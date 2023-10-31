@@ -33,6 +33,8 @@ import static com.intellij.updater.Runner.LOG;
  * </p>
  */
 public abstract class BaseUpdateAction extends PatchAction {
+  private static final byte RAW = 0;
+  private static final byte COMPRESSED = 1;
 
   private final String mySource;
   private final boolean myIsMove;
@@ -142,24 +144,45 @@ public abstract class BaseUpdateAction extends PatchAction {
   }
 
   protected void writeDiff(InputStream olderFileIn, InputStream newerFileIn, OutputStream patchOutput) throws IOException {
-    DiffAlgorithm algorithm = DiffAlgorithm.determineDiffAlgorithm(null, null, isCritical(), myPatch.getLargeFileCutoff());
-    patchOutput.write(algorithm.getId());
-    algorithm.writeDiff(olderFileIn, newerFileIn, patchOutput);
-  }
+    if (isCritical()) {
+      LOG.info("critical: " + mySource);
 
-  private static DiffAlgorithm readDiffAlgorithm(InputStream patchInput) throws IOException {
-    int type = patchInput.read();
-    return DiffAlgorithm.getAlgorithmForId(type);
+      patchOutput.write(RAW);
+      Utils.copyStream(newerFileIn, patchOutput);
+
+      return;
+    }
+
+    LOG.info(mySource);
+    ByteArrayOutputStream diffOutput = new OpenByteArrayOutputStream();
+    byte[] newerFileBuffer = JBDiff.bsdiff(olderFileIn, newerFileIn, diffOutput, myPatch.getTimeout());
+    diffOutput.close();
+
+    int diffSize = diffOutput.size();
+    if (0 < diffSize && diffSize < newerFileBuffer.length) {
+      patchOutput.write(COMPRESSED);
+      diffOutput.writeTo(patchOutput);
+    }
+    else {
+      patchOutput.write(RAW);
+      Utils.writeBytes(newerFileBuffer, newerFileBuffer.length, patchOutput);
+      if (diffSize == 0 && newerFileBuffer.length != 0) {
+        LOG.warning("*** 'bsdiff' timed out, dumping the file as-is");
+      }
+    }
   }
 
   protected void applyDiff(InputStream patchInput, InputStream oldFileIn, OutputStream toFileOut) throws IOException {
-    DiffAlgorithm algorithm = readDiffAlgorithm(patchInput);
-    algorithm.applyDiff(patchInput, oldFileIn, toFileOut);
-  }
-
-  protected void applyDiff(InputStream patchInput, File oldFileIn, OutputStream toFileOut) throws IOException {
-    DiffAlgorithm algorithm = readDiffAlgorithm(patchInput);
-    algorithm.applyDiff(patchInput, oldFileIn, toFileOut);
+    int type = patchInput.read();
+    if (type == COMPRESSED) {
+      JBPatch.bspatch(oldFileIn, toFileOut, patchInput);
+    }
+    else if (type == RAW) {
+      Utils.copyStream(patchInput, toFileOut);
+    }
+    else {
+      throw new IOException("Corrupted patch");
+    }
   }
 
   @Override

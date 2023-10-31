@@ -74,8 +74,8 @@ public class UpdateZipAction extends BaseUpdateAction {
   @Override
   protected boolean doCalculate(File olderFile, File newerFile) throws IOException {
     Map<String, Long> oldCheckSums = new HashMap<>(), newCheckSums = new HashMap<>();
-    processZipFile(olderFile, (entry, in) -> oldCheckSums.put(entry.getName(), myPatch.getDigester().digestStream(in)));
-    processZipFile(newerFile, (entry, in) -> newCheckSums.put(entry.getName(), myPatch.getDigester().digestStream(in)));
+    processZipFile(olderFile, (entry, in) -> oldCheckSums.put(entry.getName(), Digester.digestStream(in)));
+    processZipFile(newerFile, (entry, in) -> newCheckSums.put(entry.getName(), Digester.digestStream(in)));
 
     DiffCalculator.Result diff = DiffCalculator.calculate(oldCheckSums, newCheckSums);
     myFilesToCreate = diff.filesToCreate.keySet();

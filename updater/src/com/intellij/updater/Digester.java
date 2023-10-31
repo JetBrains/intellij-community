@@ -7,14 +7,11 @@ import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.zip.CRC32;
-import java.util.zip.Checksum;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipException;
 import java.util.zip.ZipFile;
@@ -35,13 +32,7 @@ public final class Digester {
     return (digest & SYM_LINK) == SYM_LINK;
   }
 
-  private final String myAlgorithm;
-
-  public Digester(String algorithm) {
-    myAlgorithm = algorithm;
-  }
-
-  public long digestRegularFile(File file, boolean normalize) throws IOException {
+  public static long digestRegularFile(File file, boolean normalize) throws IOException {
     Path path = file.toPath();
     BasicFileAttributes attrs = Files.readAttributes(path, BasicFileAttributes.class, LinkOption.NOFOLLOW_LINKS);
 
@@ -62,7 +53,7 @@ public final class Digester {
     }
   }
 
-  public long digestZipFile(File file) throws IOException {
+  public static long digestZipFile(File file) throws IOException {
     ZipFile zipFile;
     try {
       zipFile = new ZipFile(file);
@@ -84,86 +75,30 @@ public final class Digester {
 
       sorted.sort(Comparator.comparing(ZipEntry::getName));
 
-      Checksum checksum = createChecksum(myAlgorithm);
+      CRC32 crc = new CRC32();
       for (ZipEntry each : sorted) {
         try (InputStream in = zipFile.getInputStream(each)) {
-          doDigestStream(in, checksum);
+          doDigestStream(in, crc);
         }
       }
-      return checksum.getValue();
+      return crc.getValue();
     }
     finally {
       zipFile.close();
     }
   }
 
-  private static Checksum createChecksum(String algorithm) {
-    if (algorithm != null && !algorithm.equals("crc")) {
-      return new MessageDigestChecksum(algorithm);
-    }
-    return new CRC32();
+  public static long digestStream(InputStream in) throws IOException {
+    CRC32 crc = new CRC32();
+    doDigestStream(in, crc);
+    return crc.getValue();
   }
 
-  public long digestStream(InputStream in) throws IOException {
-    Checksum checksum = createChecksum(myAlgorithm);
-    doDigestStream(in, checksum);
-    return checksum.getValue();
-  }
-
-  private static void doDigestStream(InputStream in, Checksum checksum) throws IOException {
+  private static void doDigestStream(InputStream in, CRC32 crc) throws IOException {
     byte[] BUFFER = new byte[8192];
     int size;
     while ((size = in.read(BUFFER)) != -1) {
-      checksum.update(BUFFER, 0, size);
-    }
-  }
-
-  public static boolean isValidAlgorithm(String hashAlgorithm) {
-    try {
-      //noinspection ConstantConditions // Throws exception if not
-      return createChecksum(hashAlgorithm) != null;
-    }
-    catch (Exception e) {
-      return false;
-    }
-  }
-
-  private static class MessageDigestChecksum implements Checksum {
-    private MessageDigest digest;
-
-    public MessageDigestChecksum(String algorithm) {
-      try {
-        digest = MessageDigest.getInstance(algorithm);
-      }
-      catch (NoSuchAlgorithmException e) {
-        throw new IllegalArgumentException("Algorithm must be verified using isValidAlgorithm() before creating a MessageDigestChecksum!");
-      }
-    }
-
-    @Override
-    public void update(int b) {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public void update(byte[] b, int off, int len) {
-      digest.update(b, off, len);
-    }
-
-    @Override
-    public long getValue() {
-      long result = 0;
-      long mult = 1;
-      for (byte b : digest.digest()) {
-        result += b * mult;
-        mult *= 256;
-      }
-      return result;
-    }
-
-    @Override
-    public void reset() {
-      digest.reset();
+      crc.update(BUFFER, 0, size);
     }
   }
 }

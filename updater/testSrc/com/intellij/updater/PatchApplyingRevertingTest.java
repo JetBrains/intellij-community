@@ -31,7 +31,7 @@ import static org.junit.Assume.assumeFalse;
 @RunFirst
 public abstract class PatchApplyingRevertingTest extends PatchTestCase {
   private File myFile;
-  PatchSpec myPatchSpec;  // Android Studio: used in PatchFileCreatorLargeFileTest
+  private PatchSpec myPatchSpec;
   private boolean myDoBackup;
 
   @Before
@@ -63,13 +63,6 @@ public abstract class PatchApplyingRevertingTest extends PatchTestCase {
   public void testCreatingAndApplyingStrict() throws Exception {
     myPatchSpec.setStrict(true);
     assertAppliedAndReverted();
-  }
-
-  @Test
-  public void testCreatingAndApplyingMD5() throws Exception {
-    myPatchSpec.setHashAlgorithm("md5");
-    createPatch();
-    assertAppliedAndReverted(PatchFileCreator.prepareAndValidate(myFile, myOlderDir, TEST_UI));
   }
 
   @Test
@@ -210,14 +203,12 @@ public abstract class PatchApplyingRevertingTest extends PatchTestCase {
     myPatchSpec.setStrict(true);
     createPatch();
 
-    File annotations = new File(myOlderDir, "lib/annotations.jar");
-    FileUtil.delete(annotations);
+    FileUtil.delete(new File(myOlderDir, "lib/annotations.jar"));
 
     PatchFileCreator.PreparationResult preparationResult = PatchFileCreator.prepareAndValidate(myFile, myOlderDir, TEST_UI);
     assertThat(preparationResult.validationResults).containsExactly(
       new ValidationResult(ValidationResult.Kind.ERROR,
                            "lib/annotations.jar",
-                           annotations,
                            ValidationResult.Action.UPDATE,
                            ValidationResult.ABSENT_MESSAGE,
                            ValidationResult.Option.NONE));
@@ -370,14 +361,12 @@ public abstract class PatchApplyingRevertingTest extends PatchTestCase {
     myPatchSpec.setStrict(true);
     createPatch();
 
-    File toFile = new File(myOlderDir, "lib/boot.jar");
-    FileUtil.copy(new File(myOlderDir, "lib/bootstrap.jar"), toFile);
+    FileUtil.copy(new File(myOlderDir, "lib/bootstrap.jar"), new File(myOlderDir, "lib/boot.jar"));
 
     PatchFileCreator.PreparationResult preparationResult = PatchFileCreator.prepareAndValidate(myFile, myOlderDir, TEST_UI);
     assertThat(preparationResult.validationResults).containsExactly(
       new ValidationResult(ValidationResult.Kind.ERROR,
                            "lib/boot.jar",
-                           toFile,
                            ValidationResult.Action.VALIDATE,
                            ValidationResult.MODIFIED_MESSAGE,
                            ValidationResult.Option.NONE));
@@ -388,14 +377,12 @@ public abstract class PatchApplyingRevertingTest extends PatchTestCase {
     myPatchSpec.setStrictFiles(Collections.singletonList("lib/annotations.jar"));
     createPatch();
 
-    File toFile = new File(myOlderDir, "lib/annotations.jar");
-    FileUtil.copy(new File(myOlderDir, "lib/bootstrap.jar"), toFile);
+    FileUtil.copy(new File(myOlderDir, "lib/bootstrap.jar"), new File(myOlderDir, "lib/annotations.jar"));
 
     PatchFileCreator.PreparationResult preparationResult = PatchFileCreator.prepareAndValidate(myFile, myOlderDir, TEST_UI);
     assertThat(preparationResult.validationResults).containsExactly(
       new ValidationResult(ValidationResult.Kind.ERROR,
                            "lib/annotations.jar",
-                           toFile,
                            ValidationResult.Action.UPDATE,
                            ValidationResult.MODIFIED_MESSAGE,
                            ValidationResult.Option.NONE));
@@ -419,15 +406,13 @@ public abstract class PatchApplyingRevertingTest extends PatchTestCase {
 
     createPatch();
 
-    File toFile = new File(myOlderDir, "new_file.txt");
-    FileUtil.writeToFile(toFile, "hello");
+    FileUtil.writeToFile(new File(myOlderDir, "new_file.txt"), "hello");
     FileUtil.writeToFile(new File(myOlderDir, "lib/java_pid1234.hprof"), "bye!");
 
     PatchFileCreator.PreparationResult preparationResult = PatchFileCreator.prepareAndValidate(myFile, myOlderDir, TEST_UI);
     assertThat(preparationResult.validationResults).containsExactly(
       new ValidationResult(ValidationResult.Kind.CONFLICT,
                            "new_file.txt",
-                           toFile,
                            ValidationResult.Action.VALIDATE,
                            "Unexpected file",
                            ValidationResult.Option.DELETE));
@@ -455,31 +440,24 @@ public abstract class PatchApplyingRevertingTest extends PatchTestCase {
 
     createPatch();
 
-    File unexpectedDir = new File(myOlderDir, "unexpected_new_dir");
-    unexpectedDir.mkdirs();
-    File unexpected = new File(myOlderDir, "unexpected_new_dir/unexpected.txt");
-    FileUtil.writeToFile(unexpected, "bye!");
+    FileUtil.writeToFile(new File(myOlderDir, "unexpected_new_dir/unexpected.txt"), "bye!");
 
-    File newDir = new File(myOlderDir, "newDir");
-    FileUtil.createDirectory(newDir);
+    FileUtil.createDirectory(new File(myOlderDir, "newDir"));
 
     PatchFileCreator.PreparationResult preparationResult = PatchFileCreator.prepareAndValidate(myFile, myOlderDir, TEST_UI);
     assertThat(preparationResult.validationResults).containsExactly(
       new ValidationResult(ValidationResult.Kind.CONFLICT,
                            "unexpected_new_dir/unexpected.txt",
-                           unexpected,
                            ValidationResult.Action.VALIDATE,
                            "Unexpected file",
                            ValidationResult.Option.DELETE),
       new ValidationResult(ValidationResult.Kind.CONFLICT,
                            "unexpected_new_dir/",
-                           unexpectedDir,
                            ValidationResult.Action.VALIDATE,
                            "Unexpected file",
                            ValidationResult.Option.DELETE),
       new ValidationResult(ValidationResult.Kind.CONFLICT,
                            "newDir/",
-                           newDir,
                            ValidationResult.Action.CREATE,
                            ValidationResult.ALREADY_EXISTS_MESSAGE,
                            ValidationResult.Option.REPLACE));
@@ -495,8 +473,7 @@ public abstract class PatchApplyingRevertingTest extends PatchTestCase {
     FileUtil.writeToFile(new File(myNewerDir, "move/to/this/directory/move.me"), "new_content");
     createPatch();
 
-    long hash = new Digester(myPatchSpec.getHashAlgorithm())
-      .digestStream(new ByteArrayInputStream("new_content".getBytes(StandardCharsets.UTF_8)));
+    long hash = Digester.digestStream(new ByteArrayInputStream("new_content".getBytes(StandardCharsets.UTF_8)));
 
     PatchFileCreator.PreparationResult preparationResult = PatchFileCreator.prepareAndValidate(myFile, myOlderDir, TEST_UI);
     assertThat(findAction(preparationResult.patch, "move/to/this/directory/move.me"))
@@ -545,8 +522,7 @@ public abstract class PatchApplyingRevertingTest extends PatchTestCase {
     FileUtil.writeToFile(new File(myNewerDir, "move/to/this/directory/move.me"), "different");
     createPatch();
 
-    long hash = new Digester(myPatchSpec.getHashAlgorithm())
-      .digestStream(new ByteArrayInputStream("they".getBytes(StandardCharsets.UTF_8)));
+    long hash = Digester.digestStream(new ByteArrayInputStream("they".getBytes(StandardCharsets.UTF_8)));
 
     PatchFileCreator.PreparationResult preparationResult = PatchFileCreator.prepareAndValidate(myFile, myOlderDir, TEST_UI);
     assertThat(findAction(preparationResult.patch, "move/to/this/directory/move.me"))

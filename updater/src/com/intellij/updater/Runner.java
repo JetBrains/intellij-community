@@ -70,7 +70,7 @@ public final class Runner {
     return logger;
   }
 
-  public static void initLogger() throws IOException {
+  private static void initLogger() throws IOException {
     System.setProperty("java.util.logging.config.class", Object.class.getName());
 
     String dirPath = System.getProperty("idea.updater.log", System.getProperty("java.io.tmpdir", System.getProperty("user.home", ".")));
@@ -116,9 +116,10 @@ public final class Runner {
   }
 
   private static void _main(String[] args) {
-    boolean includeJar = !Arrays.asList(args).contains("--no_jar");
-    String jarFile = includeJar ? getArgument(args, "jar") : null;
-    jarFile = includeJar && jarFile == null ? resolveJarFile() : jarFile;
+    String jarFile = getArgument(args, "jar");
+    if (jarFile == null) {
+      jarFile = resolveJarFile();
+    }
 
     LOG.info("args: " + Arrays.toString(args));
     LOG.info(".jar: " + jarFile);
@@ -137,14 +138,6 @@ public final class Runner {
       boolean binary = hasArgument(args, "zip_as_binary");
       boolean strict = hasArgument(args, "strict");
       boolean normalized = hasArgument(args, "normalized");
-      String hashAlgorithm = getArgument(args, "hash_algorithm");
-      // Ensure the hashAlgorithm is valid
-      if (!Digester.isValidAlgorithm(hashAlgorithm)) {
-        //noinspection UseOfSystemOutOrSystemErr
-        System.err.println(hashAlgorithm + " is not a valid hash algorithm.");
-        System.exit(1);
-      }
-      boolean supportLargeFiles = Arrays.asList(args).contains("--large_files");
 
       String root = getArgument(args, "root");
       if (root == null) {
@@ -176,8 +169,6 @@ public final class Runner {
         .setPatchFile(patchFile)
         .setJarFile(jarFile)
         .setStrict(strict)
-        .setHashAlgorithm(hashAlgorithm)
-        .setSupportLargeFiles(supportLargeFiles)
         .setBinary(binary)
         .setNormalized(normalized)
         .setIgnoredFiles(ignoredFiles)
@@ -213,7 +204,7 @@ public final class Runner {
 
       UpdaterUI ui;
       if ("install".equals(args[0]) || "batch-install".equals(args[0])) {
-        ui = new StandaloneSwingUpdaterUI();
+        ui = new SwingUpdaterUI();
       }
       else if (hasArgument(args, "toolbox-ui")) {
         ui = new ToolboxUpdaterUI();
@@ -330,14 +321,6 @@ public final class Runner {
       "                  in a non-binary way to a fully binary patch. This will yield a larger patch, but\n" +
       "                  the generated patch can be applied on versions where non-binary patches have been applied to and it\n" +
       "                  guarantees that the patched version will match exactly the original one.\n" +
-      "    --hash_algorithm=<hashAlgorithm>: The digest algorithm used to detect differences in files.\n" +
-      "                                      hashAlgorithm can be any MessageDigest algorithm (MD5, SHA-1, SHA-256), or \n" +
-      "                                      \"crc\" (the default).\n" +
-      "    --large_files: Support large files. When encountering a large file, a slightly less-efficient but faster\n" +
-      "                   diffing algorithm will be used.\n" +
-      "    --jar=<jar file>: Include the specified patcher code in the generated patch instead of the currently-running\n" +
-      "                      patcher jar.\n" +
-      "    --no_jar: Do not include the patcher code in the generated patch.\n" +
       "    --timeout=<T> A time budget for building a 'bsdiff' patch between a pair of files, in seconds.\n" +
       "                  If exceeded, the new version is included into the patch as a whole.\n" +
       "  <folder>: The folder where product was installed. For example: c:/Program Files/JetBrains/IntelliJ IDEA 2017.3.4");
@@ -354,17 +337,12 @@ public final class Runner {
       LOG.info("Packing JAR file: " + spec.getPatchFile());
       ui.startProcess("Packing JAR file '" + spec.getPatchFile() + "'...");
 
-      try (ZipOutputWrapper out = new ZipOutputWrapper(new FileOutputStream(spec.getPatchFile()))) {
-        String jarFile = spec.getJarFile();
-        if (jarFile != null) {
-          try (ZipInputStream in = new ZipInputStream(new FileInputStream(new File(jarFile)))) {
-            ZipEntry e;
-            while ((e = in.getNextEntry()) != null) {
-              out.zipEntry(e, in);
-            }
-          }
+      try (ZipOutputWrapper out = new ZipOutputWrapper(Files.newOutputStream(Paths.get(spec.getPatchFile()), StandardOpenOption.CREATE_NEW));
+           ZipInputStream in = new ZipInputStream(Files.newInputStream(Paths.get(spec.getJarFile())))) {
+        ZipEntry e;
+        while ((e = in.getNextEntry()) != null) {
+          out.zipEntry(e, in);
         }
-
         out.zipFile(PATCH_FILE_NAME, tempPatchFile);
         out.finish();
       }
@@ -400,10 +378,6 @@ public final class Runner {
     ui.startProcess("Cleaning up...");
     ui.setProgressIndeterminate();
     Utils.cleanup();
-  }
-
-  public static boolean doInstall(String jarFile, UpdaterUI ui, Path destFolder) {
-    return install(jarFile, destFolder, ui, false);
   }
 
   private static boolean install(String patch, Path dest, UpdaterUI ui, boolean doBackup) {
@@ -665,7 +639,7 @@ public final class Runner {
     }
   }
 
-  public static String resolveJarFile() {
+  private static String resolveJarFile() {
     URL url = Runner.class.getResource(Runner.class.getSimpleName() + ".class");
     if (url == null) throw new IllegalArgumentException("Cannot resolve JAR file path");
     if (!"jar".equals(url.getProtocol())) throw new IllegalArgumentException("Patch file is not a JAR file");

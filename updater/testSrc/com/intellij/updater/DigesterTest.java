@@ -18,39 +18,23 @@ import static org.junit.Assume.assumeFalse;
 public class DigesterTest extends UpdaterTestCase {
   @Test
   public void testBasics() throws Exception {
-    Digester digester = new Digester(null);
     File binDir = new File(dataDir, "bin"), libDir = new File(dataDir, "lib");
 
-    assertEquals(Digester.DIRECTORY, digester.digestRegularFile(binDir, false));
-    assertEquals(Digester.DIRECTORY, digester.digestRegularFile(libDir, true));
+    assertEquals(Digester.DIRECTORY, Digester.digestRegularFile(binDir, false));
+    assertEquals(Digester.DIRECTORY, Digester.digestRegularFile(libDir, true));
 
-    assertEquals(CHECKSUMS.README_TXT, digester.digestRegularFile(new File(dataDir, "Readme.txt"), false));
-    assertEquals(CHECKSUMS.BOOTSTRAP_JAR_BIN, digester.digestRegularFile(new File(libDir, "bootstrap.jar"), false));
-    assertEquals(CHECKSUMS.ANNOTATIONS_JAR, digester.digestRegularFile(new File(libDir, "annotations.jar"), true));
-    assertEquals(CHECKSUMS.ANNOTATIONS_CHANGED_JAR, digester.digestRegularFile(new File(libDir, "annotations_changed.jar"), true));
-    assertEquals(CHECKSUMS.BOOT_JAR, digester.digestRegularFile(new File(libDir, "boot.jar"), true));
-    assertEquals(CHECKSUMS.BOOT2_JAR, digester.digestRegularFile(new File(libDir, "boot2.jar"), true));
-    assertEquals(CHECKSUMS.BOOT2_CHANGED_WITH_UNCHANGED_CONTENT_JAR, digester.digestRegularFile(new File(libDir, "boot2_changed_with_unchanged_content.jar"), true));
-    assertEquals(CHECKSUMS.BOOT_WITH_DIRECTORY_BECOMES_FILE_JAR, digester.digestRegularFile(new File(libDir, "boot_with_directory_becomes_file.jar"), true));
-    assertEquals(CHECKSUMS.BOOTSTRAP_JAR, digester.digestRegularFile(new File(libDir, "bootstrap.jar"), true));
-    assertEquals(CHECKSUMS.BOOTSTRAP_DELETED_JAR, digester.digestRegularFile(new File(libDir, "bootstrap_deleted.jar"), true));
+    assertEquals(CHECKSUMS.README_TXT, Digester.digestRegularFile(new File(dataDir, "Readme.txt"), false));
+    assertEquals(CHECKSUMS.BOOTSTRAP_JAR_BIN, Digester.digestRegularFile(new File(libDir, "bootstrap.jar"), false));
+    assertEquals(CHECKSUMS.ANNOTATIONS_JAR, Digester.digestRegularFile(new File(libDir, "annotations.jar"), true));
+    assertEquals(CHECKSUMS.ANNOTATIONS_CHANGED_JAR, Digester.digestRegularFile(new File(libDir, "annotations_changed.jar"), true));
+    assertEquals(CHECKSUMS.BOOT_JAR, Digester.digestRegularFile(new File(libDir, "boot.jar"), true));
+    assertEquals(CHECKSUMS.BOOT2_JAR, Digester.digestRegularFile(new File(libDir, "boot2.jar"), true));
+    assertEquals(CHECKSUMS.BOOT2_CHANGED_WITH_UNCHANGED_CONTENT_JAR, Digester.digestRegularFile(new File(libDir, "boot2_changed_with_unchanged_content.jar"), true));
+    assertEquals(CHECKSUMS.BOOT_WITH_DIRECTORY_BECOMES_FILE_JAR, Digester.digestRegularFile(new File(libDir, "boot_with_directory_becomes_file.jar"), true));
+    assertEquals(CHECKSUMS.BOOTSTRAP_JAR, Digester.digestRegularFile(new File(libDir, "bootstrap.jar"), true));
+    assertEquals(CHECKSUMS.BOOTSTRAP_DELETED_JAR, Digester.digestRegularFile(new File(libDir, "bootstrap_deleted.jar"), true));
 
-    assertEquals(CHECKSUMS.BOOTSTRAP_JAR, digester.digestZipFile(new File(libDir, "bootstrap.jar")));
- }
-
-  @Test
-  public void testMD5() throws Exception {
-    Digester digester = new Digester("md5");
-    assertEquals(MD5CHECKSUMS.README_TXT, digester.digestRegularFile(new File(dataDir, "Readme.txt"), false));
-    assertEquals(MD5CHECKSUMS.BOOTSTRAP_JAR, digester.digestZipFile(new File(dataDir, "/lib/bootstrap.jar")));
-    assertEquals(MD5CHECKSUMS.BOOTSTRAP_JAR_BINARY, digester.digestRegularFile(new File(dataDir, "/lib/bootstrap.jar"), false));
-  }
-
-  @Test
-  public void testBadAlgorithm() throws Exception {
-    assertTrue(Digester.isValidAlgorithm("md5"));
-    assertTrue(Digester.isValidAlgorithm("crc"));
-    assertFalse(Digester.isValidAlgorithm("foo"));
+    assertEquals(CHECKSUMS.BOOTSTRAP_JAR, Digester.digestZipFile(new File(libDir, "bootstrap.jar")));
   }
 
   @Test
@@ -83,12 +67,11 @@ public class DigesterTest extends UpdaterTestCase {
     @NotNull Path target = Paths.get(dataDir.getPath() + "/Readme.txt");
     Files.createSymbolicLink(link, target);
 
-    Digester digester = new Digester(null);
-    assertEquals(CHECKSUMS.LINK_TO_README_TXT, digester.digestRegularFile(simpleLink, false));
-    assertEquals(CHECKSUMS.LINK_TO_DOT_README_TXT, digester.digestRegularFile(relativeLink, false));
+    assertEquals(CHECKSUMS.LINK_TO_README_TXT, Digester.digestRegularFile(simpleLink, false));
+    assertEquals(CHECKSUMS.LINK_TO_DOT_README_TXT, Digester.digestRegularFile(relativeLink, false));
 
     try {
-      digester.digestRegularFile(absoluteLink, false);
+      Digester.digestRegularFile(absoluteLink, false);
       fail("Absolute links should cause indigestion");
     }
     catch (IOException e) {
@@ -102,8 +85,8 @@ public class DigesterTest extends UpdaterTestCase {
 
     File testFile = new File(tempDir.getRoot(), "idea.bat");
     Utils.copy(new File(dataDir, "bin/idea.bat"), testFile, false);
-    assertEquals(CHECKSUMS.IDEA_BAT, new Digester(null).digestRegularFile(testFile, false));
+    assertEquals(CHECKSUMS.IDEA_BAT, Digester.digestRegularFile(testFile, false));
     Utils.setExecutable(testFile);
-    assertEquals(CHECKSUMS.IDEA_BAT | Digester.EXECUTABLE, new Digester(null).digestRegularFile(testFile, false));
+    assertEquals(CHECKSUMS.IDEA_BAT | Digester.EXECUTABLE, Digester.digestRegularFile(testFile, false));
   }
 }

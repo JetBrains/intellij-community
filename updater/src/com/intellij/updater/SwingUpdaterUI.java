@@ -7,6 +7,8 @@ import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableColumnModel;
 import java.awt.*;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -14,7 +16,7 @@ import java.util.List;
 import java.util.Map;
 
 @SuppressWarnings({"UseJBColor", "UseDPIAwareBorders", "HardCodedStringLiteral"})
-public abstract class SwingUpdaterUI implements UpdaterUI {
+public class SwingUpdaterUI implements UpdaterUI {
   private static final EmptyBorder FRAME_BORDER = new EmptyBorder(8, 8, 8, 8);
   private static final EmptyBorder LABEL_BORDER = new EmptyBorder(0, 0, 5, 0);
   private static final EmptyBorder BUTTONS_BORDER = new EmptyBorder(5, 0, 0, 0);
@@ -22,42 +24,78 @@ public abstract class SwingUpdaterUI implements UpdaterUI {
   private static final Color VALIDATION_ERROR_COLOR = new Color(255, 175, 175);
   private static final Color VALIDATION_CONFLICT_COLOR = new Color(255, 240, 240);
 
-  protected static final String TITLE = "Update";
-  protected static final String CANCEL_BUTTON_TITLE = "Cancel";
+  private static final String TITLE = "Update";
+  private static final String CANCEL_BUTTON_TITLE = "Cancel";
   private static final String EXIT_BUTTON_TITLE = "Exit";
   private static final String RETRY_BUTTON_TITLE = "Retry";
   private static final String PROCEED_BUTTON_TITLE = "Proceed";
 
-  protected volatile boolean myCancelled = false;
-  protected volatile boolean myPaused = false;
+  private final JLabel myProcessTitle;
+  private final JProgressBar myProcessProgress;
+  private final JLabel myProcessStatus;
+  private final JButton myCancelButton;
+  private final JFrame myFrame;
 
-  protected abstract Component getParentComponent();
-  protected abstract void notifyCancelled();
+  private volatile boolean myCancelled = false;
+  private volatile boolean myPaused = false;
 
-  private static Window getParentWindow(Component component) {
-    while (component != null) {
-      if (component instanceof Frame || component instanceof Dialog) {
-        return (Window)component;
-      }
-      component = component.getParent();
+  public SwingUpdaterUI() {
+    myProcessTitle = new JLabel(" ");
+    myProcessProgress = new JProgressBar(0, 100);
+    myProcessStatus = new JLabel(" ");
+
+    myCancelButton = new JButton(CANCEL_BUTTON_TITLE);
+    myCancelButton.addActionListener(e -> doCancel());
+
+    JPanel processPanel = new JPanel();
+    processPanel.setLayout(new BoxLayout(processPanel, BoxLayout.Y_AXIS));
+    processPanel.add(myProcessTitle);
+    processPanel.add(myProcessProgress);
+    processPanel.add(myProcessStatus);
+    for (Component each : processPanel.getComponents()) {
+      ((JComponent)each).setAlignmentX(Component.LEFT_ALIGNMENT);
     }
-    return null;
+
+    JPanel buttonsPanel = new JPanel();
+    buttonsPanel.setBorder(BUTTONS_BORDER);
+    buttonsPanel.setLayout(new BoxLayout(buttonsPanel, BoxLayout.X_AXIS));
+    buttonsPanel.add(Box.createHorizontalGlue());
+    buttonsPanel.add(myCancelButton);
+
+    myFrame = new JFrame();
+    myFrame.setTitle(TITLE);
+    myFrame.setLayout(new BorderLayout());
+    myFrame.getRootPane().setBorder(FRAME_BORDER);
+    myFrame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
+    myFrame.addWindowListener(new WindowAdapter() {
+      @Override
+      public void windowClosing(WindowEvent e) {
+        doCancel();
+      }
+    });
+    myFrame.add(processPanel, BorderLayout.CENTER);
+    myFrame.add(buttonsPanel, BorderLayout.SOUTH);
+    myFrame.setMinimumSize(new Dimension(500, 50));
+    myFrame.pack();
+    myFrame.setLocationRelativeTo(null);
+    myFrame.setVisible(true);
+
+    invokeAndWait(() -> {});
   }
 
-  protected void doCancel() {
+  private void doCancel() {
     if (!myCancelled) {
       myPaused = true;
       String message = "The patch has not been applied yet.\nAre you sure you want to abort the operation?";
-      int result = JOptionPane.showConfirmDialog(getParentComponent(), message, TITLE, JOptionPane.YES_NO_OPTION);
+      int result = JOptionPane.showConfirmDialog(myFrame, message, TITLE, JOptionPane.YES_NO_OPTION);
       if (result == JOptionPane.YES_OPTION) {
         myCancelled = true;
-        notifyCancelled();
+        myCancelButton.setEnabled(false);
       }
       myPaused = false;
     }
   }
 
-/* Android Studio: removed by Change Ia67907f7 / commit 82a9fb9
   @Override
   public void setDescription(String oldBuildDesc, String newBuildDesc) {
     setDescription("Updating " + oldBuildDesc + " to " + newBuildDesc + " ...");
@@ -89,7 +127,6 @@ public abstract class SwingUpdaterUI implements UpdaterUI {
   public void setProgressIndeterminate() {
     invokeLater(() -> myProcessProgress.setIndeterminate(true));
   }
-Android Studio: removed by Change Ia67907f7 / commit 82a9fb9 */
 
   @Override
   public void checkCancelled() throws OperationCancelledException {
@@ -100,8 +137,7 @@ Android Studio: removed by Change Ia67907f7 / commit 82a9fb9 */
   @Override
   public void showError(String message) {
     String html = "<html>" + message.replace("\n", "<br>") + "</html>";
-    // Android Studio: modified by Change Ia67907f7 / commit 82a9fb9
-    invokeAndWait(() -> JOptionPane.showMessageDialog(getParentComponent(), html, "Update Error", JOptionPane.ERROR_MESSAGE));
+    invokeAndWait(() -> JOptionPane.showMessageDialog(myFrame, html, "Update Error", JOptionPane.ERROR_MESSAGE));
   }
 
   @Override
@@ -111,11 +147,11 @@ Android Studio: removed by Change Ia67907f7 / commit 82a9fb9 */
 
       Object[] choices = {RETRY_BUTTON_TITLE, EXIT_BUTTON_TITLE};
       int choice = JOptionPane.showOptionDialog(
-        getParentComponent(), message, TITLE, JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE, null, choices, choices[0]);
+        myFrame, message, TITLE, JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE, null, choices, choices[0]);
 
       if (choice != 0) {
         myCancelled = true;
-        notifyCancelled();
+        myCancelButton.setEnabled(false);
       }
     });
 
@@ -130,7 +166,7 @@ Android Studio: removed by Change Ia67907f7 / commit 82a9fb9 */
     invokeAndWait(() -> {
       if (myCancelled) return;
 
-      JDialog dialog = new JDialog(getParentWindow(getParentComponent()), TITLE, Dialog.DEFAULT_MODALITY_TYPE);
+      JDialog dialog = new JDialog(myFrame, TITLE, true);
       dialog.setLayout(new BorderLayout());
       dialog.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
 
@@ -142,7 +178,7 @@ Android Studio: removed by Change Ia67907f7 / commit 82a9fb9 */
       JButton cancelButton = new JButton(CANCEL_BUTTON_TITLE);
       cancelButton.addActionListener(e -> {
         myCancelled = true;
-        notifyCancelled();
+        myCancelButton.setEnabled(false);
         dialog.setVisible(false);
       });
       buttonsPanel.add(cancelButton);
@@ -206,11 +242,11 @@ Android Studio: removed by Change Ia67907f7 / commit 82a9fb9 */
     return "<b>" + text + "</b>";
   }
 
-  protected static void invokeLater(Runnable runnable) {
+  private static void invokeLater(Runnable runnable) {
     SwingUtilities.invokeLater(runnable);
   }
 
-  protected static void invokeAndWait(Runnable runnable) {
+  private static void invokeAndWait(Runnable runnable) {
     try {
       SwingUtilities.invokeAndWait(runnable);
     }

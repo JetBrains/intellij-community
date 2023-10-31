@@ -12,37 +12,5 @@
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
     <orderEntry type="library" scope="TEST" name="assertJ" level="project" />
-    <orderEntry type="module-library">
-      <library name="javaxdelta" type="repository">
-        <properties maven-id="com.nothome:javaxdelta:2.0.1">
-          <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/com/nothome/javaxdelta/2.0.1/javaxdelta-2.0.1.jar">
-              <sha256sum>a661dfcb749053fc26eada2a0a8e619a8ead1ca9eda29e1698687aa2cdd80152</sha256sum>
-            </artifact>
-          </verification>
-        </properties>
-        <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/com/nothome/javaxdelta/2.0.1/javaxdelta-2.0.1.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library" scope="RUNTIME">
-      <library name="fastutil" type="repository">
-        <properties maven-id="it.unimi.dsi:fastutil:8.4.0">
-          <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/it/unimi/dsi/fastutil/8.4.0/fastutil-8.4.0.jar">
-              <sha256sum>2ad2824a4a0a0eb836b52ee2fc84ba2134f44bce7bfa54015ae3f31c710a3071</sha256sum>
-            </artifact>
-          </verification>
-        </properties>
-        <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/it/unimi/dsi/fastutil/8.4.0/fastutil-8.4.0.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
   </component>
 </module>

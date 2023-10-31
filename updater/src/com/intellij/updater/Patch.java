@@ -2,7 +2,6 @@
 package com.intellij.updater;
 
 import java.io.*;
-import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.attribute.FileTime;
 import java.time.Instant;
@@ -26,9 +25,6 @@ public class Patch {
   private final boolean myIsBinary;
   private final boolean myIsStrict;
   private final boolean myIsNormalized;
-  private long myLargeFileCutoff;
-  private final String myHashAlgorithm;
-  private Digester myDigester;
   private final Map<String, String> myWarnings;
   private final List<String> myDeleteFiles;
   private final int myTimeout;
@@ -41,9 +37,6 @@ public class Patch {
     myIsBinary = spec.isBinary();
     myIsStrict = spec.isStrict();
     myIsNormalized = spec.isNormalized();
-    myHashAlgorithm = spec.getHashAlgorithm();
-    myDigester = new Digester(myHashAlgorithm);
-    myLargeFileCutoff = spec.getLargeFileCutoff();
     myWarnings = spec.getWarnings();
     myDeleteFiles = spec.getDeleteFiles();
     myTimeout = spec.getTimeout();
@@ -58,23 +51,10 @@ public class Patch {
     myIsBinary = in.readBoolean();
     myIsStrict = in.readBoolean();
     myIsNormalized = in.readBoolean();
-    myHashAlgorithm = readString(in);
-    if (!Digester.isValidAlgorithm(myHashAlgorithm)) {
-      throw new IOException("Failed to find hash algorithm!");
-    }
-    myDigester = new Digester(myHashAlgorithm);
-    myLargeFileCutoff = in.readLong();
     myWarnings = readMap(in);
     myDeleteFiles = readList(in);
     myTimeout = 0;
     myActions = readActions(in);
-  }
-
-  private static String readString(DataInputStream dataIn) throws IOException {
-    int len = dataIn.readInt();
-    byte[] bytes = new byte[len];
-    dataIn.readFully(bytes);
-    return new String(bytes, Charset.forName("UTF-8"));
   }
 
   private List<PatchAction> calculateActions(PatchSpec spec, UpdaterUI ui) throws IOException {
@@ -150,22 +130,12 @@ public class Patch {
       dataOut.writeBoolean(myIsBinary);
       dataOut.writeBoolean(myIsStrict);
       dataOut.writeBoolean(myIsNormalized);
-      writeString(dataOut, myHashAlgorithm);
-      dataOut.writeLong(myLargeFileCutoff);
       writeMap(dataOut, myWarnings);
       writeList(dataOut, myDeleteFiles);
       writeActions(dataOut, myActions);
     }
     finally {
       dataOut.flush();
-    }
-  }
-
-  private static void writeString(DataOutputStream dataOut, String s) throws IOException {
-    byte[] bytes = s.getBytes(Charset.forName("UTF-8"));
-    dataOut.writeInt(bytes.length);
-    for (byte b : bytes) {
-      dataOut.write(b);
     }
   }
 
@@ -444,10 +414,10 @@ public class Patch {
 
   public long digestFile(File toFile, boolean normalize) throws IOException {
     if (!myIsBinary && Utils.isZipFile(toFile.getName())) {
-      return myDigester.digestZipFile(toFile);
+      return Digester.digestZipFile(toFile);
     }
     else {
-      return myDigester.digestRegularFile(toFile, normalize);
+      return Digester.digestRegularFile(toFile, normalize);
     }
   }
 
@@ -490,14 +460,6 @@ public class Patch {
       }
     }
     return true;
-  }
-
-  public Digester getDigester() {
-    return myDigester;
-  }
-
-  public long getLargeFileCutoff() {
-    return myLargeFileCutoff;
   }
 
   public int getTimeout() {

@@ -28,8 +28,6 @@ public class PatchSpec {
   private String myJarFile;
   private boolean myIsBinary;
   private boolean myIsStrict;
-  private String myHashAlgorithm = "crc";
-  private long myLargeFileCutoff = Long.MAX_VALUE;
   private List<String> myIgnoredFiles = Collections.emptyList();
   private List<String> myCriticalFiles = Collections.emptyList();
   // A conflict in an essential file makes a patch update impossible; the IDE must be reinstalled from scratch.
@@ -40,9 +38,6 @@ public class PatchSpec {
   private List<String> myDeleteFiles = Collections.emptyList();
   private String myRoot = "";
   private int myTimeout = 0;
-
-  private static final long DEFAULT_LARGE_FILE_CUTOFF = 50000000L;
-
 
   public String getOldVersionDescription() {
     return myOldVersionDescription;
@@ -107,21 +102,6 @@ public class PatchSpec {
     return this;
   }
 
-  public PatchSpec setSupportLargeFiles(boolean supportLargeFiles) {
-    if (supportLargeFiles) {
-      myLargeFileCutoff = DEFAULT_LARGE_FILE_CUTOFF;
-    }
-    else {
-      myLargeFileCutoff = Long.MAX_VALUE;
-    }
-    return this;
-  }
-
-  PatchSpec setLargeFileCutoff(long cutoff) {
-    myLargeFileCutoff = cutoff;
-    return this;
-  }
-
   public List<String> getIgnoredFiles() {
     return myIgnoredFiles;
   }
@@ -176,17 +156,6 @@ public class PatchSpec {
     return this;
   }
 
-  public PatchSpec setHashAlgorithm(String hashAlgorithm) {
-    if (hashAlgorithm != null) {
-      myHashAlgorithm = hashAlgorithm;
-    }
-    return this;
-  }
-
-  public String getHashAlgorithm() {
-    return myHashAlgorithm;
-  }
-
   public PatchSpec setWarnings(Map<String, String> warnings) {
     myWarnings = warnings;
     return this;
@@ -221,8 +190,5 @@ public class PatchSpec {
   public PatchSpec setTimeout(int timeout) {
     myTimeout = timeout;
     return this;
-  }
-  public long getLargeFileCutoff() {
-    return myLargeFileCutoff;
   }
 }

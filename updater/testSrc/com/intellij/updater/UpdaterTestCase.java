@@ -8,11 +8,6 @@ import org.junit.Before;
 import org.junit.Rule;
 
 import java.io.File;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public abstract class UpdaterTestCase {
   static {
@@ -33,7 +28,6 @@ public abstract class UpdaterTestCase {
   protected File dataDir;
   protected TestUpdaterUI TEST_UI;
   protected CheckSums CHECKSUMS;
-  protected MD5CheckSums MD5CHECKSUMS;
 
   @Before
   public void before() throws Exception {
@@ -46,26 +40,6 @@ public abstract class UpdaterTestCase {
     CHECKSUMS = new CheckSums(
       new File(dataDir, "Readme.txt").length() == 7132,
       File.separatorChar == '\\');
-    boolean windowsLineEnds = new File(dataDir, "Readme.txt").length() == 7132;
-    MD5CHECKSUMS = new MD5CheckSums(windowsLineEnds);
-
-    // Android Studio: Bazel sets the execute permission for test data files when
-    // running remotely, thereby breaking a lot of updater tests.
-    // (See https://github.com/bazelbuild/bazel/issues/5588 for the relevant Bazel discussion.)
-    // We work around this by explicitly removing the execute permission for the test data.
-    // This is somewhat fragile (it could break a future test which needs an executable
-    // file as test data), so we log a warning.
-    try (Stream<Path> paths = Files.walk(dataDir.toPath())) {
-      List<File> files = paths.map(Path::toFile).filter(File::isFile).collect(Collectors.toList());
-      if (files.stream().anyMatch(File::canExecute)) {
-        System.err.println("Warning: removing execute permission from all UpdaterTestCase test data " +
-                           "files in order to work around Bazel file permission quirks.");
-        for (File file : files) {
-          //noinspection ResultOfMethodCallIgnored
-          file.setExecutable(false);
-        }
-      }
-    }
   }
 
   @After
@@ -99,47 +73,6 @@ public abstract class UpdaterTestCase {
       README_TXT = crLfs ? 1272723667L : 7256327L;
       IDEA_BAT = crLfs ? 3088608749L : 1681106766L;
       LINK_TO_DOT_README_TXT = backwardSlashes ? 2305843011210142148L : 2305843009503057206L;
-    }
-  }
-
-  protected static class MD5CheckSums {
-    public final long README_TXT;
-    public final long IDEA_BAT;
-    public final long ANNOTATIONS_JAR;
-    public final long BOOTSTRAP_JAR;
-    public final long BOOTSTRAP_JAR_BINARY;
-    public final long FOCUS_KILLER_DLL;
-    public final long ANNOTATIONS_JAR_NORM;
-    public final long ANNOTATIONS_CHANGED_JAR_NORM;
-    public final long BOOT_JAR_NORM;
-    public final long BOOT2_JAR_NORM;
-    public final long BOOT2_CHANGED_WITH_UNCHANGED_CONTENT_JAR_NORM;
-    public final long BOOT_WITH_DIRECTORY_BECOMES_FILE_JAR_NORM;
-    public final long BOOTSTRAP_JAR_NORM;
-    public final long BOOTSTRAP_DELETED_JAR_NORM;
-
-    public MD5CheckSums(boolean windowsLineEnds) {
-      if (windowsLineEnds) {
-        README_TXT = 0L;
-        IDEA_BAT = 0L;
-      }
-      else {
-        README_TXT = 4214850287831382927L;
-        IDEA_BAT = 1493936069L;
-      }
-      ANNOTATIONS_JAR = 2119442657L;
-      BOOTSTRAP_JAR = 8164818640246316539L;
-      FOCUS_KILLER_DLL = -5487271991872861862L;
-      BOOTSTRAP_JAR_BINARY = 6765351905979924471L;
-
-      ANNOTATIONS_JAR_NORM = 3039059927629132364L;
-      ANNOTATIONS_CHANGED_JAR_NORM = 3230144557297888639L;
-      BOOT_JAR_NORM = -4103093537316599430L;
-      BOOT2_JAR_NORM = -1992982772856167804L;
-      BOOT2_CHANGED_WITH_UNCHANGED_CONTENT_JAR_NORM = -1992982772856167804L;
-      BOOT_WITH_DIRECTORY_BECOMES_FILE_JAR_NORM = 6109387426094370257L;
-      BOOTSTRAP_JAR_NORM = 8164818640246316539L;
-      BOOTSTRAP_DELETED_JAR_NORM = -7880282130399843809L;
     }
   }
 }

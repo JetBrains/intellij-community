@@ -4,9 +4,6 @@ package com.intellij.updater;
 import com.intellij.openapi.util.io.FileUtil;
 
 import java.io.File;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -33,12 +30,7 @@ public abstract class PatchTestCase extends UpdaterTestCase {
 
     FileUtil.delete(new File(myNewerDir, "bin/idea.bat"));
     FileUtil.writeToFile(new File(myNewerDir, "Readme.txt"), "hello");
-    File newFile = new File(myNewerDir, "newDir/newFile.txt");
-    FileUtil.writeToFile(newFile, "hello");
-    Path link = Paths.get(myNewerDir.getPath(), "newDir2/link");
-    Files.createDirectories(link.getParent());
-
-    Files.createSymbolicLink(link, link.getParent().relativize(Paths.get(newFile.toURI())));
+    FileUtil.writeToFile(new File(myNewerDir, "newDir/newFile.txt"), "hello");
 
     FileUtil.delete(new File(myOlderDir, "lib/annotations_changed.jar"));
     FileUtil.delete(new File(myNewerDir, "lib/annotations.jar"));
