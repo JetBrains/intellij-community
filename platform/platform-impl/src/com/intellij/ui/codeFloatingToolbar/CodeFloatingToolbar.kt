@@ -4,6 +4,7 @@ package com.intellij.ui.codeFloatingToolbar
 import com.intellij.codeInsight.hint.HintManager
 import com.intellij.codeInsight.hint.HintManagerImpl
 import com.intellij.codeInsight.template.TemplateManager
+import com.intellij.ide.HelpTooltip
 import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.DefaultActionGroup
@@ -200,6 +201,7 @@ class CodeFloatingToolbar(
       override fun beforeShown(event: LightweightWindowEvent) {
         activeMenuPopup = popup
         alignButtonPopup(popup)
+        HelpTooltip.setMasterPopupOpenCondition(button) { true }
         toggleButton(button, true)
       }
 
