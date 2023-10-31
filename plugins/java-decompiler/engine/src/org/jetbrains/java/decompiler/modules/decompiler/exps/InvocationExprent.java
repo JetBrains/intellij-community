@@ -413,6 +413,10 @@ public class InvocationExprent extends Exprent {
            this.className.equals(className) && methodName.equals(name) && parameters.size() == parametersCount;
   }
 
+  public boolean isDynamicCall(@NotNull String methodName, int parametersCount) {
+    return invocationType == INVOKE_DYNAMIC && methodName.equals(name) && parameters.size() == parametersCount;
+  }
+
   public void markUsingBoxingResult() {
     canIgnoreBoxing = false;
   }

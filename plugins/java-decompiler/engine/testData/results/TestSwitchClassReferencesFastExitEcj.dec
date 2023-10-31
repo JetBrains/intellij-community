@@ -1,0 +1,128 @@
+package pkg;
+
+public class TestSwitchClassReferencesFastExitEcj {
+   public static void testObject(Object o) {
+      label16:
+      while(true) {
+         int i = 0;
+
+         while(i < o.hashCode()) {
+            switch (o) {// 8
+               case String var4:
+                  System.out.println("s");// 10
+                  System.exit(0);// 11
+                  ++i;// 12
+                  break;// 7
+               case Integer var5:
+                  System.out.println("ii");// 14
+                  continue label16;// 15
+               default:
+                  System.out.println("s");// 17
+                  return;// 18
+            }
+         }
+      }
+   }
+
+   public static void testObject2(Object o) {
+      label16:
+      while(true) {
+         int i = 0;
+
+         while(i < o.hashCode()) {
+            switch (o) {// 28
+               case String var4:
+                  System.out.println("s");// 30
+                  System.exit(0);// 31
+                  ++i;// 32
+                  break;// 27
+               case Integer var5:
+                  System.out.println("ii");// 35
+                  continue label16;// 36
+               default:
+                  System.out.println("s");// 39
+                  return;// 40
+            }
+         }
+      }
+   }
+}
+
+class 'pkg/TestSwitchClassReferencesFastExitEcj' {
+   method 'testObject (Ljava/lang/Object;)V' {
+      0      6
+      1      6
+      15      9
+      36      11
+      39      11
+      3b      11
+      3e      12
+      3f      12
+      42      13
+      4b      16
+      4e      16
+      50      16
+      53      17
+      59      19
+      5c      19
+      5e      19
+      61      20
+      64      14
+      69      8
+      6c      8
+   }
+
+   method 'testObject2 (Ljava/lang/Object;)V' {
+      0      29
+      1      29
+      15      32
+      36      34
+      39      34
+      3b      34
+      3e      35
+      3f      35
+      42      36
+      4b      39
+      4e      39
+      50      39
+      53      40
+      59      42
+      5c      42
+      5e      42
+      61      43
+      64      37
+      69      31
+      6c      31
+   }
+}
+
+Lines mapping:
+7 <-> 15
+8 <-> 10
+10 <-> 12
+11 <-> 13
+12 <-> 14
+14 <-> 17
+15 <-> 18
+17 <-> 20
+18 <-> 21
+27 <-> 38
+28 <-> 33
+30 <-> 35
+31 <-> 36
+32 <-> 37
+35 <-> 40
+36 <-> 41
+39 <-> 43
+40 <-> 44
+Not mapped:
+6
+9
+13
+16
+22
+26
+29
+34
+38
+45

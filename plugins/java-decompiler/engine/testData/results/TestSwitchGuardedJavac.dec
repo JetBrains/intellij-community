@@ -1,0 +1,169 @@
+package pkg;
+
+public class TestSwitchGuardedJavac {
+   public static void main(String[] args) {
+   }// 7
+
+   public static void testObject(Object o) {
+      switch (o) {// 10
+         case String var3 when var3.isEmpty() && var3.getBytes().length == 2 -> System.out.println("empty s");// 11
+         case String var4 -> System.out.println("s");// 12
+         case Integer var5 -> System.out.println("iii");// 13
+         default -> System.out.println(o);// 14
+      }
+
+      System.out.println("1");// 16
+   }// 17
+
+   public static void testObject2(Object o) {
+      switch (o) {// 20
+         case String var3 when var3.isEmpty() && var3.getBytes().length == 2:
+            System.out.println("empty s");// 21
+            return;// 26
+         case String var4:
+            System.out.println("s");// 22
+            return;
+         case Integer var5:
+            System.out.println("ii");// 23
+            return;
+         default:
+            System.out.println(o);// 24
+            return;
+      }
+   }
+
+   public static void testObject3(Object o) {
+      label33:
+      while(true) {
+         if (o.hashCode() == 1) {// 30
+            switch (o) {// 31
+               case String var3 when var3.isEmpty() && var3.getBytes().length == 2:// 32
+                  System.out.println("empty s");// 33
+               case String var4:
+                  System.out.println("s");// 36
+                  continue label33;// 37
+               case Integer var5:
+                  System.out.println("i");// 39
+               default:
+                  System.out.println(o);// 42
+            }
+         }
+
+         System.out.println("1");// 47
+         return;// 48
+      }
+   }
+}
+
+class 'pkg/TestSwitchGuardedJavac' {
+   method 'main ([Ljava/lang/String;)V' {
+      0      4
+   }
+
+   method 'testObject (Ljava/lang/Object;)V' {
+      10      7
+      32      8
+      39      8
+      3c      8
+      3d      8
+      3e      8
+      46      8
+      49      8
+      4b      8
+      57      9
+      5a      9
+      5c      9
+      68      10
+      6b      10
+      6d      10
+      76      11
+      7a      11
+      80      14
+      83      14
+      85      14
+      88      15
+   }
+
+   method 'testObject2 (Ljava/lang/Object;)V' {
+      10      18
+      32      19
+      39      19
+      3c      19
+      3d      19
+      3e      19
+      46      20
+      49      20
+      4b      20
+      57      23
+      5a      23
+      5c      23
+      68      26
+      6b      26
+      6d      26
+      76      29
+      7a      29
+      80      21
+   }
+
+   method 'testObject3 (Ljava/lang/Object;)V' {
+      1      37
+      4      37
+      5      37
+      18      38
+      3a      39
+      41      39
+      44      39
+      45      39
+      46      39
+      4e      40
+      51      40
+      53      40
+      5f      42
+      62      42
+      64      42
+      67      43
+      70      45
+      73      45
+      75      45
+      7e      47
+      82      47
+      8b      51
+      8e      51
+      90      51
+      93      52
+   }
+}
+
+Lines mapping:
+7 <-> 5
+10 <-> 8
+11 <-> 9
+12 <-> 10
+13 <-> 11
+14 <-> 12
+16 <-> 15
+17 <-> 16
+20 <-> 19
+21 <-> 21
+22 <-> 24
+23 <-> 27
+24 <-> 30
+26 <-> 22
+30 <-> 38
+31 <-> 39
+32 <-> 40
+33 <-> 41
+36 <-> 43
+37 <-> 44
+39 <-> 46
+42 <-> 48
+47 <-> 52
+48 <-> 53
+Not mapped:
+34
+35
+38
+40
+41
+43
+45

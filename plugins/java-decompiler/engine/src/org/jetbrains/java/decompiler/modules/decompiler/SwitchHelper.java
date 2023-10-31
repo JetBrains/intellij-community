@@ -1,24 +1,35 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.modules.decompiler;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.decompiler.ClassNameConstants;
-import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.main.ClassesProcessor;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
+import org.jetbrains.java.decompiler.main.collectors.CounterContainer;
 import org.jetbrains.java.decompiler.main.rels.MethodWrapper;
 import org.jetbrains.java.decompiler.modules.decompiler.StatEdge.EdgeType;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.*;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.*;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement.StatementType;
+import org.jetbrains.java.decompiler.modules.decompiler.vars.VarProcessor;
 import org.jetbrains.java.decompiler.struct.StructClass;
+import org.jetbrains.java.decompiler.struct.consts.PooledConstant;
+import org.jetbrains.java.decompiler.struct.consts.PrimitiveConstant;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
+import org.jetbrains.java.decompiler.util.VBStyleCollection;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
+import static org.jetbrains.java.decompiler.ClassNameConstants.JAVA_LANG_OBJECT;
+import static org.jetbrains.java.decompiler.code.CodeConstants.*;
 import static org.jetbrains.java.decompiler.main.extern.IFernflowerLogger.Severity;
+import static org.jetbrains.java.decompiler.modules.decompiler.exps.ExitExprent.EXIT_THROW;
+import static org.jetbrains.java.decompiler.modules.decompiler.exps.FunctionExprent.FUNCTION_CAST;
+import static org.jetbrains.java.decompiler.modules.decompiler.stats.IfStatement.IFTYPE_IF;
+import static org.jetbrains.java.decompiler.struct.gen.VarType.*;
 
 public final class SwitchHelper {
 
@@ -42,30 +53,32 @@ public final class SwitchHelper {
   }
 
   /**
-   * Method searches and simplifies "switch-on-string" patterns in the statement graph.
+   * Method searches and simplifies "switch-on-references" patterns in the statement graph.
    *
    * @param root statement to start traversal
    */
-  public static void simplifySwitchesOnString(@NotNull RootStatement root) {
-    List<SwitchOnStringCandidate> candidates = new ArrayList<>();
-    collectSwitchesOnString(root, new ArrayList<>(
-      Arrays.asList(new SwitchRecognizer.JavacRecognizer(), new SwitchRecognizer.EcjRecognizer())), candidates);
+  public static void simplifySwitchesOnReferences(@NotNull RootStatement root) {
+    List<SwitchOnCandidate> candidates = new ArrayList<>();
+    collectSwitchesOn(root, new ArrayList<>(
+      Arrays.asList(new StringSwitchRecognizer.JavacStringRecognizer(), new StringSwitchRecognizer.EcjStringRecognizer(),
+                    new JavacReferenceRecognizer()
+      )), candidates);
     if (candidates.isEmpty()) return;
     Map<VarExprent, Statement> tempVarAssignments = new HashMap<>();
     candidates.forEach(candidate -> candidate.simplify(tempVarAssignments));
     removeTempVariableDeclarations(tempVarAssignments);
   }
 
-  private static void collectSwitchesOnString(@NotNull Statement statement,
-                                              @NotNull List<SwitchRecognizer> recognizers,
-                                              @NotNull List<SwitchOnStringCandidate> candidates) {
+  private static void collectSwitchesOn(@NotNull Statement statement,
+                                        @NotNull List<SwitchRecognizer> recognizers,
+                                        @NotNull List<SwitchOnCandidate> candidates) {
     if (statement instanceof SwitchStatement switchStatement) {
       SwitchExprent switchExprent = (SwitchExprent)switchStatement.getHeadExprent();
       Exprent switchSelector = Objects.requireNonNull(switchExprent).getValue();
       if (switchSelector instanceof InvocationExprent) {
         SwitchRecognizer usedRecognizer = null;
         for (SwitchRecognizer recognizer : recognizers) {
-          SwitchOnStringCandidate switchCandidate = recognizer.recognize(switchStatement, (InvocationExprent)switchSelector);
+          SwitchOnCandidate switchCandidate = recognizer.recognize(switchStatement, (InvocationExprent)switchSelector);
           if (switchCandidate == null) continue;
           candidates.add(switchCandidate);
           usedRecognizer = recognizer;
@@ -78,7 +91,7 @@ public final class SwitchHelper {
       }
     }
     for (Statement child : statement.getStats()) {
-      collectSwitchesOnString(child, recognizers, candidates);
+      collectSwitchesOn(child, recognizers, candidates);
     }
   }
 
@@ -90,7 +103,7 @@ public final class SwitchHelper {
       FieldExprent arrayField = (FieldExprent)array.getArray();
       ClassesProcessor.ClassNode classNode = DecompilerContext.getClassProcessor().getMapRootClasses().get(arrayField.getClassname());
       if (classNode == null) return mapping;
-      MethodWrapper wrapper = classNode.getWrapper().getMethodWrapper(CodeConstants.CLINIT_NAME, "()V");
+      MethodWrapper wrapper = classNode.getWrapper().getMethodWrapper(CLINIT_NAME, "()V");
       if (wrapper != null && wrapper.root != null) {
         wrapper.getOrBuildGraph().iterateExprents(exprent -> {
           if (exprent instanceof AssignmentExprent assignment) {
@@ -102,10 +115,11 @@ public final class SwitchHelper {
           return 0;
         });
       }
-
-    } else if (array.getArray().type == Exprent.EXPRENT_INVOCATION) { // Eclipse compiler
-      InvocationExprent invocationExprent = (InvocationExprent) array.getArray();
-      ClassesProcessor.ClassNode classNode = DecompilerContext.getClassProcessor().getMapRootClasses().get(invocationExprent.getClassName());
+    }
+    else if (array.getArray().type == Exprent.EXPRENT_INVOCATION) { // Eclipse compiler
+      InvocationExprent invocationExprent = (InvocationExprent)array.getArray();
+      ClassesProcessor.ClassNode classNode =
+        DecompilerContext.getClassProcessor().getMapRootClasses().get(invocationExprent.getClassName());
       if (classNode == null) return mapping;
       MethodWrapper wrapper = classNode.getWrapper().getMethodWrapper(invocationExprent.getName(), "()[I");
       if (wrapper != null && wrapper.root != null) {
@@ -114,7 +128,7 @@ public final class SwitchHelper {
             Exprent left = assignment.getLeft();
             if (left.type == Exprent.EXPRENT_ARRAY) {
               Exprent indexExprent = ((ArrayExprent)left).getIndex();
-              if (indexExprent.type == Exprent.EXPRENT_INVOCATION && ((InvocationExprent) indexExprent).getName().equals("ordinal")) {
+              if (indexExprent.type == Exprent.EXPRENT_INVOCATION && ((InvocationExprent)indexExprent).getName().equals("ordinal")) {
                 mapping.put(assignment.getRight(), ((InvocationExprent)((ArrayExprent)left).getIndex()).getInstance());
               }
             }
@@ -156,21 +170,21 @@ public final class SwitchHelper {
     Exprent field = ((ArrayExprent)exprent).getArray();
     Exprent index = ((ArrayExprent)exprent).getIndex();
     boolean isJavacEnumArray = field instanceof FieldExprent &&
-      (((FieldExprent)field).getName().startsWith("$SwitchMap") ||
-        (index instanceof InvocationExprent && ((InvocationExprent)index).getName().equals("ordinal")));
+                               (((FieldExprent)field).getName().startsWith("$SwitchMap") ||
+                                (index instanceof InvocationExprent && ((InvocationExprent)index).getName().equals("ordinal")));
     boolean isEclipseEnumArray = field instanceof InvocationExprent &&
-      ((InvocationExprent)field).getName().startsWith("$SWITCH_TABLE");
+                                 ((InvocationExprent)field).getName().startsWith("$SWITCH_TABLE");
     return isJavacEnumArray || isEclipseEnumArray;
   }
 
+  @SuppressWarnings("SSBasedInspection")
   static void removeTempVariableDeclarations(@NotNull Map<VarExprent, Statement> tempVarAssignments) {
     if (tempVarAssignments.isEmpty()) return;
     for (Statement statement : new HashSet<>(tempVarAssignments.values())) {
       Statement parent = statement;
       while (parent != null) {
-        boolean removed = false;
         List<Exprent> varExprents;
-        if (parent.getFirst().type == StatementType.BASIC_BLOCK) {
+        if (parent.getFirst() != null && parent.getFirst().type == StatementType.BASIC_BLOCK) {
           varExprents = parent.getFirst().getExprents();
         }
         else if (parent.type == StatementType.TRY_CATCH) {
@@ -179,6 +193,7 @@ public final class SwitchHelper {
         else {
           varExprents = Collections.emptyList();
         }
+        List<Exprent> toDelete = new ArrayList<>();
         for (int i = 0; i < varExprents.size(); i++) {
           Exprent exprent = varExprents.get(i);
           Exprent assignmentExprent = null;
@@ -190,12 +205,10 @@ public final class SwitchHelper {
           VarExprent varExprent = (VarExprent)exprent;
           if (varExprent.isDefinition() && tempVarAssignments.keySet().stream()
             .anyMatch(expr -> expr.getIndex() == varExprent.getIndex() && expr.getVersion() == varExprent.getVersion())) {
-            varExprents.remove(assignmentExprent == null ? varExprent : assignmentExprent);
-            removed = true;
-            break;
+            toDelete.add(assignmentExprent == null ? varExprent : assignmentExprent);
           }
         }
-        if (removed) break;
+        varExprents.removeAll(toDelete);
         parent = parent.getParent();
       }
     }
@@ -229,7 +242,7 @@ public final class SwitchHelper {
 
     for (Statement caseStatement : statement.getCaseStatements()) {
       //only for simplification and not to create long rules
-      if (caseStatement instanceof SequenceStatement) {
+      if (caseStatement instanceof SequenceStatement || !caseStatement.getStats().isEmpty() || caseStatement.getExprents().size() > 1) {
         return false;
       }
       List<StatEdge> successorEdges = caseStatement.getSuccessorEdges(EdgeType.DIRECT_ALL);
@@ -237,8 +250,7 @@ public final class SwitchHelper {
         return false;
       }
       StatEdge edge = successorEdges.get(0);
-      //it is a fallthrough branch
-      if (edge.getType() == EdgeType.REGULAR) {
+      if (edge.getType() != EdgeType.BREAK) {
         return false;
       }
     }
@@ -252,16 +264,722 @@ public final class SwitchHelper {
         continue;
       }
       StatEdge edge = successorEdges.get(0);
-      if (edge.getType() == EdgeType.BREAK && edge.explicit) {
+      if (edge.getType() == EdgeType.BREAK && edge.explicit && !edge.labeled) {
         edge.explicit = false;
       }
     }
   }
 
-  private abstract static class SwitchRecognizer {
-
+  private interface SwitchRecognizer {
     @Nullable
-    abstract SwitchOnStringCandidate recognize(@NotNull SwitchStatement statement, @NotNull InvocationExprent switchSelector);
+    SwitchOnCandidate recognize(@NotNull SwitchStatement statement, @NotNull InvocationExprent switchSelector);
+  }
+
+
+  private static boolean isBootstrapSwitch(@Nullable Exprent headExprent) {
+    if (!(headExprent instanceof SwitchExprent switchExprent)) {
+      return false;
+    }
+    Exprent switchSelector = switchExprent.getValue();
+    if (switchSelector instanceof InvocationExprent invocationExprent) {
+      if (invocationExprent.isDynamicCall("typeSwitch", 2)) return true;
+      if (invocationExprent.isDynamicCall("enumSwitch", 2)) return true;
+    }
+    return false;
+  }
+
+  private static class JavacReferenceRecognizer implements SwitchRecognizer {
+
+
+    record FullCase(@NotNull Statement statement, @NotNull List<Exprent> exprents, @NotNull List<StatEdge> edges) {
+    }
+
+    record CaseValueWithEdge(@Nullable Exprent exprent, @Nullable StatEdge edge) {
+    }
+
+    @SuppressWarnings({"SSBasedInspection", "SimplifyStreamApiCallChains"})
+    @Nullable
+    private static List<FullCase> resortForSwitchBootstrap(@NotNull SwitchStatement statement,
+                                                           boolean mustCleanNonNull) {
+      for (Statement caseStatement : statement.getCaseStatements()) {
+        if (caseStatement == null) {
+          return null;
+        }
+      }
+      @NotNull List<List<@Nullable Exprent>> values = statement.getCaseValues();
+      List<List<Exprent>> sortedCaseValue = new ArrayList<>();
+      List<List<StatEdge>> sortedEdges = new ArrayList<>();
+      for (int i = 0; i < values.size(); i++) {
+        List<Exprent> caseValue = statement.getCaseValues().get(i);
+        for (Exprent exprent : caseValue) {
+          if (exprent == null) {
+            continue;
+          }
+          if (!(exprent instanceof ConstExprent constCaseValue)) {
+            return null;
+          }
+          if (!(constCaseValue.getConstType() == VARTYPE_INT ||
+                constCaseValue.getConstType() == VARTYPE_BYTECHAR ||
+                constCaseValue.getConstType() == VARTYPE_CHAR ||
+                constCaseValue.getConstType() == VARTYPE_BYTE)) {
+            return null;
+          }
+        }
+        List<StatEdge> edges = statement.getCaseEdges().get(i);
+        if (edges.size() != caseValue.size()) {
+          return null;
+        }
+        List<CaseValueWithEdge> sorted =
+          IntStream.range(0, edges.size()).mapToObj(ind -> new CaseValueWithEdge(caseValue.get(ind), edges.get(ind)))
+            .sorted((o1, o2) -> {
+              Exprent exprent1 = o1.exprent;
+              StatEdge edge1 = o1.edge;
+              Exprent exprent2 = o2.exprent;
+              StatEdge edge2 = o2.edge;
+              if (edge1 == statement.getDefaultEdge()) {
+                return 1;
+              }
+              if (edge2 == statement.getDefaultEdge()) {
+                return -1;
+              }
+              if (exprent1 instanceof ConstExprent constExprent1 && exprent2 instanceof ConstExprent constExprent2) {
+                return constExprent1.getIntValue() - constExprent2.getIntValue();
+              }
+              return 0;
+            }).collect(Collectors.toList());
+        sortedEdges.add(sorted.stream().map(t -> t.edge).collect(Collectors.toList()));
+        sortedCaseValue.add(sorted.stream().map(t -> t.exprent).collect(Collectors.toList()));
+      }
+
+      List<FullCase> sortedAll = IntStream.range(0, statement.getCaseValues().size())
+        .mapToObj(ind -> new FullCase(statement.getCaseStatements().get(ind),
+                                      sortedCaseValue.get(ind),
+                                      sortedEdges.get(ind)))
+        .sorted((o1, o2) -> {
+          if (o1.exprents.isEmpty()) {
+            return -1;
+          }
+          if (o2.exprents.isEmpty()) {
+            return 1;
+          }
+          Exprent exprent1 = o1.exprents().get(o1.exprents().size() - 1);
+          StatEdge edge1 = o1.edges.get(o1.edges.size() - 1);
+          Exprent exprent2 = o2.exprents().get(o2.exprents().size() - 1);
+          StatEdge edge2 = o2.edges.get(o2.edges.size() - 1);
+          if (edge1 == statement.getDefaultEdge()) {
+            return 1;
+          }
+          if (edge2 == statement.getDefaultEdge()) {
+            return -1;
+          }
+          if (exprent1 instanceof ConstExprent constExprent1 && exprent2 instanceof ConstExprent constExprent2) {
+            return constExprent1.getIntValue() - constExprent2.getIntValue();
+          }
+          return 0;
+        })
+        .collect(Collectors.toList());
+
+      for (int i = 0; i < sortedAll.size(); i++) {
+        if (i == sortedAll.size() - 1) {
+          break;
+        }
+        FullCase current = sortedAll.get(i);
+        FullCase next = sortedAll.get(i + 1);
+        if (current.exprents.isEmpty() || next.exprents.isEmpty()) {
+          return null;
+        }
+
+        Exprent currentFirstExpr = current.exprents.get(0);
+        Exprent nextFirstExpr = next.exprents.get(0);
+        if (currentFirstExpr instanceof ConstExprent constExprent1 && nextFirstExpr instanceof ConstExprent constExprent2) {
+          if (constExprent1.getIntValue() > constExprent2.getIntValue()) {
+            if (statement.getDefaultEdge() != next.edges.get(next.edges.size() - 1)) {
+              return null;
+            }
+          }
+        }
+        List<StatEdge> edges = current.statement.getSuccessorEdges(EdgeType.DIRECT_ALL);
+        if (edges.size() == 1) {
+          StatEdge currentEdge = edges.get(0);
+          if (currentEdge.getType() == EdgeType.REGULAR) {
+            Statement destination = currentEdge.getDestination();
+            if (destination != next.statement()) {
+              return null;
+            }
+          }
+        }
+      }
+
+      for (int i = 0; i < sortedAll.size(); i++) {
+        Statement currentStatement = sortedAll.get(i).statement;
+        List<StatEdge> edges = currentStatement.getSuccessorEdges(EdgeType.DIRECT_ALL);
+        if (edges.size() == 1) {
+          StatEdge onlyEdge = edges.get(0);
+          if (onlyEdge.getType() != EdgeType.REGULAR && !onlyEdge.explicit) {
+            onlyEdge.explicit = true;
+            onlyEdge.labeled = false;
+          }
+          if (i == statement.getCaseStatements().size() - 1 &&
+              onlyEdge.getType() == EdgeType.BREAK &&
+              onlyEdge.explicit &&
+              !onlyEdge.labeled) {
+            onlyEdge.explicit = false;
+          }
+        }
+      }
+
+      if (mustCleanNonNull) {
+        FullCase toDelete = null;
+        for (FullCase fullCase : sortedAll) {
+          int nullIndex = -1;
+          List<Exprent> exprents = fullCase.exprents;
+          for (int i = 0; i < exprents.size(); i++) {
+            Exprent t = exprents.get(i);
+            if (t instanceof ConstExprent constExprent && constExprent.getIntValue() == -1) {
+              nullIndex = i;
+              break;
+            }
+          }
+          if (nullIndex == -1) {
+            continue;
+          }
+          if (fullCase.exprents().size() != 1) {
+            fullCase.exprents.remove(nullIndex);
+            fullCase.edges.remove(nullIndex);
+          }
+          else {
+            toDelete = fullCase;
+          }
+          break;
+        }
+        sortedAll.remove(toDelete);
+      }
+      return sortedAll;
+    }
+
+    @Override
+    public @Nullable SwitchOnCandidate recognize(@NotNull SwitchStatement statement, @NotNull InvocationExprent switchSelector) {
+      //now only with null, it is first step before patterns
+      Exprent instance = switchSelector.getInstance();
+      if (instance == null) {
+        return null;
+      }
+      if (statement.getHeadExprent() == null) {
+        return null;
+      }
+      if (instance.type != Exprent.EXPRENT_VAR) return null;
+      //todo records
+      if (!isBootstrapSwitch(statement.getHeadExprent())) return null;
+
+      List<PooledConstant> bootstrapArguments = switchSelector.getBootstrapArguments();
+      if (bootstrapArguments == null) {
+        return null;
+      }
+      for (PooledConstant bootstrapArgument : bootstrapArguments) {
+        if (!(bootstrapArgument instanceof PrimitiveConstant primitiveConstant)) {
+          return null;
+        }
+        int type = primitiveConstant.type;
+        if (!(type == CONSTANT_Integer || type == CONSTANT_String || type == CONSTANT_Class)) {
+          return null;
+        }
+      }
+      List<Exprent> parameters = switchSelector.getParameters();
+      if (!instance.equals(parameters.get(0))) {
+        return null;
+      }
+      Exprent typeVar = parameters.get(1);
+      Statement first = statement.getFirst();
+      if (first == null) {
+        return null;
+      }
+      List<Exprent> firstExprents = first.getExprents();
+
+      Statement doParentStatement = null;
+
+      //possible structure:
+      //SequenceStatement
+      //  ....
+      //  BasicBlockStatement
+      //    exprents with init values
+      //  DoStatement
+      //    SwitchStatement
+      //  ....
+      if (firstExprents == null || firstExprents.isEmpty()) {
+        if (statement.getParent() instanceof DoStatement doStatement &&
+            doStatement.getLoopType() == DoStatement.LoopType.DO &&
+            doStatement.getStats().size() == 1 &&
+            doStatement.getParent() instanceof SequenceStatement upperStatement &&
+            upperStatement.getExprents() == null) {
+          VBStyleCollection<Statement, Integer> upperStatementStats = upperStatement.getStats();
+          int indexOfDo = upperStatementStats.indexOf(doStatement);
+          if (indexOfDo == -1 || indexOfDo == 0) {
+            return null;
+          }
+          if (upperStatementStats.get(indexOfDo) == doStatement &&
+              upperStatementStats.get(indexOfDo - 1) instanceof BasicBlockStatement basicBlockStatement &&
+              basicBlockStatement.getStats().isEmpty() &&
+              basicBlockStatement.getExprents() != null &&
+              !basicBlockStatement.getExprents().isEmpty()) {
+            firstExprents = basicBlockStatement.getExprents();
+            doParentStatement = doStatement;
+            first = basicBlockStatement;
+          }
+          else {
+            return null;
+          }
+        }
+        else {
+          return null;
+        }
+      }
+
+      Map<VarExprent, Statement> tempVarAssignments = new HashMap<>();
+
+      Exprent nonNullCheck = null;
+      AssignmentExprent initVar2 = null;
+      for (Exprent exprent : firstExprents) {
+        if (exprent instanceof AssignmentExprent firstAssignment && instance.equals(firstAssignment.getLeft())) {
+          instance = firstAssignment.getRight();
+          if (firstAssignment.getLeft() instanceof VarExprent varExprent) {
+            tempVarAssignments.put(varExprent, first);
+          }
+        }
+      }
+      for (Exprent exprent : firstExprents) {
+        if (isNonNullCheck(exprent, instance)) {
+          nonNullCheck = exprent;
+        }
+        if (exprent instanceof AssignmentExprent firstAssignment && typeVar.equals(firstAssignment.getLeft()) &&
+            firstAssignment.getRight() instanceof ConstExprent constExprent &&
+            constExprent.getValue() instanceof Integer value &&
+            value == 0) {
+          initVar2 = firstAssignment;
+
+          if (firstAssignment.getLeft() instanceof VarExprent varExprent) {
+            tempVarAssignments.put(varExprent, first);
+          }
+        }
+      }
+
+      if (initVar2 == null) {
+        return null;
+      }
+
+      if (statement.getCaseValues().size() != statement.getCaseEdges().size() ||
+          statement.getCaseValues().size() != statement.getCaseStatements().size()) {
+        return null;
+      }
+
+      HashSet<AssignmentExprent> usedTypeVarAssignments = new HashSet<>();
+      usedTypeVarAssignments.add(initVar2);
+      GuardPatternContainer guardPatternContainer = null;
+      if (doParentStatement != null) {
+        guardPatternContainer = collectGuards(statement, typeVar, doParentStatement, usedTypeVarAssignments);
+      }
+      if (reInitVar(typeVar, statement, usedTypeVarAssignments)) {
+        return null;
+      }
+
+
+      List<FullCase> resortedCases = resortForSwitchBootstrap(statement, nonNullCheck != null);
+      if (resortedCases == null) {
+        return null;
+      }
+
+      List<Exprent> finalFirstExprents = firstExprents;
+      Exprent finalNonNullCheck = nonNullCheck;
+
+      return new SwitchOnReferenceCandidate(statement, switchSelector, instance, tempVarAssignments, resortedCases, guardPatternContainer,
+                                            () -> {
+                                              if (finalNonNullCheck != null) {
+                                                finalFirstExprents.remove(finalNonNullCheck);
+                                              }
+                                            });
+    }
+
+    private static GuardPatternContainer collectGuards(@NotNull SwitchStatement statement,
+                                                       @NotNull Exprent typeVar,
+                                                       @NotNull Statement doParentStatement,
+                                                       @NotNull Set<AssignmentExprent> usedAssignments) {
+      GuardPatternContainer container = new GuardPatternContainer();
+      @NotNull List<Statement> statements = statement.getCaseStatements();
+      for (int i = 0; i < statements.size(); i++) {
+        Statement caseStatement = statements.get(i);
+        if (caseStatement.getStats().size() != 2) {
+          continue;
+        }
+        List<@Nullable Exprent> exprents = statement.getCaseValues().get(i);
+        OptionalInt maxCaseValue = exprents.stream().filter(t -> t instanceof ConstExprent)
+          .mapToInt(t -> ((ConstExprent)t).getIntValue())
+          .max();
+        if (maxCaseValue.isEmpty()) {
+          continue;
+        }
+        Statement breakStatement = caseStatement.getStats().get(1);
+        if (breakStatement.getStats() == null || !breakStatement.getStats().isEmpty()) {
+          continue;
+        }
+        List<StatEdge> successorEdges = breakStatement.getSuccessorEdges(EdgeType.DIRECT_ALL);
+        if (successorEdges.size() != 1) {
+          continue;
+        }
+        StatEdge breakEdge = successorEdges.get(0);
+        if (breakEdge.getType() != EdgeType.BREAK) {
+          continue;
+        }
+        if (breakEdge.getDestination() != doParentStatement) {
+          continue;
+        }
+        if (!(breakStatement.getExprents() != null && breakStatement.getExprents().size() == 1 &&
+              breakStatement.getExprents().get(0) instanceof AssignmentExprent assignmentExprent &&
+              assignmentExprent.getLeft() != typeVar && assignmentExprent.getRight() instanceof ConstExprent constExprent &&
+              constExprent.getValue() instanceof Integer index && index > maxCaseValue.getAsInt())) {
+          continue;
+        }
+        if (!(caseStatement.getStats().get(0) instanceof IfStatement ifStatement &&
+              ifStatement.getIfstat() != null &&
+              ifStatement.getElsestat() == null &&
+              !ifStatement.isNegated() &&
+              ifStatement.iftype == IFTYPE_IF)) {
+          continue;
+        }
+
+        Statement ifstat = ifStatement.getIfstat();
+        List<StatEdge> edges = ifstat.getSuccessorEdges(EdgeType.DIRECT_ALL);
+        if (edges.size() != 1 || edges.get(0).getType() == EdgeType.REGULAR) {
+          continue;
+        }
+
+        if (!(ifStatement.getHeadexprentList().size() == 1 &&
+              ifStatement.getHeadexprent() != null &&
+              ifStatement.getHeadexprent().getCondition() != null &&
+              ifStatement.getIfstat() != null)) {
+          continue;
+        }
+        //now only guards
+        container.addGuard(caseStatement, ifStatement.getHeadexprent().getCondition(), ifStatement.getIfstat(),
+                           Optional.ofNullable(ifStatement.getStats())
+                             .map(stats -> !stats.isEmpty() ? stats.get(0).getExprents() : null)
+                             .map(exprs -> exprs.size() == 1 ? exprs.get(0) : null)
+                             .orElse(null));
+
+        usedAssignments.add(assignmentExprent);
+      }
+      return container;
+    }
+
+    private static boolean isNonNullCheck(@NotNull Exprent exprent, @NotNull Exprent switchVar) {
+      if (!(exprent instanceof InvocationExprent invocationExprent)) {
+        return false;
+      }
+      if (!invocationExprent.isStatic() || !"requireNonNull".equals(invocationExprent.getName()) ||
+          !JAVA_LANG_OBJECT.equals(invocationExprent.getClassName()) ||
+          invocationExprent.getParameters() == null ||
+          invocationExprent.getParameters().size() != 1 ||
+          !switchVar.equals(invocationExprent.getParameters().get(0))) {
+        return false;
+      }
+      return true;
+    }
+
+    private static boolean reInitVar(@NotNull Exprent var, @NotNull Statement statement, @NotNull Set<AssignmentExprent> exclude) {
+      List<Exprent> exprents = statement.getExprents();
+      if (exprents != null) {
+        for (Exprent exprent : exprents) {
+          if (!(exprent instanceof AssignmentExprent assignmentExprent)) {
+            continue;
+          }
+          if (exclude.contains(assignmentExprent)) {
+            continue;
+          }
+          Exprent left = assignmentExprent.getLeft();
+          if (var.equals(left)) {
+            return true;
+          }
+        }
+      }
+      if (statement.getStats() != null) {
+        for (Statement children : statement.getStats()) {
+          if (reInitVar(var, children, exclude)) {
+            return true;
+          }
+        }
+      }
+      return false;
+    }
+
+    private static class SwitchOnReferenceCandidate implements SwitchOnCandidate {
+      @NotNull
+      private final SwitchStatement statement;
+      @NotNull
+      private final InvocationExprent switchSelector;
+      private final Exprent newSwitchSelector;
+      @NotNull
+      private final Map<VarExprent, Statement> tempVarAssignments;
+      @NotNull
+      private final List<FullCase> sortedCases;
+      @Nullable
+      private final Runnable cleaner;
+      @Nullable
+      private final GuardPatternContainer guardPatternContainer;
+
+      private SwitchOnReferenceCandidate(@NotNull SwitchStatement statement,
+                                         @NotNull InvocationExprent selector,
+                                         @NotNull Exprent newSelector,
+                                         @NotNull Map<VarExprent, Statement> tempVarAssignments,
+                                         @NotNull List<FullCase> cases,
+                                         @Nullable GuardPatternContainer guardPatternContainer,
+                                         @Nullable Runnable cleaner) {
+        this.statement = statement;
+        this.switchSelector = selector;
+        this.newSwitchSelector = newSelector;
+        this.tempVarAssignments = tempVarAssignments;
+        this.sortedCases = cases;
+        this.cleaner = cleaner;
+        this.guardPatternContainer = guardPatternContainer;
+      }
+
+      @Override
+      public void simplify(Map<VarExprent, Statement> tempVarAssignments) {
+        tempVarAssignments.putAll(this.tempVarAssignments);
+        if (cleaner != null) {
+          cleaner.run();
+        }
+        resort(statement, sortedCases);
+        Exprent headExprent = statement.getHeadExprent();
+        List<PooledConstant> bootstrapArguments = switchSelector.getBootstrapArguments();
+        Map<Integer, Exprent> mapCaseValue = new HashMap<>();
+        Map<Integer, String> mapCaseClasses = new HashMap<>();
+        for (int i = 0; i < bootstrapArguments.size(); i++) {
+          PooledConstant constant = bootstrapArguments.get(i);
+          if (constant instanceof PrimitiveConstant primitiveConstant) {
+            if (primitiveConstant.type == CONSTANT_Class) {
+              mapCaseClasses.put(i, primitiveConstant.getString());
+            }
+            else if (switchSelector.isDynamicCall("enumSwitch", 2)) {
+              mapCaseValue.put(i, new FieldExprent(primitiveConstant.getString(), null, true, null, null, null));
+            }
+            else {
+              VarType type = switch (primitiveConstant.type) {
+                case CONSTANT_String -> VARTYPE_STRING;
+                case CONSTANT_Integer -> VARTYPE_INT;
+                default -> VARTYPE_UNKNOWN;
+              };
+              mapCaseValue.put(i, new ConstExprent(type, primitiveConstant.value, null));
+            }
+          }
+        }
+        @NotNull List<List<@Nullable Exprent>> values = statement.getCaseValues();
+        boolean hasPattern = false;
+        for (int caseIndex = 0; caseIndex < values.size(); caseIndex++) {
+          List<Exprent> caseValues = values.get(caseIndex);
+          for (int valueIndex = 0; valueIndex < caseValues.size(); valueIndex++) {
+            Exprent caseValue = caseValues.get(valueIndex);
+            if (!(caseValue instanceof ConstExprent constCaseValue)) {
+              continue;
+            }
+            int expectedValue = constCaseValue.getIntValue();
+            if (expectedValue == -1) {
+              caseValues.set(valueIndex, new ConstExprent(VARTYPE_NULL, null, null));
+            }
+            Exprent newCaseValue = mapCaseValue.get(expectedValue);
+            if (newCaseValue == null) {
+              String className = mapCaseClasses.get(expectedValue);
+              if (className == null) {
+                continue;
+              }
+              newCaseValue = preparePatternVar(className, statement.getCaseStatements().get(caseIndex), switchSelector.getInstance(), guardPatternContainer);
+              hasPattern = true;
+            }
+            caseValues.set(valueIndex, newCaseValue);
+          }
+        }
+
+        if (headExprent != null) {
+          headExprent.replaceExprent(switchSelector, newSwitchSelector);
+        }
+
+        if (hasPattern) {
+          remapWithGuards(statement, guardPatternContainer);
+          cleanDefault(statement);
+        }
+      }
+
+      private static void remapWithGuards(@NotNull SwitchStatement statement, @Nullable GuardPatternContainer guardPatternContainer) {
+        if (guardPatternContainer == null) {
+          return;
+        }
+        for (int i = 0; i < statement.getCaseStatements().size(); i++) {
+          Statement currentCaseStatement = statement.getCaseStatements().get(i);
+          GuardPatternContainer.GuardStatement guards = guardPatternContainer.getGuards(currentCaseStatement);
+          if (guards == null) {
+            continue;
+          }
+          statement.getCaseStatements().set(i, guards.caseStatement());
+          statement.getCaseEdges().get(i).forEach(edge -> {
+                                                    edge.setDestination(guards.caseStatement);
+                                                  }
+          );
+          statement.addGuard(statement.getCaseStatements().get(i), guards.guard());
+        }
+        Statement doStatement = statement.getParent();
+        doStatement.getParent().replaceStatement(doStatement, statement);
+        @NotNull List<Statement> statements = statement.getCaseStatements();
+        for (int i = 0; i < statements.size(); i++) {
+          Statement caseStatement = statements.get(i);
+          List<StatEdge> edges = caseStatement.getSuccessorEdges(EdgeType.DIRECT_ALL);
+          if (edges.size() == 1 && edges.get(0).getType() == EdgeType.BREAK) {
+            edges.get(0).explicit = false;
+          }
+        }
+      }
+
+      private static void cleanDefault(@NotNull SwitchStatement statement) {
+        @NotNull List<List<StatEdge>> caseEdges = statement.getCaseEdges();
+        int indexDefault = -1;
+        boolean deleteDefault = false;
+        for (int caseIndex = 0; caseIndex < caseEdges.size(); caseIndex++) {
+          List<StatEdge> edges = caseEdges.get(caseIndex);
+          int indexDefaultInside = edges.indexOf(statement.getDefaultEdge());
+          if (indexDefaultInside == -1) {
+            continue;
+          }
+          indexDefault = caseIndex;
+          //delete other case values for default
+          if (edges.size() != 1) {
+            List<Exprent> exprentsToRemove = new ArrayList<>();
+            List<StatEdge> edgesToRemove = new ArrayList<>();
+            List<@Nullable Exprent> exprents = statement.getCaseValues().get(caseIndex);
+            for (int i = 0; i < edges.size(); i++) {
+              if (edges.get(i) == statement.getDefaultEdge()) {
+                continue;
+              }
+              if (exprents.get(i) instanceof VarExprent) {
+                exprentsToRemove.add(exprents.get(i));
+                edgesToRemove.add(edges.get(i));
+              }
+            }
+            edges.removeAll(edgesToRemove);
+            exprents.removeAll(exprentsToRemove);
+
+            break;
+          }
+          Statement defaultStatement = statement.getCaseStatements().get(caseIndex);
+          if (defaultStatement.getExprents() != null && defaultStatement.getExprents().size() == 1) {
+            Exprent expectedFastExit = defaultStatement.getExprents().get(0);
+            if (expectedFastExit instanceof ExitExprent exitExprent && exitExprent.getExitType() == EXIT_THROW &&
+                exitExprent.getValue() instanceof NewExprent newExprent && newExprent.getConstructor() != null) {
+              InvocationExprent constructor = newExprent.getConstructor();
+              if ("java/lang/MatchException".equals(constructor.getClassName()) && constructor.getParameters().size() == 2 &&
+                  constructor.getParameters().get(0) instanceof ConstExprent constExprent1 && constExprent1.isNull() &&
+                  constructor.getParameters().get(1) instanceof ConstExprent constExprent2 && constExprent2.isNull()) {
+                deleteDefault = true;
+              }
+            }
+          }
+          break;
+        }
+        if (deleteDefault) {
+          statement.getCaseStatements().remove(indexDefault);
+          statement.getCaseValues().remove(indexDefault);
+          statement.getCaseEdges().remove(indexDefault);
+        }
+      }
+
+      @NotNull
+      private static Exprent preparePatternVar(@NotNull String className,
+                                               @NotNull Statement statement,
+                                               @NotNull Exprent switchVar,
+                                               @Nullable GuardPatternContainer guardPatternContainer) {
+        Exprent expectedAssignment = null;
+        if (guardPatternContainer != null) {
+          GuardPatternContainer.GuardStatement guard = guardPatternContainer.getGuards(statement);
+          if (guard != null) {
+            expectedAssignment = guard.nameAssignment();
+          }
+        }
+        List<Exprent> expectedAssignmentExprents = null;
+        if (expectedAssignment == null) {
+          expectedAssignmentExprents = statement.getExprents();
+
+          if (expectedAssignmentExprents == null || expectedAssignmentExprents.isEmpty()) {
+            return createDefaultPatternVal(className);
+          }
+          expectedAssignment = expectedAssignmentExprents.get(0);
+        }
+        if (!(expectedAssignment instanceof AssignmentExprent assignmentExprent)) {
+          return createDefaultPatternVal(className);
+        }
+        Exprent right = assignmentExprent.getRight();
+        if (!(right instanceof FunctionExprent functionExprent)) {
+          return createDefaultPatternVal(className);
+        }
+        if (functionExprent.getFuncType() != FUNCTION_CAST || functionExprent.getLstOperands() == null ||
+            functionExprent.getLstOperands().size() != 2 ||
+            !(functionExprent.getLstOperands().get(1) instanceof ConstExprent classCast) ||
+            !(functionExprent.getLstOperands().get(0) instanceof VarExprent varName)) {
+          return createDefaultPatternVal(className);
+        }
+
+        if (!className.equals(classCast.getConstType().getValue()) || !switchVar.equals(varName)) {
+          return createDefaultPatternVal(className);
+        }
+
+        if (expectedAssignmentExprents != null) {
+          List<Exprent> copyExprents = new ArrayList<>(expectedAssignmentExprents.subList(1, expectedAssignmentExprents.size()));
+          statement.setExprents(copyExprents);
+        }
+        return assignmentExprent.getLeft();
+      }
+
+      @NotNull
+      private static Exprent createDefaultPatternVal(@NotNull String name) {
+        VarProcessor processor = DecompilerContext.getVarProcessor();
+        VarExprent varExprent = new VarExprent(DecompilerContext.getCounterContainer().getCounterAndIncrement(CounterContainer.VAR_COUNTER),
+                                               new VarType(TYPE_OBJECT, 0, name),
+                                               processor);
+        varExprent.setDefinition(true);
+        processor.setVarName(varExprent.getVarVersionPair(), "ignored");
+        return varExprent;
+      }
+
+
+      @SuppressWarnings({"SSBasedInspection", "SimplifyStreamApiCallChains"})
+      private static void resort(@NotNull SwitchStatement statement, @NotNull List<FullCase> cases) {
+        statement.getCaseStatements().clear();
+        statement.getCaseStatements().addAll(cases.stream().map(t -> t.statement).collect(Collectors.toList()));
+        statement.getCaseEdges().clear();
+        statement.getCaseEdges().addAll(cases.stream().map(t -> t.edges).collect(Collectors.toList()));
+        statement.getCaseValues().clear();
+        statement.getCaseValues().addAll(cases.stream().map(t -> t.exprents).collect(Collectors.toList()));
+      }
+    }
+  }
+
+  private static class GuardPatternContainer {
+    private final Map<Statement, GuardStatement> guards = new HashMap<>();
+
+    record GuardStatement(@NotNull Statement statement,
+                          @NotNull Exprent guard,
+                          @NotNull Statement caseStatement,
+                          @Nullable Exprent nameAssignment) {
+    }
+
+    void addGuard(@NotNull Statement statement, @NotNull Exprent guard, @NotNull Statement caseStatement, @Nullable Exprent nameAssignment) {
+      guards.put(statement, new GuardStatement(statement, guard, caseStatement, nameAssignment));
+    }
+
+    GuardStatement getGuards(@NotNull Statement statement) {
+      return guards.get(statement);
+    }
+  }
+
+  private abstract static class StringSwitchRecognizer implements SwitchRecognizer {
+
+    @Override
+    @Nullable
+    public abstract SwitchOnStringCandidate recognize(@NotNull SwitchStatement statement, @NotNull InvocationExprent switchSelector);
 
     @NotNull
     Set<Object> findRealCaseValuesHashCodes(@NotNull SwitchStatement switchStatement) {
@@ -300,7 +1018,7 @@ public final class SwitchHelper {
       return caseLabelValue instanceof String ? (String)caseLabelValue : null;
     }
 
-    private static class JavacRecognizer extends SwitchRecognizer {
+    private static class JavacStringRecognizer extends StringSwitchRecognizer {
       /**
        * From javac doc:
        * The general approach used is to translate a single
@@ -317,7 +1035,7 @@ public final class SwitchHelper {
        * @param firstSwitch    outer or first switch
        * @param switchSelector <code>firstSwitch</code> selector
        * @return recognized switch candidate
-       * @see com.sun.tools.javac.comp.Lower#visitStringSwitch(com.sun.tools.javac.tree.JCTree.JCSwitch)
+       * @see Lower#visitStringSwitch(JCTree.JCSwitch)
        */
       @Nullable
       @Override
@@ -375,7 +1093,7 @@ public final class SwitchHelper {
       }
     }
 
-    private static class EcjRecognizer extends SwitchRecognizer {
+    private static class EcjStringRecognizer extends StringSwitchRecognizer {
       @Nullable
       @Override
       public SwitchOnStringCandidate recognize(@NotNull SwitchStatement switchStatement, @NotNull InvocationExprent switchSelector) {
@@ -428,8 +1146,13 @@ public final class SwitchHelper {
     }
   }
 
-  private abstract static class SwitchOnStringCandidate {
-    abstract void simplify(Map<VarExprent, Statement> tempVarAssignments);
+  private interface SwitchOnCandidate {
+    void simplify(Map<VarExprent, Statement> tempVarAssignments);
+  }
+
+  private abstract static class SwitchOnStringCandidate implements SwitchOnCandidate {
+    @Override
+    public abstract void simplify(Map<VarExprent, Statement> tempVarAssignments);
 
     @Nullable
     private static AssignmentExprent addTempVarAssignment(@NotNull Exprent exprent,
@@ -465,7 +1188,7 @@ public final class SwitchHelper {
       }
 
       @Override
-      void simplify(@NotNull Map<VarExprent, Statement> tempVarAssignments) {
+      public void simplify(@NotNull Map<VarExprent, Statement> tempVarAssignments) {
         Exprent secondSwitchSelector = secondSwitch.getHeadExprent();
         if (secondSwitchSelector == null || secondSwitchSelector.type != Exprent.EXPRENT_SWITCH) return;
         Statement firstStatementInFirstSwitch = firstSwitch.getFirst();
@@ -478,7 +1201,7 @@ public final class SwitchHelper {
             ConstExprent constExprent = (ConstExprent)values.get(i);
             if (constExprent == null) continue;
             String labelValue = mappedCaseLabelValues.get(constExprent.getIntValue());
-            values.set(i, new ConstExprent(VarType.VARTYPE_STRING, labelValue, null));
+            values.set(i, new ConstExprent(VARTYPE_STRING, labelValue, null));
           }
         }
 
@@ -544,7 +1267,7 @@ public final class SwitchHelper {
       }
 
       @Override
-      void simplify(@NotNull Map<VarExprent, Statement> tempVarAssignments) {
+      public void simplify(@NotNull Map<VarExprent, Statement> tempVarAssignments) {
         Exprent switchSelector = switchStatement.getHeadExprent();
         if (switchSelector == null || switchSelector.type != Exprent.EXPRENT_SWITCH) return;
         tempVarAssignments.put(tmpVar, switchStatement);
@@ -554,9 +1277,9 @@ public final class SwitchHelper {
             if (constExprent == null) continue;
             int caseLabelHash = constExprent.getIntValue();
             String labelValue = mappedCaseLabelValues.get(caseLabelHash);
-            values.set(i, new ConstExprent(VarType.VARTYPE_STRING, labelValue, null));
+            values.set(i, new ConstExprent(VARTYPE_STRING, labelValue, null));
             IfStatement ifStatement = mappedIfStatements.get(caseLabelHash);
-            assert ifStatement.getStats().size() > 0;
+            assert !ifStatement.getStats().isEmpty();
             if (ifStatement.getStats().size() == 1) {
               ifStatement.getParent().replaceStatement(ifStatement, ifStatement.getStats().get(0));
               continue;

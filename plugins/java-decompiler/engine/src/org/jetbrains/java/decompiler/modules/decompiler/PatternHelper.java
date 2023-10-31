@@ -40,6 +40,9 @@ public final class PatternHelper {
       VarExprent operand = (VarExprent)operands.get(0);
       ConstExprent checkType = (ConstExprent)operands.get(1);
 
+      if (ifStatement.getIfstat() == null) {
+        return;
+      }
       PatternVariableCandidate patternVarCandidate = findPatternVarCandidate(ifStatement.getIfstat(), operand, checkType);
       if (patternVarCandidate == null && ifStatement.getElsestat() != null) {
         patternVarCandidate = findPatternVarCandidate(ifStatement.getElsestat(), operand, checkType);

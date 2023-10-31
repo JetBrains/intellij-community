@@ -3,4 +3,6 @@ package org.jetbrains.java.decompiler;
 
 public interface ClassNameConstants {
   String JAVA_LANG_STRING = "java/lang/String";
+  String JAVA_LANG_CHARACTER = "java/lang/Character";
+  String JAVA_LANG_OBJECT = "java/util/Objects";
 }

@@ -1,0 +1,127 @@
+package pkg;
+
+public class TestSwitchClassReferencesJavac {
+   public static void testObject(Object o) {
+      switch (o) {// 6
+         case String var3 -> System.out.println("s");// 7
+         case Integer var4 -> System.out.println("i");// 8
+         default -> System.out.println(o);// 9
+      }
+
+   }// 11
+
+   public static void testObject2(Object o) {
+      switch (o) {// 14
+         case null -> System.out.println("null");// 18
+         case String var3 -> System.out.println("s");// 15
+         case Integer var4 -> System.out.println("i");// 16
+         case Object ignored -> System.out.println(o);// 17
+      }
+
+   }// 20
+
+   public static void testObject3(Object o) {
+      switch (o) {// 23
+         case null -> System.out.println("null");// 26
+         case String var3 -> System.out.println("s");// 24
+         case Integer var4 -> System.out.println("i");// 25
+         default -> System.out.println("o");// 27
+      }
+
+   }// 29
+
+   public static void testObject4(Object o) {
+      switch (o) {// 32
+         case String var3 -> System.out.println("s");// 33
+         case Integer var4 -> System.out.println("i");// 34
+         default -> System.out.println("o");// 35
+      }
+
+   }// 37
+}
+
+class 'pkg/TestSwitchClassReferencesJavac' {
+   method 'testObject (Ljava/lang/Object;)V' {
+      10      4
+      31      5
+      34      5
+      36      5
+      42      6
+      45      6
+      47      6
+      50      7
+      54      7
+      57      10
+   }
+
+   method 'testObject2 (Ljava/lang/Object;)V' {
+      b      13
+      37      15
+      3a      15
+      3c      15
+      48      16
+      4b      16
+      4d      16
+      56      17
+      5a      17
+      60      14
+      63      14
+      65      14
+      68      20
+   }
+
+   method 'testObject3 (Ljava/lang/Object;)V' {
+      b      23
+      29      25
+      2c      25
+      2e      25
+      3a      26
+      3d      26
+      3f      26
+      45      24
+      48      24
+      4a      24
+      50      27
+      53      27
+      55      27
+      58      30
+   }
+
+   method 'testObject4 (Ljava/lang/Object;)V' {
+      10      33
+      31      34
+      34      34
+      36      34
+      42      35
+      45      35
+      47      35
+      4d      36
+      50      36
+      52      36
+      55      39
+   }
+}
+
+Lines mapping:
+6 <-> 5
+7 <-> 6
+8 <-> 7
+9 <-> 8
+11 <-> 11
+14 <-> 14
+15 <-> 16
+16 <-> 17
+17 <-> 18
+18 <-> 15
+20 <-> 21
+23 <-> 24
+24 <-> 26
+25 <-> 27
+26 <-> 25
+27 <-> 28
+29 <-> 31
+32 <-> 34
+33 <-> 35
+34 <-> 36
+35 <-> 37
+37 <-> 40
