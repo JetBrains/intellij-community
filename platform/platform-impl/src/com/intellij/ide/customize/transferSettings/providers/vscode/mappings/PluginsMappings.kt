@@ -34,45 +34,6 @@ open class VSCodePluginMappingBase(private val map: Map<String, FeatureInfo>) : 
 }
 
 @Suppress("SpellCheckingInspection")
-private val commonPluginMap = mapOf(
-  // Plugins
-  "emilast.logfilehighlighter" to KnownPlugins.Ideolog,
-  "xinyayang0506.log-analysis" to KnownPlugins.Ideolog,
-  "vscodevim.vim" to KnownPlugins.IdeaVim,
-  "msveden.teamcity-checker" to KnownPlugins.TeamCity,
-
-  // Features
-  "donjayamanne.githistory" to KnownPlugins.Git,
-  "eamodio.gitlens" to KnownPlugins.Git,
-  "waderyan.gitblame" to KnownPlugins.Git,
-  "mhutchie.git-graph" to KnownPlugins.Git,
-  "ritwickdey.liveserver" to KnownPlugins.WebSupport,
-  "ms-azuretools.vscode-docker" to KnownPlugins.Docker,
-  "ms-vscode-remote.remote-wsl" to KnownPlugins.WindowsSubsystemLinux,
-  "bungcip.better-toml" to KnownPlugins.Toml,
-  "Vue.volar" to KnownPlugins.Vue,
-  //"GitHub.copilot-chat" to KnownPlugins.AiAssistant,
-
-  // Language packs
-  "ms-ceintl.vscode-language-pack-zh-hans" to KnownPlugins.ChineseLanguage,
-  "ms-ceintl.vscode-language-pack-ja" to KnownPlugins.KoreanLanguage,
-  "ms-ceintl.vscode-language-pack-ko" to KnownPlugins.JapaneseLanguage,
-
-  // New mappings
-  "streetsidesoftware.code-spell-checker" to KnownPlugins.SpellChecker,
-  "formulahendry.code-runner" to KnownPlugins.RunConfigurations,
-  "wayou.vscode-todo-highlight" to KnownPlugins.LanguageSupport,
-  "editorconfig.editorconfig" to KnownPlugins.editorconfig,
-  "ms-vscode.vscode-typescript-tslint-plugin" to KnownPlugins.TSLint,
-  "github.vscode-pull-request-github" to KnownPlugins.Git,
-  "mtxr.sqltools" to KnownPlugins.DatabaseSupport,
-  "Dart-Code.dart-code" to KnownPlugins.Dart,
-  "Dart-Code.flutter" to KnownPlugins.Flutter,
-  "esbenp.prettier-vscode" to KnownPlugins.Prettier,
-  "ms-kubernetes-tools.vscode-kubernetes-tools" to KnownPlugins.Kubernetes,
-)
-
-@Suppress("SpellCheckingInspection")
 val JvmFeatures = mapOf(
   "vscjava.vscode-java-pack" to KnownPlugins.Java,
   "redhat.java" to KnownPlugins.Java,
@@ -107,12 +68,11 @@ val DotNetFeatures = mapOf(
 @Serializable
 private data class FeatureData(
   val vsCodeId: String,
-  val vsCodeName: String,
-  val ideaId: String?,
+  val ideaId: String? = null,
   val ideaName: String,
-  val builtIn: Boolean,
-  val bundled: Boolean,
-  val disabled: Boolean
+  val builtIn: Boolean = false,
+  val bundled: Boolean = false,
+  val disabled: Boolean = false
 )
 
 private val logger = logger<CommonPluginMapping>()
@@ -120,8 +80,10 @@ private val logger = logger<CommonPluginMapping>()
 internal class CommonPluginMapping : VSCodePluginMapping {
 
   private fun getResourceMappings(): List<String> = when {
+    PlatformUtils.isDataGrip() -> listOf("dg.json", "general.json") // TODO: Where else should we include DG?
     PlatformUtils.isPyCharm() -> listOf("pc.json", "general.json")
     PlatformUtils.isRubyMine() -> listOf("rm.json", "general.json")
+    PlatformUtils.isWebStorm() -> listOf("ws.json", "general.json") // TODO: Where else should we include WS?
     else -> listOf("general.json")
   }
 

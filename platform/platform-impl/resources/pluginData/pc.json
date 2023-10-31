@@ -1,7 +1,6 @@
 [
   {
     "vsCodeId": "ms-python.python",
-    "vsCodeName": "Python",
     "ideaId": "com.intellij.python",
     "ideaName": "Python",
     "disabled": false,

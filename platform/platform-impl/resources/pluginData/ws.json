@@ -1,0 +1,27 @@
+[
+  {
+    "vsCodeId": "Vue.volar",
+    "ideaName": "Vue.js",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "ms-vscode.vscode-typescript-tslint-plugin",
+    "ideaName": "TSLint",
+    "ideaId": "tslint"
+  },
+  {
+    "vsCodeId": "Dart-Code.dart-code",
+    "ideaName": "Dart",
+    "ideaId": "Dart"
+  },
+  {
+    "vsCodeId": "Dart-Code.flutter",
+    "ideaName": "Flutter",
+    "ideaId": "io.flutter"
+  },
+  {
+    "vsCodeId": "esbenp.prettier-vscode",
+    "ideaName": "Prettier",
+    "ideaId": "intellij.prettierJS"
+  }
+]
