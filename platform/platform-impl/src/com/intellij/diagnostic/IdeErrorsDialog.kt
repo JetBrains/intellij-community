@@ -17,6 +17,8 @@ import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.ErrorReportSubmitter
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent
 import com.intellij.openapi.diagnostic.Logger
@@ -113,8 +115,11 @@ open class IdeErrorsDialog @JvmOverloads internal constructor(
     val configurable = ErrorReportConfigurable.getInstance()
     val developers = configurable.developerList
     setDevelopers(developers)
-    return if (developers.isUpToDateAt()) null
-    else ITNProxy.cs.launch {
+    if (developers.isUpToDateAt()) {
+      return null
+    }
+
+    return service<ITNProxyCoroutineScopeHolder>().coroutineScope.launch {
       runCatching {
         val updatedDevelopers = DeveloperList(fetchDevelopers(), System.currentTimeMillis())
         withContext(Dispatchers.EDT) {
@@ -132,29 +137,33 @@ open class IdeErrorsDialog @JvmOverloads internal constructor(
     }
   }
 
-  private suspend fun loadCredentialsPanel(submitter: ErrorReportSubmitter) = withContext(ITNProxy.dispatcher) {
-    val account = submitter.reporterAccount
-    withContext(Dispatchers.EDT) {
-      if (account != null) {
-        myCredentialLabel.isVisible = true
-        myCredentialLabel.text = if (account.isEmpty()) {
-          DiagnosticBundle.message("error.dialog.submit.anonymous")
-        }
-        else {
-          DiagnosticBundle.message("error.dialog.submit.named", account)
+  private suspend fun loadCredentialsPanel(submitter: ErrorReportSubmitter) {
+    withContext(serviceAsync<ITNProxyCoroutineScopeHolder>().dispatcher) {
+      val account = submitter.reporterAccount
+      withContext(Dispatchers.EDT) {
+        if (account != null) {
+          myCredentialLabel.isVisible = true
+          myCredentialLabel.text = if (account.isEmpty()) {
+            DiagnosticBundle.message("error.dialog.submit.anonymous")
+          }
+          else {
+            DiagnosticBundle.message("error.dialog.submit.named", account)
+          }
         }
       }
     }
   }
 
-  private suspend fun loadPrivacyNoticeText(submitter: ErrorReportSubmitter) = withContext(ITNProxy.dispatcher) {
-    val notice = submitter.privacyNoticeText
-    withContext(Dispatchers.EDT) {
-      if (notice != null) {
-        myPrivacyNotice.panel.isVisible = true
-        val hash = Integer.toHexString(Strings.stringHashCodeIgnoreWhitespaces(notice))
-        myPrivacyNotice.expanded = !myAcceptedNotices.contains(hash)
-        myPrivacyNotice.setPrivacyPolicy(notice)
+  private suspend fun loadPrivacyNoticeText(submitter: ErrorReportSubmitter) {
+    withContext(serviceAsync<ITNProxyCoroutineScopeHolder>().dispatcher) {
+      val notice = submitter.privacyNoticeText
+      withContext(Dispatchers.EDT) {
+        if (notice != null) {
+          myPrivacyNotice.panel.isVisible = true
+          val hash = Integer.toHexString(Strings.stringHashCodeIgnoreWhitespaces(notice))
+          myPrivacyNotice.expanded = !myAcceptedNotices.contains(hash)
+          myPrivacyNotice.setPrivacyPolicy(notice)
+        }
       }
     }
   }
@@ -386,7 +395,7 @@ open class IdeErrorsDialog @JvmOverloads internal constructor(
   private fun updateControls() {
     loadingDecorator.startLoading(false)
     updateControlsJob.cancel(null)
-    updateControlsJob = ITNProxy.cs.launch(Dispatchers.EDT) {
+    updateControlsJob = service<ITNProxyCoroutineScopeHolder>().coroutineScope.launch(Dispatchers.EDT) {
       val cluster = selectedCluster()
       val submitter = cluster.submitter
       cluster.messages.forEach { it.isRead = true }
@@ -570,7 +579,7 @@ open class IdeErrorsDialog @JvmOverloads internal constructor(
     message.devListTimestamp = myDevListTimestamp
     message.isSubmitting = true
 
-    ITNProxy.cs.launch {
+    service<ITNProxyCoroutineScopeHolder>().coroutineScope.launch {
       val notice = submitter.privacyNoticeText
       if (notice != null) {
         val hash = Integer.toHexString(Strings.stringHashCodeIgnoreWhitespaces(notice))
