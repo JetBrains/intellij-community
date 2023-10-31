@@ -33,20 +33,6 @@ open class VSCodePluginMappingBase(private val map: Map<String, FeatureInfo>) : 
   }
 }
 
-@Suppress("SpellCheckingInspection")
-val JvmFeatures = mapOf(
-  "vscjava.vscode-java-pack" to KnownPlugins.Java,
-  "redhat.java" to KnownPlugins.Java,
-  "vscjava.vscode-maven" to KnownPlugins.Maven,
-  "vscjava.vscode-gradle" to KnownPlugins.Gradle,
-  "vscjava.vscode-java-debug" to KnownPlugins.Debugger,
-  "donjayamanne.javadebugger" to KnownPlugins.Debugger,
-  "mathiasfrohlich.Kotlin" to KnownPlugins.Kotlin,
-  "fwcd.kotlin" to KnownPlugins.Kotlin,
-  "scala-lang.scala" to KnownPlugins.Scala,
-  "vscjava.vscode-lombok" to KnownPlugins.Lombok,
-)
-
 @Suppress("SpellCheckingInspection", "unused") // used in Rider
 val DotNetFeatures = mapOf(
   "ms-dotnettools.csharp" to KnownPlugins.CSharp,
@@ -81,6 +67,7 @@ internal class CommonPluginMapping : VSCodePluginMapping {
 
   private fun getResourceMappings(): List<String> = when {
     PlatformUtils.isDataGrip() -> listOf("dg.json", "general.json") // TODO: Where else should we include DG?
+    PlatformUtils.isIntelliJ() -> listOf("ic.json", "general.json")
     PlatformUtils.isPyCharm() -> listOf("pc.json", "general.json")
     PlatformUtils.isRubyMine() -> listOf("rm.json", "general.json")
     PlatformUtils.isWebStorm() -> listOf("ws.json", "general.json") // TODO: Where else should we include WS?

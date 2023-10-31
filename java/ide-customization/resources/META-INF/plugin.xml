@@ -57,9 +57,6 @@
     <applicationService serviceInterface="com.intellij.openapi.module.ModuleTypeManager"
                         serviceImplementation="com.intellij.openapi.module.impl.JavaAwareModuleTypeManagerImpl"
                         overrides="true"/>
-
-    <!-- Settings Transfer -->
-    <transferSettings.vscode.pluginMapping implementation="com.intellij.ide.java.transferSettings.JavaPluginMapping"/>
   </extensions>
 
   <actions>
