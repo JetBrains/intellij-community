@@ -630,6 +630,13 @@ public abstract class QuickFixFactory {
   @NotNull
   public abstract IntentionAction createDeleteFix(@NotNull PsiElement @NotNull [] elements, @NotNull @Nls String text);
 
+  @NotNull
+  public abstract IntentionAction createReplaceCaseDefaultWithDefaultFix(@NotNull PsiCaseLabelElementList list);
+
+
+  @NotNull
+  public abstract IntentionAction createReverseCaseDefaultNullFixFix(@NotNull PsiCaseLabelElementList list);
+
   @ApiStatus.Experimental
   @NotNull
   public abstract IntentionAction createAddMainMethodFix(@NotNull PsiUnnamedClass unnamedClass);

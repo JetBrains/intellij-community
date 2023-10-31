@@ -1218,6 +1218,16 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   }
 
   @Override
+  public @NotNull IntentionAction createReplaceCaseDefaultWithDefaultFix(@NotNull PsiCaseLabelElementList list){
+    return new ReplaceCaseDefaultWithDefaultFix(list).asIntention();
+  }
+
+  @Override
+  public @NotNull IntentionAction createReverseCaseDefaultNullFixFix(@NotNull PsiCaseLabelElementList list){
+    return new ReverseCaseDefaultNullFix(list).asIntention();
+  }
+
+  @Override
   public @NotNull IntentionAction createAddMainMethodFix(@NotNull PsiUnnamedClass unnamedClass) {
     return new AddMainMethodFix(unnamedClass).asIntention();
   }
