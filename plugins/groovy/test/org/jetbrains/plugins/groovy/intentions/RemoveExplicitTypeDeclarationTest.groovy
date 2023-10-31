@@ -23,7 +23,7 @@ import org.jetbrains.plugins.groovy.util.TestUtils
  */
 class RemoveExplicitTypeDeclarationTest extends GrIntentionTestCase {
   RemoveExplicitTypeDeclarationTest() {
-    super(GrRemoveExplicitTypeDeclarationIntention)
+    super("Remove explicit type")
   }
 
   final String basePath = TestUtils.testDataPath + 'intentions/removeExplicitTypeDeclaration/'

@@ -15,19 +15,18 @@
  */
 package org.jetbrains.plugins.groovy.intentions.style;
 
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeStyle.GrReferenceAdjuster;
-import org.jetbrains.plugins.groovy.intentions.base.Intention;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
+import org.jetbrains.plugins.groovy.intentions.base.GrPsiUpdateIntention;
 import org.jetbrains.plugins.groovy.lang.psi.GrQualifiedReference;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
@@ -37,18 +36,18 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatem
 /**
  * @author Maxim.Medvedev
  */
-public class ImportOnDemandIntention extends Intention {
+public class ImportOnDemandIntention extends GrPsiUpdateIntention {
 
   @Override
-  protected void processIntention(@NotNull PsiElement element, @NotNull Project project, Editor editor) throws IncorrectOperationException {
+  protected void processIntention(@NotNull PsiElement element, @NotNull ActionContext context, @NotNull ModPsiUpdater updater) {
     if (!(element instanceof GrReferenceElement<?> ref)) return;
     final PsiElement resolved = ref.resolve();
-    if (!(resolved instanceof PsiClass)) return;
+    if (!(resolved instanceof PsiClass psiClass)) return;
 
-    final String qname = ((PsiClass)resolved).getQualifiedName();
+    final String qname = psiClass.getQualifiedName();
 
     final GrImportStatement importStatement =
-      GroovyPsiElementFactory.getInstance(project).createImportStatementFromText(qname, true, true, null);
+      GroovyPsiElementFactory.getInstance(context.project()).createImportStatementFromText(qname, true, true, null);
 
     final PsiFile containingFile = element.getContainingFile();
     if (!(containingFile instanceof GroovyFile)) return;
@@ -69,7 +68,7 @@ public class ImportOnDemandIntention extends Intention {
     return new PsiElementPredicate() {
       @Override
       public boolean satisfiedBy(@NotNull PsiElement element) {
-        if (!(element instanceof GrReferenceElement ref)) return false;
+        if (!(element instanceof GrReferenceElement<?> ref)) return false;
         final PsiElement parent = ref.getParent();
         if (!(parent instanceof GrReferenceElement)) return false;
         final PsiElement resolved = ref.resolve();

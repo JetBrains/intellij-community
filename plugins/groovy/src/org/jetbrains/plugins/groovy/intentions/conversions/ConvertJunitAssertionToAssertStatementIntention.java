@@ -15,15 +15,14 @@
  */
 package org.jetbrains.plugins.groovy.intentions.conversions;
 
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.intentions.base.Intention;
+import org.jetbrains.plugins.groovy.intentions.base.GrPsiUpdateIntention;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
@@ -38,7 +37,7 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class ConvertJunitAssertionToAssertStatementIntention extends Intention implements PsiElementPredicate {
+public class ConvertJunitAssertionToAssertStatementIntention extends GrPsiUpdateIntention implements PsiElementPredicate {
   private static class Holder {
     private static final Pattern PATTERN = Pattern.compile("arg(\\d+)");
 
@@ -112,7 +111,7 @@ public class ConvertJunitAssertionToAssertStatementIntention extends Intention i
   }
 
   @Override
-  protected void processIntention(@NotNull PsiElement element, @NotNull Project project, Editor editor) throws IncorrectOperationException {
+  protected void processIntention(@NotNull PsiElement element, @NotNull ActionContext context, @NotNull ModPsiUpdater updater) {
     GrMethodCall methodCall = (GrMethodCall)element;
 
     PsiMethod method = methodCall.resolveMethod();
