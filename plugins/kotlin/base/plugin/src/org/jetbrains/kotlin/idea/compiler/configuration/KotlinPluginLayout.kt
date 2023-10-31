@@ -109,6 +109,6 @@ object KotlinPluginLayout {
             jpsPluginClasspathProvider = lazy { listOf(resolve("lib/jps/kotlin-jps-plugin.jar")) }
         }
 
-        assert(standaloneCompilerVersion <= ideCompilerVersion)
+        check(standaloneCompilerVersion <= ideCompilerVersion) { "standaloneCompilerVersion: $standaloneCompilerVersion, ideCompilerVersion: $ideCompilerVersion" }
     }
 }
