@@ -34,6 +34,7 @@ import org.jetbrains.jewel.foundation.state.CommonStateBitMask.Focused
 import org.jetbrains.jewel.foundation.state.CommonStateBitMask.Hovered
 import org.jetbrains.jewel.foundation.state.CommonStateBitMask.Pressed
 import org.jetbrains.jewel.foundation.state.CommonStateBitMask.Selected
+import org.jetbrains.jewel.foundation.state.FocusableComponentState
 import org.jetbrains.jewel.foundation.state.SelectableComponentState
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.foundation.theme.LocalContentColor
@@ -209,7 +210,7 @@ private fun RadioButtonImage(outerModifier: Modifier, radioButtonPainter: Painte
 
 @Immutable
 @JvmInline
-value class RadioButtonState(val state: ULong) : SelectableComponentState {
+value class RadioButtonState(val state: ULong) : SelectableComponentState, FocusableComponentState {
 
     @Stable
     override val isActive: Boolean

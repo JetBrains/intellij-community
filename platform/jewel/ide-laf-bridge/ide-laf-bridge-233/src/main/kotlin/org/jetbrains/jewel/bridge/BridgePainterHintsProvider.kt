@@ -2,7 +2,6 @@ package org.jetbrains.jewel.bridge
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalDensity
 import com.intellij.ide.ui.UITheme
 import com.intellij.openapi.diagnostic.thisLogger
 import org.jetbrains.jewel.foundation.InternalJewelApi
@@ -29,7 +28,7 @@ class BridgePainterHintsProvider private constructor(
     override fun hints(path: String): List<PainterHint> = buildList {
         add(getPaletteHint(path))
         add(BridgeOverride)
-        add(HiDpi(LocalDensity.current))
+        add(HiDpi())
         add(Dark(JewelTheme.isDark))
     }
 

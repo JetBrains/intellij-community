@@ -131,7 +131,7 @@ fun Dropdown(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(style.metrics.contentPadding)
-                    .padding(end = minSize.height),
+                    .padding(end = arrowMinSize.width),
                 contentAlignment = Alignment.CenterStart,
                 content = content,
             )

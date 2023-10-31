@@ -37,6 +37,7 @@ import org.jetbrains.jewel.foundation.state.CommonStateBitMask.Hovered
 import org.jetbrains.jewel.foundation.state.CommonStateBitMask.Indeterminate
 import org.jetbrains.jewel.foundation.state.CommonStateBitMask.Pressed
 import org.jetbrains.jewel.foundation.state.CommonStateBitMask.Selected
+import org.jetbrains.jewel.foundation.state.FocusableComponentState
 import org.jetbrains.jewel.foundation.state.ToggleableComponentState
 import org.jetbrains.jewel.foundation.state.ToggleableComponentState.Companion.readToggleableState
 import org.jetbrains.jewel.foundation.theme.JewelTheme
@@ -49,6 +50,7 @@ import org.jetbrains.jewel.ui.component.styling.CheckboxMetrics
 import org.jetbrains.jewel.ui.component.styling.LocalCheckboxStyle
 import org.jetbrains.jewel.ui.outline
 import org.jetbrains.jewel.ui.painter.PainterHint
+import org.jetbrains.jewel.ui.painter.PainterProviderScope
 import org.jetbrains.jewel.ui.painter.PainterSuffixHint
 import org.jetbrains.jewel.ui.painter.hints.Selected
 import org.jetbrains.jewel.ui.painter.hints.Stateful
@@ -332,7 +334,7 @@ private fun CheckboxImpl(
 
 private object CheckBoxIndeterminate : PainterSuffixHint() {
 
-    override fun suffix(): String = "Indeterminate"
+    override fun PainterProviderScope.suffix(): String = "Indeterminate"
 }
 
 @Composable
@@ -344,7 +346,7 @@ private fun CheckBoxImage(outerModifier: Modifier, checkboxPainter: Painter, che
 
 @Immutable
 @JvmInline
-value class CheckboxState(private val state: ULong) : ToggleableComponentState {
+value class CheckboxState(private val state: ULong) : ToggleableComponentState, FocusableComponentState {
 
     @Stable
     override val toggleableState: ToggleableState

@@ -41,6 +41,7 @@ import org.jetbrains.jewel.foundation.theme.ThemeColorPalette
 import org.jetbrains.jewel.foundation.theme.ThemeDefinition
 import org.jetbrains.jewel.foundation.theme.ThemeIconData
 import org.jetbrains.jewel.ui.ComponentStyling
+import org.jetbrains.jewel.ui.DefaultComponentStyling
 import org.jetbrains.jewel.ui.component.styling.ButtonColors
 import org.jetbrains.jewel.ui.component.styling.ButtonMetrics
 import org.jetbrains.jewel.ui.component.styling.ButtonStyle
@@ -168,7 +169,7 @@ internal fun createBridgeComponentStyling(
     val textFieldStyle = readTextFieldStyle(textFieldTextStyle)
     val menuStyle = readMenuStyle()
 
-    return ComponentStyling(
+    return DefaultComponentStyling(
         checkboxStyle = readCheckboxStyle(),
         chipStyle = readChipStyle(),
         circularProgressStyle = readCircularProgressStyle(theme.isDark),
@@ -620,6 +621,7 @@ private fun readMenuStyle(): MenuStyle {
     )
 
     return MenuStyle(
+        isDark = !JBColor.isBright(),
         colors = colors,
         metrics = MenuMetrics(
             cornerSize = CornerSize(IdeaPopupMenuUI.CORNER_RADIUS.dp),
@@ -826,19 +828,16 @@ private fun readDefaultTabStyle(): TabStyle {
     val colors = TabColors(
         background = normalBackground,
         backgroundDisabled = normalBackground,
-        backgroundFocused = normalBackground,
         backgroundPressed = selectedBackground,
         backgroundHovered = JBUI.CurrentTheme.DefaultTabs.hoverBackground().toComposeColor(),
         backgroundSelected = selectedBackground,
         content = normalContent,
         contentDisabled = retrieveColorOrUnspecified("TabbedPane.disabledForeground"),
-        contentFocused = normalContent,
         contentPressed = normalContent,
         contentHovered = normalContent,
         contentSelected = normalContent,
         underline = Color.Transparent,
         underlineDisabled = retrieveColorOrUnspecified("TabbedPane.disabledUnderlineColor"),
-        underlineFocused = Color.Transparent,
         underlinePressed = selectedUnderline,
         underlineHovered = Color.Transparent,
         underlineSelected = selectedUnderline,
@@ -858,13 +857,11 @@ private fun readDefaultTabStyle(): TabStyle {
         contentAlpha = TabContentAlpha(
             iconNormal = 1f,
             iconDisabled = 1f,
-            iconFocused = 1f,
             iconPressed = 1f,
             iconHovered = 1f,
             iconSelected = 1f,
             labelNormal = 1f,
             labelDisabled = 1f,
-            labelFocused = 1f,
             labelPressed = 1f,
             labelHovered = 1f,
             labelSelected = 1f,
@@ -881,19 +878,16 @@ private fun readEditorTabStyle(): TabStyle {
     val colors = TabColors(
         background = normalBackground,
         backgroundDisabled = normalBackground,
-        backgroundFocused = normalBackground,
         backgroundPressed = selectedBackground,
         backgroundHovered = JBUI.CurrentTheme.EditorTabs.hoverBackground().toComposeColor(),
         backgroundSelected = selectedBackground,
         content = normalContent,
         contentDisabled = retrieveColorOrUnspecified("TabbedPane.disabledForeground"),
-        contentFocused = normalContent,
         contentPressed = normalContent,
         contentHovered = normalContent,
         contentSelected = normalContent,
         underline = Color.Transparent,
         underlineDisabled = retrieveColorOrUnspecified("TabbedPane.disabledUnderlineColor"),
-        underlineFocused = Color.Transparent,
         underlinePressed = selectedUnderline,
         underlineHovered = Color.Transparent,
         underlineSelected = selectedUnderline,
@@ -913,13 +907,11 @@ private fun readEditorTabStyle(): TabStyle {
         contentAlpha = TabContentAlpha(
             iconNormal = .7f,
             iconDisabled = .7f,
-            iconFocused = .7f,
             iconPressed = 1f,
             iconHovered = 1f,
             iconSelected = 1f,
             labelNormal = .7f,
             labelDisabled = .7f,
-            labelFocused = .7f,
             labelPressed = 1f,
             labelHovered = 1f,
             labelSelected = 1f,
@@ -957,14 +949,19 @@ private fun readIconButtonStyle(): IconButtonStyle =
             minSize = DpSize(16.dp, 16.dp),
         ),
         colors = IconButtonColors(
+            foregroundSelectedActivated = retrieveColorOrUnspecified("ToolWindow.Button.selectedForeground"),
             background = Color.Unspecified,
             backgroundDisabled = Color.Unspecified,
+            backgroundSelected = retrieveColorOrUnspecified("ActionButton.pressedBackground"),
+            backgroundSelectedActivated = retrieveColorOrUnspecified("ToolWindow.Button.selectedBackground"),
             backgroundFocused = Color.Unspecified,
             backgroundPressed = retrieveColorOrUnspecified("ActionButton.pressedBackground"),
             backgroundHovered = retrieveColorOrUnspecified("ActionButton.hoverBackground"),
             border = Color.Unspecified,
             borderDisabled = Color.Unspecified,
-            borderFocused = retrieveColorOrUnspecified("ActionButton.focusedBorderColor"),
+            borderSelected = retrieveColorOrUnspecified("ActionButton.pressedBackground"),
+            borderSelectedActivated = retrieveColorOrUnspecified("ToolWindow.Button.selectedBackground"),
+            borderFocused = Color.Unspecified,
             borderPressed = retrieveColorOrUnspecified("ActionButton.pressedBorderColor"),
             borderHovered = retrieveColorOrUnspecified("ActionButton.hoverBorderColor"),
         ),

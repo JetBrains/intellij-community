@@ -1,4 +1,29 @@
-public final class org/jetbrains/jewel/ui/ComponentStyling {
+public abstract interface class org/jetbrains/jewel/ui/ComponentStyling {
+	public static final field Companion Lorg/jetbrains/jewel/ui/ComponentStyling$Companion;
+	public abstract fun provide (Lkotlin/jvm/functions/Function2;)Lorg/jetbrains/jewel/ui/ComponentStyling;
+	public abstract fun provide ([Landroidx/compose/runtime/ProvidedValue;)Lorg/jetbrains/jewel/ui/ComponentStyling;
+	public abstract fun styles (Landroidx/compose/runtime/Composer;I)[Landroidx/compose/runtime/ProvidedValue;
+	public abstract fun with (Lkotlin/jvm/functions/Function2;)Lorg/jetbrains/jewel/ui/ComponentStyling;
+	public abstract fun with (Lorg/jetbrains/jewel/ui/ComponentStyling;)Lorg/jetbrains/jewel/ui/ComponentStyling;
+}
+
+public final class org/jetbrains/jewel/ui/ComponentStyling$Companion : org/jetbrains/jewel/ui/ComponentStyling {
+	public fun provide (Lkotlin/jvm/functions/Function2;)Lorg/jetbrains/jewel/ui/ComponentStyling;
+	public fun provide ([Landroidx/compose/runtime/ProvidedValue;)Lorg/jetbrains/jewel/ui/ComponentStyling;
+	public fun styles (Landroidx/compose/runtime/Composer;I)[Landroidx/compose/runtime/ProvidedValue;
+	public fun toString ()Ljava/lang/String;
+	public fun with (Lkotlin/jvm/functions/Function2;)Lorg/jetbrains/jewel/ui/ComponentStyling;
+	public fun with (Lorg/jetbrains/jewel/ui/ComponentStyling;)Lorg/jetbrains/jewel/ui/ComponentStyling;
+}
+
+public final class org/jetbrains/jewel/ui/ComponentStyling$DefaultImpls {
+	public static fun provide (Lorg/jetbrains/jewel/ui/ComponentStyling;Lkotlin/jvm/functions/Function2;)Lorg/jetbrains/jewel/ui/ComponentStyling;
+	public static fun provide (Lorg/jetbrains/jewel/ui/ComponentStyling;[Landroidx/compose/runtime/ProvidedValue;)Lorg/jetbrains/jewel/ui/ComponentStyling;
+	public static fun with (Lorg/jetbrains/jewel/ui/ComponentStyling;Lkotlin/jvm/functions/Function2;)Lorg/jetbrains/jewel/ui/ComponentStyling;
+	public static fun with (Lorg/jetbrains/jewel/ui/ComponentStyling;Lorg/jetbrains/jewel/ui/ComponentStyling;)Lorg/jetbrains/jewel/ui/ComponentStyling;
+}
+
+public final class org/jetbrains/jewel/ui/DefaultComponentStyling : org/jetbrains/jewel/ui/ComponentStyling {
 	public static final field $stable I
 	public fun <init> (Lorg/jetbrains/jewel/ui/component/styling/CheckboxStyle;Lorg/jetbrains/jewel/ui/component/styling/ChipStyle;Lorg/jetbrains/jewel/ui/component/styling/CircularProgressStyle;Lorg/jetbrains/jewel/ui/component/styling/ButtonStyle;Lorg/jetbrains/jewel/ui/component/styling/DropdownStyle;Lorg/jetbrains/jewel/ui/component/styling/TabStyle;Lorg/jetbrains/jewel/ui/component/styling/DividerStyle;Lorg/jetbrains/jewel/ui/component/styling/TabStyle;Lorg/jetbrains/jewel/ui/component/styling/GroupHeaderStyle;Lorg/jetbrains/jewel/ui/component/styling/HorizontalProgressBarStyle;Lorg/jetbrains/jewel/ui/component/styling/IconButtonStyle;Lorg/jetbrains/jewel/ui/component/styling/LabelledTextFieldStyle;Lorg/jetbrains/jewel/ui/component/styling/LazyTreeStyle;Lorg/jetbrains/jewel/ui/component/styling/LinkStyle;Lorg/jetbrains/jewel/ui/component/styling/MenuStyle;Lorg/jetbrains/jewel/ui/component/styling/ButtonStyle;Lorg/jetbrains/jewel/ui/component/styling/RadioButtonStyle;Lorg/jetbrains/jewel/ui/component/styling/ScrollbarStyle;Lorg/jetbrains/jewel/ui/component/styling/TextAreaStyle;Lorg/jetbrains/jewel/ui/component/styling/TextFieldStyle;Lorg/jetbrains/jewel/ui/component/styling/TooltipStyle;Lorg/jetbrains/jewel/ui/component/styling/DropdownStyle;)V
 	public fun equals (Ljava/lang/Object;)Z
@@ -25,8 +50,12 @@ public final class org/jetbrains/jewel/ui/ComponentStyling {
 	public final fun getTooltipStyle ()Lorg/jetbrains/jewel/ui/component/styling/TooltipStyle;
 	public final fun getUndecoratedDropdownStyle ()Lorg/jetbrains/jewel/ui/component/styling/DropdownStyle;
 	public fun hashCode ()I
-	public final fun providedStyles (Landroidx/compose/runtime/Composer;I)[Landroidx/compose/runtime/ProvidedValue;
+	public fun provide (Lkotlin/jvm/functions/Function2;)Lorg/jetbrains/jewel/ui/ComponentStyling;
+	public fun provide ([Landroidx/compose/runtime/ProvidedValue;)Lorg/jetbrains/jewel/ui/ComponentStyling;
+	public fun styles (Landroidx/compose/runtime/Composer;I)[Landroidx/compose/runtime/ProvidedValue;
 	public fun toString ()Ljava/lang/String;
+	public fun with (Lkotlin/jvm/functions/Function2;)Lorg/jetbrains/jewel/ui/ComponentStyling;
+	public fun with (Lorg/jetbrains/jewel/ui/ComponentStyling;)Lorg/jetbrains/jewel/ui/ComponentStyling;
 }
 
 public final class org/jetbrains/jewel/ui/DisabledColorFilterKt {
@@ -112,7 +141,7 @@ public final class org/jetbrains/jewel/ui/component/CheckboxKt {
 	public static final fun TriStateCheckboxRow (Ljava/lang/String;Landroidx/compose/ui/state/ToggleableState;Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;ZLorg/jetbrains/jewel/ui/Outline;Landroidx/compose/foundation/interaction/MutableInteractionSource;Lorg/jetbrains/jewel/ui/component/styling/CheckboxColors;Lorg/jetbrains/jewel/ui/component/styling/CheckboxMetrics;Lorg/jetbrains/jewel/ui/component/styling/CheckboxIcons;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/runtime/Composer;III)V
 }
 
-public final class org/jetbrains/jewel/ui/component/CheckboxState : org/jetbrains/jewel/foundation/state/ToggleableComponentState {
+public final class org/jetbrains/jewel/ui/component/CheckboxState : org/jetbrains/jewel/foundation/state/FocusableComponentState, org/jetbrains/jewel/foundation/state/ToggleableComponentState {
 	public static final field Companion Lorg/jetbrains/jewel/ui/component/CheckboxState$Companion;
 	public static final synthetic fun box-impl (J)Lorg/jetbrains/jewel/ui/component/CheckboxState;
 	public fun chooseValue (Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Landroidx/compose/runtime/Composer;I)Ljava/lang/Object;
@@ -268,6 +297,43 @@ public final class org/jetbrains/jewel/ui/component/GroupHeaderKt {
 
 public final class org/jetbrains/jewel/ui/component/IconButtonKt {
 	public static final fun IconButton (Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;ZLorg/jetbrains/jewel/ui/component/styling/IconButtonStyle;Landroidx/compose/foundation/interaction/MutableInteractionSource;Lkotlin/jvm/functions/Function4;Landroidx/compose/runtime/Composer;II)V
+	public static final fun SelectableIconButton (ZLkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;ZLorg/jetbrains/jewel/ui/component/styling/IconButtonStyle;Landroidx/compose/foundation/interaction/MutableInteractionSource;Lkotlin/jvm/functions/Function4;Landroidx/compose/runtime/Composer;II)V
+}
+
+public final class org/jetbrains/jewel/ui/component/IconButtonState : org/jetbrains/jewel/foundation/state/FocusableComponentState, org/jetbrains/jewel/foundation/state/SelectableComponentState {
+	public static final field Companion Lorg/jetbrains/jewel/ui/component/IconButtonState$Companion;
+	public static final synthetic fun box-impl (J)Lorg/jetbrains/jewel/ui/component/IconButtonState;
+	public fun chooseValue (Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Landroidx/compose/runtime/Composer;I)Ljava/lang/Object;
+	public static fun chooseValue-impl (JLjava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Landroidx/compose/runtime/Composer;I)Ljava/lang/Object;
+	public static fun constructor-impl (J)J
+	public static final fun copy-iT7zR20 (JZZZZZZ)J
+	public static synthetic fun copy-iT7zR20$default (JZZZZZZILjava/lang/Object;)J
+	public fun equals (Ljava/lang/Object;)Z
+	public static fun equals-impl (JLjava/lang/Object;)Z
+	public static final fun equals-impl0 (JJ)Z
+	public final fun getState-s-VKNKU ()J
+	public fun hashCode ()I
+	public static fun hashCode-impl (J)I
+	public fun isActive ()Z
+	public static fun isActive-impl (J)Z
+	public fun isEnabled ()Z
+	public static fun isEnabled-impl (J)Z
+	public fun isFocused ()Z
+	public static fun isFocused-impl (J)Z
+	public fun isHovered ()Z
+	public static fun isHovered-impl (J)Z
+	public fun isPressed ()Z
+	public static fun isPressed-impl (J)Z
+	public fun isSelected ()Z
+	public static fun isSelected-impl (J)Z
+	public fun toString ()Ljava/lang/String;
+	public static fun toString-impl (J)Ljava/lang/String;
+	public final synthetic fun unbox-impl ()J
+}
+
+public final class org/jetbrains/jewel/ui/component/IconButtonState$Companion {
+	public final fun of-iT7zR20 (ZZZZZZ)J
+	public static synthetic fun of-iT7zR20$default (Lorg/jetbrains/jewel/ui/component/IconButtonState$Companion;ZZZZZZILjava/lang/Object;)J
 }
 
 public final class org/jetbrains/jewel/ui/component/IconKt {
@@ -370,7 +436,7 @@ public final class org/jetbrains/jewel/ui/component/LinkState$Companion {
 	public static synthetic fun of-oSacjZw$default (Lorg/jetbrains/jewel/ui/component/LinkState$Companion;ZZZZZZILjava/lang/Object;)J
 }
 
-public final class org/jetbrains/jewel/ui/component/MenuItemState : org/jetbrains/jewel/foundation/state/SelectableComponentState {
+public final class org/jetbrains/jewel/ui/component/MenuItemState : org/jetbrains/jewel/foundation/state/FocusableComponentState, org/jetbrains/jewel/foundation/state/SelectableComponentState {
 	public static final field Companion Lorg/jetbrains/jewel/ui/component/MenuItemState$Companion;
 	public static final synthetic fun box-impl (J)Lorg/jetbrains/jewel/ui/component/MenuItemState;
 	public fun chooseValue (Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Landroidx/compose/runtime/Composer;I)Ljava/lang/Object;
@@ -449,7 +515,7 @@ public final class org/jetbrains/jewel/ui/component/RadioButtonKt {
 	public static final fun RadioButtonRow (ZLkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;ZLorg/jetbrains/jewel/ui/Outline;Landroidx/compose/foundation/interaction/MutableInteractionSource;Lorg/jetbrains/jewel/ui/component/styling/RadioButtonStyle;Landroidx/compose/ui/text/TextStyle;Lkotlin/jvm/functions/Function3;Landroidx/compose/runtime/Composer;II)V
 }
 
-public final class org/jetbrains/jewel/ui/component/RadioButtonState : org/jetbrains/jewel/foundation/state/SelectableComponentState {
+public final class org/jetbrains/jewel/ui/component/RadioButtonState : org/jetbrains/jewel/foundation/state/FocusableComponentState, org/jetbrains/jewel/foundation/state/SelectableComponentState {
 	public static final field Companion Lorg/jetbrains/jewel/ui/component/RadioButtonState$Companion;
 	public static final synthetic fun box-impl (J)Lorg/jetbrains/jewel/ui/component/RadioButtonState;
 	public fun chooseValue (Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Landroidx/compose/runtime/Composer;I)Ljava/lang/Object;
@@ -554,11 +620,9 @@ public final class org/jetbrains/jewel/ui/component/TabData$Editor : org/jetbrai
 public final class org/jetbrains/jewel/ui/component/TabState : org/jetbrains/jewel/foundation/state/SelectableComponentState {
 	public static final field Companion Lorg/jetbrains/jewel/ui/component/TabState$Companion;
 	public static final synthetic fun box-impl (J)Lorg/jetbrains/jewel/ui/component/TabState;
-	public fun chooseValue (Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Landroidx/compose/runtime/Composer;I)Ljava/lang/Object;
-	public static fun chooseValue-impl (JLjava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Landroidx/compose/runtime/Composer;I)Ljava/lang/Object;
 	public static fun constructor-impl (J)J
-	public static final fun copy-cOnw4Uk (JZZZZZZ)J
-	public static synthetic fun copy-cOnw4Uk$default (JZZZZZZILjava/lang/Object;)J
+	public static final fun copy-59c8LF8 (JZZZZZ)J
+	public static synthetic fun copy-59c8LF8$default (JZZZZZILjava/lang/Object;)J
 	public fun equals (Ljava/lang/Object;)Z
 	public static fun equals-impl (JLjava/lang/Object;)Z
 	public static final fun equals-impl0 (JJ)Z
@@ -569,8 +633,6 @@ public final class org/jetbrains/jewel/ui/component/TabState : org/jetbrains/jew
 	public static fun isActive-impl (J)Z
 	public fun isEnabled ()Z
 	public static fun isEnabled-impl (J)Z
-	public fun isFocused ()Z
-	public static fun isFocused-impl (J)Z
 	public fun isHovered ()Z
 	public static fun isHovered-impl (J)Z
 	public fun isPressed ()Z
@@ -583,8 +645,8 @@ public final class org/jetbrains/jewel/ui/component/TabState : org/jetbrains/jew
 }
 
 public final class org/jetbrains/jewel/ui/component/TabState$Companion {
-	public final fun of-cOnw4Uk (ZZZZZZ)J
-	public static synthetic fun of-cOnw4Uk$default (Lorg/jetbrains/jewel/ui/component/TabState$Companion;ZZZZZZILjava/lang/Object;)J
+	public final fun of-59c8LF8 (ZZZZZ)J
+	public static synthetic fun of-59c8LF8$default (Lorg/jetbrains/jewel/ui/component/TabState$Companion;ZZZZZILjava/lang/Object;)J
 }
 
 public final class org/jetbrains/jewel/ui/component/TabStripKt {
@@ -1096,20 +1158,26 @@ public final class org/jetbrains/jewel/ui/component/styling/HorizontalProgressBa
 public final class org/jetbrains/jewel/ui/component/styling/IconButtonColors {
 	public static final field $stable I
 	public static final field Companion Lorg/jetbrains/jewel/ui/component/styling/IconButtonColors$Companion;
-	public synthetic fun <init> (JJJJJJJJJJLkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun backgroundFor-Wlap9Qs (JLandroidx/compose/runtime/Composer;I)Landroidx/compose/runtime/State;
-	public final fun borderFor-Wlap9Qs (JLandroidx/compose/runtime/Composer;I)Landroidx/compose/runtime/State;
+	public synthetic fun <init> (JJJJJJJJJJJJJJJLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun backgroundFor-e04Q3fE (JLandroidx/compose/runtime/Composer;I)Landroidx/compose/runtime/State;
+	public final fun borderFor-e04Q3fE (JLandroidx/compose/runtime/Composer;I)Landroidx/compose/runtime/State;
 	public fun equals (Ljava/lang/Object;)Z
+	public final fun foregroundFor-e04Q3fE (JLandroidx/compose/runtime/Composer;I)Landroidx/compose/runtime/State;
 	public final fun getBackground-0d7_KjU ()J
 	public final fun getBackgroundDisabled-0d7_KjU ()J
 	public final fun getBackgroundFocused-0d7_KjU ()J
 	public final fun getBackgroundHovered-0d7_KjU ()J
 	public final fun getBackgroundPressed-0d7_KjU ()J
+	public final fun getBackgroundSelected-0d7_KjU ()J
+	public final fun getBackgroundSelectedActivated-0d7_KjU ()J
 	public final fun getBorder-0d7_KjU ()J
 	public final fun getBorderDisabled-0d7_KjU ()J
 	public final fun getBorderFocused-0d7_KjU ()J
 	public final fun getBorderHovered-0d7_KjU ()J
 	public final fun getBorderPressed-0d7_KjU ()J
+	public final fun getBorderSelected-0d7_KjU ()J
+	public final fun getBorderSelectedActivated-0d7_KjU ()J
+	public final fun getForegroundSelectedActivated-0d7_KjU ()J
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 }
@@ -1133,10 +1201,6 @@ public final class org/jetbrains/jewel/ui/component/styling/IconButtonMetrics {
 public final class org/jetbrains/jewel/ui/component/styling/IconButtonMetrics$Companion {
 }
 
-public final class org/jetbrains/jewel/ui/component/styling/IconButtonMetricsKt {
-	public static final fun getLocalIconButtonStyle ()Landroidx/compose/runtime/ProvidableCompositionLocal;
-}
-
 public final class org/jetbrains/jewel/ui/component/styling/IconButtonStyle {
 	public static final field $stable I
 	public static final field Companion Lorg/jetbrains/jewel/ui/component/styling/IconButtonStyle$Companion;
@@ -1149,6 +1213,10 @@ public final class org/jetbrains/jewel/ui/component/styling/IconButtonStyle {
 }
 
 public final class org/jetbrains/jewel/ui/component/styling/IconButtonStyle$Companion {
+}
+
+public final class org/jetbrains/jewel/ui/component/styling/IconButtonStylingKt {
+	public static final fun getLocalIconButtonStyle ()Landroidx/compose/runtime/ProvidableCompositionLocal;
 }
 
 public abstract interface class org/jetbrains/jewel/ui/component/styling/InputFieldColors {
@@ -1555,12 +1623,13 @@ public final class org/jetbrains/jewel/ui/component/styling/MenuMetrics$Companio
 public final class org/jetbrains/jewel/ui/component/styling/MenuStyle {
 	public static final field $stable I
 	public static final field Companion Lorg/jetbrains/jewel/ui/component/styling/MenuStyle$Companion;
-	public fun <init> (Lorg/jetbrains/jewel/ui/component/styling/MenuColors;Lorg/jetbrains/jewel/ui/component/styling/MenuMetrics;Lorg/jetbrains/jewel/ui/component/styling/MenuIcons;)V
+	public fun <init> (ZLorg/jetbrains/jewel/ui/component/styling/MenuColors;Lorg/jetbrains/jewel/ui/component/styling/MenuMetrics;Lorg/jetbrains/jewel/ui/component/styling/MenuIcons;)V
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getColors ()Lorg/jetbrains/jewel/ui/component/styling/MenuColors;
 	public final fun getIcons ()Lorg/jetbrains/jewel/ui/component/styling/MenuIcons;
 	public final fun getMetrics ()Lorg/jetbrains/jewel/ui/component/styling/MenuMetrics;
 	public fun hashCode ()I
+	public final fun isDark ()Z
 	public fun toString ()Ljava/lang/String;
 }
 
@@ -1701,25 +1770,22 @@ public final class org/jetbrains/jewel/ui/component/styling/SubmenuMetrics$Compa
 public final class org/jetbrains/jewel/ui/component/styling/TabColors {
 	public static final field $stable I
 	public static final field Companion Lorg/jetbrains/jewel/ui/component/styling/TabColors$Companion;
-	public synthetic fun <init> (JJJJJJJJJJJJJJJJJJLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (JJJJJJJJJJJJJJJLkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun backgroundFor-UXw_FYk (JLandroidx/compose/runtime/Composer;I)Landroidx/compose/runtime/State;
 	public final fun contentFor-UXw_FYk (JLandroidx/compose/runtime/Composer;I)Landroidx/compose/runtime/State;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getBackground-0d7_KjU ()J
 	public final fun getBackgroundDisabled-0d7_KjU ()J
-	public final fun getBackgroundFocused-0d7_KjU ()J
 	public final fun getBackgroundHovered-0d7_KjU ()J
 	public final fun getBackgroundPressed-0d7_KjU ()J
 	public final fun getBackgroundSelected-0d7_KjU ()J
 	public final fun getContent-0d7_KjU ()J
 	public final fun getContentDisabled-0d7_KjU ()J
-	public final fun getContentFocused-0d7_KjU ()J
 	public final fun getContentHovered-0d7_KjU ()J
 	public final fun getContentPressed-0d7_KjU ()J
 	public final fun getContentSelected-0d7_KjU ()J
 	public final fun getUnderline-0d7_KjU ()J
 	public final fun getUnderlineDisabled-0d7_KjU ()J
-	public final fun getUnderlineFocused-0d7_KjU ()J
 	public final fun getUnderlineHovered-0d7_KjU ()J
 	public final fun getUnderlinePressed-0d7_KjU ()J
 	public final fun getUnderlineSelected-0d7_KjU ()J
@@ -1734,16 +1800,14 @@ public final class org/jetbrains/jewel/ui/component/styling/TabColors$Companion 
 public final class org/jetbrains/jewel/ui/component/styling/TabContentAlpha {
 	public static final field $stable I
 	public static final field Companion Lorg/jetbrains/jewel/ui/component/styling/TabContentAlpha$Companion;
-	public fun <init> (FFFFFFFFFFFF)V
+	public fun <init> (FFFFFFFFFF)V
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getIconDisabled ()F
-	public final fun getIconFocused ()F
 	public final fun getIconHovered ()F
 	public final fun getIconNormal ()F
 	public final fun getIconPressed ()F
 	public final fun getIconSelected ()F
 	public final fun getLabelDisabled ()F
-	public final fun getLabelFocused ()F
 	public final fun getLabelHovered ()F
 	public final fun getLabelNormal ()F
 	public final fun getLabelPressed ()F
@@ -2023,11 +2087,11 @@ public abstract class org/jetbrains/jewel/ui/painter/BasePainterHintsProvider : 
 }
 
 public abstract interface class org/jetbrains/jewel/ui/painter/BitmapPainterHint : org/jetbrains/jewel/ui/painter/PainterHint {
-	public abstract fun canApplyTo (Ljava/lang/String;)Z
+	public abstract fun canApply (Lorg/jetbrains/jewel/ui/painter/PainterProviderScope;)Z
 }
 
 public final class org/jetbrains/jewel/ui/painter/BitmapPainterHint$DefaultImpls {
-	public static fun canApplyTo (Lorg/jetbrains/jewel/ui/painter/BitmapPainterHint;Ljava/lang/String;)Z
+	public static fun canApply (Lorg/jetbrains/jewel/ui/painter/BitmapPainterHint;Lorg/jetbrains/jewel/ui/painter/PainterProviderScope;)Z
 }
 
 public final class org/jetbrains/jewel/ui/painter/CommonPainterHintsProvider : org/jetbrains/jewel/ui/painter/PainterHintsProvider {
@@ -2056,15 +2120,15 @@ public class org/jetbrains/jewel/ui/painter/DelegatePainter : androidx/compose/u
 
 public abstract interface class org/jetbrains/jewel/ui/painter/PainterHint {
 	public static final field None Lorg/jetbrains/jewel/ui/painter/PainterHint$None;
-	public abstract fun canApplyTo (Ljava/lang/String;)Z
+	public abstract fun canApply (Lorg/jetbrains/jewel/ui/painter/PainterProviderScope;)Z
 }
 
 public final class org/jetbrains/jewel/ui/painter/PainterHint$DefaultImpls {
-	public static fun canApplyTo (Lorg/jetbrains/jewel/ui/painter/PainterHint;Ljava/lang/String;)Z
+	public static fun canApply (Lorg/jetbrains/jewel/ui/painter/PainterHint;Lorg/jetbrains/jewel/ui/painter/PainterProviderScope;)Z
 }
 
 public final class org/jetbrains/jewel/ui/painter/PainterHint$None : org/jetbrains/jewel/ui/painter/PainterHint {
-	public fun canApplyTo (Ljava/lang/String;)Z
+	public fun canApply (Lorg/jetbrains/jewel/ui/painter/PainterProviderScope;)Z
 	public fun toString ()Ljava/lang/String;
 }
 
@@ -2082,55 +2146,59 @@ public final class org/jetbrains/jewel/ui/painter/PainterHintsProviderKt {
 }
 
 public abstract interface class org/jetbrains/jewel/ui/painter/PainterPathHint : org/jetbrains/jewel/ui/painter/PainterHint {
-	public abstract fun patch (Ljava/lang/String;)Ljava/lang/String;
+	public abstract fun patch (Lorg/jetbrains/jewel/ui/painter/PainterProviderScope;)Ljava/lang/String;
 }
 
 public final class org/jetbrains/jewel/ui/painter/PainterPathHint$DefaultImpls {
-	public static fun canApplyTo (Lorg/jetbrains/jewel/ui/painter/PainterPathHint;Ljava/lang/String;)Z
+	public static fun canApply (Lorg/jetbrains/jewel/ui/painter/PainterPathHint;Lorg/jetbrains/jewel/ui/painter/PainterProviderScope;)Z
 }
 
 public abstract class org/jetbrains/jewel/ui/painter/PainterPrefixHint : org/jetbrains/jewel/ui/painter/PainterPathHint {
 	public static final field $stable I
 	public fun <init> ()V
-	public fun canApplyTo (Ljava/lang/String;)Z
-	public fun patch (Ljava/lang/String;)Ljava/lang/String;
-	public abstract fun prefix ()Ljava/lang/String;
+	public fun canApply (Lorg/jetbrains/jewel/ui/painter/PainterProviderScope;)Z
+	public fun patch (Lorg/jetbrains/jewel/ui/painter/PainterProviderScope;)Ljava/lang/String;
+	public abstract fun prefix (Lorg/jetbrains/jewel/ui/painter/PainterProviderScope;)Ljava/lang/String;
 }
 
 public abstract interface class org/jetbrains/jewel/ui/painter/PainterProvider {
 	public abstract fun getPainter ([Lorg/jetbrains/jewel/ui/painter/PainterHint;Landroidx/compose/runtime/Composer;I)Landroidx/compose/runtime/State;
 }
 
-public abstract interface class org/jetbrains/jewel/ui/painter/PainterResourcePathHint : org/jetbrains/jewel/ui/painter/PainterHint {
-	public abstract fun patch (Ljava/lang/String;Ljava/util/List;)Ljava/lang/String;
-}
-
-public final class org/jetbrains/jewel/ui/painter/PainterResourcePathHint$DefaultImpls {
-	public static fun canApplyTo (Lorg/jetbrains/jewel/ui/painter/PainterResourcePathHint;Ljava/lang/String;)Z
+public abstract interface class org/jetbrains/jewel/ui/painter/PainterProviderScope : androidx/compose/ui/unit/Density {
+	public abstract fun getAcceptedHints ()Ljava/util/List;
+	public abstract fun getPath ()Ljava/lang/String;
+	public abstract fun getRawPath ()Ljava/lang/String;
 }
 
 public abstract class org/jetbrains/jewel/ui/painter/PainterSuffixHint : org/jetbrains/jewel/ui/painter/PainterPathHint {
 	public static final field $stable I
 	public fun <init> ()V
-	public fun canApplyTo (Ljava/lang/String;)Z
-	public fun patch (Ljava/lang/String;)Ljava/lang/String;
-	public abstract fun suffix ()Ljava/lang/String;
+	public fun canApply (Lorg/jetbrains/jewel/ui/painter/PainterProviderScope;)Z
+	public fun patch (Lorg/jetbrains/jewel/ui/painter/PainterProviderScope;)Ljava/lang/String;
+	public abstract fun suffix (Lorg/jetbrains/jewel/ui/painter/PainterProviderScope;)Ljava/lang/String;
 }
 
 public abstract interface class org/jetbrains/jewel/ui/painter/PainterSvgPatchHint : org/jetbrains/jewel/ui/painter/SvgPainterHint {
-	public abstract fun patch (Lorg/w3c/dom/Element;)V
+	public abstract fun patch (Lorg/jetbrains/jewel/ui/painter/PainterProviderScope;Lorg/w3c/dom/Element;)V
 }
 
 public final class org/jetbrains/jewel/ui/painter/PainterSvgPatchHint$DefaultImpls {
-	public static fun canApplyTo (Lorg/jetbrains/jewel/ui/painter/PainterSvgPatchHint;Ljava/lang/String;)Z
+	public static fun canApply (Lorg/jetbrains/jewel/ui/painter/PainterSvgPatchHint;Lorg/jetbrains/jewel/ui/painter/PainterProviderScope;)Z
 }
 
 public abstract interface class org/jetbrains/jewel/ui/painter/PainterWrapperHint : org/jetbrains/jewel/ui/painter/PainterHint {
-	public abstract fun wrap (Landroidx/compose/ui/graphics/painter/Painter;)Landroidx/compose/ui/graphics/painter/Painter;
+	public abstract fun wrap (Lorg/jetbrains/jewel/ui/painter/PainterProviderScope;Landroidx/compose/ui/graphics/painter/Painter;)Landroidx/compose/ui/graphics/painter/Painter;
 }
 
 public final class org/jetbrains/jewel/ui/painter/PainterWrapperHint$DefaultImpls {
-	public static fun canApplyTo (Lorg/jetbrains/jewel/ui/painter/PainterWrapperHint;Ljava/lang/String;)Z
+	public static fun canApply (Lorg/jetbrains/jewel/ui/painter/PainterWrapperHint;Lorg/jetbrains/jewel/ui/painter/PainterProviderScope;)Z
+}
+
+public final class org/jetbrains/jewel/ui/painter/ResizedPainter : org/jetbrains/jewel/ui/painter/DelegatePainter {
+	public static final field $stable I
+	public synthetic fun <init> (Landroidx/compose/ui/graphics/painter/Painter;JLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun getIntrinsicSize-NH-jbRc ()J
 }
 
 public final class org/jetbrains/jewel/ui/painter/ResourcePainterProvider : org/jetbrains/jewel/ui/painter/PainterProvider {
@@ -2143,20 +2211,24 @@ public final class org/jetbrains/jewel/ui/painter/ResourcePainterProviderKt {
 	public static final fun rememberResourcePainterProvider (Ljava/lang/String;Ljava/lang/Class;Landroidx/compose/runtime/Composer;I)Lorg/jetbrains/jewel/ui/painter/PainterProvider;
 }
 
+public abstract interface class org/jetbrains/jewel/ui/painter/ResourcePainterProviderScope : org/jetbrains/jewel/ui/painter/PainterProviderScope {
+	public abstract fun getClassLoaders ()Ljava/util/Set;
+}
+
 public abstract interface class org/jetbrains/jewel/ui/painter/SvgPainterHint : org/jetbrains/jewel/ui/painter/PainterHint {
-	public abstract fun canApplyTo (Ljava/lang/String;)Z
+	public abstract fun canApply (Lorg/jetbrains/jewel/ui/painter/PainterProviderScope;)Z
 }
 
 public final class org/jetbrains/jewel/ui/painter/SvgPainterHint$DefaultImpls {
-	public static fun canApplyTo (Lorg/jetbrains/jewel/ui/painter/SvgPainterHint;Ljava/lang/String;)Z
+	public static fun canApply (Lorg/jetbrains/jewel/ui/painter/SvgPainterHint;Lorg/jetbrains/jewel/ui/painter/PainterProviderScope;)Z
 }
 
 public abstract interface class org/jetbrains/jewel/ui/painter/XmlPainterHint : org/jetbrains/jewel/ui/painter/PainterHint {
-	public abstract fun canApplyTo (Ljava/lang/String;)Z
+	public abstract fun canApply (Lorg/jetbrains/jewel/ui/painter/PainterProviderScope;)Z
 }
 
 public final class org/jetbrains/jewel/ui/painter/XmlPainterHint$DefaultImpls {
-	public static fun canApplyTo (Lorg/jetbrains/jewel/ui/painter/XmlPainterHint;Ljava/lang/String;)Z
+	public static fun canApply (Lorg/jetbrains/jewel/ui/painter/XmlPainterHint;Lorg/jetbrains/jewel/ui/painter/PainterProviderScope;)Z
 }
 
 public abstract interface class org/jetbrains/jewel/ui/painter/badge/BadgeShape : androidx/compose/ui/graphics/Shape {
@@ -2188,14 +2260,14 @@ public final class org/jetbrains/jewel/ui/painter/hints/BadgeKt {
 	public static final fun Badge-DxMtmZc (JLorg/jetbrains/jewel/ui/painter/badge/BadgeShape;)Lorg/jetbrains/jewel/ui/painter/PainterHint;
 }
 
-public final class org/jetbrains/jewel/ui/painter/hints/DarkKt {
+public final class org/jetbrains/jewel/ui/painter/hints/DarkOrStrokeKt {
 	public static final fun Dark (Z)Lorg/jetbrains/jewel/ui/painter/PainterHint;
 	public static synthetic fun Dark$default (ZILjava/lang/Object;)Lorg/jetbrains/jewel/ui/painter/PainterHint;
+	public static final fun Stroke-8_81llA (J)Lorg/jetbrains/jewel/ui/painter/PainterHint;
 }
 
 public final class org/jetbrains/jewel/ui/painter/hints/HiDpiKt {
-	public static final fun HiDpi (Landroidx/compose/ui/unit/Density;)Lorg/jetbrains/jewel/ui/painter/PainterHint;
-	public static final fun HiDpi (Z)Lorg/jetbrains/jewel/ui/painter/PainterHint;
+	public static final fun HiDpi ()Lorg/jetbrains/jewel/ui/painter/PainterHint;
 }
 
 public final class org/jetbrains/jewel/ui/painter/hints/OverrideKt {
@@ -2214,7 +2286,6 @@ public final class org/jetbrains/jewel/ui/painter/hints/SelectedKt {
 
 public final class org/jetbrains/jewel/ui/painter/hints/SizeKt {
 	public static final fun Size (II)Lorg/jetbrains/jewel/ui/painter/PainterHint;
-	public static final fun Size (Ljava/lang/String;)Lorg/jetbrains/jewel/ui/painter/PainterHint;
 	public static synthetic fun Size$default (IIILjava/lang/Object;)Lorg/jetbrains/jewel/ui/painter/PainterHint;
 }
 
@@ -2222,19 +2293,9 @@ public final class org/jetbrains/jewel/ui/painter/hints/StatefulKt {
 	public static final fun Stateful (Lorg/jetbrains/jewel/foundation/state/InteractiveComponentState;)Lorg/jetbrains/jewel/ui/painter/PainterHint;
 }
 
-public final class org/jetbrains/jewel/ui/painter/hints/StrokeKt {
-	public static final fun Stroke (Z)Lorg/jetbrains/jewel/ui/painter/PainterHint;
-	public static synthetic fun Stroke$default (ZILjava/lang/Object;)Lorg/jetbrains/jewel/ui/painter/PainterHint;
-}
-
-public abstract interface class org/jetbrains/jewel/ui/theme/ComponentStyleProviderScope {
-	public abstract fun getTheme ()Lorg/jetbrains/jewel/foundation/theme/ThemeDefinition;
-	public abstract fun provide ([Landroidx/compose/runtime/ProvidedValue;)V
-}
-
 public final class org/jetbrains/jewel/ui/theme/JewelThemeKt {
-	public static final fun BaseJewelTheme (Lorg/jetbrains/jewel/foundation/theme/ThemeDefinition;Lkotlin/jvm/functions/Function3;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;I)V
-	public static final fun BaseJewelTheme (Lorg/jetbrains/jewel/foundation/theme/ThemeDefinition;Lkotlin/jvm/functions/Function3;ZLkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
+	public static final fun BaseJewelTheme (Lorg/jetbrains/jewel/foundation/theme/ThemeDefinition;Lorg/jetbrains/jewel/ui/ComponentStyling;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;I)V
+	public static final fun BaseJewelTheme (Lorg/jetbrains/jewel/foundation/theme/ThemeDefinition;Lorg/jetbrains/jewel/ui/ComponentStyling;ZLkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
 	public static final fun getCheckboxStyle (Lorg/jetbrains/jewel/foundation/theme/JewelTheme$Companion;Landroidx/compose/runtime/Composer;I)Lorg/jetbrains/jewel/ui/component/styling/CheckboxStyle;
 	public static final fun getChipStyle (Lorg/jetbrains/jewel/foundation/theme/JewelTheme$Companion;Landroidx/compose/runtime/Composer;I)Lorg/jetbrains/jewel/ui/component/styling/ChipStyle;
 	public static final fun getCircularProgressStyle (Lorg/jetbrains/jewel/foundation/theme/JewelTheme$Companion;Landroidx/compose/runtime/Composer;I)Lorg/jetbrains/jewel/ui/component/styling/CircularProgressStyle;

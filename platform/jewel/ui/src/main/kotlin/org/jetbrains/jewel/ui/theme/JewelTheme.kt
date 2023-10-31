@@ -3,7 +3,6 @@ package org.jetbrains.jewel.ui.theme
 import androidx.compose.foundation.LocalIndication
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.ProvidedValue
 import androidx.compose.runtime.ReadOnlyComposable
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.foundation.theme.LocalColorPalette
@@ -11,6 +10,7 @@ import org.jetbrains.jewel.foundation.theme.LocalIconData
 import org.jetbrains.jewel.foundation.theme.ThemeColorPalette
 import org.jetbrains.jewel.foundation.theme.ThemeDefinition
 import org.jetbrains.jewel.foundation.theme.ThemeIconData
+import org.jetbrains.jewel.ui.ComponentStyling
 import org.jetbrains.jewel.ui.NoIndication
 import org.jetbrains.jewel.ui.component.styling.ButtonStyle
 import org.jetbrains.jewel.ui.component.styling.CheckboxStyle
@@ -175,16 +175,16 @@ val JewelTheme.Companion.iconButtonStyle: IconButtonStyle
 @Composable
 fun BaseJewelTheme(
     theme: ThemeDefinition,
-    componentStyling: @Composable ComponentStyleProviderScope.() -> Unit,
+    styling: ComponentStyling,
     content: @Composable () -> Unit,
 ) {
-    BaseJewelTheme(theme, componentStyling, swingCompatMode = false, content)
+    BaseJewelTheme(theme, styling, swingCompatMode = false, content)
 }
 
 @Composable
 fun BaseJewelTheme(
     theme: ThemeDefinition,
-    componentStyling: @Composable ComponentStyleProviderScope.() -> Unit,
+    styling: ComponentStyling,
     swingCompatMode: Boolean = false,
     content: @Composable () -> Unit,
 ) {
@@ -194,30 +194,7 @@ fun BaseJewelTheme(
             LocalIconData provides theme.iconData,
             LocalIndication provides NoIndication,
         ) {
-            val scope = ComponentStyleProviderScopeImpl(theme)
-            scope.componentStyling()
-            CompositionLocalProvider(
-                values = scope.styles(),
-                content = content,
-            )
+            CompositionLocalProvider(values = styling.styles(), content = content)
         }
-    }
-}
-
-interface ComponentStyleProviderScope {
-
-    val theme: ThemeDefinition
-
-    fun provide(vararg providedValues: ProvidedValue<*>)
-}
-
-private class ComponentStyleProviderScopeImpl(override val theme: ThemeDefinition) : ComponentStyleProviderScope {
-
-    private val styles = mutableListOf<ProvidedValue<*>>()
-
-    fun styles(): Array<ProvidedValue<*>> = styles.toTypedArray()
-
-    override fun provide(vararg providedValues: ProvidedValue<*>) {
-        styles.addAll(providedValues)
     }
 }

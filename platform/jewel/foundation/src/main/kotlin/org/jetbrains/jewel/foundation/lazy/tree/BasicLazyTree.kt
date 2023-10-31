@@ -35,7 +35,7 @@ import org.jetbrains.jewel.foundation.state.CommonStateBitMask.Focused
 import org.jetbrains.jewel.foundation.state.CommonStateBitMask.Hovered
 import org.jetbrains.jewel.foundation.state.CommonStateBitMask.Pressed
 import org.jetbrains.jewel.foundation.state.CommonStateBitMask.Selected
-import org.jetbrains.jewel.foundation.state.InteractiveComponentState
+import org.jetbrains.jewel.foundation.state.FocusableComponentState
 import org.jetbrains.jewel.foundation.state.SelectableComponentState
 import org.jetbrains.jewel.foundation.utils.Log
 import kotlin.time.Duration
@@ -98,7 +98,8 @@ fun <T> BasicLazyTree(
 ) {
     val scope = rememberCoroutineScope()
 
-    val flattenedTree = remember(tree, treeState.openNodes, treeState.allNodes) { tree.roots.flatMap { it.flattenTree(treeState) } }
+    val flattenedTree =
+        remember(tree, treeState.openNodes, treeState.allNodes) { tree.roots.flatMap { it.flattenTree(treeState) } }
 
     remember(tree) { // if tree changes we need to update selection changes
         onSelectionChange(
@@ -199,7 +200,7 @@ private fun Modifier.elementBackground(
 
 @Immutable
 @JvmInline
-value class TreeElementState(val state: ULong) : InteractiveComponentState, SelectableComponentState {
+value class TreeElementState(val state: ULong) : FocusableComponentState, SelectableComponentState {
 
     @Stable
     override val isActive: Boolean

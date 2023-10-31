@@ -20,6 +20,7 @@ import org.jetbrains.jewel.ui.component.IconButton
 import org.jetbrains.jewel.ui.component.styling.IconButtonStyle
 import org.jetbrains.jewel.ui.painter.PainterHint
 import org.jetbrains.jewel.ui.painter.PainterProvider
+import org.jetbrains.jewel.ui.painter.PainterProviderScope
 import org.jetbrains.jewel.ui.painter.PainterSuffixHint
 import org.jetbrains.jewel.window.styling.TitleBarStyle
 import java.awt.Frame
@@ -104,7 +105,7 @@ private fun TitleBarScope.ControlButton(
 
 private object Inactive : PainterSuffixHint() {
 
-    override fun suffix(): String = "Inactive"
+    override fun PainterProviderScope.suffix(): String = "Inactive"
 
     override fun toString(): String = "Inactive"
 }

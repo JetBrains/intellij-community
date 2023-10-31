@@ -24,14 +24,24 @@ fun MenuStyle.Companion.light(
     colors: MenuColors = MenuColors.light(),
     metrics: MenuMetrics = MenuMetrics.defaults(),
     icons: MenuIcons = MenuIcons.defaults(),
-) = MenuStyle(colors, metrics, icons)
+) = MenuStyle(
+    isDark = false,
+    colors = colors,
+    metrics = metrics,
+    icons = icons,
+)
 
 @Composable
 fun MenuStyle.Companion.dark(
     colors: MenuColors = MenuColors.dark(),
     metrics: MenuMetrics = MenuMetrics.defaults(),
     icons: MenuIcons = MenuIcons.defaults(),
-) = MenuStyle(colors, metrics, icons)
+) = MenuStyle(
+    isDark = true,
+    colors = colors,
+    metrics = metrics,
+    icons = icons,
+)
 
 @Composable
 fun MenuColors.Companion.light(
@@ -92,7 +102,7 @@ fun MenuItemColors.Companion.dark(
     backgroundDisabled: Color = IntUiDarkTheme.colors.grey(2),
     backgroundFocused: Color = IntUiDarkTheme.colors.blue(2),
     backgroundPressed: Color = background,
-    backgroundHovered: Color = background,
+    backgroundHovered: Color = backgroundFocused,
     content: Color = IntUiDarkTheme.colors.grey(12),
     contentDisabled: Color = IntUiDarkTheme.colors.grey(7),
     contentFocused: Color = content,

@@ -17,6 +17,7 @@ import org.jetbrains.jewel.ui.painter.PainterProvider
 @Stable
 @GenerateDataFunctions
 class MenuStyle(
+    val isDark: Boolean,
     val colors: MenuColors,
     val metrics: MenuMetrics,
     val icons: MenuIcons,

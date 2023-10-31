@@ -1,9 +1,11 @@
 package org.jetbrains.jewel.bridge
 
 import com.intellij.util.ui.DirProvider
-import org.jetbrains.jewel.ui.painter.PainterResourcePathHint
+import org.jetbrains.jewel.ui.painter.PainterPathHint
+import org.jetbrains.jewel.ui.painter.PainterProviderScope
+import org.jetbrains.jewel.ui.painter.ResourcePainterProviderScope
 
-internal object BridgeOverride : PainterResourcePathHint {
+internal object BridgeOverride : PainterPathHint {
 
     private val dirProvider = DirProvider()
 
@@ -14,7 +16,9 @@ internal object BridgeOverride : PainterResourcePathHint {
         patchIconPath
     }
 
-    override fun patch(path: String, classLoaders: List<ClassLoader>): String {
+    override fun PainterProviderScope.patch(): String {
+        if (this !is ResourcePainterProviderScope) return path
+
         // For all provided classloaders, we try to get the patched path, both using
         // the original path, and an "abridged" path that has gotten the icon path prefix
         // removed (the classloader is set up differently in prod IDEs and when running

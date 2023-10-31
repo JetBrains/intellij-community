@@ -27,6 +27,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.StrokeCap
@@ -38,7 +39,6 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import org.jetbrains.jewel.foundation.state.CommonStateBitMask.Active
 import org.jetbrains.jewel.foundation.state.CommonStateBitMask.Enabled
-import org.jetbrains.jewel.foundation.state.CommonStateBitMask.Focused
 import org.jetbrains.jewel.foundation.state.CommonStateBitMask.Hovered
 import org.jetbrains.jewel.foundation.state.CommonStateBitMask.Pressed
 import org.jetbrains.jewel.foundation.state.CommonStateBitMask.Selected
@@ -93,6 +93,7 @@ internal fun TabImpl(
             modifier
                 .height(tabStyle.metrics.tabHeight)
                 .background(backgroundColor)
+                .focusProperties { canFocus = false }
                 .selectable(
                     onClick = tabData.onClick,
                     selected = tabData.selected,
@@ -184,10 +185,6 @@ value class TabState(val state: ULong) : SelectableComponentState {
         get() = state and Enabled != 0UL
 
     @Stable
-    override val isFocused: Boolean
-        get() = state and Focused != 0UL
-
-    @Stable
     override val isHovered: Boolean
         get() = state and Hovered != 0UL
 
@@ -198,21 +195,19 @@ value class TabState(val state: ULong) : SelectableComponentState {
     fun copy(
         selected: Boolean = isSelected,
         enabled: Boolean = isEnabled,
-        focused: Boolean = isFocused,
         pressed: Boolean = isPressed,
         hovered: Boolean = isHovered,
         active: Boolean = isActive,
     ) = of(
         selected = selected,
         enabled = enabled,
-        focused = focused,
         pressed = pressed,
         hovered = hovered,
         active = active,
     )
 
     override fun toString() =
-        "${javaClass.simpleName}(isSelected=$isSelected, isEnabled=$isEnabled, isFocused=$isFocused, " +
+        "${javaClass.simpleName}(isSelected=$isSelected, isEnabled=$isEnabled, " +
             "isHovered=$isHovered, isPressed=$isPressed isActive=$isActive)"
 
     companion object {
@@ -220,14 +215,12 @@ value class TabState(val state: ULong) : SelectableComponentState {
         fun of(
             selected: Boolean,
             enabled: Boolean = true,
-            focused: Boolean = false,
             pressed: Boolean = false,
             hovered: Boolean = false,
             active: Boolean = false,
         ) = TabState(
             (if (selected) Selected else 0UL) or
                 (if (enabled) Enabled else 0UL) or
-                (if (focused) Focused else 0UL) or
                 (if (pressed) Pressed else 0UL) or
                 (if (hovered) Hovered else 0UL) or
                 (if (active) Active else 0UL),

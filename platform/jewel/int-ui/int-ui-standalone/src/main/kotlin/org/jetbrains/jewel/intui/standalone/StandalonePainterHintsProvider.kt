@@ -1,7 +1,6 @@
 package org.jetbrains.jewel.intui.standalone
 
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.platform.LocalDensity
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.foundation.theme.ThemeDefinition
 import org.jetbrains.jewel.ui.painter.BasePainterHintsProvider
@@ -29,7 +28,7 @@ class StandalonePainterHintsProvider(
     override fun hints(path: String): List<PainterHint> = buildList {
         add(getPaletteHint(path))
         add(overrideHint)
-        add(HiDpi(LocalDensity.current))
+        add(HiDpi())
         add(Dark(JewelTheme.isDark))
     }
 

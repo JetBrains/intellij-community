@@ -25,6 +25,7 @@ import org.jetbrains.jewel.intui.standalone.styling.Undecorated
 import org.jetbrains.jewel.intui.standalone.styling.dark
 import org.jetbrains.jewel.intui.standalone.styling.light
 import org.jetbrains.jewel.ui.ComponentStyling
+import org.jetbrains.jewel.ui.DefaultComponentStyling
 import org.jetbrains.jewel.ui.component.styling.ButtonStyle
 import org.jetbrains.jewel.ui.component.styling.CheckboxStyle
 import org.jetbrains.jewel.ui.component.styling.ChipStyle
@@ -46,7 +47,6 @@ import org.jetbrains.jewel.ui.component.styling.TextFieldStyle
 import org.jetbrains.jewel.ui.component.styling.TooltipStyle
 import org.jetbrains.jewel.ui.painter.LocalPainterHintsProvider
 import org.jetbrains.jewel.ui.theme.BaseJewelTheme
-import org.jetbrains.jewel.ui.theme.ComponentStyleProviderScope
 
 val JewelTheme.Companion.defaultTextStyle
     get() = TextStyle.Default.copy(
@@ -77,11 +77,13 @@ fun JewelTheme.Companion.darkThemeDefinition(
 ) = ThemeDefinition(isDark = true, colors, metrics, defaultTextStyle, contentColor, palette, iconData)
 
 @Composable
-fun JewelTheme.Companion.defaultComponentStyling(theme: ThemeDefinition): ComponentStyling =
-    if (theme.isDark) darkComponentStyling() else lightComponentStyling()
+fun ComponentStyling.default(): ComponentStyling = with {
+    val isDark = JewelTheme.isDark
+    if (isDark) dark() else light()
+}
 
 @Composable
-fun JewelTheme.Companion.darkComponentStyling(
+fun ComponentStyling.dark(
     checkboxStyle: CheckboxStyle = CheckboxStyle.dark(),
     chipStyle: ChipStyle = ChipStyle.dark(),
     circularProgressStyle: CircularProgressStyle = CircularProgressStyle.dark(),
@@ -104,33 +106,35 @@ fun JewelTheme.Companion.darkComponentStyling(
     textFieldStyle: TextFieldStyle = TextFieldStyle.dark(),
     tooltipStyle: TooltipStyle = TooltipStyle.dark(),
     undecoratedDropdownStyle: DropdownStyle = DropdownStyle.Undecorated.dark(),
-) = ComponentStyling(
-    checkboxStyle = checkboxStyle,
-    chipStyle = chipStyle,
-    circularProgressStyle = circularProgressStyle,
-    defaultButtonStyle = defaultButtonStyle,
-    defaultDropdownStyle = dropdownStyle,
-    defaultTabStyle = defaultTabStyle,
-    dividerStyle = dividerStyle,
-    editorTabStyle = editorTabStyle,
-    groupHeaderStyle = groupHeaderStyle,
-    horizontalProgressBarStyle = horizontalProgressBarStyle,
-    iconButtonStyle = iconButtonStyle,
-    labelledTextFieldStyle = labelledTextFieldStyle,
-    lazyTreeStyle = lazyTreeStyle,
-    linkStyle = linkStyle,
-    menuStyle = menuStyle,
-    outlinedButtonStyle = outlinedButtonStyle,
-    radioButtonStyle = radioButtonStyle,
-    scrollbarStyle = scrollbarStyle,
-    textAreaStyle = textAreaStyle,
-    textFieldStyle = textFieldStyle,
-    tooltipStyle = tooltipStyle,
-    undecoratedDropdownStyle = undecoratedDropdownStyle,
+) = with(
+    DefaultComponentStyling(
+        checkboxStyle = checkboxStyle,
+        chipStyle = chipStyle,
+        circularProgressStyle = circularProgressStyle,
+        defaultButtonStyle = defaultButtonStyle,
+        defaultDropdownStyle = dropdownStyle,
+        defaultTabStyle = defaultTabStyle,
+        dividerStyle = dividerStyle,
+        editorTabStyle = editorTabStyle,
+        groupHeaderStyle = groupHeaderStyle,
+        horizontalProgressBarStyle = horizontalProgressBarStyle,
+        iconButtonStyle = iconButtonStyle,
+        labelledTextFieldStyle = labelledTextFieldStyle,
+        lazyTreeStyle = lazyTreeStyle,
+        linkStyle = linkStyle,
+        menuStyle = menuStyle,
+        outlinedButtonStyle = outlinedButtonStyle,
+        radioButtonStyle = radioButtonStyle,
+        scrollbarStyle = scrollbarStyle,
+        textAreaStyle = textAreaStyle,
+        textFieldStyle = textFieldStyle,
+        tooltipStyle = tooltipStyle,
+        undecoratedDropdownStyle = undecoratedDropdownStyle,
+    ),
 )
 
 @Composable
-fun JewelTheme.Companion.lightComponentStyling(
+fun ComponentStyling.light(
     checkboxStyle: CheckboxStyle = CheckboxStyle.light(),
     chipStyle: ChipStyle = ChipStyle.light(),
     circularProgressStyle: CircularProgressStyle = CircularProgressStyle.light(),
@@ -153,29 +157,31 @@ fun JewelTheme.Companion.lightComponentStyling(
     textFieldStyle: TextFieldStyle = TextFieldStyle.light(),
     tooltipStyle: TooltipStyle = TooltipStyle.light(),
     undecoratedDropdownStyle: DropdownStyle = DropdownStyle.Undecorated.light(),
-) = ComponentStyling(
-    checkboxStyle = checkboxStyle,
-    chipStyle = chipStyle,
-    circularProgressStyle = circularProgressStyle,
-    defaultButtonStyle = defaultButtonStyle,
-    defaultDropdownStyle = dropdownStyle,
-    defaultTabStyle = defaultTabStyle,
-    dividerStyle = dividerStyle,
-    editorTabStyle = editorTabStyle,
-    groupHeaderStyle = groupHeaderStyle,
-    horizontalProgressBarStyle = horizontalProgressBarStyle,
-    iconButtonStyle = iconButtonStyle,
-    labelledTextFieldStyle = labelledTextFieldStyle,
-    lazyTreeStyle = lazyTreeStyle,
-    linkStyle = linkStyle,
-    menuStyle = menuStyle,
-    outlinedButtonStyle = outlinedButtonStyle,
-    radioButtonStyle = radioButtonStyle,
-    scrollbarStyle = scrollbarStyle,
-    textAreaStyle = textAreaStyle,
-    textFieldStyle = textFieldStyle,
-    tooltipStyle = tooltipStyle,
-    undecoratedDropdownStyle = undecoratedDropdownStyle,
+) = with(
+    DefaultComponentStyling(
+        checkboxStyle = checkboxStyle,
+        chipStyle = chipStyle,
+        circularProgressStyle = circularProgressStyle,
+        defaultButtonStyle = defaultButtonStyle,
+        defaultDropdownStyle = dropdownStyle,
+        defaultTabStyle = defaultTabStyle,
+        dividerStyle = dividerStyle,
+        editorTabStyle = editorTabStyle,
+        groupHeaderStyle = groupHeaderStyle,
+        horizontalProgressBarStyle = horizontalProgressBarStyle,
+        iconButtonStyle = iconButtonStyle,
+        labelledTextFieldStyle = labelledTextFieldStyle,
+        lazyTreeStyle = lazyTreeStyle,
+        linkStyle = linkStyle,
+        menuStyle = menuStyle,
+        outlinedButtonStyle = outlinedButtonStyle,
+        radioButtonStyle = radioButtonStyle,
+        scrollbarStyle = scrollbarStyle,
+        textAreaStyle = textAreaStyle,
+        textFieldStyle = textFieldStyle,
+        tooltipStyle = tooltipStyle,
+        undecoratedDropdownStyle = undecoratedDropdownStyle,
+    ),
 )
 
 @Composable
@@ -193,7 +199,7 @@ fun IntUiTheme(
 
     IntUiTheme(
         theme = themeDefinition,
-        componentStyling = { },
+        styling = ComponentStyling,
         swingCompatMode = swingCompatMode,
         content = content,
     )
@@ -202,16 +208,13 @@ fun IntUiTheme(
 @Composable
 fun IntUiTheme(
     theme: ThemeDefinition,
-    componentStyling: @Composable ComponentStyleProviderScope.() -> Unit,
+    styling: ComponentStyling,
     swingCompatMode: Boolean = false,
     content: @Composable () -> Unit,
 ) {
     BaseJewelTheme(
         theme,
-        componentStyling = {
-            provide(providedValues = JewelTheme.defaultComponentStyling(theme).providedStyles())
-            componentStyling()
-        },
+        ComponentStyling.default().with(styling),
         swingCompatMode,
     ) {
         CompositionLocalProvider(

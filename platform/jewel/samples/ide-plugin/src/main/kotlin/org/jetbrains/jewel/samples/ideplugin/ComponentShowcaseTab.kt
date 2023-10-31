@@ -26,9 +26,13 @@ import androidx.compose.ui.unit.dp
 import com.intellij.icons.AllIcons
 import com.intellij.ui.JBColor
 import icons.JewelIcons
+import org.jetbrains.jewel.bridge.ToolWindowScope
 import org.jetbrains.jewel.bridge.theme.SwingBridgeTheme
 import org.jetbrains.jewel.bridge.toComposeColor
 import org.jetbrains.jewel.foundation.lazy.tree.buildTree
+import org.jetbrains.jewel.foundation.modifier.onActivated
+import org.jetbrains.jewel.foundation.modifier.trackActivation
+import org.jetbrains.jewel.foundation.modifier.trackComponentActivation
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.component.CheckboxRow
 import org.jetbrains.jewel.ui.component.CircularProgressIndicator
@@ -44,13 +48,17 @@ import org.jetbrains.jewel.ui.component.TextField
 import org.jetbrains.jewel.ui.component.Tooltip
 
 @Composable
-internal fun ComponentShowcaseTab() {
+internal fun ToolWindowScope.ComponentShowcaseTab() {
     SwingBridgeTheme {
         val bgColor by remember(JewelTheme.isDark) { mutableStateOf(JBColor.PanelBackground.toComposeColor()) }
 
         val scrollState = rememberScrollState()
         Row(
-            modifier = Modifier.fillMaxSize().background(bgColor).verticalScroll(scrollState).padding(16.dp),
+            modifier = Modifier.trackComponentActivation(panel)
+                .fillMaxSize()
+                .background(bgColor)
+                .verticalScroll(scrollState)
+                .padding(16.dp),
             horizontalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             ColumnOne()
@@ -62,10 +70,16 @@ internal fun ComponentShowcaseTab() {
 @Composable
 private fun RowScope.ColumnOne() {
     Column(
-        Modifier.weight(1f),
+        Modifier.trackActivation().weight(1f),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        Text("Here is a selection of our finest components:")
+        var activated by remember { mutableStateOf(false) }
+        Text(
+            "Here is a selection of our finest components(activated: $activated):",
+            Modifier.onActivated {
+                activated = it
+            },
+        )
 
         Row(
             horizontalArrangement = Arrangement.spacedBy(16.dp),
@@ -172,9 +186,19 @@ private fun RowScope.ColumnOne() {
 @Composable
 private fun RowScope.ColumnTwo() {
     Column(
-        Modifier.weight(1f),
+        Modifier.trackActivation().weight(1f),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
+        var activated by remember { mutableStateOf(false) }
+        Text(
+            "activated: $activated",
+            Modifier.onActivated {
+                activated = it
+            },
+        )
+        OutlinedButton({}) {
+            Text("Outlined")
+        }
         val tree = remember {
             buildTree {
                 addNode("root 1") {

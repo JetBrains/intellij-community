@@ -48,19 +48,16 @@ class TabIcons(val close: PainterProvider) {
 class TabColors(
     val background: Color,
     val backgroundDisabled: Color,
-    val backgroundFocused: Color,
     val backgroundPressed: Color,
     val backgroundHovered: Color,
     val backgroundSelected: Color,
     val content: Color,
     val contentDisabled: Color,
-    val contentFocused: Color,
     val contentPressed: Color,
     val contentHovered: Color,
     val contentSelected: Color,
     val underline: Color,
     val underlineDisabled: Color,
-    val underlineFocused: Color,
     val underlinePressed: Color,
     val underlineHovered: Color,
     val underlineSelected: Color,
@@ -73,7 +70,6 @@ class TabColors(
             else -> state.chooseValueIgnoreCompat(
                 normal = content,
                 disabled = contentDisabled,
-                focused = contentFocused,
                 pressed = contentPressed,
                 hovered = contentHovered,
                 active = content,
@@ -87,7 +83,6 @@ class TabColors(
             !state.isEnabled -> backgroundDisabled
             state.isPressed -> backgroundPressed
             state.isHovered -> backgroundHovered
-            state.isFocused -> backgroundFocused
             state.isActive -> background
             state.isSelected -> backgroundSelected
             else -> background
@@ -101,7 +96,6 @@ class TabColors(
             else -> state.chooseValueIgnoreCompat(
                 normal = underline,
                 disabled = underlineDisabled,
-                focused = underlineFocused,
                 pressed = underlinePressed,
                 hovered = underlineHovered,
                 active = underline,
@@ -117,13 +111,11 @@ class TabColors(
 class TabContentAlpha(
     val iconNormal: Float,
     val iconDisabled: Float,
-    val iconFocused: Float,
     val iconPressed: Float,
     val iconHovered: Float,
     val iconSelected: Float,
     val labelNormal: Float,
     val labelDisabled: Float,
-    val labelFocused: Float,
     val labelPressed: Float,
     val labelHovered: Float,
     val labelSelected: Float,
@@ -136,7 +128,6 @@ class TabContentAlpha(
             else -> state.chooseValueIgnoreCompat(
                 normal = iconNormal,
                 disabled = iconDisabled,
-                focused = iconFocused,
                 pressed = iconPressed,
                 hovered = iconHovered,
                 active = iconNormal,
@@ -151,7 +142,6 @@ class TabContentAlpha(
             else -> state.chooseValueIgnoreCompat(
                 normal = labelNormal,
                 disabled = labelDisabled,
-                focused = labelFocused,
                 pressed = labelPressed,
                 hovered = labelHovered,
                 active = labelNormal,
@@ -167,7 +157,6 @@ class TabContentAlpha(
 private fun <T> TabState.chooseValueIgnoreCompat(
     normal: T,
     disabled: T,
-    focused: T,
     pressed: T,
     hovered: T,
     active: T,
@@ -176,7 +165,6 @@ private fun <T> TabState.chooseValueIgnoreCompat(
         !isEnabled -> disabled
         isPressed -> pressed
         isHovered -> hovered
-        isFocused -> focused
         isActive -> active
         else -> normal
     }

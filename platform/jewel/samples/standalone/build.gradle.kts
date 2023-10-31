@@ -8,6 +8,7 @@ plugins {
 }
 
 dependencies {
+    implementation(libs.kotlin.reflect)
     implementation(projects.intUi.intUiStandalone)
     implementation(projects.intUi.intUiDecoratedWindow)
     implementation(compose.desktop.currentOs) {

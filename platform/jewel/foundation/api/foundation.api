@@ -573,7 +573,7 @@ public final class org/jetbrains/jewel/foundation/lazy/tree/TreeBuilder$Element$
 	public fun toString ()Ljava/lang/String;
 }
 
-public final class org/jetbrains/jewel/foundation/lazy/tree/TreeElementState : org/jetbrains/jewel/foundation/state/InteractiveComponentState, org/jetbrains/jewel/foundation/state/SelectableComponentState {
+public final class org/jetbrains/jewel/foundation/lazy/tree/TreeElementState : org/jetbrains/jewel/foundation/state/FocusableComponentState, org/jetbrains/jewel/foundation/state/SelectableComponentState {
 	public static final field Companion Lorg/jetbrains/jewel/foundation/lazy/tree/TreeElementState$Companion;
 	public static final synthetic fun box-impl (J)Lorg/jetbrains/jewel/foundation/lazy/tree/TreeElementState;
 	public fun chooseValue (Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Landroidx/compose/runtime/Composer;I)Ljava/lang/Object;
@@ -682,6 +682,15 @@ public final class org/jetbrains/jewel/foundation/lazy/tree/TreeViewOnKeyEvent$D
 	public static fun onSelectPreviousItem (Lorg/jetbrains/jewel/foundation/lazy/tree/TreeViewOnKeyEvent;Ljava/util/List;Lorg/jetbrains/jewel/foundation/lazy/SelectableLazyListState;)V
 }
 
+public final class org/jetbrains/jewel/foundation/modifier/ActivationKt {
+	public static final fun getModifierLocalActivated ()Landroidx/compose/ui/modifier/ProvidableModifierLocal;
+	public static final fun onActivated (Landroidx/compose/ui/Modifier;ZLkotlin/jvm/functions/Function1;)Landroidx/compose/ui/Modifier;
+	public static synthetic fun onActivated$default (Landroidx/compose/ui/Modifier;ZLkotlin/jvm/functions/Function1;ILjava/lang/Object;)Landroidx/compose/ui/Modifier;
+	public static final fun trackActivation (Landroidx/compose/ui/Modifier;)Landroidx/compose/ui/Modifier;
+	public static final fun trackComponentActivation (Landroidx/compose/ui/Modifier;Ljava/awt/Component;)Landroidx/compose/ui/Modifier;
+	public static final fun trackWindowActivation (Landroidx/compose/ui/Modifier;Ljava/awt/Window;)Landroidx/compose/ui/Modifier;
+}
+
 public final class org/jetbrains/jewel/foundation/modifier/BorderKt {
 	public static final fun border (Landroidx/compose/ui/Modifier;Lorg/jetbrains/jewel/foundation/Stroke;Landroidx/compose/ui/graphics/Shape;)Landroidx/compose/ui/Modifier;
 	public static final fun border-AkepmR4 (Landroidx/compose/ui/Modifier;Lorg/jetbrains/jewel/foundation/Stroke$Alignment;FLandroidx/compose/ui/graphics/Brush;Landroidx/compose/ui/graphics/Shape;F)Landroidx/compose/ui/Modifier;
@@ -723,12 +732,8 @@ public abstract interface class org/jetbrains/jewel/foundation/state/Interactive
 	public abstract fun isPressed ()Z
 }
 
-public abstract interface class org/jetbrains/jewel/foundation/state/SelectableComponentState : org/jetbrains/jewel/foundation/state/FocusableComponentState {
+public abstract interface class org/jetbrains/jewel/foundation/state/SelectableComponentState : org/jetbrains/jewel/foundation/state/InteractiveComponentState {
 	public abstract fun isSelected ()Z
-}
-
-public final class org/jetbrains/jewel/foundation/state/SelectableComponentState$DefaultImpls {
-	public static fun chooseValue (Lorg/jetbrains/jewel/foundation/state/SelectableComponentState;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Landroidx/compose/runtime/Composer;I)Ljava/lang/Object;
 }
 
 public abstract interface class org/jetbrains/jewel/foundation/state/ToggleableComponentState : org/jetbrains/jewel/foundation/state/SelectableComponentState {
@@ -738,10 +743,6 @@ public abstract interface class org/jetbrains/jewel/foundation/state/ToggleableC
 
 public final class org/jetbrains/jewel/foundation/state/ToggleableComponentState$Companion {
 	public final fun readToggleableState-VKZWuLQ (J)Landroidx/compose/ui/state/ToggleableState;
-}
-
-public final class org/jetbrains/jewel/foundation/state/ToggleableComponentState$DefaultImpls {
-	public static fun chooseValue (Lorg/jetbrains/jewel/foundation/state/ToggleableComponentState;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Landroidx/compose/runtime/Composer;I)Ljava/lang/Object;
 }
 
 public abstract interface class org/jetbrains/jewel/foundation/theme/JewelTheme {

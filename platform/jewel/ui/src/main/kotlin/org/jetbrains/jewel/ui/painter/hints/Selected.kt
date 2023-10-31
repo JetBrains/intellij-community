@@ -3,12 +3,13 @@ package org.jetbrains.jewel.ui.painter.hints
 import androidx.compose.runtime.Immutable
 import org.jetbrains.jewel.foundation.state.SelectableComponentState
 import org.jetbrains.jewel.ui.painter.PainterHint
+import org.jetbrains.jewel.ui.painter.PainterProviderScope
 import org.jetbrains.jewel.ui.painter.PainterSuffixHint
 
 @Immutable
 private object SelectedImpl : PainterSuffixHint() {
 
-    override fun suffix(): String = "Selected"
+    override fun PainterProviderScope.suffix(): String = "Selected"
 
     override fun toString(): String = "Selected"
 }

@@ -20,14 +20,14 @@ import org.w3c.dom.Element
 @Immutable
 sealed interface PainterHint {
 
-    fun canApplyTo(path: String): Boolean = true
+    fun PainterProviderScope.canApply(): Boolean = true
 
     /**
      * An empty [PainterHint], it will be ignored.
      */
     companion object None : PainterHint {
 
-        override fun canApplyTo(path: String): Boolean = false
+        override fun PainterProviderScope.canApply(): Boolean = false
 
         override fun toString(): String = "None"
     }
@@ -39,7 +39,7 @@ sealed interface PainterHint {
 @Immutable
 interface SvgPainterHint : PainterHint {
 
-    override fun canApplyTo(path: String): Boolean = path.substringAfterLast('.').lowercase() == "svg"
+    override fun PainterProviderScope.canApply(): Boolean = path.substringAfterLast('.').lowercase() == "svg"
 }
 
 /**
@@ -48,7 +48,7 @@ interface SvgPainterHint : PainterHint {
 @Immutable
 interface BitmapPainterHint : PainterHint {
 
-    override fun canApplyTo(path: String): Boolean = when (path.substringAfterLast('.').lowercase()) {
+    override fun PainterProviderScope.canApply(): Boolean = when (path.substringAfterLast('.').lowercase()) {
         "svg", "xml" -> false
         else -> true
     }
@@ -60,7 +60,7 @@ interface BitmapPainterHint : PainterHint {
 @Immutable
 interface XmlPainterHint : PainterHint {
 
-    override fun canApplyTo(path: String): Boolean = path.substringAfterLast('.').lowercase() == "xml"
+    override fun PainterProviderScope.canApply(): Boolean = path.substringAfterLast('.').lowercase() == "xml"
 }
 
 /**
@@ -74,20 +74,7 @@ interface PainterPathHint : PainterHint {
     /**
      * Replace the entire path with the given value.
      */
-    fun patch(path: String): String
-}
-
-/**
- * A [PainterHint] that modifies the module/jar path of the resource being loaded.
- * Main used in bridge mode.
- */
-@Immutable
-interface PainterResourcePathHint : PainterHint {
-
-    /**
-     * Patch the resource path with context classLoaders(for bridge module).
-     */
-    fun patch(path: String, classLoaders: List<ClassLoader>): String
+    fun PainterProviderScope.patch(): String
 }
 
 /**
@@ -100,13 +87,13 @@ interface PainterSvgPatchHint : SvgPainterHint {
     /**
      * Patch the SVG content.
      */
-    fun patch(element: Element)
+    fun PainterProviderScope.patch(element: Element)
 }
 
 @Immutable
 interface PainterWrapperHint : PainterHint {
 
-    fun wrap(painter: Painter): Painter
+    fun PainterProviderScope.wrap(painter: Painter): Painter
 }
 
 /**
@@ -118,7 +105,7 @@ interface PainterWrapperHint : PainterHint {
 @Immutable
 abstract class PainterPrefixHint : PainterPathHint {
 
-    override fun patch(path: String): String = buildString {
+    override fun PainterProviderScope.patch(): String = buildString {
         append(path.substringBeforeLast('/', ""))
         append('/')
         append(prefix())
@@ -128,7 +115,7 @@ abstract class PainterPrefixHint : PainterPathHint {
         append(path.substringAfterLast('.'))
     }
 
-    abstract fun prefix(): String
+    abstract fun PainterProviderScope.prefix(): String
 }
 
 /**
@@ -140,7 +127,7 @@ abstract class PainterPrefixHint : PainterPathHint {
 @Immutable
 abstract class PainterSuffixHint : PainterPathHint {
 
-    override fun patch(path: String): String = buildString {
+    override fun PainterProviderScope.patch(): String = buildString {
         append(path.substringBeforeLast('/', ""))
         append('/')
         append(path.substringBeforeLast('.').substringAfterLast('/'))
@@ -150,5 +137,5 @@ abstract class PainterSuffixHint : PainterPathHint {
         append(path.substringAfterLast('.'))
     }
 
-    abstract fun suffix(): String
+    abstract fun PainterProviderScope.suffix(): String
 }

@@ -2,10 +2,11 @@ package org.jetbrains.jewel.ui.painter.hints
 
 import org.jetbrains.jewel.ui.painter.PainterHint
 import org.jetbrains.jewel.ui.painter.PainterPathHint
+import org.jetbrains.jewel.ui.painter.PainterProviderScope
 
 private class OverrideImpl(private val iconOverride: Map<String, String>) : PainterPathHint {
 
-    override fun patch(path: String): String = iconOverride[path] ?: path
+    override fun PainterProviderScope.patch(): String = iconOverride[path] ?: path
 
     override fun toString(): String = "Override(${iconOverride.hashCode()})"
 

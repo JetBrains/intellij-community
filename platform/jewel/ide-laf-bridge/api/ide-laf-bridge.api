@@ -48,8 +48,13 @@ public abstract interface annotation class org/jetbrains/jewel/bridge/SwingLafKe
 }
 
 public final class org/jetbrains/jewel/bridge/ToolWindowExtensionsKt {
-	public static final fun addComposeTab (Lcom/intellij/openapi/wm/ToolWindow;Ljava/lang/String;ZZLkotlin/jvm/functions/Function2;)V
-	public static synthetic fun addComposeTab$default (Lcom/intellij/openapi/wm/ToolWindow;Ljava/lang/String;ZZLkotlin/jvm/functions/Function2;ILjava/lang/Object;)V
+	public static final fun addComposeTab (Lcom/intellij/openapi/wm/ToolWindow;Ljava/lang/String;ZZLkotlin/jvm/functions/Function3;)V
+	public static synthetic fun addComposeTab$default (Lcom/intellij/openapi/wm/ToolWindow;Ljava/lang/String;ZZLkotlin/jvm/functions/Function3;ILjava/lang/Object;)V
+}
+
+public abstract interface class org/jetbrains/jewel/bridge/ToolWindowScope {
+	public abstract fun getPanel ()Landroidx/compose/ui/awt/ComposePanel;
+	public abstract fun getToolWindow ()Lcom/intellij/openapi/wm/ToolWindow;
 }
 
 public final class org/jetbrains/jewel/bridge/actionSystem/ProvideDataKt {

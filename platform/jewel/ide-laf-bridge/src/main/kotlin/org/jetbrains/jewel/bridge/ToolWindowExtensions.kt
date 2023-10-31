@@ -9,15 +9,30 @@ fun ToolWindow.addComposeTab(
     tabDisplayName: String,
     isLockable: Boolean = true,
     isCloseable: Boolean = false,
-    content: @Composable () -> Unit,
+    content: @Composable ToolWindowScope.() -> Unit,
 ) {
     // We need to make sure this is done before Compose is attached.
     // The operation is idempotent, so we can safely do it every time.
     enableNewSwingCompositing()
 
     val composePanel = ComposePanel()
-    composePanel.setContent(content)
+
+    val scope = object : ToolWindowScope {
+        override val toolWindow: ToolWindow = this@addComposeTab
+        override val panel: ComposePanel = composePanel
+    }
+
+    composePanel.setContent {
+        scope.content()
+    }
     val tabContent = contentManager.factory.createContent(composePanel, tabDisplayName, isLockable)
     tabContent.isCloseable = isCloseable
     contentManager.addContent(tabContent)
+}
+
+interface ToolWindowScope {
+
+    val toolWindow: ToolWindow
+
+    val panel: ComposePanel
 }
