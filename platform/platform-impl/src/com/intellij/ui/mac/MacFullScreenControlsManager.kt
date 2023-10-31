@@ -141,26 +141,15 @@ internal object MacFullScreenControlsManager {
 
   private fun updateFullScreenButtons(enter: Boolean) {
     ApplicationManager.getApplication().invokeLater {
-      if (enter) {
-        doUpdateFullScreenButtons(true)
-      }
-      else {
-        ApplicationManager.getApplication().invokeLater {
-          doUpdateFullScreenButtons(false)
-        }
-      }
-    }
-  }
-
-  private fun doUpdateFullScreenButtons(enter: Boolean) {
-    val frames = getAllFrameWindows()
-    Foundation.executeOnMainThread(true, false) {
-      val selector = Foundation.createSelector("updateFullScreenButtons:")
-      for (frameOrTab in frames) {
-        val window = MacUtil.getWindowFromJavaWindow((frameOrTab as ProjectFrameHelper).frame)
-        val delegate = Foundation.invoke(window, "delegate")
-        if (Foundation.invoke(delegate, "respondsToSelector:", selector).booleanValue()) {
-          Foundation.invoke(delegate, "updateFullScreenButtons:", if (enter) 1 else 0)
+      val frames = getAllFrameWindows()
+      Foundation.executeOnMainThread(true, false) {
+        val selector = Foundation.createSelector("updateFullScreenButtons:")
+        for (frameOrTab in frames) {
+          val window = MacUtil.getWindowFromJavaWindow((frameOrTab as ProjectFrameHelper).frame)
+          val delegate = Foundation.invoke(window, "delegate")
+          if (Foundation.invoke(delegate, "respondsToSelector:", selector).booleanValue()) {
+            Foundation.invoke(delegate, "updateFullScreenButtons:", if (enter) 1 else 0)
+          }
         }
       }
     }
