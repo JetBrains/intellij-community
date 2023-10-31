@@ -1,7 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hints.settings
 
-import com.intellij.codeInsight.daemon.impl.InlayHintsPassFactory
+import com.intellij.codeInsight.daemon.impl.InlayHintsPassFactoryInternal
 import com.intellij.codeInsight.hints.*
 import com.intellij.codeInsight.hints.settings.language.createEditor
 import com.intellij.internal.inspector.PropertyBean
@@ -374,7 +374,7 @@ class InlaySettingsPanel(val project: Project) : JPanel(BorderLayout()) {
   fun apply() {
     apply(tree.model.root as CheckedTreeNode, InlayHintsSettings.instance())
     ParameterHintsPassFactory.forceHintsUpdateOnNextPass()
-    InlayHintsPassFactory.restartDaemonUpdatingHints(project)
+    InlayHintsPassFactoryInternal.restartDaemonUpdatingHints(project)
   }
 
   private fun apply(node: CheckedTreeNode, settings: InlayHintsSettings) {

@@ -4,7 +4,7 @@ package com.intellij.codeInsight.hints.codeVision
 import com.intellij.codeInsight.codeVision.CodeVisionHost
 import com.intellij.codeInsight.codeVision.CodeVisionInitializer
 import com.intellij.codeInsight.codeVision.settings.CodeVisionSettings
-import com.intellij.codeInsight.daemon.impl.InlayHintsPassFactory
+import com.intellij.codeInsight.daemon.impl.InlayHintsPassFactoryInternal
 import com.intellij.codeInsight.hints.InlayHintsSwitch
 import com.intellij.openapi.project.Project
 
@@ -12,7 +12,7 @@ class CodeVisionSwitch : InlayHintsSwitch {
   companion object {
     fun setCodeVisionEnabled(project: Project, value: Boolean) {
       CodeVisionSettings.instance().codeVisionEnabled = value
-      InlayHintsPassFactory.restartDaemonUpdatingHints(project)
+      InlayHintsPassFactoryInternal.restartDaemonUpdatingHints(project)
       CodeVisionInitializer.getInstance(project).getCodeVisionHost().invalidateProviderSignal.fire(CodeVisionHost.LensInvalidateSignal(null))
     }
   }

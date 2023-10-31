@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.problems.pass
 
-import com.intellij.codeInsight.daemon.impl.InlayHintsPassFactory.Companion.restartDaemonUpdatingHints
+import com.intellij.codeInsight.daemon.impl.InlayHintsPassFactoryInternal.Companion.restartDaemonUpdatingHints
 import com.intellij.codeInsight.daemon.problems.FileStateCache
 import com.intellij.codeInsight.daemon.problems.FileStateUpdater.Companion.removeState
 import com.intellij.codeInsight.daemon.problems.FileStateUpdater.Companion.setPreviousState
