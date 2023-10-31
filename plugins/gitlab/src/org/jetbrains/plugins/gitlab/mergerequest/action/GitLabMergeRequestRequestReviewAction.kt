@@ -5,12 +5,12 @@ import com.intellij.collaboration.async.combineAndCollect
 import com.intellij.collaboration.async.throwFailure
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.codereview.Avatar
-import com.intellij.collaboration.ui.codereview.list.search.ChooserPopupUtil
-import com.intellij.collaboration.ui.codereview.list.search.SimpleSelectablePopupItemRenderer
 import com.intellij.collaboration.ui.icon.IconsProvider
+import com.intellij.collaboration.ui.util.popup.ChooserPopupUtil
+import com.intellij.collaboration.ui.util.popup.SelectablePopupItemPresentation
+import com.intellij.collaboration.ui.util.popup.SimpleSelectablePopupItemRenderer
 import com.intellij.ui.awt.RelativePoint
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestReviewFlowViewModel
@@ -42,7 +42,7 @@ internal class GitLabMergeRequestRequestReviewAction(
         reviewFlowVm.potentialReviewers.throwFailure(),
         filteringMapper = { user -> user.username },
         renderer = SimpleSelectablePopupItemRenderer.create { reviewer ->
-          ChooserPopupUtil.SelectablePopupItemPresentation.Simple(
+          SelectablePopupItemPresentation.Simple(
             reviewer.username,
             avatarIconsProvider.getIcon(reviewer, Avatar.Sizes.BASE),
             null,
