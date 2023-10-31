@@ -80,14 +80,15 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
     ): PsiElement {
         val expression = simpleNameReference.expression
         if (fqName.isRoot) return expression
+        val writableFqn = if (fqName.pathSegments().last().asString() == "Companion") fqName.parent() else fqName
         val importDirective = expression.parentOfType<KtImportDirective>(withSelf = false)
-        if (importDirective != null) return importDirective.replaceWith(fqName) ?: expression
+        if (importDirective != null) return importDirective.replaceWith(writableFqn) ?: expression
         val newElement = expression.containingKtFile.withOptimizedImports {
             when (val elementToReplace = expression.getQualifiedElement()) {
-                is KtUserType -> elementToReplace.replaceWith(fqName)
-                is KtDotQualifiedExpression -> elementToReplace.replaceWith(fqName)
-                is KtCallExpression -> elementToReplace.replaceWith(fqName)
-                is KtSimpleNameExpression -> elementToReplace.replaceWith(fqName)
+                is KtUserType -> elementToReplace.replaceWith(writableFqn)
+                is KtDotQualifiedExpression -> elementToReplace.replaceWith(writableFqn)
+                is KtCallExpression -> elementToReplace.replaceWith(writableFqn)
+                is KtSimpleNameExpression -> elementToReplace.replaceWith(writableFqn)
                 else -> null
             }
         } ?: expression

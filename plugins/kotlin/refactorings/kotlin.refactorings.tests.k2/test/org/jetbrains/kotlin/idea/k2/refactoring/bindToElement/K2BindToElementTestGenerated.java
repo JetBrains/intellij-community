@@ -66,6 +66,29 @@ public abstract class K2BindToElementTestGenerated extends AbstractK2BindToEleme
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../idea/tests/testData/refactoring/bindToElement/callOnCompanionObject")
+    public static class CallOnCompanionObject extends AbstractK2BindToElementTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("FullyQualified.kt")
+        public void testFullyQualified() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/bindToElement/callOnCompanionObject/FullyQualified.kt");
+        }
+
+        @TestMetadata("RootPkg.kt")
+        public void testRootPkg() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/bindToElement/callOnCompanionObject/RootPkg.kt");
+        }
+
+        @TestMetadata("UnQualified.kt")
+        public void testUnQualified() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/bindToElement/callOnCompanionObject/UnQualified.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../idea/tests/testData/refactoring/bindToElement/callOnObject")
     public static class CallOnObject extends AbstractK2BindToElementTest {
         private void runTest(String testDataFilePath) throws Exception {
