@@ -140,16 +140,6 @@ class KotlinGradleProjectDataService : AbstractProjectDataService<ModuleData, Vo
         project: Project,
         modelsProvider: IdeModifiableModelsProvider
     ) {
-        for (moduleNode in toImport) {
-            // If source sets are present, configure facets in the their modules
-            if (ExternalSystemApiUtil.getChildren(moduleNode, GradleSourceSetData.KEY).isNotEmpty()) continue
-
-            val moduleData = moduleNode.data
-            val ideModule = modelsProvider.findIdeModule(moduleData) ?: continue
-            val kotlinFacet = configureFacetByGradleModule(ideModule, modelsProvider, moduleNode, null) ?: continue
-            GradleProjectImportHandler.getInstances(project).forEach { it.importByModule(kotlinFacet, moduleNode) }
-        }
-
         runReadAction {
             val codeStyleStr = GradlePropertiesFileFacade.forProject(project).readProperty(KOTLIN_CODE_STYLE_GRADLE_SETTING)
             ProjectCodeStyleImporter.apply(project, codeStyleStr)
