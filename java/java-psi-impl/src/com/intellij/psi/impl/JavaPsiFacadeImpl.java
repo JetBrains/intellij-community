@@ -167,7 +167,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
       }
     }
 
-    return result == null ? Collections.emptyList() : result;
+    return result == null ? Collections.emptyList() : new ArrayList<>(result);
   }
 
   private static Predicate<PsiClass> getFilterFromFinders(@NotNull GlobalSearchScope scope, @NotNull List<? extends PsiElementFinder> finders) {
@@ -273,7 +273,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
     for (PsiElementFinder finder : finders) {
       PsiClass[] classes = finder.getClasses(psiPackage, scope);
       if (classes.length == 0) continue;
-      if (result == null) result = new LinkedHashSet<>(classes.length);
+      if (result == null) result = new HashSet<>(classes.length);
       filterClassesAndAppend(finder, classesFilter, classes, result);
     }
 
