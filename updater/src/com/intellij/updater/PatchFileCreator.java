@@ -20,14 +20,15 @@ import static com.intellij.updater.Runner.LOG;
 public final class PatchFileCreator {
   private static final String PATCH_INFO_FILE_NAME = ".patch-info";
 
-  public static Patch create(PatchSpec spec, File patchFile, UpdaterUI ui, Path cacheDir) throws IOException {
+  @SuppressWarnings("UseOfSystemOutOrSystemErr")
+  public static Patch create(PatchSpec spec, File patchFile, Path cacheDir) throws IOException {
     LOG.info("Creating the patch file '" + patchFile + "'...");
-    ui.startProcess("Creating the patch file '" + patchFile + "'...");
+    System.out.println("Creating the patch file '" + patchFile + "'...");
 
-    Patch patchInfo = new Patch(spec, ui);
+    var patchInfo = new Patch(spec);
 
     LOG.info("Packing entries...");
-    ui.startProcess("Packing entries...");
+    System.out.println("Packing entries...");
 
     List<PatchAction> actions = patchInfo.getActions();
     File olderDir = new File(spec.getOldFolder());

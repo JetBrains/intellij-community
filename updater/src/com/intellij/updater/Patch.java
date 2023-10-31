@@ -26,14 +26,14 @@ public class Patch {
   private final int myTimeout;
   private final List<PatchAction> myActions;
 
-  public Patch(PatchSpec spec, UpdaterUI ui) throws IOException {
+  public Patch(PatchSpec spec) throws IOException {
     myOldBuild = spec.getOldVersionDescription();
     myNewBuild = spec.getNewVersionDescription();
     myRoot = spec.getRoot();
     myIsStrict = spec.isStrict();
     myDeleteFiles = spec.getDeleteFiles();
     myTimeout = spec.getTimeout();
-    myActions = calculateActions(spec, ui);
+    myActions = calculateActions(spec);
   }
 
   public Patch(InputStream patchIn) throws IOException {
@@ -50,9 +50,10 @@ public class Patch {
     myActions = readActions(in);
   }
 
-  private List<PatchAction> calculateActions(PatchSpec spec, UpdaterUI ui) throws IOException {
+  @SuppressWarnings("UseOfSystemOutOrSystemErr")
+  private List<PatchAction> calculateActions(PatchSpec spec) throws IOException {
     LOG.info("Calculating difference...");
-    ui.startProcess("Calculating difference...");
+    System.out.println("Calculating difference...");
 
     File olderDir = new File(spec.getOldFolder());
     File newerDir = new File(spec.getNewFolder());
@@ -67,7 +68,7 @@ public class Patch {
     DiffCalculator.Result diff = DiffCalculator.calculate(oldChecksums, newChecksums, critical, optional, true);
 
     LOG.info("Preparing actions...");
-    ui.startProcess("Preparing actions...");
+    System.out.println("Preparing actions...");
 
     List<PatchAction> actions = new ArrayList<>();
 

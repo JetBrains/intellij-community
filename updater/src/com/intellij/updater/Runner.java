@@ -272,16 +272,16 @@ public final class Runner {
       "  <folder>: The folder where product was installed. For example: c:/Program Files/JetBrains/IntelliJ IDEA 2017.3.4");
   }
 
+  @SuppressWarnings("UseOfSystemOutOrSystemErr")
   private static boolean create(PatchSpec spec, Path cacheDir) {
-    ConsoleUpdaterUI ui = new ConsoleUpdaterUI();
     boolean success = false;
 
     try {
       File tempPatchFile = Utils.getTempFile("patch");
-      PatchFileCreator.create(spec, tempPatchFile, ui, cacheDir);
+      PatchFileCreator.create(spec, tempPatchFile, cacheDir);
 
       LOG.info("Packing JAR file: " + spec.getPatchFile());
-      ui.startProcess("Packing JAR file '" + spec.getPatchFile() + "'...");
+      System.out.println("Packing JAR file '" + spec.getPatchFile() + "'...");
 
       try (ZipOutputWrapper out = new ZipOutputWrapper(Files.newOutputStream(Paths.get(spec.getPatchFile()), StandardOpenOption.CREATE_NEW));
            ZipInputStream in = new ZipInputStream(Files.newInputStream(Paths.get(spec.getJarFile())))) {
@@ -297,26 +297,22 @@ public final class Runner {
     }
     catch (Throwable t) {
       LOG.log(Level.SEVERE, "create failed", t);
-      ui.showError(printStackTrace(t));
+      t.printStackTrace(System.err);
     }
     finally {
       try {
-        cleanup(ui);
+        System.out.println("Cleaning up...");
+        LOG.info("Cleaning up...");
+        Utils.cleanup();
       }
       catch (Throwable t) {
         success = false;
         LOG.log(Level.SEVERE, "cleanup failed", t);
-        ui.showError(printStackTrace(t));
+        t.printStackTrace(System.err);
       }
     }
 
     return success;
-  }
-
-  private static String printStackTrace(Throwable t) {
-    StringWriter writer = new StringWriter();
-    t.printStackTrace(new PrintWriter(writer));
-    return writer.toString();
   }
 
   private static void cleanup(UpdaterUI ui) throws IOException {

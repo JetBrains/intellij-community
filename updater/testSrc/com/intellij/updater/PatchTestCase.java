@@ -51,7 +51,7 @@ public abstract class PatchTestCase extends UpdaterTestCase {
     PatchSpec spec = new PatchSpec()
       .setOldFolder(myOlderDir.getAbsolutePath())
       .setNewFolder(myNewerDir.getAbsolutePath());
-    return new Patch(tuner.apply(spec), TEST_UI);
+    return new Patch(tuner.apply(spec));
   }
 
   protected void resetNewerDir() throws IOException {

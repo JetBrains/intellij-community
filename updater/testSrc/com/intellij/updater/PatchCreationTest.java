@@ -47,7 +47,7 @@ public class PatchCreationTest extends PatchTestCase {
       .setOldFolder(myOlderDir.getAbsolutePath())
       .setNewFolder(myNewerDir.getAbsolutePath())
       .setIgnoredFiles(asList("Readme.txt", "bin/idea.bat"));
-    Patch patch = new Patch(spec, TEST_UI);
+    Patch patch = new Patch(spec);
 
     assertThat(sortActions(patch.getActions())).containsExactly(
       new CreateAction(patch, "newDir/"),
@@ -157,7 +157,7 @@ public class PatchCreationTest extends PatchTestCase {
       .setOldFolder(myOlderDir.getAbsolutePath())
       .setNewFolder(myNewerDir.getAbsolutePath())
       .setOptionalFiles(singletonList("lib/annotations.jar"));
-    Patch patch2 = new Patch(spec, TEST_UI);
+    Patch patch2 = new Patch(spec);
     FileUtil.delete(new File(myOlderDir, "lib/annotations.jar"));
     assertThat(patch2.validate(myOlderDir, TEST_UI)).isEmpty();
   }
