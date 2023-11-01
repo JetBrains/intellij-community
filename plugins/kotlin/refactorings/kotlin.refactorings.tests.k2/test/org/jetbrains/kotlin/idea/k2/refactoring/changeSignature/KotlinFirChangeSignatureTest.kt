@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.k2.refactoring.changeSignature
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
 import org.jetbrains.kotlin.descriptors.Visibility
+import org.jetbrains.kotlin.idea.codeinsight.utils.AddQualifiersUtil
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.BaseKotlinChangeSignatureTest
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtExpression
@@ -29,7 +30,7 @@ class KotlinFirChangeSignatureTest :
     }
 
     override fun addFullQualifier(fragment: KtExpressionCodeFragment) {
-        TODO("Not yet implemented")
+        AddQualifiersUtil.addQualifiersRecursively(fragment)
     }
 
     override fun KotlinChangeInfo.createKotlinParameter(

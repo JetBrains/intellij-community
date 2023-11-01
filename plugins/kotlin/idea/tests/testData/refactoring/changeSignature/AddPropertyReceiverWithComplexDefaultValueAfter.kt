@@ -9,5 +9,3 @@ fun callFoo() = Dep2().eval(Dep.MY_CONSTANT_FROM_DEP + Dep2.NUMBER).foo
 fun t() {
     val s = Dep2().eval(Dep.MY_CONSTANT_FROM_DEP + Dep2.NUMBER).foo + " world"
 }
-
-// IGNORE_K2
