@@ -347,9 +347,7 @@ class ProjectWindowCustomizerService : Disposable {
     g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY)
     val color = getGradientProjectColor(project)
 
-    val length = Registry.intValue("ide.colorful.toolbar.gradient.length", 600)
-    val x = parent.x.toFloat()
-    val y = parent.y.toFloat()
+    val length = Registry.intValue("ide.colorful.toolbar.gradient.length", 300)
     val projectComboBtn = ComponentUtil.findComponentsOfType(parent, ToolbarComboButton::class.java).find {
       ClientProperty.get(it, CustomComponentAction.ACTION_KEY) is ProjectToolbarWidgetAction
     }
@@ -358,19 +356,15 @@ class ProjectWindowCustomizerService : Disposable {
       SwingUtilities.convertPoint(it.parent, it.x, it.y, parent).x.toFloat() + it.margin.left.toFloat() + projectIconWidth / 2
     } ?: 150f
 
-    val rightRadius = length - offset
-    g.paint = RadialGradientPaint(x + offset, y + height / 2, rightRadius, floatArrayOf(0.0f, 0.6f), arrayOf(color, parent.background))
-    g.fillRect(offset.toInt(), 0, rightRadius.toInt(), height)
-
-    val radiusOfShadowing = rightRadius * 0.6
-    ComponentUtil.findComponentsOfType(parent, MainToolbar::class.java).firstOrNull()?.let {
-      val mainToolbarXPosition = SwingUtilities.convertPoint(it, 0, 0, parent).x
-      val radius = (offset - mainToolbarXPosition / 2).coerceIn(60f, rightRadius)
-      if (radius <= radiusOfShadowing) {
-        g.paint = RadialGradientPaint(x + offset, y + height / 2, radius, floatArrayOf(0.3f, 1f), arrayOf(color, parent.background))
-      }
-    }
+    val mainToolbarXPosition = ComponentUtil.findComponentsOfType(parent, MainToolbar::class.java).firstOrNull()?.location?.x ?: 0
+    val leftBound = (offset - length).coerceAtLeast(mainToolbarXPosition.toFloat() / 2)
+    g.paint = GradientPaint(leftBound, 0f, parent.background, offset, 0f, color)
     g.fillRect(0, 0, offset.toInt(), height)
+
+    val rightBound = offset + length
+    g.paint = GradientPaint(offset, 0f, color, rightBound, 0f, parent.background)
+    g.fillRect(offset.toInt(), 0, length, height)
+
     return true
   }
 
