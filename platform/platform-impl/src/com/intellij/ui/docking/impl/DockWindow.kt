@@ -42,7 +42,7 @@ internal class DockWindow(
   private val dockManager: DockManagerImpl,
   dimensionKey: String?,
   val id: String,
-  project: Project,
+  private val project: Project,
   private var container: DockContainer,
   isDialog: Boolean,
   val supportReopen: Boolean,
@@ -111,7 +111,7 @@ internal class DockWindow(
     if (ExperimentalUI.isNewUI()) {
       buttonManager = ToolWindowPaneNewButtonManager(paneId, false)
       buttonManager.add(dockContentUiContainer)
-      buttonManager.initMoreButton()
+      buttonManager.initMoreButton(project)
     }
     else {
       buttonManager = ToolWindowPaneOldButtonManager(paneId)
