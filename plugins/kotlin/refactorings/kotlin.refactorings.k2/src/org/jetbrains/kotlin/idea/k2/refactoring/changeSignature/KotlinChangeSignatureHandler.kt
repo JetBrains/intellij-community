@@ -18,70 +18,83 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.util.OperatorNameConventions
 
 object KotlinChangeSignatureHandler : KotlinChangeSignatureHandlerBase<KtCallableDeclaration>() {
-  override fun asInvokeOperator(call: KtCallElement?): PsiElement? {
-      val psiElement = call?.mainReference?.resolve() ?: return null
-      if (psiElement is KtNamedFunction &&
-          KotlinPsiHeuristics.isPossibleOperator(psiElement) &&
-          psiElement.name == OperatorNameConventions.INVOKE.asString()
-      ) {
-          return psiElement
-      }
-      return null
-  }
-
-  override fun referencedClassOrCallable(calleeExpr: KtReferenceExpression): PsiElement? {
-    return calleeExpr.mainReference.resolve()
-  }
-
-  override fun findDescriptor(element: KtElement,
-                              project: Project,
-                              editor: Editor?): KtCallableDeclaration? {
-    return when (element) {
-      is KtParameter -> if (element.hasValOrVar()) element else null
-      is KtCallableDeclaration -> element
-      is KtClass -> element.primaryConstructor
-      else -> null
+    override fun asInvokeOperator(call: KtCallElement?): PsiElement? {
+        val psiElement = call?.mainReference?.resolve() ?: return null
+        if (psiElement is KtNamedFunction &&
+            KotlinPsiHeuristics.isPossibleOperator(psiElement) &&
+            psiElement.name == OperatorNameConventions.INVOKE.asString()
+        ) {
+            return psiElement
+        }
+        return null
     }
-  }
 
-  override fun isVarargFunction(function: KtCallableDeclaration): Boolean {
-    return function is KtNamedFunction && function.valueParameters.any { it.isVarArg }
-  }
+    override fun referencedClassOrCallable(calleeExpr: KtReferenceExpression): PsiElement? {
+        return calleeExpr.mainReference.resolve()
+    }
 
-  @OptIn(KtAllowAnalysisOnEdt::class)
-  override fun isSynthetic(function: KtCallableDeclaration, context: KtElement): Boolean {
-    return allowAnalysisOnEdt {  analyze(context) { function.getSymbol().origin == KtSymbolOrigin.SOURCE_MEMBER_GENERATED } }
-  }
+    override fun findDescriptor(
+        element: KtElement,
+        project: Project,
+        editor: Editor?
+    ): KtCallableDeclaration? {
+        return when (element) {
+            is KtParameter -> if (element.hasValOrVar()) element else null
+            is KtCallableDeclaration -> element
+            is KtClass -> element.primaryConstructor
+            else -> null
+        }
+    }
 
-  @OptIn(KtAllowAnalysisOnEdt::class)
-  override fun isLibrary(function: KtCallableDeclaration, context: KtElement): Boolean {
-    return allowAnalysisOnEdt { analyze(context) { function.getSymbol().origin == KtSymbolOrigin.LIBRARY } }
-  }
+    override fun isVarargFunction(function: KtCallableDeclaration): Boolean {
+        return function is KtNamedFunction && function.valueParameters.any { it.isVarArg }
+    }
 
-  override fun isJavaCallable(function: KtCallableDeclaration): Boolean {
-    return false
-  }
+    @OptIn(KtAllowAnalysisOnEdt::class)
+    override fun isSynthetic(function: KtCallableDeclaration, context: KtElement): Boolean {
+        return allowAnalysisOnEdt { analyze(context) { function.getSymbol().origin == KtSymbolOrigin.SOURCE_MEMBER_GENERATED } }
+    }
 
-  override fun isDynamic(function: KtCallableDeclaration): Boolean {
-    return false //todo
-  }
+    @OptIn(KtAllowAnalysisOnEdt::class)
+    override fun isLibrary(function: KtCallableDeclaration, context: KtElement): Boolean {
+        return allowAnalysisOnEdt { analyze(context) { function.getSymbol().origin == KtSymbolOrigin.LIBRARY } }
+    }
 
-  override fun getDeclaration(t: KtCallableDeclaration, project: Project): PsiElement {
-    return t
-  }
+    override fun isJavaCallable(function: KtCallableDeclaration): Boolean {
+        return false
+    }
 
-  override fun getDeclarationName(t: KtCallableDeclaration): String {
-    return (t as PsiNamedElement).name!!
-  }
+    override fun isDynamic(function: KtCallableDeclaration): Boolean {
+        return false //todo
+    }
 
-  override fun runChangeSignature(project: Project,
-                                  editor: Editor?,
-                                  callableDescriptor: KtCallableDeclaration,
-                                  context: PsiElement) {
-      when (callableDescriptor) {
-          is KtFunction -> KotlinChangeSignatureDialog(project, editor, KotlinMethodDescriptor(callableDescriptor), context, null).show()
-          is KtProperty -> KotlinChangePropertySignatureDialog(project, KotlinMethodDescriptor(callableDescriptor)).show()
-      }
+    override fun getDeclaration(t: KtCallableDeclaration, project: Project): PsiElement {
+        return t
+    }
 
-  }
+    override fun getDeclarationName(t: KtCallableDeclaration): String {
+        return (t as PsiNamedElement).name!!
+    }
+
+    override fun runChangeSignature(
+        project: Project, editor: Editor?, callableDescriptor: KtCallableDeclaration, context: PsiElement
+    ) {
+        when {
+            callableDescriptor is KtFunction -> {
+                KotlinChangeSignatureDialog(project, editor, KotlinMethodDescriptor(callableDescriptor), context, null).show()
+            }
+
+            callableDescriptor is KtProperty || callableDescriptor is KtParameter && callableDescriptor.hasValOrVar() -> {
+                KotlinChangePropertySignatureDialog(project, KotlinMethodDescriptor(callableDescriptor)).show()
+            }
+
+            callableDescriptor is KtParameter -> {
+                val ownerFunction = callableDescriptor.ownerFunction
+                if (ownerFunction is KtCallableDeclaration) {
+                    runChangeSignature(project, editor, ownerFunction, context)
+                }
+            }
+        }
+
+    }
 }
