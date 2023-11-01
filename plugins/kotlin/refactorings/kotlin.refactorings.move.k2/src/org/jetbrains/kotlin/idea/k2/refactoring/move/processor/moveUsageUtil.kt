@@ -77,18 +77,14 @@ internal val KtDeclarationContainer.topLevelDeclarationsToUpdate: List<KtNamedDe
  */
 internal val KtNamedDeclaration.needsReferenceUpdate: Boolean
     get() {
+        val isClassMember = parent.parent is KtClass
         return when (this) {
-            is KtFunction -> !isLocal && !isInstanceAccessible
-            is KtProperty -> !isLocal && !isInstanceAccessible
+            is KtFunction -> !isLocal && !isClassMember
+            is KtProperty -> !isLocal && !isClassMember
             is KtClassOrObject -> true
             else -> false
         }
     }
-
-/**
- * @return whether a declaration is an instance method or property.
- */
-private val KtNamedDeclaration.isInstanceAccessible get() = parent.parent is KtClass
 
 internal fun KtDeclarationContainer.findUsages(
     searchInCommentsAndStrings: Boolean,

@@ -63,16 +63,16 @@ sealed class K2MoveRenameUsageInfo(
          */
         @OptIn(KtAllowAnalysisFromWriteAction::class)
         private fun findInternalUsages(containingDecl: KtNamedDeclaration): List<K2MoveRenameUsageInfo> = allowAnalysisFromWriteAction {
-          fun KtDeclarationSymbol.isImported(file: KtFile): Boolean {
-            val fqName = when (this) {
-                           is KtClassLikeSymbol -> classIdIfNonLocal?.asSingleFqName()
-                           is KtConstructorSymbol -> containingClassIdIfNonLocal?.asSingleFqName()
-                           is KtCallableSymbol -> callableIdIfNonLocal?.asSingleFqName()
-                           else -> null
-                         } ?: return false
-            val importPaths = file.importDirectives.mapNotNull { it.importPath }
-            return importPaths.any { fqName.isImported(it, false) }
-          }
+            fun KtDeclarationSymbol.isImported(file: KtFile): Boolean {
+                val fqName = when (this) {
+                    is KtClassLikeSymbol -> classIdIfNonLocal?.asSingleFqName()
+                    is KtConstructorSymbol -> containingClassIdIfNonLocal?.asSingleFqName()
+                    is KtCallableSymbol -> callableIdIfNonLocal?.asSingleFqName()
+                    else -> null
+                } ?: return false
+                val importPaths = file.importDirectives.mapNotNull { it.importPath }
+                return importPaths.any { fqName.isImported(it, false) }
+            }
 
           val usages = mutableListOf<K2MoveRenameUsageInfo>()
           containingDecl.forEachDescendantOfType<KtSimpleNameExpression> { refExpr ->
@@ -82,7 +82,7 @@ sealed class K2MoveRenameUsageInfo(
               val ref = refExpr.mainReference
               val declSymbol = ref.resolveToSymbol() as? KtDeclarationSymbol? ?: return@forEachDescendantOfType
               val declPsi = declSymbol.psi as? KtNamedDeclaration ?: return@forEachDescendantOfType
-              if (!declSymbol.isImported(refExpr.containingKtFile) && declPsi.needsReferenceUpdate) {
+              if (!declSymbol.isImported(refExpr.containingKtFile) && refExpr.isImportable() && declPsi.needsReferenceUpdate) {
                 val usageInfo = ref.createUsageInfo(declSymbol.psi())
                 usages.add(usageInfo)
               }
@@ -107,21 +107,34 @@ sealed class K2MoveRenameUsageInfo(
         }
 
         @OptIn(KtAllowAnalysisFromWriteAction::class)
-        private fun KtSimpleNameExpression.isUnqualifiable(): Boolean {
+        fun KtSimpleNameExpression.isUnqualifiable(): Boolean {
             // example: a.foo() where foo is an extension function
             fun KtSimpleNameExpression.isExtensionReference(): Boolean = allowAnalysisFromWriteAction {
-              analyze(this) {
-                resolveCall()?.singleCallOrNull<KtCallableMemberCall<*, *>>()?.partiallyAppliedSymbol?.extensionReceiver != null
-              }
+                analyze(this) {
+                    resolveCall()?.singleCallOrNull<KtCallableMemberCall<*, *>>()?.partiallyAppliedSymbol?.extensionReceiver != null
+                }
             }
 
             // example: ::foo
             fun KtSimpleNameExpression.isCallableReferenceExpressionWithoutQualifier(): Boolean = allowAnalysisFromWriteAction {
-              val parent = parent
-              return parent is KtCallableReferenceExpression && parent.receiverExpression == null
+                val parent = parent
+                return parent is KtCallableReferenceExpression && parent.receiverExpression == null
             }
 
             return isExtensionReference() || isCallableReferenceExpressionWithoutQualifier()
+        }
+
+        /**
+         * For example:
+         * * `Foo.bar().fooBar` it will return true for `Foo` but false for `bar` and `fooBar`
+         * * `x.bar()` it will return `bar` in case `bar` is an extension function
+         */
+        private fun KtSimpleNameExpression.isImportable(): Boolean {
+            if (isUnqualifiable()) return true
+            val baseExpression = (parent as? KtCallExpression) ?: this
+            val parent = baseExpression.parent
+            if (parent !is KtDotQualifiedExpression) return true
+            return parent.selectorExpression != baseExpression // check if this expression is first in qualified chain
         }
 
         private fun KtReference.createUsageInfo(declaration: PsiElement): K2MoveRenameUsageInfo {
