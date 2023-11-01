@@ -2,6 +2,8 @@
 package com.intellij.platform.ide.bootstrap
 
 import com.intellij.diagnostic.PluginException
+import com.intellij.internal.statistic.eventLog.EventLogGroup
+import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ConfigImportHelper
 import com.intellij.openapi.diagnostic.logger
@@ -38,9 +40,11 @@ internal suspend fun runStartupWizard(isInitialStart: Job, app: Application) {
           withTimeout(timeoutMs.milliseconds) {
             isInitialStart.join()
           }
+          IdeStartupWizardCollector.logInitialStartSuccess()
         } catch (_: TimeoutCancellationException) {
           log.warn("Timeout on waiting for initial start, proceeding without waiting, disabling the startup flow")
           com.intellij.platform.ide.bootstrap.isInitialStart = null
+          IdeStartupWizardCollector.logInitialStartTimeout()
         }
       }
 
@@ -66,4 +70,20 @@ internal suspend fun runStartupWizard(isInitialStart: Job, app: Application) {
 @Internal
 interface IdeStartupWizard {
   suspend fun run()
+}
+
+object IdeStartupWizardCollector : CounterUsagesCollector() {
+
+  val GROUP = EventLogGroup("wizard.startup", 1)
+  override fun getGroup() = GROUP
+
+  private val initialStartSucceeded = GROUP.registerEvent("initial.start.succeeded")
+  fun logInitialStartSuccess() {
+    initialStartSucceeded.log()
+  }
+
+  private val initialStartTimeoutTriggered = GROUP.registerEvent("initial.start.timeout.triggered")
+  fun logInitialStartTimeout() {
+    initialStartTimeoutTriggered.log()
+  }
 }

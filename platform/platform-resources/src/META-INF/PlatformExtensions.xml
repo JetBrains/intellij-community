@@ -578,6 +578,7 @@
     <welcomeScreenCustomization id="defaultCustomization"
                                 implementation="com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenDefaultCustomization"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.ide.customize.transferSettings.fus.TransferSettingsCollector"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.platform.ide.bootstrap.IdeStartupWizardCollector"/>
 
     <themeProvider id="Darcula" path="/themes/darcula.theme.json" targetUi="classic"/>
     <themeProvider id="IntelliJ" path="/themes/intellijlaf.theme.json" parentTheme="Darcula" targetUi="classic"/>
