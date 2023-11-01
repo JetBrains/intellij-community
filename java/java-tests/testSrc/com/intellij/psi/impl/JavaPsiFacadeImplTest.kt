@@ -31,8 +31,8 @@ class JavaPsiFacadeImplTest {
   fun noDuplicates() {
     val dupePkg = "com.example.duplicates"
     val psiClass: PsiClass = mock()
-    val pkg: PsiPackage by lazy { PsiPackageImpl(PsiManager.getInstance(project), dupePkg) }
-    val facadeImpl by lazy { JavaPsiFacadeImpl(project) }
+    val pkg: PsiPackage = PsiPackageImpl(PsiManager.getInstance(project), dupePkg)
+    val facadeImpl = JavaPsiFacadeImpl(project)
 
     val psiClassName = "$dupePkg.ReturnedClass"
     whenever(psiClass.name).thenReturn(psiClassName)
