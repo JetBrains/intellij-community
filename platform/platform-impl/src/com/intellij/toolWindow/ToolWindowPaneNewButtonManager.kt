@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.toolWindow
 
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.RegisterToolWindowTask
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.WindowInfo
@@ -36,9 +37,9 @@ internal class ToolWindowPaneNewButtonManager(paneId: String, isPrimary: Boolean
     return oldSquareVisible != visible
   }
 
-  override fun initMoreButton() {
-    left.initMoreButton()
-    right.initMoreButton()
+  override fun initMoreButton(project: Project) {
+    left.initMoreButton(project)
+    right.initMoreButton(project)
   }
 
   override fun layout(size: Dimension, layeredPane: JComponent) {

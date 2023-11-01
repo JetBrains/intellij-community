@@ -120,7 +120,10 @@ class ShowMoreToolWindowsAction(private val toolWindowToolbar: ToolWindowToolbar
 internal abstract class AbstractMoreSquareStripeButton(action: AnAction, minimumSize: Supplier<Dimension>? = null) : AbstractSquareStripeButton(action, createPresentation(), minimumSize) {
   override fun update() {
     super.update()
-    val project = dataContext.getData(CommonDataKeys.PROJECT)
+    updateState(dataContext.getData(CommonDataKeys.PROJECT))
+  }
+
+  fun updateState(project: Project?) {
     val available = project != null && isAvailable(project)
 
     myPresentation.isEnabledAndVisible = available
