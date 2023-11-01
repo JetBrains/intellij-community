@@ -116,7 +116,14 @@ class KotlinParameterInfo(
         buffer.append(getInheritedName(inheritedCallable.takeIf { isInherited }))
 
         if (requiresExplicitType(inheritedCallable)) {
-            buffer.append(": ").append(psiFactory.createType(typeText, inheritedCallable, baseFunction, Variance.IN_VARIANCE).getTypeText())
+            buffer.append(": ")
+            buffer.append(
+                try {
+                    psiFactory.createType(typeText, inheritedCallable, baseFunction, Variance.IN_VARIANCE).getTypeText()
+                } catch (_: Throwable) {
+                    typeText
+                }
+            )
         }
 
         if (!isInherited) {
