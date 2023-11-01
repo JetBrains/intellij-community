@@ -57,7 +57,8 @@ object KotlinChangeSignatureHandler : KotlinChangeSignatureHandlerBase<KtCallabl
 
     @OptIn(KtAllowAnalysisOnEdt::class)
     override fun isLibrary(function: KtCallableDeclaration, context: KtElement): Boolean {
-        return allowAnalysisOnEdt { analyze(context) { function.getSymbol().origin == KtSymbolOrigin.LIBRARY } }
+        val original = function.originalElement as? KtCallableDeclaration ?: return false
+        return original.containingKtFile.isCompiled
     }
 
     override fun isJavaCallable(function: KtCallableDeclaration): Boolean {

@@ -99,7 +99,6 @@ abstract class KotlinChangeSignatureHandlerBase<T> : ChangeSignatureHandler {
 
 
     fun invokeChangeSignature(element: KtElement, context: KtElement, project: Project, editor: Editor?) {
-        if (!CommonRefactoringUtil.checkReadOnlyStatus(project, element)) return
 
         val callableDescriptor = findDescriptor(element, project, editor)
         if (!checkDescriptor(callableDescriptor, project, editor, context)) return
