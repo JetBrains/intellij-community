@@ -200,19 +200,19 @@ private fun SelectableLazyListScope.group(
     Column(
       modifier = Modifier
         .pointerHoverIcon(PointerIcon.Default)
-        .requiredHeight(24.dp)
+        .fillMaxWidth()
         .background(JBUI.CurrentTheme.Popup.BACKGROUND.toComposeColor())
         .onGloballyPositioned {
           shouldDrawBorder = it.positionInParent().y == 0f
         },
-      verticalArrangement = Arrangement.spacedBy(6.dp)
+      verticalArrangement = Arrangement.spacedBy(2.dp)
     ) {
-      Row(
-        modifier = Modifier.weight(1f).fillMaxWidth().padding(start = 12.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
-      ) {
-        Text(groupName, color = UIUtil.getContextHelpForeground().toComposeColor(), modifier = Modifier.align(CenterVertically))
-      }
+        Row(
+          modifier = Modifier.requiredHeight(24.dp).padding(start = 8.dp),
+          horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+          Text(groupName, color = UIUtil.getContextHelpForeground().toComposeColor(), modifier = Modifier.align(CenterVertically))
+        }
 
       if (shouldDrawBorder && canDrawBorder) {
         Divider(orientation = Orientation.Horizontal, color = UIUtil.getTooltipSeparatorColor().toComposeColor())
