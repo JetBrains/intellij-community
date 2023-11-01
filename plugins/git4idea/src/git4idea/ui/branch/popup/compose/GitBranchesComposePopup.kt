@@ -14,7 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.*
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
@@ -32,6 +32,8 @@ import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.TextRange
 import com.intellij.platform.compose.JBComposePanel
+import com.intellij.platform.compose.PreviewKeyEventHost
+import com.intellij.platform.compose.onHostPreviewKeyEvent
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
@@ -147,16 +149,18 @@ private fun Branches(
   val adapter = rememberScrollbarAdapter(columnState.lazyListState)
   val scrollbarWidth = LocalScrollbarStyle.current.thickness
   Box(modifier = modifier) {
-    SelectableLazyColumn(
-      state = columnState,
-      selectionMode = SelectionMode.Single,
-      modifier = Modifier.padding(end = scrollbarWidth + 6.dp)
-    ) {
-      if (local.isNotEmpty()) {
-        group(branchesVm, columnState, startingIndex = 0, "Local", local, dataContextProvider, closePopup)
-      }
-      if (remote.isNotEmpty()) {
-        group(branchesVm, columnState, startingIndex = local.size + 1, "Remote", remote, dataContextProvider, closePopup)
+    PreviewKeyEventHost {
+      SelectableLazyColumn(
+        state = columnState,
+        selectionMode = SelectionMode.Single,
+        modifier = Modifier.padding(end = scrollbarWidth + 6.dp)
+      ) {
+        if (local.isNotEmpty()) {
+          group(branchesVm, columnState, startingIndex = 0, "Local", local, dataContextProvider, closePopup)
+        }
+        if (remote.isNotEmpty()) {
+          group(branchesVm, columnState, startingIndex = local.size + 1, "Remote", remote, dataContextProvider, closePopup)
+        }
       }
     }
 
@@ -282,6 +286,13 @@ private fun Branch(
   Box(modifier = modifier
     .fillMaxWidth()
     .requiredHeight(24.dp)
+    .onHostPreviewKeyEvent(enabled = selected) {
+      if (it.type == KeyEventType.KeyDown && (it.key == Key.Enter || it.key == Key.DirectionRight)) {
+        showActions = true
+        return@onHostPreviewKeyEvent true
+      }
+      false
+    }
     .onClick {
       showActions = true
     }
