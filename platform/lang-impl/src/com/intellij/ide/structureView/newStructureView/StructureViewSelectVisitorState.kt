@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.structureView.newStructureView
 
+import com.intellij.ide.structureView.customRegions.CustomRegionTreeElement
 import com.intellij.psi.PsiElement
 import javax.swing.tree.TreePath
 
@@ -10,6 +11,7 @@ class StructureViewSelectVisitorState {
   var bestMatch: TreePath? = null
     private set
   private var bestMatchDepth: Int = 0
+  private var bestMatchLength: Int = Integer.MAX_VALUE
   var isExactMatch: Boolean = false
     private set
 
@@ -28,9 +30,11 @@ class StructureViewSelectVisitorState {
 
   fun updateIfBetterMatch(path: TreePath, isGoodMatch: Boolean) {
     val depth = path.pathCount
-    if (depth > bestMatchDepth) {
+    val length = StructureViewComponent.unwrapValue(path.lastPathComponent)?.textLength ?: Integer.MAX_VALUE
+    if (depth > bestMatchDepth || (depth == bestMatchDepth && length < bestMatchLength)) {
       bestMatch = path
       bestMatchDepth = depth
+      bestMatchLength = length
       isExactMatch = isGoodMatch
     }
   }
@@ -45,3 +49,9 @@ enum class StructureViewSelectVisitorStage {
   FIRST_PASS_WITH_OPTIMIZATION,
   SECOND_PASS,
 }
+
+private val Any.textLength: Int?
+  get() = when (this) {
+    is PsiElement -> textLength
+    else -> null
+  }
