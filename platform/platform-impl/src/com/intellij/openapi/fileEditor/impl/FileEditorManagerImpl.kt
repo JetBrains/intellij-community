@@ -619,7 +619,7 @@ open class FileEditorManagerImpl(
     val currentWindowIndex = windows.indexOf(currentWindow)
     return if (currentWindowIndex != -1) {
       val nextWindowIndex = currentWindowIndex + (if (ascending) 1 else -1)
-      windows[nextWindowIndex % windows.size]
+      windows[(nextWindowIndex + windows.size) % windows.size]
     }
     else {
       LOG.error("No window found")
