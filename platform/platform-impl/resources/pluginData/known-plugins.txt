@@ -1,5 +1,3 @@
-JetBrains s.r.o.|ReSharper
-
 ms-python.python
 ms-toolsai.jupyter
 ms-python.vscode-pylance

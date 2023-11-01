@@ -6,9 +6,13 @@ import com.intellij.ide.customize.transferSettings.models.FailedIdeVersion
 import com.intellij.ide.customize.transferSettings.models.IdeVersion
 import com.intellij.ide.customize.transferSettings.models.PatchedKeymap
 import com.intellij.ide.customize.transferSettings.models.Settings
+import com.intellij.ide.customize.transferSettings.providers.vswin.mappings.VisualStudioPluginsMapping
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
+import com.intellij.internal.statistic.eventLog.validator.ValidationResultType
+import com.intellij.internal.statistic.eventLog.validator.rules.EventContext
+import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
@@ -19,12 +23,12 @@ object TransferSettingsCollector : CounterUsagesCollector() {
 
   private val logger = logger<TransferSettingsCollector>()
 
-  private val GROUP = EventLogGroup("wizard.transfer.settings", 5)
+  private val GROUP = EventLogGroup("wizard.transfer.settings", 6)
   override fun getGroup(): EventLogGroup = GROUP
 
   private val ideField = EventFields.Enum<TransferableIdeId>("ide")
   private val ideVersionField = EventFields.NullableEnum<TransferableIdeVersionId>("version")
-  private val featureField = EventFields.String("feature", loadKnownPluginListFromResources())
+  private val featureField = EventFields.StringValidatedByCustomRule<KnownPluginValidationRule>("feature")
   private val performanceMetricTypeTypeField = EventFields.Enum<PerformanceMetricType>("type")
   private val perfEventValueField = EventFields.Long("value")
   private val selectedSectionsField = EventFields.StringList("selectedSections", TransferableSections.types)
@@ -171,7 +175,7 @@ object TransferSettingsCollector : CounterUsagesCollector() {
     logger.runAndLogException {
       val ide = ideVersion.transferableId
       for (pluginId in settings.plugins.keys) {
-        featureDetected.log(ide, pluginId)
+        featureDetected.log(ide, pluginId.lowercase())
       }
       recentProjectsDetected.log(ide, settings.recentProjects.size)
     }
@@ -187,14 +191,36 @@ object TransferSettingsCollector : CounterUsagesCollector() {
       )
     }
   }
+}
 
-  private fun loadKnownPluginListFromResources(): List<String> {
-    val classLoader = javaClass.classLoader
-    val resource = classLoader.getResourceAsStream("pluginData/known-plugins.txt") ?: run {
-      logger.error("Cannot load known-plugins.txt from the class loader $classLoader.")
-      return emptyList()
-    }
+class KnownPluginValidationRule : CustomValidationRule() {
 
-    return resource.reader().readLines().mapNotNull { it.nullize(true)?.trim()?.lowercase() }
+  companion object {
+    private val logger = logger<KnownPluginValidationRule>()
+  }
+
+  private val knownPlugins by lazy {
+    logger.runAndLogException {
+      val classLoader = javaClass.classLoader
+      val resource = classLoader.getResourceAsStream("pluginData/known-plugins.txt") ?: run {
+        logger.error("Cannot load known-plugins.txt from the class loader $classLoader.")
+        return@lazy emptySet()
+      }
+
+      resource.reader().readLines()
+        .asSequence()
+        .mapNotNull { it.nullize(true)?.trim()?.lowercase() }
+        .toSet()
+    } ?: emptySet()
+  }
+
+  private val allPlugins by lazy {
+    knownPlugins + VisualStudioPluginsMapping.ReSharper
+  }
+
+  override fun getRuleId() = "known_plugin_id"
+
+  override fun doValidate(data: String, context: EventContext): ValidationResultType {
+    return if (allPlugins.contains(data)) ValidationResultType.ACCEPTED else ValidationResultType.REJECTED
   }
 }

@@ -9,6 +9,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode
 import com.intellij.ide.customize.transferSettings.db.KnownPlugins
 import com.intellij.ide.customize.transferSettings.models.FeatureInfo
 import com.intellij.ide.customize.transferSettings.models.Settings
+import com.intellij.ide.customize.transferSettings.models.UnknownFeature
 import com.intellij.ide.customize.transferSettings.providers.vscode.mappings.KeymapPluginsMappings
 import com.intellij.ide.customize.transferSettings.providers.vscode.mappings.PluginsMappings
 import com.intellij.openapi.diagnostic.logger
@@ -75,14 +76,14 @@ class PluginsParser(private val settings: Settings) {
     if (keymapPlugin != null) {
       settings.keymap = keymapPlugin
     }
-    val featureInfo = PluginsMappings.pluginIdMap(foreignPluginId) ?: return
+    val featureInfo = PluginsMappings.pluginIdMap(foreignPluginId) ?: UnknownFeature
     val originalPluginName = root["displayName"]?.textValue()
 
     if (originalPluginName == null && (featureInfo == KnownPlugins.DummyPlugin || featureInfo == KnownPlugins.DummyBuiltInFeature)) {
       return
     }
 
-    if (!addedPluginIds.contains(featureInfo)) {
+    if (!addedPluginIds.contains(featureInfo) || featureInfo == UnknownFeature) {
       settings.plugins[foreignPluginId] = featureInfo
       addedPluginIds.add(featureInfo)
     }

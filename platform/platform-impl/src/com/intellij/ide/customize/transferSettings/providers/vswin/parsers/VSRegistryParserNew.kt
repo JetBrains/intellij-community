@@ -10,7 +10,7 @@ import com.intellij.ide.customize.transferSettings.models.FeatureInfo
 import com.intellij.ide.customize.transferSettings.models.ILookAndFeel
 import com.intellij.ide.customize.transferSettings.models.RecentPathInfo
 import com.intellij.ide.customize.transferSettings.providers.vswin.mappings.FontsAndColorsMappings
-import com.intellij.ide.customize.transferSettings.providers.vswin.mappings.PluginsMapping
+import com.intellij.ide.customize.transferSettings.providers.vswin.mappings.VisualStudioPluginsMapping
 import com.intellij.ide.customize.transferSettings.providers.vswin.utilities.VSHive
 import com.intellij.ide.customize.transferSettings.providers.vswin.utilities.VSHiveDetourFileNotFoundException
 import com.intellij.ide.customize.transferSettings.providers.vswin.utilities.VSProfileDetectorUtils
@@ -110,7 +110,7 @@ class VSRegistryParserNew private constructor(val hive: VSHive) {
     return buildMap {
       if (preParsed != null) {
         for (id in preParsed) {
-          val plugin = PluginsMapping.get(id)
+          val plugin = VisualStudioPluginsMapping.get(id)
           if (plugin != null) {
             put(id, plugin)
           }

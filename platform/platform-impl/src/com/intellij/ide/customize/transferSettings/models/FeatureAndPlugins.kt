@@ -33,3 +33,5 @@ class PluginFeature(
   override fun equals(other: Any?): Boolean = other is PluginFeature && pluginId == other.pluginId
   override fun hashCode(): Int = pluginId.hashCode()
 }
+
+object UnknownFeature : FeatureInfo(null, "[UNKNOWN]", isHidden = true)
