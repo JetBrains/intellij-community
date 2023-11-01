@@ -26,6 +26,5 @@
     <gotoSymbolContributor implementation="org.jetbrains.kotlin.idea.goto.KotlinGotoTypeAliasSymbolContributor"/>
     <gotoSymbolContributor implementation="org.jetbrains.kotlin.idea.goto.KotlinGotoJvmNameSymbolContributor"/>
     <gotoPrimeSymbolContributor implementation="org.jetbrains.kotlin.idea.goto.KotlinGotoPrimeSymbolContributor"/>
-    <searchEverywherePreviewProvider implementation="org.jetbrains.kotlin.idea.goto.KotlinSEPreviewProvider"/>
   </extensions>
 </idea-plugin>

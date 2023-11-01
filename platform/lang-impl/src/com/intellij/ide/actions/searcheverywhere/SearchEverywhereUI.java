@@ -925,9 +925,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
     new Task.Backgroundable(myProject, IdeBundle.message("search.everywhere.preview.showing"), true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        UsageInfo usageInfo = ReadAction.compute(() -> {
-          return SearchEverywherePreviewProvider.Companion.getUsage(selectedValue);
-        });
+        UsageInfo usageInfo = ReadAction.compute(() -> SearchEverywherePreview.getFileFirstUsage(selectedValue));
 
         List<UsageInfo2UsageAdapter> usages = new ArrayList<>();
         if (usageInfo != null) {

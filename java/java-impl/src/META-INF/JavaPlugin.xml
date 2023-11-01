@@ -1061,7 +1061,6 @@
     <gotoSymbolContributor implementation="com.intellij.ide.util.gotoByName.DefaultSymbolNavigationContributor"/>
     <gotoSymbolContributor implementation="com.intellij.ide.util.gotoByName.DefaultSymbolNavigationContributor$JavadocSeparatorContributor"/>
     <gotoClassContributor implementation="com.intellij.ide.util.gotoByName.DefaultClassNavigationContributor"/>
-    <searchEverywherePreviewProvider implementation="com.intellij.ide.util.gotoByName.JavaPreviewContributor"/>
     <psi.implicitReferenceProvider implementation="com.intellij.codeInsight.JavaImplicitReferenceProvider"/>
     <targetElementEvaluator language="JAVA" implementationClass="com.intellij.codeInsight.JavaTargetElementEvaluator"/>
     <targetElementUtilExtender implementation="com.intellij.codeInsight.JavaTargetElementEvaluator"/>
