@@ -674,12 +674,21 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
     }
 }
 
-internal fun PsiElement.getContainingMethod(excludingElement: Boolean = true): PsiElement? =
+fun PsiElement.getContainingMethod(excludingElement: Boolean = true): KtExpression? =
     PsiTreeUtil.getParentOfType(this, excludingElement,
                                 KtFunction::class.java,
                                 KtClassInitializer::class.java,
                                 KtPropertyAccessor::class.java,
                                 KtScript::class.java)
+
+fun PsiElement.getContainingBody(excludingElement: Boolean = true): KtExpression? =
+    when (val method = getContainingMethod(excludingElement)) {
+        null -> null
+        is KtDeclarationWithBody -> method.bodyExpression
+        is KtAnonymousInitializer -> method.body
+        is KtScript -> method.blockExpression
+        else -> error("Unexpected method type, $method")
+    }
 
 // Kotlin compiler generates private final static <outer-method>$lambda$0 method
 // per each lambda that takes lambda (kotlin.jvm.functions.FunctionN) as the first parameter

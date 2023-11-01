@@ -1365,6 +1365,16 @@ public abstract class K2IdeK2CodeKotlinSteppingTestGenerated extends AbstractK2I
             runTest("../testData/stepping/custom/inlinePropertyAccessors.kt");
         }
 
+        @TestMetadata("insideCallChain.kt")
+        public void testInsideCallChain() throws Exception {
+            runTest("../testData/stepping/custom/insideCallChain.kt");
+        }
+
+        @TestMetadata("insideCallChain2.kt")
+        public void testInsideCallChain2() throws Exception {
+            runTest("../testData/stepping/custom/insideCallChain2.kt");
+        }
+
         @TestMetadata("kt14057.kt")
         public void testKt14057() throws Exception {
             runTest("../testData/stepping/custom/kt14057.kt");

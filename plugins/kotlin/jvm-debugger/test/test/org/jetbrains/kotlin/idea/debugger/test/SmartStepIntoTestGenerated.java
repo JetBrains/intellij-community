@@ -128,6 +128,31 @@ public class SmartStepIntoTestGenerated extends AbstractSmartStepIntoTest {
         runTest("testData/smartStepInto/inlinedFunctionalExpression.kt");
     }
 
+    @TestMetadata("insideAddChain.kt")
+    public void testInsideAddChain() throws Exception {
+        runTest("testData/smartStepInto/insideAddChain.kt");
+    }
+
+    @TestMetadata("insideCallChain.kt")
+    public void testInsideCallChain() throws Exception {
+        runTest("testData/smartStepInto/insideCallChain.kt");
+    }
+
+    @TestMetadata("insideCallChain2.kt")
+    public void testInsideCallChain2() throws Exception {
+        runTest("testData/smartStepInto/insideCallChain2.kt");
+    }
+
+    @TestMetadata("insideCallChain3.kt")
+    public void testInsideCallChain3() throws Exception {
+        runTest("testData/smartStepInto/insideCallChain3.kt");
+    }
+
+    @TestMetadata("insideCallChain4.kt")
+    public void testInsideCallChain4() throws Exception {
+        runTest("testData/smartStepInto/insideCallChain4.kt");
+    }
+
     @TestMetadata("invoke.kt")
     public void testInvoke() throws Exception {
         runTest("testData/smartStepInto/invoke.kt");
