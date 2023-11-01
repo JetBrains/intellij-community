@@ -209,9 +209,9 @@ public class CodeStyleManagerImpl extends CodeStyleManager implements Formatting
 
     TextRange textRange = addedElement.getTextRange();
     final Document document = fileViewProvider.getDocument();
-    if (CodeFormatterFacade.shouldDelegateToTopLevel(document, containingFile)) {
+    if (document instanceof DocumentWindow documentWindow && CodeFormatterFacade.shouldDelegateToTopLevel(containingFile)) {
       containingFile = InjectedLanguageManager.getInstance(containingFile.getProject()).getTopLevelFile(containingFile);
-      textRange = ((DocumentWindow)document).injectedToHost(textRange);
+      textRange = documentWindow.injectedToHost(textRange);
     }
 
     final FormattingModelBuilder builder = LanguageFormatting.INSTANCE.forContext(containingFile);

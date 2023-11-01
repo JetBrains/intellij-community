@@ -149,8 +149,7 @@ public final class CodeFormatterFacade {
     final Project project = file.getProject();
     Document document = file.getViewProvider().getDocument();
     final List<FormatTextRange> textRanges = ranges.getRanges();
-    if (shouldDelegateToTopLevel(document, file)) {
-      DocumentWindow documentWindow = (DocumentWindow) document;
+    if (document instanceof DocumentWindow documentWindow && shouldDelegateToTopLevel(file)) {
       file = InjectedLanguageManager.getInstance(file.getProject()).getTopLevelFile(file);
       for (FormatTextRange range : textRanges) {
         range.setTextRange(documentWindow.injectedToHost(range.getTextRange()));
@@ -370,7 +369,7 @@ public final class CodeFormatterFacade {
   }
 
 
-  private static boolean shouldDelegateToTopLevel(@NotNull PsiFile file) {
+  static boolean shouldDelegateToTopLevel(@NotNull PsiFile file) {
     for (var provider: InjectedFormattingOptionsProvider.EP_NAME.getExtensions()) {
       var result = provider.shouldDelegateToTopLevel(file);
       if (result == null) continue;

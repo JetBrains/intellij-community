@@ -43,8 +43,7 @@ abstract class CodeStyleManagerRunnable<T> {
 
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myCodeStyleManager.getProject());
     Document document = documentManager.getDocument(file);
-    if (CodeFormatterFacade.shouldDelegateToTopLevel(document, file)) {
-      DocumentWindow documentWindow = (DocumentWindow) document;
+    if (document instanceof DocumentWindow documentWindow && CodeFormatterFacade.shouldDelegateToTopLevel(file)) {
       final PsiFile topLevelFile = InjectedLanguageManager.getInstance(file.getProject()).getTopLevelFile(file);
       if (!file.equals(topLevelFile)) {
         if (range != null) {
