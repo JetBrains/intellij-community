@@ -142,11 +142,14 @@ interface UastApiFixtureTestBase : UastPluginSelection {
                 interface State<out T> {
                     val value: T
                 }
+                
+                typealias NullableString = String?
 
                 @Deprecated(level = DeprecationLevel.HIDDEN, message="no longer supported")
                 fun before(
                     i : Int?,
                     s : String?,
+                    ns : NullableString,
                     vararg vs : Any,
                 ): State<String> {
                     return object : State<String> {
@@ -157,6 +160,7 @@ interface UastApiFixtureTestBase : UastPluginSelection {
                 fun after(
                     i : Int?,
                     s : String?,
+                    ns : NullableString,
                     vararg vs : Any,
                 ): State<String> {
                     return object : State<String> {

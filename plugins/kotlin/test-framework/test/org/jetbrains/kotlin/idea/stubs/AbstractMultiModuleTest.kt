@@ -174,6 +174,16 @@ abstract class AbstractMultiModuleTest : DaemonAnalyzerTestCase() {
         }
     }
 
+    fun Module.addLibrary(
+        file: VirtualFile,
+        name: String = KotlinJdkAndLibraryProjectDescriptor.LIBRARY_NAME,
+        kind: PersistentLibraryKind<*>? = null,
+    ) {
+        ConfigLibraryUtil.addLibrary(this, name, kind) {
+            addRoot(file, OrderRootType.CLASSES)
+        }
+    }
+
     fun Module.addKotlinStdlib() = runWriteAction {
         val modifiableModel = rootManager.modifiableModel
         KotlinWithJdkAndRuntimeLightProjectDescriptor.JDK_AND_RUNTIME_LIGHT_PROJECT_DESCRIPTOR.configureModule(
