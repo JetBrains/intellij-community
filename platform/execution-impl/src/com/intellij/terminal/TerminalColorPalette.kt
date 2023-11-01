@@ -11,11 +11,11 @@ abstract class TerminalColorPalette : ColorPalette() {
   abstract val defaultForeground: Color
   abstract val defaultBackground: Color
 
-  protected abstract fun getAttributesByColorIndex(index: Int): TextAttributes
+  protected abstract fun getAttributesByColorIndex(index: Int): TextAttributes?
 
   override fun getForegroundByColorIndex(colorIndex: Int): Color {
     val attributes = getAttributesByColorIndex(colorIndex)
-    val color = attributes.foregroundColor ?: attributes.backgroundColor
+    val color = attributes?.foregroundColor ?: attributes?.backgroundColor
     return if (color != null) {
       AwtTransformers.fromAwtColor(color)!!
     }
@@ -29,7 +29,7 @@ abstract class TerminalColorPalette : ColorPalette() {
 
   override fun getBackgroundByColorIndex(colorIndex: Int): Color {
     val attributes = getAttributesByColorIndex(colorIndex)
-    val color = attributes.backgroundColor ?: attributes.foregroundColor
+    val color = attributes?.backgroundColor ?: attributes?.foregroundColor
     return if (color != null) {
       AwtTransformers.fromAwtColor(color)!!
     }

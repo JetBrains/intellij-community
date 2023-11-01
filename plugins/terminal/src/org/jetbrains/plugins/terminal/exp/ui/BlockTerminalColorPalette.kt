@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.exp.ui
 
-import com.intellij.execution.ui.ConsoleViewContentType
 import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.editor.markup.TextAttributes
@@ -24,14 +23,15 @@ class BlockTerminalColorPalette(private val colorsScheme: EditorColorsScheme) : 
       return AwtTransformers.fromAwtColor(backgroundColor ?: colorsScheme.defaultBackground)!!
     }
 
-  override fun getAttributesByColorIndex(index: Int): TextAttributes {
-    return colorsScheme.getAttributes(getAnsiColorKey(index))
+  override fun getAttributesByColorIndex(index: Int): TextAttributes? {
+    val key = getAnsiColorKey(index) ?: return null
+    return colorsScheme.getAttributes(key)
   }
 
-  private fun getAnsiColorKey(value: Int): TextAttributesKey {
-    return if (value >= 16) {
-      ConsoleViewContentType.NORMAL_OUTPUT_KEY
+  private fun getAnsiColorKey(value: Int): TextAttributesKey? {
+    return if (value in colorKeys.indices) {
+      colorKeys[value]
     }
-    else colorKeys[value]
+    else null
   }
 }
