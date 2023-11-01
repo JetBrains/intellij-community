@@ -534,7 +534,7 @@ class GitStageLineStatusTracker(
         return
       }
 
-      val disposable = Disposer.newDisposable()
+      val disposable = Disposer.newCheckedDisposable()
 
       val stagedTextField = createTextField(editor, tracker.stagedDocument, range.stagedLine1, range.stagedLine2)
       val vcsTextField = createTextField(editor, tracker.vcsDocument, range.vcsLine1, range.vcsLine2)

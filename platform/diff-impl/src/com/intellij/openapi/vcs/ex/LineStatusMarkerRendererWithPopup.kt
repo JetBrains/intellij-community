@@ -28,7 +28,7 @@ abstract class LineStatusMarkerRendererWithPopup(
   project: Project?,
   document: Document,
   protected val rangesSource: LineStatusMarkerRangesSource<*>,
-  disposable: Disposable,
+  private val disposable: Disposable,
   editorFilter: MarkupEditorFilter? = null,
   isMain: Boolean = true
 ) : LineStatusMarkerRenderer(project, document, disposable, editorFilter, isMain),
@@ -56,9 +56,9 @@ abstract class LineStatusMarkerRendererWithPopup(
 
   override fun showHintAt(editor: Editor, range: Range, mousePosition: Point?) {
     if (!rangesSource.isValid()) return
-    val disposable = Disposer.newDisposable()
-    val popup = createPopupPanel(editor, range, mousePosition, disposable)
-    showPopupAt(editor, popup, mousePosition, disposable)
+    val popupDisposable = Disposer.newCheckedDisposable(disposable)
+    val popup = createPopupPanel(editor, range, mousePosition, popupDisposable)
+    showPopupAt(editor, popup, mousePosition, popupDisposable)
   }
 
   protected abstract fun createPopupPanel(editor: Editor, range: Range, mousePosition: Point?, disposable: Disposable)

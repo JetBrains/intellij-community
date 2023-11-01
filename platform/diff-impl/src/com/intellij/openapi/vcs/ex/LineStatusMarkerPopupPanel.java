@@ -25,6 +25,7 @@ import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.CheckedDisposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.ui.*;
@@ -148,9 +149,12 @@ public class LineStatusMarkerPopupPanel extends JPanel {
   public static void showPopupAt(@NotNull Editor editor,
                                  @NotNull LineStatusMarkerPopupPanel panel,
                                  @Nullable Point mousePosition,
-                                 @NotNull Disposable childDisposable) {
+                                 @NotNull CheckedDisposable childDisposable) {
     LightweightHint hint = new LightweightHint(panel);
-    HintListener closeListener = __ -> Disposer.dispose(childDisposable);
+    Disposer.register(childDisposable, () -> UIUtil.invokeLaterIfNeeded(hint::hide));
+    HintListener closeListener = __ -> {
+      if (!childDisposable.isDisposed()) Disposer.dispose(childDisposable);
+    };
     hint.addHintListener(closeListener);
     hint.setForceLightweightPopup(true);
 
