@@ -43,29 +43,29 @@ internal class JBTerminalSchemeColorPalette(private val colorsScheme: EditorColo
 
   override fun getForegroundByColorIndex(colorIndex: Int): Color {
     val attributes = colorsScheme.getAttributes(getAnsiColorKey(colorIndex))
-    return when {
-      attributes.foregroundColor != null -> AwtTransformers.fromAwtColor(attributes.foregroundColor)!!
-      attributes.backgroundColor != null -> AwtTransformers.fromAwtColor(attributes.backgroundColor)!!
-      else -> {
-        if (LOG.isDebugEnabled()) {
-          LOG.debug("Default foreground color will be used for ANSI color index #$colorIndex")
-        }
-        defaultForeground
+    val color = attributes.foregroundColor ?: attributes.backgroundColor
+    return if (color != null) {
+      AwtTransformers.fromAwtColor(color)!!
+    }
+    else {
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Default foreground color will be used for ANSI color index #$colorIndex")
       }
+      defaultForeground
     }
   }
 
   override fun getBackgroundByColorIndex(colorIndex: Int): Color {
     val attributes = colorsScheme.getAttributes(getAnsiColorKey(colorIndex))
-    return when {
-      attributes.backgroundColor != null -> AwtTransformers.fromAwtColor(attributes.backgroundColor)!!
-      attributes.foregroundColor != null -> AwtTransformers.fromAwtColor(attributes.foregroundColor)!!
-      else -> {
-        if (LOG.isDebugEnabled()) {
-          LOG.debug("Default background color will be used for ANSI color index #$colorIndex")
-        }
-        defaultBackground
+    val color = attributes.backgroundColor ?: attributes.foregroundColor
+    return if (color != null) {
+      AwtTransformers.fromAwtColor(color)!!
+    }
+    else {
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Default background color will be used for ANSI color index #$colorIndex")
       }
+      defaultBackground
     }
   }
 
