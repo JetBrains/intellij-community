@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
@@ -93,6 +93,15 @@ public class ModifierFix extends PsiBasedModCommandAction<PsiModifierListOwner> 
     }
 
     String modifierText = VisibilityUtil.toPresentableText(myModifier);
+    if (!myShouldHave && modifierList != null) {
+      int count = 0;
+      for (PsiElement child = modifierList.getFirstChild(); child != null; child = child.getNextSibling()) {
+        if (child.getText().equals(myModifier)) count++;
+      }
+      if (count > 1) {
+        return QuickFixBundle.message("remove.one.modifier.fix", modifierText);
+      }
+    }
     return QuickFixBundle.message(myShouldHave ? "add.modifier.fix" : "remove.modifier.fix", name, modifierText);
   }
 

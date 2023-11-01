@@ -170,14 +170,11 @@ public final class HighlightUtil {
                                                 @NotNull PsiModifierList modifierList,
                                                 @NotNull Map<String, Set<String>> incompatibleModifiersHash) {
     // modifier is always incompatible with itself
-    PsiElement[] modifiers = modifierList.getChildren();
     int modifierCount = 0;
-    for (PsiElement otherModifier : modifiers) {
-      if (Comparing.equal(modifier, otherModifier.getText(), true)) modifierCount++;
+    for (PsiElement otherModifier = modifierList.getFirstChild(); otherModifier != null; otherModifier = otherModifier.getNextSibling()) {
+      if (modifier.equals(otherModifier.getText())) modifierCount++;
     }
-    if (modifierCount > 1) {
-      return modifier;
-    }
+    if (modifierCount > 1) return modifier;
 
     Set<String> incompatibles = incompatibleModifiersHash.get(modifier);
     if (incompatibles == null) return null;
@@ -1043,7 +1040,19 @@ public final class HighlightUtil {
     @PsiModifier.ModifierConstant String modifier = keyword.getText();
     String incompatible = getIncompatibleModifier(modifier, modifierList);
     if (incompatible != null) {
-      String message = JavaErrorBundle.message("incompatible.modifiers", modifier, incompatible);
+      String message;
+      if (incompatible.equals(modifier)) {
+        for (PsiElement child = modifierList.getFirstChild(); child != null; child = child.getNextSibling()) {
+          if (modifier.equals(child.getText())) {
+            if (child == keyword) return null;
+            else break;
+          }
+        }
+        message = JavaErrorBundle.message("repeated.modifier", incompatible);
+      }
+      else {
+        message = JavaErrorBundle.message("incompatible.modifiers", modifier, incompatible);
+      }
       HighlightInfo.Builder highlightInfo =
         HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(keyword).descriptionAndTooltip(message);
       IntentionAction action = getFixFactory().createModifierListFix(modifierList, modifier, false, false);
@@ -1217,8 +1226,7 @@ public final class HighlightUtil {
       String message = JavaErrorBundle.message("modifier.not.allowed", modifier);
       HighlightInfo.Builder highlightInfo =
         HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(keyword).descriptionAndTooltip(message);
-      IntentionAction action = fix != null ? fix : getFixFactory()
-        .createModifierListFix(modifierList, modifier, false, false);
+      IntentionAction action = fix != null ? fix : getFixFactory().createModifierListFix(modifierList, modifier, false, false);
       highlightInfo.registerFix(action, null, null, null, null);
       return highlightInfo;
     }
