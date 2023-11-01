@@ -62,7 +62,7 @@ class EnumeratedFastFileAttribute<T> @VisibleForTesting constructor(private val 
     closer.register(persistentEnumerator)
     baseEnumerator = if (descriptorForCache == null) persistentEnumerator else CachingEnumerator(persistentEnumerator, descriptorForCache)
 
-    baseAttribute = IntFileAttribute.overFastAttribute(attribute, getAttributesFile(), clearOnVfsRebuild = false)
+    baseAttribute = IntFileAttribute.overFastAttribute(attribute, getAttributesFile())
     closer.register(baseAttribute)
 
     vfsChecker.createVfsTimestampMarkerFileIfAbsent(expectedVfsCreationTimestamp)

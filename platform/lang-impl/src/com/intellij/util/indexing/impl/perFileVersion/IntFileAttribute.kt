@@ -3,7 +3,6 @@ package com.intellij.util.indexing.impl.perFileVersion
 
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.newvfs.FileAttribute
 import com.intellij.openapi.vfs.newvfs.persistent.SpecializedFileAttributes
@@ -11,7 +10,6 @@ import com.intellij.openapi.vfs.newvfs.persistent.SpecializedFileAttributes.IntF
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.io.Closeable
 import java.nio.file.Path
-import kotlin.io.path.name
 
 @Internal
 sealed interface IntFileAttribute : Closeable {
@@ -39,12 +37,12 @@ sealed interface IntFileAttribute : Closeable {
      */
     fun overFastAttribute(attribute: FileAttribute): IntFileAttribute {
       val attributesFilePath = PathManager.getIndexRoot().resolve("fastAttributes").resolve(attribute.id)
-      return overFastAttribute(attribute, attributesFilePath, true)
+      return overFastAttribute(attribute, attributesFilePath)
     }
 
-    fun overFastAttribute(attribute: FileAttribute, path: Path, clearOnVfsRebuild: Boolean): IntFileAttribute {
+    fun overFastAttribute(attribute: FileAttribute, path: Path): IntFileAttribute {
       thisLogger().assertTrue(attribute.isFixedSize, "Should be fixed size: $attribute")
-      return IntFileAttributeImpl(attribute, path, clearOnVfsRebuild)
+      return IntFileAttributeImpl(attribute, path)
     }
   }
 
@@ -53,21 +51,10 @@ sealed interface IntFileAttribute : Closeable {
 }
 
 private class IntFileAttributeImpl(private val attribute: FileAttribute,
-                                   fastAttributesPath: Path?,
-                                   clearOnVfsRebuild: Boolean = true) : IntFileAttribute {
+                                   fastAttributesPathOrNullForRegularAttributes: Path?) : IntFileAttribute {
   private val attributeAccessor = AutoRefreshingOnVfsCloseRef<IntFileAttributeAccessor> { fsRecords ->
-    if (fastAttributesPath != null) {
-      val vfsStampFile = fastAttributesPath.resolveSibling(fastAttributesPath.name + ".vfsstamp")
-      val vfsChecker = if (clearOnVfsRebuild) VfsCreationStampChecker(vfsStampFile) else null
-      val expectedVfsCreationTimestamp = fsRecords.creationTimestamp
-      vfsChecker?.runIfVfsCreationStampMismatch(expectedVfsCreationTimestamp) { cleanupReason ->
-        thisLogger().info("Delete $vfsStampFile and $fastAttributesPath. Reason: $cleanupReason")
-        FileUtil.deleteWithRenamingIfExists(vfsStampFile)
-        FileUtil.deleteWithRenamingIfExists(fastAttributesPath)
-      }
-      SpecializedFileAttributes.specializeAsFastInt(fsRecords, attribute, fastAttributesPath).also {
-        vfsChecker?.createVfsTimestampMarkerFileIfAbsent(expectedVfsCreationTimestamp)
-      }
+    if (fastAttributesPathOrNullForRegularAttributes != null) {
+      SpecializedFileAttributes.specializeAsFastInt(fsRecords, attribute, fastAttributesPathOrNullForRegularAttributes)
     }
     else {
       SpecializedFileAttributes.specializeAsInt(fsRecords, attribute)
