@@ -199,6 +199,7 @@ private fun SelectableLazyListScope.group(
     val canDrawBorder = !(columnState.firstVisibleItemIndex == 0 && columnState.firstVisibleItemScrollOffset == 0)
     Column(
       modifier = Modifier
+        .pointerHoverIcon(PointerIcon.Default)
         .requiredHeight(24.dp)
         .background(JBUI.CurrentTheme.Popup.BACKGROUND.toComposeColor())
         .onGloballyPositioned {
