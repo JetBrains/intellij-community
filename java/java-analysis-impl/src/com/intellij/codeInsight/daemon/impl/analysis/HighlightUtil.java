@@ -87,10 +87,10 @@ public final class HighlightUtil {
 
   private static final Logger LOG = Logger.getInstance(HighlightUtil.class);
 
-  private static final Map<String, Set<String>> ourInterfaceIncompatibleModifiers = new HashMap<>(7);
+  private static final Map<String, Set<String>> ourInterfaceIncompatibleModifiers = new HashMap<>(9);
   private static final Map<String, Set<String>> ourMethodIncompatibleModifiers = new HashMap<>(11);
   private static final Map<String, Set<String>> ourFieldIncompatibleModifiers = new HashMap<>(8);
-  private static final Map<String, Set<String>> ourClassIncompatibleModifiers = new HashMap<>(8);
+  private static final Map<String, Set<String>> ourClassIncompatibleModifiers = new HashMap<>(10);
   private static final Map<String, Set<String>> ourClassInitializerIncompatibleModifiers = new HashMap<>(1);
   private static final Map<String, Set<String>> ourModuleIncompatibleModifiers = new HashMap<>(1);
   private static final Map<String, Set<String>> ourRequiresIncompatibleModifiers = new HashMap<>(2);
