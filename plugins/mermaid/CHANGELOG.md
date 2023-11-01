@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+## 0.0.17
+- [MERMAID-149](https://youtrack.jetbrains.com/issue/MERMAID-149) Fixed an issue that prevented the currently opened project from closing properly
+
 ## 0.0.16
 - [MERMAID-140](https://youtrack.jetbrains.com/issue/MERMAID-140) Updated Mermaid.js version to `10.5.1`
 - [MERMAID-141](https://youtrack.jetbrains.com/issue/MERMAID-141) Fixed incorrect parsing of generics with leading and nested tilde characters in class diagrams
