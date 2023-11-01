@@ -21,8 +21,6 @@ import kotlin.time.Duration
 
 object TransferSettingsCollector : CounterUsagesCollector() {
 
-  private val logger = logger<TransferSettingsCollector>()
-
   private val GROUP = EventLogGroup("wizard.transfer.settings", 6)
   override fun getGroup(): EventLogGroup = GROUP
 
@@ -195,10 +193,6 @@ object TransferSettingsCollector : CounterUsagesCollector() {
 
 class KnownPluginValidationRule : CustomValidationRule() {
 
-  companion object {
-    private val logger = logger<KnownPluginValidationRule>()
-  }
-
   private val knownPlugins by lazy {
     logger.runAndLogException {
       val classLoader = javaClass.classLoader
@@ -224,3 +218,5 @@ class KnownPluginValidationRule : CustomValidationRule() {
     return if (allPlugins.contains(data)) ValidationResultType.ACCEPTED else ValidationResultType.REJECTED
   }
 }
+
+private val logger = logger<TransferSettingsCollector>()
