@@ -1,6 +1,7 @@
 package org.jetbrains.jewel.bridge
 
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.unit.Density
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.Service.Level
@@ -57,6 +58,7 @@ internal class SwingBridgeService : Disposable {
         return BridgeThemeData(
             themeDefinition = createBridgeThemeDefinition(),
             componentStyling = createBridgeComponentStyling(themeDefinition),
+            density = retrieveDensity(),
         )
     }
 
@@ -67,6 +69,7 @@ internal class SwingBridgeService : Disposable {
     internal data class BridgeThemeData(
         val themeDefinition: ThemeDefinition,
         val componentStyling: ComponentStyling,
+        val density: Density,
     ) {
 
         companion object {
@@ -82,6 +85,7 @@ internal class SwingBridgeService : Disposable {
                         dropdownTextStyle = TextStyle.Default,
                         linkTextStyle = TextStyle.Default,
                     ),
+                    density = retrieveDensity(),
                 )
             }
         }

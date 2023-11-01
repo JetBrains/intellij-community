@@ -11,12 +11,14 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.platform.Typeface
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.takeOrElse
+import com.intellij.ide.ui.UISettingsUtils
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.ui.JBColor
 import com.intellij.ui.JBColor.marker
@@ -32,6 +34,7 @@ import org.jetbrains.skiko.awt.font.AwtFontManager
 import org.jetbrains.skiko.toSkikoTypefaceOrNull
 import java.awt.Dimension
 import java.awt.Font
+import java.awt.GraphicsEnvironment
 import java.awt.Insets
 import javax.swing.UIManager
 
@@ -189,7 +192,7 @@ suspend fun retrieveTextStyle(
 
     return TextStyle(
         color = color,
-        fontSize = size.takeOrElse { derivedFont.size.sp },
+        fontSize = size.takeOrElse { derivedFont.size.sp / UISettingsUtils.getInstance().currentIdeScale },
         fontWeight = if (bold) FontWeight.Bold else FontWeight.Normal,
         fontStyle = fontStyle,
         fontFamily = FontFamily(Typeface(typeface)),
@@ -217,3 +220,14 @@ internal operator fun TextUnit.plus(delta: Float) =
         isEm -> TextUnit(value + delta, type)
         else -> this
     }
+
+internal fun retrieveDensity(): Density {
+    val ideaScale = UISettingsUtils.getInstance().currentIdeScale
+    val scale = GraphicsEnvironment.getLocalGraphicsEnvironment()
+        .defaultScreenDevice
+        .defaultConfiguration
+        .defaultTransform
+        .scaleX * ideaScale
+
+    return Density(scale.toFloat(), 1f)
+}
