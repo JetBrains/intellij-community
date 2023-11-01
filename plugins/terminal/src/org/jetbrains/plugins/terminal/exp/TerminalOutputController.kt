@@ -244,7 +244,7 @@ class TerminalOutputController(
     caretPainter.repaint()
   }
 
-  private fun TextStyle.toTextAttributes(): TextAttributes = this.toTextAttributes(palette, terminalModel.styleState)
+  private fun TextStyle.toTextAttributes(): TextAttributes = this.toTextAttributes(palette)
 
   /** It is implied that the command is not null */
   private fun createCommandHighlighting(block: CommandBlock): HighlightingInfo {

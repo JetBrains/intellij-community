@@ -12,9 +12,9 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.util.Disposer
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
+import com.intellij.terminal.TerminalColorPalette
 import com.jediterm.terminal.StyledTextConsumer
 import com.jediterm.terminal.TextStyle
-import com.jediterm.terminal.emulator.ColorPalette
 import com.jediterm.terminal.model.CharBuffer
 import org.jetbrains.plugins.terminal.exp.TerminalUiUtils.toTextAttributes
 
@@ -23,7 +23,7 @@ class SimpleTerminalController(
   private val session: TerminalSession,
   private val editor: EditorEx,
   eventsHandler: TerminalEventsHandler,
-  private val palette: ColorPalette
+  private val palette: TerminalColorPalette
 ) : Disposable {
   val document: Document
     get() = editor.document
@@ -131,7 +131,7 @@ class SimpleTerminalController(
     caretPainter.repaint()
   }
 
-  private fun TextStyle.toTextAttributes(): TextAttributes = this.toTextAttributes(palette, terminalModel.styleState)
+  private fun TextStyle.toTextAttributes(): TextAttributes = this.toTextAttributes(palette)
 
   override fun dispose() {
     Disposer.dispose(caretModel)

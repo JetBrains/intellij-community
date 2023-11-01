@@ -19,6 +19,7 @@ import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
+import com.intellij.terminal.TerminalColorPalette
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.Alarm
 import com.intellij.util.MathUtil
@@ -28,9 +29,8 @@ import com.intellij.util.ui.ImageUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.jediterm.core.util.TermSize
+import com.jediterm.terminal.TerminalColor
 import com.jediterm.terminal.TextStyle
-import com.jediterm.terminal.emulator.ColorPalette
-import com.jediterm.terminal.model.StyleState
 import com.jediterm.terminal.ui.AwtTransformers
 import org.jetbrains.plugins.terminal.exp.TerminalUiUtils.Color16.Companion.toColor16
 import java.awt.*
@@ -130,8 +130,7 @@ object TerminalUiUtils {
 
   fun toFloatAndScale(value: Int): Float = JBUIScale.scale(value.toFloat())
 
-  internal fun TextStyle.toTextAttributes(palette: ColorPalette,
-                                          styleState: StyleState): TextAttributes {
+  internal fun TextStyle.toTextAttributes(palette: TerminalColorPalette): TextAttributes {
     return TextAttributes().also { attr ->
       backgroundForRun?.let {
         // [TerminalColorPalette.getDefaultBackground] is not applied to [TextAttributes].
@@ -139,7 +138,7 @@ object TerminalUiUtils {
         // paint the background uniformly.
         attr.backgroundColor = AwtTransformers.toAwtColor(palette.getBackground(it))
       }
-      attr.foregroundColor = getForegroundColor(this, palette, styleState)
+      attr.foregroundColor = getForegroundColor(this, palette)
       if (hasOption(TextStyle.Option.BOLD)) {
         attr.fontType = attr.fontType or Font.BOLD
       }
@@ -152,17 +151,25 @@ object TerminalUiUtils {
     }
   }
 
-  private fun getForegroundColor(style: TextStyle, palette: ColorPalette, styleState: StyleState): Color {
-    val foreground = palette.getForeground(styleState.getForeground(style.foregroundForRun))
+  private fun getForegroundColor(style: TextStyle, palette: TerminalColorPalette): Color {
+    val foreground = getEffectiveForegroundColor(style.foregroundForRun, palette)
     return if (style.hasOption(TextStyle.Option.DIM)) {
-      val background = palette.getBackground(styleState.getBackground(style.backgroundForRun))
+      val background = getEffectiveBackgroundColor(style.backgroundForRun, palette)
       @Suppress("UseJBColor")
       Color((foreground.red + background.red) / 2,
             (foreground.green + background.green) / 2,
             (foreground.blue + background.blue) / 2,
             foreground.alpha)
     }
-    else AwtTransformers.toAwtColor(foreground)!!
+    else foreground
+  }
+
+  private fun getEffectiveForegroundColor(color: TerminalColor?, palette: TerminalColorPalette): Color {
+    return AwtTransformers.toAwtColor(color?.let { palette.getForeground(it) } ?: palette.defaultForeground)!!
+  }
+
+  private fun getEffectiveBackgroundColor(color: TerminalColor?, palette: TerminalColorPalette): Color {
+    return AwtTransformers.toAwtColor(color?.let { palette.getBackground(it) } ?: palette.defaultBackground)!!
   }
 
   /**
