@@ -9,7 +9,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 
 object FileEditorCollector : CounterUsagesCollector() {
-  private val GROUP = EventLogGroup("file.editor", 4)
+  private val GROUP = EventLogGroup("file.editor", 5)
   private val FILE_EDITOR_FIELD = EventFields.Class("fileEditor")
   private val ALTERNATIVE_FILE_EDITOR_SELECTED = GROUP.registerVarargEvent("alternative.file.editor.selected",
                                                                            FILE_EDITOR_FIELD,
@@ -17,6 +17,10 @@ object FileEditorCollector : CounterUsagesCollector() {
                                                                            EventFields.PluginInfo)
   private val EDITOR_EMPTY_STATE_SHOWN = GROUP.registerEvent("file.editor.empty.state.shown",
                                                              EventFields.Enum<EmptyStateCause>("empty_state_cause"))
+  private val EDITOR_MARKUP_RESTORED = GROUP.registerEvent("file.editor.markup.restored",
+                                                           EventFields.AnonymizedPath,
+                                                           EventFields.Enum<MarkupGraveEvent>("markup_grave_event"),
+                                                           EventFields.Int("restored_highlighters"))
 
   @JvmStatic
   fun logAlternativeFileEditorSelected(project: Project, file: VirtualFile, editor: FileEditor) {
@@ -28,11 +32,22 @@ object FileEditorCollector : CounterUsagesCollector() {
     EDITOR_EMPTY_STATE_SHOWN.log(project, cause)
   }
 
+  @JvmStatic
+  fun logEditorMarkupGrave(project: Project, file: VirtualFile, graveEvent: MarkupGraveEvent, restoredCount: Int) {
+    EDITOR_MARKUP_RESTORED.log(project, file.path, graveEvent, restoredCount)
+  }
+
   override fun getGroup(): EventLogGroup = GROUP
 
   enum class EmptyStateCause {
     ALL_TABS_CLOSED,
     PROJECT_OPENED,
     CONTEXT_RESTORED,
+  }
+
+  enum class MarkupGraveEvent {
+    RESTORED,
+    NOT_RESTORED_CACHE_MISS,
+    NOT_RESTORED_CONTENT_CHANGED,
   }
 }
