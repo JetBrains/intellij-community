@@ -91,11 +91,13 @@ class InstanceContainerImpl(
       if (!registerDynamic || dynamicInstanceSupport == null) {
         return null
       }
-      val initializer = dynamicInstanceSupport.dynamicInstanceInitializer(instanceClass = keyClass)
-      if (initializer == null) {
+      val dynamicInstanceInitializer = dynamicInstanceSupport.dynamicInstanceInitializer(instanceClass = keyClass)
+      if (dynamicInstanceInitializer == null) {
         return null
       }
-      holder = DynamicInstanceHolder(scopeHolder.containerScope, initializer) // TODO intersect
+      val parentScope = scopeHolder.intersectScope(dynamicInstanceInitializer.registrationScope)
+      val initializer = dynamicInstanceInitializer.initializer
+      holder = DynamicInstanceHolder(parentScope, initializer)
       state.put(keyClass.name, holder)
     }
     // the following can only execute in case `holder` was initialized and committed into `state`
