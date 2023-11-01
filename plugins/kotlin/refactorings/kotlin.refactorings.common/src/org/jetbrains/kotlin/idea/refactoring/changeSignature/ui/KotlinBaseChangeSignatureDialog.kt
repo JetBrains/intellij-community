@@ -85,10 +85,6 @@ abstract class KotlinBaseChangeSignatureDialog<P : KotlinModifiableParameterInfo
 
     override fun createParametersListTable(): ParametersListTable = object : ParametersListTable() {
         private val rowRenderer = object : EditorTextFieldJBTableRowRenderer(project, KotlinLanguage.INSTANCE, disposable) {
-            init {
-                useEditorFont()
-            }
-
             override fun getText(table: JTable?, row: Int): String {
                 val item = getRowItem(row)
                 val valOrVar = if (myMethod.kind === Kind.PRIMARY_CONSTRUCTOR) {

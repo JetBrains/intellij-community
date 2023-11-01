@@ -279,9 +279,6 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
 
       private final EditorTextFieldJBTableRowRenderer myRowRenderer =
         new EditorTextFieldJBTableRowRenderer(getProject(), JavaChangeSignatureDialog.this.getFileType().getLanguage(), myDisposable) {
-          {
-            useEditorFont();
-          }
         @Override
         protected String getText(JTable table, int row) {
           ParameterTableModelItemBase<ParameterInfoImpl> item = getRowItem(row);

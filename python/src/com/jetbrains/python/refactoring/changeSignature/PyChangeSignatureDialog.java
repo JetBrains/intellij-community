@@ -270,9 +270,6 @@ public class PyChangeSignatureDialog extends
       @Override
       protected JBTableRowRenderer getRowRenderer(int row) {
         return new EditorTextFieldJBTableRowRenderer(getProject(), PythonLanguage.getInstance(), getDisposable()) {
-          {
-            useEditorFont();
-          }
           @Override
           protected String getText(JTable table, int row) {
             final PyParameterTableModelItem pyItem = getRowItem(row);
