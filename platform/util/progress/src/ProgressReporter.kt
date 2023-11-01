@@ -319,7 +319,7 @@ interface TransformCollector<R> {
  * @see transform
  */
 suspend fun <T, R> Collection<T>.transformWithProgress(
-  concurrent: Boolean,
+  concurrent: Boolean = false,
   transform: suspend TransformCollector<R>.(value: T) -> Unit,
 ): List<R> {
   return channelFlow {
@@ -355,7 +355,7 @@ suspend fun <T, R> Collection<T>.transformWithProgress(
 /**
  * @see transformWithProgress
  */
-suspend fun <T, R> Collection<T>.mapWithProgress(concurrent: Boolean, mapper: suspend (value: T) -> R): List<R> {
+suspend fun <T, R> Collection<T>.mapWithProgress(concurrent: Boolean = false, mapper: suspend (value: T) -> R): List<R> {
   return transformWithProgress(concurrent) { item ->
     out(mapper(item))
   }
@@ -364,7 +364,7 @@ suspend fun <T, R> Collection<T>.mapWithProgress(concurrent: Boolean, mapper: su
 /**
  * @see transformWithProgress
  */
-suspend fun <T> Collection<T>.filterWithProgress(concurrent: Boolean, predicate: suspend (value: T) -> Boolean): List<T> {
+suspend fun <T> Collection<T>.filterWithProgress(concurrent: Boolean = false, predicate: suspend (value: T) -> Boolean): List<T> {
   return transformWithProgress(concurrent) { item ->
     if (predicate(item)) {
       out(item)
@@ -375,7 +375,7 @@ suspend fun <T> Collection<T>.filterWithProgress(concurrent: Boolean, predicate:
 /**
  * @see transformWithProgress
  */
-suspend fun <T> Collection<T>.forEachWithProgress(concurrent: Boolean, action: suspend (value: T) -> Unit) {
+suspend fun <T> Collection<T>.forEachWithProgress(concurrent: Boolean = false, action: suspend (value: T) -> Unit) {
   transformWithProgress<_, Nothing?>(concurrent) { item ->
     action(item)
   }
