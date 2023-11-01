@@ -130,14 +130,16 @@ public final class CoverageDataAnnotationsManager implements Disposable {
       Editor editor = event.getEditor();
       Project project = editor.getProject();
       if (project == null) return;
+      if (CoverageDataManager.getInstance(project).activeSuites().isEmpty()) return;
+      CoverageDataAnnotationsManager manager = project.getServiceIfCreated(CoverageDataAnnotationsManager.class);
+      if (manager == null) return;
 
       PsiFile psiFile = ReadAction.compute(() -> PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument()));
       if (psiFile == null || !psiFile.isPhysical()) return;
 
       ApplicationManager.getApplication().executeOnPooledThread(() -> {
         CoverageDataAnnotationsManager annotationsManager = getInstance(project);
-        CoverageDataManager dataManager = CoverageDataManager.getInstance(project);
-        for (CoverageSuitesBundle bundle : dataManager.activeSuites()) {
+        for (CoverageSuitesBundle bundle : CoverageDataManager.getInstance(project).activeSuites()) {
           CoverageEngine engine = bundle.getCoverageEngine();
           if (!engine.coverageEditorHighlightingApplicableTo(psiFile)) return;
           if (!engine.acceptedByFilters(psiFile, bundle)) return;
