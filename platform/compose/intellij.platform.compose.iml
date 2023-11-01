@@ -39,19 +39,19 @@
     <orderEntry type="module" module-name="intellij.platform.compose.skikoRuntime" />
     <orderEntry type="module-library" exported="">
       <library name="jetbrains.jewel" type="repository">
-        <properties maven-id="org.jetbrains.jewel:jewel-ide-laf-bridge:0.8.0-ij-233">
+        <properties maven-id="org.jetbrains.jewel:jewel-ide-laf-bridge:0.8.1-ij-233">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/jewel/jewel-ide-laf-bridge/0.8.0-ij-233/jewel-ide-laf-bridge-0.8.0-ij-233.jar">
-              <sha256sum>ca0bc0e38885ef482120628775e85ec740d2af452877dea879b316b2d61a0181</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/jewel/jewel-ide-laf-bridge/0.8.1-ij-233/jewel-ide-laf-bridge-0.8.1-ij-233.jar">
+              <sha256sum>c077413f5d6f74ac13e06a7d3e97a80d562c359f06c01d019cb5091a26f55baa</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/jewel/jewel-ui/0.8.0/jewel-ui-0.8.0.jar">
-              <sha256sum>61735f06b215a6012ee92210864462d8c8d72b25bee9486dc8ff80861aa16f2c</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/jewel/jewel-ui/0.8.1/jewel-ui-0.8.1.jar">
+              <sha256sum>99103c0bfe4f94d7891bd7fef71a032da9e7a4fbe0b5a3209db533fc0368a3d3</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/jewel/jewel-foundation/0.8.0/jewel-foundation-0.8.0.jar">
-              <sha256sum>a585fa74ce3eee0accb759493561c44117d8ee886cc7a73f1ab744d6f0695920</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/jewel/jewel-foundation/0.8.1/jewel-foundation-0.8.1.jar">
+              <sha256sum>1f4d60aa9bcff7390f7ca1ea35d5becac49ff637e39c791815e1f2aa22bb204a</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/jewel/jewel-ide-laf-bridge-platform-specific/0.8.0-ij-233/jewel-ide-laf-bridge-platform-specific-0.8.0-ij-233.jar">
-              <sha256sum>d56095505824b9034da6536a230d3643c088bce942a640c335b8427dcdea11f3</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/jewel/jewel-ide-laf-bridge-platform-specific/0.8.1-ij-233/jewel-ide-laf-bridge-platform-specific-0.8.1-ij-233.jar">
+              <sha256sum>bcc006682ba722478ac420d695524010bf21fd1916589f277521d219476fc875</sha256sum>
             </artifact>
           </verification>
           <exclude>
@@ -59,17 +59,17 @@
           </exclude>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/jewel/jewel-ide-laf-bridge/0.8.0-ij-233/jewel-ide-laf-bridge-0.8.0-ij-233.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/jewel/jewel-ui/0.8.0/jewel-ui-0.8.0.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/jewel/jewel-foundation/0.8.0/jewel-foundation-0.8.0.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/jewel/jewel-ide-laf-bridge-platform-specific/0.8.0-ij-233/jewel-ide-laf-bridge-platform-specific-0.8.0-ij-233.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/jewel/jewel-ide-laf-bridge/0.8.1-ij-233/jewel-ide-laf-bridge-0.8.1-ij-233.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/jewel/jewel-ui/0.8.1/jewel-ui-0.8.1.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/jewel/jewel-foundation/0.8.1/jewel-foundation-0.8.1.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/jewel/jewel-ide-laf-bridge-platform-specific/0.8.1-ij-233/jewel-ide-laf-bridge-platform-specific-0.8.1-ij-233.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/jewel/jewel-ide-laf-bridge/0.8.0-ij-233/jewel-ide-laf-bridge-0.8.0-ij-233-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/jewel/jewel-ui/0.8.0/jewel-ui-0.8.0-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/jewel/jewel-foundation/0.8.0/jewel-foundation-0.8.0-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/jewel/jewel-ide-laf-bridge-platform-specific/0.8.0-ij-233/jewel-ide-laf-bridge-platform-specific-0.8.0-ij-233-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/jewel/jewel-ide-laf-bridge/0.8.1-ij-233/jewel-ide-laf-bridge-0.8.1-ij-233-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/jewel/jewel-ui/0.8.1/jewel-ui-0.8.1-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/jewel/jewel-foundation/0.8.1/jewel-foundation-0.8.1-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/jewel/jewel-ide-laf-bridge-platform-specific/0.8.1-ij-233/jewel-ide-laf-bridge-platform-specific-0.8.1-ij-233-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
