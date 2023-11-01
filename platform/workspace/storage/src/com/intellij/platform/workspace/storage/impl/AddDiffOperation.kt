@@ -126,7 +126,7 @@ internal class AddDiffOperation(val target: MutableEntityStorageImpl, val diff: 
       if (targetParentId != null) {
 
         // For one-to-one connections it's necessary to remove the obsolete children to avoid "entity leaks" and the state of broken store
-        if (connectionId.connectionType == ConnectionId.ConnectionType.ONE_TO_ONE || connectionId.connectionType == ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE) {
+        if (connectionId.isOneToOne && !connectionId.isParentNullable) {
           val obsoleteChild = target.extractOneToOneChild<WorkspaceEntityBase>(connectionId, targetParentId.id)
           if (obsoleteChild != null && obsoleteChild.id != targetEntityId.id) {
             target.removeEntity(obsoleteChild)
