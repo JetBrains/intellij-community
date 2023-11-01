@@ -3,17 +3,23 @@ package com.intellij.platform.ide.bootstrap
 
 import com.intellij.diagnostic.PluginException
 import com.intellij.internal.statistic.eventLog.EventLogGroup
+import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.application.Application
+import com.intellij.openapi.application.ConfigImportHelper
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.diagnostic.telemetry.impl.span
+import com.intellij.util.PlatformUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.withTimeout
 import org.jetbrains.annotations.ApiStatus.Internal
+import kotlin.math.absoluteValue
+import kotlin.random.Random
 import kotlin.time.Duration.Companion.seconds
 
 internal suspend fun runStartupWizard(isInitialStart: Job, app: Application) {
@@ -40,7 +46,8 @@ internal suspend fun runStartupWizard(isInitialStart: Job, app: Application) {
             isInitialStart.join()
           }
           IdeStartupWizardCollector.logInitialStartSuccess()
-        } catch (_: TimeoutCancellationException) {
+        }
+        catch (_: TimeoutCancellationException) {
           log.warn("Timeout on waiting for initial start, proceeding without waiting, disabling the startup flow")
           com.intellij.platform.ide.bootstrap.isInitialStart = null
           IdeStartupWizardCollector.logInitialStartTimeout()
@@ -69,16 +76,77 @@ interface IdeStartupWizard {
 
 object IdeStartupWizardCollector : CounterUsagesCollector() {
 
-  val GROUP = EventLogGroup("wizard.startup", 1)
+  val GROUP = EventLogGroup("wizard.startup", 2)
   override fun getGroup() = GROUP
 
-  private val initialStartSucceeded = GROUP.registerEvent("initial.start.succeeded")
+  private val initialStartSucceeded = GROUP.registerEvent("initial_start_succeeded")
   fun logInitialStartSuccess() {
     initialStartSucceeded.log()
   }
 
-  private val initialStartTimeoutTriggered = GROUP.registerEvent("initial.start.timeout.triggered")
+  private val initialStartTimeoutTriggered = GROUP.registerEvent("initial_start_timeout_triggered")
   fun logInitialStartTimeout() {
     initialStartTimeoutTriggered.log()
+  }
+
+  private val experimentState = GROUP.registerEvent(
+    "initial_start_experiment_state",
+    EventFields.Enum<IdeStartupExperiment.GroupKind>("kind"),
+    EventFields.Int("group")
+  )
+  fun logExperimentState() {
+    if (ConfigImportHelper.isFirstSession()) {
+      experimentState.log(IdeStartupExperiment.experimentGroupKind, IdeStartupExperiment.experimentGroup)
+    }
+  }
+}
+
+object IdeStartupExperiment {
+
+  enum class GroupKind {
+    Experimental,
+    Control,
+    Undefined
+  }
+
+  @Suppress("DEPRECATION")
+  private val numberOfGroups = when {
+    PlatformUtils.isIdeaUltimate() || PlatformUtils.isPyCharmPro() -> 10
+    else -> 3
+  }
+
+  @Suppress("DEPRECATION")
+  private fun getGroupKind(group: Int) = when {
+    PlatformUtils.isIdeaUltimate() || PlatformUtils.isPyCharmPro() -> when {
+      group >= 0 && group <= 6 -> GroupKind.Experimental
+      group == 7 -> GroupKind.Experimental
+      group == 8 || group == 9 -> GroupKind.Control
+      else -> GroupKind.Undefined
+    }
+    else -> when (group) {
+      0, 1 -> GroupKind.Experimental
+      2 -> GroupKind.Control
+      else -> GroupKind.Undefined
+    }
+  }
+
+  val experimentGroup by lazy {
+    val registryExperimentGroup = Registry.intValue("ide.transfer.wizard.experiment.group", -1, -1, numberOfGroups - 1)
+    if (registryExperimentGroup >= 0) return@lazy registryExperimentGroup
+    // floorMod to handle negative numbers:
+    val experimentGroup = Math.floorMod(Random.nextInt().absoluteValue, numberOfGroups)
+    experimentGroup
+  }
+
+  val experimentGroupKind by lazy {
+    getGroupKind(experimentGroup)
+  }
+
+  fun shouldEnableNewStartupFlow(): Boolean {
+    return when (experimentGroupKind) {
+      GroupKind.Experimental -> true
+      GroupKind.Control -> false
+      GroupKind.Undefined -> true
+    }
   }
 }

@@ -579,6 +579,9 @@
     <statistics.counterUsagesCollector implementationClass="com.intellij.ide.customize.transferSettings.fus.TransferSettingsCollector"/>
     <statistics.validation.customValidationRule implementation="com.intellij.ide.customize.transferSettings.fus.KnownPluginValidationRule"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.platform.ide.bootstrap.IdeStartupWizardCollector"/>
+    <registryKey defaultValue="-1"
+                 description="Defines the experiment group number. Negative value will be ignored."
+                 key="ide.transfer.wizard.experiment.group"/>
 
     <themeProvider id="Darcula" path="/themes/darcula.theme.json" targetUi="classic"/>
     <themeProvider id="IntelliJ" path="/themes/intellijlaf.theme.json" parentTheme="Darcula" targetUi="classic"/>
