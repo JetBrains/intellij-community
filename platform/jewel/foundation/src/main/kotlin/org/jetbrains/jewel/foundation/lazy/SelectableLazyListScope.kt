@@ -64,9 +64,6 @@ interface SelectableLazyListScope {
 }
 
 internal class SelectableLazyListScopeContainer : SelectableLazyListScope {
-
-    private var entriesCount = 0
-
     private val keys = mutableListOf<SelectableLazyListKey>()
     private val entries = mutableListOf<Entry>()
 
@@ -78,7 +75,6 @@ internal class SelectableLazyListScopeContainer : SelectableLazyListScope {
             val key: Any,
             val contentType: Any?,
             val content: @Composable (SelectableLazyItemScope.() -> Unit),
-            val index: Int,
         ) : Entry
 
         data class Items(
@@ -86,14 +82,12 @@ internal class SelectableLazyListScopeContainer : SelectableLazyListScope {
             val key: (index: Int) -> Any,
             val contentType: (index: Int) -> Any?,
             val itemContent: @Composable (SelectableLazyItemScope.(index: Int) -> Unit),
-            val startIndex: Int,
         ) : Entry
 
         data class StickyHeader(
             val key: Any,
             val contentType: Any?,
             val content: @Composable (SelectableLazyItemScope.() -> Unit),
-            val index: Int,
         ) : Entry
     }
 
@@ -104,8 +98,7 @@ internal class SelectableLazyListScopeContainer : SelectableLazyListScope {
         content: @Composable (SelectableLazyItemScope.() -> Unit),
     ) {
         keys.add(if (selectable) Selectable(key) else NotSelectable(key))
-        entries.add(Entry.Item(key, contentType, content, entriesCount))
-        entriesCount++
+        entries.add(Entry.Item(key, contentType, content))
     }
 
     override fun items(
@@ -123,8 +116,7 @@ internal class SelectableLazyListScopeContainer : SelectableLazyListScope {
             }
         }
         keys.addAll(selectableKeys)
-        entries.add(Entry.Items(count, key, contentType, itemContent, entriesCount))
-        entriesCount += count
+        entries.add(Entry.Items(count, key, contentType, itemContent))
     }
 
     @ExperimentalFoundationApi
@@ -135,8 +127,7 @@ internal class SelectableLazyListScopeContainer : SelectableLazyListScope {
         content: @Composable (SelectableLazyItemScope.() -> Unit),
     ) {
         keys.add(if (selectable) Selectable(key) else NotSelectable(key))
-        entries.add(Entry.StickyHeader(key, contentType, content, entriesCount))
-        entriesCount++
+        entries.add(Entry.StickyHeader(key, contentType, content))
     }
 }
 

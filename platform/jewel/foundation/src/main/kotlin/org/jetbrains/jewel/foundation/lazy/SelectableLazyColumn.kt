@@ -125,7 +125,7 @@ fun SelectableLazyColumn(
 
                 is Entry.Items -> items(
                     count = entry.count,
-                    key = { entry.key(entry.startIndex + it) },
+                    key = { entry.key(it) },
                     contentType = { entry.contentType(it) },
                 ) { index ->
                     val itemScope = SelectableLazyItemScope(entry.key(index) in state.selectedKeys, isFocused)
