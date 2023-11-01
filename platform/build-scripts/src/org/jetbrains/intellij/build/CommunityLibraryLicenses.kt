@@ -397,6 +397,7 @@ object CommunityLibraryLicenses {
                                                    "ai.grazie.utils.common",
                                                    "ai.grazie.utils.json",
                                                    "ai.grazie.utils.lucene.lt.compatibility",
+                                                   "ai.grazie.model.bdg.jvm",
                                                    "ai.grazie.model.common",
                                                    "ai.grazie.model.gec",
                                                    "ai.grazie.model.text",
