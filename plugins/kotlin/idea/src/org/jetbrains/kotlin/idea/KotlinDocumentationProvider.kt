@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea
 
 import com.google.common.html.HtmlEscapers
+import com.intellij.codeInsight.TargetElementUtil
 import com.intellij.codeInsight.documentation.DocumentationManagerUtil
 import com.intellij.codeInsight.javadoc.JavaDocExternalFilter
 import com.intellij.lang.documentation.AbstractDocumentationProvider
@@ -26,6 +27,7 @@ import com.intellij.psi.impl.compiled.ClsMethodImpl
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.io.HttpRequests
 import org.jetbrains.annotations.Nls
+import org.jetbrains.kotlin.analysis.decompiler.psi.file.KtClsFile
 import org.jetbrains.kotlin.asJava.LightClassUtil
 import org.jetbrains.kotlin.asJava.elements.KtLightDeclaration
 import org.jetbrains.kotlin.builtins.StandardNames
@@ -337,6 +339,11 @@ class KotlinDocumentationProvider : AbstractDocumentationProvider(), ExternalDoc
 
         @Nls
         private fun getTextImpl(element: PsiElement, originalElement: PsiElement?, quickNavigation: Boolean): String? {
+            if (element.containingFile is KtClsFile) {
+                val gtdTarget = TargetElementUtil.getInstance().getGotoDeclarationTarget(element, element.navigationElement)
+                if (gtdTarget.containingFile is KtFile) return getTextImpl(gtdTarget, originalElement, quickNavigation)
+            }
+
             if (element is PsiWhiteSpace) {
                 val itElement = findElementWithText(originalElement, StandardNames.IMPLICIT_LAMBDA_PARAMETER_NAME.identifier)
                 val itReference = itElement?.getParentOfType<KtNameReferenceExpression>(false)
