@@ -22,4 +22,8 @@ class KotlinSameParameterValueLocalInspectionTest : SameParameterValueInspection
   fun testNegativeDouble() {
     doHighlightTest()
   }
+
+  fun testReceiver() {
+    doHighlightTest()
+  }
 }
