@@ -21,12 +21,18 @@ abstract class BlockBasedFeedbackDialogWithEmail<T : SystemDataJsonSerializable>
   abstract val zendeskFeedbackType: String
 
   private val emailBlockWithAgreement = EmailBlock(myProject) { myShowFeedbackSystemInfoDialog() }
+
+  protected open fun shouldAutoCloseZendeskTicket(): Boolean {
+    return true
+  }
+
   override fun sendFeedbackData() {
     val feedbackData = FeedbackRequestDataWithDetailedAnswer(
       emailBlockWithAgreement.getEmailAddressIfSpecified(),
       zendeskTicketTitle,
       collectDataToPlainText(),
       DEFAULT_FEEDBACK_CONSENT_ID,
+      shouldAutoCloseZendeskTicket(),
       zendeskFeedbackType,
       collectDataToJsonObject()
     )
