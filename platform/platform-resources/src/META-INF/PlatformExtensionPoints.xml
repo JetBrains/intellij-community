@@ -37,6 +37,10 @@
                     interface="com.intellij.ide.actions.ConfigurablesPatcher"
                     dynamic="true"/>
 
+    <extensionPoint name="logsPreprocessor"
+                    interface="com.intellij.ide.logsUploader.LogsPreprocessor"
+                    dynamic="true"/>
+
     <extensionPoint name="fileType"
                     beanClass="com.intellij.openapi.fileTypes.impl.FileTypeBean"
                     dynamic="true">

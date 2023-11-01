@@ -259,6 +259,7 @@
 
     <cachesInvalidator implementation="com.intellij.openapi.vfs.newvfs.FSRecordsCacheInvalidator" order="after rootCachesInvalidator"/>
     <cachesInvalidator id="rootCachesInvalidator" implementation="com.intellij.ide.actions.RootCachesInvalidator" order="first"/>
+    <logsPreprocessor implementation="com.intellij.ide.logsUploader.DefaultLogsProcessor"/>
 
     <applicationService serviceImplementation="com.intellij.ui.popup.LocalPopupComponentFactory"
                         serviceInterface="com.intellij.ui.popup.PopupComponentFactory"
