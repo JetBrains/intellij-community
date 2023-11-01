@@ -4,10 +4,7 @@ package com.intellij.coverage
 import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.execution.configurations.coverage.CoverageEnabledConfiguration
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.components.State
-import com.intellij.openapi.components.Storage
-import com.intellij.openapi.components.StoragePathMacros
+import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.PluginDescriptor
@@ -25,12 +22,18 @@ private const val SUITE: @NonNls String = "SUITE"
  * @see com.intellij.coverage.actions.CoverageSuiteChooserDialog
  */
 @State(name = "com.intellij.coverage.CoverageDataManagerImpl", storages = [Storage(StoragePathMacros.WORKSPACE_FILE)])
-class CoverageDataSuitesManager(private val project: Project) : PersistentStateComponent<Element>, Disposable {
+@Service(Service.Level.PROJECT)
+class CoverageDataSuitesManager(private val project: Project) : PersistentStateComponent<Element>, Disposable.Default {
   private val suites = ConcurrentCollectionFactory.createConcurrentSet<CoverageSuite>()
 
   init {
     setUpRunnerEPRemovedCallback()
     setUpEngineEPRemovedCallback()
+  }
+
+  companion object {
+    @JvmStatic
+    fun getInstance(project: Project): CoverageDataSuitesManager = project.service()
   }
 
   fun addSuite(coverageRunner: CoverageRunner,
@@ -127,9 +130,6 @@ class CoverageDataSuitesManager(private val project: Project) : PersistentStateC
       coverageSuite.writeExternal(suiteElement)
     }
     return element
-  }
-
-  override fun dispose() {
   }
 
   private fun createCoverageSuite(config: CoverageEnabledConfiguration,
