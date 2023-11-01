@@ -323,6 +323,24 @@ public final class CodeStyle {
   }
 
   /**
+   * Invoke the specified consumer with a copy of the given <code>baseSettings</code> in the current thread.
+   * It is safe to make any changes to the copy of settings passed to consumer, these
+   * changes will not affect any currently set code style.
+   * <p>
+   * Same as {@link #runWithLocalSettings(Project, CodeStyleSettings, Runnable)}, but a temporary settings copy (which is often needed)
+   * is also created and passed to <code>localSettingsConsumer</code> to be modified.
+   *
+   * @param project              The current project.
+   * @param baseSettings         The base settings to be cloned and used in consumer.
+   * @param localSettingsConsumer The consumer to execute with the base settings copy.
+   */
+  public static void runWithLocalSettings(@NotNull Project project,
+                                          @NotNull CodeStyleSettings baseSettings,
+                                          @NotNull Consumer<? super @NotNull CodeStyleSettings> localSettingsConsumer) {
+    CodeStyleSettingsManager.getInstance(project).runWithLocalSettings(baseSettings, localSettingsConsumer);
+  }
+
+  /**
    * Execute the specified runnable with the given temporary code style settings and restore the old settings even if the runnable fails
    * with an exception.
    * <p> 
