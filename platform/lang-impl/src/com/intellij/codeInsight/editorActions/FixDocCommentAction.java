@@ -229,7 +229,7 @@ public final class FixDocCommentAction extends EditorAction {
   }
 
   private static void reformatCommentKeepingEmptyTags(@NotNull PsiFile file, @NotNull Project project, int start, int end) {
-    CodeStyle.doWithTemporarySettings(
+    CodeStyle.runWithLocalSettings(
       project,
       CodeStyle.getSettings(file),
       tempSettings -> {

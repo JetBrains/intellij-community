@@ -53,7 +53,7 @@ public final class SelectedTextFormatter {
   void reformatSelectedText(@NotNull CodeStyleSettings reformatSettings) {
     final SelectionModel model = myEditor.getSelectionModel();
     if (model.hasSelection()) {
-      CodeStyle.doWithTemporarySettings(myProject, reformatSettings, () -> reformatRange(myFile, getSelectedRange()));
+      CodeStyle.runWithLocalSettings(myProject, reformatSettings, () -> reformatRange(myFile, getSelectedRange()));
     }
   }
 
