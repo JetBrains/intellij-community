@@ -127,12 +127,7 @@ class InstanceContainerImpl(
       return null
     }
     LOG.trace { "$debugString : registration" }
-    val parentScope = if (registrationScope == null) {
-      scopeHolder.containerScope
-    }
-    else {
-      scopeHolder.intersectScope(registrationScope)
-    }
+    val parentScope = scopeHolder.intersectScope(registrationScope)
     return register(parentScope = parentScope, actions).also {
       LOG.trace { "$debugString : registration completed" }
     }
