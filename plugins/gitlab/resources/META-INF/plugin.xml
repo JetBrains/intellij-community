@@ -96,7 +96,7 @@
       implementationClass="org.jetbrains.plugins.gitlab.util.GitLabStatistics$GitLabCountersCollector"/>
     <notificationIdsHolder
       implementation="org.jetbrains.plugins.gitlab.notification.GitLabNotificationIdsHolder"/>
-    <actionCustomPlaceAllowlist id="AIAssistantActionCustomPlaceAllowlist"
+    <actionCustomPlaceAllowlist id="GitLabActionCustomPlaceAllowlist"
                                 places="GitLabMergeRequestListPopup;GitLabMergeRequestChangesTreePopup;GitLabMergeRequestDetailsPopup"/>
   </extensions>
 
