@@ -70,10 +70,13 @@ public final class CodeStyle {
   }
 
   /**
-   * Returns root {@link CodeStyleSettings} for the given project and virtual file. In some cases the returned instance may be of
+   * Returns root {@link CodeStyleSettings} for the given project and virtual file.
+   * <p>
+   * In some cases the returned instance may be of
    * {@link TransientCodeStyleSettings} class if the original (project) settings are modified for specific file by
    * {@link CodeStyleSettingsModifier} extensions. In these cases the returned instance may change upon the next call if some of
    * {@link TransientCodeStyleSettings} dependencies become outdated.
+   * Subscribe to {@link CodeStyleSettingsListener#TOPIC} to receive notifications when the associated settings change.
    *
    * @param project The current project.
    * @param file The file to get code style settings for.
@@ -272,8 +275,8 @@ public final class CodeStyle {
    * <p>
    *   <b>Note</b>
    * The method is supposed to be used in test's {@code setUp()} method. In production code use
-   * {@link #doWithTemporarySettings(Project, CodeStyleSettings, Runnable)}.
-   * or {@link #doWithTemporarySettings(Project, CodeStyleSettings, Consumer)}
+   * {@link #runWithLocalSettings(Project, CodeStyleSettings, Runnable)}
+   * or {@link #runWithLocalSettings(Project, CodeStyleSettings, Consumer)}.
    *
    * @param project The project or {@code null} for default settings.
    * @param settings The settings to use temporarily with the project.
@@ -289,7 +292,8 @@ public final class CodeStyle {
    * <p>
    *   <b>Note</b>
    * The method is supposed to be used in test's {@code tearDown()} method. In production code use
-   * {@link #doWithTemporarySettings(Project, CodeStyleSettings, Runnable)}.
+   * {@link #runWithLocalSettings(Project, CodeStyleSettings, Runnable)}
+   * or {@link #runWithLocalSettings(Project, CodeStyleSettings, Consumer)}.
    *
    * @param project The project to drop temporary settings for or {@code null} for default settings.
    * @see #setTemporarySettings(Project, CodeStyleSettings)
@@ -310,7 +314,10 @@ public final class CodeStyle {
   }
 
   /**
-   * Invoke a runnable using the specified settings in the current thread.
+   * Invoke a runnable using the specified settings.
+   * <p>
+   * Inside the <code>runnable</code>, <code>localSettings</code> override code style settings for all files associated with
+   * <code>project</code>. This effect is limited to current thread.
    *
    * @param project The current project.
    * @param localSettings The local settings. 
@@ -323,12 +330,11 @@ public final class CodeStyle {
   }
 
   /**
-   * Invoke the specified consumer with a copy of the given <code>baseSettings</code> in the current thread.
-   * It is safe to make any changes to the copy of settings passed to consumer, these
-   * changes will not affect any currently set code style.
+   * Invoke the specified consumer with a copy of the given <code>baseSettings</code>.
    * <p>
-   * Same as {@link #runWithLocalSettings(Project, CodeStyleSettings, Runnable)}, but a temporary settings copy (which is often needed)
-   * is also created and passed to <code>localSettingsConsumer</code> to be modified.
+   * Inside <code>localSettingsConsumer</code>, this copy will override code style settings for all files associated with <code>project</code>.
+   * This effect is limited to current thread. It is safe to make any changes to the copy of settings passed to the consumer, these changes
+   * will not affect any currently set code style.
    *
    * @param project              The current project.
    * @param baseSettings         The base settings to be cloned and used in consumer.
@@ -371,11 +377,11 @@ public final class CodeStyle {
   }
 
   /**
-   * Invoke the specified consumer with a copy of the given <b>baseSettings</b> and restore the old settings even if the
+   * Invoke the specified consumer with a copy of the given <code>baseSettings</code> and restore the old settings even if the
    * consumer fails with an exception. It is safe to make any changes to the copy of settings passed to consumer, these
    * changes will not affect any currently set code style.
-   * <p> 
-   * For production code use {@link #runWithLocalSettings(Project, CodeStyleSettings, Runnable)}
+   * <p>
+   * For production code use {@link #runWithLocalSettings(Project, CodeStyleSettings, Consumer)}
    *
    * @param project              The current project.
    * @param baseSettings         The base settings to be cloned and used in consumer.
