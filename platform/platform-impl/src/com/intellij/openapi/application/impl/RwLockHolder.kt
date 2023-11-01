@@ -48,7 +48,7 @@ object RwLockHolder: ThreadingSupport {
   @JvmField
   internal var lock: ReadMostlyRWLock? = null
 
-  private val myReadActionDispatcher = EventDispatcher.create(ReadActionListener::class.java)
+  private var myReadActionDispatcher: ReadActionListener? = null
   private val myWriteActionDispatcher = EventDispatcher.create(WriteActionListener::class.java)
 
   private val myWriteActionsStack = Stack<Class<*>>()
@@ -234,18 +234,16 @@ object RwLockHolder: ThreadingSupport {
   }
 
 
-  @Deprecated
-  override fun addReadActionListener(listener: ReadActionListener) {
-    myReadActionDispatcher.addListener(listener)
+  override fun setReadActionListener(listener: ReadActionListener) {
+    if (myReadActionDispatcher != null)
+      error("ReadActionListener already registered")
+    myReadActionDispatcher = listener
   }
 
-  override fun addReadActionListener(listener: ReadActionListener, parent: Disposable) {
-    myReadActionDispatcher.addListener(listener, parent)
-  }
-
-  @Deprecated
   override fun removeReadActionListener(listener: ReadActionListener) {
-    myReadActionDispatcher.removeListener(listener)
+    if (myReadActionDispatcher != listener)
+      error("ReadActionListener is not registered")
+    myReadActionDispatcher = null
   }
 
   override fun runReadAction(action: Runnable) {
@@ -540,7 +538,7 @@ object RwLockHolder: ThreadingSupport {
 
   private fun fireBeforeReadActionStart(clazz: Class<*>) {
     try {
-      myReadActionDispatcher.multicaster.beforeReadActionStart(clazz)
+      myReadActionDispatcher?.beforeReadActionStart(clazz)
     }
     catch (_: Throwable) {
     }
@@ -548,7 +546,7 @@ object RwLockHolder: ThreadingSupport {
 
   private fun fireReadActionStarted(clazz: Class<*>) {
     try {
-      myReadActionDispatcher.multicaster.readActionStarted(clazz)
+      myReadActionDispatcher?.readActionStarted(clazz)
     }
     catch (_: Throwable) {
     }
@@ -556,7 +554,7 @@ object RwLockHolder: ThreadingSupport {
 
   private fun fireReadActionFinished(clazz: Class<*>) {
     try {
-      myReadActionDispatcher.multicaster.readActionFinished(clazz)
+      myReadActionDispatcher?.readActionFinished(clazz)
     }
     catch (_: Throwable) {
     }
@@ -564,7 +562,7 @@ object RwLockHolder: ThreadingSupport {
 
   private fun fireAfterReadActionFinished(clazz: Class<*>) {
     try {
-      myReadActionDispatcher.multicaster.afterReadActionFinished(clazz)
+      myReadActionDispatcher?.afterReadActionFinished(clazz)
     }
     catch (_: Throwable) {
     }

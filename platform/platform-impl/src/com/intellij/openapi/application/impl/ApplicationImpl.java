@@ -292,6 +292,8 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
 
   @Override
   public void dispose() {
+    getThreadingSupport().removeReadActionListener(this);
+
     //noinspection deprecation
     myDispatcher.getMulticaster().applicationExiting();
 
@@ -1123,7 +1125,7 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
       return true;
     }, app.getCoroutineScope());
 
-    getThreadingSupport().addReadActionListener(app, app);
+    getThreadingSupport().setReadActionListener(app);
     getThreadingSupport().addWriteActionListener(app, app);
 
     app.addApplicationListener(new ApplicationListener() {

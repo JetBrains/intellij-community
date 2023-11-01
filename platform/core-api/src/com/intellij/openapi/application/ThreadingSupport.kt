@@ -132,31 +132,21 @@ interface ThreadingSupport {
   fun <T, E : Throwable?> runUnlockingIntendedWrite(action: ThrowableComputable<T, E>): T
 
   /**
-   * Adds a [ReadActionListener].
+   * Set a [ReadActionListener].
    *
-   * Please, use [addReadActionListener] with [Disposable] second argument.
+   * Only one listener can be set. It is error to set second listener.
    *
-   * @param listener the listener to add
+   * @param listener the listener to set
    */
-  @Deprecated
-  fun addReadActionListener(listener: ReadActionListener)
-
-  /**
-   * Adds a [ReadActionListener].
-   *
-   * @param listener the listener to add
-   * @param parent   the parent disposable, whose disposal will trigger this listener's removal
-   */
-  fun addReadActionListener(listener: ReadActionListener, parent: Disposable)
+  fun setReadActionListener(listener: ReadActionListener)
 
   /**
    * Removes a [ReadActionListener].
    *
-   * Please, use [addReadActionListener] with [Disposable] second argument and [Disposable.dispose].
+   * It is error to remove listener which was not set early.
    *
    * @param listener the listener to remove
    */
-  @Deprecated
   fun removeReadActionListener(listener: ReadActionListener)
 
   /**
