@@ -4,13 +4,8 @@
 package com.intellij.platform.util.progress
 
 import com.intellij.platform.util.progress.impl.ProgressText
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.channels.ProducerScope
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.flow.channelFlow
-import kotlinx.coroutines.flow.toList
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus.*
 import kotlin.coroutines.AbstractCoroutineContextElement
 import kotlin.coroutines.CoroutineContext
@@ -254,13 +249,22 @@ suspend fun <T> durationStep(duration: Double, text: ProgressText? = null, actio
   }
 }
 
-internal typealias TransformerOutput<R> = suspend (R) -> Unit
+/**
+ * @see FlowCollector
+ */
+@NonExtendable // instances are provided by the platform
+interface TransformCollector<R> {
+
+  /**
+   * Send a value to the output of the current transformation.
+   * This method is thread-safe and can be invoked concurrently.
+   */
+  suspend fun out(value: R)
+}
 
 /**
  * Splits context progress reporter into N steps, where N = size of [this] collection,
  * each [transform] invocation happens in a context of a separate progress step.
- * [transform] receives an element from [this] collection, and [TransformerOutput] lambda,
- * which should be used to feed the transformation results.
  *
  * Returns a list containing the results of applying the given [transform] function to each value of the original list.
  *
@@ -271,7 +275,7 @@ internal typealias TransformerOutput<R> = suspend (R) -> Unit
  * #### `transform`
  *
  * ```
- * items.transformWithProgress(concurrent = true) { item, out ->
+ * items.transformWithProgress(concurrent = true) { item ->
  *   when {
  *     condition0 -> {
  *       // transformed into nothing
@@ -316,20 +320,23 @@ internal typealias TransformerOutput<R> = suspend (R) -> Unit
  */
 suspend fun <T, R> Collection<T>.transformWithProgress(
   concurrent: Boolean,
-  transform: suspend (value: T, out: TransformerOutput<R>) -> Unit,
+  transform: suspend TransformCollector<R>.(value: T) -> Unit,
 ): List<R> {
-  val items = this@transformWithProgress
-  val duration = 1.0 / items.size
-
-  suspend fun ProducerScope<R>.step(item: T) {
-    durationStep(duration, text = null) {
-      transform(item) { transformed ->
-        send(transformed)
+  return channelFlow {
+    val items = this@transformWithProgress
+    val duration = 1.0 / items.size
+    val collector = object : TransformCollector<R> {
+      override suspend fun out(value: R) {
+        send(value)
       }
     }
-  }
 
-  return channelFlow {
+    suspend fun step(item: T) {
+      durationStep(duration, text = null) {
+        collector.transform(item)
+      }
+    }
+
     if (concurrent) {
       for (item in items) {
         launch {
@@ -349,7 +356,7 @@ suspend fun <T, R> Collection<T>.transformWithProgress(
  * @see transformWithProgress
  */
 suspend fun <T, R> Collection<T>.mapWithProgress(concurrent: Boolean, mapper: suspend (value: T) -> R): List<R> {
-  return transformWithProgress(concurrent) { item, out ->
+  return transformWithProgress(concurrent) { item ->
     out(mapper(item))
   }
 }
@@ -358,7 +365,7 @@ suspend fun <T, R> Collection<T>.mapWithProgress(concurrent: Boolean, mapper: su
  * @see transformWithProgress
  */
 suspend fun <T> Collection<T>.filterWithProgress(concurrent: Boolean, predicate: suspend (value: T) -> Boolean): List<T> {
-  return transformWithProgress(concurrent) { item, out ->
+  return transformWithProgress(concurrent) { item ->
     if (predicate(item)) {
       out(item)
     }
@@ -369,7 +376,7 @@ suspend fun <T> Collection<T>.filterWithProgress(concurrent: Boolean, predicate:
  * @see transformWithProgress
  */
 suspend fun <T> Collection<T>.forEachWithProgress(concurrent: Boolean, action: suspend (value: T) -> Unit) {
-  transformWithProgress<_, Nothing?>(concurrent) { item, _ ->
+  transformWithProgress<_, Nothing?>(concurrent) { item ->
     action(item)
   }
 }
