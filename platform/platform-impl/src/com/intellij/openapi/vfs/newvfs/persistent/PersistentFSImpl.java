@@ -727,7 +727,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   }
 
   @Override
-  public byte @NotNull [] contentsToByteArray(@NotNull VirtualFile file, boolean cacheContent) throws IOException {
+  public byte @NotNull [] contentsToByteArray(@NotNull VirtualFile file, boolean forceCacheContent) throws IOException {
     InputStream contentStream;
     boolean outdated;
     int fileId;
@@ -760,12 +760,17 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
         setLength(fileId, content.length);
       }
 
-      // we should cache every local file's content, because the local history feature and Perforce offline mode depend on the cache
-      // (do not cache archive content unless explicitly asked)
-      if ((!fs.isReadOnly() || cacheContent && !app.isInternal() && !app.isUnitTestMode()) && shouldCache(content.length)) {
+      if (!shouldCache(content.length)) {
+        return content;
+      }
+      // We _should_ cache every local file's content, because the local history feature and Perforce offline mode depend on the cache
+      // But caching of readOnly (which 99% means 'archived') file content is useless, if not explicitly asked
+      boolean reallyForceCacheContent = forceCacheContent && !app.isInternal() && !app.isUnitTestMode();
+      boolean fileContentCouldChange = !fs.isReadOnly();
+      if (fileContentCouldChange || reallyForceCacheContent) {
         myInputLock.writeLock().lock();
         try {
-          writeContent(file, ByteArraySequence.create(content), /*contentOfFixedSize: */ fs.isReadOnly());
+          writeContent(file, ByteArraySequence.create(content), /*contentOfFixedSize: */ !fileContentCouldChange);
           setFlag(file, Flags.MUST_RELOAD_CONTENT, false);
         }
         finally {
@@ -829,6 +834,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     return contentStream;
   }
 
+  //TODO RC: rename to !skipCachingHugeFileIfBusy(len)
   private static boolean shouldCache(long len) {
     return len <= PersistentFSConstants.FILE_LENGTH_TO_CACHE_THRESHOLD && !HeavyProcessLatch.INSTANCE.isRunning();
   }
