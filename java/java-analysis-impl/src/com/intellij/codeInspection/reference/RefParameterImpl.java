@@ -157,7 +157,7 @@ public class RefParameterImpl extends RefJavaElementImpl implements RefParameter
 
   @Nullable
   public static Object getAccessibleExpressionValue(@Nullable UExpression expression, @NotNull Supplier<? extends PsiElement> accessPlace) {
-    if (expression == null) return null;
+    if (expression == null) return VALUE_IS_NOT_CONST;
     if (expression instanceof UExpressionList expressionList) {
       List<Object> exprValues = ContainerUtil.map(expressionList.getExpressions(), expr -> getAccessibleExpressionValue(expr, accessPlace));
       return ContainerUtil.all(exprValues, value -> value == VALUE_IS_NOT_CONST) ? VALUE_IS_NOT_CONST : exprValues;
