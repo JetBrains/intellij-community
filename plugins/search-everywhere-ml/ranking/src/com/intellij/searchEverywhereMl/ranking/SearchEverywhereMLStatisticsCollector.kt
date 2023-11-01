@@ -274,7 +274,7 @@ class SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
   }
 
   companion object {
-    private val GROUP = EventLogGroup("mlse.log", 82, MLSE_RECORDER_ID)
+    private val GROUP = EventLogGroup("mlse.log", 83, MLSE_RECORDER_ID)
     private const val REPORTED_ITEMS_LIMIT = 50
 
     private val IS_INTERNAL = EventFields.Boolean("isInternal")
