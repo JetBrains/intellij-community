@@ -45,7 +45,8 @@ class MavenKotlinModuleBuilderHelper(
 
     override fun configure(project: Project, root: VirtualFile, isInteractive: Boolean) {
 
-        val psiFiles = if (myAggregatorProject != null) arrayOf(getPsiFile(project, myAggregatorProject.file)) else PsiFile.EMPTY_ARRAY
+        val aggregatorProject = myAggregatorProject
+        val psiFiles = if (aggregatorProject != null) arrayOf(getPsiFile(project, aggregatorProject.file)) else PsiFile.EMPTY_ARRAY
 
         val pom =
             WriteCommandAction.writeCommandAction(project, *psiFiles).withName(myCommandName).compute<VirtualFile?, RuntimeException> {
