@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.terminal.exp
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.IdeFocusManager
@@ -15,6 +16,7 @@ import com.jediterm.core.util.TermSize
 import com.jediterm.terminal.TtyConnector
 import org.jetbrains.plugins.terminal.JBTerminalSystemSettingsProvider
 import org.jetbrains.plugins.terminal.ShellStartupOptions
+import org.jetbrains.plugins.terminal.exp.ui.BlockTerminalColorPalette
 import java.awt.Color
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CopyOnWriteArrayList
@@ -52,7 +54,8 @@ class TerminalWidgetImpl(private val project: Project,
   fun initialize(options: ShellStartupOptions): CompletableFuture<TermSize> {
     val oldView = view
     view = if (options.shellIntegration?.withCommandBlocks == true) {
-      val session = TerminalSession(settings, options.shellIntegration)
+      val colorPalette = BlockTerminalColorPalette(EditorColorsManager.getInstance().getGlobalScheme())
+      val session = TerminalSession(settings, colorPalette, options.shellIntegration)
       Disposer.register(this, session)
       BlockTerminalView(project, session, settings, terminalTitle)
     }

@@ -13,7 +13,6 @@ import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
-import com.intellij.terminal.TerminalColorPalette
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jediterm.terminal.StyledTextConsumer
 import com.jediterm.terminal.TextStyle
@@ -35,9 +34,6 @@ class TerminalOutputController(
 
   private val caretModel: TerminalCaretModel = TerminalCaretModel(session, outputModel, editor)
   private val caretPainter: TerminalCaretPainter = TerminalCaretPainter(caretModel, outputModel, selectionModel, editor)
-
-  private val palette: TerminalColorPalette
-    get() = settings.terminalColorPalette
 
   @Volatile
   private var keyEventsListenerDisposable: Disposable? = null
@@ -244,7 +240,7 @@ class TerminalOutputController(
     caretPainter.repaint()
   }
 
-  private fun TextStyle.toTextAttributes(): TextAttributes = this.toTextAttributes(palette)
+  private fun TextStyle.toTextAttributes(): TextAttributes = this.toTextAttributes(session.colorPalette)
 
   /** It is implied that the command is not null */
   private fun createCommandHighlighting(block: CommandBlock): HighlightingInfo {

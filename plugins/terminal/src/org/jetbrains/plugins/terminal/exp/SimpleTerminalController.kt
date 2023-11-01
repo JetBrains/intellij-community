@@ -22,8 +22,7 @@ class SimpleTerminalController(
   settings: JBTerminalSystemSettingsProviderBase,
   private val session: TerminalSession,
   private val editor: EditorEx,
-  eventsHandler: TerminalEventsHandler,
-  private val palette: TerminalColorPalette
+  eventsHandler: TerminalEventsHandler
 ) : Disposable {
   val document: Document
     get() = editor.document
@@ -131,7 +130,7 @@ class SimpleTerminalController(
     caretPainter.repaint()
   }
 
-  private fun TextStyle.toTextAttributes(): TextAttributes = this.toTextAttributes(palette)
+  private fun TextStyle.toTextAttributes(): TextAttributes = this.toTextAttributes(session.colorPalette)
 
   override fun dispose() {
     Disposer.dispose(caretModel)

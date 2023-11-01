@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.terminal.exp.util
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
@@ -12,6 +13,7 @@ import org.jetbrains.plugins.terminal.ShellStartupOptions
 import org.jetbrains.plugins.terminal.exp.ShellCommandListener
 import org.jetbrains.plugins.terminal.exp.TerminalModel
 import org.jetbrains.plugins.terminal.exp.TerminalSession
+import org.jetbrains.plugins.terminal.exp.ui.BlockTerminalColorPalette
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
@@ -28,7 +30,8 @@ object TerminalSessionTestUtil {
     val process = runner.createProcess(configuredOptions)
     val ttyConnector = runner.createTtyConnector(process)
 
-    val session = TerminalSession(runner.settingsProvider, configuredOptions.shellIntegration)
+    val colorPalette = BlockTerminalColorPalette(EditorColorsManager.getInstance().globalScheme)
+    val session = TerminalSession(runner.settingsProvider, colorPalette, configuredOptions.shellIntegration)
     val model: TerminalModel = session.model
 
     val promptShownFuture = CompletableFuture<Boolean>()

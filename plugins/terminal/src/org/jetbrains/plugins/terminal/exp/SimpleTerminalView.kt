@@ -46,9 +46,9 @@ class SimpleTerminalView(
     get() = Dimension(editor.charHeight, editor.lineHeight)
 
   init {
-    val palette = settings.terminalColorPalette
+    val palette = session.colorPalette
     editor = createEditor(palette)
-    controller = SimpleTerminalController(settings, session, editor, eventsHandler, palette)
+    controller = SimpleTerminalController(settings, session, editor, eventsHandler)
     component = SimpleTerminalPanel(palette)
     editor.addFocusListener(object : FocusChangeListener {
       override fun focusGained(editor: Editor) {

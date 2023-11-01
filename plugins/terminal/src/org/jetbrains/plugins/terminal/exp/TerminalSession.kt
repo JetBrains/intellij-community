@@ -5,6 +5,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.util.Key
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
+import com.intellij.terminal.TerminalColorPalette
 import com.intellij.terminal.TerminalExecutorServiceManagerImpl
 import com.jediterm.core.typeahead.TerminalTypeAheadManager
 import com.jediterm.core.util.TermSize
@@ -15,7 +16,9 @@ import org.jetbrains.plugins.terminal.util.ShellIntegration
 import java.awt.event.KeyEvent
 import java.util.concurrent.CopyOnWriteArrayList
 
-class TerminalSession(settings: JBTerminalSystemSettingsProviderBase, val shellIntegration: ShellIntegration?) : Disposable {
+class TerminalSession(settings: JBTerminalSystemSettingsProviderBase,
+                      val colorPalette: TerminalColorPalette,
+                      val shellIntegration: ShellIntegration?) : Disposable {
   val model: TerminalModel
   lateinit var terminalStarter: TerminalStarter
 
@@ -29,7 +32,9 @@ class TerminalSession(settings: JBTerminalSystemSettingsProviderBase, val shellI
 
   init {
     val styleState = StyleState()
-    styleState.setDefaultStyle(settings.defaultStyle)
+    val defaultStyle = TextStyle(TerminalColor { colorPalette.defaultForeground },
+                                 TerminalColor { colorPalette.defaultBackground })
+    styleState.setDefaultStyle(defaultStyle)
     textBuffer = TerminalTextBuffer(80, 24, styleState)
     model = TerminalModel(textBuffer, styleState)
     controller = JediTerminal(ModelUpdatingTerminalDisplay(model, settings), textBuffer, styleState)
