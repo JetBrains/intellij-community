@@ -3,10 +3,10 @@ package com.intellij.terminal
 
 import com.intellij.execution.process.ColoredOutputTypeRegistryImpl
 import com.intellij.execution.ui.ConsoleViewContentType
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.colors.ColorKey
 import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.openapi.editor.colors.TextAttributesKey
+import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.ExperimentalUI
 import com.jediterm.core.Color
@@ -41,32 +41,8 @@ internal class JBTerminalSchemeColorPalette(private val colorsScheme: EditorColo
       return AwtTransformers.fromAwtColor(backgroundColor ?: colorsScheme.defaultBackground)!!
     }
 
-  override fun getForegroundByColorIndex(colorIndex: Int): Color {
-    val attributes = colorsScheme.getAttributes(getAnsiColorKey(colorIndex))
-    val color = attributes.foregroundColor ?: attributes.backgroundColor
-    return if (color != null) {
-      AwtTransformers.fromAwtColor(color)!!
-    }
-    else {
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("Default foreground color will be used for ANSI color index #$colorIndex")
-      }
-      defaultForeground
-    }
-  }
-
-  override fun getBackgroundByColorIndex(colorIndex: Int): Color {
-    val attributes = colorsScheme.getAttributes(getAnsiColorKey(colorIndex))
-    val color = attributes.backgroundColor ?: attributes.foregroundColor
-    return if (color != null) {
-      AwtTransformers.fromAwtColor(color)!!
-    }
-    else {
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("Default background color will be used for ANSI color index #$colorIndex")
-      }
-      defaultBackground
-    }
+  override fun getAttributesByColorIndex(index: Int): TextAttributes {
+    return colorsScheme.getAttributes(getAnsiColorKey(index))
   }
 
   private fun getAnsiColorKey(value: Int): TextAttributesKey {
@@ -77,8 +53,6 @@ internal class JBTerminalSchemeColorPalette(private val colorsScheme: EditorColo
   }
 
   companion object {
-    private val LOG = Logger.getInstance(JBTerminalSchemeColorPalette::class.java)
-
     private val isBlockTerminalEnabled: Boolean
       get() = ExperimentalUI.isNewUI() && Registry.`is`("ide.experimental.ui.new.terminal")
   }
