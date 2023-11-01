@@ -17,7 +17,7 @@ import org.jetbrains.kotlin.psi.KtVisitorVoid
  * A highlight visitor which generates a semantic INFORMATION-level highlightings (e.g., for smart-casts) and adds them to the [HighlightInfoHolder]
  */
 class KotlinSemanticHighlightingVisitor : HighlightVisitor {
-    private lateinit var analyzers: Array<KtVisitorVoid>
+    private var analyzers: Array<KtVisitorVoid>? = null
 
     override fun suitableForFile(file: PsiFile): Boolean {
         return file is KtFile && !file.isCompiled
@@ -25,8 +25,17 @@ class KotlinSemanticHighlightingVisitor : HighlightVisitor {
 
     override fun analyze(ktFile: PsiFile, updateWholeFile: Boolean, holder: HighlightInfoHolder, action: Runnable): Boolean {
         analyze(ktFile as KtElement) {
+            check(analyzers == null)
             analyzers = createSemanticAnalyzers(holder)
-            action.run()
+            try {
+                action.run()
+            } finally {
+                /*
+                `analyzers` store a reference to `KtAnalysisSession`.
+                This hack is needed to avoid `KtAnalysisSession` leak into the project via `HighlightVisitor` EP.
+                 */
+                analyzers = null
+            }
             KotlinUnusedHighlightingVisitor(ktFile as KtFile, holder).collectHighlights(holder)
         }
         return true
@@ -34,14 +43,17 @@ class KotlinSemanticHighlightingVisitor : HighlightVisitor {
 
     context(KtAnalysisSession)
     private fun createSemanticAnalyzers(holder: HighlightInfoHolder): Array<KtVisitorVoid> = arrayOf(
-      TypeHighlighter(holder),
-      FunctionCallHighlighter(holder),
-      ExpressionsSmartcastHighlighter(holder),
-      VariableReferenceHighlighter(holder),
-      DslHighlighter(holder),
+        TypeHighlighter(holder),
+        FunctionCallHighlighter(holder),
+        ExpressionsSmartcastHighlighter(holder),
+        VariableReferenceHighlighter(holder),
+        DslHighlighter(holder),
     )
 
     override fun visit(element: PsiElement) {
+        val analyzers = analyzers
+            ?: error("analyzers are not initialized")
+
         analyzers.forEach { analyzer ->
             element.accept(analyzer)
         }
