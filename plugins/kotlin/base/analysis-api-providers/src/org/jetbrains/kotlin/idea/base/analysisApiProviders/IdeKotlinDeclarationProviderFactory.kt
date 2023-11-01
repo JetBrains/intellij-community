@@ -5,12 +5,16 @@ package org.jetbrains.kotlin.idea.base.analysisApiProviders
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.OrderRootType
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.stubs.StubIndex
 import com.intellij.psi.stubs.StubIndexKey
 import com.intellij.util.indexing.FileBasedIndex
+import com.intellij.util.indexing.FileBasedIndex.ValueProcessor
+import org.jetbrains.kotlin.analysis.project.structure.KtBuiltinsModule
 import org.jetbrains.kotlin.analysis.project.structure.KtModule
 import org.jetbrains.kotlin.analysis.providers.KotlinDeclarationProvider
 import org.jetbrains.kotlin.analysis.providers.KotlinDeclarationProviderFactory
@@ -18,23 +22,25 @@ import org.jetbrains.kotlin.analysis.providers.KotlinDeclarationProviderMerger
 import org.jetbrains.kotlin.analysis.providers.impl.declarationProviders.CompositeKotlinDeclarationProvider
 import org.jetbrains.kotlin.analysis.providers.impl.declarationProviders.FileBasedKotlinDeclarationProvider
 import org.jetbrains.kotlin.analysis.providers.impl.mergeSpecificProviders
+import org.jetbrains.kotlin.idea.base.indices.names.KotlinBinaryRootToPackageIndex
 import org.jetbrains.kotlin.idea.base.indices.names.KotlinTopLevelCallableByPackageShortNameIndex
 import org.jetbrains.kotlin.idea.base.indices.names.KotlinTopLevelClassLikeDeclarationByPackageShortNameIndex
 import org.jetbrains.kotlin.idea.base.indices.names.getNamesInPackage
+import org.jetbrains.kotlin.idea.base.indices.names.isSupportedByBinaryRootToPackageIndex
 import org.jetbrains.kotlin.idea.base.indices.processElementsAndMeasure
-import org.jetbrains.kotlin.idea.base.projectStructure.KtSourceModuleByModuleInfoForOutsider
+import org.jetbrains.kotlin.idea.base.projectStructure.*
 import org.jetbrains.kotlin.idea.stubindex.*
-import org.jetbrains.kotlin.idea.vfilefinder.KotlinModuleMappingIndex
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 internal class IdeKotlinDeclarationProviderFactory(private val project: Project) : KotlinDeclarationProviderFactory() {
     override fun createDeclarationProvider(scope: GlobalSearchScope, contextualModule: KtModule?): KotlinDeclarationProvider {
-        val mainProvider = IdeKotlinDeclarationProvider(project, scope)
+        val mainProvider = IdeKotlinDeclarationProvider(project, scope, contextualModule)
 
         if (contextualModule is KtSourceModuleByModuleInfoForOutsider) {
             val fakeKtFile = PsiManager.getInstance(contextualModule.project).findFile(contextualModule.fakeVirtualFile)
@@ -54,13 +60,15 @@ internal class IdeKotlinDeclarationProviderMerger(private val project: Project) 
             IdeKotlinDeclarationProvider(
                 project,
                 GlobalSearchScope.union(targetProviders.map { it.scope }),
+                contextualModule = null,
             )
         }
 }
 
 private class IdeKotlinDeclarationProvider(
     private val project: Project,
-    val scope: GlobalSearchScope
+    val scope: GlobalSearchScope,
+    private val contextualModule: KtModule?,
 ) : KotlinDeclarationProvider() {
     private val log = Logger.getInstance(IdeKotlinDeclarationProvider::class.java)
     private val stubIndex: StubIndex = StubIndex.getInstance()
@@ -121,11 +129,48 @@ private class IdeKotlinDeclarationProvider(
         return KotlinFileFacadeClassByPackageIndex[packageFqName.asString(), project, scope]
     }
 
-    /**
-     * [org.jetbrains.kotlin.idea.caches.resolve.IDEPackagePartProvider.computePackageSetWithNonClassDeclarations]
-     */
-    override fun computePackageSetWithTopLevelCallableDeclarations(): Set<String> = buildSet {
-        FileBasedIndex.getInstance().processAllKeys(KotlinModuleMappingIndex.NAME, { name -> add(name); true }, scope, null)
+    override fun computePackageSetWithTopLevelCallableDeclarations(): Set<String>? =
+        when (contextualModule) {
+            is KtSourceModuleByModuleInfo -> computeSourceModulePackageSet(contextualModule)
+            is SdkKtModuleByModuleInfo -> computeSdkModulePackageSet(contextualModule)
+            is KtLibraryModuleByModuleInfo -> computeLibraryModulePackageSet(contextualModule)
+            is KtBuiltinsModule -> StandardClassIds.builtInsPackages.mapTo(mutableSetOf()) { it.asString() }
+            else -> null
+        }
+
+    private fun computeSourceModulePackageSet(module: KtSourceModuleByModuleInfo): Set<String>? = null // KTIJ-27450
+
+    private fun computeSdkModulePackageSet(module: SdkKtModuleByModuleInfo): Set<String>? =
+        computePackageSetFromBinaryRoots(module.moduleInfo.sdk.rootProvider.getFiles(OrderRootType.CLASSES))
+
+    private fun computeLibraryModulePackageSet(module: KtLibraryModuleByModuleInfo): Set<String>? =
+        computePackageSetFromBinaryRoots(module.libraryInfo.library.getFiles(OrderRootType.CLASSES))
+
+    private fun computePackageSetFromBinaryRoots(binaryRoots: Array<VirtualFile>): Set<String>? {
+        if (binaryRoots.any { !it.isSupportedByBinaryRootToPackageIndex }) {
+            return null
+        }
+
+        // If the `KotlinBinaryRootToPackageIndex` doesn't contain any of the (supported) binary roots, we can still return an empty set,
+        // because the index is exhaustive for binary libraries. An empty set means that the library doesn't contain any Kotlin
+        // declarations.
+        return buildSet {
+            binaryRoots.forEach { binaryRoot ->
+                FileBasedIndex.getInstance().processValues<String, String>(
+                    KotlinBinaryRootToPackageIndex.NAME,
+                    binaryRoot.name,
+                    null,
+                    ValueProcessor<String> { _, packageName ->
+                        add(packageName)
+                        true
+                    },
+
+                    // We don't need to use the declaration provider's scope, as the binary file name is already sufficiently specific (and
+                    // false positives are admissible).
+                    GlobalSearchScope.allScope(project),
+                )
+            }
+        }
     }
 
     override fun findFilesForFacade(facadeFqName: FqName): Collection<KtFile> {
