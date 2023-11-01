@@ -8,6 +8,7 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.instanceContainer.instantiation.instantiate
 import com.intellij.platform.instanceContainer.internal.DynamicInstanceSupport
+import com.intellij.platform.instanceContainer.internal.DynamicInstanceSupport.DynamicInstanceInitializer
 import com.intellij.platform.instanceContainer.internal.InstanceHolder
 import com.intellij.platform.instanceContainer.internal.InstanceInitializer
 import kotlinx.coroutines.CoroutineScope
@@ -19,11 +20,14 @@ internal class LightServiceInstanceSupport(
   private val onDynamicInstanceRegistration: (InstanceHolder) -> Unit
 ) : DynamicInstanceSupport {
 
-  override fun dynamicInstanceInitializer(instanceClass: Class<*>): InstanceInitializer? {
+  override fun dynamicInstanceInitializer(instanceClass: Class<*>): DynamicInstanceInitializer? {
     if (!isLightService(instanceClass)) {
       return null
     }
-    return LightServiceInstanceInitializer(instanceClass)
+    return DynamicInstanceInitializer(
+      registrationScope = (instanceClass.classLoader as? PluginAwareClassLoader)?.pluginCoroutineScope,
+      initializer = LightServiceInstanceInitializer(instanceClass),
+    )
   }
 
   override fun dynamicInstanceRegistered(dynamicInstanceHolder: InstanceHolder) {
