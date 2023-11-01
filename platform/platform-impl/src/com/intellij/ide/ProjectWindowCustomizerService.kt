@@ -347,7 +347,7 @@ class ProjectWindowCustomizerService : Disposable {
     g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY)
     val color = getGradientProjectColor(project)
 
-    val length = Registry.intValue("ide.colorful.toolbar.gradient.length", 300)
+    val length = Registry.intValue("ide.colorful.toolbar.gradient.radius", 300)
     val projectComboBtn = ComponentUtil.findComponentsOfType(parent, ToolbarComboButton::class.java).find {
       ClientProperty.get(it, CustomComponentAction.ACTION_KEY) is ProjectToolbarWidgetAction
     }
@@ -356,13 +356,18 @@ class ProjectWindowCustomizerService : Disposable {
       SwingUtilities.convertPoint(it.parent, it.x, it.y, parent).x.toFloat() + it.margin.left.toFloat() + projectIconWidth / 2
     } ?: 150f
 
-    val mainToolbarXPosition = ComponentUtil.findComponentsOfType(parent, MainToolbar::class.java).firstOrNull()?.location?.x ?: 0
+
+    val mainToolbarXPosition = (ComponentUtil.findComponentsOfType(parent, MainToolbar::class.java).firstOrNull())?.let {
+      SwingUtilities.convertPoint(it.parent, it.location, parent)
+    }?.x ?: 0
+    val saturation = Registry.doubleValue("ide.colorful.toolbar.gradient.saturation", 0.85).coerceIn(0.0, 1.0)
+    val blendedColor = ColorUtil.blendColorsInRgb(parent.background, color, saturation)
     val leftBound = (offset - length).coerceAtLeast(mainToolbarXPosition.toFloat() / 2)
-    g.paint = GradientPaint(leftBound, 0f, parent.background, offset, 0f, color)
+    g.paint = GradientPaint(leftBound, 0f, parent.background, offset, 0f, blendedColor)
     g.fillRect(0, 0, offset.toInt(), height)
 
     val rightBound = offset + length
-    g.paint = GradientPaint(offset, 0f, color, rightBound, 0f, parent.background)
+    g.paint = GradientPaint(offset, 0f, blendedColor, rightBound, 0f, parent.background)
     g.fillRect(offset.toInt(), 0, length, height)
 
     return true
