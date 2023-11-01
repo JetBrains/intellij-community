@@ -13,8 +13,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.idea.maven.utils.MavenActivityKey
 import org.jetbrains.idea.maven.utils.MavenCoroutineScopeProvider
-import org.jetbrains.idea.maven.utils.MavenInProgressWitness
 import org.jetbrains.idea.maven.utils.MavenUtil
 
 class MavenOpenProjectProvider : AbstractOpenProjectProvider() {
@@ -57,7 +57,7 @@ class MavenOpenProjectProvider : AbstractOpenProjectProvider() {
 
     if (ExternalSystemTrustedProjectDialog.confirmLinkingUntrustedProjectAsync(project, systemId, projectRoot.toNioPath())) {
       val asyncBuilder = MavenProjectAsyncBuilder()
-      project.trackActivity(MavenInProgressWitness::class) {
+      project.trackActivity(MavenActivityKey) {
         asyncBuilder.commit(project, projectFile, null)
       }
     }

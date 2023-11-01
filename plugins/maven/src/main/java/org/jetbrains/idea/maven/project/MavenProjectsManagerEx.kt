@@ -262,7 +262,7 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
 
   override fun scheduleUpdateAllMavenProjects(spec: MavenImportSpec) {
     cs.launch {
-      project.trackActivity(MavenInProgressWitness::class) {
+      project.trackActivity(MavenActivityKey) {
         updateAllMavenProjects(spec)
       }
     }
@@ -606,7 +606,7 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
 }
 
 class MavenProjectsManagerProjectActivity : ProjectActivity {
-  override suspend fun execute(project: Project) = project.trackActivity(MavenInProgressWitness::class) {
+  override suspend fun execute(project: Project) = project.trackActivity(MavenActivityKey) {
     blockingContext {
       MavenProjectsManager.getInstance(project).onProjectStartup()
     }

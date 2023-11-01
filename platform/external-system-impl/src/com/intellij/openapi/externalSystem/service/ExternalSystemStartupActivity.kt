@@ -11,8 +11,8 @@ import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys
 import com.intellij.openapi.externalSystem.service.project.ProjectRenameAware
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl
+import com.intellij.openapi.externalSystem.util.ExternalSystemActivityKey
 import com.intellij.openapi.externalSystem.util.ExternalSystemInProgressService
-import com.intellij.openapi.externalSystem.util.ExternalSystemInProgressWitness
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
@@ -24,7 +24,7 @@ import kotlinx.coroutines.withContext
 
 internal class ExternalSystemStartupActivity : ProjectActivity {
 
-  override suspend fun execute(project: Project) = project.trackActivity(ExternalSystemInProgressWitness::class) {
+  override suspend fun execute(project: Project) = project.trackActivity(ExternalSystemActivityKey) {
     project.serviceAsync<ExternalSystemInProgressService>().externalSystemActivityStarted()
     val esProjectsManager = readAction {
       ExternalProjectsManagerImpl.getInstance(project)

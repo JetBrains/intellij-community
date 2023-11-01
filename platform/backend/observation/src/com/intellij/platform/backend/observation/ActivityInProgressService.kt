@@ -16,7 +16,7 @@ import java.util.concurrent.ConcurrentHashMap
 
 /**
  * Allows to track subsystem activities and get a "dumb mode" w.r.t. tracked computations.
- * @see MarkupBasedActivityInProgressWitness for high-level explanations
+ * @see ActivityKey for high-level explanations
  */
 @Service(Service.Level.PROJECT)
 @Internal
@@ -46,13 +46,13 @@ internal class ActivityInProgressService(private val scope: CoroutineScope) {
    * Contract: subsystem has no configurations ongoing (i.e. the counter of configuration is 0) <=> there is no corresponding key-value in the map,
    * because we need to avoid memory leaks and problems with dynamic plugin unloading.
    */
-  private val concurrentConfigurationCounter: ConcurrentHashMap<Class<out MarkupBasedActivityInProgressWitness>, AssociatedCounter> = ConcurrentHashMap()
+  private val concurrentConfigurationCounter: ConcurrentHashMap<ActivityKey, AssociatedCounter> = ConcurrentHashMap()
 
   /**
    * Installs a tracker for a suspending asynchronous activity of [action].
    * This method is cheap to use: it does not perform any complex computations, and it is essentially equivalent to `withContext`.
    */
-  suspend fun <T> trackConfigurationActivity(kind: Class<out MarkupBasedActivityInProgressWitness>, action: suspend () -> T): T {
+  suspend fun <T> trackConfigurationActivity(kind: ActivityKey, action: suspend () -> T): T {
     return withBlockingJob(kind) { blockingJob ->
       withContext(blockingJob) {
         action()
@@ -65,7 +65,7 @@ internal class ActivityInProgressService(private val scope: CoroutineScope) {
    * This method is cheap to use: it does not add any synchronization or complex computations.
    */
   @RequiresBlockingContext
-  fun <T> trackConfigurationActivityBlocking(kind: Class<out MarkupBasedActivityInProgressWitness>, action: () -> T): T {
+  fun <T> trackConfigurationActivityBlocking(kind: ActivityKey, action: () -> T): T {
     val currentContext = currentThreadContext()
     return withBlockingJob(kind) { blockingJob ->
       installThreadContext(currentContext + blockingJob, true).use {
@@ -74,8 +74,7 @@ internal class ActivityInProgressService(private val scope: CoroutineScope) {
     }
   }
 
-  private inline fun <T> withBlockingJob(kind: Class<out MarkupBasedActivityInProgressWitness>, consumer: (BlockingJob) -> T): T {
-    assertNotAbstractClass(kind)
+  private inline fun <T> withBlockingJob(kind: ActivityKey, consumer: (BlockingJob) -> T): T {
     enterConfiguration(kind)
     // new job here to track those and only those computations which are invoked under explicit `trackConfigurationActivity`
     val tracker = Job()
@@ -95,14 +94,7 @@ internal class ActivityInProgressService(private val scope: CoroutineScope) {
     }
   }
 
-  private fun assertNotAbstractClass(kind: Class<out MarkupBasedActivityInProgressWitness>) {
-    if (kind == MarkupBasedActivityInProgressWitness::class.java) {
-      thisLogger().error("Do not use ${kind} as a marker for configuration tracking marker. " +
-                         "Consider registering an extension point of 'ActivityInProgressWitness' as advised in the docs of 'MarkupBasedActivityInProgressWitness''")
-    }
-  }
-
-  private fun enterConfiguration(kind: Class<out MarkupBasedActivityInProgressWitness>) {
+  private fun enterConfiguration(kind: ActivityKey) {
     while (true) {
       // compare-and-swap, basically
       val insertionResult = concurrentConfigurationCounter.putIfAbsent(kind, AssociatedCounter(1, Job()))
@@ -119,7 +111,7 @@ internal class ActivityInProgressService(private val scope: CoroutineScope) {
     }
   }
 
-  private fun leaveConfiguration(kind: Class<out MarkupBasedActivityInProgressWitness>) {
+  private fun leaveConfiguration(kind: ActivityKey) {
     while (true) {
       // compare-and-swap, basically
       val currentCounter = concurrentConfigurationCounter[kind]
@@ -148,13 +140,17 @@ internal class ActivityInProgressService(private val scope: CoroutineScope) {
     }
   }
 
-  fun isInProgress(kind: Class<out MarkupBasedActivityInProgressWitness>): Boolean {
+  fun getAllKeys(): Set<ActivityKey> {
+    return concurrentConfigurationCounter.keys
+  }
+
+  fun isInProgress(kind: ActivityKey): Boolean {
     // see the contract of [concurrentConfigurationCounter]
     return concurrentConfigurationCounter[kind] != null
   }
 
   @Suppress("IfThenToSafeAccess")
-  suspend fun awaitConfiguration(kind: Class<out MarkupBasedActivityInProgressWitness>) {
+  suspend fun awaitConfiguration(kind: ActivityKey) {
     val currentCounter = concurrentConfigurationCounter[kind]
     if (currentCounter != null) {
       // currentCounter != null => isInProgress == true => either currentCounter.job corresponds to the current configuration process,

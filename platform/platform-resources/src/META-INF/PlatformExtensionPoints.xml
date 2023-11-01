@@ -513,7 +513,7 @@
     <extensionPoint name="warmupConfigurator" interface="com.intellij.ide.warmup.WarmupConfigurator" dynamic="true" />
     <extensionPoint name="warmupLogger" interface="com.intellij.ide.warmup.WarmupLogger" dynamic="true" />
 
-    <extensionPoint name="activityInProgressWitness" interface="com.intellij.platform.backend.observation.ActivityInProgressWitness"
+    <extensionPoint name="activityInProgressTracker" interface="com.intellij.platform.backend.observation.ActivityInProgressTracker"
                     dynamic="true"/>
 
     <extensionPoint name="internal.ml.featureProvider" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">

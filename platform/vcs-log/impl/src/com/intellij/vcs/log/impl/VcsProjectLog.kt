@@ -192,7 +192,7 @@ class VcsProjectLog(private val project: Project, private val coroutineScope: Co
     val logProviders = VcsLogManager.findLogProviders(projectLevelVcsManager.allVcsRoots.toList(), project)
     if (logProviders.isEmpty()) return null
 
-    project.trackActivity(VcsInProgressWitness::class) {
+    project.trackActivity(VcsActivityKey) {
       val logManager = getOrCreateLogManager(logProviders)
       logManager.initialize(force = forceInit)
     }

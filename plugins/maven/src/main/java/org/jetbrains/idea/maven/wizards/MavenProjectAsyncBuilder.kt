@@ -53,7 +53,7 @@ internal class MavenProjectAsyncBuilder {
 
   suspend fun commit(project: Project,
                      projectFile: VirtualFile,
-                     modelsProvider: IdeModifiableModelsProvider?): List<Module> = project.trackActivity(MavenInProgressWitness::class) {
+                     modelsProvider: IdeModifiableModelsProvider?): List<Module> = project.trackActivity(MavenActivityKey) {
     if (ApplicationManager.getApplication().isDispatchThread) {
       FileDocumentManager.getInstance().saveAllDocuments()
     }
@@ -79,7 +79,7 @@ internal class MavenProjectAsyncBuilder {
       // do not update all modules because it can take a lot of time (freeze at project opening)
       val cs = MavenCoroutineScopeProvider.getCoroutineScope(project)
       cs.launch {
-        project.trackActivity(MavenInProgressWitness::class) {
+        project.trackActivity(MavenActivityKey) {
           doCommit(project, importProjectFile, rootDirectoryPath, modelsProvider, previewModule, importingSettings, generalSettings)
         }
       }

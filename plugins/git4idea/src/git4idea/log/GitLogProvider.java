@@ -373,7 +373,7 @@ public final class GitLogProvider implements VcsLogProvider, VcsIndexableLogProv
   public @NotNull Disposable subscribeToRootRefreshEvents(@NotNull Collection<? extends VirtualFile> roots, @NotNull VcsLogRefresher refresher) {
     MessageBusConnection connection = myProject.getMessageBus().connect();
     connection.subscribe(GitRepository.GIT_REPO_CHANGE, repository -> {
-      TrackingUtil.trackActivity(myProject, VcsInProgressWitness.class, () -> {
+      TrackingUtil.trackActivity(myProject, VcsActivityKey.INSTANCE, () -> {
         VirtualFile root = repository.getRoot();
         if (roots.contains(root)) {
           refresher.refresh(root);
