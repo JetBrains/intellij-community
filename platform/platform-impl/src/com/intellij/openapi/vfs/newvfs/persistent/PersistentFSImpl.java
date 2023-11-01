@@ -564,6 +564,11 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
         result.set(child);
         return children;
       }
+
+      //MAYBE RC: why do we access FS on lookup? maybe it is better to look only VFS, and issue
+      //          refresh request if children is not loaded -- and rely on automatic refresh to
+      //          update VFS if actual FS children are changed? This way here we'll have read-only scan
+      //          without concurrent modification problems
       Pair<@NotNull FileAttributes, String> childData = getChildData(fs, parent, childName, null, null); // todo: use BatchingFileSystem
       if (childData == null) {
         return children;
