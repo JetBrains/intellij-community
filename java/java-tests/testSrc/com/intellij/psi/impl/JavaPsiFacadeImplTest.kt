@@ -26,23 +26,22 @@ class JavaPsiFacadeImplTest {
   @get:Rule val edtRule = EdtRule()
 
   private val project by lazy { projectRule.project }
+
   @RunsInEdt
   @Test
   fun noDuplicates() {
     val dupePkg = "com.example.duplicates"
     val psiClass: PsiClass = mock()
+    whenever(psiClass.name).thenReturn("$dupePkg.ReturnedClass")
     val pkg: PsiPackage = PsiPackageImpl(PsiManager.getInstance(project), dupePkg)
-    val facadeImpl = JavaPsiFacadeImpl(project)
 
-    val psiClassName = "$dupePkg.ReturnedClass"
-    whenever(psiClass.name).thenReturn(psiClassName)
     // Make sure we get dupes from multiple finders.
     PsiElementFinder.EP.getPoint(project).registerExtension(DupeReturner(pkg, psiClass), disposableRule.disposable)
     PsiElementFinder.EP.getPoint(project).registerExtension(DupeReturner(pkg, psiClass), disposableRule.disposable)
-
     val scope = GlobalSearchScope.allScope(project)
 
-    val classes = facadeImpl.getClasses(pkg, scope)
+    val classes = JavaPsiFacadeImpl(project).getClasses(pkg, scope)
+
     assertThat(classes).containsExactly(psiClass)
   }
 
