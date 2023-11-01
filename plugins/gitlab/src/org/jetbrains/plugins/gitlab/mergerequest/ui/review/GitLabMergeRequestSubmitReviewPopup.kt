@@ -9,6 +9,7 @@ import com.intellij.collaboration.ui.util.bindChildIn
 import com.intellij.collaboration.ui.util.bindDisabledIn
 import com.intellij.collaboration.ui.util.bindTextIn
 import com.intellij.collaboration.ui.util.bindVisibilityIn
+import com.intellij.collaboration.ui.util.popup.awaitClose
 import com.intellij.icons.AllIcons
 import com.intellij.ide.plugins.newui.InstallButton
 import com.intellij.openapi.editor.actions.IncrementalFindAction
@@ -17,8 +18,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComponentContainer
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
-import com.intellij.openapi.ui.popup.JBPopupListener
-import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.ui.EditorTextField
 import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.util.ui.InlineIconButton
@@ -40,7 +39,6 @@ import javax.swing.JButton
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
-import kotlin.coroutines.resume
 
 internal object GitLabMergeRequestSubmitReviewPopup {
   suspend fun show(vm: GitLabMergeRequestSubmitReviewViewModel, parentComponent: Component, above: Boolean = false) {
@@ -177,31 +175,6 @@ internal object GitLabMergeRequestSubmitReviewPopup {
           }
           document.bindTextIn(cs, text)
         }
-    }
-  }
-
-  private suspend fun JBPopup.awaitClose() {
-    if (isDisposed) {
-      currentCoroutineContext().cancel()
-      return
-    }
-    try {
-      suspendCancellableCoroutine<Unit> { cont ->
-        addListener(object : JBPopupListener {
-          override fun onClosed(event: LightweightWindowEvent) {
-            if (event.isOk) {
-              cont.resume(Unit)
-            }
-            else {
-              cont.cancel()
-            }
-          }
-        })
-      }
-    }
-    catch (e: CancellationException) {
-      cancel()
-      throw e
     }
   }
 }
