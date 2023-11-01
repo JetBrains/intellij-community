@@ -116,6 +116,49 @@ public class CodeStyleSettingsManager implements PersistentStateComponentWithMod
     }
   }
 
+  /**
+   * @see CodeStyle#doWithTemporarySettings(Project, CodeStyleSettings, Runnable)
+   */
+  @TestOnly
+  public void doWithTemporarySettings(@NotNull CodeStyleSettings tempSettings,
+                                      @NotNull Runnable runnable) {
+    CodeStyleSettings tempSettingsBefore = getTemporarySettings();
+    try {
+      setTemporarySettings(tempSettings);
+      runnable.run();
+    }
+    finally {
+      if (tempSettingsBefore != null) {
+        setTemporarySettings(tempSettingsBefore);
+      }
+      else {
+        dropTemporarySettings();
+      }
+    }
+  }
+
+  /**
+   * @see CodeStyle#doWithTemporarySettings(Project, CodeStyleSettings, Consumer)
+   */
+  @TestOnly
+  public void doWithTemporarySettings(@NotNull CodeStyleSettings baseSettings,
+                                      @NotNull Consumer<? super CodeStyleSettings> tempSettingsConsumer) {
+    CodeStyleSettings tempSettingsBefore = getTemporarySettings();
+    try {
+      CodeStyleSettings tempSettings = createTemporarySettings();
+      tempSettings.copyFrom(baseSettings);
+      tempSettingsConsumer.accept(tempSettings);
+    }
+    finally {
+      if (tempSettingsBefore != null) {
+        setTemporarySettings(tempSettingsBefore);
+      }
+      else {
+        dropTemporarySettings();
+      }
+    }
+  }
+
   private @NotNull Collection<CodeStyleSettings> getAllSettings() {
     List<CodeStyleSettings> allSettings = new ArrayList<>(enumSettings());
     allSettings.addAll(ourReferencedSettings.toStrongList());

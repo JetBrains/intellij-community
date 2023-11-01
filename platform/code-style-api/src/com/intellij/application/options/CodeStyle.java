@@ -349,7 +349,7 @@ public final class CodeStyle {
   /**
    * Execute the specified runnable with the given temporary code style settings and restore the old settings even if the runnable fails
    * with an exception.
-   * <p> 
+   * <p>
    * For production code use {@link #runWithLocalSettings(Project, CodeStyleSettings, Runnable)}
    *
    * @param project       The current project.
@@ -360,20 +360,7 @@ public final class CodeStyle {
   public static void doWithTemporarySettings(@NotNull Project project,
                                              @NotNull CodeStyleSettings tempSettings,
                                              @NotNull Runnable runnable) {
-    final CodeStyleSettingsManager settingsManager = CodeStyleSettingsManager.getInstance(project);
-    CodeStyleSettings tempSettingsBefore = settingsManager.getTemporarySettings();
-    try {
-      settingsManager.setTemporarySettings(tempSettings);
-      runnable.run();
-    }
-    finally {
-      if (tempSettingsBefore != null) {
-        settingsManager.setTemporarySettings(tempSettingsBefore);
-      }
-      else {
-        settingsManager.dropTemporarySettings();
-      }
-    }
+    CodeStyleSettingsManager.getInstance(project).doWithTemporarySettings(tempSettings, runnable);
   }
 
   /**
@@ -391,21 +378,7 @@ public final class CodeStyle {
   public static void doWithTemporarySettings(@NotNull Project project,
                                              @NotNull CodeStyleSettings baseSettings,
                                              @NotNull Consumer<? super CodeStyleSettings> tempSettingsConsumer) {
-    final CodeStyleSettingsManager settingsManager = CodeStyleSettingsManager.getInstance(project);
-    CodeStyleSettings tempSettingsBefore = settingsManager.getTemporarySettings();
-    try {
-      CodeStyleSettings tempSettings = settingsManager.createTemporarySettings();
-      tempSettings.copyFrom(baseSettings);
-      tempSettingsConsumer.accept(tempSettings);
-    }
-    finally {
-      if (tempSettingsBefore != null) {
-        settingsManager.setTemporarySettings(tempSettingsBefore);
-      }
-      else {
-        settingsManager.dropTemporarySettings();
-      }
-    }
+    CodeStyleSettingsManager.getInstance(project).doWithTemporarySettings(baseSettings, tempSettingsConsumer);
   }
 
   /**
