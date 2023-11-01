@@ -7,10 +7,15 @@ import com.intellij.internal.statistic.eventLog.events.ObjectEventData
 import com.intellij.internal.statistic.eventLog.events.ObjectEventField
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.ex.util.EditorUtil
+import com.intellij.openapi.roots.libraries.LibraryUtil
 import com.intellij.openapi.util.TextRange
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiFileSystemItem
 
 internal object InlineContextFeatures {
-  fun capture(editor: Editor, offset: Int, contextFeatures: MutableList<EventPair<*>>) {
+  fun capture(psiFile: PsiFile, editor: Editor, offset: Int, contextFeatures: MutableList<EventPair<*>>) {
     val logicalPosition = editor.offsetToLogicalPosition(offset)
     val lineNumber = logicalPosition.line
     val columnNumber = logicalPosition.column
@@ -51,6 +56,10 @@ internal object InlineContextFeatures {
     if (followingNonEmptyLineText != null) {
       contextFeatures.add(FOLLOWING_NON_EMPTY_LINE_LENGTH.with(followingNonEmptyLineText.length))
     }
+    contextFeatures.add(INDENT_LEVEL.with(indentLevel(linePrefix, EditorUtil.getTabSize(editor))))
+    contextFeatures.add(LIBRARIES_COUNT.with(LibraryUtil.getLibraryRoots(psiFile.project).size))
+
+    psiFile.findElementAt(offset)?.let { contextFeatures.addPsiParents(it) }
   }
 
   private fun Document.findNonBlankLine(lineNumber: Int, following: Boolean): Pair<Int, String?> {
@@ -70,6 +79,44 @@ internal object InlineContextFeatures {
     return res.trim().ifEmpty { null }
   }
 
+  @Suppress("DuplicatedCode")
+  private fun indentLevel(line: String, tabSize: Int): Int {
+    if (tabSize <= 0) return 0
+
+    var indentLevel = 0
+    var spaces = 0
+    for (ch in line) {
+      if (spaces == tabSize) {
+        indentLevel += 1
+        spaces = 0
+      }
+
+      if (ch == '\t') {
+        indentLevel += 1
+        spaces = 0
+      }
+      else if (ch == ' ') {
+        spaces += 1
+      }
+      else {
+        break
+      }
+    }
+
+    return indentLevel
+  }
+
+  private fun MutableList<EventPair<*>>.addPsiParents(element: PsiElement) {
+    // First parent is always referenceExpression
+    val curParent: PsiElement = element.parent ?: return
+    val firstParent = curParent.parent
+    if (firstParent == null || firstParent is PsiFileSystemItem) return
+    add(FIRST_PARENT.with(firstParent::class.java))
+    val secondParent = firstParent.parent
+    if (secondParent == null || secondParent is PsiFileSystemItem) return
+    add(SECOND_PARENT.with(secondParent::class.java))
+  }
+
   fun getEventPair(triggerFeatures: List<EventPair<*>>) = CONTEXT_FEATURES.with(ObjectEventData(triggerFeatures))
 
   private val LINE_NUMBER = EventFields.Int("line_number")
@@ -84,6 +131,10 @@ internal object InlineContextFeatures {
   private val PREVIOUS_NON_EMPTY_LINE_LENGTH = EventFields.Int("previous_non_empty_line_length")
   private val FOLLOWING_EMPTY_LINES_COUNT = EventFields.Int("following_empty_lines_count")
   private val FOLLOWING_NON_EMPTY_LINE_LENGTH = EventFields.Int("following_non_empty_line_length")
+  private val INDENT_LEVEL = EventFields.Int("indent_level")
+  private val LIBRARIES_COUNT = EventFields.Int("libraries_count")
+  private val FIRST_PARENT = EventFields.Class("first_parent")
+  private val SECOND_PARENT = EventFields.Class("second_parent")
 
   val CONTEXT_FEATURES = ObjectEventField(
     "context_features",
@@ -98,6 +149,10 @@ internal object InlineContextFeatures {
     PREVIOUS_EMPTY_LINES_COUNT,
     PREVIOUS_NON_EMPTY_LINE_LENGTH,
     FOLLOWING_EMPTY_LINES_COUNT,
-    FOLLOWING_NON_EMPTY_LINE_LENGTH
+    FOLLOWING_NON_EMPTY_LINE_LENGTH,
+    INDENT_LEVEL,
+    LIBRARIES_COUNT,
+    FIRST_PARENT,
+    SECOND_PARENT
   )
 }
