@@ -154,10 +154,11 @@ class KotlinBreadcrumbsInfoProvider : BreadcrumbsProvider {
 
     private object DeclarationHandler : ElementHandler<KtDeclaration>(KtDeclaration::class) {
         override fun accepts(element: KtDeclaration): Boolean {
-            if (element is KtProperty) {
-                return element.parent is KtFile || element.parent is KtClassBody // do not show local variables
+            return when (element) {
+                is KtProperty -> element.parent is KtFile || element.parent is KtClassBody // do not show local variables
+                is KtScript, is KtScriptInitializer -> false
+                else -> true
             }
-            return true
         }
 
         override fun elementInfo(element: KtDeclaration): String {
@@ -390,12 +391,12 @@ class KotlinBreadcrumbsInfoProvider : BreadcrumbsProvider {
 
     override fun getElementInfo(e: PsiElement): String {
         if (DumbService.isDumb(e.project)) return ""
-        return handler(e)!!.elementInfo(e as KtElement)
+        return handler(e)?.elementInfo(e as KtElement) ?: ""
     }
 
     override fun getElementTooltip(e: PsiElement): String {
         if (DumbService.isDumb(e.project)) return ""
-        return handler(e)!!.elementTooltip(e as KtElement)
+        return handler(e)?.elementTooltip(e as KtElement) ?: ""
     }
 
     override fun getParent(element: PsiElement): PsiElement? =
