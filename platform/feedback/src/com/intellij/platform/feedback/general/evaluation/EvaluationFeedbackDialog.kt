@@ -90,4 +90,8 @@ internal class EvaluationFeedbackDialog(
     cancelAction.putValue(Action.NAME, EvaluationFeedbackBundle.message("evaluation.dialog.cancel.label"))
     return cancelAction
   }
+
+  override fun shouldAutoCloseZendeskTicket(): Boolean {
+    return false
+  }
 }
