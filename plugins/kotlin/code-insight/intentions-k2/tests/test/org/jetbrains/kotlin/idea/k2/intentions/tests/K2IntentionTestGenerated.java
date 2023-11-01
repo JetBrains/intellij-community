@@ -19,6 +19,305 @@ import org.junit.runner.RunWith;
 @RunWith(JUnit3RunnerWithInners.class)
 public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/intentions/addFullQualifier")
+    public abstract static class AddFullQualifier extends AbstractK2IntentionTest {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/intentions/addFullQualifier/callExpressions")
+        public static class CallExpressions extends AbstractK2IntentionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("ClassConstructorInRoot.kt")
+            public void testClassConstructorInRoot() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/addFullQualifier/callExpressions/ClassConstructorInRoot.kt");
+            }
+
+            @TestMetadata("FunctionWithReceiver.kt")
+            public void testFunctionWithReceiver() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/addFullQualifier/callExpressions/FunctionWithReceiver.kt");
+            }
+
+            @TestMetadata("ImportedWithAlias.kt")
+            public void testImportedWithAlias() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/addFullQualifier/callExpressions/ImportedWithAlias.kt");
+            }
+
+            @TestMetadata("LocalClass.kt")
+            public void testLocalClass() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/addFullQualifier/callExpressions/LocalClass.kt");
+            }
+
+            @TestMetadata("LocalFunction.kt")
+            public void testLocalFunction() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/addFullQualifier/callExpressions/LocalFunction.kt");
+            }
+
+            @TestMetadata("SimpleClass.kt")
+            public void testSimpleClass() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/addFullQualifier/callExpressions/SimpleClass.kt");
+            }
+
+            @TestMetadata("SimpleClassWithFullQualifier.kt")
+            public void testSimpleClassWithFullQualifier() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/addFullQualifier/callExpressions/SimpleClassWithFullQualifier.kt");
+            }
+
+            @TestMetadata("This.kt")
+            public void testThis() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/addFullQualifier/callExpressions/This.kt");
+            }
+
+            @TestMetadata("ThisWithQualifier.kt")
+            public void testThisWithQualifier() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/addFullQualifier/callExpressions/ThisWithQualifier.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/intentions/addFullQualifier/methodReferences")
+        public static class MethodReferences extends AbstractK2IntentionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("ClassConstructor.kt")
+            public void testClassConstructor() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/addFullQualifier/methodReferences/ClassConstructor.kt");
+            }
+
+            @TestMetadata("FunctionWithReceiver.kt")
+            public void testFunctionWithReceiver() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/addFullQualifier/methodReferences/FunctionWithReceiver.kt");
+            }
+
+            @TestMetadata("FunctionWithReceiver2.kt")
+            public void testFunctionWithReceiver2() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/addFullQualifier/methodReferences/FunctionWithReceiver2.kt");
+            }
+
+            @TestMetadata("LocalClass.kt")
+            public void testLocalClass() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/addFullQualifier/methodReferences/LocalClass.kt");
+            }
+
+            @TestMetadata("LocalFunction.kt")
+            public void testLocalFunction() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/addFullQualifier/methodReferences/LocalFunction.kt");
+            }
+
+            @TestMetadata("LocalMemberFunction.kt")
+            public void testLocalMemberFunction() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/addFullQualifier/methodReferences/LocalMemberFunction.kt");
+            }
+
+            @TestMetadata("MemberFunction.kt")
+            public void testMemberFunction() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/addFullQualifier/methodReferences/MemberFunction.kt");
+            }
+
+            @TestMetadata("MemberFunction2.kt")
+            public void testMemberFunction2() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/addFullQualifier/methodReferences/MemberFunction2.kt");
+            }
+
+            @TestMetadata("MemberPropertyInRoot.kt")
+            public void testMemberPropertyInRoot() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/addFullQualifier/methodReferences/MemberPropertyInRoot.kt");
+            }
+
+            @TestMetadata("MemberPropertyInRoot2.kt")
+            public void testMemberPropertyInRoot2() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/addFullQualifier/methodReferences/MemberPropertyInRoot2.kt");
+            }
+
+            @TestMetadata("NestedClassConstructor.kt")
+            public void testNestedClassConstructor() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/addFullQualifier/methodReferences/NestedClassConstructor.kt");
+            }
+
+            @TestMetadata("SimpleClass.kt")
+            public void testSimpleClass() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/addFullQualifier/methodReferences/SimpleClass.kt");
+            }
+
+            @TestMetadata("SimpleClassInRoot.kt")
+            public void testSimpleClassInRoot() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/addFullQualifier/methodReferences/SimpleClassInRoot.kt");
+            }
+
+            @TestMetadata("SimpleClassWithFullQualifier.kt")
+            public void testSimpleClassWithFullQualifier() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/addFullQualifier/methodReferences/SimpleClassWithFullQualifier.kt");
+            }
+
+            @TestMetadata("This.kt")
+            public void testThis() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/addFullQualifier/methodReferences/This.kt");
+            }
+
+            @TestMetadata("TopLevelFunction.kt")
+            public void testTopLevelFunction() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/addFullQualifier/methodReferences/TopLevelFunction.kt");
+            }
+
+            @TestMetadata("TopLevelProperty.kt")
+            public void testTopLevelProperty() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/addFullQualifier/methodReferences/TopLevelProperty.kt");
+            }
+
+            @TestMetadata("TopLevelPropertyAndFunction.kt")
+            public void testTopLevelPropertyAndFunction() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/addFullQualifier/methodReferences/TopLevelPropertyAndFunction.kt");
+            }
+
+            @TestMetadata("TypeAlias.kt")
+            public void testTypeAlias() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/addFullQualifier/methodReferences/TypeAlias.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/intentions/addFullQualifier/references")
+        public static class References extends AbstractK2IntentionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("FunctionWithReceiver.kt")
+            public void testFunctionWithReceiver() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/addFullQualifier/references/FunctionWithReceiver.kt");
+            }
+
+            @TestMetadata("LocalProperty.kt")
+            public void testLocalProperty() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/addFullQualifier/references/LocalProperty.kt");
+            }
+
+            @TestMetadata("ObjectInRoot.kt")
+            public void testObjectInRoot() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/addFullQualifier/references/ObjectInRoot.kt");
+            }
+
+            @TestMetadata("Property.kt")
+            public void testProperty() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/addFullQualifier/references/Property.kt");
+            }
+
+            @TestMetadata("PropertyInRoot.kt")
+            public void testPropertyInRoot() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/addFullQualifier/references/PropertyInRoot.kt");
+            }
+
+            @TestMetadata("PropertyWithQualifier.kt")
+            public void testPropertyWithQualifier() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/addFullQualifier/references/PropertyWithQualifier.kt");
+            }
+
+            @TestMetadata("SimpleClass.kt")
+            public void testSimpleClass() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/addFullQualifier/references/SimpleClass.kt");
+            }
+
+            @TestMetadata("SimpleClassInRoot.kt")
+            public void testSimpleClassInRoot() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/addFullQualifier/references/SimpleClassInRoot.kt");
+            }
+
+            @TestMetadata("SimpleClassWithFullQualifier.kt")
+            public void testSimpleClassWithFullQualifier() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/addFullQualifier/references/SimpleClassWithFullQualifier.kt");
+            }
+
+            @TestMetadata("Super.kt")
+            public void testSuper() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/addFullQualifier/references/Super.kt");
+            }
+
+            @TestMetadata("This.kt")
+            public void testThis() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/addFullQualifier/references/This.kt");
+            }
+
+            @TestMetadata("ThisInQualifier.kt")
+            public void testThisInQualifier() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/addFullQualifier/references/ThisInQualifier.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/intentions/addFullQualifier")
+        public static class Uncategorized extends AbstractK2IntentionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("Import.kt")
+            public void testImport() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/addFullQualifier/Import.kt");
+            }
+
+            @TestMetadata("ImportInRoot.kt")
+            public void testImportInRoot() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/addFullQualifier/ImportInRoot.kt");
+            }
+
+            @TestMetadata("Package.kt")
+            public void testPackage() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/addFullQualifier/Package.kt");
+            }
+
+            @TestMetadata("Package2.kt")
+            public void testPackage2() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/addFullQualifier/Package2.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/intentions/addFullQualifier/userTypes")
+        public static class UserTypes extends AbstractK2IntentionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("Annotation.kt")
+            public void testAnnotation() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/addFullQualifier/userTypes/Annotation.kt");
+            }
+
+            @TestMetadata("LocalClass.kt")
+            public void testLocalClass() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/addFullQualifier/userTypes/LocalClass.kt");
+            }
+
+            @TestMetadata("NullableType.kt")
+            public void testNullableType() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/addFullQualifier/userTypes/NullableType.kt");
+            }
+
+            @TestMetadata("SimpleClass.kt")
+            public void testSimpleClass() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/addFullQualifier/userTypes/SimpleClass.kt");
+            }
+
+            @TestMetadata("SimpleClassInRoot.kt")
+            public void testSimpleClassInRoot() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/addFullQualifier/userTypes/SimpleClassInRoot.kt");
+            }
+
+            @TestMetadata("SimpleClassWithFullQualifier.kt")
+            public void testSimpleClassWithFullQualifier() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/addFullQualifier/userTypes/SimpleClassWithFullQualifier.kt");
+            }
+
+            @TestMetadata("TypeAlias.kt")
+            public void testTypeAlias() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/addFullQualifier/userTypes/TypeAlias.kt");
+            }
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/intentions/addMissingClassKeyword")
     public static class AddMissingClassKeyword extends AbstractK2IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {

@@ -1,9 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeinsight.utils
 
-import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.descendantsOfType
 import com.intellij.psi.util.elementType
+import com.intellij.psi.util.prevLeaf
 import com.intellij.refactoring.suggested.createSmartPointer
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
@@ -13,11 +13,12 @@ import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassLikeSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KtConstructorSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.quoteIfNeeded
 import org.jetbrains.kotlin.idea.references.mainReference
-import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
+import org.jetbrains.kotlin.idea.util.application.runWriteActionIfPhysical
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtCallExpression
@@ -49,15 +50,30 @@ object AddQualifiersUtil {
     }
 
     context(KtAnalysisSession)
-    fun isApplicableTo(referenceExpression: KtNameReferenceExpression, contextSymbol: KtNamedSymbol): Boolean {
+    fun isApplicableTo(referenceExpression: KtNameReferenceExpression, contextSymbol: KtSymbol): Boolean {
         if (referenceExpression.parent is KtInstanceExpressionWithLabel) return false
 
-        val prevElement = PsiTreeUtil.skipWhitespacesAndCommentsBackward(referenceExpression)
+        val prevElement = referenceExpression.prevLeaf {
+            it.elementType !in KtTokens.WHITE_SPACE_OR_COMMENT_BIT_SET
+        }
         if (prevElement.elementType == KtTokens.DOT) return false
-        val fqName = getFqName(contextSymbol)
-        if (contextSymbol is KtCallableSymbol && contextSymbol.isExtension || fqName?.parent()?.isRoot == true) return false
+        val fqName = getFqName(contextSymbol) ?: return false
+        if (contextSymbol is KtCallableSymbol && contextSymbol.isExtension || fqName.parent().isRoot == true) return false
+
         if (prevElement.elementType == KtTokens.COLONCOLON) {
-            if (contextSymbol is KtCallableSymbol && contextSymbol.getContainingSymbol() == null) return false
+
+            fun isTopLevelCallable(callableSymbol: KtSymbol): Boolean {
+                if (callableSymbol is KtConstructorSymbol) {
+                    val containingClassSymbol = callableSymbol.getContainingSymbol()
+                    if (containingClassSymbol?.getContainingSymbol() == null) {
+                        return true
+                    }
+                }
+                return callableSymbol is KtCallableSymbol && callableSymbol.getContainingSymbol() == null
+            }
+
+            if (isTopLevelCallable(contextSymbol)) return false
+
             val prevSibling = prevElement?.getPrevSiblingIgnoringWhitespaceAndComments()
             if (prevSibling is KtNameReferenceExpression || prevSibling is KtDotQualifiedExpression) return false
         }
@@ -68,11 +84,10 @@ object AddQualifiersUtil {
     }
 
     fun applyTo(referenceExpression: KtNameReferenceExpression, fqName: FqName): KtElement {
-        val qualifier = fqName.parent().quoteIfNeeded().asString()
-        val project = referenceExpression.project
-        val psiFactory = KtPsiFactory(project)
-        return project.executeWriteCommand(KotlinBundle.message("add.full.qualifier"), groupId = null) {
-            when (val parent = referenceExpression.parent) {
+        return runWriteActionIfPhysical(referenceExpression) {
+            val qualifier = fqName.parent().quoteIfNeeded().asString()
+            val psiFactory = KtPsiFactory(referenceExpression.project)
+             when (val parent = referenceExpression.parent) {
                 is KtCallableReferenceExpression -> addOrReplaceQualifier(psiFactory, parent, qualifier)
                 is KtCallExpression -> replaceExpressionWithDotQualifier(psiFactory, parent, qualifier)
                 is KtUserType -> addQualifierToType(psiFactory, parent, qualifier)
@@ -81,9 +96,10 @@ object AddQualifiersUtil {
         }
     }
 
-    private fun getFqName(symbol: KtNamedSymbol): FqName? {
+    fun getFqName(symbol: KtSymbol): FqName? {
         return when (symbol) {
             is KtClassLikeSymbol -> symbol.classIdIfNonLocal?.asSingleFqName()
+            is KtConstructorSymbol -> symbol.containingClassIdIfNonLocal?.asSingleFqName()
             is KtCallableSymbol -> symbol.callableIdIfNonLocal?.asSingleFqName()
             else -> null
         }
