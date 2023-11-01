@@ -63,7 +63,7 @@ class WslIjentManager private constructor(private val scope: CoroutineScope) {
         args = *command.toList().drop(1).toTypedArray(),
         env = processBuilder.environment(),
         pty = pty,
-        workingDirectory = processBuilder.directory()?.let { wslDistribution.getWslPath(it.path) }
+        workingDirectory = processBuilder.directory()?.let { wslDistribution.getWslPath(it.toPath()) }
       )) {
         is IjentApi.ExecuteProcessResult.Success -> processResult.process.toProcess(pty != null)
         is IjentApi.ExecuteProcessResult.Failure -> throw IOException(processResult.message)
@@ -145,7 +145,7 @@ suspend fun deployAndLaunchIjentGettingPath(
   val targetPlatform = IjentExecFileProvider.SupportedPlatform.X86_64__LINUX
   val ijentBinary = IjentExecFileProvider.getIjentBinary(targetPlatform)
 
-  val wslIjentBinary = wslDistribution.getWslPath(ijentBinary.absolutePathString())!!
+  val wslIjentBinary = wslDistribution.getWslPath(ijentBinary.toAbsolutePath())!!
 
   val commandLine = GeneralCommandLine(
     // It's supposed that WslDistribution always converts commands into SHELL.

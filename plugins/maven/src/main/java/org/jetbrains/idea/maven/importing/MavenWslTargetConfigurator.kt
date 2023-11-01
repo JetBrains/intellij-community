@@ -68,7 +68,7 @@ class MavenWslTargetConfigurator : MavenImporter("", ""),
     val mavenPath = wslDistribution.collectWslMavenDirectories()
       .firstOrNull()?.let { MavenUtil.getMavenHomeFile(it) }
     dataHolder.putUserData(MAVEN_HOME_DIR, mavenPath)
-    val targetMavenPath = mavenPath?.let { wslDistribution.getWslPath(it.path) }
+    val targetMavenPath = mavenPath?.let { wslDistribution.getWslPath(it.toPath()) }
     dataHolder.putUserData(MAVEN_TARGET_PATH, targetMavenPath)
     val mavenVersion = MavenUtil.getMavenVersion(mavenPath)
     dataHolder.putUserData(MAVEN_HOME_VERSION, mavenVersion)

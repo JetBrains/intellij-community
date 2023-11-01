@@ -441,7 +441,7 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
         MavenDistribution mavenDistribution =
           MavenDistributionsCache.getInstance(myConfiguration.getProject()).getMavenDistribution(myConfiguration.getRunnerParameters()
                                                                                                    .getWorkingDirPath());
-        String mavenHome = StringUtil.notNullize(config.getDistribution().getWslPath(mavenDistribution.getMavenHome().toString()));
+        String mavenHome = StringUtil.notNullize(config.getDistribution().getWslPath(mavenDistribution.getMavenHome()));
         String mavenVersion = StringUtil.notNullize(mavenDistribution.getVersion());
 
         MavenRuntimeTargetConfiguration mavenConfig = new MavenRuntimeTargetConfiguration();

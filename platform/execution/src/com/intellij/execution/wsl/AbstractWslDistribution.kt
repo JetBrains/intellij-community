@@ -16,7 +16,7 @@ interface AbstractWslDistribution {
    * @return Linux path for a file pointed by `windowsPath` or null if unavailable, like \\MACHINE\path
    */
   @NlsSafe
-  fun getWslPath(windowsPath: String): String?
+  fun getWslPath(windowsPath: Path): String?
 
   /**
    * Patches passed command line to make it runnable in WSL context, e.g changes `date` to `ubuntu run "date"`.

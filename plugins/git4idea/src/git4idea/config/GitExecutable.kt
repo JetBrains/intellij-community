@@ -105,7 +105,7 @@ sealed class GitExecutable {
       val path = file.absolutePath
 
       // 'C:\Users\file.txt' -> '/mnt/c/Users/file.txt'
-      val wslPath = distribution.getWslPath(path)
+      val wslPath = distribution.getWslPath(file.toPath().toAbsolutePath())
       return wslPath ?: path
     }
 

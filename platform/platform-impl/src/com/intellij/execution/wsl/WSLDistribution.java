@@ -530,9 +530,17 @@ public class WSLDistribution implements AbstractWslDistribution {
     return false;
   }
 
+  /**
+   * @deprecated Use {@link #getWslPath(Path)}
+   */
+  @Deprecated
+  public final @Nullable String getWslPath(@NotNull @NlsSafe String windowsPath) {
+    return getWslPath(Path.of(windowsPath));
+  }
+
   @Override
-  public @Nullable @NlsSafe String getWslPath(@NotNull String windowsPath) {
-    WslPath wslPath = WslPath.parseWindowsUncPath(windowsPath);
+  public @Nullable @NlsSafe String getWslPath(@NotNull Path windowsPath) {
+    WslPath wslPath = WslPath.parseWindowsUncPath(windowsPath.toString());
     if (wslPath != null) {
       if (wslPath.getDistributionId().equalsIgnoreCase(myDescriptor.getMsId())) {
         return wslPath.getLinuxPath();
@@ -542,8 +550,8 @@ public class WSLDistribution implements AbstractWslDistribution {
                                          ", but context distribution is " + myDescriptor.getMsId());
     }
 
-    if (OSAgnosticPathUtil.isAbsoluteDosPath(windowsPath)) { // absolute windows path => /mnt/disk_letter/path
-      return getMntRoot() + convertWindowsPath(windowsPath);
+    if (OSAgnosticPathUtil.isAbsoluteDosPath(windowsPath.toString())) { // absolute windows path => /mnt/disk_letter/path
+      return getMntRoot() + convertWindowsPath(windowsPath.toString());
     }
     return null;
   }
@@ -731,7 +739,8 @@ public class WSLDistribution implements AbstractWslDistribution {
     WSLCommandLineOptions options = new WSLCommandLineOptions()
       .setExecuteCommandInInteractiveShell(true)
       .setExecuteCommandInLoginShell(true);
-    return WslExecution.executeInShellAndGetCommandOnlyStdout(this, new GeneralCommandLine("printenv", name), options.setLaunchWithWslExe(true), DEFAULT_TIMEOUT,
+    return WslExecution.executeInShellAndGetCommandOnlyStdout(this, new GeneralCommandLine("printenv", name),
+                                                              options.setLaunchWithWslExe(true), DEFAULT_TIMEOUT,
                                                               true);
   }
 

@@ -114,7 +114,7 @@ class LinuxFileStorage(dir: LinuxFilePath, distro: AbstractWslDistribution)
     listFile.first.delete()
 
     LOGGER.info("Copying tar")
-    distro.runCommand("cp", linuxTarFile, distro.getWslPath(destTar))
+    distro.runCommand("cp", linuxTarFile, distro.getWslPathSafe(destTar))
     distro.runCommand("rm", linuxTarFile)
   }
 
