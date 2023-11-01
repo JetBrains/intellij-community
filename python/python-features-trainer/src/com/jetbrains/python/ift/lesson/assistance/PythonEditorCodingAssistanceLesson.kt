@@ -22,10 +22,10 @@ class PythonEditorCodingAssistanceLesson(sample: LessonSample) :
   private val errorAlternateIntentionText: String
     get() = PyPsiBundle.message("QFIX.auto.import.import.this.name")
   override val warningIntentionText: String
-    get() = PyPsiBundle.message("QFIX.NAME.remove.argument")
+    get() = PyPsiBundle.message("QFIX.NAME.make.list")
 
   override val errorFixedText: String = "import math"
-  override val warningFixedText: String = "cat.say_meow()"
+  override val warningFixedText: String = """["I'm", "very", "happy"]"""
 
   override val variableNameToHighlight: String = "happiness"
 
