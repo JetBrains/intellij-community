@@ -75,7 +75,7 @@ abstract class EditorCodingAssistanceLesson(private val sample: LessonSample) :
         else null
       }
       stateCheck { editor.document.charsSequence.contains(warningFixedText) }
-      restoreByUi()
+      restoreByUi(delayMillis = defaultRestoreDelay)
       test {
         Thread.sleep(500)
         invokeActionViaShortcut("ALT SHIFT ENTER")
