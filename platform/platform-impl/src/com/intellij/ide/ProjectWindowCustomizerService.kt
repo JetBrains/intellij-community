@@ -358,21 +358,19 @@ class ProjectWindowCustomizerService : Disposable {
       SwingUtilities.convertPoint(it.parent, it.x, it.y, parent).x.toFloat() + it.margin.left.toFloat() + projectIconWidth / 2
     } ?: 150f
 
-    g.paint = RadialGradientPaint(x + offset, y + height / 2, length - offset, floatArrayOf(0.0f, 0.6f), arrayOf(color, parent.background))
-    val mainToolbarWidth = ComponentUtil.findComponentsOfType(parent, MainToolbar::class.java).firstOrNull()?.width ?: 0
-    val trafficButtonsWidth = parent.width - mainToolbarWidth
-    var radius = offset - trafficButtonsWidth / 2
-    if (radius >= 200) {
-      g.fillRect(0, 0, length, height)
-    } else {
-      if (radius < 0) {
-        radius = 60f
+    val rightRadius = length - offset
+    g.paint = RadialGradientPaint(x + offset, y + height / 2, rightRadius, floatArrayOf(0.0f, 0.6f), arrayOf(color, parent.background))
+    g.fillRect(offset.toInt(), 0, rightRadius.toInt(), height)
+
+    val radiusOfShadowing = rightRadius * 0.6
+    ComponentUtil.findComponentsOfType(parent, MainToolbar::class.java).firstOrNull()?.let {
+      val mainToolbarXPosition = SwingUtilities.convertPoint(it, 0, 0, parent).x
+      val radius = (offset - mainToolbarXPosition / 2).coerceIn(60f, rightRadius)
+      if (radius <= radiusOfShadowing) {
+        g.paint = RadialGradientPaint(x + offset, y + height / 2, radius, floatArrayOf(0.3f, 1f), arrayOf(color, parent.background))
       }
-      g.fillRect(offset.toInt(), 0, length - offset.toInt(), height)
-      g.paint = RadialGradientPaint(x + offset, y + height / 2, radius, floatArrayOf(0.0f, 0.3f, 1f),
-                                    arrayOf(color, color, parent.background))
-      g.fillRect(0, 0, offset.toInt(), height)
     }
+    g.fillRect(0, 0, offset.toInt(), height)
     return true
   }
 
