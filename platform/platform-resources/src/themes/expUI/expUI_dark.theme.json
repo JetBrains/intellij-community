@@ -580,9 +580,11 @@
 
     "ValidationTooltip": {
       "errorBackground": "Red3",
-      "errorBorderColor": "Red3",
+      "errorBorderColor": "Red6",
+      "errorForeground": "Gray14",
       "warningBackground": "Yellow2",
-      "warningBorderColor": "Yellow2"
+      "warningBorderColor": "Yellow5",
+      "warningForeground": "Gray14"
     },
 
     "ToolWindow": {
