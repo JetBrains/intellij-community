@@ -324,7 +324,8 @@ open class FileEditorManagerImpl(
 
   companion object {
     @JvmField
-    protected val DUMB_AWARE: Key<Boolean> = Key.create("DUMB_AWARE")
+    @Internal
+    val DUMB_AWARE: Key<Boolean> = Key.create("DUMB_AWARE")
 
     @JvmField
     @TestOnly
