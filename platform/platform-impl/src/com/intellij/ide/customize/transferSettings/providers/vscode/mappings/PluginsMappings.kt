@@ -25,13 +25,6 @@ interface VSCodePluginMapping {
   fun mapPlugin(pluginId: String): FeatureInfo?
 }
 
-open class VSCodePluginMappingBase(private val map: Map<String, FeatureInfo>) : VSCodePluginMapping {
-
-  override fun mapPlugin(pluginId: String): FeatureInfo? {
-    return map[pluginId]
-  }
-}
-
 @Serializable
 private data class FeatureData(
   val vsCodeId: String,
@@ -68,6 +61,12 @@ internal class CommonPluginMapping : VSCodePluginMapping {
           Json.decodeFromStream<List<FeatureData>>(file)
         }
         for (data in features) {
+          val key = data.vsCodeId.lowercase()
+          if (data.disabled) {
+            result.remove(key)
+            continue
+          }
+
           val isBundled = data.bundled || data.builtIn
           val feature =
             if (isBundled) BuiltInFeature(null, data.ideaName)
@@ -78,7 +77,7 @@ internal class CommonPluginMapping : VSCodePluginMapping {
               }
               PluginFeature(null, data.ideaId, data.ideaName)
             }
-          result[data.vsCodeId.lowercase()] = feature
+          result[key] = feature
         }
       }
     }
