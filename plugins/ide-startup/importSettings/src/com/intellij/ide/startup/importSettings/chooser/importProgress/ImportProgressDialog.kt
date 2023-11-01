@@ -131,7 +131,7 @@ class ImportProgressDialog(importFromProduct: DialogImportData): PageProvider(fa
 
   override fun createContent(): JComponent {
     val comp = JPanel(GridBagLayout()).apply {
-      preferredSize = JBDimension(640, 442)
+      preferredSize = JBDimension(640, 457)
       val gbc = GridBagConstraints()
       gbc.gridx = 0
       gbc.gridy = 0
