@@ -25,7 +25,7 @@ public final class org/jetbrains/jewel/ui/ComponentStyling$DefaultImpls {
 
 public final class org/jetbrains/jewel/ui/DefaultComponentStyling : org/jetbrains/jewel/ui/ComponentStyling {
 	public static final field $stable I
-	public fun <init> (Lorg/jetbrains/jewel/ui/component/styling/CheckboxStyle;Lorg/jetbrains/jewel/ui/component/styling/ChipStyle;Lorg/jetbrains/jewel/ui/component/styling/CircularProgressStyle;Lorg/jetbrains/jewel/ui/component/styling/ButtonStyle;Lorg/jetbrains/jewel/ui/component/styling/DropdownStyle;Lorg/jetbrains/jewel/ui/component/styling/TabStyle;Lorg/jetbrains/jewel/ui/component/styling/DividerStyle;Lorg/jetbrains/jewel/ui/component/styling/TabStyle;Lorg/jetbrains/jewel/ui/component/styling/GroupHeaderStyle;Lorg/jetbrains/jewel/ui/component/styling/HorizontalProgressBarStyle;Lorg/jetbrains/jewel/ui/component/styling/IconButtonStyle;Lorg/jetbrains/jewel/ui/component/styling/LabelledTextFieldStyle;Lorg/jetbrains/jewel/ui/component/styling/LazyTreeStyle;Lorg/jetbrains/jewel/ui/component/styling/LinkStyle;Lorg/jetbrains/jewel/ui/component/styling/MenuStyle;Lorg/jetbrains/jewel/ui/component/styling/ButtonStyle;Lorg/jetbrains/jewel/ui/component/styling/RadioButtonStyle;Lorg/jetbrains/jewel/ui/component/styling/ScrollbarStyle;Lorg/jetbrains/jewel/ui/component/styling/TextAreaStyle;Lorg/jetbrains/jewel/ui/component/styling/TextFieldStyle;Lorg/jetbrains/jewel/ui/component/styling/TooltipStyle;Lorg/jetbrains/jewel/ui/component/styling/DropdownStyle;)V
+	public fun <init> (Lorg/jetbrains/jewel/ui/component/styling/CheckboxStyle;Lorg/jetbrains/jewel/ui/component/styling/ChipStyle;Lorg/jetbrains/jewel/ui/component/styling/CircularProgressStyle;Lorg/jetbrains/jewel/ui/component/styling/ButtonStyle;Lorg/jetbrains/jewel/ui/component/styling/DropdownStyle;Lorg/jetbrains/jewel/ui/component/styling/TabStyle;Lorg/jetbrains/jewel/ui/component/styling/DividerStyle;Lorg/jetbrains/jewel/ui/component/styling/TabStyle;Lorg/jetbrains/jewel/ui/component/styling/GroupHeaderStyle;Lorg/jetbrains/jewel/ui/component/styling/HorizontalProgressBarStyle;Lorg/jetbrains/jewel/ui/component/styling/IconButtonStyle;Lorg/jetbrains/jewel/ui/component/styling/LazyTreeStyle;Lorg/jetbrains/jewel/ui/component/styling/LinkStyle;Lorg/jetbrains/jewel/ui/component/styling/MenuStyle;Lorg/jetbrains/jewel/ui/component/styling/ButtonStyle;Lorg/jetbrains/jewel/ui/component/styling/RadioButtonStyle;Lorg/jetbrains/jewel/ui/component/styling/ScrollbarStyle;Lorg/jetbrains/jewel/ui/component/styling/TextAreaStyle;Lorg/jetbrains/jewel/ui/component/styling/TextFieldStyle;Lorg/jetbrains/jewel/ui/component/styling/TooltipStyle;Lorg/jetbrains/jewel/ui/component/styling/DropdownStyle;)V
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getCheckboxStyle ()Lorg/jetbrains/jewel/ui/component/styling/CheckboxStyle;
 	public final fun getChipStyle ()Lorg/jetbrains/jewel/ui/component/styling/ChipStyle;
@@ -38,7 +38,6 @@ public final class org/jetbrains/jewel/ui/DefaultComponentStyling : org/jetbrain
 	public final fun getGroupHeaderStyle ()Lorg/jetbrains/jewel/ui/component/styling/GroupHeaderStyle;
 	public final fun getHorizontalProgressBarStyle ()Lorg/jetbrains/jewel/ui/component/styling/HorizontalProgressBarStyle;
 	public final fun getIconButtonStyle ()Lorg/jetbrains/jewel/ui/component/styling/IconButtonStyle;
-	public final fun getLabelledTextFieldStyle ()Lorg/jetbrains/jewel/ui/component/styling/LabelledTextFieldStyle;
 	public final fun getLazyTreeStyle ()Lorg/jetbrains/jewel/ui/component/styling/LazyTreeStyle;
 	public final fun getLinkStyle ()Lorg/jetbrains/jewel/ui/component/styling/LinkStyle;
 	public final fun getMenuStyle ()Lorg/jetbrains/jewel/ui/component/styling/MenuStyle;
@@ -378,11 +377,6 @@ public final class org/jetbrains/jewel/ui/component/InputFieldState : org/jetbra
 public final class org/jetbrains/jewel/ui/component/InputFieldState$Companion {
 	public final fun of-raUdB0Y (ZZZZZ)J
 	public static synthetic fun of-raUdB0Y$default (Lorg/jetbrains/jewel/ui/component/InputFieldState$Companion;ZZZZZILjava/lang/Object;)J
-}
-
-public final class org/jetbrains/jewel/ui/component/LabelledTextFieldKt {
-	public static final fun LabelledTextField (Ljava/lang/String;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;Landroidx/compose/ui/Modifier;Landroidx/compose/ui/Modifier;ZZLorg/jetbrains/jewel/ui/Outline;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;ZLandroidx/compose/ui/text/input/VisualTransformation;Landroidx/compose/foundation/text/KeyboardOptions;Landroidx/compose/foundation/text/KeyboardActions;Lkotlin/jvm/functions/Function1;Lorg/jetbrains/jewel/ui/component/styling/LabelledTextFieldStyle;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/foundation/interaction/MutableInteractionSource;Landroidx/compose/runtime/Composer;III)V
-	public static final fun LabelledTextField (Lkotlin/jvm/functions/Function2;Landroidx/compose/ui/text/input/TextFieldValue;Lkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;Landroidx/compose/ui/Modifier;ZZLorg/jetbrains/jewel/ui/Outline;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;ZLandroidx/compose/ui/text/input/VisualTransformation;Landroidx/compose/foundation/text/KeyboardOptions;Landroidx/compose/foundation/text/KeyboardActions;Lkotlin/jvm/functions/Function1;Lorg/jetbrains/jewel/ui/component/styling/LabelledTextFieldStyle;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/foundation/interaction/MutableInteractionSource;Landroidx/compose/runtime/Composer;III)V
 }
 
 public final class org/jetbrains/jewel/ui/component/LazyTreeKt {
@@ -1264,102 +1258,6 @@ public abstract interface class org/jetbrains/jewel/ui/component/styling/InputFi
 	public abstract fun getColors ()Lorg/jetbrains/jewel/ui/component/styling/InputFieldColors;
 	public abstract fun getMetrics ()Lorg/jetbrains/jewel/ui/component/styling/InputFieldMetrics;
 	public abstract fun getTextStyle ()Landroidx/compose/ui/text/TextStyle;
-}
-
-public final class org/jetbrains/jewel/ui/component/styling/LabelledTextFieldColors : org/jetbrains/jewel/ui/component/styling/InputFieldColors {
-	public static final field $stable I
-	public static final field Companion Lorg/jetbrains/jewel/ui/component/styling/LabelledTextFieldColors$Companion;
-	public synthetic fun <init> (JJJJJJJJJJJJJJJJJJJJJJJLkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun asTextFieldColors ()Lorg/jetbrains/jewel/ui/component/styling/TextFieldColors;
-	public fun backgroundFor-xB6EZ8U (JLandroidx/compose/runtime/Composer;I)Landroidx/compose/runtime/State;
-	public fun borderFor-xB6EZ8U (JLandroidx/compose/runtime/Composer;I)Landroidx/compose/runtime/State;
-	public fun caretFor-xB6EZ8U (JLandroidx/compose/runtime/Composer;I)Landroidx/compose/runtime/State;
-	public fun contentFor-xB6EZ8U (JLandroidx/compose/runtime/Composer;I)Landroidx/compose/runtime/State;
-	public fun equals (Ljava/lang/Object;)Z
-	public fun getBackground-0d7_KjU ()J
-	public fun getBackgroundDisabled-0d7_KjU ()J
-	public fun getBackgroundFocused-0d7_KjU ()J
-	public fun getBackgroundHovered-0d7_KjU ()J
-	public fun getBackgroundPressed-0d7_KjU ()J
-	public fun getBorder-0d7_KjU ()J
-	public fun getBorderDisabled-0d7_KjU ()J
-	public fun getBorderFocused-0d7_KjU ()J
-	public fun getBorderHovered-0d7_KjU ()J
-	public fun getBorderPressed-0d7_KjU ()J
-	public fun getCaret-0d7_KjU ()J
-	public fun getCaretDisabled-0d7_KjU ()J
-	public fun getCaretFocused-0d7_KjU ()J
-	public fun getCaretHovered-0d7_KjU ()J
-	public fun getCaretPressed-0d7_KjU ()J
-	public fun getContent-0d7_KjU ()J
-	public fun getContentDisabled-0d7_KjU ()J
-	public fun getContentFocused-0d7_KjU ()J
-	public fun getContentHovered-0d7_KjU ()J
-	public fun getContentPressed-0d7_KjU ()J
-	public final fun getHint-0d7_KjU ()J
-	public final fun getLabel-0d7_KjU ()J
-	public final fun getPlaceholder-0d7_KjU ()J
-	public fun hashCode ()I
-	public fun toString ()Ljava/lang/String;
-}
-
-public final class org/jetbrains/jewel/ui/component/styling/LabelledTextFieldColors$Companion {
-}
-
-public final class org/jetbrains/jewel/ui/component/styling/LabelledTextFieldMetrics : org/jetbrains/jewel/ui/component/styling/InputFieldMetrics {
-	public static final field $stable I
-	public static final field Companion Lorg/jetbrains/jewel/ui/component/styling/LabelledTextFieldMetrics$Companion;
-	public synthetic fun <init> (FLandroidx/compose/foundation/layout/PaddingValues;Landroidx/compose/foundation/shape/CornerSize;JFFLkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun asTextFieldMetrics ()Lorg/jetbrains/jewel/ui/component/styling/TextFieldMetrics;
-	public fun equals (Ljava/lang/Object;)Z
-	public fun getBorderWidth-D9Ej5fM ()F
-	public fun getContentPadding ()Landroidx/compose/foundation/layout/PaddingValues;
-	public fun getCornerSize ()Landroidx/compose/foundation/shape/CornerSize;
-	public final fun getHintSpacing-D9Ej5fM ()F
-	public final fun getLabelSpacing-D9Ej5fM ()F
-	public fun getMinSize-MYxV2XQ ()J
-	public fun hashCode ()I
-	public fun toString ()Ljava/lang/String;
-}
-
-public final class org/jetbrains/jewel/ui/component/styling/LabelledTextFieldMetrics$Companion {
-}
-
-public final class org/jetbrains/jewel/ui/component/styling/LabelledTextFieldStyle : org/jetbrains/jewel/ui/component/styling/InputFieldStyle {
-	public static final field $stable I
-	public static final field Companion Lorg/jetbrains/jewel/ui/component/styling/LabelledTextFieldStyle$Companion;
-	public fun <init> (Lorg/jetbrains/jewel/ui/component/styling/LabelledTextFieldColors;Lorg/jetbrains/jewel/ui/component/styling/LabelledTextFieldMetrics;Landroidx/compose/ui/text/TextStyle;Lorg/jetbrains/jewel/ui/component/styling/LabelledTextFieldTextStyles;)V
-	public final fun asTextFieldStyle ()Lorg/jetbrains/jewel/ui/component/styling/TextFieldStyle;
-	public fun equals (Ljava/lang/Object;)Z
-	public synthetic fun getColors ()Lorg/jetbrains/jewel/ui/component/styling/InputFieldColors;
-	public fun getColors ()Lorg/jetbrains/jewel/ui/component/styling/LabelledTextFieldColors;
-	public synthetic fun getMetrics ()Lorg/jetbrains/jewel/ui/component/styling/InputFieldMetrics;
-	public fun getMetrics ()Lorg/jetbrains/jewel/ui/component/styling/LabelledTextFieldMetrics;
-	public fun getTextStyle ()Landroidx/compose/ui/text/TextStyle;
-	public final fun getTextStyles ()Lorg/jetbrains/jewel/ui/component/styling/LabelledTextFieldTextStyles;
-	public fun hashCode ()I
-	public fun toString ()Ljava/lang/String;
-}
-
-public final class org/jetbrains/jewel/ui/component/styling/LabelledTextFieldStyle$Companion {
-}
-
-public final class org/jetbrains/jewel/ui/component/styling/LabelledTextFieldStylingKt {
-	public static final fun getLocalLabelledTextFieldStyle ()Landroidx/compose/runtime/ProvidableCompositionLocal;
-}
-
-public final class org/jetbrains/jewel/ui/component/styling/LabelledTextFieldTextStyles {
-	public static final field $stable I
-	public static final field Companion Lorg/jetbrains/jewel/ui/component/styling/LabelledTextFieldTextStyles$Companion;
-	public fun <init> (Landroidx/compose/ui/text/TextStyle;Landroidx/compose/ui/text/TextStyle;)V
-	public fun equals (Ljava/lang/Object;)Z
-	public final fun getHint ()Landroidx/compose/ui/text/TextStyle;
-	public final fun getLabel ()Landroidx/compose/ui/text/TextStyle;
-	public fun hashCode ()I
-	public fun toString ()Ljava/lang/String;
-}
-
-public final class org/jetbrains/jewel/ui/component/styling/LabelledTextFieldTextStyles$Companion {
 }
 
 public final class org/jetbrains/jewel/ui/component/styling/LazyTreeColors {
@@ -2309,7 +2207,6 @@ public final class org/jetbrains/jewel/ui/theme/JewelThemeKt {
 	public static final fun getHorizontalProgressBarStyle (Lorg/jetbrains/jewel/foundation/theme/JewelTheme$Companion;Landroidx/compose/runtime/Composer;I)Lorg/jetbrains/jewel/ui/component/styling/HorizontalProgressBarStyle;
 	public static final fun getIconButtonStyle (Lorg/jetbrains/jewel/foundation/theme/JewelTheme$Companion;Landroidx/compose/runtime/Composer;I)Lorg/jetbrains/jewel/ui/component/styling/IconButtonStyle;
 	public static final fun getIconData (Lorg/jetbrains/jewel/foundation/theme/JewelTheme$Companion;Landroidx/compose/runtime/Composer;I)Lorg/jetbrains/jewel/foundation/theme/ThemeIconData;
-	public static final fun getLabelledTextFieldStyle (Lorg/jetbrains/jewel/foundation/theme/JewelTheme$Companion;Landroidx/compose/runtime/Composer;I)Lorg/jetbrains/jewel/ui/component/styling/LabelledTextFieldStyle;
 	public static final fun getLinkStyle (Lorg/jetbrains/jewel/foundation/theme/JewelTheme$Companion;Landroidx/compose/runtime/Composer;I)Lorg/jetbrains/jewel/ui/component/styling/LinkStyle;
 	public static final fun getMenuStyle (Lorg/jetbrains/jewel/foundation/theme/JewelTheme$Companion;Landroidx/compose/runtime/Composer;I)Lorg/jetbrains/jewel/ui/component/styling/MenuStyle;
 	public static final fun getOutlinedButtonStyle (Lorg/jetbrains/jewel/foundation/theme/JewelTheme$Companion;Landroidx/compose/runtime/Composer;I)Lorg/jetbrains/jewel/ui/component/styling/ButtonStyle;

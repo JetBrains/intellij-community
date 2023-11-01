@@ -77,10 +77,9 @@ internal class SwingBridgeService : Disposable {
                     themeDefinition = createBridgeThemeDefinition(TextStyle.Default),
                     componentStyling = createBridgeComponentStyling(
                         theme = themeDefinition,
-                        textAreaTextStyle = TextStyle.Default,
                         textFieldTextStyle = TextStyle.Default,
+                        textAreaTextStyle = TextStyle.Default,
                         dropdownTextStyle = TextStyle.Default,
-                        labelTextStyle = TextStyle.Default,
                         linkTextStyle = TextStyle.Default,
                     ),
                 )

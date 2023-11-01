@@ -35,7 +35,6 @@ import org.jetbrains.jewel.ui.component.styling.DropdownStyle
 import org.jetbrains.jewel.ui.component.styling.GroupHeaderStyle
 import org.jetbrains.jewel.ui.component.styling.HorizontalProgressBarStyle
 import org.jetbrains.jewel.ui.component.styling.IconButtonStyle
-import org.jetbrains.jewel.ui.component.styling.LabelledTextFieldStyle
 import org.jetbrains.jewel.ui.component.styling.LazyTreeStyle
 import org.jetbrains.jewel.ui.component.styling.LinkStyle
 import org.jetbrains.jewel.ui.component.styling.MenuStyle
@@ -95,7 +94,6 @@ fun ComponentStyling.dark(
     groupHeaderStyle: GroupHeaderStyle = GroupHeaderStyle.dark(),
     horizontalProgressBarStyle: HorizontalProgressBarStyle = HorizontalProgressBarStyle.dark(),
     iconButtonStyle: IconButtonStyle = IconButtonStyle.dark(),
-    labelledTextFieldStyle: LabelledTextFieldStyle = LabelledTextFieldStyle.dark(),
     lazyTreeStyle: LazyTreeStyle = LazyTreeStyle.dark(),
     linkStyle: LinkStyle = LinkStyle.dark(),
     menuStyle: MenuStyle = MenuStyle.dark(),
@@ -119,7 +117,6 @@ fun ComponentStyling.dark(
         groupHeaderStyle = groupHeaderStyle,
         horizontalProgressBarStyle = horizontalProgressBarStyle,
         iconButtonStyle = iconButtonStyle,
-        labelledTextFieldStyle = labelledTextFieldStyle,
         lazyTreeStyle = lazyTreeStyle,
         linkStyle = linkStyle,
         menuStyle = menuStyle,
@@ -146,7 +143,6 @@ fun ComponentStyling.light(
     groupHeaderStyle: GroupHeaderStyle = GroupHeaderStyle.light(),
     horizontalProgressBarStyle: HorizontalProgressBarStyle = HorizontalProgressBarStyle.light(),
     iconButtonStyle: IconButtonStyle = IconButtonStyle.light(),
-    labelledTextFieldStyle: LabelledTextFieldStyle = LabelledTextFieldStyle.light(),
     lazyTreeStyle: LazyTreeStyle = LazyTreeStyle.light(),
     linkStyle: LinkStyle = LinkStyle.light(),
     menuStyle: MenuStyle = MenuStyle.light(),
@@ -170,7 +166,6 @@ fun ComponentStyling.light(
         groupHeaderStyle = groupHeaderStyle,
         horizontalProgressBarStyle = horizontalProgressBarStyle,
         iconButtonStyle = iconButtonStyle,
-        labelledTextFieldStyle = labelledTextFieldStyle,
         lazyTreeStyle = lazyTreeStyle,
         linkStyle = linkStyle,
         menuStyle = menuStyle,

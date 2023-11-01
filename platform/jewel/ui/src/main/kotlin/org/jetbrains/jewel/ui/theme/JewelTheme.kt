@@ -21,7 +21,6 @@ import org.jetbrains.jewel.ui.component.styling.DropdownStyle
 import org.jetbrains.jewel.ui.component.styling.GroupHeaderStyle
 import org.jetbrains.jewel.ui.component.styling.HorizontalProgressBarStyle
 import org.jetbrains.jewel.ui.component.styling.IconButtonStyle
-import org.jetbrains.jewel.ui.component.styling.LabelledTextFieldStyle
 import org.jetbrains.jewel.ui.component.styling.LazyTreeStyle
 import org.jetbrains.jewel.ui.component.styling.LinkStyle
 import org.jetbrains.jewel.ui.component.styling.LocalCheckboxStyle
@@ -35,7 +34,6 @@ import org.jetbrains.jewel.ui.component.styling.LocalEditorTabStyle
 import org.jetbrains.jewel.ui.component.styling.LocalGroupHeaderStyle
 import org.jetbrains.jewel.ui.component.styling.LocalHorizontalProgressBarStyle
 import org.jetbrains.jewel.ui.component.styling.LocalIconButtonStyle
-import org.jetbrains.jewel.ui.component.styling.LocalLabelledTextFieldStyle
 import org.jetbrains.jewel.ui.component.styling.LocalLazyTreeStyle
 import org.jetbrains.jewel.ui.component.styling.LocalLinkStyle
 import org.jetbrains.jewel.ui.component.styling.LocalMenuStyle
@@ -101,11 +99,6 @@ val JewelTheme.Companion.groupHeaderStyle: GroupHeaderStyle
     @Composable
     @ReadOnlyComposable
     get() = LocalGroupHeaderStyle.current
-
-val JewelTheme.Companion.labelledTextFieldStyle: LabelledTextFieldStyle
-    @Composable
-    @ReadOnlyComposable
-    get() = LocalLabelledTextFieldStyle.current
 
 val JewelTheme.Companion.linkStyle: LinkStyle
     @Composable

@@ -20,11 +20,9 @@ import com.intellij.ui.JBColor
 import com.intellij.util.ui.DirProvider
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.NamedColorUtil
-import com.intellij.util.ui.StatusText
 import org.jetbrains.jewel.bridge.bridgePainterProvider
 import org.jetbrains.jewel.bridge.createVerticalBrush
 import org.jetbrains.jewel.bridge.dp
-import org.jetbrains.jewel.bridge.minus
 import org.jetbrains.jewel.bridge.readFromLaF
 import org.jetbrains.jewel.bridge.retrieveArcAsCornerSizeWithFallbacks
 import org.jetbrains.jewel.bridge.retrieveColorOrUnspecified
@@ -68,11 +66,6 @@ import org.jetbrains.jewel.ui.component.styling.HorizontalProgressBarStyle
 import org.jetbrains.jewel.ui.component.styling.IconButtonColors
 import org.jetbrains.jewel.ui.component.styling.IconButtonMetrics
 import org.jetbrains.jewel.ui.component.styling.IconButtonStyle
-import org.jetbrains.jewel.ui.component.styling.InputFieldStyle
-import org.jetbrains.jewel.ui.component.styling.LabelledTextFieldColors
-import org.jetbrains.jewel.ui.component.styling.LabelledTextFieldMetrics
-import org.jetbrains.jewel.ui.component.styling.LabelledTextFieldStyle
-import org.jetbrains.jewel.ui.component.styling.LabelledTextFieldTextStyles
 import org.jetbrains.jewel.ui.component.styling.LazyTreeColors
 import org.jetbrains.jewel.ui.component.styling.LazyTreeIcons
 import org.jetbrains.jewel.ui.component.styling.LazyTreeMetrics
@@ -147,12 +140,11 @@ internal fun createBridgeThemeDefinition(textStyle: TextStyle): ThemeDefinition 
 @OptIn(DependsOnJBR::class)
 internal suspend fun createBridgeComponentStyling(
     theme: ThemeDefinition,
-): ComponentStyling = createBridgeComponentStyling(
+) = createBridgeComponentStyling(
     theme = theme,
-    textAreaTextStyle = retrieveTextStyle("TextArea.font", "TextArea.foreground"),
     textFieldTextStyle = retrieveTextStyle("TextField.font", "TextField.foreground"),
+    textAreaTextStyle = retrieveTextStyle("TextArea.font", "TextArea.foreground"),
     dropdownTextStyle = retrieveTextStyle("ComboBox.font"),
-    labelTextStyle = retrieveTextStyle("Label.font"),
     linkTextStyle = retrieveTextStyle("Label.font"),
 )
 
@@ -161,7 +153,6 @@ internal fun createBridgeComponentStyling(
     textFieldTextStyle: TextStyle,
     textAreaTextStyle: TextStyle,
     dropdownTextStyle: TextStyle,
-    labelTextStyle: TextStyle,
     linkTextStyle: TextStyle,
 ): ComponentStyling {
     logger.debug("Obtaining Int UI component styling from Swing...")
@@ -181,7 +172,6 @@ internal fun createBridgeComponentStyling(
         groupHeaderStyle = readGroupHeaderStyle(),
         horizontalProgressBarStyle = readHorizontalProgressBarStyle(),
         iconButtonStyle = readIconButtonStyle(),
-        labelledTextFieldStyle = readLabelledTextFieldStyle(textFieldStyle, labelTextStyle),
         lazyTreeStyle = readLazyTreeStyle(),
         linkStyle = readLinkStyle(linkTextStyle),
         menuStyle = menuStyle,
@@ -502,54 +492,6 @@ private fun readHorizontalProgressBarStyle() = HorizontalProgressBarStyle(
     ),
     indeterminateCycleDuration = 800.milliseconds, // See DarculaProgressBarUI.CYCLE_TIME_DEFAULT
 )
-
-private fun readLabelledTextFieldStyle(
-    inputFieldStyle: InputFieldStyle,
-    labelTextStyle: TextStyle,
-): LabelledTextFieldStyle {
-    val colors = LabelledTextFieldColors(
-        background = inputFieldStyle.colors.background,
-        backgroundDisabled = inputFieldStyle.colors.backgroundDisabled,
-        backgroundFocused = inputFieldStyle.colors.backgroundFocused,
-        backgroundPressed = inputFieldStyle.colors.backgroundPressed,
-        backgroundHovered = inputFieldStyle.colors.backgroundHovered,
-        content = inputFieldStyle.colors.content,
-        contentDisabled = inputFieldStyle.colors.contentDisabled,
-        contentFocused = inputFieldStyle.colors.contentFocused,
-        contentPressed = inputFieldStyle.colors.contentPressed,
-        contentHovered = inputFieldStyle.colors.contentHovered,
-        border = inputFieldStyle.colors.border,
-        borderDisabled = inputFieldStyle.colors.borderDisabled,
-        borderFocused = inputFieldStyle.colors.borderFocused,
-        borderPressed = inputFieldStyle.colors.borderPressed,
-        borderHovered = inputFieldStyle.colors.borderHovered,
-        caret = inputFieldStyle.colors.caret,
-        caretDisabled = inputFieldStyle.colors.caretDisabled,
-        caretFocused = inputFieldStyle.colors.caretFocused,
-        caretPressed = inputFieldStyle.colors.caretPressed,
-        caretHovered = inputFieldStyle.colors.caretHovered,
-        placeholder = retrieveColorOrUnspecified("Label.infoForeground"),
-        label = retrieveColorOrUnspecified("Label.foreground"),
-        hint = StatusText.DEFAULT_ATTRIBUTES.fgColor.toComposeColor(),
-    )
-
-    return LabelledTextFieldStyle(
-        colors = colors,
-        metrics = LabelledTextFieldMetrics(
-            cornerSize = inputFieldStyle.metrics.cornerSize,
-            contentPadding = inputFieldStyle.metrics.contentPadding,
-            minSize = inputFieldStyle.metrics.minSize,
-            borderWidth = inputFieldStyle.metrics.borderWidth,
-            labelSpacing = 6.dp,
-            hintSpacing = 6.dp,
-        ),
-        textStyle = inputFieldStyle.textStyle,
-        textStyles = LabelledTextFieldTextStyles(
-            label = labelTextStyle,
-            hint = labelTextStyle.copy(fontSize = labelTextStyle.fontSize - 1f),
-        ),
-    )
-}
 
 private fun readLinkStyle(
     linkTextStyle: TextStyle,
