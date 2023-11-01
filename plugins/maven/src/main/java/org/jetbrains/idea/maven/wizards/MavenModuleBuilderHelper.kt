@@ -3,7 +3,9 @@ package org.jetbrains.idea.maven.wizards
 
 import com.intellij.ide.util.EditorHelper
 import com.intellij.openapi.GitSilentFileAdderProvider
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
@@ -16,6 +18,9 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.codeStyle.CodeStyleManager
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.idea.maven.dom.MavenDomUtil
 import org.jetbrains.idea.maven.execution.MavenRunner
@@ -28,6 +33,7 @@ import org.jetbrains.idea.maven.project.MavenProjectBundle
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.statistics.MavenActionsUsagesCollector
 import org.jetbrains.idea.maven.statistics.MavenActionsUsagesCollector.Companion.trigger
+import org.jetbrains.idea.maven.utils.MavenCoroutineScopeProvider
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
 import java.io.File
@@ -95,14 +101,17 @@ open class MavenModuleBuilderHelper(protected val myProjectId: MavenId,
 
     MavenProjectsManager.getInstance(project).forceUpdateAllProjectsOrFindAllAvailablePomFiles()
 
-    // execute when current dialog is closed (e.g. Project Structure)
-    MavenUtil.invokeLater(project, ModalityState.nonModal()) {
-      if (!pom.isValid) {
-        showError(project, RuntimeException("Project is not valid"))
-        return@invokeLater
+    val cs = MavenCoroutineScopeProvider.getCoroutineScope(project)
+    cs.launch {
+      // execute when current dialog is closed (e.g. Project Structure)
+      withContext(Dispatchers.EDT + ModalityState.nonModal().asContextElement()) {
+        if (!pom.isValid) {
+          showError(project, RuntimeException("Project is not valid"))
+          return@withContext
+        }
+        EditorHelper.openInEditor(getPsiFile(project, pom)!!)
+        if (myArchetype != null) generateFromArchetype(project, pom)
       }
-      EditorHelper.openInEditor(getPsiFile(project, pom)!!)
-      if (myArchetype != null) generateFromArchetype(project, pom)
     }
   }
 
@@ -149,7 +158,7 @@ open class MavenModuleBuilderHelper(protected val myProjectId: MavenId,
     }
   }
 
-  private fun generateFromArchetype(project: Project, pom: VirtualFile) {
+  private suspend fun generateFromArchetype(project: Project, pom: VirtualFile) {
     trigger(project, MavenActionsUsagesCollector.CREATE_MAVEN_PROJECT_FROM_ARCHETYPE)
 
     val workingDir: File
@@ -176,7 +185,9 @@ open class MavenModuleBuilderHelper(protected val myProjectId: MavenId,
       props.putAll(myPropertiesToCreateByArtifact)
     }
 
-    runner.run(params, settings) { copyGeneratedFiles(workingDir, pom, project, props["artifactId"]) }
+    withContext(Dispatchers.Default) {
+      runner.run(params, settings) { copyGeneratedFiles(workingDir, pom, project, props["artifactId"]) }
+    }
   }
 
   @VisibleForTesting
