@@ -389,7 +389,7 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
   }
 
   private suspend fun runEarlyCommitChecks(commitInfo: DynamicCommitInfo, commitChecks: List<CommitCheck>): NonModalCommitChecksFailure? {
-    val problems = commitChecks.mapWithProgress(concurrent = false) { commitCheck ->
+    val problems = commitChecks.mapWithProgress { commitCheck ->
       AbstractCommitWorkflow.runCommitCheck(project, commitCheck, commitInfo)
     }.filterNotNull()
     if (problems.isEmpty()) return null
@@ -439,7 +439,7 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
 
   private suspend fun runSyncPostCommitChecks(commitInfo: DynamicCommitInfo,
                                               commitChecks: List<CommitCheck>): NonModalCommitChecksFailure? {
-    val problems = commitChecks.mapWithProgress(concurrent = false) { commitCheck ->
+    val problems = commitChecks.mapWithProgress { commitCheck ->
       AbstractCommitWorkflow.runCommitCheck(project, commitCheck, commitInfo)
     }.filterNotNull()
     if (problems.isEmpty()) return null

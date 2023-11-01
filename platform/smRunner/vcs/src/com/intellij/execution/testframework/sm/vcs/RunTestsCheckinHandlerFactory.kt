@@ -146,7 +146,7 @@ class RunTestsBeforeCheckinHandler(private val project: Project) : CheckinHandle
         if (configuration is CompoundRunConfiguration) {
           val runManager = RunManagerImpl.getInstanceImpl(project)
           configuration.getConfigurationsWithTargets(runManager).keys
-            .forEachWithProgress(concurrent = false) { runConfiguration ->
+            .forEachWithProgress { runConfiguration ->
               runManager.findSettings(runConfiguration)?.let { runnerAndConfigurationSettings ->
                 startConfiguration(executor, runnerAndConfigurationSettings, problems)
               }

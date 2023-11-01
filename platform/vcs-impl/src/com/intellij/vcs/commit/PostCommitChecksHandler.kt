@@ -140,7 +140,7 @@ class PostCommitChecksHandler(val project: Project) {
       }
     }
 
-    problems += commitChecks.mapWithProgress(concurrent = false) { commitCheck ->
+    problems += commitChecks.mapWithProgress { commitCheck ->
       AbstractCommitWorkflow.runCommitCheck(project, commitCheck, postCommitInfo)
     }.filterNotNull()
     return problems
