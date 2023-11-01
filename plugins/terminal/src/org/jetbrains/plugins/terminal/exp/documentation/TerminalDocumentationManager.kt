@@ -68,7 +68,7 @@ internal class TerminalDocumentationManager(private val project: Project, privat
       // hint's window might've been hidden by AWT without notifying us
       // dispose to remove the popup from IDE hierarchy and avoid leaking components
       popup.cancel()
-      check(this.currentPopup == null)
+      check(this.currentPopup == null)  // see popup child disposable in showDocumentationPopup method
       return null
     }
     return popup
@@ -77,11 +77,6 @@ internal class TerminalDocumentationManager(private val project: Project, privat
   private fun setCurrentPopup(popup: AbstractPopup) {
     EDT.assertIsEdt()
     currentPopup = WeakReference(popup)
-    Disposer.register(popup) {
-      EDT.assertIsEdt()
-      currentPopup = null
-      popupScope.coroutineContext.job.cancelChildren()
-    }
   }
 
   @RequiresEdt
@@ -133,6 +128,11 @@ internal class TerminalDocumentationManager(private val project: Project, privat
     }
     Disposer.register(parentDisposable) {
       cancelPopup()
+    }
+    Disposer.register(popup) {
+      EDT.assertIsEdt()
+      currentPopup = null
+      popupScope.coroutineContext.job.cancelChildren()
     }
 
     boundsHandler.showPopup(popup)
