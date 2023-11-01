@@ -37,6 +37,12 @@
     <action internal="true" id="ValidateLocalHistory" class="com.intellij.history.integration.ValidateHistoryAction">
       <add-to-group group-id="Internal.VFS"/>
     </action>
+
+    <!--Activity View-->
+    <group id="ActivityView.Toolbar"/>
+    <group id="ActivityView.Popup">
+      <reference id="Diff.ShowDiff"/>
+    </group>
   </actions>
   <extensions defaultExtensionNs="com.intellij">
     <undoProvider implementation="com.intellij.openapi.command.impl.FileUndoProvider"/>
