@@ -148,7 +148,19 @@ public final class ConfigImportHelper {
           log.error("Couldn't backup current config or delete current config directory", e);
         }
       }
-      else if (!Boolean.getBoolean("intellij.startup.wizard")) {
+      else if (Boolean.getBoolean("intellij.startup.wizard")) {
+        if (!guessedOldConfigDirs.isEmpty()) {
+          Pair<Path, FileTime> bestConfigGuess = guessedOldConfigDirs.getFirstItem();
+          if (!isConfigOld(bestConfigGuess.second)) {
+            oldConfigDirAndOldIdePath = findConfigDirectoryByPath(bestConfigGuess.first);
+            if (oldConfigDirAndOldIdePath == null) {
+              log.info("Previous config directory was detected but not accepted: " + bestConfigGuess.first);
+              importScenarioStatistics = CONFIG_DIRECTORY_NOT_FOUND;
+            }
+          }
+        }
+      }
+      else {
         if (shouldAskForConfig()) {
           oldConfigDirAndOldIdePath = showDialogAndGetOldConfigPath(guessedOldConfigDirs.getPaths());
           importScenarioStatistics = SHOW_DIALOG_REQUESTED_BY_PROPERTY;
