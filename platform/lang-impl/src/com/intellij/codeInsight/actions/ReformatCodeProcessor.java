@@ -155,7 +155,7 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
     boolean doNotKeepLineBreaks = confirmSecondReformat(file);
     return new FutureTask<>(() -> {
       Ref<Boolean> result = new Ref<>();
-      CodeStyle.doWithTemporarySettings(myProject, CodeStyle.getSettings(fileToProcess), (settings) -> {
+      CodeStyle.runWithLocalSettings(myProject, CodeStyle.getSettings(fileToProcess), (settings) -> {
         if (doNotKeepLineBreaks) {
           settings.getCommonSettings(fileToProcess.getLanguage()).KEEP_LINE_BREAKS = false;
         }
