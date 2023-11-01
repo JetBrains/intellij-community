@@ -145,7 +145,7 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
   }
 
   private void doScheduleIndex(boolean full) {
-    TrackingUtil.trackActivity(myProject, VcsInProgressWitness.class, () -> {
+    TrackingUtil.trackActivity(myProject, VcsActivityKey.INSTANCE, () -> {
       doScheduleIndex(full, request -> mySingleTaskController.request(request));
     });
   }

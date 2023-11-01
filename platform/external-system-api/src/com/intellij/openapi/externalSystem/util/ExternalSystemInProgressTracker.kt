@@ -3,15 +3,17 @@ package com.intellij.openapi.externalSystem.util
 
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.project.Project
-import com.intellij.platform.backend.observation.MarkupBasedActivityInProgressWitness
+import com.intellij.platform.backend.observation.ActivityInProgressTracker
+import com.intellij.platform.backend.observation.ActivityKey
 import kotlinx.coroutines.delay
+import org.jetbrains.annotations.Nls
 
 
-class ExternalSystemInProgressWitness : MarkupBasedActivityInProgressWitness() {
-  override val presentableName: String = "external-system"
+class ExternalSystemInProgressTracker : ActivityInProgressTracker {
+  override val presentableName: String = "external-system (startup)"
 
   override suspend fun isInProgress(project: Project): Boolean {
-    return project.serviceAsync<ExternalSystemInProgressService>().isInProgress() || super.isInProgress(project)
+    return project.serviceAsync<ExternalSystemInProgressService>().isInProgress()
   }
 
   override suspend fun awaitConfiguration(project: Project) {
@@ -19,6 +21,10 @@ class ExternalSystemInProgressWitness : MarkupBasedActivityInProgressWitness() {
     if (isAwaitingActivities) {
       delay(100)
     }
-    return super.awaitConfiguration(project)
   }
+}
+
+object ExternalSystemActivityKey : ActivityKey {
+  override val presentableName: @Nls String
+    get() = "external-system"
 }

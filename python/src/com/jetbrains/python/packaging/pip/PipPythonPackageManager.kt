@@ -10,7 +10,7 @@ import com.jetbrains.python.packaging.PyPackageManager
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.runPackagingOperationOrShowErrorDialog
 import com.jetbrains.python.packaging.management.runPackagingTool
-import com.jetbrains.python.sdk.headless.PythonInProgressWitness
+import com.jetbrains.python.sdk.headless.PythonActivityKey
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
@@ -21,7 +21,7 @@ class PipPythonPackageManager(project: Project, sdk: Sdk) : PipBasedPackageManag
 
   override val repositoryManager: PipRepositoryManager = PipRepositoryManager(project, sdk)
 
-  override suspend fun reloadPackages(): Result<List<PythonPackage>> = project.trackActivity(PythonInProgressWitness::class) {
+  override suspend fun reloadPackages(): Result<List<PythonPackage>> = project.trackActivity(PythonActivityKey) {
     val result = runPackagingOperationOrShowErrorDialog(sdk, PyBundle.message("python.packaging.operation.failed.title")) {
       val output = runPackagingTool("list", emptyList(), PyBundle.message("python.packaging.list.progress"))
 

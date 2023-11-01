@@ -211,7 +211,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
 
   @Override
   public void initializeComponent() {
-    TrackingUtil.trackActivity(myProject, MavenInProgressWitness.class, () -> {
+    TrackingUtil.trackActivity(myProject, MavenActivityKey.INSTANCE, () -> {
       //noinspection deprecation
       ProjectUtilKt.executeOnPooledThread(myProject, () -> {
         tryInit();

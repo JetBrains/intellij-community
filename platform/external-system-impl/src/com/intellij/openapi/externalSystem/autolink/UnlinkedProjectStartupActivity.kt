@@ -12,8 +12,8 @@ import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectId
 import com.intellij.openapi.externalSystem.autoimport.changes.vfs.VirtualFileChangesListener
 import com.intellij.openapi.externalSystem.autoimport.changes.vfs.VirtualFileChangesListener.Companion.installAsyncVirtualFileListener
 import com.intellij.openapi.externalSystem.autolink.ExternalSystemUnlinkedProjectAware.Companion.EP_NAME
+import com.intellij.openapi.externalSystem.util.ExternalSystemActivityKey
 import com.intellij.openapi.externalSystem.util.ExternalSystemInProgressService
-import com.intellij.openapi.externalSystem.util.ExternalSystemInProgressWitness
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.progress.blockingContext
@@ -46,7 +46,7 @@ class UnlinkedProjectStartupActivity : ProjectActivity {
   private class CoroutineScopeService(val coroutineScope: CoroutineScope)
 
   override suspend fun execute(project: Project) {
-    project.trackActivity(ExternalSystemInProgressWitness::class) {
+    project.trackActivity(ExternalSystemActivityKey) {
       project.serviceAsync<ExternalSystemInProgressService>().unlinkedActivityStarted()
       loadProjectIfSingleUnlinkedProjectFound(project)
       val projectRoots = installProjectRootsScanner(project)
@@ -156,7 +156,7 @@ class UnlinkedProjectStartupActivity : ProjectActivity {
   private suspend fun installUnlinkedProjectScanner(project: Project, projectRoots: ProjectRoots) {
     whenProjectRootsChanged(projectRoots, project) { changedRoots ->
       EP_NAME.forEachExtensionSafeAsync { extension ->
-        project.trackActivity(ExternalSystemInProgressWitness::class) {
+        project.trackActivity(ExternalSystemActivityKey) {
           for (projectRoot in changedRoots) {
             updateNotification(project, projectRoot, extension)
           }
@@ -168,7 +168,7 @@ class UnlinkedProjectStartupActivity : ProjectActivity {
         updateNotification(project, projectRoot, extension)
       }
       projectRoots.whenProjectRootRemoved(extensionDisposable) { projectRoot ->
-        project.trackActivity(ExternalSystemInProgressWitness::class) {
+        project.trackActivity(ExternalSystemActivityKey) {
           expireNotification(project, projectRoot, extension)
         }
       }
@@ -197,7 +197,7 @@ class UnlinkedProjectStartupActivity : ProjectActivity {
         .notificationNotify(extension.createProjectId(externalProjectPath)) {
           val cs = project.service<CoroutineScopeService>().coroutineScope
           cs.launch(extensionDisposable) {
-            project.trackActivity(ExternalSystemInProgressWitness::class) {
+            project.trackActivity(ExternalSystemActivityKey) {
               extension.linkAndLoadProjectAsync(project, externalProjectPath)
             }
           }
