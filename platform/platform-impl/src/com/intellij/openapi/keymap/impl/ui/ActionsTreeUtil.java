@@ -737,9 +737,14 @@ public final class ActionsTreeUtil {
         PluginException.logPluginError(LOG, "not an ActionGroup: " + action + " id=" + id, null, action.getClass());
       }
     }
-    return adjusted instanceof DefaultActionGroup
-           ? ((DefaultActionGroup)adjusted).getChildActionsOrStubs()
-           : adjusted.getChildren(null);
+    try {
+      return adjusted instanceof DefaultActionGroup
+             ? ((DefaultActionGroup)adjusted).getChildActionsOrStubs()
+             : adjusted.getChildren(null);
+    }
+    catch (Throwable e) {
+      return AnAction.EMPTY_ARRAY;
+    }
   }
 
   private static @NotNull AnAction tryUnstubAction(@NotNull AnAction action) {
