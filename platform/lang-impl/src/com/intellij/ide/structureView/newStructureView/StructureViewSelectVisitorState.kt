@@ -1,14 +1,15 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.structureView.newStructureView
 
+import com.intellij.psi.PsiElement
 import javax.swing.tree.TreePath
 
 class StructureViewSelectVisitorState {
 
   private var stage: StructureViewSelectVisitorStage = StructureViewSelectVisitorStage.FIRST_PASS
-  var deepestMatch: TreePath? = null
+  var bestMatch: TreePath? = null
     private set
-  private var deepestMatchLength: Int = 0
+  private var bestMatchDepth: Int = 0
   var isExactMatch: Boolean = false
     private set
 
@@ -26,16 +27,16 @@ class StructureViewSelectVisitorState {
   }
 
   fun updateIfBetterMatch(path: TreePath, isGoodMatch: Boolean) {
-    val count = path.pathCount
-    if (count > deepestMatchLength) {
-      deepestMatch = path
-      deepestMatchLength = count
+    val depth = path.pathCount
+    if (depth > bestMatchDepth) {
+      bestMatch = path
+      bestMatchDepth = depth
       isExactMatch = isGoodMatch
     }
   }
 
   override fun toString() =
-    "StructureViewSelectVisitorState(stage=$stage, deepestMatch=$deepestMatch, deepestMatchLength=$deepestMatchLength, isExactMatch=$isExactMatch)"
+    "StructureViewSelectVisitorState(stage=$stage, bestMatch=$bestMatch, bestMatchDepth=$bestMatchDepth, isExactMatch=$isExactMatch)"
 
 }
 

@@ -393,7 +393,7 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
           return myAsyncTreeModel.accept(visitor).thenAsync(this);
         }
         else {
-          TreePath adjusted = path == null ? state.getDeepestMatch() : path;
+          TreePath adjusted = path == null ? state.getBestMatch() : path;
           if (path == null && adjusted != null && !state.isExactMatch() && element instanceof PsiElement) {
             Object minChild = findClosestPsiElement((PsiElement)element, adjusted, myAsyncTreeModel);
             if (minChild != null) adjusted = adjusted.pathByAddingChild(minChild);
