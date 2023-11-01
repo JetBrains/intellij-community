@@ -59,10 +59,6 @@ class UnsupportedAbiVersionNotificationPanelProvider : EditorNotificationProvide
         val isPluginNewForAllRoots = badVersionedRoots.all { it.supportedVersion > it.version }
 
         val fullApplicationName = ApplicationNamesInfo.getInstance().fullProductName
-        val newApplicationContainsUpdatedPluginMessage = KotlinPluginUpdaterBundle.message(
-            "the.new.0.contains.an.updated.kotlin.plugin.that.supports.analysis.of.kotlin.libraries.compiled.with.the.latest.kotlin",
-            fullApplicationName,
-        )
 
         when {
             badRuntimeLibraries.isNotEmpty() -> {
@@ -109,7 +105,7 @@ class UnsupportedAbiVersionNotificationPanelProvider : EditorNotificationProvide
                             "html.kotlin.library.b.0.b.was.compiled.with.a.newer.kotlin.compiler.and.can.t.be.read.please.update.1.html",
                             presentableName,
                             fullApplicationName,
-                        ) + newApplicationContainsUpdatedPluginMessage
+                        )
                     }
 
                     isPluginNewForAllRoots ->
@@ -132,10 +128,10 @@ class UnsupportedAbiVersionNotificationPanelProvider : EditorNotificationProvide
             }
 
             isPluginOldForAllRoots -> {
-                answer.text = KotlinPluginUpdaterBundle.message(
+                answer.text = KotlinPluginUpdaterBundle.htmlMessage(
                     "some.kotlin.libraries.attached.to.this.project.were.compiled.with.a.newer.kotlin.compiler.and.can.t.be.read.please.update.0",
                     fullApplicationName,
-                ) + newApplicationContainsUpdatedPluginMessage
+                )
             }
 
             isPluginNewForAllRoots ->
@@ -145,10 +141,10 @@ class UnsupportedAbiVersionNotificationPanelProvider : EditorNotificationProvide
 
             else ->
                 answer.setText(
-                    KotlinPluginUpdaterBundle.message(
+                    KotlinPluginUpdaterBundle.htmlMessage(
                         "some.kotlin.libraries.attached.to.this.project.have.unsupported.binary.format.please.update.the.libraries.or.0",
                         fullApplicationName
-                    ) + newApplicationContainsUpdatedPluginMessage
+                    )
                 )
 
         }
