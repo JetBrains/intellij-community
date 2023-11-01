@@ -228,10 +228,14 @@ fun CoroutineScope.startApplication(args: List<String>,
         }.getOrLogException(log)
       }
 
-      log.info("Will enter initial app wizard flow.")
-      val result = CompletableDeferred<Boolean>()
-      isInitialStart = result
-      result
+      if (IdeStartupExperiment.shouldEnableNewStartupFlow()) {
+        log.info("Will enter initial app wizard flow.")
+        val result = CompletableDeferred<Boolean>()
+        isInitialStart = result
+        result
+      } else {
+        null
+      }
     }
     else {
       null
@@ -300,6 +304,7 @@ fun CoroutineScope.startApplication(args: List<String>,
     this@startApplication.launch {
       val isInitialStart = configImportDeferred.await()
       // appLoaded not only provides starter, but also loads app, that's why it is here
+      IdeStartupWizardCollector.logExperimentState()
       if (isInitialStart != null) {
         LoadingState.compareAndSetCurrentState(LoadingState.COMPONENTS_LOADED, LoadingState.APP_READY)
         val log = logDeferred.await()
