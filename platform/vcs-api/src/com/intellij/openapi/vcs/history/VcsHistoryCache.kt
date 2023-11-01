@@ -38,6 +38,12 @@ class VcsHistoryCache {
     return factory.createFromCachedData(customData, cachedHistory.revisions, cachedHistory.path, cachedHistory.currentRevision)
   }
 
+  @Deprecated(message="Use getSession instead", replaceWith = ReplaceWith("getSession(filePath, vcsKey, factory, false)"))
+  fun <C : Serializable, T : VcsAbstractHistorySession> getFull(filePath: FilePath, vcsKey: VcsKey,
+                                                                factory: VcsCacheableHistorySessionFactory<C, T>): T? {
+    return getSession(filePath, vcsKey, factory, false)
+  }
+
   fun getRevisions(filePath: FilePath, vcsKey: VcsKey): List<VcsFileRevision> {
     val cachedHistory = historyCache.getIfPresent(HistoryCacheBaseKey(filePath, vcsKey))
     if (cachedHistory == null) return emptyList()
