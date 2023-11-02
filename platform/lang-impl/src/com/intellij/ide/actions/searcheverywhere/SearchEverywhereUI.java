@@ -629,6 +629,8 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
       }
     };
 
+    updatePreviewVisibility(myHeader.getSelectedTab());
+
     ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(
       SETabSwitcherListener.Companion.getSE_TAB_TOPIC(), new SETabSwitcherListener() {
         @Override
@@ -657,8 +659,8 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
   }
 
   private void updatePreviewVisibility(@NotNull SETab tab) {
-    boolean hasProviders = ContainerUtil.filterIsInstance(tab.getContributors(), SearchEverywherePreviewProvider.class).isEmpty();
-    myUsagePreviewPanel.setVisible(isPreviewActive() && !hasProviders);
+    boolean noProviders = ContainerUtil.filterIsInstance(tab.getContributors(), SearchEverywherePreviewProvider.class).isEmpty();
+    myUsagePreviewPanel.setVisible(isPreviewEnabled() && isPreviewActive() && !noProviders);
   }
 
   @Override
