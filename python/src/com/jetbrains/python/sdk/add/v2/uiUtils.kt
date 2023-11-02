@@ -83,17 +83,18 @@ class PythonEnvironmentComboBoxRenderer : ColoredListCellRenderer<Any>() {
   }
 }
 
-internal fun Row.nonEditablePythonInterpreterComboBox(presenter: PythonAddInterpreterPresenter,
-                                                      sdksFlow: StateFlow<List<Sdk>>): Cell<ComboBox<Sdk?>> =
+internal fun Row.nonEditablePythonInterpreterComboBox(sdksFlow: StateFlow<List<Sdk>>,
+                                                      scope: CoroutineScope,
+                                                      uiContext: CoroutineContext): Cell<ComboBox<Sdk?>> =
   comboBox<Sdk?>(emptyList(), PythonSdkComboBoxListCellRenderer())
     .applyToComponent {
       editor = object : BasicComboBoxEditor() {
         override fun createEditorComponent(): JTextField = ExtendableTextField().apply { border = null }
       }
 
-      presenter.state.scope.launch(start = CoroutineStart.UNDISPATCHED) {
+      scope.launch(start = CoroutineStart.UNDISPATCHED) {
         sdksFlow.collectLatest { baseSdks ->
-          withContext(presenter.uiContext) {
+          withContext(uiContext) {
             removeAllItems()
             baseSdks.forEach { sdk -> addItem(sdk) }
           }

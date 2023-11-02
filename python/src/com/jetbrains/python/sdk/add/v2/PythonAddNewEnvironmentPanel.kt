@@ -77,7 +77,8 @@ class PythonAddNewEnvironmentPanel(val projectPath: ObservableProperty<String>) 
 
 
       row(message("sdk.create.python.version")) {
-        pythonBaseVersionComboBox = nonEditablePythonInterpreterComboBox(presenter, presenter.basePythonSdksFlow)
+        pythonBaseVersionComboBox = nonEditablePythonInterpreterComboBox(presenter.basePythonSdksFlow, scope = presenter.state.scope,
+                                                                         uiContext = presenter.uiContext)
           .bindItem(pythonBaseVersion)
           .displayLoaderWhen(presenter.detectingSdks, makeTemporaryEditable = true, scope = presenter.scope,
                              uiContext = presenter.uiContext)
