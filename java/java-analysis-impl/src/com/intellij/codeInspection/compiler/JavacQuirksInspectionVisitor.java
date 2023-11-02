@@ -303,7 +303,7 @@ public class JavacQuirksInspectionVisitor extends JavaElementVisitor {
     }
   }
 
-  private static class MyAddExplicitTypeArgumentsFix implements LocalQuickFix {
+  private static class MyAddExplicitTypeArgumentsFix extends PsiUpdateModCommandQuickFix {
     @Nls
     @NotNull
     @Override
@@ -312,38 +312,15 @@ public class JavacQuirksInspectionVisitor extends JavaElementVisitor {
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiElement element = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       if (element instanceof PsiReferenceExpression) {
         PsiElement parent = element.getParent();
-        if (parent instanceof PsiMethodCallExpression) {
-          PsiExpression withArgs = AddTypeArgumentsFix.addTypeArguments((PsiExpression)parent, null);
+        if (parent instanceof PsiMethodCallExpression call) {
+          PsiExpression withArgs = AddTypeArgumentsFix.addTypeArguments(call, null);
           if (withArgs == null) return;
-          element = WriteAction.compute(() -> CodeStyleManager.getInstance(project).reformat(parent.replace(withArgs)));
-          new SuppressByJavaCommentFix(
-            RedundantTypeArgsInspection.SHORT_NAME + " (explicit type arguments speedup compilation and analysis time)")
-            .invoke(project, element);
+          parent.replace(withArgs);
         }
       }
-    }
-
-    @Override
-    public boolean startInWriteAction() {
-      return false;
-    }
-
-    @Override
-    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
-      PsiElement element = previewDescriptor.getPsiElement();
-      if (element instanceof PsiReferenceExpression) {
-        PsiElement parent = element.getParent();
-        if (parent instanceof PsiMethodCallExpression) {
-          PsiExpression withArgs = AddTypeArgumentsFix.addTypeArguments((PsiExpression)parent, null);
-          if (withArgs == null) return IntentionPreviewInfo.EMPTY;
-          CodeStyleManager.getInstance(project).reformat(parent.replace(withArgs));
-        }
-      }
-      return IntentionPreviewInfo.DIFF;
     }
   }
 }
