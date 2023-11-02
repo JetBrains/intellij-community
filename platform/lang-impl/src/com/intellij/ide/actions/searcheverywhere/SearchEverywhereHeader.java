@@ -55,14 +55,13 @@ public final class SearchEverywhereHeader {
                                 @NotNull Runnable scopeChangedCallback,
                                 Function<? super String, String> shortcutSupplier,
                                 @Nullable AnAction showInFindToolWindowAction,
-                                @Nullable AnAction previewAction,
                                 SearchEverywhereUI ui) {
     myScopeChangedCallback = scopeChangedCallback;
     myProject = project;
     myShortcutSupplier = shortcutSupplier;
     myTabs = createTabs(contributors);
     mySelectedTab = myTabs.get(0);
-    myToolbar = createToolbar(previewAction, showInFindToolWindowAction);
+    myToolbar = createToolbar(showInFindToolWindowAction);
     header = ExperimentalUI.isNewUI() ? createNewUITabs() : createHeader();
 
     ApplicationManager.getApplication().getMessageBus().connect(ui).subscribe(AnActionListener.TOPIC, new AnActionListener() {
@@ -91,7 +90,7 @@ public final class SearchEverywhereHeader {
     myToolbar.updateActionsImmediately();
   }
 
-  private @NotNull ActionToolbar createToolbar(@Nullable AnAction previewAction, @Nullable AnAction showInFindToolWindowAction) {
+  private @NotNull ActionToolbar createToolbar(@Nullable AnAction showInFindToolWindowAction) {
     DefaultActionGroup actionGroup = new DefaultActionGroup();
     actionGroup.addAction(new ActionGroup() {
       @Override
@@ -100,10 +99,6 @@ public final class SearchEverywhereHeader {
         return mySelectedTab.actions.toArray(EMPTY_ARRAY);
       }
     });
-
-    if (previewAction != null) {
-      actionGroup.addAction(previewAction);
-    }
 
     if (showInFindToolWindowAction != null) {
       actionGroup.addAction(showInFindToolWindowAction);
@@ -312,7 +307,7 @@ public final class SearchEverywhereHeader {
         });
         onChanged.run();
       }
-    }, new SearchEverywhereFiltersAction<>(filter, onChanged, new ContributorFilterCollector()));
+    }, new PreviewAction(), new SearchEverywhereFiltersAction<>(filter, onChanged, new ContributorFilterCollector()));
     return new SETab(SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID,
                      IdeBundle.message("searcheverywhere.allelements.tab.name"),
                      contributors, actions, filter);

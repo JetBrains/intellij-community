@@ -85,7 +85,6 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
 import kotlin.Unit;
-import kotlin.jvm.functions.Function0;
 import kotlin.jvm.functions.Function1;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.*;
@@ -174,20 +173,14 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
       scheduleRebuildList(SearchRestartReason.SCOPE_CHANGED);
     };
 
-    if (project != null && isPreviewEnabled() && !PropertiesComponent.getInstance(project).isValueSet(PREVIEW_PROPERTY_KEY)) {
-      PropertiesComponent.getInstance(project).setValue(PREVIEW_PROPERTY_KEY, true);
+    if (project != null && isPreviewEnabled() && !PropertiesComponent.getInstance().isValueSet(PREVIEW_PROPERTY_KEY)) {
+      PropertiesComponent.getInstance().setValue(PREVIEW_PROPERTY_KEY, true);
     }
 
-    Function0<Unit> callback = () -> {
-      myUsagePreviewPanel.setVisible(project != null && isPreviewActive(project));
-      return Unit.INSTANCE;
-    };
-
-    AnAction previewAction = project == null ? null : new PreviewAction(callback);
     AnAction showInFindToolWindowAction = project == null ? null : new ShowInFindToolWindowAction();
     myHeader = new SearchEverywhereHeader(project, contributors, scopeChangedCallback,
                                           shortcutSupplier, showInFindToolWindowAction,
-                                          previewAction, this);
+                                          this);
 
     myMlService = SearchEverywhereMlService.getInstance();
 
@@ -640,8 +633,17 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
       SETabSwitcherListener.Companion.getSE_TAB_TOPIC(), new SETabSwitcherListener() {
         @Override
         public void tabSwitched(@NotNull SETabSwitcherListener.SETabSwitchedEvent event) {
-          myUsagePreviewPanel.setVisible(
-            !ContainerUtil.filterIsInstance(event.getNewTab().getContributors(), SearchEverywherePreviewProvider.class).isEmpty());
+          updatePreviewVisibility(event.getNewTab());
+        }
+      });
+
+    ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(
+      SEHeaderActionListener.Companion.getSE_HEADER_ACTION_TOPIC(), new SEHeaderActionListener() {
+        @Override
+        public void performed(@NotNull SEHeaderActionListener.SearchEverywhereActionEvent event) {
+          if (event.getActionID().equals("Preview")) {
+            updatePreviewVisibility(myHeader.getSelectedTab());
+          }
         }
       });
 
@@ -652,6 +654,11 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
     splitter.setSecondComponent(myUsagePreviewPanel);
 
     return createFooterPanel(splitter);
+  }
+
+  private void updatePreviewVisibility(@NotNull SETab tab) {
+    boolean hasProviders = ContainerUtil.filterIsInstance(tab.getContributors(), SearchEverywherePreviewProvider.class).isEmpty();
+    myUsagePreviewPanel.setVisible(isPreviewActive() && !hasProviders);
   }
 
   @Override
@@ -962,8 +969,8 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
     return Registry.is("search.everywhere.preview");
   }
 
-  private static boolean isPreviewActive(@Nullable Project project) {
-    return project != null && PropertiesComponent.getInstance(project).isTrueValue(PREVIEW_PROPERTY_KEY);
+  private static boolean isPreviewActive() {
+    return PropertiesComponent.getInstance().isTrueValue(PREVIEW_PROPERTY_KEY);
   }
 
   /**
@@ -1124,7 +1131,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
 
   private void onMouseClicked(@NotNull MouseEvent e) {
     boolean multiSelectMode = e.isShiftDown() || UIUtil.isControlKeyDown(e);
-    boolean previewMode = isPreviewActive(myProject);
+    boolean previewMode = isPreviewActive();
     if (e.getButton() == MouseEvent.BUTTON1 && !multiSelectMode && !previewMode) {
       e.consume();
       final int i = myResultsList.locationToIndex(e.getPoint());
