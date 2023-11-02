@@ -45,7 +45,7 @@ class KotlinAutoConfigTest : KotlinGradleImportingTestCase() {
     @TargetVersions("7.6")
     fun testSingleModule() {
         importProjectFromTestData()
-        testConfigure("project", IdeKotlinVersion.get("1.9.10"))
+        testConfigure("project", IdeKotlinVersion.get("1.9.20"))
     }
 
     @Test
@@ -122,7 +122,7 @@ class KotlinAutoConfigTest : KotlinGradleImportingTestCase() {
     @TargetVersions("7.6")
     fun testLibrarySubmodule() {
         importProjectFromTestData()
-        testConfigure("project.submodule", IdeKotlinVersion.get("1.9.10"))
+        testConfigure("project.submodule", IdeKotlinVersion.get("1.9.20"))
     }
 
     @Test
