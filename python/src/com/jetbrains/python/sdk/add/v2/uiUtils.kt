@@ -87,18 +87,10 @@ internal fun Row.nonEditablePythonInterpreterComboBox(sdksFlow: StateFlow<List<S
                                                       scope: CoroutineScope,
                                                       uiContext: CoroutineContext): Cell<ComboBox<Sdk?>> =
   comboBox<Sdk?>(emptyList(), PythonSdkComboBoxListCellRenderer())
+    .withSdkItems(sdksFlow, { it }, scope, uiContext)
     .applyToComponent {
       editor = object : BasicComboBoxEditor() {
         override fun createEditorComponent(): JTextField = ExtendableTextField().apply { border = null }
-      }
-
-      scope.launch(start = CoroutineStart.UNDISPATCHED) {
-        sdksFlow.collectLatest { baseSdks ->
-          withContext(uiContext) {
-            removeAllItems()
-            baseSdks.forEach { sdk -> addItem(sdk) }
-          }
-        }
       }
     }
 
@@ -108,21 +100,25 @@ internal fun Row.pythonBaseInterpreterComboBox(presenter: PythonAddInterpreterPr
                                                pathToSelectedSdk: ObservableMutableProperty<String>): Cell<ComboBox<String>> =
   comboBox<String>(emptyList())
     .bindItem(pathToSelectedSdk)
-    .withSdkItems(sdksFlow, scope = presenter.scope, uiContext = presenter.uiContext)
+    .withSdkItems(sdksFlow, mapper = { sdk -> sdk.homePath.orEmpty() }, scope = presenter.scope, uiContext = presenter.uiContext)
     .displayLoaderWhen(loadingFlow, scope = presenter.scope, uiContext = presenter.uiContext)
     .withBrowsableSdk(pathToSelectedSdk, presenter)
 
-private fun Cell<ComboBox<String>>.withSdkItems(sdksFlow: StateFlow<List<Sdk>>,
-                                                scope: CoroutineScope,
-                                                uiContext: CoroutineContext): Cell<ComboBox<String>> =
-  applyToComponent { withSdkItems(sdksFlow, scope, uiContext) }
+private fun <T, C : ComboBox<T>> Cell<C>.withSdkItems(sdksFlow: StateFlow<List<Sdk>>,
+                                                      mapper: (Sdk) -> T,
+                                                      scope: CoroutineScope,
+                                                      uiContext: CoroutineContext): Cell<C> =
+  applyToComponent { withSdkItems(sdksFlow, scope, uiContext, mapper) }
 
-private fun ComboBox<String>.withSdkItems(sdksFlow: StateFlow<List<Sdk>>, scope: CoroutineScope, uiContext: CoroutineContext) {
+private fun <T> ComboBox<T>.withSdkItems(sdksFlow: StateFlow<List<Sdk>>,
+                                         scope: CoroutineScope,
+                                         uiContext: CoroutineContext,
+                                         mapper: (Sdk) -> T) {
   scope.launch(start = CoroutineStart.UNDISPATCHED) {
     sdksFlow.collectLatest { sdks ->
       withContext(uiContext) {
         removeAllItems()
-        sdks.map { sdk -> sdk.homePath.orEmpty() }.forEach(this@withSdkItems::addItem)
+        sdks.map(mapper).forEach(this@withSdkItems::addItem)
       }
     }
   }
