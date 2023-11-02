@@ -59,11 +59,7 @@ public class ActivateToolWindowAction extends DumbAwareAction implements MainMen
   }
 
   public static void unregister(@NotNull String id) {
-    String actionId = getActionIdForToolWindow(id);
-    ActionManager actionManager = ActionManager.getInstance();
-    if (actionManager.getAction(actionId) != null) {
-      actionManager.unregisterAction(actionId);
-    }
+    ActionManager.getInstance().unregisterAction(getActionIdForToolWindow(id));
   }
 
   public static void updateToolWindowActionPresentation(@NotNull ToolWindow toolWindow) {

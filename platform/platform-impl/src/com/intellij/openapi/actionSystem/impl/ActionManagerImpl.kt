@@ -1017,7 +1017,7 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
       }
 
       if (removeFromGroups) {
-        val customActionSchema = ApplicationManager.getApplication().serviceIfCreated<CustomActionsSchema>()
+        val customActionSchema = serviceIfCreated<CustomActionsSchema>()
         for (groupId in (idToGroupId.get(actionId) ?: emptyList())) {
           customActionSchema?.invalidateCustomizedActionGroup(groupId)
           val group = getActionOrStub(groupId) as DefaultActionGroup?
