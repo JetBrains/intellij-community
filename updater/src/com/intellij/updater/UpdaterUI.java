@@ -33,7 +33,7 @@ public interface UpdaterUI {
 
   default @Nls String bold(@Nls String text) { return text; }
 
-  String BUNDLE = "messages.Updater";
+  String BUNDLE = "messages.UpdaterBundle";
 
   static @Nls String message(@PropertyKey(resourceBundle = BUNDLE) String key, Object... parameters) {
     var bundle = ResourceBundle.getBundle(BUNDLE);
