@@ -7,6 +7,7 @@ import com.intellij.ide.actions.searcheverywhere.PossibleSlowContributor
 import com.intellij.ide.util.gotoByName.GotoActionModel
 import com.intellij.ide.util.gotoByName.GotoActionModel.MatchedValue
 import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.impl.Utils.runUpdateSessionForActionSearch
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.progress.ProgressIndicator
@@ -14,13 +15,12 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.ml.embeddings.search.settings.SemanticSearchSettings
 import com.intellij.searchEverywhereMl.SemanticSearchEverywhereContributor
 import com.intellij.searchEverywhereMl.semantics.contributors.SearchEverywhereConcurrentElementsFetcher.Companion.ORDERED_PRIORITIES
 import com.intellij.searchEverywhereMl.semantics.contributors.SearchEverywhereConcurrentElementsFetcher.DescriptorPriority
 import com.intellij.searchEverywhereMl.semantics.providers.LocalSemanticActionsProvider
-import com.intellij.searchEverywhereMl.semantics.providers.SemanticActionsProvider
 import com.intellij.searchEverywhereMl.semantics.providers.ServerSemanticActionsProvider
-import com.intellij.platform.ml.embeddings.search.settings.SemanticSearchSettings
 import com.intellij.ui.JBColor
 import com.intellij.util.Processor
 import com.intellij.util.TimeoutUtil
@@ -45,9 +45,8 @@ import javax.swing.ListCellRenderer
 class SemanticActionSearchEverywhereContributor(defaultContributor: ActionSearchEverywhereContributor)
   : ActionSearchEverywhereContributor(defaultContributor), SemanticSearchEverywhereContributor,
     SearchEverywhereConcurrentElementsFetcher<MatchedValue, MatchedValue>, PossibleSlowContributor {
-  override val itemsProvider = SemanticSearchSettings.getInstance().run {
-    if (getUseRemoteActionsServer()) ServerSemanticActionsProvider(model) else LocalSemanticActionsProvider(model)
-  }
+  override val itemsProvider
+    get() = throw UnsupportedOperationException()
 
   override val desiredResultsCount
     get() = DESIRED_RESULTS_COUNT
@@ -95,13 +94,18 @@ class SemanticActionSearchEverywhereContributor(defaultContributor: ActionSearch
   override fun fetchElementsConcurrently(pattern: String,
                                          progressIndicator: ProgressIndicator,
                                          consumer: Processor<in FoundItemDescriptor<MatchedValue>>): Unit = runBlockingCancellable {
-    syncSearchSettings()
+    runUpdateSessionForActionSearch(model.updateSession) { presentationProvider ->
     val knownItems = mutableListOf<FoundItemDescriptor<MatchedValue>>()
 
     val mutex = Mutex()
     val readyChannel = Channel<Unit>()
     val standardContributorFinishedChannel = Channel<Unit>()
 
+    val itemsProvider = SemanticSearchSettings.getInstance().run {
+      if (getUseRemoteActionsServer()) ServerSemanticActionsProvider(model, presentationProvider)
+      else LocalSemanticActionsProvider(model, presentationProvider)
+    }
+    itemsProvider.includeDisabledActions = myDisabledActions
     val searchStart = System.nanoTime()
     launch {
       var foundItemsCount = 0
@@ -142,6 +146,7 @@ class SemanticActionSearchEverywhereContributor(defaultContributor: ActionSearch
     }
     standardContributorFinishedChannel.close()
     readyChannel.receiveCatching()
+  }
   }
 
   private fun mergeOrSkipAction(newItem: FoundItemDescriptor<MatchedValue>,
@@ -186,7 +191,7 @@ class SemanticActionSearchEverywhereContributor(defaultContributor: ActionSearch
   }
 
   override fun syncSearchSettings() {
-    itemsProvider.includeDisabledActions = myDisabledActions
+    throw UnsupportedOperationException()
   }
 
   companion object {
