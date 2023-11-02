@@ -3,6 +3,7 @@ package com.jetbrains.python.sdk.add.v2
 
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.ComboBox
+import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.Panel
 import com.jetbrains.python.PyBundle.message
 
@@ -13,7 +14,10 @@ class PythonExistingEnvironmentSelector(presenter: PythonAddInterpreterPresenter
   override fun buildOptions(panel: Panel) {
     with(panel) {
       row(message("sdk.create.custom.python.path")) {
-        versionComboBox = pythonBaseInterpreterComboBox(presenter, presenter.allExistingSdksFlow, selectedPath).component
+        versionComboBox =
+          pythonBaseInterpreterComboBox(presenter, presenter.allExistingSdksFlow, presenter.detectingSdks, selectedPath)
+            .align(Align.FILL)
+            .component
       }
     }
     selectedPath.dependsOn(state.basePythonHomePath) {

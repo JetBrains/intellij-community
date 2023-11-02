@@ -104,47 +104,61 @@ internal fun Row.nonEditablePythonInterpreterComboBox(sdksFlow: StateFlow<List<S
 
 internal fun Row.pythonBaseInterpreterComboBox(presenter: PythonAddInterpreterPresenter,
                                                sdksFlow: StateFlow<List<Sdk>>,
-                                               sdkSelectedPath: ObservableMutableProperty<String>): Cell<ComboBox<String>> =
+                                               loadingFlow: StateFlow<Boolean>,
+                                               pathToSelectedSdk: ObservableMutableProperty<String>): Cell<ComboBox<String>> =
   comboBox<String>(emptyList())
-    .bindItem(sdkSelectedPath)
-    .align(Align.FILL)
-    .applyToComponent {
-      val browseExtension = ExtendableTextComponent.Extension.create(AllIcons.General.OpenDisk,
-                                                                     AllIcons.General.OpenDiskHover,
-                                                                     message("sdk.create.custom.python.browse.tooltip")) {
-        val currentBaseSdkPathOnTarget = sdkSelectedPath.get().nullize(nullizeSpaces = true)
-        val currentBaseSdkVirtualFile = currentBaseSdkPathOnTarget?.let { presenter.tryGetVirtualFile(it) }
-        FileChooser.chooseFile(FileChooserDescriptorFactory.createSingleFileOrExecutableAppDescriptor(), null,
-                               currentBaseSdkVirtualFile) { file ->
-          val nioPath = file?.toNioPath() ?: return@chooseFile
-          val targetPath = presenter.getPathOnTarget(nioPath)
-          presenter.addAndSelectBaseSdk(targetPath)
-        }
-      }
+    .bindItem(pathToSelectedSdk)
+    .withSdkItems(sdksFlow, scope = presenter.scope, uiContext = presenter.uiContext)
+    .displayLoaderWhen(loadingFlow, scope = presenter.scope, uiContext = presenter.uiContext)
+    .withBrowsableSdk(pathToSelectedSdk, presenter)
 
-      isEditable = true
-      editor = object : BasicComboBoxEditor() {
-        override fun createEditorComponent(): JTextField {
-          val field = ExtendableTextField()
-          field.addExtension(browseExtension)
-          field.setBorder(null)
-          field.isEditable = false
-          field.background = JBUI.CurrentTheme.Arrow.backgroundColor(true, true)
-          return field
-        }
-      }
+private fun Cell<ComboBox<String>>.withSdkItems(sdksFlow: StateFlow<List<Sdk>>,
+                                                scope: CoroutineScope,
+                                                uiContext: CoroutineContext): Cell<ComboBox<String>> =
+  applyToComponent { withSdkItems(sdksFlow, scope, uiContext) }
 
-      presenter.scope.launch(start = CoroutineStart.UNDISPATCHED) {
-        sdksFlow.collectLatest { sdks ->
-          withContext(presenter.uiContext) {
-            removeAllItems()
-            sdks.map { sdk -> sdk.homePath.orEmpty() }.forEach(this@applyToComponent::addItem)
-          }
-        }
+private fun ComboBox<String>.withSdkItems(sdksFlow: StateFlow<List<Sdk>>, scope: CoroutineScope, uiContext: CoroutineContext) {
+  scope.launch(start = CoroutineStart.UNDISPATCHED) {
+    sdksFlow.collectLatest { sdks ->
+      withContext(uiContext) {
+        removeAllItems()
+        sdks.map { sdk -> sdk.homePath.orEmpty() }.forEach(this@withSdkItems::addItem)
       }
-
-      displayLoaderWhen(presenter.detectingSdks, scope = presenter.scope, uiContext = presenter.uiContext)
     }
+  }
+}
+
+internal fun Cell<ComboBox<String>>.withBrowsableSdk(pathToSelectedSdk: ObservableMutableProperty<String>,
+                                                     presenter: PythonAddInterpreterPresenter): Cell<ComboBox<String>> =
+  applyToComponent { withBrowsableSdk(pathToSelectedSdk, presenter) }
+
+private fun ComboBox<String>.withBrowsableSdk(pathToSelectedSdk: ObservableMutableProperty<String>,
+                                              presenter: PythonAddInterpreterPresenter) {
+  val browseExtension = ExtendableTextComponent.Extension.create(AllIcons.General.OpenDisk,
+                                                                 AllIcons.General.OpenDiskHover,
+                                                                 message("sdk.create.custom.python.browse.tooltip")) {
+    val currentBaseSdkPathOnTarget = pathToSelectedSdk.get().nullize(nullizeSpaces = true)
+    val currentBaseSdkVirtualFile = currentBaseSdkPathOnTarget?.let { presenter.tryGetVirtualFile(it) }
+    FileChooser.chooseFile(FileChooserDescriptorFactory.createSingleFileOrExecutableAppDescriptor(), null,
+                           currentBaseSdkVirtualFile) { file ->
+      val nioPath = file?.toNioPath() ?: return@chooseFile
+      val targetPath = presenter.getPathOnTarget(nioPath)
+      presenter.addAndSelectBaseSdk(targetPath)
+    }
+  }
+
+  isEditable = true
+  editor = object : BasicComboBoxEditor() {
+    override fun createEditorComponent(): JTextField {
+      val field = ExtendableTextField()
+      field.addExtension(browseExtension)
+      field.setBorder(null)
+      field.isEditable = false
+      field.background = JBUI.CurrentTheme.Arrow.backgroundColor(true, true)
+      return field
+    }
+  }
+}
 
 /**
  * Note. Here [ExtendableTextComponent.Extension] is used to display animated loader icon. This approach requires [ExtendableTextComponent]
