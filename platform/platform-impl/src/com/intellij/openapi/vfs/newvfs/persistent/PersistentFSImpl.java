@@ -765,9 +765,8 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       }
       // We _should_ cache every local file's content, because the local history feature and Perforce offline mode depend on the cache
       // But caching of readOnly (which 99% means 'archived') file content is useless, if not explicitly asked
-      boolean reallyForceCacheContent = forceCacheContent && !app.isInternal() && !app.isUnitTestMode();
       boolean fileContentCouldChange = !fs.isReadOnly();
-      if (fileContentCouldChange || reallyForceCacheContent) {
+      if (fileContentCouldChange || forceCacheContent) {
         myInputLock.writeLock().lock();
         try {
           writeContent(file, ByteArraySequence.create(content), /*contentOfFixedSize: */ !fileContentCouldChange);
