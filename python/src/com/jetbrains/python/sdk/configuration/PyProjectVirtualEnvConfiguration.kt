@@ -6,6 +6,7 @@ package com.jetbrains.python.sdk.configuration
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
@@ -136,7 +137,12 @@ internal fun createSdkForTarget(project: Project?,
     sdk.associateWithModule(project.modules[0], null)
   }
 
-  sdk.versionString = sdkVersion
+  sdk.sdkModificator.let { modifiableSdk ->
+    modifiableSdk.versionString = sdkVersion
+    ApplicationManager.getApplication().runWriteAction {
+      modifiableSdk.commitChanges()
+    }
+  }
 
   data.isValid = true
 
