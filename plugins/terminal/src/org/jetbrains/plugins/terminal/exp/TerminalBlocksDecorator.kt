@@ -47,7 +47,7 @@ class TerminalBlocksDecorator(private val outputModel: TerminalOutputModel,
     val topInlay = editor.inlayModel.addBlockElement(block.startOffset, false, true, 1, topRenderer)!!
     val bottomRenderer = EmptyWidthInlayRenderer(TerminalUi.blockBottomInset + TerminalUi.blocksGap)
     val bottomInlay = editor.inlayModel.addBlockElement(block.endOffset, true, false, 0, bottomRenderer)!!
-    val commandToOutputInlay = if (!block.command.isNullOrEmpty()) {
+    val commandToOutputInlay = if (block.withCommand) {
       val renderer = EmptyWidthInlayRenderer(TerminalUi.commandToOutputInset)
       editor.inlayModel.addBlockElement(block.outputStartOffset, false, true, 0, renderer)!!
     }
