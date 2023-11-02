@@ -19,8 +19,9 @@ import kotlin.math.absoluteValue
 import kotlin.random.Random
 import kotlin.time.Duration.Companion.milliseconds
 
+private val log = logger<IdeStartupWizard>()
+
 internal suspend fun runStartupWizard(isInitialStart: Job, app: Application) {
-  val log = logger<IdeStartupWizard>()
 
   log.info("Entering startup wizard workflow.")
 
@@ -77,7 +78,7 @@ interface IdeStartupWizard {
 
 object IdeStartupWizardCollector : CounterUsagesCollector() {
 
-  val GROUP = EventLogGroup("wizard.startup", 2)
+  val GROUP = EventLogGroup("wizard.startup", 3)
   override fun getGroup() = GROUP
 
   private val initialStartSucceeded = GROUP.registerEvent("initial_start_succeeded")
@@ -93,11 +94,18 @@ object IdeStartupWizardCollector : CounterUsagesCollector() {
   private val experimentState = GROUP.registerEvent(
     "initial_start_experiment_state",
     EventFields.Enum<IdeStartupExperiment.GroupKind>("kind"),
-    EventFields.Int("group")
+    EventFields.Int("group"),
+    EventFields.Boolean("enabled")
   )
   fun logExperimentState() {
     if (ConfigImportHelper.isFirstSession()) {
-      experimentState.log(IdeStartupExperiment.experimentGroupKind, IdeStartupExperiment.experimentGroup)
+      val isEnabled = IdeStartupExperiment.shouldEnableNewStartupFlow()
+      log.info("IDE startup isEnabled = $isEnabled, experimentGroupKind = ${IdeStartupExperiment.experimentGroupKind}, experimentGroup = ${IdeStartupExperiment.experimentGroup}")
+      experimentState.log(
+        IdeStartupExperiment.experimentGroupKind,
+        IdeStartupExperiment.experimentGroup,
+        isEnabled
+      )
     }
   }
 }
