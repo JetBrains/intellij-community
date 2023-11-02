@@ -82,6 +82,9 @@ internal class ChangeProjectIconAction : RecentProjectsWelcomeScreenActionBase()
       if (ui.iconRemoved) {
         FileUtil.delete(ui.pathToIcon())
         RecentProjectIconHelper.refreshProjectIcon(projectPath)
+        event.project?.let {
+          ProjectWindowCustomizerService.getInstance().dropProjectIconCache(it)
+        }
       }
       // Actually, we can try to drop the needed icon,
       // but it is a very rare action and this whole cache drop will not have any performance impact.
@@ -149,7 +152,7 @@ private class ProjectIconUI(private val projectPath: @SystemIndependent String) 
       .apply { targetComponent = iconLabel }
   }
 
-  fun pathToIcon() = Path("${projectPath}/.idea/icon.svg")
+  fun pathToIcon() = RecentProjectIconHelper.getDotIdeaPath(projectPath)?.resolve("icon.svg") ?: Path("${projectPath}/.idea/icon.svg")
 }
 
 private class IconPreviewPanel(component: JComponent) : JPanel(BorderLayout()) {
