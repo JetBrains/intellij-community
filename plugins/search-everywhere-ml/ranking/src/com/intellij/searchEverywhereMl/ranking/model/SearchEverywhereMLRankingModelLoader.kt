@@ -6,8 +6,8 @@ import com.intellij.internal.ml.FeaturesInfo
 import com.intellij.internal.ml.catboost.CatBoostResourcesModelMetadataReader
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.searchEverywhereMl.SearchEverywhereTabWithMlRanking
-import com.intellij.searchEverywhereMl.ranking.SearchEverywhereMlRankingService
 import com.intellij.searchEverywhereMl.ranking.model.local.LocalRankingModelProviderUtil
+import com.intellij.searchEverywhereMl.ranking.searchEverywhereMlRankingService
 
 /**
  * Loads ML model from module dependency or local file, loaded models predict relevance of each element in Search Everywhere tab
@@ -54,7 +54,7 @@ internal abstract class SearchEverywhereMLRankingModelLoader {
   protected abstract val supportedTab: SearchEverywhereTabWithMlRanking
 
   protected fun shouldProvideExperimentalModel(): Boolean {
-    return SearchEverywhereMlRankingService.getService()?.shouldUseExperimentalModel(supportedTab) ?: false
+    return searchEverywhereMlRankingService?.shouldUseExperimentalModel(supportedTab) ?: false
   }
 
   private fun shouldProvideLocalModel(): Boolean {
