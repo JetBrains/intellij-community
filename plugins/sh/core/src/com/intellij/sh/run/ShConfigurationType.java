@@ -7,9 +7,12 @@ import com.intellij.execution.configurations.SimpleConfigurationType;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.sh.ShBundle;
 import com.intellij.sh.ShLanguage;
 import org.jetbrains.annotations.NotNull;
+
+import java.io.File;
 
 public final class ShConfigurationType extends SimpleConfigurationType {
   ShConfigurationType() {
@@ -41,6 +44,25 @@ public final class ShConfigurationType extends SimpleConfigurationType {
 
   public static @NotNull String getDefaultShell(@NotNull Project project) {
     ShDefaultShellPathProvider shellPathProvider = project.getService(ShDefaultShellPathProvider.class);
-    return shellPathProvider.getDefaultShell();
+    if (shellPathProvider != null) {
+      return shellPathProvider.getDefaultShell();
+    } else {
+      return trivialDefaultShellDetection();
+    }
+  }
+
+  private static @NotNull String trivialDefaultShellDetection() {
+    String shell = System.getenv("SHELL");
+    if (shell != null && new File(shell).canExecute()) {
+      return shell;
+    }
+    if (SystemInfo.isUnix) {
+      String bashPath = "/bin/bash";
+      if (new File(bashPath).exists()) {
+        return bashPath;
+      }
+      return "/bin/sh";
+    }
+    return "powershell.exe";
   }
 }
