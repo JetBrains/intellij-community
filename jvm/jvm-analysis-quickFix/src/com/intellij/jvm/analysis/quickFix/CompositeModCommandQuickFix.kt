@@ -5,7 +5,6 @@ import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.lang.jvm.JvmModifiersOwner
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModCommandExecutor
-import com.intellij.modcommand.ModUpdateFileText
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDocumentManager
@@ -39,17 +38,8 @@ abstract class CompositeModCommandQuickFix : PsiUpdateModCommandQuickFix() {
         val manager = PsiDocumentManager.getInstance(project)
         manager.doPostponedOperationsAndUnblockDocument(document)
         if (modCommandAction != null) {
-          for (command in modCommandAction.perform(ActionContext.from(null, containingFile)).unpack()) {
-            if (command is ModUpdateFileText) {
-              if (command.file != containingFile.originalFile.virtualFile) {
-                throw UnsupportedOperationException("The command ${action.familyName} updates non-current file")
-              }
-              ModCommandExecutor.getInstance().updateText(project, document, command)
-            }
-            else {
-              throw UnsupportedOperationException("Unexpected command performed by ${action.familyName}: " + command)
-            }
-          }
+          ModCommandExecutor.getInstance()
+            .executeForFileCopy(modCommandAction.perform(ActionContext.from(null, containingFile)), containingFile)
         }
         else {
           action.invoke(project, null, containingFile)

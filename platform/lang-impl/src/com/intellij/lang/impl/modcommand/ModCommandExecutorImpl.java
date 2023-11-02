@@ -662,7 +662,21 @@ public class ModCommandExecutorImpl implements ModCommandExecutor {
   }
 
   @Override
-  public void updateText(@NotNull Project project, @NotNull Document document, @NotNull ModUpdateFileText upd)
+  public void executeForFileCopy(@NotNull ModCommand command, @NotNull PsiFile file) {
+    for (ModCommand cmd : command.unpack()) {
+      if (cmd instanceof ModUpdateFileText updateFileText) {
+        if (!updateFileText.file().equals(file.getOriginalFile().getVirtualFile())) {
+          throw new UnsupportedOperationException("The command updates non-current file");
+        }
+        updateText(file.getProject(), file.getViewProvider().getDocument(), updateFileText);
+      }
+      else if (!(cmd instanceof ModNavigate) && !(cmd instanceof ModHighlight)) {
+        throw new UnsupportedOperationException("Unexpected command: " + command);
+      }
+    }
+  }
+
+  private void updateText(@NotNull Project project, @NotNull Document document, @NotNull ModUpdateFileText upd)
     throws IllegalStateException {
     String oldText = upd.oldText();
     if (!document.getText().equals(oldText)) {

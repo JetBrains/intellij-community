@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.psi.PsiFile;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
@@ -40,17 +41,13 @@ public interface ModCommandExecutor {
   @NotNull BatchExecutionResult executeInBatch(@NotNull ActionContext context, @NotNull ModCommand command);
 
   /**
-   * Apply {@link ModUpdateFileText} command to specific document. The caller must ensure that the document is writable.
-   * This API is not intended to be used outside the platform and may change without notice. 
-   * 
-   * @param project current project
-   * @param document document to apply changes to
-   * @param updateTextCommand command to apply
-   * @throws IllegalStateException if the current document text does not match the expected
+   * Apply a command for non-physical file copy.
+   *
+   * @param command command to apply
+   * @param file a non-physical file copy to apply the command to
+   * @throws UnsupportedOperationException if the command does something except modifying the specified file
    */
-  @ApiStatus.Internal
-  void updateText(@NotNull Project project, @NotNull Document document, @NotNull ModUpdateFileText updateTextCommand)
-    throws IllegalStateException;
+  void executeForFileCopy(@NotNull ModCommand command, @NotNull PsiFile file) throws UnsupportedOperationException;
 
   /**
    * @return an instance of this service
