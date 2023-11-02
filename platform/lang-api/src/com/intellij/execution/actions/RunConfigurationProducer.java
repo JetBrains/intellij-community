@@ -31,13 +31,11 @@ public abstract class RunConfigurationProducer<T extends RunConfiguration> {
   private static final Logger LOG = Logger.getInstance(RunConfigurationProducer.class);
 
   public static @NotNull List<RunConfigurationProducer<?>> getProducers(@NotNull Project project) {
-    boolean isDumbMode = DumbService.isDumb(project);
     RunConfigurationProducerService runConfigurationProducerService = RunConfigurationProducerService.getInstance(project);
-    List<RunConfigurationProducer> allProducers = EP_NAME.getExtensionList();
+    List<RunConfigurationProducer> allProducers = DumbService.getInstance(project).filterByDumbAwareness(EP_NAME.getExtensionList());
     List<RunConfigurationProducer<?>> result = new ArrayList<>(allProducers.size());
     for (RunConfigurationProducer producer : allProducers) {
-      if ((!isDumbMode || DumbService.isDumbAware(producer))
-          && !runConfigurationProducerService.isIgnored(producer)) {
+      if (!runConfigurationProducerService.isIgnored(producer)) {
         result.add(producer);
       }
     }
