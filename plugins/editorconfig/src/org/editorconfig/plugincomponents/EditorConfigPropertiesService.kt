@@ -6,6 +6,7 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.BaseProjectDirectories.Companion.getBaseDirectories
 import com.intellij.openapi.project.Project
@@ -74,9 +75,11 @@ class EditorConfigPropertiesService(private val project: Project, private val co
       }
     }
     catch (e: IOException) {
+      LOG.warn(e)
       InvalidEditorConfig(dir)
     }
     catch (e: ParseException) {
+      LOG.debug(e)
       InvalidEditorConfig(dir)
     }
   }
@@ -92,9 +95,12 @@ class EditorConfigPropertiesService(private val project: Project, private val co
       val maybeDirWithConfig = dir
       // due to a limitation of Kotlin, cannot use computeIfAbsent
       val cachedEditorConfig = editorConfigsCache.compute(maybeDirWithConfig.url) { _, cached ->
-        if (cached != null) return@compute cached
+        if (cached != null) {
+          LOG.debug { "cached config ${maybeDirWithConfig.url}" }
+          return@compute cached
+        }
         when (val loaded = loadEditorConfigFromDir(maybeDirWithConfig)) {
-          is ValidEditorConfig -> loaded
+          is ValidEditorConfig -> loaded.also { LOG.debug { "found config ${maybeDirWithConfig.url}" } }
           is NonExistentEditorConfig -> null
           is InvalidEditorConfig -> {
             error = true
@@ -112,6 +118,8 @@ class EditorConfigPropertiesService(private val project: Project, private val co
         result += cachedEditorConfig
         reachedRoot = reachedRoot || cachedEditorConfig.parsed.isRoot
       }
+
+      if (reachedRoot) LOG.debug { "reached root config: ${maybeDirWithConfig.url}" }
 
       dir = dir.parent
     }
