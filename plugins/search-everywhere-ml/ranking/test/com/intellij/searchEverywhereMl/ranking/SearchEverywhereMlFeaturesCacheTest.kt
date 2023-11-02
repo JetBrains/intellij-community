@@ -26,19 +26,19 @@ class SearchEverywhereMlFeaturesCacheTest : HeavyPlatformTestCase() {
 
     fun withPriority(priority: Int) = apply {
       this.priority = priority
-      mlFeatures.add(SearchEverywhereCommonFeaturesProvider.PRIORITY_DATA_KEY.with(priority))
+      mlFeatures.add(SearchEverywhereCommonFeaturesProvider.Fields.PRIORITY_DATA_KEY.with(priority))
     }
 
     fun withTotalSymbolsAmount(totalSymbolsAmount: Int) = apply {
-      mlFeatures.add(SearchEverywhereActionFeaturesProvider.TEXT_LENGTH_KEY.with(totalSymbolsAmount))
+      mlFeatures.add(SearchEverywhereActionFeaturesProvider.Fields.TEXT_LENGTH_KEY.with(totalSymbolsAmount))
     }
 
     fun withIsAction(isAction: Boolean) = apply {
-      mlFeatures.add(SearchEverywhereActionFeaturesProvider.IS_ACTION_DATA_KEY.with(isAction))
+      mlFeatures.add(SearchEverywhereActionFeaturesProvider.Fields.IS_ACTION_DATA_KEY.with(isAction))
     }
 
     fun withUsage(usage: Int) = apply {
-      mlFeatures.add(SearchEverywhereActionFeaturesProvider.USAGE.with(usage))
+      mlFeatures.add(SearchEverywhereActionFeaturesProvider.Fields.USAGE.with(usage))
     }
 
     fun withElement(element: Any) = apply {
@@ -137,7 +137,7 @@ class SearchEverywhereMlFeaturesCacheTest : HeavyPlatformTestCase() {
     TestCase.assertNotNull(events)
 
     val allowedFields = listOf(SearchEverywhereMLStatisticsCollector.FEATURES_DATA_KEY,
-                               SearchEverywhereCommonFeaturesProvider.PRIORITY_DATA_KEY,
+                               SearchEverywhereCommonFeaturesProvider.Fields.PRIORITY_DATA_KEY,
                                SearchEverywhereMLStatisticsCollector.ML_WEIGHT_KEY,
                                SearchEverywhereMLStatisticsCollector.ID_KEY,
                                SearchEverywhereMLStatisticsCollector.CONTRIBUTOR_DATA_KEY)
@@ -159,7 +159,7 @@ class SearchEverywhereMlFeaturesCacheTest : HeavyPlatformTestCase() {
   private fun assertFeatures(events: List<ObjectEventData>, commonFeatures: List<List<Pair<String, Any>>>?,
                              mlFeatures: List<List<Pair<String, Any>>>?) {
     val allowedFields = listOf(SearchEverywhereMLStatisticsCollector.FEATURES_DATA_KEY,
-                               SearchEverywhereCommonFeaturesProvider.PRIORITY_DATA_KEY,
+                               SearchEverywhereCommonFeaturesProvider.Fields.PRIORITY_DATA_KEY,
                                SearchEverywhereMLStatisticsCollector.ML_WEIGHT_KEY,
                                SearchEverywhereMLStatisticsCollector.CONTRIBUTOR_DATA_KEY,
                                SearchEverywhereMLStatisticsCollector.ID_KEY)
@@ -732,8 +732,8 @@ class SearchEverywhereMLElementCacheTest : BasePlatformTestCase() {
       contributor = SearchEverywhereMlFeaturesCacheTest.getContributorFeatures("ActionSearchEverywhereContributor"),
       mlWeight = 100.0,
       mlFeatures = listOf(
-        SearchEverywhereCommonFeaturesProvider.STATISTICIAN_USE_COUNT_DATA_KEY.with(2),
-        SearchEverywhereCommonFeaturesProvider.STATISTICIAN_IS_MOST_POPULAR_DATA_KEY.with(true)
+        SearchEverywhereCommonFeaturesProvider.Fields.STATISTICIAN_USE_COUNT_DATA_KEY.with(2),
+        SearchEverywhereCommonFeaturesProvider.Fields.STATISTICIAN_IS_MOST_POPULAR_DATA_KEY.with(true)
       )
     )
 
@@ -742,8 +742,8 @@ class SearchEverywhereMLElementCacheTest : BasePlatformTestCase() {
       contributor = SearchEverywhereMlFeaturesCacheTest.getContributorFeatures("FilesSearchEverywhereContributor"),
       mlWeight = 100.0,
       mlFeatures = listOf(
-        SearchEverywhereCommonFeaturesProvider.STATISTICIAN_USE_COUNT_DATA_KEY.with(2),
-        SearchEverywhereCommonFeaturesProvider.STATISTICIAN_IS_MOST_POPULAR_DATA_KEY.with(true)
+        SearchEverywhereCommonFeaturesProvider.Fields.STATISTICIAN_USE_COUNT_DATA_KEY.with(2),
+        SearchEverywhereCommonFeaturesProvider.Fields.STATISTICIAN_IS_MOST_POPULAR_DATA_KEY.with(true)
       )
     )
 
@@ -758,20 +758,20 @@ class SearchEverywhereMLElementCacheTest : BasePlatformTestCase() {
   fun `test only ml features diff logged`() {
     val prevCache = SearchEverywhereMLElementCache(
       mlFeatures = listOf(
-        SearchEverywhereCommonFeaturesProvider.STATISTICIAN_USE_COUNT_DATA_KEY.with(2),
-        SearchEverywhereCommonFeaturesProvider.STATISTICIAN_IS_MOST_POPULAR_DATA_KEY.with(true),
-        SearchEverywhereActionFeaturesProvider.USAGE.with(5),
-        SearchEverywhereCommonFeaturesProvider.PRIORITY_DATA_KEY.with(10011)
+        SearchEverywhereCommonFeaturesProvider.Fields.STATISTICIAN_USE_COUNT_DATA_KEY.with(2),
+        SearchEverywhereCommonFeaturesProvider.Fields.STATISTICIAN_IS_MOST_POPULAR_DATA_KEY.with(true),
+        SearchEverywhereActionFeaturesProvider.Fields.USAGE.with(5),
+        SearchEverywhereCommonFeaturesProvider.Fields.PRIORITY_DATA_KEY.with(10011)
       )
     )
 
     val newCache = SearchEverywhereMLElementCache(
       mlFeatures = listOf(
-        SearchEverywhereCommonFeaturesProvider.STATISTICIAN_USE_COUNT_DATA_KEY.with(3), // 2 -> 3
-        SearchEverywhereCommonFeaturesProvider.STATISTICIAN_IS_MOST_POPULAR_DATA_KEY.with(true),
-        SearchEverywhereActionFeaturesProvider.USAGE.with(5),
-        SearchEverywhereCommonFeaturesProvider.PRIORITY_DATA_KEY.with(10013), // 10011 -> 10013
-        SearchEverywhereActionFeaturesProvider.IS_SEARCH_ACTION.with(true) // new
+        SearchEverywhereCommonFeaturesProvider.Fields.STATISTICIAN_USE_COUNT_DATA_KEY.with(3), // 2 -> 3
+        SearchEverywhereCommonFeaturesProvider.Fields.STATISTICIAN_IS_MOST_POPULAR_DATA_KEY.with(true),
+        SearchEverywhereActionFeaturesProvider.Fields.USAGE.with(5),
+        SearchEverywhereCommonFeaturesProvider.Fields.PRIORITY_DATA_KEY.with(10013), // 10011 -> 10013
+        SearchEverywhereActionFeaturesProvider.Fields.IS_SEARCH_ACTION.with(true) // new
       )
     )
 
@@ -779,9 +779,9 @@ class SearchEverywhereMLElementCacheTest : BasePlatformTestCase() {
 
     UsefulTestCase.assertOrderedEquals(
       listOf(
-        SearchEverywhereCommonFeaturesProvider.STATISTICIAN_USE_COUNT_DATA_KEY.with(3), // 2 -> 3
-        SearchEverywhereCommonFeaturesProvider.PRIORITY_DATA_KEY.with(10013), // 10011 -> 10013
-        SearchEverywhereActionFeaturesProvider.IS_SEARCH_ACTION.with(true) // new
+        SearchEverywhereCommonFeaturesProvider.Fields.STATISTICIAN_USE_COUNT_DATA_KEY.with(3), // 2 -> 3
+        SearchEverywhereCommonFeaturesProvider.Fields.PRIORITY_DATA_KEY.with(10013), // 10011 -> 10013
+        SearchEverywhereActionFeaturesProvider.Fields.IS_SEARCH_ACTION.with(true) // new
       ),
       diffCache.mlFeatures?.toList() ?: emptyList()
     )
@@ -790,19 +790,19 @@ class SearchEverywhereMLElementCacheTest : BasePlatformTestCase() {
   fun `test absent features logged`() {
     val prevCache = SearchEverywhereMLElementCache(
       mlFeatures = listOf(
-        SearchEverywhereCommonFeaturesProvider.STATISTICIAN_USE_COUNT_DATA_KEY.with(2),
-        SearchEverywhereCommonFeaturesProvider.STATISTICIAN_IS_MOST_POPULAR_DATA_KEY.with(true),
-        SearchEverywhereActionFeaturesProvider.USAGE.with(5),
-        SearchEverywhereCommonFeaturesProvider.PRIORITY_DATA_KEY.with(10011),
-        SearchEverywhereActionFeaturesProvider.IS_SEARCH_ACTION.with(true)
+        SearchEverywhereCommonFeaturesProvider.Fields.STATISTICIAN_USE_COUNT_DATA_KEY.with(2),
+        SearchEverywhereCommonFeaturesProvider.Fields.STATISTICIAN_IS_MOST_POPULAR_DATA_KEY.with(true),
+        SearchEverywhereActionFeaturesProvider.Fields.USAGE.with(5),
+        SearchEverywhereCommonFeaturesProvider.Fields.PRIORITY_DATA_KEY.with(10011),
+        SearchEverywhereActionFeaturesProvider.Fields.IS_SEARCH_ACTION.with(true)
       )
     )
 
     val newCache = SearchEverywhereMLElementCache(
       mlFeatures = listOf(
-        SearchEverywhereCommonFeaturesProvider.STATISTICIAN_USE_COUNT_DATA_KEY.with(3), // 2 -> 3
-        SearchEverywhereCommonFeaturesProvider.STATISTICIAN_IS_MOST_POPULAR_DATA_KEY.with(true),
-        SearchEverywhereCommonFeaturesProvider.PRIORITY_DATA_KEY.with(10013), // 10011 -> 10013
+        SearchEverywhereCommonFeaturesProvider.Fields.STATISTICIAN_USE_COUNT_DATA_KEY.with(3), // 2 -> 3
+        SearchEverywhereCommonFeaturesProvider.Fields.STATISTICIAN_IS_MOST_POPULAR_DATA_KEY.with(true),
+        SearchEverywhereCommonFeaturesProvider.Fields.PRIORITY_DATA_KEY.with(10013), // 10011 -> 10013
       )
     )
 
@@ -810,8 +810,8 @@ class SearchEverywhereMLElementCacheTest : BasePlatformTestCase() {
 
     UsefulTestCase.assertOrderedEquals(
       listOf(
-        SearchEverywhereActionFeaturesProvider.USAGE.name,
-        SearchEverywhereActionFeaturesProvider.IS_SEARCH_ACTION.name
+        SearchEverywhereActionFeaturesProvider.Fields.USAGE.name,
+        SearchEverywhereActionFeaturesProvider.Fields.IS_SEARCH_ACTION.name
       ),
       diffCache.absentFeatures ?: emptyList()
     )
@@ -820,16 +820,16 @@ class SearchEverywhereMLElementCacheTest : BasePlatformTestCase() {
   fun `test empty absent feature are not logged`() {
     val prevCache = SearchEverywhereMLElementCache(
       mlFeatures = listOf(
-        SearchEverywhereCommonFeaturesProvider.STATISTICIAN_USE_COUNT_DATA_KEY.with(2),
-        SearchEverywhereCommonFeaturesProvider.STATISTICIAN_IS_MOST_POPULAR_DATA_KEY.with(true),
-        SearchEverywhereCommonFeaturesProvider.PRIORITY_DATA_KEY.with(10011),
+        SearchEverywhereCommonFeaturesProvider.Fields.STATISTICIAN_USE_COUNT_DATA_KEY.with(2),
+        SearchEverywhereCommonFeaturesProvider.Fields.STATISTICIAN_IS_MOST_POPULAR_DATA_KEY.with(true),
+        SearchEverywhereCommonFeaturesProvider.Fields.PRIORITY_DATA_KEY.with(10011),
       )
     )
     val newCache = SearchEverywhereMLElementCache(
       mlFeatures = listOf(
-        SearchEverywhereCommonFeaturesProvider.STATISTICIAN_USE_COUNT_DATA_KEY.with(3), // 2 -> 3
-        SearchEverywhereCommonFeaturesProvider.STATISTICIAN_IS_MOST_POPULAR_DATA_KEY.with(true),
-        SearchEverywhereCommonFeaturesProvider.PRIORITY_DATA_KEY.with(10013), // 10011 -> 10013
+        SearchEverywhereCommonFeaturesProvider.Fields.STATISTICIAN_USE_COUNT_DATA_KEY.with(3), // 2 -> 3
+        SearchEverywhereCommonFeaturesProvider.Fields.STATISTICIAN_IS_MOST_POPULAR_DATA_KEY.with(true),
+        SearchEverywhereCommonFeaturesProvider.Fields.PRIORITY_DATA_KEY.with(10013), // 10011 -> 10013
       )
     )
 

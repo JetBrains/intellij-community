@@ -20,12 +20,40 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.actionSystem.EditorAction
-import com.intellij.searchEverywhereMl.ranking.features.SearchEverywhereGeneralActionFeaturesProvider.Companion.IS_ENABLED
+import com.intellij.searchEverywhereMl.ranking.features.SearchEverywhereActionFeaturesProvider.Fields.GLOBAL_STATISTICS_DEFAULT
+import com.intellij.searchEverywhereMl.ranking.features.SearchEverywhereActionFeaturesProvider.Fields.GLOBAL_STATISTICS_UPDATED
+import com.intellij.searchEverywhereMl.ranking.features.SearchEverywhereActionFeaturesProvider.Fields.GROUP_LENGTH_KEY
+import com.intellij.searchEverywhereMl.ranking.features.SearchEverywhereActionFeaturesProvider.Fields.HAS_ICON_KEY
+import com.intellij.searchEverywhereMl.ranking.features.SearchEverywhereActionFeaturesProvider.Fields.IS_ACTION_DATA_KEY
+import com.intellij.searchEverywhereMl.ranking.features.SearchEverywhereActionFeaturesProvider.Fields.IS_EDITOR_ACTION
+import com.intellij.searchEverywhereMl.ranking.features.SearchEverywhereActionFeaturesProvider.Fields.IS_GROUP_KEY
+import com.intellij.searchEverywhereMl.ranking.features.SearchEverywhereActionFeaturesProvider.Fields.IS_SEARCH_ACTION
+import com.intellij.searchEverywhereMl.ranking.features.SearchEverywhereActionFeaturesProvider.Fields.IS_TOGGLE_ACTION_DATA_KEY
+import com.intellij.searchEverywhereMl.ranking.features.SearchEverywhereActionFeaturesProvider.Fields.MATCH_MODE_KEY
+import com.intellij.searchEverywhereMl.ranking.features.SearchEverywhereActionFeaturesProvider.Fields.PLUGIN_ID
+import com.intellij.searchEverywhereMl.ranking.features.SearchEverywhereActionFeaturesProvider.Fields.PLUGIN_TYPE
+import com.intellij.searchEverywhereMl.ranking.features.SearchEverywhereActionFeaturesProvider.Fields.TEXT_LENGTH_KEY
+import com.intellij.searchEverywhereMl.ranking.features.SearchEverywhereActionFeaturesProvider.Fields.TIME_SINCE_LAST_USAGE
+import com.intellij.searchEverywhereMl.ranking.features.SearchEverywhereActionFeaturesProvider.Fields.TIME_SINCE_LAST_USAGE_SE
+import com.intellij.searchEverywhereMl.ranking.features.SearchEverywhereActionFeaturesProvider.Fields.USAGE
+import com.intellij.searchEverywhereMl.ranking.features.SearchEverywhereActionFeaturesProvider.Fields.USAGE_SE
+import com.intellij.searchEverywhereMl.ranking.features.SearchEverywhereActionFeaturesProvider.Fields.USAGE_TO_MAX
+import com.intellij.searchEverywhereMl.ranking.features.SearchEverywhereActionFeaturesProvider.Fields.USAGE_TO_MAX_SE
+import com.intellij.searchEverywhereMl.ranking.features.SearchEverywhereActionFeaturesProvider.Fields.WAS_USED_IN_LAST_DAY
+import com.intellij.searchEverywhereMl.ranking.features.SearchEverywhereActionFeaturesProvider.Fields.WAS_USED_IN_LAST_DAY_SE
+import com.intellij.searchEverywhereMl.ranking.features.SearchEverywhereActionFeaturesProvider.Fields.WAS_USED_IN_LAST_HOUR
+import com.intellij.searchEverywhereMl.ranking.features.SearchEverywhereActionFeaturesProvider.Fields.WAS_USED_IN_LAST_HOUR_SE
+import com.intellij.searchEverywhereMl.ranking.features.SearchEverywhereActionFeaturesProvider.Fields.WAS_USED_IN_LAST_MINUTE
+import com.intellij.searchEverywhereMl.ranking.features.SearchEverywhereActionFeaturesProvider.Fields.WAS_USED_IN_LAST_MINUTE_SE
+import com.intellij.searchEverywhereMl.ranking.features.SearchEverywhereActionFeaturesProvider.Fields.WAS_USED_IN_LAST_MONTH
+import com.intellij.searchEverywhereMl.ranking.features.SearchEverywhereActionFeaturesProvider.Fields.WAS_USED_IN_LAST_MONTH_SE
+import com.intellij.searchEverywhereMl.ranking.features.SearchEverywhereActionFeaturesProvider.Fields.WEIGHT_KEY
+import com.intellij.searchEverywhereMl.ranking.features.SearchEverywhereGeneralActionFeaturesProvider.Fields.IS_ENABLED
 import com.intellij.util.Time
 
 internal class SearchEverywhereActionFeaturesProvider :
   SearchEverywhereElementFeaturesProvider(ActionSearchEverywhereContributor::class.java, TopHitSEContributor::class.java) {
-  companion object {
+  object Fields {
     internal val IS_ACTION_DATA_KEY = EventFields.Boolean("isAction")
     internal val IS_TOGGLE_ACTION_DATA_KEY = EventFields.Boolean("isToggleAction")
     internal val IS_EDITOR_ACTION = EventFields.Boolean("isEditorAction")
@@ -40,8 +68,8 @@ internal class SearchEverywhereActionFeaturesProvider :
     internal val PLUGIN_TYPE = EventFields.StringValidatedByEnum("pluginType", "plugin_type")
     internal val PLUGIN_ID = EventFields.StringValidatedByCustomRule("pluginId", PluginIdRuleValidator::class.java)
 
-    private val GLOBAL_STATISTICS_DEFAULT = GlobalStatisticsFields(ActionsGlobalSummaryManager.getDefaultStatisticsVersion())
-    private val GLOBAL_STATISTICS_UPDATED = GlobalStatisticsFields(ActionsGlobalSummaryManager.getUpdatedStatisticsVersion())
+    val GLOBAL_STATISTICS_DEFAULT = GlobalStatisticsFields(ActionsGlobalSummaryManager.getDefaultStatisticsVersion())
+    val GLOBAL_STATISTICS_UPDATED = GlobalStatisticsFields(ActionsGlobalSummaryManager.getUpdatedStatisticsVersion())
 
 
     internal val USAGE = EventFields.Int("usage")
