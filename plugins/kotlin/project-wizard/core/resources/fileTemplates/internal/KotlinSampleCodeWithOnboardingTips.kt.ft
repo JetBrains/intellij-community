@@ -6,9 +6,9 @@ package ${PACKAGE_NAME}
 // ${SearchEverywhereComment1}
 // ${SearchEverywhereComment2}
 fun main() {
+    val name = "Kotlin"
     // ${ShowIntentionComment1}
     // ${ShowIntentionComment2}
-    val name = "Kotlin"
     println("Hello, " + name + "!")
 
     // ${RunComment}
