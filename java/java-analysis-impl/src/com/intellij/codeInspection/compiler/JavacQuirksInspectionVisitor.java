@@ -8,7 +8,10 @@ import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.AddTypeArgumentsFix;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.miscGenerics.RedundantTypeArgsInspection;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.modcommand.ModPsiUpdater;
@@ -26,6 +29,7 @@ import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.PsiReplacementUtil;
 import org.jetbrains.annotations.Nls;
@@ -87,6 +91,22 @@ public class JavacQuirksInspectionVisitor extends JavaElementVisitor {
       final String message = JavaAnalysisBundle.message("inspection.compiler.javac.quirks.anno.array.comma.problem");
       final String fixName = JavaAnalysisBundle.message("inspection.compiler.javac.quirks.anno.array.comma.fix");
       myHolder.registerProblem(lastElement, message, QuickFixFactory.getInstance().createDeleteFix(lastElement, fixName));
+    }
+  }
+
+  @Override
+  public void visitTypeParameterList(@NotNull PsiTypeParameterList list) {
+    if (PsiUtil.isLanguageLevel7OrHigher(list)) return;
+    PsiTypeParameter[] parameters = list.getTypeParameters();
+    for (int i = 0; i < parameters.length; i++) {
+      PsiTypeParameter typeParameter = parameters[i];
+      for (PsiJavaCodeReferenceElement referenceElement : typeParameter.getExtendsList().getReferenceElements()) {
+        PsiElement resolve = referenceElement.resolve();
+        if (resolve instanceof PsiTypeParameter && ArrayUtilRt.find(parameters, resolve) > i) {
+          myHolder.registerProblem(referenceElement,
+                                   JavaAnalysisBundle.message("inspection.compiler.javac.quirks.illegal.forward.reference"));
+        }
+      }
     }
   }
 
