@@ -23,11 +23,11 @@ abstract class AbstractKotlinFirInlineTest : KotlinLightCodeInsightFixtureTestCa
             IgnoreTests.DIRECTIVES.IGNORE_K2,
             directivePosition = IgnoreTests.DirectivePosition.LAST_LINE_IN_FILE
         ) {
-            doTest1(unused)
+            doTestInner(unused)
         }
     }
 
-    protected fun doTest1(unused: String) {
+    protected fun doTestInner(unused: String) {
         val testDataFile = dataFile()
         val afterFile = dataFile("${fileName()}.after")
 
@@ -62,6 +62,9 @@ abstract class AbstractKotlinFirInlineTest : KotlinLightCodeInsightFixtureTestCa
                     inlinePropertyKeepValue?.let { settings.INLINE_PROPERTY_KEEP = it }
                     handler.inlineElement(project, editor, targetElement)
                     for ((extraPsiFile, extraFile) in allFiles) {
+                        if (!afterFileExists && InTextDirectivesUtils.isDirectiveDefined(myFixture.file.text, IgnoreTests.DIRECTIVES.IGNORE_K2)) {
+                            fail("K1 is unable to inline property")
+                        }
                         KotlinTestUtils.assertEqualsToFile(File("${extraFile.path}.after"), extraPsiFile.text)
                     }
                 } catch (e: CommonRefactoringUtil.RefactoringErrorHintException) {
