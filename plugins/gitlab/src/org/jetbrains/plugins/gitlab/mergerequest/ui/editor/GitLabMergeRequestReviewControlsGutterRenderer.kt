@@ -239,7 +239,7 @@ private constructor(cs: CoroutineScope,
       }
 
       fun calcHoveredLineData(): LogicalLineData? {
-        val logicalLine = hoveredLogicalLine ?: return null
+        val logicalLine = hoveredLogicalLine?.takeIf { it in 0 until editor.document.lineCount } ?: return null
         return LogicalLineData(editor, nonCommentableRanges, logicalLine, columnHovered)
       }
 
