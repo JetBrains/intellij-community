@@ -9,9 +9,11 @@ import org.jetbrains.idea.maven.utils.MavenUtil
 import org.jetbrains.idea.maven.wizards.AbstractMavenModuleBuilder
 import org.jetbrains.kotlin.tools.projectWizard.BuildSystemKotlinNewProjectWizard.Companion.DEFAULT_KOTLIN_VERSION
 
-class MavenKotlinModuleBuilder: AbstractMavenModuleBuilder() {
+class MavenKotlinModuleBuilder(private val outputDirectory: String): AbstractMavenModuleBuilder() {
 
     var kotlinPluginWizardVersion = DEFAULT_KOTLIN_VERSION
+
+    internal val filesToOpen = mutableListOf<String>()
 
     override fun setupRootModel(rootModel: ModifiableRootModel) {
 
@@ -38,7 +40,9 @@ class MavenKotlinModuleBuilder: AbstractMavenModuleBuilder() {
                 myArchetype,
                 myPropertiesToCreateByArtifact,
                 MavenProjectBundle.message("command.name.create.new.maven.module"),
-                kotlinPluginWizardVersion
+                kotlinPluginWizardVersion,
+                outputDirectory,
+                filesToOpen
             ).configure(project, root, false)
         })
     }

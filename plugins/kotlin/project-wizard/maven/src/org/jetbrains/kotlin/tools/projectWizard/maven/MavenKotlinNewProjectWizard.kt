@@ -108,7 +108,10 @@ internal class MavenKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard {
             ExternalProjectsManagerImpl.setupCreatedProject(project)
             project.putUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT, true)
 
-            val moduleBuilder = MavenKotlinModuleBuilder()
+            val moduleBuilder = MavenKotlinModuleBuilder("$path/$name")
+            if (addSampleCode) {
+                moduleBuilder.filesToOpen.add("$SRC_MAIN_KOTLIN_PATH/Main.kt")
+            }
 
             linkMavenProject(
                 project,
@@ -129,7 +132,7 @@ internal class MavenKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard {
             }
             createKotlinContentRoots()
             if (parent.addSampleCode) {
-                withKotlinSampleCode(SRC_MAIN_KOTLIN_PATH, parent.groupId, shouldAddOnboardingTips())
+                withKotlinSampleCode(SRC_MAIN_KOTLIN_PATH, parent.groupId, shouldAddOnboardingTips(), shouldOpenFile = false)
             }
         }
 

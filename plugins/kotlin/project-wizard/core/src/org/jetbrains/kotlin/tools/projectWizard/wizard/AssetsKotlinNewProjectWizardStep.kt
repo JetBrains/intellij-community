@@ -12,7 +12,12 @@ import org.jetbrains.kotlin.tools.projectWizard.KotlinNewProjectWizardBundle
 private const val generatedFileName = "Main.kt"
 
 abstract class AssetsKotlinNewProjectWizardStep(parent: NewProjectWizardStep) : AssetsOnboardingTipsProjectWizardStep(parent) {
-    fun withKotlinSampleCode(sourceRootPath: String, packageName: String?, generateOnboardingTips: Boolean) {
+    fun withKotlinSampleCode(
+        sourceRootPath: String,
+        packageName: String?,
+        generateOnboardingTips: Boolean,
+        shouldOpenFile: Boolean = true
+    ) {
         val renderedOnboardingTips = shouldRenderOnboardingTips()
         val templateName = when {
             !generateOnboardingTips -> "KotlinSampleCode"
@@ -58,7 +63,9 @@ abstract class AssetsKotlinNewProjectWizardStep(parent: NewProjectWizardStep) : 
                 }
             }
         })
-        addFilesToOpen(sourcePath)
+        if (shouldOpenFile) {
+            addFilesToOpen(sourcePath)
+        }
     }
 
     fun prepareOnboardingTips(project: Project) {
