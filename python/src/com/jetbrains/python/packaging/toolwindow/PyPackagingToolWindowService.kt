@@ -126,7 +126,7 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
   internal suspend fun initForSdk(sdk: Sdk?) {
     val previousSdk = currentSdk
     currentSdk = sdk
-    if (currentSdk != null) {
+    if (currentSdk != null && currentSdk != previousSdk) {
       manager = PythonPackageManager.forSdk(project, currentSdk!!)
       manager.repositoryManager.initCaches()
       manager.reloadPackages()
