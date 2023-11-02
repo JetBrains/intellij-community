@@ -20,6 +20,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -440,17 +441,23 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
 
   @NotNull
   public DefaultTreeModel build() {
+    return build(false);
+  }
+
+  @NotNull
+  @ApiStatus.Experimental
+  public DefaultTreeModel build(boolean forcePrepareCaches) {
     TreeUtil.sort(myModel, BROWSER_NODE_COMPARATOR);
     collapseDirectories(myModel, myRoot);
 
     if (myProject != null && !ApplicationManager.getApplication().isDispatchThread()) {
-      // Incrementally fill background colors
-      // read lock is required for background colors calculation as it requires project file index
-      // no return value expected. incremental computation is handled inside precalculateFileColors
-      //noinspection deprecation
-      ReadAction.nonBlocking(() -> {
-        precalculateFileColors(myProject, myRoot);
-      }).executeSynchronously();
+      // Pre-fill background colors for small trees to reduce blinking
+      if (!TreeUtil.hasManyNodes(myRoot, 1000) || forcePrepareCaches) {
+        //noinspection deprecation
+        ReadAction.nonBlocking(() -> {
+          precalculateFileColors(myProject, myRoot);
+        }).executeSynchronously();
+      }
     }
 
     myModel.nodeStructureChanged((TreeNode)myModel.getRoot());
@@ -458,15 +465,13 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
   }
 
   /**
-   * Unfortunately calculating file background color is a costly operation.
-   * (it requires e.g. project file index to detect whether a file in test sources or not)
-   * TreeModelBuilder calls this method on a background thread to have
-   * this calculation ready for Tree rendering
+   * Calculating file background color is a costly operation, so it should be done in background.
+   * (Ex: it requires project file index to detect whether a file in test sources or not)
    */
   @RequiresReadLock
   private static void precalculateFileColors(@NotNull Project project, @NotNull ChangesBrowserNode<?> root) {
     root.traverse().forEach(node -> {
-      node.preparePresentationDataCaches(project);
+      node.cacheBackgroundColor(project);
       // Allow to interrupt read lock
       ProgressManager.checkCanceled();
     });

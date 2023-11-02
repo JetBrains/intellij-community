@@ -893,7 +893,7 @@ public class ChangesViewManager implements ChangesViewEx,
           }
         }
 
-        DefaultTreeModel treeModel = treeModelBuilder.build();
+        DefaultTreeModel treeModel = treeModelBuilder.build(true);
 
         ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
         indicator.checkCanceled();

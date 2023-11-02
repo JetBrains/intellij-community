@@ -4,6 +4,7 @@ package com.intellij.openapi.vcs.changes.ui
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.blockingContext
@@ -17,15 +18,18 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.*
+import java.awt.Color
 import java.awt.Dimension
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 import java.util.function.Function
 import javax.swing.tree.DefaultTreeModel
+import javax.swing.tree.TreePath
 
 /**
  * Call [shutdown] when the tree is no longer needed.
  */
+@OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
 abstract class AsyncChangesTree : ChangesTree {
   companion object {
     private val LOG = logger<AsyncChangesTree>()
@@ -37,6 +41,8 @@ abstract class AsyncChangesTree : ChangesTree {
 
   private val updateSemaphore = OverflowSemaphore(overflow = BufferOverflow.DROP_OLDEST)
   private val _callbacks = Channel<PendingCallback>(capacity = Int.MAX_VALUE)
+  private val _pendingColors = MutableSharedFlow<ChangesBrowserNode<*>>(extraBufferCapacity = 100,
+                                                                        onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
   private val lastFulfilledRequestId = MutableStateFlow(-1)
   private val lastRequestId = AtomicInteger()
@@ -150,6 +156,21 @@ abstract class AsyncChangesTree : ChangesTree {
         handleCallback(callback)
       }
     }
+    scope.launch {
+      val repaintRequest = MutableSharedFlow<Unit>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+      launch(treeEdtContext, start = CoroutineStart.UNDISPATCHED) {
+        repaintRequest.debounce(300).collect {
+          repaint()
+        }
+      }
+
+      _pendingColors.collect { node ->
+        val wasChanged = readAction { node.cacheBackgroundColor(project) }
+        if (wasChanged) {
+          repaintRequest.emit(Unit)
+        }
+      }
+    }
   }
 
   private suspend fun refreshTreeModel(requestId: Int,
@@ -170,6 +191,8 @@ abstract class AsyncChangesTree : ChangesTree {
   @RequiresEdt
   private suspend fun updateTreeModel(requestId: Int, treeModel: DefaultTreeModel, treeStateStrategy: TreeStateStrategy<*>?) {
     try {
+      _pendingColors.resetReplayCache()
+
       blockingContext {
         if (treeStateStrategy != null) {
           updateTreeModel(treeModel, treeStateStrategy)
@@ -206,6 +229,17 @@ abstract class AsyncChangesTree : ChangesTree {
   private fun updatePaintBusy(isBusy: Boolean) {
     setPaintBusy(isBusy)
     repaint() // repaint empty text
+  }
+
+  override fun getFileColorForPath(path: TreePath): Color? {
+    val node = path.lastPathComponent
+    if (node is ChangesBrowserNode<*>) {
+      if (!node.hasBackgroundColorCached()) {
+        _pendingColors.tryEmit(node)
+      }
+      return node.backgroundColorCached
+    }
+    return null
   }
 
   private class PendingCallback(
