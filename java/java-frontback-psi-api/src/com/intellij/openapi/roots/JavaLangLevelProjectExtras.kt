@@ -38,3 +38,6 @@ class JavaLangLevelProjectExtras : ProjectExtras<LanguageLevelHolder> {
 
 @Serializable
 class LanguageLevelHolder(val languageLevel: LanguageLevel)
+
+@Serializable
+class NullableLanguageLevelHolder(val languageLevel: LanguageLevel?)

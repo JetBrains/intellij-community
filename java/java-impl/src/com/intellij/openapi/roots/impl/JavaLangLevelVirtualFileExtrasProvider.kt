@@ -21,7 +21,7 @@ class JavaLangLevelVirtualFileExtrasProvider : VirtualFileExtrasProvider<Nullabl
     val LOG = logger<JavaLangLevelVirtualFileExtrasProvider>()
   }
 
-  override val id: String = "projectLangLevel"
+  override val id: String = "virtualFileJavaLangLevel"
 
   override val dataType: KType
     get() = typeOf<NullableLanguageLevelHolder>()
