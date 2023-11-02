@@ -5,4 +5,6 @@ import com.intellij.openapi.util.registry.Registry
 
 object GitLabRegistry {
   fun isCombinedDiffEnabled(): Boolean = Registry.`is`("gitlab.enable.combined.diff")
+  fun getRequestPollingIntervalMillis(): Int = Registry.intValue("gitlab.request.polling.interval.millis")
+  fun getRequestPollingAttempts(): Int = Registry.intValue("gitlab.request.polling.attempts")
 }
