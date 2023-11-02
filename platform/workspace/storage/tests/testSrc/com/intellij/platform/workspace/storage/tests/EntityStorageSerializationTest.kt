@@ -142,7 +142,7 @@ class EntityStorageSerializationTest {
                  "Have you changed serialization version type? Add the new version to the usedCacheVersionPrefixes list!")
 
     assertContentEquals(usedCacheVersionTypes, usedCacheVersionTypes.distinct(),
-                        "Version type of the cache ${serializationVersionPrefix} was used previously. Add the new version!")
+                        "Version type of the cache ${serializationVersionPrefix} was used previously. Add the new version type!")
   }
 
   @Test
