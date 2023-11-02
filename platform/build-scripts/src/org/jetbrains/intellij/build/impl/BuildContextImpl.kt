@@ -208,7 +208,7 @@ class BuildContextImpl(
     return shouldBuildDistributions() && options.targetOs.contains(os) && (options.targetArch == null || options.targetArch == arch)
   }
 
-  override fun createCopyForProduct(productProperties: ProductProperties, projectHomeForCustomizers: Path): BuildContext {
+  override fun createCopyForProduct(productProperties: ProductProperties, projectHomeForCustomizers: Path, prepareForBuild: Boolean): BuildContext {
     val projectHomeForCustomizersAsString = FileUtilRt.toSystemIndependentName(projectHomeForCustomizers.toString())
     val options = BuildOptions(compressZipFiles = this.options.compressZipFiles)
     options.useCompiledClassesFromProjectOutput = this.options.useCompiledClassesFromProjectOutput
@@ -228,10 +228,12 @@ class BuildContextImpl(
       macDistributionCustomizer = productProperties.createMacCustomizer(projectHomeForCustomizersAsString),
       proprietaryBuildTools = proprietaryBuildTools,
     )
-    @Suppress("DEPRECATION") val productCode = productProperties.productCode
-    copy.paths.artifactDir = paths.artifactDir.resolve(productCode!!)
-    copy.paths.artifacts = "${paths.artifacts}/$productCode"
-    copy.compilationContext.prepareForBuild()
+    if (prepareForBuild) {
+      @Suppress("DEPRECATION") val productCode = productProperties.productCode
+      copy.paths.artifactDir = paths.artifactDir.resolve(productCode!!)
+      copy.paths.artifacts = "${paths.artifacts}/$productCode"
+      copy.compilationContext.prepareForBuild()
+    }
     return copy
   }
 
