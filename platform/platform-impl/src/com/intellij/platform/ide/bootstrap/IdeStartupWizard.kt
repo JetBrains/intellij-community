@@ -2,6 +2,7 @@
 package com.intellij.platform.ide.bootstrap
 
 import com.intellij.diagnostic.PluginException
+import com.intellij.internal.statistic.DeviceIdManager
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
@@ -9,16 +10,16 @@ import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ConfigImportHelper
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.platform.diagnostic.telemetry.impl.span
+import com.intellij.util.MathUtil
 import com.intellij.util.PlatformUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.withTimeout
 import org.jetbrains.annotations.ApiStatus.Internal
-import kotlin.math.absoluteValue
-import kotlin.random.Random
 import kotlin.time.Duration.Companion.seconds
 
 private val log = logger<IdeStartupWizard>()
@@ -140,12 +141,21 @@ object IdeStartupExperiment {
     }
   }
 
+  private fun String.asBucket() = MathUtil.nonNegativeAbs(this.hashCode()) % 256
+  private fun getBucket(): Int {
+    val deviceId = log.runAndLogException {
+      DeviceIdManager.getOrGenerateId(object : DeviceIdManager.DeviceIdToken {}, "FUS")
+    } ?: return 0
+    return deviceId.asBucket()
+  }
+
   val experimentGroup by lazy {
-    val registryExperimentGroup = (System.getProperty("ide.transfer.wizard.experiment.group", "").toIntOrNull() ?: -1)
+    val registryExperimentGroup = (System.getProperty("ide.transfer.wizard.experiment.group", "-1").toIntOrNull() ?: -1)
       .coerceIn(-1, numberOfGroups - 1)
     if (registryExperimentGroup >= 0) return@lazy registryExperimentGroup
-    // floorMod to handle negative numbers:
-    val experimentGroup = Math.floorMod(Random.nextInt().absoluteValue, numberOfGroups)
+
+    val bucket = getBucket()
+    val experimentGroup = bucket % numberOfGroups
     experimentGroup
   }
 
