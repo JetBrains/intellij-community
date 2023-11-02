@@ -58,15 +58,25 @@ class PythonProjectSpecificSettingsStep<T>(projectGenerator: DirectoryProjectGen
     return createContentPanelWithAdvancedSettingsPanel()
   }
 
-  override fun getProjectLocation(): String {
-    return FileUtil.expandUserHome(projectLocation.joinSystemDependentPath(projectName).get())
-  }
+  /**
+   * Returns the project location that is either:
+   * - constructed using two parts (using the values from "Location" and "Name" fields) for Python project types ("Pure Python", "Django",
+   *   etc.);
+   * - specified directly in the single "Location" field for non-Python project types ("Angular CLI", "Bootstrap", etc.).
+   */
+  override fun getProjectLocation(): String =
+    if (interpreterPanel != null) {
+      FileUtil.expandUserHome(projectLocation.joinSystemDependentPath(projectName).get())
+    }
+    else {
+      super.getProjectLocation()
+    }
 
   override fun getRemotePath(): String? {
     return null
   }
 
-  private val interpreterPanel = PythonAddNewEnvironmentPanel(projectLocation.joinSystemDependentPath(projectName))
+  private var interpreterPanel: PythonAddNewEnvironmentPanel? = null
 
   override fun createBasePanel(): JPanel {
     if (myProjectGenerator !is PythonProjectGenerator<*>) return super.createBasePanel()
@@ -74,6 +84,8 @@ class PythonProjectSpecificSettingsStep<T>(projectGenerator: DirectoryProjectGen
     val nextProjectName = myProjectDirectory.get()
     projectName.set(nextProjectName.nameWithoutExtension)
     projectLocation.set(nextProjectName.parent)
+
+    val interpreterPanel = PythonAddNewEnvironmentPanel(projectLocation.joinSystemDependentPath(projectName)).also { interpreterPanel = it }
 
     mainPanel = panel {
       row(message("new.project.name")) {
@@ -140,11 +152,11 @@ class PythonProjectSpecificSettingsStep<T>(projectGenerator: DirectoryProjectGen
   }
 
   override fun onPanelSelected() {
-    interpreterPanel.onShown()
+    interpreterPanel?.onShown()
   }
 
   override fun getSdk(): Sdk {
-    return PyLazySdk("Uninitialized environment") { interpreterPanel.getSdk() }
+    return PyLazySdk("Uninitialized environment") { interpreterPanel?.getSdk() }
   }
 
 
