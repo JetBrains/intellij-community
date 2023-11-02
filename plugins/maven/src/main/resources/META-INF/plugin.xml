@@ -341,7 +341,7 @@
     <registryKey key="maven.create.dummy.module.on.first.import" defaultValue="true"
                  description="Create maven dummy module on import"/>
 
-    <registryKey key="maven.preimport.project" defaultValue="true"
+    <registryKey key="maven.preimport.project" defaultValue="false"
                  description="Make fast project preimport"/>
 
     <registryKey key="maven.preimport.only" defaultValue="false"
