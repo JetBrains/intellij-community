@@ -1,13 +1,13 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl
 
-import com.intellij.platform.diagnostic.telemetry.Workspace
+import com.intellij.platform.diagnostic.telemetry.WorkspaceModel
 import com.intellij.platform.diagnostic.telemetry.helpers.SharedMetrics
 import java.util.concurrent.Semaphore
 
 val workspaceMetrics: WorkspaceMetrics by lazy { WorkspaceMetrics.instance }
 
-class WorkspaceMetrics : SharedMetrics(Workspace) {
+class WorkspaceMetrics : SharedMetrics(WorkspaceModel) {
   companion object {
     private val lock = Semaphore(1)
     private var _instance: WorkspaceMetrics? = null
