@@ -5,9 +5,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectExtras
 import com.intellij.openapi.roots.LanguageLevelProjectExtension.LanguageLevelChangeListener
 import com.intellij.pom.java.LanguageLevel
-import kotlinx.coroutines.channels.awaitClose
+import com.intellij.util.messages.impl.subscribeAsFlow
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.serialization.Serializable
 import kotlin.reflect.KType
 import kotlin.reflect.typeOf
@@ -20,15 +20,12 @@ class JavaLangLevelProjectExtras : ProjectExtras<LanguageLevelHolder> {
     get() = typeOf<LanguageLevelHolder>()
 
   override fun getValues(project: Project): Flow<LanguageLevelHolder> {
-    return callbackFlow {
-      val languageLevel = LanguageLevelProjectExtension.getInstance(project).languageLevel
-      val element = LanguageLevelHolder(languageLevel)
-      trySend(element)
-      project.messageBus.connect(this).subscribe(LanguageLevelProjectExtension.LANGUAGE_LEVEL_CHANGED_TOPIC, LanguageLevelChangeListener {
-        trySend(LanguageLevelHolder(LanguageLevelProjectExtension.getInstance(project).languageLevel))
-      })
-      awaitClose()
-    }
+    return project.messageBus.subscribeAsFlow(LanguageLevelProjectExtension.LANGUAGE_LEVEL_CHANGED_TOPIC) {
+      trySend(Unit)
+      LanguageLevelChangeListener {
+        trySend(Unit)
+      }
+    }.map { LanguageLevelHolder(LanguageLevelProjectExtension.getInstance(project).languageLevel) }
   }
 
   override fun consumeValue(project: Project, value: LanguageLevelHolder) {
