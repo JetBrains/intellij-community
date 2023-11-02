@@ -1026,8 +1026,6 @@ internal class MutableEntityStorageImpl(
     }
 
     init {
-      // See also [org.jetbrains.jps.diagnostic.JpsMetrics] and [org.jetbrains.jps.diagnostic.Metrics].
-      // If tracking of spans are needed it makes sense to extract them into separate module and depend on it.
       setupOpenTelemetryReporting(TelemetryManager.getMeter(JPS))
     }
   }
