@@ -2,6 +2,7 @@
 package com.intellij.openapi.vcs.changes.committed
 
 import com.intellij.openapi.fileEditor.FileEditor
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.component1
 import com.intellij.openapi.util.component2
@@ -17,7 +18,7 @@ import org.jetbrains.annotations.Nls
 import java.util.function.Function
 import javax.swing.JComponent
 
-internal class OutdatedVersionNotifier : EditorNotificationProvider {
+internal class OutdatedVersionNotifier : EditorNotificationProvider, DumbAware {
   override fun collectNotificationData(project: Project, file: VirtualFile): Function<in FileEditor, out JComponent?>? {
     val cache = CommittedChangesCache.getInstanceIfCreated(project) ?: return null
     val (incomingChangeList, incomingChange) = cache.getIncomingChangeList(file) ?: return null

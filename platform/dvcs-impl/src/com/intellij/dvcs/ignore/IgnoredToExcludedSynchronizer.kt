@@ -20,6 +20,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtil
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.runModalTask
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.OrderEnumerator
@@ -162,7 +163,7 @@ class IgnoredToExcludedSynchronizer(project: Project, cs: CoroutineScope) : File
 }
 
 private fun markIgnoredAsExcluded(project: Project, files: Collection<VirtualFile>) {
-  val ignoredDirsByModule = runReadAction {  
+  val ignoredDirsByModule = runReadAction {
     files
       .groupBy { ModuleUtil.findModuleForFile(it, project) }
       //if the directory already excluded then ModuleUtil.findModuleForFile return null and this will filter out such directories from processing.
@@ -209,7 +210,7 @@ private fun selectFilesToExclude(project: Project, ignoredDirs: List<VirtualFile
 private fun allowShowNotification() = Registry.`is`("vcs.propose.add.ignored.directories.to.exclude", true)
 private fun synchronizationTurnOff() = !Registry.`is`("vcs.enable.add.ignored.directories.to.exclude", true)
 
-class IgnoredToExcludeNotificationProvider : EditorNotificationProvider {
+class IgnoredToExcludeNotificationProvider : EditorNotificationProvider, DumbAware {
   private fun canCreateNotification(project: Project, file: VirtualFile): Boolean {
     return file.fileType is IgnoreFileType &&
            with(project.service<IgnoredToExcludedSynchronizer>()) {
