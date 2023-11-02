@@ -6,15 +6,18 @@ import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import org.jetbrains.plugins.terminal.TerminalProjectOptionsProvider
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.IS_PROMPT_EDITOR_KEY
 import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.properties.Delegates
 
 class TerminalPromptController(
+  project: Project,
   private val editor: EditorEx,
   session: TerminalSession,
   private val commandExecutor: TerminalCommandExecutor
@@ -28,6 +31,14 @@ class TerminalPromptController(
   var promptIsVisible: Boolean by Delegates.observable(true) { _, oldValue, newValue ->
     if (newValue != oldValue) listeners.forEach { it.promptVisibilityChanged(newValue) }
   }
+
+  var promptText: String = computePromptText(TerminalProjectOptionsProvider.getInstance(project).startingDirectory ?: "")
+    private set(value) {
+      if (value != field) {
+        field = value
+        listeners.forEach { it.promptLabelChanged(value) }
+      }
+    }
 
   init {
     editor.putUserData(IS_PROMPT_EDITOR_KEY, true)
@@ -49,11 +60,10 @@ class TerminalPromptController(
   }
 
   override fun directoryChanged(newDirectory: String) {
-    val newText = computePromptText(newDirectory)
-    listeners.forEach { it.promptLabelChanged(newText) }
+    promptText = computePromptText(newDirectory)
   }
 
-  fun computePromptText(directory: String): @NlsSafe String {
+  private fun computePromptText(directory: String): @NlsSafe String {
     return if (directory != SystemProperties.getUserHome()) {
       FileUtil.getLocationRelativeToUserHome(directory)
     }
