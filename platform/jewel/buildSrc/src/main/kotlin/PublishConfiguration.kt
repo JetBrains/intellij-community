@@ -1,4 +1,4 @@
-@file:Suppress("UnstableApiUsage")
+@file:Suppress("UnstableApiUsage", "UnusedImports")
 
 import org.gradle.api.publish.PublishingExtension
 import org.gradle.api.publish.maven.MavenPom

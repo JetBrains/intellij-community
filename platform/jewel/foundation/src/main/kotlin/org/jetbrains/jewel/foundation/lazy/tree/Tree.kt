@@ -3,15 +3,16 @@ package org.jetbrains.jewel.foundation.lazy.tree
 import org.jetbrains.jewel.foundation.lazy.tree.Tree.Element.Node
 
 @Suppress("UNCHECKED_CAST")
-fun <T> emptyTree() = Tree.EMPTY as Tree<T>
+public fun <T> emptyTree(): Tree<T> = Tree.EMPTY as Tree<T>
 
-class Tree<T> internal constructor(val roots: List<Element<T>>) {
+public class Tree<T> internal constructor(public val roots: List<Element<T>>) {
 
-    companion object {
+    public companion object {
+
         internal val EMPTY = Tree(roots = emptyList<Element<Any?>>())
     }
 
-    fun isEmpty() = roots.isEmpty()
+    public fun isEmpty(): Boolean = roots.isEmpty()
 
     private fun walk(breathFirst: Boolean) = sequence {
         val queue = roots.toMutableList()
@@ -29,31 +30,39 @@ class Tree<T> internal constructor(val roots: List<Element<T>>) {
         }
     }
 
-    fun walkBreadthFirst() = walk(true)
-    fun walkDepthFirst() = walk(false)
+    public fun walkBreadthFirst(): Sequence<Element<T>> = walk(true)
 
-    sealed interface Element<T> {
+    public fun walkDepthFirst(): Sequence<Element<T>> = walk(false)
 
-        val data: T
-        val depth: Int
-        val parent: Element<T>?
-        val childIndex: Int
-        var next: Element<T>?
-        var previous: Element<T>?
-        val id: Any
+    public sealed interface Element<T> {
 
-        fun path() = buildList {
-            var next: Element<T>? = this@Element
-            while (next != null) {
-                add(next)
-                next = next.parent
+        public val data: T
+        public val depth: Int
+        public val parent: Element<T>?
+        public val childIndex: Int
+        public var next: Element<T>?
+        public var previous: Element<T>?
+        public val id: Any
+
+        public fun path(): List<Element<T>> =
+            buildList {
+                var next: Element<T>? = this@Element
+                while (next != null) {
+                    add(next)
+                    next = next.parent
+                }
             }
-        }.reversed()
+                .reversed()
 
-        fun previousElementsIterable() = Iterable { elementIterator(previous) { it.previous } }
-        fun nextElementsIterable() = Iterable { elementIterator(next) { it.next } }
+        public fun previousElementsIterable(): Iterable<Element<T>> = Iterable {
+            elementIterator(previous) { it.previous }
+        }
 
-        class Leaf<T>(
+        public fun nextElementsIterable(): Iterable<Element<T>> = Iterable {
+            elementIterator(next) { it.next }
+        }
+
+        public class Leaf<T>(
             override val data: T,
             override val depth: Int,
             override val childIndex: Int,
@@ -63,7 +72,7 @@ class Tree<T> internal constructor(val roots: List<Element<T>>) {
             override val id: Any,
         ) : Element<T>
 
-        class Node<T>(
+        public class Node<T>(
             override val data: T,
             override val depth: Int,
             override val childIndex: Int,
@@ -74,7 +83,7 @@ class Tree<T> internal constructor(val roots: List<Element<T>>) {
             override val id: Any,
         ) : Element<T> {
 
-            var children: List<Element<T>>? = null
+            public var children: List<Element<T>>? = null
                 private set
 
             private fun evaluateChildren() {
@@ -101,12 +110,12 @@ class Tree<T> internal constructor(val roots: List<Element<T>>) {
                 }
             }
 
-            fun open(reloadChildren: Boolean = false) {
+            public fun open(reloadChildren: Boolean = false) {
                 if (reloadChildren || children == null) evaluateChildren()
                 connectChildren()
             }
 
-            fun close() {
+            public fun close() {
                 detachChildren()
                 children?.asSequence()
                     ?.filterIsInstance<Node<*>>()
@@ -120,7 +129,10 @@ class Tree<T> internal constructor(val roots: List<Element<T>>) {
     }
 }
 
-private fun <T> elementIterator(initial: Tree.Element<T>?, next: (Tree.Element<T>) -> Tree.Element<T>?) = iterator {
+private fun <T> elementIterator(
+    initial: Tree.Element<T>?,
+    next: (Tree.Element<T>) -> Tree.Element<T>?,
+) = iterator {
     var current = initial ?: return@iterator
     yield(current)
     while (true) {

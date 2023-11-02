@@ -9,22 +9,20 @@ import androidx.compose.ui.modifier.modifierLocalMapOf
 import androidx.compose.ui.modifier.modifierLocalOf
 
 /**
- * Holder for parent node of current [DataProviderNode].
- * So, each [DataProviderNode] provides itself and read parent node.
- * It allows building tree of [DataProviderNode] and traverse it later on.
+ * Holder for parent node of current [DataProviderNode]. So, each
+ * [DataProviderNode] provides itself and read parent node. It allows
+ * building tree of [DataProviderNode] and traverse it later on.
  *
  * @see ModifierLocalModifierNode
  */
-private val LocalDataProviderNode = modifierLocalOf<DataProviderNode?> {
-    null
-}
+private val LocalDataProviderNode = modifierLocalOf<DataProviderNode?> { null }
 
-internal class DataProviderNode(var dataProvider: (dataId: String) -> Any?) :
-    Modifier.Node(),
-    ModifierLocalModifierNode,
-    FocusEventModifierNode {
+internal class DataProviderNode(
+    var dataProvider: (dataId: String) -> Any?,
+) : Modifier.Node(), ModifierLocalModifierNode, FocusEventModifierNode {
 
-    // TODO: should we use state here and in parent with children for thread safety? Will it trigger recompositions?
+    // TODO: should we use state here and in parent with children for thread safety? Will it trigger
+    // recompositions?
     var hasFocus = false
 
     var parent: DataProviderNode? = null
@@ -52,7 +50,7 @@ internal class DataProviderNode(var dataProvider: (dataId: String) -> Any?) :
         hasFocus = focusState.hasFocus
     }
 
-    fun updateParent() {
+    public fun updateParent() {
         parent = LocalDataProviderNode.current
     }
 }

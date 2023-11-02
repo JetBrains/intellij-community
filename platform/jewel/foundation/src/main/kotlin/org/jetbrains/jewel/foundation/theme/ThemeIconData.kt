@@ -4,26 +4,29 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.Color
 
 @Immutable
-class ThemeIconData(
-    val iconOverrides: Map<String, String>,
-    val colorPalette: Map<String, String?>,
-    val selectionColorPalette: Map<String, Int>,
+public class ThemeIconData(
+    public val iconOverrides: Map<String, String>,
+    public val colorPalette: Map<String, String?>,
+    public val selectionColorPalette: Map<String, Int>,
 ) {
 
-    fun selectionColorMapping() =
-        selectionColorPalette.mapNotNull { (key, value) ->
-            val keyColor = key.toColorOrNull() ?: return@mapNotNull null
-            val valueColor = Color(value)
-            keyColor to valueColor
-        }.toMap()
+    public fun selectionColorMapping(): Map<Color, Color> =
+        selectionColorPalette
+            .mapNotNull { (key, value) ->
+                val keyColor = key.toColorOrNull() ?: return@mapNotNull null
+                val valueColor = Color(value)
+                keyColor to valueColor
+            }
+            .toMap()
 
-    companion object {
+    public companion object {
 
-        val Empty = ThemeIconData(
-            iconOverrides = emptyMap(),
-            colorPalette = emptyMap(),
-            selectionColorPalette = emptyMap(),
-        )
+        public val Empty: ThemeIconData =
+            ThemeIconData(
+                iconOverrides = emptyMap(),
+                colorPalette = emptyMap(),
+                selectionColorPalette = emptyMap(),
+            )
     }
 }
 

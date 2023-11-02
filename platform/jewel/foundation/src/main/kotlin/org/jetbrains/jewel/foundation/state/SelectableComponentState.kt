@@ -1,9 +1,6 @@
 package org.jetbrains.jewel.foundation.state
 
-import androidx.compose.runtime.Stable
+public interface SelectableComponentState : InteractiveComponentState {
 
-interface SelectableComponentState : InteractiveComponentState {
-
-    @Stable
-    val isSelected: Boolean
+    public val isSelected: Boolean
 }

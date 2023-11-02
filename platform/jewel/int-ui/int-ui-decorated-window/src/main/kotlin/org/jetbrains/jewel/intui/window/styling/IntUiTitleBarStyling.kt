@@ -28,11 +28,11 @@ import org.jetbrains.jewel.window.styling.TitleBarMetrics
 import org.jetbrains.jewel.window.styling.TitleBarStyle
 
 @Composable
-fun TitleBarStyle.Companion.light(
+public fun TitleBarStyle.Companion.light(
     colors: TitleBarColors = TitleBarColors.light(),
     metrics: TitleBarMetrics = TitleBarMetrics.defaults(),
     icons: TitleBarIcons = TitleBarIcons.defaults(),
-) =
+): TitleBarStyle =
     TitleBarStyle(
         colors = colors,
         metrics = metrics,
@@ -73,11 +73,11 @@ fun TitleBarStyle.Companion.light(
     )
 
 @Composable
-fun TitleBarStyle.Companion.lightWithLightHeader(
+public fun TitleBarStyle.Companion.lightWithLightHeader(
     colors: TitleBarColors = TitleBarColors.lightWithLightHeader(),
     metrics: TitleBarMetrics = TitleBarMetrics.defaults(),
     icons: TitleBarIcons = TitleBarIcons.defaults(),
-) =
+): TitleBarStyle =
     TitleBarStyle(
         colors = colors,
         metrics = metrics,
@@ -117,11 +117,11 @@ fun TitleBarStyle.Companion.lightWithLightHeader(
     )
 
 @Composable
-fun TitleBarStyle.Companion.dark(
+public fun TitleBarStyle.Companion.dark(
     colors: TitleBarColors = TitleBarColors.dark(),
     metrics: TitleBarMetrics = TitleBarMetrics.defaults(),
     icons: TitleBarIcons = TitleBarIcons.defaults(),
-) =
+): TitleBarStyle =
     TitleBarStyle(
         colors = colors,
         metrics = metrics,
@@ -164,29 +164,30 @@ private fun titleBarIconButtonStyle(
     hoveredBackground: Color,
     pressedBackground: Color,
     metrics: IconButtonMetrics,
-) = IconButtonStyle(
-    IconButtonColors(
-        foregroundSelectedActivated = Color.Unspecified,
-        background = Color.Unspecified,
-        backgroundDisabled = Color.Unspecified,
-        backgroundSelected = Color.Unspecified,
-        backgroundSelectedActivated = Color.Unspecified,
-        backgroundFocused = Color.Unspecified,
-        backgroundPressed = hoveredBackground,
-        backgroundHovered = pressedBackground,
-        border = Color.Unspecified,
-        borderDisabled = Color.Unspecified,
-        borderSelected = Color.Unspecified,
-        borderSelectedActivated = Color.Unspecified,
-        borderFocused = hoveredBackground,
-        borderPressed = pressedBackground,
-        borderHovered = Color.Unspecified,
-    ),
-    metrics,
-)
+) =
+    IconButtonStyle(
+        IconButtonColors(
+            foregroundSelectedActivated = Color.Unspecified,
+            background = Color.Unspecified,
+            backgroundDisabled = Color.Unspecified,
+            backgroundSelected = Color.Unspecified,
+            backgroundSelectedActivated = Color.Unspecified,
+            backgroundFocused = Color.Unspecified,
+            backgroundPressed = hoveredBackground,
+            backgroundHovered = pressedBackground,
+            border = Color.Unspecified,
+            borderDisabled = Color.Unspecified,
+            borderSelected = Color.Unspecified,
+            borderSelectedActivated = Color.Unspecified,
+            borderFocused = hoveredBackground,
+            borderPressed = pressedBackground,
+            borderHovered = Color.Unspecified,
+        ),
+        metrics,
+    )
 
 @Composable
-fun TitleBarColors.Companion.light(
+public fun TitleBarColors.Companion.light(
     backgroundColor: Color = IntUiLightTheme.colors.grey(2),
     inactiveBackground: Color = IntUiLightTheme.colors.grey(3),
     contentColor: Color = IntUiLightTheme.colors.grey(12),
@@ -202,19 +203,20 @@ fun TitleBarColors.Companion.light(
     // com.intellij.openapi.wm.impl.customFrameDecorations.CustomFrameTitleButtons.closeStyleBuilder
     titlePaneCloseButtonHoveredBackground: Color = Color(0xFFE81123),
     titlePaneCloseButtonPressedBackground: Color = Color(0xFFF1707A),
-
     iconButtonHoveredBackground: Color = IntUiLightTheme.colors.grey(3),
     iconButtonPressedBackground: Color = IntUiLightTheme.colors.grey(3),
 
     // There are two fields in theme.json: transparentHoveredBackground and hoveredBackground,
     // but in com.intellij.ide.ui.laf.darcula.ui.ToolbarComboWidgetUI#paintBackground,
-    // transparentHoveredBackground is used first, which is guessed to be due to the gradient background
+    // transparentHoveredBackground is used first, which is guessed to be due to the gradient
+    // background
     // caused by the project color of the titlebar, which makes the pure color background look strange
-    // in the area. In order to simplify the use in Jewel, here directly use transparentHoveredBackground
+    // in the area. In order to simplify the use in Jewel, here directly use
+    // transparentHoveredBackground
     // as hoveredBackground.
     dropdownHoveredBackground: Color = Color(0x1AFFFFFF),
     dropdownPressedBackground: Color = dropdownHoveredBackground,
-) =
+): TitleBarColors =
     TitleBarColors(
         background = backgroundColor,
         inactiveBackground = inactiveBackground,
@@ -232,7 +234,7 @@ fun TitleBarColors.Companion.light(
     )
 
 @Composable
-fun TitleBarColors.Companion.lightWithLightHeader(
+public fun TitleBarColors.Companion.lightWithLightHeader(
     backgroundColor: Color = IntUiLightTheme.colors.grey(13),
     inactiveBackground: Color = IntUiLightTheme.colors.grey(12),
     fullscreenControlButtonsBackground: Color = Color(0xFF7A7B80),
@@ -246,7 +248,7 @@ fun TitleBarColors.Companion.lightWithLightHeader(
     iconButtonPressedBackground: Color = IntUiLightTheme.colors.grey(11),
     dropdownHoveredBackground: Color = Color(0x0D000000),
     dropdownPressedBackground: Color = dropdownHoveredBackground,
-) =
+): TitleBarColors =
     TitleBarColors(
         background = backgroundColor,
         inactiveBackground = inactiveBackground,
@@ -264,7 +266,7 @@ fun TitleBarColors.Companion.lightWithLightHeader(
     )
 
 @Composable
-fun TitleBarColors.Companion.dark(
+public fun TitleBarColors.Companion.dark(
     backgroundColor: Color = IntUiDarkTheme.colors.grey(2),
     inactiveBackground: Color = IntUiDarkTheme.colors.grey(3),
     fullscreenControlButtonsBackground: Color = Color(0xFF575A5C),
@@ -278,32 +280,33 @@ fun TitleBarColors.Companion.dark(
     iconButtonPressedBackground: Color = IntUiLightTheme.colors.grey(3),
     dropdownHoveredBackground: Color = Color(0x1AFFFFFF),
     dropdownPressedBackground: Color = dropdownHoveredBackground,
-) = TitleBarColors(
-    background = backgroundColor,
-    inactiveBackground = inactiveBackground,
-    content = contentColor,
-    border = borderColor,
-    fullscreenControlButtonsBackground = fullscreenControlButtonsBackground,
-    titlePaneButtonHoveredBackground = titlePaneButtonHoveredBackground,
-    titlePaneButtonPressedBackground = titlePaneButtonPressedBackground,
-    titlePaneCloseButtonHoveredBackground = titlePaneCloseButtonHoveredBackground,
-    titlePaneCloseButtonPressedBackground = titlePaneCloseButtonPressedBackground,
-    iconButtonHoveredBackground = iconButtonHoveredBackground,
-    iconButtonPressedBackground = iconButtonPressedBackground,
-    dropdownHoveredBackground = dropdownHoveredBackground,
-    dropdownPressedBackground = dropdownPressedBackground,
-)
+): TitleBarColors =
+    TitleBarColors(
+        background = backgroundColor,
+        inactiveBackground = inactiveBackground,
+        content = contentColor,
+        border = borderColor,
+        fullscreenControlButtonsBackground = fullscreenControlButtonsBackground,
+        titlePaneButtonHoveredBackground = titlePaneButtonHoveredBackground,
+        titlePaneButtonPressedBackground = titlePaneButtonPressedBackground,
+        titlePaneCloseButtonHoveredBackground = titlePaneCloseButtonHoveredBackground,
+        titlePaneCloseButtonPressedBackground = titlePaneCloseButtonPressedBackground,
+        iconButtonHoveredBackground = iconButtonHoveredBackground,
+        iconButtonPressedBackground = iconButtonPressedBackground,
+        dropdownHoveredBackground = dropdownHoveredBackground,
+        dropdownPressedBackground = dropdownPressedBackground,
+    )
 
-fun TitleBarMetrics.Companion.defaults(
+public fun TitleBarMetrics.Companion.defaults(
     height: Dp = 40.dp,
     gradientStartX: Dp = (-100).dp,
     gradientEndX: Dp = 400.dp,
     titlePaneButtonSize: DpSize = DpSize(40.dp, 40.dp),
-) = TitleBarMetrics(height, gradientStartX, gradientEndX, titlePaneButtonSize)
+): TitleBarMetrics = TitleBarMetrics(height, gradientStartX, gradientEndX, titlePaneButtonSize)
 
-fun TitleBarIcons.Companion.defaults(
+public fun TitleBarIcons.Companion.defaults(
     minimizeButton: PainterProvider = decoratedWindowPainterProvider("icons/intui/window/minimize.svg"),
     maximizeButton: PainterProvider = decoratedWindowPainterProvider("icons/intui/window/maximize.svg"),
     restoreButton: PainterProvider = decoratedWindowPainterProvider("icons/intui/window/restore.svg"),
     closeButton: PainterProvider = decoratedWindowPainterProvider("icons/intui/window/close.svg"),
-) = TitleBarIcons(minimizeButton, maximizeButton, restoreButton, closeButton)
+): TitleBarIcons = TitleBarIcons(minimizeButton, maximizeButton, restoreButton, closeButton)

@@ -21,7 +21,7 @@ import org.jetbrains.jewel.ui.theme.treeStyle
 
 @ExperimentalJewelApi
 @Composable
-fun <T> LazyTree(
+public fun <T> LazyTree(
     tree: Tree<T>,
     modifier: Modifier = Modifier,
     onElementClick: (Tree.Element<T>) -> Unit = {},
@@ -34,6 +34,7 @@ fun <T> LazyTree(
 ) {
     val colors = style.colors
     val metrics = style.metrics
+
     BasicLazyTree(
         tree = tree,
         onElementClick = onElementClick,
@@ -57,17 +58,12 @@ fun <T> LazyTree(
             Icon(painter = painter, contentDescription = null)
         },
     ) {
-        CompositionLocalProvider(
-            LocalContentColor provides (
-                style.colors.contentFor(
-                    TreeElementState.of(
-                        focused = isActive,
-                        selected = isSelected,
-                        expanded = false,
-                    ),
-                ).value
-                    .takeOrElse { LocalContentColor.current }
-                ),
-        ) { nodeContent(it) }
+        val resolvedContentColor = style.colors
+            .contentFor(TreeElementState.of(focused = isActive, selected = isSelected, expanded = false))
+            .value.takeOrElse { LocalContentColor.current }
+
+        CompositionLocalProvider(LocalContentColor provides resolvedContentColor) {
+            nodeContent(it)
+        }
     }
 }

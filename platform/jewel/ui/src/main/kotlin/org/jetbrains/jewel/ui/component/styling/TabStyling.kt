@@ -3,7 +3,9 @@ package org.jetbrains.jewel.ui.component.styling
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.ProvidableCompositionLocal
 import androidx.compose.runtime.Stable
+import androidx.compose.runtime.State
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
@@ -14,142 +16,151 @@ import org.jetbrains.jewel.ui.painter.PainterProvider
 
 @Stable
 @GenerateDataFunctions
-class TabStyle(
-    val colors: TabColors,
-    val metrics: TabMetrics,
-    val icons: TabIcons,
-    val contentAlpha: TabContentAlpha,
+public class TabStyle(
+    public val colors: TabColors,
+    public val metrics: TabMetrics,
+    public val icons: TabIcons,
+    public val contentAlpha: TabContentAlpha,
 ) {
 
-    companion object
+    public companion object
 }
 
 @Stable
 @GenerateDataFunctions
-class TabMetrics(
-    val underlineThickness: Dp,
-    val tabPadding: PaddingValues,
-    val tabHeight: Dp,
-    val closeContentGap: Dp,
+public class TabMetrics(
+    public val underlineThickness: Dp,
+    public val tabPadding: PaddingValues,
+    public val tabHeight: Dp,
+    public val closeContentGap: Dp,
 ) {
 
-    companion object
+    public companion object
 }
 
 @Immutable
 @GenerateDataFunctions
-class TabIcons(val close: PainterProvider) {
+public class TabIcons(public val close: PainterProvider) {
 
-    companion object
+    public companion object
 }
 
 @Immutable
 @GenerateDataFunctions
-class TabColors(
-    val background: Color,
-    val backgroundDisabled: Color,
-    val backgroundPressed: Color,
-    val backgroundHovered: Color,
-    val backgroundSelected: Color,
-    val content: Color,
-    val contentDisabled: Color,
-    val contentPressed: Color,
-    val contentHovered: Color,
-    val contentSelected: Color,
-    val underline: Color,
-    val underlineDisabled: Color,
-    val underlinePressed: Color,
-    val underlineHovered: Color,
-    val underlineSelected: Color,
+public class TabColors(
+    public val background: Color,
+    public val backgroundDisabled: Color,
+    public val backgroundPressed: Color,
+    public val backgroundHovered: Color,
+    public val backgroundSelected: Color,
+    public val content: Color,
+    public val contentDisabled: Color,
+    public val contentPressed: Color,
+    public val contentHovered: Color,
+    public val contentSelected: Color,
+    public val underline: Color,
+    public val underlineDisabled: Color,
+    public val underlinePressed: Color,
+    public val underlineHovered: Color,
+    public val underlineSelected: Color,
 ) {
 
     @Composable
-    fun contentFor(state: TabState) = rememberUpdatedState(
-        when {
-            state.isSelected -> contentSelected
-            else -> state.chooseValueIgnoreCompat(
-                normal = content,
-                disabled = contentDisabled,
-                pressed = contentPressed,
-                hovered = contentHovered,
-                active = content,
-            )
-        },
-    )
+    public fun contentFor(state: TabState): State<Color> =
+        rememberUpdatedState(
+            when {
+                state.isSelected -> contentSelected
+                else ->
+                    state.chooseValueIgnoreCompat(
+                        normal = content,
+                        disabled = contentDisabled,
+                        pressed = contentPressed,
+                        hovered = contentHovered,
+                        active = content,
+                    )
+            },
+        )
 
     @Composable
-    fun backgroundFor(state: TabState) = rememberUpdatedState(
-        when {
-            !state.isEnabled -> backgroundDisabled
-            state.isPressed -> backgroundPressed
-            state.isHovered -> backgroundHovered
-            state.isActive -> background
-            state.isSelected -> backgroundSelected
-            else -> background
-        },
-    )
+    public fun backgroundFor(state: TabState): State<Color> =
+        rememberUpdatedState(
+            when {
+                !state.isEnabled -> backgroundDisabled
+                state.isPressed -> backgroundPressed
+                state.isHovered -> backgroundHovered
+                state.isActive -> background
+                state.isSelected -> backgroundSelected
+                else -> background
+            },
+        )
 
     @Composable
-    fun underlineFor(state: TabState) = rememberUpdatedState(
-        when {
-            state.isSelected -> underlineSelected
-            else -> state.chooseValueIgnoreCompat(
-                normal = underline,
-                disabled = underlineDisabled,
-                pressed = underlinePressed,
-                hovered = underlineHovered,
-                active = underline,
-            )
-        },
-    )
+    public fun underlineFor(state: TabState): State<Color> =
+        rememberUpdatedState(
+            when {
+                state.isSelected -> underlineSelected
+                else ->
+                    state.chooseValueIgnoreCompat(
+                        normal = underline,
+                        disabled = underlineDisabled,
+                        pressed = underlinePressed,
+                        hovered = underlineHovered,
+                        active = underline,
+                    )
+            },
+        )
 
-    companion object
+    public companion object
 }
 
 @Immutable
 @GenerateDataFunctions
-class TabContentAlpha(
-    val iconNormal: Float,
-    val iconDisabled: Float,
-    val iconPressed: Float,
-    val iconHovered: Float,
-    val iconSelected: Float,
-    val labelNormal: Float,
-    val labelDisabled: Float,
-    val labelPressed: Float,
-    val labelHovered: Float,
-    val labelSelected: Float,
+public class TabContentAlpha(
+    public val iconNormal: Float,
+    public val iconDisabled: Float,
+    public val iconPressed: Float,
+    public val iconHovered: Float,
+    public val iconSelected: Float,
+    public val labelNormal: Float,
+    public val labelDisabled: Float,
+    public val labelPressed: Float,
+    public val labelHovered: Float,
+    public val labelSelected: Float,
 ) {
 
     @Composable
-    fun iconFor(state: TabState) = rememberUpdatedState(
-        when {
-            state.isSelected -> iconSelected
-            else -> state.chooseValueIgnoreCompat(
-                normal = iconNormal,
-                disabled = iconDisabled,
-                pressed = iconPressed,
-                hovered = iconHovered,
-                active = iconNormal,
-            )
-        },
-    )
+    public fun iconFor(state: TabState): State<Float> =
+        rememberUpdatedState(
+            when {
+                state.isSelected -> iconSelected
+                else ->
+                    state.chooseValueIgnoreCompat(
+                        normal = iconNormal,
+                        disabled = iconDisabled,
+                        pressed = iconPressed,
+                        hovered = iconHovered,
+                        active = iconNormal,
+                    )
+            },
+        )
 
     @Composable
-    fun labelFor(state: TabState) = rememberUpdatedState(
-        when {
-            state.isSelected -> labelSelected
-            else -> state.chooseValueIgnoreCompat(
-                normal = labelNormal,
-                disabled = labelDisabled,
-                pressed = labelPressed,
-                hovered = labelHovered,
-                active = labelNormal,
-            )
-        },
-    )
+    public fun labelFor(state: TabState): State<Float> =
+        rememberUpdatedState(
+            when {
+                state.isSelected -> labelSelected
+                else ->
+                    state.chooseValueIgnoreCompat(
+                        normal = labelNormal,
+                        disabled = labelDisabled,
+                        pressed = labelPressed,
+                        hovered = labelHovered,
+                        active = labelNormal,
+                    )
+            },
+        )
 
-    companion object
+    public companion object
 }
 
 // Tabs are the only components that handle hover states
@@ -169,10 +180,12 @@ private fun <T> TabState.chooseValueIgnoreCompat(
         else -> normal
     }
 
-val LocalDefaultTabStyle = staticCompositionLocalOf<TabStyle> {
-    error("No LocalTabStyle provided")
-}
+public val LocalDefaultTabStyle: ProvidableCompositionLocal<TabStyle> =
+    staticCompositionLocalOf {
+        error("No LocalTabStyle provided. Have you forgotten the theme?")
+    }
 
-val LocalEditorTabStyle = staticCompositionLocalOf<TabStyle> {
-    error("No LocalTabStyle provided")
-}
+public val LocalEditorTabStyle: ProvidableCompositionLocal<TabStyle> =
+    staticCompositionLocalOf {
+        error("No LocalTabStyle provided. Have you forgotten the theme?")
+    }

@@ -10,15 +10,15 @@ import org.jetbrains.jewel.foundation.state.FocusableComponentState
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.util.thenIf
 
-enum class Outline {
+public enum class Outline {
     None,
     Warning,
     Error,
     ;
 
-    companion object {
+    public companion object {
 
-        fun of(warning: Boolean, error: Boolean) =
+        public fun of(warning: Boolean, error: Boolean): Outline =
             when {
                 error -> Error
                 warning -> Warning
@@ -28,7 +28,7 @@ enum class Outline {
 }
 
 @Composable
-fun Modifier.focusOutline(
+public fun Modifier.focusOutline(
     state: FocusableComponentState,
     outlineShape: Shape,
     alignment: Stroke.Alignment = Stroke.Alignment.Outside,
@@ -43,7 +43,7 @@ fun Modifier.focusOutline(
 }
 
 @Composable
-fun Modifier.outline(
+public fun Modifier.outline(
     state: FocusableComponentState,
     outline: Outline,
     outlineShape: Shape,
@@ -53,13 +53,14 @@ fun Modifier.outline(
     val outlineColors = JewelTheme.globalColors.outlines
 
     return thenIf(outline != Outline.None) {
-        val outlineColor = when {
-            state.isFocused && outline == Outline.Error -> outlineColors.focusedError
-            outline == Outline.Error -> outlineColors.error
-            state.isFocused && outline == Outline.Warning -> outlineColors.focusedWarning
-            outline == Outline.Warning -> outlineColors.warning
-            else -> error("State $state says it has an outline, but doesn't really")
-        }
+        val outlineColor =
+            when {
+                state.isFocused && outline == Outline.Error -> outlineColors.focusedError
+                outline == Outline.Error -> outlineColors.error
+                state.isFocused && outline == Outline.Warning -> outlineColors.focusedWarning
+                outline == Outline.Warning -> outlineColors.warning
+                else -> error("State $state says it has an outline, but doesn't really")
+            }
         border(alignment, outlineWidth, outlineColor, outlineShape)
     }
 }

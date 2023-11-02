@@ -3,6 +3,7 @@ package org.jetbrains.jewel.ui.painter.hints
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.isSpecified
+import org.jetbrains.jewel.foundation.GenerateDataFunctions
 import org.jetbrains.jewel.ui.painter.PainterHint
 import org.jetbrains.jewel.ui.painter.PainterProviderScope
 import org.jetbrains.jewel.ui.painter.PainterSuffixHint
@@ -20,6 +21,7 @@ private object DarkImpl : PainterSuffixHint() {
 }
 
 @Immutable
+@GenerateDataFunctions
 private class StrokeImpl(private val color: Color) : PainterSuffixHint(), PainterSvgPatchHint {
 
     override fun PainterProviderScope.suffix(): String = "_stroke"
@@ -31,19 +33,6 @@ private class StrokeImpl(private val color: Color) : PainterSuffixHint(), Painte
     }
 
     override fun PainterProviderScope.canApply(): Boolean = true
-
-    override fun toString(): String = "Stroke(color=$color)"
-
-    override fun hashCode(): Int = color.hashCode()
-
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (other !is StrokeImpl) return false
-
-        if (color != other.color) return false
-
-        return true
-    }
 
     private val backgroundPalette = listOf(
         Color(0xFFEBECF0),
@@ -73,14 +62,8 @@ private class StrokeImpl(private val color: Color) : PainterSuffixHint(), Painte
     )
 }
 
-fun Stroke(color: Color): PainterHint = if (color.isSpecified) {
-    StrokeImpl(color)
-} else {
-    PainterHint.None
-}
+public fun Stroke(color: Color): PainterHint =
+    if (color.isSpecified) StrokeImpl(color) else PainterHint.None
 
-fun Dark(isDark: Boolean = true): PainterHint = if (isDark) {
-    DarkImpl
-} else {
-    PainterHint.None
-}
+public fun Dark(isDark: Boolean = true): PainterHint =
+    if (isDark) DarkImpl else PainterHint.None

@@ -56,7 +56,8 @@ internal const val TITLE_BAR_LAYOUT_ID = "__TITLE_BAR_CONTENT__"
 
 internal const val TITLE_BAR_BORDER_LAYOUT_ID = "__TITLE_BAR_BORDER__"
 
-@Composable fun DecoratedWindowScope.TitleBar(
+@Composable
+public fun DecoratedWindowScope.TitleBar(
     modifier: Modifier = Modifier,
     gradientStartColor: Color = Color.Unspecified,
     style: TitleBarStyle = JewelTheme.defaultTitleBarStyle,
@@ -101,7 +102,7 @@ internal fun DecoratedWindowScope.TitleBarImpl(
     }
 
     Layout(
-        {
+        content = {
             CompositionLocalProvider(
                 LocalContentColor provides style.colors.content,
                 LocalIconButtonStyle provides style.iconButtonStyle,
@@ -113,15 +114,11 @@ internal fun DecoratedWindowScope.TitleBarImpl(
                 }
             }
         },
-        modifier.background(backgroundBrush)
+        modifier = modifier.background(backgroundBrush)
             .focusProperties { canFocus = false }
             .layoutId(TITLE_BAR_LAYOUT_ID)
             .height(style.metrics.height)
-            .onSizeChanged {
-                with(density) {
-                    applyTitleBar(it.height.toDp(), state)
-                }
-            }
+            .onSizeChanged { with(density) { applyTitleBar(it.height.toDp(), state) } }
             .fillMaxWidth(),
         measurePolicy = rememberTitleBarMeasurePolicy(
             window,
@@ -130,7 +127,12 @@ internal fun DecoratedWindowScope.TitleBarImpl(
         ),
     )
 
-    Spacer(Modifier.layoutId(TITLE_BAR_BORDER_LAYOUT_ID).height(1.dp).fillMaxWidth().background(style.colors.border))
+    Spacer(
+        Modifier.layoutId(TITLE_BAR_BORDER_LAYOUT_ID)
+            .height(1.dp)
+            .fillMaxWidth()
+            .background(style.colors.border),
+    )
 }
 
 internal class TitleBarMeasurePolicy(
@@ -141,10 +143,7 @@ internal class TitleBarMeasurePolicy(
 
     override fun MeasureScope.measure(measurables: List<Measurable>, constraints: Constraints): MeasureResult {
         if (measurables.isEmpty()) {
-            return layout(
-                constraints.minWidth,
-                constraints.minHeight,
-            ) {}
+            return layout(width = constraints.minWidth, height = constraints.minHeight) {}
         }
 
         var occupiedSpaceHorizontally = 0
@@ -179,9 +178,11 @@ internal class TitleBarMeasurePolicy(
             if (state.isFullscreen) {
                 MacUtil.updateFullScreenButtons(window)
             }
-            val placeableGroups = measuredPlaceable.groupBy { (measurable, _) ->
-                (measurable.parentData as? TitleBarChildDataNode)?.horizontalAlignment ?: Alignment.CenterHorizontally
-            }
+            val placeableGroups =
+                measuredPlaceable.groupBy { (measurable, _) ->
+                    (measurable.parentData as? TitleBarChildDataNode)?.horizontalAlignment
+                        ?: Alignment.CenterHorizontally
+                }
 
             var headUsedSpace = leftInset
             var trailerUsedSpace = rightInset
@@ -230,23 +231,19 @@ internal fun rememberTitleBarMeasurePolicy(
     window: Window,
     state: DecoratedWindowState,
     applyTitleBar: (Dp, DecoratedWindowState) -> PaddingValues,
-): MeasurePolicy {
-    return remember(window, state, applyTitleBar) {
-        TitleBarMeasurePolicy(
-            window,
-            state,
-            applyTitleBar,
-        )
+): MeasurePolicy =
+    remember(window, state, applyTitleBar) {
+        TitleBarMeasurePolicy(window, state, applyTitleBar)
     }
-}
 
-interface TitleBarScope {
+public interface TitleBarScope {
 
-    val title: String
+    public val title: String
 
-    val icon: Painter?
+    public val icon: Painter?
 
-    @Stable fun Modifier.align(alignment: Alignment.Horizontal): Modifier
+    @Stable
+    public fun Modifier.align(alignment: Alignment.Horizontal): Modifier
 }
 
 private class TitleBarScopeImpl(
@@ -254,17 +251,14 @@ private class TitleBarScopeImpl(
     override val icon: Painter?,
 ) : TitleBarScope {
 
-    override fun Modifier.align(alignment: Alignment.Horizontal): Modifier {
-        return then(
-            TitleBarChildDataElement(
-                alignment,
-                inspectorInfo = debugInspectorInfo {
-                    name = "align"
-                    value = alignment
-                },
-            ),
+    override fun Modifier.align(alignment: Alignment.Horizontal): Modifier =
+        this then TitleBarChildDataElement(
+            alignment,
+            debugInspectorInfo {
+                name = "align"
+                value = alignment
+            },
         )
-    }
 }
 
 private class TitleBarChildDataElement(
@@ -295,5 +289,6 @@ private class TitleBarChildDataNode(
     var horizontalAlignment: Alignment.Horizontal,
 ) : ParentDataModifierNode, Modifier.Node() {
 
-    override fun Density.modifyParentData(parentData: Any?) = this@TitleBarChildDataNode
+    override fun Density.modifyParentData(parentData: Any?) =
+        this@TitleBarChildDataNode
 }

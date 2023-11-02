@@ -37,7 +37,7 @@ fun main() {
                     IntUiThemes.Light -> TitleBarStyle.light()
                     IntUiThemes.LightWithLightHeader -> TitleBarStyle.lightWithLightHeader()
                     IntUiThemes.Dark -> TitleBarStyle.dark()
-                    IntUiThemes.SYSTEM -> if (MainViewModel.theme.isDark()) {
+                    IntUiThemes.System -> if (MainViewModel.theme.isDark()) {
                         TitleBarStyle.dark()
                     } else {
                         TitleBarStyle.light()

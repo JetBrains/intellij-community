@@ -12,6 +12,7 @@ dependencies {
     api(projects.ui) {
         exclude(group = "org.jetbrains.kotlinx")
     }
+
     when (supportedIJVersion()) {
         IJ_232 -> {
             api(projects.ideLafBridge.ideLafBridge232)

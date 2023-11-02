@@ -3,14 +3,17 @@ package org.jetbrains.jewel.samples.standalone.view
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.jetbrains.jewel.foundation.modifier.trackActivation
@@ -27,48 +30,59 @@ import org.jetbrains.jewel.ui.component.styling.LocalCheckboxStyle
 import org.jetbrains.jewel.ui.painter.hints.Selected
 import org.jetbrains.jewel.ui.painter.rememberResourcePainterProvider
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 @View(title = "Welcome", position = 0, icon = "icons/meetNewUi.svg")
 fun WelcomeView() {
-    Box(
-        Modifier.trackActivation().fillMaxSize()
+    Column(
+        modifier = Modifier.trackActivation()
+            .fillMaxSize()
             .background(JewelTheme.globalColors.paneBackground)
             .padding(24.dp),
+        verticalArrangement = Arrangement.spacedBy(24.dp),
     ) {
-        Column(verticalArrangement = Arrangement.spacedBy(24.dp)) {
-            val meetNewUiImage =
-                rememberResourcePainterProvider("images/New UI Image.png", StandaloneSampleIcons::class.java)
-            val meetNewUiImagePainter by meetNewUiImage.getPainter()
-            Image(meetNewUiImagePainter, "Meet Jewel")
+        val meetNewUiImage =
+            rememberResourcePainterProvider("images/New UI Image.png", StandaloneSampleIcons::class.java)
+        val meetNewUiImagePainter by meetNewUiImage.getPainter()
+        Image(
+            painter = meetNewUiImagePainter,
+            contentDescription = null,
+            modifier = Modifier.widthIn(max = 500.dp),
+            contentScale = ContentScale.Crop,
+        )
 
-            Text("Meet Jewel", fontSize = 20.sp)
+        Text("Meet Jewel", fontSize = 20.sp)
 
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text("Theme:")
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    ThemeSelectionChip(IntUiThemes.Dark, "Dark", "icons/darkTheme.svg")
-                    ThemeSelectionChip(IntUiThemes.Light, "Light", "icons/lightTheme.svg")
-                    ThemeSelectionChip(
-                        IntUiThemes.LightWithLightHeader,
-                        "Light(Header)",
-                        "icons/lightWithLightHeaderTheme.svg",
-                    )
-                    ThemeSelectionChip(IntUiThemes.SYSTEM, "System", "icons/systemTheme.svg")
-                }
-            }
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text("Theme:")
 
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                CheckboxRow(
-                    text = "Swing compatibility",
-                    checked = MainViewModel.swingCompat,
-                    onCheckedChange = {
-                        MainViewModel.swingCompat = it
-                    },
-                    colors = LocalCheckboxStyle.current.colors,
-                    metrics = LocalCheckboxStyle.current.metrics,
-                    icons = LocalCheckboxStyle.current.icons,
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                ThemeSelectionChip(IntUiThemes.Dark, "Dark", "icons/darkTheme.svg")
+
+                ThemeSelectionChip(IntUiThemes.Light, "Light", "icons/lightTheme.svg")
+
+                ThemeSelectionChip(
+                    IntUiThemes.LightWithLightHeader,
+                    "Light with Light Header",
+                    "icons/lightWithLightHeaderTheme.svg",
                 )
+
+                ThemeSelectionChip(IntUiThemes.System, "System", "icons/systemTheme.svg")
             }
+        }
+
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            CheckboxRow(
+                text = "Swing compatibility",
+                checked = MainViewModel.swingCompat,
+                onCheckedChange = { MainViewModel.swingCompat = it },
+                colors = LocalCheckboxStyle.current.colors,
+                metrics = LocalCheckboxStyle.current.metrics,
+                icons = LocalCheckboxStyle.current.icons,
+            )
         }
     }
 }

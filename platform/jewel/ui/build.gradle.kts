@@ -8,7 +8,8 @@ plugins {
     alias(libs.plugins.kotlinx.serialization)
 }
 
-private val composeVersion get() = ComposeBuildConfig.composeVersion
+private val composeVersion
+    get() = ComposeBuildConfig.composeVersion
 
 dependencies {
     api(projects.foundation)

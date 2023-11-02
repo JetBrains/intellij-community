@@ -21,17 +21,24 @@ import java.net.URL
 
 open class StudioVersionsGenerationExtension(project: Project) {
 
-    val targetDir: DirectoryProperty = project.objects.directoryProperty()
-        .convention(project.layout.buildDirectory.dir("generated/studio-releases/"))
+    val targetDir: DirectoryProperty =
+        project.objects
+            .directoryProperty()
+            .convention(project.layout.buildDirectory.dir("generated/studio-releases/"))
 
-    val resourcesDirs: SetProperty<File> = project.objects.setProperty<File>()
-        .convention(project.sourceSets.main.get().resources.srcDirs)
+    val resourcesDirs: SetProperty<File> =
+        project.objects
+            .setProperty<File>()
+            .convention(project.sourceSets.main.get().resources.srcDirs)
 
-    val dataUrl: Property<String> = project.objects.property<String>()
-        .convention("https://jb.gg/android-studio-releases-list.json")
+    val dataUrl: Property<String> =
+        project.objects
+            .property<String>()
+            .convention("https://jb.gg/android-studio-releases-list.json")
 }
 
-internal const val STUDIO_RELEASES_OUTPUT_CLASS_NAME = "org.jetbrains.jewel.samples.ideplugin.releasessample.AndroidStudioReleases"
+internal const val STUDIO_RELEASES_OUTPUT_CLASS_NAME =
+    "org.jetbrains.jewel.samples.ideplugin.releasessample.AndroidStudioReleases"
 
 open class AndroidStudioReleasesGeneratorTask : DefaultTask() {
 

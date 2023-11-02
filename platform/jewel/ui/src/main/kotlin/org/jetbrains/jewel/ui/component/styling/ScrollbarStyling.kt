@@ -3,6 +3,7 @@ package org.jetbrains.jewel.ui.component.styling
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.ProvidableCompositionLocal
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
@@ -12,37 +13,38 @@ import kotlin.time.Duration
 
 @Stable
 @GenerateDataFunctions
-class ScrollbarStyle(
-    val colors: ScrollbarColors,
-    val metrics: ScrollbarMetrics,
-    val hoverDuration: Duration,
+public class ScrollbarStyle(
+    public val colors: ScrollbarColors,
+    public val metrics: ScrollbarMetrics,
+    public val hoverDuration: Duration,
 ) {
 
-    companion object
+    public companion object
 }
 
 @Immutable
 @GenerateDataFunctions
-class ScrollbarColors(
-    val thumbBackground: Color,
-    val thumbBackgroundHovered: Color,
+public class ScrollbarColors(
+    public val thumbBackground: Color,
+    public val thumbBackgroundHovered: Color,
 ) {
 
-    companion object
+    public companion object
 }
 
 @Stable
 @GenerateDataFunctions
-class ScrollbarMetrics(
-    val thumbCornerSize: CornerSize,
-    val thumbThickness: Dp,
-    val minThumbLength: Dp,
-    val trackPadding: PaddingValues,
+public class ScrollbarMetrics(
+    public val thumbCornerSize: CornerSize,
+    public val thumbThickness: Dp,
+    public val minThumbLength: Dp,
+    public val trackPadding: PaddingValues,
 ) {
 
-    companion object
+    public companion object
 }
 
-val LocalScrollbarStyle = staticCompositionLocalOf<ScrollbarStyle> {
-    error("No ScrollbarStyle provided")
-}
+public val LocalScrollbarStyle: ProvidableCompositionLocal<ScrollbarStyle> =
+    staticCompositionLocalOf {
+        error("No ScrollbarStyle provided. Have you forgotten the theme?")
+    }

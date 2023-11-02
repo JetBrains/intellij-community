@@ -26,10 +26,11 @@ import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.component.styling.HorizontalProgressBarStyle
 import org.jetbrains.jewel.ui.theme.horizontalProgressBarStyle
 
-// TODO implement green/red/yellow variants based on com.intellij.openapi.progress.util.ColorProgressBar
+// TODO implement green/red/yellow variants based on
+// com.intellij.openapi.progress.util.ColorProgressBar
 
 @Composable
-fun HorizontalProgressBar(
+public fun HorizontalProgressBar(
     progress: Float, // from 0 to 1
     modifier: Modifier = Modifier,
     style: HorizontalProgressBarStyle = JewelTheme.horizontalProgressBarStyle,
@@ -38,9 +39,7 @@ fun HorizontalProgressBar(
     val shape = RoundedCornerShape(style.metrics.cornerSize)
 
     Box(
-        modifier
-            .defaultMinSize(minHeight = style.metrics.minHeight)
-            .clip(shape)
+        modifier.defaultMinSize(minHeight = style.metrics.minHeight).clip(shape)
             .drawWithContent {
                 drawRect(color = colors.track) // Draw the background
                 val progressWidth = size.width * progress
@@ -59,13 +58,15 @@ fun HorizontalProgressBar(
 }
 
 @Composable
-fun IndeterminateHorizontalProgressBar(
+public fun IndeterminateHorizontalProgressBar(
     modifier: Modifier = Modifier,
     style: HorizontalProgressBarStyle = JewelTheme.horizontalProgressBarStyle,
 ) {
     val infiniteTransition = rememberInfiniteTransition()
 
-    val cycleDurationMillis by remember { mutableStateOf(style.indeterminateCycleDuration.inWholeMilliseconds.toInt()) }
+    val cycleDurationMillis by remember {
+        mutableStateOf(style.indeterminateCycleDuration.inWholeMilliseconds.toInt())
+    }
     val animatedProgress by infiniteTransition.animateFloat(
         initialValue = 0f,
         targetValue = 2f,
@@ -77,26 +78,25 @@ fun IndeterminateHorizontalProgressBar(
 
     val highlightWidth = style.metrics.indeterminateHighlightWidth
     val colors = style.colors
-    val colorsList by remember { mutableStateOf(listOf(colors.indeterminateBase, colors.indeterminateHighlight)) }
+    val colorsList by remember {
+        mutableStateOf(listOf(colors.indeterminateBase, colors.indeterminateHighlight))
+    }
     val shape = RoundedCornerShape(style.metrics.cornerSize)
 
     Box(
-        modifier
-            .defaultMinSize(minHeight = style.metrics.minHeight)
-            .clip(shape)
-            .drawWithContent {
-                drawRect(color = colors.track) // Draw the background
-                val x = highlightWidth.value * animatedProgress
+        modifier.defaultMinSize(minHeight = style.metrics.minHeight).clip(shape).drawWithContent {
+            drawRect(color = colors.track) // Draw the background
+            val x = highlightWidth.value * animatedProgress
 
-                // Draw the animated highlight
-                drawRect(
-                    brush = Brush.linearGradient(
-                        colors = colorsList,
-                        start = Offset(x, 0f),
-                        end = Offset(x + highlightWidth.value, 0f),
-                        TileMode.Mirror,
-                    ),
-                )
-            },
+            // Draw the animated highlight
+            drawRect(
+                Brush.linearGradient(
+                    colors = colorsList,
+                    start = Offset(x, 0f),
+                    end = Offset(x + highlightWidth.value, 0f),
+                    TileMode.Mirror,
+                ),
+            )
+        },
     )
 }

@@ -15,22 +15,16 @@ val extension: StudioVersionsGenerationExtension =
 val task =
     tasks.register<AndroidStudioReleasesGeneratorTask>("generateAndroidStudioReleasesList") {
         val className = ClassName.bestGuess(STUDIO_RELEASES_OUTPUT_CLASS_NAME)
-        outputFile = extension.targetDir.file(
-            className.packageName.replace(".", "/")
-                .plus("/${className.simpleName}.kt")
-        )
+        val filePath = className.packageName.replace(".", "/") +
+            "/${className.simpleName}.kt"
+        outputFile = extension.targetDir.file(filePath)
         dataUrl = extension.dataUrl
         resourcesDirs = extension.resourcesDirs
     }
 
 tasks {
-    withType<BaseKotlinCompile> {
-        dependsOn(task)
-    }
-
-    withType<Detekt> {
-        dependsOn(task)
-    }
+    withType<BaseKotlinCompile> { dependsOn(task) }
+    withType<Detekt> { dependsOn(task) }
 }
 
 pluginManager.withPlugin("org.jetbrains.kotlin.jvm") {

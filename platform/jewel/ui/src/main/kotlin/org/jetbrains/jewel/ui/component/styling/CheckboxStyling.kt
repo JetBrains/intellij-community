@@ -3,6 +3,8 @@ package org.jetbrains.jewel.ui.component.styling
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.ProvidableCompositionLocal
+import androidx.compose.runtime.State
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
@@ -16,55 +18,57 @@ import org.jetbrains.jewel.ui.painter.PainterProvider
 
 @Immutable
 @GenerateDataFunctions
-class CheckboxStyle(
-    val colors: CheckboxColors,
-    val metrics: CheckboxMetrics,
-    val icons: CheckboxIcons,
+public class CheckboxStyle(
+    public val colors: CheckboxColors,
+    public val metrics: CheckboxMetrics,
+    public val icons: CheckboxIcons,
 ) {
 
-    companion object
+    public companion object
 }
 
 @Immutable
 @GenerateDataFunctions
-class CheckboxColors(
-    val content: Color,
-    val contentDisabled: Color,
-    val contentSelected: Color,
+public class CheckboxColors(
+    public val content: Color,
+    public val contentDisabled: Color,
+    public val contentSelected: Color,
 ) {
 
     @Composable
-    fun contentFor(state: CheckboxState) = rememberUpdatedState(
-        when {
-            !state.isEnabled -> contentDisabled
-            state.toggleableState == ToggleableState.On -> contentSelected
-            else -> content
-        },
-    )
+    public fun contentFor(state: CheckboxState): State<Color> =
+        rememberUpdatedState(
+            when {
+                !state.isEnabled -> contentDisabled
+                state.toggleableState == ToggleableState.On -> contentSelected
+                else -> content
+            },
+        )
 
-    companion object
+    public companion object
 }
 
 @Immutable
 @GenerateDataFunctions
-class CheckboxMetrics(
-    val checkboxSize: DpSize,
-    val checkboxCornerSize: CornerSize,
-    val outlineSize: DpSize,
-    val outlineOffset: DpOffset,
-    val iconContentGap: Dp,
+public class CheckboxMetrics(
+    public val checkboxSize: DpSize,
+    public val checkboxCornerSize: CornerSize,
+    public val outlineSize: DpSize,
+    public val outlineOffset: DpOffset,
+    public val iconContentGap: Dp,
 ) {
 
-    companion object
+    public companion object
 }
 
 @Immutable
 @GenerateDataFunctions
-class CheckboxIcons(val checkbox: PainterProvider) {
+public class CheckboxIcons(public val checkbox: PainterProvider) {
 
-    companion object
+    public companion object
 }
 
-val LocalCheckboxStyle = staticCompositionLocalOf<CheckboxStyle> {
-    error("No CheckboxStyle provided")
-}
+public val LocalCheckboxStyle: ProvidableCompositionLocal<CheckboxStyle> =
+    staticCompositionLocalOf {
+        error("No CheckboxStyle provided. Have you forgotten the theme?")
+    }

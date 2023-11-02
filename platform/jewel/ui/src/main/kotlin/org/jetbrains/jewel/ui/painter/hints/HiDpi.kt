@@ -19,4 +19,4 @@ private object HiDpiImpl : PainterSuffixHint() {
     override fun toString(): String = "HiDpi"
 }
 
-fun HiDpi(): PainterHint = HiDpiImpl
+public fun HiDpi(): PainterHint = HiDpiImpl

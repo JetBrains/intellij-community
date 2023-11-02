@@ -15,24 +15,26 @@ internal interface Logger {
 
     // Resets previous color codes
     private fun resetColor() = "\u001b[0m"
-    fun log(level: LogLevel, msg: String)
-    fun e(msg: String) {
+
+    public fun log(level: LogLevel, msg: String)
+
+    public fun e(msg: String) {
         log(LogLevel.Error, LogLevel.Error.color + msg + resetColor())
     }
 
-    fun d(msg: String) {
+    public fun d(msg: String) {
         log(LogLevel.Debug, LogLevel.Debug.color + msg + resetColor())
     }
 
-    fun w(msg: String) {
+    public fun w(msg: String) {
         log(LogLevel.Warn, LogLevel.Warn.color + msg + resetColor())
     }
 
-    fun i(msg: String) {
+    public fun i(msg: String) {
         log(LogLevel.Info, LogLevel.Info.color + msg + resetColor())
     }
 
-    fun t(msg: String) {
+    public fun t(msg: String) {
         log(LogLevel.Trace, LogLevel.Trace.color + msg + resetColor())
     }
 }
@@ -42,6 +44,7 @@ internal interface Logger {
 internal object Log : Logger {
 
     override var currentLogLevel: LogLevel = LogLevel.Off
+
     override fun log(level: LogLevel, msg: String) {
         if (currentLogLevel.ordinal <= level.ordinal) println(msg)
     }

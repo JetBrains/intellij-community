@@ -7,28 +7,28 @@ import org.jetbrains.jewel.window.styling.DecoratedWindowColors
 import org.jetbrains.jewel.window.styling.DecoratedWindowMetrics
 import org.jetbrains.jewel.window.styling.DecoratedWindowStyle
 
-fun DecoratedWindowStyle.Companion.light(
+public fun DecoratedWindowStyle.Companion.light(
     colors: DecoratedWindowColors = DecoratedWindowColors.light(),
     metrics: DecoratedWindowMetrics = DecoratedWindowMetrics.defaults(),
-) = DecoratedWindowStyle(colors, metrics)
+): DecoratedWindowStyle = DecoratedWindowStyle(colors, metrics)
 
-fun DecoratedWindowStyle.Companion.dark(
+public fun DecoratedWindowStyle.Companion.dark(
     colors: DecoratedWindowColors = DecoratedWindowColors.dark(),
     metrics: DecoratedWindowMetrics = DecoratedWindowMetrics.defaults(),
-) = DecoratedWindowStyle(colors, metrics)
+): DecoratedWindowStyle = DecoratedWindowStyle(colors, metrics)
 
-fun DecoratedWindowColors.Companion.light(
+public fun DecoratedWindowColors.Companion.light(
     // from Window.undecorated.border
     borderColor: Color = Color(0xFF5A5D6B),
     inactiveBorderColor: Color = borderColor,
-) = DecoratedWindowColors(borderColor, inactiveBorderColor)
+): DecoratedWindowColors = DecoratedWindowColors(borderColor, inactiveBorderColor)
 
-fun DecoratedWindowColors.Companion.dark(
+public fun DecoratedWindowColors.Companion.dark(
     // from Window.undecorated.border
     borderColor: Color = Color(0xFF5A5D63),
     inactiveBorderColor: Color = borderColor,
-) = DecoratedWindowColors(borderColor, inactiveBorderColor)
+): DecoratedWindowColors = DecoratedWindowColors(borderColor, inactiveBorderColor)
 
-fun DecoratedWindowMetrics.Companion.defaults(
+public fun DecoratedWindowMetrics.Companion.defaults(
     borderWidth: Dp = 1.dp,
-) = DecoratedWindowMetrics(borderWidth)
+): DecoratedWindowMetrics = DecoratedWindowMetrics(borderWidth)

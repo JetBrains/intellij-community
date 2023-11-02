@@ -3,6 +3,7 @@
 plugins {
     id("org.jetbrains.kotlinx.binary-compatibility-validator")
     id("dev.drewhamilton.poko")
+    kotlin("jvm")
 }
 
 apiValidation {
@@ -18,14 +19,17 @@ poko {
     pokoAnnotation = "org.jetbrains.jewel.foundation.GenerateDataFunctions"
 }
 
-tasks {
-    val validatePublicApi = register<ValidatePublicApiTask>("validatePublicApi") {
-        include { it.file.extension == "api" }
-        source(project.fileTree("api"))
-        dependsOn(named("apiCheck"))
-    }
+kotlin {
+    explicitApi()
+}
 
-    named("check") {
-        dependsOn(validatePublicApi)
-    }
+tasks {
+    val validatePublicApi =
+        register<ValidatePublicApiTask>("validatePublicApi") {
+            include { it.file.extension == "api" }
+            source(project.fileTree("api"))
+            dependsOn(named("apiCheck"))
+        }
+
+    named("check") { dependsOn(validatePublicApi) }
 }

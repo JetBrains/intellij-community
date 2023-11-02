@@ -2,6 +2,7 @@ package org.jetbrains.jewel.ui.component.styling
 
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.ProvidableCompositionLocal
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
@@ -10,38 +11,39 @@ import kotlin.time.Duration
 
 @Immutable
 @GenerateDataFunctions
-class HorizontalProgressBarStyle(
-    val colors: HorizontalProgressBarColors,
-    val metrics: HorizontalProgressBarMetrics,
-    val indeterminateCycleDuration: Duration,
+public class HorizontalProgressBarStyle(
+    public val colors: HorizontalProgressBarColors,
+    public val metrics: HorizontalProgressBarMetrics,
+    public val indeterminateCycleDuration: Duration,
 ) {
 
-    companion object
+    public companion object
 }
 
 @Immutable
 @GenerateDataFunctions
-class HorizontalProgressBarColors(
-    val track: Color,
-    val progress: Color,
-    val indeterminateBase: Color,
-    val indeterminateHighlight: Color,
+public class HorizontalProgressBarColors(
+    public val track: Color,
+    public val progress: Color,
+    public val indeterminateBase: Color,
+    public val indeterminateHighlight: Color,
 ) {
 
-    companion object
+    public companion object
 }
 
 @Immutable
 @GenerateDataFunctions
-class HorizontalProgressBarMetrics(
-    val cornerSize: CornerSize,
-    val minHeight: Dp,
-    val indeterminateHighlightWidth: Dp,
+public class HorizontalProgressBarMetrics(
+    public val cornerSize: CornerSize,
+    public val minHeight: Dp,
+    public val indeterminateHighlightWidth: Dp,
 ) {
 
-    companion object
+    public companion object
 }
 
-val LocalHorizontalProgressBarStyle = staticCompositionLocalOf<HorizontalProgressBarStyle> {
-    error("No HorizontalProgressBarStyle provided")
-}
+public val LocalHorizontalProgressBarStyle: ProvidableCompositionLocal<HorizontalProgressBarStyle> =
+    staticCompositionLocalOf<HorizontalProgressBarStyle> {
+        error("No HorizontalProgressBarStyle provided. Have you forgotten the theme?")
+    }

@@ -11,7 +11,8 @@ internal object BridgeOverride : PainterPathHint {
 
     private val patchIconPath by lazy {
         val clazz = Class.forName("com.intellij.ui.icons.CachedImageIconKt")
-        val patchIconPath = clazz.getMethod("patchIconPath", String::class.java, ClassLoader::class.java)
+        val patchIconPath =
+            clazz.getMethod("patchIconPath", String::class.java, ClassLoader::class.java)
         patchIconPath.isAccessible = true
         patchIconPath
     }
@@ -24,12 +25,15 @@ internal object BridgeOverride : PainterPathHint {
         // removed (the classloader is set up differently in prod IDEs and when running
         // from Gradle, and the icon could be in either place depending on the environment)
         val fallbackPath = path.removePrefix(dirProvider.dir())
-        val patchedPath = classLoaders.firstNotNullOfOrNull { classLoader ->
-            val patchedPathAndClassLoader =
-                patchIconPath.invoke(null, path.removePrefix("/"), classLoader)
-                    ?: patchIconPath.invoke(null, fallbackPath, classLoader)
-            patchedPathAndClassLoader as? Pair<*, *>
-        }?.first as? String
+        val patchedPath =
+            classLoaders
+                .firstNotNullOfOrNull { classLoader ->
+                    val patchedPathAndClassLoader =
+                        patchIconPath.invoke(null, path.removePrefix("/"), classLoader)
+                            ?: patchIconPath.invoke(null, fallbackPath, classLoader)
+                    patchedPathAndClassLoader as? Pair<*, *>
+                }
+                ?.first as? String
 
         return patchedPath ?: path
     }

@@ -4,7 +4,9 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.ProvidableCompositionLocal
 import androidx.compose.runtime.Stable
+import androidx.compose.runtime.State
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
@@ -16,131 +18,135 @@ import org.jetbrains.jewel.ui.painter.PainterProvider
 
 @Stable
 @GenerateDataFunctions
-class MenuStyle(
-    val isDark: Boolean,
-    val colors: MenuColors,
-    val metrics: MenuMetrics,
-    val icons: MenuIcons,
+public class MenuStyle(
+    public val isDark: Boolean,
+    public val colors: MenuColors,
+    public val metrics: MenuMetrics,
+    public val icons: MenuIcons,
 ) {
 
-    companion object
+    public companion object
 }
 
 @Immutable
 @GenerateDataFunctions
-class MenuColors(
-    val background: Color,
-    val border: Color,
-    val shadow: Color,
-    val itemColors: MenuItemColors,
+public class MenuColors(
+    public val background: Color,
+    public val border: Color,
+    public val shadow: Color,
+    public val itemColors: MenuItemColors,
 ) {
 
-    companion object
+    public companion object
 }
 
 @Immutable
 @GenerateDataFunctions
-class MenuItemColors(
-    val background: Color,
-    val backgroundDisabled: Color,
-    val backgroundFocused: Color,
-    val backgroundPressed: Color,
-    val backgroundHovered: Color,
-    val content: Color,
-    val contentDisabled: Color,
-    val contentFocused: Color,
-    val contentPressed: Color,
-    val contentHovered: Color,
-    val iconTint: Color,
-    val iconTintDisabled: Color,
-    val iconTintFocused: Color,
-    val iconTintPressed: Color,
-    val iconTintHovered: Color,
-    val separator: Color,
+public class MenuItemColors(
+    public val background: Color,
+    public val backgroundDisabled: Color,
+    public val backgroundFocused: Color,
+    public val backgroundPressed: Color,
+    public val backgroundHovered: Color,
+    public val content: Color,
+    public val contentDisabled: Color,
+    public val contentFocused: Color,
+    public val contentPressed: Color,
+    public val contentHovered: Color,
+    public val iconTint: Color,
+    public val iconTintDisabled: Color,
+    public val iconTintFocused: Color,
+    public val iconTintPressed: Color,
+    public val iconTintHovered: Color,
+    public val separator: Color,
 ) {
 
     @Composable
-    fun backgroundFor(state: MenuItemState) = rememberUpdatedState(
-        state.chooseValue(
-            normal = background,
-            disabled = backgroundDisabled,
-            active = background,
-            focused = backgroundFocused,
-            pressed = backgroundPressed,
-            hovered = backgroundHovered,
-        ),
-    )
+    public fun backgroundFor(state: MenuItemState): State<Color> =
+        rememberUpdatedState(
+            state.chooseValue(
+                normal = background,
+                disabled = backgroundDisabled,
+                active = background,
+                focused = backgroundFocused,
+                pressed = backgroundPressed,
+                hovered = backgroundHovered,
+            ),
+        )
 
     @Composable
-    fun contentFor(state: MenuItemState) = rememberUpdatedState(
-        state.chooseValue(
-            normal = content,
-            disabled = contentDisabled,
-            focused = contentFocused,
-            pressed = contentPressed,
-            hovered = contentHovered,
-            active = content,
-        ),
-    )
+    public fun contentFor(state: MenuItemState): State<Color> =
+        rememberUpdatedState(
+            state.chooseValue(
+                normal = content,
+                disabled = contentDisabled,
+                focused = contentFocused,
+                pressed = contentPressed,
+                hovered = contentHovered,
+                active = content,
+            ),
+        )
 
     @Composable
-    fun iconTintFor(state: MenuItemState) = rememberUpdatedState(
-        state.chooseValue(
-            normal = iconTint,
-            disabled = iconTintDisabled,
-            focused = iconTintFocused,
-            pressed = iconTintPressed,
-            hovered = iconTintHovered,
-            active = iconTint,
-        ),
-    )
+    public fun iconTintFor(state: MenuItemState): State<Color> =
+        rememberUpdatedState(
+            state.chooseValue(
+                normal = iconTint,
+                disabled = iconTintDisabled,
+                focused = iconTintFocused,
+                pressed = iconTintPressed,
+                hovered = iconTintHovered,
+                active = iconTint,
+            ),
+        )
 
-    companion object
+    public companion object
 }
 
 @Stable
 @GenerateDataFunctions
-class MenuMetrics(
-    val cornerSize: CornerSize,
-    val menuMargin: PaddingValues,
-    val contentPadding: PaddingValues,
-    val offset: DpOffset,
-    val shadowSize: Dp,
-    val borderWidth: Dp,
-    val itemMetrics: MenuItemMetrics,
-    val submenuMetrics: SubmenuMetrics,
+public class MenuMetrics(
+    public val cornerSize: CornerSize,
+    public val menuMargin: PaddingValues,
+    public val contentPadding: PaddingValues,
+    public val offset: DpOffset,
+    public val shadowSize: Dp,
+    public val borderWidth: Dp,
+    public val itemMetrics: MenuItemMetrics,
+    public val submenuMetrics: SubmenuMetrics,
 ) {
 
-    companion object
+    public companion object
 }
 
 @Stable
 @GenerateDataFunctions
-class MenuItemMetrics(
-    val selectionCornerSize: CornerSize,
-    val outerPadding: PaddingValues,
-    val contentPadding: PaddingValues,
-    val separatorPadding: PaddingValues,
-    val separatorThickness: Dp,
+public class MenuItemMetrics(
+    public val selectionCornerSize: CornerSize,
+    public val outerPadding: PaddingValues,
+    public val contentPadding: PaddingValues,
+    public val separatorPadding: PaddingValues,
+    public val separatorThickness: Dp,
 ) {
 
-    companion object
+    public companion object
 }
 
 @Stable
 @GenerateDataFunctions
-class SubmenuMetrics(val offset: DpOffset) {
+public class SubmenuMetrics(public val offset: DpOffset) {
 
-    companion object
+    public companion object
 }
 
 @Immutable
 @GenerateDataFunctions
-class MenuIcons(val submenuChevron: PainterProvider) {
+public class MenuIcons(public val submenuChevron: PainterProvider) {
 
-    companion object
+    public companion object
 }
 
-val LocalMenuStyle = staticCompositionLocalOf<MenuStyle> {
-    error("No MenuStyle provided")
-}
+public val LocalMenuStyle: ProvidableCompositionLocal<MenuStyle> =
+    staticCompositionLocalOf {
+        error("No MenuStyle provided. Have you forgotten the theme?")
+    }

@@ -15,56 +15,60 @@ import org.jetbrains.jewel.ui.component.styling.TabMetrics
 import org.jetbrains.jewel.ui.component.styling.TabStyle
 import org.jetbrains.jewel.ui.painter.PainterProvider
 
-val TabStyle.Companion.Default
+public val TabStyle.Companion.Default: IntUiDefaultTabStyleFactory
     get() = IntUiDefaultTabStyleFactory
 
-object IntUiDefaultTabStyleFactory {
+public object IntUiDefaultTabStyleFactory {
 
     @Composable
-    fun light(
+    public fun light(
         colors: TabColors = TabColors.Default.light(),
         metrics: TabMetrics = TabMetrics.defaults(),
         icons: TabIcons = TabIcons.defaults(),
         contentAlpha: TabContentAlpha = TabContentAlpha.default(),
-    ) = TabStyle(colors, metrics, icons, contentAlpha)
+    ): TabStyle =
+        TabStyle(colors, metrics, icons, contentAlpha)
 
     @Composable
-    fun dark(
+    public fun dark(
         colors: TabColors = TabColors.Default.dark(),
         metrics: TabMetrics = TabMetrics.defaults(),
         icons: TabIcons = TabIcons.defaults(),
         contentAlpha: TabContentAlpha = TabContentAlpha.default(),
-    ) = TabStyle(colors, metrics, icons, contentAlpha)
+    ): TabStyle =
+        TabStyle(colors, metrics, icons, contentAlpha)
 }
 
-val TabStyle.Companion.Editor
+public val TabStyle.Companion.Editor: IntUiEditorTabStyleFactory
     get() = IntUiEditorTabStyleFactory
 
-object IntUiEditorTabStyleFactory {
+public object IntUiEditorTabStyleFactory {
 
     @Composable
-    fun light(
+    public fun light(
         colors: TabColors = TabColors.Editor.light(),
         metrics: TabMetrics = TabMetrics.defaults(),
         icons: TabIcons = TabIcons.defaults(),
         contentAlpha: TabContentAlpha = TabContentAlpha.editor(),
-    ) = TabStyle(colors, metrics, icons, contentAlpha)
+    ): TabStyle =
+        TabStyle(colors, metrics, icons, contentAlpha)
 
     @Composable
-    fun dark(
+    public fun dark(
         colors: TabColors = TabColors.Editor.dark(),
         metrics: TabMetrics = TabMetrics.defaults(),
         icons: TabIcons = TabIcons.defaults(),
         contentAlpha: TabContentAlpha = TabContentAlpha.editor(),
-    ) = TabStyle(colors, metrics, icons, contentAlpha)
+    ): TabStyle =
+        TabStyle(colors, metrics, icons, contentAlpha)
 }
 
-val TabColors.Companion.Default
+public val TabColors.Companion.Default: IntUiDefaultTabColorsFactory
     get() = IntUiDefaultTabColorsFactory
 
-object IntUiDefaultTabColorsFactory {
+public object IntUiDefaultTabColorsFactory {
 
-    fun light(
+    public fun light(
         background: Color = IntUiLightTheme.colors.grey(14),
         backgroundHovered: Color = IntUiLightTheme.colors.grey(12),
         backgroundPressed: Color = backgroundHovered,
@@ -80,25 +84,26 @@ object IntUiDefaultTabColorsFactory {
         underlineDisabled: Color = underline,
         underlinePressed: Color = underline,
         underlineSelected: Color = IntUiLightTheme.colors.blue(4),
-    ) = TabColors(
-        background,
-        backgroundDisabled,
-        backgroundPressed,
-        backgroundHovered,
-        backgroundSelected,
-        content,
-        contentDisabled,
-        contentPressed,
-        contentHovered,
-        contentSelected,
-        underline,
-        underlineDisabled,
-        underlinePressed,
-        underlineHovered,
-        underlineSelected,
-    )
+    ): TabColors =
+        TabColors(
+            background = background,
+            backgroundDisabled = backgroundDisabled,
+            backgroundPressed = backgroundPressed,
+            backgroundHovered = backgroundHovered,
+            backgroundSelected = backgroundSelected,
+            content = content,
+            contentDisabled = contentDisabled,
+            contentPressed = contentPressed,
+            contentHovered = contentHovered,
+            contentSelected = contentSelected,
+            underline = underline,
+            underlineDisabled = underlineDisabled,
+            underlinePressed = underlinePressed,
+            underlineHovered = underlineHovered,
+            underlineSelected = underlineSelected,
+        )
 
-    fun dark(
+    public fun dark(
         background: Color = Color.Unspecified,
         backgroundHovered: Color = IntUiDarkTheme.colors.grey(4),
         backgroundPressed: Color = backgroundHovered,
@@ -114,31 +119,32 @@ object IntUiDefaultTabColorsFactory {
         underlineDisabled: Color = underline,
         underlinePressed: Color = underline,
         underlineSelected: Color = IntUiDarkTheme.colors.blue(6),
-    ) = TabColors(
-        background,
-        backgroundDisabled,
-        backgroundPressed,
-        backgroundHovered,
-        backgroundSelected,
-        content,
-        contentDisabled,
-        contentPressed,
-        contentHovered,
-        contentSelected,
-        underline,
-        underlineDisabled,
-        underlinePressed,
-        underlineHovered,
-        underlineSelected,
-    )
+    ): TabColors =
+        TabColors(
+            background = background,
+            backgroundDisabled = backgroundDisabled,
+            backgroundPressed = backgroundPressed,
+            backgroundHovered = backgroundHovered,
+            backgroundSelected = backgroundSelected,
+            content = content,
+            contentDisabled = contentDisabled,
+            contentPressed = contentPressed,
+            contentHovered = contentHovered,
+            contentSelected = contentSelected,
+            underline = underline,
+            underlineDisabled = underlineDisabled,
+            underlinePressed = underlinePressed,
+            underlineHovered = underlineHovered,
+            underlineSelected = underlineSelected,
+        )
 }
 
-val TabColors.Companion.Editor
+public val TabColors.Companion.Editor: IntUiEditorTabColorsFactory
     get() = IntUiEditorTabColorsFactory
 
-object IntUiEditorTabColorsFactory {
+public object IntUiEditorTabColorsFactory {
 
-    fun light(
+    public fun light(
         background: Color = Color.Transparent,
         backgroundHovered: Color = background,
         backgroundPressed: Color = background,
@@ -154,69 +160,70 @@ object IntUiEditorTabColorsFactory {
         underlineDisabled: Color = underline,
         underlinePressed: Color = underline,
         underlineSelected: Color = IntUiLightTheme.colors.blue(4),
-    ) = TabColors(
-        background,
-        backgroundDisabled,
-        backgroundPressed,
-        backgroundHovered,
-        backgroundSelected,
-        content,
-        contentDisabled,
-        contentPressed,
-        contentHovered,
-        contentSelected,
-        underline,
-        underlineDisabled,
-        underlinePressed,
-        underlineHovered,
-        underlineSelected,
-    )
+    ): TabColors =
+        TabColors(
+            background = background,
+            backgroundDisabled = backgroundDisabled,
+            backgroundPressed = backgroundPressed,
+            backgroundHovered = backgroundHovered,
+            backgroundSelected = backgroundSelected,
+            content = content,
+            contentDisabled = contentDisabled,
+            contentPressed = contentPressed,
+            contentHovered = contentHovered,
+            contentSelected = contentSelected,
+            underline = underline,
+            underlineDisabled = underlineDisabled,
+            underlinePressed = underlinePressed,
+            underlineHovered = underlineHovered,
+            underlineSelected = underlineSelected,
+        )
 
-    fun dark(
+    public fun dark(
         background: Color = Color.Unspecified,
         backgroundHovered: Color = background,
         backgroundPressed: Color = background,
         backgroundSelected: Color = background,
         backgroundDisabled: Color = background,
-
         content: Color = Color.Unspecified,
         contentHovered: Color = content,
         contentDisabled: Color = content,
         contentPressed: Color = content,
         contentSelected: Color = content,
-
         underline: Color = Color.Unspecified,
         underlineHovered: Color = underline,
         underlineDisabled: Color = underline,
         underlinePressed: Color = underline,
         underlineSelected: Color = IntUiDarkTheme.colors.blue(6),
-    ) = TabColors(
-        background,
-        backgroundDisabled,
-        backgroundPressed,
-        backgroundHovered,
-        backgroundSelected,
-        content,
-        contentDisabled,
-        contentPressed,
-        contentHovered,
-        contentSelected,
-        underline,
-        underlineDisabled,
-        underlinePressed,
-        underlineHovered,
-        underlineSelected,
-    )
+    ): TabColors =
+        TabColors(
+            background = background,
+            backgroundDisabled = backgroundDisabled,
+            backgroundPressed = backgroundPressed,
+            backgroundHovered = backgroundHovered,
+            backgroundSelected = backgroundSelected,
+            content = content,
+            contentDisabled = contentDisabled,
+            contentPressed = contentPressed,
+            contentHovered = contentHovered,
+            contentSelected = contentSelected,
+            underline = underline,
+            underlineDisabled = underlineDisabled,
+            underlinePressed = underlinePressed,
+            underlineHovered = underlineHovered,
+            underlineSelected = underlineSelected,
+        )
 }
 
-fun TabMetrics.Companion.defaults(
+public fun TabMetrics.Companion.defaults(
     underlineThickness: Dp = 3.dp,
     tabPadding: PaddingValues = PaddingValues(horizontal = 8.dp),
     closeContentGap: Dp = 8.dp,
     tabHeight: Dp = 40.dp,
-) = TabMetrics(underlineThickness, tabPadding, tabHeight, closeContentGap)
+): TabMetrics =
+    TabMetrics(underlineThickness, tabPadding, tabHeight, closeContentGap)
 
-fun TabContentAlpha.Companion.default(
+public fun TabContentAlpha.Companion.default(
     iconNormal: Float = 1f,
     iconDisabled: Float = iconNormal,
     iconPressed: Float = iconNormal,
@@ -227,20 +234,21 @@ fun TabContentAlpha.Companion.default(
     labelPressed: Float = iconNormal,
     labelHovered: Float = iconNormal,
     labelSelected: Float = iconNormal,
-) = TabContentAlpha(
-    iconNormal,
-    iconDisabled,
-    iconPressed,
-    iconHovered,
-    iconSelected,
-    labelNormal,
-    labelDisabled,
-    labelPressed,
-    labelHovered,
-    labelSelected,
-)
+): TabContentAlpha =
+    TabContentAlpha(
+        iconNormal = iconNormal,
+        iconDisabled = iconDisabled,
+        iconPressed = iconPressed,
+        iconHovered = iconHovered,
+        iconSelected = iconSelected,
+        labelNormal = labelNormal,
+        labelDisabled = labelDisabled,
+        labelPressed = labelPressed,
+        labelHovered = labelHovered,
+        labelSelected = labelSelected,
+    )
 
-fun TabContentAlpha.Companion.editor(
+public fun TabContentAlpha.Companion.editor(
     iconNormal: Float = .7f,
     iconDisabled: Float = iconNormal,
     iconPressed: Float = 1f,
@@ -251,20 +259,21 @@ fun TabContentAlpha.Companion.editor(
     labelPressed: Float = 1f,
     labelHovered: Float = labelPressed,
     labelSelected: Float = labelPressed,
-) =
+): TabContentAlpha =
     TabContentAlpha(
-        iconNormal,
-        iconDisabled,
-        iconPressed,
-        iconHovered,
-        iconSelected,
-        labelNormal,
-        labelDisabled,
-        labelPressed,
-        labelHovered,
-        labelSelected,
+        iconNormal = iconNormal,
+        iconDisabled = iconDisabled,
+        iconPressed = iconPressed,
+        iconHovered = iconHovered,
+        iconSelected = iconSelected,
+        labelNormal = labelNormal,
+        labelDisabled = labelDisabled,
+        labelPressed = labelPressed,
+        labelHovered = labelHovered,
+        labelSelected = labelSelected,
     )
 
-fun TabIcons.Companion.defaults(
+public fun TabIcons.Companion.defaults(
     close: PainterProvider = standalonePainterProvider("expui/general/closeSmall.svg"),
-) = TabIcons(close)
+): TabIcons =
+    TabIcons(close)

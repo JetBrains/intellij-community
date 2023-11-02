@@ -1,16 +1,14 @@
 package org.jetbrains.jewel.foundation.state
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.Stable
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 
-interface FocusableComponentState : InteractiveComponentState {
+public interface FocusableComponentState : InteractiveComponentState {
 
-    @Stable
-    val isFocused: Boolean
+    public val isFocused: Boolean
 
     @Composable
-    fun <T> chooseValue(
+    public fun <T> chooseValue(
         normal: T,
         disabled: T,
         focused: T,

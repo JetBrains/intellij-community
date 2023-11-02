@@ -11,66 +11,67 @@ import org.jetbrains.jewel.foundation.lazy.DefaultSelectableColumnKeybindings
 import org.jetbrains.jewel.foundation.lazy.SelectableColumnKeybindings
 import org.jetbrains.skiko.hostOs
 
-open class DefaultTreeViewKeybindings : DefaultSelectableColumnKeybindings(), TreeViewKeybindings {
+public open class DefaultTreeViewKeybindings : DefaultSelectableColumnKeybindings(), TreeViewKeybindings {
 
-    companion object : DefaultTreeViewKeybindings()
+    public companion object : DefaultTreeViewKeybindings()
 
-    override val KeyEvent.isSelectParent
+    override val KeyEvent.isSelectParent: Boolean
         get() = key == Key.DirectionLeft && !isContiguousSelectionKeyPressed
 
-    override val KeyEvent.isExtendSelectionToParent
+    override val KeyEvent.isExtendSelectionToParent: Boolean
         get() = key == Key.DirectionLeft && isContiguousSelectionKeyPressed
 
-    override val KeyEvent.isSelectChild
+    override val KeyEvent.isSelectChild: Boolean
         get() = key == Key.DirectionRight && !isContiguousSelectionKeyPressed
 
-    override val KeyEvent.isExtendSelectionToChild
+    override val KeyEvent.isExtendSelectionToChild: Boolean
         get() = key == Key.DirectionRight && isContiguousSelectionKeyPressed
 
-    override val KeyEvent.isSelectNextSibling
+    override val KeyEvent.isSelectNextSibling: Boolean
         get() = false
 
-    override val KeyEvent.isSelectPreviousSibling
+    override val KeyEvent.isSelectPreviousSibling: Boolean
         get() = false
 
-    override val KeyEvent.isEdit get() = key == Key.F2 && !isContiguousSelectionKeyPressed
+    override val KeyEvent.isEdit: Boolean
+        get() = key == Key.F2 && !isContiguousSelectionKeyPressed
 }
 
-interface TreeViewKeybindings : SelectableColumnKeybindings {
+public interface TreeViewKeybindings : SelectableColumnKeybindings {
 
     /**
-     * Select Parent Node
+     * Select Parent Node.
      */
-    val KeyEvent.isSelectParent: Boolean
+    public val KeyEvent.isSelectParent: Boolean
 
     /**
-     * Extend Selection to Parent Node inherited from Left with Selection
+     * Extend Selection to Parent Node inherited from Left with Selection.
      */
-    val KeyEvent.isExtendSelectionToParent: Boolean
+    public val KeyEvent.isExtendSelectionToParent: Boolean
 
     /**
-     * Select Child Node inherited from Right
+     * Select Child Node inherited from Right.
      */
-    val KeyEvent.isSelectChild: Boolean
+    public val KeyEvent.isSelectChild: Boolean
 
     /**
-     * Extend Selection to Child Node inherited from Right with Selection
+     * Extend Selection to Child Node inherited from Right with Selection.
      */
-    val KeyEvent.isExtendSelectionToChild: Boolean
+    public val KeyEvent.isExtendSelectionToChild: Boolean
 
     /**
-     * Select Next Sibling Node
+     * Select Next Sibling Node.
      */
-    val KeyEvent.isSelectNextSibling: Boolean
+    public val KeyEvent.isSelectNextSibling: Boolean
 
     /**
-     * Select Previous Sibling Node
+     * Select Previous Sibling Node.
      */
-    val KeyEvent.isSelectPreviousSibling: Boolean
+    public val KeyEvent.isSelectPreviousSibling: Boolean
 }
 
 @Suppress("unused")
-val DefaultWindowsTreeViewClickModifierHandler: TreeViewClickModifierHandler
+public val DefaultWindowsTreeViewClickModifierHandler: TreeViewClickModifierHandler
     get() = {
         when {
             hostOs.isWindows || hostOs.isLinux -> isCtrlPressed
@@ -79,10 +80,10 @@ val DefaultWindowsTreeViewClickModifierHandler: TreeViewClickModifierHandler
         }
     }
 
-typealias TreeViewClickModifierHandler = PointerKeyboardModifiers.() -> Boolean
+public typealias TreeViewClickModifierHandler = PointerKeyboardModifiers.() -> Boolean
 
-open class DefaultMacOsTreeColumnKeybindings : DefaultTreeViewKeybindings() {
-    companion object : DefaultMacOsTreeColumnKeybindings()
+public open class DefaultMacOsTreeColumnKeybindings : DefaultTreeViewKeybindings() {
+    public companion object : DefaultMacOsTreeColumnKeybindings()
 
     override val KeyEvent.isMultiSelectionKeyPressed: Boolean
         get() = isMetaPressed

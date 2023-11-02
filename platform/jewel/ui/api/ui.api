@@ -551,23 +551,6 @@ public final class org/jetbrains/jewel/ui/component/ScrollbarsKt {
 	public static final fun VerticalScrollbar (Landroidx/compose/foundation/v2/ScrollbarAdapter;Landroidx/compose/ui/Modifier;ZLandroidx/compose/foundation/interaction/MutableInteractionSource;Lorg/jetbrains/jewel/ui/component/styling/ScrollbarStyle;Landroidx/compose/runtime/Composer;II)V
 }
 
-public final class org/jetbrains/jewel/ui/component/SpinnerProgressIconGenerator {
-	public static final field $stable I
-	public static final field INSTANCE Lorg/jetbrains/jewel/ui/component/SpinnerProgressIconGenerator;
-}
-
-public final class org/jetbrains/jewel/ui/component/SpinnerProgressIconGenerator$Big {
-	public static final field $stable I
-	public static final field INSTANCE Lorg/jetbrains/jewel/ui/component/SpinnerProgressIconGenerator$Big;
-	public final fun generateSvgFrames (Ljava/lang/String;)Ljava/util/List;
-}
-
-public final class org/jetbrains/jewel/ui/component/SpinnerProgressIconGenerator$Small {
-	public static final field $stable I
-	public static final field INSTANCE Lorg/jetbrains/jewel/ui/component/SpinnerProgressIconGenerator$Small;
-	public final fun generateSvgFrames (Ljava/lang/String;)Ljava/util/List;
-}
-
 public final class org/jetbrains/jewel/ui/component/SplitLayoutKt {
 	public static final fun HorizontalSplitLayout-BssWTFQ (Lkotlin/jvm/functions/Function3;Lkotlin/jvm/functions/Function3;Landroidx/compose/ui/Modifier;JFFFFFFLandroidx/compose/runtime/Composer;II)V
 	public static final fun VerticalSplitLayout-BssWTFQ (Lkotlin/jvm/functions/Function3;Lkotlin/jvm/functions/Function3;Landroidx/compose/ui/Modifier;JFFFFFFLandroidx/compose/runtime/Composer;II)V
@@ -595,6 +578,7 @@ public final class org/jetbrains/jewel/ui/component/TabData$Default : org/jetbra
 	public fun getOnClose ()Lkotlin/jvm/functions/Function0;
 	public fun getSelected ()Z
 	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
 }
 
 public final class org/jetbrains/jewel/ui/component/TabData$Editor : org/jetbrains/jewel/ui/component/TabData {
@@ -609,6 +593,7 @@ public final class org/jetbrains/jewel/ui/component/TabData$Editor : org/jetbrai
 	public fun getOnClose ()Lkotlin/jvm/functions/Function0;
 	public fun getSelected ()Z
 	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
 }
 
 public final class org/jetbrains/jewel/ui/component/TabState : org/jetbrains/jewel/foundation/state/SelectableComponentState {
@@ -2219,7 +2204,7 @@ public final class org/jetbrains/jewel/ui/theme/JewelThemeKt {
 }
 
 public final class org/jetbrains/jewel/ui/util/ColorExtensionsKt {
-	public static final fun fromRGBAHexString (Landroidx/compose/ui/graphics/Color$Companion;Ljava/lang/String;)Landroidx/compose/ui/graphics/Color;
+	public static final fun fromRGBAHexStringOrNull (Landroidx/compose/ui/graphics/Color$Companion;Ljava/lang/String;)Landroidx/compose/ui/graphics/Color;
 	public static final fun isDark-8_81llA (J)Z
 	public static final fun toRgbaHexString-8_81llA (J)Ljava/lang/String;
 }
@@ -2229,24 +2214,6 @@ public final class org/jetbrains/jewel/ui/util/DebugKt {
 }
 
 public final class org/jetbrains/jewel/ui/util/ModifierExtensionsKt {
-	public static final fun appendIf (Landroidx/compose/ui/Modifier;ZLkotlin/jvm/functions/Function1;)Landroidx/compose/ui/Modifier;
 	public static final fun thenIf (Landroidx/compose/ui/Modifier;ZLkotlin/jvm/functions/Function1;)Landroidx/compose/ui/Modifier;
-}
-
-public final class org/jetbrains/jewel/ui/util/SpinnerProgressIconGenerator {
-	public static final field $stable I
-	public static final field INSTANCE Lorg/jetbrains/jewel/ui/util/SpinnerProgressIconGenerator;
-}
-
-public final class org/jetbrains/jewel/ui/util/SpinnerProgressIconGenerator$Big {
-	public static final field $stable I
-	public static final field INSTANCE Lorg/jetbrains/jewel/ui/util/SpinnerProgressIconGenerator$Big;
-	public final fun generateRawSvg (Ljava/lang/String;)Ljava/util/List;
-}
-
-public final class org/jetbrains/jewel/ui/util/SpinnerProgressIconGenerator$Small {
-	public static final field $stable I
-	public static final field INSTANCE Lorg/jetbrains/jewel/ui/util/SpinnerProgressIconGenerator$Small;
-	public final fun generateRawSvg (Ljava/lang/String;)Ljava/util/List;
 }
 

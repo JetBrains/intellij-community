@@ -11,28 +11,33 @@ import org.jetbrains.jewel.ui.component.styling.GroupHeaderMetrics
 import org.jetbrains.jewel.ui.component.styling.GroupHeaderStyle
 
 @Composable
-fun GroupHeaderStyle.Companion.light(
+public fun GroupHeaderStyle.Companion.light(
     colors: GroupHeaderColors = GroupHeaderColors.light(),
     metrics: GroupHeaderMetrics = GroupHeaderMetrics.defaults(),
-) = GroupHeaderStyle(colors, metrics)
+): GroupHeaderStyle =
+    GroupHeaderStyle(colors, metrics)
 
 @Composable
-fun GroupHeaderStyle.Companion.dark(
+public fun GroupHeaderStyle.Companion.dark(
     colors: GroupHeaderColors = GroupHeaderColors.dark(),
     metrics: GroupHeaderMetrics = GroupHeaderMetrics.defaults(),
-) = GroupHeaderStyle(colors, metrics)
+): GroupHeaderStyle =
+    GroupHeaderStyle(colors, metrics)
 
 @Composable
-fun GroupHeaderColors.Companion.light(
+public fun GroupHeaderColors.Companion.light(
     divider: Color = IntUiLightTheme.colors.grey(12),
-) = GroupHeaderColors(divider)
+): GroupHeaderColors =
+    GroupHeaderColors(divider)
 
 @Composable
-fun GroupHeaderColors.Companion.dark(
+public fun GroupHeaderColors.Companion.dark(
     divider: Color = IntUiDarkTheme.colors.grey(3),
-) = GroupHeaderColors(divider)
+): GroupHeaderColors =
+    GroupHeaderColors(divider)
 
-fun GroupHeaderMetrics.Companion.defaults(
+public fun GroupHeaderMetrics.Companion.defaults(
     dividerThickness: Dp = 1.dp,
     indent: Dp = 8.dp,
-) = GroupHeaderMetrics(dividerThickness, indent)
+): GroupHeaderMetrics =
+    GroupHeaderMetrics(dividerThickness, indent)

@@ -6,7 +6,7 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.unit.LayoutDirection
 
-open class DelegatePainter(private val delegate: Painter) : Painter() {
+public open class DelegatePainter(private val delegate: Painter) : Painter() {
 
     override val intrinsicSize: Size
         get() = delegate.intrinsicSize
@@ -33,9 +33,7 @@ open class DelegatePainter(private val delegate: Painter) : Painter() {
     }
 
     protected fun DrawScope.drawDelegate() {
-        with(delegate) {
-            draw(this@drawDelegate.size, alpha, filter)
-        }
+        with(delegate) { draw(this@drawDelegate.size, alpha, filter) }
     }
 
     override fun DrawScope.onDraw() {

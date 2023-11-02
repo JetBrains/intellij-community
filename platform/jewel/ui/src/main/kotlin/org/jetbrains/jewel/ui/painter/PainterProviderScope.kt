@@ -2,16 +2,16 @@ package org.jetbrains.jewel.ui.painter
 
 import androidx.compose.ui.unit.Density
 
-interface PainterProviderScope : Density {
+public interface PainterProviderScope : Density {
 
-    val rawPath: String
+    public val rawPath: String
 
-    val path: String
+    public val path: String
 
-    val acceptedHints: List<PainterHint>
+    public val acceptedHints: List<PainterHint>
 }
 
-interface ResourcePainterProviderScope : PainterProviderScope {
+public interface ResourcePainterProviderScope : PainterProviderScope {
 
-    val classLoaders: Set<ClassLoader>
+    public val classLoaders: Set<ClassLoader>
 }

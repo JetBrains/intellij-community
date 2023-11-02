@@ -28,9 +28,7 @@ publishing {
             artifact(sourcesJar)
             version = project.version.toString()
             artifactId = "jewel-${project.name}"
-            pom {
-                configureJewelPom()
-            }
+            pom { configureJewelPom() }
         }
     }
 }

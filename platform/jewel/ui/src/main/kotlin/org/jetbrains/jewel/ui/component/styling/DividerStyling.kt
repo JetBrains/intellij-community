@@ -1,6 +1,7 @@
 package org.jetbrains.jewel.ui.component.styling
 
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.ProvidableCompositionLocal
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
@@ -9,30 +10,31 @@ import org.jetbrains.jewel.foundation.GenerateDataFunctions
 
 @Immutable
 @GenerateDataFunctions
-class DividerStyle(
-    val color: Color,
-    val metrics: DividerMetrics,
+public class DividerStyle(
+    public val color: Color,
+    public val metrics: DividerMetrics,
 ) {
 
-    companion object
+    public companion object
 }
 
 @Immutable
 @GenerateDataFunctions
-class DividerMetrics(
-    val thickness: Dp,
-    val startIndent: Dp,
+public class DividerMetrics(
+    public val thickness: Dp,
+    public val startIndent: Dp,
 ) {
 
-    companion object {
+    public companion object {
 
-        fun defaults(
+        public fun defaults(
             thickness: Dp = 1.dp,
             startIndent: Dp = 0.dp,
-        ) = DividerMetrics(thickness, startIndent)
+        ): DividerMetrics = DividerMetrics(thickness, startIndent)
     }
 }
 
-val LocalDividerStyle = staticCompositionLocalOf<DividerStyle> {
-    error("No DividerStyle provided")
-}
+public val LocalDividerStyle: ProvidableCompositionLocal<DividerStyle> =
+    staticCompositionLocalOf {
+        error("No DividerStyle provided. Have you forgotten the theme?")
+    }

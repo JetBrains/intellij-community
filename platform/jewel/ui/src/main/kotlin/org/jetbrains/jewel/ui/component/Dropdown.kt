@@ -19,7 +19,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -57,7 +56,7 @@ import org.jetbrains.jewel.ui.theme.dropdownStyle
 import org.jetbrains.jewel.ui.util.thenIf
 
 @Composable
-fun Dropdown(
+public fun Dropdown(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     menuModifier: Modifier = Modifier,
@@ -74,18 +73,15 @@ fun Dropdown(
         mutableStateOf(DropdownState.of(enabled = enabled))
     }
 
-    remember(enabled) {
-        dropdownState = dropdownState.copy(enabled = enabled)
-    }
+    remember(enabled) { dropdownState = dropdownState.copy(enabled = enabled) }
 
     LaunchedEffect(interactionSource) {
         interactionSource.interactions.collect { interaction ->
             when (interaction) {
                 is PressInteraction.Press -> dropdownState = dropdownState.copy(pressed = true)
-                is PressInteraction.Cancel, is PressInteraction.Release ->
-                    dropdownState =
-                        dropdownState.copy(pressed = false)
-
+                is PressInteraction.Cancel,
+                is PressInteraction.Release,
+                -> dropdownState = dropdownState.copy(pressed = false)
                 is HoverInteraction.Enter -> dropdownState = dropdownState.copy(hovered = true)
                 is HoverInteraction.Exit -> dropdownState = dropdownState.copy(hovered = false)
                 is FocusInteraction.Focus -> dropdownState = dropdownState.copy(focused = true)
@@ -103,33 +99,33 @@ fun Dropdown(
     val hasNoOutline = outline == Outline.None
 
     Box(
-        modifier.clickable(
-            onClick = {
-                // TODO: Trick to skip click event when close menu by click dropdown
-                if (!skipNextClick) {
-                    expanded = !expanded
-                }
-                skipNextClick = false
-            },
-            enabled = enabled,
-            role = Role.Button,
-            interactionSource = interactionSource,
-            indication = null,
-        )
+        modifier = modifier
+            .clickable(
+                onClick = {
+                    // TODO: Trick to skip click event when close menu by click dropdown
+                    if (!skipNextClick) {
+                        expanded = !expanded
+                    }
+                    skipNextClick = false
+                },
+                enabled = enabled,
+                role = Role.Button,
+                interactionSource = interactionSource,
+                indication = null,
+            )
             .background(colors.backgroundFor(dropdownState).value, shape)
-            .thenIf(hasNoOutline) { border(Stroke.Alignment.Center, style.metrics.borderWidth, borderColor, shape) }
+            .thenIf(hasNoOutline) {
+                border(Stroke.Alignment.Center, style.metrics.borderWidth, borderColor, shape)
+            }
             .thenIf(outline == Outline.None) { focusOutline(dropdownState, shape) }
             .outline(dropdownState, outline, shape)
             .width(IntrinsicSize.Max)
             .defaultMinSize(minSize.width, minSize.height.coerceAtLeast(arrowMinSize.height)),
         contentAlignment = Alignment.CenterStart,
     ) {
-        CompositionLocalProvider(
-            LocalContentColor provides colors.contentFor(dropdownState).value,
-        ) {
+        CompositionLocalProvider(LocalContentColor provides colors.contentFor(dropdownState).value) {
             Box(
-                modifier = Modifier
-                    .fillMaxWidth()
+                modifier = Modifier.fillMaxWidth()
                     .padding(style.metrics.contentPadding)
                     .padding(end = arrowMinSize.width),
                 contentAlignment = Alignment.CenterStart,
@@ -137,8 +133,7 @@ fun Dropdown(
             )
 
             Box(
-                modifier = Modifier.size(arrowMinSize)
-                    .align(Alignment.CenterEnd),
+                modifier = Modifier.size(arrowMinSize).align(Alignment.CenterEnd),
                 contentAlignment = Alignment.Center,
             ) {
                 val chevronIcon by style.icons.chevronDown.getPainter(Stateful(dropdownState))
@@ -187,9 +182,7 @@ internal fun DropdownMenu(
 
     var focusManager: FocusManager? by remember { mutableStateOf(null) }
     var inputModeManager: InputModeManager? by remember { mutableStateOf(null) }
-    val menuManager = remember(onDismissRequest) {
-        MenuManager(onDismissRequest = onDismissRequest)
-    }
+    val menuManager = remember(onDismissRequest) { MenuManager(onDismissRequest = onDismissRequest) }
 
     Popup(
         popupPositionProvider = popupPositionProvider,
@@ -198,7 +191,8 @@ internal fun DropdownMenu(
         onPreviewKeyEvent = { false },
         onKeyEvent = {
             val currentFocusManager = checkNotNull(focusManager) { "FocusManager must not be null" }
-            val currentInputModeManager = checkNotNull(inputModeManager) { "InputModeManager must not be null" }
+            val currentInputModeManager =
+                checkNotNull(inputModeManager) { "InputModeManager must not be null" }
             handlePopupMenuOnKeyEvent(it, currentFocusManager, currentInputModeManager, menuManager)
         },
     ) {
@@ -209,70 +203,64 @@ internal fun DropdownMenu(
             LocalMenuManager provides menuManager,
             LocalMenuStyle provides style,
         ) {
-            MenuContent(
-                modifier = modifier,
-                content = content,
-            )
+            MenuContent(modifier, content = content)
         }
     }
 }
 
 @Immutable
 @JvmInline
-value class DropdownState(val state: ULong) : FocusableComponentState {
+public value class DropdownState(public val state: ULong) : FocusableComponentState {
 
-    @Stable
     override val isActive: Boolean
         get() = state and Active != 0UL
 
-    @Stable
     override val isEnabled: Boolean
         get() = state and Enabled != 0UL
 
-    @Stable
     override val isFocused: Boolean
         get() = state and Focused != 0UL
 
-    @Stable
     override val isHovered: Boolean
         get() = state and Hovered != 0UL
 
-    @Stable
     override val isPressed: Boolean
         get() = state and Pressed != 0UL
 
-    fun copy(
+    public fun copy(
         enabled: Boolean = isEnabled,
         focused: Boolean = isFocused,
         pressed: Boolean = isPressed,
         hovered: Boolean = isHovered,
         active: Boolean = isActive,
-    ) = of(
-        enabled = enabled,
-        focused = focused,
-        pressed = pressed,
-        hovered = hovered,
-        active = active,
-    )
+    ): DropdownState =
+        of(
+            enabled = enabled,
+            focused = focused,
+            pressed = pressed,
+            hovered = hovered,
+            active = active,
+        )
 
-    override fun toString() =
+    override fun toString(): String =
         "${javaClass.simpleName}(isEnabled=$isEnabled, isFocused=$isFocused, " +
             "isHovered=$isHovered, isPressed=$isPressed, isActive=$isActive)"
 
-    companion object {
+    public companion object {
 
-        fun of(
+        public fun of(
             enabled: Boolean = true,
             focused: Boolean = false,
             pressed: Boolean = false,
             hovered: Boolean = false,
             active: Boolean = false,
-        ) = DropdownState(
-            (if (enabled) Enabled else 0UL) or
-                (if (focused) Focused else 0UL) or
-                (if (hovered) Hovered else 0UL) or
-                (if (pressed) Pressed else 0UL) or
-                (if (active) Active else 0UL),
-        )
+        ): DropdownState =
+            DropdownState(
+                (if (enabled) Enabled else 0UL) or
+                    (if (focused) Focused else 0UL) or
+                    (if (hovered) Hovered else 0UL) or
+                    (if (pressed) Pressed else 0UL) or
+                    (if (active) Active else 0UL),
+            )
     }
 }

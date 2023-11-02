@@ -21,7 +21,6 @@ tasks {
         source(configurations.outgoingSarif)
         include { it.file.extension == "sarif" }
     }
-    register("check") {
-        dependsOn(mergeSarifReports)
-    }
+
+    register("check") { dependsOn(mergeSarifReports) }
 }

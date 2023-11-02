@@ -15,28 +15,27 @@ import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.window.styling.TitleBarStyle
 import org.jetbrains.jewel.window.utils.macos.MacUtil
 
-fun Modifier.newFullscreenControls(newControls: Boolean = true): Modifier {
-    return then(
-        NewFullscreenControlsElement(
-            newControls,
-            inspectorInfo = debugInspectorInfo {
-                name = "newFullscreenControls"
-                value = newControls
-            },
-        ),
+public fun Modifier.newFullscreenControls(newControls: Boolean = true): Modifier =
+    this then NewFullscreenControlsElement(
+        newControls,
+        debugInspectorInfo {
+            name = "newFullscreenControls"
+            value = newControls
+        },
     )
-}
 
 private class NewFullscreenControlsElement(
     val newControls: Boolean,
     val inspectorInfo: InspectorInfo.() -> Unit,
 ) : ModifierNodeElement<NewFullscreenControlsNode>() {
 
-    override fun create(): NewFullscreenControlsNode = NewFullscreenControlsNode(newControls)
+    override fun create(): NewFullscreenControlsNode =
+        NewFullscreenControlsNode(newControls)
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
-        val otherModifier = other as? NewFullscreenControlsElement ?: return false
+        val otherModifier = other as? NewFullscreenControlsElement
+            ?: return false
         return newControls == otherModifier.newControls
     }
 
@@ -51,9 +50,7 @@ private class NewFullscreenControlsElement(
     }
 }
 
-private class NewFullscreenControlsNode(
-    var newControls: Boolean,
-) : Modifier.Node()
+private class NewFullscreenControlsNode(var newControls: Boolean) : Modifier.Node()
 
 @Composable
 internal fun DecoratedWindowScope.TitleBarOnMacOs(
@@ -85,10 +82,10 @@ internal fun DecoratedWindowScope.TitleBarOnMacOs(
     val titleBar = remember { JBR.getWindowDecorations().createCustomTitleBar() }
 
     TitleBarImpl(
-        modifier.customTitleBarMouseEventHandler(titleBar),
-        gradientStartColor,
-        style,
-        { height, state ->
+        modifier = modifier.customTitleBarMouseEventHandler(titleBar),
+        gradientStartColor = gradientStartColor,
+        style = style,
+        applyTitleBar = { height, state ->
             if (state.isFullscreen) {
                 MacUtil.updateFullScreenButtons(window)
             }
@@ -101,6 +98,6 @@ internal fun DecoratedWindowScope.TitleBarOnMacOs(
                 PaddingValues(start = titleBar.leftInset.dp, end = titleBar.rightInset.dp)
             }
         },
-        content,
+        content = content,
     )
 }

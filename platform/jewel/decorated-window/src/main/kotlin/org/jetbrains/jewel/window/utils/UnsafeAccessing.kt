@@ -20,13 +20,9 @@ internal object UnsafeAccessing {
         }
     }
 
-    val desktopModule by lazy {
-        ModuleLayer.boot().findModule("java.desktop").get()
-    }
+    val desktopModule by lazy { ModuleLayer.boot().findModule("java.desktop").get() }
 
-    val ownerModule: Module by lazy {
-        this.javaClass.module
-    }
+    val ownerModule: Module by lazy { this.javaClass.module }
 
     private val isAccessibleFieldOffset: Long? by lazy {
         try {
@@ -38,11 +34,9 @@ internal object UnsafeAccessing {
 
     private val implAddOpens by lazy {
         try {
-            Module::class.java.getDeclaredMethod(
-                "implAddOpens",
-                String::class.java,
-                Module::class.java,
-            ).accessible()
+            Module::class.java
+                .getDeclaredMethod("implAddOpens", String::class.java, Module::class.java)
+                .accessible()
         } catch (_: Throwable) {
             null
         }
@@ -60,9 +54,7 @@ internal object UnsafeAccessing {
 
     fun assignAccessibility(module: Module, packages: List<String>) {
         try {
-            packages.forEach {
-                implAddOpens?.invoke(module, it, ownerModule)
-            }
+            packages.forEach { implAddOpens?.invoke(module, it, ownerModule) }
         } catch (_: Throwable) {
             // ignore
         }
@@ -77,8 +69,5 @@ internal object UnsafeAccessing {
     }
 }
 
-internal fun <T : AccessibleObject> T.accessible(): T {
-    return apply {
-        UnsafeAccessing.assignAccessibility(this)
-    }
-}
+internal fun <T : AccessibleObject> T.accessible(): T =
+    apply { UnsafeAccessing.assignAccessibility(this) }

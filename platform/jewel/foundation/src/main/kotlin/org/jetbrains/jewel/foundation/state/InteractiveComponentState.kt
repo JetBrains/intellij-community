@@ -1,18 +1,12 @@
 package org.jetbrains.jewel.foundation.state
 
-import androidx.compose.runtime.Stable
+public interface InteractiveComponentState {
 
-interface InteractiveComponentState {
+    public val isActive: Boolean
 
-    @Stable
-    val isActive: Boolean
+    public val isEnabled: Boolean
 
-    @Stable
-    val isEnabled: Boolean
+    public val isHovered: Boolean
 
-    @Stable
-    val isHovered: Boolean
-
-    @Stable
-    val isPressed: Boolean
+    public val isPressed: Boolean
 }

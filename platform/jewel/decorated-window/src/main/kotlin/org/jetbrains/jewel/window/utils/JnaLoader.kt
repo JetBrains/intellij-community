@@ -10,13 +10,12 @@ internal object JnaLoader {
     private var loaded: Boolean? = null
     private val logger = Logger.getLogger(JnaLoader::class.java.simpleName)
 
-    @Synchronized fun load() {
+    @Synchronized
+    fun load() {
         if (loaded == null) {
             loaded = false
             try {
-                val time = measureTimeMillis {
-                    Native.POINTER_SIZE
-                }
+                val time = measureTimeMillis { Native.POINTER_SIZE }
                 logger.info("JNA library (${Native.POINTER_SIZE shl 3}-bit) loaded in $time ms")
                 loaded = true
             } catch (@Suppress("TooGenericExceptionCaught") t: Throwable) {
@@ -33,7 +32,8 @@ internal object JnaLoader {
         }
     }
 
-    @get:Synchronized val isLoaded: Boolean
+    @get:Synchronized
+    val isLoaded: Boolean
         get() {
             if (loaded == null) {
                 load()

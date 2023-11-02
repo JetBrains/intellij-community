@@ -3,6 +3,8 @@ package org.jetbrains.jewel.ui.component.styling
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.ProvidableCompositionLocal
+import androidx.compose.runtime.State
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
@@ -15,91 +17,94 @@ import org.jetbrains.jewel.ui.painter.PainterProvider
 
 @Immutable
 @GenerateDataFunctions
-class LinkStyle(
-    val colors: LinkColors,
-    val metrics: LinkMetrics,
-    val icons: LinkIcons,
-    val textStyles: LinkTextStyles,
+public class LinkStyle(
+    public val colors: LinkColors,
+    public val metrics: LinkMetrics,
+    public val icons: LinkIcons,
+    public val textStyles: LinkTextStyles,
 ) {
 
-    companion object
+    public companion object
 }
 
 @Immutable
 @GenerateDataFunctions
-class LinkColors(
-    val content: Color,
-    val contentDisabled: Color,
-    val contentFocused: Color,
-    val contentPressed: Color,
-    val contentHovered: Color,
-    val contentVisited: Color,
+public class LinkColors(
+    public val content: Color,
+    public val contentDisabled: Color,
+    public val contentFocused: Color,
+    public val contentPressed: Color,
+    public val contentHovered: Color,
+    public val contentVisited: Color,
 ) {
 
     @Composable
-    fun contentFor(state: LinkState) = rememberUpdatedState(
-        state.chooseValueWithVisited(
-            normal = content,
-            disabled = contentDisabled,
-            focused = contentFocused,
-            pressed = contentPressed,
-            hovered = contentHovered,
-            visited = contentVisited,
-            active = content,
-        ),
-    )
+    public fun contentFor(state: LinkState): State<Color> =
+        rememberUpdatedState(
+            state.chooseValueWithVisited(
+                normal = content,
+                disabled = contentDisabled,
+                focused = contentFocused,
+                pressed = contentPressed,
+                hovered = contentHovered,
+                visited = contentVisited,
+                active = content,
+            ),
+        )
 
-    companion object
+    public companion object
 }
 
 @Immutable
 @GenerateDataFunctions
-class LinkMetrics(
-    val focusHaloCornerSize: CornerSize,
-    val textIconGap: Dp,
-    val iconSize: DpSize,
+public class LinkMetrics(
+    public val focusHaloCornerSize: CornerSize,
+    public val textIconGap: Dp,
+    public val iconSize: DpSize,
 ) {
 
-    companion object
+    public companion object
 }
 
 @Immutable
 @GenerateDataFunctions
-class LinkIcons(
-    val dropdownChevron: PainterProvider,
-    val externalLink: PainterProvider,
+public class LinkIcons(
+    public val dropdownChevron: PainterProvider,
+    public val externalLink: PainterProvider,
 ) {
 
-    companion object
+    public companion object
 }
 
 @Immutable
 @GenerateDataFunctions
-class LinkTextStyles(
-    val normal: TextStyle,
-    val disabled: TextStyle,
-    val focused: TextStyle,
-    val pressed: TextStyle,
-    val hovered: TextStyle,
-    val visited: TextStyle,
+public class LinkTextStyles(
+    public val normal: TextStyle,
+    public val disabled: TextStyle,
+    public val focused: TextStyle,
+    public val pressed: TextStyle,
+    public val hovered: TextStyle,
+    public val visited: TextStyle,
 ) {
 
     @Composable
-    fun styleFor(state: LinkState) = rememberUpdatedState(
-        state.chooseValueWithVisited(
-            normal = normal,
-            disabled = disabled,
-            focused = focused,
-            pressed = pressed,
-            hovered = hovered,
-            visited = visited,
-            active = normal,
-        ),
-    )
+    public fun styleFor(state: LinkState): State<TextStyle> =
+        rememberUpdatedState(
+            state.chooseValueWithVisited(
+                normal = normal,
+                disabled = disabled,
+                focused = focused,
+                pressed = pressed,
+                hovered = hovered,
+                visited = visited,
+                active = normal,
+            ),
+        )
 
-    companion object
+    public companion object
 }
 
-val LocalLinkStyle = staticCompositionLocalOf<LinkStyle> {
-    error("No LinkStyle provided")
-}
+public val LocalLinkStyle: ProvidableCompositionLocal<LinkStyle> =
+    staticCompositionLocalOf {
+        error("No LinkStyle provided. Have you forgotten the theme?")
+    }

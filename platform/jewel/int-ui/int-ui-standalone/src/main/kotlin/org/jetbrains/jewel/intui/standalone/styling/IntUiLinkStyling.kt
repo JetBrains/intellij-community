@@ -21,68 +21,74 @@ import org.jetbrains.jewel.ui.component.styling.LinkTextStyles
 import org.jetbrains.jewel.ui.painter.PainterProvider
 
 @Composable
-fun LinkStyle.Companion.light(
+public fun LinkStyle.Companion.light(
     colors: LinkColors = LinkColors.light(),
     metrics: LinkMetrics = LinkMetrics.defaults(),
     icons: LinkIcons = LinkIcons.defaults(),
     textStyles: LinkTextStyles = LinkTextStyles.light(),
-) = LinkStyle(colors, metrics, icons, textStyles)
+): LinkStyle =
+    LinkStyle(colors, metrics, icons, textStyles)
 
 @Composable
-fun LinkStyle.Companion.dark(
+public fun LinkStyle.Companion.dark(
     colors: LinkColors = LinkColors.dark(),
     metrics: LinkMetrics = LinkMetrics.defaults(),
     icons: LinkIcons = LinkIcons.defaults(),
     textStyles: LinkTextStyles = LinkTextStyles.dark(),
-) = LinkStyle(colors, metrics, icons, textStyles)
+): LinkStyle =
+    LinkStyle(colors, metrics, icons, textStyles)
 
 @Composable
-fun LinkColors.Companion.light(
+public fun LinkColors.Companion.light(
     content: Color = IntUiLightTheme.colors.blue(2),
     contentDisabled: Color = IntUiLightTheme.colors.grey(8),
     contentFocused: Color = content,
     contentPressed: Color = content,
     contentHovered: Color = content,
     contentVisited: Color = content,
-) = LinkColors(
-    content,
-    contentDisabled,
-    contentFocused,
-    contentPressed,
-    contentHovered,
-    contentVisited,
-)
+): LinkColors =
+    LinkColors(
+        content = content,
+        contentDisabled = contentDisabled,
+        contentFocused = contentFocused,
+        contentPressed = contentPressed,
+        contentHovered = contentHovered,
+        contentVisited = contentVisited,
+    )
 
 @Composable
-fun LinkColors.Companion.dark(
+public fun LinkColors.Companion.dark(
     content: Color = IntUiDarkTheme.colors.blue(9),
     contentDisabled: Color = IntUiDarkTheme.colors.grey(7),
     contentFocused: Color = content,
     contentPressed: Color = content,
     contentHovered: Color = content,
     contentVisited: Color = content,
-) = LinkColors(
-    content,
-    contentDisabled,
-    contentFocused,
-    contentPressed,
-    contentHovered,
-    contentVisited,
-)
+): LinkColors =
+    LinkColors(
+        content = content,
+        contentDisabled = contentDisabled,
+        contentFocused = contentFocused,
+        contentPressed = contentPressed,
+        contentHovered = contentHovered,
+        contentVisited = contentVisited,
+    )
 
-fun LinkMetrics.Companion.defaults(
+public fun LinkMetrics.Companion.defaults(
     focusHaloCornerSize: CornerSize = CornerSize(2.dp),
     textIconGap: Dp = 0.dp,
     iconSize: DpSize = DpSize(16.dp, 16.dp),
-) = LinkMetrics(focusHaloCornerSize, textIconGap, iconSize)
+): LinkMetrics =
+    LinkMetrics(focusHaloCornerSize, textIconGap, iconSize)
 
-fun LinkIcons.Companion.defaults(
+public fun LinkIcons.Companion.defaults(
     dropdownChevron: PainterProvider = standalonePainterProvider("expui/general/chevronDown.svg"),
     externalLink: PainterProvider = standalonePainterProvider("expui/ide/externalLink.svg"),
-) = LinkIcons(dropdownChevron, externalLink)
+): LinkIcons =
+    LinkIcons(dropdownChevron, externalLink)
 
 @Composable
-fun LinkTextStyles.Companion.light(
+public fun LinkTextStyles.Companion.light(
     normal: TextStyle = JewelTheme.defaultTextStyle.copy(textDecoration = TextDecoration.Underline),
     disabled: TextStyle = JewelTheme.defaultTextStyle,
     focused: TextStyle = normal,
@@ -93,7 +99,7 @@ fun LinkTextStyles.Companion.light(
     LinkTextStyles(normal, disabled, focused, pressed, hovered, visited)
 
 @Composable
-fun LinkTextStyles.Companion.dark(
+public fun LinkTextStyles.Companion.dark(
     normal: TextStyle = JewelTheme.defaultTextStyle.copy(textDecoration = TextDecoration.Underline),
     disabled: TextStyle = JewelTheme.defaultTextStyle,
     focused: TextStyle = normal,

@@ -37,7 +37,7 @@ import kotlin.math.max
  *     component when the [value] is empty.
  */
 @Composable
-fun TextField(
+public fun TextField(
     value: String,
     onValueChange: (String) -> Unit,
     modifier: Modifier = Modifier,
@@ -93,7 +93,7 @@ fun TextField(
  *     component when the [value] is empty.
  */
 @Composable
-fun TextField(
+public fun TextField(
     value: TextFieldValue,
     onValueChange: (TextFieldValue) -> Unit,
     modifier: Modifier = Modifier,
@@ -188,22 +188,22 @@ private fun TextFieldDecorationBox(
         val iconConstraints = incomingConstraints.copy(minWidth = 0, minHeight = 0)
 
         // measure trailing icon
-        val trailingPlaceable = measurables.find { it.layoutId == TRAILING_ID }
-            ?.measure(iconConstraints)
+        val trailingPlaceable =
+            measurables.find { it.layoutId == TRAILING_ID }?.measure(iconConstraints)
 
-        val leadingPlaceable = measurables.find { it.layoutId == LEADING_ID }
-            ?.measure(iconConstraints)
+        val leadingPlaceable = measurables.find { it.layoutId == LEADING_ID }?.measure(iconConstraints)
         occupiedSpaceHorizontally += trailingPlaceable?.width ?: 0
         occupiedSpaceHorizontally += leadingPlaceable?.width ?: 0
 
-        val textFieldConstraints = incomingConstraints.offset(
-            horizontal = -occupiedSpaceHorizontally,
-        ).copy(minHeight = 0)
-        val textFieldPlaceable = measurables.first { it.layoutId == TEXT_FIELD_ID }.measure(textFieldConstraints)
+        val textFieldConstraints = incomingConstraints.offset(horizontal = -occupiedSpaceHorizontally)
+            .copy(minHeight = 0)
+        val textFieldPlaceable = measurables.single { it.layoutId == TEXT_FIELD_ID }
+            .measure(textFieldConstraints)
 
         // measure placeholder
         val placeholderConstraints = textFieldConstraints.copy(minWidth = 0)
-        val placeholderPlaceable = measurables.find { it.layoutId == PLACEHOLDER_ID }?.measure(placeholderConstraints)
+        val placeholderPlaceable = measurables.find { it.layoutId == PLACEHOLDER_ID }
+            ?.measure(placeholderConstraints)
 
         val width = calculateWidth(
             trailingPlaceable,
@@ -221,14 +221,7 @@ private fun TextFieldDecorationBox(
         )
 
         layout(width, height) {
-            place(
-                height,
-                width,
-                trailingPlaceable,
-                leadingPlaceable,
-                textFieldPlaceable,
-                placeholderPlaceable,
-            )
+            place(height, width, trailingPlaceable, leadingPlaceable, textFieldPlaceable, placeholderPlaceable)
         }
     }
 }
@@ -240,11 +233,10 @@ private fun calculateWidth(
     placeholderPlaceable: Placeable?,
     constraints: Constraints,
 ): Int {
-    val middleSection = maxOf(
-        textFieldPlaceable.width,
-        placeholderPlaceable?.width ?: 0,
-    )
-    val wrappedWidth = middleSection + (trailingPlaceable?.width ?: 0) + (leadingPlaceable?.width ?: 0)
+    val middleSection =
+        maxOf(textFieldPlaceable.width, placeholderPlaceable?.width ?: 0)
+    val wrappedWidth =
+        middleSection + (trailingPlaceable?.width ?: 0) + (leadingPlaceable?.width ?: 0)
     return max(wrappedWidth, constraints.minWidth)
 }
 
@@ -254,13 +246,14 @@ private fun calculateHeight(
     textFieldPlaceable: Placeable,
     placeholderPlaceable: Placeable?,
     constraints: Constraints,
-): Int = maxOf(
-    textFieldPlaceable.height,
-    placeholderPlaceable?.height ?: 0,
-    trailingPlaceable?.height ?: 0,
-    leadingPlaceable?.height ?: 0,
-    constraints.minHeight,
-)
+): Int =
+    maxOf(
+        textFieldPlaceable.height,
+        placeholderPlaceable?.height ?: 0,
+        trailingPlaceable?.height ?: 0,
+        leadingPlaceable?.height ?: 0,
+        constraints.minHeight,
+    )
 
 private fun Placeable.PlacementScope.place(
     height: Int,

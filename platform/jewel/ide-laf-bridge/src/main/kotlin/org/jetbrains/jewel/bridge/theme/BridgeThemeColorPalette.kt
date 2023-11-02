@@ -9,10 +9,10 @@ import java.util.TreeMap
 
 private val logger = Logger.getInstance("BridgeThemeColorPalette")
 
-val ThemeColorPalette.windowsPopupBorder
+public val ThemeColorPalette.windowsPopupBorder: Color?
     get() = lookup("windowsPopupBorder")
 
-fun ThemeColorPalette.Companion.readFromLaF(): ThemeColorPalette {
+public fun ThemeColorPalette.Companion.readFromLaF(): ThemeColorPalette {
     val grey = readPaletteColors("Grey")
     val blue = readPaletteColors("Blue")
     val green = readPaletteColors("Green")
@@ -54,14 +54,16 @@ private fun readPaletteColors(colorName: String): Map<String, Color> {
     val colorNameKeyPrefix = "ColorPalette.$colorName"
     val colorNameKeyPrefixLength = colorNameKeyPrefix.length
 
-    val lastColorIndex = allKeys.asSequence()
-        .filterIsInstance(String::class.java)
-        .filter { it.startsWith(colorNameKeyPrefix) }
-        .mapNotNull {
-            val afterName = it.substring(colorNameKeyPrefixLength)
-            afterName.toIntOrNull()
-        }
-        .maxOrNull() ?: return TreeMap()
+    val lastColorIndex =
+        allKeys
+            .asSequence()
+            .filterIsInstance(String::class.java)
+            .filter { it.startsWith(colorNameKeyPrefix) }
+            .mapNotNull {
+                val afterName = it.substring(colorNameKeyPrefixLength)
+                afterName.toIntOrNull()
+            }
+            .maxOrNull() ?: return TreeMap()
 
     return buildMap {
         for (i in 1..lastColorIndex) {
@@ -80,6 +82,5 @@ private fun readPaletteColors(colorName: String): Map<String, Color> {
 private fun readPaletteColor(colorName: String): Color {
     val defaults = uiDefaults
     val colorNameKey = "ColorPalette.$colorName"
-    return (defaults[colorNameKey] as? java.awt.Color)
-        ?.toComposeColor() ?: Color.Unspecified
+    return (defaults[colorNameKey] as? java.awt.Color)?.toComposeColor() ?: Color.Unspecified
 }

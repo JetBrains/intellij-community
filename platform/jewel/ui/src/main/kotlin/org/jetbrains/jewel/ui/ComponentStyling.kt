@@ -3,39 +3,35 @@ package org.jetbrains.jewel.ui
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.ProvidedValue
 
-interface ComponentStyling {
+public interface ComponentStyling {
 
-    fun provide(vararg values: ProvidedValue<*>): ComponentStyling {
+    public fun provide(vararg values: ProvidedValue<*>): ComponentStyling {
         if (values.isEmpty()) return this
         return with(StaticComponentStyling(values = values))
     }
 
-    fun provide(provider: @Composable () -> Array<out ProvidedValue<*>>): ComponentStyling =
+    public fun provide(provider: @Composable () -> Array<out ProvidedValue<*>>): ComponentStyling =
         with(LazyComponentStyling(provider))
 
-    fun with(styling: ComponentStyling): ComponentStyling {
+    public fun with(styling: ComponentStyling): ComponentStyling {
         if (styling is Companion) return this
         return CombinedComponentStyling(this, styling)
     }
 
-    fun with(styling: @Composable () -> ComponentStyling): ComponentStyling =
-        with(
-            LazyComponentStyling {
-                styling().styles()
-            },
-        )
+    public fun with(styling: @Composable () -> ComponentStyling): ComponentStyling =
+        with(LazyComponentStyling { styling().styles() })
 
     @Composable
-    fun styles(): Array<out ProvidedValue<*>>
+    public fun styles(): Array<out ProvidedValue<*>>
 
-    companion object : ComponentStyling {
+    public companion object : ComponentStyling {
 
         override fun with(styling: ComponentStyling): ComponentStyling = styling
 
         @Composable
         override fun styles(): Array<out ProvidedValue<*>> = emptyArray()
 
-        override fun toString() = "ComponentStyleProvider"
+        override fun toString(): String = "ComponentStyleProvider"
     }
 }
 

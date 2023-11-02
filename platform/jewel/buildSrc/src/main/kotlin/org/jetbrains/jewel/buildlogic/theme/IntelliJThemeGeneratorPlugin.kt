@@ -16,14 +16,16 @@ import org.gradle.api.tasks.TaskAction
 import org.gradle.kotlin.dsl.property
 import java.net.URL
 
-class ThemeGeneratorContainer(container: NamedDomainObjectContainer<ThemeGeneration>) : NamedDomainObjectContainer<ThemeGeneration> by container
+class ThemeGeneratorContainer(container: NamedDomainObjectContainer<ThemeGeneration>) :
+    NamedDomainObjectContainer<ThemeGeneration> by container
 
 class ThemeGeneration(val name: String, project: Project) {
 
-    val targetDir: DirectoryProperty = project.objects.directoryProperty()
-        .convention(project.layout.buildDirectory.dir("generated/theme"))
-    val ideaVersion = project.objects.property<String>()
-        .convention("232.6734")
+    val targetDir: DirectoryProperty =
+        project.objects
+            .directoryProperty()
+            .convention(project.layout.buildDirectory.dir("generated/theme"))
+    val ideaVersion = project.objects.property<String>().convention("232.6734")
     val themeClassName = project.objects.property<String>()
     val themeFile = project.objects.property<String>()
 }
@@ -64,7 +66,10 @@ open class IntelliJThemeGeneratorTask : DefaultTask() {
         val file = IntUiThemeDescriptorReader.readThemeFrom(themeDescriptor, className, ideaVersion.get(), url)
 
         val outputFile = outputFile.get().asFile
-        logger.lifecycle("Theme descriptor for ${themeDescriptor.name} parsed and code generated into ${outputFile.path}")
+        logger.lifecycle(
+            "Theme descriptor for ${themeDescriptor.name} parsed and " +
+                "code generated into ${outputFile.path}"
+        )
         outputFile.bufferedWriter().use { file.writeTo(it) }
     }
 }

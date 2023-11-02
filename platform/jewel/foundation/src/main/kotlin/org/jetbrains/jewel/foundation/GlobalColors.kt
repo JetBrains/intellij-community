@@ -1,45 +1,47 @@
 package org.jetbrains.jewel.foundation
 
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.ProvidableCompositionLocal
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 
 @Immutable
 @GenerateDataFunctions
-class GlobalColors(
-    val borders: BorderColors,
-    val outlines: OutlineColors,
-    val infoContent: Color,
-    val paneBackground: Color,
+public class GlobalColors(
+    public val borders: BorderColors,
+    public val outlines: OutlineColors,
+    public val infoContent: Color,
+    public val paneBackground: Color,
 ) {
 
-    companion object
+    public companion object
 }
 
 @Immutable
 @GenerateDataFunctions
-class BorderColors(
-    val normal: Color,
-    val focused: Color,
-    val disabled: Color,
+public class BorderColors(
+    public val normal: Color,
+    public val focused: Color,
+    public val disabled: Color,
 ) {
 
-    companion object
+    public companion object
 }
 
 @Immutable
 @GenerateDataFunctions
-class OutlineColors(
-    val focused: Color,
-    val focusedWarning: Color,
-    val focusedError: Color,
-    val warning: Color,
-    val error: Color,
+public class OutlineColors(
+    public val focused: Color,
+    public val focusedWarning: Color,
+    public val focusedError: Color,
+    public val warning: Color,
+    public val error: Color,
 ) {
 
-    companion object
+    public companion object
 }
 
-val LocalGlobalColors = staticCompositionLocalOf<GlobalColors> {
-    error("No GlobalColors provided")
-}
+public val LocalGlobalColors: ProvidableCompositionLocal<GlobalColors> =
+    staticCompositionLocalOf {
+        error("No GlobalColors provided. Have you forgotten the theme?")
+    }

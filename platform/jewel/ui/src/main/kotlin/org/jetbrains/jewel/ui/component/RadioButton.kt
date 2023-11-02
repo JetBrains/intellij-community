@@ -16,7 +16,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -47,7 +46,7 @@ import org.jetbrains.jewel.ui.painter.hints.Stateful
 import org.jetbrains.jewel.ui.theme.radioButtonStyle
 
 @Composable
-fun RadioButton(
+public fun RadioButton(
     selected: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
@@ -71,7 +70,7 @@ fun RadioButton(
 }
 
 @Composable
-fun RadioButtonRow(
+public fun RadioButtonRow(
     text: String,
     selected: Boolean,
     onClick: () -> Unit,
@@ -97,7 +96,7 @@ fun RadioButtonRow(
 }
 
 @Composable
-fun RadioButtonRow(
+public fun RadioButtonRow(
     selected: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
@@ -136,6 +135,7 @@ private fun RadioButtonImpl(
     var radioButtonState by remember(interactionSource) {
         mutableStateOf(RadioButtonState.of(selected = selected, enabled = enabled))
     }
+
     remember(selected, enabled) {
         radioButtonState = radioButtonState.copy(selected = selected, enabled = enabled)
     }
@@ -144,9 +144,9 @@ private fun RadioButtonImpl(
         interactionSource.interactions.collect { interaction ->
             when (interaction) {
                 is PressInteraction.Press -> radioButtonState = radioButtonState.copy(pressed = true)
-                is PressInteraction.Cancel, is PressInteraction.Release ->
-                    radioButtonState =
-                        radioButtonState.copy(pressed = false)
+                is PressInteraction.Cancel, is PressInteraction.Release -> {
+                    radioButtonState = radioButtonState.copy(pressed = false)
+                }
 
                 is HoverInteraction.Enter -> radioButtonState = radioButtonState.copy(hovered = true)
                 is HoverInteraction.Exit -> radioButtonState = radioButtonState.copy(hovered = false)
@@ -160,20 +160,25 @@ private fun RadioButtonImpl(
         radioButtonState = radioButtonState.copy(hovered = false, pressed = false)
     }
 
-    val wrapperModifier = modifier.selectable(
-        selected = selected,
-        onClick = onClick,
-        enabled = enabled,
-        role = Role.RadioButton,
-        interactionSource = interactionSource,
-        indication = null,
-    )
+    val wrapperModifier =
+        modifier.selectable(
+            selected = selected,
+            onClick = onClick,
+            enabled = enabled,
+            role = Role.RadioButton,
+            interactionSource = interactionSource,
+            indication = null,
+        )
 
     val colors = style.colors
     val metrics = style.metrics
-    val radioButtonModifier = Modifier
-        .size(metrics.radioButtonSize)
-        .outline(radioButtonState, outline, outlineShape = CircleShape, alignment = Stroke.Alignment.Inside)
+    val radioButtonModifier = Modifier.size(metrics.radioButtonSize)
+        .outline(
+            radioButtonState,
+            outline,
+            outlineShape = CircleShape,
+            alignment = Stroke.Alignment.Inside,
+        )
     val radioButtonPainter by style.icons.radioButton.getPainter(
         Selected(radioButtonState),
         Stateful(radioButtonState),
@@ -190,9 +195,12 @@ private fun RadioButtonImpl(
             RadioButtonImage(Modifier, radioButtonPainter, radioButtonModifier)
 
             val contentColor by colors.contentFor(radioButtonState)
+            val resolvedContentColor = contentColor.takeOrElse { textStyle.color }
+                .takeOrElse { LocalContentColor.current }
+
             CompositionLocalProvider(
                 LocalTextStyle provides textStyle.copy(color = contentColor.takeOrElse { textStyle.color }),
-                LocalContentColor provides contentColor.takeOrElse { textStyle.color.takeOrElse { LocalContentColor.current } },
+                LocalContentColor provides resolvedContentColor,
             ) {
                 content()
             }
@@ -201,8 +209,11 @@ private fun RadioButtonImpl(
 }
 
 @Composable
-private fun RadioButtonImage(outerModifier: Modifier, radioButtonPainter: Painter, radioButtonModifier: Modifier) {
-    // TODO tint icon painter
+private fun RadioButtonImage(
+    outerModifier: Modifier,
+    radioButtonPainter: Painter,
+    radioButtonModifier: Modifier,
+) {
     Box(outerModifier) {
         Image(radioButtonPainter, contentDescription = null, modifier = radioButtonModifier)
     }
@@ -210,68 +221,64 @@ private fun RadioButtonImage(outerModifier: Modifier, radioButtonPainter: Painte
 
 @Immutable
 @JvmInline
-value class RadioButtonState(val state: ULong) : SelectableComponentState, FocusableComponentState {
+public value class RadioButtonState(public val state: ULong) : SelectableComponentState, FocusableComponentState {
 
-    @Stable
     override val isActive: Boolean
         get() = state and Active != 0UL
 
-    @Stable
     override val isSelected: Boolean
         get() = state and Selected != 0UL
 
-    @Stable
     override val isEnabled: Boolean
         get() = state and Enabled != 0UL
 
-    @Stable
     override val isFocused: Boolean
         get() = state and Focused != 0UL
 
-    @Stable
     override val isHovered: Boolean
         get() = state and Hovered != 0UL
 
-    @Stable
     override val isPressed: Boolean
         get() = state and Pressed != 0UL
 
-    fun copy(
+    public fun copy(
         selected: Boolean = isSelected,
         enabled: Boolean = isEnabled,
         focused: Boolean = isFocused,
         pressed: Boolean = isPressed,
         hovered: Boolean = isHovered,
         active: Boolean = isActive,
-    ) = of(
-        selected = selected,
-        enabled = enabled,
-        focused = focused,
-        pressed = pressed,
-        hovered = hovered,
-        active = active,
-    )
+    ): RadioButtonState =
+        of(
+            selected = selected,
+            enabled = enabled,
+            focused = focused,
+            pressed = pressed,
+            hovered = hovered,
+            active = active,
+        )
 
-    override fun toString() =
+    override fun toString(): String =
         "${javaClass.simpleName}(isSelected=$isSelected, isEnabled=$isEnabled, isFocused=$isFocused, " +
             "isHovered=$isHovered, isPressed=$isPressed, isActive=$isActive)"
 
-    companion object {
+    public companion object {
 
-        fun of(
+        public fun of(
             selected: Boolean,
             enabled: Boolean = true,
             focused: Boolean = false,
             pressed: Boolean = false,
             hovered: Boolean = false,
             active: Boolean = false,
-        ) = RadioButtonState(
-            (if (selected) Selected else 0UL) or
-                (if (enabled) Enabled else 0UL) or
-                (if (focused) Focused else 0UL) or
-                (if (pressed) Pressed else 0UL) or
-                (if (hovered) Hovered else 0UL) or
-                (if (active) Active else 0UL),
-        )
+        ): RadioButtonState =
+            RadioButtonState(
+                (if (selected) Selected else 0UL) or
+                    (if (enabled) Enabled else 0UL) or
+                    (if (focused) Focused else 0UL) or
+                    (if (pressed) Pressed else 0UL) or
+                    (if (hovered) Hovered else 0UL) or
+                    (if (active) Active else 0UL),
+            )
     }
 }

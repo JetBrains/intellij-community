@@ -6,9 +6,7 @@ plugins {
     `intellij-theme-generator`
 }
 
-dependencies {
-    api(projects.ui)
-}
+dependencies { api(projects.ui) }
 
 intelliJThemeGenerator {
     val targetIdeaVersion = "232.9960"

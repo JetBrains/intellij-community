@@ -51,12 +51,12 @@ import org.jetbrains.jewel.ui.component.styling.TextAreaStyle
 import org.jetbrains.jewel.ui.component.styling.TextFieldStyle
 import org.jetbrains.jewel.ui.component.styling.TooltipStyle
 
-val JewelTheme.Companion.colorPalette: ThemeColorPalette
+public val JewelTheme.Companion.colorPalette: ThemeColorPalette
     @Composable
     @ReadOnlyComposable
     get() = LocalColorPalette.current
 
-val JewelTheme.Companion.iconData: ThemeIconData
+public val JewelTheme.Companion.iconData: ThemeIconData
     @Composable
     @ReadOnlyComposable
     get() = LocalIconData.current
@@ -65,108 +65,108 @@ val JewelTheme.Companion.iconData: ThemeIconData
 // Component styling
 // -----------------
 
-val JewelTheme.Companion.defaultButtonStyle: ButtonStyle
+public val JewelTheme.Companion.defaultButtonStyle: ButtonStyle
     @Composable
     @ReadOnlyComposable
     get() = LocalDefaultButtonStyle.current
 
-val JewelTheme.Companion.outlinedButtonStyle: ButtonStyle
+public val JewelTheme.Companion.outlinedButtonStyle: ButtonStyle
     @Composable
     @ReadOnlyComposable
     get() = LocalOutlinedButtonStyle.current
 
-val JewelTheme.Companion.checkboxStyle: CheckboxStyle
+public val JewelTheme.Companion.checkboxStyle: CheckboxStyle
     @Composable
     @ReadOnlyComposable
     get() = LocalCheckboxStyle.current
 
-val JewelTheme.Companion.chipStyle: ChipStyle
+public val JewelTheme.Companion.chipStyle: ChipStyle
     @Composable
     @ReadOnlyComposable
     get() = LocalChipStyle.current
 
-val JewelTheme.Companion.dividerStyle: DividerStyle
+public val JewelTheme.Companion.dividerStyle: DividerStyle
     @Composable
     @ReadOnlyComposable
     get() = LocalDividerStyle.current
 
-val JewelTheme.Companion.dropdownStyle: DropdownStyle
+public val JewelTheme.Companion.dropdownStyle: DropdownStyle
     @Composable
     @ReadOnlyComposable
     get() = LocalDefaultDropdownStyle.current
 
-val JewelTheme.Companion.groupHeaderStyle: GroupHeaderStyle
+public val JewelTheme.Companion.groupHeaderStyle: GroupHeaderStyle
     @Composable
     @ReadOnlyComposable
     get() = LocalGroupHeaderStyle.current
 
-val JewelTheme.Companion.linkStyle: LinkStyle
+public val JewelTheme.Companion.linkStyle: LinkStyle
     @Composable
     @ReadOnlyComposable
     get() = LocalLinkStyle.current
 
-val JewelTheme.Companion.menuStyle: MenuStyle
+public val JewelTheme.Companion.menuStyle: MenuStyle
     @Composable
     @ReadOnlyComposable
     get() = LocalMenuStyle.current
 
-val JewelTheme.Companion.horizontalProgressBarStyle: HorizontalProgressBarStyle
+public val JewelTheme.Companion.horizontalProgressBarStyle: HorizontalProgressBarStyle
     @Composable
     @ReadOnlyComposable
     get() = LocalHorizontalProgressBarStyle.current
 
-val JewelTheme.Companion.radioButtonStyle: RadioButtonStyle
+public val JewelTheme.Companion.radioButtonStyle: RadioButtonStyle
     @Composable
     @ReadOnlyComposable
     get() = LocalRadioButtonStyle.current
 
-val JewelTheme.Companion.scrollbarStyle: ScrollbarStyle
+public val JewelTheme.Companion.scrollbarStyle: ScrollbarStyle
     @Composable
     @ReadOnlyComposable
     get() = LocalScrollbarStyle.current
 
-val JewelTheme.Companion.textAreaStyle: TextAreaStyle
+public val JewelTheme.Companion.textAreaStyle: TextAreaStyle
     @Composable
     @ReadOnlyComposable
     get() = LocalTextAreaStyle.current
 
-val JewelTheme.Companion.textFieldStyle: TextFieldStyle
+public val JewelTheme.Companion.textFieldStyle: TextFieldStyle
     @Composable
     @ReadOnlyComposable
     get() = LocalTextFieldStyle.current
 
-val JewelTheme.Companion.treeStyle: LazyTreeStyle
+public val JewelTheme.Companion.treeStyle: LazyTreeStyle
     @Composable
     @ReadOnlyComposable
     get() = LocalLazyTreeStyle.current
 
-val JewelTheme.Companion.defaultTabStyle: TabStyle
+public val JewelTheme.Companion.defaultTabStyle: TabStyle
     @Composable
     @ReadOnlyComposable
     get() = LocalDefaultTabStyle.current
 
-val JewelTheme.Companion.editorTabStyle: TabStyle
+public val JewelTheme.Companion.editorTabStyle: TabStyle
     @Composable
     @ReadOnlyComposable
     get() = LocalEditorTabStyle.current
 
-val JewelTheme.Companion.circularProgressStyle: CircularProgressStyle
+public val JewelTheme.Companion.circularProgressStyle: CircularProgressStyle
     @Composable
     @ReadOnlyComposable
     get() = LocalCircularProgressStyle.current
 
-val JewelTheme.Companion.tooltipStyle: TooltipStyle
+public val JewelTheme.Companion.tooltipStyle: TooltipStyle
     @Composable
     @ReadOnlyComposable
     get() = LocalTooltipStyle.current
 
-val JewelTheme.Companion.iconButtonStyle: IconButtonStyle
+public val JewelTheme.Companion.iconButtonStyle: IconButtonStyle
     @Composable
     @ReadOnlyComposable
     get() = LocalIconButtonStyle.current
 
 @Composable
-fun BaseJewelTheme(
+public fun BaseJewelTheme(
     theme: ThemeDefinition,
     styling: ComponentStyling,
     content: @Composable () -> Unit,
@@ -175,7 +175,7 @@ fun BaseJewelTheme(
 }
 
 @Composable
-fun BaseJewelTheme(
+public fun BaseJewelTheme(
     theme: ThemeDefinition,
     styling: ComponentStyling,
     swingCompatMode: Boolean = false,

@@ -17,53 +17,60 @@ import org.jetbrains.jewel.ui.component.styling.CheckboxStyle
 import org.jetbrains.jewel.ui.painter.PainterProvider
 
 @Composable
-fun CheckboxStyle.Companion.light(
+public fun CheckboxStyle.Companion.light(
     colors: CheckboxColors = CheckboxColors.light(),
     metrics: CheckboxMetrics = CheckboxMetrics.defaults(),
     icons: CheckboxIcons = CheckboxIcons.light(),
-) = CheckboxStyle(colors, metrics, icons)
+): CheckboxStyle =
+    CheckboxStyle(colors, metrics, icons)
 
 @Composable
-fun CheckboxStyle.Companion.dark(
+public fun CheckboxStyle.Companion.dark(
     colors: CheckboxColors = CheckboxColors.dark(),
     metrics: CheckboxMetrics = CheckboxMetrics.defaults(),
     icons: CheckboxIcons = CheckboxIcons.dark(),
-) = CheckboxStyle(colors, metrics, icons)
+): CheckboxStyle =
+    CheckboxStyle(colors, metrics, icons)
 
 @Composable
-fun CheckboxColors.Companion.light(
+public fun CheckboxColors.Companion.light(
     content: Color = Color.Unspecified,
     contentDisabled: Color = IntUiLightTheme.colors.grey(8),
     contentSelected: Color = content,
-) = CheckboxColors(content, contentDisabled, contentSelected)
+): CheckboxColors =
+    CheckboxColors(content, contentDisabled, contentSelected)
 
 @Composable
-fun CheckboxColors.Companion.dark(
+public fun CheckboxColors.Companion.dark(
     content: Color = Color.Unspecified,
     contentDisabled: Color = IntUiDarkTheme.colors.grey(7),
     contentSelected: Color = content,
-) = CheckboxColors(content, contentDisabled, contentSelected)
+): CheckboxColors =
+    CheckboxColors(content, contentDisabled, contentSelected)
 
-fun CheckboxMetrics.Companion.defaults(
+public fun CheckboxMetrics.Companion.defaults(
     checkboxSize: DpSize = DpSize(19.dp, 19.dp),
     checkboxCornerSize: CornerSize = CornerSize(3.dp),
     outlineSize: DpSize = DpSize(15.dp, 15.dp),
     outlineOffset: DpOffset = DpOffset(2.5.dp, 1.5.dp),
     iconContentGap: Dp = 5.dp,
-) = CheckboxMetrics(
-    checkboxSize,
-    checkboxCornerSize,
-    outlineSize,
-    outlineOffset,
-    iconContentGap,
-)
+): CheckboxMetrics =
+    CheckboxMetrics(
+        checkboxSize,
+        checkboxCornerSize,
+        outlineSize,
+        outlineOffset,
+        iconContentGap,
+    )
 
 @Composable
-fun CheckboxIcons.Companion.light(
+public fun CheckboxIcons.Companion.light(
     checkbox: PainterProvider = standalonePainterProvider("com/intellij/ide/ui/laf/icons/intellij/checkBox.svg"),
-) = CheckboxIcons(checkbox)
+): CheckboxIcons =
+    CheckboxIcons(checkbox)
 
 @Composable
-fun CheckboxIcons.Companion.dark(
+public fun CheckboxIcons.Companion.dark(
     checkbox: PainterProvider = standalonePainterProvider("com/intellij/ide/ui/laf/icons/darcula/checkBox.svg"),
-) = CheckboxIcons(checkbox)
+): CheckboxIcons =
+    CheckboxIcons(checkbox)

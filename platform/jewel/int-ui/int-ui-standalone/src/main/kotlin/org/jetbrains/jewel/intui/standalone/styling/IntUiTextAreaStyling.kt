@@ -17,21 +17,23 @@ import org.jetbrains.jewel.ui.component.styling.TextAreaMetrics
 import org.jetbrains.jewel.ui.component.styling.TextAreaStyle
 
 @Composable
-fun TextAreaStyle.Companion.light(
+public fun TextAreaStyle.Companion.light(
     colors: TextAreaColors = TextAreaColors.light(),
     metrics: TextAreaMetrics = TextAreaMetrics.defaults(),
     textStyle: TextStyle = JewelTheme.defaultTextStyle,
-) = TextAreaStyle(colors, metrics, textStyle)
+): TextAreaStyle =
+    TextAreaStyle(colors, metrics, textStyle)
 
 @Composable
-fun TextAreaStyle.Companion.dark(
+public fun TextAreaStyle.Companion.dark(
     colors: TextAreaColors = TextAreaColors.dark(),
     metrics: TextAreaMetrics = TextAreaMetrics.defaults(),
     textStyle: TextStyle = JewelTheme.defaultTextStyle,
-) = TextAreaStyle(colors, metrics, textStyle)
+): TextAreaStyle =
+    TextAreaStyle(colors, metrics, textStyle)
 
 @Composable
-fun TextAreaColors.Companion.light(
+public fun TextAreaColors.Companion.light(
     background: Color = IntUiLightTheme.colors.grey(14),
     backgroundDisabled: Color = IntUiLightTheme.colors.grey(13),
     backgroundFocused: Color = background,
@@ -53,32 +55,33 @@ fun TextAreaColors.Companion.light(
     caretPressed: Color = caret,
     caretHovered: Color = caret,
     placeholder: Color = IntUiLightTheme.colors.grey(8),
-) = TextAreaColors(
-    background,
-    backgroundDisabled,
-    backgroundFocused,
-    backgroundPressed,
-    backgroundHovered,
-    content,
-    contentDisabled,
-    contentFocused,
-    contentPressed,
-    contentHovered,
-    border,
-    borderDisabled,
-    borderFocused,
-    borderPressed,
-    borderHovered,
-    caret,
-    caretDisabled,
-    caretFocused,
-    caretPressed,
-    caretHovered,
-    placeholder,
-)
+): TextAreaColors =
+    TextAreaColors(
+        background = background,
+        backgroundDisabled = backgroundDisabled,
+        backgroundFocused = backgroundFocused,
+        backgroundPressed = backgroundPressed,
+        backgroundHovered = backgroundHovered,
+        content = content,
+        contentDisabled = contentDisabled,
+        contentFocused = contentFocused,
+        contentPressed = contentPressed,
+        contentHovered = contentHovered,
+        border = border,
+        borderDisabled = borderDisabled,
+        borderFocused = borderFocused,
+        borderPressed = borderPressed,
+        borderHovered = borderHovered,
+        caret = caret,
+        caretDisabled = caretDisabled,
+        caretFocused = caretFocused,
+        caretPressed = caretPressed,
+        caretHovered = caretHovered,
+        placeholder = placeholder,
+    )
 
 @Composable
-fun TextAreaColors.Companion.dark(
+public fun TextAreaColors.Companion.dark(
     background: Color = IntUiDarkTheme.colors.grey(2),
     backgroundDisabled: Color = background,
     backgroundFocused: Color = background,
@@ -100,33 +103,35 @@ fun TextAreaColors.Companion.dark(
     caretPressed: Color = caret,
     caretHovered: Color = caret,
     placeholder: Color = IntUiDarkTheme.colors.grey(7),
-) = TextAreaColors(
-    background,
-    backgroundDisabled,
-    backgroundFocused,
-    backgroundPressed,
-    backgroundHovered,
-    content,
-    contentDisabled,
-    contentFocused,
-    contentPressed,
-    contentHovered,
-    border,
-    borderDisabled,
-    borderFocused,
-    borderPressed,
-    borderHovered,
-    caret,
-    caretDisabled,
-    caretFocused,
-    caretPressed,
-    caretHovered,
-    placeholder,
-)
+): TextAreaColors =
+    TextAreaColors(
+        background = background,
+        backgroundDisabled = backgroundDisabled,
+        backgroundFocused = backgroundFocused,
+        backgroundPressed = backgroundPressed,
+        backgroundHovered = backgroundHovered,
+        content = content,
+        contentDisabled = contentDisabled,
+        contentFocused = contentFocused,
+        contentPressed = contentPressed,
+        contentHovered = contentHovered,
+        border = border,
+        borderDisabled = borderDisabled,
+        borderFocused = borderFocused,
+        borderPressed = borderPressed,
+        borderHovered = borderHovered,
+        caret = caret,
+        caretDisabled = caretDisabled,
+        caretFocused = caretFocused,
+        caretPressed = caretPressed,
+        caretHovered = caretHovered,
+        placeholder = placeholder,
+    )
 
-fun TextAreaMetrics.Companion.defaults(
+public fun TextAreaMetrics.Companion.defaults(
     cornerSize: CornerSize = CornerSize(4.dp),
     contentPadding: PaddingValues = PaddingValues(horizontal = 6.dp, vertical = 2.dp),
     minSize: DpSize = DpSize(144.dp, 28.dp),
     borderWidth: Dp = 1.dp,
-) = TextAreaMetrics(borderWidth, contentPadding, cornerSize, minSize)
+): TextAreaMetrics =
+    TextAreaMetrics(borderWidth, contentPadding, cornerSize, minSize)

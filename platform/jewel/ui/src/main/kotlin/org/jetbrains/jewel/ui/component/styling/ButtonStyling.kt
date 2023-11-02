@@ -4,7 +4,9 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.ProvidableCompositionLocal
 import androidx.compose.runtime.Stable
+import androidx.compose.runtime.State
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Brush
@@ -16,89 +18,94 @@ import org.jetbrains.jewel.ui.component.ButtonState
 
 @Stable
 @GenerateDataFunctions
-class ButtonStyle(
-    val colors: ButtonColors,
-    val metrics: ButtonMetrics,
+public class ButtonStyle(
+    public val colors: ButtonColors,
+    public val metrics: ButtonMetrics,
 ) {
 
-    companion object
+    public companion object
 }
 
 @Immutable
 @GenerateDataFunctions
-class ButtonColors(
-    val background: Brush,
-    val backgroundDisabled: Brush,
-    val backgroundFocused: Brush,
-    val backgroundPressed: Brush,
-    val backgroundHovered: Brush,
-    val content: Color,
-    val contentDisabled: Color,
-    val contentFocused: Color,
-    val contentPressed: Color,
-    val contentHovered: Color,
-    val border: Brush,
-    val borderDisabled: Brush,
-    val borderFocused: Brush,
-    val borderPressed: Brush,
-    val borderHovered: Brush,
+public class ButtonColors(
+    public val background: Brush,
+    public val backgroundDisabled: Brush,
+    public val backgroundFocused: Brush,
+    public val backgroundPressed: Brush,
+    public val backgroundHovered: Brush,
+    public val content: Color,
+    public val contentDisabled: Color,
+    public val contentFocused: Color,
+    public val contentPressed: Color,
+    public val contentHovered: Color,
+    public val border: Brush,
+    public val borderDisabled: Brush,
+    public val borderFocused: Brush,
+    public val borderPressed: Brush,
+    public val borderHovered: Brush,
 ) {
 
     @Composable
-    fun backgroundFor(state: ButtonState) = rememberUpdatedState(
-        state.chooseValue(
-            normal = background,
-            disabled = backgroundDisabled,
-            focused = backgroundFocused,
-            pressed = backgroundPressed,
-            hovered = backgroundHovered,
-            active = background,
-        ),
-    )
+    public fun backgroundFor(state: ButtonState): State<Brush> =
+        rememberUpdatedState(
+            state.chooseValue(
+                normal = background,
+                disabled = backgroundDisabled,
+                focused = backgroundFocused,
+                pressed = backgroundPressed,
+                hovered = backgroundHovered,
+                active = background,
+            ),
+        )
 
     @Composable
-    fun contentFor(state: ButtonState) = rememberUpdatedState(
-        state.chooseValue(
-            normal = content,
-            disabled = contentDisabled,
-            focused = contentFocused,
-            pressed = contentPressed,
-            hovered = contentHovered,
-            active = content,
-        ),
-    )
+    public fun contentFor(state: ButtonState): State<Color> =
+        rememberUpdatedState(
+            state.chooseValue(
+                normal = content,
+                disabled = contentDisabled,
+                focused = contentFocused,
+                pressed = contentPressed,
+                hovered = contentHovered,
+                active = content,
+            ),
+        )
 
     @Composable
-    fun borderFor(state: ButtonState) = rememberUpdatedState(
-        state.chooseValue(
-            normal = border,
-            disabled = borderDisabled,
-            focused = borderFocused,
-            pressed = borderPressed,
-            hovered = borderHovered,
-            active = border,
-        ),
-    )
+    public fun borderFor(state: ButtonState): State<Brush> =
+        rememberUpdatedState(
+            state.chooseValue(
+                normal = border,
+                disabled = borderDisabled,
+                focused = borderFocused,
+                pressed = borderPressed,
+                hovered = borderHovered,
+                active = border,
+            ),
+        )
 
-    companion object
+    public companion object
 }
 
 @Stable
 @GenerateDataFunctions
-class ButtonMetrics(
-    val cornerSize: CornerSize,
-    val padding: PaddingValues,
-    val minSize: DpSize,
-    val borderWidth: Dp,
+public class ButtonMetrics(
+    public val cornerSize: CornerSize,
+    public val padding: PaddingValues,
+    public val minSize: DpSize,
+    public val borderWidth: Dp,
 ) {
 
-    companion object
+    public companion object
 }
 
-val LocalDefaultButtonStyle = staticCompositionLocalOf<ButtonStyle> {
-    error("No default ButtonStyle provided")
-}
+public val LocalDefaultButtonStyle: ProvidableCompositionLocal<ButtonStyle> =
+    staticCompositionLocalOf {
+        error("No default ButtonStyle provided. Have you forgotten the theme?")
+    }
 
-val LocalOutlinedButtonStyle = staticCompositionLocalOf<ButtonStyle> {
-    error("No outlined ButtonStyle provided")
-}
+public val LocalOutlinedButtonStyle: ProvidableCompositionLocal<ButtonStyle> =
+    staticCompositionLocalOf {
+        error("No outlined ButtonStyle provided. Have you forgotten the theme?")
+    }

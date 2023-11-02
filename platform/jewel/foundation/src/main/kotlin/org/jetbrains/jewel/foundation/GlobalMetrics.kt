@@ -1,19 +1,21 @@
 package org.jetbrains.jewel.foundation
 
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.ProvidableCompositionLocal
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.unit.Dp
 
 @Immutable
 @GenerateDataFunctions
-class GlobalMetrics(
-    val outlineWidth: Dp,
-    val rowHeight: Dp,
+public class GlobalMetrics(
+    public val outlineWidth: Dp,
+    public val rowHeight: Dp,
 ) {
 
-    companion object
+    public companion object
 }
 
-val LocalGlobalMetrics = staticCompositionLocalOf<GlobalMetrics> {
-    error("No GlobalMetrics provided")
-}
+public val LocalGlobalMetrics: ProvidableCompositionLocal<GlobalMetrics> =
+    staticCompositionLocalOf {
+        error("No GlobalMetrics provided. Have you forgotten the theme?")
+    }

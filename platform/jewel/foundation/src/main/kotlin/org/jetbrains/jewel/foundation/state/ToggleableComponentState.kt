@@ -1,18 +1,16 @@
 package org.jetbrains.jewel.foundation.state
 
-import androidx.compose.runtime.Stable
 import androidx.compose.ui.state.ToggleableState
 import org.jetbrains.jewel.foundation.state.CommonStateBitMask.Indeterminate
 import org.jetbrains.jewel.foundation.state.CommonStateBitMask.Selected
 
-interface ToggleableComponentState : SelectableComponentState {
+public interface ToggleableComponentState : SelectableComponentState {
 
-    @Stable
-    val toggleableState: ToggleableState
+    public val toggleableState: ToggleableState
 
-    companion object {
+    public companion object {
 
-        fun ULong.readToggleableState(): ToggleableState {
+        public fun ULong.readToggleableState(): ToggleableState {
             val selected = this and Selected != 0UL
             val indeterminate = this and Indeterminate != 0UL
 

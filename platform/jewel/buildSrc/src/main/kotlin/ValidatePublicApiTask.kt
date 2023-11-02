@@ -18,7 +18,8 @@ open class ValidatePublicApiTask : SourceTask() {
     private val classFqnRegex = "public (?:\\w+ )*class (\\S+)\\b".toRegex()
 
     @Suppress("ConvertToStringTemplate") // The odd concatenation is needed because of $; escapes get confused
-    private val copyMethodRegex = ("public static synthetic fun copy(-\\w+)?" + "\\$" + "default\\b").toRegex()
+    private val copyMethodRegex =
+        ("public static synthetic fun copy(-\\w+)?" + "\\$" + "default\\b").toRegex()
 
     @TaskAction
     fun validatePublicApi() {
@@ -86,8 +87,9 @@ open class ValidatePublicApiTask : SourceTask() {
             }
         }
 
-        val actualDataClasses = dataClasses.filterValues { it.hasCopyMethod && !it.isLikelyValueClass }
-            .keys
+        val actualDataClasses =
+            dataClasses.filterValues { it.hasCopyMethod && !it.isLikelyValueClass }
+                .keys
         return actualDataClasses
     }
 }

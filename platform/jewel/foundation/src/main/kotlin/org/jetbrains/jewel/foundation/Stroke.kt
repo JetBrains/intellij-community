@@ -7,44 +7,57 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.isUnspecified
 import androidx.compose.ui.unit.Dp
 
-sealed class Stroke {
+public sealed class Stroke {
+
     @Immutable
-    object None : Stroke() {
+    public object None : Stroke() {
 
         override fun toString(): String = "None"
     }
 
     @Immutable
     @GenerateDataFunctions
-    class Solid internal constructor(
-        val width: Dp,
-        val color: Color,
-        val alignment: Alignment,
-        val expand: Dp,
+    public class Solid internal constructor(
+        public val width: Dp,
+        public val color: Color,
+        public val alignment: Alignment,
+        public val expand: Dp,
     ) : Stroke()
 
     @Immutable
     @GenerateDataFunctions
-    class Brush internal constructor(
-        val width: Dp,
-        val brush: androidx.compose.ui.graphics.Brush,
-        val alignment: Alignment,
-        val expand: Dp,
+    public class Brush internal constructor(
+        public val width: Dp,
+        public val brush: androidx.compose.ui.graphics.Brush,
+        public val alignment: Alignment,
+        public val expand: Dp,
     ) : Stroke()
 
-    enum class Alignment {
-        Inside, Center, Outside
+    public enum class Alignment {
+        Inside,
+        Center,
+        Outside,
     }
 }
 
-fun Stroke(width: Dp, color: Color, alignment: Stroke.Alignment, expand: Dp = Dp.Unspecified): Stroke {
+public fun Stroke(
+    width: Dp,
+    color: Color,
+    alignment: Stroke.Alignment,
+    expand: Dp = Dp.Unspecified,
+): Stroke {
     if (width.value == 0f) return Stroke.None
     if (color.isUnspecified) return Stroke.None
 
     return Stroke.Solid(width, color, alignment, expand)
 }
 
-fun Stroke(width: Dp, brush: Brush, alignment: Stroke.Alignment, expand: Dp = Dp.Unspecified): Stroke {
+public fun Stroke(
+    width: Dp,
+    brush: Brush,
+    alignment: Stroke.Alignment,
+    expand: Dp = Dp.Unspecified,
+): Stroke {
     if (width.value == 0f) return Stroke.None
     return when (brush) {
         is SolidColor -> {
@@ -54,7 +67,6 @@ fun Stroke(width: Dp, brush: Brush, alignment: Stroke.Alignment, expand: Dp = Dp
                 Stroke.Solid(width, brush.value, alignment, expand)
             }
         }
-
         else -> Stroke.Brush(width, brush, alignment, expand)
     }
 }

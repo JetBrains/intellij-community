@@ -6,7 +6,7 @@ import androidx.compose.foundation.interaction.InteractionSource
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.drawscope.ContentDrawScope
 
-object NoIndication : Indication {
+public object NoIndication : Indication {
 
     private object NoIndicationInstance : IndicationInstance {
 

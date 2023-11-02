@@ -20,61 +20,65 @@ import org.jetbrains.jewel.ui.component.styling.DropdownStyle
 import org.jetbrains.jewel.ui.component.styling.MenuStyle
 import org.jetbrains.jewel.ui.painter.PainterProvider
 
-val DropdownStyle.Companion.Default: IntUiDefaultDropdownStyleFactory
+public val DropdownStyle.Companion.Default: IntUiDefaultDropdownStyleFactory
     get() = IntUiDefaultDropdownStyleFactory
 
-object IntUiDefaultDropdownStyleFactory {
+public object IntUiDefaultDropdownStyleFactory {
 
     @Composable
-    fun light(
+    public fun light(
         colors: DropdownColors = DropdownColors.Default.light(),
         metrics: DropdownMetrics = DropdownMetrics.default(),
         icons: DropdownIcons = DropdownIcons.defaults(),
         textStyle: TextStyle = JewelTheme.defaultTextStyle,
         menuStyle: MenuStyle = MenuStyle.light(),
-    ) = DropdownStyle(colors, metrics, icons, textStyle, menuStyle)
+    ): DropdownStyle =
+        DropdownStyle(colors, metrics, icons, textStyle, menuStyle)
 
     @Composable
-    fun dark(
+    public fun dark(
         colors: DropdownColors = DropdownColors.Default.dark(),
         metrics: DropdownMetrics = DropdownMetrics.default(),
         icons: DropdownIcons = DropdownIcons.defaults(),
         textStyle: TextStyle = JewelTheme.defaultTextStyle,
         menuStyle: MenuStyle = MenuStyle.dark(),
-    ) = DropdownStyle(colors, metrics, icons, textStyle, menuStyle)
+    ): DropdownStyle =
+        DropdownStyle(colors, metrics, icons, textStyle, menuStyle)
 }
 
-val DropdownStyle.Companion.Undecorated: IntUiUndecoratedDropdownStyleFactory
+public val DropdownStyle.Companion.Undecorated: IntUiUndecoratedDropdownStyleFactory
     get() = IntUiUndecoratedDropdownStyleFactory
 
-object IntUiUndecoratedDropdownStyleFactory {
+public object IntUiUndecoratedDropdownStyleFactory {
 
     @Composable
-    fun light(
+    public fun light(
         colors: DropdownColors = DropdownColors.Undecorated.light(),
         metrics: DropdownMetrics = DropdownMetrics.undecorated(),
         icons: DropdownIcons = DropdownIcons.defaults(),
         textStyle: TextStyle = JewelTheme.defaultTextStyle,
         menuStyle: MenuStyle = MenuStyle.light(),
-    ) = DropdownStyle(colors, metrics, icons, textStyle, menuStyle)
+    ): DropdownStyle =
+        DropdownStyle(colors, metrics, icons, textStyle, menuStyle)
 
     @Composable
-    fun dark(
+    public fun dark(
         colors: DropdownColors = DropdownColors.Undecorated.dark(),
         metrics: DropdownMetrics = DropdownMetrics.undecorated(),
         icons: DropdownIcons = DropdownIcons.defaults(),
         textStyle: TextStyle = JewelTheme.defaultTextStyle,
         menuStyle: MenuStyle = MenuStyle.dark(),
-    ) = DropdownStyle(colors, metrics, icons, textStyle, menuStyle)
+    ): DropdownStyle =
+        DropdownStyle(colors, metrics, icons, textStyle, menuStyle)
 }
 
-val DropdownColors.Companion.Default: IntUiDefaultDropdownColorsFactory
+public val DropdownColors.Companion.Default: IntUiDefaultDropdownColorsFactory
     get() = IntUiDefaultDropdownColorsFactory
 
-object IntUiDefaultDropdownColorsFactory {
+public object IntUiDefaultDropdownColorsFactory {
 
     @Composable
-    fun light(
+    public fun light(
         background: Color = IntUiLightTheme.colors.grey(14),
         backgroundDisabled: Color = IntUiLightTheme.colors.grey(13),
         backgroundFocused: Color = background,
@@ -95,31 +99,32 @@ object IntUiDefaultDropdownColorsFactory {
         iconTintFocused: Color = iconTint,
         iconTintPressed: Color = iconTint,
         iconTintHovered: Color = iconTint,
-    ) = DropdownColors(
-        background,
-        backgroundDisabled,
-        backgroundFocused,
-        backgroundPressed,
-        backgroundHovered,
-        content,
-        contentDisabled,
-        contentFocused,
-        contentPressed,
-        contentHovered,
-        border,
-        borderDisabled,
-        borderFocused,
-        borderPressed,
-        borderHovered,
-        iconTint,
-        iconTintDisabled,
-        iconTintFocused,
-        iconTintPressed,
-        iconTintHovered,
-    )
+    ): DropdownColors =
+        DropdownColors(
+            background = background,
+            backgroundDisabled = backgroundDisabled,
+            backgroundFocused = backgroundFocused,
+            backgroundPressed = backgroundPressed,
+            backgroundHovered = backgroundHovered,
+            content = content,
+            contentDisabled = contentDisabled,
+            contentFocused = contentFocused,
+            contentPressed = contentPressed,
+            contentHovered = contentHovered,
+            border = border,
+            borderDisabled = borderDisabled,
+            borderFocused = borderFocused,
+            borderPressed = borderPressed,
+            borderHovered = borderHovered,
+            iconTint = iconTint,
+            iconTintDisabled = iconTintDisabled,
+            iconTintFocused = iconTintFocused,
+            iconTintPressed = iconTintPressed,
+            iconTintHovered = iconTintHovered,
+        )
 
     @Composable
-    fun dark(
+    public fun dark(
         background: Color = IntUiDarkTheme.colors.grey(2),
         backgroundDisabled: Color = background,
         backgroundFocused: Color = background,
@@ -140,37 +145,38 @@ object IntUiDefaultDropdownColorsFactory {
         iconTintFocused: Color = iconTint,
         iconTintPressed: Color = iconTint,
         iconTintHovered: Color = iconTint,
-    ) = DropdownColors(
-        background,
-        backgroundDisabled,
-        backgroundFocused,
-        backgroundPressed,
-        backgroundHovered,
-        content,
-        contentDisabled,
-        contentFocused,
-        contentPressed,
-        contentHovered,
-        border,
-        borderDisabled,
-        borderFocused,
-        borderPressed,
-        borderHovered,
-        iconTint,
-        iconTintDisabled,
-        iconTintFocused,
-        iconTintPressed,
-        iconTintHovered,
-    )
+    ): DropdownColors =
+        DropdownColors(
+            background = background,
+            backgroundDisabled = backgroundDisabled,
+            backgroundFocused = backgroundFocused,
+            backgroundPressed = backgroundPressed,
+            backgroundHovered = backgroundHovered,
+            content = content,
+            contentDisabled = contentDisabled,
+            contentFocused = contentFocused,
+            contentPressed = contentPressed,
+            contentHovered = contentHovered,
+            border = border,
+            borderDisabled = borderDisabled,
+            borderFocused = borderFocused,
+            borderPressed = borderPressed,
+            borderHovered = borderHovered,
+            iconTint = iconTint,
+            iconTintDisabled = iconTintDisabled,
+            iconTintFocused = iconTintFocused,
+            iconTintPressed = iconTintPressed,
+            iconTintHovered = iconTintHovered,
+        )
 }
 
-val DropdownColors.Companion.Undecorated: IntUiUndecoratedDropdownColorsFactory
+public val DropdownColors.Companion.Undecorated: IntUiUndecoratedDropdownColorsFactory
     get() = IntUiUndecoratedDropdownColorsFactory
 
-object IntUiUndecoratedDropdownColorsFactory {
+public object IntUiUndecoratedDropdownColorsFactory {
 
     @Composable
-    fun light(
+    public fun light(
         background: Color = Color.Transparent,
         backgroundDisabled: Color = background,
         backgroundFocused: Color = background,
@@ -186,31 +192,32 @@ object IntUiUndecoratedDropdownColorsFactory {
         iconTintFocused: Color = iconTint,
         iconTintPressed: Color = iconTint,
         iconTintHovered: Color = iconTint,
-    ) = DropdownColors(
-        background,
-        backgroundDisabled,
-        backgroundFocused,
-        backgroundPressed,
-        backgroundHovered,
-        content,
-        contentDisabled,
-        contentFocused,
-        contentPressed,
-        contentHovered,
-        border = Color.Transparent,
-        borderDisabled = Color.Transparent,
-        borderFocused = Color.Transparent,
-        borderPressed = Color.Transparent,
-        borderHovered = Color.Transparent,
-        iconTint,
-        iconTintDisabled,
-        iconTintFocused,
-        iconTintPressed,
-        iconTintHovered,
-    )
+    ): DropdownColors =
+        DropdownColors(
+            background = background,
+            backgroundDisabled = backgroundDisabled,
+            backgroundFocused = backgroundFocused,
+            backgroundPressed = backgroundPressed,
+            backgroundHovered = backgroundHovered,
+            content = content,
+            contentDisabled = contentDisabled,
+            contentFocused = contentFocused,
+            contentPressed = contentPressed,
+            contentHovered = contentHovered,
+            border = Color.Transparent,
+            borderDisabled = Color.Transparent,
+            borderFocused = Color.Transparent,
+            borderPressed = Color.Transparent,
+            borderHovered = Color.Transparent,
+            iconTint = iconTint,
+            iconTintDisabled = iconTintDisabled,
+            iconTintFocused = iconTintFocused,
+            iconTintPressed = iconTintPressed,
+            iconTintHovered = iconTintHovered,
+        )
 
     @Composable
-    fun dark(
+    public fun dark(
         background: Color = Color.Transparent,
         backgroundDisabled: Color = background,
         backgroundFocused: Color = background,
@@ -226,58 +233,50 @@ object IntUiUndecoratedDropdownColorsFactory {
         iconTintFocused: Color = iconTint,
         iconTintPressed: Color = iconTint,
         iconTintHovered: Color = iconTint,
-    ) = DropdownColors(
-        background,
-        backgroundDisabled,
-        backgroundFocused,
-        backgroundPressed,
-        backgroundHovered,
-        content,
-        contentDisabled,
-        contentFocused,
-        contentPressed,
-        contentHovered,
-        border = Color.Transparent,
-        borderDisabled = Color.Transparent,
-        borderFocused = Color.Transparent,
-        borderPressed = Color.Transparent,
-        borderHovered = Color.Transparent,
-        iconTint,
-        iconTintDisabled,
-        iconTintFocused,
-        iconTintPressed,
-        iconTintHovered,
-    )
+    ): DropdownColors =
+        DropdownColors(
+            background = background,
+            backgroundDisabled = backgroundDisabled,
+            backgroundFocused = backgroundFocused,
+            backgroundPressed = backgroundPressed,
+            backgroundHovered = backgroundHovered,
+            content = content,
+            contentDisabled = contentDisabled,
+            contentFocused = contentFocused,
+            contentPressed = contentPressed,
+            contentHovered = contentHovered,
+            border = Color.Transparent,
+            borderDisabled = Color.Transparent,
+            borderFocused = Color.Transparent,
+            borderPressed = Color.Transparent,
+            borderHovered = Color.Transparent,
+            iconTint = iconTint,
+            iconTintDisabled = iconTintDisabled,
+            iconTintFocused = iconTintFocused,
+            iconTintPressed = iconTintPressed,
+            iconTintHovered = iconTintHovered,
+        )
 }
 
-fun DropdownMetrics.Companion.default(
+public fun DropdownMetrics.Companion.default(
     arrowMinSize: DpSize = DpSize((23 + 3).dp, 24.dp),
     minSize: DpSize = DpSize((49 + 23 + 6).dp, 24.dp),
     cornerSize: CornerSize = CornerSize(4.dp),
     contentPadding: PaddingValues = PaddingValues(horizontal = 6.dp, vertical = 3.dp),
     borderWidth: Dp = 1.dp,
-) = DropdownMetrics(
-    arrowMinSize,
-    minSize,
-    cornerSize,
-    contentPadding,
-    borderWidth,
-)
+): DropdownMetrics =
+    DropdownMetrics(arrowMinSize, minSize, cornerSize, contentPadding, borderWidth)
 
-fun DropdownMetrics.Companion.undecorated(
+public fun DropdownMetrics.Companion.undecorated(
     arrowMinSize: DpSize = DpSize((23 + 3).dp, 24.dp),
     minSize: DpSize = DpSize((49 + 23 + 6).dp, 24.dp),
     cornerSize: CornerSize = CornerSize(4.dp),
     contentPadding: PaddingValues = PaddingValues(horizontal = 6.dp, vertical = 3.dp),
     borderWidth: Dp = 0.dp,
-) = DropdownMetrics(
-    arrowMinSize,
-    minSize,
-    cornerSize,
-    contentPadding,
-    borderWidth,
-)
+): DropdownMetrics =
+    DropdownMetrics(arrowMinSize, minSize, cornerSize, contentPadding, borderWidth)
 
-fun DropdownIcons.Companion.defaults(
+public fun DropdownIcons.Companion.defaults(
     chevronDown: PainterProvider = standalonePainterProvider("expui/general/chevronDown.svg"),
-) = DropdownIcons(chevronDown)
+): DropdownIcons =
+    DropdownIcons(chevronDown)

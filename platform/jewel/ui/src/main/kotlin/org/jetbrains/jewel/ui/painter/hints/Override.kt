@@ -1,29 +1,21 @@
 package org.jetbrains.jewel.ui.painter.hints
 
+import androidx.compose.runtime.Immutable
+import org.jetbrains.jewel.foundation.GenerateDataFunctions
 import org.jetbrains.jewel.ui.painter.PainterHint
 import org.jetbrains.jewel.ui.painter.PainterPathHint
 import org.jetbrains.jewel.ui.painter.PainterProviderScope
 
+@Immutable
+@GenerateDataFunctions
 private class OverrideImpl(private val iconOverride: Map<String, String>) : PainterPathHint {
 
     override fun PainterProviderScope.patch(): String = iconOverride[path] ?: path
+}
 
-    override fun toString(): String = "Override(${iconOverride.hashCode()})"
-
-    override fun hashCode(): Int = iconOverride.hashCode()
-
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (other !is OverrideImpl) return false
-
-        if (iconOverride != other.iconOverride) return false
-
-        return true
+public fun Override(override: Map<String, String>): PainterHint =
+    if (override.isEmpty()) {
+        PainterHint.None
+    } else {
+        OverrideImpl(override)
     }
-}
-
-fun Override(override: Map<String, String>): PainterHint = if (override.isEmpty()) {
-    PainterHint.None
-} else {
-    OverrideImpl(override)
-}

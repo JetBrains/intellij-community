@@ -38,9 +38,13 @@ internal fun DecoratedWindowScope.TitleBarOnLinux(
     val viewConfig = LocalViewConfiguration.current
     TitleBarImpl(
         modifier.onPointerEvent(PointerEventType.Press, PointerEventPass.Main) {
-            if (this.currentEvent.button == PointerButton.Primary && this.currentEvent.changes.any { changed -> !changed.isConsumed }) {
+            if (this.currentEvent.button == PointerButton.Primary &&
+                this.currentEvent.changes.any { changed -> !changed.isConsumed }
+            ) {
                 JBR.getWindowMove()?.startMovingTogetherWithMouse(window, MouseEvent.BUTTON1)
-                if (System.currentTimeMillis() - lastPress in viewConfig.doubleTapMinTimeMillis..viewConfig.doubleTapTimeoutMillis) {
+                if (System.currentTimeMillis() - lastPress in
+                    viewConfig.doubleTapMinTimeMillis..viewConfig.doubleTapTimeoutMillis
+                ) {
                     if (state.isMaximized) {
                         window.extendedState = Frame.NORMAL
                     } else {
@@ -54,22 +58,33 @@ internal fun DecoratedWindowScope.TitleBarOnLinux(
         style,
         { _, _ -> PaddingValues(0.dp) },
     ) { state ->
-        CloseButton({
-            window.dispatchEvent(WindowEvent(window, WindowEvent.WINDOW_CLOSING))
-        }, state, style)
+        CloseButton(
+            { window.dispatchEvent(WindowEvent(window, WindowEvent.WINDOW_CLOSING)) },
+            state,
+            style,
+        )
 
         if (state.isMaximized) {
-            ControlButton({
-                window.extendedState = Frame.NORMAL
-            }, state, style.icons.restoreButton, "Restore")
+            ControlButton(
+                { window.extendedState = Frame.NORMAL },
+                state,
+                style.icons.restoreButton,
+                "Restore",
+            )
         } else {
-            ControlButton({
-                window.extendedState = Frame.MAXIMIZED_BOTH
-            }, state, style.icons.maximizeButton, "Maximize")
+            ControlButton(
+                { window.extendedState = Frame.MAXIMIZED_BOTH },
+                state,
+                style.icons.maximizeButton,
+                "Maximize",
+            )
         }
-        ControlButton({
-            window.extendedState = Frame.ICONIFIED
-        }, state, style.icons.minimizeButton, "Minimize")
+        ControlButton(
+            { window.extendedState = Frame.ICONIFIED },
+            state,
+            style.icons.minimizeButton,
+            "Minimize",
+        )
         content(state)
     }
 }
@@ -80,7 +95,14 @@ private fun TitleBarScope.CloseButton(
     state: DecoratedWindowState,
     style: TitleBarStyle = JewelTheme.defaultTitleBarStyle,
 ) {
-    ControlButton(onClick, state, style.icons.closeButton, "Close", style, style.paneCloseButtonStyle)
+    ControlButton(
+        onClick,
+        state,
+        style.icons.closeButton,
+        "Close",
+        style,
+        style.paneCloseButtonStyle,
+    )
 }
 
 @Composable
@@ -94,12 +116,13 @@ private fun TitleBarScope.ControlButton(
 ) {
     IconButton(
         onClick,
-        Modifier.align(Alignment.End)
-            .focusable(false)
-            .size(style.metrics.titlePaneButtonSize),
+        Modifier.align(Alignment.End).focusable(false).size(style.metrics.titlePaneButtonSize),
         style = iconButtonStyle,
     ) {
-        Icon(painterProvider.getPainter(if (state.isActive) PainterHint else Inactive).value, description)
+        Icon(
+            painterProvider.getPainter(if (state.isActive) PainterHint else Inactive).value,
+            description,
+        )
     }
 }
 

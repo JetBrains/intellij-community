@@ -22,7 +22,7 @@ import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.component.styling.MenuStyle
 import org.jetbrains.jewel.ui.theme.menuStyle
 
-object ContextMenuRepresentation : ContextMenuRepresentation {
+public object ContextMenuRepresentation : ContextMenuRepresentation {
 
     @Composable
     override fun Representation(state: ContextMenuState, items: () -> List<ContextMenuItem>) {
@@ -52,22 +52,22 @@ internal fun ContextMenu(
 ) {
     var focusManager: FocusManager? by mutableStateOf(null)
     var inputModeManager: InputModeManager? by mutableStateOf(null)
-    val menuManager = remember(onDismissRequest) {
-        MenuManager(
-            onDismissRequest = onDismissRequest,
-        )
-    }
+    val menuManager =
+        remember(onDismissRequest) {
+            MenuManager(
+                onDismissRequest = onDismissRequest,
+            )
+        }
 
     Popup(
         popupPositionProvider = rememberCursorPositionProvider(style.metrics.offset),
-        onDismissRequest = {
-            onDismissRequest(InputMode.Touch)
-        },
+        onDismissRequest = { onDismissRequest(InputMode.Touch) },
         properties = PopupProperties(focusable = focusable),
         onPreviewKeyEvent = { false },
         onKeyEvent = {
             val currentFocusManager = checkNotNull(focusManager) { "FocusManager must not be null" }
-            val currentInputModeManager = checkNotNull(inputModeManager) { "InputModeManager must not be null" }
+            val currentInputModeManager =
+                checkNotNull(inputModeManager) { "InputModeManager must not be null" }
             handlePopupMenuOnKeyEvent(it, currentFocusManager, currentInputModeManager, menuManager)
         },
     ) {
@@ -91,15 +91,9 @@ private fun MenuScope.contextItems(items: () -> List<ContextMenuItem>) {
             is ContextMenuDivider -> {
                 separator()
             }
-
             is ContextSubmenu -> {
-                submenu(submenu = {
-                    contextItems(item.submenu)
-                }) {
-                    Text(item.label)
-                }
+                submenu(submenu = { contextItems(item.submenu) }) { Text(item.label) }
             }
-
             else -> {
                 selectableItem(
                     selected = false,
@@ -112,9 +106,9 @@ private fun MenuScope.contextItems(items: () -> List<ContextMenuItem>) {
     }
 }
 
-object ContextMenuDivider : ContextMenuItem("---", {})
+public object ContextMenuDivider : ContextMenuItem("---", {})
 
-class ContextSubmenu(
+public class ContextSubmenu(
     label: String,
-    val submenu: () -> List<ContextMenuItem>,
+    public val submenu: () -> List<ContextMenuItem>,
 ) : ContextMenuItem(label, {})

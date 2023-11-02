@@ -2,7 +2,9 @@ package org.jetbrains.jewel.window.styling
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.ProvidableCompositionLocal
 import androidx.compose.runtime.Stable
+import androidx.compose.runtime.State
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
@@ -16,82 +18,85 @@ import org.jetbrains.jewel.window.DecoratedWindowState
 
 @Stable
 @GenerateDataFunctions
-class TitleBarStyle(
-    val colors: TitleBarColors,
-    val metrics: TitleBarMetrics,
-    val icons: TitleBarIcons,
-    val dropdownStyle: DropdownStyle,
-    val iconButtonStyle: IconButtonStyle,
-    val paneButtonStyle: IconButtonStyle,
-    val paneCloseButtonStyle: IconButtonStyle,
+public class TitleBarStyle(
+    public val colors: TitleBarColors,
+    public val metrics: TitleBarMetrics,
+    public val icons: TitleBarIcons,
+    public val dropdownStyle: DropdownStyle,
+    public val iconButtonStyle: IconButtonStyle,
+    public val paneButtonStyle: IconButtonStyle,
+    public val paneCloseButtonStyle: IconButtonStyle,
 ) {
 
-    companion object
+    public companion object
 }
 
 @Immutable
 @GenerateDataFunctions
-class TitleBarColors(
-    val background: Color,
-    val inactiveBackground: Color,
-    val content: Color,
-    val border: Color,
+public class TitleBarColors(
+    public val background: Color,
+    public val inactiveBackground: Color,
+    public val content: Color,
+    public val border: Color,
 
-    // The background color for newControlButtons(three circles in left top corner) in MacOS fullscreen mode
-    val fullscreenControlButtonsBackground: Color,
+    // The background color for newControlButtons(three circles in left top corner) in MacOS
+    // fullscreen mode
+    public val fullscreenControlButtonsBackground: Color,
 
     // The hover and press background color for window control buttons(minimize, maximize) in Linux
-    val titlePaneButtonHoveredBackground: Color,
-    val titlePaneButtonPressedBackground: Color,
+    public val titlePaneButtonHoveredBackground: Color,
+    public val titlePaneButtonPressedBackground: Color,
 
     // The hover and press background color for window close button in Linux
-    val titlePaneCloseButtonHoveredBackground: Color,
-    val titlePaneCloseButtonPressedBackground: Color,
+    public val titlePaneCloseButtonHoveredBackground: Color,
+    public val titlePaneCloseButtonPressedBackground: Color,
 
     // The hover and press background color for IconButtons in title bar content
-    val iconButtonHoveredBackground: Color,
-    val iconButtonPressedBackground: Color,
+    public val iconButtonHoveredBackground: Color,
+    public val iconButtonPressedBackground: Color,
 
     // The hover and press background color for Dropdown in title bar content
-    val dropdownPressedBackground: Color,
-    val dropdownHoveredBackground: Color,
+    public val dropdownPressedBackground: Color,
+    public val dropdownHoveredBackground: Color,
 ) {
 
     @Composable
-    fun backgroundFor(state: DecoratedWindowState) = rememberUpdatedState(
-        when {
-            !state.isActive -> inactiveBackground
-            else -> background
-        },
-    )
+    public fun backgroundFor(state: DecoratedWindowState): State<Color> =
+        rememberUpdatedState(
+            when {
+                !state.isActive -> inactiveBackground
+                else -> background
+            },
+        )
 
-    companion object
+    public companion object
 }
 
 @Immutable
 @GenerateDataFunctions
-class TitleBarMetrics(
-    val height: Dp,
-    val gradientStartX: Dp,
-    val gradientEndX: Dp,
-    val titlePaneButtonSize: DpSize,
+public class TitleBarMetrics(
+    public val height: Dp,
+    public val gradientStartX: Dp,
+    public val gradientEndX: Dp,
+    public val titlePaneButtonSize: DpSize,
 ) {
 
-    companion object
+    public companion object
 }
 
 @Immutable
 @GenerateDataFunctions
-class TitleBarIcons(
-    val minimizeButton: PainterProvider,
-    val maximizeButton: PainterProvider,
-    val restoreButton: PainterProvider,
-    val closeButton: PainterProvider,
+public class TitleBarIcons(
+    public val minimizeButton: PainterProvider,
+    public val maximizeButton: PainterProvider,
+    public val restoreButton: PainterProvider,
+    public val closeButton: PainterProvider,
 ) {
 
-    companion object
+    public companion object
 }
 
-val LocalTitleBarStyle = staticCompositionLocalOf<TitleBarStyle> {
-    error("No TitleBarStyle provided")
-}
+public val LocalTitleBarStyle: ProvidableCompositionLocal<TitleBarStyle> =
+    staticCompositionLocalOf {
+        error("No TitleBarStyle provided. Have you forgotten the theme?")
+    }

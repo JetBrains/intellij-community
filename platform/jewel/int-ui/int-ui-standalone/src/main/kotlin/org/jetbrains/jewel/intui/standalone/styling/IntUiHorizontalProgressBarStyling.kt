@@ -14,51 +14,52 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 
 @Composable
-fun HorizontalProgressBarStyle.Companion.light(
+public fun HorizontalProgressBarStyle.Companion.light(
     colors: HorizontalProgressBarColors = HorizontalProgressBarColors.light(),
     metrics: HorizontalProgressBarMetrics = HorizontalProgressBarMetrics.defaults(),
     indeterminateCycleDuration: Duration = 800.milliseconds,
-) = HorizontalProgressBarStyle(colors, metrics, indeterminateCycleDuration)
+): HorizontalProgressBarStyle =
+    HorizontalProgressBarStyle(colors, metrics, indeterminateCycleDuration)
 
 @Composable
-fun HorizontalProgressBarStyle.Companion.dark(
+public fun HorizontalProgressBarStyle.Companion.dark(
     colors: HorizontalProgressBarColors = HorizontalProgressBarColors.dark(),
     metrics: HorizontalProgressBarMetrics = HorizontalProgressBarMetrics.defaults(),
     indeterminateCycleDuration: Duration = 800.milliseconds,
-) = HorizontalProgressBarStyle(colors, metrics, indeterminateCycleDuration)
+): HorizontalProgressBarStyle =
+    HorizontalProgressBarStyle(colors, metrics, indeterminateCycleDuration)
 
 @Composable
-fun HorizontalProgressBarColors.Companion.light(
+public fun HorizontalProgressBarColors.Companion.light(
     track: Color = IntUiLightTheme.colors.grey(11),
     progress: Color = IntUiLightTheme.colors.blue(4),
     indeterminateBase: Color = IntUiLightTheme.colors.blue(9),
     indeterminateHighlight: Color = IntUiLightTheme.colors.blue(4),
-) = HorizontalProgressBarColors(
-    track,
-    progress,
-    indeterminateBase,
-    indeterminateHighlight,
-)
+): HorizontalProgressBarColors =
+    HorizontalProgressBarColors(
+        track = track,
+        progress = progress,
+        indeterminateBase = indeterminateBase,
+        indeterminateHighlight = indeterminateHighlight,
+    )
 
 @Composable
-fun HorizontalProgressBarColors.Companion.dark(
+public fun HorizontalProgressBarColors.Companion.dark(
     track: Color = IntUiDarkTheme.colors.grey(4),
     progress: Color = IntUiDarkTheme.colors.blue(7),
     indeterminateBase: Color = IntUiDarkTheme.colors.blue(9),
     indeterminateHighlight: Color = IntUiDarkTheme.colors.blue(5),
-) = HorizontalProgressBarColors(
-    track,
-    progress,
-    indeterminateBase,
-    indeterminateHighlight,
-)
+): HorizontalProgressBarColors =
+    HorizontalProgressBarColors(
+        track = track,
+        progress = progress,
+        indeterminateBase = indeterminateBase,
+        indeterminateHighlight = indeterminateHighlight,
+    )
 
-fun HorizontalProgressBarMetrics.Companion.defaults(
+public fun HorizontalProgressBarMetrics.Companion.defaults(
     cornerSize: CornerSize = CornerSize(100),
     minHeight: Dp = 4.dp,
     indeterminateHighlightWidth: Dp = 140.dp,
-) = HorizontalProgressBarMetrics(
-    cornerSize,
-    minHeight,
-    indeterminateHighlightWidth,
-)
+): HorizontalProgressBarMetrics =
+    HorizontalProgressBarMetrics(cornerSize, minHeight, indeterminateHighlightWidth)

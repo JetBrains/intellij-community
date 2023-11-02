@@ -5,7 +5,7 @@ import androidx.compose.ui.awt.ComposePanel
 import com.intellij.openapi.wm.ToolWindow
 import org.jetbrains.jewel.foundation.enableNewSwingCompositing
 
-fun ToolWindow.addComposeTab(
+public fun ToolWindow.addComposeTab(
     tabDisplayName: String,
     isLockable: Boolean = true,
     isCloseable: Boolean = false,
@@ -22,17 +22,15 @@ fun ToolWindow.addComposeTab(
         override val panel: ComposePanel = composePanel
     }
 
-    composePanel.setContent {
-        scope.content()
-    }
+    composePanel.setContent { scope.content() }
     val tabContent = contentManager.factory.createContent(composePanel, tabDisplayName, isLockable)
     tabContent.isCloseable = isCloseable
     contentManager.addContent(tabContent)
 }
 
-interface ToolWindowScope {
+public interface ToolWindowScope {
 
-    val toolWindow: ToolWindow
+    public val toolWindow: ToolWindow
 
-    val panel: ComposePanel
+    public val panel: ComposePanel
 }

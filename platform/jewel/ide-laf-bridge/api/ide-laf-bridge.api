@@ -7,6 +7,7 @@ public final class org/jetbrains/jewel/bridge/BridgeUtilsKt {
 	public static synthetic fun createVerticalBrush-8A-3gB4$default (Ljava/util/List;FFIILjava/lang/Object;)Landroidx/compose/ui/graphics/Brush;
 	public static final fun getDp (Lcom/intellij/util/ui/JBValue;)F
 	public static final fun retrieveArcAsCornerSize (Ljava/lang/String;)Landroidx/compose/foundation/shape/CornerSize;
+	public static final fun retrieveArcAsCornerSizeOrDefault (Ljava/lang/String;Landroidx/compose/foundation/shape/CornerSize;)Landroidx/compose/foundation/shape/CornerSize;
 	public static final fun retrieveArcAsCornerSizeWithFallbacks ([Ljava/lang/String;)Landroidx/compose/foundation/shape/CornerSize;
 	public static final fun retrieveColorOrNull (Ljava/lang/String;)Landroidx/compose/ui/graphics/Color;
 	public static final fun retrieveColorOrUnspecified (Ljava/lang/String;)J
@@ -41,10 +42,6 @@ public final class org/jetbrains/jewel/bridge/JewelBridgeException$KeyNotFoundEx
 public final class org/jetbrains/jewel/bridge/JewelBridgeException$KeysNotFoundException : org/jetbrains/jewel/bridge/JewelBridgeException {
 	public static final field $stable I
 	public fun <init> (Ljava/util/List;Ljava/lang/String;)V
-}
-
-public abstract interface annotation class org/jetbrains/jewel/bridge/SwingLafKey : java/lang/annotation/Annotation {
-	public abstract fun key ()Ljava/lang/String;
 }
 
 public final class org/jetbrains/jewel/bridge/ToolWindowExtensionsKt {

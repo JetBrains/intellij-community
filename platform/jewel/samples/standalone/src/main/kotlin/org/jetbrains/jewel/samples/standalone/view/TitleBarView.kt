@@ -86,14 +86,14 @@ fun DecoratedWindowScope.TitleBarView() {
                 when (MainViewModel.theme) {
                     IntUiThemes.Light -> Text("Switch to light theme with light header")
                     IntUiThemes.LightWithLightHeader -> Text("Switch to dark theme")
-                    IntUiThemes.Dark, IntUiThemes.SYSTEM -> Text("Switch to light theme")
+                    IntUiThemes.Dark, IntUiThemes.System -> Text("Switch to light theme")
                 }
             }) {
                 IconButton({
                     MainViewModel.theme = when (MainViewModel.theme) {
                         IntUiThemes.Light -> IntUiThemes.LightWithLightHeader
                         IntUiThemes.LightWithLightHeader -> IntUiThemes.Dark
-                        IntUiThemes.Dark, IntUiThemes.SYSTEM -> IntUiThemes.Light
+                        IntUiThemes.Dark, IntUiThemes.System -> IntUiThemes.Light
                     }
                 }, Modifier.size(40.dp).padding(5.dp)) {
                     when (MainViewModel.theme) {
@@ -115,7 +115,7 @@ fun DecoratedWindowScope.TitleBarView() {
                             StandaloneSampleIcons::class.java,
                         )
 
-                        IntUiThemes.SYSTEM -> Icon(
+                        IntUiThemes.System -> Icon(
                             "icons/systemTheme@20x20.svg",
                             "Themes",
                             StandaloneSampleIcons::class.java,

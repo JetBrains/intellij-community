@@ -2,6 +2,7 @@ package org.jetbrains.jewel.ui.component.styling
 
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.shape.CornerSize
+import androidx.compose.runtime.ProvidableCompositionLocal
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
@@ -15,41 +16,41 @@ import kotlin.time.Duration.Companion.milliseconds
 
 @Stable
 @GenerateDataFunctions
-class TooltipStyle(
-    val colors: TooltipColors,
-    val metrics: TooltipMetrics,
+public class TooltipStyle(
+    public val colors: TooltipColors,
+    public val metrics: TooltipMetrics,
 ) {
 
-    companion object
+    public companion object
 }
 
 @Stable
 @GenerateDataFunctions
-class TooltipColors(
-    val background: Color,
-    val content: Color,
-    val border: Color,
-    val shadow: Color,
+public class TooltipColors(
+    public val background: Color,
+    public val content: Color,
+    public val border: Color,
+    public val shadow: Color,
 ) {
 
-    companion object
+    public companion object
 }
 
 @Stable
 @GenerateDataFunctions
-class TooltipMetrics(
-    val contentPadding: PaddingValues,
-    val showDelay: Duration,
-    val cornerSize: CornerSize,
-    val borderWidth: Dp,
-    val shadowSize: Dp,
-    val tooltipOffset: DpOffset,
-    val tooltipAlignment: Alignment.Horizontal,
+public class TooltipMetrics(
+    public val contentPadding: PaddingValues,
+    public val showDelay: Duration,
+    public val cornerSize: CornerSize,
+    public val borderWidth: Dp,
+    public val shadowSize: Dp,
+    public val tooltipOffset: DpOffset,
+    public val tooltipAlignment: Alignment.Horizontal,
 ) {
 
-    companion object {
+    public companion object {
 
-        fun defaults(
+        public fun defaults(
             contentPadding: PaddingValues = PaddingValues(vertical = 9.dp, horizontal = 12.dp),
             showDelay: Duration = 0.milliseconds,
             cornerSize: CornerSize = CornerSize(5.dp),
@@ -57,18 +58,20 @@ class TooltipMetrics(
             shadowSize: Dp = 12.dp,
             tooltipOffset: DpOffset = DpOffset(0.dp, 20.dp),
             tooltipAlignment: Alignment.Horizontal = Alignment.Start,
-        ) = TooltipMetrics(
-            contentPadding,
-            showDelay,
-            cornerSize,
-            borderWidth,
-            shadowSize,
-            tooltipOffset,
-            tooltipAlignment,
-        )
+        ): TooltipMetrics =
+            TooltipMetrics(
+                contentPadding,
+                showDelay,
+                cornerSize,
+                borderWidth,
+                shadowSize,
+                tooltipOffset,
+                tooltipAlignment,
+            )
     }
 }
 
-val LocalTooltipStyle = staticCompositionLocalOf<TooltipStyle> {
-    error("No TooltipStyle provided")
-}
+public val LocalTooltipStyle: ProvidableCompositionLocal<TooltipStyle> =
+    staticCompositionLocalOf {
+        error("No TooltipStyle provided. Have you forgotten the theme?")
+    }

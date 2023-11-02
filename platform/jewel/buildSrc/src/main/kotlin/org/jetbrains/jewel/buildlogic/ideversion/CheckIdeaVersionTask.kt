@@ -17,7 +17,8 @@ open class CheckIdeaVersionTask : DefaultTask() {
             "fields=code,releases,releases.version,releases.build,releases.type&" +
             "code=IC"
 
-    private val versionRegex = "2\\d{2}\\.\\d+\\.\\d+(?:-EAP-SNAPSHOT)?".toRegex(RegexOption.IGNORE_CASE)
+    private val versionRegex =
+        "2\\d{2}\\.\\d+\\.\\d+(?:-EAP-SNAPSHOT)?".toRegex(RegexOption.IGNORE_CASE)
 
     init {
         group = "jewel"
@@ -42,7 +43,8 @@ open class CheckIdeaVersionTask : DefaultTask() {
         logger.lifecycle("Fetching IntelliJ Platform releases from $releasesUrl...")
         val icReleases =
             try {
-                URL(releasesUrl).openStream()
+                URL(releasesUrl)
+                    .openStream()
                     .use { json.decodeFromStream<List<ApiIdeaReleasesItem>>(it) }
                     .first()
             } catch (e: IOException) {
@@ -64,11 +66,13 @@ open class CheckIdeaVersionTask : DefaultTask() {
         val rawPlatformBuild = readPlatformBuild(currentPlatformVersion)
 
         val isCurrentBuildStable = !rawPlatformBuild.contains("EAP")
-        val latestAvailableBuild = icReleases.releases.asSequence()
-            .filter { it.version.startsWith(majorPlatformVersion) }
-            .filter { if (isCurrentBuildStable) it.type == "release" else true }
-            .sortedWith(ReleaseComparator)
-            .last()
+        val latestAvailableBuild =
+            icReleases.releases
+                .asSequence()
+                .filter { it.version.startsWith(majorPlatformVersion) }
+                .filter { if (isCurrentBuildStable) it.type == "release" else true }
+                .sortedWith(ReleaseComparator)
+                .last()
         logger.info("The latest IntelliJ Platform $majorPlatformVersion build is ${latestAvailableBuild.build}")
 
         val currentPlatformBuild = rawPlatformBuild.substringBefore('-')
@@ -83,36 +87,37 @@ open class CheckIdeaVersionTask : DefaultTask() {
                     appendLine()
                     append("Detected channel: ")
                     appendLine(if (isCurrentBuildStable) "stable" else "non-stable (eap/beta/rc)")
-                }
-            )
+                })
         }
         logger.lifecycle("No IntelliJ Platform version updates available. Current: $currentPlatformBuild")
     }
 
-    private fun getRawPlatformVersion(currentPlatformVersion: SupportedIJVersion) = when (currentPlatformVersion) {
-        SupportedIJVersion.IJ_232 -> "2023.2"
-        SupportedIJVersion.IJ_233 -> "2023.3"
-    }
+    private fun getRawPlatformVersion(currentPlatformVersion: SupportedIJVersion) =
+        when (currentPlatformVersion) {
+            SupportedIJVersion.IJ_232 -> "2023.2"
+            SupportedIJVersion.IJ_233 -> "2023.3"
+        }
 
     private fun readPlatformBuild(platformVersion: SupportedIJVersion): String {
         val catalogFile = project.rootProject.file("gradle/libs.versions.toml")
-        val dependencyName = when (platformVersion) {
-            SupportedIJVersion.IJ_232 -> "idea232"
-            SupportedIJVersion.IJ_233 -> "idea233"
-        }
-
-        val catalogDependencyLine = catalogFile
-            .useLines { lines ->
-                lines.find { it.startsWith(dependencyName) }
+        val dependencyName =
+            when (platformVersion) {
+                SupportedIJVersion.IJ_232 -> "idea232"
+                SupportedIJVersion.IJ_233 -> "idea233"
             }
-            ?: throw GradleException(
-                "Unable to find IJP dependency '$dependencyName' in the catalog file '${catalogFile.path}'"
-            )
 
-        val dependencyVersion = catalogDependencyLine.substringAfter(dependencyName)
-            .trimStart(' ', '=')
-            .trimEnd()
-            .trim('"')
+        val catalogDependencyLine =
+            catalogFile.useLines { lines -> lines.find { it.startsWith(dependencyName) } }
+                ?: throw GradleException(
+                    "Unable to find IJP dependency '$dependencyName' in the catalog file '${catalogFile.path}'"
+                )
+
+        val dependencyVersion =
+            catalogDependencyLine
+                .substringAfter(dependencyName)
+                .trimStart(' ', '=')
+                .trimEnd()
+                .trim('"')
 
         if (!dependencyVersion.matches(versionRegex)) {
             throw GradleException("Invalid IJP version found in version catalog: '$dependencyVersion'")

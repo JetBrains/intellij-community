@@ -8,7 +8,7 @@ import org.jetbrains.jewel.foundation.BorderColors
 import org.jetbrains.jewel.foundation.GlobalColors
 import org.jetbrains.jewel.foundation.OutlineColors
 
-fun GlobalColors.Companion.readFromLaF() =
+public fun GlobalColors.Companion.readFromLaF(): GlobalColors =
     GlobalColors(
         borders = BorderColors.readFromLaF(),
         outlines = OutlineColors.readFromLaF(),
@@ -16,14 +16,14 @@ fun GlobalColors.Companion.readFromLaF() =
         paneBackground = retrieveColorOrUnspecified("Panel.background"),
     )
 
-fun BorderColors.Companion.readFromLaF() =
+public fun BorderColors.Companion.readFromLaF(): BorderColors =
     BorderColors(
         normal = JBColor.border().toComposeColorOrUnspecified(),
         focused = DarculaUIUtil.getOutlineColor(true, true).toComposeColorOrUnspecified(),
         disabled = DarculaUIUtil.getOutlineColor(false, false).toComposeColorOrUnspecified(),
     )
 
-fun OutlineColors.Companion.readFromLaF() =
+public fun OutlineColors.Companion.readFromLaF(): OutlineColors =
     OutlineColors(
         focused = retrieveColorOrUnspecified("*.focusColor"),
         focusedWarning = retrieveColorOrUnspecified("Component.warningFocusColor"),

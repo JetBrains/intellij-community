@@ -4,7 +4,9 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.ProvidableCompositionLocal
 import androidx.compose.runtime.Stable
+import androidx.compose.runtime.State
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
@@ -15,83 +17,87 @@ import org.jetbrains.jewel.ui.component.IconButtonState
 
 @Stable
 @GenerateDataFunctions
-class IconButtonStyle(
-    val colors: IconButtonColors,
-    val metrics: IconButtonMetrics,
+public class IconButtonStyle(
+    public val colors: IconButtonColors,
+    public val metrics: IconButtonMetrics,
 ) {
 
-    companion object
+    public companion object
 }
 
 @Immutable
 @GenerateDataFunctions
-class IconButtonColors(
-    val foregroundSelectedActivated: Color,
-    val background: Color,
-    val backgroundDisabled: Color,
-    val backgroundSelected: Color,
-    val backgroundSelectedActivated: Color,
-    val backgroundFocused: Color,
-    val backgroundPressed: Color,
-    val backgroundHovered: Color,
-    val border: Color,
-    val borderDisabled: Color,
-    val borderSelected: Color,
-    val borderSelectedActivated: Color,
-    val borderFocused: Color,
-    val borderPressed: Color,
-    val borderHovered: Color,
+public class IconButtonColors(
+    public val foregroundSelectedActivated: Color,
+    public val background: Color,
+    public val backgroundDisabled: Color,
+    public val backgroundSelected: Color,
+    public val backgroundSelectedActivated: Color,
+    public val backgroundFocused: Color,
+    public val backgroundPressed: Color,
+    public val backgroundHovered: Color,
+    public val border: Color,
+    public val borderDisabled: Color,
+    public val borderSelected: Color,
+    public val borderSelectedActivated: Color,
+    public val borderFocused: Color,
+    public val borderPressed: Color,
+    public val borderHovered: Color,
 ) {
 
     @Composable
-    fun foregroundFor(state: IconButtonState) = rememberUpdatedState(
-        when {
-            state.isActive && state.isSelected -> foregroundSelectedActivated
-            else -> Color.Unspecified
-        },
-    )
+    public fun foregroundFor(state: IconButtonState): State<Color> =
+        rememberUpdatedState(
+            when {
+                state.isActive && state.isSelected -> foregroundSelectedActivated
+                else -> Color.Unspecified
+            },
+        )
 
     @Composable
-    fun backgroundFor(state: IconButtonState) = rememberUpdatedState(
-        when {
-            !state.isEnabled -> backgroundDisabled
-            state.isActive && state.isSelected -> backgroundSelectedActivated
-            state.isSelected -> backgroundSelected
-            state.isPressed -> backgroundPressed
-            state.isHovered -> backgroundHovered
-            state.isFocused -> backgroundFocused
-            else -> background
-        },
-    )
+    public fun backgroundFor(state: IconButtonState): State<Color> =
+        rememberUpdatedState(
+            when {
+                !state.isEnabled -> backgroundDisabled
+                state.isActive && state.isSelected -> backgroundSelectedActivated
+                state.isSelected -> backgroundSelected
+                state.isPressed -> backgroundPressed
+                state.isHovered -> backgroundHovered
+                state.isFocused -> backgroundFocused
+                else -> background
+            },
+        )
 
     @Composable
-    fun borderFor(state: IconButtonState) = rememberUpdatedState(
-        when {
-            !state.isEnabled -> borderDisabled
-            state.isActive && state.isSelected -> borderSelectedActivated
-            state.isSelected -> borderSelected
-            state.isFocused -> borderFocused
-            state.isPressed -> borderPressed
-            state.isHovered -> borderHovered
-            else -> border
-        },
-    )
+    public fun borderFor(state: IconButtonState): State<Color> =
+        rememberUpdatedState(
+            when {
+                !state.isEnabled -> borderDisabled
+                state.isActive && state.isSelected -> borderSelectedActivated
+                state.isSelected -> borderSelected
+                state.isFocused -> borderFocused
+                state.isPressed -> borderPressed
+                state.isHovered -> borderHovered
+                else -> border
+            },
+        )
 
-    companion object
+    public companion object
 }
 
 @Stable
 @GenerateDataFunctions
-class IconButtonMetrics(
-    val cornerSize: CornerSize,
-    val borderWidth: Dp,
-    val padding: PaddingValues,
-    val minSize: DpSize,
+public class IconButtonMetrics(
+    public val cornerSize: CornerSize,
+    public val borderWidth: Dp,
+    public val padding: PaddingValues,
+    public val minSize: DpSize,
 ) {
 
-    companion object
+    public companion object
 }
 
-val LocalIconButtonStyle = staticCompositionLocalOf<IconButtonStyle> {
-    error("No IconButtonStyle provided")
-}
+public val LocalIconButtonStyle: ProvidableCompositionLocal<IconButtonStyle> =
+    staticCompositionLocalOf {
+        error("No IconButtonStyle provided. Have you forgotten the theme?")
+    }

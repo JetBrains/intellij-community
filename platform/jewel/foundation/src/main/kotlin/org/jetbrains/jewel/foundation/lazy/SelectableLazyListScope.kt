@@ -6,8 +6,10 @@ import androidx.compose.runtime.Composable
 import org.jetbrains.jewel.foundation.lazy.SelectableLazyListKey.NotSelectable
 import org.jetbrains.jewel.foundation.lazy.SelectableLazyListKey.Selectable
 
-/** Interface defining the scope for building a selectable lazy list. */
-interface SelectableLazyListScope {
+/**
+ * Interface defining the scope for building a selectable lazy list.
+ */
+public interface SelectableLazyListScope {
 
     /**
      * Represents an item in a selectable lazy list.
@@ -18,7 +20,7 @@ interface SelectableLazyListScope {
      *     `true`.
      * @param content The content of the item as a composable function.
      */
-    fun item(
+    public fun item(
         key: Any,
         contentType: Any? = null,
         selectable: Boolean = true,
@@ -38,7 +40,7 @@ interface SelectableLazyListScope {
      * @param itemContent The content of each individual item, specified as a
      *     composable function that takes the item's index as a parameter.
      */
-    fun items(
+    public fun items(
         count: Int,
         key: (index: Int) -> Any,
         contentType: (index: Int) -> Any? = { null },
@@ -55,7 +57,7 @@ interface SelectableLazyListScope {
      * @param content The content to be displayed in the sticky header,
      *     provided as a composable function
      */
-    fun stickyHeader(
+    public fun stickyHeader(
         key: Any,
         contentType: Any? = null,
         selectable: Boolean = false,
@@ -64,10 +66,12 @@ interface SelectableLazyListScope {
 }
 
 internal class SelectableLazyListScopeContainer : SelectableLazyListScope {
+
     private val keys = mutableListOf<SelectableLazyListKey>()
     private val entries = mutableListOf<Entry>()
 
     fun getEntries() = entries.toList()
+
     fun getKeys() = keys.toList()
 
     internal sealed interface Entry {
@@ -108,13 +112,14 @@ internal class SelectableLazyListScopeContainer : SelectableLazyListScope {
         selectable: (index: Int) -> Boolean,
         itemContent: @Composable (SelectableLazyItemScope.(index: Int) -> Unit),
     ) {
-        val selectableKeys: List<SelectableLazyListKey> = List(count) {
-            if (selectable(it)) {
-                Selectable(key(it))
-            } else {
-                NotSelectable(key(it))
+        val selectableKeys: List<SelectableLazyListKey> =
+            List(count) {
+                if (selectable(it)) {
+                    Selectable(key(it))
+                } else {
+                    NotSelectable(key(it))
+                }
             }
-        }
         keys.addAll(selectableKeys)
         entries.add(Entry.Items(count, key, contentType, itemContent))
     }
@@ -131,7 +136,7 @@ internal class SelectableLazyListScopeContainer : SelectableLazyListScope {
     }
 }
 
-fun <T : Any> SelectableLazyListScope.items(
+public fun <T : Any> SelectableLazyListScope.items(
     items: List<T>,
     key: (item: T) -> Any = { it },
     contentType: (item: T) -> Any? = { it },
@@ -147,7 +152,7 @@ fun <T : Any> SelectableLazyListScope.items(
     )
 }
 
-fun <T : Any> SelectableLazyListScope.itemsIndexed(
+public fun <T : Any> SelectableLazyListScope.itemsIndexed(
     items: List<T>,
     key: (index: Int, item: T) -> Any = { _, item -> item },
     contentType: (index: Int, item: T) -> Any? = { _, item -> item },
@@ -164,11 +169,10 @@ fun <T : Any> SelectableLazyListScope.itemsIndexed(
 }
 
 @Composable
-fun LazyItemScope.SelectableLazyItemScope(
+public fun LazyItemScope.SelectableLazyItemScope(
     isSelected: Boolean = false,
     isActive: Boolean = false,
-): SelectableLazyItemScope =
-    SelectableLazyItemScopeDelegate(this, isSelected, isActive)
+): SelectableLazyItemScope = SelectableLazyItemScopeDelegate(this, isSelected, isActive)
 
 internal class SelectableLazyItemScopeDelegate(
     private val delegate: LazyItemScope,

@@ -10,7 +10,6 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -56,12 +55,9 @@ internal fun InputField(
     textStyle: TextStyle,
     decorationBox: @Composable (innerTextField: @Composable () -> Unit, state: InputFieldState) -> Unit,
 ) {
-    var inputState by remember(interactionSource) {
-        mutableStateOf(InputFieldState.of(enabled = enabled))
-    }
-    remember(enabled) {
-        inputState = inputState.copy(enabled = enabled)
-    }
+    var inputState by remember(interactionSource) { mutableStateOf(InputFieldState.of(enabled = enabled)) }
+    remember(enabled) { inputState = inputState.copy(enabled = enabled) }
+
     LaunchedEffect(interactionSource) {
         interactionSource.interactions.collect { interaction ->
             when (interaction) {
@@ -82,7 +78,7 @@ internal fun InputField(
     val borderColor by style.colors.borderFor(inputState)
     val hasNoOutline = outline == Outline.None
     val borderModifier = Modifier.thenIf(!undecorated && borderColor.isSpecified && hasNoOutline) {
-        Modifier.border(
+        border(
             alignment = Stroke.Alignment.Center,
             width = style.metrics.borderWidth,
             color = borderColor,
@@ -96,7 +92,8 @@ internal fun InputField(
 
     BasicTextField(
         value = value,
-        modifier = modifier.then(backgroundModifier)
+        modifier = modifier
+            .then(backgroundModifier)
             .then(borderModifier)
             .thenIf(!undecorated && hasNoOutline) { focusOutline(inputState, shape) }
             .outline(inputState, outline, shape, Stroke.Alignment.Center),
@@ -120,60 +117,58 @@ internal fun InputField(
 
 @Immutable
 @JvmInline
-value class InputFieldState(val state: ULong) : FocusableComponentState {
+public value class InputFieldState(public val state: ULong) : FocusableComponentState {
 
-    @Stable
     override val isActive: Boolean
         get() = state and Active != 0UL
 
-    @Stable
     override val isEnabled: Boolean
         get() = state and Enabled != 0UL
 
-    @Stable
     override val isFocused: Boolean
         get() = state and Focused != 0UL
 
-    @Stable
     override val isHovered: Boolean
         get() = state and Hovered != 0UL
 
-    @Stable
     override val isPressed: Boolean
         get() = state and Pressed != 0UL
 
-    fun copy(
+    public fun copy(
         enabled: Boolean = isEnabled,
         focused: Boolean = isFocused,
         pressed: Boolean = isPressed,
         hovered: Boolean = isHovered,
         active: Boolean = isActive,
-    ) = of(
-        enabled = enabled,
-        focused = focused,
-        pressed = pressed,
-        hovered = hovered,
-        active = active,
-    )
+    ): InputFieldState =
+        of(
+            enabled = enabled,
+            focused = focused,
+            pressed = pressed,
+            hovered = hovered,
+            active = active,
+        )
 
-    override fun toString() =
+    override fun toString(): String =
         "${javaClass.simpleName}(isEnabled=$isEnabled, isFocused=$isFocused, " +
             "isHovered=$isHovered, isPressed=$isPressed, isActive=$isActive)"
 
-    companion object {
+    public companion object {
 
-        fun of(
+        public fun of(
             enabled: Boolean = true,
             focused: Boolean = false,
             pressed: Boolean = false,
             hovered: Boolean = false,
             active: Boolean = false,
-        ) = InputFieldState(
-            state = (if (enabled) Enabled else 0UL) or
-                (if (focused) Focused else 0UL) or
-                (if (hovered) Hovered else 0UL) or
-                (if (pressed) Pressed else 0UL) or
-                (if (active) Active else 0UL),
-        )
+        ): InputFieldState =
+            InputFieldState(
+                state =
+                (if (enabled) Enabled else 0UL) or
+                    (if (focused) Focused else 0UL) or
+                    (if (hovered) Hovered else 0UL) or
+                    (if (pressed) Pressed else 0UL) or
+                    (if (active) Active else 0UL),
+            )
     }
 }

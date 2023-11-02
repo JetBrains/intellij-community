@@ -1,14 +1,15 @@
 package org.jetbrains.jewel.window.utils
 
-enum class DesktopPlatform {
+public enum class DesktopPlatform {
     Linux,
     Windows,
     MacOS,
     Unknown,
     ;
 
-    companion object {
-        val Current: DesktopPlatform by lazy {
+    public companion object {
+
+        public val Current: DesktopPlatform by lazy {
             val name = System.getProperty("os.name")
             when {
                 name?.startsWith("Linux") == true -> Linux

@@ -2,9 +2,9 @@ package org.jetbrains.jewel.ui.painter
 
 import androidx.compose.ui.graphics.Color
 import org.jetbrains.jewel.ui.painter.hints.Palette
-import org.jetbrains.jewel.ui.util.fromRGBAHexString
+import org.jetbrains.jewel.ui.util.fromRGBAHexStringOrNull
 
-abstract class BasePainterHintsProvider(
+public abstract class BasePainterHintsProvider(
     isDark: Boolean,
     intellijIconPalette: Map<String, String?>,
     themeIconPalette: Map<String, String?>,
@@ -30,7 +30,7 @@ abstract class BasePainterHintsProvider(
 
             // If either the key or the resolved value aren't valid colors, ignore the entry
             val keyAsColor = resolveKeyColor(key, intellijIconPalette, isDark) ?: continue
-            val resolvedColor = namedColor ?: Color.fromRGBAHexString(value) ?: continue
+            val resolvedColor = namedColor ?: Color.fromRGBAHexStringOrNull(value) ?: continue
 
             // Save the new entry (oldColor -> newColor) in the map
             map[keyAsColor] = resolvedColor
@@ -46,18 +46,23 @@ abstract class BasePainterHintsProvider(
         checkBoxes: MutableMap<Color, Color>,
         trees: MutableMap<Color, Color>,
         ui: MutableMap<Color, Color>,
-    ) = when {
-        key.startsWith("Checkbox.") -> checkBoxes
-        key.startsWith("Tree.iconColor.") -> trees
-        key.startsWith("Objects.") || key.startsWith("Actions.") || key.startsWith("#") -> ui
-        else -> null
-    }
+    ) =
+        when {
+            key.startsWith("Checkbox.") -> checkBoxes
+            key.startsWith("Tree.iconColor.") -> trees
+            key.startsWith("Objects.") || key.startsWith("Actions.") || key.startsWith("#") -> ui
+            else -> null
+        }
 
     // See com.intellij.ide.ui.UITheme.toColorString
-    private fun resolveKeyColor(key: String, keyPalette: Map<String, String?>, isDark: Boolean): Color? {
+    private fun resolveKeyColor(
+        key: String,
+        keyPalette: Map<String, String?>,
+        isDark: Boolean,
+    ): Color? {
         val darkKey = "$key.Dark"
         val resolvedKey = if (isDark && keyPalette.containsKey(darkKey)) darkKey else key
-        return Color.fromRGBAHexString(keyPalette[resolvedKey] ?: return null)
+        return Color.fromRGBAHexStringOrNull(keyPalette[resolvedKey] ?: return null)
     }
 
     protected fun getPaletteHint(path: String): PainterHint {
@@ -66,7 +71,8 @@ abstract class BasePainterHintsProvider(
         val file = path.substringAfterLast('/')
         return when {
             file == "treeCollapsed.svg" || file == "treeExpanded.svg" -> treePaletteHint
-            // ⚠️ This next line is not a copy-paste error — the code in UITheme.PaletteScopeManager.getScopeByPath()
+            // ⚠️ This next line is not a copy-paste error — the code in
+            // UITheme.PaletteScopeManager.getScopeByPath()
             // says they share the same colors
             file.startsWith("check") || file.startsWith("radio") -> checkBoxPaletteHint
             else -> PainterHint.None

@@ -19,7 +19,7 @@ import org.jetbrains.jewel.ui.component.styling.DividerStyle
 import org.jetbrains.jewel.ui.theme.dividerStyle
 
 @Composable
-fun Divider(
+public fun Divider(
     orientation: Orientation,
     modifier: Modifier = Modifier,
     color: Color = Color.Unspecified,
@@ -27,22 +27,23 @@ fun Divider(
     startIndent: Dp = Dp.Unspecified,
     style: DividerStyle = JewelTheme.dividerStyle,
 ) {
-    val indentMod = if (startIndent.value != 0f) {
-        Modifier.padding(start = startIndent.takeOrElse { style.metrics.startIndent })
-    } else {
-        Modifier
-    }
+    val indentModifier =
+        if (startIndent.value != 0f) {
+            Modifier.padding(start = startIndent.takeOrElse { style.metrics.startIndent })
+        } else {
+            Modifier
+        }
 
     val actualThickness = thickness.takeOrElse { style.metrics.thickness }
-    val orientationModifier = when (orientation) {
-        Orientation.Horizontal -> Modifier.height(actualThickness).fillMaxWidth()
-        Orientation.Vertical -> Modifier.width(actualThickness).fillMaxHeight()
-    }
+    val orientationModifier =
+        when (orientation) {
+            Orientation.Horizontal -> Modifier.height(actualThickness).fillMaxWidth()
+            Orientation.Vertical -> Modifier.width(actualThickness).fillMaxHeight()
+        }
 
     val lineColor = color.takeOrElse { style.color }
     Box(
-        modifier
-            .then(indentMod)
+        modifier.then(indentModifier)
             .then(orientationModifier)
             .background(color = lineColor),
     )

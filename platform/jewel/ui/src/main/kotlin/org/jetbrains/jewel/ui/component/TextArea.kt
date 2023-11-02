@@ -36,7 +36,7 @@ import org.jetbrains.jewel.ui.theme.textAreaStyle
  *     component when the [value] is empty.
  */
 @Composable
-fun TextArea(
+public fun TextArea(
     value: String,
     onValueChange: (String) -> Unit,
     modifier: Modifier = Modifier,
@@ -92,7 +92,7 @@ fun TextArea(
  *     component when the [value] is empty.
  */
 @Composable
-fun TextArea(
+public fun TextArea(
     value: TextFieldValue,
     onValueChange: (TextFieldValue) -> Unit,
     modifier: Modifier = Modifier,
@@ -114,8 +114,7 @@ fun TextArea(
     InputField(
         value = value,
         onValueChange = onValueChange,
-        modifier = modifier
-            .defaultMinSize(minWidth = minSize.width, minHeight = minSize.height),
+        modifier = modifier.defaultMinSize(minWidth = minSize.width, minHeight = minSize.height),
         enabled = enabled,
         readOnly = readOnly,
         outline = outline,
@@ -172,46 +171,29 @@ private fun TextAreaDecorationBox(
             }
         },
     ) { measurables, incomingConstraints ->
-        val horizontalPadding =
-            (
-                contentPadding.calculateLeftPadding(layoutDirection) +
-                    contentPadding.calculateRightPadding(layoutDirection)
-                ).roundToPx()
-        val verticalPadding =
-            (
-                contentPadding.calculateTopPadding() +
-                    contentPadding.calculateBottomPadding()
-                ).roundToPx()
+        val leftPadding = contentPadding.calculateLeftPadding(layoutDirection)
+        val rightPadding = contentPadding.calculateRightPadding(layoutDirection)
+        val horizontalPadding = (leftPadding + rightPadding).roundToPx()
+        val verticalPadding = (contentPadding.calculateTopPadding() + contentPadding.calculateBottomPadding())
+            .roundToPx()
 
-        val textAreaConstraints = incomingConstraints.offset(
-            horizontal = -horizontalPadding,
-            vertical = -verticalPadding,
-        ).copy(minHeight = 0)
+        val textAreaConstraints = incomingConstraints
+            .offset(horizontal = -horizontalPadding, vertical = -verticalPadding)
+            .copy(minHeight = 0)
 
-        val textAreaPlaceable = measurables.first { it.layoutId == TEXT_AREA_ID }.measure(textAreaConstraints)
+        val textAreaPlaceable = measurables.single { it.layoutId == TEXT_AREA_ID }
+            .measure(textAreaConstraints)
 
         // Measure placeholder
         val placeholderConstraints = textAreaConstraints.copy(minWidth = 0, minHeight = 0)
-        val placeholderPlaceable = measurables.find { it.layoutId == PLACEHOLDER_ID }?.measure(placeholderConstraints)
+        val placeholderPlaceable = measurables.find { it.layoutId == PLACEHOLDER_ID }
+            ?.measure(placeholderConstraints)
 
-        val width = calculateWidth(
-            textAreaPlaceable,
-            placeholderPlaceable,
-            textAreaConstraints,
-        )
-        val height = calculateHeight(
-            textAreaPlaceable,
-            placeholderPlaceable,
-            verticalPadding,
-            textAreaConstraints,
-        )
+        val width = calculateWidth(textAreaPlaceable, placeholderPlaceable, textAreaConstraints)
+        val height = calculateHeight(textAreaPlaceable, placeholderPlaceable, verticalPadding, textAreaConstraints)
 
         layout(width, height) {
-            place(
-                height,
-                textAreaPlaceable,
-                placeholderPlaceable,
-            )
+            place(height, textAreaPlaceable, placeholderPlaceable)
         }
     }
 }
@@ -221,10 +203,7 @@ private fun calculateWidth(
     placeholderPlaceable: Placeable?,
     constraints: Constraints,
 ): Int =
-    maxOf(
-        textFieldPlaceable.width,
-        placeholderPlaceable?.width ?: 0,
-    )
+    maxOf(textFieldPlaceable.width, placeholderPlaceable?.width ?: 0)
         .coerceAtLeast(constraints.minWidth)
 
 private fun calculateHeight(
@@ -233,10 +212,7 @@ private fun calculateHeight(
     verticalPadding: Int,
     constraints: Constraints,
 ): Int {
-    val textAreaHeight = maxOf(
-        textFieldPlaceable.height,
-        placeholderPlaceable?.height ?: 0,
-    )
+    val textAreaHeight = maxOf(textFieldPlaceable.height, placeholderPlaceable?.height ?: 0)
     return (textAreaHeight + verticalPadding).coerceAtLeast(constraints.minHeight)
 }
 
@@ -246,16 +222,10 @@ private fun Placeable.PlacementScope.place(
     placeholderPlaceable: Placeable?,
 ) {
     // placed center vertically
-    textAreaPlaceable.placeRelative(
-        0,
-        Alignment.CenterVertically.align(textAreaPlaceable.height, height),
-    )
+    textAreaPlaceable.placeRelative(0, Alignment.CenterVertically.align(textAreaPlaceable.height, height))
 
     // placed similar to the input text above
-    placeholderPlaceable?.placeRelative(
-        0,
-        Alignment.CenterVertically.align(placeholderPlaceable.height, height),
-    )
+    placeholderPlaceable?.placeRelative(0, Alignment.CenterVertically.align(placeholderPlaceable.height, height))
 }
 
 private const val PLACEHOLDER_ID = "Placeholder"

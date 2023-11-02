@@ -4,7 +4,7 @@ import com.intellij.ide.ui.UITheme
 import org.jetbrains.jewel.foundation.theme.ThemeIconData
 
 @Suppress("UnstableApiUsage")
-fun ThemeIconData.Companion.readFromLaF(): ThemeIconData {
+public fun ThemeIconData.Companion.readFromLaF(): ThemeIconData {
     val uiTheme = currentUiThemeOrNull()
     val bean = uiTheme?.describe()
     val iconMap = bean?.icons.orEmpty()

@@ -46,7 +46,7 @@ private val errorPainter = ColorPainter(Color.Magenta)
  * [debug mode][inDebugMode], however, exceptions will not be suppressed.
  */
 @Immutable
-class ResourcePainterProvider(
+public class ResourcePainterProvider(
     private val basePath: String,
     vararg classLoaders: ClassLoader,
 ) : PainterProvider {
@@ -57,8 +57,10 @@ class ResourcePainterProvider(
 
     private val contextClassLoaders = classLoaders.toList()
 
-    private val documentBuilderFactory = DocumentBuilderFactory.newDefaultInstance()
-        .apply { setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true) }
+    private val documentBuilderFactory =
+        DocumentBuilderFactory.newDefaultInstance().apply {
+            setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true)
+        }
 
     private fun Scope.resolveHint(hint: PainterHint) {
         with(hint) {
@@ -74,15 +76,13 @@ class ResourcePainterProvider(
         val scope = Scope(density, basePath, classLoaders)
 
         val currentHintsProvider = LocalPainterHintsProvider.current
-        currentHintsProvider.priorityHints(basePath).forEach {
-            scope.resolveHint(it)
-        }
-        hints.forEach {
-            scope.resolveHint(it)
-        }
-        currentHintsProvider.hints(basePath).forEach {
-            scope.resolveHint(it)
-        }
+        currentHintsProvider.priorityHints(basePath)
+            .forEach { scope.resolveHint(it) }
+
+        hints.forEach { scope.resolveHint(it) }
+
+        currentHintsProvider.hints(basePath)
+            .forEach { scope.resolveHint(it) }
 
         val cacheKey = scope.acceptedHints.hashCode()
 
@@ -90,12 +90,13 @@ class ResourcePainterProvider(
             println("Cache hit for $basePath(${scope.acceptedHints.joinToString()})")
         }
 
-        val painter = cache.getOrPut(cacheKey) {
-            if (inDebugMode) {
-                println("Cache miss for $basePath(${scope.acceptedHints.joinToString()})")
+        val painter =
+            cache.getOrPut(cacheKey) {
+                if (inDebugMode) {
+                    println("Cache miss for $basePath(${scope.acceptedHints.joinToString()})")
+                }
+                loadPainter(scope)
             }
-            loadPainter(scope)
-        }
 
         return rememberUpdatedState(painter)
     }
@@ -106,34 +107,30 @@ class ResourcePainterProvider(
 
         for (hint in scope.acceptedHints) {
             if (hint !is PainterPathHint) continue
-            scopes = scopes.flatMap {
-                listOfNotNull(it.apply(hint), it)
-            }
+            scopes = scopes.flatMap { listOfNotNull(it.apply(hint), it) }
         }
 
-        val (chosenScope, url) = scopes.firstNotNullOfOrNull {
-            resolveResource(it)
-        } ?: run {
-            if (inDebugMode) {
-                error("Resource '$basePath(${scope.acceptedHints.joinToString()})' not found")
-            } else {
-                return errorPainter
+        val (chosenScope, url) = scopes.firstNotNullOfOrNull { resolveResource(it) }
+            ?: run {
+                if (inDebugMode) {
+                    error("Resource '$basePath(${scope.acceptedHints.joinToString()})' not found")
+                } else {
+                    return errorPainter
+                }
             }
-        }
 
         val extension = basePath.substringAfterLast(".").lowercase()
 
-        var painter = when (extension) {
-            "svg" -> createSvgPainter(chosenScope, url)
-            "xml" -> createVectorDrawablePainter(chosenScope, url)
-            else -> createBitmapPainter(chosenScope, url)
-        }
+        var painter =
+            when (extension) {
+                "svg" -> createSvgPainter(chosenScope, url)
+                "xml" -> createVectorDrawablePainter(chosenScope, url)
+                else -> createBitmapPainter(chosenScope, url)
+            }
 
         for (hint in scope.acceptedHints) {
             if (hint !is PainterWrapperHint) continue
-            with(hint) {
-                painter = chosenScope.wrap(painter)
-            }
+            with(hint) { painter = chosenScope.wrap(painter) }
         }
 
         return painter
@@ -179,9 +176,7 @@ class ResourcePainterProvider(
 
             hints.forEach { hint ->
                 if (hint !is PainterSvgPatchHint) return@forEach
-                with(hint) {
-                    scope.patch(document.documentElement)
-                }
+                with(hint) { scope.patch(document.documentElement) }
             }
 
             return document.writeToString().byteInputStream()
@@ -193,9 +188,7 @@ class ResourcePainterProvider(
         tryLoadingResource(
             url = url,
             loadingAction = { resourceUrl ->
-                resourceUrl.openStream().use {
-                    loadXmlImageVector(InputSource(it), scope)
-                }
+                resourceUrl.openStream().use { loadXmlImageVector(InputSource(it), scope) }
             },
             rememberAction = { rememberVectorPainter(it) },
         )
@@ -205,9 +198,7 @@ class ResourcePainterProvider(
         tryLoadingResource(
             url = url,
             loadingAction = { resourceUrl ->
-                val bitmap = resourceUrl.openStream().use {
-                    loadImageBitmap(it)
-                }
+                val bitmap = resourceUrl.openStream().use { loadImageBitmap(it) }
                 BitmapPainter(bitmap)
             },
             rememberAction = { remember(url, scope.density) { it } },
@@ -220,17 +211,18 @@ class ResourcePainterProvider(
         rememberAction: @Composable (T) -> Painter,
     ): Painter {
         @Suppress("TooGenericExceptionCaught") // This is a last-resort fallback when icons fail to load
-        val painter = try {
-            loadingAction(url)
-        } catch (e: RuntimeException) {
-            val message = "Unable to load SVG resource from $url\n${e.stackTraceToString()}"
-            if (inDebugMode) {
-                error(message)
-            }
+        val painter =
+            try {
+                loadingAction(url)
+            } catch (e: RuntimeException) {
+                val message = "Unable to load SVG resource from $url\n${e.stackTraceToString()}"
+                if (inDebugMode) {
+                    error(message)
+                }
 
-            System.err.println(message)
-            return errorPainter
-        }
+                System.err.println(message)
+                return errorPainter
+            }
 
         return rememberAction(painter)
     }
@@ -280,7 +272,5 @@ internal fun Document.writeToString(): String {
 }
 
 @Composable
-fun rememberResourcePainterProvider(path: String, iconClass: Class<*>): PainterProvider =
-    remember(path, iconClass.classLoader) {
-        ResourcePainterProvider(path, iconClass.classLoader)
-    }
+public fun rememberResourcePainterProvider(path: String, iconClass: Class<*>): PainterProvider =
+    remember(path, iconClass.classLoader) { ResourcePainterProvider(path, iconClass.classLoader) }

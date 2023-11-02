@@ -17,21 +17,23 @@ import org.jetbrains.jewel.ui.component.styling.TextFieldMetrics
 import org.jetbrains.jewel.ui.component.styling.TextFieldStyle
 
 @Composable
-fun TextFieldStyle.Companion.light(
+public fun TextFieldStyle.Companion.light(
     colors: TextFieldColors = TextFieldColors.light(),
     metrics: TextFieldMetrics = TextFieldMetrics.defaults(),
     textStyle: TextStyle = JewelTheme.defaultTextStyle,
-) = TextFieldStyle(colors, metrics, textStyle)
+): TextFieldStyle =
+    TextFieldStyle(colors, metrics, textStyle)
 
 @Composable
-fun TextFieldStyle.Companion.dark(
+public fun TextFieldStyle.Companion.dark(
     colors: TextFieldColors = TextFieldColors.dark(),
     metrics: TextFieldMetrics = TextFieldMetrics.defaults(),
     textStyle: TextStyle = JewelTheme.defaultTextStyle,
-) = TextFieldStyle(colors, metrics, textStyle)
+): TextFieldStyle =
+    TextFieldStyle(colors, metrics, textStyle)
 
 @Composable
-fun TextFieldColors.Companion.light(
+public fun TextFieldColors.Companion.light(
     background: Color = IntUiLightTheme.colors.grey(14),
     backgroundDisabled: Color = IntUiLightTheme.colors.grey(13),
     backgroundFocused: Color = background,
@@ -53,32 +55,33 @@ fun TextFieldColors.Companion.light(
     caretPressed: Color = caret,
     caretHovered: Color = caret,
     placeholder: Color = IntUiLightTheme.colors.grey(8),
-) = TextFieldColors(
-    background,
-    backgroundDisabled,
-    backgroundFocused,
-    backgroundPressed,
-    backgroundHovered,
-    content,
-    contentDisabled,
-    contentFocused,
-    contentPressed,
-    contentHovered,
-    border,
-    borderDisabled,
-    borderFocused,
-    borderPressed,
-    borderHovered,
-    caret,
-    caretDisabled,
-    caretFocused,
-    caretPressed,
-    caretHovered,
-    placeholder,
-)
+): TextFieldColors =
+    TextFieldColors(
+        background = background,
+        backgroundDisabled = backgroundDisabled,
+        backgroundFocused = backgroundFocused,
+        backgroundPressed = backgroundPressed,
+        backgroundHovered = backgroundHovered,
+        content = content,
+        contentDisabled = contentDisabled,
+        contentFocused = contentFocused,
+        contentPressed = contentPressed,
+        contentHovered = contentHovered,
+        border = border,
+        borderDisabled = borderDisabled,
+        borderFocused = borderFocused,
+        borderPressed = borderPressed,
+        borderHovered = borderHovered,
+        caret = caret,
+        caretDisabled = caretDisabled,
+        caretFocused = caretFocused,
+        caretPressed = caretPressed,
+        caretHovered = caretHovered,
+        placeholder = placeholder,
+    )
 
 @Composable
-fun TextFieldColors.Companion.dark(
+public fun TextFieldColors.Companion.dark(
     background: Color = IntUiDarkTheme.colors.grey(2),
     backgroundDisabled: Color = background,
     backgroundFocused: Color = background,
@@ -100,33 +103,35 @@ fun TextFieldColors.Companion.dark(
     caretPressed: Color = caret,
     caretHovered: Color = caret,
     placeholder: Color = IntUiDarkTheme.colors.grey(7),
-) = TextFieldColors(
-    background,
-    backgroundDisabled,
-    backgroundFocused,
-    backgroundPressed,
-    backgroundHovered,
-    content,
-    contentDisabled,
-    contentFocused,
-    contentPressed,
-    contentHovered,
-    border,
-    borderDisabled,
-    borderFocused,
-    borderPressed,
-    borderHovered,
-    caret,
-    caretDisabled,
-    caretFocused,
-    caretPressed,
-    caretHovered,
-    placeholder,
-)
+): TextFieldColors =
+    TextFieldColors(
+        background = background,
+        backgroundDisabled = backgroundDisabled,
+        backgroundFocused = backgroundFocused,
+        backgroundPressed = backgroundPressed,
+        backgroundHovered = backgroundHovered,
+        content = content,
+        contentDisabled = contentDisabled,
+        contentFocused = contentFocused,
+        contentPressed = contentPressed,
+        contentHovered = contentHovered,
+        border = border,
+        borderDisabled = borderDisabled,
+        borderFocused = borderFocused,
+        borderPressed = borderPressed,
+        borderHovered = borderHovered,
+        caret = caret,
+        caretDisabled = caretDisabled,
+        caretFocused = caretFocused,
+        caretPressed = caretPressed,
+        caretHovered = caretHovered,
+        placeholder = placeholder,
+    )
 
-fun TextFieldMetrics.Companion.defaults(
+public fun TextFieldMetrics.Companion.defaults(
     cornerSize: CornerSize = CornerSize(4.dp),
     contentPadding: PaddingValues = PaddingValues(horizontal = 9.dp, vertical = 6.dp),
     minSize: DpSize = DpSize(144.dp, 28.dp),
     borderWidth: Dp = 1.dp,
-) = TextFieldMetrics(borderWidth, contentPadding, cornerSize, minSize)
+): TextFieldMetrics =
+    TextFieldMetrics(borderWidth, contentPadding, cornerSize, minSize)

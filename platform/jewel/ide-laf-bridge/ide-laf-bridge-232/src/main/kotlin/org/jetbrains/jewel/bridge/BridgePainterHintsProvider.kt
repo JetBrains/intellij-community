@@ -10,20 +10,15 @@ import org.jetbrains.jewel.ui.painter.BasePainterHintsProvider
 import org.jetbrains.jewel.ui.painter.PainterHint
 import org.jetbrains.jewel.ui.painter.hints.Dark
 import org.jetbrains.jewel.ui.painter.hints.HiDpi
-import org.jetbrains.jewel.ui.util.fromRGBAHexString
+import org.jetbrains.jewel.ui.util.fromRGBAHexStringOrNull
 
 @InternalJewelApi
-class BridgePainterHintsProvider private constructor(
+public class BridgePainterHintsProvider private constructor(
     isDark: Boolean,
     intellijIconPalette: Map<String, String> = emptyMap(),
     themeIconPalette: Map<String, String?> = emptyMap(),
     themeColorPalette: Map<String, Color?> = emptyMap(),
-) : BasePainterHintsProvider(
-    isDark,
-    intellijIconPalette,
-    themeIconPalette,
-    themeColorPalette,
-) {
+) : BasePainterHintsProvider(isDark, intellijIconPalette, themeIconPalette, themeColorPalette) {
 
     @Composable
     override fun hints(path: String): List<PainterHint> = buildList {
@@ -33,23 +28,24 @@ class BridgePainterHintsProvider private constructor(
         add(Dark(JewelTheme.isDark))
     }
 
-    companion object {
+    public companion object {
 
         private val logger = thisLogger()
 
-        operator fun invoke(isDark: Boolean): BasePainterHintsProvider {
+        public operator fun invoke(isDark: Boolean): BasePainterHintsProvider {
             val uiTheme = currentUiThemeOrNull() ?: return BridgePainterHintsProvider(isDark)
             logger.info("Parsing theme info from theme ${uiTheme.name} (id: ${uiTheme.id}, isDark: ${uiTheme.isDark})")
 
             val iconColorPalette = uiTheme.iconColorPalette
             val keyPalette = UITheme.getColorPalette()
-            val themeColors = uiTheme.colors.orEmpty().mapValues { (_, v) ->
-                when (v) {
-                    is Int -> Color(v)
-                    is String -> Color.fromRGBAHexString(v)
-                    else -> null
+            val themeColors = uiTheme.colors.orEmpty()
+                .mapValues { (_, v) ->
+                    when (v) {
+                        is Int -> Color(v)
+                        is String -> Color.fromRGBAHexStringOrNull(v)
+                        else -> null
+                    }
                 }
-            }
 
             return BridgePainterHintsProvider(isDark, keyPalette, iconColorPalette, themeColors)
         }

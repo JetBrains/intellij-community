@@ -15,62 +15,71 @@ import org.jetbrains.jewel.ui.component.styling.RadioButtonStyle
 import org.jetbrains.jewel.ui.painter.PainterProvider
 
 @Composable
-fun RadioButtonStyle.Companion.light(
+public fun RadioButtonStyle.Companion.light(
     colors: RadioButtonColors = RadioButtonColors.light(),
     metrics: RadioButtonMetrics = RadioButtonMetrics.defaults(),
     icons: RadioButtonIcons = RadioButtonIcons.light(),
-) = RadioButtonStyle(colors, metrics, icons)
+): RadioButtonStyle =
+    RadioButtonStyle(colors, metrics, icons)
 
 @Composable
-fun RadioButtonStyle.Companion.dark(
+public fun RadioButtonStyle.Companion.dark(
     colors: RadioButtonColors = RadioButtonColors.dark(),
     metrics: RadioButtonMetrics = RadioButtonMetrics.defaults(),
     icons: RadioButtonIcons = RadioButtonIcons.dark(),
-) = RadioButtonStyle(colors, metrics, icons)
+): RadioButtonStyle =
+    RadioButtonStyle(colors, metrics, icons)
 
 @Composable
-fun RadioButtonColors.Companion.light(
+public fun RadioButtonColors.Companion.light(
     content: Color = Color.Unspecified,
     contentHovered: Color = content,
     contentDisabled: Color = IntUiLightTheme.colors.grey(8),
     contentSelected: Color = content,
     contentSelectedHovered: Color = content,
     contentSelectedDisabled: Color = contentDisabled,
-) = RadioButtonColors(
-    content,
-    contentHovered,
-    contentDisabled,
-    contentSelected,
-    contentSelectedHovered,
-    contentSelectedDisabled,
-)
+): RadioButtonColors =
+    RadioButtonColors(
+        content = content,
+        contentHovered = contentHovered,
+        contentDisabled = contentDisabled,
+        contentSelected = contentSelected,
+        contentSelectedHovered = contentSelectedHovered,
+        contentSelectedDisabled = contentSelectedDisabled,
+    )
 
 @Composable
-fun RadioButtonColors.Companion.dark(
+public fun RadioButtonColors.Companion.dark(
     content: Color = Color.Unspecified,
     contentHovered: Color = content,
     contentDisabled: Color = IntUiDarkTheme.colors.grey(8),
     contentSelected: Color = content,
     contentSelectedHovered: Color = content,
     contentSelectedDisabled: Color = contentDisabled,
-) = RadioButtonColors(
-    content,
-    contentHovered,
-    contentDisabled,
-    contentSelected,
-    contentSelectedHovered,
-    contentSelectedDisabled,
-)
+): RadioButtonColors =
+    RadioButtonColors(
+        content = content,
+        contentHovered = contentHovered,
+        contentDisabled = contentDisabled,
+        contentSelected = contentSelected,
+        contentSelectedHovered = contentSelectedHovered,
+        contentSelectedDisabled = contentSelectedDisabled,
+    )
 
-fun RadioButtonMetrics.Companion.defaults(
+public fun RadioButtonMetrics.Companion.defaults(
     radioButtonSize: DpSize = DpSize(19.dp, 19.dp),
     iconContentGap: Dp = 8.dp,
-) = RadioButtonMetrics(radioButtonSize, iconContentGap)
+): RadioButtonMetrics =
+    RadioButtonMetrics(radioButtonSize, iconContentGap)
 
-fun RadioButtonIcons.Companion.light(
-    radioButton: PainterProvider = standalonePainterProvider("com/intellij/ide/ui/laf/icons/intellij/radio.svg"),
-) = RadioButtonIcons(radioButton)
+public fun RadioButtonIcons.Companion.light(
+    radioButton: PainterProvider =
+        standalonePainterProvider("com/intellij/ide/ui/laf/icons/intellij/radio.svg"),
+): RadioButtonIcons =
+    RadioButtonIcons(radioButton)
 
-fun RadioButtonIcons.Companion.dark(
-    radioButton: PainterProvider = standalonePainterProvider("com/intellij/ide/ui/laf/icons/darcula/radio.svg"),
-) = RadioButtonIcons(radioButton)
+public fun RadioButtonIcons.Companion.dark(
+    radioButton: PainterProvider =
+        standalonePainterProvider("com/intellij/ide/ui/laf/icons/darcula/radio.svg"),
+): RadioButtonIcons =
+    RadioButtonIcons(radioButton)

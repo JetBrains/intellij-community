@@ -18,7 +18,7 @@ private val bridgeService
 
 @ExperimentalJewelApi
 @Composable
-fun SwingBridgeTheme(content: @Composable () -> Unit) {
+public fun SwingBridgeTheme(content: @Composable () -> Unit) {
     val themeData by bridgeService.currentBridgeThemeData.collectAsState()
 
     BaseJewelTheme(

@@ -53,7 +53,7 @@ internal object BridgeOverride : PainterPathHint {
                     append(it.drop(1))
                     append('/')
                 }
-            replace(length - 1, length, "")
+            replace(length - 1, length, "") // Drop last '/'
             if (iconPath.contains("_dark")) append("_dark")
             append(".svg")
 

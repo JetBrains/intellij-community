@@ -16,21 +16,23 @@ import org.jetbrains.jewel.ui.component.styling.LazyTreeStyle
 import org.jetbrains.jewel.ui.painter.PainterProvider
 
 @Composable
-fun LazyTreeStyle.Companion.light(
+public fun LazyTreeStyle.Companion.light(
     colors: LazyTreeColors = LazyTreeColors.light(),
     metrics: LazyTreeMetrics = LazyTreeMetrics.defaults(),
     icons: LazyTreeIcons = LazyTreeIcons.defaults(),
-) = LazyTreeStyle(colors, metrics, icons)
+): LazyTreeStyle =
+    LazyTreeStyle(colors, metrics, icons)
 
 @Composable
-fun LazyTreeStyle.Companion.dark(
+public fun LazyTreeStyle.Companion.dark(
     colors: LazyTreeColors = LazyTreeColors.dark(),
     metrics: LazyTreeMetrics = LazyTreeMetrics.defaults(),
     icons: LazyTreeIcons = LazyTreeIcons.defaults(),
-) = LazyTreeStyle(colors, metrics, icons)
+): LazyTreeStyle =
+    LazyTreeStyle(colors, metrics, icons)
 
 @Composable
-fun LazyTreeColors.Companion.light(
+public fun LazyTreeColors.Companion.light(
     content: Color = Color.Unspecified,
     contentFocused: Color = content,
     contentSelected: Color = content,
@@ -38,18 +40,19 @@ fun LazyTreeColors.Companion.light(
     nodeBackgroundFocused: Color = Color.Unspecified,
     nodeBackgroundSelected: Color = IntUiLightTheme.colors.grey(11),
     nodeBackgroundSelectedFocused: Color = IntUiLightTheme.colors.blue(11),
-) = LazyTreeColors(
-    content,
-    contentFocused,
-    contentSelected,
-    contentSelectedFocused,
-    nodeBackgroundFocused,
-    nodeBackgroundSelected,
-    nodeBackgroundSelectedFocused,
-)
+): LazyTreeColors =
+    LazyTreeColors(
+        elementBackgroundFocused = content,
+        elementBackgroundSelected = contentFocused,
+        elementBackgroundSelectedFocused = contentSelected,
+        content = contentSelectedFocused,
+        contentFocused = nodeBackgroundFocused,
+        contentSelected = nodeBackgroundSelected,
+        contentSelectedFocused = nodeBackgroundSelectedFocused,
+    )
 
 @Composable
-fun LazyTreeColors.Companion.dark(
+public fun LazyTreeColors.Companion.dark(
     content: Color = Color.Unspecified,
     contentFocused: Color = content,
     contentSelected: Color = content,
@@ -57,40 +60,43 @@ fun LazyTreeColors.Companion.dark(
     nodeBackgroundFocused: Color = Color.Unspecified,
     nodeBackgroundSelected: Color = IntUiDarkTheme.colors.grey(4),
     nodeBackgroundSelectedFocused: Color = IntUiDarkTheme.colors.blue(2),
-) = LazyTreeColors(
-    content,
-    contentFocused,
-    contentSelected,
-    contentSelectedFocused,
-    nodeBackgroundFocused,
-    nodeBackgroundSelected,
-    nodeBackgroundSelectedFocused,
-)
+): LazyTreeColors =
+    LazyTreeColors(
+        elementBackgroundFocused = content,
+        elementBackgroundSelected = contentFocused,
+        elementBackgroundSelectedFocused = contentSelected,
+        content = contentSelectedFocused,
+        contentFocused = nodeBackgroundFocused,
+        contentSelected = nodeBackgroundSelected,
+        contentSelectedFocused = nodeBackgroundSelectedFocused,
+    )
 
-fun LazyTreeMetrics.Companion.defaults(
+public fun LazyTreeMetrics.Companion.defaults(
     indentSize: Dp = 7.dp + 16.dp,
     elementBackgroundCornerSize: CornerSize = CornerSize(2.dp),
     elementPadding: PaddingValues = PaddingValues(horizontal = 12.dp),
     elementContentPadding: PaddingValues = PaddingValues(4.dp),
     elementMinHeight: Dp = 24.dp,
     chevronContentGap: Dp = 2.dp,
-) = LazyTreeMetrics(
-    indentSize,
-    elementBackgroundCornerSize,
-    elementPadding,
-    elementContentPadding,
-    elementMinHeight,
-    chevronContentGap,
-)
+): LazyTreeMetrics =
+    LazyTreeMetrics(
+        indentSize,
+        elementBackgroundCornerSize,
+        elementPadding,
+        elementContentPadding,
+        elementMinHeight,
+        chevronContentGap,
+    )
 
-fun LazyTreeIcons.Companion.defaults(
+public fun LazyTreeIcons.Companion.defaults(
     chevronCollapsed: PainterProvider = standalonePainterProvider("expui/general/chevronRight.svg"),
     chevronExpanded: PainterProvider = standalonePainterProvider("expui/general/chevronDown.svg"),
     chevronSelectedCollapsed: PainterProvider = chevronCollapsed,
     chevronSelectedExpanded: PainterProvider = chevronExpanded,
-) = LazyTreeIcons(
-    chevronCollapsed,
-    chevronExpanded,
-    chevronSelectedCollapsed,
-    chevronSelectedExpanded,
-)
+): LazyTreeIcons =
+    LazyTreeIcons(
+        chevronCollapsed,
+        chevronExpanded,
+        chevronSelectedCollapsed,
+        chevronSelectedExpanded,
+    )

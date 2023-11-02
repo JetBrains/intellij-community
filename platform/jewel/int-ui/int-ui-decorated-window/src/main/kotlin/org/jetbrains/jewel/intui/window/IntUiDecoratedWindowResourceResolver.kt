@@ -5,7 +5,8 @@ import org.jetbrains.jewel.ui.painter.ResourcePainterProvider
 import org.jetbrains.jewel.window.styling.DecoratedWindowStyle
 
 /**
- * Create [PainterProvider][org.jetbrains.jewel.painter.PainterProvider] for decorated window module resource.
+ * Create a [PainterProvider][org.jetbrains.jewel.painter.PainterProvider]
+ * for loading a decorated window module resource.
  */
-fun decoratedWindowPainterProvider(path: String) =
+public fun decoratedWindowPainterProvider(path: String): ResourcePainterProvider =
     ResourcePainterProvider(path, DecoratedWindowStyle::class.java.classLoader, JewelTheme::class.java.classLoader)

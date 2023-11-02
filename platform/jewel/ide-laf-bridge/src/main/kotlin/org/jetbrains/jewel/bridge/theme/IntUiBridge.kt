@@ -4,7 +4,6 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.graphics.isSpecified
 import androidx.compose.ui.graphics.takeOrElse
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.DpOffset
@@ -15,7 +14,6 @@ import com.intellij.ide.ui.laf.darcula.DarculaUIUtil
 import com.intellij.ide.ui.laf.darcula.ui.DarculaCheckBoxUI
 import com.intellij.ide.ui.laf.intellij.IdeaPopupMenuUI
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.JBColor
 import com.intellij.util.ui.DirProvider
 import com.intellij.util.ui.JBUI
@@ -24,6 +22,7 @@ import org.jetbrains.jewel.bridge.bridgePainterProvider
 import org.jetbrains.jewel.bridge.createVerticalBrush
 import org.jetbrains.jewel.bridge.dp
 import org.jetbrains.jewel.bridge.readFromLaF
+import org.jetbrains.jewel.bridge.retrieveArcAsCornerSizeOrDefault
 import org.jetbrains.jewel.bridge.retrieveArcAsCornerSizeWithFallbacks
 import org.jetbrains.jewel.bridge.retrieveColorOrUnspecified
 import org.jetbrains.jewel.bridge.retrieveColorsOrUnspecified
@@ -140,13 +139,14 @@ internal fun createBridgeThemeDefinition(textStyle: TextStyle): ThemeDefinition 
 @OptIn(DependsOnJBR::class)
 internal suspend fun createBridgeComponentStyling(
     theme: ThemeDefinition,
-) = createBridgeComponentStyling(
-    theme = theme,
-    textFieldTextStyle = retrieveTextStyle("TextField.font", "TextField.foreground"),
-    textAreaTextStyle = retrieveTextStyle("TextArea.font", "TextArea.foreground"),
-    dropdownTextStyle = retrieveTextStyle("ComboBox.font"),
-    linkTextStyle = retrieveTextStyle("Label.font"),
-)
+) =
+    createBridgeComponentStyling(
+        theme = theme,
+        textFieldTextStyle = retrieveTextStyle("TextField.font", "TextField.foreground"),
+        textAreaTextStyle = retrieveTextStyle("TextArea.font", "TextArea.foreground"),
+        dropdownTextStyle = retrieveTextStyle("ComboBox.font"),
+        linkTextStyle = retrieveTextStyle("Label.font"),
+    )
 
 internal fun createBridgeComponentStyling(
     theme: ThemeDefinition,
@@ -186,37 +186,36 @@ internal fun createBridgeComponentStyling(
 }
 
 private fun readDefaultButtonStyle(): ButtonStyle {
-    val normalBackground =
-        listOf(
-            JBUI.CurrentTheme.Button.defaultButtonColorStart().toComposeColor(),
-            JBUI.CurrentTheme.Button.defaultButtonColorEnd().toComposeColor(),
-        ).createVerticalBrush()
+    val normalBackground = listOf(
+        JBUI.CurrentTheme.Button.defaultButtonColorStart().toComposeColor(),
+        JBUI.CurrentTheme.Button.defaultButtonColorEnd().toComposeColor(),
+    ).createVerticalBrush()
 
     val normalContent = retrieveColorOrUnspecified("Button.default.foreground")
 
-    val normalBorder =
-        listOf(
-            JBUI.CurrentTheme.Button.buttonOutlineColorStart(true).toComposeColor(),
-            JBUI.CurrentTheme.Button.buttonOutlineColorEnd(true).toComposeColor(),
-        ).createVerticalBrush()
+    val normalBorder = listOf(
+        JBUI.CurrentTheme.Button.buttonOutlineColorStart(true).toComposeColor(),
+        JBUI.CurrentTheme.Button.buttonOutlineColorEnd(true).toComposeColor(),
+    ).createVerticalBrush()
 
-    val colors = ButtonColors(
-        background = normalBackground,
-        backgroundDisabled = SolidColor(Color.Transparent),
-        backgroundFocused = normalBackground,
-        backgroundPressed = normalBackground,
-        backgroundHovered = normalBackground,
-        content = normalContent,
-        contentDisabled = retrieveColorOrUnspecified("Button.disabledText"),
-        contentFocused = normalContent,
-        contentPressed = normalContent,
-        contentHovered = normalContent,
-        border = normalBorder,
-        borderDisabled = SolidColor(JBUI.CurrentTheme.Button.disabledOutlineColor().toComposeColor()),
-        borderFocused = SolidColor(retrieveColorOrUnspecified("Button.default.focusedBorderColor")),
-        borderPressed = normalBorder,
-        borderHovered = normalBorder,
-    )
+    val colors =
+        ButtonColors(
+            background = normalBackground,
+            backgroundDisabled = SolidColor(Color.Transparent),
+            backgroundFocused = normalBackground,
+            backgroundPressed = normalBackground,
+            backgroundHovered = normalBackground,
+            content = normalContent,
+            contentDisabled = retrieveColorOrUnspecified("Button.disabledText"),
+            contentFocused = normalContent,
+            contentPressed = normalContent,
+            contentHovered = normalContent,
+            border = normalBorder,
+            borderDisabled = SolidColor(JBUI.CurrentTheme.Button.disabledOutlineColor().toComposeColor()),
+            borderFocused = SolidColor(retrieveColorOrUnspecified("Button.default.focusedBorderColor")),
+            borderPressed = normalBorder,
+            borderHovered = normalBorder,
+        )
 
     return ButtonStyle(
         colors = colors,
@@ -230,19 +229,17 @@ private fun readDefaultButtonStyle(): ButtonStyle {
 }
 
 private fun readOutlinedButtonStyle(): ButtonStyle {
-    val normalBackground =
-        listOf(
-            JBUI.CurrentTheme.Button.buttonColorStart().toComposeColor(),
-            JBUI.CurrentTheme.Button.buttonColorEnd().toComposeColor(),
-        ).createVerticalBrush()
+    val normalBackground = listOf(
+        JBUI.CurrentTheme.Button.buttonColorStart().toComposeColor(),
+        JBUI.CurrentTheme.Button.buttonColorEnd().toComposeColor(),
+    ).createVerticalBrush()
 
     val normalContent = retrieveColorOrUnspecified("Button.foreground")
 
-    val normalBorder =
-        listOf(
-            JBUI.CurrentTheme.Button.buttonOutlineColorStart(false).toComposeColor(),
-            JBUI.CurrentTheme.Button.buttonOutlineColorEnd(false).toComposeColor(),
-        ).createVerticalBrush()
+    val normalBorder = listOf(
+        JBUI.CurrentTheme.Button.buttonOutlineColorStart(false).toComposeColor(),
+        JBUI.CurrentTheme.Button.buttonOutlineColorEnd(false).toComposeColor(),
+    ).createVerticalBrush()
 
     val colors = ButtonColors(
         background = normalBackground,
@@ -264,7 +261,8 @@ private fun readOutlinedButtonStyle(): ButtonStyle {
 
     return ButtonStyle(
         colors = colors,
-        metrics = ButtonMetrics(
+        metrics =
+        ButtonMetrics(
             cornerSize = CornerSize(DarculaUIUtil.BUTTON_ARC.dp / 2),
             padding = PaddingValues(horizontal = 14.dp), // see DarculaButtonUI.HORIZONTAL_PADDING
             minSize = DpSize(DarculaUIUtil.MINIMUM_WIDTH.dp, DarculaUIUtil.MINIMUM_HEIGHT.dp),
@@ -290,9 +288,7 @@ private fun readCheckboxStyle(): CheckboxStyle {
             outlineOffset = DpOffset(2.5.dp, 1.5.dp), // Extrapolated from SVG
             iconContentGap = 5.dp, // See DarculaCheckBoxUI#textIconGap
         ),
-        icons = CheckboxIcons(
-            checkbox = bridgePainterProvider("${iconsBasePath}checkBox.svg"),
-        ),
+        icons = CheckboxIcons(checkbox = bridgePainterProvider("${iconsBasePath}checkBox.svg")),
     )
 }
 
@@ -343,6 +339,7 @@ private fun readChipStyle(): ChipStyle {
         borderSelectedFocused = selectedBorder,
         borderSelectedHovered = selectedBorder,
     )
+
     return ChipStyle(
         colors = colors,
         metrics = ChipMetrics(
@@ -397,17 +394,12 @@ private fun readDefaultDropdownStyle(
         colors = colors,
         metrics = DropdownMetrics(
             arrowMinSize = DpSize(arrowWidth, DarculaUIUtil.MINIMUM_HEIGHT.dp),
-            minSize = DpSize(
-                DarculaUIUtil.MINIMUM_WIDTH.dp + arrowWidth,
-                DarculaUIUtil.MINIMUM_HEIGHT.dp,
-            ),
+            minSize = DpSize(DarculaUIUtil.MINIMUM_WIDTH.dp + arrowWidth, DarculaUIUtil.MINIMUM_HEIGHT.dp),
             cornerSize = CornerSize(DarculaUIUtil.COMPONENT_ARC.dp),
             contentPadding = retrieveInsetsAsPaddingValues("ComboBox.padding"),
             borderWidth = DarculaUIUtil.BW.dp,
         ),
-        icons = DropdownIcons(
-            chevronDown = bridgePainterProvider("general/chevron-down.svg"),
-        ),
+        icons = DropdownIcons(chevronDown = bridgePainterProvider("general/chevron-down.svg")),
         textStyle = dropdownTextStyle,
         menuStyle = menuStyle,
     )
@@ -449,17 +441,12 @@ private fun readUndecoratedDropdownStyle(
         colors = colors,
         metrics = DropdownMetrics(
             arrowMinSize = DpSize(arrowWidth, DarculaUIUtil.MINIMUM_HEIGHT.dp),
-            minSize = DpSize(
-                DarculaUIUtil.MINIMUM_WIDTH.dp + arrowWidth,
-                DarculaUIUtil.MINIMUM_HEIGHT.dp,
-            ),
+            minSize = DpSize(DarculaUIUtil.MINIMUM_WIDTH.dp + arrowWidth, DarculaUIUtil.MINIMUM_HEIGHT.dp),
             cornerSize = CornerSize(JBUI.CurrentTheme.MainToolbar.Dropdown.hoverArc().dp),
             contentPadding = JBUI.CurrentTheme.MainToolbar.Dropdown.borderInsets().toPaddingValues(),
             borderWidth = 0.dp,
         ),
-        icons = DropdownIcons(
-            chevronDown = bridgePainterProvider("general/chevron-down.svg"),
-        ),
+        icons = DropdownIcons(chevronDown = bridgePainterProvider("general/chevron-down.svg")),
         textStyle = dropdownTextStyle,
         menuStyle = menuStyle,
     )
@@ -467,55 +454,59 @@ private fun readUndecoratedDropdownStyle(
 
 private fun readGroupHeaderStyle() =
     GroupHeaderStyle(
-        colors = GroupHeaderColors(
-            divider = retrieveColorOrUnspecified("Separator.separatorColor"),
-        ),
+        colors = GroupHeaderColors(divider = retrieveColorOrUnspecified("Separator.separatorColor")),
         metrics = GroupHeaderMetrics(
             dividerThickness = 1.dp, // see DarculaSeparatorUI
             indent = 1.dp, // see DarculaSeparatorUI
         ),
     )
 
-private fun readHorizontalProgressBarStyle() = HorizontalProgressBarStyle(
-    colors = HorizontalProgressBarColors(
-        track = retrieveColorOrUnspecified("ProgressBar.trackColor"),
-        progress = retrieveColorOrUnspecified("ProgressBar.progressColor"),
-        indeterminateBase = retrieveColorOrUnspecified("ProgressBar.indeterminateStartColor"),
-        indeterminateHighlight = retrieveColorOrUnspecified("ProgressBar.indeterminateEndColor"),
-    ),
-    metrics = HorizontalProgressBarMetrics(
-        cornerSize = CornerSize(100),
-        minHeight = 4.dp, // See DarculaProgressBarUI.DEFAULT_WIDTH
-        // See DarculaProgressBarUI.CYCLE_TIME_DEFAULT, DarculaProgressBarUI.REPAINT_INTERVAL_DEFAULT,
-        // and the "step" constant in DarculaProgressBarUI#paintIndeterminate
-        indeterminateHighlightWidth = (800 / 50 * 6).dp,
-    ),
-    indeterminateCycleDuration = 800.milliseconds, // See DarculaProgressBarUI.CYCLE_TIME_DEFAULT
-)
+private fun readHorizontalProgressBarStyle() =
+    HorizontalProgressBarStyle(
+        colors = HorizontalProgressBarColors(
+            track = retrieveColorOrUnspecified("ProgressBar.trackColor"),
+            progress = retrieveColorOrUnspecified("ProgressBar.progressColor"),
+            indeterminateBase = retrieveColorOrUnspecified("ProgressBar.indeterminateStartColor"),
+            indeterminateHighlight = retrieveColorOrUnspecified("ProgressBar.indeterminateEndColor"),
+        ),
+        metrics = HorizontalProgressBarMetrics(
+            cornerSize = CornerSize(100),
+            minHeight = 4.dp, // See DarculaProgressBarUI.DEFAULT_WIDTH
+            // See DarculaProgressBarUI.CYCLE_TIME_DEFAULT,
+            // DarculaProgressBarUI.REPAINT_INTERVAL_DEFAULT,
+            // and the "step" constant in DarculaProgressBarUI#paintIndeterminate
+            indeterminateHighlightWidth = (800 / 50 * 6).dp,
+        ),
+        indeterminateCycleDuration = 800.milliseconds, // See DarculaProgressBarUI.CYCLE_TIME_DEFAULT
+    )
 
 private fun readLinkStyle(
     linkTextStyle: TextStyle,
 ): LinkStyle {
-    val normalContent =
-        retrieveColorOrUnspecified("Link.activeForeground").takeOrElse { retrieveColorOrUnspecified("Link.activeForeground") }
+    val normalContent = retrieveColorOrUnspecified("Link.activeForeground")
+        .takeOrElse { retrieveColorOrUnspecified("Link.activeForeground") }
 
-    val colors = LinkColors(
-        content = normalContent,
-        contentDisabled = retrieveColorOrUnspecified("Link.disabledForeground").takeOrElse {
-            retrieveColorOrUnspecified(
-                "Label.disabledForeground",
-            )
-        },
-        contentFocused = normalContent,
-        contentPressed = retrieveColorOrUnspecified("Link.pressedForeground").takeOrElse { retrieveColorOrUnspecified("link.pressed.foreground") },
-        contentHovered = retrieveColorOrUnspecified("Link.hoverForeground").takeOrElse { retrieveColorOrUnspecified("link.hover.foreground") },
-        contentVisited = retrieveColorOrUnspecified("Link.visitedForeground").takeOrElse { retrieveColorOrUnspecified("link.visited.foreground") },
-    )
+    val colors =
+        LinkColors(
+            content = normalContent,
+            contentDisabled = retrieveColorOrUnspecified("Link.disabledForeground")
+                .takeOrElse { retrieveColorOrUnspecified("Label.disabledForeground") },
+            contentFocused = normalContent,
+            contentPressed = retrieveColorOrUnspecified("Link.pressedForeground")
+                .takeOrElse { retrieveColorOrUnspecified("link.pressed.foreground") },
+            contentHovered = retrieveColorOrUnspecified("Link.hoverForeground")
+                .takeOrElse { retrieveColorOrUnspecified("link.hover.foreground") },
+            contentVisited = retrieveColorOrUnspecified("Link.visitedForeground")
+                .takeOrElse { retrieveColorOrUnspecified("link.visited.foreground") },
+        )
 
     return LinkStyle(
         colors = colors,
         metrics = LinkMetrics(
-            focusHaloCornerSize = CornerSize(Registry.intValue("ide.link.button.focus.round.arc", 4).dp),
+            focusHaloCornerSize = retrieveArcAsCornerSizeOrDefault(
+                key = "ide.link.button.focus.round.arc",
+                default = CornerSize(4.dp),
+            ),
             textIconGap = 4.dp,
             iconSize = DpSize(16.dp, 16.dp),
         ),
@@ -540,7 +531,8 @@ private fun readMenuStyle(): MenuStyle {
 
     val colors = MenuColors(
         background = retrieveColorOrUnspecified("PopupMenu.background"),
-        border = retrieveColorOrUnspecified("Popup.borderColor").takeOrElse { retrieveColorOrUnspecified("Popup.Border.color") },
+        border = retrieveColorOrUnspecified("Popup.borderColor")
+            .takeOrElse { retrieveColorOrUnspecified("Popup.Border.color") },
         shadow = Color.Black.copy(alpha = .6f),
         itemColors = MenuItemColors(
             background = retrieveColorOrUnspecified("MenuItem.background"),
@@ -577,18 +569,17 @@ private fun readMenuStyle(): MenuStyle {
                 outerPadding = PaddingValues(horizontal = 6.dp),
                 contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
                 separatorPadding = PaddingValues(
-                    horizontal = retrieveIntAsDpOrUnspecified("PopupMenuSeparator.withToEdge").takeOrElse { 0.dp },
-                    vertical = retrieveIntAsDpOrUnspecified("PopupMenuSeparator.stripeIndent").takeOrElse { 0.dp },
+                    horizontal = retrieveIntAsDpOrUnspecified("PopupMenuSeparator.withToEdge")
+                        .takeOrElse { 0.dp },
+                    vertical = retrieveIntAsDpOrUnspecified("PopupMenuSeparator.stripeIndent")
+                        .takeOrElse { 0.dp },
                 ),
-                separatorThickness = retrieveIntAsDpOrUnspecified("PopupMenuSeparator.stripeWidth").takeOrElse { 0.dp },
+                separatorThickness = retrieveIntAsDpOrUnspecified("PopupMenuSeparator.stripeWidth")
+                    .takeOrElse { 0.dp },
             ),
-            submenuMetrics = SubmenuMetrics(
-                offset = DpOffset(0.dp, (-8).dp),
-            ),
+            submenuMetrics = SubmenuMetrics(offset = DpOffset(0.dp, (-8).dp)),
         ),
-        icons = MenuIcons(
-            submenuChevron = bridgePainterProvider("general/chevron-right.svg"),
-        ),
+        icons = MenuIcons(submenuChevron = bridgePainterProvider("general/chevron-right.svg")),
     )
 }
 
@@ -608,11 +599,10 @@ private fun readRadioButtonStyle(): RadioButtonStyle {
         colors = colors,
         metrics = RadioButtonMetrics(
             radioButtonSize = DpSize(19.dp, 19.dp),
-            iconContentGap = retrieveIntAsDpOrUnspecified("RadioButton.textIconGap").takeOrElse { 4.dp },
+            iconContentGap = retrieveIntAsDpOrUnspecified("RadioButton.textIconGap")
+                .takeOrElse { 4.dp },
         ),
-        icons = RadioButtonIcons(
-            radioButton = bridgePainterProvider("${iconsBasePath}radio.svg"),
-        ),
+        icons = RadioButtonIcons(radioButton = bridgePainterProvider("${iconsBasePath}radio.svg")),
     )
 }
 
@@ -740,11 +730,12 @@ private fun readLazyTreeStyle(): LazyTreeStyle {
     val chevronCollapsed = bridgePainterProvider("general/chevron-right.svg")
     val chevronExpanded = bridgePainterProvider("general/chevron-down.svg")
 
+    val leftIndent = retrieveIntAsDpOrUnspecified("Tree.leftChildIndent").takeOrElse { 7.dp }
+    val rightIndent = retrieveIntAsDpOrUnspecified("Tree.rightChildIndent").takeOrElse { 11.dp }
     return LazyTreeStyle(
         colors = colors,
         metrics = LazyTreeMetrics(
-            indentSize = retrieveIntAsDpOrUnspecified("Tree.leftChildIndent").takeOrElse { 7.dp } +
-                retrieveIntAsDpOrUnspecified("Tree.rightChildIndent").takeOrElse { 11.dp },
+            indentSize = leftIndent + rightIndent,
             elementBackgroundCornerSize = CornerSize(JBUI.CurrentTheme.Tree.ARC.dp / 2),
             elementPadding = PaddingValues(horizontal = 12.dp),
             elementContentPadding = PaddingValues(4.dp),
@@ -788,14 +779,13 @@ private fun readDefaultTabStyle(): TabStyle {
     return TabStyle(
         colors = colors,
         metrics = TabMetrics(
-            underlineThickness = retrieveIntAsDpOrUnspecified("TabbedPane.tabSelectionHeight").takeOrElse { 2.dp },
+            underlineThickness = retrieveIntAsDpOrUnspecified("TabbedPane.tabSelectionHeight")
+                .takeOrElse { 2.dp },
             tabPadding = retrieveInsetsAsPaddingValues("TabbedPane.tabInsets"),
             closeContentGap = 4.dp,
             tabHeight = retrieveIntAsDpOrUnspecified("TabbedPane.tabHeight").takeOrElse { 24.dp },
         ),
-        icons = TabIcons(
-            close = bridgePainterProvider("expui/general/closeSmall.svg"),
-        ),
+        icons = TabIcons(close = bridgePainterProvider("expui/general/closeSmall.svg")),
         contentAlpha = TabContentAlpha(
             iconNormal = 1f,
             iconDisabled = 1f,
@@ -838,14 +828,14 @@ private fun readEditorTabStyle(): TabStyle {
     return TabStyle(
         colors = colors,
         metrics = TabMetrics(
-            underlineThickness = retrieveIntAsDpOrUnspecified("TabbedPane.tabSelectionHeight").takeOrElse { 2.dp },
+            underlineThickness = retrieveIntAsDpOrUnspecified("TabbedPane.tabSelectionHeight")
+                .takeOrElse { 2.dp },
             tabPadding = retrieveInsetsAsPaddingValues("TabbedPane.tabInsets"),
             closeContentGap = 4.dp,
-            tabHeight = retrieveIntAsDpOrUnspecified("TabbedPane.tabHeight").takeOrElse { 24.dp },
+            tabHeight = retrieveIntAsDpOrUnspecified("TabbedPane.tabHeight")
+                .takeOrElse { 24.dp },
         ),
-        icons = TabIcons(
-            close = bridgePainterProvider("expui/general/closeSmall.svg"),
-        ),
+        icons = TabIcons(close = bridgePainterProvider("expui/general/closeSmall.svg")),
         contentAlpha = TabContentAlpha(
             iconNormal = .7f,
             iconDisabled = .7f,
@@ -861,14 +851,11 @@ private fun readEditorTabStyle(): TabStyle {
     )
 }
 
-private fun readCircularProgressStyle(
-    isDark: Boolean,
-) =
+private fun readCircularProgressStyle(isDark: Boolean) =
     CircularProgressStyle(
         frameTime = 125.milliseconds,
         color = retrieveColorOrUnspecified("ProgressIcon.color")
-            .takeIf { it.isSpecified }
-            ?: if (isDark) Color(0xFF6F737A) else Color(0xFFA8ADBD),
+            .takeOrElse { if (isDark) Color(0xFF6F737A) else Color(0xFFA8ADBD) },
     )
 
 private fun readTooltipStyle() =

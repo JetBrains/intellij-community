@@ -20,7 +20,7 @@ import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.foundation.theme.LocalContentColor
 
 @Composable
-fun Text(
+public fun Text(
     text: String,
     modifier: Modifier = Modifier,
     color: Color = Color.Unspecified,
@@ -60,7 +60,7 @@ fun Text(
 }
 
 @Composable
-fun Text(
+public fun Text(
     text: AnnotatedString,
     modifier: Modifier = Modifier,
     color: Color = Color.Unspecified,
@@ -79,24 +79,32 @@ fun Text(
     onTextLayout: (TextLayoutResult) -> Unit = {},
     style: TextStyle = JewelTheme.textStyle,
 ) {
-    val textColor = color.takeOrElse {
-        LocalContentColor.current.takeOrElse {
-            style.color
-        }
-    }
+    val textColor = color.takeOrElse { LocalContentColor.current.takeOrElse { style.color } }
 
-    val mergedStyle = style.merge(
-        TextStyle(
-            color = textColor,
-            fontSize = fontSize,
-            fontWeight = fontWeight,
-            textAlign = textAlign,
-            lineHeight = lineHeight,
-            fontFamily = fontFamily,
-            textDecoration = textDecoration,
-            fontStyle = fontStyle,
-            letterSpacing = letterSpacing,
-        ),
+    val mergedStyle =
+        style.merge(
+            TextStyle(
+                color = textColor,
+                fontSize = fontSize,
+                fontWeight = fontWeight,
+                textAlign = textAlign,
+                lineHeight = lineHeight,
+                fontFamily = fontFamily,
+                textDecoration = textDecoration,
+                fontStyle = fontStyle,
+                letterSpacing = letterSpacing,
+            ),
+        )
+
+    BasicText(
+        text,
+        modifier,
+        mergedStyle,
+        onTextLayout,
+        overflow,
+        softWrap,
+        maxLines,
+        minLines = 1,
+        inlineContent,
     )
-    BasicText(text, modifier, mergedStyle, onTextLayout, overflow, softWrap, maxLines, minLines = 1, inlineContent)
 }

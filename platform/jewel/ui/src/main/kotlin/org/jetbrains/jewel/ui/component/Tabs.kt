@@ -1,7 +1,6 @@
 package org.jetbrains.jewel.ui.component
 
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.HoverInteraction
@@ -18,7 +17,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -57,12 +55,15 @@ internal fun TabImpl(
     tabData: TabData,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
 ) {
-    val tabStyle = when (tabData) {
-        is TabData.Default -> JewelTheme.defaultTabStyle
-        is TabData.Editor -> JewelTheme.editorTabStyle
-    }
+    val tabStyle =
+        when (tabData) {
+            is TabData.Default -> JewelTheme.defaultTabStyle
+            is TabData.Editor -> JewelTheme.editorTabStyle
+        }
 
-    var tabState by remember { mutableStateOf(TabState.of(selected = tabData.selected, active = isActive)) }
+    var tabState by remember {
+        mutableStateOf(TabState.of(selected = tabData.selected, active = isActive))
+    }
     remember(tabData.selected, isActive) {
         tabState = tabState.copy(selected = tabData.selected, active = isActive)
     }
@@ -71,7 +72,10 @@ internal fun TabImpl(
         interactionSource.interactions.collect { interaction ->
             when (interaction) {
                 is PressInteraction.Press -> tabState = tabState.copy(pressed = true)
-                is PressInteraction.Cancel, is PressInteraction.Release -> tabState = tabState.copy(pressed = false)
+                is PressInteraction.Cancel,
+                is PressInteraction.Release,
+                -> tabState = tabState.copy(pressed = false)
+
                 is HoverInteraction.Enter -> tabState = tabState.copy(hovered = true)
                 is HoverInteraction.Exit -> tabState = tabState.copy(hovered = false)
             }
@@ -82,16 +86,15 @@ internal fun TabImpl(
     val lineThickness = tabStyle.metrics.underlineThickness
     val backgroundColor by tabStyle.colors.backgroundFor(state = tabState)
 
-    CompositionLocalProvider(
-        LocalIndication provides NoIndication,
-        LocalContentColor provides tabStyle.colors.contentFor(tabState).value.takeOrElse { LocalContentColor.current },
-    ) {
+    val resolvedContentColor = tabStyle.colors.contentFor(tabState)
+        .value.takeOrElse { LocalContentColor.current }
+
+    CompositionLocalProvider(LocalContentColor provides resolvedContentColor) {
         val labelAlpha by tabStyle.contentAlpha.labelFor(tabState)
         val iconAlpha by tabStyle.contentAlpha.iconFor(tabState)
 
         Row(
-            modifier
-                .height(tabStyle.metrics.tabHeight)
+            modifier.height(tabStyle.metrics.tabHeight)
                 .background(backgroundColor)
                 .focusProperties { canFocus = false }
                 .selectable(
@@ -116,9 +119,7 @@ internal fun TabImpl(
                     )
                 }
                 .padding(tabStyle.metrics.tabPadding)
-                .onPointerEvent(PointerEventType.Release) {
-                    if (it.button.isTertiary) tabData.onClose()
-                },
+                .onPointerEvent(PointerEventType.Release) { if (it.button.isTertiary) tabData.onClose() },
             horizontalArrangement = Arrangement.spacedBy(tabStyle.metrics.closeContentGap),
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -131,33 +132,39 @@ internal fun TabImpl(
                 text = tabData.label,
                 color = tabStyle.colors.contentFor(tabState).value,
             )
-            val showCloseIcon = when (tabData) {
-                is TabData.Default -> tabData.closable
-                is TabData.Editor -> tabData.closable && (tabState.isHovered || tabState.isSelected)
-            }
+            val showCloseIcon =
+                when (tabData) {
+                    is TabData.Default -> tabData.closable
+                    is TabData.Editor -> tabData.closable && (tabState.isHovered || tabState.isSelected)
+                }
+
             if (showCloseIcon) {
                 val closeActionInteractionSource = remember { MutableInteractionSource() }
                 LaunchedEffect(closeActionInteractionSource) {
                     closeActionInteractionSource.interactions.collect { interaction ->
                         when (interaction) {
                             is PressInteraction.Press -> closeButtonState = closeButtonState.copy(pressed = true)
-                            is PressInteraction.Cancel, is PressInteraction.Release ->
-                                closeButtonState =
-                                    closeButtonState.copy(pressed = false)
+                            is PressInteraction.Cancel, is PressInteraction.Release -> {
+                                closeButtonState = closeButtonState.copy(pressed = false)
+                            }
 
                             is HoverInteraction.Enter -> closeButtonState = closeButtonState.copy(hovered = true)
+
                             is HoverInteraction.Exit -> closeButtonState = closeButtonState.copy(hovered = false)
                         }
                     }
                 }
+
                 val closePainter by tabStyle.icons.close.getPainter(Stateful(closeButtonState))
                 Image(
-                    modifier = Modifier.clickable(
-                        interactionSource = closeActionInteractionSource,
-                        indication = null,
-                        onClick = tabData.onClose,
-                        role = Role.Button,
-                    ).size(16.dp),
+                    modifier = Modifier
+                        .clickable(
+                            interactionSource = closeActionInteractionSource,
+                            indication = null,
+                            onClick = tabData.onClose,
+                            role = Role.Button,
+                        )
+                        .size(16.dp),
                     painter = closePainter,
                     contentDescription = "Close tab ${tabData.label}",
                 )
@@ -170,60 +177,57 @@ internal fun TabImpl(
 
 @Immutable
 @JvmInline
-value class TabState(val state: ULong) : SelectableComponentState {
+public value class TabState(public val state: ULong) : SelectableComponentState {
 
-    @Stable
     override val isActive: Boolean
         get() = state and Active != 0UL
 
-    @Stable
     override val isSelected: Boolean
         get() = state and Selected != 0UL
 
-    @Stable
     override val isEnabled: Boolean
         get() = state and Enabled != 0UL
 
-    @Stable
     override val isHovered: Boolean
         get() = state and Hovered != 0UL
 
-    @Stable
     override val isPressed: Boolean
         get() = state and Pressed != 0UL
 
-    fun copy(
+    public fun copy(
         selected: Boolean = isSelected,
         enabled: Boolean = isEnabled,
         pressed: Boolean = isPressed,
         hovered: Boolean = isHovered,
         active: Boolean = isActive,
-    ) = of(
-        selected = selected,
-        enabled = enabled,
-        pressed = pressed,
-        hovered = hovered,
-        active = active,
-    )
+    ): TabState =
+        of(
+            selected = selected,
+            enabled = enabled,
+            pressed = pressed,
+            hovered = hovered,
+            active = active,
+        )
 
-    override fun toString() =
+    override fun toString(): String =
         "${javaClass.simpleName}(isSelected=$isSelected, isEnabled=$isEnabled, " +
             "isHovered=$isHovered, isPressed=$isPressed isActive=$isActive)"
 
-    companion object {
+    public companion object {
 
-        fun of(
+        public fun of(
             selected: Boolean,
             enabled: Boolean = true,
             pressed: Boolean = false,
             hovered: Boolean = false,
             active: Boolean = false,
-        ) = TabState(
-            (if (selected) Selected else 0UL) or
-                (if (enabled) Enabled else 0UL) or
-                (if (pressed) Pressed else 0UL) or
-                (if (hovered) Hovered else 0UL) or
-                (if (active) Active else 0UL),
-        )
+        ): TabState =
+            TabState(
+                (if (selected) Selected else 0UL) or
+                    (if (enabled) Enabled else 0UL) or
+                    (if (pressed) Pressed else 0UL) or
+                    (if (hovered) Hovered else 0UL) or
+                    (if (active) Active else 0UL),
+            )
     }
 }

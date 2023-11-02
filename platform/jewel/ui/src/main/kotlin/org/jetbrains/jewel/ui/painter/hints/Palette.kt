@@ -2,6 +2,7 @@ package org.jetbrains.jewel.ui.painter.hints
 
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.Color
+import org.jetbrains.jewel.foundation.GenerateDataFunctions
 import org.jetbrains.jewel.ui.painter.PainterHint
 import org.jetbrains.jewel.ui.painter.PainterProviderScope
 import org.jetbrains.jewel.ui.painter.PainterSvgPatchHint
@@ -10,23 +11,11 @@ import org.w3c.dom.Element
 import kotlin.math.roundToInt
 
 @Immutable
+@GenerateDataFunctions
 private class PaletteImpl(val map: Map<Color, Color>) : PainterSvgPatchHint {
 
     override fun PainterProviderScope.patch(element: Element) {
         element.patchPalette(map)
-    }
-
-    override fun toString(): String = "Palette(${map.hashCode()})"
-
-    override fun hashCode(): Int = map.hashCode()
-
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (other !is PaletteImpl) return false
-
-        if (map != other.map) return false
-
-        return true
     }
 }
 
@@ -105,8 +94,5 @@ private fun fromHexOrNull(rawColor: String, alpha: Float): Color? {
     }
 }
 
-fun Palette(map: Map<Color, Color>): PainterHint = if (map.isEmpty()) {
-    PainterHint.None
-} else {
-    PaletteImpl(map)
-}
+public fun Palette(map: Map<Color, Color>): PainterHint =
+    if (map.isEmpty()) PainterHint.None else PaletteImpl(map)

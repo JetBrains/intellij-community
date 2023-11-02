@@ -13,20 +13,20 @@ import org.jetbrains.jewel.foundation.lazy.SelectableScope
 import org.jetbrains.jewel.foundation.utils.Log
 
 @Composable
-fun rememberTreeState(
+public fun rememberTreeState(
     lazyListState: LazyListState = LazyListState(),
     selectableLazyListState: SelectableLazyListState = SelectableLazyListState(lazyListState),
 ): TreeState = remember { TreeState(selectableLazyListState) }
 
-class TreeState(
+public class TreeState(
     internal val delegate: SelectableLazyListState,
 ) : SelectableScope by delegate, ScrollableState by delegate {
 
     internal val allNodes = mutableStateListOf<Pair<Any, Int>>()
 
-    var openNodes by mutableStateOf<Set<Any>>(emptySet())
+    public var openNodes: Set<Any> by mutableStateOf<Set<Any>>(emptySet())
 
-    fun toggleNode(nodeId: Any) {
+    public fun toggleNode(nodeId: Any) {
         Log.d("toggleNode $nodeId")
         if (nodeId in openNodes) {
             openNodes -= nodeId
@@ -36,7 +36,7 @@ class TreeState(
         Log.d("open nodes ${openNodes.map { it.toString() }}")
     }
 
-    fun openNodes(nodes: List<Any>) {
+    public fun openNodes(nodes: List<Any>) {
         openNodes += nodes
     }
 }

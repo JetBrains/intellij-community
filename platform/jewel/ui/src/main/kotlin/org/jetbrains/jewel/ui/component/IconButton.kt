@@ -17,7 +17,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -35,7 +34,7 @@ import org.jetbrains.jewel.ui.component.styling.IconButtonStyle
 import org.jetbrains.jewel.ui.theme.iconButtonStyle
 
 @Composable
-fun IconButton(
+public fun IconButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
@@ -43,24 +42,19 @@ fun IconButton(
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     content: @Composable (BoxScope.(IconButtonState) -> Unit),
 ) {
-    val buttonState = remember(interactionSource) {
-        mutableStateOf(IconButtonState.of(enabled = enabled))
-    }
+    val buttonState = remember(interactionSource) { mutableStateOf(IconButtonState.of(enabled = enabled)) }
 
-    remember(enabled) {
-        buttonState.value = buttonState.value.copy(enabled = enabled)
-    }
+    remember(enabled) { buttonState.value = buttonState.value.copy(enabled = enabled) }
 
     IconButtonImpl(
         state = buttonState,
-        modifier = modifier
-            .clickable(
-                onClick = onClick,
-                enabled = enabled,
-                role = Role.Button,
-                interactionSource = interactionSource,
-                indication = NoIndication,
-            ),
+        modifier = modifier.clickable(
+            onClick = onClick,
+            enabled = enabled,
+            role = Role.Button,
+            interactionSource = interactionSource,
+            indication = NoIndication,
+        ),
         style = style,
         interactionSource = interactionSource,
         content = content,
@@ -68,7 +62,7 @@ fun IconButton(
 }
 
 @Composable
-fun SelectableIconButton(
+public fun SelectableIconButton(
     selected: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
@@ -87,16 +81,18 @@ fun SelectableIconButton(
 
     IconButtonImpl(
         state = buttonState,
-        modifier = modifier.selectable(
-            onClick = onClick,
-            enabled = enabled,
-            role = Role.RadioButton,
-            interactionSource = interactionSource,
-            indication = null,
-            selected = selected,
-        ).onActivated(enabled = enabled) {
-            buttonState.value = buttonState.value.copy(active = it)
-        },
+        modifier = modifier
+            .selectable(
+                onClick = onClick,
+                enabled = enabled,
+                role = Role.RadioButton,
+                interactionSource = interactionSource,
+                indication = null,
+                selected = selected,
+            )
+            .onActivated(enabled = enabled) {
+                buttonState.value = buttonState.value.copy(active = it)
+            },
         style = style,
         interactionSource = interactionSource,
         content = content,
@@ -117,13 +113,12 @@ private fun IconButtonImpl(
         interactionSource.interactions.collect { interaction ->
             when (interaction) {
                 is PressInteraction.Press -> buttonState = buttonState.copy(pressed = true)
-                is PressInteraction.Cancel, is PressInteraction.Release ->
-                    buttonState =
-                        buttonState.copy(pressed = false)
+                is PressInteraction.Cancel,
+                is PressInteraction.Release,
+                -> buttonState = buttonState.copy(pressed = false)
 
                 is HoverInteraction.Enter -> buttonState = buttonState.copy(hovered = true)
                 is HoverInteraction.Exit -> buttonState = buttonState.copy(hovered = false)
-
                 is FocusInteraction.Focus -> buttonState = buttonState.copy(focused = true)
                 is FocusInteraction.Unfocus -> buttonState = buttonState.copy(focused = false)
             }
@@ -133,83 +128,76 @@ private fun IconButtonImpl(
     val background by style.colors.backgroundFor(buttonState)
     val border by style.colors.borderFor(buttonState)
     Box(
-        modifier = modifier
-            .defaultMinSize(style.metrics.minSize.width, style.metrics.minSize.height)
+        modifier = modifier.defaultMinSize(style.metrics.minSize.width, style.metrics.minSize.height)
             .padding(style.metrics.padding)
             .background(background, shape)
             .border(style.metrics.borderWidth, border, shape),
         contentAlignment = Alignment.Center,
-        content = {
-            content(buttonState)
-        },
+        content = { content(buttonState) },
     )
 }
 
 @Immutable
 @JvmInline
-value class IconButtonState(val state: ULong) : FocusableComponentState, SelectableComponentState {
+public value class IconButtonState(public val state: ULong) : FocusableComponentState, SelectableComponentState {
 
-    @Stable
     override val isSelected: Boolean
         get() = state and CommonStateBitMask.Selected != 0UL
 
-    @Stable
     override val isActive: Boolean
         get() = state and CommonStateBitMask.Active != 0UL
 
-    @Stable
     override val isEnabled: Boolean
         get() = state and CommonStateBitMask.Enabled != 0UL
 
-    @Stable
     override val isFocused: Boolean
         get() = state and CommonStateBitMask.Focused != 0UL
 
-    @Stable
     override val isHovered: Boolean
         get() = state and CommonStateBitMask.Hovered != 0UL
 
-    @Stable
     override val isPressed: Boolean
         get() = state and CommonStateBitMask.Pressed != 0UL
 
-    fun copy(
+    public fun copy(
         enabled: Boolean = isEnabled,
         selected: Boolean = isSelected,
         focused: Boolean = isFocused,
         pressed: Boolean = isPressed,
         hovered: Boolean = isHovered,
         active: Boolean = isActive,
-    ) = of(
-        enabled = enabled,
-        selected = selected,
-        focused = focused,
-        pressed = pressed,
-        hovered = hovered,
-        active = active,
-    )
+    ): IconButtonState =
+        of(
+            enabled = enabled,
+            selected = selected,
+            focused = focused,
+            pressed = pressed,
+            hovered = hovered,
+            active = active,
+        )
 
-    override fun toString() =
+    override fun toString(): String =
         "${javaClass.simpleName}(isEnabled=$isEnabled, isSelected=$isSelected, " +
             "isFocused=$isFocused, isHovered=$isHovered, isPressed=$isPressed, " +
             "isActive=$isActive)"
 
-    companion object {
+    public companion object {
 
-        fun of(
+        public fun of(
             enabled: Boolean = true,
             selected: Boolean = false,
             focused: Boolean = false,
             pressed: Boolean = false,
             hovered: Boolean = false,
             active: Boolean = false,
-        ) = IconButtonState(
-            state = (if (enabled) CommonStateBitMask.Enabled else 0UL) or
-                (if (selected) CommonStateBitMask.Selected else 0UL) or
-                (if (focused) CommonStateBitMask.Focused else 0UL) or
-                (if (hovered) CommonStateBitMask.Hovered else 0UL) or
-                (if (pressed) CommonStateBitMask.Pressed else 0UL) or
-                (if (active) CommonStateBitMask.Active else 0UL),
-        )
+        ): IconButtonState =
+            IconButtonState(
+                (if (enabled) CommonStateBitMask.Enabled else 0UL) or
+                    (if (selected) CommonStateBitMask.Selected else 0UL) or
+                    (if (focused) CommonStateBitMask.Focused else 0UL) or
+                    (if (hovered) CommonStateBitMask.Hovered else 0UL) or
+                    (if (pressed) CommonStateBitMask.Pressed else 0UL) or
+                    (if (active) CommonStateBitMask.Active else 0UL),
+            )
     }
 }

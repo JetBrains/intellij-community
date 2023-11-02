@@ -10,7 +10,7 @@ import org.jetbrains.jewel.ui.component.styling.GroupHeaderStyle
 import org.jetbrains.jewel.ui.component.styling.LocalGroupHeaderStyle
 
 @Composable
-fun GroupHeader(
+public fun GroupHeader(
     text: String,
     modifier: Modifier = Modifier,
     textColor: Color = Color.Unspecified,
@@ -18,6 +18,7 @@ fun GroupHeader(
 ) {
     Row(modifier, verticalAlignment = Alignment.CenterVertically) {
         Text(text, color = textColor)
+
         Divider(
             orientation = Orientation.Horizontal,
             color = style.colors.divider,

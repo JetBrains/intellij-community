@@ -20,47 +20,51 @@ import org.jetbrains.jewel.ui.component.styling.SubmenuMetrics
 import org.jetbrains.jewel.ui.painter.PainterProvider
 
 @Composable
-fun MenuStyle.Companion.light(
+public fun MenuStyle.Companion.light(
     colors: MenuColors = MenuColors.light(),
     metrics: MenuMetrics = MenuMetrics.defaults(),
     icons: MenuIcons = MenuIcons.defaults(),
-) = MenuStyle(
-    isDark = false,
-    colors = colors,
-    metrics = metrics,
-    icons = icons,
-)
+): MenuStyle =
+    MenuStyle(isDark = false, colors, metrics, icons)
 
 @Composable
-fun MenuStyle.Companion.dark(
+public fun MenuStyle.Companion.dark(
     colors: MenuColors = MenuColors.dark(),
     metrics: MenuMetrics = MenuMetrics.defaults(),
     icons: MenuIcons = MenuIcons.defaults(),
-) = MenuStyle(
-    isDark = true,
-    colors = colors,
-    metrics = metrics,
-    icons = icons,
-)
+): MenuStyle =
+    MenuStyle(isDark = true, colors, metrics, icons)
 
 @Composable
-fun MenuColors.Companion.light(
+public fun MenuColors.Companion.light(
     background: Color = IntUiLightTheme.colors.grey(14),
     border: Color = IntUiLightTheme.colors.grey(9),
     shadow: Color = Color(0x78919191), // Not a palette color
     itemColors: MenuItemColors = MenuItemColors.light(),
-) = MenuColors(background, border, shadow, itemColors)
+): MenuColors =
+    MenuColors(
+        background = background,
+        border = border,
+        shadow = shadow,
+        itemColors = itemColors,
+    )
 
 @Composable
-fun MenuColors.Companion.dark(
+public fun MenuColors.Companion.dark(
     background: Color = IntUiDarkTheme.colors.grey(2),
     border: Color = IntUiDarkTheme.colors.grey(3),
     shadow: Color = Color(0x66000000), // Not a palette color
     itemColors: MenuItemColors = MenuItemColors.dark(),
-) = MenuColors(background, border, shadow, itemColors)
+): MenuColors =
+    MenuColors(
+        background = background,
+        border = border,
+        shadow = shadow,
+        itemColors = itemColors,
+    )
 
 @Composable
-fun MenuItemColors.Companion.light(
+public fun MenuItemColors.Companion.light(
     background: Color = IntUiLightTheme.colors.grey(14),
     backgroundDisabled: Color = IntUiLightTheme.colors.grey(14),
     backgroundFocused: Color = IntUiLightTheme.colors.blue(11),
@@ -77,27 +81,28 @@ fun MenuItemColors.Companion.light(
     iconTintPressed: Color = iconTint,
     iconTintHovered: Color = iconTint,
     separator: Color = IntUiLightTheme.colors.grey(12),
-) = MenuItemColors(
-    background,
-    backgroundDisabled,
-    backgroundFocused,
-    backgroundPressed,
-    backgroundHovered,
-    content,
-    contentDisabled,
-    contentFocused,
-    contentPressed,
-    contentHovered,
-    iconTint,
-    iconTintDisabled,
-    iconTintFocused,
-    iconTintPressed,
-    iconTintHovered,
-    separator,
-)
+): MenuItemColors =
+    MenuItemColors(
+        background = background,
+        backgroundDisabled = backgroundDisabled,
+        backgroundFocused = backgroundFocused,
+        backgroundPressed = backgroundPressed,
+        backgroundHovered = backgroundHovered,
+        content = content,
+        contentDisabled = contentDisabled,
+        contentFocused = contentFocused,
+        contentPressed = contentPressed,
+        contentHovered = contentHovered,
+        iconTint = iconTint,
+        iconTintDisabled = iconTintDisabled,
+        iconTintFocused = iconTintFocused,
+        iconTintPressed = iconTintPressed,
+        iconTintHovered = iconTintHovered,
+        separator = separator,
+    )
 
 @Composable
-fun MenuItemColors.Companion.dark(
+public fun MenuItemColors.Companion.dark(
     background: Color = IntUiDarkTheme.colors.grey(2),
     backgroundDisabled: Color = IntUiDarkTheme.colors.grey(2),
     backgroundFocused: Color = IntUiDarkTheme.colors.blue(2),
@@ -114,26 +119,27 @@ fun MenuItemColors.Companion.dark(
     iconTintPressed: Color = iconTint,
     iconTintHovered: Color = iconTint,
     separator: Color = IntUiDarkTheme.colors.grey(3),
-) = MenuItemColors(
-    background,
-    backgroundDisabled,
-    backgroundFocused,
-    backgroundPressed,
-    backgroundHovered,
-    content,
-    contentDisabled,
-    contentFocused,
-    contentPressed,
-    contentHovered,
-    iconTint,
-    iconTintDisabled,
-    iconTintFocused,
-    iconTintPressed,
-    iconTintHovered,
-    separator,
-)
+): MenuItemColors =
+    MenuItemColors(
+        background = background,
+        backgroundDisabled = backgroundDisabled,
+        backgroundFocused = backgroundFocused,
+        backgroundPressed = backgroundPressed,
+        backgroundHovered = backgroundHovered,
+        content = content,
+        contentDisabled = contentDisabled,
+        contentFocused = contentFocused,
+        contentPressed = contentPressed,
+        contentHovered = contentHovered,
+        iconTint = iconTint,
+        iconTintDisabled = iconTintDisabled,
+        iconTintFocused = iconTintFocused,
+        iconTintPressed = iconTintPressed,
+        iconTintHovered = iconTintHovered,
+        separator = separator,
+    )
 
-fun MenuMetrics.Companion.defaults(
+public fun MenuMetrics.Companion.defaults(
     cornerSize: CornerSize = CornerSize(8.dp),
     menuMargin: PaddingValues = PaddingValues(vertical = 6.dp),
     contentPadding: PaddingValues = PaddingValues(vertical = 8.dp),
@@ -142,35 +148,39 @@ fun MenuMetrics.Companion.defaults(
     borderWidth: Dp = 1.dp,
     itemMetrics: MenuItemMetrics = MenuItemMetrics.defaults(),
     submenuMetrics: SubmenuMetrics = SubmenuMetrics.defaults(),
-) = MenuMetrics(
-    cornerSize,
-    menuMargin,
-    contentPadding,
-    offset,
-    shadowSize,
-    borderWidth,
-    itemMetrics,
-    submenuMetrics,
-)
+): MenuMetrics =
+    MenuMetrics(
+        cornerSize,
+        menuMargin,
+        contentPadding,
+        offset,
+        shadowSize,
+        borderWidth,
+        itemMetrics,
+        submenuMetrics,
+    )
 
-fun MenuItemMetrics.Companion.defaults(
+public fun MenuItemMetrics.Companion.defaults(
     selectionCornerSize: CornerSize = CornerSize(4.dp),
     outerPadding: PaddingValues = PaddingValues(horizontal = 4.dp),
     contentPadding: PaddingValues = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
     separatorPadding: PaddingValues = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
     separatorThickness: Dp = 1.dp,
-) = MenuItemMetrics(
-    selectionCornerSize,
-    outerPadding,
-    contentPadding,
-    separatorPadding,
-    separatorThickness,
-)
+): MenuItemMetrics =
+    MenuItemMetrics(
+        selectionCornerSize,
+        outerPadding,
+        contentPadding,
+        separatorPadding,
+        separatorThickness,
+    )
 
-fun SubmenuMetrics.Companion.defaults(
+public fun SubmenuMetrics.Companion.defaults(
     offset: DpOffset = DpOffset(0.dp, (-8).dp),
-) = SubmenuMetrics(offset)
+): SubmenuMetrics =
+    SubmenuMetrics(offset)
 
-fun MenuIcons.Companion.defaults(
+public fun MenuIcons.Companion.defaults(
     submenuChevron: PainterProvider = standalonePainterProvider("expui/general/chevronRight.svg"),
-) = MenuIcons(submenuChevron)
+): MenuIcons =
+    MenuIcons(submenuChevron)

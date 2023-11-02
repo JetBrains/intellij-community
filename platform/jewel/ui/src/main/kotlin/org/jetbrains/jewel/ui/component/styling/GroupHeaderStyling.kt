@@ -1,6 +1,7 @@
 package org.jetbrains.jewel.ui.component.styling
 
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.ProvidableCompositionLocal
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
@@ -8,31 +9,32 @@ import org.jetbrains.jewel.foundation.GenerateDataFunctions
 
 @Immutable
 @GenerateDataFunctions
-class GroupHeaderStyle(
-    val colors: GroupHeaderColors,
-    val metrics: GroupHeaderMetrics,
+public class GroupHeaderStyle(
+    public val colors: GroupHeaderColors,
+    public val metrics: GroupHeaderMetrics,
 ) {
 
-    companion object
+    public companion object
 }
 
 @Immutable
 @GenerateDataFunctions
-class GroupHeaderColors(val divider: Color) {
+public class GroupHeaderColors(public val divider: Color) {
 
-    companion object
+    public companion object
 }
 
 @Immutable
 @GenerateDataFunctions
-class GroupHeaderMetrics(
-    val dividerThickness: Dp,
-    val indent: Dp,
+public class GroupHeaderMetrics(
+    public val dividerThickness: Dp,
+    public val indent: Dp,
 ) {
 
-    companion object
+    public companion object
 }
 
-val LocalGroupHeaderStyle = staticCompositionLocalOf<GroupHeaderStyle> {
-    error("No GroupHeaderStyle provided")
-}
+public val LocalGroupHeaderStyle: ProvidableCompositionLocal<GroupHeaderStyle> =
+    staticCompositionLocalOf {
+        error("No GroupHeaderStyle provided. Have you forgotten the theme?")
+    }

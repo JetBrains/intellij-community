@@ -3,6 +3,7 @@ package org.jetbrains.jewel.ui.component.styling
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.ProvidableCompositionLocal
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
@@ -13,18 +14,18 @@ import org.jetbrains.jewel.foundation.GenerateDataFunctions
 
 @Stable
 @GenerateDataFunctions
-class TextFieldStyle(
+public class TextFieldStyle(
     override val colors: TextFieldColors,
     override val metrics: TextFieldMetrics,
     override val textStyle: TextStyle,
 ) : InputFieldStyle {
 
-    companion object
+    public companion object
 }
 
 @Immutable
 @GenerateDataFunctions
-class TextFieldColors(
+public class TextFieldColors(
     override val background: Color,
     override val backgroundDisabled: Color,
     override val backgroundFocused: Color,
@@ -45,24 +46,25 @@ class TextFieldColors(
     override val caretFocused: Color,
     override val caretPressed: Color,
     override val caretHovered: Color,
-    val placeholder: Color,
+    public val placeholder: Color,
 ) : InputFieldColors {
 
-    companion object
+    public companion object
 }
 
 @Stable
 @GenerateDataFunctions
-class TextFieldMetrics(
+public class TextFieldMetrics(
     override val borderWidth: Dp,
     override val contentPadding: PaddingValues,
     override val cornerSize: CornerSize,
     override val minSize: DpSize,
 ) : InputFieldMetrics {
 
-    companion object
+    public companion object
 }
 
-val LocalTextFieldStyle = staticCompositionLocalOf<TextFieldStyle> {
-    error("No TextFieldStyle provided")
-}
+public val LocalTextFieldStyle: ProvidableCompositionLocal<TextFieldStyle> =
+    staticCompositionLocalOf {
+        error("No TextFieldStyle provided. Have you forgotten the theme?")
+    }

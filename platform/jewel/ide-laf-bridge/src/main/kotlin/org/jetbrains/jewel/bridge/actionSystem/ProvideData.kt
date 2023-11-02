@@ -15,16 +15,18 @@ import org.jetbrains.annotations.VisibleForTesting
 import javax.swing.JComponent
 
 /**
- * Layout composable that create the bridge between [Modifier.provideData] used inside [content] and
- * [component]. So, IntelliJ's [DataManager] can use [component] as [DataProvider].
+ * Layout composable that create the bridge between [Modifier.provideData]
+ * used inside [content] and [component]. So, IntelliJ's [DataManager] can
+ * use [component] as [DataProvider].
  *
- * When IntelliJ requests [getData] from [component] Compose will traverse [DataProviderNode] hierarchy
- * and collect it according [DataProvider] rules (see javadoc).
+ * When IntelliJ requests [getData] from [component] Compose will traverse
+ * [DataProviderNode] hierarchy and collect it according [DataProvider]
+ * rules (see javadoc).
  */
 // TODO: choose better naming?
 @Suppress("unused", "FunctionName")
 @Composable
-fun ComponentDataProviderBridge(
+public fun ComponentDataProviderBridge(
     component: JComponent,
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit,
@@ -38,9 +40,7 @@ fun ComponentDataProviderBridge(
     DisposableEffect(component) {
         DataManager.registerDataProvider(component, rootDataProviderModifier.dataProvider)
 
-        onDispose {
-            DataManager.removeDataProvider(component)
-        }
+        onDispose { DataManager.removeDataProvider(component) }
     }
 }
 
@@ -48,28 +48,26 @@ fun ComponentDataProviderBridge(
  * Configure component to provide data for IntelliJ Actions system.
  *
  * Use this modifier to provide context related data that can be used by
- * IntelliJ Actions functionality such as Search Everywhere, Action Popups etc.
+ * IntelliJ Actions functionality such as Search Everywhere, Action Popups
+ * etc.
  *
- * Important note: modifiers order is important, so be careful with order of [focusable] and [provideData]
- * (see [FocusEventModifierNode]).
+ * Important note: modifiers order is important, so be careful with order
+ * of [focusable] and [provideData] (see [FocusEventModifierNode]).
  *
  * @see DataProvider
  * @see DataContext
  * @see ComponentDataProviderBridge
  */
 @Suppress("unused")
-fun Modifier.provideData(dataProvider: (dataId: String) -> Any?) = this.then(
-    DataProviderElement(dataProvider),
-)
+public fun Modifier.provideData(dataProvider: (dataId: String) -> Any?): Modifier =
+    this then DataProviderElement(dataProvider)
 
 @VisibleForTesting
 internal class RootDataProviderModifier : ModifierNodeElement<DataProviderNode>() {
 
     private val rootNode = DataProviderNode { null }
 
-    val dataProvider: (String) -> Any? = {
-        rootNode.getData(it)
-    }
+    val dataProvider: (String) -> Any? = { rootNode.getData(it) }
 
     override fun create() = rootNode
 

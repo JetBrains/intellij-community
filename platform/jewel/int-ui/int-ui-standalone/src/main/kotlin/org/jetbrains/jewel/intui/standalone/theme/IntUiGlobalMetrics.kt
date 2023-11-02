@@ -4,7 +4,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import org.jetbrains.jewel.foundation.GlobalMetrics
 
-fun GlobalMetrics.Companion.defaults(
+public fun GlobalMetrics.Companion.defaults(
     outlineWidth: Dp = 2.dp,
     rowHeight: Dp = 24.dp,
-) = GlobalMetrics(outlineWidth, rowHeight)
+): GlobalMetrics =
+    GlobalMetrics(outlineWidth, rowHeight)

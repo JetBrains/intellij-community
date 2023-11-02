@@ -14,19 +14,21 @@ import org.jetbrains.jewel.ui.component.styling.IconButtonMetrics
 import org.jetbrains.jewel.ui.component.styling.IconButtonStyle
 
 @Composable
-fun IconButtonStyle.Companion.light(
+public fun IconButtonStyle.Companion.light(
     colors: IconButtonColors = IconButtonColors.light(),
     metrics: IconButtonMetrics = IconButtonMetrics.defaults(),
-) = IconButtonStyle(colors, metrics)
+): IconButtonStyle =
+    IconButtonStyle(colors, metrics)
 
 @Composable
-fun IconButtonStyle.Companion.dark(
+public fun IconButtonStyle.Companion.dark(
     colors: IconButtonColors = IconButtonColors.dark(),
     metrics: IconButtonMetrics = IconButtonMetrics.defaults(),
-) = IconButtonStyle(colors, metrics)
+): IconButtonStyle =
+    IconButtonStyle(colors, metrics)
 
 @Composable
-fun IconButtonColors.Companion.light(
+public fun IconButtonColors.Companion.light(
     foregroundSelectedActivated: Color = IntUiLightTheme.colors.grey(14),
     background: Color = Color.Unspecified,
     backgroundDisabled: Color = background,
@@ -42,7 +44,7 @@ fun IconButtonColors.Companion.light(
     borderFocused: Color = backgroundFocused,
     borderPressed: Color = backgroundPressed,
     borderHovered: Color = backgroundHovered,
-) =
+): IconButtonColors =
     IconButtonColors(
         foregroundSelectedActivated = foregroundSelectedActivated,
         background = background,
@@ -62,7 +64,7 @@ fun IconButtonColors.Companion.light(
     )
 
 @Composable
-fun IconButtonColors.Companion.dark(
+public fun IconButtonColors.Companion.dark(
     foregroundSelectedActivated: Color = IntUiDarkTheme.colors.grey(14),
     background: Color = Color.Unspecified,
     backgroundDisabled: Color = background,
@@ -78,7 +80,7 @@ fun IconButtonColors.Companion.dark(
     borderFocused: Color = backgroundFocused,
     borderPressed: Color = backgroundPressed,
     borderHovered: Color = backgroundHovered,
-) =
+): IconButtonColors =
     IconButtonColors(
         foregroundSelectedActivated = foregroundSelectedActivated,
         background = background,
@@ -97,9 +99,10 @@ fun IconButtonColors.Companion.dark(
         borderHovered = borderHovered,
     )
 
-fun IconButtonMetrics.Companion.defaults(
+public fun IconButtonMetrics.Companion.defaults(
     cornerSize: CornerSize = CornerSize(4.dp),
     borderWidth: Dp = 1.dp,
     padding: PaddingValues = PaddingValues(0.dp),
     minSize: DpSize = DpSize(16.dp, 16.dp),
-) = IconButtonMetrics(cornerSize, borderWidth, padding, minSize)
+): IconButtonMetrics =
+    IconButtonMetrics(cornerSize, borderWidth, padding, minSize)

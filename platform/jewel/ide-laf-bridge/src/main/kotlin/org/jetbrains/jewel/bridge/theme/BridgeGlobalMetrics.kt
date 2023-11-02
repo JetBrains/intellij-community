@@ -7,7 +7,7 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.jewel.foundation.GlobalMetrics
 
-fun GlobalMetrics.Companion.readFromLaF(): GlobalMetrics {
+public fun GlobalMetrics.Companion.readFromLaF(): GlobalMetrics {
     // Copied from DarculaUIUtil.doPaint(java.awt.Graphics2D, int, int, float, float, boolean)
     // except that scaling is all moved into the .dp operation below
     val f = if (UIUtil.isRetina()) 0.5f else 1.0f

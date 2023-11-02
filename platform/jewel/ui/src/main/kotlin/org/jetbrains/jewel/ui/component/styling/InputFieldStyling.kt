@@ -5,6 +5,7 @@ import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.Stable
+import androidx.compose.runtime.State
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
@@ -13,94 +14,98 @@ import androidx.compose.ui.unit.DpSize
 import org.jetbrains.jewel.ui.component.InputFieldState
 
 @Stable
-interface InputFieldStyle {
+public interface InputFieldStyle {
 
-    val colors: InputFieldColors
-    val metrics: InputFieldMetrics
-    val textStyle: TextStyle
+    public val colors: InputFieldColors
+    public val metrics: InputFieldMetrics
+    public val textStyle: TextStyle
 }
 
 @Immutable
-interface InputFieldColors {
+public interface InputFieldColors {
 
-    val background: Color
-    val backgroundDisabled: Color
-    val backgroundFocused: Color
-    val backgroundPressed: Color
-    val backgroundHovered: Color
-
-    @Composable
-    fun backgroundFor(state: InputFieldState) = rememberUpdatedState(
-        state.chooseValue(
-            normal = background,
-            disabled = backgroundDisabled,
-            focused = backgroundFocused,
-            pressed = backgroundPressed,
-            hovered = backgroundHovered,
-            active = background,
-        ),
-    )
-
-    val content: Color
-    val contentDisabled: Color
-    val contentFocused: Color
-    val contentPressed: Color
-    val contentHovered: Color
+    public val background: Color
+    public val backgroundDisabled: Color
+    public val backgroundFocused: Color
+    public val backgroundPressed: Color
+    public val backgroundHovered: Color
 
     @Composable
-    fun contentFor(state: InputFieldState) = rememberUpdatedState(
-        state.chooseValue(
-            normal = content,
-            disabled = contentDisabled,
-            focused = contentFocused,
-            pressed = contentPressed,
-            hovered = contentHovered,
-            active = content,
-        ),
-    )
+    public fun backgroundFor(state: InputFieldState): State<Color> =
+        rememberUpdatedState(
+            state.chooseValue(
+                normal = background,
+                disabled = backgroundDisabled,
+                focused = backgroundFocused,
+                pressed = backgroundPressed,
+                hovered = backgroundHovered,
+                active = background,
+            ),
+        )
 
-    val border: Color
-    val borderDisabled: Color
-    val borderFocused: Color
-    val borderPressed: Color
-    val borderHovered: Color
-
-    @Composable
-    fun borderFor(state: InputFieldState) = rememberUpdatedState(
-        state.chooseValue(
-            normal = border,
-            disabled = borderDisabled,
-            focused = borderFocused,
-            pressed = borderPressed,
-            hovered = borderHovered,
-            active = border,
-        ),
-    )
-
-    val caret: Color
-    val caretDisabled: Color
-    val caretFocused: Color
-    val caretPressed: Color
-    val caretHovered: Color
+    public val content: Color
+    public val contentDisabled: Color
+    public val contentFocused: Color
+    public val contentPressed: Color
+    public val contentHovered: Color
 
     @Composable
-    fun caretFor(state: InputFieldState) = rememberUpdatedState(
-        state.chooseValue(
-            normal = caret,
-            disabled = caretDisabled,
-            focused = caretFocused,
-            pressed = caretPressed,
-            hovered = caretHovered,
-            active = caret,
-        ),
-    )
+    public fun contentFor(state: InputFieldState): State<Color> =
+        rememberUpdatedState(
+            state.chooseValue(
+                normal = content,
+                disabled = contentDisabled,
+                focused = contentFocused,
+                pressed = contentPressed,
+                hovered = contentHovered,
+                active = content,
+            ),
+        )
+
+    public val border: Color
+    public val borderDisabled: Color
+    public val borderFocused: Color
+    public val borderPressed: Color
+    public val borderHovered: Color
+
+    @Composable
+    public fun borderFor(state: InputFieldState): State<Color> =
+        rememberUpdatedState(
+            state.chooseValue(
+                normal = border,
+                disabled = borderDisabled,
+                focused = borderFocused,
+                pressed = borderPressed,
+                hovered = borderHovered,
+                active = border,
+            ),
+        )
+
+    public val caret: Color
+    public val caretDisabled: Color
+    public val caretFocused: Color
+    public val caretPressed: Color
+    public val caretHovered: Color
+
+    @Composable
+    public fun caretFor(state: InputFieldState): State<Color> =
+        rememberUpdatedState(
+            state.chooseValue(
+                normal = caret,
+                disabled = caretDisabled,
+                focused = caretFocused,
+                pressed = caretPressed,
+                hovered = caretHovered,
+                active = caret,
+            ),
+        )
 }
 
 @Stable
-interface InputFieldMetrics {
+public interface InputFieldMetrics {
 
-    val cornerSize: CornerSize
-    val contentPadding: PaddingValues
-    val minSize: DpSize
-    val borderWidth: Dp
+    public val cornerSize: CornerSize
+    public val contentPadding: PaddingValues
+    public val minSize: DpSize
+    public val borderWidth: Dp
 }

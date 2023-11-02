@@ -4,7 +4,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.pointerInput
 
-fun Modifier.onHover(onHover: (Boolean) -> Unit): Modifier =
+public fun Modifier.onHover(onHover: (Boolean) -> Unit): Modifier =
     pointerInput(Unit) {
         awaitPointerEventScope {
             while (true) {
