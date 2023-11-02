@@ -28,7 +28,7 @@ import javax.swing.plaf.basic.BasicComboPopup
 import kotlin.math.max
 
 @ApiStatus.Internal
-internal class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRow<T>, ListCellRenderer<T>, NewUIComboBoxRenderer {
+open class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRow<T>, ListCellRenderer<T>, NewUIComboBoxRenderer {
 
   private var listCellRendererParams: ListCellRendererParams<T>? = null
 
