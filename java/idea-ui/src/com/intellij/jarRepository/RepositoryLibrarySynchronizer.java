@@ -6,7 +6,6 @@ import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.impl.CoreProgressManager;
@@ -21,6 +20,7 @@ import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.platform.backend.workspace.WorkspaceModelTopics;
 import com.intellij.util.containers.ContainerUtil;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryDescription;
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties;
@@ -32,6 +32,28 @@ import java.util.function.Predicate;
 import static com.intellij.jarRepository.SyncLoadingKt.loadDependenciesSync;
 
 public final class RepositoryLibrarySynchronizer implements StartupActivity.DumbAware {
+
+  @Override
+  public void runActivity(final @NotNull Project project) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) return;
+    if (ApplicationManager.getApplication().isHeadlessEnvironment() &&
+        !CoreProgressManager.shouldKeepTasksAsynchronousInHeadlessMode()) {
+      loadDependenciesSync(project);
+      return;
+    }
+
+    var disposable = RemoteRepositoriesConfiguration.getInstance(project);
+    LibrarySynchronizationQueue synchronizationQueue = LibrarySynchronizationQueue.getInstance(project);
+    ChangedRepositoryLibrarySynchronizer synchronizer = new ChangedRepositoryLibrarySynchronizer(project, synchronizationQueue);
+    GlobalChangedRepositoryLibrarySynchronizer globalLibSynchronizer =
+      new GlobalChangedRepositoryLibrarySynchronizer(synchronizationQueue, disposable);
+    for (LibraryTable libraryTable : GlobalChangedRepositoryLibrarySynchronizer.getGlobalAndCustomLibraryTables()) {
+      libraryTable.addListener(globalLibSynchronizer, disposable);
+    }
+    globalLibSynchronizer.installOnExistingLibraries();
+    project.getMessageBus().connect(disposable).subscribe(WorkspaceModelTopics.CHANGED, synchronizer);
+    synchronizationQueue.requestAllLibrariesSynchronization();
+  }
 
   static boolean isLibraryNeedToBeReloaded(LibraryEx library, RepositoryLibraryProperties properties) {
     String version = properties.getVersion();
@@ -51,11 +73,11 @@ public final class RepositoryLibrarySynchronizer implements StartupActivity.Dumb
     return false;
   }
 
-  public static Set<Library> collectLibraries(@NotNull final Project project, @NotNull final Predicate<? super Library> predicate) {
+  public static Set<Library> collectLibraries(final @NotNull Project project, final @NotNull Predicate<? super Library> predicate) {
     final Set<Library> result = new LinkedHashSet<>();
     ApplicationManager.getApplication().runReadAction(() -> {
       if (project.isDisposed()) return;
-      
+
       for (final Module module : ModuleManager.getInstance(project).getModules()) {
         OrderEnumerator.orderEntries(module).withoutSdk().forEachLibrary(library -> {
           if (predicate.test(library)) {
@@ -75,7 +97,9 @@ public final class RepositoryLibrarySynchronizer implements StartupActivity.Dumb
 
   static void removeDuplicatedUrlsFromRepositoryLibraries(@NotNull Project project) {
     Collection<Library> libraries = collectLibraries(project, library ->
-      library instanceof LibraryEx && ((LibraryEx)library).getProperties() instanceof RepositoryLibraryProperties && hasDuplicatedRoots(library)
+      library instanceof LibraryEx &&
+      ((LibraryEx)library).getProperties() instanceof RepositoryLibraryProperties &&
+      hasDuplicatedRoots(library)
     );
 
     if (!libraries.isEmpty()) {
@@ -83,7 +107,7 @@ public final class RepositoryLibrarySynchronizer implements StartupActivity.Dumb
         List<Library> validLibraries = ContainerUtil.filter(libraries, LibraryTableImplUtil::isValidLibrary);
         if (validLibraries.isEmpty()) return;
 
-        WriteAction.run(() -> {
+        ApplicationManager.getApplication().runWriteAction(() -> {
           for (Library library : validLibraries) {
             Library.ModifiableModel model = library.getModifiableModel();
             for (OrderRootType type : OrderRootType.getAllTypes()) {
@@ -106,7 +130,8 @@ public final class RepositoryLibrarySynchronizer implements StartupActivity.Dumb
                              : validLibraries.size() + " libraries";
         Notifications.Bus.notify(JarRepositoryManager.GROUP.createNotification(
           JavaUiBundle.message("notification.title.repository.libraries.cleanup"),
-          JavaUiBundle.message("notification.text.duplicated.urls.were.removed", libraryText, ApplicationNamesInfo.getInstance().getFullProductName()),
+          JavaUiBundle.message("notification.text.duplicated.urls.were.removed", libraryText,
+                               ApplicationNamesInfo.getInstance().getFullProductName()),
           NotificationType.INFORMATION
         ), project);
       }, project.getDisposed());
@@ -116,32 +141,12 @@ public final class RepositoryLibrarySynchronizer implements StartupActivity.Dumb
   private static boolean hasDuplicatedRoots(Library library) {
     for (OrderRootType type : OrderRootType.getAllTypes()) {
       String[] urls = library.getUrls(type);
-      if (urls.length != ContainerUtil.newHashSet(urls).size()) {
+      //noinspection SSBasedInspection
+      if (urls.length != new ObjectOpenHashSet<>(urls).size()) {
         return true;
       }
     }
     return false;
-  }
-
-  @Override
-  public void runActivity(@NotNull final Project project) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) return;
-    if (ApplicationManager.getApplication().isHeadlessEnvironment() &&
-        !CoreProgressManager.shouldKeepTasksAsynchronousInHeadlessMode()) {
-      loadDependenciesSync(project);
-      return;
-    }
-
-    var disposable = RemoteRepositoriesConfiguration.getInstance(project);
-    LibrarySynchronizationQueue synchronizationQueue = LibrarySynchronizationQueue.getInstance(project);
-    ChangedRepositoryLibrarySynchronizer synchronizer = new ChangedRepositoryLibrarySynchronizer(project, synchronizationQueue);
-    GlobalChangedRepositoryLibrarySynchronizer globalLibSynchronizer = new GlobalChangedRepositoryLibrarySynchronizer(synchronizationQueue, disposable);
-    for (LibraryTable libraryTable : GlobalChangedRepositoryLibrarySynchronizer.getGlobalAndCustomLibraryTables()) {
-      libraryTable.addListener(globalLibSynchronizer, disposable);
-    }
-    globalLibSynchronizer.installOnExistingLibraries();
-    project.getMessageBus().connect(disposable).subscribe(WorkspaceModelTopics.CHANGED, synchronizer);
-    synchronizationQueue.requestAllLibrariesSynchronization();
   }
 
   public static void syncLibraries(@NotNull Project project) {
@@ -155,11 +160,14 @@ public final class RepositoryLibrarySynchronizer implements StartupActivity.Dumb
     }, project.getDisposed());
   }
 
-  @NotNull
-  public static Set<Library> collectLibrariesToSync(@NotNull Project project) {
+  public static @NotNull Set<Library> collectLibrariesToSync(@NotNull Project project) {
     return collectLibraries(
       project,
-      library -> library instanceof LibraryEx libraryEx && libraryEx.getProperties() instanceof RepositoryLibraryProperties properties &&
-                 isLibraryNeedToBeReloaded(libraryEx, properties));
+      library -> {
+        return library instanceof LibraryEx libraryEx &&
+               libraryEx.getProperties() instanceof RepositoryLibraryProperties properties &&
+               isLibraryNeedToBeReloaded(libraryEx, properties);
+      }
+    );
   }
 }
