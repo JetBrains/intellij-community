@@ -46,7 +46,7 @@ interface ActivityInProgressTracker {
   }
 
   /**
-   * The user-visible name of this witness.
+   * The user-visible name of this tracker.
    */
   val presentableName: @Nls String
 
