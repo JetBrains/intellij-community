@@ -75,9 +75,11 @@ class SettingsProviderComponent(private val project: Project, private val corout
       }
     } catch (e: IOException) {
       // error reading from an .editorconfig file
+      LOG.warn(e)
       EMPTY_PROPERTIES
     } catch (e: ParseException) {
       // syntax error (we're using ErrorHandler.THROW_SYNTAX_ERRORS_IGNORE_OTHERS)
+      LOG.debug(e)
       EMPTY_PROPERTIES
     }
   }

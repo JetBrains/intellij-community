@@ -16,6 +16,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
@@ -72,9 +73,11 @@ class EditorConfigCodeStyleSettingsModifier : CodeStyleSettingsModifier {
           settings.addDependencies(editorConfigs)
           val navigationFactory = EditorConfigNavigationActionsFactory.getInstance(psiFile)
           navigationFactory?.updateEditorConfigFilePaths(editorConfigs.map { it.path })
+          LOG.debug { "Modified for ${psiFile.name}" }
           return@runBlockingMaybeCancellable true
         }
         else {
+          LOG.debug { "No changes for ${psiFile.name}" }
           return@runBlockingMaybeCancellable false
         }
       }
