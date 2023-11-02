@@ -734,10 +734,7 @@ class Java11ShimImpl : Java11Shim {
 
   override fun <E> copyOf(collection: Collection<E>): Set<E> = java.util.Set.copyOf(collection)
 
-  override fun <E> copyOfCollection(collection: Collection<E>): List<E> = java.util.List.copyOf(collection)
   override fun <V : Any> createConcurrentLongObjectMap(): ConcurrentLongObjectMap<V> {
     return ConcurrentCollectionFactory.createConcurrentLongObjectMap()
   }
-
-  override fun <E> setOf(collection: Array<E>): Set<E> = java.util.Set.of(*collection)
 }
