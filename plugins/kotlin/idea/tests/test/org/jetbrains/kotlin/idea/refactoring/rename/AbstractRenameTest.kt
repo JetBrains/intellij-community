@@ -137,7 +137,7 @@ abstract class AbstractRenameTest : KotlinLightCodeInsightFixtureTestCase() {
                 val psiManager = myFixture.psiManager
                 val visitor = object : VirtualFileVisitor<Any>() {
                     override fun visitFile(file: VirtualFile): Boolean {
-                        (psiManager.findFile(file) as? KtFile)?.let { DirectiveBasedActionUtils.checkForUnexpectedErrors(it) }
+                        (psiManager.findFile(file) as? KtFile)?.let { checkForUnexpectedErrors(it) }
                         return true
                     }
                 }
@@ -158,6 +158,10 @@ abstract class AbstractRenameTest : KotlinLightCodeInsightFixtureTestCase() {
         } finally {
             fixtureClasses.forEach { TestFixtureExtension.unloadFixture(it) }
         }
+    }
+
+    protected open fun checkForUnexpectedErrors(ktFile: KtFile) {
+        DirectiveBasedActionUtils.checkForUnexpectedErrors(ktFile)
     }
 
     protected open fun configExtra(rootDir: VirtualFile, renameParamsObject: JsonObject) {

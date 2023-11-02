@@ -45,6 +45,8 @@ abstract class AbstractFirRenameTest : AbstractRenameTest() {
         )
     }
 
+    override fun checkForUnexpectedErrors(ktFile: KtFile) {}
+
     override fun findPsiDeclarationToRename(contextFile: KtFile, target: KotlinTarget): PsiElement = analyze(contextFile) {
         fun getContainingMemberSymbol(classId: ClassId): KtSymbolWithMembers {
             getClassOrObjectSymbolByClassId(classId)?.let { return it }
