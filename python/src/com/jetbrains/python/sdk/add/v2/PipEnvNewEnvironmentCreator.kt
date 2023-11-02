@@ -26,7 +26,7 @@ class PipEnvNewEnvironmentCreator(presenter: PythonAddInterpreterPresenter) : Py
   override fun buildOptions(panel: Panel) {
     with(panel) {
       row(message("sdk.create.custom.base.python")) {
-        basePythonComboBox = pythonBaseInterpreterComboBox(presenter, presenter.basePythonSdksFlow, presenter.basePythonHomePath)
+        basePythonComboBox = pythonBaseInterpreterComboBox(presenter, presenter.basePythonSdksFlow, presenter.basePythonHomePath).component
       }
 
       pipEnvPathField = executableSelector(message("sdk.create.custom.pipenv.path"), executable,

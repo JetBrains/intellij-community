@@ -104,50 +104,47 @@ internal fun Row.nonEditablePythonInterpreterComboBox(sdksFlow: StateFlow<List<S
 
 internal fun Row.pythonBaseInterpreterComboBox(presenter: PythonAddInterpreterPresenter,
                                                sdksFlow: StateFlow<List<Sdk>>,
-                                               sdkSelectedPath: ObservableMutableProperty<String>): ComboBox<String> {
-  val component = comboBox<String>(emptyList())
+                                               sdkSelectedPath: ObservableMutableProperty<String>): Cell<ComboBox<String>> =
+  comboBox<String>(emptyList())
     .bindItem(sdkSelectedPath)
     .align(Align.FILL)
-    .component
-
-  val browseExtension = ExtendableTextComponent.Extension.create(AllIcons.General.OpenDisk,
-                                                                 AllIcons.General.OpenDiskHover,
-                                                                 message("sdk.create.custom.python.browse.tooltip")) {
-    val currentBaseSdkPathOnTarget = sdkSelectedPath.get().nullize(nullizeSpaces = true)
-    val currentBaseSdkVirtualFile = currentBaseSdkPathOnTarget?.let { presenter.tryGetVirtualFile(it) }
-    FileChooser.chooseFile(FileChooserDescriptorFactory.createSingleFileOrExecutableAppDescriptor(), null,
-                           currentBaseSdkVirtualFile) { file ->
-      val nioPath = file?.toNioPath() ?: return@chooseFile
-      val targetPath = presenter.getPathOnTarget(nioPath)
-      presenter.addAndSelectBaseSdk(targetPath)
-    }
-  }
-
-  component.isEditable = true
-  component.editor = object : BasicComboBoxEditor() {
-    override fun createEditorComponent(): JTextField {
-      val field = ExtendableTextField()
-      field.addExtension(browseExtension)
-      field.setBorder(null)
-      field.isEditable = false
-      field.background = JBUI.CurrentTheme.Arrow.backgroundColor(true, true)
-      return field
-    }
-  }
-
-  presenter.scope.launch(start = CoroutineStart.UNDISPATCHED) {
-    sdksFlow.collectLatest { sdks ->
-      withContext(presenter.uiContext) {
-        component.removeAllItems()
-        sdks.map { sdk -> sdk.homePath.orEmpty() }.forEach(component::addItem)
+    .applyToComponent {
+      val browseExtension = ExtendableTextComponent.Extension.create(AllIcons.General.OpenDisk,
+                                                                     AllIcons.General.OpenDiskHover,
+                                                                     message("sdk.create.custom.python.browse.tooltip")) {
+        val currentBaseSdkPathOnTarget = sdkSelectedPath.get().nullize(nullizeSpaces = true)
+        val currentBaseSdkVirtualFile = currentBaseSdkPathOnTarget?.let { presenter.tryGetVirtualFile(it) }
+        FileChooser.chooseFile(FileChooserDescriptorFactory.createSingleFileOrExecutableAppDescriptor(), null,
+                               currentBaseSdkVirtualFile) { file ->
+          val nioPath = file?.toNioPath() ?: return@chooseFile
+          val targetPath = presenter.getPathOnTarget(nioPath)
+          presenter.addAndSelectBaseSdk(targetPath)
+        }
       }
+
+      isEditable = true
+      editor = object : BasicComboBoxEditor() {
+        override fun createEditorComponent(): JTextField {
+          val field = ExtendableTextField()
+          field.addExtension(browseExtension)
+          field.setBorder(null)
+          field.isEditable = false
+          field.background = JBUI.CurrentTheme.Arrow.backgroundColor(true, true)
+          return field
+        }
+      }
+
+      presenter.scope.launch(start = CoroutineStart.UNDISPATCHED) {
+        sdksFlow.collectLatest { sdks ->
+          withContext(presenter.uiContext) {
+            removeAllItems()
+            sdks.map { sdk -> sdk.homePath.orEmpty() }.forEach(this@applyToComponent::addItem)
+          }
+        }
+      }
+
+      displayLoaderWhen(presenter.detectingSdks, scope = presenter.scope, uiContext = presenter.uiContext)
     }
-  }
-
-  component.displayLoaderWhen(presenter.detectingSdks, scope = presenter.scope, uiContext = presenter.uiContext)
-
-  return component
-}
 
 /**
  * Note. Here [ExtendableTextComponent.Extension] is used to display animated loader icon. This approach requires [ExtendableTextComponent]

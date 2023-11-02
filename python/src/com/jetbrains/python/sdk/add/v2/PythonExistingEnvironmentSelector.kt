@@ -13,7 +13,7 @@ class PythonExistingEnvironmentSelector(presenter: PythonAddInterpreterPresenter
   override fun buildOptions(panel: Panel) {
     with(panel) {
       row(message("sdk.create.custom.python.path")) {
-        versionComboBox = pythonBaseInterpreterComboBox(presenter, presenter.allExistingSdksFlow, selectedPath)
+        versionComboBox = pythonBaseInterpreterComboBox(presenter, presenter.allExistingSdksFlow, selectedPath).component
       }
     }
     selectedPath.dependsOn(state.basePythonHomePath) {
