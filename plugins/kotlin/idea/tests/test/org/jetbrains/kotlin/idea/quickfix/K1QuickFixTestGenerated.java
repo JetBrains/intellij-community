@@ -3150,6 +3150,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
             runTest("testData/quickfix/changeSignature/changeFunctionLiteralParameters4.kt");
         }
 
+        @TestMetadata("changeParameterType.kt")
+        public void testChangeParameterType() throws Exception {
+            runTest("testData/quickfix/changeSignature/changeParameterType.kt");
+        }
+
         @TestMetadata("complexHierarchy.kt")
         public void testComplexHierarchy() throws Exception {
             runTest("testData/quickfix/changeSignature/complexHierarchy.kt");

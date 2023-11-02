@@ -32,8 +32,8 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicator
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinApplicatorTargetWithInput
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.diagnosticFixFactory
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.withInput
-import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.defaultValOrVar
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.*
+import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.defaultValOrVar
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinValVar
 import org.jetbrains.kotlin.psi.KtCallElement
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
@@ -110,29 +110,36 @@ object ChangeSignatureFixFactory {
         val isConstructor = input.isConstructor
 
         val declarationName = input.name
+        return when (input.type) {
+            ChangeType.CHANGE_FUNCTIONAL -> KotlinBundle.message("fix.change.signature.lambda")
 
-        return if (input.type == ChangeType.ADD) {
-            assert(newParametersCnt > 0)
-            KotlinBundle.message(
-                if (isConstructor) "fix.add.function.parameters.add.parameter.generic.constructor" else "fix.add.function.parameters.add.parameter.generic.function",
-                newParametersCnt,
-                declarationName
-            )
-        } else if (input.type == ChangeType.TOO_MANY_ARGUMENTS_WITH_TYPE_MISMATCH || newParametersCnt <= 0 && input.type == ChangeType.TYPE_MISMATCH) {
-            KotlinBundle.message(
-                if (isConstructor) "fix.add.function.parameters.change.signature.constructor" else "fix.add.function.parameters.change.signature.function",
-                declarationName
-            )
-        } else if (input.type == ChangeType.TYPE_MISMATCH) {
-            assert(newParametersCnt > 0)
-            KotlinBundle.message(
-                if (isConstructor) "fix.add.function.parameters.add.parameter.constructor" else "fix.add.function.parameters.add.parameter.function",
-                input.idx + 1,
-                newParametersCnt,
-                declarationName
-            )
-        } else {
-            KotlinBundle.message("fix.change.signature.lambda")
+            ChangeType.ADD -> {
+                assert(newParametersCnt > 0)
+                KotlinBundle.message(
+                    if (isConstructor) "fix.add.function.parameters.add.parameter.generic.constructor" else "fix.add.function.parameters.add.parameter.generic.function",
+                    newParametersCnt,
+                    declarationName
+                )
+            }
+
+            ChangeType.TOO_MANY_ARGUMENTS_WITH_TYPE_MISMATCH -> {
+                KotlinBundle.message(
+                    if (isConstructor) "fix.add.function.parameters.change.signature.constructor" else "fix.add.function.parameters.change.signature.function",
+                    declarationName
+                )
+            }
+
+            ChangeType.TYPE_MISMATCH -> {
+                assert(newParametersCnt > 0)
+                KotlinBundle.message(
+                    if (isConstructor) "fix.add.function.parameters.add.parameter.constructor" else "fix.add.function.parameters.add.parameter.function",
+                    input.idx + 1,
+                    newParametersCnt,
+                    declarationName
+                )
+            }
+
+            ChangeType.REMOVE -> error("Unreachable, already processed above")
         }
     }
 
@@ -376,6 +383,10 @@ object ChangeSignatureFixFactory {
 
         val isConstructor = functionLikeSymbol is KtConstructorSymbol
         val name = getDeclarationName(isConstructor, functionLikeSymbol) ?: return emptyList()
+
+        val newParametersCnt = callElement.valueArguments.size - functionLikeSymbol.valueParameters.size
+
+        if (newParametersCnt <= 0 && psi !is KtLambdaExpression) return emptyList()
 
         return listOf(
             psi withInput Input(
