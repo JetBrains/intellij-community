@@ -307,7 +307,12 @@ class GitLabSnippetService(private val project: Project, private val serviceScop
    * @return `true` if the limit is reached, `false`, if not.
    */
   private fun VirtualFile.collectNonBinaryFilesImpl(collection: MutableSet<VirtualFile>): Boolean {
-    if (isFile && fileType.isBinary || collection.size > GL_SNIPPET_FILES_LIMIT || isRecursiveOrCircularSymlink) {
+    val fileType = runCatching {
+      this.fileType
+    }
+
+    if (fileType.isFailure || (isFile && fileType.getOrNull()?.isBinary == true)
+        || collection.size > GL_SNIPPET_FILES_LIMIT || isRecursiveOrCircularSymlink) {
       return collection.size > GL_SNIPPET_FILES_LIMIT
     }
 
