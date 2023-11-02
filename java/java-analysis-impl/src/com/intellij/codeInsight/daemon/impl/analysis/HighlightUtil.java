@@ -2537,7 +2537,10 @@ public final class HighlightUtil {
   static HighlightInfo.Builder checkIllegalForwardReferenceToField(@NotNull PsiReferenceExpression expression, @NotNull PsiField referencedField) {
     Boolean isIllegalForwardReference = isIllegalForwardReferenceToField(expression, referencedField, false);
     if (isIllegalForwardReference == null) return null;
-    String description = JavaErrorBundle.message(isIllegalForwardReference ? "illegal.forward.reference" : "illegal.self.reference");
+    String key = referencedField instanceof PsiEnumConstant
+                 ? (isIllegalForwardReference ? "illegal.forward.reference.enum" : "illegal.self.reference.enum")
+                 : (isIllegalForwardReference ? "illegal.forward.reference" : "illegal.self.reference");
+    String description = JavaErrorBundle.message(key, referencedField.getName());
     return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(description);
   }
 

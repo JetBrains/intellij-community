@@ -6,7 +6,7 @@ enum IDEA56239 {
       System.out.println(FOO1);
       System.out.println(<error descr="It is illegal to access static member 'C' from enum constructor or instance initializer">C</error>);
     }
-  }, C(<error descr="Illegal forward reference">D</error>), D;
+  }, C(<error descr="Cannot refer to enum constant 'D' before its definition">D</error>), D;
 
   public static String FOO = "";
   public static final String FOO1 = "";
