@@ -201,7 +201,13 @@ abstract class ProductProperties {
    * specified module is used to compute [JetBrainsClientModuleFilter]. 
    */
   @ApiStatus.Experimental
-  var embeddedJetBrainsClientMainModule: String? = null 
+  var embeddedJetBrainsClientMainModule: String? = null
+
+  /**
+   * Specifies a factory function for an instance which will be used to generate launchers for the embedded JetBrains Client. 
+   */
+  @ApiStatus.Experimental
+  var embeddedJetBrainsClientProperties: (() -> ProductProperties)? = null
 
   /**
    * Specifies the mode of this product which will be used to determine which plugin modules should be loaded at runtime by 

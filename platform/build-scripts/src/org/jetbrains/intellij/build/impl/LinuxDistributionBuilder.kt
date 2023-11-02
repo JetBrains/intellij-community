@@ -12,6 +12,8 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.impl.OsSpecificDistributionBuilder.Companion.suffix
+import org.jetbrains.intellij.build.impl.client.ADDITIONAL_EMBEDDED_CLIENT_VM_OPTIONS
+import org.jetbrains.intellij.build.impl.client.createJetBrainsClientContextForLaunchers
 import org.jetbrains.intellij.build.impl.productInfo.*
 import org.jetbrains.intellij.build.impl.support.RepairUtilityBuilder
 import org.jetbrains.intellij.build.io.*
@@ -60,6 +62,11 @@ class LinuxDistributionBuilder(override val context: BuildContext,
         }
         writeVmOptions(distBinDir)
         generateScripts(distBinDir, arch, context)
+        val jetBrainsClientContext = createJetBrainsClientContextForLaunchers(context)
+        if (jetBrainsClientContext != null) {
+          writeLinuxVmOptions(distBinDir, jetBrainsClientContext)
+          generateMainScript(distBinDir, arch, additionalNonCustomizableJvmArgs = ADDITIONAL_EMBEDDED_CLIENT_VM_OPTIONS, jetBrainsClientContext)
+        }
         generateReadme(targetPath)
         generateVersionMarker(targetPath, context)
         customizer.copyAdditionalFiles(context = context, targetDir = targetPath, arch = arch)
@@ -332,13 +339,13 @@ private fun generateScripts(distBinDir: Path, arch: JvmArchitecture, context: Bu
   }
 
   copyInspectScript(context, distBinDir)
-  generateMainScript(distBinDir, arch, context)
+  generateMainScript(distBinDir, arch, emptyList(), context)
 }
 
 private val ProductProperties.mainScriptFileName: String
   get() = "$baseFileName.sh"
 
-private fun generateMainScript(distBinDir: Path, arch: JvmArchitecture, context: BuildContext) {
+private fun generateMainScript(distBinDir: Path, arch: JvmArchitecture, additionalNonCustomizableJvmArgs: List<String>, context: BuildContext) {
   val baseName = context.productProperties.baseFileName
   val vmOptionsPath = distBinDir.resolve("${baseName}64.vmoptions")
 
@@ -356,6 +363,7 @@ private fun generateMainScript(distBinDir: Path, arch: JvmArchitecture, context:
   }
 
   val additionalJvmArguments = context.getAdditionalJvmArguments(os = OsFamily.LINUX, arch = arch, isScript = true).toMutableList()
+  additionalJvmArguments.addAll(additionalNonCustomizableJvmArgs)
   if (!context.xBootClassPathJarNames.isEmpty()) {
     val bootCp = context.xBootClassPathJarNames.joinToString(separator = ":") { "\$IDE_HOME/lib/${it}" }
     additionalJvmArguments.add("\"-Xbootclasspath/a:$bootCp\"")
