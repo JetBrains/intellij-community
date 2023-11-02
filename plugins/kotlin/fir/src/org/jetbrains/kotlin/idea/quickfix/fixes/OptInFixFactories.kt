@@ -1,13 +1,13 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.quickfix.fixes
 
-import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.findParentOfType
 import com.intellij.util.containers.addIfNotNull
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.annotations.*
+import org.jetbrains.kotlin.analysis.api.annotations.KtKClassAnnotationValue
+import org.jetbrains.kotlin.analysis.api.annotations.annotationsByClassId
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.fir.utils.getActualAnnotationTargets
 import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
@@ -15,11 +15,12 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.diagnosticFix
 import org.jetbrains.kotlin.idea.quickfix.AddAnnotationFix
 import org.jetbrains.kotlin.idea.quickfix.OptInGeneralUtilsBase
 import org.jetbrains.kotlin.idea.refactoring.isOpen
-import org.jetbrains.kotlin.idea.testIntegration.framework.KotlinPsiBasedTestFramework.Companion.asKtClassOrObject
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.resolve.checkers.OptInNames
 
 object OptInFixFactories {
@@ -37,10 +38,12 @@ object OptInFixFactories {
 
         val optInClassId = ClassId.topLevel(OptInFixUtils.optInFqName() ?: return emptyList())
         val isOverrideError = isOverrideError(diagnostic)
-        val psiClass = JavaPsiFacade.getInstance(element.project).findClass(annotationFqName.asString(), element.resolveScope) ?: return emptyList()
-        val annotationClass = psiClass.asKtClassOrObject()?.getClassOrObjectSymbol() ?: psiClass.getNamedClassSymbol()
-        val annotationClassId = annotationClass?.classIdIfNonLocal ?: return emptyList()
-        val applicableTargets = annotationClass.annotationApplicableTargets
+
+        val annotationSymbol = OptInFixUtils.findAnnotation(annotationFqName, element) ?: return emptyList()
+        if (!OptInFixUtils.annotationIsVisible(annotationSymbol, from = element)) return emptyList()
+
+        val annotationClassId = annotationSymbol.classIdIfNonLocal ?: return emptyList()
+        val applicableTargets = annotationSymbol.annotationApplicableTargets
         val result = mutableListOf<AddAnnotationFix>()
 
         val candidates = OptInGeneralUtils.collectCandidates(element)

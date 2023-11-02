@@ -11307,6 +11307,16 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                 runTest("testData/quickfix/optIn/hasOptInAnnotationForClass2.kt");
             }
 
+            @TestMetadata("invisibleAnnotation.kt")
+            public void testInvisibleAnnotation() throws Exception {
+                runTest("testData/quickfix/optIn/invisibleAnnotation.kt");
+            }
+
+            @TestMetadata("invisibleAnnotationFir.kt")
+            public void testInvisibleAnnotationFir() throws Exception {
+                runTest("testData/quickfix/optIn/invisibleAnnotationFir.kt");
+            }
+
             @TestMetadata("localFunction.kt")
             public void testLocalFunction() throws Exception {
                 runTest("testData/quickfix/optIn/localFunction.kt");

@@ -27,6 +27,9 @@ object OptInFileLevelFixFactories {
             val optInMarkerFqName = OptInFixUtils.optInMarkerFqName(diagnostic) ?: return@diagnosticFixFactories emptyList()
             val optInFqName = OptInFixUtils.optInFqName() ?: return@diagnosticFixFactories emptyList()
             val containingFile = element.containingKtFile
+            val annotationSymbol = OptInFixUtils.findAnnotation(optInMarkerFqName, element) ?: return@diagnosticFixFactories emptyList()
+
+            if (!OptInFixUtils.annotationIsVisible(annotationSymbol, from = element)) return@diagnosticFixFactories emptyList()
 
             return@diagnosticFixFactories listOf(
                 UseOptInFileAnnotationFix(

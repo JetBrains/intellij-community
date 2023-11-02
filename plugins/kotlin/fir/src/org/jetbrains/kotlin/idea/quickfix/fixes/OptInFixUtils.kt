@@ -2,12 +2,17 @@
 
 package org.jetbrains.kotlin.idea.quickfix.fixes
 
+import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
+import org.jetbrains.kotlin.analysis.api.symbols.KtNamedClassOrObjectSymbol
 import org.jetbrains.kotlin.idea.base.util.names.FqNames
+import org.jetbrains.kotlin.idea.testIntegration.framework.KotlinPsiBasedTestFramework.Companion.asKtClassOrObject
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtQualifiedExpression
 import org.jetbrains.kotlin.resolve.checkers.OptInNames
 
 object OptInFixUtils {
@@ -25,4 +30,17 @@ object OptInFixUtils {
 
     context (KtAnalysisSession)
     private fun FqName.annotationApplicable() = getClassOrObjectSymbolByClassId(ClassId.topLevel(this)) != null
+
+    context (KtAnalysisSession)
+    fun findAnnotation(name: FqName, useSite: KtElement): KtNamedClassOrObjectSymbol? {
+        val psiClass = JavaPsiFacade.getInstance(useSite.project).findClass(name.asString(), useSite.resolveScope) ?: return null
+        return psiClass.asKtClassOrObject()?.getNamedClassOrObjectSymbol() ?: psiClass.getNamedClassSymbol()
+    }
+
+    context (KtAnalysisSession)
+    fun annotationIsVisible(annotation: KtNamedClassOrObjectSymbol, from: KtElement): Boolean {
+        val file = from.containingKtFile.getFileSymbol()
+        val receiver = (from as? KtQualifiedExpression)?.receiverExpression
+        return isVisible(annotation, file, receiver, from)
+    }
 }

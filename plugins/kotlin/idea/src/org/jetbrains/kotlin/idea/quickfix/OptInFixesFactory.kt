@@ -9,30 +9,31 @@ import com.intellij.util.containers.addIfNotNull
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.resolveClassByFqName
 import org.jetbrains.kotlin.diagnostics.Diagnostic
-import org.jetbrains.kotlin.diagnostics.Errors.*
+import org.jetbrains.kotlin.diagnostics.Errors.OPT_IN_OVERRIDE
+import org.jetbrains.kotlin.diagnostics.Errors.OPT_IN_OVERRIDE_ERROR
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
 import org.jetbrains.kotlin.idea.core.toDescriptor
 import org.jetbrains.kotlin.idea.inspections.CanSealedSubClassBeObjectInspection.Util.asKtClass
+import org.jetbrains.kotlin.idea.quickfix.OptInGeneralUtilsBase.CandidateData
 import org.jetbrains.kotlin.idea.refactoring.fqName.fqName
 import org.jetbrains.kotlin.idea.refactoring.isOpen
 import org.jetbrains.kotlin.idea.search.usagesSearch.descriptor
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.AnnotationChecker
 import org.jetbrains.kotlin.resolve.checkers.OptInNames
 import org.jetbrains.kotlin.resolve.constants.KClassValue
+import org.jetbrains.kotlin.resolve.descriptorUtil.classId
 import org.jetbrains.kotlin.resolve.descriptorUtil.module
 import org.jetbrains.kotlin.resolve.sam.SamConstructorDescriptor
 import org.jetbrains.kotlin.scripting.definitions.isScript
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
-import org.jetbrains.kotlin.idea.quickfix.OptInGeneralUtilsBase.CandidateData
-import org.jetbrains.kotlin.name.ClassId
-import org.jetbrains.kotlin.resolve.descriptorUtil.classId
 
 /**
  * [OptInFixesFactory] is responsible for adding fixes for code elements only,
@@ -52,6 +53,9 @@ internal object OptInFixesFactory : KotlinIntentionActionsFactory() {
 
         val applicableTargets = AnnotationChecker.applicableTargetSet(annotationClassDescriptor)
         val context = element.analyze()
+
+        if (!OptInFixesUtils.annotationIsVisible(annotationClassDescriptor, from = element, context)) return emptyList()
+
         val isOverrideError = diagnostic.factory == OPT_IN_OVERRIDE_ERROR || diagnostic.factory == OPT_IN_OVERRIDE
         val optInClassId = ClassId.topLevel(OptInFixesUtils.optInFqName(moduleDescriptor))
 
