@@ -14,6 +14,7 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.util.PsiUtilCore
+import com.intellij.util.application
 import kotlin.random.Random
 import kotlin.system.measureNanoTime
 
@@ -42,7 +43,6 @@ internal class InlineCompletionInvocationTracker(
     requestId,
     provider,
     invocationTime,
-    InlineContextFeatures.getEventPair(contextFeatures),
     language,
     fileLanguage,
   )
@@ -95,6 +95,10 @@ internal class InlineCompletionInvocationTracker(
       }
     }.takeIf { it.isNotEmpty() }?.let {
       data.add(InvokedEvents.ADDITIONAL.with(ObjectEventData(it)))
+    }
+
+    if (application.isEAP && contextFeatures.isNotEmpty()) {
+      data.add(InvokedEvents.CONTEXT_FEATURES.with(ObjectEventData(contextFeatures)))
     }
 
     InlineCompletionUsageTracker.INVOKED_EVENT.log(listOf(

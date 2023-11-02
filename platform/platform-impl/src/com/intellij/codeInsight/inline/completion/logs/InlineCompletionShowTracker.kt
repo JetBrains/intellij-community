@@ -8,7 +8,6 @@ import com.intellij.codeInsight.inline.completion.logs.InlineCompletionUsageTrac
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.lang.Language
-import com.intellij.util.application
 
 /**
  * This tracker lives from the moment the inline completion appears on the screen until its end.
@@ -18,7 +17,6 @@ internal class InlineCompletionShowTracker(
   private val requestId: Long,
   private val provider: Class<out InlineCompletionProvider>,
   private val invocationTime: Long,
-  private val triggerFeatures: EventPair<*>,
   private val language: Language?,
   private val fileLanguage: Language?,
 ) {
@@ -41,9 +39,6 @@ internal class InlineCompletionShowTracker(
     data.add(EventFields.CurrentFile.with(fileLanguage))
     data.add(ShownEvents.TIME_TO_SHOW.with(System.currentTimeMillis() - invocationTime))
     data.add(ShownEvents.PROVIDER.with(provider))
-    if (application.isEAP) {
-      data.add(triggerFeatures)
-    }
     nextShown(element)
     assert(!shownLogSent)
   }
