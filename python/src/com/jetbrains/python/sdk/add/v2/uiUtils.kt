@@ -102,9 +102,9 @@ internal fun Row.nonEditablePythonInterpreterComboBox(sdksFlow: StateFlow<List<S
       }
     }
 
-fun Row.pythonBaseInterpreterComboBox(presenter: PythonAddInterpreterPresenter,
-                                      sdksFlow: StateFlow<List<Sdk>>,
-                                      sdkSelectedPath: ObservableMutableProperty<String>): ComboBox<String> {
+internal fun Row.pythonBaseInterpreterComboBox(presenter: PythonAddInterpreterPresenter,
+                                               sdksFlow: StateFlow<List<Sdk>>,
+                                               sdkSelectedPath: ObservableMutableProperty<String>): ComboBox<String> {
   val component = comboBox<String>(emptyList())
     .bindItem(sdkSelectedPath)
     .align(Align.FILL)
@@ -172,15 +172,15 @@ private fun ComboBox<*>.displayLoaderWhen(loading: SharedFlow<Boolean>,
   }
 }
 
-fun <T : TextFieldWithBrowseButton> Cell<T>.displayLoaderWhen(loading: StateFlow<Boolean>,
-                                                              scope: CoroutineScope,
-                                                              uiContext: CoroutineContext): Cell<T> =
+internal fun <T : TextFieldWithBrowseButton> Cell<T>.displayLoaderWhen(loading: StateFlow<Boolean>,
+                                                                       scope: CoroutineScope,
+                                                                       uiContext: CoroutineContext): Cell<T> =
   applyToComponent { displayLoaderWhen(loading, scope, uiContext) }
 
-fun <T, C : ComboBox<T>> Cell<C>.displayLoaderWhen(loading: SharedFlow<Boolean>,
-                                                   makeTemporaryEditable: Boolean = false,
-                                                   scope: CoroutineScope,
-                                                   uiContext: CoroutineContext): Cell<C> =
+internal fun <T, C : ComboBox<T>> Cell<C>.displayLoaderWhen(loading: SharedFlow<Boolean>,
+                                                            makeTemporaryEditable: Boolean = false,
+                                                            scope: CoroutineScope,
+                                                            uiContext: CoroutineContext): Cell<C> =
   applyToComponent {
     if (makeTemporaryEditable && editor.editorComponent !is ExtendableTextField) {
       editor = object : BasicComboBoxEditor() {
