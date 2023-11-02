@@ -39,6 +39,7 @@ import java.io.PrintWriter;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Function;
@@ -535,7 +536,18 @@ public class WSLDistribution implements AbstractWslDistribution {
    */
   @Deprecated
   public final @Nullable String getWslPath(@NotNull @NlsSafe String windowsPath) {
-    return getWslPath(Path.of(windowsPath));
+    try {
+      return getWslPath(Path.of(windowsPath));
+    }
+    catch (InvalidPathException e) {
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        LOG.error("Failed to convert '" + windowsPath + "' to path", e);
+      }
+      else {
+        LOG.warn("Failed to convert '" + windowsPath + "' to path: " + e.getMessage());
+      }
+      return null;
+    }
   }
 
   @Override
