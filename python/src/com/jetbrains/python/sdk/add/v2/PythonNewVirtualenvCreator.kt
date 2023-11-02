@@ -16,6 +16,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.OSAgnosticPathUtil
 import com.intellij.ui.dsl.builder.*
 import com.intellij.util.PathUtil
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.sdk.PySdkSettings
 import com.jetbrains.python.sdk.add.LocalContext
@@ -143,6 +144,7 @@ class PythonNewVirtualenvCreator(presenter: PythonAddInterpreterPresenter) : Pyt
      *
      * @see [Path.exists]
      */
+    @RequiresBackgroundThread(generateAssertion = false)
     private fun TextFieldWithBrowseButton.doesPathExist(): Boolean =
       text.let { probablyIncompletePath ->
         if (SystemInfo.isWindows && OSAgnosticPathUtil.isUncPath(probablyIncompletePath)) {
