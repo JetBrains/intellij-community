@@ -10,7 +10,6 @@ import com.intellij.openapi.application.ConfigImportHelper
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.util.PlatformUtils
 import kotlinx.coroutines.Dispatchers
@@ -131,7 +130,8 @@ object IdeStartupExperiment {
   }
 
   val experimentGroup by lazy {
-    val registryExperimentGroup = Registry.intValue("ide.transfer.wizard.experiment.group", -1, -1, numberOfGroups - 1)
+    val registryExperimentGroup = (System.getProperty("ide.transfer.wizard.experiment.group", "").toIntOrNull() ?: -1)
+      .coerceIn(-1, numberOfGroups - 1)
     if (registryExperimentGroup >= 0) return@lazy registryExperimentGroup
     // floorMod to handle negative numbers:
     val experimentGroup = Math.floorMod(Random.nextInt().absoluteValue, numberOfGroups)
