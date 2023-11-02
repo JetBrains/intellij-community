@@ -115,7 +115,7 @@ public final class Registry {
       return result;
     }
 
-    Map<String, String> map = new HashMap<>(1_800);
+    Map<String, String> map = new LinkedHashMap<>(1_800);
     boolean mainFound = loadFromResource("misc/registry.properties", map);
     boolean overrideFound = loadFromResource("misc/registry.override.properties", map);
     if (!mainFound && !overrideFound) {
@@ -203,7 +203,7 @@ public final class Registry {
   }
 
   private static @NotNull Map<String, String> fromState(@NotNull Element state) {
-    Map<String, String> map = new HashMap<>();
+    Map<String, String> map = new LinkedHashMap<>();
     for (Element eachEntry : state.getChildren("entry")) {
       String key = eachEntry.getAttributeValue("key");
       String value = eachEntry.getAttributeValue("value");
@@ -293,7 +293,7 @@ public final class Registry {
   }
 
   void restoreDefaults() {
-    Map<String, String> old = new HashMap<>(myUserProperties);
+    Map<String, String> old = new LinkedHashMap<>(myUserProperties);
     Registry instance = getInstance();
     for (String key : old.keySet()) {
       String v = instance.getBundleValueOrNull(key);
