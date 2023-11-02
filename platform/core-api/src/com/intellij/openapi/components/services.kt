@@ -28,8 +28,17 @@ import org.jetbrains.annotations.ApiStatus
  */
 inline fun <reified T : Any> ComponentManager.service(): T {
   val serviceClass = T::class.java
-  return getService(serviceClass)
-         ?: error("Cannot find service ${serviceClass.name} in $this (classloader=${serviceClass.classLoader}")
+  return getService(serviceClass) ?: throw serviceNotFoundError(serviceClass)
+}
+
+// do not inline it in client code
+@PublishedApi
+internal fun <T : Any> ComponentManager.serviceNotFoundError(serviceClass: Class<T>): IllegalStateException {
+  return IllegalStateException("Cannot find service ${serviceClass.name} (" +
+                               "classloader=${serviceClass.classLoader}, " +
+                               "serviceContainer=$this, " +
+                               "serviceContainerClass=${this::class.java.name}" +
+                               ")")
 }
 
 /**
