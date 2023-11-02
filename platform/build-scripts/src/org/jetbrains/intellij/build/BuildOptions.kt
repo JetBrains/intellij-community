@@ -389,6 +389,13 @@ class BuildOptions(
   var enableEmbeddedJetBrainsClient = SystemProperties.getBooleanProperty("intellij.build.enable.embedded.jetbrains.client", true)
 
   /**
+   * If `true` and embedded JetBrains Client is [enabled][BuildContext.isEmbeddedJetBrainsClientEnabled], launchers which start it will be
+   * included in the IDE's distributions.
+   */
+  @ApiStatus.Experimental
+  var includeLaunchersForEmbeddedJetBrainsClient = SystemProperties.getBooleanProperty("intellij.build.include.launchers.for.embedded.jetbrains.client", true) 
+
+  /**
    * Specifies a prefix to use when looking for an artifact of a [org.jetbrains.intellij.build.JetBrainsRuntimeDistribution] to be bundled with distributions.
    * If `null`, `"jbr_jcef-"` will be used.
    */
