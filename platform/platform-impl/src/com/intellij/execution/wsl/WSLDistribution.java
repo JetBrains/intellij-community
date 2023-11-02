@@ -540,12 +540,7 @@ public class WSLDistribution implements AbstractWslDistribution {
       return getWslPath(Path.of(windowsPath));
     }
     catch (InvalidPathException e) {
-      if (ApplicationManager.getApplication().isUnitTestMode()) {
-        LOG.error("Failed to convert '" + windowsPath + "' to path", e);
-      }
-      else {
-        LOG.warn("Failed to convert '" + windowsPath + "' to path: " + e.getMessage());
-      }
+      LOG.warn("Failed to convert '" + windowsPath + "' to wsl path", e);
       return null;
     }
   }
