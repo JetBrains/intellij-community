@@ -121,7 +121,7 @@ public final class CodeStyle {
   private static CodeStyleSettings getCachedOrProjectSettings(@NotNull Project project, @NotNull VirtualFile file) {
     CodeStyleSettings cachedSettings = CodeStyleCachingService.getInstance(project).tryGetSettings(file);
     if (LOG.isDebugEnabled()) {
-      LOG.debug(cachedSettings != null ? "cached" : "project" + " settings for " + file.getName());
+      LOG.debug((cachedSettings != null ? "cached" : "project") + " settings for " + file.getName());
     }
     return cachedSettings != null ? cachedSettings : getSettings(project);
   }
