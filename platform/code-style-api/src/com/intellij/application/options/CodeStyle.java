@@ -4,6 +4,7 @@ package com.intellij.application.options;
 import com.intellij.application.options.codeStyle.cache.CodeStyleCachingService;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
@@ -36,6 +37,8 @@ public final class CodeStyle {
 
   private CodeStyle() {
   }
+
+  public static final Logger LOG = Logger.getInstance(CodeStyle.class);
 
   /**
    * @return Default application-wide root code style settings.
@@ -86,10 +89,12 @@ public final class CodeStyle {
   public static CodeStyleSettings getSettings(@NotNull Project project, @NotNull VirtualFile file) {
     CodeStyleSettings localOrTempSettings = getLocalOrTemporarySettings(project);
     if (localOrTempSettings != null) {
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("localOrTemp settings for " + file.getName());
+      }
       return localOrTempSettings;
     }
-    CodeStyleSettings cachedSettings = CodeStyleCachingService.getInstance(project).tryGetSettings(file);
-    return cachedSettings != null ? cachedSettings : getSettings(project);
+    return getCachedOrProjectSettings(project, file);
   }
 
   public static CodeStyleSettings getSettings(@NotNull PsiFile file) {
@@ -97,6 +102,9 @@ public final class CodeStyle {
 
     CodeStyleSettings localOrTempSettings = getLocalOrTemporarySettings(project);
     if (localOrTempSettings != null) {
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("localOrTemp settings for " + file.getName());
+      }
       return localOrTempSettings;
     }
     PsiFile settingsFile = getSettingsPsi(file);
@@ -107,7 +115,14 @@ public final class CodeStyle {
     if (virtualFile == null) {
       return getSettings(project);
     }
-    CodeStyleSettings cachedSettings = CodeStyleCachingService.getInstance(project).tryGetSettings(virtualFile);
+    return getCachedOrProjectSettings(project, virtualFile);
+  }
+
+  private static CodeStyleSettings getCachedOrProjectSettings(@NotNull Project project, @NotNull VirtualFile file) {
+    CodeStyleSettings cachedSettings = CodeStyleCachingService.getInstance(project).tryGetSettings(file);
+    if (LOG.isDebugEnabled()) {
+      LOG.debug(cachedSettings != null ? "cached" : "project" + " settings for " + file.getName());
+    }
     return cachedSettings != null ? cachedSettings : getSettings(project);
   }
 
@@ -122,6 +137,9 @@ public final class CodeStyle {
     @SuppressWarnings("TestOnlyProblems")
     CodeStyleSettings tempSettings = settingsManager.getTemporarySettings();
     if (tempSettings != null) {
+      if (!ApplicationManager.getApplication().isUnitTestMode()) {
+        LOG.warn("Temporary settings used in production. Please use CodeStyle#runWithLocalSettings instead.");
+      }
       return tempSettings;
     }
 

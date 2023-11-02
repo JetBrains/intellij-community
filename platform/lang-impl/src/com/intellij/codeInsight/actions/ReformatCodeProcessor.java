@@ -39,7 +39,7 @@ import java.util.List;
 import java.util.concurrent.FutureTask;
 
 public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
-  private static final Logger LOG = Logger.getInstance(ReformatCodeProcessor.class);
+  private static final Logger LOG = CodeStyle.LOG;
   private static final Key<Trinity<Long, Date, List<TextRange>>> SECOND_FORMAT_KEY = Key.create("second.format");
   private static final String SECOND_REFORMAT_CONFIRMED = "second.reformat.confirmed.2";
 
@@ -188,6 +188,9 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
             // the `document` here can be in an uncommitted state. In the case of an external formatter,
             // this may be the cause of formatting artifacts
             PsiDocumentManager.getInstance(myProject).commitDocument(document);
+          }
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("explicit reformat for " + file.getName());
           }
           if (processChangedTextOnly) {
             ChangedRangesInfo info = VcsFacade.getInstance().getChangedRangesInfo(fileToProcess);
