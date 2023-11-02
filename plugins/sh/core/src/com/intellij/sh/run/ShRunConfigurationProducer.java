@@ -36,16 +36,14 @@ final class ShRunConfigurationProducer extends LazyRunConfigurationProducer<ShRu
     VirtualFile virtualFile = psiFile.getVirtualFile();
     if (virtualFile == null || virtualFile instanceof LightVirtualFile) return false;
 
-    String defaultShell = ShConfigurationType.getDefaultShell();
-    if (defaultShell != null) {
-      String shebang = ShShebangParserUtil.getShebangExecutable((ShFile)psiFile);
-      if (shebang != null) {
-        Pair<String, String> result = parseInterpreterAndOptions(shebang);
-        configuration.setInterpreterPath(result.first);
-        configuration.setInterpreterOptions(result.second);
-      } else {
-        configuration.setInterpreterPath(defaultShell);
-      }
+    String defaultShell = ShConfigurationType.getDefaultShell(psiFile.getProject());
+    String shebang = ShShebangParserUtil.getShebangExecutable((ShFile)psiFile);
+    if (shebang != null) {
+      Pair<String, String> result = parseInterpreterAndOptions(shebang);
+      configuration.setInterpreterPath(result.first);
+      configuration.setInterpreterOptions(result.second);
+    } else {
+      configuration.setInterpreterPath(defaultShell);
     }
     configuration.setScriptWorkingDirectory(virtualFile.getParent().getPath());
     configuration.setName(virtualFile.getPresentableName());
