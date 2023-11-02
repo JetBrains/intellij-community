@@ -5,6 +5,7 @@ import com.intellij.codeInsight.inline.completion.elements.InlineCompletionEleme
 import com.intellij.codeInsight.inline.completion.listeners.InlineSessionWiseCaretListener
 import com.intellij.codeInsight.inline.completion.logs.InlineCompletionUsageTracker
 import com.intellij.codeInsight.inline.completion.logs.InlineCompletionUsageTracker.ShownEvents.FinishType
+import com.intellij.codeInsight.inline.completion.logs.InlineContextFeaturesTracker
 import com.intellij.codeInsight.inline.completion.session.InlineCompletionContext
 import com.intellij.codeInsight.inline.completion.session.InlineCompletionSession
 import com.intellij.codeInsight.inline.completion.session.InlineCompletionSessionManager
@@ -248,6 +249,10 @@ class InlineCompletionHandler(
   private fun getProvider(event: InlineCompletionEvent): InlineCompletionProvider? {
     if (application.isUnitTestMode && testProvider != null) {
       return testProvider?.takeIf { it.isEnabled(event) }
+    }
+
+    if (application.isEAP) {
+      InlineContextFeaturesTracker.getInstance().cacheContextFeatures(editor)
     }
 
     return InlineCompletionProvider.extensions().firstOrNull {
