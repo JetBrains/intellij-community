@@ -4885,6 +4885,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                         runTest("testData/quickfix/createFromUsage/createFunction/call/abstract/companion.kt");
                     }
 
+                    @TestMetadata("companion_k2.kt")
+                    public void testCompanion_k2() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/abstract/companion_k2.kt");
+                    }
+
                     @TestMetadata("explicitReceiverOfContainingClass.kt")
                     public void testExplicitReceiverOfContainingClass() throws Exception {
                         runTest("testData/quickfix/createFromUsage/createFunction/call/abstract/explicitReceiverOfContainingClass.kt");
@@ -4920,9 +4925,19 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                         runTest("testData/quickfix/createFromUsage/createFunction/call/abstract/noAbstractSuperclass.kt");
                     }
 
+                    @TestMetadata("noAbstractSuperclass_k2.kt")
+                    public void testNoAbstractSuperclass_k2() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/abstract/noAbstractSuperclass_k2.kt");
+                    }
+
                     @TestMetadata("notAbstractClass.kt")
                     public void testNotAbstractClass() throws Exception {
                         runTest("testData/quickfix/createFromUsage/createFunction/call/abstract/notAbstractClass.kt");
+                    }
+
+                    @TestMetadata("notAbstractClass_k2.kt")
+                    public void testNotAbstractClass_k2() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/abstract/notAbstractClass_k2.kt");
                     }
 
                     @TestMetadata("notWritableAbstractSuperclass.kt")
@@ -4930,9 +4945,19 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                         runTest("testData/quickfix/createFromUsage/createFunction/call/abstract/notWritableAbstractSuperclass.kt");
                     }
 
+                    @TestMetadata("notWritableAbstractSuperclass_k2.kt")
+                    public void testNotWritableAbstractSuperclass_k2() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/abstract/notWritableAbstractSuperclass_k2.kt");
+                    }
+
                     @TestMetadata("otherExplicitReceiver.kt")
                     public void testOtherExplicitReceiver() throws Exception {
                         runTest("testData/quickfix/createFromUsage/createFunction/call/abstract/otherExplicitReceiver.kt");
+                    }
+
+                    @TestMetadata("otherExplicitReceiver_k2.kt")
+                    public void testOtherExplicitReceiver_k2() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/abstract/otherExplicitReceiver_k2.kt");
                     }
                 }
 

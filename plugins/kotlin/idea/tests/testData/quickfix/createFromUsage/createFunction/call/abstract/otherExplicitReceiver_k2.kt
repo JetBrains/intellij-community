@@ -2,7 +2,7 @@
 // ACTION: Add 'b =' to argument
 // ACTION: Create extension function 'B.foo'
 // ACTION: Create member function 'B.foo'
-// ACTION: Rename reference
+// ACTION: Make 'open'
 // ERROR: Unresolved reference: foo
 abstract class A {
     fun bar(b: Boolean) {}
@@ -16,4 +16,4 @@ class B {
 
 }
 
-// IGNORE_K2
+// IGNORE_K1

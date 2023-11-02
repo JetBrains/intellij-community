@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.idea.core.overrideImplement.MemberNotImplementedQuic
 import org.jetbrains.kotlin.idea.inspections.RemoveAnnotationFix
 import org.jetbrains.kotlin.idea.quickfix.fixes.*
 import org.jetbrains.kotlin.idea.quickfix.fixes.ConvertToBlockBodyFixFactory
+import org.jetbrains.kotlin.idea.quickfix.fixes.createFromUsage.CreateCallableFromCallActionFactory
 import org.jetbrains.kotlin.idea.quickfix.importFix.ImportQuickFix
 
 class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
@@ -281,6 +282,10 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         registerApplicator(ActualAnnotationsNotMatchExpectFixFactory.factory)
     }
 
+    private val createFromUsage = KtQuickFixesListBuilder.registerPsiQuickFix {
+        registerApplicator(CreateCallableFromCallActionFactory.factoryForUnresolvedReferenceDiagnostic)
+    }
+
     override val list: KotlinQuickFixesList = KotlinQuickFixesList.createCombined(
         keywords,
         addAbstract,
@@ -300,6 +305,7 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         optIn,
         multiplatform,
         superType,
+        createFromUsage,
     )
 
     override val importOnTheFlyList: KotlinQuickFixesList = KtQuickFixesListBuilder.registerPsiQuickFix {

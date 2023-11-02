@@ -1,6 +1,5 @@
 // "Create abstract function 'bar'" "false"
 // ACTION: Create function 'bar'
-// ACTION: Rename reference
 // ERROR: Unresolved reference: bar
 class Foo : Runnable {
     override fun run() {
@@ -8,4 +7,4 @@ class Foo : Runnable {
     }
 }
 
-// IGNORE_K2
+// IGNORE_K1

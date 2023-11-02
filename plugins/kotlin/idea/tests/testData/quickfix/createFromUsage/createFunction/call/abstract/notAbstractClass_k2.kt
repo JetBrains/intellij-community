@@ -1,6 +1,5 @@
 // "Create abstract function 'foo'" "false"
 // ACTION: Create function 'foo'
-// ACTION: Rename reference
 // ACTION: Add 'b =' to argument
 // ERROR: Unresolved reference: foo
 class A {
@@ -11,4 +10,4 @@ class A {
     }
 }
 
-// IGNORE_K2
+// IGNORE_K1
