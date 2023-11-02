@@ -17,7 +17,6 @@ import org.jetbrains.idea.maven.project.MavenConsole
 import org.jetbrains.idea.maven.server.MavenEmbedderWrapper.LongRunningEmbedderTask
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException
-import org.jetbrains.idea.maven.utils.MavenProgressIndicator
 import java.io.File
 import java.nio.file.Path
 import java.rmi.RemoteException
@@ -169,15 +168,14 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
   }
 
   @Throws(MavenProcessCanceledException::class)
-  fun executeGoal(requests: Collection<MavenGoalExecutionRequest?>,
-                  goal: String,
-                  progressIndicator: MavenProgressIndicator?,
-                  console: MavenConsole?): List<MavenGoalExecutionResult> {
-    val indicator = progressIndicator?.indicator
-    val syncConsole = progressIndicator?.syncConsole
-    return runLongRunningTaskBlocking(
+  suspend fun executeGoal(requests: Collection<MavenGoalExecutionRequest?>,
+                          goal: String,
+                          progressReporter: RawProgressReporter,
+                          syncConsole: MavenSyncConsole?,
+                          console: MavenConsole?): List<MavenGoalExecutionResult> {
+    return runLongRunningTask(
       LongRunningEmbedderTask { embedder, taskId -> embedder.executeGoal(taskId, ArrayList(requests), goal, ourToken) },
-      indicator, syncConsole, console)
+      progressReporter, syncConsole, console)
   }
 
   fun resolveRepositories(repositories: Collection<MavenRemoteRepository?>): Set<MavenRemoteRepository> {
