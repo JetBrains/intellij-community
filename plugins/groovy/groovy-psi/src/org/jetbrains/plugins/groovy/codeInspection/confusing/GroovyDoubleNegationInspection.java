@@ -26,7 +26,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
-import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
+import org.jetbrains.plugins.groovy.codeInspection.GrInspectionUtil;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpression;
@@ -67,7 +67,7 @@ public class GroovyDoubleNegationInspection extends BaseInspection {
         if (innerOperand == null) {
           return;
         }
-        GroovyFix.replaceExpression(expression, innerOperand.getText());
+        GrInspectionUtil.replaceExpression(expression, innerOperand.getText());
       }
       else if (operand instanceof GrBinaryExpression binaryExpression) {
         final GrExpression lhs = binaryExpression.getLeftOperand();
@@ -79,7 +79,7 @@ public class GroovyDoubleNegationInspection extends BaseInspection {
           final String rhsText = rhs.getText();
           builder.append(rhsText);
         }
-        GroovyFix.replaceExpression(expression, builder.toString());
+        GrInspectionUtil.replaceExpression(expression, builder.toString());
       }
     }
   }

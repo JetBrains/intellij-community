@@ -13,12 +13,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
+import org.jetbrains.plugins.groovy.codeInspection.GrInspectionUtil;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
-import static org.jetbrains.plugins.groovy.codeInspection.GroovyFix.replaceExpression;
 import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtilKt.isFake;
 
 public class GroovyPointlessArithmeticInspection extends BaseInspection {
@@ -88,7 +88,7 @@ public class GroovyPointlessArithmeticInspection extends BaseInspection {
     protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       final GrExpression expression = (GrExpression) element;
       final String newExpression = calculateReplacementExpression(expression);
-      replaceExpression(expression, newExpression);
+      GrInspectionUtil.replaceExpression(expression, newExpression);
     }
   }
 

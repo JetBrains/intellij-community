@@ -28,6 +28,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
+import org.jetbrains.plugins.groovy.codeInspection.GrInspectionUtil;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyTokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -35,8 +36,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
-
-import static org.jetbrains.plugins.groovy.codeInspection.GroovyFix.replaceExpression;
 
 public class GroovyListGetCanBeKeyedAccessInspection extends BaseInspection {
 
@@ -71,7 +70,7 @@ public class GroovyListGetCanBeKeyedAccessInspection extends BaseInspection {
       final GrMethodCallExpression callExpression = (GrMethodCallExpression) invokedExpression.getParent();
       final GrArgumentList args = callExpression.getArgumentList();
       final GrExpression arg = args.getExpressionArguments()[0];
-      replaceExpression(callExpression, invokedExpression.getQualifierExpression().getText() + '[' + arg.getText() + ']');
+      GrInspectionUtil.replaceExpression(callExpression, invokedExpression.getQualifierExpression().getText() + '[' + arg.getText() + ']');
     }
   }
 

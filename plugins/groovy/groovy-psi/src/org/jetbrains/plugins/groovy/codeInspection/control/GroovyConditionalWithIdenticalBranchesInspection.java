@@ -24,11 +24,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
+import org.jetbrains.plugins.groovy.codeInspection.GrInspectionUtil;
 import org.jetbrains.plugins.groovy.codeInspection.utils.EquivalenceChecker;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrConditionalExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-
-import static org.jetbrains.plugins.groovy.codeInspection.GroovyFix.replaceExpression;
 
 public class GroovyConditionalWithIdenticalBranchesInspection extends BaseInspection {
 
@@ -54,7 +53,7 @@ public class GroovyConditionalWithIdenticalBranchesInspection extends BaseInspec
       final PsiElement parent = element.getParent();
       if (!(parent instanceof GrConditionalExpression expression)) return;
       final GrExpression thenBranch = expression.getThenBranch();
-      replaceExpression(expression, thenBranch.getText());
+      GrInspectionUtil.replaceExpression(expression, thenBranch.getText());
     }
   }
 

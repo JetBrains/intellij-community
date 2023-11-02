@@ -31,6 +31,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
+import org.jetbrains.plugins.groovy.codeInspection.GrInspectionUtil;
 import org.jetbrains.plugins.groovy.codeInspection.utils.EquivalenceChecker;
 import org.jetbrains.plugins.groovy.codeInspection.utils.SideEffectChecker;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
@@ -41,7 +42,6 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
-import static org.jetbrains.plugins.groovy.codeInspection.GroovyFix.replaceExpression;
 
 public class GroovyAssignmentCanBeOperatorAssignmentInspection
     extends BaseInspection {
@@ -138,7 +138,7 @@ public class GroovyAssignmentCanBeOperatorAssignmentInspection
     protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       if (!(element instanceof GrAssignmentExpression expression)) return;
       final String newExpression = calculateReplacementExpression(expression);
-      replaceExpression(expression, newExpression);
+      GrInspectionUtil.replaceExpression(expression, newExpression);
     }
   }
 

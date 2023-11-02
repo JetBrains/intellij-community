@@ -25,10 +25,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
+import org.jetbrains.plugins.groovy.codeInspection.GrInspectionUtil;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrConditionalExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-
-import static org.jetbrains.plugins.groovy.codeInspection.GroovyFix.replaceExpression;
 
 public class GroovyConstantConditionalInspection extends BaseInspection {
 
@@ -77,8 +76,8 @@ public class GroovyConstantConditionalInspection extends BaseInspection {
                     (GrConditionalExpression) element;
             final String newExpression =
                     calculateReplacementExpression(expression);
-            replaceExpression(expression, newExpression);
-        }
+        GrInspectionUtil.replaceExpression(expression, newExpression);
+      }
     }
 
     private static class ConstantConditionalExpressionVisitor

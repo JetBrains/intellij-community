@@ -28,7 +28,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.formatter.GrControlStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrBlockStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
 
 public abstract class GroovyFix implements LocalQuickFix {
@@ -67,10 +66,6 @@ public abstract class GroovyFix implements LocalQuickFix {
   protected abstract void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor)
       throws IncorrectOperationException;
 
-
-  public static void replaceExpression(GrExpression expression, @NonNls String newExpression) {
-    GrInspectionUtil.replaceExpression(expression, newExpression);
-  }
 
   public static void replaceStatement(GrStatement statement, @NonNls String newStatement) {
     final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(statement.getProject());

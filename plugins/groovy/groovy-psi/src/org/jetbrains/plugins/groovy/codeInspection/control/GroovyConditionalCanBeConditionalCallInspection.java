@@ -36,8 +36,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
-import static org.jetbrains.plugins.groovy.codeInspection.GroovyFix.replaceExpression;
-
 public class GroovyConditionalCanBeConditionalCallInspection extends BaseInspection {
 
   @Override
@@ -80,7 +78,7 @@ public class GroovyConditionalCanBeConditionalCallInspection extends BaseInspect
       }
       final String methodName = methodExpression.getReferenceName();
       final GrArgumentList argumentList = call.getArgumentList();
-      replaceExpression(expression, qualifier.getText() + "?." + methodName + argumentList.getText());
+      GrInspectionUtil.replaceExpression(expression, qualifier.getText() + "?." + methodName + argumentList.getText());
     }
   }
 

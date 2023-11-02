@@ -16,7 +16,6 @@
 package org.jetbrains.plugins.groovy.codeInspection.confusing;
 
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
@@ -25,14 +24,13 @@ import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypes;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
-import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
+import org.jetbrains.plugins.groovy.codeInspection.GrInspectionUtil;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnaryExpression;
@@ -40,7 +38,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals
 import org.jetbrains.plugins.groovy.lang.psi.impl.utils.ComparisonUtils;
 import org.jetbrains.plugins.groovy.lang.psi.impl.utils.ParenthesesUtils;
 
-import static org.jetbrains.plugins.groovy.codeInspection.GroovyFix.replaceExpression;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.*;
 import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtilKt.isFake;
 
@@ -194,12 +191,12 @@ public class GroovyPointlessBooleanInspection extends BaseInspection {
     protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       if (element instanceof GrBinaryExpression expression) {
         final String replacementString = calculateSimplifiedBinaryExpression(expression);
-        replaceExpression(expression, replacementString);
+        GrInspectionUtil.replaceExpression(expression, replacementString);
       }
       else {
         final GrUnaryExpression expression = (GrUnaryExpression)element;
         final String replacementString = calculateSimplifiedPrefixExpression(expression);
-        replaceExpression(expression, replacementString);
+        GrInspectionUtil.replaceExpression(expression, replacementString);
       }
     }
   }
