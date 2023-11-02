@@ -131,7 +131,8 @@ class MavenSystemIndicesManager(val cs: CoroutineScope) {
 
   private fun getDirForMavenIndex(repo: MavenRepositoryInfo): Path {
     val url = getCanonicalUrl(repo)
-    val key = PathUtilRt.getFileName(url)
+    val key = PathUtilRt.suggestFileName(PathUtilRt.getFileName(url), false, false)
+
     val locationHash = Integer.toHexString((url).hashCode())
     return getIndicesDir().resolve("$key-$locationHash")
   }
