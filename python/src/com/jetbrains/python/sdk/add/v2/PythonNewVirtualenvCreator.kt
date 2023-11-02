@@ -41,7 +41,10 @@ class PythonNewVirtualenvCreator(presenter: PythonAddInterpreterPresenter) : Pyt
   override fun buildOptions(panel: Panel) {
     with(panel) {
       row(message("sdk.create.custom.base.python")) {
-        versionComboBox = pythonBaseInterpreterComboBox(presenter, presenter.basePythonSdksFlow, presenter.basePythonHomePath).component
+        versionComboBox =
+          pythonBaseInterpreterComboBox(presenter, presenter.basePythonSdksFlow, presenter.detectingSdks, presenter.basePythonHomePath)
+            .align(Align.FILL)
+            .component
       }
       row(message("sdk.create.custom.location")) {
         textFieldWithBrowseButton(message("sdk.create.custom.venv.location.browse.title"),

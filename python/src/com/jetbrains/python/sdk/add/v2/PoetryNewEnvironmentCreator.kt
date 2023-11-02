@@ -8,6 +8,7 @@ import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
+import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.util.text.nullize
 import com.jetbrains.python.PyBundle.message
@@ -26,7 +27,10 @@ class PoetryNewEnvironmentCreator(presenter: PythonAddInterpreterPresenter) : Py
   override fun buildOptions(panel: Panel) {
     with(panel) {
       row(message("sdk.create.custom.base.python")) {
-        basePythonComboBox = pythonBaseInterpreterComboBox(presenter, presenter.basePythonSdksFlow, presenter.basePythonHomePath).component
+        basePythonComboBox =
+          pythonBaseInterpreterComboBox(presenter, presenter.basePythonSdksFlow, presenter.detectingSdks, presenter.basePythonHomePath)
+            .align(Align.FILL)
+            .component
       }
 
       poetryPathField = executableSelector(message("sdk.create.custom.poetry.path"), executable,
