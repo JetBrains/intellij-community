@@ -26,7 +26,7 @@ class PoetryNewEnvironmentCreator(presenter: PythonAddInterpreterPresenter) : Py
   override fun buildOptions(panel: Panel) {
     with(panel) {
       row(message("sdk.create.custom.base.python")) {
-        basePythonComboBox = pythonBaseInterpreterComboBox(presenter, presenter.basePythonSdksFlow, presenter.basePythonHomePath)
+        basePythonComboBox = pythonBaseInterpreterComboBox(presenter, presenter.basePythonSdksFlow, presenter.basePythonHomePath).component
       }
 
       poetryPathField = executableSelector(message("sdk.create.custom.poetry.path"), executable,
