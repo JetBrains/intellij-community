@@ -1411,7 +1411,7 @@
                         serviceImplementation="com.intellij.ui.AutoScrollToSourceTaskManagerImpl"/>
 
     <applicationService serviceImplementation="com.intellij.openapi.updateSettings.impl.UpdateCheckerService" headlessImplementation=""/>
-    <postStartupActivity implementation="com.intellij.openapi.updateSettings.impl.UpdateCheckerService$MyActivity" order="last"/>
+    <postStartupActivity implementation="com.intellij.openapi.updateSettings.impl.UpdateCheckerProjectActivity" order="last"/>
 
     <applicationService serviceImplementation="com.intellij.usages.impl.UsageFilteringRuleStateService" client="all"/>
 
