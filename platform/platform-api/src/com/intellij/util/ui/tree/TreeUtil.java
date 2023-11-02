@@ -117,7 +117,7 @@ public final class TreeUtil {
     return hasManyNodes(treeTraverser(tree), threshold);
   }
 
-  public static boolean hasManyChildren(@NotNull TreeNode node, int threshold) {
+  public static boolean hasManyNodes(@NotNull TreeNode node, int threshold) {
     return hasManyNodes(treeNodeTraverser(node), threshold);
   }
 
@@ -2022,5 +2022,13 @@ public final class TreeUtil {
     TreePath path = tree.getPathForRow(row);
     if (path == null) throw new NullPointerException("path is not found at row " + row);
     return path;
+  }
+
+  /**
+   * @deprecated Use {@link #hasManyNodes} instead
+   */
+  @Deprecated(forRemoval = true)
+  public static boolean hasManyChildren(@NotNull TreeNode node, int threshold) {
+    return hasManyNodes(node, threshold);
   }
 }
