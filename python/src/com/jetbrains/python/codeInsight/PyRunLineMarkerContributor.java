@@ -7,6 +7,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.extensions.ExtensionNotApplicableException;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -23,7 +24,7 @@ import com.jetbrains.python.psi.impl.PyIfStatementNavigator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class PyRunLineMarkerContributor extends RunLineMarkerContributor {
+public class PyRunLineMarkerContributor extends RunLineMarkerContributor implements DumbAware {
   public PyRunLineMarkerContributor() {
     if (PlatformUtils.isPyCharmEducational()) {
       throw ExtensionNotApplicableException.create();
