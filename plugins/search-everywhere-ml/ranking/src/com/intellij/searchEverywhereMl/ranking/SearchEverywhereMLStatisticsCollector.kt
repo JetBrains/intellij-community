@@ -220,17 +220,15 @@ class SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
     }
   }
 
-  private fun getSessionLevelEvents(
-    project: Project?,
-    shouldLogFeatures: Boolean,
-    context: SearchEverywhereMLContextInfo
-  ): List<EventPair<*>> {
-    val sessionEvents = listOf(
-      PROJECT_OPENED_KEY.with(project != null),
-      LOG_FEATURES_DATA_KEY.with(shouldLogFeatures),
-    )
-    val contextEvents = if (shouldLogFeatures) context.features else emptyList()
-    return sessionEvents + contextEvents
+  private fun getSessionLevelEvents(project: Project?,
+                                    shouldLogFeatures: Boolean,
+                                    context: SearchEverywhereMLContextInfo) = buildList {
+    add(PROJECT_OPENED_KEY.with(project != null))
+    add(LOG_FEATURES_DATA_KEY.with(shouldLogFeatures))
+
+    if (shouldLogFeatures) {
+      addAll(context.features)
+    }
   }
 
   private fun isLoggingEnabled() =
@@ -241,21 +239,27 @@ class SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
                                         elements: List<SearchEverywhereFoundElementInfoWithMl>,
                                         elementIdProvider: SearchEverywhereMlItemIdProvider,
                                         selectedItems: List<Any>): List<EventPair<*>> {
+    if (selectedElements.isEmpty()) return emptyList()
+
     return buildList {
-      if (selectedElements.isNotEmpty()) {
-        add(SELECTED_INDEXES_DATA_KEY.with(selectedElements.map { it }))
-        add(SELECTED_ELEMENTS_DATA_KEY.with(selectedElements.map {
-          if (it < elements.size) {
-            val element = elements[it].element
-            val elementId = elementIdProvider.getId(element)
-            if (elementId != null) {
-              return@map elementId
-            }
-          }
-          return@map -1
-        }))
-        add(SELECTED_ELEMENTS_CONSISTENT.with(isSelectionConsistent(selectedElements, selectedItems, elements)))
-      }
+      add(SELECTED_INDEXES_DATA_KEY.with(selectedElements.toList()))
+      add(SELECTED_ELEMENTS_DATA_KEY.with(mapSelectedIndexToElementId(selectedElements, elements, elementIdProvider)))
+      add(SELECTED_ELEMENTS_CONSISTENT.with(isSelectionConsistent(selectedElements, selectedItems, elements)))
+    }
+  }
+
+  /**
+   * Maps every selected element, based on index, to its ID
+   * If the number of selected elements does not match the number of elements, each element will have ID -1.
+   */
+  private fun mapSelectedIndexToElementId(selectedIndices: IntArray,
+                                          elements: List<SearchEverywhereFoundElementInfoWithMl>,
+                                          idProvider: SearchEverywhereMlItemIdProvider): List<Int> {
+    return selectedIndices.map { index ->
+      if (index >= elements.lastIndex) return@map -1
+
+      val element = elements[index].element
+      return@map idProvider.getId(element) ?: -1
     }
   }
 
