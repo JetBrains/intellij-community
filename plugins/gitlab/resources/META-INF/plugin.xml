@@ -87,6 +87,8 @@
                  description="Connect to GitLab repository without an explicit user action"
                  defaultValue="true"/>
     <registryKey defaultValue="true" description="Enable all-in-one diff for GitLab merge requests" key="gitlab.enable.combined.diff"/>
+    <registryKey defaultValue="1000" description="Request polling timeout in milliseconds" key="gitlab.request.polling.timeout.millis"/>
+    <registryKey defaultValue="5" description="Request polling attempts" key="gitlab.request.polling.attempts"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.statistics">

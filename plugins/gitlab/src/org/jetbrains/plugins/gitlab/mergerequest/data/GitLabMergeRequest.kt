@@ -20,8 +20,8 @@ import org.jetbrains.plugins.gitlab.mergerequest.api.request.*
 import org.jetbrains.plugins.gitlab.mergerequest.data.loaders.GitLabETagUpdatableListLoader
 import org.jetbrains.plugins.gitlab.util.GitLabApiRequestName
 import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
+import org.jetbrains.plugins.gitlab.util.GitLabRegistry
 import org.jetbrains.plugins.gitlab.util.GitLabStatistics
-import kotlin.time.Duration.Companion.seconds
 
 private val LOG = logger<GitLabMergeRequest>()
 
@@ -235,13 +235,7 @@ internal class LoadedGitLabMergeRequest(
 
   override suspend fun merge(commitMessage: String) {
     withContext(cs.coroutineContext + Dispatchers.IO) {
-      val mergeRequest = mergeRequestDetailsState.value
-      val updatedMergeRequest = api.graphQL.mergeRequestAccept(glProject,
-                                                               iid,
-                                                               commitMessage,
-                                                               mergeRequest.commits.first().sha, // First from the list -- last commit from review
-                                                               withSquash = false).getResultOrThrow()
-      updateMergeRequestData(updatedMergeRequest)
+      runMerge(commitMessage, withSquash = false)
     }
     discussionsContainer.checkUpdates()
     GitLabStatistics.logMrActionExecuted(project, GitLabStatistics.MergeRequestAction.MERGE)
@@ -249,13 +243,7 @@ internal class LoadedGitLabMergeRequest(
 
   override suspend fun squashAndMerge(commitMessage: String) {
     withContext(cs.coroutineContext + Dispatchers.IO) {
-      val mergeRequest = mergeRequestDetailsState.value
-      val updatedMergeRequest = api.graphQL.mergeRequestAccept(glProject,
-                                                               iid,
-                                                               commitMessage,
-                                                               mergeRequest.commits.first().sha, // First from the list -- last commit from review
-                                                               withSquash = true).getResultOrThrow()
-      updateMergeRequestData(updatedMergeRequest)
+      runMerge(commitMessage, withSquash = true)
     }
     discussionsContainer.checkUpdates()
     GitLabStatistics.logMrActionExecuted(project, GitLabStatistics.MergeRequestAction.SQUASH_MERGE)
@@ -263,13 +251,7 @@ internal class LoadedGitLabMergeRequest(
 
   override suspend fun rebase() {
     withContext(cs.coroutineContext + Dispatchers.IO) {
-      api.rest.mergeRequestRebase(glProject, iid)
-      do {
-        val updatedMergeRequest = api.graphQL.loadMergeRequest(glProject, iid).body()!!
-        updateMergeRequestData(updatedMergeRequest)
-        delay(1.seconds)
-      }
-      while (updatedMergeRequest.rebaseInProgress)
+      runRebase()
     }
     discussionsContainer.checkUpdates()
     GitLabStatistics.logMrActionExecuted(project, GitLabStatistics.MergeRequestAction.REBASE)
@@ -392,5 +374,35 @@ internal class LoadedGitLabMergeRequest(
     return GitLabMergeRequestFullDetails.fromGraphQL(updatedMergeRequest, commits).also {
       mergeRequestDetailsState.value = it
     }
+  }
+
+  private suspend fun runMerge(commitMessage: String, withSquash: Boolean) {
+    var attempts = 0
+    val mergeRequest = mergeRequestDetailsState.value
+    val sha = mergeRequest.commits.first().sha // First from the list -- last commit from review
+    api.graphQL.mergeRequestAccept(glProject, iid, commitMessage, sha, withSquash).getResultOrThrow()
+    do {
+      val updatedMergeRequest = api.graphQL.loadMergeRequest(glProject, iid).body()!!
+      updateMergeRequestData(updatedMergeRequest)
+      delay(GitLabRegistry.getRequestPollingIntervalMillis().toLong())
+      attempts++
+    }
+    while (updatedMergeRequest.state != GitLabMergeRequestState.MERGED || attempts == REQUEST_ATTEMPTS_LIMIT_NUMBER)
+  }
+
+  private suspend fun runRebase() {
+    var attempts = 0
+    api.rest.mergeRequestRebase(glProject, iid)
+    do {
+      val updatedMergeRequest = api.graphQL.loadMergeRequest(glProject, iid).body()!!
+      updateMergeRequestData(updatedMergeRequest)
+      delay(GitLabRegistry.getRequestPollingIntervalMillis().toLong())
+      attempts++
+    }
+    while (updatedMergeRequest.rebaseInProgress || attempts == REQUEST_ATTEMPTS_LIMIT_NUMBER)
+  }
+
+  companion object {
+    private val REQUEST_ATTEMPTS_LIMIT_NUMBER = GitLabRegistry.getRequestPollingAttempts()
   }
 }
