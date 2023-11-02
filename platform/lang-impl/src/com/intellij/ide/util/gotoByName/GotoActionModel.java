@@ -665,6 +665,7 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
     private final Presentation myPresentation;
     private final String myActionText;
 
+    @Deprecated(forRemoval = true)
     public ActionWrapper(@NotNull AnAction action,
                          @Nullable GroupMapping groupMapping,
                          @NotNull MatchMode mode,
