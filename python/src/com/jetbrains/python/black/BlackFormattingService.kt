@@ -35,10 +35,9 @@ class BlackFormattingService : AsyncDocumentFormattingService() {
     val NAME: String = PyBundle.message("black.formatting.service.name")
     val DEFAULT_CHARSET: Charset = StandardCharsets.UTF_8
     const val NOTIFICATION_GROUP_ID = "Black Formatter Integration"
-    val FEATURES: Set<FormattingService.Feature> = setOf(FormattingService.Feature.FORMAT_FRAGMENTS)
   }
 
-  override fun getFeatures(): Set<FormattingService.Feature> = FEATURES
+  override fun getFeatures(): Set<FormattingService.Feature> = setOf()
 
   override fun canFormat(source: PsiFile): Boolean {
     if (!Registry.`is`("black.formatter.support.enabled")) return false
