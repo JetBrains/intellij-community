@@ -1332,7 +1332,7 @@
     <externalProjectDataService implementation="com.intellij.externalSystem.JavaProjectDataService"/>
     <externalProjectDataService implementation="com.intellij.externalSystem.JavaModuleDataService"/>
     <libraryDataServiceExtension implementation="com.intellij.externalSystem.JavaLibraryDataServiceExtension"/>
-    <postStartupActivity implementation="com.intellij.pom.java.AcceptedLanguageLevelsSettings$AcceptedLanguageLevelsSettingsStartupActivity"/>
+    <postStartupActivity implementation="com.intellij.pom.java.AcceptedLanguageLevelsSettingsStartupActivity"/>
     <projectModelModifier implementation="com.intellij.openapi.roots.impl.IdeaProjectModelModifier" order="last"/>
     <multiHostInjector implementation="com.intellij.psi.impl.source.tree.injected.JavaConcatenationToInjectorAdapter" order="first"/>
     <multiHostInjector implementation="com.intellij.psi.impl.source.tree.injected.JavadocInjector" />
