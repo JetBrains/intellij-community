@@ -77,8 +77,14 @@ class LinuxFileStorage(dir: LinuxFilePath, distro: AbstractWslDistribution)
   }
 
   override fun isEmpty(): Boolean {
+    // echo nonce >&2 && [ -e dir ] && ls dir
+    // if exit code is 0 and stdout is empty, the folder is empty
+    // if exit code != 0, folder doesn't exist or some error happened
+    // we cut everything before nonce because shell profile might print junk there, and then check the rest
+    val prefixCutter = PrefixCutter()
     val options = WSLCommandLineOptions().apply {
       addInitCommand("[ -e ${escapePath(dir)} ]")
+      addInitCommand("echo ${prefixCutter.token} >&2")
     }
     val process = distro.patchCommandLine(GeneralCommandLine("ls", "-A", dir), null, options).createProcess()
     if (!process.waitFor(5, TimeUnit.SECONDS)) throw Exception("Process didn't finish: WSL frozen?")
@@ -88,7 +94,7 @@ class LinuxFileStorage(dir: LinuxFilePath, distro: AbstractWslDistribution)
     }
     else {
       // Folder doesn't exist
-      val error = process.errorStream.readAllBytes().decodeToString()
+      val error = prefixCutter.getAfterToken(process.errorStream.readAllBytes().decodeToString()).trim()
       if (error.isEmpty()) return true // Doesn't exist, but still empty
       throw Exception("Error checking folder: $error")
     }
