@@ -8,6 +8,7 @@ import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.ide.bootstrap.IdeStartupWizard
+import com.intellij.platform.ide.bootstrap.isIdeStartupWizardEnabled
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
@@ -15,11 +16,8 @@ import kotlinx.coroutines.withContext
 
 internal class IdeStartupWizardImpl : IdeStartupWizard {
 
-  private val isEnabledViaSystemProperty
-    get() = System.getProperty("intellij.startup.wizard", "false").toBoolean()
-
   override suspend fun run() {
-    if (!isEnabledViaSystemProperty) return
+    if (!isIdeStartupWizardEnabled) return
 
     logger.info("Initial startup wizard is enabled. Will start the wizard.")
     coroutineScope {

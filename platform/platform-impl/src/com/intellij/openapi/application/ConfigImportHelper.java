@@ -37,7 +37,7 @@ import com.intellij.openapi.util.text.NaturalComparator;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.platform.ide.bootstrap.IdeStartupExperiment;
+import com.intellij.platform.ide.bootstrap.IdeStartupWizardKt;
 import com.intellij.platform.ide.bootstrap.StartupErrorReporter;
 import com.intellij.ui.AppUIUtilKt;
 import com.intellij.util.PlatformUtils;
@@ -150,7 +150,7 @@ public final class ConfigImportHelper {
           log.error("Couldn't backup current config or delete current config directory", e);
         }
       }
-      else if (Boolean.getBoolean("intellij.startup.wizard") && IdeStartupExperiment.INSTANCE.shouldEnableNewStartupFlow()) {
+      else if (IdeStartupWizardKt.isIdeStartupWizardEnabled()) {
         if (!guessedOldConfigDirs.isEmpty() && !shouldAskForConfig()) {
           Pair<Path, FileTime> bestConfigGuess = guessedOldConfigDirs.getFirstItem();
           if (!isConfigOld(bestConfigGuess.second)) {
