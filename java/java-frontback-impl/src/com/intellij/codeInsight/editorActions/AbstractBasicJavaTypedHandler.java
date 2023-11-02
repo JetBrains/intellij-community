@@ -118,7 +118,8 @@ public abstract class AbstractBasicJavaTypedHandler extends TypedHandlerDelegate
       
       HighlighterIterator iterator = editor.getHighlighter().createIterator(offset-1);
       CharSequence sequence = editor.getDocument().getCharsSequence();
-      if (!iterator.atEnd() && iterator.getTokenType() == JavaTokenType.STRING_TEMPLATE_BEGIN &&
+      if (!iterator.atEnd() && 
+          (iterator.getTokenType() == JavaTokenType.STRING_TEMPLATE_BEGIN || iterator.getTokenType() == JavaTokenType.TEXT_BLOCK_TEMPLATE_BEGIN) &&
           iterator.getEnd() == offset && sequence.subSequence(iterator.getStart(), iterator.getEnd()).toString().equals("\\{")) {
         if (sequence.length() > offset && sequence.charAt(offset) == '}') {
           editor.getCaretModel().moveToOffset(offset + 1);
