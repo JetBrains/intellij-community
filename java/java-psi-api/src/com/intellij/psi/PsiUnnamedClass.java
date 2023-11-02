@@ -12,7 +12,6 @@ import org.jetbrains.annotations.Nullable;
  */
 @ApiStatus.Experimental
 public interface PsiUnnamedClass extends PsiClass {
-  @Contract("-> null")
   @Override
   @Nullable String getQualifiedName();
 
