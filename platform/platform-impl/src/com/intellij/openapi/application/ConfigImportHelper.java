@@ -148,7 +148,7 @@ public final class ConfigImportHelper {
           log.error("Couldn't backup current config or delete current config directory", e);
         }
       }
-      else if (!Boolean.getBoolean("intellij.startup.wizard")) {
+      else {
         if (shouldAskForConfig()) {
           oldConfigDirAndOldIdePath = showDialogAndGetOldConfigPath(guessedOldConfigDirs.getPaths());
           importScenarioStatistics = SHOW_DIALOG_REQUESTED_BY_PROPERTY;
