@@ -11,6 +11,8 @@ import kotlinx.coroutines.*
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.impl.OsSpecificDistributionBuilder.Companion.suffix
+import org.jetbrains.intellij.build.impl.client.ADDITIONAL_EMBEDDED_CLIENT_VM_OPTIONS
+import org.jetbrains.intellij.build.impl.client.createJetBrainsClientContextForLaunchers
 import org.jetbrains.intellij.build.impl.productInfo.*
 import org.jetbrains.intellij.build.impl.support.RepairUtilityBuilder
 import org.jetbrains.intellij.build.io.*
@@ -57,7 +59,14 @@ internal class WindowsDistributionBuilder(
         generateScripts(distBinDir, arch)
       }
       writeVmOptions(distBinDir)
-      buildWinLauncher(targetPath, arch, context)
+      buildWinLauncher(targetPath, arch, additionalNonCustomizableJvmArgs = emptyList(), context)
+      val jetBrainsClientContext = createJetBrainsClientContextForLaunchers(context)
+      if (jetBrainsClientContext != null) {
+        writeWindowsVmOptions(distBinDir, jetBrainsClientContext)
+        buildWinLauncher(targetPath, arch, additionalNonCustomizableJvmArgs = ADDITIONAL_EMBEDDED_CLIENT_VM_OPTIONS,
+                         jetBrainsClientContext)
+      }
+
       customizer.copyAdditionalFiles(context, targetPath, arch)
     }
 
@@ -290,14 +299,18 @@ private fun computeIcoPath(context: BuildContext): Path? {
   return icoPath?.let { Path.of(icoPath) }
 }
 
-private suspend fun buildWinLauncher(winDistPath: Path, arch: JvmArchitecture, context: BuildContext) {
+private suspend fun buildWinLauncher(winDistPath: Path,
+                                     arch: JvmArchitecture,
+                                     additionalNonCustomizableJvmArgs: List<String>,
+                                     context: BuildContext) {
   spanBuilder("build Windows executable").useWithScope2 {
     val executableBaseName = "${context.productProperties.baseFileName}64"
     val launcherPropertiesPath = context.paths.tempDir.resolve("launcher-${arch.dirName}.properties")
     val icoFile = computeIcoPath(context)
 
     @Suppress("SpellCheckingInspection")
-    val vmOptions = context.getAdditionalJvmArguments(OsFamily.WINDOWS, arch) + listOf("-Dide.native.launcher=true")
+    val vmOptions = context.getAdditionalJvmArguments(OsFamily.WINDOWS, arch) + listOf("-Dide.native.launcher=true") + 
+                    additionalNonCustomizableJvmArgs
     val productName = context.applicationInfo.shortProductName
     val classPath = context.bootClassPathJarNames.joinToString(separator = ";") { "%IDE_HOME%\\\\lib\\\\${it}" }
     val bootClassPath = context.xBootClassPathJarNames.joinToString(separator = ";") { "%IDE_HOME%\\\\lib\\\\${it}" }
