@@ -36,11 +36,11 @@ internal fun navigationActions(): List<AnAction> = groupActions("Documentation.N
 private fun groupActions(groupId: String) = listOf(*requireNotNull(ActionUtil.getActionGroup(groupId)).getChildren(null))
 
 internal fun registerBackForwardActions(component: JComponent) {
-  EmptyAction.registerWithShortcutSet("Documentation.Back", CustomShortcutSet(
+  ActionUtil.wrap("Documentation.Back").registerCustomShortcutSet(CustomShortcutSet(
     KeyboardShortcut.fromString(if (ScreenReader.isActive()) "alt LEFT" else "LEFT"),
     KeymapUtil.parseMouseShortcut("button4"),
   ), component)
-  EmptyAction.registerWithShortcutSet("Documentation.Forward", CustomShortcutSet(
+    ActionUtil.wrap("Documentation.Forward").registerCustomShortcutSet(CustomShortcutSet(
     KeyboardShortcut.fromString(if (ScreenReader.isActive()) "alt RIGHT" else "RIGHT"),
     KeymapUtil.parseMouseShortcut("button5")
   ), component)

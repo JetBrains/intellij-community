@@ -5,7 +5,7 @@ import com.intellij.collaboration.ui.toolwindow.dontHideOnEmptyContent
 import com.intellij.collaboration.ui.toolwindow.manageReviewToolwindowTabs
 import com.intellij.openapi.actionSystem.CommonShortcuts
 import com.intellij.openapi.actionSystem.DefaultActionGroup
-import com.intellij.openapi.actionSystem.EmptyAction
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -79,11 +79,9 @@ private class GHPRToolWindowController(private val project: Project, parentCs: C
         toolWindow.dontHideOnEmptyContent()
         val componentFactory = GHPRToolWindowTabComponentFactory(project, vm)
         manageReviewToolwindowTabs(this, toolWindow, vm, componentFactory, GithubBundle.message("toolwindow.stripe.Pull_Requests"))
-
-        toolWindow.setTitleActions(listOf(
-          EmptyAction.registerWithShortcutSet("Github.Create.Pull.Request", CommonShortcuts.getNew(), toolWindow.component),
-          GHPRSelectPullRequestForFileAction(),
-        ))
+        val wrapper = ActionUtil.wrap("Github.Create.Pull.Request")
+        wrapper.registerCustomShortcutSet(CommonShortcuts.getNew(), toolWindow.component)
+        toolWindow.setTitleActions(listOf(wrapper, GHPRSelectPullRequestForFileAction()))
         toolWindow.setAdditionalGearActions(DefaultActionGroup(GHPRSwitchRemoteAction()))
 
         awaitCancellation()
