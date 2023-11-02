@@ -74,10 +74,12 @@ internal class ActionUpdater @JvmOverloads constructor(
   val place: String,
   private val contextMenuAction: Boolean,
   private val toolbarAction: Boolean,
-  private val edtScope: CoroutineScope,
+  edtScope: CoroutineScope,
   private val eventTransform: ((AnActionEvent) -> AnActionEvent)? = null) {
 
+  private val edtScope = edtScope + SupervisorJob()
   @Volatile private var bgtScope: CoroutineScope? = null
+
   private val application: Application = com.intellij.util.application
   private val project = CommonDataKeys.PROJECT.getData(dataContext)
   private val sessionData = ConcurrentHashMap<Pair<String, Any?>, Deferred<*>>()
