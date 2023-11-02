@@ -112,7 +112,7 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
 
   /**
    * NOTE: if the client sets forUseInNonAWTThread to "true", then it's their responsibility to control the document and its listeners.
-   * The noticeable peculiarity of DocumentImpl behavior in this mode is that it won't suppress ProcessCancelledException
+   * The noticeable peculiarity of DocumentImpl behavior in this mode is that it won't suppress ProcessCanceledException
    * thrown from listeners during "changedUpdate" event, so the exceptions will be rethrown and the remaining listeners WON'T be notified.
    */
   public DocumentImpl(@NotNull CharSequence chars, boolean forUseInNonAWTThread) {

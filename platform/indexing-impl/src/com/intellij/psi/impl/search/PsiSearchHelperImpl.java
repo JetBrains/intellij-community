@@ -94,7 +94,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
         additionalScope = enlarger.getAdditionalUseScope(element);
       }
       catch (IndexNotReadyException pce) {
-        LOG.debug("ProcessCancelledException thrown while getUseScope() calculation", pce);
+        LOG.debug("ProcessCanceledException thrown while getUseScope() calculation", pce);
       }
       if (additionalScope != null) {
         scope = scope.union(additionalScope);
