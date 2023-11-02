@@ -199,14 +199,26 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
     }
 
     List<PsiElement> refsToInlineList = new ArrayList<>();
+    boolean simpleInlining = false;
     if (mode == InlineMode.INLINE_ONE) {
       refsToInlineList.add(refExpr);
     } else {
-      try {
-        Collections.addAll(refsToInlineList, DefUseUtil.getRefs(containerBlock, local, defToInline));
+      if (defToInline == local.getInitializer()) {
+        // Do not rely on ref-def analysis in a simple case when we inline an initializer and there are no subsequent writes.
+        // This allows inlining in the presense of syntax errors.
+        List<PsiReferenceExpression> refs = VariableAccessUtils.getVariableReferences(local, containerBlock);
+        if (!ContainerUtil.exists(refs, ref -> PsiUtil.isAccessedForWriting(ref))) {
+          simpleInlining = true;
+          refsToInlineList.addAll(refs);
+        }
       }
-      catch (RuntimeException e) {
-        return processWrappedAnalysisCanceledException(e);
+      if (!simpleInlining) {
+        try {
+          Collections.addAll(refsToInlineList, DefUseUtil.getRefs(containerBlock, local, defToInline, true));
+        }
+        catch (RuntimeException e) {
+          return processWrappedAnalysisCanceledException(e);
+        }
       }
       for (PsiElement innerClassUsage : innerClassUses.innerClassUsages()) {
         if (!refsToInlineList.contains(innerClassUsage)) {
