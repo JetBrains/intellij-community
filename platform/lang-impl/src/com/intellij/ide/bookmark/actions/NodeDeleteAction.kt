@@ -44,23 +44,23 @@ internal class NodeDeleteAction : DumbAwareAction() {
                           view: BookmarksView) {
     val shouldDelete = when {
       bookmarksViewState == null -> true
-      nodes.any { it is GroupNode || it is FileNode } -> {
+      else -> {
         if (!askBeforeDeleting(bookmarksViewState, nodes)) true
         else {
           val fileNode = nodes.any { it is FileNode }
           val title = when {
             fileNode && nodes.size == 1 -> BookmarkBundle.message("dialog.message.delete.single.node.title")
-            fileNode -> BookmarkBundle.message("dialog.message.delete.multiple.nodes.title")
             nodes.size == 1 -> BookmarkBundle.message("dialog.message.delete.single.list.title")
-            else -> BookmarkBundle.message("dialog.message.delete.multiple.lists.title")
+            nodes.all { it is GroupNode } -> BookmarkBundle.message("dialog.message.delete.multiple.lists.title")
+            else -> BookmarkBundle.message("dialog.message.delete.multiple.nodes.title")
           }
           val message = when {
             fileNode && nodes.size == 1 -> BookmarkBundle.message("dialog.message.delete.single.node",
                                                                   nodes.first().children.size,
                                                                   (nodes.first().value as FileBookmark).file.name)
-            fileNode -> BookmarkBundle.message("dialog.message.delete.multiple.nodes")
             nodes.size == 1 -> BookmarkBundle.message("dialog.message.delete.single.list", (nodes.first { it is GroupNode }.value as BookmarkGroup).name)
-            else -> BookmarkBundle.message("dialog.message.delete.multiple.lists")
+            nodes.all { it is GroupNode } -> BookmarkBundle.message("dialog.message.delete.multiple.lists")
+            else -> BookmarkBundle.message("dialog.message.delete.multiple.nodes")
           }
           MessageDialogBuilder
             .yesNo(title, message)
@@ -75,7 +75,6 @@ internal class NodeDeleteAction : DumbAwareAction() {
             .ask(project)
         }
       }
-      else -> true
     }
 
     if (shouldDelete) {
