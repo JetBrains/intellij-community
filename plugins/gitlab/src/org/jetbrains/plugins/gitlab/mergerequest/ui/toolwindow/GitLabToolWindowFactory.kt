@@ -5,7 +5,7 @@ import com.intellij.collaboration.ui.toolwindow.dontHideOnEmptyContent
 import com.intellij.collaboration.ui.toolwindow.manageReviewToolwindowTabs
 import com.intellij.openapi.actionSystem.CommonShortcuts
 import com.intellij.openapi.actionSystem.DefaultActionGroup
-import com.intellij.openapi.actionSystem.EmptyAction
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -72,10 +72,9 @@ private class GitLabMergeRequestsToolWindowController(private val project: Proje
       val componentFactory = GitLabReviewTabComponentFactory(project, vm)
 
       manageReviewToolwindowTabs(cs, toolWindow, vm, componentFactory, GitLabBundle.message("merge.request.toolwindow.tab.title"))
-
-      toolWindow.setTitleActions(listOf(
-        EmptyAction.registerWithShortcutSet("GitLab.Merge.Request.Create", CommonShortcuts.getNew(), toolWindow.component),
-      ))
+      val wrapper = ActionUtil.wrap("GitLab.Merge.Request.Create")
+      wrapper.registerCustomShortcutSet(CommonShortcuts.getNew(), toolWindow.component)
+      toolWindow.setTitleActions(listOf(wrapper))
       toolWindow.setAdditionalGearActions(DefaultActionGroup(GitLabSwitchProjectAndAccountAction()))
       awaitCancellation()
     }.cancelOnDispose(toolWindow.contentManager)

@@ -40,7 +40,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkAdditionalData;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryManager;
@@ -1074,7 +1076,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
       }
 
       public void setup() {
-        EmptyAction.setupAction(this, CONSOLE_SPLIT_LINE_ACTION_ID, null);
+        ActionUtil.mergeFrom(this, CONSOLE_SPLIT_LINE_ACTION_ID);
       }
     }
 

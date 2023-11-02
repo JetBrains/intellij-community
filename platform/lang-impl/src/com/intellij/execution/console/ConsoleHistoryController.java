@@ -12,6 +12,7 @@ import com.intellij.lang.LangBundle;
 import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.undo.UndoUtil;
@@ -200,9 +201,9 @@ public class ConsoleHistoryController implements Disposable {
   }
 
   private void configureActions() {
-    EmptyAction.setupAction(myHistoryNext, "Console.History.Next", null);
-    EmptyAction.setupAction(myHistoryPrev, "Console.History.Previous", null);
-    EmptyAction.setupAction(myBrowseHistory, "Console.History.Browse", null);
+    ActionUtil.mergeFrom(myHistoryNext, "Console.History.Next");
+    ActionUtil.mergeFrom(myHistoryPrev, "Console.History.Previous");
+    ActionUtil.mergeFrom(myBrowseHistory, "Console.History.Browse");
     if (!myMultiline) {
       addShortcuts(myHistoryNext, getShortcutUpDown(true));
       addShortcuts(myHistoryPrev, getShortcutUpDown(false));

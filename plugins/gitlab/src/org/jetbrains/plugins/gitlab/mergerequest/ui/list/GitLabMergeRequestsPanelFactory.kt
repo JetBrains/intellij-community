@@ -5,6 +5,7 @@ import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.collaboration.ui.codereview.list.ReviewListUtil.wrapWithLazyVerticalScroll
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.ui.CollectionListModel
 import com.intellij.ui.PopupHandler
 import com.intellij.ui.ScrollableContentBorder
@@ -40,7 +41,7 @@ internal class GitLabMergeRequestsPanelFactory {
         }
       }
       val shortcuts = CompositeShortcutSet(CommonShortcuts.ENTER, CommonShortcuts.DOUBLE_CLICK_1)
-      EmptyAction.registerWithShortcutSet("GitLab.Merge.Request.Show", shortcuts, panel)
+      ActionUtil.wrap("GitLab.Merge.Request.Show").registerCustomShortcutSet(shortcuts, panel)
     }
     ScrollableContentBorder.setup(listLoaderPanel, Side.TOP, progressStripe)
 

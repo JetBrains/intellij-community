@@ -9,7 +9,7 @@ import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.EmptyAction;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.command.impl.UndoManagerImpl;
 import com.intellij.openapi.command.undo.DocumentReferenceManager;
 import com.intellij.openapi.command.undo.UndoManager;
@@ -63,7 +63,7 @@ public class ConsoleExecuteAction extends DumbAwareAction {
     myExecuteActionHandler = executeActionHandler;
     myEnabledCondition = enabledCondition == null ? Conditions.alwaysTrue() : enabledCondition;
 
-    EmptyAction.setupAction(this, emptyExecuteActionId, null);
+    ActionUtil.mergeFrom(this, emptyExecuteActionId);
   }
 
   @Override
