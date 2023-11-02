@@ -202,6 +202,13 @@ public final class ImmutableZipFile implements ZipFile {
       throw new ZipException("Archive is not a ZIP archive");
     }
 
+    int commentSize = buffer.getShort(offset + 20);
+    int commentVersion = commentSize == COMMENT_SIZE ? buffer.get(offset + 22) : 0;
+    int indexDataEnd = -1;
+    if (commentVersion == INDEX_FORMAT_VERSION) {
+      indexDataEnd = buffer.getInt(offset + 22 + Byte.BYTES /* index format version size */);
+    }
+
     boolean isZip64 = true;
     if (buffer.getInt(offset - 20) == 0x07064b50) {
       offset = (int)buffer.getLong(offset - (20 - 8));
@@ -214,30 +221,15 @@ public final class ImmutableZipFile implements ZipFile {
     int entryCount;
     int centralDirSize;
     int centralDirPosition;
-    int commentSize;
-    int commentVersion;
-    int indexDataEnd = -1;
     if (isZip64) {
       entryCount = (int)buffer.getLong(offset + 32);
       centralDirSize = (int)buffer.getLong(offset + 40);
       centralDirPosition = (int)buffer.getLong(offset + 48);
-
-      commentSize = (int)(buffer.getLong(offset + 4) + 12) - 56;
-      commentVersion = commentSize == COMMENT_SIZE ? buffer.get(offset + 56) : 0;
-      if (commentVersion == INDEX_FORMAT_VERSION) {
-        indexDataEnd = buffer.getInt(offset + 56 + 1);
-      }
     }
     else {
       entryCount = buffer.getShort(offset + 10) & 0xffff;
       centralDirSize = buffer.getInt(offset + 12);
       centralDirPosition = buffer.getInt(offset + 16);
-
-      commentSize = buffer.getShort(offset + 20);
-      commentVersion = commentSize == COMMENT_SIZE ? buffer.get(offset + 22) : 0;
-      if (commentVersion == INDEX_FORMAT_VERSION) {
-        indexDataEnd = buffer.getInt(offset + 22 + Byte.BYTES /* index format version size */);
-      }
     }
 
     if (forceNonIkv || commentVersion != INDEX_FORMAT_VERSION || entryCount == 0) {
