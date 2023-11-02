@@ -46,9 +46,14 @@ abstract class ProductChooserAction : ChooseProductActionButton(null) {
     if (ch.size == 1) {
       e.presentation.text = null
       e.presentation.icon = null
+      e.presentation.description = null
       ch.firstOrNull()?.let {
+        it.update(e)
         e.presentation.text = e.presentation.text ?: it.templateText
         e.presentation.icon = e.presentation.icon ?: it.templatePresentation.icon
+        e.presentation.getClientProperty(UiUtils.DESCRIPTION)?.let { descr ->
+          e.presentation.description =  descr
+        }
       }
       return
     }

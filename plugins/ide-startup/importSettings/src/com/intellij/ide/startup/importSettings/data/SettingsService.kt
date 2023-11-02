@@ -147,7 +147,7 @@ enum class IconProductSize(val int: Int) {
 
 
 interface Product : SettingsContributor {
-  val version: String
+  val version: String?
   val lastUsage: LocalDate
 }
 

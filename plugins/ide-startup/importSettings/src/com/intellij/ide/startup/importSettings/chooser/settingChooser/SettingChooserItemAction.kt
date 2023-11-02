@@ -2,6 +2,7 @@
 package com.intellij.ide.startup.importSettings.chooser.settingChooser
 
 import com.intellij.ide.startup.importSettings.chooser.ui.PageProvider
+import com.intellij.ide.startup.importSettings.chooser.ui.UiUtils
 import com.intellij.ide.startup.importSettings.data.ActionsDataProvider
 import com.intellij.ide.startup.importSettings.data.Product
 import com.intellij.openapi.actionSystem.ActionUpdateThread
@@ -22,6 +23,9 @@ class SettingChooserItemAction(val product: Product, val provider: ActionsDataPr
     e.presentation.isVisible = true
     e.presentation.text = provider.getText(product)
     e.presentation.icon = provider.getProductIcon(product.id)
+    provider.getComment(product)?.let {
+      e.presentation.putClientProperty(UiUtils.DESCRIPTION, it)
+    }
   }
 
   override fun actionPerformed(e: AnActionEvent) {
