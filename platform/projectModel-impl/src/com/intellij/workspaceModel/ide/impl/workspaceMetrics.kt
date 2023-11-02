@@ -3,31 +3,12 @@ package com.intellij.workspaceModel.ide.impl
 
 import com.intellij.platform.diagnostic.telemetry.WorkspaceModel
 import com.intellij.platform.diagnostic.telemetry.helpers.SharedMetrics
-import java.util.concurrent.Semaphore
+import com.intellij.util.concurrency.SynchronizedClearableLazy
 
-val workspaceMetrics: WorkspaceMetrics by lazy { WorkspaceMetrics.instance }
+val workspaceModelMetrics: WorkspaceModelMetrics by lazy { WorkspaceModelMetrics.instance.value }
 
-class WorkspaceMetrics : SharedMetrics(WorkspaceModel) {
+class WorkspaceModelMetrics : SharedMetrics(WorkspaceModel) {
   companion object {
-    private val lock = Semaphore(1)
-    private var _instance: WorkspaceMetrics? = null
-
-    val instance: WorkspaceMetrics
-      get() {
-        try {
-          if (_instance != null) return _instance!!
-          lock.acquire()
-          if (_instance == null) _instance = WorkspaceMetrics()
-        }
-        catch (e: InterruptedException) {
-          lock.release()
-        }
-        finally {
-          lock.release()
-        }
-        return _instance!!
-      }
-
-    const val workspaceSyncSpanName = "workspace.sync"
+    val instance: SynchronizedClearableLazy<WorkspaceModelMetrics> = SynchronizedClearableLazy { WorkspaceModelMetrics() }
   }
 }
