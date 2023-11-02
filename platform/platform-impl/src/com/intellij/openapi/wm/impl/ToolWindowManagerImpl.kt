@@ -588,16 +588,17 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
   }
 
   internal fun projectClosed() {
-    // Hide everything outside the frame (floating and windowed) - frame contents are handled separately elsewhere.
+    val actionManager = serviceIfCreated<ActionManager>()
+    // hide everything outside the frame (floating and windowed) - frame contents are handled separately elsewhere
     for (entry in idToEntry.values) {
+      actionManager?.unregisterAction(ActivateToolWindowAction.getActionIdForToolWindow(entry.id))
+
       if (entry.toolWindow.windowInfo.type.isInternal) {
         continue
       }
+
       try {
         removeExternalDecorators(entry)
-      }
-      catch (e: CancellationException) {
-        throw e
       }
       catch (e: ProcessCanceledException) {
         throw e
