@@ -53,6 +53,7 @@ internal suspend fun runStartupWizard(isInitialStart: Job, app: Application) {
         }
         catch (_: TimeoutCancellationException) {
           log.warn("Timeout on waiting for initial start, proceeding without waiting, disabling the startup flow")
+          com.intellij.platform.ide.bootstrap.isInitialStart?.cancel()
           com.intellij.platform.ide.bootstrap.isInitialStart = null
           IdeStartupWizardCollector.logInitialStartTimeout()
         }
