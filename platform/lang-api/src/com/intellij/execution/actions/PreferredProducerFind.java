@@ -57,10 +57,9 @@ final class PreferredProducerFind {
   }
 
   private static List<RuntimeConfigurationProducer> findAllProducers(Location location, ConfigurationContext context) {
-    boolean isDumbMode = DumbService.isDumb(context.getProject());
-    final ArrayList<RuntimeConfigurationProducer> producers = new ArrayList<>();
-    for (final RuntimeConfigurationProducer prototype : RuntimeConfigurationProducer.RUNTIME_CONFIGURATION_PRODUCER.getExtensionList()) {
-      if (isDumbMode && !DumbService.isDumbAware(prototype)) continue;
+    final ArrayList<RuntimeConfigurationProducer> result = new ArrayList<>();
+    List<RuntimeConfigurationProducer> producers = RuntimeConfigurationProducer.RUNTIME_CONFIGURATION_PRODUCER.getExtensionList();
+    for (final RuntimeConfigurationProducer prototype : DumbService.getInstance(context.getProject()).filterByDumbAwareness(producers)) {
       final RuntimeConfigurationProducer producer;
       try {
         producer = prototype.createProducer(location, context);
@@ -75,10 +74,10 @@ final class PreferredProducerFind {
 
       if (producer.getConfiguration() != null) {
         LOG.assertTrue(producer.getSourceElement() != null, producer);
-        producers.add(producer);
+        result.add(producer);
       }
     }
-    return producers;
+    return result;
   }
 
   /**
