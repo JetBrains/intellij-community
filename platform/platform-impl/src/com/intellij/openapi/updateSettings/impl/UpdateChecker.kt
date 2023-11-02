@@ -5,7 +5,6 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.externalComponents.ExternalComponentManager
 import com.intellij.ide.externalComponents.ExternalComponentSource
 import com.intellij.ide.plugins.*
-import com.intellij.ide.plugins.PluginManagementPolicy
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.internal.statistic.eventLog.fus.MachineIdManager
@@ -45,7 +44,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jdom.JDOMException
 import org.jetbrains.annotations.ApiStatus
-import java.io.File
 import java.io.IOException
 import java.lang.ref.SoftReference
 import java.net.HttpURLConnection
@@ -558,7 +556,7 @@ object UpdateChecker {
   fun testPlatformUpdate(
     project: Project?,
     updateDataText: String,
-    patchFile: File?,
+    patchFile: Path?,
     forceUpdate: Boolean,
   ) {
     if (!ApplicationManager.getApplication().isInternal) {

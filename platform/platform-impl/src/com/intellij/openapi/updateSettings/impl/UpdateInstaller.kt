@@ -11,7 +11,9 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.NioFiles
 import com.intellij.platform.ide.customization.ExternalProductResourceUrls
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.io.HttpRequests
@@ -34,16 +36,16 @@ internal object UpdateInstaller {
 
   @JvmStatic
   @Throws(IOException::class)
-  fun downloadPatchChain(chain: List<BuildNumber>, indicator: ProgressIndicator): List<File> {
+  fun downloadPatchChain(chain: List<BuildNumber>, indicator: ProgressIndicator): List<Path> {
     indicator.text = IdeBundle.message("update.downloading.patch.progress")
 
-    val files = mutableListOf<File>()
+    val files = mutableListOf<Path>()
     val share = 1.0 / (chain.size - 1)
 
     for (i in 1 until chain.size) {
       val from = chain[i - 1]
       val to = chain[i]
-      val patchFile = File(getTempDir(), "patch-${from.withoutProductCode().asString()}-${to.withoutProductCode().asString()}.jar")
+      val patchFile = getTempDir().resolve("patch-${from.withoutProductCode().asString()}-${to.withoutProductCode().asString()}.jar")
       val url = ExternalProductResourceUrls.getInstance().computePatchUrl(from, to)
                 ?: error("Metadata contains information about patch '$from' -> '$to', but 'computePatchUrl' returns 'null'")
       val partIndicator = object : DelegatingProgressIndicator(indicator) {
@@ -54,16 +56,16 @@ internal object UpdateInstaller {
       LOG.info("downloading ${url}")
       HttpRequests.request(url).gzip(false).saveToFile(patchFile, partIndicator)
       try {
-        ZipFile(patchFile).use {
+        ZipFile(patchFile.toFile()).use {
           if (it.getEntry(PATCH_FILE_NAME) == null || it.getEntry(UPDATER_ENTRY) == null) {
-            throw IOException("Corrupted patch file: ${patchFile.name}")
+            throw IOException("Corrupted patch file: ${patchFile}")
           }
         }
       }
       catch (e: ZipException) {
-        throw IOException("Corrupted patch file: ${patchFile.name}", e)
+        throw IOException("Corrupted patch file: ${patchFile}", e)
       }
-      files += patchFile
+      files.add(patchFile)
     }
 
     return files
@@ -117,62 +119,65 @@ internal object UpdateInstaller {
     return true
   }
 
-  @JvmStatic
   fun cleanupPatch() {
     val tempDir = getTempDir()
-    if (tempDir.exists()) FileUtil.delete(tempDir)
+    if (Files.exists(tempDir)) {
+      NioFiles.deleteRecursively(tempDir)
+    }
   }
 
   @JvmStatic
   @Throws(IOException::class)
-  fun preparePatchCommand(patchFiles: List<File>, indicator: ProgressIndicator): Array<String> {
+  fun preparePatchCommand(patchFiles: List<Path>, indicator: ProgressIndicator): Array<String> {
     indicator.text = IdeBundle.message("update.preparing.patch.progress")
 
     val tempDir = getTempDir()
-    if (FileUtil.isAncestor(PathManager.getHomePath(), tempDir.path, true)) {
+    if (FileUtil.isAncestor(PathManager.getHomePath(), tempDir.toString(), true)) {
       throw IOException("Temp directory inside installation: $tempDir")
     }
-    if (!(tempDir.exists() || tempDir.mkdirs())) {
-      throw IOException("Cannot create temp directory: $tempDir")
-    }
+    Files.createDirectories(tempDir)
 
     var java = System.getProperty("java.home")
     if (PathManager.isUnderHomeDirectory(Path.of(java))) {
-      val javaCopy = File(tempDir, "jre")
-      if (javaCopy.exists()) FileUtil.delete(javaCopy)
-      FileUtil.copyDir(File(java), javaCopy)
+      val javaCopy = tempDir.resolve("jre")
+      if (Files.exists(javaCopy)) {
+        NioFiles.deleteRecursively(javaCopy)
+      }
+      FileUtil.copyDir(File(java), javaCopy.toFile())
 
       val jnf = File(java, "../Frameworks/JavaNativeFoundation.framework")
       if (jnf.isDirectory) {
-        val jnfCopy = File(tempDir, "Frameworks/JavaNativeFoundation.framework")
-        if (jnfCopy.exists()) FileUtil.delete(jnfCopy)
-        FileUtil.copyDir(jnf, jnfCopy)
+        val jnfCopy = tempDir.resolve("Frameworks/JavaNativeFoundation.framework")
+        if (Files.exists(jnfCopy)) {
+          NioFiles.deleteRecursively(jnfCopy)
+        }
+        FileUtil.copyDir(jnf, jnfCopy.toFile())
       }
 
-      java = javaCopy.path
+      java = javaCopy.toString()
     }
 
     val args = mutableListOf<String>()
 
-    if (SystemInfo.isWindows && !Files.isWritable(Path.of(PathManager.getHomePath()))) {
+    if (SystemInfoRt.isWindows && !Files.isWritable(Path.of(PathManager.getHomePath()))) {
       val launcher = PathManager.findBinFile("launcher.exe")
       val elevator = PathManager.findBinFile("elevator.exe")  // "launcher" depends on "elevator"
       if (launcher != null && elevator != null) {
-        args.add(launcher.copy(tempDir.toPath().resolve(launcher.fileName)).toString())
-        elevator.copy(tempDir.toPath().resolve(elevator.fileName))
+        args.add(launcher.copy(tempDir.resolve(launcher.fileName)).toString())
+        elevator.copy(tempDir.resolve(elevator.fileName))
       }
     }
 
     args += File(java, if (SystemInfo.isWindows) "bin\\java.exe" else "bin/java").path
     args += "-Xmx${2000}m"
     args += "-cp"
-    args += patchFiles.last().path
+    args += patchFiles.last().normalize().toAbsolutePath().toString()
 
     args += "-Djna.nosys=true"
     args += "-Djna.boot.library.path="
     args += "-Djna.debug_load=true"
     args += "-Djna.debug_load.jna=true"
-    args += "-Djava.io.tmpdir=${tempDir.path}"
+    args += "-Djava.io.tmpdir=$tempDir"
     args += "-Didea.updater.log=${PathManager.getLogPath()}"
     args += "-Dswing.defaultlaf=${UIManager.getSystemLookAndFeelClassName()}"
     args += "-Duser.language=${DynamicBundle.getLocale().language}"
@@ -187,5 +192,5 @@ internal object UpdateInstaller {
     return args.toTypedArray()
   }
 
-  private fun getTempDir() = File(PathManager.getTempPath(), "patch-update")
+  private fun getTempDir() = Path.of(PathManager.getTempPath(), "patch-update")
 }
