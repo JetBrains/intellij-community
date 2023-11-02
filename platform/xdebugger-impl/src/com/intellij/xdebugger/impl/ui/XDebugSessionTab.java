@@ -355,7 +355,9 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
   }
 
   protected void registerAdditionalActions(DefaultActionGroup leftToolbar, DefaultActionGroup topLeftToolbar, DefaultActionGroup settings) {
-    mySession.getDebugProcess().registerAdditionalActions(leftToolbar, topLeftToolbar, settings);
+    if (mySession != null) {
+      mySession.getDebugProcess().registerAdditionalActions(leftToolbar, topLeftToolbar, settings);
+    }
   }
 
   protected static void attachViewToSession(@NotNull XDebugSessionImpl session, @Nullable XDebugView view) {
