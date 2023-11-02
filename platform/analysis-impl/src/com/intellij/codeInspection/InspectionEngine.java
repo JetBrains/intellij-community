@@ -292,7 +292,7 @@ public final class InspectionEngine {
         isOnTheFly ? null : psiFile.getProject().getMessageBus().syncPublisher(GlobalInspectionContextEx.INSPECT_TOPIC);
 
       Processor<LocalInspectionToolWrapper> processor = toolWrapper -> {
-        ProblemsHolder holder = new ProblemsHolder(InspectionManager.getInstance(psiFile.getProject()), psiFile, isOnTheFly){
+        ProblemsHolder holder = new ProblemsHolder(InspectionManager.getInstance(psiFile.getProject()), psiFile, isOnTheFly) {
           @Override
           public void registerProblem(@NotNull ProblemDescriptor descriptor) {
             if (!isOnTheFly) {
@@ -312,20 +312,33 @@ public final class InspectionEngine {
         };
         LocalInspectionTool tool = toolWrapper.getTool();
 
-        long inspectionStartTime = System.nanoTime();
-        boolean inspectionWasRun = createVisitorAndAcceptElements(tool, holder, isOnTheFly, session, elements, targetPsiClasses);
-        long inspectionDuration = TimeoutUtil.getDurationMillis(inspectionStartTime);
+        try {
+          long inspectionStartTime = System.nanoTime();
+          boolean inspectionWasRun = createVisitorAndAcceptElements(tool, holder, isOnTheFly, session, elements, targetPsiClasses);
+          long inspectionDuration = TimeoutUtil.getDurationMillis(inspectionStartTime);
 
-        if (inspectionListener != null && inspectionWasRun) {
-          inspectionListener.inspectionFinished(
-            inspectionDuration,
-            Thread.currentThread().getId(),
-            holder.getResultCount(),
-            toolWrapper,
-            InspectListener.InspectionKind.LOCAL,
-            psiFile,
-            psiFile.getProject()
-          );
+          if (inspectionListener != null && inspectionWasRun) {
+            inspectionListener.inspectionFinished(
+              inspectionDuration,
+              Thread.currentThread().getId(),
+              holder.getResultCount(),
+              toolWrapper,
+              InspectListener.InspectionKind.LOCAL,
+              psiFile,
+              psiFile.getProject()
+            );
+          }
+        }
+        catch (Exception e) {
+          if (inspectionListener != null) {
+            inspectionListener.inspectionFailed(
+              toolWrapper.getID(),
+              e,
+              psiFile,
+              psiFile.getProject()
+            );
+          }
+          throw e;
         }
 
         if (holder.hasResults()) {

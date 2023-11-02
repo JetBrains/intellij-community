@@ -707,7 +707,6 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
     List<InspectionToolWrapper<?, ?>> needRepeatSearchRequest = new ArrayList<>();
     SearchScope initialSearchScope = ReadAction.compute(scope::toSearchScope);
     boolean canBeExternalUsages = !scope.isTotalScope();
-    InspectListener eventPublisher = getInspectionEventPublisher();
 
     TraceUtil.runWithSpanThrows(tracer, "globalInspectionsAnalysis", (__) -> {
       for (Tools tools : globalTools) {
@@ -726,7 +725,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
           try {
             ThrowableRunnable<RuntimeException> runnable = () -> {
               reportWhenInspectionFinished(
-                eventPublisher,
+                getInspectionEventPublisher(),
                 toolWrapper,
                 GLOBAL,
                 null,
@@ -759,7 +758,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
       }
     });
     reportWhenActivityFinished(
-      eventPublisher,
+      getInspectionEventPublisher(),
       InspectListener.ActivityKind.GLOBAL_POST_RUN_ACTIVITIES,
       getProject(),
       () -> processPostRunActivities(needRepeatSearchRequest));
