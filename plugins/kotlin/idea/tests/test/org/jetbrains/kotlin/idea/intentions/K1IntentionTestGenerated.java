@@ -10175,6 +10175,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
                 runTest("testData/intentions/declarations/split/anonymousFunction.kt");
             }
 
+            @TestMetadata("genericType.kt")
+            public void testGenericType() throws Exception {
+                runTest("testData/intentions/declarations/split/genericType.kt");
+            }
+
             @TestMetadata("longInit.kt")
             public void testLongInit() throws Exception {
                 runTest("testData/intentions/declarations/split/longInit.kt");

@@ -2448,6 +2448,89 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/intentions/declarations/split")
+    public static class Split extends AbstractK2IntentionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("anonymousFunction.kt")
+        public void testAnonymousFunction() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/declarations/split/anonymousFunction.kt");
+        }
+
+        @TestMetadata("genericType.kt")
+        public void testGenericType() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/declarations/split/genericType.kt");
+        }
+
+        @TestMetadata("longInit.kt")
+        public void testLongInit() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/declarations/split/longInit.kt");
+        }
+
+        @TestMetadata("longInit2.kt")
+        public void testLongInit2() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/declarations/split/longInit2.kt");
+        }
+
+        @TestMetadata("noInitializer.kt")
+        public void testNoInitializer() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/declarations/split/noInitializer.kt");
+        }
+
+        @TestMetadata("noInitializer2.kt")
+        public void testNoInitializer2() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/declarations/split/noInitializer2.kt");
+        }
+
+        @TestMetadata("nonLocalProperty.kt")
+        public void testNonLocalProperty() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/declarations/split/nonLocalProperty.kt");
+        }
+
+        @TestMetadata("nonLocalProperty2.kt")
+        public void testNonLocalProperty2() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/declarations/split/nonLocalProperty2.kt");
+        }
+
+        @TestMetadata("simpleInit.kt")
+        public void testSimpleInit() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/declarations/split/simpleInit.kt");
+        }
+
+        @TestMetadata("simpleInit2.kt")
+        public void testSimpleInit2() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/declarations/split/simpleInit2.kt");
+        }
+
+        @TestMetadata("simpleInitWithErrorType.kt")
+        public void testSimpleInitWithErrorType() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/declarations/split/simpleInitWithErrorType.kt");
+        }
+
+        @TestMetadata("simpleInitWithErrorType2.kt")
+        public void testSimpleInitWithErrorType2() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/declarations/split/simpleInitWithErrorType2.kt");
+        }
+
+        @TestMetadata("simpleInitWithType.kt")
+        public void testSimpleInitWithType() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/declarations/split/simpleInitWithType.kt");
+        }
+
+        @TestMetadata("simpleInitWithType2.kt")
+        public void testSimpleInitWithType2() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/declarations/split/simpleInitWithType2.kt");
+        }
+
+        @TestMetadata("whenSubject.kt")
+        public void testWhenSubject() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/declarations/split/whenSubject.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/intentions/removeExplicitType")
     public static class RemoveExplicitType extends AbstractK2IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
