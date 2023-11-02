@@ -159,5 +159,12 @@ internal class MavenKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard {
                 Path.of(it).createDirectories()
             }
         }
+
+        override fun setupProject(project: Project) {
+            if (shouldAddOnboardingTips()) {
+                prepareOnboardingTips(project)
+            }
+            super.setupProject(project)
+        }
     }
 }
