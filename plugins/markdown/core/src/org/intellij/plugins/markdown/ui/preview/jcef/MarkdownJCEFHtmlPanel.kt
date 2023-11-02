@@ -3,6 +3,7 @@ package org.intellij.plugins.markdown.ui.preview.jcef
 
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.UserDataHolderBase
@@ -28,7 +29,6 @@ import org.intellij.plugins.markdown.ui.preview.*
 import org.intellij.plugins.markdown.ui.preview.jcef.impl.*
 import org.jetbrains.annotations.ApiStatus
 import java.net.URL
-import java.nio.file.Path
 
 class MarkdownJCEFHtmlPanel(
   private val _project: Project?,
@@ -37,7 +37,12 @@ class MarkdownJCEFHtmlPanel(
   constructor(): this(null, null)
 
   private val pageBaseName = "markdown-preview-index-${hashCode()}.html"
-  private val fileSchemeResourcesProcessor = FileSchemeResourcesProcessor()
+
+  private val projectRoot: VirtualFile? = if (_virtualFile != null && _project != null) {
+    ProjectFileIndex.getInstance(_project).getContentRootForFile(_virtualFile)
+  } else null
+  private val fileSchemeResourcesProcessor = FileSchemeResourcesProcessor(_virtualFile, projectRoot)
+
   private val resourceProvider = MyAggregatingResourceProvider()
   private val browserPipe = JcefBrowserPipeImpl(
     this,
@@ -165,10 +170,9 @@ class MarkdownJCEFHtmlPanel(
     executeJavaScript(code)
   }
 
-  override fun setHtml(html: String, initialScrollOffset: Int, documentPath: Path?) {
-    val basePath = documentPath?.parent
-    fileSchemeResourcesProcessor.clear()
-    val builder = IncrementalDOMBuilder(html, basePath, fileSchemeResourcesProcessor)
+  override fun setHtml(html: String, initialScrollOffset: Int, document: VirtualFile?) {
+    val baseFile = document?.parent
+    val builder = IncrementalDOMBuilder(html, baseFile, projectRoot, fileSchemeResourcesProcessor)
     updateDom(builder.generateRenderClosure(), initialScrollOffset)
     firstUpdate = false
   }

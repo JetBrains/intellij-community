@@ -9,9 +9,8 @@ import org.intellij.markdown.ast.findChildOfType
 import org.intellij.markdown.ast.getTextInNode
 import org.intellij.markdown.html.HtmlGenerator
 import org.intellij.markdown.parser.LinkMap
-import java.net.URI
 
-internal class IntelliJImageGeneratingProvider(linkMap: LinkMap, baseURI: URI?) : LinkGeneratingProvider(baseURI) {
+internal class IntelliJImageGeneratingProvider(linkMap: LinkMap) : LinkGeneratingProvider() {
   companion object {
     private val REGEX = Regex("[^a-zA-Z0-9 ]")
 
@@ -26,17 +25,8 @@ internal class IntelliJImageGeneratingProvider(linkMap: LinkMap, baseURI: URI?) 
     val ignorePathProcessingAttributeName = "md-do-not-process-path"
   }
 
-  private val referenceLinkProvider = ReferenceLinksGeneratingProvider(linkMap, baseURI)
-  private val inlineLinkProvider = InlineLinkGeneratingProvider(baseURI)
-
-  override fun makeAbsoluteUrl(destination: CharSequence): CharSequence {
-    val destinationEx = if (SystemInfo.isWindows) StringUtil.replace(destination.toString(), "%5C", "/") else destination.toString()
-    if (destinationEx.startsWith('#')) {
-      return destinationEx
-    }
-
-    return super.makeAbsoluteUrl(destinationEx)
-  }
+  private val referenceLinkProvider = ReferenceLinksGeneratingProvider(linkMap)
+  private val inlineLinkProvider = InlineLinkGeneratingProvider()
 
   override fun getRenderInfo(text: String, node: ASTNode): RenderInfo? {
     node.findChildOfType(MarkdownElementTypes.INLINE_LINK)?.let {
@@ -48,7 +38,7 @@ internal class IntelliJImageGeneratingProvider(linkMap: LinkMap, baseURI: URI?) 
   }
 
   override fun renderLink(visitor: HtmlGenerator.HtmlGeneratingVisitor, text: String, node: ASTNode, info: RenderInfo) {
-    val url = makeAbsoluteUrl(info.destination)
+    val url = if (SystemInfo.isWindows) StringUtil.replace(info.destination.toString(), "%5C", "/") else info.destination.toString()
     visitor.consumeTagOpen(
       node,
       "img",

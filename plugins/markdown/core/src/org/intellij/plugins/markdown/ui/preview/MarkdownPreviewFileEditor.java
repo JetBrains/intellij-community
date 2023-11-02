@@ -262,8 +262,7 @@ public final class MarkdownPreviewFileEditor extends UserDataHolderBase implemen
         String currentHtml = "<html><head></head>" + html + "</html>";
         if (!currentHtml.equals(myLastRenderedHtml)) {
           myLastRenderedHtml = currentHtml;
-          final var fileSystem = myFile.getFileSystem();
-          myPanel.setHtml(myLastRenderedHtml, mainEditor.getCaretModel().getOffset(), fileSystem.getNioPath(myFile));
+          myPanel.setHtml(myLastRenderedHtml, mainEditor.getCaretModel().getOffset(), myFile);
         }
 
         synchronized (REQUESTS_LOCK) {

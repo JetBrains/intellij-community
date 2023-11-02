@@ -3,6 +3,7 @@ package org.intellij.plugins.markdown.ui.preview;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -24,7 +25,7 @@ public interface MarkdownHtmlPanel extends Disposable {
    * @param initialScrollOffset Offset in the original document which will be used to initially position preview content.
    */
   default void setHtml(@NotNull String html, int initialScrollOffset) {
-    setHtml(html, initialScrollOffset, null);
+    setHtml(html, initialScrollOffset, (VirtualFile)null);
   }
 
   /**
@@ -33,7 +34,15 @@ public interface MarkdownHtmlPanel extends Disposable {
    * @param initialScrollOffset Offset in the original document which will be used to initially position preview content.
    * @param documentPath Path to original document. It will be used to resolve resources with relative paths, like images.
    */
-  void setHtml(@NotNull String html, int initialScrollOffset, @Nullable Path documentPath);
+  default void setHtml(@NotNull String html, int initialScrollOffset, @Nullable Path documentPath) {
+    if (documentPath == null) {
+      setHtml(html, initialScrollOffset, (VirtualFile) null);
+    } else {
+      setHtml(html, initialScrollOffset, VfsUtil.findFile(documentPath, false));
+    }
+  }
+
+  void setHtml(@NotNull String html, int initialScrollOffset, @Nullable VirtualFile document);
 
   /**
    * @return null if current preview implementation doesn't support any message passing.
