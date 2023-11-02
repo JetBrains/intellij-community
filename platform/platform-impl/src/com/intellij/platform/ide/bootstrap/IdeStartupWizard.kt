@@ -57,7 +57,7 @@ internal suspend fun runStartupWizard(isInitialStart: Job, app: Application) {
         }
       }
 
-      log.info("Passing execution control to $adapter.")
+      log.info("Passing execution control to $wizard.")
       span("${adapter.assignableToClassName}.run") {
         wizard.run()
       }
