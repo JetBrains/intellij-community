@@ -5,6 +5,7 @@ import com.intellij.ide.bookmark.BookmarkBundle
 import com.intellij.ide.bookmark.BookmarkGroup
 import com.intellij.ide.bookmark.BookmarksListProviderService
 import com.intellij.ide.bookmark.FileBookmark
+import com.intellij.ide.bookmark.ui.BookmarksView
 import com.intellij.ide.bookmark.ui.BookmarksViewState
 import com.intellij.ide.bookmark.ui.tree.FileNode
 import com.intellij.ide.bookmark.ui.tree.GroupNode
@@ -12,6 +13,7 @@ import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DoNotAskOption
 import com.intellij.openapi.ui.MessageDialogBuilder
 
@@ -33,6 +35,13 @@ internal class NodeDeleteAction : DumbAwareAction() {
     val view = event.bookmarksView ?: return
     val nodes = event.bookmarkNodes ?: return
     val bookmarksViewState = event.bookmarksViewState
+    deleteSelectedNodes(bookmarksViewState, nodes, project, view)
+  }
+
+  fun deleteSelectedNodes(bookmarksViewState: BookmarksViewState?,
+                          nodes: List<AbstractTreeNode<*>>,
+                          project: Project,
+                          view: BookmarksView) {
     val shouldDelete = when {
       bookmarksViewState == null -> true
       nodes.any { it is GroupNode || it is FileNode } -> {
@@ -70,7 +79,7 @@ internal class NodeDeleteAction : DumbAwareAction() {
     }
 
     if (shouldDelete) {
-        BookmarksListProviderService.findProvider(project) { it.canDelete(nodes) }?.performDelete(nodes, view.tree)
+      BookmarksListProviderService.findProvider(project) { it.canDelete(nodes) }?.performDelete(nodes, view.tree)
     }
   }
 

@@ -5,6 +5,7 @@ import com.intellij.execution.Location
 import com.intellij.ide.DefaultTreeExpander
 import com.intellij.ide.OccurenceNavigator
 import com.intellij.ide.bookmark.*
+import com.intellij.ide.bookmark.actions.BookmarksDeleteProvider
 import com.intellij.ide.bookmark.actions.registerNavigateOnEnterAction
 import com.intellij.ide.bookmark.ui.tree.BookmarksTreeStructure
 import com.intellij.ide.bookmark.ui.tree.FolderNodeComparator
@@ -13,7 +14,6 @@ import com.intellij.ide.bookmark.ui.tree.VirtualFileVisitor
 import com.intellij.ide.dnd.DnDSupport
 import com.intellij.ide.dnd.aware.DnDAwareTree
 import com.intellij.ide.ui.UISettings
-import com.intellij.ide.util.DeleteHandler.DefaultDeleteProvider
 import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
@@ -102,7 +102,7 @@ class BookmarksView(val project: Project, showToolbar: Boolean?)
     PlatformDataKeys.SELECTED_ITEMS.`is`(dataId) -> selectedNodes?.toArray(emptyArray<Any>())
     PlatformDataKeys.SELECTED_ITEM.`is`(dataId) -> selectedNodes?.firstOrNull()
     PlatformDataKeys.PROJECT.`is`(dataId) -> project
-    PlatformDataKeys.DELETE_ELEMENT_PROVIDER.`is`(dataId) -> DefaultDeleteProvider()
+    PlatformDataKeys.DELETE_ELEMENT_PROVIDER.`is`(dataId) -> BookmarksDeleteProvider()
     PlatformDataKeys.BGT_DATA_PROVIDER.`is`(dataId) -> {
       val selectedNodes = selectedNodes
       DataProvider { slowDataId -> getSlowData(slowDataId, selectedNodes) }
