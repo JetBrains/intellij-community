@@ -15,7 +15,7 @@ import com.intellij.ui.dsl.builder.BottomGap
 import javax.swing.Action
 
 internal class GeneralFeedbackDialog(project: Project?,
-                            forTest: Boolean
+                                     forTest: Boolean
 ) : BlockBasedFeedbackDialogWithEmail<CommonFeedbackSystemData>(project, forTest) {
 
   /** Increase the additional number when feedback format is changed */
@@ -31,7 +31,11 @@ internal class GeneralFeedbackDialog(project: Project?,
 
   override val myBlocks: List<FeedbackBlock> = mutableListOf<FeedbackBlock>().apply {
     add(TopLabelBlock(GeneralFeedbackBundle.message("general.dialog.title")).setBottomGap(BottomGap.MEDIUM))
-    add(TextAreaBlock(GeneralFeedbackBundle.message("general.dialog.text.area.details"), tellUsMoreJsonElementName))
+    add(
+      TextAreaBlock(
+        GeneralFeedbackBundle.message("general.dialog.text.area.details"), tellUsMoreJsonElementName
+      ).requireNotEmpty(GeneralFeedbackBundle.message("general.dialog.text.area.details.require"))
+    )
   }
 
   override val mySystemInfoData: CommonFeedbackSystemData by lazy {
