@@ -6,6 +6,7 @@ import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.ui.*;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.ui.ValidationInfo;
@@ -100,7 +101,7 @@ public final class JavaApplicationSettingsEditor extends JavaSettingsEditorBase<
         public @NotNull Collection<String> getItems(String prefix, boolean cached, CompletionParameters parameters) {
             return DumbService.isDumb(getProject())
                    ? List.of()
-                   : StubIndex.getInstance().getAllKeys(JavaStubIndexKeys.UNNAMED_CLASSES, getProject());
+                   : ReadAction.compute(() -> StubIndex.getInstance().getAllKeys(JavaStubIndexKeys.UNNAMED_CLASSES, getProject()));
         }
       }, true, null);
       CommonParameterFragments.setMonospaced(myUnnamedClassField);
