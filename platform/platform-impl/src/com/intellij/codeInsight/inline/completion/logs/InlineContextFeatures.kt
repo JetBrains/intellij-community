@@ -3,8 +3,6 @@ package com.intellij.codeInsight.inline.completion.logs
 
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
-import com.intellij.internal.statistic.eventLog.events.ObjectEventData
-import com.intellij.internal.statistic.eventLog.events.ObjectEventField
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.util.EditorUtil
@@ -117,42 +115,20 @@ internal object InlineContextFeatures {
     add(SECOND_PARENT.with(secondParent::class.java))
   }
 
-  fun getEventPair(triggerFeatures: List<EventPair<*>>) = CONTEXT_FEATURES.with(ObjectEventData(triggerFeatures))
-
-  private val LINE_NUMBER = EventFields.Int("line_number")
-  private val COLUMN_NUMBER = EventFields.Int("column_number")
-  private val SYMBOLS_IN_LINE_BEFORE_CARET = EventFields.Int("symbols_in_line_before_caret")
-  private val SYMBOLS_IN_LINE_AFTER_CARET = EventFields.Int("symbols_in_line_after_caret")
-  private val IS_WHITE_SPACE_BEFORE_CARET = EventFields.Boolean("is_white_space_before_caret")
-  private val IS_WHITE_SPACE_AFTER_CARET = EventFields.Boolean("is_white_space_after_caret")
-  private val NON_SPACE_SYMBOL_BEFORE_CARET = EventFields.Enum("non_space_symbol_before_caret", CharCategory::class.java)
-  private val NON_SPACE_SYMBOL_AFTER_CARET = EventFields.Enum("non_space_symbol_after_caret", CharCategory::class.java)
-  private val PREVIOUS_EMPTY_LINES_COUNT = EventFields.Int("previous_empty_lines_count")
-  private val PREVIOUS_NON_EMPTY_LINE_LENGTH = EventFields.Int("previous_non_empty_line_length")
-  private val FOLLOWING_EMPTY_LINES_COUNT = EventFields.Int("following_empty_lines_count")
-  private val FOLLOWING_NON_EMPTY_LINE_LENGTH = EventFields.Int("following_non_empty_line_length")
-  private val INDENT_LEVEL = EventFields.Int("indent_level")
-  private val LIBRARIES_COUNT = EventFields.Int("libraries_count")
-  private val FIRST_PARENT = EventFields.Class("first_parent")
-  private val SECOND_PARENT = EventFields.Class("second_parent")
-
-  val CONTEXT_FEATURES = ObjectEventField(
-    "context_features",
-    LINE_NUMBER,
-    COLUMN_NUMBER,
-    SYMBOLS_IN_LINE_BEFORE_CARET,
-    SYMBOLS_IN_LINE_AFTER_CARET,
-    IS_WHITE_SPACE_BEFORE_CARET,
-    IS_WHITE_SPACE_AFTER_CARET,
-    NON_SPACE_SYMBOL_BEFORE_CARET,
-    NON_SPACE_SYMBOL_AFTER_CARET,
-    PREVIOUS_EMPTY_LINES_COUNT,
-    PREVIOUS_NON_EMPTY_LINE_LENGTH,
-    FOLLOWING_EMPTY_LINES_COUNT,
-    FOLLOWING_NON_EMPTY_LINE_LENGTH,
-    INDENT_LEVEL,
-    LIBRARIES_COUNT,
-    FIRST_PARENT,
-    SECOND_PARENT
-  )
+  val LINE_NUMBER = EventFields.Int("line_number")
+  val COLUMN_NUMBER = EventFields.Int("column_number")
+  val SYMBOLS_IN_LINE_BEFORE_CARET = EventFields.Int("symbols_in_line_before_caret")
+  val SYMBOLS_IN_LINE_AFTER_CARET = EventFields.Int("symbols_in_line_after_caret")
+  val IS_WHITE_SPACE_BEFORE_CARET = EventFields.Boolean("is_white_space_before_caret")
+  val IS_WHITE_SPACE_AFTER_CARET = EventFields.Boolean("is_white_space_after_caret")
+  val NON_SPACE_SYMBOL_BEFORE_CARET = EventFields.Enum("non_space_symbol_before_caret", CharCategory::class.java)
+  val NON_SPACE_SYMBOL_AFTER_CARET = EventFields.Enum("non_space_symbol_after_caret", CharCategory::class.java)
+  val PREVIOUS_EMPTY_LINES_COUNT = EventFields.Int("previous_empty_lines_count")
+  val PREVIOUS_NON_EMPTY_LINE_LENGTH = EventFields.Int("previous_non_empty_line_length")
+  val FOLLOWING_EMPTY_LINES_COUNT = EventFields.Int("following_empty_lines_count")
+  val FOLLOWING_NON_EMPTY_LINE_LENGTH = EventFields.Int("following_non_empty_line_length")
+  val INDENT_LEVEL = EventFields.Int("indent_level")
+  val LIBRARIES_COUNT = EventFields.Int("libraries_count")
+  val FIRST_PARENT = EventFields.Class("first_parent")
+  val SECOND_PARENT = EventFields.Class("second_parent")
 }

@@ -36,6 +36,25 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
     }
 
     val ADDITIONAL: ObjectEventField = createAdditionalDataField(GROUP.id, INVOKED_EVENT_ID)
+    val CONTEXT_FEATURES = ObjectEventField(
+      "context_features",
+      InlineContextFeatures.LINE_NUMBER,
+      InlineContextFeatures.COLUMN_NUMBER,
+      InlineContextFeatures.SYMBOLS_IN_LINE_BEFORE_CARET,
+      InlineContextFeatures.SYMBOLS_IN_LINE_AFTER_CARET,
+      InlineContextFeatures.IS_WHITE_SPACE_BEFORE_CARET,
+      InlineContextFeatures.IS_WHITE_SPACE_AFTER_CARET,
+      InlineContextFeatures.NON_SPACE_SYMBOL_BEFORE_CARET,
+      InlineContextFeatures.NON_SPACE_SYMBOL_AFTER_CARET,
+      InlineContextFeatures.PREVIOUS_EMPTY_LINES_COUNT,
+      InlineContextFeatures.PREVIOUS_NON_EMPTY_LINE_LENGTH,
+      InlineContextFeatures.FOLLOWING_EMPTY_LINES_COUNT,
+      InlineContextFeatures.FOLLOWING_NON_EMPTY_LINE_LENGTH,
+      InlineContextFeatures.INDENT_LEVEL,
+      InlineContextFeatures.LIBRARIES_COUNT,
+      InlineContextFeatures.FIRST_PARENT,
+      InlineContextFeatures.SECOND_PARENT,
+    )
   }
 
   internal val INVOKED_EVENT: VarargEventId = GROUP.registerVarargEvent(
@@ -48,6 +67,7 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
     InvokedEvents.TIME_TO_COMPUTE,
     InvokedEvents.OUTCOME,
     InvokedEvents.ADDITIONAL,
+    InvokedEvents.CONTEXT_FEATURES,
   )
 
   object ShownEvents {
@@ -89,7 +109,6 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
     ShownEvents.TIME_TO_SHOW,
     ShownEvents.SHOWING_TIME,
     ShownEvents.FINISH_TYPE,
-    InlineContextFeatures.CONTEXT_FEATURES
   )
 
   override fun getGroup() = GROUP
