@@ -7,7 +7,8 @@ import com.intellij.psi.util.findParentOfType
 import com.intellij.util.containers.addIfNotNull
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.annotations.*
+import org.jetbrains.kotlin.analysis.api.annotations.KtKClassAnnotationValue
+import org.jetbrains.kotlin.analysis.api.annotations.annotationsByClassId
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.fir.utils.getActualAnnotationTargets
 import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
@@ -19,7 +20,9 @@ import org.jetbrains.kotlin.idea.testIntegration.framework.KotlinPsiBasedTestFra
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.resolve.checkers.OptInNames
 
 object OptInFixFactories {
@@ -37,9 +40,12 @@ object OptInFixFactories {
 
         val optInClassId = ClassId.topLevel(OptInFixUtils.optInFqName() ?: return emptyList())
         val isOverrideError = isOverrideError(diagnostic)
+
         val psiClass = JavaPsiFacade.getInstance(element.project).findClass(annotationFqName.asString(), element.resolveScope) ?: return emptyList()
-        val annotationClass = psiClass.asKtClassOrObject()?.getClassOrObjectSymbol() ?: psiClass.getNamedClassSymbol()
-        val annotationClassId = annotationClass?.classIdIfNonLocal ?: return emptyList()
+        val annotationClass = psiClass.asKtClassOrObject()?.getClassOrObjectSymbol() ?: psiClass.getNamedClassSymbol() ?: return emptyList()
+        if (!OptInFixUtils.isVisible(element, annotationClass)) return emptyList()
+
+        val annotationClassId = annotationClass.classIdIfNonLocal ?: return emptyList()
         val applicableTargets = annotationClass.annotationApplicableTargets
         val result = mutableListOf<AddAnnotationFix>()
 

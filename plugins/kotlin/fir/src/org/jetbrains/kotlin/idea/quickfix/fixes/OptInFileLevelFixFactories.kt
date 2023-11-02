@@ -2,11 +2,13 @@
 
 package org.jetbrains.kotlin.idea.quickfix.fixes
 
+import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.util.findParentOfType
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.diagnosticFixFactories
 import org.jetbrains.kotlin.idea.quickfix.UseOptInFileAnnotationFix
+import org.jetbrains.kotlin.idea.testIntegration.framework.KotlinPsiBasedTestFramework.Companion.asKtClassOrObject
 import org.jetbrains.kotlin.idea.util.findAnnotation
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
@@ -27,6 +29,12 @@ object OptInFileLevelFixFactories {
             val optInMarkerFqName = OptInFixUtils.optInMarkerFqName(diagnostic) ?: return@diagnosticFixFactories emptyList()
             val optInFqName = OptInFixUtils.optInFqName() ?: return@diagnosticFixFactories emptyList()
             val containingFile = element.containingKtFile
+
+            val psiClass = JavaPsiFacade.getInstance(element.project).findClass(optInMarkerFqName.asString(), element.resolveScope)
+                ?: return@diagnosticFixFactories emptyList()
+            val annotationClass = psiClass.asKtClassOrObject()?.getClassOrObjectSymbol() ?: psiClass.getNamedClassSymbol()
+                ?: return@diagnosticFixFactories emptyList()
+            if (!OptInFixUtils.isVisible(element, annotationClass)) return@diagnosticFixFactories emptyList()
 
             return@diagnosticFixFactories listOf(
                 UseOptInFileAnnotationFix(

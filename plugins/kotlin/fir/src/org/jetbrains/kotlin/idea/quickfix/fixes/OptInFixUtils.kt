@@ -5,9 +5,13 @@ package org.jetbrains.kotlin.idea.quickfix.fixes
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
+import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithVisibility
 import org.jetbrains.kotlin.idea.base.util.names.FqNames
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtQualifiedExpression
 import org.jetbrains.kotlin.resolve.checkers.OptInNames
 
 object OptInFixUtils {
@@ -25,4 +29,12 @@ object OptInFixUtils {
 
     context (KtAnalysisSession)
     private fun FqName.annotationApplicable() = getClassOrObjectSymbolByClassId(ClassId.topLevel(this)) != null
+
+    context (KtAnalysisSession)
+    fun isVisible(from: KtElement, to: KtClassOrObjectSymbol): Boolean {
+        if (to !is KtSymbolWithVisibility) return false
+        val file = from.containingKtFile.getFileSymbol()
+        val receiver = (from as? KtQualifiedExpression)?.receiverExpression
+        return isVisible(to, file, receiver, from)
+    }
 }

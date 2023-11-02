@@ -2,13 +2,20 @@
 
 package org.jetbrains.kotlin.idea.quickfix
 
+import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
 import org.jetbrains.kotlin.descriptors.resolveClassByFqName
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.Errors.*
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.util.names.FqNames
+import org.jetbrains.kotlin.idea.core.isVisible
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
+import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.checkers.OptInNames
 
 internal object OptInFixesUtils {
@@ -26,4 +33,9 @@ internal object OptInFixesUtils {
     fun annotationExists(moduleDescriptor: ModuleDescriptor, fqName: FqName): Boolean =
         moduleDescriptor.resolveClassByFqName(fqName, NoLookupLocation.FROM_IDE) != null
 
+    fun isVisible(from: KtElement, to: ClassDescriptor, context: BindingContext): Boolean {
+        val declaration = from.getNonStrictParentOfType<KtDeclaration>() ?: return false
+        val declarationDescriptor = context[BindingContext.DECLARATION_TO_DESCRIPTOR, declaration] ?: return false
+        return to.isVisible(declarationDescriptor, from.languageVersionSettings)
+    }
 }

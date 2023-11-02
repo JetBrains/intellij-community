@@ -1452,6 +1452,16 @@ public abstract class K2QuickFixTestGenerated extends AbstractK2QuickFixTest {
             runTest("../../../idea/tests/testData/quickfix/optIn/hasOptInAnnotationForClass2.kt");
         }
 
+        @TestMetadata("invisibleAnnotation.kt")
+        public void testInvisibleAnnotation() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/optIn/invisibleAnnotation.kt");
+        }
+
+        @TestMetadata("invisibleAnnotationFir.kt")
+        public void testInvisibleAnnotationFir() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/optIn/invisibleAnnotationFir.kt");
+        }
+
         @TestMetadata("localFunction.kt")
         public void testLocalFunction() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/optIn/localFunction.kt");
