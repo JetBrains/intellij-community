@@ -228,7 +228,7 @@ fun CoroutineScope.startApplication(args: List<String>,
         }.getOrLogException(log)
       }
 
-      if (IdeStartupExperiment.shouldEnableNewStartupFlow()) {
+      if (isIdeStartupWizardEnabled) {
         log.info("Will enter initial app wizard flow.")
         val result = CompletableDeferred<Boolean>()
         isInitialStart = result

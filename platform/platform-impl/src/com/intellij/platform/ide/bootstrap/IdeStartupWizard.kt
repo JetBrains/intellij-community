@@ -21,6 +21,9 @@ import kotlin.time.Duration.Companion.milliseconds
 
 private val log = logger<IdeStartupWizard>()
 
+val isIdeStartupWizardEnabled: Boolean
+  get() = System.getProperty("intellij.startup.wizard", "true").toBoolean() && IdeStartupExperiment.isExperimentEnabled()
+
 internal suspend fun runStartupWizard(isInitialStart: Job, app: Application) {
 
   log.info("Entering startup wizard workflow.")
@@ -99,7 +102,7 @@ object IdeStartupWizardCollector : CounterUsagesCollector() {
   )
   fun logExperimentState() {
     if (ConfigImportHelper.isFirstSession()) {
-      val isEnabled = IdeStartupExperiment.shouldEnableNewStartupFlow()
+      val isEnabled = IdeStartupExperiment.isExperimentEnabled()
       log.info("IDE startup isEnabled = $isEnabled, experimentGroupKind = ${IdeStartupExperiment.experimentGroupKind}, experimentGroup = ${IdeStartupExperiment.experimentGroup}")
       experimentState.log(
         IdeStartupExperiment.experimentGroupKind,
@@ -152,7 +155,7 @@ object IdeStartupExperiment {
     getGroupKind(experimentGroup)
   }
 
-  fun shouldEnableNewStartupFlow(): Boolean {
+  fun isExperimentEnabled(): Boolean {
     return when (experimentGroupKind) {
       GroupKind.Experimental -> true
       GroupKind.Control -> false
