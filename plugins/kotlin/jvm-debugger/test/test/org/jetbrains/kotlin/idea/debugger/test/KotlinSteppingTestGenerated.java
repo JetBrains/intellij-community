@@ -1451,6 +1451,11 @@ public abstract class KotlinSteppingTestGenerated extends AbstractKotlinStepping
             runTest("testData/stepping/custom/multilineFunctionCall.kt");
         }
 
+        @TestMetadata("recursive.kt")
+        public void testRecursive() throws Exception {
+            runTest("testData/stepping/custom/recursive.kt");
+        }
+
         @TestMetadata("sequentialInlineFunctionCalls.kt")
         public void testSequentialInlineFunctionCalls() throws Exception {
             runTest("testData/stepping/custom/sequentialInlineFunctionCalls.kt");

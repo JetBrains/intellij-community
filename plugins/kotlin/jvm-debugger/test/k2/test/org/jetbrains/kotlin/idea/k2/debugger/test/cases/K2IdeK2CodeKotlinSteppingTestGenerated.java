@@ -1450,6 +1450,11 @@ public abstract class K2IdeK2CodeKotlinSteppingTestGenerated extends AbstractK2I
             runTest("../testData/stepping/custom/multilineFunctionCall.kt");
         }
 
+        @TestMetadata("recursive.kt")
+        public void testRecursive() throws Exception {
+            runTest("../testData/stepping/custom/recursive.kt");
+        }
+
         @TestMetadata("sequentialInlineFunctionCalls.kt")
         public void testSequentialInlineFunctionCalls() throws Exception {
             runTest("../testData/stepping/custom/sequentialInlineFunctionCalls.kt");
