@@ -33,7 +33,6 @@ import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.OpaquePanel;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.util.Consumer;
-import com.intellij.util.ui.JBEmptyBorder;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.Nls;
@@ -211,21 +210,20 @@ public final class SettingsEntryPointAction extends DumbAwareAction
             if (action instanceof LastAction lastAction) {
               Presentation presentation = action.getTemplatePresentation();
               JBLabel label = new JBLabel(presentation.getIcon());
+              label.setBorder(JBUI.Borders.emptyRight(JBUI.CurrentTheme.ActionsList.elementIconGap() - 2));
 
-              JPanel panel = new OpaquePanel(new BorderLayout(JBUI.scale(4), 0), isSelected
-                                                                                 ? JBUI.CurrentTheme.ManagedIde.MENU_ITEM_HOVER
-                                                                                 : JBUI.CurrentTheme.Advertiser.background()) {
+              JPanel panel = new OpaquePanel(new BorderLayout(), isSelected
+                                                                 ? JBUI.CurrentTheme.ManagedIde.MENU_ITEM_HOVER
+                                                                 : JBUI.CurrentTheme.Advertiser.background()) {
                 @Override
                 public AccessibleContext getAccessibleContext() {
                   return label.getAccessibleContext();
                 }
               };
 
-              int leftRightInset = JBUI.CurrentTheme.Popup.Selection.LEFT_RIGHT_INSET.get();
-              Insets innerInsets = JBUI.CurrentTheme.Popup.Selection.innerInsets();
-              int topBottomInset = JBUI.scale(12);
-              panel.setBorder(
-                new JBEmptyBorder(new Insets(topBottomInset, leftRightInset + innerInsets.left, topBottomInset, JBUI.scale(14))));
+              float leftRightInset = JBUI.CurrentTheme.Popup.Selection.LEFT_RIGHT_INSET.getUnscaled();
+              Insets innerInsets = ((JBInsets)JBUI.CurrentTheme.Popup.Selection.innerInsets()).getUnscaled();
+              panel.setBorder(JBUI.Borders.empty(12, (int)(leftRightInset + innerInsets.left), 12, 14));
 
               JPanel iconPanel = new NonOpaquePanel(new BorderLayout());
               iconPanel.add(label, BorderLayout.NORTH);
