@@ -53,6 +53,11 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
       InlineContextFeatures.LIBRARIES_COUNT,
       InlineContextFeatures.FIRST_PARENT,
       InlineContextFeatures.SECOND_PARENT,
+      InlineContextFeatures.TIME_SINCE_LAST_TYPING,
+      InlineContextFeatures.TYPING_SPEED_1S,
+      InlineContextFeatures.TYPING_SPEED_2S,
+      InlineContextFeatures.TYPING_SPEED_5S,
+      InlineContextFeatures.TYPING_SPEED_30S,
     )
     val CONTEXT_FEATURES_COMPUTATION_TIME = EventFields.Long("context_features_computation_time")
   }
