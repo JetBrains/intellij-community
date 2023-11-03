@@ -92,15 +92,7 @@ public class InlineLocalTest extends LightJavaCodeInsightTestCase {
   }
 
   public void testAugmentedAssignment() {
-    String exception = null;
-    try {
-      doTest();
-    }
-    catch (RuntimeException ex) {
-      exception = ex.getMessage();
-    }
-    String error = RefactoringBundle.getCannotRefactorMessage(JavaRefactoringBundle.message("variable.is.accessed.for.writing", "text"));
-    assertEquals(error, exception);
+    doTest();
   }
 
   public void testUsedInInnerClass() {       // IDEADEV-28786
@@ -355,6 +347,10 @@ public class InlineLocalTest extends LightJavaCodeInsightTestCase {
   public void testEolComment() {
     doTest();
   }
+  
+  public void testCompositeAssignment() { doTest(); }
+  
+  public void testCompositeAssignmentCast() { doTest(); }
 
   private void doTest(String conflictMessage) {
     try {

@@ -32,8 +32,10 @@ import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -140,9 +142,8 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
     boolean inlineAll = mode == InlineMode.INLINE_ALL_AND_DELETE;
     return ModCommand.psiUpdate(context, updater -> {
       PsiPatternVariable writablePattern = updater.getWritable(pattern);
-      List<SmartPsiElementPointer<PsiExpression>> pointers =
-        inlineOccurrences(project, writablePattern, defToInline,
-                          ContainerUtil.map2Array(refsToInline, PsiElement.EMPTY_ARRAY, updater::getWritable));
+      List<SmartPsiElementPointer<PsiExpression>> pointers = inlineOccurrences(project, writablePattern, defToInline,
+                                                                               ContainerUtil.map(refsToInline, updater::getWritable));
       if (inlineAll) {
         writablePattern.delete();
       }
@@ -288,7 +289,9 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
     }
 
     final PsiElement writeAccess = checkRefsInAugmentedAssignmentOrUnaryModified(refsToInline, defToInline);
-    if (writeAccess != null) {
+    if (writeAccess != null && !
+      (writeAccess.getParent() instanceof PsiAssignmentExpression assignment && assignment.getLExpression() == writeAccess &&
+       ArrayUtil.contains(writeAccess, refsToInline))) {
       String message =
         RefactoringBundle.getCannotRefactorMessage(JavaRefactoringBundle.message("variable.is.accessed.for.writing", localName));
       return ModCommand.highlight(EditorColors.WRITE_SEARCH_RESULT_ATTRIBUTES, writeAccess)
@@ -305,9 +308,16 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
     return ModCommand.psiUpdate(context, updater -> {
       PsiExpression writableDef = updater.getWritable(defToInline);
       PsiLocalVariable writableLocal = updater.getWritable(local);
-      PsiElement[] writableRefs = ContainerUtil.map2Array(refsToInline, PsiElement.EMPTY_ARRAY, updater::getWritable);
+      List<PsiElement> writableRefs = StreamEx.of(refsToInline).without(writeAccess).map(updater::getWritable).toList();
+      PsiElement writableWrite = updater.getWritable(writeAccess);
       List<SmartPsiElementPointer<PsiExpression>> pointers = inlineOccurrences(project, writableLocal, writableDef, writableRefs);
-
+      if (writableWrite != null && writableWrite.isValid()) {
+        PsiAssignmentExpression newAssignment =
+          PsiReplacementUtil.replaceOperatorAssignmentWithAssignmentExpression((PsiAssignmentExpression)writableWrite.getParent());
+        for (PsiReferenceExpression ref : VariableAccessUtils.getVariableReferences(writableLocal, newAssignment.getRExpression())) {
+          pointers.add(SmartPointerManager.createPointer(InlineUtil.inlineVariable(local, defToInline, ref)));
+        }
+      }
       if (inlineAll) {
         if (!isInliningVariableInitializer(writableDef)) {
           deleteInitializer(writableDef);
@@ -356,10 +366,10 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
   }
 
   @NotNull
-  static List<SmartPsiElementPointer<PsiExpression>> inlineOccurrences(@NotNull Project project,
-                                                                       @NotNull PsiVariable local,
-                                                                       PsiExpression defToInline,
-                                                                       PsiElement[] refsToInline) {
+  private static List<SmartPsiElementPointer<PsiExpression>> inlineOccurrences(@NotNull Project project,
+                                                                               @NotNull PsiVariable local,
+                                                                               PsiExpression defToInline,
+                                                                               @NotNull List<PsiElement> refsToInline) {
     List<SmartPsiElementPointer<PsiExpression>> pointers = new ArrayList<>();
     final SmartPointerManager pointerManager = SmartPointerManager.getInstance(project);
     for (PsiElement element : refsToInline) {
