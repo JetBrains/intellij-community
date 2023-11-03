@@ -28,7 +28,7 @@ private class ChangeViewToolWindowFactory : VcsToolWindowFactory() {
     super.init(window)
 
     window.stripeTitleProvider = Supplier {
-      ProjectLevelVcsManager.getInstance(window.project).allActiveVcss.singleOrNull()?.displayName
+      window.project.takeIf { !it.isDisposed }?.let { ProjectLevelVcsManager.getInstance(it).allActiveVcss.singleOrNull()?.displayName }
       ?: IdeBundle.message("toolwindow.stripe.Version_Control")
     }
 
