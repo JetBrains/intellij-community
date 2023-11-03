@@ -27,18 +27,18 @@ sealed class K2MoveRenameUsageInfo(
   reference: PsiReference,
   referencedElement: PsiElement
 ) : MoveRenameUsageInfo(element, reference, referencedElement) {
-    val usageElement: KtElement get() = element as KtElement
-
     abstract fun retarget()
 
-    class LightUsageInfo(
-        private val element: PsiElement,
+    class Light(
+        element: PsiElement,
         reference: PsiReference,
-        private val referencedElement: KtElement,
-        private val lightElement: PsiNamedElement,
+        referencedElement: KtNamedDeclaration,
+        @Suppress("StatefulEp") private val lightElement: PsiNamedElement,
         private val lightElementIndex: Int,
     ) : K2MoveRenameUsageInfo(element, reference, referencedElement) {
         override fun retarget() {
+            val element = element ?: return
+            val referencedElement = (upToDateReferencedElement as? KtNamedDeclaration) ?: return
             val newLightElement = referencedElement.toLightElements()[lightElementIndex]
             if (element is PsiReferenceExpression
                 && lightElement is PsiMember
@@ -94,9 +94,10 @@ sealed class K2MoveRenameUsageInfo(
     class Qualifiable(
       element: KtElement,
       reference: KtReference,
-      private val referencedElement: KtNamedDeclaration
+      referencedElement: KtNamedDeclaration
     ) : K2MoveRenameUsageInfo(element, reference, referencedElement) {
         override fun retarget() {
+            val referencedElement = upToDateReferencedElement ?: return
             reference?.bindToElement(referencedElement)
         }
     }
@@ -108,10 +109,12 @@ sealed class K2MoveRenameUsageInfo(
     class Unqualifiable(
       element: KtElement,
       reference: KtReference,
-      private val referencedElement: KtNamedDeclaration
+      referencedElement: KtNamedDeclaration
     ) : K2MoveRenameUsageInfo(element, reference, referencedElement) {
         override fun retarget() {
-            referencedElement.fqName?.let(usageElement.containingKtFile::addImport)
+            val element = (element as? KtElement) ?: return
+            val referencedElement = (upToDateReferencedElement as? KtNamedDeclaration) ?: return
+            referencedElement.fqName?.let(element.containingKtFile::addImport)
         }
     }
 
@@ -168,7 +171,7 @@ sealed class K2MoveRenameUsageInfo(
                         } else {
                             lightElements.firstOrNull { ref.isReferenceTo(it) }
                         } ?: return@mapNotNull null
-                        LightUsageInfo(ref.element, ref, declaration, lightElement, lightElements.indexOf(lightElement))
+                        Light(ref.element, ref, declaration, lightElement, lightElements.indexOf(lightElement))
                     }
                 }
         }
