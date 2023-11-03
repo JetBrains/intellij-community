@@ -14,6 +14,7 @@ import com.intellij.ide.startup.StartupActionScriptManager;
 import com.intellij.ide.startup.StartupActionScriptManager.ActionCommand;
 import com.intellij.ide.ui.laf.LookAndFeelThemeAdapterKt;
 import com.intellij.openapi.application.migrations.BigDataTools232;
+import com.intellij.openapi.application.migrations.HttpClientPostmanConverter233;
 import com.intellij.openapi.application.migrations.PresentationAssistant233;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
@@ -933,6 +934,7 @@ public final class ConfigImportHelper {
     var options = new PluginMigrationOptions(currentProductVersion, newConfigDir, oldConfigDir, toMigrate, toDownload);
     new BigDataTools232().migratePlugins(options);
     new PresentationAssistant233().migratePlugin(options);
+    new HttpClientPostmanConverter233().migratePlugins(options);
   }
 
   private static void partitionNonBundled(Collection<? extends IdeaPluginDescriptor> descriptors,
