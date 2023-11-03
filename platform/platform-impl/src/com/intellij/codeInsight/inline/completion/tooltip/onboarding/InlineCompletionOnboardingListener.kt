@@ -8,7 +8,6 @@ import com.intellij.codeInsight.inline.completion.tooltip.InlineCompletionToolti
 import com.intellij.openapi.editor.Editor
 
 internal class InlineCompletionOnboardingListener private constructor(private val editor: Editor) : InlineCompletionEventAdapter {
-
   private var state: State? = null
 
   override fun onRequest(event: InlineCompletionEventType.Request) {
