@@ -21,6 +21,7 @@ public final class PluginXmlReader {
     try {
       List<RawIncludedRuntimeModule> modules = new ArrayList<>();
       Set<String> addedModules = new HashSet<>();
+      //it's important to have the main module at the beginning of the list for now, ModuleBasedProductLoadingStrategy.loadPluginDescriptorFromRuntimeModule relies on that
       modules.add(new RawIncludedRuntimeModule(mainModule.getModuleId(), ModuleImportance.FUNCTIONAL, Collections.emptySet()));
       addedModules.add(mainModule.getModuleId().getStringId());
       try (InputStream inputStream = mainModule.readFile(PLUGIN_XML_PATH)) {
