@@ -50,7 +50,7 @@ open class TransferableSetting(
 
     fun keymap(keymap: Keymap): Multiple {
       val customShortcuts = (keymap as? PatchedKeymap)?.overrides
-      val customShortcutCount = customShortcuts?.size ?: 0
+      val customShortcutCount = customShortcuts?.sumOf { it.shortcuts.size } ?: 0
       val title = if (customShortcutCount == 0)
         keymap.displayName
       else ImportSettingsBundle.message("transfer.settings.keymap-with-custom-shortcuts", keymap.displayName, customShortcutCount)
