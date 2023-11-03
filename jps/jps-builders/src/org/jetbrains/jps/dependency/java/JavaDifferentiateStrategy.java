@@ -245,13 +245,14 @@ public final class JavaDifferentiateStrategy implements DifferentiateStrategy {
 
   private boolean processMethodChanges(DifferentiateContext context, Difference.Change<JvmClass, JvmClass.Diff> classChange, Utils future, Utils present) {
     JvmClass changedClass = classChange.getPast();
-    if (changedClass.isAnnotation()) {
-      debug("Class is annotation, skipping method analysis");
-      return true;
-    }
 
     Difference.Specifier<JvmMethod, JvmMethod.Diff> methodsDiff = classChange.getDiff().methods();
-    processAddedMethods(context, changedClass, methodsDiff.added(), future, present);
+    if (!changedClass.isAnnotation()) {
+      processAddedMethods(context, changedClass, methodsDiff.added(), future, present);
+    }
+    else {
+      debug("Class is annotation, skipping method analysis for added methods");
+    }
     processRemovedMethods(context, changedClass, methodsDiff.removed(), future, present);
     processChangedMethods(context, changedClass, methodsDiff.changed(), future, present);
 

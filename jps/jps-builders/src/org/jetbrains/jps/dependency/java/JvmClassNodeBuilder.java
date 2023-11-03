@@ -120,28 +120,28 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
         // only primitive, String, Class, Enum, another Annotation or array of any of these are allowed
         switch (name) {
           case "java/lang/Integer":
-            descriptor.append("I;");
+            descriptor.append("I");
             break;
           case "java/lang/Short":
-            descriptor.append("S;");
+            descriptor.append("S");
             break;
           case "java/lang/Long":
-            descriptor.append("J;");
+            descriptor.append("J");
             break;
           case "java/lang/Byte":
-            descriptor.append("B;");
+            descriptor.append("B");
             break;
           case "java/lang/Char":
-            descriptor.append("C;");
+            descriptor.append("C");
             break;
           case "java/lang/Boolean":
-            descriptor.append("Z;");
+            descriptor.append("Z");
             break;
           case "java/lang/Float":
-            descriptor.append("F;");
+            descriptor.append("F");
             break;
           case "java/lang/Double":
-            descriptor.append("D;");
+            descriptor.append("D");
             break;
           default:
             descriptor.append("L").append(name).append(";");
