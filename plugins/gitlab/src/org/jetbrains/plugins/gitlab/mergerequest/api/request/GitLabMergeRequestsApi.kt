@@ -19,7 +19,6 @@ import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestShort
 import org.jetbrains.plugins.gitlab.util.GitLabApiRequestName
 import java.net.URI
 import java.net.http.HttpRequest
-import java.net.http.HttpRequest.BodyPublishers
 import java.net.http.HttpResponse
 
 @SinceGitLab("7.0", note = "?search available since 10.4, ?scope since 9.5")
@@ -162,7 +161,7 @@ suspend fun GitLabApi.Rest.mergeRequestSetReviewers(
                 // Dumb hack: IDs are of course URLs rather than numbers, but this endpoint requires a number.
                 + "?reviewer_ids=${reviewers.joinToString(",") { it.id.substringAfterLast('/') }}")
   val request = request(uri)
-    .PUT(BodyPublishers.noBody()).build()
+    .PUT(HttpRequest.BodyPublishers.noBody()).build()
   return withErrorStats(GitLabApiRequestName.REST_PUT_MERGE_REQUEST_REVIEWERS) {
     sendAndAwaitCancellable(request)
   }
