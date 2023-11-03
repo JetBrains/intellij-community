@@ -3,16 +3,17 @@ package com.intellij.platform.ide.bootstrap
 
 import com.intellij.diagnostic.PluginException
 import com.intellij.openapi.application.Application
-import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ConfigImportHelper
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.platform.diagnostic.telemetry.impl.span
-import kotlinx.coroutines.Dispatchers
+import com.intellij.util.MathUtil
+import com.intellij.util.PlatformUtils
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.withTimeout
 import org.jetbrains.annotations.ApiStatus.Internal
-import kotlin.time.Duration.Companion.seconds
+import kotlin.time.Duration.Companion.milliseconds
 
 internal suspend fun runStartupWizard(isInitialStart: Job, app: Application) {
   val log = logger<IdeStartupWizard>()
@@ -31,10 +32,11 @@ internal suspend fun runStartupWizard(isInitialStart: Job, app: Application) {
 
     try {
       val wizard = adapter.createInstance<IdeStartupWizard>(app) ?: continue
+      val timeoutMs = System.getProperty("intellij.startup.wizard.initial.timeout").orEmpty().toIntOrNull() ?: 2000
 
-      span("app manager initial state waiting", Dispatchers.EDT) {
+      span("app manager initial state waiting") {
         try {
-          withTimeout(2.seconds) {
+          withTimeout(timeoutMs.milliseconds) {
             isInitialStart.join()
           }
         } catch (_: TimeoutCancellationException) {
