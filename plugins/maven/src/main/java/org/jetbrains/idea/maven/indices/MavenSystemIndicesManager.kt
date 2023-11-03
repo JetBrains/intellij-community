@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.indices
 
+import com.intellij.ide.AppLifecycleListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -8,10 +9,7 @@ import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.util.PathUtilRt
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
+import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.jetbrains.annotations.TestOnly
@@ -29,7 +27,7 @@ import java.nio.file.Path
 @Service
 class MavenSystemIndicesManager(val cs: CoroutineScope) {
   private val openedIndices = HashMap<String, MavenIndex>()
-  private val updatingIndices = HashMap<String, Deferred<MavenIndex>>();
+  private val updatingIndices = HashMap<String, Deferred<MavenIndex>>()
   private val mutex = Mutex()
 
   private var ourTestIndicesDir: Path? = null
@@ -65,39 +63,54 @@ class MavenSystemIndicesManager(val cs: CoroutineScope) {
     }
   }
 
-  suspend fun updateIndexContent(repo: MavenRepositoryInfo,
-                                 fullUpdate: Boolean,
-                                 multithreaded: Boolean,
-                                 indicator: MavenProgressIndicator) {
-    val index = getIndexForRepo(repo)
-    var calculate = false
-    val deferredResult = mutex.withLock {
-      val deferred = updatingIndices[repo.url]
-      if (deferred == null) {
-        calculate = true;
-        val newDeferred = cs.async {
-          index.updateOrRepair(fullUpdate, indicator, multithreaded)
-          index
+  private suspend fun updateIndexContent(repo: MavenRepositoryInfo,
+                                         fullUpdate: Boolean,
+                                         multithreaded: Boolean,
+                                         indicator: MavenProgressIndicator) {
+
+    coroutineScope {
+
+      val updateScope = this
+      val connection = ApplicationManager.getApplication().messageBus.connect(updateScope)
+      connection.subscribe(AppLifecycleListener.TOPIC, object : AppLifecycleListener {
+        override fun appClosing() {
+          updateScope.cancel()
+          indicator.cancel()
+          MavenLog.LOG.info("Application is closing, gracefully shutdown all indexing operations")
         }
-        updatingIndices.putIfAbsent(repo.url, newDeferred)
-        return@withLock newDeferred
+      })
+
+      indicator.addCancelCondition {
+        !updateScope.isActive
       }
-      else return@withLock deferred
-    }
-    deferredResult.invokeOnCompletion {
-      cs.async {
-        mutex.withLock {
-          updatingIndices.remove(repo.url)
+
+      val index = getIndexForRepo(repo)
+      val deferredResult = mutex.withLock {
+        val deferred = updatingIndices[repo.url]
+        if (deferred == null) {
+          val newDeferred = updateScope.async {
+            index.updateOrRepair(fullUpdate, indicator, multithreaded)
+            index
+          }
+          updatingIndices.putIfAbsent(repo.url, newDeferred)
+          return@withLock newDeferred
+        }
+        else return@withLock deferred
+      }
+      deferredResult.invokeOnCompletion {
+        updateScope.async {
+          mutex.withLock {
+            updatingIndices.remove(repo.url)
+          }
         }
       }
 
+      deferredResult.await()
     }
-
-    deferredResult.await()
 
   }
 
-  suspend fun getIndexForRepo(repo: MavenRepositoryInfo): MavenIndex {
+  private suspend fun getIndexForRepo(repo: MavenRepositoryInfo): MavenIndex {
     return cs.async(Dispatchers.IO) {
       val dir = getDirForMavenIndex(repo)
       mutex.withLock {
@@ -126,7 +139,7 @@ class MavenSystemIndicesManager(val cs: CoroutineScope) {
   }
 
   private fun getIndexWrapper(): MavenIndexerWrapper {
-    return MavenServerManager.getInstance().createIndexer();
+    return MavenServerManager.getInstance().createIndexer()
   }
 
   private fun getDirForMavenIndex(repo: MavenRepositoryInfo): Path {
