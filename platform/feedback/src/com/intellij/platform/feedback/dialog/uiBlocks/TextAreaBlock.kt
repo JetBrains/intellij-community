@@ -34,7 +34,7 @@ class TextAreaBlock(@NlsContexts.Label private val myLabel: String,
           .apply {
             if (myRequireNotEmptyMessage != null) {
               errorOnApply(myRequireNotEmptyMessage!!) {
-                myProperty.isBlank()
+                it.text.isBlank()
               }
             }
           }
