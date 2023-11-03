@@ -11,6 +11,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.changes.EditorTabDiffPreviewManager
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.platform.util.coroutines.childScope
@@ -144,6 +145,9 @@ class ActivityView(private val project: Project, gateway: IdeaGateway, val activ
 
       ActivityToolWindow.showTab(project, content)
     }
+
+    @JvmStatic
+    fun isViewEnabled() = Registry.`is`("lvcs.show.activity.view")
   }
 }
 

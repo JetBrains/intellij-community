@@ -8,6 +8,8 @@ import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.lvcs.ActivityScope;
+import com.intellij.platform.lvcs.ui.ActivityView;
 import com.intellij.vcsUtil.VcsSelection;
 import com.intellij.vcsUtil.VcsSelectionUtil;
 import org.jetbrains.annotations.NotNull;
@@ -23,7 +25,12 @@ public final class ShowSelectionHistoryAction extends ShowHistoryAction {
     int from = sel.getSelectionStartLineNumber();
     int to = sel.getSelectionEndLineNumber();
 
-    new SelectionHistoryDialog(p, gw, f, from, to).show();
+    if (ActivityView.isViewEnabled()) {
+      ActivityView.show(p, gw, new ActivityScope.Selection(f, from, to));
+    }
+    else {
+      new SelectionHistoryDialog(p, gw, f, from, to).show();
+    }
   }
 
   @Override
