@@ -1667,7 +1667,9 @@ public final class Mappings {
         debug("Field: ", addedField.name);
 
         if (!addedField.isPrivate()) {
-          getAllSubclasses(classRepr.name).forEach(subClass -> {
+          IntSet changedClassWithSubclasses = myFuture.propagateFieldAccess(addedField.name, classRepr.name);
+          changedClassWithSubclasses.add(classRepr.name);
+          changedClassWithSubclasses.forEach(subClass -> {
             final Iterable<ClassRepr> reprs = Iterators.collect(myFuture.reprsByName(subClass, ClassRepr.class), new SmartList<>());
             if (!Iterators.isEmpty(reprs)) {
               final Iterable<File> sourceFileNames = classToSourceFileGet(subClass);
@@ -1709,35 +1711,9 @@ public final class Mappings {
         for (final Pair<FieldRepr, ClassRepr> p : overriddenFields) {
           final FieldRepr overridden = p.first;
           final ClassRepr cc = p.second;
-          if (overridden.isPrivate()) {
-            continue;
-          }
-          final boolean sameKind = addedField.myType.equals(overridden.myType) && addedField.isStatic() == overridden.isStatic() && addedField.isSynthetic() == overridden.isSynthetic() && addedField.isFinal() == overridden.isFinal();
-          if (!sameKind || Difference.weakerAccess(addedField.access, overridden.access)) {
-            final IntSet propagated = myPresent.propagateFieldAccess(overridden.name, cc.name);
-
-            final Set<UsageRepr.Usage> affectedUsages = new HashSet<>();
+          if (!overridden.isPrivate()) {
             debug("Affecting usages of overridden field in class ", cc.name);
-            myFuture.affectFieldUsages(overridden, propagated, overridden.createUsage(myContext, cc.name), affectedUsages, state.myDependants);
-
-            if (sameKind) {
-              // check if we can reduce the number of usages going to be recompiled
-              UsageConstraint constraint = null;
-              if (addedField.isProtected()) {
-                // no need to recompile usages in field class' package and hierarchy, since newly added field is accessible in this scope
-                constraint = myFuture.new InheritanceConstraint(cc);
-              }
-              else if (addedField.isPackageLocal()) {
-                // no need to recompile usages in field class' package, since newly added field is accessible in this scope
-                constraint = myFuture.new PackageConstraint(cc.getPackageName());
-              }
-              if (constraint != null) {
-                for (final UsageRepr.Usage usage : affectedUsages) {
-                  state.myUsageConstraints.put(usage, constraint);
-                }
-              }
-            }
-            state.myAffectedUsages.addAll(affectedUsages);
+            myFuture.affectFieldUsages(overridden, myPresent.propagateFieldAccess(overridden.name, cc.name), overridden.createUsage(myContext, cc.name), state.myAffectedUsages, state.myDependants);
           }
         }
       }

@@ -594,15 +594,11 @@ public final class JavaDifferentiateStrategy implements DifferentiateStrategy {
 
     for (JvmField addedField : added) {
       debug("Field: " + addedField.getName());
-      if (!addedField.isPrivate()) {
-
-        for (ReferenceID id : future.withAllSubclasses(changedClass.getReferenceID())) {
-          if (!(id instanceof JvmNodeReferenceID)) {
-            continue;
-          }
-          JvmNodeReferenceID subClass = (JvmNodeReferenceID)id;
-
-          String affectReason = null;
+      Set<JvmNodeReferenceID> changedClassWithSubclasses = future.collectSubclassesWithoutField(changedClass.getReferenceID(), addedField.getName());
+      changedClassWithSubclasses.add(changedClass.getReferenceID());
+      for (JvmNodeReferenceID subClass : changedClassWithSubclasses) {
+        String affectReason = null;
+        if (!addedField.isPrivate()) {
           for (JvmClass cl : future.getNodes(subClass, JvmClass.class)) {
             if (cl.isLocal()) {
               affectReason = "Affecting local subclass (introduced field can potentially hide surrounding method parameters/local variables): ";
@@ -619,40 +615,30 @@ public final class JavaDifferentiateStrategy implements DifferentiateStrategy {
               }
             }
           }
+        }
 
-          if (affectReason != null) {
-            affectNodeSources(context, subClass, affectReason);
-          }
+        if (affectReason != null) {
+          affectNodeSources(context, subClass, affectReason);
+        }
 
-          debug("Affecting field usages referenced from subclass ", subClass.getNodeName());
-          affectMemberUsages(context, subClass, addedField, Collections.emptyList());
-          if (addedField.isStatic()) {
-            affectStaticMemberOnDemandUsages(context, subClass, Collections.emptyList());
-          }
+        if (!addedField.isPrivate() && addedField.isStatic()) {
+          affectStaticMemberOnDemandUsages(context, subClass, Collections.emptyList());
+        }
+        else {
+          // ensure analysis scope includes classes that depend on the subclass
+          context.affectUsage(new AffectionScopeMetaUsage(subClass));
         }
       }
 
-      for (Pair<JvmClass, JvmField> p : future.getOverriddenFields(changedClass, addedField)) {
-        JvmClass overriddenCls = p.getFirst();
-        JvmField overriddenField = p.getSecond();
-        if (!addedField.isSameKind(overriddenField) || addedField.isWeakerAccessThan(overriddenField)) {
-          debug("Affecting usages of overridden field in class ", overriddenCls.getName());
-
-          Predicate<Node<?, ?>> constraint = null;
-          if (addedField.isSameKind(overriddenField)) {
-            if (addedField.isProtected()) {
-              // no need to recompile usages in field class' package and hierarchy, since newly added field is accessible in this scope
-              constraint = new InheritanceConstraint(future, overriddenCls);
-            }
-            else if (addedField.isPackageLocal()) {
-              // no need to recompile usages in field class' package, since newly added field is accessible in this scope
-              constraint = new PackageConstraint(overriddenCls.getPackageName());
-            }
-          }
-          affectMemberUsages(context, overriddenCls.getReferenceID(), overriddenField, present.collectSubclassesWithoutField(overriddenCls.getReferenceID(), overriddenField.getName()), constraint);
+      context.affectUsage((n, u) -> {
+        // affect all clients that access fields with the same name via subclasses,
+        // if the added field is not visible to the client
+        if (!(u instanceof FieldUsage) || !(n instanceof JvmClass)) {
+          return false;
         }
-      }
-      
+        FieldUsage fieldUsage = (FieldUsage)u;
+        return Objects.equals(fieldUsage.getName(), addedField.getName()) && changedClassWithSubclasses.contains(fieldUsage.getElementOwner());
+      });
     }
     
     debug("End of added fields processing");

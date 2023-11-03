@@ -140,7 +140,7 @@ public final class Utils {
 
   public Iterable<Pair<JvmClass, JvmField>> getOverriddenFields(JvmClass fromCls, JvmField field) {
     Function<JvmClass, Iterable<Pair<JvmClass, JvmField>>> dataGetter = cl -> Iterators.collect(
-      Iterators.map(Iterators.filter(cl.getFields(), f -> Objects.equals(f.getName(), field.getName()) && isVisibleIn(cl, f, fromCls)), ff -> Pair.create(cl, ff)),
+      Iterators.map(Iterators.filter(cl.getFields(), f -> Objects.equals(f.getName(), field.getName()) && isVisibleInHierarchy(cl, f, fromCls)), ff -> Pair.create(cl, ff)),
       new SmartList<>()
     );
     return Iterators.flat(
@@ -150,7 +150,7 @@ public final class Utils {
 
   public Iterable<Pair<JvmClass, JvmMethod>> getOverriddenMethods(JvmClass fromCls, Predicate<JvmMethod> searchCond) {
     Function<JvmClass, Iterable<Pair<JvmClass, JvmMethod>>> dataGetter = cl -> Iterators.collect(
-      Iterators.map(Iterators.filter(cl.getMethods(), m -> searchCond.test(m) && isVisibleIn(cl, m, fromCls)), mm -> Pair.create(cl, mm)),
+      Iterators.map(Iterators.filter(cl.getMethods(), m -> searchCond.test(m) && isVisibleInHierarchy(cl, m, fromCls)), mm -> Pair.create(cl, mm)),
       new SmartList<>()
     );
     return Iterators.flat(
@@ -159,7 +159,7 @@ public final class Utils {
   }
 
   public Iterable<Pair<JvmClass, JvmMethod>> getOverridingMethods(JvmClass fromCls, JvmMethod method, Predicate<JvmMethod> searchCond) {
-    Function<JvmClass, Iterable<Pair<JvmClass, JvmMethod>>> dataGetter = cl -> isVisibleIn(fromCls, method, cl)? Iterators.collect(
+    Function<JvmClass, Iterable<Pair<JvmClass, JvmMethod>>> dataGetter = cl -> isVisibleInHierarchy(fromCls, method, cl)? Iterators.collect(
       Iterators.map(Iterators.filter(cl.getMethods(), searchCond::test), mm -> Pair.create(cl, mm)),
       new SmartList<>()
     ) : Collections.emptyList();
@@ -192,11 +192,26 @@ public final class Utils {
     return !Iterators.isEmpty(Iterators.filter(cls.getMethods(), method::isSameByJavaRules)) || !Iterators.isEmpty(getOverriddenMethods(cls, method::isSameByJavaRules));
   }
 
-  // tests visibility within a class hierarchy
-  private static boolean isVisibleIn(final JvmClass cls, final ProtoMember member, final JvmClass scope) {
-    final boolean privacy = member.isPrivate() && !Objects.equals(cls.getName(), scope.getName());
-    final boolean packageLocality = member.isPackageLocal() && !Objects.equals(cls.getPackageName(), scope.getPackageName());
-    return !privacy && !packageLocality;
+  private boolean isVisibleInHierarchy(final JvmClass cls, final ProtoMember clsMember, final JvmClass subClass) {
+    // optimized version, allows skipping isInheritor check
+    return clsMember.isProtected() || isVisibleIn(cls, clsMember, subClass);
+  }
+
+  public boolean isVisibleIn(final JvmClass cls, final ProtoMember clsMember, final JvmClass scope) {
+    if (clsMember.isPrivate()) {
+      return Objects.equals(cls.getReferenceID(), scope.getReferenceID());
+    }
+    if (clsMember.isPackageLocal()) {
+      return Objects.equals(cls.getPackageName(), scope.getPackageName());
+    }
+    if (clsMember.isProtected()) {
+      return Objects.equals(cls.getPackageName(), scope.getPackageName()) || isInheritorOf(scope, cls);
+    }
+    return true;
+  }
+
+  public boolean isInheritorOf(JvmClass who, JvmClass whom) {
+    return !Iterators.isEmpty(Iterators.filter(Iterators.recurseDepth(who, cl -> Iterators.flat(Iterators.map(who.getSuperTypes(), st -> getClassesByName(st))), true), cl -> cl.getReferenceID().equals(whom.getReferenceID())));
   }
 
   public boolean inheritsFromLibraryClass(JvmClass cls) {
