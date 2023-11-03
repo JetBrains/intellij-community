@@ -143,7 +143,22 @@ pub struct ProductInfoLaunchField {
     pub vmOptionsFilePath: String,
     pub bootClassPathJarNames: Vec<String>,
     pub additionalJvmArguments: Vec<String>,
-    pub mainClass: String
+    pub mainClass: String,
+    #[serde(default = "Vec::new")]
+    pub customCommands: Vec<ProductInfoCustomCommandField>,
+}
+
+#[allow(non_snake_case)]
+#[derive(Deserialize, Serialize, Clone, Debug)]
+pub struct ProductInfoCustomCommandField {
+    pub commands: Vec<String>,
+    pub vmOptionsFilePath: Option<String>,
+    #[serde(default = "Vec::new")]
+    pub bootClassPathJarNames: Vec<String>,
+    #[serde(default = "Vec::new")]
+    pub additionalJvmArguments: Vec<String>,
+    pub mainClass: Option<String>,
+    pub dataDirectoryName: Option<String>,
 }
 
 pub trait LaunchConfiguration {

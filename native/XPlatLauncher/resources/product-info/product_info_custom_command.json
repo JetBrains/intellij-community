@@ -1,32 +1,32 @@
 {
   "name": "Cross-platform Launcher Test",
   "version": "1234.5",
-  "versionSuffix": "EAP",
   "buildNumber": "123.456",
   "productCode": "XL",
   "dataDirectoryName": "XPlatLauncherTest",
-  "svgIconPath": "bin/idea.svg",
   "productVendor": "JetBrains",
   "launch": [
     {
-      "os": "Windows",
-      "launcherPath": "bin/xplat64.exe",
-      "javaExecutablePath": "jbr/bin/java.exe",
-      "vmOptionsFilePath": "bin/xplat64.exe.vmoptions",
+      "os": "Linux",
+      "launcherPath": "bin/xplat.sh",
+      "javaExecutablePath": "jbr/bin/java",
+      "vmOptionsFilePath": "bin/xplat64.vmoptions",
+      "startupWmClass": "jetbrains-idea",
       "bootClassPathJarNames": [
-        "app.jar",
-        "boot-windows.jar"
+        "app.jar"
       ],
       "additionalJvmArguments": [
-        "-Didea.vendor.name=JetBrains",
-        "-Didea.paths.selector=XPlatLauncherTest",
-        "-Dpath.macro.test=%IDE_HOME%"
+        "-Didea.paths.selector=XPlatLauncherTest"
       ],
       "mainClass": "com.intellij.idea.TestMain",
       "customCommands": [
         {
           "commands": [
             "custom-command"
+          ],
+          "vmOptionsFilePath": "bin/xplat64custom.vmoptions",
+          "bootClassPathJarNames": [
+            "custom.jar"
           ],
           "additionalJvmArguments": [
             "-Dproduct.property=product.value"
@@ -36,17 +36,5 @@
         }
       ]
     }
-  ],
-  "bundledPlugins": [
-    "TestPlugin1",
-    "TestPlugin2"
-  ],
-  "modules": [
-    "TestModule1",
-    "TestModule2"
-  ],
-  "fileExtensions": [
-    "*.test_ext_1",
-    "*.test_ext_2"
   ]
 }
