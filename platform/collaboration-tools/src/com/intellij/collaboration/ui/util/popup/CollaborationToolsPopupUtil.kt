@@ -1,6 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.collaboration.ui.util.popup
 
+import com.intellij.collaboration.ui.codereview.details.SelectableWrapper
+import com.intellij.collaboration.ui.items
 import com.intellij.execution.ui.FragmentedSettingsUtil
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupListener
@@ -75,6 +77,11 @@ suspend fun <T> JBPopup.showAndAwaitSubmission(list: JList<T>, point: RelativePo
   return waitForChoiceAsync(list)
 }
 
+suspend fun <T> JBPopup.showAndAwaitSubmissions(list: JList<SelectableWrapper<T>>, point: RelativePoint): List<T> {
+  show(point)
+  return waitForMultipleChoiceAsync(list)
+}
+
 /**
  * [PopupChooserBuilder.setItemChosenCallback] fires on every selection change
  * [PopupChooserBuilder.setCancelCallback] fires on every popup close
@@ -94,6 +101,23 @@ private suspend fun <T> JBPopup.waitForChoiceAsync(list: JList<T>): T {
   }
 }
 
+private suspend fun <T> JBPopup.waitForMultipleChoiceAsync(list: JList<SelectableWrapper<T>>): List<T> {
+  checkDisposed()
+  return try {
+    suspendCancellableCoroutine<List<T>> { continuation ->
+      addChoicesPopupListener(continuation) {
+        list.model.items
+          .filter { item -> item.isSelected }
+          .map { item -> item.value }
+      }
+    }
+  }
+  catch (e: CancellationException) {
+    cancel()
+    throw e
+  }
+}
+
 private fun <T> JBPopup.addChoicePopupListener(cont: CancellableContinuation<T>, chosenValue: () -> T) {
   val listener = object : JBPopupListener {
     override fun onClosed(event: LightweightWindowEvent) {
@@ -101,6 +125,15 @@ private fun <T> JBPopup.addChoicePopupListener(cont: CancellableContinuation<T>,
         event.isOk -> cont.resume(chosenValue())
         else -> cont.cancel()
       }
+    }
+  }
+  addListener(listener)
+}
+
+private fun <T> JBPopup.addChoicesPopupListener(cont: CancellableContinuation<List<T>>, chosenValues: () -> List<T>) {
+  val listener = object : JBPopupListener {
+    override fun onClosed(event: LightweightWindowEvent) {
+      cont.resume(chosenValues())
     }
   }
   addListener(listener)
