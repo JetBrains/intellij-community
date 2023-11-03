@@ -28,6 +28,7 @@ import com.intellij.util.text.nullize
 import com.intellij.util.ui.JBUI
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.sdk.PyDetectedSdk
+import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMethod.*
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnvIdentity
 import kotlinx.coroutines.CoroutineScope
@@ -50,6 +51,27 @@ import kotlin.io.path.isDirectory
 
 internal fun <T> PropertyGraph.booleanProperty(dependency: ObservableProperty<T>, value: T) =
   lazyProperty { false }.apply { dependsOn(dependency) { dependency.get() == value } }
+
+class PythonNewEnvironmentDialogNavigator {
+  lateinit var selectionMode: ObservableMutableProperty<PythonInterpreterSelectionMode>
+  lateinit var selectionMethod: ObservableMutableProperty<PythonInterpreterSelectionMethod>
+  lateinit var newEnvManager: ObservableMutableProperty<PythonSupportedEnvironmentManagers>
+  lateinit var existingEnvManager: ObservableMutableProperty<PythonSupportedEnvironmentManagers>
+
+  fun navigateTo(newMode: PythonInterpreterSelectionMode? = null, newMethod: PythonInterpreterSelectionMethod? = null, newManager:PythonSupportedEnvironmentManagers? = null) {
+    newMode?.let { selectionMode.set(it) }
+    newMethod?.let { method ->
+      selectionMethod.set(method)
+    }
+    newManager?.let {
+      when (newMethod) {
+        CREATE_NEW -> newEnvManager.set(it)
+        SELECT_EXISTING -> existingEnvManager.set(it)
+        null -> null
+      }
+    }
+  }
+}
 
 
 class PythonSdkComboBoxListCellRenderer : ColoredListCellRenderer<Any>() {

@@ -26,6 +26,7 @@ import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.sdk.PySdkSettings
 import com.jetbrains.python.sdk.add.LocalContext
 import com.jetbrains.python.sdk.add.ProjectLocationContext
+import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMethod.*
 import com.jetbrains.python.sdk.configuration.createVirtualEnvSynchronously
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
@@ -54,7 +55,8 @@ class PythonNewVirtualenvCreator(presenter: PythonAddInterpreterPresenter) : Pyt
       locationValidationFailed.set(false)
     }
     val selectVenvLink = ActionLink(message("sdk.create.custom.venv.select.existing.link")) {
-      // todo navigate to select existing python
+      // todo create a detected sdk from current venv path and set `presenter.state.selectedVenv`
+      presenter.navigator.navigateTo(newMethod = SELECT_EXISTING, newManager = PythonSupportedEnvironmentManagers.PYTHON)
     }
 
     with(panel) {

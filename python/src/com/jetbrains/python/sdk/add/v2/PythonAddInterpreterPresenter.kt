@@ -67,6 +67,8 @@ class PythonAddInterpreterPresenter(val state: PythonAddInterpreterState, val ui
   private val _detectingCondaExecutable = MutableStateFlow(value = false)
   val detectingCondaExecutable: StateFlow<Boolean> = _detectingCondaExecutable.asStateFlow()
 
+  val navigator = PythonNewEnvironmentDialogNavigator()
+
   /**
    * Prefer using this flow over [PythonAddInterpreterState.projectPath] of the [state] when reacting to the changes of the new project
    * location (either with background computations or UI).

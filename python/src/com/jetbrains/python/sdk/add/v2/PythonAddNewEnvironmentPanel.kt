@@ -41,6 +41,7 @@ class PythonAddNewEnvironmentPanel(val projectPath: ObservableProperty<String>) 
   private val allExistingSdks = propertyGraph.property<List<Sdk>>(emptyList())
   private val basePythonSdks = propertyGraph.property<List<Sdk>>(emptyList())
   private val pythonBaseVersion = propertyGraph.property<Sdk?>(null)
+  private val selectedVenv = propertyGraph.property<Sdk?>(null)
 
   private val condaExecutable = propertyGraph.property("")
   private var venvHint = propertyGraph.property("")
@@ -60,6 +61,7 @@ class PythonAddNewEnvironmentPanel(val projectPath: ObservableProperty<String>) 
                                         basePythonSdks,
                                         allExistingSdks,
                                         pythonBaseVersion,
+                                        selectedVenv,
                                         condaExecutable)
 
   private lateinit var presenter: PythonAddInterpreterPresenter
@@ -68,6 +70,7 @@ class PythonAddNewEnvironmentPanel(val projectPath: ObservableProperty<String>) 
 
   fun buildPanel(outerPanel: Panel) {
     presenter = PythonAddInterpreterPresenter(state, uiContext = Dispatchers.EDT + ModalityState.current().asContextElement())
+    presenter.navigator.selectionMode = selectedMode
     custom = PythonAddCustomInterpreter(presenter)
     val validationRequestor = WHEN_PROPERTY_CHANGED(selectedMode)
 
