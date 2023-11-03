@@ -299,7 +299,8 @@ object CommunityRepositoryModules {
       "intellij.turboComplete",
     ) { spec ->
       spec.withModule("intellij.turboComplete.languages.kotlin")
-    }
+    },
+    plugin("intellij.ae.database.counters.community")
   )
 
   @Suppress("SpellCheckingInspection")
