@@ -279,7 +279,7 @@ public final class JavaCompletionContributor extends CompletionContributor imple
         public boolean isAcceptable(Object element, PsiElement context) {
           return element instanceof PsiClass psiClass &&
                  (JAVA_LANG_OBJECT.equals(psiClass.getQualifiedName()) || psiClass.isEnum() || psiClass.isInterface()) &&
-                 //it will be covered by enum class and it looks like a noise
+                 //it will be covered by enum class, and it looks like noise
                  !JAVA_LANG_COMPARABLE.equals(psiClass.getQualifiedName()) &&
                  TypeConversionUtil.areTypesConvertible(TypeUtils.getType(psiClass), selectorType);
         }

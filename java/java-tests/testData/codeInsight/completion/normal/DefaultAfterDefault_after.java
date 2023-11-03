@@ -7,7 +7,7 @@ class Main {
         break;
       default:
         break;
-      case null, deaful<caret>
+      case null, defaul<caret>
     }
   }
 }
