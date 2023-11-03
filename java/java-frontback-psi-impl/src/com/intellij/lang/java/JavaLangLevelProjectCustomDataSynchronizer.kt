@@ -1,9 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.roots
+package com.intellij.lang.java
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectCustomDataSynchronizer
-import com.intellij.openapi.roots.LanguageLevelProjectExtension.LanguageLevelChangeListener
+import com.intellij.openapi.roots.LanguageLevelProjectExtension
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.util.messages.impl.subscribeAsFlow
 import kotlinx.coroutines.flow.Flow
@@ -22,7 +22,7 @@ class JavaLangLevelProjectCustomDataSynchronizer : ProjectCustomDataSynchronizer
   override fun getValues(project: Project): Flow<LanguageLevelHolder> {
     return project.messageBus.subscribeAsFlow(LanguageLevelProjectExtension.LANGUAGE_LEVEL_CHANGED_TOPIC) {
       trySend(Unit)
-      LanguageLevelChangeListener {
+      LanguageLevelProjectExtension.LanguageLevelChangeListener {
         trySend(Unit)
       }
     }.map { LanguageLevelHolder(LanguageLevelProjectExtension.getInstance(project).languageLevel) }

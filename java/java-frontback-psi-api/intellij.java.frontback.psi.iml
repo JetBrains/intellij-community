@@ -12,12 +12,6 @@
             <stringArg name="apiVersion" arg="1.9" />
             <stringArg name="languageVersion" arg="1.9" />
           </stringArguments>
-          <arrayArguments>
-            <arrayArg name="pluginClasspaths">
-              <args>$KOTLIN_BUNDLED$/lib/kotlinx-serialization-compiler-plugin.jar</args>
-            </arrayArg>
-            <arrayArg name="pluginOptions" />
-          </arrayArguments>
         </compilerArguments>
       </configuration>
     </facet>
@@ -31,7 +25,5 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.platform.core" exported="" />
-    <orderEntry type="library" name="kotlin-stdlib" level="project" />
-    <orderEntry type="library" name="kotlinx-serialization-core" level="project" />
   </component>
 </module>
