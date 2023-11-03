@@ -61,14 +61,6 @@
             "type": "string",
             "enum": ["amd64", "aarch64"]
           },
-          "relevantCommands": {
-            "description": "List of commands (specified as the first argument in the command line) this launch method should be used for; if there is a specific launch method for some command, it should be used instead of the default one where this property isn't specified",
-            "type": "array",
-            "items": {
-              "type": "string",
-              "minItems": 1
-            }
-          },
           "launcherPath": {
             "description": "Path to an executable file which starts the IDE (relative to the parent directory of this file, '/' as a separator, may start with '../'), e.g. 'bin/idea.sh'",
             "type": "string"
@@ -105,9 +97,53 @@
             "description": "A name of the class to launch",
             "type": "string"
           },
-          "overrideDataDirectoryName": {
-            "description": "Custom value which should be used instead of 'dataDirectoryName' if this launch variant is chosen",
-            "type": "string"
+          "customCommands": {
+            "description": "Specifies custom values for some properties if IDE is started with a specific command",
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["commands"],
+              "additionalProperties": false,
+              "minItems": 0,
+              "properties": {
+                "commands": {
+                  "description": "List of commands (specified as the first argument in the command line) this customization should be used for",
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minItems": 1
+                  }
+                },
+                "vmOptionsFilePath": {
+                  "description": "Overrides value of 'vmOptionsFilePath' for the specified commands",
+                  "type": "string"
+                },
+                "bootClassPathJarNames": {
+                  "description": "Overrides value of 'bootClassPathJarNames' for the specified commands",
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minItems": 1
+                  }
+                },
+                "additionalJvmArguments": {
+                  "description": "Overrides value of 'additionalJvmArguments' for the specified commands",
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minItems": 1
+                  }
+                },
+                "mainClass": {
+                  "description": "Overrides value of 'mainClass' for the specified commands",
+                  "type": "string"
+                },
+                "dataDirectoryName": {
+                  "description": "Overrides 'dataDirectoryName' from product-info object for the specified commands",
+                  "type": "string"
+                }
+              }
+            }
           }
         }
       }

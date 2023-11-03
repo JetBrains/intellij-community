@@ -81,7 +81,6 @@ data class ProductInfoData(
 data class ProductInfoLaunchData(
   val os: String,
   val arch: String,
-  val relevantCommands: List<String> = emptyList(),
   val launcherPath: String,
   val javaExecutablePath: String?,
   val vmOptionsFilePath: String,
@@ -89,7 +88,17 @@ data class ProductInfoLaunchData(
   val bootClassPathJarNames: List<String>,
   val additionalJvmArguments: List<String>,
   val mainClass: String,
-  val overrideDataDirectoryName: String? = null,
+  val customCommands: List<CustomCommandLaunchData> = emptyList(),
+)
+
+@Serializable
+data class CustomCommandLaunchData(
+  val commands: List<String>,
+  val vmOptionsFilePath: String? = null,
+  val bootClassPathJarNames: List<String> = emptyList(),
+  val additionalJvmArguments: List<String> = emptyList(),
+  val mainClass: String? = null,
+  val dataDirectoryName: String? = null,
 )
 
 @Serializable
