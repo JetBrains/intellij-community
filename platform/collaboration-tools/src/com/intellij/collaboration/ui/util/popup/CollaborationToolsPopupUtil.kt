@@ -1,10 +1,15 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.collaboration.ui.util.popup
 
+import com.intellij.execution.ui.FragmentedSettingsUtil
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
+import com.intellij.openapi.util.NlsContexts
+import com.intellij.ui.ExperimentalUI
+import com.intellij.ui.SearchTextField
 import com.intellij.ui.awt.RelativePoint
+import com.intellij.ui.popup.AbstractPopup
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.CancellableContinuation
 import kotlinx.coroutines.CancellationException
@@ -15,6 +20,27 @@ import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.suspendCancellableCoroutine
 import javax.swing.JList
 import kotlin.coroutines.resume
+
+object CollaborationToolsPopupUtil {
+  fun configureSearchField(popup: JBPopup, popupConfig: PopupConfig) {
+    val searchTextField = UIUtil.findComponentOfType(popup.content, SearchTextField::class.java)
+    if (searchTextField != null) {
+      tuneSearchFieldForNewUI(searchTextField)
+      setSearchFieldPlaceholder(searchTextField, popupConfig.searchTextPlaceHolder)
+    }
+  }
+
+  private fun tuneSearchFieldForNewUI(searchTextField: SearchTextField) {
+    if (!ExperimentalUI.isNewUI()) return
+    AbstractPopup.customizeSearchFieldLook(searchTextField, true)
+  }
+
+  private fun setSearchFieldPlaceholder(searchTextField: SearchTextField, placeholderText: @NlsContexts.StatusText String?) {
+    placeholderText ?: return
+    searchTextField.textEditor.emptyText.text = placeholderText
+    FragmentedSettingsUtil.setupPlaceholderVisibility(searchTextField.textEditor)
+  }
+}
 
 suspend fun JBPopup.showAndAwait(point: RelativePoint) = showAndAwait(point) {}
 

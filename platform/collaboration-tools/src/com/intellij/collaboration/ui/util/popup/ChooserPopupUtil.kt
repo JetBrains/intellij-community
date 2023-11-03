@@ -2,7 +2,6 @@
 package com.intellij.collaboration.ui.util.popup
 
 import com.intellij.collaboration.messages.CollaborationToolsBundle
-import com.intellij.execution.ui.FragmentedSettingsUtil
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.ui.popup.*
@@ -12,10 +11,8 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.*
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.JBList
-import com.intellij.ui.popup.AbstractPopup
 import com.intellij.util.childScope
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
@@ -51,7 +48,7 @@ object ChooserPopupUtil {
       .setFilterAlwaysVisible(popupConfig.alwaysShowSearchField)
       .createPopup()
 
-    configureSearchField(popup, popupConfig)
+    CollaborationToolsPopupUtil.configureSearchField(popup, popupConfig)
 
     PopupUtil.setPopupToggleComponent(popup, point.component)
     return popup.showAndAwaitSubmission(list, point)
@@ -83,7 +80,7 @@ object ChooserPopupUtil {
       .addListener(loadingListener)
       .createPopup()
 
-    configureSearchField(popup, popupConfig)
+    CollaborationToolsPopupUtil.configureSearchField(popup, popupConfig)
 
     PopupUtil.setPopupToggleComponent(popup, point.component)
     popup.showAndAwaitSubmission(list, point)
@@ -143,25 +140,6 @@ object ChooserPopupUtil {
     simplePopupItemRenderer.ipad.left = 0
     simplePopupItemRenderer.ipad.right = 0
     return RoundedCellRenderer(simplePopupItemRenderer, false)
-  }
-
-  private fun configureSearchField(popup: JBPopup, popupConfig: PopupConfig) {
-    val searchTextField = UIUtil.findComponentOfType(popup.content, SearchTextField::class.java)
-    if (searchTextField != null) {
-      tuneSearchFieldForNewUI(searchTextField)
-      setSearchFieldPlaceholder(searchTextField, popupConfig.searchTextPlaceHolder)
-    }
-  }
-
-  private fun tuneSearchFieldForNewUI(searchTextField: SearchTextField) {
-    if (!ExperimentalUI.isNewUI()) return
-    AbstractPopup.customizeSearchFieldLook(searchTextField, true)
-  }
-
-  private fun setSearchFieldPlaceholder(searchTextField: SearchTextField, placeholderText: @NlsContexts.StatusText String?) {
-    placeholderText ?: return
-    searchTextField.textEditor.emptyText.text = placeholderText
-    FragmentedSettingsUtil.setupPlaceholderVisibility(searchTextField.textEditor)
   }
 }
 
