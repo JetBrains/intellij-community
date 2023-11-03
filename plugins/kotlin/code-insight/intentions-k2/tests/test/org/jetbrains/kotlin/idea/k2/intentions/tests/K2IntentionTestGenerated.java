@@ -4676,4 +4676,297 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/convertBinaryExpressionWithDemorgansLaw/retainedParens.kt");
         }
     }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/intentions/invertIfCondition")
+    public static class InvertIfCondition extends AbstractK2IntentionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("addSurroundingBlock_preserveComments.kt")
+        public void testAddSurroundingBlock_preserveComments() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/invertIfCondition/addSurroundingBlock_preserveComments.kt");
+        }
+
+        @TestMetadata("assignedToValue.kt")
+        public void testAssignedToValue() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/invertIfCondition/assignedToValue.kt");
+        }
+
+        @TestMetadata("binaryExpression.kt")
+        public void testBinaryExpression() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/invertIfCondition/binaryExpression.kt");
+        }
+
+        @TestMetadata("booleanLiteral.kt")
+        public void testBooleanLiteral() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/invertIfCondition/booleanLiteral.kt");
+        }
+
+        @TestMetadata("branchingIfStatements.kt")
+        public void testBranchingIfStatements() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/invertIfCondition/branchingIfStatements.kt");
+        }
+
+        @TestMetadata("endOfLineCommentBug.kt")
+        public void testEndOfLineCommentBug() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/invertIfCondition/endOfLineCommentBug.kt");
+        }
+
+        @TestMetadata("forLoopWithMultipleExpressions.kt")
+        public void testForLoopWithMultipleExpressions() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/invertIfCondition/forLoopWithMultipleExpressions.kt");
+        }
+
+        @TestMetadata("functionWithReturnExpression.kt")
+        public void testFunctionWithReturnExpression() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/invertIfCondition/functionWithReturnExpression.kt");
+        }
+
+        @TestMetadata("ifExpressionInsideForLoop.kt")
+        public void testIfExpressionInsideForLoop() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/invertIfCondition/ifExpressionInsideForLoop.kt");
+        }
+
+        @TestMetadata("ifExpressionWithReturn.kt")
+        public void testIfExpressionWithReturn() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/invertIfCondition/ifExpressionWithReturn.kt");
+        }
+
+        @TestMetadata("ifThenReturn.kt")
+        public void testIfThenReturn() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/invertIfCondition/ifThenReturn.kt");
+        }
+
+        @TestMetadata("ifThenReturn2.kt")
+        public void testIfThenReturn2() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/invertIfCondition/ifThenReturn2.kt");
+        }
+
+        @TestMetadata("ifThenReturn3.kt")
+        public void testIfThenReturn3() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/invertIfCondition/ifThenReturn3.kt");
+        }
+
+        @TestMetadata("ifThenReturn4.kt")
+        public void testIfThenReturn4() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/invertIfCondition/ifThenReturn4.kt");
+        }
+
+        @TestMetadata("ifWithBothBranchesReturn.kt")
+        public void testIfWithBothBranchesReturn() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/invertIfCondition/ifWithBothBranchesReturn.kt");
+        }
+
+        @TestMetadata("ifWithBothBranchesSetter.kt")
+        public void testIfWithBothBranchesSetter() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/invertIfCondition/ifWithBothBranchesSetter.kt");
+        }
+
+        @TestMetadata("in.kt")
+        public void testIn() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/invertIfCondition/in.kt");
+        }
+
+        @TestMetadata("invertableOperator.kt")
+        public void testInvertableOperator() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/invertIfCondition/invertableOperator.kt");
+        }
+
+        @TestMetadata("is.kt")
+        public void testIs() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/invertIfCondition/is.kt");
+        }
+
+        @TestMetadata("isBlank.kt")
+        public void testIsBlank() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/invertIfCondition/isBlank.kt");
+        }
+
+        @TestMetadata("isEmpty.kt")
+        public void testIsEmpty() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/invertIfCondition/isEmpty.kt");
+        }
+
+        @TestMetadata("isNotBlank.kt")
+        public void testIsNotBlank() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/invertIfCondition/isNotBlank.kt");
+        }
+
+        @TestMetadata("isNotEmpty.kt")
+        public void testIsNotEmpty() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/invertIfCondition/isNotEmpty.kt");
+        }
+
+        @TestMetadata("lambdaNonLocalAndLocalReturn.kt")
+        public void testLambdaNonLocalAndLocalReturn() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/invertIfCondition/lambdaNonLocalAndLocalReturn.kt");
+        }
+
+        @TestMetadata("lambdaNonLocalReturn.kt")
+        public void testLambdaNonLocalReturn() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/invertIfCondition/lambdaNonLocalReturn.kt");
+        }
+
+        @TestMetadata("lastStatement1.kt")
+        public void testLastStatement1() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/invertIfCondition/lastStatement1.kt");
+        }
+
+        @TestMetadata("lastStatement2.kt")
+        public void testLastStatement2() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/invertIfCondition/lastStatement2.kt");
+        }
+
+        @TestMetadata("lastStatement3.kt")
+        public void testLastStatement3() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/invertIfCondition/lastStatement3.kt");
+        }
+
+        @TestMetadata("lastStatementBeforeBreak.kt")
+        public void testLastStatementBeforeBreak() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/invertIfCondition/lastStatementBeforeBreak.kt");
+        }
+
+        @TestMetadata("lastStatementBeforeContinue.kt")
+        public void testLastStatementBeforeContinue() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/invertIfCondition/lastStatementBeforeContinue.kt");
+        }
+
+        @TestMetadata("lastStatementBeforeReturn.kt")
+        public void testLastStatementBeforeReturn() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/invertIfCondition/lastStatementBeforeReturn.kt");
+        }
+
+        @TestMetadata("lastStatementInLambda.kt")
+        public void testLastStatementInLambda() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/invertIfCondition/lastStatementInLambda.kt");
+        }
+
+        @TestMetadata("lastStatementInLoop.kt")
+        public void testLastStatementInLoop() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/invertIfCondition/lastStatementInLoop.kt");
+        }
+
+        @TestMetadata("lastStatementInLoop2.kt")
+        public void testLastStatementInLoop2() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/invertIfCondition/lastStatementInLoop2.kt");
+        }
+
+        @TestMetadata("lastStatementNonUnitMethod.kt")
+        public void testLastStatementNonUnitMethod() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/invertIfCondition/lastStatementNonUnitMethod.kt");
+        }
+
+        @TestMetadata("negatedExpression.kt")
+        public void testNegatedExpression() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/invertIfCondition/negatedExpression.kt");
+        }
+
+        @TestMetadata("negatedIsBlank.kt")
+        public void testNegatedIsBlank() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/invertIfCondition/negatedIsBlank.kt");
+        }
+
+        @TestMetadata("negatedIsEmpty.kt")
+        public void testNegatedIsEmpty() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/invertIfCondition/negatedIsEmpty.kt");
+        }
+
+        @TestMetadata("negatedIsNotBlank.kt")
+        public void testNegatedIsNotBlank() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/invertIfCondition/negatedIsNotBlank.kt");
+        }
+
+        @TestMetadata("negatedIsNotEmpty.kt")
+        public void testNegatedIsNotEmpty() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/invertIfCondition/negatedIsNotEmpty.kt");
+        }
+
+        @TestMetadata("nestedIfWithReturn.kt")
+        public void testNestedIfWithReturn() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/invertIfCondition/nestedIfWithReturn.kt");
+        }
+
+        @TestMetadata("notBlock.kt")
+        public void testNotBlock() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/invertIfCondition/notBlock.kt");
+        }
+
+        @TestMetadata("notBlock2.kt")
+        public void testNotBlock2() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/invertIfCondition/notBlock2.kt");
+        }
+
+        @TestMetadata("notBlock3.kt")
+        public void testNotBlock3() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/invertIfCondition/notBlock3.kt");
+        }
+
+        @TestMetadata("notBlock4.kt")
+        public void testNotBlock4() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/invertIfCondition/notBlock4.kt");
+        }
+
+        @TestMetadata("notBlock5.kt")
+        public void testNotBlock5() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/invertIfCondition/notBlock5.kt");
+        }
+
+        @TestMetadata("notBlock6.kt")
+        public void testNotBlock6() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/invertIfCondition/notBlock6.kt");
+        }
+
+        @TestMetadata("notBlock7.kt")
+        public void testNotBlock7() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/invertIfCondition/notBlock7.kt");
+        }
+
+        @TestMetadata("notBlock8.kt")
+        public void testNotBlock8() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/invertIfCondition/notBlock8.kt");
+        }
+
+        @TestMetadata("notIn.kt")
+        public void testNotIn() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/invertIfCondition/notIn.kt");
+        }
+
+        @TestMetadata("notIs.kt")
+        public void testNotIs() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/invertIfCondition/notIs.kt");
+        }
+
+        @TestMetadata("returnIfExpression.kt")
+        public void testReturnIfExpression() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/invertIfCondition/returnIfExpression.kt");
+        }
+
+        @TestMetadata("simple.kt")
+        public void testSimple() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/invertIfCondition/simple.kt");
+        }
+
+        @TestMetadata("unnecessaryContinue.kt")
+        public void testUnnecessaryContinue() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/invertIfCondition/unnecessaryContinue.kt");
+        }
+
+        @TestMetadata("unnecessaryContinue2.kt")
+        public void testUnnecessaryContinue2() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/invertIfCondition/unnecessaryContinue2.kt");
+        }
+
+        @TestMetadata("unnecessaryContinue3.kt")
+        public void testUnnecessaryContinue3() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/invertIfCondition/unnecessaryContinue3.kt");
+        }
+
+        @TestMetadata("valueAndReturnBranches.kt")
+        public void testValueAndReturnBranches() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/invertIfCondition/valueAndReturnBranches.kt");
+        }
+    }
 }

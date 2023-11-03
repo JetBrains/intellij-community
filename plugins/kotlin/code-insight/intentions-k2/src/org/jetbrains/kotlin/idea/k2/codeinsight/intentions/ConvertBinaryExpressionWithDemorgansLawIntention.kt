@@ -23,12 +23,14 @@ internal class ConvertBinaryExpressionWithDemorgansLawIntention :
     override fun apply(element: KtBinaryExpression, context: AnalysisActionContext<DemorgansLawContext>, updater: ModPsiUpdater) {
         val expr = element.topmostBinaryExpression()
         if (splitBooleanSequence(expr) == null) return
-        applyDemorgansLaw(element, context.analyzeContext)
+        applyDemorgansLaw(expr, context.analyzeContext)
     }
 
     context(KtAnalysisSession)
     override fun prepareContext(element: KtBinaryExpression): DemorgansLawContext? {
-        return prepareDemorgansLawContext(element)
+        val operands = element.topmostBinaryExpression().let(::splitBooleanSequence) ?: return null
+        if (operands.any { !it.isBoolean }) return null
+        return prepareDemorgansLawContext(operands)
     }
 
     override fun getActionName(element: KtBinaryExpression, context: DemorgansLawContext): String {
