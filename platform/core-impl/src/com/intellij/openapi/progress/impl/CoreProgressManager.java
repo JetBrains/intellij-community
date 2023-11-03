@@ -496,9 +496,13 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
         }
 
         ApplicationUtil.invokeLaterSomewhere(task.whereToRunCallbacks(), modalityState, () -> {
-          finishTask(task, result.isCanceled(), result.getThrowable() instanceof ProcessCanceledException ? null : result.getThrowable());
-          if (indicatorDisposable != null) {
-            Disposer.dispose(indicatorDisposable);
+          try {
+            finishTask(task, result.isCanceled(), result.getThrowable() instanceof ProcessCanceledException ? null : result.getThrowable());
+          }
+          finally {
+            if (indicatorDisposable != null) {
+              Disposer.dispose(indicatorDisposable);
+            }
           }
         });
       }));
