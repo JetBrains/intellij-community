@@ -58,15 +58,19 @@ class TerminalSelectionController(
   }
 
   @RequiresEdt
-  fun selectRelativeBlock(isBelow: Boolean) {
-    val selectedBlock = selectionModel.primarySelection
-    if (selectedBlock != null) {
-      val curIndex = outputModel.getIndexOfBlock(selectedBlock)
+  fun selectRelativeBlock(isBelow: Boolean, dropCurrentSelection: Boolean) {
+    val primaryBlock = selectionModel.primarySelection
+    if (primaryBlock != null) {
+      val curIndex = outputModel.getIndexOfBlock(primaryBlock)
       if (curIndex >= 0) {
         val newIndex = if (isBelow) curIndex + 1 else curIndex - 1
         if (newIndex in (0 until outputModel.getBlocksSize())) {
           val newBlock = outputModel.getByIndex(newIndex)
-          selectionModel.selectedBlocks = listOf(newBlock)
+          selectionModel.selectedBlocks = when {
+            dropCurrentSelection -> listOf(newBlock)
+            selectedBlocks.contains(newBlock) -> selectedBlocks - primaryBlock  // selection is decreasing
+            else -> selectedBlocks + newBlock
+          }
           makeBlockVisible(newBlock)
         }
         else if (isBelow) {

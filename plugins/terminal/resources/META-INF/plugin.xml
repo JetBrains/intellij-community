@@ -114,6 +114,12 @@
     <action id="Terminal.SelectBlockBelow" class="org.jetbrains.plugins.terminal.exp.TerminalSelectBlockBelowAction">
       <keyboard-shortcut first-keystroke="DOWN" keymap="$default"/>
     </action>
+    <action id="Terminal.ExpandBlockSelectionAbove" class="org.jetbrains.plugins.terminal.exp.TerminalExpandBlockSelectionAboveAction"
+            use-shortcut-of="EditorUpWithSelection">
+    </action>
+    <action id="Terminal.ExpandBlockSelectionBelow" class="org.jetbrains.plugins.terminal.exp.TerminalExpandBlockSelectionBelowAction"
+            use-shortcut-of="EditorDownWithSelection">
+    </action>
 
     <action id="Terminal.CommandCompletion" class="org.jetbrains.plugins.terminal.action.TerminalCommandCompletionAction">
       <keyboard-shortcut first-keystroke="TAB" keymap="$default"/>
