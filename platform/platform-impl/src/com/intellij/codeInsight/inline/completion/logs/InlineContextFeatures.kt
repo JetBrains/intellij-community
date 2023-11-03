@@ -10,8 +10,10 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiFileSystemItem
+import org.jetbrains.annotations.ApiStatus
 
-internal object InlineContextFeatures {
+@ApiStatus.Internal
+object InlineContextFeatures {
   fun capture(psiFile: PsiFile, editor: Editor, offset: Int, contextFeatures: MutableList<EventPair<*>>) {
     val logicalPosition = editor.offsetToLogicalPosition(offset)
     val lineNumber = logicalPosition.line
