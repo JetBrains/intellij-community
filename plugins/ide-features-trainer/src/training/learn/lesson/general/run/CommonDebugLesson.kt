@@ -3,7 +3,6 @@ package training.learn.lesson.general.run
 
 import com.intellij.execution.RunManager
 import com.intellij.execution.ui.RunConfigurationStartHistory
-import com.intellij.execution.ui.UIExperiment
 import com.intellij.icons.AllIcons
 import com.intellij.ide.ui.text.ShortcutsRenderingUtil
 import com.intellij.idea.ActionsBundle
@@ -337,10 +336,7 @@ abstract class CommonDebugLesson(id: String) : KLesson(id, LessonsBundle.message
         checkPositionOfEditor(LessonSample(afterFixText, position))
       }
       val intro = LessonsBundle.message("debug.workflow.run.to.cursor.intro", code(debuggingMethodName), code("return"))
-      val actionPart = if (!UIExperiment.isNewDebuggerUIEnabled()) {
-        LessonsBundle.message("debug.workflow.run.to.cursor.press.or.click", action(it), icon(AllIcons.Actions.RunToCursor))
-      }
-      else LessonsBundle.message("debug.workflow.run.to.cursor.press", action(it))
+      val actionPart = LessonsBundle.message("debug.workflow.run.to.cursor.press", action(it))
       "$intro $actionPart"
     }
   }
