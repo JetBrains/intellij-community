@@ -50,7 +50,6 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
       InlineContextFeatures.PREVIOUS_NON_EMPTY_LINE_LENGTH,
       InlineContextFeatures.FOLLOWING_EMPTY_LINES_COUNT,
       InlineContextFeatures.FOLLOWING_NON_EMPTY_LINE_LENGTH,
-      InlineContextFeatures.INDENT_LEVEL,
       InlineContextFeatures.LIBRARIES_COUNT,
       InlineContextFeatures.FIRST_PARENT,
       InlineContextFeatures.SECOND_PARENT,

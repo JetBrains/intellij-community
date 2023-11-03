@@ -5,7 +5,6 @@ import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.roots.libraries.LibraryUtil
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
@@ -54,7 +53,6 @@ internal object InlineContextFeatures {
     if (followingNonEmptyLineText != null) {
       contextFeatures.add(FOLLOWING_NON_EMPTY_LINE_LENGTH.with(followingNonEmptyLineText.length))
     }
-    contextFeatures.add(INDENT_LEVEL.with(indentLevel(linePrefix, EditorUtil.getTabSize(editor))))
     contextFeatures.add(LIBRARIES_COUNT.with(LibraryUtil.getLibraryRoots(psiFile.project).size))
 
     psiFile.findElementAt(offset)?.let { contextFeatures.addPsiParents(it) }
@@ -75,33 +73,6 @@ internal object InlineContextFeatures {
     if (line !in 0..<lineCount) return null
     val res = getText(TextRange(getLineStartOffset(line), getLineEndOffset(line)))
     return res.trim().ifEmpty { null }
-  }
-
-  @Suppress("DuplicatedCode")
-  private fun indentLevel(line: String, tabSize: Int): Int {
-    if (tabSize <= 0) return 0
-
-    var indentLevel = 0
-    var spaces = 0
-    for (ch in line) {
-      if (spaces == tabSize) {
-        indentLevel += 1
-        spaces = 0
-      }
-
-      if (ch == '\t') {
-        indentLevel += 1
-        spaces = 0
-      }
-      else if (ch == ' ') {
-        spaces += 1
-      }
-      else {
-        break
-      }
-    }
-
-    return indentLevel
   }
 
   private fun MutableList<EventPair<*>>.addPsiParents(element: PsiElement) {
@@ -127,7 +98,6 @@ internal object InlineContextFeatures {
   val PREVIOUS_NON_EMPTY_LINE_LENGTH = EventFields.Int("previous_non_empty_line_length")
   val FOLLOWING_EMPTY_LINES_COUNT = EventFields.Int("following_empty_lines_count")
   val FOLLOWING_NON_EMPTY_LINE_LENGTH = EventFields.Int("following_non_empty_line_length")
-  val INDENT_LEVEL = EventFields.Int("indent_level")
   val LIBRARIES_COUNT = EventFields.Int("libraries_count")
   val FIRST_PARENT = EventFields.Class("first_parent")
   val SECOND_PARENT = EventFields.Class("second_parent")
