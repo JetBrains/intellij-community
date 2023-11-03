@@ -31,6 +31,7 @@ import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FeaturePromoBundle;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.NlsActions.ActionText;
 import com.intellij.openapi.util.text.StringUtil;
@@ -945,7 +946,7 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
       upgradeTo.setBackground(panelBackground);
       upgradeTo.setForeground(groupFg);
       upgradeTo.setIconOnTheRight(true);
-      upgradeTo.append(IdeBundle.message("plugin.advertiser.upgrade.to"));
+      upgradeTo.append(FeaturePromoBundle.message("get.prefix"));
       upgradeTo.setTransparentIconBackground(true);
 
       BorderLayoutPanel compositeUpgradeHint = JBUI.Panels.simplePanel(promo)

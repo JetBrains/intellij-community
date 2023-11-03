@@ -48,14 +48,11 @@ internal class PromoSwaggerConfigurableProvider : UltimateConfigurableProvider(P
 
 internal class PromoDatabaseConfigurable : UltimatePromoConfigurable() {
   override fun getId(): String = "promo.database"
-
-  override fun getDisplayName(): String {
-    return FeaturePromoBundle.message("promo.configurable.database")
-  }
+  override fun getDisplayName(): String = FeaturePromoBundle.message("promo.configurable.database")
 
   override fun createComponent(): JComponent {
     return featurePage(
-      FeaturePromoBundle.message("feature.database.description.html"),
+      FeaturePromoBundle.message("feature.database.description.html", "https://www.jetbrains.com/help/idea/relational-databases.html"),
       listOf(
         PromoFeatureListItem(AllIcons.Nodes.DataTables, FeaturePromoBundle.message("feature.database.create.and.manage")),
         PromoFeatureListItem(AllIcons.Actions.Run_anything, FeaturePromoBundle.message("feature.database.run")),
@@ -68,14 +65,11 @@ internal class PromoDatabaseConfigurable : UltimatePromoConfigurable() {
 
 internal class PromoKubernetesConfigurable : UltimatePromoConfigurable() {
   override fun getId(): String = "promo.kubernetes"
-
-  override fun getDisplayName(): String {
-    return FeaturePromoBundle.message("promo.configurable.kubernetes")
-  }
+  override fun getDisplayName(): String = FeaturePromoBundle.message("promo.configurable.kubernetes")
 
   override fun createComponent(): JComponent {
     return featurePage(
-      FeaturePromoBundle.message("feature.kubernetes.description.html"),
+      FeaturePromoBundle.message("feature.kubernetes.description.html", "https://www.jetbrains.com/help/idea/kubernetes.html"),
       listOf(
         PromoFeatureListItem(AllIcons.Nodes.Deploy, FeaturePromoBundle.message("feature.kubernetes.deploy")),
         PromoFeatureListItem(AllIcons.Nodes.Console, FeaturePromoBundle.message("feature.kubernetes.logs")),
@@ -88,14 +82,11 @@ internal class PromoKubernetesConfigurable : UltimatePromoConfigurable() {
 
 internal class PromoProfilerConfigurable : UltimatePromoConfigurable() {
   override fun getId(): String = "promo.profiler"
-
-  override fun getDisplayName(): String {
-    return JavaUiBundle.message("promo.configurable.profiler")
-  }
+  override fun getDisplayName(): String = JavaUiBundle.message("promo.configurable.profiler")
 
   override fun createComponent(): JComponent {
     return featurePage(
-      JavaUiBundle.message("feature.profiler.description.html"),
+      JavaUiBundle.message("feature.profiler.description.html", "https://www.jetbrains.com/help/idea/profiler-intro.html"),
       listOf(
         PromoFeatureListItem(AllIcons.Actions.ProfileCPU, JavaUiBundle.message("feature.profiler.cpu")),
         PromoFeatureListItem(AllIcons.Actions.ProfileMemory, JavaUiBundle.message("feature.profiler.memory")),
@@ -106,57 +97,39 @@ internal class PromoProfilerConfigurable : UltimatePromoConfigurable() {
   }
 }
 
+private fun javascriptFeaturePage(): JComponent {
+  @Suppress("DialogTitleCapitalization")
+  return featurePage(
+    FeaturePromoBundle.message("feature.javascript.description.html",
+                               "https://www.jetbrains.com/help/idea/javascript-specific-guidelines.html"),
+    listOf(
+      PromoFeatureListItem(AllIcons.Actions.ReformatCode, FeaturePromoBundle.message("feature.javascript.code")),
+      PromoFeatureListItem(AllIcons.Actions.SuggestedRefactoringBulb, FeaturePromoBundle.message("feature.javascript.refactor")),
+      PromoFeatureListItem(AllIcons.FileTypes.UiForm, FeaturePromoBundle.message("feature.javascript.frameworks"))
+    ),
+    "JavaScript"
+  )
+}
+
 internal class PromoJSConfigurable : UltimatePromoConfigurable() {
   override fun getId(): String = "promo.javascript"
-
-  override fun getDisplayName(): String {
-    return FeaturePromoBundle.message("promo.configurable.javascript")
-  }
-
-  override fun createComponent(): JComponent {
-    return featurePage(
-      FeaturePromoBundle.message("feature.javascript.description.html"),
-      listOf(
-        PromoFeatureListItem(AllIcons.Actions.ReformatCode, FeaturePromoBundle.message("feature.javascript.code")),
-        PromoFeatureListItem(AllIcons.Actions.SuggestedRefactoringBulb, FeaturePromoBundle.message("feature.javascript.refactor")),
-        PromoFeatureListItem(AllIcons.FileTypes.UiForm, FeaturePromoBundle.message("feature.javascript.frameworks"))
-      ),
-      "JavaScript"
-    )
-  }
+  override fun getDisplayName(): String = FeaturePromoBundle.message("promo.configurable.javascript")
+  override fun createComponent(): JComponent = javascriptFeaturePage()
 }
 
 internal class PromoTSConfigurable : UltimatePromoConfigurable() {
   override fun getId(): String = "promo.typescript"
-
-  override fun getDisplayName(): String {
-    return FeaturePromoBundle.message("promo.configurable.typescript")
-  }
-
-  override fun createComponent(): JComponent {
-    @Suppress("DialogTitleCapitalization")
-    return featurePage(
-      FeaturePromoBundle.message("feature.javascript.description.html"),
-      listOf(
-        PromoFeatureListItem(AllIcons.Actions.ReformatCode, FeaturePromoBundle.message("feature.javascript.code")),
-        PromoFeatureListItem(AllIcons.Actions.SuggestedRefactoringBulb, FeaturePromoBundle.message("feature.javascript.refactor")),
-        PromoFeatureListItem(AllIcons.FileTypes.UiForm, FeaturePromoBundle.message("feature.javascript.frameworks"))
-      ),
-      "JavaScript"
-    )
-  }
+  override fun getDisplayName(): String = FeaturePromoBundle.message("promo.configurable.typescript")
+  override fun createComponent(): JComponent = javascriptFeaturePage()
 }
 
 internal class PromoSwaggerConfigurable : UltimatePromoConfigurable() {
   override fun getId(): String = "promo.swagger"
-
-  override fun getDisplayName(): String {
-    return FeaturePromoBundle.message("promo.configurable.swagger")
-  }
+  override fun getDisplayName(): String = FeaturePromoBundle.message("promo.configurable.swagger")
 
   override fun createComponent(): JComponent {
     return featurePage(
-      FeaturePromoBundle.message("feature.swagger.description.html"),
+      FeaturePromoBundle.message("feature.swagger.description.html", "https://www.jetbrains.com/help/idea/openapi.html"),
       listOf(
         PromoFeatureListItem(AllIcons.Actions.ReformatCode, FeaturePromoBundle.message("feature.swagger.code")),
         PromoFeatureListItem(AllIcons.FileTypes.UiForm, FeaturePromoBundle.message("feature.swagger.preview")),
