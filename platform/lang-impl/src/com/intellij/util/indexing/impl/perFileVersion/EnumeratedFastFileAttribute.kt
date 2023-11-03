@@ -27,14 +27,14 @@ import kotlin.io.path.*
  * uses this directory exclusively, i.e. no other classes keep their files there. [EnumeratedFastFileAttribute] will
  * delete the whole directory on VFS rebuild. All the data is kept in this folder only, i.e. it is enough to
  * delete it (while [EnumeratedFastFileAttribute] is closed) to drop all the existing data.
- * @param attribute
+ * @param fileAttribute
  * @param descriptorForCache enable caching via [CachingEnumerator] (or use no-cache if `null`)
  * @param createEnumerator lambda that creates [PersistentEnumerator] in specified `enumeratorPath`. Invoked at most once (exactly once if
  * constructor completes normally).
  */
 @Internal
 class EnumeratedFastFileAttribute<T> @VisibleForTesting constructor(private val exclusiveDir: Path,
-                                                                    attribute: FileAttribute,
+                                                                    fileAttribute: FileAttribute,
                                                                     descriptorForCache: KeyDescriptor<T>?,
                                                                     expectedVfsCreationTimestamp: Long,
                                                                     createEnumerator: (enumeratorPath: Path) -> PersistentEnumerator<T>) : Closeable {
@@ -44,28 +44,51 @@ class EnumeratedFastFileAttribute<T> @VisibleForTesting constructor(private val 
   private val closer: Closer = Closer.create()
 
   constructor(exclusiveDir: Path,
-              attribute: FileAttribute,
+              fileAttribute: FileAttribute,
               descriptorForCache: KeyDescriptor<T>?,
               createEnumerator: (enumeratorPath: Path) -> PersistentEnumerator<T>) :
-    this(exclusiveDir, attribute, descriptorForCache, FSRecords.getCreationTimestamp(), createEnumerator)
+    this(exclusiveDir, fileAttribute, descriptorForCache, FSRecords.getCreationTimestamp(), createEnumerator)
 
   init {
     val vfsChecker = VfsCreationStampChecker(getVfsCreationTimestampFile())
     assert(!exclusiveDir.isRegularFile()) { "$exclusiveDir should be a directory, or non-existing path" }
 
     vfsChecker.runIfVfsCreationStampMismatch(expectedVfsCreationTimestamp) { cleanupReason ->
-      thisLogger().info("Clear $exclusiveDir. Reason: $cleanupReason")
-      FileUtil.deleteWithRenamingIfExists(exclusiveDir)
+      deleteStorageDir(cleanupReason)
     }
 
-    val persistentEnumerator = createEnumerator(getEnumeratorFile())
-    closer.register(persistentEnumerator)
-    baseEnumerator = if (descriptorForCache == null) persistentEnumerator else CachingEnumerator(persistentEnumerator, descriptorForCache)
+    val (enumerator, attribute) = try {
+      tryOpenStorages(fileAttribute, createEnumerator)
+    }
+    catch (ioe: IOException) {
+      deleteStorageDir(ioe.toString())
+      tryOpenStorages(fileAttribute, createEnumerator)
+    }
 
-    baseAttribute = IntFileAttribute.overFastAttribute(attribute, getAttributesFile())
-    closer.register(baseAttribute)
+    closer.register(enumerator)
+    closer.register(attribute)
 
+    baseEnumerator = if (descriptorForCache == null) enumerator else CachingEnumerator(enumerator, descriptorForCache)
+    baseAttribute = attribute
     vfsChecker.createVfsTimestampMarkerFileIfAbsent(expectedVfsCreationTimestamp)
+  }
+
+  private fun tryOpenStorages(fileAttribute: FileAttribute, createEnumerator: (enumeratorPath: Path) -> PersistentEnumerator<T>)
+    : Pair<PersistentEnumerator<T>, IntFileAttribute> {
+    val localCloser = Closer.create()
+    try {
+      val enumerator = createEnumerator(getEnumeratorFile())
+      localCloser.register(enumerator)
+
+      val attribute = IntFileAttribute.overFastAttribute(fileAttribute, getAttributesFile())
+      localCloser.register(attribute)
+
+      return Pair(enumerator, attribute)
+    }
+    catch (e: Exception) {
+      localCloser.close()
+      throw e
+    }
   }
 
   private fun getAttributesFile(): Path = exclusiveDir.resolve("attributes")
@@ -73,6 +96,11 @@ class EnumeratedFastFileAttribute<T> @VisibleForTesting constructor(private val 
   private fun getEnumeratorFile(): Path = exclusiveDir.resolve("enumerator")
 
   private fun getVfsCreationTimestampFile(): Path = exclusiveDir.resolve("vfs.stamp")
+
+  private fun deleteStorageDir(cleanupReason: String) {
+    thisLogger().info("Clear $exclusiveDir. Reason: $cleanupReason")
+    FileUtil.deleteWithRenamingIfExists(exclusiveDir)
+  }
 
   @Throws(IOException::class)
   fun readEnumerated(fileId: Int): T? {
