@@ -21,6 +21,16 @@ class BuildOptions(
   @ApiStatus.Internal
   @JvmField
   val compressZipFiles: Boolean = true,
+  /** See [GlobalOptions.BUILD_DATE_IN_SECONDS]. */
+  val buildDateInSeconds: Long = computeBuildDateInSeconds(),
+  @ApiStatus.Internal
+  @JvmField
+  val printFreeSpace: Boolean = true,
+  @ApiStatus.Internal
+  @JvmField
+  val validateImplicitPlatformModule: Boolean = true,
+  @JvmField
+  var skipDependencySetup: Boolean = false,
 ) {
   companion object {
     /**
@@ -169,7 +179,7 @@ class BuildOptions(
     const val RESOLVE_DEPENDENCIES_MAX_ATTEMPTS_PROPERTY = "intellij.build.dependencies.resolution.retry.max.attempts"
 
     /**
-     * Initial delay in milliseconds between dependencies resolution retries on fault. Default is `1000`.
+     * Initial delay in milliseconds between dependency resolution retries on fault. Default is `1000`.
      *
      * @see [org.jetbrains.intellij.build.impl.JpsCompilationRunner.resolveProjectDependencies]
      */
@@ -222,8 +232,6 @@ class BuildOptions(
      * IJPL-176 Download pre-compiled IJent executables.
      */
     const val IJENT_EXECUTABLE_DOWNLOADING = "ijent.executable.downloading"
-
-    private val currentBuildTimeInSeconds = System.currentTimeMillis() / 1000
 
     @Suppress("SpellCheckingInspection")
     private const val DEFAULT_SNAP_TOOL_IMAGE = "snapcore/snapcraft:stable@sha256:6d771575c134569e28a590f173f7efae8bf7f4d1746ad8a474c98e02f4a3f627"
@@ -297,12 +305,12 @@ class BuildOptions(
   /**
    * If `true`, the project modules will be compiled incrementally.
    */
-  var incrementalCompilation = SystemProperties.getBooleanProperty(INTELLIJ_BUILD_INCREMENTAL_COMPILATION, false)
+  var incrementalCompilation: Boolean = SystemProperties.getBooleanProperty(INTELLIJ_BUILD_INCREMENTAL_COMPILATION, false)
 
   /**
    * If `true`, and the incremental compilation fails, fallback to downloading Portable Compilation Cache and full rebuild.
    */
-  var incrementalCompilationFallbackRebuild = SystemProperties.getBooleanProperty(INCREMENTAL_COMPILATION_FALLBACK_REBUILD_PROPERTY, true)
+  var incrementalCompilationFallbackRebuild: Boolean = SystemProperties.getBooleanProperty(INCREMENTAL_COMPILATION_FALLBACK_REBUILD_PROPERTY, true)
 
   /**
    * Full rebuild will be triggered if this timeout is exceeded for incremental compilation.
@@ -326,29 +334,19 @@ class BuildOptions(
   /**
    * If `true`, write all compilation messages into a separate file (`compilation.log`).
    */
-  var compilationLogEnabled = SystemProperties.getBooleanProperty("intellij.build.compilation.log.enabled", true)
+  var compilationLogEnabled: Boolean = SystemProperties.getBooleanProperty("intellij.build.compilation.log.enabled", true)
 
-  var cleanOutputFolder = SystemProperties.getBooleanProperty(CLEAN_OUTPUT_DIRECTORY_PROPERTY, true)
+  var cleanOutputFolder: Boolean = SystemProperties.getBooleanProperty(CLEAN_OUTPUT_DIRECTORY_PROPERTY, true)
 
   /**
    * If `true`, the build is running as a unit test.
    */
-  var isTestBuild = SystemProperties.getBooleanProperty("intellij.build.test.mode", false)
-
-  var skipDependencySetup = false
+  var isTestBuild: Boolean = SystemProperties.getBooleanProperty("intellij.build.test.mode", false)
 
   /**
    * If 'true', print system properties and environment variables to stdout. Useful for build scripts debugging.
    */
-  var printEnvironmentInfo = SystemProperties.getBooleanProperty("intellij.print.environment", false)
-
-  @ApiStatus.Internal
-  @JvmField
-  var printFreeSpace: Boolean = true
-
-  @ApiStatus.Internal
-  @JvmField
-  var validateImplicitPlatformModule: Boolean = true
+  var printEnvironmentInfo: Boolean = SystemProperties.getBooleanProperty("intellij.print.environment", false)
 
   /**
    * Specifies a list of directory names for bundled plugins that should not be included in the product distribution.
@@ -370,7 +368,7 @@ class BuildOptions(
    * the distribution (IJPL-109), and launchers will use it to start the IDE (IJPL-128).
    */
   @ApiStatus.Experimental
-  var useModularLoader = SystemProperties.getBooleanProperty("intellij.build.use.modular.loader", true)
+  var useModularLoader: Boolean = SystemProperties.getBooleanProperty("intellij.build.use.modular.loader", true)
 
   /**
    * If this option is set to `true` and [enableEmbeddedJetBrainsClient] is enabled,
@@ -379,14 +377,14 @@ class BuildOptions(
    * (in this case, the generation is enabled automatically).
    */
   @ApiStatus.Experimental
-  var generateRuntimeModuleRepository = SystemProperties.getBooleanProperty("intellij.build.generate.runtime.module.repository", true)
+  var generateRuntimeModuleRepository: Boolean = SystemProperties.getBooleanProperty("intellij.build.generate.runtime.module.repository", true)
 
   /**
    * If `true` and [ProductProperties.embeddedJetBrainsClientMainModule] is not null, the JAR files in the distribution will be adjusted
    * to allow starting JetBrains Client directly from the IDE's distribution.
    */
   @ApiStatus.Experimental
-  var enableEmbeddedJetBrainsClient = SystemProperties.getBooleanProperty("intellij.build.enable.embedded.jetbrains.client", true)
+  var enableEmbeddedJetBrainsClient: Boolean = SystemProperties.getBooleanProperty("intellij.build.enable.embedded.jetbrains.client", true)
 
   /**
    * If `true` and embedded JetBrains Client is [enabled][BuildContext.isEmbeddedJetBrainsClientEnabled], launchers which start it will be
@@ -413,22 +411,6 @@ class BuildOptions(
 
   var resolveDependenciesMaxAttempts: Int = System.getProperty(RESOLVE_DEPENDENCIES_MAX_ATTEMPTS_PROPERTY, "2").toInt()
   var resolveDependenciesDelayMs: Long = System.getProperty(RESOLVE_DEPENDENCIES_DELAY_MS_PROPERTY, "1000").toLong()
-
-  /** See [GlobalOptions.BUILD_DATE_IN_SECONDS]. */
-  val buildDateInSeconds: Long = run {
-    val sourceDateEpoch = System.getenv(GlobalOptions.BUILD_DATE_IN_SECONDS)
-    val minZipTime = GregorianCalendar(1980, 0, 1)
-    val minZipTimeInSeconds = TimeUnit.MILLISECONDS.toSeconds(minZipTime.timeInMillis)
-    val value = sourceDateEpoch?.toLong() ?: currentBuildTimeInSeconds
-    require(value >= minZipTimeInSeconds) {
-      ".zip archive cannot store timestamps older than ${minZipTime.time} " +
-      "(see specification: https://pkware.cachefly.net/webdocs/casestudies/APPNOTE.TXT) " +
-      "but ${GlobalOptions.BUILD_DATE_IN_SECONDS}=$sourceDateEpoch was supplied. " +
-      "If timestamps aren't stored then .zip content files modification time will be set to extraction time " +
-      "diverging from modification times specified in .manifest."
-    }
-    value
-  }
 
   var randomSeedNumber: Long = 0
 
@@ -466,12 +448,27 @@ class BuildOptions(
   }
 }
 
-private fun parseBooleanValue(text: String): Boolean =
-  when {
+private fun parseBooleanValue(text: String): Boolean {
+  return when {
     text.toBoolean() -> true
     text.equals(false.toString(), ignoreCase = true) -> false
     else -> throw IllegalArgumentException("Could not parse as boolean, accepted values are only 'true' or 'false': $text")
   }
+}
 
-private fun getSetProperty(name: String): Set<String> =
-  System.getProperty(name)?.split(',')?.toSet() ?: emptySet()
+private fun getSetProperty(name: String): Set<String> = System.getProperty(name)?.split(',')?.toSet() ?: emptySet()
+
+private fun computeBuildDateInSeconds(): Long {
+  val sourceDateEpoch = System.getenv(GlobalOptions.BUILD_DATE_IN_SECONDS)
+  val minZipTime = GregorianCalendar(1980, 0, 1)
+  val minZipTimeInSeconds = TimeUnit.MILLISECONDS.toSeconds(minZipTime.timeInMillis)
+  val value = sourceDateEpoch?.toLong() ?: (System.currentTimeMillis() / 1000)
+  require(value >= minZipTimeInSeconds) {
+    ".zip archive cannot store timestamps older than ${minZipTime.time} " +
+    "(see specification: https://pkware.cachefly.net/webdocs/casestudies/APPNOTE.TXT) " +
+    "but ${GlobalOptions.BUILD_DATE_IN_SECONDS}=$sourceDateEpoch was supplied. " +
+    "If timestamps aren't stored then .zip content files modification time will be set to extraction time " +
+    "diverging from modification times specified in .manifest."
+  }
+  return value
+}

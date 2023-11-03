@@ -7,6 +7,7 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.idea.AppMode
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressManager
@@ -26,7 +27,12 @@ fun ideFingerprint(debugHelperToken: Int = 0): Long {
   val hasher = Hashing.komihash5_0().hashStream()
 
   val appInfo = ApplicationInfoImpl.getShadowInstance()
-  hasher.putLong(appInfo.buildTime.toEpochSecond())
+  if (AppMode.isDevServer()) {
+    hasher.putBytes(Files.readAllBytes(Path.of(PathManager.getHomePath(), "fingerprint.txt")))
+  }
+  else {
+    hasher.putLong(appInfo.buildTime.toEpochSecond())
+  }
   hasher.putString(appInfo.build.asString())
 
   // loadedPlugins list is sorted

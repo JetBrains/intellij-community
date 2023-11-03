@@ -1,6 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplacePutWithAssignment")
+
 package org.jetbrains.intellij.build.devServer
 
+import com.dynatrace.hash4j.hashing.Hashing
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope2
@@ -24,6 +27,8 @@ import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
+import java.time.OffsetDateTime
+import java.time.temporal.TemporalAdjusters
 import kotlin.time.Duration.Companion.seconds
 
 private const val PLUGIN_CACHE_DIR_NAME = "plugin-cache"
@@ -56,7 +61,7 @@ data class BuildRequest(
 
 internal suspend fun buildProduct(productConfiguration: ProductConfiguration, request: BuildRequest): Path {
   val rootDir = withContext(Dispatchers.IO) {
-    val rootDir = request.homePath.resolve("out/dev-run")
+    val rootDir = request.homePath.normalize().toAbsolutePath().resolve("out/dev-run")
     // if symlinked to ram disk, use a real path for performance reasons and avoid any issues in ant/other code
     if (Files.exists(rootDir)) {
       // toRealPath must be called only on existing file
@@ -71,7 +76,7 @@ internal suspend fun buildProduct(productConfiguration: ProductConfiguration, re
     val classifier = if (request.isIdeProfileAware) computeAdditionalModulesFingerprint(request.additionalModules) else ""
     val productDirName = (if (request.platformPrefix == "Idea") "idea-community" else request.platformPrefix) + classifier
 
-    val runDir = rootDir.resolve("$productDirName/$productDirName").toAbsolutePath()
+    val runDir = rootDir.resolve("$productDirName/$productDirName")
     // on start, delete everything to avoid stale data
     if (Files.isDirectory(runDir)) {
       val usePluginCache = spanBuilder("check plugin cache applicability").useWithScope2 {
@@ -150,7 +155,7 @@ internal suspend fun buildProduct(productConfiguration: ProductConfiguration, re
                                                           layout = plugin,
                                                           moduleNames = modules)
         for (name in modules) {
-          moduleNameToPluginBuildDescriptor[name] = pluginBuildDescriptor
+          moduleNameToPluginBuildDescriptor.put(name, pluginBuildDescriptor)
         }
         pluginBuildDescriptors.add(pluginBuildDescriptor)
       }
@@ -178,10 +183,12 @@ internal suspend fun buildProduct(productConfiguration: ProductConfiguration, re
     }
 
     if (context.generateRuntimeModuleRepository) {
-      launch(Dispatchers.IO) {
+      launch {
+        val allDistributionEntries = platformDistributionEntries.await() + pluginDistributionEntries.await().flatten()
         spanBuilder("generate runtime repository").useWithScope2 {
-          val allDistributionEntries = platformDistributionEntries.await() + pluginDistributionEntries.await().flatten()
-          generateRuntimeModuleRepositoryForDevBuild(entries = allDistributionEntries, targetDirectory = runDir, context = context)
+          withContext(Dispatchers.IO) {
+            generateRuntimeModuleRepositoryForDevBuild(entries = allDistributionEntries, targetDirectory = runDir, context = context)
+          }
         }
       }
     }
@@ -205,20 +212,31 @@ private suspend fun createBuildContext(productConfiguration: ProductConfiguratio
     // load project is executed as part of compilation context creation - ~1 second
     val compilationContext = async {
       spanBuilder("create build context").useWithScope2 {
-        val options = BuildOptions(jarCacheDir = jarCacheDir)
-        options.printFreeSpace = false
-        options.validateImplicitPlatformModule = false
+        // we cannot inject a proper build time as it is a part of resources, so, set to the first day of the current month
+        val options = BuildOptions(
+          jarCacheDir = jarCacheDir,
+          buildDateInSeconds = OffsetDateTime.now().with(TemporalAdjusters.firstDayOfMonth()).toEpochSecond(),
+          printFreeSpace = false,
+          validateImplicitPlatformModule = false,
+          skipDependencySetup = true,
+        )
         options.useCompiledClassesFromProjectOutput = true
         options.setTargetOsAndArchToCurrent()
         options.cleanOutputFolder = false
-        options.skipDependencySetup = true
         options.outputRootPath = runDir
         options.buildStepsToSkip.add(BuildOptions.PREBUILD_SHARED_INDEXES)
         options.buildStepsToSkip.add(BuildOptions.GENERATE_JAR_ORDER_STEP)
         options.buildStepsToSkip.add(BuildOptions.FUS_METADATA_BUNDLE_STEP)
-        if (options.enableEmbeddedJetBrainsClient && System.getProperty("idea.dev.build.unpacked").toBoolean()) {
-          options.enableEmbeddedJetBrainsClient = false
+
+        if (System.getProperty("idea.dev.build.unpacked").toBoolean()) {
+          if (options.enableEmbeddedJetBrainsClient) {
+            options.enableEmbeddedJetBrainsClient = false
+          }
+
+          // it downloads binaries from TC - it is bad
+          options.buildStepsToSkip.add(BuildOptions.IJENT_EXECUTABLE_DOWNLOADING)
         }
+
         options.generateRuntimeModuleRepository = options.generateRuntimeModuleRepository && request.generateRuntimeModuleRepository
 
         CompilationContextImpl.createCompilationContext(
@@ -322,14 +340,15 @@ private suspend fun layoutPlatform(runDir: Path,
                                            context = context,
                                            copyFiles = true)
   lateinit var sortedClassPath: Set<Path>
-  withContext(Dispatchers.IO) {
-    launch {
+  coroutineScope {
+    launch(Dispatchers.IO) {
       copyDistFiles(context = context, newDir = runDir, os = OsFamily.currentOs, arch = JvmArchitecture.currentJvmArch)
     }
 
     launch {
       val classPath = LinkedHashSet<Path>()
       val libDir = runDir.resolve("lib")
+      val hasher = Hashing.komihash5_0().hashStream()
       for (entry in entries) {
         val file = entry.path
         // exclude files like ext/platform-main.jar - if file in lib, take only direct children in an account
@@ -338,11 +357,17 @@ private suspend fun layoutPlatform(runDir: Path,
         }
 
         classPath.add(file)
+
+        hasher.putLong(entry.hash)
       }
       sortedClassPath = computeAppClassPath(libDir = libDir, existing = classPath, homeDir = runDir)
+
+      withContext(Dispatchers.IO) {
+        Files.writeString(runDir.resolve("fingerprint.txt"), java.lang.Long.toUnsignedString(hasher.asLong, Character.MAX_RADIX))
+      }
     }
 
-    launch {
+    launch(Dispatchers.IO) {
       Files.writeString(runDir.resolve("build.txt"), context.fullBuildNumber)
     }
   }
@@ -387,6 +412,7 @@ private fun CoroutineScope.prepareExistingRunDirForProduct(runDir: Path, usePlug
       }
     }
   }
+
   launch {
     val pluginCacheDir = runDir.resolve(PLUGIN_CACHE_DIR_NAME)
     val pluginDir = runDir.resolve("plugins")

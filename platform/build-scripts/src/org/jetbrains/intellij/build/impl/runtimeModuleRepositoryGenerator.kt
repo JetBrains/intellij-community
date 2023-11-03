@@ -58,7 +58,7 @@ internal fun generateRuntimeModuleRepository(entries: List<DistributionFileEntry
 }
 
 /**
- * A variant of [generateRuntimeModuleRepository] which should be used for 'dev build', when all [entries] correspond to the current OS, 
+ * A variant of [generateRuntimeModuleRepository] which should be used for 'dev build', when all [entries] correspond to the current OS,
  * and distribution files are generated under [targetDirectory].
  */
 @ApiStatus.Internal
@@ -83,7 +83,7 @@ fun generateRuntimeModuleRepositoryForDevBuild(entries: List<DistributionFileEnt
 }
 
 private fun loadForCompiledModules(context: BuildContext): Pair<Path, Map<RuntimeModuleId, RawRuntimeModuleDescriptor>> {
-  //maybe it makes sense to produce the repository along with compiled classes and reuse it 
+  // maybe it makes sense to produce the repository along with compiled classes and reuse it
   CompilationTasks.create(context).generateRuntimeModuleRepository()
 
   val repositoryForCompiledModulesPath = context.classesOutputDirectory.resolve(JAR_REPOSITORY_FILE_NAME)
