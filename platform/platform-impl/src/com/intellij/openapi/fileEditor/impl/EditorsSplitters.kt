@@ -196,7 +196,7 @@ open class EditorsSplitters internal constructor(
     }
 
     coroutineScope.launch(CoroutineName("EditorSplitters frame title update")) {
-      currentCompositeFlow.collectLatest { composite ->
+      currentCompositeFlow.collectLatest { _ ->
         updateFrameTitle()
       }
     }

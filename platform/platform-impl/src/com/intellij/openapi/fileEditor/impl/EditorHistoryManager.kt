@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplacePutWithAssignment")
+@file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
 
 package com.intellij.openapi.fileEditor.impl
 
@@ -87,7 +87,7 @@ class EditorHistoryManager internal constructor(private val project: Project) : 
   interface IncludeInEditorHistoryFile
 
   /**
-   * Makes file most recent one
+   * Makes file the most recent one
    */
   private fun fileOpenedImpl(file: VirtualFile, fallbackEditor: FileEditor?, fallbackProvider: FileEditorProvider?) {
     ThreadingAssertions.assertEventDispatchThread()
@@ -129,8 +129,12 @@ class EditorHistoryManager internal constructor(private val project: Project) : 
         states[i] = editor.getState(FileEditorStateLevel.FULL)
       }
     }
-    val entry = HistoryEntry.createHeavy(project, file, providers.asList(), states.asList(), providers[selectedProviderIndex]!!,
-                                               editorComposite != null && editorComposite.isPreview)
+    val entry = HistoryEntry.createHeavy(project = project,
+                                         file = file,
+                                         providers = providers.asList(),
+                                         states = states.asList(),
+                                         selectedProvider = providers.get(selectedProviderIndex)!!,
+                                         preview = editorComposite != null && editorComposite.isPreview)
     synchronized(this) {
       entries.add(entry)
     }
@@ -164,7 +168,7 @@ class EditorHistoryManager internal constructor(private val project: Project) : 
       providers = listOf(fileEditorProvider)
     }
     if (editors.isEmpty()) {
-      // obviously, not opened in any editor at the moment makes no sense to put the file in the history
+      // not opened in any editor at the moment makes no sense to put the file in the history
       return
     }
     val entry = getEntry(file)
@@ -187,6 +191,7 @@ class EditorHistoryManager internal constructor(private val project: Project) : 
           // and this method was called during the corresponding myEditor close up
           continue
         }
+
         val oldState = entry.getState(provider)
         val newState = editor.getState(FileEditorStateLevel.FULL)
         if (newState != oldState) {
@@ -196,9 +201,7 @@ class EditorHistoryManager internal constructor(private val project: Project) : 
     }
     val selectedEditorWithProvider = fileEditorManager.getSelectedEditorWithProvider(file)
     if (selectedEditorWithProvider != null) {
-      //LOG.assertTrue(selectedEditorWithProvider != null);
       entry.selectedProvider = selectedEditorWithProvider.provider
-      LOG.assertTrue(entry.selectedProvider != null)
       if (changeEntryOrderOnly) {
         moveOnTop(entry)
       }
