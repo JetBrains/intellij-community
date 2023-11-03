@@ -3,6 +3,7 @@ package com.intellij.execution.wsl
 
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.configurations.GeneralCommandLine
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import org.jetbrains.annotations.ApiStatus
@@ -58,3 +59,15 @@ interface AbstractWslDistribution {
   val msId: String
 
 }
+
+/**
+ * throws exception instead of null
+ */
+fun AbstractWslDistribution.getWslPathSafe(path: Path): String =
+  getWslPath(path) ?: throw Exception("Can't access from Linux: $path")
+
+/**
+ * How Linux can access tool from IJ "bin" folder
+ */
+fun AbstractWslDistribution.getToolLinuxPath(toolName: String): String =
+  getWslPathSafe(PathManager.findBinFileWithException(toolName))

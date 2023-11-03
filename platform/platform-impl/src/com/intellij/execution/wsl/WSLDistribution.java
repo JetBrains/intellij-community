@@ -334,10 +334,13 @@ public class WSLDistribution implements AbstractWslDistribution {
         }
 
         if (options.isExecuteCommandInDefaultShell()) {
+          fixTTYSize(commandLine);
           commandLine.addParameters(SHELL_PARAMETER, "-c", linuxCommandStr);
         }
         else {
-          commandLine.addParameters(EXEC_PARAMETER, getShellPath());
+          commandLine.addParameter(EXEC_PARAMETER);
+          fixTTYSize(commandLine);
+          commandLine.addParameter(getShellPath());
           if (options.isExecuteCommandInInteractiveShell()) {
             commandLine.addParameters("-i");
           }
@@ -366,6 +369,20 @@ public class WSLDistribution implements AbstractWslDistribution {
 
     logCommandLineAfter(commandLine);
     return commandLine;
+  }
+
+  /**
+   * Workaround for <a href="https://github.com/microsoft/WSL/issues/10701">wrong tty size WSL problem</a>
+   */
+  private void fixTTYSize(@NotNull GeneralCommandLine cmd) {
+    if (!WslDistributionDescriptor.isCalculatingMountRootCommand(cmd)
+        // Even though mount root is calculated with `options.isExecuteCommandInShell()=false`,
+        // let's protect from possible infinite recursion.
+        && !(cmd instanceof PtyCommandLine)  // PTY command line has correct tty size
+        && Registry.is("wsl.fix.initial.tty.size.when.running.without.tty", true)) {
+      var ttyfix = AbstractWslDistributionKt.getToolLinuxPath(this, "ttyfix");
+      cmd.addParameter(ttyfix);
+    }
   }
 
   private void logCommandLineBefore(@NotNull GeneralCommandLine commandLine, @NotNull WSLCommandLineOptions options) {
