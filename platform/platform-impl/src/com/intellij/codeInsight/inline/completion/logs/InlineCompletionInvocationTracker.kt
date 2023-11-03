@@ -53,10 +53,10 @@ internal class InlineCompletionInvocationTracker(
     fileLanguage = psiFile.language
     data.add(EventFields.Language.with(language))
     data.add(EventFields.CurrentFile.with(fileLanguage))
-    val time = measureNanoTime {
+    val computationTime = measureNanoTime {
       InlineContextFeatures.capture(psiFile, editor, offset, contextFeatures)
     }
-    LOG.info("Context features computation time is $time ns")
+    data.add(InvokedEvents.CONTEXT_FEATURES_COMPUTATION_TIME.with(computationTime))
     assert(!finished)
   }
 
