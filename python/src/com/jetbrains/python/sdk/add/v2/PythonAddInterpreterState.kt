@@ -22,5 +22,5 @@ class PythonAddInterpreterState(
                                                        { path -> basePythonSdks.get().find { it.homePath == path }!! })
 
   val selectedVenvPath = selectedVenv.transform({ sdk -> sdk?.homePath ?: "" },
-                                                { path -> allExistingSdks.get().find { it.homePath == path }!! })
+                                                { path -> allExistingSdks.get().find { it.homePath == path } })
 }
