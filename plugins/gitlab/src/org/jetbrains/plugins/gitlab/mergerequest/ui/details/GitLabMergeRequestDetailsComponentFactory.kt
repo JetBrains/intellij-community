@@ -10,6 +10,7 @@ import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.collaboration.ui.util.bindContentIn
 import com.intellij.collaboration.ui.util.emptyBorders
 import com.intellij.collaboration.ui.util.gap
+import com.intellij.collaboration.ui.util.swingAction
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
@@ -55,7 +56,11 @@ internal object GitLabMergeRequestDetailsComponentFactory {
         when (loadingState) {
           GitLabMergeRequestDetailsLoadingViewModel.LoadingState.Loading -> LoadingLabel()
           is GitLabMergeRequestDetailsLoadingViewModel.LoadingState.Error -> {
-            val errorPresenter = GitLabMergeRequestErrorStatusPresenter(accountVm)
+            val errorPresenter = GitLabMergeRequestErrorStatusPresenter(
+              accountVm,
+              swingAction(GitLabBundle.message("merge.request.reload")) {
+                detailsLoadingVm.reloadData()
+              })
             val errorPanel = ErrorStatusPanelFactory.create(scope, flowOf(loadingState.exception), errorPresenter)
             CollaborationToolsUIUtil.moveToCenter(errorPanel)
           }

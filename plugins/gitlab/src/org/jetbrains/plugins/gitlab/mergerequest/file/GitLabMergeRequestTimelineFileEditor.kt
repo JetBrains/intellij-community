@@ -6,6 +6,7 @@ import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.collaboration.ui.LoadingLabel
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil
 import com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPanelFactory
+import com.intellij.collaboration.ui.util.swingAction
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -24,9 +25,11 @@ import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.flowOf
+import org.jetbrains.plugins.gitlab.api.GitLabProjectConnectionManager
 import org.jetbrains.plugins.gitlab.mergerequest.ui.error.GitLabMergeRequestErrorStatusPresenter
 import org.jetbrains.plugins.gitlab.mergerequest.ui.timeline.GitLabMergeRequestTimelineComponentFactory
 import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.model.GitLabToolWindowViewModel
+import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import java.beans.PropertyChangeListener
 import java.beans.PropertyChangeSupport
 import javax.swing.JComponent
@@ -90,7 +93,16 @@ private class ComponentFactory(private val project: Project, private val parentC
                 wrapper.repaint()
               },
               onFailure = { error ->
-                val errorPresenter = GitLabMergeRequestErrorStatusPresenter(projectVm.accountVm)
+                val errorPresenter = GitLabMergeRequestErrorStatusPresenter(
+                  projectVm.accountVm,
+                  swingAction(GitLabBundle.message("merge.request.reload")) {
+                    launch {
+                      project.service<GitLabProjectConnectionManager>()
+                        .connectionState.value
+                        ?.projectData?.mergeRequests
+                        ?.reloadMergeRequest(file.mergeRequestId)
+                    }
+                  })
                 val errorPanel = ErrorStatusPanelFactory.create(this, flowOf(error), errorPresenter).let {
                   CollaborationToolsUIUtil.moveToCenter(it)
                 }
