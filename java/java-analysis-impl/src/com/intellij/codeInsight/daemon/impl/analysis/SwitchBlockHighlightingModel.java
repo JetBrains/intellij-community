@@ -245,7 +245,7 @@ public class SwitchBlockHighlightingModel {
           // if default is not the only case in the label, insufficient language level will be reported
           // see HighlightVisitorImpl#visitDefaultCaseLabelElement
           HighlightInfo.Builder info = createError(defaultElement, JavaErrorBundle.message("default.label.must.not.contains.case.keyword"));
-          IntentionAction fix = getFixFactory().createReplaceCaseDefaultWithDefaultFix(labelElementList);
+          ModCommandAction fix = getFixFactory().createReplaceCaseDefaultWithDefaultFix(labelElementList);
           info.registerFix(fix, null, null, null, null);
           errorSink.accept(info);
           reported = true;
@@ -1025,7 +1025,7 @@ public class SwitchBlockHighlightingModel {
 
     private record CaseLabelCombinationProblem(@NotNull PsiCaseLabelElement element,
                                                @NotNull @PropertyKey(resourceBundle = JavaErrorBundle.BUNDLE) String message,
-                                               @Nullable IntentionAction customAction) {
+                                               @Nullable ModCommandAction customAction) {
     }
 
     private static @Nullable CaseLabelCombinationProblem checkCaseLabelCombination(PsiCaseLabelElementList labelElementList) {
@@ -1033,7 +1033,7 @@ public class SwitchBlockHighlightingModel {
       PsiCaseLabelElement firstElement = elements[0];
       if (elements.length == 1) {
         if (firstElement instanceof PsiDefaultCaseLabelElement) {
-          IntentionAction fix = SwitchBlockHighlightingModel.getFixFactory().createReplaceCaseDefaultWithDefaultFix(labelElementList);
+          ModCommandAction fix = SwitchBlockHighlightingModel.getFixFactory().createReplaceCaseDefaultWithDefaultFix(labelElementList);
           return new CaseLabelCombinationProblem(firstElement, "default.label.must.not.contains.case.keyword", fix);
         }
         return null;
@@ -1042,7 +1042,7 @@ public class SwitchBlockHighlightingModel {
         if (firstElement instanceof PsiDefaultCaseLabelElement &&
             elements[1] instanceof PsiExpression expr &&
             ExpressionUtils.isNullLiteral(expr)) {
-          IntentionAction fix = SwitchBlockHighlightingModel.getFixFactory().createReverseCaseDefaultNullFixFix(labelElementList);
+          ModCommandAction fix = SwitchBlockHighlightingModel.getFixFactory().createReverseCaseDefaultNullFixFix(labelElementList);
           return new CaseLabelCombinationProblem(firstElement, "invalid.default.and.null.order", fix);
         }
         if (firstElement instanceof PsiExpression expr &&
@@ -1107,7 +1107,7 @@ public class SwitchBlockHighlightingModel {
 
     private static HighlightInfo.@NotNull Builder addIllegalFallThroughError(@NotNull PsiElement element,
                                                                              @NotNull @PropertyKey(resourceBundle = JavaErrorBundle.BUNDLE) String key,
-                                                                             @Nullable IntentionAction customAction,
+                                                                             @Nullable ModCommandAction customAction,
                                                                              @NotNull Set<? super PsiElement> alreadyFallThroughElements) {
       alreadyFallThroughElements.add(element);
       HighlightInfo.Builder info = createError(element, JavaErrorBundle.message(key));

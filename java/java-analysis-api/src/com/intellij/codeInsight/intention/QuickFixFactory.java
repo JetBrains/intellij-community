@@ -5,6 +5,7 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.lang.jvm.actions.JvmElementActionsFactory;
+import com.intellij.modcommand.ModCommandAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -631,11 +632,11 @@ public abstract class QuickFixFactory {
   public abstract IntentionAction createDeleteFix(@NotNull PsiElement @NotNull [] elements, @NotNull @Nls String text);
 
   @NotNull
-  public abstract IntentionAction createReplaceCaseDefaultWithDefaultFix(@NotNull PsiCaseLabelElementList list);
+  public abstract ModCommandAction createReplaceCaseDefaultWithDefaultFix(@NotNull PsiCaseLabelElementList list);
 
 
   @NotNull
-  public abstract IntentionAction createReverseCaseDefaultNullFixFix(@NotNull PsiCaseLabelElementList list);
+  public abstract ModCommandAction createReverseCaseDefaultNullFixFix(@NotNull PsiCaseLabelElementList list);
 
   @ApiStatus.Experimental
   @NotNull
