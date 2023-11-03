@@ -28,7 +28,8 @@ import com.intellij.util.text.nullize
 import com.intellij.util.ui.JBUI
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.sdk.PyDetectedSdk
-import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMethod.*
+import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMethod.CREATE_NEW
+import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMethod.SELECT_EXISTING
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnvIdentity
 import kotlinx.coroutines.CoroutineScope
@@ -171,7 +172,7 @@ private fun ComboBox<String>.withBrowsableSdk(pathToSelectedSdk: ObservableMutab
                            currentBaseSdkVirtualFile) { file ->
       val nioPath = file?.toNioPath() ?: return@chooseFile
       val targetPath = presenter.getPathOnTarget(nioPath)
-      presenter.addAndSelectBaseSdk(targetPath)
+      presenter.addPythonInterpreter(targetPath)
     }
   }
 
