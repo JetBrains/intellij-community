@@ -10,11 +10,13 @@ import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.internal.statistic.eventLog.events.ObjectEventData
 import com.intellij.internal.statistic.utils.getPluginInfo
 import com.intellij.lang.Language
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.util.application
 import kotlin.random.Random
+import kotlin.system.measureNanoTime
 
 /**
  * This tracker lives from the moment the inline completion is invoked until the end of generation.
@@ -30,6 +32,7 @@ internal class InlineCompletionInvocationTracker(
   val requestId = Random.nextLong()
   private var finished = false
   private val data = mutableListOf<EventPair<*>>()
+  private val contextFeatures = mutableListOf<EventPair<*>>()
   private var hasSuggestions: Boolean? = null
   private var canceled: Boolean = false
   private var exception: Boolean = false
@@ -50,6 +53,10 @@ internal class InlineCompletionInvocationTracker(
     fileLanguage = psiFile.language
     data.add(EventFields.Language.with(language))
     data.add(EventFields.CurrentFile.with(fileLanguage))
+    val time = measureNanoTime {
+      InlineContextFeatures.capture(psiFile, editor, offset, contextFeatures)
+    }
+    LOG.info("Context features computation time is $time ns")
     assert(!finished)
   }
 
@@ -90,13 +97,8 @@ internal class InlineCompletionInvocationTracker(
       data.add(InvokedEvents.ADDITIONAL.with(ObjectEventData(it)))
     }
 
-    if (application.isEAP) {
-      val inlineContextFeaturesTracker = InlineContextFeaturesTracker.getInstance()
-      val contextFeatures = inlineContextFeaturesTracker.contextFeatures
-      if (contextFeatures.isNotEmpty()) {
-        data.add(InvokedEvents.CONTEXT_FEATURES.with(ObjectEventData(contextFeatures)))
-        data.add(InvokedEvents.CONTEXT_FEATURES_COMPUTATION_TIME.with(inlineContextFeaturesTracker.computationTime))
-      }
+    if (application.isEAP && contextFeatures.isNotEmpty()) {
+      data.add(InvokedEvents.CONTEXT_FEATURES.with(ObjectEventData(contextFeatures)))
     }
 
     InlineCompletionUsageTracker.INVOKED_EVENT.log(listOf(
@@ -116,5 +118,9 @@ internal class InlineCompletionInvocationTracker(
         }
       )
     ))
+  }
+
+  companion object {
+    val LOG = thisLogger()
   }
 }

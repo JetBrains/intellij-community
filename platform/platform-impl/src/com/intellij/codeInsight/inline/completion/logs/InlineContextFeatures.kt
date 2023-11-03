@@ -3,32 +3,17 @@ package com.intellij.codeInsight.inline.completion.logs
 
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
-import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.roots.libraries.LibraryUtil
 import com.intellij.openapi.util.TextRange
-import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiFileSystemItem
-import kotlin.system.measureNanoTime
 
-@Service
-internal class InlineContextFeaturesTracker {
-  val contextFeatures: MutableList<EventPair<*>> = mutableListOf()
-  var computationTime: Long = 0
-
-  fun cacheContextFeatures(editor: Editor) {
-    contextFeatures.clear()
-    computationTime = measureNanoTime {
-      captureContextFeatures(editor)
-    }
-  }
-
-  private fun captureContextFeatures(editor: Editor) {
-    val offset = editor.caretModel.offset
+internal object InlineContextFeatures {
+  fun capture(psiFile: PsiFile, editor: Editor, offset: Int, contextFeatures: MutableList<EventPair<*>>) {
     val logicalPosition = editor.offsetToLogicalPosition(offset)
     val lineNumber = logicalPosition.line
     val columnNumber = logicalPosition.column
@@ -70,8 +55,8 @@ internal class InlineContextFeaturesTracker {
       contextFeatures.add(FOLLOWING_NON_EMPTY_LINE_LENGTH.with(followingNonEmptyLineText.length))
     }
     contextFeatures.add(INDENT_LEVEL.with(indentLevel(linePrefix, EditorUtil.getTabSize(editor))))
-    val psiFile = PsiDocumentManager.getInstance(editor.project ?: return).getPsiFile(editor.document) ?: return
     contextFeatures.add(LIBRARIES_COUNT.with(LibraryUtil.getLibraryRoots(psiFile.project).size))
+
     psiFile.findElementAt(offset)?.let { contextFeatures.addPsiParents(it) }
   }
 
@@ -130,24 +115,20 @@ internal class InlineContextFeaturesTracker {
     add(SECOND_PARENT.with(secondParent::class.java))
   }
 
-  companion object {
-    val LINE_NUMBER = EventFields.Int("line_number")
-    val COLUMN_NUMBER = EventFields.Int("column_number")
-    val SYMBOLS_IN_LINE_BEFORE_CARET = EventFields.Int("symbols_in_line_before_caret")
-    val SYMBOLS_IN_LINE_AFTER_CARET = EventFields.Int("symbols_in_line_after_caret")
-    val IS_WHITE_SPACE_BEFORE_CARET = EventFields.Boolean("is_white_space_before_caret")
-    val IS_WHITE_SPACE_AFTER_CARET = EventFields.Boolean("is_white_space_after_caret")
-    val NON_SPACE_SYMBOL_BEFORE_CARET = EventFields.Enum("non_space_symbol_before_caret", CharCategory::class.java)
-    val NON_SPACE_SYMBOL_AFTER_CARET = EventFields.Enum("non_space_symbol_after_caret", CharCategory::class.java)
-    val PREVIOUS_EMPTY_LINES_COUNT = EventFields.Int("previous_empty_lines_count")
-    val PREVIOUS_NON_EMPTY_LINE_LENGTH = EventFields.Int("previous_non_empty_line_length")
-    val FOLLOWING_EMPTY_LINES_COUNT = EventFields.Int("following_empty_lines_count")
-    val FOLLOWING_NON_EMPTY_LINE_LENGTH = EventFields.Int("following_non_empty_line_length")
-    val INDENT_LEVEL = EventFields.Int("indent_level")
-    val LIBRARIES_COUNT = EventFields.Int("libraries_count")
-    val FIRST_PARENT = EventFields.Class("first_parent")
-    val SECOND_PARENT = EventFields.Class("second_parent")
-
-    fun getInstance(): InlineContextFeaturesTracker = service()
-  }
+  val LINE_NUMBER = EventFields.Int("line_number")
+  val COLUMN_NUMBER = EventFields.Int("column_number")
+  val SYMBOLS_IN_LINE_BEFORE_CARET = EventFields.Int("symbols_in_line_before_caret")
+  val SYMBOLS_IN_LINE_AFTER_CARET = EventFields.Int("symbols_in_line_after_caret")
+  val IS_WHITE_SPACE_BEFORE_CARET = EventFields.Boolean("is_white_space_before_caret")
+  val IS_WHITE_SPACE_AFTER_CARET = EventFields.Boolean("is_white_space_after_caret")
+  val NON_SPACE_SYMBOL_BEFORE_CARET = EventFields.Enum("non_space_symbol_before_caret", CharCategory::class.java)
+  val NON_SPACE_SYMBOL_AFTER_CARET = EventFields.Enum("non_space_symbol_after_caret", CharCategory::class.java)
+  val PREVIOUS_EMPTY_LINES_COUNT = EventFields.Int("previous_empty_lines_count")
+  val PREVIOUS_NON_EMPTY_LINE_LENGTH = EventFields.Int("previous_non_empty_line_length")
+  val FOLLOWING_EMPTY_LINES_COUNT = EventFields.Int("following_empty_lines_count")
+  val FOLLOWING_NON_EMPTY_LINE_LENGTH = EventFields.Int("following_non_empty_line_length")
+  val INDENT_LEVEL = EventFields.Int("indent_level")
+  val LIBRARIES_COUNT = EventFields.Int("libraries_count")
+  val FIRST_PARENT = EventFields.Class("first_parent")
+  val SECOND_PARENT = EventFields.Class("second_parent")
 }
