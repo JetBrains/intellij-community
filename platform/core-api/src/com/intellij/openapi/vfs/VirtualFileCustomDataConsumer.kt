@@ -3,10 +3,18 @@ package com.intellij.openapi.vfs
 
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
+import org.jetbrains.annotations.ApiStatus
 
-interface VirtualFileExtrasConsumer<TData : Any> : VirtualFileExtras<TData> {
+/**
+ * Used for synchronizing custom data related to a [VirtualFile] instance
+ * from Host to Thin Client in Remote Development. Consumes the custom data,
+ * that is received on ThinClient side.
+ */
+@ApiStatus.Experimental
+interface VirtualFileCustomDataConsumer<TData : Any> : VirtualFileCustomDataSynchronizer<TData> {
   companion object {
-    val EP_NAME: ExtensionPointName<VirtualFileExtrasConsumer<*>> = ExtensionPointName.create("com.intellij.virtualFile.extras.consumer")
+    val EP_NAME: ExtensionPointName<VirtualFileCustomDataConsumer<*>> =
+      ExtensionPointName.create("com.intellij.virtualFileCustomDataConsumer")
   }
 
   /**

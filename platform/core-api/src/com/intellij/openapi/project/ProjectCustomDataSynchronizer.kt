@@ -3,11 +3,21 @@ package com.intellij.openapi.project
 
 import com.intellij.openapi.extensions.ExtensionPointName
 import kotlinx.coroutines.flow.Flow
+import org.jetbrains.annotations.ApiStatus.Experimental
 import kotlin.reflect.KType
 
-interface ProjectExtras<TData : Any> {
+/**
+ * Used for synchronizing custom data related to a [Project] instance
+ * from Host to Thin Client in Remote Development.
+ *
+ * @param TData must be serializable (see [kotlinx.serialization.Serializable])
+ * @property dataType must return the class of [TData]
+ */
+@Experimental
+interface ProjectCustomDataSynchronizer<TData : Any> {
   companion object {
-    val EP_NAME: ExtensionPointName<ProjectExtras<*>> = ExtensionPointName.create("com.intellij.project.extras")
+    val EP_NAME: ExtensionPointName<ProjectCustomDataSynchronizer<*>> =
+      ExtensionPointName.create("com.intellij.projectCustomDataSynchronizer")
   }
 
   val id: String get() = javaClass.name

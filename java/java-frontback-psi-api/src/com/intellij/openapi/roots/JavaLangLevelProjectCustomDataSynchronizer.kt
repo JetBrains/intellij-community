@@ -2,7 +2,7 @@
 package com.intellij.openapi.roots
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectExtras
+import com.intellij.openapi.project.ProjectCustomDataSynchronizer
 import com.intellij.openapi.roots.LanguageLevelProjectExtension.LanguageLevelChangeListener
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.util.messages.impl.subscribeAsFlow
@@ -12,7 +12,7 @@ import kotlinx.serialization.Serializable
 import kotlin.reflect.KType
 import kotlin.reflect.typeOf
 
-class JavaLangLevelProjectExtras : ProjectExtras<LanguageLevelHolder> {
+class JavaLangLevelProjectCustomDataSynchronizer : ProjectCustomDataSynchronizer<LanguageLevelHolder> {
 
   override val id: String = "projectLangLevel"
 
