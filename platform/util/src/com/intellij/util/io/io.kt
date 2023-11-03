@@ -14,7 +14,6 @@ import java.net.SocketTimeoutException
 import java.net.URLEncoder
 import java.nio.ByteBuffer
 import java.util.*
-import kotlin.coroutines.CoroutineContext
 import kotlin.math.min
 
 fun Reader.readCharSequence(length: Int): CharSequence {
@@ -113,9 +112,8 @@ suspend fun InputStream.copyToAsync(
   outputStream: OutputStream,
   bufferSize: Int = DEFAULT_BUFFER_SIZE,
   limit: Long = Long.MAX_VALUE,
-  context: CoroutineContext = CoroutineName("copyToAsync: $this => $outputStream")
 ) {
-  computeDetached(context = context) {
+  computeDetached(context = CoroutineName("copyToAsync: $this => $outputStream")) {
     val buffer = ByteArray(bufferSize)
     var totalRead = 0L
     while (totalRead < limit) {
