@@ -317,6 +317,11 @@ public class ProjectJdkImpl extends UserDataHolderBase implements ProjectJdk, Sd
   }
 
   @Override
+  public void applyChangesWithoutWriteAction() {
+    commitChanges();
+  }
+
+  @Override
   public SdkAdditionalData getSdkAdditionalData() {
     return myAdditionalData;
   }

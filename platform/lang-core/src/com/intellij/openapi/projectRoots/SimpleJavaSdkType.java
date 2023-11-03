@@ -38,13 +38,9 @@ public class SimpleJavaSdkType extends SdkType implements JavaSdkType {
     String homePath = FileUtil.toSystemIndependentName(home);
     sdkModificator.setHomePath(homePath);
     sdkModificator.setVersionString(this.getVersionString(homePath));
-    Application application = ApplicationManager.getApplication();
-    Runnable runnable = () -> sdkModificator.commitChanges();
-    if (application.isDispatchThread()) {
-      application.runWriteAction(runnable);
-    } else {
-      application.invokeAndWait(() -> application.runWriteAction(runnable));
-    }
+
+    // This SDK not in the storage, so it's OK to apply changes from `SdkModificator` to the storage, related to SDK only, not global WSM
+    sdkModificator.applyChangesWithoutWriteAction();
     return jdk;
   }
 

@@ -139,5 +139,19 @@ class SdkModificatorBridgeImpl(private val originalEntity: SdkMainEntity.Builder
     isCommitted = true
   }
 
+  override fun applyChangesWithoutWriteAction() {
+    if (isCommitted) error("Modification already completed")
+
+    modifiedSdkEntity.additionalData = if (additionalData != null) {
+      val additionalDataElement = Element(ELEMENT_ADDITIONAL)
+      modifiedSdkEntity.getSdkType().saveAdditionalData(additionalData!!, additionalDataElement)
+      JDOMUtil.write(additionalDataElement)
+    } else ""
+
+    originalEntity.applyChangesFrom(modifiedSdkEntity)
+    originalSdkBridge.reloadAdditionalData()
+    isCommitted = true
+  }
+
   override fun isWritable(): Boolean = !isCommitted
 }
