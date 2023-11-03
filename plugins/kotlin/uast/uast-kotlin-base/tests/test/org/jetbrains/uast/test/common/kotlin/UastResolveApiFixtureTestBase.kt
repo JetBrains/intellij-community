@@ -21,6 +21,7 @@ import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCaseBase
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCaseBase.assertContainsElements
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCaseBase.assertDoesntContain
 import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.psi.psiUtil.isExtensionDeclaration
 import org.jetbrains.kotlin.util.OperatorNameConventions
 import org.jetbrains.kotlin.utils.addToStdlib.cast
 import org.jetbrains.uast.*
@@ -1554,4 +1555,146 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
         }
     }
 
+    fun checkResolveThisExpression(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "main.kt", """
+                class Foo {
+                  fun myMethod() = 42
+                  
+                  fun test() {
+                    this.myMethod()
+                  }
+                }
+                
+                fun Foo.ext() = this.myMethod()
+                
+                val Foo.ext: Int
+                    get() = this.myMethod()
+            """.trimIndent()
+        )
+
+        myFixture.file.toUElement()!!.accept(
+            object : AbstractUastVisitor() {
+                var currentMethod: String? = null
+
+                override fun visitMethod(node: UMethod): Boolean {
+                    currentMethod = node.name
+
+                    return super.visitMethod(node)
+                }
+
+                override fun afterVisitMethod(node: UMethod) {
+                    currentMethod = null
+
+                    super.afterVisitMethod(node)
+                }
+
+                override fun visitThisExpression(node: UThisExpression): Boolean {
+                    val resolved = node.resolve()
+                    TestCase.assertNotNull(resolved)
+
+                    if (currentMethod == "ext" || currentMethod == "getExt") {
+                        TestCase.assertTrue(resolved is PsiParameter)
+                        TestCase.assertEquals("\$this\$ext", (resolved as PsiParameter).name)
+                        TestCase.assertEquals("Foo", resolved.type.canonicalText)
+                    } else {
+                        TestCase.assertTrue(resolved is PsiClass)
+                        TestCase.assertEquals("Foo", (resolved as PsiClass).name)
+                    }
+
+                    return super.visitThisExpression(node)
+                }
+            }
+        )
+    }
+
+    fun checkResolveThisExpressionAsLambdaReceiver(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "main.kt", """
+                package some
+                
+                interface MyCoroutineScope
+                
+                suspend fun <R> coroutineScope(block: MyCoroutineScope.() -> R): R = TODO()
+                
+                class Foo {
+                  val list = listOf(1)
+
+                  fun myMethod() {}
+
+                  fun consumeScope(scope: MyCoroutineScope) {}
+
+                  suspend fun testClassProperty() = coroutineScope outer@{ // this: MyCoroutineScope
+                    list.isEmpty()
+                    this@Foo.list.isEmpty()
+
+                    list.apply { // this: List
+                      this@apply.isEmpty()
+                      this.isEmpty() // same as above, just no label
+
+                      consumeScope(this@outer)
+                    }
+
+                    myMethod()
+                    this@Foo.myMethod()
+
+                    consumeScope(this@outer)
+                    consumeScope(this) // same as above, just no label
+                  }
+                }
+            """.trimIndent()
+        )
+
+        val callables = setOf("TODO", "listOf", "coroutineScope", "isEmpty", "apply", "myMethod", "consumeScope")
+        myFixture.file.toUElement()!!.accept(
+            object : AbstractUastVisitor() {
+                override fun visitCallExpression(node: UCallExpression): Boolean {
+                    val resolved = node.resolve()
+                    TestCase.assertNotNull(resolved)
+                    TestCase.assertTrue(resolved!!.name in callables)
+
+                    return super.visitCallExpression(node)
+                }
+
+                var lastThis: PsiParameter? = null
+
+                override fun visitThisExpression(node: UThisExpression): Boolean {
+                    val resolved = node.resolve()
+                    TestCase.assertNotNull(resolved)
+
+                    val text = node.sourcePsi?.text ?: "not this?"
+                    if (text.contains("@Foo")) {
+                        // this@Foo
+                        TestCase.assertTrue(resolved is PsiClass)
+                        TestCase.assertEquals("Foo", (resolved as PsiClass).name)
+                    } else {
+                        // this@apply, this, this@outer
+                        TestCase.assertTrue(resolved is PsiParameter)
+                        TestCase.assertEquals("<this>", (resolved as PsiParameter).name)
+
+                        when (text) {
+                            "this" -> {
+                                // `this` is deliberately tested always *after* labeled `this`
+                                TestCase.assertEquals(lastThis!!.type.canonicalText, resolved.type.canonicalText)
+                            }
+                            "this@apply" -> {
+                                TestCase.assertEquals(
+                                    "java.util.List<? extends java.lang.Integer>",
+                                    resolved.type.canonicalText
+                                )
+                            }
+                            "this@outer" -> {
+                                TestCase.assertEquals("some.MyCoroutineScope", resolved.type.canonicalText)
+                            }
+                            else -> error("unexpected UThisExpression: $text")
+                        }
+
+                        lastThis = resolved
+                    }
+
+                    return super.visitThisExpression(node)
+                }
+            }
+        )
+    }
 }

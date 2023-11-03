@@ -227,4 +227,12 @@ class FirUastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
     fun testCompanionConstantAsVarargAnnotationValue() {
         checkCompanionConstantAsVarargAnnotationValue(myFixture)
     }
+
+    fun testResolveThisExpression() {
+        checkResolveThisExpression(myFixture)
+    }
+
+    fun testResolveThisExpressionAsLambdaReceiver() {
+        checkResolveThisExpressionAsLambdaReceiver(myFixture)
+    }
 }
