@@ -112,7 +112,10 @@ class PythonProjectSpecificSettingsStep<T>(projectGenerator: DirectoryProjectGen
       }
     }
 
-    mainPanel.registerValidators(this)
+    mainPanel.registerValidators(this) { validations ->
+      val anyErrors = validations.entries.any { (key, value) -> key.isVisible && !value.okEnabled }
+      myCreateButton.isEnabled = !anyErrors
+    }
     myCreateButton.addActionListener { mainPanel.apply() }
     return mainPanel
   }
