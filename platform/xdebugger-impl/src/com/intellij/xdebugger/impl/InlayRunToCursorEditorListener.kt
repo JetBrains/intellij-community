@@ -117,7 +117,7 @@ class InlayRunToCursorEditorListener(private val project: Project, private val c
     if (lineNumber < 0) {
       return true
     }
-    if (lineNumber != editor.getCaretModel().logicalPosition.line && x > showInlayPopupWidth(editor)) {
+    if (x > showInlayPopupWidth(editor)) {
       currentEditor.clear()
       currentLineNumber = -1
       return true
