@@ -986,7 +986,7 @@ abstract class ComponentManagerImpl(
     return result ?: throw RuntimeException("service is not defined for $keyClass")
   }
 
-  suspend fun <T : Any> getServiceAsyncIfDefined(keyClass: Class<T>): T? {
+  override suspend fun <T : Any> getServiceAsyncIfDefined(keyClass: Class<T>): T? {
     if (useInstanceContainer) {
       val holder = serviceContainer.getInstanceHolder(keyClass) ?: return null
       @Suppress("UNCHECKED_CAST")

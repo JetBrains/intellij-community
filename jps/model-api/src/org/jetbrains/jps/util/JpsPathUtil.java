@@ -1,9 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.util;
 
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -94,12 +95,23 @@ public final class JpsPathUtil {
   }
 
   public static @Nullable String readProjectName(@NotNull Path projectDir) {
+    String s;
     try (Stream<String> stream = Files.lines(projectDir.resolve(".name"))) {
-      return stream.findFirst().map(String::trim).orElse(null);
+      s = stream.findFirst().orElse("");
     }
     catch (IOException | UncheckedIOException e) {
       return null;
     }
+    return normalizeProjectName(s);
+  }
+
+  public static @Nullable String normalizeProjectName(@Nullable String s) {
+    if (s == null) {
+      return null;
+    }
+
+    s = StringUtil.removeHtmlTags(s, true);
+    return s.isBlank() ? null : s.trim();
   }
 
   private static final String UNNAMED_PROJECT = "<unnamed>";

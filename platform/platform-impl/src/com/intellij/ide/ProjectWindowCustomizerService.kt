@@ -54,7 +54,7 @@ private class ProjectWindowCustomizerIconCache(private val project: Project) {
       cachedIcon.drop()
     })
     busConnection.subscribe(ProjectNameListener.TOPIC, object: ProjectNameListener {
-      override fun nameChanged(newName: String) {
+      override fun nameChanged(newName: String?) {
         cachedIcon.drop()
       }
     })

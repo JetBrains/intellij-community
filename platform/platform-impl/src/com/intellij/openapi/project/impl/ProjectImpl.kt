@@ -11,10 +11,13 @@ import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.startup.StartupManagerEx
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.client.ClientAwareComponentManager
+import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.StorageScheme
 import com.intellij.openapi.components.impl.stores.IProjectStore
 import com.intellij.openapi.components.service
@@ -46,6 +49,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.jps.util.JpsPathUtil
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
 import java.nio.file.ClosedFileSystemException
@@ -179,20 +183,26 @@ open class ProjectImpl(parent: ComponentManagerImpl, filePath: Path, projectName
   }
 
   override fun setProjectName(value: String) {
-    if (cachedName == value) {
+    val name = JpsPathUtil.normalizeProjectName(value)
+    if (cachedName == name) {
       return
     }
 
-    cachedName = value
+    cachedName = name
 
-    if (!ApplicationManager.getApplication().isUnitTestMode) {
-      messageBus.syncPublisher(ProjectNameListener.TOPIC).nameChanged(value)
-      StartupManager.getInstance(this).runAfterOpened {
-        ApplicationManager.getApplication().invokeLater(Runnable {
-          val frame = WindowManager.getInstance().getFrame(this) ?: return@Runnable
-          val title = FrameTitleBuilder.getInstance().getProjectTitle(this) ?: return@Runnable
-          frame.title = title
-        }, ModalityState.nonModal(), disposed)
+    val app = ApplicationManager.getApplication()
+    if (app.isHeadlessEnvironment || app.isUnitTestMode) {
+      return
+    }
+
+    messageBus.syncPublisher(ProjectNameListener.TOPIC).nameChanged(name)
+    StartupManager.getInstance(this).runAfterOpened {
+      coroutineScope.launch(Dispatchers.EDT + ModalityState.nonModal().asContextElement()) {
+        val frame = (app as? ComponentManagerEx)?.getServiceAsyncIfDefined(WindowManager::class.java)?.getFrame(this@ProjectImpl)
+                    ?: return@launch
+        val title = (app as? ComponentManagerEx)?.getServiceAsyncIfDefined(FrameTitleBuilder::class.java)?.getProjectTitle(this@ProjectImpl)
+                    ?: return@launch
+        frame.title = title
       }
     }
   }

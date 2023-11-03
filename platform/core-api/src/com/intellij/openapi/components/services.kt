@@ -84,4 +84,8 @@ interface ComponentManagerEx {
   suspend fun <T : Any> getServiceAsync(keyClass: Class<T>): T {
     throw AbstractMethodError()
   }
+
+  suspend fun <T : Any> getServiceAsyncIfDefined(keyClass: Class<T>): T? {
+    throw AbstractMethodError()
+  }
 }

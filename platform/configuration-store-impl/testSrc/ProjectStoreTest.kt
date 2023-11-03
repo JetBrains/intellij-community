@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
 import com.intellij.ide.highlighter.ProjectFileType
@@ -163,6 +163,14 @@ internal class ProjectStoreTest {
       project.setProjectName(name)
       project.stateStore.save()
       assertThat(store.getNameFile()).doesNotExist()
+
+      project.setProjectName("<html><img src=http:ip:port/attack.png> </html>")
+      project.stateStore.save()
+      assertThat(store.getNameFile()).doesNotExist()
+
+      project.setProjectName("a < b or b > c")
+      project.stateStore.save()
+      assertThat(store.getNameFile()).hasContent("a b or b > c")
     }
   }
 
