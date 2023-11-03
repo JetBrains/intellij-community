@@ -167,8 +167,8 @@ class PythonAddInterpreterPresenter(val state: PythonAddInterpreterState, val ui
    * Adds SDK specified by its path if it is not present in the list and selects it.
    */
   @RequiresEdt
-  fun addAndSelectBaseSdk(path: String) {
-    val sdkAdded = createDetectedSdk(path, targetEnvironmentConfiguration)
+  fun addPythonInterpreter(targetPath: String) {
+    val sdkAdded = createDetectedSdk(targetPath, targetEnvironmentConfiguration)
     // TODO probably remove duplicates
     manuallyAddedSdksFlow.value += sdkAdded
   }
