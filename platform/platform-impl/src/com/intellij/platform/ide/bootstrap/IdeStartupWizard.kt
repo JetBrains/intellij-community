@@ -130,8 +130,7 @@ object IdeStartupExperiment {
   @Suppress("DEPRECATION")
   private fun getGroupKind(group: Int) = when {
     PlatformUtils.isIdeaUltimate() || PlatformUtils.isPyCharmPro() -> when {
-      group >= 0 && group <= 6 -> GroupKind.Experimental
-      group == 7 -> GroupKind.Experimental
+      group >= 0 && group <= 7 -> GroupKind.Experimental
       group == 8 || group == 9 -> GroupKind.Control
       else -> GroupKind.Undefined
     }
