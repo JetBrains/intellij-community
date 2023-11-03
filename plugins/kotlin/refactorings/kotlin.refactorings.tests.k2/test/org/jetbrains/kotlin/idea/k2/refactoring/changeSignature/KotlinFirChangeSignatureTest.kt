@@ -3,8 +3,10 @@ package org.jetbrains.kotlin.idea.k2.refactoring.changeSignature
 
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
+import com.intellij.refactoring.RefactoringBundle
 import org.jetbrains.kotlin.descriptors.Visibility
 import org.jetbrains.kotlin.idea.codeinsight.utils.AddQualifiersUtil
+import org.jetbrains.kotlin.idea.k2.refactoring.checkSuperMethods
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.BaseKotlinChangeSignatureTest
 import org.jetbrains.kotlin.psi.*
 
@@ -54,7 +56,8 @@ class KotlinFirChangeSignatureTest :
 
     override fun createChangeInfo(): KotlinChangeInfo {
         val targetElement = findTargetDescriptor(KotlinChangeSignatureHandler)
-        return KotlinChangeInfo(KotlinMethodDescriptor(targetElement))
+        val superMethod = checkSuperMethods(targetElement, emptyList(), RefactoringBundle.message("to.refactor")).first() as KtNamedDeclaration
+        return KotlinChangeInfo(KotlinMethodDescriptor(superMethod))
     }
 
     override fun doRefactoring(configure: KotlinChangeInfo.() -> Unit) {

@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.k2.refactoring.changeSignature
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import com.intellij.refactoring.RefactoringBundle
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
@@ -11,6 +12,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtSymbolOrigin
 import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.ui.KotlinChangePropertySignatureDialog
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.ui.KotlinChangeSignatureDialog
+import org.jetbrains.kotlin.idea.k2.refactoring.checkSuperMethods
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinChangeSignatureHandlerBase
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.psi.*
@@ -79,22 +81,25 @@ object KotlinChangeSignatureHandler : KotlinChangeSignatureHandlerBase<KtNamedDe
     override fun runChangeSignature(
         project: Project, editor: Editor?, callableDescriptor: KtNamedDeclaration, context: PsiElement
     ) {
+
+        val superMethods = checkSuperMethods(callableDescriptor, emptyList(), RefactoringBundle.message("to.refactor"))
+
+        val callableToRefactor = superMethods.firstOrNull() as? KtNamedDeclaration ?: return
         when {
-            callableDescriptor is KtFunction || callableDescriptor is KtClass -> {
-                KotlinChangeSignatureDialog(project, editor, KotlinMethodDescriptor(callableDescriptor), context, null).show()
+            callableToRefactor is KtFunction || callableToRefactor is KtClass -> {
+                KotlinChangeSignatureDialog(project, editor, KotlinMethodDescriptor(callableToRefactor), context, null).show()
             }
 
-            callableDescriptor is KtProperty || callableDescriptor is KtParameter && callableDescriptor.hasValOrVar() -> {
-                KotlinChangePropertySignatureDialog(project, KotlinMethodDescriptor(callableDescriptor as KtCallableDeclaration)).show()
+            callableToRefactor is KtProperty || callableToRefactor is KtParameter && callableToRefactor.hasValOrVar() -> {
+                KotlinChangePropertySignatureDialog(project, KotlinMethodDescriptor(callableToRefactor as KtCallableDeclaration)).show()
             }
 
-            callableDescriptor is KtParameter -> {
-                val ownerFunction = callableDescriptor.ownerFunction
+            callableToRefactor is KtParameter -> {
+                val ownerFunction = callableToRefactor.ownerFunction
                 if (ownerFunction is KtCallableDeclaration) {
                     runChangeSignature(project, editor, ownerFunction, context)
                 }
             }
         }
-
     }
 }

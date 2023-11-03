@@ -9,4 +9,3 @@ interface B {
 class C : A, B {
     override fun <caret>f(p: Int) {}
 }
-// IGNORE_K2
