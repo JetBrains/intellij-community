@@ -6,17 +6,39 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.ui.UIUtil
+import java.awt.AWTEvent
+import java.awt.Toolkit
+import java.awt.event.AWTEventListener
 import java.awt.event.FocusAdapter
 import java.awt.event.FocusEvent
 import java.util.concurrent.CopyOnWriteArrayList
 import javax.swing.JComponent
 
 class TerminalFocusModel(private val project: Project,
+                         private val blockTerminalView: BlockTerminalView,
                          private val outputView: TerminalOutputView,
                          private val promptView: TerminalPromptView) {
+  /** True, if focus is inside the terminal component */
+  var isActive: Boolean = true
+    private set(value) {
+      if (value != field) {
+        field = value
+        listeners.forEach { it.activeStateChanged(value) }
+      }
+    }
+
   private val listeners: MutableList<TerminalFocusListener> = CopyOnWriteArrayList()
 
   init {
+    val listener = AWTEventListener {
+      isActive = UIUtil.isFocusAncestor(blockTerminalView.component)
+    }
+    Toolkit.getDefaultToolkit().addAWTEventListener(listener, AWTEvent.FOCUS_EVENT_MASK)
+    Disposer.register(blockTerminalView) {
+      Toolkit.getDefaultToolkit().removeAWTEventListener(listener)
+    }
+
     promptView.preferredFocusableComponent.addFocusListener(object : FocusAdapter() {
       override fun focusGained(e: FocusEvent?) {
         listeners.forEach { it.promptFocused() }
@@ -51,5 +73,7 @@ class TerminalFocusModel(private val project: Project,
 
   interface TerminalFocusListener {
     fun promptFocused() {}
+
+    fun activeStateChanged(isActive: Boolean) {}
   }
 }

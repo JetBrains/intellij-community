@@ -35,6 +35,18 @@ class TerminalSelectionController(
       override fun promptFocused() {
         clearSelection()   // clear selection if user selected the prompt using the mouse
       }
+
+      // mark selected blocks as inactive when the terminal loses the focus
+      override fun activeStateChanged(isActive: Boolean) {
+        for (block in selectedBlocks) {
+          if (isActive) {
+            outputModel.removeBlockState(block, InactiveSelectedBlockDecorationState.NAME)
+          }
+          else {
+            outputModel.addBlockState(block, InactiveSelectedBlockDecorationState())
+          }
+        }
+      }
     })
     textSelectionModel.addSelectionListener(object : SelectionListener {
       override fun selectionChanged(e: SelectionEvent) {

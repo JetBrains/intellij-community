@@ -42,6 +42,24 @@ class SelectedBlockDecorationState : AbstractBlockDecorationState(NAME, priority
   }
 }
 
+class InactiveSelectedBlockDecorationState : AbstractBlockDecorationState(NAME, priority = 3) {
+  override val backgroundRenderer: CustomHighlighterRenderer = TerminalBlockBackgroundRenderer(TerminalUi.inactiveSelectedBlockBackground)
+  override val cornersRenderer: CustomHighlighterRenderer = TerminalBlockCornersRenderer(
+    background = TerminalUi.inactiveSelectedBlockBackground,
+    strokeBackground = TerminalUi.inactiveSelectedBlockStrokeColor,
+    strokeWidth = 2
+  )
+  override val leftAreaRenderer: LineMarkerRenderer = TerminalBlockLeftAreaRenderer(
+    background = TerminalUi.inactiveSelectedBlockBackground,
+    strokeBackground = TerminalUi.inactiveSelectedBlockStrokeColor,
+    strokeWidth = 2
+  )
+
+  companion object {
+    const val NAME: String = "SELECTED_INACTIVE"
+  }
+}
+
 class ErrorBlockDecorationState : AbstractBlockDecorationState(NAME, priority = 1) {
   override val backgroundRenderer: CustomHighlighterRenderer = TerminalBlockBackgroundRenderer(TerminalUi.errorBlockBackground)
   override val cornersRenderer: CustomHighlighterRenderer = TerminalBlockCornersRenderer(background = TerminalUi.errorBlockBackground,
