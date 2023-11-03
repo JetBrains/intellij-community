@@ -151,12 +151,17 @@ internal object GitLabMergeRequestTimelineComponentFactory {
 
     cs.launch(Dispatchers.Main) {
       timelineVm.timelineItems.collect {
-        it.fold(onSuccess = { items -> timelineItems.emit(items) }, onFailure = { exception ->
-          val errorPresenter = GitLabMergeRequestTimelineErrorStatusPresenter()
-          val errorPanel = ErrorStatusPanelFactory.create(cs, flowOf(exception), errorPresenter)
+        it.fold(
+          onSuccess = { items ->
+            timelineItems.emit(items)
+            timelineOrErrorPanel.setContent(timelineItemContent)
+          },
+          onFailure = { exception ->
+            val errorPresenter = GitLabMergeRequestTimelineErrorStatusPresenter(timelineVm)
+            val errorPanel = ErrorStatusPanelFactory.create(cs, flowOf(exception), errorPresenter)
 
-          timelineOrErrorPanel.setContent(CollaborationToolsUIUtil.moveToCenter(errorPanel))
-        })
+            timelineOrErrorPanel.setContent(CollaborationToolsUIUtil.moveToCenter(errorPanel))
+          })
       }
     }
 

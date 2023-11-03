@@ -84,6 +84,12 @@ class LoadAllGitLabMergeRequestTimelineViewModel(
     preferences.showEventsInTimeline = show
   }
 
+  override fun reloadData() {
+    cs.launchNow {
+      mergeRequest.reloadData()
+    }
+  }
+
   override fun refreshData() {
     cs.launchNow {
       mergeRequest.refreshData()

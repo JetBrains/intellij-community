@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.ui.details.model
 
+import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.async.modelFlow
 import com.intellij.collaboration.ui.codereview.details.data.ReviewRequestState
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewBranchesViewModel
@@ -82,6 +83,12 @@ internal class GitLabMergeRequestDetailsViewModelImpl(
   override val branchesVm = GitLabMergeRequestBranchesViewModel(cs, mergeRequest, projectData.projectMapping)
   override val statusVm = GitLabMergeRequestStatusViewModel(cs, mergeRequest, projectData.projectMapping.repository.serverPath)
   override val changesVm = GitLabMergeRequestChangesViewModelImpl(project, cs, mergeRequest)
+
+  override fun reloadData() {
+    cs.launchNow {
+      mergeRequest.reloadData()
+    }
+  }
 
   override fun refreshData() {
     cs.launch {
