@@ -5,6 +5,7 @@ import com.intellij.CommonBundle
 import com.intellij.ide.startup.importSettings.ImportSettingsBundle
 import com.intellij.ide.startup.importSettings.chooser.productChooser.ProductChooserDialog
 import com.intellij.ide.startup.importSettings.chooser.ui.PageProvider
+import com.intellij.ide.startup.importSettings.chooser.ui.WizardPageTracker
 import com.intellij.ide.startup.importSettings.data.ActionsDataProvider
 import com.intellij.ide.startup.importSettings.data.IconProductSize
 import com.intellij.ide.startup.importSettings.data.SettingsContributor
@@ -137,4 +138,6 @@ open class SettingChooserDialog(private val provider: ActionsDataProvider<*>, va
       putValue(Action.NAME, ImportSettingsBundle.message("import.settings.ok"))
     }
   }
+
+  override val tracker = WizardPageTracker(null)
 }

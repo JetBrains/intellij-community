@@ -1,3 +1,4 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.startup.importSettings.chooser.importProgress
 
 import com.intellij.CommonBundle
@@ -5,12 +6,14 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.startup.importSettings.ImportSettingsBundle
 import com.intellij.ide.startup.importSettings.chooser.ui.BannerOverlay
 import com.intellij.ide.startup.importSettings.chooser.ui.PageProvider
+import com.intellij.ide.startup.importSettings.chooser.ui.WizardPageTracker
 import com.intellij.ide.startup.importSettings.data.DialogImportData
 import com.intellij.ide.startup.importSettings.data.ImportFromProduct
 import com.intellij.ide.startup.importSettings.data.SettingsService
 import com.intellij.openapi.rd.createLifetime
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.platform.ide.bootstrap.StartupWizardStage
 import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.util.minimumWidth
@@ -183,4 +186,6 @@ class ImportProgressDialog(importFromProduct: DialogImportData): PageProvider(fa
       return Dimension(0, Math.max(prefH, JBUI.scale(45)))
     }
   }
+
+  override val tracker = WizardPageTracker(StartupWizardStage.ImportProgressPage)
 }

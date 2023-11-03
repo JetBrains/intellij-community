@@ -6,10 +6,12 @@ import com.intellij.ide.startup.importSettings.ImportSettingsBundle
 import com.intellij.ide.startup.importSettings.chooser.ui.BannerOverlay
 import com.intellij.ide.startup.importSettings.chooser.ui.PageProvider
 import com.intellij.ide.startup.importSettings.chooser.ui.UiUtils
+import com.intellij.ide.startup.importSettings.chooser.ui.WizardPageTracker
 import com.intellij.ide.startup.importSettings.data.SettingsService
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.rd.createLifetime
+import com.intellij.platform.ide.bootstrap.StartupWizardStage
 import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.util.preferredHeight
@@ -129,4 +131,6 @@ class ProductChooserDialog : PageProvider() {
                                 addHelpToLeftSide: Boolean): JPanel {
     return south
   }
+
+  override val tracker = WizardPageTracker(StartupWizardStage.ProductChoicePage)
 }

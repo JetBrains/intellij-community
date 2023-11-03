@@ -4,7 +4,9 @@ package com.intellij.ide.startup.importSettings.chooser.settingChooser
 import com.intellij.ide.startup.importSettings.ImportSettingsBundle
 import com.intellij.ide.startup.importSettings.chooser.importProgress.ImportProgressDialog
 import com.intellij.ide.startup.importSettings.chooser.ui.PageProvider
+import com.intellij.ide.startup.importSettings.chooser.ui.WizardPageTracker
 import com.intellij.ide.startup.importSettings.data.*
+import com.intellij.platform.ide.bootstrap.StartupWizardStage
 import java.awt.event.ActionEvent
 import javax.swing.Action
 
@@ -46,6 +48,8 @@ class ConfigurableSettingChooserDialog<T : BaseService>(val provider: ActionsDat
       DataForSave(it.setting.id, chs)
     }
   }
+
+  override val tracker = WizardPageTracker(StartupWizardStage.SettingsToImportPage)
 }
 
 class SyncSettingDialog(val provider: SyncActionsDataProvider, product: SettingsContributor) : SettingChooserDialog(provider, product) {
@@ -75,4 +79,6 @@ class SyncSettingDialog(val provider: SyncActionsDataProvider, product: Settings
       }
     }
   }
+
+  override val tracker = WizardPageTracker(StartupWizardStage.SettingsToSyncPage)
 }

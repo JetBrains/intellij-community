@@ -91,9 +91,11 @@ class MultiplePageDialog private constructor() : DialogWrapper(null) {
     current?.let {
       panel.remove(it.content)
       southPanel.remove(it.southPanel)
+      it.tracker.onLeave()
     }
 
     dialog.content?.let {
+      dialog.tracker.onEnter()
       panel.add(it, gbc)
     }
 
@@ -166,6 +168,7 @@ abstract class PageProvider(val createSouth: Boolean = true) : DialogWrapper(nul
   }
 
   fun doClose() {
+    tracker.onLeave()
     parentDialog?.close(CANCEL_EXIT_CODE) ?: run {
       close(CANCEL_EXIT_CODE)
     }
@@ -213,4 +216,6 @@ abstract class PageProvider(val createSouth: Boolean = true) : DialogWrapper(nul
       doAction(it)
     }
   }
+
+  abstract val tracker: WizardPageTracker
 }

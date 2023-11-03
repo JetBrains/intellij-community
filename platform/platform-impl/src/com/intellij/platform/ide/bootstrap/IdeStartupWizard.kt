@@ -20,6 +20,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.withTimeout
 import org.jetbrains.annotations.ApiStatus.Internal
+import java.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
 private val log = logger<IdeStartupWizard>()
@@ -45,6 +46,7 @@ internal suspend fun runStartupWizard(isInitialStart: Job, app: Application) {
       val wizard = adapter.createInstance<IdeStartupWizard>(app) ?: continue
 
       span("app manager initial state waiting", Dispatchers.EDT) {
+        val startTimeNs = System.nanoTime()
         try {
           withTimeout(2.seconds) {
             isInitialStart.join()
@@ -56,6 +58,12 @@ internal suspend fun runStartupWizard(isInitialStart: Job, app: Application) {
           com.intellij.platform.ide.bootstrap.isInitialStart?.cancel()
           com.intellij.platform.ide.bootstrap.isInitialStart = null
           IdeStartupWizardCollector.logInitialStartTimeout()
+        }
+        finally {
+          IdeStartupWizardCollector.logStartupStageTime(
+            StartupWizardStage.InitialStart,
+            Duration.ofNanos(System.nanoTime() - startTimeNs)
+          )
         }
       }
 
@@ -79,9 +87,17 @@ interface IdeStartupWizard {
   suspend fun run()
 }
 
+enum class StartupWizardStage {
+  InitialStart,
+  ProductChoicePage,
+  SettingsToSyncPage,
+  SettingsToImportPage,
+  ImportProgressPage
+}
+
 object IdeStartupWizardCollector : CounterUsagesCollector() {
 
-  val GROUP = EventLogGroup("wizard.startup", 3)
+  val GROUP = EventLogGroup("wizard.startup", 4)
   override fun getGroup() = GROUP
 
   private val initialStartSucceeded = GROUP.registerEvent("initial_start_succeeded")
@@ -110,6 +126,15 @@ object IdeStartupWizardCollector : CounterUsagesCollector() {
         isEnabled
       )
     }
+  }
+
+  private val wizardStageEnded = GROUP.registerEvent(
+    "wizard_stage_ended",
+    EventFields.Enum<StartupWizardStage>("stage"),
+    EventFields.DurationMs
+  )
+  fun logStartupStageTime(stage: StartupWizardStage, duration: Duration) {
+    wizardStageEnded.log(stage, duration.toMillis())
   }
 }
 
