@@ -48,6 +48,9 @@ internal class K1CommonRefactoringSettings : KotlinCommonRefactoringSettingsBase
     override var INTRODUCE_SPECIFY_TYPE_EXPLICITLY: Boolean
             by delegateTo { it::INTRODUCE_SPECIFY_TYPE_EXPLICITLY }
 
+    override var renameFileNames: Boolean
+            by delegateTo { it::renameFileNames }
+
     override var renameVariables: Boolean
             by delegateTo { it::renameVariables }
 
@@ -62,4 +65,22 @@ internal class K1CommonRefactoringSettings : KotlinCommonRefactoringSettingsBase
 
     override var renameTestMethods: Boolean
             by delegateTo { it::renameTestMethods }
+
+    override var INLINE_LOCAL_THIS: Boolean
+            by delegateTo { it::INLINE_LOCAL_THIS }
+
+    override var INLINE_PROPERTY_KEEP: Boolean
+            by delegateTo { it::INLINE_PROPERTY_KEEP }
+
+    override var INLINE_METHOD_THIS: Boolean
+            by delegateTo { it::INLINE_METHOD_THIS }
+
+    override var INLINE_METHOD_KEEP: Boolean
+            by delegateTo { it::INLINE_METHOD_KEEP }
+
+    override var INLINE_TYPE_ALIAS_THIS: Boolean
+            by delegateTo { it::INLINE_TYPE_ALIAS_THIS }
+
+    override var INLINE_TYPE_ALIAS_KEEP: Boolean
+            by delegateTo { it::INLINE_TYPE_ALIAS_KEEP }
 }

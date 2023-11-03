@@ -67,10 +67,12 @@ public class SuperBuilderHandler extends BuilderHandler {
           problem.withLocalQuickFixes(() -> LocalQuickFix.from(new AddAbstractAndStaticModifiersFix(existingInnerBuilderClass)));
         }
         else if (!isAbstract) {
-          problem.withLocalQuickFixes(() -> new ModifierFix(existingInnerBuilderClass, PsiModifier.ABSTRACT, true, false));
+          problem.withLocalQuickFixes(
+            () -> LocalQuickFix.from(new ModifierFix(existingInnerBuilderClass, PsiModifier.ABSTRACT, true, false)));
         }
         else {
-          problem.withLocalQuickFixes(() -> new ModifierFix(existingInnerBuilderClass, PsiModifier.STATIC, true, false));
+          problem.withLocalQuickFixes(
+            () -> LocalQuickFix.from(new ModifierFix(existingInnerBuilderClass, PsiModifier.STATIC, true, false)));
         }
         return false;
       }

@@ -1,15 +1,14 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.intentions.control;
 
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
-import org.jetbrains.plugins.groovy.intentions.base.Intention;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
+import org.jetbrains.plugins.groovy.intentions.base.GrPsiUpdateIntention;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrBlockStatement;
@@ -27,10 +26,11 @@ import java.util.Objects;
 /**
  * @author Max Medvedev
  */
-public class GrRedundantElseIntention extends Intention {
+public class GrRedundantElseIntention extends GrPsiUpdateIntention {
   public static final String HINT = "Remove redundant 'else' keyword";
+
   @Override
-  protected void processIntention(@NotNull PsiElement element, @NotNull Project project, Editor editor) throws IncorrectOperationException {
+  protected void processIntention(@NotNull PsiElement element, @NotNull ActionContext context, @NotNull ModPsiUpdater updater) {
     final PsiElement parent = element.getParent();
     if (!(parent instanceof GrIfStatement)) return;
 
@@ -56,7 +56,7 @@ public class GrRedundantElseIntention extends Intention {
     }
     branch.delete();
 
-    editor.getCaretModel().moveToOffset(ifStatement.getTextRange().getEndOffset());
+    updater.moveTo(ifStatement.getTextRange().getEndOffset());
   }
 
   private static PsiElement inferFirst(PsiElement lbrace) {

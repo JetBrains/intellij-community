@@ -326,7 +326,7 @@ final class UnindexedFilesFinder {
       final Throwable cause = e.getCause();
       if (cause instanceof IOException || cause instanceof StorageException) {
         LOG.info(e);
-        myFileBasedIndex.requestRebuild(indexId);
+        myFileBasedIndex.requestRebuild(indexId, cause);
       }
       else {
         throw e;

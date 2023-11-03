@@ -336,6 +336,9 @@
       "State": {
         "Background": "Grey11",
         "Foreground": "Grey6"
+      },
+      "ChatItem":{
+        "Hover": "#DFE1E533"
       }
     },
 
@@ -587,9 +590,11 @@
 
     "ValidationTooltip": {
       "errorBackground": "Red11",
-      "errorBorderColor": "Red11",
+      "errorBorderColor": "Red7",
+      "errorForeground": "Gray1",
       "warningBackground": "Yellow9",
-      "warningBorderColor": "Yellow9"
+      "warningBorderColor": "Yellow5",
+      "warningForeground": "Gray1"
     },
 
     "ToolWindow": {

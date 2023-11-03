@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.legacyBridge.impl.java
 
 import com.intellij.java.workspace.entities.JavaModuleSettingsEntity
@@ -20,7 +20,7 @@ import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleExtensionBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleExtensionBridgeFactory
 
-class CompilerModuleExtensionBridge(
+internal class CompilerModuleExtensionBridge(
   private val module: ModuleBridge,
   private val entityStorage: VersionedEntityStorage,
   private val diff: MutableEntityStorage?
@@ -157,7 +157,8 @@ class CompilerModuleExtensionBridge(
   class Factory : ModuleExtensionBridgeFactory<CompilerModuleExtensionBridge> {
     override fun createExtension(module: ModuleBridge,
                                  entityStorage: VersionedEntityStorage,
-                                 diff: MutableEntityStorage?): CompilerModuleExtensionBridge =
-      CompilerModuleExtensionBridge(module, entityStorage, diff)
+                                 diff: MutableEntityStorage?): CompilerModuleExtensionBridge {
+      return CompilerModuleExtensionBridge(module = module, entityStorage = entityStorage, diff = diff)
+    }
   }
 }

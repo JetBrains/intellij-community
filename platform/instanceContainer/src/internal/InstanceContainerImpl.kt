@@ -91,13 +91,17 @@ class InstanceContainerImpl(
       if (!registerDynamic || dynamicInstanceSupport == null) {
         return null
       }
-      val initializer = dynamicInstanceSupport.dynamicInstanceInitializer(instanceClass = keyClass)
-      if (initializer == null) {
+      val dynamicInstanceInitializer = dynamicInstanceSupport.dynamicInstanceInitializer(instanceClass = keyClass)
+      if (dynamicInstanceInitializer == null) {
         return null
       }
-      holder = DynamicInstanceHolder(scopeHolder.containerScope, initializer) // TODO intersect
+      val parentScope = scopeHolder.intersectScope(dynamicInstanceInitializer.registrationScope)
+      val initializer = dynamicInstanceInitializer.initializer
+      holder = DynamicInstanceHolder(parentScope, initializer)
       state.put(keyClass.name, holder)
     }
+    // the following can only execute in case `holder` was initialized and committed into `state`
+    dynamicInstanceSupport!!.dynamicInstanceRegistered(holder)
     return holder
   }
 
@@ -125,12 +129,7 @@ class InstanceContainerImpl(
       return null
     }
     LOG.trace { "$debugString : registration" }
-    val parentScope = if (registrationScope == null) {
-      scopeHolder.containerScope
-    }
-    else {
-      scopeHolder.intersectScope(registrationScope)
-    }
+    val parentScope = scopeHolder.intersectScope(registrationScope)
     return register(parentScope = parentScope, actions).also {
       LOG.trace { "$debugString : registration completed" }
     }
@@ -239,11 +238,11 @@ class InstanceContainerImpl(
     return existingHolder
   }
 
-  override fun unregister(keyClassName: String): InstanceHolder? {
+  override fun unregister(keyClassName: String, unregisterDynamic: Boolean): InstanceHolder? {
     lateinit var existingHolder: InstanceHolder
     updateState { state: InstanceHolders ->
       existingHolder = state[keyClassName]?.takeUnless {
-        it is DynamicInstanceHolder
+        it is DynamicInstanceHolder && !unregisterDynamic
       } ?: return null
       state.remove(keyClassName)
     }

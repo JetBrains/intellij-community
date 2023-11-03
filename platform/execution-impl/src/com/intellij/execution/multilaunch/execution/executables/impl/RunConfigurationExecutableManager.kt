@@ -5,22 +5,25 @@ import com.intellij.execution.compound.CompoundRunConfiguration
 import com.intellij.execution.configurations.RunConfiguration
 import com.intellij.execution.configurations.WrappingRunConfiguration
 import com.intellij.execution.executors.DefaultRunExecutor
+import com.intellij.execution.impl.EditConfigurationsDialog
 import com.intellij.execution.impl.ExecutionManagerImpl
-import com.intellij.execution.process.ProcessAdapter
-import com.intellij.execution.process.ProcessEvent
-import com.intellij.execution.runners.ExecutionUtil
-import com.intellij.execution.runners.ProgramRunner
-import com.intellij.execution.ui.RunContentDescriptor
-import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.service
-import com.intellij.openapi.project.Project
-import com.jetbrains.rd.util.lifetime.Lifetime
+import com.intellij.execution.impl.RunConfigurationSelector
 import com.intellij.execution.multilaunch.MultiLaunchConfiguration
 import com.intellij.execution.multilaunch.execution.BeforeExecuteTask
 import com.intellij.execution.multilaunch.execution.ExecutionMode
 import com.intellij.execution.multilaunch.execution.executables.Executable
 import com.intellij.execution.multilaunch.execution.executables.ExecutableTemplate
 import com.intellij.execution.multilaunch.state.ExecutableSnapshot
+import com.intellij.execution.process.ProcessAdapter
+import com.intellij.execution.process.ProcessEvent
+import com.intellij.execution.runners.ExecutionUtil
+import com.intellij.execution.runners.ProgramRunner
+import com.intellij.execution.ui.RunContentDescriptor
+import com.intellij.ide.DataManager
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
+import com.intellij.openapi.project.Project
+import com.jetbrains.rd.util.lifetime.Lifetime
 import com.intellij.openapi.ui.MessageType
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
@@ -65,11 +68,18 @@ class RunConfigurationExecutableManager(private val project: Project) : Executab
         .map { BeforeRunTaskProvider.getProvider(project, it.providerId)?.name ?: it.providerId.toString()}
         .map { BeforeExecuteTask(it) }
 
-    override val supportsDebugging: Boolean
-      get() = true
+    override val supportsDebugging = true
+    override val supportsEditing = true
 
     override fun saveAttributes(snapshot: ExecutableSnapshot) {}
     override fun loadAttributes(snapshot: ExecutableSnapshot) {}
+
+    override fun performEdit() {
+      val dialog = EditConfigurationsDialog.findInstanceFromFocus() ?: return
+      val dialogContext = DataManager.getInstance().getDataContext(dialog.getPreferredFocusedComponent())
+      val selector = RunConfigurationSelector.KEY.getData(dialogContext) ?: return
+      selector.select(settings.configuration)
+    }
 
     override suspend fun execute(mode: ExecutionMode, lifetime: Lifetime): RunContentDescriptor? {
       val executor = when (mode) {

@@ -383,6 +383,17 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
     assertEquals(2, secondaryWindow.getTabCount());
   }
 
+  public void testGetPreviousWindow() {
+    manager.openFile(getFile("/src/1.txt"), false);
+    EditorWindow currentWindow = manager.getCurrentWindow();
+    VirtualFile expectedFile = getFile("/src/2.txt");
+    manager.openFile(expectedFile, false);
+    manager.createSplitter(SwingConstants.VERTICAL, currentWindow);
+
+    VirtualFile actualFile = manager.getPrevWindow(currentWindow).getSelectedFile();
+    assertEquals(expectedFile, actualFile);
+  }
+
   @Language("XML")
   private static final String STRING = """
     <component name="FileEditorManager">

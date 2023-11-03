@@ -9,7 +9,6 @@ import com.intellij.openapi.application.appSystemDir
 import com.intellij.openapi.components.*
 import com.intellij.openapi.components.impl.stores.IProjectStore
 import com.intellij.openapi.diagnostic.getOrLogException
-import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectCoreUtil
 import com.intellij.openapi.project.doGetProjectFileName
@@ -21,7 +20,6 @@ import com.intellij.util.SmartList
 import com.intellij.util.io.Ksuid
 import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.messages.MessageBus
-import com.intellij.util.text.nullize
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import java.nio.file.Files
@@ -40,7 +38,7 @@ abstract class ProjectStoreBase(final override val project: Project) : Component
 
   internal fun getNameFile(): Path {
     for (projectNameProvider in ProjectNameProvider.EP_NAME.lazySequence()) {
-      LOG.runAndLogException { projectNameProvider.getNameFile(project)?.let { return it } }
+      runCatching { projectNameProvider.getNameFile(project)?.let { return it } }.getOrLogException(LOG)
     }
     return directoryStorePath!!.resolve(ProjectEx.NAME_FILE)
   }
@@ -209,11 +207,15 @@ abstract class ProjectStoreBase(final override val project: Project) : Component
       }
       result.sortWith(deprecatedComparator)
       if (isDirectoryBased) {
-        for (providerFactory in StreamProviderFactory.EP_NAME.getIterable(project)) {
-          LOG.runAndLogException {
+        for (providerFactory in StreamProviderFactory.EP_NAME.asSequence(project)) {
+          runCatching {
             // yes, DEPRECATED_PROJECT_FILE_STORAGE_ANNOTATION is not added in this case
-            providerFactory?.customizeStorageSpecs(component, storageManager, stateSpec, result!!, operation)?.let { return it }
-          }
+            providerFactory.customizeStorageSpecs(component = component,
+                                                  storageManager = storageManager,
+                                                  stateSpec = stateSpec,
+                                                  storages = result!!,
+                                                  operation = operation)?.let { return it }
+          }.getOrLogException(LOG)
         }
       }
 
@@ -263,8 +265,6 @@ abstract class ProjectStoreBase(final override val project: Project) : Component
     }
     return VfsUtilCore.isAncestorOrSelf(projectFilePath.parent.systemIndependentPath, file)
   }
-
-  override fun getDirectoryStorePath(ignoreProjectStorageScheme: Boolean) = dotIdea?.systemIndependentPath.nullize()
 
   final override fun getDirectoryStorePath() = dotIdea
 

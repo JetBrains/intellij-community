@@ -1,10 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.dependency.impl;
 
-import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.dependency.*;
 import org.jetbrains.jps.dependency.diff.DiffCapable;
+import org.jetbrains.jps.dependency.java.ClassShortNameIndex;
 import org.jetbrains.jps.dependency.java.JavaDifferentiateStrategy;
 import org.jetbrains.jps.dependency.java.SubclassesIndex;
 import org.jetbrains.jps.javac.Iterators;
@@ -21,6 +21,7 @@ public final class DependencyGraphImpl extends GraphImpl implements DependencyGr
   public DependencyGraphImpl(MapletFactory containerFactory) {
     super(containerFactory);
     addIndex(new SubclassesIndex(containerFactory));
+    addIndex(new ClassShortNameIndex(containerFactory));
   }
 
   @Override
@@ -29,7 +30,7 @@ public final class DependencyGraphImpl extends GraphImpl implements DependencyGr
   }
 
   @Override
-  public DifferentiateResult differentiate(Delta delta, boolean calculateAffected) {
+  public DifferentiateResult differentiate(Delta delta, DifferentiateParameters params) {
 
     Iterable<NodeSource> deltaSources = delta.getSources();
     Set<NodeSource> allProcessedSources = Iterators.collect(Iterators.flat(Arrays.asList(delta.getBaseSources(), deltaSources, delta.getDeletedSources())), new HashSet<>());
@@ -40,7 +41,7 @@ public final class DependencyGraphImpl extends GraphImpl implements DependencyGr
     // better make a node-diff over all compiled sources => the sets of removed, added, deleted _nodes_ will be more accurate and reflecting reality
     List<Node<?, ?>> deletedNodes = Iterators.collect(Iterators.filter(nodesBefore, n -> !nodesAfter.contains(n)), new ArrayList<>());
 
-    if (!calculateAffected) {
+    if (!params.isCalculateAffected()) {
       return new DifferentiateResult() {
         @Override
         public Delta getDelta() {
@@ -66,6 +67,11 @@ public final class DependencyGraphImpl extends GraphImpl implements DependencyGr
       final Map<Usage, Predicate<Node<?, ?>>> affectedUsages = new HashMap<>();
       final Set<BiPredicate<Node<?, ?>, Usage>> usageQueries = new HashSet<>();
       final Set<NodeSource> affectedSources = new HashSet<>();
+
+      @Override
+      public DifferentiateParameters getParams() {
+        return params;
+      }
 
       @Override
       public @NotNull Graph getGraph() {
@@ -207,15 +213,14 @@ public final class DependencyGraphImpl extends GraphImpl implements DependencyGr
       }
     }
 
-    Set<ReferenceID> deltaNodes = Iterators.collect(Iterators.map(Iterators.flat(Iterators.map(delta.getSources(), s -> delta.getNodes(s))), node -> node.getReferenceID()), new HashSet<>());
-    
     var updatedNodes = Iterators.collect(Iterators.flat(Iterators.map(delta.getSources(), s -> getNodes(s))), new HashSet<>());
     for (BackDependencyIndex index : getIndices()) {
       BackDependencyIndex deltaIndex = delta.getIndex(index.getName());
       assert deltaIndex != null;
-      index.integrate(diffResult.getDeletedNodes(), updatedNodes, Iterators.map(deltaNodes, id -> Pair.create(id, deltaIndex.getDependencies(id))));
+      index.integrate(diffResult.getDeletedNodes(), updatedNodes, deltaIndex);
     }
 
+    var deltaNodes = Iterators.map(Iterators.flat(Iterators.map(delta.getSources(), s -> delta.getNodes(s))), node -> node.getReferenceID());
     for (ReferenceID nodeID : deltaNodes) {
       Set<NodeSource> sources = Iterators.collect(myNodeToSourcesMap.get(nodeID), new HashSet<>());
       sources.removeAll(delta.getBaseSources());

@@ -8,8 +8,8 @@ import com.intellij.codeInsight.intention.EmptyIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.LocalQuickFixAsIntentionAdapter;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -52,7 +52,7 @@ public class GrAccessibilityChecker {
   }
 
   @SuppressWarnings("MagicConstant")
-  static GroovyFix[] buildFixes(PsiElement location, GroovyResolveResult resolveResult) {
+  static LocalQuickFix[] buildFixes(PsiElement location, GroovyResolveResult resolveResult) {
     final PsiElement element = resolveResult.getElement();
     if (!(element instanceof PsiMember refElement)) return GroovyFix.EMPTY_ARRAY;
 
@@ -61,7 +61,7 @@ public class GrAccessibilityChecker {
     PsiModifierList modifierList = refElement.getModifierList();
     if (modifierList == null) return GroovyFix.EMPTY_ARRAY;
 
-    List<GroovyFix> fixes = new ArrayList<>();
+    List<LocalQuickFix> fixes = new ArrayList<>();
     try {
       Project project = refElement.getProject();
       JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
@@ -90,7 +90,7 @@ public class GrAccessibilityChecker {
     catch (IncorrectOperationException e) {
       LOG.error(e);
     }
-    return fixes.toArray(GroovyFix.EMPTY_ARRAY);
+    return fixes.toArray(LocalQuickFix.EMPTY_ARRAY);
   }
 
   @Nullable
@@ -133,7 +133,7 @@ public class GrAccessibilityChecker {
     PsiElement element = result.getElement();
     assert element != null;
     if (element instanceof LightElement) return;
-    GroovyFix[] fixes = buildFixes(ref, result);
+    LocalQuickFix[] fixes = buildFixes(ref, result);
     if (fixes.length == 0) {
       String displayName = HighlightDisplayKey.getDisplayNameByKey(myDisplayKey);
       if (displayName != null) {
@@ -144,11 +144,10 @@ public class GrAccessibilityChecker {
     else {
       ProblemDescriptor descriptor = InspectionManager.getInstance(ref.getProject()).
         createProblemDescriptor(element, element, "", HighlightInfo.convertSeverityToProblemHighlight(severity), true,
-                                LocalQuickFix.EMPTY_ARRAY);
-      for (GroovyFix fix : fixes) {
-        info.registerFix(new LocalQuickFixAsIntentionAdapter(fix, descriptor), null, HighlightDisplayKey.getDisplayNameByKey(myDisplayKey),
-                         null,
-                         myDisplayKey);
+                                fixes);
+      for (int i = 0; i < fixes.length; i++) {
+        IntentionAction action = QuickFixWrapper.wrap(descriptor, i);
+        info.registerFix(action, null, HighlightDisplayKey.getDisplayNameByKey(myDisplayKey), null, myDisplayKey);
       }
     }
   }

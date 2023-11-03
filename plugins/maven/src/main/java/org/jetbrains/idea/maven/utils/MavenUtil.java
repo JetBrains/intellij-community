@@ -849,7 +849,7 @@ public class MavenUtil {
   private static String getMavenLibVersion(final File file) {
     WSLDistribution distribution = WslPath.getDistributionByWindowsUncPath(file.getPath());
     File fileToRead = Optional.ofNullable(distribution)
-      .map(it -> distribution.getWslPath(file.getPath()))
+      .map(it -> distribution.getWslPath(file.toPath()))
       .map(it -> distribution.resolveSymlink(it))
       .map(it -> distribution.getWindowsPath(it))
       .map(it -> new File(it))

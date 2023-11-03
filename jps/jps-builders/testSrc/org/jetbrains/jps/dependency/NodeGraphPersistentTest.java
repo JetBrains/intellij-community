@@ -31,7 +31,7 @@ public class NodeGraphPersistentTest extends BasePlatformTestCase {
       delta.associate(jvmClassNode, Arrays.asList(aSrc, bSrc));
 
       // After each round, not after each builder
-      DifferentiateResult differentiateResult = graph.differentiate(delta, true);
+      DifferentiateResult differentiateResult = graph.differentiate(delta, DifferentiateParameters.byDefault());
       graph.integrate(differentiateResult);
 
       // Check graph

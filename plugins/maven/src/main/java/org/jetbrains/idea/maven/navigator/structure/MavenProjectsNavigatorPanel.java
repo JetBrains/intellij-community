@@ -245,7 +245,7 @@ public final class MavenProjectsNavigatorPanel extends SimpleToolWindowPanel imp
     return parent;
   }
 
-  private static Object extractProfiles(@NotNull List<MavenSimpleNode> selectedNodes) {
+  private static Map<String, MavenProfileKind> extractProfiles(@NotNull List<MavenSimpleNode> selectedNodes) {
     List<ProfileNode> profileNodes = filterNodesByClass(selectedNodes, ProfileNode.class);
     final Map<String, MavenProfileKind> profiles = new HashMap<>();
     for (ProfileNode node : profileNodes) {

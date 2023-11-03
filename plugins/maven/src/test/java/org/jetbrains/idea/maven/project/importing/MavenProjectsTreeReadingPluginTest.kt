@@ -57,7 +57,7 @@ class MavenProjectsTreeReadingPluginTest : MavenProjectsTreeTestCase() {
                                       progressReporter,
                                       mavenProgressIndicator.syncConsole,
                                       false)
-        MavenFolderResolver(myProject).resolveFolders(listOf(parentProject))
+        MavenFolderResolver(myProject).resolveFolders(listOf(parentProject), progressReporter)
       }
     }
     finally {

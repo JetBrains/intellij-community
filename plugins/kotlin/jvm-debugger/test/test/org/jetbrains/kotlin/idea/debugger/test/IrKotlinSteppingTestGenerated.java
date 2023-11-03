@@ -1335,6 +1335,11 @@ public abstract class IrKotlinSteppingTestGenerated extends AbstractIrKotlinStep
             runTest("testData/stepping/custom/idea335243.kt");
         }
 
+        @TestMetadata("idea335263.kt")
+        public void testIdea335263() throws Exception {
+            runTest("testData/stepping/custom/idea335263.kt");
+        }
+
         @TestMetadata("initBlocks.kt")
         public void testInitBlocks() throws Exception {
             runTest("testData/stepping/custom/initBlocks.kt");
@@ -1358,6 +1363,16 @@ public abstract class IrKotlinSteppingTestGenerated extends AbstractIrKotlinStep
         @TestMetadata("inlinePropertyAccessors.kt")
         public void testInlinePropertyAccessors() throws Exception {
             runTest("testData/stepping/custom/inlinePropertyAccessors.kt");
+        }
+
+        @TestMetadata("insideCallChain.kt")
+        public void testInsideCallChain() throws Exception {
+            runTest("testData/stepping/custom/insideCallChain.kt");
+        }
+
+        @TestMetadata("insideCallChain2.kt")
+        public void testInsideCallChain2() throws Exception {
+            runTest("testData/stepping/custom/insideCallChain2.kt");
         }
 
         @TestMetadata("kt14057.kt")
@@ -1433,6 +1448,11 @@ public abstract class IrKotlinSteppingTestGenerated extends AbstractIrKotlinStep
         @TestMetadata("multilineFunctionCall.kt")
         public void testMultilineFunctionCall() throws Exception {
             runTest("testData/stepping/custom/multilineFunctionCall.kt");
+        }
+
+        @TestMetadata("recursive.kt")
+        public void testRecursive() throws Exception {
+            runTest("testData/stepping/custom/recursive.kt");
         }
 
         @TestMetadata("sequentialInlineFunctionCalls.kt")

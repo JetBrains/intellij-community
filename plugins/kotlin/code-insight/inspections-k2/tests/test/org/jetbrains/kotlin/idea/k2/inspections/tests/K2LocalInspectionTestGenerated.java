@@ -2364,6 +2364,229 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/inspectionsLocal/redundantUnitExpression")
+    public static class RedundantUnitExpression extends AbstractK2LocalInspectionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("atLastAfterClass.kt")
+        public void testAtLastAfterClass() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantUnitExpression/atLastAfterClass.kt");
+        }
+
+        @TestMetadata("atLastAfterConstant.kt")
+        public void testAtLastAfterConstant() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantUnitExpression/atLastAfterConstant.kt");
+        }
+
+        @TestMetadata("atLastAfterFunInIf.kt")
+        public void testAtLastAfterFunInIf() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantUnitExpression/atLastAfterFunInIf.kt");
+        }
+
+        @TestMetadata("atLastAfterFunInTry.kt")
+        public void testAtLastAfterFunInTry() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantUnitExpression/atLastAfterFunInTry.kt");
+        }
+
+        @TestMetadata("atLastAfterFunInWhen.kt")
+        public void testAtLastAfterFunInWhen() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantUnitExpression/atLastAfterFunInWhen.kt");
+        }
+
+        @TestMetadata("atLastAfterIfStatement.kt")
+        public void testAtLastAfterIfStatement() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantUnitExpression/atLastAfterIfStatement.kt");
+        }
+
+        @TestMetadata("atLastAfterIntFunctionCall.kt")
+        public void testAtLastAfterIntFunctionCall() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantUnitExpression/atLastAfterIntFunctionCall.kt");
+        }
+
+        @TestMetadata("atLastAfterUnit.kt")
+        public void testAtLastAfterUnit() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantUnitExpression/atLastAfterUnit.kt");
+        }
+
+        @TestMetadata("atLastAfterUnitFunctionCall.kt")
+        public void testAtLastAfterUnitFunctionCall() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantUnitExpression/atLastAfterUnitFunctionCall.kt");
+        }
+
+        @TestMetadata("atLastAfterVal.kt")
+        public void testAtLastAfterVal() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantUnitExpression/atLastAfterVal.kt");
+        }
+
+        @TestMetadata("atLastAfterWhenStatement.kt")
+        public void testAtLastAfterWhenStatement() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantUnitExpression/atLastAfterWhenStatement.kt");
+        }
+
+        @TestMetadata("dynamic.kt")
+        public void testDynamic() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantUnitExpression/dynamic.kt");
+        }
+
+        @TestMetadata("dynamic2.kt")
+        public void testDynamic2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantUnitExpression/dynamic2.kt");
+        }
+
+        @TestMetadata("dynamic3.kt")
+        public void testDynamic3() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantUnitExpression/dynamic3.kt");
+        }
+
+        @TestMetadata("dynamic4.kt")
+        public void testDynamic4() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantUnitExpression/dynamic4.kt");
+        }
+
+        @TestMetadata("dynamic5.kt")
+        public void testDynamic5() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantUnitExpression/dynamic5.kt");
+        }
+
+        @TestMetadata("dynamic6.kt")
+        public void testDynamic6() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantUnitExpression/dynamic6.kt");
+        }
+
+        @TestMetadata("labeledReturnAny.kt")
+        public void testLabeledReturnAny() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantUnitExpression/labeledReturnAny.kt");
+        }
+
+        @TestMetadata("labeledReturnAnyInValueArgument.kt")
+        public void testLabeledReturnAnyInValueArgument() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantUnitExpression/labeledReturnAnyInValueArgument.kt");
+        }
+
+        @TestMetadata("labeledReturnAnyWithParameters.kt")
+        public void testLabeledReturnAnyWithParameters() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantUnitExpression/labeledReturnAnyWithParameters.kt");
+        }
+
+        @TestMetadata("labeledReturnGenericType.kt")
+        public void testLabeledReturnGenericType() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantUnitExpression/labeledReturnGenericType.kt");
+        }
+
+        @TestMetadata("labeledReturnUnit.kt")
+        public void testLabeledReturnUnit() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantUnitExpression/labeledReturnUnit.kt");
+        }
+
+        @TestMetadata("lambda.kt")
+        public void testLambda() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantUnitExpression/lambda.kt");
+        }
+
+        @TestMetadata("notRedundant1.kt")
+        public void testNotRedundant1() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantUnitExpression/notRedundant1.kt");
+        }
+
+        @TestMetadata("notRedundant2.kt")
+        public void testNotRedundant2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantUnitExpression/notRedundant2.kt");
+        }
+
+        @TestMetadata("notRedundant3.kt")
+        public void testNotRedundant3() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantUnitExpression/notRedundant3.kt");
+        }
+
+        @TestMetadata("notRedundant4.kt")
+        public void testNotRedundant4() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantUnitExpression/notRedundant4.kt");
+        }
+
+        @TestMetadata("notRedundant5.kt")
+        public void testNotRedundant5() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantUnitExpression/notRedundant5.kt");
+        }
+
+        @TestMetadata("notRedundant6.kt")
+        public void testNotRedundant6() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantUnitExpression/notRedundant6.kt");
+        }
+
+        @TestMetadata("notRedundant7.kt")
+        public void testNotRedundant7() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantUnitExpression/notRedundant7.kt");
+        }
+
+        @TestMetadata("redundant1.kt")
+        public void testRedundant1() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantUnitExpression/redundant1.kt");
+        }
+
+        @TestMetadata("redundant5.kt")
+        public void testRedundant5() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantUnitExpression/redundant5.kt");
+        }
+
+        @TestMetadata("returnAsAny.kt")
+        public void testReturnAsAny() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantUnitExpression/returnAsAny.kt");
+        }
+
+        @TestMetadata("returnAsNullableAny.kt")
+        public void testReturnAsNullableAny() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantUnitExpression/returnAsNullableAny.kt");
+        }
+
+        @TestMetadata("returnAsNullableUnit.kt")
+        public void testReturnAsNullableUnit() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantUnitExpression/returnAsNullableUnit.kt");
+        }
+
+        @TestMetadata("returnValueOfElse.kt")
+        public void testReturnValueOfElse() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantUnitExpression/returnValueOfElse.kt");
+        }
+
+        @TestMetadata("returnValueOfIf.kt")
+        public void testReturnValueOfIf() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantUnitExpression/returnValueOfIf.kt");
+        }
+
+        @TestMetadata("returnValueOfWhen.kt")
+        public void testReturnValueOfWhen() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantUnitExpression/returnValueOfWhen.kt");
+        }
+
+        @TestMetadata("unitReturnType.kt")
+        public void testUnitReturnType() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantUnitExpression/unitReturnType.kt");
+        }
+
+        @TestMetadata("unitReturnType2.kt")
+        public void testUnitReturnType2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantUnitExpression/unitReturnType2.kt");
+        }
+
+        @TestMetadata("unitReturnType3.kt")
+        public void testUnitReturnType3() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantUnitExpression/unitReturnType3.kt");
+        }
+
+        @TestMetadata("unitReturnType4.kt")
+        public void testUnitReturnType4() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantUnitExpression/unitReturnType4.kt");
+        }
+
+        @TestMetadata("unitReturnType5.kt")
+        public void testUnitReturnType5() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantUnitExpression/unitReturnType5.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/inspectionsLocal/equalsBetweenInconvertibleTypes")
     public static class EqualsBetweenInconvertibleTypes extends AbstractK2LocalInspectionTest {
         private void runTest(String testDataFilePath) throws Exception {

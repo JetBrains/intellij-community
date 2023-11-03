@@ -10,6 +10,11 @@ public final class MethodUsage extends MemberUsage{
     myDescriptor = descriptor;
   }
 
+  public MethodUsage(JvmNodeReferenceID clsId, String name, String descriptor) {
+    super(clsId, name);
+    myDescriptor = descriptor;
+  }
+
   public String getDescriptor() {
     return myDescriptor;
   }

@@ -1276,7 +1276,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       type = type.fromRelation(RelationType.EQ);
       for (DfaVariableValue value : eqClass.asList()) {
         if (value != dfaVar) {
-          recordVariableType(value, type);
+          recordVariableType(value, type.meet(value.getInherentType()));
           if (!updateQualifierOnEquality(value, value)) return false;
         }
       }

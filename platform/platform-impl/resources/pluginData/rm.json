@@ -1,0 +1,82 @@
+[
+  {
+    "vsCodeId": "Shopify.ruby-lsp",
+    "ideaName": "Ruby support",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "castwide.solargraph",
+    "ideaName": "Ruby support",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "KoichiSasada.vscode-rdbg",
+    "ideaName": "Ruby Debugger",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "misogi.ruby-rubocop",
+    "ideaName": "Rubocop support",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "sorbet.sorbet-vscode-extension",
+    "ideaName": "Ruby Sorbet support",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "connorshea.vscode-ruby-test-adapter",
+    "ideaName": "Ruby Test Runner",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "kaiwood.endwise",
+    "ideaName": "Ruby support",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "CraigMaslowski.erb",
+    "ideaName": "ERB support",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "noku.rails-run-spec-vscode",
+    "ideaName": "RSpec support",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "bung87.rails",
+    "ideaName": "Rails support",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "aki77.rails-routes",
+    "ideaName": "Rails Routes",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "aliariff.vscode-erb-beautify",
+    "ideaName": "ERB support",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "karunamurti.haml",
+    "ideaName": "HAML support",
+    "bundled": true
+  },
+  {
+    "vsCodeId": "sianglim.slim",
+    "ideaName": "Slim support",
+    "bundled": true
+  },
+  {
+    "vsCodeId": "Shopify.theme-check-vscode",
+    "ideaName": "Liquid support",
+    "bundled": true
+  },
+  {
+    "vsCodeId": "bung87.vscode-gemfile",
+    "ideaName": "Gemfile support",
+    "builtIn": true
+  }
+]

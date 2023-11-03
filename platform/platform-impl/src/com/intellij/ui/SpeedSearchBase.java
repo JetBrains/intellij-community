@@ -124,13 +124,9 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
     myComponent.addFocusListener(new FocusAdapter() {
       @Override
       public void focusLost(FocusEvent e) {
-        if (!keepEvenWhenFocusLost() && !isGotItShown()) {
+        if (!keepEvenWhenFocusLost()) {
           manageSearchPopup(null);
         }
-      }
-
-      private boolean isGotItShown() {
-        return mySearchPopup != null && GotItTooltip.isCurrentlyShownFor(mySearchPopup.mySearchField);
       }
 
       @Override
@@ -679,7 +675,6 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
   protected final class SearchField extends ExtendableTextField {
     SearchField() {
       setFocusable(false);
-      getCaret().setVisible(true); // we still want it blinking even though the field isn't focusable
       ExtendableTextField.Extension leftExtension = new Extension() {
         @Override
         public Icon getIcon(boolean hovered) {
@@ -704,6 +699,18 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
         addExtension(rightExtension);
       }
       getEmptyText().setText(ApplicationBundle.message("editorsearch.search.hint"));
+    }
+
+    @Override
+    public void addNotify() {
+      super.addNotify();
+      getCaret().setVisible(true); // we still want it blinking even though the field isn't focusable
+    }
+
+    @Override
+    public void removeNotify() {
+      getCaret().setVisible(false); // doesn't happen automatically for some reason and causes Timer leaks
+      super.removeNotify();
     }
 
     @Override
@@ -765,8 +772,10 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
     @Override
     protected void processFocusEvent(FocusEvent e) {
       super.processFocusEvent(e);
-      getCaret().setVisible(true); // we want to keep it blinking even if the focus is lost
-      // (never happens in practice, though, as the field isn't focusable, so this is just a precaution)
+      if (isShowing()) {
+        getCaret().setVisible(true); // we want to keep it blinking even if the focus is lost
+        // (never happens in practice, though, as the field isn't focusable, so this is just a precaution)
+      }
     }
   }
 

@@ -73,11 +73,18 @@ internal class IconTransform
   }
 
   fun patchPath(path: String, classLoader: ClassLoader?): Pair<String, ClassLoader?>? {
-    val pathWithLeadingSlash = if (path[0] == '/') path else "/$path"
-    val length = patchers.size + postPatchers.size
-    for (i in 0 until length) {
-      val patcher = if (i < patchers.size) patchers[i] else postPatchers[i - patchers.size]
+    val prePatchResult = applyPatchers(path, classLoader, patchers)
+    return if (prePatchResult == null) {
+      applyPatchers(path, classLoader, postPatchers)
+    }
+    else {
+      applyPatchers(prePatchResult.first, prePatchResult.second, postPatchers) ?: prePatchResult
+    }
+  }
 
+  private fun applyPatchers(path: String, classLoader: ClassLoader?, patchers: Array<IconPathPatcher>): Pair<String, ClassLoader?>? {
+    val pathWithLeadingSlash = if (path[0] == '/') path else "/$path"
+    for (patcher in patchers) {
       var newPath: String?
       try {
         newPath = patcher.patchPath(pathWithLeadingSlash, classLoader)
@@ -105,6 +112,7 @@ internal class IconTransform
       }
       return Pair(newPath, contextClassLoader)
     }
+
     return null
   }
 

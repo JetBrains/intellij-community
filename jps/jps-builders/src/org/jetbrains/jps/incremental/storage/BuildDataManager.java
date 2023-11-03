@@ -35,6 +35,7 @@ import java.util.function.Consumer;
  * @author Eugene Zhuravlev
  */
 public final class BuildDataManager {
+  public static final String PROCESS_CONSTANTS_NON_INCREMENTAL_PROPERTY = "compiler.process.constants.non.incremental";
   private static final int VERSION = 39 + (PersistentHashMapValueStorage.COMPRESSION_ENABLED ? 1:0);
   private static final Logger LOG = Logger.getInstance(BuildDataManager.class);
   private static final String SRC_TO_FORM_STORAGE = "src-form";
@@ -52,6 +53,7 @@ public final class BuildDataManager {
   private final OutputToTargetRegistry myOutputToTargetRegistry;
   private final File myVersionFile;
   private final PathRelativizerService myRelativizer;
+  private boolean myProcessConstantsIncrementally = !Boolean.parseBoolean(System.getProperty(PROCESS_CONSTANTS_NON_INCREMENTAL_PROPERTY, "false"));
 
   private final StorageProvider<SourceToOutputMappingImpl> SRC_TO_OUT_MAPPING_PROVIDER = new StorageProvider<>() {
     @Override
@@ -77,9 +79,22 @@ public final class BuildDataManager {
     }
     else {
       myMappings = new Mappings(mappingsRoot, relativizer);
+      myMappings.setProcessConstantsIncrementally(isProcessConstantsIncrementally());
     }
     myVersionFile = new File(myDataPaths.getDataStorageRoot(), "version.dat");
     myRelativizer = relativizer;
+  }
+
+  public void setProcessConstantsIncrementally(boolean processInc) {
+    myProcessConstantsIncrementally = processInc;
+    Mappings mappings = myMappings;
+    if (mappings != null) {
+      mappings.setProcessConstantsIncrementally(processInc);
+    }
+  }
+
+  public boolean isProcessConstantsIncrementally() {
+    return myProcessConstantsIncrementally;
   }
 
   public BuildTargetsState getTargetsState() {
@@ -468,9 +483,9 @@ public final class BuildDataManager {
       }
 
       @Override
-      public DifferentiateResult differentiate(Delta delta, boolean calculateAffected) {
+      public DifferentiateResult differentiate(Delta delta, DifferentiateParameters params) {
         synchronized (lock) {
-          return graph.differentiate(delta, calculateAffected);
+          return graph.differentiate(delta, params);
         }
       }
 

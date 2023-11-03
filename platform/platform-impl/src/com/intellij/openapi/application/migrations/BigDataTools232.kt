@@ -6,29 +6,22 @@ import com.intellij.openapi.application.PluginMigrationOptions
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.text.StringUtil.compareVersionNumbers
 
-class BigDataTools232 {
+class BigDataTools232: PluginMigration() {
   private val BIG_DATA_TOOLS_PLUGIN_ID = "com.intellij.bigdatatools"
 
-  fun migratePlugins(options: PluginMigrationOptions) {
-    val currentPluginsToDownload = options.pluginsToDownload.map { it.pluginId.idString }.toSet()
-
+  override fun migratePlugins(descriptor: PluginMigrationDescriptor) {
+    val options = descriptor.options
     if (compareVersionNumbers(options.currentProductVersion, "232") >= 0
-        && currentPluginsToDownload.contains(BIG_DATA_TOOLS_PLUGIN_ID)) {
+        && descriptor.currentPluginsToDownload.contains(BIG_DATA_TOOLS_PLUGIN_ID)) {
 
-      fun addPluginIfNeeded(pluginIdString: String) {
-        if (!currentPluginsToDownload.contains(pluginIdString)) {
-          options.pluginsToDownload.add(PluginNode(PluginId.getId(pluginIdString)))
-        }
-      }
-
-      addPluginIfNeeded("com.intellij.bigdatatools.core")
-      addPluginIfNeeded("com.intellij.bigdatatools.kafka")
-      addPluginIfNeeded("com.intellij.bigdatatools.rfs")
-      addPluginIfNeeded("com.intellij.bigdatatools.zeppelin")
-      addPluginIfNeeded("com.intellij.bigdatatools.metastore.core")
-      addPluginIfNeeded("com.intellij.bigdatatools.spark")
-      addPluginIfNeeded("com.intellij.bigdatatools.flink")
-      addPluginIfNeeded("com.intellij.bigdatatools.binary.files")
+      descriptor.addPluginIfNeeded("com.intellij.bigdatatools.core")
+      descriptor.addPluginIfNeeded("com.intellij.bigdatatools.kafka")
+      descriptor.addPluginIfNeeded("com.intellij.bigdatatools.rfs")
+      descriptor.addPluginIfNeeded("com.intellij.bigdatatools.zeppelin")
+      descriptor.addPluginIfNeeded("com.intellij.bigdatatools.metastore.core")
+      descriptor.addPluginIfNeeded("com.intellij.bigdatatools.spark")
+      descriptor.addPluginIfNeeded("com.intellij.bigdatatools.flink")
+      descriptor.addPluginIfNeeded("com.intellij.bigdatatools.binary.files")
     }
   }
 }

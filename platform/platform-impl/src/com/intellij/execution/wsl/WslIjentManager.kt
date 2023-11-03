@@ -2,8 +2,6 @@
 package com.intellij.execution.wsl
 
 import com.intellij.execution.configurations.GeneralCommandLine
-import com.intellij.execution.process.ChannelInputStream
-import com.intellij.execution.process.ChannelOutputStream
 import com.intellij.execution.process.UnixSignal
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.components.Service
@@ -16,6 +14,8 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.ijent.*
 import com.intellij.util.SuspendingLazy
+import com.intellij.util.channel.ChannelInputStream
+import com.intellij.util.channel.ChannelOutputStream
 import com.intellij.util.suspendingLazy
 import com.jetbrains.rd.util.concurrentMapOf
 import kotlinx.coroutines.CoroutineScope
@@ -63,7 +63,7 @@ class WslIjentManager private constructor(private val scope: CoroutineScope) {
         args = *command.toList().drop(1).toTypedArray(),
         env = processBuilder.environment(),
         pty = pty,
-        workingDirectory = processBuilder.directory()?.let { wslDistribution.getWslPath(it.path) }
+        workingDirectory = processBuilder.directory()?.let { wslDistribution.getWslPath(it.toPath()) }
       )) {
         is IjentApi.ExecuteProcessResult.Success -> processResult.process.toProcess(pty != null)
         is IjentApi.ExecuteProcessResult.Failure -> throw IOException(processResult.message)
@@ -145,7 +145,7 @@ suspend fun deployAndLaunchIjentGettingPath(
   val targetPlatform = IjentExecFileProvider.SupportedPlatform.X86_64__LINUX
   val ijentBinary = IjentExecFileProvider.getIjentBinary(targetPlatform)
 
-  val wslIjentBinary = wslDistribution.getWslPath(ijentBinary.absolutePathString())!!
+  val wslIjentBinary = wslDistribution.getWslPath(ijentBinary.toAbsolutePath())!!
 
   val commandLine = GeneralCommandLine(
     // It's supposed that WslDistribution always converts commands into SHELL.

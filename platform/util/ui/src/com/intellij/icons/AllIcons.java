@@ -493,7 +493,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon InspectionsEye = load("general/inspectionsEye.svg", 1945529681, 2);
     /** 16x16 */ public static final @NotNull Icon InspectionsMixed = load("general/inspectionsMixed.svg", -1563908295, 2);
     /** 16x16 */ public static final @NotNull Icon InspectionsOK = load("general/inspectionsOK.svg", 2050720021, 2);
-    /** 16x17 */ public static final @NotNull Icon InspectionsOKEmpty = load("general/inspectionsOKEmpty.svg", 1651856, 2);
+    /** 16x16 */ public static final @NotNull Icon InspectionsOKEmpty = load("general/inspectionsOKEmpty.svg", -147695886, 2);
     /** 16x16 */ public static final @NotNull Icon InspectionsPause = load("general/inspectionsPause.svg", 1426069888, 2);
     /** 16x16 */ public static final @NotNull Icon InspectionsPowerSaveMode = load("general/inspectionsPowerSaveMode.svg", -1738215750, 0);
     /** 16x16 */ public static final @NotNull Icon InspectionsTrafficOff = load("general/inspectionsTrafficOff.svg", -1141682828, 2);
@@ -546,7 +546,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon Tree = load("general/tree.svg", 699730744, 0);
     /** 16x16 */ public static final @NotNull Icon TreeHovered = load("general/treeHovered.svg", -805484505, 0);
     /** 16x16 */ public static final @NotNull Icon TreeSelected = load("general/treeSelected.svg", -1128936978, 0);
-    /** 32x16 */ public static final @NotNull Icon TrialBadge = load("general/trialBadge.svg", -754123725, 0);
+    /** 32x16 */ public static final @NotNull Icon TrialBadge = load("general/trialBadge.svg", 1116872237, 0);
     /** 16x16 */ public static final @NotNull Icon User = load("general/user.svg", 100112941, 0);
     /** 16x16 */ public static final @NotNull Icon Warning = load("general/warning.svg", 748587837, 2);
     /** 16x16 */ public static final @NotNull Icon WarningDecorator = load("general/warningDecorator.svg", 382605295, 2);
@@ -1212,6 +1212,7 @@ public class AllIcons {
   public static final class Ultimate {
     /** 16x16 */ public static final @NotNull Icon Lock = load("ultimate/lock.svg", 2079176291, 2);
     /** 16x16 */ public static final @NotNull Icon LockWhite = load("ultimate/lockWhite.svg", -1751542808, 0);
+    /** 16x16 */ public static final @NotNull Icon PycharmLock = load("ultimate/pycharmLock.svg", 1201180026, 2);
   }
 
   public static final class Vcs {

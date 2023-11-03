@@ -5,6 +5,8 @@ import com.dynatrace.hash4j.hashing.Hashing;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.concurrency.ConcurrentCollectionFactory;
+import com.intellij.featureStatistics.fusCollectors.FileEditorCollector;
+import com.intellij.featureStatistics.fusCollectors.FileEditorCollector.MarkupGraveEvent;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ReadAction;
@@ -136,6 +138,7 @@ final class HighlightingMarkupGrave implements Disposable {
     FileMarkupInfo markupInfo = myMarkupStore.getMarkup(file);
     if (markupInfo == null) {
       myResurrectedZombies.put(file.getId(), true);
+      logFusStatistic(file, MarkupGraveEvent.NOT_RESTORED_CACHE_MISS);
       return;
     }
 
@@ -146,6 +149,7 @@ final class HighlightingMarkupGrave implements Disposable {
       }
       myMarkupStore.removeMarkup(file);
       myResurrectedZombies.put(file.getId(), true);
+      logFusStatistic(file, MarkupGraveEvent.NOT_RESTORED_CONTENT_CHANGED);
       return;
     }
 
@@ -188,6 +192,7 @@ final class HighlightingMarkupGrave implements Disposable {
       }
       markZombieMarkup(highlighter);
     }
+    logFusStatistic(file, MarkupGraveEvent.RESTORED, markupInfo.size());
     if (LOG.isDebugEnabled()) {
       LOG.debug("restored " + markupInfo.size() + " for " + file);
     }
@@ -464,5 +469,13 @@ final class HighlightingMarkupGrave implements Disposable {
 
   private static int contentHash(@NotNull Document document) {
     return Hashing.komihash5_0().hashCharsToInt(document.getImmutableCharSequence());
+  }
+
+  private void logFusStatistic(@NotNull VirtualFileWithId file, @NotNull MarkupGraveEvent event) {
+    logFusStatistic(file, event, 0);
+  }
+
+  private void logFusStatistic(@NotNull VirtualFileWithId file, @NotNull MarkupGraveEvent event, int restoredCount) {
+    FileEditorCollector.logEditorMarkupGrave(myProject, (VirtualFile) file, event, restoredCount);
   }
 }

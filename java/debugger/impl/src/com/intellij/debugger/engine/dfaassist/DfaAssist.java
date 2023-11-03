@@ -24,7 +24,6 @@ import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.EdtScheduledExecutorService;
-import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebugSessionListener;
 import com.intellij.xdebugger.XDebuggerManager;
@@ -44,7 +43,6 @@ import static com.intellij.xdebugger.impl.dfaassist.DfaAssistBase.AssistMode.*;
 
 public final class DfaAssist extends DfaAssistBase implements DebuggerContextListener, XDebuggerManagerListener {
   private static final int CLEANUP_DELAY_MILLIS = 300;
-  private final @NotNull MessageBusConnection myConnection;
   private volatile CancellablePromise<?> myComputation;
   private volatile ScheduledFuture<?> myScheduledCleanup;
   private volatile boolean myInactive = false;
@@ -52,8 +50,7 @@ public final class DfaAssist extends DfaAssistBase implements DebuggerContextLis
 
   private DfaAssist(@NotNull Project project, @NotNull DebuggerStateManager manager) {
     super(project);
-    myConnection = project.getMessageBus().connect();
-    myConnection.subscribe(XDebuggerManager.TOPIC, this);
+    project.getMessageBus().connect(this).subscribe(XDebuggerManager.TOPIC, this);
     myManager = manager;
     updateFromSettings();
   }
@@ -155,7 +152,6 @@ public final class DfaAssist extends DfaAssistBase implements DebuggerContextLis
   @Override
   public void dispose() {
     myManager.removeListener(this);
-    myConnection.disconnect();
     cleanUp();
   }
 

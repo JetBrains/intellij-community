@@ -792,10 +792,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
     }
     if (myProject != null && myVirtualFile != null) {
-      for (EditorLinePainter painter : EditorLinePainter.EP_NAME.getExtensions()) {
+      for (EditorLinePainter painter : EditorLinePainter.EP_NAME.getExtensionList()) {
         if (LightEdit.owns(myProject) && !(painter instanceof LightEditCompatible)) {
           continue;
         }
+
         Collection<LineExtensionInfo> extensions = painter.getLineExtensions(myProject, myVirtualFile, line);
         if (extensions != null) {
           for (LineExtensionInfo extension : extensions) {
@@ -1612,7 +1613,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         return;
       }
 
-      // We do repaint in case of equal offsets because there is a possible case that there is a soft wrap at the same offset,
+      // We do repaint in case of equal offsets. There is a possible case that there is a soft wrap at the same offset,
       // and it does occupy a particular amount of visual space that may be necessary to repaint.
       if (startOffset <= minEndOffset) {
         int startLine = myView.offsetToVisualLine(startOffset, false);
@@ -2253,7 +2254,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
      Another approach is to make scrollbars opaque, but only in the editor (as editor is a slow-to-draw component with large screen area).
      This is what "true smooth scrolling" option currently does. Interestingly, making the vertical scrollbar opaque might actually be
-     a good thing because on modern displays (size, aspect ratio) code rarely extends beyond the right screen edge, and even
+     a good thing. On modern displays (size, aspect ratio) code rarely extends beyond the right screen edge, and even
      when it does, its coupling with the navigation bar only reduces intelligibility of both the navigation bar and the code itself.
 
      Horizontal scrollbar is another story - a single long line of text forces horizontal scrollbar in the whole document,

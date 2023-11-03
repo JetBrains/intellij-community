@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.searcheverywhere
 
 import com.intellij.icons.AllIcons
@@ -37,7 +37,11 @@ internal class CalculatorSEContributorFactory : SearchEverywhereContributorFacto
   }
 }
 
-internal class EvaluationResult(val value: String)
+/**
+ * @param value The resulting value of the given [expression]
+ * @param expression The query typed by the user, for example 2+2
+ */
+data class EvaluationResult(val value: String, val expression: String)
 
 private class CalculatorSEContributor : WeightedSearchEverywhereContributor<EvaluationResult> {
 
@@ -58,7 +62,7 @@ private class CalculatorSEContributor : WeightedSearchEverywhereContributor<Eval
     catch (_: Throwable) {
       return
     }
-    consumer.process(FoundItemDescriptor(EvaluationResult(result), 0x8000))
+    consumer.process(FoundItemDescriptor(EvaluationResult(result, pattern), 0x8000))
   }
 
   override fun getDataForItem(element: EvaluationResult, dataId: String): Any? = null

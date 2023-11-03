@@ -3,12 +3,12 @@ package org.jetbrains.kotlin.idea.k2.refactoring.changeSignature
 
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
+import com.intellij.refactoring.RefactoringBundle
 import org.jetbrains.kotlin.descriptors.Visibility
+import org.jetbrains.kotlin.idea.codeinsight.utils.AddQualifiersUtil
+import org.jetbrains.kotlin.idea.k2.refactoring.checkSuperMethods
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.BaseKotlinChangeSignatureTest
-import org.jetbrains.kotlin.psi.KtElement
-import org.jetbrains.kotlin.psi.KtExpression
-import org.jetbrains.kotlin.psi.KtExpressionCodeFragment
-import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.*
 
 class KotlinFirChangeSignatureTest :
     BaseKotlinChangeSignatureTest<KotlinChangeInfo, KotlinParameterInfo, KotlinTypeInfo, Visibility, KotlinMethodDescriptor>() {
@@ -29,7 +29,7 @@ class KotlinFirChangeSignatureTest :
     }
 
     override fun addFullQualifier(fragment: KtExpressionCodeFragment) {
-        TODO("Not yet implemented")
+        AddQualifiersUtil.addQualifiersRecursively(fragment)
     }
 
     override fun KotlinChangeInfo.createKotlinParameter(
@@ -56,7 +56,8 @@ class KotlinFirChangeSignatureTest :
 
     override fun createChangeInfo(): KotlinChangeInfo {
         val targetElement = findTargetDescriptor(KotlinChangeSignatureHandler)
-        return KotlinChangeInfo(KotlinMethodDescriptor(targetElement))
+        val superMethod = checkSuperMethods(targetElement, emptyList(), RefactoringBundle.message("to.refactor")).first() as KtNamedDeclaration
+        return KotlinChangeInfo(KotlinMethodDescriptor(superMethod))
     }
 
     override fun doRefactoring(configure: KotlinChangeInfo.() -> Unit) {
@@ -65,6 +66,10 @@ class KotlinFirChangeSignatureTest :
 
     override fun findCallers(method: PsiMethod): LinkedHashSet<PsiMethod> {
         TODO("Not yet implemented")
+    }
+
+    override fun ignoreTestData(fileName: String): Boolean {
+        return fileName.contains("Propagat")
     }
 
     override fun getIgnoreDirective(): String {

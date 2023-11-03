@@ -1,0 +1,10 @@
+[
+  {
+    "vsCodeId": "ms-python.python",
+    "ideaId": "com.intellij.python",
+    "ideaName": "Python",
+    "disabled": false,
+    "builtIn": true,
+    "bundled": false
+  }
+]

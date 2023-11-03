@@ -124,7 +124,7 @@ public class ProgramParametersConfigurator {
     if (StringUtil.isEmpty(parametersStringWithMacros)) {
       return Collections.emptyList();
     }
-    String expandedParametersString = expandMacros(parametersStringWithMacros, DataContext.EMPTY_CONTEXT, true);
+    String expandedParametersString = expandMacros(parametersStringWithMacros, createContext(DataContext.EMPTY_CONTEXT), true);
     return ParametersListUtil.parse(expandedParametersString);
   }
 
@@ -133,23 +133,7 @@ public class ProgramParametersConfigurator {
       return path;
     }
 
-    DataContext envContext = ExecutionManagerImpl.getEnvironmentDataContext();
-    if (fallbackDataContext == DataContext.EMPTY_CONTEXT && envContext != null) {
-      Project project = CommonDataKeys.PROJECT.getData(envContext);
-      Module module = PlatformCoreDataKeys.MODULE.getData(envContext);
-      if (project != null) {
-        fallbackDataContext = projectContext(project, module, null);
-      }
-    }
-
-    DataContext finalFallbackDataContext = fallbackDataContext;
-    DataContext context = envContext == null ? fallbackDataContext : new DataContext() {
-      @Override
-      public @Nullable Object getData(@NotNull String dataId) {
-        Object data = envContext.getData(dataId);
-        return data != null ? data : finalFallbackDataContext.getData(dataId);
-      }
-    };
+    DataContext context = createContext(fallbackDataContext);
     for (Macro macro : MacroManager.getInstance().getMacros()) {
       boolean paramsMacro = macro instanceof MacroWithParams;
       String template = "$" + macro.getName() + (paramsMacro ? "(" : "$");
@@ -183,6 +167,27 @@ public class ProgramParametersConfigurator {
       }
     }
     return path;
+  }
+
+  private static DataContext createContext(@NotNull DataContext fallbackDataContext) {
+    DataContext envContext = ExecutionManagerImpl.getEnvironmentDataContext();
+    if (fallbackDataContext == DataContext.EMPTY_CONTEXT && envContext != null) {
+      Project project = CommonDataKeys.PROJECT.getData(envContext);
+      Module module = PlatformCoreDataKeys.MODULE.getData(envContext);
+      if (project != null) {
+        fallbackDataContext = projectContext(project, module, null);
+      }
+    }
+
+    DataContext finalFallbackDataContext = fallbackDataContext;
+    DataContext context = envContext == null ? fallbackDataContext : new DataContext() {
+      @Override
+      public @Nullable Object getData(@NotNull String dataId) {
+        Object data = envContext.getData(dataId);
+        return data != null ? data : finalFallbackDataContext.getData(dataId);
+      }
+    };
+    return context;
   }
 
   private static @Nullable String previewOrExpandMacro(Macro macro, DataContext dataContext, String @NotNull ... args) {

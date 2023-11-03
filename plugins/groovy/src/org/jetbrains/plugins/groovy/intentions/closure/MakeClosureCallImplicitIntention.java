@@ -15,13 +15,12 @@
  */
 package org.jetbrains.plugins.groovy.intentions.closure;
 
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.intentions.base.Intention;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
+import org.jetbrains.plugins.groovy.intentions.base.GrPsiUpdateIntention;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -29,30 +28,28 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 
-public class MakeClosureCallImplicitIntention extends Intention {
+public class MakeClosureCallImplicitIntention extends GrPsiUpdateIntention {
 
+  @Override
+  @NotNull
+  public PsiElementPredicate getElementPredicate() {
+    return new ExplicitClosureCallPredicate();
+  }
 
-    @Override
-    @NotNull
-    public PsiElementPredicate getElementPredicate() {
-        return new ExplicitClosureCallPredicate();
+  @Override
+  protected void processIntention(@NotNull PsiElement element, @NotNull ActionContext context, @NotNull ModPsiUpdater updater) {
+    final GrMethodCallExpression expression =
+      (GrMethodCallExpression)element;
+    final GrReferenceExpression invokedExpression = (GrReferenceExpression)expression.getInvokedExpression();
+    final GrExpression qualifier = invokedExpression.getQualifierExpression();
+    final GrArgumentList argList = expression.getArgumentList();
+    final GrClosableBlock[] closureArgs = expression.getClosureArguments();
+    final StringBuilder newExpression = new StringBuilder();
+    newExpression.append(qualifier.getText());
+    newExpression.append(argList.getText());
+    for (GrClosableBlock closureArg : closureArgs) {
+      newExpression.append(closureArg.getText());
     }
-
-    @Override
-    public void processIntention(@NotNull PsiElement element, @NotNull Project project, Editor editor)
-            throws IncorrectOperationException {
-        final GrMethodCallExpression expression =
-                (GrMethodCallExpression) element;
-        final GrReferenceExpression invokedExpression = (GrReferenceExpression) expression.getInvokedExpression();
-        final GrExpression qualifier = invokedExpression.getQualifierExpression();
-        final GrArgumentList argList = expression.getArgumentList();
-        final GrClosableBlock[] closureArgs = expression.getClosureArguments();
-        final StringBuilder newExpression = new StringBuilder();
-        newExpression.append(qualifier.getText());
-        newExpression.append(argList.getText());
-        for (GrClosableBlock closureArg : closureArgs) {
-            newExpression.append(closureArg.getText());
-        }
-        PsiImplUtil.replaceExpression(newExpression.toString(), expression);
-    }
+    PsiImplUtil.replaceExpression(newExpression.toString(), expression);
+  }
 }

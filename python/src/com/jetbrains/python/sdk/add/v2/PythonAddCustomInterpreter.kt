@@ -2,6 +2,7 @@
 package com.jetbrains.python.sdk.add.v2
 
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.ui.validation.DialogValidationRequestor
 import com.intellij.ui.dsl.builder.Panel
 import com.jetbrains.python.sdk.add.v2.PythonInterpreterCreationTargets.LOCAL_MACHINE
 
@@ -13,7 +14,7 @@ class PythonAddCustomInterpreter(presenter: PythonAddInterpreterPresenter) {
     LOCAL_MACHINE to PythonLocalEnvironmentCreator(presenter),
   )
 
-  fun buildPanel(outerPanel: Panel) {
+  fun buildPanel(outerPanel: Panel, validationRequestor: DialogValidationRequestor) {
     with(outerPanel) {
 
       // todo uncomment for all available targets
@@ -30,7 +31,7 @@ class PythonAddCustomInterpreter(presenter: PythonAddInterpreterPresenter) {
 
 
       rowsRange {
-        targets[LOCAL_MACHINE]!!.buildPanel(this)
+        targets[LOCAL_MACHINE]!!.buildPanel(this, validationRequestor)
       }
     }
   }

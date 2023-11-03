@@ -168,6 +168,8 @@ public final class WSLCommandLineOptions {
    * The initialize command is a linux command that runs before the main command.
    * If the initialize command fails (exit code != 0), the main command won't run.
    * For example, it can be used to setup environment before running the app.
+   * Note, that this function <strong>prepends</strong> commands, so calling it with 1 and 2 will
+   * produce <pre>2 && 1</pre>
    * 
    * @param initCommand a linux shell command (may contain shell builtin commands)
    */

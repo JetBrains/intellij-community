@@ -67,7 +67,7 @@ class KotlinJavaChangeInfoConverter: JavaChangeInfoConverter {
                 false
             }
             javaChangeInfos = ktCallableDeclaration.toLightMethods().map {
-                createJavaInfoForLightMethod(ktCallableDeclaration, it, changeInfo, isJvmOverloads, isProperty)
+                createJavaInfoForLightMethod(ktCallableDeclaration as KtCallableDeclaration, it, changeInfo, isJvmOverloads, isProperty)
             }
             changeInfo.putUserData(javaChangeInfoKey, javaChangeInfos)
         }

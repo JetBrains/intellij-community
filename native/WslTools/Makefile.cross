@@ -17,4 +17,4 @@ $(MUSL_CROSS_DISTR):
 .PHONY: all clean
 
 clean:
-	$(RM) wslproxy wslhash
+	$(RM) wslproxy wslhash ttyfix

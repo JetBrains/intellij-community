@@ -10,7 +10,6 @@ import com.intellij.openapi.application.ApplicationListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
@@ -66,18 +65,13 @@ final class FileBasedIndexDataInitialization extends IndexDataInitializer<IndexC
 
   private @NotNull Collection<ThrowableRunnable<?>> initAssociatedDataForExtensions() {
     Activity activity = StartUpMeasurer.startActivity("file index extensions iteration");
-    ExtensionPointImpl<@NotNull FileBasedIndexExtension<?, ?>> extPoint =
-      (ExtensionPointImpl<@NotNull FileBasedIndexExtension<?, ?>>)FileBasedIndexExtension.EXTENSION_POINT_NAME.getPoint();
-    Iterator<FileBasedIndexExtension<?, ?>> extensions = extPoint.iterator();
-    List<ThrowableRunnable<?>> tasks = new ArrayList<>(extPoint.size());
+    Iterator<FileBasedIndexExtension<?, ?>> extensions = FileBasedIndexExtension.EXTENSION_POINT_NAME.getIterable().iterator();
+    List<ThrowableRunnable<?>> tasks = new ArrayList<>(FileBasedIndexExtension.EXTENSION_POINT_NAME.getPoint().size());
 
     myDirtyFileIds.addAll(PersistentDirtyFilesQueue.readIndexingQueue(PersistentDirtyFilesQueue.getQueueFile(), ManagingFS.getInstance().getCreationTimestamp()));
     // todo: init contentless indices first ?
     while (extensions.hasNext()) {
       FileBasedIndexExtension<?, ?> extension = extensions.next();
-      if (extension == null) {
-        break;
-      }
       RebuildStatus.registerIndex(extension.getName());
 
       tasks.add(() -> {
@@ -141,8 +135,8 @@ final class FileBasedIndexDataInitialization extends IndexDataInitializer<IndexC
 
     myCurrentVersionCorrupted = CorruptionMarker.requireInvalidation();
     boolean storageLayoutChanged = FileBasedIndexLayoutSettings.INSTANCE.loadUsedLayout();
-    for (FileBasedIndexInfrastructureExtension ex : FileBasedIndexInfrastructureExtension.EP_NAME.getExtensions()) {
-      FileBasedIndexInfrastructureExtension.InitializationResult result = ex.initialize(DefaultIndexStorageLayout.getUsedLayoutId());
+    for (FileBasedIndexInfrastructureExtension extension : FileBasedIndexInfrastructureExtension.EP_NAME.getExtensionList()) {
+      FileBasedIndexInfrastructureExtension.InitializationResult result = extension.initialize(DefaultIndexStorageLayout.getUsedLayoutId());
       myCurrentVersionCorrupted = myCurrentVersionCorrupted ||
                                 result == FileBasedIndexInfrastructureExtension.InitializationResult.INDEX_REBUILD_REQUIRED;
     }
@@ -177,7 +171,7 @@ final class FileBasedIndexDataInitialization extends IndexDataInitializer<IndexC
           RebuildStatus.clearIndexIfNecessary(indexId, () -> myFileBasedIndex.clearIndex(indexId));
         }
         catch (StorageException e) {
-          myFileBasedIndex.requestRebuild(indexId);
+          myFileBasedIndex.requestRebuild(indexId, e);
           FileBasedIndexImpl.LOG.error(e);
         }
       }

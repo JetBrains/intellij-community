@@ -17,6 +17,7 @@ import com.intellij.codeInspection.UpdateInspectionOptionFix;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.java.JavaBundle;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -35,8 +36,10 @@ public class NotNullFieldNotInitializedInspection extends AbstractBaseJavaLocalI
   @Override
   public @NotNull OptPane getOptionsPane() {
     return pane(
-      checkbox(IGNORE_IMPLICITLY_WRITTEN_FIELDS_NAME, JavaBundle.message("inspection.notnull.field.not.initialized.option.implicit")),
-      checkbox(IGNORE_FIELDS_WRITTEN_IN_SETUP_NAME, JavaBundle.message("inspection.notnull.field.not.initialized.option.setup")));
+      checkbox(IGNORE_IMPLICITLY_WRITTEN_FIELDS_NAME, JavaBundle.message("inspection.notnull.field.not.initialized.option.implicit"))
+        .description(HtmlChunk.raw(JavaBundle.message("inspection.notnull.field.not.initialized.option.implicit.description"))),
+      checkbox(IGNORE_FIELDS_WRITTEN_IN_SETUP_NAME, JavaBundle.message("inspection.notnull.field.not.initialized.option.setup"))
+        .description(HtmlChunk.raw(JavaBundle.message("inspection.notnull.field.not.initialized.option.setup.description"))));
   }
 
   @NotNull

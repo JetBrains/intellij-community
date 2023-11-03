@@ -6,33 +6,40 @@ import com.intellij.ide.customize.transferSettings.models.FailedIdeVersion
 import com.intellij.ide.customize.transferSettings.models.IdeVersion
 import com.intellij.ide.customize.transferSettings.models.PatchedKeymap
 import com.intellij.ide.customize.transferSettings.models.Settings
+import com.intellij.ide.customize.transferSettings.providers.vswin.mappings.VisualStudioPluginsMapping
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
+import com.intellij.internal.statistic.eventLog.validator.rules.impl.AllowedItemsResourceWeakRefStorage
+import com.intellij.internal.statistic.eventLog.validator.rules.impl.LocalFileCustomValidationRule
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
+import com.intellij.util.text.nullize
 import kotlin.time.Duration
 
 object TransferSettingsCollector : CounterUsagesCollector() {
 
   private val logger = logger<TransferSettingsCollector>()
 
-  private val GROUP = EventLogGroup("wizard.transfer.settings", 3)
+  private val GROUP = EventLogGroup("wizard.transfer.settings", 6)
   override fun getGroup(): EventLogGroup = GROUP
 
   private val ideField = EventFields.Enum<TransferableIdeId>("ide")
   private val ideVersionField = EventFields.NullableEnum<TransferableIdeVersionId>("version")
-  private val featureField = EventFields.Enum<TransferableIdeFeatureId>("feature")
+  private val featureField = EventFields.StringValidatedByCustomRule<KnownPluginValidationRule>("feature")
   private val performanceMetricTypeTypeField = EventFields.Enum<PerformanceMetricType>("type")
   private val perfEventValueField = EventFields.Long("value")
+  private val selectedSectionsField = EventFields.StringList("selectedSections", TransferableSections.types)
+  private val unselectedSectionsField = EventFields.StringList("unselectedSections", TransferableSections.types)
+  private val timesSwitchedBetweenInstancesField = EventFields.Int("timesSwitchedBetweenInstances")
 
   // Common events
   private val transferSettingsShown = GROUP.registerEvent("transfer.settings.shown")
   private val transferSettingsSkipped = GROUP.registerEvent("transfer.settings.skipped")
-  private val importStarted = GROUP.registerEvent("import.started")
-  private val importSucceeded = GROUP.registerEvent("import.succeeded", ideField)
-  private val importFailed = GROUP.registerEvent("import.failed", ideField)
+  private val importStarted = GROUP.registerEvent("import.started", selectedSectionsField, unselectedSectionsField, timesSwitchedBetweenInstancesField)
+  private val importSucceeded = GROUP.registerEvent("import.succeeded", ideField, ideVersionField)
+  private val importFailed = GROUP.registerEvent("import.failed", ideField, ideVersionField)
 
   // Discovery events
   private val instancesOfIdeFound = GROUP.registerEvent(
@@ -82,33 +89,64 @@ object TransferSettingsCollector : CounterUsagesCollector() {
     transferSettingsSkipped.log()
   }
 
-  fun logImportStarted() {
-    importStarted.log()
+  fun logImportStarted(settings: Settings, timesSwitchedBetweenInstances: Int) {
+    val selectedSections = mutableListOf<String>()
+    val unselectedSections = mutableListOf<String>()
+
+    if (settings.laf != null) {
+      if (settings.preferences.laf) selectedSections.add(TransferableSections.laf) else unselectedSections.add(TransferableSections.laf)
+    }
+    if (settings.keymap != null) {
+      if (settings.preferences.keymap) selectedSections.add(TransferableSections.keymap) else unselectedSections.add(TransferableSections.keymap)
+    }
+    if (settings.plugins.isNotEmpty()) {
+      if (settings.preferences.plugins) selectedSections.add(TransferableSections.plugins) else unselectedSections.add(TransferableSections.plugins)
+    }
+    if (settings.recentProjects.isNotEmpty()) {
+      if (settings.preferences.recentProjects) selectedSections.add(TransferableSections.recentProjects) else unselectedSections.add(TransferableSections.recentProjects)
+    }
+    if (settings.syntaxScheme != null) {
+      if (settings.preferences.syntaxScheme) selectedSections.add(TransferableSections.syntaxScheme) else unselectedSections.add(TransferableSections.syntaxScheme)
+    }
+
+    importStarted.log(selectedSections, unselectedSections, timesSwitchedBetweenInstances)
   }
 
   fun logImportSucceeded(ideVersion: IdeVersion, settings: Settings) {
     logger.runAndLogException {
       val ide = ideVersion.transferableId
-      importSucceeded.log(ide)
-      settings.laf?.transferableId?.let { lafImported.log(it) }
-      settings.keymap?.let { keymap ->
-        val patchedKeymap = keymap as? PatchedKeymap
-        shortcutsTransferred.log(
-          keymap.transferableId,
-          patchedKeymap?.overrides?.size ?: 0,
-          patchedKeymap?.removal?.size ?: 0
-        )
+      importSucceeded.log(ide, ideVersion.transferableVersion)
+
+      if (settings.preferences.laf) {
+        settings.laf?.transferableId?.let { lafImported.log(it) }
       }
-      recentProjectsTransferred.log(ide, settings.recentProjects.size)
-      for (plugin in settings.plugins) {
-        featureImported.log(plugin.transferableId, ide)
+
+      if (settings.preferences.keymap) {
+        settings.keymap?.let { keymap ->
+          val patchedKeymap = keymap as? PatchedKeymap
+          shortcutsTransferred.log(
+            keymap.transferableId,
+            patchedKeymap?.overrides?.size ?: 0,
+            patchedKeymap?.removal?.size ?: 0
+          )
+        }
+      }
+
+      if (settings.preferences.recentProjects) {
+        recentProjectsTransferred.log(ide, settings.recentProjects.size)
+      }
+
+      if (settings.preferences.plugins) {
+        for (pluginId in settings.plugins.keys) {
+          featureImported.log(pluginId, ide)
+        }
       }
     }
   }
 
   fun logImportFailed(ideVersion: IdeVersion) {
     logger.runAndLogException {
-      importFailed.log(ideVersion.transferableId)
+      importFailed.log(ideVersion.transferableId, ideVersion.transferableVersion)
     }
   }
 
@@ -135,8 +173,8 @@ object TransferSettingsCollector : CounterUsagesCollector() {
   fun logIdeSettingsDiscovered(ideVersion: IdeVersion, settings: Settings) {
     logger.runAndLogException {
       val ide = ideVersion.transferableId
-      for (plugin in settings.plugins) {
-        featureDetected.log(ide, plugin.transferableId)
+      for (pluginId in settings.plugins.keys) {
+        featureDetected.log(ide, pluginId.lowercase())
       }
       recentProjectsDetected.log(ide, settings.recentProjects.size)
     }
@@ -153,3 +191,14 @@ object TransferSettingsCollector : CounterUsagesCollector() {
     }
   }
 }
+
+class KnownPluginValidationRule : LocalFileCustomValidationRule(
+  "known_plugin_id",
+  object : AllowedItemsResourceWeakRefStorage(KnownPluginValidationRule::class.java, "pluginData/known-plugins.txt") {
+
+    override fun createValue(value: String): String? = value.nullize(true)?.trim()?.lowercase()
+    override fun readItems(): Set<String?> {
+      return super.readItems() + VisualStudioPluginsMapping.ReSharper
+    }
+  }
+)

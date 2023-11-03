@@ -304,7 +304,8 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
 
   public void testSwitchEnumLabel() {
     configureByFile("SwitchEnumLabel.java");
-    assertEquals("[A, B, C, null]", ContainerUtil.map(myItems, LookupElement::getLookupString).toString());
+    //first B is enum Field, second B is class. They have different presentations and handlers
+    assertEquals("[A, B, C, null, B, Object]", ContainerUtil.map(myItems, LookupElement::getLookupString).toString());
   }
 
   public void testSwitchCaseWithEnumConstant() { doTest(); }
@@ -341,6 +342,14 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
     configureByFile("Annotation7.java");
     selectItem(myItems[0]);
     checkResultByFile("Annotation7_after.java");
+  }
+  
+  public void testAnnotationAttrBeforeExisting() {
+    doTest("\n");
+  }
+  
+  public void testAnnotationAttrBeforeExistingBool() {
+    doTest("\n");
   }
 
   public void testEnumInAnnotation() {

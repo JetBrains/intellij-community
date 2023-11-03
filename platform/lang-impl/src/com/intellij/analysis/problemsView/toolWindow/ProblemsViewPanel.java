@@ -70,7 +70,7 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, D
   private final ProblemsViewState myState;
   private final Supplier<@NlsContexts.TabTitle String> myName;
   private final ProblemsTreeModel myTreeModel = new ProblemsTreeModel(this);
-  private final DescriptorPreview myPreview;
+  protected final DescriptorPreview myPreview;
   private final JPanel myPanel;
   protected final ActionToolbar myToolbar;
   private final Insets myToolbarInsets = JBUI.insetsRight(1);

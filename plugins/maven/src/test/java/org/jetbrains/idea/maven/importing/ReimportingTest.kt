@@ -66,7 +66,7 @@ class ReimportingTest : MavenMultiVersionImportingTestCase() {
       <version>1</version>
       """.trimIndent())
 
-    importProjectAsync()
+    updateAllProjects()
     assertModules("project", "m1", "m2", "m3")
   }
 

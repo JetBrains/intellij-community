@@ -132,7 +132,7 @@ class ActionMenuItem internal constructor(action: AnAction,
     }
     val shortcutSuffix = presentation.getClientProperty(Presentation.PROP_KEYBOARD_SHORTCUT_SUFFIX)
     val shortcut = defaultFirstShortcutText
-    firstShortcutTextFromPresentation = if (!shortcut.isNullOrEmpty() && !shortcutSuffix.isNullOrEmpty()) {
+    firstShortcutTextFromPresentation = if (shortcut.isNotEmpty() && !shortcutSuffix.isNullOrEmpty()) {
       shortcut + shortcutSuffix
     }
     else {

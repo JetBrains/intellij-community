@@ -11,6 +11,7 @@ import com.intellij.util.childScope
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.gitlab.api.*
+import org.jetbrains.plugins.gitlab.api.data.GitLabPlan
 import org.jetbrains.plugins.gitlab.api.dto.GitLabLabelDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.api.request.*
@@ -29,6 +30,7 @@ interface GitLabProject {
   val labels: Flow<Result<List<GitLabLabelDTO>>>
   val members: Flow<Result<List<GitLabUserDTO>>>
   val defaultBranch: Deferred<String>
+  val plan: Deferred<GitLabPlan>
 
   suspend fun createMergeRequest(sourceBranch: String, targetBranch: String, title: String): GitLabMergeRequestDTO
   suspend fun adjustReviewers(mrIid: String, reviewers: List<GitLabUserDTO>): GitLabMergeRequestDTO
@@ -69,6 +71,11 @@ class GitLabLazyProject(
   override val defaultBranch: Deferred<String> = cs.async(Dispatchers.IO, start = CoroutineStart.LAZY) {
     val projectRepository = api.graphQL.getProjectRepository(projectCoordinates).body()
     projectRepository.rootRef
+  }
+
+  override val plan: Deferred<GitLabPlan> = cs.async(Dispatchers.IO, start = CoroutineStart.LAZY) {
+    val namespace = api.rest.getProjectNamespace(projectMapping.repository.projectPath.owner).body()
+    namespace.plan
   }
 
   @Throws(GitLabGraphQLMutationException::class)

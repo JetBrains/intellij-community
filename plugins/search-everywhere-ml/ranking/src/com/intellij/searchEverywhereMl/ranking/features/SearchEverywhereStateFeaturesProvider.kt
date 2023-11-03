@@ -1,7 +1,6 @@
 package com.intellij.searchEverywhereMl.ranking.features
 
 import com.intellij.find.FindManager
-import com.intellij.find.impl.TextSearchContributor
 import com.intellij.ide.actions.searcheverywhere.FileSearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl
 import com.intellij.ide.util.scopeChooser.ScopeDescriptor
@@ -69,7 +68,7 @@ class SearchEverywhereStateFeaturesProvider {
       features.add(SEARCH_SCOPE_DATA_KEY.with(scopeId))
     }
 
-    if (project != null && tabId == TextSearchContributor::class.java.simpleName) {
+    if (project != null) {
       features.addAll(getTextContributorFeatures(project))
     }
 

@@ -24,7 +24,6 @@ import org.jetbrains.kotlin.descriptors.Visibilities.Private
 import org.jetbrains.kotlin.descriptors.Visibilities.Protected
 import org.jetbrains.kotlin.descriptors.Visibilities.Public
 import org.jetbrains.kotlin.idea.base.util.allScope
-import org.jetbrains.kotlin.idea.stubindex.KotlinFullClassNameIndex
 import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelFunctionFqnNameIndex
 import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
@@ -34,6 +33,7 @@ import org.jetbrains.kotlin.utils.sure
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 import java.io.File
+import kotlin.reflect.KClass
 import kotlin.reflect.full.allSuperclasses
 import kotlin.reflect.full.declaredMemberFunctions
 
@@ -353,23 +353,27 @@ abstract class BaseKotlinChangeSignatureTest<C: KotlinModifiableChangeInfo<P>, P
         }
     }
 
+    open fun ignoreTestData(fileName: String): Boolean = false
+
     // --------------------------------- Tests ---------------------------------
 
     fun testAllTestsPresented() {
-
-        val functionNames = this::class.allSuperclasses.flatMap {
+        val classes = mutableListOf<KClass<*>>()
+        classes.add(this::class)
+        classes.addAll(this::class.allSuperclasses)
+        val functionNames = classes.flatMap {
             it.declaredMemberFunctions
                     .asSequence()
                     .map { it.name }
                     .filter { it.startsWith("test") }
                     .map { it.removePrefix("test") }
                     .map { it + "Before" }
-        }
-                .toSet()
+        }.toSet()
 
         for (file in testDataDirectory.listFiles()!!) {
             val fileName = file.name.substringBefore(".")
             if (fileName.endsWith("Messages") || fileName.endsWith("After")) continue
+            if (ignoreTestData(fileName)) continue
 
             assertTrue(
               "test function for ${file.name} not found",
@@ -964,7 +968,7 @@ abstract class BaseKotlinChangeSignatureTest<C: KotlinModifiableChangeInfo<P>, P
     }
 
 
-    fun testMakePrimaryConstructorPrivateNoParams() = doTest { setNewVisibility(Private) }//todo can't perform refactoring
+    fun testMakePrimaryConstructorPrivateNoParams() = doTest { setNewVisibility(Private) }
 
     fun testMakePrimaryConstructorPublic() = doTest { setNewVisibility(Public) }
 
@@ -1080,76 +1084,6 @@ abstract class BaseKotlinChangeSignatureTest<C: KotlinModifiableChangeInfo<P>, P
     }
 
 
-    // ---------- propagation ----------------------------
-
-    fun testPropagateWithParameterDuplication() = doTestConflict {
-        val defaultValueForCall = KtPsiFactory(project).createExpression("1")
-        addParameter(createKotlinIntParameter(name = "n", defaultValueForCall = defaultValueForCall))
-
-        primaryPropagationTargets = listOf(
-          KotlinTopLevelFunctionFqnNameIndex.get("bar", project, project.allScope()).first()
-        )
-    }
-
-    fun testPropagateWithVariableDuplication() = doTestConflict {
-        val defaultValueForCall = KtPsiFactory(project).createExpression("1")
-        addParameter(createKotlinIntParameter(name = "n", defaultValueForCall = defaultValueForCall))
-
-        primaryPropagationTargets = listOf(
-          KotlinTopLevelFunctionFqnNameIndex.get("bar", project, project.allScope()).first()
-        )
-    }
-
-    fun testPropagateWithThisQualificationInClassMember() = doTest {
-        val defaultValueForCall = KtPsiFactory(project).createExpression("1")
-        addParameter(createKotlinIntParameter(name = "n", defaultValueForCall = defaultValueForCall))
-
-        val classA = KotlinFullClassNameIndex.get("A", project, project.allScope()).first()
-        val functionBar = classA.declarations.first { it is KtNamedFunction && it.name == "bar" }
-        primaryPropagationTargets = listOf(functionBar)
-    }
-
-    fun testPropagateWithThisQualificationInExtension() = doTest {
-        val defaultValueForCall = KtPsiFactory(project).createExpression("1")
-        addParameter(createKotlinIntParameter(name = "n", defaultValueForCall = defaultValueForCall))
-
-        primaryPropagationTargets = listOf(
-          KotlinTopLevelFunctionFqnNameIndex.get("bar", project, project.allScope()).first()
-        )
-    }
-
-    fun testPrimaryConstructorParameterPropagation() = doTestAndIgnoreConflicts {
-        val defaultValueForCall = KtPsiFactory(project).createExpression("1")
-        addParameter(createKotlinIntParameter(name = "n", defaultValueForCall = defaultValueForCall))
-
-        primaryPropagationTargets = findCallers(method.getRepresentativeLightMethod()!!)
-    }
-
-    fun testSecondaryConstructorParameterPropagation() = doTestAndIgnoreConflicts {
-        val defaultValueForCall = KtPsiFactory(project).createExpression("1")
-        addParameter(createKotlinIntParameter(name = "n", defaultValueForCall = defaultValueForCall))
-
-        primaryPropagationTargets = findCallers(method.getRepresentativeLightMethod()!!)
-    }
-
-    fun testParameterPropagation() = doTestAndIgnoreConflicts {
-        val psiFactory = KtPsiFactory(project)
-
-        val defaultValueForCall1 = psiFactory.createExpression("1")
-        val newParameter1 = createKotlinParameter("n", null, defaultValueForCall1, currentType = "Int")
-        addParameter(newParameter1)
-
-        val defaultValueForCall2 = psiFactory.createExpression("\"abc\"")
-        val newParameter2 = createKotlinParameter("s", null, defaultValueForCall2, currentType = "String")
-        addParameter(newParameter2)
-
-        val classA = KotlinFullClassNameIndex.get("A", project, project.allScope()).first()
-        val functionBar = classA.declarations.first { it is KtNamedFunction && it.name == "bar" }
-        val functionTest = KotlinTopLevelFunctionFqnNameIndex.get("test", project, project.allScope()).first()
-
-        primaryPropagationTargets = listOf(functionBar, functionTest)
-    }
-
     //------------- return type -------------------
 
     fun testSetErrorReturnType() = doTest {
@@ -1241,7 +1175,7 @@ abstract class BaseKotlinChangeSignatureTest<C: KotlinModifiableChangeInfo<P>, P
         newParameters[1].setType("Double?")
     }
 
-    fun testAddConstructorVisibility() = doTest {//todo cannot perform
+    fun testAddConstructorVisibility() = doTest {
         setNewVisibility(Protected)
 
         val newParameter = createKotlinParameter("x", "Any", KtPsiFactory(project).createExpression("12")).apply {

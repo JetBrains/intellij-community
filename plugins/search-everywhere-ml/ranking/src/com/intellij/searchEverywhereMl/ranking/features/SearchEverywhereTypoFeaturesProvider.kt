@@ -5,11 +5,12 @@ import com.intellij.ide.actions.searcheverywhere.SearchEverywhereSpellingCorrect
 import com.intellij.internal.statistic.eventLog.events.EventField
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
+import com.intellij.searchEverywhereMl.ranking.features.SearchEverywhereTypoFeaturesProvider.Fields.SUGGESTION_CONFIDENCE_FIELD
 
 private class SearchEverywhereTypoFeaturesProvider
   : SearchEverywhereElementFeaturesProvider(SearchEverywhereSpellingCorrectorContributor::class.java) {
-  companion object {
-    private val SUGGESTION_CONFIDENCE_FIELD = EventFields.Float("suggestionConfidence")
+  object Fields {
+    val SUGGESTION_CONFIDENCE_FIELD = EventFields.Float("suggestionConfidence")
   }
 
   override fun getFeaturesDeclarations(): List<EventField<*>> = listOf(SUGGESTION_CONFIDENCE_FIELD)

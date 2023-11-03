@@ -185,7 +185,7 @@ internal object InlineCompletionTooltip {
       }
 
       override fun onMousePressed(e: MouseEvent) {
-        InlineCompletionOnboardingComponent.getInstance().fireTooltipUsed()
+        InlineCompletionOnboardingComponent.getInstance().fireOnboardingFinished()
       }
     }.also {
       it.isFocusable = false

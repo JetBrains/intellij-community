@@ -6,6 +6,12 @@
       headlessImplementation="com.intellij.platform.diagnostic.startUpPerformanceReporter.HeadlessStartUpPerformanceService"
     />
 
+    <applicationService
+      serviceInterface="com.intellij.ide.plugins.PluginUtil"
+      serviceImplementation="com.intellij.ide.plugins.PluginUtilModernImpl"
+      overrides="true"
+    />
+
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
     <appStarter id="save" implementation="com.intellij.openapi.application.SaveStarter"/>
     <appStarter id="exit" implementation="com.intellij.openapi.application.ExitStarter"/>
@@ -152,6 +158,10 @@
                  description="Use 'wsl.exe -l -v' to get distribution list. If it's disabled 'wsl.exe -l -q' will be used."/>
     <registryKey key="wsl.use.utf8.encoding" os="windows" defaultValue="true" restartRequired="false"
                  description="Use UTF-8 as default encoding for all WSL distributions, otherwise default console encoding will be used (see Preferences | Editor | General | Console )"/>
+    <registryKey key="wsl.fix.initial.tty.size.when.running.without.tty"
+                 restartRequired="false"
+                 description="Set initial Linux tty size to 100x100 for WSL processes not attached to Windows PTY (workaround for https://github.com/microsoft/WSL/issues/10701)"
+                 defaultValue="true"/>
     <applicationService serviceInterface="com.intellij.execution.wsl.WslDistributionManager"
                         serviceImplementation="com.intellij.execution.wsl.WslDistributionManagerImpl"/>
     <executionTargetType implementation="com.intellij.execution.wsl.target.WslTargetType"/>
@@ -298,11 +308,11 @@
                              groupId="build"/>
     <trustedProjectsLocator implementation="com.intellij.ide.trustedProjects.impl.DefaultTrustedProjectsLocator"/>
 
-    <activityInProgressWitness implementation="com.intellij.openapi.project.DumbServiceInProgressWitness"/>
-    <activityInProgressWitness implementation="com.intellij.openapi.project.ScanningInProgressWitness"/>
-    <activityInProgressWitness implementation="com.intellij.ide.startup.StartupActivityInProgressWitness"/>
-    <activityInProgressWitness implementation="com.intellij.openapi.vfs.newvfs.VfsActivityInProgressWitness"/>
-    <activityInProgressWitness implementation="com.intellij.configurationStore.SavingInProgressWitness"/>
+    <activityInProgressTracker implementation="com.intellij.openapi.project.DumbServiceInProgressTracker"/>
+    <activityInProgressTracker implementation="com.intellij.openapi.project.ScanningInProgressTracker"/>
+    <activityInProgressTracker implementation="com.intellij.ide.startup.StartupActivityInProgressTracker"/>
+    <activityInProgressTracker implementation="com.intellij.openapi.vfs.newvfs.VfsActivityInProgressTracker"/>
+    <activityInProgressTracker implementation="com.intellij.configurationStore.SavingInProgressTracker"/>
 
 
     <colorAndFontPanelFactory implementation="com.intellij.openapi.diff.impl.settings.DiffColorsPageFactory"/>
@@ -332,7 +342,6 @@
     <fileIconProvider implementation="com.intellij.ide.plugins.UIComponentVirtualFile$UIComponentVirtualFileIconProvider"/>
 
     <diff.editor.diffRequestProcessorEditorCustomizer implementation="com.intellij.diff.editor.DefaultDiffFileEditorCustomizer"/>
-    <diff.tools.combined.diffBlockFactory implementation="com.intellij.diff.tools.combined.CombinedSimpleDiffBlockFactory" order="last"/>
 
     <fileIconProvider implementation="com.intellij.diff.editor.DiffFileIconProvider"/>
 
@@ -578,6 +587,11 @@
     <welcomeScreenCustomization id="defaultCustomization"
                                 implementation="com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenDefaultCustomization"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.ide.customize.transferSettings.fus.TransferSettingsCollector"/>
+    <statistics.validation.customValidationRule implementation="com.intellij.ide.customize.transferSettings.fus.KnownPluginValidationRule"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.platform.ide.bootstrap.IdeStartupWizardCollector"/>
+    <registryKey defaultValue="-1"
+                 description="Defines the experiment group number. Negative value will be ignored."
+                 key="ide.transfer.wizard.experiment.group"/>
 
     <themeProvider id="Darcula" path="/themes/darcula.theme.json" targetUi="classic"/>
     <themeProvider id="IntelliJ" path="/themes/intellijlaf.theme.json" parentTheme="Darcula" targetUi="classic"/>
@@ -894,7 +908,8 @@
     <statistics.counterUsagesCollector implementationClass="com.intellij.accessibility.AccessibilityUsageTrackerCollector"/>
     <statistics.counterUsagesCollector
       implementationClass="com.intellij.ide.actions.searcheverywhere.SearchEverywhereFiltersStatisticsCollector"/>
-    <statistics.counterUsagesCollector implementationClass="com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollector"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.ide.plugins.marketplace.statistics.collectors.PluginManagerMPCollector"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.ide.plugins.marketplace.statistics.collectors.PluginManagerFUSCollector"/>
     <statistics.validation.customValidationRule implementation="com.intellij.ide.plugins.marketplace.statistics.validators.MarketplaceTagsListValidator"/>
     <statistics.validation.customValidationRule implementation="com.intellij.ide.plugins.marketplace.statistics.validators.MarketplaceVendorsListValidator"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.codeInsight.template.impl.LiveTemplateRunLogger"/>
@@ -1406,7 +1421,7 @@
                         serviceImplementation="com.intellij.ui.AutoScrollToSourceTaskManagerImpl"/>
 
     <applicationService serviceImplementation="com.intellij.openapi.updateSettings.impl.UpdateCheckerService" headlessImplementation=""/>
-    <postStartupActivity implementation="com.intellij.openapi.updateSettings.impl.UpdateCheckerService$MyActivity" order="last"/>
+    <postStartupActivity implementation="com.intellij.openapi.updateSettings.impl.UpdateCheckerProjectActivity" order="last"/>
 
     <applicationService serviceImplementation="com.intellij.usages.impl.UsageFilteringRuleStateService" client="all"/>
 
@@ -1650,6 +1665,10 @@
                  defaultValue="false"
                  description="Enabled rendering of a selected element context information in the search everywhere list footer"/>
 
+    <registryKey key="search.everywhere.preview"
+                 defaultValue="false"
+                 description="Enables preview of the selected element in the Search Everywhere"/>
+
     <registryKey key="search.everywhere.recents"
                  defaultValue="false"
                  description="Enables recent items on search everywhere tabs"/>
@@ -1709,10 +1728,6 @@
                  defaultValue="false"
                  description="Import only projects that contain cargo.toml file"
     />
-    <registryKey key="transferSettings.vscode.showRust"
-                 defaultValue="false"
-                 description="Suggest rust"
-    />
 
     <toolbarQuickAction implementationClass="com.intellij.openapi.wm.impl.headertoolbar.BuildQuickAction"
                         listGroupID="MainToolbarQuickActions.Run"/>
@@ -1726,6 +1741,10 @@
     <ideEventQueueDispatcher implementation="com.intellij.ide.ui.laf.LaFMnemonicDispatcher"/>
 
     <registryKey key="code.toolbar.debugger.actions" defaultValue="true" description="Add debugger actions into floating toolbar."/>
+
+    <!-- Settings Transfer -->
+    <transferSettings.vscode.pluginMapping id="CommonPluginMapping"
+                                           implementation="com.intellij.ide.customize.transferSettings.providers.vscode.mappings.CommonPluginMapping"/>
   </extensions>
 
   <applicationListeners>
@@ -1787,7 +1806,7 @@
     <listener class="com.intellij.ide.ui.laf.LafAndEditorColorSchemeDynamicPluginListener"
               topic="com.intellij.ide.plugins.DynamicPluginListener"/>
 
-    <listener class="com.intellij.codeInsight.inline.completion.listeners.InlineCompletionAnActionListener"
+    <listener class="com.intellij.codeInsight.inline.completion.listeners.InlineCompletionTypingListener"
               topic="com.intellij.openapi.actionSystem.ex.AnActionListener"/>
     <listener class="com.intellij.codeInsight.inline.completion.listeners.InlineCompletionNewLineAnActionListener"
               topic="com.intellij.openapi.actionSystem.ex.AnActionListener"/>
@@ -1804,6 +1823,8 @@
               topic="com.intellij.openapi.project.DumbService$DumbModeListener"/>
     <listener class="com.intellij.openapi.project.RefreshIconsOnEndOfDumbModeListener"
               topic="com.intellij.openapi.project.DumbService$DumbModeListener"/>
+    <listener class="com.intellij.codeInsight.inline.completion.listeners.InlineCompletionTemplateListener"
+              topic="com.intellij.codeInsight.template.TemplateManagerListener"/>
   </projectListeners>
 
   <xi:include href="/META-INF/RemoteDevUtil.xml">

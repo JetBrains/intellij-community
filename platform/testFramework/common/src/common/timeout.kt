@@ -16,12 +16,12 @@ fun timeoutRunBlocking(timeout: Duration = DEFAULT_TEST_TIMEOUT, action: suspend
   var error: Throwable? = null
   @Suppress("RAW_RUN_BLOCKING")
   runBlocking {
-    val job = launch(block = action)
+    val job = async(block = action)
     @OptIn(DelicateCoroutinesApi::class)
-    launch(blockingDispatcher) {
+    withContext(blockingDispatcher) {
       try {
         withTimeout(timeout) {
-          job.join()
+          job.await()
         }
       }
       catch (e: TimeoutCancellationException) {

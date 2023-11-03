@@ -139,15 +139,15 @@ class KotlinJUnitMixedFrameworkInspectionTest : JUnitMixedFrameworkInspectionTes
     """.trimIndent(), """
       import org.junit.jupiter.api.Test
       
-      public class MyTest {
+      class MyTest {
         @Test
-        public fun testFoo() { }
+        fun testFoo() { }
         
         @org.junit.jupiter.api.Test
-        public fun testBar() { }
+        fun testBar() { }
         
         @org.junit.jupiter.api.Test
-        public fun testFooBar() { }
+        fun testFooBar() { }
       }
     """.trimIndent(), fileName = "MyTest", hint = "Migrate to JUnit 5")
   }

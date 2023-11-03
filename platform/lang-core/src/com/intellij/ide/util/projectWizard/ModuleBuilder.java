@@ -31,6 +31,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ModalityUiUtil;
+import kotlin.Unit;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -89,12 +90,13 @@ public abstract class ModuleBuilder extends AbstractModuleBuilder {
       }
       catch (Exception e) {
         LOG.error(e);
-        return;
+        return Unit.INSTANCE;
       }
 
       if (builder.isAvailable()) {
         result.add(builder);
       }
+      return Unit.INSTANCE;
     });
     return result;
   }

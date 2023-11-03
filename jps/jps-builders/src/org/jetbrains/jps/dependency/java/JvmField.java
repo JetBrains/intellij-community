@@ -3,18 +3,32 @@ package org.jetbrains.jps.dependency.java;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.dependency.diff.DiffCapable;
+import org.jetbrains.org.objectweb.asm.Opcodes;
 
 import java.util.Objects;
 
 public final class JvmField extends ProtoMember implements DiffCapable<JvmField, JvmField.Diff> {
-
+  private static final JVMFlags INLINABLE_FIELD_FLAGS = new JVMFlags(Opcodes.ACC_FINAL);
+  
   public JvmField(JVMFlags flags, String signature, String name, String descriptor, @NotNull Iterable<TypeRepr.ClassType> annotations, Object value) {
     super(flags, signature, name, TypeRepr.getType(descriptor), annotations, value);
   }
 
+  public boolean isSameKind(JvmField other) {
+    return isStatic() == other.isStatic() && isSynthetic() == other.isSynthetic() && isFinal() == other.isFinal() && Objects.equals(getType(), other.getType());
+  }
+
+  public boolean isInlinable() {
+    return getFlags().isAllSet(INLINABLE_FIELD_FLAGS);
+  }
+
   @Override
-  public FieldUsage createUsage(String owner) {
+  public FieldUsage createUsage(JvmNodeReferenceID owner) {
     return new FieldUsage(owner, getName(), getType().getDescriptor());
+  }
+
+  public FieldAssignUsage createAssignUsage(String owner) {
+    return new FieldAssignUsage(owner, getName(), getType().getDescriptor());
   }
 
   @Override

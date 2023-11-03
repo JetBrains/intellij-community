@@ -9,11 +9,10 @@ import com.intellij.util.xmlb.annotations.Property
 @Service(Service.Level.APP)
 internal class InlineCompletionOnboardingComponent : PersistentStateComponent<InlineCompletionOnboardingComponent> {
 
-  @Property
   private var shownTimeMs = 0L
 
   @Property
-  private var tooltipUsedExplicitly = false
+  private var onboardingFinished = false
 
   override fun getState(): InlineCompletionOnboardingComponent {
     return this
@@ -24,16 +23,19 @@ internal class InlineCompletionOnboardingComponent : PersistentStateComponent<In
   }
 
   fun shouldExplicitlyDisplayTooltip(): Boolean {
-    return !tooltipUsedExplicitly && shownTimeMs < MAX_SHOWN_TIME_MS
+    return !onboardingFinished
   }
 
-  fun fireTooltipUsed() {
-    tooltipUsedExplicitly = true
+  fun fireOnboardingFinished() {
+    onboardingFinished = true
   }
 
   fun fireTooltipLivedFor(ms: Long) {
     if (shouldExplicitlyDisplayTooltip()) {
       shownTimeMs += ms
+      if (shownTimeMs >= MAX_SHOWN_TIME_MS) {
+        fireOnboardingFinished()
+      }
     }
   }
 

@@ -25,7 +25,6 @@ import com.intellij.psi.impl.file.PsiFileImplUtil;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.LightVirtualFile;
-import com.intellij.util.LocalTimeCounter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -204,8 +203,8 @@ final class PsiUpdateImpl {
     }
     else {
       return PsiFileFactory.getInstance(project).createFileFromText(
-        origFile.getName(), origFile.getFileType(), manager.getUnescapedText(origFile),
-        LocalTimeCounter.currentTime(), false);
+        origFile.getName(), origFile.getLanguage(), manager.getUnescapedText(origFile),
+        false, true, true, origFile.getVirtualFile());
     }
   }
 

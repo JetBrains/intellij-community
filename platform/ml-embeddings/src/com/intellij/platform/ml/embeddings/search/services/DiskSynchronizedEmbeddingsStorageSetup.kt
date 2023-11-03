@@ -1,59 +1,57 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ml.embeddings.search.services
 
-import com.intellij.platform.util.progress.forEachWithProgress
 import com.intellij.platform.ml.embeddings.search.indices.DiskSynchronizedEmbeddingSearchIndex
 import com.intellij.platform.ml.embeddings.search.indices.IndexableEntity
 import com.intellij.platform.ml.embeddings.search.utils.LowMemoryNotificationManager
+import com.intellij.platform.util.progress.durationStep
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.*
 import java.util.concurrent.atomic.AtomicReference
 
 class DiskSynchronizedEmbeddingsStorageSetup<T : IndexableEntity>(
   private val index: DiskSynchronizedEmbeddingSearchIndex,
   private val indexSetupJob: AtomicReference<Job>,
-  private val indexableEntities: List<T>,
+  private val scanResult: ScanResult<T>,
+  private val shouldShrinkIndex: Boolean,
 ) {
-  private var shouldSaveToDisk = true
+  private var shouldSaveToDisk = false
 
   suspend fun run() = coroutineScope {
-    if (checkEmbeddingsReady(indexableEntities)) {
-      shouldSaveToDisk = false
-      return@coroutineScope
-    }
-
     indexSetupJob.getAndSet(launch {
-      indexableEntities
-        .filter { it.id !in index }
-        .chunked(BATCH_SIZE)
-        .forEachWithProgress(concurrent = false) { batch ->
-          if (index.checkCanAddEntry()) {
-            val ids = batch.map { it.id.intern() }
-            val texts = batch.map { it.indexableRepresentation }
-            EmbeddingIndexingTask.Add(ids, texts).run(index)
-          }
-          else {
-            LowMemoryNotificationManager.getInstance().showNotification()
-          }
+      if (shouldShrinkIndex) {
+        index.onIndexingStart()
+      }
+      scanResult.flow.collect { flow ->
+        // wait until all files are traversed (but maybe not all files' content parsed)
+        scanResult.filesScanFinished.receiveCatching()
+        // filesCount should not change by this moment
+        val duration = 1.0 / scanResult.filesCount.get()
+        durationStep(duration) {
+          flow.filter { it.id !in index }
+            .collect {
+              if (index.checkCanAddEntry()) {
+                shouldSaveToDisk = true
+                EmbeddingIndexingTask.Add(listOf(it.id), listOf(it.indexableRepresentation)).run(index)
+              }
+              else {
+                LowMemoryNotificationManager.getInstance().showNotification()
+              }
+            }
         }
+      }
     })?.cancel()
   }
 
   fun onFinish(cs: CoroutineScope) {
     indexSetupJob.set(null)
+    if (shouldShrinkIndex) {
+      index.onIndexingFinish()
+    }
     if (shouldSaveToDisk) {
       cs.launch(Dispatchers.IO) {
         index.saveToDisk()
       }
     }
-  }
-
-  private fun checkEmbeddingsReady(indexableEntities: List<IndexableEntity>): Boolean {
-    val idToCount = indexableEntities.groupingBy { it.id.intern() }.eachCount()
-    index.filterIdsTo(idToCount)
-    return index.checkAllIdsPresent(idToCount.keys)
-  }
-
-  companion object {
-    private const val BATCH_SIZE = 1
   }
 }

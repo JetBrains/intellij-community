@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.ui.create.model
 
+import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.async.modelFlow
 import com.intellij.collaboration.ui.ListenableProgressIndicator
 import com.intellij.collaboration.ui.icon.IconsProvider
@@ -9,6 +10,7 @@ import com.intellij.collaboration.util.SingleCoroutineLauncher
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.childScope
 import com.intellij.vcs.log.VcsCommitMetadata
 import git4idea.GitBranch
@@ -22,8 +24,10 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.future.await
 import org.jetbrains.plugins.gitlab.GitLabProjectsManager
+import org.jetbrains.plugins.gitlab.api.data.GitLabPlan
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabProject
+import org.jetbrains.plugins.gitlab.mergerequest.util.GitLabMergeRequestReviewersUtil
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
 
@@ -34,6 +38,7 @@ internal interface GitLabMergeRequestCreateViewModel {
 
   val isBusy: Flow<Boolean>
 
+  val plan: Deferred<GitLabPlan>
   val branchState: Flow<BranchState?>
 
   val existingMergeRequest: Flow<String?>
@@ -51,8 +56,7 @@ internal interface GitLabMergeRequestCreateViewModel {
   fun updateTitle(text: String)
   fun updateBranchState(state: BranchState?)
 
-  fun addReviewer(reviewer: GitLabUserDTO)
-  fun removeReviewer(reviewer: GitLabUserDTO)
+  fun adjustReviewer(point: RelativePoint)
 
   fun createMergeRequest()
 }
@@ -64,12 +68,15 @@ internal class GitLabMergeRequestCreateViewModelImpl(
   override val projectsManager: GitLabProjectsManager,
   override val projectData: GitLabProject,
   override val avatarIconProvider: IconsProvider<GitLabUserDTO>,
-  override val openReviewTabAction: suspend (mrIid: String) -> Unit
+  override val openReviewTabAction: suspend (mrIid: String) -> Unit,
+  private val onReviewCreated: suspend () -> Unit
 ) : GitLabMergeRequestCreateViewModel {
   private val cs: CoroutineScope = parentCs.childScope()
   private val taskLauncher = SingleCoroutineLauncher(cs)
 
   override val isBusy: Flow<Boolean> = taskLauncher.busy
+
+  override val plan: Deferred<GitLabPlan> = projectData.plan
 
   private val listenableProgressIndicator = ListenableProgressIndicator()
   override val creatingProgressText: Flow<String?> = callbackFlow {
@@ -157,15 +164,17 @@ internal class GitLabMergeRequestCreateViewModelImpl(
     _branchState.value = state
   }
 
-  override fun addReviewer(reviewer: GitLabUserDTO) {
-    // TODO: add ability to select several reviewers
-    val updatedReviewers = _adjustedReviewers.value + reviewer
-    _adjustedReviewers.value = updatedReviewers
-  }
+  override fun adjustReviewer(point: RelativePoint) {
+    cs.launchNow(Dispatchers.Main) {
+      val originalReviewersIds = adjustedReviewers.value.mapTo(mutableSetOf<String>(), GitLabUserDTO::id)
+      val updatedReviewers = if (plan.await() == GitLabPlan.FREE)
+        GitLabMergeRequestReviewersUtil.selectReviewer(point, originalReviewersIds, potentialReviewers, avatarIconProvider)
+      else
+        GitLabMergeRequestReviewersUtil.selectReviewers(point, originalReviewersIds, potentialReviewers, avatarIconProvider)
 
-  override fun removeReviewer(reviewer: GitLabUserDTO) {
-    val updatedReviewers = _adjustedReviewers.value - reviewer
-    _adjustedReviewers.value = updatedReviewers
+      updatedReviewers ?: return@launchNow
+      _adjustedReviewers.value = updatedReviewers
+    }
   }
 
   override fun createMergeRequest() {
@@ -181,6 +190,7 @@ internal class GitLabMergeRequestCreateViewModelImpl(
         )
         projectData.adjustReviewers(mergeRequest.iid, adjustedReviewers.value)
         openReviewTabAction(mergeRequest.iid)
+        onReviewCreated()
       }
       catch (e: CancellationException) {
         throw e

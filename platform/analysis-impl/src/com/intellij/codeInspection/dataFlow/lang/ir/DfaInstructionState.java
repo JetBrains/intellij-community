@@ -54,7 +54,7 @@ public class DfaInstructionState implements Comparable<DfaInstructionState> {
 
   @Override
   public int hashCode() {
-    return Objects.hash(myBeforeMemoryState, myInstruction);
+    return 31 * myBeforeMemoryState.hashCode() + myInstruction.hashCode();
   }
 
   @Override

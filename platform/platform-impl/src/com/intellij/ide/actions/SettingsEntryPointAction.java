@@ -210,16 +210,20 @@ public final class SettingsEntryPointAction extends DumbAwareAction
             if (action instanceof LastAction lastAction) {
               Presentation presentation = action.getTemplatePresentation();
               JBLabel label = new JBLabel(presentation.getIcon());
+              label.setBorder(JBUI.Borders.emptyRight(JBUI.CurrentTheme.ActionsList.elementIconGap() - 2));
 
-              JPanel panel = new OpaquePanel(new BorderLayout(JBUI.scale(4), 0), isSelected
-                                                                                 ? JBUI.CurrentTheme.ManagedIde.MENU_ITEM_HOVER
-                                                                                 : JBUI.CurrentTheme.Advertiser.background()) {
+              JPanel panel = new OpaquePanel(new BorderLayout(), isSelected
+                                                                 ? JBUI.CurrentTheme.ManagedIde.MENU_ITEM_HOVER
+                                                                 : JBUI.CurrentTheme.Advertiser.background()) {
                 @Override
                 public AccessibleContext getAccessibleContext() {
                   return label.getAccessibleContext();
                 }
               };
-              panel.setBorder(JBUI.Borders.empty(12, 14));
+
+              float leftRightInset = JBUI.CurrentTheme.Popup.Selection.LEFT_RIGHT_INSET.getUnscaled();
+              Insets innerInsets = ((JBInsets)JBUI.CurrentTheme.Popup.Selection.innerInsets()).getUnscaled();
+              panel.setBorder(JBUI.Borders.empty(12, (int)(leftRightInset + innerInsets.left), 12, 14));
 
               JPanel iconPanel = new NonOpaquePanel(new BorderLayout());
               iconPanel.add(label, BorderLayout.NORTH);
@@ -583,6 +587,19 @@ public final class SettingsEntryPointAction extends DumbAwareAction
   }
 
   public abstract static class LastAction extends DumbAwareAction {
+    protected LastAction() {
+    }
+
+    protected LastAction(@Nullable @NlsActions.ActionText String text) {
+      super(text);
+    }
+
+    protected LastAction(@Nullable @NlsActions.ActionText String text,
+                         @Nullable @NlsActions.ActionDescription String description,
+                         @Nullable Icon icon) {
+      super(text, description, icon);
+    }
+
     public abstract @NotNull @NlsActions.ActionText String getSecondText();
   }
 }

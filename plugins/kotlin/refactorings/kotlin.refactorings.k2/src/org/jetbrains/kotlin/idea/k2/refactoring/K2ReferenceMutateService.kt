@@ -19,7 +19,6 @@ import org.jetbrains.kotlin.idea.base.codeInsight.KotlinOptimizeImportsFacility
 import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.kdoc.KDocElementFactory
-import org.jetbrains.kotlin.idea.refactoring.intentions.OperatorToFunctionConverter
 import org.jetbrains.kotlin.idea.refactoring.rename.KtReferenceMutateServiceBase
 import org.jetbrains.kotlin.idea.references.KDocReference
 import org.jetbrains.kotlin.idea.references.KtReference
@@ -27,7 +26,9 @@ import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.references.KtSimpleReference
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.getPossiblyQualifiedCallExpression
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElement
+
 /**
  * At the moment, this implementation of [org.jetbrains.kotlin.idea.references.KtReferenceMutateService] is not able to do some of the
  * required operations. It is OK and on purpose - this functionality will be added later.
@@ -77,17 +78,17 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
         shorteningMode: KtSimpleNameReference.ShorteningMode, // not supported in K2, it always does FORCED_SHORTENING
         targetElement: PsiElement?
     ): PsiElement {
-        if (targetElement !is KtElement) operationNotSupportedInK2Error() // TODO fix reference shortener for non-Kotlin target elements
         val expression = simpleNameReference.expression
         if (fqName.isRoot) return expression
+        val writableFqn = if (fqName.pathSegments().last().asString() == "Companion") fqName.parent() else fqName
         val importDirective = expression.parentOfType<KtImportDirective>(withSelf = false)
-        if (importDirective != null) return importDirective.replaceWith(fqName) ?: expression
+        if (importDirective != null) return importDirective.replaceWith(writableFqn) ?: expression
         val newElement = expression.containingKtFile.withOptimizedImports {
             when (val elementToReplace = expression.getQualifiedElement()) {
-                is KtUserType -> elementToReplace.replaceWith(fqName)
-                is KtDotQualifiedExpression -> elementToReplace.replaceWith(fqName)
-                is KtCallExpression -> elementToReplace.replaceWith(fqName)
-                is KtSimpleNameExpression -> elementToReplace.replaceWith(fqName)
+                is KtUserType -> elementToReplace.replaceWith(writableFqn)
+                is KtDotQualifiedExpression -> elementToReplace.replaceWith(writableFqn)
+                is KtCallExpression -> elementToReplace.replaceWith(writableFqn)
+                is KtSimpleNameExpression -> elementToReplace.replaceWith(writableFqn)
                 else -> null
             }
         } ?: expression
@@ -186,8 +187,9 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
         }
     }
 
-    override fun replaceWithImplicitInvokeInvocation(newExpression: KtDotQualifiedExpression): KtExpression? =
-      OperatorToFunctionConverter.replaceExplicitInvokeCallWithImplicit(newExpression)
+    override fun canMoveLambdaOutsideParentheses(newExpression: KtDotQualifiedExpression): Boolean {
+        return newExpression.getPossiblyQualifiedCallExpression()?.canMoveLambdaOutsideParentheses() == true
+    }
 
     private fun operationNotSupportedInK2Error(): Nothing {
         throw IncorrectOperationException("K2 plugin does not yet support this operation")

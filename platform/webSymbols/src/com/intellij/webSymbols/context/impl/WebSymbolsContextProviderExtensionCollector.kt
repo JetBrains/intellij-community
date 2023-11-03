@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.webSymbols.context.impl
 
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -30,7 +30,7 @@ class WebSymbolsContextProviderExtensionCollector(private val epName: ExtensionP
 
   fun allOf(kind: String): Map<String /* name */, List<WebSymbolsContextProvider>> =
     allOfCache.computeIfAbsent(kind) {
-      epName.extensions.asSequence()
+      epName.extensionList.asSequence()
         .filter { it.kind == kind && it.name != null }
         .groupBy { it.name!! }
         .mapValues { (_, list) -> list.map { it.instance } }

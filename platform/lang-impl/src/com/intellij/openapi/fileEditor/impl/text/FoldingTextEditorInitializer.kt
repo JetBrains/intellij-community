@@ -15,7 +15,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 private class FoldingTextEditorInitializer : TextEditorInitializer {
-  override suspend fun initializeEditor(project: Project, file: VirtualFile, document: Document, editorSupplier: suspend () -> EditorEx) {
+  override suspend fun initializeEditor(project: Project,
+                                        file: VirtualFile,
+                                        document: Document,
+                                        editorSupplier: suspend () -> EditorEx,
+                                        highlighterReady: suspend () -> Unit) {
     if (project.isDefault) {
       return
     }

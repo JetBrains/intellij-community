@@ -7,6 +7,7 @@ import com.intellij.ide.CopyProvider;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.VcsInternalDataKeys;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.colors.EditorColorsListener;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -333,7 +334,7 @@ public final class FileHistoryPanelImpl extends JPanel implements DataProvider, 
     myDualView.setTreeCellRenderer(new MyTreeCellRenderer(myDualView.getTree().getCellRenderer(), () -> myHistorySession));
     myDualView.setCellWrapper(new MyCellWrapper(() -> myHistorySession));
 
-    myDualView.installDoubleClickHandler(EmptyAction.wrap(ActionManager.getInstance().getAction(IdeActions.ACTION_SHOW_DIFF_COMMON)));
+    myDualView.installDoubleClickHandler(ActionUtil.wrap(IdeActions.ACTION_SHOW_DIFF_COMMON));
 
     myDualView.getFlatView().getTableViewModel().setSortable(true);
     RowSorter<? extends TableModel> rowSorter = myDualView.getFlatView().getRowSorter();

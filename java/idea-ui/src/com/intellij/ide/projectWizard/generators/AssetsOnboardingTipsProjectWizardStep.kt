@@ -5,7 +5,6 @@ import com.intellij.ide.fileTemplates.FileTemplateManager
 import com.intellij.ide.wizard.NewProjectOnboardingTips
 import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.ide.wizard.OnboardingTipsInstallationInfo
-import com.intellij.ide.wizard.whenProjectCreated
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import org.jetbrains.annotations.ApiStatus
@@ -18,13 +17,13 @@ abstract class AssetsOnboardingTipsProjectWizardStep(parent: NewProjectWizardSte
 
   protected fun shouldRenderOnboardingTips(): Boolean = Registry.`is`("doc.onboarding.tips.render")
 
-  protected fun prepareTipsInEditor(project: Project, templateWithoutTips: String, breakpointSelector: (CharSequence) -> Int?) = whenProjectCreated(project) {
+  protected fun prepareOnboardingTips(project: Project, templateWithoutTips: String, fileName: String, breakpointSelector: (CharSequence) -> Int?) {
     val templateManager = FileTemplateManager.getDefaultInstance()
     val properties = getTemplateProperties()
     val defaultProperties = templateManager.defaultProperties
     val template = templateManager.getInternalTemplate(templateWithoutTips)
     val simpleSampleText = template.getText(defaultProperties + properties)
-    val onboardingInfo = OnboardingTipsInstallationInfo(simpleSampleText, breakpointSelector)
+    val onboardingInfo = OnboardingTipsInstallationInfo(simpleSampleText, fileName, breakpointSelector)
     for (extension in NewProjectOnboardingTips.EP_NAME.extensions) {
       extension.installTips(project, onboardingInfo)
     }

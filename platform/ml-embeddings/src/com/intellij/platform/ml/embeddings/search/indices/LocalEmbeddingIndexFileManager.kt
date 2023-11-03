@@ -8,6 +8,8 @@ import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.intellij.util.io.outputStream
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.ensureActive
 import java.io.RandomAccessFile
 import java.nio.ByteBuffer
 import java.nio.file.Files
@@ -84,16 +86,21 @@ class LocalEmbeddingIndexFileManager(root: Path, private val dimensions: Int = D
     }
   }
 
-  fun loadIndex(): Pair<List<String>, List<FloatTextEmbedding>>? = lock.read {
-    if (!idsPath.exists() || !embeddingsPath.exists()) return null
-    val ids = mapper.readValue<List<String>>(idsPath.toFile()).map { it.intern() }.toMutableList()
-    val buffer = ByteArray(EMBEDDING_ELEMENT_SIZE)
-    return embeddingsPath.inputStream().use { input ->
-      ids to ids.map {
-        FloatTextEmbedding(FloatArray(dimensions) {
-          input.read(buffer)
-          ByteBuffer.wrap(buffer).getFloat()
-        })
+  suspend fun loadIndex(): Pair<List<String>, List<FloatTextEmbedding>>? = coroutineScope {
+    ensureActive()
+    lock.read {
+      ensureActive()
+      if (!idsPath.exists() || !embeddingsPath.exists()) return@coroutineScope null
+      val ids = mapper.readValue<List<String>>(idsPath.toFile()).map { it.intern() }.toMutableList()
+      val buffer = ByteArray(EMBEDDING_ELEMENT_SIZE)
+      embeddingsPath.inputStream().use { input ->
+        ids to ids.map {
+          ensureActive()
+          FloatTextEmbedding(FloatArray(dimensions) {
+            input.read(buffer)
+            ByteBuffer.wrap(buffer).getFloat()
+          })
+        }
       }
     }
   }
@@ -104,15 +111,20 @@ class LocalEmbeddingIndexFileManager(root: Path, private val dimensions: Int = D
     }
   }
 
-  fun saveIndex(ids: List<String>, embeddings: List<FloatTextEmbedding>) = lock.write {
-    idsPath.outputStream().use { output ->
-      mapper.writer(prettyPrinter).writeValue(output, ids)
-    }
-    val buffer = ByteBuffer.allocate(EMBEDDING_ELEMENT_SIZE)
-    embeddingsPath.outputStream().use { output ->
-      embeddings.forEach { embedding ->
-        embedding.values.forEach {
-          output.write(buffer.putFloat(0, it).array())
+  suspend fun saveIndex(ids: List<String>, embeddings: List<FloatTextEmbedding>) = coroutineScope {
+    ensureActive()
+    lock.write {
+      ensureActive()
+      idsPath.outputStream().use { output ->
+        mapper.writer(prettyPrinter).writeValue(output, ids)
+      }
+      val buffer = ByteBuffer.allocate(EMBEDDING_ELEMENT_SIZE)
+      embeddingsPath.outputStream().use { output ->
+        embeddings.forEach { embedding ->
+          ensureActive()
+          embedding.values.forEach {
+            output.write(buffer.putFloat(0, it).array())
+          }
         }
       }
     }

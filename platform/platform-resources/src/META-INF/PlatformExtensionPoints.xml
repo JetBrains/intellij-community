@@ -218,6 +218,10 @@
       <with attribute="instance" implements="com.intellij.openapi.options.SearchableConfigurable"/>
     </extensionPoint>
 
+    <extensionPoint name="projectCustomDataSynchronizer" interface="com.intellij.openapi.project.ProjectCustomDataSynchronizer" dynamic="true"/>
+    <extensionPoint name="virtualFileCustomDataProvider" interface="com.intellij.openapi.vfs.VirtualFileCustomDataProvider" dynamic="true"/>
+    <extensionPoint name="virtualFileCustomDataConsumer" interface="com.intellij.openapi.vfs.VirtualFileCustomDataConsumer" dynamic="true"/>
+
     <extensionPoint name="statusBarWidgetProvider" interface="com.intellij.openapi.wm.StatusBarWidgetProvider" dynamic="true"/>
     <extensionPoint name="statusBarWidgetFactory" interface="com.intellij.openapi.wm.StatusBarWidgetFactory" dynamic="true"/>
 
@@ -509,7 +513,7 @@
     <extensionPoint name="warmupConfigurator" interface="com.intellij.ide.warmup.WarmupConfigurator" dynamic="true" />
     <extensionPoint name="warmupLogger" interface="com.intellij.ide.warmup.WarmupLogger" dynamic="true" />
 
-    <extensionPoint name="activityInProgressWitness" interface="com.intellij.platform.backend.observation.ActivityInProgressWitness"
+    <extensionPoint name="activityInProgressTracker" interface="com.intellij.platform.backend.observation.ActivityInProgressTracker"
                     dynamic="true"/>
 
     <extensionPoint name="internal.ml.featureProvider" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
@@ -536,5 +540,10 @@
     <extensionPoint name="uiDslRendererProvider" interface="com.intellij.ui.dsl.listCellRenderer.UiDslRendererProvider" dynamic="true"/>
 
     <extensionPoint name="notificationRouter" interface="com.intellij.notification.NotificationRouter" dynamic="true"/>
+
+    <!-- Settings Transfer -->
+    <extensionPoint name="transferSettings.vscode.pluginMapping"
+                    interface="com.intellij.ide.customize.transferSettings.providers.vscode.mappings.VSCodePluginMapping"
+                    dynamic="true" />
   </extensionPoints>
 </idea-plugin>

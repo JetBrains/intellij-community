@@ -238,7 +238,7 @@ public final class WolfTheProblemSolverImpl extends WolfTheProblemSolver impleme
 
   boolean isToBeHighlighted(@NotNull VirtualFile virtualFile) {
     return ReadAction.compute(() -> {
-      for (Condition<VirtualFile> filter : FILTER_EP_NAME.getExtensions(myProject)) {
+      for (Condition<VirtualFile> filter : FILTER_EP_NAME.getExtensionList(myProject)) {
         ProgressManager.checkCanceled();
         if (filter.value(virtualFile)) {
           return true;

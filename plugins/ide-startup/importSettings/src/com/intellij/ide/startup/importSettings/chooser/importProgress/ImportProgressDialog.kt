@@ -1,3 +1,4 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.startup.importSettings.chooser.importProgress
 
 import com.intellij.CommonBundle
@@ -5,12 +6,14 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.startup.importSettings.ImportSettingsBundle
 import com.intellij.ide.startup.importSettings.chooser.ui.BannerOverlay
 import com.intellij.ide.startup.importSettings.chooser.ui.PageProvider
+import com.intellij.ide.startup.importSettings.chooser.ui.WizardPageTracker
 import com.intellij.ide.startup.importSettings.data.DialogImportData
 import com.intellij.ide.startup.importSettings.data.ImportFromProduct
 import com.intellij.ide.startup.importSettings.data.SettingsService
 import com.intellij.openapi.rd.createLifetime
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.platform.ide.bootstrap.StartupWizardStage
 import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.util.minimumWidth
@@ -47,7 +50,7 @@ class ImportProgressDialog(importFromProduct: DialogImportData): PageProvider(fa
       }
 
       isOpaque = false
-      border = JBUI.Borders.emptyBottom(20)
+      border = JBUI.Borders.empty(30, 0, 20, 0)
     })
 
 
@@ -82,7 +85,7 @@ class ImportProgressDialog(importFromProduct: DialogImportData): PageProvider(fa
         cn.gridy = 1
         add(HLabel(to.item.name).label, cn)
 
-        border = JBUI.Borders.emptyBottom(20)
+        border = JBUI.Borders.emptyBottom(18)
 
       })
     }
@@ -95,7 +98,7 @@ class ImportProgressDialog(importFromProduct: DialogImportData): PageProvider(fa
         preferredWidth = JBUI.scale(280)
       })
 
-      val hLabel = HLabel("")
+      val hLabel = CommentLabel("")
       importFromProduct.progress.progressMessage.advise(Lifetime.Eternal) {
         hLabel.text = if (it != null) "<center>$it</center>" else "&nbsp"
       }
@@ -145,7 +148,7 @@ class ImportProgressDialog(importFromProduct: DialogImportData): PageProvider(fa
     return arrayOf()
   }
 
-  private class HLabel(txt: String) {
+  private open class HLabel(txt: String) {
     var text: @NlsContexts.Label String = ""
       set(value) {
         if (field == value) return
@@ -156,8 +159,12 @@ class ImportProgressDialog(importFromProduct: DialogImportData): PageProvider(fa
     private val lbl = object : JLabel() {
       override fun getPreferredSize(): Dimension {
         val preferredSize = super.getPreferredSize()
-        return Dimension(0, preferredSize.height)
+        return getPref(preferredSize.height)
       }
+    }
+
+    protected open fun getPref(prefH: Int): Dimension {
+      return Dimension(0, prefH)
     }
 
     val label: JComponent
@@ -169,7 +176,16 @@ class ImportProgressDialog(importFromProduct: DialogImportData): PageProvider(fa
       lbl.isOpaque = false
       lbl.minimumWidth = 10
       lbl.horizontalAlignment = SwingConstants.CENTER
+      lbl.verticalAlignment = SwingConstants.TOP
       text = txt
     }
   }
+
+  private class CommentLabel(txt: String) : HLabel(txt) {
+    override fun getPref(prefH: Int): Dimension {
+      return Dimension(0, Math.max(prefH, JBUI.scale(45)))
+    }
+  }
+
+  override val tracker = WizardPageTracker(StartupWizardStage.ImportProgressPage)
 }

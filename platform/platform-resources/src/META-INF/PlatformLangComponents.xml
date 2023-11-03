@@ -39,10 +39,10 @@
     <postStartupActivity implementation="com.intellij.openapi.wm.impl.WindowDressing$MyStartupActivity" />
 
     <applicationService serviceInterface="com.intellij.openapi.command.undo.UndoManager"
-                        serviceImplementation="com.intellij.openapi.command.impl.UndoManagerImpl" preload="await"/>
+                        serviceImplementation="com.intellij.openapi.command.impl.UndoManagerImpl" preload="notHeadless"/>
 
     <projectService serviceInterface="com.intellij.openapi.command.undo.UndoManager"
-                    serviceImplementation="com.intellij.openapi.command.impl.UndoManagerImpl" preload="await"/>
+                    serviceImplementation="com.intellij.openapi.command.impl.UndoManagerImpl" preload="notHeadless"/>
 
     <applicationService serviceInterface="com.intellij.ide.ui.LafManager"
                         serviceImplementation="com.intellij.ide.ui.laf.LafManagerImpl"

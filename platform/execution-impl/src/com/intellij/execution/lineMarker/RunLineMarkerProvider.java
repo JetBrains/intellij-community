@@ -20,6 +20,8 @@ import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.MarkupEditorFilter;
 import com.intellij.openapi.editor.markup.MarkupEditorFilterFactory;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -42,7 +44,7 @@ import java.util.List;
 /**
  * @author Dmitry Avdeev
  */
-public class RunLineMarkerProvider extends LineMarkerProviderDescriptor {
+public class RunLineMarkerProvider extends LineMarkerProviderDescriptor implements DumbAware {
   private static final Comparator<Info> COMPARATOR = (a, b) -> {
     if (b.shouldReplace(a)) {
       return 1;
@@ -58,7 +60,8 @@ public class RunLineMarkerProvider extends LineMarkerProviderDescriptor {
     InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(element.getProject());
     if (injectedLanguageManager.isInjectedFragment(element.getContainingFile())) return null;
 
-    List<RunLineMarkerContributor> contributors = RunLineMarkerContributor.EXTENSION.allForLanguageOrAny(element.getLanguage());
+    List<RunLineMarkerContributor> contributors =
+      DumbService.getInstance(element.getProject()).filterByDumbAwareness(RunLineMarkerContributor.EXTENSION.allForLanguageOrAny(element.getLanguage()));
     Icon icon = null;
     List<Info> infos = null;
     for (RunLineMarkerContributor contributor : contributors) {
@@ -84,7 +87,8 @@ public class RunLineMarkerProvider extends LineMarkerProviderDescriptor {
   public void collectSlowLineMarkers(@NotNull List<? extends PsiElement> elements,
                                      @NotNull Collection<? super LineMarkerInfo<?>> result) {
     for (PsiElement element : elements) {
-      List<RunLineMarkerContributor> contributors = RunLineMarkerContributor.EXTENSION.allForLanguageOrAny(element.getLanguage());
+      List<RunLineMarkerContributor> contributors = DumbService.getInstance(element.getProject())
+        .filterByDumbAwareness(RunLineMarkerContributor.EXTENSION.allForLanguageOrAny(element.getLanguage()));
       Icon icon = null;
       List<Info> infos = null;
       for (RunLineMarkerContributor contributor : contributors) {
@@ -211,6 +215,11 @@ public class RunLineMarkerProvider extends LineMarkerProviderDescriptor {
         @Override
         public ActionGroup getPopupMenuActions() {
           return myActionGroup;
+        }
+
+        @Override
+        public boolean isDumbAware() {
+          return myActionGroup.isDumbAware();
         }
       };
     }

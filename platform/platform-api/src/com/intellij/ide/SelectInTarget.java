@@ -1,13 +1,15 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
-import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.ProjectExtensionPointName;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 public interface SelectInTarget {
-  ExtensionPointName<SelectInTarget> EP_NAME = new ExtensionPointName<>("com.intellij.selectInTarget");
+  @ApiStatus.Internal
+  ProjectExtensionPointName<SelectInTarget> EP_NAME = new ProjectExtensionPointName<>("com.intellij.selectInTarget");
 
   @Override
   @Nls String toString();

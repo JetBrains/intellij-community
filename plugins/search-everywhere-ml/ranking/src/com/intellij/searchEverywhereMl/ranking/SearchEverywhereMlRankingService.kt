@@ -9,22 +9,19 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.searchEverywhereMl.RANKING_EP_NAME
 import com.intellij.searchEverywhereMl.SearchEverywhereMlExperiment
 import com.intellij.searchEverywhereMl.SearchEverywhereTabWithMlRanking
-import com.intellij.searchEverywhereMl.settings.SearchEverywhereMlSettings
 import com.intellij.searchEverywhereMl.SemanticSearchEverywhereContributor
+import com.intellij.searchEverywhereMl.settings.SearchEverywhereMlSettings
 import com.intellij.ui.components.JBList
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 import javax.swing.ListCellRenderer
 
+internal val searchEverywhereMlRankingService: SearchEverywhereMlRankingService?
+  get() = RANKING_EP_NAME.findExtensionOrFail(SearchEverywhereMlRankingService::class.java).takeIf { it.isEnabled() }
 
 @ApiStatus.Internal
 class SearchEverywhereMlRankingService : SearchEverywhereMlService {
-  companion object {
-    fun getService(): SearchEverywhereMlRankingService?
-      = RANKING_EP_NAME.findExtensionOrFail(SearchEverywhereMlRankingService::class.java).takeIf { it.isEnabled() }
-  }
-
   private val sessionIdCounter = AtomicInteger()
   private var activeSession: AtomicReference<SearchEverywhereMLSearchSession?> = AtomicReference()
 

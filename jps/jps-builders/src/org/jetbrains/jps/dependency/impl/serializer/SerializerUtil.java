@@ -498,15 +498,17 @@ public final class SerializerUtil {
   }
 
   static FieldAssignUsage readFieldAssignUsage(DataInput in) throws IOException {
-    FieldUsage fieldUsage = readFieldUsage(in);
-    return (FieldAssignUsage)fieldUsage;
+    String owner = in.readUTF();
+    String name = in.readUTF();
+    String descriptor = in.readUTF();
+    return new FieldAssignUsage(owner, name, descriptor);
   }
 
   static FieldUsage readFieldUsage(DataInput in) throws IOException {
-    String refId = in.readUTF();
+    String owner = in.readUTF();
     String name = in.readUTF();
     String descriptor = in.readUTF();
-    return new FieldUsage(refId, name, descriptor);
+    return new FieldUsage(owner, name, descriptor);
   }
 
   static JvmClass readJvmClass(DataInput in) throws IOException {
@@ -639,7 +641,7 @@ public final class SerializerUtil {
     Object value = readValueObject(in);
     return new ProtoMember(proto.getFlags(), proto.getSignature(), proto.getName(), typeRepr, proto.getAnnotations(), value) {
       @Override
-      public MemberUsage createUsage(String owner) {
+      public MemberUsage createUsage(JvmNodeReferenceID owner) {
         return null;
       }
     };

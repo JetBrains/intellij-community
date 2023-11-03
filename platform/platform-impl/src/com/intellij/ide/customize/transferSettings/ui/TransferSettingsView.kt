@@ -42,8 +42,15 @@ class TransferSettingsView(private val config: TransferSettingsConfiguration, pr
   private fun initPanel() = JPanel().apply {
     layout = MigLayout("ins 0, novisualpadding, fill")
     addComponentListener(object : ComponentAdapter() {
-      override fun componentShown(e: ComponentEvent?) {
+      private var shown = false
+
+      override fun componentShown(e: ComponentEvent?) = onEvent()
+      override fun componentResized(e: ComponentEvent?) = onEvent()
+
+      private fun onEvent() {
+        if (shown) return
         TransferSettingsCollector.logTransferSettingsShown()
+        shown = true
       }
     })
 

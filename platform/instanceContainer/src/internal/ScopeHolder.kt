@@ -26,7 +26,10 @@ class ScopeHolder(
    */
   private val _registeredScopes = AtomicReference<PersistentMap<CoroutineScope, CoroutineScope>>(persistentHashMapOf())
 
-  fun intersectScope(pluginScope: CoroutineScope): CoroutineScope {
+  fun intersectScope(pluginScope: CoroutineScope?): CoroutineScope {
+    if (pluginScope == null) {
+      return containerScope // no intersection
+    }
     var scopes = _registeredScopes.get()
     scopes[pluginScope]?.let {
       return it

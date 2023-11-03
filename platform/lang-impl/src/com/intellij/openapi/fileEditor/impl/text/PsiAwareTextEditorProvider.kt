@@ -18,6 +18,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory
 import com.intellij.openapi.editor.impl.EditorFactoryImpl
+import com.intellij.openapi.editor.impl.EditorGutterLayout
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.fileEditor.*
 import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader.Companion.isEditorLoaded
@@ -70,9 +71,11 @@ open class PsiAwareTextEditorProvider : TextEditorProvider(), AsyncFileEditorPro
       }
 
       val editorDeferred = CompletableDeferred<EditorEx>()
-      val editorSupplier = suspend { editorDeferred.await() }
 
       val task = asyncLoader.coroutineScope.async(CoroutineName("TextEditorInitializer")) {
+        val editorSupplier = suspend { editorDeferred.await() }
+        val highlighterReady = suspend { highlighterDeferred.join() }
+
         coroutineScope {
           for (item in EDITOR_LOADER_EP.filterableLazySequence()) {
             if (item.pluginDescriptor.pluginId != PluginManagerCore.CORE_ID) {
@@ -83,7 +86,11 @@ open class PsiAwareTextEditorProvider : TextEditorProvider(), AsyncFileEditorPro
             val initializer = item.instance ?: continue
             launch(CoroutineName(item.implementationClassName)) {
               catchingExceptionsAsync {
-                initializer.initializeEditor(project = project, file = file, document = effectiveDocument, editorSupplier = editorSupplier)
+                initializer.initializeEditor(project = project,
+                                             file = file,
+                                             document = effectiveDocument,
+                                             editorSupplier = editorSupplier,
+                                             highlighterReady = highlighterReady)
               }
             }
           }
@@ -104,6 +111,7 @@ open class PsiAwareTextEditorProvider : TextEditorProvider(), AsyncFileEditorPro
       object : AsyncFileEditorProvider.Builder() {
         override fun build(): FileEditor {
           val editor = factory.createMainEditor(effectiveDocument, project, file, highlighter)
+          editor.gutterComponentEx.setInitialIconAreaWidth(EditorGutterLayout.getInitialGutterWidth())
           val textEditor = PsiAwareTextEditorImpl(project = project, file = file, editor = editor, asyncLoader = asyncLoader)
           editorDeferred.complete(textEditor.editor)
           asyncLoader.start(textEditor = textEditor, tasks = listOf(task))

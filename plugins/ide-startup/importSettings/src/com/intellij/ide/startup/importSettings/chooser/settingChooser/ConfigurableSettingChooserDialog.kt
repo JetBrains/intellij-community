@@ -4,19 +4,22 @@ package com.intellij.ide.startup.importSettings.chooser.settingChooser
 import com.intellij.ide.startup.importSettings.ImportSettingsBundle
 import com.intellij.ide.startup.importSettings.chooser.importProgress.ImportProgressDialog
 import com.intellij.ide.startup.importSettings.chooser.ui.PageProvider
+import com.intellij.ide.startup.importSettings.chooser.ui.WizardPageTracker
 import com.intellij.ide.startup.importSettings.data.*
+import com.intellij.platform.ide.bootstrap.StartupWizardStage
 import java.awt.event.ActionEvent
 import javax.swing.Action
 
 fun createDialog(provider: ActionsDataProvider<*>, product: SettingsContributor): PageProvider {
-  if(provider is SyncActionsDataProvider && provider.productService.baseProduct(product.id)) {
+  if (provider is SyncActionsDataProvider && provider.productService.baseProduct(product.id)) {
     return SyncSettingDialog(provider, product)
   }
   return ConfigurableSettingChooserDialog(provider, product)
 }
 
-class ConfigurableSettingChooserDialog<T : BaseService>(val provider: ActionsDataProvider<T>, product: SettingsContributor) : SettingChooserDialog(provider,
-                                                                                                                                                   product) {
+class ConfigurableSettingChooserDialog<T : BaseService>(val provider: ActionsDataProvider<T>,
+                                                        product: SettingsContributor) : SettingChooserDialog(provider,
+                                                                                                             product) {
   override fun createActions(): Array<Action> {
     return arrayOf(okAction, getBackAction())
   }
@@ -29,16 +32,24 @@ class ConfigurableSettingChooserDialog<T : BaseService>(val provider: ActionsDat
 
   override fun doOKAction() {
     val productService = provider.productService
-
-
-    val dataForSaves = settingPanes.map { it.item }.filter { it.configurable && it.selected }.map {
-      val chs = it.childItems?.filter { item -> item.selected }?.map { item -> item.child.id }?.toList()
-      DataForSave(it.setting.id, chs)
-    }.toList()
-
+    val dataForSaves = prepareDataForSave()
     val importSettings = productService.importSettings(product.id, dataForSaves)
     nextStep(ImportProgressDialog(importSettings))
   }
+
+  override fun changeHandler() {
+    val dataForSaves = prepareDataForSave()
+    okAction.isEnabled = dataForSaves.isNotEmpty()
+  }
+
+  private fun prepareDataForSave(): List<DataForSave> {
+    return settingPanes.map { it.item }.filter { it.selected }.map {
+      val chs = it.childItems?.filter { item -> item.selected }?.map { item -> item.child.id }?.toList() ?: emptyList()
+      DataForSave(it.setting.id, chs)
+    }
+  }
+
+  override val tracker = WizardPageTracker(StartupWizardStage.SettingsToImportPage)
 }
 
 class SyncSettingDialog(val provider: SyncActionsDataProvider, product: SettingsContributor) : SettingChooserDialog(provider, product) {
@@ -68,4 +79,6 @@ class SyncSettingDialog(val provider: SyncActionsDataProvider, product: Settings
       }
     }
   }
+
+  override val tracker = WizardPageTracker(StartupWizardStage.SettingsToSyncPage)
 }

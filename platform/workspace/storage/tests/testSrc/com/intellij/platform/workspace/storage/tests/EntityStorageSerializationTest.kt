@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
+import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import kotlin.test.assertFalse
@@ -129,6 +130,22 @@ class EntityStorageSerializationTest {
   }
 
   @Test
+  fun `immutable serializer version prefix`() {
+    val serializer = EntityStorageSerializerImpl(PluginAwareEntityTypesResolver, VirtualFileUrlManagerImpl())
+
+    val serializationVersionNumber = "[1-9][0-9]*".toRegex().find(serializer.serializerDataFormatVersion)?.value
+    val serializationVersionPrefix = serializationVersionNumber?.let {
+      serializer.serializerDataFormatVersion.substringBefore(serializationVersionNumber)
+    }
+
+    assertEquals(usedCacheVersionPrefixes.last(), serializationVersionPrefix,
+                 "Have you changed serialization version prefix? Add the new prefix to the usedCacheVersionPrefixes list!")
+
+    assertContentEquals(usedCacheVersionPrefixes, usedCacheVersionPrefixes.distinct(),
+                        "Version prefix of the cache ${serializationVersionPrefix} was used previously. Add the new version prefix!")
+  }
+
+  @Test
   fun `serialize empty lists`() {
     val virtualFileManager = VirtualFileUrlManagerImpl()
     val serializer = EntityStorageSerializerImpl(PluginAwareEntityTypesResolver, virtualFileManager)
@@ -214,6 +231,11 @@ class EntityStorageSerializationTest {
     SerializationRoundTripChecker.verifyPSerializationRoundTrip(builder.toSnapshot(), VirtualFileUrlManagerImpl())
   }
 }
+
+/**
+ * Stores previously used serialization version prefixes in the [EntityStorageSerializerImpl.serializerDataFormatVersion] to check immutability
+ */
+private val usedCacheVersionPrefixes: List<String> = listOf("v", "version")
 
 // Use '#' instead of '$' to separate the subclass of the class
 private val expectedKryoRegistration = """

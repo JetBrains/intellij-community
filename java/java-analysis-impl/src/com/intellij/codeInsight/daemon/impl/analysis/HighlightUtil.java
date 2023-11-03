@@ -53,6 +53,7 @@ import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.*;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.ExperimentalUI;
@@ -64,10 +65,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.UIUtil;
-import com.siyeh.ig.psiutils.ControlFlowUtils;
-import com.siyeh.ig.psiutils.InstanceOfUtils;
-import com.siyeh.ig.psiutils.VariableAccessUtils;
-import com.siyeh.ig.psiutils.VariableNameGenerator;
+import com.siyeh.ig.psiutils.*;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.*;
 
@@ -89,10 +87,10 @@ public final class HighlightUtil {
 
   private static final Logger LOG = Logger.getInstance(HighlightUtil.class);
 
-  private static final Map<String, Set<String>> ourInterfaceIncompatibleModifiers = new HashMap<>(7);
+  private static final Map<String, Set<String>> ourInterfaceIncompatibleModifiers = new HashMap<>(9);
   private static final Map<String, Set<String>> ourMethodIncompatibleModifiers = new HashMap<>(11);
   private static final Map<String, Set<String>> ourFieldIncompatibleModifiers = new HashMap<>(8);
-  private static final Map<String, Set<String>> ourClassIncompatibleModifiers = new HashMap<>(8);
+  private static final Map<String, Set<String>> ourClassIncompatibleModifiers = new HashMap<>(10);
   private static final Map<String, Set<String>> ourClassInitializerIncompatibleModifiers = new HashMap<>(1);
   private static final Map<String, Set<String>> ourModuleIncompatibleModifiers = new HashMap<>(1);
   private static final Map<String, Set<String>> ourRequiresIncompatibleModifiers = new HashMap<>(2);
@@ -172,14 +170,11 @@ public final class HighlightUtil {
                                                 @NotNull PsiModifierList modifierList,
                                                 @NotNull Map<String, Set<String>> incompatibleModifiersHash) {
     // modifier is always incompatible with itself
-    PsiElement[] modifiers = modifierList.getChildren();
     int modifierCount = 0;
-    for (PsiElement otherModifier : modifiers) {
-      if (Comparing.equal(modifier, otherModifier.getText(), true)) modifierCount++;
+    for (PsiElement otherModifier = modifierList.getFirstChild(); otherModifier != null; otherModifier = otherModifier.getNextSibling()) {
+      if (modifier.equals(otherModifier.getText())) modifierCount++;
     }
-    if (modifierCount > 1) {
-      return modifier;
-    }
+    if (modifierCount > 1) return modifier;
 
     Set<String> incompatibles = incompatibleModifiersHash.get(modifier);
     if (incompatibles == null) return null;
@@ -1045,7 +1040,19 @@ public final class HighlightUtil {
     @PsiModifier.ModifierConstant String modifier = keyword.getText();
     String incompatible = getIncompatibleModifier(modifier, modifierList);
     if (incompatible != null) {
-      String message = JavaErrorBundle.message("incompatible.modifiers", modifier, incompatible);
+      String message;
+      if (incompatible.equals(modifier)) {
+        for (PsiElement child = modifierList.getFirstChild(); child != null; child = child.getNextSibling()) {
+          if (modifier.equals(child.getText())) {
+            if (child == keyword) return null;
+            else break;
+          }
+        }
+        message = JavaErrorBundle.message("repeated.modifier", incompatible);
+      }
+      else {
+        message = JavaErrorBundle.message("incompatible.modifiers", modifier, incompatible);
+      }
       HighlightInfo.Builder highlightInfo =
         HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(keyword).descriptionAndTooltip(message);
       IntentionAction action = getFixFactory().createModifierListFix(modifierList, modifier, false, false);
@@ -1219,8 +1226,7 @@ public final class HighlightUtil {
       String message = JavaErrorBundle.message("modifier.not.allowed", modifier);
       HighlightInfo.Builder highlightInfo =
         HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(keyword).descriptionAndTooltip(message);
-      IntentionAction action = fix != null ? fix : getFixFactory()
-        .createModifierListFix(modifierList, modifier, false, false);
+      IntentionAction action = fix != null ? fix : getFixFactory().createModifierListFix(modifierList, modifier, false, false);
       highlightInfo.registerFix(action, null, null, null, null);
       return highlightInfo;
     }
@@ -1409,7 +1415,7 @@ public final class HighlightUtil {
         }
         return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message);
       }
-      final HighlightInfo.Builder info = checkTextBlockEscapes(expression, text, level, file, description);
+      final HighlightInfo.Builder info = checkTextBlockEscapes(expression, rawText, level, file, description);
       if (info != null) return info;
     }
     else if (type == JavaTokenType.STRING_LITERAL || type == JavaTokenType.TEXT_BLOCK_LITERAL) {
@@ -1420,8 +1426,8 @@ public final class HighlightUtil {
           }
         }
 
-        if (!StringUtil.startsWithChar(text, '\"')) return null;
-        if (!StringUtil.endsWithChar(text, '\"') || text.length() == 1) {
+        if (!StringUtil.startsWithChar(text, '"')) return null;
+        if (!StringUtil.endsWithChar(text, '"') || text.length() == 1) {
           String message = JavaErrorBundle.message("illegal.line.end.in.string.literal");
           if (description != null) {
             description.set(message);
@@ -1441,7 +1447,7 @@ public final class HighlightUtil {
             .range(expression, calculateErrorRange(rawText, offsets[chars.length()]))
             .descriptionAndTooltip(message);
         }
-        final HighlightInfo.Builder info2 = checkTextBlockEscapes(expression, text, level, file, description);
+        final HighlightInfo.Builder info2 = checkTextBlockEscapes(expression, rawText, level, file, description);
         if (info2 != null) return info2;
       }
       else {
@@ -1565,8 +1571,10 @@ public final class HighlightUtil {
                                                                        @NotNull LanguageLevel level,
                                                                        @Nullable PsiFile file,
                                                                        @Nullable Ref<? super String> description) {
-    if (file == null || !containsUnescaped(text, "\\s")) return null;
-    HighlightInfo.Builder info = checkFeature(expression, HighlightingFeature.TEXT_BLOCK_ESCAPES, level, file);
+    if (file == null) return null;
+    TextRange errorRange = calculateUnescapedRange(text, "\\s", expression.getTextOffset());
+    if (errorRange == null) return null;
+    HighlightInfo.Builder info = checkFeature(errorRange, HighlightingFeature.TEXT_BLOCK_ESCAPES, level, file);
     if (info == null) return null;
     if (description != null) {
       description.set(getUnsupportedFeatureMessage(HighlightingFeature.TEXT_BLOCK_ESCAPES, level, file));
@@ -1586,7 +1594,7 @@ public final class HighlightUtil {
     return new TextRange(start, end);
   }
 
-  private static boolean containsUnescaped(@NotNull String text, @NotNull String subText) {
+  private static TextRange calculateUnescapedRange(@NotNull String text, @NotNull String subText, int offset) {
     int start = 0;
     while ((start = StringUtil.indexOf(text, subText, start)) != -1) {
       int nSlashes = 0;
@@ -1594,10 +1602,12 @@ public final class HighlightUtil {
         if (text.charAt(pos) != '\\') break;
         nSlashes++;
       }
-      if (nSlashes % 2 == 0) return true;
+      if (nSlashes % 2 == 0) {
+        return TextRange.from(offset + start, subText.length());
+      }
       start += subText.length();
     }
-    return false;
+    return null;
   }
 
   private static final Pattern FP_LITERAL_PARTS =
@@ -2206,7 +2216,7 @@ public final class HighlightUtil {
                                                   @Nullable String symbolName,
                                                   @Nullable String containerName) {
     ErrorWithFixes error = null;
-    for (JavaModuleSystem moduleSystem : JavaModuleSystem.EP_NAME.getExtensions()) {
+    for (JavaModuleSystem moduleSystem : JavaModuleSystem.EP_NAME.getExtensionList()) {
       if (moduleSystem instanceof JavaModuleSystemEx) {
         error = checkAccess((JavaModuleSystemEx)moduleSystem, target, place);
       }
@@ -2235,7 +2245,7 @@ public final class HighlightUtil {
   }
 
   private static PsiElement getContainer(@NotNull PsiModifierListOwner refElement) {
-    for (ContainerProvider provider : ContainerProvider.EP_NAME.getExtensions()) {
+    for (ContainerProvider provider : ContainerProvider.EP_NAME.getExtensionList()) {
       PsiElement container = provider.getContainer(refElement);
       if (container != null) return container;
     }
@@ -2278,7 +2288,8 @@ public final class HighlightUtil {
     PsiExpression processor = templateExpression.getProcessor();
     if (processor == null) {
       String message = JavaErrorBundle.message("processor.missing.from.string.template.expression");
-      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(templateExpression).descriptionAndTooltip(message);
+      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(templateExpression).descriptionAndTooltip(message)
+        .registerFix(new MissingStrProcessorFix(templateExpression), null, null, null, null);
     }
     PsiType type = processor.getType();
     if (type == null) return null;
@@ -2949,7 +2960,7 @@ public final class HighlightUtil {
           result.append(c);
         }
         else if (c != 'u') {
-          result.append('\'').append(c);
+          result.append('\\').append(c);
           escape = false;
         }
         else {
@@ -3721,12 +3732,12 @@ public final class HighlightUtil {
 
   @Nullable
   static HighlightInfo.Builder checkFeature(@NotNull PsiElement element,
-                                    @NotNull HighlightingFeature feature,
-                                    @NotNull LanguageLevel level,
-                                    @NotNull PsiFile file,
-                                    @Nullable @NlsContexts.DetailedDescription String message,
-                                    @NotNull HighlightInfoType highlightInfoType) {
-    if (file.getManager().isInProject(file) && !feature.isSufficient(level)) {
+                                            @NotNull HighlightingFeature feature,
+                                            @NotNull LanguageLevel level,
+                                            @NotNull PsiFile file,
+                                            @Nullable @NlsContexts.DetailedDescription String message,
+                                            @NotNull HighlightInfoType highlightInfoType) {
+    if (!feature.isSufficient(level)) {
       message = message == null ? getUnsupportedFeatureMessage(feature, level, file) : message;
       HighlightInfo.Builder info = HighlightInfo.newHighlightInfo(highlightInfoType).range(element).descriptionAndTooltip(message);
       List<IntentionAction> registrar = new ArrayList<>();
@@ -3741,10 +3752,10 @@ public final class HighlightUtil {
   }
 
   static HighlightInfo.Builder checkFeature(@NotNull TextRange range,
-                                    @NotNull HighlightingFeature feature,
-                                    @NotNull LanguageLevel level,
-                                    @NotNull PsiFile file) {
-    if (file.getManager().isInProject(file) && !feature.isSufficient(level)) {
+                                            @NotNull HighlightingFeature feature,
+                                            @NotNull LanguageLevel level,
+                                            @NotNull PsiFile file) {
+    if (!feature.isSufficient(level)) {
       String message = getUnsupportedFeatureMessage(feature, level, file);
       HighlightInfo.Builder info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range).descriptionAndTooltip(message);
       List<IntentionAction> registrar = new ArrayList<>();
@@ -3780,7 +3791,7 @@ public final class HighlightUtil {
     if (module != null) {
       LanguageLevel moduleLanguageLevel = LanguageLevelUtil.getEffectiveLanguageLevel(module);
       if (moduleLanguageLevel.isAtLeast(feature.level) && !feature.isLimited()) {
-        for (FilePropertyPusher<?> pusher : FilePropertyPusher.EP_NAME.getExtensions()) {
+        for (FilePropertyPusher<?> pusher : FilePropertyPusher.EP_NAME.getExtensionList()) {
           if (pusher instanceof JavaLanguageLevelPusher) {
             String newMessage = ((JavaLanguageLevelPusher)pusher).getInconsistencyLanguageLevelMessage(message, level, file);
             if (newMessage != null) {

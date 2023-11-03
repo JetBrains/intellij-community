@@ -116,7 +116,14 @@ class KotlinParameterInfo(
         buffer.append(getInheritedName(inheritedCallable.takeIf { isInherited }))
 
         if (requiresExplicitType(inheritedCallable)) {
-            buffer.append(": ").append(psiFactory.createType(typeText, inheritedCallable, baseFunction, Variance.IN_VARIANCE).getTypeText())
+            buffer.append(": ")
+            buffer.append(
+                try {
+                    psiFactory.createType(typeText, inheritedCallable, baseFunction, Variance.IN_VARIANCE).getTypeText()
+                } catch (_: Throwable) {
+                    typeText
+                }
+            )
         }
 
         if (!isInherited) {
@@ -155,10 +162,16 @@ class KotlinParameterInfo(
     }
 }
 
-fun defaultValOrVar(callableDescriptor: KtCallableDeclaration): KotlinValVar {
+fun defaultValOrVar(callableDescriptor: KtDeclaration): KotlinValVar {
     if (callableDescriptor is KtConstructor<*>) {
         val classOrObject = callableDescriptor.getContainingClassOrObject()
         if (classOrObject.isAnnotation() || classOrObject.isData() && callableDescriptor is KtPrimaryConstructor) {
+            return KotlinValVar.Val
+        }
+    }
+
+    if (callableDescriptor is KtClass) {
+        if (callableDescriptor.isAnnotation() || callableDescriptor.isData()) {
             return KotlinValVar.Val
         }
     }

@@ -80,6 +80,7 @@ fun KtCallExpression.moveFunctionLiteralOutsideParentheses() {
     assert(expression.unpackFunctionLiteral() != null)
 
     fun isWhiteSpaceOrComment(e: PsiElement) = e is PsiWhiteSpace || e is PsiComment
+
     val prevComma = argument.siblings(forward = false, withItself = false).firstOrNull { it.elementType == KtTokens.COMMA }
     val prevComments = (prevComma ?: argumentList.leftParenthesis)
         ?.siblings(forward = true, withItself = false)
@@ -190,4 +191,16 @@ fun KtElement.isInsideOfCallerBody(
     } as? KtNamedDeclaration ?: return false
     val body = container.getDeclarationBody() ?: return false
     return body.textRange.contains(textRange) && container.isCaller(allUsages)
+}
+fun KtNamedDeclaration.deleteWithCompanion() {
+    val containingClass = this.containingClassOrObject
+    if (containingClass is KtObjectDeclaration &&
+        containingClass.isCompanion() &&
+        containingClass.declarations.size == 1 &&
+        containingClass.getSuperTypeList() == null
+    ) {
+        containingClass.delete()
+    } else {
+        this.delete()
+    }
 }

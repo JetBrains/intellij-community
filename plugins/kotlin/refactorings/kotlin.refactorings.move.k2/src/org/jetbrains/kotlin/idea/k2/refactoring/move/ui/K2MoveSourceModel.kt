@@ -14,7 +14,10 @@ import com.intellij.ui.list.createTargetPresentationRenderer
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveSourceDescriptor
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberInfo
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberSelectionPanel
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtDeclarationContainer
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import javax.swing.Icon
 import javax.swing.JComponent
 
@@ -69,13 +72,14 @@ sealed interface K2MoveSourceModel<T : KtElement> {
 
         context(Panel)
         override fun buildPanel(onError: (String?, JComponent) -> Unit) {
-            fun getSourceFiles(elementsToMove: Collection<KtNamedDeclaration>): List<KtFile> = elementsToMove
-                .map(KtPureElement::getContainingKtFile)
-                .distinct()
+            fun getDeclarationsContainers(elementsToMove: Collection<KtNamedDeclaration>): Set<KtDeclarationContainer> = elementsToMove
+                .mapNotNull { it.parent as? KtDeclarationContainer }
+                .toSet()
 
-            fun getAllDeclarations(files: Collection<KtFile>): List<KtNamedDeclaration> = files
-                .flatMap<KtFile, KtDeclaration> { file -> if (file.isScript()) file.script!!.declarations else file.declarations }
+            fun getAllDeclarations(container: Collection<KtDeclarationContainer>): Set<KtNamedDeclaration> = container
+                .flatMap { it.declarations }
                 .filterIsInstance<KtNamedDeclaration>()
+                .toSet()
 
             fun memberInfos(
                 elementsToMove: Set<KtNamedDeclaration>,
@@ -89,9 +93,9 @@ sealed interface K2MoveSourceModel<T : KtElement> {
             val project = elements.firstOrNull()?.project ?: return
 
             val memberInfos = ActionUtil.underModalProgress(project, RefactoringBundle.message("move.title")) {
-                val sourceFiles = getSourceFiles(elements)
-                val allDeclarations = getAllDeclarations(sourceFiles)
-                return@underModalProgress memberInfos(elements, allDeclarations)
+                val containers = getDeclarationsContainers(elements)
+                val allDeclarations = getAllDeclarations(containers)
+                return@underModalProgress memberInfos(elements, allDeclarations.toList())
             }
 
             lateinit var memberSelectionPanel: KotlinMemberSelectionPanel
@@ -102,5 +106,11 @@ sealed interface K2MoveSourceModel<T : KtElement> {
                 elements = memberSelectionPanel.table.selectedMemberInfos.map { it.member }.toSet()
             }
         }
+    }
+
+    companion object {
+        fun getDeclarationsContainers(elementsToMove: Collection<KtNamedDeclaration>): Set<KtDeclarationContainer> = elementsToMove
+            .mapNotNull { it.parent as? KtDeclarationContainer }
+            .toSet()
     }
 }

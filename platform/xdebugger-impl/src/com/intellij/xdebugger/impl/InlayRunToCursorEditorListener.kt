@@ -49,17 +49,21 @@ import com.intellij.xdebugger.impl.actions.XDebuggerActions
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
+import org.jetbrains.annotations.ApiStatus
 import java.awt.*
 import java.lang.ref.WeakReference
 import javax.swing.*
 
-private const val NEGATIVE_INLAY_PANEL_SHIFT = -6 // it is needed to fit into 2-space tabulation
 private const val MINIMAL_TEXT_OFFSET = 16
-private const val ACTION_BUTTON_SIZE = 22
 private const val ACTION_BUTTON_GAP = 2
 
 class InlayRunToCursorEditorListener(private val project: Project, private val coroutineScope: CoroutineScope) : EditorMouseMotionListener, EditorMouseListener {
   companion object {
+    @ApiStatus.Internal
+    const val NEGATIVE_INLAY_PANEL_SHIFT = -6 // it is needed to fit into 2-space tabulation
+    @ApiStatus.Internal
+    const val ACTION_BUTTON_SIZE = 22
+
     @JvmStatic
     val isInlayRunToCursorEnabled: Boolean get() = AdvancedSettings.getBoolean("debugger.inlay.run.to.cursor") &&
                                                    !PlatformUtils.isPyCharm()
@@ -117,7 +121,7 @@ class InlayRunToCursorEditorListener(private val project: Project, private val c
     if (lineNumber < 0) {
       return true
     }
-    if (lineNumber != editor.getCaretModel().logicalPosition.line && x > showInlayPopupWidth(editor)) {
+    if (x > showInlayPopupWidth(editor)) {
       currentEditor.clear()
       currentLineNumber = -1
       return true

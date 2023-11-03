@@ -11,7 +11,11 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationGroupManager;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.InternalFileType;
@@ -75,7 +79,9 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   private static final boolean LOG_NON_CACHED_ROOTS_LIST = getBooleanProperty("PersistentFSImpl.LOG_NON_CACHED_ROOTS_LIST", false);
 
   /** Show notification about successful VFS recovery if VFS init takes longer than [nanoseconds] */
-  private static final long NOTIFY_OF_RECOVERY_IF_LONGER_NS = SECONDS.toNanos(getLongProperty("vfs.notify-user-if-recovery-longer-sec", 10));
+  private static final long NOTIFY_OF_RECOVERY_IF_LONGER_NS = SECONDS.toNanos(
+    getLongProperty("vfs.notify-user-if-recovery-longer-sec", ApplicationManager.getApplication().isEAP() ? 10 : Long.MAX_VALUE)
+  );
 
   private final Map<String, VirtualFileSystemEntry> myRoots;
 
@@ -181,40 +187,51 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
         VFSInitializationResult initializationResult = _vfsPeer.initializationResult();
         if (app != null && !app.isHeadlessEnvironment()
             && initializationResult.totalInitializationDurationNs > NOTIFY_OF_RECOVERY_IF_LONGER_NS) {
-          NotificationGroup notificationGroup = NotificationGroupManager.getInstance().getNotificationGroup("VFS");
-          notificationGroup.createNotification(
-              IdeBundle.message("notification.vfs.vfs-recovered.notification.title"),
-              IdeBundle.message("notification.vfs.vfs-recovered.notification.text"),
-              INFORMATION
-            )
-            .setImportant(false)
-            .notify(/*project: */ null);
+          showNotificationAboutLongRecovery();
         }
 
         //refresh the folders there something was 'recovered':
-        IntList directoryIdsToRefresh = recoveryInfo.directoriesIdsToRefresh();
-        if (!directoryIdsToRefresh.isEmpty()) {
-          try {
-            List<NewVirtualFile> directoriesToRefresh = directoryIdsToRefresh.intStream()
-              .mapToObj(dirId -> {
-                try {
-                  return findFileById(dirId);
-                }
-                catch (Throwable t) {
-                  LOG.info("Directory to refresh [#" + dirId + "] can't be resolved", t);
-                  return null;
-                }
-              })
-              .filter(Objects::nonNull)
-              .toList();
-            RefreshQueue.getInstance().refresh(false, false, null, directoriesToRefresh);
-          }
-          catch (Throwable t) {
-            LOG.warn("Can't refresh recovered directories: " + directoryIdsToRefresh, t);
-          }
-        }
+        refreshSuspiciousDirectories(recoveryInfo.directoriesIdsToRefresh());
       }
     }
+  }
+
+  private void refreshSuspiciousDirectories(@NotNull IntList directoryIdsToRefresh) {
+    if (!directoryIdsToRefresh.isEmpty()) {
+      try {
+        List<NewVirtualFile> directoriesToRefresh = directoryIdsToRefresh.intStream()
+          .mapToObj(dirId -> {
+            try {
+              return findFileById(dirId);
+            }
+            catch (Throwable t) {
+              LOG.info("Directory to refresh [#" + dirId + "] can't be resolved", t);
+              return null;
+            }
+          })
+          .filter(Objects::nonNull)
+          .toList();
+        RefreshQueue.getInstance().refresh(false, false, null, directoriesToRefresh);
+      }
+      catch (Throwable t) {
+        LOG.warn("Can't refresh recovered directories: " + directoryIdsToRefresh, t);
+      }
+    }
+  }
+
+  private static void showNotificationAboutLongRecovery() {
+    NotificationGroup notificationGroup = NotificationGroupManager.getInstance().getNotificationGroup("VFS");
+    ApplicationNamesInfo names = ApplicationNamesInfo.getInstance();
+    AnAction reportProblemAction = ActionManager.getInstance().getAction("ReportProblem");
+    notificationGroup.createNotification(
+        IdeBundle.message("notification.vfs.vfs-recovered.notification.title", names.getFullProductName()),
+        IdeBundle.message("notification.vfs.vfs-recovered.notification.text", names.getProductName()),
+        INFORMATION
+      )
+      .setDisplayId("VFS.recovery.happened")
+      .addAction(reportProblemAction)
+      .setImportant(false)
+      .notify(/*project: */ null);
   }
 
   private static void applyVfsLogPreferences() {

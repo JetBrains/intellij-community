@@ -10,24 +10,19 @@ interface EmbeddingSearchIndex {
 
   operator fun contains(id: String): Boolean
 
-  fun addEntries(values: Iterable<Pair<String, FloatTextEmbedding>>)
+  fun onIndexingStart()
+  fun onIndexingFinish()
 
-  fun saveToDisk()
+  suspend fun addEntries(values: Iterable<Pair<String, FloatTextEmbedding>>, shouldCount: Boolean = false)
 
-  fun loadFromDisk()
+  suspend fun saveToDisk()
+  suspend fun loadFromDisk()
 
   fun findClosest(searchEmbedding: FloatTextEmbedding, topK: Int, similarityThreshold: Double? = null): List<ScoredText>
-
   fun streamFindClose(searchEmbedding: FloatTextEmbedding, similarityThreshold: Double? = null): Sequence<ScoredText>
 
-  fun filterIdsTo(idToCount: Map<String, Int>)
-
-  fun checkAllIdsPresent(ids: Set<String>): Boolean
-
   fun estimateMemoryUsage(): Long
-
   fun estimateLimitByMemory(memory: Long): Int
-
   fun checkCanAddEntry(): Boolean
 }
 

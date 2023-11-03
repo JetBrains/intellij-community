@@ -24,7 +24,7 @@ object ApplicationActivationStateManager {
 
   fun updateState(windowEvent: WindowEvent): Boolean {
     val app = ApplicationManager.getApplication()
-    if (app !is ApplicationImpl) {
+    if (app !is ApplicationImpl || app.isExitInProgress || app.isDisposed) {
       return false
     }
 
@@ -41,7 +41,7 @@ object ApplicationActivationStateManager {
       }
 
       // for stuff that cannot wait windowEvent notify about deactivation immediately
-      if (state.isActive && !app.isDisposed()) {
+      if (state.isActive) {
         val ideFrame = getIdeFrameFromWindow(window)
         if (ideFrame != null) {
           app.getMessageBus().syncPublisher(ApplicationActivationListener.TOPIC).applicationDeactivated(ideFrame)

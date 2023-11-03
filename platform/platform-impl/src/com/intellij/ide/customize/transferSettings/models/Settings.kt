@@ -9,7 +9,10 @@ open class Settings(
   var laf: ILookAndFeel? = null,
   var syntaxScheme: EditorColorScheme? = null,
   var keymap: Keymap? = null,
-  val plugins: MutableList<FeatureInfo> = mutableListOf(),
+  /**
+   * Original plugin id ⇒ feature or plugin info.
+   */
+  val plugins: MutableMap<String, FeatureInfo> = mutableMapOf(),
   /**
    * Don't forget to set info.projectOpenTimestamp
    */

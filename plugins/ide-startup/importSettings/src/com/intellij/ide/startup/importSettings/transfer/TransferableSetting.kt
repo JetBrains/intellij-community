@@ -7,7 +7,9 @@ import com.intellij.ide.customize.transferSettings.models.FeatureInfo
 import com.intellij.ide.customize.transferSettings.models.ILookAndFeel
 import com.intellij.ide.customize.transferSettings.models.Keymap
 import com.intellij.ide.customize.transferSettings.models.PatchedKeymap
+import com.intellij.ide.customize.transferSettings.models.PluginFeature
 import com.intellij.ide.nls.NlsMessages
+import com.intellij.ide.plugins.PluginManager
 import com.intellij.ide.startup.importSettings.ImportSettingsBundle
 import com.intellij.ide.startup.importSettings.StartupImportIcons
 import com.intellij.ide.startup.importSettings.data.BaseSetting
@@ -15,6 +17,7 @@ import com.intellij.ide.startup.importSettings.data.ChildSetting
 import com.intellij.ide.startup.importSettings.data.Multiple
 import com.intellij.openapi.actionSystem.KeyboardShortcut
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.keymap.MacKeymapUtil
 import com.intellij.openapi.util.SystemInfo
@@ -69,8 +72,8 @@ open class TransferableSetting(
       )
     }
 
-    fun plugins(features: List<FeatureInfo>): Multiple {
-      val items = features.filter { !it.isHidden }.map(::FeatureSetting)
+    fun plugins(features: Collection<FeatureInfo>): Multiple {
+      val items = features.asSequence().filter { !it.isHidden }.map(::FeatureSetting).toList()
       val limitForPreview = 3
       val comment = NlsMessages.formatNarrowAndList(items.take(limitForPreview).map { it.nameForPreview })
       return TransferableSettingGroup(
@@ -133,7 +136,14 @@ private class DemoShortcut(override val name: String, shortcut: Any) : ChildSett
 private class FeatureSetting(feature: FeatureInfo) : ChildSetting {
   override val id = ""
   override val name = feature.name
-  override val leftComment = if (feature is BuiltInFeature) ImportSettingsBundle.message("transfer.setting.feature.built-in") else null
+  override val leftComment = when(feature) {
+    is BuiltInFeature -> ImportSettingsBundle.message("transfer.setting.feature.built-in")
+    is PluginFeature ->
+      if (PluginManager.isPluginInstalled(PluginId.getId(feature.pluginId)))
+        ImportSettingsBundle.message("transfer.setting.feature.bundled")
+      else null
+    else -> null
+  }
   override val rightComment = null
   val nameForPreview: String
     get() = buildString {

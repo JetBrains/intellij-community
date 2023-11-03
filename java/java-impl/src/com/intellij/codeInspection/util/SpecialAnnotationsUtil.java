@@ -20,6 +20,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -40,6 +41,7 @@ import javax.swing.*;
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
 import java.awt.*;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.function.Predicate;
@@ -187,7 +189,9 @@ public final class SpecialAnnotationsUtil {
 
       @Override
       public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-        SpecialAnnotationsUtilBase.doQuickFixInternal(project, targetList, qualifiedName);
+        targetList.add(qualifiedName);
+        Collections.sort(targetList);
+        ProjectInspectionProfileManager.getInstance(project).fireProfileChanged();
       }
 
       @Override

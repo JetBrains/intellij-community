@@ -74,7 +74,8 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
                                                                            @NotNull String modifier,
                                                                            boolean shouldHave,
                                                                            boolean showContainingClass) {
-    return new ModifierFix(modifierList, modifier, shouldHave,showContainingClass);
+    return LocalQuickFixAndIntentionActionOnPsiElement.from(new ModifierFix(modifierList, modifier, shouldHave, showContainingClass),
+                                                            modifierList.getParent());
   }
 
   @NotNull
@@ -83,7 +84,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
                                                                            @NotNull final String modifier,
                                                                            final boolean shouldHave,
                                                                            final boolean showContainingClass) {
-    return new ModifierFix(owner, modifier, shouldHave, showContainingClass);
+    return LocalQuickFixAndIntentionActionOnPsiElement.from(new ModifierFix(owner, modifier, shouldHave, showContainingClass), owner);
   }
 
   @NotNull
@@ -1214,6 +1215,16 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   @Override
   public @NotNull IntentionAction createDeleteFix(@NotNull PsiElement @NotNull [] elements, @NotNull @Nls String text) {
     return new DeleteElementFix.DeleteMultiFix(elements, text).asIntention();
+  }
+
+  @Override
+  public @NotNull ModCommandAction createReplaceCaseDefaultWithDefaultFix(@NotNull PsiCaseLabelElementList list){
+    return new ReplaceCaseDefaultWithDefaultFix(list);
+  }
+
+  @Override
+  public @NotNull ModCommandAction createReverseCaseDefaultNullFixFix(@NotNull PsiCaseLabelElementList list){
+    return new ReverseCaseDefaultNullFix(list);
   }
 
   @Override

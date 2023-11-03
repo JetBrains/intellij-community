@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("CreateFieldFromUsage")
 
 package com.intellij.lang.java.request
@@ -23,7 +23,7 @@ import com.intellij.psi.util.parentOfType
 fun generateActions(ref: PsiReferenceExpression): List<IntentionAction> {
   if (!checkReference(ref)) return emptyList()
   val fieldRequests = CreateFieldRequests(ref).collectRequests()
-  val extensions = EP_NAME.extensions
+  val extensions = EP_NAME.extensionList
   return fieldRequests.flatMap { (clazz, request) ->
     extensions.flatMap { ext ->
       ext.createAddFieldActions(clazz, request)

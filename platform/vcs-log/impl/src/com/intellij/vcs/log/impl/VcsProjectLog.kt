@@ -91,6 +91,9 @@ class VcsProjectLog(private val project: Project, private val coroutineScope: Co
         launchWithAnyModality { disposeLog(recreate = true) }
       }
     }, listenersDisposable)
+    project.service<VcsLogSharedSettings>().addListener(VcsLogSharedSettings.Listener {
+      launchWithAnyModality { disposeLog(recreate = true) }
+    }, listenersDisposable)
 
     @Suppress("SSBasedInspection", "ObjectLiteralToLambda") val shutdownTask = object : Runnable {
       override fun run() {
@@ -192,7 +195,7 @@ class VcsProjectLog(private val project: Project, private val coroutineScope: Co
     val logProviders = VcsLogManager.findLogProviders(projectLevelVcsManager.allVcsRoots.toList(), project)
     if (logProviders.isEmpty()) return null
 
-    project.trackActivity(VcsInProgressWitness::class) {
+    project.trackActivity(VcsActivityKey) {
       val logManager = getOrCreateLogManager(logProviders)
       logManager.initialize(force = forceInit)
     }

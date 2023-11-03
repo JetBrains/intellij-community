@@ -267,4 +267,29 @@ public sealed interface ModCommand
     @NotNull BiConsumer<@NotNull T, @NotNull ModPsiUpdater> action) {
     return psiUpdateStep(element, title, action, PsiElement::getTextRange);
   }
+
+  /**
+   * @param command a command to tune
+   * @param file a file where we want to navigate
+   * @param offset an offset in the file before the command is executed 
+   * @param leanRight if true, lean to right side when the text was inserted right at the caret position
+   * @return an updated command which tries to navigate inside the specified file, taking into account the modifications inside that file
+   */
+  static @NotNull ModCommand moveCaretAfter(@NotNull ModCommand command, @NotNull PsiFile file, int offset, boolean leanRight) {
+    VirtualFile virtualFile = file.getVirtualFile();
+    ModCommand finalCommand = nop();
+    for (ModCommand sub : command.unpack()) {
+      if (sub instanceof ModUpdateFileText updateFileText && updateFileText.file().equals(virtualFile)) {
+        offset = updateFileText.translateOffset(offset, leanRight);
+      }
+      if (sub instanceof ModDeleteFile deleteFile && deleteFile.file().equals(virtualFile)) {
+        // Navigation is useless: we are removing the target file
+        return command;
+      }
+      if (!(sub instanceof ModNavigate)) {
+        finalCommand = finalCommand.andThen(sub);
+      }
+    }
+    return finalCommand.andThen(new ModNavigate(virtualFile, offset, offset, offset));
+  }
 }

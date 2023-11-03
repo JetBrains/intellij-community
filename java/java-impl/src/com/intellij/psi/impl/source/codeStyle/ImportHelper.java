@@ -45,6 +45,7 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.NotNullList;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -1036,5 +1037,6 @@ public final class ImportHelper{
     return dotIndex < 0 ? "" : className.substring(0, dotIndex);
   }
 
+  @ApiStatus.Internal
   public record Import(String name, boolean isStatic) {}
 }

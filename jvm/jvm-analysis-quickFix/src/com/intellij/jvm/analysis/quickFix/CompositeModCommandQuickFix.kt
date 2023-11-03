@@ -3,8 +3,11 @@ package com.intellij.jvm.analysis.quickFix
 
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.lang.jvm.JvmModifiersOwner
+import com.intellij.modcommand.ActionContext
+import com.intellij.modcommand.ModCommandExecutor
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.SmartPointerManager
@@ -20,11 +23,29 @@ abstract class CompositeModCommandQuickFix : PsiUpdateModCommandQuickFix() {
     val target = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(element)
     getActions(project).forEach { factory ->
       val actions = factory(target.element.asSafely<JvmModifiersOwner>() ?: return@forEach)
-      actions.forEach { action ->
-        action.invoke(project, null, containingFile)
-      }
+      performActions(actions, containingFile)
     }
   }
 
   protected abstract fun getActions(project: Project): List<(JvmModifiersOwner) -> List<IntentionAction>>
+
+  companion object {
+    fun performActions(actions: List<IntentionAction>, containingFile: PsiFile) {
+      actions.forEach { action ->
+        val project = containingFile.project
+        val document = containingFile.viewProvider.document
+        val modCommandAction = action.asModCommandAction()
+        val manager = PsiDocumentManager.getInstance(project)
+        manager.doPostponedOperationsAndUnblockDocument(document)
+        if (modCommandAction != null) {
+          ModCommandExecutor.getInstance()
+            .executeForFileCopy(modCommandAction.perform(ActionContext.from(null, containingFile)), containingFile)
+        }
+        else {
+          action.invoke(project, null, containingFile)
+          manager.commitDocument(document)
+        }
+      }
+    }
+  }
 }

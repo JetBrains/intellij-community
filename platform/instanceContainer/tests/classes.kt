@@ -69,7 +69,7 @@ internal class TestContainerResolver(private val container: InstanceContainerInt
     return true
   }
 
-  override fun resolveDependency(parameterType: Class<*>, round: Int): ArgumentSupplier? {
+  override fun resolveDependency(parameterType: Class<*>, instanceClass: Class<*>, round: Int): ArgumentSupplier? {
     return container.getInstanceHolder(parameterType)?.let {
       ArgumentSupplier {
         it.getInstance(parameterType)

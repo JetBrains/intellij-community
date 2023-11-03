@@ -1701,10 +1701,9 @@ public final class PluginDetailsPageComponent extends MultiPanel {
 
   private static @NotNull BorderLayoutPanel createBaseNotificationPanel() {
     BorderLayoutPanel panel = new BorderLayoutPanel();
-    Border customLine = JBUI.Borders.customLine(JBColor.border(), 1, 0, 1, 0);
+    Border customLine = JBUI.Borders.customLine(JBUI.CurrentTheme.Banner.INFO_BACKGROUND, 1, 0, 1, 0);
     panel.setBorder(JBUI.Borders.merge(JBUI.Borders.empty(10), customLine, true));
-    panel.setBackground(JBUI.CurrentTheme.Notification.BACKGROUND);
-    panel.setForeground(JBUI.CurrentTheme.Notification.FOREGROUND);
+    panel.setBackground(JBUI.CurrentTheme.Banner.INFO_BACKGROUND);
     return panel;
   }
 

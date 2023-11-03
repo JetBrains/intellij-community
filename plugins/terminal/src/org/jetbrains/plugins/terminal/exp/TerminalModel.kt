@@ -15,7 +15,7 @@ import com.jediterm.terminal.model.TerminalTextBuffer
 import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.math.min
 
-class TerminalModel(internal val textBuffer: TerminalTextBuffer, val styleState: StyleState) {
+class TerminalModel(private val textBuffer: TerminalTextBuffer, val styleState: StyleState) {
   val width: Int
     get() = textBuffer.width
   val height: Int
@@ -143,8 +143,6 @@ class TerminalModel(internal val textBuffer: TerminalTextBuffer, val styleState:
   }
 
   //-------------------MODIFICATION METHODS------------------------------------------------
-
-  fun clearAll() = textBuffer.clearAll()
 
   fun clearAllAndMoveCursorToTopLeftCorner(terminal: Terminal) {
     terminal.eraseInDisplay(2)

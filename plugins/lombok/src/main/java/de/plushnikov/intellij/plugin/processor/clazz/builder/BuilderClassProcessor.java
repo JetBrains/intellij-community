@@ -8,6 +8,7 @@ import de.plushnikov.intellij.plugin.problem.ProblemSink;
 import de.plushnikov.intellij.plugin.processor.clazz.AbstractClassProcessor;
 import de.plushnikov.intellij.plugin.processor.handler.BuilderHandler;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -31,6 +32,13 @@ public final class BuilderClassProcessor extends AbstractClassProcessor {
   }
 
   @Override
+  protected boolean possibleToGenerateElementNamed(@NotNull String nameHint,
+                                                   @NotNull PsiClass psiClass,
+                                                   @NotNull PsiAnnotation psiAnnotation) {
+    return nameHint.equals(BuilderHandler.getBuilderClassName(psiClass, psiAnnotation, null));
+  }
+
+  @Override
   protected Collection<String> getNamesOfPossibleGeneratedElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation) {
     final String innerBuilderClassName = BuilderHandler.getBuilderClassName(psiClass, psiAnnotation, null);
     return Collections.singleton(innerBuilderClassName);
@@ -42,7 +50,8 @@ public final class BuilderClassProcessor extends AbstractClassProcessor {
   }
 
   @Override
-  protected void generatePsiElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
+  protected void generatePsiElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target,
+                                     @Nullable String nameHint) {
     getBuilderHandler().createBuilderClassIfNotExist(psiClass, null, psiAnnotation).ifPresent(target::add);
   }
 }

@@ -5,7 +5,6 @@ import com.intellij.util.SmartList
 import com.intellij.util.text.CharSequenceBackedByChars
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.withContext
 import kotlinx.coroutines.yield
 import org.jetbrains.annotations.ApiStatus
 import java.io.InputStream
@@ -15,6 +14,7 @@ import java.net.SocketTimeoutException
 import java.net.URLEncoder
 import java.nio.ByteBuffer
 import java.util.*
+import kotlin.coroutines.CoroutineContext
 import kotlin.math.min
 
 fun Reader.readCharSequence(length: Int): CharSequence {
@@ -109,31 +109,34 @@ inline fun String.decodeBase64(): ByteArray = Base64.getDecoder().decode(this)
  */
 @ApiStatus.Experimental
 @OptIn(DelicateCoroutinesApi::class)
-suspend fun InputStream.copyToAsync(outputStream: OutputStream, bufferSize: Int = DEFAULT_BUFFER_SIZE, limit: Long = Long.MAX_VALUE) {
-  computeDetached {
-    withContext(CoroutineName("copyToAsync: $this => $outputStream")) {
-      val buffer = ByteArray(bufferSize)
-      var totalRead = 0L
-      while (totalRead < limit) {
-        yield()
-        val read =
-          try {
-            read(buffer, 0, min(limit - totalRead, buffer.size.toLong()).toInt())
-          }
-          catch (ignored: SocketTimeoutException) {
-            continue
-          }
-        when {
-          read < 0 -> break
-          read > 0 -> {
-            totalRead += read
-            yield()
-            // According to Javadoc, Socket.soTimeout doesn't have any influence on SocketOutputStream.
-            // Had timeout affected sends, it would have impossible to distinguish if the packets were delivered or not in case of timeout.
-            outputStream.write(buffer, 0, read)
-          }
-          else -> Unit
+suspend fun InputStream.copyToAsync(
+  outputStream: OutputStream,
+  bufferSize: Int = DEFAULT_BUFFER_SIZE,
+  limit: Long = Long.MAX_VALUE,
+  context: CoroutineContext = CoroutineName("copyToAsync: $this => $outputStream")
+) {
+  computeDetached(context = context) {
+    val buffer = ByteArray(bufferSize)
+    var totalRead = 0L
+    while (totalRead < limit) {
+      yield()
+      val read =
+        try {
+          read(buffer, 0, min(limit - totalRead, buffer.size.toLong()).toInt())
         }
+        catch (ignored: SocketTimeoutException) {
+          continue
+        }
+      when {
+        read < 0 -> break
+        read > 0 -> {
+          totalRead += read
+          yield()
+          // According to Javadoc, Socket.soTimeout doesn't have any influence on SocketOutputStream.
+          // Had timeout affected sends, it would have impossible to distinguish if the packets were delivered or not in case of timeout.
+          outputStream.write(buffer, 0, read)
+        }
+        else -> Unit
       }
     }
   }

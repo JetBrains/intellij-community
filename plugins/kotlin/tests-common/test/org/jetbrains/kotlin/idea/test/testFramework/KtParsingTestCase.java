@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.test.testFramework;
 
@@ -33,12 +33,12 @@ import com.intellij.testFramework.MockSchemeManagerFactory;
 import com.intellij.testFramework.TestDataFile;
 import com.intellij.util.CachedValuesManagerImpl;
 import com.intellij.util.Function;
+import com.intellij.util.pico.DefaultPicoContainer;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.kotlin.idea.KotlinFileType;
 import org.picocontainer.ComponentAdapter;
-import org.picocontainer.MutablePicoContainer;
 
 import java.io.File;
 import java.io.IOException;
@@ -77,7 +77,7 @@ public abstract class KtParsingTestCase extends KtPlatformLiteFixture {
         myProject = new MockProjectEx(getTestRootDisposable());
         myPsiManager = new MockPsiManager(myProject);
         myFileFactory = new PsiFileFactoryImpl(myPsiManager);
-        MutablePicoContainer appContainer = getApplication().getPicoContainer();
+        DefaultPicoContainer appContainer = getApplication().getPicoContainer();
         final MockEditorFactory editorFactory = new MockEditorFactory();
         MockFileTypeManager mockFileTypeManager = new MockFileTypeManager(KotlinFileType.INSTANCE);
         MockFileDocumentManagerImpl mockFileDocumentManager = new MockFileDocumentManagerImpl(

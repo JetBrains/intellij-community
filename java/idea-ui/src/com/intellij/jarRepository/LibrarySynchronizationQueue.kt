@@ -1,22 +1,20 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.jarRepository
 
-import com.intellij.jarRepository.RepositoryLibrarySynchronizer.removeDuplicatedUrlsFromRepositoryLibraries
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
-import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.impl.libraries.LibraryTableImplUtil
+import com.intellij.openapi.util.Computable
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties
 import org.jetbrains.idea.maven.utils.library.RepositoryUtils
 import kotlin.coroutines.coroutineContext
-
-private val LOG = logger<LibrarySynchronizationQueue>()
 
 @Service(Service.Level.PROJECT)
 internal class LibrarySynchronizationQueue(private val project: Project, private val scope: CoroutineScope) {
@@ -46,7 +44,7 @@ internal class LibrarySynchronizationQueue(private val project: Project, private
             Request.AllLibrariesSynchronization -> {
               val newLibrariesToSync = readAction {
                 removeDuplicatedUrlsFromRepositoryLibraries(project)
-                RepositoryLibrarySynchronizer.collectLibrariesToSync(project)
+                collectLibrariesToSync(project)
               }
               toSynchronize.addAll(newLibrariesToSync.map { lib -> lib as LibraryEx })
               synchronizeLibraries(toSynchronize)
@@ -59,7 +57,7 @@ internal class LibrarySynchronizationQueue(private val project: Project, private
         }
         catch (e: Exception) {
           // continue collecting on exceptions
-          LOG.warn(e)
+          thisLogger().warn(e)
         }
       }
     }
@@ -86,9 +84,7 @@ internal class LibrarySynchronizationQueue(private val project: Project, private
       if (!coroutineContext.isActive) {
         return
       }
-      val shouldReload = readAction { library.needToReload() }
-
-      if (shouldReload) {
+      if (readAction { library.needToReload() }) {
         RepositoryUtils.reloadDependencies(project, library)
       }
     }
@@ -102,15 +98,13 @@ internal class LibrarySynchronizationQueue(private val project: Project, private
   }
 
   companion object {
-    @JvmStatic
     fun getInstance(project: Project): LibrarySynchronizationQueue = project.service()
   }
 }
 
 internal fun LibraryEx.needToReload(): Boolean {
   val props = properties as? RepositoryLibraryProperties ?: return false
-
-  val isValid = runReadAction { LibraryTableImplUtil.isValidLibrary(this) }
-  val needToReload = RepositoryLibrarySynchronizer.isLibraryNeedToBeReloaded(this, props)
+  val isValid = ApplicationManager.getApplication().runReadAction (Computable { LibraryTableImplUtil.isValidLibrary(this) })
+  val needToReload = isLibraryNeedToBeReloaded(library = this, properties = props)
   return isValid && needToReload
 }

@@ -82,7 +82,7 @@ class SettingsServiceImpl : SettingsService {
     }
   }
 
-  override val isSyncEnabled = Property(false) //jbAccount.compose(unloggedSyncHide()) { account, reg -> !reg || account != null }
+  override val isSyncEnabled = Property(shouldUseMockData) //jbAccount.compose(unloggedSyncHide()) { account, reg -> !reg || account != null }
 
   init {
     if (shouldUseMockData) {

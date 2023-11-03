@@ -1,12 +1,13 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.customize.transferSettings.providers.vswin.parsers.data
 
 
 import com.intellij.ide.customize.transferSettings.db.KnownPlugins
 import com.intellij.ide.customize.transferSettings.models.KeyBinding
-import com.intellij.openapi.actionSystem.KeyboardShortcut
 import com.intellij.ide.customize.transferSettings.providers.vswin.mappings.KeyBindingsMappings.newTokens
 import com.intellij.ide.customize.transferSettings.providers.vswin.mappings.KeyBindingsMappings.vsCommandToIdeaAction
 import com.intellij.ide.customize.transferSettings.providers.vswin.utilities.VSHive
+import com.intellij.openapi.actionSystem.KeyboardShortcut
 import com.intellij.openapi.diagnostic.logger
 import org.jdom.Element
 import javax.swing.KeyStroke
@@ -76,7 +77,7 @@ class KeyBindingsParsedData(majorVersion: Int, val scheme: String, userShortcuts
     private val logger = logger<KeyBindingsParsedData>()
   }
 
-  private val isReSharperInstalled = hive?.registry?.extensions?.contains(KnownPlugins.ReSharper) == true
+  private val isReSharperInstalled = hive?.registry?.extensions?.values?.contains(KnownPlugins.ReSharper) == true
   private val reSharperName = KnownPlugins.ReSharper.name.lowercase()
 
   init {

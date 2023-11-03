@@ -182,7 +182,7 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
       result.add(ActionManager.getInstance().getAction(IdeActions.MOVE_TO_ANOTHER_CHANGE_LIST));
     }
 
-    EmptyAction.registerWithShortcutSet(IdeActions.MOVE_TO_ANOTHER_CHANGE_LIST, CommonShortcuts.getMove(), myViewer);
+    ActionUtil.wrap(IdeActions.MOVE_TO_ANOTHER_CHANGE_LIST).registerCustomShortcutSet(CommonShortcuts.getMove(), myViewer);
 
     result.add(createRollbackGroup(false));
 

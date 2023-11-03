@@ -11,13 +11,11 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
-import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.impl.updateFromFlow
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase
 import com.intellij.openapi.progress.util.ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.util.NlsContexts.ProgressDetails
-import com.intellij.openapi.util.NlsContexts.ProgressText
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.util.text.plus
 import com.intellij.openapi.vcs.VcsBundle.message
@@ -26,8 +24,8 @@ import com.intellij.openapi.vcs.changes.InclusionListener
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx
 import com.intellij.openapi.wm.ex.StatusBarEx
 import com.intellij.openapi.wm.ex.WindowManagerEx
-import com.intellij.platform.util.progress.RawProgressReporter
 import com.intellij.platform.util.progress.asContextElement
+import com.intellij.platform.util.progress.impl.TextDetailsProgressReporter
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.EditorTextComponent
 import com.intellij.ui.components.JBLabel
@@ -149,7 +147,19 @@ open class CommitProgressPanel : CommitProgressUi, InclusionListener, DocumentLi
     })
     indicator.start()
     try {
-      return withContext(IndeterminateProgressReporter(indicator).asContextElement(), block = action)
+      return coroutineScope {
+        TextDetailsProgressReporter(scope).use { reporter ->
+          val updater = launch {
+            indicator.updateFromFlow(reporter.progressState)
+          }
+          try {
+            withContext(reporter.asContextElement(), action)
+          }
+          finally {
+            updater.cancel()
+          }
+        }
+      }
     }
     finally {
       indicator.stop()
@@ -412,21 +422,4 @@ private class RerunCommitChecksAction :
       hoveredIcon = AllIcons.General.InlineRefreshHover
     }
   }
-}
-
-private class IndeterminateProgressReporter(private val indicator: ProgressIndicator) : RawProgressReporter {
-
-  override fun text(text: @ProgressText String?) {
-    if (text != null) {
-      indicator.text = text
-    }
-  }
-
-  override fun details(details: @ProgressDetails String?) {
-    if (details != null) {
-      indicator.text2 = details
-    }
-  }
-
-  // ignore fraction updates
 }

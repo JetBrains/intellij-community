@@ -196,7 +196,7 @@ class VSWinTransferSettingsProvider : TransferSettingsProvider {
 
   private class VSWinTransferSettingsRightPanelChooser(private val ide: IdeVersion, config: TransferSettingsConfiguration) : TransferSettingsRightPanelChooser(ide, config) {
     override fun getBottomComponentFactory(): () -> JComponent? = {
-      if (ide.settingsCache.plugins.contains(KnownPlugins.ReSharper)) {
+      if (ide.settingsCache.plugins.values.contains(KnownPlugins.ReSharper)) {
         panel {
           row {
             icon(AllIcons.TransferSettings.Resharper).customize(UnscaledGaps(left = 5, right = 5))

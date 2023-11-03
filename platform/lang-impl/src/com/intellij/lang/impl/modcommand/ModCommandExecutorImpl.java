@@ -55,6 +55,7 @@ import com.intellij.refactoring.rename.RenamePsiElementProcessor;
 import com.intellij.refactoring.rename.inplace.MemberInplaceRenamer;
 import com.intellij.refactoring.suggested.*;
 import com.intellij.refactoring.ui.ConflictsDialog;
+import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
@@ -81,7 +82,7 @@ public class ModCommandExecutorImpl implements ModCommandExecutor {
   }
 
   private static boolean ensureWritable(@NotNull Project project, @NotNull ModCommand command) {
-    Set<VirtualFile> files = command.modifiedFiles();
+    Collection<VirtualFile> files = ContainerUtil.filter(command.modifiedFiles(), f -> !(f instanceof LightVirtualFile));
     return files.isEmpty() || ReadonlyStatusHandler.ensureFilesWritable(project, files.toArray(VirtualFile.EMPTY_ARRAY));
   }
 
@@ -660,22 +661,52 @@ public class ModCommandExecutorImpl implements ModCommandExecutor {
     return true;
   }
 
+  @Override
+  public void executeForFileCopy(@NotNull ModCommand command, @NotNull PsiFile file) {
+    for (ModCommand cmd : command.unpack()) {
+      if (cmd instanceof ModUpdateFileText updateFileText) {
+        if (!updateFileText.file().equals(file.getOriginalFile().getVirtualFile())) {
+          throw new UnsupportedOperationException("The command updates non-current file");
+        }
+        updateText(file.getProject(), file.getViewProvider().getDocument(), updateFileText);
+      }
+      else if (!(cmd instanceof ModNavigate) && !(cmd instanceof ModHighlight)) {
+        throw new UnsupportedOperationException("Unexpected command: " + command);
+      }
+    }
+  }
+
+  private void updateText(@NotNull Project project, @NotNull Document document, @NotNull ModUpdateFileText upd)
+    throws IllegalStateException {
+    String oldText = upd.oldText();
+    if (!document.getText().equals(oldText)) {
+      throw new IllegalStateException("Old text doesn't match");
+    }
+    List<@NotNull Fragment> ranges = calculateRanges(upd);
+    PsiDocumentManager manager = PsiDocumentManager.getInstance(project);
+    applyRanges(document, ranges, upd.newText());
+    manager.commitDocument(document);
+  }
+
   private static boolean executeUpdate(@NotNull Project project, @NotNull ModUpdateFileText upd) {
     VirtualFile file = upd.file();
     Document document = FileDocumentManager.getInstance().getDocument(file);
     if (document == null) return false;
     String oldText = upd.oldText();
-    String newText = upd.newText();
     if (!document.getText().equals(oldText)) return false;
     List<@NotNull Fragment> ranges = calculateRanges(upd);
     return WriteAction.compute(() -> {
-      for (Fragment range : ranges) {
-        document.replaceString(range.offset(), range.offset() + range.oldLength(),
-                               newText.substring(range.offset(), range.offset() + range.newLength()));
-      }
+      applyRanges(document, ranges, upd.newText());
       PsiDocumentManager.getInstance(project).commitDocument(document);
       return true;
     });
+  }
+
+  private static void applyRanges(@NotNull Document document, List<@NotNull Fragment> ranges, String newText) {
+    for (Fragment range : ranges) {
+      document.replaceString(range.offset(), range.offset() + range.oldLength(),
+                             newText.substring(range.offset(), range.offset() + range.newLength()));
+    }
   }
   
   private static @NotNull List<@NotNull Fragment> calculateRanges(@NotNull ModUpdateFileText upd) {

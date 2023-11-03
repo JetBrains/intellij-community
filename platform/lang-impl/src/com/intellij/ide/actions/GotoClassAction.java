@@ -59,6 +59,6 @@ public final class GotoClassAction extends SearchEverywhereBaseAction implements
 
   @Override
   protected boolean hasContributors(@NotNull DataContext dataContext) {
-    return ChooseByNameRegistry.getInstance().getClassModelContributors().length > 0;
+    return !ChooseByNameRegistry.getInstance().getClassModelContributorList().isEmpty();
   }
 }

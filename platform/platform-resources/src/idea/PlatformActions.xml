@@ -251,7 +251,7 @@
       <action id="EditorMoveDownAndScroll" class="com.intellij.openapi.editor.actions.MoveDownAndScrollAction"/>
       <action id="EditorMoveUpAndScrollWithSelection" class="com.intellij.openapi.editor.actions.MoveUpWithSelectionAndScrollAction"/>
       <action id="EditorMoveDownAndScrollWithSelection" class="com.intellij.openapi.editor.actions.MoveDownWithSelectionAndScrollAction"/>
-      <action id="EditorAddOrRemoveCaret" class="com.intellij.openapi.editor.actions.AddOrRemoveCaretDummyAction"/>
+      <action id="EditorAddOrRemoveCaret" class="com.intellij.openapi.actionSystem.EmptyAction"/>
       <action id="EditorCreateRectangularSelection" class="com.intellij.openapi.editor.actions.CreateRectangularSelectionAction"/>
       <action id="EditorAddRectangularSelectionOnMouseDrag"
               class="com.intellij.openapi.editor.actions.AddRectangularSelectionOnMouseDragAction"/>

@@ -50,7 +50,7 @@ class DefaultImportPerformer(private val partials: Collection<PartialImportPerfo
 
   override fun collectAllRequiredPlugins(settings: Settings): Set<PluginId> {
     logger.info("collectAllRequiredPlugins")
-    val ids = settings.plugins.filterIsInstance<PluginFeature>().map { PluginId.getId(it.pluginId) }.toMutableSet()
+    val ids = settings.plugins.values.filterIsInstance<PluginFeature>().map { PluginId.getId(it.pluginId) }.toMutableSet()
 
     ids.addAll(onlyRequiredPartials(settings).flatMap { it.collectAllRequiredPlugins(settings) })
 

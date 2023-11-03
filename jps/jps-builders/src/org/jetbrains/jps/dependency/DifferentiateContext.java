@@ -8,6 +8,8 @@ import java.util.function.Predicate;
 
 public interface DifferentiateContext {
 
+  DifferentiateParameters getParams();
+
   /**
    * Accessor for the main Graph
    */

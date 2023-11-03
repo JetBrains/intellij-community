@@ -148,7 +148,7 @@ public final class ProblemsView implements DumbAware, ToolWindowFactory {
     ContentManager manager = window.getContentManager();
 
     CompletableFuture<?> result = CompletableFuture.completedFuture(null);
-    for (ProblemsViewPanelProvider provider : ProblemsViewPanelProvider.getEP().getExtensions(project)) {
+    for (ProblemsViewPanelProvider provider : ProblemsViewPanelProvider.getEP().getExtensionList(project)) {
       ProblemsViewTab panel = provider.create();
       if (panel != null) {
         createContent(manager, panel);

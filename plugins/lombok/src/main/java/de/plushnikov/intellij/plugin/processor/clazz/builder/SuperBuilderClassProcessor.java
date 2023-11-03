@@ -10,6 +10,7 @@ import de.plushnikov.intellij.plugin.processor.clazz.AbstractClassProcessor;
 import de.plushnikov.intellij.plugin.processor.handler.SuperBuilderHandler;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -33,6 +34,16 @@ public final class SuperBuilderClassProcessor extends AbstractClassProcessor {
   }
 
   @Override
+  protected boolean possibleToGenerateElementNamed(@NotNull String nameHint,
+                                                   @NotNull PsiClass psiClass,
+                                                   @NotNull PsiAnnotation psiAnnotation) {
+    final SuperBuilderHandler builderHandler = getBuilderHandler();
+    final String builderClassName = builderHandler.getBuilderClassName(psiClass);
+    return nameHint.equals(builderClassName) ||
+           !psiClass.hasModifierProperty(PsiModifier.ABSTRACT) && nameHint.equals(builderHandler.getBuilderImplClassName(psiClass));
+  }
+
+  @Override
   protected Collection<String> getNamesOfPossibleGeneratedElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation) {
     final SuperBuilderHandler builderHandler = getBuilderHandler();
 
@@ -53,7 +64,7 @@ public final class SuperBuilderClassProcessor extends AbstractClassProcessor {
   @Override
   protected void generatePsiElements(@NotNull PsiClass psiClass,
                                      @NotNull PsiAnnotation psiAnnotation,
-                                     @NotNull List<? super PsiElement> target) {
+                                     @NotNull List<? super PsiElement> target, @Nullable String nameHint) {
     SuperBuilderHandler builderHandler = getBuilderHandler();
     final String builderClassName = builderHandler.getBuilderClassName(psiClass);
 

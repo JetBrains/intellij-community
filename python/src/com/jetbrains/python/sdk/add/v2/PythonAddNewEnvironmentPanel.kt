@@ -7,10 +7,13 @@ import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.service
 import com.intellij.openapi.observable.properties.ObservableProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
+import com.intellij.openapi.observable.util.and
+import com.intellij.openapi.observable.util.notEqualsTo
 import com.intellij.openapi.observable.util.or
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.ComboBox
+import com.intellij.openapi.ui.validation.WHEN_PROPERTY_CHANGED
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.TaskCancellation
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
@@ -21,15 +24,11 @@ import com.jetbrains.python.newProject.steps.ProjectSpecificSettingsStep
 import com.jetbrains.python.sdk.add.target.conda.createCondaSdkFromExistingEnv
 import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMode.*
 import com.jetbrains.python.sdk.configuration.createVirtualEnvSynchronously
-import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.nio.file.Path
-import java.nio.file.Paths
-import kotlin.io.path.exists
 
 class PythonAddNewEnvironmentPanel(val projectPath: ObservableProperty<String>) {
   private val propertyGraph = PropertyGraph()
@@ -42,6 +41,7 @@ class PythonAddNewEnvironmentPanel(val projectPath: ObservableProperty<String>) 
   private val allExistingSdks = propertyGraph.property<List<Sdk>>(emptyList())
   private val basePythonSdks = propertyGraph.property<List<Sdk>>(emptyList())
   private val pythonBaseVersion = propertyGraph.property<Sdk?>(null)
+  private val selectedVenv = propertyGraph.property<Sdk?>(null)
 
   private val condaExecutable = propertyGraph.property("")
   private var venvHint = propertyGraph.property("")
@@ -61,54 +61,54 @@ class PythonAddNewEnvironmentPanel(val projectPath: ObservableProperty<String>) 
                                         basePythonSdks,
                                         allExistingSdks,
                                         pythonBaseVersion,
+                                        selectedVenv,
                                         condaExecutable)
 
   private lateinit var presenter: PythonAddInterpreterPresenter
-
   private lateinit var custom: PythonAddCustomInterpreter
 
 
   fun buildPanel(outerPanel: Panel) {
     presenter = PythonAddInterpreterPresenter(state, uiContext = Dispatchers.EDT + ModalityState.current().asContextElement())
+    presenter.navigator.selectionMode = selectedMode
     custom = PythonAddCustomInterpreter(presenter)
+    val validationRequestor = WHEN_PROPERTY_CHANGED(selectedMode)
+
     with(outerPanel) {
       row(message("sdk.create.interpreter.type")) {
         segmentedButton(PythonInterpreterSelectionMode.entries) { text = message(it.nameKey) }
           .bind(selectedMode)
-      }.topGap(TopGap.SMALL)
-
+      }.topGap(TopGap.MEDIUM)
 
       row(message("sdk.create.python.version")) {
-        pythonBaseVersionComboBox = comboBox<Sdk?>(emptyList(), PythonSdkComboBoxListCellRenderer())
+        pythonBaseVersionComboBox = nonEditablePythonInterpreterComboBox(presenter.basePythonSdksFlow, scope = presenter.state.scope,
+                                                                         uiContext = presenter.uiContext)
           .bindItem(pythonBaseVersion)
+          .displayLoaderWhen(presenter.detectingSdks, makeTemporaryEditable = true, scope = presenter.scope,
+                             uiContext = presenter.uiContext)
           .align(AlignX.FILL)
           .component
       }.visibleIf(_projectVenv)
 
-      row(message("sdk.create.conda.executable.path")) {
-        textFieldWithBrowseButton()
-          .bindText(condaExecutable)
-          .validationOnInput {
-            if (!Paths.get(it.text).exists()) error("Executable does not exist") else null
-          }
-          .align(AlignX.FILL)
+      rowsRange {
+        executableSelector(state.condaExecutable,
+                           validationRequestor,
+                           message("sdk.create.conda.executable.path"),
+                           message("sdk.create.conda.missing.text"))
+          .displayLoaderWhen(presenter.detectingCondaExecutable, scope = presenter.scope, uiContext = presenter.uiContext)
       }.visibleIf(_baseConda)
 
       row("") {
         comment("").bindText(venvHint)
-      }.visibleIf(_projectVenv or _baseConda)
+      }.visibleIf(_projectVenv or (_baseConda and state.condaExecutable.notEqualsTo(UNKNOWN_EXECUTABLE)))
 
       rowsRange {
-        custom.buildPanel(this)
+        custom.buildPanel(this, validationRequestor)
       }.visibleIf(_custom)
     }
 
     projectPath.afterChange { updateVenvLocationHint() }
     selectedMode.afterChange { updateVenvLocationHint() }
-
-    // todo why doesn't work?
-    //venvHint.dependsOn(projectPath, ::updateVenvLocationHint)
-    //venvHint.dependsOn(selectedMode, ::updateVenvLocationHint)
   }
 
   fun onShown() {
@@ -124,36 +124,16 @@ class PythonAddNewEnvironmentPanel(val projectPath: ObservableProperty<String>) 
         updateVenvLocationHint()
       }
 
-      state.scope.launch(start = CoroutineStart.UNDISPATCHED) {
-        presenter.basePythonSdksFlow.collectLatest { baseSdks ->
-          withContext(presenter.uiContext) {
-            pythonBaseVersionComboBox.removeAllItems()
-            baseSdks.forEach { sdk -> pythonBaseVersionComboBox.addItem(sdk) }
-          }
-        }
-      }
-
       custom.onShown()
     }
   }
 
-  //fun validateCurrent(): Boolean {
-  //  return when (selectedMode.get()) {
-  //    PROJECT_VENV -> pythonBaseVersion.get().let { it != null && it.sdkSeemsValid }
-  //    BASE_CONDA -> {
-  //      val condaPath = condaExecutable.get()
-  //      return condaPath != null
-  //    }
-  //    CUSTOM -> error("")
-  //  }
-  //}
-
-  fun getSdk(): Sdk? {
-    return when (selectedMode.get()) {
+  fun getSdk(): Sdk? =
+    when (selectedMode.get()) {
       PROJECT_VENV -> {
         val venvPath = Path.of(projectPath.get(), ".venv")
         val venvPathOnTarget = presenter.getPathOnTarget(venvPath)
-        return createVirtualEnvSynchronously(pythonBaseVersion.get(), basePythonSdks.get(), venvPathOnTarget, projectPath.get(), null, null)
+        createVirtualEnvSynchronously(pythonBaseVersion.get(), basePythonSdks.get(), venvPathOnTarget, projectPath.get(), null, null)
       }
       BASE_CONDA -> {
         runWithModalProgressBlocking(ModalTaskOwner.guess(), message("sdk.create.custom.conda.select.progress"),
@@ -165,5 +145,4 @@ class PythonAddNewEnvironmentPanel(val projectPath: ObservableProperty<String>) 
       }
       CUSTOM -> custom.getSdk()
     }
-  }
 }

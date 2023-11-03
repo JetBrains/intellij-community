@@ -10,6 +10,7 @@ import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.openapi.observable.util.bindBooleanStorage
 import com.intellij.openapi.project.Project
 import com.intellij.ui.dsl.builder.Panel
+import com.intellij.ui.dsl.builder.RightGap
 import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.whenStateChangedFromUi
 import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.BuildSystemType
@@ -51,6 +52,8 @@ internal class IntelliJKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizar
                 checkBox(KotlinNewProjectWizardUIBundle.message("label.project.wizard.new.project.use.compact.project.structure"))
                     .bindSelected(useCompactProjectStructureProperty)
                     .whenStateChangedFromUi { logUseCompactProjectStructureChanged(it) }
+                    .gap(RightGap.SMALL)
+                contextHelp(KotlinNewProjectWizardUIBundle.message("tooltip.project.wizard.new.project.use.compact.project.structure"))
             }
         }
 
@@ -69,9 +72,7 @@ internal class IntelliJKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizar
                 sdk = sdk,
                 buildSystemType = BuildSystemType.Jps,
                 addSampleCode = false,
-                useCompactProjectStructure = useCompactProject,
-                createResourceDirectories = !useCompactProject,
-                filterTestSourcesets = useCompactProject
+                useCompactProjectStructure = useCompactProject
             )
         }
     }
@@ -90,10 +91,10 @@ internal class IntelliJKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizar
         }
 
         override fun setupProject(project: Project) {
-            super.setupProject(project)
             if (shouldAddOnboardingTips()) {
-                prepareTipsInEditor(project)
+                prepareOnboardingTips(project)
             }
+            super.setupProject(project)
         }
     }
 }

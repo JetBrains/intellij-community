@@ -12,7 +12,6 @@ import com.intellij.internal.statistic.eventLog.StatisticsEventLogger
 import com.intellij.internal.statistic.eventLog.fus.FeatureUsageLogger.logState
 import com.intellij.internal.statistic.eventLog.fus.FeatureUsageStateEventTracker
 import com.intellij.internal.statistic.service.fus.collectors.FUStateUsagesLogger.Companion.LOG
-import com.intellij.internal.statistic.updater.StatisticsStateCollectorsScheduler
 import com.intellij.internal.statistic.updater.allowExecution
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant
 import com.intellij.internal.statistic.utils.getPluginInfo
@@ -25,7 +24,6 @@ import com.intellij.openapi.project.waitForSmartMode
 import kotlinx.coroutines.*
 import kotlinx.coroutines.future.asDeferred
 import org.jetbrains.annotations.ApiStatus.Internal
-import org.jetbrains.concurrency.asDeferred
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes
 
@@ -248,7 +246,7 @@ class ProjectFUStateUsagesLogger(
       logProjectState()
     }
 
-    for (extension in FeatureUsageStateEventTracker.EP_NAME.extensions) {
+    for (extension in FeatureUsageStateEventTracker.EP_NAME.extensionList) {
       launch {
         extension.reportNow()
       }

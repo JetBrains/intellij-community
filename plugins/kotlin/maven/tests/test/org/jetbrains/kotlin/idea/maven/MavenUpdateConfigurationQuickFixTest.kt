@@ -2,9 +2,11 @@
 
 package org.jetbrains.kotlin.idea.maven
 
+import com.intellij.maven.testFramework.assertWithinTimeout
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
@@ -15,19 +17,61 @@ import com.intellij.util.ThrowableRunnable
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
+import org.jetbrains.idea.maven.project.MavenImportListener
+import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import org.jetbrains.kotlin.idea.test.runAll
+import org.junit.Assert
 import org.junit.Test
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 import java.io.File
+import java.util.concurrent.atomic.AtomicInteger
 import kotlin.reflect.KMutableProperty0
 
 @RunWith(JUnit38ClassRunner::class)
 class MavenUpdateConfigurationQuickFixTest12 : KotlinMavenImportingTestCase() {
     private lateinit var codeInsightTestFixture: CodeInsightTestFixture
 
+    private val artifactDownloadingScheduled = AtomicInteger()
+    private val artifactDownloadingFinished = AtomicInteger()
+
     override fun runInDispatchThread() = false
+
+    override fun setUp() {
+        super.setUp()
+        myProject.messageBus.connect(testRootDisposable)
+            .subscribe(MavenImportListener.TOPIC, object : MavenImportListener {
+                override fun artifactDownloadingScheduled() {
+                    artifactDownloadingScheduled.incrementAndGet()
+                }
+
+                override fun artifactDownloadingFinished() {
+                    artifactDownloadingFinished.incrementAndGet()
+                }
+
+                override fun importFinished(importedProjects: MutableCollection<MavenProject>, newModules: MutableList<Module>) {
+                }
+            })
+    }
+
+    override fun tearDown() = runBlocking {
+        try {
+            waitForScheduledArtifactDownloads()
+        } catch (e: Throwable) {
+            addSuppressedException(e)
+        } finally {
+            super.tearDown()
+        }
+    }
+
+    private suspend fun waitForScheduledArtifactDownloads() {
+        assertWithinTimeout {
+            val scheduled = artifactDownloadingScheduled.get()
+            val finished = artifactDownloadingFinished.get()
+            Assert.assertEquals("Expected $scheduled artifact downloads, but finished $finished", scheduled, finished)
+        }
+    }
 
     private fun getTestDataPath(): String {
         return KotlinRoot.DIR.resolve("maven/tests/testData/languageFeature").resolve(getTestName(true)).path.substringBefore('_')

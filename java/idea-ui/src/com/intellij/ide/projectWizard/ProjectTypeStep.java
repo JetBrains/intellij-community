@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectWizard;
 
 import com.intellij.diagnostic.PluginException;
@@ -60,6 +60,7 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
+import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -702,7 +703,7 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
       URL url = classLoader.getResource(StringUtil.trimStart(ep.templatePath, "/"));
       if (url == null) {
         LOG.error(new PluginException("Can't find resource for project template: " + ep.templatePath, pluginDescriptor.getPluginId()));
-        return;
+        return Unit.INSTANCE;
       }
 
       try {
@@ -718,6 +719,7 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
       catch (Exception e) {
         LOG.error(new PluginException("Error loading template from URL: " + ep.templatePath, e, pluginDescriptor.getPluginId()));
       }
+      return Unit.INSTANCE;
     });
     return map;
   }

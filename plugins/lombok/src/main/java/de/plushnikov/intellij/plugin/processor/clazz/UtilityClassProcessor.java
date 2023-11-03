@@ -7,6 +7,7 @@ import de.plushnikov.intellij.plugin.problem.ProblemSink;
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -20,6 +21,13 @@ public final class UtilityClassProcessor extends AbstractClassProcessor {
 
   public UtilityClassProcessor() {
     super(PsiMethod.class, LombokClassNames.UTILITY_CLASS);
+  }
+
+  @Override
+  protected boolean possibleToGenerateElementNamed(@NotNull String nameHint,
+                                                   @NotNull PsiClass psiClass,
+                                                   @NotNull PsiAnnotation psiAnnotation) {
+    return nameHint.equals(psiClass.getName());
   }
 
   @Override
@@ -82,7 +90,8 @@ public final class UtilityClassProcessor extends AbstractClassProcessor {
   }
 
   @Override
-  protected void generatePsiElements(@NotNull final PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
+  protected void generatePsiElements(@NotNull final PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target,
+                                     @Nullable String nameHint) {
 
     LombokLightMethodBuilder constructorBuilder = new LombokLightMethodBuilder(psiClass.getManager(), psiClass.getName())
       .withConstructor(true)

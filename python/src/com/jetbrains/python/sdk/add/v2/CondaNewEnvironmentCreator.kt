@@ -2,15 +2,14 @@
 package com.jetbrains.python.sdk.add.v2
 
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.ComboBox
+import com.intellij.openapi.ui.validation.DialogValidationRequestor
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.TaskCancellation
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
-import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.bindItem
 import com.intellij.ui.dsl.builder.bindText
@@ -29,7 +28,7 @@ class CondaNewEnvironmentCreator(presenter: PythonAddInterpreterPresenter) : Pyt
   private lateinit var pythonVersion: ObservableMutableProperty<LanguageLevel>
   private lateinit var versionComboBox: ComboBox<LanguageLevel>
 
-  override fun buildOptions(panel: Panel) {
+  override fun buildOptions(panel: Panel, validationRequestor: DialogValidationRequestor) {
     with(panel) {
       row(message("sdk.create.python.version")) {
         pythonVersion = propertyGraph.property(condaSupportedLanguages.first())
@@ -41,13 +40,12 @@ class CondaNewEnvironmentCreator(presenter: PythonAddInterpreterPresenter) : Pyt
         textField()
           .bindText(envName)
       }
-      row(message("sdk.create.conda.executable.path")) {
-        textFieldWithBrowseButton(message("sdk.create.custom.conda.browse.title"),
-                                  null,
-                                  FileChooserDescriptorFactory.createSingleFileOrExecutableAppDescriptor())
-          .align(Align.FILL)
-          .bindText(state.condaExecutable)
-      }
+
+      executableSelector(state.condaExecutable,
+                         validationRequestor,
+                         message("sdk.create.conda.executable.path"),
+                         message("sdk.create.conda.missing.text"))
+        .displayLoaderWhen(presenter.detectingCondaExecutable, scope = presenter.scope, uiContext = presenter.uiContext)
     }
   }
 

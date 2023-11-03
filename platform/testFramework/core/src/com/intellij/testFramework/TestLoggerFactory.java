@@ -523,7 +523,7 @@ public final class TestLoggerFactory implements Logger.Factory {
 
   private static class WithTimeSinceTestStartedJulFormatter extends IdeaLogRecordFormatter {
     WithTimeSinceTestStartedJulFormatter() {
-      super(false);
+      super(true);
     }
 
     @Override

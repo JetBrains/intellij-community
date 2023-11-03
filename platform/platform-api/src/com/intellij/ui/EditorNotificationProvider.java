@@ -20,6 +20,8 @@ import java.util.function.Function;
  * <p>
  * Register in the {@code com.intellij.editorNotificationProvider} extension point, see {@link #EP_NAME}.
  * </p>
+ *
+ * @see EditorNotifications#updateNotifications
  */
 public interface EditorNotificationProvider {
   ProjectExtensionPointName<EditorNotificationProvider> EP_NAME =

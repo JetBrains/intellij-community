@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gitlab.ui.comment
 
 import com.intellij.collaboration.util.SingleCoroutineLauncher
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.project.Project
 import com.intellij.util.childScope
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
@@ -11,12 +12,13 @@ import org.jetbrains.plugins.gitlab.mergerequest.data.MutableGitLabNote
 interface GitLabNoteAdminActionsViewModel {
   val busy: Flow<Boolean>
 
-  val editVm: Flow<GitLabNoteEditingViewModel?>
+  val editVm: Flow<ExistingGitLabNoteEditingViewModel?>
 
   /**
    * Whether the note can be edited.
    */
   fun canEdit(): Boolean
+
   /**
    * Whether the note can be individually submitted when it is a draft note.
    */
@@ -36,23 +38,26 @@ interface GitLabNoteAdminActionsViewModel {
 private val LOG = logger<GitLabNoteAdminActionsViewModel>()
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class GitLabNoteAdminActionsViewModelImpl(parentCs: CoroutineScope, private val note: MutableGitLabNote)
-  : GitLabNoteAdminActionsViewModel {
+class GitLabNoteAdminActionsViewModelImpl(
+  parentCs: CoroutineScope,
+  private val project: Project,
+  private val note: MutableGitLabNote
+) : GitLabNoteAdminActionsViewModel {
 
   private val cs = parentCs.childScope()
   private val taskLauncher = SingleCoroutineLauncher(cs)
   override val busy: Flow<Boolean> = taskLauncher.busy
 
   private val isEditing = MutableStateFlow(false)
-  override val editVm: Flow<GitLabNoteEditingViewModel?> = isEditing.transformLatest { editing ->
+  override val editVm: Flow<ExistingGitLabNoteEditingViewModel?> = isEditing.transformLatest { editing ->
     if (editing) {
       coroutineScope {
         val cs = this@coroutineScope
-        val editVm = DelegatingGitLabNoteEditingViewModel(cs, note.body.value, note::setBody).apply {
-          onDoneIn(cs) {
-            stopEditing()
+        val editVm = GitLabNoteEditingViewModel.forExistingNote(cs, note).apply {
+            onDoneIn(cs) {
+              stopEditing()
+            }
           }
-        }
         emit(editVm)
         awaitCancellation()
       }

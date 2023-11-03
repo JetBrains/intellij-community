@@ -21,10 +21,11 @@ suspend fun GitLabApi.Rest.getCurrentUser(): HttpResponse<out GitLabUserRestDTO>
 }
 
 @SinceGitLab("12.5", note = "No exact version")
-suspend fun GitLabApi.GraphQL.getCurrentUser(): GitLabUserDetailedDTO? {
+suspend fun GitLabApi.GraphQL.getCurrentUser(): GitLabUserDetailedDTO {
   val request = gitLabQuery(GitLabGQLQuery.GET_CURRENT_USER)
   return withErrorStats(GitLabGQLQuery.GET_CURRENT_USER) {
     loadResponse<GitLabUserDetailedDTO>(request, "currentUser").body()
+    ?: throw IllegalStateException("Unable to load current user")
   }
 }
 

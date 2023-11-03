@@ -6,6 +6,8 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.observable.properties.ObservableProperty
 import com.intellij.openapi.observable.properties.whenPropertyChanged
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.options.advanced.AdvancedSettingsChangeListener
 import com.intellij.ui.DocumentAdapter
@@ -113,7 +115,7 @@ fun <T> StateFlow<T>.predicate(scope: CoroutineScope, predicate: (T) -> Boolean)
     override fun addListener(listener: (Boolean) -> Unit) {
       scope.launch {
         collect { value ->
-          withContext(Dispatchers.EDT) {
+          withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
             listener(predicate(value))
           }
         }

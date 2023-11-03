@@ -21,4 +21,9 @@
     <highlightVisitor implementation="org.jetbrains.kotlin.idea.highlighter.KotlinRainbowVisitor"/>
   </extensions>
 
+  <extensions defaultExtensionNs="org.jetbrains.kotlin">
+    <beforeResolveHighlightingVisitor implementation="org.jetbrains.kotlin.idea.base.highlighting.beforeResolve.DeclarationHighlightingExtension"/>
+    <beforeResolveHighlightingVisitor implementation="org.jetbrains.kotlin.idea.base.highlighting.beforeResolve.AnnotationsHighlightingExtension"/>
+  </extensions>
+
 </idea-plugin>

@@ -41,6 +41,11 @@ sealed interface DocumentationResult {
     fun externalUrl(externalUrl: String?): Documentation
 
     /**
+     * Expandable section under element definition
+     */
+    fun definitionDetails(details: String?): Documentation
+
+    /**
      * [Updates][updates] continuously replace the browser content until the flow is fully collected.
      * Clicking another link, closing the browser, resetting the browser, going back or forward cancels the flow collection.
      * Scrolling position is preserved in the browser when the update is applied, i.e. [anchor] does not have any effect on updates.

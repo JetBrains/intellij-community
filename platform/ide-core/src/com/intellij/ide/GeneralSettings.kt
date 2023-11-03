@@ -229,7 +229,7 @@ data class GeneralSettingsState(
   @JvmField
   var autoSyncFiles: Boolean = true,
   @JvmField
-  var backgroundSyncFiles: Boolean = false,
+  var backgroundSyncFiles: Boolean = true,
   @JvmField
   var autoSaveFiles: Boolean = true,
   @JvmField

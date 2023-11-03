@@ -287,7 +287,7 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
     JavaPsiFacade facade = JavaPsiFacade.getInstance(currentModule.getProject());
     String fullReferenceText = reference.getCanonicalText();
     ThreeState refToAnnotation = isReferenceToAnnotation(psiElement);
-    for (ExternalLibraryResolver resolver : ExternalLibraryResolver.EP_NAME.getExtensions()) {
+    for (ExternalLibraryResolver resolver : ExternalLibraryResolver.EP_NAME.getExtensionList()) {
       ExternalClassResolveResult resolveResult = resolver.resolveClass(shortReferenceName, refToAnnotation, currentModule);
       OrderEntryFix fix = null;
       if (resolveResult != null &&

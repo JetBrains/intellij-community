@@ -132,8 +132,7 @@ public class TooBroadCatchInspection extends BaseInspection {
     }
   }
 
-  private static class AddCatchSectionFix extends InspectionGadgetsFix {
-    @SafeFieldForPreview
+  private static class AddCatchSectionFix extends PsiUpdateModCommandQuickFix {
     private final SmartTypePointer myThrown;
     private final String myText;
 
@@ -155,20 +154,11 @@ public class TooBroadCatchInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement typeElement, @NotNull ModPsiUpdater updater) {
       final PsiType thrownType = myThrown.getType();
-      if (thrownType == null) {
-        return;
-      }
-      final PsiElement typeElement = descriptor.getPsiElement();
-      if (typeElement == null) {
-        return;
-      }
-      final PsiElement catchParameter = typeElement.getParent();
-      if (!(catchParameter instanceof PsiParameter)) {
-        return;
-      }
-      final PsiElement catchBlock = ((PsiParameter)catchParameter).getDeclarationScope();
+      if (thrownType == null) return;
+      if (!(typeElement.getParent() instanceof PsiParameter parameter)) return;
+      final PsiElement catchBlock = parameter.getDeclarationScope();
       if (!(catchBlock instanceof PsiCatchSection myBeforeCatchSection)) {
         return;
       }
@@ -180,23 +170,10 @@ public class TooBroadCatchInspection extends BaseInspection {
       final PsiCatchSection element = (PsiCatchSection)myTryStatement.addBefore(section, myBeforeCatchSection);
       codeStyleManager.shortenClassReferences(element);
 
-      if (isOnTheFly()) {
-        final PsiCodeBlock newBlock = element.getCatchBlock();
-        assert newBlock != null;
-        final TextRange range = SurroundWithUtil.getRangeToSelect(newBlock);
-        final PsiFile file = element.getContainingFile();
-        final Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
-        if (editor == null) {
-          return;
-        }
-        final Document document = PsiDocumentManager.getInstance(project).getDocument(file);
-        if (editor.getDocument() != document) {
-          return;
-        }
-        editor.getCaretModel().moveToOffset(range.getStartOffset());
-        editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-        editor.getSelectionModel().setSelection(range.getStartOffset(), range.getEndOffset());
-      }
+      final PsiCodeBlock newBlock = element.getCatchBlock();
+      assert newBlock != null;
+      final TextRange range = SurroundWithUtil.getRangeToSelect(newBlock);
+      updater.select(range);
     }
   }
 

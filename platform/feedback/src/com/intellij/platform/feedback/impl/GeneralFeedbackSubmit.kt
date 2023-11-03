@@ -17,12 +17,13 @@ private const val TEST_FEEDBACK_URL = "https://forms-stgn.w3jbcom-nonprod.aws.in
 private const val PRODUCTION_FEEDBACK_URL = "https://forms-service.jetbrains.com/feedback"
 
 private const val FEEDBACK_FORM_ID_ONLY_DATA = "feedback/ide"
-private const val FEEDBACK_FORM_ID_WITH_DETAILED_ANSWER = "feedback/ide_with_detailed_answer"
+private const val FEEDBACK_FORM_ID_WITH_DETAILED_ANSWER = "v2/feedback/ide_with_detailed_answer"
 
 /** Should be used inside JSON top-level keys to distinguish reports without any external information */
 const val FEEDBACK_REPORT_ID_KEY: String = "feedback_id"
 
 private const val FEEDBACK_FROM_ID_KEY = "formid"
+private const val FEEDBACK_AUTO_SOLVE_TICKET_KEY = "autosolve"
 private const val FEEDBACK_INTELLIJ_PRODUCT_KEY = "intellij_product"
 private const val FEEDBACK_TYPE_KEY = "feedback_type"
 private const val FEEDBACK_PRIVACY_CONSENT_KEY = "privacy_consent"
@@ -73,11 +74,13 @@ data class FeedbackRequestDataWithDetailedAnswer(val email: String,
                                                  val title: String,
                                                  val description: String,
                                                  val privacyConsentType: String,
+                                                 val autoSolveTicket: Boolean,
                                                  override val feedbackType: String,
                                                  override val collectedData: JsonObject) : FeedbackRequestDataHolder {
   override fun toJsonObject(): JsonObject {
     return buildJsonObject {
       put(FEEDBACK_FROM_ID_KEY, FEEDBACK_FORM_ID_WITH_DETAILED_ANSWER)
+      put(FEEDBACK_AUTO_SOLVE_TICKET_KEY, autoSolveTicket)
       put(FEEDBACK_EMAIL_KEY, email)
       put(FEEDBACK_SUBJECT_KEY, title)
       put(FEEDBACK_COMMENT_KEY, description)
@@ -164,21 +167,20 @@ enum class FeedbackRequestType {
  */
 internal fun getProductTag(): String {
   return when {
-    PlatformUtils.isIntelliJ() -> "ij_idea"
-    PlatformUtils.isPhpStorm() -> "ij_phpstorm"
-    PlatformUtils.isWebStorm() -> "ij_webstorm"
-    PlatformUtils.isPyCharm() -> "ij_pycharm"
-    PlatformUtils.isRubyMine() -> "ij_rubymine"
-    PlatformUtils.isAppCode() -> "ij_appcode"
-    PlatformUtils.isCLion() -> "ij_clion"
-    PlatformUtils.isDataGrip() -> "ij_datagrip"
-    PlatformUtils.isPyCharmEducational() -> "ij_pycharm_edu"
-    PlatformUtils.isGoIde() -> "ij_goland"
-    PlatformUtils.isJetBrainsClient() -> "ij_code_with_me"
-    PlatformUtils.isDataSpell() -> "ij_dataspell"
-    PlatformUtils.isRider() -> "ij_rider"
-    PlatformUtils.isRustRover() -> "ij_rustrover"
-    PlatformUtils.isAqua() -> "ij_aqua"
+    PlatformUtils.isIntelliJ() -> "ij_idea1"
+    PlatformUtils.isPhpStorm() -> "ij_phpstorm1"
+    PlatformUtils.isWebStorm() -> "ij_webstorm1"
+    PlatformUtils.isPyCharm() -> "ij_pycharm1"
+    PlatformUtils.isRubyMine() -> "ij_rubymine1"
+    PlatformUtils.isAppCode() -> "ij_appcode1"
+    PlatformUtils.isCLion() -> "ij_clion1"
+    PlatformUtils.isDataGrip() -> "ij_datagrip1"
+    PlatformUtils.isGoIde() -> "ij_goland1"
+    PlatformUtils.isJetBrainsClient() -> "ij_code_with_me1"
+    PlatformUtils.isDataSpell() -> "ij_dataspell1"
+    PlatformUtils.isRider() -> "ij_rider1"
+    PlatformUtils.isRustRover() -> "ij_rustrover1"
+    PlatformUtils.isAqua() -> "ij_aqua1"
     else -> "undefined"
   }
 }

@@ -61,6 +61,7 @@ object KnownPlugins {
   val Prettier: PluginFeature = PluginFeature(TransferableIdeFeatureId.Prettier, "intellij.prettierJS", "Prettier")
   val Kubernetes: PluginFeature = PluginFeature(TransferableIdeFeatureId.Kubernetes, "com.intellij.kubernetes", "Kubernetes")
 
+  // Themes
   val Monokai: PluginFeature = PluginFeature(TransferableIdeFeatureId.Monokai, "monokai-pro", "Monokai")
   val Solarized: PluginFeature = PluginFeature(TransferableIdeFeatureId.Solarized, "com.tylerthrailkill.intellij.solarized", "Solarized")
 

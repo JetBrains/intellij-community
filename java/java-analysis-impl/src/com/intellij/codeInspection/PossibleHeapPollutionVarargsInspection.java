@@ -4,10 +4,9 @@ package com.intellij.codeInspection;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.GenericsHighlightUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
-import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
-import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.java.analysis.JavaAnalysisBundle;
-import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
@@ -17,7 +16,6 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.JavaPsiRecordUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ObjectUtils;
 import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -55,7 +53,18 @@ public class PossibleHeapPollutionVarargsInspection extends AbstractBaseJavaLoca
     return new HeapPollutionVisitor(holder);
   }
 
-  private static class AnnotateAsSafeVarargsQuickFix implements LocalQuickFix {
+  private static class AnnotateAsSafeVarargsQuickFix extends PsiUpdateModCommandQuickFix {
+    private final boolean myFinal;
+
+    AnnotateAsSafeVarargsQuickFix(boolean makeFinal) {
+      myFinal = makeFinal;
+    }
+
+    @Override
+    public @NotNull String getName() {
+      return myFinal ? JavaAnalysisBundle.message("make.final.and.annotate.as.safevarargs") : super.getName();
+    }
+
     @NotNull
     @Override
     public String getFamilyName() {
@@ -63,17 +72,7 @@ public class PossibleHeapPollutionVarargsInspection extends AbstractBaseJavaLoca
     }
 
     @Override
-    public boolean startInWriteAction() {
-      return false;
-    }
-
-    @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      applyFix(project, descriptor, true);
-    }
-
-    private void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor, boolean writeCommand) {
-      final PsiElement psiElement = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement psiElement, @NotNull ModPsiUpdater updater) {
       if (!(psiElement instanceof PsiIdentifier)) return;
       PsiModifierListOwner owner = (PsiModifierListOwner)psiElement.getParent();
       if (owner instanceof PsiClass rec) {
@@ -81,48 +80,15 @@ public class PossibleHeapPollutionVarargsInspection extends AbstractBaseJavaLoca
         String compactCtorText = "public " + rec.getName() + " {}";
         PsiMethod ctor = JavaPsiFacade.getElementFactory(project).createMethodFromText(compactCtorText, owner);
         PsiMethod firstMethod = ArrayUtil.getFirstElement(rec.getMethods());
-        if (writeCommand) {
-          owner = (PsiMethod)WriteCommandAction.writeCommandAction(owner.getContainingFile()).withName(getFamilyName())
-            .compute(() -> rec.addBefore(ctor, firstMethod));
-        }
-        else {
-          owner = (PsiMethod)rec.addBefore(ctor, firstMethod);
-        }
+        owner = (PsiMethod)rec.addBefore(ctor, firstMethod);
       }
       if (owner instanceof PsiMethod) {
-        new AddAnnotationPsiFix(CommonClassNames.JAVA_LANG_SAFE_VARARGS, owner).applyFix(project, descriptor);
+        PsiModifierList list = owner.getModifierList();
+        if (myFinal) {
+          list.setModifierProperty(PsiModifier.FINAL, true);
+        }
+        list.addAnnotation(CommonClassNames.JAVA_LANG_SAFE_VARARGS);
       }
-    }
-
-    @Override
-    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      applyFix(project, descriptor, false);
-      return IntentionPreviewInfo.DIFF;
-    }
-  }
-
-  private static class MakeFinalAndAnnotateQuickFix extends AddAnnotationPsiFix {
-    MakeFinalAndAnnotateQuickFix(@NotNull PsiMethod method) {
-      super(CommonClassNames.JAVA_LANG_SAFE_VARARGS, method);
-    }
-
-    @Override
-    public @NotNull String getText() {
-      return getFamilyName();
-    }
-
-    @Override
-    public @NotNull String getFamilyName() {
-      return JavaAnalysisBundle.message("make.final.and.annotate.as.safevarargs");
-    }
-
-    @Override
-    public void applyFix() {
-      PsiMethod method = ObjectUtils.tryCast(getStartElement(), PsiMethod.class);
-      if (method != null) {
-        method.getModifierList().setModifierProperty(PsiModifier.FINAL, true);
-      }
-      super.applyFix();
     }
   }
 
@@ -167,7 +133,7 @@ public class PossibleHeapPollutionVarargsInspection extends AbstractBaseJavaLoca
       }
       final PsiElement nameIdentifier = ((PsiNameIdentifierOwner)aClass).getNameIdentifier();
       if (nameIdentifier != null) {
-        final LocalQuickFix quickFix = new AnnotateAsSafeVarargsQuickFix();
+        final LocalQuickFix quickFix = new AnnotateAsSafeVarargsQuickFix(false);
         myHolder.registerProblem(nameIdentifier, JavaAnalysisBundle.message("possible.heap.pollution.from.parameterized.vararg.type.loc"), quickFix);
       }
     }
@@ -198,7 +164,7 @@ public class PossibleHeapPollutionVarargsInspection extends AbstractBaseJavaLoca
     protected void registerProblem(PsiMethod method, PsiIdentifier nameIdentifier) {
       final LocalQuickFix quickFix;
       if (GenericsHighlightUtil.isSafeVarargsNoOverridingCondition(method, PsiUtil.getLanguageLevel(method))) {
-        quickFix = new AnnotateAsSafeVarargsQuickFix();
+        quickFix = new AnnotateAsSafeVarargsQuickFix(false);
       }
       else {
         final PsiClass containingClass = method.getContainingClass();
@@ -206,7 +172,7 @@ public class PossibleHeapPollutionVarargsInspection extends AbstractBaseJavaLoca
         boolean canBeFinal = !method.hasModifierProperty(PsiModifier.ABSTRACT) &&
                              !containingClass.isInterface() &&
                              OverridingMethodsSearch.search(method).findFirst() == null;
-        quickFix = canBeFinal ? new MakeFinalAndAnnotateQuickFix(method) : null;
+        quickFix = canBeFinal ? new AnnotateAsSafeVarargsQuickFix(true) : null;
       }
       myHolder.registerProblem(nameIdentifier, JavaAnalysisBundle.message("possible.heap.pollution.from.parameterized.vararg.type.loc"),
                                LocalQuickFix.notNullElements(quickFix));

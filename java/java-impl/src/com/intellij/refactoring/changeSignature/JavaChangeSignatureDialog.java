@@ -15,6 +15,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -277,7 +278,7 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
       }
 
       private final EditorTextFieldJBTableRowRenderer myRowRenderer =
-        new EditorTextFieldJBTableRowRenderer(getProject(), JavaChangeSignatureDialog.this.getFileType(), myDisposable) {
+        new EditorTextFieldJBTableRowRenderer(getProject(), JavaChangeSignatureDialog.this.getFileType().getLanguage(), myDisposable) {
         @Override
         protected String getText(JTable table, int row) {
           ParameterTableModelItemBase<ParameterInfoImpl> item = getRowItem(row);
@@ -324,11 +325,13 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
             myTypeEditor.addDocumentListener(getSignatureUpdater());
             myTypeEditor.setPreferredWidth(getTable().getWidth() / 2);
             myTypeEditor.addDocumentListener(new RowEditorChangeListener(0));
+            myTypeEditor.setFont(EditorUtil.getEditorFont());
             add(createLabeledPanel(RefactoringBundle.message("column.name.type"), myTypeEditor), BorderLayout.WEST);
 
             myNameEditor = new EditorTextField(item.parameter.getName(), getProject(), getFileType());
             myNameEditor.addDocumentListener(getSignatureUpdater());
             myNameEditor.addDocumentListener(new RowEditorChangeListener(1));
+            myNameEditor.setFont(EditorUtil.getEditorFont());
             add(createLabeledPanel(RefactoringBundle.message("column.name.name"), myNameEditor), BorderLayout.CENTER);
             new TextFieldCompletionProvider() {
 
@@ -364,6 +367,7 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
               ((PsiExpressionCodeFragment)item.defaultValueCodeFragment).setExpectedType(getRowType(item));
               myDefaultValueEditor.setPreferredWidth(getTable().getWidth() / 2);
               myDefaultValueEditor.addDocumentListener(new RowEditorChangeListener(2));
+              myDefaultValueEditor.setFont(EditorUtil.getEditorFont());
               String message = RefactoringBundle.message("changeSignature.default.value.label");
               additionalPanel.add(createLabeledPanel(message, myDefaultValueEditor), BorderLayout.WEST);
 

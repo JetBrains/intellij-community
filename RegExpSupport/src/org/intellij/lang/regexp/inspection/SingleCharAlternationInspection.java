@@ -2,6 +2,8 @@
 package org.intellij.lang.regexp.inspection;
 
 import com.intellij.codeInspection.*;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
@@ -51,7 +53,7 @@ public class SingleCharAlternationInspection extends LocalInspectionTool {
       return atoms.length == 1 && atoms[0] instanceof RegExpChar;
     }
 
-    private static class SingleCharAlternationFix implements LocalQuickFix {
+    private static class SingleCharAlternationFix extends PsiUpdateModCommandQuickFix {
 
       private final String myText;
 
@@ -74,14 +76,13 @@ public class SingleCharAlternationInspection extends LocalInspectionTool {
       }
 
       @Override
-      public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-        final PsiElement element = descriptor.getPsiElement();
+      protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
         if (!(element instanceof RegExpPattern pattern)) {
           return;
         }
         final PsiElement parent = pattern.getParent();
         final PsiElement victim =
-          (parent instanceof RegExpGroup && ((RegExpGroup)parent).getType() == RegExpGroup.Type.NON_CAPTURING) ? parent : pattern;
+          (parent instanceof RegExpGroup group && group.getType() == RegExpGroup.Type.NON_CAPTURING) ? parent : pattern;
         final String replacementText = buildReplacementText(pattern);
         if (replacementText == null) {
           return;

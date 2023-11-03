@@ -617,8 +617,9 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
         vfsCreationStamp = 0;
 
         // TODO-ank: Should we catch and ignore CancellationException here to allow other lines to execute?
-        IndexingStamp.flushCaches();
-        IndexingFlag.unlockAllFiles();
+        IndexingStamp.close();
+        IndexingFlag.unlockAllFiles(); // TODO-ank: IndexingFlag should also be closed, because indexes might be cleared (IDEA-336540)
+        // TODO-ank: review all the remaining usages of fast file attributes (IDEA-336540)
 
         if (myIsUnitTestMode) {
           UpdatableIndex<Integer, SerializedStubTree, FileContent, ?> index = getState().getIndex(StubUpdatingIndex.INDEX_ID);
@@ -891,7 +892,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       }
       catch (StorageException e) {
         LOG.error(e);
-        requestRebuild(indexId);
+        requestRebuild(indexId, e);
       }
     }
   }

@@ -6,18 +6,21 @@ import com.intellij.openapi.application.AccessToken
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.ProjectExtensionPointName
-import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.*
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.messages.Topic
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.toImmutableList
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Obsolete
 import org.jetbrains.annotations.Contract
+import org.jetbrains.annotations.Unmodifiable
 import javax.swing.JComponent
 
 /**
@@ -170,7 +173,7 @@ abstract class DumbService {
    * @see isDumbAware
    */
   fun <T> filterByDumbAwareness(array: Array<T>): List<T> {
-    return filterByDumbAwareness(listOf(*array))
+    return filterByDumbAwareness(array.toList())
   }
 
   /**
@@ -178,9 +181,9 @@ abstract class DumbService {
    * @see isDumbAware
    */
   @Contract(pure = true)
-  fun <T> filterByDumbAwareness(collection: Collection<T>): List<T> {
+  fun <T> filterByDumbAwareness(collection: Collection<T>): @Unmodifiable List<T> {
     if (isDumb) {
-      val result: MutableList<T> = ArrayList(collection.size)
+      val result = ArrayList<T>(collection.size)
       for (element in collection) {
         if (isDumbAware(element)) {
           result.add(element)
@@ -188,7 +191,7 @@ abstract class DumbService {
       }
       return result
     }
-    return if (collection is List<*>) collection as List<T> else ArrayList(collection)
+    return if (collection is List<*>) collection as List<T> else collection.toImmutableList()
   }
 
   /**
@@ -408,30 +411,36 @@ abstract class DumbService {
       val point = extensionPoint.point
       val size = point.size()
       if (size == 0) {
-        return emptyList()
+        return persistentListOf()
       }
+
       if (!getInstance(project).isDumb) {
         return point.extensionList
       }
-      val result: MutableList<T> = ArrayList(size)
-      for (element in point as ExtensionPointImpl<T>) {
-        if (isDumbAware(element)) {
-          result.add(element!!)
+
+      val result = ArrayList<T>(size)
+      for (item in extensionPoint.filterableLazySequence()) {
+        val aClass = item.implementationClass ?: continue
+        if (DumbAware::class.java.isAssignableFrom(aClass)) {
+          result.add(item.instance ?: continue)
+        }
+        else if (PossiblyDumbAware::class.java.isAssignableFrom(aClass)) {
+          val instance = item.instance ?: continue
+          if ((instance as PossiblyDumbAware).isDumbAware) {
+            result.add(instance)
+          }
         }
       }
       return result
     }
 
     @JvmStatic
-    fun <T: Any> getDumbAwareExtensions(project: Project, extensionPoint: ProjectExtensionPointName<T>): List<T> {
-      val dumbService = getInstance(project)
-      return dumbService.filterByDumbAwareness(extensionPoint.getExtensions(project))
+    fun <T: Any> getDumbAwareExtensions(project: Project, extensionPoint: ProjectExtensionPointName<T>): @Unmodifiable List<T> {
+      return getInstance(project).filterByDumbAwareness(extensionPoint.getExtensions(project))
     }
 
     @JvmStatic
-    fun getInstance(project: Project): DumbService {
-      return project.getService(DumbService::class.java)
-    }
+    fun getInstance(project: Project): DumbService = project.service()
 
     @Suppress("SSBasedInspection")
     @JvmStatic

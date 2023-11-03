@@ -342,17 +342,19 @@ class ActionsCollectorImpl : ActionsCollector() {
     }
 
     /**
-     * Returns language from [CommonDataKeys.PSI_FILE] or by file type from [CommonDataKeys.VIRTUAL_FILE]
+     * Returns language from [CommonDataKeys.PSI_FILE]
+     * or by file type from [CommonDataKeys.VIRTUAL_FILE] or [PlatformCoreDataKeys.FILE_EDITOR]
      */
     private fun getFileLanguage(dataContext: DataContext): Language? {
       return CommonDataKeys.PSI_FILE.getData(dataContext)?.language ?: getFileTypeLanguage(dataContext)
     }
 
     /**
-     * Returns language by file type from [CommonDataKeys.VIRTUAL_FILE]
+     * Returns language by file type from [CommonDataKeys.VIRTUAL_FILE] or [PlatformCoreDataKeys.FILE_EDITOR]
      */
     private fun getFileTypeLanguage(dataContext: DataContext): Language? {
-      val virtualFile = CommonDataKeys.VIRTUAL_FILE.getData(dataContext) ?: return null
+      val virtualFile = CommonDataKeys.VIRTUAL_FILE.getData(dataContext)
+                        ?: PlatformCoreDataKeys.FILE_EDITOR.getData(dataContext)?.file ?: return null
       val fileType = FileTypeRegistry.getInstance().getFileTypeByFileName(virtualFile.nameSequence)
       if (fileType is LanguageFileType) {
         return fileType.language

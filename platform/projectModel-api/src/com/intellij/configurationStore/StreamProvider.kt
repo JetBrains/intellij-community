@@ -2,25 +2,26 @@
 package com.intellij.configurationStore
 
 import com.intellij.openapi.components.RoamingType
-import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.TestOnly
 import java.io.InputStream
 
 @ApiStatus.Internal
 interface StreamProvider {
   /**
-   * Whether is enabled.
+   * Whether it is enabled.
    */
   val enabled: Boolean
     get() = true
 
   /**
-   * Whether is exclusive and cannot be used alongside another provider.
+   * Whether it is exclusive and cannot be used alongside another provider.
    *
    * Doesn't imply [enabled], callers should check [enabled] also if needed.
    */
   val isExclusive: Boolean
+
+  val saveStorageDataOnReload: Boolean
+    get() = true
 
   /**
    * Called only on `write`
@@ -28,17 +29,6 @@ interface StreamProvider {
   fun isApplicable(fileSpec: String, roamingType: RoamingType = RoamingType.DEFAULT): Boolean = true
 
   fun write(fileSpec: String, content: ByteArray, roamingType: RoamingType = RoamingType.DEFAULT)
-
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use #write(fileSpec, content, roamingType) without the 'size' parameter")
-  fun write(fileSpec: String, content: ByteArray, size: Int, roamingType: RoamingType = RoamingType.DEFAULT) : Unit =
-    write(fileSpec, content, roamingType)
-
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use #write(fileSpec, content, roamingType) with ByteArray parameter")
-  fun write(path: String, content: BufferExposingByteArrayOutputStream, roamingType: RoamingType = RoamingType.DEFAULT): Unit =
-    write(path, content.toByteArray(), roamingType)
-
 
   /**
    * `true` if provider is applicable for file.
@@ -65,9 +55,4 @@ interface StreamProvider {
    */
   fun deleteIfObsolete(fileSpec: String, roamingType: RoamingType) {
   }
-}
-
-@TestOnly
-fun StreamProvider.write(path: String, content: String) {
-  write(path, content.toByteArray())
 }

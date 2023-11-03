@@ -23,10 +23,15 @@ import org.jetbrains.java.decompiler.util.TextBuffer;
 
 import java.util.*;
 
+import static org.jetbrains.java.decompiler.ClassNameConstants.JAVA_LANG_CHARACTER;
+import static org.jetbrains.java.decompiler.code.CodeConstants.TYPE_OBJECT;
+import static org.jetbrains.java.decompiler.struct.gen.VarType.VARTYPE_CHAR;
+
 public final class SwitchStatement extends Statement {
   private List<Statement> caseStatements = new ArrayList<>();
   private List<List<StatEdge>> caseEdges = new ArrayList<>();
   private List<List<@Nullable Exprent>> caseValues = new ArrayList<>();
+  private final Map<Statement, Exprent> guards = new HashMap<>();
   private StatEdge defaultEdge;
   private Exprent headExprent;
   private boolean canBeRule = false;
@@ -54,6 +59,10 @@ public final class SwitchStatement extends Statement {
 
   public void setCanBeRule(boolean canBeRule) {
     this.canBeRule = canBeRule;
+  }
+
+  public void addGuard(@NotNull Statement statement, @NotNull Exprent guard) {
+    guards.put(statement, guard);
   }
 
   @Nullable
@@ -105,9 +114,14 @@ public final class SwitchStatement extends Statement {
         else {
           buf.appendIndent(indent + 1).append("case ");
           Exprent value = values.get(j);
-          if (value instanceof ConstExprent) {
+          if (value instanceof ConstExprent constExprent && !constExprent.isNull()) {
             value = value.copy();
-            ((ConstExprent)value).setConstType(switchType);
+            if (switchType.getType() != TYPE_OBJECT) {
+              ((ConstExprent)value).setConstType(switchType);
+            }
+            else if (((JAVA_LANG_CHARACTER).equals(switchType.getValue()))) {
+              ((ConstExprent)value).setConstType(VARTYPE_CHAR);
+            }
           }
           if (value instanceof FieldExprent && ((FieldExprent)value).isStatic()) { // enum values
             buf.append(((FieldExprent)value).getName());
@@ -115,6 +129,12 @@ public final class SwitchStatement extends Statement {
           else {
             buf.append(value.toJava(indent, tracer));
           }
+
+          Exprent guard = guards.get(stat);
+          if (guard != null) {
+            buf.append(" when ").append(guard.toJava(0, tracer));
+          }
+
           if (!canBeRule) {
             buf.append(":").appendLineSeparator();
           }
@@ -128,7 +148,7 @@ public final class SwitchStatement extends Statement {
       }
       //example:
       //case 0: break
-      if (canBeRule && stat instanceof BasicBlockStatement blockStatement && blockStatement.getBlock().getSeq().isEmpty()) {
+      if (canBeRule && stat instanceof BasicBlockStatement blockStatement && blockStatement.getBlock().getSeq().isEmpty() && stat.getExprents().isEmpty()) {
         buf.append("{ }").appendLineSeparator();
         tracer.incrementCurrentSourceLine();
       }

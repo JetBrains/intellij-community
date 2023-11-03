@@ -4,7 +4,7 @@ package com.intellij.collaboration.ui.codereview.list.search
 import com.intellij.collaboration.async.nestedDisposable
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.HorizontalListPanel
-import com.intellij.collaboration.ui.codereview.list.search.ChooserPopupUtil.showAndAwaitListSubmission
+import com.intellij.collaboration.ui.util.popup.showAndAwaitListSubmission
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.*

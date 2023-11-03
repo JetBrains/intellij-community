@@ -1,7 +1,6 @@
 <idea-plugin package="org.jetbrains.kotlin.tools.projectWizard">
   <dependencies>
     <plugin id="com.intellij.gradle"/>
-    <plugin id="training"/>
   </dependencies>
 
   <extensionPoints>
@@ -29,8 +28,6 @@
     <newProjectWizard.language implementation="org.jetbrains.kotlin.tools.projectWizard.KotlinNewProjectWizard"/>
 
     <newProjectWizard.kotlin.buildSystem implementation="org.jetbrains.kotlin.tools.projectWizard.IntelliJKotlinNewProjectWizard"/>
-
-    <lang.documentationProvider language="kotlin" implementationClass="org.jetbrains.kotlin.tools.projectWizard.training.KotlinOnboardingTipsDocumentationProvider" order="first"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin.idea">

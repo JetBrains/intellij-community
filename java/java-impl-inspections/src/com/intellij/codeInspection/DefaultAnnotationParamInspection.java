@@ -55,7 +55,7 @@ public class DefaultAnnotationParamInspection extends AbstractBaseJavaLocalInspe
           if (elementParent instanceof PsiClass) {
             final String qualifiedName = ((PsiClass)elementParent).getQualifiedName();
             final String name = ((PsiAnnotationMethod)element).getName();
-            if (ContainerUtil.exists(IgnoreAnnotationParamSupport.EP_NAME.getExtensions(),
+            if (ContainerUtil.exists(IgnoreAnnotationParamSupport.EP_NAME.getExtensionList(),
                                      ext -> ext.ignoreAnnotationParam(qualifiedName, name))) {
               return;
             }

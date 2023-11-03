@@ -4,7 +4,6 @@ package com.intellij.ide.startup.importSettings.chooser.productChooser
 import com.intellij.icons.AllIcons
 import com.intellij.ide.startup.importSettings.ImportSettingsBundle
 import com.intellij.ide.startup.importSettings.chooser.ui.PageProvider
-import com.intellij.ide.startup.importSettings.chooser.ui.UiUtils
 import com.intellij.ide.startup.importSettings.data.ActionsDataProvider
 import com.intellij.ide.startup.importSettings.data.JBrActionsDataProvider
 import com.intellij.ide.startup.importSettings.data.Product
@@ -12,13 +11,10 @@ import com.intellij.ide.startup.importSettings.data.SyncActionsDataProvider
 import com.intellij.ide.ui.laf.darcula.ui.OnboardingDialogButtons
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.Separator
-import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.Nls
 import javax.swing.JButton
 import javax.swing.JComponent
-import javax.swing.SwingConstants
 
 class OtherOptions(private val callback: (PageProvider) -> Unit) : ProductChooserAction() {
 
@@ -39,14 +35,14 @@ class OtherOptions(private val callback: (PageProvider) -> Unit) : ProductChoose
 
   override fun getChildren(e: AnActionEvent?): Array<AnAction> {
     val jbProducts = jbDataProvider.other
-    val syncProducts = if(syncDataProvider.settingsService.isLoggedIn()) syncDataProvider.other else emptyList()
+    val syncProducts = if (syncDataProvider.settingsService.isLoggedIn()) syncDataProvider.other else emptyList()
 
     val arr = mutableListOf<AnAction>()
     if (jb == null && jbProducts != null) {
       jb = addActionList(jbProducts, jbDataProvider, ImportSettingsBundle.message("other.options.sub.title.installed"))
     }
 
-    if (sync == null && syncProducts != null) {
+    if (sync == null && syncProducts != null && syncDataProvider.settingsService.isSyncEnabled.value) {
       sync = addActionList(syncProducts, syncDataProvider, ImportSettingsBundle.message("other.options.sub.title.setting.sync"))
     }
 
@@ -83,34 +79,14 @@ class OtherOptions(private val callback: (PageProvider) -> Unit) : ProductChoose
 
   init {
     templatePresentation.isPopupGroup = true
+    templatePresentation.text = ImportSettingsBundle.message("choose.product.other.options")
+    templatePresentation.icon = AllIcons.General.LinkDropTriangle
   }
 
   override fun update(e: AnActionEvent) {
-    super.update(e)
-
     val ch = getChildren(e)
 
-    if (ch.isEmpty()) {
-      e.presentation.isVisible = false
-      return
-    }
-
-    e.presentation.isVisible = true
-    e.presentation.text = ImportSettingsBundle.message("choose.product.other.options")
-    e.presentation.icon = AllIcons.General.LinkDropTriangle
-    e.presentation.isPopupGroup = true
-  }
-
-
-  override fun updateButtonFromPresentation(button: JButton, presentation: Presentation) {
-    super.updateButtonFromPresentation(button, presentation)
-    if (presentation.getClientProperty(UiUtils.POPUP) == true) {
-      button.setHorizontalTextPosition(SwingConstants.LEFT)
-      button.iconTextGap = 0
-    } else {
-      button.setHorizontalTextPosition(SwingConstants.RIGHT)
-      button.iconTextGap = JBUI.scale(4)
-    }
+    e.presentation.isVisible = ch.isNotEmpty()
   }
 
   override fun createButton(): JButton {

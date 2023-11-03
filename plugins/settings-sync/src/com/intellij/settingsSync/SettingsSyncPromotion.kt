@@ -8,14 +8,18 @@ import com.intellij.openapi.options.newEditor.SettingsDialogListener
 import com.intellij.openapi.options.newEditor.SettingsEditor
 import com.intellij.openapi.options.newEditor.SettingsTreeView
 import com.intellij.openapi.ui.popup.Balloon
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.settingsSync.SettingsSyncEventsStatistics.PromotionInSettingsEvent
 import com.intellij.ui.GotItTooltip
 import com.intellij.ui.treeStructure.SimpleNode
 import com.intellij.ui.treeStructure.filtered.FilteringTreeStructure
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.tree.TreeUtil
 import java.awt.Point
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.TreePath
+import kotlin.math.min
 
 class SettingsSyncPromotion : SettingsDialogListener {
   override fun afterApply(settingsEditor: AbstractEditor) {
@@ -23,6 +27,14 @@ class SettingsSyncPromotion : SettingsDialogListener {
         || SettingsSyncSettings.getInstance().syncEnabled
         || !Registry.`is`("settingsSync.promotion.in.settings", false)) {
       return
+    }
+
+    val gotItTooltip = GotItTooltip("settings.sync.in.settings",
+                                    SettingsSyncBundle.message("promotion.in.settings.text"),
+                                    parentDisposable = settingsEditor)
+    if (!gotItTooltip.canShow()) {
+      Disposer.dispose(gotItTooltip)
+      return  // It was already shown once
     }
 
     val settingsTree = settingsEditor.treeView.tree
@@ -34,22 +46,35 @@ class SettingsSyncPromotion : SettingsDialogListener {
 
     settingsTree.scrollPathToVisible(settingsSyncPath)
 
-    GotItTooltip("settings.sync.in.settings",
-                 SettingsSyncBundle.message("promotion.in.settings.text"),
-                 parentDisposable = settingsEditor)
+    gotItTooltip
       .withHeader(SettingsSyncBundle.message("promotion.in.settings.header"))
       .withButtonLabel(SettingsSyncBundle.message("promotion.in.settings.open"))
-      .withSecondaryButton(SettingsSyncBundle.message("promotion.in.settings.skip"))
+      .withSecondaryButton(SettingsSyncBundle.message("promotion.in.settings.skip")) {
+        SettingsSyncEventsStatistics.PROMOTION_IN_SETTINGS.log(PromotionInSettingsEvent.SKIP)
+      }
       .withGotItButtonAction {
         invokeLater(ModalityState.stateForComponent(settingsEditor)) {
           settingsEditor.select(settingsSyncConfigurable)
         }
+        SettingsSyncEventsStatistics.PROMOTION_IN_SETTINGS.log(PromotionInSettingsEvent.GO_TO_SETTINGS_SYNC)
       }
       .withPosition(Balloon.Position.atRight)
       .show(settingsTree) { _, _ ->
         val pathBounds = settingsTree.getPathBounds(settingsSyncPath) ?: error("Failed to get bounds for path: $settingsSyncPath")
-        Point(pathBounds.x + pathBounds.width, pathBounds.y + pathBounds.height / 2)
+        val x = pathBounds.x + min(pathBounds.width, JBUI.scale(150))
+        Point(x, pathBounds.y + pathBounds.height / 2)
       }
+
+    SettingsSyncEventsStatistics.PROMOTION_IN_SETTINGS.log(PromotionInSettingsEvent.SHOWN)
+
+    SettingsSyncEvents.getInstance().addListener(object : SettingsSyncEventListener {
+      override fun enabledStateChanged(syncEnabled: Boolean) {
+        if (syncEnabled) {
+          SettingsSyncEventsStatistics.PROMOTION_IN_SETTINGS.log(PromotionInSettingsEvent.ENABLED)
+          SettingsSyncEvents.getInstance().removeListener(this)
+        }
+      }
+    }, parentDisposable = settingsEditor)
   }
 
   private fun getConfigurable(path: TreePath): Configurable? {

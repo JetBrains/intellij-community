@@ -222,7 +222,8 @@ private fun coroutineCancellingIndicator(job: Job): ProgressIndicatorEx {
  * Asynchronously updates the indicator [text][ProgressIndicator.setText],
  * [text2][ProgressIndicator.setText2], and [fraction][ProgressIndicator.setFraction] from the [updates].
  */
-private suspend fun ProgressIndicatorEx.updateFromFlow(updates: Flow<ProgressState>): Nothing {
+@Internal
+suspend fun ProgressIndicatorEx.updateFromFlow(updates: Flow<ProgressState>): Nothing {
   updates.throttle(50).flowOn(Dispatchers.Default).collect { state: ProgressState ->
     text = state.text
     text2 = state.details
@@ -338,7 +339,7 @@ private suspend fun doShowModalIndicator(
         awaitCancellationAndInvoke {
           // TODO: don't move focus back if the focus owner was changed
           //if (focusComponent.isFocusOwner)
-            previousFocusOwner.requestFocusInWindow()
+          previousFocusOwner.requestFocusInWindow()
         }
       }
 

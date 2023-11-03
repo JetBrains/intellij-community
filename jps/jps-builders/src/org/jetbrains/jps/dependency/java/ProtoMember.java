@@ -16,7 +16,7 @@ public abstract class ProtoMember extends Proto {
     this.value = value;
   }
 
-  public abstract MemberUsage createUsage(String owner);
+  public abstract MemberUsage createUsage(JvmNodeReferenceID owner);
 
   public @NotNull TypeRepr getType() {
     return type;

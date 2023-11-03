@@ -26,7 +26,7 @@ object UsageCollectors {
 
     if (!allowedOnStartupOnly) return getAllApplicationCollectors()
 
-    return APPLICATION_EP_NAME.extensions.asSequence()
+    return APPLICATION_EP_NAME.lazySequence()
       .filter { it.allowOnStartup == true }
       .map { it.collector as ApplicationUsagesCollector }
       .filter { isValidCollector(it) }
@@ -34,16 +34,18 @@ object UsageCollectors {
   }
 
   private fun getAllApplicationCollectors(): Collection<ApplicationUsagesCollector> {
-    return APPLICATION_EP_NAME.extensions.asSequence()
+    return APPLICATION_EP_NAME.lazySequence()
       .map { it.collector as ApplicationUsagesCollector }
       .filter { isValidCollector(it) }
       .toList()
   }
 
   internal fun getProjectCollectors(invoker: UsagesCollectorConsumer): Collection<ProjectUsagesCollector> {
-    if (isCalledFromPlugin(invoker)) return emptyList()
+    if (isCalledFromPlugin(invoker)) {
+      return emptyList()
+    }
 
-    return PROJECT_EP_NAME.extensions.asSequence()
+    return PROJECT_EP_NAME.extensionList.asSequence()
       .map { it.collector as ProjectUsagesCollector }
       .filter { isValidCollector(it) }
       .toList()

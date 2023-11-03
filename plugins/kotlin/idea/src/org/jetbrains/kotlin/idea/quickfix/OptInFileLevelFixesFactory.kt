@@ -6,12 +6,16 @@ import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.intention.LowPriorityAction
 import com.intellij.openapi.module.Module
 import com.intellij.psi.util.findParentOfType
-import org.jetbrains.kotlin.idea.base.util.module
+import org.jetbrains.kotlin.descriptors.resolveClassByFqName
 import org.jetbrains.kotlin.diagnostics.Diagnostic
+import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
+import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtAnnotationEntry
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
@@ -29,6 +33,13 @@ internal object OptInFileLevelFixesFactory : KotlinIntentionActionsFactory() {
         val annotationFqName = OptInFixesUtils.annotationFqName(diagnostic) ?: return emptyList()
 
         val moduleDescriptor = element.getResolutionFacade().moduleDescriptor
+
+        val annotationClassDescriptor =
+            moduleDescriptor.resolveClassByFqName(annotationFqName, NoLookupLocation.FROM_IDE) ?: return emptyList()
+        if (!OptInFixesUtils.annotationIsVisible(annotationClassDescriptor, from = element, element.analyze())) {
+            return emptyList()
+        }
+
         val optInFqName = OptInFixesUtils.optInFqName(moduleDescriptor)
 
         val result = mutableListOf<IntentionAction>()

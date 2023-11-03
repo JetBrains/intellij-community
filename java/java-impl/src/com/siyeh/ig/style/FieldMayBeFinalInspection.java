@@ -50,7 +50,7 @@ public class FieldMayBeFinalInspection extends BaseInspection implements Cleanup
     List<LocalQuickFix> fixes = new ArrayList<>();
     PsiField field = (PsiField)infos[0];
     fixes.add(MakeFieldFinalFix.buildFixUnconditional(field));
-    SpecialAnnotationsUtilBase.createAddToSpecialAnnotationFixes(field, annoName -> {
+    SpecialAnnotationsUtilBase.processUnknownAnnotations(field, annoName -> {
       fixes.add(EntryPointsManagerBase.getInstance(field.getProject()).new AddImplicitlyWriteAnnotation(annoName));
       return true;
     });

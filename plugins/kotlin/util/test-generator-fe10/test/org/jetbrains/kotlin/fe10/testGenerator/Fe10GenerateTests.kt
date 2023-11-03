@@ -519,7 +519,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
 
         testClass<AbstractBreadcrumbsTest> {
-            model("codeInsight/breadcrumbs")
+            model("codeInsight/breadcrumbs", pattern = KT_OR_KTS)
         }
 
         testClass<AbstractK1IntentionTest> {

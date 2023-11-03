@@ -94,6 +94,10 @@ public class Proto {
     return false;
   }
 
+  public boolean isWeakerAccessThan(Proto anotherProto) {
+    return getFlags().isWeakerAccess(anotherProto.getFlags());
+  }
+
   public class Diff<V extends Proto> implements Difference {
     protected final V myPast;
 
@@ -123,11 +127,11 @@ public class Proto {
     }
 
     public boolean accessRestricted() {
-      return getFlags().isWeakerAccess(myPast.getFlags());
+      return Proto.this.isWeakerAccessThan(myPast);
     }
 
     public boolean accessExpanded() {
-      return myPast.getFlags().isWeakerAccess(getFlags());
+      return myPast.isWeakerAccessThan(Proto.this);
     }
 
     public boolean signatureChanged() {

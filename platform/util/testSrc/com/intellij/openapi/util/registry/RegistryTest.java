@@ -9,10 +9,7 @@ import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Test;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static junit.framework.Assert.*;
@@ -195,6 +192,36 @@ public class RegistryTest {
     });
     regValue.setValue(true);
     assertTrue(regValue.asBoolean());
+  }
+
+  @Test
+  public void checkElementOrderIsStable() {
+    Registry.getInstance().reset();
+
+    {
+      Map<String, String> map = populateMap(Comparator.naturalOrder(), "value");
+      Element state2load = registryElementFromMap(map);
+      Registry.loadState(state2load, null);
+      assertEquals(JDOMUtil.writeElement(state2load), JDOMUtil.writeElement(Registry.getInstance().getState()));
+    }
+    // load state with elements reversed
+    Registry.loadState(registryElementFromMap(populateMap(Comparator.reverseOrder(), "AnotherValue1111")), null);
+
+    assertEquals(JDOMUtil.writeElement(registryElementFromMap(populateMap(Comparator.naturalOrder(), "AnotherValue1111"))),
+                 JDOMUtil.writeElement(Registry.getInstance().getState()));
+  }
+
+  private Map<String, String> populateMap(Comparator<String> comparator, String valueBase) {
+    Map<String, String> map = new TreeMap<>(comparator);
+    map.put("first.key", "first." + valueBase);
+    for (int i = 0; i < 20; i++) {
+      map.put("Key#" + i, valueBase + "." + i);
+    }
+    map.put("second.key", "second." + valueBase);
+    map.put("third.key", "third." + valueBase);
+    map.put("forth.key", "forth." + valueBase);
+    map.put("fifth.key", "fifth." + valueBase);
+    return map;
   }
 
 

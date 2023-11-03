@@ -20,6 +20,7 @@ import com.intellij.openapi.vfs.newvfs.AttributeOutputStream;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.events.ChildInfo;
+import com.intellij.serviceContainer.ContainerUtilKt;
 import com.intellij.util.io.blobstorage.ByteBufferReader;
 import com.intellij.util.io.blobstorage.ByteBufferWriter;
 import com.intellij.openapi.vfs.newvfs.persistent.intercept.ConnectionInterceptor;
@@ -114,6 +115,12 @@ public final class FSRecordsImpl implements Closeable {
    * It is a quite natural thing to do, but that reuse regularly presents itself in edge-case bugs, so we consider getting rid of it
    */
   public static final boolean REUSE_DELETED_FILE_IDS = getBooleanProperty("vfs.reuse-deleted-file-ids", false);
+
+  /**
+   * Wrap {@link AlreadyDisposedException} in {@link ProcessCanceledException} if under progress indicator or Job.
+   * See containerUtil.isUnderIndicatorOrJob()
+   */
+  private static final boolean WRAP_ADE_IN_PCE = getBooleanProperty("vfs.wrap-ade-in-pce", true);
   //@formatter:on
 
   private static final FileAttribute SYMLINK_TARGET_ATTRIBUTE = new FileAttribute("FsRecords.SYMLINK_TARGET");
@@ -454,12 +461,17 @@ public final class FSRecordsImpl implements Closeable {
     }
   }
 
-  private @NotNull AlreadyDisposedException alreadyClosedException() {
-    AlreadyDisposedException alreadyClosed = new AlreadyDisposedException("VFS is already closed (disposed)");
+  private @NotNull RuntimeException alreadyClosedException() {
+    AlreadyDisposedException alreadyDisposed = new AlreadyDisposedException("VFS is already closed (disposed)");
     if (closedStackTrace != null) {
-      alreadyClosed.addSuppressed(closedStackTrace);
+      alreadyDisposed.addSuppressed(closedStackTrace);
     }
-    return alreadyClosed;
+
+    if (!WRAP_ADE_IN_PCE) {
+      return alreadyDisposed;
+    }
+    
+    return ContainerUtilKt.wrapAlreadyDisposedError(alreadyDisposed);
   }
 
 
@@ -1372,7 +1384,7 @@ public final class FSRecordsImpl implements Closeable {
   RuntimeException handleError(Throwable e) throws RuntimeException, Error {
     if (e instanceof ClosedStorageException || closed) {
       // no connection means IDE is closing...
-      AlreadyDisposedException alreadyDisposed = alreadyClosedException();
+      RuntimeException alreadyDisposed = alreadyClosedException();
       alreadyDisposed.addSuppressed(e);
       throw alreadyDisposed;
     }

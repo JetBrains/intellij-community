@@ -41,10 +41,14 @@ private val LOG: Logger
 
 private object VFSHealthCheckerConstants {
   val HEALTH_CHECKING_ENABLED = getBooleanProperty("vfs.health-check.enabled",
-                                                   ApplicationManager.getApplication().isEAP && !ApplicationManager.getApplication().isUnitTestMode)
+                                                   !ApplicationManager.getApplication().isUnitTestMode)
 
   val HEALTH_CHECKING_PERIOD_MS = getIntProperty("vfs.health-check.checking-period-ms",
-                                                 1.hours.inWholeMilliseconds.toInt())
+                                                 if (ApplicationManager.getApplication().isEAP)
+                                                   1.hours.inWholeMilliseconds.toInt()
+                                                 else
+                                                   12.hours.inWholeMilliseconds.toInt()
+  )
 
   /** 10min in most cases enough for the initial storm of requests to VFS (scanning/indexing/etc)
    *  to finish, so VFS _likely_ +/- settles down after that.
@@ -96,6 +100,9 @@ private class VFSHealthCheckServiceStarter : ApplicationInitializedListener {
 
           delay(checkingPeriod)
 
+          //MAYBE RC: this seems useless -- i.e. VFS h-check is ~10sec long once/(few) hours,
+          //          which is negligible comparing to (GC/JIT/bg tasks) load accumulated
+          //          through that few hours
           if (PowerStatus.getPowerStatus() == PowerStatus.BATTERY) {
             LOG.info("VFS health-check delayed: power source is battery")
             delay(checkingPeriod) //make it twice rarer
@@ -325,14 +332,6 @@ class VFSHealthChecker(private val impl: FSRecordsImpl,
               "file[#$fileId]{$fileName}: !directory (flags: ${Integer.toBinaryString(flags)}) but has children(${children.size})"
             )
           }
-
-          //TODO RC: try read _all_ attributes, check all them are readable
-          //TODO RC: check attribute storage _has_ such a record (not deleted)
-          //if(attributeRecordId!=AbstractAttributesStorage.NON_EXISTENT_ATTR_RECORD_ID) {
-          //  connection.attributes.forEachAttribute(connection, fileId){
-          //  }
-          //}
-
         }
         catch (t: Throwable) {
           generalErrors++.alsoLogThrottled("file[#$fileId]: unhandled exception while checking", t)

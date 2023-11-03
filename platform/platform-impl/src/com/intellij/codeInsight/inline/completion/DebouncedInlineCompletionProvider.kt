@@ -3,13 +3,16 @@ package com.intellij.codeInsight.inline.completion
 
 import com.intellij.openapi.application.ApplicationManager
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.job
+import java.util.concurrent.atomic.AtomicReference
 import kotlin.coroutines.coroutineContext
 import kotlin.time.Duration
 
 abstract class DebouncedInlineCompletionProvider : InlineCompletionProvider {
-  private var jobCall: Job? = null
+  private val jobCall = AtomicReference<Job?>(null)
+
   protected abstract val delay: Duration
 
   /**
@@ -29,22 +32,35 @@ abstract class DebouncedInlineCompletionProvider : InlineCompletionProvider {
   }
 
   override suspend fun getSuggestion(request: InlineCompletionRequest): InlineCompletionSuggestion {
+    replaceJob()
     if (ApplicationManager.getApplication().isUnitTestMode) {
       return getSuggestionDebounced(request)
     }
 
-    if (shouldBeForced(request)) {
-      jobCall?.cancel()
-      return getSuggestionDebounced(request)
-    }
-
-    return debounce(request)
+    return if (shouldBeForced(request)) getSuggestionDebounced(request) else debounce(request)
   }
 
   suspend fun debounce(request: InlineCompletionRequest): InlineCompletionSuggestion {
-    jobCall?.cancel()
-    jobCall = coroutineContext.job
     delay(delay)
     return getSuggestionDebounced(request)
+  }
+
+  private suspend fun replaceJob() {
+    val newJob = coroutineContext.job
+    if (jobCall.compareAndSet(newJob, newJob)) {
+      return
+    }
+
+    newJob.invokeOnCompletion {
+      jobCall.compareAndSet(newJob, null)
+    }
+
+    while (true) {
+      val currentJob = jobCall.get()
+      if (jobCall.compareAndSet(currentJob, newJob)) {
+        currentJob?.cancelAndJoin()
+        return
+      }
+    }
   }
 }

@@ -13,7 +13,11 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileWithId
 
 private class HighlighterTextEditorInitializer : TextEditorInitializer {
-  override suspend fun initializeEditor(project: Project, file: VirtualFile, document: Document, editorSupplier: suspend () -> EditorEx) {
+  override suspend fun initializeEditor(project: Project,
+                                        file: VirtualFile,
+                                        document: Document,
+                                        editorSupplier: suspend () -> EditorEx,
+                                        highlighterReady: suspend () -> Unit) {
     if (!HighlightingMarkupGrave.isEnabled()
         || project.service<MarkupGraveSuppressor>().shouldSuppress(file, document)
         || file !is VirtualFileWithId) {
@@ -21,6 +25,14 @@ private class HighlighterTextEditorInitializer : TextEditorInitializer {
     }
 
     val markupGrave = project.serviceAsync<HighlightingMarkupGrave>()
+
+    // we have to make sure that editor highlighter is created before we start raising zombies
+    // because creation of highlighter has side effect that TextAttributesKey.ourRegistry is filled with corresponding keys
+    // (e.g. class loading of org.jetbrains.kotlin.idea.highlighter.KotlinHighlightingColors)
+    // without such guarantee there is a risk to get uninitialized fallbackKey in TextAttributesKey.find(externalName)
+    // it may lead to incorrect color of highlighters on startup
+    highlighterReady()
+
     readActionBlocking {
       markupGrave.resurrectZombies(document, file)
     }

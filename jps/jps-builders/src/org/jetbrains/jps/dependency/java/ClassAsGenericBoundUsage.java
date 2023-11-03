@@ -8,6 +8,10 @@ public final class ClassAsGenericBoundUsage extends ClassUsage {
   public ClassAsGenericBoundUsage(@NotNull String className) {
     super(className);
   }
+  
+  public ClassAsGenericBoundUsage(@NotNull JvmNodeReferenceID clsId) {
+    super(clsId);
+  }
 
   @Override
   public int hashCode() {

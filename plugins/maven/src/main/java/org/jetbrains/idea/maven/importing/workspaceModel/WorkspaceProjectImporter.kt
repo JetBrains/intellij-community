@@ -521,16 +521,6 @@ internal class WorkspaceProjectImporter(
     }
   }
 
-  private fun logErrorIfNotControlFlow(methodName: String, e: Exception) {
-    if (e is ControlFlowException) {
-      ExceptionUtil.rethrowAllAsUnchecked(e)
-    }
-    if (e is CancellationException) {
-      throw e
-    }
-    MavenLog.LOG.error("Exception in MavenWorkspaceConfigurator.$methodName, skipping it.", e)
-  }
-
   private fun configLegacyFacets(mavenProjectsWithModules: List<MavenProjectWithModulesData<Module>>,
                                  moduleNameByProject: Map<MavenProject, String>,
                                  postTasks: List<MavenProjectsProcessorTask>,
@@ -695,7 +685,7 @@ private class AfterImportConfiguratorsTask(private val contextData: UserDataHold
         configurator.afterImport(context)
       }
       catch (e: Exception) {
-        MavenLog.LOG.error("Exception in MavenAfterImportConfigurator.afterImport, skipping it.", e)
+        logErrorIfNotControlFlow("Exception in MavenAfterImportConfigurator.afterImport, skipping it.", e)
       }
     }
   }
@@ -729,6 +719,16 @@ private class NotifyUserAboutWorkspaceImportTask : MavenProjectsProcessorTask {
 
     ApplicationManager.getApplication().invokeLater(showNotification, project.disposed)
   }
+}
+
+private fun logErrorIfNotControlFlow(methodName: String, e: Exception) {
+  if (e is ControlFlowException) {
+    ExceptionUtil.rethrowAllAsUnchecked(e)
+  }
+  if (e is CancellationException) {
+    throw e
+  }
+  MavenLog.LOG.error("Exception in MavenWorkspaceConfigurator.$methodName, skipping it.", e)
 }
 
 private class ModuleWithTypeData<M>(

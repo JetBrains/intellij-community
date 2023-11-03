@@ -1,0 +1,52 @@
+[
+  {
+    "vsCodeId": "vscjava.vscode-java-pack",
+    "ideaName": "Java",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "redhat.java",
+    "ideaName": "Java",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "vscjava.vscode-maven",
+    "ideaName": "Maven",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "vscjava.vscode-gradle",
+    "ideaName": "Gradle",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "vscjava.vscode-java-debug",
+    "ideaName": "Debugger",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "donjayamanne.javadebugger",
+    "ideaName": "Debugger",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "mathiasfrohlich.Kotlin",
+    "ideaName": "Kotlin",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "fwcd.kotlin",
+    "ideaName": "Kotlin",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "scala-lang.scala",
+    "ideaName": "Scala",
+    "ideaId": "org.intellij.scala"
+  },
+  {
+    "vsCodeId": "vscjava.vscode-lombok",
+    "ideaName": "Lombok",
+    "ideaId": "Lombook Plugin"
+  }
+]

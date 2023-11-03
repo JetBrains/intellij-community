@@ -9,6 +9,10 @@ public final class ClassExtendsUsage extends ClassUsage {
     super(className);
   }
 
+  public ClassExtendsUsage(@NotNull JvmNodeReferenceID clsId) {
+    super(clsId);
+  }
+
   @Override
   public int hashCode() {
     return super.hashCode() + 1;

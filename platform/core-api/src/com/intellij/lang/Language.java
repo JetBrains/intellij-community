@@ -14,14 +14,17 @@ import com.intellij.openapi.util.text.Strings;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.containers.ContainerUtil;
+import kotlinx.collections.immutable.PersistentList;
+import kotlinx.collections.immutable.PersistentMap;
+import kotlinx.collections.immutable.PersistentSet;
 import org.jetbrains.annotations.*;
 
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
-import static kotlinx.collections.immutable.ExtensionsKt.toPersistentList;
+import static kotlinx.collections.immutable.ExtensionsKt.*;
 
 /**
  * A language represents a programming language such as Java,
@@ -39,15 +42,19 @@ import static kotlinx.collections.immutable.ExtensionsKt.toPersistentList;
  */
 public abstract class Language extends UserDataHolderBase {
   public static final Language[] EMPTY_ARRAY = new Language[0];
-  private static final Map<Class<? extends Language>, Language> registeredLanguages = new ConcurrentHashMap<>();
-  private static final ConcurrentMap<String, List<Language>> registeredMimeTypes = new ConcurrentHashMap<>();
-  private static final Map<String, Language> ourRegisteredIDs = new ConcurrentHashMap<>();
+
+  private static final Object staticLock = new Object();
+  private static volatile PersistentMap<Class<? extends Language>, Language> registeredLanguages = persistentHashMapOf();
+  private static volatile PersistentMap<String, PersistentList<Language>> registeredMimeTypes = persistentHashMapOf();
+  private static volatile PersistentMap<String, Language> registeredIds = persistentHashMapOf();
 
   private final Language myBaseLanguage;
   private final String myID;
   private final String[] myMimeTypes;
-  private final List<Language> myDialects = ContainerUtil.createLockFreeCopyOnWriteList();
-  private final Set<@NotNull Language> transitiveDialects = ContainerUtil.newConcurrentSet();
+
+  private final Object instanceLock = new Object();
+  private volatile PersistentList<Language> dialects = persistentListOf();
+  private volatile PersistentSet<@NotNull Language> transitiveDialects = persistentHashSetOf();
 
   public static final Language ANY = new Language("") {
     @Override
@@ -69,6 +76,7 @@ public abstract class Language extends UserDataHolderBase {
     this(null, ID, mimeTypes);
   }
 
+  @SuppressWarnings("AssignmentToStaticFieldFromInstanceMethod")
   protected Language(@Nullable Language baseLanguage, @NonNls @NotNull String ID, @NonNls @NotNull String @NotNull ... mimeTypes) {
     if (baseLanguage instanceof MetaLanguage) {
       throw new ImplementationConflictException(
@@ -83,27 +91,38 @@ public abstract class Language extends UserDataHolderBase {
     myMimeTypes = mimeTypes.length == 0 ? ArrayUtilRt.EMPTY_STRING_ARRAY : mimeTypes;
 
     Class<? extends Language> langClass = getClass();
-    Language prev = registeredLanguages.putIfAbsent(langClass, this);
-    if (prev != null) {
-      throw new ImplementationConflictException("Language of '" + langClass + "' is already registered: " + prev, null, prev, this);
-    }
-
-    prev = ourRegisteredIDs.putIfAbsent(ID, this);
-    if (prev != null) {
-      throw new ImplementationConflictException("Language with ID '" + ID + "' is already registered: " + prev.getClass(), null, prev, this);
-    }
-
-    for (String mimeType : mimeTypes) {
-      if (Strings.isEmpty(mimeType)) {
-        continue;
+    synchronized (staticLock) {
+      Language existing = registeredLanguages.get(langClass);
+      if (existing != null) {
+        throw new ImplementationConflictException("Language of '" + langClass + "' is already registered: " + existing, null, existing, this);
       }
-      registeredMimeTypes.computeIfAbsent(mimeType, __ -> ContainerUtil.createConcurrentList()).add(this);
+
+      existing = registeredIds.get(ID);
+      if (existing != null) {
+        throw new ImplementationConflictException("Language with ID '" + ID + "' is already registered: " + existing.getClass(), null, existing, this);
+      }
+
+      registeredLanguages = registeredLanguages.put(langClass, this);
+      registeredIds = registeredIds.put(ID, this);
+
+      for (String mimeType : mimeTypes) {
+        if (Strings.isEmpty(mimeType)) {
+          continue;
+        }
+
+        PersistentList<Language> list = registeredMimeTypes.get(mimeType);
+        registeredMimeTypes = registeredMimeTypes.put(mimeType, list == null ? persistentListOf(this) : list.add(this));
+      }
     }
 
     if (baseLanguage != null) {
-      baseLanguage.myDialects.add(this);
+      synchronized (baseLanguage.instanceLock) {
+        baseLanguage.dialects = baseLanguage.dialects.add(this);
+      }
       while (baseLanguage != null) {
-        baseLanguage.transitiveDialects.add(this);
+        synchronized (baseLanguage.instanceLock) {
+          baseLanguage.transitiveDialects = baseLanguage.transitiveDialects.add(this);
+        }
         baseLanguage = baseLanguage.getBaseLanguage();
       }
     }
@@ -112,13 +131,13 @@ public abstract class Language extends UserDataHolderBase {
   /**
    * @return collection of all languages registered so far.
    */
-  public static @NotNull Collection<Language> getRegisteredLanguages() {
-    return toPersistentList(registeredLanguages.values());
+  public static @Unmodifiable @NotNull Collection<Language> getRegisteredLanguages() {
+    return registeredLanguages.values();
   }
 
   @ApiStatus.Internal
   public static void unregisterAllLanguagesIn(@NotNull ClassLoader classLoader, @NotNull PluginDescriptor pluginDescriptor) {
-    for (Map.Entry<Class<? extends Language>, Language> e : new ArrayList<>(registeredLanguages.entrySet())) {
+    for (Map.Entry<Class<? extends Language>, Language> e : registeredLanguages.entrySet()) {
       Class<? extends Language> clazz = e.getKey();
       Language language = e.getValue();
       if (clazz.getClassLoader() == classLoader) {
@@ -128,6 +147,7 @@ public abstract class Language extends UserDataHolderBase {
     IElementType.unregisterElementTypes(classLoader, pluginDescriptor);
   }
 
+  @SuppressWarnings("AssignmentToStaticFieldFromInstanceMethod")
   @ApiStatus.Internal
   public void unregisterLanguage(@NotNull PluginDescriptor pluginDescriptor) {
     IElementType.unregisterElementTypes(this, pluginDescriptor);
@@ -136,11 +156,15 @@ public abstract class Language extends UserDataHolderBase {
     if (referenceProvidersRegistry != null) {
       referenceProvidersRegistry.unloadProvidersFor(this);
     }
-    registeredLanguages.remove(getClass());
-    ourRegisteredIDs.remove(getID());
-    for (String mimeType : getMimeTypes()) {
-      registeredMimeTypes.remove(mimeType);
+
+    synchronized (staticLock) {
+      registeredLanguages = registeredLanguages.remove(getClass());
+      registeredIds = registeredIds.remove(getID());
+      for (String mimeType : getMimeTypes()) {
+        registeredMimeTypes.remove(mimeType);
+      }
     }
+
     Language baseLanguage = getBaseLanguage();
     if (baseLanguage != null) {
       baseLanguage.unregisterDialect(this);
@@ -149,9 +173,13 @@ public abstract class Language extends UserDataHolderBase {
 
   @ApiStatus.Internal
   public void unregisterDialect(@NotNull Language language) {
-    myDialects.remove(language);
+    synchronized (instanceLock) {
+      dialects = dialects.remove(language);
+    }
     for (Language baseLanguage = this; baseLanguage != null; baseLanguage = baseLanguage.getBaseLanguage()) {
-      baseLanguage.transitiveDialects.remove(language);
+      synchronized (baseLanguage.instanceLock) {
+        baseLanguage.transitiveDialects = baseLanguage.transitiveDialects.remove(language);
+      }
     }
   }
 
@@ -170,7 +198,7 @@ public abstract class Language extends UserDataHolderBase {
    */
   public static @Unmodifiable @NotNull Collection<Language> findInstancesByMimeType(@Nullable String mimeType) {
     List<Language> result = mimeType == null ? null : registeredMimeTypes.get(mimeType);
-    return result == null ? Collections.emptyList() : Collections.unmodifiableCollection(result);
+    return result == null ? Collections.emptyList() : result;
   }
 
   @Override
@@ -262,11 +290,11 @@ public abstract class Language extends UserDataHolderBase {
   }
 
   public @Unmodifiable @NotNull List<Language> getDialects() {
-    return Collections.unmodifiableList(myDialects);
+    return dialects;
   }
 
   public static @Nullable Language findLanguageByID(@NonNls String id) {
-    return id == null ? null : ourRegisteredIDs.get(id);
+    return id == null ? null : registeredIds.get(id);
   }
 
   /** Fake language identifier without registering */
@@ -288,9 +316,13 @@ public abstract class Language extends UserDataHolderBase {
    */
   @ApiStatus.Internal
   protected void registerDialect(@NotNull Language dialect) {
-    myDialects.add(dialect);
+    synchronized (instanceLock) {
+      dialects = dialects.add(dialect);
+    }
     for (Language baseLanguage = this; baseLanguage != null; baseLanguage = baseLanguage.getBaseLanguage()) {
-      baseLanguage.transitiveDialects.add(dialect);
+      synchronized (baseLanguage.instanceLock) {
+        baseLanguage.transitiveDialects = baseLanguage.transitiveDialects.add(dialect);
+      }
     }
   }
 
@@ -298,6 +330,6 @@ public abstract class Language extends UserDataHolderBase {
    * @return this language dialects and their dialects transitively
    */
   public @Unmodifiable @NotNull Collection<@NotNull Language> getTransitiveDialects() {
-    return Collections.unmodifiableSet(transitiveDialects);
+    return transitiveDialects;
   }
 }

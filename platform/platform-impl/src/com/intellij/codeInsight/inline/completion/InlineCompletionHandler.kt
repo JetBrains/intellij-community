@@ -20,6 +20,7 @@ import com.intellij.openapi.observable.util.whenDisposed
 import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
+import com.intellij.psi.PsiDocumentManager
 import com.intellij.util.EventDispatcher
 import com.intellij.util.application
 import com.intellij.util.concurrency.ThreadingAssertions
@@ -124,6 +125,7 @@ class InlineCompletionHandler(
 
     editor.document.insertString(offset, textToInsert)
     editor.caretModel.moveToOffset(insertEnvironment.insertedRange.endOffset)
+    PsiDocumentManager.getInstance(session.request.file.project).commitDocument(editor.document)
     session.provider.insertHandler.afterInsertion(insertEnvironment, elements)
 
     LookupManager.getActiveLookup(editor)?.hideLookup(false) //TODO: remove this
@@ -245,7 +247,7 @@ class InlineCompletionHandler(
 
   private fun getProvider(event: InlineCompletionEvent): InlineCompletionProvider? {
     if (application.isUnitTestMode && testProvider != null) {
-      return testProvider
+      return testProvider?.takeIf { it.isEnabled(event) }
     }
 
     return InlineCompletionProvider.extensions().firstOrNull {
@@ -333,6 +335,12 @@ class InlineCompletionHandler(
     @TestOnly
     fun registerTestHandler(provider: InlineCompletionProvider) {
       testProvider = provider
+    }
+
+    @TestOnly
+    fun registerTestHandler(provider: InlineCompletionProvider, disposable: Disposable) {
+      registerTestHandler(provider)
+      disposable.whenDisposed { unRegisterTestHandler() }
     }
 
     @TestOnly

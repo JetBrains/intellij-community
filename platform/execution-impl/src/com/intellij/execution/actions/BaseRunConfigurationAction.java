@@ -32,6 +32,7 @@ import java.util.function.Supplier;
 
 public abstract class BaseRunConfigurationAction extends ActionGroup {
   protected static final Logger LOG = Logger.getInstance(BaseRunConfigurationAction.class);
+  private volatile Boolean isDumbAware = false;
 
   protected BaseRunConfigurationAction(@NotNull Supplier<String> text, @NotNull Supplier<String> description, final Icon icon) {
     super(text, description, icon);
@@ -230,6 +231,7 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
       presentation.setPerformGroup(false);
     }
     else{
+      isDumbAware = configuration.getType().isDumbAware();
       presentation.setEnabledAndVisible(true);
       VirtualFile vFile = dataContext.getData(CommonDataKeys.VIRTUAL_FILE);
       if (vFile != null) {
@@ -256,7 +258,7 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
 
   @Override
   public boolean isDumbAware() {
-    return false;
+    return isDumbAware;
   }
 
   public static @NotNull @Nls String suggestRunActionName(@NotNull RunConfiguration configuration) {

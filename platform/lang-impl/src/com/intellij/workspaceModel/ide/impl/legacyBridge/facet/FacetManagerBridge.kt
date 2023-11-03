@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.facet
 
 import com.intellij.facet.*
@@ -131,7 +131,7 @@ open class FacetModelBridge(private val moduleBridge: ModuleBridge) : FacetModel
     val moduleEntity = (moduleBridge.diff ?: moduleBridge.entityStorage.current).resolve(moduleBridge.moduleEntityId)
                        ?: error("Module entity should be available")
     val facetTypeToSerializer = BaseIdeSerializationContext.CUSTOM_FACET_RELATED_ENTITY_SERIALIZER_EP.extensionList.associateBy { it.supportedFacetType }
-    WorkspaceFacetContributor.EP_NAME.extensions.forEach { facetContributor ->
+    for (facetContributor in WorkspaceFacetContributor.EP_NAME.extensionList) {
       if (facetContributor.rootEntityType != FacetEntity::class.java) {
         facetContributor.getRootEntitiesByModuleEntity(moduleEntity).forEach {
           updateDiffOrStorage{ this.getOrPutDataByEntity(it) { facetContributor.createFacetFromEntity(it, moduleBridge) }}
@@ -161,7 +161,7 @@ open class FacetModelBridge(private val moduleBridge: ModuleBridge) : FacetModel
     }
     val facetEntities: MutableList<WorkspaceEntity> = mutableListOf()
     facetEntities.addAll(moduleEntity.facets)
-    WorkspaceFacetContributor.EP_NAME.extensions.forEach {
+    for (it in WorkspaceFacetContributor.EP_NAME.extensionList) {
       if (it.rootEntityType != FacetEntity::class.java) {
         facetEntities.addAll(it.getRootEntitiesByModuleEntity(moduleEntity))
       }

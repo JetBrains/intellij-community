@@ -1,8 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ml.embeddings.search.services
 
-import com.intellij.platform.ml.embeddings.services.LocalArtifactsManager
-import com.intellij.platform.ml.embeddings.services.LocalArtifactsManager.Companion.SEMANTIC_SEARCH_RESOURCES_DIR
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
@@ -15,8 +13,10 @@ import com.intellij.platform.ml.embeddings.search.indices.DiskSynchronizedEmbedd
 import com.intellij.platform.ml.embeddings.search.indices.FileIndexableEntitiesProvider
 import com.intellij.platform.ml.embeddings.search.indices.IndexableEntity
 import com.intellij.platform.ml.embeddings.search.settings.SemanticSearchSettings
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.platform.ml.embeddings.services.LocalArtifactsManager
+import com.intellij.platform.ml.embeddings.services.LocalArtifactsManager.Companion.SEMANTIC_SEARCH_RESOURCES_DIR
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.Flow
 import java.io.File
 
 /**
@@ -47,10 +47,7 @@ class ClassEmbeddingsStorage(project: Project, cs: CoroutineScope) : FileContent
 
   override fun checkSearchEnabled() = SemanticSearchSettings.getInstance().enabledInClassesTab
 
-  @RequiresBackgroundThread
-  override suspend fun getIndexableEntities() = collectEntities(ClassesSemanticSearchFileListener.getInstance(project))
-
-  override fun traversePsiFile(file: PsiFile) = FileIndexableEntitiesProvider.extractClasses(file)
+  override fun traversePsiFile(file: PsiFile): Flow<IndexableClass> = FileIndexableEntitiesProvider.extractClasses(file)
 
   companion object {
     private const val INDEX_DIR = "classes"

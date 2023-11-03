@@ -1,86 +1,102 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.customize.transferSettings.providers.vscode.mappings
 
-import com.intellij.ide.customize.transferSettings.db.KnownPlugins
+import com.intellij.ide.customize.transferSettings.models.BuiltInFeature
 import com.intellij.ide.customize.transferSettings.models.FeatureInfo
-import com.intellij.openapi.util.registry.Registry
+import com.intellij.ide.customize.transferSettings.models.PluginFeature
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.runAndLogException
+import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.util.PlatformUtils
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.decodeFromStream
+
+/**
+ * Allows to register plugins of third-party products for importing from VSCode.
+ */
+interface VSCodePluginMapping {
+
+  companion object {
+    val EP_NAME: ExtensionPointName<VSCodePluginMapping> = ExtensionPointName("com.intellij.transferSettings.vscode.pluginMapping")
+  }
+
+  fun mapPlugin(pluginId: String): FeatureInfo?
+}
+
+@Serializable
+private data class FeatureData(
+  val vsCodeId: String,
+  val ideaId: String? = null,
+  val ideaName: String,
+  val builtIn: Boolean = false,
+  val bundled: Boolean = false,
+  val disabled: Boolean = false
+)
+
+private val logger = logger<CommonPluginMapping>()
+
+internal class CommonPluginMapping : VSCodePluginMapping {
+
+  // Note that the later files will override the data from the former.
+  private fun getResourceMappings(): List<String> = when {
+    PlatformUtils.isDataGrip() -> listOf("general.json", "dg.json")
+    PlatformUtils.isIntelliJ() -> listOf("general.json", "ic.json")
+    PlatformUtils.isPyCharm() -> listOf("general.json", "pc.json")
+    PlatformUtils.isRubyMine() -> listOf("general.json", "rm.json")
+    PlatformUtils.isRustRover() -> listOf("general.json", "rr.json")
+    PlatformUtils.isRider() -> listOf("general.json", "rd.json")
+    PlatformUtils.isWebStorm() -> listOf("general.json", "ws.json")
+    else -> listOf("general.json")
+  }
+
+  val allPlugins by lazy {
+    val resourceNames = getResourceMappings()
+    val result = mutableMapOf<String, FeatureInfo>()
+    for (resourceName in resourceNames) {
+      logger.runAndLogException {
+        @OptIn(ExperimentalSerializationApi::class)
+        val features = this.javaClass.classLoader.getResourceAsStream("pluginData/$resourceName").use { file ->
+          Json.decodeFromStream<List<FeatureData>>(file)
+        }
+        for (data in features) {
+          val key = data.vsCodeId.lowercase()
+          if (data.disabled) {
+            result.remove(key)
+            continue
+          }
+
+          val isBundled = data.bundled || data.builtIn
+          val feature =
+            if (isBundled) BuiltInFeature(null, data.ideaName)
+            else {
+              if (data.ideaId == null) {
+                logger.error("Cannot determine IntelliJ plugin id for feature $data.")
+                continue
+              }
+              PluginFeature(null, data.ideaId, data.ideaName)
+            }
+          result[key] = feature
+        }
+      }
+    }
+
+    result
+  }
+
+  override fun mapPlugin(pluginId: String) = allPlugins[pluginId.lowercase()]
+}
 
 object PluginsMappings {
-  private val theMap = mapOf(
-    // Plugins
-    "emilast.logfilehighlighter" to KnownPlugins.Ideolog,
-    "xinyayang0506.log-analysis" to KnownPlugins.Ideolog,
-    "vscodevim.vim" to KnownPlugins.IdeaVim,
-    "msveden.teamcity-checker" to KnownPlugins.TeamCity,
-
-    // Features
-    "donjayamanne.githistory" to KnownPlugins.Git,
-    "eamodio.gitlens" to KnownPlugins.Git,
-    "waderyan.gitblame" to KnownPlugins.Git,
-    "mhutchie.git-graph" to KnownPlugins.Git,
-    "ritwickdey.liveserver" to KnownPlugins.WebSupport,
-    "ms-azuretools.vscode-docker" to KnownPlugins.Docker,
-    "vscjava.vscode-java-pack" to KnownPlugins.Java,
-    "redhat.java" to KnownPlugins.Java,
-    "vscjava.vscode-maven" to KnownPlugins.Maven,
-    "vscjava.vscode-gradle" to KnownPlugins.Gradle,
-    "vscjava.vscode-java-debug" to KnownPlugins.Debugger,
-    "donjayamanne.javadebugger" to KnownPlugins.Debugger,
-    "mathiasfrohlich.Kotlin" to KnownPlugins.Kotlin,
-    "fwcd.kotlin" to KnownPlugins.Kotlin,
-    "ms-vscode-remote.remote-wsl" to KnownPlugins.WindowsSubsystemLinux,
-    "bungcip.better-toml" to KnownPlugins.Toml,
-    "Vue.volar" to KnownPlugins.Vue,
-    //"GitHub.copilot-chat" to KnownPlugins.AiAssistant,
-
-    // Language packs
-    "ms-ceintl.vscode-language-pack-zh-hans" to KnownPlugins.ChineseLanguage,
-    "ms-ceintl.vscode-language-pack-ja" to KnownPlugins.KoreanLanguage,
-    "ms-ceintl.vscode-language-pack-ko" to KnownPlugins.JapaneseLanguage,
-
-    // New mappings
-    "ms-dotnettools.csharp" to KnownPlugins.CSharp,
-    "jchannon.csharpextensions" to KnownPlugins.CSharp,
-    "ms-dotnettools.csdevkit" to KnownPlugins.CSharp,
-    "kreativ-software.csharpextensions" to KnownPlugins.CSharp,
-    "jmrog.vscode-nuget-package-manager" to KnownPlugins.NuGet,
-    "formulahendry.dotnet-test-explorer" to KnownPlugins.TestExplorer,
-    "formulahendry.dotnet" to KnownPlugins.RunConfigurations,
-    "unity.unity-debug" to KnownPlugins.Unity,
-    "tobiah.unity-tools" to KnownPlugins.Unity,
-    "kleber-swf.unity-code-snippets" to KnownPlugins.Unity,
-    "jorgeserrano.vscode-csharp-snippets" to KnownPlugins.LiveTemplates,
-    "fudge.auto-using" to KnownPlugins.CSharp,
-    "streetsidesoftware.code-spell-checker" to KnownPlugins.SpellChecker,
-    "k--kato.docomment" to KnownPlugins.CSharp,
-    "formulahendry.code-runner" to KnownPlugins.RunConfigurations,
-    "wayou.vscode-todo-highlight" to KnownPlugins.LanguageSupport,
-    "icsharpcode.ilspy-vscode" to KnownPlugins.DotNetDecompiler,
-    "editorconfig.editorconfig" to KnownPlugins.editorconfig,
-    "ms-vscode.vscode-typescript-tslint-plugin" to KnownPlugins.TSLint,
-    "github.vscode-pull-request-github" to KnownPlugins.Git,
-    "mtxr.sqltools" to KnownPlugins.DatabaseSupport,
-    "scala-lang.scala" to KnownPlugins.Scala,
-    "Dart-Code.dart-code" to KnownPlugins.Dart,
-    "Dart-Code.flutter" to KnownPlugins.Flutter,
-    "vscjava.vscode-lombok" to KnownPlugins.Lombok,
-    "esbenp.prettier-vscode" to KnownPlugins.Prettier,
-    "ms-kubernetes-tools.vscode-kubernetes-tools" to KnownPlugins.Kubernetes,
-  )
 
   fun pluginIdMap(pluginId: String): FeatureInfo? {
-    if (Registry.`is`("transferSettings.vscode.showRust") && pluginId == "rust-lang.rust-analyzer") {
-      return KnownPlugins.Rust
+
+    for (mapping in VSCodePluginMapping.EP_NAME.extensionList) {
+      val feature = mapping.mapPlugin(pluginId)
+      if (feature != null) return feature
     }
-    return theMap[pluginId]
-  }
 
-  fun idsList(): Collection<String> {
-    return theMap.keys
-  }
-
-  fun originalPluginNameOverride(pluginId: String): Nothing? = when (pluginId) {
-    //"emilast.logfilehighlighter" to "Log File Highlighter"
-    else -> null
+    return null
   }
 }

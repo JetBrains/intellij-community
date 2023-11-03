@@ -85,6 +85,7 @@ class KotlinRefactoringSettings : PersistentStateComponent<KotlinRefactoringSett
 
     var renameInheritors = true
     var renameParameterInHierarchy = true
+    var renameFileNames = true
     var renameVariables = true
     var renameTests = true
     var renameOverloads = true

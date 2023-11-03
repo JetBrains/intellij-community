@@ -51,6 +51,7 @@ final class RefreshSessionImpl extends RefreshSession {
   private volatile RefreshWorker myWorker;
   private volatile boolean myCancelled;
   private volatile boolean myLaunched;
+  private volatile int myEventCount;
 
   RefreshSessionImpl(boolean async, boolean recursive, boolean background, @Nullable Runnable finishRunnable, @NotNull ModalityState modality) {
     myIsAsync = async;
@@ -194,7 +195,9 @@ final class RefreshSessionImpl extends RefreshSession {
         workQueue.size(), types, myCancelled ? "cancelled" : "done", count, events.size()));
     }
 
-    return events.isEmpty() ? List.of() : new LinkedHashSet<>(events);
+    var result = events.isEmpty() ? List.<VFileEvent>of() : new LinkedHashSet<>(events);
+    myEventCount = result.size();
+    return result;
   }
 
   @Override
@@ -263,7 +266,13 @@ final class RefreshSessionImpl extends RefreshSession {
   }
 
   @Override
+  public Object metric(@NotNull String key) {
+    if (key.equals("events")) return myEventCount;
+    throw new IllegalArgumentException();
+  }
+
+  @Override
   public String toString() {
-    return "RefreshSessionImpl: canceled=" + myCancelled + " launched=" + myLaunched + " queue=" + myWorkQueue.size();
+    return "RefreshSessionImpl: canceled=" + myCancelled + " launched=" + myLaunched + " queue=" + myWorkQueue.size() + " events=" + myEventCount;
   }
 }

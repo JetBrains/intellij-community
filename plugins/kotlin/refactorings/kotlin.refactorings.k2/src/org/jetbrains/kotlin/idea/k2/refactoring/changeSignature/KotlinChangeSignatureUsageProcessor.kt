@@ -85,7 +85,9 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
 
         findUsages(ktCallableDeclaration, changeInfo, result)
 
-        KotlinChangeSignatureUsageSearcher.findInternalUsages(ktCallableDeclaration, changeInfo, result)
+        if (ktCallableDeclaration is KtCallableDeclaration) {
+            KotlinChangeSignatureUsageSearcher.findInternalUsages(ktCallableDeclaration, changeInfo, result)
+        }
 
         if (ktCallableDeclaration is KtPrimaryConstructor) {
             findConstructorPropertyUsages(ktCallableDeclaration, changeInfo, result)
@@ -95,11 +97,11 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
     }
 
     private fun findUsages(
-        ktCallableDeclaration: KtCallableDeclaration,
+        ktCallableDeclaration: KtNamedDeclaration,
         changeInfo: ChangeInfo,
         result: MutableList<UsageInfo>
     ) {
-        ktCallableDeclaration.findAllOverridings().forEach { overrider ->
+        (ktCallableDeclaration as? KtCallableDeclaration)?.findAllOverridings()?.forEach { overrider ->
             val provider = ChangeSignatureUsageProviders.findProvider(overrider.language)
             if (provider != null) {
                 val usageInfo = provider.createOverrideUsageInfo(
@@ -228,7 +230,7 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
         return true
     }
 
-    private fun updatePrimaryMethod(element: KtCallableDeclaration, changeInfo: KotlinChangeInfoBase, isInherited: Boolean = false) {
+    private fun updatePrimaryMethod(element: KtNamedDeclaration, changeInfo: KotlinChangeInfoBase, isInherited: Boolean = false) {
         val psiFactory = KtPsiFactory(element.project)
 
         if (changeInfo.isNameChanged) {
@@ -241,12 +243,12 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
         changeReturnTypeIfNeeded(changeInfo, element)
 
         if (changeInfo.isParameterSetOrOrderChanged) {
-            processParameterListWithStructuralChanges(changeInfo, element, element.getValueParameterList(), psiFactory, changeInfo.method, isInherited)
+            processParameterListWithStructuralChanges(changeInfo, element, (element as? KtCallableDeclaration)?.getValueParameterList(), psiFactory, changeInfo.method, isInherited)
         }
         else {
-            val parameterList = element.valueParameterList
+            val parameterList = (element as? KtCallableDeclaration)?.valueParameterList
             if (parameterList != null) {
-                val offset = if (element.receiverTypeReference != null) 1 else 0
+                val offset = if ((element as? KtCallableDeclaration)?.receiverTypeReference != null) 1 else 0
                 val parameterTypes = mutableMapOf<KtParameter, KtTypeReference>()
                 for ((paramIndex, parameter) in parameterList.parameters.withIndex()) {
                     val parameterInfo = changeInfo.newParameters[paramIndex + offset]
@@ -270,11 +272,11 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
             val receiverTypeText = changeInfo.receiverParameterInfo?.typeText
             val receiverTypeRef = if (receiverTypeText != null) psiFactory.createType(
                 receiverTypeText,
-                element,
+                element as KtCallableDeclaration,
                 changeInfo.method,
                 Variance.IN_VARIANCE
             ) else null
-            element.setReceiverTypeReference(receiverTypeRef)?.let { shortenReferences(it) }
+            (element as KtCallableDeclaration).setReceiverTypeReference(receiverTypeRef)?.let { shortenReferences(it) }
         }
 
         if (changeInfo.isVisibilityChanged() && !KtPsiUtil.isLocal(element)) {
@@ -288,7 +290,7 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
             }
         }
 
-        val parameterList = element.valueParameterList
+        val parameterList = (element as? KtCallableDeclaration)?.valueParameterList
         if (parameterList != null) {
             shortenReferences(parameterList)
         }
@@ -304,11 +306,12 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
         }
         when (element) {
             is KtCallableDeclaration -> element.setVisibility(newVisibilityToken)
+            is KtClass -> element.createPrimaryConstructorIfAbsent().setVisibility(newVisibilityToken)
             else -> throw AssertionError("Invalid element: " + element.getElementTextWithContext())
         }
     }
 
-    private fun KtCallableDeclaration.setVisibility(visibilityToken: KtModifierKeywordToken) {
+    private fun KtModifierListOwner.setVisibility(visibilityToken: KtModifierKeywordToken) {
         if (visibilityToken == KtTokens.PUBLIC_KEYWORD) {
             visibilityModifierType()?.let { removeModifier(it) }
         } else {
@@ -318,7 +321,7 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
 
     private fun processParameterListWithStructuralChanges(
         changeInfo: KotlinChangeInfoBase,
-        element: KtCallableDeclaration,
+        element: KtDeclaration,
         originalParameterList: KtParameterList?,
         psiFactory: KtPsiFactory,
         baseFunction: PsiElement,
@@ -339,11 +342,11 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
                     parameterList = null
                 }
             } else {
-                newParameterList = psiFactory.createLambdaParameterList(changeInfo.getNewParametersSignatureWithoutParentheses(element, baseFunction, isInherited))
+                newParameterList = psiFactory.createLambdaParameterList(changeInfo.getNewParametersSignatureWithoutParentheses(element as KtFunctionLiteral, baseFunction, isInherited))
                 canReplaceEntireList = true
             }
         } else if (!(element is KtProperty || element is KtParameter)) {
-            newParameterList = psiFactory.createParameterList("(" + changeInfo.getNewParametersSignatureWithoutParentheses(element, baseFunction, isInherited) + ")")
+            newParameterList = psiFactory.createParameterList("(" + changeInfo.getNewParametersSignatureWithoutParentheses(element as? KtCallableDeclaration, baseFunction, isInherited) + ")")
         }
 
         if (newParameterList == null) return

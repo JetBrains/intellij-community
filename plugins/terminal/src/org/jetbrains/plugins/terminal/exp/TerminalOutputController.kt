@@ -9,19 +9,16 @@ import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.editor.ScrollType
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.ex.EditorEx
-import com.intellij.openapi.editor.markup.EffectType
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
-import com.intellij.terminal.TerminalColorPalette
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jediterm.terminal.StyledTextConsumer
 import com.jediterm.terminal.TextStyle
 import com.jediterm.terminal.model.CharBuffer
-import com.jediterm.terminal.ui.AwtTransformers
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.IS_OUTPUT_EDITOR_KEY
-import java.awt.Color
+import org.jetbrains.plugins.terminal.exp.TerminalUiUtils.toTextAttributes
 import java.awt.Font
 
 class TerminalOutputController(
@@ -38,9 +35,6 @@ class TerminalOutputController(
   private val caretModel: TerminalCaretModel = TerminalCaretModel(session, outputModel, editor)
   private val caretPainter: TerminalCaretPainter = TerminalCaretPainter(caretModel, outputModel, selectionModel, editor)
 
-  private val palette: TerminalColorPalette
-    get() = settings.terminalColorPalette
-
   @Volatile
   private var keyEventsListenerDisposable: Disposable? = null
 
@@ -55,12 +49,15 @@ class TerminalOutputController(
   }
 
   @RequiresEdt
-  fun startCommandBlock(command: String?) {
-    val block = outputModel.createBlock(command)
-    if (!command.isNullOrEmpty()) {
-      editor.document.insertString(block.endOffset, command + "\n")
-      val highlighting = createCommandHighlighting(block)
-      outputModel.putHighlightings(block, listOf(highlighting))
+  fun startCommandBlock(command: String?, promptText: String?) {
+    val block = outputModel.createBlock(command, promptText)
+    if (block.withPrompt) {
+      appendLineToBlock(block, promptText!!, createPromptHighlighting(block))
+    }
+    if (block.withCommand) {
+      appendLineToBlock(block, command!!, createCommandHighlighting(block))
+    }
+    if (block.withPrompt || block.withCommand) {
       blocksDecorator.installDecoration(block, isFirstBlock = outputModel.getBlocksSize() == 1)
     }
 
@@ -222,13 +219,20 @@ class TerminalOutputController(
   private fun updateEditor(output: CommandOutput) {
     val block = outputModel.getLastBlock() ?: error("No active block")
     editor.document.replaceString(block.outputStartOffset, block.endOffset, output.text)
-    // highlightings are collected only for output, so add command highlighting in the first place
-    val command = block.command
-    val highlightings = if (command != null) {
-      val commandHighlighting = createCommandHighlighting(block)
-      output.highlightings.toMutableList().also { it.add(0, commandHighlighting) }
+
+    // highlightings are collected only for output, so add prompt and command highlightings to the first place
+    val highlightings = if (block.withPrompt || block.withCommand) {
+      output.highlightings.toMutableList().also { highlightings ->
+        if (block.withCommand) {
+          highlightings.add(0, createCommandHighlighting(block))
+        }
+        if (block.withPrompt) {
+          highlightings.add(0, createPromptHighlighting(block))
+        }
+      }
     }
     else output.highlightings
+
     outputModel.putHighlightings(block, highlightings)
     // Install decorations lazily, only if there is some text.
     // ZSH prints '%' character on startup and then removing it immediately, so ignore this character to avoid blinking.
@@ -246,44 +250,24 @@ class TerminalOutputController(
     caretPainter.repaint()
   }
 
-  private fun TextStyle.toTextAttributes(): TextAttributes {
-    return TextAttributes().also { attr ->
-      val background = palette.getBackground(terminalModel.styleState.getBackground(backgroundForRun))
-      val defaultBackground = palette.defaultBackground
-      // todo: it is a hack to not set default background, because it is different from the block background.
-      //  They should match to remove this hack.
-      if (background != defaultBackground) {
-        attr.backgroundColor = AwtTransformers.toAwtColor(background)
-      }
-      attr.foregroundColor = getStyleForeground(this)
-      if (hasOption(TextStyle.Option.BOLD)) {
-        attr.fontType = attr.fontType or Font.BOLD
-      }
-      if (hasOption(TextStyle.Option.ITALIC)) {
-        attr.fontType = attr.fontType or Font.ITALIC
-      }
-      if (hasOption(TextStyle.Option.UNDERLINED)) {
-        attr.withAdditionalEffect(EffectType.LINE_UNDERSCORE, attr.foregroundColor)
-      }
-    }
+  private fun TextStyle.toTextAttributes(): TextAttributes = this.toTextAttributes(session.colorPalette)
+
+  private fun appendLineToBlock(block: CommandBlock, text: String, highlighting: HighlightingInfo) {
+    editor.document.insertString(block.endOffset, text + "\n")
+    val existingHighlightings = outputModel.getHighlightings(block) ?: emptyList()
+    outputModel.putHighlightings(block, existingHighlightings + highlighting)
   }
 
-  private fun getStyleForeground(style: TextStyle): Color {
-    val foreground = palette.getForeground(terminalModel.styleState.getForeground(style.foregroundForRun))
-    return if (style.hasOption(TextStyle.Option.DIM)) {
-      val background = palette.getBackground(terminalModel.styleState.getBackground(style.backgroundForRun))
-      Color((foreground.red + background.red) / 2,
-            (foreground.green + background.green) / 2,
-            (foreground.blue + background.blue) / 2,
-            foreground.alpha)
-    }
-    else AwtTransformers.toAwtColor(foreground)!!
+  /** It is implied that [CommandBlock.prompt] is not null */
+  private fun createPromptHighlighting(block: CommandBlock): HighlightingInfo {
+    val attributes = TextAttributes(TerminalUi.promptForeground, null, null, null, Font.PLAIN)
+    return HighlightingInfo(block.startOffset, block.startOffset + block.prompt!!.length, attributes)
   }
 
-  /** It is implied that the command is not null */
+  /** It is implied that [CommandBlock.command] is not null */
   private fun createCommandHighlighting(block: CommandBlock): HighlightingInfo {
     val attributes = TextAttributes(TerminalUi.commandForeground, null, null, null, Font.BOLD)
-    return HighlightingInfo(block.startOffset, block.startOffset + block.command!!.length, attributes)
+    return HighlightingInfo(block.commandStartOffset, block.commandStartOffset + block.command!!.length, attributes)
   }
 
   fun addDocumentListener(listener: DocumentListener, disposable: Disposable? = null) {

@@ -16,7 +16,6 @@ import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.ui.LanguageTextField
 import com.intellij.ui.components.panels.ListLayout
 import com.intellij.util.ui.JBUI
-import org.jetbrains.plugins.terminal.TerminalProjectOptionsProvider
 import org.jetbrains.plugins.terminal.exp.TerminalPromptController.PromptStateListener
 import org.jetbrains.plugins.terminal.exp.completion.TerminalShellSupport
 import java.awt.Color
@@ -45,11 +44,11 @@ class TerminalPromptView(
   init {
     val editorTextField = createPromptTextField(session)
     editor = editorTextField.getEditor(true) as EditorImpl
-    controller = TerminalPromptController(editor, session, commandExecutor)
+    controller = TerminalPromptController(project, editor, session, commandExecutor)
     controller.addListener(this)
 
     promptLabel = createPromptLabel()
-    promptLabel.text = controller.computePromptText(TerminalProjectOptionsProvider.getInstance(project).startingDirectory ?: "")
+    promptLabel.text = controller.promptText
 
     commandHistoryPresenter = CommandHistoryPresenter(project, editor, commandExecutor)
 
@@ -115,7 +114,7 @@ class TerminalPromptView(
     editor.colorsScheme.apply {
       editorFontName = settings.terminalFont.fontName
       editorFontSize = settings.terminalFont.size
-      lineSpacing = settings.lineSpacing
+      lineSpacing = 1.0f
     }
     editor.caretModel.primaryCaret.visualAttributes = CaretVisualAttributes(null, CaretVisualAttributes.Weight.HEAVY)
     editor.putUserData(AutoPopupController.SHOW_BOTTOM_PANEL_IN_LOOKUP_UI, false)

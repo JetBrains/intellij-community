@@ -87,8 +87,6 @@
             language="JAVA"
             implementationClass="org.jetbrains.kotlin.idea.refactoring.inline.KotlinToJavaInlineHandler"/>
 
-    <refactoring.overrideMethodProcessor implementation="org.jetbrains.kotlin.idea.refactoring.inline.KotlinOverrideMethodsProcessor"/>
-
     <refactoring.safeDeleteProcessor
             id="kotlinProcessor"
             implementation="org.jetbrains.kotlin.idea.refactoring.safeDelete.KotlinSafeDeleteProcessor"

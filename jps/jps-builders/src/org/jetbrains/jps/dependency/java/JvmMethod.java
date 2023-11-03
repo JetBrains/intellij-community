@@ -3,7 +3,6 @@ package org.jetbrains.jps.dependency.java;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.dependency.Node;
-import org.jetbrains.jps.dependency.ReferenceID;
 import org.jetbrains.jps.dependency.Usage;
 import org.jetbrains.jps.dependency.diff.DiffCapable;
 import org.jetbrains.jps.dependency.diff.Difference;
@@ -36,14 +35,13 @@ public final class JvmMethod extends ProtoMember implements DiffCapable<JvmMetho
   }
 
   @Override
-  public MethodUsage createUsage(String owner) {
+  public MethodUsage createUsage(JvmNodeReferenceID owner) {
     return new MethodUsage(owner, getName(), getDescriptor());
   }
 
-  public BiPredicate<Node<?, ?>, Usage> createUsageQuery(String owner) {
+  public BiPredicate<Node<?, ?>, Usage> createUsageQuery(JvmNodeReferenceID owner) {
     String thisMethodName = getName();
-    ReferenceID ownerID = new JvmNodeReferenceID(owner);
-    return (n,u) -> u instanceof MethodUsage && ownerID.equals(u.getElementOwner()) && Objects.equals(((MethodUsage)u).getName(), thisMethodName);
+    return (n,u) -> u instanceof MethodUsage && owner.equals(u.getElementOwner()) && Objects.equals(((MethodUsage)u).getName(), thisMethodName);
   }
 
   public Set<ParamAnnotation> getParamAnnotations() {

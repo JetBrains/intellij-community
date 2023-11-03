@@ -54,7 +54,7 @@ data class SettingsPreferences(
     return listOf(
       SettingsPreferencesKind.Keymap to keymap,
       SettingsPreferencesKind.RecentProjects to (recentProjects && settings.recentProjects.isNotEmpty()),
-      SettingsPreferencesKind.Plugins to (plugins && settings.plugins.any { !it.isHidden })
+      SettingsPreferencesKind.Plugins to (plugins && settings.plugins.values.any { !it.isHidden })
     )
   }
 

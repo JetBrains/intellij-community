@@ -41,8 +41,7 @@ import java.util.function.Supplier;
 // not final - used by Gosu plugin
 public final class Mappings {
   private static final Logger LOG = Logger.getInstance(Mappings.class);
-  public static final String PROCESS_CONSTANTS_NON_INCREMENTAL_PROPERTY = "compiler.process.constants.non.incremental";
-  private boolean myProcessConstantsIncrementally = !Boolean.parseBoolean(System.getProperty(PROCESS_CONSTANTS_NON_INCREMENTAL_PROPERTY, "false"));
+  private boolean myProcessConstantsIncrementally = true;
   private static final boolean USE_NATURAL_INT_MULTIMAP_IMPLEMENTATION = Boolean.parseBoolean(System.getProperty("jps.mappings.natural.int.multimap.impl", "true"));
 
   private static final String CLASS_TO_SUBCLASSES = "classToSubclasses.tab";
@@ -99,6 +98,7 @@ public final class Mappings {
   private Mappings(final Mappings base) throws IOException {
     myLock = base.myLock;
     myIsDelta = true;
+    myProcessConstantsIncrementally = base.myProcessConstantsIncrementally;
     myChangedClasses = new IntOpenHashSet(DEFAULT_SET_CAPACITY, DEFAULT_SET_LOAD_FACTOR);
     myChangedFiles = FileCollectionFactory.createCanonicalFileSet();
     myDeletedClasses = new HashSet<>(DEFAULT_SET_CAPACITY, DEFAULT_SET_LOAD_FACTOR);
@@ -973,8 +973,8 @@ public final class Mappings {
                                       final Collection<? super File> affectedFiles,
                                       final Collection<? extends File> currentlyCompiled,
                                       final @Nullable DependentFilesFilter filter) {
-    final boolean isField = member instanceof FieldRepr;
     final Util self = new Util();
+    final int classname = member instanceof ClassRepr? member.name : owner;
 
     // Public branch --- hopeless
     if (member.isPublic()) {
@@ -987,9 +987,16 @@ public final class Mappings {
     // Protected branch
     if (member.isProtected()) {
       debug("Protected access, softening non-incremental decision: adding all relevant subclasses for a recompilation");
-      debug("Root class: ", owner);
+      debug("Root class: ", classname);
 
-      final IntSet propagated = self.propagateFieldAccess(isField ? member.name : myEmptyName, owner);
+      final IntSet propagated;
+      if (member instanceof FieldRepr) {
+        propagated = self.propagateFieldAccess(member.name, classname);
+      }
+      else {
+        propagated = getAllSubclasses(classname);
+        propagated.remove(classname);
+      }
       propagated.forEach(className -> {
         final Iterable<File> fileNames = classToSourceFileGet(className);
         if (fileNames != null) {
@@ -1003,7 +1010,7 @@ public final class Mappings {
       });
     }
 
-    final String cName = myContext.getValue(isField ? owner : member.name);
+    final String cName = myContext.getValue(classname);
     if (cName != null) {
       final String packageName = ClassRepr.getPackageName(cName);
 
@@ -1663,11 +1670,13 @@ public final class Mappings {
         });
       }
       
-      for (final FieldRepr f : added) {
-        debug("Field: ", f.name);
+      for (final FieldRepr addedField : added) {
+        debug("Field: ", addedField.name);
 
-        if (!f.isPrivate()) {
-          getAllSubclasses(classRepr.name).forEach(subClass -> {
+        if (!addedField.isPrivate()) {
+          IntSet changedClassWithSubclasses = myFuture.propagateFieldAccess(addedField.name, classRepr.name);
+          changedClassWithSubclasses.add(classRepr.name);
+          changedClassWithSubclasses.forEach(subClass -> {
             final Iterable<ClassRepr> reprs = Iterators.collect(myFuture.reprsByName(subClass, ClassRepr.class), new SmartList<>());
             if (!Iterators.isEmpty(reprs)) {
               final Iterable<File> sourceFileNames = classToSourceFileGet(subClass);
@@ -1682,7 +1691,7 @@ public final class Mappings {
                   }
                   else {
                     final int outerClass = r.getOuterClassName();
-                    if (!isEmpty(outerClass) && myFuture.isFieldVisible(outerClass, f)) {
+                    if (!isEmpty(outerClass) && myFuture.isFieldVisible(outerClass, addedField)) {
                       for (File sourceFileName : sourceFileNames) {
                         debug("Affecting inner subclass (introduced field can potentially hide surrounding class fields): ", sourceFileName);
                         myAffectedFiles.add(sourceFileName);
@@ -1695,50 +1704,23 @@ public final class Mappings {
             }
 
             debug("Affecting field usages referenced from subclass ", subClass);
-            final IntSet propagated = myFuture.propagateFieldAccess(f.name, subClass);
-            myFuture.affectFieldUsages(f, propagated, f.createUsage(myContext, subClass), state.myAffectedUsages, state.myDependants);
-            if (f.isStatic()) {
-              myFuture.affectStaticMemberOnDemandUsages(subClass, propagated, state.myAffectedUsages, state.myDependants);
+            myFuture.affectFieldUsages(addedField, IntSet.of(), addedField.createUsage(myContext, subClass), state.myAffectedUsages, state.myDependants);
+            if (addedField.isStatic()) {
+              myFuture.affectStaticMemberOnDemandUsages(subClass, IntSet.of(), state.myAffectedUsages, state.myDependants);
             }
             myFuture.appendDependents(subClass, state.myDependants);
           });
         }
 
         final Collection<Pair<FieldRepr, ClassRepr>> overriddenFields = new HashSet<>();
-        myFuture.addOverriddenFields(f, classRepr, overriddenFields, null, classRepr);
+        myFuture.addOverriddenFields(addedField, classRepr, overriddenFields, null, classRepr);
 
         for (final Pair<FieldRepr, ClassRepr> p : overriddenFields) {
-          final FieldRepr ff = p.first;
+          final FieldRepr overridden = p.first;
           final ClassRepr cc = p.second;
-          if (ff.isPrivate()) {
-            continue;
-          }
-          final boolean sameKind = f.myType.equals(ff.myType) && f.isStatic() == ff.isStatic() && f.isSynthetic() == ff.isSynthetic() && f.isFinal() == ff.isFinal();
-          if (!sameKind || Difference.weakerAccess(f.access, ff.access)) {
-            final IntSet propagated = myPresent.propagateFieldAccess(ff.name, cc.name);
-
-            final Set<UsageRepr.Usage> affectedUsages = new HashSet<>();
+          if (!overridden.isPrivate()) {
             debug("Affecting usages of overridden field in class ", cc.name);
-            myFuture.affectFieldUsages(ff, propagated, ff.createUsage(myContext, cc.name), affectedUsages, state.myDependants);
-
-            if (sameKind) {
-              // check if we can reduce the number of usages going to be recompiled
-              UsageConstraint constraint = null;
-              if (f.isProtected()) {
-                // no need to recompile usages in field class' package and hierarchy, since newly added field is accessible in this scope
-                constraint = myFuture.new InheritanceConstraint(cc);
-              }
-              else if (f.isPackageLocal()) {
-                // no need to recompile usages in field class' package, since newly added field is accessible in this scope
-                constraint = myFuture.new PackageConstraint(cc.getPackageName());
-              }
-              if (constraint != null) {
-                for (final UsageRepr.Usage usage : affectedUsages) {
-                  state.myUsageConstraints.put(usage, constraint);
-                }
-              }
-            }
-            state.myAffectedUsages.addAll(affectedUsages);
+            myFuture.affectFieldUsages(overridden, myPresent.propagateFieldAccess(overridden.name, cc.name), overridden.createUsage(myContext, cc.name), state.myAffectedUsages, state.myDependants);
           }
         }
       }
@@ -1760,12 +1742,12 @@ public final class Mappings {
         debug("Field: ", f.name);
 
         if (!myProcessConstantsIncrementally && !f.isPrivate() && (f.access & INLINABLE_FIELD_MODIFIERS_MASK) == INLINABLE_FIELD_MODIFIERS_MASK && f.hasValue()) {
-            debug("Field had value and was (non-private) final static => a switch to non-incremental mode requested");
-            if (!incrementalDecision(it.name, f, myAffectedFiles, myFilesToCompile, myFilter)) {
-              debug("End of Differentiate, returning false");
-              return false;
-            }
+          debug("Field had value and was (non-private) final static => a switch to non-incremental mode requested");
+          if (!incrementalDecision(it.name, f, myAffectedFiles, myFilesToCompile, myFilter)) {
+            debug("End of Differentiate, returning false");
+            return false;
           }
+        }
 
         final IntSet propagated = myPresent.propagateFieldAccess(f.name, it.name);
         myPresent.affectFieldUsages(f, propagated, f.createUsage(myContext, it.name), state.myAffectedUsages, state.myDependants);

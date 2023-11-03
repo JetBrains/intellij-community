@@ -561,7 +561,7 @@
                  description="Use workaround for Native SSH support in Git. Batch file cannot properly handle arguments with newlines when used as SSH_ASKPASS."/>
     <registryKey key="git.use.setsid.for.native.ssh" defaultValue="true"
                  description="Wrap 'git' process with 'setsid' for remote operations.
-                              This fixes issue with SSH_ASKPASS if IDE is executed from terminal or under DM/WM that pass system TTY from Xorg to GUI applications."/>
+                              This fixes issue with SSH_ASKPASS if IDE is executed from terminal or under DM/WM that pass system TTY from Xorg to GUI applications. IDEA-201054"/>
     <registryKey key="git.use.setsid.wait.for.wsl.ssh" defaultValue="true"
                  description="Wrap 'git' process with 'setsid -w' for remote operations with WSL executable."/>
     <registryKey key="git.wsl.exe.executable.no.shell" defaultValue="false"
@@ -831,6 +831,9 @@
   <projectListeners>
     <listener class="git4idea.conflicts.GitConflictsToolWindowManager$MyStagingAreaListener"
               topic="git4idea.status.GitStagingAreaHolder$StagingAreaListener"
+              activeInHeadlessMode="false"/>
+    <listener class="git4idea.conflicts.MergeConflictResolveUtil$MyStagingAreaListener"
+              topic="git4idea.status.GitStagingAreaHolder.StagingAreaListener"
               activeInHeadlessMode="false"/>
     <listener class="git4idea.conflicts.GitConflictsToolWindowManager$MyRepositoryListener"
               topic="com.intellij.dvcs.repo.VcsRepositoryMappingListener"

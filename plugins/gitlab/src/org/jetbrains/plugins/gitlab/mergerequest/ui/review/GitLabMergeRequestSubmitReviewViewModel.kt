@@ -115,7 +115,7 @@ internal class GitLabMergeRequestSubmitReviewViewModelImpl(
   }
 
   private suspend fun addNoteIfNotEmpty() {
-    text.value.takeIf { it.isNotEmpty() }?.let { mergeRequest.addNote(it, false) }
+    text.value.takeIf { it.isNotEmpty() }?.let { mergeRequest.addNote(it) }
   }
 
   private suspend inline fun executeAndSaveError(crossinline task: suspend () -> Unit) {

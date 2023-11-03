@@ -23,6 +23,7 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.NaturalComparator;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
+import com.intellij.profile.codeInspection.ui.CustomInspectionActions;
 import com.intellij.profile.codeInspection.ui.InspectionMetaDataDialog;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
@@ -76,6 +77,11 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
   private boolean myWriteSorted = false;
   private final Set<String> myProblemsReported = new HashSet<>(1);
   private InspectionProfileImpl mySessionProfile;
+
+  @NotNull
+  public static SSBasedInspection getStructuralSearchInspection(@NotNull InspectionProfile profile) {
+    return (SSBasedInspection)CustomInspectionActions.getInspection(profile, SHORT_NAME);
+  }
 
   @Override
   public void writeSettings(@NotNull Element node) throws WriteExternalException {

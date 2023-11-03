@@ -1,5 +1,5 @@
 def list=[1, 2, 3]
-for (fi<caret>nal int x in list) {
+for (final int x<caret> in list) {
     print x;
     {
         soSomething();

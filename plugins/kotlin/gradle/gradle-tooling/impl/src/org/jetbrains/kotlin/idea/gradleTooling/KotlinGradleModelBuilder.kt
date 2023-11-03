@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.gradleTooling
 
 import org.gradle.api.Project
 import org.gradle.api.Task
+import org.gradle.api.artifacts.ConfigurationContainer
 import org.gradle.api.artifacts.Dependency
 import org.gradle.api.artifacts.ProjectDependency
 import org.gradle.api.provider.Property
@@ -18,6 +19,7 @@ import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider
 import org.jetbrains.plugins.gradle.tooling.ErrorMessageBuilder
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderService
+import org.jetbrains.plugins.gradle.tooling.util.resolve.DependencyResolverImpl
 import java.io.File
 import java.io.Serializable
 import java.lang.reflect.InvocationTargetException
@@ -243,6 +245,10 @@ class KotlinGradleModelBuilder : AbstractKotlinGradleModelBuilder(), ModelBuilde
         val platform = platformPluginId ?: pluginToPlatform.entries.singleOrNull { project.plugins.findPlugin(it.key) != null }?.value
         val implementedProjects = getImplementedProjects(project)
 
+        if (builderContext != null) {
+            downloadKotlinStdlibSources(project, builderContext)
+        }
+
         return KotlinGradleModelImpl(
             hasKotlinPlugin = kotlinPluginId != null || platformPluginId != null,
             compilerArgumentsBySourceSet = compilerArgumentsBySourceSet,
@@ -254,5 +260,32 @@ class KotlinGradleModelBuilder : AbstractKotlinGradleModelBuilder(), ModelBuilde
             kotlinTaskProperties = extraProperties,
             gradleUserHome = project.gradle.gradleUserHomeDir.absolutePath,
         )
+    }
+
+    private fun downloadKotlinStdlibSources(project: Project, context: ModelBuilderContext) {
+        val kotlinStdlib = project.configurations.detachedConfiguration()
+        project.configurations.forEachUsedKotlinLibrary {
+            kotlinStdlib.dependencies.add(it)
+        }
+        project.buildscript.configurations.forEachUsedKotlinLibrary {
+            kotlinStdlib.dependencies.add(it)
+        }
+        if (kotlinStdlib.dependencies.isEmpty()) {
+            return
+        }
+        DependencyResolverImpl(context, project, /*download javadoc*/ false, /*download sources*/ true)
+            .resolveDependencies(kotlinStdlib)
+    }
+
+    private fun Dependency.isPartOfKotlinStdlib() = "org.jetbrains.kotlin" == group || "org.jetbrains.kotlinx" == group
+
+    private fun ConfigurationContainer.forEachUsedKotlinLibrary(dependencyConsumer: (Dependency) -> Unit) {
+        for (configuration in this) {
+            for (dependency in configuration.dependencies) {
+                if (dependency.isPartOfKotlinStdlib()) {
+                    dependencyConsumer.invoke(dependency)
+                }
+            }
+        }
     }
 }

@@ -3,21 +3,15 @@ package com.intellij.platform.instanceContainer.tests
 
 import com.intellij.platform.instanceContainer.CycleInitializationException
 import com.intellij.platform.instanceContainer.InstanceNotRegisteredException
-import com.intellij.platform.instanceContainer.internal.ContainerDisposedException
-import com.intellij.platform.instanceContainer.internal.InstanceAlreadyRegisteredException
-import com.intellij.platform.instanceContainer.internal.InstanceContainerImpl
-import com.intellij.platform.instanceContainer.internal.ScopeHolder
+import com.intellij.platform.instanceContainer.internal.*
 import com.intellij.testFramework.common.timeoutRunBlocking
-import kotlinx.coroutines.CoroutineName
-import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.*
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInfo
 import org.junit.jupiter.api.assertThrows
 import kotlin.coroutines.EmptyCoroutineContext
-import kotlin.test.assertEquals
-import kotlin.test.assertNotNull
-import kotlin.test.assertNull
-import kotlin.test.assertSame
+import kotlin.test.*
+import kotlin.time.Duration.Companion.hours
 
 class InstanceContainerTest {
 
@@ -188,6 +182,28 @@ class InstanceContainerTest {
       assertThrows<CycleInitializationException> {
         container.instance(CyclicB::class.java)
       }
+    }
+  }
+
+  private class AService
+
+  @Test
+  fun `instance is initialized in cancelled container scope`(testInfo: TestInfo): Unit = timeoutRunBlocking {
+    val cancelledHolder = ScopeHolder(this, EmptyCoroutineContext, testInfo.displayName).also {
+      it.containerScope.cancel()
+    }
+    InstanceContainerImpl(cancelledHolder, testInfo.displayName, null, ordered = false).use { container ->
+      val instance = AService()
+      container.registerInitializer(AService::class.java, object : InstanceInitializer {
+        override val instanceClassName: String get() = AService::class.java.name
+        override fun loadInstanceClass(keyClass: Class<*>?): Class<*> = AService::class.java
+        override suspend fun createInstance(parentScope: CoroutineScope, instanceClass: Class<*>): Any {
+          assertTrue(parentScope.coroutineContext.job.isCancelled)
+          yield()
+          return instance
+        }
+      }, override = false)
+      assertSame(instance, container.instance(AService::class.java))
     }
   }
 }

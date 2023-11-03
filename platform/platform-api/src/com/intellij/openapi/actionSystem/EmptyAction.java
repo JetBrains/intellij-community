@@ -34,9 +34,9 @@ public final class EmptyAction extends AnAction {
     super(text, description, icon);
   }
 
-  public static AnAction createEmptyAction(@Nullable @Nls(capitalization = Nls.Capitalization.Title) String name,
-                                           @Nullable Icon icon,
-                                           boolean alwaysEnabled) {
+  public static @NotNull AnAction createEmptyAction(@Nullable @Nls(capitalization = Nls.Capitalization.Title) String name,
+                                                    @Nullable Icon icon,
+                                                    boolean alwaysEnabled) {
     final EmptyAction emptyAction = new EmptyAction(name, null, icon);
     emptyAction.myEnabled = alwaysEnabled;
     return emptyAction;
@@ -56,40 +56,35 @@ public final class EmptyAction extends AnAction {
     return ActionUpdateThread.BGT;
   }
 
+  /** @deprecated Use {@link ActionUtil#mergeFrom} and {@link AnAction#registerCustomShortcutSet} directly */
+  @Deprecated(forRemoval = true)
   public static void setupAction(@NotNull AnAction action, @NotNull String id, @Nullable JComponent component) {
     ActionUtil.mergeFrom(action, id).registerCustomShortcutSet(component, null);
   }
 
+  /** @deprecated Use {@link ActionUtil#copyRegisteredShortcuts} */
+  @Deprecated(forRemoval = true)
   public static void registerActionShortcuts(@NotNull JComponent component, @NotNull JComponent fromComponent) {
     ActionUtil.copyRegisteredShortcuts(component, fromComponent);
   }
 
-  /**
-   * Registers global action on a component with a custom shortcut set.
-   * <p>
-   * ActionManager.getInstance().getAction(id).registerCustomShortcutSet(shortcutSet, component) shouldn't be used directly,
-   * because it will erase shortcuts, assigned to this action in keymap.
-   */
+  /** @deprecated Use {@link ActionUtil#wrap(String)} and {@link AnAction#registerCustomShortcutSet} directly. */
+  @Deprecated(forRemoval = true)
   public static @NotNull AnAction registerWithShortcutSet(@NotNull String id, @NotNull ShortcutSet shortcutSet, @NotNull JComponent component) {
     AnAction newAction = wrap(ActionManager.getInstance().getAction(id));
     newAction.registerCustomShortcutSet(shortcutSet, component);
     return newAction;
   }
 
-  /**
-   * Creates proxy action
-   * <p>
-   * It allows altering template presentation and shortcut set without affecting the original action.
-   */
-  public static AnAction wrap(final AnAction action) {
+  /** @deprecated Use {@link ActionUtil#wrap(AnAction)}, or {@link ActionGroupWrapper} and {@link AnActionWrapper} directly */
+  @Deprecated(forRemoval = true)
+  public static AnAction wrap(AnAction action) {
     return action instanceof ActionGroup ?
            new ActionGroupWrapper(((ActionGroup)action)) :
            new MyDelegatingAction(action);
   }
 
-  /**
-   * @deprecated Use {@link AnActionWrapper} instead.
-   */
+  /** @deprecated Use {@link AnActionWrapper} instead. */
   @Deprecated(forRemoval = true)
   public static class MyDelegatingAction extends AnActionWrapper {
     public MyDelegatingAction(@NotNull AnAction action) {

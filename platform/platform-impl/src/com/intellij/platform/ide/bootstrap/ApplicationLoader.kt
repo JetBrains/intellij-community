@@ -31,10 +31,10 @@ import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.getOrLogException
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
 import com.intellij.openapi.extensions.impl.findByIdOrFromInstance
+import com.intellij.openapi.extensions.useOrLogError
 import com.intellij.openapi.updateSettings.impl.UpdateSettings
 import com.intellij.openapi.util.SystemPropertyBean
 import com.intellij.openapi.util.io.OSAgnosticPathUtil
@@ -194,7 +194,7 @@ private suspend fun initServiceContainer(app: ApplicationImpl, pluginSetDeferred
   }
 
   span("app component registration") {
-    app.registerComponents(modules = pluginSet.getEnabledModules(), app = app, precomputedExtensionModel = null, listenerCallbacks = null)
+    app.registerComponents(modules = pluginSet.getEnabledModules(), app = app)
   }
 }
 
@@ -259,11 +259,9 @@ suspend fun initConfigurationStore(app: ApplicationImpl) {
   val configDir = PathManager.getConfigDir()
 
   span("beforeApplicationLoaded") {
-    for (listener in ApplicationLoadListener.EP_NAME.lazySequence()) {
-      launch {
-        runCatching {
-          listener.beforeApplicationLoaded(app, configDir)
-        }.getOrLogException(logger<AppStarter>())
+    for (extension in ApplicationLoadListener.EP_NAME.filterableLazySequence()) {
+      extension.useOrLogError {
+        it.beforeApplicationLoaded(app, configDir)
       }
     }
   }
@@ -300,6 +298,7 @@ internal suspend fun executeApplicationStarter(starter: ApplicationStarter, args
   ZipFilePool.POOL = null
 }
 
+@VisibleForTesting
 fun getAppInitializedListeners(app: Application): List<ApplicationInitializedListener> {
   val extensionArea = app.extensionArea as ExtensionsAreaImpl
   val point = extensionArea.getExtensionPoint<ApplicationInitializedListener>("com.intellij.applicationInitializedListener")

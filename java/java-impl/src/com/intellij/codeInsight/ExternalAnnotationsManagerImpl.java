@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight;
 
 import com.intellij.CommonBundle;
@@ -771,7 +771,7 @@ public final class ExternalAnnotationsManagerImpl extends ReadableExternalAnnota
       if (!entries.isEmpty()) {
         for (OrderEntry entry : entries) {
           if (!(entry instanceof ModuleOrderEntry)) {
-            if (AnnotationOrderRootType.getUrls(entry).length > 0) {
+            if (!AnnotationOrderRootType.getUrls(entry).isEmpty()) {
               return AnnotationPlace.EXTERNAL;
             }
             break;
@@ -993,7 +993,7 @@ public final class ExternalAnnotationsManagerImpl extends ReadableExternalAnnota
     if (hasAnyAnnotationsRoots()) {
       ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myPsiManager.getProject()).getFileIndex();
       for (OrderEntry entry : fileIndex.getOrderEntriesForFile(file)) {
-        if (!(entry instanceof ModuleOrderEntry) && AnnotationOrderRootType.getUrls(entry).length > 0) {
+        if (!(entry instanceof ModuleOrderEntry) && !AnnotationOrderRootType.getUrls(entry).isEmpty()) {
           return true;
         }
       }

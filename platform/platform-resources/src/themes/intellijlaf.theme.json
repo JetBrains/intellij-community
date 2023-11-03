@@ -668,6 +668,9 @@
         "Background": "grey15",
         "Foreground": "grey02"
       },
+      "ChatItem":{
+        "Hover": "#D8D8D833"
+      },
       "Timeline.Thread.Diff.AnchorLine": "#FBF1D1"
     },
 

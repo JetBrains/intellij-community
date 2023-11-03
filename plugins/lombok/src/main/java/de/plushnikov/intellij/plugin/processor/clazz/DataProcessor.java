@@ -52,6 +52,18 @@ public final class DataProcessor extends AbstractClassProcessor {
   }
 
   @Override
+  protected boolean possibleToGenerateElementNamed(@NotNull String nameHint,
+                                                   @NotNull PsiClass psiClass,
+                                                   @NotNull PsiAnnotation psiAnnotation) {
+    return nameHint.equals(getStaticConstructorNameValue(psiAnnotation)) ||
+           getNoArgsConstructorProcessor().possibleToGenerateElementNamed(nameHint, psiClass, psiAnnotation) ||
+           getToStringProcessor().possibleToGenerateElementNamed(nameHint, psiClass, psiAnnotation) ||
+           getEqualsAndHashCodeProcessor().possibleToGenerateElementNamed(nameHint, psiClass, psiAnnotation) ||
+           getGetterProcessor().possibleToGenerateElementNamed(nameHint, psiClass, psiAnnotation) ||
+           getSetterProcessor().possibleToGenerateElementNamed(nameHint, psiClass, psiAnnotation);
+  }
+
+  @Override
   protected Collection<String> getNamesOfPossibleGeneratedElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation) {
     Collection<String> result = new ArrayList<>();
 
@@ -101,22 +113,25 @@ public final class DataProcessor extends AbstractClassProcessor {
   @Override
   protected void generatePsiElements(@NotNull PsiClass psiClass,
                                      @NotNull PsiAnnotation psiAnnotation,
-                                     @NotNull List<? super PsiElement> target) {
+                                     @NotNull List<? super PsiElement> target, @Nullable String nameHint) {
     if (PsiAnnotationSearchUtil.isNotAnnotatedWith(psiClass, LombokClassNames.GETTER)) {
-      target.addAll(getGetterProcessor().createFieldGetters(psiClass, PsiModifier.PUBLIC));
+      target.addAll(getGetterProcessor().createFieldGetters(psiClass, PsiModifier.PUBLIC, nameHint));
     }
     if (PsiAnnotationSearchUtil.isNotAnnotatedWith(psiClass, LombokClassNames.SETTER)) {
-      target.addAll(getSetterProcessor().createFieldSetters(psiClass, PsiModifier.PUBLIC));
+      target.addAll(getSetterProcessor().createFieldSetters(psiClass, PsiModifier.PUBLIC, nameHint));
     }
-    if (PsiAnnotationSearchUtil.isNotAnnotatedWith(psiClass, LombokClassNames.EQUALS_AND_HASHCODE)) {
+    if (PsiAnnotationSearchUtil.isNotAnnotatedWith(psiClass, LombokClassNames.EQUALS_AND_HASHCODE) &&
+        getEqualsAndHashCodeProcessor().noHintOrPossibleToGenerateElementNamed(nameHint, psiClass, psiAnnotation)) {
       target.addAll(getEqualsAndHashCodeProcessor().createEqualAndHashCode(psiClass, psiAnnotation));
     }
-    if (PsiAnnotationSearchUtil.isNotAnnotatedWith(psiClass, LombokClassNames.TO_STRING)) {
+    if (PsiAnnotationSearchUtil.isNotAnnotatedWith(psiClass, LombokClassNames.TO_STRING) &&
+        getToStringProcessor().noHintOrPossibleToGenerateElementNamed(nameHint, psiClass, psiAnnotation)) {
       target.addAll(getToStringProcessor().createToStringMethod(psiClass, psiAnnotation));
     }
 
     final boolean hasConstructorWithoutParameters;
     final String staticName = getStaticConstructorNameValue(psiAnnotation);
+    if (nameHint != null && !nameHint.equals(staticName) && !nameHint.equals(psiClass.getName())) return;
     if (shouldGenerateRequiredArgsConstructor(psiClass, staticName)) {
       target.addAll(
         getRequiredArgsConstructorProcessor().createRequiredArgsConstructor(psiClass, PsiModifier.PUBLIC, psiAnnotation, staticName, true));

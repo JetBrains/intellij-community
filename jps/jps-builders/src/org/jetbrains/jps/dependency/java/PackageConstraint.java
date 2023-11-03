@@ -15,6 +15,6 @@ public class PackageConstraint implements Predicate<Node<?, ?>> {
 
   @Override
   public boolean test(Node<?, ?> node) {
-    return node instanceof JvmClass && !myPackageName.equals(((JvmClass)node).getPackageName());
+    return !(node instanceof JvmClass) || !myPackageName.equals(((JvmClass)node).getPackageName());
   }
 }

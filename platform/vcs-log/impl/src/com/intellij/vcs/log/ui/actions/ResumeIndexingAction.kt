@@ -29,12 +29,12 @@ class ResumeIndexingAction : DumbAwareAction() {
 
     val data = e.getData(VcsLogInternalDataKeys.LOG_DATA) ?: project.serviceIfCreated<VcsProjectLog>()?.dataManager
     val index = data?.index as? VcsLogModifiableIndex
-    if (data == null || !VcsLogSharedSettings.isIndexSwitchedOn(project) || index == null) {
+    if (data == null || index == null) {
       e.presentation.isEnabledAndVisible = false
       return
     }
 
-    if (!VcsLogData.isIndexSwitchedOnInRegistry()) {
+    if (!project.isIndexingEnabled) {
       val availableIndexers = VcsLogPersistentIndex.getAvailableIndexers(data.logProviders)
       if (availableIndexers.isEmpty()) {
         e.presentation.isEnabledAndVisible = false

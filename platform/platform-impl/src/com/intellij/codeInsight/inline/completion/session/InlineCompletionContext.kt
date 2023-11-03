@@ -54,6 +54,15 @@ class InlineCompletionContext internal constructor(val editor: Editor, val langu
     isDisposed = true
   }
 
+  override fun toString(): String {
+    return if (!isDisposed) {
+      "InlineCompletionContext(disposed=false, textToInsert=${textToInsert()})"
+    }
+    else {
+      "InlineCompletionContext(disposed=true)"
+    }
+  }
+
   private inline fun <T> assureNotDisposed(block: () -> T): T {
     check(!isDisposed) { "Context is disposed. Cannot access elements." }
     return block()

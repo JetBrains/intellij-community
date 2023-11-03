@@ -64,5 +64,6 @@
     <orderEntry type="module" module-name="kotlin.refactorings.common.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.facet.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.injection.tests" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.base.indices.tests" scope="RUNTIME" />
   </component>
 </module>

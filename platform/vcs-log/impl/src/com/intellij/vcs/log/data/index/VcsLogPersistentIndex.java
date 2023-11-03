@@ -145,7 +145,7 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
   }
 
   private void doScheduleIndex(boolean full) {
-    TrackingUtil.trackActivity(myProject, VcsInProgressWitness.class, () -> {
+    TrackingUtil.trackActivity(myProject, VcsActivityKey.INSTANCE, () -> {
       doScheduleIndex(full, request -> mySingleTaskController.request(request));
     });
   }
@@ -280,6 +280,10 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
       }
     }
     return indexers;
+  }
+
+  public static @NotNull Collection<VcsLogIndexer> getAvailableIndexers(@NotNull Project project) {
+    return getAvailableIndexers(VcsProjectLog.getLogProviders(project)).values();
   }
 
   private final class MyHeavyAwareListener extends HeavyAwareListener {

@@ -1,4 +1,4 @@
-expect class <!LINE_MARKER("descr='Has actuals in [native, jvmJs] modules'; targets=[(text=native; icon=nodes/Module.svg); (text=jvmJs; icon=nodes/Module.svg)]")!>Common<!> : Number {
+expect class <!LINE_MARKER("descr='Has actuals in [native, jvmJs] modules'; targets=[(text=native); (text=jvmJs)]")!>Common<!> : Number {
     override fun <!LINE_MARKER("descr='Press ... to navigate'")!>toDouble<!>(): Double
     override fun <!LINE_MARKER("descr='Press ... to navigate'")!>toFloat<!>(): Float
     override fun <!LINE_MARKER("descr='Press ... to navigate'")!>toLong<!>(): Long

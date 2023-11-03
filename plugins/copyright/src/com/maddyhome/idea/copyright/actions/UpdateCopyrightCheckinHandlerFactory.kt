@@ -12,6 +12,8 @@ import com.intellij.openapi.vcs.changes.ui.BooleanCommitOption
 import com.intellij.openapi.vcs.checkin.*
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.util.progress.progressStep
+import com.intellij.platform.util.progress.withRawProgressReporter
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.util.PsiUtilCore
@@ -38,10 +40,14 @@ private class UpdateCopyrightCheckinHandler(val project: Project) : CheckinHandl
 
   override suspend fun runCheck(commitInfo: CommitInfo): CommitProblem? {
     val files = commitInfo.committedVirtualFiles
-    withContext(Dispatchers.Default) {
-      val psiFiles = readAction { getPsiFiles(files) }
-      coroutineToIndicator {
-        UpdateCopyrightProcessor(project, null, psiFiles, false).run()
+    progressStep(1.0, CopyrightBundle.message("updating.copyrights.progress.message")) {
+      withContext(Dispatchers.Default) {
+        val psiFiles = readAction { getPsiFiles(files) }
+        withRawProgressReporter {
+          coroutineToIndicator {
+            UpdateCopyrightProcessor(project, null, psiFiles, false).run()
+          }
+        }
       }
     }
     FileDocumentManager.getInstance().saveAllDocuments()

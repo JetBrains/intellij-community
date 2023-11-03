@@ -267,6 +267,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
         task.getIndicator(),
         workspaceMap,
         getLocalRepositoryFile(),
+        request.getUserProperties(),
         canResolveDependenciesInParallel()
       );
       try {
@@ -442,9 +443,16 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
     }
   }
 
+  public MavenExecutionRequest createRequest(File file,
+                                             List<String> activeProfiles,
+                                             List<String> inactiveProfiles) {
+    return createRequest(file, activeProfiles, inactiveProfiles, new Properties());
+  }
+
   public MavenExecutionRequest createRequest(@Nullable File file,
                                              @Nullable List<String> activeProfiles,
-                                             @Nullable List<String> inactiveProfiles) {
+                                             @Nullable List<String> inactiveProfiles,
+                                             @NotNull Properties customProperties) {
 
     MavenExecutionRequest result = new DefaultMavenExecutionRequest();
 
@@ -463,6 +471,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
       if (file != null) {
         userProperties.putAll(MavenServerConfigUtil.getMavenAndJvmConfigPropertiesForNestedProjectDir(file.getParentFile()));
       }
+      userProperties.putAll(customProperties);
       result.setUserProperties(userProperties);
 
       result.setActiveProfiles(collectActiveProfiles(result.getActiveProfiles(), activeProfiles, inactiveProfiles));

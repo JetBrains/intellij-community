@@ -70,7 +70,7 @@ class BlockTerminalView(
       }
     })
 
-    val focusModel = TerminalFocusModel(project, outputView, promptView)
+    val focusModel = TerminalFocusModel(project, this, outputView, promptView)
     selectionController = TerminalSelectionController(focusModel, outputView.controller.selectionModel, outputView.controller.outputModel)
     controller = BlockTerminalController(project, session, outputView.controller, promptView.controller, selectionController, focusModel)
 

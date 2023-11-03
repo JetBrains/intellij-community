@@ -41,6 +41,7 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
             model("${idea}/inspectionsLocal/whenWithOnlyElse")
             model("${idea}/inspectionsLocal/equalsOrHashCode")
             model("${idea}/inspectionsLocal/removeRedundantQualifierName")
+            model("${idea}/inspectionsLocal/redundantUnitExpression")
             model("${idea}/inspectionsLocal/equalsBetweenInconvertibleTypes")
             model("${idea}/inspectionsLocal/redundantIf")
             model("${idea}/inspectionsLocal/mayBeConstant")
@@ -72,6 +73,7 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
         testClass<AbstractK2QuickFixTest> {
             val pattern = Patterns.forRegex("^([\\w\\-_]+)\\.kt$")
             model("${idea}/quickfix/redundantIf", pattern = pattern)
+            model("${idea}/quickfix/changeSignature", pattern = pattern)
             model("${idea}/quickfix/redundantModalityModifier", pattern = pattern)
             model("${idea}/quickfix/removeToStringInStringTemplate", pattern = pattern)
             model("${idea}/quickfix/suppress", pattern = pattern)

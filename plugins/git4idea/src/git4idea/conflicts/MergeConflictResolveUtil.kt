@@ -8,11 +8,14 @@ import com.intellij.diff.chains.DiffRequestProducerException
 import com.intellij.diff.merge.*
 import com.intellij.diff.util.DiffUserDataKeysEx
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.diff.DiffBundle
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.runBackgroundableTask
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.WindowWrapper
 import com.intellij.openapi.util.Key
@@ -24,11 +27,16 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotificationProvider
 import com.intellij.ui.EditorNotifications
-import com.intellij.ui.LightColors
 import com.intellij.util.Consumer
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.UIUtil
+import com.intellij.vcsUtil.VcsUtil
 import git4idea.i18n.GitBundle
+import git4idea.index.ui.createMergeHandler
+import git4idea.repo.GitConflict
+import git4idea.repo.GitRepository
+import git4idea.repo.GitRepositoryManager
+import git4idea.status.GitStagingAreaHolder.StagingAreaListener
 import java.util.function.Function
 import javax.swing.JComponent
 import javax.swing.JFrame
@@ -93,11 +101,11 @@ object MergeConflictResolveUtil {
     if (window !is JFrame) return
 
     file.putUserData(ACTIVE_MERGE_WINDOW, wrapper)
-    EditorNotifications.getInstance(project).updateNotifications(file)
+    updateMergeConflictEditorNotifications(project)
 
     UIUtil.runWhenWindowClosed(window) {
       file.putUserData(ACTIVE_MERGE_WINDOW, null)
-      EditorNotifications.getInstance(project).updateNotifications(file)
+      updateMergeConflictEditorNotifications(project)
     }
   }
 
@@ -141,15 +149,24 @@ object MergeConflictResolveUtil {
   }
 
 
-  class NotificationProvider : EditorNotificationProvider {
+  class NotificationProvider : EditorNotificationProvider, DumbAware {
     override fun collectNotificationData(project: Project, file: VirtualFile): Function<in FileEditor, out JComponent?>? {
-      return Function { createNotificationPanel(file) }
+      if (hasActiveMergeWindow(file)) {
+        return Function { fileEditor -> createPanelForOngoingResolve(fileEditor, file) }
+      }
+
+      val conflict = findConflictFor(project, file)
+      if (conflict != null && GitConflictsUtil.canShowMergeWindow(project, createMergeHandler(project), conflict)) {
+        return Function { fileEditor -> createPanelForFileWithConflict(project, fileEditor, file) }
+      }
+
+      return null
     }
 
-    private fun createNotificationPanel(file: VirtualFile): EditorNotificationPanel? {
+    private fun createPanelForOngoingResolve(fileEditor: FileEditor, file: VirtualFile): EditorNotificationPanel? {
       if (!hasActiveMergeWindow(file)) return null
 
-      val panel = EditorNotificationPanel(LightColors.SLIGHTLY_GREEN, EditorNotificationPanel.Status.Info)
+      val panel = EditorNotificationPanel(fileEditor, EditorNotificationPanel.Status.Info)
       panel.text = GitBundle.message("link.label.editor.notification.merge.conflicts.resolve.in.progress")
       panel.createActionLabel(GitBundle.message("link.label.merge.conflicts.resolve.in.progress.focus.window")) {
         UIUtil.toFront(getActiveMergeWindow(file)?.window)
@@ -159,5 +176,38 @@ object MergeConflictResolveUtil {
       }
       return panel
     }
+
+    private fun createPanelForFileWithConflict(project: Project, fileEditor: FileEditor, file: VirtualFile): EditorNotificationPanel {
+      val panel = EditorNotificationPanel(fileEditor, EditorNotificationPanel.Status.Warning)
+      panel.text = GitBundle.message("link.label.editor.notification.merge.conflicts.suggest.resolve")
+      panel.createActionLabel(GitBundle.message("link.label.merge.conflicts.suggest.resolve.show.window")) {
+        showMergeWindow(project, file)
+      }
+      return panel
+    }
+
+    private fun showMergeWindow(project: Project, file: VirtualFile) {
+      val conflict = findConflictFor(project, file) ?: return
+      GitConflictsUtil.showMergeWindow(project, createMergeHandler(project), listOf(conflict))
+    }
+
+    private fun findConflictFor(project: Project, file: VirtualFile): GitConflict? {
+      val repo = GitRepositoryManager.getInstance(project).getRepositoryForFileQuick(file) ?: return null
+      return repo.stagingAreaHolder.findConflict(VcsUtil.getFilePath(file))
+    }
   }
+
+  class MyStagingAreaListener : StagingAreaListener {
+    override fun stagingAreaChanged(repository: GitRepository) {
+      runInEdt(ModalityState.nonModal()) {
+        updateMergeConflictEditorNotifications(repository.project)
+      }
+    }
+  }
+}
+
+fun updateMergeConflictEditorNotifications(project: Project) {
+  val provider: MergeConflictResolveUtil.NotificationProvider =
+    EditorNotificationProvider.EP_NAME.findExtension(MergeConflictResolveUtil.NotificationProvider::class.java, project) ?: return
+  EditorNotifications.getInstance(project).updateNotifications(provider)
 }

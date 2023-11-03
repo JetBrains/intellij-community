@@ -59,11 +59,7 @@ public class ActivateToolWindowAction extends DumbAwareAction implements MainMen
   }
 
   public static void unregister(@NotNull String id) {
-    String actionId = getActionIdForToolWindow(id);
-    ActionManager actionManager = ActionManager.getInstance();
-    if (actionManager.getAction(actionId) != null) {
-      actionManager.unregisterAction(actionId);
-    }
+    ActionManager.getInstance().unregisterAction(getActionIdForToolWindow(id));
   }
 
   public static void updateToolWindowActionPresentation(@NotNull ToolWindow toolWindow) {
@@ -111,7 +107,7 @@ public class ActivateToolWindowAction extends DumbAwareAction implements MainMen
   private static void updatePresentation(@NotNull Presentation presentation, @NotNull ToolWindow toolWindow) {
     Supplier<@NlsContexts.TabTitle String> title = toolWindow.getStripeTitleProvider();
     presentation.setText(title);
-    presentation.setDescription(IdeBundle.messagePointer("action.activate.tool.window", title));
+    presentation.setDescription(() -> IdeBundle.message("action.activate.tool.window", title.get()));
     presentation.setIconSupplier(new SynchronizedClearableLazy<>(() -> {
       Icon icon = toolWindow.getIcon();
       if (icon instanceof ScalableIcon && ExperimentalUI.isNewUI()) {

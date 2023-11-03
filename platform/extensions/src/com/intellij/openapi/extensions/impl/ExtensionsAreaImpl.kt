@@ -9,13 +9,13 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.*
 import com.intellij.openapi.util.Disposer
-import com.intellij.util.ThreeState
+import kotlinx.collections.immutable.PersistentMap
+import kotlinx.collections.immutable.mutate
+import kotlinx.collections.immutable.persistentHashMapOf
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import java.lang.reflect.Modifier
-import java.util.*
-import java.util.function.Consumer
 
 private val LOG: Logger
   get() = logger<ExtensionsAreaImpl>()
@@ -45,10 +45,10 @@ fun createExtensionPoints(points: List<ExtensionPointDescriptor>,
                               hasAttributes = descriptor.hasAttributes,
                               dynamic = descriptor.isDynamic)
     }
-    result.putIfAbsent(name, point)?.let { old ->
+    result.putIfAbsent(point.name, point)?.let { old ->
       val oldPluginDescriptor = old.getPluginDescriptor()
       throw componentManager.createError(
-        "Duplicate registration for EP $name first in $oldPluginDescriptor, second in $pluginDescriptor", pluginDescriptor.pluginId
+        "Duplicate registration for EP ${point.name} first in $oldPluginDescriptor, second in $pluginDescriptor", pluginDescriptor.pluginId
       )
     }
   }
@@ -57,11 +57,18 @@ fun createExtensionPoints(points: List<ExtensionPointDescriptor>,
 @Internal
 class ExtensionsAreaImpl(private val componentManager: ComponentManager) : ExtensionsArea {
   @Volatile
-  @Internal
-  @JvmField
-  var extensionPoints: Map<String, ExtensionPointImpl<*>> = emptyMap()
+  private var extensionPoints: PersistentMap<String, ExtensionPointImpl<*>> = persistentHashMapOf()
 
   private val epTraces = if (DEBUG_REGISTRATION) HashMap<String, Throwable>() else null
+
+  override val nameToPointMap: Map<String, ExtensionPointImpl<*>>
+    get() = extensionPoints
+
+  private val lock = Any()
+
+  fun reset(nameToPointMap: PersistentMap<String, ExtensionPointImpl<*>>) {
+    extensionPoints = nameToPointMap
+  }
 
   @TestOnly
   fun notifyAreaReplaced(newArea: ExtensionsAreaImpl?) {
@@ -122,7 +129,10 @@ class ExtensionsAreaImpl(private val componentManager: ComponentManager) : Exten
                            priorityListenerCallbacks: MutableList<in Runnable>,
                            listenerCallbacks: MutableList<in Runnable>): Boolean {
     val point = extensionPoints.get(extensionPointName) ?: return false
-    point.unregisterExtensions(componentManager, pluginDescriptor, priorityListenerCallbacks, listenerCallbacks)
+    point.unregisterExtensions(componentManager = componentManager,
+                               pluginDescriptor = pluginDescriptor,
+                               priorityListenerCallbacks = priorityListenerCallbacks,
+                               listenerCallbacks = listenerCallbacks)
     return true
   }
 
@@ -133,7 +143,9 @@ class ExtensionsAreaImpl(private val componentManager: ComponentManager) : Exten
   }
 
   fun clearUserCache() {
-    extensionPoints.values.forEach(ExtensionPointImpl<*>::clearUserCache)
+    for (point in extensionPoints.values) {
+      point.clearUserCache()
+    }
   }
 
   /**
@@ -144,12 +156,13 @@ class ExtensionsAreaImpl(private val componentManager: ComponentManager) : Exten
       return
     }
 
-    val map = HashMap(extensionPoints)
-    for (descriptor in descriptors) {
-      map.remove(descriptor.getQualifiedName(pluginDescriptor))
+    synchronized(lock) {
+      extensionPoints = extensionPoints.mutate { map ->
+        for (descriptor in descriptors) {
+          map.remove(descriptor.getQualifiedName(pluginDescriptor))
+        }
+      }
     }
-    // Map.copyOf is not available in extension module
-    extensionPoints = Collections.unmodifiableMap(map)
   }
 
   @TestOnly
@@ -161,7 +174,7 @@ class ExtensionsAreaImpl(private val componentManager: ComponentManager) : Exten
     registerExtensionPoint(extensionPointName = extensionPointName,
                            extensionPointBeanClass = extensionPointBeanClass,
                            kind = kind,
-                           dynamic = false)
+                           isDynamic = false)
     Disposer.register(parentDisposable) { unregisterExtensionPoint(extensionPointName) }
   }
 
@@ -169,13 +182,13 @@ class ExtensionsAreaImpl(private val componentManager: ComponentManager) : Exten
   override fun registerExtensionPoint(extensionPointName: String,
                                       extensionPointBeanClass: String,
                                       kind: ExtensionPoint.Kind,
-                                      dynamic: Boolean) {
+                                      isDynamic: Boolean) {
     val pluginDescriptor = DefaultPluginDescriptor(PluginId.getId("fakeIdForTests"))
     doRegisterExtensionPoint<Any>(name = extensionPointName,
                                   extensionClass = extensionPointBeanClass,
                                   pluginDescriptor = pluginDescriptor,
                                   isInterface = kind == ExtensionPoint.Kind.INTERFACE,
-                                  dynamic = dynamic)
+                                  dynamic = isDynamic)
   }
 
   @TestOnly
@@ -213,10 +226,9 @@ class ExtensionsAreaImpl(private val componentManager: ComponentManager) : Exten
                          dynamic = dynamic)
     }
     checkThatPointNotDuplicated(name, point.getPluginDescriptor())
-    val newMap = HashMap<String, ExtensionPointImpl<*>>(extensionPoints.size + 1)
-    newMap.putAll(extensionPoints)
-    newMap.put(name, point)
-    extensionPoints = Collections.unmodifiableMap(newMap)
+    synchronized(lock) {
+      extensionPoints = extensionPoints.put(name, point)
+    }
     if (DEBUG_REGISTRATION) {
       epTraces!!.put(name, Throwable("Original registration for $name"))
     }
@@ -239,11 +251,7 @@ class ExtensionsAreaImpl(private val componentManager: ComponentManager) : Exten
   }
 
   private fun checkThatPointNotDuplicated(pointName: String, pluginDescriptor: PluginDescriptor) {
-    if (!hasExtensionPoint(pointName)) {
-      return
-    }
-
-    val id1 = getExtensionPoint<Any>(pointName).getPluginDescriptor().pluginId
+    val id1 = (extensionPoints.get(pointName) ?: return).getPluginDescriptor().pluginId
     val id2 = pluginDescriptor.pluginId
     val message = "Duplicate registration for EP '$pointName': first in $id1, second in $id2"
     if (DEBUG_REGISTRATION) {
@@ -254,9 +262,11 @@ class ExtensionsAreaImpl(private val componentManager: ComponentManager) : Exten
 
   // _only_ for CoreApplicationEnvironment
   fun registerExtensionPoints(points: List<ExtensionPointDescriptor>, pluginDescriptor: PluginDescriptor) {
-    val map = HashMap(extensionPoints)
-    createExtensionPoints(points, componentManager, map, pluginDescriptor)
-    extensionPoints = Collections.unmodifiableMap(map)
+    synchronized(lock) {
+      extensionPoints = extensionPoints.mutate {
+        createExtensionPoints(points = points, componentManager = componentManager, result = it, pluginDescriptor = pluginDescriptor)
+      }
+    }
   }
 
   override fun <T : Any> getExtensionPoint(extensionPointName: String): ExtensionPointImpl<T> {
@@ -274,44 +284,17 @@ class ExtensionsAreaImpl(private val componentManager: ComponentManager) : Exten
   }
 
   @TestOnly
-  fun processExtensionPoints(consumer: Consumer<ExtensionPointImpl<*>>) {
+  override fun processExtensionPoints(consumer: (ExtensionPointImpl<*>) -> Unit) {
     extensionPoints.values.forEach(consumer)
-  }
-
-  @Internal
-  fun <T : Any> findExtensionByClass(aClass: Class<T>): T? {
-    // TeamCity plugin wants DefaultDebugExecutor in constructor
-    if (aClass.name == "com.intellij.execution.executors.DefaultDebugExecutor") {
-      return getExtensionPointIfRegistered<Any>("com.intellij.executor")?.findExtension(aClass, false, ThreeState.YES)
-    }
-
-    for (point in extensionPoints.values) {
-      if (point !is InterfaceExtensionPoint<*>) {
-        continue
-      }
-
-      try {
-        if (!point.getExtensionClass().isAssignableFrom(aClass)) {
-          continue
-        }
-
-        @Suppress("UNCHECKED_CAST")
-        return (point as ExtensionPointImpl<T>).findExtension(aClass, false, ThreeState.YES) ?: continue
-      }
-      catch (e: Throwable) {
-        LOG.warn("error during findExtensionPointByClass", e)
-      }
-    }
-    return null
   }
 
   @TestOnly
   override fun unregisterExtensionPoint(extensionPointName: String) {
     val extensionPoint = getExtensionPointIfRegistered<Any>(extensionPointName) ?: return
     extensionPoint.reset()
-    val map = HashMap(extensionPoints)
-    map.remove(extensionPointName)
-    extensionPoints = Collections.unmodifiableMap(map)
+    synchronized(lock) {
+    extensionPoints = extensionPoints.remove(extensionPointName)
+      }
   }
 
   override fun hasExtensionPoint(extensionPointName: String): Boolean = extensionPoints.containsKey(extensionPointName)
@@ -320,3 +303,4 @@ class ExtensionsAreaImpl(private val componentManager: ComponentManager) : Exten
 
   override fun toString(): String = componentManager.toString()
 }
+

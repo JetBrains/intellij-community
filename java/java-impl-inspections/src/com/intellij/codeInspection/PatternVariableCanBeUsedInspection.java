@@ -34,11 +34,12 @@ public class PatternVariableCanBeUsedInspection extends AbstractBaseJavaLocalIns
       @Override
       public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
         if (!HighlightingFeature.PATTERN_GUARDS_AND_RECORD_PATTERNS.isAvailable(holder.getFile())) return;
-        PsiReferenceExpression qualifier = getQualifierReferenceExpression(call);
-        if (qualifier == null) return;
-        if (qualifier.resolve() instanceof PsiPatternVariable variable &&
-            variable.getPattern() instanceof PsiDeconstructionPattern deconstruction) {
-          if (!isFinalOrEffectivelyFinal(variable)) return;
+        PsiTypeCastExpression qualifier = getQualifierReferenceExpression(call);
+        if(qualifier==null) return;
+        PsiInstanceOfExpression candidate = InstanceOfUtils.findPatternCandidate(qualifier);
+        if (candidate == null) return;
+        PsiPrimaryPattern pattern = candidate.getPattern();
+        if (pattern instanceof PsiDeconstructionPattern deconstruction) {
           PsiPatternVariable existingPatternVariable = findExistingPatternVariable(qualifier, deconstruction, call);
           if (existingPatternVariable == null) return;
           if (!isFinalOrEffectivelyFinal(existingPatternVariable)) return;
@@ -74,12 +75,12 @@ public class PatternVariableCanBeUsedInspection extends AbstractBaseJavaLocalIns
       }
 
       @Nullable
-      private static PsiReferenceExpression getQualifierReferenceExpression(@NotNull PsiMethodCallExpression call) {
+      private static PsiTypeCastExpression getQualifierReferenceExpression(@NotNull PsiMethodCallExpression call) {
         while (true) {
           if (!call.getArgumentList().isEmpty()) return null;
           PsiExpression qualifier = PsiUtil.skipParenthesizedExprDown(call.getMethodExpression().getQualifierExpression());
           PsiMethodCallExpression qualifierMethodCall = ObjectUtils.tryCast(qualifier, PsiMethodCallExpression.class);
-          if (qualifierMethodCall == null) return ObjectUtils.tryCast(qualifier, PsiReferenceExpression.class);
+          if (qualifierMethodCall == null) return ObjectUtils.tryCast(qualifier, PsiTypeCastExpression.class);
           call = qualifierMethodCall;
         }
       }
@@ -189,6 +190,10 @@ public class PatternVariableCanBeUsedInspection extends AbstractBaseJavaLocalIns
       if (!myName.endsWith("()")) {
         PsiLocalVariable variable = PsiTreeUtil.getParentOfType(element, PsiLocalVariable.class);
         if (variable == null) return;
+        if (VariableAccessUtils.variableIsAssigned(variable)) {
+          new CommentTracker().replace(element, myPatternName);
+          return;
+        }
         List<PsiReferenceExpression> references =
           VariableAccessUtils.getVariableReferences(variable, PsiUtil.getVariableCodeBlock(variable, null));
         for (PsiReferenceExpression ref : references) {

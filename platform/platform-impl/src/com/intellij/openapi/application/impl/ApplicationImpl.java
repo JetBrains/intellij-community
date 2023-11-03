@@ -18,6 +18,7 @@ import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationUtil;
 import com.intellij.openapi.client.ClientAwareComponentManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.progress.impl.ProgressResult;
@@ -67,8 +68,6 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import static com.intellij.ide.ShutdownKt.cancelAndJoinBlocking;
-import static com.intellij.ide.ShutdownKt.cancelAndJoinExistingContainerCoroutines;
-import static com.intellij.serviceContainer.ComponentManagerImplKt.useInstanceContainer;
 import static com.intellij.util.concurrency.AppExecutorUtil.propagateContextOrCancellation;
 
 @ApiStatus.Internal
@@ -126,6 +125,7 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
   public ApplicationImpl(boolean isHeadless) {
     super(GlobalScope.INSTANCE);
 
+    Extensions.setRootArea(getExtensionArea());
     myLock = IdeEventQueue.getInstance().getRwLockHolder().lock;
 
     registerFakeServices(this);
@@ -146,6 +146,8 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
 
   public ApplicationImpl(@NotNull CoroutineScope parentScope, boolean isInternal) {
     super(parentScope);
+
+    Extensions.setRootArea(getExtensionArea());
 
     registerFakeServices(this);
 
@@ -194,24 +196,12 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
 
   @TestOnly
   public void disposeContainer() {
-    if (useInstanceContainer) {
-      disposeContainer2();
-    }
-    else {
-      cancelAndJoinBlocking(this);
-      runWriteAction(() -> {
-        startDispose();
-        Disposer.dispose(this);
-      });
-    }
-    Disposer.assertIsEmpty();
-  }
-
-  private void disposeContainer2() {
-    cancelAndJoinExistingContainerCoroutines(this);
-    runWriteAction(() -> startDispose());
     cancelAndJoinBlocking(this);
-    runWriteAction(() -> Disposer.dispose(this));
+    runWriteAction(() -> {
+      startDispose();
+      Disposer.dispose(this);
+    });
+    Disposer.assertIsEmpty();
   }
 
   @Override

@@ -3,11 +3,11 @@ package com.intellij.codeInspection.bulkOperation;
 
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.util.IteratorDeclaration;
 import com.intellij.java.JavaBundle;
 import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -49,7 +49,7 @@ public class UseBulkOperationInspection extends AbstractBaseJavaLocalInspectionT
 
   @Nullable
   private static BulkMethodInfo findInfo(PsiReferenceExpression ref) {
-    return StreamEx.of(BulkMethodInfoProvider.KEY.getExtensions())
+    return StreamEx.of(BulkMethodInfoProvider.KEY.getExtensionList())
       .flatMap(BulkMethodInfoProvider::consumers).findFirst(info -> info.isMyMethod(ref)).orElse(null);
   }
 

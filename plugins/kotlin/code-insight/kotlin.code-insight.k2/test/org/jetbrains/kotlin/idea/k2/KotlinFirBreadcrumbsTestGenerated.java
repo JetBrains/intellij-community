@@ -73,6 +73,11 @@ public class KotlinFirBreadcrumbsTestGenerated extends AbstractKotlinFirBreadcru
         runTest("../../idea/tests/testData/codeInsight/breadcrumbs/PropertyAccessor.kt");
     }
 
+    @TestMetadata("script.kts")
+    public void testScript() throws Exception {
+        runTest("../../idea/tests/testData/codeInsight/breadcrumbs/script.kts");
+    }
+
     @TestMetadata("StarProjection.kt")
     public void testStarProjection() throws Exception {
         runTest("../../idea/tests/testData/codeInsight/breadcrumbs/StarProjection.kt");

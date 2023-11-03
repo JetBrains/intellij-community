@@ -588,16 +588,17 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
   }
 
   internal fun projectClosed() {
-    // Hide everything outside the frame (floating and windowed) - frame contents are handled separately elsewhere.
+    val actionManager = serviceIfCreated<ActionManager>()
+    // hide everything outside the frame (floating and windowed) - frame contents are handled separately elsewhere
     for (entry in idToEntry.values) {
+      actionManager?.unregisterAction(ActivateToolWindowAction.getActionIdForToolWindow(entry.id))
+
       if (entry.toolWindow.windowInfo.type.isInternal) {
         continue
       }
+
       try {
         removeExternalDecorators(entry)
-      }
-      catch (e: CancellationException) {
-        throw e
       }
       catch (e: ProcessCanceledException) {
         throw e
@@ -1651,6 +1652,12 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
            entry.toolWindow.type == ToolWindowType.FLOATING)) {
         tracker = createPositionTracker(entry.toolWindow.component, ToolWindowAnchor.BOTTOM)
       }
+      else if (!button.isShowing) {
+        tracker = createPositionTracker(toolWindowPane, anchor)
+        if (balloon is BalloonImpl) {
+          balloon.setShowPointer(false)
+        }
+      }
       else {
         tracker = object : PositionTracker<Balloon>(button) {
           override fun recalculateLocation(balloon: Balloon): RelativePoint? {
@@ -2143,16 +2150,31 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     internalDecorator: InternalDecoratorImpl,
     parentFrame: JFrame,
   ) {
-    val bounds = info.floatingBounds
-    if (bounds != null && isValidBounds(bounds)) {
+    val storedBounds = info.floatingBounds
+    val screen = ScreenUtil.getScreenRectangle(parentFrame)
+    val needToCenter: Boolean
+    val bounds: Rectangle
+    if (storedBounds != null && isValidBounds(storedBounds)) {
       if (LOG.isDebugEnabled) {
-        LOG.debug("Keeping the tool window ${info.id} valid bounds: $bounds")
+        LOG.debug("Keeping the tool window ${info.id} valid bounds: $storedBounds")
       }
-      externalDecorator.bounds = Rectangle(bounds)
+      bounds = Rectangle(storedBounds)
+      needToCenter = false
+    }
+    else if (storedBounds != null && storedBounds.width > 0 && storedBounds.height > 0) {
+      if (LOG.isDebugEnabled) {
+        LOG.debug("Adjusting the stored bounds for the tool window ${info.id} to fit the screen $screen")
+      }
+      bounds = Rectangle(storedBounds)
+      ScreenUtil.moveToFit(bounds, screen, null, true)
+      if (LOG.isDebugEnabled) {
+        LOG.debug("Adjusted the stored bounds to fit the screen: $bounds")
+      }
+      needToCenter = true
     }
     else {
       if (LOG.isDebugEnabled) {
-        LOG.debug("Adjusting the tool window ${info.id} bounds because the stored bounds are ${if (bounds == null) "null" else "invalid"}")
+        LOG.debug("Computing default bounds for the tool window ${info.id}")
       }
       // place a new frame at the center of the current frame if there are no floating bounds
       var size = internalDecorator.size
@@ -2163,10 +2185,17 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
         }
         size = preferredSize
       }
-      externalDecorator.bounds = Rectangle(externalDecorator.bounds.location, size)
+      bounds = Rectangle(externalDecorator.bounds.location, size)
+      if (LOG.isDebugEnabled) {
+        LOG.debug("Computed the bounds using the default location: $bounds")
+      }
+      needToCenter = true
+    }
+    externalDecorator.bounds = bounds
+    if (needToCenter) {
       externalDecorator.setLocationRelativeTo(parentFrame)
       if (LOG.isDebugEnabled) {
-        LOG.debug("Set size to $size and location to ${externalDecorator.bounds.location} (centered to the frame)")
+        LOG.debug("Centered the bounds relative to the IDE frame: ${externalDecorator.bounds}")
       }
     }
   }

@@ -105,7 +105,7 @@ private class GeneralSettingsConfigurable :
         }
       }
 
-      group(IdeBundle.message("settings.general.synchronization")) {
+      group(IdeBundle.message("settings.general.autosave")) {
         row {
           val autoSaveCheckbox = checkBox(myChkAutoSaveIfInactive).gap(RightGap.SMALL)
           intTextField(GeneralSettings.SAVE_FILES_AFTER_IDLE_SEC.asRange())
@@ -123,16 +123,19 @@ private class GeneralSettingsConfigurable :
           checkBox(myChkUseSafeWrite)
         }
         row {
+          comment(IdeBundle.message("label.autosave.comment")) {
+            HelpManager.getInstance().invokeHelp("autosave")
+          }
+        }.topGap(TopGap.SMALL)
+      }
+
+      group(IdeBundle.message("settings.general.synchronization")) {
+        row {
           checkBox(myChkSyncOnFrameActivation)
         }
         row {
           checkBox(myChkSyncInBackground)
         }
-        row {
-          comment(IdeBundle.message("label.autosave.comment")) {
-            HelpManager.getInstance().invokeHelp("autosave")
-          }
-        }.topGap(TopGap.SMALL)
       }
 
       for (configurable in configurables) {

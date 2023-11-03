@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
 package com.intellij.serviceContainer
 
@@ -7,50 +7,51 @@ import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.extensions.ExtensionDescriptor
 import com.intellij.openapi.extensions.ExtensionPointDescriptor
+import kotlinx.collections.immutable.*
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 class PrecomputedExtensionModel(
-  @JvmField val extensionPoints: List<List<ExtensionPointDescriptor>>,
-  @JvmField val pluginDescriptors: List<IdeaPluginDescriptor>,
-  @JvmField val extensionPointTotalCount: Int,
-
-  @JvmField val nameToExtensions: Map<String, MutableList<Pair<IdeaPluginDescriptor, List<ExtensionDescriptor>>>>
+  @JvmField val extensionPoints: PersistentList<Pair<IdeaPluginDescriptor, PersistentList<ExtensionPointDescriptor>>>,
+  @JvmField val nameToExtensions: PersistentMap<String, PersistentList<Pair<IdeaPluginDescriptor, PersistentList<ExtensionDescriptor>>>>,
 )
 
-fun precomputeExtensionModel(): PrecomputedExtensionModel {
-  val extensionPointDescriptors = ArrayList<List<ExtensionPointDescriptor>>()
-  val pluginDescriptors = ArrayList<IdeaPluginDescriptor>()
+@ApiStatus.Internal
+fun precomputeModuleLevelExtensionModel(): PrecomputedExtensionModel {
+  val modules = PluginManagerCore.getPluginSet().getEnabledModules()
+
   var extensionPointTotalCount = 0
-  val nameToExtensions = HashMap<String, MutableList<Pair<IdeaPluginDescriptor, List<ExtensionDescriptor>>>>()
+  var nameToExtensions = persistentHashMapOf<String, PersistentList<Pair<IdeaPluginDescriptor, PersistentList<ExtensionDescriptor>>>>()
 
   // step 1 - collect container level extension points
-  val modules = PluginManagerCore.getPluginSet().getEnabledModules()
-  executeRegisterTask(modules) { pluginDescriptor ->
-    pluginDescriptor.moduleContainerDescriptor.extensionPoints?.let {
-      extensionPointDescriptors.add(it)
-      pluginDescriptors.add(pluginDescriptor)
-      extensionPointTotalCount += it.size
+  val extensionPointDescriptors = persistentListOf<Pair<IdeaPluginDescriptor, PersistentList<ExtensionPointDescriptor>>>().mutate { mutator ->
+    executeRegisterTask(modules) { pluginDescriptor ->
+      val list = pluginDescriptor.moduleContainerDescriptor.extensionPoints
+      if (!list.isEmpty()) {
+        mutator.add(pluginDescriptor to list)
+        extensionPointTotalCount += list.size
 
-      for (descriptor in it) {
-        nameToExtensions.put(descriptor.getQualifiedName(pluginDescriptor), mutableListOf())
+        for (descriptor in list) {
+          nameToExtensions = nameToExtensions.put(descriptor.getQualifiedName(pluginDescriptor), persistentListOf())
+        }
       }
     }
   }
 
   // step 2 - collect container level extensions
-  executeRegisterTask(modules) { pluginDescriptor ->
-    val unsortedMap = pluginDescriptor.epNameToExtensions ?: return@executeRegisterTask
-    for ((name, list) in unsortedMap.entries) {
-      nameToExtensions.get(name)?.add(pluginDescriptor to list)
+  nameToExtensions = nameToExtensions.mutate { mutator ->
+    executeRegisterTask(modules) { pluginDescriptor ->
+      val map = pluginDescriptor.epNameToExtensions
+      for ((name, list) in map.entries) {
+        mutator.get(name)?.let {
+          mutator.put(name, it.add(pluginDescriptor to list))
+        }
+      }
     }
   }
 
   return PrecomputedExtensionModel(
     extensionPoints = extensionPointDescriptors,
-    pluginDescriptors = pluginDescriptors,
-    extensionPointTotalCount = extensionPointTotalCount,
-
     nameToExtensions = nameToExtensions,
   )
 }

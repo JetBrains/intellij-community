@@ -1,9 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.resolve;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -20,10 +19,11 @@ import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.function.Predicate;
 
 public class PsiResolveHelperImpl implements PsiResolveHelper {
   private static final Logger LOG = Logger.getInstance(PsiResolveHelperImpl.class);
@@ -138,17 +138,24 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
     return isAccessible(moduleSystem -> moduleSystem.isAccessible(pkg.getQualifiedName(), null, place));
   }
 
-  private static boolean isAccessible(Condition<? super JavaModuleSystem> predicate) {
-    return ContainerUtil.and(JavaModuleSystem.EP_NAME.getExtensions(), predicate);
+  private static boolean isAccessible(Predicate<? super JavaModuleSystem> predicate) {
+    for (JavaModuleSystem t : JavaModuleSystem.EP_NAME.getExtensionList()) {
+      if (!predicate.test(t)) {
+        return false;
+      }
+    }
+    return true;
   }
 
   @Override
   public CandidateInfo @NotNull [] getReferencedMethodCandidates(@NotNull PsiCallExpression expr,
                                                                  boolean dummyImplicitConstructor,
-                                                                 final boolean checkVarargs) {
+                                                                 boolean checkVarargs) {
     PsiFile containingFile = expr.getContainingFile();
-    final MethodCandidatesProcessor processor = new MethodCandidatesProcessor(expr, containingFile, new PsiConflictResolver[]{DuplicateConflictResolver.INSTANCE}, new SmartList<>()) {
-      @Override
+    final MethodCandidatesProcessor processor =
+      new MethodCandidatesProcessor(expr, containingFile, new PsiConflictResolver[]{DuplicateConflictResolver.INSTANCE},
+                                    new SmartList<>()) {
+        @Override
       protected boolean acceptVarargs() {
         return checkVarargs;
       }

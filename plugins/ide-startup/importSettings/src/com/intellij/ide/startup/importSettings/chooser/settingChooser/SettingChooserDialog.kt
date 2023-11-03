@@ -5,6 +5,7 @@ import com.intellij.CommonBundle
 import com.intellij.ide.startup.importSettings.ImportSettingsBundle
 import com.intellij.ide.startup.importSettings.chooser.productChooser.ProductChooserDialog
 import com.intellij.ide.startup.importSettings.chooser.ui.PageProvider
+import com.intellij.ide.startup.importSettings.chooser.ui.WizardPageTracker
 import com.intellij.ide.startup.importSettings.data.ActionsDataProvider
 import com.intellij.ide.startup.importSettings.data.IconProductSize
 import com.intellij.ide.startup.importSettings.data.SettingsContributor
@@ -43,6 +44,13 @@ open class SettingChooserDialog(private val provider: ActionsDataProvider<*>, va
     }
   }
 
+  override fun show() {
+    super.show()
+    changeHandler()
+  }
+
+  open fun changeHandler() {}
+
   override fun showExit(): MessageDialogBuilder.YesNo? = MessageDialogBuilder.yesNo(ApplicationBundle.message("exit.confirm.title"),
                                                                                     ApplicationBundle.message("exit.confirm.prompt"))
     .yesText(ApplicationBundle.message("command.exit"))
@@ -58,19 +66,19 @@ open class SettingChooserDialog(private val provider: ActionsDataProvider<*>, va
         }.align(AlignY.TOP).customize(UnscaledGaps(0, 0, 17, 0))
       }
       panel {
-        provider.getProductIcon(product.id, IconProductSize.MIDDLE)?.let { icn ->
-          row {
+        row {
+          provider.getProductIcon(product.id, IconProductSize.MIDDLE)?.let { icn ->
             icon(icn).align(AlignY.TOP).customize(UnscaledGaps(0, 0, 0, 8))
-            panel {
-              row {
-                text(provider.getText(product)).customize(UnscaledGaps(0, 0, 2, 0))
-              }
+          }
+          panel {
+            row {
+              text(provider.getText(product)).customize(UnscaledGaps(0, 0, 0, 0))
+            }
 
-              provider.getComment(product)?.let { addTxt ->
-                row {
-                  comment(addTxt).customize(
-                    UnscaledGaps(0))
-                }
+            provider.getComment(product)?.let { addTxt ->
+              row {
+                comment(addTxt).customize(
+                  UnscaledGaps(top = 3))
               }
             }
           }
@@ -85,7 +93,7 @@ open class SettingChooserDialog(private val provider: ActionsDataProvider<*>, va
     val listPane = JPanel(VerticalLayout(0)).apply {
       isOpaque = false
       productService.getSettings(product.id).forEach {
-        val st = createSettingPane(it, configurable)
+        val st = createSettingPane(it, configurable) { changeHandler() }
         settingPanes.add(st)
         add(st.component())
       }
@@ -101,7 +109,7 @@ open class SettingChooserDialog(private val provider: ActionsDataProvider<*>, va
       }, BorderLayout.CENTER
     )
   }.apply {
-    preferredSize = JBDimension(640, 410)
+    preferredSize = JBDimension(640, 409)
     maximumSize = preferredSize
     minimumSize = Dimension(0, 0)
   }
@@ -130,4 +138,6 @@ open class SettingChooserDialog(private val provider: ActionsDataProvider<*>, va
       putValue(Action.NAME, ImportSettingsBundle.message("import.settings.ok"))
     }
   }
+
+  override val tracker = WizardPageTracker(null)
 }

@@ -15,13 +15,12 @@
  */
 package org.jetbrains.plugins.groovy.intentions.control;
 
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.intentions.base.Intention;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
+import org.jetbrains.plugins.groovy.intentions.base.GrPsiUpdateIntention;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrIfStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
@@ -32,10 +31,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
  * @author Brice Dutheil
  * @author Hamlet D'Arcy
  */
-public class SplitIfIntention extends Intention {
+public class SplitIfIntention extends GrPsiUpdateIntention {
 
   @Override
-  protected void processIntention(@NotNull PsiElement andElement, @NotNull Project project, Editor editor) throws IncorrectOperationException {
+  protected void processIntention(@NotNull PsiElement andElement, @NotNull ActionContext context, @NotNull ModPsiUpdater updater) {
     GrBinaryExpression binaryExpression = (GrBinaryExpression) andElement.getParent();
     GrIfStatement ifStatement = (GrIfStatement) binaryExpression.getParent();
 
@@ -46,7 +45,7 @@ public class SplitIfIntention extends Intention {
 
     assert thenBranch != null;
     assert rightOperand != null;
-    GrStatement newSplittedIfs = GroovyPsiElementFactory.getInstance(project)
+    GrStatement newSplittedIfs = GroovyPsiElementFactory.getInstance(context.project())
       .createStatementFromText(
         "if(" + leftOperand.getText() +
            ") { \n" +
@@ -61,15 +60,10 @@ public class SplitIfIntention extends Intention {
   @NotNull
   @Override
   protected PsiElementPredicate getElementPredicate() {
-    return new PsiElementPredicate() {
-      @Override
-      public boolean satisfiedBy(@NotNull PsiElement element) {
-        return element.getParent() instanceof GrBinaryExpression &&
-               ((GrBinaryExpression)element.getParent()).getRightOperand() != null &&
-               element.getParent().getParent() instanceof GrIfStatement &&
-               ((GrIfStatement)element.getParent().getParent()).getElseBranch() == null
-               && "&&".equals(element.getText());
-      }
-    };
+    return element -> element.getParent() instanceof GrBinaryExpression binOp &&
+                      binOp.getRightOperand() != null &&
+                      binOp.getParent() instanceof GrIfStatement ifStatement &&
+                      ifStatement.getElseBranch() == null
+                      && "&&".equals(element.getText());
   }
 }

@@ -98,8 +98,7 @@ class RenameKotlinPropertyProcessor : RenameKotlinPsiProcessor() {
     val collisions = SmartList<UsageInfo>()
     checkRedeclarationConflicts(declaration, newName, collisions)
     checkAccidentalPropertyOverrides(declaration, newName, collisions)
-    renameRefactoringSupport.checkOriginalUsagesRetargeting(declaration, newName, result, collisions)
-    renameRefactoringSupport.checkNewNameUsagesRetargeting(declaration, newName, collisions)
+    renameRefactoringSupport.checkUsagesRetargeting(declaration, newName, result, collisions)
     result += collisions
   }
 
@@ -251,10 +250,6 @@ class RenameKotlinPropertyProcessor : RenameKotlinPsiProcessor() {
         }
 
         renameRefactoringSupport.prepareForeignUsagesRenaming(element, newName, allRenames, scope)
-
-        originalName?.let {
-            element.renameFileIfSingleDeclaration(it, newName, allRenames)
-        }
     }
 
   protected enum class UsageKind {

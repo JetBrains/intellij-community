@@ -39,9 +39,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
 
-public class CoverageDataManagerImpl extends CoverageDataManager implements Disposable {
+public class CoverageDataManagerImpl extends CoverageDataManager implements Disposable.Default {
   private final Project myProject;
-  private final CoverageDataSuitesManager mySuitesManager;
   private final List<CoverageSuiteListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   private final Object myLock = new Object();
@@ -53,8 +52,6 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
 
   public CoverageDataManagerImpl(@NotNull Project project) {
     myProject = project;
-    mySuitesManager = new CoverageDataSuitesManager(project);
-    Disposer.register(this, mySuitesManager);
 
     CoverageViewSuiteListener coverageViewListener = createCoverageViewListener();
     if (coverageViewListener != null) {
@@ -147,8 +144,9 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
                                         @NotNull CoverageRunner coverageRunner,
                                         boolean coverageByTestEnabled,
                                         boolean branchCoverage) {
-    return mySuitesManager.addSuite(coverageRunner, name, fileProvider, filters, lastCoverageTimeStamp, suiteToMergeWith,
-                                    coverageByTestEnabled, branchCoverage);
+    return CoverageDataSuitesManager.getInstance(myProject)
+      .addSuite(coverageRunner, name, fileProvider, filters, lastCoverageTimeStamp, suiteToMergeWith, coverageByTestEnabled,
+                branchCoverage);
   }
 
   /**
@@ -156,7 +154,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
    */
   @SuppressWarnings("unused")
   public void addCoverageSuite(CoverageSuite suite, @Nullable String suiteToMergeWith) {
-    mySuitesManager.addSuite(suite, suiteToMergeWith);
+    CoverageDataSuitesManager.getInstance(myProject).addSuite(suite, suiteToMergeWith);
   }
 
   @Override
@@ -164,28 +162,29 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
                                                 long timeStamp,
                                                 @NotNull CoverageRunner coverageRunner,
                                                 @NotNull CoverageFileProvider fileProvider) {
-    return mySuitesManager.addExternalCoverageSuite(coverageRunner, selectedFileName, fileProvider, timeStamp);
+    return CoverageDataSuitesManager.getInstance(myProject)
+      .addExternalCoverageSuite(coverageRunner, selectedFileName, fileProvider, timeStamp);
   }
 
   @Override
   public CoverageSuite addCoverageSuite(CoverageEnabledConfiguration config) {
-    return mySuitesManager.addSuite(config);
+    return CoverageDataSuitesManager.getInstance(myProject).addSuite(config);
   }
 
   @Override
   public CoverageSuite @NotNull [] getSuites() {
-    return mySuitesManager.getSuites();
+    return CoverageDataSuitesManager.getInstance(myProject).getSuites();
   }
 
   @Override
   public void removeCoverageSuite(CoverageSuite suite) {
-    mySuitesManager.deleteSuite(suite);
+    CoverageDataSuitesManager.getInstance(myProject).deleteSuite(suite);
     removeFromCurrent(suite);
   }
 
   @Override
   public void unregisterCoverageSuite(CoverageSuite suite) {
-    mySuitesManager.removeSuite(suite);
+    CoverageDataSuitesManager.getInstance(myProject).removeSuite(suite);
     removeFromCurrent(suite);
   }
 
@@ -362,9 +361,6 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
       processGatheredCoverage(configuration);
     }
   }
-
-  @Override
-  public void dispose() { }
 
   public static void processGatheredCoverage(RunConfigurationBase<?> configuration) {
     final Project project = configuration.getProject();

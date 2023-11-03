@@ -19,7 +19,8 @@
                         displayNameSupplierClassName="com.intellij.vcs.log.impl.VcsLogContentProvider$DisplayNameSupplier"/>
 
     <applicationService serviceImplementation="com.intellij.vcs.log.impl.VcsLogApplicationSettings"/>
-    <projectService serviceImplementation="com.intellij.vcs.log.impl.VcsLogSharedSettings"/>
+
+    <generalVcsSettingsExtension instance="com.intellij.vcs.log.ui.VcsLogSharedSettingsConfigurable"/>
 
     <projectService serviceInterface="com.intellij.vcs.log.VcsLogObjectsFactory"
                     serviceImplementation="com.intellij.vcs.log.impl.VcsLogObjectsFactoryImpl"/>
@@ -45,8 +46,6 @@
     <postStartupActivity implementation="com.intellij.vcs.log.impl.VcsProjectLog$InitLogStartupActivity"/>
 
     <cachesInvalidator implementation="com.intellij.vcs.log.impl.VcsLogCachesInvalidator"/>
-
-    <activityInProgressWitness implementation="com.intellij.vcs.log.impl.VcsInProgressWitness"/>
 
     <projectService serviceInterface="com.intellij.vcs.log.VcsLogFileHistoryProvider"
                     serviceImplementation="com.intellij.vcs.log.history.VcsLogFileHistoryProviderImpl"/>

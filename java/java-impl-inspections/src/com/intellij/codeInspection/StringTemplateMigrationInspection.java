@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiLiteralUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
@@ -30,8 +31,8 @@ public class StringTemplateMigrationInspection extends AbstractBaseJavaLocalInsp
       @Override
       public void visitPolyadicExpression(@NotNull PsiPolyadicExpression expression) {
         if (expression.getOperationTokenType() != JavaTokenType.PLUS) return;
-        if (!ExpressionUtils.hasStringType(expression) || PsiUtil.isConstantExpression(expression)) return;
-        final ProblemHighlightType type = getAvailableType(expression.getOperands());
+        if (!ExpressionUtils.hasStringType(expression)) return;
+        final ProblemHighlightType type = getProblemHighlightType(expression);
         if (type == null || (type == ProblemHighlightType.INFORMATION && !isOnTheFly)) return;
         holder.registerProblem(expression,
                                JavaBundle.message("inspection.string.template.migration.string.message"),
@@ -39,12 +40,17 @@ public class StringTemplateMigrationInspection extends AbstractBaseJavaLocalInsp
       }
 
       @Nullable
-      private static ProblemHighlightType getAvailableType(PsiExpression @NotNull [] operands) {
+      private static ProblemHighlightType getProblemHighlightType(@NotNull PsiPolyadicExpression expression) {
+        PsiElement parent = PsiTreeUtil.skipParentsOfType(expression, PsiExpression.class);
+        if (parent instanceof PsiNameValuePair || parent instanceof PsiCaseLabelElementList || parent instanceof PsiAnnotationMethod) {
+          return null;
+        }
+
         boolean hasString = false;
         boolean hasNotLiteralExpression = false;
         boolean hasLiteralExpression = false;
 
-        for (PsiExpression operand : operands) {
+        for (PsiExpression operand : expression.getOperands()) {
           // Support for template concatenation is not yet implemented.
           if (operand instanceof PsiTemplateExpression) {
             return null;
@@ -66,7 +72,7 @@ public class StringTemplateMigrationInspection extends AbstractBaseJavaLocalInsp
         }
 
         // (str + str) || "str" + 1 + 2)
-        if (hasNotLiteralExpression || (hasString && hasLiteralExpression)) {
+        if (hasNotLiteralExpression || (hasString && hasLiteralExpression) || PsiUtil.isConstantExpression(expression)) {
           return ProblemHighlightType.INFORMATION;
         }
         else {

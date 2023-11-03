@@ -992,9 +992,13 @@ private fun patchRowHeight(defaults: UIDefaults, key: String, prevScale: Float) 
   if (rowHeight <= 0) {
     LOG.warn("$key = $value in ${UIManager.getLookAndFeel().name}; it may lead to performance degradation")
   }
-  val custom = if (LoadingState.APP_STARTED.isOccurred) Registry.intValue("ide.override.$key", -1) else -1
-  defaults.put(key, if (custom >= 0) custom else if (rowHeight <= 0) 0 else scale((rowHeight / prevScale).toInt()))
+  val custom = intSystemPropertyValue("ide.override.$key", -1)
+  defaults.put(key, if (custom >= 0) scale(custom) else if (rowHeight <= 0) 0 else scale((rowHeight / prevScale).toInt()))
 }
+
+fun intSystemPropertyValue(name: String, defaultValue: Int): Int = runCatching {
+  System.getProperty(name)?.toInt() ?: defaultValue
+}.getOrNull() ?: defaultValue
 
 /**
  * The following code is a trick! By default, Swing uses lightweight and "medium" weight

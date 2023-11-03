@@ -7,11 +7,7 @@ import com.intellij.ide.ui.UISettingsListener
 import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx
-import com.intellij.openapi.actionSystem.impl.ActionMenu
-import com.intellij.openapi.actionSystem.impl.MenuItemPresentationFactory
-import com.intellij.openapi.actionSystem.impl.PopupMenuPreloader
-import com.intellij.openapi.actionSystem.impl.PresentationFactory
-import com.intellij.openapi.actionSystem.impl.Utils
+import com.intellij.openapi.actionSystem.impl.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
@@ -28,7 +24,6 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.emptyFlow
 import java.awt.Dialog
 import java.awt.Dimension
 import java.awt.KeyboardFocusManager
@@ -85,19 +80,16 @@ internal sealed class IdeMenuBarHelper(@JvmField val flavor: IdeMenuFlavor,
   }
 
   init {
-    val app = ApplicationManager.getApplication()
     val coroutineScope = menuBar.coroutineScope + CoroutineName("IdeMenuBarHelper")
-    if (app != null) {
-      app.messageBus.connect(coroutineScope).subscribe(UISettingsListener.TOPIC, UISettingsListener {
-        presentationFactory.reset()
-        updateMenuActions(true)
-      })
-    }
+    ApplicationManager.getApplication()?.messageBus?.connect(coroutineScope)?.subscribe(UISettingsListener.TOPIC, UISettingsListener {
+      presentationFactory.reset()
+      updateMenuActions(forceRebuild = true)
+    })
     val initJob = coroutineScope.launch(
       (if (StartUpMeasurer.isEnabled()) rootTask() + CoroutineName("ide menu bar actions init") else EmptyCoroutineContext) +
       Dispatchers.EDT + ModalityState.any().asContextElement()) {
-      val actions = expandMainActionGroup(true)
-      doUpdateVisibleActions(actions, false)
+      val actions = expandMainActionGroup(isFirstUpdate = true)
+      doUpdateVisibleActions(newVisibleActions = actions, forceRebuild = false)
       postInitActions(actions)
     }
     initJob.invokeOnCompletion { error ->
@@ -105,19 +97,22 @@ internal sealed class IdeMenuBarHelper(@JvmField val flavor: IdeMenuFlavor,
         LOG.info("First menu bar update failed with $error")
       }
     }
+
     coroutineScope.launch {
-      initJob.join()
-      val timerEvents = (serviceAsync<ActionManager>() as? ActionManagerEx)?.timerEvents ?: emptyFlow()
+      val timerEvents = (serviceAsync<ActionManager>() as? ActionManagerEx)?.timerEvents ?: return@launch
       timerEvents.collect {
         updateRequests.tryEmit(false)
       }
     }
+
     coroutineScope.launch {
+      initJob.join()
+
       withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
         updateRequests.throttle(500).collectLatest { forceRebuild ->
           runCatching {
             if (canUpdate()) {
-              doUpdateVisibleActions(expandMainActionGroup(false), forceRebuild)
+              doUpdateVisibleActions(newVisibleActions = expandMainActionGroup(isFirstUpdate = false), forceRebuild = forceRebuild)
             }
           }.getOrLogException(LOG)
         }
@@ -132,7 +127,10 @@ internal sealed class IdeMenuBarHelper(@JvmField val flavor: IdeMenuFlavor,
 
   private fun canUpdate(): Boolean {
     ThreadingAssertions.assertEventDispatchThread()
-    if (!menuBar.frame.isShowing || !menuBar.frame.isActive) {
+
+    val focusedWindow = KeyboardFocusManager.getCurrentKeyboardFocusManager().focusedWindow
+    val frame = focusedWindow ?: menuBar.frame
+    if (!frame.isShowing || !frame.isActive) {
       return false
     }
 
@@ -143,8 +141,7 @@ internal sealed class IdeMenuBarHelper(@JvmField val flavor: IdeMenuFlavor,
     }
 
     // don't update the toolbar if there is currently active modal dialog
-    val window = KeyboardFocusManager.getCurrentKeyboardFocusManager().focusedWindow
-    return window !is Dialog || !window.isModal
+    return focusedWindow !is Dialog || !focusedWindow.isModal
   }
 
   @RequiresEdt
@@ -156,14 +153,14 @@ internal sealed class IdeMenuBarHelper(@JvmField val flavor: IdeMenuFlavor,
   }
 
   @RequiresEdt
-  protected open suspend fun postInitActions(actions: List<ActionGroup>) {
+  private fun postInitActions(actions: List<ActionGroup>) {
     for (action in actions) {
-      PopupMenuPreloader.install(menuBar.component, ActionPlaces.MAIN_MENU, null) { action }
+      PopupMenuPreloader.install(component = menuBar.component, actionPlace = ActionPlaces.MAIN_MENU, popupHandler = null) { action }
     }
   }
 
   @RequiresEdt
-  abstract suspend fun doUpdateVisibleActions(newVisibleActions: List<ActionGroup>, forceRebuild: Boolean)
+  protected abstract suspend fun doUpdateVisibleActions(newVisibleActions: List<ActionGroup>, forceRebuild: Boolean)
 }
 
 private suspend fun expandMainActionGroup(mainActionGroup: ActionGroup,
@@ -172,12 +169,17 @@ private suspend fun expandMainActionGroup(mainActionGroup: ActionGroup,
                                           presentationFactory: PresentationFactory,
                                           isFirstUpdate: Boolean): List<ActionGroup> {
   ThreadingAssertions.assertEventDispatchThread()
+  val windowManager = serviceAsync<WindowManager>()
+  val dataManager = serviceAsync<DataManager>()
   return withContext(CoroutineName("expandMainActionGroup")) {
-    val windowManager = serviceAsync<WindowManager>()
     val targetComponent = windowManager.getFocusedComponent(frame) ?: menuBar
-    val dataContext = DataManager.getInstance().getDataContext(targetComponent)
-    Utils.expandActionGroupSuspend(mainActionGroup, presentationFactory, dataContext,
-                                   ActionPlaces.MAIN_MENU, false, isFirstUpdate)
+    val dataContext = dataManager.getDataContext(targetComponent)
+    Utils.expandActionGroupSuspend(group = mainActionGroup,
+                                   presentationFactory = presentationFactory,
+                                   dataContext = dataContext,
+                                   place = ActionPlaces.MAIN_MENU,
+                                   isToolbarAction = false,
+                                   fastTrack = isFirstUpdate)
   }.filterIsInstance<ActionGroup>()
 }
 

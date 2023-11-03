@@ -21,10 +21,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 
 import static com.intellij.codeInspection.dataFlow.TypeConstraints.*;
 
@@ -701,7 +698,7 @@ public sealed interface TypeConstraint permits TypeConstraint.Constrained, TypeC
 
     @Override
     public int hashCode() {
-      return Objects.hash(myInstanceOf, myNotInstanceOf);
+      return 31 * myInstanceOf.hashCode() + myNotInstanceOf.hashCode();
     }
 
     @Override

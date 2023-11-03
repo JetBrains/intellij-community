@@ -6,4 +6,5 @@ class HighlightTriggerParametersContext internal constructor() {
   var highlightInside: Boolean = false
   var usePulsation: Boolean = false
   var clearPreviousHighlights: Boolean = true
+  var allowHighlightingToCrossBorder: Boolean = false
 }

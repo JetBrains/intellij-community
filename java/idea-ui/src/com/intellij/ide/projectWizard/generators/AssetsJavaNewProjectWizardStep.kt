@@ -10,11 +10,11 @@ import com.intellij.openapi.keymap.KeymapTextContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
 import java.util.*
 
 @ApiStatus.Experimental
 abstract class AssetsJavaNewProjectWizardStep(parent: NewProjectWizardStep) : AssetsOnboardingTipsProjectWizardStep(parent) {
-
   fun withJavaSampleCodeAsset(sourceRootPath: String, aPackage: String, generateOnboardingTips: Boolean) {
     val renderedOnboardingTips = shouldRenderOnboardingTips()
     val templateName = when {
@@ -23,7 +23,7 @@ abstract class AssetsJavaNewProjectWizardStep(parent: NewProjectWizardStep) : As
       else -> "SampleCodeWithOnboardingTips.java"
     }
 
-    val sourcePath = createJavaSourcePath(sourceRootPath, aPackage, "Main.java")
+    val sourcePath = createJavaSourcePath(sourceRootPath, aPackage, generatedFileName)
     addTemplateAsset(sourcePath, templateName, buildMap {
       put("PACKAGE_NAME", aPackage)
       if (generateOnboardingTips) {
@@ -61,13 +61,18 @@ abstract class AssetsJavaNewProjectWizardStep(parent: NewProjectWizardStep) : As
     addFilesToOpen(sourcePath)
   }
 
-  fun prepareTipsInEditor(project: Project) {
-    prepareTipsInEditor(project, "SampleCode") { charSequence ->
+  @ScheduledForRemoval
+  @Deprecated("Use prepareOnboardingTips and it should be called before wizard project setup")
+  fun prepareTipsInEditor(project: Project) { }
+
+  fun prepareOnboardingTips(project: Project) {
+    prepareOnboardingTips(project, "SampleCode", generatedFileName) { charSequence ->
       charSequence.indexOf("System.out.println").takeIf { it >= 0 }
     }
   }
 
   companion object {
+    private const val generatedFileName = "Main.java"
 
     fun createJavaSourcePath(sourceRootPath: String, aPackage: String, fileName: String): String {
       val packageDirectory = aPackage.replace('.', '/')

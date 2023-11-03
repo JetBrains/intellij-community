@@ -4,6 +4,7 @@ package org.jetbrains.plugins.gitlab.ui.comment
 import com.intellij.collaboration.async.mapScoped
 import com.intellij.collaboration.async.modelFlow
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.project.Project
 import com.intellij.util.childScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
@@ -19,10 +20,12 @@ interface GitLabDiscussionReplyViewModel {
   fun stopWriting()
 }
 
-class GitLabDiscussionReplyViewModelImpl(parentCs: CoroutineScope,
-                                         currentUser: GitLabUserDTO,
-                                         discussion: GitLabDiscussion)
-  : GitLabDiscussionReplyViewModel {
+class GitLabDiscussionReplyViewModelImpl(
+  parentCs: CoroutineScope,
+  project: Project,
+  currentUser: GitLabUserDTO,
+  discussion: GitLabDiscussion
+) : GitLabDiscussionReplyViewModel {
 
   private val cs = parentCs.childScope()
 
@@ -30,16 +33,12 @@ class GitLabDiscussionReplyViewModelImpl(parentCs: CoroutineScope,
   override val newNoteVm: Flow<NewGitLabNoteViewModel?> = isWriting.mapScoped {
     if (!it) return@mapScoped null
     val cs = this
-    DelegatingGitLabNoteEditingViewModel(cs, "",
-                                         { discussion.addNote(it, false) },
-                                         { discussion.addNote(it, true) })
-      .forNewNote(currentUser)
-      .apply {
-        onDoneIn(cs) {
-          text.value = ""
-        }
-        requestFocus()
+    GitLabNoteEditingViewModel.forReplyNote(cs, project, discussion, currentUser).apply {
+      onDoneIn(cs) {
+        text.value = ""
       }
+      requestFocus()
+    }
   }.modelFlow(cs, thisLogger())
 
   override fun startWriting() {

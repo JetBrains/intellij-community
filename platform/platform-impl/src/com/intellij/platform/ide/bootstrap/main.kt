@@ -30,8 +30,6 @@ import com.intellij.openapi.util.registry.EarlyAccessRegistryManager
 import com.intellij.platform.diagnostic.telemetry.OpenTelemetryConfigurator
 import com.intellij.platform.diagnostic.telemetry.impl.TelemetryManagerImpl
 import com.intellij.platform.diagnostic.telemetry.impl.span
-import com.intellij.platform.ide.bootstrap.*
-import com.intellij.ui.*
 import com.intellij.ui.mac.initMacApplication
 import com.intellij.ui.mac.screenmenu.Menu
 import com.intellij.ui.scale.JBUIScale
@@ -47,12 +45,10 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.debug.internal.DebugProbesImpl
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.VisibleForTesting
-import java.io.IOException
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
 import java.lang.management.ManagementFactory
 import java.nio.file.Files
-import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
 import java.time.format.DateTimeFormatter
@@ -63,7 +59,6 @@ import java.util.function.BiConsumer
 import java.util.function.BiFunction
 import java.util.logging.ConsoleHandler
 import java.util.logging.Level
-import javax.swing.*
 import kotlin.concurrent.Volatile
 import kotlin.system.exitProcess
 
@@ -210,7 +205,7 @@ fun CoroutineScope.startApplication(args: List<String>,
   val euaDocumentDeferred = async { loadEuaDocument(appInfoDeferred) }
 
   val configImportDeferred: Deferred<Job?> = async {
-    if (isHeadless || !configImportNeededDeferred.await()) {
+    if (isHeadless || AppMode.isRemoteDevHost() || !configImportNeededDeferred.await()) {
       return@async null
     }
 
@@ -231,10 +226,14 @@ fun CoroutineScope.startApplication(args: List<String>,
         }.getOrLogException(log)
       }
 
-      log.info("Will enter initial app wizard flow.")
-      val result = CompletableDeferred<Boolean>()
-      isInitialStart = result
-      result
+      if (isIdeStartupWizardEnabled) {
+        log.info("Will enter initial app wizard flow.")
+        val result = CompletableDeferred<Boolean>()
+        isInitialStart = result
+        result
+      } else {
+        null
+      }
     }
     else {
       null
@@ -303,7 +302,9 @@ fun CoroutineScope.startApplication(args: List<String>,
     this@startApplication.launch {
       val isInitialStart = configImportDeferred.await()
       // appLoaded not only provides starter, but also loads app, that's why it is here
+      IdeStartupWizardCollector.logExperimentState()
       if (isInitialStart != null) {
+        LoadingState.compareAndSetCurrentState(LoadingState.COMPONENTS_LOADED, LoadingState.APP_READY)
         val log = logDeferred.await()
         runCatching {
           span("startup wizard run") {
@@ -699,17 +700,13 @@ private fun logEnvVar(log: Logger, variable: String) {
   }
 }
 
-private fun logPath(path: String): String {
-  try {
-    val configured = Path.of(path)
-    val real = configured.toRealPath()
-    return if (configured == real) path else "${path} -> ${real}"
-  }
-  catch (_: IOException) {
-  }
-  catch (_: InvalidPathException) {
-  }
-  return "${path} -> ?"
+private fun logPath(path: String): String = try {
+  val configured = Path.of(path)
+  val real = configured.toRealPath()
+  if (configured == real) path else "${path} -> ${real}"
+}
+catch (e: Exception) {
+  "${path} -> ${e.javaClass.name}: ${e.message}"
 }
 
 interface AppStarter {
@@ -731,10 +728,6 @@ class Java11ShimImpl : Java11Shim {
 
   override fun <E> copyOf(collection: Collection<E>): Set<E> = java.util.Set.copyOf(collection)
 
-  override fun <E> copyOfCollection(collection: Collection<E>): List<E> = java.util.List.copyOf(collection)
-  override fun <V : Any> createConcurrentLongObjectMap(): ConcurrentLongObjectMap<V> {
-    return ConcurrentCollectionFactory.createConcurrentLongObjectMap()
-  }
-
-  override fun <E> setOf(collection: Array<E>): Set<E> = java.util.Set.of(*collection)
+  override fun <V : Any> createConcurrentLongObjectMap(): ConcurrentLongObjectMap<V> =
+    ConcurrentCollectionFactory.createConcurrentLongObjectMap()
 }

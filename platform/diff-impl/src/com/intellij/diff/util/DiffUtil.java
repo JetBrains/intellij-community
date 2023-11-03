@@ -584,8 +584,8 @@ public final class DiffUtil {
     List<DiffEditorTitleCustomizer> diffTitleCustomizers = request.getUserData(DiffUserDataKeysEx.EDITORS_TITLE_CUSTOMIZER);
     boolean needCreateTitle = !isUserDataFlagSet(DiffUserDataKeysEx.EDITORS_HIDE_TITLE, request);
     for (int i = 0; i < contents.size(); i++) {
-      JComponent title = needCreateTitle ? createTitle(titles.get(i),
-                                                       diffTitleCustomizers != null ? diffTitleCustomizers.get(i) : null) : null;
+      DiffEditorTitleCustomizer customizer = diffTitleCustomizers != null ? diffTitleCustomizers.get(i) : null;
+      JComponent title = needCreateTitle ? createTitle(titles.get(i), customizer) : null;
       title = createTitleWithNotifications(viewer, title, contents.get(i));
       components.add(title);
     }
@@ -621,14 +621,40 @@ public final class DiffUtil {
     return result;
   }
 
+  @NotNull
+  public static List<JComponent> createPatchTextTitles(@Nullable DiffViewer viewer,
+                                                       @NotNull DiffRequest request,
+                                                       @NotNull List<@Nls @Nullable String> titles) {
+    List<JComponent> result = new ArrayList<>(titles.size());
+
+    List<DiffEditorTitleCustomizer> diffTitleCustomizers = request.getUserData(DiffUserDataKeysEx.EDITORS_TITLE_CUSTOMIZER);
+    boolean needCreateTitle = !isUserDataFlagSet(DiffUserDataKeysEx.EDITORS_HIDE_TITLE, request);
+    for (int i = 0; i < titles.size(); i++) {
+      JComponent title = null;
+      if (needCreateTitle) {
+        String titleText = titles.get(i);
+        DiffEditorTitleCustomizer customizer = diffTitleCustomizers != null ? diffTitleCustomizers.get(i) : null;
+        //noinspection RedundantCast
+        title = createTitle(titleText, (LineSeparator)null, (Charset)null, (Boolean)null, true, customizer);
+      }
+
+      title = createTitleWithNotifications(viewer, title, null);
+      result.add(title);
+    }
+
+    return result;
+  }
+
   @Nullable
   private static JComponent createTitleWithNotifications(@Nullable DiffViewer viewer,
                                                          @Nullable JComponent title,
-                                                         @NotNull DiffContent content) {
+                                                         @Nullable DiffContent content) {
     List<JComponent> components = new ArrayList<>();
     if (title != null) components.add(title);
 
-    components.addAll(createCustomNotifications(viewer, content));
+    if (content != null) {
+      components.addAll(createCustomNotifications(viewer, content));
+    }
 
     if (content instanceof DocumentContent) {
       Document document = ((DocumentContent)content).getDocument();

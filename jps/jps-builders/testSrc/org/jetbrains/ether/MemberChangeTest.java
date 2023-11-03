@@ -42,6 +42,10 @@ public class MemberChangeTest extends IncrementalTestCase {
     doTest();
   }
 
+  public void testAddFieldOfSameKindToBaseClass() {
+    doTest();
+  }
+
   public void testAddFieldToDerived() {
     doTest();
   }

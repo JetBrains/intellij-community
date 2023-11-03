@@ -121,7 +121,7 @@ class EmbeddedClientLauncher private constructor(private val moduleRepository: R
     val vmOptionsFile = PathManager.getConfigDir() / "embedded-client" / "jetbrains_client64.vmoptions"
     val customizableOptions: List<String>
     if (vmOptionsFile.exists()) {
-      customizableOptions = vmOptionsFile.readLines()
+      customizableOptions = vmOptionsFile.readLines().mapNotNull { line -> line.trim().takeIf { it.isNotEmpty() } }
     }
     else {
       customizableOptions = getDefaultCustomizableVmOptions()
@@ -141,7 +141,7 @@ class EmbeddedClientLauncher private constructor(private val moduleRepository: R
       "-Didea.paths.customizer=com.intellij.platform.ide.impl.startup.multiProcess.PerProcessPathCustomizer",
       "-Dintellij.platform.runtime.repository.path=${moduleRepositoryPath.pathString}",
       "-Dintellij.platform.root.module=${CLIENT_ROOT_MODULE.stringId}",
-      "-Dintellij.platform.product.scope=${ProductMode.FRONTEND.id}",
+      "-Dintellij.platform.product.mode=${ProductMode.FRONTEND.id}",
       "-Dintellij.platform.load.app.info.from.resources=true",
       "-Dsplash=true",
     )

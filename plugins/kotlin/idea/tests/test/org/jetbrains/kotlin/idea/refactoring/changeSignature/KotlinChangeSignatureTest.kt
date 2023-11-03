@@ -5,13 +5,17 @@ package org.jetbrains.kotlin.idea.refactoring.changeSignature
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
+import org.jetbrains.kotlin.asJava.getRepresentativeLightMethod
 import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
 import org.jetbrains.kotlin.descriptors.DescriptorVisibility
+import org.jetbrains.kotlin.idea.base.util.allScope
 import org.jetbrains.kotlin.idea.core.getDeepestSuperDeclarations
 import org.jetbrains.kotlin.idea.intentions.AddFullQualifierIntention
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.ui.KotlinMethodNode
+import org.jetbrains.kotlin.idea.stubindex.KotlinFullClassNameIndex
+import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelFunctionFqnNameIndex
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
@@ -89,6 +93,74 @@ class KotlinChangeSignatureTest : BaseKotlinChangeSignatureTest<KotlinChangeInfo
         return KotlinTypeInfo(false, null, type)
     }
 
+    // ---------- propagation ----------------------------
+    fun testPropagateWithParameterDuplication() = doTestConflict {
+        val defaultValueForCall = KtPsiFactory(project).createExpression("1")
+        addParameter(createKotlinIntParameter(name = "n", defaultValueForCall = defaultValueForCall))
+
+        primaryPropagationTargets = listOf(
+            KotlinTopLevelFunctionFqnNameIndex.get("bar", project, project.allScope()).first()
+        )
+    }
+
+    fun testPropagateWithVariableDuplication() = doTestConflict {
+        val defaultValueForCall = KtPsiFactory(project).createExpression("1")
+        addParameter(createKotlinIntParameter(name = "n", defaultValueForCall = defaultValueForCall))
+
+        primaryPropagationTargets = listOf(
+            KotlinTopLevelFunctionFqnNameIndex.get("bar", project, project.allScope()).first()
+        )
+    }
+
+    fun testPropagateWithThisQualificationInClassMember() = doTest {
+        val defaultValueForCall = KtPsiFactory(project).createExpression("1")
+        addParameter(createKotlinIntParameter(name = "n", defaultValueForCall = defaultValueForCall))
+
+        val classA = KotlinFullClassNameIndex.get("A", project, project.allScope()).first()
+        val functionBar = classA.declarations.first { it is KtNamedFunction && it.name == "bar" }
+        primaryPropagationTargets = listOf(functionBar)
+    }
+
+    fun testPropagateWithThisQualificationInExtension() = doTest {
+        val defaultValueForCall = KtPsiFactory(project).createExpression("1")
+        addParameter(createKotlinIntParameter(name = "n", defaultValueForCall = defaultValueForCall))
+
+        primaryPropagationTargets = listOf(
+            KotlinTopLevelFunctionFqnNameIndex.get("bar", project, project.allScope()).first()
+        )
+    }
+
+    fun testPrimaryConstructorParameterPropagation() = doTestAndIgnoreConflicts {
+        val defaultValueForCall = KtPsiFactory(project).createExpression("1")
+        addParameter(createKotlinIntParameter(name = "n", defaultValueForCall = defaultValueForCall))
+
+        primaryPropagationTargets = findCallers(method.getRepresentativeLightMethod()!!)
+    }
+
+    fun testSecondaryConstructorParameterPropagation() = doTestAndIgnoreConflicts {
+        val defaultValueForCall = KtPsiFactory(project).createExpression("1")
+        addParameter(createKotlinIntParameter(name = "n", defaultValueForCall = defaultValueForCall))
+
+        primaryPropagationTargets = findCallers(method.getRepresentativeLightMethod()!!)
+    }
+
+    fun testParameterPropagation() = doTestAndIgnoreConflicts {
+        val psiFactory = KtPsiFactory(project)
+
+        val defaultValueForCall1 = psiFactory.createExpression("1")
+        val newParameter1 = createKotlinParameter("n", null, defaultValueForCall1, currentType = "Int")
+        addParameter(newParameter1)
+
+        val defaultValueForCall2 = psiFactory.createExpression("\"abc\"")
+        val newParameter2 = createKotlinParameter("s", null, defaultValueForCall2, currentType = "String")
+        addParameter(newParameter2)
+
+        val classA = KotlinFullClassNameIndex.get("A", project, project.allScope()).first()
+        val functionBar = classA.declarations.first { it is KtNamedFunction && it.name == "bar" }
+        val functionTest = KotlinTopLevelFunctionFqnNameIndex.get("test", project, project.allScope()).first()
+
+        primaryPropagationTargets = listOf(functionBar, functionTest)
+    }
 }
 
 fun createChangeInfo(

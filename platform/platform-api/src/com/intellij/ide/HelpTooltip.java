@@ -318,7 +318,8 @@ public class HelpTooltip {
     if (that == null || getClass() != that.getClass()) return false;
     HelpTooltip tooltip = (HelpTooltip)that;
     return neverHide == tooltip.neverHide &&
-           Objects.equals(title, tooltip.title) &&
+           (title == null ? tooltip.title == null
+                          : tooltip.title != null && Objects.equals(title.get(), tooltip.title.get())) &&
            Objects.equals(shortcut, tooltip.shortcut) &&
            Objects.equals(description, tooltip.description) &&
            Objects.equals(link, tooltip.link) &&

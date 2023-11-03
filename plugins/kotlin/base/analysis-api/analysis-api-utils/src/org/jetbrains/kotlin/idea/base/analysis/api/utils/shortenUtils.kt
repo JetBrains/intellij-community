@@ -9,9 +9,10 @@ import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.analyzeInDependedAnalysisSession
 import org.jetbrains.kotlin.analysis.api.components.ShortenCommand
-import org.jetbrains.kotlin.analysis.api.components.ShortenOption
-import org.jetbrains.kotlin.analysis.api.components.ShortenOption.Companion.defaultCallableShortenOption
-import org.jetbrains.kotlin.analysis.api.components.ShortenOption.Companion.defaultClassShortenOption
+import org.jetbrains.kotlin.analysis.api.components.ShortenOptions
+import org.jetbrains.kotlin.analysis.api.components.ShortenStrategy
+import org.jetbrains.kotlin.analysis.api.components.ShortenStrategy.Companion.defaultCallableShortenStrategy
+import org.jetbrains.kotlin.analysis.api.components.ShortenStrategy.Companion.defaultClassShortenStrategy
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
@@ -30,13 +31,15 @@ import org.jetbrains.kotlin.psi.psiUtil.allChildren
  */
 fun shortenReferences(
     element: KtElement,
-    classShortenOption: (KtClassLikeSymbol) -> ShortenOption = defaultClassShortenOption,
-    callableShortenOption: (KtCallableSymbol) -> ShortenOption = defaultCallableShortenOption
+    shortenOptions: ShortenOptions = ShortenOptions.DEFAULT,
+    classShortenStrategy: (KtClassLikeSymbol) -> ShortenStrategy = defaultClassShortenStrategy,
+    callableShortenStrategy: (KtCallableSymbol) -> ShortenStrategy = defaultCallableShortenStrategy
 ): PsiElement? = shortenReferencesInRange(
     element,
     element.textRange,
-    classShortenOption,
-    callableShortenOption
+    shortenOptions,
+    classShortenStrategy,
+    callableShortenStrategy
 )
 
 /**
@@ -52,14 +55,15 @@ fun shortenReferences(
 fun shortenReferencesInRange(
     file: KtFile,
     range: TextRange = file.textRange,
-    classShortenOption: (KtClassLikeSymbol) -> ShortenOption = defaultClassShortenOption,
-    callableShortenOption: (KtCallableSymbol) -> ShortenOption = defaultCallableShortenOption
+    shortenOptions: ShortenOptions = ShortenOptions.DEFAULT,
+    classShortenStrategy: (KtClassLikeSymbol) -> ShortenStrategy = defaultClassShortenStrategy,
+    callableShortenStrategy: (KtCallableSymbol) -> ShortenStrategy = defaultCallableShortenStrategy
 ): PsiElement? {
     val shortenCommand = allowAnalysisOnEdt {
         @OptIn(KtAllowAnalysisFromWriteAction::class)
         allowAnalysisFromWriteAction {
             analyze(file) {
-                collectPossibleReferenceShortenings(file, range, classShortenOption, callableShortenOption)
+                collectPossibleReferenceShortenings(file, range, shortenOptions, classShortenStrategy, callableShortenStrategy)
             }
         }
     }
@@ -71,22 +75,23 @@ fun shortenReferencesInRange(
 fun shortenReferencesInRange(
     elementToReanalyze: KtElement,
     range: TextRange = elementToReanalyze.containingFile.originalFile.textRange,
-    classShortenOption: (KtClassLikeSymbol) -> ShortenOption = defaultClassShortenOption,
-    callableShortenOption: (KtCallableSymbol) -> ShortenOption = defaultCallableShortenOption
+    shortenOptions: ShortenOptions = ShortenOptions.DEFAULT,
+    classShortenStrategy: (KtClassLikeSymbol) -> ShortenStrategy = defaultClassShortenStrategy,
+    callableShortenStrategy: (KtCallableSymbol) -> ShortenStrategy = defaultCallableShortenStrategy
 ): PsiElement? {
     val ktFile = elementToReanalyze.containingFile as KtFile
     val originalFile = ktFile.originalFile as KtFile
     val shortenCommand =
         if (!elementToReanalyze.isPhysical && originalFile.isPhysical) {
             analyzeInDependedAnalysisSession(originalFile, elementToReanalyze) {
-                collectPossibleReferenceShortenings(elementToReanalyze.containingKtFile, range, classShortenOption, callableShortenOption)
+                collectPossibleReferenceShortenings(elementToReanalyze.containingKtFile, range, shortenOptions, classShortenStrategy, callableShortenStrategy)
             }
         } else {
             allowAnalysisOnEdt {
                 @OptIn(KtAllowAnalysisFromWriteAction::class)
                 allowAnalysisFromWriteAction {
                     analyze(ktFile) {
-                        collectPossibleReferenceShortenings(ktFile, range, classShortenOption, callableShortenOption)
+                        collectPossibleReferenceShortenings(ktFile, range, shortenOptions, classShortenStrategy, callableShortenStrategy)
                     }
                 }
             }

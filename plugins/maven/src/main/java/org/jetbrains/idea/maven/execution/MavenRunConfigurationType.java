@@ -12,7 +12,9 @@ import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.impl.DefaultJavaProgramRunner;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
@@ -35,7 +37,7 @@ import java.util.List;
 
 import static icons.OpenapiIcons.RepositoryLibraryLogo;
 
-public final class MavenRunConfigurationType implements ConfigurationType {
+public final class MavenRunConfigurationType implements ConfigurationType, DumbAware {
   private static final Key<Boolean> IS_DELEGATE_BUILD = new Key<>("IS_DELEGATE_BUILD");
   private final ConfigurationFactory myFactory;
   private static final int MAX_NAME_LENGTH = 40;
@@ -180,12 +182,14 @@ public final class MavenRunConfigurationType implements ConfigurationType {
     ExecutionEnvironment environment = new ExecutionEnvironment(executor, runner, configSettings, project);
     environment.putUserData(IS_DELEGATE_BUILD, isDelegateBuild);
     environment.setCallback(callback);
-    try {
-      runner.execute(environment);
-    }
-    catch (ExecutionException e) {
-      MavenUtil.showError(project, RunnerBundle.message("notification.title.failed.to.execute.maven.goal"), e);
-    }
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      try {
+        runner.execute(environment);
+      }
+      catch (ExecutionException e) {
+        MavenUtil.showError(project, RunnerBundle.message("notification.title.failed.to.execute.maven.goal"), e);
+      }
+    });
   }
 
   @NotNull

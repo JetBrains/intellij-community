@@ -11,7 +11,7 @@ import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.Language;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.EmptyAction;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.editor.*;
@@ -176,7 +176,7 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
       }
     });
 
-    EmptyAction.registerActionShortcuts(myHistoryViewer.getComponent(), myConsoleExecutionEditor.getComponent());
+    ActionUtil.copyRegisteredShortcuts(myHistoryViewer.getComponent(), myConsoleExecutionEditor.getComponent());
     myHistoryViewer.putUserData(EXECUTION_EDITOR_KEY, myConsoleExecutionEditor);
 
     if (ExperimentalUI.isNewUI()) {

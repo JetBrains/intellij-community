@@ -4,6 +4,7 @@ package com.jetbrains.python.sdk.add.v2
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.ui.validation.DialogValidationRequestor
 import com.intellij.ui.dsl.builder.Panel
 import com.jetbrains.python.sdk.pipenv.PIPENV_ICON
 import com.jetbrains.python.sdk.poetry.POETRY_ICON
@@ -17,7 +18,7 @@ import javax.swing.Icon
 class PythonAddSdkService(val coroutineScope: CoroutineScope)
 
 interface PythonTargetEnvironmentInterpreterCreator {
-  fun buildPanel(outerPanel: Panel)
+  fun buildPanel(outerPanel: Panel, validationRequestor: DialogValidationRequestor)
   fun onShown() {}
   fun getSdk(): Sdk
 }
@@ -29,7 +30,7 @@ abstract class PythonAddEnvironment(val presenter: PythonAddInterpreterPresenter
   internal val propertyGraph
     get() = state.propertyGraph
 
-  abstract fun buildOptions(panel: Panel)
+  abstract fun buildOptions(panel: Panel, validationRequestor: DialogValidationRequestor)
   open fun onShown() {}
   abstract fun getOrCreateSdk(): Sdk
 }

@@ -15,7 +15,6 @@ import org.jetbrains.plugins.gitlab.api.dto.GitLabMergeRequestDraftNoteRestDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabNoteDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.*
-import org.jetbrains.plugins.gitlab.util.GitLabStatistics
 import java.util.*
 
 interface GitLabNote {
@@ -101,7 +100,6 @@ class MutableGitLabMergeRequestNote(
       }
       data.update { it.copy(body = newText) }
     }
-    GitLabStatistics.logMrActionExecuted(project, GitLabStatistics.MergeRequestAction.UPDATE_NOTE)
   }
 
   override suspend fun delete() {
@@ -113,7 +111,6 @@ class MutableGitLabMergeRequestNote(
       }
       eventSink(GitLabNoteEvent.Deleted(id))
     }
-    GitLabStatistics.logMrActionExecuted(project, GitLabStatistics.MergeRequestAction.DELETE_NOTE)
   }
 
   override suspend fun submit() {
@@ -192,9 +189,7 @@ class GitLabMergeRequestDraftNoteImpl(
           api.rest.submitSingleDraftNote(project, mr.iid, noteData.id.restId.toLong()).body()
         }
       }
-      // Order of following operations: first start reload so that there's minimal delay between removing and re-adding the note.
       mr.reloadDiscussions()
-      eventSink(GitLabNoteEvent.Deleted(id))
     }
   }
 

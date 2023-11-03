@@ -3,7 +3,6 @@ package com.intellij.ui;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.ide.DataManager;
-import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.UISettingsUtils;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaEditorTextFieldBorder;
 import com.intellij.openapi.Disposable;
@@ -36,6 +35,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectCloseListener;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -85,7 +85,7 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
   private EditorEx myEditor;
   private final Set<Editor> myEditorsToBeReleased = new HashSet<>();
   private Component myNextFocusable;
-  private boolean myWholeTextSelected;
+  private @NotNull DeferredSelection deferredSelection = DeferredSelection.None.getInstance();
   private final List<DocumentListener> myDocumentListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final List<FocusListener> myFocusListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final List<MouseListener> myMouseListeners = ContainerUtil.createLockFreeCopyOnWriteList();
@@ -364,19 +364,77 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
     }
   }
 
-  public void selectAll() {
-    Editor editor = getEditor();
-    if (editor != null) {
-      doSelectAll(editor);
+  private sealed interface DeferredSelection permits DeferredSelection.None, DeferredSelection.All, DeferredSelection.Custom {
+    void execute(@NotNull Editor editor);
+
+    final class All implements DeferredSelection {
+      private static final @NotNull All INSTANCE = new DeferredSelection.All();
+
+      private All() {
+      }
+
+      @Override
+      public void execute(@NotNull Editor editor) {
+        doSelect(editor, TextRange.create(0, editor.getDocument().getTextLength()));
+      }
+
+      public static @NotNull All getInstance() {
+        return INSTANCE;
+      }
     }
-    else {
-      myWholeTextSelected = true;
+
+    final class None implements DeferredSelection {
+      private static final @NotNull None INSTANCE = new DeferredSelection.None();
+
+      private None() {
+      }
+
+      @Override
+      public void execute(@NotNull Editor editor) {
+        // do nothing
+      }
+
+      public static @NotNull None getInstance() {
+        return INSTANCE;
+      }
+    }
+
+    record Custom(@NotNull TextRange range) implements DeferredSelection {
+      @Override
+      public void execute(@NotNull Editor editor) {
+        doSelect(editor, range);
+      }
     }
   }
 
-  private static void doSelectAll(@NotNull Editor editor) {
+  /**
+   * Select a given text range or defers the selection until the editor component gets created.
+   */
+  public void select(@NotNull TextRange range) {
+    Editor editor = getEditor();
+    if (editor != null) {
+      doSelect(editor, range);
+    } else {
+      deferredSelection = new DeferredSelection.Custom(range);
+    }
+  }
+
+  /**
+   * Select all text or defers the selection until the editor component gets created.
+   */
+  public void selectAll() {
+    Editor editor = getEditor();
+    if (editor != null) {
+      doSelect(editor, TextRange.create(0, editor.getDocument().getTextLength()));
+    }
+    else {
+      deferredSelection = DeferredSelection.All.getInstance();
+    }
+  }
+
+  private static void doSelect(@NotNull Editor editor, @NotNull TextRange range) {
     editor.getCaretModel().removeSecondaryCarets();
-    editor.getCaretModel().getPrimaryCaret().setSelection(0, editor.getDocument().getTextLength(), false);
+    editor.getCaretModel().getPrimaryCaret().setSelection(range.getStartOffset(), range.getEndOffset(), false);
   }
 
   public void removeSelection() {
@@ -385,7 +443,7 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
       editor.getSelectionModel().removeSelection();
     }
     else {
-      myWholeTextSelected = false;
+      deferredSelection = DeferredSelection.None.getInstance();
     }
   }
 
@@ -651,9 +709,9 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
       if (myIsViewer) {
         editor.getSelectionModel().removeSelection();
       }
-      else if (myWholeTextSelected) {
-        doSelectAll(editor);
-        myWholeTextSelected = false;
+      else {
+        deferredSelection.execute(editor);
+        deferredSelection = DeferredSelection.None.getInstance();
       }
 
       editor.putUserData(SUPPLEMENTARY_KEY, myIsSupplementary);

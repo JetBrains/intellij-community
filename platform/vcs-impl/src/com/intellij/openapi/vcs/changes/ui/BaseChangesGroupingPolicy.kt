@@ -11,6 +11,9 @@ abstract class BaseChangesGroupingPolicy : ChangesGroupingPolicy {
     nextPolicy = policy
   }
 
+  @Deprecated("Prefer using [VcsImplUtil.findValidParentAccurately]",
+              ReplaceWith("VcsImplUtil.findValidParentAccurately(nodePath.filePath)",
+                          "com.intellij.vcsUtil.VcsImplUtil"))
   protected fun resolveVirtualFile(nodePath: StaticFilePath): VirtualFile? =
     generateSequence(nodePath) { it.parent }.mapNotNull { it.resolve() }.firstOrNull()
 

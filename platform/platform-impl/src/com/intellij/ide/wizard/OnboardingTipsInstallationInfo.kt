@@ -4,4 +4,4 @@ package com.intellij.ide.wizard
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-data class OnboardingTipsInstallationInfo(val simpleSampleText: String, val offsetForBreakpoint: (CharSequence) -> Int?)
+data class OnboardingTipsInstallationInfo(val simpleSampleText: String, val fileName: String, val offsetForBreakpoint: (CharSequence) -> Int?)

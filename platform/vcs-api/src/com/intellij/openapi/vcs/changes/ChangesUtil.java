@@ -12,6 +12,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.pom.Navigatable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashingStrategy;
@@ -188,6 +189,10 @@ public final class ChangesUtil {
     return filePath;
   }
 
+  /**
+   * @deprecated Prefer using {@link com.intellij.vcsUtil.VcsImplUtil#findValidParentAccurately(FilePath)}
+   */
+  @Deprecated
   public static @Nullable VirtualFile findValidParentAccurately(@NotNull FilePath filePath) {
     VirtualFile result = filePath.getVirtualFile();
 
@@ -201,6 +206,10 @@ public final class ChangesUtil {
     return result;
   }
 
+  /**
+   * @deprecated Prefer using {@link com.intellij.openapi.vfs.newvfs.VfsImplUtil#findCachedFileByPath(NewVirtualFileSystem, String)}
+   */
+  @Deprecated
   private static @Nullable VirtualFile getValidParentUnderReadAction(@NotNull FilePath filePath) {
     return ReadAction.compute(() -> {
       VirtualFile result = null;

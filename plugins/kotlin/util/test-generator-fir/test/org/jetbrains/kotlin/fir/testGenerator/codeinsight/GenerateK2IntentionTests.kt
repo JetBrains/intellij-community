@@ -13,6 +13,7 @@ internal fun MutableTWorkspace.generateK2IntentionTests() {
     testGroup("code-insight/intentions-k2/tests", testDataPath = "../../..") {
         testClass<AbstractK2IntentionTest> {
             val pattern = Patterns.forRegex("^([\\w\\-_]+)\\.(kt|kts)$")
+            model("${idea}intentions/addFullQualifier", pattern = pattern)
             model("${idea}intentions/addMissingClassKeyword", pattern = pattern)
             model("${idea}intentions/addNameToArgument", pattern = pattern)
             model("${idea}intentions/addNamesToCallArguments", pattern = pattern)
@@ -29,6 +30,7 @@ internal fun MutableTWorkspace.generateK2IntentionTests() {
             model("${idea}intentions/addWhenRemainingBranches", pattern = pattern)
             model("${idea}intentions/convertToConcatenatedString", pattern = pattern)
             model("${idea}intentions/convertToStringTemplate", pattern = pattern)
+            model("${idea}intentions/declarations/split", pattern = pattern)
             model("${idea}intentions/removeExplicitType", pattern = pattern)
             model("${idea}intentions/replaceUnderscoreWithTypeArgument", pattern = pattern)
             model("${idea}intentions/convertForEachToForLoop", pattern = pattern)
@@ -46,6 +48,7 @@ internal fun MutableTWorkspace.generateK2IntentionTests() {
             model("${idea}intentions/branched/ifWhen/whenToIf", pattern = pattern)
             model("code-insight/intentions-k2/tests/testData/intentions", pattern = pattern)
             model("${idea}intentions/convertBinaryExpressionWithDemorgansLaw", pattern = pattern)
+            model("${idea}intentions/invertIfCondition", pattern = pattern)
         }
 
         testClass<AbstractK2GotoTestOrCodeActionTest> {

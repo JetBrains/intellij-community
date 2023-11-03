@@ -316,14 +316,14 @@ public final class GitAnnotationProvider implements AnnotationProviderEx, Cachea
     GitVcs vcs = GitVcs.getInstance(myProject);
     GitHistoryProvider historyProvider = vcs.getVcsHistoryProvider();
 
-    VcsAbstractHistorySession cachedSession = myCache.getFull(filePath, vcs.getKeyInstanceMethod(), historyProvider);
+    VcsAbstractHistorySession cachedSession = myCache.getSession(filePath, vcs.getKeyInstanceMethod(), historyProvider, false);
     if (cachedSession != null && !ContainerUtil.isEmpty(cachedSession.getRevisionList())) {
       return cachedSession.getRevisionList();
     }
     else {
       VcsAbstractHistorySession session = historyProvider.createSessionFor(filePath);
 
-      myCache.put(filePath, null, vcs.getKeyInstanceMethod(), session, historyProvider, true);
+      myCache.putSession(filePath, null, vcs.getKeyInstanceMethod(), session, historyProvider, true);
 
       return session.getRevisionList();
     }

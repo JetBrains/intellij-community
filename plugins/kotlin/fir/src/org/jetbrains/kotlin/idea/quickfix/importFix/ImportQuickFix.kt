@@ -77,8 +77,11 @@ class ImportQuickFix(
     override fun invoke(project: Project, editor: Editor?, file: KtFile) {
         if (editor == null) return
 
-        createAddImportAction(project, editor, file).execute()
+        createImportAction(editor, file)?.execute()
     }
+
+    override fun createImportAction(editor: Editor, file: KtFile): QuestionAction? =
+        if (element != null) ImportQuestionAction(file.project, editor, file, importVariants) else null
 
     override fun createAutoImportAction(
         editor: Editor,
@@ -94,10 +97,6 @@ class ImportQuickFix(
         return ImportQuestionAction(file.project, editor, file, listOf(singleSuggestion), onTheFly = true)
     }
 
-    private fun createAddImportAction(project: Project, editor: Editor, file: KtFile): QuestionAction {
-        return ImportQuestionAction(project, editor, file, importVariants)
-    }
-
     override fun showHint(editor: Editor): Boolean {
         val element = element ?: return false
         if (
@@ -108,17 +107,17 @@ class ImportQuickFix(
         }
 
         val file = element.containingKtFile
-        val project = file.project
 
         val elementRange = element.textRange
         val autoImportHintText = KotlinBundle.message("fix.import.question", importVariants.first().fqName.asString())
+        val importAction = createImportAction(editor, file) ?: return false
 
         HintManager.getInstance().showQuestionHint(
             editor,
             autoImportHintText,
             elementRange.startOffset,
             elementRange.endOffset,
-            createAddImportAction(project, editor, file)
+            importAction,
         )
 
         return true

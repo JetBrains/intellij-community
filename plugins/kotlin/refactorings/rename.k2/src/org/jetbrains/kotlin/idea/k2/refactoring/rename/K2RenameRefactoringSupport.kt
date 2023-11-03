@@ -15,17 +15,21 @@ import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.symbols.*
+import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KtKotlinPropertySymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.getJvmName
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.refactoring.rename.KotlinRenameRefactoringSupport
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.searching.inheritors.findAllOverridings
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.NameUtils
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.quoteIfNeeded
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.InvocationKind
 import kotlin.contracts.contract
@@ -51,17 +55,16 @@ internal class K2RenameRefactoringSupport : KotlinRenameRefactoringSupport {
         scope: SearchScope
     ) {}
 
-    override fun checkOriginalUsagesRetargeting(
+    override fun checkUsagesRetargeting(
         declaration: KtNamedDeclaration,
         newName: String,
         originalUsages: MutableList<UsageInfo>,
         newUsages: MutableList<UsageInfo>
     ) {
-        // TODO
-    }
-
-    override fun checkNewNameUsagesRetargeting(declaration: KtNamedDeclaration, newName: String, newUsages: MutableList<UsageInfo>) {
-        // TODO
+        if (declaration is KtClassLikeDeclaration) {
+            checkClassNameShadowing(declaration, newName.quoteIfNeeded(), originalUsages, newUsages)
+        }
+        checkCallableShadowing(declaration, newName.quoteIfNeeded(), originalUsages, newUsages)
     }
 
     override fun getAllOverridenFunctions(function: KtNamedFunction): List<PsiElement> {
@@ -106,7 +109,7 @@ internal class K2RenameRefactoringSupport : KotlinRenameRefactoringSupport {
     }
 
     override fun shortenReferencesLater(element: KtElement) {
-        notImplementedInK2()
+        shortenReferences(element)
     }
 
     @OptIn(KtAllowAnalysisOnEdt::class)
