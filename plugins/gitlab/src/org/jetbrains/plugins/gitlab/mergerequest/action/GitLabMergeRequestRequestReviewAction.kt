@@ -2,23 +2,19 @@
 package org.jetbrains.plugins.gitlab.mergerequest.action
 
 import com.intellij.collaboration.async.combineAndCollect
-import com.intellij.collaboration.async.throwFailure
 import com.intellij.collaboration.messages.CollaborationToolsBundle
-import com.intellij.collaboration.ui.codereview.Avatar
 import com.intellij.collaboration.ui.icon.IconsProvider
-import com.intellij.collaboration.ui.util.popup.ChooserPopupUtil
-import com.intellij.collaboration.ui.util.popup.SelectablePopupItemPresentation
-import com.intellij.collaboration.ui.util.popup.SimpleSelectablePopupItemRenderer
 import com.intellij.ui.awt.RelativePoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import org.jetbrains.plugins.gitlab.api.data.GitLabPlan
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestReviewFlowViewModel
+import org.jetbrains.plugins.gitlab.mergerequest.util.GitLabMergeRequestReviewersUtil
 import java.awt.event.ActionEvent
 import javax.swing.AbstractAction
 import javax.swing.JComponent
 
-// TODO: implement scenario with multiple reviewers
 internal class GitLabMergeRequestRequestReviewAction(
   private val scope: CoroutineScope,
   private val reviewFlowVm: GitLabMergeRequestReviewFlowViewModel,
@@ -36,30 +32,15 @@ internal class GitLabMergeRequestRequestReviewAction(
     val parentComponent = event.source as? JComponent ?: return
     val point = RelativePoint.getSouthWestOf(parentComponent)
     scope.launch {
-      val reviewers = reviewFlowVm.reviewers.value
-      val selectedUser = ChooserPopupUtil.showAsyncChooserPopup(
-        point,
-        reviewFlowVm.potentialReviewers.throwFailure(),
-        filteringMapper = { user -> user.username },
-        renderer = SimpleSelectablePopupItemRenderer.create { reviewer ->
-          SelectablePopupItemPresentation.Simple(
-            reviewer.username,
-            avatarIconsProvider.getIcon(reviewer, Avatar.Sizes.BASE),
-            null,
-            isSelected = reviewers.any { it.id == reviewer.id }
-          )
-        }
-      )
+      val originalReviewersIds = reviewFlowVm.reviewers.value.mapTo(mutableSetOf<String>(), GitLabUserDTO::id)
+      val potentialReviewers = reviewFlowVm.potentialReviewers
+      val updatedReviewers = if (reviewFlowVm.plan.await() == GitLabPlan.FREE)
+        GitLabMergeRequestReviewersUtil.selectReviewer(point, originalReviewersIds, potentialReviewers, avatarIconsProvider)
+      else
+        GitLabMergeRequestReviewersUtil.selectReviewers(point, originalReviewersIds, potentialReviewers, avatarIconsProvider)
 
-      // TODO: replace on CollectionDelta
-      if (selectedUser != null) {
-        if (reviewers.any { it.id == selectedUser.id }) {
-          reviewFlowVm.removeReviewer(selectedUser)
-        }
-        else {
-          reviewFlowVm.setReviewers(listOf(selectedUser))
-        }
-      }
+      updatedReviewers ?: return@launch
+      reviewFlowVm.setReviewers(updatedReviewers)
     }
   }
 }

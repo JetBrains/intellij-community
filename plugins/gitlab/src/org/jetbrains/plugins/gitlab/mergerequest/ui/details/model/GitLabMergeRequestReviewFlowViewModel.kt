@@ -18,6 +18,7 @@ import com.intellij.util.childScope
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.gitlab.api.SinceGitLab
+import org.jetbrains.plugins.gitlab.api.data.GitLabPlan
 import org.jetbrains.plugins.gitlab.api.dto.GitLabReviewerDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
@@ -31,6 +32,8 @@ import org.jetbrains.plugins.gitlab.util.GitLabBundle
 
 internal interface GitLabMergeRequestReviewFlowViewModel : CodeReviewFlowViewModel<GitLabReviewerDTO> {
   val isBusy: Flow<Boolean>
+
+  val plan: Deferred<GitLabPlan>
 
   val currentUser: GitLabUserDTO
   val author: GitLabUserDTO
@@ -101,6 +104,8 @@ internal class GitLabMergeRequestReviewFlowViewModelImpl(
   private val taskLauncher = SingleCoroutineLauncher(scope)
 
   override val isBusy: Flow<Boolean> = taskLauncher.busy
+
+  override val plan: Deferred<GitLabPlan> = projectData.plan
 
   override val author: GitLabUserDTO = mergeRequest.author
 
@@ -235,19 +240,24 @@ internal class GitLabMergeRequestReviewFlowViewModelImpl(
 
   @SinceGitLab("13.8")
   override fun setReviewers(reviewers: List<GitLabUserDTO>) = runAction {
-    mergeRequest.setReviewers(reviewers) // TODO: implement via CollectionDelta
+    mergeRequest.setReviewers(reviewers)
   }
 
   @SinceGitLab("13.8")
   override fun setMyselfAsReviewer() = runAction {
-    mergeRequest.setReviewers(listOf(currentUser)) // TODO: implement via CollectionDelta
+    if (plan.await() == GitLabPlan.FREE) {
+      mergeRequest.setReviewers(listOf(currentUser))
+    }
+    else {
+      mergeRequest.setReviewers(listOf(currentUser) + reviewers.value)
+    }
   }
 
   @SinceGitLab("13.8")
   override fun removeReviewer(reviewer: GitLabUserDTO) = runAction {
     val newReviewers = reviewers.first().toMutableList()
     newReviewers.removeIf { it.id == reviewer.id }
-    mergeRequest.setReviewers(newReviewers) // TODO: implement via CollectionDelta
+    mergeRequest.setReviewers(newReviewers)
   }
 
   override fun reviewerRereview() = runAction {

@@ -22,6 +22,7 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.future.await
 import org.jetbrains.plugins.gitlab.GitLabProjectsManager
+import org.jetbrains.plugins.gitlab.api.data.GitLabPlan
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabProject
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
@@ -34,6 +35,7 @@ internal interface GitLabMergeRequestCreateViewModel {
 
   val isBusy: Flow<Boolean>
 
+  val plan: Deferred<GitLabPlan>
   val branchState: Flow<BranchState?>
 
   val existingMergeRequest: Flow<String?>
@@ -51,8 +53,7 @@ internal interface GitLabMergeRequestCreateViewModel {
   fun updateTitle(text: String)
   fun updateBranchState(state: BranchState?)
 
-  fun addReviewer(reviewer: GitLabUserDTO)
-  fun removeReviewer(reviewer: GitLabUserDTO)
+  fun setReviewers(reviewers: List<GitLabUserDTO>)
 
   fun createMergeRequest()
 }
@@ -71,6 +72,8 @@ internal class GitLabMergeRequestCreateViewModelImpl(
   private val taskLauncher = SingleCoroutineLauncher(cs)
 
   override val isBusy: Flow<Boolean> = taskLauncher.busy
+
+  override val plan: Deferred<GitLabPlan> = projectData.plan
 
   private val listenableProgressIndicator = ListenableProgressIndicator()
   override val creatingProgressText: Flow<String?> = callbackFlow {
@@ -158,15 +161,8 @@ internal class GitLabMergeRequestCreateViewModelImpl(
     _branchState.value = state
   }
 
-  override fun addReviewer(reviewer: GitLabUserDTO) {
-    // TODO: add ability to select several reviewers
-    val updatedReviewers = _adjustedReviewers.value + reviewer
-    _adjustedReviewers.value = updatedReviewers
-  }
-
-  override fun removeReviewer(reviewer: GitLabUserDTO) {
-    val updatedReviewers = _adjustedReviewers.value - reviewer
-    _adjustedReviewers.value = updatedReviewers
+  override fun setReviewers(reviewers: List<GitLabUserDTO>) {
+    _adjustedReviewers.value = reviewers
   }
 
   override fun createMergeRequest() {

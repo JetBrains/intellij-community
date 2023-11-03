@@ -6,6 +6,7 @@ import com.intellij.collaboration.api.dto.GraphQLConnectionDTO
 import com.intellij.collaboration.api.dto.GraphQLCursorPageInfoDTO
 import com.intellij.collaboration.api.graphql.loadResponse
 import com.intellij.collaboration.api.json.loadJsonList
+import com.intellij.collaboration.api.json.loadJsonValue
 import com.intellij.collaboration.api.page.ApiPageUtil
 import com.intellij.collaboration.util.resolveRelative
 import kotlinx.coroutines.flow.Flow
@@ -13,6 +14,7 @@ import kotlinx.coroutines.flow.map
 import org.jetbrains.plugins.gitlab.api.*
 import org.jetbrains.plugins.gitlab.api.dto.GitLabGraphQLMutationResultDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabLabelDTO
+import org.jetbrains.plugins.gitlab.api.dto.GitLabNamespaceRestDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabRepositoryDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserRestDTO
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestDTO
@@ -40,6 +42,15 @@ suspend fun GitLabApi.Rest.getProjectUsers(uri: URI): HttpResponse<out List<GitL
   val request = request(uri).GET().build()
   return withErrorStats(GitLabApiRequestName.REST_GET_PROJECT_USERS) {
     loadJsonList(request)
+  }
+}
+
+@SinceGitLab("10.3")
+suspend fun GitLabApi.Rest.getProjectNamespace(namespaceId: String): HttpResponse<out GitLabNamespaceRestDTO> {
+  val uri = server.restApiUri.resolveRelative("namespaces").resolveRelative(namespaceId)
+  val request = request(uri).GET().build()
+  return withErrorStats(GitLabApiRequestName.REST_GET_PROJECT_NAMESPACE) {
+    loadJsonValue(request)
   }
 }
 

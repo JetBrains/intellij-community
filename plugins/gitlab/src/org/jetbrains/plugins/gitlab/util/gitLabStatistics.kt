@@ -38,7 +38,7 @@ internal object GitLabStatistics {
   //endregion
 
   //region Counters
-  private val COUNTERS_GROUP = EventLogGroup("vcs.gitlab.counters", version = 13)
+  private val COUNTERS_GROUP = EventLogGroup("vcs.gitlab.counters", version = 14)
 
   /**
    * Server metadata was fetched
@@ -214,6 +214,7 @@ internal object GitLabStatistics {
 
 enum class GitLabApiRequestName {
   REST_GET_CURRENT_USER,
+  REST_GET_PROJECT_NAMESPACE,
   REST_GET_PROJECT_USERS,
   REST_GET_COMMIT,
   REST_GET_COMMIT_DIFF,

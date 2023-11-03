@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.ui.create
 
-import com.intellij.collaboration.async.throwFailure
 import com.intellij.collaboration.ui.ComponentListPanelFactory
 import com.intellij.collaboration.ui.HorizontalListPanel
 import com.intellij.collaboration.ui.VerticalListPanel
@@ -9,16 +8,15 @@ import com.intellij.collaboration.ui.codereview.Avatar
 import com.intellij.collaboration.ui.codereview.comment.CodeReviewCommentUIUtil
 import com.intellij.collaboration.ui.codereview.details.CodeReviewDetailsStatusComponentFactory
 import com.intellij.collaboration.ui.util.bindTextIn
-import com.intellij.collaboration.ui.util.popup.ChooserPopupUtil
-import com.intellij.collaboration.ui.util.popup.SelectablePopupItemPresentation
-import com.intellij.collaboration.ui.util.popup.SimpleSelectablePopupItemRenderer
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import org.jetbrains.plugins.gitlab.api.data.GitLabPlan
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.ui.create.model.GitLabMergeRequestCreateViewModel
+import org.jetbrains.plugins.gitlab.mergerequest.util.GitLabMergeRequestReviewersUtil
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import javax.swing.JComponent
 import javax.swing.JLabel
@@ -71,28 +69,14 @@ internal object GitLabMergeRequestCreateReviewersComponentFactory {
   }
 
   private suspend fun adjustReviewer(point: RelativePoint, createVm: GitLabMergeRequestCreateViewModel) {
-    val reviewers = createVm.adjustedReviewers.value
-    val selectedUser = ChooserPopupUtil.showAsyncChooserPopup(
-      point,
-      createVm.potentialReviewers.throwFailure(),
-      filteringMapper = { user -> user.username },
-      renderer = SimpleSelectablePopupItemRenderer.create { reviewer ->
-        SelectablePopupItemPresentation.Simple(
-          reviewer.username,
-          createVm.avatarIconProvider.getIcon(reviewer, Avatar.Sizes.BASE),
-          null,
-          isSelected = reviewers.any { it.id == reviewer.id }
-        )
-      }
-    )
+    val originalReviewersIds = createVm.adjustedReviewers.value.mapTo(mutableSetOf<String>(), GitLabUserDTO::id)
+    val potentialReviewers = createVm.potentialReviewers
+    val updatedReviewers = if (createVm.plan.await() == GitLabPlan.FREE)
+      GitLabMergeRequestReviewersUtil.selectReviewer(point, originalReviewersIds, potentialReviewers, createVm.avatarIconProvider)
+    else
+      GitLabMergeRequestReviewersUtil.selectReviewers(point, originalReviewersIds, potentialReviewers, createVm.avatarIconProvider)
 
-    if (selectedUser != null) {
-      if (reviewers.any { it.id == selectedUser.id }) {
-        createVm.removeReviewer(selectedUser)
-      }
-      else {
-        createVm.addReviewer(selectedUser)
-      }
-    }
+    updatedReviewers ?: return
+    createVm.setReviewers(updatedReviewers)
   }
 }
