@@ -19,14 +19,15 @@ internal class GitBranchesComposeVm(
   private val coroutineScope: CoroutineScope,
   repository: GitRepository
 ) {
-  val text = MutableStateFlow("")
+  private val _text = MutableStateFlow("")
+  val text: StateFlow<String> = _text.asStateFlow()
 
   private val speedSearchListener = object : PropertyChangeListener {
     override fun propertyChange(evt: PropertyChangeEvent?) {
       if (evt?.propertyName != SpeedSearchSupply.ENTERED_PREFIX_PROPERTY_NAME) {
         return
       }
-      text.value = evt.newValue as String
+      _text.value = evt.newValue as String
     }
   }
 
@@ -62,7 +63,7 @@ internal class GitBranchesComposeVm(
 
   private fun createFilteredBranchesFlow(branches: Collection<GitBranch>): StateFlow<List<GitBranch>> {
     // TODO: sort properly
-    return text.debounce(TEXT_DEBOUNCE).map {
+    return _text.debounce(TEXT_DEBOUNCE).map {
       branches.filter { speedSearch.shouldBeShowing(it.name) }.toList()
     }.stateIn(coroutineScope, SharingStarted.Eagerly, branches.toList())
   }
@@ -72,8 +73,12 @@ internal class GitBranchesComposeVm(
     return awtEvent.isConsumed
   }
 
+  fun updateSpeedSearchText(newText: String) {
+    speedSearch.updatePattern(newText)
+  }
+
   fun createBranchVm(viewScope: CoroutineScope, branch: GitBranch): GitBranchComposeVm {
-    return GitBranchComposeVm(viewScope, branch, text, speedSearch)
+    return GitBranchComposeVm(viewScope, branch, _text, speedSearch)
   }
 
   companion object {

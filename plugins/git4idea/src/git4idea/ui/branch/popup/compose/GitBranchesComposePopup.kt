@@ -1,4 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("FunctionName")
+
 package git4idea.ui.branch.popup.compose
 
 import androidx.compose.foundation.*
@@ -13,6 +15,7 @@ import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.*
 import androidx.compose.ui.input.pointer.PointerEventType
@@ -22,11 +25,13 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.text.*
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.intellij.icons.ExpUiIcons
+import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.keymap.KeymapUtil.getKeyStroke
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
@@ -48,7 +53,10 @@ import org.jetbrains.jewel.ui.Orientation
 import org.jetbrains.jewel.ui.component.Divider
 import org.jetbrains.jewel.ui.component.Icon
 import org.jetbrains.jewel.ui.component.Text
+import org.jetbrains.jewel.ui.component.TextField
+import java.awt.event.KeyEvent
 import javax.swing.JComponent
+import javax.swing.KeyStroke
 
 internal fun createComposeBranchesPopup(project: Project, repository: GitRepository): JBPopup {
   val size = JBDimension(450, 420)
@@ -80,24 +88,57 @@ private fun createBranchesPopupComposeComponent(
     val coroutineScope = rememberCoroutineScope()
     val branchesVm = remember(coroutineScope, project, repository) { GitBranchesComposeVm(coroutineScope, repository) }
     val text by branchesVm.text.collectAsState()
+    var textFieldFocused by remember { mutableStateOf(false) }
+    var textFieldSelection by remember { mutableStateOf(androidx.compose.ui.text.TextRange.Zero) }
+    val textFieldValue by derivedStateOf {
+      TextFieldValue(text, textFieldSelection)
+    }
+    val textFieldFocusRequester = remember { FocusRequester() }
+    val branchesFocusRequester = remember { FocusRequester() }
+    val findKeyStroke = remember { getKeyStroke(ActionManager.getInstance().getAction("Find").shortcutSet) }
 
     Box(modifier = Modifier
       .fillMaxSize()
       .background(JBUI.CurrentTheme.Popup.BACKGROUND.toComposeColor())
       .padding(start = 12.dp, end = 3.dp, top = 5.dp, bottom = 5.dp)
-      .onPreviewKeyEvent {
-        val awtEvent = it.nativeKeyEvent as java.awt.event.KeyEvent
-        branchesVm.handleKeyBySpeedSearch(awtEvent)
+      .onPreviewKeyEvent { keyEvent ->
+        val e = keyEvent.nativeKeyEvent as KeyEvent
+        when {
+          keyEvent.key == Key.DirectionUp || keyEvent.key == Key.DirectionDown || keyEvent.key == Key.Enter -> {
+            branchesFocusRequester.requestFocus()
+            false
+          }
+          Character.isWhitespace(keyEvent.key.nativeKeyCode) -> {
+            true
+          }
+          findKeyStroke == KeyStroke.getKeyStroke(e.keyCode, e.modifiersEx, e.id == KeyEvent.KEY_RELEASED) -> {
+            textFieldFocusRequester.requestFocus()
+            textFieldSelection = TextRange(text.length)
+            true
+          }
+          textFieldFocused -> {
+            // TextField will handle it
+            false
+          }
+          else -> branchesVm.handleKeyBySpeedSearch(e)
+        }
       }
     ) {
       Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        DummySearchTextField(text)
+        SearchTextField(
+          textFieldValue,
+          modifier = Modifier.fillMaxWidth().focusRequester(textFieldFocusRequester).onFocusChanged {
+            textFieldFocused = it.isFocused
+          },
+          onValueChange = {
+            branchesVm.updateSpeedSearchText(it.text)
+            textFieldSelection = it.selection
+          })
         Divider(orientation = Orientation.Horizontal, color = UIUtil.getTooltipSeparatorColor().toComposeColor())
 
-        val focusRequester = remember { FocusRequester() }
         Branches(
           branchesVm,
-          modifier = Modifier.focusRequester(focusRequester),
+          modifier = Modifier.focusRequester(branchesFocusRequester),
           dataContextProvider = { branch ->
             createDataContext(project, repository, listOf(repository), branch)
           },
@@ -106,7 +147,7 @@ private fun createBranchesPopupComposeComponent(
 
         // focus Branches tree by default
         LaunchedEffect(Unit) {
-          focusRequester.requestFocus()
+          branchesFocusRequester.requestFocus()
         }
       }
     }
@@ -116,23 +157,28 @@ private fun createBranchesPopupComposeComponent(
 }
 
 @Composable
-private fun DummySearchTextField(
-  text: String
+private fun SearchTextField(
+  value: TextFieldValue,
+  modifier: Modifier = Modifier,
+  onValueChange: (value: TextFieldValue) -> Unit
 ) {
-  Box(modifier = Modifier.offset(x = 6.dp).pointerHoverIcon(PointerIcon.Text).padding(vertical = 8.dp)) {
-    Row(
-      horizontalArrangement = Arrangement.spacedBy(6.dp)
-    ) {
-      Icon("expui/general/search.svg", "Search", ExpUiIcons::class.java)
-      Text(
-        text = text.takeIf { it.isNotEmpty() } ?: "Search branch",
-        style = TextStyle(
-          fontSize = 13.sp,
-          color = UIUtil.getContextHelpForeground().toComposeColor(),
-        )
-      )
+  TextField(
+    value,
+    modifier = modifier.padding(top = 3.dp, bottom = 3.dp),
+    onValueChange = {
+      onValueChange(it)
+    },
+    placeholder = {
+      Text("Search", color = UIUtil.getContextHelpForeground().toComposeColor())
+    },
+    undecorated = true,
+    leadingIcon = {
+      Row {
+        Icon("expui/general/search.svg", "Search", ExpUiIcons::class.java)
+        Spacer(modifier = Modifier.width(5.dp))
+      }
     }
-  }
+  )
 }
 
 @Composable
