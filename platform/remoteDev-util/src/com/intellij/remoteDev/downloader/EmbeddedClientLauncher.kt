@@ -15,6 +15,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.projectRoots.SimpleJavaSdkType
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.bootstrap.RuntimeModuleIntrospection
 import com.intellij.platform.runtime.repository.ProductMode
@@ -146,6 +147,9 @@ class EmbeddedClientLauncher private constructor(private val moduleRepository: R
       "-Dsplash=true",
     )
     vmParametersList.addAll(jetBrainsClientOptions)
+    if (SystemInfo.isMac) {
+      vmParametersList.add("-Dapple.awt.application.name=JetBrains Client")
+    }
     
     val openedPackagesStream = EmbeddedClientLauncher::class.java.getResourceAsStream("/META-INF/OpenedPackages.txt")
                                ?: error("Cannot load OpenedPackages.txt")
