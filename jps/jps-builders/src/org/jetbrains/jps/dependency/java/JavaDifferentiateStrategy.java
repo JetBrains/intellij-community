@@ -148,7 +148,10 @@ public final class JavaDifferentiateStrategy implements DifferentiateStrategy {
 
     if (changedClass.isAnnotation() && changedClass.getRetentionPolicy() == RetentionPolicy.SOURCE) {
       debug("Annotation, retention policy = SOURCE => a switch to non-incremental mode requested");
-      return false;
+      if (!affectOnNonIncrementalChange(context, changedClass.getReferenceID(), changedClass, present)) {
+        debug("End of Differentiate, returning false");
+        return false;
+      }
     }
 
     if (addedFlags.isProtected()) {
@@ -193,7 +196,7 @@ public final class JavaDifferentiateStrategy implements DifferentiateStrategy {
 
         if (removedTargets.contains(ElemType.LOCAL_VARIABLE)) {
           debug("Removed target contains LOCAL_VARIABLE => a switch to non-incremental mode requested");
-          if (!present.incrementalDecision(context, changedClass, null)) {
+          if (!affectOnNonIncrementalChange(context, changedClass.getReferenceID(), changedClass, present)) {
             debug("End of Differentiate, returning false");
             return false;
           }
@@ -652,11 +655,10 @@ public final class JavaDifferentiateStrategy implements DifferentiateStrategy {
 
       if (!context.getParams().isProcessConstantsIncrementally() && !removedField.isPrivate() && removedField.isInlinable() && removedField.getValue() != null) {
         debug("Field had value and was (non-private) final => a switch to non-incremental mode requested");
-        // todo: need support incremental decision?
-        //if (!incrementalDecision(it.name, f, myAffectedFiles, myFilesToCompile, myFilter)) {
+        if (!affectOnNonIncrementalChange(context, changedClass.getReferenceID(), removedField, present)) {
           debug("End of Differentiate, returning false");
           return false;
-        //}
+        }
       }
 
       Set<JvmNodeReferenceID> propagated = present.collectSubclassesWithoutField(changedClass.getReferenceID(), removedField.getName());
@@ -701,11 +703,10 @@ public final class JavaDifferentiateStrategy implements DifferentiateStrategy {
           }
           else {
             debug("Potentially inlined field changed its access or value => a switch to non-incremental mode requested");
-            // todo
-            //if (!incrementalDecision(it.name, field, myAffectedFiles, myFilesToCompile, myFilter)) {
+            if (!affectOnNonIncrementalChange(context, changedClass.getReferenceID(), changedField, present)) {
               debug("End of Differentiate, returning false");
               return false;
-            //}
+            }
           }
         }
       }
@@ -916,13 +917,39 @@ public final class JavaDifferentiateStrategy implements DifferentiateStrategy {
     }
   }
 
+  // todo: probably support a file filter over a module structure
+  private static boolean affectOnNonIncrementalChange(DifferentiateContext context, JvmNodeReferenceID owner, Proto proto, Utils utils) {
+    if (proto.isPublic()) {
+      debug("Public access, switching to a non-incremental mode");
+      return false;
+    }
+
+    if (proto.isProtected()) {
+      debug("Protected access, softening non-incremental decision: adding all relevant subclasses for a recompilation");
+      debug("Root class: ", owner);
+      for (ReferenceID id : proto instanceof JvmField? utils.collectSubclassesWithoutField(owner, proto.getName()) : utils.allSubclasses(owner)) {
+        affectNodeSources(context, id, "Adding ");
+      }
+    }
+
+    String packageName = JvmClass.getPackageName(owner.getNodeName());
+    debug("Softening non-incremental decision: adding all package classes for a recompilation");
+    debug("Package name: ", packageName);
+    for (ReferenceID nodeWithinPackage : Iterators.filter(context.getGraph().getRegisteredNodes(), id -> id instanceof JvmNodeReferenceID && packageName.equals(JvmClass.getPackageName(((JvmNodeReferenceID)id).getNodeName())))) {
+      affectNodeSources(context, nodeWithinPackage, "Adding ");
+    }
+    
+    return true;
+  }
+
   private static void affectNodeSources(DifferentiateContext context, ReferenceID clsId, String affectReason) {
     affectNodeSources(context, clsId, affectReason, false);
   }
   
   private static void affectNodeSources(DifferentiateContext context, ReferenceID clsId, String affectReason, boolean forceAffect) {
+    Set<NodeSource> deletedSources = context.getDelta().getDeletedSources();
     for (NodeSource source : context.getGraph().getSources(clsId)) {
-      if (forceAffect || !context.isCompiled(source)) {
+      if (forceAffect || !context.isCompiled(source) && !deletedSources.contains(source)) {
         context.affectNodeSource(source);
         debug(affectReason, source.getPath());
       }

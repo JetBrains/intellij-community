@@ -5,7 +5,10 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.dependency.*;
+import org.jetbrains.jps.dependency.BackDependencyIndex;
+import org.jetbrains.jps.dependency.Graph;
+import org.jetbrains.jps.dependency.NodeSource;
+import org.jetbrains.jps.dependency.ReferenceID;
 import org.jetbrains.jps.javac.Iterators;
 
 import java.util.*;
@@ -288,55 +291,6 @@ public final class Utils {
     return Boolean.FALSE;
   }
 
-
-  public boolean incrementalDecision(DifferentiateContext context, JvmClass owner, @Nullable JvmField field) {
-    // Public branch --- hopeless
-
-    if ((field != null? field : owner).isPublic()) {
-      debug("Public access, switching to a non-incremental mode");
-      return false;
-    }
-
-    // Protected branch
-
-    Set<NodeSource> toRecompile = new HashSet<>();
-    if ((field != null? field : owner).isProtected()) {
-      debug("Protected access, softening non-incremental decision: adding all relevant subclasses for a recompilation");
-      debug("Root class: " + owner.getName());
-
-      Set<JvmNodeReferenceID> propagated;
-      if (field != null) {
-        propagated = collectSubclassesWithoutField(owner.getReferenceID(), field.getName());
-      }
-      else {
-        JvmNodeReferenceID ownerID = owner.getReferenceID();
-        propagated = new HashSet<>();
-        for (ReferenceID id : withAllSubclasses(ownerID)) {
-          if (id instanceof JvmNodeReferenceID && !id.equals(ownerID)) {
-            propagated.add((JvmNodeReferenceID)id);
-          }
-        }
-      }
-      Iterators.collect(Iterators.flat(Iterators.map(propagated, id -> myGraph.getSources(id))), toRecompile);
-    }
-
-    // Package-local branch
-
-    String packageName = owner.getPackageName();
-    debug("Softening non-incremental decision: adding all package classes for a recompilation");
-    debug("Package name: " + packageName);
-
-    Iterators.collect(Iterators.flat(Iterators.map(
-      Iterators.filter(myGraph.getRegisteredNodes(), id -> id instanceof JvmNodeReferenceID && packageName.equals(JvmClass.getPackageName(((JvmNodeReferenceID)id).getNodeName()))),
-      id -> myGraph.getSources(id)
-    )), toRecompile);
-
-    for (NodeSource source : Iterators.filter(toRecompile, s -> !context.isCompiled(s) && !context.getDelta().getDeletedSources().contains(s))) {
-      context.affectNodeSource(source);
-    }
-
-    return true;
-  }
 
   private static <K, V> Function<K, V> cachingFunction(Function<K, V> f) {
     return new Function<>() {

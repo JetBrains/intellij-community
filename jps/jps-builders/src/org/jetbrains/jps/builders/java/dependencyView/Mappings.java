@@ -973,8 +973,8 @@ public final class Mappings {
                                       final Collection<? super File> affectedFiles,
                                       final Collection<? extends File> currentlyCompiled,
                                       final @Nullable DependentFilesFilter filter) {
-    final boolean isField = member instanceof FieldRepr;
     final Util self = new Util();
+    final int classname = member instanceof ClassRepr? member.name : owner;
 
     // Public branch --- hopeless
     if (member.isPublic()) {
@@ -987,9 +987,16 @@ public final class Mappings {
     // Protected branch
     if (member.isProtected()) {
       debug("Protected access, softening non-incremental decision: adding all relevant subclasses for a recompilation");
-      debug("Root class: ", owner);
+      debug("Root class: ", classname);
 
-      final IntSet propagated = self.propagateFieldAccess(isField ? member.name : myEmptyName, owner);
+      final IntSet propagated;
+      if (member instanceof FieldRepr) {
+        propagated = self.propagateFieldAccess(member.name, classname);
+      }
+      else {
+        propagated = getAllSubclasses(classname);
+        propagated.remove(classname);
+      }
       propagated.forEach(className -> {
         final Iterable<File> fileNames = classToSourceFileGet(className);
         if (fileNames != null) {
@@ -1003,7 +1010,7 @@ public final class Mappings {
       });
     }
 
-    final String cName = myContext.getValue(isField ? owner : member.name);
+    final String cName = myContext.getValue(classname);
     if (cName != null) {
       final String packageName = ClassRepr.getPackageName(cName);
 
