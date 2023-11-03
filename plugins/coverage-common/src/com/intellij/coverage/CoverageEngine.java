@@ -64,9 +64,25 @@ public abstract class CoverageEngine {
   }
 
   /**
+   * @deprecated Use {@link #getTestsForLine(Project, CoverageSuitesBundle, String, int)} instead
+   */
+  @Deprecated(forRemoval = true)
+  public Set<String> getTestsForLine(Project project, String classFQName, int lineNumber) {
+    return Collections.emptySet();
+  }
+
+  /**
    * @return true, if test data was collected
    */
   public boolean wasTestDataCollected(Project project, CoverageSuitesBundle bundle) {
+    return false;
+  }
+
+  /**
+   * @deprecated Use {@link #wasTestDataCollected(Project, CoverageSuitesBundle)} instead
+   */
+  @Deprecated(forRemoval = true)
+  public boolean wasTestDataCollected(Project project) {
     return false;
   }
 
