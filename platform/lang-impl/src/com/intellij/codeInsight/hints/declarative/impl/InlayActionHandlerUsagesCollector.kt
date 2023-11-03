@@ -6,8 +6,10 @@ import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.internal.statistic.utils.getPluginInfo
+import org.jetbrains.annotations.ApiStatus
 
-internal object InlayActionHandlerUsagesCollector : CounterUsagesCollector() {
+@ApiStatus.Internal
+object InlayActionHandlerUsagesCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
   private val GROUP = EventLogGroup("inlay.action.handler", 1)
