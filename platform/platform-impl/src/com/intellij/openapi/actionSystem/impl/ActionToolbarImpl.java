@@ -252,6 +252,11 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       public @NotNull ActionUpdateThread getActionUpdateThread() {
         return ActionUpdateThread.EDT;
       }
+
+      @Override
+      public boolean isDumbAware() {
+        return true;
+      }
     };
     mySecondaryActions.getTemplatePresentation().setIconSupplier(() -> AllIcons.General.GearPlain);
     mySecondaryActions.setPopup(true);
