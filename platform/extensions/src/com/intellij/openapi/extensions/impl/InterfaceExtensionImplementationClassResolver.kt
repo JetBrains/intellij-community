@@ -26,6 +26,7 @@ internal object InterfaceExtensionImplementationClassResolver : ImplementationCl
       val idString = pluginDescriptor.pluginId.idString
       if (idString != "com.intellij.java" &&
           idString != "com.intellij.java.ide" &&
+          idString != "com.intellij.java.frontend" &&
           idString != "org.jetbrains.android" &&
           idString != "com.intellij.kotlinNative.platformDeps" &&
           idString != "com.jetbrains.rider.android") {
