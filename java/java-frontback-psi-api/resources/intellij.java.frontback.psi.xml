@@ -1,5 +1,5 @@
 <idea-plugin package="com.intellij">
   <extensions defaultExtensionNs="com.intellij">
-    <project.extras implementation="com.intellij.openapi.roots.JavaLangLevelProjectExtras"/>
+    <projectCustomDataSynchronizer implementation="com.intellij.openapi.roots.JavaLangLevelProjectCustomDataSynchronizer"/>
   </extensions>
 </idea-plugin>

@@ -6,7 +6,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.NullableLanguageLevelHolder
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.VirtualFileExtrasProvider
+import com.intellij.openapi.vfs.VirtualFileCustomDataProvider
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.PsiManager
@@ -16,9 +16,9 @@ import kotlinx.coroutines.flow.map
 import kotlin.reflect.KType
 import kotlin.reflect.typeOf
 
-class JavaLangLevelVirtualFileExtrasProvider : VirtualFileExtrasProvider<NullableLanguageLevelHolder> {
+class JavaLangLevelVirtualFileCustomDataProvider : VirtualFileCustomDataProvider<NullableLanguageLevelHolder> {
   companion object {
-    val LOG = logger<JavaLangLevelVirtualFileExtrasProvider>()
+    val LOG = logger<JavaLangLevelVirtualFileCustomDataProvider>()
   }
 
   override val id: String = "virtualFileJavaLangLevel"
@@ -29,9 +29,11 @@ class JavaLangLevelVirtualFileExtrasProvider : VirtualFileExtrasProvider<Nullabl
   override fun getValues(project: Project, virtualFile: VirtualFile): Flow<NullableLanguageLevelHolder> {
     return project.messageBus.subscribeAsFlow(VirtualFileJavaLanguageLevelListener.TOPIC) {
       trySend(getFileJavaLanguageLevel(virtualFile, project))
+
+      val virtualFileRef = virtualFile
       object : VirtualFileJavaLanguageLevelListener {
-        override fun levelChanged(changedFile: VirtualFile, newLevel: LanguageLevel?) {
-          if (changedFile != virtualFile) return
+        override fun levelChanged(virtualFile: VirtualFile, newLevel: LanguageLevel?) {
+          if (virtualFile != virtualFileRef) return
           trySend(newLevel)
         }
       }
