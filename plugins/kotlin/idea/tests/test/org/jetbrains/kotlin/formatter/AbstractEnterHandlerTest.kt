@@ -48,6 +48,17 @@ abstract class AbstractEnterHandlerTest : KotlinLightPlatformCodeInsightTestCase
             "// IGNORE_INV_FORMATTER"
         ) != null
 
+        val normalIndentSizePrefix = "// NORMAL_INDENT_SIZE:"
+        val normalIndentSize =
+            InTextDirectivesUtils
+                .findStringWithPrefixes(
+                    originalFileText,
+                    normalIndentSizePrefix
+                )
+                ?.replace(normalIndentSizePrefix, "")
+                ?.trim()
+                ?.toInt()
+
         Assert.assertFalse(
             "Only one option of 'WITHOUT_CUSTOM_LINE_INDENT_PROVIDER' and 'IGNORE_FORMATTER' is available at the same time",
             withoutCustomLineIndentProvider && ignoreFormatter
@@ -61,6 +72,13 @@ abstract class AbstractEnterHandlerTest : KotlinLightPlatformCodeInsightTestCase
                     configurator.configureSettings()
                 } else {
                     configurator.configureInvertedSettings()
+                }
+                if (normalIndentSize != null) {
+                    val kotlinSettings = it.getCommonSettings(KotlinLanguage.INSTANCE)
+                    if (kotlinSettings.indentOptions == null) {
+                        kotlinSettings.initIndentOptions()
+                    }
+                    kotlinSettings.indentOptions?.INDENT_SIZE = normalIndentSize
                 }
             },
             body = {
