@@ -442,6 +442,7 @@ class NewLogicDelegate(private val project: Project) : LogicDelegate() {
             definitions = definitionsBySource.values.flattenTo(mutableListOf())
                 .onEach { it.order = scriptingSettings.getScriptDefinitionOrder(it) }
                 .sortedBy(ScriptDefinition::order)
+                .takeIf { it.isNotEmpty() }
 
             applyDefinitionsUpdate()
 
