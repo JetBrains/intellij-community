@@ -709,8 +709,8 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
 
     @Override
     public void removeNotify() {
-      super.removeNotify();
       getCaret().setVisible(false); // doesn't happen automatically for some reason and causes Timer leaks
+      super.removeNotify();
     }
 
     @Override
