@@ -465,7 +465,7 @@ class InstancesView extends InstancesViewBase {
     @Override
     public void customizeView(@NotNull InstancesView view, @NotNull XDebugSession session, String className) {
       InstancesViewTreeTableModel treeTableModel = new InstancesViewTreeTableModel(myInstancesTree);
-      JBTreeTable treeTable = new JBTreeTable(treeTableModel);
+      JBTreeTable treeTable = new JBTreeTable(treeTableModel, myInstancesTree);
       treeTable.setDefaultRenderer(Long.class, treeTableModel.createTableCellRenderer());
       treeTable.getTree().setCellRenderer(new XDebuggerTreeRenderer(myInstancesTree.getProject()));
       view.add(treeTable, BorderLayout.CENTER);
