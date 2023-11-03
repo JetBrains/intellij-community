@@ -130,7 +130,7 @@ class EntityStorageSerializationTest {
   }
 
   @Test
-  fun `immutable serializer version`() {
+  fun `immutable serializer version prefix`() {
     val serializer = EntityStorageSerializerImpl(PluginAwareEntityTypesResolver, VirtualFileUrlManagerImpl())
 
     val serializationVersionNumber = "[1-9][0-9]*".toRegex().find(serializer.serializerDataFormatVersion)?.value
@@ -138,11 +138,11 @@ class EntityStorageSerializationTest {
       serializer.serializerDataFormatVersion.substringBefore(serializationVersionNumber)
     }
 
-    assertEquals(usedCacheVersionTypes.last(), serializationVersionPrefix,
-                 "Have you changed serialization version type? Add the new version to the usedCacheVersionPrefixes list!")
+    assertEquals(usedCacheVersionPrefixes.last(), serializationVersionPrefix,
+                 "Have you changed serialization version prefix? Add the new prefix to the usedCacheVersionPrefixes list!")
 
-    assertContentEquals(usedCacheVersionTypes, usedCacheVersionTypes.distinct(),
-                        "Version type of the cache ${serializationVersionPrefix} was used previously. Add the new version type!")
+    assertContentEquals(usedCacheVersionPrefixes, usedCacheVersionPrefixes.distinct(),
+                        "Version prefix of the cache ${serializationVersionPrefix} was used previously. Add the new version prefix!")
   }
 
   @Test
@@ -235,7 +235,7 @@ class EntityStorageSerializationTest {
 /**
  * Stores previously used serialization version prefixes in the [EntityStorageSerializerImpl.serializerDataFormatVersion] to check immutability
  */
-private val usedCacheVersionTypes: List<String> = listOf("v", "version")
+private val usedCacheVersionPrefixes: List<String> = listOf("v", "version")
 
 // Use '#' instead of '$' to separate the subclass of the class
 private val expectedKryoRegistration = """
