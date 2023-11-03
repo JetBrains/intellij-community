@@ -41,8 +41,7 @@ import java.util.function.Supplier;
 // not final - used by Gosu plugin
 public final class Mappings {
   private static final Logger LOG = Logger.getInstance(Mappings.class);
-  public static final String PROCESS_CONSTANTS_NON_INCREMENTAL_PROPERTY = "compiler.process.constants.non.incremental";
-  private boolean myProcessConstantsIncrementally = !Boolean.parseBoolean(System.getProperty(PROCESS_CONSTANTS_NON_INCREMENTAL_PROPERTY, "false"));
+  private boolean myProcessConstantsIncrementally = true;
   private static final boolean USE_NATURAL_INT_MULTIMAP_IMPLEMENTATION = Boolean.parseBoolean(System.getProperty("jps.mappings.natural.int.multimap.impl", "true"));
 
   private static final String CLASS_TO_SUBCLASSES = "classToSubclasses.tab";
@@ -99,6 +98,7 @@ public final class Mappings {
   private Mappings(final Mappings base) throws IOException {
     myLock = base.myLock;
     myIsDelta = true;
+    myProcessConstantsIncrementally = base.myProcessConstantsIncrementally;
     myChangedClasses = new IntOpenHashSet(DEFAULT_SET_CAPACITY, DEFAULT_SET_LOAD_FACTOR);
     myChangedFiles = FileCollectionFactory.createCanonicalFileSet();
     myDeletedClasses = new HashSet<>(DEFAULT_SET_CAPACITY, DEFAULT_SET_LOAD_FACTOR);

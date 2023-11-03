@@ -30,7 +30,7 @@ public final class DependencyGraphImpl extends GraphImpl implements DependencyGr
   }
 
   @Override
-  public DifferentiateResult differentiate(Delta delta, boolean calculateAffected) {
+  public DifferentiateResult differentiate(Delta delta, DifferentiateParameters params) {
 
     Iterable<NodeSource> deltaSources = delta.getSources();
     Set<NodeSource> allProcessedSources = Iterators.collect(Iterators.flat(Arrays.asList(delta.getBaseSources(), deltaSources, delta.getDeletedSources())), new HashSet<>());
@@ -41,7 +41,7 @@ public final class DependencyGraphImpl extends GraphImpl implements DependencyGr
     // better make a node-diff over all compiled sources => the sets of removed, added, deleted _nodes_ will be more accurate and reflecting reality
     List<Node<?, ?>> deletedNodes = Iterators.collect(Iterators.filter(nodesBefore, n -> !nodesAfter.contains(n)), new ArrayList<>());
 
-    if (!calculateAffected) {
+    if (!params.isCalculateAffected()) {
       return new DifferentiateResult() {
         @Override
         public Delta getDelta() {
@@ -67,6 +67,11 @@ public final class DependencyGraphImpl extends GraphImpl implements DependencyGr
       final Map<Usage, Predicate<Node<?, ?>>> affectedUsages = new HashMap<>();
       final Set<BiPredicate<Node<?, ?>, Usage>> usageQueries = new HashSet<>();
       final Set<NodeSource> affectedSources = new HashSet<>();
+
+      @Override
+      public DifferentiateParameters getParams() {
+        return params;
+      }
 
       @Override
       public @NotNull Graph getGraph() {

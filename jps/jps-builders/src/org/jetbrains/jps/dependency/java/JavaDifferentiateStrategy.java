@@ -16,12 +16,8 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 
 public final class JavaDifferentiateStrategy implements DifferentiateStrategy {
-
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.dependency.java.JavaDifferentiateStrategy");
   
-  public static final String PROCESS_CONSTANTS_NON_INCREMENTAL_PROPERTY = "compiler.process.constants.non.incremental";
-  private boolean myProcessConstantsIncrementally = !Boolean.parseBoolean(System.getProperty(PROCESS_CONSTANTS_NON_INCREMENTAL_PROPERTY, "false"));
-
   @Override
   public boolean isIncremental(DifferentiateContext context, Node<?, ?> affectedNode) {
     if (affectedNode instanceof JvmClass && ((JvmClass)affectedNode).getFlags().isGenerated()) {
@@ -654,7 +650,7 @@ public final class JavaDifferentiateStrategy implements DifferentiateStrategy {
     for (JvmField removedField : removed) {
       debug("Field: ", removedField.getName());
 
-      if (!myProcessConstantsIncrementally && !removedField.isPrivate() && removedField.isInlinable() && removedField.getValue() != null) {
+      if (!context.getParams().isProcessConstantsIncrementally() && !removedField.isPrivate() && removedField.isInlinable() && removedField.getValue() != null) {
         debug("Field had value and was (non-private) final => a switch to non-incremental mode requested");
         // todo: need support incremental decision?
         //if (!incrementalDecision(it.name, f, myAffectedFiles, myFilesToCompile, myFilter)) {
@@ -698,7 +694,7 @@ public final class JavaDifferentiateStrategy implements DifferentiateStrategy {
       if (!changedField.isPrivate() && changedField.isInlinable() && changedField.getValue() != null) { // if the field was a compile-time constant
         boolean harmful = !Iterators.isEmpty(Iterators.filter(List.of(addedFlags, removedFlags), f -> f.isStatic() || f.isFinal()));
         if (harmful || diff.valueChanged() || diff.accessRestricted()) {
-          if (myProcessConstantsIncrementally) {
+          if (context.getParams().isProcessConstantsIncrementally()) {
             debug("Potentially inlined field changed its access or value => affecting field usages and static member import usages");
             affectMemberUsages(context, changedClass.getReferenceID(), changedField, propagated);
             affectStaticMemberImportUsages(context, changedClass.getReferenceID(), changedField.getName(), propagated);
