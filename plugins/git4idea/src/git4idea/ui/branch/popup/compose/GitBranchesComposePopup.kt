@@ -24,9 +24,8 @@ import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInParent
-import androidx.compose.ui.text.*
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.TextFieldValue
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.intellij.icons.ExpUiIcons
 import com.intellij.openapi.actionSystem.ActionManager
@@ -35,7 +34,6 @@ import com.intellij.openapi.keymap.KeymapUtil.getKeyStroke
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
-import com.intellij.openapi.util.TextRange
 import com.intellij.platform.compose.JBComposePanel
 import com.intellij.platform.compose.PreviewKeyEventHost
 import com.intellij.platform.compose.onHostPreviewKeyEvent
@@ -285,7 +283,7 @@ private fun SelectableLazyListScope.branches(
     item(branch) {
       val coroutineScope = rememberCoroutineScope()
       val branchVm = remember(coroutineScope, branch) { branchesVm.createBranchVm(coroutineScope, branch) }
-      Branch(
+      BranchListItem(
         branchVm,
         selected = isSelected,
         onHoverChanged = { hovered ->
@@ -307,7 +305,7 @@ private fun SelectableLazyListScope.branches(
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun Branch(
+private fun BranchListItem(
   branchVm: GitBranchComposeVm,
   selected: Boolean,
   modifier: Modifier = Modifier,
@@ -368,19 +366,7 @@ private fun Branch(
         Color.Transparent
       }, shape = RoundedCornerShape(5.dp))
   ) {
-    Row(
-      modifier = Modifier.align(CenterStart).padding(start = 12.dp),
-      verticalAlignment = CenterVertically,
-      horizontalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-      Box(modifier = Modifier.requiredWidth(16.dp))
-      val rangesToHighlight by branchVm.matchingFragments.collectAsState()
-      val highlightColor = UIUtil.getSearchMatchGradientStartColor().toComposeColor()
-      val highlightedBranchName = remember(rangesToHighlight, highlightColor) {
-        branchVm.name.highlightRanges(rangesToHighlight, highlightColor)
-      }
-      Text(highlightedBranchName, maxLines = 1, overflow = TextOverflow.Clip)
-    }
+    GitBranchCompose(branchVm, modifier = Modifier.align(CenterStart).padding(start = 12.dp))
 
     if (showActions) {
       GitComposeBranchActionsPopup(
@@ -393,26 +379,5 @@ private fun Branch(
         }
       )
     }
-  }
-}
-
-private fun String.highlightRanges(
-  rangesToHighlight: List<TextRange>,
-  highlightColor: Color
-): AnnotatedString {
-  var lastEndIndex = 0
-  val text = this
-  return buildAnnotatedString {
-    rangesToHighlight.sortedBy { it.startOffset }.forEach { range ->
-      append(text.substring(lastEndIndex, range.startOffset))
-
-      withStyle(SpanStyle(background = highlightColor)) {
-        append(text.substring(range.startOffset, range.endOffset))
-      }
-
-      lastEndIndex = range.endOffset
-    }
-
-    append(text.substring(lastEndIndex, text.length))
   }
 }
