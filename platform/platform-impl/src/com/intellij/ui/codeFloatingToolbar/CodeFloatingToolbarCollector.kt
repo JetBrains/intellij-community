@@ -9,7 +9,7 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 internal object CodeFloatingToolbarCollector: CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
-  private val GROUP = EventLogGroup("code.floating.toolbar", 1)
+  private val GROUP = EventLogGroup("code.floating.toolbar", 2)
 
   private val SHOWN: EventId2<Int, Boolean> = GROUP.registerEvent("shown", EventFields.Int("lines_selected"), EventFields.Boolean("top_to_bottom"))
 
