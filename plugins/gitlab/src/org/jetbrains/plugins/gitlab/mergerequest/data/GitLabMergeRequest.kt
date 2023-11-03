@@ -122,8 +122,8 @@ internal class LoadedGitLabMergeRequest(
         GitLabApiRequestName.REST_GET_MERGE_REQUEST_STATE_EVENTS, uri, eTag
       )
     }
-  override val stateEvents = stateEventsLoader.batches.collectBatches()
-    .asResultFlow()
+  override val stateEvents = stateEventsLoader.batches
+    .transformConsecutiveSuccesses { collectBatches() }
     .modelFlow(cs, LOG)
 
   private val labelEventsLoader =
@@ -133,8 +133,8 @@ internal class LoadedGitLabMergeRequest(
         GitLabApiRequestName.REST_GET_MERGE_REQUEST_LABEL_EVENTS, uri, eTag
       )
     }
-  override val labelEvents = labelEventsLoader.batches.collectBatches()
-    .asResultFlow()
+  override val labelEvents = labelEventsLoader.batches
+    .transformConsecutiveSuccesses { collectBatches() }
     .modelFlow(cs, LOG)
 
   private val milestoneEventsLoader =
@@ -144,8 +144,8 @@ internal class LoadedGitLabMergeRequest(
         GitLabApiRequestName.REST_GET_MERGE_REQUEST_MILESTONE_EVENTS, uri, eTag
       )
     }
-  override val milestoneEvents = milestoneEventsLoader.batches.collectBatches()
-    .asResultFlow()
+  override val milestoneEvents = milestoneEventsLoader.batches
+    .transformConsecutiveSuccesses { collectBatches() }
     .modelFlow(cs, LOG)
 
   private val _isLoading: MutableStateFlow<Boolean> = MutableStateFlow(false)

@@ -320,6 +320,55 @@ fun <T> Flow<List<T>>.collectBatches(): Flow<List<T>> {
 }
 
 /**
+ * Hack class to wrap any type to ensure equality checking is done through referential equality only.
+ */
+private class ReferentiallyComparedValue<T : Any>(val value: T) {
+  override fun equals(other: Any?): Boolean =
+    value === other
+
+  override fun hashCode(): Int =
+    System.identityHashCode(value)
+}
+
+/**
+ * Transforms a flow of consecutive successes. The flow is reset when a failure is encountered if [resetOnFailure] is `true`.
+ * This means that, if [resetOnFailure] is `true`, the [transformer] block is called once for every series of consecutive
+ * successes. If it is `false`, the [transformer] block is called only once with a flow that receives every success value.
+ *
+ * This acts as a replacement of consecutive `asResultFlow` and `throwFailure` and avoids that exceptions cancel the flow.
+ */
+fun <T, R> Flow<Result<T>>.transformConsecutiveSuccesses(
+  resetOnFailure: Boolean = true,
+  transformer: suspend Flow<T>.() -> Flow<R>
+): Flow<Result<R>> =
+  channelFlow {
+    val successFlows = MutableStateFlow(ReferentiallyComparedValue(MutableSharedFlow<T>(1)))
+
+    launchNow {
+      successFlows
+        .collectLatest { successes ->
+          successes.value
+            .transformer()
+            .collect {
+              send(Result.success(it))
+            }
+        }
+    }
+
+    collect {
+      it.fold(
+        onSuccess = { v -> successFlows.value.value.emit(v) },
+        onFailure = { ex ->
+          if (resetOnFailure) {
+            successFlows.value = ReferentiallyComparedValue(MutableSharedFlow(1))
+          }
+          send(Result.failure(ex))
+        }
+      )
+    }
+  }
+
+/**
  * Maps values in the flow to successful results and catches and wraps any exception into a failure result.
  */
 fun <T> Flow<T>.asResultFlow(): Flow<Result<T>> =

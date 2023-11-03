@@ -57,9 +57,9 @@ class LoadAllGitLabMergeRequestTimelineViewModel(
 
   override val timelineItems: SharedFlow<Result<List<GitLabMergeRequestTimelineItemViewModel>>> =
     mergeRequest.createTimelineItemsFlow(showEvents)
-      .throwFailure()
-      .mapModelsToViewModels { createItemVm(mergeRequest, it) }
-      .asResultFlow()
+      .transformConsecutiveSuccesses {
+        mapModelsToViewModels { createItemVm(mergeRequest, it) }
+      }
       .modelFlow(cs, LOG)
 
   override val newNoteVm: NewGitLabNoteViewModel? =

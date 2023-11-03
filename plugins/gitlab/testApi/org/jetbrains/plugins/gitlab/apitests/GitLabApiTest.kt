@@ -297,7 +297,7 @@ class GitLabApiTest : GitLabApiTestCase() {
       }.batches.first()
 
       assertNotNull(events)
-      assertEquals(listOf(1), events.map { it.id })
+      assertEquals(listOf(1), events.map { l -> l.map { it.id } })
     }
   }
 
@@ -314,7 +314,7 @@ class GitLabApiTest : GitLabApiTestCase() {
       }.batches.first()
 
       assertNotNull(events)
-      assertEquals(listOf(3, 4, 5), events.map { it.id })
+      assertEquals(Result.success(listOf(3, 4, 5)), events.map { l -> l.map { it.id } })
     }
   }
 
@@ -331,7 +331,7 @@ class GitLabApiTest : GitLabApiTestCase() {
       }.batches.first()
 
       assertNotNull(events)
-      assertEquals(listOf(3, 4), events.map { it.id })
+      assertEquals(listOf(3, 4), events.map { l -> l.map { it.id } })
     }
   }
 

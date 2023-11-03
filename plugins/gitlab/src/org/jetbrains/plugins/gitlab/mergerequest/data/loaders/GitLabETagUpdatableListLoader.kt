@@ -2,9 +2,13 @@
 package org.jetbrains.plugins.gitlab.mergerequest.data.loaders
 
 import com.intellij.collaboration.api.page.ApiPageUtil
-import kotlinx.coroutines.*
+import com.intellij.collaboration.util.ResultUtil.runCatchingUser
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.channelFlow
 import java.net.URI
 import java.net.http.HttpResponse
 
@@ -14,24 +18,26 @@ class GitLabETagUpdatableListLoader<T>(
 ) {
   private val updateRequests = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
-  val batches: Flow<List<T>> = channelFlow {
-    var lastETag: String? = null
-    ApiPageUtil.createPagesFlowByLinkHeader(initialURI) {
-      request(it, null)
-    }.collect {
-      send(it.body() ?: error("Empty response"))
-      lastETag = it.headers().firstValue("ETag").orElse(null)
-    }
-
-    updateRequests.collect {
-      val response = request(initialURI, lastETag)
-      val result = response.body()
-      result?.let { send(it) }
-      lastETag = response.headers().firstValue("ETag").orElse(null)
-      if (lastETag == null) {
-        currentCoroutineContext().cancel()
+  val batches: Flow<Result<List<T>>> = channelFlow {
+    runCatchingUser {
+      var lastETag: String? = null
+      ApiPageUtil.createPagesFlowByLinkHeader(initialURI) {
+        request(it, null)
+      }.collect {
+        send(Result.success(it.body() ?: error("Empty response")))
+        lastETag = it.headers().firstValue("ETag").orElse(null)
       }
-    }
+
+      updateRequests.collect {
+        val response = request(initialURI, lastETag)
+        val result = response.body()
+        result?.let { send(Result.success(it)) }
+        lastETag = response.headers().firstValue("ETag").orElse(null)
+        if (lastETag == null) {
+          currentCoroutineContext().cancel()
+        }
+      }
+    }.onFailure { send(Result.failure(it)) }
   }
 
   suspend fun checkForUpdates() {

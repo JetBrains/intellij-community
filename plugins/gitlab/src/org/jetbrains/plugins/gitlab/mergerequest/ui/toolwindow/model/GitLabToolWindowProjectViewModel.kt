@@ -63,11 +63,11 @@ private constructor(parentCs: CoroutineScope,
   private val mergeRequestsVms = Caffeine.newBuilder().build<String, SharedFlow<Result<GitLabMergeRequestViewModels>>> { iid ->
     val projectData = connection.projectData
     projectData.mergeRequests.getShared(iid)
-      .throwFailure()
-      .mapScoped {
-        GitLabMergeRequestViewModels(project, this, projectData, it, this@GitLabToolWindowProjectViewModel, connection.currentUser)
+      .transformConsecutiveSuccesses {
+        mapScoped {
+          GitLabMergeRequestViewModels(project, this, projectData, it, this@GitLabToolWindowProjectViewModel, connection.currentUser)
+        }
       }
-      .asResultFlow()
       .shareIn(cs, SharingStarted.WhileSubscribed(0, 0), 1)
   }
 
