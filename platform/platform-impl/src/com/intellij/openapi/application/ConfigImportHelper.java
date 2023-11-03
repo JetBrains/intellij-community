@@ -14,6 +14,7 @@ import com.intellij.ide.startup.StartupActionScriptManager;
 import com.intellij.ide.startup.StartupActionScriptManager.ActionCommand;
 import com.intellij.ide.ui.laf.LookAndFeelThemeAdapterKt;
 import com.intellij.openapi.application.migrations.BigDataTools232;
+import com.intellij.openapi.application.migrations.HttpClientPostmanConverter233;
 import com.intellij.openapi.application.migrations.PresentationAssistant233;
 import com.intellij.openapi.application.migrations.RustUltimate241;
 import com.intellij.openapi.components.StoragePathMacros;
@@ -959,6 +960,7 @@ public final class ConfigImportHelper {
     new BigDataTools232().migratePlugins(options);
     new PresentationAssistant233().migratePlugin(options);
     new RustUltimate241().migratePlugins(options);
+    new HttpClientPostmanConverter233().migratePlugins(options);
   }
 
   private static void partitionNonBundled(Collection<? extends IdeaPluginDescriptor> descriptors,
