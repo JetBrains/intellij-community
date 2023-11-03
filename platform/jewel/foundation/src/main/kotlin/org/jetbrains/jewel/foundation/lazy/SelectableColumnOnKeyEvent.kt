@@ -15,10 +15,13 @@ public interface SelectableColumnOnKeyEvent {
         allKeys: List<SelectableLazyListKey>,
         state: SelectableLazyListState,
     ) {
-        val firstSelectable = allKeys.withIndex().firstOrNull { it.value is Selectable }
-        if (firstSelectable != null) {
-            state.selectedKeys = listOf(firstSelectable.value.key)
-            state.lastActiveItemIndex = firstSelectable.index
+        for (index in allKeys.indices) {
+            val key = allKeys[index]
+            if (key is Selectable) {
+                state.selectedKeys = listOf(key.key)
+                state.lastActiveItemIndex = index
+                return
+            }
         }
     }
 
@@ -30,23 +33,20 @@ public interface SelectableColumnOnKeyEvent {
         keys: List<SelectableLazyListKey>,
         state: SelectableLazyListState,
     ) {
-        state.lastActiveItemIndex?.let {
-            val iterator = keys.listIterator(it)
-            val list = buildList {
-                while (iterator.hasPrevious()) {
-                    val previous = iterator.previous()
-                    if (previous is Selectable) {
-                        add(previous.key)
-                        state.lastActiveItemIndex = (iterator.previousIndex() + 1).coerceAtMost(keys.size)
-                    }
-                }
-            }
-            if (list.isNotEmpty()) {
-                state.selectedKeys =
-                    state.selectedKeys.toMutableList()
-                        .also { selectionList -> selectionList.addAll(list) }
+        val initialIndex = state.lastActiveItemIndex ?: return
+        val newSelection = ArrayList<Any>(max(initialIndex, state.selectedKeys.size)).apply {
+            addAll(state.selectedKeys)
+        }
+        var lastActiveItemIndex = initialIndex
+        for (index in initialIndex - 1 downTo 0) {
+            val key = keys[index]
+            if (key is Selectable) {
+                newSelection.add(key.key)
+                lastActiveItemIndex = index
             }
         }
+        state.lastActiveItemIndex = lastActiveItemIndex
+        state.selectedKeys = newSelection
     }
 
     /**
@@ -56,12 +56,14 @@ public interface SelectableColumnOnKeyEvent {
         keys: List<SelectableLazyListKey>,
         state: SelectableLazyListState,
     ) {
-        keys.withIndex()
-            .lastOrNull { it.value is Selectable }
-            ?.let {
-                state.selectedKeys = listOf(it)
-                state.lastActiveItemIndex = it.index
+        for (index in keys.lastIndex downTo 0) {
+            val key = keys[index]
+            if (key is Selectable) {
+                state.selectedKeys = listOf(key.key)
+                state.lastActiveItemIndex = index
+                return
             }
+        }
     }
 
     /**
@@ -72,16 +74,20 @@ public interface SelectableColumnOnKeyEvent {
         keys: List<SelectableLazyListKey>,
         state: SelectableLazyListState,
     ) {
-        state.lastActiveItemIndex?.let {
-            val list = mutableListOf<Any>(state.selectedKeys)
-            keys.subList(it, keys.lastIndex).forEachIndexed { index, selectableLazyListKey ->
-                if (selectableLazyListKey is Selectable) {
-                    list.add(selectableLazyListKey.key)
-                }
-                state.lastActiveItemIndex = index
-            }
-            state.selectedKeys = list
+        val initialIndex = state.lastActiveItemIndex ?: return
+        val newSelection = ArrayList<Any>(max(keys.size - initialIndex, state.selectedKeys.size)).apply {
+            addAll(state.selectedKeys)
         }
+        var lastActiveItemIndex = initialIndex
+        for (index in initialIndex + 1..keys.lastIndex) {
+            val key = keys[index]
+            if (key is Selectable) {
+                newSelection.add(key.key)
+                lastActiveItemIndex = index
+            }
+        }
+        state.lastActiveItemIndex = lastActiveItemIndex
+        state.selectedKeys = newSelection
     }
 
     /**
@@ -91,17 +97,14 @@ public interface SelectableColumnOnKeyEvent {
         keys: List<SelectableLazyListKey>,
         state: SelectableLazyListState,
     ) {
-        state.lastActiveItemIndex?.let { lastActiveIndex ->
-            if (lastActiveIndex == 0) return@let
-            keys.withIndex()
-                .toList()
-                .dropLastWhile { it.index >= lastActiveIndex }
-                .reversed()
-                .firstOrNull { it.value is Selectable }
-                ?.let { (index, selectableKey) ->
-                    state.selectedKeys = listOf(selectableKey.key)
-                    state.lastActiveItemIndex = index
-                }
+        val initialIndex = state.lastActiveItemIndex ?: return
+        for (index in initialIndex - 1 downTo 0) {
+            val key = keys[index]
+            if (key is Selectable) {
+                state.selectedKeys = listOf(key.key)
+                state.lastActiveItemIndex = index
+                return
+            }
         }
     }
 
@@ -112,17 +115,15 @@ public interface SelectableColumnOnKeyEvent {
         keys: List<SelectableLazyListKey>,
         state: SelectableLazyListState,
     ) {
-        state.lastActiveItemIndex?.let { lastActiveIndex ->
-            if (lastActiveIndex == 0) return@let
-            keys.withIndex()
-                .toList()
-                .dropLastWhile { it.index >= lastActiveIndex }
-                .reversed()
-                .firstOrNull { it.value is Selectable }
-                ?.let { (index, selectableKey) ->
-                    state.selectedKeys = state.selectedKeys + selectableKey.key
-                    state.lastActiveItemIndex = index
-                }
+        // todo we need deselect if we are changing direction
+        val initialIndex = state.lastActiveItemIndex ?: return
+        for (index in initialIndex - 1 downTo 0) {
+            val key = keys[index]
+            if (key is Selectable) {
+                state.selectedKeys += key.key
+                state.lastActiveItemIndex = index
+                return
+            }
         }
     }
 
@@ -133,15 +134,14 @@ public interface SelectableColumnOnKeyEvent {
         keys: List<SelectableLazyListKey>,
         state: SelectableLazyListState,
     ) {
-        state.lastActiveItemIndex?.let { lastActiveIndex ->
-            if (lastActiveIndex == keys.lastIndex) return@let
-            keys.withIndex()
-                .dropWhile { it.index <= lastActiveIndex }
-                .firstOrNull { it.value is Selectable }
-                ?.let { (index, selectableKey) ->
-                    state.selectedKeys = listOf(selectableKey.key)
-                    state.lastActiveItemIndex = index
-                }
+        val initialIndex = state.lastActiveItemIndex ?: return
+        for (index in initialIndex + 1..keys.lastIndex) {
+            val key = keys[index]
+            if (key is Selectable) {
+                state.selectedKeys = listOf(key.key)
+                state.lastActiveItemIndex = index
+                return
+            }
         }
     }
 
@@ -153,16 +153,14 @@ public interface SelectableColumnOnKeyEvent {
         state: SelectableLazyListState,
     ) {
         // todo we need deselect if we are changing direction
-        state.lastActiveItemIndex?.let { lastActiveIndex ->
-            if (lastActiveIndex == keys.lastIndex) return@let
-            keys
-                .withIndex()
-                .dropWhile { it.index <= lastActiveIndex }
-                .firstOrNull { it.value is Selectable }
-                ?.let { (index, selectableKey) ->
-                    state.selectedKeys = state.selectedKeys + selectableKey.key
-                    state.lastActiveItemIndex = index
-                }
+        val initialIndex = state.lastActiveItemIndex ?: return
+        for (index in initialIndex + 1..keys.lastIndex) {
+            val key = keys[index]
+            if (key is Selectable) {
+                state.selectedKeys += key.key
+                state.lastActiveItemIndex = index
+                return
+            }
         }
     }
 

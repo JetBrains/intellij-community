@@ -67,6 +67,18 @@ public interface SelectableLazyListScope {
 
 internal class SelectableLazyListScopeContainer : SelectableLazyListScope {
 
+    /**
+     * Provides a set of keys that cannot be selected.
+     * Here we use an assumption that amount of selectable items >> amount of non-selectable items.
+     * So, for optimization we will keep only this set.
+     *
+     * @see [isKeySelectable]
+     */
+    private val nonSelectableKeys = hashSetOf<Any>()
+
+    // TODO: [performance] we can get rid of that map if indices won't be used at all in the API
+    private val keyToIndex = hashMapOf<Any, Int>()
+
     private val keys = mutableListOf<SelectableLazyListKey>()
     private val entries = mutableListOf<Entry>()
 
@@ -95,13 +107,21 @@ internal class SelectableLazyListScopeContainer : SelectableLazyListScope {
         ) : Entry
     }
 
+    internal fun getKeyIndex(key: Any): Int = keyToIndex[key] ?: error("Cannot find index of '$key'")
+
+    internal fun isKeySelectable(key: Any): Boolean = key !in nonSelectableKeys
+
     override fun item(
         key: Any,
         contentType: Any?,
         selectable: Boolean,
         content: @Composable (SelectableLazyItemScope.() -> Unit),
     ) {
+        keyToIndex[key] = keys.size
         keys.add(if (selectable) Selectable(key) else NotSelectable(key))
+        if (!selectable) {
+            nonSelectableKeys.add(key)
+        }
         entries.add(Entry.Item(key, contentType, content))
     }
 
@@ -112,15 +132,16 @@ internal class SelectableLazyListScopeContainer : SelectableLazyListScope {
         selectable: (index: Int) -> Boolean,
         itemContent: @Composable (SelectableLazyItemScope.(index: Int) -> Unit),
     ) {
-        val selectableKeys: List<SelectableLazyListKey> =
-            List(count) {
-                if (selectable(it)) {
-                    Selectable(key(it))
-                } else {
-                    NotSelectable(key(it))
-                }
+        // TODO: [performance] now the implementation requires O(count) operations but should be done in ~ O(1)
+        for (index in 0 until count) {
+            val isSelectable = selectable(index)
+            val currentKey = key(index)
+            if (!isSelectable) {
+                nonSelectableKeys.add(currentKey)
             }
-        keys.addAll(selectableKeys)
+            keyToIndex[currentKey] = keys.size
+            keys.add(if (isSelectable) Selectable(currentKey) else NotSelectable(currentKey))
+        }
         entries.add(Entry.Items(count, key, contentType, itemContent))
     }
 
@@ -131,7 +152,11 @@ internal class SelectableLazyListScopeContainer : SelectableLazyListScope {
         selectable: Boolean,
         content: @Composable (SelectableLazyItemScope.() -> Unit),
     ) {
+        keyToIndex[key] = keys.size
         keys.add(if (selectable) Selectable(key) else NotSelectable(key))
+        if (!selectable) {
+            nonSelectableKeys.add(key)
+        }
         entries.add(Entry.StickyHeader(key, contentType, content))
     }
 }

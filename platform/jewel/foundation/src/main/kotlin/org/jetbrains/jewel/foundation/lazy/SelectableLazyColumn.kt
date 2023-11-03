@@ -10,11 +10,14 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
@@ -57,12 +60,13 @@ public fun SelectableLazyColumn(
     val keys = remember(container) { container.getKeys() }
     var isFocused by remember { mutableStateOf(false) }
 
-    fun evaluateIndexes(): List<Int> {
-        val keyToIndexMap = keys.withIndex().associateBy({ it.value.key }, { it.index })
-        return state.selectedKeys.mapNotNull { selected -> keyToIndexMap[selected] }.sorted()
+    val latestOnSelectedIndexesChanged = rememberUpdatedState(onSelectedIndexesChanged)
+    LaunchedEffect(state, container) {
+        snapshotFlow { state.selectedKeys }.collect { selectedKeys ->
+            val indices = selectedKeys.map { key -> container.getKeyIndex(key) }
+            latestOnSelectedIndexesChanged.value.invoke(indices)
+        }
     }
-
-    remember(state.selectedKeys) { onSelectedIndexesChanged(evaluateIndexes()) }
     val focusRequester = remember { FocusRequester() }
     LazyColumn(
         modifier = modifier.onFocusChanged { isFocused = it.hasFocus }
@@ -87,12 +91,22 @@ public fun SelectableLazyColumn(
         flingBehavior = flingBehavior,
     ) {
         container.getEntries().forEach { entry ->
-            AppendEntry(entry, state, isFocused, keys, focusRequester, keyActions, pointerEventActions, selectionMode)
+            appendEntry(
+                entry,
+                state,
+                isFocused,
+                keys,
+                focusRequester,
+                keyActions,
+                pointerEventActions,
+                selectionMode,
+                container::isKeySelectable,
+            )
         }
     }
 }
 
-private fun LazyListScope.AppendEntry(
+private fun LazyListScope.appendEntry(
     entry: Entry,
     state: SelectableLazyListState,
     isFocused: Boolean,
@@ -101,6 +115,7 @@ private fun LazyListScope.AppendEntry(
     keyActions: KeyActions,
     pointerEventActions: PointerEventActions,
     selectionMode: SelectionMode,
+    isKeySelectable: (Any) -> Boolean,
 ) {
     when (entry) {
         is Entry.Item -> item(entry.key, entry.contentType) {
@@ -109,7 +124,7 @@ private fun LazyListScope.AppendEntry(
                     isSelected = entry.key in state.selectedKeys,
                     isActive = isFocused,
                 )
-            if (keys.any { it.key == entry.key && it is SelectableLazyListKey.Selectable }) {
+            if (isKeySelectable(entry.key)) {
                 Box(
                     modifier = Modifier.selectable(
                         requester = focusRequester,
@@ -133,10 +148,9 @@ private fun LazyListScope.AppendEntry(
             key = { entry.key(it) },
             contentType = { entry.contentType(it) },
         ) { index ->
-            val itemScope =
-                SelectableLazyItemScope(entry.key(index) in state.selectedKeys, isFocused)
-
-            if (keys.any { it.key == entry.key(index) && it is SelectableLazyListKey.Selectable }) {
+            val key = remember(entry, index) { entry.key(index) }
+            val itemScope = SelectableLazyItemScope(key in state.selectedKeys, isFocused)
+            if (isKeySelectable(key)) {
                 Box(
                     modifier = Modifier.selectable(
                         requester = focusRequester,
@@ -158,7 +172,7 @@ private fun LazyListScope.AppendEntry(
         is Entry.StickyHeader -> stickyHeader(entry.key, entry.contentType) {
             val itemScope = SelectableLazyItemScope(entry.key in state.selectedKeys, isFocused)
 
-            if (keys.any { it.key == entry.key && it is SelectableLazyListKey.Selectable }) {
+            if (isKeySelectable(entry.key)) {
                 Box(
                     modifier = Modifier.selectable(
                         keybindings = keyActions.keybindings,

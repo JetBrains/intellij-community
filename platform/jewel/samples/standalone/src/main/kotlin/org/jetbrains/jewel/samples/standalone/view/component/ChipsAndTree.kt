@@ -1,5 +1,6 @@
 package org.jetbrains.jewel.samples.standalone.view.component
 
+import androidx.compose.foundation.VerticalScrollbar
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -13,16 +14,19 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import org.jetbrains.jewel.foundation.lazy.SelectableLazyColumn
+import org.jetbrains.jewel.foundation.lazy.rememberSelectableLazyListState
 import org.jetbrains.jewel.foundation.lazy.tree.buildTree
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.samples.standalone.viewmodel.View
@@ -58,35 +62,40 @@ fun ChipsAndTree() {
 @Composable
 fun SelectableLazyColumnSample() {
     val listOfItems = remember {
-        List((5000..10000).random()) { "Item $it" }
+        List(5_000_000) { "Item $it" }
     }
     val interactionSource = remember { MutableInteractionSource() }
-    SelectableLazyColumn(
-        modifier = Modifier
-            .size(200.dp, 200.dp)
-            .focusable(interactionSource = interactionSource),
-        content = {
-            items(
-                count = listOfItems.size,
-                key = { index -> listOfItems[index] },
-            ) { index ->
-                Text(
-                    text = listOfItems[index],
-                    modifier =
-                    Modifier.then(
-                        when {
-                            isSelected && isActive -> Modifier.background(Color.Blue)
-                            isSelected && !isActive -> Modifier.background(Color.Gray)
-                            else -> Modifier
+    val state = rememberSelectableLazyListState()
+    Box(
+        modifier = Modifier.size(200.dp, 200.dp),
+    ) {
+        SelectableLazyColumn(
+            modifier = Modifier.focusable(interactionSource = interactionSource),
+            state = state,
+            content = {
+                items(
+                    count = listOfItems.size,
+                    key = { index -> listOfItems[index] },
+                ) { index ->
+                    Text(
+                        text = listOfItems[index],
+                        modifier =
+                        Modifier.then(
+                            when {
+                                isSelected && isActive -> Modifier.background(Color.Blue)
+                                isSelected && !isActive -> Modifier.background(Color.Gray)
+                                else -> Modifier
+                            },
+                        ).clickable {
+                            println("click on $index")
                         },
-                    ).clickable {
-                        println("click on $index")
-                    },
-                )
-            }
-        },
-        interactionSource = remember { MutableInteractionSource() },
-    )
+                    )
+                }
+            },
+            interactionSource = remember { MutableInteractionSource() },
+        )
+        VerticalScrollbar(rememberScrollbarAdapter(state.lazyListState), modifier = Modifier.align(Alignment.CenterEnd))
+    }
 }
 
 @Composable

@@ -281,26 +281,51 @@ public open class DefaultSelectableLazyColumnKeyActions(
         state: SelectableLazyListState,
         selectionMode: SelectionMode,
     ): Boolean {
+        val singleSelectionEventHandled = handleSingleSelectionEvents(keys, state)
+        if (singleSelectionEventHandled) {
+            return true
+        }
+        if (selectionMode == SelectionMode.Multiple) {
+            val multipleSelectionEventHandled = handleMultipleSelectionEvents(keys, state)
+            if (multipleSelectionEventHandled) {
+                return true
+            }
+        }
+        return false
+    }
+
+    context(SelectableColumnKeybindings, SelectableColumnOnKeyEvent)
+    private fun KeyEvent.handleSingleSelectionEvents(
+        keys: List<SelectableLazyListKey>,
+        state: SelectableLazyListState,
+    ): Boolean {
         when {
             isSelectNextItem -> onSelectNextItem(keys, state)
             isSelectPreviousItem -> onSelectPreviousItem(keys, state)
             isSelectFirstItem -> onSelectFirstItem(keys, state)
             isSelectLastItem -> onSelectLastItem(keys, state)
             isEdit -> onEdit()
+            else -> return false
         }
-        if (selectionMode == SelectionMode.Single) {
-            when {
-                isExtendSelectionToFirstItem -> onExtendSelectionToFirst(keys, state)
-                isExtendSelectionToLastItem -> onExtendSelectionToLastItem(keys, state)
-                isExtendSelectionWithNextItem -> onExtendSelectionWithNextItem(keys, state)
-                isExtendSelectionWithPreviousItem -> onExtendSelectionWithPreviousItem(keys, state)
-                isScrollPageDownAndExtendSelection -> onScrollPageDownAndExtendSelection(keys, state)
-                isScrollPageDownAndSelectItem -> onScrollPageDownAndSelectItem(keys, state)
-                isScrollPageUpAndExtendSelection -> onScrollPageUpAndExtendSelection(keys, state)
-                isScrollPageUpAndSelectItem -> onScrollPageUpAndSelectItem(keys, state)
-                isSelectAll -> onSelectAll(keys, state)
-                else -> return false
-            }
+        return true
+    }
+
+    context(SelectableColumnKeybindings, SelectableColumnOnKeyEvent)
+    private fun KeyEvent.handleMultipleSelectionEvents(
+        keys: List<SelectableLazyListKey>,
+        state: SelectableLazyListState,
+    ): Boolean {
+        when {
+            isExtendSelectionToFirstItem -> onExtendSelectionToFirst(keys, state)
+            isExtendSelectionToLastItem -> onExtendSelectionToLastItem(keys, state)
+            isExtendSelectionWithNextItem -> onExtendSelectionWithNextItem(keys, state)
+            isExtendSelectionWithPreviousItem -> onExtendSelectionWithPreviousItem(keys, state)
+            isScrollPageDownAndExtendSelection -> onScrollPageDownAndExtendSelection(keys, state)
+            isScrollPageDownAndSelectItem -> onScrollPageDownAndSelectItem(keys, state)
+            isScrollPageUpAndExtendSelection -> onScrollPageUpAndExtendSelection(keys, state)
+            isScrollPageUpAndSelectItem -> onScrollPageUpAndSelectItem(keys, state)
+            isSelectAll -> onSelectAll(keys, state)
+            else -> return false
         }
         return true
     }
