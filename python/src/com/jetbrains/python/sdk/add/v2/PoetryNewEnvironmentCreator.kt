@@ -7,7 +7,7 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.ComboBox
-import com.intellij.openapi.ui.TextFieldWithBrowseButton
+import com.intellij.openapi.ui.validation.DialogValidationRequestor
 import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.util.text.nullize
@@ -22,9 +22,8 @@ import kotlinx.coroutines.withContext
 class PoetryNewEnvironmentCreator(presenter: PythonAddInterpreterPresenter) : PythonAddEnvironment(presenter) {
 
   val executable = propertyGraph.property(UNKNOWN_EXECUTABLE)
-  private lateinit var poetryPathField: TextFieldWithBrowseButton
   private lateinit var basePythonComboBox: ComboBox<String>
-  override fun buildOptions(panel: Panel) {
+  override fun buildOptions(panel: Panel, validationRequestor: DialogValidationRequestor) {
     with(panel) {
       row(message("sdk.create.custom.base.python")) {
         basePythonComboBox =
@@ -33,8 +32,10 @@ class PoetryNewEnvironmentCreator(presenter: PythonAddInterpreterPresenter) : Py
             .component
       }
 
-      poetryPathField = executableSelector(message("sdk.create.custom.poetry.path"), executable,
-                                           message("sdk.create.custom.poetry.missing.text"))
+      executableSelector(executable,
+                         validationRequestor,
+                         message("sdk.create.custom.poetry.path"),
+                         message("sdk.create.custom.poetry.missing.text")).component
     }
   }
 

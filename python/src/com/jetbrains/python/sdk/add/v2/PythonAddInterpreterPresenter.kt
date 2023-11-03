@@ -123,7 +123,9 @@ class PythonAddInterpreterPresenter(val state: PythonAddInterpreterState, val ui
     }
 
     state.allExistingSdks.afterChange { _allExistingSdksFlow.tryEmit(it) }
-    state.condaExecutable.afterChange { _currentCondaExecutableFlow.tryEmit(it.tryConvertToPath()) }
+    state.condaExecutable.afterChange {
+      if (!it.startsWith("<")) _currentCondaExecutableFlow.tryEmit(it.tryConvertToPath()) // skip possible <unknown_executable>
+    }
 
     scope.launch(start = CoroutineStart.UNDISPATCHED) {
       _projectLocationContext

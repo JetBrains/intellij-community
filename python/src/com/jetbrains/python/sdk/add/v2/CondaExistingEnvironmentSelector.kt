@@ -10,14 +10,12 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.ComboBox
-import com.intellij.openapi.ui.TextFieldWithBrowseButton
+import com.intellij.openapi.ui.validation.DialogValidationRequestor
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.TaskCancellation
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
-import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.bindItem
-import com.intellij.ui.dsl.builder.bindText
 import com.intellij.ui.layout.predicate
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.sdk.add.target.conda.createCondaSdkFromExistingEnv
@@ -31,20 +29,17 @@ import kotlin.time.Duration.Companion.seconds
 @OptIn(FlowPreview::class)
 class CondaExistingEnvironmentSelector(presenter: PythonAddInterpreterPresenter) : PythonAddEnvironment(presenter) {
   private lateinit var envComboBox: ComboBox<PyCondaEnv?>
-  private lateinit var condaExecutableComboBox: TextFieldWithBrowseButton
   private val selectedEnvironment = propertyGraph.property<PyCondaEnv?>(null)
   private val lastLoadedConda = propertyGraph.property("")
   private val loadingCondaEnvironments = MutableStateFlow(value = false)
 
-  override fun buildOptions(panel: Panel) {
+  override fun buildOptions(panel: Panel, validationRequestor: DialogValidationRequestor) {
     with(panel) {
-      row(message("sdk.create.conda.executable.path")) {
-        condaExecutableComboBox = textFieldWithBrowseButton()
-          .bindText(state.condaExecutable)
-          .displayLoaderWhen(presenter.detectingCondaExecutable, scope = presenter.scope, uiContext = presenter.uiContext)
-          .align(Align.FILL)
-          .component
-      }
+      executableSelector(state.condaExecutable,
+                         validationRequestor,
+                         message("sdk.create.conda.executable.path"),
+                         message("sdk.create.conda.missing.text"))
+        .displayLoaderWhen(presenter.detectingCondaExecutable, scope = presenter.scope, uiContext = presenter.uiContext)
 
       row(message("sdk.create.custom.env.creation.type")) {
         val condaEnvironmentsLoaded = loadingCondaEnvironments.predicate(presenter.scope) { !it }
