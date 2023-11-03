@@ -51,6 +51,10 @@
       <keyboard-shortcut keymap="$default" first-keystroke="ctrl shift alt 9"/>
       <add-to-group group-id="MaintenanceGroup" anchor="before" relative-to-action="DumpLookupElementWeights"/>
     </action>
+    <action id="DumpMLExperimentGroups"
+            class="com.intellij.completion.ml.actions.DumpMLExperimentsGroupsAction">
+      <add-to-group group-id="MaintenanceGroup" anchor="after" relative-to-action="DumpMLCompletionFeatures"/>
+    </action>
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
