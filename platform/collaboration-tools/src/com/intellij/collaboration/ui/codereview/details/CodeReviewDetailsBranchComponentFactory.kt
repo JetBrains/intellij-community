@@ -8,8 +8,8 @@ import com.intellij.collaboration.ui.codereview.details.model.CodeReviewBranches
 import com.intellij.collaboration.ui.util.CodeReviewColorUtil
 import com.intellij.collaboration.ui.util.bindIconIn
 import com.intellij.collaboration.ui.util.bindTextIn
-import com.intellij.collaboration.ui.util.popup.ChooserPopupUtil
 import com.intellij.collaboration.ui.util.popup.PopupItemPresentation
+import com.intellij.collaboration.ui.util.popup.SimplePopupItemRenderer
 import com.intellij.collaboration.ui.util.popup.showAndAwait
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.vcs.changes.ui.CurrentBranchComponent
@@ -76,7 +76,7 @@ object CodeReviewDetailsBranchComponentFactory {
 }
 
 private fun popupActionsRenderer(sourceBranch: String): ListCellRenderer<Any> {
-  return ChooserPopupUtil.createSimpleItemRenderer { item ->
+  return SimplePopupItemRenderer.create { item ->
     when (item) {
       CHECKOUT_ACTION_MARKER -> PopupItemPresentation.Simple(
         CollaborationToolsBundle.message("review.details.branch.checkout.remote", sourceBranch)

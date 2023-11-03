@@ -17,7 +17,7 @@ import java.awt.Component
 import javax.swing.JList
 import javax.swing.ListCellRenderer
 
-class SimplePopupItemRenderer<T>(private val presenter: (T) -> PopupItemPresentation) : ColoredListCellRenderer<T>() {
+class SimplePopupItemRenderer<T> private constructor(private val presenter: (T) -> PopupItemPresentation) : ColoredListCellRenderer<T>() {
   init {
     iconTextGap = JBUIScale.scale(4)
   }
@@ -34,6 +34,18 @@ class SimplePopupItemRenderer<T>(private val presenter: (T) -> PopupItemPresenta
 
     // ColoredListCellRenderer sets null for a background in case of !selected, so it can't work with SelectablePanel
     if (!selected) background = list.background
+  }
+
+  companion object {
+    fun <T> create(presenter: (T) -> PopupItemPresentation): ListCellRenderer<T> {
+      val simplePopupItemRenderer = SimplePopupItemRenderer(presenter)
+      if (!ExperimentalUI.isNewUI())
+        return simplePopupItemRenderer
+
+      simplePopupItemRenderer.ipad.left = 0
+      simplePopupItemRenderer.ipad.right = 0
+      return RoundedCellRenderer(simplePopupItemRenderer, false)
+    }
   }
 }
 

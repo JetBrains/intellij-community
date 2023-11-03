@@ -7,7 +7,6 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.ui.popup.*
 import com.intellij.openapi.ui.popup.util.PopupUtil
-import com.intellij.openapi.ui.popup.util.RoundedCellRenderer
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.*
 import com.intellij.ui.awt.RelativePoint
@@ -30,7 +29,7 @@ object ChooserPopupUtil {
                                    items: List<T>,
                                    presenter: (T) -> PopupItemPresentation,
                                    popupConfig: PopupConfig = PopupConfig.DEFAULT): T? =
-    showChooserPopup(point, items, { presenter(it).shortText }, createSimpleItemRenderer(presenter), popupConfig)
+    showChooserPopup(point, items, { presenter(it).shortText }, SimplePopupItemRenderer.create(presenter), popupConfig)
 
   @JvmOverloads
   suspend fun <T> showChooserPopup(point: RelativePoint,
@@ -60,7 +59,7 @@ object ChooserPopupUtil {
                                               itemsLoader: Flow<List<T>>,
                                               presenter: (T) -> PopupItemPresentation,
                                               popupConfig: PopupConfig = PopupConfig.DEFAULT): T? =
-    showAsyncChooserPopup(point, itemsLoader, { presenter(it).shortText }, createSimpleItemRenderer(presenter), popupConfig)
+    showAsyncChooserPopup(point, itemsLoader, { presenter(it).shortText }, SimplePopupItemRenderer.create(presenter), popupConfig)
 
   @JvmOverloads
   suspend fun <T : Any> showAsyncChooserPopup(point: RelativePoint,
@@ -128,16 +127,6 @@ object ChooserPopupUtil {
       cs?.cancel()
       cs = null
     }
-  }
-
-  fun <T> createSimpleItemRenderer(presenter: (T) -> PopupItemPresentation): ListCellRenderer<T> {
-    val simplePopupItemRenderer = SimplePopupItemRenderer(presenter)
-    if (!ExperimentalUI.isNewUI())
-      return simplePopupItemRenderer
-
-    simplePopupItemRenderer.ipad.left = 0
-    simplePopupItemRenderer.ipad.right = 0
-    return RoundedCellRenderer(simplePopupItemRenderer, false)
   }
 }
 
