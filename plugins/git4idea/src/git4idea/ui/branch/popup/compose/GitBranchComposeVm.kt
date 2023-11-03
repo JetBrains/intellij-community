@@ -14,6 +14,9 @@ internal class GitBranchComposeVm(
   coroutineScope: CoroutineScope,
   branch: GitBranch,
   speedSearchText: StateFlow<String>,
+  val isFavorite: StateFlow<Boolean>,
+  private val toggleIsFavoriteState: () -> Unit,
+  val isCurrent: Boolean,
   private val speedSearch: SpeedSearch,
 ) {
   val name: String = branch.name
@@ -21,4 +24,8 @@ internal class GitBranchComposeVm(
   val matchingFragments: StateFlow<List<TextRange>> = speedSearchText.map {
     speedSearch.matchingFragments(name)?.toList() ?: emptyList()
   }.stateIn(coroutineScope, SharingStarted.Eagerly, emptyList())
+
+  fun toggleIsFavourite() {
+    toggleIsFavoriteState()
+  }
 }

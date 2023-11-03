@@ -1,10 +1,16 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ui.branch.popup.compose
 
+import com.intellij.dvcs.branch.DvcsBranchManager
+import com.intellij.dvcs.branch.DvcsBranchManager.DVCS_BRANCH_SETTINGS_CHANGED
+import com.intellij.openapi.components.service
+import com.intellij.openapi.project.Project
 import com.intellij.ui.speedSearch.SpeedSearch
 import com.intellij.ui.speedSearch.SpeedSearchSupply
 import git4idea.GitBranch
+import git4idea.branch.GitBranchType
 import git4idea.repo.GitRepository
+import git4idea.ui.branch.GitBranchManager
 import git4idea.ui.branch.tree.localBranchesOrCurrent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.FlowPreview
@@ -16,8 +22,9 @@ import java.beans.PropertyChangeListener
 
 @OptIn(FlowPreview::class)
 internal class GitBranchesComposeVm(
+  project: Project,
   private val coroutineScope: CoroutineScope,
-  repository: GitRepository
+  private val repository: GitRepository
 ) {
   private val _text = MutableStateFlow("")
   val text: StateFlow<String> = _text.asStateFlow()
@@ -47,7 +54,18 @@ internal class GitBranchesComposeVm(
     selectPreferredBranch(localBranches, remoteBranches)
   }.stateIn(coroutineScope, SharingStarted.Eagerly, selectPreferredBranch(allLocalBranches, allRemoteBranches))
 
+  private val favouriteChanged = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+
+  private val branchManagerListener = object : DvcsBranchManager.DvcsBranchManagerListener {
+    override fun branchFavoriteSettingsChanged() {
+      favouriteChanged.tryEmit(Unit)
+    }
+  }
+
+  private val branchManager = project.service<GitBranchManager>()
+
   init {
+    project.messageBus.connect(coroutineScope).subscribe(DVCS_BRANCH_SETTINGS_CHANGED, branchManagerListener)
     coroutineScope.coroutineContext.job.invokeOnCompletion {
       speedSearch.removeChangeListener(speedSearchListener)
     }
@@ -78,7 +96,19 @@ internal class GitBranchesComposeVm(
   }
 
   fun createBranchVm(viewScope: CoroutineScope, branch: GitBranch): GitBranchComposeVm {
-    return GitBranchComposeVm(viewScope, branch, _text, speedSearch)
+    val isFavorite = favouriteChanged.map {
+      branchManager.isFavorite(GitBranchType.of(branch), repository, branch.name)
+    }.stateIn(viewScope, SharingStarted.Eagerly, branchManager.isFavorite(GitBranchType.of(branch), repository, branch.name))
+
+    return GitBranchComposeVm(
+      viewScope, branch, _text,
+      isFavorite = isFavorite,
+      toggleIsFavoriteState = {
+        branchManager.setFavorite(GitBranchType.of(branch), repository, branch.name, !isFavorite.value)
+      },
+      isCurrent = repository.currentBranch == branch,
+      speedSearch = speedSearch
+    )
   }
 
   companion object {

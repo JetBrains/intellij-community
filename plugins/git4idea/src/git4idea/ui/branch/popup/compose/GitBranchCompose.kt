@@ -3,10 +3,12 @@
 
 package git4idea.ui.branch.popup.compose
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.requiredWidth
+import androidx.compose.foundation.onClick
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -20,14 +22,19 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
+import com.intellij.icons.AllIcons
+import com.intellij.icons.ExpUiIcons
 import com.intellij.openapi.util.TextRange
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.jewel.bridge.toComposeColor
+import org.jetbrains.jewel.ui.component.Icon
 import org.jetbrains.jewel.ui.component.Text
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 internal fun GitBranchCompose(
   branchVm: GitBranchComposeVm,
+  selected: Boolean,
   modifier: Modifier = Modifier
 ) {
   Row(
@@ -35,7 +42,21 @@ internal fun GitBranchCompose(
     verticalAlignment = Alignment.CenterVertically,
     horizontalArrangement = Arrangement.spacedBy(8.dp)
   ) {
-    Box(modifier = Modifier.requiredWidth(16.dp))
+    val isFavorite by branchVm.isFavorite.collectAsState()
+    Box(
+      modifier = Modifier.onClick {
+        branchVm.toggleIsFavourite()
+      }
+    ) {
+      when {
+        isFavorite && branchVm.isCurrent -> Icon("expui/vcs/currentBranchFavoriteLabel.svg", null, ExpUiIcons::class.java)
+        isFavorite -> Icon("nodes/favorite.svg", null, AllIcons::class.java)
+        selected -> Icon("nodes/notFavoriteOnHover.svg", null, AllIcons::class.java)
+        branchVm.isCurrent -> Icon("expui/vcs/currentBranchLabel.svg", null, ExpUiIcons::class.java)
+        else -> Box(modifier = Modifier.requiredWidth(16.dp))
+      }
+    }
+
     val rangesToHighlight by branchVm.matchingFragments.collectAsState()
     val highlightColor = UIUtil.getSearchMatchGradientStartColor().toComposeColor()
     val highlightedBranchName = remember(rangesToHighlight, highlightColor) {

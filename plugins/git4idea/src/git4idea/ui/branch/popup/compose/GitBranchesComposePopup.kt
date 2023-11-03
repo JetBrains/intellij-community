@@ -84,7 +84,9 @@ private fun createBranchesPopupComposeComponent(
 ): JComponent {
   val composePanel = JBComposePanel {
     val coroutineScope = rememberCoroutineScope()
-    val branchesVm = remember(coroutineScope, project, repository) { GitBranchesComposeVm(coroutineScope, repository) }
+    val branchesVm = remember(coroutineScope, project, repository) {
+      GitBranchesComposeVm(project, coroutineScope, repository)
+    }
     val text by branchesVm.text.collectAsState()
     var textFieldFocused by remember { mutableStateOf(false) }
     var textFieldSelection by remember { mutableStateOf(androidx.compose.ui.text.TextRange.Zero) }
@@ -366,7 +368,7 @@ private fun BranchListItem(
         Color.Transparent
       }, shape = RoundedCornerShape(5.dp))
   ) {
-    GitBranchCompose(branchVm, modifier = Modifier.align(CenterStart).padding(start = 12.dp))
+    GitBranchCompose(branchVm, selected, modifier = Modifier.align(CenterStart).padding(start = 12.dp))
 
     if (showActions) {
       GitComposeBranchActionsPopup(
