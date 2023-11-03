@@ -8,6 +8,7 @@ import androidx.compose.ui.platform.LocalDensity
 import com.intellij.openapi.components.service
 import org.jetbrains.jewel.bridge.BridgePainterHintsProvider
 import org.jetbrains.jewel.bridge.SwingBridgeService
+import org.jetbrains.jewel.bridge.retrieveIdeaDensity
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.ui.ComponentStyling
 import org.jetbrains.jewel.ui.painter.LocalPainterHintsProvider
@@ -28,7 +29,7 @@ public fun SwingBridgeTheme(content: @Composable () -> Unit) {
     ) {
         CompositionLocalProvider(
             LocalPainterHintsProvider provides BridgePainterHintsProvider(themeData.themeDefinition.isDark),
-            LocalDensity provides themeData.density,
+            LocalDensity provides retrieveIdeaDensity(LocalDensity.current),
         ) {
             content()
         }

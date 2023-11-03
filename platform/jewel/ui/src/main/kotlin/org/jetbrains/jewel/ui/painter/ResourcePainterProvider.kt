@@ -84,7 +84,7 @@ public class ResourcePainterProvider(
         currentHintsProvider.hints(basePath)
             .forEach { scope.resolveHint(it) }
 
-        val cacheKey = scope.acceptedHints.hashCode()
+        val cacheKey = scope.acceptedHints.hashCode() * 31 + LocalDensity.current.hashCode()
 
         if (inDebugMode && cache[cacheKey] != null) {
             println("Cache hit for $basePath(${scope.acceptedHints.joinToString()})")

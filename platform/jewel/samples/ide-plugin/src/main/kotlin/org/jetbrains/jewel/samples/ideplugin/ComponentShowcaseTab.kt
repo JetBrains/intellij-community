@@ -26,8 +26,8 @@ import androidx.compose.ui.unit.dp
 import com.intellij.icons.AllIcons
 import com.intellij.ui.JBColor
 import icons.JewelIcons
+import org.jetbrains.jewel.bridge.LocalComponent
 import org.jetbrains.jewel.bridge.ToolWindowScope
-import org.jetbrains.jewel.bridge.theme.SwingBridgeTheme
 import org.jetbrains.jewel.bridge.toComposeColor
 import org.jetbrains.jewel.foundation.lazy.tree.buildTree
 import org.jetbrains.jewel.foundation.modifier.onActivated
@@ -49,21 +49,19 @@ import org.jetbrains.jewel.ui.component.Tooltip
 
 @Composable
 internal fun ToolWindowScope.ComponentShowcaseTab() {
-    SwingBridgeTheme {
-        val bgColor by remember(JewelTheme.isDark) { mutableStateOf(JBColor.PanelBackground.toComposeColor()) }
+    val bgColor by remember(JewelTheme.isDark) { mutableStateOf(JBColor.PanelBackground.toComposeColor()) }
 
-        val scrollState = rememberScrollState()
-        Row(
-            modifier = Modifier.trackComponentActivation(panel)
-                .fillMaxSize()
-                .background(bgColor)
-                .verticalScroll(scrollState)
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-        ) {
-            ColumnOne()
-            ColumnTwo()
-        }
+    val scrollState = rememberScrollState()
+    Row(
+        modifier = Modifier.trackComponentActivation(LocalComponent.current)
+            .fillMaxSize()
+            .background(bgColor)
+            .verticalScroll(scrollState)
+            .padding(16.dp),
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
+        ColumnOne()
+        ColumnTwo()
     }
 }
 

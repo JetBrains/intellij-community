@@ -35,7 +35,6 @@ import org.jetbrains.skiko.awt.font.AwtFontManager
 import org.jetbrains.skiko.toSkikoTypefaceOrNull
 import java.awt.Dimension
 import java.awt.Font
-import java.awt.GraphicsEnvironment
 import java.awt.Insets
 import javax.swing.UIManager
 
@@ -222,13 +221,9 @@ internal operator fun TextUnit.plus(delta: Float): TextUnit =
         else -> this
     }
 
-internal fun retrieveDensity(): Density {
+internal fun retrieveIdeaDensity(sourceDensity: Density): Density {
     val ideaScale = UISettingsUtils.getInstance().currentIdeScale
-    val scale = GraphicsEnvironment.getLocalGraphicsEnvironment()
-        .defaultScreenDevice
-        .defaultConfiguration
-        .defaultTransform
-        .scaleX * ideaScale
+    val scale = ideaScale * sourceDensity.density
 
-    return Density(scale.toFloat(), 1f)
+    return Density(scale, sourceDensity.fontScale)
 }

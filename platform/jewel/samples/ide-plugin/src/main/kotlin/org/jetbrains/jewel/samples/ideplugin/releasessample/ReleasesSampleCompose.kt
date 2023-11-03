@@ -74,7 +74,6 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.datetime.toJavaLocalDate
 import org.jetbrains.jewel.bridge.retrieveColorOrUnspecified
 import org.jetbrains.jewel.bridge.retrieveTextStyle
-import org.jetbrains.jewel.bridge.theme.SwingBridgeTheme
 import org.jetbrains.jewel.bridge.toComposeColor
 import org.jetbrains.jewel.bridge.toFontFamily
 import org.jetbrains.jewel.foundation.lazy.SelectableLazyColumn
@@ -103,28 +102,26 @@ import kotlin.time.Duration.Companion.seconds
 @OptIn(DependsOnJBR::class)
 @Composable
 fun ReleasesSampleCompose(project: Project) {
-    SwingBridgeTheme {
-        var selectedItem: ContentItem? by remember { mutableStateOf(null) }
-        HorizontalSplitLayout(
-            first = { modifier ->
-                LeftColumn(
-                    project = project,
-                    modifier = modifier.fillMaxSize(),
-                    onSelectedItemChange = { selectedItem = it },
-                )
-            },
-            second = { modifier ->
-                RightColumn(
-                    selectedItem = selectedItem,
-                    modifier = modifier.fillMaxSize(),
-                )
-            },
-            Modifier.fillMaxSize(),
-            initialDividerPosition = 400.dp,
-            minRatio = .15f,
-            maxRatio = .7f,
-        )
-    }
+    var selectedItem: ContentItem? by remember { mutableStateOf(null) }
+    HorizontalSplitLayout(
+        first = { modifier ->
+            LeftColumn(
+                project = project,
+                modifier = modifier.fillMaxSize(),
+                onSelectedItemChange = { selectedItem = it },
+            )
+        },
+        second = { modifier ->
+            RightColumn(
+                selectedItem = selectedItem,
+                modifier = modifier.fillMaxSize(),
+            )
+        },
+        Modifier.fillMaxSize(),
+        initialDividerPosition = 400.dp,
+        minRatio = .15f,
+        maxRatio = .7f,
+    )
 }
 
 @Composable

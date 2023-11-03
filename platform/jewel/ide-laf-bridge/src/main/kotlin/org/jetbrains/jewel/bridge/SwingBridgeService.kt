@@ -1,7 +1,6 @@
 package org.jetbrains.jewel.bridge
 
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.unit.Density
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.Service.Level
 import kotlinx.coroutines.CoroutineScope
@@ -42,14 +41,12 @@ internal class SwingBridgeService(scope: CoroutineScope) {
         return BridgeThemeData(
             themeDefinition = createBridgeThemeDefinition(),
             componentStyling = createBridgeComponentStyling(themeDefinition),
-            density = retrieveDensity(),
         )
     }
 
     internal data class BridgeThemeData(
         val themeDefinition: ThemeDefinition,
         val componentStyling: ComponentStyling,
-        val density: Density,
     ) {
 
         public companion object {
@@ -67,7 +64,6 @@ internal class SwingBridgeService(scope: CoroutineScope) {
                         dropdownTextStyle = TextStyle.Default,
                         linkTextStyle = TextStyle.Default,
                     ),
-                    density = retrieveDensity(),
                 )
             }
         }
