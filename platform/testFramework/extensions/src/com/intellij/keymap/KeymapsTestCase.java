@@ -48,7 +48,6 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
       {"alt INSERT",               "FileChooser.NewFolder", "Generate", "NewElement"},
       {"alt J",                    "SelectNextOccurrence", "JupyterNotebookMoveCellDownCommandModeAction"},
       {"alt UP",                   "MethodUp", "JupyterNotebookMoveCellUpCommandModeAction"},
-      {"alt BACK_SLASH",           "CallOneLineCloudCompletionAction", "MainMenuButton.ShowMenu"},
       {"alt button1",              "EditorCreateRectangularSelectionOnMouseDrag", "QuickEvaluateExpression"},
       {"alt shift LEFT",           "Diff.PrevChange", "PreviousEditorTab"},
       {"alt shift RIGHT",          "Diff.NextChange", "NextEditorTab"},
@@ -263,7 +262,6 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
       {"F7",                       "CompileDirty", "NextDiff"},
       {"F12",                      "GotoDeclaration", "WebInspector.Browser.Selection.Toggle"},
       {"alt O",                    "SwitchHeaderSource", "ExportToTextFile"},
-      {"alt BACK_SLASH",           "CallOneLineCloudCompletionAction", "FileStructurePopup"},
       {"control alt button1",      "EditorAddOrRemoveCaret", "UiInspector"},
       {"ctrl E",                   SECOND_STROKE, "SwitcherIterateItems", "SwitcherRecentEditedChangedToggleCheckBox"},
       {"ctrl ENTER",               "Console.Execute.Multiline", "DirDiffMenu.SynchronizeDiff.All", "EditorStartNewLineBefore",
@@ -305,7 +303,6 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     Map.entry("Visual Studio OSX", new String[][]{
       {"F12",                      "GotoDeclaration", "WebInspector.Browser.Selection.Toggle"},
       {"meta L",                   "$Cut", "Terminal.ClearBuffer"},
-      {"alt BACK_SLASH",           "CallOneLineCloudCompletionAction", "FileStructurePopup"},
       {"alt DELETE",               "EditorDeleteToWordEnd", "SafeDelete"},
       {"shift ctrl RIGHT",         "Diff.NextChange", "EditorRightWithSelection"},
       {"meta F10",                 "RunToCursor", "UpdateRunningApplication"},
