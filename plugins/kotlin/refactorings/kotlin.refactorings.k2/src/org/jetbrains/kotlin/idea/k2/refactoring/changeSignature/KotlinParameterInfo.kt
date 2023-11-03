@@ -162,10 +162,16 @@ class KotlinParameterInfo(
     }
 }
 
-fun defaultValOrVar(callableDescriptor: KtCallableDeclaration): KotlinValVar {
+fun defaultValOrVar(callableDescriptor: KtDeclaration): KotlinValVar {
     if (callableDescriptor is KtConstructor<*>) {
         val classOrObject = callableDescriptor.getContainingClassOrObject()
         if (classOrObject.isAnnotation() || classOrObject.isData() && callableDescriptor is KtPrimaryConstructor) {
+            return KotlinValVar.Val
+        }
+    }
+
+    if (callableDescriptor is KtClass) {
+        if (callableDescriptor.isAnnotation() || callableDescriptor.isData()) {
             return KotlinValVar.Val
         }
     }

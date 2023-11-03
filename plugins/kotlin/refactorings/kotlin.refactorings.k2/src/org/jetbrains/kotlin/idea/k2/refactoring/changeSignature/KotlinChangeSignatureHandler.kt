@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.k2.refactoring.changeSignature
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiNamedElement
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
@@ -17,7 +16,7 @@ import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.util.OperatorNameConventions
 
-object KotlinChangeSignatureHandler : KotlinChangeSignatureHandlerBase<KtCallableDeclaration>() {
+object KotlinChangeSignatureHandler : KotlinChangeSignatureHandlerBase<KtNamedDeclaration>() {
     override fun asInvokeOperator(call: KtCallElement?): PsiElement? {
         val psiElement = call?.mainReference?.resolve() ?: return null
         if (psiElement is KtNamedFunction &&
@@ -37,56 +36,56 @@ object KotlinChangeSignatureHandler : KotlinChangeSignatureHandlerBase<KtCallabl
         element: KtElement,
         project: Project,
         editor: Editor?
-    ): KtCallableDeclaration? {
+    ): KtNamedDeclaration? {
         return when (element) {
             is KtParameter -> if (element.hasValOrVar()) element else null
             is KtCallableDeclaration -> element
-            is KtClass -> element.primaryConstructor
+            is KtClass -> element.primaryConstructor ?: if (element.allConstructors.isEmpty()) element else null
             else -> null
         }
     }
 
-    override fun isVarargFunction(function: KtCallableDeclaration): Boolean {
+    override fun isVarargFunction(function: KtNamedDeclaration): Boolean {
         return function is KtNamedFunction && function.valueParameters.any { it.isVarArg }
     }
 
     @OptIn(KtAllowAnalysisOnEdt::class)
-    override fun isSynthetic(function: KtCallableDeclaration, context: KtElement): Boolean {
+    override fun isSynthetic(function: KtNamedDeclaration, context: KtElement): Boolean {
         return allowAnalysisOnEdt { analyze(context) { function.getSymbol().origin == KtSymbolOrigin.SOURCE_MEMBER_GENERATED } }
     }
 
     @OptIn(KtAllowAnalysisOnEdt::class)
-    override fun isLibrary(function: KtCallableDeclaration, context: KtElement): Boolean {
+    override fun isLibrary(function: KtNamedDeclaration, context: KtElement): Boolean {
         val original = function.originalElement as? KtCallableDeclaration ?: return false
         return original.containingKtFile.isCompiled
     }
 
-    override fun isJavaCallable(function: KtCallableDeclaration): Boolean {
+    override fun isJavaCallable(function: KtNamedDeclaration): Boolean {
         return false
     }
 
-    override fun isDynamic(function: KtCallableDeclaration): Boolean {
+    override fun isDynamic(function: KtNamedDeclaration): Boolean {
         return false //todo
     }
 
-    override fun getDeclaration(t: KtCallableDeclaration, project: Project): PsiElement {
+    override fun getDeclaration(t: KtNamedDeclaration, project: Project): PsiElement {
         return t
     }
 
-    override fun getDeclarationName(t: KtCallableDeclaration): String {
-        return (t as PsiNamedElement).name!!
+    override fun getDeclarationName(t: KtNamedDeclaration): String {
+        return t.name!!
     }
 
     override fun runChangeSignature(
-        project: Project, editor: Editor?, callableDescriptor: KtCallableDeclaration, context: PsiElement
+        project: Project, editor: Editor?, callableDescriptor: KtNamedDeclaration, context: PsiElement
     ) {
         when {
-            callableDescriptor is KtFunction -> {
+            callableDescriptor is KtFunction || callableDescriptor is KtClass -> {
                 KotlinChangeSignatureDialog(project, editor, KotlinMethodDescriptor(callableDescriptor), context, null).show()
             }
 
             callableDescriptor is KtProperty || callableDescriptor is KtParameter && callableDescriptor.hasValOrVar() -> {
-                KotlinChangePropertySignatureDialog(project, KotlinMethodDescriptor(callableDescriptor)).show()
+                KotlinChangePropertySignatureDialog(project, KotlinMethodDescriptor(callableDescriptor as KtCallableDeclaration)).show()
             }
 
             callableDescriptor is KtParameter -> {

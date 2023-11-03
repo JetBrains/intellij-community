@@ -33,6 +33,7 @@ class KotlinChangeSignatureConflictSearcher(
 
     fun findConflicts(): MultiMap<PsiElement, String> {
         val function = originalInfo.method
+        if (function !is KtCallableDeclaration) return result
         val kind = originalInfo.methodDescriptor.kind
         if (kind == Kind.FUNCTION && (originalInfo.isNameChanged || originalInfo.isParameterSetOrOrderChanged || originalInfo.isParameterTypesChanged)) {
             val unresolvableCollisions = mutableListOf<UsageInfo>()

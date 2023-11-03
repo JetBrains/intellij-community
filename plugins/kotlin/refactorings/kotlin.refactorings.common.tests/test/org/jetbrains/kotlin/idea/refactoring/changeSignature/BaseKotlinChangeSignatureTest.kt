@@ -968,7 +968,7 @@ abstract class BaseKotlinChangeSignatureTest<C: KotlinModifiableChangeInfo<P>, P
     }
 
 
-    fun testMakePrimaryConstructorPrivateNoParams() = doTest { setNewVisibility(Private) }//todo can't perform refactoring
+    fun testMakePrimaryConstructorPrivateNoParams() = doTest { setNewVisibility(Private) }
 
     fun testMakePrimaryConstructorPublic() = doTest { setNewVisibility(Public) }
 
@@ -1175,7 +1175,7 @@ abstract class BaseKotlinChangeSignatureTest<C: KotlinModifiableChangeInfo<P>, P
         newParameters[1].setType("Double?")
     }
 
-    fun testAddConstructorVisibility() = doTest {//todo cannot perform
+    fun testAddConstructorVisibility() = doTest {
         setNewVisibility(Protected)
 
         val newParameter = createKotlinParameter("x", "Any", KtPsiFactory(project).createExpression("12")).apply {

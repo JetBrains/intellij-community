@@ -18,25 +18,25 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.types.Variance
 
-class KotlinMethodDescriptor(private val callable: KtCallableDeclaration) :
+class KotlinMethodDescriptor(private val callable: KtNamedDeclaration) :
     KotlinModifiableMethodDescriptor<KotlinParameterInfo, Visibility> {
 
     @OptIn(KtAllowAnalysisOnEdt::class)
     internal val oldReturnType: String = allowAnalysisOnEdt {
         analyze(callable) {
-            callable.getReturnKtType().render(position = Variance.INVARIANT)
+            (callable as? KtCallableDeclaration)?.getReturnKtType()?.render(position = Variance.INVARIANT) ?: ""
         }
     }
 
     @OptIn(KtAllowAnalysisOnEdt::class)
     internal val oldReceiverType: String? = allowAnalysisOnEdt {
         analyze(callable) {
-            callable.receiverTypeReference?.getKtType()?.render(position = Variance.INVARIANT)
+            (callable as? KtCallableDeclaration)?.receiverTypeReference?.getKtType()?.render(position = Variance.INVARIANT)
         }
     }
 
     @OptIn(KtAllowAnalysisOnEdt::class)
-    override var receiver: KotlinParameterInfo? = callable.receiverTypeReference?.let {
+    override var receiver: KotlinParameterInfo? = (callable as? KtCallableDeclaration)?.receiverTypeReference?.let {
         allowAnalysisOnEdt {
             analyze(callable) {
                 val ktType = it.getKtType()
@@ -68,8 +68,8 @@ class KotlinMethodDescriptor(private val callable: KtCallableDeclaration) :
             analyze(callable) {
                 val params = mutableListOf< KotlinParameterInfo>()
                 receiver?.let { params.add(it) }
-                callable
-                    .valueParameters.forEach { p ->
+                (callable as? KtCallableDeclaration)
+                    ?.valueParameters?.forEach { p ->
                         val parameterInfo = KotlinParameterInfo(
                             params.size, KotlinTypeInfo(p.getReturnKtType().render(position = Variance.INVARIANT), callable),
                             p.name!!,
@@ -92,7 +92,7 @@ class KotlinMethodDescriptor(private val callable: KtCallableDeclaration) :
     }
 
     override fun getParametersCount(): Int {
-        return callable.valueParameters.size
+        return (callable as? KtCallableDeclaration)?.valueParameters?.size ?: 0
     }
 
     @OptIn(KtAllowAnalysisOnEdt::class)
@@ -104,7 +104,7 @@ class KotlinMethodDescriptor(private val callable: KtCallableDeclaration) :
 
     override fun getVisibility(): Visibility = _visibility
 
-    override fun getMethod(): KtCallableDeclaration {
+    override fun getMethod(): KtNamedDeclaration {
         return callable
     }
 
@@ -125,11 +125,11 @@ class KotlinMethodDescriptor(private val callable: KtCallableDeclaration) :
     }
 
     override fun canChangeReturnType(): ReadWriteOption {
-        return if (callable is KtConstructor<*>) ReadWriteOption.None else ReadWriteOption.ReadWrite
+        return if (callable is KtConstructor<*> || callable is KtClass) ReadWriteOption.None else ReadWriteOption.ReadWrite
     }
 
     override val original: KotlinModifiableMethodDescriptor<KotlinParameterInfo, Visibility>
         get() = this
 
-    override val baseDeclaration: KtCallableDeclaration = callable
+    override val baseDeclaration: KtNamedDeclaration = callable
 }
