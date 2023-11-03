@@ -24,9 +24,9 @@ class SplitPropertyDeclarationIntention : AbstractKotlinModCommandWithContext<Kt
 ), LowPriorityAction {
     data class Context(val propertyType: String?)
 
-    override fun getFamilyName(): String {
-        return KotlinBundle.message("split.property.declaration")
-    }
+    override fun getFamilyName(): String = KotlinBundle.message("split.property.declaration")
+
+    override fun getActionName(element: KtProperty, context: Context): String = familyName
 
     override fun getApplicabilityRange(): KotlinApplicabilityRange<KtProperty> = applicabilityRange {
         TextRange(0, it.initializer!!.startOffsetInParent)
@@ -37,17 +37,10 @@ class SplitPropertyDeclarationIntention : AbstractKotlinModCommandWithContext<Kt
         return element.initializer != null
     }
 
-    override fun getActionName(element: KtProperty, context: Context): String {
-        return familyName
-    }
-
     context(KtAnalysisSession)
     override fun prepareContext(element: KtProperty): Context? {
         val ktType = element.initializer?.getKtType() ?: return null
-        if (ktType is KtErrorType) {
-            return Context(null)
-        }
-        return Context(ktType.render(position = Variance.OUT_VARIANCE))
+        return Context(if (ktType is KtErrorType) null else ktType.render(position = Variance.OUT_VARIANCE))
     }
 
     override fun apply(element: KtProperty, context: Context, project: Project, editor: Editor?) {
@@ -55,12 +48,7 @@ class SplitPropertyDeclarationIntention : AbstractKotlinModCommandWithContext<Kt
 
         val initializer = element.initializer ?: return
 
-        val explicitTypeToSet = if (element.typeReference != null) {
-            null
-        }
-        else {
-           context.propertyType
-        }
+        val explicitTypeToSet = if (element.typeReference != null) null else context.propertyType
 
         val psiFactory = KtPsiFactory(element.project)
 
