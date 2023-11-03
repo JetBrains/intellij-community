@@ -734,54 +734,111 @@ public abstract class PerformanceTypingIndentationTestGenerated extends Abstract
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../idea/tests/testData/editor/enterHandler/emptyBraces")
-        public static class EmptyBraces extends AbstractPerformanceTypingIndentationTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
+        public abstract static class EmptyBraces extends AbstractPerformanceTypingIndentationTest {
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../idea/tests/testData/editor/enterHandler/emptyBraces/trailingComma")
+            public static class TrailingComma extends AbstractPerformanceTypingIndentationTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("DifferentNormalIndentLambdaAsArgument.after.kt")
+                public void testDifferentNormalIndentLambdaAsArgument() throws Exception {
+                    runTest("../idea/tests/testData/editor/enterHandler/emptyBraces/trailingComma/DifferentNormalIndentLambdaAsArgument.after.kt");
+                }
+
+                @TestMetadata("IfAsArgument.after.kt")
+                public void testIfAsArgument() throws Exception {
+                    runTest("../idea/tests/testData/editor/enterHandler/emptyBraces/trailingComma/IfAsArgument.after.kt");
+                }
+
+                @TestMetadata("IfAsNamedArgument.after.kt")
+                public void testIfAsNamedArgument() throws Exception {
+                    runTest("../idea/tests/testData/editor/enterHandler/emptyBraces/trailingComma/IfAsNamedArgument.after.kt");
+                }
+
+                @TestMetadata("LambdaAsConstructorArgument.after.kt")
+                public void testLambdaAsConstructorArgument() throws Exception {
+                    runTest("../idea/tests/testData/editor/enterHandler/emptyBraces/trailingComma/LambdaAsConstructorArgument.after.kt");
+                }
+
+                @TestMetadata("LambdaAsFunctionArgument.after.kt")
+                public void testLambdaAsFunctionArgument() throws Exception {
+                    runTest("../idea/tests/testData/editor/enterHandler/emptyBraces/trailingComma/LambdaAsFunctionArgument.after.kt");
+                }
+
+                @TestMetadata("LambdaAsNamedConstructorArgument.after.kt")
+                public void testLambdaAsNamedConstructorArgument() throws Exception {
+                    runTest("../idea/tests/testData/editor/enterHandler/emptyBraces/trailingComma/LambdaAsNamedConstructorArgument.after.kt");
+                }
+
+                @TestMetadata("LambdaAsNamedFunctionArgument.after.kt")
+                public void testLambdaAsNamedFunctionArgument() throws Exception {
+                    runTest("../idea/tests/testData/editor/enterHandler/emptyBraces/trailingComma/LambdaAsNamedFunctionArgument.after.kt");
+                }
+
+                @TestMetadata("WhenAsArgument.after.kt")
+                public void testWhenAsArgument() throws Exception {
+                    runTest("../idea/tests/testData/editor/enterHandler/emptyBraces/trailingComma/WhenAsArgument.after.kt");
+                }
+
+                @TestMetadata("WhenAsNamedArgument.after.kt")
+                public void testWhenAsNamedArgument() throws Exception {
+                    runTest("../idea/tests/testData/editor/enterHandler/emptyBraces/trailingComma/WhenAsNamedArgument.after.kt");
+                }
             }
 
-            @TestMetadata("ClassWithConstructor.after.kt")
-            public void testClassWithConstructor() throws Exception {
-                runTest("../idea/tests/testData/editor/enterHandler/emptyBraces/ClassWithConstructor.after.kt");
-            }
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../idea/tests/testData/editor/enterHandler/emptyBraces")
+            public static class Uncategorized extends AbstractPerformanceTypingIndentationTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
+                }
 
-            @TestMetadata("ClassWithConstructor2.after.kt")
-            public void testClassWithConstructor2() throws Exception {
-                runTest("../idea/tests/testData/editor/enterHandler/emptyBraces/ClassWithConstructor2.after.kt");
-            }
+                @TestMetadata("ClassWithConstructor.after.kt")
+                public void testClassWithConstructor() throws Exception {
+                    runTest("../idea/tests/testData/editor/enterHandler/emptyBraces/ClassWithConstructor.after.kt");
+                }
 
-            @TestMetadata("ClassWithoutConstructor.after.kt")
-            public void testClassWithoutConstructor() throws Exception {
-                runTest("../idea/tests/testData/editor/enterHandler/emptyBraces/ClassWithoutConstructor.after.kt");
-            }
+                @TestMetadata("ClassWithConstructor2.after.kt")
+                public void testClassWithConstructor2() throws Exception {
+                    runTest("../idea/tests/testData/editor/enterHandler/emptyBraces/ClassWithConstructor2.after.kt");
+                }
 
-            @TestMetadata("FunctionBlock.after.kt")
-            public void testFunctionBlock() throws Exception {
-                runTest("../idea/tests/testData/editor/enterHandler/emptyBraces/FunctionBlock.after.kt");
-            }
+                @TestMetadata("ClassWithoutConstructor.after.kt")
+                public void testClassWithoutConstructor() throws Exception {
+                    runTest("../idea/tests/testData/editor/enterHandler/emptyBraces/ClassWithoutConstructor.after.kt");
+                }
 
-            @TestMetadata("FunctionBlock2.after.kt")
-            public void testFunctionBlock2() throws Exception {
-                runTest("../idea/tests/testData/editor/enterHandler/emptyBraces/FunctionBlock2.after.kt");
-            }
+                @TestMetadata("FunctionBlock.after.kt")
+                public void testFunctionBlock() throws Exception {
+                    runTest("../idea/tests/testData/editor/enterHandler/emptyBraces/FunctionBlock.after.kt");
+                }
 
-            @TestMetadata("FunctionBody3.after.kt")
-            public void testFunctionBody3() throws Exception {
-                runTest("../idea/tests/testData/editor/enterHandler/emptyBraces/FunctionBody3.after.kt");
-            }
+                @TestMetadata("FunctionBlock2.after.kt")
+                public void testFunctionBlock2() throws Exception {
+                    runTest("../idea/tests/testData/editor/enterHandler/emptyBraces/FunctionBlock2.after.kt");
+                }
 
-            @TestMetadata("FunctionBody4.after.kt")
-            public void testFunctionBody4() throws Exception {
-                runTest("../idea/tests/testData/editor/enterHandler/emptyBraces/FunctionBody4.after.kt");
-            }
+                @TestMetadata("FunctionBody3.after.kt")
+                public void testFunctionBody3() throws Exception {
+                    runTest("../idea/tests/testData/editor/enterHandler/emptyBraces/FunctionBody3.after.kt");
+                }
 
-            @TestMetadata("FunctionBodyInsideClass.after.kt")
-            public void testFunctionBodyInsideClass() throws Exception {
-                runTest("../idea/tests/testData/editor/enterHandler/emptyBraces/FunctionBodyInsideClass.after.kt");
-            }
+                @TestMetadata("FunctionBody4.after.kt")
+                public void testFunctionBody4() throws Exception {
+                    runTest("../idea/tests/testData/editor/enterHandler/emptyBraces/FunctionBody4.after.kt");
+                }
 
-            @TestMetadata("FunctionBodyInsideClass2.after.kt")
-            public void testFunctionBodyInsideClass2() throws Exception {
-                runTest("../idea/tests/testData/editor/enterHandler/emptyBraces/FunctionBodyInsideClass2.after.kt");
+                @TestMetadata("FunctionBodyInsideClass.after.kt")
+                public void testFunctionBodyInsideClass() throws Exception {
+                    runTest("../idea/tests/testData/editor/enterHandler/emptyBraces/FunctionBodyInsideClass.after.kt");
+                }
+
+                @TestMetadata("FunctionBodyInsideClass2.after.kt")
+                public void testFunctionBodyInsideClass2() throws Exception {
+                    runTest("../idea/tests/testData/editor/enterHandler/emptyBraces/FunctionBodyInsideClass2.after.kt");
+                }
             }
         }
 
