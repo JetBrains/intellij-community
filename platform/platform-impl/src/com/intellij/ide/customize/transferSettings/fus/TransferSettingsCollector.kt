@@ -10,9 +10,8 @@ import com.intellij.ide.customize.transferSettings.providers.vswin.mappings.Visu
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
-import com.intellij.internal.statistic.eventLog.validator.ValidationResultType
-import com.intellij.internal.statistic.eventLog.validator.rules.EventContext
-import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule
+import com.intellij.internal.statistic.eventLog.validator.rules.impl.AllowedItemsResourceWeakRefStorage
+import com.intellij.internal.statistic.eventLog.validator.rules.impl.LocalFileCustomValidationRule
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
@@ -20,6 +19,8 @@ import com.intellij.util.text.nullize
 import kotlin.time.Duration
 
 object TransferSettingsCollector : CounterUsagesCollector() {
+
+  private val logger = logger<TransferSettingsCollector>()
 
   private val GROUP = EventLogGroup("wizard.transfer.settings", 6)
   override fun getGroup(): EventLogGroup = GROUP
@@ -191,32 +192,13 @@ object TransferSettingsCollector : CounterUsagesCollector() {
   }
 }
 
-class KnownPluginValidationRule : CustomValidationRule() {
+class KnownPluginValidationRule : LocalFileCustomValidationRule(
+  "known_plugin_id",
+  object : AllowedItemsResourceWeakRefStorage(KnownPluginValidationRule::class.java, "pluginData/known-plugins.txt") {
 
-  private val knownPlugins by lazy {
-    logger.runAndLogException {
-      val classLoader = javaClass.classLoader
-      val resource = classLoader.getResourceAsStream("pluginData/known-plugins.txt") ?: run {
-        logger.error("Cannot load known-plugins.txt from the class loader $classLoader.")
-        return@lazy emptySet()
-      }
-
-      resource.reader().readLines()
-        .asSequence()
-        .mapNotNull { it.nullize(true)?.trim()?.lowercase() }
-        .toSet()
-    } ?: emptySet()
+    override fun createValue(value: String): String? = value.nullize(true)?.trim()?.lowercase()
+    override fun readItems(): Set<String?> {
+      return super.readItems() + VisualStudioPluginsMapping.ReSharper
+    }
   }
-
-  private val allPlugins by lazy {
-    knownPlugins + VisualStudioPluginsMapping.ReSharper
-  }
-
-  override fun getRuleId() = "known_plugin_id"
-
-  override fun doValidate(data: String, context: EventContext): ValidationResultType {
-    return if (allPlugins.contains(data)) ValidationResultType.ACCEPTED else ValidationResultType.REJECTED
-  }
-}
-
-private val logger = logger<TransferSettingsCollector>()
+)
