@@ -344,7 +344,7 @@ public class GitPushOperation {
       return GitHistoryUtils.history(myProject, root, range).size();
     }
     catch (VcsException e) {
-      LOG.error("Couldn't collect commits from range " + range);
+      LOG.error("Couldn't collect commits from range " + range, e);
       return -1;
     }
   }
