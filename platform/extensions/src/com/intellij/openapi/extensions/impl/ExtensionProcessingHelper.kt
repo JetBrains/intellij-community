@@ -169,5 +169,5 @@ object ExtensionProcessingHelper {
 inline fun <T : Any> ExtensionPointName<T>.findByIdOrFromInstance(id: String, idGetter: (T) -> String?): T? {
   val point = point as ExtensionPointImpl<T>
   return point.sortedAdapters.firstOrNull { it.orderId == id }?.createInstance(point.componentManager)
-         ?: lazySequence().firstOrNull { idGetter(it) == id }
+         ?: point.firstOrNull { idGetter(it) == id }
 }

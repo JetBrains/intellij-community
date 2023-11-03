@@ -826,37 +826,31 @@ class EditorSplitterStateSplitter(
   val proportion: Float = splitterElement.getAttributeValue("split-proportion")?.toFloat() ?: 0.5f
 }
 
-@Internal
-class EditorSplitterStateLeaf(element: Element) {
+internal class EditorSplitterStateLeaf(element: Element) {
   @JvmField
-  val files: List<FileEntry>
+  val files: List<FileEntry> = (element.getChildren("file")?.map {
+    FileEntry(
+      pinned = it.getAttributeBooleanValue(PINNED),
+      currentInTab = it.getAttributeValue(CURRENT_IN_TAB, "true").toBoolean(),
+      history = it.getChild(HistoryEntry.TAG),
+    )
+  }) ?: emptyList()
 
   @JvmField
-  val tabSizeLimit: Int
+  val tabSizeLimit: Int = element.getAttributeValue(JBTabsImpl.SIDE_TABS_SIZE_LIMIT_KEY.toString())?.toIntOrNull() ?: -1
 
   class FileEntry(
     @JvmField val pinned: Boolean,
     @JvmField val currentInTab: Boolean,
     @JvmField val history: Element,
   )
-
-  init {
-    files = (element.getChildren("file")?.map {
-      FileEntry(
-        pinned = it.getAttributeBooleanValue(PINNED),
-        currentInTab = it.getAttributeValue(CURRENT_IN_TAB, "true").toBoolean(),
-        history = it.getChild(HistoryEntry.TAG),
-      )
-    }) ?: emptyList()
-    tabSizeLimit = element.getAttributeValue(JBTabsImpl.SIDE_TABS_SIZE_LIMIT_KEY.toString())?.toIntOrNull() ?: -1
-  }
 }
 
 @Internal
 class EditorSplitterState(element: Element) {
   @JvmField
   val splitters: EditorSplitterStateSplitter?
-  val leaf: EditorSplitterStateLeaf?
+  internal val leaf: EditorSplitterStateLeaf?
 
   init {
     val splitterElement = element.getChild("splitter")
@@ -934,6 +928,7 @@ private class UiBuilder(private val splitters: EditorsSplitters) {
       var focusedFile: VirtualFile? = null
       val fileEditorManager = splitters.manager
       val fileDocumentManager = serviceAsync<FileDocumentManager>()
+      val fileEditorProviderManager = serviceAsync<FileEditorProviderManager>()
 
       fun weight(item: EditorSplitterStateLeaf.FileEntry) = (if (item.currentInTab) 1 else 0)
 
@@ -944,8 +939,10 @@ private class UiBuilder(private val splitters: EditorsSplitters) {
       for ((index, fileEntry) in sorted) {
         val fileName = fileEntry.history.getAttributeValue(HistoryEntry.FILE_ATTR)
         val activity = StartUpMeasurer.startActivity(PathUtilRt.getFileName(fileName), ActivityCategory.REOPENING_EDITOR)
-        val entry = HistoryEntry.createLight(fileEditorManager.project, fileEntry.history)
-        val file = entry.filePointer.file
+
+        val (entry, file) = HistoryEntry.createLight(project = fileEditorManager.project,
+                                                     element = fileEntry.history,
+                                                     fileEditorProviderManager = fileEditorProviderManager)
         if (file == null) {
           if (ApplicationManager.getApplication().isUnitTestMode) {
             LOG.error("No file exists: ${entry.filePointer.url}")
@@ -957,7 +954,7 @@ private class UiBuilder(private val splitters: EditorsSplitters) {
           file.putUserData(OPENED_IN_BULK, true)
 
           val newProviders = async(CoroutineName("editor provider computing")) {
-            serviceAsync<FileEditorProviderManager>().getProvidersAsync(fileEditorManager.project, file)
+            fileEditorProviderManager.getProvidersAsync(fileEditorManager.project, file)
           }
 
           val document = readActionBlocking {
@@ -1086,7 +1083,7 @@ private fun getSplittersForProject(activeWindow: Window, project: Project?): Edi
   return fileEditorManager.getSplittersFor(activeWindow) ?: fileEditorManager.splitters
 }
 
-// When tool window is hidden by a shortcut, we want focus to return to previously focused splitters.
+// When the tool window is hidden by a shortcut, we want focus to return to previously focused splitters.
 // When it's hidden by clicking on stripe button, we want focus to stay in the current window.
 private fun getSplittersToActivate(activeWindow: Window, project: Project?): EditorsSplitters? {
   if (project == null || project.isDisposed) return null

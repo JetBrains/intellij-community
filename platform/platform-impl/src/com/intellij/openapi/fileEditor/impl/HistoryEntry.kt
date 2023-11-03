@@ -10,7 +10,6 @@ import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.InvalidDataException
-import com.intellij.openapi.util.Pair
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.impl.LightFilePointer
@@ -51,8 +50,10 @@ internal class HistoryEntry private constructor(@JvmField val filePointer: Virtu
       return entry
     }
 
-    fun createLight(project: Project, e: Element): HistoryEntry {
-      val entryData = parseEntry(project, e)
+    fun createLight(project: Project,
+                    element: Element,
+                    fileEditorProviderManager: FileEditorProviderManager): Pair<HistoryEntry, VirtualFile?> {
+      val (entryData, file) = parseEntry(project = project, e = element, fileEditorProviderManager = fileEditorProviderManager)
       val pointer = LightFilePointer(entryData.url)
       val entry = HistoryEntry(filePointer = pointer,
                                selectedProvider = entryData.selectedProvider,
@@ -61,7 +62,7 @@ internal class HistoryEntry private constructor(@JvmField val filePointer: Virtu
       for (state in entryData.providerStates) {
         entry.putState(state.first, state.second)
       }
-      return entry
+      return entry to file
     }
 
     fun createHeavy(project: Project,
@@ -87,15 +88,17 @@ internal class HistoryEntry private constructor(@JvmField val filePointer: Virtu
     @Throws(InvalidDataException::class)
     fun createHeavy(project: Project, e: Element): HistoryEntry {
       if (project.isDisposed) {
-        return createLight(project, e)
+        return createLight(project, e, FileEditorProviderManager.getInstance()).first
       }
 
-      val entryData = parseEntry(project, e)
+      val (entryData, _) = parseEntry(project = project, e = e, fileEditorProviderManager = FileEditorProviderManager.getInstance())
 
       val disposable = Disposer.newDisposable()
       val pointer = VirtualFilePointerManager.getInstance().create(entryData.url, disposable, null)
-
-      val entry = HistoryEntry(pointer, entryData.selectedProvider, entryData.preview, disposable)
+      val entry = HistoryEntry(filePointer = pointer,
+                               selectedProvider = entryData.selectedProvider,
+                               isPreview = entryData.preview,
+                               disposable = disposable)
       for (state in entryData.providerStates) {
         entry.putState(state.first, state.second)
       }
@@ -164,7 +167,7 @@ private const val PREVIEW_ATTR: @NonNls String = "preview"
 
 private val EMPTY_ELEMENT = Element("state")
 
-private fun parseEntry(project: Project, e: Element): EntryData {
+private fun parseEntry(project: Project, e: Element, fileEditorProviderManager: FileEditorProviderManager): Pair<EntryData, VirtualFile?> {
   if (e.name != HistoryEntry.TAG) {
     throw IllegalArgumentException("unexpected tag: $e")
   }
@@ -174,7 +177,6 @@ private fun parseEntry(project: Project, e: Element): EntryData {
   var selectedProvider: FileEditorProvider? = null
 
   val file = VirtualFileManager.getInstance().findFileByUrl(url)
-  val fileEditorProviderManager = FileEditorProviderManager.getInstance()
   for (providerElement in e.getChildren(PROVIDER_ELEMENT)) {
     val typeId = providerElement.getAttributeValue(EDITOR_TYPE_ID_ATTR)
     val provider = fileEditorProviderManager.getProvider(typeId) ?: continue
@@ -185,12 +187,12 @@ private fun parseEntry(project: Project, e: Element): EntryData {
     if (file != null) {
       val stateElement = providerElement.getChild(STATE_ELEMENT)
       val state = provider.readState(stateElement ?: EMPTY_ELEMENT, project, file)
-      providerStates = providerStates.add(Pair(provider, state))
+      providerStates = providerStates.add(provider to state)
     }
   }
 
   val preview = e.getAttributeValue(PREVIEW_ATTR) != null
-  return EntryData(url = url, providerStates = providerStates, selectedProvider = selectedProvider, preview = preview)
+  return EntryData(url = url, providerStates = providerStates, selectedProvider = selectedProvider, preview = preview) to file
 }
 
 internal class EntryData(
