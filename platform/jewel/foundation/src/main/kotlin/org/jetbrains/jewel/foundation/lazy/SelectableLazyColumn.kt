@@ -63,7 +63,7 @@ public fun SelectableLazyColumn(
     val latestOnSelectedIndexesChanged = rememberUpdatedState(onSelectedIndexesChanged)
     LaunchedEffect(state, container) {
         snapshotFlow { state.selectedKeys }.collect { selectedKeys ->
-            val indices = selectedKeys.map { key -> container.getKeyIndex(key) }
+            val indices = selectedKeys.mapNotNull { key -> container.getKeyIndex(key) }
             latestOnSelectedIndexesChanged.value.invoke(indices)
         }
     }
