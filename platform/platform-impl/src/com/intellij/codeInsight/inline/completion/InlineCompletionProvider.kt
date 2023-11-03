@@ -4,11 +4,8 @@ package com.intellij.codeInsight.inline.completion
 import com.intellij.codeInsight.inline.completion.elements.InlineCompletionElement
 import com.intellij.codeInsight.inline.completion.tooltip.InlineCompletionTooltipFactory
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.project.Project
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.debounce
-import javax.swing.JComponent
-import javax.swing.JLabel
 
 /**
  * Proposals provider for inline completion.
