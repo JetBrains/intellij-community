@@ -1371,6 +1371,11 @@ public abstract class K1IdeK2CodeKotlinEvaluateExpressionInMppTestGenerated exte
                 runTest("testData/evaluation/singleBreakpoint/inlineMethodsInSignature.kt");
             }
 
+            @TestMetadata("inlineWithAnonymousObject.kt")
+            public void testInlineWithAnonymousObject() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/inlineWithAnonymousObject.kt");
+            }
+
             @TestMetadata("innerClass.kt")
             public void testInnerClass() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/innerClass.kt");
