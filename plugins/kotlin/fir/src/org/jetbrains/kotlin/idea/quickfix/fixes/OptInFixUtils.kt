@@ -15,8 +15,8 @@ import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtQualifiedExpression
 import org.jetbrains.kotlin.resolve.checkers.OptInNames
 
-object OptInFixUtils {
-    fun optInMarkerFqName(diagnostic: KtFirDiagnostic<PsiElement>) = when (diagnostic) {
+internal object OptInFixUtils {
+    fun optInMarkerFqName(diagnostic: KtFirDiagnostic<PsiElement>): FqName? = when (diagnostic) {
         is KtFirDiagnostic.OptInUsage -> diagnostic.optInMarkerFqName
         is KtFirDiagnostic.OptInUsageError -> diagnostic.optInMarkerFqName
         is KtFirDiagnostic.OptInOverride -> diagnostic.optInMarkerFqName
@@ -29,7 +29,8 @@ object OptInFixUtils {
         ?: FqNames.OptInFqNames.OLD_USE_EXPERIMENTAL_FQ_NAME.takeIf { it.annotationApplicable() }
 
     context (KtAnalysisSession)
-    private fun FqName.annotationApplicable() = getClassOrObjectSymbolByClassId(ClassId.topLevel(this)) != null
+    private fun FqName.annotationApplicable(): Boolean =
+        getClassOrObjectSymbolByClassId(ClassId.topLevel(this)) != null
 
     context (KtAnalysisSession)
     fun findAnnotation(name: FqName, useSite: KtElement): KtNamedClassOrObjectSymbol? {

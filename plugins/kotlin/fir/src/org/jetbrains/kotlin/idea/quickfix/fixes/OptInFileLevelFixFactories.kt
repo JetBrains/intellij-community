@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
 
-object OptInFileLevelFixFactories {
+internal object OptInFileLevelFixFactories {
     val optInFileLevelFixFactories =
         diagnosticFixFactories(
             KtFirDiagnostic.OptInUsage::class,

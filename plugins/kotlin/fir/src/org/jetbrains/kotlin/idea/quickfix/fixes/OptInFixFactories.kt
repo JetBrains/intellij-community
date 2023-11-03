@@ -23,7 +23,7 @@ import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.resolve.checkers.OptInNames
 
-object OptInFixFactories {
+internal object OptInFixFactories {
     val optInFixFactories = diagnosticFixFactories(
         KtFirDiagnostic.OptInUsage::class,
         KtFirDiagnostic.OptInUsageError::class,
