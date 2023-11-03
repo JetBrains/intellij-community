@@ -137,7 +137,7 @@ internal object GitLabMergeRequestDetailsComponentFactory {
           CC().grow().shrinkPrioY(200))
       add(GitLabMergeRequestDetailsStatusChecksComponentFactory.create(cs, statusVm, detailsReviewFlowVm, avatarIconsProvider),
           CC().growX().gap(ReviewDetailsUIUtil.STATUSES_GAPS).maxHeight("${ReviewDetailsUIUtil.STATUSES_MAX_HEIGHT}"))
-      add(GitLabMergeRequestDetailsActionsComponentFactory.create(cs, detailsReviewFlowVm, avatarIconsProvider),
+      add(GitLabMergeRequestDetailsActionsComponentFactory.create(cs, detailsReviewFlowVm),
           CC().growX().gap(ReviewDetailsUIUtil.ACTIONS_GAPS).minHeight("pref"))
     }
   }

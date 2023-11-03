@@ -12,11 +12,8 @@ import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.launch
-import org.jetbrains.plugins.gitlab.api.data.GitLabPlan
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.ui.create.model.GitLabMergeRequestCreateViewModel
-import org.jetbrains.plugins.gitlab.mergerequest.util.GitLabMergeRequestReviewersUtil
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import javax.swing.JComponent
 import javax.swing.JLabel
@@ -38,9 +35,7 @@ internal object GitLabMergeRequestCreateReviewersComponentFactory {
       val editButton = CodeReviewCommentUIUtil.createEditButton { event ->
         val parentComponent = event.source as? JComponent ?: return@createEditButton
         val point = RelativePoint.getSouthWestOf(parentComponent)
-        cs.launch {
-          adjustReviewer(point, createVm)
-        }
+        createVm.adjustReviewer(point)
       }
 
       add(reviewersLabel)
@@ -66,17 +61,5 @@ internal object GitLabMergeRequestCreateReviewersComponentFactory {
       icon = createVm.avatarIconProvider.getIcon(reviewer, Avatar.Sizes.BASE)
       text = reviewer.name
     }
-  }
-
-  private suspend fun adjustReviewer(point: RelativePoint, createVm: GitLabMergeRequestCreateViewModel) {
-    val originalReviewersIds = createVm.adjustedReviewers.value.mapTo(mutableSetOf<String>(), GitLabUserDTO::id)
-    val potentialReviewers = createVm.potentialReviewers
-    val updatedReviewers = if (createVm.plan.await() == GitLabPlan.FREE)
-      GitLabMergeRequestReviewersUtil.selectReviewer(point, originalReviewersIds, potentialReviewers, createVm.avatarIconProvider)
-    else
-      GitLabMergeRequestReviewersUtil.selectReviewers(point, originalReviewersIds, potentialReviewers, createVm.avatarIconProvider)
-
-    updatedReviewers ?: return
-    createVm.setReviewers(updatedReviewers)
   }
 }

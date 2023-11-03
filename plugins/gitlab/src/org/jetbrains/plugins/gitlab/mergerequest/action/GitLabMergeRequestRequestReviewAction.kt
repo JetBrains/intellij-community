@@ -3,22 +3,17 @@ package org.jetbrains.plugins.gitlab.mergerequest.action
 
 import com.intellij.collaboration.async.combineAndCollect
 import com.intellij.collaboration.messages.CollaborationToolsBundle
-import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.ui.awt.RelativePoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import org.jetbrains.plugins.gitlab.api.data.GitLabPlan
-import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestReviewFlowViewModel
-import org.jetbrains.plugins.gitlab.mergerequest.util.GitLabMergeRequestReviewersUtil
 import java.awt.event.ActionEvent
 import javax.swing.AbstractAction
 import javax.swing.JComponent
 
 internal class GitLabMergeRequestRequestReviewAction(
   private val scope: CoroutineScope,
-  private val reviewFlowVm: GitLabMergeRequestReviewFlowViewModel,
-  private val avatarIconsProvider: IconsProvider<GitLabUserDTO>
+  private val reviewFlowVm: GitLabMergeRequestReviewFlowViewModel
 ) : AbstractAction(CollaborationToolsBundle.message("review.details.action.request")) {
   init {
     scope.launch {
@@ -31,16 +26,6 @@ internal class GitLabMergeRequestRequestReviewAction(
   override fun actionPerformed(event: ActionEvent) {
     val parentComponent = event.source as? JComponent ?: return
     val point = RelativePoint.getSouthWestOf(parentComponent)
-    scope.launch {
-      val originalReviewersIds = reviewFlowVm.reviewers.value.mapTo(mutableSetOf<String>(), GitLabUserDTO::id)
-      val potentialReviewers = reviewFlowVm.potentialReviewers
-      val updatedReviewers = if (reviewFlowVm.plan.await() == GitLabPlan.FREE)
-        GitLabMergeRequestReviewersUtil.selectReviewer(point, originalReviewersIds, potentialReviewers, avatarIconsProvider)
-      else
-        GitLabMergeRequestReviewersUtil.selectReviewers(point, originalReviewersIds, potentialReviewers, avatarIconsProvider)
-
-      updatedReviewers ?: return@launch
-      reviewFlowVm.setReviewers(updatedReviewers)
-    }
+    reviewFlowVm.adjustReviewers(point)
   }
 }

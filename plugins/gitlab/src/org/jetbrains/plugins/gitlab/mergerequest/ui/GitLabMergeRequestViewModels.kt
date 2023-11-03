@@ -45,7 +45,7 @@ internal class GitLabMergeRequestViewModels(private val project: Project,
   private val diffBridge = GitLabMergeRequestDiffBridge()
 
   val detailsVm: GitLabMergeRequestDetailsViewModel by lazy {
-    GitLabMergeRequestDetailsViewModelImpl(project, cs, currentUser, projectData, mergeRequest).also {
+    GitLabMergeRequestDetailsViewModelImpl(project, cs, currentUser, projectData, mergeRequest, projectVm.avatarIconProvider).also {
       setupDetailsVm(it)
     }
   }

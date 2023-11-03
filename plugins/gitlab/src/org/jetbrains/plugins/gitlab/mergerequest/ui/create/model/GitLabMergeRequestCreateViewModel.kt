@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.ui.create.model
 
+import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.async.modelFlow
 import com.intellij.collaboration.ui.ListenableProgressIndicator
 import com.intellij.collaboration.ui.icon.IconsProvider
@@ -9,6 +10,7 @@ import com.intellij.collaboration.util.SingleCoroutineLauncher
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.childScope
 import com.intellij.vcs.log.VcsCommitMetadata
 import git4idea.GitBranch
@@ -25,6 +27,7 @@ import org.jetbrains.plugins.gitlab.GitLabProjectsManager
 import org.jetbrains.plugins.gitlab.api.data.GitLabPlan
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabProject
+import org.jetbrains.plugins.gitlab.mergerequest.util.GitLabMergeRequestReviewersUtil
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
 
@@ -53,7 +56,7 @@ internal interface GitLabMergeRequestCreateViewModel {
   fun updateTitle(text: String)
   fun updateBranchState(state: BranchState?)
 
-  fun setReviewers(reviewers: List<GitLabUserDTO>)
+  fun adjustReviewer(point: RelativePoint)
 
   fun createMergeRequest()
 }
@@ -161,8 +164,17 @@ internal class GitLabMergeRequestCreateViewModelImpl(
     _branchState.value = state
   }
 
-  override fun setReviewers(reviewers: List<GitLabUserDTO>) {
-    _adjustedReviewers.value = reviewers
+  override fun adjustReviewer(point: RelativePoint) {
+    cs.launchNow(Dispatchers.Main) {
+      val originalReviewersIds = adjustedReviewers.value.mapTo(mutableSetOf<String>(), GitLabUserDTO::id)
+      val updatedReviewers = if (plan.await() == GitLabPlan.FREE)
+        GitLabMergeRequestReviewersUtil.selectReviewer(point, originalReviewersIds, potentialReviewers, avatarIconProvider)
+      else
+        GitLabMergeRequestReviewersUtil.selectReviewers(point, originalReviewersIds, potentialReviewers, avatarIconProvider)
+
+      updatedReviewers ?: return@launchNow
+      _adjustedReviewers.value = updatedReviewers
+    }
   }
 
   override fun createMergeRequest() {
