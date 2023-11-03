@@ -4,6 +4,9 @@ package com.jetbrains.python.sdk.add.v2
 import com.intellij.openapi.observable.util.and
 import com.intellij.openapi.observable.util.equalsTo
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.ui.validation.DialogValidationRequestor
+import com.intellij.openapi.ui.validation.WHEN_PROPERTY_CHANGED
+import com.intellij.openapi.ui.validation.and
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.bind
 import com.intellij.ui.dsl.builder.bindItem
@@ -12,15 +15,12 @@ import com.jetbrains.python.sdk.add.v2.PythonSupportedEnvironmentManagers.*
 
 class PythonLocalEnvironmentCreator(presenter: PythonAddInterpreterPresenter) : PythonTargetEnvironmentInterpreterCreator {
 
-  private val settings = presenter.state
-
-  private val selectionMethod = settings.propertyGraph.property(PythonInterpreterSelectionMethod.CREATE_NEW)
-
-  private val _createNew = settings.propertyGraph.booleanProperty(selectionMethod, PythonInterpreterSelectionMethod.CREATE_NEW)
-  private val _selectExisting = settings.propertyGraph.booleanProperty(selectionMethod, PythonInterpreterSelectionMethod.SELECT_EXISTING)
-
-  private val newInterpreterManager = settings.propertyGraph.property(VIRTUALENV)
-  private val existingInterpreterManager = settings.propertyGraph.property(PYTHON)
+  private val propertyGraph = presenter.state.propertyGraph
+  private val selectionMethod = propertyGraph.property(PythonInterpreterSelectionMethod.CREATE_NEW)
+  private val _createNew = propertyGraph.booleanProperty(selectionMethod, PythonInterpreterSelectionMethod.CREATE_NEW)
+  private val _selectExisting = propertyGraph.booleanProperty(selectionMethod, PythonInterpreterSelectionMethod.SELECT_EXISTING)
+  private val newInterpreterManager = propertyGraph.property(VIRTUALENV)
+  private val existingInterpreterManager = propertyGraph.property(PYTHON)
 
   private val newInterpreterCreators = mapOf(
     VIRTUALENV to PythonNewVirtualenvCreator(presenter),
@@ -35,7 +35,7 @@ class PythonLocalEnvironmentCreator(presenter: PythonAddInterpreterPresenter) : 
   )
 
 
-  override fun buildPanel(outerPanel: Panel) {
+  override fun buildPanel(outerPanel: Panel, validationRequestor: DialogValidationRequestor) {
     with(outerPanel) {
       buttonsGroup {
         row(message("sdk.create.custom.env.creation.type")) {
@@ -64,13 +64,19 @@ class PythonLocalEnvironmentCreator(presenter: PythonAddInterpreterPresenter) : 
 
       newInterpreterCreators.forEach { (type, creator) ->
         rowsRange {
-          creator.buildOptions(this)
+          creator.buildOptions(this,
+                               validationRequestor
+                                 and WHEN_PROPERTY_CHANGED(selectionMethod)
+                                 and WHEN_PROPERTY_CHANGED(newInterpreterManager))
         }.visibleIf(_createNew and newInterpreterManager.equalsTo(type))
       }
 
       existingInterpreterSelectors.forEach { (type, selector) ->
         rowsRange {
-          selector.buildOptions(this)
+          selector.buildOptions(this,
+                                validationRequestor
+                                  and WHEN_PROPERTY_CHANGED(selectionMethod)
+                                  and WHEN_PROPERTY_CHANGED(existingInterpreterManager))
         }.visibleIf(_selectExisting and existingInterpreterManager.equalsTo(type))
       }
     }
