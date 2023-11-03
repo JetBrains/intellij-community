@@ -104,7 +104,7 @@ object IdeStartupWizardCollector : CounterUsagesCollector() {
   fun logExperimentState() {
     if (ConfigImportHelper.isFirstSession()) {
       val isEnabled = IdeStartupExperiment.isExperimentEnabled()
-      log.info("IDE startup isEnabled = $isEnabled, experimentGroupKind = ${IdeStartupExperiment.experimentGroupKind}, experimentGroup = ${IdeStartupExperiment.experimentGroup}")
+      log.info("IDE startup isEnabled = $isEnabled, IDEStartupKind = ${IdeStartupExperiment.experimentGroupKind}, IDEStartup = ${IdeStartupExperiment.experimentGroup}")
       experimentState.log(
         IdeStartupExperiment.experimentGroupKind,
         IdeStartupExperiment.experimentGroup,
