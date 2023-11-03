@@ -59,27 +59,23 @@ class TerminalSelectionController(
 
   @RequiresEdt
   fun selectRelativeBlock(isBelow: Boolean, dropCurrentSelection: Boolean) {
-    val primaryBlock = selectionModel.primarySelection
-    if (primaryBlock != null) {
-      val curIndex = outputModel.getIndexOfBlock(primaryBlock)
-      if (curIndex >= 0) {
-        val newIndex = if (isBelow) curIndex + 1 else curIndex - 1
-        if (newIndex in (0 until outputModel.getBlocksSize())) {
-          val newBlock = outputModel.getByIndex(newIndex)
-          selectionModel.selectedBlocks = when {
-            dropCurrentSelection -> listOf(newBlock)
-            selectedBlocks.contains(newBlock) -> selectedBlocks - primaryBlock  // selection is decreasing
-            else -> selectedBlocks + newBlock
-          }
-          makeBlockVisible(newBlock)
-        }
-        else if (isBelow) {
-          // The last block is already selected, so scroll to the end of the output
-          val editor = outputModel.editor
-          val visibleHeight = editor.scrollingModel.visibleArea.height
-          editor.scrollingModel.scrollVertically(editor.contentComponent.height - visibleHeight)
-        }
+    val primaryBlock = selectionModel.primarySelection ?: return
+    val curIndex = outputModel.getIndexOfBlock(primaryBlock).takeIf { it >= 0 } ?: return
+    val newIndex = if (isBelow) curIndex + 1 else curIndex - 1
+    if (newIndex in (0 until outputModel.getBlocksSize())) {
+      val newBlock = outputModel.getByIndex(newIndex)
+      selectionModel.selectedBlocks = when {
+        dropCurrentSelection -> listOf(newBlock)
+        selectedBlocks.contains(newBlock) -> selectedBlocks - primaryBlock  // selection is decreasing
+        else -> selectedBlocks + newBlock
       }
+      makeBlockVisible(newBlock)
+    }
+    else if (isBelow) {
+      // The last block is already selected, so scroll to the end of the output
+      val editor = outputModel.editor
+      val visibleHeight = editor.scrollingModel.visibleArea.height
+      editor.scrollingModel.scrollVertically(editor.contentComponent.height - visibleHeight)
     }
   }
 
