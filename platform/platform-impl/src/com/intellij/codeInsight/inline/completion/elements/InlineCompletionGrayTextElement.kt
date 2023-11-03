@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorCustomElementRenderer
 import com.intellij.openapi.editor.Inlay
+import com.intellij.openapi.editor.VisualPosition
 import com.intellij.openapi.editor.ex.util.EditorActionAvailabilityHint
 import com.intellij.openapi.editor.ex.util.addActionAvailabilityHint
 import com.intellij.openapi.editor.markup.TextAttributes
@@ -50,15 +51,9 @@ data class InlineCompletionGrayTextElement(override val text: String) : InlineCo
     }
 
     private fun renderSuffix(editor: Editor, lines: List<String>, offset: Int) {
-      // TODO: remove this?
-      // the following is a hacky solution to the effect described in ML-977
-      //if (Registry.`is`("inline.completion.caret.forceLeanLeft")) {
-      //  val visualPosition = editor.caretModel.visualPosition
-      //  if (visualPosition.leansRight) {
-      //    val leftLeaningPosition = VisualPosition(visualPosition.line, visualPosition.column, false)
-      //    editor.caretModel.moveToVisualPosition(leftLeaningPosition)
-      //  }
-      //}
+      // The following is a hacky solution to the effect described in ML-977
+      // ML-1781 Inline completion renders on the left to the caret after moving it
+      editor.forceLeanLeft()
 
       val line = lines.first()
       if (line.isBlank()) {
@@ -90,6 +85,14 @@ data class InlineCompletionGrayTextElement(override val text: String) : InlineCo
       ) ?: return
 
       blockInlay = element
+    }
+
+    private fun Editor.forceLeanLeft() {
+      val visualPosition = caretModel.visualPosition
+      if (visualPosition.leansRight) {
+        val leftLeaningPosition = VisualPosition(visualPosition.line, visualPosition.column, false)
+        caretModel.moveToVisualPosition(leftLeaningPosition)
+      }
     }
   }
 }
