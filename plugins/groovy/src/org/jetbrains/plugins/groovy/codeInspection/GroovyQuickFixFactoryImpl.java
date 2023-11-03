@@ -168,7 +168,7 @@ public class GroovyQuickFixFactoryImpl extends GroovyQuickFixFactory {
   }
 
   @Override
-  public GroovyFix createAddMissingCasesFix(List<? extends PsiElement> expressions, GrSwitchElement switchElement) {
+  public LocalQuickFix createAddMissingCasesFix(List<? extends PsiElement> expressions, GrSwitchElement switchElement) {
     return new GrAddMissingCaseSectionsFix(expressions, switchElement);
   }
 }

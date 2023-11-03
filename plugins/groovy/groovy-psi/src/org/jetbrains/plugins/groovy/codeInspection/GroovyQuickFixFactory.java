@@ -80,5 +80,5 @@ public abstract class GroovyQuickFixFactory {
 
   public abstract LocalQuickFix createQualifyExpressionFix();
 
-  public abstract GroovyFix createAddMissingCasesFix(List<? extends PsiElement> expressions, GrSwitchElement switchElement);
+  public abstract LocalQuickFix createAddMissingCasesFix(List<? extends PsiElement> expressions, GrSwitchElement switchElement);
 }
