@@ -54,6 +54,7 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
       InlineContextFeatures.FIRST_PARENT,
       InlineContextFeatures.SECOND_PARENT,
     )
+    val CONTEXT_FEATURES_COMPUTATION_TIME = EventFields.Long("context_features_computation_time")
   }
 
   internal val INVOKED_EVENT: VarargEventId = GROUP.registerVarargEvent(
@@ -67,6 +68,7 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
     InvokedEvents.OUTCOME,
     InvokedEvents.ADDITIONAL,
     InvokedEvents.CONTEXT_FEATURES,
+    InvokedEvents.CONTEXT_FEATURES_COMPUTATION_TIME,
   )
 
   object ShownEvents {
