@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.roots.libraries.LibraryUtil
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -97,6 +98,7 @@ object InlineContextFeatures {
     add(SECOND_PARENT.with(secondParent::class.java))
   }
 
+  val KEY: Key<MutableList<EventPair<*>>> = Key.create("inline_context_features")
   val LOG = logger<InlineContextFeatures>()
 
   val LINE_NUMBER = EventFields.Int("line_number")
