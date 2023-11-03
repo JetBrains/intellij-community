@@ -445,6 +445,7 @@ class NewLogicDelegate(private val project: Project) : LogicDelegate() {
             loadedDefinitions = definitionsBySource.values.flattenTo(mutableListOf())
                 .onEach { it.order = scriptingSettings.getScriptDefinitionOrder(it) }
                 .sortedBy(ScriptDefinition::order)
+                .takeIf { it.isNotEmpty() }
 
             definitions = loadedDefinitions
         }
