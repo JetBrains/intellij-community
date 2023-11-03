@@ -45,12 +45,10 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.debug.internal.DebugProbesImpl
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.VisibleForTesting
-import java.io.IOException
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
 import java.lang.management.ManagementFactory
 import java.nio.file.Files
-import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
 import java.time.format.DateTimeFormatter
@@ -702,17 +700,13 @@ private fun logEnvVar(log: Logger, variable: String) {
   }
 }
 
-private fun logPath(path: String): String {
-  try {
-    val configured = Path.of(path)
-    val real = configured.toRealPath()
-    return if (configured == real) path else "${path} -> ${real}"
-  }
-  catch (_: IOException) {
-  }
-  catch (_: InvalidPathException) {
-  }
-  return "${path} -> ?"
+private fun logPath(path: String): String = try {
+  val configured = Path.of(path)
+  val real = configured.toRealPath()
+  if (configured == real) path else "${path} -> ${real}"
+}
+catch (e: Exception) {
+  "${path} -> ${e.javaClass.name}: ${e.message}"
 }
 
 interface AppStarter {
@@ -734,7 +728,6 @@ class Java11ShimImpl : Java11Shim {
 
   override fun <E> copyOf(collection: Collection<E>): Set<E> = java.util.Set.copyOf(collection)
 
-  override fun <V : Any> createConcurrentLongObjectMap(): ConcurrentLongObjectMap<V> {
-    return ConcurrentCollectionFactory.createConcurrentLongObjectMap()
-  }
+  override fun <V : Any> createConcurrentLongObjectMap(): ConcurrentLongObjectMap<V> =
+    ConcurrentCollectionFactory.createConcurrentLongObjectMap()
 }
