@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.collaboration.ui.util.popup
 
+import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
@@ -104,24 +105,20 @@ object ChooserPopupUtil {
       val cs = parentScope.childScope()
       this.cs = cs
 
-      cs.launch {
+      cs.launchNow {
         items.catch { e ->
           val errorMessage = e.localizedMessage ?: CollaborationToolsBundle.message("popup.data.loading.error")
           list.emptyText.setText(errorMessage, SimpleTextAttributes.ERROR_ATTRIBUTES)
+          LOG.error(e)
         }.collect {
           list.emptyText.clear()
-          try {
-            val selected = list.selectedIndex
-            if (it.size > listModel.size) {
-              val newList = it.subList(listModel.size, it.size)
-              listModel.addAll(listModel.size, newList)
-            }
-            if (selected != -1) {
-              list.selectedIndex = selected
-            }
+          val selected = list.selectedIndex
+          if (it.size > listModel.size) {
+            val newList = it.subList(listModel.size, it.size)
+            listModel.addAll(listModel.size, newList)
           }
-          catch (e: Exception) {
-            LOG.error(e)
+          if (selected != -1) {
+            list.selectedIndex = selected
           }
         }
       }
@@ -129,6 +126,7 @@ object ChooserPopupUtil {
 
     override fun onClosed(event: LightweightWindowEvent) {
       cs?.cancel()
+      cs = null
     }
   }
 
