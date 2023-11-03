@@ -298,7 +298,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
       }
     }
     UsageInfo[] infos = filtered.toArray(UsageInfo.EMPTY_ARRAY);
-    VisibilityUtil.fixVisibility(UsageViewUtil.toElements(infos), newMember, newMember.getContainingFile(), myNewVisibility);
+    VisibilityUtil.fixVisibility(UsageViewUtil.toElements(infos), newMember, myNewVisibility);
   }
 
   @Override

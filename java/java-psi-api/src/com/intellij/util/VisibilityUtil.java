@@ -11,7 +11,6 @@ import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 
 public final class VisibilityUtil {
@@ -45,16 +44,17 @@ public final class VisibilityUtil {
   }
 
   public static void escalateVisibility(PsiMember modifierListOwner, PsiElement place) throws IncorrectOperationException {
-    escalateVisibility(modifierListOwner, place, null);
-  }
-
-  public static void escalateVisibility(PsiMember modifierListOwner, PsiElement place, @Nullable PsiFile fileResolveScope)
-    throws IncorrectOperationException {
     final String visibilityModifier = getVisibilityModifier(modifierListOwner.getModifierList());
     int index;
     for (index = 0; index < visibilityModifiers.length; index++) {
       String modifier = visibilityModifiers[index];
       if (modifier.equals(visibilityModifier)) break;
+    }
+    PsiElement fileResolveScope = null;
+    if (place instanceof PsiJavaReference) {
+      fileResolveScope = ((PsiJavaReference)place).advancedResolve(false).getCurrentFileResolveScope();
+    } else if (place instanceof PsiCall) {
+      fileResolveScope = ((PsiCall)place).resolveMethodGenerics().getCurrentFileResolveScope();
     }
     PsiResolveHelper psiResolveHelper = PsiResolveHelper.getInstance(place.getProject());
     for (;
@@ -129,18 +129,11 @@ public final class VisibilityUtil {
   }
 
   public static void fixVisibility(PsiElement[] elements, PsiMember member, @PsiModifier.ModifierConstant String newVisibility) {
-    fixVisibility(elements, member, null, newVisibility);
-  }
-
-  public static void fixVisibility(PsiElement[] elements,
-                                   PsiMember member,
-                                   @Nullable PsiFile fileResolveScope,
-                                   @PsiModifier.ModifierConstant String newVisibility) {
     if (newVisibility == null) return;
     if (ESCALATE_VISIBILITY.equals(newVisibility)) {
       for (PsiElement element : elements) {
         if (element != null) {
-          escalateVisibility(member, element, fileResolveScope);
+          escalateVisibility(member, element);
         }
       }
     }
