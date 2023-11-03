@@ -18,14 +18,16 @@ import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 import java.io.DataInput
 import java.io.DataOutput
+import java.io.RandomAccessFile
 import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.io.path.exists
 import kotlin.io.path.isDirectory
+import kotlin.io.path.isRegularFile
 
 private data class EnumeratedTestClass(val testIntField: Int)
 
-private class EnumeratedTestClassDescriptor() : KeyDescriptor<EnumeratedTestClass> {
+private class EnumeratedTestClassDescriptor : KeyDescriptor<EnumeratedTestClass> {
   override fun isEqual(val1: EnumeratedTestClass?, val2: EnumeratedTestClass?): Boolean = val1 == val2
 
   override fun getHashCode(value: EnumeratedTestClass?): Int = value?.testIntField ?: 0
@@ -71,15 +73,14 @@ class EnumeratedFastFileAttributeTest {
     closer.close()
   }
 
-  private fun createFileAttribute() = FileAttribute("EnumeratedFastFileAttributeTest.${fileAttrCounter.getAndIncrement()}", 0, true)
+  private fun createFileAttribute(version: Int = 0): FileAttribute {
+    return FileAttribute("EnumeratedFastFileAttributeTest.${fileAttrCounter.getAndIncrement()}", version, true)
+  }
 
-  private fun createEnumeratedFastFileAttribute(dir: Path): EnumeratedFastFileAttribute<EnumeratedTestClass> =
-    EnumeratedFastFileAttribute(dir, createFileAttribute(), EnumeratedTestClassDescriptor()) {
-      PersistentEnumerator(it, EnumeratedTestClassDescriptor(), 32)
-    }.also(closer::register)
-
-  private fun createEnumeratedFastFileAttribute(dir: Path, vfsVersion: Long): EnumeratedFastFileAttribute<EnumeratedTestClass> =
-    EnumeratedFastFileAttribute(dir, createFileAttribute(), EnumeratedTestClassDescriptor(), vfsVersion) {
+  private fun createEnumeratedFastFileAttribute(dir: Path,
+                                                vfsVersion: Long = 12345,
+                                                fileAttributeVersion: Int = 0): EnumeratedFastFileAttribute<EnumeratedTestClass> =
+    EnumeratedFastFileAttribute(dir, createFileAttribute(fileAttributeVersion), EnumeratedTestClassDescriptor(), vfsVersion) {
       PersistentEnumerator(it, EnumeratedTestClassDescriptor(), 32)
     }.also(closer::register)
 
@@ -180,6 +181,47 @@ class EnumeratedFastFileAttributeTest {
     createEnumeratedFastFileAttribute(dir, vfsVersion = 1).use { storage ->
       val r = storage.readEnumerated(f.id)
       assertNull(r)
+    }
+  }
+
+  @Test
+  fun testStorageVersionChange() {
+    val dir = temp.newDirectory().toPath()
+    val f = temp.newVirtualFile("test", "content".toByteArray()) as VirtualFileWithId
+    val w = EnumeratedTestClass(1)
+
+    createEnumeratedFastFileAttribute(dir, fileAttributeVersion = 0).use { storage ->
+      storage.writeEnumerated(f.id, w)
+    }
+
+    createEnumeratedFastFileAttribute(dir, fileAttributeVersion = 1).use { storage ->
+      val read = storage.readEnumerated(f.id)
+      assertNull(read)
+    }
+  }
+
+  @Test // IDEA-337085, IDEA-337109
+  fun testStorageRecreatedAfterCorruption() {
+    val dir = temp.newDirectory().toPath()
+    val f = temp.newVirtualFile("test", "content".toByteArray()) as VirtualFileWithId
+    val w = EnumeratedTestClass(1)
+
+    createEnumeratedFastFileAttribute(dir).use { storage ->
+      storage.writeEnumerated(f.id, w)
+    }
+
+    // corrupt enum file
+    val enumFile = dir.resolve("enumerator")
+    assertTrue(enumFile.isRegularFile())
+    RandomAccessFile(enumFile.toFile(), "rw").use {
+      val header = it.readInt()
+      it.seek(0)
+      it.writeInt(header + 1)
+    }
+
+    createEnumeratedFastFileAttribute(dir).use { storage ->
+      val read = storage.readEnumerated(f.id)
+      assertNull(read)
     }
   }
 }
