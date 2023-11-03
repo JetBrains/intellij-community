@@ -5,10 +5,12 @@ import com.intellij.ide.startup.importSettings.StartupImportIcons
 import com.intellij.ide.startup.importSettings.jb.JbImportServiceImpl
 import com.intellij.ide.startup.importSettings.sync.SyncServiceImpl
 import com.intellij.ide.startup.importSettings.transfer.SettingTransferService
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.rd.createLifetime
 import com.intellij.openapi.rd.createNestedDisposable
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryValue
@@ -31,7 +33,7 @@ interface SettingsService {
   fun getJbService(): JbService
   fun getExternalService(): ExternalService
 
-  fun cancelImport()
+  val importCancelled: Signal<Unit>
 
   val error: ISignal<NotificationData>
 
@@ -44,7 +46,7 @@ interface SettingsService {
   fun isLoggedIn(): Boolean = jbAccount.value != null
 }
 
-class SettingsServiceImpl : SettingsService {
+class SettingsServiceImpl : SettingsService, Disposable.Default {
 
   private val shouldUseMockData = SystemProperties.getBooleanProperty("intellij.startup.wizard.use-mock-data", true)
 
@@ -60,7 +62,11 @@ class SettingsServiceImpl : SettingsService {
     if (shouldUseMockData) TestExternalService()
     else SettingTransferService.getInstance()
 
-  override fun cancelImport() = thisLogger().info("$IMPORT_SERVICE cancelImport")
+  override val importCancelled = Signal<Unit>().apply {
+    advise(createLifetime()) {
+      thisLogger().info("$IMPORT_SERVICE cancelImport")
+    }
+  }
 
   override val error = Signal<NotificationData>()
 

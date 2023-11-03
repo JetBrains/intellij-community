@@ -24,6 +24,7 @@ open class TransferSettingsPerformImportTask(
   override fun run(indicator: ProgressIndicator) {
     indicator.isIndeterminate = true
     indicator.text2 = IdeBundle.message("transfersettings.task.progress.details.starting.up")
+    indicator.checkCanceled()
     val requiredPlugins = performer.collectAllRequiredPlugins(settings)
     indicator.isIndeterminate = false
     indicator.fraction = 0.0
@@ -35,12 +36,15 @@ open class TransferSettingsPerformImportTask(
       }
     }
 
+    indicator.checkCanceled()
     settings = performer.patchSettingsAfterPluginInstallation(settings, PluginManagerCore.plugins.map { it.pluginId.idString }.toSet())
 
+    indicator.checkCanceled()
     performer.perform(project, settings, indicator)
     indicator.fraction = 0.99
     indicator.text = IdeBundle.message("transfersettings.task.progress.details.finishing.up")
     indicator.text2 = null
+    indicator.checkCanceled()
     application.invokeAndWait({ performer.performEdt(project, settings) }, indicator.modalityState)
 
     indicator.fraction = 1.0

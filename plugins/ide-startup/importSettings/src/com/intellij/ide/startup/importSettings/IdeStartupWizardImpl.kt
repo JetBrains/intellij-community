@@ -9,6 +9,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.ide.bootstrap.IdeStartupWizard
 import com.intellij.platform.ide.bootstrap.isIdeStartupWizardEnabled
+import com.jetbrains.rd.util.reactive.fire
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
@@ -28,7 +29,7 @@ internal class IdeStartupWizardImpl : IdeStartupWizard {
       withContext(Dispatchers.EDT) {
         MultiplePageDialog.show(
           ProductChooserDialog(),
-          { settingsService.cancelImport() },
+          { settingsService.importCancelled.fire() },
           title = ApplicationNamesInfo.getInstance().fullProductName
         )
       }

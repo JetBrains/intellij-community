@@ -30,6 +30,7 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.rd.util.withSyncIOBackgroundContext
 import com.intellij.util.containers.nullize
 import com.intellij.util.text.nullize
+import com.jetbrains.rd.util.lifetime.LifetimeDefinition
 import com.jetbrains.rd.util.reactive.OptProperty
 import com.jetbrains.rd.util.reactive.Property
 import kotlinx.coroutines.CancellationException
@@ -164,11 +165,17 @@ class SettingTransferService : ExternalService {
       val product = info.product
       applyPreferences(product, data)
       val importData = TransferSettingsProgress(product)
-      config.controller.addListener(TransferSettingsWizardListener())
+      val progressIndicator = importData.createProgressIndicatorAdapter()
+      val importLifetime = LifetimeDefinition()
+      SettingsService.getInstance().importCancelled.advise(importLifetime.lifetime) {
+        progressIndicator.cancel()
+      }
+
+      config.controller.addListener(TransferSettingsWizardListener(importLifetime))
       config.controller.performImport(
         null,
         product,
-        importData.createProgressIndicatorAdapter()
+        progressIndicator
       )
       return importData
     }
@@ -194,18 +201,20 @@ class SettingTransferService : ExternalService {
   }
 }
 
-internal class TransferSettingsWizardListener : TransferSettingsListener {
+internal class TransferSettingsWizardListener(private val ld: LifetimeDefinition) : TransferSettingsListener {
 
   override fun importStarted(ideVersion: IdeVersion, settings: Settings) {
     thisLogger().info("Settings import from ${ideVersion.name} has been started.")
   }
 
   override fun importFailed(ideVersion: IdeVersion, settings: Settings, throwable: Throwable) {
+    ld.terminate()
     thisLogger().error("Setting import error from ${ideVersion.name}.", throwable)
     showImportErrorNotification(throwable)
   }
 
   override fun importPerformed(ideVersion: IdeVersion, settings: Settings, context: TransferSettingsPerformContext) {
+    ld.terminate()
     thisLogger().info("Setting import error from ${ideVersion.name} has been finished, plugin state: ${context.pluginInstallationState}.")
     SettingsService.getInstance().doClose.fire(Unit)
     if (context.pluginInstallationState == PluginInstallationState.RestartRequired) {

@@ -12,6 +12,7 @@ import com.intellij.ide.startup.importSettings.data.SettingsContributor
 import com.intellij.ide.startup.importSettings.jb.JbProductInfo
 import com.intellij.ide.startup.importSettings.jb.NameMappings
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.NlsContexts.ProgressDetails
 import com.intellij.openapi.util.NlsContexts.ProgressText
@@ -52,11 +53,15 @@ private class TransferSettingsContributor(ideVersion: BaseIdeVersion) : Settings
 }
 
 class ProgressIndicatorAdapter(private val backend: TransferSettingsProgressIndicator) : ProgressIndicator {
+
+  @Volatile
+  private var cancelled = false
+
   override fun start() {}
   override fun stop() {}
   override fun isRunning() = true
-  override fun cancel() {}
-  override fun isCanceled() = false
+  override fun cancel() { cancelled = true }
+  override fun isCanceled() = cancelled
 
   private val textProp = Property<String?>(null)
   private val text2Prop = Property<String?>(null)
@@ -104,7 +109,10 @@ class ProgressIndicatorAdapter(private val backend: TransferSettingsProgressIndi
   override fun setModalityProgress(modalityProgress: ProgressIndicator?) {}
   override fun isIndeterminate() = false
   override fun setIndeterminate(indeterminate: Boolean) {}
-  override fun checkCanceled() {}
+  override fun checkCanceled() {
+    if (cancelled)
+      throw ProcessCanceledException()
+  }
   override fun isPopupWasShown() = true
   override fun isShowing() = true
 }
