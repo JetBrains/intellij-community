@@ -1652,6 +1652,12 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
            entry.toolWindow.type == ToolWindowType.FLOATING)) {
         tracker = createPositionTracker(entry.toolWindow.component, ToolWindowAnchor.BOTTOM)
       }
+      else if (!button.isShowing) {
+        tracker = createPositionTracker(toolWindowPane, anchor)
+        if (balloon is BalloonImpl) {
+          balloon.setShowPointer(false)
+        }
+      }
       else {
         tracker = object : PositionTracker<Balloon>(button) {
           override fun recalculateLocation(balloon: Balloon): RelativePoint? {
