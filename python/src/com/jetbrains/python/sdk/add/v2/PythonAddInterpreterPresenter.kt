@@ -51,7 +51,6 @@ class PythonAddInterpreterPresenter(val state: PythonAddInterpreterState, val ui
     get() = state.scope
 
   private val _allExistingSdksFlow = MutableStateFlow(state.allExistingSdks.get())
-  val allExistingSdksFlow: StateFlow<List<Sdk>> = _allExistingSdksFlow.asStateFlow()
 
   private val projectLocationContexts = ProjectLocationContexts()
 
@@ -95,6 +94,12 @@ class PythonAddInterpreterPresenter(val state: PythonAddInterpreterState, val ui
       .stateIn(scope + uiContext, started = SharingStarted.Lazily, LocalContext to emptyList())
 
   private val manuallyAddedSdksFlow = MutableStateFlow<List<Sdk>>(emptyList())
+
+  val allSdksFlow: StateFlow<List<Sdk>> =
+    combine(_allExistingSdksFlow, manuallyAddedSdksFlow) { existingSdks, manuallyAddedSdks ->
+      manuallyAddedSdks + existingSdks
+    }
+      .stateIn(scope + uiContext, started = SharingStarted.Lazily, initialValue = emptyList())
 
   val basePythonSdksFlow: StateFlow<List<Sdk>> =
     combine(_allExistingSdksFlow, manuallyAddedSdksFlow, detectedSdksFlow) { existingSdks, manuallyAddedSdks, (context, detectedSdks) ->
