@@ -3,6 +3,7 @@ package com.intellij.codeInsight.inline.completion.logs
 
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.roots.libraries.LibraryUtil
@@ -15,49 +16,53 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 object InlineContextFeatures {
   fun capture(psiFile: PsiFile, editor: Editor, offset: Int, contextFeatures: MutableList<EventPair<*>>) {
-    val logicalPosition = editor.offsetToLogicalPosition(offset)
-    val lineNumber = logicalPosition.line
-    val columnNumber = logicalPosition.column
+    try {
+      val logicalPosition = editor.offsetToLogicalPosition(offset)
+      val lineNumber = logicalPosition.line
+      val columnNumber = logicalPosition.column
 
-    contextFeatures.add(LINE_NUMBER.with(lineNumber))
-    contextFeatures.add(COLUMN_NUMBER.with(columnNumber))
+      contextFeatures.add(LINE_NUMBER.with(lineNumber))
+      contextFeatures.add(COLUMN_NUMBER.with(columnNumber))
 
-    val lineStartOffset = editor.document.getLineStartOffset(lineNumber)
-    val lineEndOffset = editor.document.getLineEndOffset(lineNumber)
+      val lineStartOffset = editor.document.getLineStartOffset(lineNumber)
+      val lineEndOffset = editor.document.getLineEndOffset(lineNumber)
 
-    val linePrefix = editor.document.getText(TextRange(lineStartOffset, offset))
-    val lineSuffix = editor.document.getText(TextRange(offset, lineEndOffset))
+      val linePrefix = editor.document.getText(TextRange(lineStartOffset, offset))
+      val lineSuffix = editor.document.getText(TextRange(offset, lineEndOffset))
 
-    if (linePrefix.isNotBlank()) {
-      contextFeatures.add(IS_WHITE_SPACE_BEFORE_CARET.with(linePrefix.last().isWhitespace()))
-      val trimmedPrefix = linePrefix.trim()
-      contextFeatures.add(SYMBOLS_IN_LINE_BEFORE_CARET.with(trimmedPrefix.length))
-      CharCategory.find(trimmedPrefix.last())?.let {
-        contextFeatures.add(NON_SPACE_SYMBOL_BEFORE_CARET.with(it))
+      if (linePrefix.isNotBlank()) {
+        contextFeatures.add(IS_WHITE_SPACE_BEFORE_CARET.with(linePrefix.last().isWhitespace()))
+        val trimmedPrefix = linePrefix.trim()
+        contextFeatures.add(SYMBOLS_IN_LINE_BEFORE_CARET.with(trimmedPrefix.length))
+        CharCategory.find(trimmedPrefix.last())?.let {
+          contextFeatures.add(NON_SPACE_SYMBOL_BEFORE_CARET.with(it))
+        }
       }
-    }
-    if (lineSuffix.isNotBlank()) {
-      contextFeatures.add(IS_WHITE_SPACE_AFTER_CARET.with(lineSuffix.first().isWhitespace()))
-      val trimmedSuffix = lineSuffix.trim()
-      contextFeatures.add(SYMBOLS_IN_LINE_AFTER_CARET.with(trimmedSuffix.length))
-      CharCategory.find(trimmedSuffix.last())?.let {
-        contextFeatures.add(NON_SPACE_SYMBOL_AFTER_CARET.with(it))
+      if (lineSuffix.isNotBlank()) {
+        contextFeatures.add(IS_WHITE_SPACE_AFTER_CARET.with(lineSuffix.first().isWhitespace()))
+        val trimmedSuffix = lineSuffix.trim()
+        contextFeatures.add(SYMBOLS_IN_LINE_AFTER_CARET.with(trimmedSuffix.length))
+        CharCategory.find(trimmedSuffix.last())?.let {
+          contextFeatures.add(NON_SPACE_SYMBOL_AFTER_CARET.with(it))
+        }
       }
-    }
-    val document = editor.document
-    val (previousNonEmptyLineNumber, previousNonEmptyLineText) = document.findNonBlankLine(lineNumber, false)
-    contextFeatures.add(PREVIOUS_EMPTY_LINES_COUNT.with(lineNumber - previousNonEmptyLineNumber - 1))
-    if (previousNonEmptyLineText != null) {
-      contextFeatures.add(PREVIOUS_NON_EMPTY_LINE_LENGTH.with(previousNonEmptyLineText.length))
-    }
-    val (followingNonEmptyLineNumber, followingNonEmptyLineText) = document.findNonBlankLine(lineNumber, true)
-    contextFeatures.add(FOLLOWING_EMPTY_LINES_COUNT.with(followingNonEmptyLineNumber - lineNumber - 1))
-    if (followingNonEmptyLineText != null) {
-      contextFeatures.add(FOLLOWING_NON_EMPTY_LINE_LENGTH.with(followingNonEmptyLineText.length))
-    }
-    contextFeatures.add(LIBRARIES_COUNT.with(LibraryUtil.getLibraryRoots(psiFile.project).size))
+      val document = editor.document
+      val (previousNonEmptyLineNumber, previousNonEmptyLineText) = document.findNonBlankLine(lineNumber, false)
+      contextFeatures.add(PREVIOUS_EMPTY_LINES_COUNT.with(lineNumber - previousNonEmptyLineNumber - 1))
+      if (previousNonEmptyLineText != null) {
+        contextFeatures.add(PREVIOUS_NON_EMPTY_LINE_LENGTH.with(previousNonEmptyLineText.length))
+      }
+      val (followingNonEmptyLineNumber, followingNonEmptyLineText) = document.findNonBlankLine(lineNumber, true)
+      contextFeatures.add(FOLLOWING_EMPTY_LINES_COUNT.with(followingNonEmptyLineNumber - lineNumber - 1))
+      if (followingNonEmptyLineText != null) {
+        contextFeatures.add(FOLLOWING_NON_EMPTY_LINE_LENGTH.with(followingNonEmptyLineText.length))
+      }
+      contextFeatures.add(LIBRARIES_COUNT.with(LibraryUtil.getLibraryRoots(psiFile.project).size))
 
-    psiFile.findElementAt(offset)?.let { contextFeatures.addPsiParents(it) }
+      psiFile.findElementAt(offset)?.let { contextFeatures.addPsiParents(it) }
+    } catch (e: Exception) {
+      LOG.trace(e)
+    }
   }
 
   private fun Document.findNonBlankLine(lineNumber: Int, following: Boolean): Pair<Int, String?> {
@@ -87,6 +92,8 @@ object InlineContextFeatures {
     if (secondParent == null || secondParent is PsiFileSystemItem) return
     add(SECOND_PARENT.with(secondParent::class.java))
   }
+
+  val LOG = logger<InlineContextFeatures>()
 
   val LINE_NUMBER = EventFields.Int("line_number")
   val COLUMN_NUMBER = EventFields.Int("column_number")
