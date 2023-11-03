@@ -1,8 +1,8 @@
 // "Create enum constant 'EEE'" "true"
 
 enum E {
-    AAA;
+    AAA, EEE;
     void t() {
-        int t = <caret>EEE;
+        int t = EEE;
     }
 }

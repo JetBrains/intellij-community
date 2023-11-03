@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl
 
 import com.intellij.codeInsight.daemon.QuickFixBundle
@@ -116,7 +116,7 @@ class JavaElementActionsFactory : JvmElementActionsFactory() {
     val constantRequested = request.isConstant || javaClass.isInterface || javaClass.isRecord || request.modifiers.containsAll(
       constantModifiers)
     val result = ArrayList<IntentionAction>()
-    if (canCreateEnumConstant(javaClass, request)) {
+    if (canCreateEnumConstant(javaClass)) {
       result += CreateEnumConstantAction(javaClass, request)
     }
     if (constantRequested || request.fieldName.uppercase(Locale.ENGLISH) == request.fieldName) {
