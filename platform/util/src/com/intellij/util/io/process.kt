@@ -8,6 +8,7 @@ import java.io.BufferedReader
 import java.util.concurrent.CancellationException
 import java.util.concurrent.TimeUnit
 import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.time.Duration
 
 /**
@@ -45,13 +46,10 @@ suspend fun Process.awaitExit(): Int {
 @IntellijInternalApi
 @Internal
 suspend fun <T> computeDetached(
-  context: CoroutineContext? = null,
+  context: CoroutineContext = EmptyCoroutineContext,
   action: suspend CoroutineScope.() -> T,
 ): T {
-  val finalContext =
-    if (context != null) context + blockingDispatcher
-    else blockingDispatcher
-  val deferred = GlobalScope.async(finalContext, block = action)
+  val deferred = GlobalScope.async(context + blockingDispatcher, block = action)
   try {
     return deferred.await()
   }

@@ -118,6 +118,10 @@ class ProcessTest {
         assertThat(holdingThread.get())
           .describedAs("After a while, no more blocking operations should be invoked. The background operation should've been cancelled.")
           .isFalse()
+
+        assertThat(String(outputStream.toByteArray()))
+          .describedAs("According to the test logic, no more data should have been copied")
+          .isEqualTo("hello")
       }
     }
   }
