@@ -54,8 +54,6 @@ internal object GitLabMergeRequestTimelineComponentFactory {
              timelineVm: GitLabMergeRequestTimelineViewModel,
              avatarIconsProvider: IconsProvider<GitLabUserDTO>
   ): JComponent {
-    val actionGroup = ActionManager.getInstance().getAction("GitLab.Merge.Request.Timeline.Popup") as ActionGroup
-
     val titleComponent = GitLabMergeRequestTimelineTitleComponent.create(cs, timelineVm).let {
       CollaborationToolsUIUtil.wrapWithLimitedSize(it, CodeReviewChatItemUIUtil.TEXT_CONTENT_WIDTH)
     }.apply {
@@ -64,12 +62,13 @@ internal object GitLabMergeRequestTimelineComponentFactory {
     val descriptionComponent = GitLabMergeRequestTimelineDescriptionComponent
       .createComponent(cs, timelineVm, avatarIconsProvider)
 
-    val errorOrTimelineComponent = createErrorOrTimelineComponent(cs, project, avatarIconsProvider, timelineVm)
+    val timelinePanel = VerticalListPanel(0)
+    val errorOrTimelineComponent = createErrorOrTimelineComponent(cs, project, avatarIconsProvider, timelineVm, timelinePanel)
 
     val newNoteField = timelineVm.newNoteVm?.let {
       cs.createNewNoteField(project, avatarIconsProvider, it)
     }
-    val timelinePanel = VerticalListPanel(0).apply {
+    timelinePanel.apply {
       add(titleComponent)
       add(descriptionComponent)
       add(errorOrTimelineComponent)
@@ -86,7 +85,6 @@ internal object GitLabMergeRequestTimelineComponentFactory {
         }
     }
 
-    PopupHandler.installPopupMenu(timelinePanel, actionGroup, ActionPlaces.POPUP)
     DataManager.registerDataProvider(timelinePanel) { dataId ->
       when {
         GitLabMergeRequestViewModel.DATA_KEY.`is`(dataId) -> timelineVm
@@ -134,7 +132,12 @@ internal object GitLabMergeRequestTimelineComponentFactory {
   private fun createErrorOrTimelineComponent(cs: CoroutineScope,
                                              project: Project,
                                              avatarIconsProvider: IconsProvider<GitLabUserDTO>,
-                                             timelineVm: GitLabMergeRequestTimelineViewModel): JComponent {
+                                             timelineVm: GitLabMergeRequestTimelineViewModel,
+                                             timelinePanel: JComponent): JComponent {
+    val actionManager = ActionManager.getInstance()
+    val timelineActionGroup = actionManager.getAction("GitLab.Merge.Request.Timeline.Popup") as ActionGroup
+    val errorActionGroup = actionManager.getAction("GitLab.Merge.Request.Timeline.Error.Popup") as ActionGroup
+
     val timelineOrErrorPanel = Wrapper()
 
     val timelineItems = MutableSharedFlow<List<GitLabMergeRequestTimelineItemViewModel>>()
@@ -154,13 +157,16 @@ internal object GitLabMergeRequestTimelineComponentFactory {
         it.fold(
           onSuccess = { items ->
             timelineItems.emit(items)
+
             timelineOrErrorPanel.setContent(timelineItemContent)
+            PopupHandler.installPopupMenu(timelinePanel, timelineActionGroup, ActionPlaces.POPUP)
           },
           onFailure = { exception ->
             val errorPresenter = GitLabMergeRequestTimelineErrorStatusPresenter(timelineVm)
             val errorPanel = ErrorStatusPanelFactory.create(cs, flowOf(exception), errorPresenter)
 
             timelineOrErrorPanel.setContent(CollaborationToolsUIUtil.moveToCenter(errorPanel))
+            PopupHandler.installPopupMenu(timelinePanel, errorActionGroup, ActionPlaces.POPUP)
           })
       }
     }

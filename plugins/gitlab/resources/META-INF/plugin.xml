@@ -172,6 +172,11 @@
       <reference id="GitLab.Merge.Request.Copy.Link"/>
     </group>
 
+    <group id="GitLab.Merge.Request.Timeline.Error.Popup">
+      <reference id="GitLab.Merge.Request.Open.Link"/>
+      <reference id="GitLab.Merge.Request.Copy.Link"/>
+    </group>
+
     <group id="GitLab.Merge.Request.Changes.Popup">
       <reference id="Diff.ShowDiff"/>
       <reference id="Diff.ShowStandaloneDiff"/>
