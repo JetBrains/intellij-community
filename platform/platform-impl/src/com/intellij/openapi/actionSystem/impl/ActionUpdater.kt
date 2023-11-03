@@ -105,8 +105,11 @@ internal class ActionUpdater @JvmOverloads constructor(
     val presentation = presentationFactory.getPresentation(action).clone()
     // reset enabled/visible flags (actions are encouraged to always set them in `update`)
     presentation.setEnabledAndVisible(true)
-    val success = callAction(action, Op.Update) {
-      doUpdate(action, createActionEvent(presentation))
+    val event = createActionEvent(presentation)
+    val success = ActionUpdaterInterceptor.updateAction(action, event) {
+      callAction(action, Op.Update) {
+        doUpdate(action, event)
+      }
     }
     return if (success) presentation else null
   }
@@ -357,10 +360,13 @@ internal class ActionUpdater @JvmOverloads constructor(
 
   private suspend fun getGroupChildren(group: ActionGroup): List<AnAction> {
     return groupChildren.getOrPut(group) {
+      val event = createActionEvent(updatedPresentations[group] ?: initialBgtPresentation(group))
       val children = try {
         retryOnAwaitSharedData {
-          callAction(group, Op.GetChildren) {
-            doGetChildren(group, createActionEvent(updatedPresentations[group] ?: initialBgtPresentation(group)))
+          ActionUpdaterInterceptor.getGroupChildren(group, event) {
+            callAction(group, Op.GetChildren) {
+              doGetChildren(group, event)
+            }
           }
         }
       }
