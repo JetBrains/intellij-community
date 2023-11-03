@@ -15,15 +15,13 @@
  */
 package com.siyeh.ig.resources;
 
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.ex.InspectionProfileImpl;
+import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.NotNull;
-
-import java.io.BufferedReader;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
 
 /**
  * @author Bas Leijdekkers
@@ -653,6 +651,33 @@ public class AutoCloseableResourceInspectionTest extends LightJavaInspectionTest
         """);
   }
 
+  public void testIgnoreFix() {
+    InspectionProfileImpl.INIT_INSPECTIONS = true;
+    try {
+      myFixture.configureByText("X.java", """
+        import java.io.InputStream;
+                
+        class X {
+          native InputStream produce();
+          
+          void test() {
+            InputStream is = <caret>produce();
+            int i = is.read();
+          }
+        }
+        """);
+      IntentionAction intention = myFixture.findSingleIntention("Ignore 'AutoCloseable' returned by this method");
+      myFixture.checkIntentionPreviewHtml(intention, "Add method <code>X.produce()</code> to the list of ignored methods");
+      myFixture.launchAction(intention);
+      var inspection = (AutoCloseableResourceInspection)InspectionProfileManager.getInstance(getProject()).getCurrentProfile()
+        .getUnwrappedTool("AutoCloseableResource", getFile());
+      assertContainsElements(inspection.myMethodMatcher.getClassNames(), "X");
+      assertContainsElements(inspection.myMethodMatcher.getMethodNamePatterns(), "produce");
+    }
+    finally {
+      InspectionProfileImpl.INIT_INSPECTIONS = false;
+    }
+  }
 
   @Override
   protected LocalInspectionTool getInspection() {
