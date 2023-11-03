@@ -379,7 +379,7 @@ private fun Branch(
       val highlightedBranchName = remember(rangesToHighlight, highlightColor) {
         branchVm.name.highlightRanges(rangesToHighlight, highlightColor)
       }
-      Text(highlightedBranchName, maxLines = 1, overflow = TextOverflow.Ellipsis)
+      Text(highlightedBranchName, maxLines = 1, overflow = TextOverflow.Clip)
     }
 
     if (showActions) {
