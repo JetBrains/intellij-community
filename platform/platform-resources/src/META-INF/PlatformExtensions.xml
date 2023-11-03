@@ -1662,7 +1662,7 @@
     <idePerformanceListener implementation="com.intellij.diagnostic.FusFreezeReporter"/>
 
     <registryKey key="search.everywhere.footer.extended.info"
-                 defaultValue="false"
+                 defaultValue="true"
                  description="Enabled rendering of a selected element context information in the search everywhere list footer"/>
 
     <registryKey key="search.everywhere.preview"
