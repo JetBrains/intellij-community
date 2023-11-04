@@ -274,6 +274,13 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
       if (executorId.equals(executor.getId())) {
         return executor;
       }
+      else if (executor instanceof ExecutorGroup<?> && executorId.startsWith(executor.getId())) {
+        for (Executor child : ((ExecutorGroup<?>)executor).childExecutors()) {
+          if (executorId.equals(child.getId())) {
+            return child;
+          }
+        }
+      }
     }
     return null;
   }
