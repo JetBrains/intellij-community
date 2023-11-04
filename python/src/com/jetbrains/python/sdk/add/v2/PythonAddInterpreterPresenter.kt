@@ -180,6 +180,16 @@ class PythonAddInterpreterPresenter(val state: PythonAddInterpreterState, val ui
     manuallyAddedSdksFlow.value += sdkAdded
   }
 
+  /**
+   * Adds base SDK specified by its path if it is not present in the list.
+   */
+  @RequiresEdt
+  fun addBasePythonInterpreter(targetPath: String) {
+    val sdkAdded = createDetectedSdk(targetPath, targetEnvironmentConfiguration)
+    // TODO probably remove duplicates
+    manuallyAddedBaseSdksFlow.value += sdkAdded
+  }
+
   private fun String.associateWithContext(): ProjectPathWithContext =
     ProjectPathWithContext(projectPath = this, projectLocationContexts.getProjectLocationContextFor(projectPath = this))
 

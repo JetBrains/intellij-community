@@ -26,7 +26,7 @@ import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.sdk.PySdkSettings
 import com.jetbrains.python.sdk.add.LocalContext
 import com.jetbrains.python.sdk.add.ProjectLocationContext
-import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMethod.*
+import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMethod.SELECT_EXISTING
 import com.jetbrains.python.sdk.configuration.createVirtualEnvSynchronously
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
@@ -62,7 +62,8 @@ class PythonNewVirtualenvCreator(presenter: PythonAddInterpreterPresenter) : Pyt
     with(panel) {
       row(message("sdk.create.custom.base.python")) {
         versionComboBox =
-          pythonBaseInterpreterComboBox(presenter, presenter.basePythonSdksFlow, presenter.detectingSdks, presenter.basePythonHomePath)
+          pythonBaseInterpreterComboBox(presenter, presenter.basePythonSdksFlow, presenter.detectingSdks, presenter.basePythonHomePath,
+                                        presenter::addBasePythonInterpreter)
             .align(Align.FILL)
             .component
       }
