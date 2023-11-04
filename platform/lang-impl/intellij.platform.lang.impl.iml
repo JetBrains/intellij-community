@@ -94,5 +94,6 @@
     <orderEntry type="library" name="hash4j" level="project" />
     <orderEntry type="library" name="kotlinx-serialization-protobuf" level="project" />
     <orderEntry type="library" name="kotlinx-serialization-core" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.configurationStore.impl" />
   </component>
 </module>
