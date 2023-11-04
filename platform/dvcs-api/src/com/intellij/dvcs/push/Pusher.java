@@ -38,5 +38,11 @@ public abstract class Pusher<Repo extends Repository, Source extends PushSource,
                             @Nullable VcsPushOptionValue additionalOption,
                             boolean force);
 
+  public void push(@NotNull Map<Repo, PushSpec<Source, Target>> pushSpecs,
+                   @Nullable VcsPushOptionValue additionalOption,
+                   boolean force,
+                   @NotNull Map<String, VcsPushOptionValue> customParams) {
+    push(pushSpecs, additionalOption, force);
+  }
 }
 
