@@ -12,9 +12,13 @@ import com.intellij.openapi.observable.util.notEqualsTo
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
+import com.intellij.openapi.ui.getUserData
+import com.intellij.openapi.ui.putUserData
 import com.intellij.openapi.ui.validation.DialogValidationRequestor
 import com.intellij.openapi.ui.validation.WHEN_PROPERTY_CHANGED
 import com.intellij.openapi.ui.validation.and
+import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.ColoredListCellRenderer
 import com.intellij.ui.SimpleTextAttributes
@@ -152,11 +156,28 @@ private fun <T> ComboBox<T>.withSdkItems(sdksFlow: StateFlow<List<Sdk>>,
   scope.launch(start = CoroutineStart.UNDISPATCHED) {
     sdksFlow.collectLatest { sdks ->
       withContext(uiContext) {
+        val itemToSelectAfterModelUpdate = tryGetAndRemoveItemToSelectAfterModelUpdate() ?: selectedItem
         removeAllItems()
-        sdks.map(mapper).forEach(this@withSdkItems::addItem)
+        val items = sdks.map(mapper)
+        items.forEach(this@withSdkItems::addItem)
+        if (itemToSelectAfterModelUpdate != null && items.any { it == itemToSelectAfterModelUpdate }) {
+          // restore previously selected item if it (still) presents in the combobox
+          selectedItem = itemToSelectAfterModelUpdate
+        }
       }
     }
   }
+}
+
+private val KEY_ITEM_TO_SELECT_AFTER_MODEL_UPDATED: Key<Any?> by lazy { Key.create("ITEM_TO_SELECT_AFTER_MODEL_UPDATED") }
+
+private fun <T> ComboBox<T>.tryGetAndRemoveItemToSelectAfterModelUpdate(): @NlsSafe Any? =
+  getUserData(KEY_ITEM_TO_SELECT_AFTER_MODEL_UPDATED)?.also {
+    putUserData(KEY_ITEM_TO_SELECT_AFTER_MODEL_UPDATED, null)
+  }
+
+private fun ComboBox<String?>.setItemToSelectAfterModelUpdate(targetPath: @NlsSafe Any) {
+  putUserData(KEY_ITEM_TO_SELECT_AFTER_MODEL_UPDATED, targetPath)
 }
 
 internal fun Cell<ComboBox<String?>>.withBrowsableSdk(presenter: PythonAddInterpreterPresenter): Cell<ComboBox<String?>> =
@@ -173,6 +194,7 @@ private fun ComboBox<String?>.withBrowsableSdk(presenter: PythonAddInterpreterPr
                            currentBaseSdkVirtualFile) { file ->
       val nioPath = file?.toNioPath() ?: return@chooseFile
       val targetPath = presenter.getPathOnTarget(nioPath)
+      thisComboBox.setItemToSelectAfterModelUpdate(targetPath)
       presenter.addPythonInterpreter(targetPath)
     }
   }
