@@ -172,11 +172,12 @@ internal class GitLabMergeRequestReviewFlowViewModelImpl(
 
   override fun submitReview() {
     scope.launch {
-      check(submittableReview.first() != null)
+      val review = submittableReview.first()
+      check(review != null)
       val handler = submitReviewInputHandler
       check(handler != null)
       val ctx = currentCoroutineContext()
-      val vm = GitLabMergeRequestSubmitReviewViewModelImpl(this, mergeRequest, currentUser) {
+      val vm = GitLabMergeRequestSubmitReviewViewModelImpl(this, mergeRequest, currentUser, review) {
         ctx.cancel()
       }
       handler.invoke(vm)

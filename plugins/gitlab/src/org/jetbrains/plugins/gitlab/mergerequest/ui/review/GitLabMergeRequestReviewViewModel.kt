@@ -49,12 +49,12 @@ internal open class GitLabMergeRequestReviewViewModelBase(
   }
 
   override fun submitReview() {
+    val review = submittableReview.value ?: return
     cs.launch {
-      check(submittableReview.first() != null)
       val handler = submitReviewInputHandler
       check(handler != null)
       val ctx = currentCoroutineContext()
-      val vm = GitLabMergeRequestSubmitReviewViewModelImpl(this, mergeRequest, currentUser) {
+      val vm = GitLabMergeRequestSubmitReviewViewModelImpl(this, mergeRequest, currentUser, review) {
         ctx.cancel()
       }
       handler.invoke(vm)
