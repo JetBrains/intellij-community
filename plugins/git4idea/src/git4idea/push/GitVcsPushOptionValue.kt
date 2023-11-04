@@ -17,4 +17,7 @@ package git4idea.push
 
 import com.intellij.dvcs.push.VcsPushOptionValue
 
-internal data class GitVcsPushOptionValue(val pushTagMode: GitPushTagMode?, val isSkipHook: Boolean) : VcsPushOptionValue
+internal data class GitVcsPushOptionValue(
+  val pushTagMode: GitPushTagMode?,
+  val isSkipHook: Boolean
+) : VcsPushOptionValue

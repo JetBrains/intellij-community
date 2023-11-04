@@ -16,7 +16,10 @@ import git4idea.update.HashRange;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.Map;
+
+import static java.util.Collections.emptyMap;
 
 class GitPusher extends Pusher<GitRepository, GitPushSource, GitPushTarget> {
 
@@ -32,10 +35,19 @@ class GitPusher extends Pusher<GitRepository, GitPushSource, GitPushTarget> {
 
   @Override
   public void push(@NotNull Map<GitRepository, PushSpec<GitPushSource, GitPushTarget>> pushSpecs,
-                   @Nullable VcsPushOptionValue optionValue, boolean force) {
+                   @Nullable VcsPushOptionValue additionalOption,
+                   boolean force) {
+    push(pushSpecs, additionalOption, force, emptyMap());
+  }
+
+  @Override
+  public void push(@NotNull Map<GitRepository, PushSpec<GitPushSource, GitPushTarget>> pushSpecs,
+                   @Nullable VcsPushOptionValue optionValue, boolean force,
+                   @NotNull Map<String, VcsPushOptionValue> customParams) {
     expireExistingErrorsAndWarnings();
     GitPushTagMode pushTagMode;
     boolean skipHook;
+
     if (optionValue instanceof GitVcsPushOptionValue) {
       pushTagMode = ((GitVcsPushOptionValue)optionValue).getPushTagMode();
       skipHook = ((GitVcsPushOptionValue)optionValue).isSkipHook();
@@ -44,18 +56,22 @@ class GitPusher extends Pusher<GitRepository, GitPushSource, GitPushTarget> {
       pushTagMode = null;
       skipHook = false;
     }
+
     mySettings.setPushTagMode(pushTagMode);
 
     GitPushOperation pushOperation = new GitPushOperation(myProject, myPushSupport, pushSpecs, pushTagMode, force, skipHook);
-    pushAndNotify(myProject, pushOperation);
+    pushAndNotify(myProject, pushOperation, customParams);
   }
 
-  public static void pushAndNotify(@NotNull Project project, @NotNull GitPushOperation pushOperation) {
+  public static void pushAndNotify(@NotNull Project project,
+                                   @NotNull GitPushOperation pushOperation,
+                                   @NotNull Map<String, VcsPushOptionValue> customParams) {
     GitPushResult pushResult = pushOperation.execute();
 
     GitPushListener pushListener = project.getMessageBus().syncPublisher(GitPushListener.getTOPIC());
+
     for (Map.Entry<GitRepository, GitPushRepoResult> entry : pushResult.getResults().entrySet()) {
-      pushListener.onCompleted(entry.getKey(), entry.getValue());
+      pushListener.onCompleted(entry.getKey(), entry.getValue(), customParams);
     }
 
     Map<GitRepository, HashRange> updatedRanges = pushResult.getUpdatedRanges();
@@ -65,7 +81,8 @@ class GitPusher extends Pusher<GitRepository, GitPushSource, GitPushTarget> {
 
     ApplicationManager.getApplication().invokeLater(() -> {
       boolean multiRepoProject = GitUtil.getRepositoryManager(project).moreThanOneRoot();
-      GitPushResultNotification.create(project, pushResult, pushOperation, multiRepoProject, notificationData).notify(project);
+      GitPushResultNotification.create(project, pushResult, pushOperation, multiRepoProject, notificationData, customParams)
+        .notify(project);
     });
   }
 
