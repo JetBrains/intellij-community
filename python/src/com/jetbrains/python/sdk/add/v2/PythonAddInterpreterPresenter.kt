@@ -5,6 +5,7 @@ import com.intellij.execution.target.FullPathOnTarget
 import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.observable.util.transform
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.UserDataHolder
@@ -112,9 +113,9 @@ class PythonAddInterpreterPresenter(val state: PythonAddInterpreterState, val ui
       .logException(LOG)
       .stateIn(scope + uiContext, started = SharingStarted.Lazily, initialValue = emptyList())
 
-  val basePythonHomePath = state.basePythonVersion.transform(
+  val basePythonHomePath: ObservableMutableProperty<String?> = state.basePythonVersion.transform(
     map = { sdk -> sdk?.homePath ?: "" },
-    backwardMap = { path -> state.basePythonSdks.get().find { it.homePath == path }!! }
+    backwardMap = { path -> state.basePythonSdks.get().find { it.homePath == path } }
   )
   val targetEnvironmentConfiguration: TargetEnvironmentConfiguration?
     get() = projectLocationContext.targetEnvironmentConfiguration
