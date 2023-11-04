@@ -92,8 +92,28 @@ public final class JavaDifferentiateStrategy implements DifferentiateStrategy {
     Set<ReferenceID> affectedNodes = new HashSet<>();
 
     for (JvmClass addedClass : addedClasses){
-      // todo: consider if we need to perform a duplicate-class check, when the newly added class is of the same name with the existing one in the same module chunk
       debug("Class name: ", addedClass.getName());
+
+      // class duplication checks
+      if (!addedClass.isAnonymous() && !addedClass.isLocal() && addedClass.getOuterFqName().isEmpty()) {
+        Set<NodeSource> deletedSources = context.getDelta().getDeletedSources();
+        Predicate<? super NodeSource> belongsToChunk = context.getParams().belongsToCurrentCompilationChunk();
+        Set<NodeSource> candidates = Iterators.collect(
+          Iterators.filter(present.getNodeSources(addedClass.getReferenceID()), s -> !deletedSources.contains(s) && belongsToChunk.test(s)), new HashSet<>()
+        );
+        
+        if (!Iterators.isEmpty(Iterators.filter(candidates, src -> !context.isCompiled(src)))) {
+          Iterators.collect(context.getDelta().getSources(addedClass.getReferenceID()), candidates);
+          final StringBuilder msg = new StringBuilder();
+          msg.append("Possibly duplicated classes in the same compilation chunk; Scheduling for recompilation sources: ");
+          for (NodeSource candidate : candidates) {
+            context.affectNodeSource(candidate);
+            msg.append(candidate.getPath()).append("; ");
+          }
+          debug(msg.toString());
+          continue; // if duplicates are found, do not perform further checks for classes with the same short name
+        }
+      }
 
       if (!addedClass.isAnonymous() && !addedClass.isLocal()) {
         Iterators.collect(index.getDependencies(new JvmNodeReferenceID(addedClass.getShortName())), affectedNodes);
@@ -552,7 +572,7 @@ public final class JavaDifferentiateStrategy implements DifferentiateStrategy {
         if (!Iterators.isEmpty(Iterators.filter(sources, s -> !context.isCompiled(s)))) { // has non-compiled sources
           for (JvmClass outerClass : Iterators.flat(Iterators.map(future.getNodes(subClassId, JvmClass.class), cl -> future.getNodes(new JvmNodeReferenceID(cl.getOuterFqName()), JvmClass.class)))) {
             if (future.isMethodVisible(outerClass, addedMethod)  || future.inheritsFromLibraryClass(outerClass)) {
-              for (NodeSource source : sources) {
+              for (NodeSource source : Iterators.filter(sources, context.getParams().affectionFilter()::test)) {
                 debug("Affecting file due to local overriding: ", source.getPath());
                 context.affectNodeSource(source);
               }
@@ -949,7 +969,8 @@ public final class JavaDifferentiateStrategy implements DifferentiateStrategy {
   
   private static void affectNodeSources(DifferentiateContext context, ReferenceID clsId, String affectReason, boolean forceAffect) {
     Set<NodeSource> deletedSources = context.getDelta().getDeletedSources();
-    for (NodeSource source : context.getGraph().getSources(clsId)) {
+    Predicate<? super NodeSource> affectionFilter = context.getParams().affectionFilter();
+    for (NodeSource source : Iterators.filter(context.getGraph().getSources(clsId), affectionFilter::test)) {
       if (forceAffect || !context.isCompiled(source) && !deletedSources.contains(source)) {
         context.affectNodeSource(source);
         debug(affectReason, source.getPath());
@@ -959,7 +980,7 @@ public final class JavaDifferentiateStrategy implements DifferentiateStrategy {
 
   private static void affectModule(DifferentiateContext context, Utils utils, JvmModule mod) {
     debug("Affecting module ", mod.getName());
-    for (NodeSource source : utils.getNodeSources(mod.getReferenceID())) {
+    for (NodeSource source : Iterators.filter(utils.getNodeSources(mod.getReferenceID()), context.getParams().affectionFilter()::test)) {
       context.affectNodeSource(source);
       debug("Affected source ", source.getPath());
     }

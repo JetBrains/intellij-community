@@ -20,8 +20,8 @@ import org.jetbrains.jps.builders.java.dependencyView.Mappings;
 import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
 import org.jetbrains.jps.dependency.Delta;
 import org.jetbrains.jps.dependency.DependencyGraph;
-import org.jetbrains.jps.dependency.DifferentiateParameters;
 import org.jetbrains.jps.dependency.DifferentiateResult;
+import org.jetbrains.jps.dependency.impl.DifferentiateParametersBuilder;
 import org.jetbrains.jps.dependency.impl.FileSource;
 import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.fs.CompilationRound;
@@ -420,11 +420,14 @@ public final class JavaBuilderUtil {
     final boolean errorsDetected = Utils.errorsDetected(context);
     BuildDataManager dataManager = context.getProjectDescriptor().dataManager;
     DependencyGraph graph = dataManager.getDependencyGraph();
-    boolean calculateAffected = context.shouldDifferentiate(chunk) && !isForcedRecompilationAllJavaModules(context);
-    boolean processConstantsIncrementally = dataManager.isProcessConstantsIncrementally();
-    DifferentiateResult diffResult = graph.differentiate(delta, new DifferentiateParameters(calculateAffected, processConstantsIncrementally));
-
     final ModulesBasedFileFilter moduleBasedFilter = new ModulesBasedFileFilter(context, chunk);
+    DifferentiateParametersBuilder params = DifferentiateParametersBuilder.create()
+      .calculateAffected(context.shouldDifferentiate(chunk) && !isForcedRecompilationAllJavaModules(context))
+      .processConstantsIncrementally(dataManager.isProcessConstantsIncrementally())
+      .withAffectionFilter(s -> moduleBasedFilter.accept(s.getPath().toFile()))
+      .withChunkStructureFilter(s -> moduleBasedFilter.belongsToCurrentTargetChunk(s.getPath().toFile()));
+    DifferentiateResult diffResult = graph.differentiate(delta, params.get());
+
     final boolean compilingIncrementally = isCompileJavaIncrementally(context);
 
     if (diffResult.isIncremental()) {
@@ -677,13 +680,18 @@ public final class JavaBuilderUtil {
       if (rd == null) {
         return true;
       }
-      final ModuleBuildTarget targetOfFile = rd.target;
+      final BuildTarget<?> targetOfFile = rd.target;
       if (myChunkTargets.contains(targetOfFile)) {
         return true;
       }
       Set<BuildTarget<?>> targetOfFileWithDependencies = myCache.get(targetOfFile);
       if (targetOfFileWithDependencies == null) {
-        targetOfFileWithDependencies = myBuildTargetIndex.getDependenciesRecursively(targetOfFile, myContext);
+        targetOfFileWithDependencies = Iterators.collect(Iterators.recurseDepth(targetOfFile, new Iterators.Function<BuildTarget<?>, Iterable<? extends BuildTarget<?>>>() {
+          @Override
+          public Iterable<? extends BuildTarget<?>> fun(BuildTarget<?> t) {
+            return myBuildTargetIndex.getDependencies(t, myContext);
+          }
+        }, false), new LinkedHashSet<>());
         myCache.put(targetOfFile, targetOfFileWithDependencies);
       }
       return ContainerUtil.intersects(targetOfFileWithDependencies, myChunkTargets);

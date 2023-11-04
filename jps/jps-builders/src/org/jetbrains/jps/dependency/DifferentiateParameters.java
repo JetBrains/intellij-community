@@ -1,36 +1,19 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.dependency;
 
-public final class DifferentiateParameters {
-  private final boolean calculateAffected;
-  private final boolean processConstantsIncrementally;
+import org.jetbrains.annotations.NotNull;
 
-  public DifferentiateParameters() {
-    this(true, true);
-  }
+import java.util.function.Predicate;
 
-  public boolean isCalculateAffected() {
-    return calculateAffected;
-  }
+public interface DifferentiateParameters {
 
-  public boolean isProcessConstantsIncrementally() {
-    return processConstantsIncrementally;
-  }
+  boolean isCalculateAffected();
 
-  public DifferentiateParameters(boolean calculateAffected, boolean processConstantsIncrementally) {
-    this.calculateAffected = calculateAffected;
-    this.processConstantsIncrementally = processConstantsIncrementally;
-  }
+  boolean isProcessConstantsIncrementally();
 
-  public static DifferentiateParameters byDefault() {
-    return new DifferentiateParameters();
-  }
+  @NotNull
+  Predicate<? super NodeSource> affectionFilter();
 
-  public static DifferentiateParameters withoutAffectedCalculation() {
-    return new DifferentiateParameters(false, true);
-  }
-
-  public static DifferentiateParameters processConstantsNonIncremental() {
-    return new DifferentiateParameters(true, false);
-  }
+  @NotNull
+  Predicate<? super NodeSource> belongsToCurrentCompilationChunk();
 }

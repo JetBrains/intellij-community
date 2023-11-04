@@ -5,6 +5,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import org.jetbrains.jps.dependency.impl.Containers;
 import org.jetbrains.jps.dependency.impl.DependencyGraphImpl;
+import org.jetbrains.jps.dependency.impl.DifferentiateParametersBuilder;
 import org.jetbrains.jps.dependency.impl.FileSource;
 import org.jetbrains.jps.dependency.java.JvmClass;
 import org.jetbrains.jps.dependency.serializer.JvmClassTestUtil;
@@ -31,7 +32,7 @@ public class NodeGraphPersistentTest extends BasePlatformTestCase {
       delta.associate(jvmClassNode, Arrays.asList(aSrc, bSrc));
 
       // After each round, not after each builder
-      DifferentiateResult differentiateResult = graph.differentiate(delta, DifferentiateParameters.byDefault());
+      DifferentiateResult differentiateResult = graph.differentiate(delta, DifferentiateParametersBuilder.withDefaultSettings());
       graph.integrate(differentiateResult);
 
       // Check graph
