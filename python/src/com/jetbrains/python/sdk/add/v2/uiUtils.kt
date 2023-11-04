@@ -59,7 +59,9 @@ class PythonNewEnvironmentDialogNavigator {
   lateinit var newEnvManager: ObservableMutableProperty<PythonSupportedEnvironmentManagers>
   lateinit var existingEnvManager: ObservableMutableProperty<PythonSupportedEnvironmentManagers>
 
-  fun navigateTo(newMode: PythonInterpreterSelectionMode? = null, newMethod: PythonInterpreterSelectionMethod? = null, newManager:PythonSupportedEnvironmentManagers? = null) {
+  fun navigateTo(newMode: PythonInterpreterSelectionMode? = null,
+                 newMethod: PythonInterpreterSelectionMethod? = null,
+                 newManager: PythonSupportedEnvironmentManagers? = null) {
     newMode?.let { selectionMode.set(it) }
     newMethod?.let { method ->
       selectionMethod.set(method)
@@ -312,7 +314,9 @@ fun Panel.executableSelector(executable: ObservableMutableProperty<String>,
             else -> null
           }
         }
-        else if (validationPanel!!.isVisible && it.text == UNKNOWN_EXECUTABLE) error(message("sdk.create.not.executable.does.not.exist.error"))
+        else if (validationPanel!!.isVisible && it.text == UNKNOWN_EXECUTABLE) {
+          error(message("sdk.create.not.executable.does.not.exist.error"))
+        }
         else null
       }
   }.visibleIf(executable.notEqualsTo(UNKNOWN_EXECUTABLE))
