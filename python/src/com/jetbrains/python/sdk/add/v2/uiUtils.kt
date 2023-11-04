@@ -136,12 +136,13 @@ internal fun Row.nonEditablePythonInterpreterComboBox(sdksFlow: StateFlow<List<S
 internal fun Row.pythonBaseInterpreterComboBox(presenter: PythonAddInterpreterPresenter,
                                                sdksFlow: StateFlow<List<Sdk>>,
                                                loadingFlow: StateFlow<Boolean>,
-                                               pathToSelectedSdk: ObservableMutableProperty<String?>): Cell<ComboBox<String?>> =
+                                               pathToSelectedSdk: ObservableMutableProperty<String?>,
+                                               onSdkChosen: (String) -> Unit): Cell<ComboBox<String?>> =
   comboBox<String?>(emptyList())
     .bindItem(pathToSelectedSdk)
     .withSdkItems(sdksFlow, mapper = { sdk -> sdk.homePath.orEmpty() }, scope = presenter.scope, uiContext = presenter.uiContext)
     .displayLoaderWhen(loadingFlow, scope = presenter.scope, uiContext = presenter.uiContext)
-    .withBrowsableSdk(presenter)
+    .withBrowsableSdk(presenter, onSdkChosen)
 
 private fun <T, C : ComboBox<T>> Cell<C>.withSdkItems(sdksFlow: StateFlow<List<Sdk>>,
                                                       mapper: (Sdk) -> T,
@@ -180,10 +181,11 @@ private fun ComboBox<String?>.setItemToSelectAfterModelUpdate(targetPath: @NlsSa
   putUserData(KEY_ITEM_TO_SELECT_AFTER_MODEL_UPDATED, targetPath)
 }
 
-internal fun Cell<ComboBox<String?>>.withBrowsableSdk(presenter: PythonAddInterpreterPresenter): Cell<ComboBox<String?>> =
-  applyToComponent { withBrowsableSdk(presenter) }
+internal fun Cell<ComboBox<String?>>.withBrowsableSdk(presenter: PythonAddInterpreterPresenter,
+                                                      onSdkChosen: (String) -> Unit): Cell<ComboBox<String?>> =
+  applyToComponent { withBrowsableSdk(presenter, onSdkChosen) }
 
-private fun ComboBox<String?>.withBrowsableSdk(presenter: PythonAddInterpreterPresenter) {
+private fun ComboBox<String?>.withBrowsableSdk(presenter: PythonAddInterpreterPresenter, onSdkChosen: (String) -> Unit) {
   val thisComboBox = this@withBrowsableSdk
   val browseExtension = ExtendableTextComponent.Extension.create(AllIcons.General.OpenDisk,
                                                                  AllIcons.General.OpenDiskHover,
@@ -195,7 +197,7 @@ private fun ComboBox<String?>.withBrowsableSdk(presenter: PythonAddInterpreterPr
       val nioPath = file?.toNioPath() ?: return@chooseFile
       val targetPath = presenter.getPathOnTarget(nioPath)
       thisComboBox.setItemToSelectAfterModelUpdate(targetPath)
-      presenter.addPythonInterpreter(targetPath)
+      onSdkChosen(targetPath)
     }
   }
 

@@ -29,7 +29,8 @@ class PipEnvNewEnvironmentCreator(presenter: PythonAddInterpreterPresenter) : Py
     with(panel) {
       row(message("sdk.create.custom.base.python")) {
         basePythonComboBox =
-          pythonBaseInterpreterComboBox(presenter, presenter.basePythonSdksFlow, presenter.detectingSdks, presenter.basePythonHomePath)
+          pythonBaseInterpreterComboBox(presenter, presenter.basePythonSdksFlow, presenter.detectingSdks, presenter.basePythonHomePath,
+                                        presenter::addBasePythonInterpreter)
             .align(Align.FILL)
             .component
       }
