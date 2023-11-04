@@ -8,14 +8,13 @@ import com.jediterm.terminal.StyledTextConsumer
 import com.jediterm.terminal.Terminal
 import com.jediterm.terminal.emulator.mouse.MouseFormat
 import com.jediterm.terminal.emulator.mouse.MouseMode
-import com.jediterm.terminal.model.StyleState
 import com.jediterm.terminal.model.TerminalLine
 import com.jediterm.terminal.model.TerminalModelListener
 import com.jediterm.terminal.model.TerminalTextBuffer
 import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.math.min
 
-class TerminalModel(private val textBuffer: TerminalTextBuffer, val styleState: StyleState) {
+class TerminalModel(private val textBuffer: TerminalTextBuffer) {
   val width: Int
     get() = textBuffer.width
   val height: Int

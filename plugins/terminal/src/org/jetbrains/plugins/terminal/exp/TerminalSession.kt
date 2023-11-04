@@ -36,7 +36,7 @@ class TerminalSession(settings: JBTerminalSystemSettingsProviderBase,
                                  TerminalColor { colorPalette.defaultBackground })
     styleState.setDefaultStyle(defaultStyle)
     textBuffer = TerminalTextBuffer(80, 24, styleState)
-    model = TerminalModel(textBuffer, styleState)
+    model = TerminalModel(textBuffer)
     controller = JediTerminal(ModelUpdatingTerminalDisplay(model, settings), textBuffer, styleState)
 
     commandManager = ShellCommandManager(controller)
