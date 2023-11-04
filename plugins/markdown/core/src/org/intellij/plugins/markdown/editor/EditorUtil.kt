@@ -14,7 +14,8 @@ fun CaretModel.runForEachCaret(reverseOrder: Boolean = false, block: (Caret) -> 
   runForEachCaret(block, reverseOrder)
 }
 
-internal fun isMarkdownScratchFile(project: Project, file: VirtualFile): Boolean {
+@ApiStatus.Internal
+fun isMarkdownScratchFile(project: Project, file: VirtualFile): Boolean {
   if (!ScratchUtil.isScratch(file)) {
     return false
   }
