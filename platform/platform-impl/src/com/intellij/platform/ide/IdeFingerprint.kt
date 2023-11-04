@@ -20,8 +20,15 @@ import java.nio.file.attribute.BasicFileAttributes
 import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.walk
 
+private val fingerprint = lazy { computeIdeFingerprint(debugHelperToken = 0) }
+
 @Internal
 fun ideFingerprint(debugHelperToken: Int = 0): Long {
+  return if (debugHelperToken == 0) fingerprint.value else computeIdeFingerprint(debugHelperToken = debugHelperToken)
+}
+
+@Internal
+private fun computeIdeFingerprint(debugHelperToken: Int): Long {
   val startTime = System.currentTimeMillis()
 
   val hasher = Hashing.komihash5_0().hashStream()

@@ -15,8 +15,10 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.impl.LightFilePointer
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
+import com.intellij.platform.ide.ideFingerprint
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentMapOf
+import kotlinx.collections.immutable.toPersistentList
 import org.jdom.Element
 import org.jetbrains.annotations.NonNls
 
@@ -29,9 +31,13 @@ internal class HistoryEntry private constructor(@JvmField val filePointer: Virtu
                                                  */
                                                 @JvmField var selectedProvider: FileEditorProvider?,
                                                 @JvmField var isPreview: Boolean,
+                                                @JvmField val ideFingerprint: Long?,
                                                 private val disposable: Disposable?) {
   // ordered
   private var providerToState = persistentMapOf<FileEditorProvider, FileEditorState>()
+
+  val providers: List<FileEditorProvider>
+    get() = providerToState.keys.toPersistentList()
 
   companion object {
     const val TAG: @NonNls String = "entry"
@@ -43,7 +49,11 @@ internal class HistoryEntry private constructor(@JvmField val filePointer: Virtu
                     selectedProvider: FileEditorProvider,
                     preview: Boolean): HistoryEntry {
       val pointer: VirtualFilePointer = LightFilePointer(file)
-      val entry = HistoryEntry(pointer, selectedProvider, preview, null)
+      val entry = HistoryEntry(filePointer = pointer,
+                               selectedProvider = selectedProvider,
+                               isPreview = preview,
+                               ideFingerprint = null,
+                               disposable = null)
       for (i in providers.indices) {
         entry.putState(providers.get(i) ?: continue, states.get(i) ?: continue)
       }
@@ -53,11 +63,12 @@ internal class HistoryEntry private constructor(@JvmField val filePointer: Virtu
     fun createLight(project: Project,
                     element: Element,
                     fileEditorProviderManager: FileEditorProviderManager): Pair<HistoryEntry, VirtualFile?> {
-      val (entryData, file) = parseEntry(project = project, e = element, fileEditorProviderManager = fileEditorProviderManager)
+      val (entryData, file) = parseEntry(project = project, element = element, fileEditorProviderManager = fileEditorProviderManager)
       val pointer = LightFilePointer(entryData.url)
       val entry = HistoryEntry(filePointer = pointer,
                                selectedProvider = entryData.selectedProvider,
                                isPreview = entryData.preview,
+                               ideFingerprint = entryData.ideFingerprint,
                                disposable = null)
       for (state in entryData.providerStates) {
         entry.putState(state.first, state.second)
@@ -72,15 +83,19 @@ internal class HistoryEntry private constructor(@JvmField val filePointer: Virtu
                     selectedProvider: FileEditorProvider,
                     preview: Boolean): HistoryEntry {
       if (project.isDisposed) {
-        return createLight(file, providers, states, selectedProvider, preview)
+        return createLight(file = file, providers = providers, states = states, selectedProvider = selectedProvider, preview = preview)
       }
 
       val disposable = Disposer.newDisposable()
       val pointer = VirtualFilePointerManager.getInstance().create(file, disposable, null)
 
-      val entry = HistoryEntry(filePointer = pointer, selectedProvider = selectedProvider, isPreview = preview, disposable = disposable)
+      val entry = HistoryEntry(filePointer = pointer,
+                               selectedProvider = selectedProvider,
+                               isPreview = preview,
+                               ideFingerprint = null,
+                               disposable = disposable)
       for (i in providers.indices) {
-        entry.putState(providers[i] ?: continue, states.get(i) ?: continue)
+        entry.putState(providers.get(i) ?: continue, states.get(i) ?: continue)
       }
       return entry
     }
@@ -91,13 +106,14 @@ internal class HistoryEntry private constructor(@JvmField val filePointer: Virtu
         return createLight(project, e, FileEditorProviderManager.getInstance()).first
       }
 
-      val (entryData, _) = parseEntry(project = project, e = e, fileEditorProviderManager = FileEditorProviderManager.getInstance())
+      val (entryData, _) = parseEntry(project = project, element = e, fileEditorProviderManager = FileEditorProviderManager.getInstance())
 
       val disposable = Disposer.newDisposable()
       val pointer = VirtualFilePointerManager.getInstance().create(entryData.url, disposable, null)
       val entry = HistoryEntry(filePointer = pointer,
                                selectedProvider = entryData.selectedProvider,
                                isPreview = entryData.preview,
+                               ideFingerprint = entryData.ideFingerprint,
                                disposable = disposable)
       for (state in entryData.providerStates) {
         entry.putState(state.first, state.second)
@@ -127,6 +143,7 @@ internal class HistoryEntry private constructor(@JvmField val filePointer: Virtu
     val e = Element(TAG)
     element.addContent(e)
     e.setAttribute(FILE_ATTR, filePointer.url)
+    e.setAttribute("ideFingerprint", ideFingerprint().toString())
 
     for ((provider, value) in providerToState) {
       val providerElement = Element(PROVIDER_ELEMENT)
@@ -167,17 +184,19 @@ private const val PREVIEW_ATTR: @NonNls String = "preview"
 
 private val EMPTY_ELEMENT = Element("state")
 
-private fun parseEntry(project: Project, e: Element, fileEditorProviderManager: FileEditorProviderManager): Pair<EntryData, VirtualFile?> {
-  if (e.name != HistoryEntry.TAG) {
-    throw IllegalArgumentException("unexpected tag: $e")
+private fun parseEntry(project: Project,
+                       element: Element,
+                       fileEditorProviderManager: FileEditorProviderManager): Pair<EntryData, VirtualFile?> {
+  if (element.name != HistoryEntry.TAG) {
+    throw IllegalArgumentException("unexpected tag: $element")
   }
 
-  val url = e.getAttributeValue(HistoryEntry.FILE_ATTR)
+  val url = element.getAttributeValue(HistoryEntry.FILE_ATTR)
   var providerStates = persistentListOf<Pair<FileEditorProvider, FileEditorState>>()
   var selectedProvider: FileEditorProvider? = null
 
   val file = VirtualFileManager.getInstance().findFileByUrl(url)
-  for (providerElement in e.getChildren(PROVIDER_ELEMENT)) {
+  for (providerElement in element.getChildren(PROVIDER_ELEMENT)) {
     val typeId = providerElement.getAttributeValue(EDITOR_TYPE_ID_ATTR)
     val provider = fileEditorProviderManager.getProvider(typeId) ?: continue
     if (providerElement.getAttributeValue(SELECTED_ATTR_VALUE).toBoolean()) {
@@ -191,13 +210,25 @@ private fun parseEntry(project: Project, e: Element, fileEditorProviderManager: 
     }
   }
 
-  val preview = e.getAttributeValue(PREVIEW_ATTR) != null
-  return EntryData(url = url, providerStates = providerStates, selectedProvider = selectedProvider, preview = preview) to file
+  val preview = element.getAttributeValue(PREVIEW_ATTR) != null
+  return EntryData(
+    url = url,
+    providerStates = providerStates,
+    selectedProvider = selectedProvider,
+    ideFingerprint = try {
+      element.getAttributeValue("ideFingerprint")?.toLong()
+    }
+    catch (ignored: NumberFormatException) {
+      null
+    },
+    preview = preview,
+  ) to file
 }
 
 internal class EntryData(
   @JvmField val url: String,
   @JvmField val providerStates: List<Pair<FileEditorProvider, FileEditorState>>,
   @JvmField val selectedProvider: FileEditorProvider?,
+  @JvmField val ideFingerprint: Long?,
   @JvmField val preview: Boolean,
 )

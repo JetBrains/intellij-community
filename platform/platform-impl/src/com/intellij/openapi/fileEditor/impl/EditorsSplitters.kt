@@ -43,6 +43,7 @@ import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy
 import com.intellij.openapi.wm.ex.IdeFrameEx
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.*
+import com.intellij.platform.ide.ideFingerprint
 import com.intellij.testFramework.LightVirtualFileBase
 import com.intellij.ui.*
 import com.intellij.ui.awt.RelativePoint
@@ -953,8 +954,13 @@ private class UiBuilder(private val splitters: EditorsSplitters) {
         try {
           file.putUserData(OPENED_IN_BULK, true)
 
-          val newProviders = async(CoroutineName("editor provider computing")) {
-            fileEditorProviderManager.getProvidersAsync(fileEditorManager.project, file)
+          val newProviders = if (entry.ideFingerprint == ideFingerprint()) {
+            CompletableDeferred(value = entry.providers)
+          }
+          else {
+            async(CoroutineName("editor provider computing")) {
+              fileEditorProviderManager.getProvidersAsync(fileEditorManager.project, file)
+            }
           }
 
           val document = readActionBlocking {

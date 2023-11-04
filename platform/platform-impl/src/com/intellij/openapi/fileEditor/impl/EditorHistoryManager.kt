@@ -167,10 +167,12 @@ class EditorHistoryManager internal constructor(private val project: Project) : 
       editors = listOf(fileEditor)
       providers = listOf(fileEditorProvider)
     }
+
     if (editors.isEmpty()) {
       // not opened in any editor at the moment makes no sense to put the file in the history
       return
     }
+
     val entry = getEntry(file)
     if (entry == null) {
       // The size of an entry list can be less than the number of opened editors (some entries can be removed)
@@ -180,6 +182,7 @@ class EditorHistoryManager internal constructor(private val project: Project) : 
       }
       return
     }
+
     if (!changeEntryOrderOnly) {
       // update entry state
       for (i in editors.indices.reversed()) {
@@ -252,21 +255,14 @@ class EditorHistoryManager internal constructor(private val project: Project) : 
     getEntry(file)?.let { removeEntry(it) }
   }
 
-  fun getState(file: VirtualFile, provider: FileEditorProvider): FileEditorState? {
-    return getEntry(file)?.getState(provider)
-  }
+  fun getState(file: VirtualFile, provider: FileEditorProvider): FileEditorState? = getEntry(file)?.getState(provider)
 
-  /**
-   * @return may be null
-   */
-  fun getSelectedProvider(file: VirtualFile): FileEditorProvider? {
-    return getEntry(file)?.selectedProvider
-  }
+  fun getSelectedProvider(file: VirtualFile): FileEditorProvider? = getEntry(file)?.selectedProvider
 
   @Synchronized
   private fun getEntry(file: VirtualFile): HistoryEntry? {
     for (i in entries.indices.reversed()) {
-      val entry = entries[i]
+      val entry = entries.get(i)
       val entryFile = entry.file
       if (file == entryFile) {
         return entry
@@ -352,7 +348,7 @@ class EditorHistoryManager internal constructor(private val project: Project) : 
     }
 
     override fun selectionChanged(event: FileEditorManagerEvent) {
-      // updateHistoryEntry does commitDocument which is 1) very expensive and 2) cannot be performed from within PSI change listener
+      // updateHistoryEntry does commitDocument, which is 1) costly and 2) cannot be performed from within PSI change listener
       // so defer updating history entry until documents are committed to improve responsiveness
       PsiDocumentManager.getInstance(project).performWhenAllCommitted {
         val newEditor = event.newEditor
