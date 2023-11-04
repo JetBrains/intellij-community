@@ -12,7 +12,8 @@ class PythonExistingEnvironmentSelector(presenter: PythonAddInterpreterPresenter
   override fun buildOptions(panel: Panel, validationRequestor: DialogValidationRequestor) {
     with(panel) {
       row(message("sdk.create.custom.python.path")) {
-        pythonBaseInterpreterComboBox(presenter, presenter.allSdksFlow, presenter.detectingSdks, presenter.state.selectedVenvPath)
+        pythonBaseInterpreterComboBox(presenter, presenter.allSdksFlow, presenter.detectingSdks, presenter.state.selectedVenvPath,
+                                      presenter::addPythonInterpreter)
           .align(Align.FILL)
       }
     }
