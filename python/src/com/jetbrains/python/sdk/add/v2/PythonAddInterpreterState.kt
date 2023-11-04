@@ -21,6 +21,8 @@ class PythonAddInterpreterState(
   val basePythonHomePath = basePythonVersion.transform({ sdk -> sdk?.homePath ?: "" },
                                                        { path -> basePythonSdks.get().find { it.homePath == path }!! })
 
-  val selectedVenvPath = selectedVenv.transform({ sdk -> sdk?.homePath ?: "" },
-                                                { path -> allExistingSdks.get().find { it.homePath == path } })
+  val selectedVenvPath: ObservableMutableProperty<String?> = selectedVenv.transform(
+    { sdk -> sdk?.homePath },
+    { path -> allExistingSdks.get().find { it.homePath == path } }
+  )
 }
