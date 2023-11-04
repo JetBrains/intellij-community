@@ -137,7 +137,7 @@ internal fun Row.pythonBaseInterpreterComboBox(presenter: PythonAddInterpreterPr
     .bindItem(pathToSelectedSdk)
     .withSdkItems(sdksFlow, mapper = { sdk -> sdk.homePath.orEmpty() }, scope = presenter.scope, uiContext = presenter.uiContext)
     .displayLoaderWhen(loadingFlow, scope = presenter.scope, uiContext = presenter.uiContext)
-    .withBrowsableSdk(pathToSelectedSdk, presenter)
+    .withBrowsableSdk(presenter)
 
 private fun <T, C : ComboBox<T>> Cell<C>.withSdkItems(sdksFlow: StateFlow<List<Sdk>>,
                                                       mapper: (Sdk) -> T,
@@ -159,16 +159,15 @@ private fun <T> ComboBox<T>.withSdkItems(sdksFlow: StateFlow<List<Sdk>>,
   }
 }
 
-internal fun Cell<ComboBox<String>>.withBrowsableSdk(pathToSelectedSdk: ObservableMutableProperty<String>,
-                                                     presenter: PythonAddInterpreterPresenter): Cell<ComboBox<String>> =
-  applyToComponent { withBrowsableSdk(pathToSelectedSdk, presenter) }
+internal fun Cell<ComboBox<String>>.withBrowsableSdk(presenter: PythonAddInterpreterPresenter): Cell<ComboBox<String>> =
+  applyToComponent { withBrowsableSdk(presenter) }
 
-private fun ComboBox<String>.withBrowsableSdk(pathToSelectedSdk: ObservableMutableProperty<String>,
-                                              presenter: PythonAddInterpreterPresenter) {
+private fun ComboBox<String>.withBrowsableSdk(presenter: PythonAddInterpreterPresenter) {
+  val thisComboBox = this@withBrowsableSdk
   val browseExtension = ExtendableTextComponent.Extension.create(AllIcons.General.OpenDisk,
                                                                  AllIcons.General.OpenDiskHover,
                                                                  message("sdk.create.custom.python.browse.tooltip")) {
-    val currentBaseSdkPathOnTarget = pathToSelectedSdk.get().nullize(nullizeSpaces = true)
+    val currentBaseSdkPathOnTarget = thisComboBox.item.nullize(nullizeSpaces = true)
     val currentBaseSdkVirtualFile = currentBaseSdkPathOnTarget?.let { presenter.tryGetVirtualFile(it) }
     FileChooser.chooseFile(FileChooserDescriptorFactory.createSingleFileOrExecutableAppDescriptor(), null,
                            currentBaseSdkVirtualFile) { file ->
