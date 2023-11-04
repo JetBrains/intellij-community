@@ -8,6 +8,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.observable.util.transform
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -38,7 +39,8 @@ internal fun PythonAddInterpreterPresenter.tryGetVirtualFile(pathOnTarget: FullP
   return if (mapper != null) mapper.getVfsFromTargetPath(pathOnTarget) else LocalFileSystem.getInstance().findFileByPath(pathOnTarget)
 }
 
-internal fun PythonAddInterpreterPresenter.getPathOnTarget(path: Path): String = path.convertToPathOnTarget(targetEnvironmentConfiguration)
+internal fun PythonAddInterpreterPresenter.getPathOnTarget(path: Path): @NlsSafe String =
+  path.convertToPathOnTarget(targetEnvironmentConfiguration)
 
 /**
  * Note. This class could be made a view-model in Model-View-ViewModel pattern. This would completely decouple its logic from the view. To
@@ -95,16 +97,20 @@ class PythonAddInterpreterPresenter(val state: PythonAddInterpreterState, val ui
       .stateIn(scope + uiContext, started = SharingStarted.Lazily, LocalContext to emptyList())
 
   private val manuallyAddedSdksFlow = MutableStateFlow<List<Sdk>>(emptyList())
+  private val manuallyAddedBaseSdksFlow = MutableStateFlow<List<Sdk>>(emptyList())
 
   val allSdksFlow: StateFlow<List<Sdk>> =
-    combine(_allExistingSdksFlow, manuallyAddedSdksFlow) { existingSdks, manuallyAddedSdks ->
-      manuallyAddedSdks + existingSdks
+    combine(_allExistingSdksFlow, manuallyAddedSdksFlow, manuallyAddedBaseSdksFlow) { existingSdks, addedSdks, addedBaseSdks ->
+      val allSdks = addedSdks + addedBaseSdks + existingSdks
+      state.allSdks.set(allSdks)
+      allSdks
     }
+      .logException(LOG)
       .stateIn(scope + uiContext, started = SharingStarted.Lazily, initialValue = emptyList())
 
   val basePythonSdksFlow: StateFlow<List<Sdk>> =
-    combine(_allExistingSdksFlow, manuallyAddedSdksFlow, detectedSdksFlow) { existingSdks, manuallyAddedSdks, (context, detectedSdks) ->
-      val sdkList = manuallyAddedSdks + withContext(Dispatchers.IO) {
+    combine(_allExistingSdksFlow, manuallyAddedBaseSdksFlow, detectedSdksFlow) { existingSdks, addedBaseSdks, (context, detectedSdks) ->
+      val sdkList = addedBaseSdks + withContext(Dispatchers.IO) {
         prepareSdkList(detectedSdks, existingSdks, context.targetEnvironmentConfiguration)
       }
       state.basePythonSdks.set(sdkList)
@@ -165,7 +171,7 @@ class PythonAddInterpreterPresenter(val state: PythonAddInterpreterState, val ui
     }
 
   /**
-   * Adds SDK specified by its path if it is not present in the list and selects it.
+   * Adds SDK specified by its path if it is not present in the list.
    */
   @RequiresEdt
   fun addPythonInterpreter(targetPath: String) {
