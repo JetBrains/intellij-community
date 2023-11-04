@@ -44,7 +44,7 @@ class PythonNewVirtualenvCreator(presenter: PythonAddInterpreterPresenter) : Pyt
   private val makeAvailable = propertyGraph.property(false)
   private val locationValidationFailed = propertyGraph.property(false)
   private val locationValidationMessage = propertyGraph.property("Current location already exists")
-  private lateinit var versionComboBox: ComboBox<String>
+  private lateinit var versionComboBox: ComboBox<String?>
   private var locationModified = false
   private var suggestedVenvName: String = ""
 

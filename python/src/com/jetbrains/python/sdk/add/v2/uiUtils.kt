@@ -132,8 +132,8 @@ internal fun Row.nonEditablePythonInterpreterComboBox(sdksFlow: StateFlow<List<S
 internal fun Row.pythonBaseInterpreterComboBox(presenter: PythonAddInterpreterPresenter,
                                                sdksFlow: StateFlow<List<Sdk>>,
                                                loadingFlow: StateFlow<Boolean>,
-                                               pathToSelectedSdk: ObservableMutableProperty<String>): Cell<ComboBox<String>> =
-  comboBox<String>(emptyList())
+                                               pathToSelectedSdk: ObservableMutableProperty<String?>): Cell<ComboBox<String?>> =
+  comboBox<String?>(emptyList())
     .bindItem(pathToSelectedSdk)
     .withSdkItems(sdksFlow, mapper = { sdk -> sdk.homePath.orEmpty() }, scope = presenter.scope, uiContext = presenter.uiContext)
     .displayLoaderWhen(loadingFlow, scope = presenter.scope, uiContext = presenter.uiContext)
@@ -159,10 +159,10 @@ private fun <T> ComboBox<T>.withSdkItems(sdksFlow: StateFlow<List<Sdk>>,
   }
 }
 
-internal fun Cell<ComboBox<String>>.withBrowsableSdk(presenter: PythonAddInterpreterPresenter): Cell<ComboBox<String>> =
+internal fun Cell<ComboBox<String?>>.withBrowsableSdk(presenter: PythonAddInterpreterPresenter): Cell<ComboBox<String?>> =
   applyToComponent { withBrowsableSdk(presenter) }
 
-private fun ComboBox<String>.withBrowsableSdk(presenter: PythonAddInterpreterPresenter) {
+private fun ComboBox<String?>.withBrowsableSdk(presenter: PythonAddInterpreterPresenter) {
   val thisComboBox = this@withBrowsableSdk
   val browseExtension = ExtendableTextComponent.Extension.create(AllIcons.General.OpenDisk,
                                                                  AllIcons.General.OpenDiskHover,

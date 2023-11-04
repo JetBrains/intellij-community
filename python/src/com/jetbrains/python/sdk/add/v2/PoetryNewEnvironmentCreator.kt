@@ -22,7 +22,7 @@ import kotlinx.coroutines.withContext
 class PoetryNewEnvironmentCreator(presenter: PythonAddInterpreterPresenter) : PythonAddEnvironment(presenter) {
 
   val executable = propertyGraph.property(UNKNOWN_EXECUTABLE)
-  private lateinit var basePythonComboBox: ComboBox<String>
+  private lateinit var basePythonComboBox: ComboBox<String?>
   override fun buildOptions(panel: Panel, validationRequestor: DialogValidationRequestor) {
     with(panel) {
       row(message("sdk.create.custom.base.python")) {

@@ -23,7 +23,7 @@ import kotlinx.coroutines.withContext
 class PipEnvNewEnvironmentCreator(presenter: PythonAddInterpreterPresenter) : PythonAddEnvironment(presenter) {
   private val executable = propertyGraph.property(UNKNOWN_EXECUTABLE)
   private lateinit var pipEnvPathField: TextFieldWithBrowseButton
-  private lateinit var basePythonComboBox: ComboBox<String>
+  private lateinit var basePythonComboBox: ComboBox<String?>
 
   override fun buildOptions(panel: Panel, validationRequestor: DialogValidationRequestor) {
     with(panel) {
