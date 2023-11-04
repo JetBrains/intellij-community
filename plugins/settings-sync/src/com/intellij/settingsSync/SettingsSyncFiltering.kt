@@ -76,12 +76,11 @@ private fun findComponentClasses(fileSpec: String): List<Class<PersistentStateCo
   val componentClasses = ArrayList<Class<PersistentStateComponent<Any>>>()
   componentManager.processAllImplementationClasses { aClass, _ ->
     if (PersistentStateComponent::class.java.isAssignableFrom(aClass)) {
-      val state = aClass.getAnnotation(State::class.java)
-      state?.storages?.forEach { storage ->
-        if (!storage.deprecated && storage.value == fileSpec) {
-          @Suppress("UNCHECKED_CAST")
-          componentClasses.add(aClass as Class<PersistentStateComponent<Any>>)
-        }
+      val state = aClass.getAnnotation(State::class.java) ?: return@processAllImplementationClasses
+      if (fileSpec.startsWith(state.additionalExportDirectory + "/") ||
+          state.storages.any { storage -> !storage.deprecated && storage.value == fileSpec }) {
+        @Suppress("UNCHECKED_CAST")
+        componentClasses.add(aClass as Class<PersistentStateComponent<Any>>)
       }
     }
   }
