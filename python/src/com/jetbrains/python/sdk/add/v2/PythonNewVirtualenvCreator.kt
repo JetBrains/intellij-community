@@ -44,6 +44,8 @@ class PythonNewVirtualenvCreator(presenter: PythonAddInterpreterPresenter) : Pyt
   private val makeAvailable = propertyGraph.property(false)
   private val locationValidationFailed = propertyGraph.property(false)
   private val locationValidationMessage = propertyGraph.property("Current location already exists")
+  private val basePythonVersion = propertyGraph.property<Sdk?>(initial = null)
+  private val basePythonHomePath = basePythonVersion.transformToHomePathProperty(state.basePythonSdks)
   private lateinit var versionComboBox: ComboBox<String?>
   private var locationModified = false
   private var suggestedVenvName: String = ""
@@ -62,7 +64,7 @@ class PythonNewVirtualenvCreator(presenter: PythonAddInterpreterPresenter) : Pyt
     with(panel) {
       row(message("sdk.create.custom.base.python")) {
         versionComboBox =
-          pythonBaseInterpreterComboBox(presenter, presenter.basePythonSdksFlow, presenter.detectingSdks, state.basePythonHomePath,
+          pythonBaseInterpreterComboBox(presenter, presenter.basePythonSdksFlow, presenter.detectingSdks, basePythonHomePath,
                                         presenter::addBasePythonInterpreter)
             .align(Align.FILL)
             .component
@@ -138,7 +140,7 @@ class PythonNewVirtualenvCreator(presenter: PythonAddInterpreterPresenter) : Pyt
 
   override fun getOrCreateSdk(): Sdk {
     val venvRootOnTarget = presenter.getPathOnTarget(Path.of(location.get()))
-    return createVirtualEnvSynchronously(state.basePythonVersion.get(),
+    return createVirtualEnvSynchronously(basePythonVersion.get(),
                                          state.basePythonSdks.get(),
                                          venvRootOnTarget,
                                          state.projectPath.get(),

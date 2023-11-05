@@ -60,7 +60,6 @@ class PythonAddNewEnvironmentPanel(val projectPath: ObservableProperty<String>) 
                                         service<PythonAddSdkService>().coroutineScope,
                                         basePythonSdks,
                                         allExistingSdks,
-                                        pythonBaseVersion,
                                         selectedVenv,
                                         condaExecutable)
 
