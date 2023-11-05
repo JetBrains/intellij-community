@@ -17,6 +17,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.flow.mapStateIn
 import com.intellij.util.text.nullize
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
+import com.jetbrains.python.sdk.PyDetectedSdk
 import com.jetbrains.python.sdk.add.LocalContext
 import com.jetbrains.python.sdk.add.ProjectLocationContext
 import com.jetbrains.python.sdk.add.ProjectLocationContexts
@@ -96,12 +97,17 @@ class PythonAddInterpreterPresenter(val state: PythonAddInterpreterState, val ui
       .logException(LOG)
       .stateIn(scope + uiContext, started = SharingStarted.Lazily, LocalContext to emptyList())
 
-  private val manuallyAddedSdksFlow = MutableStateFlow<List<Sdk>>(emptyList())
-  private val manuallyAddedBaseSdksFlow = MutableStateFlow<List<Sdk>>(emptyList())
+  private val manuallyAddedSdksFlow = MutableStateFlow<List<PyDetectedSdk>>(emptyList())
+  private val manuallyAddedBaseSdksFlow = MutableStateFlow<List<PyDetectedSdk>>(emptyList())
 
   val allSdksFlow: StateFlow<List<Sdk>> =
     combine(_allExistingSdksFlow, manuallyAddedSdksFlow, manuallyAddedBaseSdksFlow) { existingSdks, addedSdks, addedBaseSdks ->
-      val allSdks = addedSdks + addedBaseSdks + existingSdks
+      val filteredAddedSdks = addedSdks
+        .filterNot { existingSdks.hasSamePythonInterpreter(it) }
+      val filteredAddedBaseSdks = addedBaseSdks
+        .filterNot { existingSdks.hasSamePythonInterpreter(it) }
+        .filterNot { filteredAddedSdks.hasSamePythonInterpreter(it) }
+      val allSdks = filteredAddedSdks + filteredAddedBaseSdks + existingSdks
       state.allSdks.set(allSdks)
       allSdks
     }
@@ -175,9 +181,7 @@ class PythonAddInterpreterPresenter(val state: PythonAddInterpreterState, val ui
    */
   @RequiresEdt
   fun addPythonInterpreter(targetPath: String) {
-    val sdkAdded = createDetectedSdk(targetPath, targetEnvironmentConfiguration)
-    // TODO probably remove duplicates
-    manuallyAddedSdksFlow.value += sdkAdded
+    manuallyAddedSdksFlow.addDetectedSdk(targetPath, targetEnvironmentConfiguration)
   }
 
   /**
@@ -185,9 +189,7 @@ class PythonAddInterpreterPresenter(val state: PythonAddInterpreterState, val ui
    */
   @RequiresEdt
   fun addBasePythonInterpreter(targetPath: String) {
-    val sdkAdded = createDetectedSdk(targetPath, targetEnvironmentConfiguration)
-    // TODO probably remove duplicates
-    manuallyAddedBaseSdksFlow.value += sdkAdded
+    manuallyAddedBaseSdksFlow.addDetectedSdk(targetPath, targetEnvironmentConfiguration)
   }
 
   private fun String.associateWithContext(): ProjectPathWithContext =
@@ -197,5 +199,18 @@ class PythonAddInterpreterPresenter(val state: PythonAddInterpreterState, val ui
 
   companion object {
     private val LOG = logger<PythonAddInterpreterPresenter>()
+
+    private fun MutableStateFlow<List<PyDetectedSdk>>.addDetectedSdk(targetPath: String,
+                                                                     targetEnvironmentConfiguration: TargetEnvironmentConfiguration?) {
+      value = value.addDetectedSdk(targetPath, targetEnvironmentConfiguration)
+    }
+
+    private fun List<PyDetectedSdk>.addDetectedSdk(targetPath: String,
+                                                   targetEnvironmentConfiguration: TargetEnvironmentConfiguration?): List<PyDetectedSdk> =
+      if (!containsSdkWithHomePath(targetPath)) this + createDetectedSdk(targetPath, targetEnvironmentConfiguration) else this
+
+    private fun Collection<Sdk>.hasSamePythonInterpreter(sdk: Sdk) = any { it.homePath == sdk.homePath }
+
+    private fun Collection<Sdk>.containsSdkWithHomePath(targetPath: String) = any { it.homePath == targetPath }
   }
 }
