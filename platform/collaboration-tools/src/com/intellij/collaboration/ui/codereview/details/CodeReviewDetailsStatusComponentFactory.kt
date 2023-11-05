@@ -62,7 +62,7 @@ object CodeReviewDetailsStatusComponentFactory {
   fun <T> createNeedReviewerComponent(scope: CoroutineScope, reviewersReview: Flow<Map<T, ReviewState>>): JComponent {
     return ReviewDetailsStatusLabel("Code review status: need reviewer").apply {
       border = JBUI.Borders.empty(STATUS_COMPONENT_BORDER, 0)
-      icon = if (ExperimentalUI.isNewUI()) ExpUiIcons.Status.Error else AllIcons.RunConfigurations.TestError
+      icon = AllIcons.General.Warning
       text = CollaborationToolsBundle.message("review.details.status.reviewer.missing")
       bindVisibilityIn(scope, reviewersReview.map { it.isEmpty() })
     }
