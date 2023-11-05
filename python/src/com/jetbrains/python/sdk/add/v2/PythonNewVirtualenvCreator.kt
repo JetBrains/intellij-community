@@ -62,7 +62,7 @@ class PythonNewVirtualenvCreator(presenter: PythonAddInterpreterPresenter) : Pyt
     with(panel) {
       row(message("sdk.create.custom.base.python")) {
         versionComboBox =
-          pythonBaseInterpreterComboBox(presenter, presenter.basePythonSdksFlow, presenter.detectingSdks, presenter.basePythonHomePath,
+          pythonBaseInterpreterComboBox(presenter, presenter.basePythonSdksFlow, presenter.detectingSdks, state.basePythonHomePath,
                                         presenter::addBasePythonInterpreter)
             .align(Align.FILL)
             .component
