@@ -36,8 +36,10 @@ import com.intellij.openapi.ui.OnePixelDivider
 import com.intellij.openapi.ui.Splitter
 import com.intellij.openapi.util.Iconable
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.impl.LightFilePointer
 import com.intellij.openapi.wm.*
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy
 import com.intellij.openapi.wm.ex.IdeFrameEx
@@ -56,6 +58,7 @@ import com.intellij.util.childScope
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.JBRectangle
+import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
@@ -79,6 +82,7 @@ import kotlin.time.Duration.Companion.milliseconds
 private val OPEN_FILES_ACTIVITY = Key.create<Activity>("open.files.activity")
 private val LOG = logger<EditorsSplitters>()
 private const val PINNED: @NonNls String = "pinned"
+private const val IDE_FINGERPRINT: @NonNls String = "ideFingerprint"
 private const val CURRENT_IN_TAB = "current-in-tab"
 private val OPENED_IN_BULK = Key.create<Boolean>("EditorSplitters.opened.in.bulk")
 
@@ -280,6 +284,7 @@ open class EditorsSplitters internal constructor(
     if (pinned) {
       fileElement.setAttribute(PINNED, "true")
     }
+    fileElement.setAttribute(IDE_FINGERPRINT, ideFingerprint().toString())
     if (composite != selectedEditor) {
       fileElement.setAttribute(CURRENT_IN_TAB, "false")
     }
@@ -829,22 +834,10 @@ class EditorSplitterStateSplitter(
 
 internal class EditorSplitterStateLeaf(element: Element) {
   @JvmField
-  val files: List<FileEntry> = (element.getChildren("file")?.map {
-    FileEntry(
-      pinned = it.getAttributeBooleanValue(PINNED),
-      currentInTab = it.getAttributeValue(CURRENT_IN_TAB, "true").toBoolean(),
-      history = it.getChild(HistoryEntry.TAG),
-    )
-  }) ?: emptyList()
+  val files: List<FileEntry> = (element.getChildren("file")?.map(::parseFileEntry)) ?: emptyList()
 
   @JvmField
   val tabSizeLimit: Int = element.getAttributeValue(JBTabsImpl.SIDE_TABS_SIZE_LIMIT_KEY.toString())?.toIntOrNull() ?: -1
-
-  class FileEntry(
-    @JvmField val pinned: Boolean,
-    @JvmField val currentInTab: Boolean,
-    @JvmField val history: Element,
-  )
 }
 
 @Internal
@@ -877,7 +870,7 @@ private class UiBuilder(private val splitters: EditorsSplitters) {
     if (splitState == null) {
       val leaf = state.leaf
       val files = leaf?.files ?: emptyList()
-      val trimmedFiles: List<EditorSplitterStateLeaf.FileEntry>
+      val trimmedFiles: List<FileEntry>
       var toRemove = files.size - EditorWindow.tabLimit
       if (toRemove <= 0) {
         trimmedFiles = files
@@ -912,7 +905,7 @@ private class UiBuilder(private val splitters: EditorsSplitters) {
     }
   }
 
-  private suspend fun processFiles(fileEntries: List<EditorSplitterStateLeaf.FileEntry>,
+  private suspend fun processFiles(fileEntries: List<FileEntry>,
                                    tabSizeLimit: Int,
                                    addChild: (child: JComponent) -> Unit) {
     coroutineScope {
@@ -931,22 +924,21 @@ private class UiBuilder(private val splitters: EditorsSplitters) {
       val fileDocumentManager = serviceAsync<FileDocumentManager>()
       val fileEditorProviderManager = serviceAsync<FileEditorProviderManager>()
 
-      fun weight(item: EditorSplitterStateLeaf.FileEntry) = (if (item.currentInTab) 1 else 0)
+      fun weight(item: FileEntry) = (if (item.currentInTab) 1 else 0)
 
       // open the selected tab first
       val sorted = fileEntries.withIndex().sortedWith(Comparator { o1, o2 ->
         weight(o2.value) - weight(o1.value)
       })
       for ((index, fileEntry) in sorted) {
-        val fileName = fileEntry.history.getAttributeValue(HistoryEntry.FILE_ATTR)
-        val activity = StartUpMeasurer.startActivity(PathUtilRt.getFileName(fileName), ActivityCategory.REOPENING_EDITOR)
+        val filePointer = fileEntry.filePointer
+        val activity = StartUpMeasurer.startActivity(PathUtilRt.getFileName(filePointer.url), ActivityCategory.REOPENING_EDITOR)
 
-        val (entry, file) = HistoryEntry.createLight(project = fileEditorManager.project,
-                                                     element = fileEntry.history,
-                                                     fileEditorProviderManager = fileEditorProviderManager)
+        val file = filePointer.file
+
         if (file == null) {
           if (ApplicationManager.getApplication().isUnitTestMode) {
-            LOG.error("No file exists: ${entry.filePointer.url}")
+            LOG.error("No file exists: ${filePointer.url}")
           }
           continue
         }
@@ -954,8 +946,20 @@ private class UiBuilder(private val splitters: EditorsSplitters) {
         try {
           file.putUserData(OPENED_IN_BULK, true)
 
-          val newProviders = if (entry.ideFingerprint == ideFingerprint()) {
-            CompletableDeferred(value = entry.providers)
+          val newProviders = if (fileEntry.ideFingerprint == ideFingerprint()) {
+            async(CoroutineName("editor provider resolving")) {
+              val list = fileEntry.providers.mapNotNull {
+                fileEditorProviderManager.getProvider(it.first) ?: return@mapNotNull null
+              }
+
+              // if some provider is not found, compute without taking cache in an account
+              if (fileEntry.providers.size == list.size) {
+                list
+              }
+              else {
+                fileEditorProviderManager.getProvidersAsync(fileEditorManager.project, file)
+              }
+            }
           }
           else {
             async(CoroutineName("editor provider computing")) {
@@ -973,14 +977,14 @@ private class UiBuilder(private val splitters: EditorsSplitters) {
               windowDeferred = windowDeferred,
               file = file,
               document = document,
-              entry = entry,
+              fileEntry = fileEntry,
               options = FileEditorOpenOptions(
                 selectAsCurrent = false,
                 pin = fileEntry.pinned,
                 index = index,
-                usePreviewTab = entry.isPreview,
+                usePreviewTab = fileEntry.isPreview,
               ),
-              newProviders = newProviders.await(),
+              providers = newProviders.await(),
             )
           }
           else {
@@ -1135,4 +1139,38 @@ private fun decorateFileIcon(composite: EditorComposite, baseIcon: Icon): Icon? 
     result.setIcon(modifiedIcon, 1, 0, 0)
   }
   return JBUIScale.scaleIcon(result)
+}
+
+internal class FileEntry(
+  @JvmField val pinned: Boolean,
+  @JvmField val currentInTab: Boolean,
+  @JvmField val filePointer: LightFilePointer,
+  @JvmField val selectedProvider: String?,
+  @JvmField val ideFingerprint: Long?,
+  @JvmField val isPreview: Boolean,
+  @JvmField val providers: List<Pair<String, Element>>,
+)
+
+internal fun parseFileEntry(fileElement: Element): FileEntry {
+  val historyElement = fileElement.getChild(HistoryEntry.TAG)
+
+  var selectedProvider: String? = null
+  var providers = persistentListOf<Pair<String, Element>>()
+  for (providerElement in historyElement.getChildren(PROVIDER_ELEMENT)) {
+    val typeId = providerElement.getAttributeValue(EDITOR_TYPE_ID_ATTR)
+    providers = providers.add(typeId to providerElement.getChild(STATE_ELEMENT))
+    if (providerElement.getAttributeValue(SELECTED_ATTR_VALUE).toBoolean()) {
+      selectedProvider = typeId
+    }
+  }
+
+  return FileEntry(
+    pinned = fileElement.getAttributeBooleanValue(PINNED),
+    currentInTab = fileElement.getAttributeValue(CURRENT_IN_TAB, "true").toBoolean(),
+    isPreview = historyElement.getAttributeValue(PREVIEW_ATTR) != null,
+    filePointer = LightFilePointer(url = historyElement.getAttributeValue(HistoryEntry.FILE_ATTR)),
+    selectedProvider = selectedProvider,
+    providers = providers,
+    ideFingerprint = StringUtilRt.parseLong(fileElement.getAttributeValue(IDE_FINGERPRINT), 0),
+  )
 }
