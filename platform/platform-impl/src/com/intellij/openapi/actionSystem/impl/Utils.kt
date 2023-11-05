@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:OptIn(IntellijInternalApi::class, ExperimentalStdlibApi::class)
+@file:OptIn(IntellijInternalApi::class)
 
 package com.intellij.openapi.actionSystem.impl
 
@@ -259,12 +259,9 @@ object Utils {
     checkAsyncDataContext(asyncDataContext, place)
     val isContextMenu = ActionPlaces.isPopupPlace(place)
     val fastTrackTime = getFastTrackMaxTime(fastTrack, group, place, asyncDataContext, isToolbarAction, true)
-    val edtDispatcher =
-      if (fastTrackTime > 0) AltEdtDispatcher.apply { switchToQueue() }
-      else Dispatchers.EDT[CoroutineDispatcher]!!
-    val updater = ActionUpdater(presentationFactory, asyncDataContext, place, isContextMenu, isToolbarAction, edtDispatcher)
-    val deferred = async(EmptyCoroutineContext, CoroutineStart.UNDISPATCHED) {
+    val deferred = async(if (fastTrackTime > 0) AltEdtDispatcher.apply { switchToQueue() } else EmptyCoroutineContext) {
       serviceAsync<ActionUpdaterInterceptor>().expandActionGroup(presentationFactory, asyncDataContext, place, group, isToolbarAction) {
+        val updater = ActionUpdater(presentationFactory, asyncDataContext, place, isContextMenu, isToolbarAction, this)
         updater.runUpdateSession(updaterContext(place, fastTrackTime, isContextMenu, isToolbarAction)) {
           updater.expandActionGroup(group, group is CompactActionGroup)
         }
@@ -341,8 +338,7 @@ object Utils {
     }
     try {
       service<ActionUpdaterInterceptor>().expandActionGroup(presentationFactory, asyncDataContext, place, group, false) {
-        val edtDispatcher = coroutineContext[CoroutineDispatcher]!!
-        val updater = ActionUpdater(presentationFactory, asyncDataContext, place, isContextMenu, false, edtDispatcher)
+        val updater = ActionUpdater(presentationFactory, asyncDataContext, place, isContextMenu, false, this)
         updater.runUpdateSession(updaterContext(place, fastTrackTime, isContextMenu, false)) {
           updater.expandActionGroup(group, group is CompactActionGroup)
         }
@@ -800,10 +796,10 @@ object Utils {
   @JvmStatic
   fun initUpdateSession(e: AnActionEvent) {
     if (e.updateSession !== UpdateSession.EMPTY) return
-    val edtDispatcher = Dispatchers.EDT[CoroutineDispatcher]!!
-    @Suppress("DEPRECATION", "removal")
+    @Suppress("removal", "DEPRECATION")
     val actionUpdater = ActionUpdater(PresentationFactory(), e.dataContext, e.place,
-                                      e.isFromContextMenu, e.isFromActionToolbar, edtDispatcher)
+                                      e.isFromContextMenu, e.isFromActionToolbar,
+                                      CoroutineScope(Dispatchers.EDT))
     e.updateSession = actionUpdater.asUpdateSession()
   }
 
@@ -859,8 +855,7 @@ object Utils {
     checkAsyncDataContext(dataContext, place)
     val start = System.nanoTime()
     val events = ConcurrentHashMap<Presentation, AnActionEvent>()
-    val edtDispatcher = coroutineContext[CoroutineDispatcher]!!
-    val actionUpdater = ActionUpdater(factory, dataContext, place, false, false, edtDispatcher) {
+    val actionUpdater = ActionUpdater(factory, dataContext, place, false, false, this) {
       val event = actionProcessor.createEvent(inputEvent, it.dataContext, it.place, it.presentation, it.actionManager)
       events.put(event.presentation, event)
       event
