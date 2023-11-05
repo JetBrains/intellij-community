@@ -55,6 +55,10 @@ class JaegerJsonSpanExporter(
     beginWriter(w = writer, serviceName = serviceName, serviceVersion = serviceVersion, serviceNamespace = serviceNamespace)
   }
 
+  fun flushOtlp(scopeSpans: List<ScopeSpans>) {
+    TODO("Not yet implemented")
+  }
+
   override suspend fun export(spans: Collection<SpanData>) {
     lock.withLock {
       for (span in spans) {

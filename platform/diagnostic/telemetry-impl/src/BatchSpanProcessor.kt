@@ -5,6 +5,8 @@ package com.intellij.platform.diagnostic.telemetry.impl
 
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.diagnostic.telemetry.AsyncSpanExporter
+import com.intellij.platform.diagnostic.telemetry.exporters.JaegerJsonSpanExporter
+import com.intellij.platform.diagnostic.telemetry.exporters.ScopeSpans
 import io.opentelemetry.context.Context
 import io.opentelemetry.sdk.common.CompletableResultCode
 import io.opentelemetry.sdk.trace.ReadWriteSpan
@@ -25,7 +27,7 @@ import kotlin.time.Duration.Companion.seconds
 @Internal
 class BatchSpanProcessor(
   coroutineScope: CoroutineScope,
-  @JvmField internal val spanExporters: List<AsyncSpanExporter>,
+  private val spanExporters: List<AsyncSpanExporter>,
   private val scheduleDelay: Duration = 5.seconds,
   private val maxExportBatchSize: Int = 512,
   private val exporterTimeout: Duration = 30.seconds,
@@ -166,6 +168,10 @@ class BatchSpanProcessor(
   }
 
   internal fun flushOtlp(scopeSpans: List<ScopeSpans>) {
-    TODO("Not yet implemented")
+    for (spanExporter in spanExporters) {
+      if (spanExporter is JaegerJsonSpanExporter) {
+        spanExporter.flushOtlp(scopeSpans)
+      }
+    }
   }
 }
