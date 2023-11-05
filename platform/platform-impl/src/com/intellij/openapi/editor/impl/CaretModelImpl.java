@@ -19,6 +19,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyClipboardOwner;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
@@ -423,11 +424,12 @@ public final class CaretModelImpl implements CaretModel, PrioritizedDocumentList
   }
 
   @Override
+  @RequiresEdt
   public void setCaretsAndSelections(final @NotNull List<? extends CaretState> caretStates, final boolean updateSystemSelection) {
-    EditorImpl.assertIsDispatchThread();
     if (caretStates.isEmpty()) {
       throw new IllegalArgumentException("At least one caret should exist");
     }
+
     int maxCaretCount = getMaxCaretCount();
     List<? extends CaretState> states;
     if (caretStates.size() <= maxCaretCount) {

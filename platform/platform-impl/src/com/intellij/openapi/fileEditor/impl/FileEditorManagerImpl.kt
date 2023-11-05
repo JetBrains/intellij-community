@@ -42,7 +42,6 @@ import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager
 import com.intellij.openapi.fileEditor.ex.FileEditorWithProvider
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory
 import com.intellij.openapi.fileEditor.impl.EditorComposite.Companion.retrofit
-import com.intellij.openapi.fileEditor.impl.EditorsSplitters.Companion.isOpenedInBulk
 import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader
 import com.intellij.openapi.fileEditor.impl.text.TEXT_EDITOR_PROVIDER_TYPE_ID
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider
@@ -93,6 +92,7 @@ import com.intellij.util.flow.zipWithNext
 import com.intellij.util.messages.impl.MessageListenerList
 import com.intellij.util.ui.EDT
 import com.intellij.util.ui.UIUtil
+import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.*
@@ -474,14 +474,14 @@ open class FileEditorManagerImpl(
     get() = mainSplitters
 
   fun getAllSplitters(): Set<EditorsSplitters> {
-    val all = LinkedHashSet<EditorsSplitters>()
-    all.add(mainSplitters)
+    // ordered
+    var result = persistentSetOf(mainSplitters)
     for (container in DockManager.getInstance(project).containers) {
       if (container is DockableEditorTabbedContainer) {
-        all.add(container.splitters)
+        result = result.add(container.splitters)
       }
     }
-    return all
+    return result
   }
 
   private fun getActiveSplittersAsync(): Deferred<EditorsSplitters?> {
@@ -510,8 +510,10 @@ open class FileEditorManagerImpl(
     return container?.splitters ?: mainSplitters
   }
 
-  private fun getDockContainer(focusOwner: Component?) =
-    DockManager.getInstance(project).getContainerFor(focusOwner) { it is DockableEditorTabbedContainer } as DockableEditorTabbedContainer?
+  private fun getDockContainer(focusOwner: Component?): DockableEditorTabbedContainer? {
+    return DockManager.getInstance(project).getContainerFor(
+      focusOwner) { it is DockableEditorTabbedContainer } as DockableEditorTabbedContainer?
+  }
 
   override val preferredFocusedComponent: JComponent?
     get() = currentFileEditorFlow.value?.preferredFocusedComponent
@@ -729,7 +731,7 @@ open class FileEditorManagerImpl(
         runBulkTabChangeInEdt(activeSplitters) { activeSplitters.closeFile(file, moveFocus) }
       }
       else {
-        clientFileEditorManager?.closeFile(file, false)
+        clientFileEditorManager?.closeFile(file = file, closeAllCopies = false)
       }
     }
     else {
@@ -750,7 +752,7 @@ open class FileEditorManagerImpl(
     if (ClientId.isCurrentlyUnderLocalId) {
       openFileSetModificationCount.increment()
       for (each in getAllSplitters()) {
-        runBulkTabChange(each) { each.closeFileEditor(file, editor, moveFocus) }
+        runBulkTabChange(each) { each.closeFileEditor(file = file, editor = editor, moveFocus = moveFocus) }
       }
     }
     else {
@@ -1249,7 +1251,7 @@ open class FileEditorManagerImpl(
                                  isNewEditor: Boolean,
                                  exactState: Boolean) {
     val provider = editorWithProvider.provider
-    var state: FileEditorState? = fileEditorStateProvider?.getState(provider)
+    var state = fileEditorStateProvider?.getState(provider)
     if (state == null && isNewEditor) {
       // We have to try to get state from the history only in case of the editor is not opened.
       // Otherwise, history entry might have a state out of sync with the current editor state.
@@ -2244,7 +2246,7 @@ open class FileEditorManagerImpl(
     // notify editors about selection changes
     val splitters = window.owner
 
-    if (!isOpenedInBulk(file)) {
+    if (!AsyncEditorLoader.isOpenedInBulk(file)) {
       splitters.setCurrentWindowAndComposite(window = window)
       addSelectionRecord(file, window)
       composite.selectedEditor?.selectNotify()

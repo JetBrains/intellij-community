@@ -126,7 +126,7 @@ open class PsiAwareTextEditorProvider : TextEditorProvider(), AsyncFileEditorPro
     // foldings
     val child = element.getChild(FOLDING_ELEMENT)
     if (child != null) {
-      val document = FileDocumentManager.getInstance().getCachedDocument(file)
+      val document = if (AsyncEditorLoader.isOpenedInBulk(file)) null else FileDocumentManager.getInstance().getCachedDocument(file)
       if (document == null) {
         state.setDelayedFoldState(PsiAwareTextEditorDelayedFoldingState(project = project, file = file, state = child))
       }

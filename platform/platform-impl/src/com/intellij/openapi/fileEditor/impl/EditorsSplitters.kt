@@ -25,6 +25,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager
+import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader
 import com.intellij.openapi.fileEditor.impl.text.FileDropHandler
 import com.intellij.openapi.keymap.Keymap
 import com.intellij.openapi.keymap.KeymapManagerListener
@@ -84,7 +85,6 @@ private val LOG = logger<EditorsSplitters>()
 private const val PINNED: @NonNls String = "pinned"
 private const val IDE_FINGERPRINT: @NonNls String = "ideFingerprint"
 private const val CURRENT_IN_TAB = "current-in-tab"
-private val OPENED_IN_BULK = Key.create<Boolean>("EditorSplitters.opened.in.bulk")
 
 @Suppress("LeakingThis", "IdentifierGrammar")
 @DirtyUI
@@ -101,8 +101,6 @@ open class EditorsSplitters internal constructor(
         project.putUserData(OPEN_FILES_ACTIVITY, null)
       }
     }
-
-    internal fun isOpenedInBulk(file: VirtualFile): Boolean = file.getUserData(OPENED_IN_BULK) != null
 
     @JvmStatic
     fun findDefaultComponentInSplitters(project: Project?): JComponent? {
@@ -944,7 +942,7 @@ private class UiBuilder(private val splitters: EditorsSplitters) {
         }
 
         try {
-          file.putUserData(OPENED_IN_BULK, true)
+          file.putUserData(AsyncEditorLoader.OPENED_IN_BULK, true)
 
           val newProviders = if (fileEntry.ideFingerprint == ideFingerprint()) {
             async(CoroutineName("editor provider resolving")) {
@@ -1000,7 +998,7 @@ private class UiBuilder(private val splitters: EditorsSplitters) {
           }
         }
         finally {
-          file.putUserData(OPENED_IN_BULK, null)
+          file.putUserData(AsyncEditorLoader.OPENED_IN_BULK, null)
         }
         activity.end()
       }
