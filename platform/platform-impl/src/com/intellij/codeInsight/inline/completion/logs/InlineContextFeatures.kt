@@ -6,7 +6,6 @@ import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.roots.libraries.LibraryUtil
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
@@ -66,7 +65,6 @@ object InlineContextFeatures {
     if (followingNonEmptyLineText != null) {
       contextFeatures.add(FOLLOWING_NON_EMPTY_LINE_LENGTH.with(followingNonEmptyLineText.length))
     }
-    contextFeatures.add(LIBRARIES_COUNT.with(LibraryUtil.getLibraryRoots(psiFile.project).size))
 
     psiFile.findElementAt(offset)?.let { contextFeatures.addPsiParents(it) }
     contextFeatures.addTypingFeatures()
@@ -126,7 +124,6 @@ object InlineContextFeatures {
   val PREVIOUS_NON_EMPTY_LINE_LENGTH = EventFields.Int("previous_non_empty_line_length")
   val FOLLOWING_EMPTY_LINES_COUNT = EventFields.Int("following_empty_lines_count")
   val FOLLOWING_NON_EMPTY_LINE_LENGTH = EventFields.Int("following_non_empty_line_length")
-  val LIBRARIES_COUNT = EventFields.Int("libraries_count")
   val FIRST_PARENT = EventFields.Class("first_parent")
   val SECOND_PARENT = EventFields.Class("second_parent")
   val TIME_SINCE_LAST_TYPING = EventFields.Long("time_since_last_typing")
