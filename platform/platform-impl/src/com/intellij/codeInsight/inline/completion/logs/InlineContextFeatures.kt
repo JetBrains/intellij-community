@@ -107,7 +107,7 @@ object InlineContextFeatures {
   }
 
   val KEY: Key<MutableList<EventPair<*>>> = Key.create("inline_context_features")
-  val LOG = logger<InlineContextFeatures>()
+  private val LOG = logger<InlineContextFeatures>()
 
   val LINE_NUMBER = EventFields.Int("line_number")
   val COLUMN_NUMBER = EventFields.Int("column_number")
