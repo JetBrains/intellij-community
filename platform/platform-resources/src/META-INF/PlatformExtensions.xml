@@ -1656,7 +1656,7 @@
                  description="Enabled rendering of a selected element context information in the search everywhere list footer"/>
 
     <registryKey key="search.everywhere.recents"
-                 defaultValue="false"
+                 defaultValue="true"
                  description="Enables recent items on search everywhere tabs"/>
 
     <registryKey key="search.everywhere.recents.limit"
