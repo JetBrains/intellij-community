@@ -81,6 +81,15 @@ object CodeReviewDetailsStatusComponentFactory {
     }
   }
 
+  fun createRequiredResolveConversationsComponent(scope: CoroutineScope, requiredConversationsResolved: Flow<Boolean>): JComponent {
+    return ReviewDetailsStatusLabel("Code review status: required conversations resolved").apply {
+      border = JBUI.Borders.empty(STATUS_COMPONENT_BORDER, 0)
+      icon = if (ExperimentalUI.isNewUI()) ExpUiIcons.Status.Error else AllIcons.RunConfigurations.TestError
+      text = CollaborationToolsBundle.message("review.details.status.conversations")
+      bindVisibilityIn(scope, requiredConversationsResolved)
+    }
+  }
+
   fun createRestrictionComponent(scope: CoroutineScope, isRestricted: Flow<Boolean>, isDraft: Flow<Boolean>): JComponent {
     return ReviewDetailsStatusLabel("Code review status: restricted rights").apply {
       border = JBUI.Borders.empty(STATUS_COMPONENT_BORDER, 0)
@@ -246,7 +255,8 @@ object CodeReviewDetailsStatusComponentFactory {
 
         if (value.detailsUrl != null) {
           append(value.name, SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES, SimpleColoredComponent.BrowserLauncherTag(value.detailsUrl))
-        } else {
+        }
+        else {
           append(value.name, SimpleTextAttributes.REGULAR_ATTRIBUTES)
         }
       }

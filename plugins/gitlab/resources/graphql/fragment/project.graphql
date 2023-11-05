@@ -6,6 +6,8 @@ fragment project on Project {
   httpUrlToRepo
   sshUrlToRepo
 
+  onlyAllowMergeIfAllDiscussionsAreResolved
+
   userPermissions {
     createSnippet
   }

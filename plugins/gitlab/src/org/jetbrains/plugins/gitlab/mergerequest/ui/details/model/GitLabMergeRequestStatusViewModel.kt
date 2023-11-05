@@ -32,6 +32,10 @@ class GitLabMergeRequestStatusViewModel(
 
   override val hasConflicts: SharedFlow<Boolean> = mergeRequest.details.map { it.conflicts }.modelFlow(cs, thisLogger())
 
+  override val requiredConversationsResolved: SharedFlow<Boolean> = mergeRequest.details.map {
+    it.onlyAllowMergeIfAllDiscussionsAreResolved
+  }.modelFlow(cs, thisLogger())
+
   override val ciJobs: SharedFlow<List<CodeReviewCIJob>> = pipeline.map {
     it?.jobs?.map { job -> job.convert() } ?: emptyList()
   }.modelFlow(cs, thisLogger())

@@ -17,6 +17,7 @@ data class GitLabProjectDTO(
   val httpUrlToRepo: @NlsSafe String?,
   val sshUrlToRepo: @NlsSafe String?,
   val userPermissions: ProjectUserPermissions,
+  val onlyAllowMergeIfAllDiscussionsAreResolved: Boolean,
 ) {
   val ownerPath: @NlsSafe String = fullPath.split("/").dropLast(1).joinToString("/")
 

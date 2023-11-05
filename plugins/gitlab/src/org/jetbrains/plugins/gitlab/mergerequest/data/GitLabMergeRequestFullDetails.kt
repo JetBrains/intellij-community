@@ -30,6 +30,7 @@ data class GitLabMergeRequestFullDetails(
   val sourceBranch: String,
   val approvalsRequired: Int,
   val conflicts: Boolean,
+  val onlyAllowMergeIfAllDiscussionsAreResolved: Boolean,
   val commits: List<GitLabCommit>,
   val diffRefs: GitLabDiffRefs?,
   val headPipeline: GitLabPipelineDTO?,
@@ -63,6 +64,7 @@ data class GitLabMergeRequestFullDetails(
       sourceBranch = dto.sourceBranch,
       approvalsRequired = dto.approvalsRequired ?: 0,
       conflicts = dto.conflicts,
+      onlyAllowMergeIfAllDiscussionsAreResolved = dto.targetProject.onlyAllowMergeIfAllDiscussionsAreResolved,
       commits = dto.commits?.map(GitLabCommit.Companion::fromGraphQLDTO)
                 ?: backupCommits.map(GitLabCommit.Companion::fromRestDTO),
       diffRefs = dto.diffRefs,
