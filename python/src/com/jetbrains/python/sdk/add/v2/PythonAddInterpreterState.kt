@@ -4,7 +4,6 @@ package com.jetbrains.python.sdk.add.v2
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.observable.properties.ObservableProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
-import com.intellij.openapi.observable.util.transform
 import com.intellij.openapi.projectRoots.Sdk
 import kotlinx.coroutines.CoroutineScope
 
@@ -18,15 +17,9 @@ class PythonAddInterpreterState(
   val selectedVenv: ObservableMutableProperty<Sdk?>,
   val condaExecutable: ObservableMutableProperty<String>,
 ) {
-  val basePythonHomePath: ObservableMutableProperty<String?> = basePythonVersion.transform(
-    map = { sdk -> sdk?.homePath },
-    backwardMap = { path -> basePythonSdks.get().find { it.homePath == path } }
-  )
+  val basePythonHomePath: ObservableMutableProperty<String?> = basePythonVersion.transformToHomePathProperty(basePythonSdks)
 
   internal val allSdks: ObservableMutableProperty<List<Sdk>> = propertyGraph.property(initial = allExistingSdks.get())
 
-  val selectedVenvPath: ObservableMutableProperty<String?> = selectedVenv.transform(
-    { sdk -> sdk?.homePath },
-    { path -> allSdks.get().find { it.homePath == path } }
-  )
+  val selectedVenvPath: ObservableMutableProperty<String?> = selectedVenv.transformToHomePathProperty(allSdks)
 }
