@@ -34,7 +34,10 @@ import com.intellij.util.ui.RegionPainter;
 import com.jediterm.core.compatibility.Point;
 import com.jediterm.core.util.TermSize;
 import com.jediterm.terminal.*;
-import com.jediterm.terminal.model.*;
+import com.jediterm.terminal.model.SelectionUtil;
+import com.jediterm.terminal.model.StyleState;
+import com.jediterm.terminal.model.TerminalSelection;
+import com.jediterm.terminal.model.TerminalTextBuffer;
 import com.jediterm.terminal.model.hyperlinks.LinkInfo;
 import com.jediterm.terminal.model.hyperlinks.LinkResult;
 import com.jediterm.terminal.model.hyperlinks.LinkResultItem;
@@ -49,6 +52,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
+import java.io.IOException;
 import java.util.List;
 
 public class JBTerminalWidget extends JediTermWidget implements Disposable, DataProvider {
@@ -354,6 +358,10 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
     return myTerminalTitle;
   }
 
+  protected void executeCommand(@NotNull String shellCommand) throws IOException {
+    throw new RuntimeException("Should be called for ShellTerminalWidget only");
+  }
+
   private final TerminalWidgetBridge myBridge = new TerminalWidgetBridge();
 
   public @NotNull TerminalWidget asNewWidget() {
@@ -455,6 +463,16 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
         widget().remove(notificationComponent);
         widget().revalidate();
       });
+    }
+
+    @Override
+    public void sendCommandToExecute(@NotNull String shellCommand) {
+      try {
+        widget().executeCommand(shellCommand);
+      }
+      catch (IOException e) {
+        LOG.info("Cannot execute shell command: " + shellCommand);
+      }
     }
   }
 }

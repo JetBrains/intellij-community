@@ -47,7 +47,7 @@ class IJShellRuntimeDataProvider(private val session: TerminalSession) : ShellRu
         }
       }, disposable)
 
-      session.executeCommand(command)
+      session.sendCommandToExecute(command)
       return resultFuture.await()
     }
     finally {

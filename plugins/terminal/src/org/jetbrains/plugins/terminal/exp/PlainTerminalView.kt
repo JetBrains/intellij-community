@@ -62,5 +62,9 @@ class PlainTerminalView(
     session.addTerminationCallback(onTerminated, parentDisposable)
   }
 
+  override fun sendCommandToExecute(shellCommand: String) {
+    session.sendCommandToExecute(shellCommand)
+  }
+
   override fun dispose() {}
 }

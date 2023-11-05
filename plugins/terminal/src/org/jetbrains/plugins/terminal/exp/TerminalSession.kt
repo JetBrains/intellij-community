@@ -13,7 +13,7 @@ import com.jediterm.terminal.*
 import com.jediterm.terminal.model.*
 import org.jetbrains.plugins.terminal.TerminalUtil
 import org.jetbrains.plugins.terminal.util.ShellIntegration
-import java.awt.event.KeyEvent
+import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CopyOnWriteArrayList
 
 class TerminalSession(settings: JBTerminalSystemSettingsProviderBase,
@@ -21,6 +21,7 @@ class TerminalSession(settings: JBTerminalSystemSettingsProviderBase,
                       val shellIntegration: ShellIntegration?) : Disposable {
   val model: TerminalModel
   lateinit var terminalStarter: TerminalStarter
+  private val terminalStarterFuture: CompletableFuture<TerminalStarter> = CompletableFuture()
 
   private val executorServiceManager: TerminalExecutorServiceManager = TerminalExecutorServiceManagerImpl()
 
@@ -49,6 +50,7 @@ class TerminalSession(settings: JBTerminalSystemSettingsProviderBase,
 
   fun start(ttyConnector: TtyConnector) {
     terminalStarter = TerminalStarter(controller, ttyConnector, TtyBasedArrayDataStream(ttyConnector), typeAheadManager, executorServiceManager)
+    terminalStarterFuture.complete(terminalStarter)
     executorServiceManager.unboundedExecutorService.submit {
       terminalStarter.start()
       try {
@@ -66,10 +68,10 @@ class TerminalSession(settings: JBTerminalSystemSettingsProviderBase,
     TerminalUtil.addItem(terminationListeners, onTerminated, parentDisposable)
   }
 
-  fun executeCommand(command: String) {
-    val enterCode = terminalStarter.getCode(KeyEvent.VK_ENTER, 0)
-    terminalStarter.sendString(command, false)
-    terminalStarter.sendBytes(enterCode, false)
+  fun sendCommandToExecute(shellCommand: String) {
+    terminalStarterFuture.thenAccept {
+      TerminalUtil.sendCommandToExecute(shellCommand, terminalStarter)
+    }
   }
 
   fun postResize(newSize: TermSize) {

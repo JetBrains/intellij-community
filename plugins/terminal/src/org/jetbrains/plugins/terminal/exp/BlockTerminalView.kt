@@ -173,6 +173,10 @@ class BlockTerminalView(
     session.addTerminationCallback(onTerminated, parentDisposable)
   }
 
+  override fun sendCommandToExecute(shellCommand: String) {
+    controller.startCommandExecution(shellCommand)
+  }
+
   override fun dispose() {}
 
   private inner class BlockTerminalPanel : JPanel(), DataProvider {

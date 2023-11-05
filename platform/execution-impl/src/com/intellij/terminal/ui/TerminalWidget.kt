@@ -42,6 +42,9 @@ interface TerminalWidget : ComponentContainer {
   fun addNotification(notificationComponent: JComponent, disposable: Disposable)
 
   @RequiresEdt(generateAssertion = false)
+  fun sendCommandToExecute(shellCommand: String)
+
+  @RequiresEdt(generateAssertion = false)
   fun addTerminationCallback(onTerminated: Runnable, parentDisposable: Disposable)
 }
 

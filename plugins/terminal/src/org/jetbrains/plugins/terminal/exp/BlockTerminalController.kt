@@ -54,7 +54,7 @@ class BlockTerminalController(
   private fun startCommand(command: String) {
     outputController.startCommandBlock(command, promptText = promptController.promptText)
     promptController.promptIsVisible = false
-    session.executeCommand(command)
+    session.sendCommandToExecute(command)
   }
 
   override fun commandStarted(command: String) {

@@ -197,6 +197,14 @@ public final class TerminalToolWindowManager implements Disposable {
     return createLocalShellWidget(workingDirectory, tabName, requestFocus, true);
   }
 
+  /**
+   *
+   * @deprecated use  workingDirectory
+   * @param tabName
+   * @param requestFocus
+   * @param deferSessionStartUntilUiShown
+   * @return
+   */
   public @NotNull ShellTerminalWidget createLocalShellWidget(@Nullable String workingDirectory,
                                                              @Nullable @Nls String tabName,
                                                              boolean requestFocus,
@@ -206,6 +214,16 @@ public final class TerminalToolWindowManager implements Disposable {
     tabState.myWorkingDirectory = workingDirectory;
     TerminalWidget widget = createNewSession(myTerminalRunner, tabState, requestFocus, deferSessionStartUntilUiShown);
     return (ShellTerminalWidget)Objects.requireNonNull(JBTerminalWidget.asJediTermWidget(widget));
+  }
+
+  public @NotNull TerminalWidget createShellWidget(@Nullable String workingDirectory,
+                                                   @Nullable @Nls String tabName,
+                                                   boolean requestFocus,
+                                                   boolean deferSessionStartUntilUiShown) {
+    TerminalTabState tabState = new TerminalTabState();
+    tabState.myTabName = tabName;
+    tabState.myWorkingDirectory = workingDirectory;
+    return createNewSession(myTerminalRunner, tabState, requestFocus, deferSessionStartUntilUiShown);
   }
 
   private void createNewSession(@NotNull AbstractTerminalRunner<?> terminalRunner,

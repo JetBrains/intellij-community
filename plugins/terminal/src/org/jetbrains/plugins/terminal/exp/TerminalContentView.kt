@@ -20,4 +20,7 @@ interface TerminalContentView : Disposable {
 
   @RequiresEdt(generateAssertion = false)
   fun addTerminationCallback(onTerminated: Runnable, parentDisposable: Disposable)
+
+  @RequiresEdt(generateAssertion = false)
+  fun sendCommandToExecute(shellCommand: String)
 }

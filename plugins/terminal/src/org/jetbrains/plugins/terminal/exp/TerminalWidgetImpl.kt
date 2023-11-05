@@ -62,7 +62,10 @@ class TerminalWidgetImpl(private val project: Project,
     else {
       OldPlainTerminalView(project, settings, terminalTitle)
     }
-    oldView.asSafely<TerminalPlaceholder>()?.moveTerminationCallbacksTo(view)
+    oldView.asSafely<TerminalPlaceholder>()?.let {
+      it.moveTerminationCallbacksTo(view)
+      it.executePostponedShellCommands(view)
+    }
     Disposer.dispose(oldView)
     Disposer.register(this, view)
 
@@ -95,6 +98,10 @@ class TerminalWidgetImpl(private val project: Project,
 
   }
 
+  override fun sendCommandToExecute(shellCommand: String) {
+    view.sendCommandToExecute(shellCommand)
+  }
+
   override fun addTerminationCallback(onTerminated: Runnable, parentDisposable: Disposable) {
     view.addTerminationCallback(onTerminated, parentDisposable)
   }
@@ -108,6 +115,7 @@ class TerminalWidgetImpl(private val project: Project,
   private class TerminalPlaceholder : TerminalContentView {
 
     private val postponedTerminationCallbackInfos: MutableList<Pair<Runnable, Disposable>> = CopyOnWriteArrayList()
+    private val postponedShellCommands: MutableList<String> = CopyOnWriteArrayList()
 
     override val component: JComponent = object : JPanel() {
       override fun getBackground(): Color {
@@ -129,11 +137,22 @@ class TerminalWidgetImpl(private val project: Project,
       postponedTerminationCallbackInfos.add(Pair(onTerminated, parentDisposable))
     }
 
+    override fun sendCommandToExecute(shellCommand: String) {
+      postponedShellCommands.add(shellCommand)
+    }
+
     fun moveTerminationCallbacksTo(destView: TerminalContentView) {
       for (info in postponedTerminationCallbackInfos) {
         destView.addTerminationCallback(info.first, info.second)
       }
       postponedTerminationCallbackInfos.clear()
+    }
+
+    fun executePostponedShellCommands(destView: TerminalContentView) {
+      for (shellCommand in postponedShellCommands) {
+        destView.sendCommandToExecute(shellCommand)
+      }
+      postponedShellCommands.clear()
     }
 
     override fun dispose() {
