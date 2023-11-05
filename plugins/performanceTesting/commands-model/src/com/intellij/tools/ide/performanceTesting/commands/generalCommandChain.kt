@@ -101,6 +101,10 @@ fun <T : CommandChain> T.goto(goto: Pair<Int, Int>): T = apply {
   goto(goto.first, goto.second)
 }
 
+fun <T : CommandChain> T.gotoLine(line: Int): T = apply {
+  addCommand("${CMD_PREFIX}goto", line.toString(), "0")
+}
+
 @Suppress("unused")
 fun <T : CommandChain> T.gotoNextPsiElement(vararg name: String): T = apply {
   addCommand("${CMD_PREFIX}goToNextPsiElement", *name)
@@ -305,7 +309,7 @@ fun <T : CommandChain> T.doCompleteInEvaluateExpressionWarmup(completionType: Co
 }
 
 fun <T : CommandChain> T.doComplete(times: Int): T = apply {
-  for (i in 1..times) {
+  repeat(times) {
     doComplete()
     pressKey(Keys.ESCAPE)
     cleanCaches()
@@ -353,7 +357,7 @@ fun <T : CommandChain> T.altEnter(intention: String, invoke: Boolean): T = apply
 }
 
 fun <T : CommandChain> T.callAltEnter(times: Int, intention: String = "", invoke: Boolean = true): T = apply {
-  for (i in 1..times) {
+  repeat(times) {
     altEnter(intention, invoke)
   }
 }
