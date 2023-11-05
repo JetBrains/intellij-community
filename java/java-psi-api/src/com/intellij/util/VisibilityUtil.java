@@ -45,11 +45,6 @@ public final class VisibilityUtil {
 
   public static void escalateVisibility(PsiMember modifierListOwner, PsiElement place) throws IncorrectOperationException {
     final String visibilityModifier = getVisibilityModifier(modifierListOwner.getModifierList());
-    int index;
-    for (index = 0; index < visibilityModifiers.length; index++) {
-      String modifier = visibilityModifiers[index];
-      if (modifier.equals(visibilityModifier)) break;
-    }
     PsiElement fileResolveScope = null;
     if (place instanceof PsiJavaReference) {
       fileResolveScope = ((PsiJavaReference)place).advancedResolve(false).getCurrentFileResolveScope();
@@ -57,7 +52,7 @@ public final class VisibilityUtil {
       fileResolveScope = ((PsiCall)place).resolveMethodGenerics().getCurrentFileResolveScope();
     }
     PsiResolveHelper psiResolveHelper = PsiResolveHelper.getInstance(place.getProject());
-    for (;
+    for (int index = ArrayUtil.indexOf(visibilityModifiers, visibilityModifier);
          index < visibilityModifiers.length &&
          !psiResolveHelper.isAccessible(modifierListOwner, modifierListOwner.getModifierList(), place, null, fileResolveScope);
          index++) {
