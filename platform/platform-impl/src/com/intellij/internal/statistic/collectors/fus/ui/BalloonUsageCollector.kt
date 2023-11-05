@@ -7,7 +7,7 @@ import com.intellij.internal.statistic.eventLog.events.StringEventField
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 
 object BalloonUsageCollector : CounterUsagesCollector() {
-  private val GROUP = EventLogGroup("balloons", 6)
+  private val GROUP = EventLogGroup("balloons", 7)
 
   @JvmField
   val BALLOON_SHOWN: EventId1<String?> = GROUP.registerEvent("balloon.shown", BalloonIdField())
