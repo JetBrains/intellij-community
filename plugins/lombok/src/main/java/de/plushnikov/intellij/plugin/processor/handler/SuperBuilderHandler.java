@@ -1,6 +1,5 @@
 package de.plushnikov.intellij.plugin.processor.handler;
 
-import com.intellij.codeInsight.daemon.impl.quickfix.ModifierFix;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -13,6 +12,7 @@ import de.plushnikov.intellij.plugin.processor.clazz.ToStringProcessor;
 import de.plushnikov.intellij.plugin.psi.LombokLightClassBuilder;
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
 import de.plushnikov.intellij.plugin.quickfix.AddAbstractAndStaticModifiersFix;
+import de.plushnikov.intellij.plugin.quickfix.PsiQuickFixFactory;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
@@ -68,11 +68,11 @@ public class SuperBuilderHandler extends BuilderHandler {
         }
         else if (!isAbstract) {
           problem.withLocalQuickFixes(
-            () -> LocalQuickFix.from(new ModifierFix(existingInnerBuilderClass, PsiModifier.ABSTRACT, true, false)));
+            () -> PsiQuickFixFactory.createModifierListFix(existingInnerBuilderClass, PsiModifier.ABSTRACT, true, false));
         }
         else {
           problem.withLocalQuickFixes(
-            () -> LocalQuickFix.from(new ModifierFix(existingInnerBuilderClass, PsiModifier.STATIC, true, false)));
+            () -> PsiQuickFixFactory.createModifierListFix(existingInnerBuilderClass, PsiModifier.STATIC, true, false));
         }
         return false;
       }
