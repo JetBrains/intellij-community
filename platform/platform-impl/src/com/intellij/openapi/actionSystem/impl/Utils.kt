@@ -19,6 +19,7 @@ import com.intellij.openapi.actionSystem.util.ActionSystem
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx
 import com.intellij.openapi.keymap.impl.ActionProcessor
@@ -263,8 +264,8 @@ object Utils {
       else Dispatchers.EDT[CoroutineDispatcher]!!
     val updater = ActionUpdater(presentationFactory, asyncDataContext, place, isContextMenu, isToolbarAction, edtDispatcher)
     val deferred = async(EmptyCoroutineContext, CoroutineStart.UNDISPATCHED) {
-      updater.runUpdateSession(updaterContext(place, fastTrackTime, isContextMenu, isToolbarAction)) {
-        ActionUpdaterInterceptor.expandActionGroup(presentationFactory, asyncDataContext, place, group, isToolbarAction) {
+      serviceAsync<ActionUpdaterInterceptor>().expandActionGroup(presentationFactory, asyncDataContext, place, group, isToolbarAction) {
+        updater.runUpdateSession(updaterContext(place, fastTrackTime, isContextMenu, isToolbarAction)) {
           updater.expandActionGroup(group, group is CompactActionGroup)
         }
       }
@@ -339,10 +340,10 @@ object Utils {
       addLoadingIcon(loadingIconPoint, place)
     }
     try {
-      val edtDispatcher = coroutineContext[CoroutineDispatcher]!!
-      val updater = ActionUpdater(presentationFactory, asyncDataContext, place, isContextMenu, false, edtDispatcher)
-      updater.runUpdateSession(updaterContext(place, fastTrackTime, isContextMenu, false)) {
-        ActionUpdaterInterceptor.expandActionGroup(presentationFactory, asyncDataContext, place, group, false) {
+      service<ActionUpdaterInterceptor>().expandActionGroup(presentationFactory, asyncDataContext, place, group, false) {
+        val edtDispatcher = coroutineContext[CoroutineDispatcher]!!
+        val updater = ActionUpdater(presentationFactory, asyncDataContext, place, isContextMenu, false, edtDispatcher)
+        updater.runUpdateSession(updaterContext(place, fastTrackTime, isContextMenu, false)) {
           updater.expandActionGroup(group, group is CompactActionGroup)
         }
       }
@@ -866,12 +867,9 @@ object Utils {
     }
     cancelAllUpdates("'$place' invoked")
 
+    val rearranged = rearrangeByPromoters(actions, dataContext)
     val result = actionUpdater.runUpdateSession(shortcutUpdateDispatcher) {
-      ActionUpdaterInterceptor.runUpdateSessionForInputEvent(actions, place, dataContext) { promoted ->
-        val rearranged = if (promoted.isNotEmpty()) promoted
-        else rearrangeByPromoters(actions, dataContext)
-        function(rearranged, actionUpdater::presentation, events)
-      }
+      function(rearranged, actionUpdater::presentation, events)
     }
     actionUpdater.applyPresentationChanges()
     val elapsed = TimeoutUtil.getDurationMillis(start)
@@ -904,9 +902,13 @@ private suspend fun rearrangeByPromoters(actions: List<AnAction>, dataContext: D
   val frozenContext = Utils.freezeDataContext(dataContext, null)
   return SlowOperations.startSection(SlowOperations.FORCE_ASSERT).use {
     try {
-      readActionUndispatchedForActionExpand {
-        val promoters = ActionPromoter.EP_NAME.extensionList + actions.filterIsInstance<ActionPromoter>()
-        rearrangeByPromotersImpl(actions, frozenContext, promoters)
+      service<ActionUpdaterInterceptor>().rearrangeByPromoters(actions, frozenContext) {
+        withContext(shortcutUpdateDispatcher) {
+          readActionUndispatchedForActionExpand {
+            val promoters = ActionPromoter.EP_NAME.extensionList + actions.filterIsInstance<ActionPromoter>()
+            rearrangeByPromotersImpl(actions, frozenContext, promoters)
+          }
+        }
       }
     }
     catch (ex: CancellationException) {
