@@ -27,7 +27,7 @@ import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.ShutDownTracker
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.registry.EarlyAccessRegistryManager
-import com.intellij.platform.diagnostic.telemetry.OpenTelemetryConfigurator
+import com.intellij.platform.diagnostic.telemetry.impl.OpenTelemetryConfigurator
 import com.intellij.platform.diagnostic.telemetry.impl.TelemetryManagerImpl
 import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.ui.mac.initMacApplication

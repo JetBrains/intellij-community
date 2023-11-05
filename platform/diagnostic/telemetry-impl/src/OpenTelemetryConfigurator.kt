@@ -1,9 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.diagnostic.telemetry
+package com.intellij.platform.diagnostic.telemetry.impl
 
 import com.intellij.openapi.util.ShutDownTracker
 import com.intellij.openapi.util.SystemInfoRt
-import com.intellij.platform.diagnostic.telemetry.otExporters.CsvMetricsExporter
+import com.intellij.platform.diagnostic.telemetry.*
 import com.intellij.util.ConcurrencyUtil
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import io.opentelemetry.api.common.AttributeKey
@@ -23,8 +23,7 @@ import kotlin.time.Duration.Companion.minutes
 import kotlin.time.toJavaDuration
 
 @ApiStatus.Internal
-class OpenTelemetryConfigurator(private val mainScope: CoroutineScope,
-                                private val sdkBuilder: OpenTelemetrySdkBuilder,
+class OpenTelemetryConfigurator(private val sdkBuilder: OpenTelemetrySdkBuilder,
                                 serviceName: String = "",
                                 serviceVersion: String = "",
                                 serviceNamespace: String = "",
@@ -50,17 +49,15 @@ class OpenTelemetryConfigurator(private val mainScope: CoroutineScope,
 
   private fun isMetricsEnabled(): Boolean = metricsReportingPath != null
 
-  fun registerSpanExporters(spanExporters: List<AsyncSpanExporter>) {
-    if (spanExporters.isEmpty()) {
-      return
-    }
-
+  fun registerSpanExporters(spanExporters: List<AsyncSpanExporter>, coroutineScope: CoroutineScope): BatchSpanProcessor {
+    check(spanExporters.isNotEmpty())
+    val batchSpanProcessor = BatchSpanProcessor(coroutineScope = coroutineScope, spanExporters = spanExporters)
     val tracerProvider = SdkTracerProvider.builder()
-      .addSpanProcessor(BatchSpanProcessor(coroutineScope = mainScope, spanExporters = spanExporters))
+      .addSpanProcessor(batchSpanProcessor)
       .setResource(resource)
       .build()
-
     sdkBuilder.setTracerProvider(tracerProvider)
+    return batchSpanProcessor
   }
 
   private fun registerMetricExporters(metricsExporters: List<MetricsExporterEntry>) {

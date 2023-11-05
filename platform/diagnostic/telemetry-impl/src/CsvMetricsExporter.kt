@@ -1,12 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.diagnostic.telemetry.otExporters
+package com.intellij.platform.diagnostic.telemetry.impl
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.diagnostic.telemetry.OpenTelemetryUtils.csvHeadersLines
 import com.intellij.platform.diagnostic.telemetry.OpenTelemetryUtils.toCsvStream
-import com.intellij.platform.diagnostic.telemetry.RollingFileSupplier
-import com.intellij.platform.diagnostic.telemetry.otExporters.CsvMetricsExporter.Companion.HTML_PLOTTER_NAME
+import com.intellij.platform.diagnostic.telemetry.impl.CsvMetricsExporter.Companion.HTML_PLOTTER_NAME
 import io.opentelemetry.sdk.common.CompletableResultCode
 import io.opentelemetry.sdk.metrics.InstrumentType
 import io.opentelemetry.sdk.metrics.data.AggregationTemporality

@@ -17,7 +17,6 @@ import java.nio.file.StandardCopyOption
 import java.nio.file.StandardOpenOption
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
-import java.util.*
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
@@ -37,7 +36,7 @@ class JaegerJsonSpanExporter(
   private val lock = ReentrantLock()
 
   init {
-    // presume that telemetry stuff need to be saved in log dir
+    // presume that telemetry stuff needs to be saved in log dir
     if (!file.isAbsolute || file.parent == null) {
       Files.createDirectories(PathManager.getLogDir().toAbsolutePath()).apply {
         tempTelemetryPath = this.resolve("telemetry.temp")
@@ -50,10 +49,10 @@ class JaegerJsonSpanExporter(
       telemetryJsonPath = file
     }
 
-    writer = JsonFactory().createGenerator(java.nio.file.Files.newBufferedWriter(tempTelemetryPath))
+    writer = JsonFactory().createGenerator(Files.newBufferedWriter(tempTelemetryPath))
       .configure(com.fasterxml.jackson.core.JsonGenerator.Feature.AUTO_CLOSE_TARGET, true)
 
-    beginWriter(writer, serviceName, serviceVersion, serviceNamespace)
+    beginWriter(w = writer, serviceName = serviceName, serviceVersion = serviceVersion, serviceNamespace = serviceNamespace)
   }
 
   override suspend fun export(spans: Collection<SpanData>) {
@@ -128,7 +127,9 @@ class JaegerJsonSpanExporter(
     lock.withLock {
       closeJsonFile(writer)
       // nothing was written to the file
-      if (Files.notExists(tempTelemetryPath)) return
+      if (Files.notExists(tempTelemetryPath)) {
+        return
+      }
 
       Files.move(tempTelemetryPath, telemetryJsonPath, StandardCopyOption.REPLACE_EXISTING)
     }
@@ -195,7 +196,7 @@ private fun writeAttributesAsJson(w: JsonGenerator, attributes: Attributes) {
   attributes.forEach { k, v ->
     w.writeStartObject()
     w.writeStringField("key", k.key)
-    w.writeStringField("type", k.type.name.lowercase(Locale.getDefault()))
+    w.writeStringField("type", k.type.name.lowercase())
     if (v is Iterable<*>) {
       w.writeArrayFieldStart("value")
       for (item in v) {

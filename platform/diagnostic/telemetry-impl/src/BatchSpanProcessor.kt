@@ -1,9 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("RAW_RUN_BLOCKING")
 
-package com.intellij.platform.diagnostic.telemetry
+package com.intellij.platform.diagnostic.telemetry.impl
 
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.platform.diagnostic.telemetry.AsyncSpanExporter
 import io.opentelemetry.context.Context
 import io.opentelemetry.sdk.common.CompletableResultCode
 import io.opentelemetry.sdk.trace.ReadWriteSpan
@@ -24,7 +25,7 @@ import kotlin.time.Duration.Companion.seconds
 @Internal
 class BatchSpanProcessor(
   coroutineScope: CoroutineScope,
-  private val spanExporters: List<AsyncSpanExporter>,
+  @JvmField internal val spanExporters: List<AsyncSpanExporter>,
   private val scheduleDelay: Duration = 5.seconds,
   private val maxExportBatchSize: Int = 512,
   private val exporterTimeout: Duration = 30.seconds,
@@ -162,5 +163,9 @@ class BatchSpanProcessor(
     finally {
       batch.clear()
     }
+  }
+
+  internal fun flushOtlp(scopeSpans: List<ScopeSpans>) {
+    TODO("Not yet implemented")
   }
 }

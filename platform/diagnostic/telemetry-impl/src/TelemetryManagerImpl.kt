@@ -8,6 +8,7 @@ import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -16,7 +17,6 @@ import com.intellij.platform.diagnostic.telemetry.*
 import com.intellij.platform.diagnostic.telemetry.exporters.JaegerJsonSpanExporter
 import com.intellij.platform.diagnostic.telemetry.exporters.OtlpSpanExporter
 import com.intellij.platform.diagnostic.telemetry.impl.otExporters.OpenTelemetryExporterProvider
-import com.intellij.util.childScope
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.metrics.Meter
 import io.opentelemetry.api.trace.propagation.W3CTraceContextPropagator
@@ -30,6 +30,9 @@ import java.nio.file.Path
 import java.util.concurrent.TimeUnit
 import kotlin.coroutines.CoroutineContext
 
+@Service
+private class OtlpCoroutineScopeHolder(@JvmField val coroutineScope: CoroutineScope)
+
 /**
  * See [Span](https://opentelemetry.io/docs/reference/specification),
  * [Manual Instrumentation](https://opentelemetry.io/docs/instrumentation/java/manual/#create-spans-with-events).
@@ -37,33 +40,38 @@ import kotlin.coroutines.CoroutineContext
 @ApiStatus.Experimental
 @ApiStatus.Internal
 class TelemetryManagerImpl(app: Application) : TelemetryManager {
-
   // for the unit (performance) tests
   @Suppress("unused")
   constructor() : this(ApplicationManager.getApplication())
 
   private val sdk: OpenTelemetrySdk
 
-  private val otlpService by lazy {
-    ApplicationManager.getApplication().service<OtlpService>()
-  }
-
   override var verboseMode: Boolean = false
 
   private val aggregatedMetricExporter: AggregatedMetricExporter
   private val hasSpanExporters: Boolean
 
+  private val otlpService: Lazy<OtlpService>
+
   init {
     verboseMode = System.getProperty("idea.diagnostic.opentelemetry.verbose")?.toBooleanStrictOrNull() == true
-    @Suppress("DEPRECATION")
-    val configurator = createOpenTelemetryConfigurator(mainScope = app.coroutineScope.childScope(),
-                                                       appInfo = ApplicationInfoImpl.getShadowInstance())
+    val configurator = createOpenTelemetryConfigurator(appInfo = ApplicationInfoImpl.getShadowInstance())
 
     aggregatedMetricExporter = configurator.aggregatedMetricExporter
 
     val spanExporters = createSpanExporters(configurator.resource, isUnitTestMode = app.isUnitTestMode)
     hasSpanExporters = !spanExporters.isEmpty()
-    configurator.registerSpanExporters(spanExporters = spanExporters)
+    val batchSpanProcessor = if (hasSpanExporters) {
+      configurator.registerSpanExporters(spanExporters = spanExporters,
+                                         coroutineScope = app.service<OtlpCoroutineScopeHolder>().coroutineScope)
+    }
+    else {
+      null
+    }
+
+    otlpService = lazy {
+      OtlpService(coroutineScope = app.service<OtlpCoroutineScopeHolder>().coroutineScope, batchSpanProcessor = batchSpanProcessor)
+    }
 
     // W3CTraceContextPropagator is needed to make backend/client spans properly synced, issue: RDCT-408
     sdk = configurator.getConfiguredSdkBuilder()
@@ -87,7 +95,7 @@ class TelemetryManagerImpl(app: Application) : TelemetryManager {
   }
 
   override fun getSimpleTracer(scope: Scope): IntelliJTracer {
-    return if (hasSpanExporters) IntelliJTracerImpl(scope, otlpService) else NoopIntelliJTracer
+    return if (hasSpanExporters) IntelliJTracerImpl(scope, otlpService.value) else NoopIntelliJTracer
   }
 
   override fun forceFlushMetrics() {
@@ -158,10 +166,11 @@ private fun createSpanExporters(resource: Resource, isUnitTestMode: Boolean = fa
   }
 
   // Extension points for "com.intellij.openTelemetryExporterProvider" isn't available in unit tests
-  if (isUnitTestMode) return spanExporters
+  if (isUnitTestMode) {
+    return spanExporters
+  }
 
-  for (item in ExtensionPointName<OpenTelemetryExporterProvider>("com.intellij.openTelemetryExporterProvider")
-    .filterableLazySequence()) {
+  for (item in ExtensionPointName<OpenTelemetryExporterProvider>("com.intellij.openTelemetryExporterProvider").filterableLazySequence()) {
     val pluginDescriptor = item.pluginDescriptor
     if (!pluginDescriptor.isBundled) {
       logger<OpenTelemetryExporterProvider>().error(PluginException("Plugin ${pluginDescriptor.pluginId} is not allowed " +
@@ -174,9 +183,8 @@ private fun createSpanExporters(resource: Resource, isUnitTestMode: Boolean = fa
   return spanExporters
 }
 
-private fun createOpenTelemetryConfigurator(mainScope: CoroutineScope, appInfo: ApplicationInfo): OpenTelemetryConfigurator {
+private fun createOpenTelemetryConfigurator(appInfo: ApplicationInfo): OpenTelemetryConfigurator {
   return OpenTelemetryConfigurator(
-    mainScope = mainScope,
     sdkBuilder = OpenTelemetrySdk.builder(),
     serviceName = ApplicationNamesInfo.getInstance().fullProductName,
     serviceVersion = appInfo.build.asStringWithoutProductCode(),

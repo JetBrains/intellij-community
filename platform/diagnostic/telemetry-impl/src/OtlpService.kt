@@ -4,7 +4,6 @@ package com.intellij.platform.diagnostic.telemetry.impl
 import com.intellij.diagnostic.ActivityImpl
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.openapi.application.ApplicationInfo
-import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.platform.diagnostic.telemetry.Scope
 import com.intellij.platform.diagnostic.telemetry.exporters.normalizeOtlpEndPoint
@@ -27,8 +26,7 @@ fun getOtlpEndPoint(): String? {
   return normalizeOtlpEndPoint(System.getProperty("idea.diagnostic.opentelemetry.otlp"))
 }
 
-@Service
-internal class OtlpService(private val coroutineScope: CoroutineScope) {
+internal class OtlpService(private val coroutineScope: CoroutineScope, private val batchSpanProcessor: BatchSpanProcessor?) {
   private val spans = Channel<ActivityImpl>(capacity = Channel.UNLIMITED)
 
   private val utc = ((ZonedDateTime.now(ZoneOffset.UTC).toInstant().toEpochMilli() / 1000) - 1672531200).toInt()
@@ -138,11 +136,13 @@ internal class OtlpService(private val coroutineScope: CoroutineScope) {
       return
     }
 
+    val scopeSpans = java.util.List.copyOf(scopeToSpans.values)
+    batchSpanProcessor?.flushOtlp(scopeSpans)
     val data = TracesData(
       resourceSpans = listOf(
         ResourceSpans(
           resource = resource,
-          scopeSpans = scopeToSpans.values.toList(),
+          scopeSpans = scopeSpans,
         ),
       ),
     )
