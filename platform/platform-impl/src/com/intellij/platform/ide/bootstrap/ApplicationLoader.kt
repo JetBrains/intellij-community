@@ -42,6 +42,7 @@ import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.diagnostic.telemetry.impl.TelemetryManagerImpl
 import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
+import com.intellij.platform.ide.ideFingerprint
 import com.intellij.ui.AppIcon
 import com.intellij.ui.ExperimentalUI
 import com.intellij.util.PlatformUtils
@@ -83,22 +84,15 @@ internal suspend fun loadApp(app: ApplicationImpl,
                              initAwtToolkitAndEventQueueJob: Job): ApplicationStarter {
   return span("app initialization") {
     val initServiceContainerJob = launch {
-      initServiceContainer(app = app, pluginSetDeferred = pluginSetDeferred)
+      val pluginSet = span("plugin descriptor init waiting") {
+        pluginSetDeferred.await().await()
+      }
+
+      span("app component registration") {
+        app.registerComponents(modules = pluginSet.getEnabledModules(), app = app)
+      }
       // ApplicationManager.getApplication may be used in ApplicationInitializedListener constructor
       ApplicationManager.setApplication(app)
-    }
-
-    val initTelemetryJob = launch(CoroutineName("opentelemetry configuration")) {
-      initServiceContainerJob.join()
-      try {
-        TelemetryManager.setTelemetryManager(TelemetryManagerImpl(app))
-      }
-      catch (e: CancellationException) {
-        throw e
-      }
-      catch (e: Throwable) {
-        logDeferred.await().error("Can't initialize OpenTelemetry: will use default (noop) SDK impl", e)
-      }
     }
 
     val euaTaskDeferred: Deferred<(suspend () -> Boolean)?>? = if (AppMode.isHeadless()) {
@@ -111,6 +105,23 @@ internal suspend fun loadApp(app: ApplicationImpl,
     }
 
     initServiceContainerJob.join()
+
+    val initTelemetryJob = launch(CoroutineName("opentelemetry configuration")) {
+      try {
+        TelemetryManager.setTelemetryManager(TelemetryManagerImpl(app))
+      }
+      catch (e: CancellationException) {
+        throw e
+      }
+      catch (e: Throwable) {
+        logDeferred.await().error("Can't initialize OpenTelemetry: will use default (noop) SDK impl", e)
+      }
+    }
+
+    app.coroutineScope.launch {
+      // precompute after plugin model loaded
+      ideFingerprint()
+    }
 
     val loadIconMapping = if (app.isHeadlessEnvironment) {
       null
@@ -185,16 +196,6 @@ internal suspend fun loadApp(app: ApplicationImpl,
     appInitializedListenerJob.join()
 
     applicationStarter.await()
-  }
-}
-
-private suspend fun initServiceContainer(app: ApplicationImpl, pluginSetDeferred: Deferred<Deferred<PluginSet>>) {
-  val pluginSet = span("plugin descriptor init waiting") {
-    pluginSetDeferred.await().await()
-  }
-
-  span("app component registration") {
-    app.registerComponents(modules = pluginSet.getEnabledModules(), app = app)
   }
 }
 

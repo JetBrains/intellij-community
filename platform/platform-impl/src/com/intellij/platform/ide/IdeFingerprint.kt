@@ -94,11 +94,10 @@ private fun hashByFileContent(descriptor: IdeaPluginDescriptorImpl, hasher: Hash
     if (isDevMode) {
       val path = file.toString()
       if (path.endsWith(".jar")) {
-        hashFile(file, hasher, path)
+        hashFile(file = file, hasher = hasher, path = path)
       }
       else {
-        // classpath.index cannot be used as it is created not before but during IDE launch
-        // .unmodified must be present
+        // classpath.index cannot be used as it is created not before but during IDE launch, .unmodified must be present
         try {
           hashFile(file = file.resolve(".unmodified"), hasher = hasher, path = path)
         }
