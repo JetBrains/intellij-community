@@ -13,12 +13,9 @@ class PythonAddInterpreterState(
   val scope: CoroutineScope,
   val basePythonSdks: ObservableMutableProperty<List<Sdk>>,
   val allExistingSdks: ObservableMutableProperty<List<Sdk>>,
-  val basePythonVersion: ObservableMutableProperty<Sdk?>,
   val selectedVenv: ObservableMutableProperty<Sdk?>,
   val condaExecutable: ObservableMutableProperty<String>,
 ) {
-  val basePythonHomePath: ObservableMutableProperty<String?> = basePythonVersion.transformToHomePathProperty(basePythonSdks)
-
   internal val allSdks: ObservableMutableProperty<List<Sdk>> = propertyGraph.property(initial = allExistingSdks.get())
 
   val selectedVenvPath: ObservableMutableProperty<String?> = selectedVenv.transformToHomePathProperty(allSdks)

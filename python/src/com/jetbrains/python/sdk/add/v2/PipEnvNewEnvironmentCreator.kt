@@ -22,6 +22,8 @@ import kotlinx.coroutines.withContext
 
 class PipEnvNewEnvironmentCreator(presenter: PythonAddInterpreterPresenter) : PythonAddEnvironment(presenter) {
   private val executable = propertyGraph.property(UNKNOWN_EXECUTABLE)
+  private val basePythonVersion = propertyGraph.property<Sdk?>(initial = null)
+  private val basePythonHomePath = basePythonVersion.transformToHomePathProperty(state.basePythonSdks)
   private lateinit var pipEnvPathField: TextFieldWithBrowseButton
   private lateinit var basePythonComboBox: ComboBox<String?>
 
@@ -29,7 +31,7 @@ class PipEnvNewEnvironmentCreator(presenter: PythonAddInterpreterPresenter) : Py
     with(panel) {
       row(message("sdk.create.custom.base.python")) {
         basePythonComboBox =
-          pythonBaseInterpreterComboBox(presenter, presenter.basePythonSdksFlow, presenter.detectingSdks, state.basePythonHomePath,
+          pythonBaseInterpreterComboBox(presenter, presenter.basePythonSdksFlow, presenter.detectingSdks, basePythonHomePath,
                                         presenter::addBasePythonInterpreter)
             .align(Align.FILL)
             .component
@@ -63,6 +65,6 @@ class PipEnvNewEnvironmentCreator(presenter: PythonAddInterpreterPresenter) : Py
   override fun getOrCreateSdk(): Sdk {
     PropertiesComponent.getInstance().pipEnvPath = pipEnvPathField.text.nullize()
     return setupPipEnvSdkUnderProgress(null, null, state.basePythonSdks.get(), state.projectPath.get(),
-                                       state.basePythonVersion.get()!!.homePath, false)!!
+                                       basePythonVersion.get()!!.homePath, false)!!
   }
 }
