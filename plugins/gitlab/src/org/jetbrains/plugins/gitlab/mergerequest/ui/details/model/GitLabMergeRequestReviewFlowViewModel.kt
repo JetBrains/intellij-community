@@ -108,8 +108,6 @@ internal class GitLabMergeRequestReviewFlowViewModelImpl(
 
   override val author: GitLabUserDTO = mergeRequest.author
 
-  private val isApproved: StateFlow<Boolean> = mergeRequest.details.mapState(scope) { it.isApproved }
-
   override val reviewRequestState: SharedFlow<ReviewRequestState> = mergeRequest.details.map { it.reviewState }
     .modelFlow(scope, LOG)
   override val reviewers: StateFlow<List<GitLabReviewerDTO>> = mergeRequest.details.mapState(scope) {
@@ -118,6 +116,13 @@ internal class GitLabMergeRequestReviewFlowViewModelImpl(
   override val reviewerReviews: Flow<Map<GitLabReviewerDTO, ReviewState>> = reviewers.map { reviewers ->
     reviewers.associateWith { it.mergeRequestInteraction.toReviewState() }
   }
+
+  private val isApproved: SharedFlow<Boolean> = combine(mergeRequest.details, reviewerReviews) { details, reviews ->
+    val approvalsRequired = details.approvalsRequired
+    val approvedReviews = reviews.count { it.value == ReviewState.ACCEPTED }
+    return@combine if (approvalsRequired == 0) approvedReviews > 0 else approvedReviews >= approvalsRequired
+  }.modelFlow(scope, LOG)
+
   override val reviewState: SharedFlow<ReviewState> = combine(reviewerReviews, isApproved) { reviewerReviews, isApproved ->
     val reviewStates = reviewerReviews.values
     when {

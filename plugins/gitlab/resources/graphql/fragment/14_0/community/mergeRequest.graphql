@@ -1,4 +1,5 @@
-# <14.3 approved removed, CE and EE MergeRequests are equal for us
+# <14.0 mergeStatusEnum removed
+# Diff with EE: approvalsRequired not included
 fragment mergeRequest on MergeRequest {
   id
   iid
@@ -30,7 +31,6 @@ fragment mergeRequest on MergeRequest {
   headPipeline {
     ...pipeline
   }
-  mergeStatusEnum
   mergeable
   state
   draft

@@ -9,8 +9,8 @@ internal object GitLabGQLQueryLoaders {
   private val loaderCache = mutableMapOf<GitLabServerMetadata, CachingGraphQLQueryLoader>()
 
   private val fragmentVersions = listOf(
+    GitLabVersion(13, 9),
     GitLabVersion(14, 0),
-    GitLabVersion(14, 3),
     GitLabVersion(14, 5),
     GitLabVersion(14, 7),
     GitLabVersion(15, 4),

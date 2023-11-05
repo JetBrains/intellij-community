@@ -1,4 +1,5 @@
-# <14.7 commits removed
+# <13.9 approvalsRequired removed
+# CE and EE MergeRequests are equal for us
 fragment mergeRequest on MergeRequest {
   id
   iid
@@ -26,12 +27,10 @@ fragment mergeRequest on MergeRequest {
     headSha
   }
 
-  approvalsRequired # Not available in community
   conflicts
   headPipeline {
     ...pipeline
   }
-  mergeStatusEnum
   mergeable
   state
   draft
