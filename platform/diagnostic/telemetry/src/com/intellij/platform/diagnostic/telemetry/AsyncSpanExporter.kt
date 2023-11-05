@@ -10,5 +10,5 @@ interface AsyncSpanExporter {
 
   fun forceFlush() {}
 
-  fun shutdown() {}
+  suspend fun shutdown() {}
 }

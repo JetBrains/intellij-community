@@ -9,6 +9,8 @@ import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.sdk.trace.IdGenerator
 import io.opentelemetry.sdk.trace.data.SpanData
 import io.opentelemetry.sdk.trace.data.StatusData
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.io.BufferedWriter
 import java.nio.file.Files
@@ -55,10 +57,7 @@ class JaegerJsonSpanExporter(
     beginWriter(w = writer, serviceName = serviceName, serviceVersion = serviceVersion, serviceNamespace = serviceNamespace)
   }
 
-  fun flushOtlp(scopeSpans: List<ScopeSpans>) {
-    TODO("Not yet implemented")
-  }
-
+  @Suppress("DuplicatedCode")
   override suspend fun export(spans: Collection<SpanData>) {
     lock.withLock {
       for (span in spans) {
@@ -127,7 +126,54 @@ class JaegerJsonSpanExporter(
     }
   }
 
-  override fun shutdown() {
+  @OptIn(ExperimentalStdlibApi::class)
+  @Suppress("DuplicatedCode")
+  fun flushOtlp(scopeSpans: Collection<ScopeSpans>) {
+    lock.withLock {
+      for (scopeSpan in scopeSpans) {
+        for (span in scopeSpan.spans) {
+          writer.writeStartObject()
+          val traceId = span.traceId.toHexString()
+          writer.writeStringField("traceID", traceId)
+          writer.writeStringField("spanID", span.spanId.toHexString())
+          writer.writeStringField("operationName", span.name)
+
+          writer.writeStringField("processID", "p1")
+          writer.writeNumberField("startTime", TimeUnit.NANOSECONDS.toMicros(span.startTimeUnixNano))
+          writer.writeNumberField("duration", TimeUnit.NANOSECONDS.toMicros(span.endTimeUnixNano - span.startTimeUnixNano))
+
+          val attributes = span.attributes
+          if (!attributes.isEmpty()) {
+            writer.writeArrayFieldStart("tags")
+            for (k in attributes) {
+              val w = writer
+              w.writeStartObject()
+              w.writeStringField("key", k.key)
+              w.writeStringField("type", "string")
+              w.writeStringField("value", k.value.string)
+              w.writeEndObject()
+            }
+            writer.writeEndArray()
+          }
+
+          if (span.parentSpanId != null) {
+            writer.writeArrayFieldStart("references")
+            writer.writeStartObject()
+            writer.writeStringField("refType", "CHILD_OF")
+            // not an error - space trace id equals to parent, OpenTelemetry opposite to Jaeger doesn't support cross-trace parent
+            writer.writeStringField("traceID", traceId)
+            writer.writeStringField("spanID", span.parentSpanId.toHexString())
+            writer.writeEndObject()
+            writer.writeEndArray()
+          }
+          writer.writeEndObject()
+        }
+      }
+      writer.flush()
+    }
+  }
+
+  fun shutdownSync() {
     lock.withLock {
       closeJsonFile(writer)
       // nothing was written to the file
@@ -136,6 +182,12 @@ class JaegerJsonSpanExporter(
       }
 
       Files.move(tempTelemetryPath, telemetryJsonPath, StandardCopyOption.REPLACE_EXISTING)
+    }
+  }
+
+  override suspend fun shutdown() {
+    withContext(Dispatchers.IO) {
+      shutdownSync()
     }
   }
 

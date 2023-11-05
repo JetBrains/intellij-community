@@ -13,8 +13,6 @@ import io.opentelemetry.sdk.OpenTelemetrySdkBuilder
 import io.opentelemetry.sdk.metrics.SdkMeterProvider
 import io.opentelemetry.sdk.metrics.export.PeriodicMetricReader
 import io.opentelemetry.sdk.resources.Resource
-import io.opentelemetry.sdk.trace.SdkTracerProvider
-import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 import java.time.Instant
 import java.time.format.DateTimeFormatter
@@ -23,7 +21,7 @@ import kotlin.time.Duration.Companion.minutes
 import kotlin.time.toJavaDuration
 
 @ApiStatus.Internal
-class OpenTelemetryConfigurator(private val sdkBuilder: OpenTelemetrySdkBuilder,
+class OpenTelemetryConfigurator(@JvmField internal val sdkBuilder: OpenTelemetrySdkBuilder,
                                 serviceName: String = "",
                                 serviceVersion: String = "",
                                 serviceNamespace: String = "",
@@ -48,17 +46,6 @@ class OpenTelemetryConfigurator(private val sdkBuilder: OpenTelemetrySdkBuilder,
   val aggregatedMetricExporter: AggregatedMetricExporter = AggregatedMetricExporter()
 
   private fun isMetricsEnabled(): Boolean = metricsReportingPath != null
-
-  fun registerSpanExporters(spanExporters: List<AsyncSpanExporter>, coroutineScope: CoroutineScope): BatchSpanProcessor {
-    check(spanExporters.isNotEmpty())
-    val batchSpanProcessor = BatchSpanProcessor(coroutineScope = coroutineScope, spanExporters = spanExporters)
-    val tracerProvider = SdkTracerProvider.builder()
-      .addSpanProcessor(batchSpanProcessor)
-      .setResource(resource)
-      .build()
-    sdkBuilder.setTracerProvider(tracerProvider)
-    return batchSpanProcessor
-  }
 
   private fun registerMetricExporters(metricsExporters: List<MetricsExporterEntry>) {
     val registeredMetricsReaders = SdkMeterProvider.builder()

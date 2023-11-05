@@ -21,6 +21,7 @@ import kotlinx.coroutines.selects.select
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.function.BiFunction
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -28,17 +29,15 @@ import kotlin.time.Duration.Companion.seconds
 class BatchSpanProcessor(
   coroutineScope: CoroutineScope,
   private val spanExporters: List<AsyncSpanExporter>,
-  private val scheduleDelay: Duration = 5.seconds,
+  private val scheduleDelay: Duration = 1.minutes,
   private val maxExportBatchSize: Int = 512,
   private val exporterTimeout: Duration = 30.seconds,
 ) : SpanProcessor {
   private val queue = Channel<ReadableSpan>(capacity = Channel.UNLIMITED)
   private val flushRequested = Channel<CompletableDeferred<Unit>>(capacity = Channel.UNLIMITED)
 
-  private val processingJob: Job
-
   init {
-    processingJob = coroutineScope.launch {
+    coroutineScope.launch {
       val batch = ArrayList<SpanData>(maxExportBatchSize)
       try {
         var counter = 0
@@ -47,7 +46,9 @@ class BatchSpanProcessor(
             flushRequested.onReceive { result ->
               try {
                 exportCurrentBatch(batch)
-                spanExporters.forEach { it.forceFlush() }
+                for (spanExporter in spanExporters) {
+                  spanExporter.forceFlush()
+                }
               }
               finally {
                 result.complete(Unit)
@@ -84,7 +85,14 @@ class BatchSpanProcessor(
             exportCurrentBatch(batch)
           }
           finally {
-            shutdownExporters()
+            for (spanExporter in spanExporters) {
+              try {
+                spanExporter.shutdown()
+              }
+              catch (e: Throwable) {
+                logger<BatchSpanProcessor>().error("Failed to shutdown", e)
+              }
+            }
           }
         }
         throw e
@@ -99,7 +107,7 @@ class BatchSpanProcessor(
 
   override fun onEnd(span: ReadableSpan) {
     if (span.spanContext.isSampled) {
-      addSpan(span)
+      queue.trySend(span)
     }
   }
 
@@ -108,17 +116,6 @@ class BatchSpanProcessor(
   override fun shutdown(): CompletableResultCode {
     // shutdown must be performed using scope - explicit shutdown is not required
     return CompletableResultCode.ofSuccess()
-  }
-
-  private fun shutdownExporters() {
-    for (spanExporter in spanExporters) {
-      try {
-        spanExporter.shutdown()
-      }
-      catch (e: Throwable) {
-        logger<BatchSpanProcessor>().error("Failed to shutdown", e)
-      }
-    }
   }
 
   override fun forceFlush(): CompletableResultCode {
@@ -138,10 +135,6 @@ class BatchSpanProcessor(
       }
     })
     return result
-  }
-
-  private fun addSpan(span: ReadableSpan) {
-    queue.trySend(span)
   }
 
   private suspend fun exportCurrentBatch(batch: MutableList<SpanData>) {
@@ -167,7 +160,7 @@ class BatchSpanProcessor(
     }
   }
 
-  internal fun flushOtlp(scopeSpans: List<ScopeSpans>) {
+  internal fun flushOtlp(scopeSpans: Collection<ScopeSpans>) {
     for (spanExporter in spanExporters) {
       if (spanExporter is JaegerJsonSpanExporter) {
         spanExporter.flushOtlp(scopeSpans)

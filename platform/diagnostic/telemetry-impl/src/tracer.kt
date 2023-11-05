@@ -182,17 +182,17 @@ open class DefaultTraceReporter(private val reportScheduleTimeForRoot: Boolean) 
 
     if (reportScheduleTimeForRoot || parentActivity != null) {
       // the main activity cannot be a parent for meta "scheduled" activity since it is outside it (preceding the main activity)
-      setEndAndAdd(ActivityImpl("${coroutineName}: scheduled", scheduleTime, parentActivity), start)
+      setEndAndAdd(ActivityImpl("$coroutineName: scheduled", scheduleTime, parentActivity), start)
     }
 
-    // start main activity right away
+    // start the main activity right away
     return ActivityImpl(coroutineName, /* start = */start, parentActivity)
   }
 
   override fun end(activity: ActivityImpl, coroutineName: String, end: Long, lastSuspensionTime: Long) {
     if (lastSuspensionTime != -1L) {
       // after the last suspension, the coroutine was waiting for its children => end main activity
-      setEndAndAdd(ActivityImpl("${coroutineName}: completing", lastSuspensionTime, activity), end)
+      setEndAndAdd(ActivityImpl("$coroutineName: completing", lastSuspensionTime, activity), end)
     }
     setEndAndAdd(activity, end)
   }

@@ -23,8 +23,11 @@ import io.opentelemetry.api.trace.propagation.W3CTraceContextPropagator
 import io.opentelemetry.context.propagation.ContextPropagators
 import io.opentelemetry.sdk.OpenTelemetrySdk
 import io.opentelemetry.sdk.resources.Resource
+import io.opentelemetry.sdk.trace.SdkTracerProvider
+import io.opentelemetry.sdk.trace.data.SpanData
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 import java.util.concurrent.TimeUnit
@@ -51,32 +54,61 @@ class TelemetryManagerImpl(app: Application) : TelemetryManager {
   private val aggregatedMetricExporter: AggregatedMetricExporter
   private val hasSpanExporters: Boolean
 
-  private val otlpService: Lazy<OtlpService>
+  private val otlpService: OtlpService
 
   init {
     verboseMode = System.getProperty("idea.diagnostic.opentelemetry.verbose")?.toBooleanStrictOrNull() == true
     val configurator = createOpenTelemetryConfigurator(appInfo = ApplicationInfoImpl.getShadowInstance())
-
     aggregatedMetricExporter = configurator.aggregatedMetricExporter
+    otlpService = OtlpService()
 
+    var otlJob: Job? = null
     val spanExporters = createSpanExporters(configurator.resource, isUnitTestMode = app.isUnitTestMode)
     hasSpanExporters = !spanExporters.isEmpty()
     val batchSpanProcessor = if (hasSpanExporters) {
-      configurator.registerSpanExporters(spanExporters = spanExporters,
-                                         coroutineScope = app.service<OtlpCoroutineScopeHolder>().coroutineScope)
+      spanExporters.add(object : AsyncSpanExporter {
+        override suspend fun export(spans: Collection<SpanData>) {
+        }
+
+        override suspend fun shutdown() {
+          otlpService.stop()
+          otlJob?.let {
+            otlJob = null
+            it.join()
+          }
+        }
+      })
+
+      val batchSpanProcessor = BatchSpanProcessor(coroutineScope = app.service<OtlpCoroutineScopeHolder>().coroutineScope,
+                                                  spanExporters = java.util.List.copyOf(spanExporters))
+      val tracerProvider = SdkTracerProvider.builder()
+        .addSpanProcessor(batchSpanProcessor)
+        .setResource(configurator.resource)
+        .build()
+      configurator.sdkBuilder.setTracerProvider(tracerProvider)
+      batchSpanProcessor
     }
     else {
       null
     }
 
-    otlpService = lazy {
-      OtlpService(coroutineScope = app.service<OtlpCoroutineScopeHolder>().coroutineScope, batchSpanProcessor = batchSpanProcessor)
-    }
+    otlJob = otlpService.process(coroutineScope = app.service<OtlpCoroutineScopeHolder>().coroutineScope,
+                                 batchSpanProcessor = batchSpanProcessor)
 
     // W3CTraceContextPropagator is needed to make backend/client spans properly synced, issue: RDCT-408
     sdk = configurator.getConfiguredSdkBuilder()
       .setPropagators(ContextPropagators.create(W3CTraceContextPropagator.getInstance()))
       .buildAndRegisterGlobal()
+  }
+
+  fun addStartupActivities(activities: List<ActivityImpl>) {
+    val scope = Scope("startup")
+    for (activity in activities) {
+      if (activity.scope == null) {
+        activity.scope = scope
+      }
+      otlpService.add(activity)
+    }
   }
 
   override fun addMetricsExporters(exporters: List<MetricsExporterEntry>) {
@@ -95,7 +127,7 @@ class TelemetryManagerImpl(app: Application) : TelemetryManager {
   }
 
   override fun getSimpleTracer(scope: Scope): IntelliJTracer {
-    return if (hasSpanExporters) IntelliJTracerImpl(scope, otlpService.value) else NoopIntelliJTracer
+    return if (hasSpanExporters) IntelliJTracerImpl(scope = scope, otlpService = otlpService) else NoopIntelliJTracer
   }
 
   override fun forceFlushMetrics() {
@@ -150,7 +182,7 @@ private class IntelliJTracerImpl(private val scope: Scope, private val otlpServi
   }
 }
 
-private fun createSpanExporters(resource: Resource, isUnitTestMode: Boolean = false): List<AsyncSpanExporter> {
+private fun createSpanExporters(resource: Resource, isUnitTestMode: Boolean = false): MutableList<AsyncSpanExporter> {
   val spanExporters = mutableListOf<AsyncSpanExporter>()
   System.getProperty("idea.diagnostic.opentelemetry.file")?.let { traceFile ->
     spanExporters.add(JaegerJsonSpanExporter(
