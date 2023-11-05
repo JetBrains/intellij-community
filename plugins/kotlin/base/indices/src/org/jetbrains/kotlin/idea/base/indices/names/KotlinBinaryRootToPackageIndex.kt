@@ -6,17 +6,11 @@ import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.jrt.JrtFileSystem
-import com.intellij.util.indexing.DataIndexer
-import com.intellij.util.indexing.DefaultFileTypeSpecificInputFilter
-import com.intellij.util.indexing.FileBasedIndex
-import com.intellij.util.indexing.FileBasedIndexExtension
-import com.intellij.util.indexing.FileContent
-import com.intellij.util.indexing.ID
+import com.intellij.util.indexing.*
 import com.intellij.util.io.EnumeratorStringDescriptor
 import org.jetbrains.kotlin.analysis.decompiler.konan.KlibMetaFileType
 import org.jetbrains.kotlin.incremental.storage.StringExternalizer
 import org.jetbrains.kotlin.library.KLIB_FILE_EXTENSION_WITH_DOT
-import kotlin.jvm.java
 
 /**
  * [KotlinBinaryRootToPackageIndex] maps JAR and KLIB library names and JRT module names to the packages that are contained in the library.
@@ -38,7 +32,7 @@ import kotlin.jvm.java
  */
 class KotlinBinaryRootToPackageIndex : FileBasedIndexExtension<String, String>() {
     companion object {
-        val NAME: ID<String, String> = ID.create(KotlinBinaryRootToPackageIndex::class.java.canonicalName)
+        val NAME: ID<String, String> = ID.create(KotlinBinaryRootToPackageIndex::class.java.simpleName)
     }
 
     override fun getName() = NAME
