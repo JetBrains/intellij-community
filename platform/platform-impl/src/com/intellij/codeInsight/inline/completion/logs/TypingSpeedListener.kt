@@ -13,7 +13,7 @@ class TypingSpeedListener : KeyAdapter() {
       return
     }
     LOG.trace("Valuable key released event $event")
-    TypingSpeedTracker.typingOccurred()
+    TypingSpeedTracker.getInstance().typingOccurred()
   }
 
   private fun isValuableKeyReleased(event: KeyEvent): Boolean {

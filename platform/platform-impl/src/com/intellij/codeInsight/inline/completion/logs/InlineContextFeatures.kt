@@ -12,7 +12,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiFileSystemItem
 import org.jetbrains.annotations.ApiStatus
-import kotlin.time.Duration.Companion.seconds
 
 @ApiStatus.Internal
 object InlineContextFeatures {
@@ -99,13 +98,11 @@ object InlineContextFeatures {
   }
 
   private fun MutableList<EventPair<*>>.addTypingFeatures() {
-    val timeSinceLastTyping = TypingSpeedTracker.getTimeSinceLastTyping()
+    val typingSpeedTracker = TypingSpeedTracker.getInstance()
+    val timeSinceLastTyping = typingSpeedTracker.getTimeSinceLastTyping()
     if (timeSinceLastTyping != null) {
       add(TIME_SINCE_LAST_TYPING.with(timeSinceLastTyping))
-      TypingSpeedTracker.getTypingSpeed(1.seconds)?.let { add(TYPING_SPEED_1S.with(it)) }
-      TypingSpeedTracker.getTypingSpeed(2.seconds)?.let { add(TYPING_SPEED_2S.with(it)) }
-      TypingSpeedTracker.getTypingSpeed(5.seconds)?.let { add(TYPING_SPEED_5S.with(it)) }
-      TypingSpeedTracker.getTypingSpeed(30.seconds)?.let { add(TYPING_SPEED_30S.with(it)) }
+      addAll(typingSpeedTracker.getTypingSpeedEventPairs())
     }
   }
 
@@ -127,8 +124,4 @@ object InlineContextFeatures {
   val FIRST_PARENT = EventFields.Class("first_parent")
   val SECOND_PARENT = EventFields.Class("second_parent")
   val TIME_SINCE_LAST_TYPING = EventFields.Long("time_since_last_typing")
-  val TYPING_SPEED_1S = EventFields.Float("typing_speed_1s")
-  val TYPING_SPEED_2S = EventFields.Float("typing_speed_2s")
-  val TYPING_SPEED_5S = EventFields.Float("typing_speed_5s")
-  val TYPING_SPEED_30S = EventFields.Float("typing_speed_30s")
 }
