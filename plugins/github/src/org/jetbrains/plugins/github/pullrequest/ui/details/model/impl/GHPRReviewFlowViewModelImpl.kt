@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui.details.model.impl
 
+import com.intellij.collaboration.async.modelFlow
 import com.intellij.collaboration.async.nestedDisposable
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.codereview.action.ReviewMergeCommitMessageDialog
@@ -9,6 +10,8 @@ import com.intellij.collaboration.ui.codereview.details.data.ReviewRole
 import com.intellij.collaboration.ui.codereview.details.data.ReviewState
 import com.intellij.collaboration.util.CollectionDelta
 import com.intellij.collaboration.util.SingleCoroutineLauncher
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
@@ -35,6 +38,8 @@ import org.jetbrains.plugins.github.ui.util.GHUIUtil
 import java.util.concurrent.CompletableFuture
 import javax.swing.JComponent
 import kotlin.coroutines.cancellation.CancellationException
+
+private val LOG: Logger = logger<GHPRReviewFlowViewModel>()
 
 class GHPRReviewFlowViewModelImpl internal constructor(
   parentCs: CoroutineScope,
@@ -73,14 +78,21 @@ class GHPRReviewFlowViewModelImpl internal constructor(
     getReviewsByReviewers(author, reviews, reviewers)
   }.shareIn(cs, SharingStarted.Lazily, 1)
 
-  override val reviewState: SharedFlow<ReviewState> = detailsState.map {
-    when (it.reviewDecision) {
+  private val isApproved: SharedFlow<Boolean> = combine(reviewerReviews, mergeabilityState) { reviews, state ->
+    val requiredApprovingReviewsCount = state?.requiredApprovingReviewsCount ?: 0
+    val approvedReviews = reviews.count { it.value == ReviewState.ACCEPTED }
+    return@combine if (requiredApprovingReviewsCount == 0) approvedReviews > 0 else approvedReviews >= requiredApprovingReviewsCount
+  }.modelFlow(cs, LOG)
+
+  override val reviewState: SharedFlow<ReviewState> = combine(detailsState, isApproved) { detailsState, isApproved ->
+    if (isApproved) return@combine ReviewState.ACCEPTED
+    return@combine when (detailsState.reviewDecision) {
       GHPullRequestReviewDecision.APPROVED -> ReviewState.ACCEPTED
       GHPullRequestReviewDecision.CHANGES_REQUESTED -> ReviewState.WAIT_FOR_UPDATES
       GHPullRequestReviewDecision.REVIEW_REQUIRED -> ReviewState.NEED_REVIEW
       null -> ReviewState.NEED_REVIEW
     }
-  }.shareIn(cs, SharingStarted.Lazily, 1)
+  }.modelFlow(cs, LOG)
 
   override val role: SharedFlow<ReviewRole> = detailsState.map { details ->
     when {
