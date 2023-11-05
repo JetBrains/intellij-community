@@ -22,12 +22,14 @@ import kotlinx.coroutines.withContext
 class PoetryNewEnvironmentCreator(presenter: PythonAddInterpreterPresenter) : PythonAddEnvironment(presenter) {
 
   val executable = propertyGraph.property(UNKNOWN_EXECUTABLE)
+  private val basePythonVersion = propertyGraph.property<Sdk?>(initial = null)
+  private val basePythonHomePath = basePythonVersion.transformToHomePathProperty(state.basePythonSdks)
   private lateinit var basePythonComboBox: ComboBox<String?>
   override fun buildOptions(panel: Panel, validationRequestor: DialogValidationRequestor) {
     with(panel) {
       row(message("sdk.create.custom.base.python")) {
         basePythonComboBox =
-          pythonBaseInterpreterComboBox(presenter, presenter.basePythonSdksFlow, presenter.detectingSdks, state.basePythonHomePath,
+          pythonBaseInterpreterComboBox(presenter, presenter.basePythonSdksFlow, presenter.detectingSdks, basePythonHomePath,
                                         presenter::addBasePythonInterpreter)
             .align(Align.FILL)
             .component
@@ -60,7 +62,7 @@ class PoetryNewEnvironmentCreator(presenter: PythonAddInterpreterPresenter) : Py
   override fun getOrCreateSdk(): Sdk {
     PropertiesComponent.getInstance().poetryPath = executable.get().nullize()
     return setupPoetrySdkUnderProgress(null, null, state.basePythonSdks.get(), state.projectPath.get(),
-                                       state.basePythonVersion.get()!!.homePath, false)!!
+                                       basePythonVersion.get()!!.homePath, false)!!
   }
 
 
