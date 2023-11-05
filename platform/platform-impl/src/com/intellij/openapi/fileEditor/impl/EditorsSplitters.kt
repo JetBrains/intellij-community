@@ -20,9 +20,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.colors.CodeInsightColors
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.markup.TextAttributes
-import com.intellij.openapi.fileEditor.ClientFileEditorManager
-import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.fileEditor.FileEditor
+import com.intellij.openapi.fileEditor.*
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager
 import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader
@@ -944,7 +942,7 @@ private class UiBuilder(private val splitters: EditorsSplitters) {
         try {
           file.putUserData(AsyncEditorLoader.OPENED_IN_BULK, true)
 
-          val newProviders = if (fileEntry.ideFingerprint == ideFingerprint()) {
+          val providers = if (fileEntry.ideFingerprint == ideFingerprint()) {
             async(CoroutineName("editor provider resolving")) {
               val list = fileEntry.providers.mapNotNull {
                 fileEditorProviderManager.getProvider(it.first) ?: return@mapNotNull null
@@ -965,6 +963,17 @@ private class UiBuilder(private val splitters: EditorsSplitters) {
             }
           }
 
+          val fileEditorStateProvider = object : FileEditorStateProvider {
+            override suspend fun getSelectedProvider(): FileEditorProvider? {
+              return providers.await().firstOrNull { it.editorTypeId == fileEntry.selectedProvider }
+            }
+
+            override fun getState(provider: FileEditorProvider): FileEditorState? {
+              val state = fileEntry.providers.firstOrNull { it.first == provider.editorTypeId }?.second ?: return null
+              return provider.readState(state, fileEditorManager.project, file)
+            }
+          }
+
           val document = readActionBlocking {
             fileDocumentManager.getDocument(file)
           }
@@ -975,14 +984,14 @@ private class UiBuilder(private val splitters: EditorsSplitters) {
               windowDeferred = windowDeferred,
               file = file,
               document = document,
-              fileEntry = fileEntry,
+              fileEditorStateProvider = fileEditorStateProvider,
               options = FileEditorOpenOptions(
                 selectAsCurrent = false,
                 pin = fileEntry.pinned,
                 index = index,
                 usePreviewTab = fileEntry.isPreview,
               ),
-              providers = newProviders.await(),
+              providers = providers.await(),
             )
           }
           else {

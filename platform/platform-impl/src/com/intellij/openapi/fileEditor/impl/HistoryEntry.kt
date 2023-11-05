@@ -28,9 +28,9 @@ internal class HistoryEntry private constructor(@JvmField val filePointer: Virtu
                                                 /**
                                                  * can be null when read from XML
                                                  */
-                                                override var selectedProvider: FileEditorProvider?,
+                                                var selectedProvider: FileEditorProvider?,
                                                 @JvmField var isPreview: Boolean,
-                                                private val disposable: Disposable?) : FileEditorStateProvider {
+                                                private val disposable: Disposable?) {
   // ordered
   private var providerToState = persistentMapOf<FileEditorProvider, FileEditorState>()
 
@@ -57,9 +57,9 @@ internal class HistoryEntry private constructor(@JvmField val filePointer: Virtu
       return entry
     }
 
-    fun createLight(project: Project,
-                    element: Element,
-                    fileEditorProviderManager: FileEditorProviderManager): HistoryEntry {
+    private fun createLight(project: Project,
+                            element: Element,
+                            fileEditorProviderManager: FileEditorProviderManager): HistoryEntry {
       val entryData = parseEntry(project = project, element = element, fileEditorProviderManager = fileEditorProviderManager)
       val pointer = LightFilePointer(entryData.url)
       val entry = HistoryEntry(filePointer = pointer,
@@ -119,7 +119,7 @@ internal class HistoryEntry private constructor(@JvmField val filePointer: Virtu
   val file: VirtualFile?
     get() = filePointer.file
 
-  override fun getState(provider: FileEditorProvider): FileEditorState? = providerToState.get(provider)
+  fun getState(provider: FileEditorProvider): FileEditorState? = providerToState.get(provider)
 
   fun putState(provider: FileEditorProvider, state: FileEditorState) {
     providerToState = providerToState.put(provider, state)
