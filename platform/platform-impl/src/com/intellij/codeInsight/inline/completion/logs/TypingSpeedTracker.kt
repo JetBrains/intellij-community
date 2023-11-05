@@ -6,6 +6,9 @@ import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.thisLogger
+import java.awt.event.KeyAdapter
+import java.awt.event.KeyEvent
 import java.time.Instant
 import kotlin.math.pow
 import kotlin.time.Duration
@@ -41,6 +44,26 @@ internal class TypingSpeedTracker {
     }
   }
 
+  class KeyListener : KeyAdapter() {
+    override fun keyReleased(event: KeyEvent) {
+      if (!isValuableKey(event.keyChar)) {
+        return
+      }
+      LOG.trace("Valuable key released event $event")
+      getInstance().typingOccurred()
+    }
+
+    private fun isValuableKey(keyChar: Char): Boolean {
+      return keyChar.isLetterOrDigit() ||
+             keyChar.isWhitespace() ||
+             keyChar in "!\"#$%&'()*+,-./:;<=>?@[\\]^_`{¦}~"
+    }
+
+    companion object {
+      private val LOG = thisLogger()
+    }
+  }
+
   companion object {
     private val DECAY_DURATIONS = listOf(1, 2, 5, 30).associate { it.seconds to EventFields.Float("typing_speed_${it}s") }
 
@@ -48,4 +71,3 @@ internal class TypingSpeedTracker {
     fun getEventFields(): Array<EventField<*>> = DECAY_DURATIONS.values.toTypedArray()
   }
 }
-
