@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceGetOrSet", "ReplaceNegatedIsEmptyWithIsNotEmpty", "PrivatePropertyName")
+@file:Suppress("ReplaceGetOrSet", "ReplaceNegatedIsEmptyWithIsNotEmpty", "PrivatePropertyName", "ReplacePutWithAssignment")
 
 package com.intellij.openapi.fileEditor.impl
 
@@ -942,7 +942,7 @@ private class UiBuilder(private val splitters: EditorsSplitters) {
         try {
           file.putUserData(AsyncEditorLoader.OPENED_IN_BULK, true)
 
-          val providers = if (fileEntry.ideFingerprint == ideFingerprint()) {
+          val deferredProviders: Deferred<List<FileEditorProvider>> = if (fileEntry.ideFingerprint == ideFingerprint()) {
             async(CoroutineName("editor provider resolving")) {
               val list = fileEntry.providers.mapNotNull {
                 fileEditorProviderManager.getProvider(it.first) ?: return@mapNotNull null
@@ -964,13 +964,22 @@ private class UiBuilder(private val splitters: EditorsSplitters) {
           }
 
           val fileEditorStateProvider = object : FileEditorStateProvider {
-            override suspend fun getSelectedProvider(): FileEditorProvider? {
-              return providers.await().firstOrNull { it.editorTypeId == fileEntry.selectedProvider }
+            // preload
+            private val providerAndStateList = async {
+              val providers = deferredProviders.await()
+              providers.mapNotNullTo(ArrayList(providers.size)) { provider ->
+                val stateData = fileEntry.providers.firstOrNull { it.first == provider.editorTypeId }?.second ?: return@mapNotNullTo null
+                val state = provider.readState(stateData, fileEditorManager.project, file)
+                provider to state
+              }
             }
 
-            override fun getState(provider: FileEditorProvider): FileEditorState? {
-              val state = fileEntry.providers.firstOrNull { it.first == provider.editorTypeId }?.second ?: return null
-              return provider.readState(state, fileEditorManager.project, file)
+            override suspend fun getSelectedProvider(): FileEditorProvider? {
+              return deferredProviders.await().firstOrNull { it.editorTypeId == fileEntry.selectedProvider }
+            }
+
+            override suspend fun getState(provider: FileEditorProvider): FileEditorState? {
+              return providerAndStateList.await().firstOrNull { it.first === provider }?.second
             }
           }
 
@@ -991,7 +1000,7 @@ private class UiBuilder(private val splitters: EditorsSplitters) {
                 index = index,
                 usePreviewTab = fileEntry.isPreview,
               ),
-              providers = providers.await(),
+              providers = deferredProviders.await(),
             )
           }
           else {

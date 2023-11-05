@@ -1041,16 +1041,6 @@ open class FileEditorManagerImpl(
           existingComposite = existingComposite,
           window = window,
           file = file,
-          fileEditorStateProvider = if (entry == null) {
-            null
-          }
-          else {
-            object : FileEditorStateProvider {
-              override suspend fun getSelectedProvider() = entry.selectedProvider
-
-              override fun getState(provider: FileEditorProvider): FileEditorState? = entry.getState(provider)
-            }
-          },
           entry = entry,
           options = effectiveOptions,
           newProviders = newProviders)
@@ -1115,7 +1105,6 @@ open class FileEditorManagerImpl(
     existingComposite: EditorComposite?,
     window: EditorWindow,
     file: VirtualFile,
-    fileEditorStateProvider: FileEditorStateProvider?,
     entry: HistoryEntry?,
     options: FileEditorOpenOptions,
     newProviders: List<kotlin.Pair<FileEditorProvider, AsyncFileEditorProvider.Builder?>>?,
@@ -1135,17 +1124,17 @@ open class FileEditorManagerImpl(
     for (editorWithProvider in editorsWithProviders) {
       restoreEditorState(file = file,
                          editorWithProvider = editorWithProvider,
-                         fileEditorStateProvider = fileEditorStateProvider,
+                         storedState = entry?.getState(editorWithProvider.provider),
                          isNewEditor = newEditor,
                          exactState = options.isExactState)
     }
 
     // restore selected editor
-    val provider = if (fileEditorStateProvider == null) {
+    val provider = if (entry == null) {
       getFileEditorProviderManager().getSelectedFileEditorProvider(composite = composite, project = project)
     }
     else {
-      entry!!.selectedProvider
+      entry.selectedProvider
     }
     if (provider != null) {
       composite.setSelectedEditor(provider.editorTypeId)
@@ -1257,11 +1246,11 @@ open class FileEditorManagerImpl(
 
   private fun restoreEditorState(file: VirtualFile,
                                  editorWithProvider: FileEditorWithProvider,
-                                 fileEditorStateProvider: FileEditorStateProvider?,
                                  isNewEditor: Boolean,
+                                 storedState: FileEditorState?,
                                  exactState: Boolean) {
     val provider = editorWithProvider.provider
-    var state = fileEditorStateProvider?.getState(provider)
+    var state = storedState
     if (state == null && isNewEditor) {
       // We have to try to get state from the history only in case of the editor is not opened.
       // Otherwise, history entry might have a state out of sync with the current editor state.
@@ -2179,11 +2168,18 @@ open class FileEditorManagerImpl(
             FileEditorComposite.EMPTY
           }
           else {
+            for (editorWithProvider in composite.allEditorsWithProviders) {
+              restoreEditorState(file = file,
+                                 editorWithProvider = editorWithProvider,
+                                 storedState = fileEditorStateProvider?.getState(editorWithProvider.provider),
+                                 isNewEditor = isNewEditor,
+                                 exactState = options.isExactState)
+            }
+
             openInEdtImpl(
               composite = composite,
               window = window,
               file = file,
-              fileEditorStateProvider = fileEditorStateProvider,
               options = options,
               selectedProvider = if (fileEditorStateProvider == null) {
                 getFileEditorProviderManager().getSelectedFileEditorProvider(composite, project)
@@ -2228,19 +2224,10 @@ open class FileEditorManagerImpl(
     composite: EditorComposite,
     window: EditorWindow,
     file: VirtualFile,
-    fileEditorStateProvider: FileEditorStateProvider?,
     options: FileEditorOpenOptions,
     isNewEditor: Boolean,
     selectedProvider: FileEditorProvider?,
   ): FileEditorComposite {
-    for (editorWithProvider in composite.allEditorsWithProviders) {
-      restoreEditorState(file = file,
-                         editorWithProvider = editorWithProvider,
-                         fileEditorStateProvider = fileEditorStateProvider,
-                         isNewEditor = isNewEditor,
-                         exactState = options.isExactState)
-    }
-
     if (selectedProvider != null) {
       composite.setSelectedEditor(selectedProvider.editorTypeId)
     }
@@ -2480,5 +2467,5 @@ private fun getFileEditorProviderManager() = FileEditorProviderManager.getInstan
 internal interface FileEditorStateProvider {
   suspend fun getSelectedProvider(): FileEditorProvider?
 
-  fun getState(provider: FileEditorProvider): FileEditorState?
+  suspend fun getState(provider: FileEditorProvider): FileEditorState?
 }
