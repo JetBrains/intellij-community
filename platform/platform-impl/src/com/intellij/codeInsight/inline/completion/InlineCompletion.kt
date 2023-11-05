@@ -5,7 +5,7 @@ import com.intellij.codeInsight.inline.completion.listeners.InlineCompletionDocu
 import com.intellij.codeInsight.inline.completion.listeners.InlineCompletionFocusListener
 import com.intellij.codeInsight.inline.completion.listeners.InlineEditorMouseListener
 import com.intellij.codeInsight.inline.completion.logs.InlineCompletionUsageTracker.ShownEvents.FinishType
-import com.intellij.codeInsight.inline.completion.logs.TypingSpeedListener
+import com.intellij.codeInsight.inline.completion.logs.TypingSpeedTracker
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.util.EditorUtil
@@ -33,7 +33,7 @@ object InlineCompletion {
     editor.document.addDocumentListener(InlineCompletionDocumentListener(editor), disposable)
     editor.addFocusListener(InlineCompletionFocusListener(), disposable)
     editor.addEditorMouseListener(InlineEditorMouseListener(), disposable)
-    editor.contentComponent.addKeyListener(TypingSpeedListener())
+    editor.contentComponent.addKeyListener(TypingSpeedTracker.KeyListener())
   }
 
   fun remove(editor: Editor) {
