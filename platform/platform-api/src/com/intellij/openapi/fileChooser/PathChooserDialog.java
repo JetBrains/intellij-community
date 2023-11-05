@@ -9,11 +9,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * @author Roman Shevchenko
- */
 public interface PathChooserDialog {
   DataKey<Boolean> PREFER_LAST_OVER_EXPLICIT = DataKey.create("prefer.last.over.explicit");
 
-  void choose(@Nullable VirtualFile toSelect, final @NotNull Consumer<? super List<VirtualFile>> callback);
+  void choose(@Nullable VirtualFile toSelect, @NotNull Consumer<? super List<VirtualFile>> callback);
 }
