@@ -69,7 +69,7 @@ internal class GitLabMergeRequestCreateViewModelImpl(
   override val projectData: GitLabProject,
   override val avatarIconProvider: IconsProvider<GitLabUserDTO>,
   override val openReviewTabAction: suspend (mrIid: String) -> Unit,
-  private val onReviewCreated: suspend () -> Unit
+  private val onReviewCreated: () -> Unit
 ) : GitLabMergeRequestCreateViewModel {
   private val cs: CoroutineScope = parentCs.childScope()
   private val taskLauncher = SingleCoroutineLauncher(cs)

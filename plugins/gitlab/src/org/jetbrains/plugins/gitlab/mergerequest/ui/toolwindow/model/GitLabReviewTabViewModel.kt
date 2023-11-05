@@ -40,7 +40,7 @@ internal sealed interface GitLabReviewTabViewModel : ReviewTabViewModel {
     projectData: GitLabProject,
     avatarIconProvider: IconsProvider<GitLabUserDTO>,
     openReviewTabAction: suspend (mrIid: String) -> Unit,
-    onReviewCreated: suspend () -> Unit
+    onReviewCreated: () -> Unit
   ) : GitLabReviewTabViewModel {
     private val cs = parentCs.childScope()
 

@@ -131,7 +131,11 @@ private constructor(parentCs: CoroutineScope,
         closeTabAsync(GitLabReviewTab.NewMergeRequest)
         showTab(GitLabReviewTab.ReviewSelected(mrIid))
       },
-      onReviewCreated = { mergeRequestCreatedSignal.emit(Unit) }
+      onReviewCreated = {
+        cs.launchNow {
+          mergeRequestCreatedSignal.emit(Unit)
+        }
+      }
     )
   }
 
