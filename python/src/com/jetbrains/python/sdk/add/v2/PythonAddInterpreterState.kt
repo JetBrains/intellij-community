@@ -18,8 +18,10 @@ class PythonAddInterpreterState(
   val selectedVenv: ObservableMutableProperty<Sdk?>,
   val condaExecutable: ObservableMutableProperty<String>,
 ) {
-  val basePythonHomePath = basePythonVersion.transform({ sdk -> sdk?.homePath ?: "" },
-                                                       { path -> basePythonSdks.get().find { it.homePath == path }!! })
+  val basePythonHomePath: ObservableMutableProperty<String?> = basePythonVersion.transform(
+    map = { sdk -> sdk?.homePath },
+    backwardMap = { path -> basePythonSdks.get().find { it.homePath == path } }
+  )
 
   internal val allSdks: ObservableMutableProperty<List<Sdk>> = propertyGraph.property(initial = allExistingSdks.get())
 
