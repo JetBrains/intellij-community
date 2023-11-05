@@ -9,6 +9,7 @@ import com.intellij.codeInsight.inline.completion.logs.TypingSpeedTracker
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.util.EditorUtil
+import com.intellij.openapi.observable.util.addKeyListener
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.util.application
@@ -33,7 +34,7 @@ object InlineCompletion {
     editor.document.addDocumentListener(InlineCompletionDocumentListener(editor), disposable)
     editor.addFocusListener(InlineCompletionFocusListener(), disposable)
     editor.addEditorMouseListener(InlineEditorMouseListener(), disposable)
-    editor.contentComponent.addKeyListener(TypingSpeedTracker.KeyListener())
+    editor.contentComponent.addKeyListener(disposable, TypingSpeedTracker.KeyListener())
   }
 
   fun remove(editor: Editor) {
