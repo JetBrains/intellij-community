@@ -1723,6 +1723,7 @@
     <projectService serviceInterface="com.intellij.lang.documentation.ide.IdeDocumentationTargetProvider"
                     serviceImplementation="com.intellij.lang.documentation.ide.impl.IdeDocumentationTargetProviderImpl"/>
     <projectService serviceImplementation="com.intellij.lang.documentation.ide.impl.DocumentationPopupFocusService"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.lang.documentation.ide.impl.DocumentationUsageCollector"/>
 
     <lang.formatter.restriction implementation="com.intellij.lang.InvalidPsiAutoFormatRestriction"/>
     <findInProjectExtension implementation="com.intellij.psi.search.PredefinedSearchScopeProviderImpl$SelectedFilesFindInProjectExtension" />
