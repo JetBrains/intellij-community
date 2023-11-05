@@ -50,8 +50,8 @@ public enum ConfigKey {
   NO_ARGS_CONSTRUCTOR_EXTRA_PRIVATE("lombok.noArgsConstructor.extraPrivate", "false"),
 
   BUILDER_CLASS_NAME("lombok.builder.className", "*Builder"),
-  ADD_NULL_ANNOTATIONS("lombok.addNullAnnotations", "");
-  //ADD_LOMBOK_GENERATED_ANNOTATION("lombok.addLombokGeneratedAnnotation", "false");
+  ADD_NULL_ANNOTATIONS("lombok.addNullAnnotations", ""),
+  ADD_LOMBOK_GENERATED_ANNOTATION("lombok.addLombokGeneratedAnnotation", "false");
   /*
     ACCESSORS_FLAG_USAGE("lombok.accessors.flagUsage", ""),
     ALLARGSCONSTRUCTOR_FLAG_USAGE("lombok.allArgsConstructor.flagUsage", ""),
