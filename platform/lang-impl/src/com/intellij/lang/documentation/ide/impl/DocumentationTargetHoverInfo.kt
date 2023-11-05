@@ -111,6 +111,7 @@ private class DocumentationTargetHoverInfo(
         resizePopup(popup)
         bridge.updateLocation()
       }
+      DocumentationUsageCollector.QUICK_DOC_SHOWN.log()
     }
     EditorUtil.disposeWithEditor(editor, popupUI)
     return popupUI.component
