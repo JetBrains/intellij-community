@@ -49,9 +49,7 @@ public class HgRollbackEnvironment implements RollbackEnvironment {
   }
 
   @Override
-  @Nls(capitalization = Nls.Capitalization.Title)
-  @NotNull
-  public String getRollbackOperationName() {
+  public @Nls(capitalization = Nls.Capitalization.Title) @NotNull String getRollbackOperationName() {
     return HgBundle.message("hg4idea.revert");
   }
 

@@ -30,9 +30,8 @@ public class HgExecutableValidator extends ExecutableValidator {
     return HgExecutableManager.getInstance().getHgExecutable(myProject);
   }
 
-  @NotNull
   @Override
-  protected String getConfigurableDisplayName() {
+  protected @NotNull String getConfigurableDisplayName() {
     return HgBundle.message("hg4idea.mercurial");
   }
 

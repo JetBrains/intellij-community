@@ -49,8 +49,7 @@ public class HgRepositorySelectorComponent {
     mainPanel.setBorder(IdeBorderFactory.createTitledBorder(title));
   }
 
-  @NotNull
-  public HgRepository getRepository() {
+  public @NotNull HgRepository getRepository() {
     return (HgRepository)repositorySelector.getSelectedItem();
   }
 }
