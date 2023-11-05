@@ -46,13 +46,10 @@ import java.util.Collections;
 import java.util.List;
 
 public final class CodeFoldingManagerImpl extends CodeFoldingManager implements Disposable {
-  private final Project myProject;
-
-  private final Collection<Document> myDocumentsWithFoldingInfo = new WeakList<>();
-
-  private final Key<DocumentFoldingInfo> myFoldingInfoInDocumentKey = Key.create("FOLDING_INFO_IN_DOCUMENT_KEY");
   private static final Key<Boolean> FOLDING_STATE_KEY = Key.create("FOLDING_STATE_KEY");
-
+  private final Project myProject;
+  private final Collection<Document> myDocumentsWithFoldingInfo = new WeakList<>();
+  private final Key<DocumentFoldingInfo> myFoldingInfoInDocumentKey = Key.create("FOLDING_INFO_IN_DOCUMENT_KEY");
   private final FoldingModelGrave myFoldingGrave;
 
   public CodeFoldingManagerImpl(Project project) {
@@ -60,28 +57,27 @@ public final class CodeFoldingManagerImpl extends CodeFoldingManager implements 
     myFoldingGrave = FoldingModelGrave.Companion.getInstance(project);
     myFoldingGrave.subscribeFileClosed();
 
-    LanguageFolding.EP_NAME.addExtensionPointListener(
-      new ExtensionPointListener<>() {
-        @Override
-        public void extensionAdded(@NotNull KeyedLazyInstance<FoldingBuilder> extension, @NotNull PluginDescriptor pluginDescriptor) {
-          // Asynchronously update foldings when an extension is added
-          for (FileEditor fileEditor : FileEditorManager.getInstance(project).getAllEditors()) {
-            if (fileEditor instanceof TextEditor) {
-              scheduleAsyncFoldingUpdate(((TextEditor)fileEditor).getEditor());
-            }
+    LanguageFolding.EP_NAME.addExtensionPointListener(new ExtensionPointListener<>() {
+      @Override
+      public void extensionAdded(@NotNull KeyedLazyInstance<FoldingBuilder> extension, @NotNull PluginDescriptor pluginDescriptor) {
+        // Asynchronously update foldings when an extension is added
+        for (FileEditor fileEditor : FileEditorManager.getInstance(project).getAllEditors()) {
+          if (fileEditor instanceof TextEditor) {
+            scheduleAsyncFoldingUpdate(((TextEditor)fileEditor).getEditor());
           }
         }
+      }
 
-        @Override
-        public void extensionRemoved(@NotNull KeyedLazyInstance<FoldingBuilder> extension, @NotNull PluginDescriptor pluginDescriptor) {
-          // Synchronously remove foldings when an extension is removed
-          for (FileEditor fileEditor : FileEditorManager.getInstance(project).getAllEditors()) {
-            if (fileEditor instanceof TextEditor) {
-              updateFoldRegions(((TextEditor)fileEditor).getEditor());
-            }
+      @Override
+      public void extensionRemoved(@NotNull KeyedLazyInstance<FoldingBuilder> extension, @NotNull PluginDescriptor pluginDescriptor) {
+        // Synchronously remove foldings when an extension is removed
+        for (FileEditor fileEditor : FileEditorManager.getInstance(project).getAllEditors()) {
+          if (fileEditor instanceof TextEditor) {
+            updateFoldRegions(((TextEditor)fileEditor).getEditor());
           }
         }
-      }, this);
+      }
+    }, this);
 
     Runnable listener = () -> {
       for (FileEditor fileEditor : FileEditorManager.getInstance(project).getAllEditors()) {
@@ -111,7 +107,7 @@ public final class CodeFoldingManagerImpl extends CodeFoldingManager implements 
   }
 
   @Override
-  public void buildInitialFoldings(@NotNull final Editor editor) {
+  public void buildInitialFoldings(final @NotNull Editor editor) {
     final Project project = editor.getProject();
     if (project == null || !project.equals(myProject) || editor.isDisposed()) return;
     if (!((FoldingModelEx)editor.getFoldingModel()).isFoldingEnabled()) return;
@@ -125,9 +121,8 @@ public final class CodeFoldingManagerImpl extends CodeFoldingManager implements 
     }
   }
 
-  @Nullable
   @Override
-  public CodeFoldingState buildInitialFoldings(@NotNull final Document document) {
+  public @Nullable CodeFoldingState buildInitialFoldings(final @NotNull Document document) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     ApplicationManager.getApplication().assertIsNonDispatchThread();
 
@@ -136,7 +131,7 @@ public final class CodeFoldingManagerImpl extends CodeFoldingManager implements 
     }
     PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(myProject);
     if (psiDocumentManager.isUncommited(document)) {
-      // skip building foldings for uncommitted document, CodeFoldingPass invoked by daemon will do it later
+      // skip building foldings for an uncommitted document, CodeFoldingPass invoked by daemon will do it later
       return null;
     }
     //Do not save/restore folding for code fragments
@@ -148,8 +143,8 @@ public final class CodeFoldingManagerImpl extends CodeFoldingManager implements 
     VirtualFile vFile = FileDocumentManager.getInstance().getFile(document);
     FoldingState fileFoldingState = myFoldingGrave.getFoldingState(vFile);
     List<RegionInfo> regionInfos = fileFoldingState == null
-                                                 ? FoldingUpdate.getFoldingsFor(file, true)
-                                                 : Collections.emptyList();
+                                   ? FoldingUpdate.getFoldingsFor(file, true)
+                                   : Collections.emptyList();
 
     boolean supportsDumbModeFolding = FoldingUpdate.supportsDumbModeFolding(file);
 
@@ -190,9 +185,8 @@ public final class CodeFoldingManagerImpl extends CodeFoldingManager implements 
     }
   }
 
-  @Nullable
   @Override
-  public Boolean isCollapsedByDefault(@NotNull FoldRegion region) {
+  public @Nullable Boolean isCollapsedByDefault(@NotNull FoldRegion region) {
     return region.getUserData(UpdateFoldRegionsOperation.COLLAPSED_BY_DEFAULT);
   }
 
@@ -222,8 +216,7 @@ public final class CodeFoldingManagerImpl extends CodeFoldingManager implements 
   }
 
   @Override
-  @Nullable
-  public FoldRegion findFoldRegion(@NotNull Editor editor, int startOffset, int endOffset) {
+  public @Nullable FoldRegion findFoldRegion(@NotNull Editor editor, int startOffset, int endOffset) {
     return FoldingUtil.findFoldRegion(editor, startOffset, endOffset);
   }
 
@@ -247,8 +240,7 @@ public final class CodeFoldingManagerImpl extends CodeFoldingManager implements 
   }
 
   @Override
-  @Nullable
-  public Runnable updateFoldRegionsAsync(@NotNull final Editor editor, final boolean firstTime) {
+  public @Nullable Runnable updateFoldRegionsAsync(final @NotNull Editor editor, final boolean firstTime) {
     if (!editor.getSettings().isAutoCodeFoldingEnabled()) return null;
     final Runnable runnable = updateFoldRegions(editor, firstTime, false);
     return () -> {
@@ -261,8 +253,7 @@ public final class CodeFoldingManagerImpl extends CodeFoldingManager implements 
     };
   }
 
-  @Nullable
-  private Runnable updateFoldRegions(@NotNull Editor editor, boolean applyDefaultState, boolean quick) {
+  private @Nullable Runnable updateFoldRegions(@NotNull Editor editor, boolean applyDefaultState, boolean quick) {
     PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
     return file == null ? null : FoldingUpdate.updateFoldRegions(editor, file, applyDefaultState, quick);
   }
@@ -299,8 +290,7 @@ public final class CodeFoldingManagerImpl extends CodeFoldingManager implements 
     return info;
   }
 
-  @NotNull
-  private DocumentFoldingInfo getDocumentFoldingInfo(@NotNull Document document) {
+  private @NotNull DocumentFoldingInfo getDocumentFoldingInfo(@NotNull Document document) {
     DocumentFoldingInfo info = document.getUserData(myFoldingInfoInDocumentKey);
     if (info == null) {
       info = new DocumentFoldingInfo(myProject, document);
