@@ -85,8 +85,8 @@ class GitMergeOperation extends GitBranchOperation {
         GitSimpleEventDetector alreadyUpToDateDetector = new GitSimpleEventDetector(GitSimpleEventDetector.Event.ALREADY_UP_TO_DATE);
 
         GitCommandResult result = myGit.merge(repository, myBranchToMerge, Collections.emptyList(),
-                                            localChangesDetector, unmergedFiles, untrackedOverwrittenByMerge, mergeConflict,
-                                            alreadyUpToDateDetector);
+                                              localChangesDetector, unmergedFiles, untrackedOverwrittenByMerge, mergeConflict,
+                                              alreadyUpToDateDetector);
         if (result.success()) {
           LOG.info("Merged successfully");
           updateAndRefreshChangedVfs(repository, startHash);
@@ -177,7 +177,7 @@ class GitMergeOperation extends GitBranchOperation {
   }
 
   private boolean proposeSmartMergePerformAndNotify(@NotNull GitRepository repository,
-                                          @NotNull GitMessageWithFilesDetector localChangesOverwrittenByMerge) {
+                                                    @NotNull GitMessageWithFilesDetector localChangesOverwrittenByMerge) {
     Pair<List<GitRepository>, List<Change>> conflictingRepositoriesAndAffectedChanges =
       getConflictingRepositoriesAndAffectedChanges(repository, localChangesOverwrittenByMerge, myCurrentHeads.get(repository),
                                                    myBranchToMerge);
@@ -220,7 +220,7 @@ class GitMergeOperation extends GitBranchOperation {
    * If an error happens in one repository, the method doesn't go further in others, and shows a notification.
    *
    * @return true if merge has succeeded without errors (but possibly with conflicts) in all repositories;
-   *         false if it failed at least in one of them.
+   * false if it failed at least in one of them.
    */
   private boolean doMerge(@NotNull Collection<? extends GitRepository> repositories) {
     for (GitRepository repository : repositories) {
@@ -316,8 +316,8 @@ class GitMergeOperation extends GitBranchOperation {
     return result;
   }
 
-  private boolean thereAreLocalChangesIn(@NotNull GitRepository repository) {
-    return !myChangeListManager.getChangesIn(repository.getRoot()).isEmpty();
+  private static boolean thereAreLocalChangesIn(@NotNull GitRepository repository) {
+    return !repository.getStagingAreaHolder().getAllRecords().isEmpty();
   }
 
   @Override
@@ -334,7 +334,7 @@ class GitMergeOperation extends GitBranchOperation {
       .br()
       .appendRaw(successfulRepositoriesJoined())
       .br()
-      .append(GitBundle.message("merge.operation.you.may.rollback.not.to.let.branches.diverge")).toString();  
+      .append(GitBundle.message("merge.operation.you.may.rollback.not.to.let.branches.diverge")).toString();
   }
 
   @Override
@@ -345,7 +345,8 @@ class GitMergeOperation extends GitBranchOperation {
   private class MyMergeConflictResolver extends GitMergeCommittingConflictResolver {
     MyMergeConflictResolver() {
       super(GitMergeOperation.this.myProject, myGit, new GitMerger(GitMergeOperation.this.myProject),
-            GitUtil.getRootsFromRepositories(GitMergeOperation.this.myConflictedRepositories.keySet()), new Params(GitMergeOperation.this.myProject), true);
+            GitUtil.getRootsFromRepositories(GitMergeOperation.this.myConflictedRepositories.keySet()),
+            new Params(GitMergeOperation.this.myProject), true);
     }
 
     @Override
