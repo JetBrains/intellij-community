@@ -13,6 +13,7 @@ final class MavenCommandProvider implements CommandProvider {
                   SetMavenSettingsXmlFilePathCommand.PREFIX, SetMavenSettingsXmlFilePathCommand::new,
                   ExecuteMavenGoalCommand.PREFIX, ExecuteMavenGoalCommand::new,
                   LinkMavenProjectCommand.PREFIX, LinkMavenProjectCommand::new,
-                  UnlinkMavenProjectCommand.PREFIX, UnlinkMavenProjectCommand::new);
+                  UnlinkMavenProjectCommand.PREFIX, UnlinkMavenProjectCommand::new,
+                  ToggleMavenProfilesCommand.PREFIX, ToggleMavenProfilesCommand::new);
   }
 }

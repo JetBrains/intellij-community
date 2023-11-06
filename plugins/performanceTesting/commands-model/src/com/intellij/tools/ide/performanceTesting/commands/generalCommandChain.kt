@@ -483,6 +483,10 @@ fun <T : CommandChain> T.importMavenProject(): T = apply {
   addCommand("${CMD_PREFIX}importMavenProject")
 }
 
+fun <T : CommandChain> T.toggleMavenProfiles(profileIds: Set<String>, enable: Boolean = true): T = apply {
+  addCommand("${CMD_PREFIX}toggleMavenProfiles ${profileIds.joinToString(",")} $enable")
+}
+
 fun <T : CommandChain> T.linkMavenProject(projectPath: Path): T = apply {
   addCommand("${CMD_PREFIX}linkMavenProject ${projectPath}")
 }
@@ -534,7 +538,9 @@ fun <T : CommandChain> T.importGradleProject(): T = apply {
   addCommand("${CMD_PREFIX}importGradleProject")
 }
 
-fun <T : CommandChain> T.showEvaluateExpression(expression: String = "", performEvaluateCount: Int = 0, warmup: Boolean = false): T = apply {
+fun <T : CommandChain> T.showEvaluateExpression(expression: String = "",
+                                                performEvaluateCount: Int = 0,
+                                                warmup: Boolean = false): T = apply {
   val command = mutableListOf("${CMD_PREFIX}showEvaluateExpression")
   if (expression.isNotEmpty()) {
     command.add("-expression $expression")
