@@ -5,7 +5,7 @@
 package com.intellij.platform.ide.bootstrap
 
 import com.intellij.BundleBase
-import com.intellij.accessibility.AccessibilityUtils
+import com.intellij.accessibility.enableScreenReaderSupportIfNecessary
 import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.diagnostic.*
 import com.intellij.ide.*
@@ -480,7 +480,7 @@ private suspend fun importConfig(args: List<String>,
                                  euaDocumentDeferred: Deferred<EndUserAgreement.Document?>) {
   span("screen reader checking") {
     runCatching {
-      withContext(RawSwingDispatcher) { AccessibilityUtils.enableScreenReaderSupportIfNecessary() }
+      withContext(RawSwingDispatcher) { enableScreenReaderSupportIfNecessary() }
     }.getOrLogException(log)
   }
 
