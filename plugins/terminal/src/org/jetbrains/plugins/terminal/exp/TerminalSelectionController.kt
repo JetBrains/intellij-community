@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.event.EditorMouseEvent
 import com.intellij.openapi.editor.event.EditorMouseListener
 import com.intellij.openapi.editor.event.SelectionEvent
 import com.intellij.openapi.editor.event.SelectionListener
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.util.MathUtil
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.plugins.terminal.exp.TerminalFocusModel.TerminalFocusListener
@@ -96,13 +97,20 @@ class TerminalSelectionController(
   }
 
   override fun mouseClicked(event: EditorMouseEvent) {
-    if (event.mouseEvent.clickCount == 1) {
-      val block = getBlockUnderMouse(event)
-      if (block != null) {
-        selectionModel.selectedBlocks = listOf(block)
-      }
-      else clearSelection()
+    if (event.mouseEvent.clickCount != 1) {
+      return
     }
+    val block = getBlockUnderMouse(event)
+    if (block != null && event.mouseEvent.isSelectAdditionalBlock) {
+      selectionModel.selectedBlocks = if (selectedBlocks.contains(block)) {
+        selectedBlocks - block
+      }
+      else selectedBlocks + block
+    }
+    else if (block != null) {
+      selectionModel.selectedBlocks = listOf(block)
+    }
+    else clearSelection()
   }
 
   override fun mousePressed(event: EditorMouseEvent) {
@@ -197,5 +205,14 @@ class TerminalSelectionController(
 
     private val MouseEvent.isSelectBlockRange: Boolean
       get() = isShiftDown && !isControlDown && !isAltDown && !isMetaDown
+
+    private val MouseEvent.isSelectAdditionalBlock: Boolean
+      get() = if (SystemInfo.isMac) isOnlyMetaDown else isOnlyControlDown
+
+    private val MouseEvent.isOnlyMetaDown: Boolean
+      get() = isMetaDown && !isControlDown && !isAltDown && !isShiftDown
+
+    private val MouseEvent.isOnlyControlDown: Boolean
+      get() = isControlDown && !isAltDown && !isShiftDown && !isMetaDown
   }
 }
