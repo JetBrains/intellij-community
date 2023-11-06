@@ -87,7 +87,8 @@ class JavaSuggestedRefactoringAvailabilityTest : BaseSuggestedRefactoringAvailab
       {
         replaceTextAtCaret("int", "long")
       },
-      expectedAvailability = Availability.Disabled
+      expectedAvailability = Availability.Available(changeSignatureAvailableTooltip("foo", "overrides")),
+      expectedAvailabilityAfterBackgroundAmend = Availability.Disabled
     )
   }
 
@@ -102,7 +103,8 @@ class JavaSuggestedRefactoringAvailabilityTest : BaseSuggestedRefactoringAvailab
       {
         replaceTextAtCaret("void", "int")
       },
-      expectedAvailability = Availability.Disabled
+      expectedAvailability = Availability.Available(changeSignatureAvailableTooltip("foo", "overrides")),
+      expectedAvailabilityAfterBackgroundAmend = Availability.Disabled
     )
   }
 
@@ -175,7 +177,8 @@ class JavaSuggestedRefactoringAvailabilityTest : BaseSuggestedRefactoringAvailab
       {
         replaceTextAtCaret("public", "private")
       },
-      expectedAvailability = Availability.Disabled
+      expectedAvailability = Availability.Available(changeSignatureAvailableTooltip("foo", "overrides")),
+      expectedAvailabilityAfterBackgroundAmend = Availability.Disabled
     )
   }
 
@@ -222,7 +225,8 @@ class JavaSuggestedRefactoringAvailabilityTest : BaseSuggestedRefactoringAvailab
       {
         replaceTextAtCaret("void", "int")
       },
-      expectedAvailability = Availability.Disabled
+      expectedAvailability = Availability.Available(changeSignatureAvailableTooltip("foo", "overrides")),
+      expectedAvailabilityAfterBackgroundAmend = Availability.Disabled
     )
   }
 
@@ -237,7 +241,8 @@ class JavaSuggestedRefactoringAvailabilityTest : BaseSuggestedRefactoringAvailab
       {
         replaceTextAtCaret("void", "int")
       },
-      expectedAvailability = Availability.Disabled
+      expectedAvailability = Availability.Available(changeSignatureAvailableTooltip("foo", "overrides")),
+      expectedAvailabilityAfterBackgroundAmend = Availability.Disabled
     )
   }
 
@@ -252,7 +257,8 @@ class JavaSuggestedRefactoringAvailabilityTest : BaseSuggestedRefactoringAvailab
       {
         replaceTextAtCaret("void", "int")
       },
-      expectedAvailability = Availability.Disabled
+      expectedAvailability = Availability.Available(changeSignatureAvailableTooltip("foo", "overrides")),
+      expectedAvailabilityAfterBackgroundAmend = Availability.Disabled
     )
   }
 
@@ -267,7 +273,8 @@ class JavaSuggestedRefactoringAvailabilityTest : BaseSuggestedRefactoringAvailab
       {
         replaceTextAtCaret("void", "int")
       },
-      expectedAvailability = Availability.Disabled
+      expectedAvailability = Availability.Available(changeSignatureAvailableTooltip("foo", "overrides")),
+      expectedAvailabilityAfterBackgroundAmend = Availability.Disabled
     )
   }
 
@@ -455,7 +462,8 @@ class JavaSuggestedRefactoringAvailabilityTest : BaseSuggestedRefactoringAvailab
       {
         replaceTextAtCaret("int", "long")
       },
-      expectedAvailability = Availability.Disabled
+      expectedAvailability = Availability.Available(changeSignatureAvailableTooltip("C", "overrides")),
+      expectedAvailabilityAfterBackgroundAmend = Availability.Disabled
     )
   }
 
