@@ -65,6 +65,8 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CancellationException;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -1320,6 +1322,14 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   public void updateActionsImmediately() {
     updateActionsImmediately(false);
   }
+  
+  @RequiresEdt
+  public Future<?> updateActionsAsync() {
+    updateActionsImmediately(false);
+    CancellablePromise<List<AnAction>> update = myLastUpdate;
+    return update == null ? CompletableFuture.completedFuture(null) : update;
+  }
+
 
   @ApiStatus.Internal
   @RequiresEdt
