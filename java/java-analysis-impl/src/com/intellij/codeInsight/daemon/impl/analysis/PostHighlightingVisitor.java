@@ -563,8 +563,8 @@ class PostHighlightingVisitor extends JavaElementVisitor {
         .descriptionAndTooltip(description)
         .group(GeneralHighlightingPass.POST_UPDATE_ALL);
 
-    IntentionAction removeFix = QuickFixFactory.getInstance().createDeleteFix(importStatement, JavaErrorBundle.message("remove.unused.import.quickfix.text"));
-    builder.registerFix(removeFix, null, HighlightDisplayKey.getDisplayNameByKey(unusedImportKey), null, unusedImportKey);
+    IntentionAction optimizeFix = QuickFixFactory.getInstance().createOptimizeImportsFix(false, myFile);
+    builder.registerFix(optimizeFix, null, HighlightDisplayKey.getDisplayNameByKey(unusedImportKey), null, unusedImportKey);
 
     IntentionAction switchFix = QuickFixFactory.getInstance().createEnableOptimizeImportsOnTheFlyFix();
     builder.registerFix(switchFix, null, HighlightDisplayKey.getDisplayNameByKey(unusedImportKey), null, unusedImportKey);
