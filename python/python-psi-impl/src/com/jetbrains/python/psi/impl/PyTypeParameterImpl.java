@@ -7,13 +7,11 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyTokenTypes;
-import com.jetbrains.python.psi.PyElementVisitor;
-import com.jetbrains.python.psi.PyExpression;
-import com.jetbrains.python.psi.PyTypeParameter;
-import com.jetbrains.python.psi.PyUtil;
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
+import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.stubs.PyTypeParameterElementType;
 import com.jetbrains.python.psi.stubs.PyTypeParameterStub;
-import com.jetbrains.python.psi.types.PyType;
-import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -70,6 +68,19 @@ public class PyTypeParameterImpl extends PyBaseElementImpl<PyTypeParameterStub> 
     }
 
     return null;
+  }
+
+  @Override
+  @NotNull
+  public PyTypeParameter.Kind getKind() {
+    PyTypeParameterStub stub = getStub();
+
+    if (stub != null) {
+      return stub.getKind();
+    }
+    else {
+      return PyTypeParameterElementType.getTypeParameterKindFromPsi(this);
+    }
   }
 
   @Override
