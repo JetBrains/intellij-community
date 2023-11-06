@@ -745,6 +745,7 @@
         <action id="CreateDesktopEntry" class="com.intellij.ide.actions.CreateDesktopEntryAction"/>
         <separator/>
         <group id="OtherMenu"/>
+        <group id="ToolsMenu.Services" popup="true"/>
       </group>
 
       <group id="WindowMenu" popup="true">
