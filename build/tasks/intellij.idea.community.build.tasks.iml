@@ -59,6 +59,5 @@
     <orderEntry type="library" name="jetbrains-annotations" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.base" />
     <orderEntry type="library" name="hash4j" level="project" />
-    <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry.impl" />
   </component>
 </module>

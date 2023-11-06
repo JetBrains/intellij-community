@@ -1,10 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("unused")
+@file:Suppress("unused", "ReplaceJavaStaticMethodWithKotlinAnalog")
 @file:JvmName("DevMainImpl")
 package org.jetbrains.intellij.build.devServer
 
 import com.intellij.openapi.application.PathManager
-import com.intellij.platform.diagnostic.telemetry.impl.BatchSpanProcessor
+import com.intellij.platform.diagnostic.telemetry.exporters.BatchSpanProcessor
 import com.intellij.util.childScope
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
@@ -30,7 +30,7 @@ fun buildDevMain(): Collection<Path> {
   var newClassPath: Collection<Path>? = null
   runBlocking(Dispatchers.Default) {
     val batchSpanProcessorScope = childScope()
-    val spanProcessor = BatchSpanProcessor(coroutineScope = batchSpanProcessorScope, spanExporters = listOf(ConsoleSpanExporter()))
+    val spanProcessor = BatchSpanProcessor(coroutineScope = batchSpanProcessorScope, spanExporters = java.util.List.of(ConsoleSpanExporter()))
 
     val tracerProvider = SdkTracerProvider.builder()
       .addSpanProcessor(spanProcessor)

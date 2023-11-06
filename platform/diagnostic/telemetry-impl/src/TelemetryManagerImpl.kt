@@ -14,6 +14,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.Ref
 import com.intellij.platform.diagnostic.telemetry.*
+import com.intellij.platform.diagnostic.telemetry.exporters.BatchSpanProcessor
 import com.intellij.platform.diagnostic.telemetry.exporters.JaegerJsonSpanExporter
 import com.intellij.platform.diagnostic.telemetry.exporters.OtlpSpanExporter
 import io.opentelemetry.api.common.AttributeKey

@@ -1,12 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("RAW_RUN_BLOCKING")
 
-package com.intellij.platform.diagnostic.telemetry.impl
+package com.intellij.platform.diagnostic.telemetry.exporters
 
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.diagnostic.telemetry.AsyncSpanExporter
-import com.intellij.platform.diagnostic.telemetry.exporters.JaegerJsonSpanExporter
-import com.intellij.platform.diagnostic.telemetry.exporters.ScopeSpans
 import io.opentelemetry.context.Context
 import io.opentelemetry.sdk.common.CompletableResultCode
 import io.opentelemetry.sdk.trace.ReadWriteSpan
@@ -160,7 +158,7 @@ class BatchSpanProcessor(
     }
   }
 
-  internal fun flushOtlp(scopeSpans: Collection<ScopeSpans>) {
+  fun flushOtlp(scopeSpans: Collection<ScopeSpans>) {
     for (spanExporter in spanExporters) {
       if (spanExporter is JaegerJsonSpanExporter) {
         spanExporter.flushOtlp(scopeSpans)
