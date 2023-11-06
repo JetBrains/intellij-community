@@ -476,7 +476,7 @@ private suspend fun importConfig(args: List<String>,
                                  euaDocumentDeferred: Deferred<EndUserAgreement.Document?>) {
   span("screen reader checking") {
     runCatching {
-      withContext(RawSwingDispatcher) { enableScreenReaderSupportIfNecessary() }
+      enableScreenReaderSupportIfNecessary()
     }.getOrLogException(log)
   }
 

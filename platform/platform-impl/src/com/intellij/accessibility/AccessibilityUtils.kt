@@ -5,6 +5,7 @@ import com.intellij.ide.GeneralSettings
 import com.intellij.ide.isSupportScreenReadersOverridden
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
+import com.intellij.openapi.application.impl.RawSwingDispatcher
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
@@ -16,6 +17,7 @@ import com.intellij.ui.mac.foundation.Foundation.NSAutoreleasePool
 import com.intellij.ui.mac.foundation.ID
 import com.intellij.util.User32Ex
 import com.sun.jna.platform.win32.WinDef
+import kotlinx.coroutines.withContext
 import java.awt.Component
 import javax.accessibility.AccessibleRole
 
@@ -24,7 +26,7 @@ object AccessibilityUtils {
   val GROUPED_ELEMENTS: AccessibleRole = if (SystemInfoRt.isMac) AccessibleRole.AWT_COMPONENT else AccessibleRole.PANEL
 }
 
-internal fun enableScreenReaderSupportIfNecessary() {
+internal suspend fun enableScreenReaderSupportIfNecessary() {
   if (isSupportScreenReadersOverridden()) {
     AccessibilityUsageTrackerCollector.featureTriggered(AccessibilityUsageTrackerCollector.SCREEN_READER_SUPPORT_ENABLED_VM)
     return
@@ -36,11 +38,13 @@ internal fun enableScreenReaderSupportIfNecessary() {
 
   AccessibilityUsageTrackerCollector.featureTriggered(AccessibilityUsageTrackerCollector.SCREEN_READER_DETECTED)
   val appName = ApplicationInfoImpl.getShadowInstance().versionName
-  val answer = MessageDialogBuilder.yesNo(title = ApplicationBundle.message("title.screen.reader.support"),
-                                          message = ApplicationBundle.message("confirmation.screen.reader.enable", appName))
-    .yesText(ApplicationBundle.message("button.enable"))
-    .noText(Messages.getCancelButton())
-    .ask(null as Component?)
+  val answer = withContext(RawSwingDispatcher) {
+    MessageDialogBuilder.yesNo(title = ApplicationBundle.message("title.screen.reader.support"),
+                               message = ApplicationBundle.message("confirmation.screen.reader.enable", appName))
+      .yesText(ApplicationBundle.message("button.enable"))
+      .noText(Messages.getCancelButton())
+      .ask(null as Component?)
+  }
   if (answer) {
     AccessibilityUsageTrackerCollector.featureTriggered(AccessibilityUsageTrackerCollector.SCREEN_READER_SUPPORT_ENABLED)
     enable = true
