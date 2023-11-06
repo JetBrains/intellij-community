@@ -24,13 +24,14 @@ internal fun collectRevisionData(project: Project,
                                  gateway: IdeaGateway,
                                  facade: LocalHistoryFacade,
                                  file: VirtualFile,
-                                 filter: String? = null): RevisionData {
+                                 filter: String? = null,
+                                 before: Boolean = true): RevisionData {
   return runReadAction {
     gateway.registerUnsavedDocuments(facade)
 
     val path = gateway.getPathOrUrl(file)
     val root = gateway.createTransientRootEntry()
-    val all = RevisionsCollector(facade, root, path, project.getLocationHash(), filter).result
+    val all = RevisionsCollector(facade, root, path, project.getLocationHash(), filter, before).result
 
     RevisionData(all[0], mergeLabelsWithRevisions(all.subList(1, all.size)))
   }
@@ -51,9 +52,10 @@ private fun mergeLabelsWithRevisions(revisions: List<Revision>): List<RevisionIt
   return result.asReversed()
 }
 
-fun LocalHistoryFacade.filterContents(gateway: IdeaGateway, file: VirtualFile, revisions: List<RevisionItem>, filter: String): Set<Long> {
+fun LocalHistoryFacade.filterContents(gateway: IdeaGateway, file: VirtualFile, revisions: List<RevisionItem>, filter: String,
+                                      before: Boolean): Set<Long> {
   val result = mutableSetOf<Long>()
-  processContents(gateway, file, revisions) { revision, content ->
+  processContents(gateway, file, revisions, before) { revision, content ->
     if (Thread.currentThread().isInterrupted) return@processContents false
     if (content?.contains(filter, true) == true) {
       val id = revision.changeSetId
@@ -64,7 +66,7 @@ fun LocalHistoryFacade.filterContents(gateway: IdeaGateway, file: VirtualFile, r
   return result
 }
 
-internal fun LocalHistoryFacade.processContents(gateway: IdeaGateway, file: VirtualFile, revisions: List<RevisionItem>,
+internal fun LocalHistoryFacade.processContents(gateway: IdeaGateway, file: VirtualFile, revisions: List<RevisionItem>, before: Boolean,
                                                 processor: PairProcessor<in Revision, in String?>) {
   val revisionMap = revisions.associate { it.revision.changeSetId to it.revision }
   if (revisionMap.isEmpty()) return
@@ -90,11 +92,12 @@ internal fun LocalHistoryFacade.processContents(gateway: IdeaGateway, file: Virt
       if (Thread.currentThread().isInterrupted) {
         throw ProcessCanceledException()
       }
+      if (!before && !processContent(revisionMap[c.id])) stop()
     }
 
     @Throws(StopVisitingException::class)
     override fun end(c: ChangeSet) {
-      if (!processContent(revisionMap[c.id])) stop()
+      if (before && !processContent(revisionMap[c.id])) stop()
     }
 
     override fun visit(c: StructuralChange) {

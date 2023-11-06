@@ -27,6 +27,7 @@ public abstract class HistoryDialogModel {
   protected final VirtualFile myFile;
   protected final IdeaGateway myGateway;
   private String myFilter;
+  protected boolean myBefore = true;
 
   private RevisionData myRevisionData;
 
@@ -62,11 +63,11 @@ public abstract class HistoryDialogModel {
   }
 
   protected @NotNull RevisionData collectRevisionData() {
-    return RevisionDataKt.collectRevisionData(myProject, myGateway, myVcs, myFile, myFilter);
+    return RevisionDataKt.collectRevisionData(myProject, myGateway, myVcs, myFile, myFilter, myBefore);
   }
 
   public void processContents(@NotNull PairProcessor<? super Revision, ? super String> processor) {
-    RevisionDataKt.processContents(myVcs, myGateway, myFile, getRevisions(), processor);
+    RevisionDataKt.processContents(myVcs, myGateway, myFile, getRevisions(), myBefore, processor);
   }
 
   public void setFilter(@Nullable String filter) {

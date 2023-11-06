@@ -42,6 +42,6 @@ public abstract class FileHistoryDialogModel extends HistoryDialogModel {
   }
 
   public @NotNull Set<Long> filterContents(@NotNull String filter) {
-    return RevisionDataKt.filterContents(myVcs, myGateway, myFile, getRevisions(), filter);
+    return RevisionDataKt.filterContents(myVcs, myGateway, myFile, getRevisions(), filter, myBefore);
   }
 }

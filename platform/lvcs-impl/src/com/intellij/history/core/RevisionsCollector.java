@@ -33,15 +33,21 @@ public final class RevisionsCollector extends ChangeSetsProcessor {
   private final RootEntry myRoot;
   private final String myProjectId;
   private final String myPattern;
+  private final boolean myBefore;
 
   private final List<Revision> myResult = new ArrayList<>();
 
-  public RevisionsCollector(LocalHistoryFacade facade, RootEntry rootEntry, @NotNull String path, String projectId, @Nullable String pattern) {
+  public RevisionsCollector(LocalHistoryFacade facade, RootEntry rootEntry, @NotNull String path, String projectId, @Nullable String pattern, boolean before) {
     super(path);
     myFacade = facade;
     myRoot = rootEntry;
     myProjectId = projectId;
     myPattern = pattern;
+    myBefore = before;
+  }
+
+  public RevisionsCollector(LocalHistoryFacade facade, RootEntry rootEntry, @NotNull String path, String projectId, @Nullable String pattern) {
+    this(facade, rootEntry, path, projectId, pattern, true);
   }
 
   public @NotNull List<Revision> getResult() {
@@ -69,6 +75,6 @@ public final class RevisionsCollector extends ChangeSetsProcessor {
 
   @Override
   protected void visit(ChangeSet changeSet) {
-    myResult.add(new ChangeRevision(myFacade, myRoot, myPath, changeSet, true));
+    myResult.add(new ChangeRevision(myFacade, myRoot, myPath, changeSet, myBefore));
   }
 }
