@@ -58,6 +58,7 @@ internal fun InlineCompletionTooltipComponent.shortcutActions(): ActionButtonWit
         null -> " "
         "[pressed TAB]" -> "Tab"
         "[pressed ENTER]" -> "Enter"
+        "[shift pressed RIGHT]" -> "Shift →"
         else -> KeymapUtil.getShortcutText(shortcut)
       }
     }
