@@ -2265,9 +2265,10 @@ public final class JBUI {
     }
 
     public static final class ManagedIde {
-      public static final Color BADGE_BORDER = JBColor.namedColor("ManagedIdeBadgeBorder", 0x5A5D6B, 0x4E5157);
-      private static final Color BADGE_BACKGROUND = JBColor.namedColor("ManagedIdeBadgeBackground", 0x383A42, 0x393B40);
-      private static final Color BADGE_BACKGROUND_HOVER = JBColor.namedColor("ManagedIdeBadgeBackgroundHover", 0x494B57, 0x43454A);
+      public static final Color BADGE_BORDER = JBColor.namedColor("ManagedIdeBadgeBorder", CustomFrameDecorations.separatorForeground());
+      private static final Color BADGE_BACKGROUND = JBColor.namedColor("ManagedIdeBadgeBackground", CustomFrameDecorations.paneBackground());
+      private static final Color BADGE_BACKGROUND_HOVER = JBColor.namedColor("ManagedIdeBadgeBackgroundHover", JBColor.namedColor(
+        "MainToolbar.Dropdown.transparentHoverBackground", UIManager.getColor("MainToolbar.Icon.hoverBackground")));
       public static final Color MENU_ITEM_HOVER = JBColor.namedColor("ManagedIdeMenuItemHover", 0xEBECF0, 0x43454A);
 
       public static @NotNull Color getBadgeBackground(boolean hover) {
