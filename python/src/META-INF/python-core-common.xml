@@ -697,6 +697,7 @@
     <pyAnnotator implementation="com.jetbrains.python.validation.PyPatternAnnotator"/>
     <pyAnnotator implementation="com.jetbrains.python.validation.PyTryExceptAnnotator"/>
     <pyAnnotator implementation="com.jetbrains.python.validation.PyVariableAnnotator"/>
+    <pyAnnotator implementation="com.jetbrains.python.validation.PyTypeParameterListAnnotator"/>
 
     <!--stdlib-->
     <documentationLinkProvider implementation="com.jetbrains.python.codeInsight.stdlib.PyStdlibDocumentationLinkProvider"/>

@@ -756,6 +756,32 @@ public class PythonHighlightingTest extends PyTestCase {
     doTest(LanguageLevel.PYTHON311, false, true);
   }
 
+  public void testParamSpecWithBoundsReported() {
+    doTest(LanguageLevel.PYTHON312, true, false);
+  }
+
+  // PY-61857
+  public void testTypeVarTupleWithBoundsReported() {
+    doTest(LanguageLevel.PYTHON312, true, false);
+  }
+
+  // PY-61857
+  public void testEmptyTypeParameterConstraintReported() {
+    doTest(LanguageLevel.PYTHON312, true, false);
+  }
+
+  // PY-61857
+  public void testOneTypeParameterConstraintReported() {
+    doTest(LanguageLevel.PYTHON312, true, false);
+  }
+
+  // PY-61857
+  public void testTypeParameterDuplicationReported() {
+    doTest(LanguageLevel.PYTHON312, true, false);
+  }
+
+
+
   @NotNull
   private static EditorColorsScheme createTemporaryColorScheme() {
     EditorColorsManager manager = EditorColorsManager.getInstance();
