@@ -18,7 +18,6 @@ import org.jetbrains.kotlin.psi.KtDeclarationContainer
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
-import javax.swing.Icon
 import javax.swing.JComponent
 
 sealed interface K2MoveSourceModel<T : KtElement> {
@@ -39,22 +38,23 @@ sealed interface K2MoveSourceModel<T : KtElement> {
         override fun buildPanel(onError: (String?, JComponent) -> Unit) {
             val project = elements.firstOrNull()?.project ?: return
 
-            class FileInfo(val icon: Icon?, val file: KtFile)
+            class PresentableFile(val file: KtFile, val presentation: TargetPresentation)
 
-            val fileInfos = ActionUtil.underModalProgress(project, RefactoringBundle.message("move.title")) {
-                elements.map { file -> FileInfo(file.getIcon(0), file) }
+            val presentableFiles = ActionUtil.underModalProgress(project, RefactoringBundle.message("move.title")) {
+                elements.map { file ->
+                    val presentation = TargetPresentation.builder(file.name)
+                        .icon(file.getIcon(0))
+                        .locationText(file.virtualFile.parent.path)
+                        .presentation()
+                    PresentableFile(file, presentation)
+                }
             }
 
             group(RefactoringBundle.message("move.files.group")) {
-                lateinit var list: JBList<FileInfo>
+                lateinit var list: JBList<PresentableFile>
                 row {
-                    list = JBList(CollectionListModel(fileInfos))
-                    list.cellRenderer = createTargetPresentationRenderer { fileInfo ->
-                        TargetPresentation.builder(fileInfo.file.name)
-                            .icon(fileInfo.icon)
-                            .locationText(fileInfo.file.virtualFile.parent.path)
-                            .presentation()
-                    }
+                    list = JBList(CollectionListModel(presentableFiles))
+                    list.cellRenderer = createTargetPresentationRenderer { presentableFile -> presentableFile.presentation }
                     cell(list).resizableColumn()
                 }
                 onApply {
