@@ -564,13 +564,14 @@ class ModifiableRootModelBridgeImpl(
     val moduleDiff = module.diff
     if (moduleDiff != null) {
       moduleDiff.addDiff(diff)
+      postCommit()
     }
     else {
       WorkspaceModel.getInstance(project).updateProjectModel("Root model commit") {
         it.addDiff(diff)
       }
+      postCommit()
     }
-    postCommit()
   }
 
   override fun prepareForCommit() {
