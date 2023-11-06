@@ -45,6 +45,11 @@ internal class GHPRCreateCombinedDiffModelProvider(private val project: Project,
   private val cs = parentCs.childScope()
 
   fun createCombinedDiffModel(repository: GHRepositoryCoordinates, pullRequest: GHPRIdentifier): CombinedDiffModelImpl {
+    val dataDisposable = Disposer.newDisposable()
+    val dataContext = GHPRDataContextRepository.getInstance(project).findContext(repository)!!
+    val dataProvider = dataContext.dataProviderRepository.getDataProvider(pullRequest, dataDisposable)
+
+    fun createCombinedDiffModel(repository: GHRepositoryCoordinates, pullRequest: GHPRIdentifier): CombinedDiffModelImpl {
     val model = CombinedDiffModelImpl(project)
     val dataContext = GHPRDataContextRepository.getInstance(project).findContext(repository)!!
     val dataProvider = dataContext.dataProviderRepository.getDataProvider(pullRequest, model.ourDisposable)
