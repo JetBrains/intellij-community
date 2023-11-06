@@ -56,7 +56,7 @@ public final class UndoManagerImpl extends UndoManager {
 
   private final @Nullable Project myProject;
 
-  private CurrentEditorProvider myEditorProvider;
+  private @Nullable CurrentEditorProvider myOverriddenEditorProvider;
 
   static final class ClientState implements Disposable {
     final ClientId myClientId = ClientId.getCurrent();
@@ -117,12 +117,6 @@ public final class UndoManagerImpl extends UndoManager {
   @SuppressWarnings("NonDefaultConstructor")
   private UndoManagerImpl(@Nullable ComponentManager componentManager) {
     myProject = componentManager instanceof Project ? (Project)componentManager : null;
-
-    if (myProject != null && myProject.isDefault()) {
-      return;
-    }
-
-    myEditorProvider = () -> ApplicationManager.getApplication().getService(CurrentEditorProvider.class).getCurrentEditor();
   }
 
   public @Nullable Project getProject() {
@@ -232,7 +226,7 @@ public final class UndoManagerImpl extends UndoManager {
           editor = CommonDataKeys.EDITOR.getData(DataManager.getInstance().getDataContext());
         }
         else {
-          FileEditor fileEditor = myEditorProvider.getCurrentEditor();
+          FileEditor fileEditor = getEditorProvider().getCurrentEditor(myProject);
           if (fileEditor instanceof TextEditor) {
             editor = ((TextEditor)fileEditor).getEditor();
           }
@@ -286,7 +280,7 @@ public final class UndoManagerImpl extends UndoManager {
   }
 
   private EditorAndState getCurrentState() {
-    FileEditor editor = myEditorProvider.getCurrentEditor();
+    FileEditor editor = getEditorProvider().getCurrentEditor(myProject);
     if (editor == null) {
       return null;
     }
@@ -729,12 +723,12 @@ public final class UndoManagerImpl extends UndoManager {
 
   @TestOnly
   public void setEditorProvider(@NotNull CurrentEditorProvider p) {
-    myEditorProvider = p;
+    myOverriddenEditorProvider = p;
   }
 
-  @TestOnly
   public @NotNull CurrentEditorProvider getEditorProvider() {
-    return myEditorProvider;
+    CurrentEditorProvider provider = myOverriddenEditorProvider;
+    return (provider != null) ? provider : CurrentEditorProvider.getInstance();
   }
 
   @TestOnly
