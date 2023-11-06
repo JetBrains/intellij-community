@@ -121,21 +121,21 @@ private class GeneralSettingsConfigurable :
         }
         row {
           checkBox(myChkUseSafeWrite)
+        }.bottomGap(BottomGap.SMALL)
+        @Suppress("DialogTitleCapitalization")
+        buttonsGroup(IdeBundle.message("settings.general.synchronization")) {
+          row {
+            checkBox(myChkSyncOnFrameActivation)
+          }
+          row {
+            checkBox(myChkSyncInBackground)
+          }
         }
         row {
           comment(IdeBundle.message("label.autosave.comment")) {
             HelpManager.getInstance().invokeHelp("autosave")
           }
         }.topGap(TopGap.SMALL)
-      }
-
-      group(IdeBundle.message("settings.general.synchronization")) {
-        row {
-          checkBox(myChkSyncOnFrameActivation)
-        }
-        row {
-          checkBox(myChkSyncInBackground)
-        }
       }
 
       for (configurable in configurables) {
