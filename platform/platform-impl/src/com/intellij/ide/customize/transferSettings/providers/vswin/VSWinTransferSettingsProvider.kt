@@ -190,7 +190,7 @@ class VSWinTransferSettingsProvider : TransferSettingsProvider {
   private fun timeFn() = System.nanoTime()
   private fun convertTimeFn(time: Long): Duration = time.nanoseconds
 
-  override fun getRightPanel(ideV: IdeVersion, config: TransferSettingsConfiguration): TransferSettingsRightPanelChooser? {
+  override fun getRightPanel(ideV: IdeVersion, config: TransferSettingsConfiguration): TransferSettingsRightPanelChooser {
     return VSWinTransferSettingsRightPanelChooser(ideV, config)
   }
 
@@ -200,7 +200,7 @@ class VSWinTransferSettingsProvider : TransferSettingsProvider {
         panel {
           row {
             icon(AllIcons.TransferSettings.Resharper).customize(UnscaledGaps(left = 5, right = 5))
-            label("ReSharper settings are found and will be imported")
+            label(IdeBundle.message("transfer-settings.vs-win.resharper-settings-found"))
           }
         }
       }

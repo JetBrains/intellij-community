@@ -4,11 +4,7 @@ package com.intellij.ide.startup.importSettings.transfer
 import com.intellij.icons.AllIcons
 import com.intellij.ide.customize.transferSettings.models.BaseIdeVersion
 import com.intellij.ide.customize.transferSettings.models.IdeVersion
-import com.intellij.ide.startup.importSettings.data.DialogImportItem
-import com.intellij.ide.startup.importSettings.data.IconProductSize
-import com.intellij.ide.startup.importSettings.data.ImportFromProduct
-import com.intellij.ide.startup.importSettings.data.ImportProgress
-import com.intellij.ide.startup.importSettings.data.SettingsContributor
+import com.intellij.ide.startup.importSettings.data.*
 import com.intellij.ide.startup.importSettings.jb.JbProductInfo
 import com.intellij.ide.startup.importSettings.jb.NameMappings
 import com.intellij.openapi.application.ModalityState
@@ -63,16 +59,15 @@ class ProgressIndicatorAdapter(private val backend: TransferSettingsProgressIndi
   override fun cancel() { cancelled = true }
   override fun isCanceled() = cancelled
 
-  private val textProp = Property<String?>(null)
-  private val text2Prop = Property<String?>(null)
+  private val textProp = Property<@ProgressText String?>(null)
+  private val text2Prop = Property<@ProgressText String?>(null)
   init {
     textProp.compose(text2Prop, ::Pair).advise(Lifetime.Eternal) { (t1, t2) ->
       val text = when {
         t1 == null && t2 == null -> null
         t1 == null && t2 != null -> t2
         t1 != null && t2 == null -> t1
-        t1 != null && t2 != null -> "$t1 / $t2"
-        else -> error("Impossible")
+        else -> "$t1 / $t2"
       }
       backend.progressMessage.set(text)
     }

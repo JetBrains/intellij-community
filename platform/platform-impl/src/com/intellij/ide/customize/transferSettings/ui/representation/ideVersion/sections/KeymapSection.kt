@@ -1,7 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.customize.transferSettings.ui.representation.ideVersion.sections
 
 import com.intellij.icons.AllIcons
+import com.intellij.ide.IdeBundle
 import com.intellij.ide.customize.transferSettings.models.*
 import com.intellij.openapi.actionSystem.KeyboardShortcut
 import com.intellij.openapi.keymap.KeymapUtil
@@ -22,7 +23,6 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
 import net.miginfocom.swing.MigLayout
 import org.jetbrains.annotations.Nls
-import java.awt.Font
 import javax.swing.*
 import javax.swing.border.CompoundBorder
 
@@ -30,23 +30,23 @@ class KeymapSection(private val ideVersion: IdeVersion) : IdeRepresentationSecti
   companion object {
     @Nls
     private val delim = if (SystemInfo.isMac) "" else "+"
-    private val delimToParse = "+"
+    private const val DELIM_TO_PARSE = "+"
 
     private fun getKeystrokeText(accelerator: KeyStroke?): String {
       if (accelerator == null) return ""
 
       return if (SystemInfo.isMac)
-        MacKeymapUtil.getKeyStrokeText(accelerator, delimToParse, true)
+        MacKeymapUtil.getKeyStrokeText(accelerator, DELIM_TO_PARSE, true)
       else KeymapUtil.getKeystrokeText(accelerator)
     }
 
     private fun init(sc: KeyboardShortcut): Pair<List<String>, List<String>?> {
-      return Pair(getKeystrokeText(sc.firstKeyStroke).split(delimToParse),
-                  sc.secondKeyStroke?.let { getKeystrokeText(it).split(delimToParse) })
+      return Pair(getKeystrokeText(sc.firstKeyStroke).split(DELIM_TO_PARSE),
+                  sc.secondKeyStroke?.let { getKeystrokeText(it).split(DELIM_TO_PARSE) })
     }
 
     private fun init(sc: DummyKeyboardShortcut): Pair<List<String>, List<String>?> {
-      return Pair(sc.firstKeyStroke.split(delimToParse), sc.secondKeyStroke?.split(delimToParse))
+      return Pair(sc.firstKeyStroke.split(DELIM_TO_PARSE), sc.secondKeyStroke?.split(DELIM_TO_PARSE))
     }
   }
 
@@ -63,15 +63,15 @@ class KeymapSection(private val ideVersion: IdeVersion) : IdeRepresentationSecti
     val customShortcuts = (keymap as? PatchedKeymap)?.overrides
 
     if (!customShortcuts.isNullOrEmpty()) {
-      withMoreLabel("more...") {
+      withMoreLabel(IdeBundle.message("transfer-settings.keymap.more")) {
         BorderLayoutPanel().apply {
           border = JBUI.Borders.empty()
           addToTop(JPanel().apply {
             layout = BoxLayout(this, BoxLayout.Y_AXIS)
-            add(JLabel("Only custom shortcuts").apply {
+            add(JLabel(IdeBundle.message("transfer-settings.keymap.custom-shortcuts")).apply {
               border = JBUI.Borders.empty(5, 5, 0, 5)
             })
-            add(JLabel("<html>Some extensions from ${ideVersion.name} might have added custom shortcuts. These shortcuts are also displayed in this list</html>").apply {
+            add(JLabel(IdeBundle.message("transfer-settings.keymap.extension-custom-shortcuts", ideVersion.name)).apply {
               border = JBUI.Borders.empty(0, 5)
               font = JBFont.small()
               foreground = JBUI.CurrentTheme.Label.disabledForeground()
@@ -93,7 +93,7 @@ class KeymapSection(private val ideVersion: IdeVersion) : IdeRepresentationSecti
 
     return panel {
       val items = keymap.demoShortcuts.take(LIMIT)
-      items.forEachIndexed { idx, it ->
+      items.forEach {
         row {
           val dsc = it.defaultShortcut
           shortcutComp(dsc)
@@ -125,7 +125,7 @@ class KeymapSection(private val ideVersion: IdeVersion) : IdeRepresentationSecti
     if (dsc is DummyKeyboardShortcut) cell(KeyboardTwoShortcuts(dsc, _isSelected, _isEnabled)).customize(UnscaledGaps.EMPTY)
   }
 
-  private inner class KeyboardTwoShortcuts private constructor(private val shortcut: Pair<List<String>, List<String>?>, private val isSelected: AtomicBooleanProperty, private val isEnabledPanel: AtomicBooleanProperty) : JPanel() {
+  private inner class KeyboardTwoShortcuts private constructor(shortcut: Pair<List<String>, List<String>?>, private val isSelected: AtomicBooleanProperty, private val isEnabledPanel: AtomicBooleanProperty) : JPanel() {
     init {
       layout = MigLayout("novisualpadding, ins 0, gap 0")
       parsePart(shortcut.first)

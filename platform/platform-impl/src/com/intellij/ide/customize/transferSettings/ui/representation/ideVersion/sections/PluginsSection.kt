@@ -15,14 +15,14 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import javax.swing.JComponent
 
-class PluginsSection(private val ideVersion: IdeVersion) : IdeRepresentationSection(ideVersion.settingsCache.preferences, SettingsPreferencesKind.Plugins, AllIcons.TransferSettings.PluginsAndFeatures) {
+class PluginsSection(ideVersion: IdeVersion) : IdeRepresentationSection(ideVersion.settingsCache.preferences, SettingsPreferencesKind.Plugins, AllIcons.TransferSettings.PluginsAndFeatures) {
   private val plugins = ideVersion.settingsCache.plugins.values.filter { !it.isHidden }
   override val name: String = "Plugins and Features"
   override fun worthShowing(): Boolean = plugins.isNotEmpty()
 
   override fun getContent(): JComponent {
     if (plugins.size > LIMIT) {
-      withMoreLabel("and ${plugins.size - LIMIT} more") {
+      withMoreLabel(IdeBundle.message("transfer-settings.plugins.more", plugins.size - LIMIT)) {
         return@withMoreLabel JBScrollPane(Wrapper(panel {
           for (plugin in plugins.drop(LIMIT)) {
             createPluginRow(plugin, this)
@@ -49,6 +49,7 @@ class PluginsSection(private val ideVersion: IdeVersion) : IdeRepresentationSect
         }
       }
 
+      @Suppress("DialogTitleCapitalization")
       comment(
         when (plugin) {
           is BuiltInFeature -> IdeBundle.message("transfersettings.plugin.built.in")
