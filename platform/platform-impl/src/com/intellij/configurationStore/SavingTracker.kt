@@ -3,12 +3,12 @@ package com.intellij.configurationStore
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
-import com.intellij.platform.backend.observation.ActivityInProgressTracker
+import com.intellij.platform.backend.observation.ActivityTracker
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
 
 @Internal
-class SavingInProgressTracker : ActivityInProgressTracker {
+class SavingTracker : ActivityTracker {
   override val presentableName: @Nls String = "saving"
 
   override suspend fun isInProgress(project: Project): Boolean {

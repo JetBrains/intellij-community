@@ -3,13 +3,13 @@ package com.intellij.openapi.externalSystem.util
 
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.project.Project
-import com.intellij.platform.backend.observation.ActivityInProgressTracker
 import com.intellij.platform.backend.observation.ActivityKey
+import com.intellij.platform.backend.observation.ActivityTracker
 import kotlinx.coroutines.delay
 import org.jetbrains.annotations.Nls
 
 
-class ExternalSystemInProgressTracker : ActivityInProgressTracker {
+class ExternalSystemTracker : ActivityTracker {
   override val presentableName: String = "external-system (startup)"
 
   override suspend fun isInProgress(project: Project): Boolean {

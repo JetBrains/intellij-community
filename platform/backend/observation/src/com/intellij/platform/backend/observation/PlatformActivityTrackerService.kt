@@ -15,16 +15,16 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.concurrent.ConcurrentHashMap
 
 /**
- * Allows to track subsystem activities and get a "dumb mode" w.r.t. tracked computations.
+ * Allows tracking subsystem activities and getting a "dumb mode" with respect to tracked computations.
  * @see ActivityKey for high-level explanations
  */
 @Service(Service.Level.PROJECT)
 @Internal
-internal class ActivityInProgressService(private val scope: CoroutineScope) {
+internal class PlatformActivityTrackerService(private val scope: CoroutineScope) {
 
   companion object {
-    suspend fun getInstanceAsync(project: Project): ActivityInProgressService = project.serviceAsync<ActivityInProgressService>()
-    fun getInstance(project: Project): ActivityInProgressService = project.service<ActivityInProgressService>()
+    suspend fun getInstanceAsync(project: Project): PlatformActivityTrackerService = project.serviceAsync<PlatformActivityTrackerService>()
+    fun getInstance(project: Project): PlatformActivityTrackerService = project.service<PlatformActivityTrackerService>()
   }
 
   private class AssociatedCounter(
