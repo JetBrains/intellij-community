@@ -10,7 +10,6 @@ import com.intellij.terminal.TerminalTitle
 import com.intellij.terminal.ui.TerminalWidget
 import com.intellij.terminal.ui.TtyConnectorAccessor
 import com.intellij.ui.components.panels.Wrapper
-import com.intellij.util.asSafely
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jediterm.core.util.TermSize
 import com.jediterm.terminal.TtyConnector
@@ -62,9 +61,9 @@ class TerminalWidgetImpl(private val project: Project,
     else {
       OldPlainTerminalView(project, settings, terminalTitle)
     }
-    oldView.asSafely<TerminalPlaceholder>()?.let {
-      it.moveTerminationCallbacksTo(view)
-      it.executePostponedShellCommands(view)
+    if (oldView is TerminalPlaceholder) {
+      oldView.moveTerminationCallbacksTo(view)
+      oldView.executePostponedShellCommands(view)
     }
     Disposer.dispose(oldView)
     Disposer.register(this, view)
