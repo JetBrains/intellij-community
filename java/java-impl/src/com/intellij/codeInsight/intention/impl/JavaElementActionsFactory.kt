@@ -113,8 +113,8 @@ class JavaElementActionsFactory : JvmElementActionsFactory() {
   override fun createAddFieldActions(targetClass: JvmClass, request: CreateFieldRequest): List<IntentionAction> {
     val javaClass = targetClass.toJavaClassOrNull() ?: return emptyList()
 
-    val constantRequested = request.isConstant || javaClass.isInterface || javaClass.isRecord || request.modifiers.containsAll(
-      constantModifiers)
+    val constantRequested = request.isConstant || javaClass.isInterface || request.modifiers.containsAll(constantModifiers)
+    if (javaClass.isRecord) request.modifiers += JvmModifier.STATIC
     val result = ArrayList<IntentionAction>()
     if (canCreateEnumConstant(javaClass)) {
       result += CreateEnumConstantAction(javaClass, request)
