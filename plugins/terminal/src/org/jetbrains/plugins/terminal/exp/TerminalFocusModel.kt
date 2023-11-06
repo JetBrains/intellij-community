@@ -14,6 +14,8 @@ import java.awt.event.FocusAdapter
 import java.awt.event.FocusEvent
 import java.util.concurrent.CopyOnWriteArrayList
 import javax.swing.JComponent
+import javax.swing.JPopupMenu
+import javax.swing.MenuSelectionManager
 
 class TerminalFocusModel(private val project: Project,
                          private val blockTerminalView: BlockTerminalView,
@@ -32,7 +34,14 @@ class TerminalFocusModel(private val project: Project,
 
   init {
     val listener = AWTEventListener {
-      isActive = UIUtil.isFocusAncestor(blockTerminalView.component)
+      if (UIUtil.isFocusAncestor(blockTerminalView.component)) {
+        isActive = true  // a simple case - focused component is descendant of terminal parent component
+      }
+      else {
+        // consider active if a menu is invoked on some component inside the terminal
+        val menu = MenuSelectionManager.defaultManager().selectedPath.firstOrNull() as? JPopupMenu
+        isActive = UIUtil.isDescendingFrom(menu, blockTerminalView.component)
+      }
     }
     Toolkit.getDefaultToolkit().addAWTEventListener(listener, AWTEvent.FOCUS_EVENT_MASK)
     Disposer.register(blockTerminalView) {
