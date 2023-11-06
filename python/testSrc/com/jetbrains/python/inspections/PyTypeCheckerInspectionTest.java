@@ -1531,4 +1531,30 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
                            """)
     );
   }
+
+  // PY-61883
+  public void testTypeParameterBoundWithPEP695Syntax() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON312,
+      () -> doTestByText("""
+                           def foo[T: str](p: T):
+                               return p
+                                                      
+                           expr = foo(<warning descr="Expected type 'T', got 'int' instead">42</warning>)
+                           """)
+    );
+  }
+
+  // PY-61883
+  public void testTypeParameterConstraintsWithPEP695Syntax() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON312,
+      () -> doTestByText("""
+                           def foo[T: (str, bool)](p: T):
+                               return p
+                                                      
+                           expr = foo(<warning descr="Expected type 'T', got 'int' instead">42</warning>)
+                           """)
+    );
+  }
 }

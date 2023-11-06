@@ -3925,6 +3925,461 @@ public class PyTypingTest extends PyTestCase {
              """);
   }
 
+  // PY-61883
+  public void testSimpleGenericClassWithPEP695TypeParameterSyntax() {
+    doTest("str", """
+      class MyStack[T]:
+          def pop(self) -> T:
+              pass
+          
+      stack = MyStack[str]()
+      expr = stack.pop()
+      """);
+  }
+
+  // PY-61883
+  public void testSimpleGenericFunWithPEP695Syntax() {
+    doTest("int", """
+      def foo[T](x: T) -> T:
+        return x
+      
+      expr = foo(1)
+      """);
+  }
+
+  // PY-61883
+  public void testGenericClassParameterizedWithTypeOfConstructorArgumentWithPEP695Syntax() {
+    doTest("C[int]", """
+      class C[T]:
+          def __init__(self, x: T):
+              pass
+      
+      expr = C(10)
+      """);
+  }
+
+  // PY-61883
+  public void testGenericBaseWithPEP695SyntaxClassSpecifiedThroughAlias() {
+    doTest("int",
+           """
+             class Super[T]:
+                 pass
+        
+             Alias = Super
+
+             class Sub[T](Alias[T]):
+                 pass
+                         
+             def f[T](x: Super[T]) -> T:
+                 pass
+                         
+             arg: Sub[int]
+             expr = f(arg)
+              """);
+  }
+
+  // PY-61883
+  public void testExplicitlyParametrizedGenericClassInstanceWithPEP695Syntax() {
+    doTest("Node[int]",
+           """
+            from typing import List
+            
+            class Node[T]:
+                def __init__(self, children: List[T]):
+                    self.children = children
+            
+            
+            expr = Node[int]()""");
+  }
+
+  // PY-61883
+  public void testParameterizedWithPEP695SyntaxClassInheritance() {
+    doTest("int",
+           """
+             class B[T]:
+                 def foo(self) -> T:
+                     pass
+        
+             class C[T](B[T]):
+                 def __init__(self, x: T):
+                     pass
+
+             expr = C(10).foo()
+             """);
+  }
+
+  // PY-61883
+  public void testGenericFieldOfClassParameterizedWithNewPEP695Syntax() {
+    doTest("str",
+           """
+             class C[T]:
+                 def __init__(self, foo: T):
+                     self.foo = foo
+                          
+             def f() -> C[str]:
+                 return C('test')
+                          
+             x = f()
+             expr = x.foo
+             """);
+  }
+
+  // PY-61883
+  public void testMultiTypeExplicitlyParametrizedGenericClassInstanceWithPEP695Syntax() {
+    doTest("float",
+           """
+             class FirstType[T]: pass
+             class SecondType[V]: pass
+             class ThirdType[Z]: pass
+             class Clazz[T, V, Z](FirstType[T], SecondType[V], ThirdType[Z]):
+                 first: T
+                 second: V
+                 third: Z
+                          
+                 def __init__(self):
+                     pass
+                          
+             node = Clazz[str, int, float]()
+             expr = node.third""");
+  }
+
+  // PY-61883
+  public void testGenericUserFunctionWithManyParamsAndNestedCallWithPEP695Syntax() {
+    doTest("tuple[bool, int, LiteralString]",
+           """
+             def myid[T](x: T) -> T:
+                 pass
+                          
+             def f[T, U, V](x: T, y: U, z: V):
+                 return myid(x), myid(y), myid(z)
+                          
+             expr = f(True, 1, 'foo')
+             """);
+  }
+
+  // PY-61883
+  public void testGenericSubstitutionInDeepHierarchyWithPEP695Syntax() {
+    doTest("int",
+           """
+             class Root[T1, T2]:
+                 def m(self) -> T2:
+                     pass
+                          
+             class Base3[T1](Root[T1, int]):
+                 pass
+                          
+             class Base2[T1](Base3[T1]):
+                 pass
+                          
+             class Base1[T1](Base2[T1]):
+                 pass
+                          
+             class Sub[T1](Base1[T1]):
+                 pass
+                          
+             expr = Sub().m()
+             """);
+  }
+
+  // PY-61883
+  public void testGenericClassSpecializesInheritedParameterAndAddsNewOneWithPEP695Syntax() {
+    doTest("StrBoxWithExtra[int]",
+           """
+             class Box[T]:
+                 pass
+                          
+             class StrBoxWithExtra[T2](Box[str]):
+                 def __init__(self, extra: T2):
+                     self.extra = extra
+                          
+             expr = StrBoxWithExtra(42)""");
+  }
+
+  // PY-61883
+  public void testSimpleTypeAliasWithPEP695Syntax() {
+    doTest("str",
+           """
+             type myType = str
+             def foo() -> myType:
+                 pass
+             expr = foo()
+             """);
+  }
+
+  // PY-61883
+  public void testGenericTypeAliasForTupleWithPEP695Syntax() {
+    doTest("tuple[int, int]",
+           """
+             type Pair[T] = tuple[T, T]
+             expr: Pair[int]""");
+  }
+
+  // PY-61883
+  public void testGenericTypeAliasParameterizedInTwoStepsWithPEP695Syntax() {
+    doTest("dict[int, str]",
+           """
+             type Alias1[T1, T2] = dict[T1, T2]
+             type Alias2[T2] = Alias1[int, T2]
+             expr: Alias2[str]""");
+  }
+
+  // PY-61883
+  public void testGenericClassDefinedInAnotherFileWithPEP695Syntax() {
+    doMultiFileStubAwareTest("int",
+                             """
+                               from a import Stack
+
+                               expr = Stack[int]().pop()""");
+  }
+
+  // PY-61883
+  public void testRecursiveTypeAliasInAnotherFilePEP695Syntax() {
+    doMultiFileStubAwareTest("list | int",
+                             """
+                               from a import MyType
+
+                               expr: MyType = ...""");
+  }
+
+  // PY-61883
+  public void testTrivialRecursiveTypeAliasInAnotherFileWithPEP695Syntax() {
+    doMultiFileStubAwareTest("Any",
+                             """
+                               from a import alias
+
+                               expr: alias""");
+  }
+
+  // PY-61883
+  public void testGenericTypeAliasInAnotherFileWithPEP695Syntax() {
+    doMultiFileStubAwareTest("dict[str, int]",
+                             """
+                               from a import alias
+
+                               expr: alias[str, int]""");
+  }
+
+  // PY-61883
+  public void testGenericFunctionInAnotherFileWithPEP695Syntax() {
+    doMultiFileStubAwareTest("int",
+                             """
+                               from a import foo
+
+                               expr = foo(42)""");
+  }
+
+  // PY-61883
+  public void testGenericProtocolUnificationSameTypeVarWithPEP695Syntax() {
+    doTest("list[int]",
+           """
+             from typing import Protocol
+                          
+             class SupportsIter[T](Protocol):
+                 def __iter__(self) -> T:
+                     pass
+                          
+                          
+             def my_iter[T](x: SupportsIter[T]) -> T:
+                 pass
+                          
+                          
+             class MyList:
+                 def __iter__(self) -> list[int]:
+                     pass
+                          
+                          
+             expr = my_iter(MyList())""");
+  }
+
+  // PY-61883
+  public void testGenericProtocolUnificationSeparateTypeVarWithPEP695Syntax() {
+    doTest("list[int]",
+           """
+             from typing import Protocol
+
+             class SupportsIter[T](Protocol):
+                 def __iter__(self) -> T:
+                     pass
+
+             def my_iter[T2](x: SupportsIter[T2]) -> T2:
+                 pass
+
+             class MyList:
+                 def __iter__(self) -> list[int]:
+                     pass
+
+             expr = my_iter(MyList())""");
+  }
+
+  // PY-61883
+  public void testGenericProtocolUnificationGenericImplementationWithGenericSuperclassWithPEP695Syntax() {
+    doTest("int",
+           """
+             from typing import Protocol
+                          
+                          
+             class Fooable[T1](Protocol):
+                 def foo(self) -> T1:
+                     ...
+                          
+             class Super[T2]:
+                 def foo(self) -> T2:
+                     ...
+                          
+             class MyClass[T2](Super[T2]):
+                 pass
+                          
+             def f[T1](x: Fooable[T1]) -> T1:
+                 ...
+                          
+             obj: MyClass[int]
+             expr = f(obj)""");
+  }
+
+  // PY-61883
+  public void testGenericVariadicByCallableWithPEP695Syntax() {
+    doTest("tuple[int, str]",
+           """
+             from typing import Callable, Tuple
+                          
+             def foo[*Ts](f: Callable[[*Ts], Tuple[*Ts]]) -> Tuple[*Ts]: ...
+                          
+             def bar(a: int, b: str) -> Tuple[int, str]: ...
+                          
+             expr = foo(bar)
+             """);
+  }
+
+  // PY-61883
+  public void testGenericVariadicByCallablePrefixSuffixWithPEP695Syntax() {
+    doTest("tuple[str, str, float, int, bool]",
+           """
+             from typing import Callable, Tuple
+                          
+             def foo[T, *Ts](f: Callable[[int, *Ts, T], Tuple[T, *Ts]]) -> Tuple[str, *Ts, int, T]: ...
+                          
+             def bar(a: int, b: str, c: float, d: bool) -> Tuple[bool, str, float]: ...
+                          
+             expr = foo(bar)
+             """);
+  }
+
+  // PY-61883
+  public void testGenericVariadicClassWithPEP695Syntax() {
+    doTest("A[float, bool, list[LiteralString]]",
+           """
+             from typing import Generic, Tuple
+                          
+             class A[*Ts]:
+                 def __init__(self, value: Tuple[int, *Ts]) -> None:
+                     self.field: Tuple[int, *Ts] = value
+                          
+             tpl = (42, 1.1, True, ['42'])
+             expr = A(tpl)
+             """);
+  }
+
+  // PY-61883
+  public void testGenericVariadicClassFieldWithPEP695Syntax() {
+    doTest("tuple[int, float, bool, list[LiteralString]]",
+           """
+             from typing import Tuple
+
+             class A[*Ts]:
+                 def __init__(self, value: Tuple[int, *Ts]) -> None:
+                     self.field: Tuple[int, *Ts] = value
+
+             tpl = (42, 1.1, True, ['42'])
+             a = A(tpl)
+             expr = a.field
+             """);
+  }
+
+  // PY-61883
+  public void testGenericVariadicAndGenericClassWithPEP695Syntax() {
+    doTest("A[int | str, int | str, list[int]]",
+           """
+             from __future__ import annotations
+             from typing import Tuple
+
+
+             class A[T, *Ts, T1]:
+                 def __init__(self, t: T, tpl: Tuple[*Ts], t1: T1) -> None:
+                     ...
+
+             x: int | str
+             expr = A(x, (x,), [1])
+             """);
+  }
+
+  // PY-61883
+  public void testGenericVariadicClassMethodAddAxisPrefixWithPEP695Syntax() {
+    doTest("Array[LiteralString, int, bool]",
+           """
+             from __future__ import annotations
+             from typing import Tuple, NewType
+
+             class Array[*Shape]:
+                 def __init__(self, shape: Tuple[*Shape]):
+                     self._shape: Tuple[*Shape] = shape
+
+                 def add_axis_prefix[T](self, t: T) -> Array[T, *Shape]: ...
+
+             shape = (42, True)
+             arr: Array[int, bool] = Array(shape)
+             expr = arr.add_axis_prefix('')
+             """);
+  }
+
+  // PY-61883
+  public void testGenericVariadicStarArgsAndTypeVarsWithPEP695Syntax() {
+    doTest("tuple[LiteralString, list[int], bool, int]",
+           """
+             from typing import TypeVarTuple, Tuple, TypeVar
+
+             def args_to_tuple[T1, T2, *Ts](t1: T1, t2: T2, *args: *Tuple[T2, *Ts, float]) -> Tuple[T2, *Ts, T1]: ...
+
+             expr = args_to_tuple(1, 'a', 'a', [1], True, 3.3)
+             """);
+  }
+
+  // PY-61883
+  public void testTypeAliasStatementTypeNotInterpretedAsAssignedTypeOutsideOfTypeHint() {
+    doTest("Any",
+           """
+             type myType = str
+             expr = myType
+             """);
+  }
+
+  // PY-61883
+  public void testTypeParameterTypeIsTypingTypeVar() {
+    doTest("TypeVar",
+           """
+             def foo[T]():
+                expr = T
+             """);
+  }
+
+  // PY-61883
+  public void testTypeParameterTypeIsTypingParamSpec() {
+    doTest("ParamSpec",
+           """
+             def foo[**P]():
+                expr = P
+             """);
+  }
+
+  // PY-61883
+  public void testTypeParameterTypeIsTypingTypeVarTuple() {
+    doTest("TypeVarTuple",
+           """
+             def foo[*Ts]():
+                expr = Ts
+             """);
+  }
+
+
   private void doTestNoInjectedText(@NotNull String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final InjectedLanguageManager languageManager = InjectedLanguageManager.getInstance(myFixture.getProject());

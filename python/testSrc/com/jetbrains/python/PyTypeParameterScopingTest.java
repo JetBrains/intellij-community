@@ -420,6 +420,78 @@ public class PyTypeParameterScopingTest extends PyTestCase {
                                """);
   }
 
+  // PY-61883
+  public void testFunctionDeclaresOwnTypeVarWithPEP695Syntax() {
+    assertTypeParameterOwner("func", "func",
+                             """
+                               def func[T](x) -> T:
+                                   pass
+                               """
+    );
+  }
+
+  // PY-61883
+  public void testMethodUsesTypeVarOfItsClassInAnnotationWithPEP695Syntax() {
+    assertTypeParameterOwner("C.m", "C",
+                             """
+                               class C[T]:
+                                   def m(self, x: T) -> T:
+                                       pass
+                               """
+    );
+  }
+
+  // PY-61883
+  public void testMethodDeclaresOwnTypeVarWithPEP695Syntax() {
+    assertTypeParameterOwner("C.m", "C.m",
+                             """
+                               class C[T]:
+                                   def m[V](self, x: V) -> V:
+                                       pass
+                               """);
+  }
+
+  // PY-61883
+  public void testInstanceAttributeUsesTypeVarOfItsClassWithPEP695Syntax() {
+    assertTypeParameterOwner("C.attr", "C",
+                             """
+                               class C[T]:
+                                   def __init__(self):
+                                       self.attr: T = ...
+                               """);
+  }
+
+  // PY-61883
+  public void testClassDeclaresOwnParamSpecWithPEP695Syntax() {
+    assertTypeParameterOwner("C", "C",
+                             """                       
+                               class C[**P]:
+                                   ...
+                               """);
+  }
+
+  // PY-61883
+  public void testFunctionUsesTypeVarOfEnclosingFunctionWithPEP695Syntax() {
+    assertTypeParameterOwner("dec.g", "dec",
+                             """
+                               def dec[T](x: T):
+                                   def g(func) -> T:
+                                       ...
+                                   return g
+                               """);
+  }
+
+  // PY-61883
+  public void testFunctionUsesTypeVarOfEnclosingMethodClassWithPEP695Syntax() {
+    assertTypeParameterOwner("C.method.f", "C",
+                             """
+                               class C[T]:
+                                   def method(self, x: T) -> None:
+                                       def f() -> T:
+                                           ...
+                               """);
+  }
+
   private void assertTypeParameterOwner(@NotNull String elementQName, @NotNull String scopeOwnerQName, @NotNull String text) {
     VirtualFile virtualFile;
     try {
