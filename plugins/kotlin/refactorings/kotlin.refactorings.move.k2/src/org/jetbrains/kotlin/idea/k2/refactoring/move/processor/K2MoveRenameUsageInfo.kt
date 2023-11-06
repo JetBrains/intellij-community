@@ -150,7 +150,7 @@ sealed class K2MoveRenameUsageInfo(
               val declSymbol = ref.resolveToSymbol() as? KtDeclarationSymbol? ?: return@forEachDescendantOfType
               val declPsi = declSymbol.psi as? KtNamedDeclaration ?: return@forEachDescendantOfType
               if (!declSymbol.isImported(refExpr.containingKtFile) && refExpr.isImportable() && declPsi.needsReferenceUpdate) {
-                val usageInfo = ref.createUsageInfo(declPsi)
+                val usageInfo = ref.createKotlinUsageInfo(declPsi)
                 usages.add(usageInfo)
               }
             }
@@ -166,7 +166,7 @@ sealed class K2MoveRenameUsageInfo(
                 .filter { !declaration.isAncestor(it.element) } // exclude internal usages
                 .mapNotNull { ref ->
                     if (ref is KtReference) {
-                        ref.createUsageInfo(declaration)
+                        ref.createKotlinUsageInfo(declaration)
                     } else {
                         val lightElements = declaration.toLightElements()
                         val lightElement = if (lightElements.size == 1) {
@@ -210,7 +210,7 @@ sealed class K2MoveRenameUsageInfo(
             return parent.selectorExpression != baseExpression // check if this expression is first in qualified chain
         }
 
-        private fun KtReference.createUsageInfo(declaration: KtNamedDeclaration): K2MoveRenameUsageInfo {
+        private fun KtReference.createKotlinUsageInfo(declaration: KtNamedDeclaration): K2MoveRenameUsageInfo {
             val refExpr = element
             return if (refExpr is KtSimpleNameExpression && refExpr.isUnqualifiable()) {
                 Unqualifiable(refExpr, this, declaration)
