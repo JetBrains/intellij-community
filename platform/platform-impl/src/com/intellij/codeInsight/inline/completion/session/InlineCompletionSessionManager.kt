@@ -84,8 +84,8 @@ internal abstract class InlineCompletionSessionManager {
         }
         updatedResult ?: UpdateSessionResult.Invalidated
       }
-      is InlineCompletionEvent.InlineLookupEvent -> UpdateSessionResult.Same
-      else -> UpdateSessionResult.Invalidated
+      // If a provider didn't decide to restart on [request], then this event should not disturb the provider
+      else -> UpdateSessionResult.Same
     }
   }
 
