@@ -3017,6 +3017,37 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
     assertEquals("(Object paramName)", presentation.getTailText());
   }
 
+  @NeedsIndex.Full
+  public void testResolveToSubclassMethod2() {
+    myFixture.configureByText("Test.java", """
+      public final class Complete {
+        public static void main(String[] args) {
+          SubClass instance;
+          instance.<caret>
+        }
+      
+        static class SuperClass<T> {
+          public List<? extends Object> list(String param) {
+            return null;
+          }
+        }
+      
+        static class SubClass extends SuperClass<String> {
+          @Override
+          public List<String> list(String paramName) {
+            return null;
+          }
+        }
+      }""");
+    LookupElement[] elements = myFixture.completeBasic();
+    assertNotNull(elements);
+    LookupElement listElement = StreamEx.of(elements).collect(MoreCollectors.onlyOne(e -> e.getLookupString().equals("list"))).orElseThrow();
+    LookupElementPresentation presentation = new LookupElementPresentation();
+    listElement.renderElement(presentation);
+    assertEquals("(String paramName)", presentation.getTailText());
+    assertEquals("List<String>", presentation.getTypeText());
+  }
+
   @NeedsIndex.ForStandardLibrary
   public void testCompleteUnnamed() {
     myFixture.configureByText("Test.java", """
