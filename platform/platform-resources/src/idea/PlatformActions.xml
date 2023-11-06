@@ -415,8 +415,6 @@
                 icon="AllIcons.Diff.Compare4RightBottom"/>
       </group>
 
-      <action id="CompareDirs" class="com.intellij.diff.actions.CompareFilesAction" use-shortcut-of="CompareTwoFiles"/>
-
       <separator/>
       <add-to-group group-id="Vcs.KeymapGroup"/>
     </group>
