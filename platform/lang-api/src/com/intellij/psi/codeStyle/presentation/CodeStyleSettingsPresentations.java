@@ -335,7 +335,10 @@ final class CodeStyleSettingsPresentations {
       new CodeStyleSettingPresentation("WHILE_ON_NEW_LINE", ApplicationBundle.message("wrapping.while.on.new.line"))
     ));
 
-    result.put(new CodeStyleSettingPresentation.SettingsGroup(customizableOptions.WRAPPING_SWITCH_STATEMENT), List.of(
+    putGroupTop(result, "SWITCH_EXPRESSIONS_WRAP", customizableOptions.WRAPPING_SWITCH_EXPRESSION, WRAP_VALUES,
+                customizableOptions.WRAP_OPTIONS);
+
+    result.put(new CodeStyleSettingPresentation.SettingsGroup(customizableOptions.WRAPPING_SWITCH_EXPRESSION), List.of(
       new CodeStyleSettingPresentation("INDENT_CASE_FROM_SWITCH", ApplicationBundle.message("wrapping.indent.case.from.switch")),
       new CodeStyleSettingPresentation("INDENT_BREAK_FROM_CASE", ApplicationBundle.message("wrapping.indent.break.from.case")),
       new CodeStyleSettingPresentation("CASE_STATEMENT_ON_NEW_LINE", ApplicationBundle.message("wrapping.case.statements.on.one.line"))

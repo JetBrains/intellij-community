@@ -632,6 +632,11 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
         Block block = createJavaBlock(child, mySettings, myJavaSettings, childIndent, wrap, alignmentStrategy, myFormattingMode);
         result.add(block);
       }
+      else if (nodeType == JavaElementType.CASE_LABEL_ELEMENT_LIST) {
+        Wrap wrap = Wrap.createWrap(getWrapType(mySettings.SWITCH_EXPRESSIONS_WRAP), false);
+        WrappingStrategy wrapStrategy = WrappingStrategy.createDoNotWrapCommaStrategy(wrap);
+        child = processSwitchExpression(result, child, wrapStrategy);
+      }
       else {
         Alignment alignment = alignmentStrategy.getAlignment(childType);
 
@@ -761,6 +766,22 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
       }
       return lastFieldInGroup;
     }
+  }
+
+  @Nullable
+  private ASTNode processSwitchExpression(@NotNull final List<? super Block> result,
+                                          ASTNode child,
+                                          WrappingStrategy wrappingStrategy) {
+    AlignmentStrategy alignmentStrategy = AlignmentStrategy.wrap(createAlignment(true, null), JavaTokenType.COMMA);
+    while (child != null) {
+      if (!FormatterUtil.containsWhiteSpacesOnly(child) && child.getTextLength() > 0) {
+        result.add(createJavaBlock(child, mySettings, myJavaSettings, Indent.getNoneIndent(),
+                                   wrappingStrategy.getWrap(child.getElementType()), alignmentStrategy,
+                                   myFormattingMode));
+      }
+      child = child.getTreeNext();
+    }
+    return child;
   }
 
   @Nullable

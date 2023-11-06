@@ -174,7 +174,7 @@ class KotlinLanguageCodeStyleSettingsProvider : LanguageCodeStyleSettingsProvide
                 )
 
                 consumer.renameStandardOption(
-                    codeStyleSettingsCustomizableOptions.WRAPPING_SWITCH_STATEMENT,
+                    codeStyleSettingsCustomizableOptions.WRAPPING_SWITCH_EXPRESSION,
                     KotlinBundle.message("formatter.title.when.statements")
                 )
 
@@ -195,13 +195,13 @@ class KotlinLanguageCodeStyleSettingsProvider : LanguageCodeStyleSettingsProvide
                 showCustomOption(
                     KotlinCodeStyleSettings::ALIGN_IN_COLUMNS_CASE_BRANCH,
                     KotlinBundle.message("formatter.title.align.when.branches.in.columns"),
-                    codeStyleSettingsCustomizableOptions.WRAPPING_SWITCH_STATEMENT
+                    codeStyleSettingsCustomizableOptions.WRAPPING_SWITCH_EXPRESSION
                 )
 
                 showCustomOption(
                     KotlinCodeStyleSettings::LINE_BREAK_AFTER_MULTILINE_WHEN_ENTRY,
                     KotlinBundle.message("formatter.title.line.break.after.multiline.when.entry"),
-                    codeStyleSettingsCustomizableOptions.WRAPPING_SWITCH_STATEMENT
+                    codeStyleSettingsCustomizableOptions.WRAPPING_SWITCH_EXPRESSION
                 )
 
                 showCustomOption(

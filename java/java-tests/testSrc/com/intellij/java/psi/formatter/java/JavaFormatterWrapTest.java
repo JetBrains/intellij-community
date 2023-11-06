@@ -1238,4 +1238,67 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
         }"""
     );
   }
+
+  public void testCaseLabelElementListEnum() {
+    getSettings().RIGHT_MARGIN = 50;
+    getSettings().SWITCH_EXPRESSIONS_WRAP = CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM;
+    doClassTest("""
+          boolean isWeekend(DayOfWeek day) {
+                return switch (day) {
+                    case MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY -> false;
+                    case SATURDAY, SUNDAY -> true;
+                };
+          }""", """
+          boolean isWeekend(DayOfWeek day) {
+              return switch (day) {
+                  case MONDAY,
+                       TUESDAY,
+                       WEDNESDAY,
+                       THURSDAY,
+                       FRIDAY -> false;
+                  case SATURDAY, SUNDAY -> true;
+              };
+          }""");
+  }
+
+  public void testCaseLabelElementListConditionalExpression() {
+    getSettings().RIGHT_MARGIN = 30;
+    getSettings().SWITCH_EXPRESSIONS_WRAP = CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM;
+    doClassTest("""
+          boolean isMagicNumber(Integer b) {
+              return switch (b) {     // Exhaustive!
+                  case true ? 10 : 20, false ? 11 : 12 -> true;
+                  default -> false;
+              };
+          }""", """
+          boolean isMagicNumber(Integer b) {
+              return switch (b) {     // Exhaustive!
+                  case true ? 10 : 20,
+                       false ? 11 : 12 ->
+                          true;
+                  default -> false;
+              };
+          }""");
+  }
+
+  public void testCaseLabelElementListNumbers() {
+    getSettings().RIGHT_MARGIN = 30;
+    getSettings().SWITCH_EXPRESSIONS_WRAP = CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM;
+    doClassTest("""
+          int getMagicNumber(Integer b) {
+              return switch (b) {     // Exhaustive!
+                  case 10, 100, 1000, 10000 -> 1;
+                  default -> -1;
+              };
+          }""", """
+          int getMagicNumber(Integer b) {
+              return switch (b) {     // Exhaustive!
+                  case 10,
+                       100,
+                       1000,
+                       10000 -> 1;
+                  default -> -1;
+              };
+          }""");
+  }
 }
