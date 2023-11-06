@@ -12,8 +12,10 @@ import com.intellij.ide.lightEdit.LightEditService
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginManagerMain
 import com.intellij.internal.inspector.UiInspectorAction
+import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
+import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.components.serviceAsync
@@ -244,13 +246,14 @@ private fun CoroutineScope.postOpenUiTasks() {
 }
 
 private suspend fun reportPluginErrors() {
-  val pluginErrors = PluginManagerCore.getAndClearPluginLoadingErrors()
+  val pluginErrors = PluginManagerCore.getAndClearPluginLoadingErrors().toMutableList()
   if (pluginErrors.isEmpty()) {
     return
   }
 
   withContext(Dispatchers.EDT + ModalityState.nonModal().asContextElement()) {
     val title = IdeBundle.message("title.plugin.error")
+    val actions = linksToActions(pluginErrors)
     val content = HtmlBuilder().appendWithSeparators(HtmlChunk.p(), pluginErrors).toString()
     @Suppress("DEPRECATION")
     NotificationGroupManager.getInstance().getNotificationGroup(
@@ -259,6 +262,34 @@ private suspend fun reportPluginErrors() {
         notification.expire()
         PluginManagerMain.onEvent(event.description)
       }
+      .addActions(actions)
       .notify(null)
   }
+}
+
+private fun linksToActions(errors: MutableList<HtmlChunk>): Collection<AnAction> {
+  val link = "<a href=\""
+  val actions = ArrayList<AnAction>()
+
+  while (!errors.isEmpty()) {
+    val builder = StringBuilder()
+    errors[errors.lastIndex].appendTo(builder)
+    val error = builder.toString()
+
+    if (error.startsWith(link)) {
+      val descriptionEnd = error.indexOf('"', link.length)
+      val description = error.substring(link.length, descriptionEnd)
+      val text = error.substring(descriptionEnd + 2, error.lastIndexOf("</a>"))
+      errors.removeAt(errors.lastIndex)
+
+      actions.add(NotificationAction.createSimpleExpiring(text) {
+        PluginManagerMain.onEvent(description)
+      })
+    }
+    else {
+      break
+    }
+  }
+
+  return actions
 }
