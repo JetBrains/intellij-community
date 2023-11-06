@@ -11,6 +11,7 @@ import com.intellij.util.MathUtil
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.plugins.terminal.exp.TerminalFocusModel.TerminalFocusListener
 import org.jetbrains.plugins.terminal.exp.TerminalSelectionModel.TerminalSelectionListener
+import java.awt.event.MouseEvent
 import javax.swing.SwingUtilities
 import kotlin.math.min
 
@@ -27,6 +28,8 @@ class TerminalSelectionController(
 
   private val textSelectionModel: SelectionModel
     get() = outputModel.editor.selectionModel
+
+  private var rangeSelectionInitialIndex: Int? = null
 
   init {
     outputModel.editor.addEditorMouseListener(this)
@@ -64,11 +67,10 @@ class TerminalSelectionController(
     val newIndex = if (isBelow) curIndex + 1 else curIndex - 1
     if (newIndex in (0 until outputModel.getBlocksSize())) {
       val newBlock = outputModel.getByIndex(newIndex)
-      selectionModel.selectedBlocks = when {
-        dropCurrentSelection -> listOf(newBlock)
-        selectedBlocks.contains(newBlock) -> selectedBlocks - primaryBlock  // selection is decreasing
-        else -> selectedBlocks + newBlock
+      if (dropCurrentSelection) {
+        selectionModel.selectedBlocks = listOf(newBlock)
       }
+      else selectBlockRange(newBlock)
       makeBlockVisible(newBlock)
     }
     else if (isBelow) {
@@ -104,17 +106,20 @@ class TerminalSelectionController(
   }
 
   override fun mousePressed(event: EditorMouseEvent) {
-    if (!SwingUtilities.isRightMouseButton(event.mouseEvent)) {
-      return
+    if (event.mouseEvent.isSelectBlockRange) {
+      // consume the event if only shift pressed to not select the text in the editor
+      event.consume()
     }
-    val block = getBlockUnderMouse(event)
-    if (block != null) {
+    val block = getBlockUnderMouse(event) ?: return
+    if (SwingUtilities.isRightMouseButton(event.mouseEvent)) {
       val insideTextSelection = textSelectionModel.let { event.offset in (it.selectionStart..it.selectionEnd) }
       if (!selectionModel.selectedBlocks.contains(block) && !insideTextSelection) {
         selectionModel.selectedBlocks = listOf(block)
       }
     }
-    else clearSelection()
+    else if (event.mouseEvent.isSelectBlockRange) {
+      selectBlockRange(block)
+    }
   }
 
   override fun selectionChanged(oldSelection: List<CommandBlock>, newSelection: List<CommandBlock>) {
@@ -124,6 +129,37 @@ class TerminalSelectionController(
     }
     else if (!textSelectionModel.hasSelection()) {
       focusModel.focusPrompt()
+    }
+    rangeSelectionInitialIndex = null
+  }
+
+  /**
+   * Selects the range of blocks like it is done with pressed Shift in UI container components (List, Tree).
+   * 1. From [primarySelection] to [targetBlock] initially
+   * 2. From [rangeSelectionInitialIndex] to [targetBlock] for the next subsequent invocations
+   */
+  private fun selectBlockRange(targetBlock: CommandBlock) {
+    val primaryBlock = primarySelection
+    if (primaryBlock == null) {
+      selectionModel.selectedBlocks = listOf(targetBlock)
+      return
+    }
+    val curBlockIndex = outputModel.getIndexOfBlock(primaryBlock)
+    val initialBlockIndex = rangeSelectionInitialIndex ?: curBlockIndex
+    val newBlockIndex = outputModel.getIndexOfBlock(targetBlock)
+    if (curBlockIndex != -1 && newBlockIndex != -1) {
+      val indexRange = if (initialBlockIndex <= newBlockIndex) {
+        initialBlockIndex..newBlockIndex
+      }
+      else initialBlockIndex downTo newBlockIndex
+      selectionModel.selectedBlocks = indexRange.map {
+        outputModel.getByIndex(it)
+      }
+      // assign it after selected blocks change, because this index is reset in the process of change
+      rangeSelectionInitialIndex = initialBlockIndex
+    }
+    else {
+      selectionModel.selectedBlocks = listOf(targetBlock)
     }
   }
 
@@ -158,5 +194,8 @@ class TerminalSelectionController(
 
   companion object {
     val KEY: DataKey<TerminalSelectionController> = DataKey.create("TerminalSelectionController")
+
+    private val MouseEvent.isSelectBlockRange: Boolean
+      get() = isShiftDown && !isControlDown && !isAltDown && !isMetaDown
   }
 }
