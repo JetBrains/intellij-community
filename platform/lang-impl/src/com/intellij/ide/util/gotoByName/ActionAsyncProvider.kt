@@ -15,7 +15,8 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl
 import com.intellij.openapi.actionSystem.impl.Utils.runUpdateSessionForActionSearch
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.getOrLogException
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.util.registry.Registry
@@ -30,7 +31,7 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.function.Consumer
 import java.util.function.Predicate
 
-private val LOG = Logger.getInstance(ActionAsyncProvider::class.java)
+private val LOG = logger<ActionAsyncProvider>()
 
 private const val DEFAULT_CHANNEL_CAPACITY = 30
 
@@ -90,7 +91,10 @@ class ActionAsyncProvider(private val myModel: GotoActionModel) {
   }
 
   private suspend fun <T> collectAndSort(flow: Flow<T>, comparator: Comparator<in T>): List<T> {
-    val list = flow.toSet().toMutableList()
+    val list = flow
+      .catch { e -> LOG.error("Error while collecting actions.", e) }
+      .toSet()
+      .toMutableList()
     list.sortWith(comparator)
     return list
   }
@@ -152,11 +156,13 @@ class ActionAsyncProvider(private val myModel: GotoActionModel) {
     val additionalActionsFlow = myModel.dataContext.getData(QuickActionProvider.KEY)?.getActions(true)?.asFlow() ?: emptyFlow<AnAction>()
 
     val actionsWithWeightsFlow = merge(fromIdsFlow, additionalActionsFlow).transform {
-      val mode = myModel.actionMatches(pattern, matcher, it)
-      if (mode != MatchMode.NONE) {
-        val weight = calcElementWeight(it, pattern, weightMatcher)
-        emit(MatchedAction(it, mode, weight))
-      }
+      runCatching {
+        val mode = myModel.actionMatches(pattern, matcher, it)
+        if (mode != MatchMode.NONE) {
+          val weight = calcElementWeight(it, pattern, weightMatcher)
+          emit(MatchedAction(it, mode, weight))
+        }
+      }.getOrLogException(LOG)
     }
 
     val comparator = Comparator.comparing<MatchedAction, Int> { it.weight ?: 0 }.reversed()
@@ -190,14 +196,18 @@ class ActionAsyncProvider(private val myModel: GotoActionModel) {
         if (action is ActionGroup && !action.isSearchable) return@mapNotNull null
         action
       }
-      .filter { (it is ActionStubBase) && myModel.actionMatches(pattern, matcher, it) == MatchMode.NONE }
+      .filter {
+        runCatching { (it is ActionStubBase) && myModel.actionMatches(pattern, matcher, it) == MatchMode.NONE }.getOrLogException(LOG) == true
+      }
       .transform {
-        val action = myActionManager.getAction((it as ActionStubBase).id)
-        val mode = myModel.actionMatches(pattern, matcher, action)
-        if (mode != MatchMode.NONE) {
-          val weight = calcElementWeight(action, pattern, weightMatcher)
-          emit(MatchedAction(action, mode, weight))
-        }
+        runCatching {
+          val action = myActionManager.getAction((it as ActionStubBase).id)
+          val mode = myModel.actionMatches(pattern, matcher, action)
+          if (mode != MatchMode.NONE) {
+            val weight = calcElementWeight(action, pattern, weightMatcher)
+            emit(MatchedAction(action, mode, weight))
+          }
+        }.getOrLogException(LOG)
       }
       .map {
         val presentation = presentationProvider(it.action)
