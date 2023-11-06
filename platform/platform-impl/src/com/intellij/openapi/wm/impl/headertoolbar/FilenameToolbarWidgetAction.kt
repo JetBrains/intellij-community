@@ -3,6 +3,7 @@ package com.intellij.openapi.wm.impl.headertoolbar
 
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.ui.UISettings
+import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -17,6 +18,8 @@ import com.intellij.openapi.fileEditor.impl.EditorHistoryManager.Companion.getIn
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.openapi.ui.popup.JBPopupListener
+import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep
 import com.intellij.openapi.util.IconLoader
@@ -27,16 +30,16 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.FileStatusManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.VfsPresentationUtil
-import com.intellij.ui.ClickListener
+import com.intellij.openapi.wm.impl.ExpandableComboAction.MyPopupModel
+import com.intellij.openapi.wm.impl.ToolbarComboButton
+import com.intellij.openapi.wm.impl.ToolbarComboButtonModel
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.JBColor
-import com.intellij.ui.components.JBLabel
 import com.intellij.util.IconUtil
 import com.intellij.util.messages.SimpleMessageBusConnection
-import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import java.awt.Color
-import java.awt.Cursor
+import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import javax.swing.Icon
 import javax.swing.JComponent
@@ -83,55 +86,56 @@ class FilenameToolbarWidgetAction: DumbAwareAction(), CustomComponentAction {
     presentation.isEnabledAndVisible = true
     presentation.putClientProperty(FILE_COLOR, fg)
     presentation.putClientProperty(FILE_FULL_PATH, if (UISettings.getInstance().fullPathsInWindowHeader) file.path else null)
-    presentation.description = StringUtil.shortenTextWithEllipsis(filename, 60, 30)
+    presentation.text = StringUtil.shortenTextWithEllipsis(filename, 60, 30)
+    presentation.description = ActionsBundle.message("action.main.toolbar.Filename.tooltip.text", presentation.text)
     presentation.icon = icon
   }
 
   @Suppress("UseJBColor")
   private fun isDarkToolbar() = ColorUtil.isDark(JBColor.namedColor("MainToolbar.background", Color.WHITE))
 
-  override fun createCustomComponent(presentation: Presentation, place: String): JBLabel = FilenameToolbarWidget()
+  override fun createCustomComponent(presentation: Presentation, place: String): JComponent = FilenameToolbarWidget(MyPopupModel())
 
   override fun updateCustomComponent(component: JComponent, presentation: Presentation) {
     (component as FilenameToolbarWidget).update(presentation)
   }
 
-  private inner class FilenameToolbarWidget : JBLabel() {
+  private inner class FilenameToolbarWidget(model: ToolbarComboButtonModel) : ToolbarComboButton(model) {
 
     private var messageBusConnection: SimpleMessageBusConnection? = null
 
     init {
       isOpaque = false
-      cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
-      object : ClickListener() {
-        override fun onClick(event: MouseEvent, clickCount: Int): Boolean {
-          if (UIUtil.isCloseClick(event, MouseEvent.MOUSE_RELEASED)) {
+      addMouseListener(object : MouseAdapter() {
+        override fun mouseClicked(e: MouseEvent) {
+          if (e.clickCount == 1 && e.button == MouseEvent.BUTTON1) {
+            showRecentFilesPopup(this@FilenameToolbarWidget)
+          }
+        }
+
+        override fun mouseReleased(e: MouseEvent) {
+          if (UIUtil.isCloseClick(e, MouseEvent.MOUSE_RELEASED)) {
             val project = ProjectUtil.getProjectForComponent(this@FilenameToolbarWidget)
             if (project != null) {
               val files = FileEditorManager.getInstance(project).selectedFiles
               if (files.isNotEmpty()) {
                 FileEditorManager.getInstance(project).closeFile(files[0])
-                return true
+                return
               }
             }
           }
-          if (clickCount == 1) {
-            showRecentFilesPopup(this@FilenameToolbarWidget)
-            return true
-          }
-          return false
         }
-      }.installOn(this)
+      })
     }
 
     fun update(presentation: Presentation) {
       @Suppress("HardCodedStringLiteral")
       val path = presentation.getClientProperty(FILE_FULL_PATH)
       isOpaque = false
-      iconTextGap = JBUI.scale(4)
-      icon = presentation.icon
+      leftIcons = listOf(presentation.icon)
       foreground = presentation.getClientProperty(FILE_COLOR)
-      text = presentation.description
+      text = presentation.text
+      toolTipText = presentation.description
       if (text.isNullOrEmpty()) {
         // A trick to avoid flashing the "unknown" icon on the toolbar during initialization,
         // as the action system goes out of its way to make the action visible until the first update.
@@ -142,6 +146,11 @@ class FilenameToolbarWidgetAction: DumbAwareAction(), CustomComponentAction {
         @Suppress("HardCodedStringLiteral")
         text = "<html><body>$text <font color='$htmlColor'>[$path]</font></body></html>"
       }
+    }
+
+    override fun updateUI() {
+      super.updateUI()
+      hoverBackground = JBColor.namedColor("MainToolbar.Dropdown.background", JBColor.foreground())
     }
 
     override fun addNotify() {
@@ -172,11 +181,23 @@ class FilenameToolbarWidgetAction: DumbAwareAction(), CustomComponentAction {
       val recentFiles = getInstance(project).fileList.asReversed()
       if (recentFiles.size > 1) {
         val files = recentFiles.subList(1, recentFiles.lastIndex + 1)
-        JBPopupFactory.getInstance().createListPopup(RecentFilesListPopupStep(project, files))
-          .showUnderneathOf(component)
+        val popup = JBPopupFactory.getInstance().createListPopup(RecentFilesListPopupStep(project, files))
+        if (component is FilenameToolbarWidget) {
+          popup.addListener(object : JBPopupListener {
+            override fun beforeShown(event: LightweightWindowEvent) {
+              (component.model as? MyPopupModel)?.isPopupShown = true
+            }
+
+            override fun onClosed(event: LightweightWindowEvent) {
+              (component.model as? MyPopupModel)?.isPopupShown = false
+            }
+          })
+        }
+        popup.showUnderneathOf(component)
       }
     }
   }
+
   class RecentFilesListPopupStep(val project: Project, files: List<VirtualFile>) : BaseListPopupStep<VirtualFile>(null, files) {
     override fun getIconFor(value: VirtualFile?): Icon? {
       if (value == null) return null
