@@ -32,13 +32,17 @@ internal fun InlineCompletionTooltipComponent.shortcutActions(): ActionButtonWit
     "Shift →" to KeyboardShortcut.fromString("shift pressed RIGHT"),
   )
 
-  val actions = arrayOf<AnAction>(
+  val customCurrentShortcut = KeymapUtil.getPrimaryShortcut(IdeActions.ACTION_INSERT_INLINE_COMPLETION)
+    .takeIf { predefinedShortcuts.find { (_, shortcut) -> shortcut.toString() == it.toString() } == null }
+
+  val actions = listOfNotNull<AnAction>(
     Separator.create(IdeBundle.message("inline.completion.tooltip.shortcuts.header")),
+    customCurrentShortcut?.let { InplaceChangeInlineCompletionShortcutAction(KeymapUtil.getShortcutText(it), it) },
     *predefinedShortcuts.map2Array { (name, shortcut) -> InplaceChangeInlineCompletionShortcutAction(name, shortcut) },
     ChangeToCustomInlineCompletionAction(),
   )
 
-  val group = InlineCompletionPopupActionGroup(actions)
+  val group = InlineCompletionPopupActionGroup(actions.toTypedArray())
 
   return object : ActionButtonWithText(group, group.templatePresentation.clone(), ActionPlaces.UNKNOWN, JBUI.emptySize()) {
     override fun getMargins() = JBUI.insets(1, 2)
