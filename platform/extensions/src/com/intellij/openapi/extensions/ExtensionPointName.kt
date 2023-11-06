@@ -96,12 +96,6 @@ class ExtensionPointName<T : Any>(name: @NonNls String) : BaseExtensionPointName
   @Obsolete
   fun getExtensions(areaInstance: AreaInstance?): Array<T> = getPointImpl(areaInstance).extensions
 
-  @Deprecated("Use app-level app extension point.", level = DeprecationLevel.ERROR)
-  fun extensions(areaInstance: AreaInstance?): Stream<T> {
-    @Suppress("SSBasedInspection")
-    return getPointImpl(areaInstance).extensionList.stream()
-  }
-
   @Deprecated("Do not use project-level or module-level extensions.")
   fun getPoint(areaInstance: AreaInstance?): ExtensionPoint<T> = getPointImpl(areaInstance)
 
@@ -109,15 +103,15 @@ class ExtensionPointName<T : Any>(name: @NonNls String) : BaseExtensionPointName
     get() = getPointImpl(null)
 
   fun <V : T> findExtension(instanceOf: Class<V>): V? {
-    return getPointImpl(null).findExtension(instanceOf, false, ThreeState.UNSURE)
+    return getPointImpl(null).findExtension(aClass = instanceOf, isRequired = false, strictMatch = ThreeState.UNSURE)
   }
 
   fun <V : T> findExtensionOrFail(exactClass: Class<V>): V {
-    return getPointImpl(null).findExtension(exactClass, true, ThreeState.UNSURE)!!
+    return getPointImpl(null).findExtension(aClass = exactClass, isRequired = true, strictMatch = ThreeState.UNSURE)!!
   }
 
   fun <V : T> findFirstAssignableExtension(instanceOf: Class<V>): V? {
-    return getPointImpl(null).findExtension(instanceOf, true, ThreeState.NO)
+    return getPointImpl(null).findExtension(aClass = instanceOf, isRequired = true, strictMatch = ThreeState.NO)
   }
 
   /**
