@@ -1,112 +1,117 @@
 [
   {
-    "vsCodeId": "emilast.LogFileHighlighter",
     "ideaName": "Ideolog",
-    "ideaId": "com.intellij.ideolog"
+    "ideaId": "com.intellij.ideolog",
+    "vsCodeId": "emilast.LogFileHighlighter"
   },
   {
-    "vsCodeId": "vscodevim.vim",
     "ideaName": "IdeaVIM",
-    "ideaId": "IdeaVIM"
+    "ideaId": "IdeaVIM",
+    "vsCodeId": "vscodevim.vim"
   },
   {
-    "vsCodeId": "ms-vscode.node-debug2",
+    "builtIn": true,
     "ideaName": "NodeJS support",
-    "builtIn": true
+    "vsCodeId": "ms-vscode.node-debug2"
   },
   {
-    "vsCodeId": "donjayamanne.githistory",
+    "builtIn": true,
     "ideaName": "Git",
-    "builtIn": true
+    "vsCodeId": "donjayamanne.githistory"
   },
   {
-    "vsCodeId": "eamodio.gitlens",
+    "builtIn": true,
     "ideaName": "Git",
-    "builtIn": true
+    "vsCodeId": "eamodio.gitlens"
   },
   {
-    "vsCodeId": "waderyan.gitblame",
+    "builtIn": true,
     "ideaName": "Git",
-    "builtIn": true
+    "vsCodeId": "waderyan.gitblame"
   },
   {
-    "vsCodeId": "mhutchie.git-graph",
+    "builtIn": true,
     "ideaName": "Git",
-    "builtIn": true
+    "vsCodeId": "mhutchie.git-graph"
   },
   {
-    "vsCodeId": "ritwickdey.LiveServer",
+    "builtIn": true,
     "ideaName": "Web support",
-    "builtIn": true
+    "vsCodeId": "ritwickdey.LiveServer"
   },
   {
-    "vsCodeId": "ms-azuretools.vscode-docker",
+    "builtIn": true,
     "ideaName": "Docker",
-    "builtIn": true
+    "vsCodeId": "ms-azuretools.vscode-docker"
   },
   {
-    "vsCodeId": "xinyayang0506.log-analysis",
+    "builtIn": true,
+    "ideaName": "GitHub",
+    "vsCodeId": "github.vscode-pull-request-github"
+  },
+  {
+    "builtIn": true,
+    "ideaName": "GitLab",
+    "vsCodeId": "gitLab.gitlab-workflow"
+  },
+  {
     "ideaName": "Ideolog",
-    "ideaId": "com.intellij.ideolog"
+    "ideaId": "com.intellij.ideolog",
+    "vsCodeId": "xinyayang0506.log-analysis"
   },
   {
-    "vsCodeId": "msveden.teamcity-checker",
     "ideaName": "JetBrains TeamCity Plugin",
-    "ideaId": "TeamCity"
+    "ideaId": "TeamCity",
+    "vsCodeId": "msveden.teamcity-checker"
   },
   {
-    "vsCodeId": "ms-vscode-remote.remote-wsl",
+    "builtIn": true,
     "ideaName": "WSL",
-    "builtIn": true
+    "vsCodeId": "ms-vscode-remote.remote-wsl"
   },
   {
-    "vsCodeId": "bungcip.better-toml",
+    "builtIn": true,
     "ideaName": "TOML",
-    "builtIn": true
+    "vsCodeId": "bungcip.better-toml"
   },
   {
-    "vsCodeId": "ms-ceintl.vscode-language-pack-zh-hans",
     "ideaName": "Chinese (Simplified) Language Pack / 中文语言包",
-    "ideaId": "com.intellij.zh"
+    "ideaId": "com.intellij.zh",
+    "vsCodeId": "ms-ceintl.vscode-language-pack-zh-hans"
   },
   {
-    "vsCodeId": "ms-ceintl.vscode-language-pack-ko",
     "ideaName": "Korean Language Pack / 한국어 언어 팩",
-    "ideaId": "com.intellij.ko"
+    "ideaId": "com.intellij.ko",
+    "vsCodeId": "ms-ceintl.vscode-language-pack-ko"
   },
   {
-    "vsCodeId": "ms-ceintl.vscode-language-pack-ja",
     "ideaName": "Japanese Language Pack / 日本語言語パック",
-    "ideaId": "com.intellij.ja"
+    "ideaId": "com.intellij.ja",
+    "vsCodeId": "ms-ceintl.vscode-language-pack-ja"
   },
   {
-    "vsCodeId": "streetsidesoftware.code-spell-checker",
+    "builtIn": true,
     "ideaName": "Spell Checker",
-    "builtIn": true
+    "vsCodeId": "streetsidesoftware.code-spell-checker"
   },
   {
-    "vsCodeId": "wayou.vscode-todo-highlight",
+    "builtIn": true,
     "ideaName": "Language Support",
-    "builtIn": true
+    "vsCodeId": "wayou.vscode-todo-highlight"
   },
   {
-    "vsCodeId": "editorconfig.editorconfig",
+    "builtIn": true,
     "ideaName": "editorconfig",
-    "builtIn": true
+    "vsCodeId": "editorconfig.editorconfig"
   },
   {
-    "vsCodeId": "formulahendry.code-runner",
+    "builtIn": true,
     "ideaName": "Run Configurations",
-    "builtIn": true
+    "vsCodeId": "formulahendry.code-runner"
   },
   {
-    "vsCodeId": "github.vscode-pull-request-github",
-    "ideaName": "Git",
-    "builtIn": true
-  },
-  {
-    "vsCodeId": "ms-kubernetes-tools.vscode-kubernetes-tools",
     "ideaName": "Kubernetes",
-    "ideaId": "com.intellij.kubernetes"
+    "ideaId": "com.intellij.kubernetes",
+    "vsCodeId": "ms-kubernetes-tools.vscode-kubernetes-tools"
   }
 ]

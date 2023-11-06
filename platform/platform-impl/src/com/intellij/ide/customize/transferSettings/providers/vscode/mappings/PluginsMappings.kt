@@ -43,6 +43,7 @@ internal class CommonPluginMapping : VSCodePluginMapping {
   private fun getResourceMappings(): List<String> = when {
     PlatformUtils.isDataGrip() -> listOf("general.json", "dg.json")
     PlatformUtils.isIntelliJ() -> listOf("general.json", "ic.json")
+    PlatformUtils.isPhpStorm() -> listOf("general.json", "ps.json")
     PlatformUtils.isPyCharm() -> listOf("general.json", "pc.json")
     PlatformUtils.isRubyMine() -> listOf("general.json", "rm.json")
     PlatformUtils.isRustRover() -> listOf("general.json", "rr.json")

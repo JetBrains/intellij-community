@@ -1,27 +1,27 @@
 [
   {
-    "vsCodeId": "Vue.volar",
+    "builtIn": true,
     "ideaName": "Vue.js",
-    "builtIn": true
+    "vsCodeId": "Vue.volar"
   },
   {
-    "vsCodeId": "ms-vscode.vscode-typescript-tslint-plugin",
     "ideaName": "TSLint",
-    "ideaId": "tslint"
+    "ideaId": "tslint",
+    "vsCodeId": "ms-vscode.vscode-typescript-tslint-plugin"
   },
   {
-    "vsCodeId": "Dart-Code.dart-code",
     "ideaName": "Dart",
-    "ideaId": "Dart"
+    "ideaId": "Dart",
+    "vsCodeId": "Dart-Code.dart-code"
   },
   {
-    "vsCodeId": "Dart-Code.flutter",
     "ideaName": "Flutter",
-    "ideaId": "io.flutter"
+    "ideaId": "io.flutter",
+    "vsCodeId": "Dart-Code.flutter"
   },
   {
-    "vsCodeId": "esbenp.prettier-vscode",
     "ideaName": "Prettier",
-    "ideaId": "intellij.prettierJS"
+    "ideaId": "intellij.prettierJS",
+    "vsCodeId": "esbenp.prettier-vscode"
   }
 ]

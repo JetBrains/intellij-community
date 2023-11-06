@@ -1,82 +1,82 @@
 [
   {
-    "vsCodeId": "Shopify.ruby-lsp",
+    "builtIn": true,
     "ideaName": "Ruby support",
-    "builtIn": true
+    "vsCodeId": "Shopify.ruby-lsp"
   },
   {
-    "vsCodeId": "castwide.solargraph",
+    "builtIn": true,
     "ideaName": "Ruby support",
-    "builtIn": true
+    "vsCodeId": "castwide.solargraph"
   },
   {
-    "vsCodeId": "KoichiSasada.vscode-rdbg",
+    "builtIn": true,
     "ideaName": "Ruby Debugger",
-    "builtIn": true
+    "vsCodeId": "KoichiSasada.vscode-rdbg"
   },
   {
-    "vsCodeId": "misogi.ruby-rubocop",
+    "builtIn": true,
     "ideaName": "Rubocop support",
-    "builtIn": true
+    "vsCodeId": "misogi.ruby-rubocop"
   },
   {
-    "vsCodeId": "sorbet.sorbet-vscode-extension",
+    "builtIn": true,
     "ideaName": "Ruby Sorbet support",
-    "builtIn": true
+    "vsCodeId": "sorbet.sorbet-vscode-extension"
   },
   {
-    "vsCodeId": "connorshea.vscode-ruby-test-adapter",
+    "builtIn": true,
     "ideaName": "Ruby Test Runner",
-    "builtIn": true
+    "vsCodeId": "connorshea.vscode-ruby-test-adapter"
   },
   {
-    "vsCodeId": "kaiwood.endwise",
+    "builtIn": true,
     "ideaName": "Ruby support",
-    "builtIn": true
+    "vsCodeId": "kaiwood.endwise"
   },
   {
-    "vsCodeId": "CraigMaslowski.erb",
+    "builtIn": true,
     "ideaName": "ERB support",
-    "builtIn": true
+    "vsCodeId": "CraigMaslowski.erb"
   },
   {
-    "vsCodeId": "noku.rails-run-spec-vscode",
+    "builtIn": true,
     "ideaName": "RSpec support",
-    "builtIn": true
+    "vsCodeId": "noku.rails-run-spec-vscode"
   },
   {
-    "vsCodeId": "bung87.rails",
+    "builtIn": true,
     "ideaName": "Rails support",
-    "builtIn": true
+    "vsCodeId": "bung87.rails"
   },
   {
-    "vsCodeId": "aki77.rails-routes",
+    "builtIn": true,
     "ideaName": "Rails Routes",
-    "builtIn": true
+    "vsCodeId": "aki77.rails-routes"
   },
   {
-    "vsCodeId": "aliariff.vscode-erb-beautify",
+    "builtIn": true,
     "ideaName": "ERB support",
-    "builtIn": true
+    "vsCodeId": "aliariff.vscode-erb-beautify"
   },
   {
-    "vsCodeId": "karunamurti.haml",
     "ideaName": "HAML support",
-    "bundled": true
+    "bundled": true,
+    "vsCodeId": "karunamurti.haml"
   },
   {
-    "vsCodeId": "sianglim.slim",
     "ideaName": "Slim support",
-    "bundled": true
+    "bundled": true,
+    "vsCodeId": "sianglim.slim"
   },
   {
-    "vsCodeId": "Shopify.theme-check-vscode",
     "ideaName": "Liquid support",
-    "bundled": true
+    "bundled": true,
+    "vsCodeId": "Shopify.theme-check-vscode"
   },
   {
-    "vsCodeId": "bung87.vscode-gemfile",
+    "builtIn": true,
     "ideaName": "Gemfile support",
-    "builtIn": true
+    "vsCodeId": "bung87.vscode-gemfile"
   }
 ]
