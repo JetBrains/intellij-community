@@ -353,6 +353,16 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
              && (myFirstState == null || myFirstState.canBeMergedWith(((MyFileEditorState)otherState).myFirstState, level))
              && (mySecondState == null || mySecondState.canBeMergedWith(((MyFileEditorState)otherState).mySecondState, level));
     }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      MyFileEditorState state = (MyFileEditorState)o;
+      return mySplitLayout == state.mySplitLayout &&
+             Objects.equals(myFirstState, state.myFirstState) &&
+             Objects.equals(mySecondState, state.mySecondState);
+    }
   }
 
   @Override
