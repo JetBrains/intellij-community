@@ -2,23 +2,15 @@
 package com.intellij.ide.customize.transferSettings.providers.vscode
 
 import com.intellij.icons.AllIcons
-import com.intellij.ide.IdeBundle
 import com.intellij.ide.customize.transferSettings.TransferSettingsConfiguration
-import com.intellij.ide.customize.transferSettings.TransferSettingsDialog
 import com.intellij.ide.customize.transferSettings.TransferableIdeId
 import com.intellij.ide.customize.transferSettings.models.IdeVersion
 import com.intellij.ide.customize.transferSettings.providers.TransferSettingsProvider
 import com.intellij.ide.customize.transferSettings.providers.vscode.VSCodeSettingsProcessor.Companion.vsCodeHome
-import com.intellij.ide.customize.transferSettings.showTransferSettingsDialog
 import com.intellij.ide.customize.transferSettings.ui.representation.TransferSettingsRightPanelChooser
-import com.intellij.openapi.ui.DialogWrapper
-import com.intellij.openapi.util.registry.Registry
-import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.util.SmartList
 import java.nio.file.Files
 import java.nio.file.Paths
-import javax.swing.JComponent
 
 class VSCodeTransferSettingsProvider : TransferSettingsProvider {
 
@@ -58,25 +50,5 @@ class VSCodeTransferSettingsProvider : TransferSettingsProvider {
 }
 
 private class VSCodeTransferSettingsRightPanelChooser(private val ide: IdeVersion, config: TransferSettingsConfiguration) : TransferSettingsRightPanelChooser(ide, config) {
-  override fun getBottomComponentFactory(): () -> JComponent? = s@{
-    if (!Registry.`is`("transferSettings.vscode.showRunningInfo")) {
-      return@s null
-    }
-    if (ide.settingsCache.notes["vscode.databaseState"] != false) {
-      return@s null
-    }
-    panel {
-      row {
-        icon(AllIcons.General.Warning).customize(UnscaledGaps(10))
-        text(IdeBundle.message("transferSettings.vscode.file.warning"))
-        link(IdeBundle.message("transferSettings.vscode.file.warning.action")) {
-          val window = (it.source as? JComponent)?.let { DialogWrapper.findInstance(it) } as? TransferSettingsDialog
-          if (window != null) {
-            window.close(-1)
-            showTransferSettingsDialog(window.project, null)
-          }
-        }
-      }
-    }
-  }
+  override fun getBottomComponentFactory() = null
 }

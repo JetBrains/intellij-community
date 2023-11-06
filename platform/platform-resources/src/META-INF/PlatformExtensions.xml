@@ -1704,13 +1704,6 @@
                     configurationSchemaKey="plugins"/>
     <updateSettingsProvider implementation="com.intellij.openapi.updateSettings.impl.ConfigurationScriptPluginRepositoriesProvider"/>
 
-    <postStartupActivity implementation="com.intellij.ide.customize.transferSettings.TransferSettingsProjectActivity"/>
-    <notificationGroup displayType="STICKY_BALLOON" id="transferSettings"
-                       bundle="messages.IdeBundle" key="transfer.settings.notificationGroup"/>
-    <registryKey key="transferSettings.enabled"
-                 defaultValue="false"
-                 description="Enable Transfer Setting from VSCode sticky ballon"/>
-
     <toolbarQuickAction implementationClass="com.intellij.openapi.wm.impl.headertoolbar.OpenFileQuickAction"
                         listGroupID="MainToolbarQuickActions.General"/>
     <toolbarQuickAction implementationClass="com.intellij.openapi.wm.impl.headertoolbar.SaveAllQuickAction"
@@ -1721,10 +1714,6 @@
                         listGroupID="MainToolbarQuickActions.General"/>
     <toolbarQuickAction implementationClass="com.intellij.openapi.wm.impl.headertoolbar.UndoRedoQuickAction"
                         listGroupID="MainToolbarQuickActions.General"/>
-    <registryKey key="transferSettings.vscode.showRunningInfo"
-                 defaultValue="false"
-                 description="Show info about possible running vscode instance"
-                 />
     <registryKey key="transferSettings.vscode.onlyCargoToml"
                  defaultValue="false"
                  description="Import only projects that contain cargo.toml file"
