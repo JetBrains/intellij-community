@@ -98,7 +98,8 @@ object EventsSchemeBuilder {
           val collector = ApplicationManager.getApplication().instantiateClass<FeatureUsagesCollector>(
             counterUsageCollectorEP.implementationClass, descriptor)
           counterCollectors.add(FeatureUsageCollectorInfo(collector,
-                                                          PluginSchemeDescriptor(collectorPlugin, descriptor.version)))
+                                                          PluginSchemeDescriptor(collectorPlugin,
+                                                                                 transformPluginVersion(descriptor.version))))
         }
       }
     }
@@ -109,14 +110,16 @@ object EventsSchemeBuilder {
       val collectorPlugin = descriptor.pluginId.idString
       if ((pluginId == null && !brokenPluginIds.contains(collectorPlugin)) || pluginId == collectorPlugin) {
         stateCollectors.add(FeatureUsageCollectorInfo(bean.collector,
-                                                      PluginSchemeDescriptor(collectorPlugin, descriptor.version)))
+                                                      PluginSchemeDescriptor(collectorPlugin,
+                                                                             transformPluginVersion(descriptor.version))))
       }
     }
     UsageCollectors.PROJECT_EP_NAME.processWithPluginDescriptor { bean, descriptor ->
       val collectorPlugin = descriptor.pluginId.idString
       if ((pluginId == null && !brokenPluginIds.contains(collectorPlugin)) || pluginId == collectorPlugin) {
         stateCollectors.add(FeatureUsageCollectorInfo(bean.collector,
-                                                      PluginSchemeDescriptor(collectorPlugin, descriptor.version)))
+                                                      PluginSchemeDescriptor(collectorPlugin,
+                                                                             transformPluginVersion(descriptor.version))))
       }
     }
     result.addAll(collectGroupsFromExtensions("state", stateCollectors, recorder))
@@ -143,10 +146,30 @@ object EventsSchemeBuilder {
         .map { (eventName, events) -> EventDescriptor(eventName, buildFields(events, eventName, group.id)) }
         .toSet()
       result[group.id] = GroupDescriptor(group.id, groupType, group.version, eventsDescriptors, collectorClass.name,
-                                         group.recorder, PluginSchemeDescriptor(plugin.id, plugin.version))
+                                         group.recorder, PluginSchemeDescriptor(plugin.id, transformPluginVersion(plugin.version)))
     }
     return result.values
   }
+
+  /**
+   * %VersionString% -> %VersionString%
+   * %VersionString%.SNAPSHOT -> %VersionString%
+   * %VersionString%.YYYYMMDD.SNAPSHOT -> %VersionString%
+   * %VersionString%YYYYMMDD.SNAPSHOT -> %VersionString%
+   */
+  private fun transformPluginVersion(pluginVersion: String): String {
+    var version = pluginVersion
+    if (version.endsWith("SNAPSHOT")) {
+      version = version.removeSuffix(".SNAPSHOT")
+
+      if (version.matches(Regex(".*\\d{8}"))) {
+        version = version.subSequence(0, version.length - 8).toString()
+      }
+      version = version.removeSuffix(".")
+    }
+    return version
+  }
+
 
   private fun validateGroupId(collector: FeatureUsagesCollector) {
     try {
