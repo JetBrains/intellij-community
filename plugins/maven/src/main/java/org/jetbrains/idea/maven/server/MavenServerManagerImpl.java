@@ -9,7 +9,6 @@ import com.intellij.ide.trustedProjects.TrustedProjectsListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectCloseListener;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.JavaSdkVersionUtil;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -64,13 +63,6 @@ final class MavenServerManagerImpl implements MavenServerManager {
       }
     });
 
-    connection.subscribe(ProjectCloseListener.TOPIC, new ProjectCloseListener() {
-      @Override
-      public void projectClosing(@NotNull Project project) {
-        getConnectors(project).forEach(connector -> connector.stop(false));
-      }
-    });
-
     connection.subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
       @Override
       public void beforePluginUnload(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
@@ -105,18 +97,6 @@ final class MavenServerManagerImpl implements MavenServerManager {
         }
       }
     });
-  }
-
-  private Collection<MavenServerConnector> getConnectors(@NotNull Project project) {
-    Set<MavenServerConnector> set = Collections.newSetFromMap(new IdentityHashMap<>());
-    synchronized (myMultimoduleDirToConnectorMap) {
-      getAllConnectors().forEach(it -> {
-        if (project.equals(it.getProject())) {
-          set.add(it);
-        }
-      });
-    }
-    return set;
   }
 
   @Override
@@ -237,7 +217,7 @@ final class MavenServerManagerImpl implements MavenServerManager {
 
   private void registerDisposable(Project project, MavenServerConnector connector) {
     Disposer.register(MavenDisposable.getInstance(project), () -> {
-      ApplicationManager.getApplication().executeOnPooledThread(() -> shutdownConnector(connector, true));
+      ApplicationManager.getApplication().executeOnPooledThread(() -> shutdownConnector(connector, false));
     });
   }
 
