@@ -117,12 +117,12 @@ class LocalGradleExecutionAware : GradleExecutionAware {
     }
     checkForWslJdkOnWindows(homePath, projectSettings.externalProjectPath, task)
     if (!JdkUtil.checkForJdk(homePath)) {
-      if (JdkUtil.checkForJre(homePath)) {
-        LOG.warn("Gradle JVM ($gradleJvm) is JRE instead JDK: $sdkInfo")
-        throw jdkConfigurationException("gradle.jvm.is.jre")
-      }
       LOG.warn("Invalid Gradle JVM ($gradleJvm) home path: $sdkInfo")
       throw jdkConfigurationException("gradle.jvm.is.invalid")
+    }
+    if (!JdkUtil.checkForJre(homePath)) {
+      LOG.warn("Gradle JVM ($gradleJvm) is JRE instead JDK: $sdkInfo")
+      throw jdkConfigurationException("gradle.jvm.is.jre")
     }
     return sdkInfo
   }
