@@ -454,12 +454,12 @@ internal class ActionUpdater @JvmOverloads constructor(
     return event
   }
 
-  private suspend fun <T> computeOnEdt(supplier: () -> T): T {
-    return withContext(edtDispatcher) {
+  private suspend fun <T> computeOnEdt(supplier: () -> T): T  = coroutineScope {
+    async(edtDispatcher) {
       blockingContext {
         supplier()
       }
-    }
+    }.await()
   }
 
   fun asUpdateSession(): UpdateSession {
