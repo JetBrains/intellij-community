@@ -472,14 +472,7 @@ public final class JavaSdkImpl extends JavaSdk {
     addDocs(jdkHomePath, sdkModificator, null);
     attachJdkAnnotations(sdkModificator);
 
-    Application application = ApplicationManager.getApplication();
-    Runnable runnable = () -> sdkModificator.commitChanges();
-    if (application.isDispatchThread()) {
-      application.runWriteAction(runnable);
-    } else {
-      application.invokeAndWait(() -> application.runWriteAction(runnable));
-    }
-
+    sdkModificator.applyChangesWithoutWriteAction();
     return jdk;
   }
 
