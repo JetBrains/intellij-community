@@ -18,6 +18,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.ui.EditorTextFieldCellRenderer;
+import com.intellij.ui.RemoteTransferUIManager;
 import com.intellij.usages.impl.UsagePreviewPanel;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
@@ -49,6 +50,10 @@ class UsageCodeSnippetComponent extends EditorTextFieldCellRenderer.SimpleWithGu
     settings.setLineCursorWidth(1);
     settings.setDndEnabled(false);
     settings.setUseSoftWraps(false);
+
+    // This editor doesn't work properly in Remote Development, so we forbid it from conversion to BeControls
+    // TODO Remove this after GTW-6748 is done
+    RemoteTransferUIManager.forbidBeControlizationInLux(editor, "findUsages");
   }
 
   private void highlightRange(@NotNull TextRange rangeToHighlight) {
