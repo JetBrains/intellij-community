@@ -35,6 +35,7 @@ import com.intellij.openapi.fileEditor.impl.CurrentEditorProvider
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.options.advanced.AdvancedSettingsImpl
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
 import com.intellij.psi.NavigatablePsiElement
 import com.intellij.psi.PsiClass
@@ -49,6 +50,7 @@ import com.intellij.testFramework.common.ThreadUtil
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil
 import com.intellij.util.ThrowableRunnable
 import org.jetbrains.annotations.NotNull
+import org.jetbrains.annotations.Nullable
 
 import static com.intellij.java.codeInsight.completion.NormalCompletionTestCase.renderElement
 
@@ -1281,7 +1283,7 @@ record App() {
     def old = manager.editorProvider
     manager.editorProvider = new CurrentEditorProvider() {
       @Override
-      FileEditor getCurrentEditor() {
+      FileEditor getCurrentEditor(@Nullable Project project) {
         return editor
       }
     }
