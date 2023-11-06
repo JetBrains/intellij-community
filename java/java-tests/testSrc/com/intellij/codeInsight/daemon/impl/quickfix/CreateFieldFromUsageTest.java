@@ -23,6 +23,7 @@ import java.io.IOException;
 
 public class CreateFieldFromUsageTest extends LightQuickFixTestCase {
 
+  public void testSwitchCaseLabel() { doSingleTest(); }
   public void testAnonymousClass() { doSingleTest(); }
   public void testExpectedTypes() { doSingleTest(); }
   public void testInterface() { doSingleTest(); }

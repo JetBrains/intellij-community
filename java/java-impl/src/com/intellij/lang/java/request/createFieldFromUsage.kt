@@ -117,7 +117,7 @@ private class CreateFieldRequests(val myRef: PsiReferenceExpression) {
       modifiers = modifiers,
       reference = myRef,
       useAnchor = ownerClass != null && PsiTreeUtil.isAncestor(target.toJavaClassOrNull(), ownerClass, false),
-      isConstant = false
+      isConstant = shouldCreateConstant(myRef)
     )
     addRequest(target, request)
   }
@@ -143,4 +143,8 @@ private fun collectOnDemandImported(place: PsiElement): List<JvmClass> {
 private fun shouldCreateFinalField(ref: PsiReferenceExpression, targetClass: JvmClass): Boolean {
   val javaClass = targetClass.toJavaClassOrNull() ?: return false
   return CreateFieldFromUsageFix.shouldCreateFinalMember(ref, javaClass)
+}
+private fun shouldCreateConstant(ref: PsiReferenceExpression): Boolean {
+  val parent = PsiTreeUtil.skipParentsOfType(ref, PsiExpression::class.java)
+  return parent is PsiNameValuePair || parent is PsiCaseLabelElementList || parent is PsiAnnotationMethod;
 }
