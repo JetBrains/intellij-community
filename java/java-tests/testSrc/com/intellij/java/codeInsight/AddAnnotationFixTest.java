@@ -245,13 +245,11 @@ public class AddAnnotationFixTest extends UsefulTestCase {
   public void testAnnotated() {
     PsiFile psiFile = myFixture.configureByFile("lib/p/TestAnnotated.java");
     PsiTestUtil.addSourceRoot(myFixture.getModule(), psiFile.getVirtualFile().getParent());
-    final PsiFile file = myFixture.getFile();
-    final Editor editor = myFixture.getEditor();
     assertNotAvailable("NotNull");
     assertNotAvailable("Nullable");
 
     final DeannotateIntentionAction deannotateFix = new DeannotateIntentionAction();
-    assertFalse(deannotateFix.isAvailable(myFixture.getProject(), editor, file));
+    assertNull(deannotateFix.getPresentation(myFixture.getActionContext()));
   }
 
   public void testDeannotation() {
@@ -277,7 +275,7 @@ public class AddAnnotationFixTest extends UsefulTestCase {
     assertNotAvailable("Nullable");
 
     final DeannotateIntentionAction deannotateFix = new DeannotateIntentionAction();
-    assertTrue(deannotateFix.isAvailable(myFixture.getProject(), editor, file));
+    assertNotNull(deannotateFix.getPresentation(myFixture.getActionContext()));
 
     final PsiModifierListOwner container = AddAnnotationPsiFix.getContainer(file, editor.getCaretModel().getOffset());
     assertNotNull(container);
@@ -290,7 +288,7 @@ public class AddAnnotationFixTest extends UsefulTestCase {
     getAnnotateAction("NotNull");
     getAnnotateAction("Nullable");
 
-    assertFalse(deannotateFix.isAvailable(myFixture.getProject(), editor, file));
+    assertNull(deannotateFix.getPresentation(myFixture.getActionContext()));
   }
 
   private static void assertMethodAndParameterAnnotationsValues(ExternalAnnotationsManager manager,
