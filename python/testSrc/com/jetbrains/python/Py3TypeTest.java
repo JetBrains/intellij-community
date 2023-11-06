@@ -2189,6 +2189,76 @@ public class Py3TypeTest extends PyTestCase {
                  pass
              """);
   }
+
+  // PY-61883
+  public void testParamSpecExampleWithPEP695Syntax() {
+    doTest("(a: str, b: bool) -> str",
+           """
+             from typing import Callable
+
+             def changes_return_type_to_str[**P](x: Callable[P, int]) -> Callable[P, str]: ...
+
+             def returns_int(a: str, b: bool) -> int:
+                 return 42
+                 
+             expr = changes_return_type_to_str(returns_int)""");
+  }
+
+  // PY-61883
+  public void testParamSpecInImportedFileWithPEP695Syntax() {
+    doMultiFileTest("(a: str, b: bool) -> str",
+                    """
+                      from a import changes_return_type_to_str
+                            
+                      def returns_int(a: str, b: bool) -> int:
+                          return 42
+
+                      expr = changes_return_type_to_str(returns_int)
+                      """);
+  }
+
+  // PY-61883
+  public void testParamSpecConcatenateTransformWithPEP695Syntax() {
+    doTest("(str, args: tuple[bool, ...]) -> bool",
+           """
+            from typing import Callable, Concatenate
+            
+            def bar(x: int, *args: bool) -> int: ...
+            
+            
+            def transform[**P](
+                    x: Callable[Concatenate[int, P], int]
+            ) -> Callable[Concatenate[str, P], bool]:
+                def inner(s: str, *args: P.args):
+                    return True
+            
+                return inner
+            
+            
+            expr = transform(bar)""");
+  }
+
+  // PY-61883
+  public void testParamSpecUserGenericClassWithPEP695Syntax() {
+    doTest("Y[int, [int, str, bool]]",
+           """
+             from typing import Callable
+
+             class Y[U, **P]:
+                 f: Callable[P, str]
+                 attr: U
+
+                 def __init__(self, f: Callable[P, str], attr: U) -> None:
+                     self.f = f
+                     self.attr = attr
+
+
+             def a(q: int, p: str, r: bool) -> str: ...
+
+
+             expr = Y(a, 1)
+             """);
+  }
   
 
   private void doTest(final String expectedType, final String text) {

@@ -105,6 +105,16 @@ public class PyTypeParameterImpl extends PyBaseElementImpl<PyTypeParameterStub> 
   @Override
   @Nullable
   public PyType getType(@NotNull TypeEvalContext context, TypeEvalContext.@NotNull Key key) {
+    PyPsiFacade facade = PyPsiFacade.getInstance(this.getProject());
+    Kind kind = this.getKind();
+    PyClass pyClass = switch (kind) {
+      case TypeVar -> facade.createClassByQName(PyTypingTypeProvider.TYPE_VAR, this);
+      case TypeVarTuple -> facade.createClassByQName(PyTypingTypeProvider.TYPE_VAR_TUPLE, this);
+      case ParamSpec -> facade.createClassByQName(PyTypingTypeProvider.TYPING_PARAM_SPEC, this);
+    };
+    if (pyClass != null) {
+      return new PyClassTypeImpl(pyClass, false);
+    }
     return null;
   }
 }
