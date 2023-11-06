@@ -721,7 +721,7 @@ abstract class BaseKotlinChangeSignatureTest<C: KotlinModifiableChangeInfo<P>, P
 
     //----------- receivers ---------------
 
-    fun testAddFunctionReceiverWithDefaultValue() = doTest {//todo not implemented addFullQualifier
+    fun testAddFunctionReceiverWithDefaultValue() = doTest {
         val expression = createExpressionWithImports(method, "Dep.MY_CONSTANT_FROM_DEP", listOf("a.b.c.Dep"))
         receiverParameterInfo = createKotlinIntParameter(defaultValueForCall = expression)
     }
@@ -1372,7 +1372,7 @@ abstract class BaseKotlinChangeSignatureTest<C: KotlinModifiableChangeInfo<P>, P
 
     fun testSAMChangeMethodReturnType() = doJavaTest { newReturnType = objectPsiType }
 
-    fun testGenericsWithSAMConstructors() = doJavaTest {//todo
+    fun testGenericsWithSAMConstructors() = doJavaTest {
         newParameters[0].setType(psiFactory.createTypeFromText("java.util.List<X<B>>", method.parameterList))
         newParameters[1].setType(psiFactory.createTypeFromText("X<java.util.Set<A>>", method.parameterList))
 
