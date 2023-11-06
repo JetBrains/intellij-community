@@ -3,7 +3,7 @@
 use std::{env, fs};
 use std::collections::HashMap;
 use std::fs::File;
-use std::io::{BufRead, BufReader, BufWriter, Write};
+use std::io::{BufRead, BufReader, BufWriter, IsTerminal, Write};
 use std::path::{Path, PathBuf};
 
 use anyhow::{anyhow, bail, Context, Result};
@@ -606,10 +606,14 @@ fn print_help() {
 }
 
 fn init_env_vars(launcher_name_for_usage: &str) -> Result<()> {
-    let remote_dev_env_var_values = vec![
+    let mut remote_dev_env_var_values = vec![
         ("IDEA_RESTART_VIA_EXIT_CODE", "88"),
         ("REMOTE_DEV_LAUNCHER_NAME_FOR_USAGE", launcher_name_for_usage)
     ];
+
+    if std::io::stdout().is_terminal() {
+        remote_dev_env_var_values.push(("REMOTE_DEV_NON_INTERACTIVE", "1"))
+    }
 
     for (key, value) in remote_dev_env_var_values {
         match env::var(key) {
