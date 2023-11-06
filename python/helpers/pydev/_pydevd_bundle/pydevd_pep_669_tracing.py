@@ -518,32 +518,37 @@ class PyRaiseCallback(PEP669CallbackBase):
 
 class PyReturnCallback(PEP669CallbackBase):
     def __call__(self, code, instruction_offset, retval):
-        # print('PY_RETURN %s %s %s' % (code, code.co_name, code.co_filename))
+        try:
+            # print('PY_RETURN %s %s %s' % (code, code.co_name, code.co_filename))
 
-        frame = self.frame
-        thread = self.thread
-        info = self._get_additional_info(thread)
+            frame = self.frame
+            thread = self.thread
+            info = self._get_additional_info(thread)
 
-        if self.py_db.show_return_values or self.py_db.remove_return_values_flag:
-            manage_return_values(self.py_db, frame, 'return', retval)
+            if self.py_db.show_return_values or self.py_db.remove_return_values_flag:
+                manage_return_values(self.py_db, frame, 'return', retval)
 
-        step_cmd = info.pydev_step_cmd
+            step_cmd = info.pydev_step_cmd
 
-        if step_cmd == CMD_STEP_OVER:
-            if frame.f_back and self.py_db.in_project_scope(code.co_filename):
-                back = frame.f_back
-                if back is not None:
-                    _, back_filename, base \
-                        = get_abs_path_real_path_and_base_from_frame(back)
+            if step_cmd == CMD_STEP_OVER:
+                if frame.f_back:
+                    back = frame.f_back
                     back_code = back.f_code
-                    if (base, back_code.co_name) in (DEBUG_START, DEBUG_START_PY3K):
-                        back = None
-                    if back is not info.pydev_step_stop:
-                        self.py_db.set_suspend(thread, step_cmd)
-                        self.py_db.do_wait_suspend(thread, back, 'return', retval)
-                    PyLineCallback.start_monitoring(back_code)
-                    if back_code.co_name != '<module>':
-                        PyReturnCallback.start_monitoring(back_code)
+                    if not self.py_db.in_project_scope(back_code.co_filename):
+                        return
+                    if back is not None:
+                        _, back_filename, base \
+                            = get_abs_path_real_path_and_base_from_frame(back)
+                        if (base, back_code.co_name) in (DEBUG_START, DEBUG_START_PY3K):
+                            back = None
+                        if back is not info.pydev_step_stop:
+                            self.py_db.set_suspend(thread, step_cmd)
+                            self.py_db.do_wait_suspend(thread, back, 'return', retval)
+                        PyLineCallback.start_monitoring(back_code)
+                        if back_code.co_name != '<module>':
+                            PyReturnCallback.start_monitoring(back_code)
+        finally:
+            self.stop_monitoring(code)
 
     @staticmethod
     def start_monitoring(code):
