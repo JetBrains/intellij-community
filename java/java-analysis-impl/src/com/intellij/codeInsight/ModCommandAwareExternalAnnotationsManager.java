@@ -5,18 +5,13 @@ import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
 import com.intellij.modcommand.ModCommand;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.psi.*;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.Processor;
 import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -89,6 +84,13 @@ public class ModCommandAwareExternalAnnotationsManager extends ReadableExternalA
     return tagsToProcess;
   }
 
+  /**
+   * Returns a command that removes the specified external annotations
+   *
+   * @param listOwner      The list of PsiModifierListOwner to deannotate.
+   * @param annotationFQNs The list of fully qualified annotation names to remove.
+   * @return The ModCommand that removes the specified annotations
+   */
   @Contract(pure = true)
   public @NotNull ModCommand deannotateModCommand(List<PsiModifierListOwner> listOwner, @NotNull List<String> annotationFQNs) {
     return processExistingExternalAnnotationsModCommand(listOwner, annotationFQNs, annotationTag -> {
@@ -99,6 +101,24 @@ public class ModCommandAwareExternalAnnotationsManager extends ReadableExternalA
           parent.delete();
         }
       }
+      return true;
+    });
+  }
+
+  /**
+   * Returns a command that edits an existing external annotation.
+   *
+   * @param listOwner      The modifier list owner to edit external annotations for.
+   * @param annotationFQN  The fully qualified name of the annotation to edit.
+   * @param value          An array of new key-value pairs (old ones will be replaced with new ones).
+   * @return The ModCommand that edits an existing external annotation.
+   */
+  public @NotNull ModCommand editExternalAnnotationModCommand(@NotNull PsiModifierListOwner listOwner,
+                                                              @NotNull String annotationFQN,
+                                                              PsiNameValuePair @Nullable [] value) {
+    return processExistingExternalAnnotationsModCommand(List.of(listOwner), List.of(annotationFQN), annotationTag -> {
+      annotationTag.replace(XmlElementFactory.getInstance(myPsiManager.getProject()).createTagFromText(
+        createAnnotationTag(annotationFQN, value)));
       return true;
     });
   }
@@ -136,5 +156,22 @@ public class ModCommandAwareExternalAnnotationsManager extends ReadableExternalA
         item.delete();
       }
     }
+  }
+
+  @NonNls
+  @VisibleForTesting
+  public static @NotNull String createAnnotationTag(@NotNull String annotationFQName, PsiNameValuePair @Nullable [] values) {
+    @NonNls String text;
+    if (values != null && values.length != 0) {
+      text = "  <annotation name='" + annotationFQName + "'>\n";
+      text += StringUtil.join(values, pair -> "<val" +
+                                              (pair.getName() != null ? " name=\"" + pair.getName() + "\"" : "") +
+                                              " val=\"" + StringUtil.escapeXmlEntities(pair.getValue().getText()) + "\"/>", "    \n");
+      text += "  </annotation>";
+    }
+    else {
+      text = "  <annotation name='" + annotationFQName + "'/>\n";
+    }
+    return text;
   }
 }

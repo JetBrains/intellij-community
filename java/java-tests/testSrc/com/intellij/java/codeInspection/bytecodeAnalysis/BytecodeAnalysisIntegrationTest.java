@@ -1,10 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInspection.bytecodeAnalysis;
 
-import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInsight.ExternalAnnotationsManager;
-import com.intellij.codeInsight.ExternalAnnotationsManagerImpl;
-import com.intellij.codeInsight.InferredContractAnnotationsLineMarkerProvider;
+import com.intellij.codeInsight.*;
 import com.intellij.codeInsight.daemon.GutterMark;
 import com.intellij.codeInsight.daemon.LineMarkerSettings;
 import com.intellij.codeInsight.daemon.impl.LineMarkerSettingsImpl;
@@ -283,7 +280,7 @@ public class BytecodeAnalysisIntegrationTest extends LightJavaCodeInsightFixture
       private void saveXmlForPackage(String packageName, Map<String, Map<String, PsiNameValuePair[]>> annotations, VirtualFile root) {
         if (annotations.isEmpty()) return;
         String xmlContent = EntryStream.of(annotations)
-          .mapValues(map -> EntryStream.of(map).mapKeyValue(ExternalAnnotationsManagerImpl::createAnnotationTag).joining())
+          .mapValues(map -> EntryStream.of(map).mapKeyValue(ModCommandAwareExternalAnnotationsManager::createAnnotationTag).joining())
           .mapKeyValue((externalName, content) -> "<item name='" + StringUtil.escapeXmlEntities(externalName) +
                                                   "'>\n" + content.trim() + "\n</item>\n")
           .joining("", "<root>\n", "</root>");

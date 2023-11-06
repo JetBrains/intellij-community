@@ -826,23 +826,6 @@ public final class ExternalAnnotationsManagerImpl extends ModCommandAwareExterna
     return String.format("<item name='%s'>%s</item>", ownerName, annotationTag);
   }
 
-  @NonNls
-  @VisibleForTesting
-  public static @NotNull String createAnnotationTag(@NotNull String annotationFQName, PsiNameValuePair @Nullable [] values) {
-    @NonNls String text;
-    if (values != null && values.length != 0) {
-      text = "  <annotation name='" + annotationFQName + "'>\n";
-      text += StringUtil.join(values, pair -> "<val" +
-                                              (pair.getName() != null ? " name=\"" + pair.getName() + "\"" : "") +
-                                              " val=\"" + StringUtil.escapeXmlEntities(pair.getValue().getText()) + "\"/>", "    \n");
-      text += "  </annotation>";
-    }
-    else {
-      text = "  <annotation name='" + annotationFQName + "'/>\n";
-    }
-    return text;
-  }
-
   private @Nullable XmlFile createAnnotationsXml(@NotNull VirtualFile root, @NonNls @NotNull String packageName) {
     return createAnnotationsXml(root, packageName, myPsiManager);
   }
