@@ -5,7 +5,7 @@ import com.intellij.ide.ApplicationInitializedListener
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.platform.diagnostic.telemetry.MetricsExporterEntry
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
-import com.intellij.platform.diagnostic.telemetry.impl.otExporters.OpenTelemetryExporterProvider
+import com.intellij.platform.diagnostic.telemetry.impl.OpenTelemetryExporterProvider
 import kotlinx.coroutines.CoroutineScope
 
 private val EP: ExtensionPointName<OpenTelemetryExporterProvider> = ExtensionPointName("com.intellij.openTelemetryExporterProvider")

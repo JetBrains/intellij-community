@@ -16,7 +16,6 @@ import com.intellij.openapi.util.Ref
 import com.intellij.platform.diagnostic.telemetry.*
 import com.intellij.platform.diagnostic.telemetry.exporters.JaegerJsonSpanExporter
 import com.intellij.platform.diagnostic.telemetry.exporters.OtlpSpanExporter
-import com.intellij.platform.diagnostic.telemetry.impl.otExporters.OpenTelemetryExporterProvider
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.metrics.Meter
 import io.opentelemetry.api.trace.propagation.W3CTraceContextPropagator
