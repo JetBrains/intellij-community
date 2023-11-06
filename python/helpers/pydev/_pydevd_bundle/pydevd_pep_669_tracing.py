@@ -143,6 +143,8 @@ class PyStartCallback(PEP669CallbackBase):
             if is_stepping:
                 if (pydev_step_cmd == CMD_STEP_OVER
                         and frame is not additional_info.pydev_step_stop):
+                    if frame.f_back is additional_info.pydev_step_stop:
+                        self._return_callback.start_monitoring(code)
                     return
                 if (py_db.is_filter_enabled
                         and py_db.is_ignored_by_filters(filename)):
@@ -537,8 +539,9 @@ class PyReturnCallback(PEP669CallbackBase):
                     back_code = back.f_code
                     if (base, back_code.co_name) in (DEBUG_START, DEBUG_START_PY3K):
                         back = None
-                    self.py_db.set_suspend(thread, step_cmd)
-                    self.py_db.do_wait_suspend(thread, back, 'return', retval)
+                    if back is not info.pydev_step_stop:
+                        self.py_db.set_suspend(thread, step_cmd)
+                        self.py_db.do_wait_suspend(thread, back, 'return', retval)
                     PyLineCallback.start_monitoring(back_code)
                     if back_code.co_name != '<module>':
                         PyReturnCallback.start_monitoring(back_code)
