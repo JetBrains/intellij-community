@@ -209,7 +209,7 @@ internal class GitLabMergeRequestCreateViewModelImpl(
           val dialogMessages = GitPushUtil.BranchNameInputDialogMessages(
             GitLabBundle.message("merge.request.create.branch.dialog.title"),
             GitLabBundle.message("merge.request.create.branch.dialog.message"),
-            GitLabBundle.message("merge.request.create.branch.dialog.comment", headBranch.name, headRepo.gitRemote.name)
+            GitLabBundle.message("merge.request.create.branch.dialog.comment")
           )
           GitPushUtil.findOrPushRemoteBranch(
             project, listenableProgressIndicator,
