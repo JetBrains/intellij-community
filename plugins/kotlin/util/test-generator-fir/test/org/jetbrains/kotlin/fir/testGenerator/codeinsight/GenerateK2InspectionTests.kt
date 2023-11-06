@@ -46,6 +46,7 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
             model("${idea}/inspectionsLocal/redundantIf")
             model("${idea}/inspectionsLocal/mayBeConstant")
             model("${idea}/inspectionsLocal/moveLambdaOutsideParentheses")
+            model("${idea}/inspectionsLocal/foldInitializerAndIfToElvis")
             model("code-insight/inspections-k2/tests/testData/inspectionsLocal", pattern = pattern)
         }
         /**

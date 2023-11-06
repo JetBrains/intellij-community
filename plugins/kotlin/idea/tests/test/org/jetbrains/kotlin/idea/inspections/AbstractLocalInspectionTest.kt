@@ -38,8 +38,6 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
     protected open val inspectionFileName: String
         get() = ".inspection"
 
-    private val afterFileNameSuffix: String = ".after"
-
     private val expectedProblemDirectiveName: String = "PROBLEM"
 
     protected val expectedProblemHighlightType: String = "HIGHLIGHT"
@@ -268,7 +266,7 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
     }
 
     protected fun doTestForInternal(mainFile: File, inspection: LocalInspectionTool, fileText: String) {
-        val mainFilePath = mainFile.name
+        val mainFileName = mainFile.name
         val expectedProblemString = InTextDirectivesUtils.findStringWithPrefixes(
             fileText, "// $expectedProblemDirectiveName: "
         )
@@ -280,26 +278,43 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
         )
 
         val inspectionSettings = loadInspectionSettings(mainFile)
-        val canonicalPathToExpectedFile = mainFilePath + afterFileNameSuffix
-        val canonicalPathToExpectedPath = testDataDirectory.toPath() / canonicalPathToExpectedFile
+        val afterFileName = mainFileName +
+                if (isDifferentExpectedDataForK2(inspection, fileText)) ".after.k2" else ".after"
+        val afterFileAbsolutePath = testDataDirectory.toPath() / afterFileName
 
-        if (!runInspectionWithFixesAndCheck(inspection, expectedProblemString, expectedHighlightString, localFixTextString, inspectionSettings)) {
-            assertFalse("$canonicalPathToExpectedFile should not exist as no action could be applied", Files.exists(canonicalPathToExpectedPath))
+        if (!runInspectionWithFixesAndCheck(
+                inspection,
+                expectedProblemString,
+                expectedHighlightString,
+                localFixTextString,
+                inspectionSettings
+            )
+        ) {
+            assertFalse("$afterFileName should not exist as no action could be applied", Files.exists(afterFileAbsolutePath))
             return
         }
 
-        createAfterFileIfItDoesNotExist(canonicalPathToExpectedPath)
+        createAfterFileIfItDoesNotExist(afterFileAbsolutePath)
         dispatchAllEventsInIdeEventQueue()
         try {
-            myFixture.checkResultByFile(canonicalPathToExpectedFile)
+            myFixture.checkResultByFile(afterFileName)
         } catch (e: ComparisonFailure) {
             KotlinTestUtils.assertEqualsToFile(
-                File(testDataDirectory, canonicalPathToExpectedFile),
+                File(testDataDirectory, afterFileName),
                 editor.document.text
             )
         }
 
         checkForUnexpectedErrors()
+    }
+
+    private fun isDifferentExpectedDataForK2(inspection: LocalInspectionTool, fileText: String): Boolean {
+        val withK2Data = InTextDirectivesUtils.isDirectiveDefined(
+            fileText, "// WITH_DIFFERENT_DATA_FOR_K2"
+        )
+
+        return inspection.javaClass.`package`.name == "org.jetbrains.kotlin.idea.k2.codeinsight.inspections"
+                && withK2Data
     }
 
     private fun createAfterFileIfItDoesNotExist(path: Path) {
