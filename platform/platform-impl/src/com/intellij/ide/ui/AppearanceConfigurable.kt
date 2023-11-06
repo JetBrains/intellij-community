@@ -9,6 +9,7 @@ import com.intellij.ide.IdeBundle.message
 import com.intellij.ide.ProjectWindowCustomizerService
 import com.intellij.ide.actions.IdeScaleTransformer
 import com.intellij.ide.actions.QuickChangeLookAndFeel
+import com.intellij.ide.isSupportScreenReadersOverridden
 import com.intellij.ide.ui.laf.LafManagerImpl
 import com.intellij.ide.ui.search.OptionDescription
 import com.intellij.internal.statistic.service.fus.collectors.IdeZoomEventFields
@@ -259,7 +260,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
 
       group(message("title.accessibility")) {
         row {
-          val isOverridden = GeneralSettings.isSupportScreenReadersOverridden()
+          val isOverridden = isSupportScreenReadersOverridden()
           val ctrlTab = KeymapUtil.getKeystrokeText(KeyStroke.getKeyStroke(KeyEvent.VK_TAB, InputEvent.CTRL_DOWN_MASK))
           val ctrlShiftTab = KeymapUtil.getKeystrokeText(
             KeyStroke.getKeyStroke(KeyEvent.VK_TAB, InputEvent.CTRL_DOWN_MASK + InputEvent.SHIFT_DOWN_MASK))

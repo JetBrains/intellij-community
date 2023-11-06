@@ -14,10 +14,9 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import org.intellij.lang.annotations.MagicConstant
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.SystemDependent
 
-private const val SHOW_TIPS_ON_STARTUP_DEFAULT_VALUE_PROPERTY = "ide.show.tips.on.startup.default.value"
-private const val CONFIGURED_PROPERTY = "GeneralSettings.initiallyConfigured"
 
 @State(name = "GeneralSettings", storages = [Storage(GeneralSettings.IDE_GENERAL_XML)], category = SettingsCategory.SYSTEM)
 class GeneralSettings : PersistentStateComponent<GeneralSettingsState> {
@@ -142,16 +141,11 @@ class GeneralSettings : PersistentStateComponent<GeneralSettingsState> {
     const val OPEN_PROJECT_SAME_WINDOW_ATTACH: Int = 2
     @Suppress("SpellCheckingInspection")
     const val SUPPORT_SCREEN_READERS: String = "ide.support.screenreaders.enabled"
-    private val SUPPORT_SCREEN_READERS_OVERRIDDEN = getSupportScreenReadersOverridden()
 
     val SAVE_FILES_AFTER_IDLE_SEC: UINumericRange = UINumericRange(15, 1, 300)
 
     @JvmStatic
     fun getInstance(): GeneralSettings = ApplicationManager.getApplication().service<GeneralSettings>()
-
-    private fun getSupportScreenReadersOverridden(): Boolean? = System.getProperty(SUPPORT_SCREEN_READERS)?.toBoolean()
-
-    fun isSupportScreenReadersOverridden(): Boolean = SUPPORT_SCREEN_READERS_OVERRIDDEN != null
 
     fun defaultConfirmNewProject(): Int = OPEN_PROJECT_ASK
   }
@@ -260,3 +254,11 @@ enum class ProcessCloseConfirmation {
   TERMINATE,
   DISCONNECT
 }
+
+private const val SHOW_TIPS_ON_STARTUP_DEFAULT_VALUE_PROPERTY = "ide.show.tips.on.startup.default.value"
+private const val CONFIGURED_PROPERTY = "GeneralSettings.initiallyConfigured"
+
+private val SUPPORT_SCREEN_READERS_OVERRIDDEN = System.getProperty(GeneralSettings.SUPPORT_SCREEN_READERS)?.toBoolean()
+
+@Internal
+fun isSupportScreenReadersOverridden(): Boolean = SUPPORT_SCREEN_READERS_OVERRIDDEN != null
