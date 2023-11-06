@@ -4,6 +4,7 @@ package com.intellij.codeInsight.inline.completion.tooltip
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.ui.dsl.builder.RightGap
 import com.intellij.ui.dsl.builder.panel
@@ -33,4 +34,21 @@ object InlineCompletionTooltipFactory {
       cell(moreActionsButton)
     }
   }
+
+  @Deprecated("Use InlineCompletionTooltipFactory.defaultProviderTooltip with actions array instead")
+  fun defaultProviderTooltip(
+    @Nls name: String,
+    @Nls comment: String,
+    icon: Icon,
+    moreInfoAction: ((AnActionEvent) -> Unit),
+  ): JComponent = defaultProviderTooltip(
+    name, comment, icon,
+    arrayOf(
+      object : AnAction("Settings...", "Settings", AllIcons.General.GearPlain) {
+        override fun actionPerformed(e: AnActionEvent) {
+          moreInfoAction(e)
+        }
+      }
+    ),
+  )
 }
