@@ -9,7 +9,6 @@ import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.idea.test.KotlinMultiFileTestCase
 import org.jetbrains.kotlin.idea.test.extractMarkerOffset
 import org.jetbrains.kotlin.psi.KtElement
-import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.types.KotlinType
 import org.junit.internal.runners.JUnit38ClassRunner
@@ -37,8 +36,8 @@ class KotlinMultiModuleChangeSignatureTest : KotlinMultiFileTestCase() {
             assert(marker != -1)
             val element = KotlinChangeSignatureHandler().findTargetMember(psiFile.findElementAt(marker)!!) as KtElement
             val handler = KotlinChangeSignatureHandler()
-            val callableDescriptor = handler.findDescriptor(element, project, editor)!!
-            handler.checkDescriptor(callableDescriptor, project, editor, psiFile as KtFile)
+            val callableDescriptor = handler.findDescriptor(element)!!
+            handler.checkDescriptor(callableDescriptor, project, editor)
             val changeInfo = createChangeInfo(project, editor, callableDescriptor, KotlinChangeSignatureConfiguration.Empty, element)!!
             KotlinChangeSignatureProcessor(project, changeInfo.apply { configure() }, "Change signature").run()
         }

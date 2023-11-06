@@ -55,7 +55,8 @@ class KotlinFirChangeSignatureTest :
     override fun createParameterTypeInfo(type: String?, ktElement: PsiElement): KotlinTypeInfo = KotlinTypeInfo(type, ktElement as KtElement)
 
     override fun createChangeInfo(): KotlinChangeInfo {
-        val targetElement = findTargetDescriptor(KotlinChangeSignatureHandler)
+        val element = findTargetElement() as KtElement
+        val targetElement = KotlinChangeSignatureHandler.findDeclaration(element, element, project, editor)!!
         val superMethod = checkSuperMethods(targetElement, emptyList(), RefactoringBundle.message("to.refactor")).first() as KtNamedDeclaration
         return KotlinChangeInfo(KotlinMethodDescriptor(superMethod))
     }

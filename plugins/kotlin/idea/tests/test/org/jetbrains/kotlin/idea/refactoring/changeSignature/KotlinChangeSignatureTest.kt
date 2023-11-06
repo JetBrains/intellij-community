@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.asJava.getRepresentativeLightMethod
 import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
+import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.DescriptorVisibility
 import org.jetbrains.kotlin.idea.base.util.allScope
 import org.jetbrains.kotlin.idea.core.getDeepestSuperDeclarations
@@ -25,6 +26,14 @@ import org.junit.runner.RunWith
 
 @RunWith(JUnit38ClassRunner::class)
 class KotlinChangeSignatureTest : BaseKotlinChangeSignatureTest<KotlinChangeInfo, KotlinParameterInfo, KotlinTypeInfo, DescriptorVisibility, KotlinMutableMethodDescriptor>() {
+    protected  fun findTargetDescriptor(handler: KotlinChangeSignatureHandler): DeclarationDescriptor {
+        val element = findTargetElement() as KtElement
+
+        val descriptor = handler.findDescriptor(element)
+        handler.checkDescriptor(descriptor, project, editor)
+        val callableDescriptor = descriptor.sure { "Target descriptor is null" }
+        return callableDescriptor
+    }
 
     override fun doTestInvokePosition(code: String) {
         doTestTargetElement<KtCallExpression>(code)

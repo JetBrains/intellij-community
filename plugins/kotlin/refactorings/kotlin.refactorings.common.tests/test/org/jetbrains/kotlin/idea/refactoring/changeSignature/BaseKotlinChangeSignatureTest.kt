@@ -43,16 +43,6 @@ abstract class BaseKotlinChangeSignatureTest<C: KotlinModifiableChangeInfo<P>, P
         protected val EXTENSIONS = arrayOf(".kt", ".java")
     }
 
-    protected  fun <T> findTargetDescriptor(handler: KotlinChangeSignatureHandlerBase<T>): T {
-        val element = findTargetElement().assertedCast<KtElement> { "Target element is null" }
-
-        val descriptor = handler.findDescriptor(element, project, editor)
-        handler.checkDescriptor(descriptor, project, editor, file as KtFile)
-        val callableDescriptor = descriptor
-          .sure { "Target descriptor is null" }
-        return callableDescriptor
-    }
-
     fun C.createKotlinStringParameter(name: String = "s", defaultValueForCall: KtExpression? = null) =
         createKotlinParameter(name, "String", defaultValueForCall)
 

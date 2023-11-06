@@ -4,11 +4,15 @@ package org.jetbrains.kotlin.idea.k2.refactoring.changeSignature
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import com.intellij.refactoring.HelpID
 import com.intellij.refactoring.RefactoringBundle
+import com.intellij.refactoring.util.CommonRefactoringUtil
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbolOrigin
+import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
 import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.ui.KotlinChangePropertySignatureDialog
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.ui.KotlinChangeSignatureDialog
@@ -18,67 +22,62 @@ import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.util.OperatorNameConventions
 
-object KotlinChangeSignatureHandler : KotlinChangeSignatureHandlerBase<KtNamedDeclaration>() {
+object KotlinChangeSignatureHandler : KotlinChangeSignatureHandlerBase() {
     override fun asInvokeOperator(call: KtCallElement?): PsiElement? {
         val psiElement = call?.mainReference?.resolve() ?: return null
-        if (psiElement is KtNamedFunction &&
-            KotlinPsiHeuristics.isPossibleOperator(psiElement) &&
-            psiElement.name == OperatorNameConventions.INVOKE.asString()
-        ) {
+        if (psiElement is KtNamedFunction && KotlinPsiHeuristics.isPossibleOperator(psiElement) && psiElement.name == OperatorNameConventions.INVOKE.asString()) {
             return psiElement
         }
         return null
     }
 
-    override fun referencedClassOrCallable(calleeExpr: KtReferenceExpression): PsiElement? {
-        return calleeExpr.mainReference.resolve()
+    override fun invokeChangeSignature(
+        element: KtElement, context: KtElement, project: Project, editor: Editor?
+    ) {
+        val callableDeclaration = findDeclaration(element, context, project, editor) ?: return
+        runChangeSignature(project, editor, callableDeclaration, context)
     }
 
-    override fun findDescriptor(
-        element: KtElement,
-        project: Project,
-        editor: Editor?
+    @OptIn(KtAllowAnalysisOnEdt::class)
+    fun findDeclaration(
+        element: KtElement, context: KtElement, project: Project, editor: Editor?
     ): KtNamedDeclaration? {
-        return when (element) {
-            is KtParameter -> if (element.hasValOrVar()) element else null
-            is KtCallableDeclaration -> element
-            is KtClass -> element.primaryConstructor ?: if (element.allConstructors.isEmpty()) element else null
-            else -> null
+        return allowAnalysisOnEdt {
+            analyze(context) {
+                val ktSymbol = when (element) {
+                    is KtParameter -> if (element.hasValOrVar()) element.getSymbol() else null
+                    is KtCallableDeclaration -> element.getSymbol()
+                    is KtClass -> element.primaryConstructor?.getSymbol()
+                        ?: if (element.allConstructors.isEmpty()) element.getSymbol() else null
+                    is KtReferenceExpression -> element.mainReference.resolveToSymbols().firstOrNull()
+                        ?.takeIf { it !is KtValueParameterSymbol || it.generatedPrimaryConstructorProperty != null }
+                    else -> null
+                }
+
+                val elementKind = when {
+                    ktSymbol == null -> InapplicabilityKind.Null
+                    ktSymbol is KtFunctionSymbol && ktSymbol.valueParameters.any { it.isVararg } -> InapplicabilityKind.Varargs
+                    ktSymbol.origin == KtSymbolOrigin.SOURCE_MEMBER_GENERATED -> InapplicabilityKind.Synthetic
+                    ktSymbol.origin == KtSymbolOrigin.LIBRARY -> InapplicabilityKind.Library
+                    else -> null
+                }
+
+                if (elementKind != null) {
+                    val message = RefactoringBundle.getCannotRefactorMessage(
+                        elementKind.description
+                    )
+
+                    CommonRefactoringUtil.showErrorHint(
+                        project, editor, message, RefactoringBundle.message("changeSignature.refactoring.name"), HelpID.CHANGE_SIGNATURE
+                    )
+                    null
+                } else ktSymbol?.psi as? KtNamedDeclaration
+            }
         }
     }
 
-    override fun isVarargFunction(function: KtNamedDeclaration): Boolean {
-        return function is KtNamedFunction && function.valueParameters.any { it.isVarArg }
-    }
 
-    @OptIn(KtAllowAnalysisOnEdt::class)
-    override fun isSynthetic(function: KtNamedDeclaration, context: KtElement): Boolean {
-        return allowAnalysisOnEdt { analyze(context) { function.getSymbol().origin == KtSymbolOrigin.SOURCE_MEMBER_GENERATED } }
-    }
-
-    @OptIn(KtAllowAnalysisOnEdt::class)
-    override fun isLibrary(function: KtNamedDeclaration, context: KtElement): Boolean {
-        val original = function.originalElement as? KtCallableDeclaration ?: return false
-        return original.containingKtFile.isCompiled
-    }
-
-    override fun isJavaCallable(function: KtNamedDeclaration): Boolean {
-        return false
-    }
-
-    override fun isDynamic(function: KtNamedDeclaration): Boolean {
-        return false //todo
-    }
-
-    override fun getDeclaration(t: KtNamedDeclaration, project: Project): PsiElement {
-        return t
-    }
-
-    override fun getDeclarationName(t: KtNamedDeclaration): String {
-        return t.name!!
-    }
-
-    override fun runChangeSignature(
+    private fun runChangeSignature(
         project: Project, editor: Editor?, callableDescriptor: KtNamedDeclaration, context: PsiElement
     ) {
 

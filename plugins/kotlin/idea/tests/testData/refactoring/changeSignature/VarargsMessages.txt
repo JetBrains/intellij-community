@@ -1,1 +1,2 @@
+Cannot perform refactoring.
 Can't refactor the function with variable arguments
