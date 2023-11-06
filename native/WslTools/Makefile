@@ -6,7 +6,7 @@ MUSL_HOME := $(HOME)/musl
 # Musl gcc wrapper (use it co compile)
 MUSL_CC := $(MUSL_HOME)/bin/musl-gcc
 
-CFLAGS = -Wall -Wextra -pedantic -Werror -Os -D_POSIX_SOURCE=1 -D_BSD_SOURCE=1
+CFLAGS = -Wall -Wextra -pedantic -Werror -Os -D_POSIX_SOURCE=1 -D_BSD_SOURCE=1 -s
 LDFLAGS = -static
 CC = $(MUSL_CC)
 
