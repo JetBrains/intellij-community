@@ -5,11 +5,8 @@ package com.intellij.platform.diagnostic.telemetry.impl
 
 import com.intellij.diagnostic.ActivityImpl
 import com.intellij.diagnostic.StartUpMeasurer
-import com.intellij.openapi.application.ApplicationInfo
-import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.platform.diagnostic.telemetry.Scope
 import com.intellij.platform.diagnostic.telemetry.exporters.*
 import com.intellij.platform.util.http.ContentType
@@ -21,10 +18,9 @@ import kotlinx.coroutines.selects.select
 import kotlinx.serialization.encodeToByteArray
 import kotlinx.serialization.protobuf.ProtoBuf
 import java.nio.ByteBuffer
-import java.time.Instant
 import java.time.ZoneOffset
 import java.time.ZonedDateTime
-import java.time.format.DateTimeFormatter
+import java.util.function.BiConsumer
 import kotlin.time.Duration.Companion.minutes
 
 private const val chunkSize = 512
@@ -39,7 +35,9 @@ internal class OtlpService {
   private val utc = ((ZonedDateTime.now(ZoneOffset.UTC).toInstant().toEpochMilli() / 1000) - 1672531200).toInt()
 
   @OptIn(ExperimentalCoroutinesApi::class)
-  fun process(coroutineScope: CoroutineScope, batchSpanProcessor: BatchSpanProcessor?): Job? {
+  fun process(coroutineScope: CoroutineScope,
+              batchSpanProcessor: BatchSpanProcessor?,
+              opentelemetrySdkResource: io.opentelemetry.sdk.resources.Resource): Job? {
     val endpoint = getOtlpEndPoint()
     if (endpoint == null && batchSpanProcessor == null) {
       return null
@@ -52,7 +50,7 @@ internal class OtlpService {
       val appInfo = ApplicationInfoImpl.getShadowInstance()
       val version = appInfo.build.asStringWithoutProductCode()
 
-      val resource = createOpenTelemetryResource(appInfo)
+      val resource = createOpenTelemetryResource(opentelemetrySdkResource)
       val scopeToSpans = HashMap<Scope, ScopeSpans>()
       try {
         var counter = 0
@@ -187,22 +185,12 @@ private fun computeSpanId(span: ActivityImpl): ByteArray {
   return byteBuffer.array()
 }
 
-private fun createOpenTelemetryResource(appInfo: ApplicationInfo): Resource {
-  return Resource(attributes = listOf(
-    KeyValue(key = "service.name",
-             value = AnyValue(string = ApplicationNamesInfo.getInstance().fullProductName)),
-    KeyValue(key = "service.version",
-             value = AnyValue(string = appInfo.build.asStringWithoutProductCode())),
-    KeyValue(key = "service.namespace", value = AnyValue(string = appInfo.build.productCode)),
-    KeyValue(key = "service.instance.id",
-             value = AnyValue(string = DateTimeFormatter.ISO_INSTANT.format(Instant.now()))),
-
-    KeyValue(key = "process.owner",
-             value = AnyValue(string = System.getProperty("user.name") ?: "unknown")),
-    KeyValue(key = "os.type", value = AnyValue(string = SystemInfoRt.OS_NAME)),
-    KeyValue(key = "os.version", value = AnyValue(string = SystemInfoRt.OS_VERSION)),
-    KeyValue(key = "host.arch", value = AnyValue(string = System.getProperty("os.arch"))),
-  ))
+private fun createOpenTelemetryResource(opentelemetrySdkResource: io.opentelemetry.sdk.resources.Resource): Resource {
+  val attributes = mutableListOf<KeyValue>()
+  opentelemetrySdkResource.attributes.forEach(BiConsumer { k, v ->
+    attributes.add(KeyValue(key = k.key, value = AnyValue(string = v.toString())))
+  })
+  return Resource(attributes = java.util.List.copyOf(attributes))
 }
 
 private val hashCodeRegex = Regex("@\\d+ ")

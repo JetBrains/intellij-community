@@ -92,7 +92,8 @@ class TelemetryManagerImpl(app: Application) : TelemetryManager {
     }
 
     otlJob = otlpService.process(coroutineScope = app.service<OtlpCoroutineScopeHolder>().coroutineScope,
-                                 batchSpanProcessor = batchSpanProcessor)
+                                 batchSpanProcessor = batchSpanProcessor,
+                                 opentelemetrySdkResource = configurator.resource)
 
     // W3CTraceContextPropagator is needed to make backend/client spans properly synced, issue: RDCT-408
     sdk = configurator.getConfiguredSdkBuilder()
