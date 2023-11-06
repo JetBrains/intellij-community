@@ -107,10 +107,4 @@ sealed interface K2MoveSourceModel<T : KtElement> {
             }
         }
     }
-
-    companion object {
-        fun getDeclarationsContainers(elementsToMove: Collection<KtNamedDeclaration>): Set<KtDeclarationContainer> = elementsToMove
-            .mapNotNull { it.parent as? KtDeclarationContainer }
-            .toSet()
-    }
 }
