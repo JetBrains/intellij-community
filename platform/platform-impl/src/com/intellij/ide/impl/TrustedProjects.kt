@@ -4,11 +4,16 @@
 
 package com.intellij.ide.impl
 
+import com.intellij.ide.IdeBundle
 import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.ide.trustedProjects.TrustedProjectsDialog
 import com.intellij.ide.trustedProjects.TrustedProjectsListener
 import com.intellij.ide.trustedProjects.TrustedProjectsLocator
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ex.ApplicationInfoEx
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.util.ThreeState
@@ -110,3 +115,27 @@ interface TrustStateListener {
 }
 
 const val TRUSTED_PROJECTS_HELP_TOPIC: String = "Project_security"
+
+class ShowTrustProjectDialogAction : DumbAwareAction() {
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+
+  override fun update(e: AnActionEvent) {
+    val project = e.project
+    e.presentation.isEnabledAndVisible = project != null && !project.isDefault && !project.isTrusted()
+  }
+
+  override fun actionPerformed(e: AnActionEvent) {
+    val project = e.project!!
+    if (confirmLoadingUntrustedProject(
+        project,
+        IdeBundle.message("untrusted.project.general.dialog.title"),
+        IdeBundle.message("untrusted.project.open.dialog.text", ApplicationInfoEx.getInstanceEx().fullApplicationName),
+        IdeBundle.message("untrusted.project.dialog.trust.button"),
+        IdeBundle.message("untrusted.project.dialog.distrust.button"))
+    ) {
+      ApplicationManager.getApplication().messageBus
+        .syncPublisher(TrustedProjectsListener.TOPIC)
+        .onProjectTrusted(project)
+    }
+  }
+}
