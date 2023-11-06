@@ -113,11 +113,15 @@ public final class ChangesUtil {
     return JBIterable.from(changes).flatMap(ChangesUtil::iteratePathsCaseSensitive);
   }
 
+  public static boolean equalsCaseSensitive(@Nullable FilePath path1, @Nullable FilePath path2) {
+    return CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY.equals(path1, path2);
+  }
+
   public static @NotNull JBIterable<FilePath> iteratePathsCaseSensitive(@NotNull Change change) {
     FilePath beforePath = getBeforePath(change);
     FilePath afterPath = getAfterPath(change);
 
-    if (CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY.equals(beforePath, afterPath)) {
+    if (equalsCaseSensitive(beforePath, afterPath)) {
       return JBIterable.of(beforePath);
     }
     else {
