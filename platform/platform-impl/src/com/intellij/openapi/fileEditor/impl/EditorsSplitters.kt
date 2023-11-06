@@ -395,7 +395,7 @@ open class EditorsSplitters internal constructor(
   }
 
   internal suspend fun doUpdateFileIcon(file: VirtualFile) {
-    val icon = readActionBlocking {
+    val icon = readAction {
       IconUtil.computeFileIcon(file = file, flags = Iconable.ICON_FLAG_READ_STATUS, project = manager.project)
     }
     withContext(Dispatchers.EDT) {
@@ -960,7 +960,7 @@ private class UiBuilder(private val splitters: EditorsSplitters) {
             serviceAsync<FileEditorProviderManager>().getProvidersAsync(fileEditorManager.project, file)
           }
 
-          val document = readActionBlocking {
+          val document = readAction {
             fileDocumentManager.getDocument(file)
           }
 
@@ -1011,8 +1011,6 @@ private class UiBuilder(private val splitters: EditorsSplitters) {
       splitters.coroutineScope.launch(Dispatchers.EDT) {
         val composite = focusedFile?.let { window.getComposite(focusedFile) } ?: window.selectedComposite
         if (composite != null) {
-          fileEditorManager.addSelectionRecord(composite.file, window)
-
           // OPENED_IN_BULK is forcing 'JBTabsImpl.addTabWithoutUpdating',
           // so these need to be fired even if the composite is already selected
           window.selectOpenedCompositeOnStartup(composite = composite)
