@@ -38,7 +38,7 @@ internal fun InlineCompletionTooltipComponent.shortcutActions(): ActionButtonWit
     ChangeToCustomInlineCompletionAction(),
   )
 
-  val group = PopupActionGroup(actions)
+  val group = InlineCompletionPopupActionGroup(actions)
 
   return object : ActionButtonWithText(group, group.templatePresentation.clone(), ActionPlaces.UNKNOWN, JBUI.emptySize()) {
     override fun getMargins() = JBUI.insets(1, 2)
@@ -82,7 +82,7 @@ private class ChangeToCustomInlineCompletionAction : AnAction(
   }
 }
 
-internal class PopupActionGroup(private val actions: Array<AnAction>) : ActionGroup(), DumbAware {
+internal class InlineCompletionPopupActionGroup(private val actions: Array<AnAction>) : ActionGroup(), DumbAware {
   init {
     isPopup = true
     templatePresentation.isPerformGroup = true

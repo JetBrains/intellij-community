@@ -23,7 +23,7 @@ object InlineCompletionTooltipFactory {
       icon(icon).gap(RightGap.SMALL)
       comment("$name $comment").gap(RightGap.SMALL)
 
-      val group = PopupActionGroup(actions)
+      val group = InlineCompletionPopupActionGroup(actions)
 
       val moreActionsButton = object : ActionButton(group, group.templatePresentation.clone(), ActionPlaces.UNKNOWN, JBUI.emptySize()) {
         override fun shallPaintDownArrow() = false
