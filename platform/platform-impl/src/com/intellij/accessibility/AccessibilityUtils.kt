@@ -3,6 +3,7 @@ package com.intellij.accessibility
 
 import com.intellij.ide.GeneralSettings
 import com.intellij.ide.isSupportScreenReadersOverridden
+import com.intellij.ide.ui.laf.setEarlyUiLaF
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.application.impl.RawSwingDispatcher
@@ -39,6 +40,8 @@ internal suspend fun enableScreenReaderSupportIfNecessary() {
   AccessibilityUsageTrackerCollector.featureTriggered(AccessibilityUsageTrackerCollector.SCREEN_READER_DETECTED)
   val appName = ApplicationInfoImpl.getShadowInstance().versionName
   val answer = withContext(RawSwingDispatcher) {
+    setEarlyUiLaF()
+
     MessageDialogBuilder.yesNo(title = ApplicationBundle.message("title.screen.reader.support"),
                                message = ApplicationBundle.message("confirmation.screen.reader.enable", appName))
       .yesText(ApplicationBundle.message("button.enable"))
