@@ -1647,6 +1647,8 @@
 
     <cachesInvalidator implementation="com.intellij.ide.ui.IconCacheInvalidator"/>
 
+    <cachesInvalidator implementation="com.intellij.openapi.fileEditor.impl.text.foldingGrave.MarkupCacheInvalidator$InvalidationRequest"/>
+
     <diagnostic.freezeProfiler implementation="com.intellij.diagnostic.opentelemetry.OTelMetricsFreezeProfiler"/>
 
     <backgroundPostStartupActivity implementation="com.intellij.diagnostic.opentelemetry.JVMStatsToOTelReporter"/>
