@@ -52,7 +52,8 @@
       <add-to-group group-id="MaintenanceGroup" anchor="before" relative-to-action="DumpLookupElementWeights"/>
     </action>
     <action id="DumpMLExperimentGroups"
-            class="com.intellij.completion.ml.actions.DumpMLExperimentsGroupsAction">
+            class="com.intellij.completion.ml.actions.DumpMLExperimentsGroupsAction"
+            internal="true">
       <add-to-group group-id="MaintenanceGroup" anchor="after" relative-to-action="DumpMLCompletionFeatures"/>
     </action>
   </actions>
