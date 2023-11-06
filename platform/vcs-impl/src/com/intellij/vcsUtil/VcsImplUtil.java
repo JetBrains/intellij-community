@@ -11,25 +11,27 @@ import com.intellij.openapi.util.NlsContexts.DialogMessage;
 import com.intellij.openapi.util.NlsContexts.DialogTitle;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsKey;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vcs.changes.ChangeListManagerEx;
-import com.intellij.openapi.vcs.changes.IgnoredFileContentProvider;
-import com.intellij.openapi.vcs.changes.IgnoredFileGenerator;
+import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.util.paths.RecursiveFilePathSet;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.VfsImplUtil;
 import com.intellij.util.WaitForProgressToShow;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.SystemIndependent;
 
 import java.nio.charset.Charset;
+import java.util.Collection;
 
 import static com.intellij.openapi.vcs.FileStatus.IGNORED;
 import static com.intellij.openapi.vcs.FileStatus.UNKNOWN;
@@ -145,5 +147,37 @@ public final class VcsImplUtil {
 
     Pair<NewVirtualFile, NewVirtualFile> pair = VfsImplUtil.findCachedFileByPath(LocalFileSystem.getInstance(), path);
     return pair.first != null ? pair.first : pair.second;
+  }
+
+  public static @NotNull JBIterable<? extends Change> filterChangesUnderFiles(@NotNull Iterable<? extends Change> changes,
+                                                                              @NotNull Collection<VirtualFile> files) {
+    return filterChangesUnder(changes, ContainerUtil.map(files, file -> VcsUtil.getFilePath(file)));
+  }
+
+  public static @NotNull JBIterable<? extends Change> filterChangesUnder(@NotNull Iterable<? extends Change> changes,
+                                                                         @NotNull Collection<FilePath> filePaths) {
+    if (filePaths.isEmpty()) return JBIterable.empty();
+
+    RecursiveFilePathSet scope = new RecursiveFilePathSet(SystemInfoRt.isFileSystemCaseSensitive);
+    scope.addAll(filePaths);
+
+    return JBIterable.from(changes).filter(change -> isUnderScope(scope, change));
+  }
+
+  private static boolean isUnderScope(@NotNull RecursiveFilePathSet scope, @NotNull Change change) {
+    FilePath beforePath = ChangesUtil.getBeforePath(change);
+    if (beforePath != null &&
+        scope.hasAncestor(beforePath)) {
+      return true;
+    }
+
+    FilePath afterPath = ChangesUtil.getAfterPath(change);
+    if (afterPath != null &&
+        !ChangesUtil.equalsCaseSensitive(beforePath, afterPath) &&
+        scope.hasAncestor(afterPath)) {
+      return true;
+    }
+
+    return false;
   }
 }

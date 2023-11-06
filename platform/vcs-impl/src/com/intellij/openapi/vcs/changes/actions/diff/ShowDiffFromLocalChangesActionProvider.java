@@ -18,10 +18,11 @@ import com.intellij.openapi.vcs.changes.ui.ChangesListView;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
+import com.intellij.vcsUtil.VcsImplUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -95,7 +96,7 @@ public class ShowDiffFromLocalChangesActionProvider implements AnActionExtension
       ChangeListManager.getInstance(project).invokeAfterUpdate(true, () -> {
         ChangesViewManager.getInstanceEx(project).promiseRefresh().onProcessed(__ -> {
           try {
-            List<Change> actualChanges = loadFakeRevisions(project, changes);
+            List<? extends Change> actualChanges = loadFakeRevisions(project, changes);
             resultRef.complete(collectRequestProducers(project, actualChanges, unversioned, view));
           }
           catch (Throwable err) {
@@ -145,12 +146,9 @@ public class ShowDiffFromLocalChangesActionProvider implements AnActionExtension
   }
 
   @NotNull
-  private static List<Change> loadFakeRevisions(@NotNull Project project, @NotNull List<? extends Change> changes) {
-    List<Change> actualChanges = new ArrayList<>();
-    for (Change change : changes) {
-      actualChanges.addAll(ChangeListManager.getInstance(project).getChangesIn(ChangesUtil.getFilePath(change)));
-    }
-    return actualChanges;
+  private static List<? extends Change> loadFakeRevisions(@NotNull Project project, @NotNull List<? extends Change> changes) {
+    Collection<Change> allChanges = ChangeListManager.getInstance(project).getAllChanges();
+    return VcsImplUtil.filterChangesUnder(allChanges, ChangesUtil.getPaths(changes)).toList();
   }
 
   @NotNull

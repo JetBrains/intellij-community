@@ -193,9 +193,17 @@ public abstract class ChangeListManager implements ChangeListModification {
   @NotNull
   public abstract List<FilePath> getUnversionedFilesPaths();
 
+  /**
+   * @return All the changes under a given path (inc. from other VCS roots)
+   * @see com.intellij.vcsUtil.VcsImplUtil#filterChangesUnderFiles
+   */
   @NotNull
   public abstract Collection<Change> getChangesIn(@NotNull VirtualFile dir);
 
+  /**
+   * @return All the changes under a given path (inc. from other VCS roots)
+   * @see com.intellij.vcsUtil.VcsImplUtil#filterChangesUnder
+   */
   @NotNull
   public abstract Collection<Change> getChangesIn(@NotNull FilePath path);
 

@@ -22,6 +22,7 @@ import com.intellij.util.containers.ContainerUtil
 import com.intellij.vcs.commit.CommitModeManager
 import com.intellij.vcs.commit.CommitWorkflowHandler
 import com.intellij.vcs.commit.cleanActionText
+import com.intellij.vcsUtil.VcsImplUtil
 
 internal fun AnActionEvent.getContextCommitWorkflowHandler(): CommitWorkflowHandler? = getData(VcsDataKeys.COMMIT_WORKFLOW_HANDLER)
 
@@ -117,8 +118,8 @@ object CheckinActionUtil {
                                  initialChangeList: LocalChangeList,
                                  pathsToCommit: List<FilePath>): Collection<Any> {
     if (selectedChanges.isEmpty() && selectedUnversioned.isEmpty()) {
-      val manager = ChangeListManager.getInstance(project)
-      val changesToCommit = pathsToCommit.flatMap { manager.getChangesIn(it) }.toSet()
+      val allChanges = ChangeListManager.getInstance(project).allChanges
+      val changesToCommit = VcsImplUtil.filterChangesUnder(allChanges, pathsToCommit).toSet()
       return initialChangeList.changes.intersect(changesToCommit)
     }
     else {
@@ -135,21 +136,16 @@ object CheckinActionUtil {
   }
 
   fun getInitiallySelectedChangeListFor(project: Project, pathsToCommit: List<FilePath>): LocalChangeList {
-    val manager = ChangeListManager.getInstance(project)
+    val manager = ChangeListManagerEx.getInstanceEx(project)
 
     val defaultChangeList = manager.defaultChangeList
-    val defaultListChanges = defaultChangeList.changes
-
-    var result: LocalChangeList? = null
-    for (filePath in pathsToCommit) {
-      val changes = manager.getChangesIn(filePath)
-      if (changes.any { defaultListChanges.contains(it) }) return defaultChangeList
-
-      if (result == null) {
-        result = changes.firstNotNullOfOrNull { manager.getChangeList(it) }
-      }
+    val selectedInDefault = VcsImplUtil.filterChangesUnder(defaultChangeList.changes, pathsToCommit)
+    if (selectedInDefault.isNotEmpty) {
+      return defaultChangeList
     }
 
-    return result ?: defaultChangeList
+    val selectedChanges = VcsImplUtil.filterChangesUnder(manager.allChanges, pathsToCommit)
+    val changeLists = manager.getAffectedLists(selectedChanges.toList())
+    return changeLists.singleOrNull() ?: defaultChangeList
   }
 }
