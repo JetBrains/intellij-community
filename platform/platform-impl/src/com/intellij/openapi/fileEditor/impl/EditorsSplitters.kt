@@ -35,15 +35,16 @@ import com.intellij.openapi.ui.OnePixelDivider
 import com.intellij.openapi.ui.Splitter
 import com.intellij.openapi.util.Iconable
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.impl.LightFilePointer
 import com.intellij.openapi.wm.*
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy
 import com.intellij.openapi.wm.ex.IdeFrameEx
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.*
+import com.intellij.platform.fileEditor.FileEntry
+import com.intellij.platform.fileEditor.parseFileEntry
+import com.intellij.platform.fileEditor.writeComposite
 import com.intellij.platform.ide.ideFingerprint
 import com.intellij.testFramework.LightVirtualFileBase
 import com.intellij.ui.*
@@ -57,7 +58,6 @@ import com.intellij.util.childScope
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.JBRectangle
-import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
@@ -80,9 +80,6 @@ import kotlin.time.Duration.Companion.milliseconds
 
 private val OPEN_FILES_ACTIVITY = Key.create<Activity>("open.files.activity")
 private val LOG = logger<EditorsSplitters>()
-private const val PINNED: @NonNls String = "pinned"
-private const val IDE_FINGERPRINT: @NonNls String = "ideFingerprint"
-private const val CURRENT_IN_TAB = "current-in-tab"
 
 @Suppress("LeakingThis", "IdentifierGrammar")
 @DirtyUI
@@ -269,22 +266,11 @@ open class EditorsSplitters internal constructor(
   private fun writeWindow(result: Element, window: EditorWindow) {
     val composites = window.getComposites().toList()
     for (i in composites.indices) {
-      val file = window.getFileAt(i)
-      result.addContent(writeComposite(composites.get(i), window.isFilePinned(file), window.selectedComposite))
+      result.addContent(writeComposite(composite = composites.get(i),
+                                       pinned = window.isFilePinned(window.getFileAt(i)),
+                                       selectedEditor = window.selectedComposite,
+                                       project = manager.project))
     }
-  }
-
-  private fun writeComposite(composite: EditorComposite, pinned: Boolean, selectedEditor: EditorComposite?): Element {
-    val fileElement = Element("file")
-    composite.currentStateAsHistoryEntry().writeExternal(fileElement, manager.project)
-    if (pinned) {
-      fileElement.setAttribute(PINNED, "true")
-    }
-    fileElement.setAttribute(IDE_FINGERPRINT, ideFingerprint().toString())
-    if (composite != selectedEditor) {
-      fileElement.setAttribute(CURRENT_IN_TAB, "false")
-    }
-    return fileElement
   }
 
   @Internal
@@ -1155,38 +1141,4 @@ private fun decorateFileIcon(composite: EditorComposite, baseIcon: Icon): Icon? 
     result.setIcon(modifiedIcon, 1, 0, 0)
   }
   return JBUIScale.scaleIcon(result)
-}
-
-internal class FileEntry(
-  @JvmField val pinned: Boolean,
-  @JvmField val currentInTab: Boolean,
-  @JvmField val filePointer: LightFilePointer,
-  @JvmField val selectedProvider: String?,
-  @JvmField val ideFingerprint: Long?,
-  @JvmField val isPreview: Boolean,
-  @JvmField val providers: List<Pair<String, Element>>,
-)
-
-internal fun parseFileEntry(fileElement: Element): FileEntry {
-  val historyElement = fileElement.getChild(HistoryEntry.TAG)
-
-  var selectedProvider: String? = null
-  var providers = persistentListOf<Pair<String, Element>>()
-  for (providerElement in historyElement.getChildren(PROVIDER_ELEMENT)) {
-    val typeId = providerElement.getAttributeValue(EDITOR_TYPE_ID_ATTR)
-    providers = providers.add(typeId to providerElement.getChild(STATE_ELEMENT))
-    if (providerElement.getAttributeValue(SELECTED_ATTR_VALUE).toBoolean()) {
-      selectedProvider = typeId
-    }
-  }
-
-  return FileEntry(
-    pinned = fileElement.getAttributeBooleanValue(PINNED),
-    currentInTab = fileElement.getAttributeValue(CURRENT_IN_TAB, "true").toBoolean(),
-    isPreview = historyElement.getAttributeValue(PREVIEW_ATTR) != null,
-    filePointer = LightFilePointer(url = historyElement.getAttributeValue(HistoryEntry.FILE_ATTR)),
-    selectedProvider = selectedProvider,
-    providers = providers,
-    ideFingerprint = StringUtilRt.parseLong(fileElement.getAttributeValue(IDE_FINGERPRINT), 0),
-  )
 }
