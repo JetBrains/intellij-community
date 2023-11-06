@@ -92,6 +92,7 @@ import com.intellij.util.flow.zipWithNext
 import com.intellij.util.messages.impl.MessageListenerList
 import com.intellij.util.ui.EDT
 import com.intellij.util.ui.UIUtil
+import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet
 import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
@@ -2237,9 +2238,9 @@ open class FileEditorManagerImpl(
     // notify editors about selection changes
     val splitters = window.owner
 
+    addSelectionRecord(file, window)
     if (!AsyncEditorLoader.isOpenedInBulk(file)) {
       splitters.setCurrentWindowAndComposite(window = window)
-      addSelectionRecord(file, window)
       composite.selectedEditor?.selectNotify()
     }
 
@@ -2334,13 +2335,11 @@ open class EditorWithProviderComposite @Internal constructor(
 ) : EditorComposite(file = file, editorsWithProviders = editorsWithProviders, project = project)
 
 private class SelectionHistory {
-  private val history = ArrayList<kotlin.Pair<VirtualFile, EditorWindow>>()
+  private val history = ObjectLinkedOpenHashSet<kotlin.Pair<VirtualFile, EditorWindow>>()
 
   @Synchronized
   fun addRecord(file: VirtualFile, window: EditorWindow) {
-    val record = file to window
-    history.remove(record)
-    history.add(0, record)
+    history.addAndMoveToFirst(file to window)
   }
 
   @Synchronized

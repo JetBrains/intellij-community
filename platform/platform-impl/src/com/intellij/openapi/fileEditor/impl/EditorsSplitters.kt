@@ -951,15 +951,11 @@ private class UiBuilder(private val splitters: EditorsSplitters) {
 
       val window = windowDeferred.await()
       splitters.coroutineScope.launch(Dispatchers.EDT) {
-        val composite = focusedFile?.let { window.getComposite(it) } ?: window.selectedComposite
-        if (composite != null) {
-          fileEditorManager.addSelectionRecord(composite.file, window)
-
-          // OPENED_IN_BULK is forcing 'JBTabsImpl.addTabWithoutUpdating',
-          // so these need to be fired even if the composite is already selected
-          window.selectOpenedCompositeOnStartup(composite = composite)
-          splitters.setCurrentWindowAndComposite(window = window)
-        }
+        val composite = focusedFile?.let { window.getComposite(it) } ?: window.selectedComposite ?: return@launch
+        // OPENED_IN_BULK is forcing 'JBTabsImpl.addTabWithoutUpdating',
+        // so these need to be fired even if the composite is already selected
+        window.selectOpenedCompositeOnStartup(composite = composite)
+        splitters.setCurrentWindowAndComposite(window = window)
       }
     }
   }
