@@ -3,13 +3,10 @@ package com.intellij.platform.diagnostic.telemetry.impl
 
 import com.intellij.diagnostic.ActivityImpl
 import com.intellij.diagnostic.PluginException
-import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
-import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.Ref
@@ -17,6 +14,7 @@ import com.intellij.platform.diagnostic.telemetry.*
 import com.intellij.platform.diagnostic.telemetry.exporters.BatchSpanProcessor
 import com.intellij.platform.diagnostic.telemetry.exporters.JaegerJsonSpanExporter
 import com.intellij.platform.diagnostic.telemetry.exporters.OtlpSpanExporter
+import com.intellij.util.childScope
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.metrics.Meter
 import io.opentelemetry.api.trace.propagation.W3CTraceContextPropagator
@@ -33,19 +31,16 @@ import java.nio.file.Path
 import java.util.concurrent.TimeUnit
 import kotlin.coroutines.CoroutineContext
 
-@Service
-private class OtlpCoroutineScopeHolder(@JvmField val coroutineScope: CoroutineScope)
-
 /**
  * See [Span](https://opentelemetry.io/docs/reference/specification),
  * [Manual Instrumentation](https://opentelemetry.io/docs/instrumentation/java/manual/#create-spans-with-events).
  */
 @ApiStatus.Experimental
 @ApiStatus.Internal
-class TelemetryManagerImpl(app: Application) : TelemetryManager {
+class TelemetryManagerImpl(coroutineScope: CoroutineScope, isUnitTestMode: Boolean) : TelemetryManager {
   // for the unit (performance) tests
-  @Suppress("unused")
-  constructor() : this(ApplicationManager.getApplication())
+  @Suppress("unused", "DEPRECATION")
+  constructor() : this(ApplicationManager.getApplication().coroutineScope, ApplicationManager.getApplication().isUnitTestMode)
 
   private val sdk: OpenTelemetrySdk
 
@@ -63,8 +58,9 @@ class TelemetryManagerImpl(app: Application) : TelemetryManager {
     otlpService = OtlpService()
 
     var otlJob: Job? = null
-    val spanExporters = createSpanExporters(configurator.resource, isUnitTestMode = app.isUnitTestMode)
+    val spanExporters = createSpanExporters(configurator.resource, isUnitTestMode = isUnitTestMode)
     hasSpanExporters = !spanExporters.isEmpty()
+    var otlpServiceCoroutineScope = coroutineScope
     val batchSpanProcessor = if (hasSpanExporters) {
       spanExporters.add(object : AsyncSpanExporter {
         override suspend fun export(spans: Collection<SpanData>) {
@@ -79,8 +75,10 @@ class TelemetryManagerImpl(app: Application) : TelemetryManager {
         }
       })
 
-      val batchSpanProcessor = BatchSpanProcessor(coroutineScope = app.service<OtlpCoroutineScopeHolder>().coroutineScope,
+      val batchSpanProcessor = BatchSpanProcessor(coroutineScope = coroutineScope,
                                                   spanExporters = java.util.List.copyOf(spanExporters))
+      // make sure that otlpService job is canceled before BatchSpanProcessor job
+      otlpServiceCoroutineScope = coroutineScope.childScope(supervisor = false)
       val tracerProvider = SdkTracerProvider.builder()
         .addSpanProcessor(batchSpanProcessor)
         .setResource(configurator.resource)
@@ -92,7 +90,7 @@ class TelemetryManagerImpl(app: Application) : TelemetryManager {
       null
     }
 
-    otlJob = otlpService.process(coroutineScope = app.service<OtlpCoroutineScopeHolder>().coroutineScope,
+    otlJob = otlpService.process(coroutineScope = otlpServiceCoroutineScope,
                                  batchSpanProcessor = batchSpanProcessor,
                                  opentelemetrySdkResource = configurator.resource)
 

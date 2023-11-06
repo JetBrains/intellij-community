@@ -108,7 +108,7 @@ internal suspend fun loadApp(app: ApplicationImpl,
 
     val initTelemetryJob = launch(CoroutineName("opentelemetry configuration")) {
       try {
-        TelemetryManager.setTelemetryManager(TelemetryManagerImpl(app))
+        TelemetryManager.setTelemetryManager(TelemetryManagerImpl(coroutineScope = app.coroutineScope, isUnitTestMode = app.isUnitTestMode))
       }
       catch (e: CancellationException) {
         throw e

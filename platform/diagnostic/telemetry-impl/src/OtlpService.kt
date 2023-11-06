@@ -114,8 +114,10 @@ internal class OtlpService {
         }
 
         // shutdown is requested
-        withContext(NonCancellable) {
-          flush(scopeToSpans = scopeToSpans, resource = resource, endpoint = endpoint, batchSpanProcessor = batchSpanProcessor)
+        if (!scopeToSpans.isEmpty()) {
+          withContext(NonCancellable) {
+            flush(scopeToSpans = scopeToSpans, resource = resource, endpoint = endpoint, batchSpanProcessor = batchSpanProcessor)
+          }
         }
       }
       catch (e: CancellationException) {
