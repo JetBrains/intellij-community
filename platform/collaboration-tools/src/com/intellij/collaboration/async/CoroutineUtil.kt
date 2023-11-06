@@ -405,3 +405,16 @@ suspend fun Job.cancelAndJoinSilently() {
   catch (ignored: Exception) {
   }
 }
+
+/**
+ * Await the deferred value and cancel if the waiting was canceled
+ */
+suspend fun <T> Deferred<T>.awaitCancelling(): T {
+  return try {
+    await()
+  }
+  catch (ce: CancellationException) {
+    if (!isCompleted) cancel()
+    throw ce
+  }
+}

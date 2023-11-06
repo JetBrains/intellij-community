@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.ui.details
 
+import com.intellij.collaboration.async.awaitCancelling
 import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.HorizontalListPanel
@@ -16,7 +17,6 @@ import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.ui.components.JBOptionButton
 import com.intellij.ui.components.panels.Wrapper
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -122,16 +122,9 @@ internal object GitLabMergeRequestDetailsActionsComponentFactory {
       toolTipText = GitLabBundle.message("merge.request.review.submit.action.tooltip")
     }
     reviewFlowVm.submitReviewInputHandler = {
-      val result = cs.async {
+      cs.async {
         GitLabMergeRequestSubmitReviewPopup.show(it, submitButton, true)
-      }
-      try {
-        result.await()
-      }
-      catch (ce: CancellationException) {
-        result.cancel()
-        throw ce
-      }
+      }.awaitCancelling()
     }
 
     moreActionsGroup.add(reviewActions.requestReviewAction.toAnAction())
