@@ -11,6 +11,9 @@ import training.featuresSuggester.FeatureSuggesterTestUtils.typeDelete
 import training.featuresSuggester.NoSuggestion
 import training.featuresSuggester.ReplaceCompletionSuggesterTest
 
+/**
+ * Use `intellij.python.tests` module as a classpath to run this test locally
+ */
 class ReplaceCompletionSuggesterPythonTest : ReplaceCompletionSuggesterTest() {
   override val testingCodeFileName = "PythonCodeExample.py"
 
