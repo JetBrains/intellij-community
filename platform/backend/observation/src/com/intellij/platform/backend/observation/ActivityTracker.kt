@@ -39,10 +39,10 @@ import org.jetbrains.annotations.Nls
  * It means that if there is a configuration process ongoing, the method [isInProgress] will be invoked at least two times.
  */
 @Experimental
-interface ActivityInProgressTracker {
+interface ActivityTracker {
 
   companion object {
-    val EP_NAME: ExtensionPointName<ActivityInProgressTracker> = ExtensionPointName("com.intellij.activityInProgressTracker")
+    val EP_NAME: ExtensionPointName<ActivityTracker> = ExtensionPointName("com.intellij.activityTracker")
   }
 
   /**
@@ -53,7 +53,7 @@ interface ActivityInProgressTracker {
   /**
    * Checks if a configuration activity is in progress.
    *
-   * See [ActivityInProgressTracker] documentation for more details about the contract and guarantees.
+   * See [ActivityTracker] documentation for more details about the contract and guarantees.
    *
    * @return `true` if there is some activity happening, `false` otherwise
    */
@@ -66,7 +66,7 @@ interface ActivityInProgressTracker {
    * and therefore it does **NOT** provide any guarantees about the state of the configuration activities
    * in a subsystem on the moment of resumption.
    *
-   * See [ActivityInProgressTracker] documentation for more details about the contract and guarantees.
+   * See [ActivityTracker] documentation for more details about the contract and guarantees.
    *
    * @param project the project which is configured
    */

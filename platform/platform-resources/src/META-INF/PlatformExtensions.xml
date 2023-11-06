@@ -298,11 +298,11 @@
                              groupId="build"/>
     <trustedProjectsLocator implementation="com.intellij.ide.trustedProjects.impl.DefaultTrustedProjectsLocator"/>
 
-    <activityInProgressTracker implementation="com.intellij.openapi.project.DumbServiceInProgressTracker"/>
-    <activityInProgressTracker implementation="com.intellij.openapi.project.ScanningInProgressTracker"/>
-    <activityInProgressTracker implementation="com.intellij.ide.startup.StartupActivityInProgressTracker"/>
-    <activityInProgressTracker implementation="com.intellij.openapi.vfs.newvfs.VfsActivityInProgressTracker"/>
-    <activityInProgressTracker implementation="com.intellij.configurationStore.SavingInProgressTracker"/>
+    <activityTracker implementation="com.intellij.openapi.project.DumbServiceTracker"/>
+    <activityTracker implementation="com.intellij.openapi.project.ScanningTracker"/>
+    <activityTracker implementation="com.intellij.ide.startup.StartupActivityTracker"/>
+    <activityTracker implementation="com.intellij.openapi.vfs.newvfs.VfsActivityTracker"/>
+    <activityTracker implementation="com.intellij.configurationStore.SavingTracker"/>
 
 
     <colorAndFontPanelFactory implementation="com.intellij.openapi.diff.impl.settings.DiffColorsPageFactory"/>

@@ -2,11 +2,11 @@
 package com.intellij.openapi.vfs.newvfs
 
 import com.intellij.openapi.project.Project
-import com.intellij.platform.backend.observation.ActivityInProgressTracker
+import com.intellij.platform.backend.observation.ActivityTracker
 import kotlinx.coroutines.delay
 import org.jetbrains.annotations.Nls
 
-class VfsActivityInProgressTracker : ActivityInProgressTracker {
+class VfsActivityTracker : ActivityTracker {
 
   override val presentableName: @Nls String = "vfs"
 

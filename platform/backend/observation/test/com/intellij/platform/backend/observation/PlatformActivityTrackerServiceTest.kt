@@ -14,7 +14,7 @@ import org.junit.jupiter.api.RepeatedTest
 import kotlin.collections.map
 import kotlin.random.Random.Default.nextInt
 
-class ActivityInProgressServiceTest {
+class PlatformActivityTrackerServiceTest {
 
 
   object Key1 : ActivityKey {
@@ -36,7 +36,7 @@ class ActivityInProgressServiceTest {
     return allKeys[index]
   }
 
-  private fun CoroutineScope.createConfigurator(service: ActivityInProgressService): CompletableJob {
+  private fun CoroutineScope.createConfigurator(service: PlatformActivityTrackerService): CompletableJob {
     val j = Job()
     val actor = chooseRandomActor()
     launch {
@@ -50,7 +50,7 @@ class ActivityInProgressServiceTest {
     return j
   }
 
-  private fun CoroutineScope.createAwaiter(service: ActivityInProgressService): CompletableJob {
+  private fun CoroutineScope.createAwaiter(service: PlatformActivityTrackerService): CompletableJob {
     val j = Job()
     val actor = chooseRandomActor()
     launch {
@@ -63,12 +63,12 @@ class ActivityInProgressServiceTest {
   }
 
   // this test checks the absence of deadlocks in `service.awaitConfiguration`
-  // and that internal invariants of `ActivityInProgressService` are not violated
+  // and that internal invariants of `PlatformActivityTrackerService` are not violated
   // the execution is nondeterministic because of coroutines dispatcher and random shuffle
   @RepeatedTest(50)
   fun test(): Unit = runBlocking {
     withTimeout(10_000) {
-      val service = ActivityInProgressService(this)
+      val service = PlatformActivityTrackerService(this)
       coroutineScope {
         val actors = (1..5).map { createConfigurator(service) }
         val waiters = (1..5).map { createAwaiter(service) }

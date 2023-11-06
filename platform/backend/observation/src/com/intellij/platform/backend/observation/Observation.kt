@@ -7,7 +7,7 @@ object Observation {
 
   /**
    * Suspends until configuration processes in the IDE are completed.
-   * The awaited configuration processes are those that use [ActivityInProgressTracker] or [ActivityKey]
+   * The awaited configuration processes are those that use [ActivityTracker] or [ActivityKey]
    */
   suspend fun awaitConfiguration(project: Project, messageCallback: ((String) -> Unit)? = null) {
     // we perform several phases of awaiting here,
@@ -54,7 +54,7 @@ object Observation {
   }
 
   private suspend fun collectTrackersFromKeys(project: Project): List<GenericActivityTracker> {
-    val service = ActivityInProgressService.getInstanceAsync(project)
+    val service = PlatformActivityTrackerService.getInstanceAsync(project)
     return service.getAllKeys().map {
       object : GenericActivityTracker {
         override val name: String = it.presentableName
@@ -65,7 +65,7 @@ object Observation {
   }
 
   private suspend fun collectTrackersFromExtensions(project: Project): List<GenericActivityTracker> {
-    return ActivityInProgressTracker.EP_NAME.extensionList.map {
+    return ActivityTracker.EP_NAME.extensionList.map {
       object : GenericActivityTracker {
         override val name: String = it.presentableName
         override suspend fun isInProgress(): Boolean = it.isInProgress(project)

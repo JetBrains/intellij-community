@@ -3,9 +3,9 @@ package com.intellij.ide.startup
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupManager
-import com.intellij.platform.backend.observation.ActivityInProgressTracker
+import com.intellij.platform.backend.observation.ActivityTracker
 
-class StartupActivityInProgressTracker : ActivityInProgressTracker {
+class StartupActivityTracker : ActivityTracker {
   override val presentableName: String = "startup-activities"
 
   override suspend fun isInProgress(project: Project): Boolean {
