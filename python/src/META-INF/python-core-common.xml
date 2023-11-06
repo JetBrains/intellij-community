@@ -490,6 +490,7 @@
     <!-- Targets API -->
     <registryKey key="python.use.targets.api" defaultValue="true" description="Switches Python support to Targets API."/>
     <registryKey key="enable.conda.on.targets" defaultValue="false" description="Enables Conda configuration on targets."/>
+    <registryKey key="python.upload.project.for.packaging.tool" defaultValue="true" description="Upload project files for packaging tool."/>
     <notificationGroup id="Python Debugger" displayType="TOOL_WINDOW" toolWindowId="Debug" bundle="messages.PyBundle"
                        key="debug.notification.group"/>
     <notificationGroup id="Python SDK Updater" displayType="BALLOON" bundle="messages.PyBundle"
