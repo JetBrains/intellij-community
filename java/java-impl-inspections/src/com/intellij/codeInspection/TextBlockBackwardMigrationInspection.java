@@ -57,7 +57,7 @@ public class TextBlockBackwardMigrationInspection extends AbstractBaseJavaLocalI
       CodeStyleSettings tempSettings = CodeStyle.getSettings(file);
       tempSettings.getCommonSettings(JavaLanguage.INSTANCE).ALIGN_MULTILINE_BINARY_OPERATION = true;
       CodeStyleManager manager = CodeStyleManager.getInstance(literalExpression.getProject());
-      CodeStyle.doWithTemporarySettings(project, tempSettings, () -> {
+      CodeStyle.runWithLocalSettings(project, tempSettings, () -> {
         PsiElement result = new CommentTracker().replaceAndRestoreComments(literalExpression, replacement);
         manager.reformat(result);
       });

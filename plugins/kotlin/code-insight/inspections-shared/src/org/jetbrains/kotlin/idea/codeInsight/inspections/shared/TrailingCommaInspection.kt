@@ -4,9 +4,7 @@ package org.jetbrains.kotlin.idea.codeInsight.inspections.shared
 import com.intellij.application.options.CodeStyle
 import com.intellij.codeInsight.intention.FileModifier
 import com.intellij.codeInspection.*
-import com.intellij.codeInspection.options.OptPane
 import com.intellij.codeInspection.options.OptPane.*
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel
 import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.openapi.project.Project
@@ -15,7 +13,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiFile
 import com.intellij.psi.codeStyle.CodeStyleManager
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
@@ -33,7 +30,6 @@ import org.jetbrains.kotlin.idea.util.leafIgnoringWhitespaceAndComments
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
-import javax.swing.JComponent
 import kotlin.properties.Delegates
 
 class TrailingCommaInspection(
@@ -198,12 +194,11 @@ class TrailingCommaInspection(
         override fun applyFix(project: Project, problemDescriptor: ProblemDescriptor) {
             val element = commaOwnerPointer.element ?: return
             val range = createFormatterTextRange(element)
-            val settings = CodeStyleSettingsManager.getInstance(project).cloneSettings(CodeStyle.getSettings(element.containingKtFile))
-            settings.kotlinCustomSettings.ALLOW_TRAILING_COMMA = true
-            settings.kotlinCustomSettings.ALLOW_TRAILING_COMMA_ON_CALL_SITE = true
-            CodeStyle.doWithTemporarySettings(project, settings, Runnable {
+            CodeStyle.runWithLocalSettings(project, CodeStyle.getSettings(element.containingKtFile)) { tempSettings ->
+                tempSettings.kotlinCustomSettings.ALLOW_TRAILING_COMMA = true
+                tempSettings.kotlinCustomSettings.ALLOW_TRAILING_COMMA_ON_CALL_SITE = true
                 CodeStyleManager.getInstance(project).reformatRange(element, range.startOffset, range.endOffset)
-            })
+            }
         }
 
         private fun createFormatterTextRange(commaOwner: KtElement): TextRange {

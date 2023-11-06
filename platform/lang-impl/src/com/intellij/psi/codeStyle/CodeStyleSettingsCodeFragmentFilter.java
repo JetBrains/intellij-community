@@ -50,9 +50,9 @@ public class CodeStyleSettingsCodeFragmentFilter {
 
   public @NotNull CodeStyleSettingsToShow getFieldNamesAffectingCodeFragment(LanguageCodeStyleSettingsProvider.SettingsType... types) {
     Ref<CodeStyleSettingsToShow> settingsToShow = new Ref<>();
-    CodeStyle.doWithTemporarySettings(myProject,
-                                      CodeStyle.getSettings(myFile),
-                                      tempSettings -> settingsToShow.set(computeFieldsWithTempSettings(tempSettings, types)));
+    CodeStyle.runWithLocalSettings(myProject,
+                                   CodeStyle.getSettings(myFile),
+                                   tempSettings -> settingsToShow.set(computeFieldsWithTempSettings(tempSettings, types)));
     return settingsToShow.get();
   }
 

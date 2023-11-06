@@ -75,7 +75,7 @@ final class EditorConfigPreviewFile extends LightVirtualFile implements CodeStyl
             CodeStyleSettings settings = CodeStyle.getSettings(originalPsiFile);
             PsiFile psiFile = createPsi(originalPsiFile.getFileType());
             psiFile.putUserData(PsiFileFactory.ORIGINAL_FILE, originalPsiFile);
-            CodeStyle.doWithTemporarySettings(
+            CodeStyle.runWithLocalSettings(
               myProject, settings, () -> CodeStyleManager.getInstance(myProject).reformatText(psiFile, 0, psiFile.getTextLength()));
             myDocument.replaceString(0, myDocument.getTextLength(), psiFile.getText());
           }
