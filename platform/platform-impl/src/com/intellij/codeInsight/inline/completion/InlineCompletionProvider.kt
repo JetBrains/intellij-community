@@ -50,7 +50,7 @@ interface InlineCompletionProvider {
   val id: InlineCompletionProviderID
 
   /**
-   *
+   * Allow to add custom tooltip presentation for inline suggestion
    */
   val providerPresentation: InlineCompletionProviderPresentation
     get() = InlineCompletionProviderPresentation.dummy(this)
@@ -79,7 +79,9 @@ interface InlineCompletionProvider {
   fun isEnabled(event: InlineCompletionEvent): Boolean
 
   /**
-   * Determines whether the given inline completion event should completely hide current session.
+   * Determines whether the given inline completion event should restart current session and .
+   * If provider renders something and returns true here, then getSuggestion is invoked again.
+   * Also, the same provider will be called in this case.
    *
    * @return True if the session should be restarted, false otherwise.
    */
