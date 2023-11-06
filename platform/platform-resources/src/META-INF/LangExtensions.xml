@@ -421,8 +421,7 @@
     <projectService serviceImplementation="com.intellij.codeInsight.codeVision.CodeVisionHost"/>
     <postStartupActivity implementation="com.intellij.codeInsight.codeVision.CodeVisionInitializer$CodeVisionInitializerStartupActivity"/>
     <projectService serviceImplementation="com.intellij.codeInsight.codeVision.CodeVisionContextProvider"/>
-    <projectService serviceInterface="com.intellij.codeInsight.codeVision.ui.model.ProjectCodeVisionModel"
-                    serviceImplementation="com.intellij.codeInsight.codeVision.ui.model.ProjectCodeVisionModelImpl"/>
+    <projectService serviceImplementation="com.intellij.codeInsight.codeVision.ui.model.ProjectCodeVisionModel"/>
     <applicationService serviceImplementation="com.intellij.codeInsight.codeVision.ui.renderers.painters.CodeVisionThemeInfoProvider"/>
     <registryKey description="Enable Code Vision performance watcher" key="code.vision.performance.watcher.enabled" defaultValue="true"/>
 
