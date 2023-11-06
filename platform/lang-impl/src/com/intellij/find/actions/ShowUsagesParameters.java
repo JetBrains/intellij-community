@@ -39,6 +39,11 @@ public final class ShowUsagesParameters {
     return maxUsages;
   }
 
+  @NotNull
+  public RelativePoint getPopupPosition() {
+    return popupPosition;
+  }
+
   public @NotNull ShowUsagesParameters moreUsages() {
     return new ShowUsagesParameters(project, editor, popupPosition, minWidth, maxUsages + getUsagesPageSize());
   }

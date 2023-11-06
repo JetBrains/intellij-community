@@ -24,6 +24,7 @@ val editorLensContextKey: Key<EditorCodeVisionContext> = Key<EditorCodeVisionCon
 val codeVisionEntryOnHighlighterKey: Key<CodeVisionEntry> = Key.create("CodeLensEntryOnHighlighter")
 val highlighterOnCodeVisionEntryKey: Key<RangeMarker> = Key.create("HighlighterOnHighlighterCodeLensEntry")
 val codeVisionEntryMouseEventKey: Key<MouseEvent> = Key.create("CodeVisionEntryMouseEventKey")
+val editorCodeVisionEntryKey: Key<CodeVisionEntry> = Key.create("EditorCodeVisionEntryKey")
 
 // used by Rider
 val Editor.lensContext: EditorCodeVisionContext
