@@ -38,16 +38,15 @@ class GHPRMergeabilityStateBuilder(private val headRefOid: String, private val p
     val lastCommit = mergeabilityData.commits.lastOrNull()?.commit
     val contexts = lastCommit?.status?.contexts.orEmpty()
     contexts.forEach { context ->
-      val status = CodeReviewCIJob(name = context.context, status = context.state.toCiState(), detailsUrl = context.targetUrl)
+      val status = CodeReviewCIJob(context.context, context.state.toCiState(), context.isRequired, context.targetUrl)
       ciJobs.add(status)
     }
 
     val checkSuites = lastCommit?.checkSuites.orEmpty()
-    checkSuites.flatMap { checkSuite -> checkSuite.checkRuns }
-      .forEach { checkRun ->
-        val status = CodeReviewCIJob(name = checkRun.name, status = checkRun.conclusion.toCiState(), detailsUrl = checkRun.url)
-        ciJobs.add(status)
-      }
+    checkSuites.flatMap { checkSuite -> checkSuite.checkRuns }.forEach { checkRun ->
+      val status = CodeReviewCIJob(checkRun.name, checkRun.conclusion.toCiState(), checkRun.isRequired, checkRun.url)
+      ciJobs.add(status)
+    }
 
     val canBeMerged = when {
       mergeabilityData.mergeStateStatus.canMerge() -> true

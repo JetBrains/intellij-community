@@ -22,8 +22,10 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.gitlab.api.SinceGitLab
 import org.jetbrains.plugins.gitlab.api.data.GitLabPlan
+import org.jetbrains.plugins.gitlab.api.dto.GitLabCiJobDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabReviewerDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabCiJobStatus
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabProject
 import org.jetbrains.plugins.gitlab.mergerequest.data.reviewState
@@ -47,13 +49,12 @@ internal interface GitLabMergeRequestReviewFlowViewModel : CodeReviewFlowViewMod
   val reviewState: SharedFlow<ReviewState>
   val role: SharedFlow<ReviewRole>
 
-  val isMergeable: SharedFlow<Boolean>
-
-  val shouldBeRebased: SharedFlow<Boolean>
-
   val userCanApprove: SharedFlow<Boolean>
   val userCanManage: SharedFlow<Boolean>
   val userCanMerge: SharedFlow<Boolean>
+
+  val isMergeEnabled: SharedFlow<Boolean>
+  val isRebaseEnabled: SharedFlow<Boolean>
 
   val submittableReview: SharedFlow<SubmittableReview?>
   var submitReviewInputHandler: (suspend (GitLabMergeRequestSubmitReviewViewModel) -> Unit)?
@@ -139,17 +140,31 @@ internal class GitLabMergeRequestReviewFlowViewModelImpl(
     }
   }.modelFlow(scope, LOG)
 
-  override val isMergeable: SharedFlow<Boolean> = mergeRequest.details.map { it.isMergeable }
-    .modelFlow(scope, LOG)
-  override val shouldBeRebased: SharedFlow<Boolean> = mergeRequest.details.map { it.shouldBeRebased }
-    .modelFlow(scope, LOG)
-
   override val userCanApprove: SharedFlow<Boolean> = mergeRequest.details.map { it.userPermissions.canApprove == true }
     .modelFlow(scope, LOG)
   override val userCanManage: SharedFlow<Boolean> = mergeRequest.details.map { it.userPermissions.updateMergeRequest }
     .modelFlow(scope, LOG)
   override val userCanMerge: SharedFlow<Boolean> = mergeRequest.details.map { it.userPermissions.canMerge }
     .modelFlow(scope, LOG)
+
+  private val isMergeable: SharedFlow<Boolean> = mergeRequest.details.map { it.isMergeable }
+    .modelFlow(scope, LOG)
+  private val shouldBeRebased: SharedFlow<Boolean> = mergeRequest.details.map { it.shouldBeRebased }
+    .modelFlow(scope, LOG)
+  private val isPipelineSucceeds: SharedFlow<Boolean> = mergeRequest.details.map { details ->
+    val ciJobs = details.headPipeline?.jobs ?: return@map true
+    if (!details.targetProject.onlyAllowMergeIfPipelineSucceeds) return@map true
+    ciJobs.areAllJobsSuccessful(details.targetProject.allowMergeOnSkippedPipeline)
+  }.modelFlow(scope, LOG)
+
+  override val isMergeEnabled: SharedFlow<Boolean> =
+    combine(userCanMerge, isMergeable, isPipelineSucceeds) { userCanMerge, isMergeable, isPipelineSucceeds ->
+      userCanMerge && isMergeable && isPipelineSucceeds
+    }.modelFlow(scope, LOG)
+  override val isRebaseEnabled: SharedFlow<Boolean> =
+    combine(userCanMerge, shouldBeRebased, isPipelineSucceeds) { userCanMerge, shouldBeRebased, isPipelineSucceeds ->
+      userCanMerge && shouldBeRebased && isPipelineSucceeds
+    }.modelFlow(scope, LOG)
 
   override val submittableReview: SharedFlow<SubmittableReview?> = mergeRequest.getSubmittableReview(currentUser).modelFlow(scope, LOG)
   override var submitReviewInputHandler: (suspend (GitLabMergeRequestSubmitReviewViewModel) -> Unit)? = null
@@ -294,6 +309,14 @@ internal class GitLabMergeRequestReviewFlowViewModelImpl(
         reviewed -> ReviewState.WAIT_FOR_UPDATES
         else -> ReviewState.NEED_REVIEW
       }
+    }
+
+    private fun List<GitLabCiJobDTO>.areAllJobsSuccessful(allowSkippedJob: Boolean): Boolean {
+      val jobs = this
+      val requiredJobs = jobs.filterNot { it.allowFailure ?: false }.let { jobs ->
+        if (allowSkippedJob) jobs.filterNot { it.status == GitLabCiJobStatus.SKIPPED } else jobs
+      }
+      return requiredJobs.all { it.status == GitLabCiJobStatus.SUCCESS }
     }
   }
 }

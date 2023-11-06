@@ -7,6 +7,8 @@ fragment project on Project {
   sshUrlToRepo
 
   onlyAllowMergeIfAllDiscussionsAreResolved
+  onlyAllowMergeIfPipelineSucceeds
+  allowMergeOnSkippedPipeline
 
   userPermissions {
     createSnippet

@@ -10,6 +10,7 @@ internal object GitLabGQLQueryLoaders {
 
   private val fragmentVersions = listOf(
     GitLabVersion(13, 9),
+    GitLabVersion(13, 11),
     GitLabVersion(14, 0),
     GitLabVersion(14, 5),
     GitLabVersion(14, 7),

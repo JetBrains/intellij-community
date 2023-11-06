@@ -221,7 +221,10 @@ object CodeReviewDetailsStatusComponentFactory {
     val failed = jobs.count { it.status == CodeReviewCIJobState.FAILED }
     val pending = jobs.count { it.status == CodeReviewCIJobState.PENDING }
     return when {
-      jobs.all { it.status == CodeReviewCIJobState.SUCCESS } -> if (ExperimentalUI.isNewUI()) ExpUiIcons.Status.Success else AllIcons.RunConfigurations.TestPassed
+      jobs
+        .filter { it.isRequired }
+        .all { it.status == CodeReviewCIJobState.SUCCESS }
+      -> if (ExperimentalUI.isNewUI()) ExpUiIcons.Status.Success else AllIcons.RunConfigurations.TestPassed
       pending != 0 && failed != 0 -> if (ExperimentalUI.isNewUI()) ExpUiIcons.Status.FailedInProgress else AllIcons.Status.FailedInProgress
       pending != 0 -> if (ExperimentalUI.isNewUI()) ExpUiIcons.Run.TestNotRunYet else AllIcons.RunConfigurations.TestNotRan
       else -> if (ExperimentalUI.isNewUI()) ExpUiIcons.Status.Error else AllIcons.RunConfigurations.TestError
@@ -232,7 +235,7 @@ object CodeReviewDetailsStatusComponentFactory {
     val failed = jobs.count { it.status == CodeReviewCIJobState.FAILED }
     val pending = jobs.count { it.status == CodeReviewCIJobState.PENDING }
     return when {
-      jobs.all { it.status == CodeReviewCIJobState.SUCCESS } -> CollaborationToolsBundle.message("review.details.status.ci.passed")
+      jobs.filter { it.isRequired }.all { it.status == CodeReviewCIJobState.SUCCESS } -> CollaborationToolsBundle.message("review.details.status.ci.passed")
       pending != 0 && failed != 0 -> CollaborationToolsBundle.message("review.details.status.ci.progress.and.failed")
       pending != 0 -> CollaborationToolsBundle.message("review.details.status.ci.progress")
       else -> CollaborationToolsBundle.message("review.details.status.ci.failed")

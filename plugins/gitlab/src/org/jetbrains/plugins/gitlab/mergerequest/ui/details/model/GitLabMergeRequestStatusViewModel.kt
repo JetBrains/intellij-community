@@ -37,7 +37,7 @@ class GitLabMergeRequestStatusViewModel(
   }.modelFlow(cs, thisLogger())
 
   override val ciJobs: SharedFlow<List<CodeReviewCIJob>> = pipeline.map {
-    it?.jobs?.map { job -> job.convert() } ?: emptyList()
+    it?.jobs?.mapNotNull { job -> job.convert() } ?: emptyList()
   }.modelFlow(cs, thisLogger())
 
   private val _showJobsDetailsRequests = MutableSharedFlow<List<CodeReviewCIJob>>()
@@ -50,9 +50,11 @@ class GitLabMergeRequestStatusViewModel(
     }
   }
 
-  private fun GitLabCiJobDTO.convert(): CodeReviewCIJob {
+  private fun GitLabCiJobDTO.convert(): CodeReviewCIJob? {
     val jobUrl: URI? = webPath?.let { serverPath.toURI().resolveRelative(it) }
-    return CodeReviewCIJob(name, status.toCiState(), jobUrl?.toString())
+    val status = status?.let { it.toCiState() } ?: return null
+    val isRequired = allowFailure?.not() ?: true
+    return CodeReviewCIJob(name, status, isRequired, jobUrl?.toString())
   }
 
   // TODO: Add more states (CodeReviewCIJobState.SKIPPED -> MANUAL, SKIPPED)
