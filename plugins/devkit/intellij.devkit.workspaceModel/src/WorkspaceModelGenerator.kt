@@ -102,8 +102,8 @@ class WorkspaceModelGenerator(private val project: Project, private val coroutin
 
   private val Module.explicitApiEnabled: Boolean
     get() {
-      val something: IKotlinFacetSettings? = KotlinFacet.get(this)?.configuration?.settings
-      return something?.compilerArguments?.explicitApi == ExplicitApiMode.STRICT.state
+      val facetSettings: IKotlinFacetSettings? = KotlinFacet.get(this)?.configuration?.settings
+      return facetSettings?.compilerArguments?.explicitApi == ExplicitApiMode.STRICT.state
     }
 
   companion object {
