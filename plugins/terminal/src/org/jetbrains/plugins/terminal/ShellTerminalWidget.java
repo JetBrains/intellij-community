@@ -194,11 +194,6 @@ public class ShellTerminalWidget extends JBTerminalWidget {
     return super.getDefaultSessionName(connector);
   }
 
-  @Override
-  public void setTtyConnector(@NotNull TtyConnector ttyConnector) {
-    super.setTtyConnector(ttyConnector);
-  }
-
   public boolean hasRunningCommands() throws IllegalStateException {
     TtyConnector connector = getTtyConnector();
     if (connector == null) return false;
