@@ -92,10 +92,11 @@ class InlineCompletionHandler(
       return
     }
 
-    val provider = getProvider(event)
-    if (sessionManager.updateSession(request, provider) || provider == null) {
+    if (sessionManager.updateSession(request)) {
       return
     }
+
+    val provider = getProvider(event) ?: return
 
     // At this point, the previous session must be removed, otherwise, `init` will throw.
     val newSession = InlineCompletionSession.init(editor, provider, request, parentDisposable).apply {
