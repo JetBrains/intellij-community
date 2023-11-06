@@ -94,7 +94,7 @@ open class EditorCodeVisionContext(
   fun resubmitThings() {
     val viewService = editor.project!!.service<CodeVisionView>()
 
-    viewService.runWithReusingLenses(codeVisionModel) {
+    viewService.runWithReusingLenses {
       val lifetime = outputLifetimes.next()
       val mergedLenses = getValidResult().groupBy { editor.document.getLineNumber(it.startOffset) }
       
