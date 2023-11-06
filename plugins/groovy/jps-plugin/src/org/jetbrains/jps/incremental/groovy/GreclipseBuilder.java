@@ -1,6 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.groovy;
 
+import com.intellij.execution.process.BaseOSProcessHandler;
+import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.process.ProcessOutputType;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
@@ -30,16 +33,22 @@ import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerConfiguration;
 import org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile;
 import org.jetbrains.jps.model.module.JpsModule;
+import org.jetbrains.jps.service.SharedThreadPool;
 
 import javax.tools.*;
 import java.io.File;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.concurrent.Future;
 
 public final class GreclipseBuilder extends ModuleLevelBuilder {
   private static final Logger LOG = Logger.getInstance(GreclipseBuilder.class);
@@ -149,7 +158,7 @@ public final class GreclipseBuilder extends ModuleLevelBuilder {
 
       String mainOutputDir = outputDirs.get(chunk.representativeTarget());
       final List<String> args = createCommandLine(context, chunk, toCompile, mainOutputDir, profile, greclipseSettings);
-
+      final List<String> vmOptions = discoverVmOptions(chunk, greclipseSettings.cmdLineParams, greclipseSettings.vmOptions);
       if (Utils.IS_TEST_MODE || LOG.isDebugEnabled()) {
         LOG.debug("Compiling with args: " + args);
       }
@@ -166,7 +175,7 @@ public final class GreclipseBuilder extends ModuleLevelBuilder {
       StringWriter err = new StringWriter();
       HashMap<String, List<String>> outputMap = new HashMap<>();
 
-      boolean success = performCompilation(args, out, err, outputMap, context, chunk);
+      boolean success = performCompilation(vmOptions, args, out, err, outputMap, context, chunk);
 
       List<OutputItem> items = new ArrayList<>();
       for (String src : outputMap.keySet()) {
@@ -209,13 +218,19 @@ public final class GreclipseBuilder extends ModuleLevelBuilder {
     return ID.equals(JpsJavaExtensionService.getInstance().getCompilerConfiguration(project).getJavaCompilerId());
   }
 
-  private boolean performCompilation(List<String> args, StringWriter out, StringWriter err, Map<String, List<String>> outputs, CompileContext context, ModuleChunk chunk) {
+  private boolean performCompilation(List<String> vmOptions,
+                                     List<String> args,
+                                     StringWriter out,
+                                     StringWriter err,
+                                     Map<String, List<String>> outputs,
+                                     CompileContext context,
+                                     ModuleChunk chunk) {
     String bytecodeTarget = JpsGroovycRunner.getBytecodeTarget(context, chunk);
     if (bytecodeTarget != null && System.getProperty(GroovyRtConstants.GROOVY_TARGET_BYTECODE) == null) {
       synchronized (ourGlobalEnvironmentLock) {
         try {
           System.setProperty(GroovyRtConstants.GROOVY_TARGET_BYTECODE, bytecodeTarget);
-          return performCompilationInner(args, out, err, outputs, context);
+          return performCompilationInner(vmOptions, args, out, err, outputs, context, chunk);
         }
         finally {
           System.clearProperty(GroovyRtConstants.GROOVY_TARGET_BYTECODE);
@@ -223,14 +238,16 @@ public final class GreclipseBuilder extends ModuleLevelBuilder {
       }
     }
 
-    return performCompilationInner(args, out, err, outputs, context);
+    return performCompilationInner(vmOptions, args, out, err, outputs, context, chunk);
   }
 
-  private boolean performCompilationInner(List<String> args,
+  private boolean performCompilationInner(List<String> vmOptions,
+                                          List<String> args,
                                           StringWriter out,
                                           StringWriter err,
                                           Map<String, List<String>> outputs,
-                                          CompileContext context) {
+                                          CompileContext context,
+                                          ModuleChunk chunk) {
     final ClassLoader jpsLoader = Thread.currentThread().getContextClassLoader();
     try {
       // We have to set context class loader in order because greclipse will create child GroovyClassLoader,
@@ -253,12 +270,46 @@ public final class GreclipseBuilder extends ModuleLevelBuilder {
       // If we set context classloader here, then in the 6th step parent loader will be myGreclipseLoader,
       // and ASTTransformation class will be returned from myGreclipseLoader, and the compilation won't fail.
       Thread.currentThread().setContextClassLoader(myGreclipseLoader);
-      Class<?> mainClass = Class.forName(GreclipseMain.class.getName(), true, myGreclipseLoader);
-      Constructor<?> constructor = mainClass.getConstructor(PrintWriter.class, PrintWriter.class, Map.class);
-      Method compileMethod = mainClass.getMethod("compile", String[].class);
 
-      Object main = constructor.newInstance(new PrintWriter(out), new PrintWriter(err), outputs);
-      return (Boolean)compileMethod.invoke(main, new Object[]{ArrayUtilRt.toStringArray(args)});
+      if (vmOptions.isEmpty()) {
+        Class<?> mainClass = Class.forName(GreclipseMain.class.getName(), true, myGreclipseLoader);
+        Constructor<?> constructor = mainClass.getConstructor(PrintWriter.class, PrintWriter.class, Map.class);
+        Method compileMethod = mainClass.getMethod("compile", String[].class);
+        Object main = constructor.newInstance(new PrintWriter(out), new PrintWriter(err), outputs);
+        return (Boolean)compileMethod.invoke(main, new Object[]{ArrayUtilRt.toStringArray(args)});
+      }
+      else {
+        final List<String> cmd = ExternalProcessUtil.buildJavaCommandLine(
+          ForkedGroovyc.getJavaExecutable(chunk),
+          "org.jetbrains.jps.incremental.groovy.GreclipseMain",
+          Collections.emptyList(), Arrays.asList(myGreclipseJar,
+                                                 Objects.requireNonNull(PathManager.getJarForClass(GreclipseMain.class)).toAbsolutePath()
+                                                   .toString()),
+          vmOptions,
+          args
+        );
+        final Process process = Runtime.getRuntime().exec(ArrayUtilRt.toStringArray(cmd));
+        ProcessHandler handler = new BaseOSProcessHandler(process, StringUtil.join(cmd, " "), null) {
+          @NotNull
+          @Override
+          public Future<?> executeTask(@NotNull Runnable task) {
+            return SharedThreadPool.getInstance().submit(task);
+          }
+
+          @Override
+          public void notifyTextAvailable(@NotNull String text, @NotNull Key outputType) {
+            if (outputType == ProcessOutputType.STDERR) {
+              err.append(text);
+            }
+            if (outputType == ProcessOutputType.STDOUT) {
+              out.append(text);
+            }
+          }
+        };
+        handler.startNotify();
+        handler.waitFor();
+        return true;
+      }
     }
     catch (Exception e) {
       context.processMessage(CompilerMessage.createInternalBuilderError(getPresentableName(), e));
@@ -287,6 +338,10 @@ public final class GreclipseBuilder extends ModuleLevelBuilder {
     List<String> params = ParametersListUtil.parse(settings.cmdLineParams);
     for (Iterator<String> iterator = params.iterator(); iterator.hasNext(); ) {
       String option = iterator.next();
+      if ("-javaAgentClass".equals(option)) {
+        iterator.next();
+        continue;
+      }
       if ("-target".equals(option)) {
         iterator.next();
         continue;
@@ -306,6 +361,46 @@ public final class GreclipseBuilder extends ModuleLevelBuilder {
     }
 
     return args;
+  }
+
+  private static List<String> discoverVmOptions(ModuleChunk chunk, String args, String rawVmOptions) {
+    List<String> params = ParametersListUtil.parse(args);
+    List<String> vmOptions = new ArrayList<>(ParametersListUtil.parse(rawVmOptions));
+    for (Iterator<String> iterator = params.iterator(); iterator.hasNext(); ) {
+      String option = iterator.next();
+      if ("-javaAgentClass".equals(option)) {
+        String agentClass = iterator.next();
+        vmOptions.add("-javaagent:" + locateAgentJar(chunk, agentClass));
+      }
+    }
+    return vmOptions;
+  }
+
+  /**
+   * @see <a href="https://github.com/groovy/groovy-eclipse/blob/18133707880e2169b7e3c0666e845dd008364d69/extras/groovy-eclipse-compiler/src/main/java/org/codehaus/groovy/eclipse/compiler/GroovyEclipseCompiler.java#L560">groovy-eclipse approach</a>
+   */
+  private static String locateAgentJar(ModuleChunk chunk, String agentClassName) {
+    Collection<File> files = ProjectPaths.getCompilationClasspathFiles(chunk, chunk.containsTests(), false, false);
+    URL[] urls = new URL[files.size()];
+    int i = 0;
+    for (File file : files) {
+      try {
+        urls[i] = file.toURI().toURL();
+        ++i;
+      }
+      catch (MalformedURLException e) {
+        LOG.warn("Malformed dependency: " + file);
+      }
+    }
+    try (URLClassLoader dependenciesLoader = new URLClassLoader(urls, StandardJavaFileManager.class.getClassLoader())) {
+      Class<?> agentClass = Class.forName(agentClassName, false, dependenciesLoader);
+      URL agentUrl = agentClass.getProtectionDomain().getCodeSource().getLocation();
+      File agentClassFile = new File(URLDecoder.decode(agentUrl.getPath(), StandardCharsets.UTF_8));
+      return agentClassFile.getAbsolutePath();
+    }
+    catch (IOException | ClassNotFoundException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   private static String getClasspathString(ModuleChunk chunk) {

@@ -1,70 +1,71 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.plugins.groovy.compiler;
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.plugins.groovy.compiler
 
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.options.Configurable;
-import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.ui.RawCommandLineEditor;
-import com.intellij.ui.components.JBCheckBox;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.incremental.groovy.GreclipseSettings;
-import org.jetbrains.plugins.groovy.GroovyBundle;
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
+import com.intellij.openapi.options.Configurable
+import com.intellij.openapi.ui.DialogPanel
+import com.intellij.openapi.util.NlsContexts.ConfigurableName
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.bindSelected
+import com.intellij.ui.dsl.builder.bindText
+import com.intellij.ui.dsl.builder.panel
+import org.jetbrains.annotations.Nls
+import org.jetbrains.jps.incremental.groovy.GreclipseSettings
+import org.jetbrains.plugins.groovy.GroovyBundle
+import javax.swing.JComponent
 
-import javax.swing.*;
-import java.util.Objects;
+class GreclipseConfigurable(val settings: GreclipseSettings) : Configurable {
 
-public class GreclipseConfigurable implements Configurable {
-  private final GreclipseSettings mySettings;
-  private TextFieldWithBrowseButton myJarPath;
-  private RawCommandLineEditor myCmdLineParams;
-  private JBCheckBox myGenerateDebugInfo;
-  private JPanel myPanel;
-
-  public GreclipseConfigurable(GreclipseSettings settings) {
-    mySettings = settings;
-
-    FileChooserDescriptor descriptor = new FileChooserDescriptor(false, false, true, true, false, false);
-    myJarPath.addBrowseFolderListener(null, GroovyBundle.message("configurable.greclipse.path.chooser.description"), null, descriptor);
+  override fun getDisplayName(): @ConfigurableName String? {
+    return null
   }
 
-  @Override
-  public String getDisplayName() {
-    return null;
+  val panel: DialogPanel = panel {
+    group(GroovyBundle.message("configurable.greclipse.border.title")) {
+      row(GroovyBundle.message("configurable.greclipse.path.label")) {
+        val fileChooserDescriptor = FileChooserDescriptorFactory.createSingleLocalFileDescriptor()
+        textFieldWithBrowseButton(browseDialogTitle = GroovyBundle.message("configurable.greclipse.path.chooser.description"),
+                                  fileChooserDescriptor = fileChooserDescriptor)
+          .align(AlignX.FILL)
+          .bindText(settings::greclipsePath)
+      }
+      row(GroovyBundle.message("configurable.greclipse.command.line.params.label")) {
+        val field = textField().align(AlignX.FILL)
+          .bindText(settings::cmdLineParams)
+          .comment(getJavaAgentCommentText(settings.cmdLineParams))
+        val comment = field.comment!!
+        field.onChanged {
+          comment.text = getJavaAgentCommentText(it.text)
+        }
+      }
+      row(GroovyBundle.message("configurable.greclipse.vm.options.label")) {
+        textField().align(AlignX.FILL)
+          .comment(GroovyBundle.message("configurable.greclipse.vm.options.comment"))
+          .bindText(settings::vmOptions)
+      }
+      row {
+        checkBox(GroovyBundle.message("configurable.greclipse.debug.checkbox"))
+          .bindSelected(settings::debugInfo)
+      }
+    }
   }
 
-  @Nullable
-  @Override
-  public JComponent createComponent() {
-    return myPanel;
+  fun getJavaAgentCommentText(args: String): @Nls String {
+    if (args.contains("-javaAgentClass")) {
+      return GroovyBundle.message("configurable.greclipse.command.java.agent.class.workaround")
+    }
+    else {
+      return ""
+    }
   }
 
-  @Override
-  public boolean isModified() {
-    return !Objects.equals(getExternalizableJarPath(), mySettings.greclipsePath) ||
-           !Objects.equals(myCmdLineParams.getText(), mySettings.cmdLineParams) ||
-           !Comparing.equal(myGenerateDebugInfo.isSelected(), mySettings.debugInfo);
+  override fun createComponent(): JComponent? {
+    return panel
   }
 
-  @Override
-  public void apply() throws ConfigurationException {
-    mySettings.greclipsePath = getExternalizableJarPath();
-    mySettings.cmdLineParams = myCmdLineParams.getText();
-    mySettings.debugInfo = myGenerateDebugInfo.isSelected();
-  }
+  override fun isModified(): Boolean = panel.isModified()
 
-  @NotNull
-  private String getExternalizableJarPath() {
-    return FileUtil.toSystemIndependentName(myJarPath.getText());
-  }
-
-  @Override
-  public void reset() {
-    myJarPath.setText(FileUtil.toSystemDependentName(mySettings.greclipsePath));
-    myCmdLineParams.setText(mySettings.cmdLineParams);
-    myGenerateDebugInfo.setSelected(mySettings.debugInfo);
+  override fun apply() {
+    panel.apply()
   }
 }
