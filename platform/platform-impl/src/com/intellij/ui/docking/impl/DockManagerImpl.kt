@@ -435,7 +435,6 @@ class DockManagerImpl(@JvmField internal val project: Project, private val corou
                             coroutineScope = coroutineScope,
                             dimensionKey = dimensionKey,
                             id = id ?: (windowIdCounter++).toString(),
-                            project = project,
                             container = container,
                             isDialog = container is DockContainer.Dialog,
                             supportReopen = canReopenWindow)
