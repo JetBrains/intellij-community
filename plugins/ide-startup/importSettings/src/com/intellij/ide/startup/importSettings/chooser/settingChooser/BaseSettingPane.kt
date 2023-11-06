@@ -19,6 +19,7 @@ import java.awt.event.ActionEvent
 import javax.swing.AbstractAction
 import javax.swing.JComponent
 import javax.swing.JPanel
+import javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
 
 fun createSettingPane(setting: BaseSetting, configurable: Boolean, changeHandler: () -> Unit): BaseSettingPane {
   return if (setting is Multiple) {
@@ -134,6 +135,7 @@ class MultipleSettingPane(item: SettingItem, changeHandler: () -> Unit) : BaseSe
     panel.border = JBUI.Borders.empty()
 
     val scrollPane = JBScrollPane(component)
+    scrollPane.horizontalScrollBarPolicy = HORIZONTAL_SCROLLBAR_NEVER
     panel.add(scrollPane, BorderLayout.CENTER)
     scrollPane.border = JBUI.Borders.empty(ChildSettingsList.SCROLL_PANE_INSETS, ChildSettingsList.SCROLL_PANE_INSETS,
                                            ChildSettingsList.SCROLL_PANE_INSETS, 0)

@@ -5,14 +5,17 @@ import com.intellij.ide.startup.importSettings.data.ChildSetting
 import com.intellij.ui.SeparatorComponent
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBList
-import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.gridLayout.UnscaledGaps
-import com.intellij.ui.util.minimumWidth
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.UIUtil
 import java.awt.Component
+import java.awt.GridBagConstraints
+import java.awt.GridBagLayout
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
-import javax.swing.*
+import javax.swing.JLabel
+import javax.swing.JList
+import javax.swing.JPanel
+import javax.swing.ListCellRenderer
 
 class ChildSettingsList(val settings: List<ChildItem>, configurable: Boolean, changeHandler: () -> Unit) : JBList<ChildItem>(createDefaultListModel(settings)) {
   companion object {
@@ -41,39 +44,71 @@ class ChildSettingsList(val settings: List<ChildItem>, configurable: Boolean, ch
 }
 
 private class CBRenderer(val configurable: Boolean) : ListCellRenderer<ChildItem> {
-  private lateinit var ch: JBCheckBox
-  private lateinit var txt: JEditorPane
-  private lateinit var addTxt: JEditorPane
-  private lateinit var rightTxt: JEditorPane
+  private var ch = JBCheckBox()
+  private var txt = JLabel()
+
+  private var addTxt = JLabel().apply {
+    foreground = UIUtil.getContextHelpForeground()
+  }
+
+  private var rightTxt = JLabel().apply {
+    foreground = UIUtil.getContextHelpForeground()
+  }
 
   private val separator = SeparatorComponent(5, JBUI.CurrentTheme.Popup.separatorColor(), null)
 
   private val hg = 3
   private val wg = 5
 
-  private val gaps = UnscaledGaps(hg, wg, hg, wg)
 
-  val line = panel {
-    row {
-      ch = checkBox("").customize(gaps).component
-      panel {
-        row {
-          txt = text("").customize(gaps).component.apply {
-            minimumWidth = JBUI.scale(30)
-          }
-          addTxt = comment("").resizableColumn().customize(gaps).component
-        }
-      }.resizableColumn()
-      rightTxt = comment("").customize(UnscaledGaps(hg, wg, hg, wg + ChildSettingsList.SCROLL_PANE_INSETS)).component
-    }
-  }.apply {
-    minimumWidth = JBUI.scale(300)
+  val line = JPanel(GridBagLayout()).apply {
+    val constraint = GridBagConstraints()
+
+    constraint.anchor = GridBagConstraints.BASELINE
+    constraint.weightx = 0.0
+    constraint.weighty = 1.0
+    constraint.gridx = 0
+    constraint.gridy = 0
+    constraint.fill = GridBagConstraints.HORIZONTAL
+    constraint.ipadx = 10
+    add(ch, constraint)
+
+    constraint.weightx = 0.0
+    constraint.weighty = 1.0
+    constraint.gridx = 1
+    constraint.gridy = 0
+
+    add(txt, constraint)
+
+    constraint.weightx = 2.0
+    constraint.weighty = 1.0
+    constraint.gridx = 2
+    constraint.gridy = 0
+    add(addTxt, constraint)
+
+    constraint.weightx = 0.0
+    constraint.weighty = 1.0
+    constraint.gridx = 3
+    constraint.gridy = 0
+
+    add(rightTxt, constraint)
+
+    border = JBUI.Borders.empty()
   }
 
   val pane = JPanel().apply {
-    layout = BoxLayout(this, BoxLayout.Y_AXIS)
-    add(separator)
-    add(line)
+    layout = GridBagLayout()
+    val constraint = GridBagConstraints()
+    constraint.weightx = 1.0
+    constraint.weighty = 1.0
+    constraint.gridx = 0
+    constraint.gridy = 0
+    constraint.fill = GridBagConstraints.HORIZONTAL
+    add(separator, constraint)
+    constraint.gridx = 0
+    constraint.gridy = 1
+    add(line, constraint)
+    border = JBUI.Borders.empty(hg, wg)
   }
 
   override fun getListCellRendererComponent(list: JList<out ChildItem>,
