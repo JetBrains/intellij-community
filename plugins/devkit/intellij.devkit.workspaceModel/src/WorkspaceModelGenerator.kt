@@ -14,12 +14,16 @@ import com.intellij.openapi.roots.SourceFolder
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.jps.model.java.JavaSourceRootProperties
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.kotlin.config.ExplicitApiMode
 import org.jetbrains.kotlin.config.IKotlinFacetSettings
+import org.jetbrains.kotlin.config.additionalArgumentsAsList
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
 
 private val LOG = logger<WorkspaceModelGenerator>()
@@ -103,7 +107,8 @@ class WorkspaceModelGenerator(private val project: Project, private val coroutin
   private val Module.explicitApiEnabled: Boolean
     get() {
       val facetSettings: IKotlinFacetSettings? = KotlinFacet.get(this)?.configuration?.settings
-      return facetSettings?.compilerArguments?.explicitApi == ExplicitApiMode.STRICT.state
+      val compilerArguments = facetSettings?.compilerSettings?.additionalArgumentsAsList
+      return compilerArguments?.contains("-Xexplicit-api=${ExplicitApiMode.STRICT.state}") == true
     }
 
   companion object {
