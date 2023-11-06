@@ -4,7 +4,6 @@
 package com.intellij.ide.ui.laf
 
 import com.intellij.CommonBundle
-import com.intellij.diagnostic.LoadingState
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.diagnostic.runActivity
 import com.intellij.icons.AllIcons
@@ -684,7 +683,9 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
   }
 
   private fun getPreviousSchemeForLaf(lookAndFeelInfo: UIThemeLookAndFeelInfo): EditorColorsScheme? {
-    val schemeName = lafToPreviousScheme.get(lookAndFeelInfo.id) ?: return null
+    val schemeName = lafToPreviousScheme.get(lookAndFeelInfo.id)
+                     ?: lafToPreviousScheme.get(lookAndFeelInfo.name)
+                     ?: return null
     return EditorColorsManager.getInstance().getScheme(schemeName)
   }
 
