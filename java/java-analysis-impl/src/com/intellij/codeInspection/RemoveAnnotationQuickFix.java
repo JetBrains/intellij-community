@@ -97,10 +97,9 @@ public class RemoveAnnotationQuickFix extends ModCommandQuickFix {
 
   @NotNull
   private static ModCommand deannotateExternal(@NotNull Project project, String qualifiedName, List<PsiModifierListOwner> externalOwners) {
-    if (IntentionPreviewUtils.isIntentionPreviewActive()) return ModCommand.nop();
     if (ExternalAnnotationsManager.getInstance(project) instanceof ModCommandAwareExternalAnnotationsManager manager &&
         qualifiedName != null) {
-      return manager.deannotateModCommand(externalOwners, qualifiedName);
+      return manager.deannotateModCommand(externalOwners, List.of(qualifiedName));
     }
     return ModCommand.nop();
   }

@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight;
 
+import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
 import com.intellij.modcommand.ModCommand;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
@@ -40,14 +41,16 @@ public class ModCommandAwareExternalAnnotationsManager extends ReadableExternalA
   }
 
   private @NotNull ModCommand processExistingExternalAnnotationsModCommand(@NotNull List<PsiModifierListOwner> listOwners,
-                                                                           @NotNull String annotationFQN,
+                                                                           @NotNull List<String> annotationFQNs,
                                                                            @NotNull Processor<? super XmlTag> annotationTagProcessor) {
     if (listOwners.isEmpty()) return ModCommand.nop();
     return ModCommand.psiUpdate(listOwners.get(0), (lo, updater) -> {
       List<XmlTag> tags = StreamEx.of(listOwners)
         .mapToEntry(this::findExternalAnnotationsXmlFiles)
         .removeValues(f -> f == null || f.isEmpty())
-        .flatMapKeyValue((owner, fileList) -> StreamEx.of(fileList).flatCollection(file -> getTagsToProcess(file, owner, annotationFQN)))
+        .flatMapKeyValue((owner, fileList) -> StreamEx.of(fileList)
+          .cross(annotationFQNs)
+          .flatMapKeyValue((file, annotationFQN) -> getTagsToProcess(file, owner, annotationFQN).stream()))
         .map(updater::getWritable)
         .toList();
       Set<XmlFile> files = StreamEx.of(tags).map(t -> (XmlFile)t.getContainingFile()).toSet();
@@ -56,8 +59,11 @@ public class ModCommandAwareExternalAnnotationsManager extends ReadableExternalA
           annotationTagProcessor.process(tag);
         }
       }
-      for (XmlFile file : files) {
-        sortItems(file);
+      if (!IntentionPreviewUtils.isIntentionPreviewActive()) {
+        // Avoid too big preview changes
+        for (XmlFile file : files) {
+          sortItems(file);
+        }
       }
     });
   }
@@ -84,8 +90,8 @@ public class ModCommandAwareExternalAnnotationsManager extends ReadableExternalA
   }
 
   @Contract(pure = true)
-  public @NotNull ModCommand deannotateModCommand(List<PsiModifierListOwner> listOwner, @NotNull String annotationFQN) {
-    return processExistingExternalAnnotationsModCommand(listOwner, annotationFQN, annotationTag -> {
+  public @NotNull ModCommand deannotateModCommand(List<PsiModifierListOwner> listOwner, @NotNull List<String> annotationFQNs) {
+    return processExistingExternalAnnotationsModCommand(listOwner, annotationFQNs, annotationTag -> {
       PsiElement parent = annotationTag.getParent();
       annotationTag.delete();
       if (parent instanceof XmlTag xmlTag) {
