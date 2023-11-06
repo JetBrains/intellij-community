@@ -4,7 +4,7 @@ package org.jetbrains.intellij.build.images
 import com.dynatrace.hash4j.hashing.Hashing
 import com.intellij.openapi.util.io.isAncestor
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.ui.icons.loadPng
+import com.intellij.ui.icons.loadRasterImage
 import com.intellij.ui.svg.getSvgDocumentSize
 import com.intellij.util.LineSeparator
 import com.intellij.util.containers.CollectionFactory
@@ -68,7 +68,7 @@ internal open class IconsClassGenerator(private val projectHome: Path,
   private val processedPhantom = AtomicInteger()
   private val modifiedClasses = CopyOnWriteArrayList<ModifiedClass>()
   private val obsoleteClasses = CopyOnWriteArrayList<Path>()
-  
+
   private val openSourceRoot: Path? by lazy {
     val communityFolderMarkerFile = "intellij.idea.community.main.iml"
     if (projectHome.resolve(communityFolderMarkerFile).exists()) return@lazy projectHome
@@ -151,14 +151,14 @@ internal open class IconsClassGenerator(private val projectHome: Path,
         val packageName = existingIconsClass?.packageName ?: possiblePackageNames.first()
         val targetRoot = sourceRoot.path.resolve(packageName.replace('.', File.separatorChar))
 
-        if (existingIconsClass != null && !existingIconsClass.sourceRoot.properties.isForGeneratedSources 
+        if (existingIconsClass != null && !existingIconsClass.sourceRoot.properties.isForGeneratedSources
             && sourceRoot.properties.isForGeneratedSources && images.isNotEmpty()) {
           val oldFile = existingIconsClass.filePath
           println("deleting $oldFile from source root which isn't marked as 'generated', it'll be recreated under the proper root")
           Files.delete(oldFile)
         }
 
-        val className = moduleConfig?.className 
+        val className = moduleConfig?.className
                         ?: existingIconsClass?.className
                         ?: "${directoryName(module).removeSuffix("Icons")}Icons"
         val outFile = targetRoot.resolve("$className.java")
@@ -173,7 +173,7 @@ internal open class IconsClassGenerator(private val projectHome: Path,
     val packageName: String,
     val className: String
   )
-  
+
   private fun findExistingIconsClass(sourceRoots: List<JpsTypedModuleSourceRoot<JavaSourceRootProperties>>,
                                      possiblePackageNames: List<String>): ExistingIconsClass? {
     for (sourceRoot in sourceRoots) {
@@ -267,10 +267,10 @@ internal open class IconsClassGenerator(private val projectHome: Path,
 
   private fun getCopyrightComment(text: String?, module: JpsModule): String {
     if (text == null) {
-      if (openSourceRoot == null || module.contentRootsList.urls.any { 
-        !openSourceRoot!!.isAncestor(Path.of(JpsPathUtil.urlToOsPath(it)), false)
-      }) return ""
-      
+      if (openSourceRoot == null || module.contentRootsList.urls.any {
+          !openSourceRoot!!.isAncestor(Path.of(JpsPathUtil.urlToOsPath(it)), false)
+        }) return ""
+
       return "// Copyright 2000-${LocalDate.now().year} JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.\n"
     }
     val i = text.indexOf("package ")
@@ -486,7 +486,7 @@ internal open class IconsClassGenerator(private val projectHome: Path,
         javaDoc = "/** ${size.width.toInt()}x${size.height.toInt()} */ "
       }
       else {
-        val loadedImage = Files.newInputStream(file).use { loadPng(it) }
+        val loadedImage = Files.newInputStream(file).use { loadRasterImage(it) }
         key = 0
         javaDoc = "/** ${loadedImage.width}x${loadedImage.height} */ "
       }

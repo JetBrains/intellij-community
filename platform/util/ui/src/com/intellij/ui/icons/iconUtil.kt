@@ -56,6 +56,8 @@ private val LOG: Logger
 
 private val cleaners = CopyOnWriteArrayList<() -> Unit>()
 
+internal const val FILE_SCHEME_PREFIX = "file:/"
+
 internal fun registerIconCacheCleaner(cleaner: () -> Unit) {
   cleaners.add(cleaner)
 }
@@ -187,12 +189,12 @@ fun filterImage(image: Image, filters: List<ImageFilter>): Image {
 @Internal
 fun loadPngFromClassResource(path: String, classLoader: ClassLoader?, resourceClass: Class<*>? = null): BufferedImage? {
   val data = getResourceData(path = path, resourceClass = resourceClass, classLoader = classLoader) ?: return null
-  return loadPng(stream = ByteArrayInputStream(data))
+  return loadRasterImage(stream = ByteArrayInputStream(data))
 }
 
 @Internal
 internal fun getResourceData(path: String, resourceClass: Class<*>?, classLoader: ClassLoader?): ByteArray? {
-  assert(resourceClass != null || classLoader != null || path.startsWith("file://"))
+  assert(resourceClass != null || classLoader != null || path.startsWith(FILE_SCHEME_PREFIX))
   if (classLoader != null) {
     val isAbsolute = path.startsWith('/')
     val data = ResourceUtil.getResourceAsBytes(if (isAbsolute) path.substring(1) else path, classLoader, true)
@@ -202,7 +204,7 @@ internal fun getResourceData(path: String, resourceClass: Class<*>?, classLoader
   }
 
   resourceClass?.getResourceAsStream(path)?.use { stream -> return stream.readAllBytes() }
-  if (path.startsWith("file:/")) {
+  if (path.startsWith(FILE_SCHEME_PREFIX)) {
     val nioPath = Path.of(URI.create(path))
     try {
       return Files.readAllBytes(nioPath)
@@ -218,18 +220,19 @@ internal fun getResourceData(path: String, resourceClass: Class<*>?, classLoader
 }
 
 @Internal
-fun loadPng(stream: InputStream): BufferedImage {
+fun loadRasterImage(stream: InputStream): BufferedImage {
   val start = StartUpMeasurer.getCurrentTimeIfEnabled()
   var image: BufferedImage
-  val reader = ImageIO.getImageReadersByFormatName("png").next()
-  try {
-    MemoryCacheImageInputStream(stream).use { imageInputStream ->
+  MemoryCacheImageInputStream(stream).use { imageInputStream ->
+    val reader = ImageIO.getImageReaders(imageInputStream).takeIf { it.hasNext() }?.next()
+                 ?: ImageIO.getImageReadersByFormatName("png").next()
+    try {
       reader.setInput(imageInputStream, true, true)
       image = reader.read(0, null)
     }
-  }
-  finally {
-    reader.dispose()
+    finally {
+      reader.dispose()
+    }
   }
   if (start != -1L) {
     IconLoadMeasurer.pngDecoding.end(start)
@@ -288,7 +291,7 @@ fun loadImageForStartUp(requestedPath: String, scale: Float, classLoader: ClassL
         return renderSvg(data = data, scale = descriptor.scale)
       }
       else {
-        val image = loadPng(stream = ByteArrayInputStream(data))
+        val image = loadRasterImage(stream = ByteArrayInputStream(data))
         // compensate the image original scale
         val effectiveScale = if (descriptor.scale > 1) scale / descriptor.scale else scale
         return doScaleImage(image = image, scale = effectiveScale.toDouble()) as BufferedImage
@@ -332,7 +335,7 @@ fun loadImageFromStream(stream: InputStream,
       return loadSvg(path = path, stream = stream, scale = scale, compoundCacheKey = compoundCacheKey, colorPatcherProvider = null)
     }
     else {
-      return loadPng(stream = stream)
+      return loadRasterImage(stream = stream)
     }
   }
 }
