@@ -43,7 +43,7 @@ final class CommandProcessorImpl extends CoreCommandProcessor {
     if (failed) {
       Project project = command.getProject();
       if (project != null) {
-        FileEditor editor = new FocusBasedCurrentEditorProvider().getCurrentEditor();
+        FileEditor editor = new FocusBasedCurrentEditorProvider().getCurrentEditor(project);
         final UndoManager undoManager = UndoManager.getInstance(project);
         if (undoManager.isUndoAvailable(editor)) {
           undoManager.undo(editor);
