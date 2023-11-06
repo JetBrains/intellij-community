@@ -311,7 +311,8 @@ open class CodeVisionHost(val project: Project) {
 
 
   private fun subscribeForFrontendEditor(editorLifetime: Lifetime, editor: Editor) {
-    if (editor.document !is DocumentImpl) return
+    val context = editor.lensContext
+    if (context == null || editor.document !is DocumentImpl) return
 
     val calculationLifetimes = SequentialLifetimes(editorLifetime)
 
@@ -342,14 +343,14 @@ open class CodeVisionHost(val project: Project) {
       calculateFrontendLenses(lt, editor, groupToRecalculate) { lenses, providersToUpdate ->
         val newLenses = previousLenses.filter { !providersToUpdate.contains(it.second.providerId) } + lenses
 
-        editor.lensContext.setResults(newLenses)
+        context.setResults(newLenses)
         previousLenses = newLenses
         calcRunning = false
       }
     }
 
     fun pokeEditor(providersToRecalculate: Collection<String> = emptyList()) {
-      editor.lensContext.notifyPendingLenses()
+      context.notifyPendingLenses()
       val shouldRecalculateAll = mergingQueueFront.isEmpty.not()
       mergingQueueFront.cancelAllUpdates()
       mergingQueueFront.queue(object : Update("") {
@@ -369,7 +370,7 @@ open class CodeVisionHost(val project: Project) {
       }
     }
 
-    editor.lensContext.notifyPendingLenses()
+    context.notifyPendingLenses()
     recalculateLenses()
 
     application.messageBus.connect(editorLifetime.createNestedDisposable()).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER,
@@ -387,7 +388,7 @@ open class CodeVisionHost(val project: Project) {
       }
     }, editorLifetime.createNestedDisposable())
 
-    editorLifetime.onTermination { editor.lensContext.clearLenses() }
+    editorLifetime.onTermination { context.clearLenses() }
   }
 
   private fun calculateFrontendLenses(calcLifetime: Lifetime,
@@ -399,9 +400,9 @@ open class CodeVisionHost(val project: Project) {
       if (groupsToRecalculate.isNotEmpty() && !groupsToRecalculate.contains(it.id)) return@associate it.id to null
       it.id to it.precomputeOnUiThread(editor)
     }
-
+    val context = editor.lensContext
     // dropping all lenses if CV disabled
-    if (lifeSettingModel.isEnabled.value.not()) {
+    if (lifeSettingModel.isEnabled.value.not() || context == null) {
       consumer(emptyList(), providers.map { it.id })
       return
     }
@@ -430,7 +431,7 @@ open class CodeVisionHost(val project: Project) {
         ProgressManager.checkCanceled()
         if (project.isDisposed) return@executeOnPooledThread
         if (!inlaySettingsEditor && lifeSettingModel.disabledCodeVisionProviderIds.contains(it.groupId)) {
-          if (editor.lensContext.hasProviderCodeVision(it.id)) {
+          if (context.hasProviderCodeVision(it.id)) {
             providerWhoWantToUpdate.add(it.id)
           }
           return@forEach
@@ -467,12 +468,12 @@ open class CodeVisionHost(val project: Project) {
       }
 
       if (!everyProviderReadyToUpdate) {
-        editor.lensContext.discardPending()
+        context.discardPending()
         return@executeOnPooledThread
       }
 
       if (providerWhoWantToUpdate.isEmpty()) {
-        editor.lensContext.discardPending()
+        context.discardPending()
         return@executeOnPooledThread
       }
 
@@ -533,7 +534,7 @@ open class CodeVisionHost(val project: Project) {
   @TestOnly
   fun calculateCodeVisionSync(editor: Editor, testRootDisposable: Disposable) {
     calculateFrontendLenses(testRootDisposable.createLifetime(), editor, inTestSyncMode = true) { lenses, _ ->
-      editor.lensContext.setResults(lenses)
+      editor.lensContext?.setResults(lenses)
     }
   }
 }

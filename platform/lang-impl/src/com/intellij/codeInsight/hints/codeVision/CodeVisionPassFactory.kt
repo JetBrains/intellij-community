@@ -79,7 +79,7 @@ private class CodeVisionTextEditorInitializer : TextEditorInitializer {
     }
 
     withContext(Dispatchers.EDT) {
-      editor.lensContext.setResults(placeholders)
+      editor.lensContext?.setResults(placeholders)
     }
   }
 }
