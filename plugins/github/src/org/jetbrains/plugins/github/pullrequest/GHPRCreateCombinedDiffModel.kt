@@ -12,7 +12,9 @@ import com.intellij.diff.tools.combined.CombinedPathBlockId
 import com.intellij.diff.util.DiffUserDataKeys
 import com.intellij.diff.util.DiffUtil
 import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.diff.impl.GenericDataProvider
+import com.intellij.openapi.observable.util.whenDisposed
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
@@ -22,7 +24,7 @@ import com.intellij.openapi.vcs.changes.ChangesUtil
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer
 import com.intellij.openapi.vcs.changes.actions.diff.CombinedDiffPreviewModel
 import com.intellij.openapi.vcs.history.VcsDiffUtil
-import com.intellij.util.cancelOnDispose
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.io.await
 import git4idea.changes.GitBranchComparisonResult
 import kotlinx.coroutines.*
@@ -39,27 +41,30 @@ import org.jetbrains.plugins.github.pullrequest.ui.changes.createReviewSupport
 import org.jetbrains.plugins.github.pullrequest.ui.changes.installDiffComputer
 import org.jetbrains.plugins.github.pullrequest.ui.changes.installReviewSupport
 
-internal fun createCombinedDiffModel(project: Project,
-                                     repository: GHRepositoryCoordinates,
-                                     pullRequest: GHPRIdentifier): CombinedDiffModelImpl {
-  val dataDisposable = Disposer.newDisposable()
-  val dataContext = GHPRDataContextRepository.getInstance(project).findContext(repository)!!
-  val dataProvider = dataContext.dataProviderRepository.getDataProvider(pullRequest, dataDisposable)
+@Service(Service.Level.PROJECT)
+internal class GHPRCreateCombinedDiffModelProvider(private val project: Project, parentCs: CoroutineScope) {
+  private val cs = parentCs.childScope()
 
-  val model = CombinedDiffModelImpl(project)
+  fun createCombinedDiffModel(repository: GHRepositoryCoordinates, pullRequest: GHPRIdentifier): CombinedDiffModelImpl {
+    val dataDisposable = Disposer.newDisposable()
+    val dataContext = GHPRDataContextRepository.getInstance(project).findContext(repository)!!
+    val dataProvider = dataContext.dataProviderRepository.getDataProvider(pullRequest, dataDisposable)
 
-  val job = SupervisorJob()
-  val uiCs = CoroutineScope(job + Dispatchers.Main.immediate + CoroutineName("GitLab Merge Request Review Combined Diff UI"))
-  job.cancelOnDispose(model.ourDisposable)
+    val model = CombinedDiffModelImpl(project)
 
-  var childJob = uiCs.handleChanges(dataProvider, model, dataContext, project)
+    val uiCs = cs.childScope(Dispatchers.Main.immediate + CoroutineName("GitLab Merge Request Review Combined Diff UI"))
+    model.ourDisposable.whenDisposed {
+      uiCs.cancel("disposed")
+    }
 
-  dataProvider.changesData.addChangesListener(model.ourDisposable) {
-    childJob.cancel()
-    childJob = uiCs.handleChanges(dataProvider, model, dataContext, project)
+    var childJob = uiCs.handleChanges(dataProvider, model, dataContext, project)
+    dataProvider.changesData.addChangesListener(model.ourDisposable) {
+      childJob.cancel()
+      childJob = uiCs.handleChanges(dataProvider, model, dataContext, project)
+    }
+
+    return model
   }
-
-  return model
 }
 
 private fun CoroutineScope.handleChanges(

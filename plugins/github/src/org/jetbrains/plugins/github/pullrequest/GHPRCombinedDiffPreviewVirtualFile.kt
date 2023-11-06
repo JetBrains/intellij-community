@@ -3,6 +3,7 @@ package org.jetbrains.plugins.github.pullrequest
 
 import com.intellij.diff.tools.combined.CombinedDiffModelBuilder
 import com.intellij.diff.tools.combined.CombinedDiffModelImpl
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.i18n.GithubBundle
@@ -26,7 +27,7 @@ internal class GHPRCombinedDiffPreviewVirtualFile(sourceId: String,
   override fun getPresentablePath() = "${repository.toUrl()}/pulls/${pullRequest.number}.diff"
 
   override fun createModel(id: String): CombinedDiffModelImpl {
-    return createCombinedDiffModel(project, repository, pullRequest)
+    return project.service<GHPRCreateCombinedDiffModelProvider>().createCombinedDiffModel(repository, pullRequest)
   }
 
   override fun equals(other: Any?): Boolean {
