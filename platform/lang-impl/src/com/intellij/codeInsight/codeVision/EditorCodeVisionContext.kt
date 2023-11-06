@@ -26,8 +26,7 @@ val highlighterOnCodeVisionEntryKey: Key<RangeMarker> = Key.create("HighlighterO
 val codeVisionEntryMouseEventKey: Key<MouseEvent> = Key.create("CodeVisionEntryMouseEventKey")
 val editorCodeVisionEntryKey: Key<CodeVisionEntry> = Key.create("EditorCodeVisionEntryKey")
 
-// used by Rider
-val Editor.lensContext: EditorCodeVisionContext
+val Editor.lensContext: EditorCodeVisionContext?
   get() = getOrCreateCodeVisionContext(this)
 
 val RangeMarker.codeVisionEntryOrThrow: CodeVisionEntry
@@ -92,7 +91,12 @@ open class EditorCodeVisionContext(
   // used externally
   @Suppress("MemberVisibilityCanBePrivate")
   fun resubmitThings() {
-    val viewService = editor.project!!.service<CodeVisionView>()
+    val project = editor.project
+    if (project == null) {
+      LOG.error("Project wasn't available from editor during code vision calculation")
+      return
+    }
+    val viewService = project.service<CodeVisionView>()
 
     viewService.runWithReusingLenses {
       val lifetime = outputLifetimes.next()
@@ -148,13 +152,17 @@ open class EditorCodeVisionContext(
   }
 }
 
-private fun getOrCreateCodeVisionContext(editor: Editor): EditorCodeVisionContext {
+private fun getOrCreateCodeVisionContext(editor: Editor): EditorCodeVisionContext? {
   val context = editor.getUserData(editorLensContextKey)
   if (context != null) {
     return context
   }
-
-  val newContext = editor.project!!.service<CodeVisionContextProvider>().createCodeVisionContext(editor)
+  val project = editor.project
+  if (project == null) {
+    LOG.error("Project wasn't available from editor during creating of code vision context")
+    return null
+  }
+  val newContext = project.service<CodeVisionContextProvider>().createCodeVisionContext(editor)
   editor.putUserData(editorLensContextKey, newContext)
   return newContext
 }
