@@ -8,7 +8,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 
+@Deprecated("Access CodeVisionHost as service")
+@ApiStatus.ScheduledForRemoval(inVersion = "2024.1")
 open class CodeVisionInitializer(project: Project) {
   companion object {
     fun getInstance(project: Project): CodeVisionInitializer = project.service<CodeVisionInitializer>()
