@@ -4,7 +4,6 @@ package com.intellij.openapi.fileEditor.impl.text.foldingGrave
 import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ShutDownTracker
 import com.intellij.openapi.util.text.StringUtil
@@ -29,7 +28,7 @@ internal class FoldingModelStore(
     try {
       return persistentMap[fileId]
     } catch (e: IOException) {
-      logger.info("cannot get markup for file $fileId", e)
+      logger.warn("cannot get markup for file $fileId", e)
     }
     try {
       persistentMap.remove(fileId)
@@ -50,7 +49,7 @@ internal class FoldingModelStore(
       try {
         persistentMap[fileId] = state
       } catch (e: IOException) {
-        logger.info("cannot store folding state $state for file $fileId", e)
+        logger.warn("cannot store folding state $state for file $fileId", e)
       }
     }
   }
@@ -79,26 +78,25 @@ internal class FoldingModelStore(
       flushingJob = null
       persistentMap.close()
     } catch (e: IOException) {
-      logger.info("error on persistent map close", e)
+      logger.warn("error on persistent map close", e)
     }
   }
 
   private fun recreateCache() {
     try {
       close(isAppShutDown=false)
-    } catch (ignored: IOException) {}
+    } catch (e: IOException) {
+      logger.warn("error on close folding cache", e)
+    }
     val path = storePath(storeName)
     IOUtil.deleteAllFilesStartingWith(path)
-    persistentMap = createPersistentMap(path)
+    persistentMap = createPersistentMap(storeName, path)
     flushingJob = startFlushingJob(persistentMap, scope, dispatcher)
   }
 
   companion object {
     private val logger = Logger.getInstance(FoldingModelStore::class.java)
-
-    @OptIn(ExperimentalCoroutinesApi::class)
-    private val dispatcher: CoroutineDispatcher = Dispatchers.IO.limitedParallelism(1)
-
+    private val dispatcher: CoroutineDispatcher = @OptIn(ExperimentalCoroutinesApi::class) Dispatchers.IO.limitedParallelism(1)
     private val allStores: MutableSet<FoldingModelStore> = ConcurrentCollectionFactory.createConcurrentSet()
 
     init {
@@ -107,7 +105,7 @@ internal class FoldingModelStore(
 
     fun create(project: Project, scope: CoroutineScope): FoldingModelStore {
       val storeName = project.name.trimLongString() + "-" + project.locationHash.trimLongString()
-      val persistentMap = createPersistentMap(storePath(storeName))
+      val persistentMap = createPersistentMap(storeName, storePath(storeName))
       val store = FoldingModelStore(
         storeName,
         scope,
@@ -143,7 +141,7 @@ internal class FoldingModelStore(
       }
     }
 
-    private fun createPersistentMap(path: Path): CachingPersistentMap<Int, FoldingState>? {
+    private fun createPersistentMap(name: String, path: Path): CachingPersistentMap<Int, FoldingState>? {
       val mapBuilder = PersistentMapBuilder.newBuilder(
         path,
         EnumeratorIntegerDescriptor.INSTANCE,
@@ -152,7 +150,10 @@ internal class FoldingModelStore(
       var map: PersistentMapImpl<Int, FoldingState>? = null
       var exception: Exception? = null
       val retryAttempts = 5
-      for (i in 1..retryAttempts) {
+      for (i in 0 until retryAttempts) {
+        if (i > 1) {
+          Thread.sleep(10)
+        }
         try {
           map = PersistentMapImpl(mapBuilder)
           break
@@ -161,16 +162,16 @@ internal class FoldingModelStore(
           exception = e
           IOUtil.deleteAllFilesStartingWith(path)
         } catch (e: Exception) {
-          logger.info("error while creating persistent map, attempt $i", e)
+          logger.warn("error while creating persistent map, attempt $i", e)
           exception = e
           IOUtil.deleteAllFilesStartingWith(path)
         }
       }
       if (map == null) {
-        logger.error("cannot create persistent map", exception)
+        logger.error("cannot create persistent map for folding cache '${name}'", exception)
         return null
       }
-      logger.debug { "persistent map created with folding files count " + map.size }
+      logger.info("restoring folding cache '${name}' for ${map.size} files")
       return CachingPersistentMap(map, inMemoryCount=20)
     }
 

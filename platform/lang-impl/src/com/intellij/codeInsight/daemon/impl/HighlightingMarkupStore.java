@@ -54,7 +54,7 @@ final class HighlightingMarkupStore {
   @RequiresBackgroundThread
   static @NotNull HighlightingMarkupStore create(@NotNull Project project) {
     String storeName = trimLongString(project.getName()) + "-" + trimLongString(project.getLocationHash());
-    var persistentMap = createPersistentMap(getAbsolutePath(storeName));
+    var persistentMap = createPersistentMap(storeName, getStorePath(storeName));
     HighlightingMarkupStore markupStore = new HighlightingMarkupStore(storeName, persistentMap);
     markupStore.flushOnLowMemory(project);
     ALL_STORES.add(markupStore);
@@ -76,7 +76,7 @@ final class HighlightingMarkupStore {
       fileIdToMarkupMap.put(file.getId(), markupInfo);
     }
     catch (IOException e) {
-      LOG.info("cannot store markup " + markupInfo + " for file " + file, e);
+      LOG.warn("cannot store markup " + markupInfo + " for file " + file, e);
     }
   }
 
@@ -89,7 +89,7 @@ final class HighlightingMarkupStore {
       return fileIdToMarkupMap.get(file.getId());
     }
     catch (IOException e) {
-      LOG.info("cannot get markup for file " + file, e);
+      LOG.warn("cannot get markup for file " + file, e);
     }
     // try to remove only one corrupted markup
     removeMarkup(file);
@@ -123,7 +123,7 @@ final class HighlightingMarkupStore {
       fileIdToMarkupMap.close();
     }
     catch (IOException e) {
-      LOG.info("error on persistent map close", e);
+      LOG.warn("error on persistent map close", e);
     }
   }
 
@@ -170,9 +170,10 @@ final class HighlightingMarkupStore {
     try {
       fileIdToMarkupMap.closeAndDelete();
     }
-    catch (IOException ignored) {
+    catch (IOException e) {
+      LOG.warn("error on close markup cache", e);
     }
-    fileIdToMarkupMap = createPersistentMap(getAbsolutePath(storeName));
+    fileIdToMarkupMap = createPersistentMap(storeName, getStorePath(storeName));
     scheduledFlushing = startPeriodicallyFlushing();
   }
 
@@ -224,13 +225,19 @@ final class HighlightingMarkupStore {
     return "HighlightingMarkupStore[" + storeName + ", " + size + ']';
   }
 
-  private static @Nullable PersistentMapImpl<@NotNull Integer, @NotNull FileMarkupInfo> createPersistentMap(@NotNull Path path) {
+  private static @Nullable PersistentMapImpl<Integer, FileMarkupInfo> createPersistentMap(@NotNull String name, @NotNull Path path) {
     var mapBuilder = PersistentMapBuilder.newBuilder(path, EnumeratorIntegerDescriptor.INSTANCE, FileMarkupInfoExternalizer.INSTANCE)
       .withVersion(2);
     PersistentMapImpl<Integer, FileMarkupInfo> map = null;
     Exception exception = null;
     int retryAttempts = 5;
     for (int i = 0; i < retryAttempts; i++) {
+      if (i > 1) {
+        try {
+          Thread.sleep(10);
+        }
+        catch (InterruptedException ignored) {}
+      }
       try {
         map = new PersistentMapImpl<>(mapBuilder);
         break;
@@ -241,7 +248,7 @@ final class HighlightingMarkupStore {
         IOUtil.deleteAllFilesStartingWith(path);
       }
       catch (Exception e) {
-        LOG.info("error while creating persistent map, attempt " + i, e);
+        LOG.warn("error while creating persistent map, attempt " + i, e);
         exception = e;
         IOUtil.deleteAllFilesStartingWith(path);
       }
@@ -250,13 +257,11 @@ final class HighlightingMarkupStore {
       LOG.error("cannot create persistent map", exception);
       return null;
     }
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("persistent map created with size " + map.getSize());
-    }
+    LOG.info("restoring markup cache '" + name + "' for " + map.getSize() + " files");
     return map;
   }
 
-  private static @NotNull Path getAbsolutePath(@NotNull String storeName) {
+  private static @NotNull Path getStorePath(@NotNull String storeName) {
     return PathManager.getSystemDir().resolve(PERSISTENT_MARKUP).resolve(storeName);
   }
 
