@@ -8,7 +8,6 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.RangeMarker
-import com.intellij.openapi.editor.ex.RangeMarkerEx
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.rd.createLifetime
 import com.intellij.openapi.util.Key
@@ -23,7 +22,7 @@ import java.awt.event.MouseEvent
 val editorLensContextKey: Key<EditorCodeVisionContext> = Key<EditorCodeVisionContext>("EditorCodeLensContext")
 // used externally
 val codeVisionEntryOnHighlighterKey: Key<CodeVisionEntry> = Key.create("CodeLensEntryOnHighlighter")
-val highlighterOnCodeVisionEntryKey: Key<RangeMarkerEx> = Key.create("HighlighterOnHighlighterCodeLensEntry")
+val highlighterOnCodeVisionEntryKey: Key<RangeMarker> = Key.create("HighlighterOnHighlighterCodeLensEntry")
 val codeVisionEntryMouseEventKey: Key<MouseEvent> = Key.create("CodeVisionEntryMouseEventKey")
 
 // used by Rider
@@ -78,7 +77,7 @@ open class EditorCodeVisionContext(
       if (!range.isValidFor(editor.document)) return@mapNotNull null
       editor.document.createRangeMarker(range).apply {
         putUserData(codeVisionEntryOnHighlighterKey, entry)
-        entry.putUserData(highlighterOnCodeVisionEntryKey, this as? RangeMarkerEx)
+        entry.putUserData(highlighterOnCodeVisionEntryKey, this)
       }
     }
     resubmitThings()
