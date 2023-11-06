@@ -141,6 +141,9 @@ class PyStartCallback(PEP669CallbackBase):
                 return
 
             if is_stepping:
+                if (pydev_step_cmd == CMD_STEP_OVER
+                        and frame is not additional_info.pydev_step_stop):
+                    return
                 if (py_db.is_filter_enabled
                         and py_db.is_ignored_by_filters(filename)):
                     return
