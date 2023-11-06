@@ -263,13 +263,13 @@ internal class GHPRCreateInfoComponentFactory(private val project: Project,
         val dialogMessages = GitPushUtil.BranchNameInputDialogMessages(
           GithubBundle.message("pull.request.create.input.remote.branch.title"),
           GithubBundle.message("pull.request.create.input.remote.branch.name"),
-          GithubBundle.message("pull.request.create.input.remote.branch.comment", (headBranch as GitLocalBranch).name,
-                               headRepo.remote.remote.name))
+          GithubBundle.message("pull.request.create.input.remote.branch.comment")
+        )
         findOrPushRemoteBranch(project,
                                progressIndicator,
                                headRepo.remote.repository,
                                headRepo.remote.remote,
-                               headBranch,
+                               headBranch as GitLocalBranch,
                                dialogMessages)
       }.thenCompose { remoteHeadBranch ->
         dataContext.creationService
