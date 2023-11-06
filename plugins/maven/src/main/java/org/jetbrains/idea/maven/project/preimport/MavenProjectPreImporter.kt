@@ -102,7 +102,7 @@ class MavenProjectPreImporter(val project: Project, val coroutineScope: Coroutin
           ProjectImportCollector.LINKED_PROJECTS.with(statisticsData.linkedProject),
           ProjectImportCollector.RESOLVED_DEPENDENCIES.with(statisticsData.resolvedDependencies),
           ProjectImportCollector.RESOLVED_DEPS_PERCENT.with(
-            statisticsData.resolvedDependencies.toFloat() / statisticsData.totalDependencies.toFloat()),
+            if (statisticsData.totalDependencies == 0) 0.0f else (statisticsData.resolvedDependencies.toFloat() / statisticsData.totalDependencies.toFloat())),
           ProjectImportCollector.ADDED_MODULES.with(statisticsData.addedModules))
       }
     }
