@@ -44,19 +44,21 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
     private fun KtFile.unusedImports(): Set<KtImportDirective> =
         KotlinOptimizeImportsFacility.getInstance().analyzeImports(this)?.unusedImports?.toSet().orEmpty()
 
-    @OptIn(KtAllowAnalysisFromWriteAction::class)
+    @OptIn(KtAllowAnalysisFromWriteAction::class, KtAllowAnalysisOnEdt::class)
     private fun <R : KtElement> KtFile.withOptimizedImports(replacement: () -> R?): PsiElement? {
         allowAnalysisFromWriteAction {
-            val unusedImportsBefore = unusedImports()
-            val newElement = replacement() ?: return null
-            val unusedImportsAfter = unusedImports()
-            val importsToRemove =  unusedImportsAfter - unusedImportsBefore
-            importsToRemove.forEach(PsiElement::delete)
-            val newShortenings = analyze(newElement) {
-                collectPossibleReferenceShorteningsInElement(newElement)
+            allowAnalysisOnEdt {
+                val unusedImportsBefore = unusedImports()
+                val newElement = replacement() ?: return null
+                val unusedImportsAfter = unusedImports()
+                val importsToRemove =  unusedImportsAfter - unusedImportsBefore
+                importsToRemove.forEach(PsiElement::delete)
+                val newShortenings = analyze(newElement) {
+                    collectPossibleReferenceShorteningsInElement(newElement)
+                }
+                val shortened = newShortenings.invokeShortening().firstOrNull() ?: newElement
+                return shortened
             }
-            val shortened = newShortenings.invokeShortening().firstOrNull() ?: newElement
-            return shortened
         }
     }
 
@@ -84,13 +86,14 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
         val importDirective = expression.parentOfType<KtImportDirective>(withSelf = false)
         if (importDirective != null) return importDirective.replaceWith(writableFqn) ?: expression
         val newElement = expression.containingKtFile.withOptimizedImports {
-            when (val elementToReplace = expression.getQualifiedElement()) {
+            val element = when (val elementToReplace = expression.getQualifiedElement()) {
                 is KtUserType -> elementToReplace.replaceWith(writableFqn)
                 is KtDotQualifiedExpression -> elementToReplace.replaceWith(writableFqn)
                 is KtCallExpression -> elementToReplace.replaceWith(writableFqn)
                 is KtSimpleNameExpression -> elementToReplace.replaceWith(writableFqn)
                 else -> null
             }
+            element
         } ?: expression
         return newElement
     }
