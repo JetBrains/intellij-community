@@ -6,6 +6,9 @@ import com.intellij.openapi.project.Project
 import javax.swing.JComponent
 import javax.swing.JLabel
 
+/**
+ * Allows to customize presentation of tooltip on inline completion hover
+ */
 interface InlineCompletionProviderPresentation {
   /**
    * See [InlineCompletionTooltipFactory].
