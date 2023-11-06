@@ -235,13 +235,14 @@ final class FTManager {
       else {
         processedNames.add(fileName);
         FileTemplateBase template = addTemplateFromFile(fileName, stream);
-        if (fileName.contains(FileTemplateBase.TEMPLATE_CHILDREN_SUFFIX)) {
+        if (template != null && fileName.contains(FileTemplateBase.TEMPLATE_CHILDREN_SUFFIX)) {
           children.add(template);
         }
       }
       return true;
-    }))
+    })) {
       return;
+    }
 
     for (FileTemplateBase child : children) {
       String qname = getParentName(child);
@@ -262,7 +263,7 @@ final class FTManager {
   }
 
   private void deleteFile(String fileName) {
-    if (!streamProvider.delete(FileUtil.toSystemIndependentName(fileName), RoamingType.DEFAULT)) {
+    if (!streamProvider.delete(getSpec(fileName), RoamingType.DEFAULT)) {
       try {
         Files.delete(templateDir.resolve(fileName));
       }
@@ -273,28 +274,33 @@ final class FTManager {
   }
 
   private boolean processTemplates(Function3<String, InputStream, Boolean, Boolean> processor) {
-    if (!streamProvider.processChildren(getSpec(templatePath), RoamingType.DEFAULT, s -> true, processor)) {
-      try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(templateDir,
-                                                                   file -> !Files.isDirectory(file) && !Files.isHidden(file))) {
-        for (Path path : directoryStream) {
-          try (InputStream stream = Files.newInputStream(path)) {
-            processor.invoke(path.getFileName().toString(), stream, false);
-          }
-        }
-      }
-      catch (NoSuchFileException ignored) {
-      }
-      catch (IOException e) {
-        LOG.error(e);
-        return false;
-      }
+    if (!streamProvider.processChildren(getSpec(""), RoamingType.DEFAULT, s -> true, processor)) {
+      if (processLocal(processor)) return false;
     }
     return true;
   }
 
+  private boolean processLocal(Function3<String, InputStream, Boolean, Boolean> processor) {
+    try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(templateDir,
+                                                                 file -> !Files.isDirectory(file) && !Files.isHidden(file))) {
+      for (Path path : directoryStream) {
+        try (InputStream stream = Files.newInputStream(path)) {
+          processor.invoke(path.getFileName().toString(), stream, false);
+        }
+      }
+    }
+    catch (NoSuchFileException ignored) {
+    }
+    catch (IOException e) {
+      LOG.error(e);
+      return true;
+    }
+    return false;
+  }
+
   @NotNull
-  private static @NonNls String getSpec(Path path) {
-    return FileUtil.toSystemIndependentName(path.toString());
+  private @NonNls String getSpec(String fileName) {
+    return FileUtil.toSystemIndependentName(templatePath.resolve(fileName).toString());
   }
 
   private static @NotNull String getParentName(FileTemplateBase child) {
@@ -302,7 +308,7 @@ final class FTManager {
     return name.substring(0, name.indexOf(FileTemplateBase.TEMPLATE_CHILDREN_SUFFIX));
   }
 
-  private FileTemplateBase addTemplateFromFile(@NotNull String fileName, @Nullable InputStream stream) {
+  private @Nullable FileTemplateBase addTemplateFromFile(@NotNull String fileName, @Nullable InputStream stream) {
     Pair<String, String> nameExt = decodeFileName(fileName);
     final String extension = nameExt.second;
     final String templateQName = nameExt.first;
@@ -316,8 +322,10 @@ final class FTManager {
 
   private String readFile(@NotNull String fileName) {
     Ref<String> ref = Ref.create();
-    if (streamProvider.read(FileUtil.toSystemIndependentName(fileName), RoamingType.DEFAULT, inputStream -> {
-      ref.set(readText(inputStream));
+    if (streamProvider.read(getSpec(fileName), RoamingType.DEFAULT, inputStream -> {
+      if (inputStream != null) {
+        ref.set(readText(inputStream));
+      }
       return null;
     })) {
       return ref.get();
@@ -331,7 +339,7 @@ final class FTManager {
     }
   }
 
-  private static @Nullable String readText(InputStream stream) {
+  private static @Nullable String readText(@NotNull InputStream stream) {
     try {
       return StreamUtil.readText(new InputStreamReader(stream, StandardCharsets.UTF_8));
     }
@@ -348,7 +356,7 @@ final class FTManager {
   private void saveTemplates(boolean removeDeleted) {
     final Set<String> allNames = new HashSet<>();
     final Set<String> templatesOnDisk = new HashSet<>();
-    processTemplates((name, stream, aBoolean) -> {
+    processLocal((name, stream, aBoolean) -> {
       templatesOnDisk.add(name);
       allNames.add(name);
       return true;
@@ -419,7 +427,7 @@ final class FTManager {
       content = StringUtilRt.convertLineSeparators(content, lineSeparator);
     }
     if (streamProvider.getEnabled()) {
-      streamProvider.write(getSpec(templatePath.resolve(fileName)), content.getBytes(StandardCharsets.UTF_8), RoamingType.DEFAULT);
+      streamProvider.write(getSpec(fileName), content.getBytes(StandardCharsets.UTF_8), RoamingType.DEFAULT);
     }
     else {
       final Path templateFile = templateDir.resolve(fileName);
