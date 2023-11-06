@@ -3,6 +3,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.modcommand.*;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -54,6 +55,7 @@ public class AddRuntimeExceptionToThrowsAction implements ModCommandAction {
   @Override
   public @Nullable Presentation getPresentation(@NotNull ActionContext context) {
     if (!(context.file() instanceof PsiJavaFile)) return null;
+    if (!BaseIntentionAction.canModify(context.file())) return null;
     PsiClassType exception = getRuntimeExceptionAtCaret(context);
     if (exception == null) return null;
 

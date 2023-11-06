@@ -79,6 +79,7 @@ public class MoveIntoIfBranchesAction implements ModCommandAction {
 
   @Override
   public @Nullable Presentation getPresentation(@NotNull ActionContext context) {
+    if (!BaseIntentionAction.canModify(context.file())) return null;
     List<PsiStatement> statements = extractStatements(context);
     if (statements.isEmpty()) return null;
     PsiElement prev = PsiTreeUtil.skipWhitespacesAndCommentsBackward(statements.get(0));

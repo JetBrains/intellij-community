@@ -149,6 +149,7 @@ public class ExtractSetFromComparisonChainAction implements ModCommandAction {
 
   @Override
   public @Nullable Presentation getPresentation(@NotNull ActionContext actionContext) {
+    if (!BaseIntentionAction.canModify(actionContext.file())) return null;
     PsiElement element = actionContext.findLeaf();
     List<ExpressionToConstantComparison> comparisons = comparisons(element).toList();
     if (comparisons.size() <= 1) return null;

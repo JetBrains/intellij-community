@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight;
 
+import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.java.JavaBundle;
 import com.intellij.lang.java.JavaLanguage;
@@ -38,6 +39,7 @@ public class MakeExternalAnnotationExplicit implements ModCommandAction {
 
   @Override
   public @Nullable Presentation getPresentation(@NotNull ActionContext context) {
+    if (!BaseIntentionAction.canModify(context.file())) return null;
     final PsiElement leaf = context.findLeaf();
     PsiFile file = context.file();
     final PsiModifierListOwner owner = NonCodeAnnotationsLineMarkerProvider.getAnnotationOwner(leaf);
