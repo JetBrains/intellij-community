@@ -162,8 +162,6 @@
       <reference id="Github.PullRequest.Open.Link"/>
       <reference id="Github.PullRequest.Copy.Link"/>
     </group>
-    <action id="Github.PullRequest.Comments.Reload"
-            class="org.jetbrains.plugins.github.pullrequest.action.GHPRReloadCommentsAction" use-shortcut-of="Refresh"/>
 
     <action id="Github.PullRequest.Review.Submit"
             class="org.jetbrains.plugins.github.pullrequest.action.GHPRReviewSubmitAction"/>
