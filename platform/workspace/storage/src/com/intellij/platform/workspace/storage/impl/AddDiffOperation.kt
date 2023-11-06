@@ -82,7 +82,8 @@ internal class AddDiffOperation(val target: MutableEntityStorageImpl, val diff: 
           if (!replaceMap.containsValue(sourceEntityId)) {
             target.indexes.entityRemoved(sourceEntityId.id)
             if (target.entityDataById(sourceEntityId.id) != null) {
-              target.removeEntityByEntityId(sourceEntityId.id)
+              // As we generate a remove event for each cascade removed entities, we can remove entities one by one
+              target.removeSingleEntity(sourceEntityId.id)
             }
           }
         }

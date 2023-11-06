@@ -727,4 +727,65 @@ class AddDiffTest {
     assertEquals(AnotherSource, target.entities(OoParentEntity::class.java).single().anotherChild!!.entitySource)
     assertEquals(2, target.entities(OoChildWithNullableParentEntity::class.java).toList().size)
   }
+
+  @RepeatedTest(10)
+  fun `detach child and remove parent`() {
+    val parentEntity = target addEntity XParentEntity("Parent2", MySource) {
+      this.optionalChildren = listOf(XChildWithOptionalParentEntity("property", MySource))
+    }
+
+    val source = createBuilderFrom(target)
+    source.modifyEntity(parentEntity.from(source)) {
+      this.optionalChildren = emptyList()
+    }
+
+    source.removeEntity(parentEntity.from(source))
+
+    // The child was not removed
+    assertTrue(source.entities(XChildWithOptionalParentEntity::class.java).any())
+
+    target.addDiff(source)
+
+    target.assertConsistency()
+
+    assertTrue(target.entities(XParentEntity::class.java).none())
+    assertTrue(target.entities(XChildWithOptionalParentEntity::class.java).any())
+  }
+
+  @RepeatedTest(10)
+  fun `attach child and remove parent`() {
+    val child = target addEntity XChildWithOptionalParentEntity("property", MySource)
+    val parentEntity = target addEntity XParentEntity("Parent2", MySource)
+
+    val source = createBuilderFrom(target)
+    source.modifyEntity(parentEntity.from(source)) {
+      this.optionalChildren = listOf(child)
+    }
+
+    source.removeEntity(parentEntity.from(source))
+
+    // The child was removed
+    assertTrue(source.entities(XChildWithOptionalParentEntity::class.java).none())
+
+    target.addDiff(source)
+
+    target.assertConsistency()
+
+    assertTrue(target.entities(XParentEntity::class.java).none())
+    assertTrue(target.entities(XChildWithOptionalParentEntity::class.java).none())
+  }
+
+  @RepeatedTest(10)
+  fun `remove entity with soft link`() {
+    val entity = target addEntity WithSoftLinkEntity(NameId("id"), MySource)
+
+    val source = createBuilderFrom(target)
+    source.removeEntity(entity.from(source))
+
+    target.addDiff(source)
+
+    target.assertConsistency()
+
+    assertTrue(target.referrers(NameId("id"), WithSoftLinkEntity::class.java).toList().isEmpty())
+  }
 }
