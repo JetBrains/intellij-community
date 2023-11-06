@@ -88,7 +88,7 @@ internal abstract class IdeaFormatWriter(private val activities: Map<String, Mut
     for ((name, list ) in activities) {
       list.sortWith(itemComparator)
 
-      val measureThreshold = if (name == ActivityCategory.DEFAULT.jsonName || name == ActivityCategory.REOPENING_EDITOR.jsonName) {
+      val measureThreshold = if (name == ActivityCategory.DEFAULT.jsonName) {
         -1
       }
       else {

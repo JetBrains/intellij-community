@@ -4,7 +4,6 @@ package com.intellij.platform.fileEditor
 import com.intellij.openapi.fileEditor.impl.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtilRt
-import com.intellij.openapi.vfs.impl.LightFilePointer
 import com.intellij.platform.ide.ideFingerprint
 import kotlinx.collections.immutable.persistentListOf
 import org.jdom.Element
@@ -17,7 +16,7 @@ private const val CURRENT_IN_TAB = "current-in-tab"
 internal class FileEntry(
   @JvmField val pinned: Boolean,
   @JvmField val currentInTab: Boolean,
-  @JvmField val filePointer: LightFilePointer,
+  @JvmField val url: String,
   @JvmField val selectedProvider: String?,
   @JvmField val ideFingerprint: Long?,
   @JvmField val isPreview: Boolean,
@@ -41,7 +40,7 @@ internal fun parseFileEntry(fileElement: Element): FileEntry {
     pinned = fileElement.getAttributeBooleanValue(PINNED),
     currentInTab = fileElement.getAttributeValue(CURRENT_IN_TAB, "true").toBoolean(),
     isPreview = historyElement.getAttributeValue(PREVIEW_ATTR) != null,
-    filePointer = LightFilePointer(url = historyElement.getAttributeValue(HistoryEntry.FILE_ATTR)),
+    url = historyElement.getAttributeValue(HistoryEntry.FILE_ATTR),
     selectedProvider = selectedProvider,
     providers = providers,
     ideFingerprint = StringUtilRt.parseLong(fileElement.getAttributeValue(IDE_FINGERPRINT), 0),
