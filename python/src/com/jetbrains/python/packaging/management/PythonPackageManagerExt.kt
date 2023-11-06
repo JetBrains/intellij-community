@@ -12,8 +12,8 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.blockingContext
-import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.openapi.project.guessProjectDir
+import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.util.net.HttpConfigurable
 import com.jetbrains.python.PySdkBundle
 import com.jetbrains.python.PythonHelper
