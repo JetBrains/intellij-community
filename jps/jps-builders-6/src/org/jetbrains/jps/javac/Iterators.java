@@ -341,6 +341,16 @@ public final class Iterators {
     });
   }
 
+  public static <T> Iterable<T> uniqueBy(final Iterable<? extends T> it, final Provider<? extends BooleanFunction<T>> predicateFactory) {
+    return isEmptyCollection(it)? Collections.<T>emptyList() : new Iterable<T>() {
+      @NotNull
+      @Override
+      public Iterator<T> iterator() {
+        return filter(it.iterator(), predicateFactory.get());
+      }
+    };
+  }
+
   @SuppressWarnings("unchecked")
   public static <T> BooleanFunction<? super T> notNullFilter() {
     return (BooleanFunction<T>)NOT_NULL_FILTER;

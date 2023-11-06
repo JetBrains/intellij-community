@@ -46,4 +46,9 @@ public final class FileSource implements NodeSource {
   public int hashCode() {
     return myPath.hashCode();
   }
+
+  @Override
+  public String toString() {
+    return "NodeSource {" + myPath + "}";
+  }
 }

@@ -195,22 +195,22 @@ public final class DependencyGraphImpl extends GraphImpl implements DependencyGr
   public void integrate(@NotNull DifferentiateResult diffResult) {
     final Delta delta = diffResult.getDelta();
 
-    { // handle deleted nodes and sources
-      Set<ReferenceID> deletedNodeIDs = new HashSet<>();
-      for (var node : diffResult.getDeletedNodes()) { // the set of deleted nodes include ones corresponding to deleted sources
-        myNodeToSourcesMap.remove(node.getReferenceID());
-        deletedNodeIDs.add(node.getReferenceID());
-      }
-      for (NodeSource deletedSource : delta.getDeletedSources()) {
-        for (var node : getNodes(deletedSource)) {
-          // avoid the operation when known the key does not exist
-          if (!deletedNodeIDs.contains(node.getReferenceID())) {
-            // ensure association with deleted source is removed
-            myNodeToSourcesMap.removeValue(node.getReferenceID(), deletedSource);
-          }
+    // handle deleted nodes and sources
+    if (!Iterators.isEmpty(diffResult.getDeletedNodes())) {
+      Set<NodeSource> differentiatedSources = Iterators.collect(Iterators.flat(List.of(delta.getBaseSources(), delta.getSources(), delta.getDeletedSources())), new HashSet<>());
+      for (var deletedNode : diffResult.getDeletedNodes()) { // the set of deleted nodes includes ones corresponding to deleted sources
+        Set<NodeSource> nodeSources = Iterators.collect(myNodeToSourcesMap.get(deletedNode.getReferenceID()), new HashSet<>());
+        nodeSources.removeAll(differentiatedSources);
+        if (nodeSources.isEmpty()) {
+          myNodeToSourcesMap.remove(deletedNode.getReferenceID());
         }
-        mySourceToNodesMap.remove(deletedSource);
+        else {
+          myNodeToSourcesMap.put(deletedNode.getReferenceID(), nodeSources);
+        }
       }
+    }
+    for (NodeSource deletedSource : delta.getDeletedSources()) {
+      mySourceToNodesMap.remove(deletedSource);
     }
 
     var updatedNodes = Iterators.collect(Iterators.flat(Iterators.map(delta.getSources(), s -> getNodes(s))), new HashSet<>());
@@ -220,7 +220,7 @@ public final class DependencyGraphImpl extends GraphImpl implements DependencyGr
       index.integrate(diffResult.getDeletedNodes(), updatedNodes, deltaIndex);
     }
 
-    var deltaNodes = Iterators.map(Iterators.flat(Iterators.map(delta.getSources(), s -> delta.getNodes(s))), node -> node.getReferenceID());
+    var deltaNodes = Iterators.unique(Iterators.map(Iterators.flat(Iterators.map(delta.getSources(), s -> delta.getNodes(s))), node -> node.getReferenceID()));
     for (ReferenceID nodeID : deltaNodes) {
       Set<NodeSource> sources = Iterators.collect(myNodeToSourcesMap.get(nodeID), new HashSet<>());
       sources.removeAll(delta.getBaseSources());

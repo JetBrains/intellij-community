@@ -9,6 +9,8 @@ import org.jetbrains.jps.dependency.BackDependencyIndex;
 import org.jetbrains.jps.dependency.Graph;
 import org.jetbrains.jps.dependency.NodeSource;
 import org.jetbrains.jps.dependency.ReferenceID;
+import org.jetbrains.jps.dependency.diff.DiffCapable;
+import org.jetbrains.jps.dependency.impl.Containers;
 import org.jetbrains.jps.javac.Iterators;
 
 import java.util.*;
@@ -47,6 +49,7 @@ public final class Utils {
     if (id instanceof JvmNodeReferenceID) {
       return ((JvmNodeReferenceID)id).getNodeName();
     }
+    //noinspection unchecked
     Iterable<JVMClassNode> nodes = getNodes(id, JVMClassNode.class);
     for (var node : nodes) {
       return node.getName();
@@ -97,7 +100,16 @@ public final class Utils {
     else {
       allNodes = Iterators.flat(Iterators.map(myGraph.getSources(id), src -> myGraph.getNodes(src, selector)));
     }
-    return Iterators.unique(Iterators.filter(allNodes, n -> id.equals(n.getReferenceID())));
+    return Iterators.uniqueBy(Iterators.filter(allNodes, n -> id.equals(n.getReferenceID())), () -> new Iterators.BooleanFunction<>() {
+      Set<T> visited;
+      @Override
+      public boolean fun(T t) {
+        if (visited == null) {
+          visited = Containers.createCustomPolicySet(DiffCapable::isSame, DiffCapable::diffHashCode);
+        }
+        return visited.add(t);
+      }
+    });
   }
 
   public Iterable<JvmNodeReferenceID> allDirectSupertypes(JvmNodeReferenceID classId) {
