@@ -82,6 +82,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
   private static final Ref<Boolean> SHOW_BREAKPOINT_AD = new Ref<>(true);
 
   public static final DataKey<Integer> LINE_NUMBER = DataKey.create("x.debugger.line.number");
+  public static final DataKey<Integer> OFFSET = DataKey.create("x.debugger.offset");
 
   @Override
   public XLineBreakpointType<?>[] getLineBreakpointTypes() {
@@ -578,6 +579,10 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
     Integer lineNumber = LINE_NUMBER.getData(context);
     if (lineNumber != null) {
       return XSourcePositionImpl.create(editor.getVirtualFile(), lineNumber);
+    }
+    Integer offsetFromDataContext = OFFSET.getData(context);
+    if (offsetFromDataContext != null) {
+      return XSourcePositionImpl.createByOffset(editor.getVirtualFile(), offsetFromDataContext);
     }
 
     final Document document = editor.getDocument();
