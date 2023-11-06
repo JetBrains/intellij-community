@@ -22,6 +22,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
  *
  * @see TypingEvent
  * @see InlineCompletionProvider.overtyper
+ * @see InlineCompletionElementManipulator
  */
 interface InlineCompletionOvertyper {
 
