@@ -160,9 +160,12 @@ class IntentionPreviewComputable(private val project: Project,
 
   private fun getModActionPreview(origFile: PsiFile, origEditor: Editor): IntentionPreviewInfo {
     val unwrapped = action.asModCommandAction() ?: return IntentionPreviewInfo.EMPTY
-    val info = SideEffectGuard.computeWithoutSideEffects {
+    var info: IntentionPreviewInfo = IntentionPreviewInfo.EMPTY
+    SideEffectGuard.computeWithoutSideEffects {
       val context = ActionContext.from(origEditor, origFile).applyIf(problemOffset >= 0) { withOffset(problemOffset) }
-      unwrapped.generatePreview(context)
+      IntentionPreviewUtils.previewSession(origEditor) {
+        info = unwrapped.generatePreview(context)
+      }
     }
     return convertResult(info, origFile, origFile, false) ?: IntentionPreviewInfo.EMPTY
   }
