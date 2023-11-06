@@ -28,7 +28,6 @@ import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelFunctionFqnNameIndex
 import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.utils.addToStdlib.assertedCast
 import org.jetbrains.kotlin.utils.sure
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
@@ -655,7 +654,7 @@ abstract class BaseKotlinChangeSignatureTest<C: KotlinModifiableChangeInfo<P>, P
         addParameter(createKotlinParameter("s", originalType = "Any", currentType = "kotlin.String"))
     }
 
-    fun testEnumEntriesWithoutSuperCalls() = doTest {//todo class without private constructor
+    fun testEnumEntriesWithoutSuperCalls() = doTest {
         val defaultValueForCall = KtPsiFactory(project).createExpression("1")
         addParameter(createKotlinIntParameter(name = "n", defaultValueForCall = defaultValueForCall))
     }
@@ -1133,9 +1132,9 @@ abstract class BaseKotlinChangeSignatureTest<C: KotlinModifiableChangeInfo<P>, P
         addParameter(createKotlinStringParameter(defaultValueForCall = defaultValueForCall))
     }
 
-    fun testRemoveEnumConstructorParameter() = doTest { removeParameter(1) } //todo safe delete doesn't work here as well
+    fun testRemoveEnumConstructorParameter() = doTest { removeParameter(1) }
 
-    fun testRemoveAllEnumConstructorParameters() = doTest { clearParameters() }//todo
+    fun testRemoveAllEnumConstructorParameters() = doTest { clearParameters() }
 
     fun testConstructor() = doTest {
         setNewVisibility(Public)

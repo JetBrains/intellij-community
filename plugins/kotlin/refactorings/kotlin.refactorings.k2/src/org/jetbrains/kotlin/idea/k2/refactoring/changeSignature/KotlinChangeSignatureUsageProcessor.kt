@@ -20,14 +20,19 @@ import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
+import org.jetbrains.kotlin.idea.base.util.useScope
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.usages.KotlinBaseUsage
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.usages.KotlinByConventionCallUsage
+import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.usages.KotlinConstructorDelegationCallUsage
+import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.usages.KotlinEnumEntryWithoutSuperCallUsage
+import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.usages.KotlinFunctionCallUsage
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.usages.KotlinOverrideUsageInfo
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.setValOrVar
 import org.jetbrains.kotlin.idea.refactoring.replaceListPsiAndKeepDelimiters
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.SearchUtils.isOverridable
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchOptions
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchParameters
+import org.jetbrains.kotlin.idea.search.usagesSearch.processDelegationCallConstructorUsages
 import org.jetbrains.kotlin.idea.searching.inheritors.findAllOverridings
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -91,6 +96,22 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
 
         if (ktCallableDeclaration is KtPrimaryConstructor) {
             findConstructorPropertyUsages(ktCallableDeclaration, changeInfo, result)
+        }
+
+        if (ktCallableDeclaration is KtClass && ktCallableDeclaration.isEnum()) {
+            for (declaration in ktCallableDeclaration.declarations) {
+                if (declaration is KtEnumEntry && declaration.superTypeListEntries.isEmpty()) {
+                    result.add(KotlinEnumEntryWithoutSuperCallUsage(declaration))
+                }
+            }
+        }
+
+        ktCallableDeclaration.processDelegationCallConstructorUsages(ktCallableDeclaration.useScope()) { callElement ->
+            when (callElement) {
+                is KtConstructorDelegationCall -> result.add(KotlinConstructorDelegationCallUsage(callElement, ktCallableDeclaration))
+                is KtSuperTypeCallEntry -> result.add(KotlinFunctionCallUsage(callElement, ktCallableDeclaration))
+            }
+            true
         }
 
         return result.toTypedArray()
@@ -191,6 +212,9 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
         else {
             if (usageInfo is KotlinByConventionCallUsage) {
                 usageInfo.preprocessUsage()
+            }
+            if (usageInfo is KotlinEnumEntryWithoutSuperCallUsage) {
+                usageInfo.preprocess(kotlinChangeInfo, usageInfo.element as KtElement)
             }
             if ((usageInfo is KotlinOverrideUsageInfo || usageInfo is OverriderUsageInfo) && element is KtCallableDeclaration) {
                 val baseElement =
