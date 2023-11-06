@@ -31,7 +31,7 @@ class UnindexedFilesScannerExecutor(project: Project)
                                                IndexingBundle.message("progress.indexing.scanning"),
                                                IndexingBundle.message("progress.indexing.scanning.paused")) {
 
-  val initialVfsRefreshRequested: AtomicBoolean = AtomicBoolean(false);
+  val initialVfsRefreshCompleted: AtomicBoolean = AtomicBoolean(false);
 
   private val runningDumbTask = AtomicReference<ProgressIndicator>()
 
