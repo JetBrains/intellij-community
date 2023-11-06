@@ -9,7 +9,6 @@ import com.intellij.ide.ui.UISettingsListener
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileEditor.impl.DockableEditorTabbedContainer
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.FrameWrapper
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.IdeFrame
@@ -42,12 +41,11 @@ internal class DockWindow(
   private val dockManager: DockManagerImpl,
   dimensionKey: String?,
   val id: String,
-  private val project: Project,
   private var container: DockContainer,
   isDialog: Boolean,
   val supportReopen: Boolean,
   coroutineScope: CoroutineScope,
-) : FrameWrapper(project = project,
+) : FrameWrapper(project = dockManager.project,
                  dimensionKey = dimensionKey ?: "dock-window-$id",
                  isDialog = isDialog,
                  coroutineScope = coroutineScope) {
@@ -64,7 +62,7 @@ internal class DockWindow(
 
   init {
     if (!ApplicationManager.getApplication().isHeadlessEnvironment && container !is DockContainer.Dialog) {
-      val mainStatusBar = WindowManager.getInstance().getStatusBar(project)
+      val mainStatusBar = WindowManager.getInstance().getStatusBar(dockManager.project)
       if (mainStatusBar != null) {
         val frame = getFrame()
         if (frame is IdeFrame) {
@@ -111,7 +109,7 @@ internal class DockWindow(
     if (ExperimentalUI.isNewUI()) {
       buttonManager = ToolWindowPaneNewButtonManager(paneId, false)
       buttonManager.add(dockContentUiContainer)
-      buttonManager.initMoreButton(project)
+      buttonManager.initMoreButton(dockManager.project)
     }
     else {
       buttonManager = ToolWindowPaneOldButtonManager(paneId)
