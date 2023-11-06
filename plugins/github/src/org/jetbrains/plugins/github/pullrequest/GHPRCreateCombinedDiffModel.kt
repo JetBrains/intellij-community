@@ -16,7 +16,6 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.diff.impl.GenericDataProvider
 import com.intellij.openapi.observable.util.whenDisposed
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor
@@ -46,11 +45,9 @@ internal class GHPRCreateCombinedDiffModelProvider(private val project: Project,
   private val cs = parentCs.childScope()
 
   fun createCombinedDiffModel(repository: GHRepositoryCoordinates, pullRequest: GHPRIdentifier): CombinedDiffModelImpl {
-    val dataDisposable = Disposer.newDisposable()
-    val dataContext = GHPRDataContextRepository.getInstance(project).findContext(repository)!!
-    val dataProvider = dataContext.dataProviderRepository.getDataProvider(pullRequest, dataDisposable)
-
     val model = CombinedDiffModelImpl(project)
+    val dataContext = GHPRDataContextRepository.getInstance(project).findContext(repository)!!
+    val dataProvider = dataContext.dataProviderRepository.getDataProvider(pullRequest, model.ourDisposable)
 
     val uiCs = cs.childScope(Dispatchers.Main.immediate + CoroutineName("GitLab Merge Request Review Combined Diff UI"))
     model.ourDisposable.whenDisposed {
