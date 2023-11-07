@@ -8,15 +8,14 @@ import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ConfigImportHelper
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.util.MathUtil
 import com.intellij.util.PlatformUtils
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.TimeoutCancellationException
-import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
@@ -26,6 +25,7 @@ private val log = logger<IdeStartupWizard>()
 val isIdeStartupWizardEnabled: Boolean
   get() = java.lang.Boolean.getBoolean("intellij.startup.wizard") && IdeStartupExperiment.isExperimentEnabled()
 
+@ExperimentalCoroutinesApi
 internal suspend fun runStartupWizard(isInitialStart: Job, app: Application) {
 
   log.info("Entering startup wizard workflow.")
@@ -54,8 +54,6 @@ internal suspend fun runStartupWizard(isInitialStart: Job, app: Application) {
         }
         catch (_: TimeoutCancellationException) {
           log.warn("Timeout on waiting for initial start, proceeding without waiting, disabling the startup flow")
-          com.intellij.platform.ide.bootstrap.isInitialStart?.cancel()
-          com.intellij.platform.ide.bootstrap.isInitialStart = null
           IdeStartupWizardCollector.logInitialStartTimeout()
         }
         finally {
@@ -67,7 +65,14 @@ internal suspend fun runStartupWizard(isInitialStart: Job, app: Application) {
       }
 
       log.info("Passing execution control to $wizard.")
-      span("${adapter.assignableToClassName}.run") {
+      span("${adapter.assignableToClassName}.run") block@{
+        withContext(Dispatchers.EDT) {
+          val successfulStart = com.intellij.platform.ide.bootstrap.isInitialStart
+
+          successfulStart?.cancel()
+          com.intellij.platform.ide.bootstrap.isInitialStart = null
+        }
+
         wizard.run()
       }
 
