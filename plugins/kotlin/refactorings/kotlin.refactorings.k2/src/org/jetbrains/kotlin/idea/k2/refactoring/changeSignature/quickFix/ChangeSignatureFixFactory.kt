@@ -41,6 +41,7 @@ import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtLambdaExpression
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
+import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtPsiUtil
 import org.jetbrains.kotlin.psi.KtValueArgument
 import org.jetbrains.kotlin.psi.ValueArgument
@@ -153,15 +154,16 @@ object ChangeSignatureFixFactory {
             ((callElement.resolveCall() as? KtErrorCallInfo)?.candidateCalls?.firstOrNull() as? KtCallableMemberCall<*, *>)
                 ?: return null
 
-        val ktCallableDeclaration = functionCall.partiallyAppliedSymbol.symbol.psi as? KtCallableDeclaration
+        val ktCallableDeclaration = functionCall.partiallyAppliedSymbol.symbol.psi as? KtNamedDeclaration
             ?: return null //todo change java from kotlin
 
         val methodDescriptor = KotlinMethodDescriptor(ktCallableDeclaration)
 
         val changeInfo = KotlinChangeInfo(methodDescriptor)
+        val index = input.idx + if ((ktCallableDeclaration as? KtCallableDeclaration)?.receiverTypeReference != null) 1 else 0
         if (input.type == ChangeType.REMOVE) {
-            assert(input.idx >= 0)
-            changeInfo.removeParameter(input.idx)
+            assert(index >= 0)
+            changeInfo.removeParameter(index)
         } else {
             val usedNames = mutableSetOf<String>()
             val validator = getNameValidator(ktCallableDeclaration, usedNames)
@@ -182,11 +184,11 @@ object ChangeSignatureFixFactory {
             }
 
             val currentArgument = psi.parentOfType<KtValueArgument>(true) ?: return null
-            if (input.type == ChangeType.ADD || input.type == ChangeType.TYPE_MISMATCH) {
+            if (input.type == ChangeType.TYPE_MISMATCH) {
                 val parameterInfo = getNewParameterInfo(currentArgument) ?: return null
-                changeInfo.addParameter(parameterInfo, input.idx)
+                changeInfo.addParameter(parameterInfo, index)
             } else {
-                val parameters = ktCallableDeclaration.valueParameters
+                val parameters = (ktCallableDeclaration as? KtCallableDeclaration)?.valueParameters ?: emptyList()
                 val arguments = callElement.valueArguments
 
                 for (i in arguments.indices) {
@@ -198,7 +200,7 @@ object ChangeSignatureFixFactory {
                         val argumentType = getKtType(expression)
                         val parameterType = parameters[i].getReturnKtType()
                         if (argumentType != null && !argumentType.isSubTypeOf(parameterType)) {
-                            changeInfo.newParameters[i + if (ktCallableDeclaration.receiverTypeReference != null) 1 else 0].setType(
+                            changeInfo.newParameters[i + if ((ktCallableDeclaration as? KtCallableDeclaration)?.receiverTypeReference != null) 1 else 0].setType(
                                 argumentType.render(position = Variance.IN_VARIANCE)
                             )
                         }
@@ -250,7 +252,7 @@ object ChangeSignatureFixFactory {
 
     context(KtAnalysisSession)
     private fun getNameValidator(
-        callable: KtCallableDeclaration, usedNames: MutableSet<String> = mutableSetOf<String>()
+        callable: KtNamedDeclaration, usedNames: MutableSet<String> = mutableSetOf<String>()
     ): (String) -> Boolean {
         val nameValidator = KotlinDeclarationNameValidator(
             callable,

@@ -343,7 +343,11 @@ internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
                 val callExpression = element.getNonStrictParentOfType<KtCallElement>() ?: return false
                 return withResolvedCall(callExpression) { call ->
                     when (call) {
-                        is KtDelegatedConstructorCall -> call.symbol == ktDeclaration.getSymbol()
+                        is KtDelegatedConstructorCall -> {
+                            val constructorSymbol = call.symbol
+                            val declarationSymbol = ktDeclaration.getSymbol()
+                            constructorSymbol == declarationSymbol || constructorSymbol.getContainingSymbol() == declarationSymbol
+                        }
                         else -> false
                     }
                 } ?: false
