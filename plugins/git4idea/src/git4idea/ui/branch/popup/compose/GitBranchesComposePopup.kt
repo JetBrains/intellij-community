@@ -37,6 +37,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.platform.compose.JBComposePanel
 import com.intellij.platform.compose.PreviewKeyEventHost
 import com.intellij.platform.compose.onHostPreviewKeyEvent
+import com.intellij.ui.popup.AbstractPopup.isCloseRequest
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
@@ -71,6 +72,7 @@ internal fun createComposeBranchesPopup(project: Project, repository: GitReposit
     .createComponentPopupBuilder(popupComposeContent, popupComposeContent)
     .setFocusable(true)
     .setRequestFocus(true)
+    .setCancelKeyEnabled(false)
     .setResizable(true)
     .setMinSize(JBDimension(350, 300))
     .createPopup()
@@ -104,7 +106,16 @@ private fun createBranchesPopupComposeComponent(
       .onPreviewKeyEvent { keyEvent ->
         val e = keyEvent.nativeKeyEvent as KeyEvent
         when {
+          isCloseRequest(e) && text.isNotEmpty() -> {
+            branchesVm.updateSpeedSearchText("")
+            true
+          }
+          isCloseRequest(e) -> {
+            closePopup()
+            true
+          }
           keyEvent.key == Key.DirectionUp || keyEvent.key == Key.DirectionDown || keyEvent.key == Key.Enter -> {
+            // TODO: rewrite key events handling, so list will handle this events also, since now it only gets focus
             branchesFocusRequester.requestFocus()
             false
           }
