@@ -265,7 +265,7 @@ object Utils {
       if (fastTrackTime > 0) AltEdtDispatcher.apply { switchToQueue() }
       else Dispatchers.EDT[CoroutineDispatcher]!!
     val updater = ActionUpdater(presentationFactory, asyncDataContext, place, isContextMenu, isToolbarAction, edtDispatcher)
-    val deferred = async(EmptyCoroutineContext, CoroutineStart.UNDISPATCHED) {
+    val deferred = async(edtDispatcher, CoroutineStart.UNDISPATCHED) {
       service<ActionUpdaterInterceptor>().expandActionGroup(presentationFactory, asyncDataContext, place, group, isToolbarAction) {
         updater.runUpdateSession(updaterContext(place, fastTrackTime, isContextMenu, isToolbarAction)) {
           updater.expandActionGroup(group, group is CompactActionGroup)
