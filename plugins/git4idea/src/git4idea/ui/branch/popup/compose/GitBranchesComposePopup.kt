@@ -265,7 +265,7 @@ private fun SelectableLazyListScope.group(
 ) {
   stickyHeader(groupName) {
     var shouldDrawBorder by remember { mutableStateOf(false) }
-    val canDrawBorder = !(columnState.firstVisibleItemIndex == 0 && columnState.firstVisibleItemScrollOffset == 0)
+    val canDrawBorder by derivedStateOf { !(columnState.firstVisibleItemIndex == 0 && columnState.firstVisibleItemScrollOffset == 0) }
     Column(
       modifier = Modifier
         .pointerHoverIcon(PointerIcon.Default)
