@@ -189,7 +189,7 @@ internal class ApplicationInfoPropertiesImpl: ApplicationInfoProperties {
 //copy of ApplicationInfoImpl.shortenCompanyName
 private fun shortenCompanyName(name: String) = name.removeSuffix(" s.r.o.").removeSuffix(" Inc.")
 
-private fun findApplicationInfoInSources(project: JpsProject, productProperties: ProductProperties): Path {
+fun findApplicationInfoInSources(project: JpsProject, productProperties: ProductProperties): Path {
   val module = checkNotNull(project.modules.find { it.name == productProperties.applicationInfoModule }) {
     "Cannot find required '${productProperties.applicationInfoModule}' module"
   }

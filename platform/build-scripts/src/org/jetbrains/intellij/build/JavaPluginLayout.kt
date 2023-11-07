@@ -1,14 +1,19 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
 import org.jetbrains.intellij.build.impl.LibraryPackMode
 import org.jetbrains.intellij.build.impl.PluginLayout
 
 object JavaPluginLayout {
+
+  const val MAIN_MODULE_NAME = "intellij.java.plugin"
+  const val MAIN_FRONTEND_MODULE_NAME = "intellij.java.frontend"
+
+
   @JvmStatic
   @JvmOverloads
   fun javaPlugin(addition: ((PluginLayout.PluginLayoutSpec) -> Unit)? = null): PluginLayout {
-    return PluginLayout.plugin("intellij.java.plugin") { spec ->
+    return PluginLayout.plugin(MAIN_MODULE_NAME) { spec ->
       spec.directoryName = "java"
 
       val mainJarName = "java-impl.jar"
@@ -42,7 +47,6 @@ object JavaPluginLayout {
         "intellij.java.analysis",
         "intellij.jvm.analysis",
         "intellij.java.indexing",
-        "intellij.java.frontback.psi",
         "intellij.java.psi",
         "intellij.java",
         "intellij.jsp",
@@ -50,6 +54,14 @@ object JavaPluginLayout {
         "intellij.platform.uast.ide",
         "intellij.java.uast.ide",
       ))
+
+      for (moduleName in listOf(
+        "intellij.java.frontback.impl",
+        "intellij.java.frontback.psi",
+        "intellij.java.frontback.psi.impl",
+      )) {
+        spec.withModule(moduleName, "java-frontback.jar")
+      }
 
       spec.withModules(listOf(
         "intellij.java.compiler.impl",
@@ -66,9 +78,7 @@ object JavaPluginLayout {
         "intellij.jvm.analysis.quickFix",
         "intellij.jvm.analysis.refactoring",
         "intellij.java.indexing.impl",
-        "intellij.java.frontback.psi.impl",
         "intellij.java.psi.impl",
-        "intellij.java.frontback.impl",
         "intellij.java.impl",
         "intellij.java.impl.inspections",
         "intellij.java.impl.refactorings",
@@ -97,6 +107,23 @@ object JavaPluginLayout {
       spec.withResourceArchive("../jdkAnnotations", "lib/resources/jdkAnnotations.jar")
 
       addition?.invoke(spec)
+    }
+  }
+
+
+  /**
+   * A special plugin for JetBrains Client
+   */
+  @JvmStatic
+  fun javaFrontendPlugin(): PluginLayout {
+    return PluginLayout.plugin(MAIN_FRONTEND_MODULE_NAME) { spec ->
+      spec.withModules(
+        listOf(
+          "intellij.java.frontback.impl",
+          "intellij.java.frontback.psi",
+          "intellij.java.frontback.psi.impl",
+        )
+      )
     }
   }
 }
