@@ -2328,7 +2328,7 @@ open class EditorWithProviderComposite @Internal constructor(
   file: VirtualFile,
   editorsWithProviders: List<FileEditorWithProvider>,
   project: Project,
-) : EditorComposite(file = file, editorsWithProviders = editorsWithProviders, project = project)
+) : EditorComposite(file = file, fileEditorWithProviderList = editorsWithProviders, project = project)
 
 private class SelectionHistory {
   private val history = ObjectLinkedOpenHashSet<kotlin.Pair<VirtualFile, EditorWindow>>()

@@ -290,7 +290,7 @@ class EditorHistoryManager internal constructor(private val project: Project) : 
     // backward compatibility - previous entry maybe duplicated
     val fileToElement = LinkedHashMap<String, Element>()
     for (e in state.getChildren(HistoryEntry.TAG)) {
-      val file = e.getAttributeValue(HistoryEntry.FILE_ATTR)
+      val file = e.getAttributeValue(HistoryEntry.FILE_ATTRIBUTE)
       fileToElement.remove(file)
       // the last is the winner
       fileToElement.put(file, e)
@@ -329,7 +329,7 @@ class EditorHistoryManager internal constructor(private val project: Project) : 
       }
     }
     for (entry in entries) {
-      entry.writeExternal(element, project)
+      element.addContent(entry.writeExternal(project))
     }
     return element
   }

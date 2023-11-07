@@ -363,7 +363,9 @@ private suspend fun layoutPlatform(runDir: Path,
       sortedClassPath = computeAppClassPath(libDir = libDir, existing = classPath, homeDir = runDir)
 
       withContext(Dispatchers.IO) {
-        Files.writeString(runDir.resolve("fingerprint.txt"), java.lang.Long.toUnsignedString(hasher.asLong, Character.MAX_RADIX))
+        val fingerprint = java.lang.Long.toUnsignedString(hasher.asLong, Character.MAX_RADIX)
+        Files.writeString(runDir.resolve("fingerprint.txt"), fingerprint)
+        Span.current().addEvent("IDE fingerprint: $fingerprint")
       }
     }
 

@@ -62,7 +62,7 @@ class IndexingDependenciesFingerprint {
   private fun calculateFingerprint(): FingerprintImpl {
     //println(fingerprintString)
     //println(hasher.getDebugInfo())
-    return FingerprintImpl(ideFingerprint(debugHelperToken))
+    return FingerprintImpl(ideFingerprint(debugHelperToken).asLong())
   }
 
   fun getFingerprint(): FingerprintImpl {

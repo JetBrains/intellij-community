@@ -47,6 +47,7 @@ import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.platform.fileEditor.FileEntry
 import com.intellij.platform.fileEditor.parseFileEntry
 import com.intellij.platform.fileEditor.writeWindow
+import com.intellij.platform.ide.IdeFingerprint
 import com.intellij.platform.ide.ideFingerprint
 import com.intellij.testFramework.LightVirtualFileBase
 import com.intellij.ui.*
@@ -81,6 +82,7 @@ import kotlin.time.Duration.Companion.milliseconds
 
 private val OPEN_FILES_ACTIVITY = Key.create<Activity>("open.files.activity")
 private val LOG = logger<EditorsSplitters>()
+private const val IDE_FINGERPRINT: @NonNls String = "ideFingerprint"
 
 @Suppress("LeakingThis", "IdentifierGrammar")
 @DirtyUI
@@ -737,7 +739,7 @@ open class EditorsSplitters internal constructor(
   }
 }
 
-internal fun findWindowWith(component: Component): EditorWindow? {
+private fun findWindowWith(component: Component): EditorWindow? {
   return ComponentUtil.getParentOfType(EditorWindowHolder::class.java, component)?.editorWindow
 }
 
@@ -757,6 +759,8 @@ private fun writePanel(component: Component): Element {
     }
     is JBTabs -> {
       val result = Element("leaf")
+      result.setAttribute(IDE_FINGERPRINT, ideFingerprint().asString())
+
       ClientProperty.get(component.component, JBTabsImpl.SIDE_TABS_SIZE_LIMIT_KEY)?.let { limit ->
         result.setAttribute(JBTabsImpl.SIDE_TABS_SIZE_LIMIT_KEY.toString(), limit.toString())
       }
@@ -803,9 +807,10 @@ internal class EditorSplitterStateSplitter(
   val proportion: Float = splitterElement.getAttributeValue("split-proportion")?.toFloat() ?: 0.5f
 }
 
-internal class EditorSplitterStateLeaf(element: Element) {
+internal class EditorSplitterStateLeaf(element: Element, storedIdeFingerprint: IdeFingerprint) {
   @JvmField
-  val files: List<FileEntry> = (element.getChildren("file")?.map(::parseFileEntry)) ?: emptyList()
+  val files: List<FileEntry> = (element.getChildren("file")?.map { parseFileEntry(it, storedIdeFingerprint = storedIdeFingerprint) })
+                               ?: emptyList()
 
   @JvmField
   val tabSizeLimit: Int = element.getAttributeValue(JBTabsImpl.SIDE_TABS_SIZE_LIMIT_KEY.toString())?.toIntOrNull() ?: -1
@@ -824,7 +829,14 @@ class EditorSplitterState(element: Element) {
 
     if (first == null || second == null) {
       splitters = null
-      leaf = element.getChild("leaf")?.let { EditorSplitterStateLeaf(it) }
+      leaf = element.getChild("leaf")?.let { leafElement ->
+        EditorSplitterStateLeaf(element = leafElement, storedIdeFingerprint = try {
+          leafElement.getAttributeValue(IDE_FINGERPRINT)?.let(::IdeFingerprint)
+        }
+        catch (ignored: NumberFormatException) {
+          null
+        } ?: IdeFingerprint(0))
+      }
     }
     else {
       splitters = EditorSplitterStateSplitter(firstSplitter = EditorSplitterState(first),
@@ -956,8 +968,8 @@ private suspend fun openFile(file: VirtualFile,
                              asyncScope: CoroutineScope): VirtualFile? {
   val deferredProviders: Deferred<List<FileEditorProvider>> = if (fileEntry.ideFingerprint == ideFingerprint()) {
     asyncScope.async(CoroutineName("editor provider resolving")) {
-      val list = fileEntry.providers.mapNotNullTo(ArrayList(fileEntry.providers.size)) {
-        fileEditorProviderManager.getProvider(it.first) ?: return@mapNotNullTo null
+      val list = fileEntry.providers.keys.mapNotNullTo(ArrayList(fileEntry.providers.size)) {
+        fileEditorProviderManager.getProvider(it)
       }
 
       // if some provider is not found, compute without taking cache in an account
@@ -980,7 +992,7 @@ private suspend fun openFile(file: VirtualFile,
     private val providerAndStateList = asyncScope.async {
       val providers = deferredProviders.await()
       providers.mapNotNullTo(ArrayList(providers.size)) { provider ->
-        val stateData = fileEntry.providers.firstOrNull { it.first == provider.editorTypeId }?.second ?: return@mapNotNullTo null
+        val stateData = fileEntry.providers.get(provider.editorTypeId) ?: return@mapNotNullTo null
         val state = provider.readState(stateData, fileEditorManager.project, file)
         provider to state
       }

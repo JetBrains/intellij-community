@@ -39,17 +39,17 @@ internal class HistoryEntry private constructor(@JvmField val filePointer: Virtu
 
   companion object {
     const val TAG: @NonNls String = "entry"
-    const val FILE_ATTR: String = "file"
+    const val FILE_ATTRIBUTE: String = "file"
 
     fun createLight(file: VirtualFile,
                     providers: List<FileEditorProvider?>,
                     states: List<FileEditorState?>,
                     selectedProvider: FileEditorProvider,
-                    preview: Boolean): HistoryEntry {
-      val pointer: VirtualFilePointer = LightFilePointer(file)
+                    isPreview: Boolean): HistoryEntry {
+      val pointer = LightFilePointer(file)
       val entry = HistoryEntry(filePointer = pointer,
                                selectedProvider = selectedProvider,
-                               isPreview = preview,
+                               isPreview = isPreview,
                                disposable = null)
       for (i in providers.indices) {
         entry.putState(providers.get(i) ?: continue, states.get(i) ?: continue)
@@ -79,7 +79,7 @@ internal class HistoryEntry private constructor(@JvmField val filePointer: Virtu
                     selectedProvider: FileEditorProvider,
                     preview: Boolean): HistoryEntry {
       if (project.isDisposed) {
-        return createLight(file = file, providers = providers, states = states, selectedProvider = selectedProvider, preview = preview)
+        return createLight(file = file, providers = providers, states = states, selectedProvider = selectedProvider, isPreview = preview)
       }
 
       val disposable = Disposer.newDisposable()
@@ -133,17 +133,16 @@ internal class HistoryEntry private constructor(@JvmField val filePointer: Virtu
    * @return element that was added to the `element`.
    * Returned element has tag [.TAG]. Never null.
    */
-  fun writeExternal(element: Element, project: Project): Element {
-    val e = Element(TAG)
-    element.addContent(e)
-    e.setAttribute(FILE_ATTR, filePointer.url)
+  fun writeExternal(project: Project): Element {
+    val element = Element(TAG)
+    element.setAttribute(FILE_ATTRIBUTE, filePointer.url)
 
     for ((provider, value) in providerToState) {
       val providerElement = Element(PROVIDER_ELEMENT)
       if (provider == selectedProvider) {
-        providerElement.setAttribute(SELECTED_ATTR_VALUE, true.toString())
+        providerElement.setAttribute(SELECTED_ATTRIBUTE_VALUE, true.toString())
       }
-      providerElement.setAttribute(EDITOR_TYPE_ID_ATTR, provider.editorTypeId)
+      providerElement.setAttribute(EDITOR_TYPE_ID_ATTRIBUTE, provider.editorTypeId)
 
       val stateElement = Element(STATE_ELEMENT)
       provider.writeState(value, project, stateElement)
@@ -151,14 +150,14 @@ internal class HistoryEntry private constructor(@JvmField val filePointer: Virtu
         providerElement.addContent(stateElement)
       }
 
-      e.addContent(providerElement)
+      element.addContent(providerElement)
     }
 
     if (isPreview) {
-      e.setAttribute(PREVIEW_ATTR, true.toString())
+      element.setAttribute(PREVIEW_ATTRIBUTE, true.toString())
     }
 
-    return e
+    return element
   }
 
   fun onProviderRemoval(provider: FileEditorProvider) {
@@ -170,10 +169,10 @@ internal class HistoryEntry private constructor(@JvmField val filePointer: Virtu
 }
 
 internal const val PROVIDER_ELEMENT: @NonNls String = "provider"
-internal const val EDITOR_TYPE_ID_ATTR: @NonNls String = "editor-type-id"
-internal const val SELECTED_ATTR_VALUE: @NonNls String = "selected"
+internal const val EDITOR_TYPE_ID_ATTRIBUTE: @NonNls String = "editor-type-id"
+internal const val SELECTED_ATTRIBUTE_VALUE: @NonNls String = "selected"
 internal const val STATE_ELEMENT: @NonNls String = "state"
-internal const val PREVIEW_ATTR: @NonNls String = "preview"
+internal const val PREVIEW_ATTRIBUTE: @NonNls String = "preview"
 
 private val EMPTY_ELEMENT = Element("state")
 
@@ -184,15 +183,15 @@ private fun parseEntry(project: Project,
     throw IllegalArgumentException("unexpected tag: $element")
   }
 
-  val url = element.getAttributeValue(HistoryEntry.FILE_ATTR)
+  val url = element.getAttributeValue(HistoryEntry.FILE_ATTRIBUTE)
   var providerStates = persistentListOf<Pair<FileEditorProvider, FileEditorState>>()
   var selectedProvider: FileEditorProvider? = null
 
   val file = VirtualFileManager.getInstance().findFileByUrl(url)
   for (providerElement in element.getChildren(PROVIDER_ELEMENT)) {
-    val typeId = providerElement.getAttributeValue(EDITOR_TYPE_ID_ATTR)
+    val typeId = providerElement.getAttributeValue(EDITOR_TYPE_ID_ATTRIBUTE)
     val provider = fileEditorProviderManager.getProvider(typeId) ?: continue
-    if (providerElement.getAttributeValue(SELECTED_ATTR_VALUE).toBoolean()) {
+    if (providerElement.getAttributeValue(SELECTED_ATTRIBUTE_VALUE).toBoolean()) {
       selectedProvider = provider
     }
 
@@ -203,7 +202,7 @@ private fun parseEntry(project: Project,
     }
   }
 
-  val preview = element.getAttributeValue(PREVIEW_ATTR) != null
+  val preview = element.getAttributeValue(PREVIEW_ATTRIBUTE) != null
   return EntryData(
     url = url,
     providerStates = providerStates,

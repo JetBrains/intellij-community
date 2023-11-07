@@ -2,15 +2,12 @@
 package com.intellij.platform.fileEditor
 
 import com.intellij.openapi.fileEditor.impl.*
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.text.StringUtilRt
-import com.intellij.platform.ide.ideFingerprint
-import kotlinx.collections.immutable.persistentListOf
+import com.intellij.platform.ide.IdeFingerprint
+import kotlinx.collections.immutable.persistentMapOf
 import org.jdom.Element
 import org.jetbrains.annotations.NonNls
 
 private const val PINNED: @NonNls String = "pinned"
-private const val IDE_FINGERPRINT: @NonNls String = "ideFingerprint"
 private const val CURRENT_IN_TAB = "current-in-tab"
 
 internal class FileEntry(
@@ -18,20 +15,21 @@ internal class FileEntry(
   @JvmField val currentInTab: Boolean,
   @JvmField val url: String,
   @JvmField val selectedProvider: String?,
-  @JvmField val ideFingerprint: Long?,
+  val ideFingerprint: IdeFingerprint?,
   @JvmField val isPreview: Boolean,
-  @JvmField val providers: List<Pair<String, Element>>,
+  @JvmField val providers: Map<String, Element?>,
 )
 
-internal fun parseFileEntry(fileElement: Element): FileEntry {
+internal fun parseFileEntry(fileElement: Element, storedIdeFingerprint: IdeFingerprint): FileEntry {
   val historyElement = fileElement.getChild(HistoryEntry.TAG)
 
   var selectedProvider: String? = null
-  var providers = persistentListOf<Pair<String, Element>>()
+  // ordered
+  var providers = persistentMapOf<String, Element?>()
   for (providerElement in historyElement.getChildren(PROVIDER_ELEMENT)) {
-    val typeId = providerElement.getAttributeValue(EDITOR_TYPE_ID_ATTR)
-    providers = providers.add(typeId to providerElement.getChild(STATE_ELEMENT))
-    if (providerElement.getAttributeValue(SELECTED_ATTR_VALUE).toBoolean()) {
+    val typeId = providerElement.getAttributeValue(EDITOR_TYPE_ID_ATTRIBUTE)
+    providers = providers.put(typeId, providerElement.getChild(STATE_ELEMENT))
+    if (providerElement.getAttributeValue(SELECTED_ATTRIBUTE_VALUE).toBoolean()) {
       selectedProvider = typeId
     }
   }
@@ -39,38 +37,24 @@ internal fun parseFileEntry(fileElement: Element): FileEntry {
   return FileEntry(
     pinned = fileElement.getAttributeBooleanValue(PINNED),
     currentInTab = fileElement.getAttributeValue(CURRENT_IN_TAB, "true").toBoolean(),
-    isPreview = historyElement.getAttributeValue(PREVIEW_ATTR) != null,
-    url = historyElement.getAttributeValue(HistoryEntry.FILE_ATTR),
+    isPreview = historyElement.getAttributeValue(PREVIEW_ATTRIBUTE) != null,
+    url = historyElement.getAttributeValue(HistoryEntry.FILE_ATTRIBUTE),
     selectedProvider = selectedProvider,
     providers = providers,
-    ideFingerprint = StringUtilRt.parseLong(fileElement.getAttributeValue(IDE_FINGERPRINT), 0),
+    ideFingerprint = storedIdeFingerprint,
   )
 }
 
 internal fun writeWindow(result: Element, window: EditorWindow) {
-  val ideFingerprint = ideFingerprint().toString()
   for (composite in window.getComposites()) {
-    result.addContent(writeComposite(composite = composite,
-                                     pinned = window.isFilePinned(composite.file),
-                                     selectedEditor = window.selectedComposite,
-                                     project = window.manager.project,
-                                     ideFingerprint = ideFingerprint))
+    val fileElement = Element("file")
+    fileElement.addContent(composite.writeCurrentStateAsHistoryEntry(project = window.manager.project))
+    if (window.isFilePinned(composite.file)) {
+      fileElement.setAttribute(PINNED, "true")
+    }
+    if (composite != window.selectedComposite) {
+      fileElement.setAttribute(CURRENT_IN_TAB, "false")
+    }
+    result.addContent(fileElement)
   }
-}
-
-private fun writeComposite(composite: EditorComposite,
-                           pinned: Boolean,
-                           selectedEditor: EditorComposite?,
-                           project: Project,
-                           ideFingerprint: String): Element {
-  val fileElement = Element("file")
-  composite.currentStateAsHistoryEntry().writeExternal(fileElement, project)
-  if (pinned) {
-    fileElement.setAttribute(PINNED, "true")
-  }
-  fileElement.setAttribute(IDE_FINGERPRINT, ideFingerprint)
-  if (composite != selectedEditor) {
-    fileElement.setAttribute(CURRENT_IN_TAB, "false")
-  }
-  return fileElement
 }

@@ -23,12 +23,25 @@ import kotlin.io.path.walk
 private val fingerprint = lazy { computeIdeFingerprint(debugHelperToken = 0) }
 
 @Internal
-fun ideFingerprint(debugHelperToken: Int = 0): Long {
+fun ideFingerprint(debugHelperToken: Int = 0): IdeFingerprint {
   return if (debugHelperToken == 0) fingerprint.value else computeIdeFingerprint(debugHelperToken = debugHelperToken)
 }
 
 @Internal
-private fun computeIdeFingerprint(debugHelperToken: Int): Long {
+@JvmInline
+value class IdeFingerprint(private val value: Long) {
+  @Throws(NumberFormatException::class)
+  constructor(value: String) : this(java.lang.Long.parseUnsignedLong(value, Character.MAX_RADIX))
+
+  fun asString(): String = java.lang.Long.toUnsignedString(value, Character.MAX_RADIX)
+
+  fun asLong(): Long = value
+
+  override fun toString() = asString()
+}
+
+@Internal
+private fun computeIdeFingerprint(debugHelperToken: Int): IdeFingerprint {
   val startTime = System.currentTimeMillis()
 
   val hasher = Hashing.komihash5_0().hashStream()
@@ -60,13 +73,12 @@ private fun computeIdeFingerprint(debugHelperToken: Int): Long {
 
   hasher.putInt(debugHelperToken)
 
-  val fingerprint = hasher.asLong
+  val fingerprint = IdeFingerprint(hasher.asLong)
 
   val durationMs = System.currentTimeMillis() - startTime
-  val fingerprintString = java.lang.Long.toUnsignedString(fingerprint, Character.MAX_RADIX)
   Logger.getInstance("com.intellij.platform.ide.IdeFingerprint")
     .info("Calculated dependencies fingerprint in $durationMs ms " +
-          "(hash=$fingerprintString, buildTime=${appInfo.buildTime.toEpochSecond()}, appVersion=${appInfo.build.asString()})")
+          "(hash=${fingerprint.asString()}, buildTime=${appInfo.buildTime.toEpochSecond()}, appVersion=${appInfo.build.asString()})")
   return fingerprint
 }
 
