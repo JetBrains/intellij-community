@@ -199,7 +199,7 @@ open class IdeStarter : ModernApplicationStarter() {
         return
       }
 
-      val recentProjectManager = RecentProjectsManager.getInstance()
+      val recentProjectManager = serviceAsync<RecentProjectsManager>()
       val isOpened = (if (recentProjectManager.willReopenProjectOnStart()) recentProjectManager.reopenLastProjectsOnStart() else true)
       if (!isOpened) {
         asyncCoroutineScope.launch(Dispatchers.EDT) {

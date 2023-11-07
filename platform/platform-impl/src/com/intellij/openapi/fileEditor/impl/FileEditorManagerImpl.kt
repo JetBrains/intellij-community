@@ -2016,7 +2016,7 @@ open class FileEditorManagerImpl(
 
       // "Show full paths in window header"
       coroutineScope.launch {
-        withContext(Dispatchers.EDT) { getActiveSplittersAsync() }.await()?.updateFileName(null)
+        withContext(Dispatchers.EDT) { getActiveSplittersAsync() }.await()?.updateFileName(updatedFile = null)
       }
     }
   }

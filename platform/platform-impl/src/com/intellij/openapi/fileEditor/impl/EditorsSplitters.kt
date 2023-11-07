@@ -455,7 +455,7 @@ open class EditorsSplitters internal constructor(
         window.getComposites().filter { updatedFile == null || it.file.nameSequence.contentEquals(updatedFile.nameSequence) }.toList()
       }
       for (composite in composites) {
-        val title = readAction {
+        val title = readActionBlocking {
           EditorTabPresentationUtil.getEditorTabTitle(manager.project, composite.file)
         }
         withContext(Dispatchers.EDT) {

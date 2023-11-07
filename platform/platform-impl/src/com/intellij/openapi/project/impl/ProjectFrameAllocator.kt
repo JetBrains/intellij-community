@@ -12,6 +12,7 @@ import com.intellij.featureStatistics.fusCollectors.FileEditorCollector.EmptySta
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.RecentProjectMetaInfo
+import com.intellij.ide.RecentProjectsManager
 import com.intellij.ide.RecentProjectsManagerBase
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.util.runOnceForProject
@@ -45,6 +46,7 @@ import com.intellij.openapi.wm.impl.*
 import com.intellij.platform.diagnostic.telemetry.impl.getTraceActivity
 import com.intellij.platform.diagnostic.telemetry.impl.rootTask
 import com.intellij.platform.diagnostic.telemetry.impl.span
+import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.platform.ide.bootstrap.getAndUnsetSplashProjectFrame
 import com.intellij.problems.WolfTheProblemSolver
 import com.intellij.psi.PsiManager
@@ -90,7 +92,7 @@ internal open class ProjectFrameAllocator(private val options: OpenProjectTask) 
 private fun CoroutineScope.scheduleSaveTemplate(options: OpenProjectTask): Job? {
   if (options.isNewProject && options.useDefaultProjectAsTemplate && options.project == null) {
     return launch(CoroutineName("save default project") + Dispatchers.IO) {
-      saveSettings(ProjectManager.getInstance().defaultProject, forceSavingAllSettings = true)
+      saveSettings(serviceAsync<ProjectManager>().defaultProject, forceSavingAllSettings = true)
     }
   }
   else {
@@ -262,12 +264,13 @@ internal class ProjectUiFrameAllocator(@JvmField val options: OpenProjectTask,
 
     // make sure that in case of some error we close frame for a not loaded project
     withContext(Dispatchers.EDT + NonCancellable) {
-      (WindowManager.getInstance() as WindowManagerImpl).releaseFrame(frameHelper)
+      (serviceAsync<WindowManager>() as WindowManagerImpl).releaseFrame(frameHelper)
     }
   }
 
-  private fun getFrameInfo(): FrameInfo? {
-    return options.frameInfo ?: RecentProjectsManagerBase.getInstanceEx().getProjectMetaInfo(projectStoreBaseDir)?.frame
+  private suspend fun getFrameInfo(): FrameInfo? {
+    return options.frameInfo
+           ?: (serviceAsync<RecentProjectsManager>() as RecentProjectsManagerBase).getProjectMetaInfo(projectStoreBaseDir)?.frame
   }
 
   private fun updateFullScreenState(frameHelper: ProjectFrameHelper, frameInfo: FrameInfo?) {
@@ -296,7 +299,7 @@ internal class ProjectUiFrameAllocator(@JvmField val options: OpenProjectTask,
 
       if (frameHelper != null) {
         // projectLoaded was called, but then due to some error, say cancellation, still projectNotLoaded is called
-        (WindowManager.getInstance() as WindowManagerImpl).releaseFrame(frameHelper)
+        (serviceAsync<WindowManager>() as WindowManagerImpl).releaseFrame(frameHelper)
       }
     }
   }
@@ -318,11 +321,10 @@ private fun CoroutineScope.scheduleInitFrame(rawProjectDeferred: CompletableDefe
                                         taskListDeferred = taskListDeferred)
       }
 
-      @Suppress("DEPRECATION")
-      project.coroutineScope.launch(rootTask()) {
+      serviceAsync<CoreUiCoroutineScopeHolder>().coroutineScope.launch(rootTask()) {
         val frameHelper = deferredProjectFrameHelper.await()
         frameHelper.installDefaultProjectStatusBarWidgets(project)
-        frameHelper.updateTitle(FrameTitleBuilder.getInstance().getProjectTitle(project), project)
+        frameHelper.updateTitle(serviceAsync<FrameTitleBuilder>().getProjectTitle(project), project)
       }
     }
   }
@@ -351,7 +353,8 @@ private suspend fun restoreEditors(project: Project, deferredProjectFrameHelper:
     }
 
     span("editor reopening post-processing", Dispatchers.EDT) {
-      for (window in editorComponent.getWindows()) {
+      val windows = editorComponent.getWindows()
+      for (window in windows) {
         // clear empty splitters
         if (window.tabCount == 0) {
           window.removeFromSplitter()
@@ -363,13 +366,7 @@ private suspend fun restoreEditors(project: Project, deferredProjectFrameHelper:
     }
   }
 
-  @Suppress("DEPRECATION")
-  project.coroutineScope.launch {
-    val hasOpenFiles = fileEditorManager.hasOpenFiles()
-    if (!hasOpenFiles) {
-      EditorsSplitters.stopOpenFilesActivity(project)
-    }
-
+  serviceAsync<CoreUiCoroutineScopeHolder>().coroutineScope.launch {
     val frameHelper = deferredProjectFrameHelper.await()
     withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
       // read the state of dockable editors
@@ -384,9 +381,13 @@ private suspend fun restoreEditors(project: Project, deferredProjectFrameHelper:
       }
     }
 
-    if (!hasOpenFiles && !isNotificationSilentMode(project)) {
-      project.putUserData(FileEditorManagerImpl.NOTHING_WAS_OPENED_ON_START, true)
-      findAndOpenReadmeIfNeeded(project)
+    // check after `initDockableContentFactory` - editor in a docked window
+    if (!fileEditorManager.hasOpenFiles()) {
+      EditorsSplitters.stopOpenFilesActivity(project)
+      if (!isNotificationSilentMode(project)) {
+        project.putUserData(FileEditorManagerImpl.NOTHING_WAS_OPENED_ON_START, true)
+        findAndOpenReadmeIfNeeded(project)
+      }
     }
   }
 }
@@ -490,12 +491,12 @@ private suspend fun findAndOpenReadmeIfNeeded(project: Project) {
     val projectDir = project.guessProjectDir() ?: return@runOnceForProject
     val files = mutableListOf(".github/README.md", "README.md", "docs/README.md")
     if (SystemInfoRt.isFileSystemCaseSensitive) {
-      files += files.map { it.lowercase() }
+      files.addAll(files.map { it.lowercase() })
     }
     val readme = files.firstNotNullOfOrNull(projectDir::findFileByRelativePath) ?: return@runOnceForProject
     if (!readme.isDirectory) {
       readme.putUserData(TextEditorWithPreview.DEFAULT_LAYOUT_FOR_FILE, TextEditorWithPreview.Layout.SHOW_PREVIEW)
-      FileEditorManagerEx.getInstanceEx(project).openFile(readme, FileEditorOpenOptions(requestFocus = true))
+      (project.serviceAsync<FileEditorManager>() as FileEditorManagerEx).openFile(readme, FileEditorOpenOptions(requestFocus = true))
 
       readme.putUserData(README_OPENED_ON_START_TS, Instant.now())
     }
