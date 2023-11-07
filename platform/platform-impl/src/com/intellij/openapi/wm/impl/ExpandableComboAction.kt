@@ -38,6 +38,10 @@ abstract class ExpandableComboAction : AnAction(), CustomComponentAction {
       })
       popup.showUnderneathOf(combo)
     }
+    return createToolbarComboButton(model)
+  }
+
+  protected open fun createToolbarComboButton(model: ToolbarComboButtonModel): ToolbarComboButton {
     return ToolbarComboButton(model)
   }
 
@@ -47,7 +51,7 @@ abstract class ExpandableComboAction : AnAction(), CustomComponentAction {
     e.project?.let { createPopup(e)?.showCenteredInCurrentWindow(it) }
   }
 
-  class MyPopupModel: DefaultToolbarComboButtonModel() {
+  internal class MyPopupModel: DefaultToolbarComboButtonModel() {
     var isPopupShown: Boolean = false
 
     override fun isSelected(): Boolean {
