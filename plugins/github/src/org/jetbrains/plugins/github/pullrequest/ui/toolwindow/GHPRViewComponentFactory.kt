@@ -74,7 +74,6 @@ internal class GHPRViewComponentFactory(actionManager: ActionManager,
     return GHPRDetailsComponentFactory.create(this,
                                               project,
                                               detailsVm,
-                                              vm.securityService, vm.avatarIconsProvider,
                                               createChangesComponent(detailsVm.changesVm)).apply {
       reloadDetailsAction.registerCustomShortcutSet(this, nestedDisposable())
     }.let {

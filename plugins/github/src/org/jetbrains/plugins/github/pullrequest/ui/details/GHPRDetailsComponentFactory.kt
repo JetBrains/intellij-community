@@ -32,19 +32,20 @@ internal object GHPRDetailsComponentFactory {
     scope: CoroutineScope,
     project: Project,
     detailsVm: GHPRDetailsViewModel,
-    securityService: GHPRSecurityService,
-    avatarIconsProvider: GHAvatarIconsProvider,
     commitFilesBrowserComponent: JComponent
   ): JComponent {
     val commitsAndBranches = JPanel(MigLayout(LC().emptyBorders().fill(), AC().gap("push"))).apply {
       isOpaque = false
       add(CodeReviewDetailsCommitsComponentFactory.create(scope, detailsVm.changesVm) { commit: GHCommit ->
-        createCommitsPopupPresenter(commit, securityService.ghostUser)
+        createCommitsPopupPresenter(commit, detailsVm.securityService.ghostUser)
       })
       add(CodeReviewDetailsBranchComponentFactory.create(scope, detailsVm.branchesVm))
     }
-    val statusChecks = GHPRStatusChecksComponentFactory.create(scope, project, detailsVm.statusVm, detailsVm.reviewFlowVm, securityService,
-                                                               avatarIconsProvider)
+    val statusChecks = GHPRStatusChecksComponentFactory.create(scope, project,
+                                                               detailsVm.statusVm,
+                                                               detailsVm.reviewFlowVm,
+                                                               detailsVm.securityService,
+                                                               detailsVm.avatarIconsProvider)
     val actionsComponent = GHPRDetailsActionsComponentFactory.create(scope, project, detailsVm.reviewRequestState, detailsVm.reviewFlowVm)
     val actionGroup = ActionManager.getInstance().getAction("Github.PullRequest.Details.Popup") as ActionGroup
 
@@ -67,7 +68,7 @@ internal object GHPRDetailsComponentFactory {
       add(commitsAndBranches, CC().growX().gap(ReviewDetailsUIUtil.COMMIT_POPUP_BRANCHES_GAPS))
       add(CodeReviewDetailsCommitInfoComponentFactory.create(scope, detailsVm.changesVm.selectedCommit,
                                                              commitPresentation = { commit ->
-                                                               createCommitsPopupPresenter(commit, securityService.ghostUser) {
+                                                               createCommitsPopupPresenter(commit, detailsVm.securityService.ghostUser) {
                                                                  it.convertToHtml(project)
                                                                }
                                                              },

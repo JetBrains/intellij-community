@@ -6,6 +6,7 @@ import com.intellij.collaboration.async.nestedDisposable
 import com.intellij.collaboration.ui.codereview.details.data.ReviewRequestState
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewDetailsViewModel
 import com.intellij.collaboration.ui.codereview.issues.processIssueIdsHtml
+import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.openapi.project.Project
 import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.CoroutineScope
@@ -17,6 +18,7 @@ import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestState
 import org.jetbrains.plugins.github.pullrequest.comment.convertToHtml
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
+import org.jetbrains.plugins.github.pullrequest.data.service.GHPRSecurityService
 import org.jetbrains.plugins.github.pullrequest.ui.GHCompletableFutureLoadingModel
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRBranchesViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRStatusViewModelImpl
@@ -24,6 +26,9 @@ import org.jetbrains.plugins.github.pullrequest.ui.review.GHPRReviewViewModelHel
 
 @ApiStatus.Experimental
 interface GHPRDetailsViewModel : CodeReviewDetailsViewModel {
+  val securityService: GHPRSecurityService
+  val avatarIconsProvider: IconsProvider<String>
+
   val branchesVm: GHPRBranchesViewModel
   val changesVm: GHPRChangesViewModel
   val statusVm: GHPRStatusViewModelImpl
@@ -69,6 +74,8 @@ internal class GHPRDetailsViewModelImpl(
     }
   }
 
+  override val securityService: GHPRSecurityService = dataContext.securityService
+  override val avatarIconsProvider: IconsProvider<String> = dataContext.avatarIconsProvider
   override val branchesVm = GHPRBranchesViewModel(cs, project, dataContext.repositoryDataService.repositoryMapping, detailsState)
 
   private val reviewVmHelper = GHPRReviewViewModelHelper(cs, dataProvider.reviewData,

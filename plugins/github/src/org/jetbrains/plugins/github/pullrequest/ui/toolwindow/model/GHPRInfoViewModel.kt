@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.github.pullrequest.ui.toolwindow.model
 
 import com.intellij.collaboration.async.nestedDisposable
-import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.util.coroutines.childScope
@@ -17,7 +16,6 @@ import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
-import org.jetbrains.plugins.github.pullrequest.data.service.GHPRSecurityService
 import org.jetbrains.plugins.github.pullrequest.ui.GHApiLoadingErrorHandler
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRDetailsLoadingViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.impl.GHPRDetailsViewModel
@@ -33,9 +31,7 @@ class GHPRInfoViewModel internal constructor(
 ) : GHPRDetailsLoadingViewModel {
   private val cs = parentCs.childScope()
 
-  val securityService: GHPRSecurityService = dataContext.securityService
   private val dataProvider: GHPRDataProvider = dataContext.dataProviderRepository.getDataProvider(pullRequest, cs.nestedDisposable())
-  val avatarIconsProvider: IconsProvider<String> = dataContext.avatarIconsProvider
 
   val pullRequestUrl: String? get() = dataProvider.detailsData.loadedDetails?.url
 
@@ -90,7 +86,7 @@ class GHPRInfoViewModel internal constructor(
     }
   }
 
-  val detailsLoadingErrorHandler: GHApiLoadingErrorHandler = GHApiLoadingErrorHandler(project, securityService.account) {
+  val detailsLoadingErrorHandler: GHApiLoadingErrorHandler = GHApiLoadingErrorHandler(project, dataContext.securityService.account) {
     dataProvider.detailsData.reloadDetails()
   }
 
