@@ -51,7 +51,7 @@ abstract class ExpandableComboAction : AnAction(), CustomComponentAction {
     e.project?.let { createPopup(e)?.showCenteredInCurrentWindow(it) }
   }
 
-  internal class MyPopupModel: DefaultToolbarComboButtonModel() {
+  private class MyPopupModel : DefaultToolbarComboButtonModel() {
     var isPopupShown: Boolean = false
 
     override fun isSelected(): Boolean {

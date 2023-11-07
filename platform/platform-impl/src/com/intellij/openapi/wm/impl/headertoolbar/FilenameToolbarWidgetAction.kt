@@ -8,16 +8,17 @@ import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.Presentation
-import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager.Companion.getInstance
-import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.popup.*
+import com.intellij.openapi.ui.popup.JBPopup
+import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.Iconable
@@ -28,12 +29,10 @@ import com.intellij.openapi.vcs.FileStatusManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.VfsPresentationUtil
 import com.intellij.openapi.wm.impl.ExpandableComboAction
-import com.intellij.openapi.wm.impl.ExpandableComboAction.MyPopupModel
 import com.intellij.openapi.wm.impl.ToolbarComboButton
 import com.intellij.openapi.wm.impl.ToolbarComboButtonModel
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.JBColor
-import com.intellij.ui.util.maximumWidth
 import com.intellij.util.IconUtil
 import com.intellij.util.messages.SimpleMessageBusConnection
 import com.intellij.util.ui.UIUtil
@@ -46,7 +45,7 @@ import javax.swing.JComponent
 /**
  * @author Konstantin Bulenkov
  */
-class FilenameToolbarWidgetAction: ExpandableComboAction() {
+class FilenameToolbarWidgetAction: ExpandableComboAction(), DumbAware {
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
