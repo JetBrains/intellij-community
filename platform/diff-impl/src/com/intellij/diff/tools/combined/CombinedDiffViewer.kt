@@ -114,8 +114,11 @@ class CombinedDiffViewer(
     private val currentBlock get() = blockState[currentIndex] ?: getCurrentBlockId()
 
     fun updateForBlock(blockId: CombinedBlockId) {
-      currentIndex = blockState.indexOf(blockId)
-      update()
+      val newIndex = blockState.indexOf(blockId)
+      if (currentIndex != newIndex) {
+        currentIndex = newIndex
+        update()
+      }
     }
 
     override fun getContentTitles(): List<String?> {
