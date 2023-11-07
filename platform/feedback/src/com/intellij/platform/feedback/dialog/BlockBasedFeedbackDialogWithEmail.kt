@@ -20,7 +20,7 @@ abstract class BlockBasedFeedbackDialogWithEmail<T : SystemDataJsonSerializable>
   abstract val zendeskTicketTitle: String
   abstract val zendeskFeedbackType: String
 
-  private val emailBlockWithAgreement = EmailBlock(myProject) { myShowFeedbackSystemInfoDialog() }
+  protected val emailBlockWithAgreement = EmailBlock(myProject) { myShowFeedbackSystemInfoDialog() }
 
   protected open fun shouldAutoCloseZendeskTicket(): Boolean {
     return true

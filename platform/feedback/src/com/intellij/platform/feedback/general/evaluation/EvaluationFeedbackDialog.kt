@@ -70,14 +70,16 @@ internal class EvaluationFeedbackDialog(
   override fun doOKAction() {
     super.doOKAction()
 
-    val collectedData = collectDataToJsonObject()
-    logEvaluationFeedbackSent(
-      collectedData[interfaceJsonElementName].toString().toInt(),
-      collectedData[priceJsonElementName].toString().toInt(),
-      collectedData[stabilityJsonElementName].toString().toInt(),
-      collectedData[featureSetJsonElementName].toString().toInt(),
-      collectedData[performanceJsonElementName].toString().toInt()
-    )
+    if (emailBlockWithAgreement.getEmailAddressIfSpecified().isBlank()) {
+      val collectedData = collectDataToJsonObject()
+      logEvaluationFeedbackSent(
+        collectedData[interfaceJsonElementName].toString().toInt(),
+        collectedData[priceJsonElementName].toString().toInt(),
+        collectedData[stabilityJsonElementName].toString().toInt(),
+        collectedData[featureSetJsonElementName].toString().toInt(),
+        collectedData[performanceJsonElementName].toString().toInt()
+      )
+    }
   }
 
   override fun showThanksNotification() {
