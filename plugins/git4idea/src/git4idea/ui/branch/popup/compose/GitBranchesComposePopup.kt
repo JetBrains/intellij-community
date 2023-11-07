@@ -281,27 +281,29 @@ private fun SelectableLazyListScope.branches(
   dataContextProvider: (branch: GitBranch) -> DataContext,
   closePopup: () -> Unit
 ) {
-  for ((index, branch) in branches.withIndex()) {
-    item(branch) {
-      val coroutineScope = rememberCoroutineScope()
-      val branchVm = remember(coroutineScope, branch) { branchesVm.createBranchVm(coroutineScope, branch) }
-      BranchListItem(
-        branchVm,
-        selected = isSelected,
-        onHoverChanged = { hovered ->
-          if (hovered) {
-            coroutineScope.launch {
-              columnState.selectedKeys = listOf(branch)
-              columnState.lastActiveItemIndex = startingIndex + index
-            }
+  items(
+    branches.size,
+    key = { branches[it] }
+  ) { index ->
+    val branch = branches[index]
+    val coroutineScope = rememberCoroutineScope()
+    val branchVm = remember(coroutineScope, branch) { branchesVm.createBranchVm(coroutineScope, branch) }
+    BranchListItem(
+      branchVm,
+      selected = isSelected,
+      onHoverChanged = { hovered ->
+        if (hovered) {
+          coroutineScope.launch {
+            columnState.selectedKeys = listOf(branch)
+            columnState.lastActiveItemIndex = startingIndex + index
           }
-        },
-        dataContextProvider = {
-          dataContextProvider(branch)
-        },
-        closePopup = closePopup
-      )
-    }
+        }
+      },
+      dataContextProvider = {
+        dataContextProvider(branch)
+      },
+      closePopup = closePopup
+    )
   }
 }
 
