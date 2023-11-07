@@ -36,6 +36,20 @@ import java.util.concurrent.atomic.AtomicLong
 private val LOG: Logger
   get() = logger<ModuleBridgeLoaderService>()
 
+private val moduleLoadingTimeMs = AtomicLong().also { setupOpenTelemetryReporting(jpsMetrics.meter) }
+
+private fun setupOpenTelemetryReporting(meter: Meter) {
+  val modulesLoadingTimeGauge = meter.gaugeBuilder("workspaceModel.moduleBridgeLoader.loading.modules.ms")
+    .ofLongs().setDescription("Total time spent in method").buildObserver()
+
+  meter.batchCallback(
+    {
+      modulesLoadingTimeGauge.record(moduleLoadingTimeMs.get())
+    },
+    modulesLoadingTimeGauge
+  )
+}
+
 private class ModuleBridgeLoaderService : ProjectServiceContainerInitializedListener {
   override suspend fun execute(project: Project) {
     coroutineScope {
@@ -100,26 +114,6 @@ private class ModuleBridgeLoaderService : ProjectServiceContainerInitializedList
       moduleLoadingTimeMs.addElapsedTimeMs(start)
     }
     WorkspaceModelTopics.getInstance(project).notifyModulesAreLoaded()
-  }
-
-  companion object {
-    private val moduleLoadingTimeMs = AtomicLong()
-
-    private fun setupOpenTelemetryReporting(meter: Meter) {
-      val modulesLoadingTimeGauge = meter.gaugeBuilder("workspaceModel.moduleBridgeLoader.loading.modules.ms")
-        .ofLongs().setDescription("Total time spent in method").buildObserver()
-
-      meter.batchCallback(
-        {
-          modulesLoadingTimeGauge.record(moduleLoadingTimeMs.get())
-        },
-        modulesLoadingTimeGauge
-      )
-    }
-
-    init {
-      setupOpenTelemetryReporting(jpsMetrics.meter)
-    }
   }
 }
 
