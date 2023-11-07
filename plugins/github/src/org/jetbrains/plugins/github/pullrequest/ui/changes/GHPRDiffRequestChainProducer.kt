@@ -24,12 +24,12 @@ import com.intellij.openapi.vcs.history.VcsDiffUtil
 import git4idea.changes.GitBranchComparisonResult
 import git4idea.changes.getDiffComputer
 import org.jetbrains.plugins.github.api.data.GHUser
-import org.jetbrains.plugins.github.pullrequest.action.GHPRActionKeys
 import org.jetbrains.plugins.github.pullrequest.comment.GHPRDiffReviewSupport
 import org.jetbrains.plugins.github.pullrequest.comment.GHPRDiffReviewSupportImpl
 import org.jetbrains.plugins.github.pullrequest.comment.action.GHPRDiffReviewThreadsReloadAction
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRRepositoryDataService
+import org.jetbrains.plugins.github.pullrequest.ui.review.GHPRReviewViewModel
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.util.DiffRequestChainProducer
 import java.util.concurrent.CompletableFuture
@@ -42,6 +42,7 @@ internal class GHPRDiffRequestChainProducer(
   private val repositoryDataService: GHPRRepositoryDataService,
   private val ghostUser: GHUser,
   private val currentUser: GHUser,
+  private val reviewVm: GHPRReviewViewModel,
   private val createCustomContext: (Change) -> Map<Key<*>, Any>
 ) : DiffRequestChainProducer {
 
@@ -64,25 +65,29 @@ internal class GHPRDiffRequestChainProducer(
     return ChangeDiffRequestProducer.create(project, change, changeDataKeys + customDataKeys)
   }
 
-  companion object {
-    private fun createData(producer: GHPRDiffRequestChainProducer, change: Change,
-                           changesProvider: GitBranchComparisonResult): Map<Key<out Any>, Any?> {
-      val requestDataKeys = mutableMapOf<Key<out Any>, Any?>()
-      VcsDiffUtil.putFilePathsIntoChangeContext(change, requestDataKeys)
+  private fun createData(producer: GHPRDiffRequestChainProducer, change: Change,
+                         changesProvider: GitBranchComparisonResult): Map<Key<out Any>, Any?> {
+    val requestDataKeys = mutableMapOf<Key<out Any>, Any?>()
+    VcsDiffUtil.putFilePathsIntoChangeContext(change, requestDataKeys)
 
-      installDiffComputer(changesProvider, change, requestDataKeys)
+    installDiffComputer(changesProvider, change, requestDataKeys)
 
-      val reviewSupport = createReviewSupport(producer, changesProvider, change)
-      if (reviewSupport != null) {
-        installReviewSupport(requestDataKeys, reviewSupport, producer.dataProvider)
-        requestDataKeys[DiffUserDataKeys.CONTEXT_ACTIONS] = listOf(
-          ImmutableToolbarLabelAction(CollaborationToolsBundle.message("review.diff.toolbar.label")),
-          GHPRDiffReviewThreadsReloadAction(),
-          ActionManager.getInstance().getAction("Github.PullRequest.Review.Submit"))
+    val reviewSupport = createReviewSupport(producer, changesProvider, change)
+    if (reviewSupport != null) {
+      requestDataKeys[GHPRDiffReviewSupport.KEY] = reviewSupport
+      requestDataKeys[DiffUserDataKeys.DATA_PROVIDER] = GenericDataProvider().apply {
+        putData(GHPRReviewViewModel.DATA_KEY, reviewVm)
+        putData(GHPRDiffReviewSupport.DATA_KEY, reviewSupport)
       }
-      return requestDataKeys
+      requestDataKeys[DiffUserDataKeys.CONTEXT_ACTIONS] = listOf(
+        ImmutableToolbarLabelAction(CollaborationToolsBundle.message("review.diff.toolbar.label")),
+        GHPRDiffReviewThreadsReloadAction(),
+        ActionManager.getInstance().getAction("Github.PullRequest.Review.Submit"))
     }
+    return requestDataKeys
+  }
 
+  companion object {
     private fun loadBranchComparisonResult(changesProviderFuture: CompletableFuture<GitBranchComparisonResult>,
                                           indicator: ProgressIndicator,
                                           fetchFuture: CompletableFuture<Void>): GitBranchComparisonResult {
@@ -127,14 +132,4 @@ internal fun installDiffComputer(changesProvider: GitBranchComparisonResult,
                                 requestDataKeys: MutableMap<Key<out Any>, Any?>) {
   val diffComputer = changesProvider.patchesByChange[change]?.getDiffComputer() ?: return
   requestDataKeys[DiffUserDataKeysEx.CUSTOM_DIFF_COMPUTER] = diffComputer
-}
-
-internal fun installReviewSupport(keys: MutableMap<Key<out Any>, Any?>,
-                                 reviewSupport: GHPRDiffReviewSupport,
-                                 dataProvider: GHPRDataProvider) {
-  keys[GHPRDiffReviewSupport.KEY] = reviewSupport
-  keys[DiffUserDataKeys.DATA_PROVIDER] = GenericDataProvider().apply {
-    putData(GHPRActionKeys.PULL_REQUEST_DATA_PROVIDER, dataProvider)
-    putData(GHPRDiffReviewSupport.DATA_KEY, reviewSupport)
-  }
 }

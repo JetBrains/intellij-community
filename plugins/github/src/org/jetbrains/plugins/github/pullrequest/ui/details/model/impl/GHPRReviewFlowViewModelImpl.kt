@@ -2,13 +2,13 @@
 package org.jetbrains.plugins.github.pullrequest.ui.details.model.impl
 
 import com.intellij.collaboration.async.modelFlow
-import com.intellij.collaboration.async.nestedDisposable
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.codereview.action.ReviewMergeCommitMessageDialog
 import com.intellij.collaboration.ui.codereview.commits.splitCommitMessage
 import com.intellij.collaboration.ui.codereview.details.data.ReviewRole
 import com.intellij.collaboration.ui.codereview.details.data.ReviewState
 import com.intellij.collaboration.util.CollectionDelta
+import com.intellij.collaboration.util.ComputedResult
 import com.intellij.collaboration.util.SingleCoroutineLauncher
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
@@ -25,14 +25,16 @@ import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.*
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.data.GHPRMergeabilityState
+import org.jetbrains.plugins.github.pullrequest.data.GHPullRequestPendingReview
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRChangesDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDetailsDataProvider
-import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRReviewDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRStateDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRRepositoryDataService
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRSecurityService
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRReviewFlowViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.RepositoryRestrictions
+import org.jetbrains.plugins.github.pullrequest.ui.review.GHPRReviewViewModelHelper
+import org.jetbrains.plugins.github.pullrequest.ui.review.GHPRSubmitReviewViewModel
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.ui.util.GHUIUtil
 import java.util.concurrent.CompletableFuture
@@ -51,7 +53,7 @@ class GHPRReviewFlowViewModelImpl internal constructor(
   private val dataProvider: GHPRDetailsDataProvider,
   private val stateData: GHPRStateDataProvider,
   private val changesData: GHPRChangesDataProvider,
-  reviewDataProvider: GHPRReviewDataProvider
+  private val reviewVmHelper: GHPRReviewViewModelHelper
 ) : GHPRReviewFlowViewModel {
   private val cs = parentCs.childScope()
 
@@ -102,8 +104,8 @@ class GHPRReviewFlowViewModelImpl internal constructor(
     }
   }.shareIn(cs, SharingStarted.Lazily, 1)
 
-  private val _pendingCommentsState: MutableStateFlow<Int> = MutableStateFlow(0)
-  override val pendingComments: Flow<Int> = _pendingCommentsState.asSharedFlow()
+  override val pendingReview: StateFlow<ComputedResult<GHPullRequestPendingReview?>> = reviewVmHelper.pendingReviewState.asStateFlow()
+  override val pendingComments: Flow<Int> = pendingReview.map { it.result?.getOrNull()?.commentsCount ?: 0 }
 
   override val repositoryRestrictions = RepositoryRestrictions(securityService)
 
@@ -126,6 +128,14 @@ class GHPRReviewFlowViewModelImpl internal constructor(
   override val isRebaseEnabled: Flow<Boolean> = mergeabilityState.map {
     it?.isRestricted == false && repositoryRestrictions.isRebaseAllowed &&
     it.canBeRebased && userCanMergeReview
+  }
+
+  override var submitReviewInputHandler: (suspend (GHPRSubmitReviewViewModel) -> Unit)? = null
+
+  override fun submitReview() {
+    val handler = submitReviewInputHandler
+    checkNotNull(handler) { "UI handler was not set" }
+    reviewVmHelper.submitReview(handler)
   }
 
   override fun mergeReview() = runAction {
@@ -211,15 +221,6 @@ class GHPRReviewFlowViewModelImpl internal constructor(
     val reviewers = requestedReviewers.first()
     val delta = CollectionDelta(reviewers, reviewers + securityService.currentUser)
     dataProvider.adjustReviewers(EmptyProgressIndicator(), delta).await()
-  }
-
-  init {
-    reviewDataProvider.addPendingReviewListener(cs.nestedDisposable()) {
-      reviewDataProvider.loadPendingReview().thenAccept { pendingComments ->
-        _pendingCommentsState.value = pendingComments?.commentsCount ?: 0
-      }
-    }
-    reviewDataProvider.resetPendingReview()
   }
 
   private fun getReviewsByReviewers(author: GHActor?,

@@ -64,6 +64,17 @@ abstract class CodeReviewSubmitPopupHandler<VM : CodeReviewSubmitViewModel> {
   protected companion object {
     // gap 12 minus button borders (3x2)
     const val ACTIONS_GAP: Int = 6
+    const val TITLE_ACTIONS_GAP: Int = 5
+  }
+
+  protected open fun createTitleActionsComponentIn(cs: CoroutineScope, vm: VM): JComponent {
+    return InlineIconButton(
+      icon = AllIcons.Actions.Close,
+      hoveredIcon = AllIcons.Actions.CloseHovered
+    ).apply {
+      border = JBUI.Borders.empty(5)
+      actionListener = ActionListener { vm.cancel() }
+    }
   }
 
   protected abstract fun CoroutineScope.createActionsComponent(vm: VM): JComponent
@@ -72,13 +83,6 @@ abstract class CodeReviewSubmitPopupHandler<VM : CodeReviewSubmitViewModel> {
     val cs = this
     return object : ComponentContainer {
       private val editor = createEditor(vm.text)
-      private val closeButton = InlineIconButton(
-        icon = AllIcons.Actions.Close,
-        hoveredIcon = AllIcons.Actions.CloseHovered
-      ).apply {
-        border = JBUI.Borders.empty(5)
-        actionListener = ActionListener { vm.cancel() }
-      }
 
       private val panel = createPanel()
 
@@ -92,13 +96,14 @@ abstract class CodeReviewSubmitPopupHandler<VM : CodeReviewSubmitViewModel> {
         val titleLabel = JLabel(CollaborationToolsBundle.message("review.submit.review.title")).apply {
           font = font.deriveFont(font.style or Font.BOLD)
         }
-        val titlePanel = JPanel(HorizontalLayout(5)).apply {
+        val titleActions = createTitleActionsComponentIn(cs, vm)
+        val titlePanel = JPanel(HorizontalLayout(TITLE_ACTIONS_GAP)).apply {
           isOpaque = false
           add(titleLabel, HorizontalLayout.LEFT)
           bindChildIn(cs, vm.draftCommentsCount, HorizontalLayout.LEFT, 1) {
             if (it <= 0) null else JLabel(CollaborationToolsBundle.message("review.pending.comments.count", it))
           }
-          add(closeButton, HorizontalLayout.RIGHT)
+          add(titleActions, HorizontalLayout.RIGHT)
         }
 
         val errorPanel = SimpleHtmlPane().apply {

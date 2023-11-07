@@ -20,6 +20,7 @@ import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
 import org.jetbrains.plugins.github.pullrequest.ui.GHCompletableFutureLoadingModel
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRBranchesViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRStatusViewModelImpl
+import org.jetbrains.plugins.github.pullrequest.ui.review.GHPRReviewViewModelHelper
 
 @ApiStatus.Experimental
 interface GHPRDetailsViewModel : CodeReviewDetailsViewModel {
@@ -70,7 +71,9 @@ internal class GHPRDetailsViewModelImpl(
 
   override val branchesVm = GHPRBranchesViewModel(cs, project, dataContext.repositoryDataService.repositoryMapping, detailsState)
 
-  override val changesVm = GHPRChangesViewModelImpl(cs, project, dataContext, dataProvider)
+  private val reviewVmHelper = GHPRReviewViewModelHelper(cs, dataProvider.reviewData,
+                                                         detailsState.value.author?.id == dataContext.securityService.currentUser.id)
+  override val changesVm = GHPRChangesViewModelImpl(cs, project, dataContext, dataProvider, reviewVmHelper)
 
   override val statusVm = GHPRStatusViewModelImpl(cs, project, detailsState, dataProvider.stateData)
 
@@ -84,7 +87,7 @@ internal class GHPRDetailsViewModelImpl(
                                 dataProvider.detailsData,
                                 dataProvider.stateData,
                                 dataProvider.changesData,
-                                dataProvider.reviewData)
+                                reviewVmHelper)
 
   fun update(details: GHPullRequest) {
     detailsState.value = details

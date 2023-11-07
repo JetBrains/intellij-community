@@ -168,7 +168,6 @@
 
     <group id="Github.PullRequest.Changes.Toolbar">
       <reference id="Diff.ShowDiff"/>
-      <reference id="Github.PullRequest.Review.Submit"/>
       <separator/>
       <reference id="ChangesView.GroupBy"/>
     </group>

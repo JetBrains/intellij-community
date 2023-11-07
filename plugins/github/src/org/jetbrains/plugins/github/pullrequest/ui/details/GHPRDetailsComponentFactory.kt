@@ -20,7 +20,6 @@ import org.jetbrains.plugins.github.api.data.GHCommit
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.comment.convertToHtml
-import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRSecurityService
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.impl.GHPRDetailsViewModel
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
@@ -33,7 +32,6 @@ internal object GHPRDetailsComponentFactory {
     scope: CoroutineScope,
     project: Project,
     detailsVm: GHPRDetailsViewModel,
-    dataProvider: GHPRDataProvider,
     securityService: GHPRSecurityService,
     avatarIconsProvider: GHAvatarIconsProvider,
     commitFilesBrowserComponent: JComponent
@@ -47,8 +45,7 @@ internal object GHPRDetailsComponentFactory {
     }
     val statusChecks = GHPRStatusChecksComponentFactory.create(scope, project, detailsVm.statusVm, detailsVm.reviewFlowVm, securityService,
                                                                avatarIconsProvider)
-    val actionsComponent = GHPRDetailsActionsComponentFactory.create(scope, project, detailsVm.reviewRequestState, detailsVm.reviewFlowVm,
-                                                                     dataProvider)
+    val actionsComponent = GHPRDetailsActionsComponentFactory.create(scope, project, detailsVm.reviewRequestState, detailsVm.reviewFlowVm)
     val actionGroup = ActionManager.getInstance().getAction("Github.PullRequest.Details.Popup") as ActionGroup
 
     return JPanel(MigLayout(

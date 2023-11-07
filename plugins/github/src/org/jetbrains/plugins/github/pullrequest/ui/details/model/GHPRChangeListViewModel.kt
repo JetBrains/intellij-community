@@ -31,6 +31,8 @@ import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRDiffRequestChainP
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRProgressTreeModel
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRViewedStateDiffSupport
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRViewedStateDiffSupportImpl
+import org.jetbrains.plugins.github.pullrequest.ui.review.DelegatingGHPRReviewViewModel
+import org.jetbrains.plugins.github.pullrequest.ui.review.GHPRReviewViewModelHelper
 
 @ApiStatus.Experimental
 interface GHPRChangeListViewModel : CodeReviewChangeListViewModel, DiffPreview {
@@ -62,7 +64,8 @@ internal class GHPRChangeListViewModelImpl(
   parentCs: CoroutineScope,
   override val project: Project,
   private val dataContext: GHPRDataContext,
-  private val dataProvider: GHPRDataProvider
+  private val dataProvider: GHPRDataProvider,
+  private val reviewVmHelper: GHPRReviewViewModelHelper
 ) : GHPRChangeListViewModel, MutableCodeReviewChangeListViewModel(parentCs) {
   private val repository: GitRepository get() = dataContext.repositoryDataService.remoteCoordinates.repository
 
@@ -71,13 +74,15 @@ internal class GHPRChangeListViewModelImpl(
 
   private val viewedStateData = dataProvider.viewedStateData
   private val viewedStateSupport = GHPRViewedStateDiffSupportImpl(repository, viewedStateData)
+  private val reviewVm = DelegatingGHPRReviewViewModel(reviewVmHelper)
   private val diffRequestProducer: GHPRDiffRequestChainProducer =
     GHPRDiffRequestChainProducer(project,
                                  dataProvider,
                                  dataContext.htmlImageLoader, dataContext.avatarIconsProvider,
                                  dataContext.repositoryDataService,
                                  dataContext.securityService.ghostUser,
-                                 dataContext.securityService.currentUser) {
+                                 dataContext.securityService.currentUser,
+                                 reviewVm) {
 
       if (selectedCommit != null) emptyMap()
       else mapOf(

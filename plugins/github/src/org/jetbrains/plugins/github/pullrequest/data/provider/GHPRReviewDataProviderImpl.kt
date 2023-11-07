@@ -5,15 +5,21 @@ import com.intellij.collaboration.api.dto.GraphQLNodesDTO
 import com.intellij.collaboration.async.CompletableFutureUtil.completionOnEdt
 import com.intellij.collaboration.async.CompletableFutureUtil.handleOnEdt
 import com.intellij.collaboration.async.CompletableFutureUtil.successOnEdt
+import com.intellij.collaboration.async.awaitCancelling
 import com.intellij.diff.util.Side
 import com.intellij.execution.process.ProcessIOExecutorService
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diff.impl.patch.PatchHunkUtil
 import com.intellij.openapi.diff.impl.patch.TextFilePatch
 import com.intellij.openapi.editor.EditorFactory
+import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.util.messages.MessageBus
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.future.asDeferred
+import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.github.api.data.GHNode
 import org.jetbrains.plugins.github.api.data.GHPullRequestReviewEvent
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestPendingReviewDTO
@@ -33,7 +39,7 @@ class GHPRReviewDataProviderImpl(private val reviewService: GHPRReviewService,
                                  private val messageBus: MessageBus)
   : GHPRReviewDataProvider, Disposable {
 
-  override val submitReviewCommentDocument by lazy(LazyThreadSafetyMode.NONE) { EditorFactory.getInstance().createDocument("") }
+  override val pendingReviewComment: MutableStateFlow<String> = MutableStateFlow("")
 
   private val pendingReviewRequestValue = LazyCancellableBackgroundProcessValue.create {
     reviewService.loadPendingReview(it, pullRequestId).thenApply { it?.toModel() }
@@ -65,13 +71,27 @@ class GHPRReviewDataProviderImpl(private val reviewService: GHPRReviewService,
     return if (threads.isNullOrEmpty()) future else future.dropReviews()
   }
 
-  override fun submitReview(progressIndicator: ProgressIndicator,
-                            reviewId: String,
-                            event: GHPullRequestReviewEvent,
-                            body: String?): CompletableFuture<out Any?> {
-    val future = reviewService.submitReview(progressIndicator, pullRequestId, reviewId, event, body)
-    pendingReviewRequestValue.overrideProcess(future.successOnEdt { null })
-    return future.dropReviews().notifyReviews()
+  override suspend fun createReview(event: GHPullRequestReviewEvent, body: String?): GHPullRequestPendingReview =
+    reviewService.createReview(EmptyProgressIndicator(), pullRequestId, event, body)
+      .notifyReviews().dropReviews().asDeferred().awaitCancelling().toModel()
+
+  override suspend fun submitReview(reviewId: String, event: GHPullRequestReviewEvent, body: String?) {
+    val future = reviewService.submitReview(EmptyProgressIndicator(), pullRequestId, reviewId, event, body)
+    withContext(Dispatchers.Main.immediate) {
+      pendingReviewRequestValue.overrideProcess(future.successOnEdt { null })
+    }
+    future.dropReviews().notifyReviews().asDeferred().awaitCancelling()
+  }
+
+  override suspend fun deleteReview(reviewId: String) {
+    val future = reviewService.deleteReview(EmptyProgressIndicator(), pullRequestId, reviewId)
+    withContext(Dispatchers.Main.immediate) {
+      pendingReviewRequestValue.combineResult(future) { pendingReview, _ ->
+        if (pendingReview != null && pendingReview.id == reviewId) throw ProcessCanceledException()
+        else pendingReview
+      }
+    }
+    future.dropReviews().notifyReviews().asDeferred().awaitCancelling()
   }
 
   override fun updateReviewBody(progressIndicator: ProgressIndicator, reviewId: String, newText: String): CompletableFuture<String> =
@@ -80,14 +100,6 @@ class GHPRReviewDataProviderImpl(private val reviewService: GHPRReviewService,
       it.body
     }
 
-  override fun deleteReview(progressIndicator: ProgressIndicator, reviewId: String): CompletableFuture<out Any?> {
-    val future = reviewService.deleteReview(progressIndicator, pullRequestId, reviewId)
-    pendingReviewRequestValue.combineResult(future) { pendingReview, _ ->
-      if (pendingReview != null && pendingReview.id == reviewId) throw ProcessCanceledException()
-      else pendingReview
-    }
-    return future.dropReviews().notifyReviews()
-  }
 
   override fun canComment() = reviewService.canComment()
 

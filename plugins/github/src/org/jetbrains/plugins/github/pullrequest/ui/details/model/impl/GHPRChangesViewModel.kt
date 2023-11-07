@@ -25,6 +25,7 @@ import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
 import org.jetbrains.plugins.github.pullrequest.ui.GHApiLoadingErrorHandler
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRChangeListViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRChangeListViewModelImpl
+import org.jetbrains.plugins.github.pullrequest.ui.review.GHPRReviewViewModelHelper
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRCommitBrowserComponentController
 
 @ApiStatus.Experimental
@@ -37,7 +38,8 @@ internal class GHPRChangesViewModelImpl(
   parentCs: CoroutineScope,
   private val project: Project,
   private val dataContext: GHPRDataContext,
-  private val dataProvider: GHPRDataProvider
+  private val dataProvider: GHPRDataProvider,
+  private val reviewVmHelper: GHPRReviewViewModelHelper
 ) : GHPRChangesViewModel {
   private val cs = parentCs.childScope()
 
@@ -100,7 +102,7 @@ internal class GHPRChangesViewModelImpl(
   }
 
   private val delegate = CodeReviewChangesViewModelDelegate(cs, changesContainer) {
-    GHPRChangeListViewModelImpl(this, project, dataContext, dataProvider).also { vm ->
+    GHPRChangeListViewModelImpl(this, project, dataContext, dataProvider, reviewVmHelper).also { vm ->
       launch {
         isUpdatingChanges.collect {
           vm.setUpdating(it)

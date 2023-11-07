@@ -38,7 +38,9 @@ import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
 import org.jetbrains.plugins.github.pullrequest.ui.changes.createReviewSupport
 import org.jetbrains.plugins.github.pullrequest.ui.changes.installDiffComputer
-import org.jetbrains.plugins.github.pullrequest.ui.changes.installReviewSupport
+import org.jetbrains.plugins.github.pullrequest.ui.review.DelegatingGHPRReviewViewModel
+import org.jetbrains.plugins.github.pullrequest.ui.review.GHPRReviewViewModel
+import org.jetbrains.plugins.github.pullrequest.ui.review.GHPRReviewViewModelHelper
 
 @Service(Service.Level.PROJECT)
 internal class GHPRCreateCombinedDiffModelProvider(private val project: Project, parentCs: CoroutineScope) {
@@ -59,28 +61,35 @@ internal class GHPRCreateCombinedDiffModelProvider(private val project: Project,
       uiCs.cancel("disposed")
     }
 
-    var childJob = uiCs.handleChanges(dataProvider, model, dataContext, project)
-    dataProvider.changesData.addChangesListener(model.ourDisposable) {
-      childJob.cancel()
-      childJob = uiCs.handleChanges(dataProvider, model, dataContext, project)
-    }
+    uiCs.launch {
+      val details = dataProvider.detailsData.loadDetails().await()
+      val viewerIsAuthor = dataContext.securityService.currentUser.id == details.author?.id
+      val reviewVmHelper = GHPRReviewViewModelHelper(this, dataProvider.reviewData, viewerIsAuthor)
+      val reviewVm = DelegatingGHPRReviewViewModel(reviewVmHelper)
 
+      var childJob = handleChanges(project, dataContext, dataProvider, reviewVm, model)
+      dataProvider.changesData.addChangesListener(model.ourDisposable) {
+        childJob.cancel()
+        childJob = handleChanges(project, dataContext, dataProvider, reviewVm, model)
+      }
+    }
     return model
   }
 }
 
 private fun CoroutineScope.handleChanges(
-  dataProvider: GHPRDataProvider,
-  model: CombinedDiffModelImpl,
+  project: Project,
   dataContext: GHPRDataContext,
-  project: Project
+  dataProvider: GHPRDataProvider,
+  reviewVm: GHPRReviewViewModel,
+  model: CombinedDiffModelImpl
 ) = launch {
   val changesData = dataProvider.changesData
   val result = changesData.loadChanges().await()
   changesData.fetchBaseBranch().await()
   changesData.fetchHeadBranch().await()
 
-  setupReviewActions(model, dataProvider)
+  setupReviewActions(model, reviewVm)
 
   var myChanges: List<Change> = emptyList()
 
@@ -121,7 +130,10 @@ private fun createData(dataContext: GHPRDataContext,
 
   val reviewSupport = createReviewSupport(project, result, change, dataProvider, dataContext)
   if (reviewSupport != null) {
-    installReviewSupport(requestDataKeys, reviewSupport, dataProvider)
+    requestDataKeys[GHPRDiffReviewSupport.KEY] = reviewSupport
+    requestDataKeys[DiffUserDataKeys.DATA_PROVIDER] = GenericDataProvider().apply {
+      putData(GHPRDiffReviewSupport.DATA_KEY, reviewSupport)
+    }
   }
 
   return requestDataKeys
@@ -141,9 +153,9 @@ private class GHPullRequestChangeWrapper(
   }
 }
 
-private fun setupReviewActions(model: CombinedDiffModel, dataProvider: GHPRDataProvider) {
+private fun setupReviewActions(model: CombinedDiffModel, reviewVm: GHPRReviewViewModel) {
   val context = model.context
-  DiffUtil.putDataKey(context, GHPRActionKeys.PULL_REQUEST_DATA_PROVIDER, dataProvider)
+  DiffUtil.putDataKey(context, GHPRReviewViewModel.DATA_KEY, reviewVm)
 
   val genericDataProvider = GenericDataProvider().apply {
     putData(GHPRActionKeys.COMBINED_DIFF_PREVIEW_MODEL, model)
