@@ -119,6 +119,14 @@ fun JComponent.bindVisibilityIn(scope: CoroutineScope, visibilityFlow: Flow<Bool
   }
 }
 
+fun JComponent.bindEnabledIn(scope: CoroutineScope, enabledFlow: Flow<Boolean>) {
+  scope.launch(start = CoroutineStart.UNDISPATCHED) {
+    enabledFlow.collect {
+      isEnabled = it
+    }
+  }
+}
+
 fun JComponent.bindDisabledIn(scope: CoroutineScope, disabledFlow: Flow<Boolean>) {
   scope.launch(start = CoroutineStart.UNDISPATCHED) {
     disabledFlow.collect {
