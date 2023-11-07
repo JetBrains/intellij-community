@@ -83,8 +83,6 @@ mod tests {
         let output = run_launcher_ext(&test, &LauncherRunSpec::remote_dev().with_args(remote_dev_command).with_env(&env)).stdout;
 
         assert!(output.contains("Config folder does not exist, considering this the first launch. Will launch with New UI as default"));
-        assert!(output.contains("Force enable new UI"));
-        assert!(output.contains("early-access-registry.txt"));
     }
 
     #[test]
@@ -97,19 +95,18 @@ mod tests {
         let output = run_launcher_ext(&test, &LauncherRunSpec::remote_dev().with_args(remote_dev_command).with_env(&env)).stdout;
 
         assert!(!output.contains("Config folder does not exist, considering this the first launch. Will launch with New UI as default"));
-        assert!(output.contains("Force enable new UI"));
-        assert!(output.contains("early-access-registry.txt"));
     }
 
     #[test]
-    fn remote_dev_new_ui_test2() {
+    fn remote_dev_new_ui_test_shared_configs() {
         let test = prepare_test_env(LauncherLocation::RemoteDev);
         let project_dir = &test.project_dir.to_string_lossy().to_string();
 
+        let env = HashMap::from([("REMOTE_DEV_LEGACY_PER_PROJECT_CONFIGS", "0")]);
         let remote_dev_command = &["run", &project_dir];
-        let output = run_launcher_ext(&test, &LauncherRunSpec::remote_dev().with_args(remote_dev_command)).stdout;
+        let output = run_launcher_ext(&test, &LauncherRunSpec::remote_dev().with_args(remote_dev_command).with_env(&env)).stdout;
 
-        assert!(!output.contains("Force enable new UI"));
+        assert!(!output.contains("Config folder does not exist, considering this the first launch. Will launch with New UI as default"));
     }
 
     #[test]
