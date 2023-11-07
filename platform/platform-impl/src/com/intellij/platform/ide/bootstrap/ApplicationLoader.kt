@@ -33,7 +33,6 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
-import com.intellij.openapi.extensions.impl.findByIdOrFromInstance
 import com.intellij.openapi.extensions.useOrLogError
 import com.intellij.openapi.updateSettings.impl.UpdateSettings
 import com.intellij.openapi.util.SystemPropertyBean

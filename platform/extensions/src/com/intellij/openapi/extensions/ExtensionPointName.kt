@@ -217,6 +217,25 @@ class ExtensionPointName<T : Any>(name: @NonNls String) : BaseExtensionPointName
     val adapters = point.sortedAdapters
     return LazyExtensionSequence(point = point, adapters = adapters)
   }
+
+  @Internal
+  fun findByIdOrFromInstance(id: String, idGetter: (T) -> String?): T? {
+    val point = point as ExtensionPointImpl<T>
+    point.sortedAdapters.firstOrNull { it.orderId == id }?.let { adapter ->
+      return adapter.createInstance(point.componentManager)
+    }
+
+    // check only adapters without id
+    for (adapter in point.sortedAdapters) {
+      if (adapter.orderId == null) {
+        val instance = adapter.createInstance<T>(point.componentManager) ?: continue
+        if (idGetter(instance) == id) {
+          return instance
+        }
+      }
+    }
+    return null
+  }
 }
 
 @Internal

@@ -5,7 +5,6 @@ package com.intellij.openapi.extensions.impl
 
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPoint
-import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.progress.ProcessCanceledException
 import kotlinx.collections.immutable.persistentListOf
 import org.jetbrains.annotations.ApiStatus
@@ -163,23 +162,4 @@ object ExtensionProcessingHelper {
     }
     return cache
   }
-}
-
-@ApiStatus.Internal
-fun <T : Any> ExtensionPointName<T>.findByIdOrFromInstance(id: String, idGetter: (T) -> String?): T? {
-  val point = point as ExtensionPointImpl<T>
-  point.sortedAdapters.firstOrNull { it.orderId == id }?.let { adapter ->
-    return adapter.createInstance(point.componentManager)
-  }
-
-  // check only adapters without id
-  for (adapter in point.sortedAdapters) {
-    if (adapter.orderId == null) {
-      val instance = adapter.createInstance<T>(point.componentManager) ?: continue
-      if (idGetter(instance) == id) {
-        return instance
-      }
-    }
-  }
-  return null
 }
