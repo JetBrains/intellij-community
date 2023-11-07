@@ -142,6 +142,42 @@ class KotlincOutputParserTest : LightPlatformTestCase() {
 
   }
 
+  @Test
+  fun `test KSP AutoMigration error is parsed as expected`() {
+    val errorMessage = """
+    e: [ksp] project-main/app/src/main/java/com/google/apps/AutoMigrationRoom/MainActivity.kt:39:
+                AutoMigration Failure: Please declare an interface extending 'AutoMigrationSpec',
+                and annotate with the @RenameColumn or @RemoveColumn annotation to specify the
+                change to be performed:
+                1) RENAME:
+                    @RenameColumn(
+                            tableName = "users",
+                            fromColumnName = "eyeColor",
+                            toColumnName = <NEW_COLUMN_NAME>
+                    )
+                2) DELETE:
+                    @DeleteColumn=(
+                            tableName = "users",
+                            columnName = "eyeColor"
+                            )
+    
+""".trimIndent()
+    generateBuildWithOutput(errorMessage)
+    with(buildViewTestFixture) {
+      assertBuildViewTreeEquals(
+        """
+        -
+         -finished
+          [ksp] project-main/app/src/main/java/com/google/apps/AutoMigrationRoom/MainActivity.kt:39:
+      """.trimIndent()
+      )
+      assertBuildViewSelectedNode(
+        "[ksp] project-main/app/src/main/java/com/google/apps/AutoMigrationRoom/MainActivity.kt:39:",
+        errorMessage.substring(3)
+      )
+    }
+  }
+
   private fun generateBuildWithOutput(output: String) {
     BuildViewManager.createBuildProgress(project)
       .start(progressDescriptor())
