@@ -258,7 +258,7 @@ abstract class BaseKotlinChangeSignatureTest<C: KotlinModifiableChangeInfo<P>, P
         }
     }
 
-    private fun C.swapParameters(i: Int, j: Int) {
+    protected fun C.swapParameters(i: Int, j: Int) {
         val newParameters = newParameters
         val temp = newParameters[i]
         setNewParameter(i, newParameters[j])
@@ -1339,13 +1339,6 @@ abstract class BaseKotlinChangeSignatureTest<C: KotlinModifiableChangeInfo<P>, P
     fun testJavaMethodKotlinUsages() = doJavaTest {
         newName = "bar"
         newParameters.removeAt(1)
-    }
-
-    fun testJavaMethodJvmStaticKotlinUsages() = doJavaTest {
-        //kotlin method from java: wrong test data
-        val first = newParameters[1]
-        newParameters[1] = newParameters[0]
-        newParameters[0] = first
     }
 
     fun testJavaConstructorKotlinUsages() = doJavaTest { newParameters.removeAt(1) }

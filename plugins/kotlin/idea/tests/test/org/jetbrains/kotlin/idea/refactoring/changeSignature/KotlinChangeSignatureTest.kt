@@ -102,6 +102,13 @@ class KotlinChangeSignatureTest : BaseKotlinChangeSignatureTest<KotlinChangeInfo
         return KotlinTypeInfo(false, null, type)
     }
 
+    fun testJavaMethodJvmStaticKotlinUsages() = doJavaTest {
+        //kotlin method from java: wrong test data
+        val first = newParameters[1]
+        newParameters[1] = newParameters[0]
+        newParameters[0] = first
+    }
+
     // ---------- propagation ----------------------------
     fun testPropagateWithParameterDuplication() = doTestConflict {
         val defaultValueForCall = KtPsiFactory(project).createExpression("1")
