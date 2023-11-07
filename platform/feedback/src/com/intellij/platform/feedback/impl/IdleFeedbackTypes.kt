@@ -37,6 +37,9 @@ import java.time.Duration
 import java.time.LocalDateTime
 import java.util.*
 
+@Deprecated("Instead use com.intellij.platform.feedback.FeedbackSurvey." +
+            "For example see com.intellij.platform.feedback.demo.DemoExternalFeedbackSurvey and " +
+            "com.intellij.platform.feedback.demo.DemoInIdeFeedbackSurvey")
 enum class IdleFeedbackTypes {
   AQUA_NEW_USER_FEEDBACK {
     override val fusFeedbackId: String = "aqua_new_user_feedback"
