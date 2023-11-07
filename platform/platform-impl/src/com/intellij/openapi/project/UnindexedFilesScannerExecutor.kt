@@ -19,7 +19,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
-import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 import java.util.concurrent.locks.LockSupport
 
@@ -30,9 +29,6 @@ class UnindexedFilesScannerExecutor(project: Project)
     MergingQueueGuiExecutor<FilesScanningTask>(project, MergingTaskQueue(), TaskQueueListener(),
                                                IndexingBundle.message("progress.indexing.scanning"),
                                                IndexingBundle.message("progress.indexing.scanning.paused")) {
-
-  val initialVfsRefreshRequested: AtomicBoolean = AtomicBoolean(false);
-
   private val runningDumbTask = AtomicReference<ProgressIndicator>()
 
   // note that shouldShowProgressIndicator = false in UnindexedFilesScannerExecutor, so there is no suspender for the progress indicator

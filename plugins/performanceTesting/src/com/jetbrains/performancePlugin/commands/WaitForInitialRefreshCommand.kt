@@ -1,7 +1,7 @@
 package com.jetbrains.performancePlugin.commands
 
 import com.intellij.openapi.components.service
-import com.intellij.openapi.project.ProjectInitialActivitiesNotifier
+import com.intellij.openapi.project.InitialVfsRefreshService
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.ui.playback.commands.AbstractCommand
 import kotlinx.coroutines.CoroutineName
@@ -19,7 +19,7 @@ class WaitForInitialRefreshCommand(text: String, line: Int) : AbstractCommand(te
     val promise = AsyncPromise<Any>()
     @Suppress("DEPRECATION")
     context.project.coroutineScope.launch(CoroutineName("waiting for initial VFS refresh")) {
-      context.project.service<ProjectInitialActivitiesNotifier>().awaitInitialVfsRefreshFinished()
+      context.project.service<InitialVfsRefreshService>().awaitInitialVfsRefreshFinished()
       promise.setResult(null)
     }
     return promise

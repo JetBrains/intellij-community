@@ -36,13 +36,3 @@ fun CoroutineScope.awaitCancellationAndInvoke(ctx: CoroutineContext = EmptyCorou
     }
   }
 }
-
-/**
- * Same as [awaitCancellationAndInvoke], but suitable for Java clients.
- */
-@ApiStatus.Internal
-fun CoroutineScope.awaitCancellationAndRun(action: Runnable) {
-  awaitCancellationAndInvoke {
-    action.run()
-  }
-}
