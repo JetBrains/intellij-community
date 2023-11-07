@@ -2,6 +2,7 @@
 package com.intellij.platform.feedback.impl
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.util.PlatformUtils
 import com.intellij.util.io.HttpRequests
@@ -173,7 +174,8 @@ internal fun getProductTag(): String {
     PlatformUtils.isPyCharm() -> "ij_pycharm1"
     PlatformUtils.isRubyMine() -> "ij_rubymine1"
     PlatformUtils.isAppCode() -> "ij_appcode1"
-    PlatformUtils.isCLion() -> "ij_clion1"
+    PlatformUtils.isCLion() && !isCLionNova() -> "ij_clion1"
+    isCLionNova() -> "ij_clion_nova1"
     PlatformUtils.isDataGrip() -> "ij_datagrip1"
     PlatformUtils.isGoIde() -> "ij_goland1"
     PlatformUtils.isJetBrainsClient() -> "ij_code_with_me1"
@@ -183,4 +185,8 @@ internal fun getProductTag(): String {
     PlatformUtils.isAqua() -> "ij_aqua1"
     else -> "undefined"
   }
+}
+
+private fun isCLionNova(): Boolean {
+  return ApplicationNamesInfo.getInstance().fullProductNameWithEdition.contains("Nova")
 }
