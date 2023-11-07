@@ -98,6 +98,7 @@ internal object GitLabCreateSnippetComponentFactory {
               }
             )
               .align(AlignX.FILL)
+              .columns(COLUMNS_MEDIUM)
           }
 
           row(message("snippet.create.title.label")) {
@@ -168,6 +169,7 @@ internal object GitLabCreateSnippetComponentFactory {
                 JBLabel("${account.name} @ ${account.server.uri}")
               })
               .align(Align.FILL)
+              .columns(COLUMNS_MEDIUM)
 
             cs.launch {
               createSnippetVm.glAccounts.collectLatest { accounts ->
