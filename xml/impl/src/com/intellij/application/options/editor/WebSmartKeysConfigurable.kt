@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.editor
 
 import com.intellij.openapi.extensions.BaseExtensionPointName
@@ -78,9 +78,7 @@ internal class WebSmartKeysConfigurable : BoundCompositeConfigurable<UnnamedConf
     return ConfigurableWrapper.createConfigurables(EP_NAME)
   }
 
-  companion object {
-    val EP_NAME = ExtensionPointName.create<WebSmartKeysConfigurableEP>("com.intellij.webSmartKeysConfigurable")
-  }
+  private val EP_NAME get() = ExtensionPointName.create<WebSmartKeysConfigurableEP>("com.intellij.webSmartKeysConfigurable")
 
   override fun getDependencies(): Collection<BaseExtensionPointName<*>> {
     return listOf(EP_NAME)
