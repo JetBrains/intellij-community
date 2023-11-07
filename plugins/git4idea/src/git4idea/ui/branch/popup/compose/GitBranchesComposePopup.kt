@@ -212,18 +212,26 @@ private fun Branches(
 
     val preferredBranch by branchesVm.preferredBranch.collectAsState()
     // select default branch
-    LaunchedEffect(preferredBranch) {
+    LaunchedEffect(columnState, local, remote, preferredBranch) {
+      // TODO: write it cleaner
       if (local.isNotEmpty()) {
         val selectedIndex = local.indexOfFirst { it == preferredBranch }.takeIf { it != -1 } ?: 0
         columnState.selectedKeys = listOf(local[selectedIndex])
+        // select local branch taking header into account
         columnState.scrollToItem(selectedIndex + 1)
         return@LaunchedEffect
       }
-      // TODO: write it cleaner
       if (remote.isNotEmpty()) {
         val selectedIndex = remote.indexOfFirst { it == preferredBranch }.takeIf { it != -1 } ?: return@LaunchedEffect
         columnState.selectedKeys = listOf(remote[selectedIndex])
-        columnState.scrollToItem(selectedIndex + 1)
+        // select remote branch taking local branches and headers into account
+        val indexToSelect = if (local.isEmpty()) {
+          selectedIndex + 1
+        }
+        else {
+          local.size + selectedIndex + 2
+        }
+        columnState.scrollToItem(indexToSelect)
         return@LaunchedEffect
       }
     }

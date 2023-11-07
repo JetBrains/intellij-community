@@ -5,6 +5,7 @@ import com.intellij.dvcs.branch.DvcsBranchManager
 import com.intellij.dvcs.branch.DvcsBranchManager.DVCS_BRANCH_SETTINGS_CHANGED
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.psi.codeStyle.MinusculeMatcher
 import com.intellij.ui.speedSearch.SpeedSearch
 import com.intellij.ui.speedSearch.SpeedSearchSupply
 import git4idea.GitBranch
@@ -13,7 +14,9 @@ import git4idea.branch.GitBranchType
 import git4idea.repo.GitRepository
 import git4idea.ui.branch.GitBranchManager
 import git4idea.ui.branch.tree.getBranchComparator
+import git4idea.ui.branch.tree.getPreferredBranch
 import git4idea.ui.branch.tree.localBranchesOrCurrent
+import git4idea.ui.branch.tree.matchBranches
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.*
@@ -59,9 +62,14 @@ internal class GitBranchesComposeVm(
 
   val remoteBranches: StateFlow<List<GitBranch>> = createFilteredBranchesFlow(allRemoteBranches)
 
-  val preferredBranch: StateFlow<GitBranch?> = localBranches.combine(remoteBranches) { localBranches, remoteBranches ->
-    selectPreferredBranch(localBranches, remoteBranches)
-  }.stateIn(coroutineScope, SharingStarted.Eagerly, selectPreferredBranch(allLocalBranches, allRemoteBranches))
+  val preferredBranch: StateFlow<GitBranch?> = combine(localBranches, remoteBranches, _text) { localBranches, remoteBranches, _ ->
+    val matcher = speedSearch.matcher as? MinusculeMatcher
+    selectPreferredBranch(matcher, localBranches, remoteBranches)
+  }.stateIn(
+    coroutineScope,
+    initialValue = selectPreferredBranch(speedSearch.matcher as? MinusculeMatcher, allLocalBranches, allRemoteBranches),
+    started = SharingStarted.Eagerly
+  )
 
   private val favouriteChanged = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
 
@@ -78,12 +86,19 @@ internal class GitBranchesComposeVm(
     }
   }
 
-  private fun selectPreferredBranch(localBranches: Collection<GitBranch>, remoteBranches: Collection<GitBranch>): GitBranch? {
-    // TODO: introduce better logic
-    val preferredLocal = localBranches.find { it.name.contains("master") } ?: localBranches.firstOrNull()
-    val preferredRemote = remoteBranches.firstOrNull()
-
-    return preferredLocal ?: preferredRemote
+  private fun selectPreferredBranch(
+    matcher: MinusculeMatcher?,
+    localBranches: List<GitBranch>,
+    remoteBranches: List<GitBranch>
+  ): GitBranch? {
+    if (matcher == null) {
+      return getPreferredBranch(project, listOf(repository), localBranches)
+    }
+    val localBranchesMatch = matchBranches(matcher, localBranches)
+    if (localBranchesMatch.topMatch != null) {
+      return localBranchesMatch.topMatch
+    }
+    return matchBranches(matcher, remoteBranches).topMatch
   }
 
   private fun createFilteredBranchesFlow(branches: Collection<GitBranch>): StateFlow<List<GitBranch>> {
