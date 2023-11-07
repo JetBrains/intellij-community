@@ -12,13 +12,13 @@ import java.util.List;
 
 public interface ToolWindowManagerListener extends EventListener {
   @Topic.ProjectLevel
-  Topic<ToolWindowManagerListener> TOPIC =
-    new Topic<>("tool window events", ToolWindowManagerListener.class, Topic.BroadcastDirection.NONE);
+  Topic<ToolWindowManagerListener> TOPIC = new Topic<>(ToolWindowManagerListener.class, Topic.BroadcastDirection.NONE);
 
   /**
    * @deprecated Use {@link #toolWindowsRegistered}
    */
-  @Deprecated
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  @Deprecated(forRemoval = true)
   default void toolWindowRegistered(@SuppressWarnings("unused") @NotNull String id) {
   }
 
@@ -26,7 +26,9 @@ public interface ToolWindowManagerListener extends EventListener {
    * WARNING: The listener MIGHT be called NOT ON EDT.
    */
   default void toolWindowsRegistered(@NotNull List<String> ids, @NotNull ToolWindowManager toolWindowManager) {
-    ids.forEach(this::toolWindowRegistered);
+    for (String id : ids) {
+      toolWindowRegistered(id);
+    }
   }
 
   /**
