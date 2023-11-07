@@ -7,8 +7,6 @@ import com.intellij.ide.highlighter.ProjectFileType
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.appSystemDir
-import com.intellij.openapi.application.runWriteAction
-import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.fileEditor.UniqueVFilePathBuilder
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.FileTypeManager
@@ -61,14 +59,22 @@ fun calcRelativeToProjectPath(file: VirtualFile,
     else -> file.name
   }
 
-  return if (project == null) url
-         else displayUrlRelativeToProject(file, url, project, includeFilePath, keepModuleAlwaysOnTheLeft)
+  if (project == null) {
+    return url
+  }
+  else {
+    return displayUrlRelativeToProject(file = file,
+                                       url = url,
+                                       project = project,
+                                       isIncludeFilePath = includeFilePath,
+                                       moduleOnTheLeft = keepModuleAlwaysOnTheLeft)
+  }
 }
 
 fun guessProjectForFile(file: VirtualFile): Project? = ProjectLocator.getInstance().guessProjectForFile(file)
 
 /**
- * guessProjectForFile works incorrectly - even if file is config (idea config file) a first opened project will be returned
+ * guessProjectForFile works incorrectly - even if file is config (idea config file), a first opened project will be returned
  */
 @JvmOverloads
 fun guessProjectForContentFile(file: VirtualFile,
@@ -109,7 +115,7 @@ val Project.modules: Array<Module>
 inline fun <T> Project.modifyModules(crossinline task: ModifiableModuleModel.() -> T): T {
   val model = ModuleManager.getInstance(this).getModifiableModel()
   val result = model.task()
-  runWriteAction {
+  ApplicationManager.getApplication().runWriteAction {
     model.commit()
   }
   return result
@@ -124,8 +130,6 @@ fun isProjectDirectoryExistsUsingIo(parent: VirtualFile): Boolean {
   }
 }
 
-private val BASE_DIRECTORY_SUGGESTER_EP_NAME = ExtensionPointName<BaseDirectorySuggester>("com.intellij.baseDirectorySuggester")
-
 /**
  *  Tries to guess the "main project directory" of the project.
  *
@@ -139,13 +143,6 @@ fun Project.guessProjectDir() : VirtualFile? {
     return null
   }
 
-  val customBaseDir = BASE_DIRECTORY_SUGGESTER_EP_NAME.extensionList.asSequence()
-    .map { it.suggestBaseDirectory(this) }
-    .filterNotNull()
-    .firstOrNull()
-  if (customBaseDir != null) {
-    return customBaseDir
-  }
   val baseDirectory = getBaseDirectories().firstOrNull()
   if (baseDirectory != null) {
     return baseDirectory

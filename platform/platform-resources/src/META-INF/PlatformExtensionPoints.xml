@@ -279,8 +279,6 @@
 
     <extensionPoint name="projectAttachProcessor" interface="com.intellij.projectImport.ProjectAttachProcessor" dynamic="true"/>
 
-    <extensionPoint name="baseDirectorySuggester" interface="com.intellij.openapi.project.BaseDirectorySuggester" dynamic="true"/>
-
     <extensionPoint name="pathMacroFilter" interface="com.intellij.openapi.application.PathMacroFilter" dynamic="true"/>
     <extensionPoint name="pathMacroExpandableProtocol" beanClass="com.intellij.application.options.PathMacroExpandableProtocolBean" dynamic="true"/>
 
