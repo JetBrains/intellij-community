@@ -327,9 +327,6 @@ open class FileEditorManagerImpl(
     protected val DUMB_AWARE: Key<Boolean> = Key.create("DUMB_AWARE")
 
     @JvmField
-    val NOTHING_WAS_OPENED_ON_START: Key<Boolean> = Key.create("NOTHING_WAS_OPENED_ON_START")
-
-    @JvmField
     @TestOnly
     val ALLOW_IN_LIGHT_PROJECT: Key<Boolean> = Key.create("ALLOW_IN_LIGHT_PROJECT")
 

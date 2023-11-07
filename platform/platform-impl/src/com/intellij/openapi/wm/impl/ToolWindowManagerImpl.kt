@@ -625,13 +625,15 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     EditorsSplitters.focusDefaultComponentInSplittersIfPresent(project)
   }
 
+  @RequiresEdt
   open fun activateToolWindow(id: String, runnable: Runnable?, autoFocusContents: Boolean, source: ToolWindowEventSource? = null) {
-    ThreadingAssertions.assertEventDispatchThread()
-
     val activity = UiActivity.Focus("toolWindow:$id")
     UiActivityMonitor.getInstance().addActivity(project, activity, ModalityState.nonModal())
 
-    activateToolWindow(idToEntry.get(id)!!, getRegisteredMutableInfoOrLogError(id), autoFocusContents, source)
+    activateToolWindow(entry = idToEntry.get(id)!!,
+                       info = getRegisteredMutableInfoOrLogError(id),
+                       autoFocusContents = autoFocusContents,
+                       source = source)
 
     coroutineScope.launch(Dispatchers.EDT) {
       runnable?.run()

@@ -40,6 +40,7 @@ import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.project.isNotificationSilentMode
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.impl.*
@@ -180,7 +181,8 @@ internal class ProjectUiFrameAllocator(@JvmField val options: OpenProjectTask,
       val reopeningEditorJob = outOfLoadingScope.launch {
         val project = rawProjectDeferred.await()
         span("restoreEditors") {
-          restoreEditors(project = project, deferredProjectFrameHelper = deferredProjectFrameHelper)
+          val fileEditorManager = project.serviceAsync<FileEditorManager>() as FileEditorManagerImpl
+          restoreEditors(project = project, fileEditorManager = fileEditorManager)
         }
 
         val start = startOfWaitingForReadyFrame.get()
@@ -189,9 +191,26 @@ internal class ProjectUiFrameAllocator(@JvmField val options: OpenProjectTask,
         }
       }
 
-      scheduleInitFrame(rawProjectDeferred = rawProjectDeferred,
-                        reopeningEditorJob = reopeningEditorJob,
-                        deferredProjectFrameHelper = deferredProjectFrameHelper)
+      val toolWindowInitJob = scheduleInitFrame(rawProjectDeferred = rawProjectDeferred,
+                                                reopeningEditorJob = reopeningEditorJob,
+                                                deferredProjectFrameHelper = deferredProjectFrameHelper)
+
+      serviceAsync<CoreUiCoroutineScopeHolder>().coroutineScope.launch {
+        val project = rawProjectDeferred.await()
+
+        launch(rootTask()) {
+          val frameHelper = deferredProjectFrameHelper.await()
+          frameHelper.installDefaultProjectStatusBarWidgets(project)
+          frameHelper.updateTitle(serviceAsync<FrameTitleBuilder>().getProjectTitle(project), project)
+        }
+
+        reopeningEditorJob.join()
+        postOpenEditors(deferredProjectFrameHelper = deferredProjectFrameHelper,
+                        fileEditorManager = project.serviceAsync<FileEditorManager>() as FileEditorManagerImpl,
+                        toolWindowInitJob = toolWindowInitJob,
+                        project = project)
+      }
+
       task(scheduleSaveTemplate(options), projectInitObserver)
       startOfWaitingForReadyFrame.set(System.nanoTime())
     }
@@ -307,8 +326,8 @@ internal class ProjectUiFrameAllocator(@JvmField val options: OpenProjectTask,
 
 private fun CoroutineScope.scheduleInitFrame(rawProjectDeferred: CompletableDeferred<Project>,
                                              reopeningEditorJob: Job,
-                                             deferredProjectFrameHelper: Deferred<ProjectFrameHelper>) {
-  launch {
+                                             deferredProjectFrameHelper: Deferred<ProjectFrameHelper>): Job {
+  return launch {
     val project = rawProjectDeferred.await()
     span("initFrame") {
       launch(CoroutineName("tool window pane creation")) {
@@ -320,18 +339,11 @@ private fun CoroutineScope.scheduleInitFrame(rawProjectDeferred: CompletableDefe
                                         reopeningEditorJob = reopeningEditorJob,
                                         taskListDeferred = taskListDeferred)
       }
-
-      serviceAsync<CoreUiCoroutineScopeHolder>().coroutineScope.launch(rootTask()) {
-        val frameHelper = deferredProjectFrameHelper.await()
-        frameHelper.installDefaultProjectStatusBarWidgets(project)
-        frameHelper.updateTitle(serviceAsync<FrameTitleBuilder>().getProjectTitle(project), project)
-      }
     }
   }
 }
 
-private suspend fun restoreEditors(project: Project, deferredProjectFrameHelper: Deferred<ProjectFrameHelper>) {
-  val fileEditorManager = project.serviceAsync<FileEditorManager>() as? FileEditorManagerImpl ?: return
+private suspend fun restoreEditors(project: Project, fileEditorManager: FileEditorManagerImpl) {
   coroutineScope {
     // only after FileEditorManager.init - DaemonCodeAnalyzer uses FileEditorManager
     launch {
@@ -365,29 +377,32 @@ private suspend fun restoreEditors(project: Project, deferredProjectFrameHelper:
       focusSelectedEditor(editorComponent)
     }
   }
+}
 
-  serviceAsync<CoreUiCoroutineScopeHolder>().coroutineScope.launch {
-    val frameHelper = deferredProjectFrameHelper.await()
-    withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-      // read the state of dockable editors
-      fileEditorManager.initDockableContentFactory()
+private suspend fun postOpenEditors(deferredProjectFrameHelper: Deferred<ProjectFrameHelper>,
+                                    fileEditorManager: FileEditorManagerImpl,
+                                    project: Project,
+                                    toolWindowInitJob: Job) {
+  val frameHelper = deferredProjectFrameHelper.await()
+  withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+    // read the state of dockable editors
+    fileEditorManager.initDockableContentFactory()
 
-      frameHelper.postInit()
+    frameHelper.postInit()
+  }
+
+  project.getUserData(ProjectImpl.CREATION_TIME)?.let { startTime ->
+    blockingContext {
+      LifecycleUsageTriggerCollector.onProjectOpenFinished(project, TimeoutUtil.getDurationMillis(startTime), frameHelper.isTabbedWindow)
     }
+  }
 
-    project.getUserData(ProjectImpl.CREATION_TIME)?.let { startTime ->
-      blockingContext {
-        LifecycleUsageTriggerCollector.onProjectOpenFinished(project, TimeoutUtil.getDurationMillis(startTime), frameHelper.isTabbedWindow)
-      }
-    }
-
-    // check after `initDockableContentFactory` - editor in a docked window
-    if (!fileEditorManager.hasOpenFiles()) {
-      EditorsSplitters.stopOpenFilesActivity(project)
-      if (!isNotificationSilentMode(project)) {
-        project.putUserData(FileEditorManagerImpl.NOTHING_WAS_OPENED_ON_START, true)
-        findAndOpenReadmeIfNeeded(project)
-      }
+  // check after `initDockableContentFactory` - editor in a docked window
+  if (!fileEditorManager.hasOpenFiles()) {
+    EditorsSplitters.stopOpenFilesActivity(project)
+    if (!isNotificationSilentMode(project)) {
+      openProjectViewIfNeeded(project, toolWindowInitJob)
+      findAndOpenReadmeIfNeeded(project)
     }
   }
 }
@@ -481,6 +496,22 @@ internal data class OpenProjectImplOptions(
   @JvmField val frameInfo: FrameInfo? = null,
   @JvmField val frame: IdeFrameImpl? = null,
 )
+
+private suspend fun openProjectViewIfNeeded(project: Project, toolWindowInitJob: Job) {
+  if (!serviceAsync<RegistryManager>().`is`("ide.open.project.view.on.startup")) {
+    return
+  }
+
+  toolWindowInitJob.join()
+
+  // todo should we use `runOnceForProject(project, "OpenProjectViewOnStart")` or not?
+  val toolWindowManager = project.serviceAsync<ToolWindowManager>()
+  withContext(Dispatchers.EDT) {
+    if (toolWindowManager.activeToolWindowId == null) {
+      toolWindowManager.getToolWindow("Project")?.activate(null)
+    }
+  }
+}
 
 private suspend fun findAndOpenReadmeIfNeeded(project: Project) {
   if (!AdvancedSettings.getBoolean("ide.open.readme.md.on.startup")) {

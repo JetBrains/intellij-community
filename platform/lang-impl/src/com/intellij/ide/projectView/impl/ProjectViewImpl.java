@@ -43,7 +43,9 @@ import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
+import com.intellij.openapi.module.GeneralModuleType;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.project.DumbAware;
@@ -593,19 +595,6 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       }
     };
 
-    project.getMessageBus().connect().subscribe(ToolWindowManagerListener.TOPIC, new ToolWindowManagerListener() {
-      @Override
-      public void toolWindowShown(@NotNull ToolWindow toolWindow) {
-        if (ToolWindowId.PROJECT_VIEW.equals(toolWindow.getId())) {
-          AbstractProjectViewPane currentProjectViewPane = getCurrentProjectViewPane();
-          if (currentProjectViewPane != null && isAutoscrollFromSource(currentProjectViewPane.getId())) {
-            SelectInProjectViewImplKt.getLOG().debug("Invoking scroll from source because the project view is shown");
-            autoScrollFromSourceHandler.scrollFromSource();
-          }
-        }
-      }
-    });
-
     AbstractProjectViewPane.EP.addExtensionPointListener(project, new ExtensionPointListener<>() {
       @Override
       public void extensionAdded(@NotNull AbstractProjectViewPane extension, @NotNull PluginDescriptor pluginDescriptor) {
@@ -622,6 +611,38 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
         }
       }
     }, project);
+  }
+
+  static final class MyToolWindowManagerListener implements ToolWindowManagerListener {
+    @Override
+    public void toolWindowShown(@NotNull ToolWindow toolWindow) {
+      if (!ToolWindowId.PROJECT_VIEW.equals(toolWindow.getId())) {
+        return;
+      }
+
+      Project project = toolWindow.getProject();
+      ProjectView projectView = ProjectView.getInstance(project);
+      AbstractProjectViewPane pane = projectView.getCurrentProjectViewPane();
+      if (pane == null) {
+        return;
+      }
+
+      Module[] modules = ModuleManager.getInstance(project).getModules();
+      if (modules.length != 1 || !GeneralModuleType.TYPE_ID.equals(modules[0].getModuleTypeName())) {
+        JTree tree = pane.getTree();
+        if (tree != null) {
+          TreeUtil.promiseSelectFirst(tree).onSuccess(tree::expandPath);
+        }
+      }
+
+      if (projectView.isAutoscrollFromSource(pane.getId())) {
+        SelectInProjectViewImplKt.getLOG().debug("Invoking scroll from source because the project view is shown");
+
+        if (projectView instanceof ProjectViewImpl impl) {
+          impl.autoScrollFromSourceHandler.scrollFromSource();
+        }
+      }
+    }
   }
 
   private void constructUi() {

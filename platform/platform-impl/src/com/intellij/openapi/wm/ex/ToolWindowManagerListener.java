@@ -12,7 +12,7 @@ import java.util.List;
 
 public interface ToolWindowManagerListener extends EventListener {
   @Topic.ProjectLevel
-  Topic<ToolWindowManagerListener> TOPIC = new Topic<>(ToolWindowManagerListener.class, Topic.BroadcastDirection.NONE);
+  Topic<ToolWindowManagerListener> TOPIC = new Topic<>(ToolWindowManagerListener.class, Topic.BroadcastDirection.TO_PARENT);
 
   /**
    * @deprecated Use {@link #toolWindowsRegistered}

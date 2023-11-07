@@ -1747,6 +1747,8 @@
 
     <listener class="com.intellij.ui.NewUiRegistryListener"
               topic="com.intellij.openapi.util.registry.RegistryValueListener"/>
+    <listener class="com.intellij.ide.projectView.impl.ProjectViewImpl$MyToolWindowManagerListener"
+              topic="com.intellij.openapi.wm.ex.ToolWindowManagerListener"/>
   </applicationListeners>
   <projectListeners>
     <listener class="com.intellij.openapi.fileEditor.impl.FileEditorVirtualFileAppearanceListener"

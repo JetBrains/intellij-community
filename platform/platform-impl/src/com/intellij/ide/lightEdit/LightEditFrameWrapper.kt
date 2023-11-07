@@ -12,7 +12,6 @@ import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.extensions.LoadingOrder
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
-import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.ProjectManagerImpl
 import com.intellij.openapi.project.impl.applyBoundsOrDefault
@@ -26,6 +25,7 @@ import com.intellij.openapi.wm.impl.ProjectFrameBounds.Companion.getInstance
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl
 import com.intellij.openapi.wm.impl.status.adaptV2Widget
 import com.intellij.platform.ide.menu.installAppMenuIfNeeded
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.toolWindow.ToolWindowPane
 import com.intellij.ui.mac.MacFullScreenControlsManager
 import com.intellij.ui.mac.MacMainFrameDecorator
@@ -39,7 +39,6 @@ import kotlinx.coroutines.withContext
 import java.awt.Component
 import java.awt.Dimension
 import javax.swing.JFrame
-
 
 @RequiresEdt
 internal fun allocateLightEditFrame(project: Project, frameInfo: FrameInfo?): LightEditFrameWrapper {
