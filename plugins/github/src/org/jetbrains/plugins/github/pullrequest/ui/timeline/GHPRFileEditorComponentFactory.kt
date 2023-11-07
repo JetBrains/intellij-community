@@ -104,9 +104,6 @@ internal class GHPRFileEditorComponentFactory(private val project: Project,
 
   fun create(): JComponent {
     val mainPanel = Wrapper()
-    DataManager.registerDataProvider(mainPanel, DataProvider {
-      if (PlatformDataKeys.UI_DISPOSABLE.`is`(it)) uiDisposable else null
-    })
 
     val header = GHPRTitleComponentFactory.create(project, detailsModel).let {
       CollaborationToolsUIUtil.wrapWithLimitedSize(it, CodeReviewChatItemUIUtil.TEXT_CONTENT_WIDTH)
@@ -207,6 +204,22 @@ internal class GHPRFileEditorComponentFactory(private val project: Project,
     })
 
     mainPanel.setContent(scrollPane)
+
+    val ctrl = object : GHPRTimelineController {
+      override fun requestUpdate() {
+        editor.detailsData.reloadDetails()
+        editor.timelineLoader.loadMore(true)
+        editor.reviewData.resetReviewThreads()
+      }
+    }
+
+    DataManager.registerDataProvider(mainPanel, DataProvider {
+      when {
+        PlatformDataKeys.UI_DISPOSABLE.`is`(it) -> uiDisposable
+        GHPRTimelineController.DATA_KEY.`is`(it) -> ctrl
+        else -> null
+      }
+    })
 
     val actionManager = ActionManager.getInstance()
     actionManager.getAction("Github.PullRequest.Timeline.Update").registerCustomShortcutSet(scrollPane, uiDisposable)
