@@ -36,6 +36,7 @@ import com.intellij.util.application
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.FList
+import com.intellij.util.io.computeDetached
 import com.intellij.util.ui.EDT
 import com.intellij.util.use
 import io.opentelemetry.api.trace.Span
@@ -454,12 +455,17 @@ internal class ActionUpdater @JvmOverloads constructor(
     return event
   }
 
-  private suspend fun <T> computeOnEdt(supplier: () -> T): T  = coroutineScope {
-    async(edtDispatcher) {
-      blockingContext {
-        supplier()
+  @OptIn(DelicateCoroutinesApi::class)
+  private suspend fun <T> computeOnEdt(supplier: () -> T): T {
+    // We need the block below to escape the current scope to let runBlocking in UpdateSession
+    // free while the EDT block is still waiting to be cancelled in EDT queue
+    return computeDetached {
+      withContext(edtDispatcher) {
+        blockingContext {
+          supplier()
+        }
       }
-    }.await()
+    }
   }
 
   fun asUpdateSession(): UpdateSession {
