@@ -23,6 +23,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.icons.ExpUiIcons
 import com.intellij.openapi.util.TextRange
 import com.intellij.util.ui.UIUtil
+import icons.DvcsImplIcons
 import org.jetbrains.jewel.bridge.toComposeColor
 import org.jetbrains.jewel.ui.component.Icon
 import org.jetbrains.jewel.ui.component.Text
@@ -65,6 +66,7 @@ internal fun GitBranchCompose(
         branchVm.name.highlightRanges(rangesToHighlight, highlightColor)
       }
       Text(highlightedBranchName, maxLines = 1, overflow = TextOverflow.Clip)
+      IncomingOutgoingIndication(branchVm.hasIncomings, branchVm.hasOutgoings)
 
       Spacer(modifier = Modifier.weight(1f))
 
@@ -84,6 +86,29 @@ internal fun GitBranchCompose(
     }
     else {
       Box(modifier = Modifier.requiredWidth(16.dp))
+    }
+  }
+}
+
+@Composable
+private fun IncomingOutgoingIndication(
+  hasIncomings: Boolean,
+  hasOutgoings: Boolean,
+  modifier: Modifier = Modifier
+) {
+  Box(modifier = modifier) {
+    when {
+      hasIncomings && hasOutgoings -> Row {
+        Row(
+          verticalAlignment = Alignment.CenterVertically,
+          horizontalArrangement = Arrangement.spacedBy(3.dp)
+        ) {
+          Icon("icons/incoming.svg", null, DvcsImplIcons::class.java)
+          Icon("icons/outgoing.svg", null, DvcsImplIcons::class.java)
+        }
+      }
+      hasIncomings -> Icon("icons/incoming.svg", null, DvcsImplIcons::class.java)
+      hasOutgoings -> Icon("icons/outgoing.svg", null, DvcsImplIcons::class.java)
     }
   }
 }

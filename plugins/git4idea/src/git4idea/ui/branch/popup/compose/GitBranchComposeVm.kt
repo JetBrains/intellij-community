@@ -6,6 +6,7 @@ import com.intellij.ui.speedSearch.SpeedSearch
 import git4idea.GitBranch
 import git4idea.GitLocalBranch
 import git4idea.GitRemoteBranch
+import git4idea.branch.GitBranchIncomingOutgoingManager
 import git4idea.repo.GitRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.SharingStarted
@@ -18,6 +19,7 @@ internal class GitBranchComposeVm(
   repository: GitRepository,
   branch: GitBranch,
   speedSearchText: StateFlow<String>,
+  incomingOutgoingManager: GitBranchIncomingOutgoingManager,
   val isFavorite: StateFlow<Boolean>,
   private val toggleIsFavoriteState: () -> Unit,
   val isCurrent: Boolean,
@@ -35,6 +37,11 @@ internal class GitBranchComposeVm(
   else {
     null
   }
+
+  // TODO: make it reactive
+  val hasIncomings = incomingOutgoingManager.hasIncomingFor(repository, branch.name)
+  val hasOutgoings = incomingOutgoingManager.hasOutgoingFor(repository, branch.name)
+
 
   fun toggleIsFavourite() {
     toggleIsFavoriteState()

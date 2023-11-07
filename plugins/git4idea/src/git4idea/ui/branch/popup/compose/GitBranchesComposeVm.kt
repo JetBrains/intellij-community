@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.ui.speedSearch.SpeedSearch
 import com.intellij.ui.speedSearch.SpeedSearchSupply
 import git4idea.GitBranch
+import git4idea.branch.GitBranchIncomingOutgoingManager
 import git4idea.branch.GitBranchType
 import git4idea.repo.GitRepository
 import git4idea.ui.branch.GitBranchManager
@@ -22,7 +23,7 @@ import java.beans.PropertyChangeListener
 
 @OptIn(FlowPreview::class)
 internal class GitBranchesComposeVm(
-  project: Project,
+  private val project: Project,
   private val coroutineScope: CoroutineScope,
   private val repository: GitRepository
 ) {
@@ -103,6 +104,7 @@ internal class GitBranchesComposeVm(
     return GitBranchComposeVm(
       viewScope, repository,
       branch, _text,
+      incomingOutgoingManager = GitBranchIncomingOutgoingManager.getInstance(project),
       isFavorite = isFavorite,
       toggleIsFavoriteState = {
         branchManager.setFavorite(GitBranchType.of(branch), repository, branch.name, !isFavorite.value)
