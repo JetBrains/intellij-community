@@ -4,6 +4,7 @@ package com.intellij.java.psi;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.application.options.codeStyle.excludedFiles.NamedScopeDescriptor;
 import com.intellij.codeInsight.CodeInsightWorkspaceSettings;
+import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
@@ -21,7 +22,6 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -214,7 +214,7 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
       import java.util.Collection;
 
       class Foo {}""");
-    myFixture.launchAction(myFixture.findSingleIntention("Remove unused import"));
+    myFixture.launchAction(myFixture.findSingleIntention(JavaErrorBundle.message("remove.unused.imports.quickfix.text")));
 
     // whatever: main thing it didn't throw
     myFixture.checkResult("""
@@ -233,7 +233,7 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
       import java.util.Map;
 
       class Foo {}""");
-    myFixture.launchAction(myFixture.findSingleIntention("Remove unused import"));
+    myFixture.launchAction(myFixture.findSingleIntention(JavaErrorBundle.message("remove.unused.imports.quickfix.text")));
 
     // whatever: main thing it didn't throw
     assertNotEmpty(myFixture.doHighlighting(HighlightSeverity.ERROR));
@@ -259,7 +259,7 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
       import java.<caret>util.Set;
 
       """);
-    myFixture.launchAction(myFixture.findSingleIntention("Remove unused import"));
+    myFixture.launchAction(myFixture.findSingleIntention(JavaErrorBundle.message("remove.unused.imports.quickfix.text")));
     myFixture.checkResult("package p;\n\n");
   }
   public void testRemoveUnusedImportFixShownEvenForUnresolvedImport() {
@@ -270,8 +270,35 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
       import java.<caret>blahblah.Set;
 
       """);
-    myFixture.launchAction(myFixture.findSingleIntention("Remove unused import"));
+    myFixture.launchAction(myFixture.findSingleIntention(JavaErrorBundle.message("remove.unused.imports.quickfix.text")));
     myFixture.checkResult("package p;\n\n");
+  }
+  public void testRemoveUnusedImportFixMustDeleteAllUnusedImports() {
+    myFixture.enableInspections(new UnusedImportInspection());
+    myFixture.configureByText("a.java", """
+      package p;
+
+      // just remove, not reorganize
+      import java.util.List;
+      import java.util.HashSet;
+      // this for sure
+      import java.<caret>util.Set;
+      import java.util.ArrayList;
+      import java.util.HashMap;
+      
+      class X { List a = new ArrayList(); }
+      """);
+    myFixture.launchAction(myFixture.findSingleIntention(JavaErrorBundle.message("remove.unused.imports.quickfix.text")));
+    myFixture.checkResult("""
+                            package p;
+
+                            // just remove, not reorganize
+                            import java.util.List;
+                            // this for sure
+                            import java.util.ArrayList;
+
+                            class X { List a = new ArrayList(); }
+                            """);
   }
 
   public void testPerFileImportSettings() {

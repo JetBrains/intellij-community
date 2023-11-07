@@ -156,16 +156,16 @@ class PostHighlightingVisitor extends JavaElementVisitor {
     if (!(myFile instanceof PsiJavaFile) || myUnusedSymbolInspection == null) {
       return false;
     }
-    InspectionProfile profile = getCurrentProfile();
+    InspectionProfile profile = getCurrentProfile(myFile);
     return profile.isToolEnabled(displayKey, myFile) &&
            HighlightingLevelManager.getInstance(myProject).shouldInspect(myFile) &&
            !HighlightingLevelManager.getInstance(myProject).runEssentialHighlightingOnly(myFile);
   }
 
   @NotNull
-  private InspectionProfile getCurrentProfile() {
-    Function<? super InspectionProfile, ? extends InspectionProfileWrapper> custom = InspectionProfileWrapper.getCustomInspectionProfileWrapper(myFile);
-    InspectionProfileImpl currentProfile = InspectionProjectProfileManager.getInstance(myProject).getCurrentProfile();
+  private static InspectionProfile getCurrentProfile(@NotNull PsiFile file) {
+    Function<? super InspectionProfile, ? extends InspectionProfileWrapper> custom = InspectionProfileWrapper.getCustomInspectionProfileWrapper(file);
+    InspectionProfileImpl currentProfile = InspectionProjectProfileManager.getInstance(file.getProject()).getCurrentProfile();
     return custom != null ? custom.apply(currentProfile).getInspectionProfile() : currentProfile;
   }
 
@@ -552,7 +552,7 @@ class PostHighlightingVisitor extends JavaElementVisitor {
     boolean predefinedImport = imports != null && imports.contains(importStatement.getText());
     String description = !predefinedImport ? JavaAnalysisBundle.message("unused.import.statement") :
                          JavaAnalysisBundle.message("text.unused.import.in.template");
-    InspectionProfile profile = getCurrentProfile();
+    InspectionProfile profile = getCurrentProfile(myFile);
     TextAttributesKey key = ObjectUtils.notNull(profile.getEditorAttributes(unusedImportKey.toString(), myFile),
                                                 JavaHighlightInfoTypes.UNUSED_IMPORT.getAttributesKey());
     HighlightInfoType.HighlightInfoTypeImpl configHighlightType =
@@ -563,8 +563,7 @@ class PostHighlightingVisitor extends JavaElementVisitor {
         .descriptionAndTooltip(description)
         .group(GeneralHighlightingPass.POST_UPDATE_ALL);
 
-    IntentionAction removeFix = QuickFixFactory.getInstance().createDeleteFix(importStatement, JavaErrorBundle.message("remove.unused.import.quickfix.text"));
-    builder.registerFix(removeFix, null, HighlightDisplayKey.getDisplayNameByKey(unusedImportKey), null, unusedImportKey);
+    builder.registerFix(new RemoveAllUnusedImportsFix(), null, HighlightDisplayKey.getDisplayNameByKey(unusedImportKey), null, unusedImportKey);
 
     IntentionAction switchFix = QuickFixFactory.getInstance().createEnableOptimizeImportsOnTheFlyFix();
     builder.registerFix(switchFix, null, HighlightDisplayKey.getDisplayNameByKey(unusedImportKey), null, unusedImportKey);
@@ -572,5 +571,11 @@ class PostHighlightingVisitor extends JavaElementVisitor {
       myOptimizeImportsFix = QuickFixFactory.getInstance().createOptimizeImportsFix(true, myFile);
     }
     addInfo(holder, builder);
+  }
+  static boolean isUnusedImportHighlightInfo(@NotNull PsiFile psiFile, @NotNull HighlightInfo info) {
+    TextAttributesKey key = info.type.getAttributesKey();
+    InspectionProfile profile = getCurrentProfile(psiFile);
+    return key.equals(profile.getEditorAttributes(UnusedImportInspection.SHORT_NAME, psiFile))
+          || key.equals(JavaHighlightInfoTypes.UNUSED_IMPORT.getAttributesKey());
   }
 }
