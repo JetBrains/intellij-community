@@ -31,21 +31,27 @@ import org.jetbrains.plugins.github.pullrequest.comment.action.GHPRDiffReviewThr
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRRepositoryDataService
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
-import org.jetbrains.plugins.github.util.ChangeDiffRequestProducerFactory
 import org.jetbrains.plugins.github.util.DiffRequestChainProducer
 import java.util.concurrent.CompletableFuture
 
-open class GHPRDiffRequestChainProducer(
+internal class GHPRDiffRequestChainProducer(
   private val project: Project,
   private val dataProvider: GHPRDataProvider,
   private val htmlImageLoader: AsyncHtmlImageLoader,
   private val avatarIconsProvider: GHAvatarIconsProvider,
   private val repositoryDataService: GHPRRepositoryDataService,
   private val ghostUser: GHUser,
-  private val currentUser: GHUser
+  private val currentUser: GHUser,
+  private val createCustomContext: (Change) -> Map<Key<*>, Any>
 ) : DiffRequestChainProducer {
 
-  internal val changeProducerFactory = ChangeDiffRequestProducerFactory { project, change ->
+  override fun getRequestChain(changes: ListSelection<Change>): DiffRequestChain =
+    object : AsyncDiffRequestChain() {
+      override fun loadRequestProducers(): ListSelection<out DiffRequestProducer> =
+        changes.map { change -> createDiffRequestProducer(project, change) }
+    }
+
+  private fun createDiffRequestProducer(project: Project, change: Change): DiffRequestProducer? {
     val changesData = dataProvider.changesData
     val changesProviderFuture = changesData.loadChanges()
     //TODO: check if revisions are already fetched or load via API (could be much quicker in some cases)
@@ -55,18 +61,8 @@ open class GHPRDiffRequestChainProducer(
     val changeDataKeys = createData(this, change, loadBranchComparisonResult(changesProviderFuture, indicator, fetchFuture))
     val customDataKeys = createCustomContext(change)
 
-    ChangeDiffRequestProducer.create(project, change, changeDataKeys + customDataKeys)
+    return ChangeDiffRequestProducer.create(project, change, changeDataKeys + customDataKeys)
   }
-
-  override fun getRequestChain(changes: ListSelection<Change>): DiffRequestChain {
-    return object : AsyncDiffRequestChain() {
-      override fun loadRequestProducers(): ListSelection<out DiffRequestProducer> {
-        return changes.map { change -> changeProducerFactory.create(project, change) }
-      }
-    }
-  }
-
-  protected open fun createCustomContext(change: Change): Map<Key<*>, Any> = emptyMap()
 
   companion object {
     private fun createData(producer: GHPRDiffRequestChainProducer, change: Change,

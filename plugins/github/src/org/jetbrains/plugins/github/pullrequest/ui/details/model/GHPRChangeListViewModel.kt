@@ -11,7 +11,6 @@ import com.intellij.openapi.ListSelection
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.Key
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ChangesUtil
@@ -71,25 +70,20 @@ internal class GHPRChangeListViewModelImpl(
   override val isUpdating: StateFlow<Boolean> = _isUpdating.asStateFlow()
 
   private val viewedStateData = dataProvider.viewedStateData
-
+  private val viewedStateSupport = GHPRViewedStateDiffSupportImpl(repository, viewedStateData)
   private val diffRequestProducer: GHPRDiffRequestChainProducer =
-    object : GHPRDiffRequestChainProducer(project,
-                                          dataProvider,
-                                          dataContext.htmlImageLoader, dataContext.avatarIconsProvider,
-                                          dataContext.repositoryDataService,
-                                          dataContext.securityService.ghostUser,
-                                          dataContext.securityService.currentUser) {
+    GHPRDiffRequestChainProducer(project,
+                                 dataProvider,
+                                 dataContext.htmlImageLoader, dataContext.avatarIconsProvider,
+                                 dataContext.repositoryDataService,
+                                 dataContext.securityService.ghostUser,
+                                 dataContext.securityService.currentUser) {
 
-      private val viewedStateSupport = GHPRViewedStateDiffSupportImpl(repository, viewedStateData)
-
-      override fun createCustomContext(change: Change): Map<Key<*>, Any> {
-        if (selectedCommit != null) return emptyMap()
-
-        return mapOf(
-          GHPRViewedStateDiffSupport.KEY to viewedStateSupport,
-          GHPRViewedStateDiffSupport.PULL_REQUEST_FILE to ChangesUtil.getFilePath(change)
-        )
-      }
+      if (selectedCommit != null) emptyMap()
+      else mapOf(
+        GHPRViewedStateDiffSupport.KEY to viewedStateSupport,
+        GHPRViewedStateDiffSupport.PULL_REQUEST_FILE to ChangesUtil.getFilePath(it)
+      )
     }
 
   override val progressModel: GHPRProgressTreeModel =
