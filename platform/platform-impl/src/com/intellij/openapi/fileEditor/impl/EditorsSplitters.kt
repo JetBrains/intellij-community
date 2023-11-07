@@ -916,7 +916,7 @@ private class UiBuilder(private val splitters: EditorsSplitters) {
       val virtualFileManager = VirtualFileManager.getInstance()
       for ((index, fileEntry) in sorted) {
         span("opening editor") {
-          val file = virtualFileManager.findFileByUrl(fileEntry.url)
+          val file = virtualFileManager.findFileByUrl(fileEntry.url) ?: virtualFileManager.refreshAndFindFileByUrl(fileEntry.url)
           if (file == null || !file.isValid) {
             val message = "No file exists: ${fileEntry.url}"
             if (ApplicationManager.getApplication().isUnitTestMode) {
