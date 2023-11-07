@@ -114,7 +114,6 @@
     <orderEntry type="module" module-name="intellij.platform.concurrency" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="library" name="classgraph" level="project" />
-    <orderEntry type="module" module-name="intellij.execution.process.elevation" scope="RUNTIME" />
     <orderEntry type="library" name="caffeine" level="project" />
     <orderEntry type="module" module-name="intellij.platform.statistics.uploader" />
     <orderEntry type="library" name="zip-signer" level="project" />

@@ -213,5 +213,6 @@
     <orderEntry type="module" module-name="intellij.platform.ide.newUiOnboarding" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.compose" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.onboarding-promoter" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.execution.process.elevation" scope="RUNTIME" />
   </component>
 </module>

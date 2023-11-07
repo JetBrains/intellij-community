@@ -449,11 +449,6 @@
     <applicationService serviceInterface="com.intellij.credentialStore.CredentialStoreUiService"
                         serviceImplementation="com.intellij.credentialStore.CredentialStoreUiServiceImpl"/>
 
-    <applicationService serviceInterface="com.intellij.execution.process.ElevationService"
-                        serviceImplementation="com.intellij.execution.process.elevation.ElevationServiceImpl"/>
-    <applicationService serviceInterface="com.intellij.execution.process.ElevationServiceAvailability"
-                        serviceImplementation="com.intellij.execution.process.elevation.ElevationServiceAvailabilityImpl"/>
-
     <applicationService serviceInterface="com.intellij.openapi.options.SchemeManagerFactory"
                         serviceImplementation="com.intellij.configurationStore.schemeManager.SchemeManagerFactoryBase$ApplicationSchemeManagerFactory"/>
     <projectService serviceInterface="com.intellij.openapi.options.SchemeManagerFactory"

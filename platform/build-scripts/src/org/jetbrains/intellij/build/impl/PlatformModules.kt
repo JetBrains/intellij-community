@@ -54,7 +54,6 @@ private val PLATFORM_IMPLEMENTATION_MODULES = persistentListOf(
   "intellij.platform.analysis.impl",
   "intellij.platform.diff.impl",
   "intellij.platform.editor.ex",
-  "intellij.execution.process.elevation",
   "intellij.platform.externalProcessAuthHelper",
   "intellij.platform.inspect",
   // lvcs.xml - convert into product module
