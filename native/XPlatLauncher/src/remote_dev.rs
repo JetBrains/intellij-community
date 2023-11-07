@@ -430,27 +430,11 @@ impl RemoteDevLaunchConfiguration {
 
     fn get_temp_system_like_path(&self) -> Result<PathBuf> {
         let temp_path = match &self.path_overrides {
-            None => { RemoteDevLaunchConfiguration::get_os_specific_temp()? }
+            None => { env::temp_dir() }
             Some(overrides) => { overrides.system_dir.clone() }
         };
 
         Ok(temp_path)
-    }
-
-    #[cfg(not(target_os = "windows"))]
-    fn get_os_specific_temp() -> Result<PathBuf> {
-        let temp_path = if let Some(temp_dir) = env::var("TMPDIR")
-            .ok().filter(|x| !x.is_empty()) {
-            PathBuf::from(temp_dir)
-        } else {
-            PathBuf::from("/tmp")
-        };
-        Ok(temp_path)
-    }
-
-    #[cfg(target_os = "windows")]
-    fn get_os_specific_temp() -> Result<PathBuf> {
-        Ok(PathBuf::from(env::var("TEMP")))
     }
 
     fn write_merged_properties_file(&self, remote_dev_properties: &[IdeProperty]) -> Result<PathBuf> {
