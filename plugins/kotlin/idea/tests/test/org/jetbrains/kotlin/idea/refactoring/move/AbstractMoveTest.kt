@@ -43,6 +43,11 @@ import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 
 abstract class AbstractMoveTest : AbstractMultifileRefactoringTest() {
+    public override fun setUp() {
+        super.setUp()
+        myDoCompare = false
+    }
+
     override fun runRefactoring(path: String, config: JsonObject, rootDir: VirtualFile, project: Project) {
         runMoveRefactoring(path, config, rootDir, project)
     }
@@ -238,7 +243,13 @@ enum class MoveAction : AbstractMultifileRefactoringTest.RefactoringAction {
                 )
             }
 
-            val descriptor = MoveDeclarationsDescriptor(project, KotlinMoveSource(elementsToMove), moveTarget, KotlinMoveDeclarationDelegate.TopLevel)
+            val descriptor = MoveDeclarationsDescriptor(
+                project,
+                KotlinMoveSource(elementsToMove),
+                moveTarget,
+                KotlinMoveDeclarationDelegate.TopLevel,
+                deleteSourceFiles = true
+            )
             MoveKotlinDeclarationsProcessor(descriptor).run()
         }
     },
