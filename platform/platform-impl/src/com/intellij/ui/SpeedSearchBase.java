@@ -763,6 +763,11 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
         return;
       }
 
+      if (e.getID() == KeyEvent.KEY_TYPED && !UIUtil.isReallyTypedEvent(e)) {
+        // Stuff like Ctrl+N / Ctrl+P is processed on KEY_PRESSED, and the subsequent KEY_TYPED screws it up.
+        return;
+      }
+
       super.processKeyEvent(e);
       if (i == KeyEvent.VK_BACK_SPACE) {
         e.consume();
