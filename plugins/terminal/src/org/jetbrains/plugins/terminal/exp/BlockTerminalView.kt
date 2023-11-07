@@ -44,6 +44,7 @@ class BlockTerminalView(
   override val preferredFocusableComponent: JComponent
     get() = when {
       alternateBufferView != null -> alternateBufferView!!.preferredFocusableComponent
+      controller.searchSession != null -> controller.searchSession!!.component.searchTextComponent
       promptView.component.isVisible && selectionController.primarySelection == null -> promptView.preferredFocusableComponent
       else -> outputView.preferredFocusableComponent
     }
