@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util
 
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.project.Project
 import com.intellij.util.PlatformUtils
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -45,6 +46,19 @@ object RunOnceUtil {
   fun runOnceForApp(id: @NonNls String, task: Runnable): Boolean {
     return doRunOnce(storage = PropertiesComponent.getInstance(), id = id, ideAware = false, activity = task)
   }
+}
+
+suspend fun runOnceForApp(id: @NonNls String, task: suspend () -> Unit): Boolean {
+  val key = createKey(id)
+  val storage = serviceAsync<PropertiesComponent>()
+  synchronized(storage) {
+    if (storage.isTrueValue(key)) {
+      return false
+    }
+    storage.setValue(key, true)
+  }
+  task()
+  return true
 }
 
 @Internal
