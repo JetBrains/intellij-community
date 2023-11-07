@@ -896,6 +896,11 @@ public abstract class KotlinEvaluateExpressionTestGenerated extends AbstractKotl
                 runTest("testData/evaluation/singleBreakpoint/lambdas/inlineLambda.kt");
             }
 
+            @TestMetadata("labelOnAnonymousFunction.kt")
+            public void testLabelOnAnonymousFunction() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/lambdas/labelOnAnonymousFunction.kt");
+            }
+
             @TestMetadata("lambdaOnReturn.kt")
             public void testLambdaOnReturn() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/lambdas/lambdaOnReturn.kt");

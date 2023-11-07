@@ -250,7 +250,7 @@ class CodeFragmentParameterAnalyzer(
             return processFakeJavaCodeReceiver(descriptor)
         }
 
-        val actualLabel = label ?: getLabel(descriptor) ?: return null
+        val actualLabel = label ?: getLabel(descriptor)
         val receiverParameter = descriptor.extensionReceiverParameter ?: return null
 
         return parameters.getOrPut(descriptor) {
@@ -258,14 +258,18 @@ class CodeFragmentParameterAnalyzer(
         }
     }
 
-    private fun getLabel(callableDescriptor: CallableDescriptor): String? {
+    private fun getLabel(callableDescriptor: CallableDescriptor): String {
         val source = callableDescriptor.source.getPsi()
 
         if (source is KtFunctionLiteral) {
             getCallLabelForLambdaArgument(source, bindingContext)?.let { return it }
         }
 
-        return callableDescriptor.name.takeIf { !it.isSpecial }?.asString()
+        // In case of special name we will end up with "null" result.
+        // This is expected behavior for K1 that is inlined with a way how `StackFrameProxyImpl` stores variables.
+        // For K2 we will have a bit different name stored in `StackFrameProxyImpl`,
+        // but still we will be able to find the correct one due to how `VariableFinder` works.
+        return callableDescriptor.name.takeIf { !it.isSpecial }.toString()
     }
 
     private fun isFakeFunctionForJavaContext(descriptor: CallableDescriptor): Boolean {
