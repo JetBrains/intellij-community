@@ -1177,12 +1177,7 @@ private suspend fun checkOldTrustedStateAndMigrate(project: Project, projectStor
   return confirmOpeningOrLinkingUntrustedProjectAsync(
     projectStoreBaseDir,
     project,
-    IdeBundle.message("untrusted.project.open.dialog.title", project.name),
-    IdeBundle.message("untrusted.project.open.dialog.text", ApplicationNamesInfo.getInstance().fullProductName),
-    IdeBundle.message("untrusted.project.dialog.trust.button"),
-    IdeBundle.message("untrusted.project.open.dialog.distrust.button"),
-    IdeBundle.message("untrusted.project.open.dialog.cancel.button")
-  )
+    IdeBundle.message("untrusted.project.open.dialog.title", project.name))
 }
 
 private suspend fun initProject(file: Path,
@@ -1381,11 +1376,7 @@ private suspend fun checkTrustedState(projectStoreBaseDir: Path): Boolean {
   return confirmOpeningOrLinkingUntrustedProjectAsync(
     projectStoreBaseDir,
     null,
-    IdeBundle.message("untrusted.project.open.dialog.title", projectStoreBaseDir.fileName),
-    IdeBundle.message("untrusted.project.open.dialog.text", ApplicationNamesInfo.getInstance().fullProductName),
-    IdeBundle.message("untrusted.project.dialog.trust.button"),
-    IdeBundle.message("untrusted.project.open.dialog.distrust.button"),
-    IdeBundle.message("untrusted.project.open.dialog.cancel.button")
+    IdeBundle.message("untrusted.project.open.dialog.title", projectStoreBaseDir.fileName)
   )
 }
 
