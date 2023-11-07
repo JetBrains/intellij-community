@@ -46,6 +46,11 @@ public final class PatternHelper {
     removeTempVariableDeclarations(tempVarAssignments);
   }
 
+  /**
+   * Replaces assignments with pattern variables in the provided statement.
+   *
+   * @return a list of Runnable objects containing the actions to replace assignments with pattern variables
+   */
   private static List<Runnable> replaceAssignmentsWithPatternVariables(@NotNull Statement statement,
                                                              @NotNull List<TempVarAssignmentItem> tempVarAssignments,
                                                              boolean recordPatternSupport,

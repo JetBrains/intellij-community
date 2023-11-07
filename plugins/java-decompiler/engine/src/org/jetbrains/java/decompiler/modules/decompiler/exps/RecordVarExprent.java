@@ -62,9 +62,13 @@ public class RecordVarExprent extends VarExprent {
   }
 
   /**
-   * @return a copy of the current RecordVarExprent object, including a copy of its VarExprent superclass, excluding components
+   * Copies the values from the provided VarExprent object to the current RecordVarExprent object.
+   * If the provided VarExprent object is an instance of RecordVarExprent, copies the components from it.
+   * Otherwise, copy the varType, index, and version from the provided VarExprent object.
+   *
+   * @param varExprent the VarExprent object to copy the values from
+   * @return true if the copying is successful (the current set of components is empty), false otherwise
    */
-
   public boolean copyFrom(@NotNull VarExprent varExprent) {
     if (varExprent instanceof RecordVarExprent recordVarExprent) {
       if (!this.components.isEmpty()) {
