@@ -195,7 +195,7 @@ open class CodeVisionHost(val project: Project) {
     }
     val bypassBasedCollectors = ArrayList<Pair<BypassBasedPlaceholderCollector, CodeVisionProvider<*>>>()
     val placeholders = ArrayList<Pair<TextRange, CodeVisionEntry>>()
-    val settings = CodeVisionSettings.instance()
+    val settings = CodeVisionSettings.getInstance()
     for (provider in providers) {
       if (!settings.isProviderEnabled(provider.groupId)) continue
       if (getAnchorForProvider(provider) != CodeVisionAnchorKind.Top) continue

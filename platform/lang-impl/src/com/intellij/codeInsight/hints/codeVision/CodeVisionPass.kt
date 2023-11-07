@@ -106,7 +106,7 @@ class CodeVisionPass(
   private val currentIndicator = ProgressManager.getGlobalProgressIndicator()
 
   override fun doCollectInformation(progress: ProgressIndicator) {
-    val settings = CodeVisionSettings.instance()
+    val settings = CodeVisionSettings.getInstance()
     if (!settings.codeVisionEnabled) return
     val providers = DaemonBoundCodeVisionProvider.extensionPoint.extensionList
       .filter {  settings.isProviderEnabled(it.groupId) }

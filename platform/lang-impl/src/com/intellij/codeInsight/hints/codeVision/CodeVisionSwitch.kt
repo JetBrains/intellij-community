@@ -11,7 +11,7 @@ import com.intellij.openapi.project.Project
 internal class CodeVisionSwitch : InlayHintsSwitch {
 
   override fun isEnabled(project: Project): Boolean {
-    return CodeVisionSettings.instance().codeVisionEnabled
+    return CodeVisionSettings.getInstance().codeVisionEnabled
   }
 
   override fun setEnabled(project: Project, value: Boolean) {

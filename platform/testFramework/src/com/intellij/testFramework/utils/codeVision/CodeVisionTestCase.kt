@@ -29,7 +29,7 @@ abstract class CodeVisionTestCase : InlayHintsProviderTestCase() {
 
   override fun tearDown() {
     try {
-      val settings = CodeVisionSettings.instance()
+      val settings = CodeVisionSettings.getInstance()
       val codeVisionHost = CodeVisionInitializer.getInstance(project).getCodeVisionHost()
       codeVisionHost.providers.forEach {
         settings.setProviderEnabled(it.groupId, true)
@@ -45,7 +45,7 @@ abstract class CodeVisionTestCase : InlayHintsProviderTestCase() {
 
   protected fun testProviders(expectedText: String, fileName: String, vararg enabledProviderGroupIds: String) {
     // set enabled providers
-    val settings = CodeVisionSettings.instance()
+    val settings = CodeVisionSettings.getInstance()
     val codeVisionHost = CodeVisionInitializer.getInstance(project).getCodeVisionHost()
     codeVisionHost.providers.map { it.groupId }.toSet().forEach {
       settings.setProviderEnabled(it, enabledProviderGroupIds.contains(it))

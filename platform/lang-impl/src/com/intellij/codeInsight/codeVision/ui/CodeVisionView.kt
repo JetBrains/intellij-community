@@ -6,7 +6,10 @@ import com.intellij.codeInsight.codeVision.CodeVisionEntry
 import com.intellij.codeInsight.codeVision.CodeVisionModel
 import com.intellij.codeInsight.codeVision.highlighterOnCodeVisionEntryKey
 import com.intellij.codeInsight.codeVision.settings.CodeVisionSettings
-import com.intellij.codeInsight.codeVision.ui.model.*
+import com.intellij.codeInsight.codeVision.ui.model.CodeVisionListData
+import com.intellij.codeInsight.codeVision.ui.model.CodeVisionVisualVerticalPositionKeeper
+import com.intellij.codeInsight.codeVision.ui.model.ProjectCodeVisionModel
+import com.intellij.codeInsight.codeVision.ui.model.RangeCodeVisionModel
 import com.intellij.codeInsight.codeVision.ui.popup.CodeVisionPopup
 import com.intellij.codeInsight.codeVision.ui.renderers.BlockCodeVisionInlayRenderer
 import com.intellij.codeInsight.codeVision.ui.renderers.CodeVisionInlayRenderer
@@ -70,7 +73,7 @@ class CodeVisionView(val project: Project) {
     val listInlays = mutableListOf<Inlay<*>>()
     for (lens in lenses) {
       val logicalPosition = editor.offsetToLogicalPosition(anchoringRange.startOffset)
-      val inlay = when (if (lens.key == CodeVisionAnchorKind.Default) CodeVisionSettings.instance().defaultPosition else lens.key) {
+      val inlay = when (if (lens.key == CodeVisionAnchorKind.Default) CodeVisionSettings.getInstance().defaultPosition else lens.key) {
         CodeVisionAnchorKind.Top -> {
           getOrCreateBlockInlay(editor, anchoringRange)
         }

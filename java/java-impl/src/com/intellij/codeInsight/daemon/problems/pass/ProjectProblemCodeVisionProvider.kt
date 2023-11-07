@@ -39,7 +39,7 @@ private val PREVIEW_PROBLEMS_KEY = Key.create<Set<Problem>>("preview.problems.ke
 private const val ID = "java.RelatedProblems"
 
 internal fun isCodeVisionEnabled(ignored: Project): Boolean {
-  val settings = CodeVisionSettings.instance()
+  val settings = CodeVisionSettings.getInstance()
   return settings.codeVisionEnabled && settings.isProviderEnabled(ID)
 }
 
@@ -60,7 +60,7 @@ internal class ProjectProblemCodeVisionProvider : JavaCodeVisionProviderBase() {
     }
 
     val problems = ProjectProblemUtils.getReportedProblems(editor)
-    if (!CodeVisionSettings.instance().isProviderEnabled(PlatformCodeVisionIds.PROBLEMS.key)) {
+    if (!CodeVisionSettings.getInstance().isProviderEnabled(PlatformCodeVisionIds.PROBLEMS.key)) {
       if (!problems.isEmpty()) {
         ProjectProblemUtils.reportProblems(editor, emptyMap())
         updateHighlighters(project, editor, SmartList())
