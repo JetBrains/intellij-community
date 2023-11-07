@@ -1035,11 +1035,6 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
 
 
     if (getComponentCount() > 0 && size2Fit.width < Integer.MAX_VALUE) {
-      int maxHeight = 0;
-      for (int i = 0; i < bounds.size() - 2; i++) {
-        maxHeight = Math.max(maxHeight, bounds.get(i).height);
-      }
-
       Insets insets = getInsets();
       int rightOffset = insets.right;
       for (int i = getComponentCount() - 1, j = 1; i > 0; i--, j++) {
