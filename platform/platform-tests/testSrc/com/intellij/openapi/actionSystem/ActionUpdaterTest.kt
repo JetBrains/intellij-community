@@ -1,83 +1,89 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.openapi.actionSystem;
+package com.intellij.openapi.actionSystem
 
-import com.intellij.openapi.actionSystem.impl.PresentationFactory;
-import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
-import com.intellij.openapi.actionSystem.impl.Utils;
-import com.intellij.testFramework.LightPlatformTestCase;
-import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.actionSystem.impl.PresentationFactory
+import com.intellij.openapi.actionSystem.impl.Utils
+import com.intellij.testFramework.UsefulTestCase.assertEmpty
+import com.intellij.testFramework.UsefulTestCase.assertOrderedEquals
+import com.intellij.testFramework.junit5.RunInEdt
+import com.intellij.testFramework.junit5.RunMethodInEdt
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.util.containers.ContainerUtil
+import kotlinx.coroutines.DelicateCoroutinesApi
+import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Test
 
-import java.util.List;
+@OptIn(DelicateCoroutinesApi::class)
+@TestApplication
+@RunInEdt(allMethods = false)
+class ActionUpdaterTest {
 
-public class ActionUpdaterTest extends LightPlatformTestCase {
-  public void testActionGroupCanBePerformed() {
-    ActionGroup canBePerformedGroup = newCanBePerformedGroup(true, true);
-    ActionGroup popupGroup = newPopupGroup(canBePerformedGroup);
-    ActionGroup actionGroup = new DefaultActionGroup(popupGroup);
-    List<AnAction> actions = testExpandActionGroup(actionGroup);
-    assertOrderedEquals(actions, popupGroup);
+  @Test
+  @RunMethodInEdt
+  fun testActionGroupCanBePerformed() {
+    val canBePerformedGroup: ActionGroup = newCanBePerformedGroup(true, true)
+    val popupGroup = newPopupGroup(canBePerformedGroup)
+    val actionGroup: ActionGroup = DefaultActionGroup(popupGroup)
+    val actions = expandActionGroup(actionGroup)
+    assertOrderedEquals(actions, popupGroup)
   }
 
-  public void testActionGroupCanBePerformedButNotVisible() {
-    ActionGroup canBePerformedGroup = newCanBePerformedGroup(false, false);
-    ActionGroup actionGroup = new DefaultActionGroup(newPopupGroup(canBePerformedGroup));
-    List<AnAction> actions = testExpandActionGroup(actionGroup);
-    assertEmpty(actions);
+  @Test
+  @RunMethodInEdt
+  fun testActionGroupCanBePerformedButNotVisible() {
+    val canBePerformedGroup: ActionGroup = newCanBePerformedGroup(false, false)
+    val actionGroup: ActionGroup = DefaultActionGroup(newPopupGroup(canBePerformedGroup))
+    val actions = expandActionGroup(actionGroup)
+    assertEmpty(actions)
   }
 
-  public void testActionGroupCanBePerformedButNotEnabled() {
-    ActionGroup canBePerformedGroup = newCanBePerformedGroup(true, false);
-    ActionGroup actionGroup = new DefaultCompactActionGroup(newPopupGroup(canBePerformedGroup));
-    List<AnAction> actions = testExpandActionGroup(actionGroup);
-    assertEmpty(actions);
+  @Test
+  @RunMethodInEdt
+  fun testActionGroupCanBePerformedButNotEnabled() {
+    val canBePerformedGroup: ActionGroup = newCanBePerformedGroup(true, false)
+    val actionGroup: ActionGroup = DefaultCompactActionGroup(newPopupGroup(canBePerformedGroup))
+    val actions = expandActionGroup(actionGroup)
+    assertEmpty(actions)
   }
 
-  public void testWrappedActionGroupHasCorrectPresentation() {
-    String customizedText = "Customized!";
-    PresentationFactory presentationFactory = new PresentationFactory();
-    ActionGroup popupGroup = new DefaultActionGroup(newCanBePerformedGroup(true, true)) {
-      @Override
-      public void update(@NotNull AnActionEvent e) {
-        e.getPresentation().setText(customizedText);
+  @Test
+  @RunMethodInEdt
+  fun testWrappedActionGroupHasCorrectPresentation() {
+    val customizedText = "Customized!"
+    val presentationFactory = PresentationFactory()
+    val popupGroup: ActionGroup = object : DefaultActionGroup(newCanBePerformedGroup(true, true)) {
+      override fun update(e: AnActionEvent) {
+        e.presentation.text = customizedText
       }
-    };
-    popupGroup.getTemplatePresentation().setPopupGroup(true);
-    List<AnAction> actions = testExpandActionGroup(new DefaultCompactActionGroup(popupGroup), presentationFactory);
-    AnAction actual = ContainerUtil.getOnlyItem(actions);
-    assertTrue("wrapper expected", actual instanceof ActionGroupWrapper wrapper && wrapper.getDelegate() == popupGroup);
-    Presentation actualPresentation = presentationFactory.getPresentation(actual);
-    assertSame(customizedText, actualPresentation.getText());
-    assertSame(actualPresentation, presentationFactory.getPresentation(popupGroup));
+    }
+    popupGroup.templatePresentation.isPopupGroup = true
+    val actions = expandActionGroup(DefaultCompactActionGroup(popupGroup), presentationFactory)
+    val actual = ContainerUtil.getOnlyItem(actions)
+    assertTrue(actual is ActionGroupWrapper && actual.delegate === popupGroup, "wrapper expected")
+    val actualPresentation = presentationFactory.getPresentation(actual!!)
+    assertSame(customizedText, actualPresentation.text)
+    assertSame(actualPresentation, presentationFactory.getPresentation(popupGroup))
   }
 
-  @NotNull
-  private List<AnAction> testExpandActionGroup(@NotNull ActionGroup actionGroup) {
-    return testExpandActionGroup(actionGroup, new PresentationFactory());
+  private fun expandActionGroup(actionGroup: ActionGroup,
+                                presentationFactory: PresentationFactory = PresentationFactory()): List<AnAction?> {
+    return Utils.expandActionGroup(actionGroup, presentationFactory, DataContext.EMPTY_CONTEXT, ActionPlaces.UNKNOWN)
   }
 
-  @NotNull
-  private List<AnAction> testExpandActionGroup(@NotNull ActionGroup actionGroup,
-                                               @NotNull PresentationFactory presentationFactory) {
-    DataContext dataContext = SimpleDataContext.getProjectContext(getProject());
-    return Utils.expandActionGroup(actionGroup, presentationFactory, dataContext, ActionPlaces.UNKNOWN);
+  private fun newPopupGroup(vararg actions: AnAction): ActionGroup {
+    val group = DefaultActionGroup(*actions)
+    group.templatePresentation.isPopupGroup = true
+    group.templatePresentation.isHideGroupIfEmpty = true
+    return group
   }
 
-  private static ActionGroup newPopupGroup(AnAction @NotNull ... actions) {
-    DefaultActionGroup group = new DefaultActionGroup(actions);
-    group.getTemplatePresentation().setPopupGroup(true);
-    group.getTemplatePresentation().setHideGroupIfEmpty(true);
-    return group;
-  }
-
-  private static DefaultActionGroup newCanBePerformedGroup(boolean visible, boolean enabled) {
-    return new DefaultActionGroup() {
-      @Override
-      public void update(@NotNull AnActionEvent e) {
-        e.getPresentation().setVisible(visible);
-        e.getPresentation().setEnabled(enabled);
-        e.getPresentation().setPerformGroup(true);
+  private fun newCanBePerformedGroup(visible: Boolean, enabled: Boolean): DefaultActionGroup {
+    return object : DefaultActionGroup() {
+      override fun update(e: AnActionEvent) {
+        e.presentation.isVisible = visible
+        e.presentation.isEnabled = enabled
+        e.presentation.isPerformGroup = true
       }
-    };
+    }
   }
 }
