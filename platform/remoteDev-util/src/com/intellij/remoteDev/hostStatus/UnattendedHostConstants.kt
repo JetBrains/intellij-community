@@ -9,7 +9,7 @@ data class UnattendedHostPerProjectStatus(
   val projectName: String,
   val projectPath: String,
   val projectPathLink: String?,
-  var dateLastOpened: Long? = null,
+  val dateLastOpened: Long? = null,
 
   val joinLink: String,
   val httpLink: String?,
