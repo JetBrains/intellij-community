@@ -203,6 +203,8 @@ class GitLabSnippetService(private val project: Project, private val serviceScop
 
     logSnippetActionExecuted(project, CREATE_CREATED)
 
+    if (data.isOpenInBrowser) return
+
     VcsNotifier.getInstance(project)
       .notifyMinorInfo(GL_NOTIFICATION_CREATE_SNIPPET_SUCCESS,
                        message("snippet.create.action.success.title"),
