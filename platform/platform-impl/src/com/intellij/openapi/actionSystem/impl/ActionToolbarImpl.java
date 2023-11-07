@@ -1317,7 +1317,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   public void updateActionsImmediately() {
     updateActionsImmediately(false);
   }
-  
+
   @RequiresEdt
   public Future<?> updateActionsAsync() {
     updateActionsImmediately(false);
@@ -1426,6 +1426,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     }
     myForcedUpdateRequested = true;
     add(label);
+    updateMinimumButtonSize();
   }
 
   protected boolean canUpdateActions(@NotNull List<? extends AnAction> newVisibleActions) {
