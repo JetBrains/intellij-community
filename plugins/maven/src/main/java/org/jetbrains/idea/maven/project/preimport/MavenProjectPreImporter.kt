@@ -58,11 +58,21 @@ class MavenProjectPreImporter(val project: Project, val coroutineScope: Coroutin
       val roots = ArrayList<MavenProject>()
       val mavenProjectMappings = HashMap<MavenProject, List<MavenProject>>()
       val allProjects = ArrayList<MavenProject>()
+      val projectChanges = HashMap<MavenProject, MavenProjectChanges>()
+      val existingTree = MavenProjectsManager.getInstance(project).let { if (it.isMavenizedProject) it.projectsTree else null }
 
-      forest.forEach {
-        mavenProjectMappings.putAll(it.mavenProjectMappings())
-        allProjects.addAll(it.projects())
-        it.root?.let(roots::add)
+      forest.forEach { tree ->
+        mavenProjectMappings.putAll(tree.mavenProjectMappings())
+        allProjects.addAll(tree.projects())
+        tree.root?.let(roots::add)
+
+        if (existingTree == null) {
+          projectChanges.putAll(tree.projects().associateWith { MavenProjectChanges.ALL })
+        }
+        else {
+          projectChanges.putAll(
+            tree.projects().filter { existingTree.findProject(it.file) == null }.associateWith { MavenProjectChanges.ALL })
+        }
       }
 
 
@@ -77,7 +87,7 @@ class MavenProjectPreImporter(val project: Project, val coroutineScope: Coroutin
       return withBackgroundProgress(project, MavenProjectBundle.message("maven.project.importing"), false) {
         blockingContext {
           val importer = MavenProjectImporter.createImporter(project, projectTree,
-                                                             allProjects.associateWith { MavenProjectChanges.ALL },
+                                                             projectChanges,
                                                              modelsProvider,
                                                              importingSettings,
                                                              null,
