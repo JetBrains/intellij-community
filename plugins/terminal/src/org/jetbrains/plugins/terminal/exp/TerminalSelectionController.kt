@@ -42,14 +42,7 @@ class TerminalSelectionController(
 
       // mark selected blocks as inactive when the terminal loses the focus
       override fun activeStateChanged(isActive: Boolean) {
-        for (block in selectedBlocks) {
-          if (isActive) {
-            outputModel.removeBlockState(block, InactiveSelectedBlockDecorationState.NAME)
-          }
-          else {
-            outputModel.addBlockState(block, InactiveSelectedBlockDecorationState())
-          }
-        }
+        applyInactiveSelectionDecoration(isActive)
       }
     })
     textSelectionModel.addSelectionListener(object : SelectionListener {
@@ -131,6 +124,7 @@ class TerminalSelectionController(
   }
 
   override fun selectionChanged(oldSelection: List<CommandBlock>, newSelection: List<CommandBlock>) {
+    applyActiveSelectionDecoration(oldSelection, newSelection)
     if (newSelection.isNotEmpty()) {
       textSelectionModel.removeSelection()
       focusModel.focusOutput()
@@ -197,6 +191,28 @@ class TerminalSelectionController(
       }
       val offset = MathUtil.clamp(scrollOffset, 0, editor.contentComponent.height)
       editor.scrollingModel.scrollVertically(offset)
+    }
+  }
+
+  private fun applyActiveSelectionDecoration(oldSelection: List<CommandBlock>, newSelection: List<CommandBlock>) {
+    for (block in oldSelection) {
+      if (!newSelection.contains(block)) {
+        outputModel.removeBlockState(block, SelectedBlockDecorationState.NAME)
+      }
+    }
+    for (block in newSelection) {
+      outputModel.addBlockState(block, SelectedBlockDecorationState())
+    }
+  }
+
+  private fun applyInactiveSelectionDecoration(isActive: Boolean) {
+    for (block in selectedBlocks) {
+      if (isActive) {
+        outputModel.removeBlockState(block, InactiveSelectedBlockDecorationState.NAME)
+      }
+      else {
+        outputModel.addBlockState(block, InactiveSelectedBlockDecorationState())
+      }
     }
   }
 
