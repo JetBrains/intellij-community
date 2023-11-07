@@ -29,6 +29,7 @@ import com.intellij.vcsUtil.VcsUtil
 import com.intellij.vfs.AsyncVfsEventsPostProcessor
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.collectLatest
@@ -54,7 +55,7 @@ internal class VcsRootScanner(private val project: Project, coroutineScope: Coro
     VcsEP.EP_NAME.addChangeListener(::scheduleScan, this)
 
     coroutineScope.launch {
-      @Suppress("OPT_IN_USAGE")
+      @OptIn(FlowPreview::class)
       scanRequests
         .debounce(1.seconds)
         .collectLatest {
