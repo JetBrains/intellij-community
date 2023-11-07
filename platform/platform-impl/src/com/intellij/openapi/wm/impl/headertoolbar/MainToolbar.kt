@@ -2,6 +2,7 @@
 package com.intellij.openapi.wm.impl.headertoolbar
 
 import com.intellij.accessibility.AccessibilityUtils
+import com.intellij.ide.ProjectWindowCustomizerService
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.customization.ActionUrl
 import com.intellij.ide.ui.customization.CustomActionsListener
@@ -80,7 +81,7 @@ private data object DefaultMainToolbarFlavor : MainToolbarFlavor
 @ApiStatus.Internal
 class MainToolbar(
   private val coroutineScope: CoroutineScope,
-  frame: JFrame,
+  private val frame: JFrame,
   isOpaque: Boolean = false,
   background: Color? = null,
 ) : JPanel(HorizontalLayout(10)) {
@@ -194,6 +195,13 @@ class MainToolbar(
     actions.addAll(newUrls)
     actions.removeIf { fromPath == it.groupPath }
     schema.setActions(actions)
+  }
+
+  override fun paintComponent(g: Graphics?) {
+    super.paintComponent(g)
+    if (!isToolbarInHeader()) {
+      ProjectWindowCustomizerService.getInstance().paint(frame, this, g as Graphics2D)
+    }
   }
 
   private fun schemaChanged() {
