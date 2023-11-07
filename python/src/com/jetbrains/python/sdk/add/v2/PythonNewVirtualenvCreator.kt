@@ -49,15 +49,21 @@ class PythonNewVirtualenvCreator(presenter: PythonAddInterpreterPresenter) : Pyt
   private lateinit var versionComboBox: ComboBox<String?>
   private var locationModified = false
   private var suggestedVenvName: String = ""
+  private var suggestedLocation: Path = Path.of("")
+  private val pythonInVenvPath = Paths.get("bin", if (SystemInfo.isWindows) "python.exe" else "python")
 
   override fun buildOptions(panel: Panel, validationRequestor: DialogValidationRequestor) {
-    val fixNameLink = ActionLink(message("sdk.create.custom.venv.use.different.venv.link", ".venv1")) {
-      val newPath = Paths.get(location.get()).resolveSibling(suggestedVenvName)
+    val firstFixLink = ActionLink(message("sdk.create.custom.venv.use.different.venv.link", ".venv1")) {
+      val newPath = suggestedLocation.resolve(suggestedVenvName)
       location.set(newPath.toString())
       locationValidationFailed.set(false)
     }
-    val selectVenvLink = ActionLink(message("sdk.create.custom.venv.select.existing.link")) {
-      // todo create a detected sdk from current venv path and set `presenter.state.selectedVenv`
+    val secondFixLink = ActionLink(message("sdk.create.custom.venv.select.existing.link")) {
+      val sdkPath = Paths.get(location.get()).resolve(pythonInVenvPath).toString()
+      if (!presenter.state.allSdks.get().any { it.homePath == sdkPath }) {
+        presenter.addPythonInterpreter(sdkPath)
+      }
+      presenter.state.selectedVenvPath.set(sdkPath)
       presenter.navigator.navigateTo(newMethod = SELECT_EXISTING, newManager = PythonSupportedEnvironmentManagers.PYTHON)
     }
 
@@ -80,10 +86,23 @@ class PythonNewVirtualenvCreator(presenter: PythonAddInterpreterPresenter) : Pyt
               val pathExists = textField.isVisible && textField.doesPathExist()
               locationValidationFailed.set(pathExists)
               if (pathExists) {
-                val typedName = Paths.get(textField.text).last().toString()
-                suggestedVenvName = suggestVenvName(typedName)
-                locationValidationMessage.set(message("sdk.create.custom.venv.environment.exists", typedName))
-                fixNameLink.text = message("sdk.create.custom.venv.use.different.venv.link", suggestedVenvName)
+                val locationPath = Paths.get(textField.text)
+                if (locationPath.resolve(pythonInVenvPath).exists()) {
+                  val typedName = locationPath.last().toString()
+                  suggestedVenvName = suggestVenvName(typedName)
+                  suggestedLocation = locationPath.parent ?: Paths.get("/")
+                  locationValidationMessage.set(message("sdk.create.custom.venv.environment.exists", typedName))
+                  firstFixLink.text = message("sdk.create.custom.venv.use.different.venv.link", suggestedVenvName)
+                  secondFixLink.isVisible = true
+                }
+                else {
+                  locationValidationMessage.set(message("sdk.create.custom.venv.folder.not.empty"))
+                  suggestedVenvName = ".venv"
+                  suggestedLocation = locationPath
+                  firstFixLink.text = message("sdk.create.custom.venv.use.different.venv.link",
+                                              Paths.get("..", locationPath.last().toString(), suggestedVenvName))
+                  secondFixLink.isVisible = false
+                }
               }
               pathExists
             }
@@ -92,7 +111,7 @@ class PythonNewVirtualenvCreator(presenter: PythonAddInterpreterPresenter) : Pyt
       }
 
       row("") {
-        validationTooltip(locationValidationMessage, fixNameLink, selectVenvLink)
+        validationTooltip(locationValidationMessage, firstFixLink, secondFixLink)
           .align(Align.FILL)
       }.visibleIf(locationValidationFailed)
 
