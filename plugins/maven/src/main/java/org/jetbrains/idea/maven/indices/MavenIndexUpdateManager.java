@@ -24,7 +24,6 @@ import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
 import org.jetbrains.idea.maven.utils.MavenRehighlighter;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -85,7 +84,7 @@ public final class MavenIndexUpdateManager implements Disposable {
   private static CompletableFuture<?> runIndexUpdateInBackgroundWithoutProgress(Project project,
                                                                                 IndicesContentUpdateRequest request) {
     MavenProgressIndicator indicator =
-      new MavenProgressIndicator(project, () -> MavenProjectsManager.getInstance(project).getSyncConsole());
+      new MavenProgressIndicator(null, null);
     try {
       doUpdateIndicesContent(project, request, indicator);
     }
@@ -103,7 +102,7 @@ public final class MavenIndexUpdateManager implements Disposable {
       public void run(@NotNull ProgressIndicator indicator) {
         try {
           indicator.setIndeterminate(false);
-          doUpdateIndicesContent(project, request, new MavenProgressIndicator(project, indicator, null));
+          doUpdateIndicesContent(project, request, new MavenProgressIndicator(null, indicator, null));
         }
         catch (MavenProcessCanceledException ignore) {
         }
