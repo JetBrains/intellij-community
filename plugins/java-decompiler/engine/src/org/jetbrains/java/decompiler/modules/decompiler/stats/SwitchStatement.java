@@ -65,6 +65,75 @@ public final class SwitchStatement extends Statement {
     guards.put(statement, guard);
   }
 
+
+  /**
+   * Removes the specified case statement from the switch statement.
+   *
+   * @param statement the statement to be removed
+   */
+  public void removeCaseStatement(@NotNull Statement statement) {
+    stats.removeWithKey(statement.id);
+    int caseIndex = caseStatements.indexOf(statement);
+    if (caseIndex < 0) {
+      return;
+    }
+    caseStatements.remove(caseIndex);
+    caseEdges.remove(caseIndex);
+    caseValues.remove(caseIndex);
+    for (StatEdge edge : statement.getAllSuccessorEdges()) {
+      edge.getDestination().removePredecessor(edge);
+    }
+    for (StatEdge edge : statement.getAllPredecessorEdges()) {
+      edge.getSource().removeSuccessor(edge);
+    }
+  }
+
+
+  /**
+   * Duplicates a case statement within a switch statement.
+   * Labels are not copied
+   *
+   * @param currentStatement The current case statement to duplicate.
+   * @return The index of the duplicated case statement.
+   *
+   */
+  public int duplicateCaseStatement(@NotNull Statement currentStatement) {
+    Statement dummy = currentStatement.getSimpleCopy();
+    int statIndex = stats.indexOf(currentStatement);
+    if (statIndex < 0) {
+      return statIndex;
+    }
+    stats.addWithKeyAndIndex(statIndex + 1, dummy, dummy.id);
+
+    int caseIndex = caseStatements.indexOf(currentStatement);
+    caseStatements.add(caseIndex + 1, dummy);
+    List<@Nullable Exprent> toCopyValues = caseValues.get(caseIndex);
+    caseValues.add(caseIndex + 1, toCopyValues);
+    List<StatEdge> previousEdges = caseEdges.get(caseIndex);
+    List<StatEdge> toCopyEdges = new ArrayList<>();
+    for (StatEdge previousEdge : previousEdges) {
+      StatEdge edge = previousEdge.copy();
+      edge.setDestination(dummy);
+      toCopyEdges.add(edge);
+    }
+    caseEdges.add(caseIndex + 1, toCopyEdges);
+
+    for (StatEdge edge : currentStatement.getAllPredecessorEdges()) {
+      StatEdge copy = edge.copy();
+      copy.setDestination(dummy);
+      copy.getSource().addSuccessor(copy);
+    }
+
+    for (StatEdge edge : currentStatement.getAllSuccessorEdges()) {
+      StatEdge copy = edge.copy();
+      copy.setSource(dummy);
+      dummy.addSuccessor(copy);
+    }
+
+    dummy.setParent(this);
+    return caseIndex + 1;
+  }
+
   @Nullable
   public static Statement isHead(@NotNull Statement head) {
     if (head.type == StatementType.BASIC_BLOCK && head.getLastBasicType() == StatementType.SWITCH) {
@@ -148,7 +217,8 @@ public final class SwitchStatement extends Statement {
       }
       //example:
       //case 0: break
-      if (canBeRule && stat instanceof BasicBlockStatement blockStatement && blockStatement.getBlock().getSeq().isEmpty() && stat.getExprents().isEmpty()) {
+      if (canBeRule && stat instanceof BasicBlockStatement blockStatement && blockStatement.getBlock().getSeq().isEmpty() &&
+          (stat.getExprents() == null || stat.getExprents().isEmpty())) {
         buf.append("{ }").appendLineSeparator();
         tracer.incrementCurrentSourceLine();
       }

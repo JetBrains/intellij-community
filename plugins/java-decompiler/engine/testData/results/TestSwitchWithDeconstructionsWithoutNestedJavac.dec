@@ -1,0 +1,256 @@
+package pkg;
+
+public class TestSwitchWithDeconstructionsWithoutNestedJavac {
+   public static void main(String[] args) {
+   }// 6
+
+   public static void testStringString(Object o) {
+      switch (o) {// 13
+         case R1(String var4, String s2):
+            if (s2.isEmpty()) {// 15
+               System.out.println("2");// 16
+            }
+            break;
+         default:
+            System.out.println("3");// 19
+            break;
+      }
+
+      System.out.println("1");// 21
+   }
+
+   public static void testStringObjectWhen(Object o) {
+      switch (o) {// 25
+         case R1(String s1, Object var10) when s1.hashCode() == 3:// 26
+            if (s1.hashCode() == 1) {// 27
+               System.out.println("2");// 28
+               System.out.println("2");// 29
+               System.out.println("2");// 30
+            }
+            break;
+         default:
+            System.out.println("3");// 33
+            break;
+      }
+
+      System.out.println("1");// 35
+   }
+
+   public static void testStringObject(Object o) {
+      label34:
+      switch (o) {// 39
+         case R1(String var4, Object var10) when var4.isEmpty():// 41
+            System.out.println("1");// 42
+         default:
+            System.out.println("3");// 45
+            break;
+      }
+
+      System.out.println("1");// 47
+   }
+
+   public static void testObjectString(Object o) {
+      switch (o) {// 51
+         case R1(Object s1, String var5):
+            if (s1.hashCode() == 1) {// 53
+               System.out.println("1");// 54
+            }
+            break;
+         default:
+            System.out.println("3");// 57
+            break;
+      }
+
+      System.out.println("1");// 59
+   }
+
+   public static void testObjectObject(Object o) {
+      switch (o) {// 63
+         case R1(Object var6, Object var10):
+            if (var6.hashCode() == 1) {// 65
+               System.out.println("1");// 66
+            }
+            break;
+         default:
+            System.out.println("3");// 69
+      }
+
+      System.out.println("1");// 71
+   }
+
+   static record R1(Object o, Object o2) {
+      R1(Object o, Object o2) {
+         this.o = o;
+         this.o2 = o2;
+      }
+
+      public Object o() {
+         return this.o;
+      }
+
+      public Object o2() {
+         return this.o2;// 8
+      }
+   }
+}
+
+class 'pkg/TestSwitchWithDeconstructionsWithoutNestedJavac' {
+   method 'main ([Ljava/lang/String;)V' {
+      0      4
+   }
+
+   method 'testStringString (Ljava/lang/Object;)V' {
+      10      7
+      5b      9
+      5d      9
+      63      10
+      66      10
+      68      10
+      6e      14
+      71      14
+      73      14
+      76      15
+      79      18
+      7c      18
+      7e      18
+      81      19
+   }
+
+   method 'testStringObjectWhen (Ljava/lang/Object;)V' {
+      10      22
+      4a      23
+      4d      23
+      4e      23
+      58      24
+      5b      24
+      5c      24
+      5f      25
+      62      25
+      64      25
+      67      26
+      6a      26
+      6c      26
+      6f      27
+      72      27
+      74      27
+      7a      31
+      7d      31
+      7f      31
+      82      32
+      85      35
+      88      35
+      8a      35
+      8d      36
+   }
+
+   method 'testStringObject (Ljava/lang/Object;)V' {
+      10      40
+      50      41
+      58      42
+      5b      42
+      5d      42
+      63      44
+      66      44
+      68      44
+      6b      45
+      6e      48
+      71      48
+      73      48
+      76      49
+   }
+
+   method 'testObjectString (Ljava/lang/Object;)V' {
+      10      52
+      50      54
+      52      54
+      55      54
+      59      55
+      5c      55
+      5e      55
+      64      59
+      67      59
+      69      59
+      6c      60
+      6f      63
+      72      63
+      74      63
+      77      64
+   }
+
+   method 'testObjectObject (Ljava/lang/Object;)V' {
+      10      67
+      3f      69
+      42      69
+      43      69
+      46      70
+      49      70
+      4b      70
+      51      74
+      54      74
+      56      74
+      59      77
+      5c      77
+      5e      77
+      61      78
+   }
+}
+
+class 'pkg/TestSwitchWithDeconstructionsWithoutNestedJavac$R1' {
+   method '<init> (Ljava/lang/Object;Ljava/lang/Object;)V' {
+      6      82
+      b      83
+      e      84
+   }
+
+   method 'o ()Ljava/lang/Object;' {
+      1      87
+      4      87
+   }
+
+   method 'o2 ()Ljava/lang/Object;' {
+      1      91
+      4      91
+   }
+}
+
+Lines mapping:
+6 <-> 5
+8 <-> 92
+13 <-> 8
+15 <-> 10
+16 <-> 11
+19 <-> 15
+21 <-> 19
+25 <-> 23
+26 <-> 24
+27 <-> 25
+28 <-> 26
+29 <-> 27
+30 <-> 28
+33 <-> 32
+35 <-> 36
+39 <-> 41
+41 <-> 42
+42 <-> 43
+45 <-> 45
+47 <-> 49
+51 <-> 53
+53 <-> 55
+54 <-> 56
+57 <-> 60
+59 <-> 64
+63 <-> 68
+65 <-> 70
+66 <-> 71
+69 <-> 75
+71 <-> 78
+Not mapped:
+14
+22
+36
+40
+48
+52
+60
+64
+72

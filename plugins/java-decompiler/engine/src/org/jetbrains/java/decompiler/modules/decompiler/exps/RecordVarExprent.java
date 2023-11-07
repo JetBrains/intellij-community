@@ -2,6 +2,7 @@
 package org.jetbrains.java.decompiler.modules.decompiler.exps;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
 import org.jetbrains.java.decompiler.util.TextBuffer;
 
@@ -84,5 +85,21 @@ public class RecordVarExprent extends VarExprent {
 
   public List<RecordVarExprent> getComponents() {
     return new ArrayList<>(components);
+  }
+
+  /**
+   * Retrieves the direct component of a RecordVarExprent that equals the provided Exprent.
+   *
+   * @param exprent the Exprent to match
+   * @return the direct component of the RecordVarExprent that matches the provided Exprent, or null if no match is found
+   */
+  @Nullable
+  public RecordVarExprent getDirectComponent(@Nullable Exprent exprent) {
+    for (RecordVarExprent component : components) {
+      if (component.equals(exprent)) {
+        return component;
+      }
+    }
+    return null;
   }
 }
