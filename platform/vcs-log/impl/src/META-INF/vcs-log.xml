@@ -82,7 +82,7 @@
 
     <virtualFileSystem key="vcs-log" implementationClass="com.intellij.vcs.log.ui.editor.VcsLogVirtualFileSystem"/>
     <fileIconProvider implementation="com.intellij.vcs.log.ui.editor.VcsLogIconProvider"/>
-    <fileEditorProvider implementation="com.intellij.vcs.log.ui.editor.VcsLogEditorProvider" fileType="VcsLog"/>
+    <fileEditorProvider id="VcsLogEditor" implementation="com.intellij.vcs.log.ui.editor.VcsLogEditorProvider" fileType="VcsLog"/>
     <editorTabTitleProvider implementation="com.intellij.vcs.log.ui.editor.DefaultVcsLogFileTabTitleProvider"/>
     <openTelemetryExporterProvider implementation="com.intellij.vcs.log.statistics.VcsLogTelemetryExporter"/>
   </extensions>

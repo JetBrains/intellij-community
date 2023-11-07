@@ -166,7 +166,7 @@
     <completion.contributor language="Markdown"
                             implementationClass="org.intellij.plugins.markdown.editor.MarkdownCompletionContributor"/>
 
-    <fileEditorProvider implementation="org.intellij.plugins.markdown.ui.preview.MarkdownSplitEditorProvider"/>
+    <fileEditorProvider id="markdown-preview-editor" implementation="org.intellij.plugins.markdown.ui.preview.MarkdownSplitEditorProvider"/>
     <textEditorCustomizer implementation="org.intellij.plugins.markdown.ui.floating.AddFloatingToolbarTextEditorCustomizer"/>
 
     <customFileDropHandler implementation="org.intellij.plugins.markdown.fileActions.importFrom.docx.MarkdownDocxFileDropHandler"/>

@@ -166,8 +166,20 @@ object ExtensionProcessingHelper {
 }
 
 @ApiStatus.Internal
-inline fun <T : Any> ExtensionPointName<T>.findByIdOrFromInstance(id: String, idGetter: (T) -> String?): T? {
+fun <T : Any> ExtensionPointName<T>.findByIdOrFromInstance(id: String, idGetter: (T) -> String?): T? {
   val point = point as ExtensionPointImpl<T>
-  return point.sortedAdapters.firstOrNull { it.orderId == id }?.createInstance(point.componentManager)
-         ?: point.firstOrNull { idGetter(it) == id }
+  point.sortedAdapters.firstOrNull { it.orderId == id }?.let { adapter ->
+    return adapter.createInstance(point.componentManager)
+  }
+
+  // check only adapters without id
+  for (adapter in point.sortedAdapters) {
+    if (adapter.orderId == null) {
+      val instance = adapter.createInstance<T>(point.componentManager) ?: continue
+      if (idGetter(instance) == id) {
+        return instance
+      }
+    }
+  }
+  return null
 }

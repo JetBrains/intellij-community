@@ -1546,7 +1546,7 @@
     <fileEditorProvider implementation="com.intellij.openapi.fileEditor.impl.text.PsiAwareTextEditorProvider" id="text-editor"
                         order="first"/>
 
-    <fileEditorProvider implementation="com.intellij.largeFilesEditor.editor.LargeFileEditorProvider"/>
+    <fileEditorProvider id="LargeFileEditorProvider" implementation="com.intellij.largeFilesEditor.editor.LargeFileEditorProvider"/>
     <editorNotificationProvider implementation="com.intellij.largeFilesEditor.editor.LargeFileNotificationProvider"/>
     <editorNotificationProvider implementation="com.intellij.largeFilesEditor.editor.LargeFileRegexSearchNotificationProvider"/>
     <statusBarWidgetFactory id="light.edit.large.file.encoding.widget"

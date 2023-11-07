@@ -1039,8 +1039,8 @@
     <iconLayerProvider implementation="com.intellij.ide.LockedIconLayerProvider"/>
 
     <fileEditorProvider implementation="com.intellij.openapi.fileEditor.impl.text.LargeFileEditorProvider" id="LargeFileEditor"/>
-    <fileEditorProvider implementation="com.intellij.openapi.fileEditor.impl.HTMLEditorProvider"/>
-    <fileEditorProvider implementation="com.intellij.openapi.fileEditor.impl.JComponentEditorProvider"/>
+    <fileEditorProvider id="html-editor" implementation="com.intellij.openapi.fileEditor.impl.HTMLEditorProvider"/>
+    <fileEditorProvider id="jcomponent-editor" implementation="com.intellij.openapi.fileEditor.impl.JComponentEditorProvider"/>
     <editorNotificationProvider implementation="com.intellij.openapi.fileEditor.impl.text.LargeFileNotificationProvider"/>
     <fileDocumentSynchronizationVetoer implementation="com.intellij.openapi.fileEditor.impl.LargeFileSavingVetoer"/>
 
