@@ -44,7 +44,7 @@ public abstract class Language extends UserDataHolderBase {
   public static final Language[] EMPTY_ARRAY = new Language[0];
 
   private static final Object staticLock = new Object();
-  private static volatile PersistentMap<Class<? extends Language>, Language> registeredLanguages = persistentHashMapOf();
+  private static volatile PersistentMap<Class<? extends Language>, @NotNull Language> registeredLanguages = persistentHashMapOf();
   private static volatile PersistentMap<String, PersistentList<Language>> registeredMimeTypes = persistentHashMapOf();
   private static volatile PersistentMap<String, Language> registeredIds = persistentHashMapOf();
 

@@ -62,6 +62,7 @@ public class UnusedImportInspection extends GlobalSimpleInspectionTool {
     return false;
   }
 
+  @NotNull
   public static @Nls String getDisplayNameText() {
     return JavaAnalysisBundle.message("unused.import.display.name");
   }
