@@ -8,3 +8,4 @@ fun bar() {
 
 interface Runnable
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.LetImplementInterfaceFix
+/* IGNORE_K2 */

@@ -16863,6 +16863,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                 runTest("testData/quickfix/typeMismatch/functionReflectType.kt");
             }
 
+            @TestMetadata("functionReflectTypeFir.kt")
+            public void testFunctionReflectTypeFir() throws Exception {
+                runTest("testData/quickfix/typeMismatch/functionReflectTypeFir.kt");
+            }
+
             @TestMetadata("functionType.kt")
             public void testFunctionType() throws Exception {
                 runTest("testData/quickfix/typeMismatch/functionType.kt");
