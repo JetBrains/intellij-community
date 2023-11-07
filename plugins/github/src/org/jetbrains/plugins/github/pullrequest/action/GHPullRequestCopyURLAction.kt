@@ -4,6 +4,6 @@ package org.jetbrains.plugins.github.pullrequest.action
 import com.intellij.openapi.ide.CopyPasteManager
 import java.awt.datatransfer.StringSelection
 
-class GHPullRequestCopyURLAction : GHOPullRequestURLAction() {
+class GHPullRequestCopyURLAction : GHPullRequestURLAction() {
   override fun handleURL(pullRequestUrl: String) = CopyPasteManager.getInstance().setContents(StringSelection(pullRequestUrl))
 }

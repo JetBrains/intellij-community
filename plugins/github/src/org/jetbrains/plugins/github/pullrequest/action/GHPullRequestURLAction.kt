@@ -6,7 +6,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.project.DumbAwareAction
 
-abstract class GHOPullRequestURLAction : DumbAwareAction() {
+abstract class GHPullRequestURLAction : DumbAwareAction() {
   final override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   final override fun update(e: AnActionEvent) {
