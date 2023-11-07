@@ -42,7 +42,7 @@ final class CodeFoldingOptionsTopHitProvider implements OptionsSearchTopHitProvi
         @Override
         public void setOptionState(boolean enabled) {
           instance.setFoldingOutlineShown(enabled);
-          ApplicationManager.getApplication().invokeLater(() -> CodeFoldingConfigurable.applyCodeFoldingSettingsChanges(), ModalityState.nonModal());
+          ApplicationManager.getApplication().invokeLater(() -> CodeFoldingConfigurableKt.applyCodeFoldingSettingsChanges(), ModalityState.nonModal());
         }
       }
     );

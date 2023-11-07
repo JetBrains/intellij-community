@@ -1,7 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.application.options.editor.CodeFoldingConfigurable;
+import com.intellij.application.options.editor.CodeFoldingConfigurableKt;
 import com.intellij.codeHighlighting.*;
 import com.intellij.codeInsight.EditorInfo;
 import com.intellij.codeInsight.daemon.*;
@@ -2192,7 +2193,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       boolean savedValue = settings.isCollapseMethods();
       try {
         settings.setCollapseMethods(true);
-        CodeFoldingConfigurable.applyCodeFoldingSettingsChanges();
+        CodeFoldingConfigurableKt.applyCodeFoldingSettingsChanges();
         waitForDaemon();
         checkFoldingState("[FoldRegion +(22:27), placeholder='{}']");
       }
