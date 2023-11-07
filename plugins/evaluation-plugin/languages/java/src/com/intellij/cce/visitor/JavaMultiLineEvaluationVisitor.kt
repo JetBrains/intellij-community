@@ -36,8 +36,8 @@ class JavaMultiLineEvaluationVisitor : EvaluationVisitor, JavaRecursiveElementVi
 
   override fun visitCodeBlock(block: PsiCodeBlock) {
     codeFragment?.let { file ->
-      val start = block.firstChild.textRange.startOffset
-      val end = block.lastChild.textRange.endOffset
+      val start = block.statements[0].textRange.startOffset
+      val end = block.statements[block.statementCount - 1].textRange.endOffset
       val text = file.text.subSequence(start, end)
       file.addChild(CodeToken(text.toString(), start, METHOD_PROPERTIES))
     }
