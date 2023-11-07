@@ -52,11 +52,15 @@ abstract class MutableCodeReviewChangeListViewModel(parentCs: CoroutineScope) : 
   private val _changesSelection = MutableStateFlow<ChangesSelection?>(null)
   override val changesSelection: StateFlow<ChangesSelection?> = _changesSelection.asStateFlow()
 
+  protected var selectedCommit: String? = null
+
   private val stateGuard = Mutex()
 
-  fun updatesChanges(changes: List<Change>, changeToSelect: Change? = null) {
+  fun updatesChanges(changesContainer: CodeReviewChangesContainer, commit: String?, changeToSelect: Change? = null) {
     cs.launch {
       stateGuard.withLock {
+        selectedCommit = commit
+        val changes = changesContainer.getChanges(commit)
         if (changeToSelect == null) {
           _changesSelection.value = ChangesSelection.Fuzzy(changes)
           _updates.emit(Update.WithSelectAll(changes))

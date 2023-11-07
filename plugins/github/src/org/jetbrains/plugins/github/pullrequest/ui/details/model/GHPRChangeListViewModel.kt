@@ -12,9 +12,12 @@ import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ChangesUtil
 import com.intellij.openapi.vcs.changes.DiffPreview
+import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.vcsUtil.VcsFileUtil.relativePath
 import git4idea.repo.GitRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -22,6 +25,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.github.api.data.pullrequest.isViewed
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRDiffRequestChainProducer
@@ -38,6 +42,18 @@ interface GHPRChangeListViewModel : CodeReviewChangeListViewModel, DiffPreview {
   fun canShowDiff(): Boolean
   fun showDiff()
 
+  /**
+   * Tests if the viewed state matches for all files
+   */
+  @RequiresEdt
+  fun isViewedStateForAllFiles(files: Iterable<FilePath>, viewed: Boolean): Boolean?
+
+  /**
+   * Set a viewed state for all files
+   */
+  @RequiresEdt
+  fun setViewedState(files: Iterable<FilePath>, viewed: Boolean)
+
   companion object {
     val DATA_KEY = DataKey.create<GHPRChangeListViewModel>("GitHub.PullRequest.Details.Changes.List.ViewModel")
   }
@@ -51,10 +67,10 @@ internal class GHPRChangeListViewModelImpl(
 ) : GHPRChangeListViewModel, MutableCodeReviewChangeListViewModel(parentCs) {
   private val repository: GitRepository get() = dataContext.repositoryDataService.remoteCoordinates.repository
 
-  private var commitSelected: Boolean = false
-
   private val _isUpdating = MutableStateFlow(false)
   override val isUpdating: StateFlow<Boolean> = _isUpdating.asStateFlow()
+
+  private val viewedStateData = dataProvider.viewedStateData
 
   private val diffRequestProducer: GHPRDiffRequestChainProducer =
     object : GHPRDiffRequestChainProducer(project,
@@ -64,10 +80,10 @@ internal class GHPRChangeListViewModelImpl(
                                           dataContext.securityService.ghostUser,
                                           dataContext.securityService.currentUser) {
 
-      private val viewedStateSupport = GHPRViewedStateDiffSupportImpl(repository, dataProvider.viewedStateData)
+      private val viewedStateSupport = GHPRViewedStateDiffSupportImpl(repository, viewedStateData)
 
       override fun createCustomContext(change: Change): Map<Key<*>, Any> {
-        if (commitSelected) return emptyMap()
+        if (selectedCommit != null) return emptyMap()
 
         return mapOf(
           GHPRViewedStateDiffSupport.KEY to viewedStateSupport,
@@ -77,7 +93,7 @@ internal class GHPRChangeListViewModelImpl(
     }
 
   override val progressModel: GHPRProgressTreeModel =
-    GHPRProgressTreeModel(repository, dataProvider.reviewData, dataProvider.viewedStateData) { !commitSelected }.also {
+    GHPRProgressTreeModel(repository, dataProvider.reviewData, viewedStateData) { selectedCommit == null }.also {
       Disposer.register(cs.nestedDisposable(), it)
     }
 
@@ -124,5 +140,26 @@ internal class GHPRChangeListViewModelImpl(
   override fun showDiff() {
     val requestChain = dataProvider.diffRequestModel.requestChain ?: return
     DiffManager.getInstance().showDiff(project, requestChain, DiffDialogHints.DEFAULT)
+  }
+
+  override fun isViewedStateForAllFiles(files: Iterable<FilePath>, viewed: Boolean): Boolean? {
+    if (selectedCommit != null) return null
+    val state = viewedStateData.getViewedState() ?: return null
+    return files.all {
+      val relativePath = relativePath(repository.root, it)
+      (state[relativePath]?.isViewed() ?: false) == viewed
+    }
+  }
+
+  override fun setViewedState(files: Iterable<FilePath>, viewed: Boolean) {
+    //TODO: check API for batch update
+    val state = viewedStateData.getViewedState() ?: return
+    files.asSequence().map {
+      relativePath(repository.root, it)
+    }.filter {
+      state[it]?.isViewed() != viewed
+    }.forEach {
+      viewedStateData.updateViewedState(it, viewed)
+    }
   }
 }

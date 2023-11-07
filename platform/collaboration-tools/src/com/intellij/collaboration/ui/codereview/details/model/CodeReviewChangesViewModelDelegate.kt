@@ -42,7 +42,7 @@ class CodeReviewChangesViewModelDelegate<T : MutableCodeReviewChangeListViewMode
         fun updateCommit(commit: String?, change: Change? = null) {
           val existingCommit = commit.takeIf { commitsSet.contains(it) }
           _selectedCommit.value = existingCommit
-          vm.updatesChanges(changes.getChanges(existingCommit), change)
+          vm.updatesChanges(changes, existingCommit, change)
         }
 
         updateCommit(initialCommit)
@@ -158,5 +158,5 @@ class CodeReviewChangesContainer(val summaryChanges: List<Change>,
     }
 }
 
-private fun CodeReviewChangesContainer.getChanges(commit: String?): List<Change> =
+fun CodeReviewChangesContainer.getChanges(commit: String?): List<Change> =
   if (commit == null) summaryChanges else changesByCommits[commit].orEmpty()

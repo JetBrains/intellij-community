@@ -4,16 +4,12 @@ package org.jetbrains.plugins.github.pullrequest.action
 import com.intellij.diff.tools.combined.CombinedDiffModel
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.vcs.FilePath
-import git4idea.repo.GitRepository
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
 import org.jetbrains.plugins.github.pullrequest.ui.list.GHPRListController
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.model.GHPRToolWindowProjectViewModel
 
 object GHPRActionKeys {
-  @JvmStatic
-  val GIT_REPOSITORY = DataKey.create<GitRepository>("org.jetbrains.plugins.github.pullrequest.git.repository")
-
   @JvmStatic
   val PULL_REQUEST_DATA_PROVIDER = DataKey.create<GHPRDataProvider>("org.jetbrains.plugins.github.pullrequest.data.provider")
 

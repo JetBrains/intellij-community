@@ -23,8 +23,8 @@ internal class GHPRViewedStateDataProviderImpl(
 
   override fun loadViewedState(): CompletableFuture<Map<String, GHPullRequestFileViewedState>> = viewedState.value
 
-  override fun getViewedState(): Map<String, GHPullRequestFileViewedState> {
-    if (!viewedState.isCached) return emptyMap()
+  override fun getViewedState(): Map<String, GHPullRequestFileViewedState>? {
+    if (!viewedState.isCached) return null
 
     return runCatching { viewedState.value.getNow(emptyMap()) }.getOrDefault(emptyMap())
   }
