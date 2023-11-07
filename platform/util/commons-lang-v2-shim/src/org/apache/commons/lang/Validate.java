@@ -7,5 +7,5 @@ package org.apache.commons.lang;
  * Or consider using the corresponding API from IJ Platform.
  */
 @Deprecated(forRemoval = true)
-public class NumberUtils extends org.apache.commons.lang3.math.NumberUtils {
+public class Validate extends org.apache.commons.lang3.Validate {
 }
