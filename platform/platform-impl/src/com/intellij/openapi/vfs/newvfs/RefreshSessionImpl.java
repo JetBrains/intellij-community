@@ -22,6 +22,7 @@ import com.intellij.openapi.vfs.newvfs.monitoring.VfsUsageCollector;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.progress.CancellationUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -257,7 +258,7 @@ final class RefreshSessionImpl extends RefreshSession {
   }
 
   void waitFor() {
-    mySemaphore.waitFor();
+    CancellationUtil.waitForMaybeCancellable(mySemaphore);
   }
 
   @NotNull ModalityState getModality() {
