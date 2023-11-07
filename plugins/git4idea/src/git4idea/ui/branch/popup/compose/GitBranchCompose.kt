@@ -49,7 +49,7 @@ internal fun GitBranchCompose(
       }
     ) {
       when {
-        isFavorite && branchVm.isCurrent -> Icon("expui/vcs/currentBranchFavoriteLabel.svg", null, ExpUiIcons::class.java)
+        isFavorite && branchVm.isCurrent && !selected -> Icon("expui/vcs/currentBranchFavoriteLabel.svg", null, ExpUiIcons::class.java)
         isFavorite -> Icon("nodes/favorite.svg", null, AllIcons::class.java)
         selected -> Icon("nodes/notFavoriteOnHover.svg", null, AllIcons::class.java)
         branchVm.isCurrent -> Icon("expui/vcs/currentBranchLabel.svg", null, ExpUiIcons::class.java)
