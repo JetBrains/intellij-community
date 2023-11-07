@@ -7,8 +7,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import org.intellij.plugins.markdown.editor.isMarkdownScratchFile
 import org.intellij.plugins.markdown.lang.hasMarkdownType
+import org.jetbrains.annotations.ApiStatus
 
-internal class MarkdownPreviewFileEditorProvider: WeighedFileEditorProvider() {
+@ApiStatus.Internal
+class MarkdownPreviewFileEditorProvider: WeighedFileEditorProvider() {
   override fun accept(project: Project, file: VirtualFile): Boolean {
     if (!MarkdownHtmlPanelProvider.hasAvailableProviders()) {
       return false

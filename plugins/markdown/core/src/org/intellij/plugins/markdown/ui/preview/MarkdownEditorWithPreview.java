@@ -35,6 +35,7 @@ public final class MarkdownEditorWithPreview extends TextEditorWithPreview {
       Layout.SHOW_EDITOR_AND_PREVIEW,
       !MarkdownSettings.getInstance(ProjectUtil.currentOrDefaultProject(editor.getEditor().getProject())).isVerticalSplit()
     );
+    (new RuntimeException("markdown editor creation trace")).printStackTrace(System.out);
 
     editor.putUserData(PARENT_SPLIT_EDITOR_KEY, this);
     preview.putUserData(PARENT_SPLIT_EDITOR_KEY, this);
