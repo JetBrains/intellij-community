@@ -14,7 +14,6 @@ data class SettingsPreferences(
   var laf: Boolean = true,
   var syntaxScheme: Boolean = true,
   var keymap: Boolean = true,
-  var otherSettings: Boolean = true,
   var recentProjects: Boolean = true,
   var plugins: Boolean = true
 ) {
