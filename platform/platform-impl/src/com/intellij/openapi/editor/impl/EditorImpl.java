@@ -1981,39 +1981,48 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     if (clip == null) {
       return;
     }
+
     Color bg = isReleased ? getDisposedBackground() : getBackgroundColor();
     g.setColor(bg);
     g.fillRect(clip.x, clip.y, clip.width, clip.height);
   }
 
   void paint(@NotNull Graphics2D g) {
-    ReadAction.run(() -> {
-      if (g.getClipBounds() == null) return;
-      BufferedImage buffer = Registry.is("editor.dumb.mode.available") ? getUserData(BUFFER) : null;
-      if (buffer != null) {
-        Rectangle rect = getContentComponent().getVisibleRect();
-        StartupUiUtil.drawImage(g, buffer, null, rect.x, rect.y);
-        return;
-      }
-      if (!shouldPaint()) {
-        fillPlaceholder(g);
-        return;
-      }
+    if (g.getClipBounds() == null) {
+      return;
+    }
+
+    BufferedImage buffer = Registry.is("editor.dumb.mode.available", true) ? getUserData(BUFFER) : null;
+    if (buffer != null) {
+      Rectangle rect = getContentComponent().getVisibleRect();
+      StartupUiUtil.drawImage(g, buffer, null, rect.x, rect.y);
+      return;
+    }
+
+    if (!shouldPaint()) {
+      fillPlaceholder(g);
+      return;
+    }
+
+    ApplicationManager.getApplication().runReadAction(() -> {
       if (myUpdateCursor && !myPurePaintingMode) {
         setCursorPosition();
         myUpdateCursor = false;
       }
-      if (myProject != null && myProject.isDisposed()) return;
+
+      if (myProject != null && myProject.isDisposed()) {
+        return;
+      }
 
       myView.paint(g);
-
-      boolean isBackgroundImageSet = IdeBackgroundUtil.isEditorBackgroundImageSet(myProject);
-      if (myBackgroundImageSet != isBackgroundImageSet) {
-        myBackgroundImageSet = isBackgroundImageSet;
-        updateOpaque(myScrollPane.getHorizontalScrollBar());
-        updateOpaque(myScrollPane.getVerticalScrollBar());
-      }
     });
+
+    boolean isBackgroundImageSet = IdeBackgroundUtil.isEditorBackgroundImageSet(myProject);
+    if (myBackgroundImageSet != isBackgroundImageSet) {
+      myBackgroundImageSet = isBackgroundImageSet;
+      updateOpaque(myScrollPane.getHorizontalScrollBar());
+      updateOpaque(myScrollPane.getVerticalScrollBar());
+    }
   }
 
   @NotNull Color getDisposedBackground() {
