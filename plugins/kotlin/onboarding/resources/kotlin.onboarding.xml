@@ -7,6 +7,14 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceImplementation="org.jetbrains.kotlin.onboarding.KotlinNewUserTracker"/>
-    <feedback.idleFeedbackSurvey implementation="org.jetbrains.kotlin.onboarding.FeedbackSurvey"/>
+    <feedback.idleFeedbackSurvey implementation="org.jetbrains.kotlin.onboarding.OnboardingFeedbackSurvey"/>
   </extensions>
+  <actions>
+    <group id="OnboardingKotlin" internal="true">
+      <action id="org.jetbrains.kotlin.onboarding.ShowKotlinOnboardingFeedbackDialogAction"
+              class="org.jetbrains.kotlin.onboarding.ShowKotlinOnboardingFeedbackDialogAction" internal="true"/>
+      <add-to-group group-id="FeedbackDialogGroup" anchor="last"/>
+    </group>
+  </actions>
+
 </idea-plugin>

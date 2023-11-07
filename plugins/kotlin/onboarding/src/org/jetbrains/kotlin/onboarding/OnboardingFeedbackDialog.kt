@@ -8,7 +8,7 @@ import com.intellij.platform.feedback.dialog.showFeedbackSystemInfoDialog
 import com.intellij.platform.feedback.dialog.uiBlocks.*
 import com.intellij.platform.feedback.impl.notification.ThanksForFeedbackNotification
 
-class FeedbackDialog(
+class OnboardingFeedbackDialog(
     project: Project?,
     forTest: Boolean
 ) : BlockBasedFeedbackDialog<CommonFeedbackSystemData>(project, forTest) {
@@ -28,14 +28,20 @@ class FeedbackDialog(
     override val myTitle: String = FeedbackBundle.message("dialog.top.title")
     override val myBlocks: List<FeedbackBlock> = listOf(
         TopLabelBlock(FeedbackBundle.message("dialog.title")),
+        DescriptionBlock(FeedbackBundle.message("dialog.description")),
         RatingBlock(
             FeedbackBundle.message("dialog.satisfaction.rating.label"),
             "satisfaction_rating"
         ),
         ComboBoxBlock(
             FeedbackBundle.message("dialog.previous.language.label"),
-            List(14) { FeedbackBundle.message("dialog.previous.language.${it + 1}") },
+            List(13) { FeedbackBundle.message("dialog.previous.language.${it + 1}") },
             "previous_language"
+        ),
+        ComboBoxBlock(
+            FeedbackBundle.message("dialog.previous.ide.label"),
+            List(6) { FeedbackBundle.message("dialog.previous.ide.${it + 1}") },
+            "previous_ide"
         ),
         TextAreaBlock(
             FeedbackBundle.message("dialog.suggestion.to.improve.label"),

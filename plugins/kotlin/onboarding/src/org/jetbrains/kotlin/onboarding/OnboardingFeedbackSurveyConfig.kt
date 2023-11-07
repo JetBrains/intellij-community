@@ -10,7 +10,7 @@ import com.intellij.platform.feedback.impl.notification.RequestFeedbackNotificat
 import com.intellij.util.PlatformUtils
 import kotlinx.datetime.LocalDate
 
-class FeedbackSurveyConfig : InIdeFeedbackSurveyConfig {
+class OnboardingFeedbackSurveyConfig : InIdeFeedbackSurveyConfig {
 
     override val surveyId: String = "kotlin_onboarding"
     override val lastDayOfFeedbackCollection: LocalDate = LocalDate(2024, 1, 31)
@@ -32,7 +32,7 @@ class FeedbackSurveyConfig : InIdeFeedbackSurveyConfig {
     }
 
     override fun createFeedbackDialog(project: Project, forTest: Boolean): BlockBasedFeedbackDialog<out SystemDataJsonSerializable> {
-        return FeedbackDialog(project, forTest)
+        return OnboardingFeedbackDialog(project, forTest)
     }
 
     override fun createNotification(project: Project, forTest: Boolean): RequestFeedbackNotification {
