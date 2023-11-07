@@ -28,8 +28,8 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.InitialVfsRefreshService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectInitialActivitiesNotifier;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Factory;
@@ -859,7 +859,7 @@ public class ChangesViewManager implements ChangesViewEx,
         List<FilePath> unversionedFiles = changeListManager.getUnversionedFilesPaths();
 
         boolean shouldShowUntrackedLoading = unversionedFiles.isEmpty() &&
-                                             !myProject.getService(ProjectInitialActivitiesNotifier.class).isInitialVfsRefreshFinished() &&
+                                             !myProject.getService(InitialVfsRefreshService.class).isInitialVfsRefreshFinished() &&
                                              changeListManager.isUnversionedInUpdateMode();
 
         boolean skipSingleDefaultChangeList = Registry.is("vcs.skip.single.default.changelist") ||

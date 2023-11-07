@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes
 
 import com.intellij.configurationStore.OLD_NAME_CONVERTER
@@ -12,9 +12,9 @@ import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
+import com.intellij.openapi.project.InitialVfsRefreshService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectCloseListener
-import com.intellij.openapi.project.ProjectInitialActivitiesNotifier
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vcs.*
 import com.intellij.openapi.vcs.actions.VcsContextFactory
@@ -55,7 +55,7 @@ class VcsIgnoreManagerImpl(private val project: Project) : VcsIgnoreManager, Dis
 
     ignoreRefreshQueue.queue(DisposableUpdate.createDisposable(this, "wait Project opening activities scan") {
       runBlockingCancellable {
-        project.service<ProjectInitialActivitiesNotifier>().awaitInitialVfsRefreshFinished()
+        project.service<InitialVfsRefreshService>().awaitInitialVfsRefreshFinished()
       }
     })
 

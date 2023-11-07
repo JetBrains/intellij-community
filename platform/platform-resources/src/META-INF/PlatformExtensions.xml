@@ -528,8 +528,6 @@
 
     <projectService serviceInterface="com.intellij.openapi.project.DumbService"
                     serviceImplementation="com.intellij.openapi.project.DumbServiceImpl"/>
-    <projectService serviceInterface="com.intellij.openapi.project.ProjectInitialActivitiesNotifier"
-                    serviceImplementation="com.intellij.openapi.project.ProjectInitialActivitiesNotifierImpl"/>
     <postStartupActivity implementation="com.intellij.openapi.project.SmartModeScheduler$SmartModeSchedulerStartupActivity" order="last"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.project.DumbModeBlockedFunctionalityCollector"/>
 
