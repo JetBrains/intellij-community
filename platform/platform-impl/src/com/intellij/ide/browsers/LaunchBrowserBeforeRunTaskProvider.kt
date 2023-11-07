@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.browsers
 
 import com.intellij.execution.BeforeRunTask
@@ -26,10 +26,9 @@ import org.jetbrains.concurrency.resolvedPromise
 import javax.swing.Icon
 import javax.swing.JCheckBox
 
+internal val ID: Key<LaunchBrowserBeforeRunTask> get() = Key.create("LaunchBrowser.Before.Run")
+
 internal class LaunchBrowserBeforeRunTaskProvider : BeforeRunTaskProvider<LaunchBrowserBeforeRunTask>(), DumbAware {
-  companion object {
-    val ID: Key<LaunchBrowserBeforeRunTask> = Key.create("LaunchBrowser.Before.Run")
-  }
 
   override fun getName(): @Nls String = IdeBundle.message("task.browser.launch")
 
@@ -88,11 +87,14 @@ internal class LaunchBrowserBeforeRunTaskProvider : BeforeRunTaskProvider<Launch
     return resolvedPromise(modificationCount != state.modificationCount)
   }
 
-  override fun executeTask(context: DataContext, configuration: RunConfiguration, env: ExecutionEnvironment, task: LaunchBrowserBeforeRunTask): Boolean {
+  override fun executeTask(context: DataContext,
+                           configuration: RunConfiguration,
+                           env: ExecutionEnvironment,
+                           task: LaunchBrowserBeforeRunTask): Boolean {
     val disposable = Disposer.newDisposable()
     Disposer.register(env.project, disposable)
     val executionId = env.executionId
-    env.project.messageBus.connect(disposable).subscribe(ExecutionManager.EXECUTION_TOPIC, object: ExecutionListener {
+    env.project.messageBus.connect(disposable).subscribe(ExecutionManager.EXECUTION_TOPIC, object : ExecutionListener {
       override fun processNotStarted(executorId: String, env: ExecutionEnvironment) {
         Disposer.dispose(disposable)
       }
@@ -119,13 +121,16 @@ internal class LaunchBrowserBeforeRunTaskProvider : BeforeRunTaskProvider<Launch
 internal class LaunchBrowserBeforeRunTaskState : BaseState() {
   @get:Attribute(value = "browser", converter = WebBrowserReferenceConverter::class)
   var browser: WebBrowser? by property(null) { it == null }
+
   @get:Attribute()
   var url: String? by string()
+
   @get:Attribute()
   var withDebugger: Boolean by property(false)
 }
 
-internal class LaunchBrowserBeforeRunTask : BeforeRunTask<LaunchBrowserBeforeRunTask>(LaunchBrowserBeforeRunTaskProvider.ID), PersistentStateComponent<LaunchBrowserBeforeRunTaskState> {
+internal class LaunchBrowserBeforeRunTask : BeforeRunTask<LaunchBrowserBeforeRunTask>(ID),
+                                            PersistentStateComponent<LaunchBrowserBeforeRunTaskState> {
   private var state = LaunchBrowserBeforeRunTaskState()
 
   override fun loadState(state: LaunchBrowserBeforeRunTaskState) {
