@@ -53,7 +53,7 @@ internal suspend fun runStartupWizard(isInitialStart: Job, app: Application) {
           IdeStartupWizardCollector.logInitialStartSuccess()
         }
         catch (_: TimeoutCancellationException) {
-          log.warn("Timeout on waiting for initial start, proceeding without waiting, disabling the startup flow")
+          log.warn("Timeout on waiting for initial start, proceeding the startup flow without waiting.")
           IdeStartupWizardCollector.logInitialStartTimeout()
         }
         finally {
@@ -65,15 +65,25 @@ internal suspend fun runStartupWizard(isInitialStart: Job, app: Application) {
       }
 
       log.info("Passing execution control to $wizard.")
-      span("${adapter.assignableToClassName}.run") block@{
-        withContext(Dispatchers.EDT) {
+      span("${adapter.assignableToClassName}.run") {
+        val shouldProceed = withContext(Dispatchers.EDT) block@{
           val successfulStart = com.intellij.platform.ide.bootstrap.isInitialStart
+          if (successfulStart != null && successfulStart.isCompleted && !successfulStart.isCancelled) {
+            val wasSuccessful = successfulStart.getCompleted()
+            if (!wasSuccessful) {
+              log.info("Initial start unsuccessful, terminating the wizard flow.")
+              return@block false
+            }
+          }
 
           successfulStart?.cancel()
           com.intellij.platform.ide.bootstrap.isInitialStart = null
+          true
         }
 
-        wizard.run()
+        if (shouldProceed) {
+          wizard.run()
+        }
       }
 
       // first wizard wins
