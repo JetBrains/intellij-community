@@ -52,7 +52,7 @@ abstract class CodeReviewProgressTreeModel<T> {
       }
       .filterNotNull()
       .fold(defaultState) { acc, state ->
-        NodeCodeReviewProgressState(acc.isRead && state.isRead, acc.discussionsCount + state.discussionsCount)
+        NodeCodeReviewProgressState(acc.isRead && state!!.isRead, acc.discussionsCount + state!!.discussionsCount)
       }
     stateCache[node] = calculatedState
     return calculatedState
