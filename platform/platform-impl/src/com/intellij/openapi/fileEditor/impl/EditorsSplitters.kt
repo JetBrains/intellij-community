@@ -46,7 +46,7 @@ import com.intellij.openapi.wm.impl.*
 import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.platform.fileEditor.FileEntry
 import com.intellij.platform.fileEditor.parseFileEntry
-import com.intellij.platform.fileEditor.writeComposite
+import com.intellij.platform.fileEditor.writeWindow
 import com.intellij.platform.ide.ideFingerprint
 import com.intellij.testFramework.LightVirtualFileBase
 import com.intellij.ui.*
@@ -209,7 +209,7 @@ open class EditorsSplitters internal constructor(
     }
 
     removeAll()
-    setCurrentWindowAndComposite(null)
+    setCurrentWindowAndComposite(window = null)
     // revalidate doesn't repaint correctly after "Close All"
     repaint()
   }
@@ -235,42 +235,6 @@ open class EditorsSplitters internal constructor(
     }
     catch (e: Throwable) {
       LOG.error(e)
-    }
-  }
-
-  private fun writePanel(component: Component): Element {
-    return when (component) {
-      is Splitter -> {
-        val result = Element("splitter")
-        result.setAttribute("split-orientation", if (component.orientation) "vertical" else "horizontal")
-        result.setAttribute("split-proportion", component.proportion.toString())
-        val first = Element("split-first")
-        first.addContent(writePanel(component.firstComponent))
-        val second = Element("split-second")
-        second.addContent(writePanel(component.secondComponent))
-        result.addContent(first)
-        result.addContent(second)
-        result
-      }
-      is JBTabs -> {
-        val result = Element("leaf")
-        ClientProperty.get(component.component, JBTabsImpl.SIDE_TABS_SIZE_LIMIT_KEY)?.let { limit ->
-          result.setAttribute(JBTabsImpl.SIDE_TABS_SIZE_LIMIT_KEY.toString(), limit.toString())
-        }
-        findWindowWith(component)?.let { writeWindow(result, it) }
-        result
-      }
-      else -> throw IllegalArgumentException(component.javaClass.name)
-    }
-  }
-
-  private fun writeWindow(result: Element, window: EditorWindow) {
-    val composites = window.getComposites().toList()
-    for (i in composites.indices) {
-      result.addContent(writeComposite(composite = composites.get(i),
-                                       pinned = window.isFilePinned(window.getFileAt(i)),
-                                       selectedEditor = window.selectedComposite,
-                                       project = manager.project))
     }
   }
 
@@ -726,10 +690,6 @@ open class EditorsSplitters internal constructor(
     return result
   }
 
-  internal fun findWindowWith(component: Component): EditorWindow? {
-    return ComponentUtil.getParentOfType(EditorWindowHolder::class.java, component)?.editorWindow
-  }
-
   open val isFloating: Boolean
     get() = false
 
@@ -777,6 +737,36 @@ open class EditorsSplitters internal constructor(
   }
 }
 
+internal fun findWindowWith(component: Component): EditorWindow? {
+  return ComponentUtil.getParentOfType(EditorWindowHolder::class.java, component)?.editorWindow
+}
+
+private fun writePanel(component: Component): Element {
+  return when (component) {
+    is Splitter -> {
+      val result = Element("splitter")
+      result.setAttribute("split-orientation", if (component.orientation) "vertical" else "horizontal")
+      result.setAttribute("split-proportion", component.proportion.toString())
+      val first = Element("split-first")
+      first.addContent(writePanel(component.firstComponent))
+      val second = Element("split-second")
+      second.addContent(writePanel(component.secondComponent))
+      result.addContent(first)
+      result.addContent(second)
+      result
+    }
+    is JBTabs -> {
+      val result = Element("leaf")
+      ClientProperty.get(component.component, JBTabsImpl.SIDE_TABS_SIZE_LIMIT_KEY)?.let { limit ->
+        result.setAttribute(JBTabsImpl.SIDE_TABS_SIZE_LIMIT_KEY.toString(), limit.toString())
+      }
+      findWindowWith(component)?.let { writeWindow(result = result, window = it) }
+      result
+    }
+    else -> throw IllegalArgumentException(component.javaClass.name)
+  }
+}
+
 private class MyFocusTraversalPolicy(private val splitters: EditorsSplitters) : IdeFocusTraversalPolicy() {
   override fun getDefaultComponent(focusCycleRoot: Container): Component? {
     return splitters.currentCompositeFlow.value?.focusComponent?.let {
@@ -801,8 +791,7 @@ private class MyTransferHandler(private val splitters: EditorsSplitters) : Trans
   override fun canImport(comp: JComponent, transferFlavors: Array<DataFlavor>) = fileDropHandler.canHandleDrop(transferFlavors)
 }
 
-@Internal
-class EditorSplitterStateSplitter(
+internal class EditorSplitterStateSplitter(
   @JvmField val firstSplitter: EditorSplitterState,
   @JvmField val secondSplitter: EditorSplitterState,
   splitterElement: Element,
@@ -825,7 +814,7 @@ internal class EditorSplitterStateLeaf(element: Element) {
 @Internal
 class EditorSplitterState(element: Element) {
   @JvmField
-  val splitters: EditorSplitterStateSplitter?
+  internal val splitters: EditorSplitterStateSplitter?
   internal val leaf: EditorSplitterStateLeaf?
 
   init {

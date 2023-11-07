@@ -38,9 +38,8 @@ data class FileEditorProviderManagerState(@JvmField val selectedProviders: Map<S
 
 @State(name = "FileEditorProviderManager",
        storages = [Storage(value = StoragePathMacros.NON_ROAMABLE_FILE, roamingType = RoamingType.DISABLED)])
-class FileEditorProviderManagerImpl : FileEditorProviderManager,
-                                      SerializablePersistentStateComponent<FileEditorProviderManagerState>(
-                                        FileEditorProviderManagerState()) {
+class FileEditorProviderManagerImpl
+  : FileEditorProviderManager, SerializablePersistentStateComponent<FileEditorProviderManagerState>(FileEditorProviderManagerState()) {
   @Suppress("DuplicatedCode")
   override fun getProviderList(project: Project, file: VirtualFile): List<FileEditorProvider> {
     // collect all possible editors
@@ -72,7 +71,6 @@ class FileEditorProviderManagerImpl : FileEditorProviderManager,
       }
     }
     return postProcessResult(sharedProviders)
-
   }
 
   @OptIn(ExperimentalCoroutinesApi::class)
@@ -149,8 +147,8 @@ class FileEditorProviderManagerImpl : FileEditorProviderManager,
     }
 
     updateState {
-      FileEditorProviderManagerState(
-        it.selectedProviders + (computeKey(providers) to composite.selectedWithProvider!!.provider.editorTypeId))
+      FileEditorProviderManagerState(it.selectedProviders +
+                                     (computeKey(providers) to composite.selectedWithProvider!!.provider.editorTypeId))
     }
   }
 

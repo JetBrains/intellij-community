@@ -47,13 +47,28 @@ internal fun parseFileEntry(fileElement: Element): FileEntry {
   )
 }
 
-internal fun writeComposite(composite: EditorComposite, pinned: Boolean, selectedEditor: EditorComposite?, project: Project): Element {
+internal fun writeWindow(result: Element, window: EditorWindow) {
+  val ideFingerprint = ideFingerprint().toString()
+  for (composite in window.getComposites()) {
+    result.addContent(writeComposite(composite = composite,
+                                     pinned = window.isFilePinned(composite.file),
+                                     selectedEditor = window.selectedComposite,
+                                     project = window.manager.project,
+                                     ideFingerprint = ideFingerprint))
+  }
+}
+
+private fun writeComposite(composite: EditorComposite,
+                           pinned: Boolean,
+                           selectedEditor: EditorComposite?,
+                           project: Project,
+                           ideFingerprint: String): Element {
   val fileElement = Element("file")
   composite.currentStateAsHistoryEntry().writeExternal(fileElement, project)
   if (pinned) {
     fileElement.setAttribute(PINNED, "true")
   }
-  fileElement.setAttribute(IDE_FINGERPRINT, ideFingerprint().toString())
+  fileElement.setAttribute(IDE_FINGERPRINT, ideFingerprint)
   if (composite != selectedEditor) {
     fileElement.setAttribute(CURRENT_IN_TAB, "false")
   }
