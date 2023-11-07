@@ -450,7 +450,7 @@ impl RemoteDevLaunchConfiguration {
 
     #[cfg(target_os = "windows")]
     fn get_os_specific_temp() -> Result<PathBuf> {
-        Ok(PathBuf::from(env::var("TEMP")))
+        Ok(PathBuf::from(env::var("TEMP").expect("TEMP environment variable is not specified")))
     }
 
     fn write_merged_properties_file(&self, remote_dev_properties: &[IdeProperty]) -> Result<PathBuf> {
