@@ -314,12 +314,9 @@ public class UnindexedFilesScanner extends FilesScanningTaskBase {
     }
 
     if (isFullIndexUpdate() &&
-        !UnindexedFilesScannerExecutor.getInstance(myProject).getInitialVfsRefreshCompleted().get()) {
+        UnindexedFilesScannerExecutor.getInstance(myProject).getInitialVfsRefreshRequested().compareAndSet(false, true)) {
       // the full VFS refresh makes sense only after it's loaded, i.e., after scanning files to index is finished
       runInitialVfsRefresh();
-      // workaround for IDEA-337315. In the worst case we'll invoke runInitialVfsRefresh several times.
-      // there is no race here: at most one scanning task is running at any time
-      UnindexedFilesScannerExecutor.getInstance(myProject).getInitialVfsRefreshCompleted().set(true);
     }
   }
 
