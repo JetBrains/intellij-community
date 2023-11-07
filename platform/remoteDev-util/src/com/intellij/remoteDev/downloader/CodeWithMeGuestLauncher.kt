@@ -93,11 +93,11 @@ object CodeWithMeGuestLauncher {
         }
 
         val parentLifetime = lifetime ?: project?.createLifetime() ?: Lifetime.Eternal
-        if (Registry.`is`("rdct.use.embedded.client")) {
+        if (Registry.`is`("rdct.use.embedded.client") || Registry.`is`("rdct.always.use.embedded.client")) {
           val hostBuildNumber = BuildNumber.fromStringOrNull(sessionInfo.hostBuildNumber)?.withoutProductCode()
           val currentIdeBuildNumber = ApplicationInfo.getInstance().build.withoutProductCode()
           LOG.debug("Host build number: $hostBuildNumber, current IDE build number: $currentIdeBuildNumber")
-          if (hostBuildNumber == currentIdeBuildNumber) {
+          if (hostBuildNumber == currentIdeBuildNumber || Registry.`is`("rdct.always.use.embedded.client")) {
             val embeddedClientLauncher = EmbeddedClientLauncher.create()
             if (embeddedClientLauncher != null) {
               LOG.debug("Launching client process from current IDE")
@@ -141,6 +141,9 @@ object CodeWithMeGuestLauncher {
     onDone: (Lifetime) -> Unit
   ): Boolean {
     if (clientBuild == null) {
+      return false
+    }
+    if (Registry.`is`("rdct.always.use.embedded.client")) {
       return false
     }
     if (!CodeWithMeClientDownloader.isClientDownloaded(clientBuild)) {
