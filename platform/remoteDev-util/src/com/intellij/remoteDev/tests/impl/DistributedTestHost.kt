@@ -68,8 +68,6 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
 
   private val projectOrNull: Project?
     get() = ProjectManagerEx.getOpenProjects().singleOrNull()
-  val project: Project
-    get() = projectOrNull!!
 
   init {
     val hostAddress =
@@ -209,7 +207,7 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
           runLogged("Close project if it is opened") {
             projectOrNull?.let {
               withContext(Dispatchers.EDT + ModalityState.any().asContextElement() + NonCancellable) {
-                ProjectManagerEx.getInstanceEx().forceCloseProject(project)
+                ProjectManagerEx.getInstanceEx().forceCloseProject(it)
               }
             } ?: true
           }
