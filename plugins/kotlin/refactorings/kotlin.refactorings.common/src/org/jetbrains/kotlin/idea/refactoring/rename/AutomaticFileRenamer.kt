@@ -28,9 +28,9 @@ class AutomaticFileRenamer(
 
     override fun allowChangeSuggestedName(): Boolean = false
 
-    override fun getDialogTitle(): @DialogTitle String? = KotlinBundle.message("title.rename.file.name")
+    override fun getDialogTitle(): @DialogTitle String? = KotlinBundle.message("title.rename.file")
 
-    override fun getDialogDescription(): @Button String? = KotlinBundle.message("title.rename.file.name.to")
+    override fun getDialogDescription(): @Button String? = KotlinBundle.message("title.rename.file.to")
 
     override fun entityName(): @ColumnName String? = KotlinBundle.message("file.entity")
 
@@ -56,5 +56,5 @@ open class AutomaticFileRenamerFactory : AutomaticRenamerFactory {
         KotlinCommonRefactoringSettings.getInstance().renameFileNames = enabled
     }
 
-    override fun getOptionName(): String? = KotlinBundle.message("rename.file.name")
+    override fun getOptionName(): String? = KotlinBundle.message("rename.file")
 }
