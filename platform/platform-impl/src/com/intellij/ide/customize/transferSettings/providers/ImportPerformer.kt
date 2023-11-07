@@ -58,6 +58,11 @@ class DefaultImportPerformer(private val partials: Collection<PartialImportPerfo
   }
 
   override suspend fun installPlugins(project: Project?, pluginIds: Set<PluginId>, pi: ProgressIndicator): PluginInstallationState {
+    if (pluginIds.isEmpty()) {
+      logger.info("No plugins to install, proceeding.")
+      return PluginInstallationState.NoPlugins
+    }
+
     logger.info("Installing plugins")
     val installedPlugins = PluginManagerCore.plugins.map { it.pluginId.idString }.toSet()
     val pluginsToInstall = pluginIds.filter { !installedPlugins.contains(it.idString) }.toSet()
