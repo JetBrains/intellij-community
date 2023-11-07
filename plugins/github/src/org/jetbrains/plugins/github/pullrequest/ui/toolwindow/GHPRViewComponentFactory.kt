@@ -30,6 +30,7 @@ import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.action.GHPRActionKeys
 import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRDetailsComponentFactory
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRChangeListViewModel
+import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRDetailsLoadingViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.impl.GHPRChangesViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.impl.GHPRDetailsViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.model.GHPRInfoViewModel
@@ -46,7 +47,9 @@ internal class GHPRViewComponentFactory(actionManager: ActionManager,
     cs.createInfoLoadingComponent().apply {
       DataManager.registerDataProvider(this) { dataId ->
         when {
-          GHPRActionKeys.PULL_REQUEST_DATA_PROVIDER.`is`(dataId) -> vm.dataProvider
+          GHPRActionKeys.PULL_REQUEST_ID.`is`(dataId) -> vm.pullRequest
+          GHPRActionKeys.PULL_REQUEST_URL.`is`(dataId) -> vm.pullRequestUrl
+          GHPRDetailsLoadingViewModel.DATA_KEY.`is`(dataId) -> vm
           else -> null
         }
       }

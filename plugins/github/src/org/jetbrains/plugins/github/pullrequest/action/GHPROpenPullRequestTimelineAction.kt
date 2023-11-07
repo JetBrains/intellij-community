@@ -15,19 +15,15 @@ private class GHPROpenPullRequestTimelineAction
 
   override fun update(e: AnActionEvent) {
     val vm = e.getData(GHPRActionKeys.PULL_REQUESTS_PROJECT_VM)
-    val selection = e.getData(GHPRActionKeys.SELECTED_PULL_REQUEST)
-    val dataProvider = e.getData(GHPRActionKeys.PULL_REQUEST_DATA_PROVIDER)
+    val id = e.getData(GHPRActionKeys.PULL_REQUEST_ID)
 
-    e.presentation.isEnabled = vm != null && (selection != null || dataProvider != null)
+    e.presentation.isEnabled = vm != null && id != null
   }
 
   override fun actionPerformed(e: AnActionEvent) {
     val vm = e.getRequiredData(GHPRActionKeys.PULL_REQUESTS_PROJECT_VM)
-    val selection = e.getData(GHPRActionKeys.SELECTED_PULL_REQUEST)
-    val dataProvider = e.getData(GHPRActionKeys.PULL_REQUEST_DATA_PROVIDER)
+    val id = e.getRequiredData(GHPRActionKeys.PULL_REQUEST_ID)
 
-    val pullRequest = selection?.prId ?: dataProvider!!.id
-
-    vm.openPullRequestTimeline(pullRequest, true)
+    vm.openPullRequestTimeline(id, true)
   }
 }

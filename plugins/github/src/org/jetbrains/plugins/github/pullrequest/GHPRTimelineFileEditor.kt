@@ -59,7 +59,8 @@ internal class GHPRTimelineFileEditor(private val project: Project,
       DataManager.removeDataProvider(it) // suppress warning - we're delegating to the old provider
       DataManager.registerDataProvider(it) { dataId ->
         when {
-          GHPRActionKeys.PULL_REQUEST_DATA_PROVIDER.`is`(dataId) -> dataProvider
+          GHPRActionKeys.PULL_REQUEST_ID.`is`(dataId) -> file.pullRequest
+          GHPRActionKeys.PULL_REQUEST_URL.`is`(dataId) -> detailsData.loadedDetails?.url
           else -> prevProvider?.getData(dataId)
         }
       }

@@ -28,7 +28,11 @@ internal class GHPRListComponentFactory(private val listModel: ListModel<GHPullR
       presentPR(avatarIconsProvider, it)
     }.also {
       DataManager.registerDataProvider(it) { dataId ->
-        if (GHPRActionKeys.SELECTED_PULL_REQUEST.`is`(dataId)) it.selectedValue else null
+        when {
+          GHPRActionKeys.PULL_REQUEST_ID.`is`(dataId) -> it.selectedValue?.prId
+          GHPRActionKeys.PULL_REQUEST_URL.`is`(dataId) -> it.selectedValue?.url
+          else -> null
+        }
       }
       val actionGroup = ActionManager.getInstance().getAction("Github.PullRequest.ToolWindow.List.Popup") as ActionGroup
       PopupHandler.installPopupMenu(it, actionGroup, ActionPlaces.POPUP)

@@ -21,9 +21,5 @@ abstract class GHPullRequestURLAction : DumbAwareAction() {
 
   abstract fun handleURL(pullRequestUrl: String)
 
-  private fun findPullRequestURL(ctx: DataContext): String? {
-    val selection = ctx.getData(GHPRActionKeys.SELECTED_PULL_REQUEST)
-    val dataProvider = ctx.getData(GHPRActionKeys.PULL_REQUEST_DATA_PROVIDER)
-    return selection?.url ?: dataProvider?.detailsData?.loadedDetails?.url
-  }
+  private fun findPullRequestURL(ctx: DataContext): String? = ctx.getData(GHPRActionKeys.PULL_REQUEST_URL)
 }

@@ -29,13 +29,15 @@ class GHPRInfoViewModel internal constructor(
   private val project: Project,
   parentCs: CoroutineScope,
   private val dataContext: GHPRDataContext,
-  pullRequest: GHPRIdentifier
+  val pullRequest: GHPRIdentifier
 ) : GHPRDetailsLoadingViewModel {
   private val cs = parentCs.childScope()
 
   val securityService: GHPRSecurityService = dataContext.securityService
-  val dataProvider: GHPRDataProvider = dataContext.dataProviderRepository.getDataProvider(pullRequest, cs.nestedDisposable())
+  private val dataProvider: GHPRDataProvider = dataContext.dataProviderRepository.getDataProvider(pullRequest, cs.nestedDisposable())
   val avatarIconsProvider: IconsProvider<String> = dataContext.avatarIconsProvider
+
+  val pullRequestUrl: String? get() = dataProvider.detailsData.loadedDetails?.url
 
   private val _isLoading = MutableStateFlow(false)
   override val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
@@ -90,5 +92,13 @@ class GHPRInfoViewModel internal constructor(
 
   val detailsLoadingErrorHandler: GHApiLoadingErrorHandler = GHApiLoadingErrorHandler(project, securityService.account) {
     dataProvider.detailsData.reloadDetails()
+  }
+
+  override fun requestReload() {
+    dataProvider.detailsData.reloadDetails()
+    dataProvider.stateData.reloadMergeabilityState()
+    dataProvider.reviewData.resetPendingReview()
+    dataProvider.changesData.reloadChanges()
+    dataProvider.viewedStateData.reset()
   }
 }

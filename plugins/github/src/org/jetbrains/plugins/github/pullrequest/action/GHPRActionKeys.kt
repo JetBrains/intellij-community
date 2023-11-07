@@ -4,19 +4,18 @@ package org.jetbrains.plugins.github.pullrequest.action
 import com.intellij.diff.tools.combined.CombinedDiffModel
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.vcs.FilePath
-import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
-import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
+import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.pullrequest.ui.list.GHPRListController
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.model.GHPRToolWindowProjectViewModel
 
 object GHPRActionKeys {
   @JvmStatic
-  val PULL_REQUEST_DATA_PROVIDER = DataKey.create<GHPRDataProvider>("org.jetbrains.plugins.github.pullrequest.data.provider")
-
-  internal val PULL_REQUEST_FILES = DataKey.create<Iterable<FilePath>>("org.jetbrains.plugins.github.pullrequest.files")
+  val PULL_REQUEST_ID = DataKey.create<GHPRIdentifier>("org.jetbrains.plugins.github.pullrequest.id")
 
   @JvmStatic
-  val SELECTED_PULL_REQUEST = DataKey.create<GHPullRequestShort>("org.jetbrains.plugins.github.pullrequest.list.selected")
+  val PULL_REQUEST_URL = DataKey.create<String>("org.jetbrains.plugins.github.pullrequest.url")
+
+  internal val PULL_REQUEST_FILES = DataKey.create<Iterable<FilePath>>("org.jetbrains.plugins.github.pullrequest.files")
 
   @JvmStatic
   val PULL_REQUESTS_LIST_CONTROLLER = DataKey.create<GHPRListController>("org.jetbrains.plugins.github.pullrequest.list.controller")

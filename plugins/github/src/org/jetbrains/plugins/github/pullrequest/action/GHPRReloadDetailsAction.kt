@@ -6,7 +6,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.actions.RefreshAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import org.jetbrains.plugins.github.i18n.GithubBundle
-import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
+import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRDetailsLoadingViewModel
 import java.util.function.Supplier
 
 class GHPRReloadDetailsAction
@@ -15,16 +15,12 @@ class GHPRReloadDetailsAction
                   AllIcons.Actions.Refresh) {
 
   override fun update(e: AnActionEvent) {
-    val selection = e.getData(GHPRActionKeys.PULL_REQUEST_DATA_PROVIDER)
-    e.presentation.isEnabled = selection != null
+    val vm = e.getData(GHPRDetailsLoadingViewModel.DATA_KEY)
+    e.presentation.isEnabledAndVisible = vm != null
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val dataProvider: GHPRDataProvider = e.getRequiredData(GHPRActionKeys.PULL_REQUEST_DATA_PROVIDER)
-    dataProvider.detailsData.reloadDetails()
-    dataProvider.stateData.reloadMergeabilityState()
-    dataProvider.reviewData.resetPendingReview()
-    dataProvider.changesData.reloadChanges()
-    dataProvider.viewedStateData.reset()
+    val vm = e.getRequiredData(GHPRDetailsLoadingViewModel.DATA_KEY)
+    vm.requestReload()
   }
 }

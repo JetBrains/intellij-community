@@ -12,20 +12,16 @@ private class GHPROpenPullRequestAction : DumbAwareAction(GithubBundle.messagePo
 
   override fun update(e: AnActionEvent) {
     val vm = e.getData(GHPRActionKeys.PULL_REQUESTS_PROJECT_VM)
-    val selection = e.getData(GHPRActionKeys.SELECTED_PULL_REQUEST)
-    val dataProvider = e.getData(GHPRActionKeys.PULL_REQUEST_DATA_PROVIDER)
+    val id = e.getData(GHPRActionKeys.PULL_REQUEST_ID)
 
-    e.presentation.isEnabledAndVisible = vm != null && (selection != null || dataProvider != null)
+    e.presentation.isEnabledAndVisible = vm != null && id != null
   }
 
   override fun actionPerformed(e: AnActionEvent) {
     val vm = e.getRequiredData(GHPRActionKeys.PULL_REQUESTS_PROJECT_VM)
-    val selection = e.getData(GHPRActionKeys.SELECTED_PULL_REQUEST)
-    val dataProvider = e.getData(GHPRActionKeys.PULL_REQUEST_DATA_PROVIDER)
+    val id = e.getRequiredData(GHPRActionKeys.PULL_REQUEST_ID)
 
-    val pullRequest = selection?.prId ?: dataProvider!!.id
-
-    vm.viewPullRequest(pullRequest)
-    vm.openPullRequestTimeline(pullRequest, false)
+    vm.viewPullRequest(id)
+    vm.openPullRequestTimeline(id, false)
   }
 }
