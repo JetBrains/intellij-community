@@ -42,27 +42,37 @@ internal fun GitBranchCompose(
     verticalAlignment = Alignment.CenterVertically,
     horizontalArrangement = Arrangement.spacedBy(8.dp)
   ) {
-    val isFavorite by branchVm.isFavorite.collectAsState()
-    Box(
-      modifier = Modifier.onClick {
-        branchVm.toggleIsFavourite()
-      }
+    Row(
+      modifier = Modifier.weight(1f),
+      verticalAlignment = Alignment.CenterVertically,
+      horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-      when {
-        isFavorite && branchVm.isCurrent && !selected -> Icon("expui/vcs/currentBranchFavoriteLabel.svg", null, ExpUiIcons::class.java)
-        isFavorite -> Icon("nodes/favorite.svg", null, AllIcons::class.java)
-        selected -> Icon("nodes/notFavoriteOnHover.svg", null, AllIcons::class.java)
-        branchVm.isCurrent -> Icon("expui/vcs/currentBranchLabel.svg", null, ExpUiIcons::class.java)
-        else -> Box(modifier = Modifier.requiredWidth(16.dp))
+      val isFavorite by branchVm.isFavorite.collectAsState()
+      Box(
+        modifier = Modifier.onClick {
+          branchVm.toggleIsFavourite()
+        }
+      ) {
+        when {
+          isFavorite && branchVm.isCurrent && !selected -> Icon("expui/vcs/currentBranchFavoriteLabel.svg", null, ExpUiIcons::class.java)
+          isFavorite -> Icon("nodes/favorite.svg", null, AllIcons::class.java)
+          selected -> Icon("nodes/notFavoriteOnHover.svg", null, AllIcons::class.java)
+          branchVm.isCurrent -> Icon("expui/vcs/currentBranchLabel.svg", null, ExpUiIcons::class.java)
+          else -> Box(modifier = Modifier.requiredWidth(16.dp))
+        }
       }
+
+      val rangesToHighlight by branchVm.matchingFragments.collectAsState()
+      val highlightColor = UIUtil.getSearchMatchGradientStartColor().toComposeColor()
+      val highlightedBranchName = remember(rangesToHighlight, highlightColor) {
+        branchVm.name.highlightRanges(rangesToHighlight, highlightColor)
+      }
+      Text(highlightedBranchName, maxLines = 1, overflow = TextOverflow.Clip)
     }
 
-    val rangesToHighlight by branchVm.matchingFragments.collectAsState()
-    val highlightColor = UIUtil.getSearchMatchGradientStartColor().toComposeColor()
-    val highlightedBranchName = remember(rangesToHighlight, highlightColor) {
-      branchVm.name.highlightRanges(rangesToHighlight, highlightColor)
+    if (selected) {
+      Icon("expui/general/chevronRight.svg", null, ExpUiIcons::class.java)
     }
-    Text(highlightedBranchName, maxLines = 1, overflow = TextOverflow.Clip)
   }
 }
 
