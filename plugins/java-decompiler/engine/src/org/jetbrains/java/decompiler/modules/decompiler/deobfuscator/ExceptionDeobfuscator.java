@@ -429,7 +429,7 @@ public final class ExceptionDeobfuscator {
       if (successors != null && successors.size() == 1 && successors.get(0).getSuccessors().isEmpty() &&
           successors.get(0).getSuccessorExceptions().isEmpty() &&
           //exceptions contain only one type of exceptions, and it is not null, because null defines `finally` blocks
-          handler.getSuccessorExceptions().isEmpty() && exceptions.size() == 1 && !exceptions.contains(null)) {
+          exceptions.size() == 1 && !exceptions.contains(null)) {
         for (ExceptionRangeCFG range : ranges) {
           BasicBlock newHandler = handler.clone(++graph.last_id);
           graph.getBlocks().addWithKey(newHandler, newHandler.id);
@@ -443,6 +443,13 @@ public final class ExceptionDeobfuscator {
             if (previousEdge != null) {
               previousEdge.setHandler(newHandler);
             }
+          }
+          // replace successors
+          List<BasicBlock> scExceptions = new ArrayList<>(handler.getSuccessorExceptions());
+          for (BasicBlock nextException : scExceptions) {
+            ExceptionRangeCFG nextEdge = graph.getExceptionRange(nextException, handler);
+            newHandler.addSuccessorException(nextException);
+            nextEdge.getProtectedRange().add(newHandler);
           }
           //add fast exit
           newHandler.addSuccessor(successors.get(0));
