@@ -209,7 +209,7 @@ class GitLabSnippetService(private val project: Project, private val serviceScop
       .notifyMinorInfo(GL_NOTIFICATION_CREATE_SNIPPET_SUCCESS,
                        message("snippet.create.action.success.title"),
                        HtmlChunk.link(url, message("snippet.create.action.success.description")).toString())
-      .setListener(NotificationListener.URL_OPENING_LISTENER)
+      .setListener(NotificationListener.UrlOpeningListener(false))
   }
 
   /**
