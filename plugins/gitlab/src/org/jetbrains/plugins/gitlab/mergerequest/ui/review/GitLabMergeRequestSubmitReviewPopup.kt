@@ -5,10 +5,7 @@ import com.intellij.collaboration.async.inverted
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.HorizontalListPanel
 import com.intellij.collaboration.ui.SimpleHtmlPane
-import com.intellij.collaboration.ui.util.bindChildIn
-import com.intellij.collaboration.ui.util.bindDisabledIn
-import com.intellij.collaboration.ui.util.bindTextIn
-import com.intellij.collaboration.ui.util.bindVisibilityIn
+import com.intellij.collaboration.ui.util.*
 import com.intellij.collaboration.ui.util.popup.awaitClose
 import com.intellij.icons.AllIcons
 import com.intellij.ide.plugins.newui.InstallButton
@@ -24,10 +21,12 @@ import com.intellij.util.ui.InlineIconButton
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
 import com.intellij.vcsUtil.showAbove
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.withContext
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
@@ -104,8 +103,9 @@ internal object GitLabMergeRequestSubmitReviewPopup {
       private val submitButton = JButton(CollaborationToolsBundle.message("review.submit.action")).apply {
         isOpaque = false
         toolTipText = GitLabBundle.message("merge.request.submit.action.tooltip")
-        bindDisabledIn(cs, combine(vm.isBusy, vm.text) { busy, text ->
-          busy || text.isEmpty()
+        bindEnabledIn(cs, combine(vm.isBusy, vm.text, vm.draftCommentsCount) { busy, text, draftComments ->
+          // Is enabled when not busy and: the text is not blank, or there are draft comments to submit
+          !busy && (text.isNotBlank() || draftComments > 0)
         })
         addActionListener {
           vm.submit()
