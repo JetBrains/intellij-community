@@ -37,37 +37,34 @@ object RunOnceUtil {
 
 suspend fun runOnceForApp(id: @NonNls String, task: suspend () -> Unit): Boolean {
   val key = createKey(id)
-  val storage = serviceAsync<PropertiesComponent>()
-  synchronized(storage) {
-    if (storage.isTrueValue(key)) {
-      return false
-    }
-    storage.setValue(key, true)
+  if (serviceAsync<PropertiesComponent>().updateValue(key, true)) {
+    task()
+    return true
   }
-  task()
-  return true
+  else {
+    return false
+  }
 }
 
 @Internal
-suspend fun runOnceForProject(project: Project, id: @NonNls String, activity: suspend () -> Unit): Boolean {
+suspend fun runOnceForProject(project: Project, id: @NonNls String, task: suspend () -> Unit): Boolean {
   val key = createKey(id = id)
-  val storage = PropertiesComponent.getInstance(project)
-  if (!storage.updateValue(key, true)) {
+  if (project.serviceAsync<PropertiesComponent>().updateValue(key, true)) {
+    task()
+    return true
+  }
+  else {
     return false
   }
-
-  activity()
-  return true
 }
 
 private fun doRunOnce(storage: PropertiesComponent, id: @NonNls String, activity: Runnable): Boolean {
   val key = createKey(id)
-  synchronized(storage) {
-    if (storage.isTrueValue(key)) {
-      return false
-    }
-    storage.setValue(key, true)
+  if (!storage.updateValue(key, true)) {
+    return false
   }
+
+  storage.setValue(key, true)
   activity.run()
   return true
 }
