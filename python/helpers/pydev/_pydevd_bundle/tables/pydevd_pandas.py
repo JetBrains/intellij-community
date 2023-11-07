@@ -194,7 +194,8 @@ def analyze_numeric_column(column):
         else:
             format_function = lambda x: round(x, 1)
 
-        bin_labels = ['{} — {}'.format(format_function(bin_edges[i]), format_function(bin_edges[i+1])) for i in range(ColumnVisualisationUtils.NUM_BINS)]
+        # so {} — {} will be correctly viewed both on Mac and Windows
+        bin_labels = ['{} \u2014 {}'.format(format_function(bin_edges[i]), format_function(bin_edges[i+1])) for i in range(ColumnVisualisationUtils.NUM_BINS)]
         bin_count_dict = {label: count for label, count in zip(bin_labels, counts)}
         res = bin_count_dict
     return add_custom_key_value_separator(res.items())
