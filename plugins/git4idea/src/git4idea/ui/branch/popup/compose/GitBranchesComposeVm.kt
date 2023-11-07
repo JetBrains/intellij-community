@@ -12,6 +12,7 @@ import git4idea.branch.GitBranchIncomingOutgoingManager
 import git4idea.branch.GitBranchType
 import git4idea.repo.GitRepository
 import git4idea.ui.branch.GitBranchManager
+import git4idea.ui.branch.tree.getBranchComparator
 import git4idea.ui.branch.tree.localBranchesOrCurrent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.FlowPreview
@@ -44,8 +45,15 @@ internal class GitBranchesComposeVm(
     addChangeListener(speedSearchListener)
   }
 
-  private val allLocalBranches = repository.localBranchesOrCurrent
-  private val allRemoteBranches = repository.branches.remoteBranches
+  private val branchManager = project.service<GitBranchManager>()
+
+  private val localBranchesComparator: Comparator<GitBranch> =
+    getBranchComparator(listOf(repository), branchManager.getFavoriteBranches(GitBranchType.LOCAL), isPrefixGrouping = { false })
+  private val remoteBranchesComparator: Comparator<GitBranch> =
+    getBranchComparator(listOf(repository), branchManager.getFavoriteBranches(GitBranchType.LOCAL), isPrefixGrouping = { false })
+
+  private val allLocalBranches = repository.localBranchesOrCurrent.sortedWith(localBranchesComparator)
+  private val allRemoteBranches = repository.branches.remoteBranches.sortedWith(remoteBranchesComparator)
 
   val localBranches: StateFlow<List<GitBranch>> = createFilteredBranchesFlow(allLocalBranches)
 
@@ -62,8 +70,6 @@ internal class GitBranchesComposeVm(
       favouriteChanged.tryEmit(Unit)
     }
   }
-
-  private val branchManager = project.service<GitBranchManager>()
 
   init {
     project.messageBus.connect(coroutineScope).subscribe(DVCS_BRANCH_SETTINGS_CHANGED, branchManagerListener)

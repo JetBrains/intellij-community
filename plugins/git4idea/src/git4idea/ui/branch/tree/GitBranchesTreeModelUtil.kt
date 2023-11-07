@@ -27,9 +27,11 @@ internal val GitRepository.recentCheckoutBranches
 
 internal val emptyBranchComparator = Comparator<GitBranch> { _, _ -> 0 }
 
-private fun getBranchComparator(repositories: List<GitRepository>,
-                                favoriteBranches: Map<GitRepository, Set<String>>,
-                                isPrefixGrouping: () -> Boolean): Comparator<GitBranch> {
+internal fun getBranchComparator(
+  repositories: List<GitRepository>,
+  favoriteBranches: Map<GitRepository, Set<String>>,
+  isPrefixGrouping: () -> Boolean
+): Comparator<GitBranch> {
   return compareBy<GitBranch> {
     it.isNotCurrentBranch(repositories)
   } then compareBy {
