@@ -102,11 +102,11 @@ class GHPRMergeabilityStateBuilder(private val headRefOid: String, private val p
       GHCommitCheckSuiteConclusion.ACTION_REQUIRED,
       GHCommitCheckSuiteConclusion.CANCELLED,
       GHCommitCheckSuiteConclusion.NEUTRAL,
-      GHCommitCheckSuiteConclusion.SKIPPED,
       GHCommitCheckSuiteConclusion.STALE,
       GHCommitCheckSuiteConclusion.STARTUP_FAILURE,
       GHCommitCheckSuiteConclusion.TIMED_OUT,
       GHCommitCheckSuiteConclusion.FAILURE -> CodeReviewCIJobState.FAILED
+      GHCommitCheckSuiteConclusion.SKIPPED -> CodeReviewCIJobState.SKIPPED
       GHCommitCheckSuiteConclusion.SUCCESS -> CodeReviewCIJobState.SUCCESS
     }
   }

@@ -261,9 +261,10 @@ object CodeReviewDetailsStatusComponentFactory {
         }
       }
       component.icon = when (value.status) {
-        CodeReviewCIJobState.SUCCESS -> IconStatus.success
-        CodeReviewCIJobState.PENDING -> IconStatus.pending
         CodeReviewCIJobState.FAILED -> IconStatus.failed
+        CodeReviewCIJobState.PENDING -> IconStatus.pending
+        CodeReviewCIJobState.SKIPPED -> IconStatus.skipped
+        CodeReviewCIJobState.SUCCESS -> IconStatus.success
       }
 
       return component
@@ -281,6 +282,9 @@ object CodeReviewDetailsStatusComponentFactory {
 
     val pending: Icon
       get() = AllIcons.RunConfigurations.TestNotRan
+
+    val skipped: Icon
+      get() = AllIcons.RunConfigurations.TestSkipped
 
     val success: Icon
       get() = if (ExperimentalUI.isNewUI()) ExpUiIcons.Status.Success else AllIcons.RunConfigurations.TestPassed
