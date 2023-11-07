@@ -769,6 +769,12 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
       }
 
       super.processKeyEvent(e);
+
+      if (!e.isConsumed() && getNavigationKeyCode(e) != 0) {
+        // Some navigation action shortcuts aren't consumed by the field, e.g. if these are custom shortcuts the text field doesn't understand.
+        e.consume();
+      }
+
       if (i == KeyEvent.VK_BACK_SPACE) {
         e.consume();
       }
