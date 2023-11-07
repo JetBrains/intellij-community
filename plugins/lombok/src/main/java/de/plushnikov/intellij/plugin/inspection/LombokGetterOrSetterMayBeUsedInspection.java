@@ -2,6 +2,8 @@
 package de.plushnikov.intellij.plugin.inspection;
 
 import com.intellij.codeInspection.*;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
@@ -133,7 +135,7 @@ public abstract class LombokGetterOrSetterMayBeUsedInspection extends LombokJava
     }
   }
 
-  private class LombokGetterOrSetterMayBeUsedFix implements LocalQuickFix {
+  private class LombokGetterOrSetterMayBeUsedFix extends PsiUpdateModCommandQuickFix {
     private final @NotNull String myText;
 
     private LombokGetterOrSetterMayBeUsedFix(@NotNull String text) {
@@ -155,8 +157,7 @@ public abstract class LombokGetterOrSetterMayBeUsedInspection extends LombokJava
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       if (element instanceof PsiMethod) {
         new LombokGetterOrSetterMayBeUsedVisitor(null, this).visitMethodForFix((PsiMethod)element);
       }

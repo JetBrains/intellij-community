@@ -26,7 +26,7 @@ public final class PsiQuickFixFactory {
   }
 
   public static LocalQuickFix createNewFieldFix(@NotNull PsiClass psiClass, @NotNull String name, @NotNull PsiType psiType, @Nullable String initializerText, String... modifiers) {
-    return new CreateFieldQuickFix(psiClass, name, psiType, initializerText, modifiers);
+    return LocalQuickFix.from(new CreateFieldQuickFix(psiClass, name, psiType, initializerText, modifiers));
   }
 
   public static LocalQuickFix createChangeAnnotationParameterFix(@NotNull PsiAnnotation psiAnnotation, @NotNull String name, @Nullable String newValue) {
