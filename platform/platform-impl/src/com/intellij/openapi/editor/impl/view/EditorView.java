@@ -4,7 +4,6 @@ package com.intellij.openapi.editor.impl.view;
 import com.intellij.diagnostic.Dumpable;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.CustomFoldRegion;
@@ -26,8 +25,8 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
@@ -151,99 +150,99 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
     checkFontRenderContext(null);
   }
 
+  @RequiresEdt
   public int yToVisualLine(int y) {
-    assertIsDispatchThread();
     assertNotInBulkMode();
     return myMapper.yToVisualLine(y);
   }
 
+  @RequiresEdt
   public int visualLineToY(int line) {
-    assertIsDispatchThread();
     assertNotInBulkMode();
     return myMapper.visualLineToY(line);
   }
 
+  @RequiresEdt
   public int[] visualLineToYRange(int line) {
-    assertIsDispatchThread();
     assertNotInBulkMode();
     return myMapper.visualLineToYRange(line);
   }
 
+  @RequiresReadLock
   public @NotNull LogicalPosition offsetToLogicalPosition(int offset) {
-    assertIsReadAccess();
     return myMapper.offsetToLogicalPosition(offset);
   }
 
+  @RequiresReadLock
   public int logicalPositionToOffset(@NotNull LogicalPosition pos) {
-    assertIsReadAccess();
     return myMapper.logicalPositionToOffset(pos);
   }
 
+  @RequiresEdt
   public @NotNull VisualPosition logicalToVisualPosition(@NotNull LogicalPosition pos, boolean beforeSoftWrap) {
-    assertIsDispatchThread();
     assertNotInBulkMode();
     myEditor.getSoftWrapModel().prepareToMapping();
     return myMapper.logicalToVisualPosition(pos, beforeSoftWrap);
   }
 
+  @RequiresEdt
   public @NotNull LogicalPosition visualToLogicalPosition(@NotNull VisualPosition pos) {
-    assertIsDispatchThread();
     assertNotInBulkMode();
     myEditor.getSoftWrapModel().prepareToMapping();
     return myMapper.visualToLogicalPosition(pos);
   }
 
+  @RequiresEdt
   public @NotNull VisualPosition offsetToVisualPosition(int offset, boolean leanTowardsLargerOffsets, boolean beforeSoftWrap) {
-    assertIsDispatchThread();
     assertNotInBulkMode();
     myEditor.getSoftWrapModel().prepareToMapping();
     return myMapper.offsetToVisualPosition(offset, leanTowardsLargerOffsets, beforeSoftWrap);
   }
 
+  @RequiresEdt
   public int visualPositionToOffset(VisualPosition visualPosition) {
-    assertIsDispatchThread();
     assertNotInBulkMode();
     myEditor.getSoftWrapModel().prepareToMapping();
     return myMapper.visualPositionToOffset(visualPosition);
   }
 
+  @RequiresEdt
   public int offsetToVisualLine(int offset, boolean beforeSoftWrap) {
-    assertIsDispatchThread();
     assertNotInBulkMode();
     myEditor.getSoftWrapModel().prepareToMapping();
     return myMapper.offsetToVisualLine(offset, beforeSoftWrap);
   }
-  
+
+  @RequiresEdt
   public int visualLineToOffset(int visualLine) {
-    assertIsDispatchThread();
     assertNotInBulkMode();
     myEditor.getSoftWrapModel().prepareToMapping();
     return myMapper.visualLineToOffset(visualLine);
   }
-  
+
+  @RequiresEdt
   public @NotNull VisualPosition xyToVisualPosition(@NotNull Point2D p) {
-    assertIsDispatchThread();
     assertNotInBulkMode();
     myEditor.getSoftWrapModel().prepareToMapping();
     return myMapper.xyToVisualPosition(p);
   }
 
+  @RequiresEdt
   public @NotNull Point2D visualPositionToXY(@NotNull VisualPosition pos) {
-    assertIsDispatchThread();
     assertNotInBulkMode();
     myEditor.getSoftWrapModel().prepareToMapping();
     return myMapper.visualPositionToXY(pos);
   }
 
+  @RequiresEdt
   public @NotNull Point2D offsetToXY(int offset, boolean leanTowardsLargerOffsets, boolean beforeSoftWrap) {
-    assertIsDispatchThread();
     assertNotInBulkMode();
     myEditor.getSoftWrapModel().prepareToMapping();
     return myMapper.offsetToXY(offset, leanTowardsLargerOffsets, beforeSoftWrap);
   }
 
+  @RequiresEdt
   public void setPrefix(String prefixText, TextAttributes attributes) {
-    assertIsDispatchThread();
     myPrefixText = prefixText;
     synchronized (myLock) {
       myPrefixLayout = prefixText == null || prefixText.isEmpty() ? null :
@@ -275,20 +274,20 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
     return myPrefixAttributes;
   }
 
+  @RequiresEdt
   public void paint(Graphics2D g) {
-    assertIsDispatchThread();
     myEditor.getSoftWrapModel().prepareToMapping();
     checkFontRenderContext(g.getFontRenderContext());
     myPainter.paint(g);
   }
 
+  @RequiresEdt
   public void repaintCarets() {
-    assertIsDispatchThread();
     myPainter.repaintCarets();
   }
 
+  @RequiresEdt
   public @NotNull Dimension getPreferredSize() {
-    assertIsDispatchThread();
     assert !myEditor.isPurePaintingMode();
     myEditor.getSoftWrapModel().prepareToMapping();
     return mySizeManager.getPreferredSize();
@@ -303,22 +302,22 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
    * @param endLine   end visual line (exclusive), may be greater than the actual number of lines
    * @return preferred pixel width
    */
+  @RequiresEdt
   public int getPreferredWidth(int beginLine, int endLine) {
-    assertIsDispatchThread();
     assert !myEditor.isPurePaintingMode();
     myEditor.getSoftWrapModel().prepareToMapping();
     return mySizeManager.getPreferredWidth(beginLine, endLine);
   }
 
+  @RequiresEdt
   public int getPreferredHeight() {
-    assertIsDispatchThread();
     assert !myEditor.isPurePaintingMode();
     myEditor.getSoftWrapModel().prepareToMapping();
     return mySizeManager.getPreferredHeight();
   }
 
+  @RequiresEdt
   public int getMaxWidthInRange(int startOffset, int endOffset) {
-    assertIsDispatchThread();
     int startVisualLine = offsetToVisualLine(startOffset, false);
     int endVisualLine = offsetToVisualLine(endOffset, true);
     return getMaxTextWidthInLineRange(startVisualLine, endVisualLine) + getInsets().left;
@@ -359,9 +358,9 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
     setPrefix(myPrefixText, myPrefixAttributes); // recreate prefix layout
     mySizeManager.reset();
   }
-  
+
+  @RequiresEdt
   public void invalidateRange(int startOffset, int endOffset, boolean invalidateSize) {
-    assertIsDispatchThread();
     int textLength = myDocument.getTextLength();
     if (startOffset > endOffset || startOffset >= textLength || endOffset < 0) {
       return;
@@ -375,17 +374,17 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
   }
 
   /**
-   * Invoked when document might have changed, but no notifications were sent (for a hacky document in EditorTextFieldCellRenderer)
+   * Invoked when a document might have changed, but no notifications were sent (for a hacky document in EditorTextFieldCellRenderer)
    */
+  @RequiresEdt
   public void reset() {
-    assertIsDispatchThread();
     myLogicalPositionCache.reset(true);
     myTextLayoutCache.resetToDocumentSize(true);
     mySizeManager.reset();
   }
-  
+
+  @RequiresEdt
   public boolean isRtlLocation(@NotNull VisualPosition visualPosition) {
-    assertIsDispatchThread();
     if (myDocument.getTextLength() == 0) return false;
     LogicalPosition logicalPosition = visualToLogicalPosition(visualPosition);
     int offset = logicalPositionToOffset(logicalPosition);
@@ -409,19 +408,19 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
     return layout.isRtlLocation(offset - myDocument.getLineStartOffset(line), logicalPosition.leansForward);
   }
 
+  @RequiresEdt
   public boolean isAtBidiRunBoundary(@NotNull VisualPosition visualPosition) {
-    assertIsDispatchThread();
     int offset = visualPositionToOffset(visualPosition);
     int otherSideOffset = visualPositionToOffset(visualPosition.leanRight(!visualPosition.leansRight));
     return offset != otherSideOffset;
   }
 
   /**
-   * Offset of nearest boundary (not equal to {@code offset}) on the same line is returned. {@code -1} is returned if
-   * corresponding boundary is not found.
+   * Offset of the nearest boundary (not equal to {@code offset}) on the same line is returned. {@code -1} is returned if
+   * the corresponding boundary is not found.
    */
+  @RequiresEdt
   public int findNearestDirectionBoundary(int offset, boolean lookForward) {
-    assertIsDispatchThread();
     int textLength = myDocument.getTextLength();
     if (textLength == 0 || offset < 0 || offset > textLength) return -1;
     int line = myDocument.getLineNumber(offset);
@@ -691,14 +690,6 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
 
   int getBidiFlags() {
     return myBidiFlags;
-  }
-
-  private static void assertIsDispatchThread() {
-    ThreadingAssertions.assertEventDispatchThread();
-  }
-  
-  private static void assertIsReadAccess() {
-    ApplicationManager.getApplication().assertReadAccessAllowed();
   }
 
   @Override
