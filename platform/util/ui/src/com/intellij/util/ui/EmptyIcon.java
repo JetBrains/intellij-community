@@ -9,8 +9,8 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import javax.swing.plaf.UIResource;
 import java.awt.*;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * A transparent icon.
@@ -22,7 +22,7 @@ import java.util.Map;
  * @see ColorIcon
  */
  public class EmptyIcon extends JBCachingScalableIcon<EmptyIcon> {
-  private static final Map<Pair<Integer, Boolean>, EmptyIcon> cache = new HashMap<>();
+  private static final Map<Pair<Integer, Boolean>, EmptyIcon> cache = new ConcurrentHashMap<>();
 
   public static final Icon ICON_18 = JBUIScale.scaleIcon(create(18));
   public static final Icon ICON_16 = JBUIScale.scaleIcon(create(16));
