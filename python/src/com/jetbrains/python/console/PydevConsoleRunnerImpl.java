@@ -247,8 +247,6 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     outputActions.add(Separator.create());
     outputActions.add(ConsoleHistoryController.getController(myConsoleView).getBrowseHistory()); // Console History
     outputActions.add(new ConsoleCopyOutputAction(myConsoleView)); // Copy Console Output
-    outputActions.add(Separator.create());
-    outputActions.add(PyConsoleUtil.createPrintAction(myConsoleView)); // Print
     toolbarActions.add(outputActions);
     // Actions without icons
     actions.add(PyConsoleUtil.createInterruptAction(myConsoleView));
