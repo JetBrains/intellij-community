@@ -7,10 +7,8 @@ import com.intellij.platform.backend.documentation.DocumentationLinkHandler
 import com.intellij.platform.backend.documentation.DocumentationTarget
 import com.intellij.platform.backend.documentation.LinkResolveResult
 import com.intellij.psi.PsiElement
-import com.intellij.psi.util.PsiTreeUtil
-import org.jetbrains.kotlin.analysis.api.analyze
+import com.intellij.psi.util.PsiTreeUtil.findChildOfType
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocName
-import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtPsiFactory
 
@@ -31,24 +29,6 @@ class KotlinDocumentationLinkHandler : DocumentationLinkHandler {
 
 fun resolveKDocLink(names: List<String>, element: KtElement): PsiElement? {
     val ktPsiFactory = KtPsiFactory(element.project)
-
     val fragment = ktPsiFactory.createBlockCodeFragment("/**[${names.joinToString(".")}]*/ val __p = 42", element)
-    val docRef = PsiTreeUtil.findChildOfType(fragment, KDocName::class.java)
-    docRef?.reference?.resolve()?.let { return it }
-
-    if (names.size == 1) {
-        val locals = mutableListOf<PsiElement>()
-        analyze(element) {
-            val shortName = Name.identifier(names.first())
-            val scope = getPackageSymbolIfPackageExists(element.containingKtFile.packageFqName)?.getPackageScope()
-            if (scope != null) {
-                scope.getCallableSymbols(shortName).mapNotNullTo(locals) { it.psi }
-                scope.getClassifierSymbols(shortName).mapNotNullTo(locals) { it.psi }
-            }
-        }
-        if (locals.isNotEmpty()) {
-            return locals.first()
-        }
-    }
-    return null
+    return findChildOfType<KDocName>(fragment, KDocName::class.java)?.reference?.resolve()
 }
