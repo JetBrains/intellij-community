@@ -50,51 +50,5 @@ class PyLiteralStringType private constructor(val cls: PyClass) : PyClassTypeImp
     fun match(expected: PyLiteralStringType, actual: PyClassType): Boolean {
       return actual is PyLiteralStringType || actual is PyLiteralType && expected.pyClass == actual.pyClass
     }
-
-    fun fromLiteral(expression: PyExpression, context: TypeEvalContext): PyType? {
-      val value = when (expression) {
-        is PyKeywordArgument -> expression.valueExpression
-        is PyParenthesizedExpression -> PyPsiUtils.flattenParens(expression)
-        else -> expression
-      }
-      if (value is PyStringLiteralExpression) {
-        val firstNode = value.stringNodes.firstOrNull()
-        if (firstNode != null) {
-          if (firstNode.elementType === PyElementTypes.FSTRING_NODE) {
-            val allLiteralStringFragments: Boolean = value.stringElements.filterIsInstance<PyFormattedStringElement>().flatMap { it.fragments }.mapNotNull {
-              if (it.expression != null) context.getType(it.expression!!) else null
-            }.all { it is PyLiteralStringType }
-            return if (allLiteralStringFragments) create(expression) else PyBuiltinCache.getInstance(expression).strType
-          }
-          return create(value)
-        }
-      }
-      else if (value is PySequenceExpression) {
-        val classes = if (value is PyDictLiteralExpression) {
-          val keyTypes = value.elements.map { fromLiteral(it.key, context) }
-          val valueTypes = value.elements.map { type -> type.value?.let { fromLiteral(it, context) } }
-          listOf(PyUnionType.union(keyTypes), PyUnionType.union(valueTypes))
-        }
-        else value.elements.map { fromLiteral(it, context) }
-
-        if (value is PyTupleExpression) {
-          return PyTupleType.create(value, classes)
-        }
-        else {
-          val name = when (value) {
-            is PyListLiteralExpression -> "list"
-            is PySetLiteralExpression -> "set"
-            is PyDictLiteralExpression -> "dict"
-            else -> null
-          }
-          return name?.let { PyCollectionTypeImpl.createTypeByQName(value, name, false, classes) }
-        }
-      }
-      else if (value is PyConditionalExpression) {
-        return PyUnionType.union(fromLiteral(value.truePart, context),
-                                 value.falsePart?.let { fromLiteral(it, context) })
-      }
-      return context.getType(value ?: return null)
-    }
   }
 }
