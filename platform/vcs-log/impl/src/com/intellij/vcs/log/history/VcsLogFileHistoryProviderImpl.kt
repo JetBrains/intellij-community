@@ -116,7 +116,7 @@ private class VcsLogSingleFileHistoryProvider(private val project: Project) : Vc
 
     val dataManager = VcsProjectLog.getInstance(project).dataManager ?: return false
     val logProvider = dataManager.logProviders[root]
-    if (logProvider?.diffHandler == null || logProvider.fileHistoryHandler == null) return false
+    if (logProvider?.diffHandler == null || logProvider.getFileHistoryHandler(project) == null) return false
     return dataManager.index.isIndexingEnabled(root) || Registry.`is`("vcs.force.new.history")
   }
 

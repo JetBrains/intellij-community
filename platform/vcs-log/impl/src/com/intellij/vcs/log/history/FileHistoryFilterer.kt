@@ -69,7 +69,7 @@ internal class FileHistoryFilterer(private val logData: VcsLogData, private val 
     val root = filePath?.let { VcsLogUtil.getActualRoot(project, filePath) }
     val hash = getHash(filters)
     val logProvider = logProviders[root]
-    val fileHistoryHandler = logProvider?.fileHistoryHandler
+    val fileHistoryHandler = logProvider?.getFileHistoryHandler(project)
     if (root != null && !filePath.isDirectory && fileHistoryHandler != null) {
       return MyWorker(logProvider.supportedVcs, fileHistoryHandler, root, filePath, hash).filter(dataPack, oldVisiblePack, sortType,
                                                                                                  filters, commitCount)

@@ -626,6 +626,7 @@
     <unresolvedMergeCheckProvider implementation="git4idea.checkin.GitUnresolvedMergeCheckProvider"/>
     <logProvider implementation="git4idea.log.GitLogProvider"/>
     <vcsLogCommitStatusProvider implementation="git4idea.log.GitCommitSignatureStatusProvider"/>
+    <vcsLogFileHistoryHandler implementation="git4idea.history.GitLogHistoryHandler" order="last"/>
     <vcsChangesViewRefresher implementation="git4idea.changes.GitChangesViewRefresher"/>
     <vcs.branchStateProvider implementation="git4idea.branch.GitBranchStateProvider"/>
     <pushSupport implementation="git4idea.push.GitPushSupport"/>

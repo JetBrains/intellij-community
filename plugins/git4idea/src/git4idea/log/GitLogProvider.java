@@ -37,7 +37,6 @@ import git4idea.commands.Git;
 import git4idea.config.GitVersionSpecialty;
 import git4idea.history.GitCommitRequirements;
 import git4idea.history.GitCommitRequirements.DiffInMergeCommits;
-import git4idea.history.GitLogHistoryHandler;
 import git4idea.history.GitLogUtil;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
@@ -560,11 +559,6 @@ public final class GitLogProvider implements VcsLogProvider, VcsIndexableLogProv
   @Override
   public @NotNull VcsLogDiffHandler getDiffHandler() {
     return new GitLogDiffHandler(myProject);
-  }
-
-  @Override
-  public @NotNull VcsLogFileHistoryHandler getFileHistoryHandler() {
-    return new GitLogHistoryHandler(myProject);
   }
 
   @Override
