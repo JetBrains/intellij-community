@@ -17,6 +17,7 @@ import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence
 import com.intellij.util.containers.SLRUMap
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.util.CheckCanceledLock
@@ -424,7 +425,9 @@ class NewLogicDelegate(private val project: Project) : LogicDelegate() {
     private fun reloadDefinitionsInternal(sources: List<ScriptDefinitionsSource>): List<ScriptDefinition> {
         val scriptingSettings = kotlinScriptingSettingsSafe() ?: error("Kotlin script setting not found")
 
-        return definitionsLock.withLock {
+        var loadedDefinitions: List<ScriptDefinition>? = null
+
+        definitionsLock.withLock {
             val (ms, newDefinitionsBySource) = measureTimeMillisWithResult {
                 sources.associateWith {
                     val (ms, definitions) = measureTimeMillisWithResult { it.safeGetDefinitions() }
@@ -435,18 +438,20 @@ class NewLogicDelegate(private val project: Project) : LogicDelegate() {
 
             scriptingDebugLog { "Definitions loading total time: $ms ms" }
 
-            if (newDefinitionsBySource.isEmpty()) return@withLock emptyList()
+            if (newDefinitionsBySource.isEmpty()) return emptyList()
 
             definitionsBySource.putAll(newDefinitionsBySource)
 
-            definitions = definitionsBySource.values.flattenTo(mutableListOf())
+            loadedDefinitions = definitionsBySource.values.flattenTo(mutableListOf())
                 .onEach { it.order = scriptingSettings.getScriptDefinitionOrder(it) }
                 .sortedBy(ScriptDefinition::order)
 
-            applyDefinitionsUpdate()
-
-            definitions ?: emptyList()
+            definitions = loadedDefinitions
         }
+
+        applyDefinitionsUpdate() // <== acquires read-action inside
+
+        return loadedDefinitions ?: emptyList()
     }
 
     override val currentDefinitions: Sequence<ScriptDefinition>
@@ -483,8 +488,9 @@ class NewLogicDelegate(private val project: Project) : LogicDelegate() {
                 }
                 definitions = list.sortedBy(ScriptDefinition::order)
             }
-            applyDefinitionsUpdate()
         }
+
+        applyDefinitionsUpdate()  // <== acquires read-action inside
     }
 
     private fun kotlinScriptingSettingsSafe(): KotlinScriptingSettings? {
