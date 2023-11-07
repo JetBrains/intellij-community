@@ -4,10 +4,7 @@
 package git4idea.ui.branch.popup.compose
 
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.requiredWidth
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.onClick
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -68,10 +65,25 @@ internal fun GitBranchCompose(
         branchVm.name.highlightRanges(rangesToHighlight, highlightColor)
       }
       Text(highlightedBranchName, maxLines = 1, overflow = TextOverflow.Clip)
+
+      Spacer(modifier = Modifier.weight(1f))
+
+      val trackedBranch = branchVm.trackedBranch
+      if (trackedBranch != null) {
+        Text(
+          trackedBranch.name,
+          maxLines = 1,
+          color = UIUtil.getContextHelpForeground().toComposeColor(),
+          overflow = TextOverflow.Ellipsis
+        )
+      }
     }
 
     if (selected) {
-      Icon("expui/general/chevronRight.svg", null, ExpUiIcons::class.java)
+      Icon("expui/general/chevronRight.svg", null, ExpUiIcons::class.java, modifier = Modifier.requiredWidth(16.dp))
+    }
+    else {
+      Box(modifier = Modifier.requiredWidth(16.dp))
     }
   }
 }

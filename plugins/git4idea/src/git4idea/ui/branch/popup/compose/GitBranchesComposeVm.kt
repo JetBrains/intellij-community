@@ -101,7 +101,8 @@ internal class GitBranchesComposeVm(
     }.stateIn(viewScope, SharingStarted.Eagerly, branchManager.isFavorite(GitBranchType.of(branch), repository, branch.name))
 
     return GitBranchComposeVm(
-      viewScope, branch, _text,
+      viewScope, repository,
+      branch, _text,
       isFavorite = isFavorite,
       toggleIsFavoriteState = {
         branchManager.setFavorite(GitBranchType.of(branch), repository, branch.name, !isFavorite.value)
