@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.event.EditorMouseListener
 import com.intellij.openapi.editor.event.SelectionEvent
 import com.intellij.openapi.editor.event.SelectionListener
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.util.Alarm
 import com.intellij.util.MathUtil
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.plugins.terminal.exp.TerminalFocusModel.TerminalFocusListener
@@ -40,9 +41,19 @@ class TerminalSelectionController(
         clearSelection()   // clear selection if user selected the prompt using the mouse
       }
 
-      // mark selected blocks as inactive when the terminal loses the focus
+      /**
+       * Mark selected blocks as inactive when the terminal loses the focus.
+       * Remove inactive state when the terminal receives focus.
+       */
       override fun activeStateChanged(isActive: Boolean) {
-        applyInactiveSelectionDecoration(isActive)
+        // Remove inactive state with a delay to make it after selected blocks change.
+        // Because otherwise, the old selected block will first become active, and then the selection will be removed.
+        // So, it will cause blinking. But with delay, the selection will be removed first, and it won't become active.
+        Alarm().addRequest(Runnable {
+          if (!outputModel.editor.isDisposed) {
+            applyInactiveSelectionDecoration(isActive)
+          }
+        }, 150)
       }
     })
     textSelectionModel.addSelectionListener(object : SelectionListener {
@@ -198,6 +209,7 @@ class TerminalSelectionController(
     for (block in oldSelection) {
       if (!newSelection.contains(block)) {
         outputModel.removeBlockState(block, SelectedBlockDecorationState.NAME)
+        outputModel.removeBlockState(block, InactiveSelectedBlockDecorationState.NAME)
       }
     }
     for (block in newSelection) {
