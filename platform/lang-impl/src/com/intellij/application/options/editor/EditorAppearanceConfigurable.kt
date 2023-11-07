@@ -158,7 +158,7 @@ internal class EditorAppearanceConfigurable : BoundCompositeSearchableConfigurab
 
     super.apply()
 
-    EditorOptionsPanel.reinitAllEditors()
+    reinitAllEditors()
     if (showEditorTooltip != UISettings.getInstance().showEditorToolTip) {
       LafManager.getInstance().repaintUI()
       UISettings.getInstance().fireUISettingsChanged()
@@ -167,7 +167,7 @@ internal class EditorAppearanceConfigurable : BoundCompositeSearchableConfigurab
       DocRenderManager.resetAllEditorsToDefaultState()
     }
 
-    EditorOptionsPanel.restartDaemons()
+    restartDaemons()
     ApplicationManager.getApplication().messageBus.syncPublisher(EditorOptionsListener.APPEARANCE_CONFIGURABLE_TOPIC).changesApplied()
   }
 

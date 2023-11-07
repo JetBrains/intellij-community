@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.editor
 
-import com.intellij.application.options.editor.EditorOptionsPanel.Companion.reinitAllEditors
 import com.intellij.codeInsight.folding.CodeFoldingManager
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.application.ApplicationManager
