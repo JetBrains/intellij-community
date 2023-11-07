@@ -28,7 +28,6 @@ import com.intellij.openapi.keymap.Keymap
 import com.intellij.openapi.keymap.KeymapManagerListener
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.isNotificationSilentMode
 import com.intellij.openapi.ui.Divider
 import com.intellij.openapi.ui.OnePixelDivider
 import com.intellij.openapi.ui.Splitter
@@ -37,7 +36,9 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.openapi.wm.*
+import com.intellij.openapi.wm.FocusWatcher
+import com.intellij.openapi.wm.IdeFocusManager
+import com.intellij.openapi.wm.IdeFrame
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy
 import com.intellij.openapi.wm.ex.IdeFrameEx
 import com.intellij.openapi.wm.ex.WindowManagerEx
@@ -917,8 +918,12 @@ private class UiBuilder(private val splitters: EditorsSplitters) {
         span("opening editor") {
           val file = virtualFileManager.findFileByUrl(fileEntry.url)
           if (file == null || !file.isValid) {
+            val message = "No file exists: ${fileEntry.url}"
             if (ApplicationManager.getApplication().isUnitTestMode) {
-              LOG.error("No file exists: ${fileEntry.url}")
+              LOG.error(message)
+            }
+            else {
+              LOG.warn(message)
             }
             return@span
           }
@@ -936,15 +941,6 @@ private class UiBuilder(private val splitters: EditorsSplitters) {
           }
           finally {
             file.putUserData(AsyncEditorLoader.OPENED_IN_BULK, null)
-          }
-        }
-      }
-
-      if (focusedFile == null && !isNotificationSilentMode(splitters.manager.project)) {
-        val manager = splitters.manager.project.serviceAsync<ToolWindowManager>()
-        manager.invokeLater {
-          if (manager.activeToolWindowId == null) {
-            manager.getToolWindow(ToolWindowId.PROJECT_VIEW)?.activate(null)
           }
         }
       }
