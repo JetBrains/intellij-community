@@ -70,7 +70,7 @@ class TerminalOutputController(
     val keyEventsDisposable = Disposer.newDisposable().also { Disposer.register(session, it) }
     keyEventsListenerDisposable = keyEventsDisposable
 
-    val eventsHandler = SimpleTerminalEventsHandler(session, settings)
+    val eventsHandler = BlockTerminalEventsHandler(session, settings, outputModel, selectionModel)
     setupKeyEventDispatcher(editor, settings, eventsHandler, outputModel, selectionModel, keyEventsDisposable)
     setupMouseListener(editor, settings, session.model, eventsHandler, mouseAndContentDisposable)
     setupContentListener(mouseAndContentDisposable)

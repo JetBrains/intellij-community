@@ -21,7 +21,7 @@ import javax.swing.SwingUtilities
  * Logic of key events handling is copied from [com.jediterm.terminal.ui.TerminalPanel]
  * Logic of mouse event handling is copied from [com.jediterm.terminal.model.JediTerminal]
  */
-class SimpleTerminalEventsHandler(
+open class SimpleTerminalEventsHandler(
   private val session: TerminalSession,
   private val settings: JBTerminalSystemSettingsProviderBase
 ) : TerminalEventsHandler {

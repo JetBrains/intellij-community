@@ -26,7 +26,6 @@ import com.intellij.util.concurrency.ThreadingAssertions
 import com.jediterm.terminal.emulator.mouse.MouseMode
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.plugins.terminal.exp.TerminalEventDispatcher.MyKeyEventsListener
-import org.jetbrains.plugins.terminal.exp.TerminalSelectionModel.TerminalSelectionListener
 import java.awt.AWTEvent
 import java.awt.event.*
 import javax.swing.KeyStroke
@@ -195,11 +194,8 @@ internal fun setupKeyEventDispatcher(editor: EditorEx,
   editor.addFocusListener(object : FocusChangeListener {
     override fun focusGained(editor: Editor) {
       if (settings.overrideIdeShortcuts()) {
-        val selectedBlock = selectionModel.primarySelection
-        if (selectedBlock == null || selectedBlock == outputModel.getLastBlock()) {
-          val actionsToSkip = TerminalEventDispatcher.getActionsToSkip()
-          eventDispatcher.register(actionsToSkip)
-        }
+        val actionsToSkip = TerminalEventDispatcher.getActionsToSkip()
+        eventDispatcher.register(actionsToSkip)
       }
       else {
         eventDispatcher.unregister()
@@ -214,17 +210,6 @@ internal fun setupKeyEventDispatcher(editor: EditorEx,
     override fun focusLost(editor: Editor) {
       eventDispatcher.unregister()
       SaveAndSyncHandler.getInstance().scheduleRefresh()
-    }
-  }, disposable)
-
-  selectionModel.addListener(object : TerminalSelectionListener {
-    override fun selectionChanged(oldSelection: List<CommandBlock>, newSelection: List<CommandBlock>) {
-      val selectedBlock = selectionModel.primarySelection
-      if (selectedBlock == null || selectedBlock == outputModel.getLastBlock()) {
-        val actionsToSkip = TerminalEventDispatcher.getActionsToSkip()
-        eventDispatcher.register(actionsToSkip)
-      }
-      else eventDispatcher.unregister()
     }
   }, disposable)
 }
