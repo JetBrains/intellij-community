@@ -204,7 +204,7 @@ class JavaSuggestedRefactoringAvailability(refactoringSupport: SuggestedRefactor
 
   private fun extractAnnotations(type: PsiType?, owner: PsiModifierListOwner, psiFile: PsiFile): String {
     if (type == null) return ""
-    return JavaSuggestedRefactoringSupport.extractAnnotationsToCopy(type, owner, psiFile)
+    return extractAnnotationsToCopy(type, owner, psiFile)
       .joinToString(separator = " ") { it.text } //TODO: strip comments and line breaks
   }
 }
