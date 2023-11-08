@@ -7,10 +7,10 @@ internal class SimpleTreeAssertionImpl<T> private constructor() : SimpleTreeAsse
 
   private val expectedChildren = ArrayList<SimpleTree.Node<NodeAssertionOptions<T>>>()
 
-  private var valueAssertion: (T) -> Unit = {}
+  private var valueAssertions = ArrayList<(T) -> Unit>()
 
   override fun assertValue(assert: (T) -> Unit) {
-    valueAssertion = assert
+    valueAssertions.add(assert)
   }
 
   // @formatter:off
@@ -33,7 +33,7 @@ internal class SimpleTreeAssertionImpl<T> private constructor() : SimpleTreeAsse
     val expectedChild = SimpleTree.Node(displayName, options)
     val childAssertion = buildTreeAssertion(assert)
     expectedChild.children.addAll(childAssertion.expectedChildren)
-    expectedChild.value.valueAssertion = childAssertion.valueAssertion
+    expectedChild.value.valueAssertions = childAssertion.valueAssertions
     expectedChildren.add(expectedChild)
   }
 
@@ -42,7 +42,7 @@ internal class SimpleTreeAssertionImpl<T> private constructor() : SimpleTreeAsse
     val flattenIf: Boolean,
     val skipIf: Boolean,
     val isUnordered: Boolean,
-    var valueAssertion: (T) -> Unit = {},
+    var valueAssertions: List<(T) -> Unit> = ArrayList()
   )
 
   private sealed interface NodeMatcher<T> {
@@ -105,7 +105,9 @@ internal class SimpleTreeAssertionImpl<T> private constructor() : SimpleTreeAsse
           if (!expectedNode.value.matcher.matches(actualNode)) {
             throwTreeAssertionError(expectedTree, actualTree)
           }
-          expectedNode.value.valueAssertion(actualNode.value)
+          for (valueAssertion in expectedNode.value.valueAssertions) {
+            valueAssertion.invoke(actualNode.value)
+          }
           queue.add(expectedNode.children to actualNode.children)
         }
       }
