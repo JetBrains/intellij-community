@@ -15,6 +15,7 @@ import com.intellij.codeInspection.SuppressionUtil;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionProfileWrapper;
+import com.intellij.codeInspection.unusedImport.MissortedImportsInspection;
 import com.intellij.codeInspection.unusedImport.UnusedImportInspection;
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspectionBase;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtilBase;
@@ -58,7 +59,7 @@ class PostHighlightingVisitor extends JavaElementVisitor {
   private final PsiFile myFile;
   @NotNull private final Document myDocument;
   private final GlobalUsageHelper myGlobalUsageHelper;
-  private IntentionAction myOptimizeImportsFix; // when not null, there are redundant/mis-sorted imports in the file
+  private IntentionAction myOptimizeImportsFix; // when not null, there are not-optimized imports in the file
   private int myCurrentEntryIndex = -1;
   private final UnusedSymbolLocalInspectionBase myUnusedSymbolInspection;
   private final HighlightDisplayKey myDeadCodeKey;
@@ -113,15 +114,13 @@ class PostHighlightingVisitor extends JavaElementVisitor {
     }
 
     HighlightDisplayKey unusedImportKey = HighlightDisplayKey.find(UnusedImportInspection.SHORT_NAME);
-    if (unusedImportKey != null && isUnusedImportEnabled(unusedImportKey)) {
-      PsiJavaFile javaFile = (PsiJavaFile)myFile;
-      PsiImportList importList = javaFile.getImportList();
-      if (importList != null) {
-        PsiImportStatementBase[] imports = importList.getAllImportStatements();
-        for (PsiImportStatementBase statement : imports) {
-          ProgressManager.checkCanceled();
-          processImport(holder, javaFile, statement, unusedImportKey);
-        }
+    PsiJavaFile javaFile = ObjectUtils.tryCast(myFile, PsiJavaFile.class);
+    PsiImportList importList = javaFile == null ? null : javaFile.getImportList();
+    if (unusedImportKey != null && isUnusedImportEnabled(unusedImportKey) && importList != null) {
+      PsiImportStatementBase[] imports = importList.getAllImportStatements();
+      for (PsiImportStatementBase statement : imports) {
+        ProgressManager.checkCanceled();
+        processImport(holder, javaFile, statement, unusedImportKey);
       }
     }
 
@@ -133,6 +132,13 @@ class PostHighlightingVisitor extends JavaElementVisitor {
     IntentionAction fix = myOptimizeImportsFix;
     if (fix != null) {
       OptimizeImportRestarter.getInstance(myProject).scheduleOnDaemonFinish(myFile, fix);
+    }
+    HighlightDisplayKey misSortedKey = HighlightDisplayKey.find(MissortedImportsInspection.SHORT_NAME);
+    if (misSortedKey != null && isToolEnabled(misSortedKey) && fix != null && importList != null) {
+      holder.add(HighlightInfo.newHighlightInfo(JavaHighlightInfoTypes.MISSORTED_IMPORTS)
+        .range(importList)
+        .registerFix(fix, null, HighlightDisplayKey.getDisplayNameByKey(misSortedKey), null, misSortedKey)
+        .create());
     }
   }
 

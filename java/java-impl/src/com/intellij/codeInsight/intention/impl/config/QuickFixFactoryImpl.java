@@ -704,7 +704,10 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
 
     @Override
     public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-      if (myOnTheFly && !timeToOptimizeImports(file, myInContent, extensionsAllowToChangeFileSilently) || !(file instanceof PsiJavaFile)) {
+      if (!(file instanceof PsiJavaFile)) {
+        return false;
+      }
+      if (ApplicationManager.getApplication().isDispatchThread() && myOnTheFly && !timeToOptimizeImports(file, myInContent, extensionsAllowToChangeFileSilently)) {
         return false;
       }
       VirtualFile virtualFile = file.getViewProvider().getVirtualFile();
