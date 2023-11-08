@@ -30,7 +30,8 @@ internal class SimpleTreeAssertionImpl<T> private constructor(
     }
     val displayName = options.matcher.displayName
     val expectedChild = SimpleTree.Node(displayName, options)
-    addAssertionNodes(expectedChild.children, assert)
+    val childAssertion = addAssertionNodes(expectedChild.children, assert)
+    expectedChild.value.valueAssertion = childAssertion.valueAssertion
     expectedChildren.add(expectedChild)
   }
 
@@ -84,9 +85,10 @@ internal class SimpleTreeAssertionImpl<T> private constructor(
     private fun <T> addAssertionNodes(
       assertionNodes: MutableList<SimpleTree.Node<NodeAssertionOptions<T>>>,
       assert: SimpleTreeAssertion.Node<T>.() -> Unit
-    ) {
+    ): SimpleTreeAssertionImpl<T> {
       val assertion = SimpleTreeAssertionImpl(assertionNodes)
       assertion.assert()
+      return assertion
     }
 
     private fun <T> assertTree(expectedTree: SimpleTree<NodeAssertionOptions<T>>, actualTree: SimpleTree<T>) {
