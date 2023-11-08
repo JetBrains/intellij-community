@@ -34,5 +34,10 @@
     <platform.backend.documentation.linkHandler implementation="org.jetbrains.kotlin.idea.k2.codeinsight.quickDoc.KotlinDocumentationLinkHandler"/>
     <platform.backend.documentation.targetProvider id="KotlinDocumentationTargetProvider"
                                                    implementation="org.jetbrains.kotlin.idea.k2.codeinsight.quickDoc.KotlinDocumentationTargetProvider"/>
+    <lang.jvm.actions.jvmElementActionsFactory
+            implementation="org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.KotlinElementActionsFactory"/>
+
+    <codeInsight.unresolvedReferenceQuickFixProvider
+            implementation="org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.KotlinCreateFromUsageQuickFixProvider"/>
   </extensions>
 </idea-plugin>
