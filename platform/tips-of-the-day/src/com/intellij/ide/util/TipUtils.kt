@@ -16,6 +16,7 @@ import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.icons.loadImageByClassLoader
 import com.intellij.ui.scale.JBUIScale.scale
@@ -178,7 +179,9 @@ private val productCodeTipMap = mapOf(Pair("iu", "ij"),
 
 private fun getTipRetrievers(tip: TipAndTrickBean): TipRetrieversInfo {
   val fallbackLoader = TipUtils::class.java.classLoader
-  val pluginDescriptor = tip.pluginDescriptor
+  // descriptor can be null if the provided tip is not registered as an extension
+  // such tips are not present in the tips of the day list, but shown in the productivity guide
+  val pluginDescriptor: PluginDescriptor? = tip.pluginDescriptor
   val langBundle = DynamicBundle.findLanguageBundle()
 
   //I know of ternary operators, but in cases like this they're harder to comprehend and debug than this.
@@ -187,7 +190,7 @@ private fun getTipRetrievers(tip: TipAndTrickBean): TipRetrieversInfo {
     val langBundleLoader = langBundle.pluginDescriptor
     if (langBundleLoader != null) tipLoader = langBundleLoader.pluginClassLoader
   }
-  val pluginClassLoader = pluginDescriptor.pluginClassLoader
+  val pluginClassLoader = pluginDescriptor?.pluginClassLoader
 
   if (tipLoader == null && pluginClassLoader != null) {
     tipLoader = pluginClassLoader
