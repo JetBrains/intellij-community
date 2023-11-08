@@ -498,7 +498,6 @@ public final class MavenProjectReader {
       null,
       null,
       null,
-      null,
       false);
   }
 

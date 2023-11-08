@@ -29,7 +29,6 @@ internal class MavenProjectResolutionUtil {
                            locator: MavenProjectReaderProjectLocator?,
                            progressReporter: RawProgressReporter,
                            syncConsole: MavenSyncConsole?,
-                           console: MavenConsole?,
                            workspaceMap: MavenWorkspaceMap?,
                            updateSnapshots: Boolean): Collection<MavenProjectReaderResult> {
       return runBlockingMaybeCancellable {
