@@ -6,14 +6,9 @@ import com.intellij.psi.*
 
 class JavaMultiLineEvaluationVisitor : EvaluationVisitor, JavaRecursiveElementVisitor() {
   private var codeFragment: CodeFragment? = null
-
   override val language = Language.JAVA
-
   override val feature = "multi-line-completion"
-
-  override fun getFile(): CodeFragment {
-    return codeFragment ?: throw PsiConverterException("Invoke 'accept' with visitor on PSI first")
-  }
+  override fun getFile() = codeFragment ?: throw PsiConverterException("Invoke 'accept' with visitor on PSI first")
 
   override fun visitJavaFile(file: PsiJavaFile) {
     codeFragment = CodeFragment(file.textOffset, file.textLength).apply { text = file.text }
