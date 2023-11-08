@@ -23,7 +23,8 @@ import javax.swing.SwingUtilities
  */
 open class SimpleTerminalEventsHandler(
   private val session: TerminalSession,
-  private val settings: JBTerminalSystemSettingsProviderBase
+  private val settings: JBTerminalSystemSettingsProviderBase,
+  protected val outputModel: TerminalOutputModel,
 ) : TerminalEventsHandler {
   private var ignoreNextKeyTypedEvent: Boolean = false
   private var lastMotionReport: Point? = null
@@ -37,6 +38,11 @@ open class SimpleTerminalEventsHandler(
     get() = session.model
 
   override fun keyTyped(e: KeyEvent) {
+    val selectionModel = outputModel.editor.selectionModel
+    if (selectionModel.hasSelection()) {
+      selectionModel.removeSelection()
+    }
+
     if (ignoreNextKeyTypedEvent) {
       e.consume()
       return

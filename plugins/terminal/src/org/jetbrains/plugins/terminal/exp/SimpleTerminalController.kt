@@ -42,7 +42,7 @@ class SimpleTerminalController(
     terminalModel.isCommandRunning = true
 
     setupContentListener()
-    val eventsHandler = SimpleTerminalEventsHandler(session, settings)
+    val eventsHandler = SimpleTerminalEventsHandler(session, settings, outputModel)
     setupKeyEventDispatcher(editor, settings, eventsHandler, outputModel, selectionModel, disposable = this)
     setupMouseListener(editor, settings, terminalModel, eventsHandler, disposable = this)
     terminalModel.withContentLock {

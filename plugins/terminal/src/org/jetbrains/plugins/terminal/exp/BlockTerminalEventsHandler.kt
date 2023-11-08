@@ -7,9 +7,9 @@ import java.awt.event.KeyEvent
 class BlockTerminalEventsHandler(
   session: TerminalSession,
   settings: JBTerminalSystemSettingsProviderBase,
-  private val outputModel: TerminalOutputModel,
+  outputModel: TerminalOutputModel,
   private val selectionModel: TerminalSelectionModel
-) : SimpleTerminalEventsHandler(session, settings) {
+) : SimpleTerminalEventsHandler(session, settings, outputModel) {
   override fun keyTyped(e: KeyEvent) {
     // Clear the block selection on typing
     if (selectionModel.primarySelection != null) {
