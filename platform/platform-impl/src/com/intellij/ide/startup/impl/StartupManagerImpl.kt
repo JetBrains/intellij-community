@@ -255,7 +255,6 @@ open class StartupManagerImpl(private val project: Project, private val coroutin
             launchActivity(activity = activity, project = project, pluginId = pluginDescriptor.pluginId)
           }
           else {
-            println(activity.javaClass.simpleName)
             activity.execute(project)
           }
           continue
