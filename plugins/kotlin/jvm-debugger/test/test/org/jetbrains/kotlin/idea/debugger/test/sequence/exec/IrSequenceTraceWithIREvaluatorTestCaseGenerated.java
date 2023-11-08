@@ -18,10 +18,10 @@ import org.junit.runner.RunWith;
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
 @TestMetadata("testData/sequence/streams/sequence")
-public abstract class SequenceTraceWithIREvaluatorTestCaseGenerated extends AbstractSequenceTraceWithIREvaluatorTestCase {
+public abstract class IrSequenceTraceWithIREvaluatorTestCaseGenerated extends AbstractIrSequenceTraceWithIREvaluatorTestCase {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/sequence/streams/sequence/append")
-    public static class Append extends AbstractSequenceTraceWithIREvaluatorTestCase {
+    public static class Append extends AbstractIrSequenceTraceWithIREvaluatorTestCase {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -49,7 +49,7 @@ public abstract class SequenceTraceWithIREvaluatorTestCaseGenerated extends Abst
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/sequence/streams/sequence/distinct")
-    public static class Distinct extends AbstractSequenceTraceWithIREvaluatorTestCase {
+    public static class Distinct extends AbstractIrSequenceTraceWithIREvaluatorTestCase {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -92,7 +92,7 @@ public abstract class SequenceTraceWithIREvaluatorTestCaseGenerated extends Abst
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/sequence/streams/sequence/filter")
-    public static class Filter extends AbstractSequenceTraceWithIREvaluatorTestCase {
+    public static class Filter extends AbstractIrSequenceTraceWithIREvaluatorTestCase {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -150,7 +150,7 @@ public abstract class SequenceTraceWithIREvaluatorTestCaseGenerated extends Abst
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/sequence/streams/sequence/flatMap")
-    public static class FlatMap extends AbstractSequenceTraceWithIREvaluatorTestCase {
+    public static class FlatMap extends AbstractIrSequenceTraceWithIREvaluatorTestCase {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -168,7 +168,7 @@ public abstract class SequenceTraceWithIREvaluatorTestCaseGenerated extends Abst
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/sequence/streams/sequence/map")
-    public static class Map extends AbstractSequenceTraceWithIREvaluatorTestCase {
+    public static class Map extends AbstractIrSequenceTraceWithIREvaluatorTestCase {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -196,7 +196,7 @@ public abstract class SequenceTraceWithIREvaluatorTestCaseGenerated extends Abst
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/sequence/streams/sequence/misc")
-    public static class Misc extends AbstractSequenceTraceWithIREvaluatorTestCase {
+    public static class Misc extends AbstractIrSequenceTraceWithIREvaluatorTestCase {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -279,7 +279,7 @@ public abstract class SequenceTraceWithIREvaluatorTestCaseGenerated extends Abst
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/sequence/streams/sequence/sort")
-    public static class Sort extends AbstractSequenceTraceWithIREvaluatorTestCase {
+    public static class Sort extends AbstractIrSequenceTraceWithIREvaluatorTestCase {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }

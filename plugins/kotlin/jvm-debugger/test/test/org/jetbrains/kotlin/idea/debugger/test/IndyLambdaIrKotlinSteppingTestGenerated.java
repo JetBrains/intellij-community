@@ -17,10 +17,10 @@ import org.junit.runner.RunWith;
 @TestRoot("jvm-debugger/test")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-public abstract class IndyLambdaKotlinSteppingTestGenerated extends AbstractIndyLambdaKotlinSteppingTest {
+public abstract class IndyLambdaIrKotlinSteppingTestGenerated extends AbstractIndyLambdaIrKotlinSteppingTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/stepping/stepIntoAndSmartStepInto")
-    public static class StepInto extends AbstractIndyLambdaKotlinSteppingTest {
+    public static class StepInto extends AbstractIndyLambdaIrKotlinSteppingTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doStepIntoTest, this, testDataFilePath);
         }
@@ -118,7 +118,7 @@ public abstract class IndyLambdaKotlinSteppingTestGenerated extends AbstractIndy
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/stepping/stepIntoAndSmartStepInto")
-    public static class SmartStepInto extends AbstractIndyLambdaKotlinSteppingTest {
+    public static class SmartStepInto extends AbstractIndyLambdaIrKotlinSteppingTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doSmartStepIntoTest, this, testDataFilePath);
         }
@@ -216,7 +216,7 @@ public abstract class IndyLambdaKotlinSteppingTestGenerated extends AbstractIndy
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/stepping/stepInto")
-    public static class StepIntoOnly extends AbstractIndyLambdaKotlinSteppingTest {
+    public static class StepIntoOnly extends AbstractIndyLambdaIrKotlinSteppingTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doStepIntoTest, this, testDataFilePath);
         }
@@ -349,7 +349,7 @@ public abstract class IndyLambdaKotlinSteppingTestGenerated extends AbstractIndy
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/stepping/stepOut")
-    public static class StepOut extends AbstractIndyLambdaKotlinSteppingTest {
+    public static class StepOut extends AbstractIndyLambdaIrKotlinSteppingTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doStepOutTest, this, testDataFilePath);
         }
@@ -407,10 +407,10 @@ public abstract class IndyLambdaKotlinSteppingTestGenerated extends AbstractIndy
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/stepping/stepOver")
-    public abstract static class StepOver extends AbstractIndyLambdaKotlinSteppingTest {
+    public abstract static class StepOver extends AbstractIndyLambdaIrKotlinSteppingTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/stepping/stepOver/coroutines")
-        public static class Coroutines extends AbstractIndyLambdaKotlinSteppingTest {
+        public static class Coroutines extends AbstractIndyLambdaIrKotlinSteppingTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doStepOverTest, this, testDataFilePath);
             }
@@ -438,7 +438,7 @@ public abstract class IndyLambdaKotlinSteppingTestGenerated extends AbstractIndy
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/stepping/stepOver")
-        public static class Uncategorized extends AbstractIndyLambdaKotlinSteppingTest {
+        public static class Uncategorized extends AbstractIndyLambdaIrKotlinSteppingTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doStepOverTest, this, testDataFilePath);
             }
@@ -1017,7 +1017,7 @@ public abstract class IndyLambdaKotlinSteppingTestGenerated extends AbstractIndy
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/stepping/filters")
-    public static class Filters extends AbstractIndyLambdaKotlinSteppingTest {
+    public static class Filters extends AbstractIndyLambdaIrKotlinSteppingTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doStepIntoTest, this, testDataFilePath);
         }
@@ -1085,7 +1085,7 @@ public abstract class IndyLambdaKotlinSteppingTestGenerated extends AbstractIndy
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/stepping/custom")
-    public static class Custom extends AbstractIndyLambdaKotlinSteppingTest {
+    public static class Custom extends AbstractIndyLambdaIrKotlinSteppingTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doCustomTest, this, testDataFilePath);
         }

@@ -55,8 +55,8 @@ import org.jetbrains.kotlin.idea.debugger.evaluate.AbstractCodeFragmentCompletio
 import org.jetbrains.kotlin.idea.debugger.evaluate.AbstractCodeFragmentCompletionTest
 import org.jetbrains.kotlin.idea.debugger.evaluate.AbstractCodeFragmentHighlightingTest
 import org.jetbrains.kotlin.idea.debugger.test.*
-import org.jetbrains.kotlin.idea.debugger.test.sequence.exec.AbstractSequenceTraceTestCase
-import org.jetbrains.kotlin.idea.debugger.test.sequence.exec.AbstractSequenceTraceWithIREvaluatorTestCase
+import org.jetbrains.kotlin.idea.debugger.test.sequence.exec.AbstractIrSequenceTraceTestCase
+import org.jetbrains.kotlin.idea.debugger.test.sequence.exec.AbstractIrSequenceTraceWithIREvaluatorTestCase
 import org.jetbrains.kotlin.idea.decompiler.navigation.*
 import org.jetbrains.kotlin.idea.decompiler.stubBuilder.AbstractLoadJavaClsStubTest
 import org.jetbrains.kotlin.idea.decompiler.textBuilder.AbstractCommonDecompiledTextTest
@@ -64,7 +64,6 @@ import org.jetbrains.kotlin.idea.decompiler.textBuilder.AbstractJvmDecompiledTex
 import org.jetbrains.kotlin.idea.editor.backspaceHandler.AbstractBackspaceHandlerTest
 import org.jetbrains.kotlin.idea.editor.commenter.AbstractKotlinCommenterTest
 import org.jetbrains.kotlin.idea.editor.quickDoc.AbstractQuickDocProviderTest
-import org.jetbrains.kotlin.idea.externalAnnotations.AbstractExternalAnnotationTest
 import org.jetbrains.kotlin.idea.externalAnnotations.AbstractK1ExternalAnnotationTest
 import org.jetbrains.kotlin.idea.folding.AbstractKotlinFoldingTest
 import org.jetbrains.kotlin.idea.hierarchy.AbstractHierarchyTest
@@ -175,19 +174,10 @@ private fun assembleWorkspace(): TWorkspace = workspace {
     val excludedFirPrecondition = fun(name: String) = !name.endsWith(".fir.kt") && !name.endsWith(".fir.kts")
 
     testGroup("jvm-debugger/test") {
-        testClass<AbstractKotlinSteppingTest> {
-            model("stepping/stepIntoAndSmartStepInto", pattern = KT_WITHOUT_DOTS, targetBackend = TargetBackend.JVM_WITH_IR_EVALUATOR, testMethodName = "doStepIntoTest", testClassName = "StepInto")
-            model("stepping/stepIntoAndSmartStepInto", pattern = KT_WITHOUT_DOTS, targetBackend = TargetBackend.JVM_WITH_IR_EVALUATOR, testMethodName = "doSmartStepIntoTest", testClassName = "SmartStepInto")
-            model("stepping/stepInto", pattern = KT_WITHOUT_DOTS, targetBackend = TargetBackend.JVM_WITH_IR_EVALUATOR, testMethodName = "doStepIntoTest", testClassName = "StepIntoOnly")
-            model("stepping/stepOut", pattern = KT_WITHOUT_DOTS, targetBackend = TargetBackend.JVM_WITH_IR_EVALUATOR, testMethodName = "doStepOutTest")
-            model("stepping/stepOver", pattern = KT_WITHOUT_DOTS, targetBackend = TargetBackend.JVM_WITH_IR_EVALUATOR, testMethodName = "doStepOverTest")
-            model("stepping/filters", pattern = KT_WITHOUT_DOTS, targetBackend = TargetBackend.JVM_WITH_IR_EVALUATOR, testMethodName = "doStepIntoTest")
-            model("stepping/custom", pattern = KT_WITHOUT_DOTS, targetBackend = TargetBackend.JVM_WITH_IR_EVALUATOR, testMethodName = "doCustomTest")
-        }
         listOf(
-            AbstractIrKotlinSteppingTest::class,
-            AbstractIndyLambdaKotlinSteppingTest::class,
-            AbstractK1IdeK2CodeKotlinSteppingTest::class,
+          AbstractIrKotlinSteppingTest::class,
+          AbstractIndyLambdaIrKotlinSteppingTest::class,
+          AbstractK1IdeK2CodeKotlinSteppingTest::class,
         ).forEach {
             testClass(it) {
                 model("stepping/stepIntoAndSmartStepInto", pattern = KT_WITHOUT_DOTS, testMethodName = "doStepIntoTest", testClassName = "StepInto")
@@ -200,12 +190,6 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             }
         }
 
-        testClass<AbstractKotlinEvaluateExpressionTest> {
-            model("evaluation/singleBreakpoint", testMethodName = "doSingleBreakpointTest", targetBackend = TargetBackend.JVM_WITH_OLD_EVALUATOR)
-            model("evaluation/multipleBreakpoints", testMethodName = "doMultipleBreakpointsTest", targetBackend = TargetBackend.JVM_WITH_OLD_EVALUATOR)
-            model("evaluation/jvmMultiModule", testMethodName = "doJvmMultiModuleTest", targetBackend = TargetBackend.JVM_WITH_OLD_EVALUATOR)
-        }
-
         testClass<AbstractIrKotlinEvaluateExpressionTest> {
             model("evaluation/singleBreakpoint", testMethodName = "doSingleBreakpointTest", targetBackend = TargetBackend.JVM_IR_WITH_OLD_EVALUATOR)
             model("evaluation/multipleBreakpoints", testMethodName = "doMultipleBreakpointsTest", targetBackend = TargetBackend.JVM_IR_WITH_OLD_EVALUATOR)
@@ -213,9 +197,9 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
 
         listOf(
-            AbstractIndyLambdaKotlinEvaluateExpressionTest::class,
-            AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest::class,
-            AbstractK1IdeK2CodeKotlinEvaluateExpressionTest::class,
+          AbstractIndyLambdaIrKotlinEvaluateExpressionTest::class,
+          AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest::class,
+          AbstractK1IdeK2CodeKotlinEvaluateExpressionTest::class,
         ).forEach {
             testClass(it) {
                 model("evaluation/singleBreakpoint", testMethodName = "doSingleBreakpointTest", targetBackend = TargetBackend.JVM_IR_WITH_IR_EVALUATOR)
@@ -225,15 +209,15 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
 
         listOf(
-            AbstractKotlinScriptEvaluateExpressionTest::class,
-            AbstractK1IdeK2CodeScriptEvaluateExpressionTest::class,
+          AbstractIrKotlinScriptEvaluateExpressionTest::class,
+          AbstractK1IdeK2CodeScriptEvaluateExpressionTest::class,
         ).forEach {
             testClass(it) {
                 model("evaluation/scripts", testMethodName = "doMultipleBreakpointsTest", targetBackend = TargetBackend.JVM_IR_WITH_IR_EVALUATOR)
             }
         }
 
-        testClass<AbstractKotlinEvaluateExpressionInMppTest> {
+        testClass<AbstractIrKotlinEvaluateExpressionInMppTest> {
             model("evaluation/singleBreakpoint", testMethodName = "doSingleBreakpointTest", targetBackend = TargetBackend.JVM_IR_WITH_IR_EVALUATOR)
             model("evaluation/multipleBreakpoints", testMethodName = "doMultipleBreakpointsTest", targetBackend = TargetBackend.JVM_IR_WITH_IR_EVALUATOR)
             model("evaluation/multiplatform", testMethodName = "doMultipleBreakpointsTest", targetBackend = TargetBackend.JVM_IR_WITH_IR_EVALUATOR)
@@ -259,9 +243,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
 
 
-        listOf(AbstractBreakpointHighlightingTest::class,
-               AbstractIrBreakpointHighlightingTest::class,
-               AbstractIndyLambdaBreakpointHighlightingTest::class,
+        listOf(AbstractIrBreakpointHighlightingTest::class,
                AbstractK1IdeK2CodeBreakpointHighlightingTest::class).forEach {
             testClass(it) {
                 model("highlighting", isRecursive = false, pattern = KT_WITHOUT_DOTS, testMethodName = "doCustomTest")
@@ -294,11 +276,11 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             }
         }
 
-        testClass<AbstractSequenceTraceTestCase> { // TODO: implement mapping logic for terminal operations
+        testClass<AbstractIrSequenceTraceTestCase> { // TODO: implement mapping logic for terminal operations
             model("sequence/streams/sequence", excludedDirectories = listOf("terminal"))
         }
 
-        testClass<AbstractSequenceTraceWithIREvaluatorTestCase> { // TODO: implement mapping logic for terminal operations
+        testClass<AbstractIrSequenceTraceWithIREvaluatorTestCase> { // TODO: implement mapping logic for terminal operations
             model("sequence/streams/sequence", excludedDirectories = listOf("terminal"))
         }
 

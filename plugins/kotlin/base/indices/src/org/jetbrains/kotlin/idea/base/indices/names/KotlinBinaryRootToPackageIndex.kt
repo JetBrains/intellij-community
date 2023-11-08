@@ -9,6 +9,8 @@ import com.intellij.openapi.vfs.jrt.JrtFileSystem
 import com.intellij.util.indexing.*
 import com.intellij.util.io.EnumeratorStringDescriptor
 import org.jetbrains.kotlin.analysis.decompiler.konan.KlibMetaFileType
+import org.jetbrains.kotlin.analysis.decompiler.psi.BuiltInDefinitionFile
+import org.jetbrains.kotlin.analysis.decompiler.psi.KotlinBuiltInFileType
 import org.jetbrains.kotlin.incremental.storage.StringExternalizer
 import org.jetbrains.kotlin.library.KLIB_FILE_EXTENSION_WITH_DOT
 
@@ -45,15 +47,17 @@ class KotlinBinaryRootToPackageIndex : FileBasedIndexExtension<String, String>()
 
     override fun getInputFilter(): FileBasedIndex.InputFilter = DefaultFileTypeSpecificInputFilter(
         JavaClassFileType.INSTANCE,
+        KotlinBuiltInFileType,
         KlibMetaFileType,
     )
 
-    override fun getVersion(): Int = 4
+    override fun getVersion(): Int = 5
 
     override fun getIndexer(): DataIndexer<String, String, FileContent> = DataIndexer { fileContent ->
         try {
             val packageName = when (fileContent.fileType) {
                 JavaClassFileType.INSTANCE -> fileContent.toKotlinJvmBinaryClass()?.packageName
+                KotlinBuiltInFileType -> (readKotlinMetadataDefinition(fileContent) as? BuiltInDefinitionFile)?.packageFqName
                 KlibMetaFileType -> fileContent.toCompatibleFileWithMetadata()?.packageFqName
                 else -> null
             }

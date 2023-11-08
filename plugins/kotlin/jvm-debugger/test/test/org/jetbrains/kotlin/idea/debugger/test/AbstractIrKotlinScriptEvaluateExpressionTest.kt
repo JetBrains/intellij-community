@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.idea.test.KotlinCliCompilerFacade
 import org.jetbrains.kotlin.psi.KtFile
 import java.io.File
 
-abstract class AbstractKotlinScriptEvaluateExpressionTest : AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest() {
+abstract class AbstractIrKotlinScriptEvaluateExpressionTest : AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest() {
 
     override fun configureProjectByTestFiles(testFiles: List<TestFileWithModule>, testAppDirectory: File) {
         val scriptsSrcPath = listOf(testAppPath, SCRIPT_SOURCES_DIR).joinToString(File.separator)
@@ -49,7 +49,7 @@ abstract class AbstractKotlinScriptEvaluateExpressionTest : AbstractIrKotlinEval
     private fun getScriptKtFile(): KtFile = sourcesKtFiles.scriptKtFiles.single()
 }
 
-abstract class AbstractK1IdeK2CodeScriptEvaluateExpressionTest : AbstractKotlinScriptEvaluateExpressionTest() {
+abstract class AbstractK1IdeK2CodeScriptEvaluateExpressionTest : AbstractIrKotlinScriptEvaluateExpressionTest() {
     override val compileWithK2 = true
     override fun lambdasGenerationScheme() = JvmClosureGenerationScheme.INDY
 
