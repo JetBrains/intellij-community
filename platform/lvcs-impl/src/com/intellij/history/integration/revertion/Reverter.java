@@ -26,7 +26,6 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.diff.FilesTooBigForDiffException;
 import com.intellij.util.text.DateFormatUtil;
 
 import java.io.IOException;
@@ -54,16 +53,16 @@ public abstract class Reverter {
     return Collections.emptyList();
   }
 
-  protected boolean askForReadOnlyStatusClearing() throws IOException {
+  protected boolean askForReadOnlyStatusClearing() {
     return myGateway.ensureFilesAreWritable(myProject, getFilesToClearROStatus());
   }
 
-  protected List<VirtualFile> getFilesToClearROStatus() throws IOException {
+  protected List<VirtualFile> getFilesToClearROStatus() {
     final Set<VirtualFile> files = new HashSet<>();
 
     myVcs.accept(selective(new ChangeVisitor() {
       @Override
-      public void visit(StructuralChange c) throws StopVisitingException {
+      public void visit(StructuralChange c) {
         files.addAll(myGateway.getAllFilesFrom(c.getPath()));
       }
     }));
@@ -106,5 +105,5 @@ public abstract class Reverter {
 
   protected abstract Revision getTargetRevision();
 
-  protected abstract void doRevert() throws IOException, FilesTooBigForDiffException;
+  protected abstract void doRevert() throws IOException;
 }

@@ -12,9 +12,7 @@ import com.intellij.history.integration.ui.models.SelectionCalculator;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.diff.FilesTooBigForDiffException;
 
-import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 
@@ -47,13 +45,13 @@ public final class SelectionReverter extends Reverter {
   }
 
   @Override
-  protected List<VirtualFile> getFilesToClearROStatus() throws IOException {
+  protected List<VirtualFile> getFilesToClearROStatus() {
     VirtualFile file = myGateway.findVirtualFile(myRightEntry.getPath());
     return Collections.singletonList(file);
   }
 
   @Override
-  protected void doRevert() throws IOException, FilesTooBigForDiffException {
+  protected void doRevert() {
     Block b = myCalculator.getSelectionFor(myLeftRevision, new Progress() {
       @Override
       public void processed(int percentage) {

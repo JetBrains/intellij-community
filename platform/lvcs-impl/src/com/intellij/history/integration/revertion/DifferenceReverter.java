@@ -31,7 +31,7 @@ public final class DifferenceReverter extends Reverter {
   }
 
   @Override
-  protected List<VirtualFile> getFilesToClearROStatus() throws IOException {
+  protected List<VirtualFile> getFilesToClearROStatus() {
     LinkedHashSet<VirtualFile> files = new LinkedHashSet<>();
     for (Difference each : myDiffs) {
       Entry l = each.getLeft();

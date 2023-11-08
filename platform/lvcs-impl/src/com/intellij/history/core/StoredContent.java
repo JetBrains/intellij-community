@@ -33,7 +33,7 @@ public class StoredContent extends Content {
       }
 
       @Override
-      public void write(DataOutput out) throws IOException {
+      public void write(DataOutput out) {
         throw new UnsupportedOperationException();
       }
     };
