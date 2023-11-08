@@ -2087,6 +2087,9 @@ public final class UIUtil {
   public static final Key<Iterable<? extends Component>> NOT_IN_HIERARCHY_COMPONENTS = ComponentUtil.NOT_IN_HIERARCHY_COMPONENTS;
 
   private static final JBTreeTraverser<Component> UI_TRAVERSER = JBTreeTraverser.from((Function<Component, JBIterable<Component>>)c -> {
+    if (c instanceof Window window && isDisposed(window)) {
+      return JBIterable.empty();
+    }
     JBIterable<Component> result;
     if (c instanceof JMenu) {
       result = JBIterable.of(((JMenu)c).getMenuComponents());
@@ -2106,6 +2109,17 @@ public final class UIUtil {
     }
     return result;
   });
+
+  private static boolean isDisposed(Window window) {
+    Window w = window;
+    while (w != null) {
+      if (w instanceof DisposableWindow dw && dw.isWindowDisposed()) {
+        return true;
+      }
+      w = w.getOwner();
+    }
+    return false;
+  }
 
   @ApiStatus.Internal
   public static void addNotInHierarchyComponents(@NotNull JComponent container, @NotNull Iterable<Component> components) {
