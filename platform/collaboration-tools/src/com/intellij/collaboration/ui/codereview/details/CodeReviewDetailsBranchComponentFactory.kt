@@ -9,6 +9,7 @@ import com.intellij.collaboration.ui.util.CodeReviewColorUtil
 import com.intellij.collaboration.ui.util.bindIconIn
 import com.intellij.collaboration.ui.util.bindTextIn
 import com.intellij.collaboration.ui.util.popup.PopupItemPresentation
+import com.intellij.collaboration.ui.util.popup.ShowDirection
 import com.intellij.collaboration.ui.util.popup.SimplePopupItemRenderer
 import com.intellij.collaboration.ui.util.popup.showAndAwait
 import com.intellij.openapi.ui.popup.JBPopupFactory
@@ -55,7 +56,7 @@ object CodeReviewDetailsBranchComponentFactory {
             .setRenderer(popupActionsRenderer(source))
             .setAdText(CollaborationToolsBundle.message("review.details.branch.checkout.remote.ad.label", target, source))
             .createPopup()
-            .showAndAwait(point)
+            .showAndAwait(point, ShowDirection.BELOW)
           branchesVm.fetchAndCheckoutRemoteBranch()
         }
       }

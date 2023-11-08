@@ -61,7 +61,7 @@ object ChooserPopupUtil {
     CollaborationToolsPopupUtil.configureSearchField(popup, popupConfig)
 
     PopupUtil.setPopupToggleComponent(popup, point.component)
-    return popup.showAndAwaitSubmission(list, point)
+    return popup.showAndAwaitSubmission(list, point, popupConfig.showDirection)
   }
 
   @JvmOverloads
@@ -93,7 +93,7 @@ object ChooserPopupUtil {
     CollaborationToolsPopupUtil.configureSearchField(popup, popupConfig)
 
     PopupUtil.setPopupToggleComponent(popup, point.component)
-    popup.showAndAwaitSubmission(list, point)
+    popup.showAndAwaitSubmission(list, point, popupConfig.showDirection)
   }
 
   @JvmOverloads
@@ -125,7 +125,7 @@ object ChooserPopupUtil {
 
     CollaborationToolsPopupUtil.configureSearchField(popup, popupConfig)
     PopupUtil.setPopupToggleComponent(popup, point.component)
-    popup.showAndAwaitSubmissions(list, point)
+    popup.showAndAwaitSubmissions(list, point, popupConfig.showDirection)
   }
 
   private fun <T> createList(listModel: CollectionListModel<T>, renderer: ListCellRenderer<T>): JBList<T> =
@@ -197,11 +197,17 @@ object ChooserPopupUtil {
 
 data class PopupConfig(
   val alwaysShowSearchField: Boolean = true,
-  val searchTextPlaceHolder: @NlsContexts.StatusText String? = null
+  val searchTextPlaceHolder: @NlsContexts.StatusText String? = null,
+  val showDirection: ShowDirection = ShowDirection.BELOW
 ) {
   companion object {
     val DEFAULT = PopupConfig()
   }
+}
+
+enum class ShowDirection {
+  ABOVE,
+  BELOW
 }
 
 private class SelectableListLoadingListener<T : Any>(

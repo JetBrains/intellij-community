@@ -20,6 +20,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.suspendCancellableCoroutine
+import java.awt.Point
 import javax.swing.JList
 import kotlin.coroutines.resume
 
@@ -44,10 +45,10 @@ object CollaborationToolsPopupUtil {
   }
 }
 
-suspend fun JBPopup.showAndAwait(point: RelativePoint) = showAndAwait(point) {}
+suspend fun JBPopup.showAndAwait(point: RelativePoint, showDirection: ShowDirection) = showAndAwait(point, showDirection) {}
 
-suspend fun <T> JBPopup.showAndAwait(point: RelativePoint, getResultOnOk: JBPopup.() -> T): T {
-  show(point)
+suspend fun <T> JBPopup.showAndAwait(point: RelativePoint, showDirection: ShowDirection, getResultOnOk: JBPopup.() -> T): T {
+  showPopup(point, showDirection)
   return waitForResultAsync(getResultOnOk)
 }
 
@@ -66,19 +67,19 @@ private suspend fun <T> JBPopup.waitForResultAsync(getResultOnOk: JBPopup.() -> 
   }
 }
 
-suspend fun <T> JBPopup.showAndAwaitListSubmission(point: RelativePoint): T? {
+suspend fun <T> JBPopup.showAndAwaitListSubmission(point: RelativePoint, showDirection: ShowDirection): T? {
   @Suppress("UNCHECKED_CAST")
   val list = UIUtil.findComponentOfType(content, JList::class.java) as JList<T>
-  return showAndAwaitSubmission(list, point)
+  return showAndAwaitSubmission(list, point, showDirection)
 }
 
-suspend fun <T> JBPopup.showAndAwaitSubmission(list: JList<T>, point: RelativePoint): T? {
-  show(point)
+suspend fun <T> JBPopup.showAndAwaitSubmission(list: JList<T>, point: RelativePoint, showDirection: ShowDirection): T? {
+  showPopup(point, showDirection)
   return waitForChoiceAsync(list)
 }
 
-suspend fun <T> JBPopup.showAndAwaitSubmissions(list: JList<SelectableWrapper<T>>, point: RelativePoint): List<T> {
-  show(point)
+suspend fun <T> JBPopup.showAndAwaitSubmissions(list: JList<SelectableWrapper<T>>, point: RelativePoint, showDirection: ShowDirection): List<T> {
+  showPopup(point, showDirection)
   return waitForMultipleChoiceAsync(list)
 }
 
@@ -146,4 +147,20 @@ private suspend fun JBPopup.checkDisposed() {
     ctx.cancel()
     ctx.ensureActive()
   }
+}
+
+// TODO: replace with `com/intellij/vcsUtil/VcsUIUtil.kt`
+private fun JBPopup.showPopup(relativePoint: RelativePoint, showDirection: ShowDirection) {
+  val popup = this
+  popup.addListener(object : JBPopupListener {
+    override fun beforeShown(event: LightweightWindowEvent) {
+      val location = Point(popup.locationOnScreen).apply {
+        if (showDirection == ShowDirection.ABOVE) y = relativePoint.screenPoint.y - popup.size.height
+      }
+
+      popup.setLocation(location)
+      popup.removeListener(this)
+    }
+  })
+  popup.show(relativePoint)
 }
