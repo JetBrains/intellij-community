@@ -6,20 +6,16 @@ import com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangeDe
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangeList
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangeListViewModel
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangeListViewModelBase
-import com.intellij.collaboration.util.CODE_REVIEW_CHANGE_HASHING_STRATEGY
-import com.intellij.collaboration.util.ChangesSelection
+import com.intellij.collaboration.util.RefComparisonChange
+import com.intellij.collaboration.util.filePath
 import com.intellij.diff.DiffDialogHints
 import com.intellij.diff.DiffManager
-import com.intellij.openapi.ListSelection
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.FilePath
-import com.intellij.openapi.vcs.changes.Change
-import com.intellij.openapi.vcs.changes.ChangesUtil
 import com.intellij.openapi.vcs.changes.DiffPreview
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.util.containers.CollectionFactory
 import com.intellij.vcsUtil.VcsFileUtil.relativePath
 import git4idea.repo.GitRepository
 import kotlinx.coroutines.CoroutineScope
@@ -89,11 +85,11 @@ internal class GHPRChangeListViewModelImpl(
       if (selectedCommit != null) emptyMap()
       else mapOf(
         GHPRViewedStateDiffSupport.KEY to viewedStateSupport,
-        GHPRViewedStateDiffSupport.PULL_REQUEST_FILE to ChangesUtil.getFilePath(it)
+        GHPRViewedStateDiffSupport.PULL_REQUEST_FILE to it.filePath
       )
     }
 
-  override val detailsByChange: StateFlow<Map<Change, CodeReviewChangeDetails>> =
+  override val detailsByChange: StateFlow<Map<RefComparisonChange, CodeReviewChangeDetails>> =
     if (changeList.commitSha == null) {
       createDetailsByChangeFlow().stateIn(cs, SharingStarted.Eagerly, emptyMap())
     }
@@ -107,23 +103,9 @@ internal class GHPRChangeListViewModelImpl(
 
   init {
     cs.launch {
-      changesSelection.collect {
-        val listSelection = it?.let { selection ->
-          val changes = selection.changes
-          val selectedIdx = selection.selectedIdx
-          when (selection) {
-            is ChangesSelection.Fuzzy -> ListSelection.createAt(changes, 0).asExplicitSelection()
-            is ChangesSelection.Precise -> {
-              val result = mutableListOf<Change>()
-              for (i in changes.indices) {
-                result.add(changes[i])
-              }
-              ListSelection.createAt(result, selectedIdx)
-            }
-          }
-        }
-        dataProvider.combinedDiffSelectionModel.updateSelectedChanges(it)
-        dataProvider.diffRequestModel.requestChain = listSelection?.let(diffRequestProducer::getRequestChain)
+      changesSelection.collect { selection ->
+        dataProvider.combinedDiffSelectionModel.updateSelectedChanges(selection)
+        dataProvider.diffRequestModel.requestChain = selection?.let { diffRequestProducer.getRequestChain(it) }
       }
     }
   }
@@ -167,20 +149,19 @@ internal class GHPRChangeListViewModelImpl(
     }
   }
 
-  private fun createDetailsByChangeFlow(): Flow<Map<Change, CodeReviewChangeDetails>> = channelFlow {
+  private fun createDetailsByChangeFlow(): Flow<Map<RefComparisonChange, CodeReviewChangeDetails>> = channelFlow {
     var unresolvedThreadsByPath = emptyMap<String, Int>()
     var viewedStateByPath = emptyMap<String, GHPullRequestFileViewedState>()
     val disposable = Disposer.newDisposable()
 
     fun updateAndSend() {
-      val result: MutableMap<Change, CodeReviewChangeDetails> =
-        CollectionFactory.createCustomHashingStrategyMap(CODE_REVIEW_CHANGE_HASHING_STRATEGY)
-      changeList.changes.associateWithTo(result) {
-        val path = relativePath(repository.root, ChangesUtil.getFilePath(it))
-        CodeReviewChangeDetails(viewedStateByPath[path]?.isViewed() ?: true, unresolvedThreadsByPath[path] ?: 0)
-      }.let {
-        trySend(it)
+      val result = changes.associateWith { change ->
+        val path = relativePath(repository.root, change.filePath)
+        val isRead = viewedStateByPath[path]?.isViewed() ?: true
+        val discussions = unresolvedThreadsByPath[path] ?: 0
+        CodeReviewChangeDetails(isRead, discussions)
       }
+      trySend(result)
     }
 
     fun loadThreads() {

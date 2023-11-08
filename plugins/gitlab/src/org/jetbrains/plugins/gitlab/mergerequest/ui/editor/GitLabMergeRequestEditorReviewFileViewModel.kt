@@ -4,15 +4,17 @@ package org.jetbrains.plugins.gitlab.mergerequest.ui.editor
 import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
 import com.intellij.collaboration.ui.codereview.diff.DiscussionsViewOption
 import com.intellij.collaboration.ui.icon.IconsProvider
+import com.intellij.collaboration.util.RefComparisonChange
 import com.intellij.diff.util.LineRange
 import com.intellij.diff.util.Range
 import com.intellij.diff.util.Side
 import com.intellij.openapi.diff.impl.patch.PatchLine
 import com.intellij.openapi.diff.impl.patch.withoutContext
 import com.intellij.openapi.progress.coroutineToIndicator
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vcs.changes.Change
 import git4idea.changes.GitTextFilePatchWithHistory
+import git4idea.changes.createVcsChange
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.withContext
@@ -42,7 +44,8 @@ interface GitLabMergeRequestEditorReviewFileViewModel {
 }
 
 internal class GitLabMergeRequestEditorReviewFileViewModelImpl(
-  private val change: Change,
+  private val project: Project,
+  private val change: RefComparisonChange,
   private val diffData: GitTextFilePatchWithHistory,
   private val discussionsContainer: GitLabMergeRequestDiscussionsViewModels,
   discussionsViewOption: Flow<DiscussionsViewOption>,
@@ -70,7 +73,7 @@ internal class GitLabMergeRequestEditorReviewFileViewModelImpl(
 
   override suspend fun getOriginalContent(): String = withContext(Dispatchers.IO) {
     coroutineToIndicator {
-      change.afterRevision?.content ?: ""
+      change.createVcsChange(project).afterRevision?.content ?: ""
     }.let {
       StringUtil.convertLineSeparators(it)
     }

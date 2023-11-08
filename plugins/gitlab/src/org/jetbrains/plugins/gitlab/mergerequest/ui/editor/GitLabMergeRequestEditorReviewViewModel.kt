@@ -42,7 +42,7 @@ import org.jetbrains.plugins.gitlab.util.GitLabStatistics
 @OptIn(ExperimentalCoroutinesApi::class)
 internal class GitLabMergeRequestEditorReviewViewModel internal constructor(
   parentCs: CoroutineScope,
-  project: Project,
+  private val project: Project,
   private val projectMapping: GitLabProjectMapping,
   currentUser: GitLabUserDTO,
   private val mergeRequest: GitLabMergeRequest,
@@ -131,12 +131,13 @@ internal class GitLabMergeRequestEditorReviewViewModel internal constructor(
     val changes = parsedChanges.changes
     val result = mutableMapOf<FilePath, Flow<GitLabMergeRequestEditorReviewFileViewModel?>>()
     for (change in changes) {
-      val file = change.afterRevision?.file ?: continue
+      val file = change.filePathAfter ?: continue
       val changeSelection = ChangesSelection.Precise(changes, change)
       val diffData = parsedChanges.patchesByChange[change]!!
 
       val vmFlow = channelFlow<GitLabMergeRequestEditorReviewFileViewModel> {
-        val vm = GitLabMergeRequestEditorReviewFileViewModelImpl(change, diffData, discussions, discussionsViewOption, avatarIconsProvider)
+        val vm = GitLabMergeRequestEditorReviewFileViewModelImpl(project, change, diffData, discussions,
+                                                                 discussionsViewOption, avatarIconsProvider)
         launchNow {
           vm.showDiffRequests.collect {
             val selection = if (it != null) changeSelection.withLocation(DiffLineLocation(Side.RIGHT, it)) else changeSelection

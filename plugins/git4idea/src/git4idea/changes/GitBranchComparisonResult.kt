@@ -1,14 +1,17 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.changes
 
+import com.intellij.collaboration.util.RefComparisonChange
 import com.intellij.diff.comparison.ComparisonManagerImpl.getInstanceImpl
 import com.intellij.diff.comparison.iterables.DiffIterableUtil
 import com.intellij.diff.tools.util.text.LineOffsetsUtil
 import com.intellij.diff.util.DiffUserDataKeysEx
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diff.impl.patch.PatchHunkUtil
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.ex.isValidRanges
+import git4idea.GitContentRevision
 import org.jetbrains.annotations.ApiStatus.Internal
 
 /**
@@ -25,15 +28,15 @@ interface GitBranchComparisonResult {
   val mergeBaseSha: String
   val headSha: String
 
-  val changes: List<Change>
+  val changes: List<RefComparisonChange>
 
   val commits: List<GitCommitShaWithPatches>
-  val changesByCommits: Map<String, List<Change>>
+  val changesByCommits: Map<String, List<RefComparisonChange>>
 
-  val patchesByChange: Map<Change, GitTextFilePatchWithHistory>
+  val patchesByChange: Map<RefComparisonChange, GitTextFilePatchWithHistory>
 }
 
-fun GitBranchComparisonResult.findCumulativeChange(commitSha: String, filePath: String): Change? {
+fun GitBranchComparisonResult.findCumulativeChange(commitSha: String, filePath: String): RefComparisonChange? {
   for (change in changes) {
     if (patchesByChange[change]?.contains(commitSha, filePath) == true) {
       return change
@@ -64,4 +67,10 @@ fun GitTextFilePatchWithHistory.getDiffComputer(): DiffUserDataKeysEx.DiffComput
                                           indicator)
     }.flatten()
   }
+}
+
+fun RefComparisonChange.createVcsChange(project: Project): Change {
+  val beforeRevision = filePathBefore?.let { GitContentRevision.createRevision(it, revisionNumberBefore, project) }
+  val afterRevision = filePathAfter?.let { GitContentRevision.createRevision(it, revisionNumberAfter, project) }
+  return Change(beforeRevision, afterRevision)
 }

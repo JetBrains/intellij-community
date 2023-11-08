@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gitlab.mergerequest.diff
 
 import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.ui.codereview.diff.viewer.controlInlaysIn
+import com.intellij.collaboration.util.RefComparisonChange
 import com.intellij.diff.DiffContext
 import com.intellij.diff.DiffExtension
 import com.intellij.diff.FrameDiffTool
@@ -20,8 +21,6 @@ import com.intellij.openapi.diff.impl.GenericDataProvider
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.component1
 import com.intellij.openapi.util.component2
-import com.intellij.openapi.vcs.changes.Change
-import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer
 import com.intellij.util.cancelOnDispose
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -41,8 +40,7 @@ class GitLabMergeRequestDiffExtension : DiffExtension() {
     if (viewer !is DiffViewerBase) return
 
     val reviewVm = context.getUserData(GitLabMergeRequestDiffViewModel.KEY) ?: return
-
-    val change = request.getUserData(ChangeDiffRequestProducer.CHANGE_KEY) ?: return
+    val change = request.getUserData(RefComparisonChange.KEY) ?: return
 
     val dataProvider = GenericDataProvider().apply {
       putData(GitLabMergeRequestReviewViewModel.DATA_KEY, reviewVm)
@@ -57,7 +55,7 @@ class GitLabMergeRequestDiffExtension : DiffExtension() {
   @Service(Service.Level.PROJECT)
   private class InlaysController(private val project: Project, private val cs: CoroutineScope) {
 
-    fun installInlays(reviewVm: GitLabMergeRequestDiffViewModel, change: Change, viewer: DiffViewerBase) {
+    fun installInlays(reviewVm: GitLabMergeRequestDiffViewModel, change: RefComparisonChange, viewer: DiffViewerBase) {
       cs.launchNow(Dispatchers.Main) {
         reviewVm.getViewModelFor(change).collectLatest { changeVm ->
           if (changeVm == null) return@collectLatest

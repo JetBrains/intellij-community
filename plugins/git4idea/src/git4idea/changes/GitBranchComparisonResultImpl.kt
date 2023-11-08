@@ -1,17 +1,13 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.changes
 
-import com.intellij.collaboration.util.CODE_REVIEW_CHANGE_HASHING_STRATEGY
+import com.intellij.collaboration.util.RefComparisonChange
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diff.impl.patch.FilePatch
 import com.intellij.openapi.diff.impl.patch.TextFilePatch
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vcs.FilePath
-import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.containers.CollectionFactory
 import com.intellij.vcsUtil.VcsUtil
-import git4idea.GitContentRevision
 import git4idea.GitRevisionNumber
 import java.util.*
 
@@ -25,14 +21,13 @@ class GitBranchComparisonResultImpl(private val project: Project,
 
   override val headSha: String = commits.last().sha
 
-  private val _changes = mutableListOf<Change>()
-  override val changes: List<Change> = Collections.unmodifiableList(_changes)
-  private val _changesByCommits = mutableMapOf<String, List<Change>>()
-  override val changesByCommits: Map<String, List<Change>> = Collections.unmodifiableMap(_changesByCommits)
+  private val _changes = mutableListOf<RefComparisonChange>()
+  override val changes: List<RefComparisonChange> = Collections.unmodifiableList(_changes)
+  private val _changesByCommits = mutableMapOf<String, List<RefComparisonChange>>()
+  override val changesByCommits: Map<String, List<RefComparisonChange>> = Collections.unmodifiableMap(_changesByCommits)
 
-  private val _diffDataByChange: MutableMap<Change, GitTextFilePatchWithHistory> =
-    CollectionFactory.createCustomHashingStrategyMap(CODE_REVIEW_CHANGE_HASHING_STRATEGY)
-  override val patchesByChange: Map<Change, GitTextFilePatchWithHistory> = Collections.unmodifiableMap(_diffDataByChange)
+  private val _diffDataByChange: MutableMap<RefComparisonChange, GitTextFilePatchWithHistory> = mutableMapOf()
+  override val patchesByChange: Map<RefComparisonChange, GitTextFilePatchWithHistory> = Collections.unmodifiableMap(_diffDataByChange)
 
   init {
     val commitsHashes = commits.mapTo(mutableSetOf()) { it.sha }
@@ -64,7 +59,7 @@ class GitBranchComparisonResultImpl(private val project: Project,
     for (commitWithPatches in commits) {
 
       val commitSha = commitWithPatches.sha
-      val commitChanges = mutableListOf<Change>()
+      val commitChanges = mutableListOf<RefComparisonChange>()
 
       for (patch in commitWithPatches.patches) {
         val change = createChangeFromPatch(previousCommitSha, commitSha, patch)
@@ -135,19 +130,10 @@ class GitBranchComparisonResultImpl(private val project: Project,
     }
   }
 
-  private fun createChangeFromPatch(beforeRef: String, afterRef: String, patch: FilePatch): Change {
-    val (beforePath, afterPath) = getPatchPaths(patch)
-    val beforeRevision = beforePath?.let { GitContentRevision.createRevision(it, GitRevisionNumber(beforeRef), project) }
-    val afterRevision = afterPath?.let { GitContentRevision.createRevision(it, GitRevisionNumber(afterRef), project) }
-
-    return Change(beforeRevision, afterRevision)
-  }
-
-  private fun getPatchPaths(patch: FilePatch): Pair<FilePath?, FilePath?> {
-    val beforeName = if (patch.isNewFile) null else patch.beforeName
-    val afterName = if (patch.isDeletedFile) null else patch.afterName
-
-    return beforeName?.let { VcsUtil.getFilePath(vcsRoot, it) } to afterName?.let { VcsUtil.getFilePath(vcsRoot, it) }
+  private fun createChangeFromPatch(beforeRef: String, afterRef: String, patch: FilePatch): RefComparisonChange {
+    val beforePath = if (patch.isNewFile) null else VcsUtil.getFilePath(vcsRoot, patch.beforeName)
+    val afterPath = if (patch.isDeletedFile) null else VcsUtil.getFilePath(vcsRoot, patch.afterName)
+    return RefComparisonChange(GitRevisionNumber(beforeRef), beforePath, GitRevisionNumber(afterRef), afterPath)
   }
 
   override fun equals(other: Any?): Boolean {

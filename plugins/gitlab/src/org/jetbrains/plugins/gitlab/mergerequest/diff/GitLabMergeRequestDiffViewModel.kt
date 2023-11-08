@@ -4,9 +4,9 @@ package org.jetbrains.plugins.gitlab.mergerequest.diff
 import com.intellij.collaboration.async.modelFlow
 import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.collaboration.util.ChangesSelection
+import com.intellij.collaboration.util.RefComparisonChange
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.vcs.changes.Change
 import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
@@ -28,7 +28,7 @@ internal interface GitLabMergeRequestDiffViewModel : GitLabMergeRequestReviewVie
   val changes: SharedFlow<GitLabMergeRequestChanges>
   val changesToShow: SharedFlow<ChangesSelection>
 
-  fun getViewModelFor(change: Change): Flow<GitLabMergeRequestDiffReviewViewModel?>
+  fun getViewModelFor(change: RefComparisonChange): Flow<GitLabMergeRequestDiffReviewViewModel?>
 
   fun showChanges(changes: ChangesSelection)
 
@@ -60,7 +60,7 @@ internal class GitLabMergeRequestDiffViewModelImpl(
     diffBridge.setChanges(changes)
   }
 
-  override fun getViewModelFor(change: Change): Flow<GitLabMergeRequestDiffReviewViewModel?> {
+  override fun getViewModelFor(change: RefComparisonChange): Flow<GitLabMergeRequestDiffReviewViewModel?> {
     return mergeRequest.changes.map {
       it.getParsedChanges()
     }.map { parsedChanges ->

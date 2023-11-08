@@ -6,11 +6,9 @@ import com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangeDe
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangeList
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangeListViewModel
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangeListViewModelBase
-import com.intellij.collaboration.util.CODE_REVIEW_CHANGE_HASHING_STRATEGY
+import com.intellij.collaboration.util.RefComparisonChange
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vcs.changes.Change
-import com.intellij.util.containers.CollectionFactory
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.gitlab.api.GitLabId
@@ -42,17 +40,20 @@ internal class GitLabMergeRequestChangeListViewModelImpl(
   private val _showDiffRequests = MutableSharedFlow<Unit>()
   val showDiffRequests: Flow<Unit> = _showDiffRequests.asSharedFlow()
 
-  override val detailsByChange: StateFlow<Map<Change, CodeReviewChangeDetails>> =
+  override val detailsByChange: StateFlow<Map<RefComparisonChange, CodeReviewChangeDetails>> =
     combine(createUnresolvedDiscussionsPositionsFlow(mergeRequest),
             createUnresolvedDraftsPositionsFlow(mergeRequest),
             mergeRequest.changes.map { it.getParsedChanges() }.catch { }) { discPos, draftsPos, parsedChanges ->
-      val result: MutableMap<Change, CodeReviewChangeDetails> =
-        CollectionFactory.createCustomHashingStrategyMap(CODE_REVIEW_CHANGE_HASHING_STRATEGY)
-      changeList.changes.associateWithTo(result) { change ->
-        val patch = parsedChanges.patchesByChange[change] ?: return@associateWithTo CodeReviewChangeDetails(true, 0)
-        //TODO: cache?
-        val discussions = discPos.count { it.mapToLocation(patch) != null } + draftsPos.count { it.mapToLocation(patch) != null }
-        CodeReviewChangeDetails(true, discussions)
+      changes.associateWith { change ->
+        val patch = parsedChanges.patchesByChange[change]
+        if (patch == null) {
+          CodeReviewChangeDetails(true, 0)
+        }
+        else {
+          //TODO: cache?
+          val discussions = discPos.count { it.mapToLocation(patch) != null } + draftsPos.count { it.mapToLocation(patch) != null }
+          CodeReviewChangeDetails(true, discussions)
+        }
       }
     }.stateIn(cs, SharingStarted.Eagerly, emptyMap())
 

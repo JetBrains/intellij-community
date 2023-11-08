@@ -3,8 +3,8 @@ package com.intellij.collaboration.ui.codereview.details.model
 
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangeListViewModel.SelectionRequest
 import com.intellij.collaboration.util.ChangesSelection
+import com.intellij.collaboration.util.RefComparisonChange
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vcs.changes.Change
 import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.*
@@ -15,7 +15,7 @@ import kotlinx.coroutines.sync.withLock
 interface CodeReviewChangeListViewModel {
   val project: Project
 
-  val changes: List<Change>
+  val changes: List<RefComparisonChange>
 
   /**
    * Flow of selection requests to be handled
@@ -41,12 +41,12 @@ interface CodeReviewChangeListViewModel {
     /**
      * Map of additional details for changes
      */
-    val detailsByChange: StateFlow<Map<Change, CodeReviewChangeDetails>>
+    val detailsByChange: StateFlow<Map<RefComparisonChange, CodeReviewChangeDetails>>
   }
 
   sealed interface SelectionRequest {
     data object All : SelectionRequest
-    data class OneChange(val change: Change) : SelectionRequest
+    data class OneChange(val change: RefComparisonChange) : SelectionRequest
   }
 }
 
@@ -64,11 +64,11 @@ abstract class CodeReviewChangeListViewModelBase(
 
   protected val selectedCommit: String? = changeList.commitSha
 
-  override val changes: List<Change> = changeList.changes
+  final override val changes: List<RefComparisonChange> = changeList.changes
 
   private val stateGuard = Mutex()
 
-  suspend fun selectChange(change: Change?) {
+  suspend fun selectChange(change: RefComparisonChange?) {
     stateGuard.withLock {
       if (change == null) {
         _changesSelection.value = ChangesSelection.Fuzzy(changeList.changes)

@@ -3,6 +3,9 @@ package org.jetbrains.plugins.github.pullrequest
 
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.codereview.action.ImmutableToolbarLabelAction
+import com.intellij.collaboration.util.RefComparisonChange
+import com.intellij.collaboration.util.filePath
+import com.intellij.collaboration.util.fileStatus
 import com.intellij.collaboration.util.selectedChange
 import com.intellij.diff.chains.DiffRequestProducer
 import com.intellij.diff.tools.combined.COMBINED_DIFF_VIEWER_KEY
@@ -10,6 +13,7 @@ import com.intellij.diff.tools.combined.CombinedDiffModel
 import com.intellij.diff.tools.combined.CombinedDiffModelImpl
 import com.intellij.diff.tools.combined.CombinedPathBlockId
 import com.intellij.diff.util.DiffUserDataKeys
+import com.intellij.diff.util.DiffUserDataKeysEx
 import com.intellij.diff.util.DiffUtil
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.components.Service
@@ -17,15 +21,14 @@ import com.intellij.openapi.diff.impl.GenericDataProvider
 import com.intellij.openapi.observable.util.whenDisposed
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor
-import com.intellij.openapi.vcs.changes.ChangesUtil
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer
 import com.intellij.openapi.vcs.changes.actions.diff.CombinedDiffPreviewModel
 import com.intellij.openapi.vcs.history.VcsDiffUtil
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.io.await
 import git4idea.changes.GitBranchComparisonResult
+import git4idea.changes.createVcsChange
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.collectLatest
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
@@ -91,7 +94,7 @@ private fun CoroutineScope.handleChanges(
 
   setupReviewActions(model, reviewVm)
 
-  var myChanges: List<Change> = emptyList()
+  var myChanges: List<RefComparisonChange> = emptyList()
 
   dataProvider.combinedDiffSelectionModel.changesSelection.collectLatest { changesSelection ->
     if (changesSelection != null) {
@@ -110,7 +113,7 @@ private fun CoroutineScope.handleChanges(
 
       val change = changesSelection.selectedChange ?: return@collectLatest
       val diffViewer = model.context.getUserData(COMBINED_DIFF_VIEWER_KEY) ?: return@collectLatest
-      diffViewer.selectDiffBlock(CombinedPathBlockId(ChangesUtil.getFilePath(change), change.fileStatus), focusBlock = false)
+      diffViewer.selectDiffBlock(CombinedPathBlockId(change.filePath, change.fileStatus), focusBlock = false)
     }
     else {
       model.cleanBlocks()
@@ -121,10 +124,15 @@ private fun CoroutineScope.handleChanges(
 private fun createData(dataContext: GHPRDataContext,
                        dataProvider: GHPRDataProvider,
                        result: GitBranchComparisonResult,
-                       change: Change,
+                       change: RefComparisonChange,
                        project: Project): Map<Key<out Any>, Any?> {
   val requestDataKeys = mutableMapOf<Key<out Any>, Any?>()
-  VcsDiffUtil.putFilePathsIntoChangeContext(change, requestDataKeys)
+  val aFile = change.filePathBefore
+  val bFile = change.filePathAfter
+  requestDataKeys[DiffUserDataKeysEx.VCS_DIFF_RIGHT_CONTENT_TITLE] =
+    VcsDiffUtil.getRevisionTitle(change.revisionNumberAfter.toShortString(), aFile, null)
+  requestDataKeys[DiffUserDataKeysEx.VCS_DIFF_LEFT_CONTENT_TITLE] =
+    VcsDiffUtil.getRevisionTitle(change.revisionNumberBefore.toShortString(), bFile, aFile)
 
   installDiffComputer(result, change, requestDataKeys)
 
@@ -144,11 +152,11 @@ private class GHPullRequestChangeWrapper(
   private val dataContext: GHPRDataContext,
   private val dataProvider: GHPRDataProvider,
   private val result: GitBranchComparisonResult,
-  change: Change,
-) : ChangeViewDiffRequestProcessor.ChangeWrapper(change) {
+  private val refChange: RefComparisonChange,
+) : ChangeViewDiffRequestProcessor.ChangeWrapper(refChange.createVcsChange(myProject)) {
 
   override fun createProducer(project: Project?): DiffRequestProducer? {
-    val data = createData(dataContext, dataProvider, result, change, myProject)
+    val data = createData(dataContext, dataProvider, result, refChange, myProject)
     return ChangeDiffRequestProducer.create(project, change, data)
   }
 }
@@ -167,7 +175,7 @@ private fun setupReviewActions(model: CombinedDiffModel, reviewVm: GHPRReviewVie
     ActionManager.getInstance().getAction("Github.PullRequest.Review.Submit")))
 }
 
-private fun createReviewSupport(project: Project, result: GitBranchComparisonResult, change: Change,
+private fun createReviewSupport(project: Project, result: GitBranchComparisonResult, change: RefComparisonChange,
                                 dataProvider: GHPRDataProvider, dataContext: GHPRDataContext): GHPRDiffReviewSupport? {
   return createReviewSupport(project, result, change, dataProvider,
                              dataContext.htmlImageLoader,

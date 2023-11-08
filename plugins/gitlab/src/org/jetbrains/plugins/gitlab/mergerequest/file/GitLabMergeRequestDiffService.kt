@@ -3,9 +3,7 @@ package org.jetbrains.plugins.gitlab.mergerequest.file
 
 import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
-import com.intellij.collaboration.util.ChangesSelection
-import com.intellij.collaboration.util.equalChanges
-import com.intellij.collaboration.util.selectedChange
+import com.intellij.collaboration.util.*
 import com.intellij.diff.chains.DiffRequestProducer
 import com.intellij.diff.chains.SimpleDiffRequestChain
 import com.intellij.diff.impl.DiffRequestProcessor
@@ -22,9 +20,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.Pair
-import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor
-import com.intellij.openapi.vcs.changes.ChangesUtil
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer
 import com.intellij.openapi.vcs.changes.actions.diff.CombinedDiffPreviewModel
 import com.intellij.openapi.vcs.changes.ui.MutableDiffRequestChainProcessor
@@ -32,6 +28,7 @@ import com.intellij.openapi.vcs.history.VcsDiffUtil
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.cancelOnDispose
 import git4idea.changes.GitBranchComparisonResult
+import git4idea.changes.createVcsChange
 import git4idea.changes.getDiffComputer
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.collectLatest
@@ -72,7 +69,7 @@ internal class GitLabMergeRequestDiffService(private val project: Project, paren
   private suspend fun handleChanges(diffVm: GitLabMergeRequestDiffViewModel, processor: MutableDiffRequestChainProcessor) {
     var currentSelection: ChangesSelection? = null
     val selectionListener = MutableDiffRequestChainProcessor.SelectionListener { producer ->
-      val change = (producer as? ChangeDiffRequestProducer)?.change
+      val change = (producer as? ChangeDiffRequestProducer)?.changeContext?.get(RefComparisonChange.KEY) as? RefComparisonChange
       if (currentSelection != null && change != null) {
         val newSelection = currentSelection!!.copyWithSelection(change)
         currentSelection = newSelection
@@ -110,7 +107,7 @@ internal class GitLabMergeRequestDiffService(private val project: Project, paren
 
           val producers = selection.toProducersSelection { change, location ->
             val changeDataKeys = createData(changesBundle, change, location)
-            ChangeDiffRequestProducer.create(project, change, changeDataKeys)
+            ChangeDiffRequestProducer.create(project, change.createVcsChange(project), changeDataKeys)
           }
           processor.chain = producers.let(SimpleDiffRequestChain::fromProducers)
           currentSelection = selection
@@ -148,7 +145,7 @@ internal class GitLabMergeRequestDiffService(private val project: Project, paren
 
   private suspend fun handleChanges(diffVm: GitLabMergeRequestDiffViewModel, model: CombinedDiffModelImpl) {
     diffVm.changes.collectLatest { changes ->
-      var myChanges: List<Change> = emptyList()
+      var myChanges: List<RefComparisonChange> = emptyList()
       val branchComparisonResult = loadRevisionsAndParseChanges(changes)
 
       diffVm.changesToShow.collectLatest { changeSelection ->
@@ -161,7 +158,7 @@ internal class GitLabMergeRequestDiffService(private val project: Project, paren
 
           myChanges = newChanges
           val list: List<ChangeViewDiffRequestProcessor.ChangeWrapper> = myChanges.map { change ->
-            GitLabMergeRequestChangeWrapper(change, branchComparisonResult)
+            GitLabMergeRequestChangeWrapper(project, change, branchComparisonResult)
           }
 
           model.cleanBlocks()
@@ -170,7 +167,7 @@ internal class GitLabMergeRequestDiffService(private val project: Project, paren
 
         val change = changeSelection.selectedChange ?: return@collectLatest
         val diffViewer = model.context.getUserData(COMBINED_DIFF_VIEWER_KEY) ?: return@collectLatest
-        diffViewer.selectDiffBlock(CombinedPathBlockId(ChangesUtil.getFilePath(change), change.fileStatus), focusBlock = false)
+        diffViewer.selectDiffBlock(CombinedPathBlockId(change.filePath, change.fileStatus), focusBlock = false)
       }
     }
   }
@@ -186,12 +183,19 @@ private suspend fun loadRevisionsAndParseChanges(changes: GitLabMergeRequestChan
 
 private fun createData(
   parsedChanges: GitBranchComparisonResult,
-  change: Change,
+  change: RefComparisonChange,
   location: DiffLineLocation?
 ): Map<Key<out Any>, Any?> {
   val requestDataKeys = mutableMapOf<Key<out Any>, Any?>()
 
-  VcsDiffUtil.putFilePathsIntoChangeContext(change, requestDataKeys)
+  requestDataKeys[RefComparisonChange.KEY] = change
+
+  val aFile = change.filePathBefore
+  val bFile = change.filePathAfter
+  requestDataKeys[DiffUserDataKeysEx.VCS_DIFF_RIGHT_CONTENT_TITLE] =
+    VcsDiffUtil.getRevisionTitle(change.revisionNumberAfter.toShortString(), aFile, null)
+  requestDataKeys[DiffUserDataKeysEx.VCS_DIFF_LEFT_CONTENT_TITLE] =
+    VcsDiffUtil.getRevisionTitle(change.revisionNumberBefore.toShortString(), bFile, aFile)
 
   val diffComputer = parsedChanges.patchesByChange[change]?.getDiffComputer()
   if (diffComputer != null) {
@@ -205,7 +209,7 @@ private fun createData(
   return requestDataKeys
 }
 
-private fun ChangesSelection.toProducersSelection(mapper: (Change, DiffLineLocation?) -> DiffRequestProducer?)
+private fun ChangesSelection.toProducersSelection(mapper: (RefComparisonChange, DiffLineLocation?) -> DiffRequestProducer?)
   : ListSelection<out DiffRequestProducer> = when (this) {
   is ChangesSelection.Fuzzy -> ListSelection.createAt(changes.mapNotNull { mapper(it, null) }, 0).asExplicitSelection()
   is ChangesSelection.Precise -> {
@@ -221,12 +225,13 @@ private fun ChangesSelection.toProducersSelection(mapper: (Change, DiffLineLocat
 }
 
 private class GitLabMergeRequestChangeWrapper(
-  change: Change,
+  project: Project,
+  private val refChange: RefComparisonChange,
   private val result: GitBranchComparisonResult
-) : ChangeViewDiffRequestProcessor.ChangeWrapper(change) {
+) : ChangeViewDiffRequestProcessor.ChangeWrapper(refChange.createVcsChange(project)) {
 
   override fun createProducer(project: Project?): DiffRequestProducer? {
-    val data = createData(result, change, null)
+    val data = createData(result, refChange, null)
     return ChangeDiffRequestProducer.create(project, change, data)
   }
 }

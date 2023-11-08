@@ -6,13 +6,12 @@ import com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangesC
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangesViewModel
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangesViewModelDelegate
 import com.intellij.collaboration.util.ComputedResult
+import com.intellij.collaboration.util.RefComparisonChange
 import com.intellij.collaboration.util.ResultUtil.runCatchingUser
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vcs.changes.Change
 import com.intellij.platform.util.coroutines.childScope
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabCommit
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
@@ -23,7 +22,7 @@ internal interface GitLabMergeRequestChangesViewModel : CodeReviewChangesViewMod
    */
   val changeListVm: StateFlow<ComputedResult<GitLabMergeRequestChangeListViewModel>>
 
-  fun selectChange(change: Change)
+  fun selectChange(change: RefComparisonChange)
 }
 
 private val LOG = logger<GitLabMergeRequestChangesViewModel>()
@@ -74,7 +73,7 @@ internal class GitLabMergeRequestChangesViewModelImpl(
     delegate.selectPreviousCommit()
   }
 
-  override fun selectChange(change: Change) {
+  override fun selectChange(change: RefComparisonChange) {
     delegate.selectChange(change)
   }
 

@@ -4,6 +4,8 @@ package org.jetbrains.plugins.github.pullrequest.ui.changes
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.codereview.action.ImmutableToolbarLabelAction
 import com.intellij.collaboration.ui.html.AsyncHtmlImageLoader
+import com.intellij.collaboration.util.ChangesSelection
+import com.intellij.collaboration.util.RefComparisonChange
 import com.intellij.diff.chains.AsyncDiffRequestChain
 import com.intellij.diff.chains.DiffRequestChain
 import com.intellij.diff.chains.DiffRequestProducer
@@ -18,10 +20,10 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer
-import com.intellij.openapi.vcs.history.VcsDiffUtil
+import com.intellij.openapi.vcs.history.VcsDiffUtil.getRevisionTitle
 import git4idea.changes.GitBranchComparisonResult
+import git4idea.changes.createVcsChange
 import git4idea.changes.getDiffComputer
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.pullrequest.comment.GHPRDiffReviewSupport
@@ -31,7 +33,6 @@ import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRRepositoryDataService
 import org.jetbrains.plugins.github.pullrequest.ui.review.GHPRReviewViewModel
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
-import org.jetbrains.plugins.github.util.DiffRequestChainProducer
 import java.util.concurrent.CompletableFuture
 
 internal class GHPRDiffRequestChainProducer(
@@ -43,16 +44,21 @@ internal class GHPRDiffRequestChainProducer(
   private val ghostUser: GHUser,
   private val currentUser: GHUser,
   private val reviewVm: GHPRReviewViewModel,
-  private val createCustomContext: (Change) -> Map<Key<*>, Any>
-) : DiffRequestChainProducer {
+  private val createCustomContext: (RefComparisonChange) -> Map<Key<*>, Any>
+) {
 
-  override fun getRequestChain(changes: ListSelection<Change>): DiffRequestChain =
+  fun getRequestChain(selection: ChangesSelection): DiffRequestChain =
     object : AsyncDiffRequestChain() {
-      override fun loadRequestProducers(): ListSelection<out DiffRequestProducer> =
-        changes.map { change -> createDiffRequestProducer(project, change) }
+      override fun loadRequestProducers(): ListSelection<out DiffRequestProducer> {
+        val idx = selection.selectedIdx
+        val producers = selection.changes.map {
+          createDiffRequestProducer(project, it)!!
+        }
+        return ListSelection.createAt(producers, idx)
+      }
     }
 
-  private fun createDiffRequestProducer(project: Project, change: Change): DiffRequestProducer? {
+  private fun createDiffRequestProducer(project: Project, change: RefComparisonChange): DiffRequestProducer? {
     val changesData = dataProvider.changesData
     val changesProviderFuture = changesData.loadChanges()
     //TODO: check if revisions are already fetched or load via API (could be much quicker in some cases)
@@ -62,13 +68,18 @@ internal class GHPRDiffRequestChainProducer(
     val changeDataKeys = createData(this, change, loadBranchComparisonResult(changesProviderFuture, indicator, fetchFuture))
     val customDataKeys = createCustomContext(change)
 
-    return ChangeDiffRequestProducer.create(project, change, changeDataKeys + customDataKeys)
+    return ChangeDiffRequestProducer.create(project, change.createVcsChange(project), changeDataKeys + customDataKeys)
   }
 
-  private fun createData(producer: GHPRDiffRequestChainProducer, change: Change,
+  private fun createData(producer: GHPRDiffRequestChainProducer, change: RefComparisonChange,
                          changesProvider: GitBranchComparisonResult): Map<Key<out Any>, Any?> {
     val requestDataKeys = mutableMapOf<Key<out Any>, Any?>()
-    VcsDiffUtil.putFilePathsIntoChangeContext(change, requestDataKeys)
+    val aFile = change.filePathBefore
+    val bFile = change.filePathAfter
+    requestDataKeys[DiffUserDataKeysEx.VCS_DIFF_RIGHT_CONTENT_TITLE] =
+      getRevisionTitle(change.revisionNumberAfter.toShortString(), aFile, null)
+    requestDataKeys[DiffUserDataKeysEx.VCS_DIFF_LEFT_CONTENT_TITLE] =
+      getRevisionTitle(change.revisionNumberBefore.toShortString(), bFile, aFile)
 
     installDiffComputer(changesProvider, change, requestDataKeys)
 
@@ -96,7 +107,9 @@ internal class GHPRDiffRequestChainProducer(
       return changesProvider
     }
 
-    private fun createReviewSupport(producer: GHPRDiffRequestChainProducer, changesProvider: GitBranchComparisonResult, change: Change) =
+    private fun createReviewSupport(producer: GHPRDiffRequestChainProducer,
+                                    changesProvider: GitBranchComparisonResult,
+                                    change: RefComparisonChange) =
       createReviewSupport(producer.project, changesProvider, change, producer.dataProvider, producer.htmlImageLoader,
                           producer.avatarIconsProvider,
                           producer.repositoryDataService,
@@ -107,7 +120,7 @@ internal class GHPRDiffRequestChainProducer(
 
 internal fun createReviewSupport(project: Project,
                                  changesProvider: GitBranchComparisonResult,
-                                 change: Change,
+                                 change: RefComparisonChange,
                                  dataProvider: GHPRDataProvider,
                                  imageLoader: AsyncHtmlImageLoader,
                                  iconsProvider: GHAvatarIconsProvider,
@@ -128,8 +141,8 @@ internal fun createReviewSupport(project: Project,
 }
 
 internal fun installDiffComputer(changesProvider: GitBranchComparisonResult,
-                                change: Change,
-                                requestDataKeys: MutableMap<Key<out Any>, Any?>) {
+                                 change: RefComparisonChange,
+                                 requestDataKeys: MutableMap<Key<out Any>, Any?>) {
   val diffComputer = changesProvider.patchesByChange[change]?.getDiffComputer() ?: return
   requestDataKeys[DiffUserDataKeysEx.CUSTOM_DIFF_COMPUTER] = diffComputer
 }

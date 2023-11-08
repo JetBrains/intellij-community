@@ -3,12 +3,10 @@ package com.intellij.collaboration.ui.codereview.details.model
 
 import com.intellij.collaboration.async.cancelAndJoinSilently
 import com.intellij.collaboration.async.launchNow
-import com.intellij.collaboration.util.CODE_REVIEW_CHANGE_HASHING_STRATEGY
 import com.intellij.collaboration.util.ComputedResult
+import com.intellij.collaboration.util.RefComparisonChange
 import com.intellij.openapi.vcs.FilePath
-import com.intellij.openapi.vcs.changes.Change
 import com.intellij.platform.util.coroutines.childScope
-import com.intellij.util.containers.CollectionFactory
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.*
 import kotlin.coroutines.cancellation.CancellationException
@@ -44,7 +42,7 @@ class CodeReviewChangesViewModelDelegate<T : CodeReviewChangeListViewModelBase>(
           it.takeIf { commitsSet.contains(it) } ?: commitsSet.singleOrNull()
         }
 
-        suspend fun updateChanges(commit: String?, change: Change? = null, force: Boolean = false) {
+        suspend fun updateChanges(commit: String?, change: RefComparisonChange? = null, force: Boolean = false) {
           val existingCommit = commit.takeIf { commitsSet.contains(it) }
           if (_selectedCommit.value != existingCommit || force) {
             _selectedCommit.value = existingCommit
@@ -90,7 +88,7 @@ class CodeReviewChangesViewModelDelegate<T : CodeReviewChangeListViewModelBase>(
             is ChangesRequest.SelectCommitAndFile -> {
               val changeSet = changes.getChangeList(request.commitSha)
               val change = changeSet.changes.find {
-                it.afterRevision?.file == request.filePath || it.beforeRevision?.file == request.filePath
+                it.filePathAfter == request.filePath || it.filePathBefore == request.filePath
               }
               updateChanges(request.commitSha, change)
             }
@@ -98,7 +96,7 @@ class CodeReviewChangesViewModelDelegate<T : CodeReviewChangeListViewModelBase>(
               val commit = _selectedCommit.value
               val changeSet = changes.getChangeList(commit)
               val change = changeSet.changes.find {
-                it.afterRevision?.file == request.filePath || it.beforeRevision?.file == request.filePath
+                it.filePathAfter == request.filePath || it.filePathBefore == request.filePath
               }
               updateChanges(commit, change)
             }
@@ -131,7 +129,7 @@ class CodeReviewChangesViewModelDelegate<T : CodeReviewChangeListViewModelBase>(
     }
   }
 
-  fun selectChange(change: Change) {
+  fun selectChange(change: RefComparisonChange) {
     cs.launchNow {
       selectionRequests.emit(ChangesRequest.SelectChange(change))
     }
@@ -161,19 +159,17 @@ class CodeReviewChangesViewModelDelegate<T : CodeReviewChangeListViewModelBase>(
 private sealed interface ChangesRequest {
   data class Commit(val index: Int) : ChangesRequest
   data class CommitSha(val sha: String) : ChangesRequest
-  object NextCommit : ChangesRequest
-  object PrevCommit : ChangesRequest
-  data class SelectChange(val change: Change) : ChangesRequest
+  data object NextCommit : ChangesRequest
+  data object PrevCommit : ChangesRequest
+  data class SelectChange(val change: RefComparisonChange) : ChangesRequest
   data class SelectCommitAndFile(val commitSha: String?, val filePath: FilePath) : ChangesRequest
   data class SelectFile(val filePath: FilePath) : ChangesRequest
 }
 
-class CodeReviewChangesContainer(val summaryChanges: List<Change>,
+class CodeReviewChangesContainer(val summaryChanges: List<RefComparisonChange>,
                                  val commits: List<String>,
-                                 val changesByCommits: Map<String, List<Change>>) {
-  val commitsByChange: Map<Change, String> = CollectionFactory
-    .createCustomHashingStrategyMap<Change, String>(changesByCommits.entries.fold(0) { acc, (_, changes) -> acc + changes.size },
-                                                    CODE_REVIEW_CHANGE_HASHING_STRATEGY).apply {
+                                 val changesByCommits: Map<String, List<RefComparisonChange>>) {
+  val commitsByChange: Map<RefComparisonChange, String> = mutableMapOf<RefComparisonChange, String>().apply {
       changesByCommits.entries.forEach { (commit, changes) ->
         changes.forEach {
           put(it, commit)

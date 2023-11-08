@@ -4,8 +4,8 @@ package com.intellij.collaboration.ui.codereview
 import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangeDetails
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangeListViewModel
+import com.intellij.collaboration.util.RefComparisonChange
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNodeRenderer
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
@@ -86,8 +86,8 @@ abstract class CodeReviewProgressTreeModel<T> {
 
 @OptIn(FlowPreview::class)
 class CodeReviewProgressTreeModelFromDetails(cs: CoroutineScope, vm: CodeReviewChangeListViewModel.WithDetails)
-  : CodeReviewProgressTreeModel<Change>() {
-  private var details by Delegates.observable<Map<Change, CodeReviewChangeDetails>>(emptyMap()) { _, _, _ ->
+  : CodeReviewProgressTreeModel<RefComparisonChange>() {
+  private var details by Delegates.observable<Map<RefComparisonChange, CodeReviewChangeDetails>>(emptyMap()) { _, _, _ ->
     fireModelChanged()
   }
 
@@ -99,9 +99,9 @@ class CodeReviewProgressTreeModelFromDetails(cs: CoroutineScope, vm: CodeReviewC
     }
   }
 
-  override fun asLeaf(node: ChangesBrowserNode<*>): Change? = node.userObject as? Change
+  override fun asLeaf(node: ChangesBrowserNode<*>): RefComparisonChange? = node.userObject as? RefComparisonChange
 
-  override fun isRead(leafValue: Change): Boolean = details[leafValue]?.isRead ?: true
+  override fun isRead(leafValue: RefComparisonChange): Boolean = details[leafValue]?.isRead ?: true
 
-  override fun getUnresolvedDiscussionsCount(leafValue: Change): Int = details[leafValue]?.discussions ?: 0
+  override fun getUnresolvedDiscussionsCount(leafValue: RefComparisonChange): Int = details[leafValue]?.discussions ?: 0
 }
