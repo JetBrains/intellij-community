@@ -5,6 +5,7 @@ import com.intellij.application.options.colors.ReaderModeStatsCollector
 import com.intellij.codeInsight.actions.ReaderModeSettingsListener.Companion.applyToAllEditors
 import com.intellij.codeWithMe.ClientId
 import com.intellij.ide.DataManager
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.editor.ClientEditorManager
 import com.intellij.openapi.editor.colors.impl.AppEditorFontOptions
 import com.intellij.openapi.editor.colors.impl.FontPreferencesImpl
@@ -80,9 +81,9 @@ private class ReaderModeEditorSettingsListener : ProjectActivity {
         }
       }
     }
-    EditorSettingsExternalizable.getInstance().addPropertyChangeListener(propertyChangeListener, project)
+    serviceAsync<EditorSettingsExternalizable>().addPropertyChangeListener(propertyChangeListener, project)
 
-    val fontPreferences = AppEditorFontOptions.getInstance().fontPreferences as FontPreferencesImpl
+    val fontPreferences = serviceAsync<AppEditorFontOptions>().fontPreferences as FontPreferencesImpl
     fontPreferences.addChangeListener({
       ReaderModeSettings.getInstance(project).showLigatures = fontPreferences.useLigatures()
       applyToAllEditors(project)
