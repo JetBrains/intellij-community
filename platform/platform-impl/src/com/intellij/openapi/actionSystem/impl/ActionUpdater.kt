@@ -20,6 +20,7 @@ import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.CeProcessCanceledException
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -32,13 +33,13 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.platform.diagnostic.telemetry.helpers.computeWithSpan
+import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.util.SlowOperations
 import com.intellij.util.TimeoutUtil
 import com.intellij.util.application
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.FList
-import com.intellij.util.io.computeDetached
 import com.intellij.util.ui.EDT
 import com.intellij.util.use
 import io.opentelemetry.api.trace.Span
@@ -466,11 +467,21 @@ internal class ActionUpdater @JvmOverloads constructor(
   @OptIn(DelicateCoroutinesApi::class)
   private suspend fun <T> computeOnEdt(supplier: () -> T): T {
     // We need the block below to escape the current scope to let runBlocking in UpdateSession
-    // free while the EDT block is still waiting to be cancelled in EDT queue
-    return computeDetached(edtDispatcher + ModalityState.any().asContextElement()) {
+    // free while the EDT block is still waiting to be cancelled in EDT queue.
+    // The target scope must not be cancelled by `AwaitSharedData` exception (SupervisorJob)!
+    val scope = /*bgtScope ?: */service<CoreUiCoroutineScopeHolder>().coroutineScope
+    val deferred = scope.async(CoroutineName("computeOnEdt ($place)") + edtDispatcher +
+                               ModalityState.any().asContextElement()) {
       blockingContext {
         supplier()
       }
+    }
+    try {
+      return deferred.await()
+    }
+    catch (ce: CancellationException) {
+      deferred.cancel(ce)
+      throw ce
     }
   }
 
