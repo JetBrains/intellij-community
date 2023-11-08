@@ -4,7 +4,6 @@ package com.intellij.history.integration.ui.models;
 
 import com.intellij.history.core.Content;
 import com.intellij.history.core.LocalHistoryFacade;
-import com.intellij.history.core.RevisionsCollector;
 import com.intellij.history.core.changes.ChangeSet;
 import com.intellij.history.core.changes.ChangeVisitor;
 import com.intellij.history.core.changes.StructuralChange;
@@ -14,12 +13,10 @@ import com.intellij.history.core.tree.Entry;
 import com.intellij.history.core.tree.RootEntry;
 import com.intellij.history.integration.IdeaGateway;
 import com.intellij.history.integration.revertion.Reverter;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.Change;
@@ -29,7 +26,10 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public abstract class HistoryDialogModel {
   protected final Project myProject;
@@ -37,8 +37,9 @@ public abstract class HistoryDialogModel {
   protected final VirtualFile myFile;
   protected final IdeaGateway myGateway;
   private String myFilter;
-  private List<RevisionItem> myRevisionsCache;
-  private Revision myCurrentRevisionCache;
+
+  private RevisionData myRevisionData;
+
   private int myRightRevisionIndex;
   private int myLeftRevisionIndex;
   private Entry[] myLeftEntryCache;
@@ -55,31 +56,23 @@ public abstract class HistoryDialogModel {
     return FileUtil.toSystemDependentName(myFile.getPath());
   }
 
-
-  public List<RevisionItem> getRevisions() {
-    if (myRevisionsCache == null) {
-      Pair<Revision, List<RevisionItem>> revs = calcRevisionsCache();
-      myCurrentRevisionCache = revs.first;
-      myRevisionsCache = revs.second;
+  protected @NotNull RevisionData getRevisionData() {
+    if (myRevisionData == null) {
+      myRevisionData = collectRevisionData();
     }
-    return myRevisionsCache;
+    return myRevisionData;
   }
 
-  public Revision getCurrentRevision() {
-    getRevisions();
-    return myCurrentRevisionCache;
+  public @NotNull List<RevisionItem> getRevisions() {
+    return getRevisionData().getRevisions();
   }
 
-  protected Pair<Revision, List<RevisionItem>> calcRevisionsCache() {
-    return ReadAction.compute(() -> {
-      myGateway.registerUnsavedDocuments(myVcs);
-      String path = myGateway.getPathOrUrl(myFile);
-      RootEntry root = myGateway.createTransientRootEntry();
-      RevisionsCollector collector = new RevisionsCollector(myVcs, root, path, myProject.getLocationHash(), myFilter);
+  public @NotNull Revision getCurrentRevision() {
+    return getRevisionData().getCurrentRevision();
+  }
 
-      List<Revision> all = collector.getResult();
-      return Pair.create(all.get(0), groupRevisions(all.subList(1, all.size())));
-    });
+  protected @NotNull RevisionData collectRevisionData() {
+    return RevisionDataKt.collectRevisionData(myProject, myGateway, myVcs, myFile, myFilter);
   }
 
   public void processContents(@NotNull PairProcessor<? super Revision, ? super String> processor) {
@@ -129,28 +122,13 @@ public abstract class HistoryDialogModel {
     });
   }
 
-  private static @NotNull List<RevisionItem> groupRevisions(@NotNull List<? extends Revision> revs) {
-    LinkedList<RevisionItem> result = new LinkedList<>();
-
-    for (Revision each : ContainerUtil.iterateBackward(revs)) {
-      if (each.isLabel() && !result.isEmpty()) {
-        result.getFirst().labels.addFirst(each);
-      }
-      else {
-        result.addFirst(new RevisionItem(each));
-      }
-    }
-
-    return result;
-  }
-
   public void setFilter(@Nullable String filter) {
     myFilter = StringUtil.isEmptyOrSpaces(filter) ? null : filter;
     clearRevisions();
   }
 
   public void clearRevisions() {
-    myRevisionsCache = null;
+    myRevisionData = null;
     resetEntriesCache();
   }
 
