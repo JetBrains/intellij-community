@@ -48,7 +48,7 @@ import org.jetbrains.idea.maven.utils.MavenUtil
 import java.io.File
 import java.text.MessageFormat
 
-class MavenSyncConsole(private val myProject: Project) {
+class MavenSyncConsole(private val myProject: Project) : MavenEventHandler {
   @Volatile
   private var mySyncView: BuildProgressListener = BuildProgressListener { _, _ -> }
   private var mySyncId = createTaskId()
@@ -558,8 +558,8 @@ class MavenSyncConsole(private val myProject: Project) {
       MavenServerConsoleIndicator.LEVEL_FATAL to "FATAL_ERROR"
     )
 
-    enum class OutputType {
-      NORMAL, SYSTEM, ERROR
+    private enum class OutputType {
+      NORMAL, ERROR
     }
 
     @ApiStatus.Experimental
@@ -587,7 +587,7 @@ class MavenSyncConsole(private val myProject: Project) {
   }
 
   @Synchronized
-  fun handleDownloadEvents(downloadEvents: List<MavenArtifactEvent>) {
+  override fun handleDownloadEvents(downloadEvents: List<MavenArtifactEvent>) {
     for (e in downloadEvents) {
       val listener = getListener(e.resolveType)
       val id = e.dependencyId
@@ -599,7 +599,7 @@ class MavenSyncConsole(private val myProject: Project) {
     }
   }
 
-  fun handleConsoleEvents(consoleEvents: List<MavenServerConsoleEvent>) {
+  override fun handleConsoleEvents(consoleEvents: List<MavenServerConsoleEvent>) {
     for (e in consoleEvents) {
       printMessage(e.level, e.message, e.throwable)
     }

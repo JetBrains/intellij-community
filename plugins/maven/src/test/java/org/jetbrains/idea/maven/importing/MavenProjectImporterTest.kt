@@ -6,7 +6,7 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.platform.util.progress.RawProgressReporter
 import com.intellij.testFramework.replaceService
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.idea.maven.buildtool.MavenSyncConsole
+import org.jetbrains.idea.maven.buildtool.MavenEventHandler
 import org.jetbrains.idea.maven.project.*
 import org.junit.Test
 
@@ -80,7 +80,7 @@ class MavenProjectImporterTest : MavenMultiVersionImportingTestCase() {
         generalSettings: MavenGeneralSettings,
         embeddersManager: MavenEmbeddersManager,
         progressReporter: RawProgressReporter,
-        syncConsole: MavenSyncConsole?
+        eventHandler: MavenEventHandler
       ): MavenProjectResolver.MavenProjectResolutionResult {
         resolvedProjects.addAll(mavenProjects)
         return MavenProjectResolver.MavenProjectResolutionResult(emptyMap())

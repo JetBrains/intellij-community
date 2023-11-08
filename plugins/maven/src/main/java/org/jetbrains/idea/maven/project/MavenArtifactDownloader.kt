@@ -5,7 +5,8 @@ import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.LocalFileSystem
-import org.jetbrains.idea.maven.buildtool.MavenSyncConsole
+import org.jetbrains.idea.maven.buildtool.MavenEventHandler
+import org.jetbrains.idea.maven.buildtool.MavenLogEventHandler
 import org.jetbrains.idea.maven.importing.MavenExtraArtifactType
 import org.jetbrains.idea.maven.model.*
 import org.jetbrains.idea.maven.server.MavenArtifactResolutionRequest
@@ -21,7 +22,7 @@ class MavenArtifactDownloader(private val myProject: Project,
                               private val myProjectsTree: MavenProjectsTree,
                               artifacts: Collection<MavenArtifact>?,
                               private val myIndicator: ProgressIndicator?,
-                              private val syncConsole: MavenSyncConsole?) {
+                              private val eventHandler: MavenEventHandler) {
 
   private val myArtifacts: Collection<MavenArtifact>? = if (artifacts == null) null else HashSet(artifacts)
 
@@ -135,7 +136,7 @@ class MavenArtifactDownloader(private val myProject: Project,
         requests.add(request)
       }
     }
-    val artifacts = embedder.resolveArtifacts(requests, myIndicator, syncConsole)
+    val artifacts = embedder.resolveArtifacts(requests, myIndicator, eventHandler)
     for (artifact in artifacts) {
       val file = artifact.file
       if (file.exists()) {
@@ -185,8 +186,8 @@ class MavenArtifactDownloader(private val myProject: Project,
                  embedder: MavenEmbedderWrapper,
                  progressIndicator: MavenProgressIndicator?): DownloadResult {
       val indicator = progressIndicator?.indicator
-      val syncConsole = progressIndicator?.syncConsole
-      return MavenArtifactDownloader(project, projectsTree, artifacts, indicator, syncConsole)
+      val eventHandler = progressIndicator?.syncConsole ?: MavenLogEventHandler
+      return MavenArtifactDownloader(project, projectsTree, artifacts, indicator, eventHandler)
         .download(mavenProjects, embedder, downloadSources, downloadDocs)
     }
   }

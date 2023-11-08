@@ -33,6 +33,7 @@ import org.jetbrains.annotations.TestOnly
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.idea.maven.buildtool.MavenDownloadConsole
 import org.jetbrains.idea.maven.buildtool.MavenImportSpec
+import org.jetbrains.idea.maven.buildtool.MavenLogEventHandler
 import org.jetbrains.idea.maven.buildtool.MavenSyncConsole
 import org.jetbrains.idea.maven.execution.BTWMavenConsole
 import org.jetbrains.idea.maven.importing.MavenImportStats
@@ -527,7 +528,7 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
     try {
       downloadConsole.startDownload(progressListener, sources, docs)
       downloadConsole.startDownloadTask()
-      val downloader = MavenArtifactDownloader(project, projectsTree, artifacts, indicator, null)
+      val downloader = MavenArtifactDownloader(project, projectsTree, artifacts, indicator, MavenLogEventHandler)
       val result = downloader.downloadSourcesAndJavadocs(projects, sources, docs, embeddersManager)
       downloadConsole.finishDownloadTask()
       return result

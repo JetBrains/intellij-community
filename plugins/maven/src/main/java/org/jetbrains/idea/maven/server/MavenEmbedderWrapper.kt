@@ -11,6 +11,8 @@ import com.intellij.platform.util.progress.RawProgressReporter
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.idea.maven.buildtool.MavenEventHandler
+import org.jetbrains.idea.maven.buildtool.MavenLogEventHandler
 import org.jetbrains.idea.maven.buildtool.MavenSyncConsole
 import org.jetbrains.idea.maven.model.*
 import org.jetbrains.idea.maven.project.MavenConsole
@@ -52,7 +54,7 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
   suspend fun resolveProject(files: Collection<VirtualFile>,
                              explicitProfiles: MavenExplicitProfiles,
                              progressReporter: RawProgressReporter,
-                             syncConsole: MavenSyncConsole?,
+                             eventHandler: MavenEventHandler,
                              workspaceMap: MavenWorkspaceMap?,
                              updateSnapshots: Boolean,
                              userProperties: Properties): Collection<MavenServerExecutionResult> {
@@ -70,7 +72,7 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
     )
     val results = runLongRunningTask(
       LongRunningEmbedderTask { embedder, taskId -> embedder.resolveProjects(taskId, request, ourToken) },
-      progressReporter, syncConsole)
+      progressReporter, eventHandler)
     if (transformer !== RemotePathTransformerFactory.Transformer.ID) {
       for (result in results) {
         val data = result.projectData ?: continue
@@ -96,7 +98,7 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
   @Throws(MavenProcessCanceledException::class)
   fun resolve(info: MavenArtifactInfo, remoteRepositories: List<MavenRemoteRepository>): MavenArtifact {
     val requests = listOf(MavenArtifactResolutionRequest(info, ArrayList(remoteRepositories)))
-    return resolveArtifacts(requests, null, null)[0]
+    return resolveArtifacts(requests, null, MavenLogEventHandler)[0]
   }
 
   @Deprecated("use {@link MavenEmbedderWrapper#resolveArtifacts(requests, indicator, syncConsole)}",
@@ -106,16 +108,16 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
                        indicator: ProgressIndicator?,
                        syncConsole: MavenSyncConsole?,
                        console: MavenConsole?): List<MavenArtifact> {
-    return resolveArtifacts(requests, indicator, syncConsole)
+    return resolveArtifacts(requests, indicator, syncConsole ?: MavenLogEventHandler)
   }
 
   @Throws(MavenProcessCanceledException::class)
   fun resolveArtifacts(requests: Collection<MavenArtifactResolutionRequest>,
                        indicator: ProgressIndicator?,
-                       syncConsole: MavenSyncConsole?): List<MavenArtifact> {
+                       eventHandler: MavenEventHandler): List<MavenArtifact> {
     return runLongRunningTaskBlocking(
       LongRunningEmbedderTask { embedder, taskId -> embedder.resolveArtifacts(taskId, ArrayList(requests), ourToken) },
-      indicator, syncConsole)
+      indicator, eventHandler)
   }
 
   @Deprecated("use {@link MavenEmbedderWrapper#resolveArtifactTransitively()}")
@@ -137,7 +139,7 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
   @Throws(MavenProcessCanceledException::class)
   suspend fun resolvePlugins(mavenPluginRequests: Collection<Pair<MavenId, NativeMavenProjectHolder>>,
                              progressReporter: RawProgressReporter?,
-                             syncConsole: MavenSyncConsole?,
+                             eventHandler: MavenEventHandler,
                              forceUpdateSnapshots: Boolean): List<PluginResolutionResponse> {
     val pluginResolutionRequests = ArrayList<PluginResolutionRequest>()
     for (mavenPluginRequest in mavenPluginRequests) {
@@ -155,7 +157,7 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
       LongRunningEmbedderTask { embedder, taskId ->
         embedder.resolvePlugins(taskId, pluginResolutionRequests, forceUpdateSnapshots, ourToken)
       },
-      progressReporter, syncConsole)
+      progressReporter, eventHandler)
   }
 
   @Throws(MavenProcessCanceledException::class)
@@ -164,7 +166,7 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
                     forceUpdateSnapshots: Boolean): Collection<MavenArtifact> {
     val mavenId = plugin.mavenId
     return runBlockingMaybeCancellable {
-      resolvePlugins(listOf(Pair.create(mavenId, nativeMavenProject)), null, null, forceUpdateSnapshots)
+      resolvePlugins(listOf(Pair.create(mavenId, nativeMavenProject)), null, MavenLogEventHandler, forceUpdateSnapshots)
         .flatMap { resolutionResult: PluginResolutionResponse -> resolutionResult.artifacts }.toSet()
     }
   }
@@ -178,10 +180,10 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
   suspend fun executeGoal(requests: Collection<MavenGoalExecutionRequest?>,
                           goal: String,
                           progressReporter: RawProgressReporter,
-                          syncConsole: MavenSyncConsole?): List<MavenGoalExecutionResult> {
+                          eventHandler: MavenEventHandler): List<MavenGoalExecutionResult> {
     return runLongRunningTask(
       LongRunningEmbedderTask { embedder, taskId -> embedder.executeGoal(taskId, ArrayList(requests), goal, ourToken) },
-      progressReporter, syncConsole)
+      progressReporter, eventHandler)
   }
 
   fun resolveRepositories(repositories: Collection<MavenRemoteRepository?>): Set<MavenRemoteRepository> {
@@ -233,7 +235,7 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
   @Throws(MavenProcessCanceledException::class)
   private fun <R> runLongRunningTaskBlocking(task: LongRunningEmbedderTask<R>,
                                              indicator: ProgressIndicator?,
-                                             syncConsole: MavenSyncConsole?): R {
+                                             eventHandler: MavenEventHandler): R {
     val longRunningTaskId = UUID.randomUUID().toString()
     val embedder = getOrCreateWrappee()
 
@@ -245,8 +247,8 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
           blockingContext {
             val status = embedder.getLongRunningTaskStatus(longRunningTaskId, ourToken)
             indicator?.fraction = status.fraction()
-            syncConsole?.handleConsoleEvents(status.consoleEvents())
-            syncConsole?.handleDownloadEvents(status.downloadEvents())
+            eventHandler.handleConsoleEvents(status.consoleEvents())
+            eventHandler.handleDownloadEvents(status.downloadEvents())
             if (null != indicator && indicator.isCanceled) {
               if (embedder.cancelLongRunningTask(longRunningTaskId, ourToken)) {
                 throw CancellationException()
@@ -275,7 +277,7 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
   @Throws(MavenProcessCanceledException::class)
   private suspend fun <R> runLongRunningTask(task: LongRunningEmbedderTask<R>,
                                              progressReporter: RawProgressReporter?,
-                                             syncConsole: MavenSyncConsole?): R {
+                                             eventHandler: MavenEventHandler): R {
     val longRunningTaskId = UUID.randomUUID().toString()
     val embedder = getOrCreateWrappee()
 
@@ -286,8 +288,8 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
           blockingContext {
             val status = embedder.getLongRunningTaskStatus(longRunningTaskId, ourToken)
             progressReporter?.fraction(status.fraction())
-            syncConsole?.handleConsoleEvents(status.consoleEvents())
-            syncConsole?.handleDownloadEvents(status.downloadEvents())
+            eventHandler.handleConsoleEvents(status.consoleEvents())
+            eventHandler.handleDownloadEvents(status.downloadEvents())
           }
         }
       }

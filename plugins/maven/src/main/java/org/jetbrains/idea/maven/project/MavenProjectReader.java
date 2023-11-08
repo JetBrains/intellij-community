@@ -9,6 +9,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.buildtool.MavenLogEventHandler;
 import org.jetbrains.idea.maven.dom.converters.MavenConsumerPomUtil;
 import org.jetbrains.idea.maven.internal.ReadStatisticsCollector;
 import org.jetbrains.idea.maven.model.*;
@@ -496,7 +497,7 @@ public final class MavenProjectReader {
       explicitProfiles,
       locator,
       null,
-      null,
+      MavenLogEventHandler.INSTANCE,
       null,
       false);
   }

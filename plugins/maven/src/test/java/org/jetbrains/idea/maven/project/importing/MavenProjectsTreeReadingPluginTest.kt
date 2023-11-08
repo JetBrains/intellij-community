@@ -4,14 +4,16 @@ package org.jetbrains.idea.maven.project.importing
 import com.intellij.openapi.util.Pair
 import com.intellij.platform.util.progress.RawProgressReporter
 import kotlinx.coroutines.runBlocking
+import org.jetbrains.idea.maven.buildtool.MavenLogEventHandler
 import org.jetbrains.idea.maven.project.*
 import org.jetbrains.idea.maven.server.NativeMavenProjectHolder
 import org.junit.Test
 
 class MavenProjectsTreeReadingPluginTest : MavenProjectsTreeTestCase() {
+  override fun runInDispatchThread() = false
+
   @Test
-  @Throws(Exception::class)
-  fun testDoNotUpdateChildAfterParentWasResolved() {
+  fun testDoNotUpdateChildAfterParentWasResolved() = runBlocking {
     createProjectPom("""
                      <groupId>test</groupId>
                      <artifactId>parent</artifactId>
@@ -49,14 +51,12 @@ class MavenProjectsTreeReadingPluginTest : MavenProjectsTreeTestCase() {
       )
       val pluginResolver = MavenPluginResolver(tree)
       val progressReporter = object : RawProgressReporter {}
-      runBlocking {
-        pluginResolver.resolvePlugins(listOf(MavenProjectWithHolder(parentProject, nativeProject[0]!!, MavenProjectChanges.ALL)),
-                                      embeddersManager,
-                                      progressReporter,
-                                      mavenProgressIndicator.syncConsole,
-                                      false)
-        MavenFolderResolver(myProject).resolveFolders(listOf(parentProject), progressReporter)
-      }
+      pluginResolver.resolvePlugins(listOf(MavenProjectWithHolder(parentProject, nativeProject[0]!!, MavenProjectChanges.ALL)),
+                                    embeddersManager,
+                                    progressReporter,
+                                    MavenLogEventHandler,
+                                    false)
+      MavenFolderResolver(myProject).resolveFolders(listOf(parentProject), progressReporter)
     }
     finally {
       embeddersManager.releaseInTests()
