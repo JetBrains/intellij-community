@@ -82,10 +82,9 @@ internal class DocumentationPopupUI(
     toolbarComponent = toolbarComponent(toolbarActionGroup, editorPane)
     corner = actionButton(gearActions, editorPane)
     component = DocumentationPopupPane(ui.scrollPane).also {
-      it.add(toolbarComponent, BorderLayout.SOUTH)
+      it.add(toolbarComponent, BorderLayout.NORTH)
       it.add(scrollPaneWithCorner(this, ui.scrollPane, corner), BorderLayout.CENTER)
     }
-    ui.switcherToolbarComponent?.let { component.add(ui.switcherToolbarComponent, BorderLayout.NORTH) }
 
     openInToolwindowAction.registerCustomShortcutSet(component, this)
 
