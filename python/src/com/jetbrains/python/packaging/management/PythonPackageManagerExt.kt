@@ -43,11 +43,19 @@ suspend fun PythonPackageManager.runPackagingTool(operation: String, arguments: 
   val targetEnvironmentRequest = helpersAwareTargetRequest.targetEnvironmentRequest
   val pythonExecution = prepareHelperScriptExecution(PythonHelper.PACKAGING_TOOL, helpersAwareTargetRequest)
 
-  if (Registry.`is`("python.upload.project.for.packaging.tool") || targetEnvironmentRequest is LocalTargetEnvironmentRequest) {
-    // todo[akniazev]: check applyWorkingDir: PyTargetEnvironmentPackageManager.java:133
-    project.guessProjectDir()?.toNioPath()?.let {
-      targetEnvironmentRequest.ensureProjectSdkAndModuleDirsAreOnTarget(project)
-      pythonExecution.workingDir = targetPath(it)
+  if (targetEnvironmentRequest is LocalTargetEnvironmentRequest) {
+    if (Registry.`is`("python.packaging.tool.use.project.location.as.working.dir")) {
+      project.guessProjectDir()?.toNioPath()?.let {
+        pythonExecution.workingDir = targetPath(it)
+      }
+    }
+  }
+  else {
+    if (Registry.`is`("python.packaging.tool.upload.project")) {
+      project.guessProjectDir()?.toNioPath()?.let {
+        targetEnvironmentRequest.ensureProjectSdkAndModuleDirsAreOnTarget(project)
+        pythonExecution.workingDir = targetPath(it)
+      }
     }
   }
 
