@@ -329,7 +329,7 @@ open class FrameWrapper @JvmOverloads constructor(private val project: Project?,
   }
 }
 
-private class MyJFrame(private var owner: FrameWrapper, private val parent: IdeFrame) : JFrame(), DataProvider, IdeFrame.Child, IdeFrameEx {
+private class MyJFrame(private var owner: FrameWrapper, private val parent: IdeFrame) : JFrame(), DataProvider, IdeFrame.Child, IdeFrameEx, DisposableWindow {
   private var frameTitle: String? = null
   private var fileTitle: String? = null
   private var file: Path? = null
@@ -345,6 +345,8 @@ private class MyJFrame(private var owner: FrameWrapper, private val parent: IdeF
     MouseGestureManager.getInstance().add(this)
     focusTraversalPolicy = IdeFocusTraversalPolicy()
   }
+
+  override fun isWindowDisposed(): Boolean = owner.isDisposed
 
   override fun isInFullScreen() = false
 
@@ -437,7 +439,7 @@ private class MyJFrame(private var owner: FrameWrapper, private val parent: IdeF
 }
 
 private class MyJDialog(private val owner: FrameWrapper, private val parent: IdeFrame) :
-  JDialog(ComponentUtil.getWindow(parent.component)), DataProvider, IdeFrame.Child {
+  JDialog(ComponentUtil.getWindow(parent.component)), DataProvider, IdeFrame.Child, DisposableWindow {
   override fun getComponent(): JComponent = getRootPane()
 
   override fun getStatusBar(): StatusBar? = null
@@ -472,6 +474,8 @@ private class MyJDialog(private val owner: FrameWrapper, private val parent: Ide
     super.dispose()
     rootPane = null
   }
+
+  override fun isWindowDisposed(): Boolean = owner.isDisposed
 
   override fun getData(dataId: String): Any? {
     return when {
