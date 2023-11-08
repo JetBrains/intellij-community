@@ -10,14 +10,14 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.rt.execution.junit.FileComparisonFailure;
-import com.intellij.testFramework.LightProjectDescriptor;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.kotlin.idea.completion.test.IdeaTestUtilsKt;
 import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils;
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase;
-import org.jetbrains.kotlin.idea.test.ProjectDescriptorWithStdlibSources;
+import org.jetbrains.kotlin.idea.test.KotlinLightProjectDescriptor;
+import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor;
 
 import java.io.File;
 import java.util.List;
@@ -110,9 +110,8 @@ public abstract class AbstractQuickDocProviderTest extends KotlinLightCodeInsigh
     }
 
 
-    @NotNull
     @Override
-    protected LightProjectDescriptor getProjectDescriptor() {
-        return ProjectDescriptorWithStdlibSources.getInstanceWithStdlibSources();
+    protected @NotNull KotlinLightProjectDescriptor getProjectDescriptor() {
+        return KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance();
     }
 }
