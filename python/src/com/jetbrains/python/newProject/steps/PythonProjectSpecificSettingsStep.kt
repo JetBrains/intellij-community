@@ -5,6 +5,8 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.impl.ProjectUtil.getUserHomeProjectDir
 import com.intellij.ide.util.projectWizard.AbstractNewProjectStep
+import com.intellij.ide.util.projectWizard.WebProjectSettingsStepWrapper
+import com.intellij.ide.util.projectWizard.WebProjectTemplate
 import com.intellij.openapi.GitRepositoryInitializer
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
@@ -55,6 +57,9 @@ class PythonProjectSpecificSettingsStep<T>(projectGenerator: DirectoryProjectGen
   private lateinit var projectNameFiled: JBTextField
   lateinit var mainPanel: DialogPanel
   override fun createAndFillContentPanel(): JPanel {
+    if (myProjectGenerator is WebProjectTemplate) {
+      peer.buildUI(WebProjectSettingsStepWrapper(this))
+    }
     return createContentPanelWithAdvancedSettingsPanel()
   }
 
@@ -146,8 +151,13 @@ class PythonProjectSpecificSettingsStep<T>(projectGenerator: DirectoryProjectGen
     }
 
   override fun checkValid(): Boolean {
-    // todo add proper validation with custom component
-    return true
+    if (myProjectGenerator is WebProjectTemplate) {
+      return super.checkValid()
+    }
+    else {
+      // todo add proper validation with custom component
+      return true
+    }
   }
 
   override fun installFramework(): Boolean {
