@@ -20,14 +20,15 @@ import com.google.common.collect.ImmutableBiMap;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ExceptionUtil;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.execution.MavenExecutionOptions;
-import org.jetbrains.idea.maven.server.MavenServerConsoleEvent;
 import org.jetbrains.idea.maven.server.MavenServerConsoleIndicator;
 
 import java.text.MessageFormat;
-import java.util.List;
 
+/**
+ * @deprecated Use MavenSyncConsole instead
+ */
+@Deprecated
 public abstract class MavenConsole {
   private static final String LINE_SEPARATOR = System.lineSeparator();
 
@@ -65,12 +66,6 @@ public abstract class MavenConsole {
 
   public void systemMessage(int level, String string, Throwable throwable) {
     printMessage(level, string, throwable);
-  }
-
-  public void handleConsoleEvents(@NotNull List<MavenServerConsoleEvent> consoleEvents) {
-    for (var e : consoleEvents) {
-      printMessage(e.getLevel(), e.getMessage(), e.getThrowable());
-    }
   }
 
   private void printMessage(int level, String string, Throwable throwable) {

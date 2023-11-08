@@ -12,7 +12,6 @@ interface MavenProjectResolver {
                       tree: MavenProjectsTree,
                       generalSettings: MavenGeneralSettings,
                       embeddersManager: MavenEmbeddersManager,
-                      console: MavenConsole,
                       progressReporter: RawProgressReporter,
                       syncConsole: MavenSyncConsole?): MavenProjectResolutionResult
 

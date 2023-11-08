@@ -79,7 +79,6 @@ class MavenProjectImporterTest : MavenMultiVersionImportingTestCase() {
         tree: MavenProjectsTree,
         generalSettings: MavenGeneralSettings,
         embeddersManager: MavenEmbeddersManager,
-        console: MavenConsole,
         progressReporter: RawProgressReporter,
         syncConsole: MavenSyncConsole?
       ): MavenProjectResolver.MavenProjectResolutionResult {

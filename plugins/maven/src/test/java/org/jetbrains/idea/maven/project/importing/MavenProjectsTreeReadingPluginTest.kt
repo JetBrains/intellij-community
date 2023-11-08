@@ -4,8 +4,6 @@ package org.jetbrains.idea.maven.project.importing
 import com.intellij.openapi.util.Pair
 import com.intellij.platform.util.progress.RawProgressReporter
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.idea.maven.execution.BTWMavenConsole
-import org.jetbrains.idea.maven.execution.MavenExecutionOptions
 import org.jetbrains.idea.maven.project.*
 import org.jetbrains.idea.maven.server.NativeMavenProjectHolder
 import org.junit.Test
@@ -35,7 +33,6 @@ class MavenProjectsTreeReadingPluginTest : MavenProjectsTreeTestCase() {
     updateAll(myProjectPom, child)
     val parentProject = tree.findProject(myProjectPom)!!
     val embeddersManager = MavenEmbeddersManager(myProject)
-    val mavenConsole = BTWMavenConsole(myProject, MavenExecutionOptions.LoggingLevel.DISABLED)
     try {
       val nativeProject = arrayOfNulls<NativeMavenProjectHolder>(1)
       tree.addListener(object : MavenProjectsTree.Listener {
@@ -48,7 +45,6 @@ class MavenProjectsTreeReadingPluginTest : MavenProjectsTreeTestCase() {
               parentProject,
               mavenGeneralSettings,
               embeddersManager,
-              mavenConsole,
               mavenProgressIndicator
       )
       val pluginResolver = MavenPluginResolver(tree)
@@ -56,7 +52,6 @@ class MavenProjectsTreeReadingPluginTest : MavenProjectsTreeTestCase() {
       runBlocking {
         pluginResolver.resolvePlugins(listOf(MavenProjectWithHolder(parentProject, nativeProject[0]!!, MavenProjectChanges.ALL)),
                                       embeddersManager,
-                                      mavenConsole,
                                       progressReporter,
                                       mavenProgressIndicator.syncConsole,
                                       false)

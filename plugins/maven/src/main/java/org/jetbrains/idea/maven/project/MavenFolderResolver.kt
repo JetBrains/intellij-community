@@ -10,7 +10,6 @@ import com.intellij.platform.util.progress.rawProgressReporter
 import com.intellij.platform.util.progress.withRawProgressReporter
 import com.intellij.util.lang.JavaVersion
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.idea.maven.execution.BTWMavenConsole
 import org.jetbrains.idea.maven.server.MavenEmbedderWrapper
 import org.jetbrains.idea.maven.server.MavenGoalExecutionRequest
 import org.jetbrains.idea.maven.server.MavenGoalExecutionResult
@@ -77,7 +76,7 @@ class MavenFolderResolver(private val project: Project) {
     val goalResults: List<MavenGoalExecutionResult>
     val embedder: MavenEmbedderWrapper = projectsManager.embeddersManager.getEmbedder(MavenEmbeddersManager.FOR_FOLDERS_RESOLVE, baseDir)
     try {
-      goalResults = embedder.executeGoal(requests, goal, progressReporter, projectsManager.syncConsole, mavenConsole)
+      goalResults = embedder.executeGoal(requests, goal, progressReporter, projectsManager.syncConsole)
     }
     finally {
       projectsManager.embeddersManager.release(embedder)
@@ -102,10 +101,4 @@ class MavenFolderResolver(private val project: Project) {
     }
     else mavenProjects
   }
-
-  private val mavenConsole: MavenConsole
-    get() {
-      val mavenGeneralSettings = projectsManager.generalSettings
-      return BTWMavenConsole(project, mavenGeneralSettings.outputLevel)
-    }
 }

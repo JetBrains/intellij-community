@@ -21,7 +21,10 @@ import org.jetbrains.idea.maven.buildtool.MavenSyncConsole;
 import org.jetbrains.idea.maven.project.MavenConsole;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
-@SuppressWarnings("UseOfSystemOutOrSystemErr")
+/**
+ * @deprecated Use MavenSyncConsole instead
+ */
+@Deprecated
 public class BTWMavenConsole extends MavenConsole {
 
   private final Project myProject;

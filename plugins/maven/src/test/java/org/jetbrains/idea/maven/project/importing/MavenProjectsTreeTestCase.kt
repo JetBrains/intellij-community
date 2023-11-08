@@ -105,7 +105,6 @@ abstract class MavenProjectsTreeTestCase : MavenMultiVersionImportingTestCase() 
                         mavenProject: MavenProject,
                         generalSettings: MavenGeneralSettings,
                         embeddersManager: MavenEmbeddersManager,
-                        console: MavenConsole,
                         process: MavenProgressIndicator) {
     val resolver = getInstance(project)
     val progressReporter = object : RawProgressReporter {}
@@ -114,7 +113,6 @@ abstract class MavenProjectsTreeTestCase : MavenMultiVersionImportingTestCase() 
                        myTree!!,
                        generalSettings,
                        embeddersManager,
-                       console,
                        progressReporter,
                        process.syncConsole)
     }

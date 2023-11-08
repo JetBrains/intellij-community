@@ -30,7 +30,6 @@ internal class MavenProjectResolverImpl(private val myProject: Project) : MavenP
                                tree: MavenProjectsTree,
                                generalSettings: MavenGeneralSettings,
                                embeddersManager: MavenEmbeddersManager,
-                               console: MavenConsole,
                                progressReporter: RawProgressReporter,
                                syncConsole: MavenSyncConsole?): MavenProjectResolutionResult {
     val updateSnapshots = MavenProjectsManager.getInstance(myProject).forceUpdateSnapshots || generalSettings.isAlwaysUpdateSnapshots
@@ -53,7 +52,6 @@ internal class MavenProjectResolverImpl(private val myProject: Project) : MavenP
           embedder,
           progressReporter,
           syncConsole,
-          console,
           tree.workspaceMap,
           updateSnapshots,
           userProperties)
@@ -90,7 +88,6 @@ internal class MavenProjectResolverImpl(private val myProject: Project) : MavenP
                                 embedder: MavenEmbedderWrapper,
                                 progressReporter: RawProgressReporter,
                                 syncConsole: MavenSyncConsole?,
-                                console: MavenConsole,
                                 workspaceMap: MavenWorkspaceMap?,
                                 updateSnapshots: Boolean,
                                 userProperties: Properties): Collection<MavenProjectWithHolder> {
@@ -110,7 +107,6 @@ internal class MavenProjectResolverImpl(private val myProject: Project) : MavenP
       tree.projectLocator,
       progressReporter,
       syncConsole,
-      console,
       workspaceMap,
       updateSnapshots,
       userProperties)

@@ -21,8 +21,6 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.UsefulTestCase
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.idea.maven.execution.BTWMavenConsole
-import org.jetbrains.idea.maven.execution.MavenExecutionOptions
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles
 import org.jetbrains.idea.maven.project.MavenEmbeddersManager
 import org.jetbrains.idea.maven.project.MavenProject
@@ -623,7 +621,6 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
               project!!,
               mavenGeneralSettings,
               embeddersManager,
-              BTWMavenConsole(myProject, MavenExecutionOptions.LoggingLevel.DISABLED),
               mavenProgressIndicator
       )
     }
@@ -1832,7 +1829,6 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
               parentProject!!,
               mavenGeneralSettings,
               embeddersManager,
-              BTWMavenConsole(myProject, MavenExecutionOptions.LoggingLevel.DISABLED),
               mavenProgressIndicator)
     }
     finally {
@@ -1914,7 +1910,6 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
               tree.rootProjects[0],
               mavenGeneralSettings,
               embeddersManager,
-              BTWMavenConsole(myProject, MavenExecutionOptions.LoggingLevel.DISABLED),
               mavenProgressIndicator
       )
     }
@@ -2022,7 +2017,6 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
               project,
               mavenGeneralSettings,
               embeddersManager,
-              BTWMavenConsole(myProject, MavenExecutionOptions.LoggingLevel.DISABLED),
               mavenProgressIndicator
       )
     }
@@ -2216,7 +2210,6 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
               project,
               mavenGeneralSettings,
               embeddersManager,
-              BTWMavenConsole(myProject, MavenExecutionOptions.LoggingLevel.DISABLED),
               mavenProgressIndicator)
     }
     finally {

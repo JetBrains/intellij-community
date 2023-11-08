@@ -36,7 +36,6 @@ import org.jetbrains.idea.maven.buildtool.quickfix.UseBundledMavenQuickFix
 import org.jetbrains.idea.maven.execution.SyncBundle
 import org.jetbrains.idea.maven.externalSystemIntegration.output.importproject.quickfixes.DownloadArtifactBuildIssue
 import org.jetbrains.idea.maven.model.MavenProjectProblem
-import org.jetbrains.idea.maven.project.MavenConsole
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent
 import org.jetbrains.idea.maven.server.MavenArtifactEvent
@@ -559,6 +558,10 @@ class MavenSyncConsole(private val myProject: Project) {
       MavenServerConsoleIndicator.LEVEL_FATAL to "FATAL_ERROR"
     )
 
+    enum class OutputType {
+      NORMAL, SYSTEM, ERROR
+    }
+
     @ApiStatus.Experimental
     @JvmStatic
     fun startTransaction(project: Project) {
@@ -605,9 +608,9 @@ class MavenSyncConsole(private val myProject: Project) {
   private fun printMessage(level: Int, string: String, throwable: Throwable?) {
     if (isSuppressed(level)) return
 
-    var type = MavenConsole.OutputType.NORMAL
+    var type = OutputType.NORMAL
     if (throwable != null || level == MavenServerConsoleIndicator.LEVEL_WARN || level == MavenServerConsoleIndicator.LEVEL_ERROR || level == MavenServerConsoleIndicator.LEVEL_FATAL) {
-      type = MavenConsole.OutputType.ERROR
+      type = OutputType.ERROR
     }
 
     doPrint(composeLine(level, string), type)
@@ -623,8 +626,8 @@ class MavenSyncConsole(private val myProject: Project) {
     }
   }
 
-  private fun doPrint(text: String, type: MavenConsole.OutputType) {
-    addText(text, type == MavenConsole.OutputType.NORMAL)
+  private fun doPrint(text: String, type: OutputType) {
+    addText(text, type == OutputType.NORMAL)
   }
 
   private fun isSuppressed(level: Int): Boolean {

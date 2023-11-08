@@ -29,14 +29,13 @@ class MavenArtifactDownloader(private val myProject: Project,
   fun downloadSourcesAndJavadocs(mavenProjects: Collection<MavenProject>,
                                  downloadSources: Boolean,
                                  downloadDocs: Boolean,
-                                 embeddersManager: MavenEmbeddersManager,
-                                 console: MavenConsole): DownloadResult {
+                                 embeddersManager: MavenEmbeddersManager): DownloadResult {
     val projectMultiMap = MavenUtil.groupByBasedir(mavenProjects, myProjectsTree)
     val result = DownloadResult()
     for ((baseDir, mavenProjectsForBaseDir) in projectMultiMap.entrySet()) {
       val embedder = embeddersManager.getEmbedder(MavenEmbeddersManager.FOR_DOWNLOAD, baseDir)
       try {
-        val chunk = download(mavenProjectsForBaseDir, embedder, downloadSources, downloadDocs, console)
+        val chunk = download(mavenProjectsForBaseDir, embedder, downloadSources, downloadDocs)
         for (each in mavenProjectsForBaseDir) {
           myProjectsTree.fireArtifactsDownloaded(each!!)
         }
@@ -56,8 +55,7 @@ class MavenArtifactDownloader(private val myProject: Project,
   private fun download(mavenProjects: Collection<MavenProject>,
                        embedder: MavenEmbedderWrapper,
                        downloadSources: Boolean,
-                       downloadDocs: Boolean,
-                       console: MavenConsole?): DownloadResult {
+                       downloadDocs: Boolean): DownloadResult {
     val downloadedFiles: MutableCollection<File> = ConcurrentLinkedQueue()
     return try {
       val types: MutableList<MavenExtraArtifactType> = ArrayList(2)
@@ -67,8 +65,8 @@ class MavenArtifactDownloader(private val myProject: Project,
       else if (downloadSources) MavenProjectBundle.message("maven.downloading.sources")
       else MavenProjectBundle.message("maven.downloading.docs")
       myIndicator?.text = caption
-      val artifacts = collectArtifactsToDownload(mavenProjects, types, console)
-      download(embedder, artifacts, downloadedFiles, console)
+      val artifacts = collectArtifactsToDownload(mavenProjects, types)
+      download(embedder, artifacts, downloadedFiles)
     }
     finally {
       // We have to refresh parents of downloaded files, because some additional files may have been downloaded
@@ -82,8 +80,7 @@ class MavenArtifactDownloader(private val myProject: Project,
   }
 
   private fun collectArtifactsToDownload(mavenProjects: Collection<MavenProject>,
-                                         types: List<MavenExtraArtifactType>,
-                                         console: MavenConsole?): Map<MavenId, DownloadData> {
+                                         types: List<MavenExtraArtifactType>): Map<MavenId, DownloadData> {
     val result: MutableMap<MavenId, DownloadData> = HashMap()
     val dependencyTypesFromSettings: MutableSet<String> = HashSet()
     if (!ReadAction.compute<Boolean, RuntimeException> {
@@ -125,8 +122,7 @@ class MavenArtifactDownloader(private val myProject: Project,
   @Throws(MavenProcessCanceledException::class)
   private fun download(embedder: MavenEmbedderWrapper,
                        toDownload: Map<MavenId, DownloadData>,
-                       downloadedFiles: MutableCollection<File>,
-                       console: MavenConsole?): DownloadResult {
+                       downloadedFiles: MutableCollection<File>): DownloadResult {
     val result = DownloadResult()
     result.unresolvedSources.addAll(toDownload.keys)
     result.unresolvedDocs.addAll(toDownload.keys)
@@ -139,7 +135,7 @@ class MavenArtifactDownloader(private val myProject: Project,
         requests.add(request)
       }
     }
-    val artifacts = embedder.resolveArtifacts(requests, myIndicator, syncConsole, console)
+    val artifacts = embedder.resolveArtifacts(requests, myIndicator, syncConsole)
     for (artifact in artifacts) {
       val file = artifact.file
       if (file.exists()) {
@@ -163,8 +159,7 @@ class MavenArtifactDownloader(private val myProject: Project,
     val classifiersWithExtensions = LinkedHashSet<DownloadElement>()
   }
 
-  private data class DownloadElement(val classifier: String?, val extension: String?, val type: MavenExtraArtifactType?) {
-  }
+  private data class DownloadElement(val classifier: String?, val extension: String?, val type: MavenExtraArtifactType?)
 
   // used by third-party plugins
   class DownloadResult {
@@ -192,7 +187,7 @@ class MavenArtifactDownloader(private val myProject: Project,
       val indicator = progressIndicator?.indicator
       val syncConsole = progressIndicator?.syncConsole
       return MavenArtifactDownloader(project, projectsTree, artifacts, indicator, syncConsole)
-        .download(mavenProjects, embedder, downloadSources, downloadDocs, null)
+        .download(mavenProjects, embedder, downloadSources, downloadDocs)
     }
   }
 }

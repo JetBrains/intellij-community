@@ -351,8 +351,7 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
     val resolutionResult = withBackgroundProgress(myProject, MavenProjectBundle.message("maven.resolving"), true) {
       withRawProgressReporter {
         runMavenImportActivity(project, syncActivity, MavenImportStats.ResolvingTask) {
-          resolver.resolve(projectsToResolve, projectsTree, generalSettings, embeddersManager, mavenConsole, rawProgressReporter!!,
-                           syncConsole)
+          resolver.resolve(projectsToResolve, projectsTree, generalSettings, embeddersManager, rawProgressReporter!!, syncConsole)
         }
       }
     }
@@ -373,7 +372,6 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
               try {
                 pluginResolver.resolvePlugins(mavenProjects.value,
                                               embeddersManager,
-                                              mavenConsole,
                                               rawProgressReporter!!,
                                               syncConsole,
                                               true)
@@ -531,7 +529,7 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
       downloadConsole.startDownload(progressListener, sources, docs)
       downloadConsole.startDownloadTask()
       val downloader = MavenArtifactDownloader(project, projectsTree, artifacts, indicator, null)
-      val result = downloader.downloadSourcesAndJavadocs(projects, sources, docs, embeddersManager, mavenConsole)
+      val result = downloader.downloadSourcesAndJavadocs(projects, sources, docs, embeddersManager)
       downloadConsole.finishDownloadTask()
       return result
     }

@@ -21,7 +21,6 @@ class MavenPluginResolver(private val myTree: MavenProjectsTree) {
   @Throws(MavenProcessCanceledException::class)
   suspend fun resolvePlugins(mavenProjectsToResolvePlugins: Collection<MavenProjectWithHolder>,
                              embeddersManager: MavenEmbeddersManager,
-                             console: MavenConsole,
                              process: RawProgressReporter,
                              syncConsole: MavenSyncConsole?,
                              reportUnresolvedToSyncConsole: Boolean) {
@@ -43,7 +42,7 @@ class MavenPluginResolver(private val myTree: MavenProjectsTree) {
       val mavenPluginIds = mavenPluginIdsToResolve.map { it.first }
       MavenLog.LOG.info("maven plugin resolution started: $mavenPluginIds")
       val forceUpdate = MavenProjectsManager.getInstance(myProject).forceUpdateSnapshots
-      val resolutionResults = embedder.resolvePlugins(mavenPluginIdsToResolve, process, syncConsole, forceUpdate, console)
+      val resolutionResults = embedder.resolvePlugins(mavenPluginIdsToResolve, process, syncConsole, forceUpdate)
       val unresolvedPlugins = resolutionResults.filter { !it.isResolved }.map { it.mavenPluginId }
       MavenLog.LOG.info("maven plugin resolution finished, unresolved: $unresolvedPlugins")
       val artifacts = resolutionResults.flatMap { it.artifacts }

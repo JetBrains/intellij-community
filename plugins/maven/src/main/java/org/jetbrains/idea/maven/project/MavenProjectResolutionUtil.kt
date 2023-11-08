@@ -42,7 +42,6 @@ internal class MavenProjectResolutionUtil {
           locator,
           progressReporter,
           syncConsole,
-          console,
           workspaceMap,
           updateSnapshots,
           Properties())
@@ -59,13 +58,12 @@ internal class MavenProjectResolutionUtil {
                                locator: MavenProjectReaderProjectLocator?,
                                progressReporter: RawProgressReporter,
                                syncConsole: MavenSyncConsole?,
-                               console: MavenConsole?,
                                workspaceMap: MavenWorkspaceMap?,
                                updateSnapshots: Boolean,
                                userProperties: Properties): Collection<MavenProjectReaderResult> {
       return try {
         val executionResults = embedder.resolveProject(
-          files, explicitProfiles, progressReporter, syncConsole, console, workspaceMap, updateSnapshots, userProperties)
+          files, explicitProfiles, progressReporter, syncConsole, workspaceMap, updateSnapshots, userProperties)
         val filesMap = CollectionFactory.createFilePathMap<VirtualFile>()
         filesMap.putAll(files.associateBy { it.path })
         val readerResults: MutableCollection<MavenProjectReaderResult> = ArrayList()
