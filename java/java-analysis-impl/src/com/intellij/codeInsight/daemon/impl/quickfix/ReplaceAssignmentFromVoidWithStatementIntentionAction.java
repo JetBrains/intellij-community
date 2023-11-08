@@ -22,16 +22,18 @@ import com.intellij.modcommand.Presentation;
 import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ReplaceAssignmentFromVoidWithStatementIntentionAction extends PsiUpdateModCommandAction<PsiElement> {
-  private final @NotNull PsiExpression myLExpr;
+  private final @NotNull SmartPsiElementPointer<PsiExpression> myLExpr;
 
   public ReplaceAssignmentFromVoidWithStatementIntentionAction(@NotNull PsiElement parent, @NotNull PsiExpression lExpr) {
     super(parent);
-    myLExpr = lExpr;
+    myLExpr = SmartPointerManager.createPointer(lExpr);
   }
 
   @Nls
@@ -43,11 +45,14 @@ public class ReplaceAssignmentFromVoidWithStatementIntentionAction extends PsiUp
 
   @Override
   protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiElement element) {
-    return myLExpr.isValid() ? Presentation.of(getFamilyName()) : null;
+    return myLExpr.getElement() != null ? Presentation.of(getFamilyName()) : null;
   }
 
   @Override
   protected void invoke(@NotNull ActionContext context, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
-    element.replace(myLExpr);
+    PsiExpression lExpr = myLExpr.getElement();
+    if (lExpr != null) {
+      element.replace(lExpr);
+    }
   }
 }
