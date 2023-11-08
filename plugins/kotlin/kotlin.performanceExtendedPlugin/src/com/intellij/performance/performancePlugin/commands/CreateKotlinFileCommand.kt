@@ -8,6 +8,7 @@ import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.vfs.findDirectory
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
+import com.intellij.psi.PsiManager
 import com.intellij.psi.impl.PsiManagerImpl
 import com.intellij.psi.impl.file.PsiDirectoryImpl
 import com.jetbrains.performancePlugin.PerformanceTestSpan
@@ -42,7 +43,7 @@ class CreateKotlinFileCommand(text: String, line: Int) : PerformanceCommandCorou
     override suspend fun doExecute(context: PlaybackContext) {
         val (fileName, filePath, fileType) = extractCommandArgument(PREFIX).replace("\\s","").split(",")
         val directory = PsiDirectoryImpl(
-            PsiManagerImpl(context.project),
+            PsiManager.getInstance(context.project) as PsiManagerImpl,
             (context.project.guessProjectDir() ?: throw RuntimeException("Root of the project was not found "))
                 .findDirectory(filePath) ?: throw RuntimeException("Can't find file $filePath")
         )
