@@ -1,22 +1,21 @@
 <component name="libraryTable">
   <library name="kotlin-test" type="repository">
-    <properties maven-id="org.jetbrains.kotlin:kotlin-test:1.9.10">
+    <properties maven-id="org.jetbrains.kotlin:kotlin-test:1.9.20">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-test/1.9.10/kotlin-test-1.9.10.jar">
-          <sha256sum>92966c4e75e6a6fd510564344eb40ac5ce766ebbabcbec243f528b0b6c41dd58</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-test/1.9.20/kotlin-test-1.9.20.jar">
+          <sha256sum>1e5770df3873a74fa4084c30f21bec7899e3fbb5f2d6517b14901be5cee68fa6</sha256sum>
         </artifact>
       </verification>
       <exclude>
-        <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-common" />
         <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib" />
       </exclude>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-test/1.9.10/kotlin-test-1.9.10.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-test/1.9.20/kotlin-test-1.9.20.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-test/1.9.10/kotlin-test-1.9.10-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-test/1.9.20/kotlin-test-1.9.20-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
