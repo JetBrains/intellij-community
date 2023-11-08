@@ -237,7 +237,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     assertEquals(getFile().getTextRange(), dirty); // have to rehighlight whole file in case no PSI events have come
   }
 
-  public void testRenameClass() throws Exception {
+  public void testRenameClass() {
     configureByText(JavaFileType.INSTANCE, """
       class AClass<caret> {
           
@@ -255,7 +255,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   }
 
 
-  public void testTypingSpace() throws Exception {
+  public void testTypingSpace() {
     configureByText(JavaFileType.INSTANCE, """
       class AClass<caret> {
           
@@ -276,7 +276,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   }
 
 
-  public void testTypingSpaceInsideError() throws Exception {
+  public void testTypingSpaceInsideError() {
     configureByText(JavaFileType.INSTANCE, """
       class AClass {
         {
@@ -293,7 +293,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   }
 
 
-  public void testBackSpaceInsideError() throws Exception {
+  public void testBackSpaceInsideError() {
     configureByText(JavaFileType.INSTANCE, """
       class E {
            void fff() {
@@ -307,7 +307,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     assertOneElement(highlightErrors());
   }
 
-  public void testUnusedFieldUpdate() throws Exception {
+  public void testUnusedFieldUpdate() {
     configureByText(JavaFileType.INSTANCE, """
      class Unused {
        private int ffff;
@@ -366,7 +366,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     assertEmpty(getFile().getText(), errors);
   }
 
-  public void testDaemonIgnoresNonPhysicalEditor() throws Exception {
+  public void testDaemonIgnoresNonPhysicalEditor() {
     configureByText(JavaFileType.INSTANCE, """
       class AClass<caret> {
           
@@ -1186,7 +1186,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   }
 
 
-  public void testModificationInsideCodeBlockDoesNotAffectErrorMarkersOutside() throws Exception {
+  public void testModificationInsideCodeBlockDoesNotAffectErrorMarkersOutside() {
     configureByText(JavaFileType.INSTANCE, """
       class SSSSS {
           public static void suite() {
@@ -3725,7 +3725,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     }
   }
 
-  public void testModificationInsideCommentDoesNotAffectNearbyInspectionWarning() throws Exception {
+  public void testModificationInsideCommentDoesNotAffectNearbyInspectionWarning() {
     enableInspectionTool(new ConstantValueInspection());
     configureByText(JavaFileType.INSTANCE, """
       class AClass {
