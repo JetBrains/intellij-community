@@ -637,8 +637,8 @@ public abstract class MavenTestCase extends UsefulTestCase {
       assertSameLinesWithFile(filePath, expectedText);
     }
     catch (FileComparisonFailure e) {
-      String expected = e.getExpected();
-      String actual = e.getActual();
+      String expected = e.getExpectedStringPresentation();
+      String actual = e.getActualStringPresentation();
       assertUnorderedElementsAreEqual(expected.split("\n"), actual.split("\n"));
     }
   }

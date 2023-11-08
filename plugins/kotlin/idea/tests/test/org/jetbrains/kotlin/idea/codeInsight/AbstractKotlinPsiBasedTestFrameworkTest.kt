@@ -50,7 +50,7 @@ abstract class AbstractKotlinPsiBasedTestFrameworkTest : AbstractLineMarkersTest
     }
 
     private fun checkSuppressions(suppressionName : String, e: FileComparisonFailure) {
-        val lines = e.actual.split("\n")
+        val lines = e.actualStringPresentation.split("\n")
         e.message?.let { msg ->
             val regex = "^${Regex.escapeReplacement(dataFile().name)}: missing \\((\\d+):".toRegex()
             regex.findAll(msg).toList().takeIf { it.isNotEmpty() }?.forEach {

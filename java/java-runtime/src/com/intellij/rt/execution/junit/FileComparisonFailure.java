@@ -41,16 +41,6 @@ public class FileComparisonFailure extends ComparisonFailure implements FileComp
   }
   
   @Override
-  public String getExpected() {
-    return myExpected;
-  }
-
-  @Override
-  public String getActual() {
-    return myActual;
-  }
-
-  @Override
   public String getActualStringPresentation() {
     return myActual;
   }

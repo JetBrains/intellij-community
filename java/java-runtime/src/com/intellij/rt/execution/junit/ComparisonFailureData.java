@@ -230,8 +230,8 @@ public class ComparisonFailureData {
   private static ComparisonFailureData createFileComparisonFailure(Throwable assertion) {
     if (assertion instanceof FileComparisonFailure) {
       final FileComparisonFailure comparisonFailure = (FileComparisonFailure)assertion;
-      String actual = comparisonFailure.getActual();
-      String expected = comparisonFailure.getExpected();
+      String actual = comparisonFailure.getActualStringPresentation();
+      String expected = comparisonFailure.getExpectedStringPresentation();
       if (actual != null && expected != null) {
         return new ComparisonFailureData(expected, actual, comparisonFailure.getFilePath(), comparisonFailure.getActualFilePath());
       }

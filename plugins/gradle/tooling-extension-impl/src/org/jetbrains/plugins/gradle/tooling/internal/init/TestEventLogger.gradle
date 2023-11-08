@@ -165,8 +165,8 @@ class TestEventLogger {
 
   // com.intellij.rt.execution.junit.FileComparisonFailure
   private static def logIjFileComparisonFailure(MarkupBuilder xml, Throwable exception) {
-    def expected = escapeCdata(exception.expected)
-    def actual = escapeCdata(exception.actual)
+    def expected = escapeCdata(exception.expectedStringPresentation)
+    def actual = escapeCdata(exception.actualStringPresentation)
     def filePath = escapeCdata(exception.filePath)
     def actualFilePath = exception.hasProperty('actualFilePath')
       ? escapeCdata(exception.actualFilePath)
