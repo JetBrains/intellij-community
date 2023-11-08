@@ -36,7 +36,8 @@ sealed class K2MoveRenameUsageInfo(
         element: PsiElement,
         reference: PsiReference,
         referencedElement: KtNamedDeclaration,
-        @Suppress("StatefulEp") private val lightElement: PsiNamedElement,
+        private val wasMember: Boolean,
+        private val oldContainingFqn: String?,
         private val lightElementIndex: Int,
     ) : K2MoveRenameUsageInfo(element, reference, referencedElement) {
         override fun retarget() {
@@ -44,46 +45,45 @@ sealed class K2MoveRenameUsageInfo(
             val referencedElement = (upToDateReferencedElement as? KtNamedDeclaration) ?: return
             val newLightElement = referencedElement.toLightElements()[lightElementIndex]
             if (element is PsiReferenceExpression
-                && lightElement is PsiMember
+                && wasMember
                 && newLightElement is PsiMember
-                && updateJavaReference(element, lightElement, newLightElement)
+                && updateJavaReference(element, oldContainingFqn, newLightElement)
             ) return
             reference?.bindToElement(newLightElement)
         }
 
-        private fun updateJavaReference(reference: PsiReferenceExpression, oldElement: PsiElement, newElement: PsiElement): Boolean {
+        private fun updateJavaReference(
+            reference: PsiReferenceExpression,
+            oldClassFqn: String?,
+            newElement: PsiMember
+        ): Boolean {
             // TODO do proper implementation here where it keeps the import as-is
-            if (oldElement is PsiMember && newElement is PsiMember) {
-                val oldClassName = oldElement.containingClass?.qualifiedName
-                if (oldClassName != null) {
-                    val importOfOldClass = (reference.containingFile as? PsiJavaFile)?.importList?.allImportStatements?.firstOrNull {
-                        when (it) {
-                            is PsiImportStatement -> it.qualifiedName == oldClassName
-                            is PsiImportStaticStatement -> it.isOnDemand && it.importReference?.canonicalText == oldClassName
-                            else -> false
-                        }
-                    }
-                    if (importOfOldClass != null && importOfOldClass.resolve() == null) {
-                        importOfOldClass.delete()
-                    }
+            val importOfOldClass = (reference.containingFile as? PsiJavaFile)?.importList?.allImportStatements?.firstOrNull {
+                when (it) {
+                    is PsiImportStatement -> it.qualifiedName == oldClassFqn
+                    is PsiImportStaticStatement -> it.isOnDemand && it.importReference?.canonicalText == oldClassFqn
+                    else -> false
                 }
+            }
+            if (importOfOldClass != null && importOfOldClass.resolve() == null) {
+                importOfOldClass.delete()
+            }
 
-                val newClass = newElement.containingClass
-                if (newClass != null && reference.qualifierExpression != null) {
-                    val options = object : MoveMembersOptions {
-                        override fun getMemberVisibility(): String = PsiModifier.PUBLIC
-                        override fun makeEnumConstant(): Boolean = true
-                        override fun getSelectedMembers(): Array<PsiMember> = arrayOf(newElement)
-                        override fun getTargetClassName(): String? = newClass.qualifiedName
-                    }
-                    val usageInfo = MoveMembersProcessor.MoveMembersUsageInfo(
-                        newElement, reference.element, newClass, reference.qualifierExpression, reference
-                    )
-                    val moveMemberHandler = MoveMemberHandler.EP_NAME.forLanguage(reference.element.language)
-                    if (moveMemberHandler != null) {
-                        moveMemberHandler.changeExternalUsage(options, usageInfo)
-                        return true
-                    }
+            val newClass = newElement.containingClass
+            if (newClass != null && reference.qualifierExpression != null) {
+                val options = object : MoveMembersOptions {
+                    override fun getMemberVisibility(): String = PsiModifier.PUBLIC
+                    override fun makeEnumConstant(): Boolean = true
+                    override fun getSelectedMembers(): Array<PsiMember> = arrayOf(newElement)
+                    override fun getTargetClassName(): String? = newClass.qualifiedName
+                }
+                val usageInfo = MoveMembersProcessor.MoveMembersUsageInfo(
+                    newElement, reference.element, newClass, reference.qualifierExpression, reference
+                )
+                val moveMemberHandler = MoveMemberHandler.EP_NAME.forLanguage(reference.element.language)
+                if (moveMemberHandler != null) {
+                    moveMemberHandler.changeExternalUsage(options, usageInfo)
+                    return true
                 }
             }
             return false
@@ -174,7 +174,8 @@ sealed class K2MoveRenameUsageInfo(
                         } else {
                             lightElements.firstOrNull { ref.isReferenceTo(it) }
                         } ?: return@mapNotNull null
-                        Light(ref.element, ref, declaration, lightElement, lightElements.indexOf(lightElement))
+                        val fqn = if (lightElement is PsiMember) lightElement.containingClass?.qualifiedName else null
+                        Light(ref.element, ref, declaration, lightElement is PsiMember, fqn, lightElements.indexOf(lightElement))
                     }
                 }
         }
