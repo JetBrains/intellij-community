@@ -9,17 +9,17 @@ import org.jetbrains.annotations.PropertyKey;
 
 import java.util.function.Supplier;
 
-public final class ResourceBundleEditorBundle {
-  private static final @NonNls String BUNDLE = "messages.ResourceBundleEditorBundle";
-  private static final DynamicBundle INSTANCE = new DynamicBundle(ResourceBundleEditorBundle.class, BUNDLE);
+public final class ResourceBundleEditorDeprecatedMessagesBundle {
+  private static final @NonNls String BUNDLE = "messages.ResourceBundleEditorDeprecatedMessagesBundle";
+  private static final DynamicBundle INSTANCE = new DynamicBundle(ResourceBundleEditorDeprecatedMessagesBundle.class, BUNDLE);
 
-  private ResourceBundleEditorBundle() {}
+  private ResourceBundleEditorDeprecatedMessagesBundle() {}
 
   public static @NotNull @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
-    return INSTANCE.containsKey(key) ? INSTANCE.getMessage(key, params) : ResourceBundleEditorDeprecatedMessagesBundle.message(key, params);
+    return INSTANCE.getMessage(key, params);
   }
 
   public static @NotNull Supplier<@Nls String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
-    return INSTANCE.containsKey(key) ? INSTANCE.getLazyMessage(key, params) : ResourceBundleEditorDeprecatedMessagesBundle.messagePointer(key, params);
+    return INSTANCE.getLazyMessage(key, params);
   }
 }
