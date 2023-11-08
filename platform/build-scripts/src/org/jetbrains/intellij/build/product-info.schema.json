@@ -61,6 +61,14 @@
             "type": "string",
             "enum": ["amd64", "aarch64"]
           },
+          "relevantCommands": {
+            "description": "List of commands (specified as the first argument in the command line) this launch method should be used for; if there is a specific launch method for some command, it should be used instead of the default one where this property isn't specified",
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minItems": 1
+            }
+          },
           "launcherPath": {
             "description": "Path to an executable file which starts the IDE (relative to the parent directory of this file, '/' as a separator, may start with '../'), e.g. 'bin/idea.sh'",
             "type": "string"
@@ -95,6 +103,10 @@
           },
           "mainClass": {
             "description": "A name of the class to launch",
+            "type": "string"
+          },
+          "overrideDataDirectoryName": {
+            "description": "Custom value which should be used instead of 'dataDirectoryName' if this launch variant is chosen",
             "type": "string"
           }
         }
