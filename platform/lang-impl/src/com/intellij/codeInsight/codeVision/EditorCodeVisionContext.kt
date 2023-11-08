@@ -93,7 +93,7 @@ open class EditorCodeVisionContext(
   fun resubmitThings() {
     val project = editor.project
     if (project == null) {
-      LOG.error("Project wasn't available from editor during code vision calculation")
+      LOG.warn("Project wasn't available from editor during code vision calculation")
       return
     }
     val viewService = project.service<CodeVisionView>()
@@ -159,7 +159,7 @@ private fun getOrCreateCodeVisionContext(editor: Editor): EditorCodeVisionContex
   }
   val project = editor.project
   if (project == null) {
-    LOG.error("Project wasn't available from editor during creating of code vision context")
+    LOG.warn("Project wasn't available from editor during creating of code vision context")
     return null
   }
   val newContext = project.service<CodeVisionContextProvider>().createCodeVisionContext(editor)
