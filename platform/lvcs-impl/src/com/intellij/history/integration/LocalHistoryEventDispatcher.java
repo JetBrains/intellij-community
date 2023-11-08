@@ -30,7 +30,7 @@ final class LocalHistoryEventDispatcher {
     Key.create(LocalHistoryEventDispatcher.class.getSimpleName() + ".WAS_VERSIONED_KEY");
 
   private static final Boolean USE_WORKSPACE_TRAVERSAL =
-    SystemProperties.getBooleanProperty("lvcs.use-workspace-traversal", false);
+    SystemProperties.getBooleanProperty("lvcs.use-workspace-traversal", true);
 
   private final LocalHistoryFacade myVcs;
   private final IdeaGateway myGateway;
