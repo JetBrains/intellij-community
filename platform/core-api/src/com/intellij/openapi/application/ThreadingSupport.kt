@@ -138,6 +138,7 @@ interface ThreadingSupport {
    *
    * @param listener the listener to set
    */
+  @ApiStatus.Internal
   fun setReadActionListener(listener: ReadActionListener)
 
   /**
@@ -147,6 +148,7 @@ interface ThreadingSupport {
    *
    * @param listener the listener to remove
    */
+  @ApiStatus.Internal
   fun removeReadActionListener(listener: ReadActionListener)
 
   /**
@@ -219,29 +221,20 @@ interface ThreadingSupport {
   /**
    * Adds a [WriteActionListener].
    *
-   * Please, use [addWriteActionListener] with [Disposable] second argument.
+   * Only one listener can be set. It is error to set second listener.
    *
-   * @param listener the listener to add
+   * @param listener the listener to set
    */
-  @Deprecated
-  fun addWriteActionListener(listener: WriteActionListener)
-
-  /**
-   * Adds a [WriteActionListener].
-   *
-   * @param listener the listener to add
-   * @param parent   the parent disposable, whose disposal will trigger this listener's removal
-   */
-  fun addWriteActionListener(listener: WriteActionListener, parent: Disposable)
+  fun setWriteActionListener(listener: WriteActionListener)
 
   /**
    * Removes a [WriteActionListener].
    *
-   * Please, use [addWriteActionListener] with [Disposable] second argument and [Disposable.dispose].
+   * It is error to remove listener which was not set early.
    *
    * @param listener the listener to remove
    */
-  @Deprecated
+  @ApiStatus.Internal
   fun removeWriteActionListener(listener: WriteActionListener)
 
   /**

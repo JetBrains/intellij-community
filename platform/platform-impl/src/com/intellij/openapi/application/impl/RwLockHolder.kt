@@ -4,10 +4,8 @@ package com.intellij.openapi.application.impl
 import com.intellij.codeWithMe.ClientId.Companion.decorateCallable
 import com.intellij.codeWithMe.ClientId.Companion.decorateRunnable
 import com.intellij.diagnostic.PerformanceWatcher
-import com.intellij.diagnostic.PerformanceWatcher.Companion.getInstance
 import com.intellij.diagnostic.PluginException
 import com.intellij.ide.IdeBundle
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.AccessToken
 import com.intellij.openapi.application.ReadActionListener
 import com.intellij.openapi.application.ThreadingSupport
@@ -48,8 +46,8 @@ object RwLockHolder: ThreadingSupport {
   @JvmField
   internal var lock: ReadMostlyRWLock? = null
 
-  private var myReadActionDispatcher: ReadActionListener? = null
-  private val myWriteActionDispatcher = EventDispatcher.create(WriteActionListener::class.java)
+  private var myReadActionListener: ReadActionListener? = null
+  private var myWriteActionListener: WriteActionListener? = null
 
   private val myWriteActionsStack = Stack<Class<*>>()
   private var myWriteStackBase = 0
@@ -233,17 +231,18 @@ object RwLockHolder: ThreadingSupport {
     }
   }
 
-
+  @ApiStatus.Internal
   override fun setReadActionListener(listener: ReadActionListener) {
-    if (myReadActionDispatcher != null)
+    if (myReadActionListener != null)
       error("ReadActionListener already registered")
-    myReadActionDispatcher = listener
+    myReadActionListener = listener
   }
 
+  @ApiStatus.Internal
   override fun removeReadActionListener(listener: ReadActionListener) {
-    if (myReadActionDispatcher != listener)
+    if (myReadActionListener != listener)
       error("ReadActionListener is not registered")
-    myReadActionDispatcher = null
+    myReadActionListener = null
   }
 
   override fun runReadAction(action: Runnable) {
@@ -325,18 +324,18 @@ object RwLockHolder: ThreadingSupport {
     return l.isReadLockedByThisThread
   }
 
-  @Deprecated
-  override fun addWriteActionListener(listener: WriteActionListener) {
-    myWriteActionDispatcher.addListener(listener)
+  @ApiStatus.Internal
+  override fun setWriteActionListener(listener: WriteActionListener) {
+    if (myWriteActionListener != null)
+      error("WriteActionListener already registered")
+    myWriteActionListener = listener
   }
 
-  override fun addWriteActionListener(listener: WriteActionListener, parent: Disposable) {
-    myWriteActionDispatcher.addListener(listener, parent)
-  }
-
-  @Deprecated
+  @ApiStatus.Internal
   override fun removeWriteActionListener(listener: WriteActionListener) {
-    myWriteActionDispatcher.removeListener(listener)
+    if (myWriteActionListener != listener)
+      error("WriteActionListener is not registered")
+    myWriteActionListener = null
   }
 
   override fun runWriteAction(action: Runnable) {
@@ -538,7 +537,7 @@ object RwLockHolder: ThreadingSupport {
 
   private fun fireBeforeReadActionStart(clazz: Class<*>) {
     try {
-      myReadActionDispatcher?.beforeReadActionStart(clazz)
+      myReadActionListener?.beforeReadActionStart(clazz)
     }
     catch (_: Throwable) {
     }
@@ -546,7 +545,7 @@ object RwLockHolder: ThreadingSupport {
 
   private fun fireReadActionStarted(clazz: Class<*>) {
     try {
-      myReadActionDispatcher?.readActionStarted(clazz)
+      myReadActionListener?.readActionStarted(clazz)
     }
     catch (_: Throwable) {
     }
@@ -554,7 +553,7 @@ object RwLockHolder: ThreadingSupport {
 
   private fun fireReadActionFinished(clazz: Class<*>) {
     try {
-      myReadActionDispatcher?.readActionFinished(clazz)
+      myReadActionListener?.readActionFinished(clazz)
     }
     catch (_: Throwable) {
     }
@@ -562,7 +561,7 @@ object RwLockHolder: ThreadingSupport {
 
   private fun fireAfterReadActionFinished(clazz: Class<*>) {
     try {
-      myReadActionDispatcher?.afterReadActionFinished(clazz)
+      myReadActionListener?.afterReadActionFinished(clazz)
     }
     catch (_: Throwable) {
     }
@@ -570,7 +569,7 @@ object RwLockHolder: ThreadingSupport {
 
   private fun fireBeforeWriteActionStart(clazz: Class<*>) {
     try {
-      myWriteActionDispatcher.multicaster.beforeWriteActionStart(clazz)
+      myWriteActionListener?.beforeWriteActionStart(clazz)
     }
     catch (_: Throwable) {
     }
@@ -578,7 +577,7 @@ object RwLockHolder: ThreadingSupport {
 
   private fun fireWriteActionStarted(clazz: Class<*>) {
     try {
-      myWriteActionDispatcher.multicaster.writeActionStarted(clazz)
+      myWriteActionListener?.writeActionStarted(clazz)
     }
     catch (_: Throwable) {
     }
@@ -586,7 +585,7 @@ object RwLockHolder: ThreadingSupport {
 
   private fun fireWriteActionFinished(clazz: Class<*>) {
     try {
-      myWriteActionDispatcher.multicaster.writeActionFinished(clazz)
+      myWriteActionListener?.writeActionFinished(clazz)
     }
     catch (_: Throwable) {
     }
@@ -594,7 +593,7 @@ object RwLockHolder: ThreadingSupport {
 
   private fun fireAfterWriteActionFinished(clazz: Class<*>) {
     try {
-      myWriteActionDispatcher.multicaster.afterWriteActionFinished(clazz)
+      myWriteActionListener?.afterWriteActionFinished(clazz)
     }
     catch (_: Throwable) {
     }
