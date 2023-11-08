@@ -441,23 +441,27 @@ object IconUtil {
   @JvmOverloads
   @JvmStatic
   fun colorizeTint(source: Icon, color: Color, keepGray: Boolean = false): Icon {
-    return filterIcon(icon = source, filterSupplier = { ColorMultiplyFilter(color, keepGray) })
+    return filterIcon(icon = source, filterSupplier = object : RgbImageFilterSupplier {
+      override fun getFilter() = ColorMultiplyFilter(color = color, keepGray = keepGray)
+    })
   }
 
   @JvmOverloads
   @JvmStatic
   fun colorizeTint(g: Graphics2D?, source: Icon, color: Color, keepGray: Boolean = false): Icon {
-    return filterIcon(g = g, source = source, filter = ColorMultiplyFilter(color, keepGray))
+    return filterIcon(g = g, source = source, filter = ColorMultiplyFilter(color = color, keepGray = keepGray))
   }
 
   @JvmStatic
   fun colorizeReplace(source: Icon, color: Color): Icon {
-    return filterIcon(icon = source, filterSupplier = { ColorReplaceFilter(color) })
+    return filterIcon(icon = source, filterSupplier = object : RgbImageFilterSupplier {
+      override fun getFilter() = ColorReplaceFilter(color = color)
+    })
   }
 
   @JvmStatic
   fun colorizeReplace(g: Graphics2D?, source: Icon, color: Color): Icon {
-    return filterIcon(g = g, source = source, filter = ColorReplaceFilter(color))
+    return filterIcon(g = g, source = source, filter = ColorReplaceFilter(color = color))
   }
 
   @JvmStatic

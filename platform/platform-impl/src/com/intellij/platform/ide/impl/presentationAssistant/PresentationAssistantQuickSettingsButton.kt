@@ -27,7 +27,7 @@ import javax.swing.SwingConstants
 internal class PresentationAssistantQuickSettingsButton(private val project: Project,
                                                         private val appearance: ActionInfoPopupGroup.Appearance,
                                                         private val shownStateRequestCountChanged: (Int) -> Unit):
-  JBLabel(IconUtil.colorize(AllIcons.Actions.PresentationAssistantSettings, appearance.theme.keymapLabel)), Disposable, DataContext {
+  JBLabel(IconUtil.colorizeTint(AllIcons.Actions.PresentationAssistantSettings, appearance.theme.keymapLabel)), Disposable, DataContext {
 
   private var popup: JBPopup? = null
   private var hideAlarm = Alarm()
