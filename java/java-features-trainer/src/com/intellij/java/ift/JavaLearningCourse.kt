@@ -14,7 +14,7 @@ import com.intellij.java.ift.lesson.refactorings.JavaRenameLesson
 import com.intellij.java.ift.lesson.run.JavaDebugLesson
 import com.intellij.java.ift.lesson.run.JavaRunConfigurationLesson
 import com.intellij.lang.java.JavaLanguage
-import com.intellij.openapi.application.ApplicationNamesInfo
+import com.intellij.util.PlatformUtils
 import training.dsl.LessonUtil
 import training.learn.CourseManager
 import training.learn.LessonsBundle
@@ -33,9 +33,10 @@ import training.learn.lesson.general.refactorings.ExtractVariableFromBubbleLesso
 class JavaLearningCourse : LearningCourseBase(JavaLanguage.INSTANCE.id) {
   override fun modules(): List<IftModule> = onboardingTour() + stableModules() + CourseManager.instance.findCommonModules("Git")
 
-  private val disableOnboardingLesson get() = ApplicationNamesInfo.getInstance().fullProductNameWithEdition.equals("IDEA Edu")
+  private val isOnboardingLessonEnabled: Boolean
+    get() = PlatformUtils.isIdeaCommunity() || PlatformUtils.isIdeaUltimate()
 
-  private fun onboardingTour() = if (!disableOnboardingLesson) listOf(
+  private fun onboardingTour() = if (isOnboardingLessonEnabled) listOf(
     LearningModule(id = "Java.Onboarding",
                    name = JavaLessonsBundle.message("java.onboarding.module.name"),
                    description = JavaLessonsBundle.message("java.onboarding.module.description", LessonUtil.productName),
