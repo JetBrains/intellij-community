@@ -14,7 +14,8 @@ public class ToggleOptionAction extends ToggleAction {
 
   @SuppressWarnings("unused")
   public ToggleOptionAction(@NotNull Option option) {
-    this(option, null);
+    super();
+    this.optionSupplier = event -> option;
   }
 
   @SuppressWarnings("unused")
@@ -24,7 +25,8 @@ public class ToggleOptionAction extends ToggleAction {
 
   @SuppressWarnings("unused")
   public ToggleOptionAction(@NotNull Function<? super AnActionEvent, ? extends Option> optionSupplier) {
-    this(optionSupplier, null);
+    super();
+    this.optionSupplier = optionSupplier;
   }
 
   public ToggleOptionAction(@NotNull Function<? super AnActionEvent, ? extends Option> optionSupplier, @Nullable Icon icon) {
