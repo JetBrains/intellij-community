@@ -14,19 +14,21 @@ import org.jetbrains.plugins.terminal.exp.ShellCommandListener
 import org.jetbrains.plugins.terminal.exp.TerminalModel
 import org.jetbrains.plugins.terminal.exp.TerminalSession
 import org.jetbrains.plugins.terminal.exp.ui.BlockTerminalColorPalette
+import org.junit.Assume
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 
 object TerminalSessionTestUtil {
-  fun startTerminalSession(project: Project,
-                           shellPath: String,
-                           disposable: Disposable,
-                           size: TermSize = TermSize(200, 20)): TerminalSession {
+  fun startBlockTerminalSession(project: Project,
+                                shellPath: String,
+                                disposable: Disposable,
+                                size: TermSize = TermSize(200, 20)): TerminalSession {
     Registry.get(LocalTerminalDirectRunner.BLOCK_TERMINAL_REGISTRY).setValue(true, disposable)
     val runner = LocalTerminalDirectRunner.createTerminalRunner(project)
     val baseOptions = ShellStartupOptions.Builder().shellCommand(listOf(shellPath, "-i")).initialTermSize(size).build()
     val configuredOptions = runner.configureStartupOptions(baseOptions)
+    assumeBlockShellIntegration(configuredOptions)
     val process = runner.createProcess(configuredOptions)
     val ttyConnector = runner.createTtyConnector(process)
 
@@ -58,5 +60,9 @@ object TerminalSessionTestUtil {
     model.withContentLock { model.clearAllAndMoveCursorToTopLeftCorner(session.controller) }
 
     return session
+  }
+
+  private fun assumeBlockShellIntegration(options: ShellStartupOptions) {
+    Assume.assumeTrue("Block shell integration is expected", options.shellIntegration?.withCommandBlocks == true)
   }
 }
