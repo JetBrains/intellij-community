@@ -81,13 +81,15 @@ data class ProductInfoData(
 data class ProductInfoLaunchData(
   val os: String,
   val arch: String,
+  val relevantCommands: List<String> = emptyList(),
   val launcherPath: String,
   val javaExecutablePath: String?,
   val vmOptionsFilePath: String,
   val startupWmClass: String? = null,
   val bootClassPathJarNames: List<String>,
   val additionalJvmArguments: List<String>,
-  val mainClass: String
+  val mainClass: String,
+  val overrideDataDirectoryName: String? = null,
 )
 
 @Serializable
