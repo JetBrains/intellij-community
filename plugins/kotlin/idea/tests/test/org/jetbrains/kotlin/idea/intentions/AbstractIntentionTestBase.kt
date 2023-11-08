@@ -104,7 +104,7 @@ abstract class AbstractIntentionTestBase : KotlinLightCodeInsightFixtureTestCase
     }
 
     @Throws(Exception::class)
-    protected fun doTest(unused: String) {
+    protected open fun doTest(unused: String) {
         val mainFile = dataFile()
         val mainFileName = FileUtil.getNameWithoutExtension(mainFile)
         val intentionAction = createIntention(mainFile)

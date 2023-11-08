@@ -205,7 +205,8 @@ object IgnoreTests {
 
     private fun containsDirective(file: Path, directive: EnableOrDisableTestDirective): Boolean {
         if (file.notExists()) return false
-        return file.useLines { lines -> lines.any { it.isLineWithDirective(directive) } }
+        if (file.useLines { lines -> lines.any { it.isLineWithDirective(directive) } }) return true
+        return InTextDirectivesUtils.textWithDirectives(file.parent.toFile()).lineSequence().any { it.isLineWithDirective(directive) }
     }
 
     private fun String.isLineWithDirective(directive: EnableOrDisableTestDirective): Boolean =
