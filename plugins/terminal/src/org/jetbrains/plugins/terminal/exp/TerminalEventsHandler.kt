@@ -75,7 +75,7 @@ class TerminalEventsHandler(private val session: TerminalSession,
         terminalStarter.sendBytes(byteArrayOf(Ascii.NUL), true)
         return true
       }
-      val code = terminalStarter.getCode(keyCode, e.modifiers)
+      val code = terminalStarter.terminal.getCodeForKey(keyCode, e.modifiers)
       if (code != null) {
         terminalStarter.sendBytes(code, true)
         // TODO
