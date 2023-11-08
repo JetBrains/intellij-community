@@ -1381,8 +1381,8 @@
       implementationClass="com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.StartupPerformanceCollector"/>
     <postStartupActivity implementation="com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.StartupMetricCollector"/>
 
-    <postStartupActivity implementation="com.intellij.ide.startup.CheckProjectActivity" order="last"/>
-    <postStartupActivity implementation="com.intellij.ide.startup.CheckKeysStartupActivity" order="first"/>
+    <postStartupActivity implementation="com.intellij.ide.startup.CheckProjectActivity"/>
+    <postStartupActivity implementation="com.intellij.ide.startup.CheckKeysStartupActivity"/>
 
     <environmentKeyProvider implementation="com.intellij.ide.impl.ProjectOpenKeyProvider"/>
     <environmentKeyProvider implementation="com.intellij.ide.plugins.PluginEnvironmentKeyProvider"/>

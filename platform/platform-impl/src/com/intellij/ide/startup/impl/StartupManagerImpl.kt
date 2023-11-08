@@ -43,7 +43,6 @@ import com.intellij.util.concurrency.ThreadingAssertions
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
-import io.opentelemetry.context.Context
 import kotlinx.coroutines.*
 import org.intellij.lang.annotations.MagicConstant
 import org.jetbrains.annotations.ApiStatus
@@ -242,8 +241,6 @@ open class StartupManagerImpl(private val project: Project, private val coroutin
       val counter = AtomicInteger()
       val dumbService = project.serviceAsync<DumbService>()
       val isProjectLightEditCompatible = project is LightEditCompatible
-      val traceContext = Context.current()
-
       project as ComponentManagerImpl
       for (item in StartupActivity.POST_STARTUP_ACTIVITY.filterableLazySequence()) {
         val activity = item.instance ?: continue
@@ -281,8 +278,6 @@ open class StartupManagerImpl(private val project: Project, private val coroutin
           counter.incrementAndGet()
           blockingContext {
             dumbService.runWhenSmart {
-              traceContext.makeCurrent()
-
               runOldActivity(activity as StartupActivity)
             }
           }
