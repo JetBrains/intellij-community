@@ -185,6 +185,16 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   }
 
   @Override
+  protected LocalInspectionTool[] configureLocalInspectionTools() {
+    return new LocalInspectionTool[] {
+      new FieldCanBeLocalInspection(),
+      new RequiredAttributesInspectionBase(),
+      new CheckDtdReferencesInspection(),
+      new AccessStaticViaInstance(),
+    };
+  }
+
+  @Override
   protected void setUpProject() throws Exception {
     super.setUpProject();
     // treat listeners added there as not leaks
@@ -228,7 +238,11 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   }
 
   public void testRenameClass() throws Exception {
-    configureByFile(BASE_PATH + "AClass.java");
+    configureByText(JavaFileType.INSTANCE, """
+      class AClass<caret> {
+          
+      }
+    """);
     Document document = getDocument(getFile());
     assertEmpty(highlightErrors());
     PsiClass psiClass = ((PsiJavaFile)getFile()).getClasses()[0];
@@ -242,7 +256,11 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
 
 
   public void testTypingSpace() throws Exception {
-    configureByFile(BASE_PATH + "AClass.java");
+    configureByText(JavaFileType.INSTANCE, """
+      class AClass<caret> {
+          
+      }
+    """);
     Document document = getDocument(getFile());
     assertEmpty(highlightErrors());
 
@@ -259,7 +277,13 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
 
 
   public void testTypingSpaceInsideError() throws Exception {
-    configureByFile(BASE_PATH + "Error.java");
+    configureByText(JavaFileType.INSTANCE, """
+      class AClass {
+        {
+          toString(0,<caret>0);
+        }
+      }
+    """);
     assertOneElement(highlightErrors());
 
     for (int i = 0; i < 100; i++) {
@@ -270,26 +294,29 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
 
 
   public void testBackSpaceInsideError() throws Exception {
-    configureByFile(BASE_PATH + "BackError.java");
+    configureByText(JavaFileType.INSTANCE, """
+      class E {
+           void fff() {
+               int i = <caret>
+           }
+       }
+    """);
     assertOneElement(highlightErrors());
 
     backspace();
     assertOneElement(highlightErrors());
   }
 
-  @Override
-  protected LocalInspectionTool[] configureLocalInspectionTools() {
-    return new LocalInspectionTool[] {
-      new FieldCanBeLocalInspection(),
-      new RequiredAttributesInspectionBase(),
-      new CheckDtdReferencesInspection(),
-      new AccessStaticViaInstance(),
-    };
-  }
-
-
   public void testUnusedFieldUpdate() throws Exception {
-    configureByFile(BASE_PATH + "UnusedField.java");
+    configureByText(JavaFileType.INSTANCE, """
+     class Unused {
+       private int ffff;
+       void foo(int p) {
+         if (p==0) return;
+         <caret>
+       }
+     }
+    """);
     Document document = getDocument(getFile());
     List<HighlightInfo> infos = doHighlighting(HighlightSeverity.WARNING);
     assertEquals(1, infos.size());
@@ -340,7 +367,11 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   }
 
   public void testDaemonIgnoresNonPhysicalEditor() throws Exception {
-    configureByFile(BASE_PATH + "AClass.java");
+    configureByText(JavaFileType.INSTANCE, """
+      class AClass<caret> {
+          
+      }
+    """);
     assertEmpty(highlightErrors());
 
     EditorFactory editorFactory = EditorFactory.getInstance();
@@ -361,9 +392,14 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   }
 
 
-  public void testDaemonIgnoresConsoleActivities() throws Exception {
-    configureByFile(BASE_PATH + "AClass.java");
-    doHighlighting(HighlightSeverity.WARNING);
+  public void testDaemonIgnoresConsoleActivities() {
+    configureByText(JavaFileType.INSTANCE, """
+      class AClass<caret> {
+          
+      }
+    """);
+
+    assertEmpty(highlightErrors());
 
     ConsoleView consoleView = TextConsoleBuilderFactory.getInstance().createBuilder(getProject()).getConsole();
 
@@ -1151,7 +1187,18 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
 
 
   public void testModificationInsideCodeBlockDoesNotAffectErrorMarkersOutside() throws Exception {
-    configureByFile(BASE_PATH + "ErrorMark.java");
+    configureByText(JavaFileType.INSTANCE, """
+      class SSSSS {
+          public static void suite() {
+              <caret>
+              new Runnable() {
+                  public void run() {
+            
+                  }
+              };
+          }
+      
+      """);
     HighlightInfo error = assertOneElement(highlightErrors());
     assertEquals("'}' expected", error.getDescription());
 
