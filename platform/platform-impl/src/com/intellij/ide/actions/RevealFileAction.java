@@ -15,6 +15,7 @@ import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
@@ -60,7 +61,7 @@ import java.util.stream.Stream;
  *
  * @see ShowFilePathAction
  */
-public class RevealFileAction extends DumbAwareAction implements LightEditCompatible {
+public class RevealFileAction extends DumbAwareAction implements LightEditCompatible, ActionRemoteBehaviorSpecification.Disabled {
   private static final Logger LOG = Logger.getInstance(RevealFileAction.class);
 
   public static final NotificationListener FILE_SELECTING_LISTENER = new NotificationListener.Adapter() {
