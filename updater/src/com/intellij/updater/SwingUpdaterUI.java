@@ -81,9 +81,11 @@ public class SwingUpdaterUI implements UpdaterUI {
   private void doCancel() {
     if (!myCancelled) {
       myPaused = true;
-      String message = UpdaterUI.message("confirm.abort");
-      int result = JOptionPane.showConfirmDialog(myFrame, message, UpdaterUI.message("main.title"), JOptionPane.YES_NO_OPTION);
-      if (result == JOptionPane.YES_OPTION) {
+      var message = UpdaterUI.message("confirm.abort");
+      var title = UpdaterUI.message("main.title");
+      var options = new String[]{UpdaterUI.message("button.abort"), UpdaterUI.message("button.continue")};
+      var result = JOptionPane.showOptionDialog(myFrame, message, title, JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE, null, options, null);
+      if (result == 0) {
         myCancelled = true;
         myCancelButton.setEnabled(false);
       }
