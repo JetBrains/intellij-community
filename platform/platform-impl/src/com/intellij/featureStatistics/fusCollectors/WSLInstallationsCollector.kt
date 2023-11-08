@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.featureStatistics.fusCollectors
 
 import com.intellij.execution.wsl.WSLUtil
@@ -11,15 +11,14 @@ import com.intellij.openapi.diagnostic.logger
 import java.io.IOException
 import java.lang.IllegalStateException
 
-class WSLInstallationsCollector : ApplicationUsagesCollector() {
-  companion object {
-    private val group = EventLogGroup("wsl.installations", 1)
-    private val installationCountEvent = group.registerEvent("count", EventFields.Int("version"), EventFields.Int("count"))
-    private val LOG = logger<WSLInstallationsCollector>()
-  }
+private val LOG = logger<WSLInstallationsCollector>()
+
+internal class WSLInstallationsCollector : ApplicationUsagesCollector() {
+  private val group = EventLogGroup("wsl.installations", 1)
+  private val installationCountEvent = group.registerEvent("count", EventFields.Int("version"), EventFields.Int("count"))
 
   override fun getGroup(): EventLogGroup {
-    return Companion.group
+    return group
   }
 
   override fun getMetrics(): Set<MetricEvent> {
@@ -28,7 +27,7 @@ class WSLInstallationsCollector : ApplicationUsagesCollector() {
     val distributionsWithVersions = try {
       WslDistributionManager.getInstance().loadInstalledDistributionsWithVersions()
     }
-    catch(e: IOException) {
+    catch (e: IOException) {
       LOG.warn("Failed to load installed WSL distributions: " + e.message)
       return emptySet()
     }
