@@ -1,5 +1,5 @@
 fun foo() {
-    for (i in 42 downTo 0) {
-        <caret>
+    for (<selection>i<caret></selection> in 42 downTo 0) {
+
     }
 }
