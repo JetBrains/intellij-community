@@ -27,7 +27,9 @@ class TerminalEventsHandler(private val session: TerminalSession,
   private var lastMotionReport: Point? = null
 
   private val terminalStarter: TerminalStarter
-    get() = session.terminalStarter
+    // Hope the process is created fast enough - before user starts interacting with the terminal.
+    // TODO: buffering events until the process is started will fix the problem.
+    get() = session.terminalStarterFuture.getNow(null)!!
 
   private val model: TerminalModel
     get() = session.model
