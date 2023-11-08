@@ -7,10 +7,7 @@ import com.intellij.codeInsight.daemon.impl.quickfix.ImportClassFix;
 import com.intellij.codeInsight.daemon.quickFix.CreateFilePathFix;
 import com.intellij.codeInsight.daemon.quickFix.NewFileLocation;
 import com.intellij.codeInsight.daemon.quickFix.TargetDirectory;
-import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
-import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupElementBuilder;
-import com.intellij.codeInsight.lookup.LookupManager;
+import com.intellij.codeInsight.template.impl.ConstantNode;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.util.InspectionMessage;
@@ -21,12 +18,9 @@ import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.model.Symbol;
 import com.intellij.model.psi.PsiSymbolReference;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.PsiFileReference;
@@ -295,7 +289,7 @@ public class JavaDocReferenceInspection extends LocalInspectionTool {
     return file == null || context.getResolveScope().contains(file);
   }
 
-  private static class RenameReferenceQuickFix implements LocalQuickFix {
+  private static class RenameReferenceQuickFix extends PsiUpdateModCommandQuickFix {
     private final Set<String> myUnboundParams;
 
     RenameReferenceQuickFix(Set<String> unboundParams) {
@@ -308,43 +302,9 @@ public class JavaDocReferenceInspection extends LocalInspectionTool {
     }
 
     @Override
-    public boolean startInWriteAction() {
-      return false;
-    }
-
-    @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      DataManager.getInstance().getDataContextFromFocusAsync().onSuccess(dataContext -> {
-        Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
-        assert editor != null;
-
-        TextRange textRange = ((ProblemDescriptorBase)descriptor).getTextRange();
-        if (textRange != null) {
-          editor.getSelectionModel().setSelection(textRange.getStartOffset(), textRange.getEndOffset());
-        }
-
-        String word = editor.getSelectionModel().getSelectedText();
-        if (word != null && !word.isBlank()) {
-          List<LookupElement> items = new ArrayList<>();
-          for (String variant : myUnboundParams) {
-            items.add(LookupElementBuilder.create(variant));
-          }
-          LookupManager.getInstance(project).showLookup(editor, items.toArray(LookupElement.EMPTY_ARRAY));
-        }
-      });
-    }
-
-    @Override
-    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
-      String firstUnbound = myUnboundParams.stream().findFirst().orElse(null);
-      if (firstUnbound == null) return IntentionPreviewInfo.EMPTY;
-      PsiElement reference = previewDescriptor.getPsiElement();
-      PsiElement firstUnboundReference = PsiElementFactory.getInstance(project)
-        .createDocTagFromText("@param " + firstUnbound)
-        .getValueElement();
-      if (firstUnboundReference == null) return IntentionPreviewInfo.EMPTY;
-      reference.replace(firstUnboundReference);
-      return IntentionPreviewInfo.DIFF;
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      String first = myUnboundParams.iterator().next();
+      updater.templateBuilder().field(element, new ConstantNode(first).withLookupStrings(myUnboundParams));
     }
   }
 
