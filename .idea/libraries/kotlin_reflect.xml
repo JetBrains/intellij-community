@@ -1,9 +1,9 @@
 <component name="libraryTable">
   <library name="kotlin-reflect" type="repository">
-    <properties maven-id="org.jetbrains.kotlin:kotlin-reflect:1.9.10">
+    <properties maven-id="org.jetbrains.kotlin:kotlin-reflect:1.9.20">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-reflect/1.9.10/kotlin-reflect-1.9.10.jar">
-          <sha256sum>8a835f5176355083668aff0ed6eef5b3eb030e10e89679ed3eeb703fd2d5b900</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-reflect/1.9.20/kotlin-reflect-1.9.20.jar">
+          <sha256sum>49b66f9a89d50fd2954c2e8aeac80e4f488b0a09322a25efad6261576713dc0f</sha256sum>
         </artifact>
       </verification>
       <exclude>
@@ -11,11 +11,11 @@
       </exclude>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-reflect/1.9.10/kotlin-reflect-1.9.10.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-reflect/1.9.20/kotlin-reflect-1.9.20.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-reflect/1.9.10/kotlin-reflect-1.9.10-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-reflect/1.9.20/kotlin-reflect-1.9.20-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
