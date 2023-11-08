@@ -13,15 +13,12 @@ import com.intellij.psi.util.CachedValuesManager
 import com.intellij.util.containers.ConcurrentFactoryMap
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.project.structure.*
-import org.jetbrains.kotlin.analysis.project.structure.impl.KtCodeFragmentModuleImpl
 import org.jetbrains.kotlin.analysis.providers.KotlinModificationTrackerFactory
 import org.jetbrains.kotlin.analyzer.ModuleInfo
-import org.jetbrains.kotlin.idea.base.projectStructure.ProjectStructureProviderIdeImpl.Companion.getKtModuleByModuleInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.*
 import org.jetbrains.kotlin.idea.base.util.getOutsiderFileOrigin
 import org.jetbrains.kotlin.idea.base.util.isOutsiderFile
 import org.jetbrains.kotlin.parsing.KotlinParserDefinition.Companion.STD_SCRIPT_EXT
-import org.jetbrains.kotlin.psi.KtCodeFragment
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.utils.exceptions.errorWithAttachment
 import org.jetbrains.kotlin.utils.exceptions.withPsiEntry
@@ -85,16 +82,79 @@ internal class ProjectStructureProviderIdeImpl(private val project: Project) : P
             else -> null
         }
 
-        return if (anchorElement != null) {
-            cachedKtModule(anchorElement, crucialContextualModule)
-        } else {
-            calculateKtModule(element, crucialContextualModule)
+        if (anchorElement != null) {
+            val containingFile = anchorElement.containingFile
+            if (containingFile !is KtFile || containingFile.danglingFileResolutionMode == null) {
+                return cachedKtModule(anchorElement, crucialContextualModule)
+            }
         }
+
+        return computeModule(element, crucialContextualModule)
+    }
+
+    override fun getNotUnderContentRootModule(project: Project): KtNotUnderContentRootModule {
+        val moduleInfo = NotUnderContentRootModuleInfo(project, file = null)
+        return NotUnderContentRootModuleByModuleInfo(moduleInfo)
+    }
+
+    private fun isInSpecialSrcDir(psiElement: PsiElement): Boolean =
+        ProjectStructureInsightsProvider.EP_NAME.extensionList.any { it.isInSpecialSrcDirectory(psiElement) }
+
+    fun <T> computeModule(
+        psiElement: PsiElement,
+        contextualModule: T? = null
+    ): KtModule where T : KtModule, T : KtModuleByModuleInfoBase {
+        val containingFile = psiElement.containingFile
+        val virtualFile = containingFile?.virtualFile
+
+        if (containingFile != null) {
+            computeSpecialModule(containingFile)?.let { return it }
+        }
+
+        val moduleInfo = computeModuleInfoForOrdinaryModule(psiElement, contextualModule, virtualFile)
+
+        if (virtualFile != null && isOutsiderFile(virtualFile) && moduleInfo is ModuleSourceInfo) {
+            val originalFile = getOutsiderFileOrigin(project, virtualFile)
+            return KtSourceModuleByModuleInfoForOutsider(virtualFile, originalFile, moduleInfo)
+        }
+
+        return getKtModuleByModuleInfo(moduleInfo)
+    }
+
+    private fun <T> computeModuleInfoForOrdinaryModule(
+        psiElement: PsiElement,
+        contextualModule: T?,
+        virtualFile: VirtualFile?
+    ): ModuleInfo where T : KtModule, T : KtModuleByModuleInfoBase {
+        val infoProvider = ModuleInfoProvider.getInstance(project)
+
+        val config = ModuleInfoProvider.Configuration(
+            createSourceLibraryInfoForLibraryBinaries = false,
+            preferModulesFromExtensions = isScriptOrItsDependency(contextualModule, virtualFile) && !isInSpecialSrcDir(psiElement),
+            contextualModuleInfo = contextualModule?.ideaModuleInfo,
+        )
+
+        val baseModuleInfo = infoProvider.firstOrNull(psiElement, config)
+        if (baseModuleInfo != null) {
+            return baseModuleInfo
+        }
+
+        if (contextualModule != null) {
+            val noContextConfig = config.copy(contextualModuleInfo = null)
+            val noContextModuleInfo = infoProvider.firstOrNull(psiElement, noContextConfig)
+            if (noContextModuleInfo != null) {
+                return noContextModuleInfo
+            }
+        }
+
+        return NotUnderContentRootModuleInfo(project, psiElement.containingFile as? KtFile)
     }
 
     companion object {
         // TODO maybe introduce some cache?
-        fun getKtModuleByModuleInfo(moduleInfo: ModuleInfo): KtModule = createKtModuleByModuleInfo(moduleInfo)
+        fun getKtModuleByModuleInfo(moduleInfo: ModuleInfo): KtModule {
+            return createKtModuleByModuleInfo(moduleInfo)
+        }
     }
 }
 
@@ -106,7 +166,8 @@ private fun <T> cachedKtModule(
         val project = anchorElement.project
         CachedValueProvider.Result.create(
             ConcurrentFactoryMap.createMap<T?, KtModule> { context ->
-                calculateKtModule(anchorElement, context)
+                val projectStructureProvider = ProjectStructureProvider.getInstance(project) as ProjectStructureProviderIdeImpl
+                projectStructureProvider.computeModule(anchorElement, context)
             },
             ProjectRootModificationTracker.getInstance(project),
             JavaLibraryModificationTracker.getInstance(project),
@@ -139,41 +200,6 @@ private fun createKtModuleByModuleInfo(moduleInfo: ModuleInfo): KtModule {
         is NotUnderContentRootModuleInfo -> NotUnderContentRootModuleByModuleInfo(moduleInfo)
         else -> NotUnderContentRootModuleByModuleInfo(moduleInfo as IdeaModuleInfo)
     }
-}
-
-private fun isInSpecialSrcDir(psiElement: PsiElement): Boolean =
-    ProjectStructureInsightsProvider.EP_NAME.extensionList.any { it.isInSpecialSrcDirectory(psiElement) }
-
-private fun <T> calculateKtModule(
-    psiElement: PsiElement,
-    contextualModule: T? = null
-): KtModule where T : KtModule, T : KtModuleByModuleInfoBase {
-    val containingFile = psiElement.containingFile
-    val virtualFile = containingFile?.virtualFile
-    val project = psiElement.project
-    val config = ModuleInfoProvider.Configuration(
-        createSourceLibraryInfoForLibraryBinaries = false,
-        preferModulesFromExtensions = isScriptOrItsDependency(contextualModule, virtualFile) && !isInSpecialSrcDir(psiElement),
-        contextualModuleInfo = contextualModule?.ideaModuleInfo,
-    )
-
-    val infoProvider = ModuleInfoProvider.getInstance(project)
-    val moduleInfo = infoProvider.firstOrNull(psiElement, config)
-        ?: contextualModule?.let { config.copy(contextualModuleInfo = null) }?.let { infoProvider.firstOrNull(psiElement, it) }
-        ?: NotUnderContentRootModuleInfo(project, psiElement.containingFile as? KtFile)
-
-    if (virtualFile != null && isOutsiderFile(virtualFile) && moduleInfo is ModuleSourceInfo) {
-        val originalFile = getOutsiderFileOrigin(project, virtualFile)
-        return KtSourceModuleByModuleInfoForOutsider(virtualFile, originalFile, moduleInfo)
-    }
-
-    val moduleByModuleInfo = getKtModuleByModuleInfo(moduleInfo)
-
-    if (containingFile is KtCodeFragment) {
-        return KtCodeFragmentModuleImpl(containingFile, moduleByModuleInfo)
-    }
-
-    return moduleByModuleInfo
 }
 
 private fun <T> isScriptOrItsDependency(contextualModule: T?, virtualFile: VirtualFile?) where T : KtModule, T : KtModuleByModuleInfoBase =

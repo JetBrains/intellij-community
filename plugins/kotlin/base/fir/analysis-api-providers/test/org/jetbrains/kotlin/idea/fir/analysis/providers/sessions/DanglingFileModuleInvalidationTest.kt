@@ -1,6 +1,13 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.fir.analysis.providers.sessions
 
+import com.intellij.openapi.application.runReadAction
+import com.intellij.psi.PsiManager
+import com.intellij.psi.util.PsiModificationTracker
+import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.KtDiagnosticCheckerFilter
+import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.low.level.api.fir.LLFirResolveSessionService
 import org.jetbrains.kotlin.analysis.low.level.api.fir.sessions.LLFirSession
 import org.jetbrains.kotlin.analysis.project.structure.ProjectStructureProvider
@@ -17,7 +24,7 @@ import org.jetbrains.kotlin.psi.psiUtil.addTypeArgument
 import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
 import java.io.File
 
-class CodeFragmentModuleInvalidationTest : AbstractMultiModuleTest() {
+class DanglingFileModuleInvalidationTest : AbstractMultiModuleTest() {
     override fun getTestDataDirectory(): File = error("Should not be called")
 
     override fun isFirPlugin(): Boolean = true
@@ -42,13 +49,184 @@ class CodeFragmentModuleInvalidationTest : AbstractMultiModuleTest() {
         val barCall = srcFile.findDescendantOfType<KtCallExpression> { it.text == "bar()" }!!
 
         val codeFragment = KtBlockCodeFragment(project, "fragment.kt", "bar<Int>()", "", barCall)
+        ensureFilesAnalyzed(codeFragment, srcFile)
 
         val (sessionBefore, sessionAfter) = performModification(codeFragment) {
             // Nothing to do
         }
 
-        assert(sessionBefore.isValid)
+        assertEquals(sessionBefore, sessionAfter)
         assert(sessionAfter.isValid)
+    }
+
+    fun testUnrelatedCodeFragmentChange() {
+        val srcModule = createModuleInTmpDir("src") {
+            val srcFile = FileWithText(
+                "test.kt",
+                """
+                    fun foo() {
+                        <caret>bar()
+                    }
+                    
+                    fun <T> bar() {}
+                """.trimIndent()
+            )
+
+            listOf(srcFile)
+        }
+
+        val srcFile = srcModule.findSourceKtFile("test.kt")
+        val barCall = srcFile.findDescendantOfType<KtCallExpression> { it.text == "bar()" }!!
+
+        val codeFragment1 = KtBlockCodeFragment(project, "fragment1.kt", "bar<Int>()", "", barCall)
+        val codeFragment2 = KtBlockCodeFragment(project, "fragment2.kt", "bar<String>()", "", barCall)
+        ensureFilesAnalyzed(codeFragment1, codeFragment2, srcFile)
+
+        val (sessionBefore, sessionAfter) = performModification(codeFragment2) {
+            val codeFragment1BarCall = codeFragment1.findDescendantOfType<KtCallExpression> { it.text == "bar<Int>()" }!!
+            codeFragment1BarCall.typeArguments[0].delete()
+        }
+
+        assertEquals(sessionBefore, sessionAfter)
+        assert(sessionAfter.isValid)
+    }
+
+    fun testNestedCodeFragmentChange() {
+        val srcModule = createModuleInTmpDir("src") {
+            val srcFile = FileWithText(
+                "test.kt",
+                """
+                    fun foo() {
+                        <caret>bar()
+                    }
+                    
+                    fun <T> bar() {}
+                """.trimIndent()
+            )
+
+            listOf(srcFile)
+        }
+
+        val srcFile = srcModule.findSourceKtFile("test.kt")
+        val barCall = srcFile.findDescendantOfType<KtCallExpression> { it.text == "bar()" }!!
+
+        val codeFragment1 = KtBlockCodeFragment(project, "fragment1.kt", "bar<Int>()", "", barCall)
+        val codeFragment1BarCall = codeFragment1.findDescendantOfType<KtCallExpression> { it.text == "bar<Int>()" }!!
+
+        val codeFragment2 = KtBlockCodeFragment(project, "fragment2.kt", "bar<String>()", "", codeFragment1BarCall)
+        ensureFilesAnalyzed(codeFragment1, codeFragment2, srcFile)
+
+        val (sessionBefore, sessionAfter) = performModification(codeFragment2) {
+            codeFragment1BarCall.typeArguments[0].delete()
+        }
+
+        assert(!sessionBefore.isValid)
+        assert(sessionAfter.isValid)
+    }
+
+    fun testCodeFragmentChangeInsideFakeFile() {
+        val srcModule = createModuleInTmpDir("src") {
+            val srcFile = FileWithText(
+                "test.kt",
+                """
+                    fun foo() {
+                        <caret>bar()
+                    }
+                    
+                    fun <T> bar() {}
+                """.trimIndent()
+            )
+
+            listOf(srcFile)
+        }
+
+        val srcFile = srcModule.findSourceKtFile("test.kt")
+
+        val ktPsiFactory = KtPsiFactory.contextual(srcFile, markGenerated = true, eventSystemEnabled = true)
+        val fakeFile = ktPsiFactory.createFile("fake.txt", srcFile.text)
+
+        val fakeBarCall = fakeFile.findDescendantOfType<KtCallExpression> { it.text == "bar()" }!!
+
+        val codeFragment = KtBlockCodeFragment(project, "fragment.kt", "bar<Int>()", "", fakeBarCall)
+        ensureFilesAnalyzed(codeFragment, fakeFile)
+
+        val (sessionBefore, sessionAfter) = performModification(codeFragment) {
+            fakeBarCall.addTypeArgument(ktPsiFactory.createTypeArgument("Any"))
+        }
+
+        assert(!sessionBefore.isValid)
+        assert(sessionAfter.isValid)
+    }
+
+    fun testCodeFragmentChangeInsideUnrelatedFakeFile() {
+        val srcModule = createModuleInTmpDir("src") {
+            val srcFile = FileWithText(
+                "test.kt",
+                """
+                    fun foo() {
+                        <caret>bar()
+                    }
+                    
+                    fun <T> bar() {}
+                """.trimIndent()
+            )
+
+            listOf(srcFile)
+        }
+
+        val srcFile = srcModule.findSourceKtFile("test.kt")
+
+        val ktPsiFactory = KtPsiFactory.contextual(srcFile, markGenerated = true, eventSystemEnabled = true)
+        val fakeFile = ktPsiFactory.createFile("fake.txt", srcFile.text)
+
+        val barCall = srcFile.findDescendantOfType<KtCallExpression> { it.text == "bar()" }!!
+
+        val codeFragment = KtBlockCodeFragment(project, "fragment.kt", "bar<Int>()", "", barCall)
+        ensureFilesAnalyzed(codeFragment, fakeFile)
+
+        val (sessionBefore, sessionAfter) = performModification(codeFragment) {
+            val fakeBarCall = fakeFile.findDescendantOfType<KtCallExpression> { it.text == "bar()" }!!
+            fakeBarCall.addTypeArgument(ktPsiFactory.createTypeArgument("Any"))
+        }
+
+        assertEquals(sessionBefore, sessionAfter)
+        assert(sessionAfter.isValid)
+    }
+
+    fun testNonPhysicalFakeFile() {
+        val srcModule = createModuleInTmpDir("src") {
+            val srcFile = FileWithText(
+                "test.kt",
+                """
+                    fun foo() {
+                        <caret>bar()
+                    }
+                    
+                    fun <T> bar() {}
+                """.trimIndent()
+            )
+
+            listOf(srcFile)
+        }
+
+        val srcFile = srcModule.findSourceKtFile("test.kt")
+
+        val ktPsiFactory = KtPsiFactory.contextual(srcFile, markGenerated = true, eventSystemEnabled = false)
+        val fakeFile = ktPsiFactory.createFile("fake.txt", srcFile.text)
+
+        val (sessionBefore, sessionAfter) = performModification(fakeFile) {
+            // Do nothing
+        }
+
+        assert(sessionBefore.isValid)
+        assertTrue(sessionBefore === sessionAfter)
+
+        val (sessionBeforeWithPsiModification, sessionAfterWithPsiModification) = performModification(fakeFile) {
+            PsiManager.getInstance(project).dropPsiCaches()
+        }
+
+        assert(!sessionBeforeWithPsiModification.isValid)
+        assert(sessionAfterWithPsiModification.isValid)
     }
 
     fun testContextInBodyChange() {
@@ -71,6 +249,7 @@ class CodeFragmentModuleInvalidationTest : AbstractMultiModuleTest() {
         val barCall = srcFile.findDescendantOfType<KtCallExpression> { it.text == "bar()" }!!
 
         val codeFragment = KtBlockCodeFragment(project, "fragment.kt", "bar<Int>()", "", barCall)
+        ensureFilesAnalyzed(codeFragment, srcFile)
 
         val (sessionBefore, sessionAfter) = performModification(codeFragment) {
             val ktPsiFactory = KtPsiFactory(project, markGenerated = false)
@@ -101,6 +280,7 @@ class CodeFragmentModuleInvalidationTest : AbstractMultiModuleTest() {
         val barCall = srcFile.findDescendantOfType<KtCallExpression> { it.text == "bar()" }!!
 
         val codeFragment = KtBlockCodeFragment(project, "fragment.kt", "bar<Int>()", "", barCall)
+        ensureFilesAnalyzed(codeFragment, srcFile)
 
         val (sessionBefore, sessionAfter) = performModification(codeFragment) {
             srcModule.addKotlinStdlib()
@@ -130,6 +310,7 @@ class CodeFragmentModuleInvalidationTest : AbstractMultiModuleTest() {
         val barCall = srcFile.findDescendantOfType<KtCallExpression> { it.text == "bar<Any>()" }!!
 
         val codeFragment = KtBlockCodeFragment(project, "fragment.kt", "bar()", "", barCall)
+        ensureFilesAnalyzed(codeFragment, srcFile)
 
         val (sessionBefore, sessionAfter) = performModification(codeFragment) {
             val codeFragmentBarCall = codeFragment.findDescendantOfType<KtCallExpression> { it.text == "bar()" }!!
@@ -137,7 +318,7 @@ class CodeFragmentModuleInvalidationTest : AbstractMultiModuleTest() {
             codeFragmentBarCall.addTypeArgument(ktPsiFactory.createTypeArgument("Int"))
         }
 
-        assert(!sessionBefore.isValid)
+        assertEquals(sessionBefore, sessionAfter)
         assert(sessionAfter.isValid)
     }
 
@@ -170,10 +351,12 @@ class CodeFragmentModuleInvalidationTest : AbstractMultiModuleTest() {
         val srcFile = srcModule.findSourceKtFile("test.kt")
         val variableDeclaration = srcFile.findDescendantOfType<KtVariableDeclaration> { it.name == "x" }!!
 
+        val anotherFile = anotherModule.findSourceKtFile("another.kt")
+
         val codeFragment = KtBlockCodeFragment(project, "fragment.kt", "foo()", "", variableDeclaration)
+        ensureFilesAnalyzed(codeFragment, srcFile, anotherFile)
 
         val (sessionBefore, sessionAfter) = performModification(codeFragment) {
-            val anotherFile = anotherModule.findSourceKtFile("another.kt")
             val anotherVariableDeclaration = anotherFile.findDescendantOfType<KtVariableDeclaration> { it.name == "y" }!!
             anotherVariableDeclaration.setName("z")
         }
@@ -211,10 +394,12 @@ class CodeFragmentModuleInvalidationTest : AbstractMultiModuleTest() {
         val srcFile = srcModule.findSourceKtFile("test.kt")
         val variableDeclaration = srcFile.findDescendantOfType<KtVariableDeclaration> { it.name == "x" }!!
 
+        val anotherFile = anotherModule.findSourceKtFile("another.kt")
+
         val codeFragment = KtBlockCodeFragment(project, "fragment.kt", "foo()", "", variableDeclaration)
+        ensureFilesAnalyzed(codeFragment, srcFile, anotherFile)
 
         val (sessionBefore, sessionAfter) = performModification(codeFragment) {
-            val anotherFile = anotherModule.findSourceKtFile("another.kt")
             val anotherFunction = anotherFile.findDescendantOfType<KtNamedFunction> { it.name == "another" }!!
             anotherFunction.addModifier(KtTokens.PRIVATE_KEYWORD)
         }
@@ -253,6 +438,7 @@ class CodeFragmentModuleInvalidationTest : AbstractMultiModuleTest() {
         val variableDeclaration = srcFile.findDescendantOfType<KtVariableDeclaration> { it.name == "x" }!!
 
         val codeFragment = KtBlockCodeFragment(project, "fragment.kt", "foo()", "", variableDeclaration)
+        ensureFilesAnalyzed(codeFragment, srcFile)
 
         val (sessionBefore, sessionAfter) = performModification(codeFragment) {
             anotherModule.addKotlinStdlib()
@@ -262,12 +448,13 @@ class CodeFragmentModuleInvalidationTest : AbstractMultiModuleTest() {
         assert(sessionAfter.isValid)
     }
 
-    fun tesDependentModuleInBlockChange() {
+    fun testDependentModuleInBlockChange() {
         val srcModule = createModuleInTmpDir("src") {
             val srcFile = FileWithText(
                 "test.kt",
                 """
                     fun foo() {
+                        another()
                         <caret>val x = 0
                     }
                 """.trimIndent()
@@ -293,10 +480,12 @@ class CodeFragmentModuleInvalidationTest : AbstractMultiModuleTest() {
         val srcFile = srcModule.findSourceKtFile("test.kt")
         val variableDeclaration = srcFile.findDescendantOfType<KtVariableDeclaration> { it.name == "x" }!!
 
+        val anotherFile = anotherModule.findSourceKtFile("another.kt")
+
         val codeFragment = KtBlockCodeFragment(project, "fragment.kt", "foo()", "", variableDeclaration)
+        ensureFilesAnalyzed(codeFragment, srcFile, anotherFile)
 
         val (sessionBefore, sessionAfter) = performModification(codeFragment) {
-            val anotherFile = anotherModule.findSourceKtFile("another.kt")
             val anotherVariableDeclaration = anotherFile.findDescendantOfType<KtVariableDeclaration> { it.name == "y" }!!
             anotherVariableDeclaration.setName("z")
         }
@@ -311,6 +500,7 @@ class CodeFragmentModuleInvalidationTest : AbstractMultiModuleTest() {
                 "test.kt",
                 """
                     fun foo() {
+                        another()
                         <caret>val x = 0
                     }
                 """.trimIndent()
@@ -336,10 +526,12 @@ class CodeFragmentModuleInvalidationTest : AbstractMultiModuleTest() {
         val srcFile = srcModule.findSourceKtFile("test.kt")
         val variableDeclaration = srcFile.findDescendantOfType<KtVariableDeclaration> { it.name == "x" }!!
 
+        val anotherFile = anotherModule.findSourceKtFile("another.kt")
+
         val codeFragment = KtBlockCodeFragment(project, "fragment.kt", "foo()", "", variableDeclaration)
+        ensureFilesAnalyzed(codeFragment, srcFile, anotherFile)
 
         val (sessionBefore, sessionAfter) = performModification(codeFragment) {
-            val anotherFile = anotherModule.findSourceKtFile("another.kt")
             val anotherFunction = anotherFile.findDescendantOfType<KtNamedFunction> { it.name == "another" }!!
             anotherFunction.addModifier(KtTokens.PRIVATE_KEYWORD)
         }
@@ -380,6 +572,7 @@ class CodeFragmentModuleInvalidationTest : AbstractMultiModuleTest() {
         val variableDeclaration = srcFile.findDescendantOfType<KtVariableDeclaration> { it.name == "x" }!!
 
         val codeFragment = KtBlockCodeFragment(project, "fragment.kt", "foo()", "", variableDeclaration)
+        ensureFilesAnalyzed(codeFragment, srcFile)
 
         val (sessionBefore, sessionAfter) = performModification(codeFragment) {
             anotherModule.addKotlinStdlib()
@@ -387,6 +580,23 @@ class CodeFragmentModuleInvalidationTest : AbstractMultiModuleTest() {
 
         assert(!sessionBefore.isValid)
         assert(sessionAfter.isValid)
+    }
+
+    @OptIn(KtAllowAnalysisOnEdt::class)
+    private fun ensureFilesAnalyzed(vararg elements: KtElement) {
+        // Unless the session is created for the module, its invalidation won't trigger invalidation of dependents.
+        // See 'didSessionExist' in 'LLFirSessionInvalidationService.invalidate()'.
+        // Also see 'getCachedFileStructure()' in 'LLFirDeclarationModificationService.inBlockModification'.
+        allowAnalysisOnEdt {
+            runReadAction {
+                for (element in elements) {
+                    val file = element.containingKtFile
+                    analyze(file) {
+                        file.collectDiagnosticsForFile(KtDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
+                    }
+                }
+            }
+        }
     }
 
     private fun performModification(element: KtElement, modificationBlock: () -> Unit): Pair<LLFirSession, LLFirSession> {

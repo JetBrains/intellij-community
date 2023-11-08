@@ -12,6 +12,7 @@ import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiManager
 import com.intellij.psi.search.FileTypeIndex
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.testFramework.IdeaTestUtil
@@ -363,8 +364,13 @@ class KotlinProjectStructureTest : AbstractMultiModuleTest() {
     }
 
     fun `test out of content module`() {
-        val file = createDummyFile("dummy.kt", "class A")
-        assertKtModuleType<KtNotUnderContentRootModule>(file)
+        val dummyRoot = directoryContent { file("dummy.kt", "class A") }
+            .generateInVirtualTempDir()
+
+        val dummyVirtualFile = dummyRoot.findChild("dummy.kt")!!
+        val dummyFile = PsiManager.getInstance(project).findFile(dummyVirtualFile)!!
+
+        assertKtModuleType<KtNotUnderContentRootModule>(dummyFile)
 
         createModule(
             moduleName = "m",
@@ -379,10 +385,25 @@ class KotlinProjectStructureTest : AbstractMultiModuleTest() {
         assertKtModuleType<KtSourceModule>("resource.kt")
     }
 
-    fun `test script module`() {
+    fun `test dangling file module`() {
+        val file = createDummyFile("dummy.kt", "class A")
+        assertKtModuleType<KtDanglingFileModule>(file)
+    }
+
+    fun `test dangling script file module`() {
         val file = createDummyFile("dummy.kts", "class A")
+        assertKtModuleType<KtDanglingFileModule>(file)
+    }
+
+    fun `test script module`() {
+        val dummyRoot = directoryContent { file("dummy.kts", "class A") }
+            .generateInVirtualTempDir()
+
+        val dummyVirtualFile = dummyRoot.findChild("dummy.kts")!!
+        val dummyFile = PsiManager.getInstance(project).findFile(dummyVirtualFile)!!
+
         // It is KtNotUnderContentRootModule and not KtScriptModule due to a lack of virtual file
-        assertKtModuleType<KtNotUnderContentRootModule>(file)
+        assertKtModuleType<KtScriptModule>(dummyFile)
 
         createModule(
             moduleName = "m",
