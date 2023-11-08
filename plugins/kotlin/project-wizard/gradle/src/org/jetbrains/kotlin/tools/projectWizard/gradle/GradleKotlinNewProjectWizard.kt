@@ -280,6 +280,7 @@ internal class GradleKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard 
         override fun setupAssets(project: Project) {
             if (context.isCreatingNewProject) {
                 addAssets(StandardAssetsProvider().getGradleIgnoreAssets())
+                addTemplateAsset("gradle.properties", "KotlinCodeStyleProperties")
             }
             createKotlinContentRoots()
             if (parent.addSampleCode) {
