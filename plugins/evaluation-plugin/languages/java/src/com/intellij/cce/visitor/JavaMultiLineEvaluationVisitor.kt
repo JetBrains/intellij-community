@@ -20,19 +20,19 @@ class JavaMultiLineEvaluationVisitor : EvaluationVisitor, JavaRecursiveElementVi
     super.visitJavaFile(file)
   }
 
-  //override fun visitClass(aClass: PsiClass) {
-  //  codeFragment?.let { file ->
-  //    if (aClass.children.isNotEmpty()) {
-  //      val start = aClass.firstChild.textRange.startOffset
-  //      val end = aClass.lastChild.textRange.endOffset
-  //      val text = file.text.subSequence(start, end)
-  //      file.addChild(CodeToken(text.toString(), start, METHOD_PROPERTIES))
-  //    } else {
-  //      file.addChild(CodeToken(aClass.text, aClass.textOffset, METHOD_PROPERTIES))
-  //    }
-  //  }
-  //  super.visitClass(aClass)
-  //}
+  override fun visitClass(aClass: PsiClass) {
+    //codeFragment?.let { file ->
+    //  for (child in aClass.children) {
+    //    when (child) {
+    //      is PsiField, is PsiMethod -> {
+    //        val start = child.textRange.startOffset
+    //        file.addChild(CodeToken(child.text, start, FIELD_PROPERTIES))
+    //      }
+    //    }
+    //  }
+    //}
+    super.visitClass(aClass)
+  }
 
   override fun visitCodeBlock(block: PsiCodeBlock) {
     codeFragment?.let { file ->
@@ -45,3 +45,4 @@ class JavaMultiLineEvaluationVisitor : EvaluationVisitor, JavaRecursiveElementVi
 }
 
 private val METHOD_PROPERTIES = SimpleTokenProperties.create(TypeProperty.METHOD, SymbolLocation.UNKNOWN) {}
+private val FIELD_PROPERTIES = SimpleTokenProperties.create(TypeProperty.FIELD, SymbolLocation.UNKNOWN) {}
