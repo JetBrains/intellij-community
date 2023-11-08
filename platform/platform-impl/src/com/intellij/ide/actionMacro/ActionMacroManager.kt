@@ -471,8 +471,7 @@ class ActionMacroManager internal constructor(private val coroutineScope: Corout
       e.presentation.setEnabled(!getInstance().isPlaying)
     }
 
-    // Hack around IDEA-314986
-    override fun getTemplateText() = templatePresentation.text ?: IdeBundle.message("action.invoke.macro.text")
+    override fun getTemplateText() = IdeBundle.message("action.invoke.macro.text")
   }
 
   private inner class KeyPostProcessor : IdeEventQueue.EventDispatcher {
