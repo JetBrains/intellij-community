@@ -2033,6 +2033,60 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
         }
     }
 
+    fun checkResolveTopLevelInlineFromLibrary(myFixture: JavaCodeInsightTestFixture, withJvmName: Boolean) {
+        val anno = if (withJvmName) "@file:JvmName(\"Mocking\")" else ""
+        val mockLibraryFacility = myFixture.configureLibraryByText(
+            "Mocking.kt", """
+                $anno
+                package test
+
+                inline fun <reified T : Any> mock(): T = TODO()
+
+                object Mock {
+                  inline fun <reified T : Any> mock(): T = TODO()
+                }
+            """.trimIndent()
+        )
+        myFixture.configureByText(
+            "main.kt", """
+                import test.Mock
+                import test.mock as tMock
+
+                class MyClass
+
+                fun test(): Boolean {
+                  val instance1 = Mock.mock<MyClass>()
+                  val instance2 = tMock<MyClass>()
+                  return instance1 == instance2
+                }
+            """.trimIndent()
+        )
+
+        val uFile = myFixture.file.toUElementOfType<UFile>()!!
+        uFile.accept(object : AbstractUastVisitor() {
+            var first: Boolean = true
+
+            override fun visitCallExpression(node: UCallExpression): Boolean {
+                val resolved = node.resolve()
+                TestCase.assertNotNull(resolved)
+                TestCase.assertEquals("mock", resolved!!.name)
+                if (first) {
+                    TestCase.assertEquals("Mock", resolved.containingClass?.name)
+                    first = false
+                } else {
+                    TestCase.assertEquals(
+                        if (withJvmName) "Mocking" else "MockingKt",
+                        resolved.containingClass?.name
+                    )
+                }
+
+                return super.visitCallExpression(node)
+            }
+        })
+
+        mockLibraryFacility.tearDown(myFixture.module)
+    }
+
     private fun JavaCodeInsightTestFixture.configureLibraryByText(
         fileName: String,
         text: String,

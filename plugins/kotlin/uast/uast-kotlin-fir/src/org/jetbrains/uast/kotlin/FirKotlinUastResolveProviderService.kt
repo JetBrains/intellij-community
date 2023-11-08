@@ -439,7 +439,6 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
                     is KtEnumEntry -> {
                         classOrObject.getEnumEntrySymbol().callableIdIfNonLocal?.classId?.let(::buildClassType)
                     }
-
                     else -> {
                         // NB: Avoid symbol creation/retrieval
                         classOrObject.getClassId()?.let(::buildClassType)

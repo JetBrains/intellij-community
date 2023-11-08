@@ -20,5 +20,5 @@ UPolyadicExpression (operator = +) -> USimpleNameReferenceExpression (identifier
     UBinaryExpression (operator = ==) -> USimpleNameReferenceExpression (identifier = ==) -> Decompiled_Method: equals
     UBinaryExpression (operator = ==) -> UQualifiedReferenceExpression -> Decompiled_Method: trimIndent
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to Decompiled_Method) -> USimpleNameReferenceExpression (identifier = trimIndent) -> Decompiled_Method: trimIndent
-    UBinaryExpression (operator = +) -> USimpleNameReferenceExpression (identifier = +) -> Kotlin_Light_Method: plus
-    UBinaryExpression (operator = +) -> USimpleNameReferenceExpression (identifier = +) -> Kotlin_Light_Method: plus
+    UBinaryExpression (operator = +) -> USimpleNameReferenceExpression (identifier = +) -> Decompiled_Method: plus
+    UBinaryExpression (operator = +) -> USimpleNameReferenceExpression (identifier = +) -> Decompiled_Method: plus

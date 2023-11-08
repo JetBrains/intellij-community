@@ -23,7 +23,8 @@ import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.type.MapPsiToAsmDesc
 import org.jetbrains.uast.*
 import org.jetbrains.uast.kotlin.*
-import org.jetbrains.uast.kotlin.psi.UastFakeDeserializedLightMethod
+import org.jetbrains.uast.kotlin.psi.UastFakeDeserializedSourceLightMethod
+import org.jetbrains.uast.kotlin.psi.UastFakeDeserializedSymbolLightMethod
 import org.jetbrains.uast.kotlin.psi.UastFakeSourceLightMethod
 import org.jetbrains.uast.kotlin.psi.UastFakeSourceLightPrimaryConstructor
 
@@ -78,6 +79,23 @@ internal fun toPsiMethod(
     functionSymbol: KtFunctionLikeSymbol,
     context: KtElement,
 ): PsiMethod? {
+    // `inline` from binary dependency, which we can't find source PSI, so fake it
+    if (functionSymbol.origin == KtSymbolOrigin.LIBRARY &&
+        (functionSymbol as? KtFunctionSymbol)?.isInline == true
+    ) {
+        functionSymbol.getContainingJvmClassName()?.let { fqName ->
+            JavaPsiFacade.getInstance(context.project)
+                .findClass(fqName, context.resolveScope)
+                ?.let { containingClass ->
+                    return UastFakeDeserializedSymbolLightMethod(
+                        functionSymbol.createPointer(),
+                        functionSymbol.name.identifier,
+                        containingClass,
+                        context
+                    )
+                }
+        }
+    }
     return when (val psi = psiForUast(functionSymbol, context.project)) {
         null -> null
         is PsiMethod -> psi
@@ -133,7 +151,7 @@ private fun toPsiMethodForDeserialized(
             else
                 methods.filter { it.name == psi.name }
         return when (candidates.size) {
-            0 -> if (fake) UastFakeDeserializedLightMethod(psi, this) else null
+            0 -> if (fake) UastFakeDeserializedSourceLightMethod(psi, this) else null
             1 -> candidates.single()
             else -> {
                 candidates.firstOrNull { it.desc == desc(functionSymbol, it, context) } ?: candidates.first()
