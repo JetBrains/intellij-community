@@ -100,13 +100,17 @@ internal open class FileTemplatesLoader(project: Project?) : Disposable {
       }
 
       override fun pluginLoaded(pluginDescriptor: IdeaPluginDescriptor) {
-        managers.drop()
+        reloadTemplates()
       }
 
       override fun pluginUnloaded(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) {
-        managers.drop()
+        reloadTemplates()
       }
     })
+  }
+
+  protected open fun reloadTemplates() {
+    managers.drop()
   }
 
   override fun dispose() {

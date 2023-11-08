@@ -35,7 +35,7 @@ class FileTemplateSettings extends FileTemplatesLoader implements PersistentStat
     super(project);
   }
 
-  @Nullable
+  @NotNull
   @Override
   public Element getState() {
     Element element = new Element("fileTemplateSettings");
@@ -101,6 +101,13 @@ class FileTemplateSettings extends FileTemplatesLoader implements PersistentStat
         }
       }
     }
+  }
+
+  @Override
+  protected void reloadTemplates() {
+    Element state = getState();
+    super.reloadTemplates();
+    loadState(state);
   }
 
   private static void loadTemplate(Element element, FTManager manager) {
