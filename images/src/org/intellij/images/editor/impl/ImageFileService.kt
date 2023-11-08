@@ -3,6 +3,7 @@ package org.intellij.images.editor.impl
 
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import kotlinx.coroutines.*
@@ -11,7 +12,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.collectLatest
 import org.intellij.images.vfs.IfsUtil
 
-@Service(Service.Level.APP)
+@Service(Service.Level.PROJECT)
 internal class ImageFileService(
   private val coroutineScope: CoroutineScope,
 ) {
@@ -31,10 +32,19 @@ internal class ImageFileService(
 
     private val job = childScope.launch(CoroutineName("ImageFileLoader for $target")) {
       flow.collectLatest { file ->
-        val imageProvider = withContext(Dispatchers.IO) { IfsUtil.getImageProvider(file) }
-        val format = withContext(Dispatchers.IO) { IfsUtil.getFormat(file) }
-        withContext(Dispatchers.EDT) {
-          target.setImageProvider(imageProvider, format)
+        try {
+          val imageProvider = withContext(Dispatchers.IO) { IfsUtil.getImageProvider(file) }
+          val format = withContext(Dispatchers.IO) { IfsUtil.getFormat(file) }
+          withContext(Dispatchers.EDT) {
+            target.setImageProvider(imageProvider, format)
+          }
+        }
+        catch (e: CancellationException) {
+          throw e // We don't care why it's cancelled: the editor is disposed or the next request has arrived.
+        }
+        catch (e: Exception) { // Likely an I/O error.
+          LOG.warn("Exception when loading the image from $file", e)
+          target.setImageProvider(null, null)
         }
       }
     }
@@ -53,3 +63,5 @@ internal class ImageFileService(
   }
 
 }
+
+private val LOG = logger<ImageFileService>()

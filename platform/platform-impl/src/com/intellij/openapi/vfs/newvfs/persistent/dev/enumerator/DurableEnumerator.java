@@ -2,7 +2,9 @@
 package com.intellij.openapi.vfs.newvfs.persistent.dev.enumerator;
 
 import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.util.io.CleanableStorage;
 import com.intellij.util.io.DurableDataEnumerator;
+import com.intellij.util.io.Unmappable;
 import com.intellij.util.io.dev.appendonlylog.AppendOnlyLog;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.io.ScannableDataEnumeratorEx;
@@ -24,7 +26,9 @@ import java.io.IOException;
  */
 @ApiStatus.Internal
 public final class DurableEnumerator<V> implements DurableDataEnumerator<V>,
-                                                   ScannableDataEnumeratorEx<V> {
+                                                   ScannableDataEnumeratorEx<V>,
+                                                   CleanableStorage,
+                                                   Unmappable {
 
   public static final int DATA_FORMAT_VERSION = 1;
 
@@ -32,12 +36,12 @@ public final class DurableEnumerator<V> implements DurableDataEnumerator<V>,
 
   private final @NotNull KeyDescriptorEx<V> valueDescriptor;
 
-  //MAYBE RC: durable map is not _required_ here. We could go with:
-  //          1) in-memory map, transient & re-populated from log on each start
-  //          2) swappable in-memory/on-disk map, there on-disk part is transient and
-  //             map is re-populated from log on each start
-  //          3) on-disk map, durable between restarts re-populated from log only on
-  //             corruption
+  //Durable map is not _required_ here. We could go with:
+  // 1) in-memory map, transient & re-populated from log on each start
+  // 2) swappable in-memory/on-disk map, there on-disk part is transient and
+  //    map is re-populated from log on each start
+  // 3) on-disk map, durable between restarts re-populated from log only on
+  //    corruption
 
   private final @NotNull DurableIntToMultiIntMap valueHashToId;
 
@@ -54,25 +58,55 @@ public final class DurableEnumerator<V> implements DurableDataEnumerator<V>,
     //TODO RC: with mapped files we actually don't know are there any unsaved changes,
     //         since OS is responsible for that. We could force OS to flush the changes,
     //         but we couldn't ask are there changes.
-    //         I think return false is +/- safe option, since the data is almost always
-    //         'safe' (as long as OS doesn't crash), but it is a bit logically inconsistent:
+    //         I think return false is +/- safe option, since the data is almost always 'safe'
+    //         (as long as OS doesn't crash). But it is still a bit logically inconsistent:
     //         .isDirty() is supposed to return false if .force() has nothing to do, but
-    //         .force() still _can_ something, i.e. forcing OS to flush.
+    //         .force() still _can_ do something, i.e. forcing OS to flush.
     return false;
   }
 
   @Override
   public void force() throws IOException {
-    valuesLog.flush(true);
+    valuesLog.flush();
     valueHashToId.flush();
   }
 
   @Override
   public void close() throws IOException {
     ExceptionUtil.runAllAndRethrowAllExceptions(
-      new IOException("Can't close " + valuesLog + "/" + valueHashToId),
+      IOException.class,
+      () -> new IOException("Can't close " + valuesLog + "/" + valueHashToId),
       valuesLog::close,
       valueHashToId::close
+    );
+  }
+
+  @Override
+  public void closeAndUnsafelyUnmap() throws IOException {
+    close();
+    ExceptionUtil.runAllAndRethrowAllExceptions(
+      IOException.class,
+      () -> new IOException("Can't .closeAndUnsafelyUnmap() " + valuesLog + "/" + valueHashToId),
+      () -> {
+        if (valuesLog instanceof Unmappable) {
+          ((Unmappable)valuesLog).closeAndUnsafelyUnmap();
+        }
+      },
+      () -> {
+        if (valueHashToId instanceof Unmappable) {
+          ((Unmappable)valueHashToId).closeAndUnsafelyUnmap();
+        }
+      }
+    );
+  }
+
+  @Override
+  public void closeAndClean() throws IOException {
+    ExceptionUtil.runAllAndRethrowAllExceptions(
+      IOException.class,
+      () -> new IOException("Can't closeAndClean " + valuesLog + "/" + valueHashToId),
+      valuesLog::closeAndClean,
+      valueHashToId::closeAndClean
     );
   }
 

@@ -92,6 +92,9 @@ public final class SvnVcs extends AbstractVcs {
   private static final @NlsSafe @NotNull String VCS_SHORT_DISPLAY_NAME = "SVN";
 
   private static final VcsKey ourKey = createKey(VCS_NAME);
+
+  @Topic.ProjectLevel
+  @Topic.AppLevel
   public static final Topic<Runnable> WC_CONVERTED = new Topic<>("WC_CONVERTED", Runnable.class);
 
   private CheckinEnvironment myCheckinEnvironment;

@@ -1,33 +1,28 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.customize.transferSettings.ui.representation.ideVersion.sections
 
+import com.intellij.ide.IdeBundle
 import com.intellij.ide.customize.transferSettings.models.SettingsPreferences
 import com.intellij.ide.customize.transferSettings.models.SettingsPreferencesKind
 import com.intellij.ide.customize.transferSettings.ui.representation.ideVersion.TransferSettingsIdeRepresentationListener
 import com.intellij.openapi.observable.properties.AtomicBooleanProperty
 import com.intellij.openapi.ui.DialogPanel
-import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.ui.ActiveComponent
 import com.intellij.ui.awt.RelativePoint
-import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
-import com.intellij.ui.popup.AbstractPopup
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.EventDispatcher
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
-import java.util.EventListener
-import javax.swing.Icon
-import javax.swing.JComponent
-import javax.swing.JLabel
 import org.jetbrains.annotations.Nls
 import java.awt.Dimension
 import java.awt.Point
-import java.awt.Rectangle
+import javax.swing.Icon
+import javax.swing.JComponent
+import javax.swing.JLabel
 
 abstract class IdeRepresentationSection(private val prefs: SettingsPreferences,
                                         final override val key: SettingsPreferencesKind,
@@ -41,7 +36,7 @@ abstract class IdeRepresentationSection(private val prefs: SettingsPreferences,
   protected open val disabledCheckboxText: String? = null
   private val leftGap = 20
   private var morePanelFactory: ((AtomicBooleanProperty) -> JComponent)? = null
-  private var moreLabel: String = "More.."
+  private var moreLabel: @Nls String = IdeBundle.message("transfer-settings.sections.more")
 
   val isSelected: Boolean by _isSelected
 

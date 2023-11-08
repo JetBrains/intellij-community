@@ -81,8 +81,7 @@ public class ExternalSystemResolveProjectTask extends AbstractExternalSystemTask
   @SuppressWarnings("unchecked")
   protected void doExecute() throws Exception {
     ExternalSystemProgressNotificationManagerImpl progressNotificationManager =
-      (ExternalSystemProgressNotificationManagerImpl)ApplicationManager.getApplication()
-        .getService(ExternalSystemProgressNotificationManager.class);
+      (ExternalSystemProgressNotificationManagerImpl)ExternalSystemProgressNotificationManager.getInstance();
     ExternalSystemTaskId id = getId();
 
     Project ideProject;

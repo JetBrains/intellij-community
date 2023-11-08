@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow.value;
 
 import com.intellij.codeInspection.dataFlow.types.DfType;
@@ -29,8 +29,7 @@ public interface DerivedVariableDescriptor extends VariableDescriptor {
    * @param dfType of the qualifier
    * @return en extracted DfType
    */
-  @NotNull
-  default DfType getFromQualifier(@NotNull DfType dfType) {
+  default @NotNull DfType getFromQualifier(@NotNull DfType dfType) {
     return dfType.getDerivedValues().getOrDefault(this, DfType.TOP);
   }
 
@@ -42,8 +41,7 @@ public interface DerivedVariableDescriptor extends VariableDescriptor {
    * @return a DfaValue which represents this special field
    */
   @Override
-  @NotNull
-  default DfaValue createValue(@NotNull DfaValueFactory factory, @Nullable DfaValue qualifier) {
+  default @NotNull DfaValue createValue(@NotNull DfaValueFactory factory, @Nullable DfaValue qualifier) {
     if (qualifier == null) {
       return factory.fromDfType(getDefaultValue());
     }

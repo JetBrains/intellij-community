@@ -23,14 +23,7 @@ class MavenModuleBuilderSameFolderAsParentTest : MavenMultiVersionImportingTestC
   private var myBuilder: AbstractMavenModuleBuilder? = null
 
   override fun runInDispatchThread() = false
-
-  override fun tearDown() {
-    runAll(
-      ThrowableRunnable<Throwable> { stopMavenImportManager() },
-      ThrowableRunnable<Throwable> { super.tearDown() }
-    )
-  }
-
+  
   override fun setUp() {
     super.setUp()
     myBuilder = MavenJavaModuleBuilder()
@@ -61,7 +54,6 @@ class MavenModuleBuilderSameFolderAsParentTest : MavenMultiVersionImportingTestC
   @Test
   fun testSameFolderAsParent() = runBlocking {
     configConfirmationForYesAnswer()
-    Assume.assumeFalse(Registry.`is`("maven.linear.import"))
     val customPomXml = createProjectSubFile("custompom.xml", createPomXml(
       """
         <groupId>test</groupId>

@@ -1,17 +1,4 @@
 // "Fix all 'Redundant embedded expression in string template' problems in file" "true"
-package java.lang;
-import java.util.*;
-public interface StringTemplate {
-  List<String> fragments();
-  List<Object> values();
-  native static StringTemplate of(String string);
-  Processor<String, RuntimeException> STR;
-  Processor<StringTemplate, RuntimeException> RAW;
-  interface Processor<R, E extends Throwable> {
-    R process(StringTemplate stringTemplate) throws E;
-  }
-}
-
 class Test {
   public static void main(String[] args) {
     System.out.println(STR."hello|null|world");

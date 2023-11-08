@@ -141,6 +141,7 @@
     <extensionPoint name="projectTemplate"
                     beanClass="com.intellij.platform.ProjectTemplateEP" dynamic="true"/>
 
+    <extensionPoint name="ideStartupWizard" interface="com.intellij.platform.ide.bootstrap.IdeStartupWizard" dynamic="false"/>
     <extensionPoint name="ApplicationLoadListener" interface="com.intellij.ide.ApplicationLoadListener" dynamic="false"/>
     <extensionPoint name="ideEventQueueDispatcher" interface="com.intellij.ide.IdeEventQueue$EventDispatcher" dynamic="true"/>
 
@@ -216,6 +217,10 @@
     <extensionPoint name="generalOptionsProvider" beanClass="com.intellij.ide.GeneralSettingsConfigurableEP">
       <with attribute="instance" implements="com.intellij.openapi.options.SearchableConfigurable"/>
     </extensionPoint>
+
+    <extensionPoint name="projectCustomDataSynchronizer" interface="com.intellij.openapi.project.ProjectCustomDataSynchronizer" dynamic="true"/>
+    <extensionPoint name="virtualFileCustomDataProvider" interface="com.intellij.openapi.vfs.VirtualFileCustomDataProvider" dynamic="true"/>
+    <extensionPoint name="virtualFileCustomDataConsumer" interface="com.intellij.openapi.vfs.VirtualFileCustomDataConsumer" dynamic="true"/>
 
     <extensionPoint name="statusBarWidgetProvider" interface="com.intellij.openapi.wm.StatusBarWidgetProvider" dynamic="true"/>
     <extensionPoint name="statusBarWidgetFactory" interface="com.intellij.openapi.wm.StatusBarWidgetFactory" dynamic="true"/>
@@ -293,6 +298,7 @@
 
     <extensionPoint name="customPluginRepoContributor" interface="com.intellij.ide.plugins.CustomPluginRepoContributor" dynamic="true"/>
     <extensionPoint name="pluginRepositoryAuthProvider" interface="com.intellij.ide.plugins.auth.PluginRepositoryAuthProvider" dynamic="true"/>
+    <extensionPoint name="pluginsViewCustomizer" interface="com.intellij.ide.plugins.newui.PluginsViewCustomizer" dynamic="true"/>
 
     <extensionPoint name="ui.suitableFontProvider" interface="com.intellij.ui.SuitableFontProvider" dynamic="true"/>
 
@@ -398,6 +404,7 @@
 
     <extensionPoint name="experimentalFeature" beanClass="com.intellij.openapi.application.ExperimentalFeatureImpl" dynamic="true" />
     <extensionPoint name="themeProvider" beanClass="com.intellij.ide.ui.UIThemeProvider" dynamic="true"/>
+    <extensionPoint name="themeRemapper" interface="com.intellij.ide.ui.laf.UiThemeRemapper" dynamic="true"/>
     <extensionPoint name="dateTimeFormatter" beanClass="com.intellij.util.text.DateTimeFormatterBean" dynamic="true"/>
     <extensionPoint name="themeMetadataProvider" beanClass="com.intellij.ide.ui.UIThemeMetadataProvider" dynamic="true"/>
     <extensionPoint name="iconMapper" beanClass="com.intellij.ide.ui.IconMapperBean" dynamic="true"/>
@@ -506,7 +513,8 @@
     <extensionPoint name="warmupConfigurator" interface="com.intellij.ide.warmup.WarmupConfigurator" dynamic="true" />
     <extensionPoint name="warmupLogger" interface="com.intellij.ide.warmup.WarmupLogger" dynamic="true" />
 
-    <extensionPoint name="activityInProgressPredicate" interface="com.intellij.ide.observation.ActivityInProgressPredicate" dynamic="true" />
+    <extensionPoint name="activityTracker" interface="com.intellij.platform.backend.observation.ActivityTracker"
+                    dynamic="true"/>
 
     <extensionPoint name="internal.ml.featureProvider" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.internal.ml.MLFeatureProvider"/>
@@ -532,5 +540,10 @@
     <extensionPoint name="uiDslRendererProvider" interface="com.intellij.ui.dsl.listCellRenderer.UiDslRendererProvider" dynamic="true"/>
 
     <extensionPoint name="notificationRouter" interface="com.intellij.notification.NotificationRouter" dynamic="true"/>
+
+    <!-- Settings Transfer -->
+    <extensionPoint name="transferSettings.vscode.pluginMapping"
+                    interface="com.intellij.ide.customize.transferSettings.providers.vscode.mappings.VSCodePluginMapping"
+                    dynamic="true" />
   </extensionPoints>
 </idea-plugin>

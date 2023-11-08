@@ -3,9 +3,10 @@ package org.jetbrains.plugins.gitlab.mergerequest.ui.filters
 
 import com.intellij.collaboration.async.throwFailure
 import com.intellij.collaboration.ui.codereview.Avatar
-import com.intellij.collaboration.ui.codereview.list.search.ChooserPopupUtil
 import com.intellij.collaboration.ui.codereview.list.search.DropDownComponentFactory
 import com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchPanelFactory
+import com.intellij.collaboration.ui.util.popup.ChooserPopupUtil
+import com.intellij.collaboration.ui.util.popup.PopupItemPresentation
 import com.intellij.ui.awt.RelativePoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
@@ -90,7 +91,7 @@ internal class GitLabFiltersPanelFactory(
       ChooserPopupUtil.showAsyncChooserPopup(
         point,
         itemsLoader = vm.labels.throwFailure().map { labels -> labels.map { label -> LabelFilterValue(label.title) } },
-        presenter = { labelFilterValue -> ChooserPopupUtil.PopupItemPresentation.Simple(shortText = labelFilterValue.title) }
+        presenter = { labelFilterValue -> PopupItemPresentation.Simple(shortText = labelFilterValue.title) }
       )
     }
   )
@@ -115,7 +116,7 @@ internal class GitLabFiltersPanelFactory(
   ): GitLabUserDTO? = ChooserPopupUtil.showAsyncChooserPopup(
     point, itemsLoader = participantsLoader,
     presenter = { user ->
-      ChooserPopupUtil.PopupItemPresentation.Simple(shortText = user.name, icon = vm.avatarIconsProvider.getIcon(user, Avatar.Sizes.BASE))
+      PopupItemPresentation.Simple(shortText = user.name, icon = vm.avatarIconsProvider.getIcon(user, Avatar.Sizes.BASE))
     })
 
   companion object {

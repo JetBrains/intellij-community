@@ -20,14 +20,11 @@ import com.intellij.openapi.vfs.newvfs.persistent.intercept.*;
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLogEx;
 import com.intellij.openapi.vfs.newvfs.persistent.recovery.VFSRecoveryInfo;
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
+import com.intellij.serviceContainer.AlreadyDisposedException;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.FlushingDaemon;
-import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.hash.ContentHashEnumerator;
-import com.intellij.util.io.DataEnumeratorEx;
-import com.intellij.util.io.ScannableDataEnumeratorEx;
-import com.intellij.util.io.SimpleStringPersistentEnumerator;
-import com.intellij.util.io.StorageLockContext;
+import com.intellij.util.io.*;
 import com.intellij.util.io.storage.CapacityAllocationPolicy;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.io.storage.RefCountingContentStorage;
@@ -50,6 +47,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.Future;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -67,10 +65,8 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 public final class PersistentFSConnection {
   private static final Logger LOG = Logger.getInstance(PersistentFSConnection.class);
 
-  static final int RESERVED_ATTR_ID = DataEnumeratorEx.NULL_ID;
+  static final int RESERVED_ATTR_ID = DataEnumerator.NULL_ID;
   static final AttrPageAwareCapacityAllocationPolicy REASONABLY_SMALL = new AttrPageAwareCapacityAllocationPolicy();
-
-  private static final boolean USE_GENTLE_FLUSHER = getBooleanProperty("vfs.flushing.use-gentle-flusher", true);
 
   /**
    * After how many errors ('corruptions') insist on restarting IDE? I.e. we schedule
@@ -79,6 +75,24 @@ public final class PersistentFSConnection {
    * restart now, since that many errors severely affect IDE operation.
    */
   private static final int INSIST_TO_RESTART_AFTER_ERRORS_COUNT = getIntProperty("vfs.insist-to-restart-after-n-errors", 1000);
+
+  /**
+   * If true, each flush writes connectionStatus=SAFELY_CLOSED, if false -- only actual .close() writes SAFELY_CLOSED.
+   * <br/>
+   * SAFELY_CLOSED on flush is almost impossible to make strictly correct -- because modifications could run in
+   * parallel with flush itself, hence at the moment records.connectionStatus set to SAFELY_CLOSED -- some other
+   * storage could be in the middle of modification, i.e. in 'not safe state'. If at that moment IDE crashes/is
+   * killed -- we've got VFS with 'safely closed' status, but likely corrupted state. To avoid such a scenario
+   * we need to lock flush _and_ all modifications -- which is clearly undesirable.
+   * SAFELY_CLOSED_ON_EACH_FLUSH=false is the only 'safe' option -- but it is also the option that triggers
+   * more VFS rebuilds on improper IDE shutdowns -- which make users sad and sorrow. Ideally, we could avoid
+   * some/all of those VFS rebuilds if we are able to scan VFS and see is it really corrupted (and, maybe,
+   * even fix some corruptions) -- but this is a big topic itself.
+   * So the tradeoff: if we're able to avoid most of 'unnecessary' VFS rebuilds even with after improper shutdowns
+   * -- this flag should be 'false', since it is the most correct option. Otherwise set it to 'true', and hope for
+   * the best
+   */
+  private static final boolean SAFELY_CLOSED_ON_EACH_FLUSH = getBooleanProperty("vfs.safely-closed-on-flush", true);
 
 
   private final @NotNull NotNullLazyValue<? extends IntList> freeRecords;
@@ -101,9 +115,8 @@ public final class PersistentFSConnection {
 
   private final @Nullable VfsLogEx vfsLog;
 
-  private volatile boolean dirty;
-
-  private final @Nullable Closeable flushingTask;
+  private volatile boolean dirty = false;
+  private volatile boolean closed = false;
 
   /** How many errors were detected (during the use) that are likely caused by VFS corruptions -- i.e. broken internal invariants */
   private final AtomicInteger corruptionsDetected = new AtomicInteger();
@@ -138,18 +151,9 @@ public final class PersistentFSConnection {
     this.freeRecords = freeRecords;
     this.enumeratedAttributes = enumeratedAttributes;
     recoveryInfo = info;
-
-    if (FSRecords.BACKGROUND_VFS_FLUSH) {
-      //MAYBE RC: move the flushing up, to FSRecordsImpl?
-      final ScheduledExecutorService scheduler = AppExecutorUtil.getAppScheduledExecutorService();
-      flushingTask = USE_GENTLE_FLUSHER ?
-                     new GentleVFSFlusher(scheduler) :
-                     new ClassicVFSFlusher(scheduler);
-    }
-    else {
-      flushingTask = null;
-    }
   }
+
+  //It is 'second level' of wrapping, not really used today, but for the bright future:
 
   private static RefCountingContentStorage wrapContents(RefCountingContentStorage contents, List<ConnectionInterceptor> interceptors) {
     var contentInterceptors = interceptors.stream()
@@ -242,11 +246,21 @@ public final class PersistentFSConnection {
     }
   }
 
-  int getModificationCount() {
-    return records.getGlobalModCount();
+  private void resetDirty(boolean markSafelyClosed) throws IOException {
+    // no synchronization, it's ok to have race here
+    if (dirty) {
+      dirty = false;
+      if (markSafelyClosed) {
+        records.setConnectionStatus(PersistentFSHeaders.SAFELY_CLOSED_MAGIC);
+      }
+    }
   }
 
   void doForce() throws IOException {
+    doForce(/*markSafelyClosed: */ SAFELY_CLOSED_ON_EACH_FLUSH);
+  }
+
+  private void doForce(boolean markSafelyClosed) throws IOException {
     if (namesEnumerator instanceof Forceable) {
       ((Forceable)namesEnumerator).force();
     }
@@ -255,25 +269,29 @@ public final class PersistentFSConnection {
     if (contentHashesEnumerator != null) {
       contentHashesEnumerator.force();
     }
-    writeConnectionState();
+    resetDirty(/*markSafelyClosed: */ markSafelyClosed);
     records.force();
   }
 
   public boolean isDirty() {
-    return dirty || ((Forceable)namesEnumerator).isDirty() || attributesStorage.isDirty() || contentStorage.isDirty() || records.isDirty() ||
-           contentHashesEnumerator != null && contentHashesEnumerator.isDirty();
+    return dirty
+           || ((Forceable)namesEnumerator).isDirty()
+           || attributesStorage.isDirty()
+           || contentStorage.isDirty()
+           || records.isDirty()
+           || (contentHashesEnumerator != null && contentHashesEnumerator.isDirty());
   }
 
   int corruptionsDetected() {
     return corruptionsDetected.get();
   }
 
-  void close() throws IOException {
-    if (flushingTask != null) {
-      flushingTask.close();
+  synchronized void close() throws IOException {
+    if (closed) {
+      return;
     }
 
-    doForce();
+    doForce(/*markSafelyClosed: */ true);
 
     //ensure async loading is finished
     Exception freeRecordsLoadingError = ExceptionUtil.runAndCatch(() -> freeRecords.getValue());
@@ -287,6 +305,7 @@ public final class PersistentFSConnection {
                   contentHashesEnumerator,
                   contentStorage,
                   vfsLog);
+    closed = true;
   }
 
 
@@ -335,16 +354,6 @@ public final class PersistentFSConnection {
     }
   }
 
-  private void writeConnectionState() throws IOException {
-    // no synchronization, it's ok to have race here
-    if (dirty) {
-      dirty = false;
-      records.setConnectionStatus(corruptionsDetected.get() > 0 ?
-                                  PersistentFSHeaders.CORRUPTED_MAGIC :
-                                  PersistentFSHeaders.SAFELY_CLOSED_MAGIC);
-    }
-  }
-
   int getAttributeId(@NotNull String attributeId) {
     int enumeratedAttributeId = enumeratedAttributes.enumerate(attributeId);
     if (enumeratedAttributeId > AbstractAttributesStorage.MAX_ATTRIBUTE_ID) {
@@ -365,7 +374,7 @@ public final class PersistentFSConnection {
         if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
           showCorruptionNotification(/*insist: */ false);
         }
-        doForce();//forces connectionStatus=CORRUPTED to be written on disk
+        doForce();//forces ErrorsAccumulated to be written on disk
       }
       else if (corruptions % INSIST_TO_RESTART_AFTER_ERRORS_COUNT == INSIST_TO_RESTART_AFTER_ERRORS_COUNT - 1) {
         if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
@@ -469,37 +478,50 @@ public final class PersistentFSConnection {
     }
   }
 
+  static @NotNull Closeable startFlusher(@NotNull ScheduledExecutorService scheduler,
+                                         @NotNull PersistentFSConnection connection,
+                                         boolean gentleFlusher) {
+    return gentleFlusher ?
+           new GentleVFSFlusher(connection, scheduler) :
+           new ClassicVFSFlusher(connection, scheduler);
+  }
+
   /**
    * Legacy flushing implementation: do some basic precautions against contention, i.e. wait for a period without modifications
    */
-  private final class ClassicVFSFlusher implements Runnable, Closeable {
+  private static class ClassicVFSFlusher implements Runnable, Closeable {
 
     /** How often, on average, flush each index to the disk */
     public static final long FLUSHING_PERIOD_MS = SECONDS.toMillis(5);
+    private final PersistentFSConnection connection;
 
     private int lastModCount;
     private final Future<?> scheduledFuture;
 
 
-    private ClassicVFSFlusher(final @NotNull ScheduledExecutorService scheduler) {
+    private ClassicVFSFlusher(@NotNull PersistentFSConnection connection,
+                              @NotNull ScheduledExecutorService scheduler) {
       this.scheduledFuture = scheduler.scheduleWithFixedDelay(this, FLUSHING_PERIOD_MS, FLUSHING_PERIOD_MS, MILLISECONDS);
+      this.connection = connection;
     }
 
     @Override
     public void run() {
-      if (lastModCount == records.getGlobalModCount()) {
-        if (isDirty() && !HeavyProcessLatch.INSTANCE.isRunning()) {
+      if (lastModCount == connection.records.getGlobalModCount()) {
+        if (connection.isDirty() && !HeavyProcessLatch.INSTANCE.isRunning()) {
           try {
-            doForce();
+            connection.doForce();
           }
-          catch (IOException e) {
-
-            markAsCorruptedAndScheduleRebuild(e);
-            ExceptionUtil.rethrow(e);
+          catch (AlreadyDisposedException | RejectedExecutionException e){
+            LOG.warn("Stop flushing: pool is shutting down or whole application is closing", e);
+            scheduledFuture.cancel(false);
+          }
+          catch (Throwable t) {
+            LOG.error("Unhandled exception during flush (reschedule regularly)", t);
           }
         }
       }
-      lastModCount = records.getGlobalModCount();
+      lastModCount = connection.records.getGlobalModCount();
     }
 
     @Override
@@ -510,10 +532,12 @@ public final class PersistentFSConnection {
 
   /**
    * Gentle flusher impl: uses storage lock .getQueueLength() to determine potential contention and limit it.
+   * TODO RC: actually with most of the storages in VFS is memory-mapped-file-based now, this Flusher becomes
+   *          almost equivalent to ClassicVFSFlusher -- but way more complex.
    * <p>
    * More details in a {@link GentleFlusherBase} javadocs
    */
-  private final class GentleVFSFlusher extends GentleFlusherBase {
+  private static class GentleVFSFlusher extends GentleFlusherBase {
     /** How often, on average, flush each index to the disk */
     private static final long FLUSHING_PERIOD_MS = SECONDS.toMillis(FlushingDaemon.FLUSHING_PERIOD_IN_SECONDS);
 
@@ -522,17 +546,20 @@ public final class PersistentFSConnection {
     private static final int INITIAL_CONTENTION_QUOTA = 16;
     private static final int MAX_CONTENTION_QUOTA = 32;
 
+    private final PersistentFSConnection connection;
 
     private int lastModCount;
 
     private long lastSuccessfulFlushTimestampMs = 0;
 
-    private GentleVFSFlusher(final @NotNull ScheduledExecutorService scheduler) {
+    private GentleVFSFlusher(@NotNull PersistentFSConnection connection,
+                             @NotNull ScheduledExecutorService scheduler) {
       super("VFSFlusher",
             scheduler, FLUSHING_PERIOD_MS,
             MIN_CONTENTION_QUOTA, MAX_CONTENTION_QUOTA, INITIAL_CONTENTION_QUOTA,
             TelemetryManager.getInstance().getMeter(Indexes)
       );
+      this.connection = connection;
     }
 
     @Override
@@ -542,7 +569,7 @@ public final class PersistentFSConnection {
       //    them -- and (regular) flush is less important than e.g. a current UI task. So we
       //    attempt to flush only if there were _no updates_ in VFS since the last invocation
       //    of this method:
-      final int currentModCount = records.getGlobalModCount();
+      int currentModCount = connection.records.getGlobalModCount();
       if (lastModCount != currentModCount) {
         lastModCount = currentModCount;
         return true;
@@ -552,7 +579,7 @@ public final class PersistentFSConnection {
 
     @Override
     protected FlushResult flushAsMuchAsPossibleWithinQuota(final /*InOut*/ IntRef contentionQuota) throws IOException {
-      if (!isDirty()) {
+      if (!connection.isDirty()) {
         return FlushResult.NOTHING_TO_FLUSH_NOW;
       }
 
@@ -569,8 +596,8 @@ public final class PersistentFSConnection {
 
         //RC: code below is a copy of doFlush() method, but interleaved with contention quota checking:
 
-        if (namesEnumerator instanceof Forceable) {
-          ((Forceable)namesEnumerator).force();
+        if (connection.namesEnumerator instanceof Forceable) {
+          ((Forceable)connection.namesEnumerator).force();
 
           unspentContentionQuota -= competingThreads();
           if (unspentContentionQuota < 0) {
@@ -578,22 +605,22 @@ public final class PersistentFSConnection {
           }
         }
 
-        attributesStorage.force();
+        connection.attributesStorage.force();
 
         unspentContentionQuota -= competingThreads();
         if (unspentContentionQuota < 0) {
           return FlushResult.HAS_MORE_TO_FLUSH;
         }
 
-        contentStorage.force();
+        connection.contentStorage.force();
 
         unspentContentionQuota -= competingThreads();
         if (unspentContentionQuota < 0) {
           return FlushResult.HAS_MORE_TO_FLUSH;
         }
 
-        if (contentHashesEnumerator != null) {
-          contentHashesEnumerator.force();
+        if (connection.contentHashesEnumerator != null) {
+          connection.contentHashesEnumerator.force();
 
           unspentContentionQuota -= competingThreads();
           if (unspentContentionQuota < 0) {
@@ -601,8 +628,14 @@ public final class PersistentFSConnection {
           }
         }
 
-        writeConnectionState();
-        records.force();
+        //Actually, this is no strictly correct: we can set SAFELY_CLOSED only if we just flush _all_ storages,
+        // but it is impossible to guarantee storages just flushed are not modified again already -- so it is
+        // possible to set SAFELY_CLOSED here while some storages are in the middle of modification, and not
+        // in a 'safe' state.
+        if (SAFELY_CLOSED_ON_EACH_FLUSH) {
+          connection.records.setConnectionStatus(PersistentFSHeaders.SAFELY_CLOSED_MAGIC);
+        }
+        connection.records.force();
 
         unspentContentionQuota -= competingThreads();
 
@@ -616,23 +649,22 @@ public final class PersistentFSConnection {
 
     @Override
     public boolean hasSomethingToFlush() {
-      return isDirty();
+      return connection.isDirty();
     }
 
     private static int competingThreads() {
-      //TODO RC: this is a bit of a hack -- I rely on the implicit knowledge that now all storages use
-      //         PagedFileStorage under the hood, and PFS uses StorageLockContext default instance. This
-      //         is not true for other implementations of underlying storages: i.e. FilePageCacheLockFree,
-      //         and/or memory-mapped file based. Hence, this estimation will gradually lose applicability
-      //         as we will transition to those new storages implementation.
+      //FIXME RC: this is totally incorrect now: code relies on implicit knowledge that all storages use
+      //          PagedFileStorage under the hood, and PFS uses StorageLockContext default instance. This
+      //          is not true anymore, since VFS uses either FilePageCacheLockFree or mmapped-file based
+      //          storages now:
 
-      final ReentrantReadWriteLock storageLock = StorageLockContext.defaultContextLock();
+      ReentrantReadWriteLock storageLock = StorageLockContext.defaultContextLock();
 
       if (storageLock.isWriteLocked()) {
         return storageLock.getQueueLength() + 1;
       }
       else {
-        final int readers = storageLock.getReadLockCount();
+        int readers = storageLock.getReadLockCount();
         return storageLock.getQueueLength() + readers;
       }
     }

@@ -4,11 +4,9 @@ package com.intellij.openapi.vfs.newvfs.persistent.dev.enumerator;
 import com.intellij.openapi.util.IntRef;
 import com.intellij.openapi.vfs.newvfs.persistent.VFSAsyncTaskExecutor;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.appendonlylog.AppendOnlyLogFactory;
-import com.intellij.util.io.DurableDataEnumerator;
+import com.intellij.util.io.*;
 import com.intellij.util.io.dev.StorageFactory;
 import com.intellij.util.io.dev.appendonlylog.AppendOnlyLog;
-import com.intellij.util.io.IOUtil;
-import com.intellij.util.io.ScannableDataEnumeratorEx;
 import com.intellij.util.io.dev.intmultimaps.Int2IntMultimap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -31,7 +29,8 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  */
 @ApiStatus.Internal
 public final class DurableStringEnumerator implements DurableDataEnumerator<String>,
-                                                      ScannableDataEnumeratorEx<String> {
+                                                      ScannableDataEnumeratorEx<String>,
+                                                      Unmappable, CleanableStorage {
 
   public static final int DATA_FORMAT_VERSION = 1;
 
@@ -76,8 +75,11 @@ public final class DurableStringEnumerator implements DurableDataEnumerator<Stri
   }
 
   private static final StorageFactory<? extends AppendOnlyLog> VALUES_LOG_FACTORY = AppendOnlyLogFactory
-    .withPageSize(PAGE_SIZE)
-    .failIfDataFormatVersionNotMatch(DATA_FORMAT_VERSION);
+    .withDefaults()
+    .pageSize(PAGE_SIZE)
+    .failIfDataFormatVersionNotMatch(DATA_FORMAT_VERSION)
+    .checkIfFileCompatibleEagerly(true)
+    .cleanFileIfIncompatible();
 
   public static @NotNull DurableStringEnumerator open(@NotNull Path storagePath) throws IOException {
     return VALUES_LOG_FACTORY.wrapStorageSafely(
@@ -115,7 +117,7 @@ public final class DurableStringEnumerator implements DurableDataEnumerator<Stri
 
   @Override
   public void force() throws IOException {
-    valuesLog.flush(true);
+    valuesLog.flush();
   }
 
   @Override
@@ -194,6 +196,19 @@ public final class DurableStringEnumerator implements DurableDataEnumerator<Stri
     valuesLog.close();
   }
 
+  @Override
+  public void closeAndUnsafelyUnmap() throws IOException {
+    close();
+    if (valuesLog instanceof Unmappable) {
+      ((Unmappable)valuesLog).closeAndUnsafelyUnmap();
+    }
+  }
+
+  @Override
+  public void closeAndClean() throws IOException {
+    close();
+    valuesLog.closeAndClean();
+  }
 
   // ===================== implementation: =============================================================== //
 

@@ -9,9 +9,17 @@ import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
+import com.intellij.openapi.util.Key
+import javax.swing.Icon
 import javax.swing.JComponent
 
 abstract class ExpandableComboAction : AnAction(), CustomComponentAction {
+
+  companion object {
+    @JvmField val LEFT_ICONS_KEY = Key.create<List<Icon>>("leftIcons")
+    @JvmField val RIGHT_ICONS_KEY = Key.create<List<Icon>>("rightIcons")
+  }
+
   override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
     val model = MyPopupModel()
     model.addActionListener { actionEvent ->
@@ -30,6 +38,10 @@ abstract class ExpandableComboAction : AnAction(), CustomComponentAction {
       })
       popup.showUnderneathOf(combo)
     }
+    return createToolbarComboButton(model)
+  }
+
+  protected open fun createToolbarComboButton(model: ToolbarComboButtonModel): ToolbarComboButton {
     return ToolbarComboButton(model)
   }
 
@@ -39,7 +51,7 @@ abstract class ExpandableComboAction : AnAction(), CustomComponentAction {
     e.project?.let { createPopup(e)?.showCenteredInCurrentWindow(it) }
   }
 
-  private class MyPopupModel: DefaultToolbarComboButtonModel() {
+  private class MyPopupModel : DefaultToolbarComboButtonModel() {
     var isPopupShown: Boolean = false
 
     override fun isSelected(): Boolean {

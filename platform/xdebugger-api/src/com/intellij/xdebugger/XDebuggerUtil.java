@@ -11,8 +11,10 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.Processor;
 import com.intellij.xdebugger.breakpoints.*;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroupingRule;
@@ -23,7 +25,6 @@ import com.intellij.xdebugger.settings.XDebuggerSettings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Comparator;
 import java.util.List;
 
 public abstract class XDebuggerUtil {
@@ -103,12 +104,6 @@ public abstract class XDebuggerUtil {
 
   public abstract <B extends XLineBreakpoint<?>> List<XBreakpointGroupingRule<B, ?>> getGroupingByFileRuleAsList();
 
-  /**
-   * @deprecated use {@link XBreakpointType#getBreakpointComparator()}
-   */
-  @Deprecated(forRemoval = true)
-  public abstract <B extends XBreakpoint<?>> Comparator<B> getDefaultBreakpointComparator(XBreakpointType<B, ?> type);
-
   public abstract <T extends XDebuggerSettings<?>> T getDebuggerSettings(Class<T> aClass);
 
   @Nullable
@@ -135,4 +130,10 @@ public abstract class XDebuggerUtil {
   public abstract XExpression createExpression(@NotNull String text, Language language, String custom, @NotNull EvaluationMode mode);
 
   public abstract void logStack(@NotNull XSuspendContext suspendContext, @NotNull XDebugSession session);
+
+  public static final String INLINE_BREAKPOINTS_KEY = "debugger.show.breakpoints.inline";
+
+  public static boolean areInlineBreakpointsEnabled() {
+    return Registry.is(INLINE_BREAKPOINTS_KEY) && PlatformUtils.isIntelliJ();
+  }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.analysis.AnalysisBundle;
@@ -22,9 +22,8 @@ import java.util.List;
 import java.util.Set;
 
 public class InconsistentLineSeparatorsInspection extends LocalInspectionTool {
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(final @NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new PsiElementVisitor() {
       @Override
       public void visitFile(@NotNull PsiFile file) {
@@ -56,10 +55,8 @@ public class InconsistentLineSeparatorsInspection extends LocalInspectionTool {
   }
 
   private static class ChangeLineSeparatorFix implements LocalQuickFix {
-    @NotNull
-    @IntentionFamilyName
     @Override
-    public String getFamilyName() {
+    public @NotNull @IntentionFamilyName String getFamilyName() {
       return AnalysisBundle.message("intention.family.name.convert.to.project.line.separators");
     }
 

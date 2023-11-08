@@ -69,7 +69,6 @@ public interface IXMLEntityResolver {
    */
   Reader getEntity(StdXMLReader xmlReader, String name) throws XMLParseException;
 
-
   /**
    * Returns true if an entity is external.
    *

@@ -1,6 +1,6 @@
 <component name="libraryTable">
   <library name="maven-resolver-provider" type="repository">
-    <properties jar-repository-id="central-proxy" maven-id="org.apache.maven:maven-resolver-provider:3.8.8">
+    <properties maven-id="org.apache.maven:maven-resolver-provider:3.8.8">
       <verification>
         <artifact url="file://$MAVEN_REPOSITORY$/org/apache/maven/maven-resolver-provider/3.8.8/maven-resolver-provider-3.8.8.jar">
           <sha256sum>197a8a6e7c7df66dd1fa70bb495ac7616f0e96f43d354d69ff4794d725d47427</sha256sum>

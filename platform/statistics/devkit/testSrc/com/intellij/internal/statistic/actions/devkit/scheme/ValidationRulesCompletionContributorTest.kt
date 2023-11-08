@@ -2,8 +2,10 @@
 package com.intellij.internal.statistic.actions.devkit.scheme
 
 import com.intellij.codeInsight.lookup.Lookup
+import com.intellij.internal.statistic.devkit.actions.scheme.EVENTS_TEST_SCHEME_VALIDATION_RULES_KEY
 import com.intellij.internal.statistic.devkit.actions.scheme.EventsSchemeJsonSchemaProviderFactory
 import com.intellij.internal.statistic.devkit.actions.scheme.EventsTestSchemeGroupConfiguration
+import com.intellij.internal.statistic.devkit.actions.scheme.PREFIXES
 import com.intellij.internal.statistic.devkit.actions.scheme.ValidationRulesCompletionContributor
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.UsefulTestCase
@@ -22,7 +24,7 @@ class ValidationRulesCompletionContributorTest : BasePlatformTestCase() {
     markValidationRulesFile(file)
     myFixture.completeBasic()
     val strings = myFixture.lookupElementStrings!!
-    UsefulTestCase.assertContainsElements(strings, ValidationRulesCompletionContributor.PREFIXES)
+    UsefulTestCase.assertContainsElements(strings, PREFIXES)
   }
 
   fun testCompletionInEventId() {
@@ -34,7 +36,7 @@ class ValidationRulesCompletionContributorTest : BasePlatformTestCase() {
     markValidationRulesFile(file)
     myFixture.completeBasic()
     val strings = myFixture.lookupElementStrings!!
-    UsefulTestCase.assertContainsElements(strings, ValidationRulesCompletionContributor.PREFIXES)
+    UsefulTestCase.assertContainsElements(strings, PREFIXES)
   }
 
 
@@ -130,6 +132,6 @@ class ValidationRulesCompletionContributorTest : BasePlatformTestCase() {
   }
 
   private fun markValidationRulesFile(file: PsiFile) {
-    file.virtualFile.putUserData(EventsSchemeJsonSchemaProviderFactory.EVENTS_TEST_SCHEME_VALIDATION_RULES_KEY, true)
+    file.virtualFile.putUserData(EVENTS_TEST_SCHEME_VALIDATION_RULES_KEY, true)
   }
 }

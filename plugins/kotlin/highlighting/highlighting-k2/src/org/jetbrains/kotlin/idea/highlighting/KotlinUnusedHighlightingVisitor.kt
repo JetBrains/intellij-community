@@ -13,7 +13,6 @@ import com.intellij.codeInspection.SuppressionUtil
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase
 import com.intellij.codeInspection.ex.InspectionProfileWrapper
 import com.intellij.codeInspection.util.IntentionName
-import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Predicates
@@ -147,11 +146,11 @@ class KotlinUnusedHighlightingVisitor(private val ktFile: KtFile,
         val mustBeLocallyReferenced = declaration is KtParameter && !(declaration.hasValOrVar()) ||
                                       declaration.hasModifier(KtTokens.PRIVATE_KEYWORD) ||
                                       ((declaration.parent as? KtClassBody)?.parent as? KtClassOrObject)?.isLocal == true
-
+        if (SuppressionUtil.inspectionResultSuppressed(declaration, deadCodeInspection)) {
+            return
+        }
         val nameIdentifier = declaration.nameIdentifier
-        val problemPsiElement: PsiElement = if (mustBeLocallyReferenced &&
-            !SuppressionUtil.inspectionResultSuppressed(declaration, deadCodeInspection) &&
-            declaration.annotationEntries.isEmpty() //instead of slow implicit usages checks
+        val problemPsiElement: PsiElement = if (mustBeLocallyReferenced && declaration.annotationEntries.isEmpty() //instead of slow implicit usages checks
         ) {
             nameIdentifier ?: (declaration as? KtConstructor<*>)?.getConstructorKeyword() ?: declaration
         } else {
@@ -209,14 +208,7 @@ class SafeDeleteFix(declaration: KtNamedDeclaration) : LocalQuickFixAndIntention
         endElement: PsiElement
     ) {
         val element = startElement as? KtDeclaration ?: return
-        if (element is KtParameter && element.parent is KtParameterList && element.parent?.parent is KtFunction) {
-            // TODO: Implement K2 version of `RemoveUnusedFunctionParameterFix` and use it here.
-            val parameterList = element.parent as KtParameterList
-            WriteCommandAction.runWriteCommandAction(project, name, null, {
-                parameterList.removeParameter(element)
-            }, element.containingFile)
-        } else {
-            SafeDeleteHandler.invoke(project, arrayOf(element), false)
-        }
+
+        SafeDeleteHandler.invoke(project, arrayOf(element), false)
     }
 }

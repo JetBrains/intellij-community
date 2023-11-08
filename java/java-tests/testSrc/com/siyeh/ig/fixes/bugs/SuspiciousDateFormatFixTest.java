@@ -4,9 +4,12 @@ package com.siyeh.ig.fixes.bugs;
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.openapi.application.ex.PathManagerEx;
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.siyeh.ig.LightJavaInspectionTestCase;
 import com.siyeh.ig.bugs.SuspiciousDateFormatInspection;
 import org.jetbrains.annotations.NotNull;
+
+import static com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_21;
 
 public class SuspiciousDateFormatFixTest extends LightQuickFixParameterizedTestCase {
   @Override
@@ -17,6 +20,11 @@ public class SuspiciousDateFormatFixTest extends LightQuickFixParameterizedTestC
   @Override
   protected String getBasePath() {
     return "/com/siyeh/igfixes/bugs/suspicious_date_format";
+  }
+
+  @Override
+  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_21;
   }
 
   @NotNull

@@ -1,7 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.push;
 
 import com.intellij.dvcs.DvcsUtil;
+import com.intellij.dvcs.push.VcsPushOptionValue;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationGroup;
@@ -58,13 +59,13 @@ final class GitPushResultNotification extends Notification {
     setDisplayId(GitNotificationIdsHolder.PUSH_RESULT);
   }
 
-  @NotNull
   @RequiresEdt
-  static GitPushResultNotification create(@NotNull Project project,
-                                          @NotNull GitPushResult pushResult,
-                                          @Nullable GitPushOperation pushOperation,
-                                          boolean multiRepoProject,
-                                          @Nullable GitUpdateInfoAsLog.NotificationData notificationData) {
+  static @NotNull GitPushResultNotification create(@NotNull Project project,
+                                                   @NotNull GitPushResult pushResult,
+                                                   @Nullable GitPushOperation pushOperation,
+                                                   boolean multiRepoProject,
+                                                   @Nullable GitUpdateInfoAsLog.NotificationData notificationData,
+                                                   @NotNull Map<String, VcsPushOptionValue> customParams) {
     GroupedPushResult grouped = GroupedPushResult.group(pushResult.getResults());
 
     String title;
@@ -172,7 +173,7 @@ final class GitPushResultNotification extends Notification {
         }
       });
       if (pushOperation != null) {
-        notification.addAction(new ForcePushNotificationAction(project, pushOperation, staleInfoRejected));
+        notification.addAction(new ForcePushNotificationAction(project, pushOperation, staleInfoRejected, customParams));
       }
     }
 
@@ -185,9 +186,7 @@ final class GitPushResultNotification extends Notification {
     return notification;
   }
 
-  @NlsContexts.NotificationContent
-  @NotNull
-  static String emulateTitle(@NotNull @Nls String title, @NotNull @Nls String content) {
+  static @NlsContexts.NotificationContent @NotNull String emulateTitle(@NotNull @Nls String title, @NotNull @Nls String content) {
     return new HtmlBuilder()
       .append(raw(title).bold()).br()
       .appendRaw(content)
@@ -294,17 +293,20 @@ final class GitPushResultNotification extends Notification {
   }
 
   private static final class ForcePushNotificationAction extends NotificationAction {
-    @NotNull private final Project myProject;
-    @NotNull private final GitPushOperation myOperation;
-    @NotNull private final List<GitRepository> myRepositories;
+    private final @NotNull Project myProject;
+    private final @NotNull GitPushOperation myOperation;
+    private final @NotNull List<GitRepository> myRepositories;
+    private final @NotNull  Map<String, VcsPushOptionValue> customParams;
 
     private ForcePushNotificationAction(@NotNull Project project,
                                         @NotNull GitPushOperation pushOperation,
-                                        @NotNull List<GitRepository> repositories) {
+                                        @NotNull List<GitRepository> repositories,
+                                        @NotNull Map<String, VcsPushOptionValue> params) {
       super(GitBundle.message("push.notification.force.push.anyway.action"));
       myProject = project;
       myOperation = pushOperation;
       myRepositories = repositories;
+      customParams = params;
     }
 
     @Override
@@ -316,7 +318,7 @@ final class GitPushResultNotification extends Notification {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           GitPushOperation forcePushOperation = myOperation.deriveForceWithoutLease(myRepositories);
-          GitPusher.pushAndNotify(project, forcePushOperation);
+          GitPusher.pushAndNotify(project, forcePushOperation, customParams);
         }
       }.queue();
     }

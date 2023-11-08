@@ -115,7 +115,7 @@
     <orderEntry type="library" name="ktor-serialization-kotlinx-json" level="project" />
     <orderEntry type="library" name="kotlinx-coroutines-slf4j" level="project" />
     <orderEntry type="library" name="ktor-client-content-negotiation" level="project" />
-    <orderEntry type="library" name="Slf4j" level="project" />
+    <orderEntry type="library" name="slf4j-api" level="project" />
     <orderEntry type="module-library">
       <library name="jetbrains.apple.notary.api.kotlin.client" type="repository">
         <properties maven-id="org.jetbrains:apple-notary-api-kotlin-client:1.0.2">
@@ -263,11 +263,11 @@
     <orderEntry type="library" name="tcServiceMessages" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="kotlin-reflect" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="javax.activation" level="project" />
-    <orderEntry type="library" scope="RUNTIME" name="jsoup" level="project" />
+    <orderEntry type="library" name="jsoup" level="project" />
     <orderEntry type="library" name="ASM" level="project" />
     <orderEntry type="module-library">
       <library name="spdx.tools.java" type="repository">
-        <properties jar-repository-id="central-proxy" maven-id="org.spdx:tools-java:1.1.7">
+        <properties maven-id="org.spdx:tools-java:1.1.7">
           <verification>
             <artifact url="file://$MAVEN_REPOSITORY$/org/spdx/tools-java/1.1.7/tools-java-1.1.7.jar">
               <sha256sum>4cf3ef5db8c8466224b436a1242e7d13c469a2582dd7a055ec65130c89a82ae8</sha256sum>
@@ -338,5 +338,6 @@
         </SOURCES>
       </library>
     </orderEntry>
+    <orderEntry type="library" name="hash4j" level="project" />
   </component>
 </module>

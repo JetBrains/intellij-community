@@ -235,7 +235,7 @@ public abstract class PersistentFSRecordsStorageTestBase<T extends PersistentFSR
         storage.setVersion(42);
       }
       finally {
-        storage.closeAndRemoveAllFiles();
+        storage.closeAndClean();
       }
       assertFalse(
         recordsPath + " must be deleted",

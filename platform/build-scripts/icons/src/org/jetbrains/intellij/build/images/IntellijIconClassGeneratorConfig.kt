@@ -80,6 +80,12 @@ class IntellijIconClassGeneratorConfig : IconClasses() {
 
       "intellij.protoeditor.core" -> IntellijIconClassGeneratorModuleConfig(className = "ProtoeditorCoreIcons", packageName = "com.intellij.protobuf")
 
+      "intellij.ide.startup.importSettings" -> IntellijIconClassGeneratorModuleConfig(
+        className = "StartupImportIcons",
+        packageName = "com.intellij.ide.startup.importSettings"
+      )
+
+
       else -> super.getConfigForModule(moduleName)
     }
   }

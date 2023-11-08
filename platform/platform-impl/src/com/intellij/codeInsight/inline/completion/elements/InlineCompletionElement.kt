@@ -1,10 +1,64 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("PackageDirectoryMismatch")
+package com.intellij.codeInsight.inline.completion.elements
 
-package com.intellij.codeInsight.inline.completion
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.editor.Editor
+import java.awt.Rectangle
 
-import com.intellij.codeInsight.inline.completion.render.InlineCompletionBlock
-import org.jetbrains.annotations.ApiStatus
+/**
+ * Default cases to use:
+ * - [InlineCompletionGrayTextElement] default gray text element to render
+ * - [InlineCompletionSkipTextElement] allows to skip over already existed elements
+ */
+interface InlineCompletionElement {
 
-@ApiStatus.Experimental
-open class InlineCompletionElement(val text: String) : InlineCompletionBlock by InlineCompletionGrayTextElement(text)
+  /**
+   * Text to insert for current element
+   */
+  val text: String
+
+  fun toPresentable(): Presentable
+
+  /**
+   * `Presentable` is a `Disposable` interface that provides additional methods for rendering an inline element.
+   */
+  interface Presentable : Disposable {
+    val element: InlineCompletionElement
+
+    /**
+     * Checks if the presentable `InlineCompletionElement` is visible.
+     *
+     * @return `true` if the element is visible, otherwise `false`.
+     */
+    fun isVisible(): Boolean
+
+    /**
+     * Renders the presentable `InlineCompletionElement` at the specified offset in the editor.
+     *
+     * @param editor The editor where the element is rendered.
+     * @param offset The offset in the document where the element is rendered.
+     */
+    fun render(editor: Editor, offset: Int)
+
+    /**
+     * Gets the bounds of the inline element as a `Rectangle`.
+     *
+     * @return a `Rectangle` representing the bounds of the inline element, or `null` if element is not rendered yet.
+     */
+    fun getBounds(): Rectangle?
+
+    /**
+     * Gets the start offset of the inline element.
+     *
+     * @return the start offset of the inline element, or `null` if element is not rendered yet.
+     */
+    fun startOffset(): Int?
+
+    /**
+     * Gets the end offset of the inline element.
+     *
+     * @return the end offset of the inline element, or `null` if element is not rendered yet.
+     */
+    fun endOffset(): Int?
+  }
+}

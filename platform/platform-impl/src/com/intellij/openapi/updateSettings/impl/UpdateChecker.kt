@@ -44,7 +44,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jdom.JDOMException
 import org.jetbrains.annotations.ApiStatus
-import java.io.File
 import java.io.IOException
 import java.lang.ref.SoftReference
 import java.net.HttpURLConnection
@@ -285,7 +284,11 @@ object UpdateChecker {
             }
             // collect latest plugins from custom repos
             val storedDescriptor = customRepoPlugins[id]
-            if (storedDescriptor == null || StringUtil.compareVersionNumbers(descriptor.version, storedDescriptor.version) > 0) {
+            if (storedDescriptor == null
+                || StringUtil.compareVersionNumbers(descriptor.version, storedDescriptor.version) > 0 &&
+                allowedUpgrade(storedDescriptor, descriptor)
+                || (StringUtil.compareVersionNumbers(descriptor.version, storedDescriptor.version) < 0 &&
+                    allowedDowngrade(storedDescriptor, descriptor))) {
               customRepoPlugins[id] = descriptor
             }
           }
@@ -352,6 +355,16 @@ object UpdateChecker {
     return updateable
   }
 
+  @JvmStatic
+  private fun allowedDowngrade(localDescriptor: IdeaPluginDescriptor?, remoteDescriptor: IdeaPluginDescriptor?): Boolean {
+    return PluginManagementPolicy.getInstance().isDowngradeAllowed(localDescriptor, remoteDescriptor)
+  }
+
+  @JvmStatic
+  private fun allowedUpgrade(localDescriptor: IdeaPluginDescriptor?, remoteDescriptor: IdeaPluginDescriptor?): Boolean {
+    return PluginManagementPolicy.getInstance().isUpgradeAllowed(localDescriptor, remoteDescriptor)
+  }
+
   @RequiresBackgroundThread
   @RequiresReadLockAbsence
   private fun findUpdatesInJetBrainsRepository(updateable: MutableMap<PluginId, IdeaPluginDescriptor?>,
@@ -365,9 +378,9 @@ object UpdateChecker {
     val updates = MarketplaceRequests.getLastCompatiblePluginUpdate(idsToUpdate, buildNumber)
     for ((id, descriptor) in updateable) {
       val lastUpdate = updates.find { it.pluginId == id.idString }
-      if (lastUpdate != null &&
-          (descriptor == null || PluginDownloader.compareVersionsSkipBrokenAndIncompatible(lastUpdate.version, descriptor,
-                                                                                           buildNumber) > 0)) {
+      if (lastUpdate != null && (descriptor == null || PluginDownloader.compareVersionsSkipBrokenAndIncompatible(lastUpdate.version,
+                                                                                                                 descriptor,
+                                                                                                                 buildNumber) > 0)) {
         runCatching { MarketplaceRequests.loadPluginDescriptor(id.idString, lastUpdate, indicator) }
           .onFailure {
             if (!isNetworkError(it)) throw it
@@ -445,12 +458,19 @@ object UpdateChecker {
     val installedPlugin = PluginManagerCore.getPlugin(pluginId)
     if (installedPlugin == null
         || pluginVersion == null
-        || PluginDownloader.compareVersionsSkipBrokenAndIncompatible(pluginVersion, installedPlugin, buildNumber) > 0) {
+        || (PluginDownloader.compareVersionsSkipBrokenAndIncompatible(pluginVersion, installedPlugin, buildNumber) > 0
+            && allowedUpgrade(installedPlugin, originalDownloader.descriptor))
+        || (PluginDownloader.compareVersionsSkipBrokenAndIncompatible(pluginVersion, installedPlugin, buildNumber) < 0
+            && allowedDowngrade(installedPlugin, originalDownloader.descriptor))) {
       val oldDownloader = ourUpdatedPlugins[pluginId]
       val downloader = if (PluginManagerCore.isDisabled(pluginId)) {
         originalDownloader
       }
-      else if (oldDownloader == null || StringUtil.compareVersionNumbers(pluginVersion, oldDownloader.pluginVersion) > 0) {
+      else if (oldDownloader == null
+               || (StringUtil.compareVersionNumbers(pluginVersion, oldDownloader.pluginVersion) > 0
+                   && allowedUpgrade(installedPlugin, oldDownloader.descriptor))
+               || (StringUtil.compareVersionNumbers(pluginVersion, oldDownloader.pluginVersion) < 0 &&
+                   allowedDowngrade(installedPlugin, oldDownloader.descriptor))) {
         val descriptor = originalDownloader.descriptor
         if (descriptor is PluginNode && descriptor.isIncomplete) {
           originalDownloader.prepareToInstall(indicator ?: EmptyProgressIndicator())
@@ -536,7 +556,7 @@ object UpdateChecker {
   fun testPlatformUpdate(
     project: Project?,
     updateDataText: String,
-    patchFile: File?,
+    patchFile: Path?,
     forceUpdate: Boolean,
   ) {
     if (!ApplicationManager.getApplication().isInternal) {

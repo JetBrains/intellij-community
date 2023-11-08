@@ -152,13 +152,24 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
 
     @Override
     public void visitTemplateExpression(@NotNull PsiTemplateExpression element) {
-      if (HighlightingFeature.STRING_TEMPLATES.isAvailable(element)) {
-        if (element.getProcessor() != null && element.getLiteralExpression() != null) {
-          myHolder.registerProblem(element.getProcessor(),
-                                   InspectionGadgetsBundle.message("inspection.redundant.string.fix.remove.str.processor.description"),
-                                   new RemoveStrTemplateProcessorFix());
-        }
+      if (!HighlightingFeature.STRING_TEMPLATES.isAvailable(element) || element.getLiteralExpression() == null) {
+        return;
       }
+      PsiExpression processor = element.getProcessor();
+      if (!(PsiUtil.skipParenthesizedExprDown(processor) instanceof PsiReferenceExpression reference)) {
+        return;
+      }
+      PsiElement target = reference.resolve();
+      if (!(target instanceof PsiField field) || !"STR".equals(field.getName())) {
+        return;
+      }
+      PsiClass containingClass = field.getContainingClass();
+      if (containingClass == null || !JAVA_LANG_STRING_TEMPLATE.equals(containingClass.getQualifiedName())) {
+        return;
+      }
+      myHolder.registerProblem(processor,
+                               InspectionGadgetsBundle.message("inspection.redundant.string.fix.remove.str.processor.description"),
+                               new RemoveStrTemplateProcessorFix());
     }
 
     private ProblemDescriptor getStringConstructorProblem(PsiNewExpression expression) {
@@ -422,6 +433,7 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
     }
 
     private boolean lengthMatches(PsiExpression equalTo, PsiExpression from, PsiExpression to) {
+      if (!ExpressionUtils.hasStringType(equalTo)) return false;
       String str = tryCast(ExpressionUtils.computeConstantExpression(equalTo), String.class);
       PsiElementFactory factory = JavaPsiFacade.getElementFactory(myHolder.getProject());
       if (str != null) {

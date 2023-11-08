@@ -359,19 +359,19 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
             runTest("../testData/inspectionsLocal/redundantGetter/onlyReturnFieldBody.kt");
         }
 
-        @TestMetadata("withAnnotaionAndNonTrivialBlockBody.kt")
-        public void testWithAnnotaionAndNonTrivialBlockBody() throws Exception {
-            runTest("../testData/inspectionsLocal/redundantGetter/withAnnotaionAndNonTrivialBlockBody.kt");
+        @TestMetadata("withAnnotationAndNonTrivialBlockBody.kt")
+        public void testWithAnnotationAndNonTrivialBlockBody() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantGetter/withAnnotationAndNonTrivialBlockBody.kt");
         }
 
-        @TestMetadata("withAnnotaionAndTrivialBlockBody.kt")
-        public void testWithAnnotaionAndTrivialBlockBody() throws Exception {
-            runTest("../testData/inspectionsLocal/redundantGetter/withAnnotaionAndTrivialBlockBody.kt");
+        @TestMetadata("withAnnotationAndTrivialBlockBody.kt")
+        public void testWithAnnotationAndTrivialBlockBody() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantGetter/withAnnotationAndTrivialBlockBody.kt");
         }
 
-        @TestMetadata("withAnnotaionAndTrivialExpressionBody.kt")
-        public void testWithAnnotaionAndTrivialExpressionBody() throws Exception {
-            runTest("../testData/inspectionsLocal/redundantGetter/withAnnotaionAndTrivialExpressionBody.kt");
+        @TestMetadata("withAnnotationAndTrivialExpressionBody.kt")
+        public void testWithAnnotationAndTrivialExpressionBody() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantGetter/withAnnotationAndTrivialExpressionBody.kt");
         }
     }
 

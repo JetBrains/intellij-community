@@ -101,6 +101,7 @@ object SVGLoader {
 
   @ScheduledForRemoval
   @Deprecated("Please use SvgAttributePatcher")
+  @Suppress("unused")
   interface SvgElementColorPatcher {
     fun patchColors(svg: Element) {
     }
@@ -112,21 +113,19 @@ object SVGLoader {
   }
 
   interface SvgElementColorPatcherProvider {
-    @Suppress("DeprecatedCallableAddReplaceWith", "DEPRECATION")
-    @Deprecated("Implement attributeForPath")
+    fun attributeForPath(path: String): SvgAttributePatcher? = null
+
+    /**
+     * Returns a digest of the current SVG color patcher.
+     *
+     * Consider using a two-element array, where the first element is a hash of the input data for the patcher,
+     * and the second is an ID of the patcher (see [com.intellij.ui.icons.ColorPatcherIdGenerator]).
+     */
+    fun digest(): LongArray
+
+    @Suppress("DeprecatedCallableAddReplaceWith")
     @ScheduledForRemoval
-    fun forPath(path: String?): SvgElementColorPatcher? {
-      return null
-    }
-
-    fun attributeForPath(path: String): SvgAttributePatcher? {
-      return null
-    }
-
-    fun digest(): LongArray? = null
-
-    @ScheduledForRemoval
-    @Deprecated("Implement digest", ReplaceWith("digest"))
+    @Deprecated("Not used", level = DeprecationLevel.ERROR)
     fun wholeDigest(): ByteArray? = null
   }
 }

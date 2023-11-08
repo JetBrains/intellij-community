@@ -4,7 +4,8 @@ package com.intellij.openapi.progress
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.impl.ModalityStateEx
-import com.intellij.openapi.progress.impl.ProgressState
+import com.intellij.platform.util.progress.impl.ProgressState
+import com.intellij.platform.util.progress.withRawProgressReporter
 import com.intellij.testFramework.common.timeoutRunBlocking
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.job
@@ -66,6 +67,15 @@ class CoroutineToIndicatorTest : CancellationTest() {
       }
     }
     assertSame(t, thrown)
+  }
+
+  private suspend inline fun testRunUnderIndicatorRethrow(t: ProcessCanceledException) {
+    val thrown = assertThrows<PceCancellationException> {
+      coroutineToIndicator {
+        throw t
+      }
+    }
+    assertSame(t, thrown.cause)
   }
 
   @Test

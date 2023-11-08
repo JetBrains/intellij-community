@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
@@ -52,10 +52,9 @@ final class RangeHighlighterTree extends RangeMarkerTree<RangeHighlighterEx> {
     return persistent1 == persistent2 ? 0 : persistent1 ? -1 : 1;
   }
 
-  @NotNull
   @Override
-  protected RHNode createNewNode(@NotNull RangeHighlighterEx key, int start, int end,
-                                 boolean greedyToLeft, boolean greedyToRight, boolean stickingToRight, int layer) {
+  protected @NotNull RHNode createNewNode(@NotNull RangeHighlighterEx key, int start, int end,
+                                          boolean greedyToLeft, boolean greedyToRight, boolean stickingToRight, int layer) {
     return new RHNode(this, key, start, end, greedyToLeft, greedyToRight, stickingToRight, layer);
   }
 
@@ -66,7 +65,7 @@ final class RangeHighlighterTree extends RangeMarkerTree<RangeHighlighterEx> {
     final int myLayer;
 
     RHNode(@NotNull RangeHighlighterTree rangeMarkerTree,
-           @NotNull final RangeHighlighterEx key,
+           final @NotNull RangeHighlighterEx key,
            int start,
            int end,
            boolean greedyToLeft,

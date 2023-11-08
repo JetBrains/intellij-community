@@ -237,7 +237,6 @@ internal class SingleContentLayout(
 
     if (isSingleContentView) {
       val component = ui.tabComponent
-      component.bounds = component.bounds.apply { width = component.parent.width }
 
       val labelWidth = idLabel.x + idLabel.width  // label is laid out by parent
       var tabsWidth = tabAdapter?.preferredSize?.width ?: 0
@@ -296,8 +295,9 @@ internal class SingleContentLayout(
       )
       label.toolTipText = displayName
     }
-    if (ui.window.component.getClientProperty(ToolWindowContentUi.SHOW_BETA_LABEL) == true) {
-      label.icon = AllIcons.General.Beta
+    val icon = ui.window.component.getClientProperty(ToolWindowContentUi.HEADER_ICON) as? Icon
+    if (icon != null) {
+      label.icon = icon
       label.horizontalTextPosition = SwingConstants.LEFT
     }
   }

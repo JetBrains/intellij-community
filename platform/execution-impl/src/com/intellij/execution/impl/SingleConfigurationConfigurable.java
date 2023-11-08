@@ -248,8 +248,9 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
         return new RunConfigurationSelector() {
           @Override
           public void select(@NotNull RunConfiguration configuration) {
+            RunnerAndConfigurationSettingsImpl settings = RunManagerImpl.getInstanceImpl(myProject).getSettings(configuration);
             RunDialog.editConfiguration(myProject,
-                                        new RunnerAndConfigurationSettingsImpl(RunManagerImpl.getInstanceImpl(myProject), configuration),
+                                        Objects.requireNonNull(settings),
                                         ExecutionBundle.message("edit.run.configuration.for.item.dialog.title", configuration.getName()));
           }
         };
@@ -553,7 +554,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
       }
     }
 
-    private @NlsContexts.Label String generateWarningLabelText(final ValidationResult configurationException) {
+    private static @NlsContexts.Label String generateWarningLabelText(final ValidationResult configurationException) {
       return new HtmlBuilder().append(configurationException.getTitle()).append(": ")
         .wrapWith("b").wrapWith("body").addRaw(configurationException.getMessage()).wrapWith("html").toString();
     }

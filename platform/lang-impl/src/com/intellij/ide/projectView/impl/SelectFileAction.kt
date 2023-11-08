@@ -8,16 +8,16 @@ import com.intellij.ide.actions.SelectInContextImpl
 import com.intellij.ide.impl.ProjectViewSelectInGroupTarget
 import com.intellij.ide.projectView.ProjectView
 import com.intellij.idea.ActionsBundle
-import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.ActionUpdateThread
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.PlatformDataKeys
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.PlatformDataKeys.TOOL_WINDOW
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.keymap.KeymapUtil.getFirstKeyboardShortcutText
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.ToolWindowId.PROJECT_VIEW
+import com.intellij.openapi.wm.ex.WindowManagerEx
+import com.intellij.ui.ComponentUtil
 
 private const val SELECT_CONTEXT_FILE = "SelectInProjectView"
 private const val SELECT_OPENED_FILE = "SelectOpenedFileInProjectView"
@@ -30,9 +30,45 @@ internal class SelectFileAction : DumbAwareAction(), ActionRemoteBehaviorSpecifi
         if (Registry.`is`("ide.selectIn.works.as.revealIn.when.project.view.focused")) {
           ActionManager.getInstance().getAction("RevealIn")?.actionPerformed(event)
         } else {
-          getView(event)?.selectOpenedFile()
+          if (shouldUseLastFocusedEditor(event)) {
+            getView(event)?.selectOpenedFileUsingLastFocusedEditor()
+          }
+          else {
+            getView(event)?.selectOpenedFile()
+          }
         }
     }
+  }
+
+  private fun shouldUseLastFocusedEditor(event: AnActionEvent): Boolean {
+    // When the action is invoked by clicking the button in the tool window title,
+    // it's tricky to figure out which file to select:
+    // - If the project view is docked to the IDE frame, it feels more natural that the active editor
+    //   in the same frame is used;
+    // - but if a detached editor was just active, and the IDE frame became focused
+    //   by the same mouse click that invoked this action, then it feels more natural
+    //   that that detached editor should be used instead;
+    // - if, on the other hand, the project view is windowed or floating, then
+    //   it always makes sense to use the last focused editor.
+    if (event.place != ActionPlaces.TOOLWINDOW_TITLE) return false // All of this makes sense only for the tool window button click.
+    val projectFrame = WindowManagerEx.getInstanceEx().getFrame(event.project)
+    val projectViewFrame = ComponentUtil.getWindow(event.dataContext.getData(PlatformDataKeys.CONTEXT_COMPONENT))
+    val docked = projectFrame != null && projectFrame == projectViewFrame
+    if (!docked) {
+      if (SELECT_IN_LOG.isDebugEnabled) {
+        SELECT_IN_LOG.debug("Forcing use of the last focused editor because the project view is detached")
+      }
+      return true
+    }
+    val wasJustActivated = projectFrame?.mouseReleaseCountSinceLastActivated == 1
+    if (wasJustActivated) {
+      if (SELECT_IN_LOG.isDebugEnabled) {
+        SELECT_IN_LOG.debug("Forcing use of the last focused editor because the IDE frame was activated " +
+         "by pressing the Select Opened File button")
+      }
+      return true
+    }
+    return false
   }
 
   override fun update(event: AnActionEvent) {
@@ -79,3 +115,5 @@ internal class SelectFileAction : DumbAwareAction(), ActionRemoteBehaviorSpecifi
       else -> SELECT_CONTEXT_FILE
     }
 }
+
+val SELECT_IN_LOG = logger<SelectInProjectViewImpl>()

@@ -325,6 +325,7 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
 
     ImageContainerPane(final ImageComponent imageComponent) {
       this.imageComponent = imageComponent;
+      setLayout(new Layout());
       add(imageComponent);
 
       putClientProperty(Magnificator.CLIENT_PROPERTY_KEY, new Magnificator() {
@@ -350,14 +351,31 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
     }
 
     @Override
-    public void invalidate() {
-      centerComponents();
-      super.invalidate();
-    }
-
-    @Override
     public Dimension getPreferredSize() {
       return imageComponent.getSize();
+    }
+
+    private class Layout implements LayoutManager {
+      @Override
+      public void addLayoutComponent(String name, Component comp) { }
+
+      @Override
+      public void removeLayoutComponent(Component comp) { }
+
+      @Override
+      public Dimension preferredLayoutSize(Container parent) {
+        return imageComponent.getPreferredSize();
+      }
+
+      @Override
+      public Dimension minimumLayoutSize(Container parent) {
+        return imageComponent.getMinimumSize();
+      }
+
+      @Override
+      public void layoutContainer(Container parent) {
+        centerComponents();
+      }
     }
   }
 

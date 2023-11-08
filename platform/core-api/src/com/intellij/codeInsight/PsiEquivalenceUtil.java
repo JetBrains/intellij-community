@@ -12,6 +12,7 @@ import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.PairConsumer;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,6 +28,7 @@ public final class PsiEquivalenceUtil {
   /**
    * @deprecated use {@link #areEquivalent(PsiElement, PsiElement, BiPredicate, boolean)}
    */
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   public static boolean areElementsEquivalent(@NotNull PsiElement element1,
                                               @NotNull PsiElement element2,
@@ -38,6 +40,8 @@ public final class PsiEquivalenceUtil {
   /**
    * @deprecated use {@link #areEquivalent(PsiElement, PsiElement, BiPredicate, BiPredicate)}
    */
+  
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   public static boolean areElementsEquivalent(@NotNull PsiElement element1,
                                               @NotNull PsiElement element2,
@@ -79,6 +83,7 @@ public final class PsiEquivalenceUtil {
   /**
    * @deprecated use {@link #areEquivalent(PsiElement, PsiElement, BiPredicate, BiPredicate, Predicate, boolean)}
    */
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   public static boolean areElementsEquivalent(@NotNull PsiElement element1,
                                               @NotNull PsiElement element2,

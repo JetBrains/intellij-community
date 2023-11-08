@@ -8,7 +8,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
 interface GitTelemetrySpan : VcsTelemetrySpan {
   enum class Repository : GitTelemetrySpan {
     ReadGitRepositoryInfo {
-      override fun getName() = "reading Git repo info"
+      override fun getName() = "git-reading-repo-info"
     }
   }
 
@@ -19,34 +19,34 @@ interface GitTelemetrySpan : VcsTelemetrySpan {
   }
 
   enum class Log : GitTelemetrySpan {
-    LoadingDetails {
-      override fun getName() = "loading details"
+    LoadingFullCommitDetails {
+      override fun getName() = "git-loading-full-commit-details"
     },
 
     LoadingCommitMetadata {
-      override fun getName() = "loading commit metadata"
+      override fun getName() = "git-loading-commit-metadata"
     }
   }
 
   enum class LogProvider : GitTelemetrySpan {
     SortingCommits {
-      override fun getName() = "sorting commits"
+      override fun getName() = "git-log-sorting-commits"
     },
 
     ValidatingData {
-      override fun getName() = "validating data"
+      override fun getName() = "git-log-validating-data"
     },
 
     ReadingTags {
-      override fun getName() = "reading tags"
+      override fun getName() = "git-log-reading-tags"
     },
 
     LoadingCommitsOnTaggedBranch {
-      override fun getName() = "loading commits on tagged branch"
+      override fun getName() = "git-log-loading-commits-on-tagged-branch"
     },
 
-    ReadBranches {
-      override fun getName() = "readBranches"
+    ReadingBranches {
+      override fun getName() = "git-log-reading-branches"
     }
   }
 }

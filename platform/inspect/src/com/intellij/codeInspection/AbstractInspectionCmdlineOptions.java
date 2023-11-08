@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.ex.PlainTextFormatter;
@@ -104,14 +104,14 @@ public abstract class AbstractInspectionCmdlineOptions implements InspectionTool
     final String outputFormat = getOutputFormatProperty();
     if (outputFormat != null) {
       StringBuilder builder = new StringBuilder();
-      for (InspectionsReportConverter converter : InspectionsReportConverter.EP_NAME.getExtensions()) {
+      for (InspectionsReportConverter converter : InspectionsReportConverter.EP_NAME.getExtensionList()) {
         final String converterFormat = converter.getFormatName();
         if (outputFormat.equals(converterFormat)) {
           builder = null;
           break;
         }
         else {
-          if (builder.length() != 0) {
+          if (!builder.isEmpty()) {
             builder.append(", ");
           }
           builder.append(converterFormat);

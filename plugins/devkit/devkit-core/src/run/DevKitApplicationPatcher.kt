@@ -44,9 +44,7 @@ internal class DevKitApplicationPatcher : RunConfigurationExtension() {
       }
     }
 
-    if (!vmParametersAsList.contains("--add-opens")) {
-      JUnitDevKitPatcher.appendAddOpensWhenNeeded(project, jdk, vmParameters)
-    }
+    JUnitDevKitPatcher.appendAddOpensWhenNeeded(project, jdk, vmParameters)
 
     if (!isDev) {
       return
@@ -82,18 +80,24 @@ internal class DevKitApplicationPatcher : RunConfigurationExtension() {
       vmParameters.addProperty("idea.system.path", "$dir/system")
     }
 
-    val runDir = Path.of("${configuration.workingDirectory}/out/dev-run/${productClassifier}")
+    val runDir = Path.of("${configuration.workingDirectory}/out/dev-run/${productClassifier}/${productClassifier}")
     for ((name, value) in getIdeSystemProperties(runDir)) {
       vmParameters.addProperty(name, value)
     }
 
     if (vmParameters.getPropertyValue("idea.dev.skip.build").toBoolean()) {
-      try {
-        vmParameters.addProperty(PathManager.PROPERTY_HOME_PATH, runDir.invariantSeparatorsPathString)
-        javaParameters.classPath.addAll(Files.readAllLines(runDir.resolve("core-classpath.txt")))
-        javaParameters.mainClass = "com.intellij.idea.Main"
+      vmParameters.addProperty(PathManager.PROPERTY_HOME_PATH, runDir.invariantSeparatorsPathString)
+      val files = try {
+        Files.readAllLines(runDir.resolve("core-classpath.txt"))
       }
       catch (ignore: NoSuchFileException) {
+        null
+      }
+
+      if (files != null) {
+        javaParameters.classPath.clear()
+        javaParameters.classPath.addAll(files)
+        javaParameters.mainClass = "com.intellij.idea.Main"
       }
     }
 
@@ -107,7 +111,6 @@ internal class DevKitApplicationPatcher : RunConfigurationExtension() {
     vmParameters.addProperty("idea.debug.mode", "true")
     vmParameters.addProperty("idea.is.internal", "true")
     vmParameters.addProperty("fus.internal.test.mode", "true")
-    vmParameters.addProperty("jbScreenMenuBar.enabled", "true")
     vmParameters.addProperty("jdk.attach.allowAttachSelf")
     if (!vmParameters.hasParameter("-Didea.initially.ask.config=never")) {
       vmParameters.addProperty("idea.initially.ask.config", "true")
@@ -135,6 +138,7 @@ private fun getIdeSystemProperties(runDir: Path): Map<String, String> {
     // require bundled JNA dispatcher lib
     "jna.nosys" to "true",
     "jna.noclasspath" to "true",
+    "skiko.library.path" to "$libDir/skiko-awt-runtime-all",
+    "compose.swing.render.on.graphics" to "true",
   )
 }
-

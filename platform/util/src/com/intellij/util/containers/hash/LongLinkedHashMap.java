@@ -1,6 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.containers.hash;
 
+import it.unimi.dsi.fastutil.HashCommon;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -139,7 +140,7 @@ public class LongLinkedHashMap<V> {
   }
 
   private void init(int capacity) {
-    table = new Entry[HashUtil.adjustTableSize((int)(capacity / loadFactor))];
+    table = new Entry[HashCommon.arraySize(capacity, loadFactor)];
     top = back = null;
     this.capacity = capacity;
   }
@@ -209,7 +210,7 @@ public class LongLinkedHashMap<V> {
   }
 
   private void rehash(int capacity) {
-    table = new Entry[HashUtil.adjustTableSize((int)(capacity / loadFactor))];
+    table = new Entry[HashCommon.arraySize(capacity, loadFactor)];
     this.capacity = capacity;
     final Entry<V>[] table = this.table;
     final int tableLen = table.length;

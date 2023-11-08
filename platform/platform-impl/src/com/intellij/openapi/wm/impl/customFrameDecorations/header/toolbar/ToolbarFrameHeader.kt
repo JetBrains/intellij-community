@@ -62,7 +62,7 @@ internal class ToolbarFrameHeader(private val coroutineScope: CoroutineScope,
   private var toolbar: MainToolbar? = null
   private val toolbarPlaceholder = createToolbarPlaceholder()
   private val headerContent = createHeaderContent()
-  private val expandableMenu = ExpandableMenu(headerContent = headerContent, coroutineScope = coroutineScope.childScope(), frame)
+  private val expandableMenu = ExpandableMenu(headerContent = headerContent, coroutineScope = coroutineScope.childScope(), frame) { !isCompactHeader }
   private val toolbarHeaderTitle = SimpleCustomDecorationPathComponent(frame = frame).apply {
     isOpaque = false
   }
@@ -198,7 +198,9 @@ internal class ToolbarFrameHeader(private val coroutineScope: CoroutineScope,
   }
 
   override fun paintComponent(g: Graphics) {
-    if (!ProjectWindowCustomizerService.getInstance().paint(window = frame, parent = this, g = g as Graphics2D)) {
+    if (mode == ShowMode.MENU && menuBarHeaderTitle.isVisible ||
+        toolbarHeaderTitle.parent != null ||
+        !ProjectWindowCustomizerService.getInstance().paint(window = frame, parent = this, g = g as Graphics2D)) {
       // isOpaque is false to paint colorful toolbar gradient, so, we have to draw background on our own
       g.color = background
       g.fillRect(0, 0, width, height)

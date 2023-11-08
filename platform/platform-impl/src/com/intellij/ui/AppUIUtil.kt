@@ -10,6 +10,7 @@ import com.intellij.ide.gdpr.ConsentOptions
 import com.intellij.ide.gdpr.ConsentSettingsUi
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent
+import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.PathManager
@@ -51,7 +52,7 @@ import javax.swing.border.Border
 import kotlin.math.roundToInt
 
 private const val VENDOR_PREFIX = "jetbrains-"
-private var ourIcons: MutableList<Image?>? = null
+private var appIcons: MutableList<Image?>? = null
 
 @Volatile
 private var isMacDocIconSet = false
@@ -60,11 +61,11 @@ private val LOG: Logger
   get() = logger<AppUIUtil>()
 
 fun updateAppWindowIcon(window: Window) {
-  if (isWindowIconAlreadyExternallySet()) {
+  if (isMacDocIconSet || isWindowIconAlreadyExternallySet()) {
     return
   }
 
-  var images = ourIcons
+  var images = appIcons
   if (images == null) {
     images = ArrayList(3)
     val appInfo = ApplicationInfoImpl.getShadowInstance()
@@ -89,7 +90,7 @@ fun updateAppWindowIcon(window: Window) {
       }
     }
 
-    ourIcons = images
+    appIcons = images
   }
 
   if (!images.isEmpty()) {
@@ -137,7 +138,12 @@ private fun findAppIconSvgData(path: String, pixScale: Float): ByteArray? {
   return null
 }
 
-fun loadSmallApplicationIcon(scaleContext: ScaleContext, size: Int, requestReleaseIcon: Boolean): Icon {
+// todo[tav] JBR supports loading icon resource (id=2000) from the exe launcher, remove when OpenJDK supports it as well
+fun loadSmallApplicationIcon(scaleContext: ScaleContext, size: Int = 16): Icon {
+  return loadSmallApplicationIcon(scaleContext, size, requestReleaseIcon = !ApplicationInfoImpl.getShadowInstance().isEAP)
+}
+
+internal fun loadSmallApplicationIcon(scaleContext: ScaleContext, size: Int, requestReleaseIcon: Boolean): Icon {
   val appInfo = ApplicationInfoImpl.getShadowInstance()
   val upscale = size * scaleContext.getScale(DerivedScaleType.PIX_SCALE) >= 20
   val svgUrl = if (appInfo is ApplicationInfoImpl) {
@@ -147,7 +153,7 @@ fun loadSmallApplicationIcon(scaleContext: ScaleContext, size: Int, requestRelea
   else {
     if (upscale) appInfo.applicationSvgIconUrl else appInfo.smallApplicationSvgIconUrl
   }
-  return JBImageIcon(loadAppIconImage(svgUrl, scaleContext, size) ?: error("Can't load '${svgUrl}'"))
+  return JBImageIcon(loadAppIconImage(svgPath = svgUrl, scaleContext = scaleContext, size = size) ?: error("Can't load '${svgUrl}'"))
 }
 
 fun findAppIcon(): String? {
@@ -160,27 +166,26 @@ fun findAppIcon(): String? {
       }
     }
   }
-  val url = ApplicationInfoImpl::class.java.getResource(ApplicationInfoImpl.getShadowInstance().applicationSvgIconUrl)
+  val url = ApplicationInfo::class.java.getResource(ApplicationInfoImpl.getShadowInstance().applicationSvgIconUrl)
   return if (url != null && URLUtil.FILE_PROTOCOL == url.protocol) URLUtil.urlToFile(url).absolutePath else null
 }
 
-@Suppress("MemberVisibilityCanBePrivate")
-fun isWindowIconAlreadyExternallySet(): Boolean = when {
-  SystemInfoRt.isWindows -> java.lang.Boolean.getBoolean("ide.native.launcher") && SystemInfo.isJetBrainsJvm
-  SystemInfoRt.isMac -> isMacDocIconSet || (!PlatformUtils.isJetBrainsClient() && !PluginManagerCore.isRunningFromSources())
-  else -> false
+// used in Rider
+fun isWindowIconAlreadyExternallySet(): Boolean {
+  return when {
+    SystemInfoRt.isWindows -> java.lang.Boolean.getBoolean("ide.native.launcher") && SystemInfo.isJetBrainsJvm
+    SystemInfoRt.isMac -> isMacDocIconSet || !PlatformUtils.isJetBrainsClient()
+    else -> false
+  }
 }
 
 object AppUIUtil {
-  // todo[tav] JBR supports loading icon resource (id=2000) from the exe launcher, remove when OpenJDK supports it as well
-  @JvmOverloads
   @JvmStatic
-  fun loadSmallApplicationIcon(scaleContext: ScaleContext, size: Int = 16): Icon =
-    loadSmallApplicationIcon(scaleContext, size, requestReleaseIcon = !ApplicationInfoImpl.getShadowInstance().isEAP)
-
-  @JvmStatic
-  fun loadApplicationIcon(ctx: ScaleContext, size: Int): Icon? =
-    loadAppIconImage(ApplicationInfoImpl.getShadowInstance().applicationSvgIconUrl, ctx, size)?.let { JBImageIcon(it) }
+  fun loadApplicationIcon(ctx: ScaleContext, size: Int): Icon? {
+    return loadAppIconImage(svgPath = ApplicationInfoImpl.getShadowInstance().applicationSvgIconUrl,
+                            scaleContext = ctx,
+                            size = size)?.let { JBImageIcon(it) }
+  }
 
   @JvmStatic
   fun invokeLaterIfProjectAlive(project: Project, runnable: Runnable) {
@@ -218,7 +223,6 @@ object AppUIUtil {
     }
   }
 
-  @JvmStatic
   fun getFrameClass(): String {
     val name = ApplicationNamesInfo.getInstance().fullProductNameWithEdition.lowercase()
       .replace(' ', '-')

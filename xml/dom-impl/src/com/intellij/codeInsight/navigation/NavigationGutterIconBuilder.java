@@ -11,6 +11,7 @@ import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.navigation.GotoRelatedItem;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
@@ -20,6 +21,7 @@ import com.intellij.openapi.util.NlsContexts.Tooltip;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.util.ConstantFunction;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.NullableFunction;
@@ -249,7 +251,7 @@ public class NavigationGutterIconBuilder<T> {
     };
   }
 
-  protected @NotNull NavigationGutterIconRenderer createGutterIconRenderer(@NotNull Project project,
+  public @NotNull NavigationGutterIconRenderer createGutterIconRenderer(@NotNull Project project,
                                                                            @Nullable GutterIconNavigationHandler<PsiElement> navigationHandler) {
     checkBuilt();
 
@@ -257,13 +259,14 @@ public class NavigationGutterIconBuilder<T> {
     NotNullLazyValue<List<SmartPsiElementPointer<?>>> pointers = createPointersThunk(myLazy, project, factory, myConverter);
 
     final boolean empty = isEmpty();
+    boolean newUI = ExperimentalUI.isNewUI() && !ApplicationManager.getApplication().isUnitTestMode();
 
     if (myTooltipText == null && !myLazy) {
       final SortedSet<String> names = new TreeSet<>();
       for (T t : myTargets.getValue()) {
         final String text = myNamer.fun(t);
         if (text != null) {
-          names.add(MessageFormat.format(PATTERN, text));
+          names.add(newUI ? text : MessageFormat.format(PATTERN, text));
         }
       }
       @Nls StringBuilder sb = new StringBuilder("<html><body>");

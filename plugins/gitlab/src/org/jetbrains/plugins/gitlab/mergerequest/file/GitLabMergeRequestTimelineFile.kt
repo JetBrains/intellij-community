@@ -8,7 +8,7 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.gitlab.GitlabIcons
 import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestDetails
-import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabToolWindowViewModel
+import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.model.GitLabToolWindowViewModel
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import javax.swing.Icon
 

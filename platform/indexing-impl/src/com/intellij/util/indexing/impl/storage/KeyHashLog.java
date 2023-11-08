@@ -96,7 +96,7 @@ final class KeyHashLog<Key> implements Closeable {
     if (hashMaskSet == null) {
       if (useCachedHashIds && myLastScannedId != 0) {
         try {
-          Files.delete(sessionProjectCacheFile);
+          FileUtil.delete(sessionProjectCacheFile);
         }
         catch (NoSuchFileException ignored) {
 

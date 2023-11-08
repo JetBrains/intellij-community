@@ -151,7 +151,7 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
       isMultiline = model.isMultiline;
       mySearchInProjectFiles = model.mySearchInProjectFiles;
       myPattern = model.myPattern;
-      setUserMap(model.getUserMap());
+      model.copyCopyableDataTo(this);
       notifyObservers();
     }
   }
@@ -193,7 +193,7 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
       return false;
     }
     if (mySearchInProjectFiles != findModel.mySearchInProjectFiles) return false;
-    if (!getUserMap().equals(findModel.getUserMap())) return false;
+    if (!isCopyableDataEqual(findModel)) return false;
 
     return true;
   }
@@ -894,6 +894,15 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
   public <T> void putUserData(@NotNull Key<T> key, @Nullable T value) {
     boolean changed = !Objects.equals(value, getUserData(key));
     super.putUserData(key, value);
+    if (changed) {
+      notifyObservers();
+    }
+  }
+
+  @Override
+  public <T> void putCopyableUserData(@NotNull Key<T> key, T value) {
+    boolean changed = !Objects.equals(value, getCopyableUserData(key));
+    super.putCopyableUserData(key, value);
     if (changed) {
       notifyObservers();
     }

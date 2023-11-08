@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch;
 
 import com.intellij.find.impl.FindInProjectExtension;
@@ -57,30 +57,23 @@ public final class Scopes {
   }
 
   public static SearchScope createScope(@NotNull Project project, @NotNull String descriptor, @NotNull Type scopeType) {
-    if (scopeType == Type.PROJECT) {
-      return GlobalSearchScope.projectScope(project);
-    }
-    else if (scopeType == Type.MODULE) {
-      final Module module = ModuleManager.getInstance(project).findModuleByName(descriptor);
-      if (module != null) {
-        return GlobalSearchScope.moduleScope(module);
+    return switch (scopeType) {
+      case PROJECT -> GlobalSearchScope.projectScope(project);
+      case MODULE -> {
+        final Module module = ModuleManager.getInstance(project).findModuleByName(descriptor);
+        yield (module == null) ? null : GlobalSearchScope.moduleScope(module);
       }
-    }
-    else if (scopeType == Type.DIRECTORY) {
-      final boolean recursive = StringUtil.startsWithChar(descriptor, '*');
-      if (recursive) {
-        descriptor = descriptor.substring(1);
+      case DIRECTORY -> {
+        final boolean recursive = StringUtil.startsWithChar(descriptor, '*');
+        if (recursive) {
+          descriptor = descriptor.substring(1);
+        }
+        final String path = FileUtil.toSystemIndependentName(descriptor.substring(1));
+        final VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByPath(path);
+        yield (virtualFile == null) ? null : new GlobalSearchScopesCore.DirectoryScope(project, virtualFile, recursive);
       }
-      final String path = FileUtil.toSystemIndependentName(descriptor.substring(1));
-      final VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByPath(path);
-      if (virtualFile == null) return null;
-      return new GlobalSearchScopesCore.DirectoryScope(project, virtualFile, recursive);
-    }
-    else if (scopeType == Type.NAMED) {
-      return findScopeByName(project, descriptor);
-    }
-    assert false;
-    return null;
+      case NAMED -> findScopeByName(project, descriptor);
+    };
   }
 
   public static @Nullable SearchScope findScopeByName(@NotNull Project project, @NotNull String scopeName) {

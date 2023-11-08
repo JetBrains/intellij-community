@@ -38,6 +38,7 @@ import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
+import org.jetbrains.jps.incremental.storage.BuildDataManager;
 import org.jetbrains.jps.javac.*;
 import org.jetbrains.jps.javac.ast.api.JavacFileData;
 import org.jetbrains.jps.model.JpsDummyElement;
@@ -54,7 +55,9 @@ import org.jetbrains.jps.model.serialization.PathMacroUtil;
 import org.jetbrains.jps.service.JpsServiceManager;
 import org.jetbrains.jps.service.SharedThreadPool;
 
-import javax.tools.*;
+import javax.tools.Diagnostic;
+import javax.tools.DiagnosticListener;
+import javax.tools.JavaFileObject;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
@@ -164,8 +167,9 @@ public final class JavaBuilder extends ModuleLevelBuilder {
     COMPILING_TOOL.set(context, compilingTool);
     SHOWN_NOTIFICATIONS.set(context, Collections.synchronizedSet(new HashSet<>()));
     COMPILER_USAGE_STATISTICS.set(context, new ConcurrentHashMap<>());
+    BuildDataManager dataManager = context.getProjectDescriptor().dataManager;
     if (!isJavac(compilingTool)) {
-      context.getProjectDescriptor().dataManager.getMappings().setProcessConstantsIncrementally(false);
+      dataManager.setProcessConstantsIncrementally(false);
     }
     JavaBackwardReferenceIndexWriter.initialize(context);
     for (JavacFileReferencesRegistrar registrar : JpsServiceManager.getInstance().getExtensions(JavacFileReferencesRegistrar.class)) {

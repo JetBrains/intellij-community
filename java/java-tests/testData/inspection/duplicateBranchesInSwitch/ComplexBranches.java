@@ -22,8 +22,8 @@ class C {
           bar("A");
         } else {
           bar("z");
-        }
-        bar("o");</weak_warning>
+        }</weak_warning>
+        bar("o");
         break;
     }
   }

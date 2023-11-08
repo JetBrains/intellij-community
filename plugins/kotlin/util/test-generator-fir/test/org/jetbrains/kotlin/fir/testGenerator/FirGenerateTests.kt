@@ -19,6 +19,7 @@ import org.jetbrains.kotlin.idea.fir.completion.test.handlers.AbstractHighLevelJ
 import org.jetbrains.kotlin.idea.fir.completion.test.handlers.AbstractK2CompletionCharFilterTest
 import org.jetbrains.kotlin.idea.fir.completion.wheigher.AbstractHighLevelWeigherTest
 import org.jetbrains.kotlin.idea.fir.documentation.AbstractFirQuickDocTest
+import org.jetbrains.kotlin.idea.fir.externalAnnotations.AbstractK2ExternalAnnotationTest
 import org.jetbrains.kotlin.idea.fir.findUsages.AbstractFindUsagesFirTest
 import org.jetbrains.kotlin.idea.fir.findUsages.AbstractFindUsagesWithDisableComponentSearchFirTest
 import org.jetbrains.kotlin.idea.fir.findUsages.AbstractKotlinFindUsagesWithLibraryFirTest
@@ -37,6 +38,8 @@ import org.jetbrains.kotlin.idea.fir.quickfix.AbstractHighLevelQuickFixTest
 import org.jetbrains.kotlin.idea.fir.resolve.*
 import org.jetbrains.kotlin.idea.fir.search.AbstractHLImplementationSearcherTest
 import org.jetbrains.kotlin.idea.fir.shortenRefs.AbstractFirShortenRefsTest
+import org.jetbrains.kotlin.idea.imports.AbstractK2AutoImportTest
+import org.jetbrains.kotlin.idea.imports.AbstractK2FilteringAutoImportTest
 import org.jetbrains.kotlin.idea.k2.copyright.AbstractFirUpdateKotlinCopyrightTest
 import org.jetbrains.kotlin.idea.k2.refactoring.rename.AbstractFirRenameTest
 import org.jetbrains.kotlin.idea.k2.refactoring.rename.AbstractK2InplaceRenameTest
@@ -186,9 +189,11 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("quickfix/typeMismatch/casts", pattern = pattern)
             model("quickfix/typeMismatch/componentFunctionReturnTypeMismatch", pattern = pattern)
             model("quickfix/typeMismatch/typeMismatchOnReturnedExpression", pattern = pattern)
+            model("quickfix/typeMismatch", isRecursive = false, pattern = pattern)
             model("quickfix/toString", pattern = pattern)
             model("quickfix/specifySuperType", pattern = pattern)
             model("quickfix/convertToBlockBody", pattern = pattern)
+            model("quickfix/supertypeInitialization", pattern = pattern)
         }
 
         testClass<AbstractHighLevelQuickFixMultiFileTest> {
@@ -214,6 +219,20 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             )
         }
 
+        testClass<AbstractK2AutoImportTest> {
+            model(
+                "editor/autoImport", testMethodName = "doTest", testClassName = "WithAutoImport",
+                pattern = DIRECTORY, isRecursive = false
+            )
+        }
+
+        testClass<AbstractK2FilteringAutoImportTest> {
+            model(
+                "editor/autoImportExtension", testMethodName = "doTest", testClassName = "WithAutoImport",
+                pattern = DIRECTORY, isRecursive = false
+            )
+        }
+
         testClass<AbstractFirJvmOptimizeImportsTest> {
             model("editor/optimizeImports/jvm", pattern = KT_WITHOUT_DOTS)
             model("editor/optimizeImports/common", pattern = KT_WITHOUT_DOTS)
@@ -221,6 +240,10 @@ private fun assembleWorkspace(): TWorkspace = workspace {
 
         testClass<AbstractK2BytecodeToolWindowTest> {
             model("internal/toolWindow", isRecursive = false, pattern = DIRECTORY, testMethodName = "doTestWithIr")
+        }
+
+        testClass<AbstractK2ExternalAnnotationTest> {
+            model("externalAnnotations", pattern = KT_WITHOUT_DOTS)
         }
     }
 
@@ -348,6 +371,10 @@ private fun assembleWorkspace(): TWorkspace = workspace {
 
         testClass<AbstractK2JvmBasicCompletionTestWithResolveExtension> {
             model("extensions/completion", pattern = KT_WITHOUT_DOTS)
+        }
+
+        testClass<AbstractAdditionalKDocResolutionProviderTest> {
+            model("resolve/additionalKDocReference", pattern = KT_WITHOUT_DOTS)
         }
     }
 

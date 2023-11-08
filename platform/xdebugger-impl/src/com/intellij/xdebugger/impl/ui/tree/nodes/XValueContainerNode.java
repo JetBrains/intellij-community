@@ -202,6 +202,15 @@ public abstract class XValueContainerNode<ValueContainer extends XValueContainer
     invokeNodeUpdate(() -> setMessageNodes(Collections.singletonList(MessageTreeNode.createInfoMessage(myTree, message, hyperlinkListener)), false));
   }
 
+  /**
+   * Adds a temporary message child node which will be removed when children are computed.
+   * If this node already has a temporary message, the existing message is replaced by
+   * a new one.
+   */
+  public void setTemporaryMessage(@NotNull MessageTreeNode message) {
+    invokeNodeUpdate(() -> setTemporaryMessageNode(message));
+  }
+
   private void setTemporaryMessageNode(final MessageTreeNode messageNode) {
     setMessageNodes(Collections.singletonList(messageNode), true);
   }

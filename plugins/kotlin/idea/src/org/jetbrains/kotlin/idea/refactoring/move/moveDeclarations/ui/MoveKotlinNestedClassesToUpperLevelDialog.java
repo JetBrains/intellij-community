@@ -269,7 +269,7 @@ public class MoveKotlinNestedClassesToUpperLevelDialog extends MoveDialogBase {
             modelResult = getModel().computeModelResult();
         }
         catch (ConfigurationException e) {
-            setErrorText(e.getMessage());
+            setErrorHtml(e.getMessageHtml());
             return;
         }
 

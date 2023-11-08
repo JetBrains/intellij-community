@@ -12,7 +12,11 @@ public final class ModuleRequires extends Proto implements DiffCapable<ModuleReq
 
   public ModuleRequires(JVMFlags flags, String name, String version) {
     super(flags, "", name, Collections.emptyList());
-    myVersion = version;
+    myVersion = version == null? "" : version;
+  }
+
+  public boolean isTransitive() {
+    return getFlags().isTransitive();
   }
 
   public String getVersion() {

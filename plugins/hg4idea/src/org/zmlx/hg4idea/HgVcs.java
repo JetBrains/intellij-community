@@ -64,19 +64,26 @@ import static com.intellij.util.containers.ContainerUtil.exists;
 import static org.zmlx.hg4idea.HgNotificationIdsHolder.*;
 
 public class HgVcs extends AbstractVcs {
+
+  @Topic.ProjectLevel
   public static final Topic<HgUpdater> REMOTE_TOPIC = new Topic<>("hg4idea.remote", HgUpdater.class);
+
+  @Topic.ProjectLevel
   public static final Topic<HgUpdater> STATUS_TOPIC = new Topic<>("hg4idea.status", HgUpdater.class);
+
+  @Topic.ProjectLevel
   public static final Topic<HgWidgetUpdater> INCOMING_OUTGOING_CHECK_TOPIC = new Topic<>("hg4idea.incomingcheck", HgWidgetUpdater.class);
+
   private static final Logger LOG = Logger.getInstance(HgVcs.class);
 
   public static final @NonNls String VCS_NAME = "hg4idea";
   public static final Supplier<@Nls String> DISPLAY_NAME = HgBundle.messagePointer("hg4idea.vcs.name");
   public static final Supplier<@Nls String> SHORT_DISPLAY_NAME = HgBundle.messagePointer("hg4idea.vcs.short.name");
-  private final static VcsKey ourKey = createKey(VCS_NAME);
+  private static final VcsKey ourKey = createKey(VCS_NAME);
   private static final int MAX_CONSOLE_OUTPUT_SIZE = 10000;
 
   private static final @NonNls String ORIG_FILE_PATTERN = "*.orig";
-  @Nullable public static final @NonNls String HGENCODING = System.getenv("HGENCODING");
+  public static final @Nullable @NonNls String HGENCODING = System.getenv("HGENCODING");
 
   private final HgChangeProvider changeProvider;
   private final HgRollbackEnvironment rollbackEnvironment;
@@ -97,7 +104,7 @@ public class HgVcs extends AbstractVcs {
   private final CommitExecutor myMqNewExecutor;
 
   private HgRemoteStatusUpdater myHgRemoteStatusUpdater;
-  @NotNull private HgVersion myVersion = HgVersion.NULL;  // version of Hg which this plugin uses.
+  private @NotNull HgVersion myVersion = HgVersion.NULL;  // version of Hg which this plugin uses.
 
   public HgVcs(@NotNull Project project) {
     super(project, VCS_NAME);
@@ -116,26 +123,21 @@ public class HgVcs extends AbstractVcs {
   }
 
   @Override
-  @NotNull
-  public String getDisplayName() {
+  public @NotNull String getDisplayName() {
     return DISPLAY_NAME.get();
   }
 
-  @NotNull
   @Override
-  public String getShortName() {
+  public @NotNull String getShortName() {
     return SHORT_DISPLAY_NAME.get();
   }
 
-  @Nls
-  @NotNull
   @Override
-  public String getShortNameWithMnemonic() {
+  public @Nls @NotNull String getShortNameWithMnemonic() {
     return HgBundle.message("hg4idea.vcs.short.name.with.mnemonic");
   }
 
-  @NotNull
-  public HgProjectSettings getProjectSettings() {
+  public @NotNull HgProjectSettings getProjectSettings() {
     return HgProjectSettings.getInstance(myProject);
   }
 
@@ -144,9 +146,8 @@ public class HgVcs extends AbstractVcs {
     return changeProvider;
   }
 
-  @Nullable
   @Override
-  public RollbackEnvironment createRollbackEnvironment() {
+  public @Nullable RollbackEnvironment createRollbackEnvironment() {
     return rollbackEnvironment;
   }
 
@@ -165,9 +166,8 @@ public class HgVcs extends AbstractVcs {
     return getVcsHistoryProvider();
   }
 
-  @Nullable
   @Override
-  public CheckinEnvironment createCheckinEnvironment() {
+  public @Nullable CheckinEnvironment createCheckinEnvironment() {
     return checkinEnvironment;
   }
 
@@ -181,9 +181,8 @@ public class HgVcs extends AbstractVcs {
     return myMergeProvider;
   }
 
-  @Nullable
   @Override
-  public UpdateEnvironment createUpdateEnvironment() {
+  public @Nullable UpdateEnvironment createUpdateEnvironment() {
     return updateEnvironment;
   }
 
@@ -215,8 +214,7 @@ public class HgVcs extends AbstractVcs {
   /**
    * @return the prompthooks.py extension used for capturing prompts from Mercurial and requesting IDEA's user about authentication.
    */
-  @NotNull
-  public File getPromptHooksExtensionFile() {
+  public @NotNull File getPromptHooksExtensionFile() {
     if (myPromptHooksExtensionFile == null || !myPromptHooksExtensionFile.exists()) {
       // check that hooks are available
       myPromptHooksExtensionFile = HgUtil.getTemporaryPythonFile("prompthooks");
@@ -266,8 +264,7 @@ public class HgVcs extends AbstractVcs {
     }
   }
 
-  @Nullable
-  public static HgVcs getInstance(Project project) {
+  public static @Nullable HgVcs getInstance(Project project) {
     if (project == null || project.isDisposed()) {
       return null;
     }
@@ -302,8 +299,7 @@ public class HgVcs extends AbstractVcs {
     return List.of(myCommitAndPushExecutor);
   }
 
-  @Nullable
-  public HgRemoteStatusUpdater getRemoteStatusUpdater() {
+  public @Nullable HgRemoteStatusUpdater getRemoteStatusUpdater() {
     return myHgRemoteStatusUpdater;
   }
 
@@ -385,8 +381,7 @@ public class HgVcs extends AbstractVcs {
   /**
    * @return the version number of Hg, which is used by IDEA. Or {@link HgVersion#NULL} if version info is unavailable.
    */
-  @NotNull
-  public HgVersion getVersion() {
+  public @NotNull HgVersion getVersion() {
     return myVersion;
   }
 }

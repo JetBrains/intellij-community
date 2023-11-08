@@ -113,7 +113,9 @@ object KotlinPluginBuilder {
     "kotlin.formatter",
     "kotlin.repl",
     "kotlin.git",
+    "kotlin.base.injection",
     "kotlin.injection",
+    "kotlin.injection-k2",
     "kotlin.scripting",
     "kotlin.coverage",
     "kotlin.ml-completion",
@@ -125,6 +127,7 @@ object KotlinPluginBuilder {
     "kotlin.j2k.old",
     "kotlin.j2k.old.post-processing",
     "kotlin.j2k.new",
+    "kotlin.onboarding",
     "kotlin.plugin-updater",
     "kotlin.preferences",
     "kotlin.project-configuration",
@@ -314,7 +317,6 @@ object KotlinPluginBuilder {
       spec.withProjectLibrary("kotlinc.kotlin-compiler-ir")
 
       spec.withProjectLibrary("kotlinc.kotlin-jps-plugin-classpath", "jps/kotlin-jps-plugin.jar")
-      spec.withProjectLibrary("kotlinc.kotlin-stdlib", "kotlinc-lib.jar")
       spec.withProjectLibrary("kotlinc.kotlin-jps-common")
       //noinspection SpellCheckingInspection
       spec.withProjectLibrary("javaslang", LibraryPackMode.STANDALONE_MERGED)
@@ -427,6 +429,7 @@ object KotlinPluginBuilder {
 
   suspend fun build(communityHome: BuildDependenciesCommunityRoot, home: Path, properties: ProductProperties) {
     val buildContext = BuildContextImpl.createContext(communityHome = communityHome, projectHome = home, productProperties = properties)
+    buildContext.options.enableEmbeddedJetBrainsClient = false
     BuildTasks.create(buildContext).buildNonBundledPlugins(listOf(MAIN_KOTLIN_PLUGIN_MODULE))
   }
 

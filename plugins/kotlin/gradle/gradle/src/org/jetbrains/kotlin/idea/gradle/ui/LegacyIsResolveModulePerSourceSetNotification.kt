@@ -137,7 +137,7 @@ private class IdeSuppressResolveModulePerSourceSetNotificationState : BaseState(
     override var isSuppressed: Boolean by property(false)
 }
 
-@Service
+@Service(Service.Level.PROJECT)
 @State(name = "SuppressResolveModulePerSourceSetNotification")
 private class IdeResolveModulePerSourceSetComponent :
     SimplePersistentStateComponent<IdeSuppressResolveModulePerSourceSetNotificationState>(

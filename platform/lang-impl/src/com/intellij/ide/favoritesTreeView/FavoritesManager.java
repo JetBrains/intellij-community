@@ -43,7 +43,7 @@ import static com.intellij.ide.favoritesTreeView.FavoritesListProvider.EP_NAME;
 /**
  * @deprecated Use Bookmarks API instead.
  */
-@Service
+@Service(Service.Level.PROJECT)
 @State(name = "FavoritesManager", storages = {
   @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE),
   @Storage(value = StoragePathMacros.WORKSPACE_FILE, deprecated = true),

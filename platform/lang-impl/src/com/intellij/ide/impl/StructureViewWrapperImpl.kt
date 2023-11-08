@@ -197,7 +197,7 @@ class StructureViewWrapperImpl(private val myProject: Project,
       }
     }
     else {
-      val asyncDataContext = Utils.wrapDataContext(dataContext)
+      val asyncDataContext = Utils.createAsyncDataContext(dataContext)
       ReadAction.nonBlocking<VirtualFile?> { getTargetVirtualFile(asyncDataContext) }
         .coalesceBy(this, owner)
         .finishOnUiThread(ModalityState.defaultModalityState()) { file: VirtualFile? ->
@@ -503,6 +503,7 @@ class StructureViewWrapperImpl(private val myProject: Project,
 
   companion object {
     @JvmField
+    @Topic.AppLevel
     val STRUCTURE_CHANGED: Topic<Runnable> = Topic("structure view changed", Runnable::class.java,
                                                    Topic.BroadcastDirection.NONE)
 

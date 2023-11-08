@@ -77,6 +77,9 @@ public final class PersistentFSContentAccessor {
   }
 
   void releaseContentRecord(int contentRecordId) throws IOException {
+    if (USE_CONTENT_HASHES) {
+      return;
+    }
     lock.writeLock().lock();
     try {
       RefCountingContentStorage contentStorage = connection.getContents();
@@ -195,8 +198,10 @@ public final class PersistentFSContentAccessor {
     else {
       int contentRecordId = hashId;
       int newRecord = connection.getContents().acquireNewRecord();
+      //We assume we call contents.acquireNewRecord() when and only when
+      //hashesEnumerator.enumerateEx() returns positive value (which means 'new hash')
       assert contentRecordId == newRecord
-        : "Unexpected content storage modification: contentRecordId=" + contentRecordId + "; newRecord=" + newRecord;
+        : "Unexpected content storage modification: contentHashId=" + hashId + "; newContentRecord=" + newRecord;
       return -contentRecordId;
     }
   }

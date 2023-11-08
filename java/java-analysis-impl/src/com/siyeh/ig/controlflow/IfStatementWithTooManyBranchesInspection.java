@@ -76,7 +76,7 @@ public class IfStatementWithTooManyBranchesInspection
       registerStatementError(statement, Integer.valueOf(branchCount));
     }
 
-    private int calculateBranchCount(PsiIfStatement statement) {
+    private static int calculateBranchCount(PsiIfStatement statement) {
       final PsiStatement branch = statement.getElseBranch();
       if (branch == null) {
         return 1;

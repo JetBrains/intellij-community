@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import org.jetbrains.annotations.ApiStatus
 import java.util.*
 
 /**
@@ -91,4 +92,14 @@ interface LineStatusTrackerI<out R : Range> : LineStatusMarkerRangesSource<R> {
    * [task] should not take Application readLock inside.
    */
   fun <T> readLock(task: () -> T): T
+
+  @ApiStatus.Internal
+  @ApiStatus.Experimental
+  @RequiresEdt
+  fun addListener(listener: LineStatusTrackerListener)
+
+  @ApiStatus.Internal
+  @ApiStatus.Experimental
+  @RequiresEdt
+  fun removeListener(listener: LineStatusTrackerListener)
 }

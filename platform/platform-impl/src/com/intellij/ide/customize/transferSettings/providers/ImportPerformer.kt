@@ -12,12 +12,19 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginsAdvertiserDialogPluginInstaller
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.getInstallAndEnableTask
+import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.Consumer
+import kotlin.coroutines.resume
+import kotlin.coroutines.suspendCoroutine
+
+enum class PluginInstallationState {
+  NoPlugins, Done, RestartRequired
+}
 
 interface ImportPerformer {
 
   fun collectAllRequiredPlugins(settings: Settings): Set<PluginId>
-  fun installPlugins(project: Project?, pluginIds: Set<PluginId>, pi: ProgressIndicator)
+  suspend fun installPlugins(project: Project?, pluginIds: Set<PluginId>, pi: ProgressIndicator): PluginInstallationState
   fun patchSettingsAfterPluginInstallation(settings: Settings, successPluginIds: Set<String>): Settings
 
   /**
@@ -43,14 +50,19 @@ class DefaultImportPerformer(private val partials: Collection<PartialImportPerfo
 
   override fun collectAllRequiredPlugins(settings: Settings): Set<PluginId> {
     logger.info("collectAllRequiredPlugins")
-    val ids = settings.plugins.filterIsInstance<PluginFeature>().map { PluginId.getId(it.pluginId) }.toMutableSet()
+    val ids = settings.plugins.values.filterIsInstance<PluginFeature>().map { PluginId.getId(it.pluginId) }.toMutableSet()
 
     ids.addAll(onlyRequiredPartials(settings).flatMap { it.collectAllRequiredPlugins(settings) })
 
     return ids
   }
 
-  override fun installPlugins(project: Project?, pluginIds: Set<PluginId>, pi: ProgressIndicator) {
+  override suspend fun installPlugins(project: Project?, pluginIds: Set<PluginId>, pi: ProgressIndicator): PluginInstallationState {
+    if (pluginIds.isEmpty()) {
+      logger.info("No plugins to install, proceeding.")
+      return PluginInstallationState.NoPlugins
+    }
+
     logger.info("Installing plugins")
     val installedPlugins = PluginManagerCore.plugins.map { it.pluginId.idString }.toSet()
     val pluginsToInstall = pluginIds.filter { !installedPlugins.contains(it.idString) }.toSet()
@@ -58,34 +70,44 @@ class DefaultImportPerformer(private val partials: Collection<PartialImportPerfo
     val installAndEnableTask = getInstallAndEnableTask(project, pluginsToInstall, false, false, pi.modalityState) {}
     installAndEnableTask.run(pi)
 
-    val cp = installAndEnableTask.customPlugins ?: return
-    val a = object : PluginsAdvertiserDialogPluginInstaller(project, installAndEnableTask.plugins, cp, {}) {
-      override fun downloadPlugins(plugins: MutableList<PluginNode>,
-                                   customPlugins: MutableCollection<PluginNode>,
-                                   onSuccess: Runnable?,
-                                   modalityState: ModalityState,
-                                   function: Consumer<Boolean>?) {
-        var success = true
-        try {
-          val operation = PluginInstallOperation(plugins, customPlugins, PluginEnabler.HEADLESS, pi)
-          operation.setAllowInstallWithoutRestart(true)
-          operation.run()
-          success = operation.isSuccess
-          if (success) {
-            ApplicationManager.getApplication().invokeLater(Runnable {
-              for ((file, pluginDescriptor) in operation.pendingDynamicPluginInstalls) {
-                success = success and PluginInstaller.installAndLoadDynamicPlugin(file, pluginDescriptor)
-              }
-            }, modalityState)
+    val cp = installAndEnableTask.customPlugins ?: return PluginInstallationState.NoPlugins
+    val restartRequiringPlugins = AtomicInteger()
+    val installStatus = suspendCoroutine { cont ->
+      val a = object : PluginsAdvertiserDialogPluginInstaller(project, installAndEnableTask.plugins, cp, { status ->
+        cont.resume(status)
+      }) {
+        override fun downloadPlugins(plugins: MutableList<PluginNode>,
+                                     customPlugins: MutableCollection<PluginNode>,
+                                     onSuccess: Runnable?,
+                                     modalityState: ModalityState,
+                                     function: Consumer<Boolean>?) {
+          var success = true
+          try {
+            val operation = PluginInstallOperation(plugins, customPlugins, PluginEnabler.HEADLESS, pi)
+            operation.setAllowInstallWithoutRestart(true)
+            operation.run()
+            success = operation.isSuccess
+            if (operation.isRestartRequired) {
+              restartRequiringPlugins.incrementAndGet()
+            }
+            if (success) {
+              ApplicationManager.getApplication().invokeLater(Runnable {
+                for ((file, pluginDescriptor) in operation.pendingDynamicPluginInstalls) {
+                  success = success and PluginInstaller.installAndLoadDynamicPlugin(file, pluginDescriptor)
+                }
+              }, modalityState)
+            }
+          }
+          finally {
+            ApplicationManager.getApplication().invokeLater({ function?.accept(success) }, pi.modalityState)
           }
         }
-        finally {
-          ApplicationManager.getApplication().invokeLater({ function?.accept(success) }, pi.modalityState)
-        }
       }
+      a.doInstallPlugins({ true }, pi.modalityState)
     }
-    a.doInstallPlugins({ true }, pi.modalityState)
-    logger.info("Finished installing plugins")
+
+    logger.info("Finished installing plugins, result: $installStatus")
+    return if (restartRequiringPlugins.get() > 0) PluginInstallationState.RestartRequired else PluginInstallationState.Done
   }
 
   override fun patchSettingsAfterPluginInstallation(settings: Settings, successPluginIds: Set<String>): Settings {

@@ -6,6 +6,7 @@ import com.intellij.ide.ui.UISettings.Companion.setupAntialiasing
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.openapi.wm.StatusBar
@@ -16,8 +17,11 @@ import com.intellij.ui.mac.foundation.MacUtil
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.EdtInvocationManager
 import com.intellij.util.ui.JBInsets
+import com.intellij.util.ui.StartupUiUtil
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
+import java.awt.Frame
 import java.awt.Graphics
 import java.awt.Insets
 import java.awt.Rectangle
@@ -55,6 +59,9 @@ class IdeFrameImpl : JFrame(), IdeFrame, DataProvider {
   // when this client property is true, we have to ignore 'resizing' events and not spoil 'normal bounds' value for frame
   @JvmField
   internal var togglingFullScreenInProgress: Boolean = false
+
+  @Internal
+  var mouseReleaseCountSinceLastActivated = 0
 
   override fun getData(dataId: String): Any? = frameHelper?.getData(dataId)
 
@@ -100,10 +107,12 @@ class IdeFrameImpl : JFrame(), IdeFrame, DataProvider {
       }
     }
 
-    if (maximized && SystemInfoRt.isXWindow && X11UiUtil.isInitialized()) {
+    if (maximized && StartupUiUtil.isXToolkit() && X11UiUtil.isInitialized()
+        && (state and Frame.ICONIFIED == 0) && isShowing) {
       // Ubuntu (and may be other linux distros) doesn't set maximized correctly if the frame is MAXIMIZED_VERT already. Use X11 API
       X11UiUtil.setMaximized(this, true)
-    } else {
+    }
+    else {
       super.setExtendedState(state)
     }
   }

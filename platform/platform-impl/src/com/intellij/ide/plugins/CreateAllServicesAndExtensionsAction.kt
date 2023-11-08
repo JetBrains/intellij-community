@@ -1,5 +1,6 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("TestOnlyProblems", "ReplaceGetOrSet")
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("TestOnlyProblems", "ReplaceGetOrSet", "HardCodedStringLiteral")
+
 package com.intellij.ide.plugins
 
 import com.intellij.diagnostic.PluginException
@@ -17,70 +18,30 @@ import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.runModalTask
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
+import com.intellij.platform.ide.progress.ModalTaskOwner
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
+import com.intellij.platform.util.progress.indeterminateStep
 import com.intellij.psi.stubs.StubElementTypeHolderEP
 import com.intellij.serviceContainer.ComponentManagerImpl
+import com.intellij.serviceContainer.ComponentManagerImpl.Companion.createAllServices2
+import com.intellij.serviceContainer.useInstanceContainer
 import com.intellij.util.getErrorsAsString
 import io.github.classgraph.*
 import java.lang.reflect.Constructor
 import kotlin.properties.Delegates.notNull
 
-@Suppress("HardCodedStringLiteral")
 private class CreateAllServicesAndExtensionsAction : AnAction("Create All Services And Extensions"), DumbAware {
   override fun actionPerformed(e: AnActionEvent) {
-    val errors = mutableListOf<Throwable>()
-    runModalTask("Creating All Services And Extensions", cancellable = true) { indicator ->
-      val taskExecutor: (task: () -> Unit) -> Unit = { task ->
-        try {
-          task()
-        }
-        catch (e: ProcessCanceledException) {
-          throw e
-        }
-        catch (e: Throwable) {
-          errors.add(e)
-        }
-      }
-
-      // check first
-      checkExtensionPoint(StubElementTypeHolderEP.EP_NAME.point as ExtensionPointImpl<*>, taskExecutor)
-
-      val application = ApplicationManager.getApplication() as ComponentManagerImpl
-      checkContainer(application, "app", indicator, taskExecutor)
-
-      val project = ProjectUtil.getOpenProjects().firstOrNull() as? ComponentManagerImpl
-      if (project != null) {
-        checkContainer(project, "project", indicator, taskExecutor)
-        val module = ModuleManager.getInstance(project as Project).modules.firstOrNull() as? ComponentManagerImpl
-        if (module != null) {
-          checkContainer(module, "module", indicator, taskExecutor)
-        }
-      }
-
-      indicator.text2 = "Checking light services..."
-      for (mainDescriptor in PluginManagerCore.getPluginSet().enabledPlugins) {
-        // we don't check classloader for sub descriptors because url set is the same
-        val pluginClassLoader = mainDescriptor.pluginClassLoader as? PluginClassLoader
-                                ?: continue
-
-        scanClassLoader(pluginClassLoader).use { scanResult ->
-          for (classInfo in scanResult.getClassesWithAnnotation(Service::class.java.name)) {
-            checkLightServices(classInfo, mainDescriptor, application, project) {
-              val error = when (it) {
-                is ProcessCanceledException -> throw it
-                is PluginException -> it
-                else -> PluginException("Cannot create ${classInfo.name}", it, mainDescriptor.pluginId)
-              }
-
-              errors.add(error)
-            }
-          }
-        }
-      }
+    val errors = if (useInstanceContainer) {
+      createAllServicesAndExtensions2()
     }
-
+    else {
+      createAllServicesAndExtensions()
+    }
     if (errors.isNotEmpty()) {
       logger<ComponentManagerImpl>().error(getErrorsAsString(errors).toString())
     }
@@ -94,6 +55,67 @@ private class CreateAllServicesAndExtensionsAction : AnAction("Create All Servic
   }
 }
 
+private fun createAllServicesAndExtensions(): List<Throwable> {
+  val errors = mutableListOf<Throwable>()
+  runModalTask("Creating All Services And Extensions", cancellable = true) { indicator ->
+    val taskExecutor: (task: () -> Unit) -> Unit = { task ->
+      try {
+        task()
+      }
+      catch (e: ProcessCanceledException) {
+        throw e
+      }
+      catch (e: Throwable) {
+        errors.add(e)
+      }
+    }
+
+    // check first
+    checkExtensionPoint(StubElementTypeHolderEP.EP_NAME.point as ExtensionPointImpl<*>, taskExecutor)
+
+    val application = ApplicationManager.getApplication() as ComponentManagerImpl
+    checkContainer(application, "app", indicator, taskExecutor)
+
+    val project = ProjectUtil.getOpenProjects().firstOrNull() as? ComponentManagerImpl
+    if (project != null) {
+      checkContainer(project, "project", indicator, taskExecutor)
+      val module = ModuleManager.getInstance(project as Project).modules.firstOrNull() as? ComponentManagerImpl
+      if (module != null) {
+        checkContainer(module, "module", indicator, taskExecutor)
+      }
+    }
+
+    indicator.text2 = "Checking light services..."
+    checkLightServices(application, project, errors)
+  }
+  return errors
+}
+
+private fun checkLightServices(
+  application: ComponentManagerImpl,
+  project: ComponentManagerImpl?,
+  errors: MutableList<Throwable>,
+) {
+  for (mainDescriptor in PluginManagerCore.getPluginSet().enabledPlugins) {
+    // we don't check classloader for sub descriptors because url set is the same
+    val pluginClassLoader = mainDescriptor.pluginClassLoader as? PluginClassLoader
+                            ?: continue
+    scanClassLoader(pluginClassLoader).use { scanResult ->
+      for (classInfo in scanResult.getClassesWithAnnotation(Service::class.java.name)) {
+        checkLightServices(classInfo, mainDescriptor, application, project) {
+          val error = when (it) {
+            is ProcessCanceledException -> throw it
+            is PluginException -> it
+            else -> PluginException("Cannot create ${classInfo.name}", it, mainDescriptor.pluginId)
+          }
+
+          errors.add(error)
+        }
+      }
+    }
+  }
+}
+
 private class CreateAllServicesAndExtensionsActivity : AppLifecycleListener {
   init {
     if (!ApplicationManager.getApplication().isInternal ||
@@ -102,8 +124,10 @@ private class CreateAllServicesAndExtensionsActivity : AppLifecycleListener {
     }
   }
 
-  override fun appStarted() = ApplicationManager.getApplication().invokeLater {
-    performAction()
+  override fun appStarted() {
+    ApplicationManager.getApplication().invokeLater {
+      performAction()
+    }
   }
 }
 
@@ -116,6 +140,46 @@ fun performAction() {
     ActionPlaces.UNKNOWN,
     true,
   )
+}
+
+private fun createAllServicesAndExtensions2(): List<Throwable> {
+  val errors = mutableListOf<Throwable>()
+  runWithModalProgressBlocking(ModalTaskOwner.guess(), "Creating all services and extensions") {
+    val taskExecutor: (task: () -> Unit) -> Unit = { task ->
+      try {
+        task()
+      }
+      catch (e: ProcessCanceledException) {
+        throw e
+      }
+      catch (e: Throwable) {
+        errors.add(e)
+      }
+    }
+
+    // check first
+    blockingContext {
+      checkExtensionPoint(StubElementTypeHolderEP.EP_NAME.point as ExtensionPointImpl<*>, taskExecutor)
+    }
+
+    val application = ApplicationManager.getApplication() as ComponentManagerImpl
+    checkContainer2(application, "app", taskExecutor)
+
+    val project = ProjectUtil.getOpenProjects().firstOrNull() as? ComponentManagerImpl
+    if (project != null) {
+      checkContainer2(project, "project", taskExecutor)
+      val module = ModuleManager.getInstance(project as Project).modules.firstOrNull() as? ComponentManagerImpl
+      if (module != null) {
+        checkContainer2(module, "module", taskExecutor)
+      }
+    }
+    indeterminateStep("Checking light services...") {
+      blockingContext {
+        checkLightServices(application, project, errors)
+      }
+    }
+  }
+  return errors
 }
 
 // external usage in [src/com/jetbrains/performancePlugin/commands/chain/generalCommandChain.kt]
@@ -140,24 +204,47 @@ private val servicesWhichRequireEdt = java.util.Set.of(
 private val servicesWhichRequireReadAction = setOf(
   "org.jetbrains.plugins.grails.lang.gsp.psi.gsp.impl.gtag.GspTagDescriptorService",
   "com.intellij.database.psi.DbFindUsagesOptionsProvider",
-  "com.jetbrains.python.findUsages.PyFindUsagesOptions"
+  "com.jetbrains.python.findUsages.PyFindUsagesOptions",
 )
 
-@Suppress("HardCodedStringLiteral")
+private val extensionPointsWhichRequireReadAction = setOf(
+  "com.intellij.favoritesListProvider",
+  "com.intellij.postStartupActivity",
+  "com.intellij.backgroundPostStartupActivity",
+  "org.jetbrains.kotlin.defaultErrorMessages",
+)
+
 private fun checkContainer(container: ComponentManagerImpl, levelDescription: String?, indicator: ProgressIndicator,
                            taskExecutor: (task: () -> Unit) -> Unit) {
   indicator.text2 = "Checking ${levelDescription} services..."
   ComponentManagerImpl.createAllServices(container, servicesWhichRequireEdt, servicesWhichRequireReadAction)
   indicator.text2 = "Checking ${levelDescription} extensions..."
+  checkExtensions(container, taskExecutor)
+}
+
+private suspend fun checkContainer2(
+  container: ComponentManagerImpl,
+  levelDescription: String?,
+  taskExecutor: (task: () -> Unit) -> Unit,
+) {
+  indeterminateStep("Checking ${levelDescription} services...") {
+    createAllServices2(container, servicesWhichRequireEdt, servicesWhichRequireReadAction)
+  }
+  indeterminateStep("Checking ${levelDescription} extensions...") {
+    blockingContext {
+      checkExtensions(container, taskExecutor)
+    }
+  }
+}
+
+private fun checkExtensions(
+  container: ComponentManagerImpl,
+  taskExecutor: (task: () -> Unit) -> Unit,
+) {
   container.extensionArea.processExtensionPoints { extensionPoint ->
-    // requires a read action
-    if (extensionPoint.name == "com.intellij.favoritesListProvider" ||
-        extensionPoint.name == "com.intellij.postStartupActivity" ||
-        extensionPoint.name == "com.intellij.backgroundPostStartupActivity" ||
-        extensionPoint.name == "org.jetbrains.kotlin.defaultErrorMessages") {
+    if (extensionPoint.name in extensionPointsWhichRequireReadAction) {
       return@processExtensionPoints
     }
-
     checkExtensionPoint(extensionPoint, taskExecutor)
   }
 }
@@ -165,7 +252,7 @@ private fun checkContainer(container: ComponentManagerImpl, levelDescription: St
 private fun checkExtensionPoint(extensionPoint: ExtensionPointImpl<*>, taskExecutor: (task: () -> Unit) -> Unit) {
   var extensionClass: Class<out Any> by notNull()
   taskExecutor {
-    extensionClass = extensionPoint.extensionClass
+    extensionClass = extensionPoint.getExtensionClass()
   }
 
   extensionPoint.checkImplementations { extension ->

@@ -1,8 +1,10 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.dsl.builder.impl
 
+import com.intellij.internal.inspector.UiInspectorAction
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.TextWithMnemonic
 import com.intellij.ui.dsl.UiDslException
@@ -80,7 +82,7 @@ internal fun prepareVisualPaddings(component: JComponent): UnscaledGaps {
   var customVisualPaddings: UnscaledGaps? =
     when (val value = component.getClientProperty(DslComponentProperty.VISUAL_PADDINGS)) {
       null -> null
-      is Gaps -> UnscaledGaps()
+      is Gaps -> value.toUnscaled()
       is UnscaledGaps -> value
       else -> throw UiDslException("Invalid VISUAL_PADDINGS")
     }
@@ -167,8 +169,9 @@ internal fun warn(message: String) {
   }
 }
 
+@OptIn(IntellijInternalApi::class)
 internal fun registerCreationStacktrace(component: JComponent) {
-  if (ApplicationManager.getApplication().isInternal) {
+  if (ApplicationManager.getApplication().isInternal && UiInspectorAction.isSaveStacktraces()) {
     component.putClientProperty(DslComponentPropertyInternal.CREATION_STACKTRACE, Throwable())
   }
 }

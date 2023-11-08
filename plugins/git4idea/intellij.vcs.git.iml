@@ -15,7 +15,10 @@
           </stringArguments>
           <arrayArguments>
             <arrayArg name="pluginClasspaths">
-              <args>$KOTLIN_BUNDLED$/lib/kotlinx-serialization-compiler-plugin.jar</args>
+              <args>
+                <arg>$KOTLIN_BUNDLED$/lib/kotlinx-serialization-compiler-plugin.jar</arg>
+                <arg>$MAVEN_REPOSITORY$/org/jetbrains/compose/compiler/compiler-hosted/1.5.2/compiler-hosted-1.5.2.jar</arg>
+              </args>
             </arrayArg>
             <arrayArg name="pluginOptions" />
           </arrayArguments>
@@ -88,5 +91,7 @@
     <orderEntry type="module" module-name="intellij.platform.util.text.matching" />
     <orderEntry type="module" module-name="intellij.performanceTesting" />
     <orderEntry type="module" module-name="intellij.platform.ide.newUiOnboarding" />
+    <orderEntry type="module" module-name="intellij.platform.backend.observation" />
+    <orderEntry type="module" module-name="intellij.platform.compose" />
   </component>
 </module>

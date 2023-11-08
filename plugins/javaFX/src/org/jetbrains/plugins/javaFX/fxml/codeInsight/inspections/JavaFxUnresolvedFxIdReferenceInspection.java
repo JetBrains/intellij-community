@@ -4,7 +4,7 @@ package org.jetbrains.plugins.javaFX.fxml.codeInsight.inspections;
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypeInfoImpl;
 import com.intellij.codeInsight.FileModificationService;
-import com.intellij.codeInsight.TailType;
+import com.intellij.codeInsight.TailTypes;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateFieldFromUsageFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateFieldFromUsageHelper;
@@ -169,7 +169,8 @@ public final class JavaFxUnresolvedFxIdReferenceInspection extends XmlSuppressab
       field = CreateFieldFromUsageHelper.insertField(targetClass, field, psiElement);
 
       final PsiClassType fieldType = factory.createType(checkContext(reference.getXmlAttributeValue()));
-      final ExpectedTypeInfo[] types = {new ExpectedTypeInfoImpl(fieldType, ExpectedTypeInfo.TYPE_OR_SUBTYPE, fieldType, TailType.NONE,
+      final ExpectedTypeInfo[] types = {new ExpectedTypeInfoImpl(fieldType, ExpectedTypeInfo.TYPE_OR_SUBTYPE, fieldType,
+                                                                 TailTypes.noneType(),
                                                                  null, ExpectedTypeInfoImpl.NULL)};
       CreateFieldFromUsageFix.createFieldFromUsageTemplate(targetClass, project, types, field, false, psiElement);
     }

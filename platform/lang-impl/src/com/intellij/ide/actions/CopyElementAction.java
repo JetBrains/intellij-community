@@ -49,7 +49,7 @@ public final class CopyElementAction extends AnAction {
     doCopy(elements, defaultTargetDirectory);
   }
 
-  private void doCopy(PsiElement[] elements, PsiDirectory defaultTargetDirectory) {
+  private static void doCopy(PsiElement[] elements, PsiDirectory defaultTargetDirectory) {
     CopyHandler.doCopy(elements, defaultTargetDirectory);
   }
 
@@ -72,7 +72,7 @@ public final class CopyElementAction extends AnAction {
     }
   }
 
-  private void updateForEditor(DataContext dataContext, Presentation presentation) {
+  private static void updateForEditor(DataContext dataContext, Presentation presentation) {
     Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     if (editor == null) {
       presentation.setVisible(false);
@@ -101,7 +101,7 @@ public final class CopyElementAction extends AnAction {
     }
   }
 
-  private void updateForToolWindow(DataContext dataContext, Presentation presentation) {
+  private static void updateForToolWindow(DataContext dataContext, Presentation presentation) {
     PsiElement[] elements = LangDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext);
     Ref<@NlsActions.ActionText String> actionName = new Ref<>();
     presentation.setEnabled(elements != null && CopyHandler.canCopy(elements, actionName));

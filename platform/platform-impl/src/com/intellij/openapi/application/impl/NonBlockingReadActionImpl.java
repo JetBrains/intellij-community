@@ -21,10 +21,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.progress.EmptyProgressIndicator;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressIndicatorProvider;
+import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
@@ -524,6 +521,9 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
             }
           }
         }
+      } catch (ProcessCanceledException e) {
+        cancelJob(new PceCancellationException(e));
+        throw e;
       }
       finally {
         cleanupIfNeeded();

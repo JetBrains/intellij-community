@@ -3,7 +3,7 @@ package org.jetbrains.idea.devkit.commit
 
 import com.intellij.openapi.util.registry.Registry
 
-class KotlinPluginPrePushHandler : IssueIDPrePushHandler() {
+internal class KotlinPluginPrePushHandler : IssueIDPrePushHandler() {
   override val paths: List<String> = listOf("plugins/kotlin/")
   override val commitMessageRegex = Regex(".*KTIJ-\\d+.*", RegexOption.DOT_MATCHES_ALL /* line breaks matter */)
   override val pathsToIgnore = super.pathsToIgnore.toMutableList()
@@ -14,7 +14,7 @@ class KotlinPluginPrePushHandler : IssueIDPrePushHandler() {
   override fun getPresentableName(): String = DevKitGitBundle.message("push.commit.handler.name")
 }
 
-class IntelliJPrePushHandler : IssueIDPrePushHandler() {
+internal class IntelliJPrePushHandler : IssueIDPrePushHandler() {
   override val paths = listOf("community", "platform")
   override val pathsToIgnore = listOf("plugins/kotlin/")
   override val commitMessageRegex = Regex(".*[A-Z]+-\\d+.*", RegexOption.DOT_MATCHES_ALL)

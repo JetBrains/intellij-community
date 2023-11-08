@@ -26,4 +26,15 @@ abstract class BrowserLauncher {
   fun browse(url: String, browser: WebBrowser?): Unit = browse(url, browser, null)
 
   abstract fun browse(url: String, browser: WebBrowser? = null, project: Project? = null)
+
+  @Deprecated("Implementation detail; please use other methods instead", level = DeprecationLevel.ERROR)
+  fun browseUsingPath(url: String?,
+                      browserPath: String? = null,
+                      browser: WebBrowser? = null,
+                      project: Project? = null,
+                      openInNewWindow: Boolean = false,
+                      additionalParameters: Array<String> = com.intellij.util.ArrayUtil.EMPTY_STRING_ARRAY): Boolean {
+    browse(url!!, browser, project)
+    return true
+  }
 }

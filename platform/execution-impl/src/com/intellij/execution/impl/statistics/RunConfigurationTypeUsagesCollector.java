@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.impl.statistics;
 
+import com.intellij.execution.EnvFilesOptions;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.*;
@@ -34,7 +35,7 @@ import java.util.*;
 
 public final class RunConfigurationTypeUsagesCollector extends ProjectUsagesCollector {
   public static final String CONFIGURED_IN_PROJECT = "configured.in.project";
-  public static final EventLogGroup GROUP = new EventLogGroup("run.configuration.type", 15);
+  public static final EventLogGroup GROUP = new EventLogGroup("run.configuration.type", 17);
   public static final StringEventField ID_FIELD = EventFields.StringValidatedByCustomRule("id", RunConfigurationUtilValidator.class);
   public static final StringEventField FACTORY_FIELD = EventFields.StringValidatedByCustomRule("factory",
                                                                                                RunConfigurationUtilValidator.class);
@@ -44,8 +45,10 @@ public final class RunConfigurationTypeUsagesCollector extends ProjectUsagesColl
   private static final BooleanEventField SHARED_FIELD = EventFields.Boolean("shared");
   private static final BooleanEventField EDIT_BEFORE_RUN_FIELD = EventFields.Boolean("edit_before_run");
   private static final BooleanEventField ACTIVATE_BEFORE_RUN_FIELD = EventFields.Boolean("activate_before_run");
+  private static final BooleanEventField FOCUS_BEFORE_RUN_FIELD = EventFields.Boolean("focus_before_run");
   private static final BooleanEventField TEMPORARY_FIELD = EventFields.Boolean("temporary");
   private static final BooleanEventField PARALLEL_FIELD = EventFields.Boolean("parallel");
+  private static final IntEventField ENV_FILES_COUNT = EventFields.Int("env_files_count");
   /**
    * Stands for the target specified for the Run Configuration.
    * <p>
@@ -57,7 +60,8 @@ public final class RunConfigurationTypeUsagesCollector extends ProjectUsagesColl
   private static final ObjectEventField ADDITIONAL_FIELD = EventFields.createAdditionalDataField(GROUP.getId(), CONFIGURED_IN_PROJECT);
   private static final VarargEventId CONFIGURED_IN_PROJECT_EVENT =
     GROUP.registerVarargEvent(CONFIGURED_IN_PROJECT, COUNT_FIELD, ID_FIELD, FACTORY_FIELD, SHARED_FIELD, EDIT_BEFORE_RUN_FIELD,
-                              ACTIVATE_BEFORE_RUN_FIELD, TEMPORARY_FIELD, PARALLEL_FIELD, ADDITIONAL_FIELD, TARGET_FIELD);
+                              ACTIVATE_BEFORE_RUN_FIELD, FOCUS_BEFORE_RUN_FIELD, TEMPORARY_FIELD, PARALLEL_FIELD, ADDITIONAL_FIELD,
+                              TARGET_FIELD, ENV_FILES_COUNT);
   private static final VarargEventId FEATURE_USED_EVENT =
     GROUP.registerVarargEvent("feature.used", COUNT_FIELD, ID_FIELD, EventFields.PluginInfo, FEATURE_NAME_FIELD);
 
@@ -102,6 +106,9 @@ public final class RunConfigurationTypeUsagesCollector extends ProjectUsagesColl
         if (assignedTargetType != null) {
           pairs.add(TARGET_FIELD.with(assignedTargetType));
         }
+      }
+      if (runConfiguration instanceof EnvFilesOptions envFilesOptions) {
+        pairs.add(ENV_FILES_COUNT.with(envFilesOptions.getEnvFilePaths().size()));
       }
     }
     Set<MetricEvent> metrics = new HashSet<>();
@@ -183,6 +190,7 @@ public final class RunConfigurationTypeUsagesCollector extends ProjectUsagesColl
     return List.of(SHARED_FIELD.with(settings.isShared()),
                    EDIT_BEFORE_RUN_FIELD.with(settings.isEditBeforeRun()),
                    ACTIVATE_BEFORE_RUN_FIELD.with(settings.isActivateToolWindowBeforeRun()),
+                   FOCUS_BEFORE_RUN_FIELD.with(settings.isFocusToolWindowBeforeRun()),
                    PARALLEL_FIELD.with(runConfiguration.isAllowRunningInParallel()),
                    TEMPORARY_FIELD.with(settings.isTemporary()));
   }

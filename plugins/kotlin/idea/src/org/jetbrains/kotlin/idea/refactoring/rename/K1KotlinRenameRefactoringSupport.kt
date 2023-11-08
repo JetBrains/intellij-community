@@ -45,17 +45,15 @@ internal class K1RenameRefactoringSupport : KotlinRenameRefactoringSupport {
         ForeignUsagesRenameProcessor.prepareRenaming(element, newName, allRenames, scope)
     }
 
-    override fun checkOriginalUsagesRetargeting(
+    override fun checkUsagesRetargeting(
         declaration: KtNamedDeclaration,
         newName: String,
         originalUsages: MutableList<UsageInfo>,
         newUsages: MutableList<UsageInfo>
     ) {
-        org.jetbrains.kotlin.idea.refactoring.rename.checkOriginalUsagesRetargeting(declaration, newName, originalUsages, newUsages)
-    }
 
-    override fun checkNewNameUsagesRetargeting(declaration: KtNamedDeclaration, newName: String, newUsages: MutableList<UsageInfo>) {
-        org.jetbrains.kotlin.idea.refactoring.rename.checkNewNameUsagesRetargeting(declaration, newName, newUsages)
+        checkOriginalUsagesRetargeting(declaration, newName, originalUsages, newUsages)
+        checkNewNameUsagesRetargeting(declaration, newName, newUsages)
     }
 
     override fun getAllOverridenFunctions(function: KtNamedFunction): List<PsiElement> {

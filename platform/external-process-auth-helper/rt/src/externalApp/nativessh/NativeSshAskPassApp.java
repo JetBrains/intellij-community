@@ -24,12 +24,13 @@ public class NativeSshAskPassApp implements ExternalApp {
                                                                      handlerId, description);
 
       if (result.isError) {
-        System.err.println(result.error);
+        System.err.println(result.getPresentableError());
         System.exit(1);
       }
 
       String passphrase = result.response;
       if (passphrase == null) {
+        System.err.println("Authentication request was cancelled");
         System.exit(1); // dialog canceled
       }
 

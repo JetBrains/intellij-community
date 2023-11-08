@@ -8,7 +8,7 @@ import com.intellij.openapi.util.registry.Registry
 
 @Service(Service.Level.APP)
 class SearchEverywhereSemanticExperiments {
-  private val experimentGroup: Int
+  val experimentGroup: Int
     get() {
       val experimentGroup = EventLogConfiguration.getInstance().bucket % GRANULARITY
       val registryExperimentGroup = Registry.intValue("search.everywhere.ml.experiment.group", -1, -1, GRANULARITY - 1)
@@ -34,15 +34,14 @@ class SearchEverywhereSemanticExperiments {
   enum class SemanticSearchFeature { NOT_ENABLED, ENABLED }
 
   companion object {
-    const val GRANULARITY = 8
+    const val GRANULARITY = 4
 
     private val TAB_EXPERIMENTS = hashMapOf(
       ActionSearchEverywhereContributor::class.java.simpleName to TabExperimentPlan(
-        0 to SemanticSearchFeature.ENABLED, // half of one of NO_EXPERIMENT groups
-        2 to SemanticSearchFeature.ENABLED, // half of the USE_EXPERIMENTAL group
+        1 to SemanticSearchFeature.ENABLED, // instead of NO_ML experiment group
       )
     )
 
-    fun getInstance() = service<SearchEverywhereSemanticExperiments>()
+    fun getInstance(): SearchEverywhereSemanticExperiments = service()
   }
 }

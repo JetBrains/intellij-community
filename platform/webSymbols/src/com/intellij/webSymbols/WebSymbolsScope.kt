@@ -39,17 +39,15 @@ interface WebSymbolsScope : ModificationTracker {
    * If the scope contains many symbols, or results should be cached consider extending [WebSymbolsScopeWithCache].
    *
    */
-  fun getMatchingSymbols(namespace: SymbolNamespace,
-                         kind: SymbolKind,
-                         name: String,
+  fun getMatchingSymbols(qualifiedName: WebSymbolQualifiedName,
                          params: WebSymbolsNameMatchQueryParams,
                          scope: Stack<WebSymbolsScope>): List<WebSymbol> =
-    getSymbols(namespace, kind,
+    getSymbols(qualifiedName.qualifiedKind,
                WebSymbolsListSymbolsQueryParams(params.queryExecutor, expandPatterns = false, virtualSymbols = params.virtualSymbols,
                                                 abstractSymbols = params.abstractSymbols, strictScope = params.strictScope),
                scope)
       .filterIsInstance<WebSymbol>()
-      .flatMap { it.match(name, params, scope) }
+      .flatMap { it.match(qualifiedName.name, params, scope) }
 
   /**
    * Returns symbols of a particular kind and from particular namespace within the scope, including symbols with patterns.
@@ -57,8 +55,7 @@ interface WebSymbolsScope : ModificationTracker {
    *
    * If the scope contains many symbols, or results should be cached consider extending [WebSymbolsScopeWithCache].
    */
-  fun getSymbols(namespace: SymbolNamespace,
-                 kind: SymbolKind,
+  fun getSymbols(qualifiedKind: WebSymbolQualifiedKind,
                  params: WebSymbolsListSymbolsQueryParams,
                  scope: Stack<WebSymbolsScope>): List<WebSymbolsScope> =
     emptyList()
@@ -72,17 +69,15 @@ interface WebSymbolsScope : ModificationTracker {
    *
    * Default implementation calls `getSymbols` and runs [WebSymbol.toCodeCompletionItems] on each symbol.
    */
-  fun getCodeCompletions(namespace: SymbolNamespace,
-                         kind: SymbolKind,
-                         name: String,
+  fun getCodeCompletions(qualifiedName: WebSymbolQualifiedName,
                          params: WebSymbolsCodeCompletionQueryParams,
                          scope: Stack<WebSymbolsScope>): List<WebSymbolCodeCompletionItem> =
-    getDefaultCodeCompletions(namespace, kind, name, params, scope)
+    getDefaultCodeCompletions(qualifiedName, params, scope)
 
   /**
    * When scope is exclusive for a particular namespace and kind, resolve will not continue down the stack during pattern matching.
    */
-  fun isExclusiveFor(namespace: SymbolNamespace, kind: SymbolKind): Boolean =
+  fun isExclusiveFor(qualifiedKind: WebSymbolQualifiedKind): Boolean =
     false
 
 }

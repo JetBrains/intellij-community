@@ -2,7 +2,7 @@
 package com.intellij.platform.runtime.repository.serialization.impl;
 
 import com.intellij.platform.runtime.repository.*;
-import com.intellij.platform.runtime.repository.impl.IncludedRuntimeModuleImpl;
+import com.intellij.platform.runtime.repository.serialization.RawIncludedRuntimeModule;
 import org.jetbrains.annotations.NotNull;
 
 import javax.xml.stream.XMLInputFactory;
@@ -17,11 +17,12 @@ public final class PluginXmlReader {
   private static final String PLUGIN_XML_PATH = "META-INF/plugin.xml";
 
   @NotNull
-  public static List<IncludedRuntimeModule> loadPluginModules(RuntimeModuleDescriptor mainModule, RuntimeModuleRepository repository) {
+  public static List<RawIncludedRuntimeModule> loadPluginModules(RuntimeModuleDescriptor mainModule, RuntimeModuleRepository repository) {
     try {
-      List<IncludedRuntimeModule> modules = new ArrayList<>();
+      List<RawIncludedRuntimeModule> modules = new ArrayList<>();
       Set<String> addedModules = new HashSet<>();
-      modules.add(new IncludedRuntimeModuleImpl(mainModule, ModuleImportance.FUNCTIONAL, Collections.emptySet()));
+      //it's important to have the main module at the beginning of the list for now, ModuleBasedProductLoadingStrategy.loadPluginDescriptorFromRuntimeModule relies on that
+      modules.add(new RawIncludedRuntimeModule(mainModule.getModuleId(), ModuleImportance.FUNCTIONAL, Collections.emptySet()));
       addedModules.add(mainModule.getModuleId().getStringId());
       try (InputStream inputStream = mainModule.readFile(PLUGIN_XML_PATH)) {
         if (inputStream == null) {
@@ -43,11 +44,7 @@ public final class PluginXmlReader {
               int moduleNameEnd = moduleAttribute.indexOf('/');
               String moduleName = moduleNameEnd == -1 ? moduleAttribute : moduleAttribute.substring(0, moduleNameEnd);
               if (addedModules.add(moduleName)) {
-                RuntimeModuleDescriptor module = repository.resolveModule(RuntimeModuleId.raw(moduleName)).getResolvedModule();
-                //todo it makes sense to print something to log if optional module cannot be loaded
-                if (module != null) {
-                  modules.add(new IncludedRuntimeModuleImpl(module, ModuleImportance.OPTIONAL, Collections.emptySet()));
-                }
+                modules.add(new RawIncludedRuntimeModule(RuntimeModuleId.raw(moduleName), ModuleImportance.OPTIONAL, Collections.emptySet()));
               }
             }
           }

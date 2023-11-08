@@ -3,11 +3,10 @@ package com.intellij.codeInsight.codeVision.ui
 
 import com.intellij.codeInsight.codeVision.CodeVisionAnchorKind
 import com.intellij.codeInsight.codeVision.CodeVisionEntry
+import com.intellij.codeInsight.codeVision.CodeVisionModel
+import com.intellij.codeInsight.codeVision.highlighterOnCodeVisionEntryKey
 import com.intellij.codeInsight.codeVision.settings.CodeVisionSettings
-import com.intellij.codeInsight.codeVision.ui.model.CodeVisionListData
-import com.intellij.codeInsight.codeVision.ui.model.CodeVisionVisualVerticalPositionKeeper
-import com.intellij.codeInsight.codeVision.ui.model.ProjectCodeVisionModel
-import com.intellij.codeInsight.codeVision.ui.model.RangeCodeVisionModel
+import com.intellij.codeInsight.codeVision.ui.model.*
 import com.intellij.codeInsight.codeVision.ui.popup.CodeVisionPopup
 import com.intellij.codeInsight.codeVision.ui.renderers.BlockCodeVisionInlayRenderer
 import com.intellij.codeInsight.codeVision.ui.renderers.CodeVisionInlayRenderer
@@ -61,6 +60,7 @@ class CodeVisionView(val project: Project) {
     lifetime: Lifetime,
     editor: EditorImpl,
     anchoringRange: TextRange,
+    codeVisionModel: CodeVisionModel,
     lenses: Map<CodeVisionAnchorKind, List<CodeVisionEntry>>
   ): (Int) -> Unit {
     if (!isLensValid(lenses)) return {}
@@ -82,6 +82,8 @@ class CodeVisionView(val project: Project) {
       listInlays.add(inlay)
       addCodeLenses(inlay, rangeCodeVisionModel, lens.value, lens.key, lifetime)
     }
+    val lensesRangeMarkers = lenses.values.asSequence().flatMap { it }.mapNotNull { it.getUserData(highlighterOnCodeVisionEntryKey) }
+    codeVisionModel.addOrUpdateLenses(lensesRangeMarkers.asIterable())
     lifetime.onTermination {
       for (inlay in listInlays) {
         inlays.remove(inlay)

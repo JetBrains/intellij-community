@@ -16,7 +16,7 @@ import java.util.List;
 @ApiStatus.Experimental
 public abstract class ModCommandBatchQuickFix extends ModCommandQuickFix implements BatchQuickFix {
   /**
-   * A method that computes the final action of all the quick-fixs for the supplied descriptors and returns it. 
+   * A method that computes the final action of all the quick-fixes for the supplied descriptors and returns it. 
    * Executed in a background read-action under progress.
    *
    * @param project    {@link Project}

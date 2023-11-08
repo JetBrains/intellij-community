@@ -4,7 +4,7 @@
       <option name="executionName" />
       <option name="externalProjectPath" value="$PROJECT_DIR$/.." />
       <option name="externalSystemIdString" value="GRADLE" />
-      <option name="scriptParameters" value="-Ppublish.ide.plugin.dependencies=true -PdeployVersion=2.0.255 -Pbuild.number=2.0.255" />
+      <option name="scriptParameters" value="-Ppublish.ide.plugin.dependencies=true -PdeployVersion=2.0.255-dev-255 -Pbuild.number=2.0.255-dev-255 -PkotlinLanguageVersion=1.9" />
       <option name="taskDescriptions">
         <list />
       </option>

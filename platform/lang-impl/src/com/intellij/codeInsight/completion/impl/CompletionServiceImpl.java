@@ -38,7 +38,7 @@ import static com.intellij.platform.diagnostic.telemetry.helpers.TraceKt.runWith
 /**
  * @author peter
  */
-public final class CompletionServiceImpl extends BaseCompletionService {
+public class CompletionServiceImpl extends BaseCompletionService {
   private static final Logger LOG = Logger.getInstance(CompletionServiceImpl.class);
 
   private static final CompletionPhaseHolder DEFAULT_PHASE_HOLDER = new CompletionPhaseHolder(CompletionPhase.NoCompletion, null);

@@ -7,8 +7,9 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
 import org.jetbrains.kotlin.codegen.coroutines.SUSPEND_FUNCTION_COMPLETION_PARAMETER_NAME
 import org.jetbrains.kotlin.psi.KtFunction
+import org.jetbrains.uast.UastLazyPart
+import org.jetbrains.uast.getOrBuild
 import org.jetbrains.uast.kotlin.BaseKotlinUastResolveProviderService
-import org.jetbrains.uast.kotlin.lz
 
 @ApiStatus.Internal
 class UastKotlinPsiSuspendContinuationParameter private constructor(
@@ -24,19 +25,14 @@ class UastKotlinPsiSuspendContinuationParameter private constructor(
     isVarArgs = false,
     ktDefaultValue = null
 ) {
-    private val _annotations: Array<PsiAnnotation> by lz {
-        arrayOf(
-            UastFakeLightNullabilityAnnotation(KtTypeNullability.NON_NULLABLE, this)
-        )
-    }
+    private val annotationsPart = UastLazyPart<Array<PsiAnnotation>>()
 
-    override fun getAnnotations(): Array<PsiAnnotation> {
-        return _annotations
-    }
-
-    override fun hasAnnotation(fqn: String): Boolean {
-        return _annotations.find { it.hasQualifiedName(fqn) } != null
-    }
+    override val _annotations: Array<PsiAnnotation>
+        get() = annotationsPart.getOrBuild {
+            arrayOf(
+                UastFakeLightNullabilityAnnotation(KtTypeNullability.NON_NULLABLE, this)
+            )
+        }
 
     companion object {
         fun create(

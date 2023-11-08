@@ -92,6 +92,8 @@ public final class ScopeEditorPanel implements Disposable {
   private final MyAction myExcludeRec = new MyAction("button.exclude.recursively", this::excludeSelected);
 
   interface SettingsChangedListener {
+
+    @Topic.ProjectLevel
     Topic<SettingsChangedListener> TOPIC = new Topic<>(SettingsChangedListener.class, Topic.BroadcastDirection.TO_CHILDREN);
     void settingsChanged();
   }
@@ -509,7 +511,7 @@ public final class ScopeEditorPanel implements Disposable {
     tree.addTreeWillExpandListener(new TreeWillExpandListener() {
       @Override
       public void treeWillExpand(TreeExpansionEvent event) {
-        ((PackageDependenciesNode)event.getPath().getLastPathComponent()).sortChildren();
+        ((PackageDependenciesNode)event.getPath().getLastPathComponent()).updateAndSortChildren();
       }
 
       @Override
@@ -537,7 +539,7 @@ public final class ScopeEditorPanel implements Disposable {
         try {
           myTreeExpansionMonitor.freeze();
           final TreeModel model = PatternDialectProvider.getInstance(DependencyUISettings.getInstance().SCOPE_TYPE).createTreeModel(myProject, myTreeMarker);
-          ((PackageDependenciesNode)model.getRoot()).sortChildren();
+          ((PackageDependenciesNode)model.getRoot()).updateAndSortChildren();
           if (myErrorMessage == null) {
             String message = IdeBundle.message("label.scope.contains.files", model.getMarkedFileCount(), model.getTotalFileCount());
             myMatchingCountLabel.setText(message);

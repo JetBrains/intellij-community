@@ -20,9 +20,9 @@ import org.jetbrains.annotations.Nls
 import java.awt.Point
 
 open class ProjectWidgetStep : NewUiOnboardingStep {
-  protected val headerText: @Nls String
+  protected open val headerText: @Nls String
     get() = NewUiOnboardingBundle.message("project.widget.step.header")
-  protected val text: @Nls String
+  protected open val text: @Nls String
     get() = NewUiOnboardingBundle.message("project.widget.step.text")
 
   override suspend fun performStep(project: Project, disposable: CheckedDisposable): NewUiOnboardingStepData? {

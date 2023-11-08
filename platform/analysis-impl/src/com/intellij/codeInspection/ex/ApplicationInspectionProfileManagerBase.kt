@@ -29,12 +29,12 @@ import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
-import java.util.function.BiConsumer
 import java.util.function.Function
 
 open class ApplicationInspectionProfileManagerBase @Internal @NonInjectable constructor(schemeManagerFactory: SchemeManagerFactory) :
   BaseInspectionProfileManager(ApplicationManager.getApplication().messageBus) {
 
+  @Suppress("unused")
   constructor() : this(SchemeManagerFactory.getInstance())
 
   init {
@@ -76,9 +76,9 @@ open class ApplicationInspectionProfileManagerBase @Internal @NonInjectable cons
   protected val profilesAreInitialized: Unit by lazy {
     val app = ApplicationManager.getApplication()
     if (!(app.isUnitTestMode || app.isHeadlessEnvironment)) {
-      BUNDLED_EP_NAME.processWithPluginDescriptor(BiConsumer { ep, pluginDescriptor ->
-        schemeManager.loadBundledScheme(ep.path!! + ".xml", null, pluginDescriptor)
-      })
+      BUNDLED_EP_NAME.processWithPluginDescriptor { ep, pluginDescriptor ->
+        schemeManager.loadBundledScheme(resourceName = ep.path!! + ".xml", requestor = null, pluginDescriptor = pluginDescriptor)
+      }
     }
     schemeManager.loadSchemes()
 

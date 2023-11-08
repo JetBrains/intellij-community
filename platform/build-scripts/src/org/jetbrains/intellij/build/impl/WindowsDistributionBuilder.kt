@@ -11,6 +11,8 @@ import kotlinx.coroutines.*
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.impl.OsSpecificDistributionBuilder.Companion.suffix
+import org.jetbrains.intellij.build.impl.client.ADDITIONAL_EMBEDDED_CLIENT_VM_OPTIONS
+import org.jetbrains.intellij.build.impl.client.createJetBrainsClientContextForLaunchers
 import org.jetbrains.intellij.build.impl.productInfo.*
 import org.jetbrains.intellij.build.impl.support.RepairUtilityBuilder
 import org.jetbrains.intellij.build.io.*
@@ -22,15 +24,8 @@ import kotlin.io.path.extension
 internal class WindowsDistributionBuilder(
   override val context: BuildContext,
   private val customizer: WindowsDistributionCustomizer,
-  private val ideaProperties: Path?,
+  private val ideaProperties: CharSequence?,
 ) : OsSpecificDistributionBuilder {
-  private val icoFile: Path?
-
-  init {
-    val icoPath = (if (context.applicationInfo.isEAP) customizer.icoPathForEAP else null) ?: customizer.icoPath
-    icoFile = icoPath?.let { Path.of(icoPath) }
-  }
-
   override val targetOs: OsFamily
     get() = OsFamily.WINDOWS
 
@@ -54,17 +49,24 @@ internal class WindowsDistributionBuilder(
       generateBuildTxt(context, targetPath)
       copyDistFiles(context = context, newDir = targetPath, os = OsFamily.WINDOWS, arch = arch)
 
-      Files.writeString(distBinDir.resolve(ideaProperties!!.fileName),
-                        StringUtilRt.convertLineSeparators(Files.readString(ideaProperties), "\r\n"))
+      Files.writeString(distBinDir.resolve(PROPERTIES_FILE_NAME), StringUtilRt.convertLineSeparators(ideaProperties!!, "\r\n"))
 
+      val icoFile = computeIcoPath(context)
       if (icoFile != null) {
         Files.copy(icoFile, distBinDir.resolve("${context.productProperties.baseFileName}.ico"), StandardCopyOption.REPLACE_EXISTING)
       }
       if (customizer.includeBatchLaunchers) {
         generateScripts(distBinDir, arch)
       }
-      generateVMOptions(distBinDir)
-      buildWinLauncher(targetPath, arch)
+      writeVmOptions(distBinDir)
+      buildWinLauncher(targetPath, arch, additionalNonCustomizableJvmArgs = emptyList(), context)
+      val jetBrainsClientContext = createJetBrainsClientContextForLaunchers(context)
+      if (jetBrainsClientContext != null) {
+        writeWindowsVmOptions(distBinDir, jetBrainsClientContext)
+        buildWinLauncher(targetPath, arch, additionalNonCustomizableJvmArgs = ADDITIONAL_EMBEDDED_CLIENT_VM_OPTIONS,
+                         jetBrainsClientContext)
+      }
+
       customizer.copyAdditionalFiles(context, targetPath, arch)
     }
 
@@ -246,91 +248,8 @@ internal class WindowsDistributionBuilder(
       }
   }
 
-  private fun generateVMOptions(distBinDir: Path) {
-    val fileName = "${context.productProperties.baseFileName}64.exe.vmoptions"
-    val vmOptions = VmOptionsGenerator.computeVmOptions(context)
-    VmOptionsGenerator.writeVmOptions(distBinDir.resolve(fileName), vmOptions, "\r\n")
-  }
-
-  private suspend fun buildWinLauncher(winDistPath: Path, arch: JvmArchitecture) {
-    spanBuilder("build Windows executable").useWithScope2 {
-      val executableBaseName = "${context.productProperties.baseFileName}64"
-      val launcherPropertiesPath = context.paths.tempDir.resolve("launcher-${arch.dirName}.properties")
-
-      @Suppress("SpellCheckingInspection")
-      val vmOptions = context.getAdditionalJvmArguments(OsFamily.WINDOWS, arch) + listOf("-Dide.native.launcher=true")
-      val productName = context.applicationInfo.shortProductName
-      val classPath = context.bootClassPathJarNames.joinToString(separator = ";") { "%IDE_HOME%\\\\lib\\\\${it}" }
-      val bootClassPath = context.xBootClassPathJarNames.joinToString(separator = ";") { "%IDE_HOME%\\\\lib\\\\${it}" }
-      val envVarBaseName = context.productProperties.getEnvironmentVariableBaseName(context.applicationInfo)
-      val icoFilesDirectory = context.paths.tempDir.resolve("win-launcher-ico-${arch.dirName}")
-      val appInfoForLauncher = generateApplicationInfoForLauncher(context.applicationInfo.appInfoXml, icoFilesDirectory)
-      @Suppress("SpellCheckingInspection")
-      Files.writeString(launcherPropertiesPath, """
-        IDS_JDK_ONLY=${context.productProperties.toolsJarRequired}
-        IDS_JDK_ENV_VAR=${envVarBaseName}_JDK
-        IDS_VM_OPTIONS_PATH=%APPDATA%\\\\${context.applicationInfo.shortCompanyName}\\\\${context.systemSelector}
-        IDS_VM_OPTION_ERRORFILE=-XX:ErrorFile=%USERPROFILE%\\\\java_error_in_${executableBaseName}_%p.log
-        IDS_VM_OPTION_HEAPDUMPPATH=-XX:HeapDumpPath=%USERPROFILE%\\\\java_error_in_${executableBaseName}.hprof
-        IDS_PROPS_ENV_VAR=${envVarBaseName}_PROPERTIES
-        IDS_VM_OPTIONS_ENV_VAR=${envVarBaseName}_VM_OPTIONS
-        IDS_ERROR_LAUNCHING_APP=Error launching $productName
-        IDS_VM_OPTIONS=${vmOptions.joinToString(separator = " ")}
-        IDS_CLASSPATH_LIBS=${classPath}
-        IDS_BOOTCLASSPATH_LIBS=${bootClassPath}
-        IDS_INSTANCE_ACTIVATION=${context.productProperties.fastInstanceActivation}
-        IDS_MAIN_CLASS=${context.ideMainClassName.replace('.', '/')}
-        """.trimIndent().trim())
-
-      val communityHome = context.paths.communityHome
-      val inputPath = "${communityHome}/platform/build-scripts/resources/win/launcher/${arch.dirName}/WinLauncher.exe"
-      val outputPath = winDistPath.resolve("bin/${executableBaseName}.exe")
-      val classpath = ArrayList<String>()
-
-      val generatorClasspath = context.getModuleRuntimeClasspath(module = context.findRequiredModule("intellij.tools.launcherGenerator"),
-                                                                 forTests = false)
-      classpath.addAll(generatorClasspath)
-
-      sequenceOf(context.findApplicationInfoModule(), context.findRequiredModule("intellij.platform.icons"))
-        .flatMap { it.sourceRoots }
-        .forEach { root ->
-          classpath.add(root.file.absolutePath)
-        }
-
-      for (p in context.productProperties.brandingResourcePaths) {
-        classpath.add(p.toString())
-      }
-      classpath.add(icoFilesDirectory.toString())
-
-      runIdea(
-        context = context,
-        mainClass = "com.pme.launcher.LauncherGeneratorMain",
-        args = listOf(
-          inputPath,
-          appInfoForLauncher.toString(),
-          "$communityHome/native/WinLauncher/resource.h",
-          launcherPropertiesPath.toString(),
-          icoFile?.fileName?.toString() ?: " ",
-          outputPath.toString(),
-        ),
-        jvmArgs = listOf("-Djava.awt.headless=true"),
-        classPath = classpath
-      )
-    }
-  }
-
-  /**
-   * Generates ApplicationInfo.xml file for launcher generator which contains link to proper *.ico file.
-   * todo pass path to ico file to LauncherGeneratorMain directly (probably after IDEA-196705 is fixed).
-   */
-  private fun generateApplicationInfoForLauncher(appInfo: String, icoFilesDirectory: Path): Path {
-    Files.createDirectories(icoFilesDirectory)
-    if (icoFile != null) {
-      Files.copy(icoFile, icoFilesDirectory.resolve(icoFile.fileName), StandardCopyOption.REPLACE_EXISTING)
-    }
-    val patchedFile = icoFilesDirectory.resolve("win-launcher-application-info.xml")
-    Files.writeString(patchedFile, appInfo)
-    return patchedFile
+  override fun writeVmOptions(distBinDir: Path) : Path {
+    return writeWindowsVmOptions(distBinDir, context)
   }
 
   private fun CoroutineScope.createBuildWinZipTask(runtimeDir: Path?,
@@ -374,6 +293,99 @@ internal class WindowsDistributionBuilder(
   }
 }
 
+private fun computeIcoPath(context: BuildContext): Path? {
+  val customizer = context.windowsDistributionCustomizer
+  val icoPath = (if (context.applicationInfo.isEAP) customizer?.icoPathForEAP else null) ?: customizer?.icoPath
+  return icoPath?.let { Path.of(icoPath) }
+}
+
+private suspend fun buildWinLauncher(winDistPath: Path,
+                                     arch: JvmArchitecture,
+                                     additionalNonCustomizableJvmArgs: List<String>,
+                                     context: BuildContext) {
+  spanBuilder("build Windows executable").useWithScope2 {
+    val executableBaseName = "${context.productProperties.baseFileName}64"
+    val launcherPropertiesPath = context.paths.tempDir.resolve("launcher-${arch.dirName}.properties")
+    val icoFile = computeIcoPath(context)
+
+    @Suppress("SpellCheckingInspection")
+    val vmOptions = context.getAdditionalJvmArguments(OsFamily.WINDOWS, arch) + listOf("-Dide.native.launcher=true") + 
+                    additionalNonCustomizableJvmArgs
+    val productName = context.applicationInfo.shortProductName
+    val classPath = context.bootClassPathJarNames.joinToString(separator = ";") { "%IDE_HOME%\\\\lib\\\\${it}" }
+    val bootClassPath = context.xBootClassPathJarNames.joinToString(separator = ";") { "%IDE_HOME%\\\\lib\\\\${it}" }
+    val envVarBaseName = context.productProperties.getEnvironmentVariableBaseName(context.applicationInfo)
+    val icoFilesDirectory = context.paths.tempDir.resolve("win-launcher-ico-${arch.dirName}")
+    val appInfoForLauncher = generateApplicationInfoForLauncher(context.applicationInfo.appInfoXml, icoFilesDirectory, icoFile)
+    @Suppress("SpellCheckingInspection")
+    Files.writeString(launcherPropertiesPath, """
+        IDS_JDK_ONLY=${context.productProperties.toolsJarRequired}
+        IDS_JDK_ENV_VAR=${envVarBaseName}_JDK
+        IDS_VM_OPTIONS_PATH=%APPDATA%\\\\${context.applicationInfo.shortCompanyName}\\\\${context.systemSelector}
+        IDS_VM_OPTION_ERRORFILE=-XX:ErrorFile=%USERPROFILE%\\\\java_error_in_${executableBaseName}_%p.log
+        IDS_VM_OPTION_HEAPDUMPPATH=-XX:HeapDumpPath=%USERPROFILE%\\\\java_error_in_${executableBaseName}.hprof
+        IDS_PROPS_ENV_VAR=${envVarBaseName}_PROPERTIES
+        IDS_VM_OPTIONS_ENV_VAR=${envVarBaseName}_VM_OPTIONS
+        IDS_ERROR_LAUNCHING_APP=Error launching $productName
+        IDS_VM_OPTIONS=${vmOptions.joinToString(separator = " ")}
+        IDS_CLASSPATH_LIBS=${classPath}
+        IDS_BOOTCLASSPATH_LIBS=${bootClassPath}
+        IDS_INSTANCE_ACTIVATION=${context.productProperties.fastInstanceActivation}
+        IDS_MAIN_CLASS=${context.ideMainClassName.replace('.', '/')}
+        """.trimIndent().trim())
+
+    val communityHome = context.paths.communityHome
+    val inputPath = "${communityHome}/platform/build-scripts/resources/win/launcher/${arch.dirName}/WinLauncher.exe"
+    val outputPath = winDistPath.resolve("bin/${executableBaseName}.exe")
+    val classpath = ArrayList<String>()
+
+    val generatorClasspath = context.getModuleRuntimeClasspath(
+      module = context.findRequiredModule("intellij.tools.launcherGenerator"),
+      forTests = false)
+    classpath.addAll(generatorClasspath)
+
+    sequenceOf(context.findApplicationInfoModule(), context.findRequiredModule("intellij.platform.icons"))
+      .flatMap { it.sourceRoots }
+      .forEach { root ->
+        classpath.add(root.file.absolutePath)
+      }
+
+    for (p in context.productProperties.brandingResourcePaths) {
+      classpath.add(p.toString())
+    }
+    classpath.add(icoFilesDirectory.toString())
+
+    runIdea(
+      context = context,
+      mainClass = "com.pme.launcher.LauncherGeneratorMain",
+      args = listOf(
+        inputPath,
+        appInfoForLauncher.toString(),
+        "$communityHome/native/WinLauncher/resource.h",
+        launcherPropertiesPath.toString(),
+        icoFile?.fileName?.toString() ?: " ",
+        outputPath.toString(),
+      ),
+      jvmArgs = listOf("-Djava.awt.headless=true"),
+      classPath = classpath
+    )
+  }
+}
+
+/**
+ * Generates ApplicationInfo.xml file for launcher generator which contains link to proper *.ico file.
+ * todo pass path to ico file to LauncherGeneratorMain directly (probably after IDEA-196705 is fixed).
+ */
+private fun generateApplicationInfoForLauncher(appInfo: String, icoFilesDirectory: Path, icoFile: Path?): Path {
+  Files.createDirectories(icoFilesDirectory)
+  if (icoFile != null) {
+    Files.copy(icoFile, icoFilesDirectory.resolve(icoFile.fileName), StandardCopyOption.REPLACE_EXISTING)
+  }
+  val patchedFile = icoFilesDirectory.resolve("win-launcher-application-info.xml")
+  Files.writeString(patchedFile, appInfo)
+  return patchedFile
+}
+
 private suspend fun checkThatExeInstallerAndZipWithJbrAreTheSame(zipPath: Path,
                                                                  exePath: Path,
                                                                  arch: JvmArchitecture,
@@ -412,6 +424,14 @@ private suspend fun checkThatExeInstallerAndZipWithJbrAreTheSame(zipPath: Path,
       NioFiles.deleteRecursively(tempExe)
     }
   }
+}
+
+private fun writeWindowsVmOptions(distBinDir: Path, context: BuildContext): Path {
+  val vmOptionsPath = distBinDir.resolve("${context.productProperties.baseFileName}64.exe.vmoptions")
+  val vmOptions = VmOptionsGenerator.computeVmOptions(context)
+  VmOptionsGenerator.writeVmOptions(vmOptionsPath, vmOptions, "\r\n")
+
+  return vmOptionsPath
 }
 
 private fun generateProductJson(targetDir: Path, context: BuildContext, arch: JvmArchitecture, withRuntime: Boolean = true): String {

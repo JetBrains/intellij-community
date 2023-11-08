@@ -110,7 +110,7 @@ public class GroovyWhileLoopSpinsOnFieldInspection extends BaseInspection {
       return false;
     }
 
-    private boolean isLiteral(GrExpression expression) {
+    private static boolean isLiteral(GrExpression expression) {
       expression = (GrExpression)PsiUtil.skipParentheses(expression, false);
       if (expression == null) {
         return false;
@@ -118,7 +118,7 @@ public class GroovyWhileLoopSpinsOnFieldInspection extends BaseInspection {
       return expression instanceof PsiLiteralExpression;
     }
 
-    private boolean isSimpleFieldAccess(GrExpression expression) {
+    private static boolean isSimpleFieldAccess(GrExpression expression) {
       expression = (GrExpression)PsiUtil.skipParentheses(expression, false);
       if (expression == null) {
         return false;
@@ -138,7 +138,7 @@ public class GroovyWhileLoopSpinsOnFieldInspection extends BaseInspection {
       return !field.hasModifierProperty(PsiModifier.VOLATILE);
     }
 
-    private boolean statementIsEmpty(GrStatement statement) {
+    private static boolean statementIsEmpty(GrStatement statement) {
       if (statement == null) {
         return false;
       }

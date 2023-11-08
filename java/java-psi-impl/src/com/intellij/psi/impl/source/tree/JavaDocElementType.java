@@ -44,18 +44,18 @@ public interface JavaDocElementType {
     }
   }
 
-  IElementType DOC_TAG = new JavaDocCompositeElementType("DOC_TAG", () -> new PsiDocTagImpl(), BasicJavaDocElementType.DOC_TAG);
-  IElementType DOC_INLINE_TAG = new JavaDocCompositeElementType("DOC_INLINE_TAG", () -> new PsiInlineDocTagImpl(), BasicJavaDocElementType.DOC_INLINE_TAG);
-  IElementType DOC_METHOD_OR_FIELD_REF = new JavaDocCompositeElementType("DOC_METHOD_OR_FIELD_REF", () -> new PsiDocMethodOrFieldRef(), BasicJavaDocElementType.DOC_METHOD_OR_FIELD_REF);
-  IElementType DOC_PARAMETER_REF = new JavaDocCompositeElementType("DOC_PARAMETER_REF", () -> new PsiDocParamRef(), BasicJavaDocElementType.DOC_PARAMETER_REF);
-  IElementType DOC_TAG_VALUE_ELEMENT = new JavaDocParentProviderElementType("DOC_TAG_VALUE_ELEMENT", BasicJavaDocElementType.DOC_TAG_VALUE_ELEMENT);
-  IElementType DOC_SNIPPET_TAG = new JavaDocCompositeElementType("DOC_SNIPPET_TAG", () -> new PsiSnippetDocTagImpl(), BasicJavaDocElementType.DOC_SNIPPET_TAG);
-  IElementType DOC_SNIPPET_TAG_VALUE = new JavaDocCompositeElementType("DOC_SNIPPET_TAG_VALUE", () -> new PsiSnippetDocTagValueImpl(), BasicJavaDocElementType.DOC_SNIPPET_TAG_VALUE);
-  IElementType DOC_SNIPPET_BODY = new JavaDocCompositeElementType("DOC_SNIPPET_BODY", () -> new PsiSnippetDocTagBodyImpl(), BasicJavaDocElementType.DOC_SNIPPET_BODY);
-  IElementType DOC_SNIPPET_ATTRIBUTE = new JavaDocCompositeElementType("DOC_SNIPPET_ATTRIBUTE", () -> new PsiSnippetAttributeImpl(), BasicJavaDocElementType.DOC_SNIPPET_ATTRIBUTE);
+  IElementType DOC_TAG = new JavaDocCompositeElementType("DOC_TAG", () -> new PsiDocTagImpl(), BasicJavaDocElementType.BASIC_DOC_TAG);
+  IElementType DOC_INLINE_TAG = new JavaDocCompositeElementType("DOC_INLINE_TAG", () -> new PsiInlineDocTagImpl(), BasicJavaDocElementType.BASIC_DOC_INLINE_TAG);
+  IElementType DOC_METHOD_OR_FIELD_REF = new JavaDocCompositeElementType("DOC_METHOD_OR_FIELD_REF", () -> new PsiDocMethodOrFieldRef(), BasicJavaDocElementType.BASIC_DOC_METHOD_OR_FIELD_REF);
+  IElementType DOC_PARAMETER_REF = new JavaDocCompositeElementType("DOC_PARAMETER_REF", () -> new PsiDocParamRef(), BasicJavaDocElementType.BASIC_DOC_PARAMETER_REF);
+  IElementType DOC_TAG_VALUE_ELEMENT = new JavaDocParentProviderElementType("DOC_TAG_VALUE_ELEMENT", BasicJavaDocElementType.BASIC_DOC_TAG_VALUE_ELEMENT);
+  IElementType DOC_SNIPPET_TAG = new JavaDocCompositeElementType("DOC_SNIPPET_TAG", () -> new PsiSnippetDocTagImpl(), BasicJavaDocElementType.BASIC_DOC_SNIPPET_TAG);
+  IElementType DOC_SNIPPET_TAG_VALUE = new JavaDocCompositeElementType("DOC_SNIPPET_TAG_VALUE", () -> new PsiSnippetDocTagValueImpl(), BasicJavaDocElementType.BASIC_DOC_SNIPPET_TAG_VALUE);
+  IElementType DOC_SNIPPET_BODY = new JavaDocCompositeElementType("DOC_SNIPPET_BODY", () -> new PsiSnippetDocTagBodyImpl(), BasicJavaDocElementType.BASIC_DOC_SNIPPET_BODY);
+  IElementType DOC_SNIPPET_ATTRIBUTE = new JavaDocCompositeElementType("DOC_SNIPPET_ATTRIBUTE", () -> new PsiSnippetAttributeImpl(), BasicJavaDocElementType.BASIC_DOC_SNIPPET_ATTRIBUTE);
   IElementType DOC_SNIPPET_ATTRIBUTE_LIST =
-    new JavaDocCompositeElementType("DOC_SNIPPET_ATTRIBUTE_LIST", () -> new PsiSnippetAttributeListImpl(), BasicJavaDocElementType.DOC_SNIPPET_ATTRIBUTE_LIST);
-  IElementType DOC_SNIPPET_ATTRIBUTE_VALUE = new JavaDocParentProviderElementType("DOC_SNIPPET_ATTRIBUTE_VALUE", BasicJavaDocElementType.DOC_SNIPPET_ATTRIBUTE_VALUE);
+    new JavaDocCompositeElementType("DOC_SNIPPET_ATTRIBUTE_LIST", () -> new PsiSnippetAttributeListImpl(), BasicJavaDocElementType.BASIC_DOC_SNIPPET_ATTRIBUTE_LIST);
+  IElementType DOC_SNIPPET_ATTRIBUTE_VALUE = new JavaDocParentProviderElementType("DOC_SNIPPET_ATTRIBUTE_VALUE", BasicJavaDocElementType.BASIC_DOC_SNIPPET_ATTRIBUTE_VALUE);
 
   ILazyParseableElementType DOC_REFERENCE_HOLDER = new BasicJavaDocElementType.DocReferenceHolderElementType(
     () -> JavaParser.INSTANCE,
@@ -84,5 +84,6 @@ public interface JavaDocElementType {
     }
   };
 
-  TokenSet ALL_JAVADOC_ELEMENTS = BasicJavaDocElementType.ALL_JAVADOC_ELEMENTS.toTokenSet();
+  TokenSet ALL_JAVADOC_ELEMENTS = TokenSet.create(DOC_TAG, DOC_INLINE_TAG, DOC_METHOD_OR_FIELD_REF, DOC_PARAMETER_REF, DOC_TAG_VALUE_ELEMENT,
+                                                  DOC_REFERENCE_HOLDER, DOC_TYPE_HOLDER, DOC_COMMENT);
 }

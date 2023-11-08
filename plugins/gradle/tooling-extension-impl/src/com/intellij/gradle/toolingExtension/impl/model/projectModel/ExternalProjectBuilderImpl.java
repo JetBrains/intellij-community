@@ -4,6 +4,7 @@ package com.intellij.gradle.toolingExtension.impl.model.projectModel;
 import com.intellij.gradle.toolingExtension.impl.model.sourceSetModel.DefaultGradleSourceSetModel;
 import com.intellij.gradle.toolingExtension.impl.model.sourceSetModel.GradleSourceSetCache;
 import com.intellij.gradle.toolingExtension.impl.model.taskModel.GradleTaskCache;
+import com.intellij.gradle.toolingExtension.impl.modelBuilder.Messages;
 import com.intellij.gradle.toolingExtension.impl.util.GradleObjectUtil;
 import com.intellij.gradle.toolingExtension.impl.util.GradleTaskUtil;
 import org.gradle.api.Project;
@@ -19,7 +20,7 @@ import org.jetbrains.plugins.gradle.model.DefaultExternalTask;
 import org.jetbrains.plugins.gradle.model.ExternalProject;
 import org.jetbrains.plugins.gradle.model.ExternalProjectPreview;
 import org.jetbrains.plugins.gradle.tooling.AbstractModelBuilderService;
-import org.jetbrains.plugins.gradle.tooling.ErrorMessageBuilder;
+import org.jetbrains.plugins.gradle.tooling.Message;
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext;
 import org.jetbrains.plugins.gradle.tooling.builder.ProjectExtensionsDataBuilderImpl;
 
@@ -28,7 +29,7 @@ import java.util.Map;
 import java.util.Objects;
 
 import static com.intellij.gradle.toolingExtension.impl.util.GradleIdeaPluginUtil.getIdeaModuleName;
-import static com.intellij.gradle.toolingExtension.impl.util.GradleNegotiationUtil.getProjectIdentityPath;
+import static com.intellij.gradle.toolingExtension.util.GradleNegotiationUtil.getProjectIdentityPath;
 
 /**
  * @author Vladislav.Soroka
@@ -133,8 +134,18 @@ public class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
   }
 
   @Override
-  public @NotNull ErrorMessageBuilder getErrorMessageBuilder(@NotNull Project project, @NotNull Exception e) {
-    return ErrorMessageBuilder.create(project, e, "Project resolve errors")
-      .withDescription("Unable to resolve additional project configuration.");
+  public void reportErrorMessage(
+    @NotNull String modelName,
+    @NotNull Project project,
+    @NotNull ModelBuilderContext context,
+    @NotNull Exception exception
+  ) {
+    context.getMessageReporter().createMessage()
+      .withGroup(Messages.PROJECT_MODEL_GROUP)
+      .withKind(Message.Kind.ERROR)
+      .withTitle("Project resolution failure")
+      .withText("Unable to resolve additional project configuration")
+      .withException(exception)
+      .reportMessage(project);
   }
 }

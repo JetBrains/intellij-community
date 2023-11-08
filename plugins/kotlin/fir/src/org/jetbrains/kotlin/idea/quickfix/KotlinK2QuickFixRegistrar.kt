@@ -3,14 +3,15 @@
 package org.jetbrains.kotlin.idea.quickfix
 
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
-import org.jetbrains.kotlin.idea.core.overrideImplement.MemberNotImplementedQuickfixFactories
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixRegistrar
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixesList
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KtQuickFixesListBuilder
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.ChangeVariableMutabilityFix
+import org.jetbrains.kotlin.idea.core.overrideImplement.MemberNotImplementedQuickfixFactories
 import org.jetbrains.kotlin.idea.inspections.RemoveAnnotationFix
 import org.jetbrains.kotlin.idea.quickfix.fixes.*
 import org.jetbrains.kotlin.idea.quickfix.fixes.ConvertToBlockBodyFixFactory
+import org.jetbrains.kotlin.idea.quickfix.importFix.ImportQuickFix
 
 class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
     private val keywords = KtQuickFixesListBuilder.registerPsiQuickFix {
@@ -99,7 +100,7 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
     }
 
     private val propertyInitialization = KtQuickFixesListBuilder.registerPsiQuickFix {
-        registerApplicators(InitializePropertyQuickFixFactories.initializePropertyFactory)
+        registerModCommandApplicators(InitializePropertyQuickFixFactories.initializePropertyFactory)
         registerApplicator(AddLateInitFactory.addLateInitFactory)
         registerApplicators(AddAccessorsFactories.addAccessorsToUninitializedProperty)
 
@@ -130,6 +131,7 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         registerPsiQuickFixes(KtFirDiagnostic.VarAnnotationParameter::class, ChangeVariableMutabilityFix.VAR_ANNOTATION_PARAMETER_FACTORY)
         registerPsiQuickFixes(KtFirDiagnostic.InapplicableLateinitModifier::class, ChangeVariableMutabilityFix.LATEINIT_VAL_FACTORY)
         registerPsiQuickFixes(KtFirDiagnostic.ValWithSetter::class, ChangeVariableMutabilityFix.VAL_WITH_SETTER_FACTORY)
+        registerApplicator(ChangeVariableMutabilityFix.VAL_REASSIGNMENT)
         registerPsiQuickFixes(KtFirDiagnostic.MustBeInitialized::class, ChangeVariableMutabilityFix.MUST_BE_INITIALIZED_FACTORY)
         registerPsiQuickFixes(KtFirDiagnostic.MustBeInitializedWarning::class, ChangeVariableMutabilityFix.MUST_BE_INITIALIZED_FACTORY)
         registerPsiQuickFixes(KtFirDiagnostic.MustBeInitializedOrBeFinal::class, ChangeVariableMutabilityFix.MUST_BE_INITIALIZED_FACTORY)
@@ -188,6 +190,9 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
     private val typeMismatch = KtQuickFixesListBuilder.registerPsiQuickFix {
         registerApplicator(ChangeTypeQuickFixFactories.componentFunctionReturnTypeMismatch)
         registerApplicator(ChangeTypeQuickFixFactories.returnTypeMismatch)
+        registerApplicator(ChangeTypeQuickFixFactories.returnTypeNullableTypeMismatch)
+        registerApplicator(ChangeTypeQuickFixFactories.initializerTypeMismatch)
+        registerApplicator(ChangeTypeQuickFixFactories.assignmentTypeMismatch)
 
         registerApplicator(AddToStringFixFactories.typeMismatch)
         registerApplicator(AddToStringFixFactories.argumentTypeMismatch)
@@ -213,6 +218,11 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
     private val superKeyword = KtQuickFixesListBuilder.registerPsiQuickFix {
         registerApplicator(SpecifySuperTypeFixFactory.ambiguousSuper)
     }
+
+    private val superType = KtQuickFixesListBuilder.registerPsiQuickFix {
+        registerApplicator(SuperClassNotInitializedFactories.addParenthesis)
+    }
+
     private val vararg = KtQuickFixesListBuilder.registerPsiQuickFix {
         registerPsiQuickFixes(
             KtFirDiagnostic.AssigningSingleElementToVarargInNamedFormAnnotationError::class,
@@ -292,5 +302,11 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         other,
         optIn,
         multiplatform,
+        superType,
     )
+
+    override val importOnTheFlyList: KotlinQuickFixesList = KtQuickFixesListBuilder.registerPsiQuickFix {
+        registerApplicator(ImportQuickFix.unresolvedReferenceFactory)
+        registerApplicator(ImportQuickFix.invisibleReferenceFactory)
+    }
 }

@@ -119,30 +119,11 @@ public class SimpleToolWindowPanel extends JBPanelWithEmptyText implements Quick
     repaint();
   }
 
-  /** @deprecated Use other regular ways to add data providers */
-  @Deprecated(forRemoval = true)
-  public void addDataProvider(@NotNull DataProvider provider) {
-    myDataProviders.add(provider);
-  }
-
   @Override
   public @Nullable Object getData(@NotNull @NonNls String dataId) {
     if (QuickActionProvider.KEY.is(dataId) && myProvideQuickActions) {
       return this;
     }
-    if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
-      List<DataProvider> providers = JBIterable.from(myDataProviders).filterMap(
-        o -> PlatformCoreDataKeys.BGT_DATA_PROVIDER.getData(o)).toList();
-      return CompositeDataProvider.compose(providers);
-    }
-
-    for (DataProvider dataProvider : myDataProviders) {
-      Object data = dataProvider.getData(dataId);
-      if (data != null) {
-        return data;
-      }
-    }
-
     return null;
   }
 

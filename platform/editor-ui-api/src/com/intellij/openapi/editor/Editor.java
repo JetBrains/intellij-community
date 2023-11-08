@@ -3,6 +3,7 @@ package com.intellij.openapi.editor;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.event.EditorMouseEventArea;
@@ -410,8 +411,8 @@ public interface Editor extends UserDataHolder {
    */
   default int getAscent() {
     // The actual implementation in EditorImpl is a bit more complex, but this gives an idea of how it's constructed.
-    return (int)(getContentComponent().getFontMetrics(getColorsScheme().getFont(EditorFontType.PLAIN)).getAscent() *
-                 getColorsScheme().getLineSpacing());
+    return ReadAction.compute(() -> (getContentComponent().getFontMetrics(getColorsScheme().getFont(EditorFontType.PLAIN)).getAscent() *
+                                     getColorsScheme().getLineSpacing())).intValue();
   }
 
   /**
@@ -422,11 +423,13 @@ public interface Editor extends UserDataHolder {
    */
   default @NotNull ProperTextRange calculateVisibleRange() {
     ThreadingAssertions.assertEventDispatchThread();
-    Rectangle rect = getScrollingModel().getVisibleArea();
-    LogicalPosition startPosition = xyToLogicalPosition(new Point(rect.x, rect.y));
-    int visibleStart = logicalPositionToOffset(startPosition);
-    LogicalPosition endPosition = xyToLogicalPosition(new Point(rect.x + rect.width, rect.y + rect.height));
-    int visibleEnd = logicalPositionToOffset(new LogicalPosition(endPosition.line + 1, 0));
-    return new ProperTextRange(visibleStart, Math.max(visibleEnd, visibleStart));
+    return ReadAction.compute(() -> {
+      Rectangle rect = getScrollingModel().getVisibleArea();
+      LogicalPosition startPosition = xyToLogicalPosition(new Point(rect.x, rect.y));
+      int visibleStart = logicalPositionToOffset(startPosition);
+      LogicalPosition endPosition = xyToLogicalPosition(new Point(rect.x + rect.width, rect.y + rect.height));
+      int visibleEnd = logicalPositionToOffset(new LogicalPosition(endPosition.line + 1, 0));
+      return new ProperTextRange(visibleStart, Math.max(visibleEnd, visibleStart));
+    });
   }
 }

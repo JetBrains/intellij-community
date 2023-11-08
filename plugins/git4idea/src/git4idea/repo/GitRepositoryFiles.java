@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.repo;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -124,9 +124,8 @@ public final class GitRepositoryFiles {
     myRebaseMergePath = worktreePath + slash(REBASE_MERGE);
   }
 
-  @NotNull
-  public static GitRepositoryFiles createInstance(@NotNull VirtualFile rootDir,
-                                                  @NotNull VirtualFile gitDir) {
+  public static @NotNull GitRepositoryFiles createInstance(@NotNull VirtualFile rootDir,
+                                                           @NotNull VirtualFile gitDir) {
     VirtualFile gitDirForWorktree = getMainGitDirForWorktree(gitDir);
     VirtualFile mainDir = gitDirForWorktree == null ? gitDir : gitDirForWorktree;
     return new GitRepositoryFiles(rootDir, mainDir, gitDir);
@@ -138,8 +137,7 @@ public final class GitRepositoryFiles {
    * <p/>
    * Worktree's ".git" file references {@code <main-project>/.git/worktrees/<worktree-name>}
    */
-  @Nullable
-  private static VirtualFile getMainGitDirForWorktree(@NotNull VirtualFile gitDir) {
+  private static @Nullable VirtualFile getMainGitDirForWorktree(@NotNull VirtualFile gitDir) {
     File gitDirFile = virtualToIoFile(gitDir);
     File commonDir = new File(gitDirFile, "commondir");
     if (!commonDir.exists()) return null;
@@ -158,8 +156,7 @@ public final class GitRepositoryFiles {
     return lfs.refreshAndFindFileByPath(pathToMain); // absolute path is also possible
   }
 
-  @NotNull
-  private static String slash(@NotNull String s) {
+  private static @NotNull String slash(@NotNull String s) {
     return "/" + s;
   }
 
@@ -191,48 +188,39 @@ public final class GitRepositoryFiles {
     return file(myPackedRefsPath);
   }
 
-  @NotNull
-  public File getHeadFile() {
+  public @NotNull File getHeadFile() {
     return file(myHeadFilePath);
   }
 
-  @NotNull
-  public File getConfigFile() {
+  public @NotNull File getConfigFile() {
     return file(myConfigFilePath);
   }
 
-  @NotNull
-  public File getRebaseMergeDir() {
+  public @NotNull File getRebaseMergeDir() {
     return file(myRebaseMergePath);
   }
 
-  @NotNull
-  public File getRebaseApplyDir() {
+  public @NotNull File getRebaseApplyDir() {
     return file(myRebaseApplyPath);
   }
 
-  @NotNull
-  public File getMergeHeadFile() {
+  public @NotNull File getMergeHeadFile() {
     return file(myMergeHeadPath);
   }
 
-  @NotNull
-  public File getCherryPickHead() {
+  public @NotNull File getCherryPickHead() {
     return file(myCherryPickHeadPath);
   }
 
-  @NotNull
-  public File getRevertHead() {
+  public @NotNull File getRevertHead() {
     return file(myRevertHeadPath);
   }
 
-  @NotNull
-  public File getMergeMessageFile() {
+  public @NotNull File getMergeMessageFile() {
     return file(myMergeMessagePath);
   }
 
-  @NotNull
-  public File getSquashMessageFile() {
+  public @NotNull File getSquashMessageFile() {
     return file(myMergeSquashPath);
   }
 
@@ -252,48 +240,39 @@ public final class GitRepositoryFiles {
     }
   }
 
-  @NotNull
-  public File getPreCommitHookFile() {
+  public @NotNull File getPreCommitHookFile() {
     return hook(PRE_COMMIT_HOOK);
   }
 
-  @NotNull
-  public File getPrePushHookFile() {
+  public @NotNull File getPrePushHookFile() {
     return hook(PRE_PUSH_HOOK);
   }
 
-  @NotNull
-  public File getCommitMsgHookFile() {
+  public @NotNull File getCommitMsgHookFile() {
     return hook(COMMIT_MSG_HOOK);
   }
 
-  @NotNull
-  public File getShallowFile() {
+  public @NotNull File getShallowFile() {
     return file(myShallow);
   }
 
-  @NotNull
-  public File getExcludeFile() {
+  public @NotNull File getExcludeFile() {
     return file(myExcludePath);
   }
 
-  @NotNull
-  public File getStashReflogFile() {
+  public @NotNull File getStashReflogFile() {
     return file(myStashReflogPath);
   }
 
-  @NotNull
-  public File getWorktreesDirFile() {
+  public @NotNull File getWorktreesDirFile() {
     return file(myWorktreesDirPath);
   }
 
-  @NotNull
-  private File hook(@NotNull String filePath) {
+  private @NotNull File hook(@NotNull String filePath) {
     return file(ObjectUtils.chooseNotNull(myCustomHooksDirPath, myHooksDirPath) + slash(filePath));
   }
 
-  @NotNull
-  private static File file(@NotNull String filePath) {
+  private static @NotNull File file(@NotNull String filePath) {
     return new File(FileUtil.toSystemDependentName(filePath));
   }
 

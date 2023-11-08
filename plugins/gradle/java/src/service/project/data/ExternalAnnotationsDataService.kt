@@ -128,12 +128,11 @@ fun resolveProvidedAnnotations(providedAnnotations: Map<Library, Collection<Anno
                                project: Project, onResolveCompleted: () -> Unit = {}){
   val locationsToSkip = mutableSetOf<AnnotationsLocation>()
   val storage = project.workspaceModel.currentSnapshot
-  val diff = MutableEntityStorage.from(storage);
+  val diff = MutableEntityStorage.from(storage)
   if (providedAnnotations.isNotEmpty()) {
     val total = providedAnnotations.map { it.value.size }.sum().toDouble()
     runBackgroundableTask(GradleBundle.message("gradle.tasks.annotations.title")) { indicator ->
       try {
-        indicator.isIndeterminate = false
         val resolvers = ExternalAnnotationsArtifactsResolver.EP_NAME.extensionList
         var index = 0
         providedAnnotations.forEach { (lib, locations) ->
@@ -144,6 +143,7 @@ fun resolveProvidedAnnotations(providedAnnotations: Map<Library, Collection<Anno
                locationsToSkip.add(location)
             }
             index++
+            indicator.isIndeterminate = false
             indicator.fraction = index / total
           }
         }

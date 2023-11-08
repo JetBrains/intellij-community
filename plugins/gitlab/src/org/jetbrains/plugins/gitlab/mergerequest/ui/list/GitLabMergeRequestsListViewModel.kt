@@ -108,10 +108,10 @@ internal class GitLabMergeRequestsListViewModelImpl(
     @Volatile
     private var hasMoreBatches = true
 
-    suspend fun requestMore() {
+    fun requestMore() {
       if (loadingState.value || errorState.value != null || !hasMoreBatches) return
       loadingState.value = true
-      cs.launchNow {
+      cs.launch {
         try {
           val (data, hasMore) = loader.loadNext()
           listState.addAll(data)

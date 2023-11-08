@@ -17,7 +17,6 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.Urls
 import org.jetbrains.ide.BuiltInServerManager
-import java.net.URI
 
 open class BrowserLauncherImpl : BrowserLauncherAppless() {
   override fun getDefaultBrowser(): WebBrowser? {
@@ -25,7 +24,7 @@ open class BrowserLauncherImpl : BrowserLauncherAppless() {
     return if (browserManager.getDefaultBrowserPolicy() == DefaultBrowserPolicy.FIRST) browserManager.firstActiveBrowser else null
   }
 
-  override fun canBrowse(project: Project?, uri: URI): Boolean {
+  override fun canBrowse(project: Project?, uri: String): Boolean {
     if (project == null || project.isTrusted()) {
       return true
     }

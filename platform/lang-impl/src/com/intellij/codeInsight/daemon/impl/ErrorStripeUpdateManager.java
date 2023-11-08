@@ -5,7 +5,6 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingSettingsPerFile;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.Service;
@@ -17,12 +16,13 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.registry.RegistryManager;
+import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.registry.RegistryValueListener;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.concurrency.ThreadingAssertions;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,30 +33,30 @@ public final class ErrorStripeUpdateManager implements Disposable {
   }
 
   private final Project myProject;
-  private final PsiDocumentManager myPsiDocumentManager;
 
-  public ErrorStripeUpdateManager(Project project) {
+  public ErrorStripeUpdateManager(@NotNull Project project) {
     myProject = project;
-    myPsiDocumentManager = PsiDocumentManager.getInstance(myProject);
     TrafficLightRendererContributor.EP_NAME.addChangeListener(() -> {
+      PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(myProject);
       for (FileEditor fileEditor : FileEditorManager.getInstance(project).getAllEditors()) {
-        if (fileEditor instanceof TextEditor) {
-          Editor editor = ((TextEditor)fileEditor).getEditor();
-          PsiFile file = myPsiDocumentManager.getCachedPsiFile(editor.getDocument());
+        if (fileEditor instanceof TextEditor textEditor) {
+          Editor editor = textEditor.getEditor();
+          PsiFile file = psiDocumentManager.getCachedPsiFile(editor.getDocument());
           repaintErrorStripePanel(editor, file);
         }
       }
     }, this);
-    RegistryManager.getInstance().get("ide.highlighting.mode.essential").addListener(new EssentialHighlightingModeListener(), this);
   }
 
   @Override
   public void dispose() {
   }
 
+  @RequiresEdt
   public void repaintErrorStripePanel(@NotNull Editor editor, @Nullable PsiFile psiFile) {
-    ThreadingAssertions.assertEventDispatchThread();
-    if (!myProject.isInitialized()) return;
+    if (!myProject.isInitialized()) {
+      return;
+    }
 
     EditorMarkupModel markup = (EditorMarkupModel) editor.getMarkupModel();
     markup.setErrorPanelPopupHandler(new DaemonEditorPopup(myProject, editor));
@@ -67,8 +67,8 @@ public final class ErrorStripeUpdateManager implements Disposable {
     }
   }
 
+  @RequiresEdt
   void setOrRefreshErrorStripeRenderer(@NotNull EditorMarkupModel editorMarkupModel, @NotNull PsiFile file) {
-    ThreadingAssertions.assertEventDispatchThread();
     if (!editorMarkupModel.isErrorStripeVisible()) {
       return;
     }
@@ -93,8 +93,8 @@ public final class ErrorStripeUpdateManager implements Disposable {
     });
   }
 
+  @RequiresBackgroundThread
   private @NotNull TrafficLightRenderer createRenderer(@NotNull Editor editor, @Nullable PsiFile file) {
-    ApplicationManager.getApplication().assertIsNonDispatchThread();
     for (TrafficLightRendererContributor contributor : TrafficLightRendererContributor.EP_NAME.getExtensionList()) {
       TrafficLightRenderer renderer = contributor.createRenderer(editor, file);
       if (renderer != null) return renderer;
@@ -102,22 +102,34 @@ public final class ErrorStripeUpdateManager implements Disposable {
     return new TrafficLightRenderer(myProject, editor);
   }
   
-  private final class EssentialHighlightingModeListener implements RegistryValueListener {
+  static final class EssentialHighlightingModeListener implements RegistryValueListener {
     @Override
     public void afterValueChanged(@NotNull RegistryValue value) {
-      HighlightingSettingsPerFile.getInstance(myProject).incModificationCount();
-      for (FileEditor fileEditor : FileEditorManager.getInstance(myProject).getAllEditors()) {
-        if (fileEditor instanceof TextEditor) {
-          Editor editor = ((TextEditor)fileEditor).getEditor();
-          PsiFile file = myPsiDocumentManager.getCachedPsiFile(editor.getDocument());
-          repaintErrorStripePanel(editor, file);
-        }
+      if (!"ide.highlighting.mode.essential".equals(value.getKey())) {
+        return;
       }
-      
-      // Run all checks after disabling essential highlighting
-      if (!value.asBoolean()) {
-        DaemonCodeAnalyzerImpl codeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(myProject);
-        codeAnalyzer.restartToCompleteEssentialHighlighting();
+
+      for (Project project : ProjectManagerEx.Companion.getOpenProjects()) {
+        HighlightingSettingsPerFile.getInstance(project).incModificationCount();
+
+        FileEditor[] allEditors = FileEditorManager.getInstance(project).getAllEditors();
+        if (allEditors.length == 0) {
+          return;
+        }
+
+        PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(project);
+        ErrorStripeUpdateManager stripeUpdateManager = getInstance(project);
+        for (FileEditor fileEditor : allEditors) {
+          if (fileEditor instanceof TextEditor textEditor) {
+            Editor editor = textEditor.getEditor();
+            stripeUpdateManager.repaintErrorStripePanel(editor, psiDocumentManager.getCachedPsiFile(editor.getDocument()));
+          }
+        }
+
+        // Run all checks after disabling essential highlighting
+        if (!value.asBoolean()) {
+          ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(project)).restartToCompleteEssentialHighlighting();
+        }
       }
     }
   }

@@ -226,7 +226,7 @@ public class PluginRunConfiguration extends RunConfigurationBase<Element> implem
           vm.defineProperty("apple.awt.fileDialogForDirectories", "true");
         }
 
-        if (SystemInfo.isXWindow) {
+        if (SystemInfo.isUnix && !SystemInfo.isMac) {
           if (VM_PARAMETERS == null || !VM_PARAMETERS.contains("-Dsun.awt.disablegrab")) {
             vm.defineProperty("sun.awt.disablegrab", "true"); // See http://devnet.jetbrains.net/docs/DOC-1142
           }

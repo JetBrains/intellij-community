@@ -1,4 +1,4 @@
-// "Annotate method 'test()' as '@Override'" "true"
+// "Annotate method with '@Override'" "true"
 class Super {
   void test() {}
 }

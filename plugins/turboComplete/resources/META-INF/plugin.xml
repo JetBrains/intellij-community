@@ -28,7 +28,7 @@
       dynamic="true"
       name="analysis.pipelineListener"/>
     <extensionPoint
-      interface="com.intellij.turboComplete.SuggestionGeneratorExecutorProvider"
+      interface="com.intellij.platform.ml.impl.turboComplete.SuggestionGeneratorExecutorProvider"
       dynamic="true"
       name="suggestionGeneratorExecutorProvider"/>
     <extensionPoint
@@ -38,15 +38,6 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
-    <completion.contributor language="any"
-                            id="kind_executor"
-                            implementationClass="com.intellij.turboComplete.platform.contributor.KindExecutingCompletionContributor"
-                            order="first, after ml_context, before KotlinCompletionContributor"/>
-    <completion.contributor language="any"
-                            id="duplicate_remover"
-                            implementationClass="com.intellij.turboComplete.platform.contributor.FilteringCompletionContributor"
-                            order="first, before KotlinCompletionContributor"/>
-
     <completion.ml.contextFeatures language="" implementationClass="com.intellij.turboComplete.features.context.AllKindsUsageFeatures"/>
     <completion.ml.contextFeatures language=""
                                    implementationClass="com.intellij.turboComplete.features.context.CompletionPerformanceStatusFeatures"/>
@@ -56,19 +47,25 @@
     <turboComplete.features.kind.provider implementation="com.intellij.turboComplete.features.kind.KindCommonFeatures"/>
     <turboComplete.features.kind.provider implementation="com.intellij.turboComplete.features.kind.KindUsageFeatures"/>
 
-    <turboComplete.analysis.pipelineListener implementation="com.intellij.turboComplete.analysis.KindPerformanceRecorder"/>
-    <turboComplete.analysis.pipelineListener implementation="com.intellij.turboComplete.analysis.PipelinePerformanceRecorder"/>
     <turboComplete.analysis.pipelineListener
       implementation="com.intellij.turboComplete.analysis.usage.KindVarietyUsageTracker$UsagePipelineListener"/>
     <turboComplete.analysis.pipelineListener implementation="com.intellij.turboComplete.platform.EarlyLookupOpener"/>
+    <turboComplete.analysis.pipelineListener implementation="com.intellij.turboComplete.analysis.PipelineDebugLogger"/>
 
-    <registryKey key="ml.completion.performance.enable" defaultValue="true" description="Enable completion performance"/>
+    <platform.ml.impl.turboComplete.smartPipelineRunner implementation="com.intellij.turboComplete.platform.contributor.MLPipelineRunner"/>
+
+    <lookup.usageDetails implementation="com.intellij.turboComplete.analysis.fus.MLPerformanceTracker"/>
+    <statistics.collectorExtension
+      implementation="com.intellij.turboComplete.analysis.fus.MLPerformanceTracker$MLPerformanceUsageCollectorExtension"/>
+
     <registryKey key="ml.completion.performance.showLookupEarly" defaultValue="true"
                  description="Show lookup as soon as the first CompletionKind finished working"/>
     <registryKey key="ml.completion.performance.experiment" defaultValue="true"
                  description="Perform an A/B experiment turning on and off performance"/>
     <registryKey key="ml.completion.performance.executeImmediately" defaultValue="false"
                  description="Immediately execute suggestion generators"/>
+    <registryKey key="ml.completion.performance.logDebug" defaultValue="false"
+                 description="Log performance pipeline to idea.log"/>
   </extensions>
 
   <content>

@@ -10,14 +10,18 @@ import org.junit.*;
 import org.junit.rules.TemporaryFolder;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Stream;
 
 import static com.intellij.util.io.IOUtil.readString;
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 public class AppendOnlyLogOverMMappedFileTest {
 
@@ -30,7 +34,11 @@ public class AppendOnlyLogOverMMappedFileTest {
   /** Make page smaller to increase the chance of page-border issues to manifest */
   private static final int PAGE_SIZE = 1 << 18;
 
+  /** we could open >1 log -- just keep all them in the list, to closeAndClean() afterwards */
+  private static final List<AppendOnlyLogOverMMappedFile> openedLogs = new ArrayList<>();
+
   private AppendOnlyLogOverMMappedFile appendOnlyLog;
+
 
   @Before
   public void setUp() throws IOException {
@@ -41,8 +49,11 @@ public class AppendOnlyLogOverMMappedFileTest {
 
   @After
   public void tearDown() throws IOException {
-    if (appendOnlyLog != null) {
-      appendOnlyLog.closeAndRemove();
+    for (AppendOnlyLogOverMMappedFile log : openedLogs) {
+      log.closeAndUnsafelyUnmap();
+    }
+    for (AppendOnlyLogOverMMappedFile log : openedLogs) {
+      log.closeAndClean();
     }
   }
 
@@ -70,7 +81,6 @@ public class AppendOnlyLogOverMMappedFileTest {
                  dataToWrite,
                  dataReadBackRef.get());
   }
-
 
   @Test
   public void manyRecordsWritten_CouldBeReadBackAsIs() throws Exception {
@@ -200,6 +210,98 @@ public class AppendOnlyLogOverMMappedFileTest {
     );
   }
 
+  @Test
+  public void closeIsSafeToCallTwice() throws IOException {
+    appendOnlyLog.close();
+    appendOnlyLog.close();
+  }
+
+  @Test
+  public void closeAndClean_RemovesTheStorageFile() throws IOException {
+    //RC: it is over-specification -- .closeAndClean() doesn't require to remove the file, only to clean the
+    //    content so new storage opened on top of it will be as-new. But this is the current implementation
+    //    of that spec:
+    appendOnlyLog.closeAndClean();
+    assertFalse(
+      Files.exists(appendOnlyLog.storagePath()),
+      "Storage file [" + appendOnlyLog.storagePath() + "] must not exist after .closeAndClean()"
+    );
+  }
+
+  //Special/edge cases, regressions:
+
+  @Test
+  public void singleEmptyRecordWritten_CouldBeReadBackAsIs() throws Exception {
+    byte[] dataToWrite = new byte[0];
+    long recordId = appendOnlyLog.append(dataToWrite);
+    byte[] dataReadBack = appendOnlyLog.read(recordId, buffer -> {
+      byte[] bytes = new byte[buffer.remaining()];
+      buffer.get(bytes);
+      return bytes;
+    });
+    assertArrayEquals("Data written must be the data read back",
+                      dataToWrite,
+                      dataReadBack);
+  }
+
+  @Test
+  public void singleEmptyRecordWritten_CouldBeReadBackAsIs_viaForEach() throws Exception {
+    byte[] dataToWrite = {};
+    appendOnlyLog.append(dataToWrite);
+    Ref<byte[]> dataReadBackRef = new Ref<>();
+    appendOnlyLog.forEachRecord((id, buffer) -> {
+      byte[] bytes = new byte[buffer.remaining()];
+      buffer.get(bytes);
+      dataReadBackRef.set(bytes);
+      return true;
+    });
+    assertArrayEquals("Data written must be the data read back",
+                      dataToWrite,
+                      dataReadBackRef.get());
+  }
+
+  @Test
+  public void ifEmptyRecordIsLastOnPage_itStillCouldBeReadBack() throws IOException {
+    //Regression: (if recordPayload=0 && record is last on the page) => such record was skipped by .forEach()
+    //            ('cos mistreated as 32b-alignment record):
+
+    int roomOnFirstPage = PAGE_SIZE - AppendOnlyLogOverMMappedFile.HeaderLayout.HEADER_SIZE;
+
+    byte[] recordAlmostFillUpFirstPage = new byte[roomOnFirstPage - 4 - 4];
+    byte[] emptyRecord = new byte[0];
+    appendOnlyLog.append(recordAlmostFillUpFirstPage);
+
+    long emptyRecordId = appendOnlyLog.append(emptyRecord);
+    byte[] emptyRecordReadBack = appendOnlyLog.read(emptyRecordId, AppendOnlyLogOverMMappedFileTest::readBytes);
+    assertArrayEquals(
+      "Empty record must be successfully read back by id",
+      emptyRecord,
+      emptyRecordReadBack
+    );
+
+
+    ArrayList<byte[]> records = new ArrayList<>();
+    appendOnlyLog.forEachRecord((recordId, buffer) -> {
+      records.add(readBytes(buffer));
+      return true;
+    });
+    assertEquals(
+      "2 records must be read by .forEach()",
+      2,
+      records.size()
+    );
+    assertArrayEquals(
+      "Filling record must be successfully read back via .forEach()",
+      recordAlmostFillUpFirstPage,
+      records.get(0)
+    );
+    assertArrayEquals(
+      "Empty record must be successfully read back via .forEach()",
+      emptyRecord,
+      records.get(1)
+    );
+  }
+
   //TODO test for recordId=NULL_ID processing (exception?)
   //TODO test for recordId=(padding record) processing (could happen after recovery)
 
@@ -210,11 +312,16 @@ public class AppendOnlyLogOverMMappedFileTest {
     IntRef i = new IntRef(0);
     appendOnlyLog.forEachRecord((recordId, buffer) -> {
       String stringReadBack = readString(buffer);
-      assertEquals("[" + i + "]: data written must be the data read back",
-                   stringsWritten[i.get()],
-                   stringReadBack);
+      String stringWritten = stringsWritten[i.get()];
+      long expectedRecordId = recordIds[i.get()];
+      if(!stringReadBack.equals(stringWritten)) {
+        assertEquals("[" + i + "]: data written[recordId: " + expectedRecordId + "] must be the data read back[recordId: " + recordId + "]",
+                     stringWritten,
+                     stringReadBack);
+      }
+
       assertEquals("[" + i + "]: recordId must be the same for data written back",
-                   recordIds[i.get()],
+                   expectedRecordId,
                    recordId);
       i.inc();
       return true;
@@ -243,10 +350,15 @@ public class AppendOnlyLogOverMMappedFileTest {
   }
 
   private static @NotNull AppendOnlyLogOverMMappedFile openLog(@NotNull Path storageFile) throws IOException {
-    return AppendOnlyLogFactory
-      .withPageSize(PAGE_SIZE)
+    AppendOnlyLogOverMMappedFile appendOnlyLog = AppendOnlyLogFactory
+      .withDefaults()
+      .pageSize(PAGE_SIZE)
       .ignoreDataFormatVersion()
       .open(storageFile);
+
+    openedLogs.add(appendOnlyLog);
+
+    return appendOnlyLog;
   }
 
   private static String[] generateRandomStrings(int stringsCount) {
@@ -256,5 +368,11 @@ public class AppendOnlyLogOverMMappedFileTest {
       })
       .limit(stringsCount)
       .toArray(String[]::new);
+  }
+
+  private static byte[] readBytes(@NotNull ByteBuffer buffer) {
+    byte[] bytes = new byte[buffer.remaining()];
+    buffer.get(bytes);
+    return bytes;
   }
 }

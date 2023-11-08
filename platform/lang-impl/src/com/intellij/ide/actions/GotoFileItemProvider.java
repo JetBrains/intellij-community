@@ -158,6 +158,10 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
     if (pattern.contains("/") || pattern.contains("\\")) {
       String path = FileUtil.toSystemIndependentName(ChooseByNamePopup.getTransformedPattern(pattern, myModel));
       VirtualFile vFile = LocalFileSystem.getInstance().findFileByPathIfCached(path);
+      if (vFile == null) {
+        path = unitePaths(myProject.getBasePath(), path);
+        if (path != null) vFile = LocalFileSystem.getInstance().findFileByPathIfCached(path);
+      }
       if (vFile != null) {
         ProjectFileIndex index = ProjectFileIndex.getInstance(myProject);
         if (index.isInContent(vFile) || index.isInLibrary(vFile)) {
@@ -166,6 +170,20 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
       }
     }
     return null;
+  }
+
+  public static String unitePaths(String projectPathStr, String filePathStr) {
+    if (filePathStr.startsWith("/")) return filePathStr;
+
+    List<String> path = new ArrayList<>(StringUtil.split(projectPathStr, "/"));
+    StringBuilder prefix = new StringBuilder();
+
+    while (!filePathStr.startsWith(StringUtil.join(path, "/"))) {
+      prefix.append(path.remove(0)).append("/");
+      if (path.isEmpty()) return null;
+    }
+
+    return prefix.append(filePathStr).toString();
   }
 
   @NotNull

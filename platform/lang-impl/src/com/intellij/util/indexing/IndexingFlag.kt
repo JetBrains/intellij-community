@@ -4,6 +4,7 @@ package com.intellij.util.indexing
 import com.intellij.openapi.components.service
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileWithId
+import com.intellij.openapi.vfs.newvfs.FileAttribute
 import com.intellij.openapi.vfs.newvfs.impl.VfsData
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry
 import com.intellij.util.application
@@ -20,15 +21,18 @@ import org.jetbrains.annotations.TestOnly
  */
 @ApiStatus.Internal
 object IndexingFlag {
-  private val persistence = IntFileAttribute.create("indexing.flag", 0, true)
+  private val attribute = FileAttribute("indexing.flag", 0, true)
+
+  @Volatile
+  private var persistence = IntFileAttribute.overFastAttribute(attribute)
   private val hashes = StripedIndexingStampLock()
 
   @JvmStatic
   val nonExistentHash: Long = StripedIndexingStampLock.NON_EXISTENT_HASH
 
   @JvmStatic
-  fun cleanupProcessedFlag() {
-    application.service<AppIndexingDependenciesService>().invalidateAllStamps()
+  fun cleanupProcessedFlag(debugReason: String) {
+    application.service<AppIndexingDependenciesService>().invalidateAllStamps(debugReason)
   }
 
   private fun VirtualFile.asApplicable(): VirtualFileWithId? {
@@ -55,10 +59,22 @@ object IndexingFlag {
   }
 
   @JvmStatic
+  fun cleanProcessingFlag(fileId: Int) {
+    // file might have already been deleted, so there might be no VirtualFile for given fileId
+    setFileIndexed(fileId, ProjectIndexingDependenciesService.NULL_STAMP)
+  }
+
+  @JvmStatic
   fun setFileIndexed(file: VirtualFile, stamp: FileIndexingStamp) {
     file.asApplicable()?.also { fileWithId ->
+      setFileIndexed(fileWithId.id, stamp)
+    }
+  }
+
+  private fun setFileIndexed(fileId: Int, stamp: FileIndexingStamp) {
+    if (!VfsData.isIsIndexedFlagDisabled()) {
       stamp.store { s ->
-        persistence.writeInt(fileWithId.id, s)
+        persistence.writeInt(fileId, s)
       }
     }
   }
@@ -98,6 +114,10 @@ object IndexingFlag {
   @JvmStatic
   fun unlockAllFiles() {
     hashes.clear()
+  }
+
+  fun reloadAttributes() {
+    persistence = IntFileAttribute.overFastAttribute(attribute)
   }
 
   @JvmStatic

@@ -3,6 +3,7 @@ package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.annoPackages.AnnotationPackageSupport;
 import com.intellij.codeInsight.annoPackages.Jsr305Support;
+import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
 import com.intellij.codeInspection.dataFlow.HardcodedContracts;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.ide.plugins.DynamicPluginListener;
@@ -40,7 +41,7 @@ import static com.intellij.codeInsight.AnnotationUtil.NULLABLE;
 public class NullableNotNullManagerImpl extends NullableNotNullManager implements PersistentStateComponent<Element>, ModificationTracker {
   private static final String INSTRUMENTED_NOT_NULLS_TAG = "instrumentedNotNulls";
 
-  private AnnotationPackageSupport[] myAnnotationSupports;
+  private List<AnnotationPackageSupport> myAnnotationSupports;
 
   private Map<String, AnnotationPackageSupport> myDefaultNullables;
   private Map<String, AnnotationPackageSupport> myDefaultNotNulls;
@@ -72,7 +73,7 @@ public class NullableNotNullManagerImpl extends NullableNotNullManager implement
   }
 
   private void updateDefaults() {
-    myAnnotationSupports = AnnotationPackageSupport.EP_NAME.getExtensions();
+    myAnnotationSupports = AnnotationPackageSupport.EP_NAME.getExtensionList();
     myDefaultNullables = StreamEx.of(myAnnotationSupports)
       .cross(s -> s.getNullabilityAnnotations(Nullability.NULLABLE).stream()).invert().toMap();
     myDefaultNotNulls = StreamEx.of(myAnnotationSupports)
@@ -412,5 +413,15 @@ public class NullableNotNullManagerImpl extends NullableNotNullManager implement
   @Override
   public long getModificationCount() {
     return myTracker.getModificationCount();
+  }
+
+  @Override
+  protected @Nullable NullabilityAnnotationInfo findNullityDefaultOnModule(PsiAnnotation.@NotNull TargetType @NotNull [] targetTypes,
+                                                                           @NotNull PsiElement element) {
+    PsiJavaModule module = JavaModuleGraphUtil.findDescriptorByElement(element);
+    if (module != null) {
+      return getNullityDefault(module, targetTypes, element, false);
+    }
+    return null;
   }
 }

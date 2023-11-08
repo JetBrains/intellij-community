@@ -1,8 +1,8 @@
 package com.intellij.codeInspection.tests.java.sourceToSink
 
 import com.intellij.codeInspection.sourceToSink.SourceToSinkFlowInspection
-import com.intellij.codeInspection.tests.sourceToSink.SourceToSinkFlowInspectionTestBase
 import com.intellij.jvm.analysis.JavaJvmAnalysisTestUtil
+import com.intellij.jvm.analysis.internal.testFramework.sourceToSink.SourceToSinkFlowInspectionTestBase
 import com.intellij.testFramework.TestDataPath
 
 private const val INSPECTION_PATH = "/codeInspection/sourceToSinkFlow/context"
@@ -17,10 +17,15 @@ class JavaSourceToSinkFlowInspectionContextTest : SourceToSinkFlowInspectionTest
       untaintedParameterWithPlacePlaceClass.add("com.example.sqlinjection.Complete.HttpServletResponse")
       untaintedParameterWithPlacePlaceMethod.add("getWriter")
       checkedTypes.add("java.util.List")
+      checkedTypes.add("com.example.sqlinjection.CleanQualifier")
       depthInside = 10
       depthOutsideMethods = 1
       getUntaintedMethodMatcher().classNames.add("com.example.sqlinjection.utils.Utils")
       getUntaintedMethodMatcher().methodNamePatterns.add("safe")
+
+      qualifierCleanerClass.add("com.example.sqlinjection.CleanQualifier")
+      qualifierCleanerMethod.add("setSafe")
+      qualifierCleanerParams.add("true")
     }
 
   override fun getBasePath(): String {
@@ -56,5 +61,10 @@ class JavaSourceToSinkFlowInspectionContextTest : SourceToSinkFlowInspectionTest
   fun `test depth`() {
     prepareCheckFramework()
     myFixture.testHighlighting("TaintDepth.java")
+  }
+
+  fun `test clean qualifier`() {
+    prepareCheckFramework()
+    myFixture.testHighlighting("CleanQualifier.java")
   }
 }

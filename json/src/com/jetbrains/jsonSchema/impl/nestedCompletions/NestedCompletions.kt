@@ -4,6 +4,7 @@ package com.jetbrains.jsonSchema.impl.nestedCompletions
 import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.json.pointer.JsonPointerPosition
+import com.intellij.openapi.editor.CaretModel
 import com.intellij.openapi.editor.CaretState
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
@@ -14,7 +15,6 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.util.parents
 import com.intellij.refactoring.suggested.endOffset
 import com.intellij.refactoring.suggested.startOffset
-import com.intellij.util.applyIf
 import com.jetbrains.jsonSchema.extension.JsonLikePsiWalker
 import com.jetbrains.jsonSchema.extension.adapters.JsonObjectValueAdapter
 import com.jetbrains.jsonSchema.extension.adapters.JsonValueAdapter
@@ -98,7 +98,7 @@ private fun NestedCompletionMoveData.performMove(completedRange: CompletedRange,
   val caretModel = editor.caretModel
   val text = editor.document.charsSequence
 
-  val oldCaretState = caretModel.caretsAndSelections.singleOrNull()?.capturedCaretState(editor, relativeOffset = completedRange.startOffset)
+  val oldCaretState = caretModel.tryCaptureCaretState(editor, relativeOffset = completedRange.startOffset)
 
   val (additionalCaretOffset, fullTextWithoutCorrectingNewline) = createTextWrapper(treeWalker, wrappingPath)
     .wrapText(
@@ -115,8 +115,9 @@ private fun NestedCompletionMoveData.performMove(completedRange: CompletedRange,
   val takePrecedingNewline = startOfLine > 0
   val takeSucceedingNewline = !takePrecedingNewline && endOfLine < editor.document.lastIndex
   val fullText = fullTextWithoutCorrectingNewline
-    .applyIf(takePrecedingNewline) { '\n' + this }
-    .applyIf(takeSucceedingNewline) { this + '\n' }
+    .letIf(takePrecedingNewline) { '\n' + it }
+    .letIf(takeSucceedingNewline) { it + '\n' }
+
   editor.document.applyChangesOrdered(
     documentChangeAt(startOfLine) {
       replaceString(startOfLine - takePrecedingNewline.toInt(), endOfLine + takeSucceedingNewline.toInt(), "")
@@ -129,6 +130,10 @@ private fun NestedCompletionMoveData.performMove(completedRange: CompletedRange,
     }
   )
 }
+
+internal fun CharSequence.mark(index: Int): String = substring(0, index) + "|" + substring(index)  // TODO: Remove, debugging only!
+internal fun CharSequence.mark(vararg indices: Int): String = indices.sortedDescending()  // TODO: Remove, debugging only!
+  .fold(toString()) { acc, mark -> acc.mark(mark) } // TODO: Remove, debugging only!
 
 private fun offsetOfInsertionLine(destination: PsiElement?, originOffset: Int): Int = when {
   destination == null -> originOffset // If there is no destination, we insert at the origin
@@ -180,17 +185,22 @@ private fun PsiElement.manuallyDeterminedIndentIn(text: CharSequence): Int? {
     ?.let { offsetOfFirstCharInLine -> offsetOfFirstCharInLine - offsetOfLineStart }
 }
 
-private fun CaretState.capturedCaretState(editor: Editor, relativeOffset: Int): RelativeCaretState {
-  fun LogicalPosition.capturedOffset() = editor.logicalPositionToOffset(this) - relativeOffset
-  return RelativeCaretState(
-    caretPosition?.capturedOffset(),
-    selectionStart?.capturedOffset(),
-    selectionEnd?.capturedOffset(),
-    visualColumnAdjustment,
-  )
+/** @return null when the carets are in a state that we cannot capture */
+private fun CaretModel.tryCaptureCaretState(editor: Editor, relativeOffset: Int): CapturedCaretState? {
+  fun Int.captured() = this - relativeOffset
+  fun LogicalPosition.toOffset() = editor.logicalPositionToOffset(this)
+
+  return caretsAndSelections.singleOrNull()?.let { caretState ->
+    CapturedCaretState(
+      currentCaret.offset.captured(),
+      caretState.selectionStart?.toOffset()?.captured(),
+      caretState.selectionEnd?.toOffset()?.captured(),
+      caretState.visualColumnAdjustment,
+    )
+  }
 }
 
-private fun RelativeCaretState.restored(editor: Editor, newRelativeOffset: Int): CaretState {
+private fun CapturedCaretState.restored(editor: Editor, newRelativeOffset: Int): CaretState {
   fun Int.restoredLogicalPosition(): LogicalPosition = editor.offsetToLogicalPosition(this + newRelativeOffset)
   return CaretState(
     relativeCaretPosition?.restoredLogicalPosition(),
@@ -309,7 +319,7 @@ private fun createMoveData(objectWhereUserIsWithCursor: JsonObjectValueAdapter?,
   )
 }
 
-private class RelativeCaretState(
+private class CapturedCaretState(
   val relativeCaretPosition: Int?,
   val relativeSelectionStart: Int?,
   val relativeSelectionEnd: Int?,
@@ -319,3 +329,5 @@ private class RelativeCaretState(
 private inline fun <T> T.sideEffect(block: (T) -> Unit): Unit = block(this)
 private fun Boolean.toInt(): Int = if (this) 1 else 0
 private fun JsonLikePsiWalker.quoted(name: String): String = if (requiresNameQuotes()) """"$name"""" else name
+
+inline fun <R, U : R, T : R> T.letIf(condition: Boolean, block: (T) -> U): R = if (condition) block(this) else this

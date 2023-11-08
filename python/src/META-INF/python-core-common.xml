@@ -6,12 +6,16 @@
 
   <module value="com.intellij.modules.python"/>
 
+  <xi:include href="/META-INF/PythonParser.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/META-INF/PythonPsi.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/META-INF/PythonPsiImpl.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/META-INF/PythonSdk.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
   <!-- Enable command-line language -->
   <xi:include href="/META-INF/command-line.xml" xpointer="xpointer(/idea-plugin/*)"/>
+
+  <!-- Requirements.txt support -->
+  <xi:include href="/META-INF/python-requirements-plugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
   <!-- Poetry -->
   <depends optional="true" config-file="poetry-toml.xml">org.toml.lang</depends>
@@ -27,6 +31,8 @@
               topic="com.intellij.platform.ModuleAttachListener"/>
     <listener class="com.jetbrains.python.packaging.PyDependencyCollectorListener"
               topic="com.jetbrains.python.packaging.common.PythonPackageManagementListener"/>
+    <listener class="com.jetbrains.python.statistics.PyPackageDaemonListener"
+              topic="com.intellij.codeInsight.daemon.DaemonCodeAnalyzer$DaemonListener"/>
   </projectListeners>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -388,10 +394,12 @@
                  description="Possibility to create namespace packages from New | Python Package"/>
 
     <!-- asyncio REPL -->
-    <registryKey key="python.console.asyncio.repl" defaultValue="true" restartRequired="false" description="Possibility to write await outside of function"/>
+    <registryKey key="python.console.asyncio.repl" defaultValue="true" restartRequired="false"
+                 description="Possibility to write await outside of function"/>
 
     <!-- asyncio REPL for Python Console/Debugger -->
-    <registryKey key="python.debug.asyncio.repl" defaultValue="false" restartRequired="false" description="Possibility to write await outside of function"/>
+    <registryKey key="python.debug.asyncio.repl" defaultValue="false" restartRequired="false"
+                 description="Possibility to write await outside of function"/>
 
     <registryKey defaultValue="false" description="Enables an experimental low impact monitoring API for Python 3.12"
                  restartRequired="false" key="python.debug.low.impact.monitoring.api"/>
@@ -426,21 +434,25 @@
     <!-- Run Anything -->
     <runAnything.executionProvider order="after RunAnythingRunConfigurationProvider"
                                    implementation="com.jetbrains.python.run.runAnything.PyConsoleRunAnythingProvider"/>
-    <runAnything.executionProvider order="after RunAnythingRunConfigurationProvider" implementation="com.jetbrains.python.run.runAnything.PyRunAnythingFileProvider"/>
-    <runAnything.executionProvider order="after RunAnythingRunConfigurationProvider" implementation="com.jetbrains.python.run.runAnything.PyRunAnythingPipProvider"/>
-    <runAnything.executionProvider order="after RunAnythingRunConfigurationProvider" implementation="com.jetbrains.python.run.runAnything.PyRunAnythingCondaProvider"/>
+    <runAnything.executionProvider order="after RunAnythingRunConfigurationProvider"
+                                   implementation="com.jetbrains.python.run.runAnything.PyRunAnythingFileProvider"/>
+    <runAnything.executionProvider order="after RunAnythingRunConfigurationProvider"
+                                   implementation="com.jetbrains.python.run.runAnything.PyRunAnythingPipProvider"/>
+    <runAnything.executionProvider order="after RunAnythingRunConfigurationProvider"
+                                   implementation="com.jetbrains.python.run.runAnything.PyRunAnythingCondaProvider"/>
     <runAnything.commandCustomizer implementation="com.jetbrains.python.run.runAnything.PyRunAnythingCommandCustomizer"/>
 
     <!-- Statistics -->
     <statistics.projectUsagesCollector implementation="com.jetbrains.python.statistics.PyInterpreterUsagesCollector"/>
     <statistics.projectUsagesCollector implementation="com.jetbrains.python.statistics.PyPackageVersionUsagesCollector"/>
-    <statistics.validation.customValidationRule implementation="com.jetbrains.python.statistics.PyPackageUsagesValidationRule"/>
+    <statistics.projectUsagesCollector implementation="com.jetbrains.python.statistics.PyPackageInEditorUsageCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.jetbrains.python.sdk.PySdkToInstallCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.jetbrains.python.namespacePackages.PyNamespacePackagesStatisticsCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.jetbrains.python.codeInsight.codeVision.PyCodeVisionUsageCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.jetbrains.python.newProject.collector.PythonNewProjectWizardCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.jetbrains.python.sdk.add.collector.PythonNewInterpreterAddedCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.jetbrains.python.run.runAnything.PyRunAnythingCollector"/>
+
 
     <!-- Code-insight IDE bridge -->
     <applicationService serviceInterface="com.jetbrains.python.PythonRuntimeService"
@@ -468,8 +480,6 @@
     <!-- # type: ignore -->
     <lang.inspectionSuppressor language="Python"
                                implementationClass="com.jetbrains.python.inspections.typeignore.TypeIgnoreInspectionSuppressor"/>
-    <daemon.changeLocalityDetector
-      implementation="com.jetbrains.python.inspections.typeignore.TypeIgnoreSuppressingCommentLocalityDetector"/>
 
     <!-- Pipenv -->
     <editorFactoryListener implementation="com.jetbrains.python.sdk.pipenv.PipEnvPipFileWatcher"/>
@@ -485,6 +495,10 @@
     <!-- Targets API -->
     <registryKey key="python.use.targets.api" defaultValue="true" description="Switches Python support to Targets API."/>
     <registryKey key="enable.conda.on.targets" defaultValue="false" description="Enables Conda configuration on targets."/>
+    <registryKey key="python.packaging.tool.use.project.location.as.working.dir" defaultValue="false"
+                 description="Use project location as a working directory for the packaging tool execution."/>
+    <registryKey key="python.packaging.tool.upload.project" defaultValue="false"
+                 description="Upload project files and use this location as a working directory for the packaging tool execution."/>
     <notificationGroup id="Python Debugger" displayType="TOOL_WINDOW" toolWindowId="Debug" bundle="messages.PyBundle"
                        key="debug.notification.group"/>
     <notificationGroup id="Python SDK Updater" displayType="BALLOON" bundle="messages.PyBundle"
@@ -523,7 +537,8 @@
                 factoryClass="com.jetbrains.python.packaging.toolwindow.PyPackagesToolWindowFactory"/>
     <toolWindowExtractorMode id="Python Packages" mode="mirror"/>
     <statistics.counterUsagesCollector implementationClass="com.jetbrains.python.sdk.add.PyAddNewEnvCollector"/>
-    <statistics.counterUsagesCollector implementationClass="com.jetbrains.python.packaging.statistics.PythonPackagesToolwindowStatisticsCollector"/>
+    <statistics.counterUsagesCollector
+      implementationClass="com.jetbrains.python.packaging.statistics.PythonPackagesToolwindowStatisticsCollector"/>
 
     <vcs.envCustomizer implementation="com.jetbrains.python.sdk.PyVirtualEnvVcsCustomizer"/>
 
@@ -565,6 +580,11 @@
                        key="black.configurable.name"/>
 
     <dependencyCollector kind="python" implementation="com.jetbrains.python.packaging.PyDependencyCollector"/>
+    <lookup.usageDetails implementation="com.jetbrains.python.statistics.PyCompletionStatisticLogger"/>
+    <statistics.collectorExtension implementation="com.jetbrains.python.statistics.PyCompletionUsageExtension"/>
+
+    <registryKey key="python.new.interpreter.creation.ui" defaultValue="true"
+                 description="Enable new UI for adding Python interpreter in New Project dialog."/>
   </extensions>
 
   <extensionPoints>
@@ -686,6 +706,7 @@
     <pyAnnotator implementation="com.jetbrains.python.validation.PyPatternAnnotator"/>
     <pyAnnotator implementation="com.jetbrains.python.validation.PyTryExceptAnnotator"/>
     <pyAnnotator implementation="com.jetbrains.python.validation.PyVariableAnnotator"/>
+    <pyAnnotator implementation="com.jetbrains.python.validation.PyTypeParameterListAnnotator"/>
 
     <!--stdlib-->
     <documentationLinkProvider implementation="com.jetbrains.python.codeInsight.stdlib.PyStdlibDocumentationLinkProvider"/>
@@ -846,7 +867,7 @@
       <add-to-group group-id="XDebugger.ValueGroup" anchor="last"/>
     </group>
 
-    <action overrides="true" id="XDebugger.CopyValue" class="com.jetbrains.python.debugger.actions.PyXCopyValueAction" />
+    <action overrides="true" id="XDebugger.CopyValue" class="com.jetbrains.python.debugger.actions.PyXCopyValueAction"/>
 
     <action id="PyConvertModuleToPackage" class="com.jetbrains.python.refactoring.convertModulePackage.PyConvertModuleToPackageAction"
     >
@@ -884,6 +905,8 @@
       <!--suppress PluginXmlI18n -->
       <action id="PyUpdateProjectSdk" internal="true" class="com.jetbrains.python.sdk.PyUpdateProjectSdkAction"
               text="Update Python SDK" description="Forcibly update all configured Python SDKs in the project"/>
+      <action id="PySetPropertyAction" internal="true" class="com.jetbrains.python.sdk.add.v2.PySetPropertyAction"
+              text="Set PropertiesComponent Value" description="Set value in application-level PropertiesComponent"/>
       <add-to-group group-id="Internal"/>
     </group>
   </actions>

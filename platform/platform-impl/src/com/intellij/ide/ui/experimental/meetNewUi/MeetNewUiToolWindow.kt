@@ -4,11 +4,7 @@ package com.intellij.ide.ui.experimental.meetNewUi
 import com.intellij.icons.ExpUiIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.QuickChangeLookAndFeel
-import com.intellij.ide.ui.LafManager
-import com.intellij.ide.ui.LafManager.LafReference
-import com.intellij.ide.ui.LafManagerListener
-import com.intellij.ide.ui.UISettings
-import com.intellij.ide.ui.UISettingsListener
+import com.intellij.ide.ui.*
 import com.intellij.ide.ui.experimental.ExperimentalUiCollector
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.application.ApplicationManager
@@ -100,7 +96,7 @@ internal class MeetNewUiToolWindow(private val project: Project, private val too
           val gap = JBUI.scale(8)
           val themesPanel = JPanel(WrapLayout(FlowLayout.LEADING, gap, gap))
           // Remove gaps around of the panel
-          themesPanel.putClientProperty(DslComponentProperty.VISUAL_PADDINGS, UnscaledGaps(gap, gap, gap, gap))
+          themesPanel.putClientProperty(DslComponentProperty.VISUAL_PADDINGS, UnscaledGaps(gap))
           for (theme in themes) {
             themesPanel.add(theme.button)
           }
@@ -175,7 +171,7 @@ internal class MeetNewUiToolWindow(private val project: Project, private val too
 
   private fun findLafReference(name: String): LafReference? {
     val lafManager = LafManager.getInstance()
-    return lafManager.lafComboBoxModel.items.find { it.toString() == name }
+    return lafManager.lafComboBoxModel.items.find { it.name == name }
   }
 
   private fun Row.density(icon: Icon, @Nls name: String, gaps: UnscaledGaps, compactMode: Boolean): Density {
@@ -233,7 +229,7 @@ private class Theme(lafReference: LafReference?, val system: Boolean, icon: Icon
     set(value) {
       field = value
       button.isVisible = system || value != null
-      button.text = if (system) IdeBundle.message("meetnewui.toolwindow.system") else value?.toString()
+      button.text = if (system) IdeBundle.message("meetnewui.toolwindow.system") else value?.name
     }
 
   init {
@@ -262,8 +258,8 @@ private class Theme(lafReference: LafReference?, val system: Boolean, icon: Icon
       if (lafManager.autodetect) {
         lafManager.autodetect = false
       }
-      ExperimentalUiCollector.logMeetNewUiTheme(lafReference.toString())
-      QuickChangeLookAndFeel.switchLafAndUpdateUI(lafManager, lafManager.findLaf(lafReference), true)
+      ExperimentalUiCollector.logMeetNewUiTheme(lafReference.name)
+      QuickChangeLookAndFeel.switchLafAndUpdateUI(lafManager, lafManager.findLaf(lafReference.themeId), true)
     }
   }
 }

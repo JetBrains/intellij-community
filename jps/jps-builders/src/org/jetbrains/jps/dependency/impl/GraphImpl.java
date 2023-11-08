@@ -5,6 +5,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.dependency.*;
 
+import java.io.Closeable;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -15,11 +17,13 @@ abstract class GraphImpl implements Graph {
   private final List<BackDependencyIndex> myIndices = new ArrayList<>();
   protected final MultiMaplet<ReferenceID, NodeSource> myNodeToSourcesMap;
   protected final MultiMaplet<NodeSource, Node<?, ?>> mySourceToNodesMap;
+  private final MapletFactory myContainerFactory;
 
   protected GraphImpl(@NotNull MapletFactory cFactory) {
+    myContainerFactory = cFactory;
     addIndex(myDependencyIndex = new NodeDependenciesIndex(cFactory));
-    myNodeToSourcesMap = cFactory.createSetMultiMaplet();
-    mySourceToNodesMap = cFactory.createSetMultiMaplet();
+    myNodeToSourcesMap = cFactory.createSetMultiMaplet("node-sources-map");
+    mySourceToNodesMap = cFactory.createSetMultiMaplet("source-nodes-map");
   }
 
   // todo: ensure both dependency-graph and delta always have the same set of back-deps indices
@@ -27,12 +31,8 @@ abstract class GraphImpl implements Graph {
     myIndices.add(index);
   }
 
-  /**
-   * Obtain a list of backward dependencies for a certain node, denoted by a ReferenceID
-   * @param id - a ReferenceID of one or more nodes
-   * @return all known ids of Nodes that depend on nodes with the given id
-   */
-  protected @NotNull Iterable<ReferenceID> getDependingNodes(@NotNull ReferenceID id) {
+  @Override
+  public @NotNull Iterable<ReferenceID> getDependingNodes(@NotNull ReferenceID id) {
     return myDependencyIndex.getDependencies(id);
   }
 
@@ -58,6 +58,11 @@ abstract class GraphImpl implements Graph {
   }
 
   @Override
+  public Iterable<ReferenceID> getRegisteredNodes() {
+    return myNodeToSourcesMap.getKeys();
+  }
+
+  @Override
   public Iterable<NodeSource> getSources() {
     return mySourceToNodesMap.getKeys();
   }
@@ -66,6 +71,12 @@ abstract class GraphImpl implements Graph {
   public Iterable<Node<?, ?>> getNodes(@NotNull NodeSource source) {
     var nodes = mySourceToNodesMap.get(source);
     return nodes != null? nodes : Collections.emptyList();
+  }
+
+  public void close() throws IOException {
+    if (myContainerFactory instanceof Closeable)  {
+      ((Closeable)myContainerFactory).close();
+    }
   }
 
 }

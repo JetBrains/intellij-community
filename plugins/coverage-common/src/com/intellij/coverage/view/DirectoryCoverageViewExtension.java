@@ -1,10 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.coverage.view;
 
-import com.intellij.coverage.BaseCoverageAnnotator;
-import com.intellij.coverage.CoverageAnnotator;
-import com.intellij.coverage.CoverageBundle;
-import com.intellij.coverage.CoverageSuitesBundle;
+import com.intellij.coverage.*;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
@@ -18,11 +15,9 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.ui.ColumnInfo;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public class DirectoryCoverageViewExtension extends CoverageViewExtension {
   protected final CoverageAnnotator myAnnotator;
@@ -42,12 +37,23 @@ public class DirectoryCoverageViewExtension extends CoverageViewExtension {
   }
 
   @Override
-  public String getPercentage(int columnIdx, @NotNull AbstractTreeNode node) {
-    final Object value = node.getValue();
-    if (value instanceof PsiFile) {
-      return myAnnotator.getFileCoverageInformationString((PsiFile)value, mySuitesBundle, myCoverageDataManager);
+  public String getPercentage(int columnIdx, @NotNull AbstractTreeNode<?> node) {
+    VirtualFile file = extractFile(node);
+    if (file == null) return null;
+    if (file.isDirectory()) {
+      return myAnnotator.getDirCoverageInformationString(myProject, file, mySuitesBundle, myCoverageDataManager);
     }
-    return value != null ? myAnnotator.getDirCoverageInformationString((PsiDirectory)value, mySuitesBundle, myCoverageDataManager) : null;
+    else {
+      return myAnnotator.getFileCoverageInformationString(myProject, file, mySuitesBundle, myCoverageDataManager);
+    }
+  }
+
+  @Nullable
+  protected VirtualFile extractFile(@NotNull AbstractTreeNode<?> node) {
+    if (node instanceof CoverageListNode coverageNode) {
+      return coverageNode.getFile();
+    }
+    return null;
   }
 
 
@@ -62,13 +68,14 @@ public class DirectoryCoverageViewExtension extends CoverageViewExtension {
 
   @NotNull
   @Override
-  public AbstractTreeNode createRootNode() {
+  public AbstractTreeNode<?> createRootNode() {
     VirtualFile baseDir = ProjectUtil.guessProjectDir(myProject);
     if (baseDir == null) {
       final VirtualFile[] roots = ProjectRootManager.getInstance(myProject).getContentRoots();
       baseDir = VfsUtil.getCommonAncestor(Arrays.asList(roots));
     }
-    return new CoverageListRootNode(myProject, PsiManager.getInstance(myProject).findDirectory(baseDir), mySuitesBundle, myStateBean);
+    PsiDirectory directory = PsiManager.getInstance(myProject).findDirectory(Objects.requireNonNull(baseDir));
+    return new CoverageListRootNode(myProject, Objects.requireNonNull(directory), mySuitesBundle, myStateBean);
   }
 
   @Override

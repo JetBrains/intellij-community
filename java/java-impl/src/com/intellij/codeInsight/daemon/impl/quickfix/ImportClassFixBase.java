@@ -16,6 +16,7 @@ import com.intellij.codeInsight.hint.QuestionAction;
 import com.intellij.codeInsight.intention.PriorityAction;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInspection.HintAction;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
@@ -373,7 +374,7 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
 
     if (allowPopup && canImportHere) {
       if (!ApplicationManager.getApplication().isUnitTestMode() && !HintManager.getInstance().hasShownHintsThatWillHideByOtherHint(true)) {
-        String hintText = ShowAutoImportPass.getMessage(classes.length > 1, classes[0].getQualifiedName());
+        String hintText = ShowAutoImportPass.getMessage(classes.length > 1, IdeBundle.message("go.to.class.kind.text"), classes[0].getQualifiedName());
         HintManager.getInstance().showQuestionHint(editor, hintText, getStartOffset(myReferenceElement, myReference),
                                                    getEndOffset(myReferenceElement, myReference), action);
       }

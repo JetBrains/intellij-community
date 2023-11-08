@@ -1,28 +1,18 @@
 <component name="libraryTable">
   <library name="grpc-netty-shaded" type="repository">
-    <properties jar-repository-id="central-proxy" maven-id="io.grpc:grpc-netty-shaded:1.57.2">
+    <properties include-transitive-deps="false" maven-id="io.grpc:grpc-netty-shaded:1.59.0">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/io/grpc/grpc-netty-shaded/1.57.2/grpc-netty-shaded-1.57.2.jar">
-          <sha256sum>7908b69ef12c9fd2aebcb241bac1c54f39cc8db17c864ae9f486a4c226a96ff6</sha256sum>
-        </artifact>
-        <artifact url="file://$MAVEN_REPOSITORY$/com/google/errorprone/error_prone_annotations/2.18.0/error_prone_annotations-2.18.0.jar">
-          <sha256sum>9e6814cb71816988a4fd1b07a993a8f21bb7058d522c162b1de849e19bea54ae</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/grpc/grpc-netty-shaded/1.59.0/grpc-netty-shaded-1.59.0.jar">
+          <sha256sum>0eb6f53b3f7461367eb0cafb40398209b26de685916369af977b11395799c3a5</sha256sum>
         </artifact>
       </verification>
-      <exclude>
-        <dependency maven-id="com.google.guava:guava" />
-        <dependency maven-id="io.perfmark:perfmark-api" />
-        <dependency maven-id="io.grpc:grpc-core" />
-      </exclude>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-netty-shaded/1.57.2/grpc-netty-shaded-1.57.2.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/google/errorprone/error_prone_annotations/2.18.0/error_prone_annotations-2.18.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-netty-shaded/1.59.0/grpc-netty-shaded-1.59.0.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-netty-shaded/1.57.2/grpc-netty-shaded-1.57.2-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/google/errorprone/error_prone_annotations/2.18.0/error_prone_annotations-2.18.0-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-netty-shaded/1.59.0/grpc-netty-shaded-1.59.0-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

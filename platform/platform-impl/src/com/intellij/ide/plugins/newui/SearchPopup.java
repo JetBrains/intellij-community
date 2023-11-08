@@ -136,7 +136,9 @@ public final class SearchPopup extends ComponentAdapter implements CaretListener
 
   private void show() {
     if (myPopup != null) {
-      list.clearSelection();
+      if (!ScreenReader.isActive()) {
+        list.clearSelection();
+      }
       myPopup.showInScreenCoordinates(myEditor, getPopupLocation());
     }
   }

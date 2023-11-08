@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.commands;
 
 import com.intellij.openapi.project.Project;
@@ -79,9 +65,7 @@ public final class GitCompoundResult {
    * with only 1 root ever).
    * Otherwise adds repository URL to the error that repository produced.
    */
-  @NotNull
-  @NlsContexts.NotificationContent
-  public String getErrorOutputWithReposIndication() {
+  public @NotNull @NlsContexts.NotificationContent String getErrorOutputWithReposIndication() {
     HtmlBuilder sb = new HtmlBuilder();
     for (Map.Entry<GitRepository, Collection<GitCommandResult>> entry : resultsByRepos.entrySet()) {
       GitRepository repository = entry.getKey();
@@ -102,9 +86,8 @@ public final class GitCompoundResult {
     return sb.toString();
   }
 
-  @NonNls
   @Override
-  public String toString() {
+  public @NonNls String toString() {
     return "GitCompoundResult: " + StringUtil.join(resultsByRepos.keySet(), repository -> repository.getRoot().getName() + ": " + resultsByRepos.get(repository).toString(), "\n");
   }
 }

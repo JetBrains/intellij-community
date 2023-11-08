@@ -23,6 +23,6 @@ public class UnnecessaryExplicitNumericCastInspectionTest extends LightJavaInspe
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_10;
+    return JAVA_11;
   }
 }

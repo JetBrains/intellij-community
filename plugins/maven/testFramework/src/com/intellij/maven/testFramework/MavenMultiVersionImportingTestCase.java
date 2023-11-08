@@ -30,7 +30,7 @@ import java.util.List;
 @RunWith(Parameterized.class)
 public abstract class MavenMultiVersionImportingTestCase extends MavenImportingTestCase {
 
-  public static final String[] MAVEN_VERSIONS = new String[]{"bundled", "4.0.0-alpha-7"};
+  public static final String[] MAVEN_VERSIONS = new String[]{"bundled", "4.0.0-alpha-8"};
   @Parameterized.Parameter(0)
   public String myMavenVersion;
   @Nullable

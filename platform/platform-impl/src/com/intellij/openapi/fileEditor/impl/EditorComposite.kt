@@ -47,7 +47,7 @@ import javax.swing.JPanel
 import javax.swing.SwingConstants
 
 /**
- * An abstraction over one or several file editors opened in the same tab (e.g. designer and code-behind).
+ * An abstraction over one or several file editors opened in the same tab (e.g., designer and code-behind).
  * It's a composite that can be pinned in the tab list or opened as a preview, not concrete file editors.
  * It also manages the internal UI structure: bottom and top components, panels, labels, actions for navigating between editors it owns.
  */
@@ -446,7 +446,7 @@ open class EditorComposite internal constructor(
     dispatcher.multicaster.editorAdded(editorWithProvider)
   }
 
-  fun currentStateAsHistoryEntry(): HistoryEntry {
+  internal fun currentStateAsHistoryEntry(): HistoryEntry {
     val editors = allEditors
     val states = editors.map { it.getState(FileEditorStateLevel.FULL) }
     val selectedProviderIndex = editors.indexOf(selectedEditorWithProvider.value?.fileEditor)

@@ -185,7 +185,7 @@ final class InjectedGeneralHighlightingPass extends GeneralHighlightingPass {
   private @NotNull HighlightInfoHolder createInfoHolder(@NotNull PsiFile injectedPsi, @NotNull DocumentWindow documentWindow,
                                                         @NotNull InjectedLanguageManager injectedLanguageManager,
                                                         @NotNull Consumer<? super HighlightInfo> outInfos) {
-    HighlightInfoFilter[] filters = HighlightInfoFilter.EXTENSION_POINT_NAME.getExtensions();
+    List<HighlightInfoFilter> filters = HighlightInfoFilter.EXTENSION_POINT_NAME.getExtensionList();
     EditorColorsScheme actualScheme = getColorsScheme() == null ? EditorColorsManager.getInstance().getGlobalScheme() : getColorsScheme();
     return new HighlightInfoHolder(injectedPsi, filters) {
       @Override
@@ -269,7 +269,7 @@ final class InjectedGeneralHighlightingPass extends GeneralHighlightingPass {
         new HighlightInfo(info.forcedTextAttributes, info.forcedTextAttributesKey, info.type,
                           hostRange.getStartOffset(), hostRange.getEndOffset(),
                           info.getDescription(), info.getToolTip(), info.getSeverity(), isAfterEndOfLine, null,
-                          false, 0, info.getProblemGroup(), info.getInspectionToolId(), info.getGutterIconRenderer(), info.getGroup(), info.unresolvedReference);
+                          false, 0, info.getProblemGroup(), info.toolId, info.getGutterIconRenderer(), info.getGroup(), info.unresolvedReference);
       patched.setHint(info.hasHint());
 
       info.findRegisteredQuickFix((descriptor, quickfixTextRange) -> {

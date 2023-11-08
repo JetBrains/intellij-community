@@ -506,6 +506,14 @@ public class JBViewport extends JViewport implements ZoomableViewport {
         }
       }
     }
+
+    @Override
+    public String toString() {
+      return "ViewBorder{" +
+             "myInsets=" + myInsets +
+             ", myBorder=" + myBorder +
+             '}';
+    }
   }
 
   private static Dimension getPreferredScrollableViewportSize(Component view) {

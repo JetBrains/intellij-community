@@ -135,7 +135,7 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     public OptionSet() {
       Application application = ApplicationManager.getApplication();
       if (application != null) {
-        PropertiesComponent properties = application.getService(PropertiesComponent.class);
+        PropertiesComponent properties = PropertiesComponent.getInstance();
         if (properties != null) {
           INSERT_PARENTHESES_AUTOMATICALLY = properties.getBoolean("js.insert.parentheses.on.completion", true);
         }

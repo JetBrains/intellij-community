@@ -3,7 +3,7 @@ package com.intellij.platform.feedback.impl
 
 import com.intellij.ide.BrowserUtil
 import com.intellij.notification.NotificationAction
-import com.intellij.openapi.application.ex.ApplicationInfoEx
+import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.project.Project
 import com.intellij.platform.feedback.*
 import com.intellij.platform.feedback.impl.state.CommonFeedbackSurveyService
@@ -21,7 +21,7 @@ internal fun FeedbackSurveyConfig.checkIsFeedbackCollectionDeadlineNotPast(): Bo
 
 internal fun FeedbackSurveyConfig.checkIsIdeEAPIfRequired(): Boolean {
   if (requireIdeEAP) {
-    return ApplicationInfoEx.getInstanceEx().isEAP
+    return ApplicationInfo.getInstance().isEAP
   }
   return true
 }

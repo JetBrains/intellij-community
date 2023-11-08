@@ -2,10 +2,12 @@
 package com.intellij.ide.customize.transferSettings.providers.vscode
 
 import com.intellij.icons.AllIcons
+import com.intellij.ide.customize.transferSettings.TransferSettingsConfiguration
 import com.intellij.ide.customize.transferSettings.TransferableIdeId
 import com.intellij.ide.customize.transferSettings.models.IdeVersion
 import com.intellij.ide.customize.transferSettings.providers.TransferSettingsProvider
 import com.intellij.ide.customize.transferSettings.providers.vscode.VSCodeSettingsProcessor.Companion.vsCodeHome
+import com.intellij.ide.customize.transferSettings.ui.representation.TransferSettingsRightPanelChooser
 import com.intellij.util.SmartList
 import java.nio.file.Files
 import java.nio.file.Paths
@@ -42,4 +44,11 @@ class VSCodeTransferSettingsProvider : TransferSettingsProvider {
   }
 
   private fun isVSCodeDetected() = Files.isDirectory(Paths.get(vsCodeHome)) && processor.willDetectAtLeastSomething()
+
+  override fun getRightPanel(ideV: IdeVersion, config: TransferSettingsConfiguration): TransferSettingsRightPanelChooser
+    = VSCodeTransferSettingsRightPanelChooser(ideV, config)
+}
+
+private class VSCodeTransferSettingsRightPanelChooser(private val ide: IdeVersion, config: TransferSettingsConfiguration) : TransferSettingsRightPanelChooser(ide, config) {
+  override fun getBottomComponentFactory() = null
 }

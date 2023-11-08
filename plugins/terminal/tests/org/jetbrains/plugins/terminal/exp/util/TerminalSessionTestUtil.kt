@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.terminal.exp.util
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
@@ -12,27 +13,30 @@ import org.jetbrains.plugins.terminal.ShellStartupOptions
 import org.jetbrains.plugins.terminal.exp.ShellCommandListener
 import org.jetbrains.plugins.terminal.exp.TerminalModel
 import org.jetbrains.plugins.terminal.exp.TerminalSession
+import org.jetbrains.plugins.terminal.exp.ui.BlockTerminalColorPalette
+import org.junit.Assume
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 
 object TerminalSessionTestUtil {
-  fun startTerminalSession(project: Project,
-                           shellPath: String,
-                           disposable: Disposable,
-                           size: TermSize = TermSize(200, 20)): TerminalSession {
+  fun startBlockTerminalSession(project: Project,
+                                shellPath: String,
+                                disposable: Disposable,
+                                size: TermSize = TermSize(200, 20)): TerminalSession {
     Registry.get(LocalTerminalDirectRunner.BLOCK_TERMINAL_REGISTRY).setValue(true, disposable)
     val runner = LocalTerminalDirectRunner.createTerminalRunner(project)
-    val baseOptions = ShellStartupOptions.Builder().shellCommand(listOf(shellPath, "-i")).build()
+    val baseOptions = ShellStartupOptions.Builder().shellCommand(listOf(shellPath, "-i")).initialTermSize(size).build()
     val configuredOptions = runner.configureStartupOptions(baseOptions)
+    assumeBlockShellIntegration(configuredOptions)
     val process = runner.createProcess(configuredOptions)
     val ttyConnector = runner.createTtyConnector(process)
 
-    val session = TerminalSession(runner.settingsProvider, configuredOptions.shellIntegration)
+    val colorPalette = BlockTerminalColorPalette(EditorColorsManager.getInstance().globalScheme)
+    val session = TerminalSession(runner.settingsProvider, colorPalette, configuredOptions.shellIntegration)
     val model: TerminalModel = session.model
 
     val promptShownFuture = CompletableFuture<Boolean>()
-    val resizedFuture = CompletableFuture<Boolean>()
     val listenersDisposable = Disposer.newDisposable()
     session.addCommandListener(object : ShellCommandListener {
       override fun promptShown() {
@@ -40,20 +44,10 @@ object TerminalSessionTestUtil {
       }
     }, listenersDisposable)
 
-    model.addTerminalListener(object : TerminalModel.TerminalListener {
-      override fun onSizeChanged(width: Int, height: Int) {
-        if (size.columns == width && size.rows == height) {
-          resizedFuture.complete(true)
-        }
-      }
-    }, listenersDisposable)
-
     session.start(ttyConnector)
-    session.postResize(size)
 
     try {
       promptShownFuture.get(5000, TimeUnit.MILLISECONDS)
-      resizedFuture.get(5000, TimeUnit.MILLISECONDS)
     }
     catch (ex: TimeoutException) {
       BasePlatformTestCase.fail(
@@ -63,8 +57,12 @@ object TerminalSessionTestUtil {
       Disposer.dispose(listenersDisposable)
     }
     // Remove all welcome messages
-    model.withContentLock { model.clearAllExceptPrompt(1) }
+    model.withContentLock { model.clearAllAndMoveCursorToTopLeftCorner(session.controller) }
 
     return session
+  }
+
+  private fun assumeBlockShellIntegration(options: ShellStartupOptions) {
+    Assume.assumeTrue("Block shell integration is expected", options.shellIntegration?.withCommandBlocks == true)
   }
 }

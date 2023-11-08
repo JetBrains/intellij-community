@@ -604,18 +604,13 @@ public class EncapsulateFieldsDialog extends RefactoringDialog implements Encaps
         String name = (String)aValue;
         PsiField field = myFields[rowIndex];
         switch (columnIndex) {
-          case GETTER_COLUMN -> {
-            myGetterNames[rowIndex] = name;
-          }
-          case SETTER_COLUMN -> {
-            mySetterNames[rowIndex] = name;
-          }
+          case GETTER_COLUMN -> myGetterNames[rowIndex] = name;
+          case SETTER_COLUMN -> mySetterNames[rowIndex] = name;
           default -> throw new RuntimeException("Incorrect column index");
         }
         ReadAction.nonBlocking(() -> {
             switch (columnIndex) {
               case GETTER_COLUMN -> {
-                myGetterNames[rowIndex] = name;
                 PsiMethod method = myHelper.generateMethodPrototype(field, name, true);
                 if (method != null) {
                   myGetterPrototypes.put(rowIndex, method);
@@ -623,7 +618,6 @@ public class EncapsulateFieldsDialog extends RefactoringDialog implements Encaps
                 myGetterPrototypesIcons.put(rowIndex, EncapsulateFieldsContainer.getIcon(myGetterPrototypes.get(rowIndex), myClass));
               }
               case SETTER_COLUMN -> {
-                mySetterNames[rowIndex] = name;
                 PsiMethod method = myHelper.generateMethodPrototype(field, name, false);
                 if (method != null) {
                   mySetterPrototypes.put(rowIndex, method);
@@ -727,6 +721,7 @@ public class EncapsulateFieldsDialog extends RefactoringDialog implements Encaps
     PsiMethod[] mySetterPrototypes,
     Map<Integer, RowIcon> mySetterPrototypesIcons
   ) {
+    @SuppressWarnings("UnnecessaryLocalVariable")
     static EncapsulateFieldsContainer create(@NotNull PsiClass aClass,
                                              @NotNull Set preselectedFields,
                                              @NotNull EncapsulateFieldHelper helper) {

@@ -373,7 +373,8 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   @Override
   public void visitJavaFile(@NotNull PsiJavaFile file) {
     super.visitJavaFile(file);
-    if (!hasErrorResults()) add(HighlightUnnamedClassUtil.checkUnnamedClssHasMainMethod(file));
+    if (!hasErrorResults()) add(HighlightUnnamedClassUtil.checkUnnamedClassHasMainMethod(file));
+    if (!hasErrorResults()) add(HighlightUnnamedClassUtil.checkUnnamedClassFileIsValidIdentifier(file));
   }
 
   @Override
@@ -935,6 +936,8 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   @Override
   public void visitTemplate(@NotNull PsiTemplate template) {
     super.visitTemplate(template);
+    add(checkFeature(template, HighlightingFeature.STRING_TEMPLATES));
+    if (hasErrorResults()) return;
 
     for (PsiExpression embeddedExpression : template.getEmbeddedExpressions()) {
       if (PsiTypes.voidType().equals(embeddedExpression.getType())) {

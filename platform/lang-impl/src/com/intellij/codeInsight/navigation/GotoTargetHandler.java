@@ -27,11 +27,9 @@ import com.intellij.openapi.ui.popup.IPopupChooserBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
-import com.intellij.openapi.ui.popup.util.RoundedCellRenderer;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.platform.backend.presentation.TargetPresentation;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
@@ -71,7 +69,9 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
     try {
       GotoData gotoData = getSourceAndTargetElements(editor, file);
       Consumer<JBPopup> showPopupProcedure = popup -> {
-        popup.showInBestPositionFor(editor);
+        if (!editor.isDisposed()) {
+          popup.showInBestPositionFor(editor);
+        }
       };
       if (gotoData != null) {
         show(project, editor, file, gotoData, showPopupProcedure);
@@ -115,6 +115,13 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
       return;
     }
 
+    showNotEmpty(project, gotoData, showPopup);
+  }
+
+  void showNotEmpty(@NotNull Project project, @NotNull GotoData gotoData, @NotNull Consumer<? super JBPopup> showPopup) {
+    PsiElement[] targets = gotoData.targets;
+    List<AdditionalAction> additionalActions = gotoData.additionalActions;
+
     boolean finished = gotoData.listUpdaterTask == null || gotoData.listUpdaterTask.isFinished();
     if (targets.length == 1 && additionalActions.isEmpty() && finished) {
       navigateToElement(targets[0]);
@@ -145,9 +152,7 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
     if (useEditorFont()) {
       builder.setFont(EditorUtil.getEditorFont());
     }
-    var renderer = Registry.is("ide.goto.target.new.renderer")
-                   ? new GotoTargetRendererNew(o -> ((ItemWithPresentation)o).getPresentation())
-                   : new RoundedCellRenderer<>(new GotoTargetRenderer(o -> ((ItemWithPresentation)o).getPresentation()));
+    var renderer = new GotoTargetRendererNew(o -> ((ItemWithPresentation)o).getPresentation());
     builder.setRenderer(renderer).
       setItemsChosenCallback(selectedElements -> {
         for (ItemWithPresentation element : selectedElements) {
@@ -188,11 +193,7 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
 
     if (gotoData.listUpdaterTask != null) {
       Alarm alarm = new Alarm(popup);
-      alarm.addRequest(() -> {
-        if (!editor.isDisposed()) {
-          showPopup.accept(popup);
-        }
-      }, 300);
+      alarm.addRequest(() -> showPopup.accept(popup), 300);
       gotoData.listUpdaterTask.init(popup, builder.getBackgroundUpdater(), usageView);
       ProgressManager.getInstance().run(gotoData.listUpdaterTask);
     }

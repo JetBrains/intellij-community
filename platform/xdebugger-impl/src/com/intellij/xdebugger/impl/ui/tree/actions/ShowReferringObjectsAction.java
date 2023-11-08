@@ -4,6 +4,7 @@ package com.intellij.xdebugger.impl.ui.tree.actions;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.frame.XReferrersProvider;
@@ -41,18 +42,19 @@ public class ShowReferringObjectsAction extends XDebuggerTreeActionBase {
       XDebugSession session = DebuggerUIUtil.getSession(e);
       if (session != null) {
         XValue referringObjectsRoot = referrersProvider.getReferringObjectsValue();
-        XInspectDialog dialog = new XInspectDialog(tree.getProject(),
-                                                   tree.getEditorsProvider(),
-                                                   tree.getSourcePosition(),
-                                                   nodeName,
-                                                   referringObjectsRoot,
-                                                   tree.getValueMarkers(), session, false);
-        XDebuggerTree debuggerTree = dialog.getTree();
-        if (referringObjectsRoot instanceof ReferrersTreeCustomizer) {
-          ((ReferrersTreeCustomizer)referringObjectsRoot).customizeTree(debuggerTree);
+        DialogWrapper dialog;
+        if (referringObjectsRoot instanceof ReferrersTreeCustomizer referrersTreeCustomizer) {
+          dialog = referrersTreeCustomizer.getDialog(tree, nodeName, session);
         }
-
-        dialog.setTitle(XDebuggerBundle.message("showReferring.dialog.title", nodeName));
+        else {
+          dialog = new XInspectDialog(tree.getProject(),
+                                      tree.getEditorsProvider(),
+                                      tree.getSourcePosition(),
+                                      nodeName,
+                                      referringObjectsRoot,
+                                      tree.getValueMarkers(), session, false);
+          dialog.setTitle(XDebuggerBundle.message("showReferring.dialog.title", nodeName));
+        }
         dialog.show();
       }
     }
@@ -63,6 +65,6 @@ public class ShowReferringObjectsAction extends XDebuggerTreeActionBase {
    */
   @ApiStatus.Experimental
   public interface ReferrersTreeCustomizer {
-    void customizeTree(XDebuggerTree referrersTree);
+    DialogWrapper getDialog(XDebuggerTree tree, String nodeName, XDebugSession session);
   }
 }

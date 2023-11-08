@@ -63,7 +63,7 @@ class CollectFilesNotMarkedAsIndex(text: String, line: Int) : PerformanceCommand
     }
 
     Files.newBufferedWriter(fullLogPath).use { writer ->
-      val indexingRequest = project.service<ProjectIndexingDependenciesService>().getLatestIndexingRequestToken()
+      val indexingRequest = project.service<ProjectIndexingDependenciesService>().getReadOnlyTokenForTest()
       val iterator = object : ContentIterator {
         var number = 0
 
@@ -84,17 +84,16 @@ class CollectFilesNotMarkedAsIndex(text: String, line: Int) : PerformanceCommand
             return true
           }
 
-          if (VfsData.isIsIndexedFlagDisabled()) {
-            checkIndexed(fileOrDir, false, "has no indexing timestamp") {
-              IndexingStamp.hasIndexingTimeStamp(it.id) ||
-              // com.intellij.util.indexing.FileBasedIndexImpl.getAffectedIndexCandidates returns an empty list for such files
-              ProjectCoreUtil.isProjectOrWorkspaceFile(it, it.fileType)
-            }
-          }
-          else {
-            checkIndexed(fileOrDir, true, "not marked as indexed") {
-              IndexingFlag.isFileIndexed(it, indexingRequest.getFileIndexingStamp(fileOrDir))
-            }
+          checkIndexed(fileOrDir, false, "has no indexing timestamp") {
+            val indexedFlagSetOrDisabled = VfsData.isIsIndexedFlagDisabled() || IndexingFlag.isFileIndexed(it, indexingRequest.getFileIndexingStamp(fileOrDir))
+            val hasIndexingStamp = IndexingStamp.hasIndexingTimeStamp(it.id)
+
+            // TODO-ank: should be (indexedFlagSetOrDisabled && hasIndexingStamp) || ProjectCoreUtil.isProjectOrWorkspaceFile(it, it.fileType)
+            //  Currently not true, because STUB indexes invalidate file stamp when writing debug info, Subindexers via subindexing stamp, etc.
+            //  See com.intellij.integration.kotlingPlugin.tests.highlight.AcceptanceMppProjectIntegrationTest for reproducer
+            hasIndexingStamp ||
+            // com.intellij.util.indexing.FileBasedIndexImpl.getAffectedIndexCandidates returns an empty list for such files
+            ProjectCoreUtil.isProjectOrWorkspaceFile(it, it.fileType)
           }
           return true
         }

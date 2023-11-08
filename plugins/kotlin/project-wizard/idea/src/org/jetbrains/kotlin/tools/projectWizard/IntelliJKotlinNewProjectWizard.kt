@@ -3,7 +3,6 @@ package org.jetbrains.kotlin.tools.projectWizard
 
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.Kotlin.logUseCompactProjectStructureChanged
 import com.intellij.ide.projectWizard.NewProjectWizardConstants.BuildSystem.INTELLIJ
-import com.intellij.ide.projectWizard.generators.AssetsNewProjectWizardStep
 import com.intellij.ide.projectWizard.generators.IntelliJNewProjectWizardStep
 import com.intellij.ide.starters.local.StandardAssetsProvider
 import com.intellij.ide.wizard.NewProjectWizardChainStep.Companion.nextStep
@@ -11,9 +10,11 @@ import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.openapi.observable.util.bindBooleanStorage
 import com.intellij.openapi.project.Project
 import com.intellij.ui.dsl.builder.Panel
+import com.intellij.ui.dsl.builder.RightGap
 import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.whenStateChangedFromUi
 import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.BuildSystemType
+import org.jetbrains.kotlin.tools.projectWizard.wizard.AssetsKotlinNewProjectWizardStep
 import org.jetbrains.kotlin.tools.projectWizard.wizard.KotlinNewProjectWizardUIBundle
 
 internal class IntelliJKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard {
@@ -37,9 +38,12 @@ internal class IntelliJKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizar
         private val useCompactProjectStructureProperty = propertyGraph.property(true)
             .bindBooleanStorage(USE_COMPACT_PROJECT_STRUCTURE_NAME)
 
+        var useCompactProject by useCompactProjectStructureProperty
+
         override fun setupSettingsUI(builder: Panel) {
             setupJavaSdkUI(builder)
             setupSampleCodeUI(builder)
+            setupSampleCodeWithOnBoardingTipsUI(builder)
             setupCompactDirectoryLayoutUI(builder)
         }
 
@@ -48,6 +52,8 @@ internal class IntelliJKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizar
                 checkBox(KotlinNewProjectWizardUIBundle.message("label.project.wizard.new.project.use.compact.project.structure"))
                     .bindSelected(useCompactProjectStructureProperty)
                     .whenStateChangedFromUi { logUseCompactProjectStructureChanged(it) }
+                    .gap(RightGap.SMALL)
+                contextHelp(KotlinNewProjectWizardUIBundle.message("tooltip.project.wizard.new.project.use.compact.project.structure"))
             }
         }
 
@@ -58,28 +64,37 @@ internal class IntelliJKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizar
         }
 
         override fun setupProject(project: Project) {
-            val useCompactStructure = useCompactProjectStructureProperty.get()
-
             KotlinNewProjectWizard.generateProject(
                 project = project,
                 projectPath = "$path/$name",
                 projectName = name,
+                isProject = context.isCreatingNewProject,
                 sdk = sdk,
                 buildSystemType = BuildSystemType.Jps,
-                addSampleCode = addSampleCode,
-                useCompactProjectStructure = useCompactStructure,
-                createResourceDirectories = !useCompactStructure,
-                filterTestSourcesets = useCompactStructure
+                addSampleCode = false,
+                useCompactProjectStructure = useCompactProject
             )
         }
     }
 
-    private class AssetsStep(parent: NewProjectWizardStep) : AssetsNewProjectWizardStep(parent) {
+    private class AssetsStep(private val parent: Step) : AssetsKotlinNewProjectWizardStep(parent) {
+        private fun shouldAddOnboardingTips(): Boolean = parent.addSampleCode && parent.generateOnboardingTips
 
         override fun setupAssets(project: Project) {
             if (context.isCreatingNewProject) {
                 addAssets(StandardAssetsProvider().getIntelliJIgnoreAssets())
             }
+            if (parent.addSampleCode) {
+                val sourceRootPath = if (parent.useCompactProject) "src" else "src/main/kotlin"
+                withKotlinSampleCode(sourceRootPath, null, shouldAddOnboardingTips())
+            }
+        }
+
+        override fun setupProject(project: Project) {
+            if (shouldAddOnboardingTips()) {
+                prepareOnboardingTips(project)
+            }
+            super.setupProject(project)
         }
     }
 }

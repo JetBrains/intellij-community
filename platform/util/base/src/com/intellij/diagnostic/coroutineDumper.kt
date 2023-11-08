@@ -252,13 +252,17 @@ private class DeduplicatedJobRepresentationTree(
 
 private fun JobTree.toRepresentation(stripTrace: Boolean): JobRepresentationTree {
   val context: CoroutineContext = when {
-    job is AbstractCoroutine<*> -> job.context
+    job is CoroutineScope -> job.coroutineContext
     debugInfo !== null -> debugInfo.context
     else -> EmptyCoroutineContext
   }
   val name = if (job is AbstractCoroutine<*> && DEBUG) {
     // in DEBUG the name is displayed as part of `job.toString()` for AbstractCoroutine
     // see kotlinx.coroutines.AbstractCoroutine.nameString
+    null
+  }
+  else if (job.javaClass.name == "com.intellij.util.ChildScope") {
+    // ChildScope already renders the name in its `toString()`
     null
   }
   else {

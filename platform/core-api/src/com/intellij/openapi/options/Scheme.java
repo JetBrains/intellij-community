@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.options;
 
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -24,6 +24,6 @@ public interface Scheme {
    * Trims {@link #EDITABLE_COPY_PREFIX} from the given name.
    */
   static @NotNull String getBaseName(@NotNull String schemeName) {
-    return StringUtil.trimStart(schemeName, EDITABLE_COPY_PREFIX);
+    return Strings.trimStart(schemeName, EDITABLE_COPY_PREFIX);
   }
 }

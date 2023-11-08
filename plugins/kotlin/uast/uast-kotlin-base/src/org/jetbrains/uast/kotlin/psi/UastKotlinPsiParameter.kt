@@ -14,12 +14,8 @@ import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.utils.SmartList
-import org.jetbrains.uast.UDeclaration
-import org.jetbrains.uast.UElement
-import org.jetbrains.uast.UastErrorType
-import org.jetbrains.uast.getParentOfType
+import org.jetbrains.uast.*
 import org.jetbrains.uast.kotlin.BaseKotlinUastResolveProviderService
-import org.jetbrains.uast.kotlin.lz
 
 @ApiStatus.Internal
 class UastKotlinPsiParameter internal constructor(
@@ -33,35 +29,30 @@ class UastKotlinPsiParameter internal constructor(
     ktParameter: KtParameter
 ) : UastKotlinPsiParameterBase<KtParameter>(name, type, parent, ktParameter, language, isVarArgs, ktDefaultValue) {
 
-    private val _annotations: Array<PsiAnnotation> by lz {
-        val annotations = SmartList<PsiAnnotation>()
+    private val annotationsPart = UastLazyPart<Array<PsiAnnotation>>()
 
-        val nullability = baseResolveProviderService.nullability(ktParameter)
-        if (nullability != null && nullability != KtTypeNullability.UNKNOWN) {
-            annotations.add(
-                UastFakeLightNullabilityAnnotation(nullability, this)
-            )
+    override val _annotations: Array<PsiAnnotation>
+        get() = annotationsPart.getOrBuild {
+            val annotations = SmartList<PsiAnnotation>()
+
+            val nullability = baseResolveProviderService.nullability(ktParameter)
+            if (nullability != null && nullability != KtTypeNullability.UNKNOWN) {
+                annotations.add(
+                    UastFakeLightNullabilityAnnotation(nullability, this)
+                )
+            }
+
+            ktParameter.annotationEntries.mapTo(annotations) { entry ->
+                KtLightAnnotationForSourceEntry(
+                    name = entry.shortName?.identifier,
+                    lazyQualifiedName = { baseResolveProviderService.qualifiedAnnotationName(entry) },
+                    kotlinOrigin = entry,
+                    parent = ktParameter,
+                )
+            }
+
+            annotations.toTypedArray()
         }
-
-        ktParameter.annotationEntries.mapTo(annotations) { entry ->
-            KtLightAnnotationForSourceEntry(
-                name = entry.shortName?.identifier,
-                lazyQualifiedName = { baseResolveProviderService.qualifiedAnnotationName(entry) },
-                kotlinOrigin = entry,
-                parent = ktParameter,
-            )
-        }
-
-        annotations.toTypedArray()
-    }
-
-    override fun getAnnotations(): Array<PsiAnnotation> {
-        return _annotations
-    }
-
-    override fun hasAnnotation(fqn: String): Boolean {
-        return _annotations.find { it.hasQualifiedName(fqn) } != null
-    }
 
     companion object {
         fun create(

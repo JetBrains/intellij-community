@@ -83,7 +83,7 @@ public final class RepositoryLibraryPropertiesEditor {
   /**
    * @deprecated    * @deprecated Use  {@link #RepositoryLibraryPropertiesEditor(Project, RepositoryLibraryPropertiesModel, RepositoryLibraryDescription, boolean)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public RepositoryLibraryPropertiesEditor(@Nullable Project project,
                                            RepositoryLibraryPropertiesModel model,
                                            RepositoryLibraryDescription description) {
@@ -94,7 +94,7 @@ public final class RepositoryLibraryPropertiesEditor {
   /**
    * @deprecated Use  {@link #RepositoryLibraryPropertiesEditor(Project, RepositoryLibraryPropertiesModel, RepositoryLibraryDescription, boolean, ModelChangeListener, boolean)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public RepositoryLibraryPropertiesEditor(@Nullable Project project,
                                            final RepositoryLibraryPropertiesModel model,
                                            RepositoryLibraryDescription description,

@@ -60,98 +60,96 @@ class KotlinFragmentDataService : AbstractProjectDataService<KotlinFragmentData,
             }
         }
     }
+}
 
-    companion object {
-        private fun KotlinFacet.configureFacet(
-            compilerVersion: IdeKotlinVersion?,
-            platform: TargetPlatform?, // if null, detect by module dependencies
-            modelsProvider: IdeModifiableModelsProvider,
-        ) {
-            val module = module
-            with(configuration.settings) {
-                compilerArguments = null
-                targetPlatform = null
-                compilerSettings = null
-                initializeIfNeeded(
-                    module,
-                    modelsProvider.getModifiableRootModel(module),
-                    platform,
-                    compilerVersion
-                )
-                val apiLevel = apiLevel
-                val languageLevel = languageLevel
-                if (languageLevel != null && apiLevel != null && apiLevel > languageLevel) {
-                    this.apiLevel = languageLevel
-                }
-            }
-
-            ExternalCompilerVersionProvider.set(module, compilerVersion)
-        }
-
-        private fun configureFacetByFragmentData(
-            ideModule: Module,
-            modelsProvider: IdeModifiableModelsProvider,
-            moduleNode: DataNode<ModuleData>,
-            sourceSetNode: DataNode<GradleSourceSetData>,
-            fragmentDataNode: DataNode<KotlinFragmentData>
-        ): KotlinFacet? {
-
-            val compilerVersion = moduleNode.findAll(BuildScriptClasspathData.KEY).firstOrNull()?.data?.let(::findKotlinPluginVersion)
-                ?: return null
-
-            val platform = when (fragmentDataNode.data.platform) {
-                KotlinPlatform.COMMON -> CommonPlatforms.defaultCommonPlatform
-                KotlinPlatform.JVM, KotlinPlatform.ANDROID -> fragmentDataNode.data.platforms
-                    .filterIsInstance<IdeaKpmJvmPlatform>()
-                    .map { it.jvmTarget }
-                    .singleOrNull()
-                    ?.let { JvmTarget.valueOf(it) }
-                    ?.let { JvmPlatforms.jvmPlatformByTargetVersion(it) }
-                    ?: JvmPlatforms.defaultJvmPlatform
-
-                // TODO should we select platform depending on isIr platform detail?
-                KotlinPlatform.JS -> JsPlatforms.defaultJsPlatform
-                KotlinPlatform.WASM -> WasmPlatforms.Default
-                KotlinPlatform.NATIVE -> fragmentDataNode.data.platforms
-                    .filterIsInstance<IdeaKpmNativePlatform>()
-                    .mapNotNull { KonanTarget.predefinedTargets[it.konanTarget] }
-                    .ifNotEmpty { NativePlatforms.nativePlatformByTargets(this) }
-                    ?: NativePlatforms.unspecifiedNativePlatform
-            }
-
-            val languageSettings = fragmentDataNode.data.languageSettings
-
-            val compilerArguments = platform.createArguments {
-                multiPlatform = true
-                languageSettings?.also {
-                    languageVersion = it.languageVersion
-                    apiVersion = it.apiVersion
-                    progressiveMode = it.isProgressiveMode
-                    internalArguments = it.enabledLanguageFeatures.mapNotNull {
-                        val feature = LanguageFeature.fromString(it) ?: return@mapNotNull null
-                        val arg = "-XXLanguage:+$it"
-                        ManualLanguageFeatureSetting(feature, LanguageFeature.State.ENABLED, arg)
-                    }
-                    optIn = it.optInAnnotationsInUse.toTypedArray()
-                    pluginOptions = it.compilerPluginArguments.toTypedArray()
-                    pluginClasspaths = it.compilerPluginClasspath.map(File::getPath).toTypedArray()
-                    freeArgs = it.freeCompilerArgs.toMutableList()
-                }
-            }
-
-            val kotlinFacet = ideModule.getOrCreateFacet(modelsProvider, false, GradleConstants.SYSTEM_ID.id)
-            kotlinFacet.configureFacet(
-                compilerVersion,
-                platform,
-                modelsProvider,
-            )
-
-            ideModule.hasExternalSdkConfiguration = sourceSetNode.data.sdkName != null
-            ideModule.isKpmModule = true
-            ideModule.refinesFragmentIds = fragmentDataNode.data.refinesFragmentIds.toList()
-            applyCompilerArgumentsToFacetSettings(compilerArguments, kotlinFacet.configuration.settings, kotlinFacet.module, modelsProvider)
-            kotlinFacet.configuration.settings.noVersionAutoAdvance()
-            return kotlinFacet
+private fun KotlinFacet.configureFacet(
+    compilerVersion: IdeKotlinVersion?,
+    platform: TargetPlatform?, // if null, detect by module dependencies
+    modelsProvider: IdeModifiableModelsProvider,
+) {
+    val module = module
+    with(configuration.settings) {
+        compilerArguments = null
+        targetPlatform = null
+        compilerSettings = null
+        initializeIfNeeded(
+            module,
+            modelsProvider.getModifiableRootModel(module),
+            platform,
+            compilerVersion
+        )
+        val apiLevel = apiLevel
+        val languageLevel = languageLevel
+        if (languageLevel != null && apiLevel != null && apiLevel > languageLevel) {
+            this.apiLevel = languageLevel
         }
     }
+
+    ExternalCompilerVersionProvider.set(module, compilerVersion)
+}
+
+private fun configureFacetByFragmentData(
+    ideModule: Module,
+    modelsProvider: IdeModifiableModelsProvider,
+    moduleNode: DataNode<ModuleData>,
+    sourceSetNode: DataNode<GradleSourceSetData>,
+    fragmentDataNode: DataNode<KotlinFragmentData>
+): KotlinFacet? {
+
+    val compilerVersion = moduleNode.findAll(BuildScriptClasspathData.KEY).firstOrNull()?.data?.let(::findKotlinPluginVersion)
+        ?: return null
+
+    val platform = when (fragmentDataNode.data.platform) {
+        KotlinPlatform.COMMON -> CommonPlatforms.defaultCommonPlatform
+        KotlinPlatform.JVM, KotlinPlatform.ANDROID -> fragmentDataNode.data.platforms
+            .filterIsInstance<IdeaKpmJvmPlatform>()
+            .map { it.jvmTarget }
+            .singleOrNull()
+            ?.let { JvmTarget.valueOf(it) }
+            ?.let { JvmPlatforms.jvmPlatformByTargetVersion(it) }
+            ?: JvmPlatforms.defaultJvmPlatform
+
+        // TODO should we select platform depending on isIr platform detail?
+        KotlinPlatform.JS -> JsPlatforms.defaultJsPlatform
+        KotlinPlatform.WASM -> WasmPlatforms.Default
+        KotlinPlatform.NATIVE -> fragmentDataNode.data.platforms
+            .filterIsInstance<IdeaKpmNativePlatform>()
+            .mapNotNull { KonanTarget.predefinedTargets[it.konanTarget] }
+            .ifNotEmpty { NativePlatforms.nativePlatformByTargets(this) }
+            ?: NativePlatforms.unspecifiedNativePlatform
+    }
+
+    val languageSettings = fragmentDataNode.data.languageSettings
+
+    val compilerArguments = platform.createArguments {
+        multiPlatform = true
+        languageSettings?.also {
+            languageVersion = it.languageVersion
+            apiVersion = it.apiVersion
+            progressiveMode = it.isProgressiveMode
+            internalArguments = it.enabledLanguageFeatures.mapNotNull {
+                val feature = LanguageFeature.fromString(it) ?: return@mapNotNull null
+                val arg = "-XXLanguage:+$it"
+                ManualLanguageFeatureSetting(feature, LanguageFeature.State.ENABLED, arg)
+            }
+            optIn = it.optInAnnotationsInUse.toTypedArray()
+            pluginOptions = it.compilerPluginArguments.toTypedArray()
+            pluginClasspaths = it.compilerPluginClasspath.map(File::getPath).toTypedArray()
+            freeArgs = it.freeCompilerArgs.toMutableList()
+        }
+    }
+
+    val kotlinFacet = ideModule.getOrCreateFacet(modelsProvider, false, GradleConstants.SYSTEM_ID.id)
+    kotlinFacet.configureFacet(
+        compilerVersion,
+        platform,
+        modelsProvider,
+    )
+
+    ideModule.hasExternalSdkConfiguration = sourceSetNode.data.sdkName != null
+    ideModule.isKpmModule = true
+    ideModule.refinesFragmentIds = fragmentDataNode.data.refinesFragmentIds.toList()
+    applyCompilerArgumentsToFacetSettings(compilerArguments, kotlinFacet.configuration.settings, kotlinFacet.module, modelsProvider)
+    kotlinFacet.configuration.settings.noVersionAutoAdvance()
+    return kotlinFacet
 }

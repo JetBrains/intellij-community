@@ -149,5 +149,8 @@ enum class TypeProperty {
   FIELD,
   ARGUMENT_NAME,
   PARAMETER_MEMBER,
+
+  METHOD,
+  CLASS,
   UNKNOWN
 }

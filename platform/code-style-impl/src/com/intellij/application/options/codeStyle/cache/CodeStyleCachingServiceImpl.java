@@ -4,6 +4,7 @@ package com.intellij.application.options.codeStyle.cache;
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -15,6 +16,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.reference.SoftReference;
+import com.intellij.util.SlowOperations;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -70,8 +72,10 @@ public final class CodeStyleCachingServiceImpl implements CodeStyleCachingServic
       SoftReference<CodeStyleCachedValueProvider> providerRef = fileData.getUserData(PROVIDER_KEY);
       CodeStyleCachedValueProvider provider = providerRef != null ? providerRef.get() : null;
       if (provider == null || provider.isExpired()) {
-        FileViewProvider viewProvider = PsiManager.getInstance(myProject).findViewProvider(virtualFile);
-        provider = new CodeStyleCachedValueProvider(Objects.requireNonNull(viewProvider), myProject);
+        try (AccessToken ignore = SlowOperations.knownIssue("IDEA-333522, EA-910708")) {
+          FileViewProvider viewProvider = PsiManager.getInstance(myProject).findViewProvider(virtualFile);
+          provider = new CodeStyleCachedValueProvider(Objects.requireNonNull(viewProvider), myProject);
+        }
         fileData.putUserData(PROVIDER_KEY, new SoftReference<>(provider));
       }
       return provider;

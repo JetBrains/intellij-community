@@ -13,6 +13,16 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.multiplatform.ExpectActualAnnotationsIncompatibilityType
 
 object ActualAnnotationsNotMatchExpectFixFactoryCommon {
+    private val supportedAnnotationTargetsClasses = listOf(
+        KtClassLikeDeclaration::class,
+        KtFunction::class,
+        KtProperty::class,
+        KtPropertyAccessor::class,
+        KtTypeParameter::class,
+        KtParameter::class,
+        KtTypeReference::class,
+    )
+
     fun createRemoveAnnotationFromExpectFix(expectAnnotationEntry: KtAnnotationEntry): QuickFixActionBase<*>? {
         val annotationName = expectAnnotationEntry.shortName ?: return null
         return RemoveAnnotationFix(
@@ -36,6 +46,10 @@ object ActualAnnotationsNotMatchExpectFixFactoryCommon {
         val actualAnnotationEntry = when (incompatibilityType) {
             is ExpectActualAnnotationsIncompatibilityType.MissingOnActual -> null
             is ExpectActualAnnotationsIncompatibilityType.DifferentOnActual -> incompatibilityType.actualAnnotation
+        }
+
+        if (skipComplexScenario(expectAnnotationEntry, actualAnnotationTargetElement)) {
+            return emptyList()
         }
 
         if (actualAnnotationEntry == null) {
@@ -94,7 +108,23 @@ object ActualAnnotationsNotMatchExpectFixFactoryCommon {
                 notEqual(expectDeclaration.callableIdIfNotLocal, actualDeclaration.callableIdIfNotLocal)
             }
 
-            else -> error("Unexpected types: $expectDeclaration $actualDeclaration")
+            else -> false
         }
+    }
+
+    /**
+     * Skip complex scenarios:
+     * 1. Annotations with use-site targets specified.
+     * 2. Implicit declarations on actual side (default empty constructor, default getter, etc.) - as a result,
+     *    there is no declaration to add annotation to and [actualTarget] will point to element of different type.
+     *
+     * It's better to suggest nothing than to suggest incorrect quick-fixes.
+     */
+    private fun skipComplexScenario(expectAnnotationEntry: KtAnnotationEntry, actualTarget: PsiElement?): Boolean {
+        if (expectAnnotationEntry.useSiteTarget != null) {
+            return true
+        }
+        val expectTarget = (expectAnnotationEntry.parent as? KtModifierList)?.parent ?: return true
+        return supportedAnnotationTargetsClasses.none { it.isInstance(expectTarget) && it.isInstance(actualTarget) }
     }
 }

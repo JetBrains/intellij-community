@@ -3,64 +3,19 @@ package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
 import com.intellij.lang.LangBundle
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.ui.ColoredListCellRenderer
-import com.intellij.ui.SeparatorWithText
+import com.intellij.ui.GroupedComboBoxRenderer
 import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.SimpleTextAttributes
-import java.awt.Component
-import javax.swing.JList
 
-class RuntimeChooserPresenter: ColoredListCellRenderer<RuntimeChooserItem>() {
+abstract class RuntimeChooserPresenter: GroupedComboBoxRenderer<RuntimeChooserItem?>() {
 
-  override fun getListCellRendererComponent(list: JList<out RuntimeChooserItem>?,
-                                            value: RuntimeChooserItem?,
-                                            index: Int,
-                                            selected: Boolean,
-                                            hasFocus: Boolean): Component {
-
-    val message = when (value) {
-      is RuntimeChooserAdvancedSectionSeparator -> LangBundle.message("dialog.separator.choose.ide.runtime.advanced")
-      is RuntimeChooserAdvancedJbrSelectedSectionSeparator -> LangBundle.message("dialog.separator.choose.ide.runtime.advancedJbrs")
-      is RuntimeChooserCustomSelectedSectionSeparator -> LangBundle.message("dialog.separator.choose.ide.runtime.customSelected")
-      else -> null
-    }
-
-    if (message == null) {
-      return super.getListCellRendererComponent(list, value, index, selected, hasFocus)
-    }
-
-    val sep = SeparatorWithText()
-    sep.caption = message
-    return sep
-  }
-
-  override fun customizeCellRenderer(list: JList<out RuntimeChooserItem>,
-                                     value: RuntimeChooserItem?,
-                                     index: Int,
-                                     selected: Boolean,
-                                     hasFocus: Boolean) {
-    if (value is RuntimeChooserDownloadableItem) {
-      return presentJbrItem(value)
-    }
-
-    if (value is RuntimeChooserCurrentItem) {
-      presetCurrentRuntime(value)
-      return
-    }
-
-    if (value is RuntimeChooserSelectRuntimeItem) {
-      append(LangBundle.message("dialog.item.choose.ide.runtime.select.runtime"), SimpleTextAttributes.GRAYED_ATTRIBUTES)
-      return
-    }
-
-    if (value is RuntimeChooserAddCustomItem) {
-      append(LangBundle.message("dialog.item.choose.ide.runtime.add.custom", SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES))
-      return
-    }
-
-    if (value is RuntimeChooserItemWithFixedLocation) {
-      presetRuntime(value)
-      return
+  override fun customize(item: SimpleColoredComponent, value: RuntimeChooserItem?, index: Int, isSelected: Boolean, cellHasFocus: Boolean) {
+    when (value) {
+      is RuntimeChooserDownloadableItem -> item.presentJbrItem(value)
+      is RuntimeChooserCurrentItem -> item.presetCurrentRuntime(value)
+      is RuntimeChooserSelectRuntimeItem -> item.append(LangBundle.message("dialog.item.choose.ide.runtime.select.runtime"), SimpleTextAttributes.GRAYED_ATTRIBUTES)
+      is RuntimeChooserAddCustomItem -> item.append(LangBundle.message("dialog.item.choose.ide.runtime.add.custom", SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES))
+      is RuntimeChooserItemWithFixedLocation -> item.presetRuntime(value)
     }
   }
 

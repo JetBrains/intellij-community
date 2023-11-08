@@ -3,23 +3,29 @@
 
 package com.intellij.ui.svg
 
+import com.github.benmanes.caffeine.cache.Caffeine
+import com.github.benmanes.caffeine.cache.LoadingCache
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.util.DummyIcon
 import com.intellij.openapi.util.IconLoader
+import com.intellij.openapi.util.LazyIcon
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.ColorHexUtil
 import com.intellij.ui.ColorUtil
-import com.intellij.ui.hasher
-import com.intellij.ui.icons.IconLoadMeasurer
-import com.intellij.ui.icons.getResourceData
+import com.intellij.ui.IconManager
+import com.intellij.ui.icons.*
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.scale.isHiDPIEnabledAndApplicable
+import com.intellij.util.ArrayUtilRt
 import com.intellij.util.JBHiDPIScaledImage
 import com.intellij.util.SVGLoader
-import com.intellij.util.createDocumentBuilder
-import com.intellij.util.text.CharSequenceReader
+import com.intellij.util.containers.CollectionFactory
+import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.xml.dom.createXmlStreamReader
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.asExecutor
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.Component
 import java.awt.Graphics
@@ -28,13 +34,10 @@ import java.awt.geom.Rectangle2D
 import java.awt.image.BufferedImage
 import java.io.IOException
 import java.io.InputStream
-import java.io.StringWriter
 import javax.swing.Icon
-import javax.xml.XMLConstants
-import javax.xml.transform.TransformerFactory
-import javax.xml.transform.dom.DOMSource
-import javax.xml.transform.stream.StreamResult
 import kotlin.math.ceil
+import kotlin.time.Duration.Companion.minutes
+import kotlin.time.toJavaDuration
 
 // https://youtrack.jetbrains.com/issue/IDEA-312509/mvstore.MVStoreException-on-zoom-SVG-with-text
 private const val MAX_SCALE_TO_CACHE = 4
@@ -46,35 +49,17 @@ val activeSvgCache: SvgCacheManager?
 interface SvgAttributePatcher {
   fun patchColors(attributes: MutableMap<String, String>) {
   }
-
-  /**
-   * @return hash code of the current SVG color patcher or null to disable rendered SVG images caching
-   */
-  fun digest(): LongArray?
 }
 
 @Internal
 fun loadSvg(data: ByteArray, scale: Float): BufferedImage {
-  return loadAndCacheIfApplicable(path = null, precomputedCacheKey = 0, scale = scale, colorPatcherProvider = null) {
+  return loadAndCacheIfApplicable(path = null,
+                                  precomputedCacheKey = 0,
+                                  scale = scale,
+                                  colorPatcher = null,
+                                  colorPatcherDigest = ArrayUtilRt.EMPTY_LONG_ARRAY) {
     data
   }!!
-}
-
-@Internal
-fun loadSvgFromClassResource(classLoader: ClassLoader?,
-                             path: String,
-                             precomputedCacheKey: Int,
-                             scale: Float,
-                             compoundCacheKey: SvgCacheClassifier,
-                             colorPatcherProvider: SVGLoader.SvgElementColorPatcherProvider?,
-                             resourceClass: Class<*>? = null): Image? {
-  return loadAndCacheIfApplicable(path = path,
-                                  precomputedCacheKey = precomputedCacheKey,
-                                  scale = scale,
-                                  compoundCacheKey = compoundCacheKey,
-                                  colorPatcherProvider = colorPatcherProvider) {
-    getResourceData(path = path, resourceClass = resourceClass, classLoader = classLoader)
-  }
 }
 
 internal fun loadSvg(path: String?,
@@ -86,16 +71,28 @@ internal fun loadSvg(path: String?,
                                   precomputedCacheKey = 0,
                                   scale = scale,
                                   compoundCacheKey = compoundCacheKey ?: SvgCacheClassifier(scale),
-                                  colorPatcherProvider = colorPatcherProvider) {
+                                  colorPatcherDigest = colorPatcherDigestShim(colorPatcherProvider),
+                                  colorPatcher = path?.let { colorPatcherProvider?.attributeForPath(it) },) {
     stream.readAllBytes()
   }!!
 }
 
-@Internal
-fun newSvgPatcher(digest: LongArray?, newPalette: Map<String, String>, alphaProvider: (String) -> Int?): SvgAttributePatcher {
-  return object : SvgAttributePatcher {
-    override fun digest(): LongArray? = digest
+internal fun colorPatcherDigestShim(colorPatcherProvider: SVGLoader.SvgElementColorPatcherProvider?): LongArray {
+  if (colorPatcherProvider == null) {
+    return ArrayUtilRt.EMPTY_LONG_ARRAY
+  }
 
+  try {
+    return colorPatcherProvider.digest()
+  }
+  catch (e: AbstractMethodError) {
+    return longArrayOf(IconManager.getInstance().hashClass(colorPatcherProvider::class.java))
+  }
+}
+
+@Internal
+fun newSvgPatcher(newPalette: Map<String, String>, alphaProvider: (String) -> Int?): SvgAttributePatcher {
+  return object : SvgAttributePatcher {
     override fun patchColors(attributes: MutableMap<String, String>) {
       patchColorAttribute(attributes = attributes, attributeName = "fill")
       patchColorAttribute(attributes = attributes, attributeName = "stroke")
@@ -103,13 +100,14 @@ fun newSvgPatcher(digest: LongArray?, newPalette: Map<String, String>, alphaProv
 
     private fun patchColorAttribute(attributes: MutableMap<String, String>, attributeName: String) {
       val color = attributes.get(attributeName) ?: return
-      val opacity = attributes.get("$attributeName-opacity")
+      val opacityAttributeName = "$attributeName-opacity"
+      val opacity = attributes.get(opacityAttributeName)
       var alpha = 255
       if (!opacity.isNullOrEmpty()) {
         try {
           alpha = ceil(255f * opacity.toFloat()).toInt()
         }
-        catch (ignore: Exception) {
+        catch (_: Exception) {
         }
       }
 
@@ -124,7 +122,12 @@ fun newSvgPatcher(digest: LongArray?, newPalette: Map<String, String>, alphaProv
       if (newColor != null) {
         attributes.put(attributeName, newColor)
         alphaProvider(newColor)?.let {
-          attributes.put("$attributeName-opacity", (it.toFloat() / 255f).toString())
+          if (it == 255) {
+            attributes.remove(opacityAttributeName)
+          }
+          else {
+            attributes.put(opacityAttributeName, (it.toFloat() / 255f).toString())
+          }
         }
       }
     }
@@ -170,59 +173,37 @@ internal fun loadSvgAndCacheIfApplicable(path: String?,
                                          scale: Float,
                                          compoundCacheKey: SvgCacheClassifier,
                                          colorPatcher: SvgAttributePatcher?,
-                                         @Suppress("DEPRECATION") deprecatedColorPatcher: SVGLoader.SvgElementColorPatcher?,
+                                         colorPatcherDigest: LongArray,
                                          dataProvider: () -> ByteArray?): BufferedImage? {
   return loadAndCacheIfApplicable(path = path,
                                   precomputedCacheKey = 0,
                                   scale = scale,
                                   compoundCacheKey = compoundCacheKey,
                                   colorPatcher = colorPatcher,
-                                  deprecatedColorPatcher = deprecatedColorPatcher,
+                                  colorPatcherDigest = colorPatcherDigest,
                                   dataProvider = dataProvider)
 }
 
-private inline fun loadAndCacheIfApplicable(path: String?,
-                                            precomputedCacheKey: Int,
-                                            scale: Float,
-                                            compoundCacheKey: SvgCacheClassifier = SvgCacheClassifier(scale = scale),
-                                            colorPatcherProvider: SVGLoader.SvgElementColorPatcherProvider?,
-                                            dataProvider: () -> ByteArray?): BufferedImage? {
-  @Suppress("DEPRECATION")
-  return loadAndCacheIfApplicable(path = path,
-                                  precomputedCacheKey = precomputedCacheKey,
-                                  scale = scale,
-                                  compoundCacheKey = compoundCacheKey,
-                                  colorPatcher = path?.let { colorPatcherProvider?.attributeForPath(it) },
-                                  deprecatedColorPatcher = path?.let { colorPatcherProvider?.forPath(path) },
-                                  dataProvider = dataProvider)
-}
-
-private inline fun loadAndCacheIfApplicable(path: String?,
-                                            precomputedCacheKey: Int,
-                                            scale: Float,
-                                            compoundCacheKey: SvgCacheClassifier = SvgCacheClassifier(scale = scale),
-                                            colorPatcher: SvgAttributePatcher?,
-                                            @Suppress("DEPRECATION") deprecatedColorPatcher: SVGLoader.SvgElementColorPatcher?,
-                                            dataProvider: () -> ByteArray?): BufferedImage? {
-  val colorPatcherDigest = colorPatcher?.digest() ?: deprecatedColorPatcher?.digest()?.let { longArrayOf(hasher.hashBytesToLong(it)) }
+internal inline fun loadAndCacheIfApplicable(path: String?,
+                                             precomputedCacheKey: Int,
+                                             scale: Float,
+                                             compoundCacheKey: SvgCacheClassifier = SvgCacheClassifier(scale = scale),
+                                             colorPatcher: SvgAttributePatcher?,
+                                             colorPatcherDigest: LongArray,
+                                             dataProvider: () -> ByteArray?): BufferedImage? {
   val svgCache = activeSvgCache
-  if (svgCache == null ||
-      (colorPatcherDigest == null && (colorPatcher != null || deprecatedColorPatcher != null)) ||
-      scale > MAX_SCALE_TO_CACHE) {
-    return renderImage(colorPatcher = colorPatcher,
-                       deprecatedColorPatcher = deprecatedColorPatcher,
-                       data = dataProvider() ?: return null,
-                       scale = scale,
-                       path = path)
+  if (svgCache == null || scale > MAX_SCALE_TO_CACHE) {
+    return renderImage(colorPatcher = colorPatcher, data = dataProvider() ?: return null, scale = scale, path = path)
   }
 
   val data = if (precomputedCacheKey == 0) (dataProvider() ?: return null) else null
-  val themeKey = colorPatcherDigest?.let(::themeDigestToCacheKey) ?: 0
   val key = if (data == null) {
-    createPrecomputedIconCacheKey(precomputedCacheKey = precomputedCacheKey, compoundKey = compoundCacheKey, themeKey = themeKey)
+    createPrecomputedIconCacheKey(precomputedCacheKey = precomputedCacheKey,
+                                  compoundKey = compoundCacheKey,
+                                  colorPatcherDigest = colorPatcherDigest)
   }
   else {
-    createIconCacheKey(imageBytes = data, compoundKey = compoundCacheKey, themeKey = themeKey)
+    createIconCacheKey(imageBytes = data, compoundKey = compoundCacheKey, colorPatcherDigest = colorPatcherDigest)
   }
 
   try {
@@ -245,8 +226,7 @@ private inline fun loadAndCacheIfApplicable(path: String?,
     logger<SVGLoader>().warn("Cannot load from icon cache (path=$path, precomputedCacheKey=$precomputedCacheKey)", e)
   }
 
-  return renderAndCache(deprecatedColorPatcher = deprecatedColorPatcher,
-                        colorPatcher = colorPatcher,
+  return renderAndCache(colorPatcher = colorPatcher,
                         data = data ?: dataProvider() ?: return null,
                         scale = scale,
                         path = path,
@@ -254,28 +234,13 @@ private inline fun loadAndCacheIfApplicable(path: String?,
                         cache = svgCache)
 }
 
-private fun themeDigestToCacheKey(themeDigest: LongArray): Long {
-  return when (themeDigest.size) {
-    0 -> 0
-    1 -> themeDigest.first()
-    2 -> hasher.hashLongLongToLong(themeDigest[0], themeDigest[1])
-    3 -> hasher.hashLongLongLongToLong(themeDigest[0], themeDigest[1], themeDigest[2])
-    else -> hasher.hashStream().putLongArray(themeDigest).asLong
-  }
-}
-
-private fun renderAndCache(@Suppress("DEPRECATION") deprecatedColorPatcher: SVGLoader.SvgElementColorPatcher?,
-                           colorPatcher: SvgAttributePatcher?,
+private fun renderAndCache(colorPatcher: SvgAttributePatcher?,
                            data: ByteArray,
                            scale: Float,
                            path: String?,
                            key: LongArray,
                            cache: SvgCacheManager): BufferedImage {
-  val image = renderImage(colorPatcher = colorPatcher,
-                          deprecatedColorPatcher = deprecatedColorPatcher,
-                          data = data,
-                          scale = scale,
-                          path = path)
+  val image = renderImage(colorPatcher = colorPatcher, data = data, scale = scale, path = path)
   // maybe closed during rendering
   if (!cache.isActive()) {
     return image
@@ -299,30 +264,13 @@ private fun renderAndCache(@Suppress("DEPRECATION") deprecatedColorPatcher: SVGL
   return image
 }
 
-private fun renderImage(colorPatcher: SvgAttributePatcher?,
-                        @Suppress("DEPRECATION") deprecatedColorPatcher: SVGLoader.SvgElementColorPatcher?,
-                        data: ByteArray,
-                        scale: Float,
-                        path: String?): BufferedImage {
+private fun renderImage(colorPatcher: SvgAttributePatcher?, data: ByteArray, scale: Float, path: String?): BufferedImage {
   val decodingStart = StartUpMeasurer.getCurrentTimeIfEnabled()
-  val jsvgDocument = if (deprecatedColorPatcher == null) {
-    if (colorPatcher == null) {
-      createJSvgDocument(data)
-    }
-    else {
-      createJSvgDocument(createXmlStreamReader(data), colorPatcher::patchColors)
-    }
+  val jsvgDocument = if (colorPatcher == null) {
+    createJSvgDocument(data)
   }
   else {
-    val documentElement = createDocumentBuilder(namespaceAware = true).parse(data.inputStream()).documentElement
-    deprecatedColorPatcher.patchColors(documentElement)
-
-    val writer = StringWriter()
-    val transformerFactory = TransformerFactory.newDefaultInstance()
-    transformerFactory.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "")
-    transformerFactory.setAttribute(XMLConstants.ACCESS_EXTERNAL_STYLESHEET, "")
-    transformerFactory.newTransformer().transform(DOMSource(documentElement), StreamResult(writer))
-    createJSvgDocument(createXmlStreamReader(CharSequenceReader(writer.buffer)))
+    createJSvgDocument(createXmlStreamReader(data), colorPatcher::patchColors)
   }
 
   val bufferedImage = renderSvg(scale = scale, path = path, document = jsvgDocument)
@@ -339,7 +287,7 @@ fun loadWithSizes(sizes: List<Int>, data: ByteArray, scale: Float = JBUIScale.sy
   val isHiDpiNeeded = isHiDPIEnabledAndApplicable(scale)
   return sizes.map { size ->
     val compoundKey = SvgCacheClassifier(scale = scale, size = size)
-    val key = createIconCacheKey(imageBytes = data, compoundKey = compoundKey, themeKey = 0)
+    val key = createIconCacheKey(imageBytes = data, compoundKey = compoundKey, colorPatcherDigest = null)
     var image = svgCache?.loadFromCache(key)
     if (image == null) {
       image = renderSvgWithSize(document = document, width = (size * scale), height = (size * scale))
@@ -369,6 +317,60 @@ fun paintIconWithSelection(icon: Icon, c: Component?, g: Graphics?, x: Int, y: I
     icon.paintIcon(c, g, x, y)
   }
   else {
-    IconLoader.colorPatchedIcon(icon, patcher).paintIcon(c, g, x, y)
+    colorPatchedIcon(icon = icon, colorPatcher = patcher).paintIcon(c, g, x, y)
   }
+}
+
+private val colorPatchCache = CollectionFactory.createConcurrentWeakValueMap<SVGLoader.SvgElementColorPatcherProvider, LoadingCache<Icon, Icon>>().also {
+  registerIconCacheCleaner(it::clear)
+}
+
+/**
+ * Creates a new icon with the color patching applied.
+ */
+@Internal
+fun colorPatchedIcon(icon: Icon, colorPatcher: SVGLoader.SvgElementColorPatcherProvider): Icon {
+  if (icon is DummyIcon || icon is EmptyIcon) {
+    return icon
+  }
+
+  return colorPatchCache
+    .computeIfAbsent(colorPatcher) {
+      Caffeine.newBuilder()
+        .maximumSize(64)
+        .executor(Dispatchers.Default.asExecutor())
+        .expireAfterAccess(10.minutes.toJavaDuration())
+        .build {
+          patchIconsWithColorPatcher(icon = it, colorPatcher = colorPatcher)
+        }
+    }
+    .get(icon)
+}
+
+private fun patchIconsWithColorPatcher(icon: Icon, colorPatcher: SVGLoader.SvgElementColorPatcherProvider): Icon {
+  return replaceCachedImageIcons(icon) { cachedImageIcon ->
+    cachedImageIcon.createWithPatcher(colorPatcher)
+  }!!
+}
+
+/**
+ * Creates a new icon with the low-level CachedImageIcon changing
+ */
+internal fun replaceCachedImageIcons(icon: Icon, cachedImageIconReplacer: (CachedImageIcon) -> Icon): Icon? {
+  if (icon is CachedImageIcon) {
+    return cachedImageIconReplacer(icon)
+  }
+
+  return object : IconReplacer {
+    override fun replaceIcon(icon: Icon?): Icon? {
+      return when {
+        icon == null || icon is DummyIcon || icon is EmptyIcon -> icon
+        icon is LazyIcon -> replaceIcon(icon.getOrComputeIcon())
+        icon is ReplaceableIcon -> icon.replaceBy(this)
+        !checkIconSize(icon) -> EMPTY_ICON
+        icon is CachedImageIcon -> cachedImageIconReplacer(icon)
+        else -> icon
+      }
+    }
+  }.replaceIcon(icon)
 }

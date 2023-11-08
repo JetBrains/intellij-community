@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.repo;
 
 import com.intellij.openapi.vcs.VcsException;
@@ -20,9 +20,8 @@ public class GitRepositoryInitializer implements VcsRepositoryInitializer {
     Git.getInstance().runCommand(handler).throwOnError();
   }
 
-  @NotNull
   @Override
-  public VcsKey getSupportedVcs() {
+  public @NotNull VcsKey getSupportedVcs() {
     return GitVcs.getKey();
   }
 }

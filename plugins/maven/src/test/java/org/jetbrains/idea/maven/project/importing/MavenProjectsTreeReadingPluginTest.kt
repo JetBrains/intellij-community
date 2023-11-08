@@ -1,8 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.project.importing
 
-import com.intellij.openapi.progress.RawProgressReporter
 import com.intellij.openapi.util.Pair
+import com.intellij.platform.util.progress.RawProgressReporter
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.project.*
 import org.jetbrains.idea.maven.server.NativeMavenProjectHolder
@@ -57,7 +57,7 @@ class MavenProjectsTreeReadingPluginTest : MavenProjectsTreeTestCase() {
                                       progressReporter,
                                       mavenProgressIndicator.syncConsole,
                                       false)
-        MavenFolderResolver(myProject).resolveFolders(listOf(parentProject))
+        MavenFolderResolver(myProject).resolveFolders(listOf(parentProject), progressReporter)
       }
     }
     finally {

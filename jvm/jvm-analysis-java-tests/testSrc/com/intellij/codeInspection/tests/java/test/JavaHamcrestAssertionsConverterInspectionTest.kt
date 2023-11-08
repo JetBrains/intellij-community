@@ -1,7 +1,7 @@
 package com.intellij.codeInspection.tests.java.test
 
-import com.intellij.codeInspection.tests.JvmLanguage
-import com.intellij.codeInspection.tests.test.HamcrestAssertionsConverterInspectionTestBase
+import com.intellij.jvm.analysis.internal.testFramework.test.HamcrestAssertionsConverterInspectionTestBase
+import com.intellij.jvm.analysis.testFramework.JvmLanguage
 
 class JavaHamcrestAssertionsConverterInspectionTest : HamcrestAssertionsConverterInspectionTestBase() {
   fun `test highlighting`() {

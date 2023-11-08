@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.target.java
 
 import com.intellij.execution.ExecutionBundle
@@ -7,7 +7,7 @@ import com.intellij.execution.target.LanguageRuntimeConfiguration
 import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.components.PersistentStateComponent
 
-class JavaLanguageRuntimeConfiguration : LanguageRuntimeConfiguration(JavaLanguageRuntimeType.TYPE_ID),
+class JavaLanguageRuntimeConfiguration : LanguageRuntimeConfiguration(JavaLanguageRuntimeTypeConstants.TYPE_ID),
                                          PersistentStateComponent<JavaLanguageRuntimeConfiguration.MyState> {
   var homePath: String = ""
   var javaVersionString: String = ""
@@ -16,10 +16,10 @@ class JavaLanguageRuntimeConfiguration : LanguageRuntimeConfiguration(JavaLangua
     it.homePath = this.homePath
     it.javaVersionString = this.javaVersionString
 
-    saveInState(JavaLanguageRuntimeType.CLASS_PATH_VOLUME) { volumeState ->
+    saveInState(JavaLanguageRuntimeTypeConstants.CLASS_PATH_VOLUME) { volumeState ->
       it.classpathFolder = volumeState
     }
-    saveInState(JavaLanguageRuntimeType.AGENTS_VOLUME) { volumeState ->
+    saveInState(JavaLanguageRuntimeTypeConstants.AGENTS_VOLUME) { volumeState ->
       it.agentFolder = volumeState
     }
   }
@@ -28,8 +28,8 @@ class JavaLanguageRuntimeConfiguration : LanguageRuntimeConfiguration(JavaLangua
     this.homePath = state.homePath ?: ""
     this.javaVersionString = state.javaVersionString ?: ""
 
-    loadVolumeState(JavaLanguageRuntimeType.CLASS_PATH_VOLUME, state.classpathFolder)
-    loadVolumeState(JavaLanguageRuntimeType.AGENTS_VOLUME, state.agentFolder)
+    loadVolumeState(JavaLanguageRuntimeTypeConstants.CLASS_PATH_VOLUME, state.classpathFolder)
+    loadVolumeState(JavaLanguageRuntimeTypeConstants.AGENTS_VOLUME, state.agentFolder)
   }
 
   @Throws(RuntimeConfigurationException::class)

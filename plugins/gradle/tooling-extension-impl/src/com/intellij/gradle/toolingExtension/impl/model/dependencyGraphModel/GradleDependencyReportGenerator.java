@@ -20,7 +20,7 @@ import java.io.File;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
-import static com.intellij.gradle.toolingExtension.impl.util.GradleNegotiationUtil.getProjectName;
+import static com.intellij.gradle.toolingExtension.util.GradleNegotiationUtil.getProjectName;
 
 public class GradleDependencyReportGenerator {
 

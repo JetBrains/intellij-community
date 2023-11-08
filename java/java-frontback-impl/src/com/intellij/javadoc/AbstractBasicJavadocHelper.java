@@ -12,8 +12,8 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.BasicJavaAstTreeUtil;
-import com.intellij.psi.impl.source.BasicJavaTokenSet;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.ParentAwareTokenSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,9 +29,9 @@ public abstract class AbstractBasicJavadocHelper {
 
   public static final Pair<JavadocParameterInfo, List<JavadocParameterInfo>> EMPTY
     = new Pair<>(null, Collections.emptyList());
-  private static final @NotNull BasicJavaTokenSet TAG_TOKEN_SET = BasicJavaTokenSet.create(DOC_TAG,
-                                                                                           DOC_SNIPPET_TAG,
-                                                                                           DOC_INLINE_TAG);
+  private static final @NotNull ParentAwareTokenSet TAG_TOKEN_SET = ParentAwareTokenSet.create(BASIC_DOC_TAG,
+                                                                                               BASIC_DOC_SNIPPET_TAG,
+                                                                                               BASIC_DOC_INLINE_TAG);
 
   protected AbstractBasicJavadocHelper() {
   }
@@ -166,10 +166,10 @@ public abstract class AbstractBasicJavadocHelper {
       return null;
     }
 
-    final ASTNode paramRef = BasicJavaAstTreeUtil.findChildByType(tag, DOC_TAG_VALUE_ELEMENT,
-                                                                  DOC_METHOD_OR_FIELD_REF,
-                                                                  DOC_PARAMETER_REF,
-                                                                  DOC_SNIPPET_TAG_VALUE);
+    final ASTNode paramRef = BasicJavaAstTreeUtil.findChildByType(tag, BASIC_DOC_TAG_VALUE_ELEMENT,
+                                                                  BASIC_DOC_METHOD_OR_FIELD_REF,
+                                                                  BASIC_DOC_PARAMETER_REF,
+                                                                  BASIC_DOC_SNIPPET_TAG_VALUE);
     if (paramRef == null) {
       return null;
     }

@@ -3,7 +3,10 @@ package com.intellij.ide.customize.transferSettings.db
 
 import com.intellij.ide.customize.transferSettings.TransferableIdeFeatureId
 import com.intellij.ide.customize.transferSettings.models.BuiltInFeature
+import com.intellij.ide.customize.transferSettings.models.FeatureInfo
 import com.intellij.ide.customize.transferSettings.models.PluginFeature
+import com.intellij.ide.plugins.PluginManager
+import com.intellij.openapi.extensions.PluginId
 
 object KnownPlugins {
   val ReSharper: BuiltInFeature = BuiltInFeature(TransferableIdeFeatureId.ReSharper, "ReSharper", isHidden = true)
@@ -26,7 +29,11 @@ object KnownPlugins {
   val LanguageSupport: BuiltInFeature = BuiltInFeature(TransferableIdeFeatureId.LanguageSupport, "Language Support")
   val DotNetDecompiler: BuiltInFeature = BuiltInFeature(TransferableIdeFeatureId.DotNetDecompiler, ".NET Decompiler")
   val DatabaseSupport: BuiltInFeature = BuiltInFeature(TransferableIdeFeatureId.DatabaseSupport, "Database Support")
-  val TSLint: BuiltInFeature = BuiltInFeature(TransferableIdeFeatureId.TsLint, "TSLint")
+  val TSLint: FeatureInfo =
+    if (PluginManager.isPluginInstalled(PluginId.getId("tslint")))
+      BuiltInFeature(TransferableIdeFeatureId.TsLint, "TSLint")
+    else
+      PluginFeature(TransferableIdeFeatureId.TsLint, "TSLint", "TSLint")
   val Maven: BuiltInFeature = BuiltInFeature(TransferableIdeFeatureId.Maven, "Maven")
   val Gradle: BuiltInFeature = BuiltInFeature(TransferableIdeFeatureId.Gradle, "Gradle")
   val Debugger: BuiltInFeature = BuiltInFeature(TransferableIdeFeatureId.Debugger, "Debugger")
@@ -34,7 +41,7 @@ object KnownPlugins {
   val Toml: BuiltInFeature = BuiltInFeature(TransferableIdeFeatureId.Toml, "TOML")
   val Vue: BuiltInFeature = BuiltInFeature(TransferableIdeFeatureId.Vue, "Vue.js")
   val AiAssistant: BuiltInFeature = BuiltInFeature(TransferableIdeFeatureId.AiAssistant, "AI Assistant")
-
+  val Rust: BuiltInFeature = BuiltInFeature(TransferableIdeFeatureId.Rust,"Rust Support")
   // Language packs
 
   val ChineseLanguage: PluginFeature = PluginFeature(TransferableIdeFeatureId.ChineseLanguage, "com.intellij.zh", "Chinese (Simplified) Language Pack / 中文语言包")
@@ -54,6 +61,7 @@ object KnownPlugins {
   val Prettier: PluginFeature = PluginFeature(TransferableIdeFeatureId.Prettier, "intellij.prettierJS", "Prettier")
   val Kubernetes: PluginFeature = PluginFeature(TransferableIdeFeatureId.Kubernetes, "com.intellij.kubernetes", "Kubernetes")
 
+  // Themes
   val Monokai: PluginFeature = PluginFeature(TransferableIdeFeatureId.Monokai, "monokai-pro", "Monokai")
   val Solarized: PluginFeature = PluginFeature(TransferableIdeFeatureId.Solarized, "com.tylerthrailkill.intellij.solarized", "Solarized")
 

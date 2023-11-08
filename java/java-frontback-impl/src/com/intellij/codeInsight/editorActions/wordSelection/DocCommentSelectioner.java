@@ -12,13 +12,13 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-import static com.intellij.psi.impl.source.BasicJavaDocElementType.DOC_COMMENT;
+import static com.intellij.psi.impl.source.BasicJavaDocElementType.BASIC_DOC_COMMENT;
 
 public class DocCommentSelectioner extends LineCommentSelectioner {
 
   @Override
   public boolean canSelect(@NotNull PsiElement e) {
-    return BasicJavaAstTreeUtil.is(BasicJavaAstTreeUtil.toNode(e), DOC_COMMENT);
+    return BasicJavaAstTreeUtil.is(BasicJavaAstTreeUtil.toNode(e), BASIC_DOC_COMMENT);
   }
 
   @Override

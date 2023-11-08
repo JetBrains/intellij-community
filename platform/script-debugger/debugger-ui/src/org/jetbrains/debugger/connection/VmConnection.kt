@@ -83,8 +83,12 @@ abstract class VmConnection<T : Vm> : Disposable {
       opened.setError("closed")
     }
     setState(status, message)
-    Disposer.dispose(this, false)
+    if (shouldDisposeOnClose()) {
+      Disposer.dispose(this, false)
+    }
   }
+
+  open fun shouldDisposeOnClose(): Boolean = true
 
   override fun dispose() {
     vm = null

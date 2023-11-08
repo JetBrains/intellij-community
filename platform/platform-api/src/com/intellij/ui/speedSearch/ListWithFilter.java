@@ -171,11 +171,11 @@ public final class ListWithFilter<T> extends JPanel implements DataProvider {
       onSpeedSearchPatternChanged();
       mySearchField.setText(getFilter());
       if (!mySearchAlwaysVisible) {
-        if (isHoldingFilter() && !searchFieldShown) {
+        if (shouldBeActive() && !searchFieldShown) {
           mySearchField.setVisible(true);
           searchFieldShown = true;
         }
-        else if (!isHoldingFilter() && searchFieldShown) {
+        else if (!shouldBeActive() && searchFieldShown) {
           mySearchField.setVisible(false);
           searchFieldShown = false;
         }
@@ -197,6 +197,21 @@ public final class ListWithFilter<T> extends JPanel implements DataProvider {
       }
       ListWithFilter.this.revalidate();
     }
+
+    @Override
+    public boolean isSupported() {
+      return true;
+    }
+
+    @Override
+    public @NotNull JComponent getTextField() {
+      return mySearchField;
+    }
+
+    @Override
+    protected void doActivate() {
+      update();
+    }
   }
 
   private void onSpeedSearchPatternChanged() {
@@ -205,11 +220,11 @@ public final class ListWithFilter<T> extends JPanel implements DataProvider {
     if (myModel.getSize() > 0) {
       int fullMatchIndex = mySpeedSearch.isHoldingFilter() ? myModel.getClosestMatchIndex() : myModel.getElementIndex(prevSelection);
       if (fullMatchIndex != -1) {
-        myList.setSelectedIndex(fullMatchIndex);
+        ScrollingUtil.selectItem(myList, fullMatchIndex);
       }
 
       if (myModel.getSize() <= myList.getSelectedIndex() || !myModel.contains(myList.getSelectedValue())) {
-        myList.setSelectedIndex(0);
+        ScrollingUtil.selectItem(myList, 0);
       }
     }
     else {

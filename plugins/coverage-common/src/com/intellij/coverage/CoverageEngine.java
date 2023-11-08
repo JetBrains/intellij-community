@@ -59,6 +59,14 @@ public abstract class CoverageEngine {
   /**
    * @return tests, which covered specified line. Names should be compatible with {@link CoverageEngine#findTestsByNames(String[], Project)}
    */
+  public Set<String> getTestsForLine(Project project, CoverageSuitesBundle bundle, String classFQName, int lineNumber) {
+    return Collections.emptySet();
+  }
+
+  /**
+   * @deprecated Use {@link #getTestsForLine(Project, CoverageSuitesBundle, String, int)} instead
+   */
+  @Deprecated(forRemoval = true)
   public Set<String> getTestsForLine(Project project, String classFQName, int lineNumber) {
     return Collections.emptySet();
   }
@@ -66,6 +74,14 @@ public abstract class CoverageEngine {
   /**
    * @return true, if test data was collected
    */
+  public boolean wasTestDataCollected(Project project, CoverageSuitesBundle bundle) {
+    return false;
+  }
+
+  /**
+   * @deprecated Use {@link #wasTestDataCollected(Project, CoverageSuitesBundle)} instead
+   */
+  @Deprecated(forRemoval = true)
   public boolean wasTestDataCollected(Project project) {
     return false;
   }

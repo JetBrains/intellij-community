@@ -99,7 +99,7 @@ public class SearchResults implements DocumentListener, CaretListener {
   private final Stack<Pair<FindModel, FindResult>> myCursorPositions = new Stack<>();
 
   private final SelectionManager mySelectionManager;
-  private final Pair<int[], int[]> globalSearchArea = Pair.create(new int[]{0}, new int[]{Integer.MAX_VALUE});
+  private final SearchArea globalSearchArea = SearchArea.create(new int[]{0}, new int[]{Integer.MAX_VALUE});
 
   public SearchResults(@NotNull Editor editor, @NotNull Project project) {
     myEditor = editor;
@@ -220,15 +220,15 @@ public class SearchResults implements DocumentListener, CaretListener {
     Editor editor = getEditor();
 
     updatePreviousFindModel(findModel);
-    Pair<int[], int[]> searchArea = getSearchArea(editor, findModel);
+    SearchArea searchArea = getSearchArea(editor, findModel);
 
     List<FindResult> results = new ArrayList<>();
     ApplicationManager.getApplication().runReadAction(() -> {
       Project project = getProject();
       if (myDisposed || project.isDisposed()) return;
 
-      int[] starts = searchArea.first;
-      int[] ends = searchArea.second;
+      int[] starts = searchArea.startOffsets;
+      int[] ends = searchArea.endOffsets;
       for (int i = 0; i < starts.length; ++i) {
         findInRange(new TextRange(starts[i], ends[i]), editor, findModel, results);
       }
@@ -259,16 +259,22 @@ public class SearchResults implements DocumentListener, CaretListener {
     }
   }
 
-  private @NotNull Pair<int[], int[]> getSearchArea(@NotNull Editor editor, @NotNull FindModel findModel) {
+  protected record SearchArea(int[] startOffsets, int[] endOffsets) {
+    public static SearchArea create(int[] startOffsets, int[] endOffsets) {
+      return new SearchArea(startOffsets, endOffsets);
+    }
+  }
+
+  private @NotNull SearchArea getSearchArea(@NotNull Editor editor, @NotNull FindModel findModel) {
     if (findModel.isGlobal()) {
       return globalSearchArea;
     }
-    Pair<int[], int[]> searchArea;
+    SearchArea searchArea;
     if (ApplicationManager.getApplication().isDispatchThread()) {
       searchArea = getLocalSearchArea(editor, findModel);
     }
     else {
-      CompletableFuture<Pair<int[], int[]>> future = new CompletableFuture<>();
+      CompletableFuture<SearchArea> future = new CompletableFuture<>();
       try {
         SwingUtilities.invokeAndWait(() -> {
           var result = getLocalSearchArea(editor, findModel);
@@ -279,7 +285,7 @@ public class SearchResults implements DocumentListener, CaretListener {
       }
       searchArea = future.getNow(null);
     }
-    if (searchArea != null && searchArea.first.length > 0) {
+    if (searchArea != null && searchArea.startOffsets.length > 0) {
       return searchArea;
     }
     else {
@@ -289,9 +295,9 @@ public class SearchResults implements DocumentListener, CaretListener {
 
   /** This method is called only when {@link FindModel#isGlobal()} is false */
   @RequiresEdt
-  protected @NotNull Pair<int[], int[]> getLocalSearchArea(@NotNull Editor editor, @NotNull FindModel findModel) {
+  protected @NotNull SearchArea getLocalSearchArea(@NotNull Editor editor, @NotNull FindModel findModel) {
     SelectionModel selection = editor.getSelectionModel();
-    return Pair.create(selection.getBlockSelectionStarts(), selection.getBlockSelectionEnds());
+    return SearchArea.create(selection.getBlockSelectionStarts(), selection.getBlockSelectionEnds());
   }
 
   private void findInRange(@NotNull TextRange range, @NotNull Editor editor, @NotNull FindModel findModel, @NotNull List<? super FindResult> results) {

@@ -1,7 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.builders.java.dependencyView;
 
-import com.intellij.util.containers.SLRUCache;
+import com.github.benmanes.caffeine.cache.Caffeine;
+import com.github.benmanes.caffeine.cache.LoadingCache;
 import com.intellij.util.io.*;
 import it.unimi.dsi.fastutil.ints.IntIterator;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
@@ -16,8 +17,6 @@ import java.util.function.ObjIntConsumer;
 final class NaturalIntIntPersistentMultiMaplet extends IntIntMultiMaplet {
   private static final IntSet NULL_COLLECTION = new IntOpenHashSet();
   private static final int CACHE_SIZE = 128;
-  private final PersistentHashMap<Integer, IntSet> myMap;
-  private final SLRUCache<Integer, IntSet> myCache;
   private static final DataExternalizer<IntSet> EXTERNALIZER = new DataExternalizer<>() {
     @Override
     public void save(final @NotNull DataOutput out, final IntSet value) throws IOException {
@@ -47,41 +46,40 @@ final class NaturalIntIntPersistentMultiMaplet extends IntIntMultiMaplet {
       return result;
     }
   };
+  private final PersistentHashMap<Integer, IntSet> map;
+  private final LoadingCache<Integer, IntSet> cache;
 
   NaturalIntIntPersistentMultiMaplet(final File file, final KeyDescriptor<Integer> keyExternalizer) throws IOException {
     final Boolean prevValue = PersistentHashMapValueStorage.CreationTimeOptions.COMPACT_CHUNKS_WITH_VALUE_DESERIALIZATION.get();
     try {
       PersistentHashMapValueStorage.CreationTimeOptions.COMPACT_CHUNKS_WITH_VALUE_DESERIALIZATION.set(Boolean.TRUE);
-      myMap = new PersistentHashMap<>(file, keyExternalizer, EXTERNALIZER);
+      map = new PersistentHashMap<>(file.toPath(), keyExternalizer, EXTERNALIZER);
     }
     finally {
       PersistentHashMapValueStorage.CreationTimeOptions.COMPACT_CHUNKS_WITH_VALUE_DESERIALIZATION.set(prevValue);
     }
-    myCache = new SLRUCache<>(CACHE_SIZE, 2 * CACHE_SIZE) {
-      @Override
-      public @NotNull IntSet createValue(Integer key) {
-        try {
-          final IntSet collection = myMap.get(key);
-          if (collection == null) {
-            return NULL_COLLECTION;
-          }
-          if (collection.isEmpty()) {
-            myMap.remove(key);
-            return NULL_COLLECTION;
-          }
-          return collection;
+    cache = Caffeine.newBuilder().maximumSize(CACHE_SIZE).build(key -> {
+      try {
+        IntSet collection = map.get(key);
+        if (collection == null) {
+          return NULL_COLLECTION;
         }
-        catch (IOException e) {
-          throw new BuildDataCorruptedException(e);
+        if (collection.isEmpty()) {
+          map.remove(key);
+          return NULL_COLLECTION;
         }
+        return collection;
       }
-    };
+      catch (IOException e) {
+        throw new BuildDataCorruptedException(e);
+      }
+    });
   }
 
   @Override
   public boolean containsKey(final int key) {
     try {
-      return myMap.containsMapping(key);
+      return map.containsMapping(key);
     }
     catch (IOException e) {
       throw new BuildDataCorruptedException(e);
@@ -90,19 +88,19 @@ final class NaturalIntIntPersistentMultiMaplet extends IntIntMultiMaplet {
 
   @Override
   public IntSet get(final int key) {
-    final IntSet collection = myCache.get(key);
-    return collection == NULL_COLLECTION? null : collection;
+    final IntSet collection = cache.get(key);
+    return collection == NULL_COLLECTION ? null : collection;
   }
 
   @Override
   public void replace(int key, IntSet value) {
     try {
-      myCache.remove(key);
+      cache.invalidate(key);
       if (value == null || value.isEmpty()) {
-        myMap.remove(key);
+        map.remove(key);
       }
       else {
-        myMap.put(key, value);
+        map.put(key, value);
       }
     }
     catch (IOException e) {
@@ -114,8 +112,8 @@ final class NaturalIntIntPersistentMultiMaplet extends IntIntMultiMaplet {
   public void put(final int key, final IntSet values) {
     try {
       if (!values.isEmpty()) {
-        myCache.remove(key);
-        myMap.appendData(key, getAddAppender(values));
+        cache.invalidate(key);
+        map.appendData(key, getAddAppender(values));
       }
     }
     catch (IOException e) {
@@ -126,8 +124,8 @@ final class NaturalIntIntPersistentMultiMaplet extends IntIntMultiMaplet {
   @Override
   public void put(final int key, final int value) {
     try {
-      myCache.remove(key);
-      myMap.appendData(key, getAddAppender(value));
+      cache.invalidate(key);
+      map.appendData(key, getAddAppender(value));
     }
     catch (IOException e) {
       throw new BuildDataCorruptedException(e);
@@ -138,8 +136,8 @@ final class NaturalIntIntPersistentMultiMaplet extends IntIntMultiMaplet {
   public void removeAll(int key, IntSet values) {
     try {
       if (!values.isEmpty()) {
-        myCache.remove(key);
-        myMap.appendData(key, getRemoveAppender(values));
+        cache.invalidate(key);
+        map.appendData(key, getRemoveAppender(values));
       }
     }
     catch (IOException e) {
@@ -150,15 +148,15 @@ final class NaturalIntIntPersistentMultiMaplet extends IntIntMultiMaplet {
   @Override
   public void removeFrom(final int key, final int value) {
     try {
-      final IntSet collection = myCache.get(key);
+      final IntSet collection = cache.get(key);
       if (collection != NULL_COLLECTION) {
         if (collection.remove(value)) {
-          myCache.remove(key);
+          cache.invalidate(key);
           if (collection.isEmpty()) {
-            myMap.remove(key);
+            map.remove(key);
           }
           else {
-            myMap.appendData(key, getRemoveAppender(value));
+            map.appendData(key, getRemoveAppender(value));
           }
         }
       }
@@ -171,8 +169,8 @@ final class NaturalIntIntPersistentMultiMaplet extends IntIntMultiMaplet {
   @Override
   public void remove(final int key) {
     try {
-      myCache.remove(key);
-      myMap.remove(key);
+      cache.invalidate(key);
+      map.remove(key);
     }
     catch (IOException e) {
       throw new BuildDataCorruptedException(e);
@@ -192,8 +190,8 @@ final class NaturalIntIntPersistentMultiMaplet extends IntIntMultiMaplet {
   @Override
   public void close() {
     try {
-      myCache.clear();
-      myMap.close();
+      cache.invalidateAll();
+      map.close();
     }
     catch (IOException e) {
       throw new BuildDataCorruptedException(e);
@@ -203,21 +201,21 @@ final class NaturalIntIntPersistentMultiMaplet extends IntIntMultiMaplet {
   @Override
   public void flush(boolean memoryCachesOnly) {
     if (memoryCachesOnly) {
-      if (myMap.isDirty()) {
-        myMap.dropMemoryCaches();
+      if (map.isDirty()) {
+        map.dropMemoryCaches();
       }
     }
     else {
-      myMap.force();
+      map.force();
     }
   }
 
   @Override
   void forEachEntry(ObjIntConsumer<? super IntSet> proc) {
     try {
-      myMap.processKeysWithExistingMapping(key -> {
+      map.processKeysWithExistingMapping(key -> {
         try {
-          proc.accept(myMap.get(key), key);
+          proc.accept(map.get(key), key);
           return true;
         }
         catch (IOException e) {

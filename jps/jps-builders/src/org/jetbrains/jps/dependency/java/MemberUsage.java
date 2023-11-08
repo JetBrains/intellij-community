@@ -1,14 +1,16 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.dependency.java;
 
-import org.jetbrains.jps.dependency.impl.StringReferenceID;
-
 public abstract class MemberUsage extends JvmElementUsage {
 
   private final String myName;
 
   protected MemberUsage(String className, String name) {
-    super(new StringReferenceID(className));
+    this(new JvmNodeReferenceID(className), name);
+  }
+
+  protected MemberUsage(JvmNodeReferenceID clsId, String name) {
+    super(clsId);
     myName = name;
   }
 

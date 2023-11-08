@@ -11,6 +11,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.coroutineToIndicator
+import com.intellij.openapi.project.InitialVfsRefreshService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.registry.Registry
@@ -28,6 +29,7 @@ import com.intellij.vcsUtil.VcsUtil
 import com.intellij.vfs.AsyncVfsEventsPostProcessor
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.collectLatest
@@ -45,7 +47,7 @@ private val LOG = logger<VcsRootScanner>()
 internal class VcsRootScanner(private val project: Project, coroutineScope: CoroutineScope) : Disposable {
   private val rootProblemNotifier = VcsRootProblemNotifier.createInstance(project)
 
-  private val scanRequests = MutableSharedFlow<Unit>(replay=1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+  private val scanRequests = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
   init {
     AsyncVfsEventsPostProcessor.getInstance().addListener(::filesChanged, this)
@@ -53,11 +55,13 @@ internal class VcsRootScanner(private val project: Project, coroutineScope: Coro
     VcsEP.EP_NAME.addChangeListener(::scheduleScan, this)
 
     coroutineScope.launch {
-      @Suppress("OPT_IN_USAGE")
+      @OptIn(FlowPreview::class)
       scanRequests
         .debounce(1.seconds)
         .collectLatest {
           withContext(Dispatchers.IO) {
+            project.service<InitialVfsRefreshService>().awaitInitialVfsRefreshFinished()
+
             coroutineToIndicator {
               rootProblemNotifier.rescanAndNotifyIfNeeded()
             }

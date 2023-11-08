@@ -25,28 +25,28 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 public interface BasicJavaDocElementType {
-  IElementType DOC_TAG = new IJavaDocElementType("DOC_TAG");
-  IElementType DOC_INLINE_TAG = new IJavaDocElementType("DOC_INLINE_TAG");
-  IElementType DOC_METHOD_OR_FIELD_REF = new IJavaDocElementType("DOC_METHOD_OR_FIELD_REF");
-  IElementType DOC_PARAMETER_REF = new IJavaDocElementType("DOC_PARAMETER_REF");
-  IElementType DOC_TAG_VALUE_ELEMENT = new IJavaDocElementType("DOC_TAG_VALUE_ELEMENT");
-  IElementType DOC_SNIPPET_TAG = new IJavaDocElementType("DOC_SNIPPET_TAG");
-  IElementType DOC_SNIPPET_TAG_VALUE = new IJavaDocElementType("DOC_SNIPPET_TAG_VALUE");
-  IElementType DOC_SNIPPET_BODY = new IJavaDocElementType("DOC_SNIPPET_BODY");
-  IElementType DOC_SNIPPET_ATTRIBUTE = new IJavaDocElementType("DOC_SNIPPET_ATTRIBUTE");
-  IElementType DOC_SNIPPET_ATTRIBUTE_LIST =
+  IElementType BASIC_DOC_TAG = new IJavaDocElementType("DOC_TAG");
+  IElementType BASIC_DOC_INLINE_TAG = new IJavaDocElementType("DOC_INLINE_TAG");
+  IElementType BASIC_DOC_METHOD_OR_FIELD_REF = new IJavaDocElementType("DOC_METHOD_OR_FIELD_REF");
+  IElementType BASIC_DOC_PARAMETER_REF = new IJavaDocElementType("DOC_PARAMETER_REF");
+  IElementType BASIC_DOC_TAG_VALUE_ELEMENT = new IJavaDocElementType("DOC_TAG_VALUE_ELEMENT");
+  IElementType BASIC_DOC_SNIPPET_TAG = new IJavaDocElementType("DOC_SNIPPET_TAG");
+  IElementType BASIC_DOC_SNIPPET_TAG_VALUE = new IJavaDocElementType("DOC_SNIPPET_TAG_VALUE");
+  IElementType BASIC_DOC_SNIPPET_BODY = new IJavaDocElementType("DOC_SNIPPET_BODY");
+  IElementType BASIC_DOC_SNIPPET_ATTRIBUTE = new IJavaDocElementType("DOC_SNIPPET_ATTRIBUTE");
+  IElementType BASIC_DOC_SNIPPET_ATTRIBUTE_LIST =
     new IJavaDocElementType("DOC_SNIPPET_ATTRIBUTE_LIST");
-  IElementType DOC_SNIPPET_ATTRIBUTE_VALUE = new IJavaDocElementType("DOC_SNIPPET_ATTRIBUTE_VALUE");
+  IElementType BASIC_DOC_SNIPPET_ATTRIBUTE_VALUE = new IJavaDocElementType("DOC_SNIPPET_ATTRIBUTE_VALUE");
 
-  IElementType DOC_REFERENCE_HOLDER = new IJavaDocElementType("DOC_REFERENCE_HOLDER");
+  IElementType BASIC_DOC_REFERENCE_HOLDER = new IJavaDocElementType("DOC_REFERENCE_HOLDER");
 
-  IElementType DOC_TYPE_HOLDER = new IJavaDocElementType("DOC_TYPE_HOLDER");
+  IElementType BASIC_DOC_TYPE_HOLDER = new IJavaDocElementType("DOC_TYPE_HOLDER");
 
-  IElementType DOC_COMMENT = new IJavaDocElementType("DOC_COMMENT");
+  IElementType BASIC_DOC_COMMENT = new IJavaDocElementType("DOC_COMMENT");
 
-  BasicJavaTokenSet ALL_JAVADOC_ELEMENTS = BasicJavaTokenSet.create(
-    DOC_TAG, DOC_INLINE_TAG, DOC_METHOD_OR_FIELD_REF, DOC_PARAMETER_REF, DOC_TAG_VALUE_ELEMENT,
-    DOC_REFERENCE_HOLDER, DOC_TYPE_HOLDER, DOC_COMMENT);
+  ParentAwareTokenSet BASIC_ALL_JAVADOC_ELEMENTS = ParentAwareTokenSet.create(
+    BASIC_DOC_TAG, BASIC_DOC_INLINE_TAG, BASIC_DOC_METHOD_OR_FIELD_REF, BASIC_DOC_PARAMETER_REF, BASIC_DOC_TAG_VALUE_ELEMENT,
+    BASIC_DOC_REFERENCE_HOLDER, BASIC_DOC_TYPE_HOLDER, BASIC_DOC_COMMENT);
 
 
   class JavaDocCompositeElementType extends IJavaDocElementType implements ICompositeElementType, ParentProviderElementType {
@@ -103,7 +103,7 @@ public interface BasicJavaDocElementType {
     public DocReferenceHolderElementType(@NotNull Supplier<? extends BasicJavaParser> parser,
                                          @NotNull Function<LanguageLevel, JavaDocLexer> docLexerFunction,
                                          @NotNull Function<LanguageLevel, BasicJavaLexer> javaLexer) {
-      super("DOC_REFERENCE_HOLDER", DOC_REFERENCE_HOLDER);
+      super("DOC_REFERENCE_HOLDER", BASIC_DOC_REFERENCE_HOLDER);
       this.myJavaThinParser = parser;
       this.javaDocLexer = docLexerFunction;
       this.javaLexer = javaLexer;
@@ -128,7 +128,7 @@ public interface BasicJavaDocElementType {
     public DocTypeHolderElementType(@NotNull Supplier<? extends BasicJavaParser> parser,
                                     @NotNull Function<LanguageLevel, JavaDocLexer> docLexerFunction,
                                     @NotNull Function<LanguageLevel, BasicJavaLexer> javaLexer) {
-      super("DOC_TYPE_HOLDER", DOC_TYPE_HOLDER);
+      super("DOC_TYPE_HOLDER", BASIC_DOC_TYPE_HOLDER);
       this.myJavaThinParser = parser;
       this.javaDocLexer = docLexerFunction;
       this.javaLexer = javaLexer;
@@ -152,7 +152,8 @@ public interface BasicJavaDocElementType {
 
     private final Function<Project, Lexer> lexerByProject;
 
-    private static final Set<IElementType> myParentElementTypes = Collections.singleton(DOC_COMMENT);
+    private static final Set<IElementType> myParentElementTypes = Collections.singleton(BASIC_DOC_COMMENT);
+
     public DocCommentElementType(@NotNull Function<LanguageLevel, JavaDocLexer> function,
                                  @NotNull Function<LanguageLevel, BasicJavaLexer> lexerFunction,
                                  @NotNull AbstractBasicJavaDocElementTypeFactory factory,

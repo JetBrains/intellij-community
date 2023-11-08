@@ -39,7 +39,7 @@ class ClsNameValuePairImpl extends ClsElementImpl implements PsiNameValuePair {
   }
 
   @Override
-  public void setMirror(@NotNull TreeElement element) throws InvalidMirrorException {
+  protected void setMirror(@NotNull TreeElement element) throws InvalidMirrorException {
     setMirrorCheckingType(element, null);
 
     PsiNameValuePair mirror = SourceTreeToPsiMap.treeToPsiNotNull(element);

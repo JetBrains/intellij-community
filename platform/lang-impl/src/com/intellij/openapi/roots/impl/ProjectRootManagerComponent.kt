@@ -6,7 +6,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
@@ -220,7 +219,7 @@ open class ProjectRootManagerComponent(project: Project,
     if (rootPointersDisposable == oldDisposable && lastInProgressRootPointersDisposable == newDisposable) {
       rootPointersDisposable = newDisposable
       // dispose after the re-creating container to keep VFPs from disposing and re-creating back;
-      // instead, just increment/decrement their usage count
+      // instead, update their usage count
       Disposer.dispose(oldDisposable)
       rootsToWatch = LocalFileSystem.getInstance().replaceWatchedRoots(rootsToWatch, watchRoots.first, watchRoots.second)
     }
@@ -379,7 +378,7 @@ open class ProjectRootManagerComponent(project: Project,
   override fun clearScopesCaches() {
     super.clearScopesCaches()
 
-    project.serviceIfCreated<LibraryScopeCache>()?.clear()
+    LibraryScopeCache.getInstance(project)?.clear()
   }
 
   override fun clearScopesCachesForModules() {
@@ -390,16 +389,14 @@ open class ProjectRootManagerComponent(project: Project,
     }
   }
 
-  override fun markRootsForRefresh() {
+  override fun markRootsForRefresh(): List<VirtualFile> {
     val paths = CollectionFactory.createFilePathSet()
     collectModuleWatchRoots(paths, paths, false)
-    val fs = LocalFileSystem.getInstance()
-    for (path in paths) {
-      val root = fs.findFileByPath(path)
-      if (root is NewVirtualFile) {
-        root.markDirtyRecursively()
-      }
-    }
+    val roots = paths.mapNotNull(LocalFileSystem.getInstance()::findFileByPath)
+    roots.asSequence()
+      .filterIsInstance(NewVirtualFile::class.java)
+      .forEach(NewVirtualFile::markDirtyRecursively)
+    return roots
   }
 
   override fun dispose() {}

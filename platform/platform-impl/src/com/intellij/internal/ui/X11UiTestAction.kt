@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.IdeFrameImpl
@@ -15,6 +16,7 @@ import com.intellij.openapi.wm.impl.X11UiUtil
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.Alarm
+import com.intellij.util.ui.StartupUiUtil
 import java.awt.Frame
 import javax.swing.JComponent
 import javax.swing.JLabel
@@ -25,7 +27,7 @@ internal class X11UiTestAction : DumbAwareAction() {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
-    e.presentation.isEnabledAndVisible = SystemInfoRt.isXWindow
+    e.presentation.isEnabledAndVisible = StartupUiUtil.isXToolkit()
   }
 
   override fun actionPerformed(e: AnActionEvent) {

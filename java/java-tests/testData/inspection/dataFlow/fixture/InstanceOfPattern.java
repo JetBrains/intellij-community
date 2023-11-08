@@ -2,6 +2,15 @@ import java.util.function.*;
 import org.jetbrains.annotations.Nullable;
 
 public class InstanceOfPattern {
+  void test2(@Nullable Foo foo) {
+    if (Math.random() > 0.5 && foo.<warning descr="Method invocation 'bar' may produce 'NullPointerException'">bar</warning>() instanceof String s) {
+      System.out.println(s.length());
+    }
+    if (Math.random() > 0.5 && foo.<warning descr="Method invocation 'getBar' may produce 'NullPointerException'">getBar</warning>() instanceof String s) {
+      System.out.println(s.length());
+    }
+  }
+
   void test(Foo foo) {
     if (foo.bar() instanceof String s) {
       System.out.println(s.length());
@@ -27,6 +36,8 @@ public class InstanceOfPattern {
   }
 
   interface Foo {
+    @Nullable Object getBar();
+    
     @Nullable Object bar();
   }
 }

@@ -61,6 +61,8 @@ class IdeWizard(
 
     var projectTemplate by setting(ProjectTemplatesPlugin.template.reference)
 
+    var isCreatingNewProject = true
+
     private fun <V : Any, T : SettingType<V>> setting(reference: SettingReference<V, T>) =
         object : ReadWriteProperty<Any?, V?> {
             override fun setValue(thisRef: Any?, property: KProperty<*>, value: V?) {

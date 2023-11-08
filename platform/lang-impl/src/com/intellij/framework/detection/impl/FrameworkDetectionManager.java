@@ -24,7 +24,6 @@ import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.project.*;
 import com.intellij.openapi.roots.PlatformModifiableModelsProvider;
 import com.intellij.openapi.roots.ui.configuration.DefaultModulesProvider;
-import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -32,7 +31,6 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
-import com.intellij.workspaceModel.ide.JpsProjectLoadingManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
@@ -89,23 +87,14 @@ public final class FrameworkDetectionManager implements FrameworkDetectionIndexL
     }, project);
   }
 
-  private void projectOpened(@NotNull Project project) {
-    JpsProjectLoadingManager.getInstance(project).jpsProjectLoaded(() -> {
-      LOG.debug("Queue frameworks detection after opening the project");
-      @NotNull Collection<String> ids = FrameworkDetectorRegistry.getInstance().getAllDetectorIds();
-      synchronized (myLock) {
-        myDetectorsToProcess.clear();
-        myDetectorsToProcess.addAll(ids);
-      }
-      queueDetection();
-    });
-  }
-
-  static final class MyPostStartupActivity implements StartupActivity.DumbAware {
-    @Override
-    public void runActivity(@NotNull Project project) {
-      getInstance(project).projectOpened(project);
+  void jpsProjectLoaded(@NotNull FrameworkDetectorRegistry frameworkDetectorRegistry) {
+    LOG.debug("Queue frameworks detection after opening the project");
+    Collection<String> ids = frameworkDetectorRegistry.getAllDetectorIds();
+    synchronized (myLock) {
+      myDetectorsToProcess.clear();
+      myDetectorsToProcess.addAll(ids);
     }
+    queueDetection();
   }
 
   public void doInitialize() {

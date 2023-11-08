@@ -220,12 +220,12 @@ public final class EmptyFileBasedIndex extends FileBasedIndexEx {
     }
 
     @Override
-    public void setIndexedStateForFileOnFileIndexMetaData(int fileId, @Nullable Void unused) {
+    public void setIndexedStateForFileOnFileIndexMetaData(int fileId, @Nullable Void unused, boolean isProvidedByInfrastructureExtension) {
       throw new UnsupportedOperationException();
     }
 
     @Override
-    public void setIndexedStateForFile(int fileId, @NotNull IndexedFile file) {
+    public void setIndexedStateForFile(int fileId, @NotNull IndexedFile file, boolean isProvidedByInfrastructureExtension) {
       throw new UnsupportedOperationException();
     }
 

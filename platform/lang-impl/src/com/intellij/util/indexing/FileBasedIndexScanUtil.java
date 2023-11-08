@@ -296,7 +296,7 @@ public final class FileBasedIndexScanUtil {
         InputData<K, V> inputData = map == null || map.isEmpty() ? InputData.empty() : new InputData<>(map) {};
         Computable<Boolean> computable = index.prepareUpdate(fileId, inputData);
         ProgressManager.getInstance().computeInNonCancelableSection(computable::compute);
-        IndexingStamp.setFileIndexedStateCurrent(fileId, indexId);
+        IndexingStamp.setFileIndexedStateCurrent(fileId, indexId, false);
         return map;
       }
       finally {

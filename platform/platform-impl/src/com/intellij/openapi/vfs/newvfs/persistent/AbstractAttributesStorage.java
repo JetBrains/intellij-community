@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.Forceable;
@@ -8,7 +8,6 @@ import com.intellij.openapi.vfs.newvfs.AttributeOutputStream;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.io.IOUtil;
-import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -78,14 +77,10 @@ public interface AbstractAttributesStorage extends Forceable, Closeable {
   void deleteAttributes(final @NotNull PersistentFSConnection connection,
                         final int fileId) throws IOException;
 
-  int getLocalModificationCount();
-
   boolean isEmpty() throws IOException;
 
-  void checkAttributesStorageSanity(final @NotNull PersistentFSConnection connection,
-                                    final int fileId,
-                                    final @NotNull IntList usedAttributeRecordIds,
-                                    final @NotNull IntList validAttributeIds) throws IOException;
+  void checkAttributeRecordSanity(int fileId,
+                                  int attributeRecordId) throws IOException;
 
   static void checkAttributeValueSize(@NotNull FileAttribute attribute,
                                       int attributeValueSize) throws FileTooBigException {

@@ -21,15 +21,17 @@ import java.io.File;
  * @author Eugene Zhuravlev
  */
 public final class DefaultCoverageFileProvider implements CoverageFileProvider{
+  public static final String DEFAULT_LOCAL_PROVIDER_KEY = DefaultCoverageFileProvider.class.getName();
+
   private final File myFile;
   private final String mySourceProvider;
 
   public DefaultCoverageFileProvider(String path) {
-    this(new File(path), DefaultCoverageFileProvider.class.getName());
+    this(new File(path), DEFAULT_LOCAL_PROVIDER_KEY);
   }
 
   public DefaultCoverageFileProvider(File file) {
-    this(file, DefaultCoverageFileProvider.class.getName());
+    this(file, DEFAULT_LOCAL_PROVIDER_KEY);
   }
 
   public DefaultCoverageFileProvider(File file, String sourceProvider) {

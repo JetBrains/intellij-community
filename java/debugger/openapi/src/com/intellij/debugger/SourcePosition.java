@@ -179,7 +179,7 @@ public abstract class SourcePosition implements Navigatable {
       if (project.isDisposed()) {
         return null;
       }
-      return PsiDocumentManager.getInstance(project).getDocument(file);
+      return file.getViewProvider().getDocument();
     }
 
     protected int calcOffset() {

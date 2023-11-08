@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.documentation;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -232,7 +232,8 @@ public abstract class DockablePopupManager<T extends JComponent & Disposable> {
 
   @NotNull
   protected AnAction createRestorePopupAction() {
-    return new DumbAwareAction(CodeInsightBundle.messagePointer("action.AnActionButton.text.open.as.popup"), () -> getRestorePopupDescription(), null) {
+    return new DumbAwareAction(CodeInsightBundle.messagePointer("action.AnActionButton.text.open.as.popup"), () -> getRestorePopupDescription(),
+                               (Icon)null) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         restorePopupBehavior();

@@ -113,7 +113,7 @@ public final class JBCefCookieManager {
    *
    * @deprecated use {@link #getCookies(String, Boolean)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public @NotNull List<JBCefCookie> getCookies(@Nullable String url, @Nullable Boolean includeHttpOnly, @Nullable Integer maxTimeToWait) {
     boolean httpOnly = notNull(includeHttpOnly, Boolean.FALSE);
     JBCookieVisitor cookieVisitor = new JBCookieVisitor();
@@ -192,7 +192,7 @@ public final class JBCefCookieManager {
    *
    * @deprecated use {@link #setCookie(String, JBCefCookie)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public boolean setCookie(@NotNull String url, @NotNull JBCefCookie jbCefCookie, @Nullable Integer maxTimeToWait) {
     if (!checkArgs(url, jbCefCookie)) return false;
 
@@ -329,26 +329,6 @@ public final class JBCefCookieManager {
     else {
       return myCefCookieManager.deleteCookies(url, "");
     }
-  }
-
-  /**
-   * Deletes synchronously all host and domain cookies matching |url| and |cookieName| values with specified timeout.
-   *
-   * @see JBCefCookieManager#deleteCookies(String, String, IntFunction, Integer)
-   *
-   * @deprecated use {@link #deleteCookies(String, String)}
-   */
-  @Deprecated(forRemoval = true)
-  public boolean deleteCookies(@Nullable String url,
-                               @Nullable String cookieName,
-                               @Nullable Integer maxTimeToWait)
-  {
-    IntFunction<Boolean> checkFunction = (timeout) -> {
-      List<JBCefCookie> cookies = getCookies(url, false, timeout);
-      return !ContainerUtil.exists(cookies, cefCookie -> cefCookie.getName().equals(cookieName));
-    };
-
-    return deleteCookies(url, cookieName, checkFunction, maxTimeToWait);
   }
 
   /**

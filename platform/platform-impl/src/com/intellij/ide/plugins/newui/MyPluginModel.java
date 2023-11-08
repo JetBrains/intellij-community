@@ -34,6 +34,7 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.accessibility.AccessibleAnnouncerUtil;
 import com.intellij.xml.util.XmlStringUtil;
@@ -59,6 +60,8 @@ import static com.intellij.ide.plugins.BrokenPluginFileKt.isBrokenPlugin;
  */
 public class MyPluginModel extends InstalledPluginsTableModel implements PluginEnabler {
   private static final Logger LOG = Logger.getInstance(MyPluginModel.class);
+  private static final Boolean FINISH_DYNAMIC_INSTALLATION_WITHOUT_UI =
+    SystemProperties.getBooleanProperty("plugins.finish-dynamic-plugin-installation-without-ui", true);
 
   private final List<ListPluginComponent> myInstalledPluginComponents = new ArrayList<>();
   private final Map<PluginId, List<ListPluginComponent>> myInstalledPluginComponentMap = new HashMap<>();
@@ -100,6 +103,8 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
   private final Set<PluginId> myErrorPluginsToDisable = new HashSet<>();
   private @Nullable FUSEventSource myInstallSource;
 
+  private volatile boolean isUIDisposedWithApply = false;
+
   public MyPluginModel(@Nullable Project project) {
     super(project);
 
@@ -128,7 +133,8 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
            !myDynamicPluginsToInstall.isEmpty() ||
            !myDynamicPluginsToUninstall.isEmpty() ||
            !myPluginsToRemoveOnCancel.isEmpty() ||
-           !myDiff.isEmpty();
+           !myDiff.isEmpty() ||
+           !myInstallingInfos.isEmpty();
   }
 
   /**
@@ -200,6 +206,9 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
     if (needRestart) {
       InstalledPluginsState.getInstance().setRestartRequired(true);
     }
+
+    isUIDisposedWithApply = true;
+
     return !needRestart;
   }
 
@@ -215,6 +224,19 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
 
     myPluginsToRemoveOnCancel.forEach(pluginDescriptor -> PluginInstaller.uninstallDynamicPlugin(parentComponent, pluginDescriptor, false));
     myPluginsToRemoveOnCancel.clear();
+  }
+
+  public boolean isDisabledInDiff(@NotNull PluginId pluginId) {
+    final Map<PluginId, IdeaPluginDescriptorImpl> pluginIdMap = PluginManagerCore.INSTANCE.buildPluginIdMap();
+    final IdeaPluginDescriptorImpl pluginDescriptor = pluginIdMap.getOrDefault(pluginId, null);
+    if (pluginDescriptor == null) {
+      return false;
+    }
+    final Pair<PluginEnableDisableAction, PluginEnabledState> diffStatePair = myDiff.getOrDefault(pluginDescriptor, null);
+    if (diffStatePair == null) {
+      return false;
+    }
+    return diffStatePair.second.isEnabled();
   }
 
   private boolean applyEnableDisablePlugins(@NotNull PluginEnabler pluginEnabler,
@@ -336,6 +358,10 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
 
   public void setPluginUpdatesService(@NotNull PluginUpdatesService service) {
     myPluginUpdatesService = service;
+  }
+
+  public PluginUpdatesService getPluginUpdatesService() {
+    return myPluginUpdatesService;
   }
 
   public @Nullable PluginsGroup getDownloadedGroup() {
@@ -486,7 +512,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
     boolean _showErrors = showErrors;
     boolean _restartRequired = restartRequired;
     ApplicationManager.getApplication().invokeLater(() -> {
-      boolean dynamicRestartRequired = false;
+      boolean[] dynamicRestartRequired = new boolean[]{false};
       for (PendingDynamicPluginInstall install : pluginsToInstallSynchronously) {
         boolean installedWithoutRestart = PluginInstaller.installAndLoadDynamicPlugin(install.getFile(),
                                                                                       myInstalledPanel,
@@ -498,10 +524,30 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
           }
         }
         else {
-          dynamicRestartRequired = true;
+          dynamicRestartRequired[0] = true;
         }
       }
-      info.finish(_success, _cancel, _showErrors, _restartRequired || dynamicRestartRequired);
+      if (FINISH_DYNAMIC_INSTALLATION_WITHOUT_UI && isUIDisposedWithApply) {
+        if (myDynamicPluginsToInstall.size() == 1 && myDynamicPluginsToUninstall.isEmpty() && !needRestart) {
+          // this piece is stolen from #apply()
+          for (var pendingPluginInstall : myDynamicPluginsToInstall.values()) {
+            InstalledPluginsState.getInstance().trackPluginInstallation(() -> {
+              var requiresRestart = !PluginInstaller.installAndLoadDynamicPlugin(
+                pendingPluginInstall.getFile(), null, pendingPluginInstall.getPluginDescriptor()
+              );
+              needRestart = requiresRestart;
+              dynamicRestartRequired[0] |= requiresRestart;
+            });
+          }
+          myDynamicPluginsToInstall.clear();
+          LOG.info("installed final dynamic plugin");
+        }
+        if (!myDynamicPluginsToInstall.isEmpty() || !myDynamicPluginsToUninstall.isEmpty()) {
+          LOG.warn("pending dynamic plugins probably won't finish their installation: " +
+                   myDynamicPluginsToInstall + " " + myDynamicPluginsToUninstall);
+        }
+      }
+      info.finish(_success, _cancel, _showErrors, _restartRequired || dynamicRestartRequired[0]);
     }, modalityState);
   }
 
@@ -510,11 +556,16 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
       info.toBackground(myStatusBar);
     }
 
-    boolean result = !myInstallingInfos.isEmpty();
-    if (result) {
-      InstallPluginInfo.showRestart();
+    if (FINISH_DYNAMIC_INSTALLATION_WITHOUT_UI) {
+      return !myInstallingInfos.isEmpty();
+    } else {
+      // FIXME(vadim.salavatov) idk what that does and it's not clear from the surrounding code :(
+      boolean result = !myInstallingInfos.isEmpty();
+      if (result) {
+        InstallPluginInfo.showRestart();
+      }
+      return result;
     }
-    return result;
   }
 
   private void prepareToInstall(@NotNull InstallPluginInfo info) {

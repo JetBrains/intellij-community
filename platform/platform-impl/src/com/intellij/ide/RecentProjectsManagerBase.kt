@@ -221,8 +221,8 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
     return projectIconHelper.getProjectIcon(path, isProjectValid)
   }
 
-  fun getProjectIcon(path: String, isProjectValid: Boolean, iconSize: Int): Icon {
-    return projectIconHelper.getProjectIcon(path, isProjectValid, iconSize)
+  fun getProjectIcon(path: String, isProjectValid: Boolean, iconSize: Int, name: String? = null): Icon {
+    return projectIconHelper.getProjectIcon(path, isProjectValid, iconSize, name)
   }
 
   @Suppress("OVERRIDE_DEPRECATION")
@@ -467,8 +467,20 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
       if (openPaths.size == 1 || isOpenProjectsOneByOneRequired()) {
         return openOneByOne(openPaths, index = 0, someProjectWasOpened = false)
       }
+
+      val toOpen = openPaths.mapNotNull { entry ->
+        runCatching {
+          val path = Path.of(entry.key)
+          if (isValidProjectPath(path)) Pair(path, entry.value) else null
+        }.getOrLogException(LOG)
+      }
+      if (toOpen.size == 1) {
+        val pair = toOpen.get(0)
+        val pathsToOpen = listOf(AbstractMap.SimpleEntry(pair.first.toString(), pair.second))
+        return openOneByOne(pathsToOpen, index = 0, someProjectWasOpened = false)
+      }
       else {
-        return openMultiple(openPaths)
+        return openMultiple(toOpen)
       }
     }
     finally {
@@ -508,15 +520,8 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
     return withContext(Dispatchers.IO) { ProjectUtilCore.isValidProjectPath(file) }
   }
 
-  private suspend fun openMultiple(openPaths: List<Entry<String, RecentProjectMetaInfo>>): Boolean {
-    val toOpen = openPaths.mapNotNull { entry ->
-      runCatching {
-        val path = Path.of(entry.key)
-        if (isValidProjectPath(path)) Pair(path, entry.value) else null
-      }.getOrLogException(LOG)
-    }
-
-    // ok, no non-existent project paths and every info has a frame
+  // toOpen -  no non-existent project paths and every info has a frame
+  private suspend fun openMultiple(toOpen: List<Pair<Path, RecentProjectMetaInfo>>): Boolean {
     val activeInfo = (toOpen.maxByOrNull { it.second.activationTimestamp } ?: return false).second
     val taskList = ArrayList<Pair<Path, OpenProjectTask>>(toOpen.size)
     span("project frame initialization", Dispatchers.EDT) {

@@ -89,10 +89,10 @@ class JKElementInfoStorage {
     }
 
     companion object {
-        private val charPool = ('a'..'z').toList()
-        private const val generatedStringLength = 6
+        private val charPool: List<Char> = ('a'..'z').toList()
+        private const val GENERATED_STRING_LENGTH: Int = 6
 
-        private fun createRandomString() = (1..generatedStringLength).joinToString("") {
+        private fun createRandomString(): String = (1..GENERATED_STRING_LENGTH).joinToString("") {
             charPool[Random.nextInt(0, charPool.size)].toString()
         }
     }

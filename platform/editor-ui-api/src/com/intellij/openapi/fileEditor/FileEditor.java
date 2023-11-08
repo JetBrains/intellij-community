@@ -17,7 +17,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.beans.PropertyChangeListener;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -64,8 +63,8 @@ public interface FileEditor extends UserDataHolder, Disposable {
   void setState(@NotNull FileEditorState state);
 
   /**
-   * In some cases, it's desirable to set state exactly as requested (e.g. on tab splitting), while in other cases different behaviour is
-   * preferred, e.g. bringing caret into view on text editor opening.
+   * In some cases, it's desirable to set state exactly as requested (e.g., on tab splitting), while in other cases different behavior is
+   * preferred, e.g., bringing caret into view on text editor opening.
    * This method passes an additional flag to {@link FileEditor} to indicate the desired way to set state.
    */
   default void setState(@NotNull FileEditorState state, boolean exactState) {

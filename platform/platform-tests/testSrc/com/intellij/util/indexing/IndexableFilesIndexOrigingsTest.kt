@@ -4,7 +4,7 @@ package com.intellij.util.indexing
 
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.progress.runWithModalProgressBlocking
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.DependencyScope
 import com.intellij.openapi.roots.ModuleRootModificationUtil

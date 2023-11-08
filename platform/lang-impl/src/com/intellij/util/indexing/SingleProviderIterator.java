@@ -33,6 +33,7 @@ final class SingleProviderIterator implements ContentIterator {
   private final UnindexedFilesFinder unindexedFileFinder;
   private final ScanningStatistics scanningStatistics;
   private final PushedFilePropertiesUpdater pushedFilePropertiesUpdater;
+  private final boolean mayBeUsed;
 
   SingleProviderIterator(Project project, @NotNull CheckCancelOnlyProgressIndicator indicator, IndexableFilesIterator provider,
                          UnindexedFilesFinder unindexedFileFinder, ScanningStatistics scanningStatistics,
@@ -51,7 +52,11 @@ final class SingleProviderIterator implements ContentIterator {
     if (origin instanceof ModuleContentOrigin && !((ModuleContentOrigin)origin).getModule().isDisposed()) {
       pushers = FilePropertyPusher.EP_NAME.getExtensionList();
       pusherExs = null;
-      moduleValues = ReadAction.compute(() -> getModuleImmediateValues(pushers, ((ModuleContentOrigin)origin).getModule()));
+      moduleValues = ReadAction.compute(() -> {
+        if (((ModuleContentOrigin)origin).getModule().isDisposed()) return null;
+        return getModuleImmediateValues(pushers, ((ModuleContentOrigin)origin).getModule());
+      });
+      mayBeUsed = moduleValues != null;
     }
     else {
       pushers = null;
@@ -69,7 +74,16 @@ final class SingleProviderIterator implements ContentIterator {
         pusherExs = extendedPushers;
         moduleValues = ReadAction.compute(() -> getImmediateValuesEx(extendedPushers, origin));
       }
+      mayBeUsed = true;
     }
+  }
+
+  /**
+   * Introduced to check if providers are still not obviously broken to the level they should not be used, as they didn't spend their life
+   * under read lock
+   */
+  boolean mayBeUsed() {
+    return mayBeUsed;
   }
 
   @Override

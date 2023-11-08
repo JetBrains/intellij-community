@@ -8,7 +8,6 @@ import com.intellij.collaboration.api.json.JsonHttpApiHelper
 import com.intellij.collaboration.api.json.loadJsonList
 import com.intellij.collaboration.api.json.loadOptionalJsonList
 import com.intellij.collaboration.util.ResultUtil.runCatchingUser
-import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.io.HttpSecurityUtil
 import org.jetbrains.annotations.ApiStatus
@@ -26,7 +25,14 @@ sealed interface GitLabApi : HttpApiHelper {
   val graphQL: GraphQL
   val rest: Rest
 
-  suspend fun getMetadataOrNull(): GitLabServerMetadata?
+  /**
+   * Gets metadata from server or from cache.
+   *
+   * @throws java.net.ConnectException when there is no usable internet connection.
+   * @throws com.intellij.collaboration.api.HttpStatusErrorException when the API request results
+   * in a non-successful status code.
+   */
+  suspend fun getMetadata(): GitLabServerMetadata
 
   interface GraphQL : GraphQLApiHelper, GitLabApi
   interface Rest : JsonHttpApiHelper, GitLabApi
@@ -34,16 +40,18 @@ sealed interface GitLabApi : HttpApiHelper {
 
 // this dark inheritance magic is required to make extensions work properly
 internal class GitLabApiImpl(
+  private val serversManager: GitLabServersManager,
   override val server: GitLabServerPath,
   httpHelper: HttpApiHelper
 ) : GitLabApi, HttpApiHelper by httpHelper {
   constructor(
+    serversManager: GitLabServersManager,
     server: GitLabServerPath,
     tokenSupplier: (() -> String)? = null
-  ) : this(server, tokenSupplier?.let { httpHelper(it) } ?: httpHelper())
+  ) : this(serversManager, server, tokenSupplier?.let { httpHelper(it) } ?: httpHelper())
 
-  override suspend fun getMetadataOrNull(): GitLabServerMetadata? =
-    service<GitLabServersManager>().getMetadataOrNull(this)
+  override suspend fun getMetadata(): GitLabServerMetadata =
+    serversManager.getMetadata(this)
 
   override val graphQL: GitLabApi.GraphQL =
     GraphQLImpl(GraphQLApiHelper(logger<GitLabApi>(),
@@ -68,11 +76,8 @@ internal class GitLabApiImpl(
     JsonHttpApiHelper by helper
 }
 
-suspend fun GitLabApi.getMetadata(): GitLabServerMetadata {
-  val metadata = getMetadataOrNull()
-  requireNotNull(metadata) { "Could not retrieve server metadata for $server" }
-  return metadata
-}
+suspend fun GitLabApi.getMetadataOrNull(): GitLabServerMetadata? =
+  runCatchingUser { getMetadata() }.getOrNull()
 
 suspend fun GitLabApi.GraphQL.gitLabQuery(query: GitLabGQLQuery, variablesObject: Any? = null): HttpRequest {
   if (query == GitLabGQLQuery.GET_METADATA) {
@@ -121,20 +126,20 @@ private fun httpHelper(tokenSupplier: () -> String): HttpApiHelper {
     override val authorizationHeaderValue: String
       get() = HttpSecurityUtil.createBearerAuthHeaderValue(tokenSupplier())
   }
-  val requestConfigurer = CompoundRequestConfigurer(RequestTimeoutConfigurer(), GitLabHeadersConfigurer, authConfigurer)
+  val requestConfigurer = CompoundRequestConfigurer(RequestTimeoutConfigurer(), GitLabHeadersConfigurer(), authConfigurer)
   return HttpApiHelper(logger = logger<GitLabApi>(),
                        requestConfigurer = requestConfigurer)
 }
 
 private fun httpHelper(): HttpApiHelper {
-  val requestConfigurer = CompoundRequestConfigurer(RequestTimeoutConfigurer(), GitLabHeadersConfigurer)
+  val requestConfigurer = CompoundRequestConfigurer(RequestTimeoutConfigurer(), GitLabHeadersConfigurer())
   return HttpApiHelper(logger = logger<GitLabApi>(),
                        requestConfigurer = requestConfigurer)
 }
 
 private const val PLUGIN_USER_AGENT_NAME = "IntelliJ-GitLab-Plugin"
 
-private object GitLabHeadersConfigurer : HttpRequestConfigurer {
+private class GitLabHeadersConfigurer : HttpRequestConfigurer {
   override fun configure(builder: HttpRequest.Builder): HttpRequest.Builder =
     builder.apply {
       header(HttpClientUtil.ACCEPT_ENCODING_HEADER, HttpClientUtil.CONTENT_ENCODING_GZIP)

@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.refactoring.introduce.extractFunction
 
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
+import com.intellij.injected.editor.EditorWindow
 import com.intellij.java.refactoring.JavaRefactoringBundle
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.command.WriteCommandAction
@@ -106,7 +107,12 @@ class ExtractKotlinFunctionHandler(
                 val startMarkAction = StartMarkAction.start(editor, project, EXTRACT_FUNCTION)
                 Disposer.register(disposable) { FinishMarkAction.finish(project, editor, startMarkAction) }
             }
-            fun afterFinish(extraction: ExtractionResult){
+            fun afterFinish(extraction: ExtractionResult) {
+                // Templates do not work well in injected editors, see InlayModelWindow
+                if (editor is EditorWindow) {
+                    Disposer.dispose(disposable)
+                    return
+                }
                 val callRange: TextRange = callRangeProvider.invoke() ?: throw IllegalStateException()
                 val callIdentifier = findSingleCallExpression(file, callRange)?.calleeExpression ?: throw IllegalStateException()
                 val methodIdentifier = extraction.declaration.nameIdentifier ?: throw IllegalStateException()

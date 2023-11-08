@@ -3,7 +3,7 @@ package com.intellij.platform.ml.impl.turboComplete
 
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionResultSet
-import com.intellij.openapi.extensions.ExtensionPointName
+
 /**
  * Collects all [SuggestionGenerator] of the same variety,
  * without executing them.
@@ -32,20 +32,10 @@ interface KindCollector {
    * An analogue of [com.intellij.codeInsight.completion.CompletionContributor.fillCompletionVariants]
    *
    * @param parameters The completion parameters containing information about the current completion request.
-   * @param generatorConsumer The suggestion generator consumer used to collect [SuggestionGenerator]s.
+   * @param generatorExecutor The suggestion generator consumer used to collect [SuggestionGenerator]s.
    * @param result The completion result set to which the suggestions will be added.
    */
   fun collectKinds(parameters: CompletionParameters,
-                   generatorConsumer: SuggestionGeneratorConsumer,
+                   generatorExecutor: SuggestionGeneratorExecutor,
                    result: CompletionResultSet)
-
-  companion object {
-    @JvmStatic
-    val EP_NAME: ExtensionPointName<KindCollector> = ExtensionPointName.create(
-      "com.intellij.turboComplete.kindCollector")
-
-    fun forParameters(parameters: CompletionParameters): List<KindCollector> {
-      return EP_NAME.extensionList.filter { it.shouldBeCalled(parameters) }
-    }
-  }
 }

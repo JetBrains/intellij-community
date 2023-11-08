@@ -16,7 +16,6 @@ import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLog;
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLogEx;
 import com.intellij.serviceContainer.AlreadyDisposedException;
 import com.intellij.util.Processor;
-import com.intellij.util.SystemProperties;
 import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.*;
 
@@ -54,8 +53,6 @@ public final class FSRecords {
   static final Logger LOG = Logger.getInstance(FSRecords.class);
   static final ThrottledLogger THROTTLED_LOG = new ThrottledLogger(LOG, SECONDS.toMillis(30));
 
-  static final boolean BACKGROUND_VFS_FLUSH = SystemProperties.getBooleanProperty("idea.background.vfs.flush", true);
-
   /** Not a constant value but just key for a value, because could be changed (see TurbochargedSharedIndexes) */
   public static final String IDE_USE_FS_ROOTS_DATA_LOADER = "idea.fs.roots.data.loader";
 
@@ -81,9 +78,9 @@ public final class FSRecords {
   private static volatile FSRecordsImpl impl;
 
   /** @return path to the directory there all VFS files are located */
-  public static @NotNull String getCachesDir() {
+  public static @NotNull Path getCacheDir() {
     String dir = System.getProperty("caches_dir");
-    return dir == null ? PathManager.getSystemPath() + "/caches/" : dir;
+    return dir == null ? Path.of(PathManager.getSystemPath(), "caches") : Path.of(dir);
   }
 
   private FSRecords() {
@@ -111,7 +108,7 @@ public final class FSRecords {
   public static synchronized FSRecordsImpl connect(boolean enableVfsLog,
                                                    @NotNull FSRecordsImpl.ErrorHandler errorHandler) throws UncheckedIOException {
     FSRecordsImpl oldImpl = impl;
-    if (oldImpl != null && !oldImpl.isDisposed()) {
+    if (oldImpl != null && !oldImpl.isClosed()) {
       //MAYBE RC: provide reconnect()
       throw new IllegalStateException(
         "Can't connect default VFS instance -- default VFS instance is already set up" +
@@ -119,7 +116,7 @@ public final class FSRecords {
         "Current instance: " + oldImpl
       );
     }
-    FSRecordsImpl _impl = FSRecordsImpl.connect(Path.of(getCachesDir()), Collections.emptyList(), enableVfsLog, errorHandler);
+    FSRecordsImpl _impl = FSRecordsImpl.connect(getCacheDir(), Collections.emptyList(), enableVfsLog, errorHandler);
     impl = _impl;
     return _impl;
   }
@@ -129,9 +126,9 @@ public final class FSRecords {
     if (_impl == null) {
       throw new ServiceNotReadyException("VFS instance is not initialized yet");
     }
-    else if (_impl.isDisposed()) {
+    else if (_impl.isClosed()) {
       //guaranteed to fail, and provides diagnostic:
-      _impl.checkNotDisposed();
+      _impl.checkNotClosed();
     }
 
     return _impl;
@@ -144,7 +141,7 @@ public final class FSRecords {
 
   static @Nullable FSRecordsImpl getInstanceIfCreatedAndNotDisposed() {
     FSRecordsImpl _impl = impl;
-    return _impl == null || _impl.isDisposed() ? null : _impl;
+    return _impl == null || _impl.isClosed() ? null : _impl;
   }
 
   //========== FS records-as-a-whole properties: ==============================
@@ -286,6 +283,7 @@ public final class FSRecords {
     return implOrFail().supportsRawAttributesAccess();
   }
 
+  /** BEWARE: ByteBuffer passed into a reader could have ByteOrder different from JVM-default BIG_ENDIAN! */
   @ApiStatus.Internal
   public static <R> @Nullable R readAttributeRawWithLock(int fileId,
                                                          @NotNull FileAttribute attribute,
@@ -356,7 +354,7 @@ public final class FSRecords {
   @TestOnly
   public static void checkFilenameIndexConsistency() {
     FSRecordsImpl _impl = impl;
-    if (_impl != null && !_impl.isDisposed()) {
+    if (_impl != null && !_impl.isClosed()) {
       _impl.checkFilenameIndexConsistency();
     }
   }

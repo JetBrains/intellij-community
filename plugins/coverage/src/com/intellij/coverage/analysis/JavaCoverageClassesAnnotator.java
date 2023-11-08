@@ -71,7 +71,7 @@ public class JavaCoverageClassesAnnotator extends JavaCoverageClassesEnumerator 
    * Collect coverage stats for all packages, based on flatten packages coverage
    * @param flattenPackages fqn to package coverage mapping
    */
-  static void annotatePackages(Map<String, PackageAnnotator.PackageCoverageInfo> flattenPackages, Annotator annotator) {
+  public static void annotatePackages(Map<String, PackageAnnotator.PackageCoverageInfo> flattenPackages, Annotator annotator) {
     Map<String, PackageAnnotator.PackageCoverageInfo> packages = new HashMap<>();
     for (var entry : flattenPackages.entrySet()) {
       String packageFQName = entry.getKey();
@@ -110,14 +110,14 @@ public class JavaCoverageClassesAnnotator extends JavaCoverageClassesEnumerator 
     }
     myFlattenDirectories.clear();
 
-    annotateDirectories(flattenDirectories, myAnnotator, prepareRoots(module, packageVMName));
+    annotateDirectories(flattenDirectories, myAnnotator, getPackageRoots(module, packageVMName));
   }
 
   /**
    * Collect coverage stats for all directories, based on flatten directories coverage
    * @param sourceRoots Set of root directories, where the calculation should stop
    */
-  static void annotateDirectories(Map<VirtualFile, PackageAnnotator.PackageCoverageInfo> flattenDirectories,
+  public static void annotateDirectories(Map<VirtualFile, PackageAnnotator.PackageCoverageInfo> flattenDirectories,
                                   Annotator annotator,
                                   Set<VirtualFile> sourceRoots) {
     Map<VirtualFile, PackageAnnotator.DirCoverageInfo> directories = new HashMap<>();
@@ -227,20 +227,33 @@ public class JavaCoverageClassesAnnotator extends JavaCoverageClassesEnumerator 
     return false;
   }
 
-  private static Set<VirtualFile> prepareRoots(Module module, String rootPackageVMName) {
+  private static Set<VirtualFile> getPackageRoots(Module module, String rootPackageVMName) {
     Set<VirtualFile> result = new HashSet<>();
-    final ContentEntry[] contentEntries = ModuleRootManager.getInstance(module).getContentEntries();
+    for (SourceFolder folder : getSourceFolders(module)) {
+      final VirtualFile file = folder.getFile();
+      if (file == null) continue;
+      final String prefix = AnalysisUtils.fqnToInternalName(folder.getPackagePrefix());
+      final VirtualFile relativeSrcRoot = file.findFileByRelativePath(StringUtil.trimStart(rootPackageVMName, prefix));
+      if (relativeSrcRoot == null) continue;
+      result.add(relativeSrcRoot);
+    }
+    return result;
+  }
+
+  private static Set<SourceFolder> getSourceFolders(Module module) {
+    Set<SourceFolder> result = new HashSet<>();
+    ContentEntry[] contentEntries = ModuleRootManager.getInstance(module).getContentEntries();
     for (ContentEntry contentEntry : contentEntries) {
       for (SourceFolder folder : contentEntry.getSourceFolders()) {
-        final VirtualFile file = folder.getFile();
-        if (file == null) continue;
-        final String prefix = AnalysisUtils.fqnToInternalName(folder.getPackagePrefix());
-        final VirtualFile relativeSrcRoot = file.findFileByRelativePath(StringUtil.trimStart(rootPackageVMName, prefix));
-        if (relativeSrcRoot == null) continue;
-        result.add(relativeSrcRoot);
+        if (folder.getFile() == null) continue;
+        result.add(folder);
       }
     }
     return result;
+  }
+
+  public static Set<VirtualFile> getSourceRoots(Module module) {
+    return getSourceFolders(module).stream().map(SourceFolder::getFile).collect(Collectors.toSet());
   }
 
   private static int getWorkingThreads() {

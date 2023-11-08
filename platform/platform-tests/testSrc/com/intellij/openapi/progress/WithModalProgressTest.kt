@@ -10,6 +10,8 @@ import com.intellij.openapi.application.contextModality
 import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.application.impl.ModalCoroutineTest
 import com.intellij.openapi.application.impl.processApplicationQueue
+import com.intellij.platform.ide.progress.ModalTaskOwner
+import com.intellij.platform.ide.progress.TaskCancellation
 import com.intellij.testFramework.common.timeoutRunBlocking
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Semaphore
@@ -223,7 +225,7 @@ class WithModalProgressTest : ModalCoroutineTest() {
 }
 
 private suspend fun <T> withModalProgress(action: suspend CoroutineScope.() -> T): T {
-  return withModalProgress(ModalTaskOwner.guess(), "", TaskCancellation.cancellable(), action)
+  return com.intellij.platform.ide.progress.withModalProgress(ModalTaskOwner.guess(), "", TaskCancellation.cancellable(), action)
 }
 
 private suspend fun launchModalCoroutineAndWait(cs: CoroutineScope): Job {

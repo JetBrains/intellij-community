@@ -215,14 +215,18 @@ public final class PyCallableParameterImpl implements PyCallableParameter {
   public PyType getArgumentType(@NotNull TypeEvalContext context) {
     final PyType parameterType = getType(context);
 
-    if (parameterType instanceof PyCollectionType collectionType) {
-
-      if (isPositionalContainer()) {
-        return collectionType.getIteratedItemType();
+    if (isPositionalContainer() && parameterType instanceof PyTupleType tupleType) {
+      // *args: str is equivalent to *args: *tuple[str, ...]
+      // *args: *Ts is equivalent to *args: *tuple[*Ts]
+      // Convert its type to a more general form of an unpacked tuple
+      PyUnpackedTupleType unpackedTupleType = tupleType.asUnpackedTupleType();
+      if (unpackedTupleType.isUnbound()) {
+        return unpackedTupleType.getElementTypes().get(0);
       }
-      else if (isKeywordContainer()) {
-        return ContainerUtil.getOrElse(collectionType.getElementTypes(), 1, null);
-      }
+      return unpackedTupleType;
+    }
+    else if (isKeywordContainer() && parameterType instanceof PyCollectionType dictType) {
+      return ContainerUtil.getOrElse(dictType.getElementTypes(), 1, null);
     }
 
     return parameterType;

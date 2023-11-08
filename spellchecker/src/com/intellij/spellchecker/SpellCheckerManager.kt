@@ -229,7 +229,13 @@ class SpellCheckerManager(val project: Project) : Disposable {
     }
   }
 
-  fun hasProblem(word: String): Boolean = !spellChecker!!.isCorrect(word)
+  fun hasProblem(word: String): Boolean {
+    return !spellChecker!!.isCorrect(word) && !isCorrectExtensionWord(word)
+  }
+
+  private fun isCorrectExtensionWord(word: String): Boolean {
+    return DictionaryChecker.EP_NAME.extensionList.any { it.isCorrect(project, word) }
+  }
 
   fun acceptWordAsCorrect(word: String, project: Project) {
     acceptWordAsCorrect(word = word, file = null, project = project, dictionaryLevel = DictionaryLevel.PROJECT) // TODO: or default

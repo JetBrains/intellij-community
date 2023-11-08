@@ -12,6 +12,7 @@ data class JsonFileProviderIndexStatistics(
   val providerName: String = "",
   val totalNumberOfIndexedFiles: Int = 0,
   val totalNumberOfFilesFullyIndexedByExtensions: Int = 0,
+  val totalNumberOfNothingToWriteFiles: Int = 0,
   /**
    * It's actually total processing time. Was not renamed due to external usage.
    */
@@ -38,6 +39,8 @@ data class JsonFileProviderIndexStatistics(
   data class JsonIndexedFile(
     val path: PortableFilePath = PortableFilePath.AbsolutePath(""),
     @JsonProperty("wfibe")
-    val wasFullyIndexedByExtensions: Boolean = false
+    val wasFullyIndexedByExtensions: Boolean = false,
+    @JsonProperty("ntw")
+    val nothingToWrite: Boolean = false,
   )
 }

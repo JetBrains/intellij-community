@@ -57,7 +57,7 @@ class ExecuteMavenGoalCommand(text: String, line: Int) : AbstractCommand(text, l
       val projectsManager = MavenProjectsManager.getInstance(project)
       if (projectsManager == null) return@invokeLater
 
-      val mavenProject = projectsManager.projects.first { it.name.equals(moduleName) }
+      val mavenProject = projectsManager.projects.first { it.displayName.equals(moduleName) }
       if (mavenProject == null) return@invokeLater
 
       val explicitProfiles = projectsManager.getExplicitProfiles()

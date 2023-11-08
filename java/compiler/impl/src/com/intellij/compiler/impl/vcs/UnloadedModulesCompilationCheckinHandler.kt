@@ -27,7 +27,7 @@ import java.util.concurrent.CompletableFuture
 
 class UnloadedModulesCompilationCheckinHandler(private val project: Project,
                                                private val checkinPanel: CheckinProjectPanel) : CheckinHandler(), CommitCheck {
-                                                 
+
   override fun getBeforeCheckinConfigurationPanel(): RefreshableOnComponent? {
     return if (ModuleManager.getInstance(project).unloadedModuleDescriptions.isNotEmpty())
       create(checkinPanel.getProject(), this, false,
@@ -40,44 +40,47 @@ class UnloadedModulesCompilationCheckinHandler(private val project: Project,
     }
   }
 
-  override suspend fun runCheck(commitInfo: CommitInfo): CommitProblem? = withContext(Dispatchers.Default) {
-    val unloadedModulesCompileScope = readAction {
-      if (ModuleManager.getInstance(project).unloadedModuleDescriptions.isEmpty()) {
-        return@readAction null
-      }
-      val fileIndex = ProjectFileIndex.getInstance(project)
-      val compilerManager = CompilerManager.getInstance(project)
-      val affectedModules = checkinPanel.getVirtualFiles()
-        .filter { compilerManager.isCompilableFileType(it.fileType) }
-        .mapNotNullTo(LinkedHashSet()) { fileIndex.getModuleForFile(it) }
-      val affectedUnloadedModules = affectedModules.flatMapTo(LinkedHashSet()) {
-        DirectoryIndex.getInstance(project).getDependentUnloadedModules(it)
-      }
-      if (affectedUnloadedModules.isEmpty()) {
-        return@readAction null
-      }
-      ModuleCompileScope(project, affectedModules, affectedUnloadedModules, true, false)
-    }
-    if (unloadedModulesCompileScope == null) {
-      return@withContext null
-    }
-    
-    val compiledSuccessfully = CompletableFuture<Boolean>()
-    withContext(Dispatchers.EDT) {
-      CompilerManager.getInstance(project).make(unloadedModulesCompileScope) { aborted, errors, _, _ ->
-        if (aborted) {
-          compiledSuccessfully.cancel(true)
+  override suspend fun runCheck(commitInfo: CommitInfo): CommitProblem? {
+    val files = commitInfo.committedVirtualFiles
+    return withContext(Dispatchers.Default) {
+      val unloadedModulesCompileScope = readAction {
+        if (ModuleManager.getInstance(project).unloadedModuleDescriptions.isEmpty()) {
+          return@readAction null
         }
-        else {
-          compiledSuccessfully.complete(errors == 0)
+        val fileIndex = ProjectFileIndex.getInstance(project)
+        val compilerManager = CompilerManager.getInstance(project)
+        val affectedModules = files
+          .filter { compilerManager.isCompilableFileType(it.fileType) }
+          .mapNotNullTo(LinkedHashSet()) { fileIndex.getModuleForFile(it) }
+        val affectedUnloadedModules = affectedModules.flatMapTo(LinkedHashSet()) {
+          DirectoryIndex.getInstance(project).getDependentUnloadedModules(it)
+        }
+        if (affectedUnloadedModules.isEmpty()) {
+          return@readAction null
+        }
+        ModuleCompileScope(project, affectedModules, affectedUnloadedModules, true, false)
+      }
+      if (unloadedModulesCompileScope == null) {
+        return@withContext null
+      }
+
+      val compiledSuccessfully = CompletableFuture<Boolean>()
+      withContext(Dispatchers.EDT) {
+        CompilerManager.getInstance(project).make(unloadedModulesCompileScope) { aborted, errors, _, _ ->
+          if (aborted) {
+            compiledSuccessfully.cancel(true)
+          }
+          else {
+            compiledSuccessfully.complete(errors == 0)
+          }
         }
       }
+
+      if (compiledSuccessfully.await()) {
+        return@withContext null
+      }
+      return@withContext CompilationFailedProblem()
     }
-    
-    if (compiledSuccessfully.await()) {
-      return@withContext null
-    }
-    return@withContext CompilationFailedProblem()
   }
 
   override fun getExecutionOrder(): CommitCheck.ExecutionOrder = CommitCheck.ExecutionOrder.LATE
@@ -97,12 +100,13 @@ class UnloadedModulesCompilationCheckinHandler(private val project: Project,
 
     override fun showDetails(project: Project) {
       ApplicationManager.getApplication().invokeLater({
-        val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(BuildContentManager.TOOL_WINDOW_ID)
-        toolWindow?.activate(null, false)
-      }, ModalityState.nonModal())
+                                                        val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(
+                                                          BuildContentManager.TOOL_WINDOW_ID)
+                                                        toolWindow?.activate(null, false)
+                                                      }, ModalityState.nonModal())
     }
   }
-  
+
   class Factory : CheckinHandlerFactory() {
     override fun createHandler(panel: CheckinProjectPanel, commitContext: CommitContext): CheckinHandler {
       return UnloadedModulesCompilationCheckinHandler(panel.getProject(), panel)

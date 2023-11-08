@@ -1,11 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
 package com.intellij.application.options.colors;
 
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorSchemeAttributeDescriptorWithPath;
-import com.intellij.openapi.editor.colors.impl.AbstractColorsScheme;
-import com.intellij.openapi.editor.colors.impl.ReadOnlyColorsScheme;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.options.colors.AbstractKeyDescriptor;
@@ -23,7 +20,7 @@ public abstract class ColorAndFontDescription extends TextAttributes implements 
   private final String myType;
   private final Icon myIcon;
   private final String myToolTip;
-  private final EditorColorsScheme myScheme;
+  private final EditorColorsScheme scheme;
   private boolean isForegroundChecked;
   private boolean isBackgroundChecked;
   private boolean isEffectsColorChecked;
@@ -39,7 +36,7 @@ public abstract class ColorAndFontDescription extends TextAttributes implements 
     myName = name;
     myGroup = group;
     myType = type;
-    myScheme = scheme;
+    this.scheme = scheme;
     myIcon = icon;
     myToolTip = toolTip;
   }
@@ -60,7 +57,7 @@ public abstract class ColorAndFontDescription extends TextAttributes implements 
 
   @Override
   public EditorColorsScheme getScheme() {
-    return myScheme;
+    return scheme;
   }
 
   public Icon getIcon() {
@@ -231,8 +228,7 @@ public abstract class ColorAndFontDescription extends TextAttributes implements 
   }
 
   public boolean isEditable() {
-    return !(myScheme instanceof ReadOnlyColorsScheme ||
-             myScheme instanceof AbstractColorsScheme && ((AbstractColorsScheme)myScheme).isReadOnly());
+    return !scheme.isReadOnly();
   }
 
   public @Nullable TextAttributes getBaseAttributes() {

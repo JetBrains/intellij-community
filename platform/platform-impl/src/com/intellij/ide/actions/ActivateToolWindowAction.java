@@ -9,6 +9,7 @@ import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.ScalableIcon;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -17,12 +18,14 @@ import com.intellij.toolWindow.ToolWindowEventSource;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.SizedIcon;
 import com.intellij.ui.scale.JBUIScale;
+import com.intellij.util.concurrency.SynchronizedClearableLazy;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
+import java.util.function.Supplier;
 
 /**
  * Toggles tool window visibility.
@@ -56,11 +59,7 @@ public class ActivateToolWindowAction extends DumbAwareAction implements MainMen
   }
 
   public static void unregister(@NotNull String id) {
-    String actionId = getActionIdForToolWindow(id);
-    ActionManager actionManager = ActionManager.getInstance();
-    if (actionManager.getAction(actionId) != null) {
-      actionManager.unregisterAction(actionId);
-    }
+    ActionManager.getInstance().unregisterAction(getActionIdForToolWindow(id));
   }
 
   public static void updateToolWindowActionPresentation(@NotNull ToolWindow toolWindow) {
@@ -106,16 +105,17 @@ public class ActivateToolWindowAction extends DumbAwareAction implements MainMen
   }
 
   private static void updatePresentation(@NotNull Presentation presentation, @NotNull ToolWindow toolWindow) {
-    String title = toolWindow.getStripeTitle();
+    Supplier<@NlsContexts.TabTitle String> title = toolWindow.getStripeTitleProvider();
     presentation.setText(title);
-    presentation.setDescription(IdeBundle.messagePointer("action.activate.tool.window", title));
-    Icon icon = toolWindow.getIcon();
-    if (icon instanceof ScalableIcon && ExperimentalUI.isNewUI()) {
-      icon = ((ScalableIcon)icon).scale(JBUIScale.scale(16f) / icon.getIconWidth());
-      presentation.setIcon(icon);
-      return;
-    }
-    presentation.setIcon(icon == null ? null : new SizedIcon(icon, icon.getIconHeight(), icon.getIconHeight()));
+    presentation.setDescription(() -> IdeBundle.message("action.activate.tool.window", title.get()));
+    presentation.setIconSupplier(new SynchronizedClearableLazy<>(() -> {
+      Icon icon = toolWindow.getIcon();
+      if (icon instanceof ScalableIcon && ExperimentalUI.isNewUI()) {
+        icon = ((ScalableIcon)icon).scale(JBUIScale.scale(16f) / icon.getIconWidth());
+        return icon;
+      }
+      return icon == null ? null : new SizedIcon(icon, icon.getIconHeight(), icon.getIconHeight());
+    }));
   }
 
   @Override

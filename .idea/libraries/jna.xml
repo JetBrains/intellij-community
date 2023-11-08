@@ -1,6 +1,6 @@
 <component name="libraryTable">
   <library name="jna" type="repository">
-    <properties jar-repository-id="central-proxy" maven-id="net.java.dev.jna:jna-platform:5.13.0">
+    <properties maven-id="net.java.dev.jna:jna-platform:5.13.0">
       <verification>
         <artifact url="file://$MAVEN_REPOSITORY$/net/java/dev/jna/jna-platform/5.13.0/jna-platform-5.13.0.jar">
           <sha256sum>474d7b88f6e97009b6ec1d98c3024dd95c23187c65dabfbc35331bcac3d173dd</sha256sum>

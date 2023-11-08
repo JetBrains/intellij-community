@@ -2,6 +2,7 @@
 package com.intellij.gradle.toolingExtension.impl.model.resourceFilterModel
 
 import com.google.gson.GsonBuilder
+import com.intellij.gradle.toolingExtension.impl.modelBuilder.Messages
 import groovy.transform.CompileDynamic
 import org.gradle.api.Action
 import org.gradle.api.Project
@@ -11,7 +12,7 @@ import org.gradle.api.tasks.util.PatternFilterable
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.model.DefaultExternalFilter
 import org.jetbrains.plugins.gradle.model.ExternalFilter
-import org.jetbrains.plugins.gradle.tooling.ErrorMessageBuilder
+import org.jetbrains.plugins.gradle.tooling.Message
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext
 
 @ApiStatus.Internal
@@ -57,11 +58,16 @@ class GradleResourceFilterModelBuilder {
       }
     }
     catch (Exception ignored) {
-      context.getMessageReporter().reportMessage(project, ErrorMessageBuilder.create(project, "Resource configuration errors")
-        .withDescription("Cannot resolve resource filtering of " + action.class.simpleName + ". " +
-                         "IDEA may fail to build project. " +
-                         "Consider using delegated build (enabled by default).")
-        .buildMessage())
+      context.getMessageReporter().createMessage()
+        .withGroup(Messages.RESOURCE_FILTER_MODEL_GROUP)
+        .withTitle("Resource configuration warning")
+        .withText(
+          "Cannot resolve resource filtering of " + action.class.simpleName + ". " +
+          "IDEA may fail to build project. " +
+          "Consider using delegated build (enabled by default)."
+        )
+        .withKind(Message.Kind.WARNING)
+        .reportMessage(project)
     }
     return null
   }

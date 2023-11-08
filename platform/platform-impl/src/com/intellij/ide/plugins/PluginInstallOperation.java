@@ -9,7 +9,6 @@ import com.intellij.ide.plugins.marketplace.MarketplacePluginDownloadService;
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests;
 import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollector;
 import com.intellij.ide.plugins.marketplace.statistics.enums.InstallationSourceEnum;
-import com.intellij.ide.plugins.org.PluginManagerFilters;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
@@ -228,7 +227,7 @@ public final class PluginInstallOperation {
   private boolean prepareToInstall(@NotNull PluginNode pluginNode,
                                    @NotNull List<PluginId> pluginIds) throws IOException {
     if (!checkMissingDependencies(pluginNode, pluginIds)) return false;
-    if (!PluginManagerFilters.getInstance().allowInstallingPlugin(pluginNode)) {
+    if (!PluginManagementPolicy.getInstance().canInstallPlugin(pluginNode)) {
       LOG.warn("The plugin " + pluginNode.getPluginId() + " is not allowed to install for the organization");
       return false;
     }
@@ -255,7 +254,10 @@ public final class PluginInstallOperation {
       }
 
       boolean allowNoRestart = myAllowInstallWithoutRestart &&
-                               DynamicPlugins.allowLoadUnloadWithoutRestart(descriptor);
+                               DynamicPlugins.allowLoadUnloadWithoutRestart(
+                                 descriptor, null,
+                                 ContainerUtil.map(myPendingDynamicPluginInstalls, pluginInstall -> pluginInstall.getPluginDescriptor())
+                               );
       if (allowNoRestart) {
         myPendingDynamicPluginInstalls.add(new PendingDynamicPluginInstall(downloader.getFilePath(), descriptor));
         InstalledPluginsState state = InstalledPluginsState.getInstanceIfLoaded();

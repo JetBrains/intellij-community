@@ -19,6 +19,8 @@ import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import static com.jetbrains.python.run.PythonScriptCommandLineState.getExpandedWorkingDir;
+
 /**
  * User : catherine
  */
@@ -59,7 +61,7 @@ public abstract class RestCommandLineState extends PythonCommandLineState {
     }
 
     if (!StringUtil.isEmptyOrSpaces(myConfiguration.getWorkingDirectory())) {
-      commandLine.setWorkDirectory(myConfiguration.getWorkingDirectory());
+      commandLine.setWorkDirectory(getExpandedWorkingDir(myConfiguration));
     }
   }
 

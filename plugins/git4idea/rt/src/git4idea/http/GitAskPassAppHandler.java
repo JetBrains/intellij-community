@@ -18,6 +18,7 @@ package git4idea.http;
 import externalApp.ExternalAppHandler;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * This handler is called by {@link GitAskPassApp} when Git requests user credentials.
@@ -34,6 +35,6 @@ public interface GitAskPassAppHandler extends ExternalAppHandler {
    * @param arg Argument of the input script
    * @return user input
    */
-  @NotNull
+  @Nullable
   String handleInput(@NotNull String arg);
 }

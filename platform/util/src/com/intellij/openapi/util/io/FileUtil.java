@@ -385,7 +385,7 @@ public class FileUtil extends FileUtilRt {
    * Really insist: i.e. retry delete a few times with a timeout -- see {@link FileUtilRt#doDelete(Path)}
    * for details of a single-file delete operation.
    *
-   * @throws an exception if delete is not successful
+   * @throws IOException exception if delete is not successful
    * @see FileUtilRt#doDelete(Path)
    */
   public static void delete(@NotNull Path path) throws IOException {
@@ -1260,6 +1260,7 @@ public class FileUtil extends FileUtilRt {
   }
 
   /** @deprecated ambiguous w.r.t. to normalized UNC paths; consider using {@link OSAgnosticPathUtil} or {@link java.nio.file NIO2} instead */
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   public static boolean isUnixAbsolutePath(@NotNull String path) {
     return path.startsWith("/");

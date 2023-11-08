@@ -50,6 +50,18 @@ public final class QualifiedNameFinder {
   }
 
   @Nullable
+  public static QualifiedName findCachedShortestImportableName(@NotNull PsiElement foothold, @NotNull VirtualFile virtualFile) {
+    final PythonPathCache cache = ResolveImportUtil.getPathCache(foothold);
+    if (cache != null) {
+      final List<QualifiedName> names = cache.getNames(virtualFile);
+      if (names != null) {
+        return shortestQName(names);
+      }
+    }
+    return null;
+  }
+
+  @Nullable
   public static QualifiedName findShortestImportableQName(@Nullable PsiFileSystemItem fsItem) {
     VirtualFile vFile = fsItem != null ? fsItem.getVirtualFile() : null;
     return vFile != null ? findShortestImportableQName(fsItem, vFile) : null;

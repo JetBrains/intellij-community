@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.gradle.toolingExtension.impl.model.taskModel;
 
+import com.intellij.gradle.toolingExtension.impl.modelBuilder.Messages;
 import com.intellij.gradle.toolingExtension.impl.util.GradleResultUtil;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
@@ -10,7 +11,6 @@ import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.tooling.AbstractModelBuilderService;
-import org.jetbrains.plugins.gradle.tooling.ErrorMessageBuilder;
 import org.jetbrains.plugins.gradle.tooling.Message;
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext;
 
@@ -55,7 +55,8 @@ public class GradleTaskModelBuilder extends AbstractModelBuilderService {
     }
     catch (Exception e) {
       context.getMessageReporter().createMessage()
-        .withTitle("Project tasks collecting failure")
+        .withGroup(Messages.TASK_MODEL_COLLECTING_GROUP)
+        .withTitle("Tasks collecting failure")
         .withText("Tasks for " + project + " cannot be collected due to plugin exception.")
         .withException(e)
         .withKind(Message.Kind.WARNING)
@@ -76,8 +77,21 @@ public class GradleTaskModelBuilder extends AbstractModelBuilderService {
   }
 
   @Override
-  public @NotNull ErrorMessageBuilder getErrorMessageBuilder(@NotNull Project project, @NotNull Exception e) {
-    return ErrorMessageBuilder.create(project, e, "Gradle import errors")
-      .withDescription("Unable to warm-up Gradle task model");
+  public void reportErrorMessage(
+    @NotNull String modelName,
+    @NotNull Project project,
+    @NotNull ModelBuilderContext context,
+    @NotNull Exception exception
+  ) {
+    GradleTaskCache.getInstance(context)
+        .markTaskModelAsError(project);
+
+    context.getMessageReporter().createMessage()
+      .withGroup(Messages.TASK_MODEL_GROUP)
+      .withKind(Message.Kind.WARNING)
+      .withTitle("Task model building failure")
+      .withText("Unable to warm-up Gradle task model")
+      .withException(exception)
+      .reportMessage(project);
   }
 }

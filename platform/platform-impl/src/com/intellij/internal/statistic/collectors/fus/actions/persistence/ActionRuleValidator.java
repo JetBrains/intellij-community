@@ -6,6 +6,11 @@ import com.intellij.internal.statistic.eventLog.validator.ValidationResultType;
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * Please do not use directly.
+ * <br/>
+ * Use {@link ActionsEventLogGroup#ACTION_ID} instead.
+ */
 public final class ActionRuleValidator extends ClassNameRuleValidator {
   @Override
   public @NotNull String getRuleId() {

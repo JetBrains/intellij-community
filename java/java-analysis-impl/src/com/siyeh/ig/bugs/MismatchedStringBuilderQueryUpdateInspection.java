@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInsight.daemon.impl.UnusedSymbolUtil;
@@ -27,7 +27,7 @@ public class MismatchedStringBuilderQueryUpdateInspection extends BaseInspection
   @NonNls
   static final Map<BuilderType, Set<String>> returnSelfNames =
     Map.of(BuilderType.ABSTRACT_STRING_BUILDER,
-           Set.of("append", "appendCodePoint", "delete", "deleteCharAt", "insert", "replace", "reverse"),
+           Set.of("append", "appendCodePoint", "delete", "deleteCharAt", "insert", "replace", "reverse", "repeat"),
            BuilderType.STRING_JOINER, Set.of("add", "merge", "setEmptyValue"));
   private static final String STRING_JOINER = "java.util.StringJoiner";
 
@@ -211,7 +211,7 @@ public class MismatchedStringBuilderQueryUpdateInspection extends BaseInspection
     @NonNls
     private static final Map<BuilderType, Set<String>> updateNames =
       Map.of(BuilderType.ABSTRACT_STRING_BUILDER,
-             Set.of("append", "appendCodePoint", "delete", "deleteCharAt", "insert", "replace", "reverse", "setCharAt", "setLength"),
+             Set.of("append", "appendCodePoint", "delete", "deleteCharAt", "insert", "replace", "reverse", "setCharAt", "setLength", "repeat"),
              BuilderType.STRING_JOINER, Set.of("add", "merge", "setEmptyValue"));
 
     @NotNull
@@ -290,19 +290,17 @@ public class MismatchedStringBuilderQueryUpdateInspection extends BaseInspection
       if (queried) return;
       super.visitReferenceExpression(expression);
       final PsiElement parent = ParenthesesUtils.getParentSkipParentheses(expression);
-      if (!(parent instanceof PsiPolyadicExpression polyadicExpression)) {
-        return;
+      if (parent instanceof PsiPolyadicExpression polyadicExpression) {
+        final IElementType tokenType = polyadicExpression.getOperationTokenType();
+        if (!JavaTokenType.PLUS.equals(tokenType) || !ExpressionUtils.hasStringType(polyadicExpression)) {
+          return;
+        }
       }
-      final IElementType tokenType = polyadicExpression.getOperationTokenType();
-      if (!JavaTokenType.PLUS.equals(tokenType)) {
+      else if (!(parent instanceof PsiTemplate)) {
         return;
       }
       final PsiElement target = expression.resolve();
       if (!variable.equals(target)) {
-        return;
-      }
-      final PsiType type = polyadicExpression.getType();
-      if (type == null || !type.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
         return;
       }
       queried = true;

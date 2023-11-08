@@ -82,7 +82,7 @@ public interface IntentionPreviewInfo {
   /**
    * Diff preview for multiple files. UI may show only some of them if there are too many.
    */
-  class MultiFileDiff implements IntentionPreviewInfo {
+  final class MultiFileDiff implements IntentionPreviewInfo {
     private final @NotNull List<@NotNull CustomDiff> myDiffs;
 
     public MultiFileDiff(@NotNull List<@NotNull CustomDiff> diffs) {
@@ -105,7 +105,7 @@ public interface IntentionPreviewInfo {
    * However, sometimes you may provide carefully crafted original and new text, in order to get some diff highlighting
    * (added/removed parts).
    */
-  class CustomDiff implements IntentionPreviewInfo {
+  final class CustomDiff implements IntentionPreviewInfo {
     private final @NotNull FileType myFileType;
     private final @NotNull String myOrigText;
     private final @NotNull String myModifiedText;
@@ -204,7 +204,7 @@ public interface IntentionPreviewInfo {
    *   preview for common cases. Ask if you think that you need a new common method.</li>
    * </ul>
    */
-  class Html implements IntentionPreviewInfo {
+  final class Html implements IntentionPreviewInfo {
     private final @NotNull HtmlChunk myContent;
     private final @NotNull InfoKind myInfoKind;
 

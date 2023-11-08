@@ -912,9 +912,29 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
   @Nullable
   public static TextRange intersectWithLine(@Nullable TextRange range, @Nullable PsiFile file, int line) {
     if (range != null && file != null) {
-      Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
+      Document document = file.getViewProvider().getDocument();
       if (document != null) {
         range = range.intersection(DocumentUtil.getLineTextRange(document, line));
+      }
+    }
+    return range;
+  }
+
+  /**
+   * Extract text range suitable for highlighting.
+   * <p>
+   * The passed text range is cut to fit the line range.
+   * Also, whole line highlighting is represented by <code>null</code> return value.
+   * @return highlighting range inside the line or null if the whole line should be highlighted
+   */
+  @Nullable
+  public static TextRange getHighlightingRangeInsideLine(@Nullable TextRange range, @Nullable PsiFile file, int line) {
+    if (range != null && file != null) {
+      Document document = file.getViewProvider().getDocument();
+      if (document != null) {
+        TextRange lineRange = DocumentUtil.getLineTextRange(document, line);
+        TextRange res = range.intersection(lineRange);
+        return lineRange.equals(res) ? null : res;
       }
     }
     return range;
@@ -998,7 +1018,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     PsiFile file = position.getFile();
     final int line = position.getLine();
-    final Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
+    final Document document = file.getViewProvider().getDocument();
     if (document == null || line < 0 || line >= document.getLineCount()) {
       return Collections.emptyList();
     }

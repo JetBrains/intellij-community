@@ -11,10 +11,13 @@ import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.startup.StartupManagerEx
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.client.ClientAwareComponentManager
+import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.StorageScheme
 import com.intellij.openapi.components.impl.stores.IProjectStore
 import com.intellij.openapi.components.service
@@ -23,6 +26,7 @@ import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.project.ProjectNameListener
 import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.startup.StartupManager
@@ -40,16 +44,17 @@ import com.intellij.util.childScope
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.messages.impl.MessageBusEx
-import com.intellij.util.namedChildScope
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.jps.util.JpsPathUtil
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
 import java.nio.file.ClosedFileSystemException
 import java.nio.file.Path
+import java.time.LocalDateTime
 import java.util.concurrent.atomic.AtomicReference
 
 internal val projectMethodType: MethodType = MethodType.methodType(Void.TYPE, Project::class.java)
@@ -59,8 +64,7 @@ private val LOG = logger<ProjectImpl>()
 
 @Internal
 open class ProjectImpl(parent: ComponentManagerImpl, filePath: Path, projectName: String?)
-  : ClientAwareComponentManager(parent = parent,
-                                coroutineScope = parent.getCoroutineScope().namedChildScope("ProjectImpl")), ProjectEx, ProjectStoreOwner {
+  : ClientAwareComponentManager(parent), ProjectEx, ProjectStoreOwner {
   companion object {
     @Internal
     val RUN_START_UP_ACTIVITIES: Key<Boolean> = Key.create("RUN_START_UP_ACTIVITIES")
@@ -142,6 +146,15 @@ open class ProjectImpl(parent: ComponentManagerImpl, filePath: Path, projectName
                                       "expected (Project), (Project, CoroutineScope), (CoroutineScope), or ()")) as T
   }
 
+  final override fun supportedSignaturesOfLightServiceConstructors(): List<MethodType> {
+    return listOf(
+      projectMethodType,
+      projectAndScopeMethodType,
+      coroutineScopeMethodType,
+      emptyConstructorMethodType,
+    )
+  }
+
   override fun isInitialized(): Boolean {
     val containerState = containerState.get()
     if ((containerState < ContainerState.COMPONENT_CREATED || containerState >= ContainerState.DISPOSE_IN_PROGRESS)
@@ -170,18 +183,26 @@ open class ProjectImpl(parent: ComponentManagerImpl, filePath: Path, projectName
   }
 
   override fun setProjectName(value: String) {
-    if (cachedName == value) {
+    val name = JpsPathUtil.normalizeProjectName(value)
+    if (cachedName == name) {
       return
     }
 
-    cachedName = value
-    if (!ApplicationManager.getApplication().isUnitTestMode) {
-      StartupManager.getInstance(this).runAfterOpened {
-        ApplicationManager.getApplication().invokeLater(Runnable {
-          val frame = WindowManager.getInstance().getFrame(this) ?: return@Runnable
-          val title = FrameTitleBuilder.getInstance().getProjectTitle(this) ?: return@Runnable
-          frame.title = title
-        }, ModalityState.nonModal(), disposed)
+    cachedName = name
+
+    val app = ApplicationManager.getApplication()
+    if (app.isHeadlessEnvironment || app.isUnitTestMode) {
+      return
+    }
+
+    messageBus.syncPublisher(ProjectNameListener.TOPIC).nameChanged(name)
+    StartupManager.getInstance(this).runAfterOpened {
+      coroutineScope.launch(Dispatchers.EDT + ModalityState.nonModal().asContextElement()) {
+        val frame = (app as? ComponentManagerEx)?.getServiceAsyncIfDefined(WindowManager::class.java)?.getFrame(this@ProjectImpl)
+                    ?: return@launch
+        val title = (app as? ComponentManagerEx)?.getServiceAsyncIfDefined(FrameTitleBuilder::class.java)?.getProjectTitle(this@ProjectImpl)
+                    ?: return@launch
+        frame.title = title
       }
     }
   }
@@ -386,7 +407,7 @@ open class ProjectImpl(parent: ComponentManagerImpl, filePath: Path, projectName
 
   private fun storeCreationTrace() {
     if (ApplicationManager.getApplication().isUnitTestMode) {
-      putUserData(CREATION_TRACE, ExceptionUtil.currentStackTrace())
+      putUserData(CREATION_TRACE, "${LocalDateTime.now()}@${ExceptionUtil.currentStackTrace()}")
     }
   }
 

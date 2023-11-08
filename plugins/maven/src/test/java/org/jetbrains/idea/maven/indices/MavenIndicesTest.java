@@ -4,7 +4,9 @@ package org.jetbrains.idea.maven.indices;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.RunAll;
 import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase;
+import org.jetbrains.idea.maven.model.IndexKind;
 import org.jetbrains.idea.maven.model.MavenRemoteRepository;
+import org.jetbrains.idea.maven.model.MavenRepositoryInfo;
 import org.jetbrains.idea.maven.server.MavenIndexerWrapper;
 import org.junit.Assert;
 import org.mockito.Mockito;
@@ -32,7 +34,7 @@ public class MavenIndicesTest extends CodeInsightFixtureTestCase {
                                  dataDirName=data0
                                  kind=REMOTE
                                  id=central
-                                 pathOrUrl=https\\://repo.maven.apache.org/maven2
+                                 pathOrUrl=https://repo.maven.apache.org/maven2
                                  version=5""").getVirtualFile();
 
     myFixture.addFileToProject("Indices/Index1/index.properties",
@@ -41,7 +43,7 @@ public class MavenIndicesTest extends CodeInsightFixtureTestCase {
                                  dataDirName=data0
                                  kind=REMOTE
                                  id=snapshot
-                                 pathOrUrl=https\\://repo.maven.apache.org/snapshot
+                                 pathOrUrl=https://repo.maven.apache.org/snapshot
                                  version=5""").getVirtualFile();
 
     myFixture.addFileToProject("Indices/Index2/index.properties",
@@ -90,87 +92,78 @@ public class MavenIndicesTest extends CodeInsightFixtureTestCase {
   }
 
   public void testGetLocalInitAndNoDiff() {
-    MavenIndexUtils.RepositoryInfo localRepo = new MavenIndexUtils
-      .RepositoryInfo(LOCAL_REPOSITORY_ID, "/home/user/.m2/repository");
+    MavenRepositoryInfo localRepo = new MavenRepositoryInfo(LOCAL_REPOSITORY_ID, "/home/user/.m2/repository", IndexKind.LOCAL);
     localDiff = MavenIndices.getLocalDiff(localRepo, myContext, null);
     Assert.assertNotNull(localDiff.newIndices);
-    Assert.assertEquals(localRepo.url, localDiff.newIndices.getRepositoryPathOrUrl());
+    Assert.assertEquals(localRepo.getUrl(), localDiff.newIndices.getRepositoryPathOrUrl());
     Assert.assertNull(localDiff.oldIndices);
 
     localDiff = MavenIndices.getLocalDiff(localRepo, myContext, localDiff.newIndices);
     Assert.assertNotNull(localDiff.newIndices);
-    Assert.assertEquals(localRepo.url, localDiff.newIndices.getRepositoryPathOrUrl());
+    Assert.assertEquals(localRepo.getUrl(), localDiff.newIndices.getRepositoryPathOrUrl());
     Assert.assertNull(localDiff.oldIndices);
   }
 
   public void testGetLocalInitAndDiff() {
-    MavenIndexUtils.RepositoryInfo localRepo = new MavenIndexUtils
-      .RepositoryInfo(LOCAL_REPOSITORY_ID, "/home/user/.m2/repository");
+    MavenRepositoryInfo localRepo = new MavenRepositoryInfo(LOCAL_REPOSITORY_ID, "/home/user/.m2/repository", IndexKind.LOCAL);
     localDiff = MavenIndices.getLocalDiff(localRepo, myContext, null);
     Assert.assertNotNull(localDiff.newIndices);
-    Assert.assertEquals(localRepo.url, localDiff.newIndices.getRepositoryPathOrUrl());
+    Assert.assertEquals(localRepo.getUrl(), localDiff.newIndices.getRepositoryPathOrUrl());
     Assert.assertNull(localDiff.oldIndices);
 
-    localRepo = new MavenIndexUtils.RepositoryInfo(LOCAL_REPOSITORY_ID, "/home/user/.m3/repository");
+    localRepo = new MavenRepositoryInfo(LOCAL_REPOSITORY_ID, "/home/user/.m3/repository", IndexKind.LOCAL);
     MavenIndex currentLocalIndex = localDiff.newIndices;
     localDiff = MavenIndices.getLocalDiff(localRepo, myContext, currentLocalIndex);
     Assert.assertNotNull(localDiff.newIndices);
-    Assert.assertEquals(localRepo.url, localDiff.newIndices.getRepositoryPathOrUrl());
+    Assert.assertEquals(localRepo.getUrl(), localDiff.newIndices.getRepositoryPathOrUrl());
     Assert.assertSame(currentLocalIndex, localDiff.oldIndices);
   }
 
   public void testGetLocalCreateNew() {
-    MavenIndexUtils.RepositoryInfo localRepo = new MavenIndexUtils
-      .RepositoryInfo(LOCAL_REPOSITORY_ID, "/home/user/.m4/repository");
+    MavenRepositoryInfo localRepo = new MavenRepositoryInfo(LOCAL_REPOSITORY_ID, "/home/user/.m4/repository", IndexKind.LOCAL);
     localDiff = MavenIndices.getLocalDiff(localRepo, myContext, null);
     Assert.assertNotNull(localDiff.newIndices);
-    Assert.assertTrue(myContext.indicesDir.toPath().resolve("Index4").toFile().exists());
-    Assert.assertEquals(localRepo.url, localDiff.newIndices.getRepositoryPathOrUrl());
+    Assert.assertEquals(localRepo.getUrl(), localDiff.newIndices.getRepositoryPathOrUrl());
     Assert.assertNull(localDiff.oldIndices);
   }
 
   public void testGetRemoteInitAndNoDiff() {
-    MavenIndexUtils.RepositoryInfo remoteRepo = new MavenIndexUtils
-      .RepositoryInfo("central", "https\\://repo.maven.apache.org/maven2");
-    Map<String, Set<String>> remoteRepositoryIdsByUrl = Map.of(remoteRepo.url, Collections.singleton(remoteRepo.id));
+    MavenRepositoryInfo remoteRepo = new MavenRepositoryInfo("central", "https://repo.maven.apache.org/maven2", IndexKind.LOCAL);
+    Map<String, Set<String>> remoteRepositoryIdsByUrl = Map.of(remoteRepo.getUrl(), Collections.singleton(remoteRepo.getId()));
     remoteDiff = MavenIndices.getRemoteDiff(remoteRepositoryIdsByUrl, Collections.emptyList(), myContext);
     Assert.assertEquals(1, remoteDiff.newIndices.size());
-    Assert.assertEquals(remoteRepo.url, remoteDiff.newIndices.get(0).getRepositoryPathOrUrl());
+    Assert.assertEquals(remoteRepo.getUrl(), remoteDiff.newIndices.get(0).getRepositoryPathOrUrl());
     Assert.assertTrue(remoteDiff.oldIndices.isEmpty());
 
     remoteDiff = MavenIndices.getRemoteDiff(remoteRepositoryIdsByUrl, remoteDiff.newIndices, myContext);
     Assert.assertEquals(1, remoteDiff.newIndices.size());
-    Assert.assertEquals(remoteRepo.url, remoteDiff.newIndices.get(0).getRepositoryPathOrUrl());
+    Assert.assertEquals(remoteRepo.getUrl(), remoteDiff.newIndices.get(0).getRepositoryPathOrUrl());
     Assert.assertTrue(remoteDiff.oldIndices.isEmpty());
   }
 
   public void testGetRemoteInitAndDiff() {
-    MavenIndexUtils.RepositoryInfo remoteRepo = new MavenIndexUtils
-      .RepositoryInfo("central", "https\\://repo.maven.apache.org/maven2");
-    Map<String, Set<String>> remoteRepositoryIdsByUrl = Map.of(remoteRepo.url, Collections.singleton(remoteRepo.id));
+    MavenRepositoryInfo remoteRepo = new MavenRepositoryInfo("central", "https://repo.maven.apache.org/maven2", IndexKind.LOCAL);
+    Map<String, Set<String>> remoteRepositoryIdsByUrl = Map.of(remoteRepo.getUrl(), Collections.singleton(remoteRepo.getId()));
     remoteDiff = MavenIndices.getRemoteDiff(remoteRepositoryIdsByUrl, Collections.emptyList(), myContext);
     Assert.assertEquals(1, remoteDiff.newIndices.size());
-    Assert.assertEquals(remoteRepo.url, remoteDiff.newIndices.get(0).getRepositoryPathOrUrl());
+    Assert.assertEquals(remoteRepo.getUrl(), remoteDiff.newIndices.get(0).getRepositoryPathOrUrl());
     Assert.assertTrue(remoteDiff.oldIndices.isEmpty());
 
-    remoteRepo = new MavenIndexUtils
-      .RepositoryInfo("snapshot", "https\\://repo.maven.apache.org/snapshot");
-    remoteRepositoryIdsByUrl = Map.of(remoteRepo.url, Collections.singleton(remoteRepo.id));
+    remoteRepo = new MavenRepositoryInfo("snapshot", "https://repo.maven.apache.org/snapshot", IndexKind.REMOTE);
+    remoteRepositoryIdsByUrl = Map.of(remoteRepo.getUrl(), Collections.singleton(remoteRepo.getId()));
     remoteDiff = MavenIndices.getRemoteDiff(remoteRepositoryIdsByUrl, remoteDiff.newIndices, myContext);
     Assert.assertEquals(1, remoteDiff.newIndices.size());
-    Assert.assertEquals(remoteRepo.url, remoteDiff.newIndices.get(0).getRepositoryPathOrUrl());
+    Assert.assertEquals(remoteRepo.getUrl(), remoteDiff.newIndices.get(0).getRepositoryPathOrUrl());
     Assert.assertEquals(1, remoteDiff.oldIndices.size());
     Assert.assertTrue(remoteDiff.oldIndices.get(0).getRepositoryPathOrUrl().contains("maven2"));
   }
 
   public void testGetRemoteCreateNew() {
-    MavenIndexUtils.RepositoryInfo remoteRepo = new MavenIndexUtils
-      .RepositoryInfo("milestone", "https\\://repo.maven.apache.org/milestone");
-    Map<String, Set<String>> remoteRepositoryIdsByUrl = Map.of(remoteRepo.url, Collections.singleton(remoteRepo.id));
+    MavenRepositoryInfo remoteRepo = new MavenRepositoryInfo("milestone", "https://repo.maven.apache.org/milestone", IndexKind.REMOTE);
+    Map<String, Set<String>> remoteRepositoryIdsByUrl = Map.of(remoteRepo.getUrl(), Collections.singleton(remoteRepo.getUrl()));
     remoteDiff = MavenIndices.getRemoteDiff(remoteRepositoryIdsByUrl, Collections.emptyList(), myContext);
     Assert.assertEquals(1, remoteDiff.newIndices.size());
-    Assert.assertEquals(remoteRepo.url, remoteDiff.newIndices.get(0).getRepositoryPathOrUrl());
-    Assert.assertTrue(myContext.indicesDir.toPath().resolve("Index4").toFile().exists());
+    Assert.assertEquals(remoteRepo.getUrl(), remoteDiff.newIndices.get(0).getRepositoryPathOrUrl());
     Assert.assertTrue(remoteDiff.oldIndices.isEmpty());
   }
 
@@ -181,15 +174,14 @@ public class MavenIndicesTest extends CodeInsightFixtureTestCase {
                                  dataDirName=data0
                                  kind=REMOTE
                                  id=central
-                                 pathOrUrl=https\\://repo.maven.apache.org/maven2
+                                 pathOrUrl=https://repo.maven.apache.org/maven2
                                  version=5""").getVirtualFile();
 
-    MavenIndexUtils.RepositoryInfo remoteRepo = new MavenIndexUtils
-      .RepositoryInfo("central", "https\\://repo.maven.apache.org/maven2");
-    Map<String, Set<String>> remoteRepositoryIdsByUrl = Map.of(remoteRepo.url, Collections.singleton(remoteRepo.id));
+    MavenRepositoryInfo remoteRepo = new MavenRepositoryInfo("central", "https://repo.maven.apache.org/maven2", IndexKind.REMOTE);
+    Map<String, Set<String>> remoteRepositoryIdsByUrl = Map.of(remoteRepo.getUrl(), Collections.singleton(remoteRepo.getId()));
     remoteDiff = MavenIndices.getRemoteDiff(remoteRepositoryIdsByUrl, Collections.emptyList(), myContext);
     Assert.assertEquals(1, remoteDiff.newIndices.size());
-    Assert.assertEquals(remoteRepo.url, remoteDiff.newIndices.get(0).getRepositoryPathOrUrl());
+    Assert.assertEquals(remoteRepo.getUrl(), remoteDiff.newIndices.get(0).getRepositoryPathOrUrl());
     Assert.assertTrue(remoteDiff.oldIndices.isEmpty());
   }
 

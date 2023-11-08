@@ -90,7 +90,10 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
   @Override
   public boolean processUsage(ChangeInfo changeInfo, UsageInfo usage, boolean beforeMethodChange, UsageInfo[] usages) {
     if (!isJavaUsage(usage)) return false;
-    if (!(changeInfo instanceof JavaChangeInfo javaChangeInfo)) return false;
+    JavaChangeInfo javaChangeInfo = JavaChangeInfoConverters.getJavaChangeInfo(changeInfo, usage);
+    if (javaChangeInfo == null) {
+      return false;
+    }
 
     if (beforeMethodChange) {
       if (usage instanceof final CallerUsageInfo callerUsageInfo) {
@@ -210,7 +213,9 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
       }
       else if (!(usage instanceof OverriderUsageInfo) && !(usage instanceof UnresolvableCollisionUsageInfo)) {
         PsiReference reference = usage instanceof MoveRenameUsageInfo ? usage.getReference() : element.getReference();
-        if (reference != null) {
+        if (element instanceof PsiImportStaticReferenceElement) {
+          ((PsiImportStaticReferenceElement)element).handleElementRename(javaChangeInfo.getNewName());
+        } else if (reference != null) {
           reference.bindToElement(javaChangeInfo.getMethod());
         }
       }
@@ -1031,7 +1036,12 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
       final List<PsiParameter> newParameters = ContainerUtil.map(newElements, element -> (PsiParameter)element.variable());
       final List<String> newParameterNames = ContainerUtil.map(newElements, VariableWrapper::getName);
       final boolean[] toRemove = myChangeInfo.toRemoveParm();
-      resolveVariableVsFieldsConflicts(newParameters, newParameterNames, myParent, toRemove, myMethodBody, ParameterList.INSTANCE);
+      if (myChangeInfo.isFixFieldConflicts()) {
+        resolveVariableVsFieldsConflicts(newParameters, newParameterNames, myParent, toRemove, myMethodBody, ParameterList.INSTANCE);
+      } else {
+        ChangeSignatureUtil.synchronizeList(myParent, newParameters, ParameterList.INSTANCE, toRemove);
+        JavaCodeStyleManager.getInstance(myParent.getProject()).shortenClassReferences(myParent);
+      }
     }
   }
 

@@ -53,23 +53,16 @@ object PersistentFSRecordsStorageFactory {
 
 
   @JvmStatic
-  fun recordsLength(): Int =
-    when (RECORDS_STORAGE_KIND) {
-      RecordsStorageKind.REGULAR, RecordsStorageKind.IN_MEMORY -> PersistentFSSynchronizedRecordsStorage.RECORD_SIZE
-      RecordsStorageKind.OVER_LOCK_FREE_FILE_CACHE -> PersistentFSRecordsOverLockFreePagedStorage.RECORD_SIZE_IN_BYTES
-      RecordsStorageKind.OVER_MMAPPED_FILE -> PersistentFSRecordsLockFreeOverMMappedFile.RECORD_SIZE_IN_BYTES
-    }
-
-  @JvmStatic
   @Throws(IOException::class)
   fun createStorage(file: Path): PersistentFSRecordsStorage {
     FSRecords.LOG.trace("using $RECORDS_STORAGE_KIND storage for VFS records")
 
     return when (RECORDS_STORAGE_KIND) {
-      RecordsStorageKind.REGULAR -> PersistentFSSynchronizedRecordsStorage(openRMappedFile(file, recordsLength()))
+      RecordsStorageKind.REGULAR -> PersistentFSSynchronizedRecordsStorage(openRMappedFile(file, PersistentFSSynchronizedRecordsStorage.RECORD_SIZE))
       RecordsStorageKind.IN_MEMORY -> PersistentInMemoryFSRecordsStorage(file,  /*max size: */1 shl 24)
       RecordsStorageKind.OVER_LOCK_FREE_FILE_CACHE -> createLockFreeStorage(file)
       RecordsStorageKind.OVER_MMAPPED_FILE -> {
+        //TODO RC: this should be replaced with/encapsulated into StorageFactory<PersistentFSStorage>
         if (FAIL_EARLY_IF_LEGACY_STORAGE_DETECTED) {
           val legacyLengthFile = file.resolveSibling(file.fileName.toString() + ".len")
           if (legacyLengthFile.exists()) {

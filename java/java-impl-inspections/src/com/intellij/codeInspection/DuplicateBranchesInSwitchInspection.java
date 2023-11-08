@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.java.JavaBundle;
 import com.intellij.modcommand.ModPsiUpdater;
@@ -21,7 +22,6 @@ import com.intellij.refactoring.util.duplicates.DuplicatesFinder;
 import com.intellij.refactoring.util.duplicates.Match;
 import com.intellij.refactoring.util.duplicates.ReturnValue;
 import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.migration.TryWithIdenticalCatchesInspection;
 import com.siyeh.ig.psiutils.CommentTracker;
@@ -38,6 +38,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
+
 
 public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTool {
   private static final Logger LOG = Logger.getInstance(DuplicateBranchesInSwitchInspection.class);
@@ -96,9 +97,10 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
           for (int index = 0; index < size; index++) {
             if (index != defaultIndex) {
               BranchBase<?> branch = branches.get(index);
-              if (canBeJoined(defaultBranch, branch)) {
+              LevelType state = canBeJoined(defaultBranch, branch);
+              if (state != LevelType.NO) {
                 isDuplicate[index] = isDuplicate[defaultIndex] = true;
-                highlightDefaultDuplicate(branch, defaultBranch);
+                highlightDefaultDuplicate(branch, defaultBranch, state);
               }
             }
           }
@@ -114,11 +116,12 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
             if (++compareCount > 200) return; // avoid quadratic loop over too large list, but at least try to do something in that case
             BranchBase<?> otherBranch = branches.get(otherIndex);
 
-            if (canBeJoined(branch, otherBranch)) {
+            LevelType state = canBeJoined(branch, otherBranch);
+            if (state != LevelType.NO) {
               isDuplicate[otherIndex] = true;
               LocalQuickFix fix = branch.mergeCasesFix(otherBranch);
               if (fix != null) {
-                registerProblem(otherBranch, otherBranch.getCaseBranchMessage(), fix);
+                registerProblem(otherBranch, otherBranch.getCaseBranchMessage(), state, fix);
               }
             }
           }
@@ -126,24 +129,40 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
       }
     }
 
-    private void highlightDefaultDuplicate(@NotNull BranchBase<?> branch, BranchBase<?> defaultBranch) {
+    private void highlightDefaultDuplicate(@NotNull BranchBase<?> branch, BranchBase<?> defaultBranch, LevelType state) {
       List<LocalQuickFix> fixes = new ArrayList<>();
       LocalQuickFix deleteCaseFix = branch.deleteCaseFix();
       ContainerUtil.addIfNotNull(fixes, deleteCaseFix);
       LocalQuickFix mergeWithDefaultFix = branch.mergeWithDefaultFix(defaultBranch);
       ContainerUtil.addIfNotNull(fixes, mergeWithDefaultFix);
       if (!fixes.isEmpty()) {
-        registerProblem(branch, branch.getDefaultBranchMessage(), fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
+        registerProblem(branch, branch.getDefaultBranchMessage(), state, fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
       }
     }
 
     private void registerProblem(@NotNull BranchBase<?> duplicate,
                                  @NotNull @InspectionMessage String message,
+                                 @NotNull DuplicateBranchesInSwitchInspection.LevelType state,
                                  @NotNull LocalQuickFix @NotNull ... fixes) {
-      ProblemDescriptor descriptor = InspectionManager.getInstance(myHolder.getProject())
-        .createProblemDescriptor(duplicate.myStatements[0], duplicate.myStatements[duplicate.myStatements.length - 1],
-                                 message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                                 myHolder.isOnTheFly(), fixes);
+      PsiElement[] elements = duplicate.myStatements;
+      if (state == LevelType.NO) {
+        return;
+      }
+      if (state == LevelType.INFO && !myHolder.isOnTheFly()) {
+        return;
+      }
+      InspectionManager inspectionManager = InspectionManager.getInstance(myHolder.getProject());
+      ProblemDescriptor descriptor;
+      if (state == LevelType.INFO) {
+        descriptor = inspectionManager
+          .createProblemDescriptor(elements[0], elements[elements.length - 1],
+                                   message, ProblemHighlightType.INFORMATION, myHolder.isOnTheFly(), fixes);
+      }
+      else {
+        descriptor = inspectionManager
+          .createProblemDescriptor(elements[0],
+                                   message, myHolder.isOnTheFly(), fixes, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+      }
       myHolder.registerProblem(descriptor);
     }
   }
@@ -251,27 +270,26 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
     return branch;
   }
 
-  static boolean canBeJoined(@NotNull BranchBase<?> branch, @NotNull BranchBase<?> otherBranch) {
+
+  static LevelType canBeJoined(@NotNull BranchBase<?> branch, @NotNull BranchBase<?> otherBranch) {
     if (branch.isSimpleExit() != otherBranch.isSimpleExit() ||
         branch.canFallThrough() != otherBranch.canFallThrough() ||
         branch.effectiveLength() != otherBranch.effectiveLength()) {
-      return false;
+      return LevelType.NO;
     }
-    if (!branch.canBeJoinedWith(otherBranch)) return false;
+    if (!branch.canBeJoinedWith(otherBranch)) return LevelType.NO;
 
     Match match = branch.match(otherBranch);
     if (match != null) {
       Match otherMatch = otherBranch.match(branch);
       if (otherMatch != null) {
-        if (branch.isSimpleExit() &&
-            otherBranch.isSimpleExit() &&
-            !Arrays.equals(branch.myCommentTexts, otherBranch.myCommentTexts)) {
-          return false;
+        if (!Arrays.equals(branch.myCommentTexts, otherBranch.myCommentTexts)) {
+          return LevelType.INFO;
         }
-        return ReturnValue.areEquivalent(match.getReturnValue(), otherMatch.getReturnValue());
+        return ReturnValue.areEquivalent(match.getReturnValue(), otherMatch.getReturnValue()) ? LevelType.WARN : LevelType.NO;
       }
     }
-    return false;
+    return LevelType.NO;
   }
 
   private static boolean hasImplicitBreak(@NotNull PsiStatement statement) {
@@ -431,7 +449,7 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
       if (myBranchToDelete == null || candidateBranches == null) return false;
 
       for (Branch branch : candidateBranches) {
-        if (shouldMergeWith.test(branch) && canBeJoined(myBranchToDelete, branch)) {
+        if (shouldMergeWith.test(branch) && canBeJoined(myBranchToDelete, branch) != LevelType.NO) {
           myBranchToMergeWith = branch;
           break;
         }
@@ -1061,7 +1079,8 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
       if (labelElementList == null) return false;
       PsiCaseLabelElement[] elements = labelElementList.getElements();
       return !ContainerUtil.exists(elements,
-                                   element -> element instanceof PsiPattern && JavaPsiPatternUtil.containsNamedPatternVariable(element) ||
+                                   element -> element instanceof PsiPattern && (!HighlightingFeature.UNNAMED_PATTERNS_AND_VARIABLES.isAvailable(element) ||
+                                                                                JavaPsiPatternUtil.containsNamedPatternVariable(element)) ||
                                               element instanceof PsiExpression expr && ExpressionUtils.isNullLiteral(expr));
     }
 
@@ -1172,7 +1191,7 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
 
     boolean prepare(PsiElement startElement, Predicate<? super Rule> shouldMergeWith) {
       if (startElement != null) {
-        PsiSwitchLabeledRuleStatement ruleStatement = ObjectUtils.tryCast(startElement.getParent(), PsiSwitchLabeledRuleStatement.class);
+        PsiSwitchLabeledRuleStatement ruleStatement = PsiTreeUtil.getParentOfType(startElement, PsiSwitchLabeledRuleStatement.class);
         if (ruleStatement != null) {
           PsiSwitchBlock switchBlock = ruleStatement.getEnclosingSwitchBlock();
           if (switchBlock != null) {
@@ -1288,4 +1307,6 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
       }
     }
   }
+
+  private enum LevelType {WARN, NO, INFO}
 }

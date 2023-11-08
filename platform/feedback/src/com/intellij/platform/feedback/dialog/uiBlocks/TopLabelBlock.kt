@@ -2,10 +2,13 @@
 package com.intellij.platform.feedback.dialog.uiBlocks
 
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.ui.dsl.builder.BottomGap
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.util.ui.JBFont
 
 class TopLabelBlock(@NlsContexts.Label private val myText: String) : FeedbackBlock, TextDescriptionProvider {
+
+  private var bottomGap: BottomGap? = null
 
   override fun addToPanel(panel: Panel) {
     panel.apply {
@@ -14,6 +17,10 @@ class TopLabelBlock(@NlsContexts.Label private val myText: String) : FeedbackBlo
           .applyToComponent {
             font = JBFont.h1()
           }
+      }.apply {
+        if (bottomGap != null) {
+          bottomGap(bottomGap!!)
+        }
       }
     }
   }
@@ -23,5 +30,10 @@ class TopLabelBlock(@NlsContexts.Label private val myText: String) : FeedbackBlo
       appendLine(myText)
       appendLine()
     }
+  }
+
+  fun setBottomGap(bottomGap: BottomGap): TopLabelBlock {
+    this.bottomGap = bottomGap
+    return this
   }
 }

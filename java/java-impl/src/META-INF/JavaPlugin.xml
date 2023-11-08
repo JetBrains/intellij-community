@@ -17,9 +17,11 @@
   <module value="com.intellij.modules.java"/>
 
   <depends optional="true" config-file="images-integration.xml">com.intellij.platform.images</depends>
+  <depends optional="true" config-file="community-integration.xml">com.intellij.modules.idea.community</depends>
 
   <xi:include href="/idea/JavaActions.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
+  <xi:include href="intellij.java.frontback.psi.impl.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="intellij.java.frontback.impl.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/META-INF/JvmAnalysisPlugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/META-INF/JavaIndexingPlugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
@@ -136,6 +138,10 @@
                     beanClass="com.intellij.openapi.extensions.KeyedFactoryEPBean"
                     dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.openapi.roots.ui.OrderRootTypeUIFactory"/>
+    </extensionPoint>
+
+    <extensionPoint qualifiedName="com.intellij.java.changeSignature.converter" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.refactoring.changeSignature.JavaChangeInfoConverter"/>
     </extensionPoint>
 
     <extensionPoint qualifiedName="com.intellij.packaging.elementType" interface="com.intellij.packaging.elements.PackagingElementType" dynamic="true"/>
@@ -320,7 +326,7 @@
 
     <editorFactoryDocumentListener implementation="com.intellij.compiler.server.BuildManager$MyDocumentListener"/>
 
-    <postStartupActivity implementation="com.intellij.framework.detection.impl.FrameworkDetectionManager$MyPostStartupActivity"/>
+    <postStartupActivity implementation="com.intellij.framework.detection.impl.FrameworkDetectionManagerProjectActivity"/>
 
     <virtualFileSystem implementationClass="com.intellij.openapi.vfs.impl.jrt.JrtFileSystemImpl" key="jrt" physical="true"/>
 
@@ -341,10 +347,6 @@
     <applicationService serviceImplementation="com.intellij.refactoring.JavaRefactoringSettings"/>
     <applicationService serviceInterface="com.intellij.refactoring.JavaRefactoringActionHandlerFactory"
                         serviceImplementation="com.intellij.refactoring.openapi.impl.JavaRefactoringActionHandlerFactoryImpl"/>
-    <applicationService serviceInterface="com.intellij.util.xml.converters.values.ClassArrayConverter"
-                        serviceImplementation="com.intellij.util.xml.converters.ClassArrayConverterImpl"/>
-    <applicationService serviceInterface="com.intellij.util.xml.converters.values.ClassValueConverter"
-                        serviceImplementation="com.intellij.util.xml.converters.ClassValueConverterImpl"/>
     <applicationService serviceInterface="com.intellij.psi.JavaDirectoryService"
                         serviceImplementation="com.intellij.psi.impl.file.JavaDirectoryServiceImpl"/>
     <applicationService serviceInterface="com.intellij.openapi.projectRoots.JavaVersionService"
@@ -362,7 +364,6 @@
 
     <projectService serviceImplementation="com.intellij.jarRepository.RemoteRepositoriesConfiguration"/>
     <projectService serviceImplementation="com.intellij.jarRepository.services.MavenRepositoryServicesManager"/>
-    <projectService serviceImplementation="com.intellij.psi.util.ProjectIconsAccessor"/>
     <projectService serviceImplementation="com.intellij.codeInsight.JavaProjectCodeInsightSettings"/>
     <projectService serviceImplementation="com.intellij.javadoc.JavadocGenerationManager"/>
     <projectService serviceInterface="com.intellij.testIntegration.TestFailedLineManager"
@@ -1034,6 +1035,7 @@
     <automaticRenamerFactory implementation="com.intellij.refactoring.rename.naming.AutomaticParametersRenamerFactory"/>
     <automaticRenamerFactory implementation="com.intellij.refactoring.rename.naming.AutomaticVariableRenamerFactory"/>
     <automaticRenamerFactory implementation="com.intellij.refactoring.rename.naming.AutomaticGetterSetterRenamerFactory"/>
+    <automaticRenamerFactory implementation="com.intellij.refactoring.rename.naming.JavaAutomaticTestMethodRenamerFactory"/>
     <renameInputValidator implementation="com.intellij.refactoring.rename.PsiPackageRenameValidator"/>
     <renameInputValidator implementation="com.intellij.refactoring.rename.JavaModuleRenameValidator"/>
     <renameInputValidator implementation="com.intellij.refactoring.rename.JavaTypeRenameValidator"/>
@@ -1077,6 +1079,7 @@
     <elementDescriptionProvider implementation="com.intellij.refactoring.util.JavaRefactoringElementDescriptionProvider"/>
     <refactoring.helper implementation="com.intellij.refactoring.OptimizeImportsRefactoringHelper"/>
     <refactoring.changeSignatureUsageProcessor implementation="com.intellij.refactoring.changeSignature.JavaChangeSignatureUsageProcessor" id="javaProcessor"/>
+    <changeSignature.usageProvider language="JAVA" implementationClass="com.intellij.refactoring.changeSignature.JavaChangeSignatureUsageProvider"/>
     <refactoring.introduceParameterMethodUsagesProcessor implementation="com.intellij.refactoring.introduceParameter.JavaIntroduceParameterMethodUsagesProcessor"/>
     <refactoring.overrideMethodProcessor implementation="com.intellij.refactoring.JavaOverrideMethodsProcessor"/>
     <safeDelete.importSearcher implementation="com.intellij.refactoring.safeDelete.JavaImportSearcher"/>
@@ -1330,7 +1333,7 @@
     <externalProjectDataService implementation="com.intellij.externalSystem.JavaProjectDataService"/>
     <externalProjectDataService implementation="com.intellij.externalSystem.JavaModuleDataService"/>
     <libraryDataServiceExtension implementation="com.intellij.externalSystem.JavaLibraryDataServiceExtension"/>
-    <postStartupActivity implementation="com.intellij.pom.java.AcceptedLanguageLevelsSettings$AcceptedLanguageLevelsSettingsStartupActivity"/>
+    <postStartupActivity implementation="com.intellij.pom.java.AcceptedLanguageLevelsSettingsStartupActivity"/>
     <projectModelModifier implementation="com.intellij.openapi.roots.impl.IdeaProjectModelModifier" order="last"/>
     <multiHostInjector implementation="com.intellij.psi.impl.source.tree.injected.JavaConcatenationToInjectorAdapter" order="first"/>
     <multiHostInjector implementation="com.intellij.psi.impl.source.tree.injected.JavadocInjector" />
@@ -1378,7 +1381,6 @@
     <fileType extensions="java" hashBangs="java" name="JAVA" language="JAVA" fieldName="INSTANCE" implementationClass="com.intellij.ide.highlighter.JavaFileType"/>
     <fileType extensions="class" name="CLASS" fieldName="INSTANCE" implementationClass="com.intellij.ide.highlighter.JavaClassFileType"/>
     <fileType extensions="snippet" name="JSHELL" language="JShellLanguage" fieldName="INSTANCE" implementationClass="com.intellij.ide.highlighter.JShellFileType"/>
-    <fileType name="Properties" fileNames=".sdkmanrc" />
     <customPropertyScopeProvider implementation="com.intellij.psi.impl.search.SimpleAccessorScopeProvider"/>
     <codeInsight.createFieldFromUsageHelper language="JAVA" implementationClass="com.intellij.codeInsight.daemon.impl.quickfix.JavaCreateFieldFromUsageHelper"/>
     <expressionConverter implementationClass="com.intellij.refactoring.introduceParameter.JavaExpressionConverter" language="JAVA"/>
@@ -1518,6 +1520,12 @@
                      implementationClass="com.intellij.codeInspection.TextBlockMigrationInspection"
                      bundle="messages.JavaBundle"
                      key="inspection.text.block.migration.name"/>
+    <localInspection groupPathKey="group.path.names.java.language.level.specific.issues.and.migration.aids" language="JAVA" shortName="StringTemplateMigration"
+                     groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.language.level.specific.issues.and.migration.aids21" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.codeInspection.StringTemplateMigrationInspection"
+                     bundle="messages.JavaBundle"
+                     key="inspection.string.template.migration.name"/>
     <localInspection groupPathKey="group.path.names.java.language.level.specific.issues.and.migration.aids" language="JAVA" shortName="TextBlockBackwardMigration"
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.language.level.specific.issues.and.migration.aids15" enabledByDefault="true" level="INFORMATION"
@@ -2384,6 +2392,7 @@
     <codeInsight.codeVisionSettingsPreviewLanguage modelId="inheritors" language="JAVA"/>
     <codeInsight.daemonBoundCodeVisionProvider implementation="com.intellij.codeInsight.daemon.problems.pass.ProjectProblemCodeVisionProvider"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.codeInsight.daemon.impl.JavaCodeVisionUsageCollector"/>
+    <backgroundPostStartupActivity implementation="com.intellij.codeInsight.daemon.impl.JavaCodeVisionMigrator" />
     <notificationGroup id="Clean artifact" displayType="BALLOON" hideFromSettings="true"/>
     <notificationGroup id="Compiler" displayType="NONE" bundle="messages.JavaCompilerBundle" key="notification.group.compiler"/>
     <notificationGroup id="Build Profiler" displayType="STICKY_BALLOON" hideFromSettings="true"/>
@@ -2439,7 +2448,14 @@
     <java.effectively.final.fixer implementation="com.intellij.codeInspection.streamMigration.ConvertToStreamFixer"/>
     <postStartupActivity implementation="com.intellij.ide.FileNotInSourceRootChecker"/>
 
-    <pluginSuggestionProvider implementation="com.intellij.java.frameworks.FrameworkSuggestionProvider"/>
+    <virtualFileCustomDataProvider implementation="com.intellij.openapi.roots.impl.JavaLangLevelVirtualFileCustomDataProvider"/>
+
+    <spellchecker.dictionary.checker implementation="com.intellij.java.frameworks.MavenDictionaryChecker"/>
+
+    <statistics.counterUsagesCollector implementationClass="com.intellij.ide.compilation.InvalidCompilationStatistics"/>
+    <notificationGroup id="Invalid Compilation Errors" displayType="STICKY_BALLOON" hideFromSettings="true" />
+
+    <iconMapper mappingFile="JavaUIIconsMapping.json"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains">
@@ -2471,6 +2487,7 @@
     <listener class="com.intellij.codeInsight.daemon.problems.pass.ProjectProblemFileFileEditorManagerListener"
               topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"/>
   </applicationListeners>
+
   <projectListeners>
     <listener class="com.intellij.jarRepository.RepositoryLibraryChangeListener"
               topic="com.intellij.platform.backend.workspace.WorkspaceModelChangeListener"/>
@@ -2478,5 +2495,8 @@
               topic="com.intellij.codeInsight.hints.InlayHintsSettings$SettingsListener"/>
     <listener class="com.intellij.codeInsight.daemon.problems.pass.ProjectProblemFileRefactoringEventListener"
               topic="com.intellij.refactoring.listeners.RefactoringEventListener"/>
+    <listener class="com.intellij.ide.compilation.InvalidCompilationListener"
+              topic="com.intellij.openapi.compiler.CompilationStatusListener"
+              activeInHeadlessMode="false"/>
   </projectListeners>
 </idea-plugin>

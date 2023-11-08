@@ -65,7 +65,7 @@ public final class ShowFilePathAction extends DumbAwareAction implements ActionR
   public void actionPerformed(@NotNull AnActionEvent e) {
     var file = getFile(e);
     if (file != null) {
-      var asyncContext = Utils.wrapToAsyncDataContext(e.getDataContext());
+      var asyncContext = Utils.createAsyncDataContext(e.getDataContext());
       show(file, popup -> popup.showInBestPositionFor(asyncContext));
     }
   }

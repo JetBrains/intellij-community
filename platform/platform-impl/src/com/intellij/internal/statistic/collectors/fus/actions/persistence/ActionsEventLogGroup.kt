@@ -1,10 +1,13 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.collectors.fus.actions.persistence
 
-import com.intellij.internal.statistic.collectors.fus.ClassNameRuleValidator
 import com.intellij.internal.statistic.eventLog.EventLogGroup
+import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.eventLog.events.*
+import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
+import com.intellij.openapi.util.text.StringUtil
+import org.jetbrains.annotations.NonNls
 
 object ActionsEventLogGroup : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
@@ -12,16 +15,36 @@ object ActionsEventLogGroup : CounterUsagesCollector() {
   const val ACTION_FINISHED_EVENT_ID: String = "action.finished"
 
   @JvmField
-  val GROUP: EventLogGroup = EventLogGroup("actions", 73)
+  val GROUP: EventLogGroup = EventLogGroup("actions", 74)
 
   @JvmField
-  val ACTION_ID: StringEventField = EventFields.StringValidatedByCustomRule("action_id", ActionRuleValidator::class.java)
+  val ACTION_ID: PrimitiveEventField<String?> = ActioIdEventField("action_id")
+
+  @Deprecated("Introduced only for MLSE. Do not use.",
+              ReplaceWith("com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsEventLogGroup.ACTION_ID"))
+  @Suppress("FunctionName")
+  @JvmStatic
+  fun ActioID(@NonNls name: String): PrimitiveEventField<String?> = ActioIdEventField(name)
+
+  private data class ActioIdEventField(override val name: String) : PrimitiveEventField<String?>() {
+
+    override fun addData(fuData: FeatureUsageData, value: String?) {
+      if (value == null) {
+        return
+      }
+
+      fuData.addData(name, StringUtil.substringBeforeLast(value, "$\$Lambda$", true))
+    }
+
+    override val validationRule: List<String>
+      get() = listOf("{util#${CustomValidationRule.getCustomValidationRuleInstance(ActionRuleValidator::class.java).ruleId}}")
+  }
 
   @JvmField
-  val ACTION_CLASS: StringEventField = EventFields.StringValidatedByCustomRule("class", ClassNameRuleValidator::class.java)
+  val ACTION_CLASS: EventField<Class<*>?> = EventFields.Class("class")
 
   @JvmField
-  val ACTION_PARENT: StringEventField = EventFields.StringValidatedByCustomRule("parent", ClassNameRuleValidator::class.java)
+  val ACTION_PARENT: EventField<Class<*>?> = EventFields.Class("parent")
 
   @JvmField
   val TOGGLE_ACTION: BooleanEventField = EventFields.Boolean("enable")
@@ -87,6 +110,6 @@ object ActionsEventLogGroup : CounterUsagesCollector() {
   @JvmField
   val CUSTOM_ACTION_INVOKED: EventId2<String?, FusInputEvent?> = GROUP.registerEvent(
     "custom.action.invoked",
-    EventFields.StringValidatedByCustomRule("action_id", ActionRuleValidator::class.java),
+    ACTION_ID,
     EventFields.InputEvent)
 }

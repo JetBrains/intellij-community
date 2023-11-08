@@ -27,6 +27,8 @@ import java.util.concurrent.ConcurrentHashMap;
 @ApiStatus.Internal
 public final class ProgressSuspender implements AutoCloseable {
   private static final Key<ProgressSuspender> PROGRESS_SUSPENDER = Key.create("PROGRESS_SUSPENDER");
+
+  @Topic.AppLevel
   public static final Topic<SuspenderListener> TOPIC = new Topic<>("ProgressSuspender", SuspenderListener.class, Topic.BroadcastDirection.NONE);
 
   private final Object myLock = new Object();

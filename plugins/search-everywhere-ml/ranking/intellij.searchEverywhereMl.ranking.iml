@@ -42,19 +42,19 @@
     </orderEntry>
     <orderEntry type="module-library">
       <library name="find-action-model-experimental" type="repository">
-        <properties maven-id="org.jetbrains.intellij.deps.searchEverywhere.model:find-action-model:231.1.1">
+        <properties maven-id="org.jetbrains.intellij.deps.searchEverywhere.model:find-action-model:233.0.1">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-action-model/231.1.1/find-action-model-231.1.1.jar">
-              <sha256sum>7411cc9090801d3e8684ca170846de4aa60ce27da70d1b0af2c23e7d3efb1f05</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-action-model/233.0.1/find-action-model-233.0.1.jar">
+              <sha256sum>43cb632e587e80524b0379d337db0980cab595683b17ee03ebe95ed4b3fe8687</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-action-model/231.1.1/find-action-model-231.1.1.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-action-model/233.0.1/find-action-model-233.0.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-action-model/231.1.1/find-action-model-231.1.1-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-action-model/233.0.1/find-action-model-233.0.1-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
@@ -78,19 +78,19 @@
     </orderEntry>
     <orderEntry type="module-library">
       <library name="find-file-model-experimental" type="repository">
-        <properties maven-id="org.jetbrains.intellij.deps.searchEverywhere.model:find-file-model:233.0.1">
+        <properties maven-id="org.jetbrains.intellij.deps.searchEverywhere.model:find-file-model:233.1.1">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-file-model/233.0.1/find-file-model-233.0.1.jar">
-              <sha256sum>2420a0f23cb99d1e540750223e3512e027d5acbc629a1312f9b40df6466c6ecb</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-file-model/233.1.1/find-file-model-233.1.1.jar">
+              <sha256sum>f515467efb76d7f3d14a602c9b08c68395e3f2b906a635c0e7644c36b646feff</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-file-model/233.0.1/find-file-model-233.0.1.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-file-model/233.1.1/find-file-model-233.1.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-file-model/233.0.1/find-file-model-233.0.1-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-file-model/233.1.1/find-file-model-233.1.1-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
@@ -114,19 +114,19 @@
     </orderEntry>
     <orderEntry type="module-library">
       <library name="find-classes-model-experimental" type="repository">
-        <properties maven-id="org.jetbrains.intellij.deps.searchEverywhere.model:find-classes-model:231.4.1">
+        <properties maven-id="org.jetbrains.intellij.deps.searchEverywhere.model:find-classes-model:233.1.1">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-classes-model/231.4.1/find-classes-model-231.4.1.jar">
-              <sha256sum>a2ca8c6aeb54677fee7375083901ad157e35db98e81616ceef3049afc1775682</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-classes-model/233.1.1/find-classes-model-233.1.1.jar">
+              <sha256sum>3856658cb0812f1ba2c00260631fb80270368f426ff9adb2bbc3bd738069eaed</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-classes-model/231.4.1/find-classes-model-231.4.1.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-classes-model/233.1.1/find-classes-model-233.1.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-classes-model/231.4.1/find-classes-model-231.4.1-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-classes-model/233.1.1/find-classes-model-233.1.1-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

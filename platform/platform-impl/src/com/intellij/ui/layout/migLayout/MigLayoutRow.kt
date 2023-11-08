@@ -11,7 +11,6 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.SeparatorComponent
 import com.intellij.ui.TitledSeparator
 import com.intellij.ui.UIBundle
-import com.intellij.ui.components.JBRadioButton
 import com.intellij.ui.layout.*
 import com.intellij.util.SmartList
 import net.miginfocom.layout.*
@@ -21,7 +20,6 @@ import javax.swing.*
 import javax.swing.border.LineBorder
 import javax.swing.text.JTextComponent
 import kotlin.math.max
-import kotlin.reflect.KMutableProperty0
 
 @ApiStatus.ScheduledForRemoval
 @Deprecated("Mig Layout is going to be removed, IDEA-306719")
@@ -428,21 +426,6 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
     val row = createChildRow(label = null, noGrid = true)
     row.addComponent(component, cc)
     return row
-  }
-
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2")
-  @ApiStatus.Internal
-  override fun radioButton(text: String, comment: String?): CellBuilder<JBRadioButton> {
-    val result = super.radioButton(text, comment)
-    attachSubRowsEnabled(result.component)
-    return result
-  }
-
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2")
-  override fun radioButton(text: String, prop: KMutableProperty0<Boolean>, comment: String?): CellBuilder<JBRadioButton> {
-    return super.radioButton(text, prop, comment).also { attachSubRowsEnabled(it.component) }
   }
 
   override fun onGlobalApply(callback: () -> Unit): Row {

@@ -62,25 +62,19 @@ public final class GitBranchPopupActions {
 
   private GitBranchPopupActions() { }
 
-  @NlsSafe
-  @NotNull
-  public static String getCurrentBranchFullPresentation(@NotNull Project project,
-                                                        @NotNull Collection<? extends GitRepository> repositories) {
+  public static @NlsSafe @NotNull String getCurrentBranchFullPresentation(@NotNull Project project,
+                                                                          @NotNull Collection<? extends GitRepository> repositories) {
     return getCurrentBranchPresentation(project, repositories, false);
   }
 
-  @NlsSafe
-  @NotNull
-  public static String getCurrentBranchTruncatedPresentation(@NotNull Project project,
-                                                             @NotNull Collection<? extends GitRepository> repositories) {
+  public static @NlsSafe @NotNull String getCurrentBranchTruncatedPresentation(@NotNull Project project,
+                                                                               @NotNull Collection<? extends GitRepository> repositories) {
     return getCurrentBranchPresentation(project, repositories, true);
   }
 
-  @Nls
-  @NotNull
-  private static String getCurrentBranchPresentation(@NotNull Project project,
-                                                     @NotNull Collection<? extends GitRepository> repositories,
-                                                     boolean truncateBranchName) {
+  private static @Nls @NotNull String getCurrentBranchPresentation(@NotNull Project project,
+                                                                   @NotNull Collection<? extends GitRepository> repositories,
+                                                                   boolean truncateBranchName) {
     Set<String> currentBranches = map2SetNotNull(repositories,
                                                  repo -> repo.isFresh() ? repo.getCurrentBranchName() :
                                                          notNull(repo.getCurrentBranchName(),
@@ -95,37 +89,27 @@ public final class GitBranchPopupActions {
     return GitBundle.message("branches.current.branch");
   }
 
-  @NlsSafe
-  @NotNull
-  public static String getSelectedBranchFullPresentation(@NlsSafe @NotNull String branchName) {
+  public static @NlsSafe @NotNull String getSelectedBranchFullPresentation(@NlsSafe @NotNull String branchName) {
     return wrapWithQuotes(branchName);
   }
 
-  @NlsSafe
-  @NotNull
-  private static String getCurrentBranchTruncatedName(@NlsSafe @NotNull String branchName,
-                                                      @NotNull Project project) {
+  private static @NlsSafe @NotNull String getCurrentBranchTruncatedName(@NlsSafe @NotNull String branchName,
+                                                                        @NotNull Project project) {
     return wrapWithQuotes(StringUtil.escapeMnemonics(truncateBranchName(branchName, project)));
   }
 
-  @NlsSafe
-  @NotNull
-  public static String getSelectedBranchTruncatedPresentation(@NotNull Project project,
-                                                              @NlsSafe @NotNull String branchName) {
+  public static @NlsSafe @NotNull String getSelectedBranchTruncatedPresentation(@NotNull Project project,
+                                                                                @NlsSafe @NotNull String branchName) {
     return wrapWithQuotes(StringUtil.escapeMnemonics(truncateBranchName(branchName, project)));
   }
 
-  @NlsSafe
-  @NotNull
-  public static String truncateBranchName(@NotNull @NlsSafe String branchName, @NotNull Project project) {
+  public static @NlsSafe @NotNull String truncateBranchName(@NotNull @NlsSafe String branchName, @NotNull Project project) {
     return truncateBranchName(project, branchName,
                               MAX_BRANCH_NAME_LENGTH, BRANCH_NAME_SUFFIX_LENGTH, BRANCH_NAME_LENGTH_DELTA);
   }
 
-  @NlsSafe
-  @NotNull
-  public static String truncateBranchName(@NotNull Project project, @NotNull @NlsSafe String branchName,
-                                          int maxBranchNameLength, int suffixLength, int delta) {
+  public static @NlsSafe @NotNull String truncateBranchName(@NotNull Project project, @NotNull @NlsSafe String branchName,
+                                                            int maxBranchNameLength, int suffixLength, int delta) {
     int branchNameLength = branchName.length();
 
     if (branchNameLength <= maxBranchNameLength + delta) {
@@ -149,12 +133,10 @@ public final class GitBranchPopupActions {
     return StringUtil.shortenTextWithEllipsis(branchName, affectedMaxBranchNameLength, suffixLength, true);
   }
 
-  @NlsSafe
-  @NotNull
-  private static String truncateAndSaveIssueId(@NotNull TextRange issueIdRange,
-                                               @NotNull String branchName,
-                                               int maxBranchNameLength,
-                                               int suffixLength, int delta) {
+  private static @NlsSafe @NotNull String truncateAndSaveIssueId(@NotNull TextRange issueIdRange,
+                                                                 @NotNull String branchName,
+                                                                 int maxBranchNameLength,
+                                                                 int suffixLength, int delta) {
     String truncatedByDefault = StringUtil.shortenTextWithEllipsis(branchName,
                                                                    maxBranchNameLength,
                                                                    suffixLength, true);
@@ -193,9 +175,7 @@ public final class GitBranchPopupActions {
     }
   }
 
-  @NlsSafe
-  @NotNull
-  private static String wrapWithQuotes(@NlsSafe @NotNull String branchName) {
+  private static @NlsSafe @NotNull String wrapWithQuotes(@NlsSafe @NotNull String branchName) {
     return "'" + branchName + "'";
   }
 
@@ -234,9 +214,9 @@ public final class GitBranchPopupActions {
     protected final Project myProject;
     protected final List<GitRepository> myRepositories;
     protected final @NlsSafe String myBranchName;
-    @NotNull private final GitRepository mySelectedRepository;
+    private final @NotNull GitRepository mySelectedRepository;
     private final GitBranchManager myGitBranchManager;
-    @NotNull private final GitBranchIncomingOutgoingManager myIncomingOutgoingManager;
+    private final @NotNull GitBranchIncomingOutgoingManager myIncomingOutgoingManager;
 
     public LocalBranchActions(@NotNull Project project,
                               @NotNull List<? extends GitRepository> repositories,
@@ -259,8 +239,7 @@ public final class GitBranchPopupActions {
       return myRepositories;
     }
 
-    @NotNull
-    public String getBranchName() {
+    public @NotNull String getBranchName() {
       return myBranchName;
     }
 
@@ -286,8 +265,7 @@ public final class GitBranchPopupActions {
     }
 
     @Override
-    @Nullable
-    public String getInfoText() {
+    public @Nullable String getInfoText() {
       return new GitMultiRootBranchConfig(myRepositories).getTrackedBranch(myBranchName);
     }
 
@@ -297,8 +275,7 @@ public final class GitBranchPopupActions {
       myGitBranchManager.setFavorite(LOCAL, chooseRepo(), myBranchName, isFavorite());
     }
 
-    @Nullable
-    private GitRepository chooseRepo() {
+    private @Nullable GitRepository chooseRepo() {
       return myRepositories.size() > 1 ? null : mySelectedRepository;
     }
 
@@ -312,9 +289,7 @@ public final class GitBranchPopupActions {
       return myIncomingOutgoingManager.hasOutgoingFor(chooseRepo(), myBranchName);
     }
 
-    @Nls(capitalization = Nls.Capitalization.Sentence)
-    @Nullable
-    public static String constructIncomingOutgoingTooltip(boolean incoming, boolean outgoing) {
+    public static @Nls(capitalization = Nls.Capitalization.Sentence) @Nullable String constructIncomingOutgoingTooltip(boolean incoming, boolean outgoing) {
       if (!incoming && !outgoing) return null;
 
       if (incoming && outgoing) {
@@ -398,17 +373,16 @@ public final class GitBranchPopupActions {
         new VcsPushDialog(myProject, myRepositories, myRepositories, null, GitPushSource.create(localBranch)).show();
       }
 
-      @Nullable
       @Override
-      public Icon getRightIcon() {
+      public @Nullable Icon getRightIcon() {
         return myHasCommitsToPush ? DvcsImplIcons.Outgoing : null;
       }
     }
 
     public static class RenameBranchAction extends DumbAwareAction {
-      @NotNull private final Project myProject;
-      @NotNull private final List<? extends GitRepository> myRepositories;
-      @NotNull private final String myCurrentBranchName;
+      private final @NotNull Project myProject;
+      private final @NotNull List<? extends GitRepository> myRepositories;
+      private final @NotNull String myCurrentBranchName;
 
       RenameBranchAction(@NotNull Project project, @NotNull List<? extends GitRepository> repositories, @NotNull String currentBranchName) {
         super(ActionsBundle.messagePointer("action.RenameAction.text"));
@@ -500,8 +474,8 @@ public final class GitBranchPopupActions {
     private final Project myProject;
     private final List<? extends GitRepository> myRepositories;
     private final @NlsSafe String myBranchName;
-    @NotNull private final GitRepository mySelectedRepository;
-    @NotNull private final GitBranchManager myGitBranchManager;
+    private final @NotNull GitRepository mySelectedRepository;
+    private final @NotNull GitBranchManager myGitBranchManager;
 
     public RemoteBranchActions(@NotNull Project project,
                                @NotNull List<? extends GitRepository> repositories,
@@ -567,15 +541,15 @@ public final class GitBranchPopupActions {
         GitRepository repository = repositories.get(0);
         GitRemoteBranch remoteBranch = Objects.requireNonNull(repository.getBranches().findRemoteBranch(remoteBranchName));
         String suggestedLocalName = remoteBranch.getNameForRemoteOperations();
-        checkoutRemoteBranch(project, repositories, remoteBranchName, suggestedLocalName);
+        checkoutRemoteBranch(project, repositories, remoteBranchName, suggestedLocalName, null);
       }
 
       @RequiresEdt
       public static void checkoutRemoteBranch(@NotNull Project project, @NotNull List<? extends GitRepository> repositories,
-                                              @NotNull String remoteBranchName, @NotNull String suggestedLocalName) {
+                                              @NotNull String remoteBranchName, @NotNull String suggestedLocalName, @Nullable Runnable callInAwtLater) {
         // can have remote conflict if git-svn is used  - suggested local name will be equal to selected remote
         if (BRANCH_NAME_HASHING_STRATEGY.equals(remoteBranchName, suggestedLocalName)) {
-          askNewBranchNameAndCheckout(project, repositories, remoteBranchName, suggestedLocalName);
+          askNewBranchNameAndCheckout(project, repositories, remoteBranchName, suggestedLocalName, callInAwtLater);
           return;
         }
 
@@ -585,16 +559,17 @@ public final class GitBranchPopupActions {
         });
 
         if (hasTrackingConflicts(conflictingLocalBranches, remoteBranchName)) {
-          askNewBranchNameAndCheckout(project, repositories, remoteBranchName, suggestedLocalName);
+          askNewBranchNameAndCheckout(project, repositories, remoteBranchName, suggestedLocalName, callInAwtLater);
           return;
         }
         new GitBranchCheckoutOperation(project, repositories)
-          .perform(remoteBranchName, new GitNewBranchOptions(suggestedLocalName, true, true));
+          .perform(remoteBranchName, new GitNewBranchOptions(suggestedLocalName, true, true), callInAwtLater);
       }
 
       @RequiresEdt
       private static void askNewBranchNameAndCheckout(@NotNull Project project, @NotNull List<? extends GitRepository> repositories,
-                                                      @NotNull String remoteBranchName, @NotNull String suggestedLocalName) {
+                                                      @NotNull String remoteBranchName, @NotNull String suggestedLocalName,
+                                                      @Nullable Runnable callInAwtLater) {
         //do not allow name conflicts
         GitNewBranchOptions options =
           new GitNewBranchDialog(project, repositories, GitBundle.message("branches.checkout.s", remoteBranchName), suggestedLocalName,
@@ -602,7 +577,7 @@ public final class GitBranchPopupActions {
             .showAndGetOptions();
         if (options == null) return;
         GitBrancher brancher = GitBrancher.getInstance(project);
-        brancher.checkoutNewBranchStartingFrom(options.getName(), remoteBranchName, options.shouldReset(), repositories, null);
+        brancher.checkoutNewBranchStartingFrom(options.getName(), remoteBranchName, options.shouldReset(), repositories, callInAwtLater);
       }
     }
 
@@ -640,8 +615,7 @@ public final class GitBranchPopupActions {
         workflow.execute(remoteBranch.getNameForLocalOperations(), newBranchOptions);
       }
 
-      @Nullable
-      private GitNewBranchOptions askBranchName(@NotNull String suggestedLocalName) {
+      private @Nullable GitNewBranchOptions askBranchName(@NotNull String suggestedLocalName) {
         return new GitNewBranchDialog(myProject, myRepositories, GitBundle.message("branches.checkout.s", myBranchName), suggestedLocalName,
                                       false, true)
           .showAndGetOptions();
@@ -1055,9 +1029,8 @@ public final class GitBranchPopupActions {
       updateBranches(myProject, myRepositories, myBranchNameList);
     }
 
-    @Nullable
     @Override
-    public Icon getRightIcon() {
+    public @Nullable Icon getRightIcon() {
       return myHasIncoming ? DvcsImplIcons.Incoming : null;
     }
   }

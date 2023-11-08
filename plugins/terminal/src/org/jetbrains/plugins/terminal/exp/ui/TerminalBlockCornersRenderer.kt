@@ -4,9 +4,13 @@ package org.jetbrains.plugins.terminal.exp.ui
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.markup.CustomHighlighterRenderer
 import com.intellij.openapi.editor.markup.RangeHighlighter
+import com.intellij.util.ui.JBUI
 import org.jetbrains.plugins.terminal.exp.TerminalUi
 import org.jetbrains.plugins.terminal.exp.TerminalUiUtils.toFloatAndScale
-import java.awt.*
+import java.awt.Color
+import java.awt.Graphics
+import java.awt.Graphics2D
+import java.awt.RenderingHints
 import java.awt.geom.Path2D
 import java.awt.geom.Rectangle2D
 
@@ -16,18 +20,32 @@ import java.awt.geom.Rectangle2D
  * 2. Bottom area of the block with a rounded corner on the right
  * 3. Gap between the blocks
  *
- * Paints the linear gradient from the left to right if [backgroundEnd] is specified.
- * Also, can paint the border if [strokeBackground] is specified and [strokeWidth] is greater than 0.
  * It is painted over the selection to override it, so the selection will be painted only in the text area.
  */
-class TerminalBlockCornersRenderer(private val backgroundStart: Color,
-                                   private val backgroundEnd: Color? = null,
-                                   private val strokeBackground: Color? = null,
-                                   private val strokeWidth: Int = 0) : CustomHighlighterRenderer {
+class TerminalBlockCornersRenderer private constructor(
+  private val background: Color?,
+  private val gradientCache: GradientTextureCache?,
+  private val strokeBackground: Color? = null,
+  private val strokeWidth: Int = 0
+) : CustomHighlighterRenderer {
+  /** Paints solid background, but also can paint the border if [strokeBackground] is specified and [strokeWidth] is greater than 0 */
+  constructor(background: Color, strokeBackground: Color? = null, strokeWidth: Int = 0) : this(
+    background = background,
+    gradientCache = null,
+    strokeBackground = strokeBackground,
+    strokeWidth = strokeWidth
+  )
+
+  /** Paints the linear gradient from left to right */
+  constructor(gradientCache: GradientTextureCache) : this(background = null, gradientCache = gradientCache)
+
+
   override fun paint(editor: Editor, highlighter: RangeHighlighter, g: Graphics) {
     val topIns = toFloatAndScale(TerminalUi.blockTopInset)
     val bottomIns = toFloatAndScale(TerminalUi.blockBottomInset)
-    val cornerToBlock = toFloatAndScale(TerminalUi.cornerToBlockInset)
+    // it is used to calculate the width, so it should not contain the fractional part
+    // because the width will be used to check that cached gradient is still valid
+    val cornerToBlock = JBUI.scale(TerminalUi.cornerToBlockInset).toFloat()
     val gap = toFloatAndScale(TerminalUi.blocksGap)
     val arc = toFloatAndScale(TerminalUi.blockArc)
 
@@ -94,11 +112,7 @@ class TerminalBlockCornersRenderer(private val backgroundStart: Color,
       g2d.fill(topRect)
       g2d.fill(bottomRect)
 
-      val paint = if (backgroundEnd != null) {
-        GradientPaint(0f, topY, backgroundStart, width, topY, backgroundEnd)
-      }
-      else backgroundStart
-      g2d.paint = paint
+      g2d.paint = gradientCache?.getTexture(g2d, width.toInt()) ?: background
       // paint the top and bottom parts of the block with the rounded corner on the right
       g2d.fill(topCornerPath)
       g2d.fill(bottomCornerPath)

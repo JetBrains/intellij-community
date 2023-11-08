@@ -48,7 +48,7 @@ import org.jetbrains.annotations.ApiStatus.Experimental
  * ```
  * fun acceptInput(file: IndexedFile): Boolean {
  *   val res = hintSomethingMethod(...)
- *   return if (res == ThreeState.UNSURE) whenAllHintsUnsure(file) else fromBoolean(res)
+ *   return if (res == ThreeState.UNSURE) whenAllHintsUnsure(file) else res.toBoolean()
  * }
  * ```
  *

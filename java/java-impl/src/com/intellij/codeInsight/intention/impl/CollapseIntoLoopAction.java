@@ -36,6 +36,7 @@ public class CollapseIntoLoopAction implements ModCommandAction {
 
   @Override
   public @Nullable Presentation getPresentation(@NotNull ActionContext context) {
+    if (!BaseIntentionAction.canModify(context.file())) return null;
     return LoopModel.from(context) != null ? Presentation.of(getFamilyName()) : null;
   }
 

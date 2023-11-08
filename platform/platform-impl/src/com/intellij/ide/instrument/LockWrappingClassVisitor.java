@@ -1,8 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.instrument;
 
-import com.intellij.idea.StartupUtil;
 import com.intellij.openapi.application.ex.ApplicationEx;
+import com.intellij.platform.ide.bootstrap.StartupUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.org.objectweb.asm.*;

@@ -50,9 +50,9 @@ public final class WebpImageReaderSpi extends ImageReaderSpi {
   WebpImageReaderSpi() {
     vendorName = WebpMetadata.WEBP_VENDOR;
     version = WebpNativeLibHelper.getDecoderVersion();
-    suffixes = WebpMetadata.WEBP_SUFFIXES;
-    names = WebpMetadata.WEBP_FORMAT_NAMES;
-    MIMETypes = WebpMetadata.WEBP_MIME_TYPES;
+    suffixes = WebpMetadata.Companion.getWEBP_SUFFIXES();
+    names = WebpMetadata.Companion.getWEBP_FORMAT_NAMES();
+    MIMETypes = WebpMetadata.Companion.getWEBP_MIME_TYPES();
     pluginClassName = WebpReader.class.getName();
     inputTypes = new Class<?>[]{ImageInputStream.class};
   }
@@ -206,9 +206,7 @@ public final class WebpImageReaderSpi extends ImageReaderSpi {
     @Override
     public @NotNull BufferedImage read(int imageIndex, ImageReadParam param) throws IOException {
       loadInfoIfNeeded();
-      if (myError == 0) {
-        throw new IOException(UNABLE_TO_READ_WEBP_IMAGE);
-      }
+      if (myError == 0) throw new IOException(UNABLE_TO_READ_WEBP_IMAGE);
       assert myInputBytes != null;
       byte[] argb = libwebp.WebPDecodeARGB(myInputBytes, myInputBytes.length, myWidthOut, myHeightOut);
       @SuppressWarnings("UndesirableClassUsage")
@@ -216,7 +214,7 @@ public final class WebpImageReaderSpi extends ImageReaderSpi {
       // Copy the bytes read above to the image's data buffer.
       final int[] a = ((DataBufferInt) bi.getRaster().getDataBuffer()).getData();
       IntBuffer intBuf = ByteBuffer.wrap(argb).asIntBuffer();
-      assert a.length == intBuf.remaining();
+      if (a.length != intBuf.remaining()) throw new IOException(UNABLE_TO_READ_WEBP_IMAGE);
       intBuf.get(a);
       return bi;
     }

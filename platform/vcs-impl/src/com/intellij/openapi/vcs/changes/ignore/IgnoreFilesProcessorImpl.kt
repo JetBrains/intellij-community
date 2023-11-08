@@ -30,7 +30,7 @@ private val LOG = logger<IgnoreFilesProcessorImpl>()
 /**
  * Automatically generate or update .ignore files basing on [IgnoredFileProvider] extension point.
  */
-class IgnoreFilesProcessorImpl(project: Project, private val vcs: AbstractVcs, private val parentDisposable: Disposable)
+class IgnoreFilesProcessorImpl(project: Project, private val parentDisposable: Disposable, private val vcs: AbstractVcs)
   : FilesProcessorWithNotificationImpl(project, parentDisposable), AsyncVfsEventsListener, ChangeListListener {
 
   private val UNPROCESSED_FILES_LOCK = ReentrantReadWriteLock()
@@ -112,6 +112,7 @@ class IgnoreFilesProcessorImpl(project: Project, private val vcs: AbstractVcs, p
   }
 
   private fun writeIgnores(project: Project, potentiallyIgnoredFiles: Collection<VirtualFile>) {
+    if (project.isDisposed) return
     if (potentiallyIgnoredFiles.isEmpty()) return
 
     LOG.debug("Try to write potential ignored files", potentiallyIgnoredFiles)
@@ -158,9 +159,10 @@ class IgnoreFilesProcessorImpl(project: Project, private val vcs: AbstractVcs, p
       if (storeDir != null
           && ignoredContentProvider.supportIgnoreFileNotInVcsRoot()
           && file.underProjectStoreDir(storeDir)) {
-        if (ignoredContentProvider.canCreateIgnoreFileInStateStoreDir()){
+        if (ignoredContentProvider.canCreateIgnoreFileInStateStoreDir()) {
           storeDir
-        } else return null
+        }
+        else return null
       }
       else VcsUtil.getVcsRootFor(project, file) ?: return null
 

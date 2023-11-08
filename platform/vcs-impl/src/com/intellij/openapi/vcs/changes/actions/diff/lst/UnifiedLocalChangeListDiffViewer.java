@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.actions.diff.lst;
 
+import com.intellij.codeWithMe.ClientId;
 import com.intellij.diff.DiffContext;
 import com.intellij.diff.fragments.LineFragment;
 import com.intellij.diff.tools.fragmented.*;
@@ -11,11 +12,14 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
+import com.intellij.openapi.editor.markup.GutterIconRenderer;
+import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.util.EmptyRunnable;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vcs.changes.actions.diff.lst.LocalTrackerDiffUtil.LineFragmentData;
 import com.intellij.openapi.vcs.changes.actions.diff.lst.LocalTrackerDiffUtil.SelectedTrackerLine;
 import com.intellij.openapi.vcs.changes.actions.diff.lst.LocalTrackerDiffUtil.ToggleableLineRange;
@@ -39,6 +43,7 @@ import java.util.Collections;
 import java.util.List;
 
 import static com.intellij.openapi.vcs.ex.DocumentTrackerKt.countAffectedVisibleChanges;
+import static com.intellij.openapi.vcs.ex.LineStatusClientIdTrackerKt.createClientIdGutterIconRenderer;
 
 public class UnifiedLocalChangeListDiffViewer extends UnifiedDiffViewer {
   @NotNull private final LocalChangeListDiffRequest myLocalRequest;
@@ -49,7 +54,7 @@ public class UnifiedLocalChangeListDiffViewer extends UnifiedDiffViewer {
   private final LocalTrackerDiffUtil.ExcludeAllCheckboxPanel myExcludeAllCheckboxPanel;
   private final GutterCheckboxMouseMotionListener myGutterCheckboxMouseMotionListener;
 
-  private final @NotNull List<RangeHighlighter> myToggleExclusionsHighlighters = new ArrayList<>();
+  private final @NotNull List<RangeHighlighter> myHighlighters = new ArrayList<>();
 
   public UnifiedLocalChangeListDiffViewer(@NotNull DiffContext context,
                                           @NotNull LocalChangeListDiffRequest localRequest) {
@@ -259,23 +264,30 @@ public class UnifiedLocalChangeListDiffViewer extends UnifiedDiffViewer {
   protected void clearDiffPresentation() {
     super.clearDiffPresentation();
 
-    for (RangeHighlighter operation : myToggleExclusionsHighlighters) {
+    for (RangeHighlighter operation : myHighlighters) {
       operation.dispose();
     }
-    myToggleExclusionsHighlighters.clear();
+    myHighlighters.clear();
 
     myGutterCheckboxMouseMotionListener.destroyHoverHighlighter();
   }
 
   private @NotNull Runnable applyGutterOperations(@NotNull UnifiedFragmentBuilder builder,
                                                   @NotNull List<ToggleableLineRange> toggleableLineRanges) {
-    if (!myAllowExcludeChangesFromCommit) return EmptyRunnable.INSTANCE;
-
     return () -> {
-      for (ToggleableLineRange toggleableLineRange : toggleableLineRanges) {
-        myToggleExclusionsHighlighters.addAll(createGutterToggleRenderers(builder, toggleableLineRange));
+      if (myAllowExcludeChangesFromCommit) {
+        for (ToggleableLineRange toggleableLineRange : toggleableLineRanges) {
+          myHighlighters.addAll(createGutterToggleRenderers(builder, toggleableLineRange));
+        }
       }
-      getEditor().getGutterComponentEx().revalidateMarkup();
+
+      for (ToggleableLineRange range : toggleableLineRanges) {
+        ContainerUtil.addIfNotNull(myHighlighters, createClientIdHighlighter(builder, range));
+      }
+
+      if (!myHighlighters.isEmpty()) {
+        getEditor().getGutterComponentEx().revalidateMarkup();
+      }
     };
   }
 
@@ -353,6 +365,37 @@ public class UnifiedLocalChangeListDiffViewer extends UnifiedDiffViewer {
     return LocalTrackerDiffUtil.createToggleAreaThumb(getEditor(), line1, line2, () -> {
       LocalTrackerDiffUtil.toggleBlockExclusion(myTrackerActionProvider, lineRange.start1, isExcludedFromCommit);
     });
+  }
+
+  private @Nullable RangeHighlighter createClientIdHighlighter(@NotNull UnifiedFragmentBuilder builder,
+                                                               @NotNull ToggleableLineRange range) {
+    List<ClientId> clientIds = range.getFragmentData().getClientIds();
+    if (clientIds.isEmpty()) return null;
+
+    GutterIconRenderer iconRenderer = createClientIdGutterIconRenderer(myLocalRequest.getProject(), clientIds);
+    if (iconRenderer == null) return null;
+
+    Range lineRange = range.getLineRange();
+    int line1 = builder.getConvertor1().convertApproximateInv(lineRange.start1);
+    int line2 = builder.getConvertor2().convertApproximateInv(lineRange.end2);
+    if (line1 < 0 || line2 < 0 || line2 <= line1 || line2 > DiffUtil.getLineCount(myDocument)) {
+      LOG.warn("Failed to show toggle area thumb");
+      return null;
+    }
+
+    EditorEx editor = getEditor();
+    TextRange textRange = DiffUtil.getLinesRange(editor.getDocument(), line1, line2);
+    return editor.getMarkupModel()
+      .addRangeHighlighterAndChangeAttributes(null,
+                                              textRange.getStartOffset(), textRange.getEndOffset(),
+                                              DiffDrawUtil.LST_LINE_MARKER_LAYER,
+                                              HighlighterTargetArea.LINES_IN_RANGE,
+                                              false, rangeHighlighterEx -> {
+          rangeHighlighterEx.setGreedyToLeft(true);
+          rangeHighlighterEx.setGreedyToRight(true);
+
+          rangeHighlighterEx.setGutterIconRenderer(iconRenderer);
+        });
   }
 
   private static final class MyUnifiedDiffChange extends UnifiedDiffChange {

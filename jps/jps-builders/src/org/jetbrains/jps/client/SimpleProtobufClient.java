@@ -29,9 +29,9 @@ public final class SimpleProtobufClient<T extends ProtobufResponseHandler> {
   }
 
   private final AtomicReference<State> myState = new AtomicReference<>(State.DISCONNECTED);
-  protected final ChannelInitializer myChannelInitializer;
-  protected final EventLoopGroup myEventLoopGroup;
-  protected volatile ChannelFuture myConnectFuture;
+  private final ChannelInitializer myChannelInitializer;
+  private final EventLoopGroup myEventLoopGroup;
+  private volatile ChannelFuture myConnectFuture;
   private final ProtobufClientMessageHandler<T> myMessageHandler;
 
   public SimpleProtobufClient(final MessageLite msgDefaultInstance, final Executor asyncExec, final UUIDGetter uuidGetter) {
@@ -49,13 +49,13 @@ public final class SimpleProtobufClient<T extends ProtobufResponseHandler> {
     };
   }
 
-  public final void checkConnected() throws Exception {
+  public void checkConnected() throws Exception {
     if (myState.get() != State.CONNECTED) {
       throw new Exception("Client not connected");
     }
   }
 
-  public final boolean connect(final String host, final int port) {
+  public boolean connect(final String host, final int port) {
     if (myState.compareAndSet(State.DISCONNECTED, State.CONNECTING)) {
       boolean success = false;
 
@@ -83,14 +83,14 @@ public final class SimpleProtobufClient<T extends ProtobufResponseHandler> {
     return true;
   }
 
-  protected void onConnect() {
+  private void onConnect() {
   }
-  protected void beforeDisconnect() {
+  private void beforeDisconnect() {
   }
-  protected void onDisconnect() {
+  private void onDisconnect() {
   }
 
-  public final void disconnect() {
+  public void disconnect() {
     if (myState.compareAndSet(State.CONNECTED, State.DISCONNECTING)) {
       try {
         final ChannelFuture future = myConnectFuture;
@@ -118,11 +118,14 @@ public final class SimpleProtobufClient<T extends ProtobufResponseHandler> {
     }
   }
 
-  public final boolean isConnected() {
+  public boolean isConnected() {
     return myState.get() == State.CONNECTED;
   }
 
-  public final RequestFuture<T> sendMessage(final UUID messageId, MessageLite message, final @Nullable T responseHandler, final @Nullable RequestFuture.CancelAction<T> cancelAction) {
+  public RequestFuture<T> sendMessage(final UUID messageId,
+                                      MessageLite message,
+                                      final @Nullable T responseHandler,
+                                      final @Nullable RequestFuture.CancelAction<T> cancelAction) {
     final RequestFuture<T> requestFuture = new RequestFuture<>(responseHandler, messageId, cancelAction);
     myMessageHandler.registerFuture(messageId, requestFuture);
     final ChannelFuture connectFuture = myConnectFuture;

@@ -15,6 +15,7 @@ import com.intellij.platform.backend.documentation.impl.DocumentationRequest
 import com.intellij.platform.backend.documentation.impl.EmptyDocumentationTarget
 import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.util.ui.EDT
+import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.ApiStatus.Experimental
 import javax.swing.JComponent
 
@@ -37,25 +38,33 @@ internal fun documentationComponent(
   return createDocumentationComponent(project, request, parentDisposable).getComponent()
 }
 
-private fun createDocumentationComponent(project: Project,
-                                         request: DocumentationRequest,
-                                         parentDisposable: Disposable): DocumentationComponent {
-  val browser = DocumentationBrowser.createBrowser(project, request)
+private fun createDocumentationComponent(
+  project: Project,
+  request: DocumentationRequest,
+  parentDisposable: Disposable,
+): DocumentationComponent {
+  val browser = DocumentationBrowser.createBrowser(project, listOf(request))
   val ui = DocumentationUI(project, browser)
   Disposer.register(parentDisposable, ui)
   return DocumentationComponentImpl(browser, ui)
 }
 
-private class DocumentationComponentImpl(private val browser: DocumentationBrowser,
-                                         private val ui: DocumentationUI) : DocumentationComponent {
-  override fun getComponent(): JComponent = ui.scrollPane
+private class DocumentationComponentImpl(
+  private val browser: DocumentationBrowser,
+  private val ui: DocumentationUI,
+) : DocumentationComponent {
+
+  override fun getComponent(): JComponent {
+    return ui.scrollPane
+  }
 
   override fun resetBrowser() {
     browser.resetBrowser(EmptyDocumentationTarget.request)
   }
 
-  override fun resetBrowser(targetPointer: Pointer<out DocumentationTarget>,
-                            targetPresentation: TargetPresentation) {
+  override fun resetBrowser(targetPointer: Pointer<out DocumentationTarget>, targetPresentation: TargetPresentation) {
     browser.resetBrowser(DocumentationRequest(targetPointer, targetPresentation))
   }
+
+  override val contentSizeUpdates: Flow<Any> = ui.contentSizeUpdates
 }

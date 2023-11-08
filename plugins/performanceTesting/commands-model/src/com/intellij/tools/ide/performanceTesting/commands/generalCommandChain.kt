@@ -11,76 +11,47 @@ import kotlin.time.Duration
 private const val CMD_PREFIX = '%'
 
 const val WARMUP = "WARMUP"
-
 const val ENABLE_SYSTEM_METRICS = "ENABLE_SYSTEM_METRICS"
 
-const val WAIT_FOR_SMART_CMD_PREFIX = "${CMD_PREFIX}waitForSmart"
-
-const val ACTION_CMD_PREFIX = "${CMD_PREFIX}action"
-
-fun <T : CommandChain> T.waitForSmartMode(): T {
-  addCommand(WAIT_FOR_SMART_CMD_PREFIX)
-  return this
+fun <T : CommandChain> T.waitForSmartMode(): T = apply {
+  addCommand("${CMD_PREFIX}waitForSmart")
 }
 
-const val WAIT_FOR_DUMB_CMD_PREFIX = "${CMD_PREFIX}waitForDumb"
-fun <T : CommandChain> T.waitForDumbMode(maxWaitingTimeInSec: Int): T {
-  addCommand("$WAIT_FOR_DUMB_CMD_PREFIX $maxWaitingTimeInSec")
-  return this
+@Suppress("unused")
+fun <T : CommandChain> T.waitForDumbMode(maxWaitingTimeInSec: Int): T = apply {
+  addCommand("${CMD_PREFIX}waitForDumb ${maxWaitingTimeInSec}")
 }
 
-const val WAIT_FOR_GIT_LOG_INDEXING = "${CMD_PREFIX}waitForGitLogIndexing"
-
-fun <T : CommandChain> T.waitForGitLogIndexing(): T {
-  addCommand(WAIT_FOR_GIT_LOG_INDEXING)
-  return this
+fun <T : CommandChain> T.waitForInitialRefresh(): T = apply {
+  addCommand("${CMD_PREFIX}waitForInitialRefresh")
 }
 
-const val WAIT_FOR_ASYNC_REFRESH = "${CMD_PREFIX}waitForAsyncRefresh"
-
-fun <T : CommandChain> T.waitForAsyncRefresh(): T {
-  addCommand(WAIT_FOR_ASYNC_REFRESH)
-  return this
-}
-
-const val RECOVERY_ACTION_CMD_PREFIX = "${CMD_PREFIX}recovery"
-
-fun <T : CommandChain> T.recoveryAction(action: RecoveryActionType): T {
-  val possibleArguments = RecoveryActionType.values().map { it.name }
-
+fun <T : CommandChain> T.recoveryAction(action: RecoveryActionType): T = apply {
+  val possibleArguments = RecoveryActionType.entries.map { it.name }
   require(possibleArguments.contains(action.toString())) {
     "Argument ${action} isn't allowed. Possible values: $possibleArguments"
   }
-
-  addCommand(RECOVERY_ACTION_CMD_PREFIX, action.toString())
-  return this
+  addCommand("${CMD_PREFIX}recovery", action.toString())
 }
 
-const val FLUSH_INDEXES_CMD_PREFIX = "${CMD_PREFIX}flushIndexes"
-
-fun <T : CommandChain> T.flushIndexes(): T {
-  addCommand(FLUSH_INDEXES_CMD_PREFIX)
-  return this
+fun <T : CommandChain> T.flushIndexes(): T = apply {
+  addCommand("${CMD_PREFIX}flushIndexes")
 }
 
-const val SETUP_PROJECT_SDK_CMD_PREFIX = "${CMD_PREFIX}setupSDK"
-
-fun <T : CommandChain> T.setupProjectSdk(sdk: SdkObject): T {
-  appendRawLine("$SETUP_PROJECT_SDK_CMD_PREFIX \"${sdk.sdkName}\" \"${sdk.sdkType}\" \"${sdk.sdkPath}\"")
-  return this
+fun <T : CommandChain> T.setupProjectSdk(sdk: SdkObject): T = apply {
+  appendRawLine("${CMD_PREFIX}setupSDK \"${sdk.sdkName}\" \"${sdk.sdkType}\" \"${sdk.sdkPath}\"")
 }
 
-private fun <T : CommandChain> T.appendRawLine(line: String): T {
+private fun <T : CommandChain> T.appendRawLine(line: String): T = apply {
   require(!line.contains("\n")) { "Invalid line to include: $line" }
   addCommand(line)
-  return this
 }
 
 fun <T : CommandChain> T.openFile(relativePath: String,
                                   timeoutInSeconds: Long = 0,
                                   suppressErrors: Boolean = false,
                                   warmup: Boolean = false,
-                                  disableCodeAnalysis: Boolean = false): T {
+                                  disableCodeAnalysis: Boolean = false): T = apply {
   val command = mutableListOf("${CMD_PREFIX}openFile", "-file $relativePath")
   if (timeoutInSeconds != 0L) {
     command.add("-timeout $timeoutInSeconds")
@@ -96,96 +67,78 @@ fun <T : CommandChain> T.openFile(relativePath: String,
   }
 
   addCommand(*command.toTypedArray())
-  return this
 }
 
-const val OPEN_RANDOM_FILE_CMD_PREFIX = "${CMD_PREFIX}openRandomFile"
-fun <T : CommandChain> T.openRandomFile(extension: String): T {
-  addCommand(OPEN_RANDOM_FILE_CMD_PREFIX, extension)
-  return this
+fun <T : CommandChain> T.openRandomFile(extension: String): T = apply {
+  addCommand("${CMD_PREFIX}openRandomFile", extension)
 }
 
-const val OPEN_PROJECT_CMD_PREFIX = "${CMD_PREFIX}openProject"
-
-fun <T : CommandChain> T.openProject(projectPath: Path, openInNewWindow: Boolean = true, detectProjectLeak: Boolean = false): T {
-  addCommand(OPEN_PROJECT_CMD_PREFIX, projectPath.toString(), (!openInNewWindow).toString(), detectProjectLeak.toString())
-  return this
+fun <T : CommandChain> T.openProject(projectPath: Path, openInNewWindow: Boolean = true, detectProjectLeak: Boolean = false): T = apply {
+  addCommand("${CMD_PREFIX}openProject", projectPath.toString(), (!openInNewWindow).toString(), detectProjectLeak.toString())
 }
 
-fun <T : CommandChain> T.reopenProject(): T {
-  addCommand(OPEN_PROJECT_CMD_PREFIX)
-  return this
+fun <T : CommandChain> T.reopenProject(): T = apply {
+  addCommand("${CMD_PREFIX}openProject")
 }
 
-const val STORE_INDICES_CMD_PREFIX = "${CMD_PREFIX}storeIndices"
-
-fun <T : CommandChain> T.storeIndices(): T {
-  addCommand(STORE_INDICES_CMD_PREFIX)
-  return this
+fun <T : CommandChain> T.storeIndices(): T = apply {
+  addCommand("${CMD_PREFIX}storeIndices")
 }
 
-fun <T : CommandChain> T.compareIndices(): T {
-  addCommand("%compareIndices")
-  return this
+fun <T : CommandChain> T.compareIndices(): T = apply {
+  addCommand("${CMD_PREFIX}compareIndices")
 }
 
-const val GO_TO_CMD_PREFIX = "${CMD_PREFIX}goto"
-
-fun <T : CommandChain> T.goto(offset: Int): T {
-  addCommand(GO_TO_CMD_PREFIX, offset.toString())
-  return this
+fun <T : CommandChain> T.goto(offset: Int): T = apply {
+  addCommand("${CMD_PREFIX}goto", offset.toString())
 }
 
-fun <T : CommandChain> T.goto(line: Int, column: Int): T {
-  addCommand(GO_TO_CMD_PREFIX, line.toString(), column.toString())
-  return this
+fun <T : CommandChain> T.goto(line: Int, column: Int): T = apply {
+  addCommand("${CMD_PREFIX}goto", line.toString(), column.toString())
 }
 
-fun <T : CommandChain> T.goto(goto: Pair<Int, Int>): T {
+fun <T : CommandChain> T.goto(goto: Pair<Int, Int>): T = apply {
   goto(goto.first, goto.second)
-  return this
 }
 
-const val GO_TO_PSI_ELEMENT_PREFIX = "${CMD_PREFIX}goToNextPsiElement"
-
-fun <T : CommandChain> T.gotoNextPsiElement(vararg name: String): T {
-  addCommand(GO_TO_PSI_ELEMENT_PREFIX, *name)
-  return this
+fun <T : CommandChain> T.gotoLine(line: Int): T = apply {
+  addCommand("${CMD_PREFIX}goto", line.toString(), "0")
 }
 
-fun <T : CommandChain> T.gotoNextPsiElementIfExist(vararg name: String): T {
-  addCommand(GO_TO_PSI_ELEMENT_PREFIX, *name, "SUPPRESS_ERROR_IF_NOT_FOUND")
-  return this
+@Suppress("unused")
+fun <T : CommandChain> T.gotoNextPsiElement(vararg name: String): T = apply {
+  addCommand("${CMD_PREFIX}goToNextPsiElement", *name)
 }
 
-const val GO_TO_NAMED_PSI_ELEMENT_PREFIX = "${CMD_PREFIX}goToNamedPsiElement"
-
-fun <T : CommandChain> T.gotoNamedPsiElement(name: String, position: Position = Position.INTO): T {
-  addCommand(GO_TO_NAMED_PSI_ELEMENT_PREFIX, position.name, name)
-  return this
+fun <T : CommandChain> T.gotoNextPsiElementIfExist(vararg name: String): T = apply {
+  addCommand("${CMD_PREFIX}goToNextPsiElement", *name, "SUPPRESS_ERROR_IF_NOT_FOUND")
 }
 
-fun <T : CommandChain> T.gotoNamedPsiElementIfExist(name: String, position: Position = Position.INTO): T {
-  addCommand(GO_TO_NAMED_PSI_ELEMENT_PREFIX, name, position.name, "SUPPRESS_ERROR_IF_NOT_FOUND")
-  return this
+fun <T : CommandChain> T.gotoNamedPsiElement(name: String, position: Position = Position.INTO): T = apply {
+  addCommand("${CMD_PREFIX}goToNamedPsiElement", position.name, name)
 }
 
-fun <T : CommandChain> T.findUsages(expectedElementName: String = "", scope: String = "Project Files", warmup: Boolean = false): T {
+@Suppress("unused")
+fun <T : CommandChain> T.gotoNamedPsiElementIfExist(name: String, position: Position = Position.INTO): T = apply {
+  addCommand("${CMD_PREFIX}goToNamedPsiElement", name, position.name, "SUPPRESS_ERROR_IF_NOT_FOUND")
+}
+
+fun <T : CommandChain> T.findUsages(expectedElementName: String = "", scope: String = "Project Files", warmup: Boolean = false): T = apply {
   navigateAndFindUsages(expectedElementName, "", scope, warmup = warmup)
-  return this
 }
 
 fun <T : CommandChain> T.navigateAndFindUsages(expectedElementName: String,
                                                position: String = "INTO",
                                                scope: String = "Project Files",
-                                               warmup: Boolean = false): T {
+                                               warmup: Boolean = false): T = apply {
   val command = mutableListOf("${CMD_PREFIX}findUsages")
   if (expectedElementName.isNotEmpty()) {
     command.add("-expectedName $expectedElementName")
+    if (position.isNotEmpty()) {
+      command.add("-position $position")
+    }
   }
-  if (position.isNotEmpty()) {
-    command.add("-position $position")
-  }
+
   if (scope.isNotEmpty()) {
     command.add("-scope $scope")
   }
@@ -193,17 +146,11 @@ fun <T : CommandChain> T.navigateAndFindUsages(expectedElementName: String,
     command.add("WARMUP")
   }
   addCommandWithSeparator("|", *command.toTypedArray())
-  return this
 }
 
-const val INSPECTION_CMD_PREFIX = "${CMD_PREFIX}inspectCode"
-
-fun <T : CommandChain> T.inspectCode(): T {
-  addCommand(INSPECTION_CMD_PREFIX)
-  return this
+fun <T : CommandChain> T.inspectCode(): T = apply {
+  addCommand("${CMD_PREFIX}inspectCode")
 }
-
-const val INSPECTION_EX_CMD_PREFIX = "${CMD_PREFIX}InspectCodeEx"
 
 fun <T : CommandChain> T.inspectCodeEx(
   scopeName: String = "",
@@ -213,7 +160,7 @@ fun <T : CommandChain> T.inspectCodeEx(
   downloadFileUrl: String = "",
   directory: String = "",
   hideResults: Boolean = false,
-): T {
+): T = apply {
   var resultCommand = ""
   if (scopeName.isNotBlank()) {
     resultCommand += " -scopeName $scopeName"
@@ -241,99 +188,70 @@ fun <T : CommandChain> T.inspectCodeEx(
   }
   resultCommand += " -hideResults $hideResults"
 
-  addCommand(INSPECTION_EX_CMD_PREFIX + resultCommand)
-  return this
+  addCommand("${CMD_PREFIX}InspectCodeEx" + resultCommand)
 }
 
-const val CODE_ANALYSIS_CMD_PREFIX = "${CMD_PREFIX}codeAnalysis"
-
-fun <T : CommandChain> T.checkOnRedCode(): T {
-  addCommand("$CODE_ANALYSIS_CMD_PREFIX ${CodeAnalysisType.CHECK_ON_RED_CODE}")
-  return this
+fun <T : CommandChain> T.checkOnRedCode(): T = apply {
+  addCommand("${CMD_PREFIX}codeAnalysis ${CodeAnalysisType.CHECK_ON_RED_CODE}")
 }
 
-fun <T : CommandChain> T.checkWarnings(vararg args: String): T {
+fun <T : CommandChain> T.checkWarnings(vararg args: String): T = apply {
   val setArgs = args.toSet()
   val stringBuilder = StringBuilder("")
   setArgs.forEach { stringBuilder.append("$it,") }
-  addCommand("$CODE_ANALYSIS_CMD_PREFIX ${CodeAnalysisType.WARNINGS_ANALYSIS} $stringBuilder")
-  return this
+  addCommand("${CMD_PREFIX}codeAnalysis ${CodeAnalysisType.WARNINGS_ANALYSIS} $stringBuilder")
 }
 
-fun <T : CommandChain> T.project(project: File): T {
+fun <T : CommandChain> T.project(project: File): T = apply {
   addCommand("%%project ${project.absolutePath}")
-  return this
 }
 
-const val EXIT_APP_CMD_PREFIX = "${CMD_PREFIX}exitApp"
-
-fun <T : CommandChain> T.exitApp(forceExit: Boolean = true): T {
+fun <T : CommandChain> T.exitApp(forceExit: Boolean = true): T = apply {
   takeScreenshot("exitApp")
-  addCommand(EXIT_APP_CMD_PREFIX, forceExit.toString())
-  return this
+  addCommand("${CMD_PREFIX}exitApp", forceExit.toString())
 }
 
-const val EXIT_APP_WITH_TIMEOUT_CMD_PREFIX = "${CMD_PREFIX}exitAppWithTimeout"
-
-fun <T : CommandChain> T.exitAppWithTimeout(timeoutInSeconds: Long): T {
-  addCommand(EXIT_APP_WITH_TIMEOUT_CMD_PREFIX, timeoutInSeconds.toString())
-  return this
+fun <T : CommandChain> T.exitAppWithTimeout(timeoutInSeconds: Long): T = apply {
+  addCommand("${CMD_PREFIX}exitAppWithTimeout", timeoutInSeconds.toString())
 }
 
-const val START_PROFILE_CMD_PREFIX = "${CMD_PREFIX}startProfile"
-
-fun <T : CommandChain> T.startProfile(args: String): T {
-  addCommand("$START_PROFILE_CMD_PREFIX $args")
-  return this
+fun <T : CommandChain> T.startProfile(args: String): T = apply {
+  addCommand("${CMD_PREFIX}startProfile $args")
 }
 
-fun <T : CommandChain> T.startProfile(args: String, profilerParams: String): T {
-  addCommand("$START_PROFILE_CMD_PREFIX $args $profilerParams")
-  return this
+fun <T : CommandChain> T.startProfile(args: String, profilerParams: String): T = apply {
+  addCommand("${CMD_PREFIX}startProfile $args $profilerParams")
 }
 
-const val STOP_PROFILE_CMD_PREFIX = "${CMD_PREFIX}stopProfile"
-
-fun <T : CommandChain> T.stopProfile(args: String = "jfr"): T {
-  addCommand("$STOP_PROFILE_CMD_PREFIX $args")
-  return this
+fun <T : CommandChain> T.stopProfile(args: String = "jfr"): T = apply {
+  addCommand("${CMD_PREFIX}stopProfile $args")
 }
 
-const val MEMORY_DUMP_CMD_PREFIX = "${CMD_PREFIX}memoryDump"
-
-fun <T : CommandChain> T.memoryDump(): T {
-  addCommand(MEMORY_DUMP_CMD_PREFIX)
-  return this
+fun <T : CommandChain> T.memoryDump(): T = apply {
+  addCommand("${CMD_PREFIX}memoryDump")
 }
 
-fun <T : CommandChain> T.conditionalMemoryDump(targetMessageCount: Int): T {
-  addCommand("${CMD_PREFIX}conditionalMemoryDumpCommand $targetMessageCount")
-  return this
+fun <T : CommandChain> T.conditionalMemoryDump(targetMessageCount: Int, withErrorMessage: Boolean = false): T = apply {
+  val ext = if (withErrorMessage) " WITH_ERROR_MESSAGE" else ""
+  addCommand("${CMD_PREFIX}conditionalMemoryDumpCommand ${targetMessageCount}${ext}")
 }
 
-fun <T : CommandChain> T.conditionalMemoryDumpWithErrorMessage(targetMessageCount: Int): T {
-  addCommand("${CMD_PREFIX}conditionalMemoryDumpCommand $targetMessageCount WITH_ERROR_MESSAGE")
-  return this
-}
-
-fun <T : CommandChain> T.profileIndexing(args: String): T {
+@Suppress("unused")
+fun <T : CommandChain> T.profileIndexing(args: String): T = apply {
   addCommand("%%profileIndexing $args")
-  return this
 }
 
-const val CORRUPT_INDEXED_CMD_PREFIX = "${CMD_PREFIX}corruptIndex"
-
-fun <T : CommandChain> T.corruptIndexes(pathToIndexesDir: Path, additionalDir: String = ""): T {
+fun <T : CommandChain> T.corruptIndexes(pathToIndexesDir: Path, additionalDir: String = ""): T = apply {
   if (additionalDir.isEmpty()) {
-    addCommand(CORRUPT_INDEXED_CMD_PREFIX, pathToIndexesDir.toString())
+    addCommand("${CMD_PREFIX}corruptIndex", pathToIndexesDir.toString())
   }
   else {
-    addCommand(CORRUPT_INDEXED_CMD_PREFIX, pathToIndexesDir.toString(), additionalDir)
+    addCommand("${CMD_PREFIX}corruptIndex", pathToIndexesDir.toString(), additionalDir)
   }
-  return this
 }
 
-fun <T : CommandChain> T.corruptIndexPerDir(indexDir: Path): T {
+@Suppress("unused")
+fun <T : CommandChain> T.corruptIndexPerDir(indexDir: Path): T = apply {
   val dirs = indexDir
     .listDirectoryEntries()
     .filter { it.toFile().isDirectory }
@@ -345,10 +263,10 @@ fun <T : CommandChain> T.corruptIndexPerDir(indexDir: Path): T {
     flushIndexes()
     checkOnRedCode()
   }
-  return this
 }
 
-fun <T : CommandChain> T.corruptIndexPerFile(indexDir: Path): T {
+@Suppress("unused")
+fun <T : CommandChain> T.corruptIndexPerFile(indexDir: Path): T = apply {
   val filesInDir = indexDir
     .toFile()
     .walkTopDown()
@@ -360,165 +278,115 @@ fun <T : CommandChain> T.corruptIndexPerFile(indexDir: Path): T {
     flushIndexes()
     checkOnRedCode()
   }
-  return this
 }
 
-const val DUMP_PROJECT_FILES_CMD_PREFIX = "${CMD_PREFIX}dumpProjectFiles"
-
-fun <T : CommandChain> T.dumpProjectFiles(): T {
-  addCommand(DUMP_PROJECT_FILES_CMD_PREFIX)
-  return this
+fun <T : CommandChain> T.dumpProjectFiles(): T = apply {
+  addCommand("${CMD_PREFIX}dumpProjectFiles")
 }
 
-const val COMPARE_PROJECT_FILES_CMD_PREFIX = "${CMD_PREFIX}compareProjectFiles"
-
-fun <T : CommandChain> T.compareProjectFiles(previousDir: String): T {
-  addCommand(COMPARE_PROJECT_FILES_CMD_PREFIX, previousDir)
-  return this
+fun <T : CommandChain> T.compareProjectFiles(previousDir: String): T = apply {
+  addCommand("${CMD_PREFIX}compareProjectFiles", previousDir)
 }
 
-const val CLEAN_CACHES_CMD_PREFIX = "${CMD_PREFIX}cleanCaches"
-
-fun <T : CommandChain> T.cleanCaches(): T {
-  addCommand(CLEAN_CACHES_CMD_PREFIX)
-  return this
+fun <T : CommandChain> T.cleanCaches(): T = apply {
+  addCommand("${CMD_PREFIX}cleanCaches")
 }
 
-const val COMPLETION_CMD_PREFIX = "${CMD_PREFIX}doComplete"
-
-fun <T : CommandChain> T.doComplete(completionType: CompletionType = CompletionType.BASIC): T {
-  addCommand(COMPLETION_CMD_PREFIX, completionType.name)
-  return this
+fun <T : CommandChain> T.doComplete(completionType: CompletionType = CompletionType.BASIC): T = apply {
+  addCommand("${CMD_PREFIX}doComplete", completionType.name)
 }
 
-fun <T : CommandChain> T.doCompleteInEvaluateExpression(completionType: CompletionType = CompletionType.BASIC): T {
+fun <T : CommandChain> T.doCompleteWarmup(completionType: CompletionType = CompletionType.BASIC): T = apply {
+  addCommand("${CMD_PREFIX}doComplete", completionType.name, WARMUP)
+}
+
+fun <T : CommandChain> T.doCompleteInEvaluateExpression(completionType: CompletionType = CompletionType.BASIC): T = apply {
   addCommand("${CMD_PREFIX}doCompleteInEvaluateExpression", completionType.name)
-  return this
 }
 
-fun <T : CommandChain> T.doCompleteInEvaluateExpressionWarmup(completionType: CompletionType = CompletionType.BASIC): T {
+fun <T : CommandChain> T.doCompleteInEvaluateExpressionWarmup(completionType: CompletionType = CompletionType.BASIC): T = apply {
   addCommand("${CMD_PREFIX}doCompleteInEvaluateExpression", completionType.name, WARMUP)
-  return this
 }
 
-fun <T : CommandChain> T.doCompleteWarmup(completionType: CompletionType = CompletionType.BASIC): T {
-  addCommand(COMPLETION_CMD_PREFIX, completionType.name, WARMUP)
-  return this
-}
-
-fun <T : CommandChain> T.doComplete(times: Int): T {
-  for (i in 1..times) {
+fun <T : CommandChain> T.doComplete(times: Int): T = apply {
+  repeat(times) {
     doComplete()
     pressKey(Keys.ESCAPE)
     cleanCaches()
   }
-  return this
 }
 
-const val DO_HIGHLIGHTING_CMD_PREFIX = "${CMD_PREFIX}doHighlight"
-
-fun <T : CommandChain> T.doHighlightingWarmup(): T {
-  addCommand(DO_HIGHLIGHTING_CMD_PREFIX, WARMUP)
-  return this
+fun <T : CommandChain> T.doHighlightingWarmup(): T = apply {
+  addCommand("${CMD_PREFIX}doHighlight", WARMUP)
 }
 
-fun <T : CommandChain> T.doHighlighting(): T {
-  addCommand(DO_HIGHLIGHTING_CMD_PREFIX)
-  return this
+fun <T : CommandChain> T.doHighlighting(): T = apply {
+  addCommand("${CMD_PREFIX}doHighlight")
 }
 
-const val OPEN_PROJECT_VIEW_CMD_PREFIX = "${CMD_PREFIX}openProjectView"
-
-fun <T : CommandChain> T.openProjectView(): T {
-  addCommand(OPEN_PROJECT_VIEW_CMD_PREFIX)
-  return this
+fun <T : CommandChain> T.openProjectView(): T = apply {
+  addCommand("${CMD_PREFIX}openProjectView")
 }
 
-fun <T : CommandChain> T.getLibraryPathByName(name: String, path: Path): T {
+fun <T : CommandChain> T.getLibraryPathByName(name: String, path: Path): T = apply {
   addCommand("${CMD_PREFIX}getLibraryPathByName $name,$path")
-  return this
 }
 
-const val ENTER_CMD_PREFIX = "${CMD_PREFIX}pressKey"
-
-fun <T : CommandChain> T.pressKey(key: Keys): T {
-  addCommand(ENTER_CMD_PREFIX, key.name)
-  return this
+fun <T : CommandChain> T.pressKey(key: Keys): T = apply {
+  addCommand("${CMD_PREFIX}pressKey", key.name)
 }
 
-fun <T : CommandChain> T.delayType(delayMs: Int, text: String, calculateAnalyzesTime: Boolean = false): T {
+fun <T : CommandChain> T.delayType(delayMs: Int, text: String, calculateAnalyzesTime: Boolean = false): T = apply {
   addCommand("${CMD_PREFIX}delayType", "$delayMs|$text|$calculateAnalyzesTime")
-  return this
 }
 
-const val DO_LOCAL_INSPECTION_CMD_PREFIX = "${CMD_PREFIX}doLocalInspection"
-
-fun <T : CommandChain> T.doLocalInspection(): T {
-  addCommand(DO_LOCAL_INSPECTION_CMD_PREFIX)
-  return this
+fun <T : CommandChain> T.doLocalInspection(): T = apply {
+  addCommand("${CMD_PREFIX}doLocalInspection")
 }
 
-fun <T : CommandChain> T.doLocalInspectionWarmup(): T {
-  addCommand(DO_LOCAL_INSPECTION_CMD_PREFIX, WARMUP)
-  return this
+fun <T : CommandChain> T.runSingleInspection(inspectionName: String, scope: String): T = apply {
+  addCommand("${CMD_PREFIX}runSingleInspection", inspectionName, scope)
 }
 
-const val SHOW_ALT_ENTER_CMD_PREFIX = "${CMD_PREFIX}altEnter"
-
-fun <T : CommandChain> T.altEnter(intention: String, invoke: Boolean): T {
-  addCommand(SHOW_ALT_ENTER_CMD_PREFIX, "$intention|$invoke")
-  return this
+fun <T : CommandChain> T.doLocalInspectionWarmup(): T = apply {
+  addCommand("${CMD_PREFIX}doLocalInspection", WARMUP)
 }
 
-fun <T : CommandChain> T.callAltEnter(times: Int, intention: String = "", invoke: Boolean = true): T {
-  for (i in 1..times) {
+fun <T : CommandChain> T.altEnter(intention: String, invoke: Boolean): T = apply {
+  addCommand("${CMD_PREFIX}altEnter", "$intention|$invoke")
+}
+
+fun <T : CommandChain> T.callAltEnter(times: Int, intention: String = "", invoke: Boolean = true): T = apply {
+  repeat(times) {
     altEnter(intention, invoke)
   }
-  return this
 }
 
-const val CREATE_ALL_SERVICES_AND_EXTENSIONS_CMD_PREFIX = "${CMD_PREFIX}CreateAllServicesAndExtensions"
-
-fun <T : CommandChain> T.createAllServicesAndExtensions(): T {
-  addCommand(CREATE_ALL_SERVICES_AND_EXTENSIONS_CMD_PREFIX)
-  return this
+fun <T : CommandChain> T.createAllServicesAndExtensions(): T = apply {
+  addCommand("${CMD_PREFIX}CreateAllServicesAndExtensions")
 }
 
-const val RUN_CONFIGURATION_CMD_PREFIX = "${CMD_PREFIX}runConfiguration"
-
-fun <T : CommandChain> T.runConfiguration(command: String): T {
-  addCommand(RUN_CONFIGURATION_CMD_PREFIX, command)
-  return this
+fun <T : CommandChain> T.runConfiguration(command: String): T = apply {
+  addCommand("${CMD_PREFIX}runConfiguration", command)
 }
 
-const val OPEN_FILE_WITH_TERMINATE_CMD_PREFIX = "${CMD_PREFIX}openFileWithTerminate"
-
-fun <T : CommandChain> T.openFileWithTerminate(relativePath: String, terminateIdeInSeconds: Long): T {
-  addCommand("$OPEN_FILE_WITH_TERMINATE_CMD_PREFIX $relativePath $terminateIdeInSeconds")
-  return this
+fun <T : CommandChain> T.openFileWithTerminate(relativePath: String, terminateIdeInSeconds: Long): T = apply {
+  addCommand("${CMD_PREFIX}openFileWithTerminate $relativePath $terminateIdeInSeconds")
 }
 
-const val START_POWER_SAVE_CMD_PREFIX = "${CMD_PREFIX}startPowerSave"
-
-fun <T : CommandChain> T.startPowerSave(): T {
-  addCommand(START_POWER_SAVE_CMD_PREFIX)
-  return this
+fun <T : CommandChain> T.startPowerSave(): T = apply {
+  addCommand("${CMD_PREFIX}startPowerSave")
 }
 
-const val STOP_POWER_SAVE_CMD_PREFIX = "${CMD_PREFIX}stopPowerSave"
-
-fun <T : CommandChain> T.stopPowerSave(): T {
-  addCommand(STOP_POWER_SAVE_CMD_PREFIX)
-  return this
+fun <T : CommandChain> T.stopPowerSave(): T = apply {
+  addCommand("${CMD_PREFIX}stopPowerSave")
 }
-
-const val SEARCH_EVERYWHERE_CMD_PREFIX = "${CMD_PREFIX}searchEverywhere"
 
 fun <T : CommandChain> T.searchEverywhere(tab: String = "all",
                                           textToInsert: String = "",
                                           textToType: String = "",
                                           close: Boolean = false,
-                                          selectFirst: Boolean = false): T {
+                                          selectFirst: Boolean = false): T = apply {
   val closeOnOpenArgument = when {
     close -> "-close"
     else -> ""
@@ -534,167 +402,145 @@ fun <T : CommandChain> T.searchEverywhere(tab: String = "all",
   if (selectFirstArgument.isNotEmpty() && closeOnOpenArgument.isNotEmpty()) {
     throw Exception("selectFirst=true argument will be ignored since close=true and SE will be closed first")
   }
-  addCommand(SEARCH_EVERYWHERE_CMD_PREFIX, "-tab $tab $closeOnOpenArgument $selectFirstArgument $argumentForTyping|$textToInsert")
-  return this
+  addCommand("${CMD_PREFIX}searchEverywhere", "-tab $tab $closeOnOpenArgument $selectFirstArgument $argumentForTyping|$textToInsert")
 }
 
-const val SELECT_FILE_IN_PROJECT_VIEW = "${CMD_PREFIX}selectFileInProjectView"
-
-fun <T : CommandChain> T.selectFileInProjectView(relativePath: String): T {
-  addCommand(SELECT_FILE_IN_PROJECT_VIEW, relativePath)
-  return this
+fun <T : CommandChain> T.selectFileInProjectView(relativePath: String): T = apply {
+  addCommand("${CMD_PREFIX}selectFileInProjectView", relativePath)
 }
 
-const val EXPAND_PROJECT_MENU = "${CMD_PREFIX}expandProjectMenu"
-
-fun <T : CommandChain> T.expandProjectMenu(): T {
-  addCommand(EXPAND_PROJECT_MENU)
-  return this
+fun <T : CommandChain> T.expandProjectMenu(): T = apply {
+  addCommand("${CMD_PREFIX}expandProjectMenu")
 }
 
-const val EXPAND_MAIN_MENU = "${CMD_PREFIX}expandMainMenu"
-
-fun <T : CommandChain> T.expandMainMenu(): T {
-  addCommand(EXPAND_MAIN_MENU)
-  return this
+fun <T : CommandChain> T.expandMainMenu(): T = apply {
+  addCommand("${CMD_PREFIX}expandMainMenu")
 }
 
-fun <T : CommandChain> T.closeAllTabs(): T {
+fun <T : CommandChain> T.closeAllTabs(): T = apply {
   addCommand("${CMD_PREFIX}closeAllTabs")
-  return this
 }
 
-const val EXPAND_EDITOR_MENU = "${CMD_PREFIX}expandEditorMenu"
-
-fun <T : CommandChain> T.expandEditorMenu(): T {
-  addCommand(EXPAND_EDITOR_MENU)
-  return this
+fun <T : CommandChain> T.expandEditorMenu(): T = apply {
+  addCommand("${CMD_PREFIX}expandEditorMenu")
 }
 
-const val TAKE_SCREENSHOT = "${CMD_PREFIX}takeScreenshot"
-fun <T : CommandChain> T.takeScreenshot(path: String): T {
-  addCommand(TAKE_SCREENSHOT, path)
-  return this
+fun <T : CommandChain> T.takeScreenshot(path: String): T = apply {
+  addCommand("${CMD_PREFIX}takeScreenshot", path)
 }
 
-const val RECORD_REGISTERED_COUNTER_GROUPS = "${CMD_PREFIX}recordRegisteredCounterGroups"
-fun <T : CommandChain> T.recordRegisteredCounterGroups(): T {
-  addCommand(RECORD_REGISTERED_COUNTER_GROUPS)
-  return this
+fun <T : CommandChain> T.takeThreadDump(): T = apply {
+  addCommand("${CMD_PREFIX}takeThreadDump")
 }
 
-const val RECORD_STATE_COLLECTORS = "${CMD_PREFIX}recordStateCollectors"
-fun <T : CommandChain> T.recordStateCollectors(): T {
-  addCommand(RECORD_STATE_COLLECTORS)
-  return this
+fun <T : CommandChain> T.recordRegisteredCounterGroups(): T = apply {
+  addCommand("${CMD_PREFIX}recordRegisteredCounterGroups")
 }
 
-const val RELOAD_FILES = "${CMD_PREFIX}reloadFiles"
-fun <T : CommandChain> T.reloadFiles(): T {
-  addCommand(RELOAD_FILES)
-  return this
+fun <T : CommandChain> T.recordStateCollectors(): T = apply {
+  addCommand("${CMD_PREFIX}recordStateCollectors")
 }
 
-const val ADD_FILE = "${CMD_PREFIX}addFile"
-fun <T : CommandChain> T.addFile(path: String, fileName: String): T {
-  addCommand("$ADD_FILE $path, $fileName")
-  return this
+fun <T : CommandChain> T.reloadFiles(filePaths: List<String> = listOf()): T = apply {
+  addCommand("${CMD_PREFIX}reloadFiles ${filePaths.joinToString(" ")}")
 }
 
-fun <T : CommandChain> T.call(method: KFunction<String?>, vararg args: String): T {
+fun <T : CommandChain> T.addFile(path: String, fileName: String): T = apply {
+  addCommand("${CMD_PREFIX}addFile ${path}, ${fileName}")
+}
+
+fun <T : CommandChain> T.call(method: KFunction<String?>, vararg args: String): T = apply {
   val javaMethod = method.javaMethod ?: error("Failed to resolve Java Method from the declaration")
   require(Modifier.isStatic(javaMethod.modifiers)) { "Method $method must be static" }
-
-  addCommand(CMD_PREFIX + "importCall" + " " + javaMethod.declaringClass.name)
-  addCommand(CMD_PREFIX + "call" + " " + javaMethod.name + "(" + args.joinToString(", ") + ")")
-  return this
+  addCommand("${CMD_PREFIX}importCall ${javaMethod.declaringClass.name}")
+  addCommand("""${CMD_PREFIX}call ${javaMethod.name}(${args.joinToString(", ")})""")
 }
 
-const val DELETE_FILE = "${CMD_PREFIX}deleteFile"
-fun <T : CommandChain> T.deleteFile(path: String, fileName: String): T {
-  addCommand("$DELETE_FILE $path, $fileName")
-  return this
+fun <T : CommandChain> T.deleteFile(path: String, fileName: String): T = apply {
+  addCommand("${CMD_PREFIX}deleteFile ${path}, ${fileName}")
 }
 
-fun <T : CommandChain> T.delay(delayMs: Int): T {
-  addCommand("${CMD_PREFIX}delay $delayMs")
-  return this
+fun <T : CommandChain> T.delay(delayMs: Int): T = apply {
+  addCommand("${CMD_PREFIX}delay ${delayMs}")
 }
 
-fun <T : CommandChain> T.withSystemMetrics(chain: CommandChain): T {
+fun <T : CommandChain> T.withSystemMetrics(chain: CommandChain): T = apply {
   if (chain == this) throw IllegalStateException("Current command chain provided")
   for (command in chain) {
     addCommand(command.storeToString(), ENABLE_SYSTEM_METRICS)
   }
-  return this
 }
 
-const val SELECT_TEXT_CMD_PREFIX = "${CMD_PREFIX}selectText"
-
-fun <T : CommandChain> T.selectText(startLine: Int, startColumn: Int, endLine: Int, endColumn: Int): T {
-  addCommand(SELECT_TEXT_CMD_PREFIX, startLine.toString(), startColumn.toString(), endLine.toString(), endColumn.toString())
-  return this
+fun <T : CommandChain> T.selectText(startLine: Int, startColumn: Int, endLine: Int, endColumn: Int): T = apply {
+  addCommand("${CMD_PREFIX}selectText", startLine.toString(), startColumn.toString(), endLine.toString(), endColumn.toString())
 }
 
-const val SHOW_FILE_STRUCTURE_DIALOG_PREFIX = "${CMD_PREFIX}showFileStructureDialog"
-
-fun <T : CommandChain> T.showFileStructureDialog(): T {
-  addCommand(SHOW_FILE_STRUCTURE_DIALOG_PREFIX)
-  return this
+fun <T : CommandChain> T.showFileStructureDialog(): T = apply {
+  addCommand("${CMD_PREFIX}showFileStructureDialog")
 }
 
-const val IMPORT_MAVEN_PROJECT_CMD_PREFIX = "${CMD_PREFIX}importMavenProject"
-
-fun <T : CommandChain> T.importMavenProject(): T {
-  addCommand(IMPORT_MAVEN_PROJECT_CMD_PREFIX)
-  return this
+fun <T : CommandChain> T.importMavenProject(): T = apply {
+  addCommand("${CMD_PREFIX}importMavenProject")
 }
 
-fun <T : CommandChain> T.inlineRename(to: String): T {
+fun <T : CommandChain> T.toggleMavenProfiles(profileIds: Set<String>, enable: Boolean = true): T = apply {
+  addCommand("${CMD_PREFIX}toggleMavenProfiles ${profileIds.joinToString(",")} $enable")
+}
+
+fun <T : CommandChain> T.linkMavenProject(projectPath: Path): T = apply {
+  addCommand("${CMD_PREFIX}linkMavenProject ${projectPath}")
+}
+
+fun <T : CommandChain> T.linkGradleProject(projectPath: Path): T = apply {
+  addCommand("${CMD_PREFIX}linkGradleProject ${projectPath}")
+}
+
+fun <T : CommandChain> T.unlinkGradleProject(projectPath: Path): T = apply {
+  addCommand("${CMD_PREFIX}unlinkGradleProject ${projectPath}")
+}
+
+fun <T : CommandChain> T.unlinkMavenProject(projectPath: Path): T = apply {
+  addCommand("${CMD_PREFIX}unlinkMavenProject ${projectPath}")
+}
+
+fun <T : CommandChain> T.inlineRename(to: String): T = apply {
   startInlineRename()
   delayType(150, to)
   finishInlineRename()
-  return this
 }
 
-fun <T : CommandChain> T.finishInlineRename(): T {
+fun <T : CommandChain> T.finishInlineRename(): T = apply {
   addCommand("${CMD_PREFIX}finishInlineRename")
-  return this
 }
 
-fun <T : CommandChain> T.startInlineRename(): T {
+fun <T : CommandChain> T.startInlineRename(): T = apply {
   addCommand("${CMD_PREFIX}startInlineRename")
-  return this
 }
 
-fun <T : CommandChain> T.setRegistry(registry: String, value: Boolean): T {
+fun <T : CommandChain> T.setRegistry(registry: String, value: Boolean): T = apply {
   addCommand("${CMD_PREFIX}set $registry=$value")
-  return this
 }
 
-fun <T : CommandChain> T.collectNameSuggestionContext(file: String, offset: Int): T {
+fun <T : CommandChain> T.collectNameSuggestionContext(file: String, offset: Int): T = apply {
   addCommand("${CMD_PREFIX}collectNameSuggestionContext $file $offset")
-  return this
 }
 
-fun <T : CommandChain> T.waitForLlmNameSuggestions(file: String, offset: Int): T {
+@Suppress("unused")
+fun <T : CommandChain> T.waitForLlmNameSuggestions(file: String, offset: Int): T = apply {
   addCommand("${CMD_PREFIX}waitForLlmNameSuggestions $file $offset")
-  return this
 }
 
-fun <T : CommandChain> T.assertOpenedFileInRoot(path: String): T {
+fun <T : CommandChain> T.assertOpenedFileInRoot(path: String): T = apply {
   addCommand("${CMD_PREFIX}assertOpenedFileInRoot $path")
-  return this
 }
 
-const val IMPORT_GRADLE_PROJECT_CMD_PREFIX = "${CMD_PREFIX}importGradleProject"
-
-fun <T : CommandChain> T.importGradleProject(): T {
-  this.addCommand(IMPORT_GRADLE_PROJECT_CMD_PREFIX)
-  return this
+fun <T : CommandChain> T.importGradleProject(): T = apply {
+  addCommand("${CMD_PREFIX}importGradleProject")
 }
 
-fun <T : CommandChain> T.showEvaluateExpression(expression: String = "", performEvaluateCount: Int = 0, warmup: Boolean = false): T {
+fun <T : CommandChain> T.showEvaluateExpression(expression: String = "",
+                                                performEvaluateCount: Int = 0,
+                                                warmup: Boolean = false): T = apply {
   val command = mutableListOf("${CMD_PREFIX}showEvaluateExpression")
   if (expression.isNotEmpty()) {
     command.add("-expression $expression")
@@ -704,174 +550,157 @@ fun <T : CommandChain> T.showEvaluateExpression(expression: String = "", perform
     command.add("WARMUP")
   }
   addCommandWithSeparator("|", *command.toTypedArray())
-  return this
 }
 
-fun <T : CommandChain> T.executeEditorAction(action: String): T {
-  this.addCommand("${CMD_PREFIX}executeEditorAction $action")
-  return this
+fun <T : CommandChain> T.executeEditorAction(action: String): T = apply {
+  addCommand("${CMD_PREFIX}executeEditorAction $action")
 }
 
-fun <T : CommandChain> T.copy(): T {
-  this.executeEditorAction("\$Copy")
-  return this
+fun <T : CommandChain> T.copy(): T = apply {
+  executeEditorAction("\$Copy")
 }
 
-fun <T : CommandChain> T.past(): T {
-  this.executeEditorAction("\$Paste")
-  return this
+fun <T : CommandChain> T.past(): T = apply {
+  executeEditorAction("\$Paste")
 }
 
-fun <T : CommandChain> T.cut(): T {
-  this.executeEditorAction("\$Cut")
-  return this
+@Suppress("unused")
+fun <T : CommandChain> T.cut(): T = apply {
+  executeEditorAction("\$Cut")
 }
 
-fun <T : CommandChain> T.selectAll(): T {
-  this.executeEditorAction("\$SelectAll")
-  return this
+fun <T : CommandChain> T.selectAll(): T = apply {
+  executeEditorAction("\$SelectAll")
 }
 
-fun <T : CommandChain> T.checkoutBranch(branch: String): T {
-  this.addCommand("${CMD_PREFIX}gitCheckout $branch")
-  return this
+fun <T : CommandChain> T.checkoutBranch(branch: String, newBranchName: String = branch): T = apply {
+  addCommand("${CMD_PREFIX}gitCheckout $branch $newBranchName")
 }
 
-const val SHOW_FILE_HISTORY = "${CMD_PREFIX}showFileHistory"
-
-fun <T : CommandChain> T.showFileHistory(): T {
-  this.addCommand(SHOW_FILE_HISTORY)
-  return this
+fun <T : CommandChain> T.showFileHistory(): T = apply {
+  addCommand("${CMD_PREFIX}showFileHistory")
 }
 
-fun <T : CommandChain> T.assertCompletionCommand(): T {
-  this.addCommand("${CMD_PREFIX}assertCompletionCommand")
-  return this
+fun <T : CommandChain> T.filterVcsLogTab(userName: String): T = apply {
+  addCommand("${CMD_PREFIX}filterVcsLogTab $userName")
 }
 
-fun <T : CommandChain> T.assertCompletionCommand(count: Int): T {
-  this.addCommand("${CMD_PREFIX}assertCompletionCommand ${count}")
-  return this
+fun <T : CommandChain> T.chooseCompletionCommand(completionName: String): T = apply {
+  addCommand("${CMD_PREFIX}chooseCompletionCommand ${completionName}")
 }
 
-fun <T : CommandChain> T.goToDeclaration(): T {
-  this.executeEditorAction("GotoDeclaration")
-  return this
+fun <T : CommandChain> T.assertCompletionCommand(): T = apply {
+  addCommand("${CMD_PREFIX}assertCompletionCommand EXIST")
 }
 
-fun <T : CommandChain> T.goToDeclaration(expectedOpenedFile: String): T {
-  this.executeEditorAction("GotoDeclaration expectedOpenedFile $expectedOpenedFile")
-  return this
+@Suppress("unused")
+fun <T : CommandChain> T.assertCompletionCommandContains(completionNames: List<String>): T = apply {
+  addCommand("${CMD_PREFIX}assertCompletionCommand CONTAINS ${completionNames.joinToString(" ")}")
 }
 
-fun <T : CommandChain> T.collectAllFiles(extension: String): T {
-  this.addCommand("${CMD_PREFIX}collectAllFiles $extension")
-  return this
+@Suppress("unused")
+fun <T : CommandChain> T.assertCompletionCommandCount(count: Int): T = apply {
+  addCommand("${CMD_PREFIX}assertCompletionCommand COUNT ${count}")
 }
 
-fun <T : CommandChain> T.recompileFiles(relativeFilePaths: List<String>): T {
+@Suppress("unused")
+fun <T : CommandChain> T.goToDeclaration(): T = apply {
+  executeEditorAction("GotoDeclaration")
+}
+
+fun <T : CommandChain> T.goToDeclaration(expectedOpenedFile: String): T = apply {
+  executeEditorAction("GotoDeclaration expectedOpenedFile $expectedOpenedFile")
+}
+
+fun <T : CommandChain> T.collectAllFiles(extension: String): T = apply {
+  addCommand("${CMD_PREFIX}collectAllFiles $extension")
+}
+
+fun <T : CommandChain> T.recompileFiles(relativeFilePaths: List<String>): T = apply {
   addCommand("${CMD_PREFIX}buildProject RECOMPILE_FILES ${relativeFilePaths.joinToString(" ")}".trim())
-  return this
 }
 
-fun <T : CommandChain> T.build(moduleNames: List<String> = listOf()): T {
+fun <T : CommandChain> T.build(moduleNames: List<String> = listOf()): T = apply {
   addCommand("${CMD_PREFIX}buildProject BUILD ${moduleNames.joinToString(" ")}".trim())
-  return this
 }
 
-fun <T : CommandChain> T.rebuild(moduleNames: List<String> = listOf()): T {
+fun <T : CommandChain> T.rebuild(moduleNames: List<String> = listOf()): T = apply {
   addCommand("${CMD_PREFIX}buildProject REBUILD ${moduleNames.joinToString(" ")}".trim())
-  return this
 }
 
-fun <T : CommandChain> T.syncJpsLibraries(): T {
+fun <T : CommandChain> T.syncJpsLibraries(): T = apply {
   addCommand("${CMD_PREFIX}syncJpsLibraries")
-  return this
 }
 
 //kotlin
-fun <T : CommandChain> T.clearSourceCaches(): T {
-  this.addCommand("${CMD_PREFIX}clearSourceCaches")
-  return this
+fun <T : CommandChain> T.clearSourceCaches(): T = apply {
+  addCommand("${CMD_PREFIX}clearSourceCaches")
 }
 
-fun <T : CommandChain> T.clearLibraryCaches(): T {
-  this.addCommand("${CMD_PREFIX}clearLibraryCaches")
-  return this
+fun <T : CommandChain> T.clearLibraryCaches(): T = apply {
+  addCommand("${CMD_PREFIX}clearLibraryCaches")
 }
 
-fun <T : CommandChain> T.performGC(): T {
-  this.addCommand("${CMD_PREFIX}performGC")
-  return this
+fun <T : CommandChain> T.performGC(): T = apply {
+  addCommand("${CMD_PREFIX}performGC")
 }
 
-fun <T : CommandChain> T.convertJavaToKotlinByDefault(value: Boolean): T {
-  this.addCommand("${CMD_PREFIX}changeKotlinEditorOptions donTShowConversionDialog $value")
-  return this
+fun <T : CommandChain> T.convertJavaToKotlinByDefault(value: Boolean): T = apply {
+  addCommand("${CMD_PREFIX}changeKotlinEditorOptions donTShowConversionDialog ${value}")
 }
 
-fun <T : CommandChain> T.assertOpenedKotlinFileInRoot(path: String): T {
-  addCommand("${CMD_PREFIX}assertOpenedKotlinFileInRoot $path")
-  return this
+fun <T : CommandChain> T.assertOpenedKotlinFileInRoot(path: String): T = apply {
+  addCommand("${CMD_PREFIX}assertOpenedKotlinFileInRoot ${path}")
 }
 
-fun <T : CommandChain> T.assertFindUsagesCount(count: Int): T {
-  addCommand("${CMD_PREFIX}assertFindUsagesCommand $count")
-  return this
+fun <T : CommandChain> T.assertFindUsagesCount(count: Int): T = apply {
+  addCommand("${CMD_PREFIX}assertFindUsagesCommand ${count}")
 }
 
-fun <T : CommandChain> T.setBreakpoint(line: Int, relativePath: String? = null, isLambdaBreakpoint: Boolean = false): T {
-  addCommand("${CMD_PREFIX}setBreakpoint $line" +
-             if (relativePath != null) ", $relativePath"
-             else "" +
-                  if (isLambdaBreakpoint) ", lambda-type" else "")
-  return this
+fun <T : CommandChain> T.setBreakpoint(line: Int, relativePath: String? = null, isLambdaBreakpoint: Boolean = false): T = apply {
+  val ext = when {
+    relativePath != null -> ", ${relativePath}"
+    isLambdaBreakpoint -> ", lambda-type"
+    else -> ""
+  }
+  addCommand("${CMD_PREFIX}setBreakpoint ${line}${ext}")
 }
 
-fun <T : CommandChain> T.removeAllBreakpoints(): T {
+fun <T : CommandChain> T.removeAllBreakpoints(): T = apply {
   addCommand("${CMD_PREFIX}removeBreakpoint all")
-  return this
 }
 
-fun <T : CommandChain> T.debugRunConfiguration(runConfigurationName: String, maxWaitingTimeInSec: Int? = null): T {
-  addCommand("${CMD_PREFIX}debugRunConfiguration $runConfigurationName" +
-             if (maxWaitingTimeInSec != null) ",$maxWaitingTimeInSec" else "")
-  return this
+fun <T : CommandChain> T.debugRunConfiguration(runConfigurationName: String, maxWaitingTimeInSec: Int? = null): T = apply {
+  val ext = if (maxWaitingTimeInSec != null) ",${maxWaitingTimeInSec}" else ""
+  addCommand("${CMD_PREFIX}debugRunConfiguration ${runConfigurationName}${ext}")
 }
 
-fun <T : CommandChain> T.debugStep(debugStepTypes: DebugStepTypes): T {
+fun <T : CommandChain> T.debugStep(debugStepTypes: DebugStepTypes): T = apply {
   addCommand("${CMD_PREFIX}debugStep ${debugStepTypes.name}")
-  return this
 }
 
-fun <T : CommandChain> T.stopDebugProcess(): T {
+fun <T : CommandChain> T.stopDebugProcess(): T = apply {
   addCommand("${CMD_PREFIX}stopDebugProcess")
-  return this
 }
 
-fun <T : CommandChain> T.waitForCodeAnalysisFinished(): T {
+fun <T : CommandChain> T.waitForCodeAnalysisFinished(): T = apply {
   addCommand("${CMD_PREFIX}waitForFinishedCodeAnalysis")
-  return this
 }
 
-fun <T : CommandChain> T.checkChatBotResponse(textToCheck: String): T {
+fun <T : CommandChain> T.checkChatBotResponse(textToCheck: String): T = apply {
   addCommand("${CMD_PREFIX}checkResponseContains ${textToCheck}")
-  return this
 }
 
-fun <T : CommandChain> T.authenticateInGrazie(token: String): T {
+fun <T : CommandChain> T.authenticateInGrazie(token: String): T = apply {
   addCommand("${CMD_PREFIX}authenticateInGrazie ${token}")
-  return this
 }
 
-fun <T : CommandChain> T.createJavaFile(fileName: String, filePath: String, fileType: String): T {
+fun <T : CommandChain> T.createJavaFile(fileName: String, filePath: String, fileType: String): T = apply {
   addCommand("${CMD_PREFIX}createJavaFile $fileName,$filePath,$fileType")
-  return this
 }
 
-fun <T : CommandChain> T.createKotlinFile(fileName: String, filePath: String, fileType: String): T {
+fun <T : CommandChain> T.createKotlinFile(fileName: String, filePath: String, fileType: String): T = apply {
   addCommand("${CMD_PREFIX}createKotlinFile $fileName,$filePath,$fileType")
-  return this
 }
 
 enum class EnableSettingSyncOptions {
@@ -879,82 +708,69 @@ enum class EnableSettingSyncOptions {
 }
 
 fun <T : CommandChain> T.enableSettingsSync(enableCrossIdeSync: Boolean = false,
-                                            action: EnableSettingSyncOptions = EnableSettingSyncOptions.NONE): T {
+                                            action: EnableSettingSyncOptions = EnableSettingSyncOptions.NONE): T = apply {
   addCommand("${CMD_PREFIX}enableSettingsSync ${enableCrossIdeSync} ${action.name}")
-  return this
 }
 
-fun <T : CommandChain> T.getSettingsFromServer(): T {
+fun <T : CommandChain> T.getSettingsFromServer(): T = apply {
   addCommand("${CMD_PREFIX}getSettingsFromServer")
-  return this
 }
 
-fun <T : CommandChain> T.pushSettingsToServer(): T {
+@Suppress("unused")
+fun <T : CommandChain> T.pushSettingsToServer(): T = apply {
   addCommand("${CMD_PREFIX}pushSettingsToServer")
-  return this
 }
 
-fun <T : CommandChain> T.disableSettingsSync(deleteSettings: Boolean = false): T {
+fun <T : CommandChain> T.disableSettingsSync(deleteSettings: Boolean = false): T = apply {
   addCommand("${CMD_PREFIX}disableSettingsSync ${deleteSettings}")
-  return this
 }
 
-fun <T : CommandChain> T.acceptDecompileNotice(): T {
+fun <T : CommandChain> T.acceptDecompileNotice(): T = apply {
   addCommand("${CMD_PREFIX}acceptDecompileNotice")
-  return this
 }
 
-fun <T : CommandChain> T.startNameSuggestionBenchmark(): T {
+fun <T : CommandChain> T.startNameSuggestionBenchmark(): T = apply {
   addCommand("${CMD_PREFIX}startNameSuggestionBenchmark")
-  return this
 }
 
-fun <T : CommandChain> T.stopNameSuggestionBenchmark(reportPath: String): T {
+fun <T : CommandChain> T.stopNameSuggestionBenchmark(reportPath: String): T = apply {
   addCommand("${CMD_PREFIX}stopNameSuggestionBenchmark $reportPath")
-  return this
 }
 
 /**
  * Will wait and throw exception if the condition wasn't satisfied
  */
-@Suppress("unused")
-fun <T : CommandChain> T.waitVcsLogIndexing(timeout: Duration): T {
-  addCommand("${CMD_PREFIX}waitVcsLogIndexing $timeout")
-  return this
+fun <T : CommandChain> T.waitVcsLogIndexing(timeout: Duration? = null): T = apply {
+  if (timeout != null) {
+    addCommand("${CMD_PREFIX}waitVcsLogIndexing ${timeout}")
+  }
+  else {
+    addCommand("${CMD_PREFIX}waitVcsLogIndexing")
+  }
 }
 
-/**
- * Will wait infinitely till timeout of the test occurred
- */
-fun <T : CommandChain> T.waitVcsLogIndexing(): T {
-  addCommand("${CMD_PREFIX}waitVcsLogIndexing")
-  return this
-}
-
-fun <T : CommandChain> T.disableCodeVision(): T {
+fun <T : CommandChain> T.disableCodeVision(): T = apply {
   addCommand("${CMD_PREFIX}disableCodeVision")
-  return this
 }
 
-fun <T : CommandChain> T.showRecentFiles(secondsToWaitTillClose: Int): T {
-  addCommand("${CMD_PREFIX}showRecentFiles $secondsToWaitTillClose")
-  return this
+fun <T : CommandChain> T.showRecentFiles(secondsToWaitTillClose: Int): T = apply {
+  addCommand("${CMD_PREFIX}showRecentFiles ${secondsToWaitTillClose}")
 }
 
 fun <T : CommandChain> T.setRegistryValue(key: String, value: String): T = apply {
-  addCommand("${CMD_PREFIX}set $key=$value")
+  addCommand("${CMD_PREFIX}set ${key}=${value}")
 }
 
 fun <T : CommandChain> T.collectFilesNotMarkedAsIndex(): T = apply {
   addCommand("${CMD_PREFIX}collectFilesNotMarkedAsIndex")
 }
 
-fun <T : CommandChain> T.gitCommitFile(pathToFile: String, commitMessage: String) = addCommand(
-  "${CMD_PREFIX}gitCommit $pathToFile,$commitMessage")
+fun <T : CommandChain> T.gitCommitFile(pathToFile: String, commitMessage: String): T = apply {
+  addCommand("${CMD_PREFIX}gitCommit ${pathToFile},${commitMessage}")
+}
 
 fun <T : CommandChain> T.replaceText(startOffset: Int? = null, endOffset: Int? = null, newText: String? = null): T = apply {
   val options = StringBuilder()
-
   if (startOffset != null) {
     options.append(" -startOffset ${startOffset}")
   }
@@ -967,22 +783,18 @@ fun <T : CommandChain> T.replaceText(startOffset: Int? = null, endOffset: Int? =
   addCommand("${CMD_PREFIX}replaceText ${options}")
 }
 
-fun <T : CommandChain> T.saveDocumentsAndSettings(): T {
+fun <T : CommandChain> T.saveDocumentsAndSettings(): T = apply {
   addCommand("${CMD_PREFIX}saveDocumentsAndSettings")
-  return this
 }
 
-fun <T : CommandChain> T.freezeUI(durationOfFreezeInMs: Int): T {
+fun <T : CommandChain> T.freezeUI(durationOfFreezeInMs: Int): T = apply {
   addCommand("${CMD_PREFIX}freezeUI $durationOfFreezeInMs")
-  return this
 }
 
-fun <T : CommandChain> T.moveCaret(text: String): T {
+fun <T : CommandChain> T.moveCaret(text: String): T = apply {
   addCommand("${CMD_PREFIX}moveCaret $text")
-  return this
 }
 
-fun <T : CommandChain> T.startNewLine(): T {
+fun <T : CommandChain> T.startNewLine(): T = apply {
   executeEditorAction("EditorStartNewLine")
-  return this
 }

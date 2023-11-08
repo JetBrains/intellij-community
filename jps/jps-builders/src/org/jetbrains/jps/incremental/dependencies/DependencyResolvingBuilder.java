@@ -35,6 +35,7 @@ import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
+import org.jetbrains.jps.incremental.relativizer.PathRelativizerService;
 import org.jetbrains.jps.model.JpsGlobal;
 import org.jetbrains.jps.model.JpsSimpleElement;
 import org.jetbrains.jps.model.jarRepository.JpsRemoteRepositoryDescription;
@@ -55,6 +56,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.UnknownHostException;
+import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -318,7 +320,7 @@ public final class DependencyResolvingBuilder extends ModuleLevelBuilder {
         if (entriesCount <= 0) {
           try {
             Path compiledRootPath = artifact.toPath();
-            reportCorruptedArtifactZip(libraryName, descriptor, compiledRootPath);
+            reportCorruptedArtifactZip(context, libraryName, descriptor, compiledRootPath);
             context.processMessage(
               new ProgressMessage(JpsBuildBundle.message("progress.message.removing.invalid.artifact", libraryName, artifact))
             );
@@ -352,7 +354,7 @@ public final class DependencyResolvingBuilder extends ModuleLevelBuilder {
     List<Path> missingCompiledRoots = ContainerUtil.filter(allCompiledRoots, rootFile -> !Files.exists(rootFile));
 
     if (!missingCompiledRoots.isEmpty()) {
-      reportMissingCompiledRootArtifacts(libraryName, descriptor, allCompiledRoots, missingCompiledRoots);
+      reportMissingCompiledRootArtifacts(context, libraryName, descriptor, allCompiledRoots, missingCompiledRoots);
       throw new ArtifactVerificationException(
         JpsBuildBundle.message("build.message.error.missing.artifacts", libraryName, missingCompiledRoots.toString())
       );
@@ -409,14 +411,15 @@ public final class DependencyResolvingBuilder extends ModuleLevelBuilder {
     String expectedSha256Sum = verification.getSha256sum();
 
     if (!Objects.equals(expectedSha256Sum, actualSha256Sum)) {
-      reportInvalidArtifactChecksum(libraryName, descriptor, path, actualSha256Sum);
+      reportInvalidArtifactChecksum(context, libraryName, descriptor, path, actualSha256Sum);
       throw new ArtifactVerificationException(
         JpsBuildBundle.message("build.message.error.invalid.sha256.checksum", libraryName, path, expectedSha256Sum, actualSha256Sum)
       );
     }
   }
 
-  private static void reportCorruptedArtifactZip(@NotNull String libraryName,
+  private static void reportCorruptedArtifactZip(@NotNull CompileContext context,
+                                                 @NotNull String libraryName,
                                                  @NotNull JpsMavenRepositoryLibraryDescriptor descriptor,
                                                  @NotNull Path artifactFile) {
     if (SystemProperties.getBooleanProperty(RESOLUTION_REPORT_CORRUPTED_ZIP_PROPERTY, false)) {
@@ -429,40 +432,56 @@ public final class DependencyResolvingBuilder extends ModuleLevelBuilder {
         LOG.error("Failed to compute checksum for corrupted zip: " + artifactFile, e);
         sha256 = "failed_to_compute";
       }
-      reportBadArtifact(libraryName, descriptor, artifactFile, sha256, "corrupted_zip");
+      reportBadArtifact(context, libraryName, descriptor, artifactFile, sha256, "corrupted_zip");
     }
   }
 
-  private static void reportInvalidArtifactChecksum(@NotNull String libraryName,
+  private static void reportInvalidArtifactChecksum(@NotNull CompileContext context,
+                                                    @NotNull String libraryName,
                                                     @NotNull JpsMavenRepositoryLibraryDescriptor descriptor,
                                                     @NotNull Path artifactFile,
                                                     @NotNull String sha256sum) {
     if (SystemProperties.getBooleanProperty(RESOLUTION_REPORT_INVALID_SHA256_CHECKSUM_PROPERTY, false)) {
-      reportBadArtifact(libraryName, descriptor, artifactFile, sha256sum, "invalid_checksum");
+      reportBadArtifact(context, libraryName, descriptor, artifactFile, sha256sum, "invalid_checksum");
     }
   }
 
-  private static void reportBadArtifact(@NotNull String libraryName,
+  private static void reportBadArtifact(@NotNull CompileContext context,
+                                        @NotNull String libraryName,
                                         @NotNull JpsMavenRepositoryLibraryDescriptor descriptor,
                                         @NotNull Path artifactFile,
                                         @NotNull String sha256sum,
                                         @NotNull String problemKind) {
-    Path reportsDir = createVerificationProblemReport(libraryName, descriptor, problemKind,
-                                                      metadata -> metadata.setProperty("sha256", sha256sum));
+    Path reportsDir = createVerificationProblemReport(context, libraryName, descriptor, problemKind,
+                                                      metadata -> {
+                                                        metadata.setProperty("sha256", sha256sum);
+                                                        metadata.setProperty("filename", artifactFile.getFileName().toString());
+                                                      });
     if (reportsDir == null) {
       return;
     }
 
-    try {
-      Path artifactCopy = reportsDir.resolve(artifactFile.getFileName());
-      Files.copy(artifactFile, artifactCopy, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES);
+    // Dump all artifacts in artifact's parent directory
+    try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(artifactFile.getParent())) {
+      for (Path sourcePath : directoryStream) {
+        if (!Files.isRegularFile(sourcePath)) continue;
+
+        Path targetPath = reportsDir.resolve(sourcePath.getFileName());
+        try {
+          Files.copy(sourcePath, targetPath, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES);
+        }
+        catch (IOException e) {
+          LOG.error("Unable to copy bad artifact " + sourcePath, e);
+        }
+      }
     }
     catch (IOException e) {
-      LOG.error("Unable to copy bad artifact " + artifactFile, e);
+      LOG.error("Failed to open directory stream for " + artifactFile.getParent(), e);
     }
   }
 
-  private static void reportMissingCompiledRootArtifacts(@NotNull String libraryName,
+  private static void reportMissingCompiledRootArtifacts(@NotNull CompileContext context,
+                                                         @NotNull String libraryName,
                                                          @NotNull JpsMavenRepositoryLibraryDescriptor descriptor,
                                                          @NotNull List<Path> allRoots,
                                                          @NotNull List<Path> missingRoots) {
@@ -470,7 +489,7 @@ public final class DependencyResolvingBuilder extends ModuleLevelBuilder {
       return;
     }
 
-    Path reportsDir = createVerificationProblemReport(libraryName, descriptor, "missing_artifact", reportMetadata -> {
+    Path reportsDir = createVerificationProblemReport(context, libraryName, descriptor, "missing_artifact", reportMetadata -> {
       reportMetadata.setProperty("all_roots_list", allRoots.toString());
       reportMetadata.setProperty("missing_roots_list", missingRoots.toString());
     });
@@ -495,7 +514,8 @@ public final class DependencyResolvingBuilder extends ModuleLevelBuilder {
     }
   }
 
-  private static @Nullable Path createVerificationProblemReport(@NotNull String libraryName,
+  private static @Nullable Path createVerificationProblemReport(@NotNull CompileContext context,
+                                                                @NotNull String libraryName,
                                                                 @NotNull JpsMavenRepositoryLibraryDescriptor descriptor,
                                                                 @NotNull String problemKind,
                                                                 @NotNull Consumer<Properties> metadataWriter) {
@@ -503,7 +523,8 @@ public final class DependencyResolvingBuilder extends ModuleLevelBuilder {
     if (outputDirPath == null) {
       return null;
     }
-    Path corruptedArtifactsReportsDir = Path.of(outputDirPath);
+    PathRelativizerService relativizerService = context.getProjectDescriptor().dataManager.getRelativizer();
+    Path corruptedArtifactsReportsDir = Path.of(relativizerService.toFull(outputDirPath));
 
     Path libraryReportDir;
     try {

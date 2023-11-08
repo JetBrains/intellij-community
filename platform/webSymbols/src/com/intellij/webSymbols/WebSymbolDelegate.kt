@@ -82,29 +82,24 @@ abstract class WebSymbolDelegate<T : WebSymbol>(val delegate: T) : WebSymbol {
   override fun getNavigationTargets(project: Project): Collection<NavigationTarget> =
     (delegate as? NavigatableSymbol)?.getNavigationTargets(project) ?: emptyList()
 
-  override fun getMatchingSymbols(namespace: SymbolNamespace,
-                                  kind: SymbolKind,
-                                  name: String,
+  override fun getMatchingSymbols(qualifiedName: WebSymbolQualifiedName,
                                   params: WebSymbolsNameMatchQueryParams,
                                   scope: Stack<WebSymbolsScope>): List<WebSymbol> =
-    delegate.getMatchingSymbols(namespace, kind, name, params, scope)
+    delegate.getMatchingSymbols(qualifiedName, params, scope)
 
 
-  override fun getSymbols(namespace: SymbolNamespace,
-                          kind: SymbolKind,
+  override fun getSymbols(qualifiedKind: WebSymbolQualifiedKind,
                           params: WebSymbolsListSymbolsQueryParams,
                           scope: Stack<WebSymbolsScope>): List<WebSymbolsScope> =
-    delegate.getSymbols(namespace, kind, params, scope)
+    delegate.getSymbols(qualifiedKind, params, scope)
 
-  override fun getCodeCompletions(namespace: SymbolNamespace,
-                                  kind: SymbolKind,
-                                  name: String,
+  override fun getCodeCompletions(qualifiedName: WebSymbolQualifiedName,
                                   params: WebSymbolsCodeCompletionQueryParams,
                                   scope: Stack<WebSymbolsScope>): List<WebSymbolCodeCompletionItem> =
-    delegate.getCodeCompletions(namespace, kind, name, params, scope)
+    delegate.getCodeCompletions(qualifiedName, params, scope)
 
-  override fun isExclusiveFor(namespace: SymbolNamespace, kind: SymbolKind): Boolean =
-    delegate.isExclusiveFor(namespace, kind)
+  override fun isExclusiveFor(qualifiedKind: WebSymbolQualifiedKind): Boolean =
+    delegate.isExclusiveFor(qualifiedKind)
 
   override val searchTarget: WebSymbolSearchTarget?
     get() = when (delegate) {

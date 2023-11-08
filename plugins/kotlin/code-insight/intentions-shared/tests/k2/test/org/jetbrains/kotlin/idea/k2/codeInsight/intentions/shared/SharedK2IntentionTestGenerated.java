@@ -345,6 +345,11 @@ public abstract class SharedK2IntentionTestGenerated extends AbstractSharedK2Int
                 runTest("../testData/intentions/addBracesToAllBranches/whenEntry.kt");
             }
 
+            @TestMetadata("whenWithComment.kt")
+            public void testWhenWithComment() throws Exception {
+                runTest("../testData/intentions/addBracesToAllBranches/whenWithComment.kt");
+            }
+
             @TestMetadata("whenWithOneEntry.kt")
             public void testWhenWithOneEntry() throws Exception {
                 runTest("../testData/intentions/addBracesToAllBranches/whenWithOneEntry.kt");
@@ -1286,6 +1291,11 @@ public abstract class SharedK2IntentionTestGenerated extends AbstractSharedK2Int
             runTest("../testData/intentions/removeBraces/ifWithComment.kt");
         }
 
+        @TestMetadata("ifWithComment2.kt")
+        public void testIfWithComment2() throws Exception {
+            runTest("../testData/intentions/removeBraces/ifWithComment2.kt");
+        }
+
         @TestMetadata("ifWithLocalClass.kt")
         public void testIfWithLocalClass() throws Exception {
             runTest("../testData/intentions/removeBraces/ifWithLocalClass.kt");
@@ -1364,6 +1374,21 @@ public abstract class SharedK2IntentionTestGenerated extends AbstractSharedK2Int
         @TestMetadata("whenStatement.kt")
         public void testWhenStatement() throws Exception {
             runTest("../testData/intentions/removeBraces/whenStatement.kt");
+        }
+
+        @TestMetadata("whenWithComment.kt")
+        public void testWhenWithComment() throws Exception {
+            runTest("../testData/intentions/removeBraces/whenWithComment.kt");
+        }
+
+        @TestMetadata("whenWithComment2.kt")
+        public void testWhenWithComment2() throws Exception {
+            runTest("../testData/intentions/removeBraces/whenWithComment2.kt");
+        }
+
+        @TestMetadata("whenWithComment3.kt")
+        public void testWhenWithComment3() throws Exception {
+            runTest("../testData/intentions/removeBraces/whenWithComment3.kt");
         }
 
         @TestMetadata("while.kt")
@@ -1607,6 +1632,11 @@ public abstract class SharedK2IntentionTestGenerated extends AbstractSharedK2Int
         @TestMetadata("condition2.kt")
         public void testCondition2() throws Exception {
             runTest("../testData/intentions/removeUnnecessaryParentheses/condition2.kt");
+        }
+
+        @TestMetadata("condition3.kt")
+        public void testCondition3() throws Exception {
+            runTest("../testData/intentions/removeUnnecessaryParentheses/condition3.kt");
         }
 
         @TestMetadata("elvisRhs.kt")

@@ -57,15 +57,13 @@ public class SetInspectionOptionFix extends IntentionAndQuickFixAction implement
     myValue = value;
   }
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return myMessage;
   }
 
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return AnalysisBundle.message("set.inspection.option.fix");
   }
 

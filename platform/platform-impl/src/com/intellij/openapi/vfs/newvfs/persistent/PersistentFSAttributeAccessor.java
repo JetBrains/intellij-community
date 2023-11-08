@@ -7,7 +7,6 @@ import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.util.io.blobstorage.ByteBufferReader;
 import com.intellij.util.io.blobstorage.ByteBufferWriter;
 import com.intellij.util.io.DataInputOutputUtil;
-import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -109,7 +108,7 @@ public final class PersistentFSAttributeAccessor {
    * Opens given attribute of given file for writing
    */
   public @NotNull AttributeOutputStream writeAttribute(final int fileId,
-                                              final @NotNull FileAttribute attribute) {
+                                                       final @NotNull FileAttribute attribute) {
     //MAYBE RC: check fileId for be in range (1..max)? fileId will be checked on stream.close(),
     //          but it is quite common to swallow exceptions from stream.close() -- and in general
     //          it is better to fail earlier
@@ -128,15 +127,5 @@ public final class PersistentFSAttributeAccessor {
 
   public void deleteAttributes(final int fileId) throws IOException {
     attributesStorage.deleteAttributes(connection, fileId);
-  }
-
-  public int getLocalModificationCount() {
-    return attributesStorage.getLocalModificationCount();
-  }
-
-  public void checkAttributesStorageSanity(final int fileId,
-                                           final @NotNull IntList usedAttributeRecordIds,
-                                           final @NotNull IntList validAttributeIds) throws IOException {
-    attributesStorage.checkAttributesStorageSanity(connection, fileId, usedAttributeRecordIds, validAttributeIds);
   }
 }

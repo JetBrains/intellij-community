@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl.sbom
 
+import com.intellij.openapi.util.SystemInfoRt
 import com.jetbrains.plugin.structure.base.utils.exists
 import com.jetbrains.plugin.structure.base.utils.outputStream
 import io.opentelemetry.api.common.AttributeKey
@@ -28,6 +29,7 @@ import org.jetbrains.jps.model.library.JpsLibrary
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor
 import org.jetbrains.jps.model.library.JpsRepositoryLibraryType
 import org.jetbrains.jps.util.JpsPathUtil
+import org.jsoup.Jsoup
 import org.spdx.jacksonstore.MultiFormatStore
 import org.spdx.library.ModelCopyManager
 import org.spdx.library.SpdxConstants
@@ -39,6 +41,7 @@ import org.spdx.library.model.enumerations.ReferenceCategory
 import org.spdx.library.model.enumerations.RelationshipType
 import org.spdx.library.model.license.AnyLicenseInfo
 import org.spdx.library.model.license.ExtractedLicenseInfo
+import org.spdx.library.model.license.InvalidLicenseStringException
 import org.spdx.library.model.license.LicenseInfoFactory
 import org.spdx.library.model.license.SpdxNoAssertionLicense
 import org.spdx.storage.IModelStore.IdType
@@ -72,6 +75,9 @@ internal class SoftwareBillOfMaterialsImpl(
   private val baseDownloadUrl: String?
     get() = context.productProperties.baseDownloadUrl?.removeSuffix("/")
 
+  private val documentNamespace: String?
+    get() = context.productProperties.sbomOptions.documentNamespace ?: baseDownloadUrl
+
   private val license: Options.DistributionLicense by lazy {
     when (val license = context.productProperties.sbomOptions.license) {
       null -> throw IllegalArgumentException("Distribution license isn't specified")
@@ -95,7 +101,7 @@ internal class SoftwareBillOfMaterialsImpl(
     }
     Options.DistributionLicense(
       name = "JetBrains User Agreement",
-      text = eula.readText(),
+      text = Jsoup.parse(eula.readText()).text(),
       url = "https://www.jetbrains.com/legal/docs/toolbox/user/"
     )
   }
@@ -125,7 +131,7 @@ internal class SoftwareBillOfMaterialsImpl(
       .filter { it.exists() }.toList()
 
   private fun spdxDocument(name: String): SpdxDocument {
-    val uri = "$baseDownloadUrl/$specVersion/$name.spdx"
+    val uri = "$documentNamespace/$specVersion/$name.spdx"
     val modelStore = MultiFormatStore(InMemSpdxStore(), MultiFormatStore.Format.JSON_PRETTY)
     val document = SpdxModelFactory.createSpdxDocument(modelStore, uri, ModelCopyManager())
     val creationDate = Date(TimeUnit.SECONDS.toMillis(context.options.buildDateInSeconds))
@@ -156,12 +162,17 @@ internal class SoftwareBillOfMaterialsImpl(
   }
 
   override suspend fun generate() {
-    if (!context.shouldBuildDistributions()) {
-      Span.current().addEvent("No distribution was built, skipping")
-      return
+    val skipReason = when {
+      !context.shouldBuildDistributions() -> "No distribution was built"
+      documentNamespace == null -> "Document namespace isn't specified"
+      context.productProperties.sbomOptions.creator == null -> "Document creator isn't specified"
+      context.productProperties.sbomOptions.copyrightText == null -> "Copyright text isn't specified"
+      context.productProperties.sbomOptions.license == null -> "Distribution license isn't specified"
+      else -> null
     }
-    requireNotNull(baseDownloadUrl) {
-      "Base download url isn't specified"
+    if (skipReason != null) {
+      Span.current().addEvent("$skipReason, skipping")
+      return
     }
     check(distributionFiles.any()) {
       "No distribution was built"
@@ -198,8 +209,10 @@ internal class SoftwareBillOfMaterialsImpl(
         val document = spdxDocument(it.path.name)
         val rootPackage = document.spdxPackage(it.path.name, sha256sum = it.sha256sum, sha1sum = it.sha1sum) {
           setVersionInfo(version)
-            .setDownloadLocation("$baseDownloadUrl/${it.path.name}")
             .setSupplier(creator)
+            .setDownloadLocation(baseDownloadUrl?.let { url ->
+              "$url/${it.path.name}"
+            } ?: SpdxConstants.NOASSERTION_VALUE)
         }
         document.documentDescribes.add(rootPackage)
         val runtimePackage = if (isRuntimeBundled(it.path, distribution.builder.targetOs)) {
@@ -215,8 +228,11 @@ internal class SoftwareBillOfMaterialsImpl(
   }
 
   private fun isRuntimeBundled(file: Path, os: OsFamily): Boolean {
-    return os == OsFamily.LINUX && !file.name.contains(LinuxDistributionBuilder.NO_RUNTIME_SUFFIX) ||
-           os == OsFamily.MACOS && !file.name.contains(MacDistributionBuilder.NO_RUNTIME_SUFFIX)
+    return when (os) {
+      OsFamily.LINUX -> !file.name.contains(LinuxDistributionBuilder.NO_RUNTIME_SUFFIX)
+      OsFamily.MACOS -> !file.name.contains(MacDistributionBuilder.NO_RUNTIME_SUFFIX)
+      OsFamily.WINDOWS -> true
+    }
   }
 
   /**
@@ -224,17 +240,72 @@ internal class SoftwareBillOfMaterialsImpl(
    * then should be replaced with [addRuntimeDocumentRef]
    */
   private suspend fun SpdxDocument.runtimePackage(os: OsFamily, arch: JvmArchitecture): SpdxPackage {
-    val checksums = context.bundledRuntime.findArchive(os = os, arch = arch).let(SoftwareBillOfMaterialsImpl::Checksums)
-    val runtimePackage = spdxPackage(name = context.bundledRuntime.archiveName(os = os, arch = arch),
-                                     sha256sum = checksums.sha256sum, sha1sum = checksums.sha1sum,
-                                     licenseDeclared = jetBrainsOwnLicense) {
-      setVersionInfo(context.bundledRuntime.prefix + context.bundledRuntime.build)
-        .setDownloadLocation(context.bundledRuntime.downloadUrlFor(os = os, arch = arch))
-        .setSupplier("Organization: ${Suppliers.JETBRAINS}")
+    val checksums = Checksums(context.bundledRuntime.findArchive(os = os, arch = arch))
+    val version = context.bundledRuntime.build
+    val supplier = "Organization: ${Suppliers.JETBRAINS}"
+    val runtimeArchivePackage = spdxPackage(
+      name = context.bundledRuntime.archiveName(os = os, arch = arch),
+      sha256sum = checksums.sha256sum, sha1sum = checksums.sha1sum,
+      licenseDeclared = jetBrainsOwnLicense
+    ) {
+      setVersionInfo(version)
+      setSupplier(supplier)
+      setDownloadLocation(context.bundledRuntime.downloadUrlFor(os = os, arch = arch))
     }
-    runtimePackage.claimContainedFiles(document = this)
-    runtimePackage.validate()
-    return runtimePackage
+    runtimeArchivePackage.claimContainedFiles(document = this)
+    /**
+     * See [BundledRuntime.extract]
+     */
+    val extractedRuntimePackage = spdxPackage(name = "./jbr/**") {
+      setVersionInfo(version)
+      setSupplier(supplier)
+      setDownloadLocation(SpdxConstants.NOASSERTION_VALUE)
+    }
+    extractedRuntimePackage.relatesTo(runtimeArchivePackage, RelationshipType.EXPANDED_FROM_ARCHIVE)
+    addRuntimeUpstreams(runtimeArchivePackage, os, arch)
+    runtimeArchivePackage.validate()
+    return extractedRuntimePackage
+  }
+
+  private fun SpdxDocument.addRuntimeUpstreams(runtimeArchivePackage: SpdxPackage, os: OsFamily, arch: JvmArchitecture) {
+    val cefVersion = context.dependenciesProperties["cef.version"]
+    val cefSuffix = when (os) {
+      OsFamily.LINUX -> when (arch) {
+        JvmArchitecture.aarch64 -> "linuxarm64"
+        JvmArchitecture.x64 -> "linux64"
+      }
+      OsFamily.MACOS -> when (arch) {
+        JvmArchitecture.aarch64 -> "macosarm64"
+        JvmArchitecture.x64 -> "macosx64"
+      }
+      OsFamily.WINDOWS -> when (arch) {
+        JvmArchitecture.aarch64 -> "windowsarm64"
+        JvmArchitecture.x64 -> "windows64"
+      }
+    }
+    val cefArchive = "cef_binary_${cefVersion}_$cefSuffix.tar.bz2"
+    val cefPackage = spdxPackage(name = cefArchive) {
+      setVersionInfo(cefVersion)
+      setSupplier("Organization: The Chromium Embedded Framework Authors")
+      setDownloadLocation("https://cef-builds.spotifycdn.com/$cefArchive")
+    }
+    val jcefUpstream = spdxPackage("Java Chromium Embedded Framework") {
+      val revision = context.dependenciesProperties["jcef.commit"]
+      setVersionInfo(revision)
+      setSourceInfo("Revision $revision of https://github.com/chromiumembedded/java-cef")
+      setSupplier("Organization: The Chromium Embedded Framework Authors")
+      setDownloadLocation(SpdxConstants.NOASSERTION_VALUE)
+    }
+    val openJdkUpstream = spdxPackage("OpenJDK") {
+      val tag = context.dependenciesProperties["openjdk.tag"]
+      setVersionInfo(tag)
+      setSourceInfo("Tag $tag of https://github.com/openjdk/jdk17u")
+      setSupplier("Organization: Oracle Corporation and/or its affiliates")
+      setDownloadLocation(SpdxConstants.NOASSERTION_VALUE)
+    }
+    runtimeArchivePackage.relatesTo(cefPackage, RelationshipType.DEPENDS_ON, "repacked from")
+    runtimeArchivePackage.relatesTo(openJdkUpstream, RelationshipType.VARIANT_OF)
+    runtimeArchivePackage.relatesTo(jcefUpstream, RelationshipType.VARIANT_OF)
   }
 
   /**
@@ -307,7 +378,7 @@ internal class SoftwareBillOfMaterialsImpl(
     val libraryPackages = mavenLibraries.mapNotNull { lib ->
       val libraryPackage = document.spdxPackage(lib)
       val filePackage = filePackages[lib.entry.path] ?: return@mapNotNull null
-      filePackage.relatesTo(libraryPackage, RelationshipType.DEPENDS_ON, "repacked into")
+      filePackage.relatesTo(libraryPackage, RelationshipType.DEPENDS_ON, "repacked from")
       libraryPackage
     }
     val duplicates = libraryPackages.asSequence().filter {
@@ -419,16 +490,14 @@ internal class SoftwareBillOfMaterialsImpl(
     libraryLicense: LibraryLicense
   ): MavenLibrary {
     val coordinates = MavenCoordinates(mavenDescriptor.groupId, mavenDescriptor.artifactId, mavenDescriptor.version)
-    checkNotNull(mavenDescriptor.jarRepositoryId) {
-      "Missing jar repository ID for $coordinates"
+    val repositoryUrl = if (mavenDescriptor.jarRepositoryId != null) {
+      repositories
+        .firstOrNull { it.id == mavenDescriptor.jarRepositoryId }
+        ?.let { translateRepositoryUrl(it.url) }
+        ?.removeSuffix("/")
+      ?: error("Unknown jar repository ID: ${mavenDescriptor.jarRepositoryId}")
     }
-    val repositoryUrl = repositories
-      .firstOrNull { it.id == mavenDescriptor.jarRepositoryId }
-      ?.let { translateRepositoryUrl(it.url) }
-      ?.removeSuffix("/")
-    checkNotNull(repositoryUrl) {
-      "Unknown jar repository ID: ${mavenDescriptor.jarRepositoryId}"
-    }
+    else null
     val libraryName = coordinates.getFileName(packaging = mavenDescriptor.packaging, classifier = "")
     val checksums = mavenDescriptor.artifactsVerification.filter {
       Path.of(JpsPathUtil.urlToOsPath(it.url)).name == libraryName
@@ -446,8 +515,8 @@ internal class SoftwareBillOfMaterialsImpl(
     return MavenLibrary(
       coordinates = coordinates,
       repositoryUrl = repositoryUrl,
-      downloadUrl = "$repositoryUrl/${coordinates.directoryPath}/$libraryName",
-      pomXmlUrl = "$repositoryUrl/${coordinates.directoryPath}/$pomXmlName",
+      downloadUrl = repositoryUrl?.let { "$it/${coordinates.directoryPath}/$libraryName" },
+      pomXmlUrl = repositoryUrl?.let { "$it/${coordinates.directoryPath}/$pomXmlName" },
       sha256Checksum = checksums.single().sha256sum,
       license = libraryLicense,
       entry = libraryEntry,
@@ -569,7 +638,12 @@ internal class SoftwareBillOfMaterialsImpl(
    * @param id one of [SpdxConstants.LISTED_LICENSE_URL]
    */
   private fun SpdxDocument.parseLicense(id: String): AnyLicenseInfo {
-    return LicenseInfoFactory.parseSPDXLicenseString(id, modelStore, documentUri, copyManager)
+    return try {
+      LicenseInfoFactory.parseSPDXLicenseString(id, modelStore, documentUri, copyManager)
+    }
+    catch (e: InvalidLicenseStringException) {
+      throw IllegalArgumentException(id).apply { addSuppressed(e) }
+    }
   }
 
   private fun SpdxDocument.extractedLicenseInfo(name: String, text: String, url: String?): ExtractedLicenseInfo {
@@ -726,7 +800,7 @@ internal class SoftwareBillOfMaterialsImpl(
    * See https://pypi.org/project/ntia-conformance-checker/
    */
   private suspend fun checkNtiaConformance(documents: List<Path>) {
-    if (Docker.isAvailable) {
+    if (Docker.isAvailable && !SystemInfoRt.isWindows) {
       val ntiaChecker = "ntia-checker"
       suspendingRetryWithExponentialBackOff {
         runProcess(

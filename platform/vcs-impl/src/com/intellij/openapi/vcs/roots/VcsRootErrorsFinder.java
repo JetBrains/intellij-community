@@ -21,7 +21,7 @@ public final class VcsRootErrorsFinder {
   public VcsRootErrorsFinder(@NotNull Project project) {
     myProject = project;
     myVcsManager = ProjectLevelVcsManager.getInstance(project);
-    myRootDetector = myProject.getService(VcsRootDetector.class);
+    myRootDetector = VcsRootDetector.getInstance(myProject);
   }
 
   @NotNull

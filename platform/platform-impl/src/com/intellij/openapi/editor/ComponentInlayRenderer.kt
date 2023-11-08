@@ -3,7 +3,10 @@ package com.intellij.openapi.editor
 
 import com.intellij.openapi.editor.markup.TextAttributes
 import org.jetbrains.annotations.ApiStatus.Experimental
-import java.awt.*
+import java.awt.Component
+import java.awt.Dimension
+import java.awt.Graphics
+import java.awt.Rectangle
 
 /**
  * Open implementation of [EditorCustomElementRenderer] for component-based inlays.
@@ -19,11 +22,5 @@ open class ComponentInlayRenderer<out T : Component>(val component: T,
 
   final override fun calcHeightInPixels(inlay: Inlay<*>): Int = inlaySize.height
 
-  final override fun paint(inlay: Inlay<*>, g: Graphics, targetRegion: Rectangle, textAttributes: TextAttributes) {
-    inlay.bounds?.let { inlayBounds ->
-      if (component.y != inlayBounds.y) {
-        component.location = Point(component.x, inlayBounds.y)
-      }
-    }
-  }
+  final override fun paint(inlay: Inlay<*>, g: Graphics, targetRegion: Rectangle, textAttributes: TextAttributes) = Unit
 }

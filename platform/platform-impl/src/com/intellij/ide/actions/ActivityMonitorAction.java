@@ -127,7 +127,7 @@ final class ActivityMonitorAction extends DumbAwareAction implements ActionRemot
         return result;
       }
 
-      private String findPrefix(String qname, String[] prefixes) {
+      private static String findPrefix(String qname, String[] prefixes) {
         for (String prefix : prefixes) {
           if (qname.startsWith(prefix)) {
             return prefix;
@@ -169,7 +169,7 @@ final class ActivityMonitorAction extends DumbAwareAction implements ActionRemot
         return (runnable ? "<infrastructure: " : "<unidentified: ") + getCommonThreadName(info) + ">";
       }
 
-      private String getCommonThreadName(ThreadInfo info) {
+      private static String getCommonThreadName(ThreadInfo info) {
         String name = info.getThreadName();
         if (ThreadDumper.isEDT(name)) return "UI thread";
 
@@ -178,7 +178,7 @@ final class ActivityMonitorAction extends DumbAwareAction implements ActionRemot
         return name;
       }
 
-      private boolean isInfrastructureClass(String className) {
+      private static boolean isInfrastructureClass(String className) {
         return ContainerUtil.exists(INFRASTRUCTURE_PREFIXES, className::startsWith);
       }
 

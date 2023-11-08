@@ -9,7 +9,6 @@ import com.intellij.ui.dsl.builder.RowsRange
 import org.intellij.plugins.markdown.fileActions.MarkdownFileActionFormat
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
-import java.io.File
 
 @ApiStatus.Experimental
 internal interface MarkdownExportProvider {
@@ -19,7 +18,7 @@ internal interface MarkdownExportProvider {
 
   fun validate(project: Project, file: VirtualFile): @Nls String?
 
-  fun Panel.createSettingsComponent(project: Project, suggestedTargetFile: File): RowsRange? = null
+  fun Panel.createSettingsComponent(project: Project, suggestedTargetFile: VirtualFile): RowsRange? = null
 
   companion object {
     private val EP_NAME: ExtensionPointName<MarkdownExportProvider> =

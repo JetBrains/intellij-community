@@ -27,6 +27,8 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public final class SelectionDifferenceModel extends FileDifferenceModel {
   private final SelectionCalculator myCalculator;
@@ -36,10 +38,10 @@ public final class SelectionDifferenceModel extends FileDifferenceModel {
   private final int myTo;
 
   public SelectionDifferenceModel(Project p,
-                                  IdeaGateway gw,
-                                  SelectionCalculator c,
-                                  Revision left,
-                                  Revision right,
+                                  @NotNull IdeaGateway gw,
+                                  @NotNull SelectionCalculator c,
+                                  @NotNull Revision left,
+                                  @NotNull Revision right,
                                   int from,
                                   int to,
                                   boolean editableRightContent) {
@@ -62,28 +64,32 @@ public final class SelectionDifferenceModel extends FileDifferenceModel {
   }
 
   @Override
-  protected boolean isLeftContentAvailable(RevisionProcessingProgress p) {
+  protected boolean isLeftContentAvailable(@NotNull RevisionProcessingProgress p) {
     return myCalculator.canCalculateFor(myLeftRevision, p);
   }
 
   @Override
-  protected boolean isRightContentAvailable(RevisionProcessingProgress p) {
+  protected boolean isRightContentAvailable(@NotNull RevisionProcessingProgress p) {
     return myCalculator.canCalculateFor(myRightRevision, p);
   }
 
   @Override
-  protected DiffContent doGetLeftDiffContent(RevisionProcessingProgress p) {
+  protected @Nullable DiffContent getReadOnlyLeftDiffContent(@NotNull RevisionProcessingProgress p) {
     return getDiffContent(myLeftRevision, p);
   }
 
   @Override
-  protected DiffContent getReadOnlyRightDiffContent(RevisionProcessingProgress p) {
+  protected @Nullable DiffContent getReadOnlyRightDiffContent(@NotNull RevisionProcessingProgress p) {
     return getDiffContent(myRightRevision, p);
   }
 
   @Override
-  protected DiffContent getEditableRightDiffContent(RevisionProcessingProgress p) {
-    Document d = getDocument();
+  protected @Nullable DiffContent getEditableRightDiffContent(@NotNull RevisionProcessingProgress p) {
+    Entry rightEntry = getRightEntry();
+    if (rightEntry == null) return null;
+
+    Document d = myGateway.getDocument(rightEntry.getPath());
+    if (d == null) return null;
 
     int fromOffset = d.getLineStartOffset(myFrom);
     int toOffset = d.getLineEndOffset(myTo);
@@ -91,8 +97,10 @@ public final class SelectionDifferenceModel extends FileDifferenceModel {
     return DiffContentFactory.getInstance().createFragment(myProject, d, new TextRange(fromOffset, toOffset));
   }
 
-  private DocumentContent getDiffContent(Revision r, RevisionProcessingProgress p) {
+  private @Nullable DocumentContent getDiffContent(@NotNull Revision r, RevisionProcessingProgress p) {
     Entry e = r.findEntry();
+    if (e == null) return null;
+
     String content = myCalculator.getSelectionFor(r, p).getBlockContent();
     VirtualFile virtualFile = myGateway.findVirtualFile(e.getPath());
     if (virtualFile != null) {

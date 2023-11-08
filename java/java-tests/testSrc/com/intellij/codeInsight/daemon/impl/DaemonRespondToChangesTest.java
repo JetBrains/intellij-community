@@ -1,7 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
-import com.intellij.application.options.editor.CodeFoldingConfigurable;
+import com.intellij.application.options.editor.CodeFoldingConfigurableKt;
 import com.intellij.codeHighlighting.*;
 import com.intellij.codeInsight.EditorInfo;
 import com.intellij.codeInsight.daemon.*;
@@ -18,6 +18,7 @@ import com.intellij.codeInsight.intention.impl.IntentionContainer;
 import com.intellij.codeInsight.intention.impl.IntentionHintComponent;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.accessStaticViaInstance.AccessStaticViaInstance;
+import com.intellij.codeInspection.dataFlow.ConstantValueInspection;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
@@ -184,6 +185,16 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   }
 
   @Override
+  protected LocalInspectionTool[] configureLocalInspectionTools() {
+    return new LocalInspectionTool[] {
+      new FieldCanBeLocalInspection(),
+      new RequiredAttributesInspectionBase(),
+      new CheckDtdReferencesInspection(),
+      new AccessStaticViaInstance(),
+    };
+  }
+
+  @Override
   protected void setUpProject() throws Exception {
     super.setUpProject();
     // treat listeners added there as not leaks
@@ -227,7 +238,11 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   }
 
   public void testRenameClass() throws Exception {
-    configureByFile(BASE_PATH + "AClass.java");
+    configureByText(JavaFileType.INSTANCE, """
+      class AClass<caret> {
+          
+      }
+    """);
     Document document = getDocument(getFile());
     assertEmpty(highlightErrors());
     PsiClass psiClass = ((PsiJavaFile)getFile()).getClasses()[0];
@@ -241,7 +256,11 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
 
 
   public void testTypingSpace() throws Exception {
-    configureByFile(BASE_PATH + "AClass.java");
+    configureByText(JavaFileType.INSTANCE, """
+      class AClass<caret> {
+          
+      }
+    """);
     Document document = getDocument(getFile());
     assertEmpty(highlightErrors());
 
@@ -258,7 +277,13 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
 
 
   public void testTypingSpaceInsideError() throws Exception {
-    configureByFile(BASE_PATH + "Error.java");
+    configureByText(JavaFileType.INSTANCE, """
+      class AClass {
+        {
+          toString(0,<caret>0);
+        }
+      }
+    """);
     assertOneElement(highlightErrors());
 
     for (int i = 0; i < 100; i++) {
@@ -269,26 +294,29 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
 
 
   public void testBackSpaceInsideError() throws Exception {
-    configureByFile(BASE_PATH + "BackError.java");
+    configureByText(JavaFileType.INSTANCE, """
+      class E {
+           void fff() {
+               int i = <caret>
+           }
+       }
+    """);
     assertOneElement(highlightErrors());
 
     backspace();
     assertOneElement(highlightErrors());
   }
 
-  @Override
-  protected LocalInspectionTool[] configureLocalInspectionTools() {
-    return new LocalInspectionTool[] {
-      new FieldCanBeLocalInspection(),
-      new RequiredAttributesInspectionBase(),
-      new CheckDtdReferencesInspection(),
-      new AccessStaticViaInstance(),
-    };
-  }
-
-
   public void testUnusedFieldUpdate() throws Exception {
-    configureByFile(BASE_PATH + "UnusedField.java");
+    configureByText(JavaFileType.INSTANCE, """
+     class Unused {
+       private int ffff;
+       void foo(int p) {
+         if (p==0) return;
+         <caret>
+       }
+     }
+    """);
     Document document = getDocument(getFile());
     List<HighlightInfo> infos = doHighlighting(HighlightSeverity.WARNING);
     assertEquals(1, infos.size());
@@ -339,7 +367,11 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   }
 
   public void testDaemonIgnoresNonPhysicalEditor() throws Exception {
-    configureByFile(BASE_PATH + "AClass.java");
+    configureByText(JavaFileType.INSTANCE, """
+      class AClass<caret> {
+          
+      }
+    """);
     assertEmpty(highlightErrors());
 
     EditorFactory editorFactory = EditorFactory.getInstance();
@@ -360,9 +392,14 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   }
 
 
-  public void testDaemonIgnoresConsoleActivities() throws Exception {
-    configureByFile(BASE_PATH + "AClass.java");
-    doHighlighting(HighlightSeverity.WARNING);
+  public void testDaemonIgnoresConsoleActivities() {
+    configureByText(JavaFileType.INSTANCE, """
+      class AClass<caret> {
+          
+      }
+    """);
+
+    assertEmpty(highlightErrors());
 
     ConsoleView consoleView = TextConsoleBuilderFactory.getInstance().createBuilder(getProject()).getConsole();
 
@@ -505,7 +542,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     @NotNull
     @Override
     public String getGroupDisplayName() {
-      return "fegna";
+      return getClass().getName();
     }
 
     @Nls
@@ -1150,7 +1187,18 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
 
 
   public void testModificationInsideCodeBlockDoesNotAffectErrorMarkersOutside() throws Exception {
-    configureByFile(BASE_PATH + "ErrorMark.java");
+    configureByText(JavaFileType.INSTANCE, """
+      class SSSSS {
+          public static void suite() {
+              <caret>
+              new Runnable() {
+                  public void run() {
+            
+                  }
+              };
+          }
+      
+      """);
     HighlightInfo error = assertOneElement(highlightErrors());
     assertEquals("'}' expected", error.getDescription());
 
@@ -2192,7 +2240,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       boolean savedValue = settings.isCollapseMethods();
       try {
         settings.setCollapseMethods(true);
-        CodeFoldingConfigurable.applyCodeFoldingSettingsChanges();
+        CodeFoldingConfigurableKt.applyCodeFoldingSettingsChanges();
         waitForDaemon();
         checkFoldingState("[FoldRegion +(22:27), placeholder='{}']");
       }
@@ -3564,5 +3612,138 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     assertEmpty(highlightErrors());
     assertOneElement(myDaemonCodeAnalyzer.getFileLevelHighlights(getProject(), getFile()));
   }
-}
 
+  public void testInspectionMustRemoveItsObsoleteHighlightsImmediatelyAfterFinished() {
+    @Language("JAVA")
+    String text = """
+      class LQF {
+          // xxx
+          int f;<caret>
+      }""";
+    configureByText(JavaFileType.INSTANCE, text);
+    makeWholeEditorWindowVisible((EditorImpl)myEditor); // get "visible area first" optimization out of the way
+    UIUtil.markAsFocused(getEditor().getContentComponent(), true); // to make ShowIntentionPass call its collectInformation()
+    SeverityRegistrar.getSeverityRegistrar(getProject()); //preload inspection profile
+
+    AtomicReference<String> fieldWarningText = new AtomicReference<>("1st run");
+    AtomicInteger stallMs = new AtomicInteger(0);
+    AtomicBoolean slowToolFinished = new AtomicBoolean();
+    LocalInspectionTool slowTool = new MyFegnaInspection() {
+      @Override
+      public void inspectionFinished(@NotNull LocalInspectionToolSession session, @NotNull ProblemsHolder problemsHolder) {
+        slowToolFinished.set(true);
+      }
+      @NotNull
+      @Override
+      public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+        return new JavaElementVisitor() {
+          @Override
+          public void visitField(@NotNull PsiField field) {
+            holder.registerProblem(field.getNameIdentifier(), fieldWarningText.get());
+            super.visitField(field);
+          }
+
+          @Override
+          public void visitElement(@NotNull PsiElement element) {
+            // stall every other element to exacerbate latency problems if the order is wrong
+            TimeoutUtil.sleep(stallMs.get());
+          }
+        };
+      }
+    };
+
+    AtomicBoolean fastToolFinished = new AtomicBoolean();
+    // highlights all "xxx" comments, only when there are no comments after it
+    String fastToolText = "blah";
+    LocalInspectionTool fastTool = new MyFegnaInspection() {
+      @Override
+      public void inspectionFinished(@NotNull LocalInspectionToolSession session, @NotNull ProblemsHolder problemsHolder) {
+        fastToolFinished.set(true);
+      }
+      @NotNull
+      @Override
+      public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+        return new JavaElementVisitor() {
+          @Override
+          public void visitComment(@NotNull PsiComment comment) {
+            if (comment.getText().contains("xxx") && !comment.getContainingFile().getText().substring(comment.getTextOffset()+2).contains("//")) {
+              holder.registerProblem(comment, fastToolText, ProblemHighlightType.WARNING);
+            }
+          }
+        };
+      }
+    };
+    disposeOnTearDown(() -> disableInspectionTool(fastTool.getShortName()));
+    disposeOnTearDown(() -> disableInspectionTool(slowTool.getShortName()));
+    for (Tools tools : ProjectInspectionProfileManager.getInstance(getProject()).getCurrentProfile().getAllEnabledInspectionTools(getProject())) {
+      disableInspectionTool(tools.getTool().getShortName());
+    }
+    enableInspectionTools(fastTool, slowTool);
+
+    // both inspections should produce their results
+    List<HighlightInfo> infos = doHighlighting(HighlightSeverity.WARNING);
+    assertTrue(infos.toString(), ContainerUtil.exists(infos, i -> i.getDescription().equals(fieldWarningText.get())));
+    assertTrue(infos.toString(), ContainerUtil.exists(infos, i -> i.getDescription().equals(fastToolText)));
+
+    fieldWarningText.set("Aha, field, finally!");
+    stallMs.set(100);
+    type("// another comment");
+    fastToolFinished.set(false);
+    slowToolFinished.set(false);
+    makeWholeEditorWindowVisible((EditorImpl)myEditor); // get "visible area first" optimization out of the way
+
+    // now when the LIP restarted, we should get back our inspection result very fast, despite very slow processing of every other element
+    long deadline = System.currentTimeMillis() + 10_000;
+    while (!daemonIsWorkingOrPending()) {
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
+      if (System.currentTimeMillis() > deadline) {
+        fail("Too long waiting for daemon to start");
+      }
+    }
+    MarkupModelEx model = (MarkupModelEx)DocumentMarkupModel.forDocument(getEditor().getDocument(), getProject(), true);
+    try {
+      boolean fastToolFinishedFaster = false;
+      while (daemonIsWorkingOrPending()) {
+        if (System.currentTimeMillis() > deadline) {
+          fail("Too long waiting for daemon to finish\n"+ThreadDumper.dumpThreadsToString());
+        }
+        PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
+        if (fastToolFinished.get() && !slowToolFinished.get()) {
+          fastToolFinishedFaster = true;
+          boolean found = !DaemonCodeAnalyzerEx.processHighlights(model, getProject(), HighlightSeverity.WARNING, 0, myEditor.getDocument().getTextLength(),
+                          info -> !fastToolText.equals(info.getDescription()));
+          if (found) {
+            fail("Inspection must have removed its own obsolete highlights as soon as it's finished, but got:" +
+                 Arrays.toString(model.getAllHighlighters())+"; thread dump:\n"+ThreadDumper.dumpThreadsToString());
+          }
+        }
+      }
+      assertTrue("Fast inspection must have finished faster than the slow one, but it didn't", fastToolFinishedFaster);
+    }
+    finally {
+      stallMs.set(0);
+    }
+  }
+
+  public void testModificationInsideCommentDoesNotAffectNearbyInspectionWarning() throws Exception {
+    enableInspectionTool(new ConstantValueInspection());
+    configureByText(JavaFileType.INSTANCE, """
+      class AClass {
+        public int foo() {
+          //<caret>
+          if (this == null) return 0;
+          return 1;
+        }
+      }
+    """);
+
+    assertEmpty(highlightErrors());
+    List<HighlightInfo> infos = doHighlighting(HighlightSeverity.WARNING);
+    HighlightInfo error = ContainerUtil.find(infos, e->e.getDescription().contains("always 'false'"));
+    assertNotNull(infos.toString(), error);
+    type("d");
+    List<HighlightInfo> infos2 = doHighlighting(HighlightSeverity.WARNING);
+    HighlightInfo error2 = ContainerUtil.find(infos2, e->e.getDescription().contains("always 'false'"));
+    assertNotNull(infos2.toString(), error2);
+  }
+}

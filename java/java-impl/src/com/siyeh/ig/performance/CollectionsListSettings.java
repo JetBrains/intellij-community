@@ -8,7 +8,6 @@ import com.intellij.codeInspection.options.OptionContainer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.CommonClassNames;
-import com.intellij.util.SmartList;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -46,7 +45,7 @@ public abstract class CollectionsListSettings implements OptionContainer {
   private final List<String> myCollectionClassesRequiringCapacity;
 
   public CollectionsListSettings() {
-    myCollectionClassesRequiringCapacity = new SmartList<>(getDefaultSettings());
+    myCollectionClassesRequiringCapacity = new ArrayList<>(getDefaultSettings());
   }
 
   public void readSettings(@NotNull Element node) throws InvalidDataException {

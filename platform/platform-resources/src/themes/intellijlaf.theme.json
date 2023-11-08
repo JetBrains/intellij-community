@@ -160,7 +160,7 @@
 
     "CheckBox": {
       "border": "com.intellij.ide.ui.laf.darcula.ui.DarculaCheckBoxBorder",
-      "borderInsets": "2,3,3,0",
+      "borderInsets": "2,3,3,3",
       "UI": "com.intellij.ide.ui.laf.intellij.IntelliJCheckBoxUI"
     },
 
@@ -524,19 +524,23 @@
       "messageForeground": "foreground",
       "errorIcon":{
         "os.windows": "AllIcons.General.ErrorDialog",
-        "os.linux": "AllIcons.General.ErrorDialog"
+        "os.linux": "AllIcons.General.ErrorDialog",
+        "os.mac": "AllIcons.General.ErrorDialog"
       },
       "warningIcon":{
         "os.windows": "AllIcons.General.WarningDialog",
-        "os.linux": "AllIcons.General.WarningDialog"
+        "os.linux": "AllIcons.General.WarningDialog",
+        "os.mac": "AllIcons.General.WarningDialog"
       },
       "informationIcon":{
         "os.windows": "AllIcons.General.InformationDialog",
-        "os.linux": "AllIcons.General.InformationDialog"
+        "os.linux": "AllIcons.General.InformationDialog",
+        "os.mac": "AllIcons.General.InformationDialog"
       },
       "questionIcon":{
         "os.windows": "AllIcons.General.QuestionDialog",
-        "os.linux": "AllIcons.General.QuestionDialog"
+        "os.linux": "AllIcons.General.QuestionDialog",
+        "os.mac": "AllIcons.General.QuestionDialog"
       }
     },
 
@@ -646,7 +650,7 @@
 
     "RadioButton": {
       "border": "com.intellij.ide.ui.laf.darcula.ui.DarculaRadioButtonBorder",
-      "borderInsets": "2,2,2,0",
+      "borderInsets": "2,2,2,2",
       "darcula.selectionDisabledColor": "grey03",
       "darcula.selectionDisabledShadowColor": "#00000020",
       "darcula.selectionEnabledColor": "white",
@@ -663,6 +667,9 @@
       "State": {
         "Background": "grey15",
         "Foreground": "grey02"
+      },
+      "ChatItem":{
+        "Hover": "#D8D8D833"
       },
       "Timeline.Thread.Diff.AnchorLine": "#FBF1D1"
     },

@@ -16,7 +16,6 @@ import com.intellij.ui.components.JBScrollPane
 import org.jetbrains.annotations.ApiStatus.Experimental
 import java.awt.Component
 import java.awt.Dimension
-import java.awt.Rectangle
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import javax.swing.JComponent
@@ -97,7 +96,8 @@ private class ComponentInlaysContainer private constructor(val editor: EditorEx)
   }
   private val foldingListener = object : FoldingListener {
     override fun onFoldProcessingEnd() {
-      updateFolding()
+      revalidate()
+      repaint()
     }
   }
 
@@ -107,12 +107,6 @@ private class ComponentInlaysContainer private constructor(val editor: EditorEx)
     editor.foldingModel.addListener(foldingListener, this)
   }
 
-  private fun updateFolding() {
-    for (inlay in inlays) {
-      inlay.renderer.component.isVisible = !EditorUtil.isInlayFolded(inlay)
-    }
-  }
-
   private fun remove(inlay: Inlay<ComponentInlayRenderer<*>>): Boolean {
     if (!inlays.remove(inlay))
       return false
@@ -120,12 +114,14 @@ private class ComponentInlaysContainer private constructor(val editor: EditorEx)
     val renderer = inlay.renderer
     when (renderer.alignment) {
       ComponentInlayAlignment.FIT_CONTENT_WIDTH, ComponentInlayAlignment.STRETCH_TO_CONTENT_WIDTH -> {
-        if (--contentSizeAwareInlayCount == 0)
+        if (--contentSizeAwareInlayCount == 0) {
           editor.contentComponent.removeComponentListener(contentResizeListener)
+        }
       }
       ComponentInlayAlignment.FIT_VIEWPORT_X_SPAN, ComponentInlayAlignment.FIT_VIEWPORT_WIDTH -> {
-        if (--visibleAreaAwareInlaysCount == 0)
+        if (--visibleAreaAwareInlaysCount == 0) {
           editor.scrollingModel.removeVisibleAreaListener(visibleAreaListener)
+        }
       }
       else -> Unit
     }
@@ -141,12 +137,14 @@ private class ComponentInlaysContainer private constructor(val editor: EditorEx)
     // optionally add listeners if any inlay aware of viewport or content size
     when (inlay.renderer.alignment) {
       ComponentInlayAlignment.FIT_CONTENT_WIDTH, ComponentInlayAlignment.STRETCH_TO_CONTENT_WIDTH -> {
-        if (contentSizeAwareInlayCount++ == 0)
+        if (contentSizeAwareInlayCount++ == 0) {
           editor.contentComponent.addComponentListener(contentResizeListener)
+        }
       }
       ComponentInlayAlignment.FIT_VIEWPORT_X_SPAN, ComponentInlayAlignment.FIT_VIEWPORT_WIDTH -> {
-        if (visibleAreaAwareInlaysCount++ == 0)
+        if (visibleAreaAwareInlaysCount++ == 0) {
           editor.scrollingModel.addVisibleAreaListener(visibleAreaListener)
+        }
       }
       else -> Unit
     }
@@ -173,7 +171,8 @@ private class ComponentInlaysContainer private constructor(val editor: EditorEx)
     val content = editor.contentComponent
     val initialContentWidth = content.width
     val scrollPane = editor.scrollPane
-    val viewportReservedWidth = if (!isVerticalScrollbarFlipped(scrollPane)) editor.scrollPane.verticalScrollBar.width + content.insets.left else content.insets.left
+    val viewportReservedWidth = if (!isVerticalScrollbarFlipped(scrollPane)) editor.scrollPane.verticalScrollBar.width + content.insets.left
+    else content.insets.left
     val visibleArea = scrollPane.viewport.visibleRect
 
     // Step 1: Sync inlay size with preferred component size.
@@ -181,9 +180,15 @@ private class ComponentInlaysContainer private constructor(val editor: EditorEx)
     for (inlay in inlays) {
       inlay.renderer.let {
         it.inlaySize = when (it.alignment) {
-          ComponentInlayAlignment.FIT_CONTENT_WIDTH -> it.component.run { Dimension(minimumSize.width, preferredSize.height) }
-          ComponentInlayAlignment.FIT_VIEWPORT_X_SPAN, ComponentInlayAlignment.FIT_VIEWPORT_WIDTH -> it.component.run { Dimension(minimumSize.width + viewportReservedWidth, preferredSize.height) }
-          else -> it.component.preferredSize
+          ComponentInlayAlignment.FIT_CONTENT_WIDTH -> {
+            it.component.run { Dimension(minimumSize.width, preferredSize.height) }
+          }
+          ComponentInlayAlignment.FIT_VIEWPORT_X_SPAN, ComponentInlayAlignment.FIT_VIEWPORT_WIDTH -> {
+            it.component.run { Dimension(minimumSize.width + viewportReservedWidth, preferredSize.height) }
+          }
+          else -> {
+            it.component.preferredSize
+          }
         }
       }
     }
@@ -194,8 +199,9 @@ private class ComponentInlaysContainer private constructor(val editor: EditorEx)
       editor.inlayModel.execute(true) {
         for (inlay in inlays) {
           inlay.renderer.let {
-            if (it.inlaySize.width != inlay.widthInPixels || it.inlaySize.height != inlay.heightInPixels)
+            if (it.inlaySize.width != inlay.widthInPixels || it.inlaySize.height != inlay.heightInPixels) {
               inlay.update()
+            }
           }
         }
       }
@@ -211,21 +217,34 @@ private class ComponentInlaysContainer private constructor(val editor: EditorEx)
     bounds = SwingUtilities.calculateInnerArea(content, null)
 
     // Step 4: Layout inlay components
-    for (inlay in inlays) {
-      inlay.renderer.let { renderer ->
-        val component = renderer.component
-        when (renderer.alignment) {
-          ComponentInlayAlignment.STRETCH_TO_CONTENT_WIDTH, ComponentInlayAlignment.FIT_CONTENT_WIDTH -> component.size = Dimension(bounds.width, renderer.inlaySize.height)
-          ComponentInlayAlignment.FIT_VIEWPORT_WIDTH, ComponentInlayAlignment.FIT_VIEWPORT_X_SPAN -> component.bounds = fitToViewport(renderer, visibleArea, renderer.alignment, viewportReservedWidth)
-          else -> component.size = renderer.inlaySize
+    // Do as read action, because com.intellij.openapi.editor.Inlay.getBounds requires it
+    ReadAction.run<Throwable> {
+      for (inlay in inlays) {
+        val component = inlay.renderer.component
+        val componentBounds = inlay.bounds
+
+        if (componentBounds == null) {
+          component.isVisible = false
+          // component.bounds = Rectangle(0, 0, 0, 0)
+        }
+        else {
+          component.isVisible = true
+          val alignment = inlay.renderer.alignment
+
+          // x in inlay bounds contains left gap of content, which we do not need
+          componentBounds.x = if (alignment == ComponentInlayAlignment.FIT_VIEWPORT_X_SPAN) visibleArea.x else 0
+
+          if (alignment == ComponentInlayAlignment.STRETCH_TO_CONTENT_WIDTH || alignment == ComponentInlayAlignment.FIT_CONTENT_WIDTH) {
+            componentBounds.width = bounds.width
+          }
+          else if (alignment == ComponentInlayAlignment.FIT_VIEWPORT_WIDTH || alignment == ComponentInlayAlignment.FIT_VIEWPORT_X_SPAN) {
+            componentBounds.width = max(component.minimumSize.width, visibleArea.width - viewportReservedWidth)
+          }
+
+          component.bounds = componentBounds
         }
       }
     }
-  }
-
-  private fun fitToViewport(renderer: ComponentInlayRenderer<*>, visibleArea: Rectangle, alignment: ComponentInlayAlignment, viewportReservedWidth: Int): Rectangle {
-    val x = if (alignment == ComponentInlayAlignment.FIT_VIEWPORT_X_SPAN) visibleArea.x else 0
-    return Rectangle(x, renderer.component.y, max(renderer.component.minimumSize.width, visibleArea.width - viewportReservedWidth), renderer.inlaySize.height)
   }
 
   private fun isVerticalScrollbarFlipped(scrollPane: JScrollPane): Boolean {
@@ -233,6 +252,5 @@ private class ComponentInlaysContainer private constructor(val editor: EditorEx)
     return flipProperty === JBScrollPane.Flip.HORIZONTAL || flipProperty === JBScrollPane.Flip.BOTH
   }
 
-  override fun dispose() {
-  }
+  override fun dispose() = Unit
 }

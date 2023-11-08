@@ -15,6 +15,7 @@ import com.intellij.debugger.jdi.MethodBytecodeUtil
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.util.parents
 import com.intellij.util.Range
 import com.intellij.util.containers.OrderedSet
 import com.sun.jdi.Location
@@ -26,8 +27,12 @@ import org.jetbrains.kotlin.idea.debugger.base.util.DexDebugFacility
 import org.jetbrains.kotlin.idea.debugger.KotlinDebuggerSettings
 import org.jetbrains.kotlin.idea.debugger.base.util.safeLocation
 import org.jetbrains.kotlin.idea.debugger.base.util.safeMethod
+import org.jetbrains.kotlin.idea.debugger.getContainingBody
+import org.jetbrains.kotlin.psi.KtBlockExpression
 import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFile
+import kotlin.math.max
 
 class KotlinSmartStepIntoHandler : JvmSmartStepIntoHandler() {
     override fun isAvailable(position: SourcePosition?) = position?.file is KtFile
@@ -74,9 +79,9 @@ class KotlinSmartStepIntoHandler : JvmSmartStepIntoHandler() {
         }.executeSynchronously()
 
     private fun findSmartStepTargets(position: SourcePosition, session: DebuggerSession?): List<SmartStepTarget> {
-        val topmostElement = position.getTopmostElement() ?: return emptyList()
-        val lines = topmostElement.getLines() ?: return emptyList()
-        var targets = findSmartStepTargets(topmostElement, lines)
+        val expression = position.getContainingExpression() ?: return emptyList()
+        val lines = expression.getLines()?.coerceAtLeast(position.line) ?: return emptyList()
+        var targets = findSmartStepTargets(expression, lines)
         if (session != null) {
             targets = calculateSmartStepTargetsToShow(targets, session.process, lines.toClosedRange())
         }
@@ -84,10 +89,10 @@ class KotlinSmartStepIntoHandler : JvmSmartStepIntoHandler() {
     }
 }
 
-private fun findSmartStepTargets(topmostElement: KtElement, lines: Range<Int>): List<SmartStepTarget> {
+private fun findSmartStepTargets(element: KtElement, lines: Range<Int>): List<SmartStepTarget> {
     val targets = OrderedSet<SmartStepTarget>()
-    val visitor = SmartStepTargetVisitor(topmostElement, lines, targets)
-    topmostElement.accept(visitor, null)
+    val visitor = SmartStepTargetVisitor(element, lines, targets)
+    element.accept(visitor, null)
     return targets
 }
 
@@ -116,9 +121,29 @@ private fun List<KotlinMethodSmartStepTarget>.filterAlreadyExecuted(
     return filterSmartStepTargets(location, lines, this, debugProcess)
 }
 
-private fun SourcePosition.getTopmostElement(): KtElement? {
+/**
+ * Retrieves the containing expression of the current source position.
+ *
+ * It should be suitable for smart step into analysis,
+ * meaning that it is expected to include all possible step targets.
+ */
+private fun SourcePosition.getContainingExpression(): KtElement? {
     val element = elementAt ?: return null
-    return getTopmostElementAtOffset(element, element.textRange.startOffset) as? KtElement
+    // Firstly, try to locate an element that starts at the current line
+    val result = getTopmostElementAtOffset(element, element.textRange.startOffset) as? KtElement
+
+    val body = element.getContainingBody() ?: return result
+    // Secondly, try to expand to an expression. It is essential when source position
+    // is in the middle of the expression, e.g.
+    // A()<line break>
+    //    <caret>.foo().boo()
+    // In this example, `element == .`, `result == null`, `expression == A().foo().boo()`
+    val expression = element.parents(true)
+        // We should stay inside the current method and inside the current block
+        .takeWhile { it !== body && it !is KtBlockExpression }
+        .filterIsInstance<KtExpression>()
+        .lastOrNull() ?: return result
+    return if (result == null || expression.textRange.contains(result.textRange)) expression else result
 }
 
 private fun KtElement.getLines(): Range<Int>? {
@@ -127,6 +152,9 @@ private fun KtElement.getLines(): Range<Int>? {
     val textRange = textRange
     return Range(document.getLineNumber(textRange.startOffset), document.getLineNumber(textRange.endOffset))
 }
+
+private fun Range<Int>.coerceAtLeast(value: Int): Range<Int> =
+    if (from >= value && to >= value) this else Range(max(value, from), max(value, to))
 
 private fun filterSmartStepTargets(
     location: Location,

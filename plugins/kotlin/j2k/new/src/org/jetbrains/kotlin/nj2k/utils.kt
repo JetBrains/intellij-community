@@ -20,6 +20,9 @@ internal inline fun <T> List<T>.mutate(mutate: MutableList<T>.() -> Unit): List<
     return mutableList
 }
 
+// Examples:
+//   getMyProperty -> myProperty
+//   isMyProperty -> isMyProperty
 fun String.asGetterName(): String? =
     takeIf { JvmAbi.isGetterName(it) }
         ?.removePrefix("get")
@@ -29,6 +32,7 @@ fun String.asGetterName(): String? =
         }?.decapitalizeAsciiOnly()
         ?.escaped()
 
+// Example: setMyProperty -> myProperty
 fun String.asSetterName(): String? =
     takeIf { JvmAbi.isSetterName(it) }
         ?.removePrefix("set")

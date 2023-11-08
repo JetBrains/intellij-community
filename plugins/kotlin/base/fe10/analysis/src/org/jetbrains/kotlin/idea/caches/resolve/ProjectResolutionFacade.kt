@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.caches.resolve
 
@@ -35,6 +35,7 @@ import org.jetbrains.kotlin.resolve.jvm.diagnostics.ErrorsJvm
 import org.jetbrains.kotlin.resolve.konan.diagnostics.ErrorsNative
 import org.jetbrains.kotlin.storage.CancellableSimpleLock
 import org.jetbrains.kotlin.storage.guarded
+import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.ReentrantLock
 
@@ -158,7 +159,15 @@ internal class ProjectResolutionFacade(
     internal fun resolverForElement(element: PsiElement): ResolverForModule {
         val moduleInfos = mutableSetOf<IdeaModuleInfo>()
 
-        val elementModuleInfos = ModuleInfoProvider.getInstance(element.project).collect(element, existingInfos = allModules)
+        val config = allModules?.firstIsInstanceOrNull<ScriptDependenciesInfo.ForFile>()?.let {
+            ModuleInfoProvider.Configuration(contextualModuleInfo = it)
+        }
+
+        val elementModuleInfos = ModuleInfoProvider.getInstance(element.project).collect(
+            element,
+            config = config ?: ModuleInfoProvider.Configuration.Default,
+        )
+
         for (result in elementModuleInfos) {
             val moduleInfo = result.getOrNull()
             if (moduleInfo != null) {

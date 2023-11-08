@@ -40,6 +40,10 @@ object TerminalDataContextUtils {
     get() = getData(TerminalPromptController.KEY)
   val AnActionEvent.simpleTerminalController: SimpleTerminalController?
     get() = getData(SimpleTerminalController.KEY)
+  val AnActionEvent.blockTerminalController: BlockTerminalController?
+    get() = getData(BlockTerminalController.KEY)
   val AnActionEvent.selectionController: TerminalSelectionController?
     get() = getData(TerminalSelectionController.KEY)
+  val AnActionEvent.terminalSession: TerminalSession?
+    get() = getData(TerminalSession.DATA_KEY)
 }

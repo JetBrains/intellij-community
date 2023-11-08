@@ -30,12 +30,12 @@ import com.intellij.execution.ui.ConsoleView
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.execution.ui.RunContentManager
 import com.intellij.ide.SaveAndSyncHandler
+import com.intellij.ide.util.PropertiesComponent
 import com.intellij.internal.statistic.StructuredIdeActivity
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.application.*
-import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -111,7 +111,7 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
 
     @JvmStatic
     fun getInstance(project: Project): ExecutionManagerImpl {
-      return project.service<ExecutionManager>() as ExecutionManagerImpl
+      return ExecutionManager.getInstance(project) as ExecutionManagerImpl
     }
 
     @JvmStatic
@@ -256,6 +256,7 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
     val executor = environment.executor
     inProgress.add(InProgressEntry(executor.id, environment.runner.runnerId))
     project.messageBus.syncPublisher(EXECUTION_TOPIC).processStartScheduled(executor.id, environment)
+    registerRecentExecutor(environment)
 
     val startRunnable = Runnable {
       if (project.isDisposed) {
@@ -338,6 +339,17 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
         }
       })
     }
+  }
+
+  private fun registerRecentExecutor(environment: ExecutionEnvironment) {
+    environment.runnerAndConfigurationSettings?.let {
+      PropertiesComponent.getInstance(project).setValue(it.uniqueID + ".executor", environment.executor.id)
+    }
+  }
+
+  fun getRecentExecutor(setting: RunnerAndConfigurationSettings): Executor? {
+    val executorId = PropertiesComponent.getInstance(project).getValue(setting.uniqueID + ".executor")
+    return executorId?.let { ExecutorRegistry.getInstance().getExecutorById(it) }
   }
 
   override fun dispose() {

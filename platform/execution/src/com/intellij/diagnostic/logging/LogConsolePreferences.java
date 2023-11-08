@@ -26,7 +26,7 @@ import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-@Service
+@Service(Service.Level.PROJECT)
 @State(name = "LogFilters", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public final class LogConsolePreferences extends LogFilterRegistrar {
   private final SortedMap<LogFilter, Boolean> myRegisteredLogFilters = new TreeMap<>((o1, o2) -> -1);

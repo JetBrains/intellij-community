@@ -63,7 +63,7 @@ object TableFormattingUtils {
       else -> cells.maxOfOrNull { it.textRange.length }
     }
     checkNotNull(contentCellsWidth)
-    return max(contentCellsWidth, separatorCellRange?.length ?: 0)
+    return max(contentCellsWidth, separatorCellRange?.length ?: 1)
   }
 
   private fun calculateNewCaretsPositions(content: String, cellRange: TextRange): Array<Int> {

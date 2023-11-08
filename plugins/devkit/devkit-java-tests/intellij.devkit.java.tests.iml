@@ -22,6 +22,7 @@
     <orderEntry type="module" module-name="intellij.devkit.themes" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.io" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util.ui" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.tools.ide.metrics.benchmark" scope="TEST" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.devkit.core" />
 </module>

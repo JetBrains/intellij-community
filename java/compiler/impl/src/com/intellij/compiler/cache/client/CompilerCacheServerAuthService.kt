@@ -9,7 +9,11 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.future.asCompletableFuture
 import kotlinx.coroutines.launch
+import java.util.concurrent.TimeUnit
 
 @Service(Service.Level.PROJECT)
 class CompilerCacheServerAuthService(private val project: Project, private val scope: CoroutineScope) : Disposable {
@@ -25,7 +29,9 @@ class CompilerCacheServerAuthService(private val project: Project, private val s
       }
       return emptyMap()
     }
-    val authHeader = authExtension.getAuthHeader(force)
+    val authHeader = scope.async(Dispatchers.IO) {
+      authExtension.getAuthHeaders(force)
+    }.asCompletableFuture().get(10, TimeUnit.SECONDS)
     if (authHeader == null) {
       scope.launch {
         JpsServerAuthExtension.checkAuthenticated(getInstance(project), project) {

@@ -4,11 +4,11 @@ package com.intellij.ui;
 import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.Couple;
-import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NonNls;
@@ -337,7 +337,7 @@ public final class ScrollingUtil {
     UIUtil.maybeInstall(map, MOVE_END_ID, KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, 0));
   }
 
-  public interface ScrollingAction extends DumbAware {
+  public interface ScrollingAction extends DumbAware, ActionRemoteBehaviorSpecification.Frontend {
 
   }
 
@@ -559,7 +559,7 @@ public final class ScrollingUtil {
     }
 
     protected boolean isEnabled() {
-      return SpeedSearchSupply.getSupply(myComponent) == null && !isEmpty(myComponent);
+      return !isEmpty(myComponent);
     }
   }
 

@@ -14,10 +14,7 @@ import com.intellij.internal.inspector.UiInspectorPreciseContextProvider;
 import com.intellij.internal.inspector.UiInspectorUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.TransactionGuard;
-import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.diagnostic.Logger;
@@ -265,24 +262,26 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
   @DirtyUI
   @Override
   public void paintComponent(Graphics g) {
-    myEditor.measureTypingLatency();
+    ReadAction.run(() -> {
+      myEditor.measureTypingLatency();
 
-    Graphics2D gg = (Graphics2D)g;
-    if (myEditor.useEditorAntialiasing()) {
-      EditorUIUtil.setupAntialiasing(gg);
-    }
-    else {
-      UISettings.setupAntialiasing(gg);
-    }
-    gg.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, UISettings.getEditorFractionalMetricsHint());
-    AffineTransform origTx = PaintUtil.alignTxToInt(gg, PaintUtil.insets2offset(getInsets()), true, false, RoundingMode.FLOOR);
-    myEditor.paint(gg);
-    if (origTx != null) gg.setTransform(origTx);
+      Graphics2D gg = (Graphics2D)g;
+      if (myEditor.useEditorAntialiasing()) {
+        EditorUIUtil.setupAntialiasing(gg);
+      }
+      else {
+        UISettings.setupAntialiasing(gg);
+      }
+      gg.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, UISettings.getEditorFractionalMetricsHint());
+      AffineTransform origTx = PaintUtil.alignTxToInt(gg, PaintUtil.insets2offset(getInsets()), true, false, RoundingMode.FLOOR);
+      myEditor.paint(gg);
+      if (origTx != null) gg.setTransform(origTx);
 
-    Project project = myEditor.getProject();
-    if (project != null) {
-      EditorsSplitters.Companion.stopOpenFilesActivity(project);
-    }
+      Project project = myEditor.getProject();
+      if (project != null) {
+        EditorsSplitters.Companion.stopOpenFilesActivity(project);
+      }
+    });
   }
 
   public void repaintEditorComponent(int x, int y, int width, int height) {
@@ -301,11 +300,13 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
   @DirtyUI
   @Override
   public int getScrollableUnitIncrement(Rectangle visibleRect, int orientation, int direction) {
-    if (orientation == SwingConstants.VERTICAL) {
-      return myEditor.getLineHeight();
-    }
-    // if orientation == SwingConstants.HORIZONTAL
-    return EditorUtil.getSpaceWidth(Font.PLAIN, myEditor);
+    return ReadAction.compute(() -> {
+      if (orientation == SwingConstants.VERTICAL) {
+        return myEditor.getLineHeight();
+      }
+      // if orientation == SwingConstants.HORIZONTAL
+      return EditorUtil.getSpaceWidth(Font.PLAIN, myEditor);
+    });
   }
 
   @DirtyUI
@@ -661,14 +662,16 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
   @DirtyUI
   @Override
   public void updateUI() {
-    // Don't use the default TextUI, BaseTextUI, which does a lot of unnecessary
-    // work. We do however need to provide a TextUI implementation since some
-    // screen reader support code will invoke it
-    setUI(new EditorAccessibilityTextUI());
-    UISettings.setupEditorAntialiasing(this);
-    // myEditor is null when updateUI() is called from parent's constructor
-    putClientProperty(RenderingHints.KEY_FRACTIONALMETRICS, UISettings.getEditorFractionalMetricsHint());
-    invalidate();
+    ReadAction.run(() -> {
+      // Don't use the default TextUI, BaseTextUI, which does a lot of unnecessary
+      // work. We do however need to provide a TextUI implementation since some
+      // screen reader support code will invoke it
+      setUI(new EditorAccessibilityTextUI());
+      UISettings.setupEditorAntialiasing(this);
+      // myEditor is null when updateUI() is called from parent's constructor
+      putClientProperty(RenderingHints.KEY_FRACTIONALMETRICS, UISettings.getEditorFractionalMetricsHint());
+      invalidate();
+    });
   }
 
   @Override

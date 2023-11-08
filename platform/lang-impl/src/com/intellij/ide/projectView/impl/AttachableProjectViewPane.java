@@ -125,7 +125,7 @@ public abstract class AttachableProjectViewPane extends ProjectViewPane {
     }
 
     @NotNull
-    private List<VirtualFile> getDirectories(@NotNull DnDEvent event) {
+    private static List<VirtualFile> getDirectories(@NotNull DnDEvent event) {
       return ContainerUtil.filter(getVirtualFileListFromAttachedObject(event.getAttachedObject()),
                                   file -> file.isDirectory());
     }
@@ -181,11 +181,11 @@ public abstract class AttachableProjectViewPane extends ProjectViewPane {
       return false;
     }
 
-    private boolean isDroppable(@NotNull DnDEvent event) {
+    private static boolean isDroppable(@NotNull DnDEvent event) {
       return FileCopyPasteUtil.isFileListFlavorAvailable(event);
     }
 
-    private boolean isOverComponent(@Nullable JComponent component) {
+    private static boolean isOverComponent(@Nullable JComponent component) {
       if (component == null) return false;
       Point location = MouseInfo.getPointerInfo().getLocation();
       Point p = new Point(location);

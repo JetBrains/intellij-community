@@ -1,8 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.context;
 
 import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
@@ -10,7 +9,7 @@ import com.intellij.tasks.TaskBundle;
 import com.intellij.util.SlowOperations;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.impl.BreakpointManagerState;
-import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase;
+import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -60,10 +59,6 @@ final class XDebuggerBreakpointsContextProvider extends WorkingContextProvider {
 
   @Override
   public void clearContext(@NotNull Project project) {
-    XBreakpointManagerImpl breakpointManager = getBreakpointManager(XDebuggerManager.getInstance(project));
-    XBreakpointBase<?,?,?>[] breakpoints = breakpointManager.getAllBreakpoints();
-    for (final XBreakpointBase<?, ?, ?> breakpoint : breakpoints) {
-      ApplicationManager.getApplication().runWriteAction(() -> breakpointManager.removeBreakpoint(breakpoint));
-    }
+    XDebuggerUtilImpl.removeAllBreakpoints(project);
   }
 }

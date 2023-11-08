@@ -26,9 +26,6 @@ import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.completion.*
 import org.jetbrains.kotlin.idea.completion.checkers.CompletionVisibilityChecker
 import org.jetbrains.kotlin.idea.completion.context.FirBasicCompletionContext
-import org.jetbrains.kotlin.idea.completion.context.FirRawPositionCompletionContext
-import org.jetbrains.kotlin.idea.completion.context.FirTypeNameReferencePositionContext
-import org.jetbrains.kotlin.idea.completion.context.FirValueParameterPositionContext
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.CompletionSymbolOrigin
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.FirClassifierProvider.getAvailableClassifiersFromIndex
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.KtSymbolWithOrigin
@@ -36,6 +33,9 @@ import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.TypeLookup
 import org.jetbrains.kotlin.idea.completion.weighers.VariableOrParameterNameWithTypeWeigher.nameWithTypePriority
 import org.jetbrains.kotlin.idea.completion.weighers.Weighers.applyWeighsToLookupElement
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
+import org.jetbrains.kotlin.idea.util.positionContext.KotlinRawPositionContext
+import org.jetbrains.kotlin.idea.util.positionContext.KotlinTypeNameReferencePositionContext
+import org.jetbrains.kotlin.idea.util.positionContext.KotlinValueParameterPositionContext
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
@@ -43,19 +43,19 @@ import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 internal class FirVariableOrParameterNameWithTypeCompletionContributor(
     basicContext: FirBasicCompletionContext,
     priority: Int
-) : FirCompletionContributorBase<FirRawPositionCompletionContext>(basicContext, priority) {
+) : FirCompletionContributorBase<KotlinRawPositionContext>(basicContext, priority) {
 
     private val nameFiltersWithUserPrefixes: List<Pair<NameFilter, String>> = getNameFiltersWithUserPrefixes()
 
     context(KtAnalysisSession)
     override fun complete(
-        positionContext: FirRawPositionCompletionContext,
+        positionContext: KotlinRawPositionContext,
         weighingContext: WeighingContext,
         sessionParameters: FirCompletionSessionParameters,
     ) {
         val variableOrParameter: KtCallableDeclaration = when (positionContext) {
-            is FirValueParameterPositionContext -> positionContext.ktParameter.takeIf { NameWithTypeCompletion.shouldCompleteParameter(it) }
-            is FirTypeNameReferencePositionContext ->
+            is KotlinValueParameterPositionContext -> positionContext.ktParameter.takeIf { NameWithTypeCompletion.shouldCompleteParameter(it) }
+            is KotlinTypeNameReferencePositionContext ->
                 positionContext.typeReference?.let { getDeclarationFromReceiverTypeReference(it) } as? KtProperty
 
             else -> null

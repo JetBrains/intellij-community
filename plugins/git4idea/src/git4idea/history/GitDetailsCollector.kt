@@ -50,7 +50,7 @@ internal abstract class GitDetailsCollector<R : GitLogRecord, C : VcsCommitMetad
                                          vararg parameters: String) {
     val factory = GitLogUtil.getObjectsFactoryWithDisposeCheck(project) ?: return
 
-    val commandParameters = ArrayUtil.mergeArrays(ArrayUtil.toStringArray(requirements.commandParameters(project)), *parameters)
+    val commandParameters = ArrayUtil.mergeArrays(ArrayUtil.toStringArray(requirements.commandParameters(project, handler.executable)), *parameters)
     if (requirements.diffInMergeCommits == GitCommitRequirements.DiffInMergeCommits.DIFF_TO_PARENTS) {
       val consumer = { records: List<R> ->
         val firstRecord = records.first()
@@ -87,7 +87,7 @@ internal abstract class GitDetailsCollector<R : GitLogRecord, C : VcsCommitMetad
     handler.addParameters("--name-status")
     handler.endOptions()
 
-    runWithSpan(TelemetryManager.getInstance().getTracer(VcsScope), GitTelemetrySpan.Log.LoadingDetails.name) { span ->
+    runWithSpan(TelemetryManager.getInstance().getTracer(VcsScope), GitTelemetrySpan.Log.LoadingFullCommitDetails.name) { span ->
       span.setAttribute("rootName", root.name)
 
       val handlerListener = GitLogOutputSplitter(handler, parser, converter)

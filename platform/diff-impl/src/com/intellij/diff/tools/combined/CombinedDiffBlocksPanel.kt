@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.tools.combined
 
+import com.intellij.ui.scale.JBUIScale
 import java.awt.*
 import javax.swing.JComponent
 import javax.swing.JPanel
@@ -61,6 +62,7 @@ internal class CombinedDiffBlocksPanel(private val blockOrder: BlockOrder,
       maxY = minY + calcHeight(index, holder)
 
       if (id == blockId) break
+      maxY+= gap()
     }
 
     return BlockBounds(blockId, minY, maxY)
@@ -76,6 +78,7 @@ internal class CombinedDiffBlocksPanel(private val blockOrder: BlockOrder,
       maxY = minY + calcHeight(index, holder)
 
       bounds.add(BlockBounds(id, minY, maxY))
+      maxY+= gap()
     }
     return bounds
   }
@@ -95,16 +98,16 @@ internal class CombinedDiffBlocksPanel(private val blockOrder: BlockOrder,
       parent ?: return Dimension(0, 0)
 
       val w = parent.width
-      val h = holders.values.mapIndexed { index, holder -> calcHeight(index, holder) }.sum()
+      val h = holders.values.mapIndexed { index, holder -> calcHeight(index, holder) + gap() }.sum()
 
       return Dimension(w, h)
     }
 
     override fun layoutContainer(parent: Container?) {
       parent ?: return
-      val x = 0
+      val x = left()
       var y = 0
-      val w = parent.width
+      val w = parent.width - left() - right()
 
       blockOrder.iterateBlocks().forEachIndexed { index, it ->
         val holder = getHolder(it)
@@ -113,9 +116,10 @@ internal class CombinedDiffBlocksPanel(private val blockOrder: BlockOrder,
           holder.component.bounds = Rectangle(x, y, w, height)
         }
 
-        y += height
+        y += height + gap()
       }
     }
+
 
     override fun minimumLayoutSize(parent: Container?): Dimension = preferredLayoutSize(parent)
     override fun maximumLayoutSize(target: Container?): Dimension = preferredLayoutSize(target)
@@ -129,3 +133,8 @@ internal class CombinedDiffBlocksPanel(private val blockOrder: BlockOrder,
     override fun invalidateLayout(target: Container?) {}
   }
 }
+
+private fun gap(): Int = JBUIScale.scale(CombinedDiffUI.GAP_BETWEEN_BLOCKS)
+private fun left(): Int = JBUIScale.scale(CombinedDiffUI.LEFT_RIGHT_INSET)
+private fun right(): Int =JBUIScale.scale(CombinedDiffUI.LEFT_RIGHT_INSET)
+

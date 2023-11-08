@@ -7,15 +7,14 @@ import com.intellij.ide.ui.UISettings
 import com.intellij.ide.util.PsiNavigationSupport
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.impl.Utils
 import com.intellij.openapi.actionSystem.impl.Utils.isAsyncDataContext
-import com.intellij.openapi.actionSystem.impl.Utils.wrapToAsyncDataContext
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions
 import com.intellij.openapi.progress.blockingContext
-import com.intellij.openapi.progress.mapWithProgress
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.backend.navigation.NavigationRequest
@@ -24,6 +23,7 @@ import com.intellij.platform.backend.navigation.impl.RawNavigationRequest
 import com.intellij.platform.backend.navigation.impl.SourceNavigationRequest
 import com.intellij.platform.ide.navigation.NavigationOptions
 import com.intellij.platform.ide.navigation.NavigationService
+import com.intellij.platform.util.progress.mapWithProgress
 import com.intellij.pom.Navigatable
 import com.intellij.util.OverflowSemaphore
 import com.intellij.util.ui.EDT
@@ -46,7 +46,7 @@ internal class IdeNavigationService(private val project: Project) : NavigationSe
       LOG.error("Expected async context, got: $ctx")
       val asyncContext = withContext(Dispatchers.EDT) {
         // hope that context component is still available
-        wrapToAsyncDataContext(ctx)
+        Utils.createAsyncDataContext(ctx)
       }
       navigate(asyncContext, options)
     }
@@ -120,7 +120,7 @@ private suspend fun navigate(project: Project, requests: List<NavigationRequest>
   }
 
   withContext(Dispatchers.EDT) {
-    navigateNonSource(request = nonSourceRequest, options = options)
+    navigateNonSource(project = project, request = nonSourceRequest, options = options)
   }
   return true
 }
@@ -137,9 +137,7 @@ private suspend fun navigateToSource(project: Project, request: NavigationReques
     is RawNavigationRequest -> {
       if (request.canNavigateToSource) {
         withContext(Dispatchers.EDT) {
-          blockingContext {
-            request.navigatable.navigate(options.requestFocus)
-          }
+          IdeNavigationServiceExecutor.getInstance(project).navigate(request, options.requestFocus)
         }
         return true
       }
@@ -188,7 +186,7 @@ private suspend fun tryActivateOpenFile(project: Project, request: SourceNavigat
                             openOptions = FileEditorOpenOptions(requestFocus = options.requestFocus, reuseOpen = options.requestFocus))
 }
 
-private suspend fun navigateNonSource(request: NavigationRequest, options: NavigationOptions.Impl) {
+private suspend fun navigateNonSource(project: Project, request: NavigationRequest, options: NavigationOptions.Impl) {
   EDT.assertIsEdt()
 
   return when (request) {
@@ -199,9 +197,7 @@ private suspend fun navigateNonSource(request: NavigationRequest, options: Navig
     }
     is RawNavigationRequest -> {
       check(!request.canNavigateToSource)
-      blockingContext {
-        request.navigatable.navigate(options.requestFocus)
-      }
+      IdeNavigationServiceExecutor.getInstance(project).navigate(request, options.requestFocus)
     }
     else -> {
       error("Non-source request expected here, got: $request")

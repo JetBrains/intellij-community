@@ -4,7 +4,9 @@ package com.intellij.openapi.wm.impl.welcomeScreen.projectActions
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.ProjectWindowCustomizerService
 import com.intellij.ide.RecentProjectIconHelper
+import com.intellij.ide.RecentProjectsManagerBase
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ex.MainMenuPresentationAware
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsActions
@@ -15,19 +17,21 @@ import com.intellij.ui.ColorChooserService
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.ui.JBPoint
 
-class ChangeProjectColorActionGroup: DefaultActionGroup(), DumbAware {
+class ChangeProjectColorActionGroup: DefaultActionGroup(), DumbAware, MainMenuPresentationAware {
   override fun getChildren(e: AnActionEvent?): Array<AnAction> {
-    val projectPath = e?.project?.let { ProjectWindowCustomizerService.projectPath(it) } ?: return emptyArray()
+    val project = e?.project ?: return emptyArray()
+    val projectPath = ProjectWindowCustomizerService.projectPath(project) ?: return emptyArray()
+    val projectName = if (RecentProjectsManagerBase.getInstanceEx().hasCustomIcon(project)) "" else project.name
 
-    return arrayOf(ChangeProjectColorAction(projectPath, IdeBundle.message("action.ChangeProjectColorAction.Amber.title"), 0),
-                   ChangeProjectColorAction(projectPath, IdeBundle.message("action.ChangeProjectColorAction.Rust.title"), 1),
-                   ChangeProjectColorAction(projectPath, IdeBundle.message("action.ChangeProjectColorAction.Olive.title"), 2),
-                   ChangeProjectColorAction(projectPath, IdeBundle.message("action.ChangeProjectColorAction.Grass.title"), 8),
-                   ChangeProjectColorAction(projectPath, IdeBundle.message("action.ChangeProjectColorAction.Ocean.title"), 7),
-                   ChangeProjectColorAction(projectPath, IdeBundle.message("action.ChangeProjectColorAction.Sky.title"), 3),
-                   ChangeProjectColorAction(projectPath, IdeBundle.message("action.ChangeProjectColorAction.Cobalt.title"), 4),
-                   ChangeProjectColorAction(projectPath, IdeBundle.message("action.ChangeProjectColorAction.Violet.title"), 6),
-                   ChangeProjectColorAction(projectPath, IdeBundle.message("action.ChangeProjectColorAction.Plum.title"), 5),
+    return arrayOf(ChangeProjectColorAction(projectPath, IdeBundle.message("action.ChangeProjectColorAction.Amber.title"), 0, projectName),
+                   ChangeProjectColorAction(projectPath, IdeBundle.message("action.ChangeProjectColorAction.Rust.title"), 1, projectName),
+                   ChangeProjectColorAction(projectPath, IdeBundle.message("action.ChangeProjectColorAction.Olive.title"), 2, projectName),
+                   ChangeProjectColorAction(projectPath, IdeBundle.message("action.ChangeProjectColorAction.Grass.title"), 8, projectName),
+                   ChangeProjectColorAction(projectPath, IdeBundle.message("action.ChangeProjectColorAction.Ocean.title"), 7, projectName),
+                   ChangeProjectColorAction(projectPath, IdeBundle.message("action.ChangeProjectColorAction.Sky.title"), 3, projectName),
+                   ChangeProjectColorAction(projectPath, IdeBundle.message("action.ChangeProjectColorAction.Cobalt.title"), 4, projectName),
+                   ChangeProjectColorAction(projectPath, IdeBundle.message("action.ChangeProjectColorAction.Violet.title"), 6, projectName),
+                   ChangeProjectColorAction(projectPath, IdeBundle.message("action.ChangeProjectColorAction.Plum.title"), 5, projectName),
                    Separator(),
                    ChooseCustomProjectColorAction()
                    )
@@ -36,14 +40,24 @@ class ChangeProjectColorActionGroup: DefaultActionGroup(), DumbAware {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
-    e.presentation.isEnabled = e.project != null
+    val project = e.project
+    e.presentation.isEnabled = project != null
+    e.presentation.icon = project?.let {
+      val projectPath = ProjectWindowCustomizerService.projectPath(project) ?: return@let null
+      RecentProjectIconHelper.generateProjectIcon(projectPath, true, size = 14, projectName = "", colorIndex = null)
+    }
   }
+
+  override fun alwaysShowIconInMainMenu(): Boolean = true
 }
 
-class ChangeProjectColorAction(val projectPath: String, val name: @NlsSafe String, val index: Int):
-  AnAction(name, "", RecentProjectIconHelper.generateProjectIcon(projectPath, true, size = 16, colorIndex = index)), DumbAware
+class ChangeProjectColorAction(val projectPath: String, val name: @NlsSafe String, val index: Int, val projectName: String?) : AnAction(
+  name,
+  "",
+  RecentProjectIconHelper.generateProjectIcon(projectPath, true, size = 16, colorIndex = index, projectName = projectName)
+), DumbAware
 {
-  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+  override fun getActionUpdateThread() = ActionUpdateThread.EDT
 
   override fun update(e: AnActionEvent) {
     val project = e.project ?: return

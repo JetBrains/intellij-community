@@ -1,6 +1,6 @@
 <component name="libraryTable">
   <library name="jackson-module-kotlin" type="repository">
-    <properties include-transitive-deps="false" jar-repository-id="central-proxy" maven-id="com.fasterxml.jackson.module:jackson-module-kotlin:2.15.2">
+    <properties include-transitive-deps="false" maven-id="com.fasterxml.jackson.module:jackson-module-kotlin:2.15.2">
       <verification>
         <artifact url="file://$MAVEN_REPOSITORY$/com/fasterxml/jackson/module/jackson-module-kotlin/2.15.2/jackson-module-kotlin-2.15.2.jar">
           <sha256sum>b3361598a81901613201757461b0149cd75095d420ceb155ddfad09338d77588</sha256sum>

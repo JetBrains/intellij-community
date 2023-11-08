@@ -5486,6 +5486,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/explicitThis/syntheticJavaProperty_sameNameVariable.kt");
         }
 
+        @TestMetadata("unresolvedReference.kt")
+        public void testUnresolvedReference() throws Exception {
+            runTest("testData/inspectionsLocal/explicitThis/unresolvedReference.kt");
+        }
+
         @TestMetadata("variableWithSameName.kt")
         public void testVariableWithSameName() throws Exception {
             runTest("testData/inspectionsLocal/explicitThis/variableWithSameName.kt");
@@ -10220,6 +10225,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         @TestMetadata("dataClassToString.kt")
         public void testDataClassToString() throws Exception {
             runTest("testData/inspectionsLocal/redundantOverride/dataClassToString.kt");
+        }
+
+        @TestMetadata("dataClassWithOverriddenToStringCall.kt")
+        public void testDataClassWithOverriddenToStringCall() throws Exception {
+            runTest("testData/inspectionsLocal/redundantOverride/dataClassWithOverriddenToStringCall.kt");
         }
 
         @TestMetadata("dataObject.kt")
@@ -16941,6 +16951,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/unusedSymbol/catchParameter.kt");
         }
 
+        @TestMetadata("catchUnderscoreParameter.kt")
+        public void testCatchUnderscoreParameter() throws Exception {
+            runTest("testData/inspectionsLocal/unusedSymbol/catchUnderscoreParameter.kt");
+        }
+
         @TestMetadata("classByPrimaryConstructor.kt")
         public void testClassByPrimaryConstructor() throws Exception {
             runTest("testData/inspectionsLocal/unusedSymbol/classByPrimaryConstructor.kt");
@@ -17184,6 +17199,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         @TestMetadata("secondaryLocalClassConstructor.kt")
         public void testSecondaryLocalClassConstructor() throws Exception {
             runTest("testData/inspectionsLocal/unusedSymbol/secondaryLocalClassConstructor.kt");
+        }
+
+        @TestMetadata("suppressedClass.kt")
+        public void testSuppressedClass() throws Exception {
+            runTest("testData/inspectionsLocal/unusedSymbol/suppressedClass.kt");
         }
 
         @TestMetadata("typeAlias.kt")

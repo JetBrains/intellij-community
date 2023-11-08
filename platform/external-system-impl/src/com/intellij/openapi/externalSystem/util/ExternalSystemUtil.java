@@ -99,6 +99,7 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Supplier;
 
+import static com.intellij.openapi.externalSystem.service.notification.ExternalSystemNotificationManager.createNotification;
 import static com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalSettings.SyncType.*;
 import static org.jetbrains.annotations.Nls.Capitalization.Sentence;
 
@@ -416,7 +417,7 @@ public final class ExternalSystemUtil {
             var externalSystemName = externalSystemId.getReadableName();
             var title = ExternalSystemBundle.message("notification.project.refresh.fail.title", externalSystemName, projectName);
             var dataContext = BuildConsoleUtils.getDataContext(id, syncViewManager);
-            var eventResult = createFailureResult(title, e, externalSystemId, project, dataContext);
+            var eventResult = createFailureResult(title, e, externalSystemId, project, externalProjectPath, dataContext);
             return new FinishBuildEventImpl(id, null, eventTime, eventMessage, eventResult);
           });
           processHandler.notifyProcessTerminated(1);
@@ -585,7 +586,7 @@ public final class ExternalSystemUtil {
         var systemName = externalSystemId.getReadableName();
         var projectName = resolveProjectTask.getProjectName();
         var title = ExternalSystemBundle.message("notification.project.refresh.fail.title", systemName, projectName);
-        var eventResult = createFailureResult(title, t, externalSystemId, project, DataContext.EMPTY_CONTEXT);
+        var eventResult = createFailureResult(title, t, externalSystemId, project, externalProjectPath, DataContext.EMPTY_CONTEXT);
         return new FinishBuildEventImpl(taskId, null, eventTime, eventMessage, eventResult);
       });
     }
@@ -695,11 +696,34 @@ public final class ExternalSystemUtil {
   }
 
   @ApiStatus.Internal
-  public static @NotNull FailureResultImpl createFailureResult(@NotNull @Nls(capitalization = Sentence) String title,
-                                                               @NotNull Throwable exception,
-                                                               @NotNull ProjectSystemId externalSystemId,
-                                                               @NotNull Project project,
-                                                               @NotNull DataContext dataContext) {
+  public static @NotNull FailureResultImpl createFailureResult(
+    @NotNull @Nls(capitalization = Sentence) String title,
+    @NotNull Throwable exception,
+    @NotNull ProjectSystemId externalSystemId,
+    @NotNull Project project,
+    @NotNull String externalProjectPath,
+    @NotNull DataContext dataContext
+  ) {
+    var notificationManager = ExternalSystemNotificationManager.getInstance(project);
+    var notificationData = createNotification(title, exception, externalSystemId, project, externalProjectPath, dataContext);
+    if (notificationData == null) {
+      return new FailureResultImpl();
+    }
+    return createFailureResult(exception, externalSystemId, project, notificationManager, notificationData);
+  }
+
+  /**
+   * @deprecated use {@link #createFailureResult(String, Throwable, ProjectSystemId, Project, String, DataContext)} instead
+   */
+  @Deprecated
+  @ApiStatus.Internal
+  public static @NotNull FailureResultImpl createFailureResult(
+    @NotNull @Nls(capitalization = Sentence) String title,
+    @NotNull Throwable exception,
+    @NotNull ProjectSystemId externalSystemId,
+    @NotNull Project project,
+    @NotNull DataContext dataContext
+  ) {
     var notificationManager = ExternalSystemNotificationManager.getInstance(project);
     var notificationData = notificationManager.createNotification(title, exception, externalSystemId, project, dataContext);
     if (notificationData == null) {
@@ -708,11 +732,13 @@ public final class ExternalSystemUtil {
     return createFailureResult(exception, externalSystemId, project, notificationManager, notificationData);
   }
 
-  private static @NotNull FailureResultImpl createFailureResult(@NotNull Throwable exception,
-                                                                @NotNull ProjectSystemId externalSystemId,
-                                                                @NotNull Project project,
-                                                                @NotNull ExternalSystemNotificationManager notificationManager,
-                                                                @NotNull NotificationData notificationData) {
+  private static @NotNull FailureResultImpl createFailureResult(
+    @NotNull Throwable exception,
+    @NotNull ProjectSystemId externalSystemId,
+    @NotNull Project project,
+    @NotNull ExternalSystemNotificationManager notificationManager,
+    @NotNull NotificationData notificationData
+  ) {
     if (notificationData.isBalloonNotification()) {
       notificationManager.showNotification(externalSystemId, notificationData);
       return new FailureResultImpl(exception);
@@ -1007,7 +1033,7 @@ public final class ExternalSystemUtil {
           }
           return;
         }
-        ApplicationManager.getApplication().getService(ProjectDataManager.class).importData(externalProject, project);
+        ProjectDataManager.getInstance().importData(externalProject, project);
         if (importResultCallback != null) {
           importResultCallback.consume(true);
         }
@@ -1115,7 +1141,7 @@ public final class ExternalSystemUtil {
       if (externalProject == null) {
         return;
       }
-      ApplicationManager.getApplication().getService(ProjectDataManager.class).importData(externalProject, myProject);
+      ProjectDataManager.getInstance().importData(externalProject, myProject);
     }
 
     @Override

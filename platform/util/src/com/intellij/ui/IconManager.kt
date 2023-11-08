@@ -92,6 +92,16 @@ interface IconManager {
    * @return an icon that paints the given icon with the colored badge
    */
   fun withIconBadge(icon: Icon, color: Paint): Icon = icon
+
+  @ApiStatus.Experimental
+  fun colorizedIcon(baseIcon: Icon, colorProvider: () -> Color): Icon = baseIcon
+
+  @ApiStatus.Internal
+  fun hashClass(aClass: Class<*>): Long = aClass.hashCode().toLong()
+
+  fun getPluginAndModuleId(classLoader: ClassLoader): Pair<String, String?> = "com.intellij" to null
+
+  fun getClassLoader(pluginId: String, moduleId: String?): ClassLoader? = IconManager::class.java.classLoader
 }
 
 private object DummyIconManager : IconManager {

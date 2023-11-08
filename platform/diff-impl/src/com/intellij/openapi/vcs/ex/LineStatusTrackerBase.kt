@@ -20,6 +20,7 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vcs.ex.DocumentTracker.Block
 import com.intellij.openapi.vcs.ex.LineStatusTrackerBlockOperations.Companion.isSelectedByLine
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.EventDispatcher
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import java.util.*
@@ -35,7 +36,6 @@ abstract class LineStatusTrackerBase<R : Range>(
 
   protected val blockOperations: LineStatusTrackerBlockOperations<R, Block> = MyBlockOperations(LOCK)
   protected val documentTracker: DocumentTracker
-  protected abstract val renderer: LineStatusMarkerRenderer
 
   final override var isReleased: Boolean = false
     private set
@@ -44,6 +44,8 @@ abstract class LineStatusTrackerBase<R : Range>(
     private set
 
   protected val blocks: List<Block> get() = documentTracker.blocks
+
+  protected val listeners = EventDispatcher.create(LineStatusTrackerListener::class.java)
 
   init {
     documentTracker = DocumentTracker(vcsDocument, document, LOCK)
@@ -213,7 +215,7 @@ abstract class LineStatusTrackerBase<R : Range>(
   }
 
   protected fun updateHighlighters() {
-    renderer.scheduleUpdate()
+    listeners.multicaster.onRangesChanged()
   }
 
 
@@ -268,6 +270,15 @@ abstract class LineStatusTrackerBase<R : Range>(
     }
   }
 
+  override fun addListener(listener: LineStatusTrackerListener) {
+    listeners.addListener(listener)
+  }
+
+  override fun removeListener(listener: LineStatusTrackerListener) {
+    listeners.removeListener(listener)
+  }
+
+  protected abstract val Block.ourData: DocumentTracker.BlockData
 
   companion object {
     @JvmStatic

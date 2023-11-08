@@ -14,6 +14,7 @@ import com.intellij.psi.util.PsiTypesUtil
 import com.intellij.util.SmartList
 import org.jetbrains.kotlin.analysis.api.types.KtTypeMappingMode
 import org.jetbrains.kotlin.asJava.LightClassUtil
+import org.jetbrains.kotlin.asJava.classes.lazyPub
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.builtins.functions.FunctionInvokeDescriptor
 import org.jetbrains.kotlin.builtins.isBuiltinFunctionalTypeOrSubtype
@@ -70,7 +71,7 @@ import org.jetbrains.uast.kotlin.psi.UastFakeDescriptorLightMethod
 import org.jetbrains.uast.kotlin.psi.UastFakeSourceLightMethod
 import org.jetbrains.uast.kotlin.psi.UastFakeSourceLightPrimaryConstructor
 
-val kotlinUastPlugin: UastLanguagePlugin by lz {
+val kotlinUastPlugin: UastLanguagePlugin by lazyPub {
     UastLanguagePlugin.getInstances().find { it.language == KotlinLanguage.INSTANCE }
         ?: KotlinUastLanguagePlugin()
 }

@@ -8,7 +8,6 @@ import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.psi.FileViewProvider
@@ -22,7 +21,6 @@ import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.util.ArrayUtil
 import kotlinx.coroutines.*
-import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.locks.Lock
 import java.util.concurrent.locks.ReentrantLock
@@ -32,9 +30,6 @@ private val LOG = logger<CodeStyleCachedValueProvider>()
 @Service(Service.Level.PROJECT)
 private class CodeStyleCachedValueProviderService(@JvmField val coroutineScope: CoroutineScope) {
 }
-
-@Internal
-val IS_CLI_FORMATTER_KEY: Key<Boolean> = Key.create("is.cli.formatter")
 
 internal class CodeStyleCachedValueProvider(private val viewProvider: FileViewProvider,
                                             private val project: Project) : CachedValueProvider<CodeStyleSettings?> {
@@ -127,7 +122,7 @@ internal class CodeStyleCachedValueProvider(private val viewProvider: FileViewPr
 
     private fun start() {
       val app = ApplicationManager.getApplication()
-      if (app.isDispatchThread && !app.isUnitTestMode && app.getUserData(IS_CLI_FORMATTER_KEY) != true) {
+      if (app.isDispatchThread && !app.isUnitTestMode && !app.isHeadlessEnvironment) {
         job = project.service<CodeStyleCachedValueProviderService>().coroutineScope.launch {
           readAction {
             computeSettings()

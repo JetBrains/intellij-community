@@ -5,7 +5,6 @@ import com.intellij.diagnostic.PluginException
 import com.intellij.ide.ui.laf.UiThemeProviderListManager
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.extensions.PluginAware
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.RequiredElement
 import com.intellij.util.ResourceUtil
@@ -19,13 +18,11 @@ import java.io.IOException
  *
  * @author Konstantin Bulenkov
  */
-class UIThemeProvider : PluginAware {
+class UIThemeProvider {
   companion object {
     @JvmField
     val EP_NAME: ExtensionPointName<UIThemeProvider> = ExtensionPointName("com.intellij.themeProvider")
   }
-
-  private var pluginDescriptor: PluginDescriptor? = null
 
   /**
    * Path to `*.theme.json` file
@@ -54,11 +51,14 @@ class UIThemeProvider : PluginAware {
 
   @Throws(IOException::class)
   @Internal
-  fun getThemeJson(): ByteArray? {
-    return ResourceUtil.getResourceAsBytes((path ?: return null).removePrefix("/"), pluginDescriptor!!.getClassLoader())
+  fun getThemeJson(pluginDescriptor: PluginDescriptor): ByteArray? {
+    return ResourceUtil.getResourceAsBytes((path ?: return null).removePrefix("/"), pluginDescriptor.getClassLoader())
   }
 
-  internal fun createTheme(parentTheme: UITheme?, defaultDarkParent: (() -> UITheme?)?, defaultLightParent: (() ->UITheme?)?): UITheme? {
+  internal fun createTheme(parentTheme: UITheme?,
+                           defaultDarkParent: (() -> UITheme?)?,
+                           defaultLightParent: (() ->UITheme?)?,
+                           pluginDescriptor: PluginDescriptor): UITheme? {
     if (defaultDarkParent != null && id == UiThemeProviderListManager.DEFAULT_DARK_PARENT_THEME) {
       val result = defaultDarkParent()
       if (result?.id == UiThemeProviderListManager.DEFAULT_DARK_PARENT_THEME) {
@@ -72,10 +72,9 @@ class UIThemeProvider : PluginAware {
       }
     }
 
-    val pluginDescriptor = pluginDescriptor!!
     try {
       val classLoader = pluginDescriptor.getPluginClassLoader() ?: UIThemeProvider::class.java.classLoader
-      val data = getThemeJson()
+      val data = getThemeJson(pluginDescriptor)
       if (data == null) {
         thisLogger().warn(PluginException(
           "Cannot find theme resource (path=$path, classLoader=$classLoader, pluginDescriptor=$pluginDescriptor)",
@@ -96,9 +95,5 @@ class UIThemeProvider : PluginAware {
                                         pluginDescriptor.getPluginId()))
       return null
     }
-  }
-
-  override fun setPluginDescriptor(pluginDescriptor: PluginDescriptor) {
-    this.pluginDescriptor = pluginDescriptor
   }
 }

@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gitlab.snippets
 
 import com.intellij.collaboration.async.cancelAndJoinSilently
+import com.intellij.collaboration.util.ResultUtil.runCatchingUser
 import com.intellij.ide.BrowserUtil
 import com.intellij.notification.NotificationListener
 import com.intellij.openapi.application.readAction
@@ -9,12 +10,12 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.ide.CopyPasteManager
-import com.intellij.openapi.progress.withBackgroundProgress
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.isFile
+import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.util.childScope
 import kotlinx.coroutines.*
 import org.jetbrains.plugins.gitlab.api.GitLabApi
@@ -26,6 +27,7 @@ import org.jetbrains.plugins.gitlab.api.getResultOrThrow
 import org.jetbrains.plugins.gitlab.api.request.getCurrentUser
 import org.jetbrains.plugins.gitlab.authentication.GitLabLoginUtil
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
+import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.GitLabSelectorErrorStatusPresenter.Companion.isAuthorizationException
 import org.jetbrains.plugins.gitlab.snippets.PathHandlingMode.Companion.getFileNameExtractor
 import org.jetbrains.plugins.gitlab.util.GitLabBundle.message
 import org.jetbrains.plugins.gitlab.util.GitLabStatistics.SnippetAction.*
@@ -146,9 +148,12 @@ class GitLabSnippetService(private val project: Project, private val serviceScop
               ?: reattemptLogin(apiManager, accountManager, result)
               ?: return null
 
-    // If token is present, we check that it is valid with a test request. Reattempt login if token is invalid.
-    if (api.graphQL.getCurrentUser() == null) {
-      return reattemptLogin(apiManager, accountManager, result)
+    // If a token is present, we check that it is valid with a test request. Reattempt login if token is invalid.
+    runCatchingUser { api.graphQL.getCurrentUser() }.onFailure {
+      when {
+        isAuthorizationException(it) -> return reattemptLogin(apiManager, accountManager, result)
+        else -> throw it
+      }
     }
 
     return api
@@ -180,7 +185,7 @@ class GitLabSnippetService(private val project: Project, private val serviceScop
     }
 
     val httpResult = api.graphQL.createSnippet(
-      data.onProject,
+      result.onProject,
       data.title,
       data.description,
       if (data.isPrivate) GitLabVisibilityLevel.private else GitLabVisibilityLevel.public,
@@ -253,7 +258,6 @@ class GitLabSnippetService(private val project: Project, private val serviceScop
           true,
           false,
 
-          null,
           PathHandlingMode.RelativePaths
         )
       )
@@ -304,7 +308,12 @@ class GitLabSnippetService(private val project: Project, private val serviceScop
    * @return `true` if the limit is reached, `false`, if not.
    */
   private fun VirtualFile.collectNonBinaryFilesImpl(collection: MutableSet<VirtualFile>): Boolean {
-    if (isFile && fileType.isBinary || collection.size > GL_SNIPPET_FILES_LIMIT || isRecursiveOrCircularSymlink) {
+    val fileType = runCatching {
+      this.fileType
+    }
+
+    if (fileType.isFailure || (isFile && fileType.getOrNull()?.isBinary == true)
+        || collection.size > GL_SNIPPET_FILES_LIMIT || isRecursiveOrCircularSymlink) {
       return collection.size > GL_SNIPPET_FILES_LIMIT
     }
 
@@ -345,7 +354,7 @@ class GitLabSnippetService(private val project: Project, private val serviceScop
    * could not be completed, [GitLabSnippetFileContents] representing the selection or file otherwise.
    */
   private fun Editor.collectContents(): GitLabSnippetFileContents? {
-    val content = selectionModel.getSelectedText(true)?.ifEmpty { null }
+    val content = selectionModel.selectedText?.ifEmpty { null }
                   ?: document.text.ifEmpty { null }
                   ?: return null
 

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.zmlx.hg4idea.provider;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -42,26 +28,22 @@ public class HgDiffFromHistoryHandler extends BaseDiffFromHistoryHandler<HgFileR
     super(project);
   }
 
-  @NotNull
   @Override
-  protected List<Change> getChangesBetweenRevisions(@NotNull FilePath path, @NotNull HgFileRevision rev1, @Nullable HgFileRevision rev2) {
+  protected @NotNull List<Change> getChangesBetweenRevisions(@NotNull FilePath path, @NotNull HgFileRevision rev1, @Nullable HgFileRevision rev2) {
     return executeDiff(path, rev1, rev2);
   }
 
-  @NotNull
   @Override
-  protected List<Change> getAffectedChanges(@NotNull FilePath path, @NotNull HgFileRevision rev) {
+  protected @NotNull List<Change> getAffectedChanges(@NotNull FilePath path, @NotNull HgFileRevision rev) {
     return executeDiff(path, null, rev);
   }
 
-  @NotNull
   @Override
-  protected String getPresentableName(@NotNull HgFileRevision revision) {
+  protected @NotNull String getPresentableName(@NotNull HgFileRevision revision) {
     return revision.getRevisionNumber().getChangeset();
   }
 
-  @NotNull
-  private List<Change> executeDiff(@NotNull FilePath path, @Nullable HgFileRevision rev1, @Nullable HgFileRevision rev2) {
+  private @NotNull List<Change> executeDiff(@NotNull FilePath path, @Nullable HgFileRevision rev1, @Nullable HgFileRevision rev2) {
     VirtualFile root = VcsUtil.getVcsRootFor(myProject, path);
     LOG.assertTrue(root != null, "Repository is null for " + path);
 

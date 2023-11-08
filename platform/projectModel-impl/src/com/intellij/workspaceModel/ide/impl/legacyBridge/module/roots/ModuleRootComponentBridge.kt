@@ -11,14 +11,14 @@ import com.intellij.openapi.roots.impl.ModuleOrderEnumerator
 import com.intellij.openapi.roots.impl.RootConfigurationAccessor
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.workspaceModel.ide.impl.DisposableCachedValue
-import com.intellij.workspaceModel.ide.impl.legacyBridge.RootConfigurationAccessorForWorkspaceModel
-import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModuleEntity
-import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.platform.workspace.storage.CachedValue
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
+import com.intellij.workspaceModel.ide.impl.DisposableCachedValue
+import com.intellij.workspaceModel.ide.impl.legacyBridge.RootConfigurationAccessorForWorkspaceModel
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModuleEntity
+import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
@@ -51,6 +51,7 @@ class ModuleRootComponentBridge(
   }
 
   init {
+    @Suppress("DEPRECATION")
     MODULE_EXTENSION_NAME.getPoint(moduleBridge).addExtensionPointListener(object : ExtensionPointListener<ModuleExtension> {
       override fun extensionAdded(extension: ModuleExtension, pluginDescriptor: PluginDescriptor) {
         dropRootModelCache()

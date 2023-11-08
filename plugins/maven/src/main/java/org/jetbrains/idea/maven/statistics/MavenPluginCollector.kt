@@ -31,10 +31,7 @@ class MavenPluginCollector : ProjectUsagesCollector() {
       }.toSet()
   }
 
-
-  override fun getGroup(): EventLogGroup {
-    return GROUP
-  }
+  override fun getGroup(): EventLogGroup = GROUP
 
   companion object {
     private val GROUP = EventLogGroup("maven.plugins", 5)
@@ -43,7 +40,6 @@ class MavenPluginCollector : ProjectUsagesCollector() {
     val version = EventFields.Version
     val isExtension = EventFields.Boolean("extension")
     val hasConfiguration = EventFields.Boolean("has_configuration")
-
   }
 }
 

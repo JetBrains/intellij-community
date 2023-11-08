@@ -13,8 +13,7 @@ class UrlClassLoaderSplitPackageTest {
   @Test
   fun `no expected classes in com_intellij_util_lang package`() {
     val urlClassLoaderPackages = listOf(
-      "com.intellij.util.lang", 
-      "org.jetbrains.xxh3", 
+      "com.intellij.util.lang",
       "org.jetbrains.ikv",
     )
     val platformLoaderModules = setOf(

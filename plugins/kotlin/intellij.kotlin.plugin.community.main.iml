@@ -121,6 +121,8 @@
     <orderEntry type="module" module-name="kotlin.jvm-debugger.sequence" exported="" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.util" exported="" />
     <orderEntry type="module" module-name="kotlin.injection" exported="" />
+    <orderEntry type="module" module-name="kotlin.base.injection" exported="" />
+    <orderEntry type="module" module-name="kotlin.injection-k2" exported="" />
     <orderEntry type="module" module-name="kotlin.line-indent-provider" exported="" />
     <orderEntry type="module" module-name="kotlin.code-insight.live-templates-shared" exported="" />
     <orderEntry type="module" module-name="kotlin.code-insight.live-templates-k1" exported="" />
@@ -201,5 +203,6 @@
     <orderEntry type="module" module-name="kotlin.refactorings.introduce.k2" exported="" />
     <orderEntry type="module" module-name="kotlin.performanceExtendedPlugin" exported="" />
     <orderEntry type="module" module-name="kotlin.bundled-compiler-plugins-support" exported="" />
+    <orderEntry type="module" module-name="kotlin.onboarding" exported="" />
   </component>
 </module>

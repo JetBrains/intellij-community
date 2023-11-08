@@ -12,8 +12,8 @@ import org.jetbrains.plugins.gitlab.api.*
 import org.jetbrains.plugins.gitlab.api.dto.GitLabGraphQLMutationResultDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabReviewerDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
+import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestByBranchDTO
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestDTO
-import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestIidDTO
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestRebaseDTO
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestShortRestDTO
 import org.jetbrains.plugins.gitlab.util.GitLabApiRequestName
@@ -48,20 +48,24 @@ suspend fun GitLabApi.GraphQL.loadMergeRequest(
 }
 
 @SinceGitLab("13.1")
-suspend fun GitLabApi.GraphQL.findMergeRequestsByBranch(project: GitLabProjectCoordinates, branch: String)
-  : HttpResponse<out GraphQLConnectionDTO<GitLabMergeRequestIidDTO>?> {
-  val parameters = mapOf(
+suspend fun GitLabApi.GraphQL.findMergeRequestsByBranch(
+  project: GitLabProjectCoordinates,
+  sourceBranch: String,
+  targetBranch: String? = null
+): HttpResponse<out GraphQLConnectionDTO<GitLabMergeRequestByBranchDTO>?> {
+  val parameters = mutableMapOf(
     "projectId" to project.projectPath.fullPath(),
-    "branch" to branch
+    "sourceBranches" to listOf(sourceBranch),
+    "targetBranches" to targetBranch?.let { listOf(it) }
   )
   val request = gitLabQuery(GitLabGQLQuery.FIND_MERGE_REQUESTS, parameters)
   return withErrorStats(GitLabGQLQuery.FIND_MERGE_REQUESTS) {
-    loadResponse<MergeRequestsConnection>(request, "project", "mergeRequests")
+    loadResponse<MergeRequestsByBranchConnection>(request, "project", "mergeRequests")
   }
 }
 
-private class MergeRequestsConnection(pageInfo: GraphQLCursorPageInfoDTO, nodes: List<GitLabMergeRequestIidDTO>)
-  : GraphQLConnectionDTO<GitLabMergeRequestIidDTO>(pageInfo, nodes)
+private class MergeRequestsByBranchConnection(pageInfo: GraphQLCursorPageInfoDTO, nodes: List<GitLabMergeRequestByBranchDTO>)
+  : GraphQLConnectionDTO<GitLabMergeRequestByBranchDTO>(pageInfo, nodes)
 
 @SinceGitLab("13.2")
 fun getMergeRequestStateEventsUri(project: GitLabProjectCoordinates, mrIid: String): URI =
@@ -139,6 +143,13 @@ suspend fun GitLabApi.GraphQL.mergeRequestUpdate(
   }
 }
 
+/**
+ * Sets the reviewers in the Merge Request
+ *
+ * Note: this request has different behavior depending on the user's subscription plan
+ *  [org.jetbrains.plugins.gitlab.api.data.GitLabPlan.FREE] -- sets only one reviewer from the list (the last one)
+ *  OTHER -- sets all reviewers from the list
+ */
 @SinceGitLab("13.8")
 suspend fun GitLabApi.Rest.mergeRequestSetReviewers(
   project: GitLabProjectCoordinates,
@@ -157,6 +168,13 @@ suspend fun GitLabApi.Rest.mergeRequestSetReviewers(
   }
 }
 
+/**
+ * Sets the reviewers in the Merge Request
+ *
+ * Note: this request has different behavior depending on the user's subscription plan
+ *  [org.jetbrains.plugins.gitlab.api.data.GitLabPlan.FREE] -- sets only one reviewer from the list (the last one)
+ *  OTHER -- sets all reviewers from the list
+ */
 @SinceGitLab("15.3")
 suspend fun GitLabApi.GraphQL.mergeRequestSetReviewers(
   project: GitLabProjectCoordinates,

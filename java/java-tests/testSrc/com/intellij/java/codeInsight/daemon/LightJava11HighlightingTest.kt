@@ -49,6 +49,14 @@ class LightJava11HighlightingTest : LightJavaCodeInsightFixtureTestCase() {
     Assert.assertTrue(JavaHighlightUtil.isJavaHashBangScript(file))
   }
 
+  fun testRequiresJavaBase() {
+    myFixture.configureByText("module-info.java", """
+      module M {
+        requires <error descr="Modifier 'static' not allowed here">static</error> <error descr="Modifier 'transitive' not allowed here">transitive</error> java.base;
+      }""".trimIndent())
+    myFixture.checkHighlighting()
+  }
+
   private fun doTest() {
     myFixture.configureByFile(getTestName(false) + ".java")
     myFixture.checkHighlighting()

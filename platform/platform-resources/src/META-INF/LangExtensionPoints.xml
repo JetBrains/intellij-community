@@ -31,6 +31,9 @@
     <extensionPoint dynamic="true" name="codeCompletionConfigurable" beanClass="com.intellij.application.options.CodeCompletionConfigurableEP">
       <with attribute="instance" implements="com.intellij.openapi.options.UnnamedConfigurable" />
     </extensionPoint>
+    <extensionPoint dynamic="true" name="mlCodeCompletionConfigurable" beanClass="com.intellij.application.options.MLCodeCompletionConfigurableEP">
+      <with attribute="instance" implements="com.intellij.openapi.options.UnnamedConfigurable" />
+    </extensionPoint>
     <extensionPoint dynamic="true" name="editorTabsConfigurable" beanClass="com.intellij.application.options.editor.EditorTabsConfigurableEP">
       <with attribute="instance" implements="com.intellij.openapi.options.UnnamedConfigurable" />
     </extensionPoint>
@@ -156,7 +159,7 @@
     <extensionPoint name="searchEverywhereContributor" interface="com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributorFactory" dynamic="true"/>
     <extensionPoint name="searchEverywhereResultsEqualityProvider" interface="com.intellij.ide.actions.searcheverywhere.SEResultsEqualityProvider" dynamic="true"/>
     <extensionPoint name="searchEverywhereMlService" interface="com.intellij.ide.actions.searcheverywhere.SearchEverywhereMlService" dynamic="true"/>
-    <extensionPoint name="searchEverywhereMlContributorReplacementService" interface="com.intellij.ide.actions.searcheverywhere.SearchEverywhereMlContributorReplacementService" dynamic="true"/>
+    <extensionPoint name="searchEverywhereMlContributorReplacement" interface="com.intellij.ide.actions.searcheverywhere.SearchEverywhereMlContributorReplacement" dynamic="true"/>
     <extensionPoint name="searchEverywhereSpellingCorrector" interface="com.intellij.ide.actions.searcheverywhere.SearchEverywhereSpellingCorrectorFactory" dynamic="true"/>
     <extensionPoint name="searchEverywhereRemoteConverter" interface="com.intellij.ide.actions.searcheverywhere.remote.RemoteSearchEverywhereConverterSupplier" dynamic="true"/>
     <extensionPoint name="searchEverywhereReorderingService" interface="com.intellij.ide.actions.searcheverywhere.SearchEverywhereReorderingService" dynamic="true"/>
@@ -194,7 +197,7 @@
     <extensionPoint name="patternDialectProvider" interface="com.intellij.packageDependencies.ui.PatternDialectProvider"/>
 
     <extensionPoint name="inspectionProfileActionProvider" interface="com.intellij.profile.codeInspection.ui.InspectionProfileActionProvider" dynamic="true"/>
-    <extensionPoint name="emptyInspectionTreeActionProvider" interface="com.intellij.profile.codeInspection.ui.EmptyInspectionTreeActionProvider" dynamic="true"/>
+    <extensionPoint name="inspectionTreeAdvertiser" interface="com.intellij.profile.codeInspection.ui.InspectionTreeAdvertiser" dynamic="true"/>
 
     <extensionPoint name="inspectionResultsExportActionProvider" interface="com.intellij.codeInspection.ui.actions.InspectionResultsExportActionProvider" dynamic="true"/>
 
@@ -280,6 +283,7 @@
     <extensionPoint name="runDashboardCustomizer" interface="com.intellij.execution.dashboard.RunDashboardCustomizer" dynamic="true"/>
     <extensionPoint name="runDashboardDefaultTypesProvider" interface="com.intellij.execution.dashboard.RunDashboardDefaultTypesProvider" dynamic="true"/>
     <extensionPoint name="runDashboardGroupingRule" interface="com.intellij.execution.dashboard.RunDashboardGroupingRule" dynamic="true"/>
+    <extensionPoint name="runDashboardChecker" interface="com.intellij.execution.dashboard.RunDashboardChecker" dynamic="true"/>
     <extensionPoint name="serviceViewContributor" interface="com.intellij.execution.services.ServiceViewContributor" dynamic="true"/>
 
     <extensionPoint name="hectorComponentProvider" interface="com.intellij.openapi.editor.HectorComponentPanelsProvider" area="IDEA_PROJECT" dynamic="true"/>
@@ -668,5 +672,8 @@
     <extensionPoint name="safeDeleteTargetProvider" interface="com.intellij.refactoring.safeDelete.api.SafeDeleteTargetProvider" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.codeInsight.daemon.impl.injectedLanguageHighlightingRangeReducer"
                     interface="com.intellij.codeInsight.daemon.impl.InjectedLanguageHighlightingRangeReducer"/>
+
+    <extensionPoint qualifiedName="com.intellij.platform.ijent.ijentExecFileProvider" dynamic="true"
+                    interface="com.intellij.platform.ijent.IjentExecFileProvider"/>
   </extensionPoints>
 </idea-plugin>

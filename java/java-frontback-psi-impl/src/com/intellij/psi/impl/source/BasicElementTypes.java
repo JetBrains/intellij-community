@@ -3,17 +3,26 @@ package com.intellij.psi.impl.source;
 
 import com.intellij.psi.JavaDocTokenType;
 import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.tree.ParentAwareTokenSet;
 import com.intellij.psi.tree.TokenSet;
 
+/**
+ * The BasicElementTypes interface represents a collection of basic element types used in frontback java modules.
+ * {@link TokenSet} is used for set, which contains `basic` types, which are not used in hierarchy.
+ * for other sets {@link ParentAwareTokenSet} is used.
+ * This set of sets must be consistent with {@link com.intellij.psi.impl.source.tree.ElementType}.
+ * It's checked with {@link com.intellij.java.parser.FrontBackElementTypeTest#testJavaTokenSet()}
+ *
+ * @see ParentAwareTokenSet
+ */
+@SuppressWarnings("unused")
 public interface BasicElementTypes extends JavaTokenType, JavaDocTokenType, BasicJavaElementType, BasicJavaDocElementType {
 
   TokenSet BASIC_JAVA_PLAIN_COMMENT_BIT_SET = TokenSet.create(END_OF_LINE_COMMENT, C_STYLE_COMMENT);
-  BasicJavaTokenSet BASIC_JAVA_COMMENT_BIT_SET =
-    BasicJavaTokenSet.orSet(BasicJavaTokenSet.create(BASIC_JAVA_PLAIN_COMMENT_BIT_SET), BasicJavaTokenSet.create(DOC_COMMENT));
-  BasicJavaTokenSet BASIC_JAVA_COMMENT_OR_WHITESPACE_BIT_SET =
-    BasicJavaTokenSet.orSet(BasicJavaTokenSet.create(WHITE_SPACE), BASIC_JAVA_COMMENT_BIT_SET);
-
-  //token set, because it is keywords
+  ParentAwareTokenSet BASIC_JAVA_COMMENT_BIT_SET =
+    ParentAwareTokenSet.orSet(ParentAwareTokenSet.create(BASIC_JAVA_PLAIN_COMMENT_BIT_SET), ParentAwareTokenSet.create(BASIC_DOC_COMMENT));
+  ParentAwareTokenSet BASIC_JAVA_COMMENT_OR_WHITESPACE_BIT_SET =
+    ParentAwareTokenSet.orSet(ParentAwareTokenSet.create(WHITE_SPACE), BASIC_JAVA_COMMENT_BIT_SET);
   TokenSet BASIC_KEYWORD_BIT_SET = TokenSet.create(
     ABSTRACT_KEYWORD, ASSERT_KEYWORD, BOOLEAN_KEYWORD, BREAK_KEYWORD, BYTE_KEYWORD, CASE_KEYWORD, CATCH_KEYWORD, CHAR_KEYWORD,
     CLASS_KEYWORD, CONST_KEYWORD, CONTINUE_KEYWORD, DEFAULT_KEYWORD, DO_KEYWORD, DOUBLE_KEYWORD, ELSE_KEYWORD, ENUM_KEYWORD,
@@ -27,23 +36,21 @@ public interface BasicElementTypes extends JavaTokenType, JavaDocTokenType, Basi
     NON_SEALED_KEYWORD, WHEN_KEYWORD
   );
 
-  //token set, because it is keywords
   TokenSet BASIC_LITERAL_BIT_SET = TokenSet.create(TRUE_KEYWORD, FALSE_KEYWORD, NULL_KEYWORD);
 
-  //token set, because it is keywords
   TokenSet BASIC_OPERATION_BIT_SET = TokenSet.create(
     EQ, GT, LT, EXCL, TILDE, QUEST, COLON, PLUS, MINUS, ASTERISK, DIV, AND, OR, XOR,
     PERC, EQEQ, LE, GE, NE, ANDAND, OROR, PLUSPLUS, MINUSMINUS, LTLT, GTGT, GTGTGT,
     PLUSEQ, MINUSEQ, ASTERISKEQ, DIVEQ, ANDEQ, OREQ, XOREQ, PERCEQ, LTLTEQ, GTGTEQ, GTGTGTEQ);
 
-  BasicJavaTokenSet BASIC_MODIFIER_BIT_SET = BasicJavaTokenSet.create(
+  TokenSet BASIC_MODIFIER_BIT_SET = TokenSet.create(
     PUBLIC_KEYWORD, PROTECTED_KEYWORD, PRIVATE_KEYWORD, STATIC_KEYWORD, ABSTRACT_KEYWORD, FINAL_KEYWORD, NATIVE_KEYWORD,
     SYNCHRONIZED_KEYWORD, STRICTFP_KEYWORD, TRANSIENT_KEYWORD, VOLATILE_KEYWORD, DEFAULT_KEYWORD, SEALED_KEYWORD, NON_SEALED_KEYWORD);
 
-  BasicJavaTokenSet BASIC_PRIMITIVE_TYPE_BIT_SET = BasicJavaTokenSet.create(
+  TokenSet BASIC_PRIMITIVE_TYPE_BIT_SET = TokenSet.create(
     BOOLEAN_KEYWORD, BYTE_KEYWORD, SHORT_KEYWORD, INT_KEYWORD, LONG_KEYWORD, CHAR_KEYWORD, FLOAT_KEYWORD, DOUBLE_KEYWORD, VOID_KEYWORD);
 
-  BasicJavaTokenSet BASIC_EXPRESSION_BIT_SET = BasicJavaTokenSet.create(
+  ParentAwareTokenSet BASIC_EXPRESSION_BIT_SET = ParentAwareTokenSet.create(
     BASIC_REFERENCE_EXPRESSION, BASIC_LITERAL_EXPRESSION, BASIC_THIS_EXPRESSION, BASIC_SUPER_EXPRESSION,
     BASIC_PARENTH_EXPRESSION, BASIC_METHOD_CALL_EXPRESSION,
     BASIC_TYPE_CAST_EXPRESSION, BASIC_PREFIX_EXPRESSION, BASIC_POSTFIX_EXPRESSION, BASIC_BINARY_EXPRESSION,
@@ -54,11 +61,11 @@ public interface BasicElementTypes extends JavaTokenType, JavaDocTokenType, Basi
     BASIC_EMPTY_EXPRESSION,
     BASIC_TEMPLATE_EXPRESSION);
 
-  BasicJavaTokenSet BASIC_ANNOTATION_MEMBER_VALUE_BIT_SET =
-    BasicJavaTokenSet.orSet(BASIC_EXPRESSION_BIT_SET, BasicJavaTokenSet.create(BASIC_ANNOTATION,
-                                                                               BASIC_ANNOTATION_ARRAY_INITIALIZER));
+  ParentAwareTokenSet BASIC_ANNOTATION_MEMBER_VALUE_BIT_SET =
+    ParentAwareTokenSet.orSet(BASIC_EXPRESSION_BIT_SET, ParentAwareTokenSet.create(BASIC_ANNOTATION,
+                                                                                   BASIC_ANNOTATION_ARRAY_INITIALIZER));
 
-  BasicJavaTokenSet BASIC_ARRAY_DIMENSION_BIT_SET = BasicJavaTokenSet.create(
+  ParentAwareTokenSet BASIC_ARRAY_DIMENSION_BIT_SET = ParentAwareTokenSet.create(
     BASIC_REFERENCE_EXPRESSION, BASIC_LITERAL_EXPRESSION, BASIC_THIS_EXPRESSION, BASIC_SUPER_EXPRESSION,
     BASIC_PARENTH_EXPRESSION, BASIC_METHOD_CALL_EXPRESSION,
     BASIC_TYPE_CAST_EXPRESSION, BASIC_PREFIX_EXPRESSION, BASIC_POSTFIX_EXPRESSION, BASIC_BINARY_EXPRESSION,
@@ -67,7 +74,7 @@ public interface BasicElementTypes extends JavaTokenType, JavaDocTokenType, Basi
     BASIC_CLASS_OBJECT_ACCESS_EXPRESSION,
     BASIC_EMPTY_EXPRESSION);
 
-  BasicJavaTokenSet BASIC_JAVA_STATEMENT_BIT_SET = BasicJavaTokenSet.create(
+  ParentAwareTokenSet BASIC_JAVA_STATEMENT_BIT_SET = ParentAwareTokenSet.create(
     BASIC_EMPTY_STATEMENT, BASIC_BLOCK_STATEMENT, BASIC_EXPRESSION_STATEMENT, BASIC_EXPRESSION_LIST_STATEMENT,
     BASIC_DECLARATION_STATEMENT, BASIC_IF_STATEMENT,
     BASIC_WHILE_STATEMENT, BASIC_FOR_STATEMENT, BASIC_FOREACH_STATEMENT, BASIC_DO_WHILE_STATEMENT,
@@ -76,41 +83,35 @@ public interface BasicElementTypes extends JavaTokenType, JavaDocTokenType, Basi
     BASIC_TRY_STATEMENT, BASIC_LABELED_STATEMENT, BASIC_ASSERT_STATEMENT,
     BASIC_YIELD_STATEMENT);
 
-  BasicJavaTokenSet BASIC_JAVA_PATTERN_BIT_SET =
-    BasicJavaTokenSet.create(BASIC_TYPE_TEST_PATTERN, BASIC_PARENTHESIZED_PATTERN, BASIC_DECONSTRUCTION_PATTERN, BASIC_UNNAMED_PATTERN);
+  ParentAwareTokenSet BASIC_JAVA_PATTERN_BIT_SET =
+    ParentAwareTokenSet.create(BASIC_TYPE_TEST_PATTERN, BASIC_PARENTHESIZED_PATTERN, BASIC_DECONSTRUCTION_PATTERN, BASIC_UNNAMED_PATTERN);
 
-  BasicJavaTokenSet BASIC_JAVA_CASE_LABEL_ELEMENT_BIT_SET =
-    BasicJavaTokenSet.orSet(BASIC_JAVA_PATTERN_BIT_SET, BASIC_EXPRESSION_BIT_SET, BasicJavaTokenSet.create(
+  ParentAwareTokenSet BASIC_JAVA_CASE_LABEL_ELEMENT_BIT_SET =
+    ParentAwareTokenSet.orSet(BASIC_JAVA_PATTERN_BIT_SET, BASIC_EXPRESSION_BIT_SET, ParentAwareTokenSet.create(
       BASIC_DEFAULT_CASE_LABEL_ELEMENT));
 
-  BasicJavaTokenSet BASIC_JAVA_MODULE_STATEMENT_BIT_SET = BasicJavaTokenSet.create(
+  ParentAwareTokenSet BASIC_JAVA_MODULE_STATEMENT_BIT_SET = ParentAwareTokenSet.create(
     BASIC_REQUIRES_STATEMENT, BASIC_EXPORTS_STATEMENT, BASIC_OPENS_STATEMENT, BASIC_USES_STATEMENT,
     BASIC_PROVIDES_STATEMENT);
 
-  BasicJavaTokenSet BASIC_IMPORT_STATEMENT_BASE_BIT_SET = BasicJavaTokenSet.create(BASIC_IMPORT_STATEMENT,
-                                                                                   BASIC_IMPORT_STATIC_STATEMENT);
-  BasicJavaTokenSet BASIC_CLASS_KEYWORD_BIT_SET =
-    BasicJavaTokenSet.create(CLASS_KEYWORD, INTERFACE_KEYWORD, ENUM_KEYWORD, RECORD_KEYWORD);
-  BasicJavaTokenSet BASIC_MEMBER_BIT_SET = BasicJavaTokenSet.create(BASIC_CLASS, BASIC_FIELD, BASIC_ENUM_CONSTANT,
-                                                                    BASIC_METHOD, BASIC_ANNOTATION_METHOD);
-  BasicJavaTokenSet BASIC_FULL_MEMBER_BIT_SET = BasicJavaTokenSet.orSet(BASIC_MEMBER_BIT_SET, BasicJavaTokenSet.create(
+  ParentAwareTokenSet BASIC_IMPORT_STATEMENT_BASE_BIT_SET = ParentAwareTokenSet.create(BASIC_IMPORT_STATEMENT,
+                                                                                       BASIC_IMPORT_STATIC_STATEMENT);
+  TokenSet BASIC_CLASS_KEYWORD_BIT_SET =
+    TokenSet.create(CLASS_KEYWORD, INTERFACE_KEYWORD, ENUM_KEYWORD, RECORD_KEYWORD);
+  ParentAwareTokenSet BASIC_MEMBER_BIT_SET = ParentAwareTokenSet.create(BASIC_CLASS, BASIC_FIELD, BASIC_ENUM_CONSTANT,
+                                                                        BASIC_METHOD, BASIC_ANNOTATION_METHOD);
+  ParentAwareTokenSet BASIC_FULL_MEMBER_BIT_SET = ParentAwareTokenSet.orSet(BASIC_MEMBER_BIT_SET, ParentAwareTokenSet.create(
     BASIC_CLASS_INITIALIZER));
 
-  //token set, because it is literals
   TokenSet BASIC_INTEGER_LITERALS = TokenSet.create(INTEGER_LITERAL, LONG_LITERAL);
-  //token set, because it is literals
   TokenSet BASIC_REAL_LITERALS = TokenSet.create(FLOAT_LITERAL, DOUBLE_LITERAL);
-  //token set, because it is literals
   TokenSet BASIC_STRING_LITERALS = TokenSet.create(STRING_LITERAL, TEXT_BLOCK_LITERAL);
-  //token set, because it is literals
   TokenSet BASIC_TEXT_LITERALS = TokenSet.create(STRING_LITERAL, TEXT_BLOCK_LITERAL, CHARACTER_LITERAL);
 
-  //token set, because it is literals
   TokenSet BASIC_STRING_TEMPLATE_FRAGMENTS =
     TokenSet.create(STRING_TEMPLATE_BEGIN, STRING_TEMPLATE_MID, STRING_TEMPLATE_END,
-                             TEXT_BLOCK_TEMPLATE_BEGIN, TEXT_BLOCK_TEMPLATE_MID, TEXT_BLOCK_TEMPLATE_END);
+                    TEXT_BLOCK_TEMPLATE_BEGIN, TEXT_BLOCK_TEMPLATE_MID, TEXT_BLOCK_TEMPLATE_END);
 
-  //token set, because it is literals
   TokenSet BASIC_ALL_LITERALS =
     TokenSet.orSet(BASIC_INTEGER_LITERALS, BASIC_REAL_LITERALS, BASIC_TEXT_LITERALS, BASIC_LITERAL_BIT_SET);
 }

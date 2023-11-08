@@ -45,36 +45,22 @@ open class UIdentifier(
 }
 
 open class LazyParentUIdentifier(psi: PsiElement?, givenParent: UElement?) : UIdentifier(psi, givenParent) {
-  @Volatile
-  private var uastParentValue: Any? = givenParent ?: NonInitializedLazyParentUIdentifierParent
+  private var uastParentValue: Any? = givenParent ?: UNINITIALIZED_UAST_PART
 
   override val uastParent: UElement?
     get() {
       val currentValue = uastParentValue
-      if (currentValue != NonInitializedLazyParentUIdentifierParent) {
+      if (currentValue != UNINITIALIZED_UAST_PART) {
         return currentValue as UElement?
       }
 
       val newValue = computeParent()
-      if (updater.compareAndSet(this, NonInitializedLazyParentUIdentifierParent, newValue)) {
-        return newValue
-      }
+      this.uastParentValue = newValue
 
-      return uastParentValue as UElement?
+      return newValue
     }
 
   protected open fun computeParent(): UElement? {
     return sourcePsi?.parent?.toUElement()
-  }
-
-  private companion object {
-    val updater: AtomicReferenceFieldUpdater<LazyParentUIdentifier, Any> =
-      AtomicReferenceFieldUpdater.newUpdater(
-        LazyParentUIdentifier::class.java,
-        Any::class.java,
-        "uastParentValue"
-      )
-
-    val NonInitializedLazyParentUIdentifierParent = Any()
   }
 }

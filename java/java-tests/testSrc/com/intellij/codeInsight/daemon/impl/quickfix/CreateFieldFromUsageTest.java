@@ -64,9 +64,8 @@ public class CreateFieldFromUsageTest extends LightQuickFixTestCase {
     doSingleTest();
   }
 
-  public void testDependantConstant() {
-    doSingleTest();
-  }
+  public void testDependantConstant() { doSingleTest(); }
+  public void testDependantConstant2() { doSingleTest(); }
 
   public void testArrayBraces() {
     doSingleTest();

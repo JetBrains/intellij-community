@@ -66,12 +66,13 @@ public class BeanBinding extends NotNullDeserializeBinding {
     Property classAnnotation = myBeanClass.getAnnotation(Property.class);
 
     List<MutableAccessor> accessors = getAccessors(myBeanClass);
-    bindings = new NestedBinding[accessors.size()];
-    for (int i = 0, size = accessors.size(); i < size; i++) {
+    NestedBinding[] result = accessors.isEmpty() ? NestedBinding.EMPTY_ARRAY : new NestedBinding[accessors.size()];
+    for (int i = 0; i < result.length; i++) {
       NestedBinding binding = createBinding(accessors.get(i), serializer, classAnnotation == null ? Property.Style.OPTION_TAG : classAnnotation.style());
       binding.init(originalType, serializer);
-      bindings[i] = binding;
+      result[i] = binding;
     }
+    bindings = result;
   }
 
   @Override

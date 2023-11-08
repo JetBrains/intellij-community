@@ -61,7 +61,7 @@ public final class ActionsTree {
   private DefaultMutableTreeNode myRoot;
   private final JScrollPane myComponent;
   private Keymap myKeymap;
-  private Group myMainGroup = new Group("", null, null);
+  private Group myMainGroup = new Group("");
 
   private static final @NonNls String ROOT = "ROOT";
 
@@ -494,7 +494,7 @@ public final class ActionsTree {
     }
 
 
-    private ArrayList<TreeNode> childrenToArray(DefaultMutableTreeNode node) {
+    private static ArrayList<TreeNode> childrenToArray(DefaultMutableTreeNode node) {
       ArrayList<TreeNode> arrayList = new ArrayList<>();
       for (int i = 0; i < node.getChildCount(); i++) {
         arrayList.add(node.getChildAt(i));

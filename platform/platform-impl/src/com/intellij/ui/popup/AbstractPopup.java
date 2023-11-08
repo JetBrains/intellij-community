@@ -13,6 +13,7 @@ import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.actionSystem.impl.AutoPopupSupportingListener;
@@ -376,6 +377,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
     if (!(clickSource instanceof JList<?> || clickSource instanceof JTree)) {
       PopupUtil.setPopupToggleComponent(this, clickSource);
     }
+    ActionUtil.initActionContextForComponent(myContent);
     return this;
   }
 
@@ -552,7 +554,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
     show(point);
   }
 
-  private boolean isComponentSupportsAlignment(Component c) {
+  private static boolean isComponentSupportsAlignment(Component c) {
     if (!(c instanceof JComponent)
         || (c instanceof ActionButton)
         || (c instanceof ComboBoxWithWidePopup<?>)) {
@@ -2014,18 +2016,11 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
     // calling #setLocation or #setSize makes the window move for a bit because of tricky computations
     // our aim here is to just move the window as-is to make it fit the screen
     // no tricks are included here
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("MoveToFitScreen x = " + bounds.x + " y = " + bounds.y + " width = " + bounds.width + " height = " + bounds.height);
+    }
     popupWindow.setBounds(bounds);
     updateMaskAndAlpha(popupWindow);
-  }
-
-  @Deprecated(forRemoval = true)
-  public static Window setSize(@NotNull JComponent content, @NotNull Dimension size) {
-    final Window popupWindow = getContentWindow(content);
-    if (popupWindow == null) return null;
-    JBInsets.addTo(size, content.getInsets());
-    content.setPreferredSize(size);
-    popupWindow.pack();
-    return popupWindow;
   }
 
   @Override
@@ -2080,8 +2075,15 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
       }
       else {
         JBInsets.addTo(size, insets);
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Update content preferred size: width = " + size.width + " height = " + size.height);
+        }
         content.setPreferredSize(size);
         size = window.getPreferredSize();
+      }
+
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("SetBounds x = " + location.x + " y = " + location.y + " width = " + size.width + " height = " + size.height);
       }
       window.setBounds(location.x, location.y, size.width, size.height);
       window.setCursor(Cursor.getDefaultCursor());

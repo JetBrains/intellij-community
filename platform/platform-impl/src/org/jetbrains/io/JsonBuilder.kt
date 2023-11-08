@@ -48,6 +48,12 @@ class JsonObjectBuilder(val builder: StringBuilder, var indentLevel: Int = 0, va
     }
   }
 
+  infix fun String.to(value: Long) {
+    appendNameAndValue(this) {
+      builder.append(value)
+    }
+  }
+
   infix fun String.to(value: StringBuilder) {
     if (value === builder) {
       return

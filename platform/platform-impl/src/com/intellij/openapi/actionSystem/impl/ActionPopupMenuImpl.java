@@ -118,8 +118,9 @@ final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationActivatio
 
       int x2 = Math.max(0, Math.min(x, component.getWidth() - 1)); // fit x into [0, width-1]
       int y2 = Math.max(0, Math.min(y, component.getHeight() - 1)); // fit y into [0, height-1]
-      myContext = Utils.wrapDataContext(myDataContextProvider != null ? myDataContextProvider.get() :
-                                        DataManager.getInstance().getDataContext(component, x2, y2));
+      myContext = Utils.createAsyncDataContext(
+        myDataContextProvider != null ? myDataContextProvider.get() :
+        DataManager.getInstance().getDataContext(component, x2, y2));
       updateChildren(new RelativePoint(component, new Point(x, y)));
       if (getComponentCount() == 0) {
         LOG.warn("'" + myPlace + "' popup menu fails to show: no menu items");
@@ -170,7 +171,7 @@ final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationActivatio
 
     private void updateChildren(@Nullable RelativePoint point) {
       removeAll();
-      Utils.fillPopupMenu(myGroup, this, myPresentationFactory, myContext, myPlace, point);
+      Utils.INSTANCE.fillPopupMenu(myGroup, this, myPresentationFactory, myContext, myPlace, point);
     }
 
     private void disposeMenu() {

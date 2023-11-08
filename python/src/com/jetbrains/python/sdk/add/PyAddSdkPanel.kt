@@ -32,12 +32,12 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jetbrains.python.PySdkBundle
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
 import com.jetbrains.python.newProject.steps.PyAddNewEnvironmentPanel
-import com.jetbrains.python.sdk.*
-import com.jetbrains.python.sdk.add.PyAddSdkDialogFlowAction.OK
 import com.jetbrains.python.pathValidation.PlatformAndRoot
 import com.jetbrains.python.pathValidation.ValidationRequest
 import com.jetbrains.python.pathValidation.validateEmptyDir
-import com.jetbrains.python.sdk.configuration.PyProjectVirtualEnvConfiguration
+import com.jetbrains.python.sdk.*
+import com.jetbrains.python.sdk.add.PyAddSdkDialogFlowAction.OK
+import com.jetbrains.python.sdk.configuration.findPreferredVirtualEnvBaseSdk
 import com.jetbrains.python.sdk.flavors.MacPythonSdkFlavor
 import com.jetbrains.python.ui.pyModalBlocking
 import icons.PythonIcons
@@ -193,7 +193,7 @@ fun addBaseInterpretersAsync(sdkComboBox: PySdkPathChoosingComboBox,
     { findBaseSdks(existingSdks, module, context).takeIf { it.isNotEmpty() } ?: getSdksToInstall() },
     {
       sdkComboBox.apply {
-        val preferredSdk = PyProjectVirtualEnvConfiguration.findPreferredVirtualEnvBaseSdk(items)
+        val preferredSdk = findPreferredVirtualEnvBaseSdk(items)
         if (preferredSdk != null) {
           if (items.find { it.homePath == preferredSdk.homePath } == null) {
             addSdkItemOnTop(preferredSdk)

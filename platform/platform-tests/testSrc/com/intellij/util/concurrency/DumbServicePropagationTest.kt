@@ -6,10 +6,9 @@ import com.intellij.concurrency.TestElementKey
 import com.intellij.concurrency.currentThreadContext
 import com.intellij.idea.IgnoreJUnit3
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.blockingContext
-import com.intellij.openapi.progress.timeoutWaitUp
-import com.intellij.openapi.progress.withRootJob
+import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.progress.*
+import com.intellij.openapi.progress.impl.ProgressRunner
 import com.intellij.openapi.project.DumbModeTask
 import com.intellij.openapi.project.DumbService
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
@@ -21,6 +20,7 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
+import java.util.concurrent.Callable
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
@@ -158,5 +158,33 @@ class DumbServicePropagationTest : BasePlatformTestCase() {
     tasksAreScheduled.await(1, TimeUnit.SECONDS)
     job.join()
     TestCase.assertEquals(1, invocationCounter)
+  }
+
+  fun testCancellationPropagationOfSmartNBRA() = doPropagationApplicationTest(propagateCancellation = true) {
+    // spawn dumb mode
+    blockingContext {
+      dumbService.queueTask(object : DumbModeTask() {
+        override fun performInDumbMode(indicator: ProgressIndicator) {
+          // immediately finishes on execution
+        }
+      })
+    }
+    // now smart read action cannot proceed
+    val indicator = EmptyProgressIndicator()
+    val semaphore = Semaphore(1)
+    val job = withRootJob {
+      ProgressRunner { _ ->
+        semaphore.up()
+        ReadAction.nonBlocking(Callable {
+          assert(false) // this line is not intended to be reached
+        }).inSmartMode(project)
+          .executeSynchronously()
+      }
+        .withProgress(indicator)
+        .submit()
+    }
+    semaphore.timeoutWaitUp()
+    indicator.cancel()
+    job.timeoutJoinBlocking() // cancellation propagation understands the cancellation of indicator
   }
 }

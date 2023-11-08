@@ -1,7 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui
 
-import com.intellij.ide.ui.customization.CustomActionsSchema
+import com.intellij.ide.ui.customization.loadCustomIcon
 import com.intellij.openapi.util.IconLoader
 import com.intellij.testFramework.PlatformTestUtil
 import org.junit.Test
@@ -42,7 +42,7 @@ class CustomIconLoadingTest {
   private fun doTest(path: String) {
     IconLoader.activate()
     try {
-      CustomActionsSchema.loadCustomIcon(path)
+      loadCustomIcon(path)
     }
     finally {
       IconLoader.deactivate()

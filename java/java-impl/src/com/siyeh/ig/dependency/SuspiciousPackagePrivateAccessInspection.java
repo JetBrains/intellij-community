@@ -6,20 +6,19 @@ import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.apiUsage.ApiUsageProcessor;
 import com.intellij.codeInspection.apiUsage.ApiUsageUastVisitor;
-import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.options.OptionController;
 import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.lang.jvm.actions.JvmElementActionFactories;
 import com.intellij.lang.jvm.actions.MemberRequestsKt;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.ModCommandQuickFix;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -46,7 +45,6 @@ import java.util.*;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
 public final class SuspiciousPackagePrivateAccessInspection extends AbstractBaseUastLocalInspectionTool {
-  private static final Key<SuspiciousPackagePrivateAccessInspection> INSPECTION_KEY = Key.create("SuspiciousPackagePrivateAccess");
   @XCollection
   public List<ModulesSet> MODULES_SETS_LOADED_TOGETHER = new ArrayList<>();
   private final SynchronizedClearableLazy<Map<String, ModulesSet>> myModuleSetByModuleName = new SynchronizedClearableLazy<>(() -> {
@@ -72,7 +70,7 @@ public final class SuspiciousPackagePrivateAccessInspection extends AbstractBase
     );
   }
 
-  private static final class SuspiciousApiUsageProcessor implements ApiUsageProcessor {
+  private final class SuspiciousApiUsageProcessor implements ApiUsageProcessor {
 
     private final ProblemsHolder myProblemsHolder;
     private final Map<String, ModulesSet> myModuleNameToModulesSet;
@@ -219,7 +217,7 @@ public final class SuspiciousPackagePrivateAccessInspection extends AbstractBase
 
     /*
      since classes are located in the same package javac won't generate bridge methods for members inherited by enclosing class, so
-     local and inner classes won't have access to protected methods inherited by enclosing class and therefore we shouldn't check
+     local and inner classes won't have access to protected methods inherited by enclosing class, and therefore we shouldn't check
      enclosing classes here like JavaResolveUtil.canAccessProtectedMember does.
     */
     if (InheritanceUtil.isInheritorOrSelf(contextClass, memberClass, true)) {
@@ -291,7 +289,7 @@ public final class SuspiciousPackagePrivateAccessInspection extends AbstractBase
     myModuleSetByModuleName.drop();
   }
 
-  private static final class MarkModulesAsLoadedTogetherFix implements LocalQuickFix {
+  private final class MarkModulesAsLoadedTogetherFix extends ModCommandQuickFix {
     private final String myModule1;
     private final String myModule2;
 
@@ -320,11 +318,9 @@ public final class SuspiciousPackagePrivateAccessInspection extends AbstractBase
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      InspectionProfileImpl profile = InspectionProfileManager.getInstance(project).getCurrentProfile();
+    public @NotNull ModCommand perform(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiElement psiElement = descriptor.getPsiElement();
-      if (psiElement != null) {
-        profile.modifyToolSettings(INSPECTION_KEY, psiElement, inspection -> {
+      return ModCommand.updateOption(psiElement, SuspiciousPackagePrivateAccessInspection.this, inspection -> {
           Map<String, ModulesSet> moduleSetByModule = inspection.myModuleSetByModuleName.getValue();
           ModulesSet module1Set = moduleSetByModule.get(myModule1);
           ModulesSet module2Set = moduleSetByModule.get(myModule2);
@@ -348,7 +344,6 @@ public final class SuspiciousPackagePrivateAccessInspection extends AbstractBase
           }
           inspection.myModuleSetByModuleName.drop();
         });
-      }
     }
   }
 }

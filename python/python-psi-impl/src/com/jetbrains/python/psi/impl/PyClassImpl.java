@@ -25,10 +25,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import com.jetbrains.python.PyElementTypes;
-import com.jetbrains.python.PyNames;
-import com.jetbrains.python.PyTokenTypes;
-import com.jetbrains.python.PythonDialectsTokenSetProvider;
+import com.jetbrains.python.*;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
@@ -146,7 +143,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   @Override
   @Nullable
   public PyTypeParameterList getTypeParameterList() {
-    return childToPsi(PyElementTypes.TYPE_PARAMETER_LIST);
+    return getStubOrPsiChild(PyStubElementTypes.TYPE_PARAMETER_LIST);
   }
 
   @Override
@@ -250,7 +247,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   @Nullable
   @Override
   public PyDecoratorList getDecoratorList() {
-    return getStubOrPsiChild(PyElementTypes.DECORATOR_LIST);
+    return getStubOrPsiChild(PyStubElementTypes.DECORATOR_LIST);
   }
 
   @Nullable

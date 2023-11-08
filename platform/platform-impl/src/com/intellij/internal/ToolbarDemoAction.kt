@@ -7,10 +7,9 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep
-import com.intellij.openapi.wm.impl.ExpandableComboAction
+import com.intellij.openapi.wm.impl.*
+import com.intellij.openapi.wm.impl.ExpandableComboAction.Companion.LEFT_ICONS_KEY
 import com.intellij.openapi.wm.impl.SplitButtonAction
-import com.intellij.openapi.wm.impl.ToolbarComboButton
-import com.intellij.openapi.wm.impl.ToolbarSplitButton
 import com.intellij.openapi.wm.impl.headertoolbar.createDemoToolbar
 import com.intellij.ui.JBColor
 import com.intellij.util.ui.JBUI
@@ -54,6 +53,7 @@ class ToolbarDemoAction: AnAction() {
 }
 
 private class TestSplitButtonAction: SplitButtonAction() {
+
   override fun createPopup(event: AnActionEvent): JBPopup {
     val step = BaseListPopupStep(null, "item 1", "item 2", "item 3")
     return JBPopupFactory.getInstance().createListPopup(step)
@@ -66,10 +66,17 @@ private class TestSplitButtonAction: SplitButtonAction() {
   override fun updateCustomComponent(component: JComponent, presentation: Presentation) {
     (component as? ToolbarSplitButton)?.apply {
       text = "Split button"
-      leftIcons = listOf(AllIcons.General.Mouse)
-      //rightIcons = emptyList()
+      presentation.getClientProperty(LEFT_ICONS_KEY)?.let { leftIcons = it }
     }
   }
+
+  override fun update(e: AnActionEvent) {
+    e.presentation.putClientProperty(LEFT_ICONS_KEY, listOf(AllIcons.General.Mouse, AllIcons.General.Layout))
+    val iconUpdater = DefaultPresentationIconUpdater().andThen(ComboIconsUpdater())
+    iconUpdater.registerToPresentation(e.presentation)
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 }
 
 private class TestComboButtonAction: ExpandableComboAction() {
@@ -82,8 +89,13 @@ private class TestComboButtonAction: ExpandableComboAction() {
   override fun updateCustomComponent(component: JComponent, presentation: Presentation) {
     (component as? ToolbarComboButton)?.apply {
       text = "Combo button"
-      leftIcons = listOf(AllIcons.General.Filter)
-      //rightIcons = emptyList()
+      leftIcons = listOf(presentation.icon)
     }
   }
+
+  override fun update(e: AnActionEvent) {
+    e.presentation.icon = AllIcons.General.Filter
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 }

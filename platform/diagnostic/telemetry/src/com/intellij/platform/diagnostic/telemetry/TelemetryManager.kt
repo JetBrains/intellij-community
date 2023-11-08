@@ -52,10 +52,9 @@ interface TelemetryManager {
       instance.value = value
     }
 
-    fun setNoopTelemetryManager() {
-      if (!instance.isInitialized()) {
-        instance.value = NoopTelemetryManager()
-      }
+    @TestOnly
+    fun forceSetTelemetryManager(value: TelemetryManager = NoopTelemetryManager()) {
+      instance.value = value
     }
   }
 
@@ -75,8 +74,9 @@ interface TelemetryManager {
   fun addMetricsExporters(exporters: List<MetricsExporterEntry>)
 
   /**
-   * Force measurement collection and metrics flushing to appropriate files (.json for spans and .csv for meters)
-   * Looks like it is bad idea to use this method in production
+   * Force collection of measurements and metrics flushing to appropriate files (.json for spans and .csv for meters).
+   *
+   * [Do not use this method in production code. Since it may be blocking.](https://opentelemetry.io/docs/specs/otel/performance/#shutdown-and-explicit-flushing-could-block)
    **/
   @TestOnly
   fun forceFlushMetrics()

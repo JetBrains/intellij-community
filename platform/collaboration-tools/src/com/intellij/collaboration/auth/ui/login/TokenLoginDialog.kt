@@ -11,7 +11,6 @@ import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.wm.IdeFocusManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -52,6 +51,7 @@ class TokenLoginDialog(
 
     uiScope.launch {
       model.login()
+      initValidation()
     }
   }
 
@@ -62,10 +62,5 @@ class TokenLoginDialog(
       return ValidationInfo(errorMessage).withOKEnabled()
     }
     return null
-  }
-
-  override fun getPreferredFocusedComponent(): JComponent? {
-    val focusManager = IdeFocusManager.findInstanceByComponent(contentPanel)
-    return focusManager.getFocusTargetFor(contentPanel)
   }
 }

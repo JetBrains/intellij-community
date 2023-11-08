@@ -85,7 +85,7 @@ final class SendEventLogAction extends AnAction {
                                                   null, null), ModalityState.nonModal(), project.getDisposed());
       }
 
-      private StatisticsResult send() {
+      private static StatisticsResult send() {
         String recorderId = StringUtil.trim(Registry.stringValue("usage.statistics.test.action.recorder.id"));
         return EventLogStatisticsService.send(
           EventLogInternalSendConfig.createByRecorder(recorderId, true),

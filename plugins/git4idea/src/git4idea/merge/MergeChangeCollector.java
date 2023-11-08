@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.merge;
 
 import com.intellij.openapi.project.Project;
@@ -31,12 +31,12 @@ import java.util.TreeSet;
  * Collect changes for merge or pull operations
  */
 public class MergeChangeCollector {
-  @NotNull private final HashSet<String> myUnmergedPaths = new HashSet<>();
+  private final @NotNull HashSet<String> myUnmergedPaths = new HashSet<>();
 
-  @NotNull private final Project myProject;
-  @NotNull private final VirtualFile myRoot;
-  @NotNull private final GitRevisionNumber myStart; // Revision number before update (used for diff)
-  @NotNull private final GitRepository myRepository;
+  private final @NotNull Project myProject;
+  private final @NotNull VirtualFile myRoot;
+  private final @NotNull GitRevisionNumber myStart; // Revision number before update (used for diff)
+  private final @NotNull GitRepository myRepository;
 
   public MergeChangeCollector(@NotNull Project project, @NotNull GitRepository repository, @NotNull GitRevisionNumber start) {
     myStart = start;
@@ -82,8 +82,7 @@ public class MergeChangeCollector {
   /**
    * Returns absolute paths to files which are currently unmerged, and also populates myUnmergedPaths with relative paths.
    */
-  @NotNull
-  private Set<String> getUnmergedPaths() throws VcsException {
+  private @NotNull Set<String> getUnmergedPaths() throws VcsException {
     String root = myRoot.getPath();
     GitLineHandler h = new GitLineHandler(myProject, myRoot, GitCommand.LS_FILES);
     h.setSilent(true);
@@ -111,8 +110,7 @@ public class MergeChangeCollector {
    * @return The revision range which will be used to find merge diff (merge may be just finished, or in progress)
    * or null in case of error or inconsistency.
    */
-  @Nullable
-  public String getRevisionsForDiff() throws VcsException {
+  public @Nullable String getRevisionsForDiff() throws VcsException {
     GitRevisionNumber currentHead = GitRevisionNumber.resolve(myProject, myRoot, GitUtil.HEAD);
     if (currentHead.equals(myStart)) {
       // The head has not advanced. This means that this is a merge that did not commit.

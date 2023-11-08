@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.modules.decompiler.exps;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.main.ClassWriter;
 import org.jetbrains.java.decompiler.main.ClassesProcessor.ClassNode;
@@ -105,10 +106,15 @@ public class VarExprent extends Exprent {
         buffer.append(" ");
       }
 
-      buffer.append(name == null ? ("var" + index + (this.version == 0 ? "" : "_" + this.version)) : name);
+      buffer.append(name == null ? getName(getVarVersionPair()) : name);
     }
 
     return buffer;
+  }
+
+  @NotNull
+  public static String getName(VarVersionPair versionPair) {
+    return "var" + versionPair.var + (versionPair.version == 0 ? "" : "_" + versionPair.version);
   }
 
   public VarVersionPair getVarVersionPair() {
@@ -129,7 +135,7 @@ public class VarExprent extends Exprent {
     return null;
   }
 
-  private void appendDefinitionType(TextBuffer buffer) {
+  void appendDefinitionType(TextBuffer buffer) {
     if (DecompilerContext.getOption(IFernflowerPreferences.USE_DEBUG_VAR_NAMES)) {
       MethodWrapper method = (MethodWrapper)DecompilerContext.getProperty(DecompilerContext.CURRENT_METHOD_WRAPPER);
       if (method != null) {
@@ -168,6 +174,11 @@ public class VarExprent extends Exprent {
     }
 
     buffer.append(ExprProcessor.getCastTypeName(getVarType(), Collections.emptyList()));
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(index, version);
   }
 
   @Override

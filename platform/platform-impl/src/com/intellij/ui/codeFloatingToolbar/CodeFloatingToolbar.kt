@@ -4,6 +4,7 @@ package com.intellij.ui.codeFloatingToolbar
 import com.intellij.codeInsight.hint.HintManager
 import com.intellij.codeInsight.hint.HintManagerImpl
 import com.intellij.codeInsight.template.TemplateManager
+import com.intellij.ide.HelpTooltip
 import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.DefaultActionGroup
@@ -12,6 +13,7 @@ import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.FloatingToolbar
 import com.intellij.openapi.actionSystem.impl.MoreActionGroup
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.VisualPosition
 import com.intellij.openapi.options.advanced.AdvancedSettings
@@ -29,9 +31,10 @@ import com.intellij.ui.ScreenUtil
 import com.intellij.ui.awt.AnchoredPoint
 import com.intellij.ui.popup.util.PopupImplUtil
 import com.intellij.util.ui.UIUtil
-import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.*
 import java.awt.Dimension
 import java.awt.Point
+import java.awt.event.MouseEvent
 import javax.swing.JComponent
 
 /**
@@ -45,10 +48,24 @@ class CodeFloatingToolbar(
 
   companion object {
     private val FLOATING_TOOLBAR = Key<CodeFloatingToolbar>("floating.codeToolbar")
-    
+
+    private var TEMPORARILY_DISABLED = false
+
+    private var activeMenuPopup: JBPopup? = null
+
     @JvmStatic
     fun getToolbar(editor: Editor?): CodeFloatingToolbar? {
       return editor?.getUserData(FLOATING_TOOLBAR)
+    }
+
+    @JvmStatic
+    fun temporarilyDisable(disable: Boolean = true) {
+      TEMPORARILY_DISABLED = disable
+    }
+
+    @JvmStatic
+    fun isTemporarilyDisabled(): Boolean {
+      return TEMPORARILY_DISABLED
     }
   }
 
@@ -62,11 +79,8 @@ class CodeFloatingToolbar(
   }
 
   override fun isEnabled(): Boolean {
-    val selection = editor.selectionModel
-    if (!selection.hasSelection()) return false
-    val range = editor.calculateVisibleRange()
-    if (selection.selectionStart !in range && selection.selectionEnd !in range) return false
-    return editor.document.isWritable && !AdvancedSettings.getBoolean("floating.codeToolbar.hide")
+    return editor.selectionModel.hasSelection() && !AdvancedSettings.getBoolean("floating.codeToolbar.hide")
+           && editor.document.isWritable && !TEMPORARILY_DISABLED
   }
 
   override fun disableForDoubleClickSelection(): Boolean = true
@@ -79,12 +93,15 @@ class CodeFloatingToolbar(
     get() = hint?.component
 
   override fun getHintPosition(hint: LightweightHint): Point {
+    val range = editor.calculateVisibleRange()
     val selectionEnd = editor.selectionModel.selectionEnd
     val selectionStart = editor.selectionModel.selectionStart
     val isOneLineSelection = isOneLineSelection(editor)
     val isBelow = shouldBeUnderSelection(selectionEnd)
+    val areEdgesOutsideOfVisibleArea = editor.selectionModel.selectionStart !in range && editor.selectionModel.selectionEnd !in range
     val offsetForHint = when {
       isOneLineSelection -> selectionStart
+      areEdgesOutsideOfVisibleArea -> getOffsetForLine(editor, getLineByVisualStart(editor, editor.caretModel.offset, true))
       isBelow -> getOffsetForLine(editor, getLineByVisualStart(editor, selectionEnd, true))
       else -> getOffsetForLine(editor, getLineByVisualStart(editor, selectionStart, false))
     }
@@ -150,6 +167,16 @@ class CodeFloatingToolbar(
     }
   }
 
+  override suspend fun createHint(): LightweightHint {
+    val hint = super.createHint()
+    val buttons = UIUtil.findComponentsOfType(hint.component, ActionButton::class.java)
+    buttons.forEach { button ->
+      button.presentation.putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, true)
+      showMenuPopupOnMouseHover(button)
+    }
+    return hint
+  }
+
   private fun getContextAwareGroupId(editor: Editor): String? {
     val project = editor.project ?: return null
     val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.document)
@@ -171,14 +198,25 @@ class CodeFloatingToolbar(
     popup.addListener(object : JBPopupListener {
 
       override fun beforeShown(event: LightweightWindowEvent) {
+        activeMenuPopup = popup
         alignButtonPopup(popup)
+        HelpTooltip.setMasterPopupOpenCondition(button) { true }
         toggleButton(button, true)
       }
 
       override fun onClosed(event: LightweightWindowEvent) {
+        activeMenuPopup = null
         toggleButton(button, false)
       }
     })
+  }
+
+  override fun onHintShown() {
+    val model = editor.selectionModel
+    val start = model.leadSelectionOffset
+    val end = if (model.selectionStart == start) model.selectionEnd else model.selectionStart
+    val linesCount = model.editor.document.run { getLineNumber(model.selectionEnd) - getLineNumber(model.selectionStart) + 1 }
+    CodeFloatingToolbarCollector.toolbarShown(start, end, linesCount)
   }
 
   private fun toggleButton(button: ActionButton, toggled: Boolean) {
@@ -192,7 +230,7 @@ class CodeFloatingToolbar(
     val component = hintComponent ?: return
     val rootPane = UIUtil.getRootPane(component) ?: return
     popup.setMinimumSize(Dimension(rootPane.width, 0))
-    val verticalGap = 2
+    val verticalGap = 1
     val point = AnchoredPoint(AnchoredPoint.Anchor.BOTTOM_LEFT, rootPane, Point(0, verticalGap)).screenPoint
     val screenRectangle = ScreenUtil.getScreenRectangle(point)
     val popupSize = PopupImplUtil.getPopupSize(popup)
@@ -205,5 +243,31 @@ class CodeFloatingToolbar(
     }
     point.translate(1, 1)
     popup.setLocation(point)
+  }
+
+  private fun showMenuPopupOnMouseHover(button: ActionButton) {
+    var mouseWasOutsideOfComponent: Boolean
+    val isPopupButton = button.presentation.isPopupGroup
+    button.addMouseListener(object : java.awt.event.MouseListener {
+      override fun mouseEntered(e: MouseEvent?) {
+        coroutineScope.launch {
+          mouseWasOutsideOfComponent = false
+          val delayMs = if (isPopupButton && activeMenuPopup != null) 40L else 300L
+          delay(delayMs)
+          if (mouseWasOutsideOfComponent) {
+            cancel()
+          }
+          withContext(Dispatchers.EDT) {
+            if (isPopupButton) button.click() else activeMenuPopup?.cancel()
+          }
+        }
+      }
+      override fun mouseClicked(e: MouseEvent?) { }
+      override fun mousePressed(e: MouseEvent?) { }
+      override fun mouseReleased(e: MouseEvent?) { }
+      override fun mouseExited(e: MouseEvent?) {
+        mouseWasOutsideOfComponent = true
+      }
+    })
   }
 }

@@ -12,8 +12,10 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.wm.impl.IdeBackgroundUtil;
 import com.intellij.ui.AppUIUtil;
+import com.intellij.ui.IdeUICustomization;
 import com.intellij.ui.svg.SvgKt;
 import com.intellij.util.SVGLoader;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,6 +27,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * @author Konstantin Bulenkov
@@ -40,19 +43,27 @@ public class UIThemeLookAndFeelInfoImpl extends UIManager.LookAndFeelInfo implem
     this.theme = theme;
   }
 
+  @Nls
   @Override
-  public @NotNull String getId() {
+  public @NotNull String getName() {
+    //noinspection HardCodedStringLiteral
+    return Objects.requireNonNullElse(theme.getName(), theme.getId());
+  }
+
+  @Override
+  public final @NotNull String getId() {
     return theme.getId();
   }
 
   @Override
-  public boolean isDark() {
+  public final boolean isDark() {
     return theme.isDark();
   }
 
   @Override
-  public @Nullable String getEditorSchemeName() {
-    return theme.getEditorSchemeName();
+  public final @Nullable String getEditorSchemeId() {
+    return IdeUICustomization.getInstance()
+      .getUiThemeEditorSchemeId(/* themeId = */ theme.getId(), /* editorSchemeId = */ theme.getEditorSchemeId());
   }
 
   public @NotNull UITheme getTheme() {
@@ -95,17 +106,19 @@ public class UIThemeLookAndFeelInfoImpl extends UIManager.LookAndFeelInfo implem
   }
 
   @Override
-  public void installEditorScheme(@Nullable EditorColorsScheme previousSchemeForLaf) {
+  public void installEditorScheme(@Nullable EditorColorsScheme previousEditorColorSchemeForLaf) {
     EditorColorsManager editorColorManager = EditorColorsManager.getInstance();
-    if (previousSchemeForLaf == null) {
-      String name = getEditorSchemeName();
+
+    EditorColorsScheme editorColorSchemeToSet = previousEditorColorSchemeForLaf;
+    if (editorColorSchemeToSet == null) {
+      String name = getEditorSchemeId();
       if (name != null) {
-        previousSchemeForLaf = editorColorManager.getScheme(name);
+        editorColorSchemeToSet = editorColorManager.getScheme(name);
       }
     }
 
-    if (previousSchemeForLaf != null) {
-      editorColorManager.setGlobalScheme(previousSchemeForLaf);
+    if (editorColorSchemeToSet != null) {
+      editorColorManager.setCurrentSchemeOnLafChange(editorColorSchemeToSet);
     }
   }
 
@@ -154,6 +167,11 @@ public class UIThemeLookAndFeelInfoImpl extends UIManager.LookAndFeelInfo implem
       Logger.getInstance(getClass()).error(e);
       return false;
     }
+  }
+
+  @Override
+  public @NotNull UIThemeExportableBean describe() {
+    return theme.describe$intellij_platform_ide_impl();
   }
 
   private static <T extends Enum<T>> String parseEnumValue(Object value, T defaultValue) {

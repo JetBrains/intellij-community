@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.view;
 
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorFontType;
@@ -604,7 +605,8 @@ public final class EditorPainter implements TextDrawingCallback {
         myGraphics.translate(0, myYShift);
         for (RangeHighlighter highlighter : highlighters) {
           CustomHighlighterRenderer customRenderer = highlighter.getCustomRenderer();
-          if (customRenderer != null) {
+          if (customRenderer == null) continue;
+          try (AccessToken ignore = SlowOperations.reportOnceIfViolatedFor(customRenderer)) {
             customRenderer.paint(myEditor, highlighter, myGraphics);
           }
         }

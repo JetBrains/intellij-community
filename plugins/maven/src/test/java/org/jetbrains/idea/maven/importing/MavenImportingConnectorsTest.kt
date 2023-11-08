@@ -17,7 +17,6 @@ import junit.framework.TestCase
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent
 import org.jetbrains.idea.maven.project.MavenWrapper
-import org.jetbrains.idea.maven.project.importing.MavenImportingManager.Companion.getInstance
 import org.jetbrains.idea.maven.server.*
 import org.jetbrains.idea.maven.wizards.MavenOpenProjectProvider
 import org.junit.Test
@@ -60,7 +59,6 @@ class MavenImportingConnectorsTest : MavenMultiVersionImportingTestCase() {
     runBlockingMaybeCancellable {
       MavenOpenProjectProvider().linkToExistingProjectAsync(p2Root, myProject)
     }
-    waitForLinkingCompleted()
     assertModules("project1", "m1", "project2", "m2")
     val allConnectors = MavenServerManager.getInstance().allConnectors
     assertEquals(1, allConnectors.size)
@@ -71,11 +69,6 @@ class MavenImportingConnectorsTest : MavenMultiVersionImportingTestCase() {
       },
       listOf("project", "anotherProject")
     )
-  }
-
-  private fun waitForLinkingCompleted() {
-    if (!isNewImportingProcess) return
-    PlatformTestUtil.waitForPromise(getInstance(myProject).getImportFinishPromise())
   }
 
   @Test
@@ -107,7 +100,6 @@ class MavenImportingConnectorsTest : MavenMultiVersionImportingTestCase() {
     runBlockingMaybeCancellable {
       MavenOpenProjectProvider().linkToExistingProjectAsync(p2Root, myProject)
     }
-    waitForLinkingCompleted()
     assertModules("project1", "m1", "project2", "m2")
 
     assertEquals(2, MavenServerManager.getInstance().allConnectors.size)
@@ -152,7 +144,6 @@ class MavenImportingConnectorsTest : MavenMultiVersionImportingTestCase() {
       runBlockingMaybeCancellable {
         MavenOpenProjectProvider().linkToExistingProjectAsync(p2Root, myProject)
       }
-      waitForLinkingCompleted()
       assertModules("project1", "m1", "project2", "m2")
 
       assertEquals(1, MavenServerManager.getInstance().allConnectors.size)

@@ -114,7 +114,23 @@
     <action id="Terminal.SelectBlockBelow" class="org.jetbrains.plugins.terminal.exp.TerminalSelectBlockBelowAction">
       <keyboard-shortcut first-keystroke="DOWN" keymap="$default"/>
     </action>
+    <action id="Terminal.ExpandBlockSelectionAbove" class="org.jetbrains.plugins.terminal.exp.TerminalExpandBlockSelectionAboveAction"
+            use-shortcut-of="EditorUpWithSelection">
+    </action>
+    <action id="Terminal.ExpandBlockSelectionBelow" class="org.jetbrains.plugins.terminal.exp.TerminalExpandBlockSelectionBelowAction"
+            use-shortcut-of="EditorDownWithSelection">
+    </action>
 
+    <action id="Terminal.CommandCompletion" class="org.jetbrains.plugins.terminal.action.TerminalCommandCompletionAction">
+      <keyboard-shortcut first-keystroke="TAB" keymap="$default"/>
+    </action>
+    <action id="Terminal.InsertInlineCompletionItem" class="org.jetbrains.plugins.terminal.exp.TerminalInsertInlineCompletionAction">
+      <keyboard-shortcut first-keystroke="RIGHT" keymap="$default"/>
+    </action>
+    <action id="Terminal.ShowDocumentation" class="org.jetbrains.plugins.terminal.action.TerminalShowDocAction"
+            use-shortcut-of="QuickJavaDoc"/>
+    <action id="Terminal.Escape" class="org.jetbrains.plugins.terminal.action.TerminalEscapeAction"
+            use-shortcut-of="EditorEscape"/>
     <action id="Terminal.Copy" class="org.jetbrains.plugins.terminal.action.TerminalCopyAction"
             use-shortcut-of="$Copy" icon="AllIcons.Actions.Copy"/>
 

@@ -112,29 +112,13 @@ public abstract class SimpleNode extends PresentableNodeDescriptor<Object> imple
    * @deprecated use {@link #getTemplatePresentation()} to set constant presentation right in node's constructor
    * or update presentation dynamically by defining {@link #update(PresentationData)}
    */
-  @Deprecated(forRemoval = true)
-  public final void setNodeText(String text, String tooltip, boolean hasError) {
-    clearColoredText();
-    SimpleTextAttributes attributes = hasError ? getErrorAttributes() : getPlainAttributes();
-    getTemplatePresentation().addText(new ColoredFragment(text, tooltip, attributes));
-  }
-
-  /**
-   * @deprecated use {@link #getTemplatePresentation()} to set constant presentation right in node's constructor
-   * or update presentation dynamically by defining {@link #update(PresentationData)}
-   */
   @Deprecated
   public final void setPlainText(String aText) {
     clearColoredText();
     getTemplatePresentation().addText(new ColoredFragment(aText, getPlainAttributes()));
   }
 
-  /**
-   * @deprecated use {@link #getTemplatePresentation()} to set constant presentation right in node's constructor
-   * or update presentation dynamically by defining {@link #update(PresentationData)}
-   */
-  @Deprecated(forRemoval = true)
-  public final void clearColoredText() {
+  private void clearColoredText() {
     getTemplatePresentation().clearText();
   }
 
@@ -144,16 +128,7 @@ public abstract class SimpleNode extends PresentableNodeDescriptor<Object> imple
    */
   @Deprecated
   public final void addColoredFragment(String aText, SimpleTextAttributes aAttributes) {
-    addColoredFragment(aText, null, aAttributes);
-  }
-
-  /**
-   * @deprecated use {@link #getTemplatePresentation()} to set constant presentation right in node's constructor
-   * or update presentation dynamically by defining {@link #update(PresentationData)}
-   */
-  @Deprecated(forRemoval = true)
-  public final void addColoredFragment(String aText, String toolTip, SimpleTextAttributes aAttributes) {
-    getTemplatePresentation().addText(new ColoredFragment(aText, toolTip, aAttributes));
+    getTemplatePresentation().addText(new ColoredFragment(aText, null, aAttributes));
   }
 
   /**

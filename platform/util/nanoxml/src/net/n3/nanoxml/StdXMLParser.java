@@ -30,9 +30,7 @@ package net.n3.nanoxml;
 
 
 import java.io.Reader;
-import java.util.Enumeration;
-import java.util.Properties;
-import java.util.Vector;
+import java.util.*;
 
 
 /**
@@ -302,7 +300,6 @@ public final class StdXMLParser {
       XMLUtil.errorExpectedInput(reader.getSystemID(), reader.getLineNr(), "<![[CDATA[");
     }
 
-    validator.PCDataAdded(reader.getSystemID(), reader.getLineNr());
     Reader reader = new CDATAReader(this.reader);
     builder.addPCData(reader, this.reader.getSystemID(), this.reader.getLineNr());
     reader.close();
@@ -377,9 +374,9 @@ public final class StdXMLParser {
       name = name.substring(colonIndex + 1);
     }
 
-    Vector attrNames = new Vector();
-    Vector attrValues = new Vector();
-    Vector attrTypes = new Vector();
+    List<String> attrNames = new ArrayList<>();
+    List<String> attrValues = new ArrayList<>();
+    List<String> attrTypes = new ArrayList<>();
 
     validator.elementStarted(fullName, reader.getSystemID(), reader.getLineNr());
     char ch;
@@ -398,20 +395,19 @@ public final class StdXMLParser {
 
     Properties extraAttributes = new Properties();
     validator.elementAttributesProcessed(fullName, extraAttributes, reader.getSystemID(), reader.getLineNr());
-    Enumeration enumeration = extraAttributes.keys();
+    Enumeration<Object> enumeration = extraAttributes.keys();
 
     while (enumeration.hasMoreElements()) {
       String key = (String)enumeration.nextElement();
       String value = extraAttributes.getProperty(key);
-      attrNames.addElement(key);
-      attrValues.addElement(value);
-      attrTypes.addElement("CDATA");
+      attrNames.add(key);
+      attrValues.add(value);
+      attrTypes.add("CDATA");
     }
 
     for (int i = 0; i < attrNames.size(); i++) {
-      String key = (String)attrNames.elementAt(i);
-      String value = (String)attrValues.elementAt(i);
-      String type = (String)attrTypes.elementAt(i);
+      String key = attrNames.get(i);
+      String value = attrValues.get(i);
 
       if (key.equals("xmlns")) {
         defaultNamespace = value;
@@ -429,14 +425,14 @@ public final class StdXMLParser {
     }
 
     for (int i = 0; i < attrNames.size(); i++) {
-      String key = (String)attrNames.elementAt(i);
+      String key = attrNames.get(i);
 
       if (key.startsWith("xmlns")) {
         continue;
       }
 
-      String value = (String)attrValues.elementAt(i);
-      String type = (String)attrTypes.elementAt(i);
+      String value = attrValues.get(i);
+      String type = attrTypes.get(i);
       colonIndex = key.indexOf(':');
 
       if (colonIndex > 0) {
@@ -460,8 +456,6 @@ public final class StdXMLParser {
       if (reader.read() != '>') {
         XMLUtil.errorExpectedInput(reader.getSystemID(), reader.getLineNr(), "`>'");
       }
-
-      validator.elementEnded(name, reader.getSystemID(), reader.getLineNr());
 
       if (prefix == null) {
         builder.endElement(name, prefix, defaultNamespace);
@@ -508,7 +502,6 @@ public final class StdXMLParser {
             XMLUtil.errorClosingTagNotEmpty(reader.getSystemID(), reader.getLineNr());
           }
 
-          validator.elementEnded(fullName, reader.getSystemID(), reader.getLineNr());
           if (prefix == null) {
             builder.endElement(name, prefix, defaultNamespace);
           }
@@ -531,7 +524,6 @@ public final class StdXMLParser {
         else {
           reader.unread(str.charAt(0));
         }
-        validator.PCDataAdded(reader.getSystemID(), reader.getLineNr());
         Reader r = new ContentReader(reader, entityResolver, buffer.toString());
         builder.addPCData(r, reader.getSystemID(), reader.getLineNr());
         r.close();
@@ -548,7 +540,7 @@ public final class StdXMLParser {
    * @param attrTypes  contains the types of the attributes.
    * @throws Exception if something went wrong
    */
-  private void processAttribute(Vector attrNames, Vector attrValues, Vector attrTypes) throws Exception {
+  private void processAttribute(List<String> attrNames, List<String> attrValues, List<String> attrTypes) throws Exception {
     String key = XMLUtil.scanIdentifier(reader);
     XMLUtil.skipWhitespace(reader, null);
 
@@ -558,9 +550,9 @@ public final class StdXMLParser {
 
     XMLUtil.skipWhitespace(reader, null);
     String value = XMLUtil.scanString(reader, '&', entityResolver);
-    attrNames.addElement(key);
-    attrValues.addElement(value);
-    attrTypes.addElement("CDATA");
+    attrNames.add(key);
+    attrValues.add(value);
+    attrTypes.add("CDATA");
     validator.attributeAdded(key, value, reader.getSystemID(), reader.getLineNr());
   }
 }

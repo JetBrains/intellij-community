@@ -21,10 +21,20 @@ class BuildOptions(
   @ApiStatus.Internal
   @JvmField
   val compressZipFiles: Boolean = true,
+  /** See [GlobalOptions.BUILD_DATE_IN_SECONDS]. */
+  val buildDateInSeconds: Long = computeBuildDateInSeconds(),
+  @ApiStatus.Internal
+  @JvmField
+  val printFreeSpace: Boolean = true,
+  @ApiStatus.Internal
+  @JvmField
+  val validateImplicitPlatformModule: Boolean = true,
+  @JvmField
+  var skipDependencySetup: Boolean = false,
 ) {
   companion object {
     /**
-     * Use this property to change the project compiled classes output directory.
+     * Use this property to change the project's compiled classes output directory.
      *
      * @see [org.jetbrains.intellij.build.impl.CompilationContextImpl.classesOutputDirectory]
      */
@@ -36,12 +46,12 @@ class BuildOptions(
     const val OS_CURRENT = "current"
 
     /**
-     * If this value is set no distributions of the product will be produced, only [non-bundled plugins][ProductModulesLayout.pluginModulesToPublish]
-     * will be built.
+     * If this value is set no distributions of the product will be produced,
+     * only [non-bundled plugins][ProductModulesLayout.pluginModulesToPublish] will be built.
      */
     const val OS_NONE = "none"
 
-    /** Build actual searchableOptions.xml file. If skipped; the (possibly outdated) source version of the file will be used.  */
+    /** Build actual searchableOptions.xml file. If skipped, the (possibly outdated) source version of the file will be used. */
     const val SEARCHABLE_OPTIONS_INDEX_STEP = "search_index"
     const val BROKEN_PLUGINS_LIST_STEP = "broken_plugins_list"
     const val PROVIDED_MODULES_LIST_STEP = "provided_modules_list"
@@ -137,9 +147,9 @@ class BuildOptions(
     const val DOC_AUTHORING_ASSETS_STEP = "doc_authoring_assets"
 
     /**
-     * By default, build cleanup output folder before compilation, use this property to change this behaviour.
+     * By default, a build cleans up output directory before compilation. Use this property to change the behavior.
      */
-    const val CLEAN_OUTPUT_FOLDER_PROPERTY = "intellij.build.clean.output.root"
+    const val CLEAN_OUTPUT_DIRECTORY_PROPERTY = "intellij.build.clean.output.root"
 
     /**
      * If `false` build scripts compile project classes to a special output directory (to not interfere with the default project output if
@@ -157,19 +167,19 @@ class BuildOptions(
     const val INCREMENTAL_COMPILATION_FALLBACK_REBUILD_PROPERTY = "intellij.build.incremental.compilation.fallback.rebuild"
 
     /**
-     * Enables module structure validation, false by default
+     * Enables module structure validation, `false` by default.
      */
     const val VALIDATE_MODULES_STRUCTURE_PROPERTY = "intellij.build.module.structure"
 
     /**
-     * Max attempts of dependencies resolution on fault. "1" means no retries.
+     * Max number of dependency resolution retry attempts. `1` means no retries.
      *
      * @see [org.jetbrains.intellij.build.impl.JpsCompilationRunner.resolveProjectDependencies]
      */
     const val RESOLVE_DEPENDENCIES_MAX_ATTEMPTS_PROPERTY = "intellij.build.dependencies.resolution.retry.max.attempts"
 
     /**
-     * Initial delay in milliseconds between dependencies resolution retries on fault. Default is 1000
+     * Initial delay in milliseconds between dependency resolution retries on fault. Default is `1000`.
      *
      * @see [org.jetbrains.intellij.build.impl.JpsCompilationRunner.resolveProjectDependencies]
      */
@@ -178,22 +188,22 @@ class BuildOptions(
     const val TARGET_ARCH_PROPERTY = "intellij.build.target.arch"
 
     /**
-     * If `true` the project modules will be compiled incrementally
+     * If `true`, the project modules will be compiled incrementally.
      */
     const val INTELLIJ_BUILD_INCREMENTAL_COMPILATION = "intellij.build.incremental.compilation"
 
     /**
-     * Allows to override [ApplicationInfoProperties.isEAP]
+     * Allows to override [ApplicationInfoProperties.isEAP].
      */
     const val INTELLIJ_BUILD_OVERRIDE_APPLICATION_VERSION_IS_EAP = "intellij.build.override.application.version.is.eap"
 
     /**
-     * Allows to override [ApplicationInfoProperties.versionSuffix]
+     * Allows to override [ApplicationInfoProperties.versionSuffix].
      */
     const val INTELLIJ_BUILD_OVERRIDE_APPLICATION_VERSION_SUFFIX = "intellij.build.override.application.version.suffix"
 
     /**
-     * Allows to override [ApplicationInfoProperties.majorReleaseDate]
+     * Allows to override [ApplicationInfoProperties.majorReleaseDate].
      */
     const val INTELLIJ_BUILD_OVERRIDE_APPLICATION_VERSION_MAJOR_RELEASE_DATE = "intellij.build.override.application.version.majorReleaseDate"
 
@@ -203,8 +213,8 @@ class BuildOptions(
     const val BUILD_STEPS_TO_SKIP_PROPERTY = "intellij.build.skip.build.steps"
 
     /**
-     * By default, build process produces temporary and resulting files under projectHome/out/productName directory, use this property to
-     * change the output directory.
+     * By default, the build process produces temporary and resulting files under `<projectHome>/out/<productName>` directory.
+     * Use this property to change the output directory.
      */
     const val INTELLIJ_BUILD_OUTPUT_ROOT = "intellij.build.output.root"
 
@@ -214,11 +224,17 @@ class BuildOptions(
     const val INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVE = "intellij.build.compiled.classes.archive"
 
     /**
-     * By default, calculated based on build number
+     * By default, calculated based on build number.
      */
     const val INTELLIJ_BUILD_IS_NIGHTLY = "intellij.build.is.nightly"
 
-    private val currentBuildTimeInSeconds = System.currentTimeMillis() / 1000
+    /**
+     * IJPL-176 Download pre-compiled IJent executables.
+     */
+    const val IJENT_EXECUTABLE_DOWNLOADING = "ijent.executable.downloading"
+
+    @Suppress("SpellCheckingInspection")
+    private const val DEFAULT_SNAP_TOOL_IMAGE = "snapcore/snapcraft:stable@sha256:6d771575c134569e28a590f173f7efae8bf7f4d1746ad8a474c98e02f4a3f627"
   }
 
   var classesOutputDirectory: String? = System.getProperty(PROJECT_CLASSES_OUTPUT_DIRECTORY_PROPERTY)
@@ -229,7 +245,7 @@ class BuildOptions(
   var targetOs: PersistentList<OsFamily>
 
   /**
-   * Specifies for which arch distributions should be built. null means all
+   * Specifies for which arch distributions should be built. `null` means all.
    */
   var targetArch: JvmArchitecture? = null
 
@@ -239,10 +255,10 @@ class BuildOptions(
   }
 
   /**
-   * If `true` the build is running in 'Development mode' i.e. its artifacts aren't supposed to be used in production. In development
-   * mode build scripts won't fail if some non-mandatory dependencies are missing and will just show warnings.
+   * If `true`, the build is running in the 'Development mode', i.e., its artifacts aren't supposed to be used in production.
+   * In the development mode, build scripts won't fail if some non-mandatory dependencies are missing and will just show warnings.
    *
-   * By default, 'development mode' is enabled if build is not running under continuous integration server (TeamCity).
+   * By default, the development mode is enabled if the build is not running on a continuous integration server (TeamCity).
    */
   var isInDevelopmentMode = SystemProperties.getBooleanProperty("intellij.build.dev.mode", System.getenv("TEAMCITY_VERSION") == null)
   var useCompiledClassesFromProjectOutput = SystemProperties.getBooleanProperty(USE_COMPILED_CLASSES_PROPERTY, isInDevelopmentMode)
@@ -261,12 +277,10 @@ class BuildOptions(
         add(MAC_SIGN_STEP)
         add(MAC_NOTARIZE_STEP)
       }
-      // skipped until IDEA-223423 is implemented
-      add(SoftwareBillOfMaterials.STEP_ID)
     }
 
   /**
-   * Pass 'true' to this system property to produce .snap packages.
+   * Pass `true` to this system property to produce .snap packages.
    * A build configuration should have "docker.version >= 17" in requirements.
    */
   var buildUnixSnaps = SystemProperties.getBooleanProperty("intellij.build.unix.snaps", false)
@@ -274,7 +288,7 @@ class BuildOptions(
   /**
    * Docker image for snap package creation
    */
-  var snapDockerImage: String = System.getProperty("intellij.build.snap.docker.image", "snapcore/snapcraft:stable@sha256:6d771575c134569e28a590f173f7efae8bf7f4d1746ad8a474c98e02f4a3f627")
+  var snapDockerImage: String = System.getProperty("intellij.build.snap.docker.image", DEFAULT_SNAP_TOOL_IMAGE)
   var snapDockerBuildTimeoutMin: Long = System.getProperty("intellij.build.snap.timeoutMin", "20").toLong()
 
   /**
@@ -284,102 +298,100 @@ class BuildOptions(
 
   /**
    * Path to a metadata file containing urls with compiled classes of the project modules inside.
-   * Metadata is a [org.jetbrains.intellij.build.impl.compilation.CompilationPartsMetadata] serialized into json format
+   * Metadata is a [org.jetbrains.intellij.build.impl.compilation.CompilationPartsMetadata] serialized into JSON format.
    */
   var pathToCompiledClassesArchivesMetadata: String? = System.getProperty("intellij.build.compiled.classes.archives.metadata")
 
   /**
-   * If `true` the project modules will be compiled incrementally
+   * If `true`, the project modules will be compiled incrementally.
    */
-  var incrementalCompilation = SystemProperties.getBooleanProperty(INTELLIJ_BUILD_INCREMENTAL_COMPILATION, false)
+  var incrementalCompilation: Boolean = SystemProperties.getBooleanProperty(INTELLIJ_BUILD_INCREMENTAL_COMPILATION, false)
 
   /**
    * If `true`, and the incremental compilation fails, fallback to downloading Portable Compilation Cache and full rebuild.
    */
-  var incrementalCompilationFallbackRebuild =
-    SystemProperties.getBooleanProperty(INCREMENTAL_COMPILATION_FALLBACK_REBUILD_PROPERTY, true)
+  var incrementalCompilationFallbackRebuild: Boolean = SystemProperties.getBooleanProperty(INCREMENTAL_COMPILATION_FALLBACK_REBUILD_PROPERTY, true)
 
   /**
-   * Full rebuild will be triggered if this timeout is exceeded for incremental compilation
+   * Full rebuild will be triggered if this timeout is exceeded for incremental compilation.
    */
-  val incrementalCompilationTimeout: Long = SystemProperties.getLongProperty("intellij.build.incremental.compilation.timeoutMin",
-                                                                             Long.MAX_VALUE)
+  val incrementalCompilationTimeout: Long = SystemProperties.getLongProperty("intellij.build.incremental.compilation.timeoutMin", Long.MAX_VALUE)
 
   /**
-   * Build number without product code (e.g. '162.500.10'), if `null` '&lt;baseline&gt;.SNAPSHOT' will be used. Use [BuildContext.buildNumber] to
-   * get the actual build number in build scripts.
+   * Build number without product code (e.g. '162.500.10'); if `null`, `<baseline>.SNAPSHOT` will be used.
+   * Use [BuildContext.buildNumber] to get the actual build number in build scripts.
    */
   var buildNumber: String? = System.getProperty("build.number")
 
   /**
-   * By default, build process produces temporary and resulting files under projectHome/out/productName directory, use this property to
-   * change the output directory.
+   * By default, the build process produces temporary and resulting files under `<projectHome>/out/<productName>` directory.
+   * Use this property to change the output directory.
    */
   var outputRootPath: Path? = System.getProperty(INTELLIJ_BUILD_OUTPUT_ROOT)?.let { Path.of(it).toAbsolutePath().normalize() }
 
   var logPath: String? = System.getProperty("intellij.build.log.root")
 
   /**
-   * If `true` write a separate compilation.log for all compilation messages
+   * If `true`, write all compilation messages into a separate file (`compilation.log`).
    */
-  var compilationLogEnabled = SystemProperties.getBooleanProperty("intellij.build.compilation.log.enabled", true)
-  var cleanOutputFolder = SystemProperties.getBooleanProperty(CLEAN_OUTPUT_FOLDER_PROPERTY, true)
+  var compilationLogEnabled: Boolean = SystemProperties.getBooleanProperty("intellij.build.compilation.log.enabled", true)
+
+  var cleanOutputFolder: Boolean = SystemProperties.getBooleanProperty(CLEAN_OUTPUT_DIRECTORY_PROPERTY, true)
 
   /**
-   * If `true` the build is running as a unit test
+   * If `true`, the build is running as a unit test.
    */
-  var isTestBuild = SystemProperties.getBooleanProperty("intellij.build.test.mode", false)
-  var skipDependencySetup = false
+  var isTestBuild: Boolean = SystemProperties.getBooleanProperty("intellij.build.test.mode", false)
 
   /**
-   * If 'true' print system properties and environment variables to stdout.
-   * Mostly useful for build scripts debugging.
+   * If 'true', print system properties and environment variables to stdout. Useful for build scripts debugging.
    */
-  var printEnvironmentInfo = SystemProperties.getBooleanProperty("intellij.print.environment", false)
-
-  @ApiStatus.Internal
-  @JvmField
-  var printFreeSpace: Boolean = true
-  @ApiStatus.Internal
-  @JvmField
-  var validateImplicitPlatformModule: Boolean = true
+  var printEnvironmentInfo: Boolean = SystemProperties.getBooleanProperty("intellij.print.environment", false)
 
   /**
-   * Specifies list of names of directories of bundled plugins which shouldn't be included into the product distribution. This option can be
-   * used to speed up updating the IDE from sources.
+   * Specifies a list of directory names for bundled plugins that should not be included in the product distribution.
+   * This option can be used to speed up updating the IDE from sources.
    */
   val bundledPluginDirectoriesToSkip: Set<String> = getSetProperty("intellij.build.bundled.plugin.dirs.to.skip")
 
   /**
-   * Specifies list of names of directories of non-bundled plugins (determined by [ProductModulesLayout.pluginModulesToPublish] and
+   * Specifies a list of directory names for non-bundled plugins (determined by [ProductModulesLayout.pluginModulesToPublish] and
    * [ProductModulesLayout.buildAllCompatiblePlugins]) which should be actually built. This option can be used to speed up updating
    * the IDE from sources. By default, all plugins determined by [ProductModulesLayout.pluginModulesToPublish] and
-   * [ProductModulesLayout.buildAllCompatiblePlugins] are built. In order to skip building all non-bundled plugins, set the property to
-   * `none`.
+   * [ProductModulesLayout.buildAllCompatiblePlugins] are built.
+   * To skip building all non-bundled plugins, set the property to `none`.
    */
   val nonBundledPluginDirectoriesToInclude: Set<String> = getSetProperty("intellij.build.non.bundled.plugin.dirs.to.include")
 
   /**
-   * If this option and [ProductProperties.supportModularLoading] are set to `true`, a file containing module descriptors will be added to 
+   * If this option and [ProductProperties.supportModularLoading] are set to `true`, a file containing module descriptors will be added to
    * the distribution (IJPL-109), and launchers will use it to start the IDE (IJPL-128).
    */
   @ApiStatus.Experimental
-  var useModularLoader = SystemProperties.getBooleanProperty("intellij.build.use.modular.loader", true)
-  
+  var useModularLoader: Boolean = SystemProperties.getBooleanProperty("intellij.build.use.modular.loader", true)
+
   /**
-   * If this option is set to `true` and [enableEmbeddedJetBrainsClient] is enabled, a [runtime module repository][com.intellij.platform.runtime.repository.RuntimeModuleRepository] 
-   * will be generated in the distribution.
-   * This option doesn't make sense if [modular loader][BuildContext.useModularLoader] is used, in this case the generation is enabled automatically. 
+   * If this option is set to `true` and [enableEmbeddedJetBrainsClient] is enabled,
+   * a [runtime module repository][com.intellij.platform.runtime.repository.RuntimeModuleRepository] will be generated in the distribution.
+   * This option doesn't make sense if [modular loader][BuildContext.useModularLoader] is used
+   * (in this case, the generation is enabled automatically).
    */
   @ApiStatus.Experimental
-  var generateRuntimeModuleRepository = SystemProperties.getBooleanProperty("intellij.build.generate.runtime.module.repository", true)
-  
+  var generateRuntimeModuleRepository: Boolean = SystemProperties.getBooleanProperty("intellij.build.generate.runtime.module.repository", true)
+
   /**
    * If `true` and [ProductProperties.embeddedJetBrainsClientMainModule] is not null, the JAR files in the distribution will be adjusted
-   * to allow starting JetBrains Client directly from the IDE's distribution. 
+   * to allow starting JetBrains Client directly from the IDE's distribution.
    */
   @ApiStatus.Experimental
-  var enableEmbeddedJetBrainsClient = SystemProperties.getBooleanProperty("intellij.build.enable.embedded.jetbrains.client", true)
+  var enableEmbeddedJetBrainsClient: Boolean = SystemProperties.getBooleanProperty("intellij.build.enable.embedded.jetbrains.client", true)
+
+  /**
+   * If `true` and embedded JetBrains Client is [enabled][BuildContext.isEmbeddedJetBrainsClientEnabled], launchers which start it will be
+   * included in the IDE's distributions.
+   */
+  @ApiStatus.Experimental
+  var includeLaunchersForEmbeddedJetBrainsClient = SystemProperties.getBooleanProperty("intellij.build.include.launchers.for.embedded.jetbrains.client", true) 
 
   /**
    * Specifies a prefix to use when looking for an artifact of a [org.jetbrains.intellij.build.JetBrainsRuntimeDistribution] to be bundled with distributions.
@@ -388,7 +400,7 @@ class BuildOptions(
   var bundledRuntimePrefix: String? = System.getProperty("intellij.build.bundled.jre.prefix")
 
   /**
-   * Enables fastdebug runtime
+   * Enables "fastdebug" runtime.
    */
   var runtimeDebug: Boolean = parseBooleanValue(System.getProperty("intellij.build.bundled.jre.debug", "false"))
 
@@ -400,31 +412,13 @@ class BuildOptions(
   var resolveDependenciesMaxAttempts: Int = System.getProperty(RESOLVE_DEPENDENCIES_MAX_ATTEMPTS_PROPERTY, "2").toInt()
   var resolveDependenciesDelayMs: Long = System.getProperty(RESOLVE_DEPENDENCIES_DELAY_MS_PROPERTY, "1000").toLong()
 
-  /**
-   * See [GlobalOptions.BUILD_DATE_IN_SECONDS]
-   */
-  val buildDateInSeconds: Long = run {
-    val sourceDateEpoch = System.getenv(GlobalOptions.BUILD_DATE_IN_SECONDS)
-    val minZipTime = GregorianCalendar(1980, 0, 1)
-    val minZipTimeInSeconds = TimeUnit.MILLISECONDS.toSeconds(minZipTime.timeInMillis)
-    val value = sourceDateEpoch?.toLong() ?: currentBuildTimeInSeconds
-    require(value >= minZipTimeInSeconds) {
-      ".zip archive cannot store timestamps older than ${minZipTime.time} " +
-      "(see specification: https://pkware.cachefly.net/webdocs/casestudies/APPNOTE.TXT) " +
-      "but ${GlobalOptions.BUILD_DATE_IN_SECONDS}=$sourceDateEpoch was supplied. " +
-      "If timestamps aren't stored then .zip content files modification time will be set to extraction time " +
-      "diverging from modification times specified in .manifest."
-    }
-    value
-  }
-
   var randomSeedNumber: Long = 0
 
   var isNightlyBuild: Boolean = SystemProperties.getBooleanProperty(INTELLIJ_BUILD_IS_NIGHTLY, (buildNumber?.count { it == '.' } ?: 1) <= 1)
 
   /**
-   * If `false`, [org.jetbrains.intellij.build.impl.projectStructureMapping.buildJarContentReport] won't be affected by
-   * neither [PluginBundlingRestrictions.includeInEapOnly] nor [PluginBundlingRestrictions.includeInNightlyOnly]
+   * If `false`, [org.jetbrains.intellij.build.impl.projectStructureMapping.buildJarContentReport]
+   * won't be affected by [PluginBundlingRestrictions.includeInDistribution]
    */
   @set:TestOnly
   @ApiStatus.Internal
@@ -462,6 +456,19 @@ private fun parseBooleanValue(text: String): Boolean {
   }
 }
 
-private fun getSetProperty(name: String): Set<String> {
-  return java.util.Set.copyOf((System.getProperty(name) ?: return emptySet()).split(','))
+private fun getSetProperty(name: String): Set<String> = System.getProperty(name)?.split(',')?.toSet() ?: emptySet()
+
+private fun computeBuildDateInSeconds(): Long {
+  val sourceDateEpoch = System.getenv(GlobalOptions.BUILD_DATE_IN_SECONDS)
+  val minZipTime = GregorianCalendar(1980, 0, 1)
+  val minZipTimeInSeconds = TimeUnit.MILLISECONDS.toSeconds(minZipTime.timeInMillis)
+  val value = sourceDateEpoch?.toLong() ?: (System.currentTimeMillis() / 1000)
+  require(value >= minZipTimeInSeconds) {
+    ".zip archive cannot store timestamps older than ${minZipTime.time} " +
+    "(see specification: https://pkware.cachefly.net/webdocs/casestudies/APPNOTE.TXT) " +
+    "but ${GlobalOptions.BUILD_DATE_IN_SECONDS}=$sourceDateEpoch was supplied. " +
+    "If timestamps aren't stored then .zip content files modification time will be set to extraction time " +
+    "diverging from modification times specified in .manifest."
+  }
+  return value
 }

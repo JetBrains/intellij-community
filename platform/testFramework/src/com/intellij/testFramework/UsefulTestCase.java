@@ -292,7 +292,7 @@ public abstract class UsefulTestCase extends TestCase {
       () -> {
         if (isIconRequired()) {
           IconManager.Companion.deactivate();
-          IconLoader.clearCacheInTests();
+          IconLoader.INSTANCE.clearCacheInTests();
         }
       },
       () -> disposeRootDisposable(),

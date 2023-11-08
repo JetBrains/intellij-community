@@ -13,7 +13,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
-import java.util.function.Predicate;
 
 /**
  * A convenient abstract class to implement {@link ModCommandAction}
@@ -24,7 +23,6 @@ import java.util.function.Predicate;
 public abstract class PsiBasedModCommandAction<E extends PsiElement> implements ModCommandAction {
   private final @Nullable SmartPsiElementPointer<E> myPointer;
   private final @Nullable Class<E> myClass;
-  private final @Nullable Predicate<? super E> myFilter;
 
   /**
    * Constructs an instance, which is bound to a specified element
@@ -34,7 +32,6 @@ public abstract class PsiBasedModCommandAction<E extends PsiElement> implements 
   protected PsiBasedModCommandAction(@NotNull E element) {
     myPointer = SmartPointerManager.createPointer(element);
     myClass = null;
-    myFilter = null;
   }
 
   /**
@@ -46,20 +43,6 @@ public abstract class PsiBasedModCommandAction<E extends PsiElement> implements 
   protected PsiBasedModCommandAction(@NotNull Class<E> elementClass) {
     myPointer = null;
     myClass = elementClass;
-    myFilter = null;
-  }
-
-  /**
-   * Constructs an instance, which will look for an element 
-   * of a specified class at the caret offset, satisfying the specified filter.
-   * 
-   * @param elementClass element class
-   * @param filter predicate to check the elements: elements that don't satisfy will be skipped
-   */
-  protected PsiBasedModCommandAction(@NotNull Class<E> elementClass, @NotNull Predicate<? super E> filter) {
-    myPointer = null;
-    myClass = elementClass;
-    myFilter = filter;
   }
 
   @Override
@@ -77,9 +60,8 @@ public abstract class PsiBasedModCommandAction<E extends PsiElement> implements 
     int offset = context.offset();
     PsiFile file = context.file();
     if (!BaseIntentionAction.canModify(file)) return null;
-    Class<E> cls = Objects.requireNonNull(myClass);
     if (context.element() != null && context.element().isValid()) {
-      return getIfSatisfied(context.element());
+      return getIfSatisfied(context.element(), context);
     }
     PsiElement right = file.findElementAt(offset);
     PsiElement left = offset > 0 ? file.findElementAt(offset - 1) : right;
@@ -87,28 +69,40 @@ public abstract class PsiBasedModCommandAction<E extends PsiElement> implements 
     if (left == null) left = right;
     if (right == null) right = left;
     PsiElement commonParent = PsiTreeUtil.findCommonParent(left, right);
-    while (left != commonParent || right != commonParent) {
-      E result = getIfSatisfied(right);
-      if (result != null) return result;
-      result = getIfSatisfied(left);
-      if (result != null) return result;
-      if (left != commonParent) left = left.getParent();
-      if (right != commonParent) right = right.getParent();
+
+    if (left != right) {
+      while (right != commonParent) {
+        E result = getIfSatisfied(right, context);
+        if (result != null) return result;
+        right = right.getParent();
+      }
     }
-    while(true) {
+
+    while (left != commonParent) {
+      E result = getIfSatisfied(left, context);
+      if (result != null) return result;
+      left = left.getParent();
+    }
+
+    while (true) {
       if (commonParent == null) return null;
-      if (cls.isInstance(commonParent)) return cls.cast(commonParent);
+      E satisfied = getIfSatisfied(commonParent, context);
+      if (satisfied != null) return satisfied;
       if (commonParent instanceof PsiFile) return null;
       commonParent = commonParent.getParent();
     }
   }
 
-  private E getIfSatisfied(PsiElement element) {
+  private E getIfSatisfied(@NotNull PsiElement element, @NotNull ActionContext context) {
     Class<E> cls = Objects.requireNonNull(myClass);
     if (!cls.isInstance(element)) return null;
-    E result = cls.cast(element);
-    if (myFilter != null && !myFilter.test(result)) return null;
-    return result;
+    E e = cls.cast(element);
+    return isElementApplicable(e, context) ? e : null;
+  }
+
+  @SuppressWarnings("unused")
+  protected boolean isElementApplicable(@NotNull E element, @NotNull ActionContext context) {
+    return true;
   }
 
   @Override

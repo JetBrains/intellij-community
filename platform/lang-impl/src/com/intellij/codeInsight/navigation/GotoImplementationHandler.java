@@ -7,6 +7,8 @@ import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.daemon.GutterMark;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.codeInsight.daemon.NavigateAction;
+import com.intellij.codeInsight.hint.HintManager;
+import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction;
 import com.intellij.model.Pointer;
 import com.intellij.model.psi.impl.UtilKt;
@@ -37,6 +39,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
+import javax.swing.*;
 import java.awt.event.MouseEvent;
 import java.util.*;
 import java.util.function.Consumer;
@@ -187,7 +190,19 @@ public class GotoImplementationHandler extends GotoTargetHandler {
     PsiFile originalFile = containingFile.getOriginalFile();
     Editor editor = UtilKt.mockEditor(originalFile);
     GotoData source = createDataForSource(Objects.requireNonNull(editor, "No document for " + containingFile + "; original: " + originalFile), baseElement.getTextOffset(), baseElement);
-    show(project, editor, containingFile, source, popup -> popup.show(new RelativePoint(e)));
+
+    if (source.isCanceled) return;
+    if (source.targets.length == 0) {
+      String message = getNotFoundMessage(project, editor, containingFile);
+      // Cannot call showEditorHint, as it doesn't work for mockEditor instance
+      JComponent label = HintUtil.createErrorLabel(message);
+      label.setBorder(HintUtil.createHintBorder());
+      int flags = HintManager.HIDE_BY_ANY_KEY | HintManager.HIDE_BY_TEXT_CHANGE | HintManager.HIDE_BY_SCROLLING;
+      HintManager.getInstance().showHint(label, new RelativePoint(e), flags, 0);
+      return;
+    }
+
+    showNotEmpty(project, source, popup -> popup.show(new RelativePoint(e)));
   }
 
   @TestOnly

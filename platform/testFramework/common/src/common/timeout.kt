@@ -12,24 +12,26 @@ import kotlin.time.Duration.Companion.seconds
 val DEFAULT_TEST_TIMEOUT: Duration = 10.seconds
 
 @TestOnly
-fun timeoutRunBlocking(timeout: Duration = DEFAULT_TEST_TIMEOUT, action: suspend CoroutineScope.() -> Unit) {
-  var error: Throwable? = null
+fun <T> timeoutRunBlocking(
+  timeout: Duration = DEFAULT_TEST_TIMEOUT,
+  action: suspend CoroutineScope.() -> T,
+): T {
   @Suppress("RAW_RUN_BLOCKING")
-  runBlocking {
-    val job = launch(block = action)
+  return runBlocking {
+    val job = async(block = action)
     @OptIn(DelicateCoroutinesApi::class)
-    launch(blockingDispatcher) {
+    withContext(blockingDispatcher) {
       try {
-        withTimeout(timeout) {
-          job.join()
+        val value = withTimeout(timeout) {
+          job.await()
         }
+        Result.success(value)
       }
       catch (e: TimeoutCancellationException) {
-        job.cancel(e)
         println(dumpCoroutines())
-        error = e
+        job.cancel(e)
+        Result.failure(AssertionError(e))
       }
     }
-  }
-  error?.let { throw AssertionError(it) }
+  }.getOrThrow()
 }

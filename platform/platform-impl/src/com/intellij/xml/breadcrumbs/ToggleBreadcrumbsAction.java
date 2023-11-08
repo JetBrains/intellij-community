@@ -17,7 +17,7 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-abstract class ToggleBreadcrumbsAction extends ToggleAction implements ActionRemoteBehaviorSpecification.Frontend, DumbAware {
+abstract class ToggleBreadcrumbsAction extends ToggleAction implements DumbAware {
 
   static final class ShowHide extends ToggleBreadcrumbsAction {
     @Override

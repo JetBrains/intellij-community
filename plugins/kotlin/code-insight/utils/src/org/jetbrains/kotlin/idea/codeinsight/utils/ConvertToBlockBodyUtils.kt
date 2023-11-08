@@ -5,7 +5,7 @@ import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.types.KtClassErrorType
+import org.jetbrains.kotlin.analysis.api.types.KtErrorType
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
@@ -38,7 +38,7 @@ object ConvertToBlockBodyUtils {
         val body = declaration.bodyExpression ?: return null
 
         val returnType = declaration.getReturnKtType().approximateToSuperPublicDenotableOrSelf(approximateLocalTypes = true)
-        if (returnType is KtClassErrorType && declaration is KtNamedFunction && !declaration.hasDeclaredReturnType()) {
+        if (returnType is KtErrorType && declaration is KtNamedFunction && !declaration.hasDeclaredReturnType()) {
             return null
         }
 

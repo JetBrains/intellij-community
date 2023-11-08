@@ -349,6 +349,11 @@ class GroovyBuildScriptManipulator(
         }
 
         changedFiles.storeOriginalFileContent(settingsFile)
+        addFoojayPlugin(settingsFile)
+    }
+
+    override fun addFoojayPlugin(settingsFile: PsiFile) {
+        if (settingsFile !is GroovyFile) return
         val pluginBlock = settingsFile.getSettingsPluginsBlock()
         if (pluginBlock.text.contains(FOOJAY_RESOLVER_NAME)) return
         val foojayVersion = Versions.GRADLE_PLUGINS.FOOJAY_VERSION

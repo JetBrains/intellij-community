@@ -17,11 +17,16 @@ import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.Applicabilit
 import org.jetbrains.kotlin.psi.*
 
 internal class SpecifyTypeExplicitlyIntention:
-    AbstractKotlinModCommandWithContext<KtCallableDeclaration, TypeInfo>(KtCallableDeclaration::class, predicate@ {
-        if (it is KtConstructor<*> || it is KtFunctionLiteral) return@predicate false
-        if (it is KtParameter && it.isLoopParameter && it.destructuringDeclaration != null) return@predicate false
-        it.typeReference == null && (it as? KtNamedFunction)?.hasBlockBody() != true
-    }) {
+    AbstractKotlinModCommandWithContext<KtCallableDeclaration, TypeInfo>(KtCallableDeclaration::class) {
+
+    override fun getApplicabilityRange(): KotlinApplicabilityRange<KtCallableDeclaration> =
+        ApplicabilityRanges.DECLARATION_WITHOUT_INITIALIZER
+
+    override fun isApplicableByPsi(element: KtCallableDeclaration): Boolean {
+        if (element is KtConstructor<*> || element is KtFunctionLiteral) return false
+        if (element is KtParameter && element.isLoopParameter && element.destructuringDeclaration != null) return false
+        return element.typeReference == null && (element as? KtNamedFunction)?.hasBlockBody() != true
+    }
 
     override fun getFamilyName(): String = KotlinBundle.message("specify.type.explicitly")
 
@@ -29,8 +34,6 @@ internal class SpecifyTypeExplicitlyIntention:
         is KtFunction -> KotlinBundle.message("specify.return.type.explicitly")
         else -> KotlinBundle.message("specify.type.explicitly")
     }
-
-    override fun getApplicabilityRange(): KotlinApplicabilityRange<KtCallableDeclaration> = ApplicabilityRanges.DECLARATION_WITHOUT_INITIALIZER
 
     context(KtAnalysisSession)
     override fun prepareContext(element: KtCallableDeclaration): TypeInfo? {

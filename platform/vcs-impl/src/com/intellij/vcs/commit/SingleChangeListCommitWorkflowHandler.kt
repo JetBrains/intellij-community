@@ -56,6 +56,11 @@ class SingleChangeListCommitWorkflowHandler(
   fun activate(): Boolean {
     initCommitHandlers()
 
+    if (workflow.isDefaultCommitEnabled) {
+      LineStatusTrackerManager.getInstanceImpl(project).resetExcludedFromCommitMarkers()
+    }
+    ui.getInclusionModel().setInclusion(workflow.initiallyIncluded)
+
     ui.addInclusionListener(this, this)
     updateDefaultCommitActionName()
     setCommitMessage(commitMessagePolicy.init(getChangeList(), getIncludedChanges()))
@@ -63,9 +68,6 @@ class SingleChangeListCommitWorkflowHandler(
 
     amendCommitHandler.initialMessage = getCommitMessage()
 
-    if (workflow.isDefaultCommitEnabled) {
-      LineStatusTrackerManager.getInstanceImpl(project).resetExcludedFromCommitMarkers()
-    }
     return ui.activate()
   }
 

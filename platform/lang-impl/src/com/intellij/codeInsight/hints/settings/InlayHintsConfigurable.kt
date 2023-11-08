@@ -7,6 +7,7 @@ import com.intellij.lang.Language
 import com.intellij.openapi.extensions.BaseExtensionPointName
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.project.Project
+import org.jetbrains.annotations.ApiStatus
 import java.util.function.Predicate
 import javax.swing.JComponent
 import javax.swing.JPanel
@@ -46,12 +47,14 @@ class InlayHintsConfigurable(private val project: Project) : Configurable, Confi
      * Updates settings UI when external change happens (e. g. when some provider is changed).
      */
     @JvmStatic
+    @ApiStatus.ScheduledForRemoval
     @Deprecated("New UI doesn't need it, just drop call")
     fun updateInlayHintsUI() {
 
     }
 
     @JvmStatic
+    @ApiStatus.ScheduledForRemoval
     @Deprecated("Use com.intellij.codeInsight.hints.settings.InlaySettingsConfigurableKt.showInlaySettings",
                 ReplaceWith("showInlaySettings(project, language, null)"))
     fun showSettingsDialogForLanguage(project: Project, language: Language) {

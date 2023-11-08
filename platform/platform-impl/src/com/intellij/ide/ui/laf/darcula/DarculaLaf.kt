@@ -3,12 +3,12 @@
 
 package com.intellij.ide.ui.laf.darcula
 
-import com.intellij.ide.bootstrap.createBaseLaF
 import com.intellij.ide.ui.laf.LookAndFeelThemeAdapter
 import com.intellij.ide.ui.laf.createRawDarculaTheme
 import com.intellij.ide.ui.laf.initBaseLaF
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.*
+import com.intellij.platform.ide.bootstrap.createBaseLaF
 import kotlinx.coroutines.*
 import java.awt.*
 import java.util.*

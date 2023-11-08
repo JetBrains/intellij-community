@@ -2,7 +2,6 @@
 package com.intellij.util.containers;
 
 import com.intellij.reference.SoftReference;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Debug;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
@@ -269,17 +268,6 @@ public class UnsafeWeakList<T> extends AbstractCollection<T> {
       }
     }
     return true;
-  }
-
-  /**
-   * @deprecated Since weak references can be collected at any time,
-   * this method considered dangerous, misleading, error-inducing and is not supported.
-   */
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated
-  public T get(int index) {
-    throwNotAllowedException();
-    return null;
   }
 
   /**

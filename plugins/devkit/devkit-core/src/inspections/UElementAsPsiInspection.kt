@@ -10,6 +10,7 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.TypeConversionUtil.isAssignable
 import com.intellij.psi.util.TypeConversionUtil.isNullType
 import com.intellij.util.SmartList
+import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.uast.*
 import org.jetbrains.uast.visitor.AbstractUastVisitor
@@ -24,6 +25,7 @@ private val ALLOWED_REDEFINITION = setOf<String?>(
   UClassInitializer::class.java.name
 )
 
+@VisibleForTesting
 class UElementAsPsiInspection : DevKitUastInspectionBase(UMethod::class.java) {
 
   override fun checkMethod(method: UMethod, manager: InspectionManager, isOnTheFly: Boolean): Array<ProblemDescriptor>? {

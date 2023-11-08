@@ -8,6 +8,7 @@ import com.intellij.psi.util.elementType
 import com.intellij.refactoring.suggested.endOffset
 import com.intellij.util.containers.addIfNotNull
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeInsight.intentions.shared.AddBracesToAllBranchesIntention.Util.allBranchExpressions
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingIntention
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
@@ -22,7 +23,7 @@ internal class AddBracesToAllBranchesIntention : SelfTargetingIntention<KtExpres
     KotlinBundle.lazyMessage("add.braces.to.all.branches")
 ) {
     override fun isApplicableTo(element: KtExpression, caretOffset: Int): Boolean {
-        val targetIfOrWhenExpression = targetIfOrWhenExpression(element) ?: return false
+        val targetIfOrWhenExpression = Util.targetIfOrWhenExpression(element) ?: return false
 
         val targetBranchExpressions = targetIfOrWhenExpression.targetBranchExpressions()
         if (targetBranchExpressions.isEmpty()) return false
@@ -36,9 +37,11 @@ internal class AddBracesToAllBranchesIntention : SelfTargetingIntention<KtExpres
     }
 
     override fun applyTo(element: KtExpression, editor: Editor?) {
-        val targetIfOrWhenExpression = targetIfOrWhenExpression(element) ?: return
-        targetIfOrWhenExpression.targetBranchExpressions().forEach {
-            AddBracesIntention.addBraces(targetIfOrWhenExpression, it)
+        val targetIfOrWhenExpression = Util.targetIfOrWhenExpression(element) ?: return
+        val branches = targetIfOrWhenExpression.targetBranchExpressions()
+        for (branch in branches) {
+            val container = branch.parent as? KtWhenEntry ?: targetIfOrWhenExpression
+            AddBracesIntention.Util.addBraces(container, branch)
         }
     }
 
@@ -71,7 +74,7 @@ internal class AddBracesToAllBranchesIntention : SelfTargetingIntention<KtExpres
             }
     }
 
-    companion object {
+    object Util {
         fun targetIfOrWhenExpression(element: KtExpression): KtExpression? = when (element) {
             is KtIfExpression -> generateSequence(element) { target ->
                 target.parents.match(KtContainerNodeForControlStructureBody::class, last = KtIfExpression::class)
@@ -80,7 +83,7 @@ internal class AddBracesToAllBranchesIntention : SelfTargetingIntention<KtExpres
             is KtWhenExpression -> element
             is KtBlockExpression -> element.parent.let { it as? KtContainerNodeForControlStructureBody ?: it as? KtWhenEntry }
                 ?.let { it.parent as? KtExpression }
-                ?.let(::targetIfOrWhenExpression)
+                ?.let(Util::targetIfOrWhenExpression)
             else -> null
         }
 

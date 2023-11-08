@@ -68,7 +68,7 @@ class SavedPatchesChangesBrowser(project: Project,
           setData(data.changes)
         }
         is SavedPatchesProvider.LoadingResult.Error -> {
-          setEmpty { statusText -> statusText.setText(data.error.localizedMessage, SimpleTextAttributes.ERROR_ATTRIBUTES) }
+          setEmpty { statusText -> statusText.setText(data.message, SimpleTextAttributes.ERROR_ATTRIBUTES) }
         }
         null -> {}
       }
@@ -127,17 +127,15 @@ class SavedPatchesChangesBrowser(project: Project,
     val newProcessor = SavedPatchesDiffPreview(myProject, viewer, isInEditor, this)
     diffPreviewProcessor = newProcessor
 
-    if (isInEditor) {
-      editorTabPreview = object : SavedPatchesEditorDiffPreview(newProcessor, viewer, this@SavedPatchesChangesBrowser, focusMainUi) {
+    editorTabPreview = if (isInEditor) {
+      object : SavedPatchesEditorDiffPreview(newProcessor, viewer, this@SavedPatchesChangesBrowser, focusMainUi) {
         override fun getCurrentName(): String {
-          return currentPatchObject?.getDiffPreviewTitle(changeViewProcessor.currentChangeName) ?: VcsBundle.message(
-            "saved.patch.editor.diff.preview.empty.title")
+          return currentPatchObject?.getDiffPreviewTitle(changeViewProcessor.currentChangeName)
+                 ?: VcsBundle.message("saved.patch.editor.diff.preview.empty.title")
         }
       }
     }
-    else {
-      editorTabPreview = null
-    }
+    else null
 
     return newProcessor
   }

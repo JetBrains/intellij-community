@@ -10,6 +10,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -20,8 +21,9 @@ import java.awt.*;
 import java.util.Map;
 import java.util.function.Supplier;
 
-public final class HeadlessDataManager extends DataManagerImpl {
-
+// not final - used in Google's bazel plugin (in tests)
+@ApiStatus.NonExtendable
+public class HeadlessDataManager extends DataManagerImpl {
   private static final class HeadlessContext extends CustomizedDataContext implements UserDataHolder {
     private final DataProvider myProvider;
     private final DataContext myParent;

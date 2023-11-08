@@ -10,7 +10,9 @@ import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger.Dumb
 import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger.DumbModeBalloonShown
 import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger.DumbModeBalloonWasNotNeeded
 import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.editor.impl.EditorComponentImpl
 import com.intellij.openapi.ui.MessageType
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.ui.popup.JBPopupFactory
@@ -18,11 +20,14 @@ import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.ui.ExperimentalUI
+import com.intellij.ui.HintHint
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.scale.JBUIScale.scale
 import com.intellij.util.TimeoutUtil
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.ui.JBInsets
+import com.intellij.util.ui.JBUI
 
 class DumbServiceBalloon(private val myProject: Project,
                          private val myService: Service) {
@@ -63,8 +68,18 @@ class DumbServiceBalloon(private val myProject: Project,
     LOG.assertTrue(myBalloon == null)
     val startTimestamp = System.nanoTime()
     DumbModeBalloonRequested.log(myProject)
-    myBalloon = JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(balloonText, MessageType.WARNING, null).setBorderInsets(
-      DUMB_BALLOON_INSETS).setShowCallout(false).createBalloon()
+    val builder = if (ExperimentalUI.isNewUI()) {
+      JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(balloonText, MessageType.WARNING.defaultIcon,
+                                                                HintHint.Status.Warning.foreground, HintHint.Status.Warning.background,
+                                                                null).setBorderColor(HintHint.Status.Warning.border).setShowCallout(
+        true).setBorderInsets(JBUI.insets(9, 7, 11, 7)).setPointerSize(JBUI.size(16, 8)).setPointerShiftedToStart(true).setCornerRadius(
+        JBUI.scale(8))
+    }
+    else {
+      JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(balloonText, MessageType.WARNING, null).setBorderInsets(
+        DUMB_BALLOON_INSETS).setShowCallout(false)
+    }
+    myBalloon = builder.createBalloon()
     myBalloon!!.setAnimationEnabled(false)
     myBalloon!!.addListener(object : JBPopupListener {
       override fun onClosed(event: LightweightWindowEvent) {
@@ -100,8 +115,16 @@ class DumbServiceBalloon(private val myProject: Project,
     private val DUMB_BALLOON_INSETS = JBInsets.create(5, 8)
     private fun getDumbBalloonPopupPoint(balloon: Balloon, context: DataContext): RelativePoint {
       val relativePoint = JBPopupFactory.getInstance().guessBestPopupLocation(context)
-      val size = balloon.preferredSize
       val point = relativePoint.point
+      if (ExperimentalUI.isNewUI()) {
+        val component = PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(context)
+        if (component is EditorComponentImpl) {
+          point.translate(0, -component.editor.lineHeight)
+          return RelativePoint(relativePoint.component, point)
+        }
+        return relativePoint
+      }
+      val size = balloon.preferredSize
       point.translate(size.width / 2, 0)
       //here are included hardcoded insets, icon width and small hardcoded delta to show before guessBestPopupLocation point
       point.translate(-DUMB_BALLOON_INSETS.left - AllIcons.General.BalloonWarning.iconWidth - scale(6), 0)

@@ -40,18 +40,7 @@ public interface ObjectStubSerializer<T extends Stub, P extends Stub> {
    * Note that if you override this and return true, you should update the index version,
    * as the serialized representation will change.
    */
-  default boolean isAlwaysLeaf(StubBase<?> root) {
-    return false;
-  }
-
-  /**
-   * @return true if this serializer never writes and reads a single byte to/from data stream. If this method returns true,
-   * the {@link #serialize(Stub, StubOutputStream)} method must be empty, and {@link #deserialize(StubInputStream, Stub)}
-   * must not use the {@code dataStream} parameter. Returning true allows for more compact serialization format.
-   * Note that if you override this and return true, you should update the index version,
-   * as the serialized representation will change.
-   */
-  default boolean isAlwaysEmpty() {
+  default boolean isAlwaysLeaf(@NotNull StubBase<?> root) {
     return false;
   }
 }

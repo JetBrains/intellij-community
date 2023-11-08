@@ -1,8 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection
 
-import com.intellij.psi.LambdaUtil
-import com.intellij.psi.PsiType
+import com.intellij.psi.*
 import com.intellij.psi.util.InheritanceUtil
 import org.jetbrains.uast.*
 
@@ -23,6 +22,33 @@ fun ULambdaExpression.getLambdaType(): PsiType? =
    }
 
 fun UAnnotated.findAnnotations(vararg fqNames: String) = uAnnotations.filter { ann -> fqNames.contains(ann.qualifiedName) }
+
+annotation class X(vararg val value: String)
+
+/**
+ * Gets all attribute values, ignore whether these are written as array initializer.
+ *
+ * Example:
+ * ```
+ *  @Z("X")
+ * ```
+ * Will return "X" as [PsiAnnotationMemberValue]
+ *```
+ *  @Z("X", 'Y")
+ *  @Z(value = ["X", 'Y"])
+ *```
+ * Will return "X", "Y" as [PsiAnnotationMemberValue]s instead of returning a [PsiArrayInitializerMemberValue] that contains both "X" and
+ * "Y".
+ */
+fun PsiAnnotation.flattenedAttributeValues(attributeName: String): List<PsiAnnotationMemberValue> {
+  fun PsiAnnotationMemberValue.flatten(): List<PsiAnnotationMemberValue> = if (this is PsiArrayInitializerMemberValue) {
+    initializers.flatMap { it.flatten() }
+  } else listOf(this)
+
+  val annotationArgument = findDeclaredAttributeValue(attributeName)
+  if (annotationArgument == null) return emptyList()
+  return annotationArgument.flatten()
+}
 
 /**
  * Gets all classes in this file, including inner classes.

@@ -2,39 +2,42 @@
 package org.jetbrains.plugins.terminal.exp
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.util.Key
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
+import com.intellij.terminal.TerminalColorPalette
 import com.intellij.terminal.TerminalExecutorServiceManagerImpl
 import com.jediterm.core.typeahead.TerminalTypeAheadManager
 import com.jediterm.core.util.TermSize
 import com.jediterm.terminal.*
-import com.jediterm.terminal.model.JediTermDebouncerImpl
-import com.jediterm.terminal.model.JediTermTypeAheadModel
-import com.jediterm.terminal.model.StyleState
-import com.jediterm.terminal.model.TerminalTextBuffer
+import com.jediterm.terminal.model.*
 import org.jetbrains.plugins.terminal.TerminalUtil
 import org.jetbrains.plugins.terminal.util.ShellIntegration
-import java.awt.event.KeyEvent
+import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CopyOnWriteArrayList
 
-class TerminalSession(settings: JBTerminalSystemSettingsProviderBase, val shellIntegration: ShellIntegration?) : Disposable {
+class TerminalSession(settings: JBTerminalSystemSettingsProviderBase,
+                      val colorPalette: TerminalColorPalette,
+                      val shellIntegration: ShellIntegration?) : Disposable {
   val model: TerminalModel
-  lateinit var terminalStarter: TerminalStarter
+  internal val terminalStarterFuture: CompletableFuture<TerminalStarter> = CompletableFuture()
 
   private val executorServiceManager: TerminalExecutorServiceManager = TerminalExecutorServiceManagerImpl()
 
   private val textBuffer: TerminalTextBuffer
-  val controller: TerminalController
+  internal val controller: JediTerminal
   private val commandManager: ShellCommandManager
   private val typeAheadManager: TerminalTypeAheadManager
   private val terminationListeners: MutableList<Runnable> = CopyOnWriteArrayList()
 
   init {
     val styleState = StyleState()
-    styleState.setDefaultStyle(settings.defaultStyle)
+    val defaultStyle = TextStyle(TerminalColor { colorPalette.defaultForeground },
+                                 TerminalColor { colorPalette.defaultBackground })
+    styleState.setDefaultStyle(defaultStyle)
     textBuffer = TerminalTextBuffer(80, 24, styleState)
-    model = TerminalModel(textBuffer, styleState)
-    controller = TerminalController(model, settings)
+    model = TerminalModel(textBuffer)
+    controller = JediTerminal(ModelUpdatingTerminalDisplay(model, settings), textBuffer, styleState)
 
     commandManager = ShellCommandManager(controller)
 
@@ -45,7 +48,9 @@ class TerminalSession(settings: JBTerminalSystemSettingsProviderBase, val shellI
   }
 
   fun start(ttyConnector: TtyConnector) {
-    terminalStarter = TerminalStarter(controller, ttyConnector, TtyBasedArrayDataStream(ttyConnector), typeAheadManager, executorServiceManager)
+    val terminalStarter = TerminalStarter(controller, ttyConnector, TtyBasedArrayDataStream(ttyConnector),
+                                          typeAheadManager, executorServiceManager)
+    terminalStarterFuture.complete(terminalStarter)
     executorServiceManager.unboundedExecutorService.submit {
       terminalStarter.start()
       try {
@@ -63,19 +68,18 @@ class TerminalSession(settings: JBTerminalSystemSettingsProviderBase, val shellI
     TerminalUtil.addItem(terminationListeners, onTerminated, parentDisposable)
   }
 
-  fun executeCommand(command: String) {
-    val enterCode = terminalStarter.getCode(KeyEvent.VK_ENTER, 0)
-    terminalStarter.sendString(command, false)
-    terminalStarter.sendBytes(enterCode, false)
+  fun sendCommandToExecute(shellCommand: String) {
+    terminalStarterFuture.thenAccept {
+      TerminalUtil.sendCommandToExecute(shellCommand, it)
+    }
   }
 
   fun postResize(newSize: TermSize) {
-    // it can be executed right after component is shown,
-    // terminal starter can not be initialized at this point
-    if (this::terminalStarter.isInitialized && (newSize.columns != model.width || newSize.rows != model.height)) {
-      // TODO: is it needed?
-      //myTypeAheadManager.onResize()
-      terminalStarter.postResize(newSize, RequestOrigin.User)
+    terminalStarterFuture.thenAccept {
+      if (newSize.columns != model.width || newSize.rows != model.height) {
+        typeAheadManager.onResize()
+        it.postResize(newSize, RequestOrigin.User)
+      }
     }
   }
 
@@ -86,12 +90,11 @@ class TerminalSession(settings: JBTerminalSystemSettingsProviderBase, val shellI
   override fun dispose() {
     executorServiceManager.shutdownWhenAllExecuted()
     // Can be disposed before session is started
-    if (this::terminalStarter.isInitialized) {
-      terminalStarter.close()
-    }
+    terminalStarterFuture.getNow(null)?.close()
   }
 
   companion object {
     val KEY: Key<TerminalSession> = Key.create("TerminalSession")
+    val DATA_KEY: DataKey<TerminalSession> = DataKey.create("TerminalSession")
   }
 }

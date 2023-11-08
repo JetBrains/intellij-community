@@ -42,24 +42,29 @@ interface WebSymbolsQueryExecutor : ModificationTracker {
                         scope: List<WebSymbolsScope> = emptyList()): List<WebSymbol> =
     runNameMatchQuery(listOf(WebSymbolQualifiedName(namespace, kind, name)), virtualSymbols, abstractSymbols, strictScope, scope)
 
+  fun runNameMatchQuery(qualifiedName: WebSymbolQualifiedName,
+                        virtualSymbols: Boolean = true,
+                        abstractSymbols: Boolean = false,
+                        strictScope: Boolean = false,
+                        scope: List<WebSymbolsScope> = emptyList()): List<WebSymbol> =
+    runNameMatchQuery(listOf(qualifiedName), virtualSymbols, abstractSymbols, strictScope, scope)
+
   fun runNameMatchQuery(path: List<WebSymbolQualifiedName>,
                         virtualSymbols: Boolean = true,
                         abstractSymbols: Boolean = false,
                         strictScope: Boolean = false,
                         scope: List<WebSymbolsScope> = emptyList()): List<WebSymbol>
 
-  fun runListSymbolsQuery(namespace: SymbolNamespace,
-                          kind: SymbolKind,
+  fun runListSymbolsQuery(qualifiedKind: WebSymbolQualifiedKind,
                           expandPatterns: Boolean,
                           virtualSymbols: Boolean = true,
                           abstractSymbols: Boolean = false,
                           strictScope: Boolean = false,
                           scope: List<WebSymbolsScope> = emptyList()): List<WebSymbol> =
-    runListSymbolsQuery(emptyList(), namespace, kind, expandPatterns, virtualSymbols, abstractSymbols, strictScope, scope)
+    runListSymbolsQuery(emptyList(), qualifiedKind, expandPatterns, virtualSymbols, abstractSymbols, strictScope, scope)
 
   fun runListSymbolsQuery(path: List<WebSymbolQualifiedName>,
-                          namespace: SymbolNamespace,
-                          kind: SymbolKind,
+                          qualifiedKind: WebSymbolQualifiedKind,
                           expandPatterns: Boolean,
                           virtualSymbols: Boolean = true,
                           abstractSymbols: Boolean = false,
@@ -75,6 +80,14 @@ interface WebSymbolsQueryExecutor : ModificationTracker {
                              scope: List<WebSymbolsScope> = emptyList()): List<WebSymbolCodeCompletionItem> =
     runCodeCompletionQuery(listOf(WebSymbolQualifiedName(namespace, kind, name)), position, virtualSymbols, scope)
 
+  fun runCodeCompletionQuery(qualifiedKind: WebSymbolQualifiedKind,
+                             name: String,
+                             /** Position to complete at in the last segment of the path **/
+                             position: Int,
+                             virtualSymbols: Boolean = true,
+                             scope: List<WebSymbolsScope> = emptyList()): List<WebSymbolCodeCompletionItem> =
+    runCodeCompletionQuery(listOf(qualifiedKind.withName(name)), position, virtualSymbols, scope)
+
   fun runCodeCompletionQuery(path: List<WebSymbolQualifiedName>,
                              /** Position to complete at in the last segment of the path **/
                              position: Int,
@@ -83,6 +96,6 @@ interface WebSymbolsQueryExecutor : ModificationTracker {
 
   fun withNameConversionRules(rules: List<WebSymbolNameConversionRules>): WebSymbolsQueryExecutor
 
-  fun hasExclusiveScopeFor(namespace: SymbolNamespace, kind: SymbolKind, scope: List<WebSymbolsScope> = emptyList()): Boolean
+  fun hasExclusiveScopeFor(qualifiedKind: WebSymbolQualifiedKind, scope: List<WebSymbolsScope> = emptyList()): Boolean
 
 }

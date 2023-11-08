@@ -5,14 +5,14 @@ import com.intellij.diagnostic.dumpCoroutines
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.progress.ModalTaskOwner
-import com.intellij.openapi.progress.TaskCancellation
 import com.intellij.openapi.progress.impl.pumpEventsForHierarchy
-import com.intellij.openapi.progress.runWithModalProgressBlocking
 import com.intellij.openapi.project.impl.ProjectImpl
 import com.intellij.openapi.util.EmptyRunnable
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.ide.progress.ModalTaskOwner
+import com.intellij.platform.ide.progress.TaskCancellation
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.util.io.blockingDispatcher
 import com.intellij.util.ui.EDT
 import kotlinx.coroutines.*

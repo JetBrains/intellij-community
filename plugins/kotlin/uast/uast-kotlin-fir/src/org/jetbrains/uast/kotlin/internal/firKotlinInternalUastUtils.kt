@@ -5,19 +5,16 @@ package org.jetbrains.uast.kotlin.internal
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTypesUtil
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisFromWriteAction
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.*
 import org.jetbrains.kotlin.analysis.api.calls.KtCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.components.buildClassType
-import org.jetbrains.kotlin.analysis.api.getModule
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.*
 import org.jetbrains.kotlin.analysis.project.structure.KtSourceModule
 import org.jetbrains.kotlin.analysis.providers.DecompiledPsiDeclarationProvider.findPsi
+import org.jetbrains.kotlin.asJava.classes.lazyPub
 import org.jetbrains.kotlin.asJava.findFacadeClass
 import org.jetbrains.kotlin.asJava.getRepresentativeLightMethod
 import org.jetbrains.kotlin.asJava.toLightClass
@@ -32,7 +29,7 @@ import org.jetbrains.uast.kotlin.psi.UastFakeDeserializedLightMethod
 import org.jetbrains.uast.kotlin.psi.UastFakeSourceLightMethod
 import org.jetbrains.uast.kotlin.psi.UastFakeSourceLightPrimaryConstructor
 
-val firKotlinUastPlugin: FirKotlinUastLanguagePlugin by lz {
+val firKotlinUastPlugin: FirKotlinUastLanguagePlugin by lazyPub {
     UastLanguagePlugin.getInstances().single { it.language == KotlinLanguage.INSTANCE } as FirKotlinUastLanguagePlugin?
         ?: FirKotlinUastLanguagePlugin()
 }
@@ -276,7 +273,7 @@ context(KtAnalysisSession)
 internal fun nullability(ktType: KtType?): KtTypeNullability? {
     if (ktType == null) return null
     if (ktType is KtErrorType) return null
-    return if (ktType.canBeNull)
+    return if (ktType.fullyExpandedType.canBeNull)
         KtTypeNullability.NULLABLE
     else
         KtTypeNullability.NON_NULLABLE

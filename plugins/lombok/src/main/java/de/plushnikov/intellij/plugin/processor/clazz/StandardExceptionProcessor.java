@@ -1,6 +1,5 @@
 package de.plushnikov.intellij.plugin.processor.clazz;
 
-import com.intellij.openapi.components.Service;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -15,16 +14,23 @@ import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
 import de.plushnikov.intellij.plugin.util.LombokProcessorUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-@Service
 public final class StandardExceptionProcessor extends AbstractClassProcessor {
 
-  private StandardExceptionProcessor() {
+  public StandardExceptionProcessor() {
     super(PsiMethod.class, LombokClassNames.STANDARD_EXCEPTION);
+  }
+
+  @Override
+  protected boolean possibleToGenerateElementNamed(@NotNull String nameHint,
+                                                   @NotNull PsiClass psiClass,
+                                                   @NotNull PsiAnnotation psiAnnotation) {
+    return nameHint.equals(psiClass.getName());
   }
 
   @Override
@@ -70,7 +76,7 @@ public final class StandardExceptionProcessor extends AbstractClassProcessor {
   @Override
   protected void generatePsiElements(@NotNull PsiClass psiClass,
                                      @NotNull PsiAnnotation psiAnnotation,
-                                     @NotNull List<? super PsiElement> target) {
+                                     @NotNull List<? super PsiElement> target, @Nullable String nameHint) {
     final PsiManager psiManager = psiClass.getManager();
     final Collection<PsiMethod> existedConstructors = PsiClassUtil.collectClassConstructorIntern(psiClass);
     final String accessVisibility = getAccessVisibility(psiAnnotation);

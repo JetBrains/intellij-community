@@ -24,6 +24,7 @@ interface LcrRow<T> {
     NONE
   }
 
+  @Deprecated("Will be removed because we want to get rid of swing dependency for RemDev")
   val list: JList<out T>
   val value: T
   val index: Int

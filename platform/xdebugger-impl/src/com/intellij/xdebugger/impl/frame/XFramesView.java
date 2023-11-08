@@ -214,13 +214,6 @@ public final class XFramesView extends XDebugView {
         }
       }
     });
-    ComboboxSpeedSearch search = new ComboboxSpeedSearch(myThreadComboBox, null) {
-      @Override
-      protected String getElementText(Object element) {
-        return ((XExecutionStack)element).getDisplayName();
-      }
-    };
-    search.setupListeners();
 
     ActionToolbarImpl toolbar = createToolbar();
     myThreadsPanel = new Wrapper();
@@ -229,20 +222,7 @@ public final class XFramesView extends XDebugView {
     myMainPanel.add(myThreadsPanel, BorderLayout.NORTH);
     myMainPanel.setFocusCycleRoot(true);
     myMainPanel.setFocusTraversalPolicy(new MyFocusPolicy());
-    if (myMainPanel.getLayout() instanceof BorderLayout) {
-      String prev = getShortcutText(IdeActions.ACTION_PREVIOUS_OCCURENCE);
-      String next = getShortcutText(IdeActions.ACTION_NEXT_OCCURENCE);
-      String propKey = "XFramesView.AdPanel.SwitchFrames.enabled";
-      if (PropertiesComponent.getInstance().getBoolean(propKey, true) && prev != null && next != null) {
-        String message = XDebuggerBundle.message("debugger.switch.frames.from.anywhere.hint", prev, next);
-        var hint = new MyAdPanel(message, p -> {
-          myMainPanel.remove(p);
-          myMainPanel.revalidate();
-          PropertiesComponent.getInstance().setValue(propKey, false, true);
-        });
-        myMainPanel.add(hint, BorderLayout.SOUTH);
-      }
-    }
+    addFramesNavigationAd(myMainPanel);
   }
 
   public void onFrameSelectionKeyPressed(@NotNull Consumer<? super XStackFrame> handler) {
@@ -686,6 +666,24 @@ public final class XFramesView extends XDebugView {
         model.add((Object)null);
       }
       return selectCurrentFrame();
+    }
+  }
+
+  static void addFramesNavigationAd(JPanel parent) {
+    if (!(parent.getLayout() instanceof BorderLayout)) {
+      return;
+    }
+    String prev = getShortcutText(IdeActions.ACTION_PREVIOUS_OCCURENCE);
+    String next = getShortcutText(IdeActions.ACTION_NEXT_OCCURENCE);
+    String propKey = "XFramesView.AdPanel.SwitchFrames.enabled";
+    if (PropertiesComponent.getInstance().getBoolean(propKey, true) && prev != null && next != null) {
+      String message = XDebuggerBundle.message("debugger.switch.frames.from.anywhere.hint", prev, next);
+      var hint = new MyAdPanel(message, p -> {
+        parent.remove(p);
+        parent.revalidate();
+        PropertiesComponent.getInstance().setValue(propKey, false, true);
+      });
+      parent.add(hint, BorderLayout.SOUTH);
     }
   }
 

@@ -20,9 +20,8 @@ import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiWhiteSpace
 
 internal class LanguageDetectionInspection : LocalInspectionTool() {
-  companion object {
-    private val key = KeyWithDefaultValue.create("language-detection-inspection-key", DetectionContext.Local())
-  }
+
+  private val key get() = KeyWithDefaultValue.create("language-detection-inspection-key", DetectionContext.Local())
 
   override fun inspectionStarted(session: LocalInspectionToolSession, isOnTheFly: Boolean) {
     session.getUserData(key)!!.clear()

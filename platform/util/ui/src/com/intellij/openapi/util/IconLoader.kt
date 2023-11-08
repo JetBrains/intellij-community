@@ -8,28 +8,28 @@ import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.ui.*
+import com.intellij.ui.IconManager
+import com.intellij.ui.PlatformIcons
+import com.intellij.ui.RetrievableIcon
 import com.intellij.ui.icons.*
 import com.intellij.ui.paint.PaintUtil
 import com.intellij.ui.scale.DerivedScaleType
-import com.intellij.ui.scale.JBUIScale.sysScale
 import com.intellij.ui.scale.ScaleContext
-import com.intellij.ui.scale.ScaleContextSupport
-import com.intellij.ui.scale.ScaleType
 import com.intellij.util.ReflectionUtil
-import com.intellij.util.RetinaImage
 import com.intellij.util.SVGLoader.SvgElementColorPatcherProvider
-import com.intellij.util.containers.CollectionFactory
-import com.intellij.util.ui.*
+import com.intellij.util.ui.GraphicsUtil
+import com.intellij.util.ui.ImageUtil
+import com.intellij.util.ui.StartupUiUtil
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.asExecutor
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
 import java.awt.*
 import java.awt.image.BufferedImage
 import java.awt.image.ImageFilter
-import java.awt.image.RGBImageFilter
 import java.net.URL
-import java.util.concurrent.ConcurrentHashMap
+import java.nio.file.Path
 import java.util.concurrent.TimeUnit
 import java.util.function.Supplier
 import javax.swing.Icon
@@ -41,15 +41,10 @@ private val LOG: Logger
   get() = logger<IconLoader>()
 
 private val iconCache = Caffeine.newBuilder()
-  .expireAfterAccess(1, TimeUnit.HOURS)
+  .expireAfterAccess(30, TimeUnit.MINUTES)
+  .executor(Dispatchers.Default.asExecutor())
   .maximumSize(256)
   .build<Pair<String, ClassLoader?>, CachedImageIcon>()
-
-// contains mapping between icons and disabled icons
-private val iconToDisabledIcon = ConcurrentHashMap<() -> RGBImageFilter, MutableMap<Icon, Icon>>()
-private val standardDisablingFilter: () -> RGBImageFilter = { UIUtil.getGrayFilter() }
-
-private val colorPatchCache = ConcurrentHashMap<Int, MutableMap<LongArray, MutableMap<Icon, Icon>>>()
 
 internal val fakeComponent: JComponent by lazy { object : JComponent() {} }
 
@@ -66,7 +61,6 @@ object IconLoader {
     updateTransform { it.withPathPatcher(patcher) }
   }
 
-  @JvmStatic
   @Internal
   fun installPostPathPatcher(patcher: IconPathPatcher) {
     updateTransform { it.withPostPathPatcher(patcher) }
@@ -83,7 +77,7 @@ object IconLoader {
   }
 
   @JvmStatic
-  fun setFilter(filter: ImageFilter?) {
+  fun setFilter(filter: ImageFilter) {
     updateTransform { it.withFilter(filter) }
   }
 
@@ -94,11 +88,9 @@ object IconLoader {
   }
 
   @TestOnly
-  @JvmStatic
   fun clearCacheInTests() {
     iconCache.invalidateAll()
-    iconToDisabledIcon.clear()
-    clearImageCache()
+    clearCacheOnUpdateTransform()
     pathTransformGlobalModCount.incrementAndGet()
   }
 
@@ -117,7 +109,7 @@ object IconLoader {
 
   @JvmStatic
   fun getIcon(path: String, aClass: Class<*>): Icon {
-    return findIcon(originalPath = path, aClass = aClass, classLoader = aClass.classLoader, deferUrlResolve = true)
+    return findIconUsingDeprecatedImplementation(originalPath = path, classLoader = aClass.classLoader, aClass = aClass, strict = false)
            ?: throw IllegalStateException("Icon cannot be found in '$path', class='${aClass.name}'")
   }
 
@@ -146,28 +138,47 @@ object IconLoader {
    */
   @JvmStatic
   fun findIcon(path: String, aClass: Class<*>): Icon? {
-    return findIconUsingNewImplementation(path, aClass.classLoader)
+    return findIconUsingNewImplementation(path = path, classLoader = aClass.classLoader)
   }
 
   @JvmStatic
   fun findIcon(path: String, aClass: Class<*>, deferUrlResolve: Boolean, strict: Boolean): Icon? {
-    return findIcon(originalPath = path, aClass = aClass, classLoader = aClass.classLoader, strict, deferUrlResolve = deferUrlResolve)
+    if (deferUrlResolve) {
+      return findIconUsingDeprecatedImplementation(originalPath = path, classLoader = aClass.classLoader, aClass = aClass, strict = strict)
+    }
+    else {
+      return findIconUsingNewImplementation(path, aClass.classLoader)
+    }
   }
 
   @JvmStatic
-  @JvmOverloads
-  fun findIcon(url: URL?, storeToCache: Boolean = true): Icon? {
+  fun findIcon(url: URL?): Icon? {
+    if (url == null) {
+      return null
+    }
+
+    val key = Pair<String, ClassLoader?>(url.toString(), null)
+    return iconCache.get(key) { CachedImageIcon(url = url) }
+  }
+
+  @JvmStatic
+  fun findIcon(url: URL?, storeToCache: Boolean): Icon? {
     if (url == null) {
       return null
     }
 
     val key = Pair<String, ClassLoader?>(url.toString(), null)
     if (storeToCache) {
-      return iconCache.get(key) { CachedImageIcon(url = url, useCacheOnLoad = true) }
+      return iconCache.get(key) { CachedImageIcon(url = url) }
     }
     else {
-      return iconCache.getIfPresent(key) ?: CachedImageIcon(url = url, useCacheOnLoad = false)
+      return iconCache.getIfPresent(key) ?: CachedImageIcon(url = url)
     }
+  }
+
+  @Internal
+  fun findUserIconByPath(file: Path): com.intellij.ui.icons.CachedImageIcon {
+    return iconCache.get(Pair(file.toString(), null)) { CachedImageIcon(file = file) }
   }
 
   @JvmStatic
@@ -246,66 +257,15 @@ object IconLoader {
   @JvmStatic
   fun getDisabledIcon(icon: Icon): Icon = getDisabledIcon(icon = icon, disableFilter = null)
 
-  @Internal
-  fun getDisabledIcon(icon: Icon, disableFilter: (() -> RGBImageFilter)?): Icon {
-    if (!isIconActivated) {
-      return icon
-    }
-
-    val effectiveIcon = if (icon is LazyIcon) icon.getOrComputeIcon() else icon
-    val filter = disableFilter ?: standardDisablingFilter /* returns laf-aware instance */
-    return iconToDisabledIcon
-      .computeIfAbsent(filter) { CollectionFactory.createConcurrentWeakKeyWeakValueMap() }
-      .computeIfAbsent(effectiveIcon) { filterIcon(icon = it, filterSupplier = filter) }
-  }
-
-  /**
-   * Creates a new icon with the color patching applied.
-   */
+  @Deprecated("Use com.intellij.ui.svg.colorPatchedIcon")
   fun colorPatchedIcon(icon: Icon, colorPatcher: SvgElementColorPatcherProvider): Icon {
-    return replaceCachedImageIcons(icon) { patchColorsInCacheImageIcon(imageIcon = it, colorPatcher = colorPatcher, isDark = null) }!!
-  }
-
-  @Internal
-  fun patchColorsInCacheImageIcon(imageIcon: com.intellij.ui.icons.CachedImageIcon,
-                                  colorPatcher: SvgElementColorPatcherProvider,
-                                  isDark: Boolean?): Icon {
-    var result = imageIcon
-    if (isDark != null) {
-      val variant = result.getDarkIcon(isDark)
-      if (variant is com.intellij.ui.icons.CachedImageIcon) {
-        result = variant
-      }
-    }
-
-    var digest = colorPatcher.digest()
-    if (digest == null) {
-      @Suppress("DEPRECATION")
-      val bytes = colorPatcher.wholeDigest()
-      if (bytes != null) {
-        digest = longArrayOf(hasher.hashBytesToLong(bytes), seededHasher.hashBytesToLong(bytes))
-      }
-    }
-
-    if (digest == null) {
-      return result.createWithPatcher(colorPatcher)
-    }
-
-    val topMapIndex = when(isDark) {
-      false -> 0
-      true -> 1
-      else -> 2
-    }
-
-    return colorPatchCache.computeIfAbsent(topMapIndex) { CollectionFactory.createConcurrentWeakKeyWeakValueMap() }
-      .computeIfAbsent(digest) { CollectionFactory.createConcurrentWeakKeyWeakValueMap() }
-      .computeIfAbsent(imageIcon) {result.createWithPatcher(colorPatcher) }
+    return com.intellij.ui.svg.colorPatchedIcon(icon = icon, colorPatcher = colorPatcher)
   }
 
   /**
    * Creates a new icon with the filter applied.
    */
-  fun filterIcon(icon: Icon, filterSupplier: () -> RGBImageFilter): Icon {
+  fun filterIcon(icon: Icon, filterSupplier: RgbImageFilterSupplier): Icon {
     val effectiveIcon = if (icon is LazyIcon) icon.getOrComputeIcon() else icon
     if (!checkIconSize(effectiveIcon)) {
       return EMPTY_ICON
@@ -318,43 +278,9 @@ object IconLoader {
     }
   }
 
-
-  fun getScaleToRenderIcon(icon: Icon, ancestor: Component?): Float {
-    val ctxSupport = getScaleContextSupport(icon)
-    val scale = if (ctxSupport == null) {
-      (if (JreHiDpiUtil.isJreHiDPI(null as GraphicsConfiguration?)) sysScale(ancestor) else 1.0f)
-    }
-    else {
-      if (JreHiDpiUtil.isJreHiDPI(null as GraphicsConfiguration?)) ctxSupport.getScale(ScaleType.SYS_SCALE).toFloat() else 1.0f
-    }
-    return scale
-  }
-
-  fun renderFilteredIcon(icon: Icon,
-                         scale: Double,
-                         filterSupplier: Supplier<out RGBImageFilter?>,
-                         ancestor: Component?): JBImageIcon {
-    @Suppress("UndesirableClassUsage")
-    val image = BufferedImage((scale * icon.iconWidth).toInt(), (scale * icon.iconHeight).toInt(), BufferedImage.TYPE_INT_ARGB)
-    val graphics = image.createGraphics()
-    graphics.color = Gray.TRANSPARENT
-    graphics.fillRect(0, 0, icon.iconWidth, icon.iconHeight)
-    graphics.scale(scale, scale)
-    // We want to paint here on the fake component:
-    // painting on the real component will have other coordinates at least.
-    // Also, it may be significant if the icon contains updatable icon (e.g. DeferredIcon), and it will schedule incorrect repaint
-    icon.paintIcon(fakeComponent, graphics, 0, 0)
-    graphics.dispose()
-    var img = ImageUtil.filter(image, filterSupplier.get())
-    if (StartupUiUtil.isJreHiDPI(ancestor)) {
-      img = RetinaImage.createFrom(img!!, scale, null)
-    }
-    return JBImageIcon(img!!)
-  }
-
   @JvmStatic
   fun getTransparentIcon(icon: Icon): Icon {
-    return getTransparentIcon(icon, 0.5f)
+    return getTransparentIcon(icon = icon, alpha = 0.5f)
   }
 
   @JvmStatic
@@ -408,91 +334,20 @@ object IconLoader {
   }
 
   @JvmStatic
-  fun createLazy(producer: Supplier<out Icon>): Icon {
-    return LazyIcon(producer)
-  }
+  fun createLazy(producer: Supplier<out Icon>): Icon = LazyIcon(producer)
 
   @Deprecated("Do not use")
   open class CachedImageIcon private constructor(
-    originalPath: String?,
-    resolver: ImageDataLoader?,
-    isDarkOverridden: Boolean?,
-    localFilterSupplier: (() -> RGBImageFilter)? = null,
-    colorPatcher: SvgElementColorPatcherProvider? = null,
-    useStroke: Boolean = false
+    resolver: ImageDataLoader,
   ) : com.intellij.ui.icons.CachedImageIcon(
-    originalPath = originalPath,
     resolver = resolver,
-    isDarkOverridden = isDarkOverridden,
-    localFilterSupplier = localFilterSupplier,
-    colorPatcher = colorPatcher,
-    useStroke = useStroke,
+    toolTip = null,
   )
-}
-
-/**
- * Returns [ScaleContextSupport] which best represents this icon taking into account its compound structure, or null when not applicable.
- */
-private fun getScaleContextSupport(icon: Icon): ScaleContextSupport? {
-  return when (icon) {
-    is ScaleContextSupport -> icon
-    is RetrievableIcon -> getScaleContextSupport(icon.retrieveIcon())
-    is CompositeIcon -> {
-      if (icon.iconCount == 0) {
-        return null
-      }
-      getScaleContextSupport(icon.getIcon(0) ?: return null)
-    }
-    else -> null
-  }
-}
-
-private fun updateTransform(updater: (IconTransform) -> IconTransform) {
-  var prev: IconTransform
-  var next: IconTransform
-  do {
-    prev = pathTransform.get()
-    next = updater(prev)
-  }
-  while (!pathTransform.compareAndSet(prev, next))
-
-  pathTransformGlobalModCount.incrementAndGet()
-  if (prev == next) {
-    return
-  }
-
-  clearCacheOnUpdateTransform()
-}
-
-private fun clearCacheOnUpdateTransform() {
-  iconToDisabledIcon.clear()
-  colorPatchCache.clear()
-  iconToStrokeIcon.clear()
-
-  // clear svg cache
-  clearImageCache()
-  // iconCache is not cleared because it contains an original icon (instance that will delegate to)
-}
-
-private fun findIcon(originalPath: String,
-                     aClass: Class<*>?,
-                     classLoader: ClassLoader,
-                     strict: Boolean = false,
-                     deferUrlResolve: Boolean): Icon? {
-  if (deferUrlResolve) {
-    return findIconUsingDeprecatedImplementation(originalPath = originalPath,
-                                                 classLoader = classLoader,
-                                                 aClass = aClass,
-                                                 strict = strict)
-  }
-  else {
-    return findIconUsingNewImplementation(originalPath, classLoader)
-  }
 }
 
 @Internal
 fun findIconUsingNewImplementation(path: String, classLoader: ClassLoader, toolTip: Supplier<String?>? = null): Icon? {
-  return ImageDataByPathLoader.findIconByPath(path = path, classLoader = classLoader, cache = iconCache.asMap(), toolTip = toolTip)
+  return findIconByPath(path = path, classLoader = classLoader, cache = iconCache, toolTip = toolTip)
 }
 
 @Internal
@@ -505,8 +360,8 @@ fun findIconUsingDeprecatedImplementation(originalPath: String,
   val startTime = StartUpMeasurer.getCurrentTimeIfEnabled()
   val patchedPath = patchIconPath(originalPath = originalPath, classLoader = effectiveClassLoader)
   val effectivePath = patchedPath?.first ?: originalPath
-  if (patchedPath?.second != null) {
-    effectiveClassLoader = patchedPath.second
+  patchedPath?.second?.let {
+    effectiveClassLoader = it
   }
 
   var icon: Icon?
@@ -519,7 +374,7 @@ fun findIconUsingDeprecatedImplementation(originalPath: String,
     if (icon == null) {
       icon = iconCache.get(key) { k ->
         val resolver = ImageDataByPathResourceLoader(path = effectivePath, ownerClass = aClass, classLoader = k.second, strict = strict)
-        CachedImageIcon(originalPath = k.first, resolver = resolver, toolTip = toolTip)
+        CachedImageIcon(resolver = resolver, toolTip = toolTip)
       }
     }
   }

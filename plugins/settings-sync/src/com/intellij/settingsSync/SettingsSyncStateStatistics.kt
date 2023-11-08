@@ -10,14 +10,11 @@ import com.intellij.settingsSync.config.EDITOR_FONT_SUBCATEGORY_ID
 
 class SettingsSyncStateStatistics : ApplicationUsagesCollector() {
 
-  companion object {
-    val GROUP: EventLogGroup = EventLogGroup("settings.sync.state", 3)
-
-    val SETTINGS_SYNC_ENABLED_STATE = GROUP.registerEvent("general.state", EventFields.Boolean("enabled"))
-    val DISABLED_CATEGORIES = GROUP.registerEvent("disabled.categories", EventFields.Enum("category", SettingsCategory::class.java))
-    val BUNDLED_PLUGINS_DISABLED = GROUP.registerEvent("disabled.bundled.plugins", EventFields.Boolean("disabled"))
-    val EDITOR_FONT_STATE = GROUP.registerEvent("editor.font.state", EventFields.Boolean("enabled"))
-  }
+  private val GROUP: EventLogGroup = EventLogGroup("settings.sync.state", 3)
+  private val SETTINGS_SYNC_ENABLED_STATE = GROUP.registerEvent("general.state", EventFields.Boolean("enabled"))
+  private val DISABLED_CATEGORIES = GROUP.registerEvent("disabled.categories", EventFields.Enum("category", SettingsCategory::class.java))
+  private val BUNDLED_PLUGINS_DISABLED = GROUP.registerEvent("disabled.bundled.plugins", EventFields.Boolean("disabled"))
+  private val EDITOR_FONT_STATE = GROUP.registerEvent("editor.font.state", EventFields.Boolean("enabled"))
 
   override fun getMetrics(): Set<MetricEvent> {
     val settings = SettingsSyncSettings.getInstance()

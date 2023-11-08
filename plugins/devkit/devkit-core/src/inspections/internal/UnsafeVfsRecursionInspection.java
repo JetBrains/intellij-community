@@ -19,7 +19,7 @@ import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor;
 
 import java.util.List;
 
-public class UnsafeVfsRecursionInspection extends DevKitUastInspectionBase {
+final class UnsafeVfsRecursionInspection extends DevKitUastInspectionBase {
 
   private static final String VIRTUAL_FILE_CLASS_NAME = VirtualFile.class.getName();
   private static final String GET_CHILDREN_METHOD_NAME = "getChildren";

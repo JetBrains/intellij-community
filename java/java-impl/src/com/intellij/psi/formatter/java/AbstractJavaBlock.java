@@ -1330,7 +1330,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
   }
 
   protected ChildAlignmentStrategyProvider getStrategyProvider() {
-    if (myNode.getElementType() == JavaElementType.CLASS) {
+    if (myNode.getElementType() == JavaElementType.CLASS || myNode.getElementType() == JavaElementType.ANONYMOUS_CLASS) {
       return new SubsequentClassMemberAlignment(mySettings);
     }
 

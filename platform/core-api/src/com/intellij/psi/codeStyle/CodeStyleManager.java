@@ -377,7 +377,9 @@ public abstract class CodeStyleManager  {
   }
 
   public interface Listener {
+    @Topic.ProjectLevel
     Topic<Listener> TOPIC = new Topic<>(Listener.class, Topic.BroadcastDirection.NONE, true);
+
     void beforeReformatText(@NotNull PsiFile file);
     void afterReformatText(@NotNull PsiFile file);
   }

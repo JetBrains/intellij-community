@@ -27,6 +27,7 @@ import org.jetbrains.kotlin.idea.facet.initializeIfNeeded
 import org.jetbrains.kotlin.idea.formatter.KotlinStyleGuideCodeStyle.Companion.INSTANCE
 import org.jetbrains.kotlin.idea.formatter.ProjectCodeStyleImporter
 import org.jetbrains.kotlin.idea.framework.KotlinSdkType
+import org.jetbrains.kotlin.idea.projectConfiguration.JavaRuntimeLibraryDescription
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.tools.projectWizard.core.*
 import org.jetbrains.kotlin.tools.projectWizard.core.service.ProjectImportingWizardService
@@ -62,7 +63,15 @@ class IdeaJpsWizardService(
         KotlinSdkType.setUpIfNeeded()
         val projectImporter = ProjectImporter(project, modulesModel, path, modulesIrs)
         modulesBuilder.addModuleConfigurationUpdater(
-            JpsModuleConfigurationUpdater(ideWizard.jpsData, projectImporter, project, reader)
+            JpsModuleConfigurationUpdater(
+                ideWizard.jpsData,
+                projectImporter,
+                project,
+                reader,
+                ideWizard.isCreatingNewProject,
+                ideWizard.projectName,
+                modulesModel
+            )
         )
 
         projectImporter.import()
@@ -75,18 +84,50 @@ private class JpsModuleConfigurationUpdater(
     private val jpsData: IdeWizard.JpsData,
     private val projectImporter: ProjectImporter,
     private val project: Project,
-    private val reader: Reader
+    private val reader: Reader,
+    private val isCreatingProject: Boolean,
+    private val newProjectOrModuleName: String?,
+    private val modulesModel: ModifiableModuleModel
 ) : ModuleBuilder.ModuleConfigurationUpdater() {
 
+    // All modules come to this function
     override fun update(module: IdeaModule, rootModel: ModifiableRootModel) = with(jpsData) {
+        if (isCreatingProject) {
+            addKotlinJavaRuntime(rootModel)
+        } else if (newProjectOrModuleName == module.name) {
+            if (!findAndAddKotlinRuntime(rootModel)) { // If it is a pure Java project
+                addKotlinJavaRuntime(rootModel)
+            }
+        }
+        libraryDescription.finishLibConfiguration(module, rootModel, isCreatingProject)
+        setUpJvmTargetVersionForModules(module, rootModel)
+        ProjectCodeStyleImporter.apply(module.project, INSTANCE)
+    }
+
+    private fun IdeWizard.JpsData.addKotlinJavaRuntime(rootModel: ModifiableRootModel) {
         libraryOptionsPanel.apply()?.addLibraries(
             rootModel,
             ArrayList(),
             librariesContainer
         )
-        libraryDescription.finishLibConfiguration(module, rootModel, true)
-        setUpJvmTargetVersionForModules(module, rootModel)
-        ProjectCodeStyleImporter.apply(module.project, INSTANCE)
+    }
+
+    private fun findAndAddKotlinRuntime(rootModel: ModifiableRootModel): Boolean {
+        val allModules = modulesModel.modules
+        var kotlinRuntimeConfigured = false
+        /* If it's a Kotlin project, there will be only one pass per cycle because a "root" module is the first, and it will contain KotlinRuntime.
+           If we add a Kotlin module to a Java project, we need to check if other Kotlin modules exist and have Kotlin Runtime */
+        for (myModule in allModules) {
+            if (!kotlinRuntimeConfigured) {
+                val modifiableModel = ModuleRootManager.getInstance(myModule).modifiableModel
+                modifiableModel.orderEntries.filterIsInstance<LibraryOrderEntry>()
+                    .find { it.libraryName == JavaRuntimeLibraryDescription.LIBRARY_NAME }?.run {
+                        rootModel.addOrderEntry(this)
+                        kotlinRuntimeConfigured = true
+                    }
+            }
+        }
+        return kotlinRuntimeConfigured
     }
 
     private fun setUpJvmTargetVersionForModules(module: IdeaModule, rootModel: ModifiableRootModel) {

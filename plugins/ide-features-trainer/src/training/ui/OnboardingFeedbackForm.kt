@@ -8,7 +8,6 @@ import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
@@ -140,7 +139,7 @@ fun showOnboardingLessonFeedbackForm(project: Project?,
 
   val emailCheckBox = JBCheckBox(LearnBundle.message("onboarding.feedback.email.consent"))
 
-  val jLabel = JLabel(ApplicationBundle.message("feedback.form.email"))
+  val jLabel = JLabel(LearnBundle.message("onboarding.feedback.form.email"))
   jLabel.isEnabled = false
   val emailTextField = JBTextField(LicensingFacade.INSTANCE?.getLicenseeEmail() ?: "")
   emailTextField.disabledTextColor = UIUtil.getComboBoxDisabledForeground()
@@ -213,7 +212,6 @@ fun showOnboardingLessonFeedbackForm(project: Project?,
     val collectedData = buildJsonObject {
       put(FEEDBACK_REPORT_ID_KEY, onboardingFeedbackData.feedbackReportId)
       put("format_version", FEEDBACK_JSON_VERSION + onboardingFeedbackData.additionalFeedbackFormatVersion)
-      put("email", if (emailCheckBox.isSelected) emailTextField.text else "")
       for (function in saver) {
         function()
       }
@@ -230,6 +228,7 @@ fun showOnboardingLessonFeedbackForm(project: Project?,
       onboardingFeedbackData.reportTitle,
       description,
       DEFAULT_FEEDBACK_CONSENT_ID,
+      true,
       onboardingFeedbackData.feedbackReportId,
       collectedData
     )

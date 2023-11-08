@@ -78,7 +78,7 @@ public class MisorderedAssertEqualsArgumentsInspection extends BaseInspection {
     return AssertHint.create(expression, methodName -> methodNames.contains(methodName) ? 2 : null);
   }
 
-  static boolean looksLikeExpectedArgument(PsiExpression expression) {
+  static boolean looksLikeExpectedArgument(PsiExpression expression, ParameterPosition parameterPosition) {
     if (expression == null) {
       return false;
     }
@@ -134,6 +134,11 @@ public class MisorderedAssertEqualsArgumentsInspection extends BaseInspection {
             }
             expressions.add(definition);
           }
+          else if (target instanceof PsiMethod method && parameterPosition == ParameterPosition.ACTUAL) {
+            if (!"expected".equals(method.getName())) {
+              expectedArgument.set(Boolean.FALSE);
+            }
+          }
           if (!(target instanceof PsiCompiledElement)) {
             expectedArgument.set(Boolean.FALSE);
           }
@@ -157,10 +162,16 @@ public class MisorderedAssertEqualsArgumentsInspection extends BaseInspection {
       if (hint == null) {
         return;
       }
-      if (looksLikeExpectedArgument(hint.getExpected()) || !looksLikeExpectedArgument(hint.getActual())) {
+      if (looksLikeExpectedArgument(hint.getExpected(), ParameterPosition.EXPECTED) ||
+          !looksLikeExpectedArgument(hint.getActual(), ParameterPosition.ACTUAL)) {
         return;
       }
       registerMethodCallError(expression);
     }
+  }
+
+  private enum ParameterPosition {
+    EXPECTED,
+    ACTUAL
   }
 }

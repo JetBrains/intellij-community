@@ -1,12 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.highlighter;
 
-import com.intellij.lexer.HtmlHighlightingLexer;
+import com.intellij.lexer.HtmlLexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.XmlHighlighterColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
-import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterBase;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.containers.ContainerUtil;
@@ -59,7 +58,7 @@ public class HtmlFileHighlighter extends SyntaxHighlighterBase {
 
   @Override
   public @NotNull Lexer getHighlightingLexer() {
-    return new HtmlHighlightingLexer(FileTypeRegistry.getInstance().findFileTypeByName("CSS"));
+    return new HtmlLexer(true);
   }
 
   @Override

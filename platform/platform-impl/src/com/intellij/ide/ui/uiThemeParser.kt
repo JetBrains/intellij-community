@@ -3,7 +3,7 @@ package com.intellij.ide.ui
 
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.ui.ColorHexUtil
-import com.intellij.ui.icons.ImageDataByPathLoader.Companion.findIconByPath
+import com.intellij.ui.icons.findIconByPath
 import com.intellij.ui.icons.getReflectiveIcon
 import com.intellij.util.ui.GrayFilter
 import com.intellij.util.ui.JBDimension

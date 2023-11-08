@@ -36,6 +36,7 @@ import org.jetbrains.kotlin.idea.caches.resolve.util.javaResolutionFacade
 import org.jetbrains.kotlin.idea.core.compareDescriptors
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.usages.*
 import org.jetbrains.kotlin.idea.refactoring.createJavaMethod
+import org.jetbrains.kotlin.idea.refactoring.getDeclarationBody
 import org.jetbrains.kotlin.idea.refactoring.isTrueJavaMethod
 import org.jetbrains.kotlin.idea.references.KtArrayAccessReference
 import org.jetbrains.kotlin.idea.references.KtInvokeFunctionReference

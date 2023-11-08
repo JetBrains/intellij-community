@@ -34,18 +34,32 @@ public interface ExternalSystemNotificationExtension {
   ProjectSystemId getTargetExternalSystemId();
 
   /**
-   * Allows to customize external system processing notification.
+   * Allows customizing external system processing notification.
    *
-   * @param notificationData notification data
-   * @param project target ide project
-   * @param error   error occurred during external system processing
+   * @param notificationData    notification data
+   * @param project             target ide project
+   * @param externalProjectPath path of the target external project
+   * @param error               error occurred during external system processing
    */
-  void customize(@NotNull NotificationData notificationData,
-                 @NotNull Project project,
-                 @Nullable Throwable error);
+  default void customize(
+    @NotNull NotificationData notificationData,
+    @NotNull Project project,
+    @NotNull String externalProjectPath,
+    @Nullable Throwable error
+  ) { }
 
   /**
-   * Allows to determine internal errors comes from external system which might be confusing for IDE users.
+   * @deprecated Use {@link #customize(NotificationData, Project, String, Throwable)} instead
+   */
+  @Deprecated
+  default void customize(
+    @NotNull NotificationData notificationData,
+    @NotNull Project project,
+    @Nullable Throwable error
+  ) { }
+
+  /**
+   * Allows determining internal errors comes from an external system, which might be confusing for IDE users.
    * Such errors shouldn't be shown to the end user on UI.
    *
    * @param error error occurred during external system processing

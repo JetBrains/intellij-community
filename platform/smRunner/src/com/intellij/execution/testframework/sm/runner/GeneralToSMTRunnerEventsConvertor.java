@@ -124,6 +124,7 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
     //fire events
     final String testName = testStartedEvent.getName();
     final String locationUrl = testStartedEvent.getLocationUrl();
+    final String metainfo = testStartedEvent.getMetainfo();
     final boolean isConfig = testStartedEvent.isConfig();
     final String fullName = getFullTestName(testName);
 
@@ -144,7 +145,7 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
     }
     if (testProxy == null) {
       // creates test
-      testProxy = new SMTestProxy(testName, false, locationUrl, testStartedEvent.getMetainfo(), false);
+      testProxy = new SMTestProxy(testName, false, locationUrl, metainfo, false);
       testProxy.setConfig(isConfig);
       if (myTreeBuildBeforeStart) testProxy.setTreeBuildBeforeStart();
 
@@ -152,6 +153,9 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
         testProxy.setLocator(myLocator);
       }
       parentSuite.addChild(testProxy);
+    }
+    else if (metainfo != null) {
+      testProxy.setMetainfo(metainfo);
     }
     // adds to running tests map
     myRunningTestsFullNameToProxy.put(fullName, testProxy);
@@ -170,12 +174,13 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
     //fire event
     final String suiteName = suiteStartedEvent.getName();
     final String locationUrl = suiteStartedEvent.getLocationUrl();
+    final String metainfo = suiteStartedEvent.getMetainfo();
 
     SMTestProxy parentSuite = getCurrentSuite();
     SMTestProxy newSuite = findChild(parentSuite, locationUrl != null ? locationUrl : suiteName, true);
     if (newSuite == null) {
       //new suite
-      newSuite = new SMTestProxy(suiteName, true, locationUrl, suiteStartedEvent.getMetainfo(), parentSuite.isPreservePresentableName());
+      newSuite = new SMTestProxy(suiteName, true, locationUrl, metainfo, parentSuite.isPreservePresentableName());
       if (myTreeBuildBeforeStart) {
         newSuite.setTreeBuildBeforeStart();
       }
@@ -185,6 +190,9 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
       }
 
       parentSuite.addChild(newSuite);
+    }
+    else if (metainfo != null) {
+      newSuite.setMetainfo(metainfo);
     }
 
     initCurrentChildren(newSuite, true);
@@ -211,7 +219,7 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
     }
   }
 
-  private SMTestProxy findChild(SMTestProxy parentSuite, String fullName, boolean preferSuite) {
+  protected SMTestProxy findChild(SMTestProxy parentSuite, String fullName, boolean preferSuite) {
     if (myTreeBuildBeforeStart) {
       Set<SMTestProxy> acceptedProxies = new LinkedHashSet<>();
       Collection<? extends SMTestProxy> children = myCurrentChildren.get(fullName);

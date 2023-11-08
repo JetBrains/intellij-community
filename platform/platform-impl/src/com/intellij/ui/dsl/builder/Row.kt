@@ -25,6 +25,7 @@ import com.intellij.ui.dsl.gridLayout.VerticalGaps
 import com.intellij.ui.layout.ComponentPredicate
 import com.intellij.util.Function
 import com.intellij.util.execution.ParametersListUtil
+import com.intellij.util.ui.ThreeStateCheckBox
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
@@ -197,6 +198,8 @@ interface Row {
   fun panel(init: Panel.() -> Unit): Panel
 
   fun checkBox(@NlsContexts.Checkbox text: String): Cell<JBCheckBox>
+
+  fun threeStateCheckBox(@NlsContexts.Checkbox text: String): Cell<ThreeStateCheckBox>
 
   /**
    * Adds radio button. [Panel.buttonsGroup] must be defined above hierarchy before adding radio buttons (and therefore there is no need

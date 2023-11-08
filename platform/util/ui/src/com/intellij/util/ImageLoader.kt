@@ -37,7 +37,7 @@ object ImageLoader {
   @JvmStatic
   fun loadFromUrl(url: URL): Image? {
     val path = url.toString()
-    return loadImage(path = path, classLoader = null)
+    return loadImage(path = path, classLoader = null, useCache = true)
   }
 
   @JvmStatic
@@ -68,27 +68,27 @@ object ImageLoader {
   @Deprecated("Use {@link #loadFromResource(String, Class)}")
   fun loadFromResource(s: @NonNls String): Image? {
     val callerClass = ReflectionUtil.getGrandCallerClass()
-    return loadFromResource(path = s, aClass = callerClass ?: return null)
+    return loadImage(path = s, resourceClass = callerClass ?: return null, classLoader = null, useCache = true)
   }
 
   @JvmStatic
   fun loadFromResource(path: @NonNls String, aClass: Class<*>): Image? {
-    return loadImage(path = path, resourceClass = aClass, classLoader = null)
+    return loadImage(path = path, resourceClass = aClass, classLoader = null, useCache = true)
   }
 
   @JvmStatic
   fun loadFromBytes(bytes: ByteArray): Image? {
-    return loadFromStream(ByteArrayInputStream(bytes))
+    return loadFromStream(inputStream = ByteArrayInputStream(bytes))
   }
 
   @JvmStatic
   fun loadFromStream(inputStream: InputStream): Image? {
     try {
       inputStream.use {
-        // for backward compatibility assume the image is hidpi-aware (includes default SYS_SCALE)
+        // for backward compatibility, assume the image is hidpi-aware (includes default SYS_SCALE)
         val scaleContext = ScaleContext.create()
         val scale = scaleContext.getScale(DerivedScaleType.PIX_SCALE).toFloat()
-        val image = loadPng(inputStream)
+        val image = loadRasterImage(inputStream)
         if (StartupUiUtil.isJreHiDPI(scaleContext)) {
           val userScale = scaleContext.getScale(DerivedScaleType.EFF_USR_SCALE)
           return HiDPIImage(image = image,

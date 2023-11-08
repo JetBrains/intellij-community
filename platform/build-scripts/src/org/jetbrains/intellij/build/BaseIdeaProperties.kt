@@ -27,7 +27,6 @@ private val BASE_CLASS_VERSIONS = persistentHashMapOf(
   "plugins/maven/lib/maven3-server-common.jar" to "1.8",
   "plugins/maven/lib/maven3-server.jar" to "1.8",
   "plugins/maven/lib/artifact-resolver-m31.jar" to "1.7",
-  "plugins/xpath/lib/rt/xslt-rt.jar" to "1.7",
 )
 
 /**
@@ -67,16 +66,11 @@ val IDEA_BUNDLED_PLUGINS: PersistentList<String> = DEFAULT_BUNDLED_PLUGINS + per
   "intellij.groovy",
   "intellij.junit",
   "intellij.testng",
-  "intellij.xpath",
-  "intellij.android.plugin",
-  "intellij.android.design-plugin",
   "intellij.java.i18n",
-  "intellij.ant",
   "intellij.java.guiForms.designer",
   "intellij.java.byteCodeViewer",
   "intellij.java.coverage",
   "intellij.java.decompiler",
-  "intellij.devkit",
   "intellij.eclipse",
   "intellij.platform.langInjection",
   "intellij.java.debugger.streams",

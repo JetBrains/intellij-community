@@ -20,7 +20,20 @@ import org.jetbrains.uast.*
 
 @IntellijInternalApi
 enum class LevelType {
-  APP, PROJECT, MODULE, APP_AND_PROJECT, NOT_SPECIFIED;
+  APP,
+  PROJECT,
+  MODULE,
+  APP_AND_PROJECT,
+
+  /**
+   * An example of a service with no specified level:
+   *
+   * // MyService.kt
+   * @Service(value = [])
+   * class MyService
+   */
+  NOT_SPECIFIED,
+  NOT_REGISTERED;
 
   fun isApp(): Boolean {
     return this == APP || this == APP_AND_PROJECT
@@ -39,13 +52,13 @@ fun getLevelType(annotation: JvmAnnotation, language: Language): LevelType {
       serviceLevelExtractor.extractLevels(attributeValue)
     }
     is JvmAnnotationEnumFieldValue -> getLevels(attributeValue)
-    else -> emptySet()
+    else -> setOf(Service.Level.APP)
   }
   return toLevelType(levels)
 }
 
 @IntellijInternalApi
-fun getLevelType(project: Project, uClass: UClass): LevelType? {
+fun getLevelType(project: Project, uClass: UClass): LevelType {
   val serviceAnnotation = uClass.findAnnotation(Service::class.java.canonicalName)
   if (serviceAnnotation != null) return getLevelType(serviceAnnotation)
   val javaPsi = uClass.javaPsi
@@ -65,7 +78,7 @@ fun getLevelType(project: Project, uClass: UClass): LevelType? {
     }
   }
   if (levels.isEmpty()) {
-    return if (isModuleService) LevelType.MODULE else null
+    return if (isModuleService) LevelType.MODULE else LevelType.NOT_REGISTERED
   }
   return toLevelType(levels)
 }

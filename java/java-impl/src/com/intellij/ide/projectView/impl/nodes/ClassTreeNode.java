@@ -14,6 +14,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.ElementPresentationUtil;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,26 +41,36 @@ public class ClassTreeNode extends BasePsiMemberNode<PsiClass> {
   @Override
   public Collection<AbstractTreeNode<?>> getChildrenImpl() {
     PsiClass parent = getValue();
-    List<AbstractTreeNode<?>> treeNodes = new ArrayList<>(myMandatoryChildren);
+    return computeChildren(parent, this.getSettings(), this.getProject(), this.isShowInnerClasses(), this.myMandatoryChildren);
+  }
+
+  @NotNull
+  @ApiStatus.Internal
+  public static List<AbstractTreeNode<?>> computeChildren(PsiClass parent,
+                                                   ViewSettings settings,
+                                                   Project project,
+                                                   boolean showInnerClasses,
+                                                   Collection<? extends AbstractTreeNode<?>> mandatoryChildren) {
+    List<AbstractTreeNode<?>> treeNodes = new ArrayList<>(mandatoryChildren);
     if (parent != null) {
       try {
-        boolean showMembers = getSettings().isShowMembers();
-        if (showMembers || isShowInnerClasses()) {
+        boolean showMembers = settings.isShowMembers();
+        if (showMembers || showInnerClasses) {
           for (PsiClass psi : parent.getInnerClasses()) {
             if (psi.isPhysical()) {
-              treeNodes.add(new ClassTreeNode(getProject(), psi, getSettings()));
+              treeNodes.add(new ClassTreeNode(project, psi, settings));
             }
           }
         }
         if (showMembers) {
           for (PsiMethod psi : parent.getMethods()) {
             if (psi.isPhysical()) {
-              treeNodes.add(new PsiMethodNode(getProject(), psi, getSettings()));
+              treeNodes.add(new PsiMethodNode(project, psi, settings));
             }
           }
           for (PsiField psi : parent.getFields()) {
             if (psi.isPhysical()) {
-              treeNodes.add(new PsiFieldNode(getProject(), psi, getSettings()));
+              treeNodes.add(new PsiFieldNode(project, psi, settings));
             }
           }
         }

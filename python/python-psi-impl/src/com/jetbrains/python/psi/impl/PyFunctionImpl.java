@@ -18,10 +18,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
-import com.jetbrains.python.PyElementTypes;
-import com.jetbrains.python.PyNames;
-import com.jetbrains.python.PyTokenTypes;
-import com.jetbrains.python.PythonDialectsTokenSetProvider;
+import com.jetbrains.python.*;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
@@ -67,7 +64,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
   @Override
   @Nullable
   public PyTypeParameterList getTypeParameterList() {
-    return childToPsi(PyElementTypes.TYPE_PARAMETER_LIST);
+    return getStubOrPsiChild(PyStubElementTypes.TYPE_PARAMETER_LIST);
   }
 
   private class CachedStructuredDocStringProvider implements CachedValueProvider<StructuredDocString> {
@@ -145,7 +142,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
 
   @Override
   public @NotNull PyParameterList getParameterList() {
-    return getRequiredStubOrPsiChild(PyElementTypes.PARAMETER_LIST);
+    return getRequiredStubOrPsiChild(PyStubElementTypes.PARAMETER_LIST);
   }
 
   @Override
@@ -186,7 +183,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
 
   @Override
   public @Nullable PyDecoratorList getDecoratorList() {
-    return getStubOrPsiChild(PyElementTypes.DECORATOR_LIST); // PsiTreeUtil.getChildOfType(this, PyDecoratorList.class);
+    return getStubOrPsiChild(PyStubElementTypes.DECORATOR_LIST); // PsiTreeUtil.getChildOfType(this, PyDecoratorList.class);
   }
 
   @Override
@@ -552,7 +549,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
 
   @Override
   public PyAnnotation getAnnotation() {
-    return getStubOrPsiChild(PyElementTypes.ANNOTATION);
+    return getStubOrPsiChild(PyStubElementTypes.ANNOTATION);
   }
 
   @Override

@@ -111,9 +111,9 @@ public class FSRecordsImplTest {
   }
 
   @AfterEach
-  void tearDown() {
+  void tearDown() throws Exception {
     if (vfs != null) {
-      vfs.dispose();
+      StorageTestingUtils.bestEffortToCloseAndClean(vfs);
     }
   }
 }

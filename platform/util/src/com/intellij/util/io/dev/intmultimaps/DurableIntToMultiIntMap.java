@@ -2,6 +2,7 @@
 package com.intellij.util.io.dev.intmultimaps;
 
 import com.intellij.util.io.DataEnumerator;
+import com.intellij.util.io.CleanableStorage;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -11,7 +12,8 @@ import java.io.IOException;
 
 /**
  * Map[int -> int*].
- * This is a building block for {@link DurableEnumerator}, which is why API may look quite specialized.
+ * This is a building block for {@link com.intellij.util.io.DurableDataEnumerator}, which is why API
+ * may look quite specialized.
  * <p>
  * Threading: in general, implementations of this interface must provide at least thread-safety -- e.g.
  * {@link #lookupOrInsert(int, ValueAcceptor, ValueCreator)} expected to be atomic, i.e. {@link ValueCreator#newValueForKey(int)}
@@ -22,7 +24,7 @@ import java.io.IOException;
  * _require_ to be durable -- empty flush/close methods are OK.
  */
 @ApiStatus.Internal
-public interface DurableIntToMultiIntMap extends Flushable, Closeable {
+public interface DurableIntToMultiIntMap extends Flushable, Closeable, CleanableStorage {
   int NO_VALUE = DataEnumerator.NULL_ID;
 
   /** @return true if (key,value) pair was really put into the map -- i.e., wasn't there before */

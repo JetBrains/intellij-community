@@ -8,5 +8,23 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="commons-lang3" level="project" />
+    <orderEntry type="module-library">
+      <library name="commons-collections" type="repository">
+        <properties include-transitive-deps="false" maven-id="commons-collections:commons-collections:3.2.2">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/commons-collections/commons-collections/3.2.2/commons-collections-3.2.2.jar">
+              <sha256sum>eeeae917917144a68a741d4c0dff66aa5c5c5fd85593ff217bced3fc8ca783b8</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/commons-collections/commons-collections/3.2.2/commons-collections-3.2.2.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/commons-collections/commons-collections/3.2.2/commons-collections-3.2.2-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
   </component>
 </module>

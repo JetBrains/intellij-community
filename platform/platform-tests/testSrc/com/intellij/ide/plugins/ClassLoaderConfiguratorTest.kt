@@ -10,8 +10,8 @@ import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.assertions.Assertions.assertThatThrownBy
 import com.intellij.testFramework.rules.InMemoryFsRule
 import com.intellij.util.io.directoryStreamIfExists
+import com.intellij.util.lang.Xx3UnencodedString
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.xxh3.Xxh3
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TestName
@@ -139,7 +139,8 @@ internal class ClassLoaderConfiguratorTest {
     val rootDir = inMemoryFs.fs.getPath("/")
 
     // toUnsignedLong - avoid `-` symbol
-    val pluginIdSuffix = Integer.toUnsignedLong(Xxh3.hashUnencodedChars(javaClass.name + name.methodName).toInt()).toString(36)
+    val pluginIdSuffix = Integer.toUnsignedLong(Xx3UnencodedString.hashUnencodedString(javaClass.name + name.methodName).toInt())
+      .toString(36)
     val dependencyId = "p_dependency_$pluginIdSuffix"
     plugin(rootDir, """
       <idea-plugin package="com.bar">
@@ -180,8 +181,8 @@ internal class ClassLoaderConfiguratorTest {
 
 private fun loadDescriptors(dir: Path): PluginLoadingResult {
   val result = PluginLoadingResult()
-  val context = DescriptorListLoadingContext(disabledPlugins = emptySet(),
-                                             brokenPluginVersions = emptyMap(),
+  val context = DescriptorListLoadingContext(customDisabledPlugins = emptySet(),
+                                             customBrokenPluginVersions = emptyMap(),
                                              productBuildNumber = { buildNumber })
 
   // constant order in tests

@@ -40,7 +40,6 @@
 
     <projectTemplatesFactory implementation="com.intellij.platform.templates.ArchivedTemplatesFactory"/>
     <applicationService serviceImplementation="com.intellij.platform.templates.ProjectTemplateExportable"/>
-    <exportable serviceInterface="com.intellij.platform.templates.ProjectTemplateExportable"/>
     <projectTemplateFileProcessor implementation="com.intellij.platform.templates.SystemFileProcessor"/>
 
     <!-- this depends on TemplateLanguageConfigurable which isn't registered in LangExtensions, so it should go here as well -->

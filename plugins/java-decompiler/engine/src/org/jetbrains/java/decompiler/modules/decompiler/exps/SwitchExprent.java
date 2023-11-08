@@ -5,6 +5,8 @@ package org.jetbrains.java.decompiler.modules.decompiler.exps;
 
 import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.CheckTypesResult;
+import org.jetbrains.java.decompiler.struct.consts.PooledConstant;
+import org.jetbrains.java.decompiler.struct.consts.PrimitiveConstant;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
 import org.jetbrains.java.decompiler.util.TextBuffer;
 
@@ -12,6 +14,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+
+import static org.jetbrains.java.decompiler.modules.decompiler.SwitchPatternHelper.isBootstrapSwitch;
 
 public class SwitchExprent extends Exprent {
 
@@ -76,7 +80,28 @@ public class SwitchExprent extends Exprent {
   @Override
   public TextBuffer toJava(int indent, BytecodeMappingTracer tracer) {
     tracer.addMapping(bytecode);
-    return value.toJava(indent, tracer).enclose("switch (", ")");
+    //if it is impossible to process
+    TextBuffer buf = new TextBuffer();
+    if (isBootstrapSwitch(this)) {
+      InvocationExprent invocationExprent = (InvocationExprent)value;
+      List<Exprent> parameters = invocationExprent.getParameters();
+      if (parameters.size() == 2) {
+        Exprent exprent = parameters.get(1);
+        buf.append("//").append(exprent.toJava(indent, tracer)).append("->").append("value").appendLineSeparator();
+        tracer.incrementCurrentSourceLine();
+        List<PooledConstant> arguments = invocationExprent.getBootstrapArguments();
+        for (int i = 0; i < arguments.size(); i++) {
+          PooledConstant argument = arguments.get(i);
+          if (argument instanceof PrimitiveConstant primitiveConstant && primitiveConstant.value != null) {
+            buf.appendIndent(indent).append("//").append(i).append("->").append(primitiveConstant.value.toString()).appendLineSeparator();
+            tracer.incrementCurrentSourceLine();
+          }
+        }
+        buf.appendIndent(indent);
+      }
+    }
+    buf.append(value.toJava(indent, tracer).enclose("switch (", ")"));
+    return buf;
   }
 
   @Override

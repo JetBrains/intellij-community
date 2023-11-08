@@ -2,10 +2,9 @@
   "name": "IntelliJ Light",
   "dark": false,
   "author": "JetBrains",
-  "editorScheme": "/themes/Light.xml",
   "parentTheme": "IntelliJ",
   "nameKey": "intellij.light.theme.name",
-
+  "editorScheme": "IntelliJ Light",
   "ui": {
 
     "MainToolbar.Dropdown.transparentHoverBackground": "#0000001A",

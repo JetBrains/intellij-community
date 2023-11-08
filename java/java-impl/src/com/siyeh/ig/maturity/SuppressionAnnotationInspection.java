@@ -1,16 +1,15 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.maturity;
 
-import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.ModCommandQuickFix;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.siyeh.InspectionGadgetsBundle;
@@ -85,9 +84,9 @@ public class SuppressionAnnotationInspection extends BaseInspection {
     }
   }
 
-  private class AllowSuppressionsFix extends InspectionGadgetsFix {
+  private class AllowSuppressionsFix extends ModCommandQuickFix {
     @Override
-    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+    public @NotNull ModCommand perform(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement psiElement = descriptor.getPsiElement();
       final Iterable<String> ids;
       if (psiElement instanceof PsiAnnotation) {
@@ -96,26 +95,17 @@ public class SuppressionAnnotationInspection extends BaseInspection {
       else {
         final String suppressedIds = JavaSuppressionUtil.getSuppressedInspectionIdsIn(psiElement);
         if (suppressedIds == null) {
-          return;
+          return ModCommand.nop();
         }
         ids = StringUtil.tokenize(suppressedIds, ",");
       }
-      for (String id : ids) {
-        if (!myAllowedSuppressions.contains(id)) {
-          myAllowedSuppressions.add(id);
+      return ModCommand.updateOption(psiElement, SuppressionAnnotationInspection.this, inspection -> {
+        for (String id : ids) {
+          if (!inspection.myAllowedSuppressions.contains(id)) {
+            inspection.myAllowedSuppressions.add(id);
+          }
         }
-      }
-      ProjectInspectionProfileManager.getInstance(project).fireProfileChanged();
-    }
-
-    @Override
-    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
-      return new IntentionPreviewInfo.Html(HtmlChunk.text(InspectionGadgetsBundle.message("allow.suppressions.preview.text")));
-    }
-
-    @Override
-    public boolean startInWriteAction() {
-      return false;
+      });
     }
 
     @NotNull

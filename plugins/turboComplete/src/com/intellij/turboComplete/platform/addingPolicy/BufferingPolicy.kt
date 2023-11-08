@@ -4,7 +4,7 @@ import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.completion.addingPolicy.ElementsAddingPolicy
 import com.intellij.codeInsight.lookup.LookupElement
 
-class BufferingPolicy : ElementsAddingPolicy {
+class BufferingPolicy : ElementsAddingPolicy.Default {
   private val buffer: MutableList<LookupElement> = mutableListOf()
 
   override fun onResultStop(result: CompletionResultSet) {
@@ -15,7 +15,7 @@ class BufferingPolicy : ElementsAddingPolicy {
     buffer.add(element)
   }
 
-  override fun addAllElements(result: CompletionResultSet, elements: MutableIterable<LookupElement>) {
+  override fun addAllElements(result: CompletionResultSet, elements: Iterable<LookupElement>) {
     buffer.addAll(elements)
   }
 

@@ -118,6 +118,28 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
   private static int ourShowPopupAfterFirstItemGroupingTime = 100;
 
   private volatile int myCount;
+  private enum LookupAppearancePolicy {
+    /**
+     * The default strategy for lookup appearance.
+     * After elements are added to the lookup, it will appear after a certain period of time,
+     * the duration of which depends on the platform's internal logic.
+     */
+    DEFAULT,
+    /**
+     * In this strategy, elements can be added to the lookup, but the lookup itself will not appear.
+     * To eventually open the lookup, the state should transition either to DEFAULT or ON_FIRST_POSSIBILITY.
+     * Transitioning to DEFAULT, the lookup will appear after some time, based on platform's logic.
+     * Transitioning to ON_FIRST_POSSIBILITY, the lookup will attempt to appear as soon as possible.
+     */
+    POSTPONED,
+    /**
+     * This strategy forces the lookup to appear as soon as possible.
+     * If there's at least one element in the lookup already, it will open nearly immediately.
+     * Otherwise, the lookup will open almost immediately following the addition of a new element.
+     */
+    ON_FIRST_POSSIBILITY,
+  }
+  private volatile LookupAppearancePolicy myLookupAppearancePolicy = LookupAppearancePolicy.DEFAULT;
   private volatile boolean myHasPsiElements;
   private boolean myLookupUpdated;
   private final PropertyChangeListener myLookupManagerListener;
@@ -128,6 +150,12 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
   private final Object myLock = ObjectUtils.sentinel("CompletionProgressIndicator");
 
   private final EmptyCompletionNotifier myEmptyCompletionNotifier;
+
+  /**
+   * Unfreeze immediately after N-th item is added to the lookup.
+   * -1 means this functionality is disabled.
+   */
+  private volatile int myUnfreezeAfterNItems = -1;
 
   CompletionProgressIndicator(Editor editor, @NotNull Caret caret, int invocationCount,
                               CodeCompletionHandlerBase handler, @NotNull OffsetMap offsetMap, @NotNull OffsetsInFile hostOffsets,
@@ -367,6 +395,37 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
     return myLookup;
   }
 
+  /**
+   * Set lookup appearance policy to default.
+   * @see LookupAppearancePolicy
+   */
+  public void defaultLookupAppearance() {
+    myLookupAppearancePolicy = LookupAppearancePolicy.DEFAULT;
+  }
+
+  /**
+   * Postpone lookup appearance.
+   * @see LookupAppearancePolicy
+   */
+  public void postponeLookupAppearance() {
+    myLookupAppearancePolicy = LookupAppearancePolicy.POSTPONED;
+  }
+
+  /**
+   * Use this function to show the lookup window as soon as possible.
+   * Right now or after, when at least one element will be added to the lookup.
+   * @see LookupAppearancePolicy
+   */
+  public void showLookupAsSoonAsPossible() {
+    myLookupAppearancePolicy = LookupAppearancePolicy.ON_FIRST_POSSIBILITY;
+    openLookupLater();
+  }
+
+  private void openLookupLater() {
+    ApplicationManager.getApplication()
+      .invokeLater(this::showLookup, obj -> myLookup.getShownTimestampMillis() != 0L || myLookup.isLookupDisposed());
+  }
+
   void withSingleUpdate(Runnable action) {
     myArranger.batchUpdate(action);
   }
@@ -408,6 +467,9 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
   }
 
   private boolean shouldShowLookup() {
+    if (myLookupAppearancePolicy == LookupAppearancePolicy.POSTPONED) {
+      return false;
+    }
     if (isAutopopupCompletion()) {
       if (myCount == 0) {
         return false;
@@ -469,11 +531,37 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
     //noinspection NonAtomicOperationOnVolatileField
     myCount++; // invoked from a single thread
 
-    if (myCount == 1) {
-      AppExecutorUtil.getAppScheduledExecutorService().schedule(myFreezeSemaphore::up, ourInsertSingleItemTimeSpan, TimeUnit.MILLISECONDS);
+    if (myCount == myUnfreezeAfterNItems) {
+      showLookupAsSoonAsPossible();
     }
-    myQueue.queue(myUpdate);
+
+    if (myLookupAppearancePolicy == LookupAppearancePolicy.ON_FIRST_POSSIBILITY && myLookup.getShownTimestampMillis() == 0L) {
+      AppExecutorUtil.getAppScheduledExecutorService().schedule(myFreezeSemaphore::up, 0, TimeUnit.MILLISECONDS);
+      openLookupLater();
+    } else  {
+      if (myCount == 1) {
+        AppExecutorUtil.getAppScheduledExecutorService().schedule(myFreezeSemaphore::up, ourInsertSingleItemTimeSpan, TimeUnit.MILLISECONDS);
+      }
+      myQueue.queue(myUpdate);
+    }
   }
+
+  /**
+   * In certain cases we add the first batch of items almost at once and want to show lookup directly after they are added.
+   * It makes sense to set this number when you get all your items from one contributor, and you have full control over the completion
+   * process. So you can, for example, set this number in the beginning of `addCompletions()` in your completion provider and reset it
+   * when the completion is over.
+   * Example: Completion provider receives first 100 items at once after significant delay (200+ ms) and adds them all together. If you
+   * don't set this value, and you continue adding results in your completion provider (for example you get your next batch of results in
+   * 500ms) the popup might be shown with significant delay.
+   *
+   * @param number The Number of items in lookup which trigger the popup. -1 means this functionality is disabled. Also specifying 0 makes
+   *               no sense since we can't add 0 items.
+   */
+  public void unfreezeImmediatelyAfterFirstNItems(int number) {
+    myUnfreezeAfterNItems = number;
+  }
+
 
   void addDelayedMiddleMatches() {
     ArrayList<CompletionResult> delayed;

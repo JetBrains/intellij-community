@@ -4,6 +4,7 @@ package com.intellij.ide.actions.searcheverywhere;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.SearchEverywhereClassifier;
 import com.intellij.ide.util.gotoByName.GotoActionModel;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.Computable;
 import com.intellij.ui.AppUIUtil;
@@ -12,6 +13,7 @@ import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.list.SelectablePanel;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
@@ -86,8 +88,10 @@ abstract class SEResultsListFactory {
       SearchEverywhereContributor<Object> contributor = searchListModel.getContributorForIndex(index);
       assert contributor != null : "Null contributor is not allowed here";
       ListCellRenderer<? super Object> renderer = renderersCache.computeIfAbsent(contributor.getSearchProviderId(), s -> contributor.getElementsRenderer());
-      unselectedBackground = extractUnselectedBackground(selected, () ->
-        detachParent(renderer.getListCellRendererComponent(list, value, index, false, true)));
+      try (AccessToken ignore = SlowOperations.knownIssue("IDEA-326652, EA-826545; IDEA-260958, EA-831915")) {
+        unselectedBackground = extractUnselectedBackground(selected, () ->
+          detachParent(renderer.getListCellRendererComponent(list, value, index, false, true)));
+      }
       component = detachParent(renderer.getListCellRendererComponent(list, value, index, selected, true));
     }
 

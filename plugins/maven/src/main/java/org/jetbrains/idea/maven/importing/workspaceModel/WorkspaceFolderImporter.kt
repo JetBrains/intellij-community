@@ -9,9 +9,9 @@ import com.intellij.platform.workspace.jps.entities.ContentRootEntity
 import com.intellij.platform.workspace.jps.entities.ExcludeUrlEntity
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.entities.SourceRootEntity
-import com.intellij.util.containers.FileCollectionFactory
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
+import com.intellij.util.containers.FileCollectionFactory
 import org.jetbrains.idea.maven.importing.BuildHelperMavenPluginUtil
 import org.jetbrains.idea.maven.importing.MavenImporter
 import org.jetbrains.idea.maven.importing.MavenWorkspaceConfigurator

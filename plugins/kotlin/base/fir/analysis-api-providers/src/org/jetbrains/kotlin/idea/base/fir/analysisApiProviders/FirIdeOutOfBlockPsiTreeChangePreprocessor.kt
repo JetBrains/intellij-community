@@ -2,16 +2,23 @@
 
 package org.jetbrains.kotlin.idea.base.fir.analysisApiProviders
 
+import com.intellij.injected.editor.DocumentWindow
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
 import com.intellij.psi.impl.PsiModificationTrackerImpl
 import com.intellij.psi.impl.PsiTreeChangeEventImpl
 import com.intellij.psi.impl.PsiTreeChangeEventImpl.PsiEventType
 import com.intellij.psi.impl.PsiTreeChangePreprocessor
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtilBase
+import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.analysis.low.level.api.fir.LLFirInternals
 import org.jetbrains.kotlin.analysis.low.level.api.fir.file.structure.LLFirDeclarationModificationService
 import org.jetbrains.kotlin.analysis.low.level.api.fir.file.structure.LLFirDeclarationModificationService.ModificationType
+import org.jetbrains.kotlin.analysis.project.structure.ProjectStructureProvider
+import org.jetbrains.kotlin.analysis.providers.analysisMessageBus
+import org.jetbrains.kotlin.analysis.providers.topics.KotlinTopics
 import org.jetbrains.kotlin.idea.util.publishGlobalSourceOutOfBlockModification
+import org.jetbrains.kotlin.psi.KtFile
 
 internal class FirIdeOutOfBlockPsiTreeChangePreprocessor(private val project: Project) : PsiTreeChangePreprocessor {
     override fun treeChanged(event: PsiTreeChangeEventImpl) {
@@ -29,6 +36,11 @@ internal class FirIdeOutOfBlockPsiTreeChangePreprocessor(private val project: Pr
         }
 
         val rootElement = event.parent
+
+        if (rootElement != null) {
+            invalidateCachesInInjectedDocuments(rootElement)
+        }
+
         val child = when (event.code) {
             PsiEventType.CHILD_REMOVED -> rootElement
             PsiEventType.BEFORE_CHILD_REPLACEMENT -> event.oldChild
@@ -51,6 +63,31 @@ internal class FirIdeOutOfBlockPsiTreeChangePreprocessor(private val project: Pr
                 ModificationType.Unknown
             },
         )
+    }
+
+    private fun invalidateCachesInInjectedDocuments(rootElement: PsiElement) {
+        // check if the change is inside some possibly injected file, e.g., inside a string literal
+        val injectionHost = rootElement.parentOfType<PsiLanguageInjectionHost>() ?: return
+
+        @Suppress("DEPRECATION") // there is no other injection API to do this
+        val injectedDocuments = InjectedLanguageUtilBase.getCachedInjectedDocuments(rootElement.containingFile)
+        if (injectedDocuments.isEmpty()) return
+
+        for (injectedDocument in injectedDocuments) {
+            if (rootElement.containsInjection(injectedDocument)) {
+                invalidateCachesForInjectedKotlinCode(injectedDocument)
+            }
+        }
+    }
+
+    private fun PsiElement.containsInjection(injectedDocument: DocumentWindow): Boolean {
+        return injectedDocument.hostRanges.any { this.textRange.intersects(it) }
+    }
+
+    private fun invalidateCachesForInjectedKotlinCode(injectedDocument: DocumentWindow) {
+        val ktFile = PsiDocumentManager.getInstance(project).getPsiFile(injectedDocument) as? KtFile ?: return
+        val ktModule = ProjectStructureProvider.getInstance(project).getModule(ktFile, contextualModule = null)
+        project.analysisMessageBus.syncPublisher(KotlinTopics.MODULE_OUT_OF_BLOCK_MODIFICATION).onModification(ktModule)
     }
 }
 

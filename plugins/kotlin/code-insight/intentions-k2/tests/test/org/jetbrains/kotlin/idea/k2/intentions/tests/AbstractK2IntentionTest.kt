@@ -21,6 +21,13 @@ abstract class AbstractK2IntentionTest : AbstractIntentionTestBase() {
         else super.afterFileNameSuffix(ktFilePath)
     }
 
+    override fun fileName(): String {
+        val fileName = super.fileName()
+        val firFileName = IgnoreTests.deriveFirFileName(fileName)
+
+        return if (File(testDataDirectory, firFileName).exists()) firFileName else fileName
+    }
+
     override fun isFirPlugin() = true
 
     override fun getDefaultProjectDescriptor(): KotlinLightProjectDescriptor {

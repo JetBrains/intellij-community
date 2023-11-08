@@ -20,6 +20,7 @@ import java.io.*;
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.zip.DeflaterOutputStream;
@@ -28,12 +29,12 @@ import java.util.zip.InflaterInputStream;
 
 @ApiStatus.Internal
 public final class RefCountingContentStorageImplLF extends AbstractStorageLF implements RefCountingContentStorage {
-  
-  private final Map<Integer, Future<?>> pendingWriteRequests = new ConcurrentHashMap<>();
+
+  private final ConcurrentMap<Integer, Future<?>> pendingWriteRequests = new ConcurrentHashMap<>();
   private int pendingWriteRequestsSize;
   private final ExecutorService writeRequestExecutor;
 
-  /**Basically, it means "never delete records" */
+  /** Basically, it means "never delete records" */
   private final boolean useContentHashes;
 
   private static final int MAX_PENDING_WRITE_SIZE = 20 * 1024 * 1024;
@@ -87,8 +88,10 @@ public final class RefCountingContentStorageImplLF extends AbstractStorageLF imp
       doRecordSanityCheck(record, result);
     }
 
+    //text files usually 3-4x compressible:
+    int uncompressedSizeEstimation = Math.max(512, result.length * 3);
     try (InflaterInputStream in = new CustomInflaterInputStream(result)) {
-      final BufferExposingByteArrayOutputStream outputStream = new BufferExposingByteArrayOutputStream();
+      final BufferExposingByteArrayOutputStream outputStream = new BufferExposingByteArrayOutputStream(uncompressedSizeEstimation);
       StreamUtil.copy(in, outputStream);
       return outputStream;
     }
@@ -215,27 +218,27 @@ public final class RefCountingContentStorageImplLF extends AbstractStorageLF imp
   @Override
   public void acquireRecord(int record) throws IOException {
     waitForPendingWriteForRecord(record);
-    withWriteLock(() -> {
-      ((RefCountingRecordsTableLF)recordsTable).incRefCount(record);
-    });
+    if (!useContentHashes) {
+      withWriteLock(() -> ((RefCountingRecordsTableLF)recordsTable).incRefCount(record));
+    }
   }
 
   @Override
   public void releaseRecord(int record) throws IOException {
-    waitForPendingWriteForRecord(record);
-    withWriteLock(() -> {
-      if (((RefCountingRecordsTableLF)recordsTable).decRefCount(record) && !useContentHashes) {
-        doDeleteRecord(record);
-      }
-    });
+    if (!useContentHashes) {
+      waitForPendingWriteForRecord(record);
+      withWriteLock(() -> {
+        if (((RefCountingRecordsTableLF)recordsTable).decRefCount(record)) {
+          doDeleteRecord(record);
+        }
+      });
+    }
   }
 
   @Override
   public int getRefCount(int record) throws IOException {
     waitForPendingWriteForRecord(record);
-    return withReadLock(() -> {
-      return ((RefCountingRecordsTableLF)recordsTable).getRefCount(record);
-    });
+    return withReadLock(() -> ((RefCountingRecordsTableLF)recordsTable).getRefCount(record));
   }
 
   @Override

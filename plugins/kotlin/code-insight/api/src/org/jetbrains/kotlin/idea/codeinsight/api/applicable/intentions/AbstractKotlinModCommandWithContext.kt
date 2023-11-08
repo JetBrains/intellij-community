@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.analyzeInDependedAnalysisSession
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.KotlinApplicableToolWithContext
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.isApplicableToElement
@@ -21,23 +22,31 @@ import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
 import kotlin.reflect.KClass
 
-private val ALWAYS_TRUE: (KtElement) -> Boolean = { true }
-
 abstract class AbstractKotlinModCommandWithContext<ELEMENT : KtElement, CONTEXT>(
-    clazz: KClass<ELEMENT>,
-    private val predicate: (ELEMENT) -> Boolean
-) :
-    PsiUpdateModCommandAction<ELEMENT>(clazz.java, predicate),
+    clazz: KClass<ELEMENT>
+) : PsiUpdateModCommandAction<ELEMENT>(clazz.java),
     KotlinApplicableToolWithContext<ELEMENT, CONTEXT> {
-
-    constructor(clazz: KClass<ELEMENT>) : this(clazz, ALWAYS_TRUE)
 
     /**
      * Checks the intention's applicability based on [isApplicableByPsi] and [KotlinApplicabilityRange].
-     */
-    fun isApplicableTo(element: ELEMENT, caretOffset: Int): Boolean = isApplicableToElement(element, caretOffset)
+     *
+     * To be invoked on a background thread only.
+     *
+     * @param element is a non-physical [PsiElement]
+    */
+    override fun isElementApplicable(element: ELEMENT, context: ActionContext): Boolean {
+        return isApplicableToElement(element, context.offset) && analyze(element) { isApplicableByAnalyze(element) }
+    }
 
-    override fun isApplicableByPsi(element: ELEMENT): Boolean = predicate(element)
+    /*
+     * Checks if the element is applicable performing analysis.
+     *
+     * To be invoked on a background thread only.
+     *
+     * @param element is a non-physical [PsiElement]
+     */
+    context(KtAnalysisSession)
+    protected open fun isApplicableByAnalyze(element: ELEMENT): Boolean = true
 
     protected open val isKotlinOnlyIntention: Boolean = true
 
@@ -54,12 +63,21 @@ abstract class AbstractKotlinModCommandWithContext<ELEMENT : KtElement, CONTEXT>
 
     protected open fun visitTargetTypeOnlyOnce(): Boolean = false
 
+    /**
+     * To be invoked on a background thread only.
+     *
+     * @param element is a non-physical [PsiElement]
+     */
     override fun getPresentation(context: ActionContext, element: ELEMENT): Presentation? {
-        if (!isApplicableTo(element, context.offset)) return null
         val analysisContext = prepareContextWithAnalyze(element) ?: return null
         return Presentation.of(getActionName(element, analysisContext))
     }
 
+    /**
+     * To be invoked on a background thread only.
+     *
+     * @param element is a non-physical [PsiElement]
+     */
     final override fun invoke(context: ActionContext, element: ELEMENT, updater: ModPsiUpdater) {
         val containingFile = element.containingFile
         val physicalKtFile = containingFile.originalFile as KtFile

@@ -1,7 +1,7 @@
 package com.intellij.codeInspection.tests.kotlin.test.junit
 
-import com.intellij.codeInspection.tests.JvmLanguage
-import com.intellij.codeInspection.tests.test.junit.JUnitAssertEqualsOnArrayInspectionTestBase
+import com.intellij.jvm.analysis.internal.testFramework.test.junit.JUnitAssertEqualsOnArrayInspectionTestBase
+import com.intellij.jvm.analysis.testFramework.JvmLanguage
 
 class KotlinJUnitAssertEqualsOnArrayInspectionTest : JUnitAssertEqualsOnArrayInspectionTestBase() {
   fun `test highlighting`() {

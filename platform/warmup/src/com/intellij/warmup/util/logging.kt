@@ -1,8 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.warmup.util
 
+import com.intellij.diagnostic.ThreadDumper
 import com.intellij.ide.warmup.WarmupStatus
-import com.intellij.idea.logEssentialInfoAboutIde
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
@@ -15,13 +15,14 @@ import com.intellij.openapi.diagnostic.RollingFileHandler
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManagerListener
 import com.intellij.openapi.progress.Task
-import com.intellij.openapi.progress.asContextElement
-import com.intellij.openapi.progress.impl.ProgressState
-import com.intellij.openapi.progress.impl.TextDetailsProgressReporter
 import com.intellij.openapi.progress.util.ProgressIndicatorBase
 import com.intellij.openapi.util.io.findOrCreateFile
 import com.intellij.openapi.util.text.Formats
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx
+import com.intellij.platform.ide.bootstrap.logEssentialInfoAboutIde
+import com.intellij.platform.util.progress.asContextElement
+import com.intellij.platform.util.progress.impl.ProgressState
+import com.intellij.platform.util.progress.impl.TextDetailsProgressReporter
 import com.intellij.util.application
 import com.intellij.util.lazyPub
 import kotlinx.coroutines.*
@@ -37,6 +38,7 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.logging.Level
 import java.util.logging.LogRecord
 import kotlin.io.path.div
+import kotlin.io.path.writeText
 import kotlin.time.Duration.Companion.milliseconds
 
 object WarmupLogger {
@@ -60,7 +62,7 @@ internal fun initLogger(args: List<String>) {
   val logger = warmupLogger ?: return
   val info = ApplicationInfo.getInstance()
   val buildDate = SimpleDateFormat("dd MMM yyyy HH:mm", Locale.US).format(info.buildDate.time)
-  logEssentialInfoAboutIde(logger, info, args)
+  logEssentialInfoAboutIde(log = logger, appInfo = info, args = args)
   val connection = ApplicationManager.getApplication().messageBus.connect()
   connection.subscribe(ProgressManagerListener.TOPIC, WarmupProgressListener())
   logger.info("IDE: ${ApplicationNamesInfo.getInstance().fullProductName} (build #${info.build.asString()}, ${buildDate})")
@@ -239,5 +241,12 @@ class WarmupProgressListener : ProgressManagerListener {
     val startTime = taskDurationMap.remove(System.identityHashCode(task))
     val elapsedTimeSuffix = if (startTime == null) "" else " in ${Formats.formatDuration(currentTime - startTime)}"
     WarmupLogger.logInfo("[IDE]: Task '${task.title}' ended" + elapsedTimeSuffix)
+  }
+}
+
+internal fun dumpThreadsAfterConfiguration() {
+  val dump = ThreadDumper.getThreadDumpInfo(ThreadDumper.getThreadInfos(), false)
+  Path.of(PathManager.getLogPath(), "warmup").findOrCreateFile("thread-dump-after-project-configuration.txt").apply {
+    writeText(dump.rawDump)
   }
 }

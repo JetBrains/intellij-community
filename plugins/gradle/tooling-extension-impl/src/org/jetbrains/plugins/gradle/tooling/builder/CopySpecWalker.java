@@ -16,6 +16,7 @@
 
 package org.jetbrains.plugins.gradle.tooling.builder;
 
+import com.intellij.gradle.toolingExtension.util.GradleReflectionUtil;
 import groovy.lang.MetaClass;
 import groovy.lang.MetaMethod;
 import org.codehaus.groovy.runtime.DefaultGroovyMethods;
@@ -25,7 +26,6 @@ import org.gradle.api.file.FileTree;
 import org.gradle.api.file.FileVisitDetails;
 import org.gradle.api.file.FileVisitor;
 import org.gradle.util.GradleVersion;
-import org.jetbrains.plugins.gradle.tooling.util.ReflectionUtil;
 
 import java.util.Collection;
 import java.util.List;
@@ -93,7 +93,7 @@ public final class CopySpecWalker {
         @SuppressWarnings("SSBasedInspection")
         Object destPath = resolverMetaclass.respondsTo(resolver, "getDestPath").get(0).invoke(resolver, new Object[0]);
 
-        final String relativePath = ReflectionUtil.reflectiveCall(destPath, "getPathString", String.class);
+        final String relativePath = GradleReflectionUtil.reflectiveCall(destPath, "getPathString", String.class);
 
         Collection<Object> sourcePaths = getSourcePaths(resolver);
         if (sourcePaths == null) {
@@ -109,7 +109,7 @@ public final class CopySpecWalker {
           }
         }
 
-        FileTree sourceTree = ReflectionUtil.reflectiveCall(resolver, "getSource", FileTree.class);
+        FileTree sourceTree = GradleReflectionUtil.reflectiveCall(resolver, "getSource", FileTree.class);
         sourceTree.visit(new FileVisitor() {
           @Override
           public void visitDir(FileVisitDetails dirDetails) {

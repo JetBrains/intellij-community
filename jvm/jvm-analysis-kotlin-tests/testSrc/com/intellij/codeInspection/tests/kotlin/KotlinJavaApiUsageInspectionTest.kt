@@ -1,7 +1,7 @@
 package com.intellij.codeInspection.tests.kotlin
 
-import com.intellij.codeInspection.tests.JavaApiUsageInspectionTestBase
-import com.intellij.codeInspection.tests.JvmLanguage
+import com.intellij.jvm.analysis.internal.testFramework.JavaApiUsageInspectionTestBase
+import com.intellij.jvm.analysis.testFramework.JvmLanguage
 import com.intellij.pom.java.LanguageLevel
 
 class KotlinJavaApiUsageInspectionTest : JavaApiUsageInspectionTestBase() {

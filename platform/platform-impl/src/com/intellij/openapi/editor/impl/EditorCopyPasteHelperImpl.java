@@ -73,7 +73,15 @@ public final class EditorCopyPasteHelperImpl extends EditorCopyPasteHelper {
       separator = "\n";
     }
     extraDataCollector.add(new CaretStateTransferableData(startOffsets, endOffsets));
-    extraDataCollector.add(new CopyPasteOptionsTransferableData(options));
+
+    // IDEA-313776 Can not paste the text (data) on the windows remote desktop, copied from IDEA editor
+    // For some reason, copy-pasting doesn't work from host Windows to an older remote Windows connected through RDP
+    // (like Window Server 2012, or 2008) in case there's transferable data implementing Serializable.
+    // As a workaround, we only put that data if the corresponding advanced setting is enabled.
+    if (getCopiedFromEmptySelectionPasteMode() != AT_CARET) {
+      extraDataCollector.add(new CopyPasteOptionsTransferableData(options));
+    }
+
     return buf.toString();
   }
 
@@ -278,7 +286,7 @@ public final class EditorCopyPasteHelperImpl extends EditorCopyPasteHelper {
     }
 
     @Override
-    public @Nullable DataFlavor getFlavor() {
+    public @NotNull DataFlavor getFlavor() {
       return FLAVOR;
     }
 

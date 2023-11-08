@@ -78,7 +78,7 @@ fun IKotlinFacetSettings.initializeIfNeeded(
 
     if (shouldInferLanguageLevel) {
         languageLevel = (if (useProjectSettings) LanguageVersion.fromVersionString(commonArguments.languageVersion) else null)
-            ?: getDefaultLanguageLevel(module, compilerVersion, coerceRuntimeLibraryVersionToReleased = compilerVersion == null)
+            ?: getDefaultLanguageLevel(compilerVersion, coerceRuntimeLibraryVersionToReleased = compilerVersion == null)
     }
 
     if (shouldInferAPILevel) {
@@ -94,13 +94,13 @@ fun IKotlinFacetSettings.initializeIfNeeded(
                 languageLevel?.coerceAtMostVersion(compilerVersion)
             }
 
-            else -> {
-                val maximumValue = getLibraryVersion(
+            else -> run apiLevel@{
+                val maximumValue = getKotlinStdlibVersionOrNull(
                     module,
                     rootModel,
                     this.targetPlatform?.idePlatformKind,
                     coerceRuntimeLibraryVersionToReleased = compilerVersion == null
-                )
+                ) ?: compilerVersion ?: getDefaultVersion()
                 languageLevel?.coerceAtMostVersion(maximumValue)
             }
         }
@@ -125,7 +125,7 @@ private fun getDefaultTargetPlatform(module: Module, rootModel: ModuleRootModel?
     return platformKind.defaultPlatform
 }
 
-private fun LanguageVersion.coerceAtMostVersion(version: IdeKotlinVersion): LanguageVersion {
+fun LanguageVersion.coerceAtMostVersion(version: IdeKotlinVersion): LanguageVersion {
     fun isUpToNextMinor(major: Int, minor: Int, patch: Int): Boolean {
         return version.kotlinVersion.isAtLeast(major, minor, patch) && !version.kotlinVersion.isAtLeast(major, minor + 1)
     }
@@ -146,7 +146,7 @@ fun parseCompilerArgumentsToFacetSettings(
     modelsProvider: IdeModifiableModelsProvider?
 ) {
     val compilerArgumentsClass = kotlinFacetSettings.compilerArguments?.javaClass ?: return
-    val currentArgumentsBean = compilerArgumentsClass.newInstance()
+    val currentArgumentsBean = compilerArgumentsClass.getDeclaredConstructor().newInstance()
     val currentArgumentWithDefaults = substituteDefaults(arguments, currentArgumentsBean)
     parseCommandLineArguments(currentArgumentWithDefaults, currentArgumentsBean)
     applyCompilerArgumentsToFacetSettings(currentArgumentsBean, kotlinFacetSettings, null, modelsProvider)
@@ -199,6 +199,10 @@ fun applyCompilerArgumentsToFacetSettings(
         )
 
         val ignoredAsAdditionalArguments = ignoredFields + hashSetOf(
+            CommonCompilerArguments::fragments.name,
+            CommonCompilerArguments::fragmentRefines.name,
+            CommonCompilerArguments::fragmentSources.name,
+
             K2JVMCompilerArguments::moduleName.name,
             K2JVMCompilerArguments::noReflect.name,
             K2JVMCompilerArguments::noStdlib.name,

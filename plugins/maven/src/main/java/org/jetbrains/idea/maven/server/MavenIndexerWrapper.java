@@ -6,18 +6,14 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.indices.MavenIndices;
 import org.jetbrains.idea.maven.model.MavenArtifactInfo;
 import org.jetbrains.idea.maven.model.MavenIndexId;
-import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
-import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.io.File;
-import java.nio.file.Path;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
@@ -26,11 +22,6 @@ import java.util.List;
 import java.util.Set;
 
 public abstract class MavenIndexerWrapper extends MavenRemoteObjectWrapper<MavenServerIndexer> {
-  private static volatile Path ourTestIndicesDir;
-
-  private MavenIndices myIndices;
-
-
 
 
   public MavenIndexerWrapper(@Nullable RemoteObjectWrapper<?> parent) {
@@ -66,13 +57,13 @@ public abstract class MavenIndexerWrapper extends MavenRemoteObjectWrapper<Maven
   }
 
   public void updateIndex(@NotNull final MavenIndexId mavenIndexId,
-                          @Nullable final MavenGeneralSettings settings,
-                          @NotNull final MavenProgressIndicator indicator) throws MavenProcessCanceledException,
-                                                                         MavenServerIndexerException {
+                          @NotNull final MavenProgressIndicator indicator,
+                          boolean multithreaded) throws MavenProcessCanceledException,
+                                                                                                           MavenServerIndexerException {
     performCancelable(() -> {
       MavenServerProgressIndicator indicatorWrapper = wrapAndExport(indicator);
       try {
-        getOrCreateWrappee().updateIndex(mavenIndexId, indicatorWrapper, ourToken);
+        getOrCreateWrappee().updateIndex(mavenIndexId, indicatorWrapper, multithreaded, ourToken);
       }
       finally {
         UnicastRemoteObject.unexportObject(indicatorWrapper, true);
@@ -123,18 +114,9 @@ public abstract class MavenIndexerWrapper extends MavenRemoteObjectWrapper<Maven
 
   @ApiStatus.Internal
   public MavenIndices getOrCreateIndices(Project project) {
-    if (myIndices != null) {
-      return myIndices;
-    }
-    synchronized (this) {
-      if (myIndices == null) {
-        myIndices = createMavenIndices();
-      }
-      
-      return myIndices;
-    }
+    return createMavenIndices(project);
   }
 
-  protected abstract MavenIndices createMavenIndices();
+  protected abstract MavenIndices createMavenIndices(Project project);
 }
 

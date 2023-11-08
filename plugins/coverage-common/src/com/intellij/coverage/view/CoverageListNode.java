@@ -26,7 +26,7 @@ public class CoverageListNode extends AbstractTreeNode<Object> {
   protected final CoverageSuitesBundle myBundle;
   protected final CoverageViewManager.StateBean myStateBean;
   private final FileStatusManager myFileStatusManager;
-  private VirtualFile myCachedFile;
+  private final VirtualFile myFile;
 
   /**
    * Children are cached in order to be able to filter nodes with no (interesting) children.
@@ -39,23 +39,31 @@ public class CoverageListNode extends AbstractTreeNode<Object> {
    */
   @Deprecated
   public CoverageListNode(Project project,
-                          @NotNull PsiNamedElement classOrPackage,
+                          @NotNull PsiNamedElement element,
                           CoverageSuitesBundle bundle,
                           CoverageViewManager.StateBean stateBean,
                           boolean unused) {
-    this(project, classOrPackage, bundle, stateBean);
+    this(project, element, bundle, stateBean);
   }
 
   public CoverageListNode(Project project,
-                          @NotNull PsiNamedElement classOrPackage,
+                          @NotNull PsiNamedElement element,
                           CoverageSuitesBundle bundle,
                           CoverageViewManager.StateBean stateBean) {
-    super(project, classOrPackage);
+    super(project, element);
 
-    myName = ReadAction.compute(() -> classOrPackage.getName());
+    myName = ReadAction.compute(() -> element.getName());
     myBundle = bundle;
     myStateBean = stateBean;
     myFileStatusManager = FileStatusManager.getInstance(myProject);
+    myFile = ReadAction.compute(() -> {
+      VirtualFile file = element.isValid() && element.isPhysical() ? PsiUtilCore.getVirtualFile(element) : null;
+      if (file != null) {
+        VirtualFile canonical = file.getCanonicalFile();
+        if (canonical != null) return canonical;
+      }
+      return file;
+    });
   }
 
   @NotNull
@@ -84,25 +92,14 @@ public class CoverageListNode extends AbstractTreeNode<Object> {
     });
   }
 
-  @Override
-  public FileStatus getFileStatus() {
-    VirtualFile virtualFile = getVirtualFileCached();
-    return virtualFile != null ? myFileStatusManager.getStatus(virtualFile) : super.getFileStatus();
+  public VirtualFile getFile() {
+    return myFile;
   }
 
-  @Nullable
-  private VirtualFile getVirtualFileCached() {
-    if (myCachedFile != null) return myCachedFile;
-    final PsiFile containingFile = ReadAction.compute(() -> {
-      Object value = getValue();
-      if (value instanceof PsiElement && ((PsiElement)value).isValid()) {
-        return ((PsiElement)value).getContainingFile();
-      }
-      return null;
-    });
-    VirtualFile virtualFile = containingFile == null ? null : containingFile.getVirtualFile();
-    myCachedFile = virtualFile;
-    return virtualFile;
+  @Override
+  public FileStatus getFileStatus() {
+    VirtualFile virtualFile = myFile;
+    return virtualFile != null ? myFileStatusManager.getStatus(virtualFile) : super.getFileStatus();
   }
 
   @Override
@@ -118,7 +115,7 @@ public class CoverageListNode extends AbstractTreeNode<Object> {
   @Override
   public boolean canNavigate() {
     final Object value = getValue();
-    return value instanceof PsiElement && ((PsiElement)value).isValid() && ((PsiElement)value).getContainingFile() != null;
+    return value instanceof PsiElement element && element.isValid() && element.getContainingFile() != null;
   }
 
   @Override
@@ -133,8 +130,8 @@ public class CoverageListNode extends AbstractTreeNode<Object> {
       if (requestFocus) {
         NavigationUtil.activateFileWithPsiElement(value, true);
       }
-      else if (value instanceof NavigationItem) {
-        ((NavigationItem)value).navigate(false);
+      else if (value instanceof NavigationItem navigationItem) {
+        navigationItem.navigate(false);
       }
     }
   }
@@ -144,22 +141,22 @@ public class CoverageListNode extends AbstractTreeNode<Object> {
     return ReadAction.compute(() -> {
       //todo weighted
       final Object value = getValue();
-      if (value instanceof PsiElement && ((PsiElement)value).getContainingFile() != null) return 40;
+      if (value instanceof PsiElement element && element.getContainingFile() != null) return 40;
       return 30;
     });
   }
 
   public boolean contains(VirtualFile file) {
     final Object value = getValue();
-    if (value instanceof PsiElement) {
-      final boolean equalContainingFile = Comparing.equal(PsiUtilCore.getVirtualFile((PsiElement)value), file);
+    if (value instanceof PsiElement element) {
+      final boolean equalContainingFile = Comparing.equal(PsiUtilCore.getVirtualFile(element), file);
       if (equalContainingFile) return true;
     }
-    if (value instanceof PsiDirectory) {
-      return contains(file, (PsiDirectory)value);
+    if (value instanceof PsiDirectory directory) {
+      return contains(file, directory);
     }
-    else if (value instanceof PsiDirectoryContainer) {
-      final PsiDirectory[] directories = ((PsiDirectoryContainer)value).getDirectories();
+    else if (value instanceof PsiDirectoryContainer container) {
+      final PsiDirectory[] directories = container.getDirectories();
       for (PsiDirectory directory : directories) {
         if (contains(file, directory)) return true;
       }

@@ -299,7 +299,7 @@ class NastradamusClientTest {
     )
 
     val xxHash3TestClassResult = testResultRequestEntity.testRunResults
-      .single { it.fullName == "org.jetbrains.xxh3.XxHash3Test" }
+      .single { it.fullName == "com.intellij.util.lang.XxHash3Test" }
 
     Assert.assertTrue("""
       XxHash3Test class must have 184 tests and be with correct duration and bucket attributes.

@@ -13,13 +13,13 @@ boolean isMac = Os.isFamily(Os.FAMILY_MAC)
 
 envs {
   String python27version = "2.7.18"
-  String python36version = "3.6.15"
+  String python36version = (isWindows) ? "3.6.8" : "3.6.15" // 3.6.8 is broken on modern libc and clang, but latest version for Windows
   String python37version = "3.7.9"
   String python38version = "3.8.10"
   String python39version = "3.9.13"
   String python310version = "3.10.8"
-  String python311version = "3.11.0"
-  String python312version = "3.12.0rc1"
+  String python311version = "3.11.6"
+  String python312version = "3.12.0"
 
   def customBuildDir = System.getenv().get("PYCHARM_BUILD_DIR")
   project.buildDir = customBuildDir? new File(customBuildDir): buildDir

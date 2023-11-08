@@ -6,7 +6,7 @@ import com.intellij.codeWithMe.asContextElement
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.PlatformDataKeys
-import com.intellij.openapi.actionSystem.impl.Utils.wrapToAsyncDataContext
+import com.intellij.openapi.actionSystem.impl.Utils.createAsyncDataContext
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.service
@@ -21,10 +21,10 @@ import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
-private class AutoScrollToSourceTaskManagerImpl : AutoScrollToSourceTaskManager {
+internal class AutoScrollToSourceTaskManagerImpl : AutoScrollToSourceTaskManager {
   @RequiresEdt
   override fun scheduleScrollToSource(handler: AutoScrollToSourceHandler, dataContext: DataContext) {
-    val asyncDataContext = wrapToAsyncDataContext(dataContext)
+    val asyncDataContext = createAsyncDataContext(dataContext)
     val project = dataContext.getData(PlatformDataKeys.PROJECT)
 
     // task must be cancelled if the project is closed

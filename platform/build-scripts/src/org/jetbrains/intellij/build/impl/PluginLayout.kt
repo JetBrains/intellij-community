@@ -1,17 +1,19 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment", "ReplaceNegatedIsEmptyWithIsNotEmpty")
-
 package org.jetbrains.intellij.build.impl
 
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import kotlinx.collections.immutable.PersistentList
+import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.persistentMapOf
 import kotlinx.collections.immutable.plus
 import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.JvmArchitecture
+import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.PluginBundlingRestrictions
 import org.jetbrains.intellij.build.io.copyDir
 import org.jetbrains.intellij.build.io.copyFileToDir
@@ -59,9 +61,6 @@ class PluginLayout private constructor(val mainModule: String,
     private set
 
   var scrambleClasspathFilter: (BuildContext, Path) -> Boolean = { _, _ -> true }
-  
-  var allowUsingScrambledPlatformClasses: Boolean = false
-    private set
 
   /**
    * See [org.jetbrains.intellij.build.impl.PluginLayout.PluginLayoutSpec.zkmScriptStub]
@@ -75,23 +74,28 @@ class PluginLayout private constructor(val mainModule: String,
   internal var resourceGenerators: PersistentList<ResourceGenerator> = persistentListOf()
     private set
 
+  internal var platformResourceGenerators: PersistentMap<SupportedDistribution, ResourceGenerator> = persistentMapOf()
+    private set
+
   fun getMainJarName(): String = mainJarName
 
   companion object {
     /**
-     * Creates the plugin layout description. The default plugin layout is composed of a jar with name [mainModuleName].jar containing
+     * Creates the plugin layout description.
+     * The default plugin layout is composed of a jar with name [mainModuleName].jar containing
      * production output of [mainModuleName] module, and the module libraries of [mainModuleName] with scopes 'Compile' and 'Runtime'
      * placed under 'lib' directory in a directory with name [mainModuleName].
-     * If you need to include additional resources or modules in the plugin layout, specify them in
-     * [body] parameter. If you don't need to change the default layout there is no need to call this method at all, it's enough to
-     * specify the plugin module in [org.jetbrains.intellij.build.ProductModulesLayout.bundledPluginModules],
+     * If you need to include additional resources or modules in the plugin layout, specify them in the [body] parameter.
+     * If you don't need to change the default layout, there is no need to call this method at all;
+     * it's enough to specify the plugin module in [org.jetbrains.intellij.build.ProductModulesLayout.bundledPluginModules],
      * [org.jetbrains.intellij.build.ProductModulesLayout.bundledPluginModules],
      * [org.jetbrains.intellij.build.ProductModulesLayout.pluginModulesToPublish] list.
      *
-     * <p>Note that project-level libraries on which the plugin modules depend are automatically put to 'IDE_HOME/lib' directory for all IDEs
-     * that are compatible with the plugin. If this isn't desired (e.g., a library is used in a single plugin only, or of plugins where
-     * a library is used aren't bundled with IDEs, so we don't want to increase the size of the distribution, you may invoke [PluginLayoutSpec.withProjectLibrary]
-     * to include such a library to the plugin distribution.</p>
+     * Note that project-level libraries on which the plugin modules depend are automatically put to 'IDE_HOME/lib' directory
+     * for all IDEs that are compatible with the plugin.
+     * If this isn't desired (e.g., a library is used in a single plugin only or isn't bundled with IDEs to reduce the distribution size),
+     * you may invoke [PluginLayoutSpec.withProjectLibrary] to include such a library to the plugin distribution.
+     *
      * @param mainModuleName name of the module containing META-INF/plugin.xml file of the plugin
      */
     @JvmStatic
@@ -177,6 +181,10 @@ class PluginLayout private constructor(val mainModule: String,
       layout.resourceGenerators += generator
     }
 
+    fun withGeneratedPlatformResources(os: OsFamily, arch: JvmArchitecture, generator: ResourceGenerator) {
+      layout.platformResourceGenerators += SupportedDistribution(os, arch) to generator
+    }
+
     /**
      * @param resourcePath path to resource file or directory relative to `moduleName` module content root
      * @param relativeOutputPath target path relative to the plugin root directory
@@ -195,7 +203,7 @@ class PluginLayout private constructor(val mainModule: String,
       /**
        * Custom name of the directory (under 'plugins' directory) where the plugin should be placed. By default, the main module name is used
        * (with stripped `intellij` prefix and dots replaced by dashes).
-       * <strong>Don't set this property for new plugins</strong>; it is temporary added to keep the layout of old plugins unchanged.
+       * **Don't set this property for new plugins**; it is temporarily added to keep the layout of old plugins unchanged.
        */
       set(value) {
         field = value
@@ -219,7 +227,7 @@ class PluginLayout private constructor(val mainModule: String,
        * Custom name of the main plugin JAR file.
        * By default, the main module name with 'jar' an extension is used (with stripped `intellij`
        * prefix and dots replaced by dashes).
-       * <strong>Don't set this property for new plugins</strong>; it is temporary added to keep the layout of old plugins unchanged.
+       * **Don't set this property for new plugins**; it is temporarily added to keep the layout of old plugins unchanged.
        */
       set(value) {
         layout.mainJarName = value
@@ -229,26 +237,41 @@ class PluginLayout private constructor(val mainModule: String,
      * @param binPathRelativeToCommunity path to resource file or directory relative to the intellij-community repo root
      * @param outputPath target path relative to the plugin root directory
      */
-    @JvmOverloads
     fun withBin(binPathRelativeToCommunity: String, outputPath: String, skipIfDoesntExist: Boolean = false) {
       withGeneratedResources { targetDir, context ->
-        val source = context.paths.communityHomeDir.resolve(binPathRelativeToCommunity).normalize()
-        val attributes = try {
-          Files.readAttributes(source, BasicFileAttributes::class.java)
-        }
-        catch (ignored: FileSystemException) {
-          if (skipIfDoesntExist) {
-            return@withGeneratedResources
-          }
-          error("$source doesn't exist")
-        }
+        copyBinaryResource(binPathRelativeToCommunity, outputPath, skipIfDoesntExist, targetDir, context)
+      }
+    }
 
-        if (attributes.isRegularFile) {
-          copyFileToDir(source, targetDir.resolve(outputPath))
+    fun withPlatformBin(os: OsFamily, arch: JvmArchitecture, binPathRelativeToCommunity: String, outputPath: String, skipIfDoesntExist: Boolean = false) {
+      withGeneratedPlatformResources(os, arch) { targetDir, context ->
+        copyBinaryResource(binPathRelativeToCommunity, outputPath, skipIfDoesntExist, targetDir, context)
+      }
+    }
+
+    private fun copyBinaryResource(
+      binPathRelativeToCommunity: String,
+      outputPath: String,
+      skipIfDoesntExist: Boolean,
+      targetDir: Path,
+      context: BuildContext
+    ) {
+      val source = context.paths.communityHomeDir.resolve(binPathRelativeToCommunity).normalize()
+      val attributes = try {
+        Files.readAttributes(source, BasicFileAttributes::class.java)
+      }
+      catch (_: FileSystemException) {
+        if (skipIfDoesntExist) {
+          return
         }
-        else {
-          copyDir(source, targetDir.resolve(outputPath))
-        }
+        error("$source doesn't exist")
+      }
+
+      if (attributes.isRegularFile) {
+        copyFileToDir(source, targetDir.resolve(outputPath))
+      }
+      else {
+        copyDir(source, targetDir.resolve(outputPath))
       }
     }
 
@@ -300,7 +323,7 @@ class PluginLayout private constructor(val mainModule: String,
     }
 
     /**
-     * <product-description> is usually removed for bundled plugins.
+     * `<product-description>` is usually removed for bundled plugins.
      * Call this method to retain it in plugin.xml
      */
     fun retainProductDescriptorForBundledPlugin() {
@@ -309,7 +332,7 @@ class PluginLayout private constructor(val mainModule: String,
 
     /**
      * Do not automatically include module libraries from `moduleNames`
-     * <strong>Do not use this for new plugins, this method is temporary added to keep layout of old plugins</strong>.
+     * **Don't set this property for new plugins**; it is temporarily added to keep the layout of old plugins unchanged.
      */
     fun doNotCopyModuleLibrariesAutomatically(moduleNames: List<String>) {
       layout.modulesWithExcludedModuleLibraries.addAll(moduleNames)
@@ -321,7 +344,7 @@ class PluginLayout private constructor(val mainModule: String,
      * If scramble tool is not defined, scrambling will not be performed
      * Multiple invocations of this method will add corresponding paths to a list of paths to be scrambled
      *
-     * @param relativePath - a path to a jar file relative to plugin root directory
+     * @param relativePath a path to a .jar file relative to the plugin root directory
      */
     fun scramble(relativePath: String) {
       layout.pathsToScramble = layout.pathsToScramble.add(relativePath)
@@ -330,7 +353,7 @@ class PluginLayout private constructor(val mainModule: String,
     /**
      * Specifies a relative to [org.jetbrains.intellij.build.BuildPaths.communityHome] path to a zkm script stub file.
      * If scramble tool is not defined, scramble toot will expect to find the script stub file at "[org.jetbrains.intellij.build.BuildPaths.projectHome]/plugins/`pluginName`/build/script.zkm.stub".
-     * Project home cannot be used since it is not constant (for example for Rider).
+     * Project home cannot be used since it is not constant (for example, for Rider).
      *
      * @param communityRelativePath - a path to a jar file relative to community project home directory
      */
@@ -339,7 +362,7 @@ class PluginLayout private constructor(val mainModule: String,
     }
 
     /**
-     * Specifies a dependent plugin name to be added to scrambled classpath
+     * Specifies a dependent plugin name to be added to the scrambled classpath
      * Scrambling is performed by the [org.jetbrains.intellij.build.ProprietaryBuildTools.scrambleTool]
      * If scramble tool is not defined, scrambling will not be performed
      * Multiple invocations of this method will add corresponding plugin names to a list of name to be added to scramble classpath
@@ -349,16 +372,6 @@ class PluginLayout private constructor(val mainModule: String,
      */
     fun scrambleClasspathPlugin(pluginName: String, relativePath: String = "lib") {
       layout.scrambleClasspathPlugins = layout.scrambleClasspathPlugins.add(Pair(pluginName, relativePath))
-    }
-
-    /**
-     * Call this method to allow code from the plugin to refer to internal license-related classes from the platform. 
-     * Code which uses such classes must be scrambled in the plugin as well by calling [scramble] for corresponding JAR files.
-     * If this option is enabled, [ZKM script][zkmScriptStub] must include `__CHANGE-LOG-FILE-IN__` placeholder in `obfuscate` call.
-     */
-    @Internal
-    fun allowUsingScrambledPlatformClasses() {
-      layout.allowUsingScrambledPlatformClasses = true
     }
 
     /**
@@ -375,7 +388,7 @@ class PluginLayout private constructor(val mainModule: String,
      * Note: zkm open statement for the jar must be declared.
      *
      * @param jar - name of the jar file
-     * @param classFilter - in the following format: `com/mycompany/MyClass.class`
+     * @param classFilter - in the following format: `com/acme/MyClass.class`
      */
     fun scrambleSkip(jar: String, classFilter: String) {
       layout.scrambleSkipStatements += Pair(jar, classFilter)
@@ -412,7 +425,7 @@ class PluginLayout private constructor(val mainModule: String,
             AttributeKey.stringKey("serviceFile"), serviceFileName,
             AttributeKey.stringArrayKey("serviceFiles"), serviceFiles.map { it.first },
           ))
-          patcher.patchModuleOutput(moduleName = serviceFiles.first().first, // first one wins
+          patcher.patchModuleOutput(moduleName = serviceFiles.first().first, // the first one wins
                                     path = "META-INF/services/$serviceFileName",
                                     content = content)
         }

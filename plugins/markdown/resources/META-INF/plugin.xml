@@ -7,13 +7,16 @@
 
   <dependencies>
     <plugin id="com.intellij.modules.lang"/>
-    <plugin id="com.intellij.platform.images"/>
   </dependencies>
   <content>
     <module name="intellij.markdown.fenceInjection"/>
     <module name="intellij.markdown.frontmatter"/>
     <module name="intellij.markdown.frontmatter.yaml"/>
     <module name="intellij.markdown.frontmatter.toml"/>
+    <module name="intellij.markdown.images"/>
+    <module name="intellij.markdown.xml"/>
+    <module name="intellij.markdown.model"/>
+    <module name="intellij.markdown.spellchecker"/>
   </content>
 
   <description><![CDATA[
@@ -55,6 +58,9 @@
     <extensionPoint qualifiedName="org.intellij.markdown.flavourProvider"
                     interface="org.intellij.plugins.markdown.lang.parser.MarkdownFlavourProvider"
                     dynamic="true"/>
+    <extensionPoint qualifiedName="org.intellij.markdown.additionalFenceLanguageSuggester"
+                    interface="org.intellij.plugins.markdown.injection.aliases.AdditionalFenceLanguageSuggester"
+                    dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -85,7 +91,7 @@
                      key="markdown.no.table.borders.inspection.name"
                      groupKey="markdown.inspection.group.ruby.name"
                      enabledByDefault="true"
-                     level="ERROR"
+                     level="WARNING"
                      implementationClass="org.intellij.plugins.markdown.editor.tables.inspections.MarkdownNoTableBordersInspection"/>
 
     <intentionAction>
@@ -130,6 +136,7 @@
     <fileType name="Markdown" extensions="markdown;md" language="Markdown"
               implementationClass="org.intellij.plugins.markdown.lang.MarkdownFileType" fieldName="INSTANCE"/>
     <lang.fileViewProviderFactory language="Markdown"
+                                  id="SingleRootMarkdownFileViewProviderFactory"
                                   implementationClass="org.intellij.plugins.markdown.lang.MarkdownFileViewProviderFactory"/>
     <lang.parserDefinition language="Markdown" implementationClass="org.intellij.plugins.markdown.lang.parser.MarkdownParserDefinition"/>
     <lang.ast.factory language="Markdown" implementationClass="org.intellij.plugins.markdown.lang.psi.MarkdownAstFactory"/>
@@ -161,17 +168,6 @@
 
     <fileEditorProvider implementation="org.intellij.plugins.markdown.ui.preview.MarkdownSplitEditorProvider"/>
     <textEditorCustomizer implementation="org.intellij.plugins.markdown.ui.floating.AddFloatingToolbarTextEditorCustomizer"/>
-
-    <customPasteProvider id="MarkdownImagePasteProvider"
-                         implementation="org.intellij.plugins.markdown.editor.paste.MarkdownImagePasteProvider"/>
-    <customPasteProvider id="MarkdownFileLinkPasteProvider"
-                         order="after MarkdownImagePasteProvider"
-                         implementation="org.intellij.plugins.markdown.editor.paste.FileLinkPasteProvider"/>
-    <customFileDropHandler id="MarkdownEditorFileDropHandler"
-                           implementation="org.intellij.plugins.markdown.editor.paste.MarkdownFileDropHandler"/>
-
-    <spellchecker.support language="Markdown"
-                          implementationClass="org.intellij.plugins.markdown.spellchecking.MarkdownSpellcheckingStrategy"/>
 
     <customFileDropHandler implementation="org.intellij.plugins.markdown.fileActions.importFrom.docx.MarkdownDocxFileDropHandler"/>
 
@@ -222,8 +218,6 @@
     <stubElementTypeHolder class="org.intellij.plugins.markdown.lang.MarkdownStubElementTypes"/>
     <stubIndex implementation="org.intellij.plugins.markdown.lang.index.HeaderAnchorIndex"/>
 
-    <typedHandler implementation="org.intellij.plugins.markdown.model.HeaderAnchorCompletionPopupTypedHandler"/>
-
     <pathReferenceProvider implementation="org.intellij.plugins.markdown.lang.references.paths.RelativeFileWithoutExtensionReferenceProvider"/>
     <psi.referenceContributor language="Markdown" implementation="org.intellij.plugins.markdown.lang.references.CommonLinkDestinationReferenceContributor"/>
     <psi.referenceContributor language="Markdown" implementation="org.intellij.plugins.markdown.lang.references.paths.github.GithubWikiLocalReferenceContributor"/>
@@ -231,56 +225,6 @@
     <lang.elementManipulator forClass="org.intellij.plugins.markdown.lang.psi.impl.MarkdownAutoLink"
                              implementationClass="org.intellij.plugins.markdown.lang.psi.impl.MarkdownAutoLink$Manipulator"/>
     <psi.referenceContributor language="Markdown" implementation="org.intellij.plugins.markdown.lang.references.AutoLinkWebReferenceContributor"/>
-
-    <searcher forClass="com.intellij.find.usages.api.UsageSearchParameters"
-              implementationClass="org.intellij.plugins.markdown.model.psi.MarkdownSymbolUsageSearcher"/>
-
-    <psi.symbolReferenceProvider hostElementClass="com.intellij.psi.xml.XmlAttributeValue"
-                                 hostLanguage="HTML"
-                                 implementationClass="org.intellij.plugins.markdown.model.psi.headers.html.HtmlHeaderAnchorSelfReferenceProvider"
-                                 targetClass="org.intellij.plugins.markdown.model.psi.headers.MarkdownHeaderSymbol"/>
-
-    <searcher forClass="com.intellij.model.search.PsiSymbolReferenceSearchParameters"
-              implementationClass="org.intellij.plugins.markdown.model.psi.headers.html.MarkdownHtmlAnchorPsiReferenceSearcher"/>
-
-    <searcher forClass="com.intellij.refactoring.rename.api.RenameUsageSearchParameters"
-              implementationClass="org.intellij.plugins.markdown.model.psi.headers.html.HtmlAnchorRenameUsageSearcher"/>
-
-    <vetoRenameCondition implementation="org.intellij.plugins.markdown.model.psi.headers.html.HtmlAnchorVetoRenameCondition"/>
-    <rename.symbolRenameTargetFactory implementation="org.intellij.plugins.markdown.model.psi.headers.html.HtmlAnchorSymbolRenameTargetFactory"/>
-
-    <searcher forClass="com.intellij.refactoring.rename.api.RenameUsageSearchParameters"
-              implementationClass="org.intellij.plugins.markdown.model.psi.headers.HeaderRenameUsageSearcher"/>
-    <psi.declarationProvider implementation="org.intellij.plugins.markdown.model.psi.headers.HeaderSymbolDeclarationProvider"/>
-    <psi.declarationProvider implementation="org.intellij.plugins.markdown.model.psi.headers.html.HtmlAnchorSymbolDeclarationProvider"/>
-    <psi.symbolReferenceProvider hostElementClass="org.intellij.plugins.markdown.lang.psi.impl.MarkdownLinkDestination"
-                                 hostLanguage="Markdown"
-                                 implementationClass="org.intellij.plugins.markdown.model.psi.headers.HeaderAnchorSymbolReferenceProvider"
-                                 targetClass="org.intellij.plugins.markdown.model.psi.headers.MarkdownHeaderSymbol"/>
-    <localInspection language="Markdown"
-                     shortName="MarkdownUnresolvedHeaderReference"
-                     bundle="messages.MarkdownBundle"
-                     key="markdown.unresolved.header.reference.inspection.name"
-                     groupKey="markdown.inspection.group.ruby.name"
-                     enabledByDefault="true"
-                     level="WARNING"
-                     implementationClass="org.intellij.plugins.markdown.model.psi.headers.UnresolvedHeaderReferenceInspection"/>
-
-    <searcher forClass="com.intellij.refactoring.rename.api.RenameUsageSearchParameters"
-              implementationClass="org.intellij.plugins.markdown.model.psi.labels.LinkLabelRenameUsageSearcher"/>
-    <psi.declarationProvider implementation="org.intellij.plugins.markdown.model.psi.labels.LinkLabelSymbolDeclarationProvider"/>
-    <psi.symbolReferenceProvider hostElementClass="org.intellij.plugins.markdown.lang.psi.impl.MarkdownLinkLabel"
-                                 hostLanguage="Markdown"
-                                 implementationClass="org.intellij.plugins.markdown.model.psi.labels.LinkLabelSymbolReferenceProvider"
-                                 targetClass="org.intellij.plugins.markdown.model.psi.labels.LinkLabelSymbol"/>
-    <localInspection language="Markdown"
-                     shortName="MarkdownUnresolvedLinkLabel"
-                     bundle="messages.MarkdownBundle"
-                     key="markdown.unresolved.link.label.inspection.name"
-                     groupKey="markdown.inspection.group.ruby.name"
-                     enabledByDefault="true"
-                     level="WARNING"
-                     implementationClass="org.intellij.plugins.markdown.model.psi.labels.UnresolvedLinkLabelInspection"/>
 
     <todoIndexer filetype="Markdown" implementationClass="org.intellij.plugins.markdown.highlighting.MarkdownTodoIndexer"/>
     <indexPatternBuilder implementation="org.intellij.plugins.markdown.highlighting.MarkdownIndexPatternBuilder"/>
@@ -329,12 +273,6 @@
 
     <codeInsight.lineMarkerProvider language="Markdown"
                                     implementationClass="org.intellij.plugins.markdown.extensions.common.plantuml.PlantUMLCodeFenceDownloadLineMarkerProvider"/>
-    <codeInsight.lineMarkerProvider language="Markdown"
-                                    implementationClass="org.intellij.plugins.markdown.editor.images.ConfigureMarkdownImageLineMarkerProvider"/>
-    <codeInsight.lineMarkerProvider language="HTML"
-                                    implementationClass="org.intellij.plugins.markdown.editor.images.ConfigureHtmlImageLineMarkerProvider"/>
-    <codeInsight.lineMarkerProvider language="Markdown"
-                                    implementationClass="org.intellij.plugins.markdown.editor.images.ConfigureTextHtmlImageLineMarkerProvider"/>
 
     <focusModeProvider language="Markdown" implementationClass="org.intellij.plugins.markdown.editor.MarkdownFocusModeProvider"/>
 
@@ -344,12 +282,6 @@
     <intentionAction>
       <language>Markdown</language>
       <className>org.intellij.plugins.markdown.injection.MarkdownCodeFenceErrorHighlightingIntention</className>
-      <bundleName>messages.MarkdownBundle</bundleName>
-      <categoryKey>markdown.intention.category</categoryKey>
-    </intentionAction>
-    <intentionAction>
-      <language>Markdown</language>
-      <className>org.intellij.plugins.markdown.editor.images.MarkdownConfigureImageIntention</className>
       <bundleName>messages.MarkdownBundle</bundleName>
       <categoryKey>markdown.intention.category</categoryKey>
     </intentionAction>
@@ -417,6 +349,8 @@
     <!--endregion-->
 
     <advancedSetting id="markdown.hide.floating.toolbar" default="false" groupKey="markdown.settings.name"/>
+    <advancedSetting id="markdown.squash.multiple.dashes.in.header.anchors" default="false" groupKey="markdown.settings.name"/>
+
     <statistics.counterUsagesCollector implementationClass="org.intellij.plugins.markdown.MarkdownUsageCollector"/>
     <iconMapper mappingFile="MarkdownCoreIconMappings.json"/>
   </extensions>
@@ -609,11 +543,11 @@
       <action id="Markdown.InsertEmptyTable"
               class="org.intellij.plugins.markdown.editor.tables.actions.InsertEmptyTableAction"
               icon="org.intellij.plugins.markdown.MarkdownIcons.EditorActions.Table"/>
-      <action class="org.intellij.plugins.markdown.ui.actions.styling.InsertImageAction"
-              id="org.intellij.plugins.markdown.ui.actions.styling.InsertImageAction"
-              icon="AllIcons.General.LayoutPreviewOnly">
-        <keyboard-shortcut first-keystroke="control U" keymap="$default"/>
-      </action>
+      <!--<action class="org.intellij.plugins.markdown.ui.actions.styling.InsertImageAction"-->
+      <!--        id="org.intellij.plugins.markdown.ui.actions.styling.InsertImageAction"-->
+      <!--        icon="AllIcons.General.LayoutPreviewOnly">-->
+      <!--  <keyboard-shortcut first-keystroke="control U" keymap="$default"/>-->
+      <!--</action>-->
       <action id="Markdown.GenerateTableOfContents"
               class="org.intellij.plugins.markdown.editor.toc.GenerateTableOfContentsAction"
               icon="org.intellij.plugins.markdown.MarkdownIcons.EditorActions.BulletList"/>

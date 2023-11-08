@@ -18,10 +18,11 @@ import org.junit.jupiter.params.provider.ValueSource
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.InputStream
-import java.time.Duration
 import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.time.Duration.Companion.ZERO
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.nanoseconds
+import kotlin.time.Duration.Companion.seconds
 
 @CoroutinesTimeout(3_000)
 class ProcessTest {
@@ -57,7 +58,7 @@ class ProcessTest {
     @Test
     @CoroutinesTimeout(30_000)
     fun `cancel by timeout`(): Unit = runBlocking {
-      pollAssertionsAsync(total = Duration.ofSeconds(15), interval = Duration.ZERO) {
+      pollAssertionsAsync(total = 15.seconds, interval = ZERO) {
         val timeout = 500.milliseconds
         val threshold = 100.milliseconds
         val multiplier = 3
@@ -117,6 +118,10 @@ class ProcessTest {
         assertThat(holdingThread.get())
           .describedAs("After a while, no more blocking operations should be invoked. The background operation should've been cancelled.")
           .isFalse()
+
+        assertThat(String(outputStream.toByteArray()))
+          .describedAs("According to the test logic, no more data should have been copied")
+          .isEqualTo("hello")
       }
     }
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.server;
 
 import com.intellij.execution.DefaultExecutionResult;
@@ -30,7 +30,7 @@ import org.jetbrains.idea.maven.buildtool.quickfix.InstallMaven2BuildIssue;
 import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.slf4j.Logger;
-import org.slf4j.impl.JDK14LoggerFactory;
+import org.slf4j.jul.JDK14LoggerFactory;
 
 import java.io.File;
 import java.util.*;
@@ -180,7 +180,7 @@ public class MavenServerCMDState extends CommandLineState {
     MavenUtil.addEventListener(myDistribution.getVersion(), params);
   }
 
-  private void configureSslRelatedOptions(Map<String, String> defs) {
+  private static void configureSslRelatedOptions(Map<String, String> defs) {
     for (Map.Entry<Object, Object> each : System.getProperties().entrySet()) {
       Object key = each.getKey();
       Object value = each.getValue();

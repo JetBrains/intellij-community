@@ -6,7 +6,6 @@ import com.intellij.java.workspace.entities.ArtifactId
 import com.intellij.openapi.diagnostic.*
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMs
-import com.intellij.platform.workspace.jps.JpsMetrics
 import com.intellij.platform.workspace.jps.*
 import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.jps.serialization.SerializationContext
@@ -725,7 +724,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
                 separator = "||") { "$it (Persistent Id: ${(it as? WorkspaceEntityWithSymbolicId)?.symbolicId})" }
             }
               """.trimMargin()
-            reportErrorAndAttachStorage(message, storage)
+            reportErrorAndAttachStorage(message)
           }
           if (existingSerializers.isEmpty() || existingSerializers.any { it.internalEntitySource != actualFileSource }) {
             processNewlyAddedDirectoryEntities(entities, serializersToRun)

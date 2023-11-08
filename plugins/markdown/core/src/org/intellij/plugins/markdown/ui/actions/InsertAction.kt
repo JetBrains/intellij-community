@@ -8,7 +8,7 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import org.intellij.plugins.markdown.MarkdownBundle
-import org.intellij.plugins.markdown.lang.MarkdownLanguageUtils.isMarkdownLanguage
+import org.intellij.plugins.markdown.lang.isMarkdownLanguage
 
 internal class InsertAction: DumbAwareAction() {
   override fun getActionUpdateThread(): ActionUpdateThread {

@@ -18,7 +18,8 @@ public final class ModularMain {
   public static void main(@NotNull RuntimeModuleRepository moduleRepository, String @NotNull [] args,
                           @NotNull ArrayList<Object> startupTimings, long startTimeUnixNano) {
     //when this new way to load the platform will become default, strategy instance may be passed explicitly instead
-    ProductLoadingStrategy.setStrategy(new ModuleBasedProductLoadingStrategy(moduleRepository));
-    Main.mainImpl(args, startupTimings, startTimeUnixNano);
+    ModuleBasedProductLoadingStrategy strategy = new ModuleBasedProductLoadingStrategy(moduleRepository);
+    ProductLoadingStrategy.Companion.setStrategy(strategy);
+    Main.mainImpl(args, startupTimings, startTimeUnixNano, strategy::addMainModuleGroupToClassPath);
   }
 }

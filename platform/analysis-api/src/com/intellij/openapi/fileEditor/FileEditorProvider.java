@@ -29,7 +29,7 @@ public interface FileEditorProvider {
    */
   boolean accept(@NotNull Project project, @NotNull VirtualFile file);
 
-   default boolean acceptRequiresReadAction() {
+  default boolean acceptRequiresReadAction() {
      return true;
    }
 

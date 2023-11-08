@@ -148,7 +148,9 @@ class InputHookManager(object):
             from distutils.version import LooseVersion as V
         except ImportError:
             if sys.version_info[:2] >= (3, 12):
-                V = lambda v: v.split('.')
+                class V:
+                    def __init__(self, vstring):
+                        self.version = vstring.split('.')
             else:
                 raise
         wx_version = V(wx.__version__).version  # @UndefinedVariable

@@ -4,7 +4,6 @@ package com.intellij.openapi.vfs.newvfs.persistent.recovery;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.newvfs.persistent.*;
 import com.intellij.util.hash.ContentHashEnumerator;
-import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.storage.RecordIdIterator;
 import com.intellij.util.io.storage.RefCountingContentStorage;
 import org.jetbrains.annotations.NotNull;
@@ -47,19 +46,21 @@ public final class ContentStoragesRecoverer implements VFSRecoverer {
 
         //If contentStorage is OK -> try to re-create contentHashesEnumerator, and re-fill it by contentsStorage data:
         tryRebuildHashesStorageByContentStorage(loader);
+
+        //MAYBE IDEA-334517: re-check contentHashStorage: is it really 'fixed'?
+
         loader.problemsWereRecovered(contentStoragesProblems);
         LOG.info("ContentHashesEnumerator was successfully rebuild, ContentStorage was verified along the way");
       }
-      catch (IOException ex) {
+      catch (Throwable ex) {
+        LOG.warn("ContentStorage check is failed: " + ex.getMessage());
         //Seems like the ContentStorage itself is broken -> clean both Content & ContentHashes storages,
         //  and invalidate all the contentId references from fs-records:
 
         RefCountingContentStorage contentStorage = loader.contentsStorage();
-        contentStorage.dispose();
+        contentStorage.closeAndClean();
         ContentHashEnumerator contentHashEnumerator = loader.contentHashesEnumerator();
-        contentHashEnumerator.close();
-        IOUtil.deleteAllFilesStartingWith(loader.contentsFile);
-        IOUtil.deleteAllFilesStartingWith(loader.contentsHashesFile);
+        contentHashEnumerator.closeAndClean();
 
         RefCountingContentStorage emptyContentStorage = loader.createContentStorage(loader.contentsFile);
         ContentHashEnumerator emptyHashesEnumerator = PersistentFSLoader.createContentHashStorage(loader.contentsHashesFile);
@@ -74,7 +75,7 @@ public final class ContentStoragesRecoverer implements VFSRecoverer {
         //inform others (LocalHistory) that old contentIds are no longer valid:
         loader.contentIdsInvalidated(true);
         loader.problemsWereRecovered(contentStoragesProblems);
-        LOG.info("ContentStorage is found broken -> fixed by invalidating all the content refs (LocalHistory is lost)");
+        LOG.warn("ContentStorage is found broken -> fixed by invalidating all the content refs (LocalHistory is lost)");
       }
     }
     catch (Throwable t) {
@@ -97,6 +98,9 @@ public final class ContentStoragesRecoverer implements VFSRecoverer {
         try (var stream = contentStorage.readStream(contentId)) {
           stream.readAllBytes();
         }
+        catch (Throwable t) {
+          throw new IOException("file[#" + fileId + "].content[contentId: " + contentId + "] is broken, " + t, t);
+        }
       }
     }
   }
@@ -104,20 +108,18 @@ public final class ContentStoragesRecoverer implements VFSRecoverer {
   private static void tryRebuildHashesStorageByContentStorage(@NotNull PersistentFSLoader loader) throws IOException {
 
     ContentHashEnumerator contentHashEnumerator = loader.contentHashesEnumerator();
+    contentHashEnumerator.closeAndClean();
 
-    contentHashEnumerator.close();
     Path contentsHashesFile = loader.contentsHashesFile;
-    IOUtil.deleteAllFilesStartingWith(contentsHashesFile);
-
     ContentHashEnumerator recoveringHashesEnumerator = PersistentFSLoader.createContentHashStorage(contentsHashesFile);
+
     RefCountingContentStorage contentStorage = loader.contentsStorage();
     try {
       fillHashesEnumeratorByContentStorage(contentStorage, recoveringHashesEnumerator);
       loader.setContentHashesEnumerator(recoveringHashesEnumerator);
     }
     catch (Throwable t) {
-      recoveringHashesEnumerator.close();
-      IOUtil.deleteAllFilesStartingWith(contentsHashesFile);
+      recoveringHashesEnumerator.closeAndClean();
       throw t;
     }
   }

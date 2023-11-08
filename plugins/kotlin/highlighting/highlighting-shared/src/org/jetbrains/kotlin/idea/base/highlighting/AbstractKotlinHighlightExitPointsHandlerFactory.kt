@@ -18,7 +18,6 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.parents
-import org.jetbrains.kotlin.resolve.inline.InlineUtil
 import org.jetbrains.kotlin.utils.addIfNotNull
 import java.util.*
 
@@ -91,7 +90,7 @@ abstract class AbstractKotlinHighlightExitPointsHandlerFactory : HighlightUsages
                         return parent
                     }
 
-                    if (InlineUtil.canBeInlineArgument(parent) && !isInlinedArgument(parent)) {
+                    if ((parent is KtFunctionLiteral || parent is KtNamedFunction) && !isInlinedArgument(parent)) {
                         return parent
                     }
                 }

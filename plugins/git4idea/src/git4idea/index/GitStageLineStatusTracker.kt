@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diff.DiffBundle
+import com.intellij.openapi.diff.LineStatusMarkerColorScheme
 import com.intellij.openapi.diff.LineStatusMarkerDrawUtil
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
@@ -45,6 +46,7 @@ import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.paint.PaintUtil
 import com.intellij.ui.scale.JBUIScale
+import com.intellij.util.EventDispatcher
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.PeekableIteratorWrapper
@@ -84,6 +86,8 @@ class GitStageLineStatusTracker(
     private set
 
   private val renderer = MyLineStatusMarkerPopupRenderer(this)
+
+  private val listeners = EventDispatcher.create(LineStatusTrackerListener::class.java)
 
   // FIXME
   override var mode: LocalLineStatusTracker.Mode = LocalLineStatusTracker.Mode(true, true, false)
@@ -279,6 +283,14 @@ class GitStageLineStatusTracker(
     }
   }
 
+  override fun addListener(listener: LineStatusTrackerListener) {
+    listeners.addListener(listener)
+  }
+
+  override fun removeListener(listener: LineStatusTrackerListener) {
+    listeners.removeListener(listener)
+  }
+
   private class BlockFilter(private val bitSet1: BitSet,
                             private val bitSet2: BitSet) {
     fun matches(block: DocumentTracker.Block): Boolean {
@@ -321,6 +333,7 @@ class GitStageLineStatusTracker(
       cachedBlocks = null
 
       updateHighlighters()
+      if (!isDirty) listeners.multicaster.onRangesChanged()
 
       if (isOperational()) {
         if (unstaged) {
@@ -338,6 +351,7 @@ class GitStageLineStatusTracker(
 
     override fun onUnfreeze(side: Side) {
       updateHighlighters()
+      listeners.multicaster.onRangesChanged()
     }
   }
 
@@ -363,7 +377,7 @@ class GitStageLineStatusTracker(
     private fun paintStageLines(g: Graphics2D, editor: Editor, block: List<ChangedLines<StageLineFlags>>) {
       val isNewUi = ExperimentalUI.isNewUI()
 
-      val borderColor = LineStatusMarkerDrawUtil.getGutterBorderColor(editor)
+      val borderColor = LineStatusMarkerColorScheme.DEFAULT.getBorderColor(editor)
 
       val area = LineStatusMarkerDrawUtil.getGutterArea(editor)
       val x = area.first
@@ -380,7 +394,7 @@ class GitStageLineStatusTracker(
             change.flags.isUnstaged) {
           val start = change.y1
           val end = change.y2
-          val gutterColor = LineStatusMarkerDrawUtil.getGutterColor(change.type, editor)
+          val gutterColor = LineStatusMarkerColorScheme.DEFAULT.getColor(editor, change.type)
 
           if (isNewUi && LineStatusMarkerDrawUtil.isRangeHovered(editor, hoveredLine, x, start, end)) {
             g.paintUnStagedChange(change, gutterColor, x - 1, endX + 1, midX, start, end)
@@ -397,7 +411,7 @@ class GitStageLineStatusTracker(
               change.flags.isStaged) {
             val start = change.y1
             val end = change.y2
-            val stagedBorderColor = LineStatusMarkerDrawUtil.getIgnoredGutterBorderColor(change.type, editor)
+            val stagedBorderColor = LineStatusMarkerColorScheme.DEFAULT.getIgnoredBorderColor(editor, change.type)
 
             if (isNewUi && LineStatusMarkerDrawUtil.isRangeHovered(editor, hoveredLine, x, start, end)) {
               LineStatusMarkerDrawUtil.paintRect(g, null, stagedBorderColor, x - 1, start, endX + 1, end)
@@ -420,8 +434,8 @@ class GitStageLineStatusTracker(
       for (change in block) {
         if (change.y1 == change.y2) {
           val start = change.y1
-          val gutterColor = LineStatusMarkerDrawUtil.getGutterColor(change.type, editor)
-          val stagedBorderColor = borderColor ?: LineStatusMarkerDrawUtil.getIgnoredGutterBorderColor(change.type, editor)
+          val gutterColor = LineStatusMarkerColorScheme.DEFAULT.getColor(editor, change.type)
+          val stagedBorderColor = borderColor ?: LineStatusMarkerColorScheme.DEFAULT.getIgnoredBorderColor(editor, change.type)
 
           if (change.flags.isUnstaged && change.flags.isStaged) {
             paintStripeTriangle(g, editor, gutterColor, stagedBorderColor, x, endX, start)
@@ -520,22 +534,22 @@ class GitStageLineStatusTracker(
         return
       }
 
-      val disposable = Disposer.newDisposable()
+      val popupDisposable = Disposer.newDisposable(tracker.disposable)
 
       val stagedTextField = createTextField(editor, tracker.stagedDocument, range.stagedLine1, range.stagedLine2)
       val vcsTextField = createTextField(editor, tracker.vcsDocument, range.vcsLine1, range.vcsLine2)
-      installWordDiff(editor, stagedTextField, vcsTextField, range, disposable)
+      installWordDiff(editor, stagedTextField, vcsTextField, range, popupDisposable)
 
       val editorsPanel = createEditorComponent(editor, stagedTextField, vcsTextField)
 
       val actions = createToolbarActions(editor, range, mousePosition)
-      val toolbar = LineStatusMarkerPopupPanel.buildToolbar(editor, actions, disposable)
+      val toolbar = LineStatusMarkerPopupPanel.buildToolbar(editor, actions, popupDisposable)
 
-      val additionalPanel = createStageLinksPanel(editor, range, mousePosition, disposable)
+      val additionalPanel = createStageLinksPanel(editor, range, mousePosition, popupDisposable)
 
       val popupPanel = LineStatusMarkerPopupPanel.create(editor, toolbar, editorsPanel, additionalPanel)
       toolbar.setTargetComponent(popupPanel)
-      showPopupAt(editor, popupPanel, mousePosition, disposable)
+      showPopupAt(editor, popupPanel, mousePosition, popupDisposable)
     }
 
     fun createEditorComponent(editor: Editor, stagedTextField: EditorTextField, vcsTextField: EditorTextField): JComponent {

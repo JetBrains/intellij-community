@@ -33,11 +33,6 @@ fun <K, V> MutableMap<K, MutableList<V>>.putValue(key: K, value: V) {
 )
 fun Collection<*>?.isNullOrEmpty(): Boolean = this == null || isEmpty()
 
-@get:ApiStatus.ScheduledForRemoval
-@get:Deprecated("use tail()", ReplaceWith("tail()"), DeprecationLevel.ERROR)
-val <T> List<T>.tail: List<T>
-  get() = tail()
-
 /**
  * @return all the elements of a non-empty list except the first one
  */

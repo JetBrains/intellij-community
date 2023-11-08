@@ -28,6 +28,10 @@ class UnnamedClassHighlightingTest : LightJavaCodeInsightFixtureTestCase() {
     doTest()
   }
 
+  fun `testIncorrect unnamed class name with spaces`() {
+    doTest()
+  }
+
   private fun doTest() {
     myFixture.configureByFile(getTestName(false) + ".java")
     myFixture.checkHighlighting()

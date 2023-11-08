@@ -37,8 +37,7 @@ public final class QuickFixWrapper implements IntentionAction, PriorityAction, C
   private final ProblemDescriptor myDescriptor;
   private final LocalQuickFix myFix;
 
-  @NotNull
-  public static IntentionAction wrap(@NotNull ProblemDescriptor descriptor, int fixNumber) {
+  public static @NotNull IntentionAction wrap(@NotNull ProblemDescriptor descriptor, int fixNumber) {
     LOG.assertTrue(fixNumber >= 0, fixNumber);
     QuickFix<?>[] fixes = descriptor.getFixes();
     LOG.assertTrue(fixes != null && fixes.length > fixNumber);
@@ -92,14 +91,12 @@ public final class QuickFixWrapper implements IntentionAction, PriorityAction, C
   }
 
   @Override
-  @NotNull
-  public String getText() {
+  public @NotNull String getText() {
     return getFamilyName();
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return myFix.getName();
   }
 
@@ -131,9 +128,8 @@ public final class QuickFixWrapper implements IntentionAction, PriorityAction, C
     return myFix.startInWriteAction();
   }
 
-  @Nullable
   @Override
-  public PsiElement getElementToMakeWritable(@NotNull PsiFile file) {
+  public @Nullable PsiElement getElementToMakeWritable(@NotNull PsiFile file) {
     return myFix.getElementToMakeWritable(file);
   }
 
@@ -143,14 +139,12 @@ public final class QuickFixWrapper implements IntentionAction, PriorityAction, C
    * as the implementation may be different in the future
    */
   @Deprecated
-  @NotNull
-  public LocalQuickFix getFix() {
+  public @NotNull LocalQuickFix getFix() {
     return myFix;
   }
 
-  @NotNull
   @Override
-  public Priority getPriority() {
+  public @NotNull Priority getPriority() {
     return myFix instanceof PriorityAction ? ((PriorityAction)myFix).getPriority() : Priority.NORMAL;
   }
 
@@ -165,8 +159,7 @@ public final class QuickFixWrapper implements IntentionAction, PriorityAction, C
     return null;
   }
 
-  @Nullable
-  public PsiFile getFile() {
+  public @Nullable PsiFile getFile() {
     PsiElement element = myDescriptor.getPsiElement();
     return element != null ? element.getContainingFile() : null;
   }

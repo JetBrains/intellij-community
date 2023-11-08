@@ -71,7 +71,7 @@ public final class RecentChangesPopup {
       setColors(bg, fg, myPanel, myActionLabel, myDateLabel, mySpacePanel);
     }
 
-    private void setColors(Color bg, Color fg, JComponent... cc) {
+    private static void setColors(Color bg, Color fg, JComponent... cc) {
       for (JComponent c : cc) {
         c.setBackground(bg);
         c.setForeground(fg);

@@ -3,7 +3,6 @@ package org.jetbrains.idea.maven.wizards
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
@@ -11,7 +10,10 @@ import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjec
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.progress.*
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.blockingContext
+import com.intellij.openapi.progress.coroutineToIndicator
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.util.io.FileUtil
@@ -19,6 +21,10 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.backend.observation.trackActivity
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
+import com.intellij.platform.ide.progress.withBackgroundProgress
+import com.intellij.platform.util.progress.withRawProgressReporter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -45,7 +51,9 @@ internal class MavenProjectAsyncBuilder {
     }
   }
 
-  suspend fun commit(project: Project, projectFile: VirtualFile, modelsProvider: IdeModifiableModelsProvider?): List<Module> = project.serviceAsync<MavenInProgressService>().trackConfigurationActivity {
+  suspend fun commit(project: Project,
+                     projectFile: VirtualFile,
+                     modelsProvider: IdeModifiableModelsProvider?): List<Module> = project.trackActivity(MavenActivityKey) {
     if (ApplicationManager.getApplication().isDispatchThread) {
       FileDocumentManager.getInstance().saveAllDocuments()
     }
@@ -56,7 +64,7 @@ internal class MavenProjectAsyncBuilder {
 
     val isVeryNewProject = true == project.getUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT)
     val createDummyModule = isVeryNewProject && Registry.`is`("maven.create.dummy.module.on.first.import")
-    val previewModule = if (createDummyModule) createPreviewModule(project, rootDirectory) else null
+
     val directProjectsSettings = MavenWorkspaceSettingsComponent.getInstance(project).settings
     val importingSettings = directProjectsSettings.importingSettings.clone()
     val generalSettings = directProjectsSettings.generalSettings.clone()
@@ -67,16 +75,20 @@ internal class MavenProjectAsyncBuilder {
     }
 
     if (createDummyModule) {
+      val previewModule = createPreviewModule(project, rootDirectory)
       // do not update all modules because it can take a lot of time (freeze at project opening)
       val cs = MavenCoroutineScopeProvider.getCoroutineScope(project)
       cs.launch {
-        doCommit(project, importProjectFile, rootDirectoryPath, modelsProvider, previewModule, importingSettings, generalSettings)
+        project.trackActivity(MavenActivityKey) {
+          doCommit(project, importProjectFile, rootDirectoryPath, modelsProvider, previewModule, importingSettings, generalSettings)
+        }
       }
       //blockingContext { manager.addManagedFilesWithProfiles(MavenUtil.collectFiles(projects), selectedProfiles, previewModule) }
-      return@trackConfigurationActivity if (null == previewModule) emptyList() else listOf(previewModule)
+      return@trackActivity if (null == previewModule) emptyList() else listOf(previewModule)
     }
 
-    return@trackConfigurationActivity doCommit(project, importProjectFile, rootDirectoryPath, modelsProvider, null, importingSettings, generalSettings)
+    return@trackActivity doCommit(project, importProjectFile, rootDirectoryPath, modelsProvider, null, importingSettings,
+                                               generalSettings)
   }
 
   private suspend fun doCommit(project: Project,
@@ -148,7 +160,6 @@ internal class MavenProjectAsyncBuilder {
     }
     val manager = MavenProjectsManager.getInstance(project)
     manager.setIgnoredState(projects, false)
-    MavenLog.LOG.warn("performImport async: Linear Import is disabled")
 
     return manager.addManagedFilesWithProfilesAndUpdate(MavenUtil.collectFiles(projects), selectedProfiles, modelsProvider, previewModule)
   }

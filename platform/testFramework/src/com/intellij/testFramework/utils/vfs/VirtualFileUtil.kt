@@ -4,7 +4,6 @@ package com.intellij.testFramework.utils.vfs
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.getResolvedPath
-import com.intellij.openapi.util.io.toNioPath
 import com.intellij.openapi.vfs.*
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiUtilCore
@@ -31,7 +30,7 @@ fun VirtualFile.getFile(relativePath: @SystemIndependent String): VirtualFile {
   val file = findFile(relativePath)
   if (file == null) {
     throw IOException("""
-      |File doesn't exists: ${path.toNioPath().getResolvedPath(relativePath)}
+      |File doesn't exists: ${Path.of(path).getResolvedPath(relativePath)}
       |  basePath = $path
       |  relativePath = $relativePath
     """.trimMargin())
@@ -44,7 +43,7 @@ fun VirtualFile.getDirectory(relativePath: @SystemIndependent String): VirtualFi
   val directory = findDirectory(relativePath)
   if (directory == null) {
     throw IOException("""
-      |Directory doesn't exists: ${path.toNioPath().getResolvedPath(relativePath)}
+      |Directory doesn't exists: ${Path.of(path).getResolvedPath(relativePath)}
       |  basePath = $path
       |  relativePath = $relativePath
     """.trimMargin())

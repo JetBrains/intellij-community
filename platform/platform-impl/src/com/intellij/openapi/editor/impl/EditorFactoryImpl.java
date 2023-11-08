@@ -19,10 +19,12 @@ import com.intellij.openapi.editor.event.EditorFactoryEvent;
 import com.intellij.openapi.editor.event.EditorFactoryListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.editor.impl.event.EditorEventMulticasterImpl;
 import com.intellij.openapi.editor.impl.view.EditorPainter;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.options.advanced.AdvancedSettingsChangeListener;
 import com.intellij.openapi.project.Project;
@@ -32,7 +34,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.concurrency.ThreadingAssertions;
-import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.messages.SimpleMessageBusConnection;
 import com.intellij.util.text.CharArrayCharSequence;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
@@ -49,8 +51,8 @@ public final class EditorFactoryImpl extends EditorFactory {
   private final EventDispatcher<EditorFactoryListener> myEditorFactoryEventDispatcher = EventDispatcher.create(EditorFactoryListener.class);
 
   public EditorFactoryImpl() {
-    MessageBusConnection busConnection = ApplicationManager.getApplication().getMessageBus().connect();
-    busConnection.subscribe(ProjectCloseListener.TOPIC, new ProjectCloseListener() {
+    SimpleMessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().simpleConnect();
+    connection.subscribe(ProjectCloseListener.TOPIC, new ProjectCloseListener() {
       @Override
       public void projectClosed(@NotNull Project project) {
         // validate all editors are disposed after fireProjectClosed() was called, because it's the place where editor should be released
@@ -69,8 +71,8 @@ public final class EditorFactoryImpl extends EditorFactory {
         });
       }
     });
-    busConnection.subscribe(EditorColorsManager.TOPIC, __ -> refreshAllEditors());
-    busConnection.subscribe(AdvancedSettingsChangeListener.TOPIC, (id, __, __1) -> {
+    connection.subscribe(EditorColorsManager.TOPIC, __ -> refreshAllEditors());
+    connection.subscribe(AdvancedSettingsChangeListener.TOPIC, (id, __, __1) -> {
       if (id.equals(EditorGutterComponentImpl.DISTRACTION_FREE_MARGIN) ||
           id.equals(EditorPainter.EDITOR_TAB_PAINTING) ||
           id.equals(SettingsImplKt.EDITOR_SHOW_SPECIAL_CHARS)) {
@@ -134,7 +136,11 @@ public final class EditorFactoryImpl extends EditorFactory {
 
   @Override
   public void refreshAllEditors() {
-    collectAllEditors().forEach(editor -> ((EditorEx)editor).reinitSettings());
+    collectAllEditors().forEach(editor -> {
+      if (AsyncEditorLoader.isEditorLoaded(editor)) {
+        ((EditorEx)editor).reinitSettings();
+      }
+    });
   }
 
   @Override
@@ -194,23 +200,26 @@ public final class EditorFactoryImpl extends EditorFactory {
 
   private @NotNull EditorImpl createEditor(@NotNull Document document, boolean isViewer, @Nullable Project project, @NotNull EditorKind kind) {
     Document hostDocument = document instanceof DocumentWindow ? ((DocumentWindow)document).getDelegate() : document;
-    return doCreateEditor(project, hostDocument, isViewer, kind, null);
+    return doCreateEditor(project, hostDocument, isViewer, kind, null, null);
   }
 
   @ApiStatus.Internal
   @ApiStatus.Experimental
-  public @NotNull EditorImpl createMainEditor(@NotNull Document document, @NotNull Project project, @NotNull VirtualFile file) {
+  public @NotNull EditorImpl createMainEditor(@NotNull Document document,
+                                              @NotNull Project project,
+                                              @NotNull VirtualFile file,
+                                              @Nullable EditorHighlighter highlighter) {
     assert !(document instanceof DocumentWindow);
-    return doCreateEditor(project, document, false, EditorKind.MAIN_EDITOR, file);
+    return doCreateEditor(project, document, false, EditorKind.MAIN_EDITOR, file, highlighter);
   }
 
-  @NotNull
-  private EditorImpl doCreateEditor(@Nullable Project project,
-                                    @NotNull Document document,
-                                    boolean isViewer,
-                                    @NotNull EditorKind kind,
-                                    @Nullable VirtualFile file) {
-    EditorImpl editor = new EditorImpl(document, isViewer, project, kind, file);
+  private @NotNull EditorImpl doCreateEditor(@Nullable Project project,
+                                             @NotNull Document document,
+                                             boolean isViewer,
+                                             @NotNull EditorKind kind,
+                                             @Nullable VirtualFile file,
+                                             @Nullable EditorHighlighter highlighter) {
+    EditorImpl editor = new EditorImpl(document, isViewer, project, kind, file, highlighter);
     ClientEditorManager editorManager = ClientEditorManager.getCurrentInstance();
     editorManager.editorCreated(editor);
     myEditorEventMulticaster.registerEditor(editor);

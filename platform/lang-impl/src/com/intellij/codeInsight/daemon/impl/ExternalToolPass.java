@@ -244,7 +244,7 @@ public final class ExternalToolPass extends ProgressableTextEditorHighlightingPa
   }
 
   private static void processError(@NotNull Throwable t, @NotNull ExternalAnnotator<?,?> annotator, @NotNull PsiFile root) {
-    if (t instanceof ProcessCanceledException) throw (ProcessCanceledException)t;
+    if (t instanceof ProcessCanceledException pce) throw pce;
 
     VirtualFile file = root.getVirtualFile();
     String path = file != null ? file.getPath() : root.getName();

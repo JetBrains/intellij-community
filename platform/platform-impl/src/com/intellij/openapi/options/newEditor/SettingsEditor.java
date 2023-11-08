@@ -115,7 +115,7 @@ public final class SettingsEditor extends AbstractEditor implements DataProvider
     mySearch = new SettingsSearch() {
       @Override
       void onTextKeyEvent(KeyEvent event) {
-        myTreeView.myTree.processKeyEvent(event);
+        myTreeView.getTree().processKeyEvent(event);
       }
     };
     JPanel searchPanel = new JPanel(new VerticalLayout(0));
@@ -187,7 +187,7 @@ public final class SettingsEditor extends AbstractEditor implements DataProvider
       }
     });
     myTreeView = factory.createTreeView(myFilter, groups);
-    myTreeView.myTree.addKeyListener(mySearch);
+    myTreeView.getTree().addKeyListener(mySearch);
     myEditor = new ConfigurableEditor(this, null) {
       @Override
       boolean apply() {
@@ -262,7 +262,7 @@ public final class SettingsEditor extends AbstractEditor implements DataProvider
       @Override
       void updateNow() {
         Configurable configurable = myFilter.myContext.getCurrentConfigurable();
-        if (myTreeView.myTree.hasFocus() || mySearch.getTextEditor().hasFocus()) {
+        if (myTreeView.getTree().hasFocus() || mySearch.getTextEditor().hasFocus()) {
           update(myFilter, configurable, myEditor.getContent(configurable));
         }
       }
@@ -301,6 +301,11 @@ public final class SettingsEditor extends AbstractEditor implements DataProvider
     updateController(configurable);
   }
 
+  @ApiStatus.Internal
+  public @NotNull SettingsTreeView getTreeView() {
+    return myTreeView;
+  }
+
   private @NotNull MutableConfigurableGroup.Listener createReloadListener(List<? extends ConfigurableGroup> groups) {
     return new MutableConfigurableGroup.Listener() {
       @Override
@@ -337,7 +342,7 @@ public final class SettingsEditor extends AbstractEditor implements DataProvider
       @Override
       public void focusLost(FocusEvent e) {
         final Component comp = e.getOppositeComponent();
-        if (comp == mySearch.getTextEditor() || comp == myTreeView.myTree) {
+        if (comp == mySearch.getTextEditor() || comp == myTreeView.getTree()) {
           return;
         }
         mySpotlightPainter.update(null, null, null);
@@ -350,7 +355,7 @@ public final class SettingsEditor extends AbstractEditor implements DataProvider
         }
       }
     };
-    myTreeView.myTree.addFocusListener(spotlightRemover);
+    myTreeView.getTree().addFocusListener(spotlightRemover);
     mySearch.getTextEditor().addFocusListener(spotlightRemover);
   }
 
@@ -440,7 +445,7 @@ public final class SettingsEditor extends AbstractEditor implements DataProvider
 
   @Override
   JComponent getPreferredFocusedComponent() {
-    return myTreeView != null ? myTreeView.myTree : myEditor;
+    return myTreeView != null ? myTreeView.getTree() : myEditor;
   }
 
   @Nullable

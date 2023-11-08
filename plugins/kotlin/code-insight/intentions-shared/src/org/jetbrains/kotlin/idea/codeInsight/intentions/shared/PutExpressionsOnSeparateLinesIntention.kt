@@ -19,6 +19,19 @@ import org.jetbrains.kotlin.util.takeWhileIsInstance
 
 internal class PutExpressionsOnSeparateLinesIntention :
     AbstractKotlinApplicableModCommandIntention<KtOperationReferenceExpression>(KtOperationReferenceExpression::class) {
+
+    override fun getApplicabilityRange(): KotlinApplicabilityRange<KtOperationReferenceExpression> =
+        ApplicabilityRanges.SELF
+
+    override fun isApplicableByPsi(element: KtOperationReferenceExpression): Boolean {
+        element.topmostBinaryExpression()?.visitOperations {
+            val nextSibling = it.nextSibling as? PsiWhiteSpace ?: return true
+            if (!nextSibling.textContains('\n')) return true
+        }
+
+        return false
+    }
+
     override fun getActionName(element: KtOperationReferenceExpression): String = familyName
     override fun getFamilyName(): String = KotlinBundle.message("put.expressions.on.separate.lines")
 
@@ -35,17 +48,6 @@ internal class PutExpressionsOnSeparateLinesIntention :
         }
 
         CodeStyleManager.getInstance(project).reformat(/* element = */ rootBinaryExpression, /* canChangeWhiteSpacesOnly = */ true)
-    }
-
-    override fun getApplicabilityRange(): KotlinApplicabilityRange<KtOperationReferenceExpression> = ApplicabilityRanges.SELF
-
-    override fun isApplicableByPsi(element: KtOperationReferenceExpression): Boolean {
-        element.topmostBinaryExpression()?.visitOperations {
-            val nextSibling = it.nextSibling as? PsiWhiteSpace ?: return true
-            if (!nextSibling.textContains('\n')) return true
-        }
-
-        return false
     }
 }
 

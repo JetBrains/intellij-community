@@ -31,13 +31,15 @@ import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider
 import com.intellij.psi.codeStyle.modifier.CodeStyleSettingsModifier
 import com.intellij.psi.codeStyle.modifier.CodeStyleStatusBarUIContributor
 import com.intellij.psi.codeStyle.modifier.TransientCodeStyleSettings
+import com.intellij.util.application
 import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.runBlocking
 import org.ec4j.core.ResourceProperties
 import org.editorconfig.EditorConfigNotifier
 import org.editorconfig.Utils
 import org.editorconfig.configmanagement.EditorConfigNavigationActionsFactory
 import org.editorconfig.language.messages.EditorConfigBundle.message
-import org.editorconfig.plugincomponents.SettingsProviderComponent
+import org.editorconfig.plugincomponents.EditorConfigPropertiesService
 import org.editorconfig.settings.EditorConfigSettings
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.TestOnly
@@ -63,35 +65,45 @@ class EditorConfigCodeStyleSettingsModifier : CodeStyleSettingsModifier {
       return false
     }
 
-    return runBlockingMaybeCancellable {
-      try {
-        // Get editorconfig settings
-        val (properties, editorConfigs) = processEditorConfig(project, psiFile)
-        // Apply editorconfig settings for the current editor
-        if (applyCodeStyleSettings(settings, properties, psiFile)) {
-          settings.addDependencies(editorConfigs)
-          val navigationFactory = EditorConfigNavigationActionsFactory.getInstance(psiFile)
-          navigationFactory?.updateEditorConfigFilePaths(editorConfigs.map { it.path })
-          return@runBlockingMaybeCancellable true
-        }
-        else {
-          return@runBlockingMaybeCancellable false
-        }
-      }
-      catch (e: TimeoutCancellationException) {
-        LOG.warn(e)
-        if (!ApplicationManager.getApplication().isHeadlessEnvironment) {
-          error(project, "timeout", message("error.timeout"), DisableEditorConfigAction(project), true)
-        }
-      }
-      catch (e: CancellationException) {
-        throw e
-      }
-      catch (e: Exception) {
-        LOG.error(e)
-      }
-      false
+    return if (application.isDispatchThread && application.isHeadlessEnvironment) {
+      // see also CodeStyleCachedValueProvider.AsyncComputation.start
+      @Suppress("RAW_RUN_BLOCKING")
+      runBlocking { doModifySettings(psiFile, settings, project) }
     }
+    else {
+      runBlockingMaybeCancellable { doModifySettings(psiFile, settings, project) }
+    }
+
+  }
+
+  private suspend fun doModifySettings(psiFile: PsiFile, settings: TransientCodeStyleSettings, project: Project): Boolean {
+    try {
+      // Get editorconfig settings
+      val (properties, editorConfigs) = processEditorConfig(project, psiFile)
+      // Apply editorconfig settings for the current editor
+      if (applyCodeStyleSettings(settings, properties, psiFile)) {
+        settings.addDependencies(editorConfigs)
+        val navigationFactory = EditorConfigNavigationActionsFactory.getInstance(psiFile)
+        navigationFactory?.updateEditorConfigFilePaths(editorConfigs.map { it.path })
+        return true
+      }
+      else {
+        return false
+      }
+    }
+    catch (e: TimeoutCancellationException) {
+      LOG.warn(e)
+      if (!ApplicationManager.getApplication().isHeadlessEnvironment) {
+        error(project, "timeout", message("error.timeout"), DisableEditorConfigAction(project), true)
+      }
+    }
+    catch (e: CancellationException) {
+      throw e
+    }
+    catch (e: Exception) {
+      LOG.error(e)
+    }
+    return false
   }
 
   @Synchronized
@@ -333,7 +345,7 @@ private suspend fun processEditorConfig(project: Project, psiFile: PsiFile): Pai
   val file = psiFile.virtualFile
   val filePath = Utils.getFilePath(project, file)
   if (filePath != null) {
-    return SettingsProviderComponent.getInstance(project).getPropertiesAndEditorConfigs(file)
+    return EditorConfigPropertiesService.getInstance(project).getPropertiesAndEditorConfigs(file)
   }
   else if (VfsUtilCore.isBrokenLink(file)) {
     LOG.warn("${file.presentableUrl} is a broken link")

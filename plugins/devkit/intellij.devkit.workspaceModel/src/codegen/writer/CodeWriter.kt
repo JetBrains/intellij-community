@@ -39,11 +39,11 @@ private val LOG = logger<CodeWriter>()
 
 object CodeWriter {
   @RequiresEdt
-  suspend fun generate(project: Project,
-               module: Module,
-               sourceFolder: VirtualFile,
-               explicitApiEnabled: Boolean,
-               targetFolderGenerator: () -> VirtualFile?) {
+  suspend fun generate(
+    project: Project, module: Module, sourceFolder: VirtualFile,
+    processAbstractTypes: Boolean, explicitApiEnabled: Boolean,
+    targetFolderGenerator: () -> VirtualFile?
+  ) {
     val ktClasses = HashMap<String, KtClass>()
     VfsUtilCore.processFilesRecursively(sourceFolder) {
       if (it.extension == "kt") {
@@ -63,7 +63,7 @@ object CodeWriter {
       val title = DevKitWorkspaceModelBundle.message("progress.title.generating.code")
       ApplicationManagerEx.getApplicationEx().runWriteActionWithCancellableProgressInDispatchThread(title, project, null) { indicator ->
         indicator.text = DevKitWorkspaceModelBundle.message("progress.text.collecting.classes.metadata")
-        val objModules = loadObjModules(ktClasses, module, explicitApiEnabled)
+        val objModules = loadObjModules(ktClasses, module, processAbstractTypes, explicitApiEnabled)
         val codeGenerator = serviceLoader.get()
         val results = objModules.map { codeGenerator.generate(it) }
         val generatedCode = results.flatMap { it.generatedCode }
@@ -136,15 +136,14 @@ object CodeWriter {
   }
 
   private fun loadObjModules(
-    ktClasses: HashMap<String, KtClass>,
-    module: Module,
-    explicitApiEnabled: Boolean
+    ktClasses: HashMap<String, KtClass>, module: Module,
+    processAbstractTypes: Boolean, explicitApiEnabled: Boolean
   ): List<CompiledObjModule> {
     val packages = ktClasses.values.mapTo(LinkedHashSet()) { it.containingKtFile.packageFqName.asString() }
 
     val metaModelProvider: WorkspaceMetaModelProvider = WorkspaceMetaModelProviderImpl(
       explicitApiEnabled = explicitApiEnabled,
-      keepUnknownFields = java.lang.Boolean.getBoolean("workspace.model.generator.keep.unknown.fields"),
+      processAbstractTypes = processAbstractTypes,
       module.project
     )
     return packages.map { metaModelProvider.getObjModule(it, module) }
@@ -217,7 +216,8 @@ object CodeWriter {
     val implementationClassText = code.implementationClass
     if (implementationClassText != null) {
       val sourceFile = apiClass.containingFile.virtualFile
-      val packageFolder = createPackageFolderIfMissing(sourceFolder, sourceFile.parent.path, genFolder)
+      val relativePath = VfsUtil.getRelativePath(sourceFile.parent, sourceFolder, '/')
+      val packageFolder = VfsUtil.createDirectoryIfMissing(genFolder, "$relativePath")
       val targetDirectory = PsiManager.getInstance(project).findDirectory(packageFolder)!!
       val implImports = Imports(apiFile.packageFqName.asString())
       val implFile = psiFactory.createFile("${code.target.name}Impl.kt", implImports.findAndRemoveFqns(implementationClassText))

@@ -25,12 +25,15 @@
  *
  *  3. This notice may not be removed or altered from any source distribution.
  */
+/*
+ * This file is an altered version of the original NanoXML source code
+ */
 
 package net.n3.nanoxml;
 
 
+import java.util.List;
 import java.util.Properties;
-import java.util.Vector;
 
 
 /**
@@ -189,7 +192,7 @@ public interface IXMLElement {
    *
    * @return the vector.
    */
-  Vector getChildren();
+  List<IXMLElement> getChildren();
 
 
   /**

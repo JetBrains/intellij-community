@@ -47,7 +47,7 @@ interface SpacingConfiguration {
   val verticalSmallGap: Int
 
   /**
-   * Vertical medium gap between unrelated settings, before and after groups
+   * Vertical medium gap, for example used before and after groups
    */
   val verticalMediumGap: Int
 

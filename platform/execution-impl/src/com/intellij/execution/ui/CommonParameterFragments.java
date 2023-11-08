@@ -33,6 +33,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import static com.intellij.execution.util.EnvFilesUtilKt.checkEnvFiles;
 import static com.intellij.openapi.util.text.StringUtil.*;
 
 public final class CommonParameterFragments<Settings extends CommonProgramRunConfigurationParameters> {
@@ -171,7 +172,7 @@ public final class CommonParameterFragments<Settings extends CommonProgramRunCon
     fragment.setCanBeHidden(true);
     fragment.setHint(ExecutionBundle.message("environment.variables.fragment.hint"));
     fragment.setActionHint(ExecutionBundle.message("set.custom.environment.variables.for.the.process"));
-    fragment.addValidation(s -> ProgramParametersUtil.checkEnvFiles(s));
+    fragment.addValidation(s -> checkEnvFiles(s));
     return fragment;
   }
 

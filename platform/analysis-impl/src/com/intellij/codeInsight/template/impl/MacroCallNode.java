@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.template.impl;
 
@@ -44,9 +44,8 @@ public class MacroCallNode extends Expression {
     return myParameters.toArray(new Expression[0]);
   }
 
-  @NotNull
   @Override
-  public LookupFocusDegree getLookupFocusDegree() {
+  public @NotNull LookupFocusDegree getLookupFocusDegree() {
     return getMacro().getLookupFocusDegree();
   }
 }

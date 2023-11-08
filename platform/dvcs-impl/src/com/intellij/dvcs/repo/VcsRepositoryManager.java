@@ -46,6 +46,7 @@ public final class VcsRepositoryManager implements Disposable {
   /**
    * VCS repository mapping updated. Project level.
    */
+  @Topic.ProjectLevel
   public static final Topic<VcsRepositoryMappingListener> VCS_REPOSITORY_MAPPING_UPDATED =
     new Topic<>(VcsRepositoryMappingListener.class, Topic.BroadcastDirection.NONE);
 
@@ -313,6 +314,11 @@ public final class VcsRepositoryManager implements Disposable {
 
   @RequiresBackgroundThread
   private void checkAndUpdateRepositoryCollection(@Nullable VirtualFile checkedRoot) {
+    if (MODIFY_LOCK.isHeldByCurrentThread()) {
+      LOG.error(new Throwable("Recursive Repository initialization"));
+      return;
+    }
+
     MODIFY_LOCK.lock();
     try {
       Map<VirtualFile, Repository> repositories;

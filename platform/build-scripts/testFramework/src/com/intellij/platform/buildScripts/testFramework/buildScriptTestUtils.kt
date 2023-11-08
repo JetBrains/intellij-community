@@ -1,11 +1,12 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.buildScripts.testFramework
 
-import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope2
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.platform.buildScripts.testFramework.binaryReproducibility.BuildArtifactsReproducibilityTest
+import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope2
+import com.intellij.platform.runtime.repository.ProductMode
 import com.intellij.rt.execution.junit.FileComparisonData
 import com.intellij.testFramework.TestLoggerFactory
 import com.intellij.util.ExceptionUtilRt
@@ -15,6 +16,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import org.assertj.core.api.SoftAssertions
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
@@ -161,6 +163,13 @@ private suspend fun doRunTestBuild(context: BuildContext, traceSpanName: String?
       .useWithScope2 { span ->
         try {
           build(context)
+          val jetBrainsClientMainModule = context.productProperties.embeddedJetBrainsClientMainModule
+          if (jetBrainsClientMainModule != null && context.generateRuntimeModuleRepository) {
+            val softly = SoftAssertions()
+            RuntimeModuleRepositoryChecker.checkIntegrityOfEmbeddedProduct(jetBrainsClientMainModule, ProductMode.FRONTEND, context, softly)
+            softly.assertAll()
+          }
+
         }
         catch (e: CancellationException) {
           throw e

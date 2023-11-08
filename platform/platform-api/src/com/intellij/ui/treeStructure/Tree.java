@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.treeStructure;
 
+import com.intellij.ide.ActivityTracker;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.dnd.SmoothAutoScroller;
 import com.intellij.ide.util.treeView.*;
@@ -662,6 +663,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     @Override
     protected void fireValueChanged(TreeSelectionEvent e) {
       if (myHeldSelection == null) {
+        ActivityTracker.getInstance().inc();
         super.fireValueChanged(e);
       }
     }

@@ -25,9 +25,9 @@ public final class FormattingServiceUtil {
   public static @NotNull FormattingService findService(@NotNull PsiFile file, boolean isExplicit, boolean isCompleteFile) {
     FormattingService formattingService = ContainerUtil.find(
       FormattingService.EP_NAME.getExtensionList(),
-      s -> s.canFormat(file) &&
-           (isExplicit || s.getFeatures().contains(FormattingService.Feature.AD_HOC_FORMATTING)) &&
-           (isCompleteFile || s.getFeatures().contains(FormattingService.Feature.FORMAT_FRAGMENTS))
+      s -> (isExplicit || s.getFeatures().contains(FormattingService.Feature.AD_HOC_FORMATTING)) &&
+           (isCompleteFile || s.getFeatures().contains(FormattingService.Feature.FORMAT_FRAGMENTS)) &&
+           s.canFormat(file)
     );
     LOG.assertTrue(formattingService != null,
                    "At least 1 formatting service which can handle PsiFile " + file.getName() + " should be registered.");
@@ -41,7 +41,7 @@ public final class FormattingServiceUtil {
   public static @NotNull FormattingService findImportsOptimizingService(@NotNull PsiFile file) {
     FormattingService importsOptimizer = ContainerUtil.find(
       FormattingService.EP_NAME.getExtensionList(),
-      s -> s.canFormat(file) && s.getFeatures().contains(FormattingService.Feature.OPTIMIZE_IMPORTS)
+      s -> s.getFeatures().contains(FormattingService.Feature.OPTIMIZE_IMPORTS) && s.canFormat(file)
     );
     LOG.assertTrue(importsOptimizer != null,
                    "At least 1 formatting service which can optimize imports in PsiFile " + file.getName() + " should be registered.");
@@ -76,7 +76,7 @@ public final class FormattingServiceUtil {
   public static void asyncFormatElement(@NotNull PsiElement element, @NotNull TextRange range, boolean canChangeWhitespaceOnly) {
      formatElement(element, range, canChangeWhitespaceOnly, true);
   }
-  
+
   private static @NotNull PsiElement formatElement(@NotNull PsiElement element,
                                                   @NotNull TextRange range,
                                                   boolean canChangeWhiteSpacesOnly,

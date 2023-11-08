@@ -24,6 +24,7 @@ import com.intellij.lang.LangBundle;
 import com.intellij.modcommand.*;
 import com.intellij.modcommand.ModChooseMember.SelectionMode;
 import com.intellij.modcommand.ModUpdateFileText.Fragment;
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
@@ -52,7 +53,9 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.rename.RenamePsiElementProcessor;
 import com.intellij.refactoring.rename.inplace.MemberInplaceRenamer;
+import com.intellij.refactoring.suggested.*;
 import com.intellij.refactoring.ui.ConflictsDialog;
+import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
@@ -79,7 +82,7 @@ public class ModCommandExecutorImpl implements ModCommandExecutor {
   }
 
   private static boolean ensureWritable(@NotNull Project project, @NotNull ModCommand command) {
-    Set<VirtualFile> files = command.modifiedFiles();
+    Collection<VirtualFile> files = ContainerUtil.filter(command.modifiedFiles(), f -> !(f instanceof LightVirtualFile));
     return files.isEmpty() || ReadonlyStatusHandler.ensureFilesWritable(project, files.toArray(VirtualFile.EMPTY_ARRAY));
   }
 
@@ -162,6 +165,9 @@ public class ModCommandExecutorImpl implements ModCommandExecutor {
     if (command instanceof ModUpdateFileText upd) {
       return executeUpdate(project, upd);
     }
+    if (command instanceof ModUpdateReferences decl) {
+      return !executeTrackDeclaration(context, decl, editor);
+    }
     if (command instanceof ModCompositeCommand cmp) {
       return executeComposite(context, cmp, editor);
     }
@@ -205,6 +211,54 @@ public class ModCommandExecutorImpl implements ModCommandExecutor {
       return executeUpdateInspectionOptions(context, updateOptions);
     }
     throw new IllegalArgumentException("Unknown command: " + command);
+  }
+
+  @Nullable
+  private static PsiElement findElementAtRange(PsiFile psiFile, TextRange declarationRange) {
+    PsiElement element = psiFile.findElementAt(declarationRange.getStartOffset());
+    while (element != null && !element.getTextRange().contains(declarationRange)) {
+      element = element.getParent();
+    }
+    if (element == null || !element.getTextRange().equals(declarationRange)) return null;
+    return element;
+  }
+
+  private static boolean executeTrackDeclaration(@NotNull ActionContext context, @NotNull ModUpdateReferences decl, @Nullable Editor editor) {
+    // TODO: properly support multiple tracked declarations
+    VirtualFile file = decl.file();
+    Project project = context.project();
+    Callable<SuggestedRefactoringState> computeNewState = () -> {
+      PsiFile psiFile = PsiManagerEx.getInstanceEx(project).findFile(file);
+      if (psiFile == null) return null;
+      SuggestedRefactoringSupport support = SuggestedRefactoringSupport.Companion.forLanguage(psiFile.getLanguage());
+      if (support == null) return null;
+      PsiElement newElement = findElementAtRange(psiFile, decl.newRange());
+      if (newElement == null || !support.isAnchor(newElement)) return null;
+      SuggestedRefactoringStateChanges stateChanges = support.getStateChanges();
+      PsiFile fileCopy = (PsiFile)psiFile.copy();
+      Document documentCopy = fileCopy.getViewProvider().getDocument();
+      documentCopy.replaceString(0, documentCopy.getTextLength(), decl.oldText());
+      PsiDocumentManager.getInstance(project).commitDocument(documentCopy);
+      PsiElement element = findElementAtRange(fileCopy, decl.oldRange());
+      if (element == null) return null;
+      if (!support.isAnchor(element) || stateChanges.findDeclaration(element) != element) return null;
+      SuggestedRefactoringState state = stateChanges.createInitialState(element);
+      if (state == null) return null;
+      SuggestedRefactoringAvailability availability = support.getAvailability();
+      SuggestedRefactoringState newState = stateChanges.updateState(state, newElement);
+      if (newState.getErrorLevel() != SuggestedRefactoringState.ErrorLevel.NO_ERRORS) return null;
+      if (availability.detectAvailableRefactoring(newState) != null && availability.isAvailable(newState)) return newState;
+      return null;
+    };
+    SuggestedRefactoringState finalState = ProgressManager.getInstance().runProcessWithProgressSynchronously(
+      () -> ReadAction.nonBlocking(computeNewState).executeSynchronously(), 
+      LangBundle.message("dialog.title.searching.for.usages"), true, project);
+    if (finalState == null) return false;
+    Editor finalEditor = getEditor(project, editor, decl.file());
+    if (finalEditor == null) return false;
+    PerformSuggestedRefactoringKt.performSuggestedRefactoring(
+       finalState, finalEditor, project, ActionPlaces.INTENTION_MENU, true, null, null);
+    return true;
   }
 
   private static boolean executeUpdateInspectionOptions(@NotNull ActionContext context, @NotNull ModUpdateInspectionOptions options) {
@@ -369,7 +423,7 @@ public class ModCommandExecutorImpl implements ModCommandExecutor {
     PsiFile psiFile = PsiManagerEx.getInstanceEx(project).findFile(file);
     if (psiFile == null) return false;
     PsiNameIdentifierOwner element =
-      PsiTreeUtil.getNonStrictParentOfType(psiFile.findElementAt(rename.symbolRange().getStartOffset()), PsiNameIdentifierOwner.class);
+      PsiTreeUtil.getNonStrictParentOfType(psiFile.findElementAt(rename.symbolRange().range().getStartOffset()), PsiNameIdentifierOwner.class);
     if (element == null) return false;
     Editor finalEditor = getEditor(project, editor, file);
     if (finalEditor == null) return false;
@@ -607,22 +661,52 @@ public class ModCommandExecutorImpl implements ModCommandExecutor {
     return true;
   }
 
+  @Override
+  public void executeForFileCopy(@NotNull ModCommand command, @NotNull PsiFile file) {
+    for (ModCommand cmd : command.unpack()) {
+      if (cmd instanceof ModUpdateFileText updateFileText) {
+        if (!updateFileText.file().equals(file.getOriginalFile().getVirtualFile())) {
+          throw new UnsupportedOperationException("The command updates non-current file");
+        }
+        updateText(file.getProject(), file.getViewProvider().getDocument(), updateFileText);
+      }
+      else if (!(cmd instanceof ModNavigate) && !(cmd instanceof ModHighlight)) {
+        throw new UnsupportedOperationException("Unexpected command: " + command);
+      }
+    }
+  }
+
+  private void updateText(@NotNull Project project, @NotNull Document document, @NotNull ModUpdateFileText upd)
+    throws IllegalStateException {
+    String oldText = upd.oldText();
+    if (!document.getText().equals(oldText)) {
+      throw new IllegalStateException("Old text doesn't match");
+    }
+    List<@NotNull Fragment> ranges = calculateRanges(upd);
+    PsiDocumentManager manager = PsiDocumentManager.getInstance(project);
+    applyRanges(document, ranges, upd.newText());
+    manager.commitDocument(document);
+  }
+
   private static boolean executeUpdate(@NotNull Project project, @NotNull ModUpdateFileText upd) {
     VirtualFile file = upd.file();
     Document document = FileDocumentManager.getInstance().getDocument(file);
     if (document == null) return false;
     String oldText = upd.oldText();
-    String newText = upd.newText();
     if (!document.getText().equals(oldText)) return false;
     List<@NotNull Fragment> ranges = calculateRanges(upd);
     return WriteAction.compute(() -> {
-      for (Fragment range : ranges) {
-        document.replaceString(range.offset(), range.offset() + range.oldLength(),
-                               newText.substring(range.offset(), range.offset() + range.newLength()));
-      }
+      applyRanges(document, ranges, upd.newText());
       PsiDocumentManager.getInstance(project).commitDocument(document);
       return true;
     });
+  }
+
+  private static void applyRanges(@NotNull Document document, List<@NotNull Fragment> ranges, String newText) {
+    for (Fragment range : ranges) {
+      document.replaceString(range.offset(), range.offset() + range.oldLength(),
+                             newText.substring(range.offset(), range.offset() + range.newLength()));
+    }
   }
   
   private static @NotNull List<@NotNull Fragment> calculateRanges(@NotNull ModUpdateFileText upd) {

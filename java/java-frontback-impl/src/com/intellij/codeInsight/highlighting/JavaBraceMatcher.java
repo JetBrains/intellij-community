@@ -62,7 +62,10 @@ public class JavaBraceMatcher implements PairedBraceMatcher {
       parentNode = parentNode.getTreeParent();
       if (BasicJavaAstTreeUtil.is(parentNode, BASIC_METHOD) ||
           BasicJavaAstTreeUtil.is(parentNode, BASIC_CLASS_INITIALIZER)) {
-        TextRange range = DeclarationRangeUtil.getDeclarationRange(parentNode.getPsi());
+        TextRange range = DeclarationRangeUtil.getPossibleDeclarationAtRange(parentNode.getPsi());
+        if (range == null) {
+          return parentNode.getTextRange().getStartOffset();
+        }
         return range.getStartOffset();
       }
       else if (BasicJavaAstTreeUtil.is(parentNode, BASIC_JAVA_STATEMENT_BIT_SET)) {
@@ -74,7 +77,10 @@ public class JavaBraceMatcher implements PairedBraceMatcher {
       }
     }
     else if (BasicJavaAstTreeUtil.is(parentNode, BASIC_CLASS_KEYWORD_BIT_SET)) {
-      TextRange range = DeclarationRangeUtil.getDeclarationRange(parent);
+      TextRange range = DeclarationRangeUtil.getPossibleDeclarationAtRange(parent);
+      if (range == null) {
+        return parentNode.getTextRange().getStartOffset();
+      }
       return range.getStartOffset();
     }
     return openingBraceOffset;

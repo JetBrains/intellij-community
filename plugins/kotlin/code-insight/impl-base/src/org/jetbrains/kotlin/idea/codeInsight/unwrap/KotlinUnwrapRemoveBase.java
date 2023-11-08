@@ -8,7 +8,7 @@ import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle;
-import org.jetbrains.kotlin.idea.refactoring.ElementRenderingUtilsKt;
+import org.jetbrains.kotlin.idea.codeinsight.utils.ElementRenderingUtilsKt;
 import org.jetbrains.kotlin.psi.KtBlockExpression;
 import org.jetbrains.kotlin.psi.KtElement;
 import org.jetbrains.kotlin.psi.KtExpression;

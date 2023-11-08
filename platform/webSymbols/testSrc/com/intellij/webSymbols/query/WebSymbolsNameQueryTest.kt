@@ -375,12 +375,10 @@ class WebSymbolsNameQueryTest : WebSymbolsMockQueryExecutorTestBase() {
   fun testNestedPattern1() {
     webSymbolsQueryExecutorFactory.addScope(
       object : WebSymbolsScope {
-        override fun getMatchingSymbols(namespace: SymbolNamespace,
-                                        kind: SymbolKind,
-                                        name: String,
+        override fun getMatchingSymbols(qualifiedName: WebSymbolQualifiedName,
                                         params: WebSymbolsNameMatchQueryParams,
                                         scope: Stack<WebSymbolsScope>): List<WebSymbol> {
-          return if (kind == WebSymbol.KIND_HTML_ATTRIBUTES) {
+          return if (qualifiedName.kind == WebSymbol.KIND_HTML_ATTRIBUTES) {
             listOf(object : WebSymbol {
               override val origin: WebSymbolOrigin
                 get() = object : WebSymbolOrigin {

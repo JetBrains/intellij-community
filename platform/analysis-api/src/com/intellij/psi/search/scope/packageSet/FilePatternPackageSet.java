@@ -22,7 +22,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.regex.Pattern;
 
-public class FilePatternPackageSet extends PatternBasedPackageSet {
+public final class FilePatternPackageSet extends PatternBasedPackageSet {
   private static final Logger LOG = Logger.getInstance(FilePatternPackageSet.class);
 
   public static final @NonNls String SCOPE_FILE = "file";

@@ -35,7 +35,7 @@ public class MavenServerForIndexer extends MavenWatchdogAware implements MavenSe
     }
   }
 
-  private Level getLogLevel(String level) {
+  private static Level getLogLevel(String level) {
     switch (level) {
       case "error":
         return Level.SEVERE;
@@ -99,7 +99,7 @@ public class MavenServerForIndexer extends MavenWatchdogAware implements MavenSe
 
   @NotNull
   @Override
-  public MavenModel interpolateAndAlignModel(MavenModel model, File basedir, MavenToken token) throws RemoteException {
+  public MavenModel interpolateAndAlignModel(MavenModel model, File basedir, File pomDir, MavenToken token) throws RemoteException {
     throw new UnsupportedOperationException("indexing server");
   }
 

@@ -43,7 +43,7 @@ public final class CreateDesktopEntryAction extends DumbAwareAction {
   private static final Logger LOG = Logger.getInstance(CreateDesktopEntryAction.class);
 
   public static boolean isAvailable() {
-    return SystemInfo.isXWindow && !ExternalUpdateManager.isCreatingDesktopEntries() && SystemInfo.hasXdgOpen();
+    return SystemInfo.isUnix && !SystemInfo.isMac && !ExternalUpdateManager.isCreatingDesktopEntries() && SystemInfo.hasXdgOpen();
   }
 
   @Override
@@ -86,7 +86,7 @@ public final class CreateDesktopEntryAction extends DumbAwareAction {
   }
 
   public static @NotNull String getDesktopEntryName() {
-    return AppUIUtil.getFrameClass() + ".desktop";
+    return AppUIUtil.INSTANCE.getFrameClass() + ".desktop";
   }
 
   public static void createDesktopEntry(boolean globalEntry) throws Exception {
@@ -136,7 +136,7 @@ public final class CreateDesktopEntryAction extends DumbAwareAction {
 
     String name = names.getFullProductNameWithEdition();
     String comment = StringUtil.notNullize(names.getMotto(), name);
-    String wmClass = AppUIUtil.getFrameClass();
+    String wmClass = AppUIUtil.INSTANCE.getFrameClass();
     Map<String, String> vars = Map.of("$NAME$", name, "$SCRIPT$", execPath, "$ICON$", iconPath, "$COMMENT$", comment, "$WM_CLASS$", wmClass);
     String content = ExecUtil.loadTemplate(CreateDesktopEntryAction.class.getClassLoader(), "entry.desktop", vars);
     Path entryFile = Path.of(PathManager.getTempPath(), getDesktopEntryName());

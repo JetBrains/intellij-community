@@ -4,6 +4,6 @@ package com.intellij.facet;
 /**
  * @deprecated Use {@link FacetManagerListener} directly.
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public abstract class FacetManagerAdapter implements FacetManagerListener {
 }

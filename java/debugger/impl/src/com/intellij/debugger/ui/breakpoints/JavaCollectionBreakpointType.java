@@ -156,7 +156,7 @@ public class JavaCollectionBreakpointType extends JavaLineBreakpointTypeBase<Jav
         PsiClass psiClass = JavaPsiFacade.getInstance(project).findClass(className, GlobalSearchScope.allScope(project));
         if (psiClass != null) {
           final PsiFile psiFile = psiClass.getContainingFile();
-          Document document = PsiDocumentManager.getInstance(project).getDocument(psiFile);
+          Document document = psiFile.getViewProvider().getDocument();
           if (document != null) {
             PsiField field = psiClass.findFieldByName(fieldName, false);
             if (field != null) {

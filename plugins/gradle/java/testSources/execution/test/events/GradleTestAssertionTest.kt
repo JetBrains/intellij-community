@@ -5,6 +5,7 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.rt.execution.junit.FileComparisonFailure
 import junit.framework.ComparisonFailure
 import org.gradle.util.GradleVersion
+import org.jetbrains.plugins.gradle.testFramework.GradleExecutionTestCase
 import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
 import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
 import org.jetbrains.plugins.gradle.testFramework.util.assumeThatJunit5IsSupported
@@ -139,7 +140,7 @@ class GradleTestAssertionTest : GradleExecutionTestCase() {
       """.trimMargin())
 
       executeTasks(":test", isRunAsTest = true)
-      assertTestTreeView {
+      assertTestViewTree {
         assertNode("TestCase") {
           assertNode("test assert equals for ints") {
             assertTestConsoleContains("""
@@ -325,7 +326,7 @@ class GradleTestAssertionTest : GradleExecutionTestCase() {
       """.trimMargin())
 
       executeTasks(":test", isRunAsTest = true)
-      assertTestTreeView {
+      assertTestViewTree {
         assertNode("TestCase") {
           assertNode("test assert equals for ints") {
             assertTestConsoleContains("""
@@ -496,7 +497,7 @@ class GradleTestAssertionTest : GradleExecutionTestCase() {
       """.trimMargin())
 
       executeTasks(":test", isRunAsTest = true)
-      assertTestTreeView {
+      assertTestViewTree {
         assertNode("TestCase") {
           assertNode("test assert equals for ints") {
             assertTestConsoleContains("""
@@ -676,7 +677,7 @@ class GradleTestAssertionTest : GradleExecutionTestCase() {
       """.trimMargin())
 
       executeTasks(":test", isRunAsTest = true)
-      assertTestTreeView {
+      assertTestViewTree {
         assertNode("TestCase") {
           assertNode("test_assert_equals_for_ints") {
             assertTestConsoleContains("""
@@ -851,7 +852,7 @@ class GradleTestAssertionTest : GradleExecutionTestCase() {
       """.trimMargin())
 
       executeTasks(":test", isRunAsTest = true)
-      assertTestTreeView {
+      assertTestViewTree {
         assertNode("TestCase") {
           assertNode("test_assert_equals_for_ints") {
             assertTestConsoleContains("""
@@ -1017,7 +1018,7 @@ class GradleTestAssertionTest : GradleExecutionTestCase() {
       """.trimMargin())
 
       executeTasks(":test", isRunAsTest = true)
-      assertTestTreeView {
+      assertTestViewTree {
         assertNode("Gradle suite") {
           assertNode("Gradle test") {
             assertNode("TestCase", flattenIf = isGradleOlderThan("5.0")) {
@@ -1187,7 +1188,7 @@ class GradleTestAssertionTest : GradleExecutionTestCase() {
       """.trimMargin())
 
       executeTasks(":test", isRunAsTest = true)
-      assertTestTreeView {
+      assertTestViewTree {
         assertNode("Gradle suite") {
           assertNode("Gradle test") {
             assertNode("TestCase", flattenIf = isGradleOlderThan("5.0")) {
@@ -1313,7 +1314,7 @@ class GradleTestAssertionTest : GradleExecutionTestCase() {
       """.trimMargin())
 
       executeTasks(":test", isRunAsTest = true)
-      assertTestTreeView {
+      assertTestViewTree {
         assertNode("TestCase") {
           assertNode("test_file_comparison_failure") {
             assertTestConsoleContains("""
@@ -1427,7 +1428,7 @@ class GradleTestAssertionTest : GradleExecutionTestCase() {
       """.trimMargin())
 
       executeTasks(":test", isRunAsTest = true)
-      assertTestTreeView {
+      assertTestViewTree {
         assertNode("TestCase") {
           assertNode("test_file_comparison_failure") {
             assertTestConsoleContains("""

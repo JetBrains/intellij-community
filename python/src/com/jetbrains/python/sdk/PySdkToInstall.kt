@@ -56,7 +56,7 @@ import kotlin.math.absoluteValue
 private val LOGGER = Logger.getInstance(PySdkToInstall::class.java)
 
 @CalledInAny
-internal fun getSdksToInstall(): List<PySdkToInstall> {
+fun getSdksToInstall(): List<PySdkToInstall> {
   return if (SystemInfo.isWindows) listOf(getPy39ToInstallOnWindows(), getPy310ToInstallOnWindows())
   else if (SystemInfo.isMac) listOf(PySdkToInstallViaXCodeSelect())
   else emptyList()

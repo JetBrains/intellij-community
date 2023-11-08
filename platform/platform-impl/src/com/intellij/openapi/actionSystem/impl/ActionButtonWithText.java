@@ -70,6 +70,9 @@ public class ActionButtonWithText extends ActionButton {
         if(evt.getPropertyName().equals(SHORTCUT_SHOULD_SHOWN.toString())) {
           updateToolTipText();
         }
+        if (evt.getPropertyName().equals(Presentation.PROP_ICON)) {
+          revalidate();
+        }
       }
     });
     getActionMap().put("doClick", new AbstractAction() {

@@ -316,7 +316,7 @@ public class CodeStyleSettingsManager implements PersistentStateComponentWithMod
    * @deprecated use {@link #fireCodeStyleSettingsChanged()} for project-wide changes or
    * {@link #fireCodeStyleSettingsChanged(VirtualFile)} for file-related changes.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public void fireCodeStyleSettingsChanged(@Nullable PsiFile file) {
     if (file != null) {
       fireCodeStyleSettingsChanged(file.getVirtualFile());

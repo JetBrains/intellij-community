@@ -153,43 +153,58 @@ public final class Touchbar {
                                                   boolean useTextFromAction /*for optional buttons*/) {
     Object anAct = action == null ? null : action.getValue(OptionAction.AN_ACTION);
     if (anAct == null) {
-      anAct = new DumbAwareAction() {
-        {
-          setEnabledInModalContext(true);
-          if (useTextFromAction) {
-            Object name = action == null ? button.getText() : action.getValue(Action.NAME);
-            getTemplatePresentation().setText(name instanceof String ? (String)name : "");
-          }
-        }
-
-        @Override
-        public void actionPerformed(@NotNull AnActionEvent e) {
-          if (action == null) {
-            button.doClick();
-            return;
-          }
-          // also can be used something like: ApplicationManager.getApplication().invokeLater(() -> jb.doClick(), ms)
-          action.actionPerformed(new ActionEvent(button, ActionEvent.ACTION_PERFORMED, null));
-        }
-
-        @Override
-        public void update(@NotNull AnActionEvent e) {
-          e.getPresentation().setEnabled(action == null ? button.isEnabled() : action.isEnabled());
-          if (!useTextFromAction) {
-            e.getPresentation().setText(DialogWrapper.extractMnemonic(button.getText()).second);
-          }
-        }
-
-        @Override
-        public @NotNull ActionUpdateThread getActionUpdateThread() {
-          return ActionUpdateThread.EDT;
-        }
-      };
+      anAct = new MyAction(useTextFromAction, action, button);
     }
     if (!(anAct instanceof AnAction)) {
       return null;
     }
     TouchbarActionCustomizations.setComponent((AnAction)anAct, button).setShowText(true).setShowImage(false);
     return (AnAction)anAct;
+  }
+
+  private static class MyAction extends DumbAwareAction implements ActionWithDelegate<Object> {
+
+    final boolean useTextFromAction;
+    final @Nullable Action action;
+    final @NotNull JButton button;
+
+    MyAction(boolean useTextFromAction, @Nullable Action action, @NotNull JButton button) {
+      this.useTextFromAction = useTextFromAction;
+      this.action = action;
+      this.button = button;
+      setEnabledInModalContext(true);
+      if (useTextFromAction) {
+        Object name = action == null ? button.getText() : action.getValue(Action.NAME);
+        getTemplatePresentation().setText(name instanceof String ? (String)name : "");
+      }
+    }
+
+    @Override
+    public @NotNull Object getDelegate() {
+      return action == null ? button : action;
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      if (action == null) {
+        button.doClick();
+        return;
+      }
+      // also can be used something like: ApplicationManager.getApplication().invokeLater(() -> jb.doClick(), ms)
+      action.actionPerformed(new ActionEvent(button, ActionEvent.ACTION_PERFORMED, null));
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      e.getPresentation().setEnabled(action == null ? button.isEnabled() : action.isEnabled());
+      if (!useTextFromAction) {
+        e.getPresentation().setText(DialogWrapper.extractMnemonic(button.getText()).second);
+      }
+    }
   }
 }

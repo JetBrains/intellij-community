@@ -1,6 +1,6 @@
 <component name="libraryTable">
   <library name="caffeine" type="repository">
-    <properties include-transitive-deps="false" jar-repository-id="central-proxy" maven-id="com.github.ben-manes.caffeine:caffeine:3.1.8">
+    <properties include-transitive-deps="false" maven-id="com.github.ben-manes.caffeine:caffeine:3.1.8">
       <verification>
         <artifact url="file://$MAVEN_REPOSITORY$/com/github/ben-manes/caffeine/caffeine/3.1.8/caffeine-3.1.8.jar">
           <sha256sum>7dd15f9df1be238ffaa367ce6f556737a88031de4294dad18eef57c474ddf1d3</sha256sum>

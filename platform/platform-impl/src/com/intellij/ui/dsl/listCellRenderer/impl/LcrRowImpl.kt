@@ -20,12 +20,14 @@ import java.awt.Color
 import java.awt.Component
 import java.util.function.Supplier
 import javax.accessibility.Accessible
+import javax.accessibility.AccessibleContext
+import javax.accessibility.AccessibleRole
 import javax.swing.*
 import javax.swing.plaf.basic.BasicComboPopup
 import kotlin.math.max
 
 @ApiStatus.Internal
-internal class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRow<T>, ListCellRenderer<T> {
+public open class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRow<T>, ListCellRenderer<T>, ExperimentalUI.NewUIComboBoxRenderer {
 
   private var listCellRendererParams: ListCellRendererParams<T>? = null
 
@@ -66,6 +68,15 @@ internal class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRo
       for (cell in cells) {
         cell.lcrCell.component.foreground = fg
       }
+    }
+
+    override fun getAccessibleContext(): AccessibleContext {
+      if (accessibleContext == null) {
+        accessibleContext = object : AccessibleJPanel() {
+          override fun getAccessibleRole(): AccessibleRole = AccessibleRole.LABEL
+        }
+      }
+      return accessibleContext
     }
   }
 
@@ -128,8 +139,8 @@ internal class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRo
   }
 
   override fun icon(icon: Icon, init: (LcrIconInitParams.() -> Unit)?) {
-    val accessibleName = (icon as? Accessible)?.accessibleContext?.accessibleName
-    val initParams = LcrIconInitParamsImpl(accessibleName)
+    val initParams = LcrIconInitParams()
+    initParams.accessibleName = (icon as? Accessible)?.accessibleContext?.accessibleName
     if (init != null) {
       initParams.init()
     }
@@ -140,12 +151,13 @@ internal class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRo
   }
 
   override fun text(text: @Nls String, init: (LcrTextInitParams.() -> Unit)?) {
-    val initParams = LcrTextInitParamsImpl(text, foreground)
+    val initParams = LcrTextInitParams(foreground)
+    initParams.accessibleName = text
     if (init != null) {
       initParams.init()
     }
 
-    val result = if (initParams.isSimpleText()) {
+    val result = if (initParams.attributes == null) {
       lcrCellCache.occupyText().apply {
         init(text, initParams, selected, foreground)
       }
@@ -187,9 +199,8 @@ internal class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRo
           selectablePanel.isOpaque = true
           selectionArc = 8
           if (isComboBox) {
-            // todo borders for comboBox mode should be updated with implementation of IDEA-316042 Fix lists that open from dropdowns and combo boxes
-            selectionInsets = JBInsets.create(0, 0)
-            border = JBUI.Borders.empty(0, 8)
+            selectionInsets = JBInsets.create(0, 12)
+            border = JBUI.Borders.empty(2, 20)
           }
           else {
             selectionInsets = JBInsets.create(0, 12)
@@ -223,15 +234,15 @@ internal class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRo
       val roundingTopGapPatch = cell.lcrCell.component.preferredSize.height % 2
       val gaps = UnscaledGaps(top = roundingTopGapPatch, left = if (builder.x == 0) 0 else getGapValue(cell.gap))
       val horizontalAlign = when (cell.align) {
-        LcrInitParams.Align.LEFT -> HorizontalAlign.LEFT
-        LcrInitParams.Align.FILL -> HorizontalAlign.FILL
+        null, LcrInitParams.Align.LEFT -> HorizontalAlign.LEFT
+        LcrInitParams.Align.CENTER -> HorizontalAlign.CENTER
         LcrInitParams.Align.RIGHT -> HorizontalAlign.RIGHT
       }
 
       builder.cell(cell.lcrCell.component, gaps = gaps,
                    horizontalAlign = horizontalAlign,
                    verticalAlign = VerticalAlign.CENTER,
-                   resizableColumn = cell.align != LcrInitParams.Align.LEFT,
+                   resizableColumn = cell.align != null,
                    baselineAlign = cell.baselineAlign)
     }
 
@@ -240,7 +251,7 @@ internal class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRo
     return selectablePanel
   }
 
-  private fun add(lcrCell: LcrCellBaseImpl, initParams: LcrInitParamsImpl, baselineAlign: Boolean) {
+  private fun add(lcrCell: LcrCellBaseImpl, initParams: LcrInitParams, baselineAlign: Boolean) {
     cells.add(CellInfo(lcrCell, initParams.align, baselineAlign, gap))
     gap = LcrRow.Gap.DEFAULT
   }
@@ -273,7 +284,7 @@ private data class ListCellRendererParams<T>(val list: JList<out T>,
                                              val selected: Boolean,
                                              val hasFocus: Boolean)
 
-private data class CellInfo(val lcrCell: LcrCellBaseImpl, val align: LcrInitParams.Align, val baselineAlign: Boolean, val gap: LcrRow.Gap)
+private data class CellInfo(val lcrCell: LcrCellBaseImpl, val align: LcrInitParams.Align?, val baselineAlign: Boolean, val gap: LcrRow.Gap)
 
 private class LcrCellCache {
 

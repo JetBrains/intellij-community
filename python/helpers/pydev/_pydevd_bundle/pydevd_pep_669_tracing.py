@@ -1,30 +1,24 @@
-import linecache
 import os
 import sys
 import threading
 import traceback
-from functools import cached_property
 from os.path import splitext, basename
 
 from _pydev_bundle import pydev_log
 from _pydev_bundle.pydev_is_thread_alive import is_thread_alive
-from _pydevd_bundle import pydevd_vars
 from _pydevd_bundle.pydevd_additional_thread_info_regular import \
     set_additional_thread_info
-from _pydevd_bundle.pydevd_breakpoints import get_exception_breakpoint, \
-    stop_on_unhandled_exception
+from _pydevd_bundle.pydevd_breakpoints import stop_on_unhandled_exception
 from _pydevd_bundle.pydevd_bytecode_utils import find_last_call_name, \
     find_last_func_call_order
 from _pydevd_bundle.pydevd_comm_constants import CMD_STEP_OVER, CMD_SMART_STEP_INTO, \
-    CMD_SET_BREAK, CMD_STEP_INTO, CMD_STEP_INTO_MY_CODE, CMD_STEP_INTO_COROUTINE, \
-    CMD_STEP_CAUGHT_EXCEPTION
+    CMD_SET_BREAK, CMD_STEP_INTO, CMD_STEP_INTO_MY_CODE, CMD_STEP_INTO_COROUTINE
 from _pydevd_bundle.pydevd_constants import get_current_thread_id, PYDEVD_TOOL_NAME, \
     STATE_RUN, STATE_SUSPEND
 from _pydevd_bundle.pydevd_dont_trace_files import DONT_TRACE
 from _pydevd_bundle.pydevd_frame import handle_breakpoint_condition, \
-    handle_breakpoint_expression, DEBUG_START, DEBUG_START_PY3K, IGNORE_EXCEPTION_TAG
-from _pydevd_bundle.pydevd_frame_utils import add_exception_to_frame, \
-    remove_exception_from_frame, ignore_exception_trace, just_raised
+    handle_breakpoint_expression, DEBUG_START, DEBUG_START_PY3K, \
+    should_stop_on_exception, handle_exception, manage_return_values
 from _pydevd_bundle.pydevd_kill_all_pydevd_threads import kill_all_pydev_threads
 from pydevd_file_utils import NORM_PATHS_AND_BASE_CONTAINER, \
     get_abs_path_real_path_and_base_from_frame
@@ -147,6 +141,11 @@ class PyStartCallback(PEP669CallbackBase):
                 return
 
             if is_stepping:
+                if (pydev_step_cmd == CMD_STEP_OVER
+                        and frame is not additional_info.pydev_step_stop):
+                    if frame.f_back is additional_info.pydev_step_stop:
+                        self._return_callback.start_monitoring(code)
+                    return
                 if (py_db.is_filter_enabled
                         and py_db.is_ignored_by_filters(filename)):
                     return
@@ -202,7 +201,7 @@ class PyStartCallback(PEP669CallbackBase):
             if can_skip:
                 if plugin_manager is not None and self.py_db.has_plugin_line_breaks:
                     can_skip = not plugin_manager.can_not_skip(
-                        self.py_db, self, frame, info)
+                        self.py_db, frame, info)
 
                 # CMD_STEP_OVER = 108
                 if (can_skip and self.py_db.show_return_values
@@ -466,11 +465,12 @@ class PyLineCallback(PEP669CallbackBase):
 
 
 class PyRaiseCallback(PEP669CallbackBase):
-    filename_to_lines_where_exceptions_are_ignored = {}
-    filename_to_stat_info = {}
+    _top_level_frame = None
 
-    @cached_property
-    def _top_level_frame(self):
+    def _get_top_level_frame(self):
+        if self._top_level_frame is not None:
+            return self._top_level_frame
+
         f_unhandled = sys._getframe()
 
         while f_unhandled:
@@ -481,6 +481,8 @@ class PyRaiseCallback(PEP669CallbackBase):
                     break
             f_unhandled = f_unhandled.f_back
 
+        self._top_level_frame = f_unhandled
+
         return f_unhandled
 
     def __call__(self, code, instruction_offset, exception):
@@ -489,7 +491,7 @@ class PyRaiseCallback(PEP669CallbackBase):
 
         frame = self.frame
 
-        if frame is self._top_level_frame:
+        if frame is self._get_top_level_frame():
             self._stop_on_unhandled_exception(exc_info)
             return
 
@@ -497,9 +499,15 @@ class PyRaiseCallback(PEP669CallbackBase):
                                      or self.py_db.has_plugin_exception_breaks
                                      or self.py_db.stop_on_failed_tests)
         if has_exception_breakpoints:
-            should_stop, frame = self.should_stop_on_exception(self.frame, exc_info)
+            args = (
+                self.py_db, self._get_filename(frame),
+                self._get_additional_info(self.thread), self.thread, global_cache_skips,
+                global_cache_frame_skips
+            )
+            should_stop, frame = should_stop_on_exception(
+                args, self.frame, 'exception', exc_info)
             if should_stop:
-                self.handle_exception(frame, 'exception', exc_info)
+                handle_exception(args, frame, 'exception', exc_info)
 
     def _stop_on_unhandled_exception(self, exc_info):
         additional_info = self._get_additional_info(self.thread)
@@ -508,233 +516,40 @@ class PyRaiseCallback(PEP669CallbackBase):
             stop_on_unhandled_exception(self.py_db, self.thread, additional_info,
                                         exc_info)
 
-    # XXX: Copy-paste from `PyDBFrame`. This method should be factored out. Plugins
-    # are not supported.
-    def should_stop_on_exception(self, frame, arg):
-        thread = self.thread
-        info = self._get_additional_info(thread)
-        should_stop = False
-
-        # STATE_SUSPEND = 2
-        if info.pydev_state == 2:
-            return  should_stop, frame
-
-        exception, value, trace = arg
-
-        if trace is not None and hasattr(trace, 'tb_next'):
-            exception_breakpoint = get_exception_breakpoint(
-                exception, self.py_db.break_on_caught_exceptions)
-
-            if exception_breakpoint is not None:
-                if exception_breakpoint.condition is not None:
-                    # Always add exception to frame (must remove later after we proceed).
-                    add_exception_to_frame(frame, (exception, value, trace))
-                    eval_result = handle_breakpoint_condition(self.py_db, info, exception_breakpoint, frame)
-                    remove_exception_from_frame(frame)
-                    if not eval_result:
-                        return False, frame
-
-                if exception_breakpoint.ignore_libraries:
-                    if not self.py_db.is_exception_trace_in_project_scope(trace):
-                        return False, frame
-
-                if ignore_exception_trace(trace):
-                    return False, frame
-
-                was_just_raised = just_raised(trace)
-                if was_just_raised:
-
-                    if self.py_db.skip_on_exceptions_thrown_in_same_context:
-                        # Option: Don't break if an exception is caught in the same function from which it is thrown
-                        return False, frame
-
-                if exception_breakpoint.notify_on_first_raise_only:
-                    if self.py_db.skip_on_exceptions_thrown_in_same_context:
-                        # In this case we never stop if it was just raised, so, to know if it was the first we
-                        # need to check if we're in the 2nd method.
-                        if not was_just_raised and not just_raised(trace.tb_next):
-                            return False, frame  # I.e.: we stop only when we're at the caller of a method that throws an exception
-
-                    else:
-                        if not was_just_raised and not self.py_db.is_top_level_trace_in_project_scope(trace):
-                            return False, frame  # I.e.: we stop only when it was just raised
-
-                # If it got here we should stop.
-                should_stop = True
-                try:
-                    info.pydev_message = exception_breakpoint.qname
-                except:
-                    info.pydev_message = exception_breakpoint.qname.encode('utf-8')
-
-                # Always add exception to frame (must remove later after we proceed).
-                add_exception_to_frame(frame, (exception, value, trace))
-
-                info.pydev_message = "python-%s" % info.pydev_message
-
-            if should_stop:
-                if exception_breakpoint is not None and exception_breakpoint.expression is not None:
-                    handle_breakpoint_expression(exception_breakpoint, info, frame)
-
-        return should_stop, frame
-
-    # XXX: Copy-paste from `PyDBFrame`. This method should be factored out.
-    def handle_exception(self, frame, event, arg):
-        try:
-            # We have 3 things in arg: exception type, description, traceback object
-            trace_obj = arg[2]
-
-            initial_trace_obj = trace_obj
-            if trace_obj.tb_next is None and trace_obj.tb_frame is frame:
-                # I.e.: tb_next should be only None in the context it was thrown (trace_obj.tb_frame is frame is just a double check).
-                pass
-            else:
-                # Get the trace_obj from where the exception was raised...
-                while trace_obj.tb_next is not None:
-                    trace_obj = trace_obj.tb_next
-
-            if self.py_db.ignore_exceptions_thrown_in_lines_with_ignore_exception \
-                    and not self.py_db.stop_on_failed_tests:
-
-                for check_trace_obj in (initial_trace_obj, trace_obj):
-                    filename = get_abs_path_real_path_and_base_from_frame(check_trace_obj.tb_frame)[1]
-
-                    filename_to_lines_where_exceptions_are_ignored = self.filename_to_lines_where_exceptions_are_ignored
-
-                    lines_ignored = filename_to_lines_where_exceptions_are_ignored.get(filename)
-                    if lines_ignored is None:
-                        lines_ignored = filename_to_lines_where_exceptions_are_ignored[filename] = {}
-
-                    try:
-                        curr_stat = os.stat(filename)
-                        curr_stat = (curr_stat.st_size, curr_stat.st_mtime)
-                    except:
-                        curr_stat = None
-
-                    last_stat = self.filename_to_stat_info.get(filename)
-                    if last_stat != curr_stat:
-                        self.filename_to_stat_info[filename] = curr_stat
-                        lines_ignored.clear()
-                        try:
-                            linecache.checkcache(filename)
-                        except:
-                            # Jython 2.1
-                            linecache.checkcache()
-
-                    from_user_input = self.py_db.filename_to_lines_where_exceptions_are_ignored.get(filename)
-                    if from_user_input:
-                        merged = {}
-                        merged.update(lines_ignored)
-                        # Override what we have with the related entries that the user entered
-                        merged.update(from_user_input)
-                    else:
-                        merged = lines_ignored
-
-                    exc_lineno = check_trace_obj.tb_lineno
-
-                    # print ('lines ignored', lines_ignored)
-                    # print ('user input', from_user_input)
-                    # print ('merged', merged, 'curr', exc_lineno)
-
-                    if exc_lineno not in merged:  # Note: check on merged but update lines_ignored.
-                        try:
-                            line = linecache.getline(filename, exc_lineno, check_trace_obj.tb_frame.f_globals)
-                        except:
-                            # Jython 2.1
-                            line = linecache.getline(filename, exc_lineno)
-
-                        if IGNORE_EXCEPTION_TAG.match(line) is not None:
-                            lines_ignored[exc_lineno] = 1
-                            return
-                        else:
-                            # Put in the cache saying not to ignore
-                            lines_ignored[exc_lineno] = 0
-                    else:
-                        # Ok, dict has it already cached, so, let's check it...
-                        if merged.get(exc_lineno, 0):
-                            return
-
-            thread = self.thread
-
-            try:
-                frame_id_to_frame = {}
-                frame_id_to_frame[id(frame)] = frame
-                f = trace_obj.tb_frame
-                while f is not None:
-                    frame_id_to_frame[id(f)] = f
-                    f = f.f_back
-                f = None
-
-                thread_id = get_current_thread_id(thread)
-
-                if self.py_db.stop_on_failed_tests:
-                    # Our goal is to find the deepest frame in stack that still belongs to the project and stop there.
-                    f = trace_obj.tb_frame
-                    while f:
-                        abs_path, _, _ = get_abs_path_real_path_and_base_from_frame(f)
-                        if self.py_db.in_project_scope(abs_path):
-                            frame = f
-                            break
-                        f = f.f_back
-                    f = None
-
-                    trace_obj = initial_trace_obj
-                    while trace_obj:
-                        if trace_obj.tb_frame is frame:
-                            break
-                        trace_obj = trace_obj.tb_next
-
-                    add_exception_to_frame(frame, (arg[0], arg[1], trace_obj))
-
-                pydevd_vars.add_additional_frame_by_id(thread_id, frame_id_to_frame)
-
-                try:
-                    self.py_db.send_caught_exception_stack(thread, arg, id(frame))
-                    self.py_db.set_suspend(thread, CMD_STEP_CAUGHT_EXCEPTION)
-                    self.py_db.do_wait_suspend(thread, frame, event, arg)
-                    self.py_db.send_caught_exception_stack_proceeded(thread)
-
-                finally:
-                    pydevd_vars.remove_additional_frame_by_id(thread_id)
-            except KeyboardInterrupt as e:
-                raise e
-            except:
-                traceback.print_exc()
-
-            self.py_db.set_trace_for_frame_and_parents(frame)
-        finally:
-            # Make sure the user cannot see the '__exception__' we added after we leave the suspend state.
-            remove_exception_from_frame(frame)
-            # Clear some local variables...
-            frame = None
-            trace_obj = None
-            initial_trace_obj = None
-            check_trace_obj = None
-            f = None
-            frame_id_to_frame = None
-            main_debugger = None
-            thread = None
-
 
 class PyReturnCallback(PEP669CallbackBase):
     def __call__(self, code, instruction_offset, retval):
-        # print('PY_RETURN %s %s %s' % (code, code.co_name, code.co_filename))
+        try:
+            # print('PY_RETURN %s %s %s' % (code, code.co_name, code.co_filename))
 
-        frame = self.frame
-        thread = self.thread
-        info = self._get_additional_info(thread)
+            frame = self.frame
+            thread = self.thread
+            info = self._get_additional_info(thread)
 
-        step_cmd = info.pydev_step_cmd
+            if self.py_db.show_return_values or self.py_db.remove_return_values_flag:
+                manage_return_values(self.py_db, frame, 'return', retval)
 
-        if step_cmd == CMD_STEP_OVER:
-            if frame.f_back and self.py_db.in_project_scope(code.co_filename):
-                back = frame.f_back
-                if back is not None:
-                    _, back_filename, base \
-                        = get_abs_path_real_path_and_base_from_frame(back)
-                    if (base, back.f_code.co_name) in (DEBUG_START, DEBUG_START_PY3K):
-                        back = None
-                    self.py_db.set_suspend(thread, step_cmd)
-                    self.py_db.do_wait_suspend(thread, back, 'return', retval)
+            step_cmd = info.pydev_step_cmd
+
+            if step_cmd == CMD_STEP_OVER:
+                if frame.f_back:
+                    back = frame.f_back
+                    back_code = back.f_code
+                    if not self.py_db.in_project_scope(back_code.co_filename):
+                        return
+                    if back is not None:
+                        _, back_filename, base \
+                            = get_abs_path_real_path_and_base_from_frame(back)
+                        if (base, back_code.co_name) in (DEBUG_START, DEBUG_START_PY3K):
+                            back = None
+                        if back is not info.pydev_step_stop:
+                            self.py_db.set_suspend(thread, step_cmd)
+                            self.py_db.do_wait_suspend(thread, back, 'return', retval)
+                        PyLineCallback.start_monitoring(back_code)
+                        if back_code.co_name != '<module>':
+                            PyReturnCallback.start_monitoring(back_code)
+        finally:
+            self.stop_monitoring(code)
 
     @staticmethod
     def start_monitoring(code):

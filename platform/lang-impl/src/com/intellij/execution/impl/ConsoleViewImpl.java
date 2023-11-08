@@ -6,6 +6,7 @@ import com.google.common.base.CharMatcher;
 import com.intellij.codeInsight.folding.impl.FoldingUtil;
 import com.intellij.codeInsight.navigation.IncrementalSearchHandler;
 import com.intellij.codeInsight.template.impl.editorActions.TypedActionHandlerBase;
+import com.intellij.codeWithMe.ClientId;
 import com.intellij.execution.ConsoleFolding;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.actions.ClearConsoleAction;
@@ -58,6 +59,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.toolWindow.InternalDecoratorImpl;
 import com.intellij.ui.AncestorListenerAdapter;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SideBorder;
@@ -212,6 +214,9 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
         ConsoleTokenUtil.updateAllTokenTextAttributes(getEditor(), project);
       });
     if (usePredefinedMessageFilter) {
+      if (!ClientId.isCurrentlyUnderLocalId() && myPredefinedFilters.isEmpty()) {
+        updatePredefinedFiltersLater(ModalityState.defaultModalityState());
+      }
       addAncestorListener(new AncestorListenerAdapter() {
         @Override
         public void ancestorAdded(AncestorEvent event) {
@@ -241,10 +246,14 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   }
 
   private void updatePredefinedFiltersLater() {
+    updatePredefinedFiltersLater(null);
+  }
+
+  private void updatePredefinedFiltersLater(@Nullable ModalityState modalityState) {
     ReadAction
       .nonBlocking(() -> ConsoleViewUtil.computeConsoleFilters(myProject, this, mySearchScope))
       .expireWith(this)
-      .finishOnUiThread(ModalityState.stateForComponent(this), filters -> {
+      .finishOnUiThread(modalityState != null ? modalityState : ModalityState.stateForComponent(this), filters -> {
         myPredefinedFilters = filters;
         rehighlightHyperlinksAndFoldings();
       }).submit(AppExecutorUtil.getAppExecutorService());
@@ -1430,6 +1439,18 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   public void addChangeListener(@NotNull ChangeListener listener, @NotNull Disposable parent) {
     myListeners.add(listener);
     Disposer.register(parent, () -> myListeners.remove(listener));
+  }
+
+  @Override
+  public void addNotify() {
+    super.addNotify();
+    InternalDecoratorImpl.componentWithEditorBackgroundAdded(this);
+  }
+
+  @Override
+  public void removeNotify() {
+    super.removeNotify();
+    InternalDecoratorImpl.componentWithEditorBackgroundRemoved(this);
   }
 
   private void insertUserText(int offset, @NotNull String text) {

@@ -2,17 +2,12 @@
 @file:JvmName("SafeAnalysisUtils")
 package org.jetbrains.kotlin.idea.util
 
-import com.intellij.injected.editor.VirtualFileWindow
-import com.intellij.openapi.roots.ProjectRootManager
-import com.intellij.openapi.vfs.NonPhysicalFileSystem
 import com.intellij.psi.PsiElement
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes
 import org.jetbrains.jps.model.java.JavaSourceRootProperties
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 import org.jetbrains.kotlin.config.ALL_KOTLIN_SOURCE_ROOT_TYPES
 import org.jetbrains.kotlin.idea.base.util.isUnderKotlinSourceRootTypes
-import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.resolve.lazy.NoDescriptorForDeclarationException
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
@@ -49,11 +44,3 @@ inline fun <T> Exception.returnIfNoDescriptorForDeclarationException(
 val KOTLIN_AWARE_SOURCE_ROOT_TYPES: Set<JpsModuleSourceRootType<JavaSourceRootProperties>> =
     JavaModuleSourceRootTypes.SOURCES + ALL_KOTLIN_SOURCE_ROOT_TYPES
 
-@ApiStatus.ScheduledForRemoval
-@Deprecated("Use 'org.jetbrains.kotlin.idea.base.util.isUnderKotlinSourceRootTypes()' instead")
-fun PsiElement?.isUnderKotlinSourceRootTypes(): Boolean {
-    val ktFile = this?.containingFile.safeAs<KtFile>() ?: return false
-    val file = ktFile.virtualFile?.takeIf { it !is VirtualFileWindow && it.fileSystem !is NonPhysicalFileSystem } ?: return false
-    val projectFileIndex = ProjectRootManager.getInstance(ktFile.project).fileIndex
-    return projectFileIndex.isUnderSourceRootOfType(file, KOTLIN_AWARE_SOURCE_ROOT_TYPES)
-}

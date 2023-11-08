@@ -19,26 +19,30 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemUtil.runTask
 import com.intellij.testFramework.ExtensionTestUtil
 import com.jetbrains.fus.reporting.model.lion3.LogEvent
 import junit.framework.AssertionFailedError
-import junit.framework.TestCase
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
 import org.jetbrains.plugins.gradle.importing.TestGradleBuildScriptBuilder
-import org.jetbrains.plugins.gradle.statistics.GradleExecutionPerformanceCollector
+import org.jetbrains.plugins.gradle.statistics.GradleTaskExecutionCollector
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.junit.Test
 import org.junit.runners.Parameterized
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.function.Consumer
 
 class GradleTasksExecutionTest : GradleImportingTestCase() {
 
   @Test
-  fun `test fus contains only well known task metrics`() {
-    ExtensionTestUtil.maskExtensions(ExternalEventLogSettings.EP_NAME, listOf(object : ExternalEventLogSettings {
-      override fun forceLoggingAlwaysEnabled(): Boolean = true
-      override fun getExtraLogUploadHeaders(): Map<String, String> = emptyMap()
-    }), testRootDisposable)
+  fun `test fus contains only well known task names`() {
+    ExtensionTestUtil.maskExtensions(
+      ExternalEventLogSettings.EP_NAME,
+      listOf(object : ExternalEventLogSettings {
+        override fun forceLoggingAlwaysEnabled(): Boolean = true
+        override fun getExtraLogUploadHeaders(): Map<String, String> = emptyMap()
+      }),
+      testRootDisposable)
     val buildScript = createBuildScriptBuilder()
       .withTask("userDefinedTask") {
         code("dependsOn { subprojects.collect { \"\$it.name:clean\"} }\n  dependsOn { subprojects.collect { \"\$it.name:build\"} }")
@@ -56,22 +60,13 @@ class GradleTasksExecutionTest : GradleImportingTestCase() {
       .generate()
     createProjectSubFile("build.gradle", buildScript)
     createSettingsFile("include 'projectA', 'projectB', 'projectC'")
-    val events: List<LogEvent> = collectGradlePerformanceEvents {
-      assertThat(runTaskAndGetErrorOutput(projectPath, "userDefinedTask")).isEmpty()
-    }
-    val executedGradleTasks = events.filter { it.event.id == "task.executed" }.map { it.event.data["name"].toString() }
     val expectedGradleTasks = listOf("compileJava", "processResources", "classes", "jar", "assemble", "compileTestJava",
                                      "processTestResources", "testClasses", "test", "check", "build", "clean", "other")
-    assertCollection(executedGradleTasks, expectedGradleTasks)
-    val executedStages = events.groupingBy { it.event.id }.eachCount()
-    val expectedStages = setOf("execution.completed", "build.loaded", "settings.evaluated", "project.loaded",
-                               "task.graph.calculated", "container.callback.executed", "task.executed", "task.graph.executed")
-    assertCollection(executedStages.keys, expectedStages)
-    executedStages.forEach { (name, count) ->
-      if (name != "task.executed") {
-        TestCase.assertEquals(1, count)
-      }
+    val events: List<LogEvent> = collectGradlePerformanceEvents(expectedGradleTasks.size) {
+      assertThat(runTaskAndGetErrorOutput(projectPath, "userDefinedTask")).isEmpty()
     }
+    val actualGradleTasks = events.filter { it.event.id == "task.executed" }.map { it.event.data["name"].toString() }
+    assertCollection(actualGradleTasks, expectedGradleTasks)
   }
 
   @Test
@@ -220,9 +215,19 @@ tasks.register("hello-module") {
     }
   }
 
-  private fun collectGradlePerformanceEvents(runnable: () -> Unit): List<LogEvent> = FUCollectorTestCase
-    .collectLogEvents(getTestRootDisposable(), runnable)
-    .filter { it.group.id == GradleExecutionPerformanceCollector.GROUP.id }
+  private fun collectGradlePerformanceEvents(expectedEventCount: Int, runnable: () -> Unit): List<LogEvent> {
+    val latch = CountDownLatch(expectedEventCount)
+    val recordedEvents = CopyOnWriteArrayList<LogEvent>()
+    FUCollectorTestCase
+      .listenForEvents("FUS", getTestRootDisposable(), Consumer<LogEvent> {
+        if (it.group.id == GradleTaskExecutionCollector.GROUP.id) {
+          recordedEvents.add(it)
+          latch.countDown()
+        }
+      }, runnable)
+    latch.await(10, TimeUnit.SECONDS)
+    return recordedEvents
+  }
 
   companion object {
     /**

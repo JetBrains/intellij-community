@@ -58,6 +58,9 @@ public final class HintUtil {
   private HintUtil() { }
 
   public static @NotNull Color getInformationColor() {
+    if (ExperimentalUI.isNewUI()) {
+      return HintHint.Status.Info.background;
+    }
     return notNull(getGlobalOrDefaultColor(INFORMATION_COLOR_KEY), INFORMATION_COLOR_KEY.getDefaultColor());
   }
 
@@ -66,10 +69,16 @@ public final class HintUtil {
   }
 
   public static @NotNull Color getWarningColor() {
+    if (ExperimentalUI.isNewUI()) {
+      return HintHint.Status.Warning.background;
+    }
     return notNull(getGlobalOrDefaultColor(WARNING_COLOR_KEY), WARNING_COLOR_KEY.getDefaultColor());
   }
 
   public static @NotNull Color getErrorColor() {
+    if (ExperimentalUI.isNewUI()) {
+      return HintHint.Status.Error.background;
+    }
     return notNull(getGlobalOrDefaultColor(ERROR_COLOR_KEY), ERROR_COLOR_KEY.getDefaultColor());
   }
 
@@ -102,7 +111,23 @@ public final class HintUtil {
       .setTextBg(getInformationColor())
       .setTextFg(StartupUiUtil.isUnderDarcula() ? UIUtil.getLabelForeground() : Color.black)
       .setFont(getBoldFont())
-      .setAwtTooltip(true);
+      .setAwtTooltip(true)
+      .setStatus(HintHint.Status.Info);
+  }
+
+  public static @NotNull HintHint getSuccessHint() {
+    return new HintHint().setAwtTooltip(true).applyStatus(HintHint.Status.Success);
+  }
+
+  public static JComponent createSuccessLabel(@NotNull @HintText String text, @Nullable HyperlinkListener hyperlinkListener) {
+    HintHint hintHint = getSuccessHint();
+    HintLabel label = createLabel(text, null, hintHint.getTextBackground(), hintHint);
+    configureLabel(label, hyperlinkListener, null, null);
+    return label;
+  }
+
+  public static @NotNull JComponent createSuccessLabel(@NotNull @HintText String text) {
+    return createSuccessLabel(text, null);
   }
 
   public static CompoundBorder createHintBorder() {
@@ -127,8 +152,9 @@ public final class HintUtil {
       .setBorderColor(getHintBorderColor())
       .setTextFg(JBColor.foreground())
       .setFont(getBoldFont())
-      .setAwtTooltip(true);
-    return createLabel(text, icon, bg, hintHint);
+      .setAwtTooltip(true)
+      .setStatus(HintHint.Status.Info);
+    return createLabel(text, ExperimentalUI.isNewUI() ? null : icon, bg, hintHint);
   }
 
   public static @Nullable String getHintLabel(JComponent hintComponent) {
@@ -139,7 +165,8 @@ public final class HintUtil {
     return hintComponent instanceof HintLabel ? ((HintLabel)hintComponent).getIcon() : null;
   }
 
-  public static @NotNull SimpleColoredComponent createInformationComponent() {
+  public static @NotNull SimpleColoredComponent
+  createInformationComponent() {
     SimpleColoredComponent component = new SimpleColoredComponent();
     component.setTransparentIconBackground(true);
     return installInformationProperties(component);
@@ -168,7 +195,8 @@ public final class HintUtil {
       .setTextBg(bg)
       .setTextFg(JBColor.foreground())
       .setFont(getBoldFont())
-      .setAwtTooltip(true);
+      .setAwtTooltip(true)
+      .setStatus(HintHint.Status.Error);
     HintLabel label = createLabel(text, null, bg, hintHint);
     configureLabel(label, hyperlinkListener, mouseListener, null);
     return label;
@@ -187,7 +215,8 @@ public final class HintUtil {
       .setTextBg(bg)
       .setTextFg(JBColor.foreground())
       .setFont(getBoldFont())
-      .setAwtTooltip(true);
+      .setAwtTooltip(true)
+      .setStatus(HintHint.Status.Warning);
     HintLabel label = createLabel(text, null, bg, hintHint);
     configureLabel(label, hyperlinkListener, mouseListener, null);
     return label;
@@ -201,7 +230,7 @@ public final class HintUtil {
   public static @NotNull HintLabel createLabel(@HintText String text, @Nullable Icon icon, @NotNull Color color, @NotNull HintHint hintHint) {
     HintLabel label = new HintLabel();
     label.setText(text, hintHint);
-    label.setIcon(icon);
+    label.setIcon(icon == null ? hintHint.getStatusIcon() : icon);
     if (!hintHint.isAwtTooltip()) {
       label.setBorder(createHintBorder());
       label.setForeground(JBColor.foreground());
@@ -276,12 +305,17 @@ public final class HintUtil {
     private @Nullable HintHint hintHint;
 
     private HintLabel() {
-      setLayout(new BorderLayout());
+      setLayout(new BorderLayout(ExperimentalUI.isNewUI() ? 6 : 0, 0));
     }
 
     private HintLabel(@NotNull SimpleColoredComponent component) {
       this();
       setText(component);
+    }
+
+    @ApiStatus.Internal
+    public @Nullable JEditorPane getPane() {
+      return myPane;
     }
 
     @Override
@@ -351,10 +385,12 @@ public final class HintUtil {
         remove(myIcon);
       }
 
-      myIcon = new JLabel(icon, SwingConstants.CENTER);
-      myIcon.setVerticalAlignment(SwingConstants.TOP);
+      if (icon != null) {
+        myIcon = new JLabel(icon, SwingConstants.CENTER);
+        myIcon.setVerticalAlignment(SwingConstants.TOP);
 
-      add(myIcon, BorderLayout.WEST);
+        add(myIcon, BorderLayout.WEST);
+      }
 
       revalidate();
       repaint();

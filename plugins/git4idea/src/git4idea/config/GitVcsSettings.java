@@ -43,8 +43,7 @@ public final class GitVcsSettings extends SimplePersistentStateComponent<GitVcsO
     return project.getService(GitVcsSettings.class);
   }
 
-  @NotNull
-  public UpdateMethod getUpdateMethod() {
+  public @NotNull UpdateMethod getUpdateMethod() {
     return getState().getUpdateMethod();
   }
 
@@ -52,8 +51,7 @@ public final class GitVcsSettings extends SimplePersistentStateComponent<GitVcsO
     getState().setUpdateMethod(updateType);
   }
 
-  @NotNull
-  public GitSaveChangesPolicy getSaveChangesPolicy() {
+  public @NotNull GitSaveChangesPolicy getSaveChangesPolicy() {
     return getState().getSaveChangesPolicy();
   }
 
@@ -93,8 +91,7 @@ public final class GitVcsSettings extends SimplePersistentStateComponent<GitVcsO
     }
   }
 
-  @Nullable
-  public String getPathToGit() {
+  public @Nullable String getPathToGit() {
     return getState().getPathToGit();
   }
 
@@ -112,8 +109,7 @@ public final class GitVcsSettings extends SimplePersistentStateComponent<GitVcsO
   }
 
   @Override
-  @NotNull
-  public Value getSyncSetting() {
+  public @NotNull Value getSyncSetting() {
     return getState().getRootSync();
   }
 
@@ -122,8 +118,7 @@ public final class GitVcsSettings extends SimplePersistentStateComponent<GitVcsO
     getState().setRootSync(value);
   }
 
-  @Nullable
-  public String getRecentRootPath() {
+  public @Nullable String getRecentRootPath() {
     return getState().getRecentGitRootPath();
   }
 
@@ -131,8 +126,7 @@ public final class GitVcsSettings extends SimplePersistentStateComponent<GitVcsO
     getState().setRecentGitRootPath(value);
   }
 
-  @NotNull
-  public Map<String, String> getRecentBranchesByRepository() {
+  public @NotNull Map<String, String> getRecentBranchesByRepository() {
     return getState().getRecentBranchByRepository();
   }
 
@@ -140,8 +134,7 @@ public final class GitVcsSettings extends SimplePersistentStateComponent<GitVcsO
     getState().getRecentBranchByRepository().put(repositoryPath, branch);
   }
 
-  @Nullable
-  public String getRecentCommonBranch() {
+  public @Nullable String getRecentCommonBranch() {
     return getState().getRecentCommonBranch();
   }
 
@@ -173,8 +166,7 @@ public final class GitVcsSettings extends SimplePersistentStateComponent<GitVcsO
     getState().setWarnAboutDetachedHead(value);
   }
 
-  @Nullable
-  public GitResetMode getResetMode() {
+  public @Nullable GitResetMode getResetMode() {
     return getState().getResetMode();
   }
 
@@ -182,8 +174,7 @@ public final class GitVcsSettings extends SimplePersistentStateComponent<GitVcsO
     getState().setResetMode(mode);
   }
 
-  @Nullable
-  public GitPushTagMode getPushTagMode() {
+  public @Nullable GitPushTagMode getPushTagMode() {
     return getState().getPushTags();
   }
 
@@ -199,8 +190,7 @@ public final class GitVcsSettings extends SimplePersistentStateComponent<GitVcsO
     getState().setSignOffCommit(value);
   }
 
-  @NotNull
-  public GitIncomingCheckStrategy getIncomingCheckStrategy() {
+  public @NotNull GitIncomingCheckStrategy getIncomingCheckStrategy() {
     return getState().getIncomingCheckStrategy();
   }
 
@@ -232,8 +222,7 @@ public final class GitVcsSettings extends SimplePersistentStateComponent<GitVcsO
     getState().setCommitRenamesSeparately(value);
   }
 
-  @NotNull
-  public DvcsBranchSettings getBranchSettings() {
+  public @NotNull DvcsBranchSettings getBranchSettings() {
     return getState().getBranchSettings();
   }
 

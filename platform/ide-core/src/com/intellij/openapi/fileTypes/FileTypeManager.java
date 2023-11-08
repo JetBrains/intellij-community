@@ -27,6 +27,7 @@ public abstract class FileTypeManager extends FileTypeRegistry {
     return app == null ? new MockFileTypeManager() : app.getService(FileTypeManager.class);
   });
 
+  @Topic.AppLevel
   public static final @NotNull Topic<FileTypeListener> TOPIC = new Topic<>(FileTypeListener.class, Topic.BroadcastDirection.TO_DIRECT_CHILDREN);
 
   /**

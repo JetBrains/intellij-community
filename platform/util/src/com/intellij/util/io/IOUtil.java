@@ -236,6 +236,10 @@ public final class IOUtil {
     return c < 128;
   }
 
+  /**
+   * @return true if _there are no files with such prefix exist_ -- e.g. if we delete nothing,
+   * because there were no such files beforehand.
+   */
   public static boolean deleteAllFilesStartingWith(@NotNull Path file) {
     String baseName = file.getFileName().toString();
     Path parentFile = file.getParent();
@@ -261,7 +265,7 @@ public final class IOUtil {
     boolean ok = true;
     for (Path f : files) {
       try {
-        Files.deleteIfExists(f);
+        FileUtil.delete(f);
       }
       catch (IOException ignore) {
         ok = false;
@@ -368,6 +372,7 @@ public final class IOUtil {
 
 
   private static final byte[] ZEROES = new byte[1024];
+
   /**
    * Imitates 'fallocate' linux call: ensures file region [channel.size()..upUntilSize) is allocated on disk,
    * and zeroed. We can't call 'fallocate' directly, hence just write zeros into the channel.
@@ -445,11 +450,13 @@ public final class IOUtil {
         sb.append("0");
       }
       sb.append(Integer.toHexString(unsignedByte));
-      if (pageSize > 0 && i % pageSize == pageSize - 1) {
-        sb.append('\n');
-      }
-      else {
-        sb.append(' ');
+      if (i < bytes.length - 1) {
+        if (pageSize > 0 && i % pageSize == pageSize - 1) {
+          sb.append('\n');
+        }
+        else {
+          sb.append(' ');
+        }
       }
     }
     return sb.toString();

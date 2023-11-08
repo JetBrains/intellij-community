@@ -2,6 +2,7 @@
 package org.jetbrains.idea.maven.project.auto.reload
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.externalSystem.autoimport.*
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemRefreshStatus.SUCCESS
 import com.intellij.openapi.externalSystem.autoimport.settings.ReadAsyncSupplier
@@ -40,8 +41,9 @@ class MavenProjectAware(
   }
 
   override fun reloadProject(context: ExternalSystemProjectReloadContext) {
-    FileDocumentManager.getInstance().saveAllDocuments()
-    val settingsFilesContext = context.settingsFilesContext
+    ApplicationManager.getApplication().invokeAndWait {
+      FileDocumentManager.getInstance().saveAllDocuments()
+    }
     val cs = MavenCoroutineScopeProvider.getCoroutineScope(project)
     if (context.hasUndefinedModifications) {
       cs.launch {
@@ -50,6 +52,7 @@ class MavenProjectAware(
       }
     }
     else {
+      val settingsFilesContext = context.settingsFilesContext
       submitSettingsFilesPartition(settingsFilesContext) { (filesToUpdate, filesToDelete) ->
         val updated = settingsFilesContext.created + settingsFilesContext.updated
         val deleted = settingsFilesContext.deleted

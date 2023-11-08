@@ -3,6 +3,8 @@
 package org.jetbrains.kotlin.idea.intentions
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool
+import com.intellij.codeInspection.ProblemHighlightType
+import com.intellij.codeInspection.ProblemHighlightType.INFORMATION
 import com.intellij.codeInspection.options.OptPane
 import com.intellij.codeInspection.options.OptPane.*
 import com.intellij.codeInspection.options.OptionController
@@ -122,6 +124,39 @@ class UsePropertyAccessSyntaxInspection : IntentionBasedInspection<KtExpression>
                 KotlinBundle.message("use.of.getter.method.instead.of.property.access.syntax")
             }
         )
+
+    override fun problemHighlightType(element: KtExpression): ProblemHighlightType {
+        val defaultType = super.problemHighlightType(element)
+        val function = (element as? KtCallExpression)?.functionDescriptor() ?: return defaultType
+        if (reportNonTrivialAccessors || function.isTrivialAccessor(element.project)) return defaultType
+        return INFORMATION
+    }
+
+    private fun KtCallExpression.functionDescriptor(): FunctionDescriptor? {
+        val resolutionFacade = getResolutionFacade()
+        val bindingContext = safeAnalyzeNonSourceRootCode(resolutionFacade, BodyResolveMode.PARTIAL_FOR_COMPLETION)
+        val resolvedCall = getResolvedCall(bindingContext) ?: return null
+        if (!resolvedCall.isReallySuccess()) return null
+        return resolvedCall.resultingDescriptor as? FunctionDescriptor
+    }
+
+    private fun FunctionDescriptor.isTrivialAccessor(project: Project): Boolean {
+        // Accessor is considered trivial if it has exactly one statement
+        // Abstract methods are not trivial because they can be overridden by complex overrides
+        fun PsiElement.isTrivialAccessor(): Boolean = when (this) {
+            is KtNamedFunction -> bodyBlockExpression?.statements.orEmpty().size == 1
+            is ClsMethodImpl -> {
+                sourceMirrorMethod?.body?.statements?.let { it.size == 1 }
+                    ?: true // skip compiled methods for which we can't get the source code
+            }
+
+            is PsiMethod -> body?.statements.orEmpty().size == 1
+            else -> false
+        }
+
+        val accessors = DescriptorToSourceUtilsIde.getAllDeclarations(project, targetDescriptor = this)
+        return accessors.all { it.isTrivialAccessor() }
+    }
 }
 
 class NotPropertiesServiceImpl(private val project: Project) : NotPropertiesService {
@@ -219,8 +254,6 @@ class UsePropertyAccessSyntaxIntention : SelfTargetingOffsetIndependentIntention
         val notProperties = inspection?.fqNameList?.toSet() ?: NotPropertiesService.getNotProperties(callExpression)
         if (function.shouldNotConvertToProperty(notProperties)) return null
 
-        if (inspection?.reportNonTrivialAccessors != true && !function.isTrivialAccessor(callExpression.project)) return null
-
         val resolutionScope = callExpression.getResolutionScope(bindingContext, resolutionFacade)
 
         @OptIn(FrontendInternals::class)
@@ -282,24 +315,6 @@ class UsePropertyAccessSyntaxIntention : SelfTargetingOffsetIndependentIntention
 
     private fun String.isSuitableAsPropertyAccessor(): Boolean =
         canBePropertyAccessor(this) && commonGetterLikePrefixes.none { prefix -> this.contains(prefix) }
-
-    private fun FunctionDescriptor.isTrivialAccessor(project: Project): Boolean {
-        val accessors = DescriptorToSourceUtilsIde.getAllDeclarations(project, targetDescriptor = this)
-        return accessors.all { it.isTrivialAccessor() }
-    }
-
-    // Accessor is considered trivial if it has exactly one statement
-    // Abstract methods are not trivial because they can be overridden by complex overrides
-    private fun PsiElement.isTrivialAccessor(): Boolean = when (this) {
-        is KtNamedFunction -> bodyBlockExpression?.statements.orEmpty().size == 1
-        is ClsMethodImpl -> {
-            sourceMirrorMethod?.body?.statements?.let { it.size == 1 }
-                ?: true // skip compiled methods for which we can't get the source code
-        }
-
-        is PsiMethod -> body?.statements.orEmpty().size == 1
-        else -> false
-    }
 
     private fun checkWillResolveToProperty(
         resolvedCall: ResolvedCall<out CallableDescriptor>,

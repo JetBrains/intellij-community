@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.index.ui
 
+import com.intellij.diff.util.DiffUtil
 import com.intellij.dvcs.ui.RepositoryChangesBrowserNode
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
@@ -15,10 +16,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Splitter
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.AbstractVcsHelper
-import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.ChangeListListener
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl
-import com.intellij.openapi.vcs.changes.ChangesViewManager.createTextStatusFactory
 import com.intellij.openapi.vcs.changes.EditorTabDiffPreviewManager
 import com.intellij.openapi.vcs.changes.InclusionListener
 import com.intellij.openapi.vcs.changes.ui.*
@@ -185,9 +184,8 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
 
   private fun updateChangesStatusPanel() {
     val manager = ChangeListManagerImpl.getInstanceImpl(project)
-    val factory = manager.updateException?.let { createTextStatusFactory(VcsBundle.message("error.updating.changes", it.message), true) }
-                  ?: manager.additionalUpdateInfo
-    changesStatusPanel.setContent(factory?.create())
+    val components = manager.additionalUpdateInfo.mapNotNull { it.get() }
+    changesStatusPanel.setContent(DiffUtil.createStackedComponents(components, DiffUtil.TITLE_GAP))
   }
 
   @RequiresEdt

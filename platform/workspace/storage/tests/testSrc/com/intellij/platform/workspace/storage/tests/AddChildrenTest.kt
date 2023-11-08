@@ -4,7 +4,7 @@ package com.intellij.platform.workspace.storage.tests
 
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.testEntities.entities.*
-import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.platform.workspace.storage.toBuilder
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -15,14 +15,14 @@ class AddChildrenTest {
   @Test
   fun `child added to the store at parent modification`() {
     val builder = MutableEntityStorage.create()
-    val entity = ParentNullableEntity("ParentData", MySource)
+    val entity = ParentEntity("ParentData", MySource)
     builder.addEntity(entity)
 
     builder.modifyEntity(entity) {
-      this.child = ChildNullableEntity("ChildData", MySource)
+      this.child = ChildEntity("ChildData", MySource)
     }
     assertNotNull(entity.child)
-    val entities = builder.entities(ChildNullableEntity::class.java).single()
+    val entities = builder.entities(ChildEntity::class.java).single()
     assertEquals("ChildData", entity.child?.childData)
     assertEquals("ParentData", entities.parentEntity.parentData)
   }
@@ -75,8 +75,8 @@ class AddChildrenTest {
   @Test
   fun `remove child from store at parent modification`() {
     val builder = MutableEntityStorage.create()
-    val entity = ParentNullableEntity("ParentData", MySource) {
-      child = ChildNullableEntity("ChildData", MySource)
+    val entity = ParentEntity("ParentData", MySource) {
+      child = ChildEntity("ChildData", MySource)
     }
     builder.addEntity(entity)
 
@@ -84,30 +84,30 @@ class AddChildrenTest {
       child = null
     }
     assertNull(entity.child)
-    assertTrue(builder.entities(ChildNullableEntity::class.java).toList().isEmpty())
+    assertTrue(builder.entities(ChildEntity::class.java).toList().isEmpty())
   }
 
   @Test
   fun `remove old child at parent entity update`() {
     val builder = MutableEntityStorage.create()
-    val commonChild = ChildNullableEntity("ChildDataTwo", MySource)
-    val entity = ParentNullableEntity("ParentData", MySource) {
+    val commonChild = ChildEntity("ChildDataTwo", MySource)
+    val entity = ParentEntity("ParentData", MySource) {
       child = commonChild
     }
     builder.addEntity(entity)
 
-    val anotherParent = ParentNullableEntity("AnotherParentData", MySource) {
-      child = ChildNullableEntity("ChildDataTwo", MySource)
+    val anotherParent = ParentEntity("AnotherParentData", MySource) {
+      child = ChildEntity("ChildDataTwo", MySource)
     }
     builder.addEntity(anotherParent)
-    val children = builder.entities(ChildNullableEntity::class.java).toList()
+    val children = builder.entities(ChildEntity::class.java).toList()
     assertEquals(2, children.size)
 
     builder.modifyEntity(commonChild) {
       parentEntity = anotherParent
     }
     assertNull(entity.child)
-    val childFromStore = builder.entities(ChildNullableEntity::class.java).single()
+    val childFromStore = builder.entities(ChildEntity::class.java).single()
     assertEquals("ChildDataTwo", childFromStore.childData)
     assertEquals(anotherParent, childFromStore.parentEntity)
   }
@@ -132,5 +132,17 @@ class AddChildrenTest {
     builder.modifyEntity(right) {
       this.children = listOf(ChildSecondEntity("data", "Data", MySource))
     }
+  }
+
+  @Test
+  fun `adding one to one parent entity with reference to existing child`() {
+    val builder = createEmptyBuilder()
+    val child = builder addEntity OptionalOneToOneChildEntity("data", MySource)
+    val newBuilder = builder.toSnapshot().toBuilder()
+    newBuilder addEntity OptionalOneToOneParentEntity(MySource) {
+      this.child = child.from(newBuilder)
+    }
+
+    assertEquals("data", newBuilder.entities(OptionalOneToOneParentEntity::class.java).single().child!!.data)
   }
 }

@@ -47,7 +47,7 @@ import java.util.concurrent.atomic.AtomicReference
 import java.util.function.Supplier
 import kotlin.time.Duration.Companion.hours
 
-const val SPACE_REPO_HOST = "packages.jetbrains.team"
+const val SPACE_REPO_HOST: String = "packages.jetbrains.team"
 
 private val httpClient = SynchronizedClearableLazy {
   // HttpTimeout is not used - CIO engine handles that
@@ -155,38 +155,48 @@ fun closeKtorClient() {
 
 private val fileLocks = StripedMutex()
 
-suspend fun downloadAsBytes(url: String): ByteArray =
-  spanBuilder("download").setAttribute("url", url).useWithScope2 {
+suspend fun downloadAsBytes(url: String): ByteArray {
+  return spanBuilder("download").setAttribute("url", url).useWithScope2 {
     withContext(Dispatchers.IO) {
       httpClient.value.get(url).body()
     }
   }
+}
 
-suspend fun downloadAsText(url: String): String =
-  spanBuilder("download").setAttribute("url", url).useWithScope2 {
+suspend fun downloadAsText(url: String): String {
+  return spanBuilder("download").setAttribute("url", url).useWithScope2 {
     withContext(Dispatchers.IO) {
       httpClient.value.get(url).bodyAsText()
     }
   }
+}
 
-fun downloadFileToCacheLocationSync(url: String, communityRoot: BuildDependenciesCommunityRoot): Path =
-  runBlocking(Dispatchers.IO) {
+fun downloadFileToCacheLocationSync(url: String, communityRoot: BuildDependenciesCommunityRoot): Path {
+  return runBlocking(Dispatchers.IO) {
     downloadFileToCacheLocation(url, communityRoot)
   }
+}
 
-fun downloadFileToCacheLocationSync(url: String, communityRoot: BuildDependenciesCommunityRoot, username: String, password: String): Path =
-  runBlocking(Dispatchers.IO) {
+fun downloadFileToCacheLocationSync(url: String, communityRoot: BuildDependenciesCommunityRoot, username: String, password: String): Path {
+  return runBlocking(Dispatchers.IO) {
     downloadFileToCacheLocation(url, communityRoot, username, password)
   }
+}
 
-suspend fun downloadFileToCacheLocation(url: String, communityRoot: BuildDependenciesCommunityRoot): Path =
-  downloadFileToCacheLocation(url, communityRoot, token = null, username = null, password = null)
+suspend fun downloadFileToCacheLocation(url: String, communityRoot: BuildDependenciesCommunityRoot): Path {
+  return downloadFileToCacheLocation(url, communityRoot, token = null, username = null, password = null)
+}
 
-suspend fun downloadFileToCacheLocation(url: String, communityRoot: BuildDependenciesCommunityRoot, token: String): Path =
-  downloadFileToCacheLocation(url, communityRoot, token = token, username = null, password = null)
+suspend fun downloadFileToCacheLocation(url: String, communityRoot: BuildDependenciesCommunityRoot, token: String): Path {
+  return downloadFileToCacheLocation(url, communityRoot, token = token, username = null, password = null)
+}
 
-suspend fun downloadFileToCacheLocation(url: String, communityRoot: BuildDependenciesCommunityRoot, username: String, password: String): Path =
-  downloadFileToCacheLocation(url, communityRoot, token = null, username = username, password = password)
+suspend fun downloadFileToCacheLocation(url: String,
+                                        communityRoot: BuildDependenciesCommunityRoot,
+                                        username: String,
+                                        password: String): Path {
+  return downloadFileToCacheLocation(url, communityRoot, token = null, username = username, password = password)
+}
 
 private suspend fun downloadFileToCacheLocation(url: String,
                                                 communityRoot: BuildDependenciesCommunityRoot,
@@ -206,7 +216,7 @@ private suspend fun downloadFileToCacheLocation(url: String,
         AttributeKey.stringKey("target"), targetPath,
       ))
 
-      // update file modification time to maintain FIFO caches i.e. in persistent cache folder on TeamCity agent
+      // update file modification time to maintain FIFO caches, i.e., in persistent cache folder on TeamCity agent
       Files.setLastModifiedTime(target, FileTime.from(Instant.now()))
       return target
     }
@@ -283,8 +293,7 @@ private suspend fun downloadFileToCacheLocation(url: String,
             if (Files.exists(tempFile)) {
               Files.newInputStream(tempFile).use { inputStream ->
                 // yes, not trying to guess encoding
-                // string constructor should be exception free,
-                // so at worse we'll get some random characters
+                // string constructor should be exception-free, so at worse, we'll get some random characters
                 builder.append(inputStream.readNBytes(1024).toString(StandardCharsets.UTF_8))
               }
             }

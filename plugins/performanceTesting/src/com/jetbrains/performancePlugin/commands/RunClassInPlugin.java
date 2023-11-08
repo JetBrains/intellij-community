@@ -73,7 +73,13 @@ public class RunClassInPlugin extends AbstractCommand {
     if (plugin == null) throw new RuntimeException("Failed to find plugin: " + myPluginId);
 
     ClassLoader loader = plugin.getClassLoader();
-    URL[] cp = myClasspath.stream().map(f -> {
+
+    URLClassLoader classLoader = new URLClassLoader(convertClasspathToURLs(), loader);
+    runWithClassLoader(project, classLoader);
+  }
+
+  public URL[] convertClasspathToURLs() {
+    return myClasspath.stream().map(f -> {
       try {
         URL fileURL = f.toURI().toURL();
         if (!fileURL.getProtocol().equals("file")) {
@@ -85,9 +91,6 @@ public class RunClassInPlugin extends AbstractCommand {
         throw new RuntimeException("Failed to get URL for " + f + ". " + e.getMessage(), e);
       }
     }).toArray(sz -> new URL[sz]);
-
-    URLClassLoader classLoader = new URLClassLoader(cp, loader);
-    runWithClassLoader(project, classLoader);
   }
 
   protected void runWithClassLoader(@NotNull Project project, URLClassLoader classLoader) throws ReflectiveOperationException {

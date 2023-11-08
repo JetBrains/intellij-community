@@ -7,6 +7,18 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Allows an action to retrieve information about the context in which it was invoked.
+ * <p/>
+ * <b>NOTES:</b>
+ * <ul>
+ * <li>Avoid overriding or implementing this interface.
+ * Things have got more complex since the introduction of asynchronous action update.
+ * If you need to alter the provided data context or create one from a set of data
+ * use {@link CustomizedDataContext} or {@link SimpleDataContext} instead, even in tests.
+ * These classes are async-ready, optionally support {@link com.intellij.openapi.util.UserDataHolder}, and run {@link GetDataRule} rules.</li>
+ * <li>Do not to confuse {@link DataProvider} with {@link DataContext}.
+ * A {@link DataContext} is usually provided by the platform with {@link DataProvider}s as its building blocks.
+ * For example, a node in a tree view could be a {@link DataProvider} but not a {@link DataContext}.</li>
+ * </ul>
  *
  * @see AnActionEvent#getDataContext()
  * @see com.intellij.openapi.actionSystem.CommonDataKeys

@@ -9,7 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.BasicJavaAstTreeUtil;
-import com.intellij.psi.impl.source.BasicJavaTokenSet;
+import com.intellij.psi.tree.ParentAwareTokenSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -164,11 +164,11 @@ public abstract class AbstractBasicJavadocTypedHandler extends TypedHandlerDeleg
       return false;
     }
     ASTNode astNode = BasicJavaAstTreeUtil.toNode(element);
-    if (BasicJavaAstTreeUtil.is(astNode, DOC_PARAMETER_REF)) {
+    if (BasicJavaAstTreeUtil.is(astNode, BASIC_DOC_PARAMETER_REF)) {
       astNode = astNode.getTreeParent();
     }
 
-    if (BasicJavaAstTreeUtil.is(astNode, DOC_TAG, DOC_SNIPPET_TAG, DOC_INLINE_TAG) &&
+    if (BasicJavaAstTreeUtil.is(astNode, BASIC_DOC_TAG, BASIC_DOC_SNIPPET_TAG, BASIC_DOC_INLINE_TAG) &&
         "param".equals(BasicJavaAstTreeUtil.getTagName(astNode)) &&
         isTypeParamBracketClosedAfterParamTag(astNode, offset)) {
       return false;
@@ -176,15 +176,15 @@ public abstract class AbstractBasicJavadocTypedHandler extends TypedHandlerDeleg
 
 
     // The contents of inline tags is not HTML, so the paired tag completion isn't appropriate there.
-    if (BasicJavaAstTreeUtil.is(astNode, DOC_INLINE_TAG, DOC_SNIPPET_TAG) ||
-        BasicJavaAstTreeUtil.getParentOfType(astNode, BasicJavaTokenSet.create(DOC_INLINE_TAG, DOC_SNIPPET_TAG)) != null) {
+    if (BasicJavaAstTreeUtil.is(astNode, BASIC_DOC_INLINE_TAG, BASIC_DOC_SNIPPET_TAG) ||
+        BasicJavaAstTreeUtil.getParentOfType(astNode, ParentAwareTokenSet.create(BASIC_DOC_INLINE_TAG, BASIC_DOC_SNIPPET_TAG)) != null) {
       return false;
     }
 
     ASTNode node = element.getNode();
     return node != null
            && (JavaDocTokenType.ALL_JAVADOC_TOKENS.contains(node.getElementType())
-               || ALL_JAVADOC_ELEMENTS.contains(node.getElementType()));
+               || BASIC_ALL_JAVADOC_ELEMENTS.contains(node.getElementType()));
   }
 
   private static boolean isTypeParamBracketClosedAfterParamTag(ASTNode tag, int bracketOffset) {
@@ -198,7 +198,7 @@ public abstract class AbstractBasicJavadocTypedHandler extends TypedHandlerDeleg
   @Nullable
   private static ASTNode getDocumentingParameter(@NotNull ASTNode tag) {
     for (ASTNode element = tag.getFirstChildNode(); element != null; element = element.getTreeNext()) {
-      if (BasicJavaAstTreeUtil.is(element, DOC_PARAMETER_REF)) {
+      if (BasicJavaAstTreeUtil.is(element, BASIC_DOC_PARAMETER_REF)) {
         return element;
       }
     }

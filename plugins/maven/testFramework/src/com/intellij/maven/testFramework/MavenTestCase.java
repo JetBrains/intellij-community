@@ -47,10 +47,12 @@ import org.jetbrains.idea.maven.server.MavenServerManager;
 import org.jetbrains.idea.maven.server.RemotePathTransformerFactory;
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
 import org.jetbrains.idea.maven.utils.MavenUtil;
+import org.junit.Assume;
 
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -85,9 +87,12 @@ public abstract class MavenTestCase extends UsefulTestCase {
   protected VirtualFile myProjectPom;
   protected List<VirtualFile> myAllPoms = new ArrayList<>();
 
+  protected static final boolean preimportTestMode = Boolean.getBoolean("MAVEN_TEST_PREIMPORT");
+
 
   @Override
   protected void setUp() throws Exception {
+    assumeThisTestCanBeReusedForPreimport();
     super.setUp();
 
     setUpFixtures();
@@ -131,6 +136,23 @@ public abstract class MavenTestCase extends UsefulTestCase {
     });
   }
 
+  public static void assumeTestCanBeReusedForPreimport(Class<?> aClass, String testName) {
+    if (!preimportTestMode) return;
+    try {
+      if (aClass.getDeclaredAnnotation(InstantImportCompatible.class) == null) {
+        Method testMethod = aClass.getMethod(testName);
+        Assume.assumeNotNull(testMethod.getDeclaredAnnotation(InstantImportCompatible.class));
+      }
+    }
+    catch (NoSuchMethodException ignore) {
+    }
+  }
+
+  protected void assumeThisTestCanBeReusedForPreimport() {
+    assumeTestCanBeReusedForPreimport(this.getClass(), getName());
+  }
+
+
   private void setupWsl() {
     String wslMsId = System.getProperty("wsl.distribution.name");
     if (wslMsId == null) return;
@@ -157,9 +179,13 @@ public abstract class MavenTestCase extends UsefulTestCase {
   protected void runBare(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
     LoggedErrorProcessor.executeWith(new LoggedErrorProcessor() {
       @Override
-      public @NotNull Set<Action> processError(@NotNull String category, @NotNull String message, String @NotNull [] details, @Nullable Throwable t) {
+      public @NotNull Set<Action> processError(@NotNull String category,
+                                               @NotNull String message,
+                                               String @NotNull [] details,
+                                               @Nullable Throwable t) {
         boolean intercept = t != null && (
-          StringUtil.notNullize(t.getMessage()).contains("The network name cannot be found") && message.contains("Couldn't read shelf information") ||
+          StringUtil.notNullize(t.getMessage()).contains("The network name cannot be found") &&
+          message.contains("Couldn't read shelf information") ||
           "JDK annotations not found".equals(t.getMessage()) && "#com.intellij.openapi.projectRoots.impl.JavaSdkImpl".equals(category));
         return intercept ? Action.NONE : Action.ALL;
       }
@@ -218,7 +244,7 @@ public abstract class MavenTestCase extends UsefulTestCase {
   }
 
 
-  private void checkAllMavenConnectorsDisposed() {
+  private static void checkAllMavenConnectorsDisposed() {
     assertEmpty("all maven connectors should be disposed", MavenServerManager.getInstance().getAllConnectors());
   }
 
@@ -366,7 +392,7 @@ public abstract class MavenTestCase extends UsefulTestCase {
   protected VirtualFile createSettingsXml(String innerContent) throws IOException {
     var content = createSettingsXmlContent(innerContent);
     var path = Path.of(myDir.getPath(), "settings.xml");
-    Files.write(path, content.getBytes(StandardCharsets.UTF_8));
+    Files.writeString(path, content);
     getMavenGeneralSettings().setUserSettingsFile(path.toString());
     return LocalFileSystem.getInstance().refreshAndFindFileByNioFile(path);
   }
@@ -426,10 +452,7 @@ public abstract class MavenTestCase extends UsefulTestCase {
     VirtualFile f = dir.findChild("pom.xml");
     if (f == null) {
       try {
-        f = WriteAction.computeAndWait(() -> {
-          VirtualFile res = dir.createChildData(null, "pom.xml");
-          return res;
-        });
+        f = WriteAction.computeAndWait(() -> dir.createChildData(null, "pom.xml"));
       }
       catch (IOException e) {
         throw new RuntimeException(e);
@@ -441,15 +464,15 @@ public abstract class MavenTestCase extends UsefulTestCase {
   }
 
   @NonNls
-  @Language(value = "XML")
+  @Language("XML")
   public static String createPomXml(@NonNls @Language(value = "XML", prefix = "<project>", suffix = "</project>") String xml) {
-    return "<?xml version=\"1.0\"?>" +
-           "<project xmlns=\"http://maven.apache.org/POM/4.0.0\"" +
-           "         xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"" +
-           "         xsi:schemaLocation=\"http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd\">" +
-           "  <modelVersion>4.0.0</modelVersion>" +
-           xml +
-           "</project>";
+    return """
+             <?xml version="1.0"?>
+             <project xmlns="http://maven.apache.org/POM/4.0.0"
+                      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                      xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+               <modelVersion>4.0.0</modelVersion>
+             """ + xml + "</project>";
   }
 
   protected VirtualFile createProfilesXmlOldStyle(String xml) {
@@ -484,10 +507,7 @@ public abstract class MavenTestCase extends UsefulTestCase {
     VirtualFile f = dir.findChild("profiles.xml");
     if (f == null) {
       try {
-        f = WriteAction.computeAndWait(() -> {
-          VirtualFile res = dir.createChildData(null, "profiles.xml");
-          return res;
-        });
+        f = WriteAction.computeAndWait(() -> dir.createChildData(null, "profiles.xml"));
       }
       catch (IOException e) {
         throw new RuntimeException(e);
@@ -498,7 +518,7 @@ public abstract class MavenTestCase extends UsefulTestCase {
   }
 
   @Language("XML")
-  private static String createValidProfiles(String xml, boolean oldStyle) {
+  private static String createValidProfiles(@Language("XML") String xml, boolean oldStyle) {
     if (oldStyle) {
       return "<?xml version=\"1.0\"?>" +
              "<profiles>" +
@@ -601,10 +621,10 @@ public abstract class MavenTestCase extends UsefulTestCase {
   protected static <T> void assertContain(Collection<? extends T> actual, T... expected) {
     List<T> expectedList = Arrays.asList(expected);
     if (actual.containsAll(expectedList)) return;
-    Set<T> absent = new HashSet<T>(expectedList);
+    Set<T> absent = new HashSet<>(expectedList);
     absent.removeAll(actual);
-    fail("expected: " + expectedList + "\n" + "actual: " + actual.toString() +
-         "\nthis elements not present: " + absent.toString());
+    fail("expected: " + expectedList + "\n" + "actual: " + actual +
+         "\nthis elements not present: " + absent);
   }
 
   protected static <T> void assertDoNotContain(List<T> actual, T... expected) {

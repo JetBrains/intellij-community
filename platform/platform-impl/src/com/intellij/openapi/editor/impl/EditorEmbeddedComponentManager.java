@@ -548,7 +548,7 @@ public final class EditorEmbeddedComponentManager {
         return isInside(value, coordinate, coordinate);
       }
 
-      private boolean isInside(int value, int min, int max) {
+      private static boolean isInside(int value, int min, int max) {
         return value > min - RESIZE_POINT_DELTA && value < max + RESIZE_POINT_DELTA;
       }
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.ide.ui.laf.intellij.IdeaPopupMenuUI;
@@ -9,7 +9,7 @@ import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.JBValue;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.StartupUiUtil;
 import com.jetbrains.JBR;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -22,7 +22,7 @@ import java.awt.*;
 public final class WindowRoundedCornersManager {
   public static void configure(@NotNull DialogWrapper dialog) {
     if (isAvailable()) {
-      if ((SystemInfoRt.isMac && UIUtil.isUnderDarcula()) || SystemInfoRt.isWindows) {
+      if ((SystemInfoRt.isMac && StartupUiUtil.INSTANCE.isDarkTheme()) || SystemInfoRt.isWindows) {
         setRoundedCorners(dialog.getWindow(), JBUI.CurrentTheme.Popup.borderColor(true));
         dialog.getRootPane().setBorder(PopupBorder.Factory.createEmpty());
       }
@@ -51,12 +51,11 @@ public final class WindowRoundedCornersManager {
   }
 
   public static void setRoundedCorners(@NotNull Window window, @Nullable Object params) {
-    if (SystemInfo.isMac) {
+    if (SystemInfoRt.isMac) {
       if (params == null) {
         params = Float.valueOf(IdeaPopupMenuUI.CORNER_RADIUS.getFloat());
       }
-      else if (params instanceof PopupCornerType) {
-        PopupCornerType cornerType = (PopupCornerType)params;
+      else if (params instanceof PopupCornerType cornerType) {
         if (cornerType == PopupCornerType.None) {
           return;
         }
@@ -83,8 +82,7 @@ public final class WindowRoundedCornersManager {
       if (params == null) {
         params = "full";
       }
-      else if (params instanceof PopupCornerType) {
-        PopupCornerType cornerType = (PopupCornerType)params;
+      else if (params instanceof PopupCornerType cornerType) {
         if (cornerType == PopupCornerType.None) {
           return;
         }

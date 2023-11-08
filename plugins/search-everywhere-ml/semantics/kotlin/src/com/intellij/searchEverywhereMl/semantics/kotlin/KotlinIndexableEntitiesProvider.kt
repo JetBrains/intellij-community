@@ -1,10 +1,10 @@
 package com.intellij.searchEverywhereMl.semantics.kotlin
 
+import com.intellij.platform.ml.embeddings.search.indices.FileIndexableEntitiesProvider
+import com.intellij.platform.ml.embeddings.search.services.IndexableClass
+import com.intellij.platform.ml.embeddings.search.services.IndexableSymbol
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.searchEverywhereMl.semantics.indices.FileIndexableEntitiesProvider
-import com.intellij.searchEverywhereMl.semantics.services.IndexableClass
-import com.intellij.searchEverywhereMl.semantics.services.IndexableSymbol
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtFunction

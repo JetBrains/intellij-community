@@ -66,7 +66,7 @@ class ReimportingTest : MavenMultiVersionImportingTestCase() {
       <version>1</version>
       """.trimIndent())
 
-    importProjectAsync()
+    updateAllProjects()
     assertModules("project", "m1", "m2", "m3")
   }
 
@@ -273,13 +273,13 @@ class ReimportingTest : MavenMultiVersionImportingTestCase() {
       <version>1</version>
       """.trimIndent())
 
-    importProjects(m1, m2)
+    importProjectsAsync(m1, m2)
     val dep = OrderEntryUtil.findModuleOrderEntry(ModuleRootManager.getInstance(getModule("m1")), getModule("m2"))
     assertNotNull(dep)
     assertFalse(dep!!.isProductionOnTestDependency())
 
     createModulePom("m1", createPomXmlWithModuleDependency("test-jar"))
-    importProjects(m1, m2)
+    importProjectsAsync(m1, m2)
     val dep2 = OrderEntryUtil.findModuleOrderEntry(ModuleRootManager.getInstance(getModule("m1")), getModule("m2"))
     assertNotNull(dep2)
     assertTrue(dep2!!.isProductionOnTestDependency())
@@ -292,7 +292,7 @@ class ReimportingTest : MavenMultiVersionImportingTestCase() {
       <artifactId>m1</artifactId>
       <version>1</version>
       """.trimIndent())
-    importProjectAsync()
+    updateAllProjects()
     assertEquals("1.8", CompilerConfiguration.getInstance(myProject).getBytecodeTargetLevel(getModule("m1")))
 
     createModulePom("m1", """
@@ -310,7 +310,7 @@ class ReimportingTest : MavenMultiVersionImportingTestCase() {
         </plugins>
       </build>
       """.trimIndent())
-    importProjectAsync()
+    updateAllProjects()
     assertEquals("1.3", CompilerConfiguration.getInstance(myProject).getBytecodeTargetLevel(getModule("m1")))
 
     createModulePom("m1", """
@@ -329,7 +329,7 @@ class ReimportingTest : MavenMultiVersionImportingTestCase() {
       </build>
       """.trimIndent())
 
-    importProjectAsync()
+    updateAllProjects()
     assertEquals("1.6", CompilerConfiguration.getInstance(myProject).getBytecodeTargetLevel(getModule("m1")))
 
     // after configuration/target element delete in maven-compiler-plugin CompilerConfiguration#getBytecodeTargetLevel should be also updated
@@ -338,7 +338,7 @@ class ReimportingTest : MavenMultiVersionImportingTestCase() {
       <artifactId>m1</artifactId>
       <version>1</version>
       """.trimIndent())
-    importProjectAsync()
+    updateAllProjects()
     assertEquals("1.8", CompilerConfiguration.getInstance(myProject).getBytecodeTargetLevel(getModule("m1")))
   }
 

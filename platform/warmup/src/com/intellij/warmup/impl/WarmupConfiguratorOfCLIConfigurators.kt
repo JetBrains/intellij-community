@@ -6,10 +6,14 @@ import com.intellij.ide.CommandLineInspectionProjectAsyncConfigurator
 import com.intellij.ide.CommandLineInspectionProjectConfigurator
 import com.intellij.ide.warmup.WarmupConfigurator
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.*
+import com.intellij.openapi.progress.EmptyProgressIndicator
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.util.progress.rawProgressReporter
+import com.intellij.platform.util.progress.withRawProgressReporter
 import com.intellij.warmup.util.WarmupLogger
 import java.nio.file.Path
 import java.util.function.Predicate

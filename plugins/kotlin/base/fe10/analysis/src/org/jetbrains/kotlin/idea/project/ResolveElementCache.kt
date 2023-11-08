@@ -116,12 +116,9 @@ class ResolveElementCache(
     private val partialBodyResolveCache: CachedValue<SLRUCache<KtFile, ConcurrentMap<KtExpression, CachedPartialResolve>>> =
         CachedValuesManager.getManager(project).createCachedValue(
             CachedValueProvider {
-                val slruCache: SLRUCache<KtFile, ConcurrentMap<KtExpression, CachedPartialResolve>> =
-                    object : SLRUCache<KtFile, ConcurrentMap<KtExpression, CachedPartialResolve>>(20, 20) {
-                        override fun createValue(file: KtFile): ConcurrentMap<KtExpression, CachedPartialResolve> {
-                            return CollectionFactory.createConcurrentWeakKeySoftValueMap()
-                        }
-                    }
+                val slruCache = SLRUCache.slruCache<KtFile, ConcurrentMap<KtExpression, CachedPartialResolve>>(20, 20) {
+                    CollectionFactory.createConcurrentWeakKeySoftValueMap()
+                }
 
                 CachedValueProvider.Result.create(slruCache, cacheDependencies)
             },

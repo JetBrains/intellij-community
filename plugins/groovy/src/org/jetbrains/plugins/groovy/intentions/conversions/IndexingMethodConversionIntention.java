@@ -15,21 +15,19 @@
  */
 package org.jetbrains.plugins.groovy.intentions.conversions;
 
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.tree.IElementType;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.intentions.base.Intention;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
+import org.jetbrains.plugins.groovy.intentions.base.GrPsiUpdateIntention;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 
-public class IndexingMethodConversionIntention extends Intention {
+public class IndexingMethodConversionIntention extends GrPsiUpdateIntention {
 
   @Override
   @NotNull
@@ -38,27 +36,23 @@ public class IndexingMethodConversionIntention extends Intention {
   }
 
   @Override
-  public void processIntention(@NotNull PsiElement element, @NotNull Project project, Editor editor)
-      throws IncorrectOperationException {
+  protected void processIntention(@NotNull PsiElement element, @NotNull ActionContext context, @NotNull ModPsiUpdater updater) {
     final GrMethodCallExpression callExpression =
-        (GrMethodCallExpression) element;
-      final GrArgumentList argList = callExpression.getArgumentList();
-      final GrExpression[] arguments = argList.getExpressionArguments();
+      (GrMethodCallExpression)element;
+    final GrArgumentList argList = callExpression.getArgumentList();
+    final GrExpression[] arguments = argList.getExpressionArguments();
 
-      GrReferenceExpression methodExpression = (GrReferenceExpression) callExpression.getInvokedExpression();
-      final IElementType referenceType = methodExpression.getDotTokenType();
+    GrReferenceExpression methodExpression = (GrReferenceExpression)callExpression.getInvokedExpression();
 
-      final String methodName = methodExpression.getReferenceName();
-      final GrExpression qualifier = methodExpression.getQualifierExpression();
-      if("getAt".equals(methodName)|| "get".equals(methodName))
-      {
-          PsiImplUtil.replaceExpression(qualifier.getText() + '[' + arguments[0].getText() + ']',
-                                        callExpression);
-      }
-      else{
-          PsiImplUtil.replaceExpression(qualifier.getText() + '[' + arguments[0].getText() + "]=" + arguments[1].getText(),
-                                        callExpression);
-      }
+    final String methodName = methodExpression.getReferenceName();
+    final GrExpression qualifier = methodExpression.getQualifierExpression();
+    if ("getAt".equals(methodName) || "get".equals(methodName)) {
+      PsiImplUtil.replaceExpression(qualifier.getText() + '[' + arguments[0].getText() + ']',
+                                    callExpression);
+    }
+    else {
+      PsiImplUtil.replaceExpression(qualifier.getText() + '[' + arguments[0].getText() + "]=" + arguments[1].getText(),
+                                    callExpression);
+    }
   }
-
 }

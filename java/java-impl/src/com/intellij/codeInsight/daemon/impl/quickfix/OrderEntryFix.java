@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.daemon.impl.actions.AddImportAction;
 import com.intellij.codeInsight.daemon.quickFix.ExternalLibraryResolver;
 import com.intellij.codeInsight.daemon.quickFix.ExternalLibraryResolver.ExternalClassResolveResult;
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -10,9 +9,7 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.MoveToTestRootFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
@@ -290,7 +287,7 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
     JavaPsiFacade facade = JavaPsiFacade.getInstance(currentModule.getProject());
     String fullReferenceText = reference.getCanonicalText();
     ThreeState refToAnnotation = isReferenceToAnnotation(psiElement);
-    for (ExternalLibraryResolver resolver : ExternalLibraryResolver.EP_NAME.getExtensions()) {
+    for (ExternalLibraryResolver resolver : ExternalLibraryResolver.EP_NAME.getExtensionList()) {
       ExternalClassResolveResult resolveResult = resolver.resolveClass(shortReferenceName, refToAnnotation, currentModule);
       OrderEntryFix fix = null;
       if (resolveResult != null &&
@@ -343,19 +340,6 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
       uElement = uElement.getUastParent();
     }
     return ThreeState.NO;
-  }
-
-  public static void importClass(@NotNull Module currentModule, @Nullable Editor editor, @Nullable PsiReference reference, @Nullable String className) {
-    Project project = currentModule.getProject();
-    if (editor != null && reference != null && className != null) {
-      DumbService.getInstance(project).withAlternativeResolveEnabled(() -> {
-        GlobalSearchScope scope = GlobalSearchScope.moduleWithLibrariesScope(currentModule);
-        PsiClass aClass = JavaPsiFacade.getInstance(project).findClass(className, scope);
-        if (aClass != null) {
-          new AddImportAction(project, reference, editor, aClass).execute();
-        }
-      });
-    }
   }
 
   public static void addJarToRoots(@NotNull String jarPath, final @NotNull Module module, @Nullable PsiElement location) {

@@ -2,7 +2,6 @@
 package git4idea.index.ui
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.ui.BaseInclusionModel
 import com.intellij.openapi.vfs.VirtualFile
@@ -83,7 +82,7 @@ class GitStageRootInclusionModel(private val project: Project,
     }
 
     private fun Collection<VirtualFile>.asRepositories(project: Project): Set<GitRepository> {
-      return mapNotNullTo(mutableSetOf()) { project.service<GitRepositoryManager>().getRepositoryForRootQuick(it) }
+      return mapNotNullTo(mutableSetOf()) { GitRepositoryManager.getInstance(project).getRepositoryForRootQuick(it) }
     }
   }
 }

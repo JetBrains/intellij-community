@@ -20,6 +20,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.log.io.DurablePersistentByteAr
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.ExtendedVfsSnapshot
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.State
 import com.intellij.util.SystemProperties
+import com.intellij.util.childScope
 import com.intellij.util.io.DataEnumerator
 import com.intellij.util.io.SimpleStringPersistentEnumerator
 import com.intellij.util.io.delete
@@ -82,20 +83,20 @@ class VfsLogImpl private constructor(
   @ApiStatus.Internal
   inner class ContextImpl internal constructor() : VfsLogBaseContext {
     @OptIn(ExperimentalCoroutinesApi::class)
-    val coroutineScope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.IO.limitedParallelism(MAX_WORKER_THREADS_COUNT))
+    val coroutineScope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.IO.limitedParallelism(2))
 
     // todo: probably need to propagate readOnly to storages to ensure safety
     override val stringEnumerator = SimpleStringPersistentEnumerator(storagePath / "stringsEnum")
-    val operationLogStorage = OperationLogStorageImpl(storagePath / "operations", stringEnumerator,
-                                                      coroutineScope, MAX_WORKER_THREADS_COUNT)
+    val operationLogStorage = OperationLogStorageImpl(storagePath / "operations", stringEnumerator)
     val payloadStorage = PayloadStorageImpl(storagePath / "data")
     val compactionController = VfsLogCompactionController(
       storagePath / "compacted",
       readOnly,
       { tryAcquireCompactionContext() },
+      coroutineScope.childScope(CoroutineName("VfsLog compaction")),
       COMPACTION_DELAY_MS,
       COMPACTION_INTERVAL_MS,
-      if (COMPACTION_MODE == -1) DEFAULT_COMPACTION_MODE else OperationMode.values()[COMPACTION_MODE],
+      if (COMPACTION_MODE == -1) DEFAULT_COMPACTION_MODE else OperationMode.entries[COMPACTION_MODE],
       COMPACTION_MODE != -1
     )
 
@@ -135,10 +136,10 @@ class VfsLogImpl private constructor(
         LOG.warn("VfsLog dispose is already completed/in progress")
       }
       val startTime = System.currentTimeMillis()
+      operationLogStorage.closeWriteQueue()
 
       compactionController.close()
 
-      operationLogStorage.closeWriteQueue()
       awaitPendingWrites(
         timeout = Duration.INFINITE // we _must_ write down every pending operation, otherwise VfsLog and VFS will be out of sync.
       )
@@ -165,17 +166,32 @@ class VfsLogImpl private constructor(
       LOG.info("VfsLog dispose completed in ${System.currentTimeMillis() - startTime} ms")
     }
 
-    val payloadReader: PayloadReader = reader@{ payloadRef ->
-      if (payloadRef.source.isInline) {
-        return@reader InlinedPayloadStorage.readPayload(payloadRef)
+    val payloadReader: PayloadReader get() {
+      if (!isCompactionRunning) {
+        val compactionPayloadReader = compactionController.payloadReader
+        return reader@{ payloadRef ->
+          if (payloadRef.source.isInline) {
+            return@reader InlinedPayloadStorage.readPayload(payloadRef)
+          }
+          if (payloadRef.source == PayloadRef.PayloadSource.PayloadStorage) {
+            return@reader payloadStorage.readPayload(payloadRef)
+          }
+          if (payloadRef.source == PayloadRef.PayloadSource.CompactedVfsAttributes) {
+            return@reader compactionPayloadReader(payloadRef)
+          }
+          State.NotAvailable("no storage is responsible for $payloadRef")
+        }
+      } else {
+        return reader@{ payloadRef ->
+          if (payloadRef.source.isInline) {
+            return@reader InlinedPayloadStorage.readPayload(payloadRef)
+          }
+          if (payloadRef.source == PayloadRef.PayloadSource.PayloadStorage) {
+            return@reader payloadStorage.readPayload(payloadRef)
+          }
+          State.NotAvailable("no storage is responsible for $payloadRef")
+        }
       }
-      if (payloadRef.source == PayloadRef.PayloadSource.PayloadStorage) {
-        return@reader payloadStorage.readPayload(payloadRef)
-      }
-      if (payloadRef.source == PayloadRef.PayloadSource.CompactedVfsAttributes) {
-        return@reader compactionController.getInitializedCompactedVfsState().payloadReader(payloadRef)
-      }
-      State.NotAvailable("no storage is responsible for $payloadRef")
     }
 
     val payloadWriter: PayloadWriter = { data: ByteArray ->
@@ -324,23 +340,25 @@ class VfsLogImpl private constructor(
     }
   }
 
-  private fun VfsLogQueryContext.ensureLogAndCompactionAreSynced() {
+  private fun ensureLogAndCompactionAreSynced() {
     // it can theoretically happen that compaction will update its state, and will not manage to update start offsets
     // for log storages before cancellation/interrupt/whatever
-    with(context.compactionController) {
-      val compactedPosition = getCompactionPosition() ?: return
-      check(context.operationLogStorage.startOffset() <= compactedPosition.operationLogPosition)
-      check(context.payloadStorage.startOffset() <= compactedPosition.payloadStoragePosition)
-      if (context.operationLogStorage.startOffset() != compactedPosition.operationLogPosition) {
-        LOG.warn("Operation log storage was out of sync with compaction. " +
-                 "Updating offsets ${context.operationLogStorage.startOffset()} -> ${compactedPosition.operationLogPosition}")
-        context.operationLogStorage.dropOperationsUpTo(compactedPosition.operationLogPosition)
-      }
-      if (context.payloadStorage.startOffset() != compactedPosition.payloadStoragePosition) {
-        LOG.warn("Payload storage was out of sync with compaction. " +
-                 "Updating offsets ${context.payloadStorage.startOffset()} -> ${compactedPosition.payloadStoragePosition}")
-        context.payloadStorage.dropPayloadsUpTo(compactedPosition.payloadStoragePosition)
-      }
+    val compactedPosition = context.compactionController.getCompactionPosition() ?: return
+    check(context.operationLogStorage.startOffset() <= compactedPosition.operationLogPosition) {
+      "operation log start offset=${context.operationLogStorage.startOffset()} > compacted position=${compactedPosition}"
+    }
+    check(context.payloadStorage.startOffset() <= compactedPosition.payloadStoragePosition){
+      "payload storage start offset=${context.payloadStorage.startOffset()} > compacted position=${compactedPosition}"
+    }
+    if (context.operationLogStorage.startOffset() != compactedPosition.operationLogPosition) {
+      LOG.warn("Operation log storage was out of sync with compaction. " +
+               "Updating offsets ${context.operationLogStorage.startOffset()} -> ${compactedPosition.operationLogPosition}")
+      context.operationLogStorage.dropOperationsUpTo(compactedPosition.operationLogPosition)
+    }
+    if (context.payloadStorage.startOffset() != compactedPosition.payloadStoragePosition) {
+      LOG.warn("Payload storage was out of sync with compaction. " +
+               "Updating offsets ${context.payloadStorage.startOffset()} -> ${compactedPosition.payloadStoragePosition}")
+      context.payloadStorage.dropPayloadsUpTo(compactedPosition.payloadStoragePosition)
     }
   }
 
@@ -371,8 +389,7 @@ class VfsLogImpl private constructor(
         }
       }
 
-    override val payloadReader: PayloadReader
-      get() = context.payloadReader
+    override val payloadReader: PayloadReader = context.payloadReader
 
     // unconstrained
     override fun begin(): OperationLogStorage.Iterator = context.operationLogStorage.begin()
@@ -419,12 +436,7 @@ class VfsLogImpl private constructor(
   companion object {
     private val LOG = Logger.getInstance(VfsLogImpl::class.java)
 
-    const val VERSION = 6
-
-    private val MAX_WORKER_THREADS_COUNT = SystemProperties.getIntProperty(
-      "idea.vfs.log-vfs-operations.max-workers",
-      (Runtime.getRuntime().availableProcessors() / 10).coerceAtLeast(2)
-    )
+    const val VERSION = 7
 
     // compaction options
 
@@ -468,29 +480,34 @@ class VfsLogImpl private constructor(
     }
 
     @JvmStatic
+    @JvmOverloads
     fun open(
       storagePath: Path,
       readOnly: Boolean = false,
+      throwOnVersionMismatch: Boolean = false,
+      deleteOnVersionMismatch: Boolean = !readOnly
       // TODO telemetry and logging toggle
     ): VfsLogImpl {
-      if (!readOnly) {
-        deleteEverythingOnVersionMismatch(storagePath)
-      }
+      checkVersion(storagePath, throwOnVersionMismatch, deleteOnVersionMismatch)
       return VfsLogImpl(storagePath, readOnly)
     }
 
-    private fun deleteEverythingOnVersionMismatch(storagePath: Path) {
+    private fun checkVersion(storagePath: Path, throwOnMismatch: Boolean, deleteOnMismatch: Boolean) {
       val state = AtomicDurableRecord.open(storagePath / "state", ReadWrite, stateBuilder)
       val version = state.get().version
       state.close()
       if (version != VERSION) {
-        LOG.info("Upgrading storage")
-        try {
-          if (clearStorage(storagePath)) LOG.info("VfsLog storage was cleared")
+        if (throwOnMismatch) throw IllegalStateException("VfsLog version mismatch: impl=$VERSION vs stored=$version")
+        else if (deleteOnMismatch) {
+          LOG.info("Clearing storage")
+          try {
+            if (clearStorage(storagePath)) LOG.info("VfsLog storage was cleared")
+          }
+          catch (e: IOException) {
+            LOG.error("failed to clear VfsLog storage", e)
+          }
         }
-        catch (e: IOException) {
-          LOG.error("failed to clear VfsLog storage", e)
-        }
+        else LOG.warn("VfsLog version mismatch: impl=$VERSION vs stored=$version")
       }
     }
 

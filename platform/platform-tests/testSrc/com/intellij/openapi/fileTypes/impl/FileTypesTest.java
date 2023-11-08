@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileTypes.impl;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -39,7 +39,6 @@ import com.intellij.openapi.vfs.PersistentFSConstants;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManagerImpl;
-import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.impl.CachedFileType;
 import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
 import com.intellij.psi.PsiBinaryFile;
@@ -214,12 +213,9 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     VirtualFile virtualFile = getVirtualFile(file);
     assertNotNull(virtualFile);
     assertEquals(DetectedByContentFileType.INSTANCE, getFileType(virtualFile));
-    int modificationCount = ManagingFS.getInstance().getModificationCount();
     virtualFile.set(KeyFMap.EMPTY_MAP);
     clearFileTypeCache();
     assertEquals(DetectedByContentFileType.INSTANCE, getFileType(virtualFile));
-    int modificationCountAfterRedetection = ManagingFS.getInstance().getModificationCount();
-    assertEquals(modificationCount, modificationCountAfterRedetection);
   }
 
   public void testAutoDetected() throws IOException {
@@ -1115,7 +1111,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
   }
 
   private static void clearFileTypeCache() {
-    WriteAction.run(() -> CachedFileType.clearCache());   // normally this is done by PsiModificationTracker.Listener but it's not fired in this test
+    CachedFileType.clearCache();   // normally this is done by PsiModificationTracker.Listener but it's not fired in this test
   }
 
   public void testRegisterAdditionalExtensionForExistingFileType() throws IOException {

@@ -2,28 +2,24 @@
 package com.intellij.collaboration.ui.codereview.editor
 
 import com.intellij.collaboration.async.cancelAndJoinSilently
-import com.intellij.collaboration.async.collectWithPrevious
 import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil
-import com.intellij.collaboration.ui.codereview.diff.viewer.LineHoverAwareGutterMark
 import com.intellij.collaboration.ui.layout.SizeRestrictedSingleComponentLayout
 import com.intellij.collaboration.ui.util.DimensionRestrictions
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
-import com.intellij.openapi.editor.Inlay
-import com.intellij.openapi.editor.LogicalPosition
-import com.intellij.openapi.editor.event.*
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.getOrLogException
+import com.intellij.openapi.editor.*
 import com.intellij.openapi.editor.ex.EditorEx
-import com.intellij.openapi.editor.impl.EditorEmbeddedComponentManager
-import com.intellij.openapi.editor.impl.EditorEmbeddedComponentManager.Properties.RendererFactory
 import com.intellij.openapi.editor.markup.GutterIconRenderer
-import com.intellij.openapi.editor.markup.HighlighterLayer
-import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.awaitClose
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.ConcurrentHashMap
 import javax.swing.JComponent
@@ -34,17 +30,19 @@ interface EditorMapped {
   val isVisible: Flow<Boolean>
 }
 
+private val LOG = Logger.getInstance("codereview.editor.inlays")
+
 @ApiStatus.Experimental
 fun <VM : EditorMapped> EditorEx.controlInlaysIn(
   cs: CoroutineScope,
   vmsFlow: Flow<Collection<VM>>,
   vmKeyExtractor: (VM) -> Any,
-  componentFactory: CoroutineScope.(VM) -> JComponent
-) {
+  rendererFactory: CoroutineScope.(VM) -> CodeReviewComponentInlayRenderer
+): Job {
   val editor = this
   val controllersByVmKey: MutableMap<Any, Job> = ConcurrentHashMap()
 
-  cs.launchNow(Dispatchers.Default + CoroutineName("Editor component inlays for $this")) {
+  return cs.launchNow(Dispatchers.Default + CoroutineName("Editor component inlays for $this")) {
     vmsFlow.collect { vms ->
       val vmsByKey = mutableMapOf<Any, VM>()
 
@@ -66,14 +64,14 @@ fun <VM : EditorMapped> EditorEx.controlInlaysIn(
       for (vm in vms) {
         val key = vmKeyExtractor(vm)
         if (controllersByVmKey.contains(key)) continue
-        controllersByVmKey[key] = cs.controlInlay(vm, editor, componentFactory)
+        controllersByVmKey[key] = cs.controlInlay(vm, editor, rendererFactory)
       }
     }
   }
 }
 
 private fun <VM : EditorMapped> CoroutineScope.controlInlay(
-  vm: VM, editor: EditorEx, componentFactory: CoroutineScope.(VM) -> JComponent
+  vm: VM, editor: EditorEx, rendererFactory: CoroutineScope.(VM) -> CodeReviewComponentInlayRenderer
 ): Job = launchNow(Dispatchers.Main) {
   var inlay: Inlay<*>? = null
   try {
@@ -82,11 +80,13 @@ private fun <VM : EditorMapped> CoroutineScope.controlInlay(
       .collectLatest { (line, isVisible) ->
         val currentInlay = inlay
         if (line != null && isVisible) {
-          val offset = editor.document.getLineEndOffset(line)
-          if (currentInlay?.isValid != true && currentInlay?.offset != offset) {
-            currentInlay?.let(Disposer::dispose)
-            inlay = editor.insertComponentAfter(line, componentFactory(vm))
-          }
+          runCatching {
+            val offset = editor.document.getLineEndOffset(line)
+            if (currentInlay == null || !currentInlay.isValid || currentInlay.offset != offset) {
+              currentInlay?.let(Disposer::dispose)
+              inlay = editor.insertComponent(offset, rendererFactory(vm))
+            }
+          }.getOrLogException(LOG)
           awaitCancellation()
         }
         else if (currentInlay != null) {
@@ -112,126 +112,41 @@ private fun <VM : EditorMapped> CoroutineScope.controlInlay(
 fun EditorEx.insertComponentAfter(lineIndex: Int,
                                   component: JComponent,
                                   priority: Int = 0,
-                                  rendererFactory: RendererFactory? = null): Inlay<*>? {
+                                  rendererFactory: (Inlay<*>) -> GutterIconRenderer? = { null }): Inlay<*>? {
   val offset = document.getLineEndOffset(lineIndex)
-  return insertComponent(offset, component, priority, rendererFactory)
+  val renderer = object : CodeReviewComponentInlayRenderer(component) {
+    override fun calcGutterIconRenderer(inlay: Inlay<*>): GutterIconRenderer? = rendererFactory(inlay)
+  }
+  return insertComponent(offset, renderer, priority)
 }
 
 @RequiresEdt
-fun EditorEx.insertComponent(offset: Int,
-                             component: JComponent,
-                             priority: Int = 0,
-                             rendererFactory: RendererFactory? = null): Inlay<*>? {
-  val editor = this
-  val layout = SizeRestrictedSingleComponentLayout().apply {
-    // 52 for avatar and gaps
-    prefSize = DimensionRestrictions.ScalingConstant(width = CodeReviewChatItemUIUtil.TEXT_CONTENT_WIDTH + 52)
-  }
-  val wrappedComponent = JPanel(layout).apply {
+fun EditorEx.insertComponent(offset: Int, renderer: ComponentInlayRenderer<JComponent>, priority: Int = 0): Inlay<*>? {
+  val props = InlayProperties().priority(priority).relatesToPrecedingText(true)
+  return addComponentInlay(offset, props, renderer)
+}
+
+// 52 for avatar and gaps
+open class CodeReviewComponentInlayRenderer(private val actualComponent: JComponent)
+  : ComponentInlayRenderer<JComponent>(wrapWithLimitedWidth(actualComponent, CodeReviewChatItemUIUtil.TEXT_CONTENT_WIDTH + 52),
+                                       ComponentInlayAlignment.FIT_VIEWPORT_WIDTH) {
+  var isVisible: Boolean
+    get() = actualComponent.isVisible
+    set(value) {
+      actualComponent.isVisible = value
+    }
+}
+
+private fun wrapWithLimitedWidth(component: JComponent, width: Int): JComponent {
+  return JPanel(null).apply {
     isOpaque = false
+    // 52 for avatar and gaps
+    val widthRestriction = DimensionRestrictions.ScalingConstant(width = width)
+    layout = SizeRestrictedSingleComponentLayout().apply {
+      prefSize = widthRestriction
+      maxSize = widthRestriction
+    }
+
     add(component)
   }
-
-  val props = EditorEmbeddedComponentManager.Properties(EditorEmbeddedComponentManager.ResizePolicy.none(),
-                                                        rendererFactory,
-                                                        false,
-                                                        false,
-                                                        priority,
-                                                        offset)
-  return EditorEmbeddedComponentManager.getInstance().addComponent(editor, wrappedComponent, props)
 }
-
-@ApiStatus.Experimental
-fun EditorEx.controlGutterIconsIn(cs: CoroutineScope, createRenderer: (Int) -> GutterIconRenderer) {
-  cs.launch(Dispatchers.Main, start = CoroutineStart.UNDISPATCHED) {
-    lineCountFlow().distinctUntilChanged().collectLatest { editorLineCount ->
-      coroutineScope {
-        val highlighters = mutableListOf<RangeHighlighter>()
-        val renderers = ArrayList<GutterIconRenderer>()
-
-        for (editorLine in 0 until editorLineCount) {
-          val renderer = createRenderer(editorLine)
-          renderers.add(renderer)
-          val rangeHighlighter = markupModel.addLineHighlighter(null, editorLine, HighlighterLayer.LAST).apply {
-            gutterIconRenderer = renderer
-          }
-          highlighters.add(rangeHighlighter)
-        }
-
-        controlRenderersIconVisibilityIn(this, renderers)
-
-        try {
-          awaitCancellation()
-        }
-        catch (e: Exception) {
-          for (highlighter in highlighters) {
-            highlighter.dispose()
-          }
-        }
-      }
-    }
-  }
-}
-
-private fun EditorEx.controlRenderersIconVisibilityIn(cs: CoroutineScope, renderers: List<GutterIconRenderer>) {
-  cs.launch(Dispatchers.Main, start = CoroutineStart.UNDISPATCHED) {
-    hoveredLineFlow().distinctUntilChanged().collectWithPrevious(-1) { prev, curr ->
-      if (prev >= 0 && prev < renderers.size) {
-        (renderers[prev] as? LineHoverAwareGutterMark)?.let {
-          it.isHovered = false
-          repaintGutterForLine(it.line)
-        }
-      }
-      if (curr >= 0 && curr < renderers.size) {
-        (renderers[curr] as? LineHoverAwareGutterMark)?.let {
-          it.isHovered = true
-          repaintGutterForLine(it.line)
-        }
-      }
-    }
-  }
-}
-
-private fun EditorEx.repaintGutterForLine(line: Int) {
-  val gutter = gutter as JComponent
-  val y = logicalPositionToXY(LogicalPosition(line, 0)).y
-  gutter.repaint(0, y, gutter.width, y + lineHeight)
-}
-
-private fun EditorEx.lineCountFlow(ignoreLastLf: Boolean = true): Flow<Int> =
-  callbackFlow {
-    val listener = object : DocumentListener {
-      override fun documentChanged(event: DocumentEvent) {
-        trySend(getLineCount(ignoreLastLf))
-      }
-    }
-    document.addDocumentListener(listener)
-    send(getLineCount(ignoreLastLf))
-    awaitClose { document.removeDocumentListener(listener) }
-  }
-
-private fun EditorEx.getLineCount(ignoreLastLf: Boolean): Int {
-  val lineCount = document.lineCount
-  return if (ignoreLastLf && document.immutableCharSequence.lastOrNull() == '\n') lineCount - 1 else lineCount
-}
-
-private fun EditorEx.hoveredLineFlow(): Flow<Int> =
-  callbackFlow {
-    val listener = object : EditorMouseListener, EditorMouseMotionListener {
-      override fun mouseMoved(e: EditorMouseEvent) {
-        trySend(e.logicalPosition.line)
-      }
-
-      override fun mouseExited(e: EditorMouseEvent) {
-        trySend(-1)
-      }
-    }
-
-    addEditorMouseListener(listener)
-    addEditorMouseMotionListener(listener)
-    send(-1)
-    awaitClose {
-      removeEditorMouseListener(listener)
-      removeEditorMouseMotionListener(listener)
-    }
-  }

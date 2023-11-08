@@ -43,6 +43,7 @@ public class Maven40ProjectResolver {
   @NotNull private final MavenServerConsoleIndicatorImpl myCurrentIndicator;
   @Nullable private final MavenWorkspaceMap myWorkspaceMap;
   @NotNull private final File myLocalRepositoryFile;
+  @NotNull private final Properties userProperties;
   private final boolean myResolveInParallel;
 
   public Maven40ProjectResolver(@NotNull Maven40ServerEmbedderImpl embedder,
@@ -51,6 +52,7 @@ public class Maven40ProjectResolver {
                                 @NotNull MavenServerConsoleIndicatorImpl currentIndicator,
                                 @Nullable MavenWorkspaceMap workspaceMap,
                                 @NotNull File localRepositoryFile,
+                                @NotNull Properties userProperties,
                                 boolean resolveInParallel) {
     myEmbedder = embedder;
     myUpdateSnapshots = updateSnapshots;
@@ -58,6 +60,7 @@ public class Maven40ProjectResolver {
     myCurrentIndicator = currentIndicator;
     myWorkspaceMap = workspaceMap;
     myLocalRepositoryFile = localRepositoryFile;
+    this.userProperties = userProperties;
     myResolveInParallel = resolveInParallel;
   }
 
@@ -88,7 +91,7 @@ public class Maven40ProjectResolver {
                                                               @NotNull List<String> activeProfiles,
                                                               @NotNull List<String> inactiveProfiles) {
     File file = !files.isEmpty() ? files.iterator().next() : null;
-    MavenExecutionRequest request = myEmbedder.createRequest(file, activeProfiles, inactiveProfiles);
+    MavenExecutionRequest request = myEmbedder.createRequest(file, activeProfiles, inactiveProfiles, userProperties);
 
     request.setUpdateSnapshots(myUpdateSnapshots);
 
@@ -460,10 +463,10 @@ public class Maven40ProjectResolver {
     return buildingResults;
   }
 
-  private void buildSinglePom(ProjectBuilder builder,
-                              List<ProjectBuildingResult> buildingResults,
-                              ProjectBuildingRequest projectBuildingRequest,
-                              File pomFile) {
+  private static void buildSinglePom(ProjectBuilder builder,
+                                     List<ProjectBuildingResult> buildingResults,
+                                     ProjectBuildingRequest projectBuildingRequest,
+                                     File pomFile) {
     try {
       ProjectBuildingResult build = builder.build(pomFile, projectBuildingRequest);
       buildingResults.add(build);

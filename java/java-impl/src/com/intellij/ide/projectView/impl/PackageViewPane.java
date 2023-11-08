@@ -53,6 +53,11 @@ public class PackageViewPane extends AbstractProjectViewPaneWithAsyncSupport {
     super(project);
   }
 
+  @Override
+  protected void configureAsyncSupport(@NotNull AsyncProjectViewSupport support) {
+    support.setMultiSelectionEnabled(false);
+  }
+
   @NotNull
   @Override
   public String getTitle() {

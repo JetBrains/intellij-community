@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.actions;
 
 import com.intellij.analysis.AnalysisBundle;
@@ -26,15 +26,12 @@ public class SuppressByCommentFix extends AbstractBatchSuppressByNoInspectionCom
   }
 
   @Override
-  @IntentionName
-  @NotNull
-  public String getText() {
+  public @IntentionName @NotNull String getText() {
     return AnalysisBundle.message("suppress.inspection.statement");
   }
 
   @Override
-  @Nullable
-  public PsiElement getContainer(PsiElement context) {
+  public @Nullable PsiElement getContainer(PsiElement context) {
     return PsiTreeUtil.getParentOfType(context, mySuppressionHolderClass);
   }
 }

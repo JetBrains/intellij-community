@@ -4,9 +4,7 @@ package com.intellij.lang.impl.modcommand;
 import com.intellij.analysis.AnalysisBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
-import com.intellij.codeInspection.InspectionProfileEntry;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.options.*;
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -35,8 +33,7 @@ import static com.intellij.openapi.util.text.HtmlChunk.text;
 
 public class ModCommandServiceImpl implements ModCommandService {
   @Override
-  @NotNull
-  public IntentionAction wrap(@NotNull ModCommandAction action) {
+  public @NotNull IntentionAction wrap(@NotNull ModCommandAction action) {
     return new ModCommandActionWrapper(action);
   }
 
@@ -68,16 +65,7 @@ public class ModCommandServiceImpl implements ModCommandService {
   public <T extends InspectionProfileEntry> @NotNull ModCommand updateOption(
     @NotNull PsiElement context, @NotNull T inspection, @NotNull Consumer<@NotNull T> updater) {
 
-    InspectionToolWrapper<?, ?> tool = InspectionProfileManager.getInstance(context.getProject())
-      .getCurrentProfile().getInspectionTool(inspection.getShortName(), context);
-    if (tool == null) {
-      throw new IllegalArgumentException("Tool not found: " + inspection.getShortName());
-    }
-    InspectionProfileEntry copiedTool = tool.createCopy().getTool();
-    if (copiedTool.getClass() != inspection.getClass()) {
-      throw new IllegalArgumentException(
-        "Invalid class: " + copiedTool.getClass() + "!=" + inspection.getClass() + " (id: " + inspection.getShortName() + ")");
-    }
+    InspectionProfileEntry copiedTool = getToolCopy(context, inspection);
     List<@NotNull OptControl> controls = inspection.getOptionsPane().allControls();
     final Element options = new Element("copy");
     inspection.writeSettings(options);
@@ -95,6 +83,29 @@ public class ModCommandServiceImpl implements ModCommandService {
       }
     }
     return modifiedOptions.isEmpty() ? ModCommand.nop() : new ModUpdateInspectionOptions(inspection.getShortName(), modifiedOptions);
+  }
+
+  @NotNull
+  private static <T extends InspectionProfileEntry> InspectionProfileEntry getToolCopy(@NotNull PsiElement context, @NotNull T inspection) {
+    InspectionToolWrapper<?, ?> tool = InspectionProfileManager.getInstance(context.getProject())
+      .getCurrentProfile().getInspectionTool(inspection.getShortName(), context);
+    if (tool == null) {
+      throw new IllegalArgumentException("Tool not found: " + inspection.getShortName());
+    }
+    InspectionProfileEntry copiedTool = tool.createCopy().getTool();
+    if (copiedTool.getClass() != inspection.getClass()) {
+      if (copiedTool instanceof GlobalInspectionTool global) {
+        LocalInspectionTool local = global.getSharedLocalInspectionTool();
+        if (local != null) {
+          copiedTool = local;
+        }
+      }
+      if (copiedTool.getClass() != inspection.getClass()) {
+        throw new IllegalArgumentException(
+          "Invalid class: " + copiedTool.getClass() + "!=" + inspection.getClass() + " (id: " + inspection.getShortName() + ")");
+      }
+    }
+    return copiedTool;
   }
 
   @ApiStatus.Experimental

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.analysis.problemsView.toolWindow;
 
 import com.intellij.ide.actions.ToggleToolbarAction;
@@ -101,12 +101,16 @@ public final class ProblemsView implements DumbAware, ToolWindowFactory {
 
   private static void selectionChanged(boolean selected, @NotNull Content content) {
     var problemsViewTab = get(ProblemsViewTab.class, content);
-    if (problemsViewTab != null) problemsViewTab.selectionChangedTo(selected);
+    if (problemsViewTab != null) {
+      problemsViewTab.selectionChangedTo(selected);
+    }
   }
 
   private static void visibilityChanged(boolean visible, @NotNull Content content) {
     var problemsViewTab = get(ProblemsViewTab.class, content);
-    if (problemsViewTab != null) problemsViewTab.visibilityChangedTo(visible);
+    if (problemsViewTab != null) {
+      problemsViewTab.visibilityChangedTo(visible);
+    }
   }
 
   private static <T> @Nullable T get(@NotNull Class<T> type, @NotNull Content content) {
@@ -115,26 +119,23 @@ public final class ProblemsView implements DumbAware, ToolWindowFactory {
     return type.isInstance(component) ? (T)component : null;
   }
 
-  @Override
-  public void init(@NotNull ToolWindow window) {
-    Project project = window.getProject();
-    HighlightingErrorsProviderBase.getInstance(project);
-  }
-
   public static void addPanel(@NotNull Project project, @NotNull ProblemsViewPanelProvider provider) {
     ToolWindow window = getToolWindow(project);
     assert window != null;
     ContentManager manager = window.getContentManager();
     ProblemsViewTab panel = provider.create();
-    if (panel == null) return;
+    if (panel == null) {
+      return;
+    }
     createContent(manager, panel);
   }
 
   public static void removePanel(Project project, String id) {
     Content content = ProblemsViewToolWindowUtils.INSTANCE.getContentById(project, id);
     ToolWindow toolWindow = ProblemsViewToolWindowUtils.INSTANCE.getToolWindow(project);
-    if (content == null || toolWindow == null)
+    if (content == null || toolWindow == null) {
       return;
+    }
 
     toolWindow.getContentManager().removeContent(content, true);
   }
@@ -147,7 +148,7 @@ public final class ProblemsView implements DumbAware, ToolWindowFactory {
     ContentManager manager = window.getContentManager();
 
     CompletableFuture<?> result = CompletableFuture.completedFuture(null);
-    for (ProblemsViewPanelProvider provider : ProblemsViewPanelProvider.getEP().getExtensions(project)) {
+    for (ProblemsViewPanelProvider provider : ProblemsViewPanelProvider.getEP().getExtensionList(project)) {
       ProblemsViewTab panel = provider.create();
       if (panel != null) {
         createContent(manager, panel);

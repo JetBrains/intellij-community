@@ -14,6 +14,8 @@ import com.intellij.platform.ide.menu.IdeJMenuBar
 import com.intellij.ui.ClientProperty
 import com.intellij.ui.ScreenUtil
 import com.intellij.ui.mac.MacMainFrameDecorator
+import com.intellij.util.ui.StartupUiUtil
+import com.intellij.util.ui.UIUtil
 import com.jetbrains.JBR
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -41,7 +43,8 @@ internal abstract class IdeFrameDecorator protected constructor(@JvmField protec
         return when {
           SystemInfoRt.isMac -> MacMainFrameDecorator(frame, glassPane, coroutineScope)
           SystemInfoRt.isWindows -> WinMainFrameDecorator(frame)
-          SystemInfoRt.isXWindow && X11UiUtil.isFullScreenSupported() -> EWMHFrameDecorator(frame)
+          StartupUiUtil.isXToolkit() && X11UiUtil.isFullScreenSupported() -> EWMHFrameDecorator(frame)
+          StartupUiUtil.isWaylandToolkit() && UIUtil.isFullScreenSupportedByDefaultGD() -> WLFrameDecorator(frame)
           else -> null
         }
       }
@@ -177,6 +180,24 @@ private class EWMHFrameDecorator(frame: IdeFrameImpl) : IdeFrameDecorator(frame)
 
   override suspend fun toggleFullScreen(state: Boolean): Boolean {
     X11UiUtil.toggleFullScreenMode(frame)
+    val menuBar = frame.jMenuBar
+    if (menuBar is IdeJMenuBar) {
+      menuBar.onToggleFullScreen(state)
+    }
+    withContext(Dispatchers.EDT) {
+      notifyFrameComponents(state)
+    }
+    return state
+  }
+}
+
+private class WLFrameDecorator(frame: IdeFrameImpl) : IdeFrameDecorator(frame) {
+  override val isInFullScreen: Boolean
+    get() = ClientProperty.isTrue(frame, FULL_SCREEN)
+
+  override suspend fun toggleFullScreen(state: Boolean): Boolean {
+    val gd = frame.graphicsConfiguration.device
+    gd.fullScreenWindow = if (isInFullScreen) null else frame
     val menuBar = frame.jMenuBar
     if (menuBar is IdeJMenuBar) {
       menuBar.onToggleFullScreen(state)

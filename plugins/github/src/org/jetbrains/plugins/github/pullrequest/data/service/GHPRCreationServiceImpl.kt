@@ -11,7 +11,6 @@ import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.i18n.GithubBundle
-import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.util.GHGitRepositoryMapping
 import java.util.concurrent.CompletableFuture
 
@@ -55,6 +54,15 @@ class GHPRCreationServiceImpl(private val progressManager: ProgressManager,
                                                                             headBranch.nameForRemoteOperations
                                    )).nodes.firstOrNull {
       it.headRepository?.owner?.login == headRepo.repository.repositoryPath.owner
+    }
+  }
+
+  override fun findPullRequestAsync(progressIndicator: ProgressIndicator,
+                                    baseBranch: GitRemoteBranch,
+                                    headRepo: GHGitRepositoryMapping,
+                                    headBranch: GitRemoteBranch): CompletableFuture<GHPullRequest?> {
+    return progressManager.submitIOTask(progressIndicator) {
+      findPullRequest(progressIndicator, baseBranch, headRepo, headBranch)
     }
   }
 

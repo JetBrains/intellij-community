@@ -25,8 +25,8 @@ public class NormalPatternsCompletionTest extends NormalCompletionTestCase {
         }
       }""");
     myFixture.completeBasic();
-    assertEquals(List.of("Point", "Point(int x, int y)", "NullPointerException"), myFixture.getLookupElementStrings());
-    selectItem(1);
+    assertEquals(List.of("Point", "PolicyQualifierInfo", "Point(int x, int y)", "NullPointerException"), myFixture.getLookupElementStrings());
+    selectItem(2);
     myFixture.checkResult("""
                             record Point(int x, int y);
                             class X {
@@ -47,8 +47,8 @@ public class NormalPatternsCompletionTest extends NormalCompletionTestCase {
         }
       }""");
     myFixture.completeBasic();
-    assertEquals(List.of("Point", "Point(int x1, int y2)", "NullPointerException"), myFixture.getLookupElementStrings());
-    selectItem(1);
+    assertEquals(List.of("Point", "PolicyQualifierInfo", "Point(int x1, int y2)", "NullPointerException"), myFixture.getLookupElementStrings());
+    selectItem(2);
     myFixture.checkResult("""
                             record Point(int x, int y);
                             class X {
@@ -69,8 +69,8 @@ public class NormalPatternsCompletionTest extends NormalCompletionTestCase {
         }
       }""");
     myFixture.completeBasic();
-    assertEquals(List.of("Point", "Point(int x, int y)", "NullPointerException"), myFixture.getLookupElementStrings());
-    selectItem(1);
+    assertEquals(List.of("Point", "PolicyQualifierInfo", "Point(int x, int y)", "NullPointerException"), myFixture.getLookupElementStrings());
+    selectItem(2);
     myFixture.checkResult("""
                             import com.example.Point;
 
@@ -115,8 +115,8 @@ public class NormalPatternsCompletionTest extends NormalCompletionTestCase {
         }
       }""");
     myFixture.completeBasic();
-    assertEquals(List.of("Point", "Point(int x, int y)", "NullPointerException"), myFixture.getLookupElementStrings());
-    selectItem(1);
+    assertEquals(List.of("Point", "PolicyQualifierInfo", "Point(int x, int y)", "NullPointerException"), myFixture.getLookupElementStrings());
+    selectItem(2);
     myFixture.checkResult("""
                             import com.example.Y;
                                                          
@@ -139,8 +139,8 @@ public class NormalPatternsCompletionTest extends NormalCompletionTestCase {
         }
       }""");
     myFixture.completeBasic();
-    assertEquals(List.of("Point", "Point(int x, int y)", "NullPointerException"), myFixture.getLookupElementStrings());
-    selectItem(1);
+    assertEquals(List.of("Point", "PolicyQualifierInfo", "Point(int x, int y)", "NullPointerException"), myFixture.getLookupElementStrings());
+    selectItem(2);
     myFixture.checkResult("""
                             record Point(int x, int y);
                             class X {
@@ -166,7 +166,7 @@ public class NormalPatternsCompletionTest extends NormalCompletionTestCase {
     myFixture.completeBasic();
     // Options contributed by TypoTolerantMatcher; these classes contain nested public classes,
     // so we allow them, as they may potentially contain string constants
-    assertEquals(List.of("ForkJoinPool", "ThreadPoolExecutor"), myFixture.getLookupElementStrings());
+    assertEquals(List.of("Policy", "ForkJoinPool", "ThreadPoolExecutor"), myFixture.getLookupElementStrings());
   }
 
   @NeedsIndex.Full
@@ -181,8 +181,8 @@ public class NormalPatternsCompletionTest extends NormalCompletionTestCase {
         }
       }""");
     myFixture.completeBasic();
-    assertEquals(List.of("Point", "Point(int x, int y)", "NullPointerException"), myFixture.getLookupElementStrings());
-    selectItem(1);
+    assertEquals(List.of("Point", "PolicyQualifierInfo", "Point(int x, int y)", "NullPointerException"), myFixture.getLookupElementStrings());
+    selectItem(2);
     myFixture.checkResult("""
                             import com.example.Point;
                                                          

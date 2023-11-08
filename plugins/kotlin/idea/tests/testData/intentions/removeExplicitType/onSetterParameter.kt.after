@@ -1,4 +1,3 @@
-// IGNORE_K2
 var x: String = " "
     set(param) {
         field = "$param "

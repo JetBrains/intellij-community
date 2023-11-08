@@ -3,17 +3,14 @@
 package org.jetbrains.kotlin.idea.k2.refactoring.introduce.introduceVariable
 
 import com.intellij.codeInsight.template.Template
-import com.intellij.codeInsight.template.TemplateBuilderImpl
 import com.intellij.codeInsight.template.TemplateEditingAdapter
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.TextRange
-import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiReference
@@ -24,31 +21,33 @@ import com.intellij.refactoring.rename.inplace.TemplateInlayUtil.createSettingsP
 import com.intellij.ui.dsl.builder.actionListener
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.builder.selected
+import com.intellij.util.application
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.analyzeInModalWindow
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.CallableReturnTypeUpdaterUtils
 import org.jetbrains.kotlin.idea.refactoring.KotlinCommonRefactoringSettings
 import org.jetbrains.kotlin.idea.refactoring.introduce.AbstractKotlinInplaceIntroducer
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
-import org.jetbrains.kotlin.psi.KtCallableDeclaration
-import org.jetbrains.kotlin.psi.KtExpression
-import org.jetbrains.kotlin.psi.KtProperty
-import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
 import org.jetbrains.kotlin.psi.psiUtil.isIdentifier
 import org.jetbrains.kotlin.psi.psiUtil.quoteIfNeeded
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import javax.swing.JCheckBox
 import javax.swing.JPanel
+import kotlin.reflect.KFunction2
 
 class KotlinVariableInplaceIntroducer(
     addedVariable: KtProperty,
     originalExpression: KtExpression?,
     occurrencesToReplace: Array<KtExpression>,
     suggestedNames: Collection<String>,
-    private val typeString: String?,
+    private val expressionRenderedType: String?,
+    private val mustSpecifyTypeExplicitly: Boolean,
     project: Project,
-    editor: Editor
+    editor: Editor,
+    private val postProcess: KFunction2<KtDeclaration, Editor?, Unit>,
 ) : AbstractKotlinInplaceIntroducer<KtProperty>(
     localVariable = addedVariable.takeIf { it.isLocal },
     expression = originalExpression,
@@ -69,8 +68,6 @@ class KotlinVariableInplaceIntroducer(
                     .selected(KotlinCommonRefactoringSettings.getInstance().INTRODUCE_DECLARE_WITH_VAR)
                     .actionListener { _, component ->
                         myProject.executeWriteCommand(commandName, commandName) {
-                            PsiDocumentManager.getInstance(myProject).commitDocument(myEditor.document)
-
                             val psiFactory = KtPsiFactory(myProject)
                             val keyword = if (component.isSelected) psiFactory.createVarKeyword() else psiFactory.createValKeyword()
                             addedVariable?.valOrVarKeyword?.replace(keyword)
@@ -78,7 +75,7 @@ class KotlinVariableInplaceIntroducer(
                         }
                     }
             }
-            if (typeString != null) {
+            if (expressionRenderedType != null && !mustSpecifyTypeExplicitly) {
                 row {
                     checkBox(KotlinBundle.message("specify.type.explicitly")).apply {
                         selected(KotlinCommonRefactoringSettings.getInstance().INTRODUCE_SPECIFY_TYPE_EXPLICITLY)
@@ -86,7 +83,8 @@ class KotlinVariableInplaceIntroducer(
                             runWriteCommandAndRestart {
                                 updateVariableName()
                                 if (component.isSelected) {
-                                    addedVariable?.typeReference = KtPsiFactory(myProject).createType(typeString)
+                                    addedVariable?.typeReference = KtPsiFactory(myProject).createType(expressionRenderedType)
+                                    shortenReferences(addedVariable!!)
                                 } else {
                                     addedVariable?.typeReference = null
                                 }
@@ -104,14 +102,6 @@ class KotlinVariableInplaceIntroducer(
     override fun suggestNames(replaceAll: Boolean, variable: KtProperty?) = suggestedNames
 
     override fun createFieldToStartTemplateOn(replaceAll: Boolean, names: Array<out String>) = addedVariable
-
-    override fun addAdditionalVariables(builder: TemplateBuilderImpl) {
-        val variable = addedVariable ?: return
-        variable.typeReference?.let {
-            //val expression = SpecifyTypeExplicitlyIntention.createTypeExpressionForTemplate(expressionType!!, variable) ?: return@let
-            //builder.replaceElement(it, "TypeReferenceVariable", expression, false)
-        }
-    }
 
     override fun buildTemplateAndStart(
         refs: Collection<PsiReference>,
@@ -140,7 +130,7 @@ class KotlinVariableInplaceIntroducer(
             val context = analyzeInModalWindow(variable, KotlinBundle.message("find.usages.prepare.dialog.progress")) {
                 CallableReturnTypeUpdaterUtils.getTypeInfo(variable)
             }
-            ApplicationManager.getApplication().runWriteAction {
+            application.runWriteAction {
                 CallableReturnTypeUpdaterUtils.updateType(variable, context, myProject, myEditor)
             }
         }
@@ -155,8 +145,8 @@ class KotlinVariableInplaceIntroducer(
         val popupComponent = createPopupPanel()
 
         val presentation = createSettingsPresentation(templateState.editor as EditorImpl) {}
-        val templateElement: SelectableTemplateElement = object : SelectableTemplateElement(presentation) {
-        }
+        val templateElement: SelectableTemplateElement = object : SelectableTemplateElement(presentation) {}
+
         createNavigatableButtonWithPopup(
             templateState,
             currentVariableRange.endOffset,
@@ -170,10 +160,12 @@ class KotlinVariableInplaceIntroducer(
     override fun getInitialName() = super.getInitialName().quoteIfNeeded()
 
     override fun updateTitle(variable: KtProperty?, value: String?) {
-        expressionTypeCheckBox?.isEnabled = value == null || value.isIdentifier() // No preview to update
+        expressionTypeCheckBox?.isEnabled = value == null || value.isIdentifier()
+        // No preview to update
     }
 
-    override fun deleteTemplateField(psiField: KtProperty?) { // Do not delete introduced variable as it was created outside of in-place refactoring
+    override fun deleteTemplateField(psiField: KtProperty?) {
+        // Do not delete introduced variable as it was created outside of in-place refactoring
     }
 
     override fun isReplaceAllOccurrences() = true
@@ -188,13 +180,20 @@ class KotlinVariableInplaceIntroducer(
         val newName = inputName ?: return
         val replacement = KtPsiFactory(myProject).createExpression(newName)
 
-        ApplicationManager.getApplication().runWriteAction {
+        application.runWriteAction {
             addedVariable?.setName(newName)
             occurrences.forEach {
                 if (it.isValid) {
                     it.replace(replacement)
                 }
             }
+        }
+    }
+
+    override fun moveOffsetAfter(success: Boolean) {
+        super.moveOffsetAfter(success)
+        if (success) {
+            addedVariable?.let { postProcess(it, myEditor) }
         }
     }
 }

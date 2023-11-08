@@ -28,8 +28,8 @@ abstract class LinuxDistributionCustomizer {
     val basePatterns = persistentListOf(
       "bin/*.sh",
       "plugins/**/*.sh",
-      "bin/fsnotifier*",
-      "bin/*.py"
+      "bin/fsnotifier",
+      "bin/restarter"
     )
 
     val rtPatterns =

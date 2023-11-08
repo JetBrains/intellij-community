@@ -10,6 +10,7 @@ import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesColle
 import com.intellij.openapi.components.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.data.index.VcsLogBigRepositoriesList
 import com.intellij.vcs.log.impl.VcsLogSharedSettings
@@ -18,13 +19,11 @@ import java.util.concurrent.TimeUnit
 
 @NonNls
 internal class VcsLogIndexApplicationStatisticsCollector : ApplicationUsagesCollector() {
-  companion object {
-    private val GROUP = EventLogGroup("vcs.log.index.application", 3)
-    private val INDEX_DISABLED_IN_REGISTRY = GROUP.registerEvent("index.disabled.in.registry", EventFields.Boolean("value"))
-    private val INDEX_FORCED_IN_REGISTRY = GROUP.registerEvent("index.forced.in.registry", EventFields.Boolean("value"))
-    private val BIG_REPOSITORIES = GROUP.registerEvent("big.repositories", EventFields.Count)
 
-  }
+  private val GROUP = EventLogGroup("vcs.log.index.application", 3)
+  private val INDEX_DISABLED_IN_REGISTRY = GROUP.registerEvent("index.disabled.in.registry", EventFields.Boolean("value"))
+  private val INDEX_FORCED_IN_REGISTRY = GROUP.registerEvent("index.forced.in.registry", EventFields.Boolean("value"))
+  private val BIG_REPOSITORIES = GROUP.registerEvent("big.repositories", EventFields.Count)
 
   override fun getMetrics(): MutableSet<MetricEvent> {
     val metricEvents = mutableSetOf<MetricEvent>()
@@ -52,12 +51,13 @@ internal class VcsLogIndexApplicationStatisticsCollector : ApplicationUsagesColl
   }
 }
 
-class VcsLogIndexProjectStatisticsCollector : ProjectUsagesCollector() {
-  companion object {
-    private val GROUP = EventLogGroup("vcs.log.index.project", 3)
-    private val INDEXING_TIME = GROUP.registerEvent("indexing.time.minutes", EventFields.Count)
-    private val INDEX_DISABLED = GROUP.registerEvent("index.disabled.in.project", EventFields.Boolean("value"))
-  }
+internal class VcsLogIndexProjectStatisticsCollector : ProjectUsagesCollector() {
+  private val GROUP = EventLogGroup("vcs.log.index.project", 4)
+  private val INDEXING_TIME = GROUP.registerEvent("indexing.time.minutes", EventFields.Count)
+  private val IS_PAUSED = EventFields.Boolean("is_paused")
+  private val INDEXING_TIME_BY_ROOT = GROUP.registerEvent("indexing.time.by.root",
+                                                          EventFields.AnonymizedPath, EventFields.DurationMs, IS_PAUSED)
+  private val INDEX_DISABLED = GROUP.registerEvent("index.disabled.in.project", EventFields.Boolean("value"))
 
   override fun getMetrics(project: Project): Set<MetricEvent> {
     if (!project.isTrusted()) return emptySet()
@@ -67,6 +67,9 @@ class VcsLogIndexProjectStatisticsCollector : ProjectUsagesCollector() {
     getIndexCollector(project)?.state?.let { indexCollectorState ->
       val indexingTime = TimeUnit.MILLISECONDS.toMinutes(indexCollectorState.indexTime).toInt()
       usages.add(INDEXING_TIME.metric(indexingTime))
+      for ((rootPath, time) in indexCollectorState.indexTimeByRoot) {
+        usages.add(INDEXING_TIME_BY_ROOT.metric(rootPath, time, VcsLogBigRepositoriesList.getInstance().isBig(rootPath)))
+      }
     }
 
     getSharedSettings(project)?.let { sharedSettings ->
@@ -88,18 +91,21 @@ class VcsLogIndexProjectStatisticsCollector : ProjectUsagesCollector() {
 
 }
 
-class VcsLogIndexCollectorState {
-  var indexTime: Long = 0
+class VcsLogIndexCollectorState : BaseState() {
+  var indexTime by property(0L)
+  var indexTimeByRoot by linkedMap<String, Long>()
 
   fun copy(): VcsLogIndexCollectorState {
     val copy = VcsLogIndexCollectorState()
     copy.indexTime = indexTime
+    copy.indexTimeByRoot = indexTimeByRoot.toMap(linkedMapOf())
     return copy
   }
 }
 
 @State(name = "VcsLogIndexCollector",
        storages = [Storage(value = StoragePathMacros.CACHE_FILE)])
+@Service(Service.Level.PROJECT)
 class VcsLogIndexCollector : PersistentStateComponent<VcsLogIndexCollectorState> {
   private val lock = Any()
   private var state: VcsLogIndexCollectorState
@@ -122,9 +128,11 @@ class VcsLogIndexCollector : PersistentStateComponent<VcsLogIndexCollectorState>
     }
   }
 
-  fun reportIndexingTime(time: Long) {
+  fun reportIndexingTime(root: VirtualFile, time: Long) {
     synchronized(lock) {
       state.indexTime += time
+      state.indexTimeByRoot[root.path] = (state.indexTimeByRoot[root.path] ?: 0) + time
+      state.intIncrementModificationCount()
     }
   }
 

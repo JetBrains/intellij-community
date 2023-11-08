@@ -38,9 +38,8 @@ public class GitSharedSettings implements PersistentStateComponent<GitSharedSett
 
   private State myState = new State();
 
-  @Nullable
   @Override
-  public State getState() {
+  public @Nullable State getState() {
     return myState;
   }
 
@@ -61,8 +60,7 @@ public class GitSharedSettings implements PersistentStateComponent<GitSharedSett
     myState.synchronizeBranchProtectionRules = sync;
   }
 
-  @NotNull
-  public List<String> getForcePushProhibitedPatterns() {
+  public @NotNull List<String> getForcePushProhibitedPatterns() {
     return Collections.unmodifiableList(myState.FORCE_PUSH_PROHIBITED_PATTERNS);
   }
 
@@ -91,8 +89,7 @@ public class GitSharedSettings implements PersistentStateComponent<GitSharedSett
     return false;
   }
 
-  @NotNull
-  public List<String> getAdditionalProhibitedPatterns() {
+  public @NotNull List<String> getAdditionalProhibitedPatterns() {
     if (!isSynchronizeBranchProtectionRules()) return Collections.emptyList();
 
     return GitProtectedBranchProvider.getProtectedBranchPatterns(myProject);

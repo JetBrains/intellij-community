@@ -140,14 +140,13 @@ public final class PythonSdkType extends SdkType {
   @NotNull
   @Override
   public FileChooserDescriptor getHomeChooserDescriptor() {
-    final boolean isWindows = SystemInfo.isWindows;
-
     final var descriptor = new FileChooserDescriptor(true, false, false, false, false, false) {
       @Override
       public void validateSelectedFiles(VirtualFile @NotNull [] files) throws Exception {
         if (files.length != 0) {
-          if (!isValidSdkHome(files[0].getPath())) {
-            throw new Exception(PyBundle.message("python.sdk.error.invalid.interpreter.name", files[0].getName()));
+          VirtualFile file = files[0];
+          if (!isLocatedInWsl(file) && !isValidSdkHome(file.getPath())) {
+            throw new Exception(PyBundle.message("python.sdk.error.invalid.interpreter.name", file.getName()));
           }
         }
       }
@@ -156,7 +155,7 @@ public final class PythonSdkType extends SdkType {
       public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
         // TODO: add a better, customizable filtering
         if (!file.isDirectory()) {
-          if (isWindows) {
+          if (isLocatedInLocalWindowsFS(file)) {
             String path = file.getPath();
             boolean looksExecutable = false;
             for (String ext : PythonSdkUtil.WINDOWS_EXECUTABLE_SUFFIXES) {
@@ -178,6 +177,14 @@ public final class PythonSdkType extends SdkType {
     }
 
     return descriptor;
+  }
+
+  private static boolean isLocatedInLocalWindowsFS(@NotNull VirtualFile file) {
+    return SystemInfo.isWindows && !isCustomPythonSdkHomePath(file.getPath());
+  }
+
+  private static boolean isLocatedInWsl(@NotNull VirtualFile file) {
+    return SystemInfo.isWindows && isCustomPythonSdkHomePath(file.getPath());
   }
 
   @Override

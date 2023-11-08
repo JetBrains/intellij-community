@@ -11,7 +11,6 @@ import com.intellij.openapi.vcs.VcsDirectoryMapping
 import com.intellij.openapi.vcs.VcsRootChecker
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx.MAPPING_DETECTION_LOG
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.backend.workspace.WorkspaceModelTopics
 import com.intellij.util.Alarm
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.ui.update.DisposableUpdate
@@ -29,7 +28,6 @@ internal class ModuleVcsDetector(private val project: Project) {
 
   private fun startDetection() {
     MAPPING_DETECTION_LOG.debug("ModuleVcsDetector.startDetection")
-    project.messageBus.connect().subscribe(WorkspaceModelTopics.CHANGED, MyWorkspaceModelChangeListener())
 
     if (vcsManager.needAutodetectMappings() &&
         vcsManager.haveDefaultMapping() == null &&
@@ -129,12 +127,6 @@ internal class ModuleVcsDetector(private val project: Project) {
     }
 
     autoDetectForContentRoots(contentRoots)
-  }
-
-  private inner class MyWorkspaceModelChangeListener : ContentRootChangeListener(skipFileChanges = true) {
-    override fun contentRootsChanged(removed: List<VirtualFile>, added: List<VirtualFile>) {
-      scheduleScanForNewContentRoots(removed, added)
-    }
   }
 
   internal class MyStartUpActivity : VcsStartupActivity {

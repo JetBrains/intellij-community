@@ -403,7 +403,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000016",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[1] 0",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[1] 0",
       "status": "SUCCESS",
       "duration": 22,
       "runOrder": "17",
@@ -413,8 +413,8 @@
       "test": {
         "id": "-8366125246665767464",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[1] 0",
           "testNameWithoutPrefix": ".XxHash3Test.[1] 0",
@@ -428,7 +428,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000017",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[2] 1",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[2] 1",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "18",
@@ -438,8 +438,8 @@
       "test": {
         "id": "-8707499581629337291",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[2] 1",
           "testNameWithoutPrefix": ".XxHash3Test.[2] 1",
@@ -453,7 +453,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000018",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[3] 2",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[3] 2",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "19",
@@ -463,8 +463,8 @@
       "test": {
         "id": "6698187002589911034",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[3] 2",
           "testNameWithoutPrefix": ".XxHash3Test.[3] 2",
@@ -478,7 +478,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000019",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[4] 3",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[4] 3",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "20",
@@ -488,8 +488,8 @@
       "test": {
         "id": "7364781581035081319",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[4] 3",
           "testNameWithoutPrefix": ".XxHash3Test.[4] 3",
@@ -503,7 +503,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000020",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[5] 4",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[5] 4",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "21",
@@ -513,8 +513,8 @@
       "test": {
         "id": "6008683153625695842",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[5] 4",
           "testNameWithoutPrefix": ".XxHash3Test.[5] 4",
@@ -528,7 +528,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000021",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[6] 5",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[6] 5",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "22",
@@ -538,8 +538,8 @@
       "test": {
         "id": "-5604890680462818385",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[6] 5",
           "testNameWithoutPrefix": ".XxHash3Test.[6] 5",
@@ -553,7 +553,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000022",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[7] 6",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[7] 6",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "23",
@@ -563,8 +563,8 @@
       "test": {
         "id": "5687410629985155085",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[7] 6",
           "testNameWithoutPrefix": ".XxHash3Test.[7] 6",
@@ -578,7 +578,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000023",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[8] 7",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[8] 7",
       "status": "SUCCESS",
       "duration": 0,
       "runOrder": "24",
@@ -588,8 +588,8 @@
       "test": {
         "id": "-5893826718389585636",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[8] 7",
           "testNameWithoutPrefix": ".XxHash3Test.[8] 7",
@@ -603,7 +603,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000024",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[9] 8",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[9] 8",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "25",
@@ -613,8 +613,8 @@
       "test": {
         "id": "1960892526445137009",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[9] 8",
           "testNameWithoutPrefix": ".XxHash3Test.[9] 8",
@@ -628,7 +628,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000025",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[10] 9",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[10] 9",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "26",
@@ -638,8 +638,8 @@
       "test": {
         "id": "1590295929886827489",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[10] 9",
           "testNameWithoutPrefix": ".XxHash3Test.[10] 9",
@@ -653,7 +653,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000026",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[11] 10",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[11] 10",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "27",
@@ -663,8 +663,8 @@
       "test": {
         "id": "-430016674052593819",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[11] 10",
           "testNameWithoutPrefix": ".XxHash3Test.[11] 10",
@@ -678,7 +678,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000027",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[12] 11",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[12] 11",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "28",
@@ -688,8 +688,8 @@
       "test": {
         "id": "-8124751774083435952",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[12] 11",
           "testNameWithoutPrefix": ".XxHash3Test.[12] 11",
@@ -703,7 +703,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000028",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[13] 12",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[13] 12",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "29",
@@ -713,8 +713,8 @@
       "test": {
         "id": "4015061082817231860",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[13] 12",
           "testNameWithoutPrefix": ".XxHash3Test.[13] 12",
@@ -728,7 +728,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000029",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[14] 13",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[14] 13",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "30",
@@ -738,8 +738,8 @@
       "test": {
         "id": "3338193357163879715",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[14] 13",
           "testNameWithoutPrefix": ".XxHash3Test.[14] 13",
@@ -753,7 +753,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000030",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[15] 14",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[15] 14",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "31",
@@ -763,8 +763,8 @@
       "test": {
         "id": "43200106218339008",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[15] 14",
           "testNameWithoutPrefix": ".XxHash3Test.[15] 14",
@@ -778,7 +778,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000031",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[16] 15",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[16] 15",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "32",
@@ -788,8 +788,8 @@
       "test": {
         "id": "90708601423205543",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[16] 15",
           "testNameWithoutPrefix": ".XxHash3Test.[16] 15",
@@ -803,7 +803,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000032",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[17] 16",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[17] 16",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "33",
@@ -813,8 +813,8 @@
       "test": {
         "id": "-6564545248009181545",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[17] 16",
           "testNameWithoutPrefix": ".XxHash3Test.[17] 16",
@@ -828,7 +828,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000033",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[18] 17",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[18] 17",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "34",
@@ -838,8 +838,8 @@
       "test": {
         "id": "3349397356500413830",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[18] 17",
           "testNameWithoutPrefix": ".XxHash3Test.[18] 17",
@@ -853,7 +853,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000034",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[19] 18",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[19] 18",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "35",
@@ -863,8 +863,8 @@
       "test": {
         "id": "5275644820627267101",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[19] 18",
           "testNameWithoutPrefix": ".XxHash3Test.[19] 18",
@@ -878,7 +878,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000035",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[20] 19",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[20] 19",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "36",
@@ -888,8 +888,8 @@
       "test": {
         "id": "-2787274075718229573",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[20] 19",
           "testNameWithoutPrefix": ".XxHash3Test.[20] 19",
@@ -903,7 +903,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000036",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[21] 20",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[21] 20",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "37",
@@ -913,8 +913,8 @@
       "test": {
         "id": "5946244055432813975",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[21] 20",
           "testNameWithoutPrefix": ".XxHash3Test.[21] 20",
@@ -928,7 +928,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000037",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[22] 21",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[22] 21",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "38",
@@ -938,8 +938,8 @@
       "test": {
         "id": "2860381856149817506",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[22] 21",
           "testNameWithoutPrefix": ".XxHash3Test.[22] 21",
@@ -953,7 +953,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000038",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[23] 22",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[23] 22",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "39",
@@ -963,8 +963,8 @@
       "test": {
         "id": "-6974572092594290426",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[23] 22",
           "testNameWithoutPrefix": ".XxHash3Test.[23] 22",
@@ -978,7 +978,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000039",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[24] 23",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[24] 23",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "40",
@@ -988,8 +988,8 @@
       "test": {
         "id": "-8728347430429251631",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[24] 23",
           "testNameWithoutPrefix": ".XxHash3Test.[24] 23",
@@ -1003,7 +1003,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000040",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[25] 24",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[25] 24",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "41",
@@ -1013,8 +1013,8 @@
       "test": {
         "id": "-6335314330046218190",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[25] 24",
           "testNameWithoutPrefix": ".XxHash3Test.[25] 24",
@@ -1028,7 +1028,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000041",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[26] 25",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[26] 25",
       "status": "SUCCESS",
       "duration": 0,
       "runOrder": "42",
@@ -1038,8 +1038,8 @@
       "test": {
         "id": "-6210664459813818795",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[26] 25",
           "testNameWithoutPrefix": ".XxHash3Test.[26] 25",
@@ -1053,7 +1053,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000042",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[27] 26",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[27] 26",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "43",
@@ -1063,8 +1063,8 @@
       "test": {
         "id": "894817243944148069",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[27] 26",
           "testNameWithoutPrefix": ".XxHash3Test.[27] 26",
@@ -1078,7 +1078,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000043",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[28] 27",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[28] 27",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "44",
@@ -1088,8 +1088,8 @@
       "test": {
         "id": "-8721651360047130764",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[28] 27",
           "testNameWithoutPrefix": ".XxHash3Test.[28] 27",
@@ -1103,7 +1103,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000044",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[29] 28",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[29] 28",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "45",
@@ -1113,8 +1113,8 @@
       "test": {
         "id": "-2180920445025491729",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[29] 28",
           "testNameWithoutPrefix": ".XxHash3Test.[29] 28",
@@ -1128,7 +1128,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000045",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[30] 29",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[30] 29",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "46",
@@ -1138,8 +1138,8 @@
       "test": {
         "id": "-6314310614930328846",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[30] 29",
           "testNameWithoutPrefix": ".XxHash3Test.[30] 29",
@@ -1153,7 +1153,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000046",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[31] 30",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[31] 30",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "47",
@@ -1163,8 +1163,8 @@
       "test": {
         "id": "-7056041115681075131",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[31] 30",
           "testNameWithoutPrefix": ".XxHash3Test.[31] 30",
@@ -1178,7 +1178,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000047",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[32] 31",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[32] 31",
       "status": "SUCCESS",
       "duration": 0,
       "runOrder": "48",
@@ -1188,8 +1188,8 @@
       "test": {
         "id": "-1502877709954005648",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[32] 31",
           "testNameWithoutPrefix": ".XxHash3Test.[32] 31",
@@ -1203,7 +1203,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000048",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[33] 32",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[33] 32",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "49",
@@ -1213,8 +1213,8 @@
       "test": {
         "id": "6026939081639726292",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[33] 32",
           "testNameWithoutPrefix": ".XxHash3Test.[33] 32",
@@ -1228,7 +1228,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000049",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[34] 33",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[34] 33",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "50",
@@ -1238,8 +1238,8 @@
       "test": {
         "id": "5352533424396347907",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[34] 33",
           "testNameWithoutPrefix": ".XxHash3Test.[34] 33",
@@ -1253,7 +1253,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000050",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[35] 34",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[35] 34",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "51",
@@ -1263,8 +1263,8 @@
       "test": {
         "id": "7242592652845764064",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[35] 34",
           "testNameWithoutPrefix": ".XxHash3Test.[35] 34",
@@ -1278,7 +1278,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000051",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[36] 35",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[36] 35",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "52",
@@ -1288,8 +1288,8 @@
       "test": {
         "id": "7303117995477951367",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[36] 35",
           "testNameWithoutPrefix": ".XxHash3Test.[36] 35",
@@ -1303,7 +1303,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000052",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[37] 36",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[37] 36",
       "status": "SUCCESS",
       "duration": 0,
       "runOrder": "53",
@@ -1313,8 +1313,8 @@
       "test": {
         "id": "-4540282629501365833",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[37] 36",
           "testNameWithoutPrefix": ".XxHash3Test.[37] 36",
@@ -1328,7 +1328,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000053",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[38] 37",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[38] 37",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "54",
@@ -1338,8 +1338,8 @@
       "test": {
         "id": "5359515311949748902",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[38] 37",
           "testNameWithoutPrefix": ".XxHash3Test.[38] 37",
@@ -1353,7 +1353,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000054",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[39] 38",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[39] 38",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "55",
@@ -1363,8 +1363,8 @@
       "test": {
         "id": "3255393220401621309",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[39] 38",
           "testNameWithoutPrefix": ".XxHash3Test.[39] 38",
@@ -1378,7 +1378,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000055",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[40] 39",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[40] 39",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "56",
@@ -1388,8 +1388,8 @@
       "test": {
         "id": "-7239259097498108068",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[40] 39",
           "testNameWithoutPrefix": ".XxHash3Test.[40] 39",
@@ -1403,7 +1403,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000056",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[41] 40",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[41] 40",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "57",
@@ -1413,8 +1413,8 @@
       "test": {
         "id": "7075156862193869292",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[41] 40",
           "testNameWithoutPrefix": ".XxHash3Test.[41] 40",
@@ -1428,7 +1428,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000057",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[42] 41",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[42] 41",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "58",
@@ -1438,8 +1438,8 @@
       "test": {
         "id": "1659386230987175129",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[42] 41",
           "testNameWithoutPrefix": ".XxHash3Test.[42] 41",
@@ -1453,7 +1453,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000058",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[43] 42",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[43] 42",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "59",
@@ -1463,8 +1463,8 @@
       "test": {
         "id": "-5800606105319834243",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[43] 42",
           "testNameWithoutPrefix": ".XxHash3Test.[43] 42",
@@ -1478,7 +1478,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000059",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[44] 43",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[44] 43",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "60",
@@ -1488,8 +1488,8 @@
       "test": {
         "id": "-5301894988736472150",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[44] 43",
           "testNameWithoutPrefix": ".XxHash3Test.[44] 43",
@@ -1503,7 +1503,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000060",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[45] 44",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[45] 44",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "61",
@@ -1513,8 +1513,8 @@
       "test": {
         "id": "-7448604180383187895",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[45] 44",
           "testNameWithoutPrefix": ".XxHash3Test.[45] 44",
@@ -1528,7 +1528,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000061",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[46] 45",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[46] 45",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "62",
@@ -1538,8 +1538,8 @@
       "test": {
         "id": "-7387586411026378194",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[46] 45",
           "testNameWithoutPrefix": ".XxHash3Test.[46] 45",
@@ -1553,7 +1553,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000062",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[47] 46",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[47] 46",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "63",
@@ -1563,8 +1563,8 @@
       "test": {
         "id": "4386025903986909214",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[47] 46",
           "testNameWithoutPrefix": ".XxHash3Test.[47] 46",
@@ -1578,7 +1578,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000063",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[48] 47",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[48] 47",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "64",
@@ -1588,8 +1588,8 @@
       "test": {
         "id": "-5313345322700444913",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[48] 47",
           "testNameWithoutPrefix": ".XxHash3Test.[48] 47",
@@ -1603,7 +1603,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000064",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[49] 48",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[49] 48",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "65",
@@ -1613,8 +1613,8 @@
       "test": {
         "id": "-3382593983598552940",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[49] 48",
           "testNameWithoutPrefix": ".XxHash3Test.[49] 48",
@@ -1628,7 +1628,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000065",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[50] 49",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[50] 49",
       "status": "SUCCESS",
       "duration": 0,
       "runOrder": "66",
@@ -1638,8 +1638,8 @@
       "test": {
         "id": "-4171104106398158694",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[50] 49",
           "testNameWithoutPrefix": ".XxHash3Test.[50] 49",
@@ -1653,7 +1653,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000066",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[51] 50",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[51] 50",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "67",
@@ -1663,8 +1663,8 @@
       "test": {
         "id": "-4197677043452736052",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[51] 50",
           "testNameWithoutPrefix": ".XxHash3Test.[51] 50",
@@ -1678,7 +1678,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000067",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[52] 51",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[52] 51",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "68",
@@ -1688,8 +1688,8 @@
       "test": {
         "id": "-5725894087834232583",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[52] 51",
           "testNameWithoutPrefix": ".XxHash3Test.[52] 51",
@@ -1703,7 +1703,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000068",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[53] 52",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[53] 52",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "69",
@@ -1713,8 +1713,8 @@
       "test": {
         "id": "580612700820296029",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[53] 52",
           "testNameWithoutPrefix": ".XxHash3Test.[53] 52",
@@ -1728,7 +1728,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000069",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[54] 53",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[54] 53",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "70",
@@ -1738,8 +1738,8 @@
       "test": {
         "id": "1289500430035580810",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[54] 53",
           "testNameWithoutPrefix": ".XxHash3Test.[54] 53",
@@ -1753,7 +1753,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000070",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[55] 54",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[55] 54",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "71",
@@ -1763,8 +1763,8 @@
       "test": {
         "id": "4553111324939161705",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[55] 54",
           "testNameWithoutPrefix": ".XxHash3Test.[55] 54",
@@ -1778,7 +1778,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000071",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[56] 55",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[56] 55",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "72",
@@ -1788,8 +1788,8 @@
       "test": {
         "id": "4536494931900808718",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[56] 55",
           "testNameWithoutPrefix": ".XxHash3Test.[56] 55",
@@ -1803,7 +1803,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000072",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[57] 56",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[57] 56",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "73",
@@ -1813,8 +1813,8 @@
       "test": {
         "id": "-7255140650746213314",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[57] 56",
           "testNameWithoutPrefix": ".XxHash3Test.[57] 56",
@@ -1828,7 +1828,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000073",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[58] 57",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[58] 57",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "74",
@@ -1838,8 +1838,8 @@
       "test": {
         "id": "1282945088552388399",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[58] 57",
           "testNameWithoutPrefix": ".XxHash3Test.[58] 57",
@@ -1853,7 +1853,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000074",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[59] 58",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[59] 58",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "75",
@@ -1863,8 +1863,8 @@
       "test": {
         "id": "8538903953746146484",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[59] 58",
           "testNameWithoutPrefix": ".XxHash3Test.[59] 58",
@@ -1878,7 +1878,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000075",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[60] 59",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[60] 59",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "76",
@@ -1888,8 +1888,8 @@
       "test": {
         "id": "-4203209068657595308",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[60] 59",
           "testNameWithoutPrefix": ".XxHash3Test.[60] 59",
@@ -1903,7 +1903,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000076",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[61] 60",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[61] 60",
       "status": "SUCCESS",
       "duration": 0,
       "runOrder": "77",
@@ -1913,8 +1913,8 @@
       "test": {
         "id": "3191681247298514444",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[61] 60",
           "testNameWithoutPrefix": ".XxHash3Test.[61] 60",
@@ -1928,7 +1928,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000077",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[62] 61",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[62] 61",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "78",
@@ -1938,8 +1938,8 @@
       "test": {
         "id": "6448154648549358393",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[62] 61",
           "testNameWithoutPrefix": ".XxHash3Test.[62] 61",
@@ -1953,7 +1953,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000078",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[63] 62",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[63] 62",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "79",
@@ -1963,8 +1963,8 @@
       "test": {
         "id": "-2163069242993692003",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[63] 62",
           "testNameWithoutPrefix": ".XxHash3Test.[63] 62",
@@ -1978,7 +1978,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000079",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[64] 63",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[64] 63",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "80",
@@ -1988,8 +1988,8 @@
       "test": {
         "id": "-571743743681817526",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[64] 63",
           "testNameWithoutPrefix": ".XxHash3Test.[64] 63",
@@ -2003,7 +2003,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000080",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[65] 64",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[65] 64",
       "status": "SUCCESS",
       "duration": 0,
       "runOrder": "81",
@@ -2013,8 +2013,8 @@
       "test": {
         "id": "-2965025006330940503",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[65] 64",
           "testNameWithoutPrefix": ".XxHash3Test.[65] 64",
@@ -2028,7 +2028,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000081",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[66] 65",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[66] 65",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "82",
@@ -2038,8 +2038,8 @@
       "test": {
         "id": "-2954038314556039730",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[66] 65",
           "testNameWithoutPrefix": ".XxHash3Test.[66] 65",
@@ -2053,7 +2053,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000082",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[67] 66",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[67] 66",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "83",
@@ -2063,8 +2063,8 @@
       "test": {
         "id": "8261127646645481470",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[67] 66",
           "testNameWithoutPrefix": ".XxHash3Test.[67] 66",
@@ -2078,7 +2078,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000083",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[68] 67",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[68] 67",
       "status": "SUCCESS",
       "duration": 0,
       "runOrder": "84",
@@ -2088,8 +2088,8 @@
       "test": {
         "id": "-560676070902225681",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[68] 67",
           "testNameWithoutPrefix": ".XxHash3Test.[68] 67",
@@ -2103,7 +2103,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000084",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[69] 68",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[69] 68",
       "status": "SUCCESS",
       "duration": 0,
       "runOrder": "85",
@@ -2113,8 +2113,8 @@
       "test": {
         "id": "-6956447132433295500",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[69] 68",
           "testNameWithoutPrefix": ".XxHash3Test.[69] 68",
@@ -2128,7 +2128,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000085",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[70] 69",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[70] 69",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "86",
@@ -2138,8 +2138,8 @@
       "test": {
         "id": "-8150477790242224075",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[70] 69",
           "testNameWithoutPrefix": ".XxHash3Test.[70] 69",
@@ -2153,7 +2153,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000086",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[71] 70",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[71] 70",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "87",
@@ -2163,8 +2163,8 @@
       "test": {
         "id": "9018576368212541975",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[71] 70",
           "testNameWithoutPrefix": ".XxHash3Test.[71] 70",
@@ -2178,7 +2178,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000087",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[72] 71",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[72] 71",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "88",
@@ -2188,8 +2188,8 @@
       "test": {
         "id": "585248318491924258",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[72] 71",
           "testNameWithoutPrefix": ".XxHash3Test.[72] 71",
@@ -2203,7 +2203,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000088",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[73] 72",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[73] 72",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "89",
@@ -2213,8 +2213,8 @@
       "test": {
         "id": "-5721698289871233402",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[73] 72",
           "testNameWithoutPrefix": ".XxHash3Test.[73] 72",
@@ -2228,7 +2228,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000089",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[74] 73",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[74] 73",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "90",
@@ -2238,8 +2238,8 @@
       "test": {
         "id": "-6236491131773683631",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[74] 73",
           "testNameWithoutPrefix": ".XxHash3Test.[74] 73",
@@ -2253,7 +2253,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000090",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[75] 74",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[75] 74",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "91",
@@ -2263,8 +2263,8 @@
       "test": {
         "id": "-8666800123525455950",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[75] 74",
           "testNameWithoutPrefix": ".XxHash3Test.[75] 74",
@@ -2278,7 +2278,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000091",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[76] 75",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[76] 75",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "92",
@@ -2288,8 +2288,8 @@
       "test": {
         "id": "-8763319267799846443",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[76] 75",
           "testNameWithoutPrefix": ".XxHash3Test.[76] 75",
@@ -2303,7 +2303,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000092",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[77] 76",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[77] 76",
       "status": "SUCCESS",
       "duration": 0,
       "runOrder": "93",
@@ -2313,8 +2313,8 @@
       "test": {
         "id": "2577784742380045285",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[77] 76",
           "testNameWithoutPrefix": ".XxHash3Test.[77] 76",
@@ -2328,7 +2328,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000093",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[78] 77",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[78] 77",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "94",
@@ -2338,8 +2338,8 @@
       "test": {
         "id": "-6243292734870402828",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[78] 77",
           "testNameWithoutPrefix": ".XxHash3Test.[78] 77",
@@ -2353,7 +2353,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000094",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[79] 78",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[79] 78",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "95",
@@ -2363,8 +2363,8 @@
       "test": {
         "id": "-3596416278122906769",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[79] 78",
           "testNameWithoutPrefix": ".XxHash3Test.[79] 78",
@@ -2378,7 +2378,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000095",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[80] 79",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[80] 79",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "96",
@@ -2388,8 +2388,8 @@
       "test": {
         "id": "-7216648762916774378",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[80] 79",
           "testNameWithoutPrefix": ".XxHash3Test.[80] 79",
@@ -2403,7 +2403,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000096",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[81] 80",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[81] 80",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "97",
@@ -2413,8 +2413,8 @@
       "test": {
         "id": "-1416646250066441321",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[81] 80",
           "testNameWithoutPrefix": ".XxHash3Test.[81] 80",
@@ -2428,7 +2428,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000097",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[82] 81",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[82] 81",
       "status": "SUCCESS",
       "duration": 0,
       "runOrder": "98",
@@ -2438,8 +2438,8 @@
       "test": {
         "id": "-7394808403044393310",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[82] 81",
           "testNameWithoutPrefix": ".XxHash3Test.[82] 81",
@@ -2453,7 +2453,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000098",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[83] 82",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[83] 82",
       "status": "SUCCESS",
       "duration": 0,
       "runOrder": "99",
@@ -2463,8 +2463,8 @@
       "test": {
         "id": "2442944863640999686",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[83] 82",
           "testNameWithoutPrefix": ".XxHash3Test.[83] 82",
@@ -2478,7 +2478,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000099",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[84] 83",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[84] 83",
       "status": "SUCCESS",
       "duration": 0,
       "runOrder": "100",
@@ -2488,8 +2488,8 @@
       "test": {
         "id": "4038863046627389905",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[84] 83",
           "testNameWithoutPrefix": ".XxHash3Test.[84] 83",
@@ -2503,7 +2503,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000100",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[85] 84",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[85] 84",
       "status": "SUCCESS",
       "duration": 0,
       "runOrder": "101",
@@ -2513,8 +2513,8 @@
       "test": {
         "id": "1641056175859963442",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[85] 84",
           "testNameWithoutPrefix": ".XxHash3Test.[85] 84",
@@ -2528,7 +2528,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000101",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[86] 85",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[86] 85",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "102",
@@ -2538,8 +2538,8 @@
       "test": {
         "id": "1665499940754307157",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[86] 85",
           "testNameWithoutPrefix": ".XxHash3Test.[86] 85",
@@ -2553,7 +2553,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000102",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[87] 86",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[87] 86",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "103",
@@ -2563,8 +2563,8 @@
       "test": {
         "id": "-5568343315980481947",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[87] 86",
           "testNameWithoutPrefix": ".XxHash3Test.[87] 86",
@@ -2578,7 +2578,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000103",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[88] 87",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[88] 87",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "104",
@@ -2588,8 +2588,8 @@
       "test": {
         "id": "4045422718494556532",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[88] 87",
           "testNameWithoutPrefix": ".XxHash3Test.[88] 87",
@@ -2603,7 +2603,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000104",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[89] 88",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[89] 88",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "105",
@@ -2613,8 +2613,8 @@
       "test": {
         "id": "6875187532743652079",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[89] 88",
           "testNameWithoutPrefix": ".XxHash3Test.[89] 88",
@@ -2628,7 +2628,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000105",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[90] 89",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[90] 89",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "106",
@@ -2638,8 +2638,8 @@
       "test": {
         "id": "6143473278549014816",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[90] 89",
           "testNameWithoutPrefix": ".XxHash3Test.[90] 89",
@@ -2653,7 +2653,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000106",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[91] 90",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[91] 90",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "107",
@@ -2663,8 +2663,8 @@
       "test": {
         "id": "5130194529100018250",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[91] 90",
           "testNameWithoutPrefix": ".XxHash3Test.[91] 90",
@@ -2678,7 +2678,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000107",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[92] 91",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[92] 91",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "108",
@@ -2688,8 +2688,8 @@
       "test": {
         "id": "3604374953181915007",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[92] 91",
           "testNameWithoutPrefix": ".XxHash3Test.[92] 91",
@@ -2703,7 +2703,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000108",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[93] 92",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[93] 92",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "109",
@@ -2713,8 +2713,8 @@
       "test": {
         "id": "-8466197295004520741",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[93] 92",
           "testNameWithoutPrefix": ".XxHash3Test.[93] 92",
@@ -2728,7 +2728,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000109",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[94] 93",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[94] 93",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "110",
@@ -2738,8 +2738,8 @@
       "test": {
         "id": "-7824441912539789300",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[94] 93",
           "testNameWithoutPrefix": ".XxHash3Test.[94] 93",
@@ -2753,7 +2753,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000110",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[95] 94",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[95] 94",
       "status": "SUCCESS",
       "duration": 0,
       "runOrder": "111",
@@ -2763,8 +2763,8 @@
       "test": {
         "id": "-4781942206295035921",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[95] 94",
           "testNameWithoutPrefix": ".XxHash3Test.[95] 94",
@@ -2778,7 +2778,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000111",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[96] 95",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[96] 95",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "112",
@@ -2788,8 +2788,8 @@
       "test": {
         "id": "-4866112610907061880",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[96] 95",
           "testNameWithoutPrefix": ".XxHash3Test.[96] 95",
@@ -2803,7 +2803,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000112",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[97] 96",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[97] 96",
       "status": "SUCCESS",
       "duration": 0,
       "runOrder": "113",
@@ -2813,8 +2813,8 @@
       "test": {
         "id": "1863459187902526392",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[97] 96",
           "testNameWithoutPrefix": ".XxHash3Test.[97] 96",
@@ -2828,7 +2828,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000113",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[98] 97",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[98] 97",
       "status": "SUCCESS",
       "duration": 0,
       "runOrder": "114",
@@ -2838,8 +2838,8 @@
       "test": {
         "id": "-7835936225878345559",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[98] 97",
           "testNameWithoutPrefix": ".XxHash3Test.[98] 97",
@@ -2853,7 +2853,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000114",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[99] 98",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[99] 98",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "115",
@@ -2863,8 +2863,8 @@
       "test": {
         "id": "-861170895972005070",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[99] 98",
           "testNameWithoutPrefix": ".XxHash3Test.[99] 98",
@@ -2878,7 +2878,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000115",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[100] 99",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[100] 99",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "116",
@@ -2888,8 +2888,8 @@
       "test": {
         "id": "-3076156076302641443",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[100] 99",
           "testNameWithoutPrefix": ".XxHash3Test.[100] 99",
@@ -2903,7 +2903,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000116",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[101] 100",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[101] 100",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "117",
@@ -2913,8 +2913,8 @@
       "test": {
         "id": "8213899629676723335",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[101] 100",
           "testNameWithoutPrefix": ".XxHash3Test.[101] 100",
@@ -2928,7 +2928,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000117",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[102] 101",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[102] 101",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "118",
@@ -2938,8 +2938,8 @@
       "test": {
         "id": "-631010187581969918",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[102] 101",
           "testNameWithoutPrefix": ".XxHash3Test.[102] 101",
@@ -2953,7 +2953,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000118",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[103] 102",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[103] 102",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "119",
@@ -2963,8 +2963,8 @@
       "test": {
         "id": "-8570371318840050320",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[103] 102",
           "testNameWithoutPrefix": ".XxHash3Test.[103] 102",
@@ -2978,7 +2978,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000119",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[104] 103",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[104] 103",
       "status": "SUCCESS",
       "duration": 0,
       "runOrder": "120",
@@ -2988,8 +2988,8 @@
       "test": {
         "id": "-2975905063059692237",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[104] 103",
           "testNameWithoutPrefix": ".XxHash3Test.[104] 103",
@@ -3003,7 +3003,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000120",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[105] 104",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[105] 104",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "121",
@@ -3013,8 +3013,8 @@
       "test": {
         "id": "-3511753317426569956",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[105] 104",
           "testNameWithoutPrefix": ".XxHash3Test.[105] 104",
@@ -3028,7 +3028,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000121",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[106] 105",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[106] 105",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "122",
@@ -3038,8 +3038,8 @@
       "test": {
         "id": "1118703585542087726",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[106] 105",
           "testNameWithoutPrefix": ".XxHash3Test.[106] 105",
@@ -3053,7 +3053,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000122",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[107] 106",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[107] 106",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "123",
@@ -3063,8 +3063,8 @@
       "test": {
         "id": "1792182296968004922",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[107] 106",
           "testNameWithoutPrefix": ".XxHash3Test.[107] 106",
@@ -3078,7 +3078,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000123",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[108] 107",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[108] 107",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "124",
@@ -3088,8 +3088,8 @@
       "test": {
         "id": "5100942350411487787",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[108] 107",
           "testNameWithoutPrefix": ".XxHash3Test.[108] 107",
@@ -3103,7 +3103,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000124",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[109] 108",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[109] 108",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "125",
@@ -3113,8 +3113,8 @@
       "test": {
         "id": "-8855794886097001379",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[109] 108",
           "testNameWithoutPrefix": ".XxHash3Test.[109] 108",
@@ -3128,7 +3128,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000125",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[110] 109",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[110] 109",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "126",
@@ -3138,8 +3138,8 @@
       "test": {
         "id": "2588220252158681286",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[110] 109",
           "testNameWithoutPrefix": ".XxHash3Test.[110] 109",
@@ -3153,7 +3153,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000126",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[111] 110",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[111] 110",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "127",
@@ -3163,8 +3163,8 @@
       "test": {
         "id": "2310127500075614852",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[111] 110",
           "testNameWithoutPrefix": ".XxHash3Test.[111] 110",
@@ -3178,7 +3178,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000127",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[112] 111",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[112] 111",
       "status": "SUCCESS",
       "duration": 0,
       "runOrder": "128",
@@ -3188,8 +3188,8 @@
       "test": {
         "id": "-6427576636013571071",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[112] 111",
           "testNameWithoutPrefix": ".XxHash3Test.[112] 111",
@@ -3203,7 +3203,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000128",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[113] 112",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[113] 112",
       "status": "SUCCESS",
       "duration": 0,
       "runOrder": "129",
@@ -3213,8 +3213,8 @@
       "test": {
         "id": "-2810960609131232397",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[113] 112",
           "testNameWithoutPrefix": ".XxHash3Test.[113] 112",
@@ -3228,7 +3228,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000129",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[114] 113",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[114] 113",
       "status": "SUCCESS",
       "duration": 0,
       "runOrder": "130",
@@ -3238,8 +3238,8 @@
       "test": {
         "id": "-8700412876730148048",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[114] 113",
           "testNameWithoutPrefix": ".XxHash3Test.[114] 113",
@@ -3253,7 +3253,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000130",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[115] 114",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[115] 114",
       "status": "SUCCESS",
       "duration": 0,
       "runOrder": "131",
@@ -3263,8 +3263,8 @@
       "test": {
         "id": "-7011783013407857889",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[115] 114",
           "testNameWithoutPrefix": ".XxHash3Test.[115] 114",
@@ -3278,7 +3278,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000131",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[116] 115",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[116] 115",
       "status": "SUCCESS",
       "duration": 0,
       "runOrder": "132",
@@ -3288,8 +3288,8 @@
       "test": {
         "id": "6806333709700602413",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[116] 115",
           "testNameWithoutPrefix": ".XxHash3Test.[116] 115",
@@ -3303,7 +3303,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000132",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[117] 116",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[117] 116",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "133",
@@ -3313,8 +3313,8 @@
       "test": {
         "id": "5273018918645807929",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[117] 116",
           "testNameWithoutPrefix": ".XxHash3Test.[117] 116",
@@ -3328,7 +3328,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000133",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[118] 117",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[118] 117",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "134",
@@ -3338,8 +3338,8 @@
       "test": {
         "id": "1673274744881570856",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[118] 117",
           "testNameWithoutPrefix": ".XxHash3Test.[118] 117",
@@ -3353,7 +3353,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000134",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[119] 118",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[119] 118",
       "status": "SUCCESS",
       "duration": 0,
       "runOrder": "135",
@@ -3363,8 +3363,8 @@
       "test": {
         "id": "-3104246840946714018",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[119] 118",
           "testNameWithoutPrefix": ".XxHash3Test.[119] 118",
@@ -3378,7 +3378,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000135",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[120] 119",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[120] 119",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "136",
@@ -3388,8 +3388,8 @@
       "test": {
         "id": "3345074873436229069",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[120] 119",
           "testNameWithoutPrefix": ".XxHash3Test.[120] 119",
@@ -3403,7 +3403,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000136",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[121] 120",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[121] 120",
       "status": "SUCCESS",
       "duration": 0,
       "runOrder": "137",
@@ -3413,8 +3413,8 @@
       "test": {
         "id": "8028711087918464791",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[121] 120",
           "testNameWithoutPrefix": ".XxHash3Test.[121] 120",
@@ -3428,7 +3428,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000137",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[122] 121",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[122] 121",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "138",
@@ -3438,8 +3438,8 @@
       "test": {
         "id": "-1609993366289815150",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[122] 121",
           "testNameWithoutPrefix": ".XxHash3Test.[122] 121",
@@ -3453,7 +3453,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000138",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[123] 122",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[123] 122",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "139",
@@ -3463,8 +3463,8 @@
       "test": {
         "id": "-7522708256551141664",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[123] 122",
           "testNameWithoutPrefix": ".XxHash3Test.[123] 122",
@@ -3478,7 +3478,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000139",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[124] 123",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[124] 123",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "140",
@@ -3488,8 +3488,8 @@
       "test": {
         "id": "-4024702805242337629",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[124] 123",
           "testNameWithoutPrefix": ".XxHash3Test.[124] 123",
@@ -3503,7 +3503,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000140",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[125] 124",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[125] 124",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "141",
@@ -3513,8 +3513,8 @@
       "test": {
         "id": "-3326564778889699700",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[125] 124",
           "testNameWithoutPrefix": ".XxHash3Test.[125] 124",
@@ -3528,7 +3528,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000141",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[126] 125",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[126] 125",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "142",
@@ -3538,8 +3538,8 @@
       "test": {
         "id": "1229617903863097278",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[126] 125",
           "testNameWithoutPrefix": ".XxHash3Test.[126] 125",
@@ -3553,7 +3553,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000142",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[127] 126",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[127] 126",
       "status": "SUCCESS",
       "duration": 0,
       "runOrder": "143",
@@ -3563,8 +3563,8 @@
       "test": {
         "id": "452902370230978218",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[127] 126",
           "testNameWithoutPrefix": ".XxHash3Test.[127] 126",
@@ -3578,7 +3578,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000143",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[128] 127",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[128] 127",
       "status": "SUCCESS",
       "duration": 2,
       "runOrder": "144",
@@ -3588,8 +3588,8 @@
       "test": {
         "id": "6367003595611347387",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[128] 127",
           "testNameWithoutPrefix": ".XxHash3Test.[128] 127",
@@ -3603,7 +3603,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000144",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[129] 128",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[129] 128",
       "status": "SUCCESS",
       "duration": 0,
       "runOrder": "145",
@@ -3613,8 +3613,8 @@
       "test": {
         "id": "-7237300563522689075",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[129] 128",
           "testNameWithoutPrefix": ".XxHash3Test.[129] 128",
@@ -3628,7 +3628,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000145",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[130] 129",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[130] 129",
       "status": "SUCCESS",
       "duration": 0,
       "runOrder": "146",
@@ -3638,8 +3638,8 @@
       "test": {
         "id": "-3310240719722814679",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[130] 129",
           "testNameWithoutPrefix": ".XxHash3Test.[130] 129",
@@ -3653,7 +3653,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000146",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[131] 130",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[131] 130",
       "status": "SUCCESS",
       "duration": 0,
       "runOrder": "147",
@@ -3663,8 +3663,8 @@
       "test": {
         "id": "3355236635562381160",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[131] 130",
           "testNameWithoutPrefix": ".XxHash3Test.[131] 130",
@@ -3678,7 +3678,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000147",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[132] 131",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[132] 131",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "148",
@@ -3688,8 +3688,8 @@
       "test": {
         "id": "-6317529573793506835",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[132] 131",
           "testNameWithoutPrefix": ".XxHash3Test.[132] 131",
@@ -3703,7 +3703,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000148",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[133] 132",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[133] 132",
       "status": "SUCCESS",
       "duration": 0,
       "runOrder": "149",
@@ -3713,8 +3713,8 @@
       "test": {
         "id": "-2998694275667800417",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[133] 132",
           "testNameWithoutPrefix": ".XxHash3Test.[133] 132",
@@ -3728,7 +3728,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000149",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[134] 133",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[134] 133",
       "status": "SUCCESS",
       "duration": 0,
       "runOrder": "150",
@@ -3738,8 +3738,8 @@
       "test": {
         "id": "-8512113511008102692",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[134] 133",
           "testNameWithoutPrefix": ".XxHash3Test.[134] 133",
@@ -3753,7 +3753,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000150",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[135] 134",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[135] 134",
       "status": "SUCCESS",
       "duration": 0,
       "runOrder": "151",
@@ -3763,8 +3763,8 @@
       "test": {
         "id": "-8057452971615047949",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[135] 134",
           "testNameWithoutPrefix": ".XxHash3Test.[135] 134",
@@ -3778,7 +3778,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000151",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[136] 135",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[136] 135",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "152",
@@ -3788,8 +3788,8 @@
       "test": {
         "id": "5831032573323925441",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[136] 135",
           "testNameWithoutPrefix": ".XxHash3Test.[136] 135",
@@ -3803,7 +3803,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000152",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[137] 136",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[137] 136",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "153",
@@ -3813,8 +3813,8 @@
       "test": {
         "id": "5166349560045434581",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[137] 136",
           "testNameWithoutPrefix": ".XxHash3Test.[137] 136",
@@ -3828,7 +3828,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000153",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[138] 137",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[138] 137",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "154",
@@ -3838,8 +3838,8 @@
       "test": {
         "id": "1848626261774084548",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[138] 137",
           "testNameWithoutPrefix": ".XxHash3Test.[138] 137",
@@ -3853,7 +3853,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000154",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[139] 138",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[139] 138",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "155",
@@ -3863,8 +3863,8 @@
       "test": {
         "id": "-2705406942189004878",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[139] 138",
           "testNameWithoutPrefix": ".XxHash3Test.[139] 138",
@@ -3878,7 +3878,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000155",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[140] 139",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[140] 139",
       "status": "SUCCESS",
       "duration": 0,
       "runOrder": "156",
@@ -3888,8 +3888,8 @@
       "test": {
         "id": "7887664150318994351",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[140] 139",
           "testNameWithoutPrefix": ".XxHash3Test.[140] 139",
@@ -3903,7 +3903,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000156",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[141] 140",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[141] 140",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "157",
@@ -3913,8 +3913,8 @@
       "test": {
         "id": "6781595572509901801",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[141] 140",
           "testNameWithoutPrefix": ".XxHash3Test.[141] 140",
@@ -3928,7 +3928,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000157",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[142] 141",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[142] 141",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "158",
@@ -3938,8 +3938,8 @@
       "test": {
         "id": "-2819674907745364628",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[142] 141",
           "testNameWithoutPrefix": ".XxHash3Test.[142] 141",
@@ -3953,7 +3953,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000158",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[143] 142",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[143] 142",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "159",
@@ -3963,8 +3963,8 @@
       "test": {
         "id": "-6417805670286835170",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[143] 142",
           "testNameWithoutPrefix": ".XxHash3Test.[143] 142",
@@ -3978,7 +3978,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000159",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[144] 143",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[144] 143",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "160",
@@ -3988,8 +3988,8 @@
       "test": {
         "id": "-480824048774997411",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[144] 143",
           "testNameWithoutPrefix": ".XxHash3Test.[144] 143",
@@ -4003,7 +4003,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000160",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[145] 144",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[145] 144",
       "status": "SUCCESS",
       "duration": 0,
       "runOrder": "161",
@@ -4013,8 +4013,8 @@
       "test": {
         "id": "-2259947224010448270",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[145] 144",
           "testNameWithoutPrefix": ".XxHash3Test.[145] 144",
@@ -4028,7 +4028,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000161",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[146] 145",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[146] 145",
       "status": "SUCCESS",
       "duration": 0,
       "runOrder": "162",
@@ -4038,8 +4038,8 @@
       "test": {
         "id": "2334797498682858304",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[146] 145",
           "testNameWithoutPrefix": ".XxHash3Test.[146] 145",
@@ -4053,7 +4053,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000162",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[147] 146",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[147] 146",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "163",
@@ -4063,8 +4063,8 @@
       "test": {
         "id": "3981093294523480660",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[147] 146",
           "testNameWithoutPrefix": ".XxHash3Test.[147] 146",
@@ -4078,7 +4078,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000163",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[148] 147",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[148] 147",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "164",
@@ -4088,8 +4088,8 @@
       "test": {
         "id": "7578013381479802181",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[148] 147",
           "testNameWithoutPrefix": ".XxHash3Test.[148] 147",
@@ -4103,7 +4103,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000164",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[149] 148",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[149] 148",
       "status": "SUCCESS",
       "duration": 0,
       "runOrder": "165",
@@ -4113,8 +4113,8 @@
       "test": {
         "id": "-6126770748688114893",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[149] 148",
           "testNameWithoutPrefix": ".XxHash3Test.[149] 148",
@@ -4128,7 +4128,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000165",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[150] 149",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[150] 149",
       "status": "SUCCESS",
       "duration": 0,
       "runOrder": "166",
@@ -4138,8 +4138,8 @@
       "test": {
         "id": "6815930945342186481",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[150] 149",
           "testNameWithoutPrefix": ".XxHash3Test.[150] 149",
@@ -4153,7 +4153,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000166",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[151] 150",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[151] 150",
       "status": "SUCCESS",
       "duration": 0,
       "runOrder": "167",
@@ -4163,8 +4163,8 @@
       "test": {
         "id": "-7500774441293475759",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[151] 150",
           "testNameWithoutPrefix": ".XxHash3Test.[151] 150",
@@ -4178,7 +4178,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000167",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[152] 151",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[152] 151",
       "status": "SUCCESS",
       "duration": 0,
       "runOrder": "168",
@@ -4188,8 +4188,8 @@
       "test": {
         "id": "1235240568444831444",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[152] 151",
           "testNameWithoutPrefix": ".XxHash3Test.[152] 151",
@@ -4203,7 +4203,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000168",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[153] 152",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[153] 152",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "169",
@@ -4213,8 +4213,8 @@
       "test": {
         "id": "8004492900855435686",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[153] 152",
           "testNameWithoutPrefix": ".XxHash3Test.[153] 152",
@@ -4228,7 +4228,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000169",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[154] 153",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[154] 153",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "170",
@@ -4238,8 +4238,8 @@
       "test": {
         "id": "3506388004396730853",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[154] 153",
           "testNameWithoutPrefix": ".XxHash3Test.[154] 153",
@@ -4253,7 +4253,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000170",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[155] 154",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[155] 154",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "171",
@@ -4263,8 +4263,8 @@
       "test": {
         "id": "2979687119812112842",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[155] 154",
           "testNameWithoutPrefix": ".XxHash3Test.[155] 154",
@@ -4278,7 +4278,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000171",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[156] 155",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[156] 155",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "172",
@@ -4288,8 +4288,8 @@
       "test": {
         "id": "-1613368762273543944",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[156] 155",
           "testNameWithoutPrefix": ".XxHash3Test.[156] 155",
@@ -4303,7 +4303,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000172",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[157] 156",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[157] 156",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "173",
@@ -4313,8 +4313,8 @@
       "test": {
         "id": "-88564428990191124",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[157] 156",
           "testNameWithoutPrefix": ".XxHash3Test.[157] 156",
@@ -4328,7 +4328,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000173",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[158] 157",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[158] 157",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "174",
@@ -4338,8 +4338,8 @@
       "test": {
         "id": "-6858851004292679939",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[158] 157",
           "testNameWithoutPrefix": ".XxHash3Test.[158] 157",
@@ -4353,7 +4353,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000174",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[159] 158",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[159] 158",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "175",
@@ -4363,8 +4363,8 @@
       "test": {
         "id": "7134724543939070091",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[159] 158",
           "testNameWithoutPrefix": ".XxHash3Test.[159] 158",
@@ -4378,7 +4378,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000175",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[160] 159",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[160] 159",
       "status": "SUCCESS",
       "duration": 0,
       "runOrder": "176",
@@ -4388,8 +4388,8 @@
       "test": {
         "id": "-2369829021162778220",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[160] 159",
           "testNameWithoutPrefix": ".XxHash3Test.[160] 159",
@@ -4403,7 +4403,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000176",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[161] 160",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[161] 160",
       "status": "SUCCESS",
       "duration": 0,
       "runOrder": "177",
@@ -4413,8 +4413,8 @@
       "test": {
         "id": "-274772515418022598",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[161] 160",
           "testNameWithoutPrefix": ".XxHash3Test.[161] 160",
@@ -4428,7 +4428,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000177",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[162] 161",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[162] 161",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "178",
@@ -4438,8 +4438,8 @@
       "test": {
         "id": "8857558436895132607",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[162] 161",
           "testNameWithoutPrefix": ".XxHash3Test.[162] 161",
@@ -4453,7 +4453,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000178",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[163] 162",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[163] 162",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "179",
@@ -4463,8 +4463,8 @@
       "test": {
         "id": "350578572583738573",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[163] 162",
           "testNameWithoutPrefix": ".XxHash3Test.[163] 162",
@@ -4478,7 +4478,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000179",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[164] 163",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[164] 163",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "180",
@@ -4488,8 +4488,8 @@
       "test": {
         "id": "6584574879891866766",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[164] 163",
           "testNameWithoutPrefix": ".XxHash3Test.[164] 163",
@@ -4503,7 +4503,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000180",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[165] 164",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[165] 164",
       "status": "SUCCESS",
       "duration": 0,
       "runOrder": "181",
@@ -4513,8 +4513,8 @@
       "test": {
         "id": "4796847201514781857",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[165] 164",
           "testNameWithoutPrefix": ".XxHash3Test.[165] 164",
@@ -4528,7 +4528,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000181",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[166] 165",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[166] 165",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "182",
@@ -4538,8 +4538,8 @@
       "test": {
         "id": "-9055609582695414381",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[166] 165",
           "testNameWithoutPrefix": ".XxHash3Test.[166] 165",
@@ -4553,7 +4553,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000182",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[167] 166",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[167] 166",
       "status": "SUCCESS",
       "duration": 0,
       "runOrder": "183",
@@ -4563,8 +4563,8 @@
       "test": {
         "id": "-7706378427696831353",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[167] 166",
           "testNameWithoutPrefix": ".XxHash3Test.[167] 166",
@@ -4578,7 +4578,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000183",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[168] 167",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[168] 167",
       "status": "SUCCESS",
       "duration": 2,
       "runOrder": "184",
@@ -4588,8 +4588,8 @@
       "test": {
         "id": "-3812193861474321514",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[168] 167",
           "testNameWithoutPrefix": ".XxHash3Test.[168] 167",
@@ -4603,7 +4603,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000184",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[169] 168",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[169] 168",
       "status": "SUCCESS",
       "duration": 0,
       "runOrder": "185",
@@ -4613,8 +4613,8 @@
       "test": {
         "id": "633750338953250272",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[169] 168",
           "testNameWithoutPrefix": ".XxHash3Test.[169] 168",
@@ -4628,7 +4628,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000185",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[170] 169",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[170] 169",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "186",
@@ -4638,8 +4638,8 @@
       "test": {
         "id": "-1031807674141436996",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[170] 169",
           "testNameWithoutPrefix": ".XxHash3Test.[170] 169",
@@ -4653,7 +4653,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000186",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[171] 170",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[171] 170",
       "status": "SUCCESS",
       "duration": 0,
       "runOrder": "187",
@@ -4663,8 +4663,8 @@
       "test": {
         "id": "-3983718882349901976",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[171] 170",
           "testNameWithoutPrefix": ".XxHash3Test.[171] 170",
@@ -4678,7 +4678,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000187",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[172] 171",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[172] 171",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "188",
@@ -4688,8 +4688,8 @@
       "test": {
         "id": "5653545209478595053",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[172] 171",
           "testNameWithoutPrefix": ".XxHash3Test.[172] 171",
@@ -4703,7 +4703,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000188",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[173] 172",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[173] 172",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "189",
@@ -4713,8 +4713,8 @@
       "test": {
         "id": "3478100837367338655",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[173] 172",
           "testNameWithoutPrefix": ".XxHash3Test.[173] 172",
@@ -4728,7 +4728,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000189",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[174] 173",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[174] 173",
       "status": "SUCCESS",
       "duration": 0,
       "runOrder": "190",
@@ -4738,8 +4738,8 @@
       "test": {
         "id": "8068243698126229212",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[174] 173",
           "testNameWithoutPrefix": ".XxHash3Test.[174] 173",
@@ -4753,7 +4753,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000190",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[175] 174",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[175] 174",
       "status": "SUCCESS",
       "duration": 0,
       "runOrder": "191",
@@ -4763,8 +4763,8 @@
       "test": {
         "id": "8505294253145863923",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[175] 174",
           "testNameWithoutPrefix": ".XxHash3Test.[175] 174",
@@ -4778,7 +4778,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000191",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[176] 175",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[176] 175",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "192",
@@ -4788,8 +4788,8 @@
       "test": {
         "id": "-5274506802591805503",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[176] 175",
           "testNameWithoutPrefix": ".XxHash3Test.[176] 175",
@@ -4803,7 +4803,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000192",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[177] 176",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[177] 176",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "193",
@@ -4813,8 +4813,8 @@
       "test": {
         "id": "-6803739794366599467",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[177] 176",
           "testNameWithoutPrefix": ".XxHash3Test.[177] 176",
@@ -4828,7 +4828,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000193",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[178] 177",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[178] 177",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "194",
@@ -4838,8 +4838,8 @@
       "test": {
         "id": "-35625330423713340",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[178] 177",
           "testNameWithoutPrefix": ".XxHash3Test.[178] 177",
@@ -4853,7 +4853,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000194",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[179] 178",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[179] 178",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "195",
@@ -4863,8 +4863,8 @@
       "test": {
         "id": "4346742754322468786",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[179] 178",
           "testNameWithoutPrefix": ".XxHash3Test.[179] 178",
@@ -4878,7 +4878,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000195",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[180] 179",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[180] 179",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "196",
@@ -4888,8 +4888,8 @@
       "test": {
         "id": "5585608048028134814",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[180] 179",
           "testNameWithoutPrefix": ".XxHash3Test.[180] 179",
@@ -4903,7 +4903,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000196",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[181] 180",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[181] 180",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "197",
@@ -4913,8 +4913,8 @@
       "test": {
         "id": "-1091772051550914839",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[181] 180",
           "testNameWithoutPrefix": ".XxHash3Test.[181] 180",
@@ -4928,7 +4928,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000197",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[182] 181",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[182] 181",
       "status": "SUCCESS",
       "duration": 0,
       "runOrder": "198",
@@ -4938,8 +4938,8 @@
       "test": {
         "id": "8510306555253121132",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[182] 181",
           "testNameWithoutPrefix": ".XxHash3Test.[182] 181",
@@ -4953,7 +4953,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000198",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[183] 182",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[183] 182",
       "status": "SUCCESS",
       "duration": 1,
       "runOrder": "199",
@@ -4963,8 +4963,8 @@
       "test": {
         "id": "588689084006528798",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[183] 182",
           "testNameWithoutPrefix": ".XxHash3Test.[183] 182",
@@ -4978,7 +4978,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000199",
-      "name": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): org.jetbrains.xxh3.XxHash3Test.[184] 183",
+      "name": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): com.intellij.util.lang.XxHash3Test.[184] 183",
       "status": "SUCCESS",
       "duration": 0,
       "runOrder": "200",
@@ -4988,8 +4988,8 @@
       "test": {
         "id": "6311772026839641949",
         "parsedTestName": {
-          "testPackage": "org.jetbrains.xxh3",
-          "testSuite": "org.jetbrains.xxh3.XxHash3Test: org.jetbrains.xxh3.XxHash3Test.xxh3WithoutSeeds(int): ",
+          "testPackage": "com.intellij.util.lang",
+          "testSuite": "com.intellij.util.lang.XxHash3Test: com.intellij.util.lang.XxHash3Test.xxh3WithoutSeeds(int): ",
           "testClass": "XxHash3Test",
           "testShortName": "XxHash3Test.[184] 183",
           "testNameWithoutPrefix": ".XxHash3Test.[184] 183",

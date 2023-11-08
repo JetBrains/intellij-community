@@ -57,7 +57,7 @@ public final class StatementExtractor {
     PsiExpression parent;
     while (expression != root) {
       PsiElement parentElement = expression.getParent();
-      if (parentElement instanceof PsiExpressionList) {
+      if (parentElement instanceof PsiExpressionList || parentElement instanceof PsiTemplate) {
         parentElement = parentElement.getParent();
       }
       if (parentElement instanceof PsiStatement) {

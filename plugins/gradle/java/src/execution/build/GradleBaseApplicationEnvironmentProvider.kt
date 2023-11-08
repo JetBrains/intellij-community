@@ -6,6 +6,7 @@ import com.intellij.compiler.options.CompileStepBeforeRun
 import com.intellij.execution.CantRunException
 import com.intellij.execution.ExecutionBundle
 import com.intellij.execution.Executor
+import com.intellij.execution.JavaExecutionUtil
 import com.intellij.execution.JavaRunConfigurationBase
 import com.intellij.execution.configurations.JavaParameters
 import com.intellij.execution.configurations.JavaRunConfigurationModule
@@ -66,8 +67,7 @@ abstract class GradleBaseApplicationEnvironmentProvider<T : JavaRunConfiguration
 
     val runClass = runProfile.runClass
     val mainClass = runProfile.configurationModule.findClass(runClass) ?: return null
-    val mainClassName = mainClass.qualifiedName ?: return null
-
+    val mainClassName = JavaExecutionUtil.getRuntimeQualifiedName(mainClass) ?: return null
     val virtualFile = mainClass.containingFile.virtualFile
     val module = runReadAction {
       ProjectFileIndex.getInstance(project).getModuleForFile(virtualFile)

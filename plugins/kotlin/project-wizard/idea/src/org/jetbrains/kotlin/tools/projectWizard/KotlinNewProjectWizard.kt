@@ -5,15 +5,16 @@ import com.intellij.ide.JavaUiBundle
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logBuildSystemChanged
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logBuildSystemFinished
 import com.intellij.ide.projectWizard.NewProjectWizardConstants.Language.KOTLIN
-import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.ide.wizard.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.ui.dsl.builder.*
 import com.intellij.util.SystemProperties
 import com.intellij.util.ui.JBUI
+import org.jetbrains.kotlin.tools.projectWizard.core.Context
 import org.jetbrains.kotlin.tools.projectWizard.core.asPath
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.reference
+import org.jetbrains.kotlin.tools.projectWizard.core.service.WizardKotlinVersion
 import org.jetbrains.kotlin.tools.projectWizard.phases.GenerationPhase
 import org.jetbrains.kotlin.tools.projectWizard.plugins.StructurePlugin
 import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.BuildSystemPlugin
@@ -22,7 +23,6 @@ import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.gradle.Gradl
 import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.KotlinPlugin
 import org.jetbrains.kotlin.tools.projectWizard.plugins.projectTemplates.applyProjectTemplate
 import org.jetbrains.kotlin.tools.projectWizard.projectTemplates.ConsoleApplicationProjectTemplate
-import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.SourcesetType
 import org.jetbrains.kotlin.tools.projectWizard.settings.version.Version
 import org.jetbrains.kotlin.tools.projectWizard.wizard.KotlinNewProjectWizardUIBundle
 import org.jetbrains.kotlin.tools.projectWizard.wizard.NewProjectWizardModuleBuilder
@@ -38,10 +38,23 @@ class KotlinNewProjectWizard : LanguageNewProjectWizard {
     companion object {
         private const val DEFAULT_GROUP_ID = "me.user"
 
+        private fun Context.Reader.getWizardKotlinVersion(): WizardKotlinVersion {
+            return KotlinPlugin.version.propertyValue
+        }
+
+        fun getKotlinWizardVersion(newProjectWizardModuleBuilder: NewProjectWizardModuleBuilder): WizardKotlinVersion {
+            var wizardKotlinVersion: WizardKotlinVersion
+            newProjectWizardModuleBuilder.apply {
+                wizardKotlinVersion = wizard.context.Reader().getWizardKotlinVersion()
+            }
+            return wizardKotlinVersion
+        }
+
         fun generateProject(
             project: Project,
             projectPath: String,
             projectName: String,
+            isProject: Boolean = true, // false stands for module
             sdk: Sdk?,
             buildSystemType: BuildSystemType,
             projectGroupId: String? = suggestGroupId(),
@@ -50,19 +63,18 @@ class KotlinNewProjectWizard : LanguageNewProjectWizard {
             addSampleCode: Boolean = true,
             gradleVersion: String? = null,
             gradleHome: String? = null,
-            useCompactProjectStructure: Boolean = false,
-            createResourceDirectories: Boolean = true,
-            filterTestSourcesets: Boolean = false
+            useCompactProjectStructure: Boolean = false
         ) {
             NewProjectWizardModuleBuilder()
                 .apply {
                     wizard.apply(emptyList(), setOf(GenerationPhase.PREPARE))
                     wizard.jdk = sdk
+                    wizard.isCreatingNewProject = isProject
                     wizard.context.writeSettings {
                         StructurePlugin.name.reference.setValue(projectName)
                         StructurePlugin.projectPath.reference.setValue(projectPath.asPath())
                         StructurePlugin.useCompactProjectStructure.reference.setValue(useCompactProjectStructure)
-                        KotlinPlugin.createResourceDirectories.reference.setValue(createResourceDirectories)
+                        StructurePlugin.isCreatingNewProjectHierarchy.reference.setValue(isProject)
 
                         // If a local gradle installation was selected, we want to use the local gradle installation's
                         // version so that the wizard knows what kind of build scripts to generate
@@ -81,12 +93,6 @@ class KotlinNewProjectWizard : LanguageNewProjectWizard {
                         BuildSystemPlugin.type.reference.setValue(buildSystemType)
 
                         applyProjectTemplate(ConsoleApplicationProjectTemplate(addSampleCode = addSampleCode))
-
-                        if (filterTestSourcesets) {
-                            KotlinPlugin.modules.settingValue.forEach { module ->
-                                module.sourceSets = module.sourceSets.filter { it.sourcesetType != SourcesetType.test }
-                            }
-                        }
                     }
                 }.commit(project, null, null)
         }
@@ -99,7 +105,8 @@ class KotlinNewProjectWizard : LanguageNewProjectWizard {
         }
     }
 
-    override fun isEnabled(context: WizardContext): Boolean = context.isCreatingNewProject
+    // Uncommenting this line disables new Kotlin modules
+    //override fun isEnabled(context: WizardContext): Boolean = context.isCreatingNewProject
 
     override fun createStep(parent: NewProjectWizardLanguageStep) = Step(parent)
 

@@ -62,7 +62,7 @@ internal class KtInsertCancellationCheckFix(
       is KtBlockExpression -> loopBody
       // single-line loops
       is KtExpression -> {
-        AddBracesIntention.addBraces(this, loopBody)
+        AddBracesIntention.Util.addBraces(this, loopBody)
         body as KtBlockExpression
       }
       // no-body loops like `for (i in 1..10);`

@@ -1,12 +1,12 @@
 package de.plushnikov.intellij.plugin.processor.field;
 
-import com.intellij.openapi.components.Service;
 import com.intellij.psi.*;
 import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.problem.ProblemSink;
 import de.plushnikov.intellij.plugin.processor.LombokPsiElementUsage;
 import de.plushnikov.intellij.plugin.processor.handler.DelegateHandler;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -18,7 +18,6 @@ import java.util.List;
  *
  * @author Plushnikov Michail
  */
-@Service
 public final class DelegateFieldProcessor extends AbstractFieldProcessor {
 
   public DelegateFieldProcessor() {
@@ -41,7 +40,7 @@ public final class DelegateFieldProcessor extends AbstractFieldProcessor {
   @Override
   protected void generatePsiElements(@NotNull PsiField psiField,
                                      @NotNull PsiAnnotation psiAnnotation,
-                                     @NotNull List<? super PsiElement> target) {
+                                     @NotNull List<? super PsiElement> target, @Nullable String nameHint) {
     DelegateHandler.generateElements(psiField, psiField.getType(), psiAnnotation, target);
   }
 

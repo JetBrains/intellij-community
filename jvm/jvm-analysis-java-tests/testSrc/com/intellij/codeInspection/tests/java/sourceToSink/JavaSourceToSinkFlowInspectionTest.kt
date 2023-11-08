@@ -1,8 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.tests.java.sourceToSink
 
-import com.intellij.codeInspection.tests.sourceToSink.SourceToSinkFlowInspectionTestBase
 import com.intellij.jvm.analysis.JavaJvmAnalysisTestUtil
+import com.intellij.jvm.analysis.internal.testFramework.sourceToSink.SourceToSinkFlowInspectionTestBase
 import com.intellij.testFramework.TestDataPath
 
 private const val INSPECTION_PATH = "/codeInspection/sourceToSinkFlow"
@@ -108,6 +108,21 @@ class JavaSourceToSinkFlowInspectionTest : SourceToSinkFlowInspectionTestBase() 
   fun `test if statements with constants`() {
     prepareCheckFramework()
     myFixture.testHighlighting("IfStatementConstant.java")
+  }
+
+  fun `test if expressions`() {
+    prepareCheckFramework()
+    myFixture.testHighlighting("IfExpressions.java")
+  }
+
+  fun `test if expressions with constants`() {
+    prepareCheckFramework()
+    myFixture.testHighlighting("IfExpressionConstant.java")
+  }
+
+  fun `test if statements in method with constants`() {
+    prepareCheckFramework()
+    myFixture.testHighlighting("IfStatementConstantMethod.java")
   }
 
   fun `test lambdaWithForEachLoop`() {

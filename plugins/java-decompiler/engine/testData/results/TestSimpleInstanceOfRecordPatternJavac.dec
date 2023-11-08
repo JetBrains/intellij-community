@@ -1,0 +1,373 @@
+package pkg;
+
+public class TestSimpleInstanceOfRecordPatternJavac {
+   public static void main(String[] args) {
+   }// 6
+
+   public static void instanceOfTest1(Object o) {
+      if (o instanceof R(Object var3)) {// 9
+         System.out.println(var3);// 10
+      }
+
+      System.out.println("1");// 12
+   }
+
+   public static void tryInstanceOfTest1(Object o) {
+      int a = 1;// 16
+
+      try {
+         if (o instanceof R(String var9)) {// 18
+            a += 34;// 19
+         }
+      } catch (Exception var8) {// 21
+         if (o instanceof R(String var4)) {// 22
+            a += 34;// 23
+         }
+      }
+
+   }// 26
+
+   public static void negativeInstanceOfTest1(Object o) {
+      if (o instanceof R(Object var3)) {// 29
+         if (var3.hashCode() == 1) {// 31
+            System.out.println(var3);// 32
+            System.out.println("1");// 33
+         }
+
+      }
+   }// 30 35
+
+   public static void instanceOfTest2(Object o) {
+      if (o instanceof R(String s1)) {// 38
+         System.out.println(s1);// 39
+         if (s1.hashCode() == 1) {// 40
+            System.out.println("1");// 41
+         }
+      }
+
+      System.out.println("5");// 44
+   }
+
+   public static void instanceOfTest3(Object o) {
+      if (o instanceof R(String s1)) {// 48
+         if (s1.isEmpty()) {// 49
+            System.out.println("111");// 50
+            System.out.println("111");// 51
+            System.out.println("111");// 52
+            System.out.println("111");// 53
+         }
+      }
+
+      System.out.println("s222222222222");// 56
+      System.out.println("s222222222222");// 57
+   }
+
+   public static void instanceOfTest4(Object o) {
+      if (o.hashCode() == 1 && o instanceof R(String s1)) {// 61 62
+         if (o instanceof R(String var4)) {// 63
+            if (s1.isEmpty()) {// 64
+               System.out.println("111");// 65
+               System.out.println("111");// 66
+               System.out.println("111");// 67
+               System.out.println("111");// 68
+            }
+         }
+      }
+
+      System.out.println("s222222222222");// 73
+      System.out.println("s222222222222");// 74
+   }
+
+   public static void instanceOfTestDouble1(Object o, Object o2) {
+      if (o instanceof R(Object var4)) {// 78
+         System.out.println(var4);// 79
+      }
+
+      if (o2 instanceof R(Object var4)) {// 82
+         System.out.println(var4);// 83
+      }
+
+      System.out.println("s2222222");// 85
+   }
+
+   public static void instanceOfTestDouble2(Object o, Object o2) {
+      if (o instanceof R(Object var4)) {// 89
+         System.out.println(var4);// 90
+      }
+
+      if (o2 instanceof R(String r)) {// 93
+         System.out.println(r);// 94
+      }
+
+      System.out.println("2222222");// 96
+   }
+
+   public static void instanceOfTestDoubleNegate2(Object o, Object o2) {
+      if (o instanceof R(Object var4)) {// 100
+         System.out.println(var4);// 103
+         if (o2 instanceof R(String r)) {// 105
+            System.out.println(r);// 108
+            System.out.println("2222222");// 110
+            return;
+         }
+
+      }
+   }// 101 106
+
+   static record R(Object o) {
+      R(Object o) {
+         this.o = o;
+      }
+
+      public Object o() {
+         return this.o;// 113
+      }
+   }
+}
+
+class 'pkg/TestSimpleInstanceOfRecordPatternJavac' {
+   method 'main ([Ljava/lang/String;)V' {
+      0      4
+   }
+
+   method 'instanceOfTest1 (Ljava/lang/Object;)V' {
+      1      7
+      4      7
+      13      8
+      17      8
+      1a      11
+      1d      11
+      1f      11
+      22      12
+   }
+
+   method 'tryInstanceOfTest1 (Ljava/lang/Object;)V' {
+      0      15
+      1      15
+      3      18
+      6      18
+      22      19
+      39      21
+      3b      22
+      3e      22
+      5b      23
+      6f      27
+   }
+
+   method 'negativeInstanceOfTest1 (Ljava/lang/Object;)V' {
+      1      30
+      4      30
+      16      37
+      17      31
+      18      31
+      1b      31
+      1f      32
+      23      32
+      26      33
+      29      33
+      2b      33
+      3f      37
+   }
+
+   method 'instanceOfTest2 (Ljava/lang/Object;)V' {
+      1      40
+      4      40
+      1d      41
+      21      41
+      25      42
+      28      42
+      29      42
+      2c      43
+      2f      43
+      31      43
+      34      47
+      37      47
+      39      47
+      3c      48
+   }
+
+   method 'instanceOfTest3 (Ljava/lang/Object;)V' {
+      1      51
+      4      51
+      1e      52
+      21      52
+      24      53
+      27      53
+      29      53
+      2c      54
+      2f      54
+      31      54
+      34      55
+      37      55
+      39      55
+      3c      56
+      3f      56
+      41      56
+      44      60
+      47      60
+      49      60
+      4c      61
+      4f      61
+      51      61
+      54      62
+   }
+
+   method 'instanceOfTest4 (Ljava/lang/Object;)V' {
+      1      65
+      4      65
+      5      65
+      9      65
+      c      65
+      26      66
+      29      66
+      47      67
+      4a      67
+      4d      68
+      50      68
+      52      68
+      55      69
+      58      69
+      5a      69
+      5d      70
+      60      70
+      62      70
+      65      71
+      68      71
+      6a      71
+      6d      76
+      70      76
+      72      76
+      75      77
+      78      77
+      7a      77
+      7d      78
+   }
+
+   method 'instanceOfTestDouble1 (Ljava/lang/Object;Ljava/lang/Object;)V' {
+      1      81
+      4      81
+      15      82
+      19      82
+      1d      85
+      20      85
+      31      86
+      35      86
+      38      89
+      3b      89
+      3d      89
+      40      90
+   }
+
+   method 'instanceOfTestDouble2 (Ljava/lang/Object;Ljava/lang/Object;)V' {
+      1      93
+      4      93
+      15      94
+      19      94
+      1d      97
+      20      97
+      3c      98
+      40      98
+      43      101
+      46      101
+      48      101
+      4b      102
+   }
+
+   method 'instanceOfTestDoubleNegate2 (Ljava/lang/Object;Ljava/lang/Object;)V' {
+      1      105
+      4      105
+      15      106
+      18      114
+      1c      106
+      20      107
+      21      107
+      42      108
+      45      114
+      49      108
+      4a      109
+      4d      109
+      50      109
+      52      110
+   }
+}
+
+class 'pkg/TestSimpleInstanceOfRecordPatternJavac$R' {
+   method '<init> (Ljava/lang/Object;)V' {
+      6      118
+      9      119
+   }
+
+   method 'o ()Ljava/lang/Object;' {
+      1      122
+      4      122
+   }
+}
+
+Lines mapping:
+6 <-> 5
+9 <-> 8
+10 <-> 9
+12 <-> 12
+16 <-> 16
+18 <-> 19
+19 <-> 20
+21 <-> 22
+22 <-> 23
+23 <-> 24
+26 <-> 28
+29 <-> 31
+30 <-> 38
+31 <-> 32
+32 <-> 33
+33 <-> 34
+35 <-> 38
+38 <-> 41
+39 <-> 42
+40 <-> 43
+41 <-> 44
+44 <-> 48
+48 <-> 52
+49 <-> 53
+50 <-> 54
+51 <-> 55
+52 <-> 56
+53 <-> 57
+56 <-> 61
+57 <-> 62
+61 <-> 66
+62 <-> 66
+63 <-> 67
+64 <-> 68
+65 <-> 69
+66 <-> 70
+67 <-> 71
+68 <-> 72
+73 <-> 77
+74 <-> 78
+78 <-> 82
+79 <-> 83
+82 <-> 86
+83 <-> 87
+85 <-> 90
+89 <-> 94
+90 <-> 95
+93 <-> 98
+94 <-> 99
+96 <-> 102
+100 <-> 106
+101 <-> 115
+103 <-> 107
+105 <-> 108
+106 <-> 115
+108 <-> 109
+110 <-> 110
+113 <-> 123
+Not mapped:
+13
+25
+45
+58
+75
+86
+97
+111

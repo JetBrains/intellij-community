@@ -531,7 +531,7 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
 
   @Test fun `non-versioned directories are excluded_CLion`() {
     createConfigDir(product = ".clion-vcpkg", version = "", modern = false) // was created at the user dir by older versions
-    createConfigDir(product = "CLionRadler", version = "2023.2", modern = true)
+    createConfigDir(product = "CLionNova", version = "2023.2", modern = true) // "CLion" + RADLER_SUFFIX = "CLionNova"
     val current = createConfigDir(product = "CLion", version = "2023.2")
     val result = ConfigImportHelper.findConfigDirectories(current)
     assertThat(result.paths).isEmpty()

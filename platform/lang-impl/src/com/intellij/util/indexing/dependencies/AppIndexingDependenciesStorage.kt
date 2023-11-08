@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.dependencies
 
-import com.google.common.hash.HashCode
 import com.intellij.util.indexing.dependencies.IndexingDependenciesFingerprint.FingerprintImpl
 import java.io.IOException
 import java.nio.ByteBuffer
@@ -61,10 +60,7 @@ class AppIndexingDependenciesStorage(private val storage: FileChannel, storagePa
   @Throws(IOException::class)
   fun writeAppFingerprint(fingerprint: FingerprintImpl) {
     synchronized(storage) {
-      val buffer = ByteBuffer.allocate(APP_FINGERPRINT_SIZE)
-      buffer.put(fingerprint.fingerprint.asBytes())
-      buffer.rewind()
-      val bytesWritten = storage.write(buffer, APP_FINGERPRINT_OFFSET)
+      val bytesWritten = storage.write(fingerprint.toByteBuffer(), APP_FINGERPRINT_OFFSET)
       if (bytesWritten != APP_FINGERPRINT_SIZE) {
         throw IOException(tooFewBytesWrittenMsg(bytesWritten, "indexing stamp"))
       }
@@ -81,10 +77,7 @@ class AppIndexingDependenciesStorage(private val storage: FileChannel, storagePa
         throw IOException(tooFewBytesReadMsg(bytesRead, "indexing stamp"))
       }
 
-      val bytes = ByteArray(APP_FINGERPRINT_SIZE)
-      buffer.rewind().get(bytes)
-      val hashCode = HashCode.fromBytes(bytes)
-      return FingerprintImpl(hashCode)
+      return FingerprintImpl(buffer = buffer)
     }
   }
 }

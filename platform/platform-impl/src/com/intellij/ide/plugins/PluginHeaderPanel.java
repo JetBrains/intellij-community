@@ -17,7 +17,6 @@ import java.awt.*;
  * @author Konstantin Bulenkov
  */
 public final class PluginHeaderPanel {
-  private static final InstalledPluginsState ourState = InstalledPluginsState.getInstance();
 
   private IdeaPluginDescriptor myPlugin;
   private JBLabel myCategory;
@@ -76,7 +75,7 @@ public final class PluginHeaderPanel {
       myCategory.setVisible(false);
       myDownloadsPanel.setVisible(false);
       final String version = plugin.getVersion();
-      if (ourState.wasUpdated(plugin.getPluginId())) {
+      if (InstalledPluginsState.getInstance().wasUpdated(plugin.getPluginId())) {
         versionText = IdeBundle.message("label.new.version.will.be.available.after.restart");
       }
       else if (version != null && showVersion) {

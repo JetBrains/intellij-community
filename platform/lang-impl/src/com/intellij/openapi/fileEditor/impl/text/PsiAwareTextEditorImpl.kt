@@ -18,6 +18,8 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import java.awt.event.ComponentAdapter
+import java.awt.event.ComponentEvent
 import java.util.concurrent.CancellationException
 
 private val LOG = logger<PsiAwareTextEditorImpl>()
@@ -41,7 +43,18 @@ open class PsiAwareTextEditorImpl : TextEditorImpl {
                        editor: EditorImpl) : super(project = project, file = file, editor = editor, asyncLoader = asyncLoader)
 
   override fun createEditorComponent(project: Project, file: VirtualFile, editor: EditorImpl): TextEditorComponent {
-    return PsiAwareTextEditorComponent(project = project, file = file, textEditor = this, editor = editor)
+    val component = PsiAwareTextEditorComponent(project = project, file = file, textEditor = this, editor = editor)
+
+    component.addComponentListener(object: ComponentAdapter() {
+      override fun componentShown(e: ComponentEvent?) {
+        editor.component.isVisible = true
+      }
+      override fun componentHidden(e: ComponentEvent?) {
+        editor.component.isVisible = false
+      }
+    })
+
+    return component
   }
 
   override fun getBackgroundHighlighter(): BackgroundEditorHighlighter? {

@@ -2,21 +2,21 @@
 package com.intellij.diagnostic;
 
 import com.intellij.idea.AppMode;
-import com.intellij.openapi.diagnostic.*;
+import com.intellij.openapi.diagnostic.Attachment;
+import com.intellij.openapi.diagnostic.ExceptionWithAttachments;
+import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
+import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.TestOnly;
 
-import javax.swing.*;
 import java.util.*;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.LogRecord;
 
 public final class DialogAppender extends Handler {
-  private static final ErrorLogger[] LOGGERS = {new DefaultIdeaErrorLogger()};
   private static final int MAX_EARLY_LOGGING_EVENTS = 5;
   private static final int MAX_ASYNC_LOGGING_EVENTS = 5;
 
@@ -24,7 +24,7 @@ public final class DialogAppender extends Handler {
 
   private final Queue<IdeaLoggingEvent> myEarlyEvents = new ArrayDeque<>();
   private final AtomicInteger myPendingAppendCounts = new AtomicInteger();
-  private volatile Runnable myDialogRunnable;
+  private final ScheduledExecutorService myExecutor = AppExecutorUtil.createBoundedScheduledExecutorService("DialogAppender", 1);
 
   //TODO android update checker accesses project jdk, fix it and remove
   public static void delayPublishingForcibly() {
@@ -69,40 +69,8 @@ public final class DialogAppender extends Handler {
       // stop adding requests to the queue, or we can get OOME on pending logging requests (IDEA-95327)
       myPendingAppendCounts.decrementAndGet(); // number of pending logging events should not increase
     }
-    else {
-      // Note, we MUST avoid SYNCHRONOUS invokeAndWait to prevent deadlocks
-      SwingUtilities.invokeLater(() -> {
-        try {
-          appendToLoggers(event, LOGGERS);
-        }
-        finally {
-          myPendingAppendCounts.decrementAndGet();
-        }
-      });
-    }
-  }
-
-  void appendToLoggers(@NotNull IdeaLoggingEvent event, ErrorLogger @NotNull [] errorLoggers) {
-    if (myDialogRunnable != null) {
-      return;
-    }
-
-    for (int i = errorLoggers.length - 1; i >= 0; i--) {
-      ErrorLogger logger = errorLoggers[i];
-      if (!logger.canHandle(event)) {
-        continue;
-      }
-      //noinspection NonAtomicOperationOnVolatileField
-      myDialogRunnable = () -> {
-        try {
-          logger.handle(event);
-        }
-        finally {
-          myDialogRunnable = null;
-        }
-      };
-      AppExecutorUtil.getAppExecutorService().execute(myDialogRunnable);
-      break;
+    else if (DefaultIdeaErrorLogger.canHandle(event)) {
+      myExecutor.execute(() -> DefaultIdeaErrorLogger.handle(event));
     }
   }
 
@@ -125,11 +93,6 @@ public final class DialogAppender extends Handler {
       }
       return LogMessage.eventOf(throwable, message, list);
     }
-  }
-
-  @TestOnly
-  Runnable getDialogRunnable() {
-    return myDialogRunnable;
   }
 
   @Override

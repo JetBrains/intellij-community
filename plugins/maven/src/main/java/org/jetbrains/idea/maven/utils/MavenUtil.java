@@ -145,6 +145,16 @@ public class MavenUtil {
 
   private static volatile Map<String, String> ourPropertiesFromMvnOpts;
 
+  public static boolean enablePreimport() {
+    return Registry.is("maven.preimport.project") &&
+           !ApplicationManager.getApplication().isUnitTestMode() &&
+           !ApplicationManager.getApplication().isHeadlessEnvironment();
+  }
+
+  public static boolean enablePreimportOnly() {
+    return Registry.is("maven.preimport.only");
+  }
+
   public static Map<String, String> getPropertiesFromMavenOpts() {
     Map<String, String> res = ourPropertiesFromMvnOpts;
     if (res == null) {
@@ -291,6 +301,7 @@ public class MavenUtil {
     return PathManagerEx.getAppSystemDir().resolve("Maven").resolve(folder);
   }
 
+  @NotNull
   public static java.nio.file.Path getBaseDir(@NotNull VirtualFile file) {
     VirtualFile virtualBaseDir = getVFileBaseDir(file);
     return virtualBaseDir.toNioPath();
@@ -300,6 +311,7 @@ public class MavenUtil {
     return ContainerUtil.groupBy(projects, p -> getBaseDir(tree.findRootProject(p).getDirectoryFile()).toString());
   }
 
+  @NotNull
   public static VirtualFile getVFileBaseDir(@NotNull VirtualFile file) {
     VirtualFile baseDir = file.isDirectory() || file.getParent() == null ? file : file.getParent();
     VirtualFile dir = baseDir;
@@ -837,7 +849,7 @@ public class MavenUtil {
   private static String getMavenLibVersion(final File file) {
     WSLDistribution distribution = WslPath.getDistributionByWindowsUncPath(file.getPath());
     File fileToRead = Optional.ofNullable(distribution)
-      .map(it -> distribution.getWslPath(file.getPath()))
+      .map(it -> distribution.getWslPath(file.toPath()))
       .map(it -> distribution.resolveSymlink(it))
       .map(it -> distribution.getWindowsPath(it))
       .map(it -> new File(it))
@@ -1542,10 +1554,7 @@ public class MavenUtil {
 
   public static VirtualFile getConfigFile(MavenProject mavenProject, String fileRelativePath) {
     VirtualFile baseDir = getVFileBaseDir(mavenProject.getDirectoryFile());
-    if (baseDir != null) {
-      return baseDir.findFileByRelativePath(fileRelativePath);
-    }
-    return null;
+    return baseDir.findFileByRelativePath(fileRelativePath);
   }
 
   public static Path toPath(@Nullable MavenProject mavenProject, String path) {
@@ -1693,10 +1702,6 @@ public class MavenUtil {
     catch (AlreadyDisposedException e) {
       return false;
     }
-  }
-
-  public static boolean isLinearImportEnabled() {
-    return Registry.is("maven.linear.import");
   }
 
   @ApiStatus.Internal

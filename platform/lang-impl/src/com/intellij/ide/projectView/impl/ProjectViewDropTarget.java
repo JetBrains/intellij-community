@@ -5,6 +5,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.dnd.*;
 import com.intellij.ide.projectView.impl.nodes.DropTargetNode;
 import com.intellij.lang.LangBundle;
+import com.intellij.openapi.actionSystem.CustomizedDataContext;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
@@ -303,21 +304,15 @@ public abstract class ProjectViewDropTarget implements DnDNativeTarget {
         if (!element.isValid()) return;
       }
 
-      DataContext context = dataId -> {
-        if (LangDataKeys.TARGET_MODULE.is(dataId)) {
-          if (module != null) return module;
-        }
-        if (LangDataKeys.TARGET_PSI_ELEMENT.is(dataId)) {
-          return target;
-        }
-        else {
-          return externalDrop ? null : dataContext.getData(dataId);
-        }
-      };
+      DataContext context = CustomizedDataContext.create(externalDrop ? DataContext.EMPTY_CONTEXT : dataContext, dataId -> {
+        if (LangDataKeys.TARGET_MODULE.is(dataId)) return module;
+        if (LangDataKeys.TARGET_PSI_ELEMENT.is(dataId)) return target;
+        else return null;
+      });
       getActionHandler().invoke(myProject, sources, context);
     }
 
-    private RefactoringActionHandler getActionHandler() {
+    private static RefactoringActionHandler getActionHandler() {
       return RefactoringActionHandlerFactory.getInstance().createMoveHandler();
     }
 

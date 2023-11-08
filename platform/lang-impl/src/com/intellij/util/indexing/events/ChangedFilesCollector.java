@@ -232,15 +232,22 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
         ((StubIndexImpl)StubIndex.getInstance()).getPerFileElementTypeModificationTrackerUpdateProcessor();
       @Override
       public boolean process(VfsEventsMerger.@NotNull ChangeInfo info) {
-        int fileId = info.getFileId();
-        VirtualFile file = info.getFile();
-        if (info.isTransientStateChanged()) myFileBasedIndex.doTransientStateChangeForFile(fileId, file);
-        if (info.isContentChanged()) myFileBasedIndex.scheduleFileForIndexing(fileId, file, true);
-        if (info.isFileRemoved()) myFileBasedIndex.doInvalidateIndicesForFile(fileId, file);
-        if (info.isFileAdded()) myFileBasedIndex.scheduleFileForIndexing(fileId, file, false);
-        if (StubIndexImpl.PER_FILE_ELEMENT_TYPE_STUB_CHANGE_TRACKING_SOURCE ==
-            StubIndexImpl.PerFileElementTypeStubChangeTrackingSource.ChangedFilesCollector) {
-          perFileElementTypeUpdateProcessor.processUpdate(file);
+        LOG.debug("Processing ", info);
+        try {
+          int fileId = info.getFileId();
+          VirtualFile file = info.getFile();
+          if (info.isTransientStateChanged()) myFileBasedIndex.doTransientStateChangeForFile(fileId, file);
+          if (info.isContentChanged()) myFileBasedIndex.scheduleFileForIndexing(fileId, file, true);
+          if (info.isFileRemoved()) myFileBasedIndex.doInvalidateIndicesForFile(fileId, file);
+          if (info.isFileAdded()) myFileBasedIndex.scheduleFileForIndexing(fileId, file, false);
+          if (StubIndexImpl.PER_FILE_ELEMENT_TYPE_STUB_CHANGE_TRACKING_SOURCE ==
+              StubIndexImpl.PerFileElementTypeStubChangeTrackingSource.ChangedFilesCollector) {
+            perFileElementTypeUpdateProcessor.processUpdate(file);
+          }
+        }
+        catch (Throwable t) {
+          if (LOG.isDebugEnabled()) LOG.debug("Exception while processing " + info, t);
+          throw t;
         }
         return true;
       }

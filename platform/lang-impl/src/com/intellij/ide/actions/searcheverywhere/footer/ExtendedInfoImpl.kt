@@ -46,7 +46,8 @@ class ExtendedInfoComponent(val project: Project?, val advertisement: ExtendedIn
         .derive(StartupUiUtil.labelFont)
       foreground = JBUI.CurrentTheme.Advertiser.foreground()
     }
-  private var actionLink: ActionLink = ActionLink()
+  private var actionLink = ActionLink()
+  private val shortcutLabel = JBLabel()
 
   @JvmField
   val component: JPanel =
@@ -61,9 +62,6 @@ class ExtendedInfoComponent(val project: Project?, val advertisement: ExtendedIn
     component.add(text, BorderLayout.WEST)
 
     val actionPanel = JPanel(BorderLayout(2, 0))
-    val shortcutSet = KeymapUtil.getActiveKeymapShortcuts(IdeActions.ACTION_SHOW_INTENTION_ACTIONS)
-    val shortcutText = KeymapUtil.getFirstKeyboardShortcutText(shortcutSet)
-    val shortcutLabel = JBLabel(shortcutText)
     shortcutLabel.foreground = JBUI.CurrentTheme.ContextHelp.FOREGROUND
     actionPanel.add(actionLink, BorderLayout.WEST)
     actionPanel.add(shortcutLabel, BorderLayout.EAST)
@@ -82,6 +80,7 @@ class ExtendedInfoComponent(val project: Project?, val advertisement: ExtendedIn
       val actionEvent = AnActionEvent.createFromAnAction(action, null, ActionPlaces.ACTION_SEARCH, context(project))
       action.updateIt(actionEvent)
       actionLink.update(actionEvent, action)
+      shortcutLabel.updateIt(action)
     }
 
     ReadAction.nonBlocking(Callable<String> { advertisement.leftText.invoke(element) })
@@ -109,6 +108,10 @@ class ExtendedInfoComponent(val project: Project?, val advertisement: ExtendedIn
       toolTipText = event.presentation.description
       actionListeners.forEach { removeActionListener(it) }
       addActionListener { _ -> ActionUtil.performActionDumbAwareWithCallbacks(action, event) }
+    }
+
+    private fun JBLabel.updateIt(action: AnAction) {
+      text = KeymapUtil.getFirstKeyboardShortcutText(action)
     }
   }
 }

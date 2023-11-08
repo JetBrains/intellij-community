@@ -1,6 +1,5 @@
 package de.plushnikov.intellij.plugin.processor.field;
 
-import com.intellij.openapi.components.Service;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import de.plushnikov.intellij.plugin.LombokClassNames;
@@ -13,6 +12,7 @@ import de.plushnikov.intellij.plugin.thirdparty.LombokUtils;
 import de.plushnikov.intellij.plugin.util.LombokProcessorUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.List;
@@ -24,7 +24,6 @@ import java.util.List;
  *
  * @author Plushnikov Michail
  */
-@Service
 public final class FieldNameConstantsFieldProcessor extends AbstractFieldProcessor {
   private static final String CONFIG_DEFAULT = " CONFIG DEFAULT ";
 
@@ -71,7 +70,8 @@ public final class FieldNameConstantsFieldProcessor extends AbstractFieldProcess
   }
 
   @Override
-  protected void generatePsiElements(@NotNull PsiField psiField, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
+  protected void generatePsiElements(@NotNull PsiField psiField, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target,
+                                     @Nullable String nameHint) {
     final PsiClass psiClass = psiField.getContainingClass();
     if (null != psiClass) {
       target.add(createFieldNameConstant(psiField, psiClass, psiAnnotation));

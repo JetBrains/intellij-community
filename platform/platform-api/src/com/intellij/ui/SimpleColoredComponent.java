@@ -1,6 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.ui.AntialiasingType;
 import com.intellij.ide.ui.UISettings;
@@ -17,7 +19,6 @@ import com.intellij.ui.paint.EffectPainter;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.SLRUMap;
 import com.intellij.util.ui.*;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.Nls;
@@ -46,9 +47,8 @@ import java.util.List;
 import java.util.Objects;
 
 /**
- * This is high performance Swing component which represents an icon
- * with a colored text. The text consists of fragments. Each
- * text fragment has its own color (foreground) and font style.
+ * This is high-performance Swing component that represents an icon with a colored text.
+ * The text consists of fragments. Each  text fragment has its own color (foreground) and font style.
  */
 @SuppressWarnings({"NonPrivateFieldAccessedInSynchronizedContext", "FieldAccessedSynchronizedAndUnsynchronized"})
 public class SimpleColoredComponent extends JComponent implements Accessible, ColoredTextContainer {
@@ -56,7 +56,8 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
 
   public static final int FRAGMENT_ICON = -2;
 
-  private static final SLRUMap<WidthKey, Float> ourWidthCache = new SLRUMap<>(128, 128);
+  private static final Cache<WidthKey, Float> widthCache = Caffeine.newBuilder().maximumSize(128).build();
+
   private final List<ColoredFragment> myFragments;
   private ColoredFragment myCurrentFragment;
   private Font myLayoutFont;
@@ -156,7 +157,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     return appendWithClipping(fragment, SimpleTextAttributes.REGULAR_ATTRIBUTES, clipper);
   }
 
-  public final SimpleColoredComponent appendWithClipping(@NotNull @Nls String fragment, final @NotNull SimpleTextAttributes attributes, @Nullable FragmentTextClipper clipper) {
+  public final @NotNull SimpleColoredComponent appendWithClipping(@NotNull @Nls String fragment, final @NotNull SimpleTextAttributes attributes, @Nullable FragmentTextClipper clipper) {
     _append(fragment, attributes, clipper, myMainTextLastIndex < 0);
     revalidateAndRepaint();
     return this;
@@ -557,16 +558,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
 
   private static float getFragmentWidth(@NotNull ColoredFragment fragment, Font font, FontRenderContext frc) {
     WidthKey key = new WidthKey(fragment.text, new ImmutableFont(font), frc, fragment.attributes.getStyle(), font.getSize());
-    Float result;
-    synchronized (ourWidthCache) {
-      result = ourWidthCache.get(key);
-      if (result != null) {
-        return result;
-      }
-      result = fragment.getAndCacheRenderer(font, frc).getWidth();
-      ourWidthCache.put(key, result);
-    }
-    return result;
+    return widthCache.get(key, it -> fragment.getAndCacheRenderer(it.font, it.frc).getWidth());
   }
 
   private static @NotNull TextLayout createTextLayout(String text, Font basefont, FontRenderContext fontRenderContext) {
@@ -1111,7 +1103,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
   @Override
   public int getBaseline(int width, int height) {
     super.getBaseline(width, height);
-    return getTextBaseLine(getFontMetrics(getFont()), height);
+    return getTextBaseLine(getFontMetrics(getBaseFont()), height);
   }
 
   public boolean isTransparentIconBackground() {
@@ -1516,7 +1508,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
   }
 
   private static final class ImmutableFont extends Font {
-    public ImmutableFont(Font font) {
+    private ImmutableFont(Font font) {
       super(font);
     }
   }

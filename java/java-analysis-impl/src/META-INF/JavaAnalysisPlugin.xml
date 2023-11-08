@@ -47,7 +47,7 @@
     <highlightingPassFactory implementation="com.intellij.codeInsight.daemon.impl.JavaTextBlockIndentPassFactory"/>
     <deadCode implementation="com.intellij.codeInspection.java19modules.Java9ModuleEntryPoint"/>
     <metaLanguage implementation="com.intellij.uast.UastMetaLanguage"/>
-    <lang.inspectionSuppressor language="JAVA" implementationClass="com.intellij.codeInspection.SuppressManagerImpl"/>
+    <lang.inspectionSuppressor language="JAVA" implementationClass="com.intellij.codeInspection.JavaInspectionSuppressor"/>
     <projectService serviceImplementation="com.intellij.codeInspection.bytecodeAnalysis.ProjectBytecodeAnalysis"/>
     <generatedSourcesFilter implementation="com.intellij.openapi.roots.JavaGeneratedSourcesFilter"/>
     <!--suppress PluginXmlCapitalization -->
@@ -245,6 +245,9 @@
     <globalInspection groupPath="Java" language="JAVA" shortName="UNUSED_IMPORT" bundle="messages.JavaAnalysisBundle" key="unused.import.display.name"
                       groupBundle="messages.InspectionsBundle" groupKey="group.names.imports"  editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES" enabledByDefault="true" level="WARNING"
                       implementationClass="com.intellij.codeInspection.unusedImport.UnusedImportInspection"/>
+    <globalInspection groupPath="Java" language="JAVA" shortName="MISSORTED_IMPORTS" bundle="messages.JavaAnalysisBundle" key="missorted.imports.inspection.display.name"
+                      groupBundle="messages.InspectionsBundle" groupKey="group.names.imports"  enabledByDefault="true" level="INFORMATION"
+                      implementationClass="com.intellij.codeInspection.unusedImport.MissortedImportsInspection"/>
     <globalInspection groupPath="Java" language="JAVA" shortName="RedundantThrows" groupKey="group.names.declaration.redundancy" groupBundle="messages.InspectionsBundle"
                       enabledByDefault="true" level="WARNING"
                       implementationClass="com.intellij.codeInspection.unneededThrows.RedundantThrowsDeclarationInspection"

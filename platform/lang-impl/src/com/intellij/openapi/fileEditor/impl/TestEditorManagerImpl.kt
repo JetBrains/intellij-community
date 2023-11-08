@@ -23,7 +23,6 @@ import com.intellij.openapi.fileEditor.ex.FileEditorWithProvider
 import com.intellij.openapi.fileEditor.impl.text.TextEditorImpl
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider
 import com.intellij.openapi.fileEditor.impl.text.TextEditorPsiDataProvider
-import com.intellij.openapi.progress.runWithModalProgressBlocking
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectCloseListener
 import com.intellij.openapi.util.Disposer
@@ -34,6 +33,7 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.IncorrectOperationException
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -140,7 +140,7 @@ internal class TestEditorManagerImpl(private val project: Project) : FileEditorM
     if (provider != null && provider.accept(project, file)) {
       if (provider is AsyncFileEditorProvider) {
         fileEditor = runWithModalProgressBlocking(project, "") {
-          (provider as AsyncFileEditorProvider).createEditorBuilder(project, file)
+          (provider as AsyncFileEditorProvider).createEditorBuilder(project = project, file = file, document = null)
         }.build()
       }
       else {

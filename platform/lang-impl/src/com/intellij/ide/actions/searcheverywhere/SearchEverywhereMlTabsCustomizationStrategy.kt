@@ -4,7 +4,7 @@ package com.intellij.ide.actions.searcheverywhere
 class SearchEverywhereMlTabsCustomizationStrategy: TabsCustomizationStrategy {
   override fun getSeparateTabContributors(contributors: List<SearchEverywhereContributor<*>>): List<SearchEverywhereContributor<*>> {
     val separateTabContributors = contributors.filter { it.isShownInSeparateTab }
-    return SearchEverywhereMlContributorReplacementService.getInstance()?.run {
+    return SearchEverywhereMlContributorReplacement.getFirstExtension()?.run {
       separateTabContributors.map { replaceInSeparateTab(it) }
     } ?: separateTabContributors
   }

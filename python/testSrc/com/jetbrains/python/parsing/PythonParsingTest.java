@@ -40,6 +40,8 @@ public class PythonParsingTest extends ParsingTestCase {
     registerExtension(PythonDialectsTokenSetContributor.EP_NAME, new PythonTokenSetContributor());
     addExplicitExtension(LanguageASTFactory.INSTANCE, PythonLanguage.getInstance(), new PythonASTFactory());
     getProject().registerService(PyPsiFacade.class, PyPsiFacadeImpl.class);
+    getApplication().registerService(PyElementTypesFacade.class, PyElementTypesFacadeImpl.class);
+    getApplication().registerService(PyLanguageFacade.class, PyLanguageFacadeImpl.class);
   }
 
   @Override
@@ -575,67 +577,67 @@ public class PythonParsingTest extends ParsingTestCase {
     doTest(LanguageLevel.PYTHON36);
   }
 
-  public void testFStringTerminatedByQuoteOfStringLiteral() {
+  public void testFStringNotTerminatedByQuoteOfStringLiteral() {
     doTest(LanguageLevel.PYTHON36);
   }
 
-  public void testFStringTerminatedByQuoteInsideStringLiteral() {
+  public void testFStringNotTerminatedByQuoteInsideStringLiteral() {
     doTest(LanguageLevel.PYTHON36);
   }
 
-  public void testFStringTerminatedByQuoteOfNestedStringLiteral() {
+  public void testFStringNotTerminatedByQuoteOfNestedStringLiteral() {
     doTest(LanguageLevel.PYTHON36);
   }
 
-  public void testFStringTerminatedByQuoteInsideNestedStringLiteral() {
+  public void testFStringNotTerminatedByQuoteInsideNestedStringLiteral() {
     doTest(LanguageLevel.PYTHON36);
   }
 
-  public void testFStringTerminatedByQuoteOfFStringLiteral() {
+  public void testFStringNotTerminatedByQuoteOfFStringLiteral() {
     doTest(LanguageLevel.PYTHON36);
   }
 
-  public void testFStringTerminatedByQuoteInsideFStringLiteral() {
+  public void testFStringNotTerminatedByQuoteInsideFStringLiteral() {
     doTest(LanguageLevel.PYTHON36);
   }
 
-  public void testFStringTerminatedByQuoteOfNestedFStringLiteral() {
+  public void testFStringNotTerminatedByQuoteOfNestedFStringLiteral() {
     doTest(LanguageLevel.PYTHON36);
   }
 
-  public void testFStringTerminatedByQuoteInsideNestedFStringLiteral() {
+  public void testFStringNotTerminatedByQuoteInsideNestedFStringLiteral() {
     doTest(LanguageLevel.PYTHON36);
   }
 
-  public void testFStringTerminatedByQuoteOfStringLiteralInFormatPart() {
+  public void testFStringNotTerminatedByQuoteOfStringLiteralInFormatPart() {
+    doTest(LanguageLevel.getLatest());
+  }
+
+  public void testFStringNotTerminatedByQuoteInsideStringLiteralInFormatPart() {
     doTest(LanguageLevel.PYTHON36);
   }
 
-  public void testFStringTerminatedByQuoteInsideStringLiteralInFormatPart() {
+  public void testFStringNotTerminatedByQuoteOfNestedStringLiteralInFormatPart() {
     doTest(LanguageLevel.PYTHON36);
   }
 
-  public void testFStringTerminatedByQuoteOfNestedStringLiteralInFormatPart() {
+  public void testFStringNotTerminatedByQuoteInsideNestedStringLiteralInFormatPart() {
     doTest(LanguageLevel.PYTHON36);
   }
 
-  public void testFStringTerminatedByQuoteInsideNestedStringLiteralInFormatPart() {
+  public void testFStringNotTerminatedByQuoteOfFStringLiteralInFormatPart() {
     doTest(LanguageLevel.PYTHON36);
   }
 
-  public void testFStringTerminatedByQuoteOfFStringLiteralInFormatPart() {
+  public void testFStringNotTerminatedByQuoteInsideFStringLiteralInFormatPart() {
     doTest(LanguageLevel.PYTHON36);
   }
 
-  public void testFStringTerminatedByQuoteInsideFStringLiteralInFormatPart() {
+  public void testFStringNotTerminatedByQuoteOfNestedFStringLiteralInFormatPart() {
     doTest(LanguageLevel.PYTHON36);
   }
 
-  public void testFStringTerminatedByQuoteOfNestedFStringLiteralInFormatPart() {
-    doTest(LanguageLevel.PYTHON36);
-  }
-
-  public void testFStringTerminatedByQuoteInsideNestedFStringLiteralInFormatPart() {
+  public void testFStringNotTerminatedByQuoteInsideNestedFStringLiteralInFormatPart() {
     doTest(LanguageLevel.PYTHON36);
   }
 
@@ -643,7 +645,7 @@ public class PythonParsingTest extends ParsingTestCase {
     doTest(LanguageLevel.PYTHON36);
   }
 
-  public void testFStringTerminatedByQuoteInNestedLiteralPart() {
+  public void testFStringNotTerminatedByQuoteInNestedLiteralPart() {
     doTest(LanguageLevel.PYTHON36);
   }
 
@@ -651,7 +653,7 @@ public class PythonParsingTest extends ParsingTestCase {
     doTest(LanguageLevel.PYTHON36);
   }
 
-  public void testFStringTerminatedByQuoteInNestedFormatPart() {
+  public void testFStringNotTerminatedByQuoteInNestedFormatPart() {
     doTest(LanguageLevel.PYTHON36);
   }
 
@@ -671,23 +673,23 @@ public class PythonParsingTest extends ParsingTestCase {
     doTest(LanguageLevel.PYTHON36);
   }
 
-  public void testFStringTerminatedByLineBreakInExpression() {
+  public void testFStringNotTerminatedByLineBreakInExpression() {
     doTest(LanguageLevel.PYTHON36);
   }
 
-  public void testFStringTerminatedByLineBreakInNestedExpression() {
+  public void testFStringNotTerminatedByLineBreakInNestedExpression() {
     doTest(LanguageLevel.PYTHON36);
   }
 
-  public void testFStringTerminatedByLineBreakInExpressionInFormatPart() {
+  public void testFStringNotTerminatedByLineBreakInExpressionInFormatPart() {
     doTest(LanguageLevel.PYTHON36);
   }
 
-  public void testFStringTerminatedByLineBreakInNestedExpressionInFormatPart() {
+  public void testFStringNotTerminatedByLineBreakInNestedExpressionInFormatPart() {
     doTest(LanguageLevel.PYTHON36);
   }
 
-  public void testFStringTerminatedByLineBreakInStringLiteral() {
+  public void testFStringNotTerminatedByLineBreakInStringLiteral() {
     doTest(LanguageLevel.PYTHON36);
   }
 
@@ -697,7 +699,7 @@ public class PythonParsingTest extends ParsingTestCase {
     doTest(LanguageLevel.PYTHON36);
   }
 
-  public void testFStringTerminatedByLineBreakInStringLiteralInFormatPart() {
+  public void testFStringNotTerminatedByLineBreakInStringLiteralInFormatPart() {
     doTest(LanguageLevel.PYTHON36);
   }
 
@@ -705,11 +707,11 @@ public class PythonParsingTest extends ParsingTestCase {
     doTest(LanguageLevel.PYTHON36);
   }
 
-  public void testMultilineFStringTerminatedByQuotesOfStringLiteral() {
+  public void testMultilineFStringNotTerminatedByQuotesOfStringLiteral() {
     doTest(LanguageLevel.PYTHON36);
   }
 
-  public void testMultilineFStringTerminatedByQuotesInsideParenthesizedExpression() {
+  public void testFStringNotTerminatedByQuotesInsideParenthesizedExpression() {
     doTest(LanguageLevel.PYTHON36);
   }
 
@@ -729,11 +731,11 @@ public class PythonParsingTest extends ParsingTestCase {
     doTest(LanguageLevel.PYTHON36);
   }
 
-  public void testSingleQuotedFStringInsideMultilineFStringTerminatedByLineBreakInExpression() {
+  public void testSingleQuotedFStringInsideMultilineFStringNotTerminatedByLineBreakInExpression() {
     doTest(LanguageLevel.PYTHON36);
   }
 
-  public void testSingleQuotedFStringInsideMultilineFStringTerminatedByLineBreakInExpressionInParentheses() {
+  public void testSingleQuotedFStringInsideMultilineFStringNotTerminatedByLineBreakInExpressionInParentheses() {
     doTest(LanguageLevel.PYTHON36);
   }
 
@@ -858,6 +860,23 @@ public class PythonParsingTest extends ParsingTestCase {
   }
 
   public void testFStringTextTokenMerging() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testIncompleteFStringFragmentRecoveryStoppedAtStatementOnlyKeyword() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  // PY-63393
+  public void testCompleteFStringFragmentTerminatedAtStatementOnlyKeyword() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testNestedIncompleteFStringFragmentRecoveryStoppedAtStatementOnlyKeyword() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testFormatPartFStringFragmentRecoveryStoppedAtStatementOnlyKeyword() {
     doTest(LanguageLevel.PYTHON36);
   }
 
@@ -1303,7 +1322,7 @@ public class PythonParsingTest extends ParsingTestCase {
   public void testTypeKeywordAsIdentifier() {
     doTest(LanguageLevel.PYTHON312);
   }
-
+  
   public void doTest() {
     doTest(LanguageLevel.PYTHON26);
   }

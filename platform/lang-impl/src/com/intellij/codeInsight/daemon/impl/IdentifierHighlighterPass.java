@@ -274,20 +274,20 @@ public final class IdentifierHighlighterPass {
    * In brace matching case this is done from {@link BraceHighlightingHandler#highlightBraces(TextRange, TextRange, boolean, boolean, com.intellij.openapi.fileTypes.FileType)}
    */
   public void doAdditionalCodeBlockHighlighting() {
-    if (myCodeBlockMarkerRanges.size() < 2 || !(myEditor instanceof EditorEx)) {
+    if (myCodeBlockMarkerRanges.size() < 2 || !(myEditor instanceof EditorEx editorEx)) {
       return;
     }
     List<TextRange> markers = new ArrayList<>(myCodeBlockMarkerRanges);
     markers.sort(Segment.BY_START_OFFSET_THEN_END_OFFSET);
     TextRange leftBraceRange = markers.get(0);
     TextRange rightBraceRange = markers.get(markers.size() - 1);
-    int startLine = myEditor.offsetToLogicalPosition(leftBraceRange.getStartOffset()).line;
-    int endLine = myEditor.offsetToLogicalPosition(rightBraceRange.getEndOffset()).line;
+    int startLine = editorEx.offsetToLogicalPosition(leftBraceRange.getStartOffset()).line;
+    int endLine = editorEx.offsetToLogicalPosition(rightBraceRange.getEndOffset()).line;
     if (endLine - startLine > 0) {
-      BraceHighlightingHandler.lineMarkFragment((EditorEx)myEditor, myEditor.getDocument(), startLine, endLine, true);
+      BraceHighlightingHandler.lineMarkFragment(editorEx, editorEx.getDocument(), startLine, endLine, true);
     }
 
-    BraceHighlightingHandler.showScopeHint(myEditor, myFile, leftBraceRange.getStartOffset(), leftBraceRange.getEndOffset());
+    BraceHighlightingHandler.showScopeHint(editorEx, myFile, leftBraceRange.getStartOffset(), leftBraceRange.getEndOffset());
   }
 
   private @NotNull List<HighlightInfo> getHighlights() {

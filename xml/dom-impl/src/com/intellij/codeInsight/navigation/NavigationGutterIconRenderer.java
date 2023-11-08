@@ -11,6 +11,7 @@ import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -50,6 +51,7 @@ import static com.intellij.openapi.progress.util.ProgressIndicatorUtils.runInRea
 
 public abstract class NavigationGutterIconRenderer extends GutterIconRenderer
   implements GutterIconNavigationHandler<PsiElement>, DumbAware {
+  private final static Logger LOG = Logger.getInstance(NavigationGutterIconRenderer.class);
   protected final @PopupTitle String myPopupTitle;
   private final @PopupContent String myEmptyText;
   protected final Computable<? extends PsiElementListCellRenderer> myCellRenderer;
@@ -217,6 +219,9 @@ public abstract class NavigationGutterIconRenderer extends GutterIconRenderer
         }
         navigator.navigate(new RelativePoint(event), myPopupTitle, myProject, element -> getElementProcessor(event).execute(element));
         return;
+      }
+      if (!ApplicationManager.getApplication().isUnitTestMode()) {
+        LOG.error("Do not use PsiElementListCellRenderer: " + myCellRenderer + ". Use PsiTargetPresentationRenderer via NavigationGutterIconBuilder.setTargetRenderer()");
       }
       PsiElement[] elements = PsiUtilCore.toPsiElementArray(getTargetElements());
       JBPopup popup = NavigationUtil.getPsiElementPopup(elements, renderer, myPopupTitle, getElementProcessor(event));

@@ -10,6 +10,7 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.client.ClientAwareComponentManager
 import com.intellij.openapi.components.ComponentConfig
 import com.intellij.openapi.components.ComponentManager
+import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
@@ -26,25 +27,21 @@ import com.intellij.serviceContainer.coroutineScopeMethodType
 import com.intellij.serviceContainer.emptyConstructorMethodType
 import com.intellij.serviceContainer.findConstructorOrNull
 import com.intellij.util.messages.MessageBus
-import com.intellij.util.namedChildScope
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.SystemIndependent
 import org.jetbrains.annotations.TestOnly
 import java.lang.invoke.MethodHandles
-import kotlin.coroutines.EmptyCoroutineContext
+import java.lang.invoke.MethodType
 
 private val LOG = logger<DefaultProject>()
 
-internal class DefaultProject : UserDataHolderBase(), Project {
+internal class DefaultProject : UserDataHolderBase(), Project, ComponentManagerEx {
   private val timedProject = object : DefaultProjectTimed(this) {
     public override fun compute(): Project {
       val app = ApplicationManager.getApplication()
       LOG.assertTrue(!app.isDisposed(), "Application is being disposed!")
-      @Suppress("DEPRECATION")
-      val coroutineScope = app.getCoroutineScope()
-        .namedChildScope(name = "DefaultProjectImpl", context = EmptyCoroutineContext, supervisor = true)
-      val project = DefaultProjectImpl(actualContainerInstance = this@DefaultProject, coroutineScope = coroutineScope)
+      val project = DefaultProjectImpl(actualContainerInstance = this@DefaultProject)
       val componentStoreFactory = app.service<ProjectStoreFactory>()
       project.registerServiceInstance(serviceInterface = IComponentStore::class.java,
                                       instance = componentStoreFactory.createDefaultProjectStore(project),
@@ -164,6 +161,10 @@ internal class DefaultProject : UserDataHolderBase(), Project {
 
   override fun <T> getServiceIfCreated(serviceClass: Class<T>): T? = delegate.getServiceIfCreated(serviceClass)
 
+  override suspend fun <T : Any> getServiceAsync(keyClass: Class<T>): T {
+    return (delegate as ComponentManagerEx).getServiceAsync(keyClass)
+  }
+
   @Deprecated("Deprecated in interface")
   override fun <T> getComponent(interfaceClass: Class<T>): T = delegate.getComponent(interfaceClass)
 
@@ -183,12 +184,9 @@ private const val TEMPLATE_PROJECT_NAME = "Default (Template) Project"
 // chosen by fair dice roll. guaranteed to be random. see https://xkcd.com/221/ for details.
 private const val DEFAULT_HASH_CODE = 4
 
-private class DefaultProjectImpl(private val actualContainerInstance: Project,
-                                 coroutineScope: CoroutineScope) : ClientAwareComponentManager(
-  parent = ApplicationManager.getApplication() as ComponentManagerImpl,
-  coroutineScope = coroutineScope,
-  setExtensionsRootArea = false,
-), Project {
+private class DefaultProjectImpl(
+  private val actualContainerInstance: Project
+) : ClientAwareComponentManager(ApplicationManager.getApplication() as ComponentManagerImpl), Project {
   override fun <T : Any> findConstructorAndInstantiateClass(lookup: MethodHandles.Lookup, aClass: Class<T>): T {
     @Suppress("UNCHECKED_CAST")
     // see ConfigurableEP - prefer constructor that accepts our instance
@@ -197,6 +195,15 @@ private class DefaultProjectImpl(private val actualContainerInstance: Project,
             ?: lookup.findConstructorOrNull(aClass, projectAndScopeMethodType)?.invoke(this, instanceCoroutineScope(aClass))
             ?: lookup.findConstructorOrNull(aClass, coroutineScopeMethodType)?.invoke(instanceCoroutineScope(aClass))
             ?: throw RuntimeException("Cannot find suitable constructor, expected (Project) or ()")) as T
+  }
+
+  override fun supportedSignaturesOfLightServiceConstructors(): List<MethodType> {
+    return listOf(
+      projectMethodType,
+      emptyConstructorMethodType,
+      projectAndScopeMethodType,
+      coroutineScopeMethodType,
+    )
   }
 
   override fun isParentLazyListenersIgnored(): Boolean = true

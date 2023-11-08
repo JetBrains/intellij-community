@@ -73,10 +73,12 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.resolve.AnalyzingUtils
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.jvm.AsmTypes
+import org.jetbrains.kotlin.resolve.jvm.diagnostics.ErrorsJvm
 import org.jetbrains.org.objectweb.asm.ClassReader
 import org.jetbrains.org.objectweb.asm.tree.ClassNode
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ExecutionException
 import org.jetbrains.eval4j.Value as Eval4JValue
 
 internal val LOG = Logger.getInstance(KotlinEvaluator::class.java)
@@ -193,11 +195,34 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
     }
 
     private fun compileCodeFragment(context: ExecutionContext): CompiledCodeFragmentData {
-        patchCodeFragment(context, codeFragment)
-        return if (isK2Plugin()) compiledCodeFragmentDataK2(context) else compiledCodeFragmentDataK1(context)
+        try {
+            return if (isK2Plugin()) compiledCodeFragmentDataK2(context) else compiledCodeFragmentDataK1(context)
+        } catch (e: ExecutionException) {
+            throw e.cause ?: e
+        }
     }
 
-    private fun compiledCodeFragmentDataK2(context: ExecutionContext): CompiledCodeFragmentData = runReadAction {
+    private fun compiledCodeFragmentDataK2(context: ExecutionContext): CompiledCodeFragmentData {
+        val stats = CodeFragmentCompilationStats()
+        fun onFinish(status: StatisticsEvaluationResult) =
+            KotlinDebuggerEvaluatorStatisticsCollector.logEvaluationResult(codeFragment.project, StatisticsEvaluator.K2, status, stats)
+        try {
+            patchCodeFragment(context, codeFragment, stats)
+
+            val result = stats.startAndMeasureAnalysisUnderReadAction {
+                compiledCodeFragmentDataK2Impl(context)
+            }.getOrThrow()
+            onFinish(StatisticsEvaluationResult.SUCCESS)
+            return result
+        } catch(e: ProcessCanceledException) {
+            throw e
+        } catch (e: Throwable) {
+            onFinish(StatisticsEvaluationResult.FAILURE)
+            throw e
+        }
+    }
+
+    private fun compiledCodeFragmentDataK2Impl(context: ExecutionContext): CompiledCodeFragmentData {
         val module = codeFragment.module
 
         val compilerConfiguration = CompilerConfiguration().apply {
@@ -209,7 +234,7 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
             put(KtCompilerFacility.CODE_FRAGMENT_METHOD_NAME, GENERATED_FUNCTION_NAME)
         }
 
-        analyze(codeFragment) {
+        return analyze(codeFragment) {
             try {
                 val compilerTarget = KtCompilerTarget.Jvm(ClassBuilderFactories.BINARIES)
                 val allowedErrorFilter = KotlinCompilerIdeAllowedErrorFilter.getInstance()
@@ -239,7 +264,7 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
             } catch (e: EvaluateException) {
                 throw e
             } catch (e: Throwable) {
-                reportErrorWithAttachments(context, codeFragment, CodeFragmentCodegenException(e))
+                reportErrorWithAttachments(context, codeFragment, e)
                 throw EvaluateExceptionUtil.createEvaluateException(e)
             }
         }
@@ -299,6 +324,7 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
         } else {
             OldCodeFragmentCompilingStrategy(codeFragment)
         }
+        patchCodeFragment(context, codeFragment, compilerStrategy.stats)
 
         compilerStrategy.beforeAnalyzingCodeFragment()
         val analysisResult = analyze(codeFragment, debugProcess)
@@ -534,7 +560,10 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
                     Errors.MISSING_DEPENDENCY_SUPERCLASS,
                     Errors.IR_WITH_UNSTABLE_ABI_COMPILED_CLASS,
                     Errors.FIR_COMPILED_CLASS,
-                    Errors.ILLEGAL_SUSPEND_FUNCTION_CALL
+                    Errors.ILLEGAL_SUSPEND_FUNCTION_CALL,
+                    ErrorsJvm.JAVA_MODULE_DOES_NOT_DEPEND_ON_MODULE,
+                    ErrorsJvm.JAVA_MODULE_DOES_NOT_READ_UNNAMED_MODULE,
+                    ErrorsJvm.JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE
                 )
 
         private val DEFAULT_METHOD_MARKERS = listOf(AsmTypes.OBJECT_TYPE, AsmTypes.DEFAULT_CONSTRUCTOR_MARKER)

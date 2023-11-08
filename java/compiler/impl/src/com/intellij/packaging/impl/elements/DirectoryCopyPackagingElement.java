@@ -1,17 +1,17 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.packaging.impl.elements;
 
+import com.intellij.java.workspace.entities.DirectoryCopyPackagingElementEntity;
 import com.intellij.openapi.project.Project;
 import com.intellij.packaging.impl.ui.DirectoryCopyPresentation;
 import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.ui.PackagingElementPresentation;
+import com.intellij.platform.backend.workspace.VirtualFileUrls;
 import com.intellij.platform.workspace.storage.EntitySource;
 import com.intellij.platform.workspace.storage.MutableEntityStorage;
 import com.intellij.platform.workspace.storage.WorkspaceEntity;
-import com.intellij.java.workspace.entities.DirectoryCopyPackagingElementEntity;
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl;
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager;
-import com.intellij.platform.backend.workspace.VirtualFileUrls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;

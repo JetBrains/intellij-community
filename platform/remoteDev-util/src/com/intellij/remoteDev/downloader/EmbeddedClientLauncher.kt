@@ -3,52 +3,62 @@ package com.intellij.remoteDev.downloader
 import com.intellij.execution.ShortenCommandLine
 import com.intellij.execution.configurations.ParametersList
 import com.intellij.execution.configurations.SimpleJavaParameters
+import com.intellij.execution.process.OSProcessHandler
 import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.process.ProcessListener
-import com.intellij.notification.Notification
-import com.intellij.notification.NotificationAction
-import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.CustomConfigMigrationOption
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.fileEditor.FileEditorManager
-import com.intellij.openapi.project.Project
+import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.projectRoots.SimpleJavaSdkType
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.bootstrap.RuntimeModuleIntrospection
+import com.intellij.platform.runtime.repository.ProductMode
 import com.intellij.platform.runtime.repository.RuntimeModuleId
 import com.intellij.platform.runtime.repository.RuntimeModuleRepository
-import com.intellij.remoteDev.RemoteDevUtilBundle
-import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.JavaModuleOptions
 import com.intellij.util.SystemProperties
 import com.intellij.util.system.OS
 import com.jetbrains.rd.util.lifetime.Lifetime
+import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 import java.util.*
-import kotlin.io.path.Path
-import kotlin.io.path.div
-import kotlin.io.path.exists
-import kotlin.io.path.pathString
+import kotlin.io.path.*
 
-internal class EmbeddedClientLauncher private constructor(private val moduleRepository: RuntimeModuleRepository, 
+@ApiStatus.Internal
+class EmbeddedClientLauncher private constructor(private val moduleRepository: RuntimeModuleRepository, 
                                                  private val moduleRepositoryPath: Path) {
   companion object {
+    private const val USE_CUSTOM_PATHS_PROPERTY = "rdct.embedded.client.use.custom.paths"
+    private val CLIENT_ROOT_MODULE = RuntimeModuleId.module("intellij.cwm.guest")
+    private val LOG = logger<EmbeddedClientLauncher>()
+    
     fun create(): EmbeddedClientLauncher? {
       val moduleRepository = RuntimeModuleIntrospection.moduleRepository ?: return null
       val moduleRepositoryPath = RuntimeModuleIntrospection.moduleRepositoryPath ?: return null
+      try {
+        moduleRepository.getModule(CLIENT_ROOT_MODULE)
+      }
+      catch (e: Exception) {
+        LOG.warn("Failed to load embedded client: " + e.message)
+        return null
+      }
       return EmbeddedClientLauncher(moduleRepository, moduleRepositoryPath)
     }
   }
-  
-  fun launch(urlToOpen: String, lifetime: Lifetime, project: Project?): Lifetime {
+
+  fun launch(urlToOpen: String, lifetime: Lifetime, errorReporter: EmbeddedClientErrorReporter): Lifetime {
     val processLifetimeDef = lifetime.createNested()
     
     val javaParameters = createProcessParameters(moduleRepository, moduleRepositoryPath, urlToOpen)
-    val handler = javaParameters.createOSProcessHandler()
+    val commandLine = javaParameters.toCommandLine()
+    LOG.debug { "Starting embedded client: $commandLine" }
+    val handler = OSProcessHandler.Silent(commandLine)
     val output = Collections.synchronizedList(ArrayList<@NlsSafe String>())
     handler.addProcessListener(object : ProcessListener {
       override fun onTextAvailable(event: ProcessEvent, outputType: Key<*>) {
@@ -57,20 +67,7 @@ internal class EmbeddedClientLauncher private constructor(private val moduleRepo
 
       override fun processTerminated(event: ProcessEvent) {
         if (event.exitCode != 0) {
-          val notification = Notification(
-            "IDE-errors",
-            RemoteDevUtilBundle.message("notification.title.failed.to.start.client"),
-            RemoteDevUtilBundle.message("notification.content.process.finished.with.exit.code.0", event.exitCode),
-            NotificationType.ERROR
-          )
-          if (project != null) {
-            notification.addAction(
-              NotificationAction.createSimple(RemoteDevUtilBundle.message("action.notification.view.output")) {
-                FileEditorManager.getInstance(project).openFile(LightVirtualFile("output.txt", output.joinToString("")), true)
-              }
-            )
-          }
-          notification.notify(project)
+          errorReporter.startupFailed(event.exitCode, output)
         }
         ApplicationManager.getApplication().invokeLater { 
           processLifetimeDef.terminate()
@@ -86,16 +83,18 @@ internal class EmbeddedClientLauncher private constructor(private val moduleRepo
     val javaParameters = SimpleJavaParameters()
     javaParameters.jdk = SimpleJavaSdkType.getInstance().createJdk("", SystemProperties.getJavaHome())
     javaParameters.setShortenCommandLine(ShortenCommandLine.ARGS_FILE)
-    val tempDir = Path(PathManager.getTempPath()) / "embedded-client"
-    val configDir = tempDir / "config"
-    if (!configDir.exists()) {
-      CustomConfigMigrationOption.MigrateFromCustomPlace(PathManager.getConfigDir()).writeConfigMarkerFile(configDir)
+    if (ApplicationManager.getApplication().isUnitTestMode || SystemProperties.getBooleanProperty(USE_CUSTOM_PATHS_PROPERTY, false)) {
+      val tempDir = Path(PathManager.getTempPath()) / "embedded-client"
+      val configDir = tempDir / "config"
+      if (!configDir.exists()) {
+        CustomConfigMigrationOption.MigrateFromCustomPlace(PathManager.getConfigDir()).writeConfigMarkerFile(configDir)
+      }
+      javaParameters.vmParametersList.defineProperty(PathManager.PROPERTY_CONFIG_PATH, configDir.pathString)
+      val systemDir = tempDir / "system"
+      javaParameters.vmParametersList.defineProperty(PathManager.PROPERTY_SYSTEM_PATH, systemDir.pathString)
+      val logDir = PathManager.getLogDir() / "embedded-client"
+      javaParameters.vmParametersList.defineProperty(PathManager.PROPERTY_LOG_PATH, logDir.pathString)
     }
-    javaParameters.vmParametersList.defineProperty(PathManager.PROPERTY_CONFIG_PATH, configDir.pathString)
-    val systemDir = tempDir / "system"
-    javaParameters.vmParametersList.defineProperty(PathManager.PROPERTY_SYSTEM_PATH, systemDir.pathString)
-    val logDir = PathManager.getLogDir() / "embedded-client"
-    javaParameters.vmParametersList.defineProperty(PathManager.PROPERTY_LOG_PATH, logDir.pathString)
     passProperties(javaParameters.vmParametersList)
     javaParameters.mainClass = "com.intellij.platform.runtime.loader.IntellijLoader"
     val runtimeLoaderModule = RuntimeModuleId.module("intellij.platform.runtime.loader")
@@ -112,6 +111,7 @@ internal class EmbeddedClientLauncher private constructor(private val moduleRepo
       "pty4j.preferred.native.folder", 
       "jna.nosys", 
       "jna.noclasspath", 
+      "idea.is.internal",
     )
     propertiesToPass.forEach { 
       vmParametersList.defineProperty(it, System.getProperty(it))
@@ -119,15 +119,61 @@ internal class EmbeddedClientLauncher private constructor(private val moduleRepo
   }
 
   private fun addVmOptions(vmParametersList: ParametersList, moduleRepositoryPath: Path) {
-    //todo reuse options instead of duplicating them here: IJPL-225
+    val vmOptionsFile = PathManager.getConfigDir() / "embedded-client" / "jetbrains_client64.vmoptions"
+    val customizableOptions: List<String>
+    if (vmOptionsFile.exists()) {
+      customizableOptions = vmOptionsFile.readLines().mapNotNull { line -> line.trim().takeIf { it.isNotEmpty() } }
+    }
+    else {
+      customizableOptions = getDefaultCustomizableVmOptions()
+      vmOptionsFile.createParentDirectories()
+      vmOptionsFile.writeLines(customizableOptions)
+    }
+
+    vmParametersList.addAll(customizableOptions)
+
+    val jetBrainsClientOptions = listOf(
+      "-Djb.vmOptionsFile=${vmOptionsFile.pathString}",
+      "-Didea.vendor.name=JetBrains",
+      "-Didea.paths.selector=JetBrainsClient${ApplicationInfo.getInstance().build.withoutProductCode().asString()}",
+      "-Didea.platform.prefix=JetBrainsClient",
+      "-Dide.no.platform.update=true",
+      "-Didea.initially.ask.config=never",
+      "-Didea.paths.customizer=com.intellij.platform.ide.impl.startup.multiProcess.PerProcessPathCustomizer",
+      "-Dintellij.platform.runtime.repository.path=${moduleRepositoryPath.pathString}",
+      "-Dintellij.platform.root.module=${CLIENT_ROOT_MODULE.stringId}",
+      "-Dintellij.platform.product.mode=${ProductMode.FRONTEND.id}",
+      "-Dintellij.platform.load.app.info.from.resources=true",
+      "-Dsplash=true",
+    )
+    vmParametersList.addAll(jetBrainsClientOptions)
+    if (SystemInfo.isMac) {
+      vmParametersList.add("-Dapple.awt.application.name=JetBrains Client")
+    }
     
+    val openedPackagesStream = EmbeddedClientLauncher::class.java.getResourceAsStream("/META-INF/OpenedPackages.txt")
+                               ?: error("Cannot load OpenedPackages.txt")
+    val addOpensOptions = openedPackagesStream.use {
+      JavaModuleOptions.readOptions(it, OS.CURRENT)
+    }
+    vmParametersList.addAll(addOpensOptions)
+    
+    val debugPort = Registry.get("rdct.embedded.client.debug.port").asInteger()
+    if (debugPort > 0) {
+      val suspend = if (Registry.get("rdct.embedded.client.debug.suspend").asBoolean()) "y" else "n"
+      vmParametersList.add("-agentlib:jdwp=transport=dt_socket,server=y,suspend=$suspend,address=$debugPort")
+    }
+  }
+
+  private fun getDefaultCustomizableVmOptions(): List<String> {
+    //todo reuse options instead of duplicating them here: IJPL-225
+
     val memoryOptions = listOf(
       "-Xms128m",
       "-Xmx1500m",
       "-XX:ReservedCodeCacheSize=512m",
-    )  
-    vmParametersList.addAll(memoryOptions)
-    
+    )
+
     //duplicates VmOptionsGenerator
     val commonOptions = listOf(
       "-XX:+UseG1GC",
@@ -148,43 +194,16 @@ internal class EmbeddedClientLauncher private constructor(private val moduleRepo
       "-Dkotlinx.coroutines.debug=off",
       "-Djava.system.class.loader=com.intellij.util.lang.PathClassLoader",
     )
-    vmParametersList.addAll(commonOptions)
-    
+
     val osSpecificOptions = when (OS.CURRENT) {
-      OS.Linux -> listOf(//LinuxDistributionBuilder::generateVMOptions
+      OS.Linux -> listOf(
+        //LinuxDistributionBuilder::generateVMOptions
         "-Dsun.tools.attach.tmp.only=true",
         "-Dawt.lock.fair=true",
       )
       OS.macOS -> listOf("-Dapple.awt.application.appearance=system") //MacDistributionBuilder.layoutMacApp
       else -> emptyList()
-    }    
-    vmParametersList.addAll(osSpecificOptions)
-    
-    val jetBrainsClientOptions = listOf(
-      "-Didea.vendor.name=JetBrains",
-      "-Didea.paths.selector=JetBrainsClient${ApplicationInfo.getInstance().build.withoutProductCode().asString()}",
-      "-Didea.platform.prefix=JetBrainsClient",
-      "-Dide.no.platform.update=true",
-      "-Didea.initially.ask.config=never",
-      "-Didea.paths.customizer=com.intellij.platform.ide.impl.startup.multiProcess.PerProcessPathCustomizer",
-      "-Dintellij.platform.runtime.repository.path=${moduleRepositoryPath.pathString}",
-      "-Dintellij.platform.root.module=intellij.cwm.guest",
-      "-Dintellij.platform.load.app.info.from.resources=true",
-      "-Dsplash=true",
-    )
-    vmParametersList.addAll(jetBrainsClientOptions)
-    
-    val openedPackagesStream = EmbeddedClientLauncher::class.java.getResourceAsStream("/META-INF/OpenedPackages.txt")
-                               ?: error("Cannot load OpenedPackages.txt")
-    val addOpensOptions = openedPackagesStream.use {
-      JavaModuleOptions.readOptions(it, OS.CURRENT)
     }
-    vmParametersList.addAll(addOpensOptions)
-    
-    val debugPort = Registry.get("rdct.embedded.client.debug.port").asInteger()
-    if (debugPort > 0) {
-      val suspend = if (Registry.get("rdct.embedded.client.debug.suspend").asBoolean()) "y" else "n"
-      vmParametersList.add("-agentlib:jdwp=transport=dt_socket,server=y,suspend=$suspend,address=$debugPort")
-    }
+    return memoryOptions + commonOptions + osSpecificOptions
   }
 }

@@ -34,7 +34,7 @@ public class FSRecordsContext {
 
   @TearDown
   public void tearDown() throws Exception {
-    vfs.dispose();
+    vfs.close();
     if (vfsFolder != null) {
       FileUtilRt.deleteRecursively(vfsFolder.toPath());
     }

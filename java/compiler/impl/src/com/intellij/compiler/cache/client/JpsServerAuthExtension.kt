@@ -35,7 +35,7 @@ interface JpsServerAuthExtension {
    * @param parentDisposable controls the lifetime of the authentication
    * @param onAuthCompleted callback on authentication complete, if token already exists it also should be invoked
    */
-  fun checkAuthenticated(presentableReason: String, parentDisposable: Disposable, onAuthCompleted: Runnable)
+  suspend fun checkAuthenticated(presentableReason: String, parentDisposable: Disposable, onAuthCompleted: Runnable)
 
   /**
    * The method provides HTTP authentication headers for the requests to the server.
@@ -44,7 +44,7 @@ interface JpsServerAuthExtension {
    * @return Map with header name as key and token. If it's not possible to get the authentication
    * headers, `null` will be returned.
    */
-  fun getAuthHeader(force: Boolean): Map<String, String>?
+  suspend fun getAuthHeaders(force: Boolean): Map<String, String>?
 
   companion object {
     private val NOTIFICATION_SHOWN_KEY = Key.create<Boolean>("AUTH_NOTIFICATION_SHOWN")

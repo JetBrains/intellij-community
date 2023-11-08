@@ -11,6 +11,7 @@ import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.CompositeDisposable;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
@@ -103,8 +104,8 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
     DebuggerUIUtil.registerActionOnComponent(XDebuggerActions.XCOPY_WATCH, tree, myDisposables);
     DebuggerUIUtil.registerActionOnComponent(XDebuggerActions.XEDIT_WATCH, tree, myDisposables);
 
-    EmptyAction.registerWithShortcutSet(XDebuggerActions.XNEW_WATCH, CommonShortcuts.getNew(), tree);
-    EmptyAction.registerWithShortcutSet(XDebuggerActions.XREMOVE_WATCH, CommonShortcuts.getDelete(), tree);
+    ActionUtil.wrap(XDebuggerActions.XNEW_WATCH).registerCustomShortcutSet(CommonShortcuts.getNew(), tree);
+    ActionUtil.wrap(XDebuggerActions.XREMOVE_WATCH).registerCustomShortcutSet(CommonShortcuts.getDelete(), tree);
 
     DnDManager.getInstance().registerTarget(this, tree);
 

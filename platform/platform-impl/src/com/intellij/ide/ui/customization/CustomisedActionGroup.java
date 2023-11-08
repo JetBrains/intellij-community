@@ -41,7 +41,8 @@ public final class CustomisedActionGroup extends ActionGroupWrapper {
         ArrayUtil.isEmpty(myChildren) ||
         delegate instanceof DynamicActionGroup ||
         !(delegate instanceof DefaultActionGroup)) {
-      myChildren = CustomizationUtil.getReordableChildren(delegate, mySchema, myDefaultGroupName, myRootGroupName, e);
+      myChildren = CustomizationUtil.getReordableChildren(
+        delegate, super.getChildren(e), mySchema, myDefaultGroupName, myRootGroupName);
       mySchemeModificationStamp = currentSchemaStamp;
       myGroupModificationStamp = currentGroupStamp;
     }

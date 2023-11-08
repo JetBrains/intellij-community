@@ -112,9 +112,9 @@ public class LoopConditionNotUpdatedInsideLoopInspection extends BaseInspection 
       }
     }
 
-    private boolean isConditionNotUpdated(@Nullable PsiExpression condition,
-                                          @NotNull PsiStatement context,
-                                          List<? super PsiExpression> notUpdated) {
+    private static boolean isConditionNotUpdated(@Nullable PsiExpression condition,
+                                                 @NotNull PsiStatement context,
+                                                 List<? super PsiExpression> notUpdated) {
       if (condition == null) {
         return false;
       }

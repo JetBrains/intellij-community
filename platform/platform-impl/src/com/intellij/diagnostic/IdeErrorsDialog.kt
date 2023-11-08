@@ -13,10 +13,12 @@ import com.intellij.ide.util.PropertiesComponent
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
+import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.ex.ApplicationInfoEx
+import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.ErrorReportSubmitter
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent
 import com.intellij.openapi.diagnostic.Logger
@@ -37,15 +39,15 @@ import com.intellij.openapi.util.text.Strings
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.ui.*
-import com.intellij.ui.components.*
+import com.intellij.ui.components.JBLabel
+import com.intellij.ui.components.JBScrollPane
+import com.intellij.ui.components.JBTextArea
+import com.intellij.ui.components.TextComponentEmptyText
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.io.HttpRequests
 import com.intellij.util.text.DateFormatUtil
-import com.intellij.util.ui.JBFont
-import com.intellij.util.ui.JBInsets
-import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.*
 import kotlinx.coroutines.*
 import java.awt.*
 import java.awt.GridBagConstraints.*
@@ -113,8 +115,11 @@ open class IdeErrorsDialog @JvmOverloads internal constructor(
     val configurable = ErrorReportConfigurable.getInstance()
     val developers = configurable.developerList
     setDevelopers(developers)
-    return if (developers.isUpToDateAt()) null
-    else ITNProxy.cs.launch {
+    if (developers.isUpToDateAt()) {
+      return null
+    }
+
+    return service<ITNProxyCoroutineScopeHolder>().coroutineScope.launch {
       runCatching {
         val updatedDevelopers = DeveloperList(fetchDevelopers(), System.currentTimeMillis())
         withContext(Dispatchers.EDT) {
@@ -132,29 +137,33 @@ open class IdeErrorsDialog @JvmOverloads internal constructor(
     }
   }
 
-  private suspend fun loadCredentialsPanel(submitter: ErrorReportSubmitter) = withContext(ITNProxy.dispatcher) {
-    val account = submitter.reporterAccount
-    withContext(Dispatchers.EDT) {
-      if (account != null) {
-        myCredentialLabel.isVisible = true
-        myCredentialLabel.text = if (account.isEmpty()) {
-          DiagnosticBundle.message("error.dialog.submit.anonymous")
-        }
-        else {
-          DiagnosticBundle.message("error.dialog.submit.named", account)
+  private suspend fun loadCredentialsPanel(submitter: ErrorReportSubmitter) {
+    withContext(serviceAsync<ITNProxyCoroutineScopeHolder>().dispatcher) {
+      val account = submitter.reporterAccount
+      withContext(Dispatchers.EDT) {
+        if (account != null) {
+          myCredentialLabel.isVisible = true
+          myCredentialLabel.text = if (account.isEmpty()) {
+            DiagnosticBundle.message("error.dialog.submit.anonymous")
+          }
+          else {
+            DiagnosticBundle.message("error.dialog.submit.named", account)
+          }
         }
       }
     }
   }
 
-  private suspend fun loadPrivacyNoticeText(submitter: ErrorReportSubmitter) = withContext(ITNProxy.dispatcher) {
-    val notice = submitter.privacyNoticeText
-    withContext(Dispatchers.EDT) {
-      if (notice != null) {
-        myPrivacyNotice.panel.isVisible = true
-        val hash = Integer.toHexString(Strings.stringHashCodeIgnoreWhitespaces(notice))
-        myPrivacyNotice.expanded = !myAcceptedNotices.contains(hash)
-        myPrivacyNotice.setPrivacyPolicy(notice)
+  private suspend fun loadPrivacyNoticeText(submitter: ErrorReportSubmitter) {
+    withContext(serviceAsync<ITNProxyCoroutineScopeHolder>().dispatcher) {
+      val notice = submitter.privacyNoticeText
+      withContext(Dispatchers.EDT) {
+        if (notice != null) {
+          myPrivacyNotice.panel.isVisible = true
+          val hash = Integer.toHexString(Strings.stringHashCodeIgnoreWhitespaces(notice))
+          myPrivacyNotice.expanded = !myAcceptedNotices.contains(hash)
+          myPrivacyNotice.setPrivacyPolicy(notice)
+        }
       }
     }
   }
@@ -188,17 +197,19 @@ open class IdeErrorsDialog @JvmOverloads internal constructor(
 
   override fun createNorthPanel(): JComponent? {
     myCountLabel = JBLabel()
-    myInfoLabel = htmlComponent("", null, null, null, false) { e: HyperlinkEvent ->
-      if (e.eventType == HyperlinkEvent.EventType.ACTIVATED && DISABLE_PLUGIN_URL == e.description) {
-        disablePlugin()
-      }
-      else {
-        BrowserHyperlinkListener.INSTANCE.hyperlinkUpdate(e)
+    myInfoLabel = SwingHelper.createHtmlViewer(false, null, null, null).apply {
+      addHyperlinkListener {
+        if (it.eventType == HyperlinkEvent.EventType.ACTIVATED && DISABLE_PLUGIN_URL == it.description) {
+          disablePlugin()
+        }
+        else {
+          BrowserHyperlinkListener.INSTANCE.hyperlinkUpdate(it)
+        }
       }
     }
     myDetailsLabel = JBLabel()
     myDetailsLabel.foreground = UIUtil.getContextHelpForeground()
-    myForeignPluginWarningLabel = htmlComponent()
+    myForeignPluginWarningLabel = SwingHelper.createHtmlViewer(false, null, null, null)
     val toolbar = ActionManager.getInstance().createActionToolbar(
       ActionPlaces.TOOLBAR_DECORATOR_TOOLBAR, DefaultActionGroup(BackAction(), ForwardAction()), true)
     toolbar.layoutPolicy = ActionToolbar.NOWRAP_LAYOUT_POLICY
@@ -283,12 +294,14 @@ open class IdeErrorsDialog @JvmOverloads internal constructor(
       myAssigneePanel.add(myAssigneeCombo)
     }
     @NlsSafe val heightSample = " "
-    myCredentialLabel = htmlComponent(heightSample, null, null, null, false) { e: HyperlinkEvent ->
-      if (e.eventType == HyperlinkEvent.EventType.ACTIVATED) {
-        val submitter = selectedCluster().submitter
-        if (submitter != null) {
-          submitter.changeReporterAccount(rootPane)
-          updateControls()
+    myCredentialLabel = SwingHelper.createHtmlViewer(false, null, null, null).apply {
+      text = heightSample
+      addHyperlinkListener {
+        if (it.eventType == HyperlinkEvent.EventType.ACTIVATED) {
+          selectedCluster().submitter?.let { submitter ->
+            submitter.changeReporterAccount(rootPane)
+            updateControls()
+          }
         }
       }
     }
@@ -330,7 +343,7 @@ open class IdeErrorsDialog @JvmOverloads internal constructor(
   override fun createActions(): Array<Action> {
     val lastActionName = PropertiesComponent.getInstance().getValue(LAST_OK_ACTION)
     val lastAction = ReportAction.findOrDefault(lastActionName)
-    val additionalActions = ReportAction.values().asSequence()
+    val additionalActions = ReportAction.entries.asSequence()
       .filter { it != lastAction }
       .map { action: ReportAction -> action.getAction(this) }
       .toList()
@@ -382,7 +395,7 @@ open class IdeErrorsDialog @JvmOverloads internal constructor(
   private fun updateControls() {
     loadingDecorator.startLoading(false)
     updateControlsJob.cancel(null)
-    updateControlsJob = ITNProxy.cs.launch(Dispatchers.EDT) {
+    updateControlsJob = service<ITNProxyCoroutineScopeHolder>().coroutineScope.launch(Dispatchers.EDT) {
       val cluster = selectedCluster()
       val submitter = cluster.submitter
       cluster.messages.forEach { it.isRead = true }
@@ -459,7 +472,7 @@ open class IdeErrorsDialog @JvmOverloads internal constructor(
     else {
       info.append(DiagnosticBundle.message("error.list.message.blame.core", ApplicationNamesInfo.getInstance().productName))
     }
-    if (pluginId != null && !ApplicationInfoEx.getInstanceEx().isEssentialPlugin(pluginId)) {
+    if (pluginId != null && !ApplicationInfo.getInstance().isEssentialPlugin(pluginId)) {
       info.append(' ')
         .append("<a style=\"white-space: nowrap;\" href=\"$DISABLE_PLUGIN_URL\">")
         .append(DiagnosticBundle.message("error.list.disable.plugin"))
@@ -566,7 +579,7 @@ open class IdeErrorsDialog @JvmOverloads internal constructor(
     message.devListTimestamp = myDevListTimestamp
     message.isSubmitting = true
 
-    ITNProxy.cs.launch {
+    service<ITNProxyCoroutineScopeHolder>().coroutineScope.launch {
       val notice = submitter.privacyNoticeText
       if (notice != null) {
         val hash = Integer.toHexString(Strings.stringHashCodeIgnoreWhitespaces(notice))
@@ -861,7 +874,7 @@ open class IdeErrorsDialog @JvmOverloads internal constructor(
     companion object {
       fun findOrDefault(name: String?): ReportAction {
         if (name != null) {
-          for (value in values()) {
+          for (value in entries) {
             if (value.name == name) {
               return value
             }

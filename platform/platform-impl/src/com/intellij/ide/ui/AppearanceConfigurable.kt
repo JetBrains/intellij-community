@@ -9,6 +9,7 @@ import com.intellij.ide.IdeBundle.message
 import com.intellij.ide.ProjectWindowCustomizerService
 import com.intellij.ide.actions.IdeScaleTransformer
 import com.intellij.ide.actions.QuickChangeLookAndFeel
+import com.intellij.ide.isSupportScreenReadersOverridden
 import com.intellij.ide.ui.laf.LafManagerImpl
 import com.intellij.ide.ui.search.OptionDescription
 import com.intellij.internal.statistic.service.fus.collectors.IdeZoomEventFields
@@ -95,9 +96,11 @@ private val cdLeftToolWindowLayout
 private val cdRightToolWindowLayout
   get() = CheckboxDescriptor(message("checkbox.right.toolwindow.layout"), settings::rightHorizontalSplit, groupName = windowOptionGroupName)
 private val cdRememberSizeForEachToolWindowOldUI
-  get() = CheckboxDescriptor(message("checkbox.remember.size.for.each.tool.window"), settings::rememberSizeForEachToolWindowOldUI, groupName = windowOptionGroupName)
+  get() = CheckboxDescriptor(message("checkbox.remember.size.for.each.tool.window"), settings::rememberSizeForEachToolWindowOldUI,
+                             groupName = windowOptionGroupName)
 private val cdRememberSizeForEachToolWindowNewUI
-  get() = CheckboxDescriptor(message("checkbox.remember.size.for.each.tool.window"), settings::rememberSizeForEachToolWindowNewUI, groupName = windowOptionGroupName)
+  get() = CheckboxDescriptor(message("checkbox.remember.size.for.each.tool.window"), settings::rememberSizeForEachToolWindowNewUI,
+                             groupName = windowOptionGroupName)
 private val cdUseCompactTreeIndents
   get() = CheckboxDescriptor(message("checkbox.compact.tree.indents"), settings::compactTreeIndents, groupName = uiOptionGroupName)
 private val cdShowTreeIndents
@@ -112,7 +115,8 @@ private val cdUseTransparentMode
 private val cdUseContrastToolbars
   get() = CheckboxDescriptor(message("checkbox.acessibility.contrast.scrollbars"), settings::useContrastScrollbars)
 private val cdMergeMainMenuWithWindowTitle
-  get() = CheckboxDescriptor(message("checkbox.merge.main.menu.with.window.title"), settings::mergeMainMenuWithWindowTitle, groupName = windowOptionGroupName)
+  get() = CheckboxDescriptor(message("checkbox.merge.main.menu.with.window.title"), settings::mergeMainMenuWithWindowTitle,
+                             groupName = windowOptionGroupName)
 private val cdFullPathsInTitleBar
   get() = CheckboxDescriptor(message("checkbox.full.paths.in.window.header"), settings::fullPathsInWindowHeader)
 private val cdShowMenuIcons
@@ -148,7 +152,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
   override fun createPanel(): DialogPanel {
     lafProperty.afterChange(disposable!!) {
       ApplicationManager.getApplication().invokeLater {
-        QuickChangeLookAndFeel.switchLafAndUpdateUI(lafManager, lafManager.findLaf(it), true)
+        QuickChangeLookAndFeel.switchLafAndUpdateUI(lafManager, lafManager.findLaf(it.themeId), true)
       }
     }
     syncThemeProperty.afterChange(disposable!!) {
@@ -239,7 +243,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
 
         val fontSize = fontSizeComboBox({ if (settings.overrideLafFonts) settings.fontSize else getDefaultFont().size },
                                         { settings.fontSize = it },
-                         settings.fontSize)
+                                        settings.fontSize)
           .label(message("label.font.size"))
           .enabledIf(useCustomCheckbox.selected)
           .accessibleName(message("label.font.size"))
@@ -256,7 +260,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
 
       group(message("title.accessibility")) {
         row {
-          val isOverridden = GeneralSettings.isSupportScreenReadersOverridden()
+          val isOverridden = isSupportScreenReadersOverridden()
           val ctrlTab = KeymapUtil.getKeystrokeText(KeyStroke.getKeyStroke(KeyEvent.VK_TAB, InputEvent.CTRL_DOWN_MASK))
           val ctrlShiftTab = KeymapUtil.getKeystrokeText(
             KeyStroke.getKeyStroke(KeyEvent.VK_TAB, InputEvent.CTRL_DOWN_MASK + InputEvent.SHIFT_DOWN_MASK))
@@ -273,11 +277,11 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
           checkBox(cdUseContrastToolbars)
         }
 
-        val supportedValues = ColorBlindness.values().filter { ColorBlindnessSupport.get(it) != null }
+        val supportedValues = ColorBlindness.entries.filter { ColorBlindnessSupport.get(it) != null }
         if (supportedValues.isNotEmpty()) {
           val colorBlindnessProperty = MutableProperty({ settings.colorBlindness }, { settings.colorBlindness = it })
           val onApply = {
-            // callback executed not when all changes are applied, but one component by one, so, reload later when everything were applied
+            // callback executed not when all changes are applied, but one component by one, so, reload later when everything was applied
             ApplicationManager.getApplication().invokeLater(Runnable {
               DefaultColorSchemesManager.getInstance().reload()
               (EditorColorsManager.getInstance() as EditorColorsManagerImpl).schemeChangedOrSwitched(null)
@@ -319,10 +323,10 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
           yield { checkBox(cdUseCompactTreeIndents) }
           yield { checkBox(cdEnableMenuMnemonics) }
           yield { checkBox(cdEnableControlsMnemonics) }
-          if ((SystemInfo.isWindows || SystemInfo.isXWindow) && ExperimentalUI.isNewUI()) {
+          if (!SystemInfo.isMac && ExperimentalUI.isNewUI()) {
             yield {
               checkBox(cdSeparateMainMenu).apply {
-                if (SystemInfo.isXWindow) {
+                if (!SystemInfo.isWindows) {
                   comment(message("ide.restart.required.comment"))
                 }
               }
@@ -350,7 +354,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
                 checkBox.enabled(false)
                 contextHelp(message("option.is.overridden.by.jvm.property", MERGE_MAIN_MENU_WITH_WINDOW_TITLE_PROPERTY))
               }
-              if (SystemInfoRt.isXWindow && !IdeRootPane.hideNativeLinuxTitleSupported) {
+              if (SystemInfo.isUnix && !SystemInfo.isMac && !IdeRootPane.hideNativeLinuxTitleSupported) {
                 checkBox.enabled(false)
                 checkBox.comment(message("checkbox.merge.main.menu.with.window.not.supported.comment"), 30)
               }
@@ -421,10 +425,12 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
         twoColumnsRow(
           {
             val ideAAOptions =
-              if (!AntialiasingType.canUseSubpixelAAForIDE())
+              if (!AntialiasingType.canUseSubpixelAAForIDE()) {
                 arrayOf(AntialiasingType.GREYSCALE, AntialiasingType.OFF)
-              else
-                AntialiasingType.values()
+              }
+              else {
+                AntialiasingType.entries.toTypedArray()
+              }
             comboBox(DefaultComboBoxModel(ideAAOptions), renderer = AAListCellRenderer(false))
               .label(message("label.text.antialiasing.scope.ide"))
               .bindItem(settings::ideAAType.toNullableProperty())
@@ -439,10 +445,12 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
           },
           {
             val editorAAOptions =
-              if (!AntialiasingType.canUseSubpixelAAForEditor())
+              if (!AntialiasingType.canUseSubpixelAAForEditor()) {
                 arrayOf(AntialiasingType.GREYSCALE, AntialiasingType.OFF)
-              else
-                AntialiasingType.values()
+              }
+              else {
+                AntialiasingType.entries.toTypedArray()
+              }
             comboBox(DefaultComboBoxModel(editorAAOptions), renderer = AAListCellRenderer(true))
               .label(message("label.text.antialiasing.scope.editor"))
               .bindItem(settings::editorAAType.toNullableProperty())
@@ -488,7 +496,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
       group(message("group.presentation.mode")) {
         row(message("presentation.mode.ide.scale")) {
           comboBox(IdeScaleTransformer.Settings.createPresentationModeScaleComboboxModel(), textListCellRenderer { it })
-            .bindItem( { settings.presentationModeIdeScale.percentStringValue }, { })
+            .bindItem({ settings.presentationModeIdeScale.percentStringValue }, { })
             .applyToComponent {
               isEditable = true
             }

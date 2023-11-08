@@ -4,9 +4,10 @@ package com.siyeh.ig.migration;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
-import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
+import com.intellij.codeInspection.SuppressionUtilCore;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
@@ -406,7 +407,11 @@ public class TryWithIdenticalCatchesInspection extends BaseInspection {
     while (start < end - 1 && Character.isWhitespace(text.charAt(end - 1))) {
       end--;
     }
-    return start < end ? text.substring(start, end) : "";
+    String extractedText = start < end ? text.substring(start, end) : "";
+    if (extractedText.trim().startsWith(SuppressionUtilCore.SUPPRESS_INSPECTIONS_TAG_NAME)) {
+      return "";
+    }
+    return extractedText;
   }
 
   @Override

@@ -10,7 +10,10 @@ import com.intellij.openapi.vcs.impl.LineStatusTrackerManager
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiNameIdentifierOwner
 
-class VcsFeatureProvider : ElementFeatureProvider {
+private const val MAX_CHANGES_TO_ANALYZE = 1000
+internal val changesCountKey: Key<Int> = Key<Int>("VcsFeatureProvider.changesCount")
+
+internal class VcsFeatureProvider : ElementFeatureProvider {
   override fun getName(): String = "vcs"
 
   override fun calculateFeatures(element: LookupElement,
@@ -47,8 +50,4 @@ class VcsFeatureProvider : ElementFeatureProvider {
     return features
   }
 
-  companion object {
-    private const val MAX_CHANGES_TO_ANALYZE = 1000
-    internal val changesCountKey: Key<Int> = Key<Int>("VcsFeatureProvider.changesCount")
-  }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk;
 
 import com.google.common.collect.ImmutableList;
@@ -35,6 +35,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.backend.observation.TrackingUtil;
 import com.intellij.remote.RemoteSdkProperties;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ExceptionUtil;
@@ -48,6 +49,7 @@ import com.jetbrains.python.packaging.management.PythonPackageManager;
 import com.jetbrains.python.packaging.management.PythonPackageManagerExt;
 import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.remote.UnsupportedPythonSdkTypeException;
+import com.jetbrains.python.sdk.headless.PythonActivityKey;
 import com.jetbrains.python.sdk.skeletons.PySkeletonRefresher;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -79,6 +81,10 @@ public final class PythonSdkUpdater implements StartupActivity, DumbAware {
     ourEnabledInTests = enabled;
   }
 
+  static boolean dropUpdaterInHeadless() {
+    return ApplicationManager.getApplication().isHeadlessEnvironment() && !Registry.is("ide.warmup.use.predicates");
+  }
+
   /**
    * Schedules a background refresh of the SDKs of the modules for the open project.
    */
@@ -86,7 +92,7 @@ public final class PythonSdkUpdater implements StartupActivity, DumbAware {
   public void runActivity(@NotNull Project project) {
     Application application = ApplicationManager.getApplication();
     if (application.isUnitTestMode()) return;
-    if (application.isHeadlessEnvironment()) return; // see PythonHeadlessSdkUpdater
+    if (dropUpdaterInHeadless()) return; // see PythonHeadlessSdkUpdater
     if (project.isDisposed()) return;
 
     for (Sdk sdk : getPythonSdks(project)) {
@@ -366,23 +372,25 @@ public final class PythonSdkUpdater implements StartupActivity, DumbAware {
       LOG.info("Skipping background update for '" + sdk + "' in unit test mode");
       return;
     }
-    synchronized (ourLock) {
-      if (ourUnderRefresh.contains(sdk)) {
-        if (Trigger.LOG.isDebugEnabled()) {
-          PyUpdateSdkRequestData previousRequest = ourToBeRefreshed.get(sdk);
-          if (previousRequest != null) {
-            String cause = Trigger.getCauseByTrace(previousRequest.myTraceback);
-            Trigger.LOG.debug("Discarding previous update for " + sdk + " triggered by " + cause);
+    TrackingUtil.trackActivity(project, PythonActivityKey.INSTANCE, () -> {
+      synchronized (ourLock) {
+        if (ourUnderRefresh.contains(sdk)) {
+          if (Trigger.LOG.isDebugEnabled()) {
+            PyUpdateSdkRequestData previousRequest = ourToBeRefreshed.get(sdk);
+            if (previousRequest != null) {
+              String cause = Trigger.getCauseByTrace(previousRequest.myTraceback);
+              Trigger.LOG.debug("Discarding previous update for " + sdk + " triggered by " + cause);
+            }
           }
+          ourToBeRefreshed.merge(sdk, requestData, PyUpdateSdkRequestData::merge);
+          return;
         }
-        ourToBeRefreshed.merge(sdk, requestData, PyUpdateSdkRequestData::merge);
-        return;
+        else {
+          ourUnderRefresh.add(sdk);
+        }
       }
-      else {
-        ourUnderRefresh.add(sdk);
-      }
-    }
-    ProgressManager.getInstance().run(new PyUpdateSdkTask(project, sdk, requestData));
+      ProgressManager.getInstance().run(new PyUpdateSdkTask(project, sdk, requestData));
+    });
   }
 
   /**

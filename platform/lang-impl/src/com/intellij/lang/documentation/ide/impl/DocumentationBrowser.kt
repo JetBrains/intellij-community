@@ -77,7 +77,7 @@ internal class DocumentationBrowser private constructor(
 
   val pageFlow: SharedFlow<DocumentationPage> = myPageFlow.asSharedFlow()
 
-  private var page: DocumentationPage
+  internal var page: DocumentationPage
     get() = myPageFlow.value
     set(value) {
       myPageFlow.value = value
@@ -100,7 +100,7 @@ internal class DocumentationBrowser private constructor(
       else {
         myHistory.nextPage()
       }
-      DocumentationPage(request).also {
+      DocumentationPage(listOf(request)).also {
         this@DocumentationBrowser.page = it
       }
     }
@@ -110,7 +110,7 @@ internal class DocumentationBrowser private constructor(
   private suspend fun handleLink(url: String) {
     val targetPointer = this.targetPointer
     val internalResult = try {
-      handleLink(project, targetPointer, url)
+      handleLink(project, targetPointer, url, page)
     }
     catch (e: IndexNotReadyException) {
       return // normal situation, nothing to do
@@ -171,8 +171,8 @@ internal class DocumentationBrowser private constructor(
 
   companion object {
 
-    fun createBrowser(project: Project, initialRequest: DocumentationRequest): DocumentationBrowser {
-      val browser = DocumentationBrowser(project, DocumentationPage(request = initialRequest))
+    fun createBrowser(project: Project, requests: List<DocumentationRequest>): DocumentationBrowser {
+      val browser = DocumentationBrowser(project, DocumentationPage(requests))
       browser.reload() // init loading
       return browser
     }

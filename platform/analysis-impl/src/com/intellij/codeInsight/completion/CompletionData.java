@@ -1,15 +1,15 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.TailType;
+import com.intellij.codeInsight.TailTypes;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.PresentableLookupValue;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.paths.PsiDynaReference;
 import com.intellij.patterns.CharPattern;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.ObjectPattern;
@@ -55,7 +55,7 @@ public class CompletionData {
     myCompletionVariants.add(variant);
   }
 
-  public void completeReference(final PsiReference reference, final Set<? super LookupElement> set, @NotNull final PsiElement position, final PsiFile file) {
+  public void completeReference(final PsiReference reference, final Set<? super LookupElement> set, final @NotNull PsiElement position, final PsiFile file) {
     final CompletionVariant[] variants = findVariants(position, file);
     boolean hasApplicableVariants = false;
     for (CompletionVariant variant : variants) {
@@ -115,7 +115,7 @@ public class CompletionData {
     @Override
     void addReferenceCompletions(PsiReference reference, PsiElement position, Set<? super LookupElement> set, final PsiFile file,
                                  final CompletionData completionData) {
-      completeReference(reference, position, set, TailType.NONE, TrueFilter.INSTANCE, this);
+      completeReference(reference, position, set, TailTypes.noneType(), TrueFilter.INSTANCE, this);
     }
   };
 
@@ -144,7 +144,7 @@ public class CompletionData {
     return findPrefixStatic(insertedElement, offsetInFile, NOT_JAVA_ID);
   }
 
-  private static String findPrefixDefault(final PsiElement insertedElement, final int offset, @NotNull final ElementPattern trimStart) {
+  private static String findPrefixDefault(final PsiElement insertedElement, final int offset, final @NotNull ElementPattern trimStart) {
     String substr = insertedElement.getText().substring(0, offset - insertedElement.getTextRange().getStartOffset());
     if (substr.length() == 0 || Character.isWhitespace(substr.charAt(substr.length() - 1))) return "";
 
@@ -155,12 +155,11 @@ public class CompletionData {
     return substr.substring(i).trim();
   }
 
-  @NotNull
-  public static LookupElement objectToLookupItem(final @NotNull Object object) {
+  public static @NotNull LookupElement objectToLookupItem(final @NotNull Object object) {
     if (object instanceof LookupElement) return (LookupElement)object;
 
     String s = null;
-    TailType tailType = TailType.NONE;
+    TailType tailType = TailTypes.noneType();
     if (object instanceof PsiElement){
       s = PsiUtilCore.getName((PsiElement)object);
     }
@@ -195,9 +194,9 @@ public class CompletionData {
     InsertHandler<?> insertHandler = variant.getInsertHandler();
     if(insertHandler != null && item.getInsertHandler() == null) {
       item.setInsertHandler(insertHandler);
-      item.setTailType(TailType.UNKNOWN);
+      item.setTailType(TailTypes.unknownType());
     }
-    else if (tailType != TailType.NONE) {
+    else if (tailType != TailTypes.noneType()) {
       item.setTailType(tailType);
     }
     final Map<Object, Object> itemProperties = variant.getItemProperties();

@@ -5,7 +5,10 @@ import com.intellij.openapi.util.registry.Registry
 import org.jetbrains.kotlin.idea.core.util.CodeFragmentUtils
 import org.jetbrains.kotlin.idea.core.util.analyzeInlinedFunctions
 import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.ExecutionContext
-import org.jetbrains.kotlin.idea.debugger.evaluate.*
+import org.jetbrains.kotlin.idea.debugger.evaluate.KotlinDebuggerEvaluatorStatisticsCollector
+import org.jetbrains.kotlin.idea.debugger.evaluate.StatisticsEvaluationResult
+import org.jetbrains.kotlin.idea.debugger.evaluate.StatisticsEvaluator
+import org.jetbrains.kotlin.idea.debugger.evaluate.gatherProjectFilesDependedOnByFragment
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.idea.util.application.isApplicationInternalMode
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
@@ -15,14 +18,14 @@ import org.jetbrains.kotlin.resolve.BindingContext
 
 abstract class CodeFragmentCompilingStrategy(val codeFragment: KtCodeFragment) {
 
-    val stats: CodeFragmentCompilationStats = CodeFragmentCompilationStats()
+    internal val stats: CodeFragmentCompilationStats = CodeFragmentCompilationStats()
 
     abstract val compilerBackend: FragmentCompilerCodegen
 
     abstract fun getFilesToCompile(resolutionFacade: ResolutionFacade, bindingContext: BindingContext): List<KtFile>
 
     abstract fun onSuccess()
-    abstract fun processError(e: CodeFragmentCodegenException, codeFragment: KtCodeFragment, executionContext: ExecutionContext)
+    abstract fun processError(e: Throwable, codeFragment: KtCodeFragment, executionContext: ExecutionContext)
     abstract fun getFallbackStrategy(): CodeFragmentCompilingStrategy?
     abstract fun beforeRunningFallback()
     abstract fun beforeAnalyzingCodeFragment()
@@ -49,7 +52,7 @@ class OldCodeFragmentCompilingStrategy(codeFragment: KtCodeFragment) : CodeFragm
         )
     }
 
-    override fun processError(e: CodeFragmentCodegenException, codeFragment: KtCodeFragment, executionContext: ExecutionContext) {
+    override fun processError(e: Throwable, codeFragment: KtCodeFragment, executionContext: ExecutionContext) {
         KotlinDebuggerEvaluatorStatisticsCollector.logEvaluationResult(
             codeFragment.project,
             StatisticsEvaluator.OLD,
@@ -117,7 +120,7 @@ class IRCodeFragmentCompilingStrategy(codeFragment: KtCodeFragment) : CodeFragme
         )
     }
 
-    override fun processError(e: CodeFragmentCodegenException, codeFragment: KtCodeFragment, executionContext: ExecutionContext) {
+    override fun processError(e: Throwable, codeFragment: KtCodeFragment, executionContext: ExecutionContext) {
         KotlinDebuggerEvaluatorStatisticsCollector.logEvaluationResult(
             codeFragment.project,
             StatisticsEvaluator.IR,

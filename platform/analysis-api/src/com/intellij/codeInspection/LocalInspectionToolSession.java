@@ -15,7 +15,7 @@ import org.jetbrains.annotations.Nullable;
  * @see LocalInspectionTool#buildVisitor(ProblemsHolder, boolean, LocalInspectionToolSession)
  */
 @ApiStatus.NonExtendable
-public class LocalInspectionToolSession extends UserDataHolderBase {
+public final class LocalInspectionToolSession extends UserDataHolderBase {
   private final PsiFile myFile;
   private final TextRange myPriorityRange;
   private final TextRange myRestrictRange;

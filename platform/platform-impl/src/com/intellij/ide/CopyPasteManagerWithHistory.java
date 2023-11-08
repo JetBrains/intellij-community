@@ -251,7 +251,7 @@ public abstract class CopyPasteManagerWithHistory implements ClientCopyPasteMana
     return new StringSelection(UIBundle.message("clipboard.history.purged.item"));
   }
 
-  private void fireContentChanged(@Nullable Transferable oldContent, @Nullable Transferable newContent) {
+  protected void fireContentChanged(@Nullable Transferable oldContent, @Nullable Transferable newContent) {
     myDispatcher.getMulticaster().contentChanged(oldContent, newContent);
   }
 

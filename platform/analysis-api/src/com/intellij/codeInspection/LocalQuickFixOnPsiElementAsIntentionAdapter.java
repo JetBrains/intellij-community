@@ -12,7 +12,7 @@ import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class LocalQuickFixOnPsiElementAsIntentionAdapter implements IntentionAction {
+public final class LocalQuickFixOnPsiElementAsIntentionAdapter implements IntentionAction {
   private final @NotNull LocalQuickFixOnPsiElement myFix;
 
   public LocalQuickFixOnPsiElementAsIntentionAdapter(@NotNull LocalQuickFixOnPsiElement fix) {

@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.ui.details.model
 
+import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.async.mapState
 import com.intellij.collaboration.async.modelFlow
 import com.intellij.collaboration.messages.CollaborationToolsBundle
@@ -9,28 +10,34 @@ import com.intellij.collaboration.ui.codereview.details.data.ReviewRequestState
 import com.intellij.collaboration.ui.codereview.details.data.ReviewRole
 import com.intellij.collaboration.ui.codereview.details.data.ReviewState
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewFlowViewModel
+import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.collaboration.util.SingleCoroutineLauncher
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.childScope
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.gitlab.api.SinceGitLab
+import org.jetbrains.plugins.gitlab.api.data.GitLabPlan
 import org.jetbrains.plugins.gitlab.api.dto.GitLabReviewerDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabProject
 import org.jetbrains.plugins.gitlab.mergerequest.data.reviewState
-import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabMergeRequestSubmitReviewViewModel
-import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabMergeRequestSubmitReviewViewModel.SubmittableReview
-import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabMergeRequestSubmitReviewViewModelImpl
-import org.jetbrains.plugins.gitlab.mergerequest.ui.getSubmittableReview
+import org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestSubmitReviewViewModel
+import org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestSubmitReviewViewModel.SubmittableReview
+import org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestSubmitReviewViewModelImpl
+import org.jetbrains.plugins.gitlab.mergerequest.ui.review.getSubmittableReview
+import org.jetbrains.plugins.gitlab.mergerequest.util.GitLabMergeRequestReviewersUtil
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 
 internal interface GitLabMergeRequestReviewFlowViewModel : CodeReviewFlowViewModel<GitLabReviewerDTO> {
   val isBusy: Flow<Boolean>
+
+  val plan: Deferred<GitLabPlan>
 
   val currentUser: GitLabUserDTO
   val author: GitLabUserDTO
@@ -76,8 +83,7 @@ internal interface GitLabMergeRequestReviewFlowViewModel : CodeReviewFlowViewMod
 
   fun postReview()
 
-  @SinceGitLab("13.8")
-  fun setReviewers(reviewers: List<GitLabUserDTO>)
+  fun adjustReviewers(point: RelativePoint)
 
   @SinceGitLab("13.8")
   fun setMyselfAsReviewer()
@@ -95,12 +101,15 @@ internal class GitLabMergeRequestReviewFlowViewModelImpl(
   parentScope: CoroutineScope,
   override val currentUser: GitLabUserDTO,
   projectData: GitLabProject,
-  private val mergeRequest: GitLabMergeRequest
+  private val mergeRequest: GitLabMergeRequest,
+  private val avatarIconsProvider: IconsProvider<GitLabUserDTO>
 ) : GitLabMergeRequestReviewFlowViewModel {
   private val scope = parentScope.childScope()
   private val taskLauncher = SingleCoroutineLauncher(scope)
 
   override val isBusy: Flow<Boolean> = taskLauncher.busy
+
+  override val plan: Deferred<GitLabPlan> = projectData.plan
 
   override val author: GitLabUserDTO = mergeRequest.author
 
@@ -135,7 +144,7 @@ internal class GitLabMergeRequestReviewFlowViewModelImpl(
   override val shouldBeRebased: SharedFlow<Boolean> = mergeRequest.details.map { it.shouldBeRebased }
     .modelFlow(scope, LOG)
 
-  override val userCanApprove: SharedFlow<Boolean> = mergeRequest.details.map { it.userPermissions.canApprove ?: false }
+  override val userCanApprove: SharedFlow<Boolean> = mergeRequest.details.map { it.userPermissions.canApprove == true }
     .modelFlow(scope, LOG)
   override val userCanManage: SharedFlow<Boolean> = mergeRequest.details.map { it.userPermissions.updateMergeRequest }
     .modelFlow(scope, LOG)
@@ -233,26 +242,44 @@ internal class GitLabMergeRequestReviewFlowViewModelImpl(
     mergeRequest.postReview()
   }
 
-  @SinceGitLab("13.8")
-  override fun setReviewers(reviewers: List<GitLabUserDTO>) = runAction {
-    mergeRequest.setReviewers(reviewers) // TODO: implement via CollectionDelta
+  override fun adjustReviewers(point: RelativePoint) {
+    scope.launchNow(Dispatchers.Main) {
+      val originalReviewersIds = reviewers.value.mapTo(mutableSetOf<String>(), GitLabUserDTO::id)
+      val updatedReviewers = if (plan.await() == GitLabPlan.FREE)
+        GitLabMergeRequestReviewersUtil.selectReviewer(point, originalReviewersIds, potentialReviewers, avatarIconsProvider)
+      else
+        GitLabMergeRequestReviewersUtil.selectReviewers(point, originalReviewersIds, potentialReviewers, avatarIconsProvider)
+
+      updatedReviewers ?: return@launchNow
+      setReviewers(updatedReviewers)
+    }
   }
 
   @SinceGitLab("13.8")
   override fun setMyselfAsReviewer() = runAction {
-    mergeRequest.setReviewers(listOf(currentUser)) // TODO: implement via CollectionDelta
+    if (plan.await() == GitLabPlan.FREE) {
+      mergeRequest.setReviewers(listOf(currentUser))
+    }
+    else {
+      mergeRequest.setReviewers(listOf(currentUser) + reviewers.value)
+    }
   }
 
   @SinceGitLab("13.8")
   override fun removeReviewer(reviewer: GitLabUserDTO) = runAction {
     val newReviewers = reviewers.first().toMutableList()
     newReviewers.removeIf { it.id == reviewer.id }
-    mergeRequest.setReviewers(newReviewers) // TODO: implement via CollectionDelta
+    mergeRequest.setReviewers(newReviewers)
   }
 
   override fun reviewerRereview() = runAction {
     val requestedReviewers = reviewerReviews.first().filterValues { it == ReviewState.WAIT_FOR_UPDATES }.keys
     mergeRequest.reviewerRereview(requestedReviewers)
+  }
+
+  @SinceGitLab("13.8")
+  private fun setReviewers(reviewers: List<GitLabUserDTO>) = runAction {
+    mergeRequest.setReviewers(reviewers)
   }
 
   private fun runAction(action: suspend () -> Unit) {

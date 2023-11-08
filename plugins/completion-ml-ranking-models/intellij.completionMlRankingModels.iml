@@ -48,19 +48,19 @@
     </orderEntry>
     <orderEntry type="module-library">
       <library name="completion-ranking-kotlin-exp" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.jetbrains.intellij.deps.completion:completion-ranking-kotlin:0.3.4">
+        <properties include-transitive-deps="false" maven-id="org.jetbrains.intellij.deps.completion:completion-ranking-kotlin:0.4.1">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-kotlin/0.3.4/completion-ranking-kotlin-0.3.4.jar">
-              <sha256sum>c4aed95367eeff94afb97ccf969bc65adee1292e24b61170838cfd0b732384c9</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-kotlin/0.4.1/completion-ranking-kotlin-0.4.1.jar">
+              <sha256sum>0be44fc263b4f59517a6dc0c4102d5743dc309ac049ac894f2bea7cd83e570d2</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-kotlin/0.3.4/completion-ranking-kotlin-0.3.4.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-kotlin/0.4.1/completion-ranking-kotlin-0.4.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-kotlin/0.3.4/completion-ranking-kotlin-0.3.4-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-kotlin/0.4.1/completion-ranking-kotlin-0.4.1-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

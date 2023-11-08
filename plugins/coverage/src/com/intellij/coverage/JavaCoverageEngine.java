@@ -126,19 +126,19 @@ public class JavaCoverageEngine extends CoverageEngine {
   }
 
   @Override
-  public Set<String> getTestsForLine(Project project, String classFQName, int lineNumber) {
-    return extractTracedTests(project, classFQName, lineNumber);
+  public Set<String> getTestsForLine(Project project, CoverageSuitesBundle bundle, String classFQName, int lineNumber) {
+    return extractTracedTests(bundle, classFQName, lineNumber);
   }
 
   @Override
-  public boolean wasTestDataCollected(Project project) {
-    File[] files = getTraceFiles(project);
+  public boolean wasTestDataCollected(Project project, CoverageSuitesBundle bundle) {
+    File[] files = getTraceFiles(bundle);
     return files != null && files.length > 0;
   }
 
-  private static Set<String> extractTracedTests(Project project, final String classFQName, final int lineNumber) {
+  private static Set<String> extractTracedTests(CoverageSuitesBundle bundle, final String classFQName, final int lineNumber) {
     Set<String> tests = new HashSet<>();
-    final File[] traceFiles = getTraceFiles(project);
+    final File[] traceFiles = getTraceFiles(bundle);
     if (traceFiles == null) return tests;
     for (File traceFile : traceFiles) {
       DataInputStream in = null;
@@ -184,11 +184,9 @@ public class JavaCoverageEngine extends CoverageEngine {
     }
   }
 
-  private static File @Nullable [] getTraceFiles(Project project) {
-    final CoverageSuitesBundle currentSuite = CoverageDataManager.getInstance(project).getCurrentSuitesBundle();
-    if (currentSuite == null) return null;
+  private static File @Nullable [] getTraceFiles(CoverageSuitesBundle bundle) {
     final List<File> files = new ArrayList<>();
-    for (CoverageSuite coverageSuite : currentSuite.getSuites()) {
+    for (CoverageSuite coverageSuite : bundle.getSuites()) {
       final File tracesDir = getTracesDirectory(coverageSuite);
       final File[] suiteFiles = tracesDir.listFiles();
       if (suiteFiles != null) {
@@ -493,6 +491,7 @@ public class JavaCoverageEngine extends CoverageEngine {
     final PsiClass[] classes = ReadAction.compute(() -> ((PsiClassOwner)srcFile).getClasses());
     for (final PsiClass psiClass : classes) {
       final String className = ReadAction.compute(() -> psiClass.getName());
+      if (className == null) continue;
       for (File child : children) {
         if (FileUtilRt.extensionEquals(child.getName(), JavaClassFileType.INSTANCE.getDefaultExtension())) {
           final String childName = FileUtilRt.getNameWithoutExtension(child.getName());

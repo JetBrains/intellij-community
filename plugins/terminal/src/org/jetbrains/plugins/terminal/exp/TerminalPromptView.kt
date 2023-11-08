@@ -1,21 +1,26 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.exp
 
+import com.intellij.codeInsight.AutoPopupController
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runInEdt
+import com.intellij.openapi.editor.CaretVisualAttributes
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.editor.impl.EditorImpl
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileTypes.PlainTextLanguage
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.ui.LanguageTextField
 import com.intellij.ui.components.panels.ListLayout
 import com.intellij.util.ui.JBUI
-import org.jetbrains.plugins.terminal.TerminalProjectOptionsProvider
 import org.jetbrains.plugins.terminal.exp.TerminalPromptController.PromptStateListener
 import org.jetbrains.plugins.terminal.exp.completion.TerminalShellSupport
 import java.awt.Color
+import java.awt.event.MouseAdapter
+import java.awt.event.MouseEvent
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
@@ -39,11 +44,11 @@ class TerminalPromptView(
   init {
     val editorTextField = createPromptTextField(session)
     editor = editorTextField.getEditor(true) as EditorImpl
-    controller = TerminalPromptController(editor, session, commandExecutor)
+    controller = TerminalPromptController(project, editor, session, commandExecutor)
     controller.addListener(this)
 
     promptLabel = createPromptLabel()
-    promptLabel.text = controller.computePromptText(TerminalProjectOptionsProvider.getInstance(project).startingDirectory ?: "")
+    promptLabel.text = controller.promptText
 
     commandHistoryPresenter = CommandHistoryPresenter(project, editor, commandExecutor)
 
@@ -58,6 +63,13 @@ class TerminalPromptView(
     component.layout = ListLayout.vertical(TerminalUi.promptToCommandInset)
     component.add(promptLabel)
     component.add(editorTextField)
+
+    // move focus to the prompt text field on mouse click in the area of the prompt
+    component.addMouseListener(object : MouseAdapter() {
+      override fun mousePressed(e: MouseEvent?) {
+        IdeFocusManager.getInstance(project).requestFocus(editor.contentComponent, true)
+      }
+    })
   }
 
   override fun promptLabelChanged(newText: @NlsSafe String) {
@@ -102,9 +114,15 @@ class TerminalPromptView(
     editor.colorsScheme.apply {
       editorFontName = settings.terminalFont.fontName
       editorFontSize = settings.terminalFont.size
-      lineSpacing = settings.lineSpacing
+      lineSpacing = 1.0f
     }
-    editor.settings.isBlockCursor = true
+    editor.caretModel.primaryCaret.visualAttributes = CaretVisualAttributes(null, CaretVisualAttributes.Weight.HEAVY)
+    editor.putUserData(AutoPopupController.SHOW_BOTTOM_PANEL_IN_LOOKUP_UI, false)
+
+    FileDocumentManager.getInstance().getFile(editor.document)?.let {
+      editor.setFile(it)
+    }
+    TerminalInlineCompletion.getInstance(project).install(editor)
 
     return textField
   }

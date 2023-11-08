@@ -17,7 +17,6 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.components.StorageScheme
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.progress.ModalTaskOwner
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.runBlockingModalWithRawProgressReporter
 import com.intellij.openapi.project.Project
@@ -34,6 +33,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.ui.AppUIUtil
 import com.intellij.ui.IdeUICustomization
 import com.intellij.util.TimeoutUtil

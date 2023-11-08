@@ -26,8 +26,9 @@ import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.psi.unquoteKotlinIdentifier
 import org.jetbrains.kotlin.idea.caches.resolve.util.getJavaOrKotlinMemberDescriptor
 import org.jetbrains.kotlin.idea.j2k.j2k
-import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinMethodDescriptor.Kind
+import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinModifiableMethodDescriptor.Kind
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.ui.KotlinCallableParameterTableModel
+import org.jetbrains.kotlin.idea.refactoring.changeSignature.ui.KotlinChangeSignatureDialog.Companion.getTypeInfo
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.usages.KotlinCallableDefinitionUsage
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.usages.KotlinCallerUsage
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
@@ -44,7 +45,6 @@ import org.jetbrains.kotlin.resolve.source.getPsi
 import org.jetbrains.kotlin.types.isError
 import org.jetbrains.kotlin.types.typeUtil.isUnit
 import org.jetbrains.kotlin.utils.keysToMap
-import org.jetbrains.kotlin.idea.refactoring.changeSignature.ui.KotlinChangeSignatureDialog.Companion.getTypeInfo
 
 open class KotlinChangeInfo(
     val methodDescriptor: KotlinMethodDescriptor,
@@ -53,7 +53,7 @@ open class KotlinChangeInfo(
     var newVisibility: DescriptorVisibility = methodDescriptor.visibility,
     parameterInfos: List<KotlinParameterInfo> = methodDescriptor.parameters,
     receiver: KotlinParameterInfo? = methodDescriptor.receiver,
-    override val context: PsiElement,
+    val context: PsiElement,
     primaryPropagationTargets: Collection<PsiElement> = emptyList(),
     var checkUsedParameters: Boolean = false,
 ) : KotlinModifiableChangeInfo<KotlinParameterInfo>, UserDataHolder by UserDataHolderBase() {
@@ -78,9 +78,9 @@ open class KotlinChangeInfo(
     }
 
     override fun setType(type: String) {
-        newReturnTypeInfo = KtPsiFactory(context.project).createTypeCodeFragment(
+        newReturnTypeInfo = KtPsiFactory(method.project).createTypeCodeFragment(
                 type,
-                KotlinCallableParameterTableModel.getTypeCodeFragmentContext(context),
+                KotlinCallableParameterTableModel.getTypeCodeFragmentContext(method),
         ).getTypeInfo(true, true)
     }
 

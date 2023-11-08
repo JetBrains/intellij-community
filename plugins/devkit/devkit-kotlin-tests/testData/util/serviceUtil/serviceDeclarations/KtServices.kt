@@ -110,6 +110,9 @@ class KtRegisteredProjectService {
   }
 }
 
+/**
+ * NOT_REGISTERED
+ */
 class KtNonService {
   companion object {
     @JvmStatic

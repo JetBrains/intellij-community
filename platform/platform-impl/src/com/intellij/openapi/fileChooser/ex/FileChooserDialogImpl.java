@@ -476,7 +476,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
         }
       }
 
-      private @Nullable String calculatePath() {
+      private static @Nullable String calculatePath() {
         final Transferable contents = CopyPasteManager.getInstance().getContents();
         if (contents != null) {
           final List<File> fileList = FileCopyPasteUtil.getFileList(contents);

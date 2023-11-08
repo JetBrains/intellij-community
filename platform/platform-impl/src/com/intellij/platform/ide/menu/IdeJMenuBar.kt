@@ -137,7 +137,7 @@ open class IdeJMenuBar internal constructor(@JvmField internal val coroutineScop
   internal val isActivated: Boolean
     get() {
       val index = selectionModel.selectedIndex
-      return index != -1 && getMenu(index).isPopupMenuVisible
+      return index != -1 && getMenu(index).isTryingToShowPopupMenu()
     }
 
   override fun getPreferredSize(): Dimension {
@@ -264,3 +264,9 @@ internal fun installAppMenuIfNeeded(frame: JFrame) {
     LOG.info("The menu bar '$menuBar of frame '$frame' isn't instance of IdeMenuBar")
   }
 }
+
+private fun JMenu.isTryingToShowPopupMenu(): Boolean =
+  if (this is ActionMenu)
+    isTryingToShowPopupMenu
+  else
+    isPopupMenuVisible

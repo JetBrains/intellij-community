@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.editor
 
-import com.intellij.application.options.editor.EditorOptionsPanel.Companion.reinitAllEditors
 import com.intellij.codeInsight.folding.CodeFoldingManager
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.application.ApplicationManager
@@ -19,22 +18,21 @@ import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.*
 
-class CodeFoldingConfigurable : BoundCompositeConfigurable<CodeFoldingOptionsProvider>(
+fun applyCodeFoldingSettingsChanges() {
+  reinitAllEditors()
+  for (editor in EditorFactory.getInstance().allEditors) {
+    val project = editor.project
+    if (project != null && !project.isDefault) CodeFoldingManager.getInstance(project).scheduleAsyncFoldingUpdate(editor)
+  }
+  ApplicationManager.getApplication().messageBus.syncPublisher(EditorOptionsListener.FOLDING_CONFIGURABLE_TOPIC).changesApplied()
+}
+
+internal class CodeFoldingConfigurable : BoundCompositeConfigurable<CodeFoldingOptionsProvider>(
   ApplicationBundle.message("group.code.folding"), "reference.settingsdialog.IDE.editor.code.folding"),
-                                EditorOptionsProvider, WithEpDependencies {
+                                         EditorOptionsProvider, WithEpDependencies {
 
   companion object {
     const val ID: String = "editor.preferences.folding"
-
-    @JvmStatic
-    fun applyCodeFoldingSettingsChanges() {
-      reinitAllEditors()
-      for (editor in EditorFactory.getInstance().allEditors) {
-        val project = editor.project
-        if (project != null && !project.isDefault) CodeFoldingManager.getInstance(project).scheduleAsyncFoldingUpdate(editor)
-      }
-      ApplicationManager.getApplication().messageBus.syncPublisher(EditorOptionsListener.FOLDING_CONFIGURABLE_TOPIC).changesApplied()
-    }
   }
 
   private lateinit var showGutterOutline: Cell<JBCheckBox>
@@ -45,7 +43,8 @@ class CodeFoldingConfigurable : BoundCompositeConfigurable<CodeFoldingOptionsPro
 
     return panel {
       row {
-        val text = if (ExperimentalUI.isNewUI()) ApplicationBundle.message("checkbox.show.code.folding.arrows") else ApplicationBundle.message("checkbox.show.code.folding.outline")
+        val text = if (ExperimentalUI.isNewUI()) ApplicationBundle.message("checkbox.show.code.folding.arrows")
+        else ApplicationBundle.message("checkbox.show.code.folding.outline")
         showGutterOutline = checkBox(text)
           .bindSelected(settings::isFoldingOutlineShown, settings::setFoldingOutlineShown)
         if (ExperimentalUI.isNewUI()) {

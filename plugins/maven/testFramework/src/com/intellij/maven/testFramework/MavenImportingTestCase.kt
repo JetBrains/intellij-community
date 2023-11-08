@@ -8,6 +8,7 @@ import com.intellij.maven.testFramework.utils.importMavenProjects
 import com.intellij.openapi.application.*
 import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectNotificationAware
 import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectTracker
+import com.intellij.openapi.externalSystem.statistics.ProjectImportCollector
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleWithNameAlreadyExists
@@ -24,7 +25,6 @@ import com.intellij.openapi.ui.TestDialog
 import com.intellij.openapi.ui.TestDialogManager
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
@@ -43,19 +43,16 @@ import kotlinx.coroutines.withContext
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.ApiStatus.Obsolete
 import org.jetbrains.concurrency.AsyncPromise
-import org.jetbrains.concurrency.Promise
 import org.jetbrains.idea.maven.buildtool.MavenImportSpec
 import org.jetbrains.idea.maven.execution.MavenRunner
 import org.jetbrains.idea.maven.execution.MavenRunnerParameters
 import org.jetbrains.idea.maven.execution.MavenRunnerSettings
 import org.jetbrains.idea.maven.importing.MavenProjectImporter.Companion.isImportToWorkspaceModelEnabled
-import org.jetbrains.idea.maven.model.MavenArtifact
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles
 import org.jetbrains.idea.maven.project.*
-import org.jetbrains.idea.maven.project.importing.*
+import org.jetbrains.idea.maven.project.preimport.MavenProjectPreImporter
 import org.jetbrains.idea.maven.server.MavenServerManager
 import org.jetbrains.idea.maven.utils.MavenLog
-import org.jetbrains.idea.maven.utils.MavenProgressIndicator
 import org.jetbrains.idea.maven.utils.MavenUtil
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor
 import java.io.File
@@ -69,20 +66,13 @@ import java.util.concurrent.atomic.AtomicInteger
 abstract class MavenImportingTestCase : MavenTestCase() {
   private var myProjectsManager: MavenProjectsManager? = null
   private var myCodeStyleSettingsTracker: CodeStyleSettingsTracker? = null
-  @JvmField
-  protected var isNewImportingProcess = false
-  @JvmField
-  protected var myReadContext: MavenReadContext? = null
-  protected var myResolvedContext: MavenResolvedContext? = null
-  protected var myImportedContext: MavenImportedContext? = null
-  protected var myImportingResult: MavenImportingResult? = null
-  protected var myPluginResolvedContext: MavenPluginResolvedContext? = null
   private var myNotificationAware: AutoImportProjectNotificationAware? = null
   private var myProjectTracker: AutoImportProjectTracker? = null
   private var isAutoReloadEnabled = false
 
   @Throws(Exception::class)
   override fun setUp() {
+    assumeThisTestCanBeReusedForPreimport()
     isAutoReloadEnabled = false
     VfsRootAccess.allowRootAccess(getTestRootDisposable(), PathManager.getConfigPath())
     super.setUp()
@@ -91,7 +81,6 @@ abstract class MavenImportingTestCase : MavenTestCase() {
     if (settingsFile != null) {
       VfsRootAccess.allowRootAccess(getTestRootDisposable(), settingsFile.absolutePath)
     }
-    isNewImportingProcess = Registry.`is`("maven.linear.import")
     myNotificationAware = AutoImportProjectNotificationAware.getInstance(myProject)
     myProjectTracker = AutoImportProjectTracker.getInstance(myProject)
     myProject.messageBus.connect(testRootDisposable).subscribe(MavenImportListener.TOPIC, MavenImportLoggingListener())
@@ -105,7 +94,7 @@ abstract class MavenImportingTestCase : MavenTestCase() {
       ThrowableRunnable<Throwable> { TestDialogManager.setTestDialog(TestDialog.DEFAULT) },
       ThrowableRunnable<Throwable> { removeFromLocalRepository("test") },
       ThrowableRunnable<Throwable> { CompilerTestUtil.deleteBuildSystemDirectory(myProject) },
-      ThrowableRunnable<Throwable> { projectsManager?.waitForPluginResolution() },
+      ThrowableRunnable<Throwable> { projectsManager?.waitForAfterImportJobs() },
       ThrowableRunnable<Throwable> { myProjectsManager = null },
       ThrowableRunnable<Throwable> { super.tearDown() },
       ThrowableRunnable<Throwable> {
@@ -151,13 +140,6 @@ abstract class MavenImportingTestCase : MavenTestCase() {
     return !isWorkspaceImport
   }
 
-  protected fun stopMavenImportManager() {
-    if (!isNewImportingProcess) return
-    val manager = MavenImportingManager.getInstance(myProject)
-    manager.forceStopImport()
-    if (!manager.isImportingInProgress()) return
-    val p: Promise<*> = MavenImportingManager.getInstance(myProject).getImportFinishPromise()
-  }
 
   @Throws(Exception::class)
   override fun setUpInWriteAction() {
@@ -408,9 +390,25 @@ abstract class MavenImportingTestCase : MavenTestCase() {
   }
 
   protected suspend fun importProjectsAsync(files: List<VirtualFile>) {
-    initProjectsManager(false)
-    projectsManager.addManagedFilesWithProfilesAndUpdate(files, MavenExplicitProfiles.NONE, null, null)
-    projectsManager.waitForPluginResolution()
+    if (preimportTestMode) {
+      val activity = ProjectImportCollector.IMPORT_ACTIVITY.started(myProject)
+      try {
+        MavenProjectPreImporter.getInstance(myProject)
+          .preimport(files, null, mavenImporterSettings, mavenGeneralSettings, activity)
+      }
+      finally {
+        activity.finished()
+      }
+
+
+    }
+    else {
+      initProjectsManager(false)
+      projectsManager.addManagedFilesWithProfilesAndUpdate(files, MavenExplicitProfiles.NONE, null, null)
+      projectsManager.waitForAfterImportJobs()
+    }
+
+
   }
 
   protected fun importProjectWithErrors() {
@@ -448,77 +446,12 @@ abstract class MavenImportingTestCase : MavenTestCase() {
   }
 
   protected open fun doImportProjects(files: List<VirtualFile>, failOnReadingError: Boolean, vararg profiles: String) {
-    if (isNewImportingProcess) {
-      importViaNewFlow(files, failOnReadingError, emptyList<String>(), *profiles)
-    }
-    else {
-      doImportProjectsLegacyWay(files, failOnReadingError, emptyList<String>(), *profiles)
-    }
+    doImportProjects(files, failOnReadingError, emptyList<String>(), *profiles)
   }
 
-  protected fun importViaNewFlow(files: List<VirtualFile>?, failOnReadingError: Boolean,
-                                 disabledProfiles: List<String?>?, vararg profiles: String?) {
-    projectsManager.initForTests()
-    projectsManager.getProjectsTree().setExplicitProfiles(MavenExplicitProfiles(listOf(*profiles), disabledProfiles))
-    val importingManager = MavenImportingManager.getInstance(myProject)
-    myImportingResult = importingManager.openProjectAndImport(
-      FilesList(files!!),
-      mavenImporterSettings,
-      mavenGeneralSettings,
-      MavenImportSpec.EXPLICIT_IMPORT
-    )
-    val promise = myImportingResult!!.finishPromise.onSuccess { p: MavenImportFinishedContext ->
-      val t = p.error
-      if (t != null) {
-        if (t is RuntimeException) throw (t as RuntimeException?)!!
-        throw RuntimeException(t)
-      }
-      myImportedContext = p.context
-      myReadContext = myImportedContext!!.readContext
-      myResolvedContext = myImportedContext!!.resolvedContext
-    }
-    try {
-      PlatformTestUtil.waitForPromise(promise)
-    }
-    catch (e: AssertionError) {
-      if (promise.getState() == Promise.State.PENDING) {
-        fail("Current state is: " + importingManager.currentContext)
-      }
-      else {
-        throw RuntimeException(e)
-      }
-    }
 
-
-    /*Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(() -> { // we have not use EDT for import in tests
-
-      MavenImportFlow flow = new MavenImportFlow();
-      MavenInitialImportContext initialImportContext =
-        flow.prepareNewImport(myProject, getMavenProgressIndicator(),
-                              new FilesList(files),
-                              getMavenGeneralSettings(),
-                              getMavenImporterSettings(),
-                              listOf(profiles),
-                              disabledProfiles);
-      myProjectsManager.initForTests();
-      myReadContext = flow.readMavenFiles(initialImportContext, myIgnorePaths, myIgnorePatterns);
-      if (failOnReadingError) {
-        assertFalse("Failed to import Maven project: " + myReadContext.collectProblems(), myReadContext.hasReadingProblems());
-      }
-
-      myResolvedContext = flow.resolveDependencies(myReadContext);
-      mySourcesGeneratedContext = flow.resolveFolders(myResolvedContext);
-      flow.resolvePlugins(myResolvedContext);
-      myImportedContext = flow.commitToWorkspaceModel(myResolvedContext);
-      myProjectsTree = myReadContext.getProjectsTree();
-      flow.updateProjectManager(myReadContext);
-      flow.configureMavenProject(myImportedContext);
-    });
-    PlatformTestUtil.waitForFuture(future, 60_000);*/
-  }
-
-  protected fun doImportProjectsLegacyWay(files: List<VirtualFile>, failOnReadingError: Boolean,
-                                          disabledProfiles: List<String>, vararg profiles: String) {
+  protected fun doImportProjects(files: List<VirtualFile>, failOnReadingError: Boolean,
+                                 disabledProfiles: List<String>, vararg profiles: String) {
     assertFalse(ApplicationManager.getApplication().isWriteAccessAllowed())
     initProjectsManager(false)
     readProjects(files, disabledProfiles, *profiles)
@@ -544,35 +477,12 @@ abstract class MavenImportingTestCase : MavenTestCase() {
   }
 
   protected fun readProjects(files: List<VirtualFile>, disabledProfiles: List<String>, vararg profiles: String) {
-    if (isNewImportingProcess) {
-      val flow = MavenImportFlow()
-      val initialImportContext = flow.prepareNewImport(myProject,
-                                                       FilesList(files),
-                                                       mavenGeneralSettings,
-                                                       mavenImporterSettings,
-                                                       listOf(*profiles),
-                                                       disabledProfiles)
-      projectsManager.initForTests()
-      val future = ApplicationManager.getApplication().executeOnPooledThread {
-        myReadContext = flow.readMavenFiles(initialImportContext, mavenProgressIndicator)
-      }
-      edt<RuntimeException> { PlatformTestUtil.waitForFuture(future, 10000) }
-      flow.updateProjectManager(myReadContext!!)
-    }
-    else {
-      projectsManager.resetManagedFilesAndProfilesInTests(files, MavenExplicitProfiles(listOf(*profiles), disabledProfiles))
-      waitForImportCompletion()
-    }
+    projectsManager.resetManagedFilesAndProfilesInTests(files, MavenExplicitProfiles(listOf(*profiles), disabledProfiles))
+    waitForImportCompletion()
   }
 
   protected fun updateProjectsAndImport(vararg files: VirtualFile) {
-    if (isNewImportingProcess) {
-      importViaNewFlow(listOf(*files), true, emptyList<String>())
-    }
-    else {
-      readProjects(*files)
-      //myProjectsManager.performScheduledImportInTests();
-    }
+    readProjects(*files)
   }
 
   protected fun initProjectsManager(enableEventHandling: Boolean) {
@@ -617,9 +527,7 @@ abstract class MavenImportingTestCase : MavenTestCase() {
         }
       }
     }
-    if (!isNewImportingProcess) {
-      MavenUtil.invokeAndWait(myProject) {}
-    }
+    MavenUtil.invokeAndWait(myProject) {}
 
     // otherwise project settings was modified while importing
     assertNoPendingProjectForReload()
@@ -642,13 +550,10 @@ abstract class MavenImportingTestCase : MavenTestCase() {
 
   protected suspend fun updateAllProjects() {
     projectsManager.updateAllMavenProjects(MavenImportSpec.EXPLICIT_IMPORT)
-    projectsManager.waitForPluginResolution()
+    projectsManager.waitForAfterImportJobs()
   }
 
   protected fun waitForReadingCompletion() {
-    if (isNewImportingProcess) {
-      return
-    }
     ApplicationManager.getApplication().invokeAndWait {
       try {
         projectsManager.waitForReadingCompletion()
@@ -677,67 +582,19 @@ abstract class MavenImportingTestCase : MavenTestCase() {
   }
 
   protected fun resolveDependenciesAndImport() {
-    if (isNewImportingProcess) {
-      importProject()
-      return
-    }
     ApplicationManager.getApplication().invokeAndWait { projectsManager.waitForReadingCompletion() }
   }
 
   protected fun resolvePlugins() {
-    if (isNewImportingProcess) {
-      assertNotNull(myResolvedContext)
-      val promise = AsyncPromise<MavenPluginResolvedContext>()
-      ApplicationManager.getApplication().executeOnPooledThread {
-        try {
-          promise.setResult(MavenImportFlow().resolvePlugins(myResolvedContext!!))
-        }
-        catch (e: Exception) {
-          promise.setError(e)
-        }
-      }
-      PlatformTestUtil.waitForPromise(promise)
-      myPluginResolvedContext = promise.get()
-      return
-    }
     projectsManager.waitForImportCompletion()
   }
 
-  protected fun downloadArtifacts() {
-    downloadArtifacts(projectsManager.getProjects(), null)
-  }
-
-  protected fun downloadArtifacts(projects: Collection<MavenProject>,
-                                  artifacts: List<MavenArtifact>?): MavenArtifactDownloader.DownloadResult {
-    return if (isNewImportingProcess) {
-      downloadArtifactAndWaitForResult(projects, artifacts)
-    }
-    else projectsManager.downloadArtifactsSync(projects, artifacts, true, true)
-  }
-
-  private fun downloadArtifactAndWaitForResult(projects: Collection<MavenProject>,
-                                               artifacts: List<MavenArtifact>?): MavenArtifactDownloader.DownloadResult {
-    val promise = AsyncPromise<MavenArtifactDownloader.DownloadResult>()
-    ApplicationManager.getApplication().executeOnPooledThread {
-      try {
-        promise.setResult(MavenImportFlow().downloadSpecificArtifacts(
-          myProject,
-          projectsManager.getProjectsTree(),
-          projects,
-          artifacts,
-          true,
-          true,
-          MavenProgressIndicator(myProject, null)))
-      }
-      catch (e: Throwable) {
-        promise.setError(e)
-      }
-    }
-    PlatformTestUtil.waitForPromise(promise)
-    return promise.get()!!
+  protected suspend fun downloadArtifacts() {
+    projectsManager.downloadArtifacts(projectsManager.getProjects(), null, true, true)
   }
 
   protected open fun performPostImportTasks() {}
+
   @Throws(Exception::class)
   protected fun executeGoal(relativePath: String?, goal: String) {
     val dir = myProjectRoot.findFileByRelativePath(relativePath!!)
@@ -808,11 +665,13 @@ abstract class MavenImportingTestCase : MavenTestCase() {
         override fun importStarted() {
           importStarted.set(true)
         }
+
         override fun importFinished(importedProjects: MutableCollection<MavenProject>, newModules: MutableList<Module>) {
           if (importStarted.get()) {
             importFinished.set(true)
           }
         }
+
         override fun pluginResolutionStarted() {
           pluginResolutionFinished.set(false)
         }
@@ -880,6 +739,10 @@ abstract class MavenImportingTestCase : MavenTestCase() {
 
     override fun pluginResolutionFinished() {
       log("pluginResolutionFinished")
+    }
+
+    override fun artifactDownloadingScheduled() {
+      log("artifactDownloadingScheduled")
     }
 
     override fun artifactDownloadingStarted() {

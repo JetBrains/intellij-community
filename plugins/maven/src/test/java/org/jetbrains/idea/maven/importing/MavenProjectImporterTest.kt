@@ -1,9 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing
 
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.progress.RawProgressReporter
+import com.intellij.platform.util.progress.RawProgressReporter
 import com.intellij.testFramework.replaceService
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.buildtool.MavenSyncConsole

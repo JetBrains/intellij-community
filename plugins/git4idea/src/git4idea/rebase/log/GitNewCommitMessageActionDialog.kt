@@ -47,13 +47,13 @@ internal class GitNewCommitMessageActionDialog<T : GitCommitEditingActionBase.Mu
   private fun validate(commitEditingData: T, originalHEAD: String?): ValidationInfo? {
     val logData = commitEditingData.logData
     val repository = commitEditingData.repository
-    val commits = commitEditingData.selectedCommitList
+    val commits = commitEditingData.selection.commits
     if (repository.info.currentRevision != originalHEAD || Disposer.isDisposed(logData)) {
       return ValidationInfo(
         GitBundle.message("rebase.log.reword.dialog.failed.repository.changed.message", commits.size)
       )
     }
-    val lastCommitHash = commits.last().id
+    val lastCommitHash = commits.last().hash
     val branches = findContainingBranches(logData, repository.root, lastCommitHash)
     val protectedBranch = findProtectedRemoteBranch(repository, branches)
     if (protectedBranch != null) {

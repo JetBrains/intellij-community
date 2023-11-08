@@ -6,19 +6,14 @@ import com.esotericsoftware.kryo.kryo5.objenesis.instantiator.ObjectInstantiator
 import com.esotericsoftware.kryo.kryo5.serializers.DefaultSerializers
 import com.google.common.collect.HashBiMap
 import com.google.common.collect.HashMultimap
-import com.intellij.util.SmartList
-import com.intellij.util.containers.*
+import com.intellij.platform.workspace.storage.EntityTypesResolver
 import com.intellij.platform.workspace.storage.impl.*
-import com.intellij.platform.workspace.storage.impl.ChangeEntry
-import com.intellij.platform.workspace.storage.impl.ChildEntityId
-import com.intellij.platform.workspace.storage.impl.EntityId
 import com.intellij.platform.workspace.storage.impl.ImmutableEntitiesBarrel
-import com.intellij.platform.workspace.storage.impl.ImmutableEntityFamily
-import com.intellij.platform.workspace.storage.impl.ParentEntityId
-import com.intellij.platform.workspace.storage.impl.RefsTable
 import com.intellij.platform.workspace.storage.impl.containers.*
-import com.intellij.platform.workspace.storage.impl.containers.BidirectionalMap
-import com.intellij.platform.workspace.storage.impl.indices.*
+import com.intellij.platform.workspace.storage.impl.indices.EntityStorageInternalIndex
+import com.intellij.platform.workspace.storage.impl.indices.MultimapStorageIndex
+import com.intellij.platform.workspace.storage.impl.indices.SymbolicIdInternalIndex
+import com.intellij.platform.workspace.storage.impl.indices.VirtualFileIndex
 import com.intellij.platform.workspace.storage.impl.references.ImmutableAbstractOneToOneContainer
 import com.intellij.platform.workspace.storage.impl.references.ImmutableOneToAbstractManyContainer
 import com.intellij.platform.workspace.storage.impl.references.ImmutableOneToManyContainer
@@ -27,28 +22,37 @@ import com.intellij.platform.workspace.storage.impl.serialization.CacheMetadata
 import com.intellij.platform.workspace.storage.impl.serialization.SerializableEntityId
 import com.intellij.platform.workspace.storage.impl.serialization.TypeInfo
 import com.intellij.platform.workspace.storage.impl.serialization.serializer.*
-import com.intellij.platform.workspace.storage.impl.serialization.serializer.HashMultimapSerializer
-import com.intellij.platform.workspace.storage.impl.serialization.serializer.ObjectOpenHashSetSerializer
 import com.intellij.platform.workspace.storage.metadata.model.*
 import com.intellij.platform.workspace.storage.metadata.model.PropertyMetadata
 import com.intellij.platform.workspace.storage.metadata.model.ValueTypeMetadata.*
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
+import com.intellij.util.SmartList
+import com.intellij.util.containers.BidirectionalMultiMap
+import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.containers.MostlySingularMultiMap
+import com.intellij.util.containers.MultiMap
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap
-import it.unimi.dsi.fastutil.objects.*
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
 import java.util.*
-import java.util.Stack
 import kotlin.collections.ArrayDeque
-import kotlin.collections.HashSet
-import kotlin.collections.LinkedHashMap
-import kotlin.collections.LinkedHashSet
-import kotlin.enums.EnumEntries
 
 internal interface StorageRegistrar {
   fun registerClasses(kryo: Kryo)
 }
 
-internal class StorageClassesRegistrar(private val serializerUtil: StorageSerializerUtil): StorageRegistrar {
+internal class StorageClassesRegistrar(
+  private val serializerUtil: StorageSerializerUtil,
+  private val typesResolver: EntityTypesResolver
+): StorageRegistrar {
+
+  private val kotlinPluginId = "org.jetbrains.kotlin"
+
+  private val kotlinCollectionsToRegistrar: List<Class<*>> = listOf(
+    ArrayDeque::class.java, emptyList<Any>()::class.java, emptyMap<Any, Any>()::class.java, emptySet<Any>()::class.java
+  )
 
   override fun registerClasses(kryo: Kryo) {
     registerDefaultSerializers(kryo)
@@ -91,8 +95,6 @@ internal class StorageClassesRegistrar(private val serializerUtil: StorageSerial
 
     registerEmptyCollections(kryo)
 
-    registerAnonymizedEntitySources(kryo)
-
     kryo.register(UUID::class.java)
   }
 
@@ -115,9 +117,14 @@ internal class StorageClassesRegistrar(private val serializerUtil: StorageSerial
     kryo.register(MutableSet::class.java)
     kryo.register(MutableMap::class.java)
 
+    kryo.register(Array::class.java)
+
+    registerKotlinCollections(kryo)
+
+    registerKotlinCollectionsInKotlinPlugin(kryo)
+
     kryo.register(ArrayList::class.java)
     kryo.register(LinkedList::class.java)
-    kryo.register(ArrayDeque::class.java)
     kryo.register(Stack::class.java)
     kryo.register(Vector::class.java)
 
@@ -152,6 +159,20 @@ internal class StorageClassesRegistrar(private val serializerUtil: StorageSerial
     kryo.register(Arrays.asList<Int>()::class.java)
   }
 
+  private fun registerKotlinCollections(kryo: Kryo) {
+    kotlinCollectionsToRegistrar.forEach { kryo.register(it) }
+  }
+
+  private fun registerKotlinCollectionsInKotlinPlugin(kryo: Kryo) {
+    val classLoader = typesResolver.getClassLoader(kotlinPluginId)
+    if (classLoader != null) {
+      kotlinCollectionsToRegistrar.forEach {
+        val classInKotlinPlugin = classLoader.loadClass(it.name)
+        kryo.register(classInKotlinPlugin)
+      }
+    }
+  }
+
   private fun registerRefsTableClasses(kryo: Kryo) {
     kryo.register(RefsTable::class.java)
     kryo.register(ImmutableOneToOneContainer::class.java)
@@ -167,8 +188,6 @@ internal class StorageClassesRegistrar(private val serializerUtil: StorageSerial
     kryo.register(ChangeEntry.AddEntity::class.java)
     kryo.register(ChangeEntry.RemoveEntity::class.java)
     kryo.register(ChangeEntry.ReplaceEntity::class.java)
-    kryo.register(ChangeEntry.ChangeEntitySource::class.java)
-    kryo.register(ChangeEntry.ReplaceAndChangeSource::class.java)
     kryo.register(ChangeEntry.ReplaceEntity.Data::class.java)
     kryo.register(ChangeEntry.ReplaceEntity.References::class.java)
   }
@@ -227,11 +246,5 @@ internal class StorageClassesRegistrar(private val serializerUtil: StorageSerial
     registerSingletonSerializer(kryo) { emptyList<Any>() }
     registerSingletonSerializer(kryo) { emptySet<Any>() }
     registerSingletonSerializer(kryo) { emptyArray<Any>() }
-  }
-
-  private fun registerAnonymizedEntitySources(kryo: Kryo) {
-    kryo.register(AnonymizedEntitySource::class.java)
-    kryo.register(MatchedEntitySource::class.java)
-    kryo.register(UnmatchedEntitySource::class.java)
   }
 }

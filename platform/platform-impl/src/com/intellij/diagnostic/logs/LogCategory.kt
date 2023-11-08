@@ -4,4 +4,4 @@ package com.intellij.diagnostic.logs
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class LogCategory(val category: String, var level: DebugLogLevel)
+data class LogCategory(val category: String, val level: DebugLogLevel)

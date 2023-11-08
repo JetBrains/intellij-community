@@ -23,7 +23,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NotNull
 import java.util.function.Supplier
 
-@Service
+@Service(Service.Level.PROJECT)
 @ApiStatus.Experimental
 class JsonPathEvaluateManager internal constructor(private val project: Project) {
   fun evaluateExpression(jsonPathExpr: String? = null) {

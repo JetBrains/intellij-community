@@ -10,6 +10,7 @@ import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.Tools;
 import com.intellij.codeInspection.ui.InspectionResultsView;
 import com.intellij.codeInspection.ui.actions.ExportToXMLAction;
+import com.intellij.codeInspection.ui.actions.ExportToXMLActionKt;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -153,8 +154,8 @@ public class InspectionCommandEx extends AbstractCommand {
             final InspectionResultsView view = getView();
 
             if (view != null) {
-              ExportToXMLAction.Companion.dumpToXml(view.getCurrentProfile(), view.getTree(), view.getProject(),
-                                                    view.getGlobalInspectionContext(), tempDirectory.toPath());
+              ExportToXMLActionKt.dumpToXml(view.getCurrentProfile(), view.getTree(), view.getProject(),
+                                            view.getGlobalInspectionContext(), tempDirectory.toPath());
 
               File[] files = tempDirectory.listFiles();
               if (files != null) {

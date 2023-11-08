@@ -1,13 +1,13 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.server
 
 import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.RawProgressReporter
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.util.progress.RawProgressReporter
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
@@ -17,7 +17,6 @@ import org.jetbrains.idea.maven.project.MavenConsole
 import org.jetbrains.idea.maven.server.MavenEmbedderWrapper.LongRunningEmbedderTask
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException
-import org.jetbrains.idea.maven.utils.MavenProgressIndicator
 import java.io.File
 import java.nio.file.Path
 import java.rmi.RemoteException
@@ -56,7 +55,8 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
                              syncConsole: MavenSyncConsole?,
                              console: MavenConsole?,
                              workspaceMap: MavenWorkspaceMap?,
-                             updateSnapshots: Boolean): Collection<MavenServerExecutionResult> {
+                             updateSnapshots: Boolean,
+                             userProperties: Properties): Collection<MavenServerExecutionResult> {
     val transformer = if (files.isEmpty()) RemotePathTransformerFactory.Transformer.ID
     else RemotePathTransformerFactory.createForProject(project)
     val ioFiles = files.map { file: VirtualFile -> transformer.toRemotePath(file.getPath())?.let { File(it) } }
@@ -66,7 +66,8 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
       explicitProfiles.enabledProfiles,
       explicitProfiles.disabledProfiles,
       serverWorkspaceMap,
-      updateSnapshots
+      updateSnapshots,
+      userProperties
     )
     val results = runLongRunningTask(
       LongRunningEmbedderTask { embedder, taskId -> embedder.resolveProjects(taskId, request, ourToken) },
@@ -167,15 +168,14 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
   }
 
   @Throws(MavenProcessCanceledException::class)
-  fun executeGoal(requests: Collection<MavenGoalExecutionRequest?>,
-                  goal: String,
-                  progressIndicator: MavenProgressIndicator?,
-                  console: MavenConsole?): List<MavenGoalExecutionResult> {
-    val indicator = progressIndicator?.indicator
-    val syncConsole = progressIndicator?.syncConsole
-    return runLongRunningTaskBlocking(
+  suspend fun executeGoal(requests: Collection<MavenGoalExecutionRequest?>,
+                          goal: String,
+                          progressReporter: RawProgressReporter,
+                          syncConsole: MavenSyncConsole?,
+                          console: MavenConsole?): List<MavenGoalExecutionResult> {
+    return runLongRunningTask(
       LongRunningEmbedderTask { embedder, taskId -> embedder.executeGoal(taskId, ArrayList(requests), goal, ourToken) },
-      indicator, syncConsole, console)
+      progressReporter, syncConsole, console)
   }
 
   fun resolveRepositories(repositories: Collection<MavenRemoteRepository?>): Set<MavenRemoteRepository> {

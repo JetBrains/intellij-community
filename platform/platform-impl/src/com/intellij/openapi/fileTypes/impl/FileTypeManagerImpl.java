@@ -43,6 +43,7 @@ import com.intellij.util.*;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
+import kotlin.Unit;
 import kotlinx.coroutines.CoroutineScope;
 import org.jdom.Element;
 import org.jetbrains.annotations.*;
@@ -304,6 +305,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       catch (Throwable e) {
         throw new StartupAbortedException("Cannot create file types", new PluginException(e, pluginDescriptor.getPluginId()));
       }
+      return Unit.INSTANCE;
     });
 
     for (StandardFileType pair : myStandardFileTypes.values()) {

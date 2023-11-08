@@ -1,22 +1,22 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.project
 
-import com.intellij.openapi.progress.withBackgroundProgress
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.ide.progress.withBackgroundProgress
+import com.intellij.platform.util.progress.RawProgressReporter
+import com.intellij.platform.util.progress.rawProgressReporter
+import com.intellij.platform.util.progress.withRawProgressReporter
 import com.intellij.util.lang.JavaVersion
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.execution.BTWMavenConsole
-import org.jetbrains.idea.maven.project.importing.MavenImportingManager
 import org.jetbrains.idea.maven.server.MavenEmbedderWrapper
 import org.jetbrains.idea.maven.server.MavenGoalExecutionRequest
 import org.jetbrains.idea.maven.server.MavenGoalExecutionResult
 import org.jetbrains.idea.maven.server.MavenServerConnector
-import org.jetbrains.idea.maven.utils.MavenProgressIndicator
 import org.jetbrains.idea.maven.utils.MavenUtil
 import java.io.File
-import java.util.function.Supplier
 
 @ApiStatus.Internal
 class MavenFolderResolver(private val project: Project) {
@@ -26,17 +26,15 @@ class MavenFolderResolver(private val project: Project) {
 
   suspend fun resolveFoldersAndImport(projects: Collection<MavenProject>) {
     withBackgroundProgress(project, MavenProjectBundle.message("maven.updating.folders"), true) {
-      doResolveFoldersAndImport(projects)
+      withRawProgressReporter {
+        doResolveFoldersAndImport(projects, rawProgressReporter!!)
+      }
     }
   }
 
-  private suspend fun doResolveFoldersAndImport(projects: Collection<MavenProject>) {
-    if (MavenUtil.isLinearImportEnabled()) {
-      MavenImportingManager.getInstance(project).resolveFolders(projects)
-      return
-    }
+  private suspend fun doResolveFoldersAndImport(projects: Collection<MavenProject>, progressReporter: RawProgressReporter) {
 
-    val allProjectsWithChanges = resolveFolders(projects)
+    val allProjectsWithChanges = resolveFolders(projects, progressReporter)
     val projectsToImportWithChanges = allProjectsWithChanges.filter { !it.key.hasReadingProblems() && it.value.hasChanges() }
 
     //actually a fix for https://youtrack.jetbrains.com/issue/IDEA-286455 to be rewritten, see IDEA-294209
@@ -52,13 +50,14 @@ class MavenFolderResolver(private val project: Project) {
     }
   }
 
-  suspend fun resolveFolders(mavenProjects: Collection<MavenProject>): Map<MavenProject, MavenProjectChanges> {
+  suspend fun resolveFolders(mavenProjects: Collection<MavenProject>,
+                             progressReporter: RawProgressReporter): Map<MavenProject, MavenProjectChanges> {
     val tree = projectsManager.projectsTree
     val mavenProjectsToResolve = collectMavenProjectsToResolve(mavenProjects, tree)
     val projectMultiMap = MavenUtil.groupByBasedir(mavenProjectsToResolve, tree)
     val projectsWithChanges = mutableMapOf<MavenProject, MavenProjectChanges>()
     for ((baseDir, mavenProjectsForBaseDir) in projectMultiMap.entrySet()) {
-      val chunk = resolveFolders(baseDir, mavenProjectsForBaseDir, tree)
+      val chunk = resolveFolders(baseDir, mavenProjectsForBaseDir, tree, progressReporter)
       projectsWithChanges.putAll(chunk)
     }
     return projectsWithChanges
@@ -66,14 +65,10 @@ class MavenFolderResolver(private val project: Project) {
 
   private suspend fun resolveFolders(baseDir: String,
                                      mavenProjects: Collection<MavenProject>,
-                                     tree: MavenProjectsTree): Map<MavenProject, MavenProjectChanges> {
-    val syncConsoleSupplier = Supplier { projectsManager.syncConsole }
-    val indicator = MavenProgressIndicator(project, syncConsoleSupplier)
+                                     tree: MavenProjectsTree,
+                                     progressReporter: RawProgressReporter): Map<MavenProject, MavenProjectChanges> {
     val goal = projectsManager.importingSettings.updateFoldersOnImportPhase
 
-    indicator.checkCanceled()
-    indicator.setText(MavenProjectBundle.message("maven.updating.folders"))
-    indicator.setText2("")
     val fileToProject = mavenProjects.associateBy({ File(it.file.path) }, { it })
     val requests = fileToProject.entries.map { (key, value): Map.Entry<File, MavenProject> ->
       MavenGoalExecutionRequest(key, value.activatedProfilesIds)
@@ -82,7 +77,7 @@ class MavenFolderResolver(private val project: Project) {
     val goalResults: List<MavenGoalExecutionResult>
     val embedder: MavenEmbedderWrapper = projectsManager.embeddersManager.getEmbedder(MavenEmbeddersManager.FOR_FOLDERS_RESOLVE, baseDir)
     try {
-      goalResults = embedder.executeGoal(requests, goal, indicator, mavenConsole) // TODO: suspend
+      goalResults = embedder.executeGoal(requests, goal, progressReporter, projectsManager.syncConsole, mavenConsole)
     }
     finally {
       projectsManager.embeddersManager.release(embedder)
@@ -111,6 +106,6 @@ class MavenFolderResolver(private val project: Project) {
   private val mavenConsole: MavenConsole
     get() {
       val mavenGeneralSettings = projectsManager.generalSettings
-      return BTWMavenConsole(project, mavenGeneralSettings.outputLevel, mavenGeneralSettings.isPrintErrorStackTraces)
+      return BTWMavenConsole(project, mavenGeneralSettings.outputLevel)
     }
 }

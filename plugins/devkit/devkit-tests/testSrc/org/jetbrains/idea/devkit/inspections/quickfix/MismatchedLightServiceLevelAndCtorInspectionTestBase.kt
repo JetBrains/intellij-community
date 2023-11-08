@@ -17,7 +17,7 @@ abstract class MismatchedLightServiceLevelAndCtorInspectionTestBase : LightDevKi
       package com.intellij.openapi.components;
 
       public @interface Service {
-        Level[] value() default {};
+        Level[] value() default Level.APP;
 
         enum Level { APP, PROJECT }
       }

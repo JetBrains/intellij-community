@@ -3,11 +3,13 @@ package com.intellij.devkit.workspaceModel
 
 import com.intellij.codeInspection.*
 import com.intellij.openapi.project.Project
+import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtVisitorVoid
 
+@VisibleForTesting
 class WorkspaceEntityMutableFieldInspection: LocalInspectionTool() {
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = object : KtVisitorVoid() {
     override fun visitClass(klass: KtClass) {

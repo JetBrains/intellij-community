@@ -433,7 +433,7 @@ public final class GdkMethodUtil {
       }
 
       @Nullable
-      private PsiClassType inferCategoryType(final PsiClass aClass) {
+      private static PsiClassType inferCategoryType(final PsiClass aClass) {
         return RecursionManager.doPreventingRecursion(aClass, true, (NullableComputable<PsiClassType>)() -> {
           final PsiModifierList modifierList = aClass.getModifierList();
           if (modifierList == null) return null;

@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage;
 
+import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.PagedFileStorage;
 import com.intellij.util.io.blobstorage.SpaceAllocationStrategy;
 import org.jetbrains.annotations.NotNull;
@@ -28,29 +29,19 @@ public class StreamlinedBlobStorageOverPagedStorageTest extends StreamlinedBlobS
 
   @Override
   protected StreamlinedBlobStorageOverPagedStorage openStorage(final Path pathToStorage) throws IOException {
-    final PagedFileStorage pagedStorage = new PagedFileStorage(
-      pathToStorage,
-      LOCK_CONTEXT,
-      pageSize,
-      true,
-      true
-    );
-    try {
-      return new StreamlinedBlobStorageOverPagedStorage(
+    return IOUtil.wrapSafely(
+      new PagedFileStorage(pathToStorage, LOCK_CONTEXT, pageSize, true, true),
+      pagedStorage -> new StreamlinedBlobStorageOverPagedStorage(
         pagedStorage,
         allocationStrategy
-      );
-    }
-    catch (Throwable t) {
-      storage.close();
-      throw t;
-    }
+      )
+    );
   }
 
 
   @Override
   public void tearDown() throws Exception {
-    if (storage != null) {
+    if (storage != null && !storage.isClosed()) {
       System.out.printf("Storage after test: %d records allocated, %d deleted, %d relocated, live records %.1f%% of total \n",
                         storage.recordsAllocated(),
                         storage.recordsDeleted(),

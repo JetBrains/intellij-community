@@ -13,6 +13,7 @@ import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.text.StringUtil
@@ -75,7 +76,7 @@ abstract class OptionsTopHitProvider : OptionsSearchTopHitProvider, SearchTopHit
 
   // ours ProjectLevelProvider registered in ours projectOptionsTopHitProvider extension point,
   // not in common topHitProvider, so, this adapter is required to expose ours project level providers.
-  internal class ProjectLevelProvidersAdapter : SearchTopHitProvider {
+  class ProjectLevelProvidersAdapter : SearchTopHitProvider {
     override fun consumeTopHits(pattern: String, collector: Consumer<Any>, project: Project?) {
       if (project == null) {
         return
@@ -114,7 +115,9 @@ private class PreloadService(coroutineScope: CoroutineScope) {
           val provider = extension.instance as ApplicationLevelProvider? ?: continue
           if (provider.preloadNeeded()) {
             kotlin.coroutines.coroutineContext.ensureActive()
-            topHitCache.getCachedOptions(provider = provider, project = null, pluginDescriptor = extension.pluginDescriptor)
+            blockingContext {
+              topHitCache.getCachedOptions(provider = provider, project = null, pluginDescriptor = extension.pluginDescriptor)
+            }
           }
         }
       }

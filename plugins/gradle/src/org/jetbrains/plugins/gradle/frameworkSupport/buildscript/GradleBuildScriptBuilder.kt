@@ -60,8 +60,14 @@ interface GradleBuildScriptBuilder<BSB : GradleBuildScriptBuilder<BSB>> : Gradle
   fun withJavaLibraryPlugin(): BSB
   fun withIdeaPlugin(): BSB
   fun withKotlinJvmPlugin(): BSB
+
+  /**
+   * Adds the Kotlin JVM plugin using the [version], or omitting the version call if [version] is null.
+   */
+  fun withKotlinJvmPlugin(version: String?): BSB
   fun withKotlinJsPlugin(): BSB
   fun withKotlinMultiplatformPlugin(): BSB
+  fun withKotlinJvmToolchain(jvmTarget: Int): BSB
   fun withGroovyPlugin(): BSB
   fun withGroovyPlugin(version: String): BSB
   fun withApplicationPlugin(
@@ -71,6 +77,7 @@ interface GradleBuildScriptBuilder<BSB : GradleBuildScriptBuilder<BSB>> : Gradle
     defaultJvmArgs: List<String>? = null
   ): BSB
 
+  fun withKotlinTest(): BSB
   fun withJUnit(): BSB
   fun withJUnit4(): BSB
   fun withJUnit5(): BSB

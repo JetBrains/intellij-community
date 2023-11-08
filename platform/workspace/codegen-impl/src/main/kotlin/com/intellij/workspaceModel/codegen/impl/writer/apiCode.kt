@@ -108,17 +108,8 @@ private fun checkType(type: ValueType<*>): String? = when (type) {
   is ValueType.Map<*, *> -> {
     checkType(type.keyType) ?: checkType(type.valueType)
   }
-  is ValueType.Blob<*> -> {
-    if (!keepUnknownFields && type.kotlinClassName !in knownInterfaces) {
-      "Unsupported type '${type.kotlinClassName}'"
-    }
-    else null
-  }
   else -> null
 }
-
-private val keepUnknownFields: Boolean
-  get() = java.lang.Boolean.getBoolean("workspace.model.generator.keep.unknown.fields")
 
 private val knownInterfaces = setOf(VirtualFileUrl.decoded, EntitySource.decoded, SymbolicEntityId.decoded)
 

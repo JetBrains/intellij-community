@@ -23,15 +23,15 @@ internal class UiThemePaletteScope {
     if (newPalette.isEmpty()) {
       return@SynchronizedClearableLazy null
     }
-
-    val hash = updateHash(InsecureHashBuilder()).build()
-    newSvgPatcher(digest = hash, newPalette = newPalette) { alphas.get(it) }
+    else {
+      newSvgPatcher(newPalette = newPalette) { alphas.get(it) }
+    }
   }
 
   fun updateHash(insecureHashBuilder: InsecureHashBuilder): InsecureHashBuilder {
     insecureHashBuilder
-      .stringMap(newPalette)
-      .stringIntMap(alphas)
+      .putStringMap(newPalette)
+      .putStringIntMap(alphas)
     return insecureHashBuilder
   }
 }
@@ -41,6 +41,16 @@ internal class UiThemePaletteScopeManager {
   private val checkBoxes = UiThemePaletteScope()
   private val radioButtons = UiThemePaletteScope()
   private val trees = UiThemePaletteScope()
+
+  fun computeDigest(builder: InsecureHashBuilder): InsecureHashBuilder {
+    // id and version of this class implementation
+    builder.putLong(418570217844437204)
+    ui.updateHash(builder)
+    checkBoxes.updateHash(builder)
+    radioButtons.updateHash(builder)
+    trees.updateHash(builder)
+    return builder
+  }
 
   fun getScope(colorKey: String): UiThemePaletteScope? {
     return when {

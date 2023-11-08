@@ -37,9 +37,6 @@ internal class UIThemeBean {
   var dark: Boolean = false
 
   @JvmField
-  var additionalEditorSchemes: List<String>? = null
-
-  @JvmField
   var ui: Map<String, Any?>? = null
 
   @JvmField
@@ -87,27 +84,6 @@ internal fun readTheme(parser: JsonParser): UIThemeBean {
         }
       }
       JsonToken.END_OBJECT -> {
-      }
-      JsonToken.START_ARRAY -> {
-        val fieldName = parser.currentName()
-        val list = ArrayList<String>()
-        while (parser.nextToken() != JsonToken.END_ARRAY) {
-          when (parser.currentToken()) {
-            JsonToken.VALUE_STRING -> {
-              list.add(parser.valueAsString)
-            }
-            else -> {}
-          }
-        }
-
-        when (fieldName) {
-          "additionalEditorSchemes" -> {
-            bean.additionalEditorSchemes = java.util.List.copyOf(list)
-          }
-          else -> {
-            logger<UIThemeBean>().warn("Unknown field: ${parser.currentName()}")
-          }
-        }
       }
       JsonToken.VALUE_STRING -> {
         when (parser.currentName()) {

@@ -60,14 +60,12 @@ class SingleRootInjectedFileViewProvider extends SingleRootFileViewProvider impl
   }
 
   @Override
-  @NotNull
-  public DocumentWindowImpl getDocument() {
+  public @NotNull DocumentWindowImpl getDocument() {
     return myDocumentWindow;
   }
 
-  @NonNls
   @Override
-  public String toString() {
+  public @NonNls String toString() {
     return "Single root injected file '"+getVirtualFile().getName()+"' " + (isValid() ? "" : " invalid") + (isPhysical() ? "" : " nonphysical");
   }
 

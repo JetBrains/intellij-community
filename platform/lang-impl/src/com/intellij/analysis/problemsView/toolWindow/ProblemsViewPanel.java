@@ -10,6 +10,8 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ToggleOptionAction.Option;
 import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.client.ClientProjectSession;
+import com.intellij.openapi.client.ClientSessionsUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
@@ -62,14 +64,13 @@ import static com.intellij.util.OpenSourceUtil.navigate;
 import static javax.swing.tree.TreeSelectionModel.SINGLE_TREE_SELECTION;
 
 public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, DataProvider, ProblemsViewTab {
-  protected final ClientId myClientId = ClientId.getCurrent();
+  private final ClientProjectSession mySession;
   volatile boolean myDisposed;
-  private final Project myProject;
   private final String myId;
   private final ProblemsViewState myState;
   private final Supplier<@NlsContexts.TabTitle String> myName;
   private final ProblemsTreeModel myTreeModel = new ProblemsTreeModel(this);
-  private final DescriptorPreview myPreview = new DescriptorPreview(this, true, myClientId);
+  protected final DescriptorPreview myPreview;
   private final JPanel myPanel;
   protected final ActionToolbar myToolbar;
   private final Insets myToolbarInsets = JBUI.insetsRight(1);
@@ -197,7 +198,9 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, D
                            @NotNull ProblemsViewState state,
                            @NotNull Supplier<String> name) {
     super(false, .5f, .1f, .9f);
-    myProject = project;
+    mySession = ClientSessionsUtil.getCurrentSession(project);
+    myPreview = new DescriptorPreview(this, true, mySession);
+
     this.myId = id;
     myState = state;
     myName = name;
@@ -278,7 +281,7 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, D
       if (editor != null) return TextEditorProvider.getInstance().getTextEditor(editor);
       Node node = getSelectedNode();
       VirtualFile file = node == null ? null : node.getVirtualFile();
-      return file == null ? null : getFirstElement(FileEditorManager.getInstance(myProject).getEditors(file));
+      return file == null ? null : getFirstElement(FileEditorManager.getInstance(mySession.getProject()).getEditors(file));
     }
     Node node = getSelectedNode();
     if (node != null) {
@@ -346,7 +349,11 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, D
   }
 
   public final @NotNull Project getProject() {
-    return myProject;
+    return mySession.getProject();
+  }
+
+  public final @NotNull ClientProjectSession getSession() {
+    return mySession;
   }
 
   public final @NotNull ProblemsViewState getState() {
@@ -451,7 +458,7 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, D
         Node node = getSelectedNode();
         Navigatable navigatable = node == null ? null : node.getNavigatable();
         if (navigatable != null && navigatable.canNavigateToSource()) {
-          try (AccessToken ignored = ClientId.withClientId(myClientId)) {
+          try (AccessToken ignored = ClientId.withClientId(mySession.getClientId())) {
             navigate(false, navigatable);
           }
         }

@@ -34,6 +34,7 @@ import org.intellij.plugins.markdown.editor.tables.ui.presentation.GraphicsUtils
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTable
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableRow
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableSeparatorRow
 import org.intellij.plugins.markdown.lang.psi.util.hasType
 import java.awt.*
 import java.awt.event.MouseEvent
@@ -141,7 +142,7 @@ internal class HorizontalBarPresentation(private val editor: Editor, private val
   private fun calculatePositions(header: MarkdownTableRow, document: Document, fontMetrics: FontMetrics): List<Int> {
     require(barHeight % 2 == 0) { "barHeight value should be even" }
     val separators = header.firstChild.siblings(forward = true, withSelf = true)
-      .filter { it.hasType(MarkdownTokenTypes.TABLE_SEPARATOR) }
+      .filter { it.hasType(MarkdownTokenTypes.TABLE_SEPARATOR) && it !is MarkdownTableSeparatorRow }
       .map { it.startOffset }
     val separatorWidth = fontMetrics.charWidth('|')
     val firstOffset = separators.firstOrNull() ?: return emptyList()

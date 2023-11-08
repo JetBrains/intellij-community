@@ -81,7 +81,7 @@ public final class VfsData {
         isIsIndexedFlagDisabled = !enable;
       }
       else {
-        isIsIndexedFlagDisabled = Registry.is("indexing.disable.virtual.file.system.entry.is.file.indexed", true);
+        isIsIndexedFlagDisabled = Registry.is("indexing.disable.virtual.file.system.entry.is.file.indexed", false);
       }
     }
     return isIsIndexedFlagDisabled;

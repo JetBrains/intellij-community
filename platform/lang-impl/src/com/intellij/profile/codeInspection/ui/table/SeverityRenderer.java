@@ -2,6 +2,7 @@
 package com.intellij.profile.codeInspection.ui.table;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
+import com.intellij.codeHighlighting.HighlightDisplayLevelColoredIcon;
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
@@ -24,9 +25,9 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
-import java.util.List;
 import java.util.ArrayList;
 import java.util.EventObject;
+import java.util.List;
 
 public final class SeverityRenderer extends ComboBoxTableRenderer<HighlightSeverity> {
   private static final Icon DEFAULT_DISABLED_ICON = HighlightDisplayLevel.createIconByMask(UIUtil.getLabelDisabledForeground());
@@ -55,8 +56,8 @@ public final class SeverityRenderer extends ComboBoxTableRenderer<HighlightSever
 
   public static Icon getIcon(@NotNull HighlightDisplayLevel level) {
     Icon icon = level.getIcon();
-    return icon instanceof HighlightDisplayLevel.ColoredIcon
-                 ? new ColorIcon(icon.getIconWidth(), ((HighlightDisplayLevel.ColoredIcon)icon).getColor())
+    return icon instanceof HighlightDisplayLevelColoredIcon
+                 ? new ColorIcon(icon.getIconWidth(), ((HighlightDisplayLevelColoredIcon)icon).getColor())
                  : icon;
   }
 

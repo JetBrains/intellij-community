@@ -14,9 +14,7 @@ import com.intellij.ide.MnemonicUsageCollector.logMnemonicUsed
 import com.intellij.ide.actions.MaximizeActiveDialogAction
 import com.intellij.ide.dnd.DnDManager
 import com.intellij.ide.dnd.DnDManagerImpl
-import com.intellij.ide.plugins.StartupAbortedException
 import com.intellij.ide.ui.UISettings
-import com.intellij.idea.isImplicitReadOnEDTDisabled
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.TransactionGuard
@@ -41,11 +39,15 @@ import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.FocusManagerImpl
+import com.intellij.openapi.wm.impl.IdeFrameImpl
+import com.intellij.platform.ide.bootstrap.StartupErrorReporter
+import com.intellij.platform.ide.bootstrap.isImplicitReadOnEDTDisabled
 import com.intellij.ui.ComponentUtil
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.EDT
 import com.intellij.util.ui.EdtInvocationManager
+import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.job
@@ -313,7 +315,6 @@ class IdeEventQueue private constructor() : EventQueue() {
       }
 
       checkForTimeJump(startedAt)
-      hoverService.process(event)
 
       if (!appIsLoaded()) {
         try {
@@ -324,6 +325,8 @@ class IdeEventQueue private constructor() : EventQueue() {
         }
         return
       }
+
+      hoverService.process(event)
 
       event = mapEvent(event)
       val metaEvent = mapMetaState(event)
@@ -493,7 +496,7 @@ class IdeEventQueue private constructor() : EventQueue() {
       // 'bare' ControlFlowException-s are not reported
       t = RuntimeException(t)
     }
-    StartupAbortedException.processException(t)
+    StartupErrorReporter.processException(t)
   }
 
   /**
@@ -647,7 +650,7 @@ class IdeEventQueue private constructor() : EventQueue() {
   private fun redispatchLater(me: MouseEvent) {
     @Suppress("DEPRECATION")
     val toDispatch = MouseEvent(me.component, me.id, System.currentTimeMillis(), me.modifiers, me.x, me.y, 1, me.isPopupTrigger, me.button)
-    SwingUtilities.invokeLater { dispatchEvent(toDispatch) }
+    invokeLater { dispatchEvent(toDispatch) }
   }
 
   private fun dispatchByCustomDispatchers(e: AWTEvent): Boolean {
@@ -683,6 +686,13 @@ class IdeEventQueue private constructor() : EventQueue() {
       val consumed = ke == null || ke.isConsumed
       if (me != null && (me.isPopupTrigger || e.id == MouseEvent.MOUSE_PRESSED) || ke != null && ke.keyCode == KeyEvent.VK_CONTEXT_MENU) {
         popupTriggerTime = System.currentTimeMillis()
+      }
+      val source = e.source
+      if (source is IdeFrameImpl) {
+        when (e.id) {
+          WindowEvent.WINDOW_ACTIVATED -> source.mouseReleaseCountSinceLastActivated = 0
+          MouseEvent.MOUSE_RELEASED -> ++source.mouseReleaseCountSinceLastActivated
+        }
       }
       super.dispatchEvent(e)
       // collect mnemonics statistics only if key event was processed above
@@ -773,7 +783,7 @@ class IdeEventQueue private constructor() : EventQueue() {
       maybeReady()
     }
     else {
-      SwingUtilities.invokeLater {
+      invokeLater {
         ready.add(runnable)
         maybeReady()
       }
@@ -790,7 +800,7 @@ class IdeEventQueue private constructor() : EventQueue() {
            && e is KeyEvent && e.getID() == KeyEvent.KEY_RELEASED) && (e.keyCode == KeyEvent.VK_UP || e.keyCode == KeyEvent.VK_DOWN)) {
         val parent: Component? = ComponentUtil.getWindow(e.component)
         if (parent is JDialog) {
-          SwingUtilities.invokeLater {
+          invokeLater {
             if (e.keyCode == KeyEvent.VK_UP) {
               MaximizeActiveDialogAction.maximize(parent)
             }
@@ -835,7 +845,7 @@ class IdeEventQueue private constructor() : EventQueue() {
       // only do wrapping trickery with non-local events to preserve correct behavior -
       // local events will get dispatched under local ID anyway
       val clientId = current
-      super.postEvent(InvocationEvent(event.getSource()) { withClientId(clientId).use { dispatchEvent(event) } })
+      super.postEvent(InvocationEvent(event.source) { withClientId(clientId).use { dispatchEvent(event) } })
       return true
     }
     if (event is KeyEvent) {
@@ -1008,7 +1018,7 @@ internal fun performActivity(e: AWTEvent, runnable: () -> Unit) {
 }
 
 private fun mapEvent(e: AWTEvent): AWTEvent {
-  return if (SystemInfoRt.isXWindow && e is MouseEvent && e.button > 3) mapXWindowMouseEvent(e) else e
+  return if (StartupUiUtil.isXToolkit() && e is MouseEvent && e.button > 3) mapXWindowMouseEvent(e) else e
 }
 
 private fun mapXWindowMouseEvent(src: MouseEvent): AWTEvent {
@@ -1093,7 +1103,7 @@ internal fun consumeUnrelatedEvent(modalComponent: Component?, event: AWTEvent):
     val s = event.getSource()
     if (s is Component) {
       var c: Component? = s
-      val modalWindow = SwingUtilities.windowForComponent(modalComponent)
+      val modalWindow = SwingUtilities.getWindowAncestor(modalComponent)
       while (c != null && c !== modalWindow) {
         c = c.parent
       }

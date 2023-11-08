@@ -20,6 +20,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -85,13 +86,13 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
   public TreeModelBuilder(@Nullable Project project, @NotNull ChangesGroupingPolicyFactory grouping) {
     myProject = project != null && !project.isDefault() ? project : null;
     myRoot = ChangesBrowserNode.createRoot();
-    myModel = new DefaultTreeModel(myRoot);
+    myModel = new ChangesTreeModel(myRoot);
     myGroupingPolicyFactory = grouping;
   }
 
   @NotNull
   public static DefaultTreeModel buildEmpty() {
-    return new DefaultTreeModel(ChangesBrowserNode.createRoot());
+    return new ChangesTreeModel(ChangesBrowserNode.createRoot());
   }
 
   @NotNull
@@ -417,6 +418,8 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
                                   @NotNull ChangesBrowserNode<?> subtreeRoot,
                                   @NotNull ChangesBrowserNode<?> node,
                                   @NotNull Function<StaticFilePath, ChangesBrowserNode<?>> nodeBuilder) {
+    ProgressManager.checkCanceled();
+
     PATH_NODE_BUILDER.set(subtreeRoot, nodeBuilder);
     if (!GROUPING_POLICY.isIn(subtreeRoot)) {
       ChangesGroupingPolicy policy = myProject != null ? myGroupingPolicyFactory.createGroupingPolicy(myProject, myModel)
@@ -438,17 +441,23 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
 
   @NotNull
   public DefaultTreeModel build() {
+    return build(false);
+  }
+
+  @NotNull
+  @ApiStatus.Experimental
+  public DefaultTreeModel build(boolean forcePrepareCaches) {
     TreeUtil.sort(myModel, BROWSER_NODE_COMPARATOR);
     collapseDirectories(myModel, myRoot);
 
     if (myProject != null && !ApplicationManager.getApplication().isDispatchThread()) {
-      // Incrementally fill background colors
-      // read lock is required for background colors calculation as it requires project file index
-      // no return value expected. incremental computation is handled inside precalculateFileColors
-      //noinspection deprecation
-      ReadAction.nonBlocking(() -> {
-        precalculateFileColors(myProject, myRoot);
-      }).executeSynchronously();
+      // Pre-fill background colors for small trees to reduce blinking
+      if (!TreeUtil.hasManyNodes(myRoot, 1000) || forcePrepareCaches) {
+        //noinspection deprecation
+        ReadAction.nonBlocking(() -> {
+          precalculateFileColors(myProject, myRoot);
+        }).executeSynchronously();
+      }
     }
 
     myModel.nodeStructureChanged((TreeNode)myModel.getRoot());
@@ -456,15 +465,13 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
   }
 
   /**
-   * Unfortunately calculating file background color is a costly operation.
-   * (it requires e.g. project file index to detect whether a file in test sources or not)
-   * TreeModelBuilder calls this method on a background thread to have
-   * this calculation ready for Tree rendering
+   * Calculating file background color is a costly operation, so it should be done in background.
+   * (Ex: it requires project file index to detect whether a file in test sources or not)
    */
   @RequiresReadLock
   private static void precalculateFileColors(@NotNull Project project, @NotNull ChangesBrowserNode<?> root) {
     root.traverse().forEach(node -> {
-      node.preparePresentationDataCaches(project);
+      node.cacheBackgroundColor(project);
       // Allow to interrupt read lock
       ProgressManager.checkCanceled();
     });
@@ -546,12 +553,12 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
 
   @NotNull
   public static StaticFilePath staticFrom(@NotNull FilePath fp) {
-    return new StaticFilePath(fp.isDirectory(), fp.getPath(), fp.getVirtualFile());
+    return new StaticFilePath(fp.isDirectory(), fp.getPath());
   }
 
   @NotNull
   public static StaticFilePath staticFrom(@NotNull VirtualFile vf) {
-    return new StaticFilePath(vf.isDirectory(), vf.getPath(), vf);
+    return new StaticFilePath(vf.isDirectory(), vf.getPath());
   }
 
   @NotNull

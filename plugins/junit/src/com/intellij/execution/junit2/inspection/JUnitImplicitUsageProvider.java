@@ -29,6 +29,7 @@ import static com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_
 
 public class JUnitImplicitUsageProvider implements ImplicitUsageProvider {
   private static final String MOCKITO_MOCK = "org.mockito.Mock";
+  private static final String JUNIT_TEMP_DIR = "org.junit.jupiter.api.io.TempDir";
   private static final String KOTLIN_JVM_STATIC = "kotlin.jvm.JvmStatic";
 
   private static final List<String> INJECTED_FIELD_ANNOTATIONS = Arrays.asList(
@@ -37,7 +38,7 @@ public class JUnitImplicitUsageProvider implements ImplicitUsageProvider {
     "org.mockito.Captor",
     "org.mockito.InjectMocks",
     "org.easymock.Mock",
-    "org.assertj.core.api.junit.jupiter.InjectSoftAssertions", 
+    "org.assertj.core.api.junit.jupiter.InjectSoftAssertions",
     "org.junit.jupiter.api.io.TempDir");
 
 
@@ -67,7 +68,7 @@ public class JUnitImplicitUsageProvider implements ImplicitUsageProvider {
     if (element instanceof PsiEnumConstant) {
       PsiClass psiClass = ((PsiEnumConstant)element).getContainingClass();
       return psiClass != null &&
-             CachedValuesManager.getCachedValue(psiClass, 
+             CachedValuesManager.getCachedValue(psiClass,
                                                 () -> CachedValueProvider.Result.create(isEnumClassReferencedInEnumSourceAnnotation(psiClass),
                                                                                         PsiModificationTracker.MODIFICATION_COUNT));
     }
@@ -150,7 +151,8 @@ public class JUnitImplicitUsageProvider implements ImplicitUsageProvider {
   @Override
   public boolean isImplicitWrite(@NotNull PsiElement element) {
     return element instanceof PsiParameter && AnnotationUtil.isAnnotated((PsiParameter)element, MOCKITO_MOCK, 0) ||
-           element instanceof PsiField && AnnotationUtil.isAnnotated((PsiField)element, INJECTED_FIELD_ANNOTATIONS, 0);
+           element instanceof PsiField && AnnotationUtil.isAnnotated((PsiField)element, INJECTED_FIELD_ANNOTATIONS, 0) ||
+           element instanceof PsiField && MetaAnnotationUtil.isMetaAnnotated((PsiField) element, Collections.singleton(JUNIT_TEMP_DIR));
   }
 
   @Override

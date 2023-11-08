@@ -1,13 +1,13 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.commands;
 
 import org.jetbrains.annotations.NotNull;
 
 class BufferingTextSplitter {
-  @NotNull private final StringBuilder myLineBuffer = new StringBuilder();
+  private final @NotNull StringBuilder myLineBuffer = new StringBuilder();
   private boolean myBufferedCr = false;
 
-  @NotNull private final LineConsumer myLineConsumer;
+  private final @NotNull LineConsumer myLineConsumer;
 
   BufferingTextSplitter(@NotNull LineConsumer lineConsumer) {
     myLineConsumer = lineConsumer;

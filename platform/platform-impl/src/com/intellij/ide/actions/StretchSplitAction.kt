@@ -9,7 +9,6 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.Splitter
 import com.intellij.ui.ComponentUtil
-import com.intellij.ui.OnePixelSplitter
 import java.awt.Component
 
 
@@ -39,7 +38,7 @@ abstract class StretchSplitAction(private val direction: StretchDirection) : Dum
     }
   }
 
-  private fun moveDivider(pixelSplitter: OnePixelSplitter, shrinkFirstComponent: Boolean) {
+  private fun moveDivider(pixelSplitter: Splitter, shrinkFirstComponent: Boolean) {
     //The action stretches/shrinks focused component for this amount of pixels
     val step = 50
     //Protects of situations when one part of the splitter becomes invisible
@@ -57,14 +56,14 @@ abstract class StretchSplitAction(private val direction: StretchDirection) : Dum
     }
   }
 
-  private fun findSplitter(editor: Editor): OnePixelSplitter? {
+  private fun findSplitter(editor: Editor): Splitter? {
     val editorComponent = editor.component
     val pixelSplitter = ComponentUtil.findParentByCondition(editorComponent) {
-      p: Component? -> p is OnePixelSplitter
+      p: Component? -> p is Splitter
                        && p.isVertical == (direction == TOP || direction == BOTTOM)
                        && (p.proportion > 0 && p.proportion < 1)
     }
-    if (pixelSplitter is OnePixelSplitter) {
+    if (pixelSplitter is Splitter) {
       return pixelSplitter
     }
     return null

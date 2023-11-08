@@ -52,6 +52,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
+import java.io.IOException;
 import java.util.List;
 
 public class JBTerminalWidget extends JediTermWidget implements Disposable, DataProvider {
@@ -89,6 +90,7 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
         return getTerminalPanel();
       }
     });
+    TerminalTitleKt.bindApplicationTitle(myTerminalTitle, getTerminal(), this);
   }
 
   private @Nullable LinkResult runFilters(@NotNull Project project, @NotNull String line) {
@@ -307,7 +309,7 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
     TerminalTextBuffer buffer = terminalPanel.getTerminalTextBuffer();
     buffer.lock();
     try {
-      Pair<Point, Point> points = selection.pointsForRun(terminalPanel.getColumnCount());
+      Pair<Point, Point> points = selection.pointsForRun(buffer.getWidth());
       return SelectionUtil.getSelectionText(points.first, points.second, buffer);
     }
     finally {
@@ -329,8 +331,8 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
     try {
       TerminalSelection selection = new TerminalSelection(
         new Point(0, -buffer.getHistoryLinesCount()),
-        new Point(terminalPanel.getColumnCount(), buffer.getScreenLinesCount() - 1));
-      Pair<Point, Point> points = selection.pointsForRun(terminalPanel.getColumnCount());
+        new Point(buffer.getWidth(), buffer.getScreenLinesCount() - 1));
+      Pair<Point, Point> points = selection.pointsForRun(buffer.getWidth());
       return SelectionUtil.getSelectionText(points.first, points.second, buffer);
     }
     finally {
@@ -354,6 +356,10 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
 
   public @NotNull TerminalTitle getTerminalTitle() {
     return myTerminalTitle;
+  }
+
+  protected void executeCommand(@NotNull String shellCommand) throws IOException {
+    throw new RuntimeException("Should be called for ShellTerminalWidget only");
   }
 
   private final TerminalWidgetBridge myBridge = new TerminalWidgetBridge();
@@ -457,6 +463,16 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
         widget().remove(notificationComponent);
         widget().revalidate();
       });
+    }
+
+    @Override
+    public void sendCommandToExecute(@NotNull String shellCommand) {
+      try {
+        widget().executeCommand(shellCommand);
+      }
+      catch (IOException e) {
+        LOG.info("Cannot execute shell command: " + shellCommand);
+      }
     }
   }
 }

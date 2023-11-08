@@ -3,7 +3,9 @@ package org.jetbrains.idea.devkit.inspections.internal;
 
 import com.intellij.openapi.extensions.PluginId;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.VisibleForTesting;
 
+@VisibleForTesting
 public final class UsePluginIdEqualsInspection extends UseEqualsInspectionBase {
 
   @Override

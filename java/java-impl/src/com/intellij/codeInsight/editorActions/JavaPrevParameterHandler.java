@@ -3,6 +3,7 @@ package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.completion.JavaMethodCallElement;
 import com.intellij.codeInsight.hint.ParameterInfoControllerBase;
+import com.intellij.codeInsight.hint.api.impls.MethodParameterInfoHandler;
 import com.intellij.codeInsight.hints.ParameterHintsPass;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -54,7 +55,7 @@ public class JavaPrevParameterHandler extends EditorActionHandler {
               if (objects != null && objects.length > 0 && (highlighted != null || objects.length == 1)) {
                 int currentIndex = highlighted == null ? 0 : Arrays.asList(objects).indexOf(highlighted);
                 if (currentIndex >= 0) {
-                  PsiMethod currentMethod = (PsiMethod)((CandidateInfo)objects[currentIndex]).getElement();
+                  PsiMethod currentMethod = MethodParameterInfoHandler.getMethodFromCandidate(objects[currentIndex]);
                   if (currentMethod.isVarArgs() ||
                       offset != rParOffset + 1 &&
                       ((PsiExpressionList)exprList).getExpressionCount() >

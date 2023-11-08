@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.zmlx.hg4idea.util;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -52,7 +52,7 @@ public final class HgVersion implements Comparable<HgVersion> {
   private final int myMajor;
   private final int myMiddle;
   private final int myMinor;  //use only first digit after second dot
-  @NotNull private final Set<String> myUnsupportedExtensions;
+  private final @NotNull Set<String> myUnsupportedExtensions;
 
   public HgVersion(int major, int middle, int minor) {
     this(major, middle, minor, Collections.emptySet());
@@ -68,8 +68,7 @@ public final class HgVersion implements Comparable<HgVersion> {
   /**
    * Parses output of "Hg version" command.
    */
-  @NotNull
-  public static HgVersion parseVersionAndExtensionInfo(@Nullable String output,
+  public static @NotNull HgVersion parseVersionAndExtensionInfo(@Nullable String output,
                                                        @NotNull List<String> errorLines)
     throws ParseException {
     if (StringUtil.isEmptyOrSpaces(output)) {
@@ -84,8 +83,7 @@ public final class HgVersion implements Comparable<HgVersion> {
     throw new ParseException("Unsupported format of hg version output: " + output, 0);
   }
 
-  @NotNull
-  public static Set<String> parseUnsupportedExtensions(@NotNull List<String> errorLines) {
+  public static @NotNull Set<String> parseUnsupportedExtensions(@NotNull List<String> errorLines) {
     // hg version command execute with null start directory,
     // but hgrc configuration file may be related to one of repository then extension may be failed to import too
     //before fixed use command exit value instead if errors.isEmpty
@@ -117,8 +115,7 @@ public final class HgVersion implements Comparable<HgVersion> {
     return Integer.parseInt(match);
   }
 
-  @NotNull
-  public static HgVersion identifyVersion(@NotNull Project project, @NotNull String executable)
+  public static @NotNull HgVersion identifyVersion(@NotNull Project project, @NotNull String executable)
     throws ShellCommandException, InterruptedException, ParseException {
     HgCommandResult versionResult = HgUtil.getVersionOutput(project, executable);
     return parseVersionAndExtensionInfo(versionResult.getRawOutput(), versionResult.getErrorLines());
@@ -163,8 +160,7 @@ public final class HgVersion implements Comparable<HgVersion> {
     return !myUnsupportedExtensions.isEmpty();
   }
 
-  @NotNull
-  public Set<String> getUnsupportedExtensions() {
+  public @NotNull Set<String> getUnsupportedExtensions() {
     return myUnsupportedExtensions;
   }
 
@@ -206,8 +202,7 @@ public final class HgVersion implements Comparable<HgVersion> {
   }
 
   @Override
-  @NotNull
-  public String toString() {
+  public @NotNull String toString() {
     return myMajor + "." + myMiddle + "." + myMinor;
   }
 }

@@ -4,5 +4,8 @@
   </dependencies>
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceInterface="com.intellij.sh.run.ShRunner" serviceImplementation="com.intellij.sh.run.terminal.ShTerminalRunner"/>
+
+    <projectService serviceInterface="com.intellij.sh.run.ShDefaultShellPathProvider"
+                    serviceImplementation="com.intellij.sh.run.terminal.ShTerminalShellPathProvider" />
   </extensions>
 </idea-plugin>

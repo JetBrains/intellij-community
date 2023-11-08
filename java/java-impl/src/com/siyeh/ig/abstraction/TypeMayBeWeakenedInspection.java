@@ -10,27 +10,15 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.UpdateInspectionOptionFix;
 import com.intellij.codeInspection.options.OptPane;
-import com.intellij.modcommand.ModPsiUpdater;
-import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
-import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.command.undo.BasicUndoableAction;
-import com.intellij.openapi.command.undo.UndoManager;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.modcommand.*;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.ui.popup.ListPopup;
-import com.intellij.openapi.ui.popup.PopupStep;
-import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.Query;
 import com.intellij.util.SmartList;
@@ -39,7 +27,6 @@ import com.intellij.util.containers.OrderedSet;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.MethodUtils;
@@ -49,6 +36,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -149,7 +137,7 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
     return candidates;
   }
 
-  class AddStopWordQuickfix extends InspectionGadgetsFix implements LowPriorityAction, LocalQuickFix {
+  class AddStopWordQuickfix extends ModCommandQuickFix implements LowPriorityAction, LocalQuickFix {
     private final List<String> myCandidates;
 
     AddStopWordQuickfix(@NotNull List<String> candidates) {
@@ -174,26 +162,11 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      if (myCandidates.size() == 1) {
-        addClass(myCandidates.get(0), descriptor.getPsiElement());
-        return;
-      }
-      Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
-      if (editor == null) return;
-      String hint = InspectionGadgetsBundle.message("inspection.type.may.be.weakened.add.stop.class.selection.popup");
-      ListPopup popup = JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<>(hint, myCandidates) {
-        @Override
-        public PopupStep<?> onChosen(String selectedValue, boolean finalChoice) {
-          CommandProcessor.getInstance().executeCommand(project, () -> addClass(selectedValue, descriptor.getPsiElement()),
-                                                        InspectionGadgetsBundle.message("inspection.type.may.be.weakened.add.stopper"),
-                                                        null);
-          return super.onChosen(selectedValue, finalChoice);
-        }
-      });
-      popup.showInBestPositionFor(editor);
+    public @NotNull ModCommand perform(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      return new ModChooseAction(InspectionGadgetsBundle.message("inspection.type.may.be.weakened.add.stop.class.selection.popup"),
+                                 ContainerUtil.map(myCandidates, DoAddStopAction::new));
     }
-
+    
     @Override
     public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
       return new IntentionPreviewInfo.Html(
@@ -201,9 +174,28 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
       );
     }
 
-    @Override
-    public boolean startInWriteAction() {
-      return false;
+    private class DoAddStopAction implements ModCommandAction {
+      private final @NlsSafe String myCandidate;
+
+      DoAddStopAction(String candidate) {
+        myCandidate = candidate;
+      }
+
+      @Override
+      public @NotNull String getFamilyName() {
+        return myCandidate;
+      }
+
+      @Override
+      public @Nullable Presentation getPresentation(@NotNull ActionContext context) {
+        return Presentation.of(myCandidate);
+      }
+
+      @Override
+      public @NotNull ModCommand perform(@NotNull ActionContext context) {
+        return ModCommand.updateOption(context.file(), TypeMayBeWeakenedInspection.this,
+                                       insp -> insp.myStopClassSet.add(myCandidate));
+      }
     }
   }
 
@@ -232,32 +224,6 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
       Element stopClasses = new Element("stopClasses");
       stopClasses.addContent(String.join(",", myStopClassSet));
       node.addContent(stopClasses);
-    }
-  }
-
-  private void addClass(@NotNull String stopClass, @NotNull PsiElement context) {
-    if (myStopClassSet.add(stopClass)) {
-      final Project project = context.getProject();
-      ProjectInspectionProfileManager.getInstance(project).fireProfileChanged();
-      final VirtualFile vFile = PsiUtilCore.getVirtualFile(context);
-      UndoManager.getInstance(project).undoableActionPerformed(new BasicUndoableAction(vFile) {
-        @Override
-        public void undo() {
-          myStopClassSet.remove(stopClass);
-          ProjectInspectionProfileManager.getInstance(project).fireProfileChanged();
-        }
-
-        @Override
-        public void redo() {
-          myStopClassSet.add(stopClass);
-          ProjectInspectionProfileManager.getInstance(project).fireProfileChanged();
-        }
-
-        @Override
-        public boolean isGlobal() {
-          return true;
-        }
-      });
     }
   }
 

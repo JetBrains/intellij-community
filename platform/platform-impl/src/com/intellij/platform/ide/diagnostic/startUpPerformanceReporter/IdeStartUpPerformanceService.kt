@@ -4,14 +4,16 @@ package com.intellij.platform.ide.diagnostic.startUpPerformanceReporter
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.ide.AppLifecycleListener
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.progress.ModalTaskOwner
-import com.intellij.openapi.progress.runWithModalProgressBlocking
+import com.intellij.openapi.application.ex.ApplicationManagerEx
+import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.platform.diagnostic.startUpPerformanceReporter.StartUpPerformanceReporter
+import com.intellij.platform.ide.progress.ModalTaskOwner
 import kotlinx.coroutines.CoroutineScope
 import java.util.concurrent.atomic.AtomicBoolean
 
-private class IdeStartUpPerformanceService(coroutineScope: CoroutineScope) : StartUpPerformanceReporter(coroutineScope) {
+internal class IdeStartUpPerformanceService(coroutineScope: CoroutineScope) : StartUpPerformanceReporter(coroutineScope) {
   @Volatile
   private var editorRestoringTillHighlighted = false
 
@@ -38,6 +40,9 @@ private class IdeStartUpPerformanceService(coroutineScope: CoroutineScope) : Sta
   }
 
   override fun projectDumbAwareActivitiesFinished() {
+    if (ApplicationManagerEx.isInIntegrationTest()) {
+      thisLogger().info("startup phase completed: project dumb aware activities finished")
+    }
     projectOpenedActivitiesPassed = true
     if (editorRestoringTillHighlighted) {
       completed()
@@ -45,6 +50,9 @@ private class IdeStartUpPerformanceService(coroutineScope: CoroutineScope) : Sta
   }
 
   override fun editorRestoringTillHighlighted() {
+    if (ApplicationManagerEx.isInIntegrationTest()) {
+      thisLogger().info("startup phase completed: editor highlighted")
+    }
     editorRestoringTillHighlighted = true
     if (projectOpenedActivitiesPassed) {
       completed()

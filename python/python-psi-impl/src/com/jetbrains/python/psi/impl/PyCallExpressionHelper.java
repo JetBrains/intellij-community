@@ -813,6 +813,7 @@ public final class PyCallExpressionHelper {
                                                    implicitParameters,
                                                    mappingResults.getMappedParameters(),
                                                    mappingResults.getUnmappedParameters(),
+                                                   mappingResults.getUnmappedContainerParameters(),
                                                    mappingResults.getUnmappedArguments(),
                                                    mappingResults.getParametersMappedToVariadicPositionalArguments(),
                                                    mappingResults.getParametersMappedToVariadicKeywordArguments(),
@@ -880,6 +881,7 @@ public final class PyCallExpressionHelper {
                                                    implicitParameters,
                                                    mappingResults.getMappedParameters(),
                                                    mappingResults.getUnmappedParameters(),
+                                                   mappingResults.getUnmappedContainerParameters(),
                                                    mappingResults.getUnmappedArguments(),
                                                    mappingResults.getParametersMappedToVariadicPositionalArguments(),
                                                    mappingResults.getParametersMappedToVariadicKeywordArguments(),
@@ -1011,6 +1013,7 @@ public final class PyCallExpressionHelper {
     boolean mappedVariadicArgumentsToParameters = false;
     final Map<PyExpression, PyCallableParameter> mappedParameters = new LinkedHashMap<>();
     final List<PyCallableParameter> unmappedParameters = new ArrayList<>();
+    final List<PyCallableParameter> unmappedContainerParameters = new ArrayList<>();
     final List<PyExpression> unmappedArguments = new ArrayList<>();
     final List<PyCallableParameter> parametersMappedToVariadicKeywordArguments = new ArrayList<>();
     final List<PyCallableParameter> parametersMappedToVariadicPositionalArguments = new ArrayList<>();
@@ -1038,6 +1041,9 @@ public final class PyCallExpressionHelper {
           }
           if (variadicPositionalArguments.size() == 1) {
             mappedParameters.put(variadicPositionalArguments.get(0), parameter);
+          }
+          if (variadicPositionalArguments.size() != 1 && allPositionalArguments.size() == 0) {
+            unmappedContainerParameters.add(parameter);
           }
           allPositionalArguments.clear();
           variadicPositionalArguments.clear();
@@ -1158,7 +1164,7 @@ public final class PyCallExpressionHelper {
     unmappedArguments.addAll(variadicPositionalArguments);
     unmappedArguments.addAll(variadicKeywordArguments);
 
-    return new ArgumentMappingResults(mappedParameters, unmappedParameters, unmappedArguments,
+    return new ArgumentMappingResults(mappedParameters, unmappedParameters, unmappedContainerParameters, unmappedArguments,
                                       parametersMappedToVariadicPositionalArguments, parametersMappedToVariadicKeywordArguments,
                                       tupleMappedParameters);
   }
@@ -1259,6 +1265,7 @@ public final class PyCallExpressionHelper {
   public static class ArgumentMappingResults {
     @NotNull private final Map<PyExpression, PyCallableParameter> myMappedParameters;
     @NotNull private final List<PyCallableParameter> myUnmappedParameters;
+    @NotNull private final List<PyCallableParameter> myUnmappedContainerParameters;
     @NotNull private final List<PyExpression> myUnmappedArguments;
     @NotNull private final List<PyCallableParameter> myParametersMappedToVariadicPositionalArguments;
     @NotNull private final List<PyCallableParameter> myParametersMappedToVariadicKeywordArguments;
@@ -1266,12 +1273,14 @@ public final class PyCallExpressionHelper {
 
     ArgumentMappingResults(@NotNull Map<PyExpression, PyCallableParameter> mappedParameters,
                            @NotNull List<PyCallableParameter> unmappedParameters,
+                           @NotNull List<PyCallableParameter> unmappedContainerParameters,
                            @NotNull List<PyExpression> unmappedArguments,
                            @NotNull List<PyCallableParameter> parametersMappedToVariadicPositionalArguments,
                            @NotNull List<PyCallableParameter> parametersMappedToVariadicKeywordArguments,
                            @NotNull Map<PyExpression, PyCallableParameter> mappedTupleParameters) {
       myMappedParameters = mappedParameters;
       myUnmappedParameters = unmappedParameters;
+      myUnmappedContainerParameters = unmappedContainerParameters;
       myUnmappedArguments = unmappedArguments;
       myParametersMappedToVariadicPositionalArguments = parametersMappedToVariadicPositionalArguments;
       myParametersMappedToVariadicKeywordArguments = parametersMappedToVariadicKeywordArguments;
@@ -1306,6 +1315,11 @@ public final class PyCallExpressionHelper {
     @NotNull
     public Map<PyExpression, PyCallableParameter> getMappedTupleParameters() {
       return myMappedTupleParameters;
+    }
+
+    @NotNull
+    public List<PyCallableParameter> getUnmappedContainerParameters() {
+      return myUnmappedContainerParameters;
     }
   }
 

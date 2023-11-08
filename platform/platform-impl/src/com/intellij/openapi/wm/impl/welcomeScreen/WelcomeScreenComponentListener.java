@@ -8,6 +8,8 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 
 public interface WelcomeScreenComponentListener {
+
+  @Topic.AppLevel
   Topic<WelcomeScreenComponentListener> COMPONENT_CHANGED = new Topic<>("WelcomeScreenComponentChanged",
                                                                         WelcomeScreenComponentListener.class);
 

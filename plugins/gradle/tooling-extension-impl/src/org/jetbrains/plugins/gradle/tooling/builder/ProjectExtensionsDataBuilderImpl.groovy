@@ -1,7 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.tooling.builder
 
+import com.intellij.gradle.toolingExtension.impl.modelBuilder.Messages
 import groovy.transform.CompileStatic
+import groovy.transform.TypeCheckingMode
 import org.gradle.api.Project
 import org.gradle.api.plugins.ExtensionContainer
 import org.gradle.api.plugins.ExtensionsSchema
@@ -9,11 +11,11 @@ import org.gradle.api.reflect.HasPublicType
 import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.gradle.model.*
-import org.jetbrains.plugins.gradle.tooling.ErrorMessageBuilder
+import org.jetbrains.plugins.gradle.tooling.Message
+import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderService
 
 import java.lang.reflect.Method
-
 /**
  * @author Vladislav.Soroka
  */
@@ -27,6 +29,7 @@ class ProjectExtensionsDataBuilderImpl implements ModelBuilderService {
   }
 
   @Override
+  @CompileStatic(TypeCheckingMode.SKIP)
   Object buildAll(String modelName, Project project) {
     DefaultGradleExtensions result = new DefaultGradleExtensions()
     result.parentProjectPath = project.parent?.path
@@ -87,24 +90,31 @@ class ProjectExtensionsDataBuilderImpl implements ModelBuilderService {
       } catch (NoSuchMethodException ignored) {
       }
       if (m != null) {
-        break;
+        break
       }
     }
 
     if (m != null) {
       return (m.invoke(convention) as Map<String, Object>).keySet().asList() as List<String>
     } else {
-      return Collections.emptyList();
+      return Collections.emptyList()
     }
   }
 
-  @NotNull
   @Override
-  ErrorMessageBuilder getErrorMessageBuilder(@NotNull Project project, @NotNull Exception e) {
-    return ErrorMessageBuilder.create(
-      project, e, "Project extensions data import errors"
-    ).withDescription(
-      "Unable to resolve some context data of gradle scripts. Some codeInsight features inside *.gradle files can be unavailable.")
+  void reportErrorMessage(
+    @NotNull String modelName,
+    @NotNull Project project,
+    @NotNull ModelBuilderContext context,
+    @NotNull Exception exception
+  ) {
+    context.getMessageReporter().createMessage()
+      .withGroup(Messages.PROJECT_EXTENSION_MODEL_GROUP)
+      .withKind(Message.Kind.WARNING)
+      .withTitle("Project extensions data import failure")
+      .withText("Unable to resolve some context data of gradle scripts. Some codeInsight features inside *.gradle files can be unavailable.")
+      .withException(exception)
+      .reportMessage(project)
   }
 
   @NotNull private static List<String> extractStringList(Object instance, String methodName) {

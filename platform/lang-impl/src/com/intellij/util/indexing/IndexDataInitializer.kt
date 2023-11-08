@@ -5,6 +5,7 @@ import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.util.ThrowableRunnable
 import kotlinx.coroutines.*
 import kotlinx.coroutines.future.asCompletableFuture
@@ -27,9 +28,14 @@ abstract class IndexDataInitializer<T>(private val name: String) : Callable<T?> 
       log.info("Index data initialization done: ${Duration.between(started, Instant.now()).toMillis()} ms. " + message)
       return result
     }
+    catch (ade: AlreadyDisposedException) {
+      log.warn("Index data initialization cancelled", ade)
+      throw ade
+    }
     catch (t: Throwable) {
-      log.error("Index data initialization failed", t)
-      throw t
+      val e = IllegalStateException("Index data initialization failed", t)
+      log.error(e)
+      throw e
     }
   }
 

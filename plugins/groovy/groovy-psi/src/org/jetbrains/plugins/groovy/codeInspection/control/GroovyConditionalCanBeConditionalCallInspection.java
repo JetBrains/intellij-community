@@ -15,16 +15,16 @@
  */
 package org.jetbrains.plugins.groovy.codeInspection.control;
 
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.codeInspection.GrInspectionUtil;
-import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
 import org.jetbrains.plugins.groovy.codeInspection.utils.EquivalenceChecker;
 import org.jetbrains.plugins.groovy.codeInspection.utils.SideEffectChecker;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
@@ -44,11 +44,11 @@ public class GroovyConditionalCanBeConditionalCallInspection extends BaseInspect
   }
 
   @Override
-  public GroovyFix buildFix(@NotNull PsiElement location) {
+  public LocalQuickFix buildFix(@NotNull PsiElement location) {
     return new CollapseConditionalFix();
   }
 
-  private static class CollapseConditionalFix extends GroovyFix {
+  private static class CollapseConditionalFix extends PsiUpdateModCommandQuickFix {
     @Override
     @NotNull
     public String getFamilyName() {
@@ -56,8 +56,8 @@ public class GroovyConditionalCanBeConditionalCallInspection extends BaseInspect
     }
 
     @Override
-    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) throws IncorrectOperationException {
-      final GrConditionalExpression expression = (GrConditionalExpression) descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      final GrConditionalExpression expression = (GrConditionalExpression) element;
       final GrBinaryExpression binaryCondition = (GrBinaryExpression)PsiUtil.skipParentheses(expression.getCondition(), false);
       if (binaryCondition == null) {
         return;
@@ -78,7 +78,7 @@ public class GroovyConditionalCanBeConditionalCallInspection extends BaseInspect
       }
       final String methodName = methodExpression.getReferenceName();
       final GrArgumentList argumentList = call.getArgumentList();
-      replaceExpression(expression, qualifier.getText() + "?." + methodName + argumentList.getText());
+      GrInspectionUtil.replaceExpression(expression, qualifier.getText() + "?." + methodName + argumentList.getText());
     }
   }
 

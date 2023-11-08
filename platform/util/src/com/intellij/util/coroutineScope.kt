@@ -20,10 +20,7 @@ fun requireNoJob(context: CoroutineContext) {
 @Experimental
 fun CoroutineScope.childScope(context: CoroutineContext = EmptyCoroutineContext, supervisor: Boolean = true): CoroutineScope {
   requireNoJob(context)
-  val parentContext = coroutineContext
-  val parentJob = parentContext.job
-  val job = if (supervisor) SupervisorJob(parent = parentJob) else Job(parent = parentJob)
-  return CoroutineScope(parentContext + job + context)
+  return ChildScope(coroutineContext + context, supervisor)
 }
 
 @Internal
@@ -33,23 +30,30 @@ fun CoroutineScope.namedChildScope(
   supervisor: Boolean = true,
 ): CoroutineScope {
   requireNoJob(context)
-  // `launch` allows to see actual coroutine with its context (and name!)
-  // in the coroutine dump instead of "SupervisorJobImpl{Active}@598294b2"
-  // https://github.com/Kotlin/kotlinx.coroutines/issues/3428
-  lateinit var result: CoroutineScope
-  launch(context + CoroutineName(name), start = CoroutineStart.UNDISPATCHED) {
-    if (supervisor) {
-      supervisorScope {
-        result = this@supervisorScope
-        awaitCancellation() // keep it alive
-      }
-    }
-    else {
-      result = this@launch
-      awaitCancellation() // keep it alive
-    }
+  return ChildScope(coroutineContext + context + CoroutineName(name), supervisor)
+}
+
+/**
+ * This allows to see actual coroutine context (and name!)
+ * in the coroutine dump instead of "SupervisorJobImpl{Active}@598294b2".
+ *
+ * [See issue](https://github.com/Kotlin/kotlinx.coroutines/issues/3428)
+ */
+@Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE", "CANNOT_OVERRIDE_INVISIBLE_MEMBER")
+private class ChildScope(ctx: CoroutineContext, private val supervisor: Boolean) : JobImpl(ctx[Job]), CoroutineScope {
+
+  override fun childCancelled(cause: Throwable): Boolean {
+    return !supervisor && super.childCancelled(cause)
   }
-  return result
+
+  override val coroutineContext: CoroutineContext = ctx + this
+
+  override fun toString(): String {
+    val coroutineName = coroutineContext[CoroutineName]?.name
+    return (if (coroutineName != null) "\"$coroutineName\":" else "") +
+           (if (supervisor) "supervisor:" else "") +
+           super.toString()
+  }
 }
 
 /**
@@ -74,36 +78,21 @@ fun CoroutineScope.namedChildScope(
  */
 @Internal
 @OptIn(InternalCoroutinesApi::class)
+@Suppress("DEPRECATION_ERROR")
 fun CoroutineScope.attachAsChildTo(secondaryParent: CoroutineScope) {
   val parentJob = secondaryParent.coroutineContext.job
   val childJob = this.coroutineContext.job
-
-  // Prevent parent completion while child is not completed.
-  secondaryParent.launch(
-    CoroutineName("child handle '${coroutineContext[CoroutineName]?.name}'") +
-    Dispatchers.Default,
-    start = CoroutineStart.UNDISPATCHED,
-  ) {
-    withContext(NonCancellable) {
-      childJob.join()
-    }
-  }
-
+  // prevent parent completion while child is not completed
   // propagate cancellation from parent to child
-  val handle = parentJob.invokeOnCompletion(onCancelling = true) { throwable ->
-    if (throwable != null) {
-      @Suppress("DEPRECATION_ERROR")
-      (childJob as ChildJob).parentCancelled(parentJob as ParentJob)
-    }
-  }
-
+  val handle = (parentJob as JobSupport).attachChild(childJob as ChildJob)
   // propagate cancellation from child to parent
   childJob.invokeOnCompletion(onCancelling = true) { throwable ->
-    handle.dispose() // remove reference from parent to child
     if (throwable != null) {
-      @Suppress("DEPRECATION_ERROR")
-      (parentJob as JobSupport).childCancelled(throwable)
+      parentJob.childCancelled(throwable)
     }
+  }
+  childJob.invokeOnCompletion {
+    handle.dispose() // remove reference from parent to child
   }
 }
 

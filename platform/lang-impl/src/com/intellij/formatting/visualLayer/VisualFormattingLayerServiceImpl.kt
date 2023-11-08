@@ -5,6 +5,7 @@ import com.intellij.application.options.CodeStyle
 import com.intellij.codeInspection.incorrectFormatting.FormattingChanges
 import com.intellij.codeInspection.incorrectFormatting.detectFormattingChanges
 import com.intellij.formatting.visualLayer.VisualFormattingLayerElement.*
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
@@ -54,6 +55,7 @@ class VisualFormattingLayerServiceImpl : VisualFormattingLayerService() {
   }
 
   override fun collectVisualFormattingLayerElements(editor: Editor): List<VisualFormattingLayerElement> {
+    if (!ApplicationManager.getApplication().isUnitTestMode && editor.document.isWritable) return emptyList()
     val project = editor.project ?: return emptyList()
     val file = PsiDocumentManager.getInstance(project).getPsiFile(editor.document) ?: return emptyList()
     val codeStyleSettings = editor.visualFormattingLayerCodeStyleSettings ?: return emptyList()

@@ -55,7 +55,8 @@ class TerminalCaretModel(private val session: TerminalSession,
   }
 
   override fun commandStarted(command: String) {
-    val position = calculateCaretPosition(0, 1)
+    // place the caret to the next line after the command
+    val position = calculateCaretPosition(0, 2)
     updateCaretPosition(position)
   }
 
@@ -69,7 +70,8 @@ class TerminalCaretModel(private val session: TerminalSession,
 
   private fun calculateCaretPosition(cursorX: Int, cursorY: Int): LogicalPosition {
     val lastBlock = outputModel.getLastBlock() ?: error("No active block")
-    val blockStartLine = editor.document.getLineNumber(lastBlock.startOffset)
+    // cursor position in the TextBuffer is relative to the command start
+    val blockStartLine = editor.document.getLineNumber(lastBlock.commandStartOffset)
     val blockLine = terminalModel.historyLinesCount + cursorY - 1
     return LogicalPosition(blockStartLine + blockLine, cursorX)
   }

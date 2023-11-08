@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.commands;
 
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -21,7 +21,7 @@ public final class GitStandardProgressAnalyzer implements GitProgressAnalyzer {
   // but it looks simpler than storing current operation, checking that there was no skipped, etc.
   private final Object2DoubleOpenHashMap<Operation> myOperationsProgress = new Object2DoubleOpenHashMap<>(4);
 
-  public static GitLineHandlerListener createListener(@NotNull final ProgressIndicator indicator) {
+  public static GitLineHandlerListener createListener(final @NotNull ProgressIndicator indicator) {
     final GitStandardProgressAnalyzer progressAnalyzer = new GitStandardProgressAnalyzer();
     return new GitLineHandlerListener() {
       @Override

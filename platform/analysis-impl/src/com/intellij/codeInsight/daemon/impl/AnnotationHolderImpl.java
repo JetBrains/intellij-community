@@ -39,7 +39,7 @@ public class AnnotationHolderImpl extends SmartList<Annotation> implements Annot
    * @deprecated Do not instantiate the AnnotationHolderImpl directly, please use the one provided to {@link Annotator#annotate(PsiElement, AnnotationHolder)} instead
    */
   @ApiStatus.Internal
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public AnnotationHolderImpl(@NotNull AnnotationSession session) {
     this(session, false);
     PluginException.reportDeprecatedUsage("AnnotationHolderImpl(AnnotationSession)", "Please use the AnnotationHolder passed to Annotator.annotate() instead");
@@ -153,9 +153,8 @@ public class AnnotationHolderImpl extends SmartList<Annotation> implements Annot
     return doCreateAnnotation(severity, range, message, wrapXml(message), callerClass, "createAnnotation");
   }
 
-  @Nullable
   @Contract(pure = true)
-  private static String wrapXml(@Nullable String message) {
+  private static @Nullable String wrapXml(@Nullable String message) {
     return message == null ? null : XmlStringUtil.wrapInHtml(XmlStringUtil.escapeString(message));
   }
 
@@ -169,9 +168,8 @@ public class AnnotationHolderImpl extends SmartList<Annotation> implements Annot
   /**
    * @deprecated this is an old way of creating annotations, via createXXXAnnotation(). please use newAnnotation() instead
    */
-  @NotNull
   @Deprecated
-  private Annotation doCreateAnnotation(@NotNull HighlightSeverity severity,
+  private @NotNull Annotation doCreateAnnotation(@NotNull HighlightSeverity severity,
                                         @NotNull TextRange range,
                                         @NlsContexts.DetailedDescription @Nullable String message,
                                         @NlsContexts.Tooltip @Nullable String tooltip,
@@ -193,9 +191,8 @@ public class AnnotationHolderImpl extends SmartList<Annotation> implements Annot
     return !isEmpty();
   }
 
-  @NotNull
   @Override
-  public AnnotationSession getCurrentAnnotationSession() {
+  public @NotNull AnnotationSession getCurrentAnnotationSession() {
     return myAnnotationSession;
   }
 
@@ -207,14 +204,12 @@ public class AnnotationHolderImpl extends SmartList<Annotation> implements Annot
   void queueToUpdateIncrementally() {
   }
 
-  @NotNull
   @Override
-  public AnnotationBuilder newAnnotation(@NotNull HighlightSeverity severity, @NotNull @Nls String message) {
+  public @NotNull AnnotationBuilder newAnnotation(@NotNull HighlightSeverity severity, @NotNull @Nls String message) {
     return new B(this, severity, message, myCurrentElement, ObjectUtils.chooseNotNull(myCurrentAnnotator, myExternalAnnotator));
   }
-  @NotNull
   @Override
-  public AnnotationBuilder newSilentAnnotation(@NotNull HighlightSeverity severity) {
+  public @NotNull AnnotationBuilder newSilentAnnotation(@NotNull HighlightSeverity severity) {
     return new B(this, severity, null, myCurrentElement, ObjectUtils.chooseNotNull(myCurrentAnnotator, myExternalAnnotator));
   }
 

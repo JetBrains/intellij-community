@@ -184,7 +184,7 @@ public class IndentGuideRenderer implements CustomHighlighterRenderer {
         return isCaretOnGuide(editor, endOffset, off, indentColumn);
     }
 
-    protected final boolean isCaretOnGuide(@NotNull Editor editor, int endOffset, int off, int indentColumn) {
+    protected static boolean isCaretOnGuide(@NotNull Editor editor, int endOffset, int off, int indentColumn) {
         CaretModel caretModel = editor.getCaretModel();
         int caretOffset = caretModel.getOffset();
         return caretOffset >= off && caretOffset < endOffset && caretModel.getLogicalPosition().column == indentColumn;

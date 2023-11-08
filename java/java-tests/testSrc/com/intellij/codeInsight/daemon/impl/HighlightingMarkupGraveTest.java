@@ -28,7 +28,6 @@ import com.intellij.util.TestTimeOut;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ref.GCWatcher;
 import org.intellij.lang.annotations.Language;
-import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -83,8 +82,6 @@ public class HighlightingMarkupGraveTest extends DaemonAnalyzerTestCase {
         assertEquals(MyStoppableAnnotator.SWEARING, assertOneElement(highlightErrors()).getDescription());
         assertEquals("//XXX", assertOneElement(highlightErrors()).highlighter.getTextRange().substring(getFile().getText()));
 
-        initializeStateFromCurrentMarkup();
-
         VirtualFile virtualFile = getFile().getVirtualFile();
         closeEditorAndEnsureTheDocumentMarkupIsGced(virtualFile);
 
@@ -124,6 +121,15 @@ public class HighlightingMarkupGraveTest extends DaemonAnalyzerTestCase {
     FileDocumentManager.getInstance().saveAllDocuments();
     FileEditorManager.getInstance(myProject).closeFile(virtualFile);
 
+    try {
+      // wait markup stored
+      HighlightingMarkupStore.getExecutor().submit(() -> {}).get();
+    }
+    catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+    getProject().getService(HighlightingMarkupGrave.class).clearResurrectedZombies();
+
     myFile = null;
 
     myEditor = null;
@@ -143,14 +149,6 @@ public class HighlightingMarkupGraveTest extends DaemonAnalyzerTestCase {
     }
   }
 
-  private void initializeStateFromCurrentMarkup() {
-    HighlightingMarkupGrave markupRestorer = getProject().getService(HighlightingMarkupGrave.class);
-    Element savedState = markupRestorer.getState();
-    if (savedState != null) {
-      markupRestorer.loadState(savedState); // emulate save on exit - load on open, without explicit close/reload project components
-    }
-  }
-
   public void testStoredHighlightersAreAppliedImmediatelyOnFileReload() {
     HighlightingMarkupGrave.runInEnabled(() -> {
       MyStoppableAnnotator annotator = new MyStoppableAnnotator();
@@ -163,8 +161,6 @@ public class HighlightingMarkupGraveTest extends DaemonAnalyzerTestCase {
         configureByText(JavaFileType.INSTANCE, text);
         assertEquals(MyStoppableAnnotator.SWEARING, assertOneElement(highlightErrors()).getDescription());
         assertEquals("//XXX", assertOneElement(highlightErrors()).highlighter.getTextRange().substring(getFile().getText()));
-
-        initializeStateFromCurrentMarkup();
 
         VirtualFile virtualFile = getFile().getVirtualFile();
         closeEditorAndEnsureTheDocumentMarkupIsGced(virtualFile);

@@ -2,6 +2,7 @@
 package com.intellij.openapi.wm.impl.headertoolbar
 
 import com.intellij.accessibility.AccessibilityUtils
+import com.intellij.ide.ProjectWindowCustomizerService
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.customization.ActionUrl
 import com.intellij.ide.ui.customization.CustomActionsListener
@@ -43,7 +44,6 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.awt.*
 import java.awt.event.MouseEvent
-import java.beans.PropertyChangeListener
 import javax.accessibility.AccessibleContext
 import javax.accessibility.AccessibleRole
 import javax.swing.Icon
@@ -76,12 +76,12 @@ private class MenuButtonInToolbarMainToolbarFlavor(coroutineScope: CoroutineScop
   }
 }
 
-private object DefaultMainToolbarFlavor : MainToolbarFlavor
+private data object DefaultMainToolbarFlavor : MainToolbarFlavor
 
 @ApiStatus.Internal
 class MainToolbar(
   private val coroutineScope: CoroutineScope,
-  frame: JFrame,
+  private val frame: JFrame,
   isOpaque: Boolean = false,
   background: Color? = null,
 ) : JPanel(HorizontalLayout(10)) {
@@ -115,7 +115,7 @@ class MainToolbar(
       flavor.addWidget()
 
       val widgets = actionGroups.map { (actionGroup, position) ->
-        createActionBar(actionGroup, customizationGroup) to position
+        createActionBar(group = actionGroup, customizationGroup = customizationGroup) to position
       }
       for ((widget, position) in widgets) {
         addWidget(widget = widget.component, parent = this@MainToolbar, position = position)
@@ -195,6 +195,13 @@ class MainToolbar(
     actions.addAll(newUrls)
     actions.removeIf { fromPath == it.groupPath }
     schema.setActions(actions)
+  }
+
+  override fun paintComponent(g: Graphics?) {
+    super.paintComponent(g)
+    if (!isToolbarInHeader()) {
+      ProjectWindowCustomizerService.getInstance().paint(frame, this, g as Graphics2D)
+    }
   }
 
   private fun schemaChanged() {
@@ -304,7 +311,7 @@ internal class MyActionToolbarImpl(group: ActionGroup, customizationGroup: Actio
   }
 
   fun updateActions() {
-    updateActionsWithoutLoadingIcon(false)
+    updateActionsWithoutLoadingIcon(/* includeInvisible = */ false)
   }
 
   override fun calculateBounds(size2Fit: Dimension, bounds: MutableList<Rectangle>) {
@@ -363,10 +370,9 @@ internal class MyActionToolbarImpl(group: ActionGroup, customizationGroup: Actio
   }
 
   private fun adjustIcons(presentation: Presentation) {
-    iconUpdater.registerFor(presentation, "icon", { it.icon }, { pst, icn -> pst.icon = icn })
-    iconUpdater.registerFor(presentation, "selectedIcon", { it.selectedIcon }, { pst, icn -> pst.selectedIcon = icn })
-    iconUpdater.registerFor(presentation, "hoveredIcon", { it.hoveredIcon }, { pst, icn -> pst.hoveredIcon = icn })
-    iconUpdater.registerFor(presentation, "disabledIcon", { it.disabledIcon }, { pst, icn -> pst.disabledIcon = icn })
+    PresentationIconUpdater.updateIcons(presentation) { icon ->
+      iconUpdater.updateIcon(icon)
+    }
   }
 
   override fun getSeparatorColor(): Color {
@@ -452,34 +458,17 @@ internal fun isToolbarInHeader(): Boolean {
 
 internal fun isDarkHeader(): Boolean = ColorUtil.isDark(JBColor.namedColor("MainToolbar.background"))
 
-fun adjustIconForHeader(icon: Icon): Icon = if (isDarkHeader()) IconLoader.getDarkIcon(icon, true) else icon
+fun adjustIconForHeader(icon: Icon): Icon = if (isDarkHeader()) IconLoader.getDarkIcon(icon = icon, dark = true) else icon
 
 private class HeaderIconUpdater {
   private val iconCache = ContainerUtil.createWeakSet<Icon>()
 
-  private fun updateIcon(p: Presentation, getter: (Presentation) -> Icon?, setter: (Presentation, Icon) -> Unit) {
-    if (!isDarkHeader()) {
-      return
-    }
+  fun updateIcon(sourceIcon: Icon): Icon {
+    if (sourceIcon in iconCache) return sourceIcon
 
-    getter(p)?.let { icon ->
-      val replaceIcon = adjustIconForHeader(icon)
-      iconCache.add(replaceIcon)
-      setter(p, replaceIcon)
-    }
-  }
-
-  fun registerFor(presentation: Presentation, propName: String, getter: (Presentation) -> Icon?, setter: (Presentation, Icon) -> Unit) {
-    updateIcon(presentation, getter, setter)
-    presentation.addPropertyChangeListener(PropertyChangeListener { event ->
-      if (event.propertyName != propName) {
-        return@PropertyChangeListener
-      }
-      if (event.newValue != null && event.newValue in iconCache) {
-        return@PropertyChangeListener
-      }
-      updateIcon(presentation, getter, setter)
-    })
+    val replaceIcon = adjustIconForHeader(sourceIcon)
+    iconCache.add(replaceIcon)
+    return replaceIcon
   }
 }
 

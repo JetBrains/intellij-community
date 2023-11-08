@@ -3,7 +3,6 @@ package git4idea.ui.branch.tree
 
 import com.intellij.dvcs.branch.BranchType
 import com.intellij.dvcs.getCommonCurrentBranch
-import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.codeStyle.MinusculeMatcher
@@ -15,11 +14,11 @@ import git4idea.GitLocalBranch
 import git4idea.branch.GitBranchType
 import git4idea.config.GitVcsSettings
 import git4idea.repo.GitRepository
-import git4idea.ui.branch.GitBranchManager
 import javax.swing.tree.TreePath
 
 private typealias PathAndBranch = Pair<List<String>, GitBranch>
-private typealias MatchResult = Pair<Collection<GitBranch>, GitBranch?>
+
+internal class BranchesMatchResult(val matchedBranches: Collection<GitBranch>, val topMatch: GitBranch?)
 
 internal val GitRepository.localBranchesOrCurrent get() = branches.localBranches.ifEmpty { currentBranch?.let(::setOf) ?: emptySet() }
 internal val GitRepository.recentCheckoutBranches
@@ -29,25 +28,36 @@ internal val GitRepository.recentCheckoutBranches
 
 internal val emptyBranchComparator = Comparator<GitBranch> { _, _ -> 0 }
 
-private fun getBranchComparator(repositories: List<GitRepository>, isPrefixGrouping: () -> Boolean) = compareBy<GitBranch> {
-  it.isNotCurrentBranch(repositories)
-} then compareBy {
-  it.isNotFavorite(repositories)
-} then compareBy {
-  !(isPrefixGrouping() && it.name.contains('/'))
-} then compareBy { it.name }
+internal fun getBranchComparator(
+  repositories: List<GitRepository>,
+  favoriteBranches: Map<GitRepository, Set<String>>,
+  isPrefixGrouping: () -> Boolean
+): Comparator<GitBranch> {
+  return compareBy<GitBranch> {
+    it.isNotCurrentBranch(repositories)
+  } then compareBy {
+    it.isNotFavorite(favoriteBranches, repositories)
+  } then compareBy {
+    !(isPrefixGrouping() && it.name.contains('/'))
+  } then compareBy { it.name }
+}
 
-internal fun getSubTreeComparator(repositories: List<GitRepository>) = compareBy<Any> {
-  it is GitBranch && it.isNotCurrentBranch(repositories) && it.isNotFavorite(repositories)
-} then compareBy {
-  it is GitBranchesTreeModel.BranchesPrefixGroup
+internal fun getSubTreeComparator(favoriteBranches: Map<GitRepository, Set<String>>,
+                                  repositories: List<GitRepository>): Comparator<Any> {
+  return compareBy<Any> {
+    it is GitBranch && it.isNotCurrentBranch(repositories) && it.isNotFavorite(favoriteBranches, repositories)
+  } then compareBy {
+    it is GitBranchesTreeModel.BranchesPrefixGroup
+  }
 }
 
 private fun GitBranch.isNotCurrentBranch(repositories: List<GitRepository>) =
   !repositories.any { repo -> repo.currentBranch == this }
 
-private fun GitBranch.isNotFavorite(repositories: List<GitRepository>) =
-  !repositories.all { repo -> repo.project.service<GitBranchManager>().isFavorite(GitBranchType.of(this), repo, name) }
+private fun GitBranch.isNotFavorite(favoriteBranches: Map<GitRepository, Set<String>>,
+                                    repositories: List<GitRepository>): Boolean {
+  return repositories.any { repo -> !(favoriteBranches[repo]?.contains(this.name) ?: false) }
+}
 
 internal fun buildBranchTreeNodes(branchType: BranchType,
                                   branchesMap: Map<String, Any>,
@@ -122,32 +132,7 @@ internal fun getPreferredBranch(project: Project,
                                 remoteBranchesTree: LazyBranchesSubtreeHolder,
                                 recentBranchesTree: LazyBranchesSubtreeHolder = localBranchesTree): GitBranch? {
   if (branchNameMatcher == null) {
-    if (repositories.size == 1) {
-      val repository = repositories.single()
-      val recentBranches = GitVcsSettings.getInstance(project).recentBranchesByRepository
-      val recentBranch = recentBranches[repository.root.path]?.let { recentBranchName ->
-        repository.recentCheckoutBranches.find { it.name == recentBranchName }
-        ?: localBranchesTree.branches.find { it.name == recentBranchName }
-      }
-      if (recentBranch != null) {
-        return recentBranch
-      }
-
-      val currentBranch = repository.currentBranch
-      if (currentBranch != null) {
-        return currentBranch
-      }
-
-      return null
-    }
-    else {
-      val branch = (GitVcsSettings.getInstance(project).recentCommonBranch ?: repositories.getCommonCurrentBranch())
-        ?.let { recentOrCommonBranchName ->
-          localBranchesTree.branches.find { it.name == recentOrCommonBranchName }
-        }
-      return branch
-    }
-
+    return getPreferredBranch(project, repositories, localBranchesTree.branches)
   }
 
   val recentMatch = recentBranchesTree.topMatch
@@ -155,6 +140,38 @@ internal fun getPreferredBranch(project: Project,
   val remoteMatch = remoteBranchesTree.topMatch
 
   return recentMatch ?: localMatch ?: remoteMatch
+}
+
+internal fun getPreferredBranch(
+  project: Project,
+  repositories: List<GitRepository>,
+  localBranches: List<GitBranch>
+): GitBranch? {
+  if (repositories.size == 1) {
+    val repository = repositories.single()
+    val recentBranches = GitVcsSettings.getInstance(project).recentBranchesByRepository
+    val recentBranch = recentBranches[repository.root.path]?.let { recentBranchName ->
+      repository.recentCheckoutBranches.find { it.name == recentBranchName }
+      ?: localBranches.find { it.name == recentBranchName }
+    }
+    if (recentBranch != null) {
+      return recentBranch
+    }
+
+    val currentBranch = repository.currentBranch
+    if (currentBranch != null) {
+      return currentBranch
+    }
+
+    return null
+  }
+  else {
+    val branch = (GitVcsSettings.getInstance(project).recentCommonBranch ?: repositories.getCommonCurrentBranch())
+      ?.let { recentOrCommonBranchName ->
+        localBranches.find { it.name == recentOrCommonBranchName }
+      }
+    return branch
+  }
 }
 
 internal fun getLocalAndRemoteTopLevelNodes(localBranchesTree: LazyBranchesSubtreeHolder,
@@ -167,32 +184,60 @@ internal fun getLocalAndRemoteTopLevelNodes(localBranchesTree: LazyBranchesSubtr
   )
 }
 
+internal fun matchBranches(
+  matcher: MinusculeMatcher?,
+  branches: Collection<GitBranch>,
+  exceptBranchFilter: (GitBranch) -> Boolean = { false }
+): BranchesMatchResult {
+  if (branches.isEmpty() || matcher == null) return BranchesMatchResult(branches, null)
+
+  val result = mutableListOf<GitBranch>()
+  var topMatch: Pair<GitBranch, Int>? = null
+
+  for (branch in branches) {
+    if (exceptBranchFilter(branch)) continue
+
+    val matchingFragments = matcher.matchingFragments(branch.name)
+    if (matchingFragments == null) continue
+    result.add(branch)
+    val matchingDegree = matcher.matchingDegree(branch.name, false, matchingFragments)
+    if (topMatch == null || topMatch.second < matchingDegree) {
+      topMatch = branch to matchingDegree
+    }
+  }
+
+  return BranchesMatchResult(result, topMatch?.first)
+}
+
 internal class LazyBranchesSubtreeHolder(
-  unsortedBranches: Collection<GitBranch>,
   repositories: List<GitRepository>,
+  unsortedBranches: Collection<GitBranch>,
+  favoriteBranches: Map<GitRepository, Set<String>>,
   private val matcher: MinusculeMatcher?,
   private val isPrefixGrouping: () -> Boolean,
   private val exceptBranchFilter: (GitBranch) -> Boolean = { false },
-  private val branchComparatorGetter: () -> Comparator<GitBranch> = { getBranchComparator(repositories, isPrefixGrouping) }
+  private val branchComparatorGetter: () -> Comparator<GitBranch> = {
+    getBranchComparator(repositories, favoriteBranches, isPrefixGrouping)
+  }
 ) {
 
   private val initiallyEmpty = unsortedBranches.isEmpty()
 
   val branches by lazy { unsortedBranches.sortedWith(branchComparatorGetter()) }
 
-  fun isEmpty() = initiallyEmpty || matchingResult.first.isEmpty()
+  fun isEmpty() = initiallyEmpty || matchingResult.matchedBranches.isEmpty()
 
-  private val matchingResult: MatchResult by lazy {
-    match(branches)
+  private val matchingResult: BranchesMatchResult by lazy {
+    matchBranches(matcher, branches, exceptBranchFilter)
   }
 
   val tree: Map<String, Any> by lazy {
-    val branchesList = matchingResult.first
+    val branchesList = matchingResult.matchedBranches
     buildSubTree(branchesList.map { (if (isPrefixGrouping()) it.name.split('/') else listOf(it.name)) to it })
   }
 
   val topMatch: GitBranch?
-    get() = matchingResult.second
+    get() = matchingResult.topMatch
 
   private fun buildSubTree(prevLevel: List<PathAndBranch>): Map<String, Any> {
     val result = LinkedHashMap<String, Any>()
@@ -214,26 +259,5 @@ internal class LazyBranchesSubtreeHolder(
     }
 
     return result
-  }
-
-  private fun match(branches: Collection<GitBranch>): MatchResult {
-    if (branches.isEmpty() || matcher == null) return MatchResult(branches, null)
-
-    val result = mutableListOf<GitBranch>()
-    var topMatch: Pair<GitBranch, Int>? = null
-
-    for (branch in branches) {
-      if (exceptBranchFilter(branch)) continue
-
-      val matchingFragments = matcher.matchingFragments(branch.name)
-      if (matchingFragments == null) continue
-      result.add(branch)
-      val matchingDegree = matcher.matchingDegree(branch.name, false, matchingFragments)
-      if (topMatch == null || topMatch.second < matchingDegree) {
-        topMatch = branch to matchingDegree
-      }
-    }
-
-    return MatchResult(result, topMatch?.first)
   }
 }

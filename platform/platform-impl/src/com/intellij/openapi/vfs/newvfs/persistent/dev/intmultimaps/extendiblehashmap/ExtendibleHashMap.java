@@ -4,6 +4,7 @@ package com.intellij.openapi.vfs.newvfs.persistent.dev.intmultimaps.extendibleha
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.io.ClosedStorageException;
 import com.intellij.util.io.IOUtil;
+import com.intellij.util.io.Unmappable;
 import com.intellij.util.io.dev.intmultimaps.DurableIntToMultiIntMap;
 import com.intellij.util.io.dev.mmapped.MMappedFileStorage;
 import org.intellij.lang.annotations.MagicConstant;
@@ -14,6 +15,8 @@ import org.jetbrains.annotations.VisibleForTesting;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Objects;
+
+import static com.intellij.util.SystemProperties.getBooleanProperty;
 
 /**
  * Implementation of <a href="https://en.wikipedia.org/wiki/Extendible_hashing">Extendible hash map</a>
@@ -30,11 +33,12 @@ import java.util.Objects;
  * not concurrent. It is possible to replace that with some kind of 'segmented RW lock'.
  */
 @ApiStatus.Internal
-public class ExtendibleHashMap implements DurableIntToMultiIntMap {
-  private static final int VERSION = 1;
+public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
+  /** Version of binary format used by this class */
+  public static final int IMPLEMENTATION_VERSION = 1;
 
   /** First header int32 to recognize this file type */
-  private static final int MAGIC_WORD = IOUtil.asciiToMagicWord("EHMM");
+  public static final int MAGIC_WORD = IOUtil.asciiToMagicWord("EHMM");
 
   //Binary layout: (header segment) (data segment)+
   //  Header segment: (fixed header fields) (segments table)
@@ -69,17 +73,18 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap {
   /** 1M page ~= 64K (key,value) pairs per page */
   public static final int DEFAULT_STORAGE_PAGE_SIZE = DEFAULT_SEGMENT_SIZE * DEFAULT_SEGMENTS_PER_PAGE;
 
+  private static final boolean MARK_SAFELY_CLOSED_ON_FLUSH = getBooleanProperty("ExtendibleHashMap.MARK_SAFELY_CLOSED_ON_FLUSH", true);
 
-  //TODO RC: pruning of tombstones (see comment in a .split() method for details)
+  //TODO RC: unfinished work
+  //        1) prune tombstones (see comment in a .split() method for details)
+  //        2) .size() is now O(N), make it O(1)
+  //        3) Half-utilized segmentTable room (see HeaderLayout)
 
   private final MMappedFileStorage storage;
   private transient BufferSource bufferSource;
 
-  /**
-   * Modified flag is used avoid updating header.fileState on each modification -- instead we update it only once,
-   * on the first modification, and skip the update afterward relying on this flag.
-   */
-  private boolean storageModifiedSinceOpened = false;
+  /** Used avoid updating header.fileState on _each_ modification */
+  private boolean dirty = false;
 
   private final boolean wasProperlyClosed;
 
@@ -107,14 +112,15 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap {
       bufferSource = (offsetInFile, length) -> {
         ByteBuffer buffer = storage.pageByOffset(offsetInFile).rawPageBuffer();
         int offsetInPage = storage.toOffsetInPage(offsetInFile);
-        return buffer.slice(offsetInPage, length);
+        return buffer.slice(offsetInPage, length)
+          .order(buffer.order());
       };
 
       header = new HeaderLayout(bufferSource, segmentSize);
 
       if (fileIsEmpty) {
         header.magicWord(MAGIC_WORD);
-        header.version(VERSION);
+        header.version(IMPLEMENTATION_VERSION);
         header.segmentSize(segmentSize);
         header.fileStatus(HeaderLayout.FILE_STATUS_PROPERLY_CLOSED);
         wasProperlyClosed = true;//new storage is by definition 'correct'
@@ -133,9 +139,9 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap {
             ".magicWord(=" + magicWord + ", '" + IOUtil.magicWordToASCII(magicWord) + "') != " + MAGIC_WORD + " expected");
         }
 
-        if (header.version() != VERSION) {
+        if (header.version() != IMPLEMENTATION_VERSION) {
           throw new IOException(
-            "[" + storage.storagePath() + "]: version(=" + header.version() + ") != current impl version(=" + VERSION + ")");
+            "[" + storage.storagePath() + "]: version(=" + header.version() + ") != current impl version(=" + IMPLEMENTATION_VERSION + ")");
         }
 
         if (header.segmentSize() != segmentSize) {
@@ -167,7 +173,7 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap {
    * -> re-opened: wasProperlyClosed=true
    * </pre>
    * So on 2nd re-open storage is 'properly closed', even though it could be still corrupted because of the absence
-   * of proper close after the first session. 
+   * of proper close after the first session.
    */
   public synchronized boolean wasProperlyClosed() {
     return wasProperlyClosed;
@@ -235,27 +241,60 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap {
     for (int segmentIndex = 1; segmentIndex <= segmentsCount; segmentIndex++) {
       HashMapSegmentLayout segment = new HashMapSegmentLayout(bufferSource, segmentIndex, segmentSize);
       if (segment.aliveEntriesCount() > 0) {
-        return true;
+        return false;
       }
     }
-    return false;
+    return true;
   }
 
 
   @Override
   public synchronized void flush() throws IOException {
-    //nothing to do
+    if (MARK_SAFELY_CLOSED_ON_FLUSH) {
+      //RC: It seems that since EHMap is non-concurrent (sync-ed), set .fileStatus(PROPERLY_CLOSED) in
+      //    .flush() is safe: nobody could modify EHMap content until .flush() finishes, which creates kind of
+      //    'safepoint'.
+      //    (On the contrary: data structures with concurrent updates doesn't have this property: their
+      //    content could be modified in between .flush() sets .dirty=false and .fileStatus=PROPERLY_CLOSED)
+
+      if (dirty) {
+        dirty = false;
+        header.fileStatus(HeaderLayout.FILE_STATUS_PROPERLY_CLOSED);
+      }
+    }
   }
 
   @Override
   public synchronized void close() throws IOException {
-    if (storageModifiedSinceOpened) {
-      header.fileStatus(HeaderLayout.FILE_STATUS_PROPERLY_CLOSED);
+    if (storage.isOpen()) {
+      if (dirty) {
+        header.fileStatus(HeaderLayout.FILE_STATUS_PROPERLY_CLOSED);
+      }
+      storage.close();
+      //clean all references to mapped ByteBuffers, so it's easier for GC to unmap them:
+      header = null;
+      bufferSource = null;
     }
-    storage.close();
-    //clean all references to mapped ByteBuffers, so it's easier for GC to unmap them:
-    header = null;
-    bufferSource = null;
+  }
+
+  @Override
+  public void closeAndUnsafelyUnmap() throws IOException {
+    close();
+    storage.closeAndUnsafelyUnmap();
+  }
+
+  @Override
+  public void closeAndClean() throws IOException {
+    close();
+    storage.closeAndClean();
+  }
+
+  @Override
+  public String toString() {
+    return "ExtendibleHashMap" +
+           "[" + storage.storagePath() + "]" +
+           "[opened: " + storage.isOpen() + "]" +
+           "[wasProperlyClosed: " + wasProperlyClosed + "]";
   }
 
   //=============== implementation ============================================================
@@ -269,8 +308,8 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap {
 
   //@GuardedBy(this)
   private void markModified() {
-    if (!storageModifiedSinceOpened) {
-      storageModifiedSinceOpened = true;
+    if (!dirty) {
+      dirty = true;
       header.fileStatus(HeaderLayout.FILE_STATUS_OPENED);
     }
   }
@@ -480,33 +519,33 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap {
   }
 
 
-  @VisibleForTesting
   static final class HeaderLayout {
     //@formatter:off
-    private static final int MAGIC_WORD_OFFSET               = 0;   //int32
-    private static final int VERSION_OFFSET                  = 4;   //int32
-    private static final int SEGMENT_SIZE_OFFSET             = 8;   //int32
-    private static final int ACTUAL_SEGMENTS_COUNT_OFFSET    = 12;  //int32
-    private static final int GLOBAL_HASH_SUFFIX_DEPTH_OFFSET = 16;  //int8
+    public static final int MAGIC_WORD_OFFSET               =  0;  //int32
+    public static final int VERSION_OFFSET                  =  4;  //int32
+    public static final int SEGMENT_SIZE_OFFSET             =  8;  //int32
+    public static final int ACTUAL_SEGMENTS_COUNT_OFFSET    = 12;  //int32
+    public static final int GLOBAL_HASH_SUFFIX_DEPTH_OFFSET = 16;  //int8
 
-    private static final int FILE_STATUS_OFFSET              = 17;  //int8
+    public static final int FILE_STATUS_OFFSET              = 17;  //int8
 
-    private static final int FIRST_FREE_OFFSET               = 18;
+    public static final int FIRST_FREE_OFFSET               = 18;
     // region [18..79] is reserved for the generations to come
-    private static final int STATIC_HEADER_SIZE              = 80;
+    public static final int STATIC_HEADER_SIZE              = 80;
 
     private static final int SEGMENTS_TABLE_OFFSET = STATIC_HEADER_SIZE; //int16[N]
     //@formatter:on
 
-    private static final byte FILE_STATUS_PROPERLY_CLOSED = 1;
-    private static final byte FILE_STATUS_OPENED = 0;
+    public static final byte FILE_STATUS_PROPERLY_CLOSED = 1;
+    public static final byte FILE_STATUS_OPENED = 0;
 
     //TODO RC: segmentSize is 2^N, and segmentsTable also must have 2^M entries -- but since we use few bytes
     // for static header, this means M <= N-1 -- i.e. we waste _almost half_ of header segment space because
-    // segmentsTable must have power-of-2 size. We could solve that by using some compression -- we need to
-    // win just 80 bytes out of 32-64k, it seems quite doable, and we could cache uncompressed segmentsTable
-    // in memory -- 32-64k heap usage is OK given it makes hashtable almost 2x larger for same segmentSize,
-    // and likely also speeds up segmentTable lookup a bit.
+    // segmentsTable must have power-of-2 size.
+    // We could solve that by using some compression -- we need to win just 80 bytes out of 32-64k, it seems
+    // quite doable, and we could cache uncompressed segmentsTable in memory -- 32-64k heap usage is OK given
+    // it makes hashtable almost 2x larger for same segmentSize, and likely also speeds up segmentTable lookup
+    // a bit.
     // Alternative solution would be to break (headerSegment.size == dataSegment.size) constraint: i.e. allow
     // header to be (80 + dataSegment.size) bytes. Such change of layout means we can't align segments to the
     // first page anymore -- so there will be (dataSegment.size-80) wasted bytes at the end of the first page.
@@ -529,6 +568,7 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap {
       this.headerSegmentSize = headerSegmentSize;
       headerBuffer = bufferSource.slice(0, headerSegmentSize);
     }
+
     public int magicWord() {
       return headerBuffer.getInt(MAGIC_WORD_OFFSET);
     }
@@ -561,6 +601,23 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap {
                            byte connectionStatus) {
       headerBuffer.put(FILE_STATUS_OFFSET, connectionStatus);
     }
+
+    public static int magicWord(@NotNull ByteBuffer headerBuffer) {
+      return headerBuffer.getInt(MAGIC_WORD_OFFSET);
+    }
+
+    public static int version(@NotNull ByteBuffer headerBuffer) {
+      return headerBuffer.getInt(VERSION_OFFSET);
+    }
+
+    public static int segmentSize(@NotNull ByteBuffer headerBuffer) {
+      return headerBuffer.getInt(SEGMENT_SIZE_OFFSET);
+    }
+
+    public static byte fileStatus(@NotNull ByteBuffer headerBuffer) {
+      return headerBuffer.get(FILE_STATUS_OFFSET);
+    }
+
 
     public int actualSegmentsCount() {
       return headerBuffer.getInt(ACTUAL_SEGMENTS_COUNT_OFFSET);
@@ -868,7 +925,7 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap {
     public boolean put(@NotNull HashTableData table,
                        int key,
                        int value) {
-      //FIXME RC: check hash(key) has correct hashSuffix -- but this violates an abstraction of HashAlgo,
+      //MAYBE RC: check hash(key) has correct hashSuffix -- but this violates an abstraction of HashAlgo,
       //          so this check is better to be moved to HashSegment?
       checkNotNoValue("key", key);
       checkNotNoValue("value", value);

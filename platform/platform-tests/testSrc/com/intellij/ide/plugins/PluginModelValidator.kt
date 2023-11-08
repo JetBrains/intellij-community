@@ -83,6 +83,11 @@ class PluginModelValidator(sourceModules: List<Module>) {
     }
 
     val moduleNameToInfo = HashMap<String, ModuleInfo>()
+
+    for ((sourceModuleName, moduleMetaInfo) in sourceModuleNameToFileInfo) {
+      checkModuleFileInfo(moduleMetaInfo, sourceModuleName, false, moduleNameToInfo)
+    }
+
     // 2. process plugins - process content to collect modules
     for ((sourceModuleName, moduleMetaInfo) in sourceModuleNameToFileInfo) {
       // interested only in plugins
@@ -421,24 +426,7 @@ class PluginModelValidator(sourceModules: List<Module>) {
       val moduleDescriptorFileInfo = getModuleDescriptorFileInfo(moduleName, referencingModuleInfo, sourceModuleNameToFileInfo) ?: continue
 
       val moduleDescriptor = moduleDescriptorFileInfo.moduleDescriptor!!
-      val packageName = moduleDescriptor.getAttributeValue("package")
-      if (packageName == null) {
-        _errors.add(PluginValidationError(
-          "Module package is not specified",
-          mapOf(
-            "descriptorFile" to moduleDescriptorFileInfo.moduleDescriptorFile!!,
-          ),
-        ))
-        continue
-      }
-
-      val moduleInfo = ModuleInfo(pluginId = null,
-                                  name = moduleName,
-                                  sourceModuleName = moduleDescriptorFileInfo.sourceModule.name,
-                                  descriptorFile = moduleDescriptorFileInfo.moduleDescriptorFile!!,
-                                  packageName = packageName,
-                                  descriptor = moduleDescriptor)
-      moduleNameToInfo[moduleName] = moduleInfo
+      val moduleInfo = checkModuleFileInfo(moduleDescriptorFileInfo, moduleName, true, moduleNameToInfo) ?: continue
       referencingModuleInfo.content.add(moduleInfo)
 
       @Suppress("GrazieInspection")
@@ -468,6 +456,32 @@ class PluginModelValidator(sourceModules: List<Module>) {
         ))
       }
     }
+  }
+
+  private fun checkModuleFileInfo(moduleDescriptorFileInfo: ModuleDescriptorFileInfo, moduleName: String, checkPackage: Boolean, moduleNameToInfo: MutableMap<String, ModuleInfo>): ModuleInfo? {
+    val moduleDescriptor = moduleDescriptorFileInfo.moduleDescriptor ?: return null
+
+    val packageName = moduleDescriptor.getAttributeValue("package")
+    if (packageName == null) {
+      if (checkPackage) {
+        _errors.add(PluginValidationError(
+          "Module package is not specified",
+          mapOf(
+            "descriptorFile" to moduleDescriptorFileInfo.moduleDescriptorFile!!,
+          ),
+        ))
+      }
+      return null
+    }
+
+    val moduleInfo = ModuleInfo(pluginId = null,
+                                name = moduleName,
+                                sourceModuleName = moduleDescriptorFileInfo.sourceModule.name,
+                                descriptorFile = moduleDescriptorFileInfo.moduleDescriptorFile!!,
+                                packageName = packageName,
+                                descriptor = moduleDescriptor)
+    moduleNameToInfo[moduleName] = moduleInfo
+    return moduleInfo
   }
 
   private fun getModuleDescriptorFileInfo(moduleName: String,

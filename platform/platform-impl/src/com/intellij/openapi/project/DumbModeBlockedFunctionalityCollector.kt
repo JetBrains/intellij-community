@@ -1,10 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project
 
-import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionRuleValidator
+import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsEventLogGroup
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
-import com.intellij.internal.statistic.eventLog.events.EventFields.StringValidatedByCustomRule
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.DumbModeBlockedFunctionalityCollector.logActionBlocked
@@ -21,20 +20,19 @@ import java.util.concurrent.atomic.AtomicReference
  * This case is not handled by this collector.
  */
 object DumbModeBlockedFunctionalityCollector : CounterUsagesCollector() {
-  private val GROUP = EventLogGroup("dumb.mode.blocked.functionality", 1)
+  private val GROUP = EventLogGroup("dumb.mode.blocked.functionality", 2)
 
-  private val ACTION_ID = StringValidatedByCustomRule("action_id", ActionRuleValidator::class.java)
   private val FUNCTIONALITY_SOURCE = EventFields.Enum("functionality", DumbModeBlockedFunctionality::class.java)
   private val EXECUTED_WHEN_SMART = EventFields.Boolean("executed_when_smart")
   private val FUNCTIONALITY_BLOCKED = GROUP.registerVarargEvent("functionality.blocked",
-                                                                ACTION_ID,
+                                                                ActionsEventLogGroup.ACTION_ID,
                                                                 FUNCTIONALITY_SOURCE,
                                                                 EXECUTED_WHEN_SMART)
 
   fun logActionBlocked(project: Project, actionId: String) {
     lastEqualityObjectReference.set(null)
     FUNCTIONALITY_BLOCKED.log(project,
-                              ACTION_ID.with(actionId),
+                              ActionsEventLogGroup.ACTION_ID.with(actionId),
                               FUNCTIONALITY_SOURCE.with(DumbModeBlockedFunctionality.Action))
   }
 
@@ -45,7 +43,7 @@ object DumbModeBlockedFunctionalityCollector : CounterUsagesCollector() {
                                      FUNCTIONALITY_SOURCE.with(DumbModeBlockedFunctionality.ActionWithoutId),
                                      EXECUTED_WHEN_SMART.with(executedAfterBlock))
       1 -> FUNCTIONALITY_BLOCKED.log(project,
-                                     ACTION_ID.with(actionIds[0]),
+                                     ActionsEventLogGroup.ACTION_ID.with(actionIds[0]),
                                      FUNCTIONALITY_SOURCE.with(DumbModeBlockedFunctionality.Action),
                                      EXECUTED_WHEN_SMART.with(executedAfterBlock))
       else -> FUNCTIONALITY_BLOCKED.log(project,

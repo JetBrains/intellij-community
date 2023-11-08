@@ -1602,9 +1602,24 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("testData/newJ2k/detectProperties/AccessorsImplementInterface.java");
         }
 
+        @TestMetadata("AnnotationWithInapplicableTargetOnGetter.java")
+        public void testAnnotationWithInapplicableTargetOnGetter() throws Exception {
+            runTest("testData/newJ2k/detectProperties/AnnotationWithInapplicableTargetOnGetter.java");
+        }
+
+        @TestMetadata("AnnotationWithInapplicableTargetOnSetter.java")
+        public void testAnnotationWithInapplicableTargetOnSetter() throws Exception {
+            runTest("testData/newJ2k/detectProperties/AnnotationWithInapplicableTargetOnSetter.java");
+        }
+
         @TestMetadata("AnonymousClass.java")
         public void testAnonymousClass() throws Exception {
             runTest("testData/newJ2k/detectProperties/AnonymousClass.java");
+        }
+
+        @TestMetadata("AssignFieldInsideGetter.java")
+        public void testAssignFieldInsideGetter() throws Exception {
+            runTest("testData/newJ2k/detectProperties/AssignFieldInsideGetter.java");
         }
 
         @TestMetadata("AssignFieldInsideSetter.java")
@@ -1667,6 +1682,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("testData/newJ2k/detectProperties/DifferentFieldName.java");
         }
 
+        @TestMetadata("DifferentFieldName2.java")
+        public void testDifferentFieldName2() throws Exception {
+            runTest("testData/newJ2k/detectProperties/DifferentFieldName2.java");
+        }
+
         @TestMetadata("DifferentFieldNameAndDefaultParameterValue.java")
         public void testDifferentFieldNameAndDefaultParameterValue() throws Exception {
             runTest("testData/newJ2k/detectProperties/DifferentFieldNameAndDefaultParameterValue.java");
@@ -1715,6 +1735,16 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
         @TestMetadata("GetterAndSetterNamesDifferent.java")
         public void testGetterAndSetterNamesDifferent() throws Exception {
             runTest("testData/newJ2k/detectProperties/GetterAndSetterNamesDifferent.java");
+        }
+
+        @TestMetadata("GetterNameConflictWithParentClass.java")
+        public void testGetterNameConflictWithParentClass() throws Exception {
+            runTest("testData/newJ2k/detectProperties/GetterNameConflictWithParentClass.java");
+        }
+
+        @TestMetadata("GetterOverride.java")
+        public void testGetterOverride() throws Exception {
+            runTest("testData/newJ2k/detectProperties/GetterOverride.java");
         }
 
         @TestMetadata("GetterSetterUsages.java")
@@ -1772,6 +1802,16 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("testData/newJ2k/detectProperties/GetterWithSideEffect5.java");
         }
 
+        @TestMetadata("GetterWithSideEffect6.java")
+        public void testGetterWithSideEffect6() throws Exception {
+            runTest("testData/newJ2k/detectProperties/GetterWithSideEffect6.java");
+        }
+
+        @TestMetadata("GetterWithSideEffect7.java")
+        public void testGetterWithSideEffect7() throws Exception {
+            runTest("testData/newJ2k/detectProperties/GetterWithSideEffect7.java");
+        }
+
         @TestMetadata("InCompanionObject.java")
         public void testInCompanionObject() throws Exception {
             runTest("testData/newJ2k/detectProperties/InCompanionObject.java");
@@ -1807,19 +1847,9 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("testData/newJ2k/detectProperties/KeywordPropertyName.java");
         }
 
-        @TestMetadata("kt-31700.java")
-        public void testKt_31700() throws Exception {
-            runTest("testData/newJ2k/detectProperties/kt-31700.java");
-        }
-
         @TestMetadata("kt-32253.java")
         public void testKt_32253() throws Exception {
             runTest("testData/newJ2k/detectProperties/kt-32253.java");
-        }
-
-        @TestMetadata("kt-35739.java")
-        public void testKt_35739() throws Exception {
-            runTest("testData/newJ2k/detectProperties/kt-35739.java");
         }
 
         @TestMetadata("NoBackingField.java")
@@ -1842,14 +1872,29 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("testData/newJ2k/detectProperties/PropertyAndFieldConflicts.java");
         }
 
+        @TestMetadata("PropertyAndFieldConflicts2.java")
+        public void testPropertyAndFieldConflicts2() throws Exception {
+            runTest("testData/newJ2k/detectProperties/PropertyAndFieldConflicts2.java");
+        }
+
         @TestMetadata("PropertyType.java")
         public void testPropertyType() throws Exception {
             runTest("testData/newJ2k/detectProperties/PropertyType.java");
         }
 
+        @TestMetadata("SetterNonUnitReturnType.java")
+        public void testSetterNonUnitReturnType() throws Exception {
+            runTest("testData/newJ2k/detectProperties/SetterNonUnitReturnType.java");
+        }
+
         @TestMetadata("SetterTypeNotMatch.java")
         public void testSetterTypeNotMatch() throws Exception {
             runTest("testData/newJ2k/detectProperties/SetterTypeNotMatch.java");
+        }
+
+        @TestMetadata("SetterTypeNotMatchInInterface.java")
+        public void testSetterTypeNotMatchInInterface() throws Exception {
+            runTest("testData/newJ2k/detectProperties/SetterTypeNotMatchInInterface.java");
         }
 
         @TestMetadata("SetterWithSideEffect1.java")
@@ -1880,6 +1925,26 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
         @TestMetadata("SetterWithSideEffect6.java")
         public void testSetterWithSideEffect6() throws Exception {
             runTest("testData/newJ2k/detectProperties/SetterWithSideEffect6.java");
+        }
+
+        @TestMetadata("SetterWithSideEffect7.java")
+        public void testSetterWithSideEffect7() throws Exception {
+            runTest("testData/newJ2k/detectProperties/SetterWithSideEffect7.java");
+        }
+
+        @TestMetadata("SetterWithSideEffect8.java")
+        public void testSetterWithSideEffect8() throws Exception {
+            runTest("testData/newJ2k/detectProperties/SetterWithSideEffect8.java");
+        }
+
+        @TestMetadata("SpecialSetterParameterName.java")
+        public void testSpecialSetterParameterName() throws Exception {
+            runTest("testData/newJ2k/detectProperties/SpecialSetterParameterName.java");
+        }
+
+        @TestMetadata("UnresolvedType.java")
+        public void testUnresolvedType() throws Exception {
+            runTest("testData/newJ2k/detectProperties/UnresolvedType.java");
         }
     }
 

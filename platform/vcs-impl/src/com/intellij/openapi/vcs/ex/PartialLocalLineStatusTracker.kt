@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.ex
 
+import com.intellij.codeWithMe.ClientId
 import com.intellij.diff.util.DiffUtil
 import com.intellij.diff.util.Side
 import com.intellij.ide.DataManager
@@ -47,13 +48,11 @@ import com.intellij.util.containers.WeakList
 import com.intellij.util.ui.JBUI
 import com.intellij.vcsUtil.VcsUtil
 import org.jetbrains.annotations.CalledInAny
-import java.awt.BorderLayout
 import java.awt.Graphics
 import java.awt.Point
 import java.lang.ref.WeakReference
 import java.util.*
 import javax.swing.JComponent
-import javax.swing.JPanel
 
 /**
  * Tracker that is used for "Partial Changelist" and "Partial Commit" features, allowing to commit a subset of file's changed lines.
@@ -116,8 +115,9 @@ class PartialCommitContent(val vcsContent: CharSequence, val currentContent: Cha
 enum class ExclusionState { ALL_INCLUDED, ALL_EXCLUDED, PARTIALLY, NO_CHANGES }
 
 class LocalRange internal constructor(line1: Int, line2: Int, vcsLine1: Int, vcsLine2: Int, innerRanges: List<InnerRange>?,
+                                      override val clientIds: List<ClientId>,
                                       val changelistId: String, val exclusionState: RangeExclusionState)
-  : Range(line1, line2, vcsLine1, vcsLine2, innerRanges) {
+  : Range(line1, line2, vcsLine1, vcsLine2, innerRanges), LocalLineStatusTrackerImpl.LstLocalRange {
   init {
     if (exclusionState is RangeExclusionState.Partial) {
       exclusionState.validate(vcsLine2 - vcsLine1, line2 - line1)
@@ -171,7 +171,9 @@ class ChangelistsLocalLineStatusTracker internal constructor(project: Project,
     assert(blocks.isEmpty())
   }
 
-  override fun toRange(block: Block): LocalRange = LocalRange(block.start, block.end, block.vcsStart, block.vcsEnd, block.innerRanges,
+  override fun toRange(block: Block): LocalRange = LocalRange(block.start, block.end, block.vcsStart, block.vcsEnd,
+                                                              block.ourData.innerRanges,
+                                                              block.ourData.clientIds,
                                                               block.marker.changelistId, block.excludedFromCommit)
 
   private fun toIncludedRanges(block: Block, exclusionState: RangeExclusionState.Partial): List<LocalRange> {
@@ -180,11 +182,11 @@ class ChangelistsLocalLineStatusTracker internal constructor(project: Project,
 
     exclusionState.iterateIncludedDeletionRanges(block.range) { deletedRange ->
       result += LocalRange(deletedRange.start1, deletedRange.end1, deletedRange.start2, deletedRange.end2, null,
-                           changelistId, RangeExclusionState.Included)
+                           block.ourData.clientIds, changelistId, RangeExclusionState.Included)
     }
     exclusionState.iterateIncludedAdditionRanges(block.range) { addedRange ->
       result += LocalRange(addedRange.start1, addedRange.end1, addedRange.start2, addedRange.end2, null,
-                           changelistId, RangeExclusionState.Included)
+                           block.ourData.clientIds, changelistId, RangeExclusionState.Included)
     }
 
     return result
@@ -643,6 +645,19 @@ class ChangelistsLocalLineStatusTracker internal constructor(project: Project,
                                            range: Range,
                                            mousePosition: Point?,
                                            disposable: Disposable): JComponent? {
+      val superPanel = super.createAdditionalInfoPanel(editor, range, mousePosition, disposable)
+      val changelistPanel = createChangelistInfoPanel(editor, range, mousePosition, disposable)
+      if (superPanel == null || changelistPanel == null) return superPanel ?: changelistPanel
+
+      return JBUI.Panels.simplePanel(changelistPanel)
+        .addToRight(superPanel)
+        .andTransparent()
+    }
+
+    private fun createChangelistInfoPanel(editor: Editor,
+                                          range: Range,
+                                          mousePosition: Point?,
+                                          disposable: Disposable): JComponent? {
       if (range !is LocalRange) return null
 
       val changeLists = ChangeListManager.getInstance(tracker.project).changeLists
@@ -664,6 +679,8 @@ class ChangelistsLocalLineStatusTracker internal constructor(project: Project,
         JBPopupFactory.getInstance()
           .createActionGroupPopup(null, group, dataContext, JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false)
       }
+      link.border = JBUI.Borders.emptyLeft(7)
+      link.isOpaque = false
 
       val moveChangesShortcutSet = ActionManager.getInstance().getAction("Vcs.MoveChangedLinesToChangelist").shortcutSet
       object : DumbAwareAction() {
@@ -677,11 +694,7 @@ class ChangelistsLocalLineStatusTracker internal constructor(project: Project,
         link.toolTipText = VcsBundle.message("ex.move.lines.to.another.changelist.0", KeymapUtil.getShortcutText(shortcuts.first()))
       }
 
-      val panel = JPanel(BorderLayout())
-      panel.add(link, BorderLayout.CENTER)
-      panel.border = JBUI.Borders.emptyLeft(7)
-      panel.isOpaque = false
-      return panel
+      return link
     }
 
     private inner class MoveToAnotherChangeListAction(editor: Editor, range: Range, val mousePosition: Point?)
@@ -999,25 +1012,19 @@ class ChangelistsLocalLineStatusTracker internal constructor(project: Project,
     val excludedFromCommit: RangeExclusionState? = null // should not be persisted
   )
 
-  private data class ChangeListMarker(val changelistId: String) {
+  protected data class ChangeListMarker(val changelistId: String) {
     constructor(changelist: LocalChangeList) : this(changelist.id)
   }
 
+  protected data class ChangeListBlockData(override var innerRanges: List<Range.InnerRange>? = null,
+                                           override var clientIds: List<ClientId> = emptyList(),
+                                           var marker: ChangeListMarker? = null,
+                                           var excludedFromCommit: RangeExclusionState = RangeExclusionState.Excluded) : LocalBlockData
 
-  private data class BlockData(var innerRanges: List<Range.InnerRange>? = null,
-                               var marker: ChangeListMarker? = null,
-                               var excludedFromCommit: RangeExclusionState = RangeExclusionState.Excluded)
-
-  private val Block.ourData: BlockData
+  override val Block.ourData: ChangeListBlockData
     get() {
-      if (data == null) data = BlockData()
-      return data as BlockData
-    }
-
-  override var Block.innerRanges: List<Range.InnerRange>?
-    get() = this.ourData.innerRanges
-    set(value) {
-      this.ourData.innerRanges = value
+      if (data == null) data = ChangeListBlockData()
+      return data as ChangeListBlockData
     }
 
   private var Block.marker: ChangeListMarker

@@ -80,7 +80,7 @@ public class VariableNotUsedInsideIfInspection extends BaseInspection {
       }
     }
 
-    private boolean checkVariableUsage(PsiReferenceExpression referenceExpression, PsiElement thenContext, PsiElement elseContext) {
+    private static boolean checkVariableUsage(PsiReferenceExpression referenceExpression, PsiElement thenContext, PsiElement elseContext) {
       final PsiElement target = referenceExpression.resolve();
       if (!(target instanceof PsiVariable variable)) {
         return false;

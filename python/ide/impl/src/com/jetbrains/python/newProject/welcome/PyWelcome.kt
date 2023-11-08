@@ -21,7 +21,6 @@ import com.intellij.openapi.project.DumbAwareRunnable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectCoreUtil
 import com.intellij.openapi.startup.StartupManager
-import com.intellij.openapi.ui.CheckBoxWithDescription
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.SystemInfo
@@ -36,7 +35,8 @@ import com.intellij.platform.DirectoryProjectConfigurator
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
-import com.intellij.ui.components.JBCheckBox
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.selected
 import com.intellij.xdebugger.XDebuggerUtil
 import com.jetbrains.python.PythonPluginDisposable
 import com.jetbrains.python.newProject.welcome.PyWelcomeCollector.Companion.ProjectType
@@ -50,7 +50,6 @@ import com.jetbrains.python.run.PythonRunConfigurationProducer
 import com.jetbrains.python.sdk.pythonSdk
 import org.jetbrains.annotations.CalledInAny
 import org.jetbrains.concurrency.CancellablePromise
-import java.awt.event.ItemEvent
 import java.util.concurrent.Callable
 import javax.swing.JPanel
 
@@ -79,13 +78,14 @@ internal class PyWelcomeConfigurator : DirectoryProjectConfigurator {
 
 internal object PyWelcomeGenerator {
   fun createWelcomeSettingsPanel(): JPanel {
-    return CheckBoxWithDescription(
-      JBCheckBox(PyWelcomeBundle.message("py.welcome.new.project.text"),
-                 PyWelcomeSettings.instance.createWelcomeScriptForEmptyProject).apply {
-        addItemListener { e -> PyWelcomeSettings.instance.createWelcomeScriptForEmptyProject = e.stateChange == ItemEvent.SELECTED }
-      },
-      PyWelcomeBundle.message("py.welcome.new.project.description")
-    )
+    return panel {
+      row {
+        checkBox(PyWelcomeBundle.message("py.welcome.new.project.text"))
+          .selected(PyWelcomeSettings.instance.createWelcomeScriptForEmptyProject)
+          .comment(PyWelcomeBundle.message("py.welcome.new.project.description"))
+          .onChanged { PyWelcomeSettings.instance.createWelcomeScriptForEmptyProject = it.isSelected }
+      }
+    }
   }
 
   fun welcomeUser(project: Project, baseDir: VirtualFile, module: Module) {

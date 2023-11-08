@@ -1864,7 +1864,6 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     PsiType operandType = operand.getType();
     PsiTypeElement checkType = InstanceOfUtils.findCheckTypeElement(expression);
     CFGBuilder builder = new CFGBuilder(this);
-    DfaVariableValue expressionValue;
     if (pattern == null) {
       if (checkType == null) {
         pushUnknown();
@@ -1874,18 +1873,10 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       }
     }
     else if (operandType != null) {
-      DfaValue expr = JavaDfaValueFactory.getExpressionDfaValue(getFactory(), operand);
-      if (expr instanceof DfaVariableValue) {
-        expressionValue = (DfaVariableValue)expr;
-        builder.push(expressionValue);
-      }
-      else {
-        expressionValue = createTempVariable(operand.getType());
-        builder
-          .pushForWrite(expressionValue)
-          .pushExpression(operand)
-          .assign();
-      }
+      builder
+        .pushForWrite(createTempVariable(operand.getType()))
+        .pushExpression(operand)
+        .assign();
       processPatternInInstanceof(pattern, expression, operandType);
     }
     else {
@@ -2569,6 +2560,6 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     new AssertJInliner(), new OptionalChainInliner(), new LambdaInliner(), new CollectionUpdateInliner(),
     new StreamChainInliner(), new MapUpdateInliner(), new AssumeInliner(), new ClassMethodsInliner(),
     new AssertAllInliner(), new BoxingInliner(), new SimpleMethodInliner(),
-    new TransformInliner(), new EnumCompareInliner(), new IndexOfInliner()
+    new TransformInliner(), new EnumCompareInliner(), new IndexOfInliner(), new AssertInstanceOfInliner()
   };
 }

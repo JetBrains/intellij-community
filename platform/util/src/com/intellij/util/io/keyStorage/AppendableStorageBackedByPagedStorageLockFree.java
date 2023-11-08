@@ -112,7 +112,8 @@ public final class AppendableStorageBackedByPagedStorageLockFree<Data> implement
   public void close() throws IOException {
     try {
       ExceptionUtil.runAllAndRethrowAllExceptions(
-        new IOException("Failed to .close() appendable storage [" + storage.getFile() + "]"),
+        IOException.class,
+        () -> new IOException("Failed to .close() appendable storage [" + storage.getFile() + "]"),
         this::flushAppendBuffer,
         storage::close
       );

@@ -47,7 +47,6 @@ import org.jetbrains.kotlin.idea.base.util.showYesNoCancelDialog
 import org.jetbrains.kotlin.idea.caches.resolve.*
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
 import org.jetbrains.kotlin.idea.core.*
-import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinChangeInfo
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinValVar
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.toValVar
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KtPsiClassWrapper
@@ -70,8 +69,6 @@ import org.jetbrains.kotlin.resolve.source.getPsi
 import org.jetbrains.kotlin.types.typeUtil.unCapture
 import java.lang.annotation.Retention
 import java.util.*
-import kotlin.math.min
-import org.jetbrains.kotlin.idea.base.psi.getLineCount as newGetLineCount
 import org.jetbrains.kotlin.idea.base.psi.getLineNumber as _getLineNumber
 import org.jetbrains.kotlin.idea.core.util.toPsiDirectory as newToPsiDirectory
 import org.jetbrains.kotlin.idea.core.util.toPsiFile as newToPsiFile
@@ -242,16 +239,6 @@ fun PsiFile.getLineStartOffset(line: Int): Int? {
 }
 
 @ApiStatus.ScheduledForRemoval
-@Deprecated(
-    "Use org.jetbrains.kotlin.idea.base.psi.getLineEndOffset() instead",
-    ReplaceWith("this.getLineEndOffset(line)", "org.jetbrains.kotlin.idea.base.psi.getLineEndOffset"),
-    DeprecationLevel.ERROR
-)
-fun PsiFile.getLineEndOffset(line: Int): Int? {
-    val document = viewProvider.document ?: PsiDocumentManager.getInstance(project).getDocument(this)
-    return document?.getLineEndOffset(line)
-}
-
 @Deprecated("Use org.jetbrains.kotlin.idea.base.psi.PsiLinesUtilsKt.getLineNumber instead")
 fun PsiElement.getLineNumber(start: Boolean = true): Int {
    return _getLineNumber(start)
@@ -522,68 +509,6 @@ fun KtNamedDeclaration.isAbstract(): Boolean = when {
 
 fun KtClass.isOpen(): Boolean = hasModifier(KtTokens.OPEN_KEYWORD) || this.isAbstract() || this.isInterfaceClass() || this.isSealed()
 
-fun <ListType : KtElement> replaceListPsiAndKeepDelimiters(
-    changeInfo: KotlinChangeInfo,
-    originalList: ListType,
-    newList: ListType,
-    @Suppress("UNCHECKED_CAST") listReplacer: ListType.(ListType) -> ListType = { replace(it) as ListType },
-    itemsFun: ListType.() -> List<KtElement>
-): ListType {
-    originalList.children.takeWhile { it is PsiErrorElement }.forEach { it.delete() }
-
-    val oldParameters = originalList.itemsFun().toMutableList()
-    val newParameters = newList.itemsFun()
-    val oldCount = oldParameters.size
-    val newCount = newParameters.size
-
-    val commonCount = min(oldCount, newCount)
-    val originalIndexes = changeInfo.newParameters.map { it.originalIndex }
-    val keepComments = originalList.allChildren.any { it is PsiComment } &&
-            oldCount > commonCount && originalIndexes == originalIndexes.sorted()
-    if (!keepComments) {
-        for (i in 0 until commonCount) {
-            oldParameters[i] = oldParameters[i].replace(newParameters[i]) as KtElement
-        }
-    }
-
-    if (commonCount == 0 && !keepComments) return originalList.listReplacer(newList)
-
-    if (oldCount > commonCount) {
-        if (keepComments) {
-            ((0 until oldParameters.size) - originalIndexes).forEach { index ->
-                val oldParameter = oldParameters[index]
-                val nextComma = oldParameter.getNextSiblingIgnoringWhitespaceAndComments()?.takeIf { it.node.elementType == KtTokens.COMMA }
-                if (nextComma != null) {
-                    nextComma.delete()
-                } else {
-                    oldParameter.getPrevSiblingIgnoringWhitespaceAndComments()?.takeIf { it.node.elementType == KtTokens.COMMA }?.delete()
-                }
-                oldParameter.delete()
-            }
-        } else {
-            originalList.deleteChildRange(oldParameters[commonCount - 1].nextSibling, oldParameters.last())
-        }
-    } else if (newCount > commonCount) {
-        val lastOriginalParameter = oldParameters.last()
-        val psiBeforeLastParameter = lastOriginalParameter.prevSibling
-        val withMultiline =
-            (psiBeforeLastParameter is PsiWhiteSpace || psiBeforeLastParameter is PsiComment) && psiBeforeLastParameter.textContains('\n')
-        val extraSpace = if (withMultiline) KtPsiFactory(originalList.project).createNewLine() else null
-        originalList.addRangeAfter(newParameters[commonCount - 1].nextSibling, newParameters.last(), lastOriginalParameter)
-        if (extraSpace != null) {
-            val addedItems = originalList.itemsFun().subList(commonCount, newCount)
-            for (addedItem in addedItems) {
-                val elementBefore = addedItem.prevSibling
-                if ((elementBefore !is PsiWhiteSpace && elementBefore !is PsiComment) || !elementBefore.textContains('\n')) {
-                    addedItem.parent.addBefore(extraSpace, addedItem)
-                }
-            }
-        }
-    }
-
-    return originalList
-}
-
 fun dropOverrideKeywordIfNecessary(element: KtNamedDeclaration) {
     val callableDescriptor = element.resolveToDescriptorIfAny() as? CallableDescriptor ?: return
     if (callableDescriptor.overriddenDescriptors.isEmpty()) {
@@ -786,16 +711,6 @@ fun <T : KtExpression> T.replaceWithCopyWithResolveCheck(
     val newDescriptor = resolveStrategy(elementCopy, newContext) ?: return null
 
     return if (originDescriptor.canonicalRender() == newDescriptor.canonicalRender()) elementCopy.postHook() else null
-}
-
-@ApiStatus.ScheduledForRemoval
-@Deprecated(
-    "Use org.jetbrains.kotlin.idea.base.psi.getLineCount() instead",
-    ReplaceWith("this.getLineCount()", "org.jetbrains.kotlin.idea.base.psi.getLineCount"),
-    DeprecationLevel.ERROR
-)
-fun PsiElement.getLineCount(): Int {
-    return newGetLineCount()
 }
 
 @Deprecated(

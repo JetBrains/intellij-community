@@ -101,7 +101,7 @@ public final class AboutDialog extends DialogWrapper {
   }
 
   @Override
-  protected @Nullable JComponent createCenterPanel() {
+  protected @NotNull JComponent createCenterPanel() {
     Icon appIcon = AppUIUtil.loadApplicationIcon(ScaleContext.create(), 60);
     Box box = getText();
     JLabel icon = new JLabel(appIcon);
@@ -222,7 +222,7 @@ public final class AboutDialog extends DialogWrapper {
     return box;
   }
 
-  public static @NotNull Pair<String, String> getBuildInfo(ApplicationInfoEx appInfo) {
+  public static @NotNull Pair<String, String> getBuildInfo(ApplicationInfo appInfo) {
     String buildInfo = IdeBundle.message("about.box.build.number", appInfo.getBuild().asString());
     String buildInfoNonLocalized = MessageFormat.format("Build #{0}", appInfo.getBuild().asString());
     Date buildDate = appInfo.getBuildDate().getTime();
@@ -305,7 +305,7 @@ public final class AboutDialog extends DialogWrapper {
       }
     }
 
-    if (SystemInfo.isXWindow) {
+    if (SystemInfo.isUnix && !SystemInfo.isMac) {
       text.append("Current Desktop: ").append(requireNonNullElse(System.getenv("XDG_CURRENT_DESKTOP"), "Undefined")).append('\n');
     }
 

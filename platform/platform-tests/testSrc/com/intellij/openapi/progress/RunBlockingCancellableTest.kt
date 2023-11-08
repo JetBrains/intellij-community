@@ -3,7 +3,10 @@ package com.intellij.openapi.progress
 
 import com.intellij.concurrency.currentThreadContextOrNull
 import com.intellij.openapi.application.impl.ModalityStateEx
-import com.intellij.openapi.progress.impl.ProgressState
+import com.intellij.platform.util.progress.impl.ProgressState
+import com.intellij.platform.util.progress.progressReporter
+import com.intellij.platform.util.progress.rawProgressReporter
+import com.intellij.platform.util.progress.withRawProgressReporter
 import com.intellij.testFramework.common.timeoutRunBlocking
 import kotlinx.coroutines.*
 import org.junit.jupiter.api.Assertions.*
@@ -138,6 +141,32 @@ class RunBlockingCancellableTest : CancellationTest() {
             delay(100.milliseconds) // let indicator polling job kick in
             assertDoesNotThrow {
               ensureActive()
+            }
+          }
+        }
+      }
+    }
+  }
+
+  @Test
+  fun `with indicator under job non-cancellable`(): Unit = timeoutRunBlocking {
+    launch {
+      blockingContext {
+        indicatorTest {
+          Cancellation.computeInNonCancelableSection<_, Nothing> {
+            assertDoesNotThrow {
+              runBlockingCancellable {
+                @OptIn(ExperimentalCoroutinesApi::class)
+                assertNull(coroutineContext.job.parent) // rbc does not attach to blockingContext job
+                assertDoesNotThrow {
+                  ensureActive()
+                }
+                this@launch.cancel()
+                delay(100.milliseconds) // let indicator polling job kick in
+                assertDoesNotThrow {
+                  ensureActive()
+                }
+              }
             }
           }
         }

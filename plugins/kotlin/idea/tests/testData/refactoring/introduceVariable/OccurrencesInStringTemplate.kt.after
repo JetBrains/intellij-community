@@ -1,3 +1,4 @@
+// IGNORE_K2
 fun a(x: Int) {
     val i = x + 1
     val a = i

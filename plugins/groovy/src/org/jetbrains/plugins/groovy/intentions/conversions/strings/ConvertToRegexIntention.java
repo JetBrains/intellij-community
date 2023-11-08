@@ -15,12 +15,11 @@
  */
 package org.jetbrains.plugins.groovy.intentions.conversions.strings;
 
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.intentions.base.Intention;
+import org.jetbrains.plugins.groovy.intentions.base.GrPsiUpdateIntention;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -34,11 +33,10 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
 /**
  * @author Max Medvedev
  */
-public class ConvertToRegexIntention extends Intention {
+public class ConvertToRegexIntention extends GrPsiUpdateIntention {
   @Override
-  protected void processIntention(@NotNull PsiElement element, @NotNull Project project, Editor editor) throws IncorrectOperationException {
+  protected void processIntention(@NotNull PsiElement element, @NotNull ActionContext context, @NotNull ModPsiUpdater updater) {
     if (!(element instanceof GrLiteral)) return;
-
 
     StringBuilder buffer = new StringBuilder();
     buffer.append("/");
@@ -68,7 +66,7 @@ public class ConvertToRegexIntention extends Intention {
     }
 
     buffer.append("/");
-    GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(project);
+    GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(context.project());
     GrExpression regex = factory.createExpressionFromText(buffer);
 
     element.replace(regex); //don't use replaceWithExpression since it can revert regex to string if regex brakes syntax

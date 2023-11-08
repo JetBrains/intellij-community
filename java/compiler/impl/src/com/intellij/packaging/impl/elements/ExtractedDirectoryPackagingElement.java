@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.packaging.impl.elements;
 
+import com.intellij.java.workspace.entities.ExtractedDirectoryPackagingElementEntity;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
@@ -9,14 +10,13 @@ import com.intellij.packaging.elements.PackagingElement;
 import com.intellij.packaging.impl.ui.ExtractedDirectoryPresentation;
 import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.ui.PackagingElementPresentation;
+import com.intellij.platform.backend.workspace.VirtualFileUrls;
 import com.intellij.platform.workspace.storage.EntitySource;
 import com.intellij.platform.workspace.storage.MutableEntityStorage;
 import com.intellij.platform.workspace.storage.WorkspaceEntity;
-import com.intellij.java.workspace.entities.ExtractedDirectoryPackagingElementEntity;
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl;
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager;
 import com.intellij.util.xmlb.annotations.Attribute;
-import com.intellij.platform.backend.workspace.VirtualFileUrls;
 import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

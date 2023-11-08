@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.wizard
 
 import com.intellij.ide.IdeBundle
@@ -24,7 +24,6 @@ import com.intellij.openapi.ui.shortenTextWithEllipsis
 import com.intellij.openapi.ui.validation.*
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.toCanonicalPath
-import com.intellij.openapi.util.io.toNioPath
 import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.openapi.vfs.toNioPathOrNull
 import com.intellij.ui.UIBundle
@@ -142,7 +141,7 @@ class NewProjectWizardBaseStep(parent: NewProjectWizardStep) : AbstractNewProjec
 
       onApply {
         context.projectName = name
-        context.setProjectFileDirectory(path.toNioPath().resolve(name), false)
+        context.setProjectFileDirectory(Path.of(path).resolve(name), false)
       }
     }
   }

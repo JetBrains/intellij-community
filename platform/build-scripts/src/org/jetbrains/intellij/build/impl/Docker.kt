@@ -6,7 +6,7 @@ import kotlinx.coroutines.runBlocking
 import org.jetbrains.intellij.build.io.runProcess
 
 internal object Docker {
-  val isAvailable by lazy {
+  val isAvailable: Boolean by lazy {
     try {
       runBlocking {
         runProcess("docker", "system", "info", inheritOut = true)

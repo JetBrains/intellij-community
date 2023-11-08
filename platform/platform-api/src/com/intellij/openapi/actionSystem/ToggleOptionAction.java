@@ -57,8 +57,12 @@ public class ToggleOptionAction extends ToggleAction {
       String name = option.getName();
       if (name != null) presentation.setText(name);
       String description = option.getDescription();
-      if (description != null) presentation.setDescription(description);
-      if (ActionPlaces.isPopupPlace(event.getPlace())) presentation.setIcon(null);
+      if (description != null) {
+        presentation.setDescription(description);
+      }
+      if (ActionPlaces.isPopupPlace(event.getPlace())) {
+        presentation.setIcon(null);
+      }
     }
   }
 

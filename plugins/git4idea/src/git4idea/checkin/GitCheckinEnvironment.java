@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.checkin;
 
 import com.google.common.collect.HashMultiset;
@@ -717,8 +717,7 @@ public final class GitCheckinEnvironment implements CheckinEnvironment, AmendCom
                           beforePathsMultiSet.count(move.getAfter()) == 0 && afterPathsMultiSet.count(move.getBefore()) == 0);
   }
 
-  @NotNull
-  private static List<CommitChange> collectChangesToCommit(@NotNull Collection<Change> changes) {
+  private static @NotNull List<CommitChange> collectChangesToCommit(@NotNull Collection<Change> changes) {
     List<CommitChange> result = new ArrayList<>();
     MultiMap<VirtualFile, CommitChange> map = new MultiMap<>();
 
@@ -775,7 +774,7 @@ public final class GitCheckinEnvironment implements CheckinEnvironment, AmendCom
         }
       }
       if (hasMismatch) {
-        LOG.warn(String.format("Change mismatch on commit of %s: %s", virtualFile, fileCommitChanges));
+        LOG.error(String.format("Change mismatch on commit of %s: %s", virtualFile, fileCommitChanges));
       }
 
       result.add(new CommitChange(beforePath, afterPath,

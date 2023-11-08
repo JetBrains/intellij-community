@@ -15,12 +15,16 @@
  */
 package com.jetbrains.python.newProject.steps;
 
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.projectWizard.AbstractNewProjectStep;
 import com.intellij.ide.util.projectWizard.ProjectSettingsStepBase;
 import com.intellij.ide.util.projectWizard.WebProjectTemplate;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.platform.DirectoryProjectGenerator;
@@ -29,14 +33,25 @@ import com.intellij.util.BooleanFunction;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.newProject.PyNewProjectSettings;
 import com.jetbrains.python.newProject.PythonProjectGenerator;
+import com.jetbrains.python.newProject.welcome.PyWelcomeSettings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Arrays;
+import java.util.Optional;
+
 
 public class PythonGenerateProjectCallback<T> extends AbstractNewProjectStep.AbstractCallback<T> {
 
   @Override
   public void consume(@Nullable ProjectSettingsStepBase<T> step, @NotNull ProjectGeneratorPeer<T> projectGeneratorPeer) {
     if (!(step instanceof ProjectSpecificSettingsStep settingsStep)) return;
+
+    if (step instanceof PythonProjectSpecificSettingsStep) {
+      // has to be set before project generation
+      boolean welcomeScript = PropertiesComponent.getInstance().getBoolean("PyCharm.NewProject.Welcome", false);
+      PyWelcomeSettings.getInstance().setCreateWelcomeScriptForEmptyProject(welcomeScript);
+    }
 
     final DirectoryProjectGenerator generator = settingsStep.getProjectGenerator();
     Sdk sdk = settingsStep.getSdk();
@@ -67,6 +82,20 @@ public class PythonGenerateProjectCallback<T> extends AbstractNewProjectStep.Abs
     if (newProject != null && generator instanceof PythonProjectGenerator) {
       SdkConfigurationUtil.setDirectoryProjectSdk(newProject, sdk);
       ((PythonProjectGenerator<?>)generator).afterProjectGenerated(newProject);
+    }
+
+    if (step instanceof PythonProjectSpecificSettingsStep newStep) {
+      // init git repostory
+      if (PropertiesComponent.getInstance().getBoolean("PyCharm.NewProject.Git", false)) {
+        ModuleManager moduleManager = ModuleManager.getInstance(newProject);
+        Optional<Module> module = Arrays.stream(moduleManager.getModules()).findFirst();
+        module.ifPresent((value -> {
+          ModuleRootManager rootManager = ModuleRootManager.getInstance(value);
+          Arrays.stream(rootManager.getContentRoots()).findFirst().ifPresent(root -> {
+            PythonProjectSpecificSettingsStep.initializeGit(newProject, root);
+          });
+        }));
+      }
     }
   }
 

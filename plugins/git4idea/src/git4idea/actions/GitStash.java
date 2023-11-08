@@ -29,8 +29,7 @@ public class GitStash extends GitRepositoryAction {
   }
 
   @Override
-  @NotNull
-  protected String getActionName() {
+  protected @NotNull String getActionName() {
     return GitBundle.message("stash.action.name");
   }
 }

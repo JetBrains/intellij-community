@@ -1,9 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle;
 
 import com.intellij.execution.configurations.SimpleJavaParameters;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.externalSystem.ExternalSystemAutoImportAware;
 import com.intellij.openapi.externalSystem.ExternalSystemConfigurableAware;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
@@ -53,6 +53,7 @@ import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData;
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager;
 import org.jetbrains.plugins.gradle.service.project.GradleAutoImportAware;
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolver;
+import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverExtension;
 import org.jetbrains.plugins.gradle.service.settings.GradleConfigurable;
 import org.jetbrains.plugins.gradle.service.task.GradleTaskManager;
 import org.jetbrains.plugins.gradle.settings.*;
@@ -111,7 +112,7 @@ public final class GradleManager
       GradleProjectSettings projectLevelSettings = settings.getLinkedProjectSettings(projectPath);
       String rootProjectPath = projectLevelSettings != null ? projectLevelSettings.getExternalProjectPath() : projectPath;
 
-      GradleInstallationManager gradleInstallationManager = ApplicationManager.getApplication().getService(GradleInstallationManager.class);
+      GradleInstallationManager gradleInstallationManager = GradleInstallationManager.getInstance();
       File gradleHome = gradleInstallationManager.getGradleHome(project, rootProjectPath);
       String localGradlePath = null;
       if (gradleHome != null) {
@@ -144,7 +145,12 @@ public final class GradleManager
         LOG.info("Instructing gradle to use java from " + javaHome);
       }
       result.setJavaHome(javaHome);
-      result.setDownloadSources(settings.isDownloadSources());
+      String vmOptions = Objects.requireNonNullElse(settings.getGradleVmOptions(), "");
+      if (vmOptions.contains("-Didea.gradle.download.sources.force=false")) {
+        result.setDownloadSources(false);
+      } else {
+        result.setDownloadSources(settings.isDownloadSources());
+      }
       result.setParallelModelFetch(settings.isParallelModelFetch());
       String ideProjectPath;
       if (project.getBasePath() == null ||
@@ -330,6 +336,11 @@ public final class GradleManager
   }
 
   @Override
+  public @NotNull List<ExtensionPointName<?>> getExtensionPointsForResolver() {
+    return List.of(GradleProjectResolverExtension.EP_NAME);
+  }
+
+  @Override
   public void runActivity(@NotNull final Project project) {
     // We want to automatically refresh linked projects on gradle service directory change.
     MessageBusConnection connection = project.getMessageBus().connect();
@@ -383,7 +394,7 @@ public final class GradleManager
                 }
                 configureExcludeOutDir(moduleDataNode, delegatedBuild);
               }
-              ApplicationManager.getApplication().getService(ProjectDataManager.class).importData(projectStructure, project);
+              ProjectDataManager.getInstance().importData(projectStructure, project);
             });
           }
         });

@@ -101,12 +101,12 @@ object CodeWithMeGuestLauncher {
             val embeddedClientLauncher = EmbeddedClientLauncher.create()
             if (embeddedClientLauncher != null) {
               LOG.debug("Launching client process from current IDE")
-              val lifetime = embeddedClientLauncher.launch(url, parentLifetime, project)
+              val lifetime = embeddedClientLauncher.launch(url, parentLifetime, NotificationBasedEmbeddedClientErrorReporter(project))
               onDone(lifetime)
               return
             }
             else {
-              LOG.debug("Cannot launch client process from the current IDE because information about runtime modules isn't available")
+              LOG.debug("Embedded client isn't available in the current IDE installation")
             }
           }
         }

@@ -13,6 +13,7 @@ import com.intellij.openapi.components.ComponentConfig
 import com.intellij.openapi.components.ServiceDescriptor
 import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
@@ -23,13 +24,13 @@ import com.intellij.serviceContainer.PrecomputedExtensionModel
 import com.intellij.serviceContainer.executeRegisterTaskForOldContent
 import com.intellij.serviceContainer.findConstructorOrNull
 import com.intellij.util.messages.MessageBus
-import com.intellij.util.namedChildScope
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
 
-private val LOG = logger<ClientSessionImpl>()
+private val LOG: Logger
+  get() = logger<ClientSessionImpl>()
 
 @OptIn(DelicateCoroutinesApi::class)
 @ApiStatus.Experimental
@@ -40,8 +41,8 @@ abstract class ClientSessionImpl(
   private val sharedComponentManager: ClientAwareComponentManager
 ) : ComponentManagerImpl(
   parent = null,
-  coroutineScope = GlobalScope.namedChildScope("ClientSessionImpl", clientId.asContextElement2()),
-  setExtensionsRootArea = false,
+  parentScope = GlobalScope,
+  additionalContext = clientId.asContextElement2(),
 ), ClientSession {
   final override val isLightServiceSupported: Boolean = false
   final override val isMessageBusSupported: Boolean = false
@@ -55,6 +56,12 @@ abstract class ClientSessionImpl(
     @Suppress("UNCHECKED_CAST")
     return (lookup.findConstructorOrNull(aClass, sessionConstructorMethodType)?.invoke(this) as T?)
            ?: super.findConstructorAndInstantiateClass(lookup, aClass)
+  }
+
+  override fun supportedSignaturesOfLightServiceConstructors(): List<MethodType> {
+    return listOf(
+      sessionConstructorMethodType,
+    ) + super.supportedSignaturesOfLightServiceConstructors()
   }
 
   fun registerServices() {
@@ -109,6 +116,8 @@ abstract class ClientSessionImpl(
   }
 
   fun <T : Any> doGetService(serviceClass: Class<T>, createIfNeeded: Boolean, fallbackToShared: Boolean): T? {
+    if (!fallbackToShared && !hasComponent(serviceClass)) return null
+
     val clientService = ClientId.withClientId(clientId) {
       super.doGetService(serviceClass = serviceClass, createIfNeeded = createIfNeeded)
     }
@@ -150,7 +159,7 @@ abstract class ClientSessionImpl(
   }
 
   final override fun toString(): String {
-    return clientId.toString()
+    return "${javaClass.name}(type=${type}, clientId=$clientId)"
   }
 }
 
@@ -200,6 +209,12 @@ open class ClientProjectSessionImpl(
            ?: super.findConstructorAndInstantiateClass(lookup, aClass)
   }
 
+  override fun supportedSignaturesOfLightServiceConstructors(): List<MethodType> {
+    return listOf(
+      projectMethodType,
+      projectSessionConstructorMethodType,
+    ) + super.supportedSignaturesOfLightServiceConstructors()
+  }
 
   override fun getContainerDescriptor(pluginDescriptor: IdeaPluginDescriptorImpl): ContainerDescriptor {
     return pluginDescriptor.projectContainerDescriptor

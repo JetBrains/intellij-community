@@ -1,19 +1,20 @@
 package com.intellij.searchEverywhereMl.semantics.reordering
 
-import com.intellij.ide.actions.searcheverywhere.ActionSearchEverywhereContributor
-import com.intellij.ide.actions.searcheverywhere.FileSearchEverywhereContributor
-import com.intellij.ide.actions.searcheverywhere.ClassSearchEverywhereContributor
-import com.intellij.ide.actions.searcheverywhere.SymbolSearchEverywhereContributor
-import com.intellij.ide.actions.searcheverywhere.SearchEverywhereReorderingService
-import com.intellij.ide.actions.searcheverywhere.SearchEverywhereFoundElementInfo
+import com.intellij.ide.actions.searcheverywhere.*
 import com.intellij.searchEverywhereMl.SemanticSearchEverywhereContributor
-import com.intellij.searchEverywhereMl.semantics.settings.SemanticSearchSettings
 
 class SearchEverywhereReorderingServiceImpl : SearchEverywhereReorderingService {
-  override fun isEnabled() = SemanticSearchSettings.getInstance().isEnabled()
+  private val enabledTabs = setOf(
+    ActionSearchEverywhereContributor::class.java.simpleName,
+    FileSearchEverywhereContributor::class.java.simpleName,
+    ClassSearchEverywhereContributor::class.java.simpleName,
+    SymbolSearchEverywhereContributor::class.java.simpleName
+  )
+
+  override fun isEnabled() = false
 
   override fun isEnabledInTab(tabID: String): Boolean {
-    return tabID in ENABLED_TABS
+    return tabID in enabledTabs
   }
 
   override fun reorder(tabID: String, items: MutableList<SearchEverywhereFoundElementInfo>) {
@@ -41,14 +42,5 @@ class SearchEverywhereReorderingServiceImpl : SearchEverywhereReorderingService 
         semanticIndex++
       }
     }
-  }
-
-  companion object {
-    private val ENABLED_TABS = setOf(
-      ActionSearchEverywhereContributor::class.java.simpleName,
-      FileSearchEverywhereContributor::class.java.simpleName,
-      ClassSearchEverywhereContributor::class.java.simpleName,
-      SymbolSearchEverywhereContributor::class.java.simpleName
-    )
   }
 }

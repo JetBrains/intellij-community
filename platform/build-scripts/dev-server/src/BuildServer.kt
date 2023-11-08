@@ -15,7 +15,10 @@ import org.jetbrains.intellij.build.TraceManager
 import org.jetbrains.intellij.build.closeKtorClient
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.*
+import kotlin.io.path.bufferedReader
 import kotlin.io.path.exists
+import kotlin.io.path.listDirectoryEntries
 
 @Serializable
 internal data class Configuration(@JvmField val products: Map<String, ProductConfiguration>)
@@ -34,17 +37,27 @@ private const val CUSTOM_PRODUCT_PROPERTIES_PATH = "idea.product.properties.path
 fun getIdeSystemProperties(runDir: Path): Map<String, String> {
   // see BuildContextImpl.getAdditionalJvmArguments - we should somehow deduplicate code
   val libDir = runDir.resolve("lib")
-  return mapOf(
-    "jna.boot.library.path" to "$libDir/jna/${JvmArchitecture.currentJvmArch.dirName}",
-    "pty4j.preferred.native.folder" to "$libDir/pty4j",
-    // require bundled JNA dispatcher lib
-    "jna.nosys" to "true",
-    "jna.noclasspath" to "true",
-  )
+
+  val defaultProperties: Map<String, String> = Properties().apply {
+    load(runDir.resolve("bin/idea.properties").bufferedReader())
+  }.map { it.key.toString() to it.value.toString() }.toMap()
+
+  return defaultProperties.plus(
+    mapOf(
+      "jna.boot.library.path" to "$libDir/jna/${JvmArchitecture.currentJvmArch.dirName}",
+      "pty4j.preferred.native.folder" to "$libDir/pty4j",
+      // require bundled JNA dispatcher lib
+      "jna.nosys" to "true",
+      "jna.noclasspath" to "true",
+      "jb.vmOptionsFile" to "${runDir.parent.listDirectoryEntries(glob = "*.vmoptions").singleOrNull()}",
+      "skiko.library.path" to "$libDir/skiko-awt-runtime-all",
+      "compose.swing.render.on.graphics" to "true",
+  ))
 }
 
-suspend fun buildProductInProcess(request: BuildRequest) {
-  TraceManager.spanBuilder("build ide").setAttribute("request", request.toString()).useWithScope2 {
+/** Returns IDE installation directory */
+suspend fun buildProductInProcess(request: BuildRequest): Path {
+  return TraceManager.spanBuilder("build ide").setAttribute("request", request.toString()).useWithScope2 {
     val platformPrefix = request.platformPrefix
     val configuration = createConfiguration(homePath = request.homePath, productionClassOutput = request.productionClassOutput)
     val productConfiguration = getProductConfiguration(configuration, platformPrefix)

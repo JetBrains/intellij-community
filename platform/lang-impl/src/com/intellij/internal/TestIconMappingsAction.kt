@@ -4,11 +4,11 @@ package com.intellij.internal
 import com.intellij.ide.ui.IconMapLoader
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.service
-import com.intellij.openapi.progress.ModalTaskOwner
-import com.intellij.openapi.progress.runWithModalProgressBlocking
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.findIconUsingNewImplementation
+import com.intellij.platform.ide.progress.ModalTaskOwner
 
 /**
  * @author Konstantin Bulenkov

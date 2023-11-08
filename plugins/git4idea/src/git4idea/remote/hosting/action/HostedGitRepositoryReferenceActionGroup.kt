@@ -15,6 +15,12 @@ abstract class HostedGitRepositoryReferenceActionGroup : ActionGroup, DumbAware 
 
   constructor(dynamicText: Supplier<@NlsActions.ActionText String>,
               dynamicDescription: Supplier<@NlsActions.ActionDescription String>,
+              icon: Supplier<Icon?>?)
+    : super(dynamicText, dynamicDescription, icon)
+
+  @Deprecated(level = DeprecationLevel.ERROR, message = "Use icon supplier")
+  constructor(dynamicText: Supplier<@NlsActions.ActionText String>,
+              dynamicDescription: Supplier<@NlsActions.ActionDescription String>,
               icon: Icon?)
     : super(dynamicText, dynamicDescription, icon)
 

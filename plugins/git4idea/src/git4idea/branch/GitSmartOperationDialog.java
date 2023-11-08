@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.branch;
 
 import com.intellij.openapi.Disposable;
@@ -40,8 +40,7 @@ public final class GitSmartOperationDialog extends DialogWrapper {
     FORCE,
     CANCEL;
 
-    @NotNull
-    private static Choice fromDialogExitCode(int exitCode) {
+    private static @NotNull Choice fromDialogExitCode(int exitCode) {
       if (exitCode == OK_EXIT_CODE) return SMART;
       if (exitCode == FORCE_EXIT_CODE) return FORCE;
       if (exitCode == CANCEL_EXIT_CODE) return CANCEL;
@@ -53,16 +52,15 @@ public final class GitSmartOperationDialog extends DialogWrapper {
   private static final Logger LOG = Logger.getInstance(GitSmartOperationDialog.class);
   private static final int FORCE_EXIT_CODE = NEXT_USER_EXIT_CODE;
 
-  @NotNull private final JComponent myFileBrowser;
-  @NotNull @Nls private final String myOperationTitle;
-  @NotNull private final GitSaveChangesPolicy mySaveMethod;
-  @Nullable @Nls private final String myForceButton;
+  private final @NotNull JComponent myFileBrowser;
+  private final @NotNull @Nls String myOperationTitle;
+  private final @NotNull GitSaveChangesPolicy mySaveMethod;
+  private final @Nullable @Nls String myForceButton;
 
   /**
    * Shows the dialog with the list of local changes preventing merge/checkout and returns the user's choice.
    */
-  @NotNull
-  static Choice show(@NotNull Project project,
+  static @NotNull Choice show(@NotNull Project project,
                      @NotNull List<? extends Change> changes,
                      @NotNull Collection<String> paths,
                      @NotNull @Nls(capitalization = Nls.Capitalization.Title) String operationTitle,

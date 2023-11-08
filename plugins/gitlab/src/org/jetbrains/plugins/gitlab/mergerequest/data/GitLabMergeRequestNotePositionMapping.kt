@@ -1,10 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.data
 
+import com.intellij.collaboration.util.ChangesSelection
+import com.intellij.diff.util.Side
 import com.intellij.openapi.diagnostic.logger
 import git4idea.changes.GitBranchComparisonResult
 import git4idea.changes.findCumulativeChange
-import com.intellij.collaboration.util.ChangesSelection
 
 interface GitLabMergeRequestNotePositionMapping {
   class Actual(val change: ChangesSelection.Precise) : GitLabMergeRequestNotePositionMapping
@@ -16,7 +17,7 @@ interface GitLabMergeRequestNotePositionMapping {
     private val LOG = logger<GitLabMergeRequestNotePositionMapping>()
 
     fun map(mrChanges: GitBranchComparisonResult, position: GitLabNotePosition): GitLabMergeRequestNotePositionMapping {
-      val textLocation = (position as? GitLabNotePosition.Text)?.location
+      val textLocation = position.getLocation(Side.LEFT)
 
       val changes = if (position.parentSha == mrChanges.mergeBaseSha) {
         // first commit

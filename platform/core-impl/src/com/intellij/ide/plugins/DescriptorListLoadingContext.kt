@@ -19,15 +19,19 @@ import java.util.function.Supplier
 
 @ApiStatus.Internal
 class DescriptorListLoadingContext(
-  @JvmField val disabledPlugins: Set<PluginId> = DisabledPluginsState.getDisabledIds(),
-  @JvmField val expiredPlugins: Set<PluginId> = ExpiredPluginsState.expiredPluginIds,
-  private val brokenPluginVersions: Map<PluginId, Set<String?>> = getBrokenPluginVersions(),
+  private val customDisabledPlugins: Set<PluginId>? = null,
+  private val customExpiredPlugins: Set<PluginId>? = null,
+  private val customBrokenPluginVersions: Map<PluginId, Set<String?>>? = null,
   @JvmField val productBuildNumber: () -> BuildNumber = { PluginManagerCore.buildNumber },
   override val isMissingIncludeIgnored: Boolean = false,
   @JvmField val isMissingSubDescriptorIgnored: Boolean = false,
   checkOptionalConfigFileUniqueness: Boolean = false,
   @JvmField val transient: Boolean = false
 ) : AutoCloseable, ReadModuleContext {
+  val disabledPlugins by lazy { customDisabledPlugins ?: DisabledPluginsState.getDisabledIds() }
+  val expiredPlugins by lazy { customExpiredPlugins ?: ExpiredPluginsState.expiredPluginIds }
+  private val brokenPluginVersions by lazy { customBrokenPluginVersions ?: getBrokenPluginVersions() }
+  
   @JvmField
   internal val globalErrors: CopyOnWriteArrayList<Supplier<String>> = CopyOnWriteArrayList<Supplier<String>>()
 

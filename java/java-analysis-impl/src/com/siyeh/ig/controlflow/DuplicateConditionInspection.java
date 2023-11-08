@@ -116,7 +116,9 @@ public class DuplicateConditionInspection extends BaseInspection {
       }
     }
 
-    private void collectConditionsForExpression(PsiExpression condition, Set<? super PsiExpression> conditions, IElementType wantedTokenType) {
+    private static void collectConditionsForExpression(PsiExpression condition,
+                                                       Set<? super PsiExpression> conditions,
+                                                       IElementType wantedTokenType) {
       condition = PsiUtil.skipParenthesizedExprDown(condition);
       if (condition == null) return;
       if (condition instanceof PsiPolyadicExpression polyadicExpression) {

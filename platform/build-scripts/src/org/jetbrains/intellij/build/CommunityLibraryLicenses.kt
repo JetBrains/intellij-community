@@ -149,9 +149,13 @@ object CommunityLibraryLicenses {
       .apache("https://gitbox.apache.org/repos/asf?p=commons-cli.git;a=blob_plain;f=LICENSE.txt;hb=HEAD"),
     LibraryLicense(name = "Apache Commons Codec", libraryName = "commons-codec", url = "https://commons.apache.org/proper/commons-codec/")
       .apache("https://github.com/apache/commons-codec/blob/master/LICENSE.txt"),
+    LibraryLicense(name = "Apache Commons Collections", libraryName = "commons-collections",
+                   url = "https://commons.apache.org/proper/commons-collections/")
+      .apache("https://gitbox.apache.org/repos/asf?p=commons-collections.git;a=blob_plain;f=LICENSE.txt;hb=HEAD"),
     LibraryLicense(name = "Apache Commons Compress", libraryName = "commons-compress",
                    url = "https://commons.apache.org/proper/commons-compress/")
-      .apache("https://gitbox.apache.org/repos/asf?p=commons-compress.git;a=blob_plain;f=LICENSE.txt;hb=HEAD"),
+      .apache("https://gitbox.apache.org/repos/asf?p=commons-compress.git;a=blob_plain;f=LICENSE.txt;hb=HEAD")
+      .suppliedByOrganizations(Suppliers.APACHE),
     LibraryLicense(name = "Apache Commons Discovery", libraryName = "commons-discovery",
                    url = "https://commons.apache.org/dormant/commons-discovery/")
       .apache("https://commons.apache.org/dormant/commons-discovery/license.html")
@@ -173,7 +177,12 @@ object CommunityLibraryLicenses {
       .apache("https://gitbox.apache.org/repos/asf?p=commons-io.git;a=blob_plain;f=LICENSE.txt;hb=HEAD"),
     LibraryLicense(name = "Apache Commons Lang", libraryName = "commons-lang3",
                    url = "https://commons.apache.org/proper/commons-lang/")
-      .apache("https://gitbox.apache.org/repos/asf?p=commons-lang.git;a=blob_plain;f=LICENSE.txt;hb=HEAD"),
+      .apache("https://gitbox.apache.org/repos/asf?p=commons-lang.git;a=blob_plain;f=LICENSE.txt;hb=HEAD")
+      .suppliedByPersons(
+        "Daniel Rall", "Robert Burrell Donkin", "James Carman", "Benedikt Ritter", "Rob Tompkins", "Stephen Colebourne",
+        "Henri Yandell", "Steven Caswell", "Gary D. Gregory", "Fredrik Westermarck", "Niall Pemberton", "Matt Benson", "Joerg Schaible",
+        "Oliver Heger", "Paul Benedict", "Duncan Jones", "Loic Guibert"
+      ),
     LibraryLicense(name = "Apache Commons Logging", libraryName = "commons-logging",
                    url = "https://commons.apache.org/proper/commons-logging/")
       .apache("https://gitbox.apache.org/repos/asf?p=commons-logging.git;a=blob_plain;f=LICENSE.txt;hb=HEAD"),
@@ -232,6 +241,8 @@ object CommunityLibraryLicenses {
       .suppliedByOrganizations("Atlassian Pty Ltd"),
     LibraryLicense(name = "Automaton", libraryName = "automaton", url = "https://www.brics.dk/automaton/")
       .simplifiedBsd("https://github.com/cs-au-dk/dk.brics.automaton/blob/master/COPYING"),
+    LibraryLicense(name = "Bash-Preexec", attachedTo = "intellij.terminal", url = "https://github.com/rcaloras/bash-preexec", version = "0.5.0")
+      .mit("https://github.com/rcaloras/bash-preexec/blob/master/LICENSE.md"),
     LibraryLicense(name = "batik", libraryName = "batik-transcoder", url = "https://xmlgraphics.apache.org/batik/")
       .apache("https://xmlgraphics.apache.org/batik/license.html")
       .suppliedByOrganizations("The Apache Software Foundation"),
@@ -258,6 +269,9 @@ object CommunityLibraryLicenses {
     LibraryLicense(name = "classgraph", libraryName = "classgraph", license = "codehaus",
                    url = "https://github.com/classgraph/classgraph",
                    licenseUrl = "https://github.com/codehaus/classworlds/blob/master/classworlds/LICENSE.txt"),
+    LibraryLicense(name = "Clikt", libraryName = "clikt", url = "https://github.com/ajalt/clikt")
+      .apache("https://github.com/ajalt/clikt/blob/master/LICENSE.txt")
+      .suppliedByOrganizations("AJ Alt"),
     LibraryLicense(name = "Command Line Interface Parser for Java", libraryName = "cli-parser",
                    url = "https://code.google.com/p/cli-parser/").apache(),
     LibraryLicense(name = "Common Annotations for the JavaTM Platform API", libraryName = "javax.annotation-api",
@@ -267,6 +281,14 @@ object CommunityLibraryLicenses {
     LibraryLicense(name = "Compose Animation Tooling", libraryName = "ui-animation-tooling-internal", version = "0.1.0-SNAPSHOT",
                    url = "https://source.android.com/").apache()
       .suppliedByOrganizations(Suppliers.GOOGLE),
+    LibraryLicense(name = "Compose Multiplatform", libraryName = "jetbrains.compose.desktop.foundation",
+                   url = "https://github.com/JetBrains/compose-multiplatform")
+      .apache("https://github.com/JetBrains/compose-multiplatform/blob/master/LICENSE.txt")
+      .suppliedByOrganizations(Suppliers.JETBRAINS),
+    LibraryLicense(name = "Compose Multiplatform Compiler", libraryName = "jetbrains.compose.compiler.hosted",
+                   url = "https://github.com/JetBrains/compose-multiplatform")
+      .apache("https://github.com/JetBrains/compose-multiplatform/blob/master/LICENSE.txt")
+      .suppliedByOrganizations(Suppliers.JETBRAINS),
     // For ADB wireless QR Code generation
     LibraryLicense(name = "Core barcode encoding/decoding library", url = "https://github.com/zxing/zxing/tree/master/core",
                    libraryName = "zxing-core").apache("https://github.com/zxing/zxing/blob/master/LICENSE")
@@ -324,29 +346,15 @@ object CommunityLibraryLicenses {
       .simplifiedBsd("https://github.com/fb55/entities/blob/master/LICENSE"),
     LibraryLicense(name = "epydoc", attachedTo = "intellij.python", version = "3.0.1",
                    url = "https://epydoc.sourceforge.net/").mit(),
-    LibraryLicense(name = "error-prone-annotations", libraryName = "error-prone-annotations",
-                   url = "https://github.com/google/error-prone")
-      .apache("https://github.com/google/error-prone/blob/master/COPYING")
-      .suppliedByOrganizations(Suppliers.GOOGLE),
-    LibraryLicense(name = "fastutil", libraryName = "fastutil-min",
-                   url = "https://github.com/vigna/fastutil")
+    LibraryLicense(name = "fastutil", libraryName = "fastutil-min", url = "https://github.com/vigna/fastutil")
       .apache("https://github.com/vigna/fastutil/blob/master/LICENSE-2.0")
       .suppliedByPersons("Sebastiano Vigna"),
-    LibraryLicense(name = "ffmpeg", libraryName = "ffmpeg",
-                   url = "https://android.googlesource.com/platform/prebuilts/tools/+/refs/tags/studio-2022.1.1/common/m2/repository/org/bytedeco",
-                   license = "LGPL v2.1+",
-                   licenseUrl = "https://android.googlesource.com/platform/prebuilts/tools/+/refs/tags/studio-2022.1.1/common/m2/repository/org/bytedeco/ffmpeg-LICENSE.md")
-      .suppliedByOrganizations(Suppliers.GOOGLE),
-    LibraryLicense(name = "ffmpeg-javacpp", libraryName = "ffmpeg-javacpp",
-                   url = "https://android.googlesource.com/platform/prebuilts/tools/+/refs/tags/studio-2022.1.1/common/m2/repository/org/bytedeco",
-                   license = "LGPL v2.1+",
-                   licenseUrl = "https://android.googlesource.com/platform/prebuilts/tools/+/refs/tags/studio-2022.1.1/common/m2/repository/org/bytedeco/ffmpeg-LICENSE.md")
-      .suppliedByOrganizations(Suppliers.GOOGLE),
-    LibraryLicense(name = "ffmpeg-platform", libraryName = "ffmpeg-platform",
-                   url = "https://android.googlesource.com/platform/prebuilts/tools/+/refs/tags/studio-2022.1.1/common/m2/repository/org/bytedeco",
-                   license = "LGPL v2.1+",
-                   licenseUrl = "https://android.googlesource.com/platform/prebuilts/tools/+/refs/tags/studio-2022.1.1/common/m2/repository/org/bytedeco/ffmpeg-LICENSE.md")
-      .suppliedByOrganizations(Suppliers.GOOGLE),
+    ffmpegLibraryLicense("ffmpeg"),
+    ffmpegLibraryLicense("ffmpeg-javacpp"),
+    ffmpegLibraryLicense("ffmpeg-linux-x64"),
+    ffmpegLibraryLicense("ffmpeg-macos-aarch64"),
+    ffmpegLibraryLicense("ffmpeg-macos-x64"),
+    ffmpegLibraryLicense("ffmpeg-windows-x64"),
     LibraryLicense(name = "FiraCode", attachedTo = "intellij.platform.resources", version = "1.206", license = "OFL",
                    url = "https://github.com/tonsky/FiraCode", licenseUrl = "https://github.com/tonsky/FiraCode/blob/master/LICENSE"),
     // for flatbuffers-java module library in android.sdktools.mlkit-common
@@ -395,6 +403,7 @@ object CommunityLibraryLicenses {
                                                    "ai.grazie.utils.common",
                                                    "ai.grazie.utils.json",
                                                    "ai.grazie.utils.lucene.lt.compatibility",
+                                                   "ai.grazie.model.bdg.jvm",
                                                    "ai.grazie.model.common",
                                                    "ai.grazie.model.gec",
                                                    "ai.grazie.model.text",
@@ -419,6 +428,10 @@ object CommunityLibraryLicenses {
     LibraryLicense(name = "Groovy XML", libraryName = "org.codehaus.groovy:groovy-xml",
                    url = "https://groovy-lang.org/")
       .apache("https://github.com/apache/groovy/blob/master/LICENSE"),
+
+    LibraryLicense(libraryName = "grpc-inprocess", url = "https://grpc.io/")
+      .apache("https://github.com/grpc/grpc-java/blob/master/LICENSE")
+      .suppliedByOrganizations("gRPC Authors"),
     LibraryLicense(name = "gRPC Kotlin: Stub", libraryName = "grpc-kotlin-stub", url = "https://grpc.io/")
       .apache("https://github.com/grpc/grpc-java/blob/master/LICENSE")
       .suppliedByOrganizations("gRPC Authors"),
@@ -434,6 +447,7 @@ object CommunityLibraryLicenses {
     LibraryLicense(name = "gRPC: Stub", libraryName = "grpc-stub", url = "https://grpc.io/")
       .apache("https://github.com/grpc/grpc-java/blob/master/LICENSE")
       .suppliedByOrganizations("gRPC Authors"),
+
     LibraryLicense(name = "Gson", libraryName = "gson", url = "https://github.com/google/gson")
       .apache("https://github.com/google/gson/blob/master/LICENSE"),
     LibraryLicense(libraryName = "Guava", url = "https://github.com/google/guava")
@@ -560,6 +574,10 @@ object CommunityLibraryLicenses {
                    license = "CDDL 1.1 / GPL 2.0 + Classpath",
                    licenseUrl = "https://github.com/javaee/activation/blob/master/LICENSE.txt")
       .suppliedByPersons("Bill Shannon"),
+    ffmpegLibraryLicense("javacpp-linux-x64"),
+    ffmpegLibraryLicense("javacpp-macos-aarch64"),
+    ffmpegLibraryLicense("javacpp-macos-x64"),
+    ffmpegLibraryLicense("javacpp-windows-x64"),
     LibraryLicense(name = "javaslang", libraryName = "javaslang", url = "https://javaslang.io/").apache()
       .suppliedByPersons("Daniel Dietrich"),
     LibraryLicense(name = "javawriter", attachedTo = "intellij.android.core",
@@ -622,6 +640,9 @@ object CommunityLibraryLicenses {
                    url = "https://github.com/JetBrains/JetBrainsRuntime").apache(),
     LibraryLicense(name = "jetCheck", libraryName = "jetCheck", url = "https://github.com/JetBrains/jetCheck")
       .apache("https://github.com/JetBrains/jetCheck/blob/master/LICENSE")
+      .suppliedByOrganizations(Suppliers.JETBRAINS),
+    LibraryLicense(name = "Jewel", libraryName = "jetbrains.jewel", url = "https://github.com/JetBrains/jewel")
+      .apache("https://github.com/JetBrains/jewel/blob/main/LICENSE")
       .suppliedByOrganizations(Suppliers.JETBRAINS),
     LibraryLicense(name = "JGit (Settings Sync and SettingsRepo)", libraryName = "jetbrains.intellij.deps.eclipse.jgit",
                    license = "Eclipse Distribution License 1.0",
@@ -695,7 +716,8 @@ object CommunityLibraryLicenses {
                      "kinference.serializer.tiled.jvm",
                      "kinference.core.jvm",
                      "kinference.utils",
-                   )).apache("https://github.com/JetBrains-Research/kinference/blob/master/LICENSE.txt"),
+                   )).apache("https://github.com/JetBrains-Research/kinference/blob/master/LICENSE.txt")
+      .suppliedByOrganizations(Suppliers.JETBRAINS),
     LibraryLicense(name = "Kodein-DI", libraryName = "kodein-di-jvm", url = "https://github.com/kosi-libs/Kodein")
       .mit("https://github.com/kosi-libs/Kodein/blob/master/LICENSE.txt"),
     LibraryLicense(name = "Kotlin Coroutines for Guava", libraryName = "kotlinx-coroutines-guava",
@@ -1009,7 +1031,10 @@ object CommunityLibraryLicenses {
                    url = "https://six.readthedocs.io/",
                    licenseUrl = "https://github.com/benjaminp/six/blob/master/LICENSE")
       .mit("https://github.com/benjaminp/six/blob/master/LICENSE"),
-    LibraryLicense(libraryName = "Slf4j", url = "https://slf4j.org/")
+    LibraryLicense(name = "Skiko Runtime", libraryName = "jetbrains.skiko.awt.runtime.all",
+                   url = "https://github.com/JetBrains/skiko/")
+      .apache("https://github.com/JetBrains/skiko/blob/master/LICENSE"),
+    LibraryLicense(libraryName = "slf4j-api", url = "https://slf4j.org/")
       .mit("https://www.slf4j.org/license.html")
       .suppliedByOrganizations("QOS.ch Sarl"),
     LibraryLicense(libraryName = "slf4j-jdk14", url = "https://slf4j.org/")
@@ -1038,6 +1063,12 @@ object CommunityLibraryLicenses {
                    url = "https://sphinxcontrib-napoleon.readthedocs.io/",
                    licenseUrl = "https://github.com/sphinx-contrib/napoleon/blob/master/LICENSE").simplifiedBsd(),
     androidDependency(name = "SQLite Inspector Proto", libraryName = "sqlite-inspector-proto"),
+    LibraryLicense(name = "Squareup Okio", libraryName = "squareup.okio.jvm", url = "https://github.com/square/okio")
+      .apache("https://github.com/square/okio/blob/master/LICENSE.txt")
+      .suppliedByOrganizations("Square, Inc."),
+    LibraryLicense(name = "Squareup Wire", libraryName = "squareup.wire.runtime.jvm", url = "https://github.com/square/wire")
+      .apache("https://github.com/square/wire/blob/master/LICENSE.txt")
+      .suppliedByOrganizations("Square, Inc."),
     LibraryLicense(name = "ssh-nio-fs", libraryName = "ssh-nio-fs",
                    url = "https://github.com/JetBrains/intellij-deps-ssh-nio-fs")
       .mit("https://github.com/JetBrains/intellij-deps-ssh-nio-fs/blob/master/LICENSE")
@@ -1240,8 +1271,6 @@ object CommunityLibraryLicenses {
     jetbrainsLibrary("kotlinc.kotlin-scripting-common"),
     jetbrainsLibrary("kotlinc.kotlin-scripting-compiler-impl"),
     jetbrainsLibrary("kotlinc.kotlin-scripting-jvm"),
-    jetbrainsLibrary("kotlinc.kotlin-stdlib"),
-    jetbrainsLibrary("kotlinc.kotlin-stdlib-minimal-for-test"),
     jetbrainsLibrary("kotlinc.kotlinx-serialization-compiler-plugin"),
     jetbrainsLibrary("kotlinc.lombok-compiler-plugin"),
     jetbrainsLibrary("kotlinc.low-level-api-fir"),
@@ -1260,6 +1289,16 @@ object CommunityLibraryLicenses {
     jetbrainsLibrary("tips-pycharm-community"),
     jetbrainsLibrary("workspace-model-codegen"),
   )
+
+  private fun ffmpegLibraryLicense(libraryName: String): LibraryLicense {
+    return LibraryLicense(
+      name = libraryName,
+      libraryName = libraryName,
+      url = "https://android.googlesource.com/platform/prebuilts/tools/+/refs/tags/studio-2022.3.1-beta2/common/m2/repository/org/bytedeco",
+      license = "LGPL v2.1+",
+      licenseUrl = "https://android.googlesource.com/platform/prebuilts/tools/+/refs/tags/studio-2022.3.1-beta2/common/m2/repository/org/bytedeco/ffmpeg-LICENSE.md"
+    ).suppliedByOrganizations(Suppliers.GOOGLE)
+  }
 
   private fun androidDependency(name: String, libraryName: String = name, version: String? = null) =
     LibraryLicense(name = name, libraryName = libraryName, version = version,

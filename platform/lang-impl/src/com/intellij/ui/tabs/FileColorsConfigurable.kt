@@ -18,8 +18,8 @@ import com.intellij.openapi.options.UnnamedConfigurable
 import com.intellij.openapi.options.ex.Settings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
+import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.ui.panel.ComponentPanelBuilder.createCommentComponent
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep
@@ -35,14 +35,12 @@ import com.intellij.ui.FileColorManager
 import com.intellij.ui.LayeredIcon
 import com.intellij.ui.SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES
 import com.intellij.ui.ToolbarDecorator.createDecorator
-import com.intellij.ui.components.ActionLink
-import com.intellij.ui.components.panels.HorizontalLayout
-import com.intellij.ui.components.panels.VerticalLayout
+import com.intellij.ui.dsl.builder.Align
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.hover.TableHoverListener
 import com.intellij.ui.table.JBTable
 import com.intellij.util.ui.EditableModel
 import com.intellij.util.ui.JBInsets
-import com.intellij.util.ui.JBUI.Borders
 import com.intellij.util.ui.RegionPaintIcon
 import com.intellij.util.ui.RegionPainter
 import org.jetbrains.annotations.Nls
@@ -120,32 +118,34 @@ internal class FileColorsConfigurable(project: Project) : SearchableConfigurable
   override fun createComponent(): JPanel {
     disposeUIResources()
 
-    val north = JPanel(HorizontalLayout(10))
-    north.border = Borders.emptyBottom(5)
-    north.add(HorizontalLayout.LEFT, enabledFileColors.createComponent())
-    north.add(HorizontalLayout.LEFT, useInEditorTabs.createComponent())
-    north.add(HorizontalLayout.LEFT, useInProjectView.createComponent())
-
-    val south = JPanel(VerticalLayout(5))
-    south.border = Borders.emptyTop(5)
-    south.add(VerticalLayout.TOP, createCommentComponent(message("settings.file.colors.description"), true))
-    south.add(VerticalLayout.TOP, ActionLink(message("settings.file.colors.manage.scopes")) {
-      Settings.KEY.getData(DataManager.getInstance().getDataContext(south))?.let {
-        try {
-          // try to select related configurable in the current Settings dialog
-          if (!it.select(it.find(PROJECT_SCOPES)).isRejected) return@ActionLink
-        }
-        catch (ignored: IllegalStateException) {
-          // see ScopeColorsPageFactory.java:74
+    lateinit var panel: DialogPanel
+    panel = panel {
+      row {
+        cell(enabledFileColors.createComponent())
+        cell(useInEditorTabs.createComponent())
+        cell(useInProjectView.createComponent())
+      }
+      row {
+        cell(colorsTableModel.createComponent())
+          .align(Align.FILL)
+          .comment(message("settings.file.colors.description"))
+      }.resizableRow()
+      row {
+        link(message("settings.file.colors.manage.scopes")) {
+          Settings.KEY.getData(DataManager.getInstance().getDataContext(panel))?.let {
+            try {
+              // try to select related configurable in the current Settings dialog
+              if (!it.select(it.find(PROJECT_SCOPES)).isRejected) return@link
+            }
+            catch (ignored: IllegalStateException) {
+              // see ScopeColorsPageFactory.java:74
+            }
+          }
+          EditScopesDialog.showDialog(manager.project, null, true)
         }
       }
-      EditScopesDialog.showDialog(manager.project, null, true)
-    })
+    }
 
-    val panel = JPanel(BorderLayout())
-    panel.add(BorderLayout.NORTH, north)
-    panel.add(BorderLayout.CENTER, colorsTableModel.createComponent())
-    panel.add(BorderLayout.SOUTH, south)
     return panel
   }
 
@@ -383,7 +383,7 @@ private class FileColorsTableModel(val manager: FileColorManagerImpl) : Abstract
     return createDecorator(table)
       .setAddAction {
         val popup = JBPopupFactory.getInstance().createListPopup(ScopeListPopupStep(this))
-        it.preferredPopupPoint?.let { point -> popup.show(point) }
+        it.preferredPopupPoint.let { point -> popup.show(point) }
       }
       .setAddIcon(LayeredIcon.ADD_WITH_DROPDOWN)
       .setMoveUpActionUpdater { table.selectedRows.all { canExchangeRows(it, it - 1) } }

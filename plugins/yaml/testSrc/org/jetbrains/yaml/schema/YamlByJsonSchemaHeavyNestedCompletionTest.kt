@@ -27,7 +27,7 @@ class YamlByJsonSchemaHeavyNestedCompletionTest: JsonBySchemaHeavyCompletionTest
       .completesTo("""
         one:
           two:
-            three: <selection>false</selection>
+            three: <selection>false<caret></selection>
       """.trimIndent())
   }
 
@@ -39,7 +39,7 @@ class YamlByJsonSchemaHeavyNestedCompletionTest: JsonBySchemaHeavyCompletionTest
       .completesTo("""
         one:
           two:
-            three: <selection>false</selection>
+            three: <selection>false<caret></selection>
       """.trimIndent())
   }
 
@@ -54,7 +54,7 @@ class YamlByJsonSchemaHeavyNestedCompletionTest: JsonBySchemaHeavyCompletionTest
       .completesTo("""
         one:
           two:
-            three: <selection>false</selection>
+            three: <selection>false<caret></selection>
             foo: bar
       """.trimIndent())
   }
@@ -69,7 +69,7 @@ class YamlByJsonSchemaHeavyNestedCompletionTest: JsonBySchemaHeavyCompletionTest
       .completesTo("""
         one:
           two:
-            three: <selection>false</selection>
+            three: <selection>false<caret></selection>
           foo: bar
       """.trimIndent())
   }
@@ -197,7 +197,7 @@ class YamlByJsonSchemaHeavyNestedCompletionTest: JsonBySchemaHeavyCompletionTest
         one:
           two:
             foo: false
-            three: <selection>false</selection>
+            three: <selection>false<caret></selection>
       """.trimIndent())
 
     open1ThenOpen2Then3Schema
@@ -213,7 +213,7 @@ class YamlByJsonSchemaHeavyNestedCompletionTest: JsonBySchemaHeavyCompletionTest
         one:
           two:
             foo: false
-            three: <selection>false</selection>
+            three: <selection>false<caret></selection>
           twosBrother: 4
         onesBrother: 2
       """.trimIndent())
@@ -231,7 +231,7 @@ class YamlByJsonSchemaHeavyNestedCompletionTest: JsonBySchemaHeavyCompletionTest
         one:
           two:
             foo: false
-            three: <selection>false</selection>
+            three: <selection>false<caret></selection>
           twosBrother: 4
         onesBrother: 2
       """.trimIndent())
@@ -247,7 +247,7 @@ class YamlByJsonSchemaHeavyNestedCompletionTest: JsonBySchemaHeavyCompletionTest
         one:
           twosBrother: 4
           two:
-            three: <selection>false</selection>
+            three: <selection>false<caret></selection>
         onesBrother: 2
       """.trimIndent())
   }

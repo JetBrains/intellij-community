@@ -12,22 +12,22 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.JDOMUtil
+import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
 import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMs
 import com.intellij.platform.workspace.jps.JpsMetrics
-import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
+import com.intellij.platform.workspace.jps.entities.FacetEntity
+import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.jps.entities.ModuleId
+import com.intellij.platform.workspace.jps.entities.ModuleSettingsBase
+import com.intellij.platform.workspace.storage.EntityChange
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.VersionedStorageChange
+import com.intellij.platform.workspace.storage.orderToRemoveReplaceAdd
 import com.intellij.workspaceModel.ide.impl.jps.serialization.BaseIdeSerializationContext
 import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetModelBridge.Companion.facetMapping
 import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetModelBridge.Companion.mutableFacetMapping
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl.Companion.moduleMap
 import com.intellij.workspaceModel.ide.legacyBridge.WorkspaceFacetContributor
-import com.intellij.platform.workspace.storage.EntityChange
-import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.platform.workspace.storage.VersionedStorageChange
-import com.intellij.platform.workspace.jps.entities.FacetEntity
-import com.intellij.platform.workspace.jps.entities.ModuleEntity
-import com.intellij.platform.workspace.jps.entities.ModuleId
-import com.intellij.platform.workspace.jps.entities.ModuleSettingsBase
-import com.intellij.platform.workspace.storage.orderToRemoveReplaceAdd
 import io.opentelemetry.api.metrics.Meter
 import kotlinx.coroutines.CoroutineScope
 import java.util.concurrent.atomic.AtomicLong
@@ -40,7 +40,7 @@ internal class FacetEntityChangeListener(private val project: Project, coroutine
   fun initializeFacetBridge(changes: Map<Class<*>, List<EntityChange<*>>>, builder: MutableEntityStorage) {
     val start = System.currentTimeMillis()
 
-    for (facetBridgeContributor in WorkspaceFacetContributor.EP_NAME.extensions) {
+    for (facetBridgeContributor in WorkspaceFacetContributor.EP_NAME.extensionList) {
       val facetType = facetBridgeContributor.rootEntityType
       changes[facetType]?.asSequence()?.filterIsInstance<EntityChange.Added<*>>()?.forEach perFacet@{ facetChange ->
         fun createBridge(entity: ModuleSettingsBase): Facet<*> {
@@ -71,13 +71,13 @@ internal class FacetEntityChangeListener(private val project: Project, coroutine
     private val facetEntityChangeListener = getInstance(project)
 
     override fun beforeChanged(event: VersionedStorageChange) {
-      WorkspaceFacetContributor.EP_NAME.extensions.forEach { facetBridgeContributor ->
+      for (facetBridgeContributor in WorkspaceFacetContributor.EP_NAME.extensionList) {
         facetEntityChangeListener.processBeforeChangeEvents(event, facetBridgeContributor)
       }
     }
 
     override fun changed(event: VersionedStorageChange) {
-      WorkspaceFacetContributor.EP_NAME.extensions.forEach { facetBridgeContributor ->
+      for (facetBridgeContributor in WorkspaceFacetContributor.EP_NAME.extensionList) {
         facetEntityChangeListener.processChangeEvents(event, facetBridgeContributor)
       }
     }
@@ -213,8 +213,8 @@ internal class FacetEntityChangeListener(private val project: Project, coroutine
       }
     }
 
-    val entityTypeToSerializer = BaseIdeSerializationContext.CUSTOM_FACET_RELATED_ENTITY_SERIALIZER_EP.extensions.associateBy { it.rootEntityType }
-    changedFacets.forEach { (facet, rootEntity) ->
+    val entityTypeToSerializer = BaseIdeSerializationContext.CUSTOM_FACET_RELATED_ENTITY_SERIALIZER_EP.extensionList.associateBy { it.rootEntityType }
+    for ((facet, rootEntity) in changedFacets) {
       val serializer = entityTypeToSerializer[rootEntity.getEntityInterface()]
                        ?: error("Unavailable XML serializer for ${rootEntity.getEntityInterface()}")
       val rootElement = serializer.serializeIntoXml(rootEntity)

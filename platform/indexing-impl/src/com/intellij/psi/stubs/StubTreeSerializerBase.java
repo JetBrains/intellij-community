@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.function.UnaryOperator;
 
 abstract class StubTreeSerializerBase<SerializationState> {
-  protected static final ThreadLocal<ObjectStubSerializer<?, ? extends Stub>> ourRootStubSerializer = new ThreadLocal<>();
+  static final ThreadLocal<ObjectStubSerializer<?, ? extends Stub>> ourRootStubSerializer = new ThreadLocal<>();
   private static final boolean useStubStringInterner = Boolean.parseBoolean(System.getProperty("idea.use.stub.string.interner", "false"));
 
   private final @Nullable UnaryOperator<String> stubStringInterner;
@@ -46,13 +46,13 @@ abstract class StubTreeSerializerBase<SerializationState> {
 
     Stub baseStub = deserializeRoot(inputStream, storage, state);
     List<PsiFileStub<?>> stubs = new ArrayList<>(stubFilesCount);
-    if (baseStub instanceof PsiFileStub) {
-      stubs.add((PsiFileStub<?>)baseStub);
+    if (baseStub instanceof PsiFileStub<?> fileStub) {
+      stubs.add(fileStub);
     }
     for (int j = 1; j < stubFilesCount; j++) {
       Stub deserialize = deserializeRoot(inputStream, storage, state);
-      if (deserialize instanceof PsiFileStub) {
-        stubs.add((PsiFileStub<?>)deserialize);
+      if (deserialize instanceof PsiFileStub<?> fileStub) {
+        stubs.add(fileStub);
       }
       else {
         Logger.getInstance(getClass()).error("Stub root must be PsiFileStub for files with several stub roots");
@@ -60,8 +60,8 @@ abstract class StubTreeSerializerBase<SerializationState> {
     }
     PsiFileStub<?>[] stubsArray = stubs.toArray(PsiFileStub.EMPTY_ARRAY);
     for (PsiFileStub<?> stub : stubsArray) {
-      if (stub instanceof PsiFileStubImpl) {
-        ((PsiFileStubImpl<?>)stub).setStubRoots(stubsArray);
+      if (stub instanceof PsiFileStubImpl<?> fileStub) {
+        fileStub.setStubRoots(stubsArray);
       }
     }
     return baseStub;
@@ -74,8 +74,8 @@ abstract class StubTreeSerializerBase<SerializationState> {
     StubOutputStream stubOutputStream = new StubOutputStream(out, storage);
     boolean doDefaultSerialization = true;
 
-    if (rootStub instanceof PsiFileStubImpl) {
-      PsiFileStub<?>[] roots = ((PsiFileStubImpl<?>)rootStub).getStubRoots();
+    if (rootStub instanceof PsiFileStubImpl<?> fileStub) {
+      PsiFileStub<?>[] roots = fileStub.getStubRoots();
       if (roots.length == 0) {
         Logger.getInstance(getClass()).error("Incorrect stub files count during serialization:" + rootStub + "," + rootStub.getStubType());
       }
@@ -115,9 +115,10 @@ abstract class StubTreeSerializerBase<SerializationState> {
     ourRootStubSerializer.set(serializer);
     try {
       Stub stub = serializer.deserialize(inputStream, null);
-      if (stub instanceof StubBase) {
-        deserializeStubList((StubBase<?>)stub, serializer, inputStream, storage, state);
-      } else {
+      if (stub instanceof StubBase<?> base) {
+        deserializeStubList(base, serializer, inputStream, storage, state);
+      }
+      else {
         deserializeChildren(inputStream, stub, state);
       }
       return stub;
@@ -166,13 +167,14 @@ abstract class StubTreeSerializerBase<SerializationState> {
                              AbstractStringEnumerator storage,
                              @NotNull SerializationState state) throws IOException {
     serializeSelf(root, out, state);
-    if (root instanceof StubBase) {
-      StubList stubList = ((StubBase<?>)root).myStubList;
+    if (root instanceof StubBase<?> base) {
+      StubList stubList = base.myStubList;
       if (root != stubList.get(0)) {
         throw new IllegalArgumentException("Serialization is supported only for root stubs");
       }
-      serializeStubList((StubBase<?>)root, stubList, out, storage, state);
-    } else {
+      serializeStubList(base, stubList, out, storage, state);
+    }
+    else {
       serializeChildren(root, out, state);
     }
   }
@@ -198,7 +200,7 @@ abstract class StubTreeSerializerBase<SerializationState> {
         int serializerId = DataInputOutputUtil.readINT(inputStream);
         ObjectStubSerializer<?, Stub> serializer = getClassByIdLocal(serializerId, null, state);
 
-        int start = serializer.isAlwaysEmpty() ? 0 : DataInputOutputUtil.readINT(inputStream);
+        int start = serializer instanceof EmptyStubSerializer ? 0 : DataInputOutputUtil.readINT(inputStream);
 
         allStarts.set(start);
 
@@ -249,7 +251,7 @@ abstract class StubTreeSerializerBase<SerializationState> {
     for (int i = 1; i < stubList.size(); i++) {
       StubBase<?> stub = stubList.get(i);
       ObjectStubSerializer<Stub, Stub> serializer = writeSerializerId(stub, out, state);
-      if (!serializer.isAlwaysEmpty()) {
+      if (!(serializer instanceof EmptyStubSerializer)) {
         DataInputOutputUtil.writeINT(out, interner.internBytes(serializeStub(serializer, storage, stub, tempBuffer)));
       }
       int count = stubList.getChildrenCount(stub.id);

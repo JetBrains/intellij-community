@@ -8,16 +8,15 @@ import com.intellij.codeInsight.completion.CompletionProgressIndicator
 import com.intellij.codeInsight.hint.HintManager
 import com.intellij.codeInsight.hint.HintManagerImpl
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory
+import com.intellij.diagnostic.COROUTINE_DUMP_HEADER
 import com.intellij.diagnostic.LoadingState
+import com.intellij.diagnostic.dumpCoroutines
 import com.intellij.diagnostic.enableCoroutineDump
-import com.intellij.ide.bootstrap.callAppInitialized
-import com.intellij.ide.bootstrap.getAppInitializedListeners
-import com.intellij.ide.bootstrap.initConfigurationStore
-import com.intellij.ide.bootstrap.preloadCriticalServices
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.idea.AppMode
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.impl.AWTExceptionHandler
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
@@ -30,8 +29,6 @@ import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.impl.EditorFactoryImpl
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl
-import com.intellij.openapi.progress.ModalTaskOwner
-import com.intellij.openapi.progress.runWithModalProgressBlocking
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.RecursionManager
@@ -45,7 +42,12 @@ import com.intellij.openapi.vfs.impl.local.LocalFileSystemBase
 import com.intellij.openapi.vfs.newvfs.ManagingFS
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl
-import com.intellij.platform.diagnostic.telemetry.TelemetryManager
+import com.intellij.platform.ide.bootstrap.callAppInitialized
+import com.intellij.platform.ide.bootstrap.getAppInitializedListeners
+import com.intellij.platform.ide.bootstrap.initConfigurationStore
+import com.intellij.platform.ide.bootstrap.preloadCriticalServices
+import com.intellij.platform.ide.progress.ModalTaskOwner
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.psi.PsiManager
 import com.intellij.psi.impl.DocumentCommitProcessor
 import com.intellij.psi.impl.DocumentCommitThread
@@ -63,6 +65,7 @@ import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.indexing.FileBasedIndexImpl
 import com.intellij.util.ui.EDT
 import com.intellij.util.ui.EdtInvocationManager
+import com.jetbrains.JBR
 import kotlinx.coroutines.*
 import kotlinx.coroutines.future.asCompletableFuture
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -106,7 +109,17 @@ fun loadApp() {
 @OptIn(DelicateCoroutinesApi::class)
 @Internal
 fun loadApp(setupEventQueue: Runnable) {
+  // Open Telemetry file will be located at ../system/test/log/opentelemetry.json (alongside with open-telemetry-metrics.*.csv)
+  System.setProperty("idea.diagnostic.opentelemetry.file",
+                     PathManager.getLogDir().resolve("opentelemetry.json").toAbsolutePath().toString())
+
   enableCoroutineDump()
+  JBR.getJstack()?.includeInfoFrom {
+    """
+    $COROUTINE_DUMP_HEADER
+    ${dumpCoroutines(stripDump = false)}
+    """
+  }
   val isHeadless = UITestUtil.getAndSetHeadlessProperty()
   AppMode.setHeadlessInTestMode(isHeadless)
   PluginManagerCore.isUnitTestMode = true
@@ -146,7 +159,7 @@ private fun loadAppInUnitTestMode(isHeadless: Boolean) {
   try {
     // 40 seconds - tests maybe executed on cloud agents where I/O is very slow
     val pluginSet = loadedModuleFuture.asCompletableFuture().get(40, TimeUnit.SECONDS)
-    app.registerComponents(modules = pluginSet.getEnabledModules(), app = app, precomputedExtensionModel = null, listenerCallbacks = null)
+    app.registerComponents(modules = pluginSet.getEnabledModules(), app = app)
 
     val task = suspend {
       initConfigurationStore(app)
@@ -178,7 +191,6 @@ private fun loadAppInUnitTestMode(isHeadless: Boolean) {
 
 private suspend fun preloadServicesAndCallAppInitializedListeners(app: ApplicationImpl) {
   coroutineScope {
-    TelemetryManager.setNoopTelemetryManager()
     withTimeout(Duration.ofSeconds(40).toMillis()) {
       preloadCriticalServices(app = app,
                               asyncScope = app.coroutineScope,
@@ -291,10 +303,8 @@ fun Application.cleanupApplicationCaches() {
   (serviceIfCreated<FileBasedIndex>() as? FileBasedIndexImpl)?.cleanupForNextTest()
   if (serviceIfCreated<VirtualFileManager>() != null) {
     val localFileSystem = LocalFileSystem.getInstance()
-    if (localFileSystem != null) {
-      runInEdtAndWait {
-        (localFileSystem as LocalFileSystemBase).cleanupForNextTest()
-      }
+    runInEdtAndWait {
+      (localFileSystem as LocalFileSystemBase).cleanupForNextTest()
     }
   }
 }

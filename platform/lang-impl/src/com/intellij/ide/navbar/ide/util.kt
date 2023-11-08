@@ -112,6 +112,6 @@ private fun dataContextInner(window: Window, panel: JComponent): DataContext? {
     return null
   }
   val dataContext = DataManager.getInstance().getDataContext(focusedComponentInWindow)
-  val uiSnapshot = Utils.wrapToAsyncDataContext(dataContext)
+  val uiSnapshot = Utils.createAsyncDataContext(dataContext)
   return AnActionEvent.getInjectedDataContext(uiSnapshot)
 }

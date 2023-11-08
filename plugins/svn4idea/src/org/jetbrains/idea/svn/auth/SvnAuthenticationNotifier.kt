@@ -64,7 +64,7 @@ private val LOG = logger<SvnAuthenticationNotifier>()
 private val AUTH_KINDS =
   listOf(SvnAuthenticationManager.PASSWORD, "svn.ssh", SvnAuthenticationManager.SSL, "svn.username", "svn.ssl.server", "svn.ssh.server")
 
-@Service
+@Service(Service.Level.PROJECT)
 class SvnAuthenticationNotifier(project: Project) :
   GenericNotifierImpl<SvnAuthenticationNotifier.AuthenticationRequest, Url>(
     project,

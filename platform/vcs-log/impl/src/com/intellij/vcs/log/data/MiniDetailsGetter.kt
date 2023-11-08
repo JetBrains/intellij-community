@@ -47,7 +47,7 @@ class MiniDetailsGetter internal constructor(project: Project,
   }
 
   fun getCommitData(commit: Int, commitsToLoad: Iterable<Int>): VcsCommitMetadata {
-    val details = getCommitDataIfAvailable(commit)
+    val details = getFromCacheAndCleanOldPlaceholder(commit)
     if (details != null) return details
 
     if (!EventQueue.isDispatchThread()) {
@@ -66,7 +66,7 @@ class MiniDetailsGetter internal constructor(project: Project,
     return cache.getIfPresent(commit) ?: createPlaceholderCommit(commit, taskNumber)
   }
 
-  override fun getCommitDataIfAvailable(commit: Int): VcsCommitMetadata? {
+  private fun getFromCacheAndCleanOldPlaceholder(commit: Int): VcsCommitMetadata? {
     if (!EventQueue.isDispatchThread()) {
       return cache.getIfPresent(commit) ?: topCommitsDetailsCache[commit]
     }
@@ -84,15 +84,12 @@ class MiniDetailsGetter internal constructor(project: Project,
     return topCommitsDetailsCache[commit]
   }
 
+  override fun getCommitDataIfAvailable(commit: Int): VcsCommitMetadata? {
+    return cache.getIfPresent(commit).takeIf { it !is LoadingDetails } ?: topCommitsDetailsCache[commit]
+  }
+
   override fun getCommitDataIfAvailable(commits: List<Int>): Int2ObjectMap<VcsCommitMetadata> {
-    val detailsFromCache = commits.associateNotNull {
-      val details = getCommitDataIfAvailable(it)
-      if (details is LoadingDetails) {
-        return@associateNotNull null
-      }
-      details
-    }
-    return detailsFromCache
+    return commits.associateNotNull { getCommitDataIfAvailable(it) }
   }
 
   override fun saveInCache(commit: Int, details: VcsCommitMetadata) = cache.put(commit, details)

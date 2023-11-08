@@ -18,6 +18,7 @@ interface ConstrainedExecution<E : ConstrainedExecution<E>> {
    *
    * Never use [kotlinx.coroutines.asCoroutineDispatcher] with [asExecutor]: the latter may violate the [Executor] contract.
    */
+  @ApiStatus.ScheduledForRemoval
   @Deprecated(message = "Do not use: coroutine cancellation must not be handled by a dispatcher.")
   fun asCoroutineDispatcher(): ContinuationInterceptor
 

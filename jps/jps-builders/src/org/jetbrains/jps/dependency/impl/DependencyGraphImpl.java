@@ -1,10 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.dependency.impl;
 
-import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.dependency.*;
 import org.jetbrains.jps.dependency.diff.DiffCapable;
+import org.jetbrains.jps.dependency.java.ClassShortNameIndex;
 import org.jetbrains.jps.dependency.java.JavaDifferentiateStrategy;
 import org.jetbrains.jps.dependency.java.SubclassesIndex;
 import org.jetbrains.jps.javac.Iterators;
@@ -14,13 +14,14 @@ import java.util.function.BiPredicate;
 import java.util.function.Predicate;
 
 public final class DependencyGraphImpl extends GraphImpl implements DependencyGraph {
-  private List<DifferentiateStrategy> myDifferentiateStrategies = List.of(
+  private static final List<DifferentiateStrategy> ourDifferentiateStrategies = List.of(
     new JavaDifferentiateStrategy()
   );
 
-  public DependencyGraphImpl() {
-    super(Containers.PERSISTENT_CONTAINER_FACTORY);
-    addIndex(new SubclassesIndex(Containers.PERSISTENT_CONTAINER_FACTORY));
+  public DependencyGraphImpl(MapletFactory containerFactory) {
+    super(containerFactory);
+    addIndex(new SubclassesIndex(containerFactory));
+    addIndex(new ClassShortNameIndex(containerFactory));
   }
 
   @Override
@@ -29,17 +30,48 @@ public final class DependencyGraphImpl extends GraphImpl implements DependencyGr
   }
 
   @Override
-  public DifferentiateResult differentiate(Delta delta) {
+  public DifferentiateResult differentiate(Delta delta, DifferentiateParameters params) {
 
-    Set<Node<?, ?>> nodesBefore = Iterators.collect(Iterators.flat(Iterators.map(Iterators.unique(Iterators.flat(Arrays.asList(delta.getBaseSources(), delta.getSources(), delta.getDeletedSources()))), s -> getNodes(s))), Containers.createCustomPolicySet(DiffCapable::isSame, DiffCapable::diffHashCode));
-    Set<Node<?, ?>> nodesAfter = Iterators.collect(Iterators.flat(Iterators.map(delta.getSources(), s -> delta.getNodes(s))), Containers.createCustomPolicySet(DiffCapable::isSame, DiffCapable::diffHashCode));
+    Iterable<NodeSource> deltaSources = delta.getSources();
+    Set<NodeSource> allProcessedSources = Iterators.collect(Iterators.flat(Arrays.asList(delta.getBaseSources(), deltaSources, delta.getDeletedSources())), new HashSet<>());
+    Set<Node<?, ?>> nodesBefore = Iterators.collect(Iterators.flat(Iterators.map(allProcessedSources, s -> getNodes(s))), Containers.createCustomPolicySet(DiffCapable::isSame, DiffCapable::diffHashCode));
+    Set<Node<?, ?>> nodesAfter = Iterators.collect(Iterators.flat(Iterators.map(deltaSources, s -> delta.getNodes(s))), Containers.createCustomPolicySet(DiffCapable::isSame, DiffCapable::diffHashCode));
+
+    // do not process 'removed' per-source file. This works when a class comes from exactly one source, but might not work, if a class can be associated with several sources
+    // better make a node-diff over all compiled sources => the sets of removed, added, deleted _nodes_ will be more accurate and reflecting reality
+    List<Node<?, ?>> deletedNodes = Iterators.collect(Iterators.filter(nodesBefore, n -> !nodesAfter.contains(n)), new ArrayList<>());
+
+    if (!params.isCalculateAffected()) {
+      return new DifferentiateResult() {
+        @Override
+        public Delta getDelta() {
+          return delta;
+        }
+
+        @Override
+        public Iterable<Node<?, ?>> getDeletedNodes() {
+          return deletedNodes;
+        }
+
+        @Override
+        public Iterable<NodeSource> getAffectedSources() {
+          return Collections.emptyList();
+        }
+      };
+    }
 
     var diffContext = new DifferentiateContext() {
       private final Predicate<Node<?, ?>> ANY_CONSTRAINT = node -> true;
 
+      final Set<NodeSource> compiledSources = deltaSources instanceof Set? (Set<NodeSource>)deltaSources : Iterators.collect(deltaSources, new HashSet<>());
       final Map<Usage, Predicate<Node<?, ?>>> affectedUsages = new HashMap<>();
       final Set<BiPredicate<Node<?, ?>, Usage>> usageQueries = new HashSet<>();
       final Set<NodeSource> affectedSources = new HashSet<>();
+
+      @Override
+      public DifferentiateParameters getParams() {
+        return params;
+      }
 
       @Override
       public @NotNull Graph getGraph() {
@@ -49,6 +81,11 @@ public final class DependencyGraphImpl extends GraphImpl implements DependencyGr
       @Override
       public @NotNull Delta getDelta() {
         return delta;
+      }
+
+      @Override
+      public boolean isCompiled(NodeSource src) {
+        return compiledSources.contains(src);
       }
 
       @Override
@@ -91,39 +128,15 @@ public final class DependencyGraphImpl extends GraphImpl implements DependencyGr
     };
 
     boolean incremental = true;
-    for (DifferentiateStrategy diffStrategy : myDifferentiateStrategies) {
+    for (DifferentiateStrategy diffStrategy : ourDifferentiateStrategies) {
       if (!diffStrategy.differentiate(diffContext, nodesBefore, nodesAfter)) {
         incremental = false;
         break;
       }
     }
 
-    // do not process 'removed' per-source file. This works when a class comes from exactly one source, but might not work, if a class can be associated with several sources
-    // better make a node-diff over all compiled sources => the sets of removed, added, deleted _nodes_ will be more accurate and reflecting reality
-    List<Node<?, ?>> deletedNodes = Iterators.collect(Iterators.filter(nodesBefore, n -> !nodesAfter.contains(n)), new ArrayList<>());
-
     if (!incremental) {
-      return new DifferentiateResult() {
-        @Override
-        public boolean isIncremental() {
-          return false;
-        }
-
-        @Override
-        public Delta getDelta() {
-          return delta;
-        }
-
-        @Override
-        public Iterable<Node<?, ?>> getDeletedNodes() {
-          return deletedNodes;
-        }
-
-        @Override
-        public Iterable<NodeSource> getAffectedSources() {
-          return Collections.emptyList();
-        }
-      };
+      return DifferentiateResult.createNonIncremental(delta, deletedNodes);
     }
 
     Set<NodeSource> affectedSources = new HashSet<>();
@@ -138,18 +151,25 @@ public final class DependencyGraphImpl extends GraphImpl implements DependencyGr
     for (ReferenceID dependent : Iterators.unique(Iterators.filter(Iterators.flat(Iterators.map(changedScopeNodes, id -> getDependingNodes(id))), id -> !dependingOnDeleted.contains(id)))) {
       for (NodeSource depSrc : getSources(dependent)) {
         if (!affectedSources.contains(depSrc)) {
+          boolean affectSource = false;
           for (var depNode : getNodes(depSrc)) {
             if (diffContext.isNodeAffected(depNode)) {
-              affectedSources.add(depSrc);
-              break;
+              affectSource = true;
+              for (DifferentiateStrategy strategy : ourDifferentiateStrategies) {
+                if (!strategy.isIncremental(diffContext, depNode)) {
+                  return DifferentiateResult.createNonIncremental(delta, deletedNodes);
+                }
+              }
             }
+          }
+          if (affectSource) {
+            affectedSources.add(depSrc);
           }
         }
       }
     }
     // do not include sources that were already compiled
-    affectedSources.removeAll(delta.getBaseSources());
-    affectedSources.removeAll(delta.getDeletedSources());
+    affectedSources.removeAll(allProcessedSources);
     // ensure sources explicitly marked by strategies are affected, even if these sources were compiled initially
     affectedSources.addAll(diffContext.affectedSources);
 
@@ -175,33 +195,32 @@ public final class DependencyGraphImpl extends GraphImpl implements DependencyGr
   public void integrate(@NotNull DifferentiateResult diffResult) {
     final Delta delta = diffResult.getDelta();
 
-    { // handle deleted nodes and sources
-      Set<ReferenceID> deletedNodeIDs = new HashSet<>();
-      for (var node : diffResult.getDeletedNodes()) { // the set of deleted nodes include ones corresponding to deleted sources
-        myNodeToSourcesMap.remove(node.getReferenceID());
-        deletedNodeIDs.add(node.getReferenceID());
-      }
-      for (NodeSource deletedSource : delta.getDeletedSources()) {
-        for (var node : getNodes(deletedSource)) {
-          // avoid the operation when known the key does not exist
-          if (!deletedNodeIDs.contains(node.getReferenceID())) {
-            // ensure association with deleted source is removed
-            myNodeToSourcesMap.removeValue(node.getReferenceID(), deletedSource);
-          }
+    // handle deleted nodes and sources
+    if (!Iterators.isEmpty(diffResult.getDeletedNodes())) {
+      Set<NodeSource> differentiatedSources = Iterators.collect(Iterators.flat(List.of(delta.getBaseSources(), delta.getSources(), delta.getDeletedSources())), new HashSet<>());
+      for (var deletedNode : diffResult.getDeletedNodes()) { // the set of deleted nodes includes ones corresponding to deleted sources
+        Set<NodeSource> nodeSources = Iterators.collect(myNodeToSourcesMap.get(deletedNode.getReferenceID()), new HashSet<>());
+        nodeSources.removeAll(differentiatedSources);
+        if (nodeSources.isEmpty()) {
+          myNodeToSourcesMap.remove(deletedNode.getReferenceID());
         }
-        mySourceToNodesMap.remove(deletedSource);
+        else {
+          myNodeToSourcesMap.put(deletedNode.getReferenceID(), nodeSources);
+        }
       }
     }
+    for (NodeSource deletedSource : delta.getDeletedSources()) {
+      mySourceToNodesMap.remove(deletedSource);
+    }
 
-    Set<ReferenceID> deltaNodes = Iterators.collect(Iterators.map(Iterators.flat(Iterators.map(delta.getSources(), s -> delta.getNodes(s))), node -> node.getReferenceID()), new HashSet<>());
-    
     var updatedNodes = Iterators.collect(Iterators.flat(Iterators.map(delta.getSources(), s -> getNodes(s))), new HashSet<>());
     for (BackDependencyIndex index : getIndices()) {
       BackDependencyIndex deltaIndex = delta.getIndex(index.getName());
       assert deltaIndex != null;
-      index.integrate(diffResult.getDeletedNodes(), updatedNodes, Iterators.map(deltaNodes, id -> Pair.create(id, deltaIndex.getDependencies(id))));
+      index.integrate(diffResult.getDeletedNodes(), updatedNodes, deltaIndex);
     }
 
+    var deltaNodes = Iterators.unique(Iterators.map(Iterators.flat(Iterators.map(delta.getSources(), s -> delta.getNodes(s))), node -> node.getReferenceID()));
     for (ReferenceID nodeID : deltaNodes) {
       Set<NodeSource> sources = Iterators.collect(myNodeToSourcesMap.get(nodeID), new HashSet<>());
       sources.removeAll(delta.getBaseSources());
@@ -224,7 +243,8 @@ public final class DependencyGraphImpl extends GraphImpl implements DependencyGr
    * @return complete set of node sources, containing all sources associated with nodes affected by the sources from the input set.
    */
   private Set<NodeSource> completeSourceSet(Iterable<NodeSource> sources, Iterable<NodeSource> deletedSources) {
-    Set<NodeSource> result = Iterators.collect(sources, new HashSet<>()); // ensure initial sources are in teh result
+    // ensure initial sources are in the result
+    Set<NodeSource> result = Iterators.collect(sources, new HashSet<>());          // todo: check if a special hashing-policy set is required here
     Set<NodeSource> deleted = Iterators.collect(deletedSources, new HashSet<>());
 
     Set<Node<?, ?>> affectedNodes = Iterators.collect(Iterators.flat(Iterators.map(Iterators.flat(result, deleted), s -> getNodes(s))), new HashSet<>());

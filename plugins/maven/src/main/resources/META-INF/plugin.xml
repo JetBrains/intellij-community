@@ -96,7 +96,6 @@
                     serviceImplementation="org.jetbrains.idea.maven.project.MavenProjectResolverImpl"/>
 
     <projectService serviceImplementation="org.jetbrains.idea.maven.server.MavenDistributionsCache"/>
-    <projectService serviceImplementation="org.jetbrains.idea.maven.project.importing.MavenImportingManager"/>
 
     <applicationService serviceImplementation="org.jetbrains.idea.maven.utils.MavenWslCache"/>
     <applicationService serviceImplementation="org.jetbrains.idea.maven.indices.archetype.MavenCatalogManager"/>
@@ -119,8 +118,6 @@
     <compiler.task execute="AFTER" implementation="org.jetbrains.idea.maven.tasks.MavenTasksManager$MavenAfterCompileTask"/>
 
     <consoleFilterProvider implementation="org.jetbrains.idea.maven.project.MavenConsoleFilterProvider"/>
-
-    <activityInProgressPredicate implementation="org.jetbrains.idea.maven.utils.MavenInProgressPredicate"/>
 
     <projectConfigurable groupId="build.tools" groupWeight="120" instance="org.jetbrains.idea.maven.utils.MavenSettings" id="MavenSettings"
                          bundle="messages.MavenProjectBundle"
@@ -321,9 +318,6 @@
     <registryKey key="maven.dedicated.indexer" defaultValue="true"
                  description="Dedicated maven indexer" restartRequired="true"/>
 
-    <registryKey key="maven.linear.import" defaultValue="false"
-                 description="Linear maven import process"/>
-
     <registryKey key="maven.plugins.use.cache" defaultValue="true"
                  description="Use cache for plugin resolving"/>
 
@@ -344,6 +338,12 @@
 
     <registryKey key="maven.create.dummy.module.on.first.import" defaultValue="true"
                  description="Create maven dummy module on import"/>
+
+    <registryKey key="maven.preimport.project" defaultValue="true"
+                 description="Make fast project preimport"/>
+
+    <registryKey key="maven.preimport.only" defaultValue="false"
+                 description="Make fast project preimport only, without running maven import"/>
 
     <registryKey key="maven.server.per.idea.project" defaultValue="false"
                  description="Single Maven server per idea project, .mvn could be ignored"/>
@@ -811,6 +811,15 @@
       <reference ref="RunContextGroup"/>
       <separator/>
       <reference id="EditSource"/>
+    </group>
+
+    <group id="Maven.ProfilesMenu" popup="true">
+      <action id="Maven.ResetProfiles"
+              class="org.jetbrains.idea.maven.project.actions.ResetProfilesAction"/>
+    </group>
+
+    <group id="Maven.ProfileMenu" popup="true">
+      <reference ref="Maven.ToggleProfile"/>
     </group>
 
     <group id="Maven.BuildMenu" popup="true" class="org.jetbrains.idea.maven.navigator.actions.MavenBuildMenu">

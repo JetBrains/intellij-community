@@ -218,7 +218,8 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
     if (element == null) return false;
     final List<String> namespaces = getNamespaces(element, getFile());
     if (!namespaces.isEmpty()) {
-      final String message = ShowAutoImportPass.getMessage(namespaces.size() > 1, namespaces.iterator().next());
+      final String message = ShowAutoImportPass.getMessage(namespaces.size() > 1, XmlPsiBundle.message("xml.terms.namespace.alias"),
+                                                           namespaces.iterator().next());
       final String title = getSelectNSActionTitle();
       final ImportNSAction action = new ImportNSAction(namespaces, getFile(), element, editor, title);
       if (element instanceof XmlTag && token != null) {

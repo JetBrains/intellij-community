@@ -96,7 +96,7 @@ suspend fun runApplicationStarter(context: BuildContext,
   BuildUtils.addVmProperty(jvmArgs, "idea.home.path", context.paths.projectHome.toString())
   BuildUtils.addVmProperty(jvmArgs, "idea.system.path", systemDir.toString())
   BuildUtils.addVmProperty(jvmArgs, "idea.config.path", "$tempDir/config")
-  // reproducible build - avoid touching module outputs, do no write classpath.index
+  // reproducible build - avoid touching module outputs, do not write classpath.index
   BuildUtils.addVmProperty(jvmArgs, "idea.classpath.index.enabled", "false")
   BuildUtils.addVmProperty(jvmArgs, "idea.builtin.server.disabled", "true")
   BuildUtils.addVmProperty(jvmArgs, "java.system.class.loader", "com.intellij.util.lang.PathClassLoader")
@@ -106,6 +106,7 @@ suspend fun runApplicationStarter(context: BuildContext,
   System.getProperty("intellij.build.${arguments.first()}.debug.port")?.let {
     jvmArgs.add("-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=*:$it")
   }
+  //jvmArgs.add("-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=*:5001")
 
   val effectiveIdeClasspath = LinkedHashSet(ideClasspath)
 

@@ -1,6 +1,6 @@
 <component name="libraryTable">
   <library name="sqlite" type="repository">
-    <properties jar-repository-id="central-proxy" maven-id="org.xerial:sqlite-jdbc:3.43.0.0">
+    <properties maven-id="org.xerial:sqlite-jdbc:3.43.0.0">
       <verification>
         <artifact url="file://$MAVEN_REPOSITORY$/org/xerial/sqlite-jdbc/3.43.0.0/sqlite-jdbc-3.43.0.0.jar">
           <sha256sum>50524b16b649fb03f81df6e61dec69911b8849e6943c61b85faa24e49bfd98fc</sha256sum>

@@ -14,7 +14,6 @@ import com.intellij.openapi.vfs.newvfs.persistent.dev.enumerator.DurableStringEn
 import com.intellij.openapi.vfs.newvfs.persistent.intercept.*;
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLogEx;
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLogImpl;
-import com.intellij.util.io.dev.mmapped.MMappedFileStorageFactory;
 import com.intellij.openapi.vfs.newvfs.persistent.recovery.VFSRecoverer;
 import com.intellij.openapi.vfs.newvfs.persistent.recovery.VFSRecoveryInfo;
 import com.intellij.util.ExceptionUtil;
@@ -25,6 +24,7 @@ import com.intellij.util.io.*;
 import com.intellij.util.io.blobstorage.SpaceAllocationStrategy;
 import com.intellij.util.io.blobstorage.SpaceAllocationStrategy.DataLengthPlusFixedPercentStrategy;
 import com.intellij.util.io.blobstorage.StreamlinedBlobStorage;
+import com.intellij.util.io.dev.mmapped.MMappedFileStorageFactory;
 import com.intellij.util.io.pagecache.impl.PageContentLockingStrategy;
 import com.intellij.util.io.storage.*;
 import com.intellij.util.io.storage.lf.RefCountingContentStorageImplLF;
@@ -175,7 +175,7 @@ public final class PersistentFSLoader {
 
   public void initializeStorages() throws IOException {
     if (enableVfsLog) {
-      vfsLog = VfsLogImpl.open(vfsLogDir, false);
+      vfsLog = VfsLogImpl.open(vfsLogDir, false, true);
     }
     else {
       vfsLog = null;
@@ -188,20 +188,27 @@ public final class PersistentFSLoader {
     CompletableFuture<RefCountingContentStorage> contentsStorageFuture = executorService.async(() -> createContentStorage(contentsFile));
     CompletableFuture<PersistentFSRecordsStorage> recordsStorageFuture = executorService.async(() -> createRecordsStorage(recordsFile));
 
-    //Initiate async scanning of the recordsStorage to fill both invertedNameIndex and reusableFileIds,
-    //  and create lazy-accessors for both.
-    collectDeletedFileRecordsTask = executorService.async(() -> {
-      IntList reusableFileIds = new IntArrayList(1024);
-      //fill up reusable (=deleted) records:
-      PersistentFSRecordsStorage storage = recordsStorageFuture.join();
-      storage.processAllRecords((fileId, nameId, flags, parentId, attributeRecordId, contentId, corrupted) -> {
-        if (hasDeletedFlag(flags)) {
-          reusableFileIds.add(fileId);
-        }
+    //TODO RC: if !REUSE_DELETED_FILE_IDS -> check recordsStorage.maxAllocatedID() -> rebuild VFS if maxID >~ MAX_INT/2
+    if (FSRecordsImpl.REUSE_DELETED_FILE_IDS) {
+      //Initiate async scanning of the recordsStorage to fill reusableFileIds, and create lazy-accessor for it.
+      collectDeletedFileRecordsTask = executorService.async(() -> {
+        //TODO RC: limit max number of reusable fileIds -- i.e. what if there are millions of them?
+        //         5-10_000 max should be enough.
+        IntList reusableFileIds = new IntArrayList(1024);
+        //fill up reusable (=deleted) records:
+        PersistentFSRecordsStorage storage = recordsStorageFuture.join();
+        storage.processAllRecords((fileId, nameId, flags, parentId, attributeRecordId, contentId, corrupted) -> {
+          if (hasDeletedFlag(flags)) {
+            reusableFileIds.add(fileId);
+          }
+        });
+        LOG.info("VFS scanned: " + reusableFileIds.size() + " deleted files to reuse");
+        return reusableFileIds;
       });
-      LOG.info("VFS scanned: " + reusableFileIds.size() + " deleted files to reuse");
-      return reusableFileIds;
-    });
+    }
+    else {
+      collectDeletedFileRecordsTask = CompletableFuture.completedFuture(new IntArrayList(0));
+    }
     //RC: we don't need volatile/atomicLazy, since computation is idempotent: same instance returned always.
     //    So _there could be_ a data race, but it is a benign race.
     reusableFileIdsLazy = NotNullLazyValue.lazy(() -> {
@@ -309,26 +316,34 @@ public final class PersistentFSLoader {
     int commonVersion = commonVersionIfExists(recordsStorage, attributesStorage, contentsStorage);
 
     if (commonVersion != currentImplVersion) {
-      //If storages are just created -> commonVersion=0, and storages are empty.
-      // => we should stamp them with current implVersion and go ahead.
-      //Otherwise it is version mismatch and we should rebuild VFS storages from 0.
-      boolean storagesAreEmpty = (recordsStorage.recordsCount() == 0);
-      if (commonVersion == 0 && storagesAreEmpty) {//MAYBE RC: better check also attributes/contentsStorage.isEmpty()?
+      //If (commonVersion=0) AND (all storages are empty)
+      //   => storages were just created
+      //   => we should stamp them with current implVersion and go ahead.
+      boolean storagesAreEmpty = recordsStorage.recordsCount() == 0
+                                 && contentsStorage.getRecordsCount() == 0
+                                 && attributesStorage.isEmpty();
+      if (commonVersion == 0 && storagesAreEmpty) {
         //all storages are fresh new => assign their versions to the current one:
         setCurrentVersion(recordsStorage, attributesStorage, contentsStorage, currentImplVersion);
         return;
       }
 
-      //if commonVersion > 0 => current VFS data has a consistent version, but != implVersion
-      //                     => IMPL_VERSION_MISMATCH
-      //if commonVersion = -1 => different VFS storages have inconsistent versions
-      //                      => UNRECOGNIZED (I guess it is a rare case, most probably happens for users playing
-      //                         hard with their IDE installations, most likely they are our QAs -- so the case
-      //                         doesn't worth dedicated enum constant)
+      //Otherwise: (not all storages are empty OR commonVersion != 0)
+      //   => it is a version mismatch
+      //   => we should rebuild VFS storages from 0.
+
+
+      //if commonVersion > 0  => current VFS data _has_ a consistent version, but != implVersion
+      //                      => IMPL_VERSION_MISMATCH
+      //if commonVersion = -1 => different VFS storages have different, inconsistent versions
+      //                      => UNRECOGNIZED (I guess it is a rare case, most probably happens if users play hard
+      //                         with their IDE installations -- most likely they are our QAs -- or it is Nightly,
+      //                         and we're changing VFS file layout... -- anyway, those are cases that are not worth
+      //                         dedicated statistics/enum constant)
       VFSInitException.ErrorCategory rebuildCause = commonVersion > 0 ? IMPL_VERSION_MISMATCH : UNRECOGNIZED;
       throw new VFSInitException(
         rebuildCause,
-        "FS repository detected version(=" + commonVersion + ") != current version(=" + currentImplVersion + ") -> VFS needs rebuild"
+        "VFS storages detected version(=" + commonVersion + ") != current impl version(=" + currentImplVersion + ") -> VFS needs rebuild"
       );
     }
   }
@@ -362,54 +377,21 @@ public final class PersistentFSLoader {
       LOG.info("Can't delete " + recoveryInProgressMarkerFile);
     }
 
-    deleted = IOUtil.deleteAllFilesStartingWith(namesFile);
-    if (!deleted) {
-      LOG.info("Can't delete " + namesFile);
-    }
+    makeBestEffortToCleanStorage(namesStorage, namesFile);
 
-    if (FSRecordsImpl.USE_STREAMLINED_ATTRIBUTES_IMPLEMENTATION) {
-      deleted = AttributesStorageOverBlobStorage.deleteStorageFiles(attributesFile);
-    }
-    else {
-      deleted = AbstractStorage.deleteFiles(attributesFile);
-    }
-    if (!deleted) {
-      LOG.info("Can't delete " + attributesFile);
-    }
+    makeBestEffortToCleanStorage(attributesStorage, attributesFile);
 
-    deleted = AbstractStorage.deleteFiles(contentsFile);
-    if (!deleted) {
-      LOG.info("Can't delete " + contentsFile);
-    }
+    makeBestEffortToCleanStorage(attributesEnumerator, attributesFile);
 
-    deleted = IOUtil.deleteAllFilesStartingWith(contentsHashesFile);
-    if (!deleted) {
-      LOG.info("Can't delete " + contentsHashesFile);
-    }
+    makeBestEffortToCleanStorage(contentsStorage, contentsFile);
 
-    if (recordsStorage != null) {
-      try {
-        recordsStorage.closeAndRemoveAllFiles();
-      }
-      catch (IOException ex) {
-        LOG.info("Can't delete fs-records: " + ex.getMessage(), ex);
-      }
-    }
-    else {
-      deleted = IOUtil.deleteAllFilesStartingWith(recordsFile);
-      if (!deleted) {
-        LOG.info("Can't delete " + recordsFile);
-      }
-    }
+    makeBestEffortToCleanStorage(contentHashesEnumerator, contentsHashesFile);
+
+    makeBestEffortToCleanStorage(recordsStorage, recordsFile);
 
     deleted = IOUtil.deleteAllFilesStartingWith(vfsPaths.getRootsBaseFile());
     if (!deleted) {
       LOG.info("Can't delete " + vfsPaths.getRootsBaseFile());
-    }
-
-    deleted = IOUtil.deleteAllFilesStartingWith(enumeratedAttributesFile);
-    if (!deleted) {
-      LOG.info("Can't delete " + enumeratedAttributesFile);
     }
 
     try {
@@ -475,12 +457,16 @@ public final class PersistentFSLoader {
     //Faster to look only for the first error of each kind:
     boolean nameStorageHasErrors = false;
     boolean contentHashesStorageHasErrors = false;
+    boolean attributesStorageHasErrors = false;
 
-    //Try to resolve few nameId/contentId against apt enumerators -- which is quite likely fails
-    //if enumerators' files are corrupted anyhow, hence serves as a self-check heuristic.
-    //Check every file is quite slow, but it is definitely worth checking _some_.
-    // A tradeoff: if there were no signs of corruption -- check only fileId=2, 4, 8...
-    // -- always < 32 checks, given fileId is int32.
+    //Try to resolve few nameId/contentId/attributeRefId against apt enumerators/storages -- which is quite
+    // likely fails if storages/enumerators' files are corrupted anyhow, hence serves as a self-check heuristic.
+    //Check _every_ fileId is quite slow, but it is definitely worth checking _some_.
+    // So a tradeoff:
+    // If there were _no_ signs of corruption -- check only fileId(=)2, 4, 8...) -> always < 32 checks, given fileId
+    // is int32.
+    // If _any_ signs of corruption arises during quick-scan (or even before it) -> fallback to full scan, check
+    // _every_ fileId.
     if (problemsDuringLoad.isEmpty()) {
       for (int fileId = FSRecords.MIN_REGULAR_FILE_ID; fileId <= maxAllocatedID; fileId *= 2) {
         if (!nameStorageHasErrors) {
@@ -494,11 +480,16 @@ public final class PersistentFSLoader {
             contentHashesStorageHasErrors = true;
           }
         }
+        if (!attributesStorageHasErrors) {
+          if (!attributeRecordIsValid(fileId)) {
+            attributesStorageHasErrors = true;
+          }
+        }
       }
     }
 
     //...If there are some errors, or other signs of possible corruption
-    // -> switch to full scan
+    // -> fallback to a full scan:
     if (!problemsDuringLoad.isEmpty()) {
       for (int fileId = FSRecords.MIN_REGULAR_FILE_ID; fileId <= maxAllocatedID; fileId++) {
         if (!nameStorageHasErrors) {
@@ -512,12 +503,18 @@ public final class PersistentFSLoader {
             contentHashesStorageHasErrors = true;
           }
         }
+        if (!attributesStorageHasErrors) {
+          if (!attributeRecordIsValid(fileId)) {
+            attributesStorageHasErrors = true;
+          }
+        }
       }
     }
   }
 
   private boolean contentResolvedSuccessfully(int fileId) throws IOException {
     int contentId = recordsStorage.getContentRecordId(fileId);
+    //Check only contentHashEnumerator -- it is faster than contentStorage:
     if (contentHashesEnumerator != null
         && contentId != DataEnumerator.NULL_ID) {
       try {
@@ -582,6 +579,24 @@ public final class PersistentFSLoader {
       return false;
     }
     return true;
+  }
+
+  private boolean attributeRecordIsValid(int fileId) throws IOException {
+    int attributeRecordId = recordsStorage.getAttributeRecordId(fileId);
+    if (attributeRecordId == AbstractAttributesStorage.NON_EXISTENT_ATTR_RECORD_ID) {
+      return true;
+    }
+
+    try {
+      attributesStorage.checkAttributeRecordSanity(fileId, attributeRecordId);
+      return true;
+    }
+    catch (Throwable t) {
+      addProblem(ATTRIBUTES_STORAGE_CORRUPTED,
+                 "file[#" + fileId + "].attributeRefId(=" + attributeRecordId + "): attributesStorage read failed", t
+      );
+      return false;
+    }
   }
 
   private void addProblem(@NotNull VFSInitException.ErrorCategory type,
@@ -649,8 +664,11 @@ public final class PersistentFSLoader {
       else if (FSRecordsImpl.USE_ATTRIBUTES_OVER_MMAPPED_FILE) {
         LOG.info("VFS uses streamlined attributes storage (over mmapped file)");
         int pageSize = 1 << 24;//16Mb
-        blobStorage = MMappedFileStorageFactory
-          .withPageSize(pageSize)
+        blobStorage = MMappedFileStorageFactory.withDefaults()
+          .pageSize(pageSize)
+          //mmapped and !mmapped storages have the same binary layout, so mmapped storage could inherit all the
+          // data from non-mmapped -- the only 'migration' needed is to page-align the file:
+          .expandFileIfNotPageAligned(true)
           .wrapStorageSafely(
             attributesFile,
             storage -> new StreamlinedBlobStorageOverMMappedFile(storage, allocationStrategy)
@@ -762,7 +780,7 @@ public final class PersistentFSLoader {
     return storage;
   }
 
-  /** @return common version of all 3 storages, or -1, if their versions are differ (i.e. inconsistent) */
+  /** @return common version of all 3 storages, or -1, if their versions are different (i.e. inconsistent) */
   private static int commonVersionIfExists(@NotNull PersistentFSRecordsStorage records,
                                            @NotNull AbstractAttributesStorage attributes,
                                            @NotNull RefCountingContentStorage contents) throws IOException {
@@ -788,6 +806,31 @@ public final class PersistentFSLoader {
     attributes.setVersion(version);
     contents.setVersion(version);
     records.setConnectionStatus(PersistentFSHeaders.SAFELY_CLOSED_MAGIC);
+  }
+
+  private static void makeBestEffortToCleanStorage(@Nullable Object storage,
+                                                   @NotNull Path storageFile) {
+    if (storage instanceof CleanableStorage) {
+      try {
+        ((CleanableStorage)storage).closeAndClean();
+      }
+      catch (Throwable t) {
+        LOG.info(storage.getClass().getSimpleName() + ".closeAndClean() fails: " +
+                 ExceptionUtil.getNonEmptyMessage(t, t.getClass().getSimpleName() + "(<no error message given>)"));
+      }
+    }
+    else {
+      LOG.info("[" + storageFile.getFileName() + "]: " + storage + " is not CleanableStorage " +
+               "-> trying to clean by explicitly removing all the files [" + storageFile.getFileName() + "*]");
+    }
+    //In theory, we should try removing files explicitly only as a last resort, if the code above fails
+    // -- i.e. if .closeAndClean() fails, or storage is null, or not CleanableStorage...
+    //In practice, though, I trust no one, not even JVM, nor my own code. Especially not my own code.
+    // So let's do that always:
+    boolean noSuchFilesRemains = IOUtil.deleteAllFilesStartingWith(storageFile);
+    if (!noSuchFilesRemains) {
+      LOG.info("Can't delete " + storageFile + "*");
+    }
   }
 
 

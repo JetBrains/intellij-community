@@ -230,7 +230,7 @@ public class GradleProjectTaskRunner extends ProjectTaskRunner {
       userData.putUserData(GradleTaskManager.INIT_SCRIPT_PREFIX_KEY, settings.getExecutionName());
 
       ExternalSystemUtil.runTask(settings, DefaultRunExecutor.EXECUTOR_ID, project, GradleConstants.SYSTEM_ID,
-                                 taskCallback, ProgressExecutionMode.IN_BACKGROUND_ASYNC, false, userData);
+                                 taskCallback, ProgressExecutionMode.NO_PROGRESS_ASYNC, false, userData);
     }
     return resultPromise;
   }

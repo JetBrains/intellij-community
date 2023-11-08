@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.main;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.main.ClassesProcessor.ClassNode;
 import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
@@ -1188,7 +1189,7 @@ public class ClassWriter {
     }
   }
 
-  private static void appendParameterAnnotations(TextBuffer buffer, StructMethod mt, Type type, int param) {
+  private static void appendParameterAnnotations(TextBuffer buffer, StructMethod mt, @NotNull Type type, int param) {
     for (StructGeneralAttribute.Key<?> key : StructGeneralAttribute.PARAMETER_ANNOTATION_ATTRIBUTES) {
       StructAnnotationParameterAttribute attribute = (StructAnnotationParameterAttribute)mt.getAttribute(key);
       if (attribute != null) {

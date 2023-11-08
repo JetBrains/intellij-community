@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic
 
 import com.intellij.credentialStore.Credentials
@@ -8,6 +8,7 @@ import com.intellij.ide.passwordSafe.PasswordSafe
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.LoadingDecorator
 import com.intellij.openapi.util.Disposer
@@ -17,7 +18,6 @@ import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.dialog
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.builder.selected
 import com.intellij.util.text.nullize
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -27,7 +27,7 @@ import java.net.URLEncoder
 import javax.swing.JPasswordField
 import javax.swing.JTextField
 
-fun askJBAccountCredentials(parent: Component, project: Project?, authFailed: Boolean = false): Credentials? {
+internal fun askJBAccountCredentials(parent: Component, project: Project?, authFailed: Boolean = false): Credentials? {
   val prompt = if (authFailed) DiagnosticBundle.message("error.report.auth.failed")
   else DiagnosticBundle.message("error.report.auth.prompt")
   val userField = JTextField()
@@ -63,7 +63,7 @@ fun askJBAccountCredentials(parent: Component, project: Project?, authFailed: Bo
   try {
     loadingDecorator.startLoading(false)
 
-    val credentialsJob = ITNProxy.cs.launch {
+    val credentialsJob = service<ITNProxyCoroutineScopeHolder>().coroutineScope.launch {
       val credentials = ErrorReportConfigurable.getCredentials()
 
       val remember = if (credentials?.userName == null) PasswordSafe.instance.isRememberPasswordByDefault  // EA credentials were never stored
@@ -95,7 +95,7 @@ fun askJBAccountCredentials(parent: Component, project: Project?, authFailed: Bo
       val password = passwordField.password
       val passwordToRemember = if (rememberCheckBox.isSelected) password else null
       RememberCheckBoxState.update(rememberCheckBox)
-      ITNProxy.cs.launch {
+      service<ITNProxyCoroutineScopeHolder>().coroutineScope.launch {
         ErrorReportConfigurable.saveCredentials(userName, passwordToRemember)
       }
       return Credentials(userName, password)

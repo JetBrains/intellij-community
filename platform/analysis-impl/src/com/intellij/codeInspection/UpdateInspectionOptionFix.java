@@ -13,20 +13,22 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Objects;
+
 public class UpdateInspectionOptionFix implements ModCommandAction {
-  private final LocalInspectionTool myInspection;
+  private final InspectionProfileEntry myInspection;
   private final String myProperty;
   private final @IntentionName String myMessage;
   private final Object myValue;
 
-  public UpdateInspectionOptionFix(@NotNull LocalInspectionTool inspection, @NotNull @NonNls String property, @NotNull @IntentionName String message, boolean value) {
+  public UpdateInspectionOptionFix(@NotNull InspectionProfileEntry inspection, @NotNull @NonNls String property, @NotNull @IntentionName String message, boolean value) {
     myInspection = inspection;
     myProperty = property;
     myMessage = message;
     myValue = value;
   }
 
-  public UpdateInspectionOptionFix(@NotNull LocalInspectionTool inspection, @NotNull @NonNls String property, @NotNull @IntentionName String message, int value) {
+  public UpdateInspectionOptionFix(@NotNull InspectionProfileEntry inspection, @NotNull @NonNls String property, @NotNull @IntentionName String message, int value) {
     myInspection = inspection;
     myProperty = property;
     myMessage = message;
@@ -35,12 +37,12 @@ public class UpdateInspectionOptionFix implements ModCommandAction {
 
   @Override
   public @Nullable Presentation getPresentation(@NotNull ActionContext context) {
+    if (Objects.equals(myInspection.getOptionController().getOption(myProperty), myValue)) return null;
     return Presentation.of(myMessage).withPriority(PriorityAction.Priority.LOW).withIcon(AllIcons.Actions.Cancel);
   }
 
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return AnalysisBundle.message("set.inspection.option.fix");
   }
 

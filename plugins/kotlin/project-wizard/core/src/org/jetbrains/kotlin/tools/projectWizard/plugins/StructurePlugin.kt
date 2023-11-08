@@ -26,9 +26,8 @@ class StructurePlugin(context: Context) : Plugin(context) {
     companion object : PluginSettingsOwner() {
         override val pluginPath = "structure"
 
-        private val ALLOWED_SPECIAL_CHARS_IN_GROUP_ID = Module.ALLOWED_SPECIAL_CHARS_IN_MODULE_NAMES + '.'
-        private val ALLOWED_SPECIAL_CHARS_IN_ARTIFACT_ID = Module.ALLOWED_SPECIAL_CHARS_IN_MODULE_NAMES
-        private val ALLOWED_SPECIAL_CHARS_IN_VERSION = setOf('_', '-', '.')
+        private val ALLOWED_SPECIAL_CHARS_IN_GROUP_ID = setOf('-', '_', '.')
+        private val ALLOWED_SPECIAL_CHARS_IN_VERSION = ALLOWED_SPECIAL_CHARS_IN_GROUP_ID
 
         val projectPath by pathSetting(
             KotlinNewProjectWizardBundle.message("plugin.structure.setting.location"),
@@ -67,7 +66,9 @@ class StructurePlugin(context: Context) : Plugin(context) {
             GenerationPhase.FIRST_STEP,
         ) {
             shouldNotBeBlank()
-            validate(StringValidators.shouldBeValidIdentifier(title, ALLOWED_SPECIAL_CHARS_IN_ARTIFACT_ID))
+            // This is technically wrong as in Gradle/Maven modules spaces are not allowed, but they are in JPS.
+            // However, the only place still using this wizard is JPS.
+            validate(StringValidators.shouldBeValidIdentifier(title, Module.ALLOWED_SPECIAL_CHARS_IN_MODULE_NAMES))
             tooltipText = KotlinNewProjectWizardBundle.message("plugin.structure.setting.artifact.id.tooltip")
         }
         val version by stringSetting(
@@ -94,6 +95,15 @@ class StructurePlugin(context: Context) : Plugin(context) {
             defaultValue = value(false)
         }
 
+        // True when creating a new project, or when creating a submodule without parent of the same build system
+        // (e.g. a new Gradle module inside a JPS project)
+        val isCreatingNewProjectHierarchy by booleanSetting(
+            "<IS_CREATING_NEW_PROJECT_HIERARCHY>",
+            GenerationPhase.FIRST_STEP,
+        ) {
+            defaultValue = value(false)
+        }
+
         val createProjectDir by pipelineTask(GenerationPhase.PROJECT_GENERATION) {
             withAction {
                 service<FileSystemWizardService>().createDirectory(StructurePlugin.projectPath.settingValue)
@@ -109,7 +119,8 @@ class StructurePlugin(context: Context) : Plugin(context) {
             artifactId,
             version,
             renderPomIR,
-            useCompactProjectStructure
+            useCompactProjectStructure,
+            isCreatingNewProjectHierarchy
         )
     override val pipelineTasks: List<PipelineTask> =
         listOf(createProjectDir)

@@ -328,7 +328,7 @@ public class XDebuggerFramesList extends DebuggerFramesList implements DataProvi
       }
     }
 
-    private boolean canDropSelectedFrame(JList list) {
+    private static boolean canDropSelectedFrame(JList list) {
       if (!(list instanceof XDebuggerFramesList)) {
         return false;
       }

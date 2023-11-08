@@ -291,8 +291,11 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
       JRootPane root = ((RootPaneContainer)dialogWindow).getRootPane();
 
       IdeGlassPaneEx glass = (IdeGlassPaneEx)myDialog.getRootPane().getGlassPane();
-      new WindowResizeListenerEx(glass, root, JBUI.insets(4), null)
-        .install(myDisposable);
+      boolean toolkitCannotResizeUndecorated = !StartupUiUtil.isWaylandToolkit();
+      if (toolkitCannotResizeUndecorated) {
+        new WindowResizeListenerEx(glass, root, JBUI.insets(4), null)
+          .install(myDisposable);
+      }
 
       DumbAwareAction.create(e -> closeImmediately())
         .registerCustomShortcutSet(escape == null ? CommonShortcuts.ESCAPE : escape.getShortcutSet(), root, myDisposable);
@@ -1300,8 +1303,9 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
     emptyText.clear();
     FindModel model = myHelper.getModel();
     boolean dotAdded = false;
-    if (StringUtil.isEmpty(model.getStringToFind())) {
+    if (StringUtil.isEmpty(model.getStringToFind()) && model.getFileFilter() == null) {
       emptyText.setText(FindBundle.message("message.type.search.query"));
+      return;
     }
     else {
       emptyText.setText(message);
@@ -1310,7 +1314,7 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
       emptyText.appendText(".");
       dotAdded = true;
       emptyText.appendSecondaryText(FindBundle.message("find.recursively.hint"),
-                                                               SimpleTextAttributes.LINK_ATTRIBUTES,
+                                    LINK_PLAIN_ATTRIBUTES,
                                     e -> {
                                       model.setWithSubdirectories(true);
                                       scheduleResultsUpdate();
@@ -1348,8 +1352,7 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
         }
       }
     }
-    String fileTypeMask = getFileTypeMask();
-    if (fileTypeMask != null && (FindInProjectUtil.createFileMaskCondition(fileTypeMask) != Conditions.<CharSequence>alwaysTrue())) {
+    if (FindInProjectUtil.createFileMaskCondition(model.getFileFilter()) != Conditions.<CharSequence>alwaysTrue()) {
       usedOptions.add(header.cbFileFilter);
     }
     if (model.isInCommentsOnly()
@@ -1372,7 +1375,7 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
         emptyText.appendLine(FindBundle.message("message.nothingFound.used.options"));
         @NlsSafe StringBuilder sb = new StringBuilder();
         for (Object option : usedOptions) {
-          if (sb.length() > 0) sb.append("  ");
+          if (!sb.isEmpty()) sb.append("  ");
           String optionText = getOptionText(option, true);
           if (optionText == null) continue;
           sb.append(optionText);

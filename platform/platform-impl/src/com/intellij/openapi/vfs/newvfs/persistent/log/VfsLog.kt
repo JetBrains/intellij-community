@@ -31,7 +31,22 @@ interface VfsLog {
   fun isCompactionRunning(): Boolean
 
   companion object {
-    private val LOG_VFS_OPERATIONS_ENABLED: Boolean = SystemProperties.getBooleanProperty("idea.vfs.log-vfs-operations.enabled", false)
+    private val LOG_VFS_OPERATIONS_ENABLED: Boolean =
+      SystemProperties.getBooleanProperty(
+        "idea.vfs.log-vfs-operations.enabled",
+        // recovery via VfsLog does not work, because indexing has migrated to fast attributes, which are not yet tracked
+        false
+        /*try {
+          ApplicationManager.getApplication().isEAP &&
+          !ApplicationManager.getApplication().isUnitTestMode &&
+          !ApplicationManagerEx.isInStressTest() &&
+          !ApplicationManagerEx.isInIntegrationTest()
+        }
+        catch (e: NullPointerException) { // ApplicationManager may be not initialized in some tests
+          logger<VfsLog>().info("ApplicationManager is not available", e)
+          false
+        }*/
+      )
 
     @JvmStatic
     val isVfsTrackingEnabled: Boolean get() = LOG_VFS_OPERATIONS_ENABLED
@@ -39,7 +54,7 @@ interface VfsLog {
 }
 
 @ApiStatus.Internal
-interface VfsLogEx: VfsLog {
+interface VfsLogEx : VfsLog {
   val connectionInterceptors: List<ConnectionInterceptor>
   val applicationVFileEventsTracker: ApplicationVFileEventsTracker
 

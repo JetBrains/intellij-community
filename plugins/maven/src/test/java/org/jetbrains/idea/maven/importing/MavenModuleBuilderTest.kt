@@ -23,12 +23,6 @@ class MavenModuleBuilderTest : MavenMultiVersionImportingTestCase() {
 
   override fun runInDispatchThread() = false
 
-  override fun tearDown() {
-    runAll(
-      ThrowableRunnable<Throwable> { stopMavenImportManager() },
-      ThrowableRunnable<Throwable> { super.tearDown() }
-    )
-  }
 
   override fun setUp() {
     super.setUp()

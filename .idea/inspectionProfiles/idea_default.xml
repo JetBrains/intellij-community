@@ -5,6 +5,7 @@
       <scope name="Production" level="WARNING" enabled="true" />
     </inspection_tool>
     <inspection_tool class="2b82dee6-0e1c-36ce-846f-749c578bd315" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="807b1a20-1c6f-3175-b372-e193a137c304" enabled="true" level="TYPO" enabled_by_default="true" editorAttributes="TYPO" />
     <inspection_tool class="81c39993-de39-3a30-9c64-ab89d04bb566" enabled="true" level="TEXT ATTRIBUTES" enabled_by_default="false" editorAttributes="INFO_ATTRIBUTES">
       <scope name="Production" level="TEXT ATTRIBUTES" enabled="true" editorAttributes="INFO_ATTRIBUTES" />
     </inspection_tool>
@@ -226,6 +227,29 @@
     <inspection_tool class="Convert2MethodRef" enabled="true" level="INFORMATION" enabled_by_default="true" />
     <inspection_tool class="CovariantCompareTo" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="CovariantEquals" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="CustomRegExpInspection" enabled="true" level="WARNING" enabled_by_default="true">
+      <option name="myConfigurations">
+        <list>
+          <RegExpInspectionConfiguration>
+            <option name="description" value="Reports properties ending with &lt;code&gt;[space]…&lt;/code&gt; instead of &lt;code&gt;…&lt;/code&gt;.&lt;br/&gt;&#10;See &lt;a href=&quot;https://jetbrains.design/intellij/text/punctuation/&quot;&gt;punctuation guidelines&lt;/a&gt;." />
+            <option name="name" value="Extra space before ellipsis" />
+            <option name="problemDescriptor" value="Property has an extra space before the ellipsis" />
+            <option name="suppressId" value="SpaceBeforeEllipsis" />
+            <option name="uuid" value="807b1a20-1c6f-3175-b372-e193a137c304" />
+            <option name="patterns">
+              <list>
+                <InspectionPattern>
+                  <option name="regExp" value=" …$" />
+                  <option name="_fileType" value="Properties" />
+                  <option name="searchContext" value="ANY" />
+                  <option name="replacement" value="…" />
+                </InspectionPattern>
+              </list>
+            </option>
+          </RegExpInspectionConfiguration>
+        </list>
+      </option>
+    </inspection_tool>
     <inspection_tool class="DeclareParentsInspection" enabled="false" level="ERROR" enabled_by_default="false" />
     <inspection_tool class="DeprecatedGemInspection" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="DialogTitleCapitalization" enabled="true" level="WARNING" enabled_by_default="true">
@@ -1157,24 +1181,6 @@
         <constraint name="key" within="" contains="" />
         <constraint name="value" regexp="[^{]*''[^{]*" target="true" within="" contains="" />
       </searchConfiguration>
-      <replaceConfiguration name="Eager service initialization during classloading" description="This code is executed when JVM is loading the class, which may cause deadlocks, slowdowns and circular loading issues.&#10;&#10;An example of good API for service getters is&#10;fun instance(): Type = service()" suppressId="service_in_classloading" text="class $doesNotMatter$ {&#10;  companion object {&#10;    val $instance$ = service&lt;$cls$&gt;()&#10;  }&#10;}" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default" search_injected="false" reformatAccordingToStyle="true" shortenFQN="true" replacement="fun $instance$() = service&lt;$cls$&gt;()&#10;  &#10;@Deprecated(&quot;inline me&quot;)&#10;val $instance$ = $instance$()">
-        <constraint name="__context__" within="" contains="" />
-        <constraint name="instance" target="true" within="" contains="" />
-        <constraint name="doesNotMatter" within="" contains="" />
-        <constraint name="cls" within="" contains="" />
-      </replaceConfiguration>
-      <replaceConfiguration name="Eager service initialization during classloading" text="class $doesNotMatter$ {&#10;  companion object {&#10;    val $instance$ = ApplicationManager.getApplication().getService($cls$)&#10;  }&#10;}" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default" search_injected="false" reformatAccordingToStyle="true" shortenFQN="true" replacement="fun $instance$() = ApplicationManager.getApplication().getService($cls$)&#10;&#10;@Deprecated(&quot;inline me&quot;)&#10;val $instance$ get() = $instance$">
-        <constraint name="__context__" within="" contains="" />
-        <constraint name="instance" target="true" within="" contains="" />
-        <constraint name="doesNotMatter" within="" contains="" />
-        <constraint name="cls" within="" contains="" />
-      </replaceConfiguration>
-      <replaceConfiguration name="Eager service initialization during classloading" text="class $doesNotMatter$ {&#10;  companion object {&#10;    val $instance$: $cls$ = service()&#10;  }&#10;}" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default" search_injected="false" reformatAccordingToStyle="true" shortenFQN="true" replacement="fun $instance$(): $cls$ = service()&#10;@Deprecated(&quot;inline me&quot;) val $instance$: $cls$ get() = instance&#10;">
-        <constraint name="__context__" within="" contains="" />
-        <constraint name="instance" target="true" within="" contains="" />
-        <constraint name="doesNotMatter" within="" contains="" />
-        <constraint name="cls" within="" contains="" />
-      </replaceConfiguration>
       <searchConfiguration name="EventLogGroup version should be &gt; 0" text="EventLogGroup($Parameter1$, $Parameter2$)" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default" search_injected="false">
         <constraint name="__context__" within="" contains="" />
         <constraint name="Parameter2" regexp="0" within="" contains="" />
@@ -1497,6 +1503,10 @@
         <constraint name="__context__" within="" contains="" />
         <constraint name="QUALIFIER" nameOfExprType="com\.intellij\.psi\.PsiManager" minCount="0" within="" contains="" />
       </replaceConfiguration>
+      <searchConfiguration name="Raw coroutine scope creation" uuid="e11e9d2f-7cc2-3359-a78a-24f67cbe0850" description="Coroutine scope should be created:&#10;&lt;ul&gt;&#10;&lt;li&gt;by a coroutine builder (&lt;code&gt;launch&lt;/code&gt;, &lt;code&gt;async&lt;/code&gt;, &lt;code&gt;runBlockingCancellable&lt;/code&gt;);&lt;/li&gt;&#10;&lt;li&gt;by a scoping function (&lt;code&gt;withContext&lt;/code&gt;, &lt;code&gt;coroutineScope&lt;/code&gt;, &lt;code&gt;supervisorScope&lt;/code&gt;);&lt;/li&gt;&#10;&lt;li&gt;by injecting it into a service constructor;&lt;/li&gt;&#10;&lt;li&gt;by explicitly creating a child scope (&lt;code&gt;childScope&lt;/code&gt;, &lt;code&gt;namedChildScope&lt;/code&gt;)&lt;/li&gt;&#10;&lt;/ul&gt; " suppressId="RAW_SCOPE_CREATION" problemDescriptor="Raw scope might not be linked to any parent unintentionally (if passed context does not have any &lt;code&gt;Job&lt;/code&gt;, or if passed &lt;code&gt;Job&lt;/code&gt; does not have any parent). Use &lt;code&gt;namedChildScope()&lt;/code&gt; on some existing scope instead. If no parent is actually intended, use &lt;code&gt;GlobalScope.namedScope()&lt;/code&gt;." text="CoroutineScope($args$)" recursive="true" caseInsensitive="true" type="Kotlin" pattern_context="default" search_injected="false">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="args" within="" contains="" />
+      </searchConfiguration>
       <replaceConfiguration name="Raw runBlocking" description="Standard library `runBlocking` may block indefinitely because does not take thread context `Job` or thread `ProgressIndicator` into account.&#10;Use `com.intellij.openapi.progress.runBlockingCancellable` instead. Read its doc if it fails with an error that there is no job or indicator in the current thread." suppressId="RAW_RUN_BLOCKING" problemDescriptor="Use `runBlockingCancellable` instead" text="runBlocking {&#10;  $statement$&#10;}&#10;" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default" search_injected="false" reformatAccordingToStyle="false" shortenFQN="true" replacement="com.intellij.openapi.progress.runBlockingCancellable {&#10;  $statement$&#10;}&#10;">
         <constraint name="__context__" within="" contains="" />
         <constraint name="statement" minCount="0" maxCount="2147483647" within="" contains="" />

@@ -143,8 +143,8 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
     mySourcePosition = sourcePosition;
     myTreeModel = (DefaultTreeModel)getModel();
     myPinToTopManager = XDebuggerPinToTopManager.Companion.getInstance(project);
-    setCellRenderer(new XDebuggerTreeRenderer());
-    new TreeLinkMouseListener(new XDebuggerTreeRenderer()) {
+    setCellRenderer(new XDebuggerTreeRenderer(myProject));
+    new TreeLinkMouseListener(new XDebuggerTreeRenderer(myProject)) {
       @Override
       protected boolean doCacheLastNode() {
         return false;
@@ -232,7 +232,7 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
         handleExpansion(event, false);
       }
 
-      private void handleExpansion(TreeExpansionEvent event, boolean expanded) {
+      private static void handleExpansion(TreeExpansionEvent event, boolean expanded) {
         final TreePath path = event.getPath();
         final Object component = path != null ? path.getLastPathComponent() : null;
         if (component instanceof XValueGroupNodeImpl) {

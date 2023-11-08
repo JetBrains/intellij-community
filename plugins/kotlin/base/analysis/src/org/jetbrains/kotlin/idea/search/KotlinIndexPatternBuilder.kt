@@ -12,10 +12,6 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtFile
 
 class KotlinIndexPatternBuilder : IndexPatternBuilderAdapter() {
-    private companion object {
-        private val TODO_COMMENT_TOKENS = TokenSet.orSet(KtTokens.COMMENTS, TokenSet.create(KDocTokens.KDOC))
-    }
-
     override fun getCommentTokenSet(file: PsiFile): TokenSet? {
         return if (file is KtFile) TODO_COMMENT_TOKENS else null
     }
@@ -31,3 +27,5 @@ class KotlinIndexPatternBuilder : IndexPatternBuilderAdapter() {
         else -> 0
     }
 }
+
+private val TODO_COMMENT_TOKENS: TokenSet = TokenSet.orSet(KtTokens.COMMENTS, TokenSet.create(KDocTokens.KDOC))

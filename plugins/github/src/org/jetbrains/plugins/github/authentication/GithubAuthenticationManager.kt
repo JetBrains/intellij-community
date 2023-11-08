@@ -1,17 +1,9 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.authentication
 
-import com.intellij.collaboration.async.collectWithPrevious
-import com.intellij.collaboration.async.disposingMainScope
-import com.intellij.collaboration.auth.AccountsListener
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import kotlinx.coroutines.async
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.launch
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.CalledInAny
 import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
@@ -39,24 +31,6 @@ class GithubAuthenticationManager internal constructor() {
   }
 
   fun getSingleOrDefaultAccount(project: Project): GithubAccount? = GHAccountsUtil.getSingleOrDefaultAccount(project)
-
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("replaced with stateFlow", ReplaceWith("accountManager.accountsState"))
-  @RequiresEdt
-  fun addListener(disposable: Disposable, listener: AccountsListener<GithubAccount>) {
-    disposable.disposingMainScope().launch {
-      accountManager.accountsState.collectWithPrevious(setOf()) { prev, current ->
-        listener.onAccountListChanged(prev, current)
-        current.forEach { acc ->
-          async {
-            accountManager.getCredentialsFlow(acc).collectLatest {
-              listener.onAccountCredentialsChanged(acc)
-            }
-          }
-        }
-      }
-    }
-  }
 
   companion object {
     @JvmStatic

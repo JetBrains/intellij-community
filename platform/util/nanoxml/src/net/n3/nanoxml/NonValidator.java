@@ -25,17 +25,11 @@
  *
  *  3. This notice may not be removed or altered from any source distribution.
  */
-
 package net.n3.nanoxml;
-
 
 import java.io.Reader;
 import java.io.StringReader;
-import java.util.Enumeration;
-import java.util.Hashtable;
-import java.util.Properties;
-import java.util.Stack;
-
+import java.util.*;
 
 /**
  * NonValidator is a concrete implementation of IXMLValidator which processes
@@ -45,33 +39,29 @@ import java.util.Stack;
  * @author Marc De Scheemaecker
  * @version $Name: RELEASE_2_2_1 $, $Revision: 1.4 $
  */
-public class NonValidator implements IXMLValidator {
-
+public abstract class NonValidator implements IXMLValidator {
   /**
    * The parameter entity resolver.
    */
   protected IXMLEntityResolver parameterEntityResolver;
 
-
   /**
    * Contains the default values for attributes for the different element
    * types.
    */
-  protected Hashtable attributeDefaultValues;
-
+  protected Map<String, Properties> attributeDefaultValues;
 
   /**
    * The stack of elements to be processed.
    */
-  protected Stack currentElements;
-
+  protected Deque<Properties> currentElements;
 
   /**
    * Creates the &quot;validator&quot;.
    */
   public NonValidator() {
-    attributeDefaultValues = new Hashtable();
-    currentElements = new Stack();
+    attributeDefaultValues = new HashMap<>();
+    currentElements = new ArrayDeque<>();
     parameterEntityResolver = new XMLEntityResolver();
   }
 
@@ -86,42 +76,27 @@ public class NonValidator implements IXMLValidator {
    * @throws Exception If something went wrong.
    */
   @Override
-  public void parseDTD(String publicID, StdXMLReader reader, IXMLEntityResolver entityResolver, boolean external) throws Exception {
-    XMLUtil.skipWhitespace(reader, null);
-    int origLevel = reader.getStreamLevel();
-
-    for (; ; ) {
-      String str = XMLUtil.read(reader, '%');
-      char ch = str.charAt(0);
-
-      if (ch == '%') {
-        XMLUtil.processEntity(str, reader, parameterEntityResolver);
-        continue;
+  public final void parseDTD(String publicID, StdXMLReader reader, IXMLEntityResolver entityResolver, boolean external) throws Exception {
+    if (!external) {
+      //super.parseDTD(publicID, reader, entityResolver, external);
+      int cnt = 1;
+      for (char ch = reader.read(); !(ch == ']' && --cnt == 0); ch = reader.read()) {
+        if (ch == '[') cnt ++;
       }
-      else if (ch == '<') {
-        processElement(reader, entityResolver);
-      }
-      else if (ch == ']') {
-        return; // end internal DTD
-      }
-      else {
-        XMLUtil.errorInvalidInput(reader.getSystemID(), reader.getLineNr(), str);
-      }
+    }
+    else {
+      int origLevel = reader.getStreamLevel();
 
-      do {
-        ch = reader.read();
+      while (true) {
+        char ch = reader.read();
 
-        if (external && (reader.getStreamLevel() < origLevel)) {
+        if (reader.getStreamLevel() < origLevel) {
           reader.unread(ch);
           return; // end external DTD
         }
       }
-      while ((ch == ' ') || (ch == '\t') || (ch == '\n') || (ch == '\r'));
-
-      reader.unread(ch);
     }
   }
-
 
   /**
    * Processes an element in the DTD.
@@ -168,7 +143,7 @@ public class NonValidator implements IXMLValidator {
   /**
    * Processes a conditional section.
    *
-   * @param reader         the reader to read data from.
+   * @param reader the reader to read data from.
    * @throws Exception If something went wrong.
    */
   protected void processConditionalSection(StdXMLReader reader) throws Exception {
@@ -234,7 +209,7 @@ public class NonValidator implements IXMLValidator {
   /**
    * Processes an ignore section.
    *
-   * @param reader         the reader to read data from.
+   * @param reader the reader to read data from.
    * @throws Exception If something went wrong.
    */
   protected void processIgnoreSection(StdXMLReader reader) throws Exception {
@@ -261,7 +236,7 @@ public class NonValidator implements IXMLValidator {
   /**
    * Processes an ATTLIST element.
    *
-   * @param reader         the reader to read data from.
+   * @param reader the reader to read data from.
    * @throws Exception If something went wrong.
    */
   protected void processAttList(StdXMLReader reader) throws Exception {
@@ -455,8 +430,7 @@ public class NonValidator implements IXMLValidator {
    */
   @Override
   public void elementStarted(String name, String systemId, int lineNr) {
-    Properties attribs = (Properties)attributeDefaultValues.get(name);
-
+    Properties attribs = attributeDefaultValues.get(name);
     if (attribs == null) {
       attribs = new Properties();
     }
@@ -466,20 +440,6 @@ public class NonValidator implements IXMLValidator {
 
     currentElements.push(attribs);
   }
-
-
-  /**
-   * Indicates that the current element has ended.
-   *
-   * @param name     the name of the element.
-   * @param systemId the system ID of the XML data of the element.
-   * @param lineNr   the line number in the XML data of the element.
-   */
-  @Override
-  public void elementEnded(String name, String systemId, int lineNr) {
-    // nothing to do
-  }
-
 
   /**
    * This method is called when the attributes of an XML element have been
@@ -494,15 +454,9 @@ public class NonValidator implements IXMLValidator {
    */
   @Override
   public void elementAttributesProcessed(String name, Properties extraAttributes, String systemId, int lineNr) {
-    Properties props = (Properties)currentElements.pop();
-    Enumeration enumeration = props.keys();
-
-    while (enumeration.hasMoreElements()) {
-      String key = (String)enumeration.nextElement();
-      extraAttributes.put(key, props.get(key));
-    }
+    Properties props = currentElements.pop();
+    extraAttributes.putAll(props);
   }
-
 
   /**
    * Indicates that an attribute has been added to the current element.
@@ -514,20 +468,6 @@ public class NonValidator implements IXMLValidator {
    */
   @Override
   public void attributeAdded(String key, String value, String systemId, int lineNr) {
-    Properties props = (Properties)currentElements.peek();
-
-    props.remove(key);
-  }
-
-
-  /**
-   * Indicates that a new #PCDATA element has been encountered.
-   *
-   * @param systemId the system ID of the XML data of the element.
-   * @param lineNr   the line number in the XML data of the element.
-   */
-  @Override
-  public void PCDataAdded(String systemId, int lineNr) {
-    // nothing to do
+    currentElements.peek().remove(key);
   }
 }

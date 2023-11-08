@@ -427,6 +427,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(
 
     isEditBeforeRun = template.isEditBeforeRun
     isActivateToolWindowBeforeRun = template.isActivateToolWindowBeforeRun
+    isFocusToolWindowBeforeRun = template.isFocusToolWindowBeforeRun
   }
 
   private fun <T> importFromTemplate(templateItem: RunnerItem<T>, item: RunnerItem<T>) {

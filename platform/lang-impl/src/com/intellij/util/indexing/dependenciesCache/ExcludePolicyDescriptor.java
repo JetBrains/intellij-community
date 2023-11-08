@@ -10,6 +10,7 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.impl.DirectoryIndexExcludePolicy;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -18,15 +19,16 @@ import java.util.*;
 
 final class ExcludePolicyDescriptor {
   @NotNull
-  public final Class<? extends DirectoryIndexExcludePolicy> policyClass;
-  public final String[] excludedRootUrls;
-  @NotNull public final Set<VirtualFile> excludedFromSdkRoots;
+  private final Class<? extends DirectoryIndexExcludePolicy> policyClass;
+  private final String[] excludedRootUrls;
+  @NotNull final Set<VirtualFile> excludedFromSdkRoots;
 
   @NotNull
   static ExcludePolicyDescriptor create(@NotNull DirectoryIndexExcludePolicy policy,
                                         @NotNull Set<? extends Sdk> sdks,
                                         @NotNull Set<? extends VirtualFile> sdkRoots) {
     String[] excludedRootUrls = policy.getExcludeUrlsForProject();
+    if (excludedRootUrls.length == 0) excludedRootUrls = ArrayUtil.EMPTY_STRING_ARRAY;
     Function<Sdk, List<VirtualFile>> strategy = policy.getExcludeSdkRootsStrategy();
     Set<VirtualFile> excludedFromSdkRoots;
     if (strategy == null) {

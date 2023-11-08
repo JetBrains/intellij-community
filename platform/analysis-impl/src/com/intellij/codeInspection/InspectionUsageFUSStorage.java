@@ -23,8 +23,7 @@ public final class InspectionUsageFUSStorage {
   private Set<String> inspectionsReportingProblems = newStorage();
   private final AtomicInteger inspectionSessions = new AtomicInteger(0);
 
-  @NotNull
-  private static Set<@NotNull String> newStorage() {
+  private static @NotNull Set<@NotNull String> newStorage() {
     return ContainerUtil.newConcurrentSet();
   }
 
@@ -33,8 +32,7 @@ public final class InspectionUsageFUSStorage {
     inspectionSessions.incrementAndGet();
   }
 
-  @NotNull
-  public Report collectHighligtingReport() {
+  public @NotNull Report collectHighligtingReport() {
     Set<String> old = inspectionsReportingProblems;
     inspectionsReportingProblems = newStorage();
     int inspectionSessionCount = inspectionSessions.getAndSet(0);

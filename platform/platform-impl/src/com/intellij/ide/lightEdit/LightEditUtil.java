@@ -56,6 +56,8 @@ public final class LightEditUtil {
 
   public static final Key<Boolean> SUGGEST_SWITCH_TO_PROJECT = Key.create("light.edit.suggest.project.switch");
 
+  public static final String PROJECT_NAME = "LightEditProject";
+
   private LightEditUtil() {
   }
 

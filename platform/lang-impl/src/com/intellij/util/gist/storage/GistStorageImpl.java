@@ -36,9 +36,8 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
-import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import static com.intellij.util.SystemProperties.getIntProperty;
 import static com.intellij.util.io.IOUtil.KiB;
@@ -65,7 +64,7 @@ public final class GistStorageImpl extends GistStorage {
   /** `{caches}/huge-gists/{FSRecords.createdTimestamp}/' */
   private static final NotNullLazyValue<Path> DIR_FOR_HUGE_GISTS = NotNullLazyValue.atomicLazy(() -> {
     final String vfsStamp = Long.toString(FSRecords.getCreationTimestamp());
-    Path gistsDir = Paths.get(FSRecords.getCachesDir(), HUGE_GISTS_DIR_NAME, vfsStamp);
+    Path gistsDir = FSRecords.getCacheDir().resolve(HUGE_GISTS_DIR_NAME + "/" + vfsStamp);
     try {
       if (Files.isRegularFile(gistsDir)) {
         FileUtil.delete(gistsDir);
@@ -158,6 +157,7 @@ public final class GistStorageImpl extends GistStorage {
               LOG.info("Can't delete old huge-gists dir [" + outdatedHugeGistsDir.toAbsolutePath() + "]", e);
             }
           });
+        LOG.info("Cleaning old huge-gists dirs finished");
       }
       catch (IOException e) {
         LOG.info("Can't list huge-gists dir [" + hugeGistsParentDir.toAbsolutePath() + "] children", e);
@@ -183,8 +183,8 @@ public final class GistStorageImpl extends GistStorage {
     private final int version;
     private final DataExternalizer<Data> externalizer;
 
-    /** Protects put/get operations. So far it seems there is no need for RWLock here. */
-    private final transient ReentrantLock lock = new ReentrantLock();
+    /** Protects put/get operations */
+    private final transient ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
 
     public GistImpl(@NotNull @NonNls String id,
                     int version,
@@ -215,7 +215,7 @@ public final class GistStorageImpl extends GistStorage {
       FileAttribute fileAttribute = fileAttributeFor(id, version);
       String projectId = projectIdOf(project);
 
-      CancellationUtil.lockMaybeCancellable(lock);
+      CancellationUtil.lockMaybeCancellable(lock.readLock());
       try {
         try (AttributeInputStream stream = fileAttribute.readFileAttribute(file)) {
           if (stream == null) {
@@ -267,7 +267,7 @@ public final class GistStorageImpl extends GistStorage {
         }
       }
       finally {
-        lock.unlock();
+        lock.readLock().unlock();
       }
     }
 
@@ -279,7 +279,7 @@ public final class GistStorageImpl extends GistStorage {
       FileAttribute fileAttribute = fileAttributeFor(id, version);
       String projectId = projectIdOf(project);
 
-      CancellationUtil.lockMaybeCancellable(lock);
+      CancellationUtil.lockMaybeCancellable(lock.writeLock());
       try {
         List<GistRecord<Data>> allProjectsGistsRecords = new ArrayList<>();
         try (AttributeInputStream attributeStream = fileAttribute.readFileAttribute(file)) {
@@ -321,7 +321,7 @@ public final class GistStorageImpl extends GistStorage {
         throw new IOException("Can't store gist[" + id + "]@[" + file + "]", e);
       }
       finally {
-        lock.unlock();
+        lock.writeLock().unlock();
       }
     }
 

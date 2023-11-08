@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.uast.test.common.kotlin
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiModifier
 import com.intellij.psi.PsiModifierListOwner
@@ -13,8 +14,11 @@ import org.jetbrains.kotlin.psi.KtConstructor
 import org.jetbrains.kotlin.util.OperatorNameConventions
 import org.jetbrains.uast.*
 import com.intellij.platform.uast.testFramework.env.findElementByTextFromPsi
+import com.intellij.psi.PsiAnnotation
+import com.intellij.psi.PsiTypes
 import org.jetbrains.kotlin.psi.KtDestructuringDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
+import org.jetbrains.uast.kotlin.BaseKotlinUastResolveProviderService
 import org.jetbrains.uast.util.isConstructorCall
 import org.jetbrains.uast.visitor.AbstractUastVisitor
 
@@ -138,11 +142,14 @@ interface UastApiFixtureTestBase : UastPluginSelection {
                 interface State<out T> {
                     val value: T
                 }
+                
+                typealias NullableString = String?
 
                 @Deprecated(level = DeprecationLevel.HIDDEN, message="no longer supported")
                 fun before(
                     i : Int?,
                     s : String?,
+                    ns : NullableString,
                     vararg vs : Any,
                 ): State<String> {
                     return object : State<String> {
@@ -153,6 +160,7 @@ interface UastApiFixtureTestBase : UastPluginSelection {
                 fun after(
                     i : Int?,
                     s : String?,
+                    ns : NullableString,
                     vararg vs : Any,
                 ): State<String> {
                     return object : State<String> {
@@ -204,6 +212,109 @@ interface UastApiFixtureTestBase : UastPluginSelection {
             .orFail("cant convert to UMethod: readCharacteristicAfter")
 
         compareDeprecatedHidden(readBefore, readAfter, NotNull::class.java.name)
+    }
+
+    fun checkTypesOfDeprecatedHiddenProperty_noAccessor(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "main.kt", """
+                class Test {
+                    @Deprecated(level = DeprecationLevel.HIDDEN, "no more property")
+                    var pOld_noAccessor: String = "42"
+                    var pNew_noAccessor: String = "42"
+                }
+            """.trimIndent()
+        )
+
+        val uFile = myFixture.file.toUElement()!!
+        val test = uFile.findElementByTextFromPsi<UClass>("Test", strict = false)
+        compareDeprecatedHiddenProperty(test, NotNull::class.java.name)
+    }
+
+    fun checkTypesOfDeprecatedHiddenProperty_getter(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "main.kt", """
+                class Test {
+                    @Deprecated(level = DeprecationLevel.HIDDEN, "no more property")
+                    var pOld_getter: String? = null
+                        get() = field ?: "null?"
+                    var pNew_getter: String? = null
+                        get() = field ?: "null?"
+                }
+            """.trimIndent()
+        )
+
+        val uFile = myFixture.file.toUElement()!!
+        val test = uFile.findElementByTextFromPsi<UClass>("Test", strict = false)
+        compareDeprecatedHiddenProperty(test, Nullable::class.java.name)
+    }
+
+    fun checkTypesOfDeprecatedHiddenProperty_setter(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "main.kt", """
+                class Test {
+                    @Deprecated(level = DeprecationLevel.HIDDEN, "no more property")
+                    var pOld_setter: String? = null
+                        set(value) {
+                            if (field == null) {
+                                field = value
+                            }
+                        }
+                    var pNew_setter: String? = null
+                        set(value) {
+                            if (field == null) {
+                                field = value
+                            }
+                        }
+                }
+            """.trimIndent()
+        )
+
+        val uFile = myFixture.file.toUElement()!!
+        val test = uFile.findElementByTextFromPsi<UClass>("Test", strict = false)
+        compareDeprecatedHiddenProperty(test, Nullable::class.java.name)
+    }
+
+    fun checkTypesOfDeprecatedHiddenProperty_accessors(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "main.kt", """
+                class Test {
+                    @Deprecated(level = DeprecationLevel.HIDDEN, "no more property")
+                    var pOld_accessors: String? = null
+                        get() = field ?: "null?"
+                        set(value) {
+                            if (field == null) {
+                                field = value
+                            }
+                        }
+                    var pNew_accessors: String? = null
+                        get() = field ?: "null?"
+                        set(value) {
+                            if (field == null) {
+                                field = value
+                            }
+                        }
+                }
+            """.trimIndent()
+        )
+
+        val uFile = myFixture.file.toUElement()!!
+        val test = uFile.findElementByTextFromPsi<UClass>("Test", strict = false)
+        compareDeprecatedHiddenProperty(test, Nullable::class.java.name)
+    }
+
+    private fun compareDeprecatedHiddenProperty(test: UClass, nullness: String) {
+        val old_getter = test.methods.find { it.name.startsWith("getPOld") }
+            .orFail("cant find old getter")
+        val old_setter = test.methods.find { it.name.startsWith("setPOld") }
+            .orFail("cant find old setter")
+
+        val new_getter = test.methods.find { it.name.startsWith("getPNew") }
+            .orFail("cant find new getter")
+        val new_setter = test.methods.find { it.name.startsWith("setPNew") }
+            .orFail("cant find new setter")
+
+        compareDeprecatedHidden(old_getter, new_getter, nullness)
+        compareDeprecatedHidden(old_setter, new_setter, nullness)
     }
 
     private fun compareDeprecatedHidden(before: UMethod, after: UMethod, nullness: String) {
@@ -268,6 +379,146 @@ interface UastApiFixtureTestBase : UastPluginSelection {
                 }
 
                 return super.visitMethod(node)
+            }
+        })
+    }
+
+    fun checkInheritedGenericTypeNullability(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "main.kt", """
+                class NonNullUpperBound<T : Any>(ctorParam: T) {
+                    fun inheritedNullability(i: T): T = i
+                    fun explicitNullable(e: T?): T? = e
+                }
+
+                class NullableUpperBound<T : Any?>(ctorParam: T) {
+                    fun inheritedNullability(i: T): T = i
+                    fun explicitNullable(e: T?): T? = e
+                }
+
+                class UnspecifiedUpperBound<T>(ctorParam: T) {
+                    fun inheritedNullability(i: T): T = i
+                    fun explicitNullable(e: T?): T? = e
+                }
+
+                fun <T : Any> topLevelNonNullUpperBoundInherited(t: T) = t
+                fun <T : Any> T.extensionNonNullUpperBoundInherited(t: T) { }
+                fun <T : Any> topLevelNonNullUpperBoundExplicitNullable(t: T?) = t
+
+                fun <T : Any?> topLevelNullableUpperBoundInherited(t: T) = t
+                fun <T : Any?> T.extensionNullableUpperBoundInherited(t: T) { }
+                fun <T : Any?> topLevelNullableUpperBoundExplicitNullable(t: T?) = t
+
+                fun <T> topLevelUnspecifiedUpperBoundInherited(t: T) = t
+                fun <T> T.extensionUnspecifiedUpperBoundInherited(t: T) { }
+                fun <T> topLevelUnspecifiedUpperBoundExplicitNullable(t: T?) = t
+            """.trimIndent()
+        )
+
+        val uFile = myFixture.file.toUElement()!!
+        val service = ApplicationManager.getApplication().getService(BaseKotlinUastResolveProviderService::class.java)
+
+        uFile.accept(object : AbstractUastVisitor() {
+            var currentMethod: UMethod? = null
+
+            override fun visitMethod(node: UMethod): Boolean {
+                if (node.isConstructor) {
+                    return super.visitMethod(node)
+                }
+                currentMethod = node
+                return super.visitMethod(node)
+            }
+
+            override fun afterVisitMethod(node: UMethod) {
+                currentMethod = null
+            }
+
+            override fun visitParameter(node: UParameter): Boolean {
+                if (currentMethod == null) {
+                    return super.visitParameter(node)
+                }
+
+                val name = currentMethod!!.name
+                val annotations = node.uAnnotations
+                if (name.endsWith("Nullable")) {
+                    // explicitNullable or ...ExplicitNullable
+                    checkNullableAnnotation(annotations)
+                } else if (name == "inheritedNullability") {
+                    val className = (currentMethod!!.uastParent as UClass).name!!
+                    if (className.startsWith("NonNull")) {
+                        // non-null upper bound (T: Any)
+                        checkNonNullAnnotation(annotations)
+                    } else {
+                        TestCase.assertTrue(annotations.isEmpty())
+                        TestCase.assertTrue(service.hasInheritedGenericType(node.sourcePsi!!))
+                    }
+                } else {
+                    // ...Inherited
+                    if (name.contains("NonNull")) {
+                        // non-null upper bound (T: Any)
+                        checkNonNullAnnotation(annotations)
+                    } else {
+                        TestCase.assertTrue(annotations.isEmpty())
+                        TestCase.assertTrue(service.hasInheritedGenericType(node.sourcePsi!!))
+                    }
+                }
+
+                return super.visitParameter(node)
+            }
+
+            private fun checkNonNullAnnotation(annotations: List<UAnnotation>) {
+                TestCase.assertEquals(1, annotations.size)
+                val annotation = annotations.single()
+                TestCase.assertTrue(annotation.isNotNull)
+            }
+
+            private fun checkNullableAnnotation(annotations: List<UAnnotation>) {
+                TestCase.assertEquals(1, annotations.size)
+                val annotation = annotations.single()
+                TestCase.assertTrue(annotation.isNullable)
+            }
+        })
+    }
+
+    fun checkInheritedGenericTypeNullability_propertyAndAccessor(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "main.kt", """
+                class CircularArray<E> {
+                    val first: E
+                        get() = TODO()
+
+                    var last: E
+                        get() = TODO()
+                        set(value) = TODO()
+                }
+            """.trimIndent()
+        )
+
+        val uFile = myFixture.file.toUElement()!!
+        val service = ApplicationManager.getApplication().getService(BaseKotlinUastResolveProviderService::class.java)
+
+        uFile.accept(object : AbstractUastVisitor() {
+            override fun visitField(node: UField): Boolean {
+                TestCase.assertTrue(node.uAnnotations.isEmpty())
+                TestCase.assertTrue(service.hasInheritedGenericType(node.sourcePsi!!))
+                return super.visitField(node)
+            }
+
+            override fun visitMethod(node: UMethod): Boolean {
+                if (node.isConstructor) {
+                    return super.visitMethod(node)
+                }
+                TestCase.assertTrue(node.uAnnotations.isEmpty())
+                TestCase.assertTrue(
+                    node.returnType == PsiTypes.voidType() || service.hasInheritedGenericType(node.sourcePsi!!)
+                )
+                return super.visitMethod(node)
+            }
+
+            override fun visitParameter(node: UParameter): Boolean {
+                TestCase.assertTrue(node.uAnnotations.isEmpty())
+                TestCase.assertTrue(service.hasInheritedGenericType(node.sourcePsi!!))
+                return super.visitParameter(node)
             }
         })
     }

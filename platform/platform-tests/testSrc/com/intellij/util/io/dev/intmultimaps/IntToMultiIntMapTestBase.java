@@ -27,17 +27,17 @@ public abstract class IntToMultiIntMapTestBase<M extends DurableIntToMultiIntMap
 
   @BeforeEach
   void setUp(@TempDir Path tempDir) throws IOException {
-    multimap = create(tempDir);
+    multimap = openInDir(tempDir);
   }
 
   @AfterEach
   void tearDown() throws IOException {
     if (multimap != null) {
-      multimap.close();
+      multimap.closeAndClean();
     }
   }
 
-  protected abstract M create(@NotNull Path tempDir) throws IOException;
+  protected abstract M openInDir(@NotNull Path tempDir) throws IOException;
 
   @Test
   public void ZERO_IS_PROHIBITED_KEY() throws IOException {
@@ -53,6 +53,19 @@ public abstract class IntToMultiIntMapTestBase<M extends DurableIntToMultiIntMap
                  () -> multimap.put(1, 0),
                  "Can't use value=0: 0 is reserved value (NO_VALUE)"
     );
+  }
+
+  @Test
+  public void mapIsEmpty_Initially() throws IOException {
+    assertTrue(multimap.isEmpty(),
+               "Map is just created, must be empty");
+  }
+
+  @Test
+  public void mapIsNotEmpty_AfterInsertedValue() throws IOException {
+    multimap.put(1, 2);
+    assertFalse(multimap.isEmpty(),
+                "(1,2) record was put, map must NOT be empty anymore");
   }
 
   @Test
@@ -161,6 +174,12 @@ public abstract class IntToMultiIntMapTestBase<M extends DurableIntToMultiIntMap
     );
   }
 
+
+  @Test
+  public void closeIsSafeToCallTwice() throws IOException {
+    multimap.close();
+    multimap.close();
+  }
 
   //TODO RC: test modification of records
   //TODO RC: test many multi-mapping (>1 value for the same key)

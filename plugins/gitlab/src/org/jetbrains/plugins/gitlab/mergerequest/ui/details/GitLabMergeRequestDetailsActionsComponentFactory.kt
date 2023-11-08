@@ -9,7 +9,6 @@ import com.intellij.collaboration.ui.codereview.details.CodeReviewDetailsActions
 import com.intellij.collaboration.ui.codereview.details.CodeReviewDetailsActionsComponentFactory.CodeReviewActions
 import com.intellij.collaboration.ui.codereview.details.data.ReviewRole
 import com.intellij.collaboration.ui.codereview.details.data.ReviewState
-import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.collaboration.ui.util.bindContentIn
 import com.intellij.collaboration.ui.util.bindVisibilityIn
 import com.intellij.collaboration.ui.util.toAnAction
@@ -22,11 +21,10 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
-import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.action.*
-import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabMergeRequestSubmitReviewPopup
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestReviewFlowViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestReviewFlowViewModelImpl.Companion.toReviewState
+import org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestSubmitReviewPopup
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import javax.swing.JButton
 import javax.swing.JComponent
@@ -34,13 +32,9 @@ import javax.swing.JComponent
 internal object GitLabMergeRequestDetailsActionsComponentFactory {
   private const val BUTTONS_GAP = 10
 
-  fun create(
-    scope: CoroutineScope,
-    reviewFlowVm: GitLabMergeRequestReviewFlowViewModel,
-    avatarIconsProvider: IconsProvider<GitLabUserDTO>
-  ): JComponent {
+  fun create(scope: CoroutineScope, reviewFlowVm: GitLabMergeRequestReviewFlowViewModel): JComponent {
     val reviewActions = CodeReviewActions(
-      requestReviewAction = GitLabMergeRequestRequestReviewAction(scope, reviewFlowVm, avatarIconsProvider),
+      requestReviewAction = GitLabMergeRequestRequestReviewAction(scope, reviewFlowVm),
       reRequestReviewAction = GitLabMergeRequestReRequestReviewAction(scope, reviewFlowVm),
       closeReviewAction = GitLabMergeRequestCloseAction(scope, reviewFlowVm),
       reopenReviewAction = GitLabMergeRequestReopenAction(scope, reviewFlowVm),

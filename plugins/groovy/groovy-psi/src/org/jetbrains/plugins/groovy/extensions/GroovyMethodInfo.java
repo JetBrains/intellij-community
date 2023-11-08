@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.extensions;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -8,6 +8,7 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.PairFunction;
 import com.intellij.util.SingletonInstancesCache;
 import com.intellij.util.containers.ContainerUtil;
+import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
@@ -65,6 +66,7 @@ public final class GroovyMethodInfo {
         for (GroovyMethodDescriptor method : classDescriptor.methods) {
           addMethodDescriptor(methodInfos, method, classLoader, classDescriptor.className);
         }
+        return Unit.INSTANCE;
       });
 
       for (GroovyMethodDescriptorExtension methodDescriptor : GroovyMethodDescriptorExtension.EP_NAME.getExtensions()) {

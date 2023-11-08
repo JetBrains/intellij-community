@@ -6,9 +6,10 @@ import com.intellij.util.ui.NamedColorUtil
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
 import java.awt.Font
+import javax.swing.UIManager
 
 @ApiStatus.Experimental
-interface LcrTextInitParams : LcrInitParams {
+class LcrTextInitParams(foreground: Color) : LcrInitParams() {
 
   /**
    * A grey text, that is usually used for non-primary information in renderers
@@ -21,12 +22,12 @@ interface LcrTextInitParams : LcrInitParams {
    *
    * See also [greyForeground]
    */
-  var foreground: Color
+  var foreground: Color = foreground
 
   /**
    * Attributes of the text, if set then [foreground] is ignored
    */
-  var attributes: SimpleTextAttributes?
+  var attributes: SimpleTextAttributes? = null
 
-  var font: Font?
+  var font: Font? = UIManager.getFont("Label.font")
 }

@@ -15,7 +15,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowFactory;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -34,32 +33,36 @@ public final class ProjectViewToolWindowFactory implements ToolWindowFactory, Du
 
   @Override
   public void init(@NotNull ToolWindow window) {
-    if (!(window instanceof ToolWindowEx) || !Registry.is("ide.open.project.view.on.startup", true)) {
+    if (!Registry.is("ide.open.project.view.on.startup", true)) {
       return;
     }
 
     Project project = window.getProject();
-    if (Boolean.TRUE.equals(project.getUserData(FileEditorManagerImpl.NOTHING_WAS_OPENED_ON_START)) &&
-        !ProjectUtil.isNotificationSilentMode(project)) {
+    if (ProjectUtil.isNotificationSilentMode(project)) {
+      return;
+    }
+
+    ToolWindowManager manager = ToolWindowManager.getInstance(project);
+    manager.invokeLater(() -> {
       RunOnceUtil.runOnceForProject(project, "OpenProjectViewOnStart", () -> {
-        ToolWindowManager manager = ToolWindowManager.getInstance(project);
-        manager.invokeLater(() -> {
-          if (manager.getActiveToolWindowId() == null) {
-            window.activate(() -> {
-              Module[] modules = ModuleManager.getInstance(project).getModules();
-              if (modules.length == 1 && GeneralModuleType.TYPE_ID.equals(modules[0].getModuleTypeName()))
-              {
-                return;
-              }
-              AbstractProjectViewPane pane = ProjectView.getInstance(project).getCurrentProjectViewPane();
-              JTree tree = pane == null ? null : pane.getTree();
-              if (tree != null) {
-                TreeUtil.promiseSelectFirst(tree).onSuccess(tree::expandPath);
-              }
-            });
+        if (manager.getActiveToolWindowId() != null ||
+            !Boolean.TRUE.equals(project.getUserData(FileEditorManagerImpl.NOTHING_WAS_OPENED_ON_START))) {
+          return;
+        }
+
+        window.activate(() -> {
+          Module[] modules = ModuleManager.getInstance(project).getModules();
+          if (modules.length == 1 && GeneralModuleType.TYPE_ID.equals(modules[0].getModuleTypeName())) {
+            return;
+          }
+
+          AbstractProjectViewPane pane = ProjectView.getInstance(project).getCurrentProjectViewPane();
+          JTree tree = pane == null ? null : pane.getTree();
+          if (tree != null) {
+            TreeUtil.promiseSelectFirst(tree).onSuccess(tree::expandPath);
           }
         });
       });
-    }
+    });
   }
 }

@@ -792,7 +792,8 @@ public final class PlatformTestUtil {
         assertArrayEquals(fileExpected.getPath(), fileExpected.contentsToByteArray(), fileActual.contentsToByteArray());
       }
       else if (!StringUtil.equals(expected, actual)) {
-        throw new FileComparisonFailure("Text mismatch in the file " + fileExpected.getName(), expected, actual, fileExpected.getPath());
+        throw new FileComparisonFailure("Text mismatch in the file " + fileExpected.getName(), expected, actual,
+                                        fileActual.getUserData(VfsTestUtil.TEST_DATA_FILE_PATH));
       }
     }
   }

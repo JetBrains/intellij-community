@@ -36,6 +36,11 @@ interface SoftwareBillOfMaterials {
      */
     var license: DistributionLicense? = null
 
+    /**
+     * Used to construct SPDX document URI: [documentNamespace]/[org.spdx.library.Version]/$distributionFileName.spdx
+     */
+    var documentNamespace: String? = null
+
     class DistributionLicense(val name: String, val text: String, val url: String?) {
       internal companion object {
         val JETBRAINS = DistributionLicense(LibraryLicense.JETBRAINS_OWN, LibraryLicense.JETBRAINS_OWN, null)

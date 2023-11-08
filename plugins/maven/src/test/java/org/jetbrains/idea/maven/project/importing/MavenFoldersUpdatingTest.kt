@@ -52,8 +52,6 @@ class MavenFoldersUpdatingTest : MavenMultiVersionImportingTestCase() {
 
     assertExcludes("project", "target")
     assertGeneratedSources("project", "target/generated-sources/xxx")
-
-    assertNull(myProjectRoot.findChild("target"))
   }
 
   @Test

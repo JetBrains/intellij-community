@@ -40,10 +40,10 @@ import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
-import java.util.EventObject;
 import java.util.List;
 
 import static com.intellij.diff.util.DiffUtil.getDiffType;
+import static java.util.Collections.emptyList;
 
 public class LineStatusMarkerPopupPanel extends JPanel {
   private static final JBColor TOOLBAR_BACKGROUND_COLOR =
@@ -147,10 +147,10 @@ public class LineStatusMarkerPopupPanel extends JPanel {
   public static void showPopupAt(@NotNull Editor editor,
                                  @NotNull LineStatusMarkerPopupPanel panel,
                                  @Nullable Point mousePosition,
-                                 @NotNull Disposable childDisposable) {
+                                 @NotNull Disposable popupDisposable) {
     LightweightHint hint = new LightweightHint(panel);
-    HintListener closeListener = __ -> Disposer.dispose(childDisposable);
-    hint.addHintListener(closeListener);
+    Disposer.register(popupDisposable, () -> UIUtil.invokeLaterIfNeeded(hint::hide));
+    hint.addHintListener(e -> Disposer.dispose(popupDisposable));
     hint.setForceLightweightPopup(true);
 
     int line = editor.getCaretModel().getLogicalPosition().line;
@@ -163,10 +163,11 @@ public class LineStatusMarkerPopupPanel extends JPanel {
     }
     point.x -= panel.getEditorTextOffset(); // align main editor with the one in popup
 
-    int flags = HintManager.HIDE_BY_CARET_MOVE | HintManager.HIDE_BY_TEXT_CHANGE | HintManager.HIDE_BY_SCROLLING;
+    int flags = HintManager.HIDE_BY_CARET_MOVE | HintManager.HIDE_BY_TEXT_CHANGE | HintManager.HIDE_BY_SCROLLING |
+                HintManager.HIDE_BY_ESCAPE;
     HintManagerImpl.getInstanceImpl().showEditorHint(hint, editor, point, flags, -1, false, new HintHint(editor, point));
 
-    ApplicationManager.getApplication().getMessageBus().connect(childDisposable)
+    ApplicationManager.getApplication().getMessageBus().connect(popupDisposable)
       .subscribe(EditorHintListener.TOPIC, new EditorHintListener() {
         @Override
         public void hintShown(@NotNull Editor newEditor, @NotNull LightweightHint newHint, int flags, @NotNull HintHint hintInfo) {
@@ -180,7 +181,7 @@ public class LineStatusMarkerPopupPanel extends JPanel {
       });
 
     if (!hint.isVisible()) {
-      closeListener.hintHidden(new EventObject(hint));
+      Disposer.dispose(popupDisposable);
     }
   }
 
@@ -212,8 +213,8 @@ public class LineStatusMarkerPopupPanel extends JPanel {
   }
 
   @NotNull
-  public static JComponent createEditorComponent(@NotNull Editor editor, @NotNull EditorTextField textField) {
-    JPanel editorComponent = JBUI.Panels.simplePanel(textField);
+  public static JComponent createEditorComponent(@NotNull Editor editor, @NotNull JComponent popupEditor) {
+    JPanel editorComponent = JBUI.Panels.simplePanel(popupEditor);
     editorComponent.setBorder(createEditorFragmentBorder());
     editorComponent.setBackground(getEditorBackgroundColor(editor));
     return editorComponent;
@@ -268,14 +269,22 @@ public class LineStatusMarkerPopupPanel extends JPanel {
                                                         @Nullable List<? extends DiffFragment> wordDiff) {
     if (wordDiff == null) return;
     textField.addSettingsProvider(uEditor -> {
-      for (DiffFragment fragment : wordDiff) {
-        int vcsStart = fragment.getStartOffset1();
-        int vcsEnd = fragment.getEndOffset1();
-        TextDiffType type = getDiffType(fragment);
-
-        DiffDrawUtil.createInlineHighlighter(uEditor, vcsStart, vcsEnd, type);
-      }
+      installEditorDiffHighlighters(uEditor, wordDiff);
     });
+  }
+
+  public static @NotNull List<RangeHighlighter> installEditorDiffHighlighters(@NotNull Editor editor,
+                                                                              @Nullable List<? extends DiffFragment> wordDiff) {
+    if (wordDiff == null) return emptyList();
+    List<RangeHighlighter> highlighters = new ArrayList<>();
+    for (DiffFragment fragment : wordDiff) {
+      int vcsStart = fragment.getStartOffset1();
+      int vcsEnd = fragment.getEndOffset1();
+      TextDiffType type = getDiffType(fragment);
+
+      highlighters.addAll(DiffDrawUtil.createInlineHighlighter(editor, vcsStart, vcsEnd, type));
+    }
+    return highlighters;
   }
 
   public static void installMasterEditorWordHighlighters(@NotNull Editor editor,

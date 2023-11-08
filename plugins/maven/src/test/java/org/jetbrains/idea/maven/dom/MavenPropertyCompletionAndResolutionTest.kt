@@ -17,8 +17,6 @@ import org.jetbrains.idea.maven.dom.model.MavenDomProfiles
 import org.jetbrains.idea.maven.dom.model.MavenDomProfilesModel
 import org.jetbrains.idea.maven.dom.model.MavenDomSettingsModel
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles
-import org.jetbrains.idea.maven.project.importing.FilesList
-import org.jetbrains.idea.maven.project.importing.MavenImportFlow
 import org.jetbrains.idea.maven.utils.MavenUtil
 import org.jetbrains.idea.maven.vfs.MavenPropertiesVirtualFileSystem
 import org.junit.Test
@@ -1203,32 +1201,11 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
   }
 
   private suspend fun readWithProfiles(vararg profiles: String) {
-    if (isNewImportingProcess) {
-      readWithProfilesViaImportFlow(*profiles)
-    }
-    else {
-      projectsManager.explicitProfiles = MavenExplicitProfiles(listOf(*profiles))
-      updateAllProjects()
-    }
+    projectsManager.explicitProfiles = MavenExplicitProfiles(listOf(*profiles))
+    updateAllProjects()
   }
 
   override fun readProjects() = runBlocking {
     readWithProfiles()
-  }
-
-  private fun readWithProfilesViaImportFlow(vararg profiles: String) {
-    val flow = MavenImportFlow()
-    val initialImportContext =
-      flow.prepareNewImport(myProject,
-                            FilesList(myAllPoms),
-                            mavenGeneralSettings,
-                            mavenImporterSettings,
-                            Arrays.asList(*profiles),
-                            emptyList())
-    projectsManager.initForTests()
-    ApplicationManager.getApplication().executeOnPooledThread {
-      myReadContext = flow.readMavenFiles(initialImportContext, mavenProgressIndicator)
-      projectsManager.setProjectsTree(myReadContext!!.projectsTree)
-    }[10, TimeUnit.SECONDS]
   }
 }

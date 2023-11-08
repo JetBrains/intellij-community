@@ -6,14 +6,19 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.uast.UAnnotation
 import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UastLazyPart
+import org.jetbrains.uast.getOrBuild
 
 @ApiStatus.Internal
 open class KotlinUAnnotatedLocalVariable(
     psi: PsiLocalVariable,
     sourcePsi: KtElement,
     uastParent: UElement?,
-    computeAnnotations: (parent: UElement) -> List<UAnnotation>
+    private val computeAnnotations: (parent: UElement) -> List<UAnnotation>
 ) : KotlinULocalVariable(psi, sourcePsi, uastParent) {
 
-    override val uAnnotations: List<UAnnotation> by lz { computeAnnotations(this) }
+    private val uAnnotationsPart = UastLazyPart<List<UAnnotation>>()
+
+    override val uAnnotations: List<UAnnotation>
+        get() = uAnnotationsPart.getOrBuild { computeAnnotations(this) }
 }

@@ -11,7 +11,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.externalSystem.issue.quickfix.ReimportQuickFix.Companion.requestImport
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration.PROGRESS_LISTENER_KEY
-import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode.IN_BACKGROUND_ASYNC
+import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode.NO_PROGRESS_ASYNC
 import com.intellij.openapi.externalSystem.service.notification.ExternalSystemNotificationManager
 import com.intellij.openapi.externalSystem.service.notification.NotificationCategory.WARNING
 import com.intellij.openapi.externalSystem.service.notification.NotificationData
@@ -142,7 +142,7 @@ class GradleVersionQuickFix(private val projectPath: String,
               override fun onFailure() {
                 future.completeExceptionally(RuntimeException("Wrapper task failed"))
               }
-            }, IN_BACKGROUND_ASYNC, false, userData)
+            }, NO_PROGRESS_ASYNC, false, userData)
     return future
   }
 

@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.tools.projectWizard.compatibility.KotlinGradleCompat
  */
 internal val DEFAULT_KOTLIN_GRADLE_COMPATIBILITY_DATA = KotlinGradleCompatibilityState(
     kotlinVersions = listOf(
+        "1.9.20",
         "1.9.10",
         "1.9.0",
         "1.8.22",
@@ -35,44 +36,59 @@ internal val DEFAULT_KOTLIN_GRADLE_COMPATIBILITY_DATA = KotlinGradleCompatibilit
     ),
     compatibility = listOf(
         KotlinGradleVersionMapping(
-            kotlin = "1.9.0-1.9.30",
-            gradle = "6.8.3-8.3.0"
+            kotlin = "1.9.20-1.9.30",
+            gradle = "6.8.3-8.5",
+            maxJvmTarget = 21
+        ),
+        KotlinGradleVersionMapping(
+            kotlin = "1.9.0-1.9.20",
+            gradle = "6.8.3-8.5",
+            maxJvmTarget = 20
         ),
         KotlinGradleVersionMapping(
             kotlin = "1.8.20-1.8.30",
-            gradle = "6.8.3-8.3.0"
+            gradle = "6.8.3-8.5",
+            maxJvmTarget = 19
         ),
         KotlinGradleVersionMapping(
             kotlin = "1.8.0-1.8.20",
-            gradle = "6.8.3-7.4.0"
+            gradle = "6.8.3-7.4.0",
+            maxJvmTarget = 19
         ),
         KotlinGradleVersionMapping(
             kotlin = "1.7.20-1.7.30",
-            gradle = "6.7.1-7.2.0"
+            gradle = "6.7.1-7.2.0",
+            maxJvmTarget = 18
         ),
         KotlinGradleVersionMapping(
             kotlin = "1.7.0-1.7.20",
-            gradle = "6.7.1-7.0.2"
+            gradle = "6.7.1-7.0.2",
+            maxJvmTarget = 18
         ),
         KotlinGradleVersionMapping(
             kotlin = "1.6.20-1.7.0",
-            gradle = "6.1.1-7.0.2"
+            gradle = "6.1.1-7.0.2",
+            maxJvmTarget = 18
         ),
         KotlinGradleVersionMapping(
             kotlin = "1.6.0-1.6.20",
-            gradle = "6.1.1-7.0"
+            gradle = "6.1.1-7.0",
+            maxJvmTarget = 17
         ),
         KotlinGradleVersionMapping(
             kotlin = "1.5.30-1.6.0",
-            gradle = "6.1.1-7.0"
+            gradle = "6.1.1-7.0",
+            maxJvmTarget = 16
         ),
         KotlinGradleVersionMapping(
             kotlin = "1.5.20-1.5.30",
-            gradle = "6.1.1-7.0"
+            gradle = "6.1.1-7.0",
+            maxJvmTarget = 16
         ),
         KotlinGradleVersionMapping(
             kotlin = "1.5.0-1.5.20",
-            gradle = "6.1-7.0"
+            gradle = "6.1-7.0",
+            maxJvmTarget = 16
         )
     )
 )

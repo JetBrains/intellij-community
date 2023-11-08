@@ -30,8 +30,7 @@ import java.awt.event.*
 import java.beans.PropertyChangeListener
 import java.util.function.Supplier
 import javax.swing.*
-import javax.swing.AbstractButton.MNEMONIC_CHANGED_PROPERTY
-import javax.swing.AbstractButton.TEXT_CHANGED_PROPERTY
+import javax.swing.AbstractButton.*
 import javax.swing.JComponent.TOOL_TIP_TEXT_KEY
 import javax.swing.SwingUtilities.replaceUIActionMap
 import javax.swing.SwingUtilities.replaceUIInputMap
@@ -181,8 +180,11 @@ open class BasicOptionButtonUI : OptionButtonUI() {
     when (it.propertyName) {
       "action" -> mainButton.action = optionButton.action
       TEXT_CHANGED_PROPERTY -> mainButton.text = optionButton.text
+      ICON_CHANGED_PROPERTY -> mainButton.icon = optionButton.icon
+      "iconTextGap" -> mainButton.iconTextGap = optionButton.iconTextGap
       MNEMONIC_CHANGED_PROPERTY -> mainButton.mnemonic = optionButton.mnemonic
-      TOOL_TIP_TEXT_KEY, PROP_OPTION_TOOLTIP -> updateTooltip()
+      TOOL_TIP_TEXT_KEY -> mainButton.toolTipText = optionButton.toolTipText
+      PROP_OPTION_TOOLTIP -> updateTooltip()
       PROP_OPTIONS -> {
         closePopup()
         updateTooltip()
@@ -316,7 +318,9 @@ open class BasicOptionButtonUI : OptionButtonUI() {
   private fun updateTooltip() {
     val toolTip = if (!isSimpleButton) optionButton.optionTooltipText else optionButton.toolTipText
 
-    mainButton.toolTipText = toolTip
+    if (mainButton.toolTipText == null) {
+      mainButton.toolTipText = toolTip
+    }
     arrowButton.toolTipText = toolTip
   }
 

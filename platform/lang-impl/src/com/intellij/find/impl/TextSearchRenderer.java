@@ -37,7 +37,7 @@ final class TextSearchRenderer extends JPanel implements ListCellRenderer<Search
     }
 
     @NotNull
-    private SimpleTextAttributes getAttributes(@NotNull TextChunk textChunk, boolean selected) {
+    private static SimpleTextAttributes getAttributes(@NotNull TextChunk textChunk, boolean selected) {
       SimpleTextAttributes attributes = textChunk.getSimpleAttributesIgnoreBackground();
       if (!(attributes.getFontStyle() == Font.BOLD)) return attributes;
 

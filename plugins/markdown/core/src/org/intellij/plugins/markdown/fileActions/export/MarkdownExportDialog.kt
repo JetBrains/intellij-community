@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.dsl.builder.Panel
@@ -68,7 +69,10 @@ internal class MarkdownExportDialog(
     supportedExportProviders
       .mapNotNull {
         with(it) {
-          createSettingsComponent(project, File(suggestedFilePath))?.visibleIf(fileTypeSelector.selectedValueIs(it))
+          val file = VfsUtil.findFileByIoFile(File(suggestedFilePath), false)
+          if (file != null) {
+            createSettingsComponent(project, file)?.visibleIf(fileTypeSelector.selectedValueIs(it))
+          }
         }
       }
   }

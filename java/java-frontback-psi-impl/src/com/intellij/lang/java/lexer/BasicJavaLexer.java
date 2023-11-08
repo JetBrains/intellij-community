@@ -21,7 +21,6 @@ public class BasicJavaLexer extends LexerBase {
   private static final int STATE_TEXT_BLOCK_TEMPLATE = 1;
 
   private final _JavaLexer myFlexLexer;
-  private final boolean myStringTemplates;
   private final IntStack myStateStack = new IntArrayList(1);
   private CharSequence myBuffer;
   private char @Nullable [] myBufferArray;
@@ -35,10 +34,8 @@ public class BasicJavaLexer extends LexerBase {
 
   private final AbstractBasicJavaDocElementTypeFactory.JavaDocElementTypeContainer myJavaDocElementTypeContainer;
   public BasicJavaLexer(@NotNull LanguageLevel level, @NotNull AbstractBasicJavaDocElementTypeFactory javaDocElementTypeFactory) {
-
     myFlexLexer = new _JavaLexer(level);
     myJavaDocElementTypeContainer = javaDocElementTypeFactory.getContainer();
-    myStringTemplates = level.isAtLeast(LanguageLevel.JDK_21_PREVIEW);
   }
 
   @Override
@@ -67,6 +64,7 @@ public class BasicJavaLexer extends LexerBase {
 
   @Override
   public int getTokenStart() {
+    locateToken();
     return myBufferIndex;
   }
 
@@ -108,33 +106,29 @@ public class BasicJavaLexer extends LexerBase {
         break;
 
       case '{':
-        if (myStringTemplates) {
-          int count = myStateStack.topInt() >> 16;
-          if (count > 0) myStateStack.push((myStateStack.popInt() & STATE_TEXT_BLOCK_TEMPLATE) | ((count + 1) << 16));
-        }
+        int count1 = myStateStack.topInt() >> 16;
+        if (count1 > 0) myStateStack.push((myStateStack.popInt() & STATE_TEXT_BLOCK_TEMPLATE) | ((count1 + 1) << 16));
         myTokenType = JavaTokenType.LBRACE;
         myTokenEndOffset = myBufferIndex + mySymbolLength;
         break;
       case '}':
-        if (myStringTemplates) {
-          int count = myStateStack.topInt() >> 16;
-          if (count > 0) {
-            if (count != 1) {
-              myStateStack.push((myStateStack.popInt() & STATE_TEXT_BLOCK_TEMPLATE) | ((count - 1) << 16));
+        int count2 = myStateStack.topInt() >> 16;
+        if (count2 > 0) {
+          if (count2 != 1) {
+            myStateStack.push((myStateStack.popInt() & STATE_TEXT_BLOCK_TEMPLATE) | ((count2 - 1) << 16));
+          }
+          else {
+            int state = myStateStack.popInt();
+            if (myStateStack.isEmpty()) myStateStack.push(STATE_DEFAULT);
+            if ((state & STATE_TEXT_BLOCK_TEMPLATE) != 0) {
+              boolean fragment = locateLiteralEnd(myBufferIndex + mySymbolLength, LiteralType.TEXT_BLOCK);
+              myTokenType = fragment ? JavaTokenType.TEXT_BLOCK_TEMPLATE_MID : JavaTokenType.TEXT_BLOCK_TEMPLATE_END;
             }
             else {
-              int state = myStateStack.popInt();
-              if (myStateStack.isEmpty()) myStateStack.push(STATE_DEFAULT);
-              if ((state & STATE_TEXT_BLOCK_TEMPLATE) != 0) {
-                boolean fragment = locateLiteralEnd(myBufferIndex + mySymbolLength, LiteralType.TEXT_BLOCK);
-                myTokenType = fragment ? JavaTokenType.TEXT_BLOCK_TEMPLATE_MID : JavaTokenType.TEXT_BLOCK_TEMPLATE_END;
-              }
-              else {
-                boolean fragment = locateLiteralEnd(myBufferIndex + mySymbolLength, LiteralType.STRING);
-                myTokenType = fragment ? JavaTokenType.STRING_TEMPLATE_MID : JavaTokenType.STRING_TEMPLATE_END;
-              }
-              break;
+              boolean fragment = locateLiteralEnd(myBufferIndex + mySymbolLength, LiteralType.STRING);
+              myTokenType = fragment ? JavaTokenType.STRING_TEMPLATE_MID : JavaTokenType.STRING_TEMPLATE_END;
             }
+            break;
           }
         }
         myTokenType = JavaTokenType.RBRACE;
@@ -255,7 +249,7 @@ public class BasicJavaLexer extends LexerBase {
         pos += mySymbolLength;
         // on (encoded) backslash we also need to skip the next symbol (e.g. \\u005c" is translated to \")
         if (pos < myBufferEndOffset) {
-          if (locateCharAt(pos) == '{' && myStringTemplates && literalType != LiteralType.CHAR) {
+          if (locateCharAt(pos) == '{' && literalType != LiteralType.CHAR) {
             pos += mySymbolLength;
             myTokenEndOffset = pos;
             if (myStateStack.topInt() == 0) myStateStack.popInt();

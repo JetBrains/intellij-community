@@ -253,7 +253,8 @@ public final class ResizeableMappedFile implements Forceable, Closeable {
   @Override
   public void close() throws IOException {
     ExceptionUtil.runAllAndRethrowAllExceptions(
-      new IOException("Failed to close ResizableMappedFile[" + getPagedFileStorage().getFile() + "]"),
+      IOException.class,
+      () -> new IOException("Failed to close ResizableMappedFile[" + getPagedFileStorage().getFile() + "]"),
       () -> {
         ensureLengthWritten();
         assert myLogicalSize == myLastWrittenLogicalSize;

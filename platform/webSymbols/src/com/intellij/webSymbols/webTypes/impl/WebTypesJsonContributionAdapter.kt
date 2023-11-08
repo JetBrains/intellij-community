@@ -71,9 +71,9 @@ abstract class WebTypesJsonContributionAdapter private constructor(protected val
 
   open val contributionForQuery: GenericContributionsHost get() = contribution
 
-  private var exclusiveContributions: Set<Pair<SymbolNamespace, String>>? = null
+  private var exclusiveContributions: Set<WebSymbolQualifiedKind>? = null
 
-  fun isExclusiveFor(namespace: SymbolNamespace, kind: SymbolKind): Boolean =
+  fun isExclusiveFor(qualifiedKind: WebSymbolQualifiedKind): Boolean =
     (exclusiveContributions
      ?: when {
        contribution.exclusiveContributions.isEmpty() -> emptySet()
@@ -86,13 +86,11 @@ abstract class WebTypesJsonContributionAdapter private constructor(protected val
            val n = path.substring(1, slash).asWebTypesSymbolNamespace()
                    ?: return@mapNotNull null
            val k = path.substring(slash + 1, path.length)
-           Pair(n, k)
+           WebSymbolQualifiedKind(n, k)
          }
          .toSet()
      }.also { exclusiveContributions = it }
-    )
-      .takeIf { it.isNotEmpty() }
-      ?.contains(Pair(namespace, kind)) == true
+    ).contains(qualifiedKind)
 
   override fun withQueryExecutorContext(queryExecutor: WebSymbolsQueryExecutor): WebSymbol =
     WebTypesSymbolImpl(this, queryExecutor)
@@ -112,33 +110,25 @@ abstract class WebTypesJsonContributionAdapter private constructor(protected val
                 ?.also { contributions -> _superContributions = contributions }
               ?: emptyList()
 
-    override fun getMatchingSymbols(namespace: SymbolNamespace,
-                                    kind: String,
-                                    name: String,
+    override fun getMatchingSymbols(qualifiedName: WebSymbolQualifiedName,
                                     params: WebSymbolsNameMatchQueryParams,
                                     scope: Stack<WebSymbolsScope>): List<WebSymbol> =
       base.rootScope
-        .getMatchingSymbols(base.contributionForQuery, base.jsonOrigin, namespace,
-                            kind, name, params, scope)
+        .getMatchingSymbols(base.contributionForQuery, base.jsonOrigin, qualifiedName, params, scope)
         .toList()
 
-    override fun getSymbols(namespace: SymbolNamespace,
-                            kind: SymbolKind,
+    override fun getSymbols(qualifiedKind: WebSymbolQualifiedKind,
                             params: WebSymbolsListSymbolsQueryParams,
                             scope: Stack<WebSymbolsScope>): List<WebSymbolsScope> =
       base.rootScope
-        .getSymbols(base.contributionForQuery, this.origin, namespace,
-                    kind, params)
+        .getSymbols(base.contributionForQuery, this.origin, qualifiedKind, params)
         .toList()
 
-    override fun getCodeCompletions(namespace: SymbolNamespace,
-                                    kind: String,
-                                    name: String,
+    override fun getCodeCompletions(qualifiedName: WebSymbolQualifiedName,
                                     params: WebSymbolsCodeCompletionQueryParams,
                                     scope: Stack<WebSymbolsScope>): List<WebSymbolCodeCompletionItem> =
       base.rootScope
-        .getCodeCompletions(base.contributionForQuery, base.jsonOrigin, namespace,
-                            kind, name, params, scope)
+        .getCodeCompletions(base.contributionForQuery, base.jsonOrigin, qualifiedName, params, scope)
         .toList()
 
     override val kind: SymbolKind
@@ -249,10 +239,9 @@ abstract class WebTypesJsonContributionAdapter private constructor(protected val
     override val properties: Map<String, Any>
       get() = base.contribution.genericProperties
 
-    override fun isExclusiveFor(namespace: SymbolNamespace, kind: SymbolKind): Boolean =
-      namespace == this.namespace
-      && (base.isExclusiveFor(namespace, kind)
-          || superContributions.any { it.isExclusiveFor(namespace, kind) })
+    override fun isExclusiveFor(qualifiedKind: WebSymbolQualifiedKind): Boolean =
+      base.isExclusiveFor(qualifiedKind)
+          || superContributions.any { it.isExclusiveFor(qualifiedKind) }
 
     override fun toString(): String =
       base.toString()

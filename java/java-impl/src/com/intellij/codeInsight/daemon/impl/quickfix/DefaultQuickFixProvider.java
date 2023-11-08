@@ -74,7 +74,7 @@ public class DefaultQuickFixProvider extends UnresolvedReferenceQuickFixProvider
     SurroundWithQuotesAnnotationParameterValueFix.register(registrar, ref);
 
     if (PsiUtil.isLanguageLevel5OrHigher(ref)) {
-      registrar.register(new CreateTypeParameterFromUsageFix(ref));
+      registrar.register(new CreateTypeParameterFromUsageFix(ref).asIntention());
     }
   }
 

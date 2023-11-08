@@ -78,14 +78,8 @@ public final class UndoManagerImpl extends UndoManager {
     private DocumentReference myOriginatorReference;
 
     @SuppressWarnings("unused")
-    private ClientState() {
-      myManager = getUndoManager(ApplicationManager.getApplication());
-      myMerger = new CommandMerger(this);
-    }
-
-    @SuppressWarnings("unused")
-    private ClientState(@NotNull Project project) {
-      myManager = getUndoManager(project);
+    private ClientState(@NotNull ComponentManager componentManager) {
+      myManager = getUndoManager(componentManager);
       myMerger = new CommandMerger(this);
     }
 
@@ -120,15 +114,11 @@ public final class UndoManagerImpl extends UndoManager {
     return Registry.intValue("undo.documentUndoLimit");
   }
 
-  @SuppressWarnings("unused")
-  private UndoManagerImpl() {
-    this(null);
-  }
+  @SuppressWarnings("NonDefaultConstructor")
+  private UndoManagerImpl(@Nullable ComponentManager componentManager) {
+    myProject = componentManager instanceof Project ? (Project)componentManager : null;
 
-  private UndoManagerImpl(@Nullable Project project) {
-    myProject = project;
-
-    if (project != null && project.isDefault()) {
+    if (myProject != null && myProject.isDefault()) {
       return;
     }
 
@@ -832,7 +822,7 @@ public final class UndoManagerImpl extends UndoManager {
     @SuppressWarnings("unused")
     MyCommandListener() {
       project = null;
-      manager = (UndoManagerImpl)ApplicationManager.getApplication().getService(UndoManager.class);
+      manager = (UndoManagerImpl)UndoManager.getGlobalInstance();
     }
 
     @Override

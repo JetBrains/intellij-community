@@ -12,6 +12,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.testFramework.LightVirtualFile;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,8 +31,9 @@ public class ReadonlyStatusHandlerBase extends ReadonlyStatusHandler {
   }
 
   private static void checkThreading() {
+    ThreadingAssertions.assertEventDispatchThread(); // we might show a dialog
+
     Application app = ApplicationManager.getApplication();
-    app.assertWriteIntentLockAcquired();
     if (!app.isWriteAccessAllowed()) return;
 
     if (app.isUnitTestMode() && Registry.is("tests.assert.clear.read.only.status.outside.write.action")) {

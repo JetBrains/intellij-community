@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.indices;
 
 import com.intellij.openapi.Disposable;
@@ -48,6 +48,8 @@ import java.util.stream.Stream;
  * Get current index state, schedule update index list, check MavenId in index, add data to index.
  */
 public final class MavenIndicesManager implements Disposable {
+
+  @Topic.AppLevel
   public static final Topic<MavenIndexerListener> INDEXER_TOPIC =
     new Topic<>(MavenIndexerListener.class.getSimpleName(), MavenIndexerListener.class);
 
@@ -87,11 +89,11 @@ public final class MavenIndicesManager implements Disposable {
     if (MavenUtil.isMavenUnitTestModeEnabled()) {
       if (!myMavenIndices.isDisposed()) {
         var localIndex = myMavenIndices.getIndexHolder().getLocalIndex();
-        if (localIndex != null) {
-          localIndex.closeAndClean();
+        if (localIndex instanceof MavenIndexImpl impl) {
+          impl.closeAndClean();
         }
       }
-      Path dir = getIndicesDir();
+      Path dir = MavenSystemIndicesManager.getInstance().getIndicesDir();
       try {
         PathKt.delete(dir);
       }
@@ -126,7 +128,7 @@ public final class MavenIndicesManager implements Disposable {
   }
 
   void updateIndicesListSync() {
-    myMavenIndices.updateIndicesList(myProject);
+    myMavenIndices.updateRepositoriesList();
   }
 
   public boolean isInit() {
@@ -169,12 +171,7 @@ public final class MavenIndicesManager implements Disposable {
     }, this);
   }
 
-  @NotNull
-  Path getIndicesDir() {
-    return MavenSystemIndicesManager.getInstance().getIndicesDir();
-  }
-
-  public void addArchetype(@NotNull MavenArchetype archetype) {
+  public static void addArchetype(@NotNull MavenArchetype archetype) {
     MavenArchetypeManager.addArchetype(archetype, getUserArchetypesFile());
   }
 
@@ -226,14 +223,17 @@ public final class MavenIndicesManager implements Disposable {
    */
   public void scheduleUpdateContentAll() {
     myIndexUpdateManager.scheduleUpdateContent(myProject,
-                                               ContainerUtil.map(myMavenIndices.getIndices(), MavenIndex::getRepositoryPathOrUrl));
+                                               IndicesContentUpdateRequest.explicit(
+                                                 ContainerUtil.map(myMavenIndices.getIndices(), MavenIndex::getRepository)));
   }
 
   /**
    * Schedule update indices content async.
    */
-  public CompletableFuture<?> scheduleUpdateContent(@NotNull List<MavenIndex> indices) {
-    return myIndexUpdateManager.scheduleUpdateContent(myProject, ContainerUtil.map(indices, MavenIndex::getRepositoryPathOrUrl));
+  public CompletableFuture<?> scheduleUpdateContent(@NotNull List<MavenIndex> indices, boolean explicit) {
+    IndicesContentUpdateRequest request =
+      new IndicesContentUpdateRequest(ContainerUtil.map(indices, MavenIndex::getRepository), explicit, true, explicit);
+    return myIndexUpdateManager.scheduleUpdateContent(myProject, request);
   }
 
   /**
@@ -245,13 +245,9 @@ public final class MavenIndicesManager implements Disposable {
     myIndexUpdateManager.scheduleUpdateIndicesList(myProject, consumer);
   }
 
-  public MavenIndexUpdateManager.IndexUpdatingState getUpdatingState(@NotNull MavenSearchIndex index) {
-    return myIndexUpdateManager.getUpdatingState(index);
-  }
-
   @NotNull
-  private Path getUserArchetypesFile() {
-    return getIndicesDir().resolve("UserArchetypes.xml");
+  private static Path getUserArchetypesFile() {
+    return MavenSystemIndicesManager.getInstance().getIndicesDir().resolve("UserArchetypes.xml");
   }
 
   private final class IndexFixer {
@@ -367,8 +363,9 @@ public final class MavenIndicesManager implements Disposable {
 
     @Override
     public void indexIsBroken(@NotNull MavenSearchIndex index) {
-      if (index instanceof MavenIndex) {
-        myManager.myIndexUpdateManager.scheduleUpdateContent(myManager.myProject, List.of(index.getRepositoryPathOrUrl()), false);
+      if (index instanceof MavenUpdatableIndex) {
+        myManager.myIndexUpdateManager.scheduleUpdateContent(myManager.myProject,
+                                                             IndicesContentUpdateRequest.explicit(List.of(index.getRepository())));
       }
     }
   }

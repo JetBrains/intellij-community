@@ -6,6 +6,22 @@ package org.apache.commons.lang;
  * please consider migrating to either the commons-lang3 or commons-text libraries and bundling them with your plugin.
  * Or consider using the corresponding API from IJ Platform.
  */
+@SuppressWarnings("unused")
 @Deprecated(forRemoval = true)
 public final class StringEscapeUtils extends org.apache.commons.lang3.StringEscapeUtils {
+  public static String escapeHtml(String input) {
+    return escapeHtml4(input);
+  }
+
+  public static String unescapeHtml(String input) {
+    return unescapeHtml4(input);
+  }
+
+  public static String escapeJavaScript(String input) {
+    return escapeEcmaScript(input);
+  }
+
+  public static String unescapeJavaScript(String input) {
+    return unescapeEcmaScript(input);
+  }
 }

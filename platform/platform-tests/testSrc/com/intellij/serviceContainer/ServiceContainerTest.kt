@@ -1,12 +1,16 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.serviceContainer
 
+import com.intellij.diagnostic.PluginException
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.extensions.DefaultPluginDescriptor
+import com.intellij.openapi.progress.assertInstanceOf
 import com.intellij.openapi.util.Disposer
+import com.intellij.platform.instanceContainer.CycleInitializationException
 import org.assertj.core.api.Assertions.assertThatThrownBy
-import org.junit.Before
 import org.junit.Test
+import org.junit.jupiter.api.assertThrows
+import java.lang.reflect.InvocationTargetException
 
 class ServiceContainerTest {
   @Test
@@ -20,11 +24,28 @@ class ServiceContainerTest {
 
       componentManager.registerService(C1::class.java, C1::class.java, pluginDescriptor, override = false)
       componentManager.registerService(C2::class.java, C2::class.java, pluginDescriptor, override = false)
-
-      assertThatThrownBy {
-        componentManager.getService(C1::class.java)
+      if (useInstanceContainer) {
+        val outer = assertThrows<Throwable> {
+          componentManager.getService(C1::class.java)
+        }
+        assertInstanceOf<CycleInitializationException>( // C1 getService
+          assertInstanceOf<InvocationTargetException>( // C2 constructor
+            assertInstanceOf<PluginException>( // C2 getService
+              assertInstanceOf<InvocationTargetException>( // C1 constructor
+                assertInstanceOf<PluginException>( // C1 getService
+                  outer
+                ).cause
+              ).cause
+            ).cause
+          ).cause
+        )
       }
-        .hasMessageContaining("Cyclic service initialization")
+      else {
+        assertThatThrownBy {
+          componentManager.getService(C1::class.java)
+        }
+          .hasMessageContaining("Cyclic service initialization")
+      }
     }
     finally {
       Disposer.dispose(disposable)

@@ -469,6 +469,8 @@ ${if (exception == null) "" else exception.message}""")
 
   override fun getPluginId(): PluginId = pluginId
 
+  override fun getModuleId(): String? = (pluginDescriptor as IdeaPluginDescriptorImpl).moduleName
+
   override fun getPluginDescriptor(): PluginDescriptor = pluginDescriptor
 
   override fun toString(): String {
@@ -506,6 +508,7 @@ private class DeepEnumeration(private val list: List<Enumeration<URL>>) : Enumer
   }
 }
 
+// only `kotlin.` and not `kotlinx.` classes here (see mustBeLoadedByPlatform - name.startsWith("kotlin."))
 private fun computeKotlinStdlibClassesUsedInSignatures(): Set<String> {
   val result = mutableListOf(
     "kotlin.Function",
@@ -525,11 +528,13 @@ private fun computeKotlinStdlibClassesUsedInSignatures(): Set<String> {
     "kotlin.properties.ReadWriteProperty",
     "kotlin.properties.ReadOnlyProperty",
     "kotlin.coroutines.ContinuationInterceptor",
-    "kotlinx.coroutines.CoroutineDispatcher",
     "kotlin.coroutines.Continuation",
+
     "kotlin.coroutines.CoroutineContext",
     "kotlin.coroutines.CoroutineContext\$Element",
     "kotlin.coroutines.CoroutineContext\$Key",
+    "kotlin.coroutines.EmptyCoroutineContext",
+
     "kotlin.Result",
     "kotlin.Result\$Failure",
     "kotlin.Result\$Companion",  // even though it's an internal class, it can leak (and it does) into API surface because it's exposed by public
@@ -545,8 +550,6 @@ private fun computeKotlinStdlibClassesUsedInSignatures(): Set<String> {
     "kotlin.jvm.internal.ReflectionFactory",
     "kotlin.jvm.internal.Reflection",
     "kotlin.jvm.internal.Lambda",
-    // coroutine dump is supported by core class loader
-    "kotlin.coroutines.jvm.internal.DebugProbesKt",
   )
   System.getProperty("idea.kotlin.classes.used.in.signatures")?.let {
     result.addAll(it.splitToSequence(',').map(String::trim))
@@ -561,8 +564,8 @@ private fun mustBeLoadedByPlatform(name: @NonNls String): Boolean {
 
   // Some commonly used classes from kotlin-runtime must be loaded by the platform classloader.
   // Otherwise, if a plugin bundles its own version
-  // of kotlin-runtime.jar, it won't be possible to call platform's methods with these types in a signatures from such a plugin.
-  // We assume that these classes don't change between Kotlin versions, so it's safe to always load them from platform's kotlin-runtime.
+  // of kotlin-runtime.jar, it won't be possible to call the platform's methods with these types in a signatures from such a plugin.
+  // We assume that these classes don't change between Kotlin versions, so it's safe to always load them from the platform's kotlin-runtime.
   return name.startsWith("kotlin.") &&
          (name.startsWith("kotlin.jvm.functions.") ||
           // Those are kotlin-reflect related classes, but unfortunately, they are placed in kotlin-stdlib.

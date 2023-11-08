@@ -16,7 +16,7 @@ import org.jetbrains.uast.*
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
 
 
-class ApplicationServiceAsStaticFinalFieldOrPropertyInspection : DevKitUastInspectionBase() {
+internal class ApplicationServiceAsStaticFinalFieldOrPropertyInspection : DevKitUastInspectionBase() {
 
   override fun buildInternalVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
     // Can't easily visit all Kotlin properties via UAST (since some of them are UField,
@@ -37,7 +37,7 @@ class ApplicationServiceAsStaticFinalFieldOrPropertyInspection : DevKitUastInspe
 
           val fieldTypeUClass = PsiTypesUtil.getPsiClass(node.type).toUElementOfType<UClass>() ?: return true
           val serviceLevel = getLevelType(holder.project, fieldTypeUClass)
-          if (serviceLevel == null || !serviceLevel.isApp()) return true
+          if (serviceLevel == LevelType.NOT_REGISTERED || !serviceLevel.isApp()) return true
 
           val sourcePsi = node.sourcePsi ?: return true
           val fixProvider = AppServiceAsStaticFinalFieldOrPropertyFixProviders.forLanguage(holder.file.language)

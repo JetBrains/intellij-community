@@ -15,15 +15,15 @@
  */
 package org.jetbrains.plugins.groovy.intentions.conversions.strings;
 
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle;
-import org.jetbrains.plugins.groovy.intentions.base.Intention;
+import org.jetbrains.plugins.groovy.intentions.base.GrPsiUpdateIntention;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
@@ -38,11 +38,11 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
 /**
  * @author Max Medvedev
  */
-public class ConvertMultilineStringToSingleLineIntention extends Intention {
+public class ConvertMultilineStringToSingleLineIntention extends GrPsiUpdateIntention {
   private static final Logger LOG = Logger.getInstance(ConvertMultilineStringToSingleLineIntention.class);
 
   @Override
-  protected void processIntention(@NotNull PsiElement element, @NotNull Project project, Editor editor) throws IncorrectOperationException {
+  protected void processIntention(@NotNull PsiElement element, @NotNull ActionContext context, @NotNull ModPsiUpdater updater) {
     String quote = element.getText().substring(0, 1);
 
     StringBuilder buffer = new StringBuilder();
@@ -69,7 +69,7 @@ public class ConvertMultilineStringToSingleLineIntention extends Intention {
 
     buffer.append(quote);
     try {
-      final int offset = editor.getCaretModel().getOffset();
+      final int offset = context.offset();
       final TextRange range = old.getTextRange();
       int shift;
 
@@ -89,11 +89,11 @@ public class ConvertMultilineStringToSingleLineIntention extends Intention {
         shift = -2;
       }
 
-      final GrExpression newLiteral = GroovyPsiElementFactory.getInstance(project).createExpressionFromText(buffer.toString());
+      final GrExpression newLiteral = GroovyPsiElementFactory.getInstance(context.project()).createExpressionFromText(buffer.toString());
       old.replaceWithExpression(newLiteral, true);
 
       if (shift != 0) {
-        editor.getCaretModel().moveToOffset(offset + shift);
+        updater.moveTo(offset + shift);
       }
     }
     catch (IncorrectOperationException e) {

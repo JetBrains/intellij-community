@@ -157,8 +157,7 @@ public class UnicodeUnescapeIntention extends MCIntention {
       if (!selection.isEmpty()) {
         final int start = selection.getStartOffset();
         final int end = selection.getEndOffset();
-        if (start < 0 || end < 0 || start > end) {
-          // shouldn't happen but http://ea.jetbrains.com/browser/ea_problems/50192
+        if (start < 0 || end < 0 || start > end || end > document.getTextLength()) {
           return false;
         }
         final String text = document.getCharsSequence().subSequence(start, end).toString();

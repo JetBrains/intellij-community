@@ -75,7 +75,7 @@ class FunctionConstraintsCollector(
             val superEntryTypeElement = substitutor[superClass, innerTypeParameter] ?: continue
             innerTypeElement.isTheSameTypeAs(
                 superEntryTypeElement,
-                org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.ConstraintPriority.SUPER_DECLARATION
+                ConstraintPriority.SUPER_DECLARATION
             )
 
             inferenceContext.typeElementToTypeVariable[innerTypeElement]?.also { usedTypeVariables += it }
@@ -84,14 +84,14 @@ class FunctionConstraintsCollector(
         if (superTypeVariable != null) {
             superTypeVariable.isTheSameTypeAs(
                 typeElement,
-                org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.ConstraintPriority.SUPER_DECLARATION,
+                ConstraintPriority.SUPER_DECLARATION,
                 usedTypeVariables
             )
         } else {
             superType.boundType(forceEnhance = true, inferenceContext = inferenceContext)
                 .isTheSameTypeAs(
                     typeElement,
-                    org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.ConstraintPriority.SUPER_DECLARATION,
+                    ConstraintPriority.SUPER_DECLARATION,
                     usedTypeVariables
                 )
         }

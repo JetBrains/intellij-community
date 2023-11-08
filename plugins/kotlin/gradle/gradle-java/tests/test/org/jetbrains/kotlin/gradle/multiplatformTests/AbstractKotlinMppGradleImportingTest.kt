@@ -26,7 +26,9 @@ import org.jetbrains.kotlin.idea.codeInsight.gradle.KotlinGradleImportingTestCas
 import org.jetbrains.kotlin.idea.codeInsight.gradle.PluginTargetVersionsRule
 import org.jetbrains.kotlin.idea.codeInsight.gradle.combineMultipleFailures
 import org.jetbrains.kotlin.idea.codeMetaInfo.clearTextFromDiagnosticMarkup
+import org.jetbrains.kotlin.idea.test.IDEA_KOTLIN_PLUGIN_USE_K2_SYSTEM_PROPERTY
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
+import org.jetbrains.kotlin.idea.test.checkPluginIsCorrect
 import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.konan.target.HostManager
 import org.jetbrains.kotlin.test.TestMetadata
@@ -70,10 +72,15 @@ import java.util.*
  * [KotlinMppTestsContext.description] should cover common needs for [Rule]
  *
  * Sharing of the test suite capabilities should be done via standalone composable modularized [TestFeature]s
+ *
+ * Passing [KotlinIdePluginKind.K2] will turn on K2 IDE mode and will force use of FIR frontend and all corresponding services.
+ * The choice happens during IDE plugins loading, it's not possible to have different tests in one suite for different plugin kinds.
+ * K1 and K2 classpaths cannot be mixed together. K2 test suites should belong to a different module than K1 tests, see also
+ * [com.intellij.ideaProjectStructure.fast.KotlinModuleConsistencyTest].
  */
 @RunWith(KotlinMppTestsJUnit4Runner::class)
 @TestDataPath("\$PROJECT_ROOT/community/plugins/kotlin/idea/tests/testData/gradle")
-abstract class AbstractKotlinMppGradleImportingTest :
+abstract class AbstractKotlinMppGradleImportingTest(private val pluginKind: KotlinIdePluginKind = KotlinIdePluginKind.K1) :
     GradleImportingTestCase(), WorkspaceChecksDsl, GradleProjectsPublishingDsl, GradleProjectsLinkingDsl, HighlightingCheckDsl,
     TestWithKotlinPluginAndGradleVersions, DevModeTweaksDsl, AllFilesUnderContentRootConfigurationDsl,
     RunConfigurationChecksDsl, CustomGradlePropertiesDsl, DocumentationCheckerDsl {
@@ -117,6 +124,10 @@ abstract class AbstractKotlinMppGradleImportingTest :
 
     // Temporary hack allowing to reuse new test runner in selected smoke tests for runs on linux-hosts
     open val allowOnNonMac: Boolean = false
+
+    // Captures the state of the 'idea.kotlin.plugin.use.k2' system property before the test.
+    // Used for restoring the property's value after the test.
+    private var beforeSetupK2PluginProperty: String? = null
 
     open fun TestConfigurationDslScope.defaultTestConfiguration() {}
 
@@ -178,11 +189,17 @@ abstract class AbstractKotlinMppGradleImportingTest :
         if (!allowOnNonMac) {
             assumeTrue("Test is ignored because it requires Mac-host", HostManager.hostIsMac)
         }
+
+        // It is important to set up property before plugin loading as the property affects plugin.xml parsing
+        setUpK2PluginProperty()
+
         // Hack: usually this is set-up by JUnit's Parametrized magic, but
         // our tests source versions from `kotlinTestPropertiesService`, not from
         // @Parametrized
         (this as GradleImportingTestCase).gradleVersion = context.gradleVersion.version
         super.setUp()
+
+        checkPluginIsCorrect(pluginKind.isK2)
 
         context.testProject = myProject
         context.testProjectRoot = myProjectRoot.toNioPath().toFile()
@@ -191,6 +208,13 @@ abstract class AbstractKotlinMppGradleImportingTest :
         // Otherwise Gradle Daemon fails with Metaspace exhausted periodically
         GradleSystemSettings.getInstance().gradleVmOptions =
             "-XX:MaxMetaspaceSize=1024m -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=${System.getProperty("user.dir")}"
+    }
+
+    final override fun tearDown() {
+        runAll(
+            ThrowableRunnable { super.tearDown() },
+            ThrowableRunnable { tearDownK2PluginProperty() }
+        )
     }
 
     override fun setUpFixtures() {
@@ -205,6 +229,21 @@ abstract class AbstractKotlinMppGradleImportingTest :
             ThrowableRunnable { context.mutableCodeInsightTestFixture = null },
             ThrowableRunnable { myTestFixture = null },
         )
+    }
+
+    private fun setUpK2PluginProperty() {
+        beforeSetupK2PluginProperty = System.getProperty(IDEA_KOTLIN_PLUGIN_USE_K2_SYSTEM_PROPERTY)
+        when {
+            pluginKind.isK2 -> System.setProperty(IDEA_KOTLIN_PLUGIN_USE_K2_SYSTEM_PROPERTY, "true")
+            else -> System.setProperty(IDEA_KOTLIN_PLUGIN_USE_K2_SYSTEM_PROPERTY, "false")
+        }
+    }
+
+    private fun tearDownK2PluginProperty() {
+        when (val oldProperty = beforeSetupK2PluginProperty) {
+            null -> System.clearProperty(IDEA_KOTLIN_PLUGIN_USE_K2_SYSTEM_PROPERTY)
+            else -> System.setProperty(IDEA_KOTLIN_PLUGIN_USE_K2_SYSTEM_PROPERTY, oldProperty)
+        }
     }
 
     private fun KotlinMppTestsContext.configureByFiles(): List<VirtualFile> {
@@ -367,4 +406,17 @@ abstract class AbstractKotlinMppGradleImportingTest :
             testFeaturesCompletedSetUp.forEach { it.additionalTearDown() }
         }
     }
+}
+
+/**
+ * Defines which version of IDEA Kotlin plugin will be used. See [AbstractKotlinMppGradleImportingTest]'s comment for more details.
+ */
+enum class KotlinIdePluginKind {
+    K1, K2;
+
+    val isK1: Boolean
+        get()= this == K1
+
+    val isK2: Boolean
+        get() = this == K2
 }

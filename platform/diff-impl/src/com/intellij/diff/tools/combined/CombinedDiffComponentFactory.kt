@@ -5,7 +5,6 @@ import com.intellij.diff.*
 import com.intellij.diff.impl.DiffRequestProcessor
 import com.intellij.diff.impl.DiffSettingsHolder
 import com.intellij.diff.requests.DiffRequest
-import com.intellij.diff.tools.fragmented.UnifiedDiffTool
 import com.intellij.diff.util.DiffUserDataKeys
 import com.intellij.diff.util.DiffUserDataKeysEx
 import com.intellij.diff.util.DiffUtil
@@ -27,7 +26,7 @@ abstract class CombinedDiffComponentFactory(val model: CombinedDiffModel) {
 
   private val mainUi: CombinedDiffMainUI
 
-  private var combinedViewer: CombinedDiffViewer
+  private var combinedViewer: CombinedDiffViewer?
 
   init {
     if (model.haveParentDisposable) { // diff preview scenario?
@@ -53,10 +52,11 @@ abstract class CombinedDiffComponentFactory(val model: CombinedDiffModel) {
     }
   }
 
-  private fun createCombinedViewer(initialFocusRequest: Boolean): CombinedDiffViewer {
+  private fun createCombinedViewer(initialFocusRequest: Boolean): CombinedDiffViewer? {
     val context = model.context
     val blocks = model.requests.keys.toList()
     val blockToSelect = model.context.getUserData(COMBINED_DIFF_SCROLL_TO_BLOCK)
+    if (blocks.isEmpty()) return null
 
     return CombinedDiffViewer(context, blocks, blockToSelect, MyBlockListener()).also { viewer ->
       Disposer.register(ourDisposable, viewer)
@@ -70,7 +70,9 @@ abstract class CombinedDiffComponentFactory(val model: CombinedDiffModel) {
 
   private inner class ModelListener : CombinedDiffModelListener {
     override fun onModelReset() {
-      Disposer.dispose(combinedViewer)
+      combinedViewer?.let {
+        Disposer.dispose(it)
+      }
       model.context.putUserData(COMBINED_DIFF_VIEWER_KEY, null)
 
       combinedViewer = createCombinedViewer(false)
@@ -78,19 +80,22 @@ abstract class CombinedDiffComponentFactory(val model: CombinedDiffModel) {
 
     @RequiresEdt
     override fun onRequestsLoaded(blockId: CombinedBlockId, request: DiffRequest) {
+      val viewer = combinedViewer ?: return
       buildBlockContent(mainUi, model.context, request, blockId)?.let { newContent ->
         mainUi.countDifferences(blockId, newContent.viewer)
-        combinedViewer.updateBlockContent(newContent)
+        viewer.updateBlockContent(newContent)
         request.onAssigned(true)
       }
 
-      combinedViewer.contentChanged()
+      viewer.contentChanged()
     }
 
     @RequiresEdt
     override fun onRequestContentsUnloaded(requests: Map<CombinedBlockId, DiffRequest>) {
+      val viewer = combinedViewer ?: return
+
       for ((blockId, request) in requests) {
-        combinedViewer.replaceBlockWithPlaceholder(blockId)
+        viewer.replaceBlockWithPlaceholder(blockId)
         request.onAssigned(false)
       }
     }
@@ -111,22 +116,21 @@ abstract class CombinedDiffComponentFactory(val model: CombinedDiffModel) {
     private fun buildBlockContent(mainUi: CombinedDiffMainUI,
                                   context: DiffContext,
                                   request: DiffRequest,
-                                  blockId: CombinedBlockId,
-                                  needTakeTool: (FrameDiffTool) -> Boolean = { true }): CombinedDiffBlockContent? {
+                                  blockId: CombinedBlockId): CombinedDiffBlockContent? {
       val diffSettings = DiffSettingsHolder.DiffSettings.getSettings(context.getUserData(DiffUserDataKeys.PLACE))
       val diffTools = DiffManagerEx.getInstance().diffTools
       request.putUserData(DiffUserDataKeys.ALIGNED_TWO_SIDED_DIFF, true)
       context.getUserData(DiffUserDataKeysEx.SCROLL_TO_CHANGE)?.let { request.putUserData(DiffUserDataKeysEx.SCROLL_TO_CHANGE, it) }
 
-      val frameDiffTool =
-        if (mainUi.isUnified() && UnifiedDiffTool.INSTANCE.canShow(context, request)) {
-          UnifiedDiffTool.INSTANCE
-        }
-        else {
-          getDiffToolsExceptUnified(context, diffSettings, diffTools, request, needTakeTool)
-        }
+      val orderedDiffTools = getOrderedDiffTools(diffSettings, diffTools, mainUi.isUnified())
 
-      val childViewer = frameDiffTool
+      val diffTool = orderedDiffTools
+        .filter { it.canShow(context, request) }
+        .toList()
+        .let(DiffUtil::filterSuppressedTools)
+        .firstOrNull()
+
+      val childViewer = diffTool
                           ?.let { findSubstitutor(it, context, request) }
                           ?.createComponent(context, request)
                         ?: return null
@@ -144,16 +148,16 @@ abstract class CombinedDiffComponentFactory(val model: CombinedDiffModel) {
       return DiffUtil.findToolSubstitutor(tool, context, request) as? FrameDiffTool ?: tool
     }
 
-    private fun getDiffToolsExceptUnified(context: DiffContext,
-                                          diffSettings: DiffSettingsHolder.DiffSettings,
-                                          diffTools: List<DiffTool>,
-                                          request: DiffRequest,
-                                          needTakeTool: (FrameDiffTool) -> Boolean): FrameDiffTool? {
-
-      return DiffRequestProcessor.getToolOrderFromSettings(diffSettings, diffTools)
-        .asSequence().filterIsInstance<FrameDiffTool>()
-        .filter { needTakeTool(it) && it !is UnifiedDiffTool && it.canShow(context, request) }
-        .toList().let(DiffUtil::filterSuppressedTools).firstOrNull()
+    private fun getOrderedDiffTools(diffSettings: DiffSettingsHolder.DiffSettings,
+                                    diffTools: List<DiffTool>,
+                                    isUnifiedView: Boolean): List<FrameDiffTool> {
+      return DiffRequestProcessor.getToolOrderFromSettings(diffSettings, diffTools).asSequence()
+        .filterIsInstance<FrameDiffTool>()
+        .sortedBy {
+          val isUnifiedTool: Boolean = it.toolType == DiffToolType.Unified
+          if (isUnifiedView == isUnifiedTool) -1 else 0
+        }
+        .toList()
     }
 
     private fun notifyDiffViewerCreated(viewer: FrameDiffTool.DiffViewer, context: DiffContext, request: DiffRequest) {

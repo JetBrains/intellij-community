@@ -13,10 +13,10 @@ public class Proto {
   private final String name;
   private final @NotNull Iterable<ClassType> annotations;
 
-  public Proto(JVMFlags flags, String signature, String name, @NotNull Iterable<ClassType> annotations) {
+  public Proto(@NotNull JVMFlags flags, String signature, String name, @NotNull Iterable<ClassType> annotations) {
     this.access = flags;
-    this.signature = signature;
-    this.name = name;
+    this.signature = signature == null? "" : signature;
+    this.name = name == null? "" : name;
     this.annotations = annotations;
   }
 
@@ -94,6 +94,10 @@ public class Proto {
     return false;
   }
 
+  public boolean isWeakerAccessThan(Proto anotherProto) {
+    return getFlags().isWeakerAccess(anotherProto.getFlags());
+  }
+
   public class Diff<V extends Proto> implements Difference {
     protected final V myPast;
 
@@ -103,7 +107,11 @@ public class Proto {
 
     @Override
     public boolean unchanged() {
-      return myPast.getFlags().equals(getFlags()) && !signatureChanged() && annotations().unchanged();
+      return !flagsChanged() && !signatureChanged() && annotations().unchanged();
+    }
+
+    public boolean flagsChanged() {
+      return !myPast.getFlags().equals(getFlags());
     }
 
     public JVMFlags getAddedFlags() {
@@ -112,6 +120,18 @@ public class Proto {
 
     public JVMFlags getRemovedFlags() {
       return getFlags().deriveRemoved(myPast.getFlags());
+    }
+
+    public boolean becamePackageLocal() {
+      return !myPast.isPackageLocal() && isPackageLocal();
+    }
+
+    public boolean accessRestricted() {
+      return Proto.this.isWeakerAccessThan(myPast);
+    }
+
+    public boolean accessExpanded() {
+      return myPast.isWeakerAccessThan(Proto.this);
     }
 
     public boolean signatureChanged() {

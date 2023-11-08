@@ -143,7 +143,7 @@ final class Win7TaskBar {
   }
 
   static void setForegroundWindow(@NotNull Window window) {
-    if (!ourInitialized) {
+    if (!ourInitialized || !window.isShowing()) {
       return;
     }
 

@@ -6,7 +6,7 @@ import com.intellij.openapi.observable.properties.AtomicBooleanProperty
 import com.intellij.openapi.observable.properties.AtomicProperty
 import com.intellij.openapi.observable.util.not
 import com.intellij.openapi.observable.util.or
-import com.intellij.openapi.progress.withBackgroundProgress
+import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.dsl.builder.*

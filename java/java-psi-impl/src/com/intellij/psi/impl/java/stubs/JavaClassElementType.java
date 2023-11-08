@@ -137,7 +137,8 @@ public abstract class JavaClassElementType extends JavaStubElementType<PsiClassS
       }
     }
 
-    boolean isUnnamed = !classKindFound;
+
+    boolean isUnnamed = node.getTokenType() == JavaElementType.UNNAMED_CLASS;
     final short flags = PsiClassStubImpl.packFlags(isDeprecatedByComment, isInterface, isEnum, isEnumConst, isAnonymous, isAnnotation,
                                                   isInQualifiedNew, hasDeprecatedAnnotation, false, false, hasDocComment, isRecord, isUnnamed);
     final JavaClassElementType type = typeForClass(isAnonymous, isEnumConst, isUnnamed);

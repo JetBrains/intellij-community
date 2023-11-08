@@ -3,6 +3,7 @@ package com.intellij.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
@@ -32,7 +33,8 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  * </ul>
  */
 @ApiStatus.Internal
-public final class SimpleStringPersistentEnumerator implements ScannableDataEnumeratorEx<String> {
+public final class SimpleStringPersistentEnumerator implements ScannableDataEnumeratorEx<String>,
+                                                               CleanableStorage{
   private static final Logger LOG = Logger.getInstance(SimpleStringPersistentEnumerator.class);
 
   private final @NotNull Path file;
@@ -182,6 +184,14 @@ public final class SimpleStringPersistentEnumerator implements ScannableDataEnum
     return sb.toString();
   }
 
+  @Override
+  public synchronized void closeAndClean() throws IOException {
+    //FIXME RC: there is no way to 'close' this enumerator: the very next update just re-creates the file
+    valueToId = new Object2IntOpenHashMap<>();
+    idToValue = ArrayUtil.EMPTY_STRING_ARRAY;
+    FileUtil.delete(file);
+  }
+
   private static @NotNull Pair<Object2IntMap<String>, String[]> readStorageFromDisk(@NotNull Path file,
                                                                                     @NotNull Charset charset,
                                                                                     @NotNull Charset charsetToFallback) {
@@ -211,7 +221,7 @@ public final class SimpleStringPersistentEnumerator implements ScannableDataEnum
       }
 
       Object2IntMap<String> nameToIdRegistry = new Object2IntOpenHashMap<>(lines.size());
-      String[] idToNameRegistry = new String[lines.size()];
+      String[] idToNameRegistry = lines.isEmpty() ? ArrayUtil.EMPTY_STRING_ARRAY : new String[lines.size()];
       for (int i = 0; i < lines.size(); i++) {
         String name = lines.get(i);
         int id = i + 1;

@@ -3,6 +3,8 @@ package org.jetbrains.plugins.terminal.exp
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
+import com.intellij.terminal.TerminalTitle
+import com.intellij.terminal.bindApplicationTitle
 import com.jediterm.core.util.TermSize
 import com.jediterm.terminal.TtyConnector
 import org.jetbrains.plugins.terminal.JBTerminalSystemSettingsProvider
@@ -12,7 +14,8 @@ import javax.swing.JComponent
 /**
  * Once [PlainTerminalView] is feature-rich and stable enough, it will replace [OldPlainTerminalView].
  */
-class OldPlainTerminalView(project: Project, settings: JBTerminalSystemSettingsProvider) : TerminalContentView {
+class OldPlainTerminalView(project: Project, settings: JBTerminalSystemSettingsProvider,
+                           terminalTitle: TerminalTitle) : TerminalContentView {
 
   private val widget: ShellTerminalWidget
 
@@ -24,6 +27,7 @@ class OldPlainTerminalView(project: Project, settings: JBTerminalSystemSettingsP
 
   init {
     widget = ShellTerminalWidget(project, settings, this)
+    terminalTitle.bindApplicationTitle(widget.terminal, this)
   }
 
   override fun connectToTty(ttyConnector: TtyConnector, initialTermSize: TermSize) {
@@ -40,6 +44,10 @@ class OldPlainTerminalView(project: Project, settings: JBTerminalSystemSettingsP
 
   override fun addTerminationCallback(onTerminated: Runnable, parentDisposable: Disposable) {
     widget.asNewWidget().addTerminationCallback(onTerminated, parentDisposable)
+  }
+
+  override fun sendCommandToExecute(shellCommand: String) {
+    widget.executeCommand(shellCommand)
   }
 
   override fun dispose() {}

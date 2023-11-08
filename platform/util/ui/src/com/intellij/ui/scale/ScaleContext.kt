@@ -2,6 +2,7 @@
 package com.intellij.ui.scale
 
 import com.intellij.ui.JreHiDpiUtil
+import org.jetbrains.annotations.TestOnly
 import java.awt.Component
 import java.awt.Graphics2D
 import java.awt.GraphicsConfiguration
@@ -23,7 +24,7 @@ class ScaleContext : UserScaleContext {
      * Creates a context with all scale factors set to 1.
      */
     @JvmStatic
-    fun createIdentity(): ScaleContext = ScaleContext(ScaleType.USR_SCALE.of(1f), ScaleType.SYS_SCALE.of(1f))
+    fun createIdentity(): ScaleContext = ScaleContext(arrayOf(ScaleType.USR_SCALE.of(1f), ScaleType.SYS_SCALE.of(1f)))
 
     /**
      * Creates a context from the provided `ctx`.
@@ -68,7 +69,8 @@ class ScaleContext : UserScaleContext {
     /**
      * Creates a context with the provided scale factors
      */
-    fun of(vararg scales: Scale): ScaleContext = ScaleContext(scales = scales)
+    @TestOnly
+    fun of(scales: Array<Scale>): ScaleContext = ScaleContext(scales = scales)
 
     /**
      * Creates a default context with the default screen scale and the current user scale
@@ -99,7 +101,7 @@ class ScaleContext : UserScaleContext {
     pixScale = derivePixScale()
   }
 
-  private constructor(vararg scales: Scale) : this() {
+  private constructor(scales: Array<Scale>) : this() {
     for (scale in scales) {
       when (scale.type) {
         ScaleType.USR_SCALE -> {
@@ -169,7 +171,7 @@ class ScaleContext : UserScaleContext {
   }
 
   fun copyWithScale(scale: Scale): ScaleContext {
-    val result = ScaleContext(usrScale, sysScale, objScale, scale)
+    val result = ScaleContext(arrayOf(usrScale, sysScale, objScale, scale))
     overriddenScales?.let {
       result.overriddenScales = it.clone()
     }
@@ -198,7 +200,7 @@ class ScaleContext : UserScaleContext {
   }
 
   override fun <T : UserScaleContext> copy(): T {
-    val result = ScaleContext(usrScale, sysScale, objScale)
+    val result = ScaleContext(arrayOf(usrScale, sysScale, objScale))
     result.updateAll(this)
     @Suppress("UNCHECKED_CAST")
     return result as T

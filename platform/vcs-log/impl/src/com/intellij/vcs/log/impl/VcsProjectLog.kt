@@ -17,8 +17,8 @@ import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
-import com.intellij.openapi.progress.withBackgroundProgress
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.Disposer
@@ -28,6 +28,8 @@ import com.intellij.openapi.util.registry.RegistryValueListener
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsMappingListener
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.backend.observation.trackActivity
+import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.util.awaitCancellationAndInvoke
 import com.intellij.util.childScope
 import com.intellij.util.concurrency.ThreadingAssertions
@@ -88,6 +90,9 @@ class VcsProjectLog(private val project: Project, private val coroutineScope: Co
       override fun afterValueChanged(value: RegistryValue) {
         launchWithAnyModality { disposeLog(recreate = true) }
       }
+    }, listenersDisposable)
+    project.service<VcsLogSharedSettings>().addListener(VcsLogSharedSettings.Listener {
+      launchWithAnyModality { disposeLog(recreate = true) }
     }, listenersDisposable)
 
     @Suppress("SSBasedInspection", "ObjectLiteralToLambda") val shutdownTask = object : Runnable {
@@ -190,8 +195,10 @@ class VcsProjectLog(private val project: Project, private val coroutineScope: Co
     val logProviders = VcsLogManager.findLogProviders(projectLevelVcsManager.allVcsRoots.toList(), project)
     if (logProviders.isEmpty()) return null
 
-    val logManager = getOrCreateLogManager(logProviders)
-    logManager.initialize(force = forceInit)
+    project.trackActivity(VcsActivityKey) {
+      val logManager = getOrCreateLogManager(logProviders)
+      logManager.initialize(force = forceInit)
+    }
     return logManager
   }
 
@@ -236,7 +243,7 @@ class VcsProjectLog(private val project: Project, private val coroutineScope: Co
   internal class InitLogStartupActivity : ProjectActivity {
     init {
       val app = ApplicationManager.getApplication()
-      if (app.isUnitTestMode || app.isHeadlessEnvironment) {
+      if (app.isUnitTestMode) {
         throw ExtensionNotApplicableException.create()
       }
     }
@@ -363,21 +370,27 @@ class VcsProjectLog(private val project: Project, private val coroutineScope: Co
 
 private suspend fun VcsLogManager.initialize(force: Boolean) {
   if (force) {
-    scheduleInitialization()
+    blockingContext {
+      scheduleInitialization()
+    }
     return
   }
 
   if (PostponableLogRefresher.keepUpToDate()) {
     val invalidator = CachesInvalidator.EP_NAME.findExtensionOrFail(VcsLogCachesInvalidator::class.java)
     if (invalidator.isValid) {
-      scheduleInitialization()
+      blockingContext {
+        scheduleInitialization()
+      }
       return
     }
   }
 
   withContext(Dispatchers.EDT) {
     if (isLogVisible) {
-      scheduleInitialization()
+      blockingContext {
+        scheduleInitialization()
+      }
     }
   }
 }

@@ -31,11 +31,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Objects;
 
-/**
- * @author Dmitry Batkovich
- */
-public class CollectionAddAllCanBeReplacedWithConstructorInspection extends AbstractBaseJavaLocalInspectionTool {
-
+public final class CollectionAddAllCanBeReplacedWithConstructorInspection extends AbstractBaseJavaLocalInspectionTool {
   private final CollectionsListSettings mySettings = new CollectionsListSettings() {
     @Override
     protected Collection<String> getDefaultSettings() {

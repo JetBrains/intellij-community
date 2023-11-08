@@ -83,19 +83,16 @@ public class DefaultInspectionToolResultExporter implements InspectionToolResult
   }
 
   @Override
-  @NotNull
-  public InspectionToolWrapper<?,?> getToolWrapper() {
+  public @NotNull InspectionToolWrapper<?,?> getToolWrapper() {
     return myToolWrapper;
   }
 
-  @NotNull
-  public RefManager getRefManager() {
+  public @NotNull RefManager getRefManager() {
     return getContext().getRefManager();
   }
 
   @Override
-  @NotNull
-  public SynchronizedBidiMultiMap<RefEntity, CommonProblemDescriptor> getProblemElements() {
+  public @NotNull SynchronizedBidiMultiMap<RefEntity, CommonProblemDescriptor> getProblemElements() {
     return myProblemElements;
   }
 
@@ -279,25 +276,22 @@ public class DefaultInspectionToolResultExporter implements InspectionToolResult
     return getToolWrapper().getShortName();
   }
 
-  @NotNull
-  public GlobalInspectionContextEx getContext() {
+  public @NotNull GlobalInspectionContextEx getContext() {
     return myContext;
   }
 
 
   private static @NotNull SynchronizedBidiMultiMap<RefEntity, CommonProblemDescriptor> createBidiMap() {
     return new SynchronizedBidiMultiMap<>() {
-      @NotNull
       @Override
-      protected ArrayFactory<CommonProblemDescriptor> arrayFactory() {
+      protected @NotNull ArrayFactory<CommonProblemDescriptor> arrayFactory() {
         return CommonProblemDescriptor.ARRAY_FACTORY;
       }
     };
   }
 
-  @Nullable
   @Override
-  public HighlightSeverity getSeverity(@NotNull RefElement element) {
+  public @Nullable HighlightSeverity getSeverity(@NotNull RefElement element) {
     if (ApplicationManager.getApplication().isDispatchThread()) {
       return WriteIntentReadAction
         .compute((Computable<HighlightSeverity>)() -> doGetSeverity(element));
@@ -308,8 +302,7 @@ public class DefaultInspectionToolResultExporter implements InspectionToolResult
     }
   }
 
-  @Nullable
-  private HighlightSeverity doGetSeverity(@NotNull RefElement element) {
+  private @Nullable HighlightSeverity doGetSeverity(@NotNull RefElement element) {
     PsiElement psiElement = ((RefElement)element.getRefManager().getRefinedElement(element)).getPointer().getContainingFile();
     if (psiElement != null) {
       GlobalInspectionContextBase context = getContext();
@@ -505,8 +498,7 @@ public class DefaultInspectionToolResultExporter implements InspectionToolResult
   }
 
   @Override
-  @NotNull
-  public Collection<CommonProblemDescriptor> getProblemDescriptors() {
+  public @NotNull Collection<CommonProblemDescriptor> getProblemDescriptors() {
     return myProblemElements.getValues();
   }
 
@@ -528,9 +520,8 @@ public class DefaultInspectionToolResultExporter implements InspectionToolResult
     return myResolvedElements.containsKey(entity) && !myProblemElements.containsKey(entity);
   }
 
-  @NotNull
   @Override
-  public Collection<RefEntity> getResolvedElements() {
+  public @NotNull Collection<RefEntity> getResolvedElements() {
     return myResolvedElements.keys();
   }
 
@@ -543,16 +534,14 @@ public class DefaultInspectionToolResultExporter implements InspectionToolResult
    * @return {@link ThreeState#UNSURE}, if the content has never been updated,
    * {@link ThreeState#YES}, if some problems were found, otherwise {@link ThreeState#NO}
    */
-  @NotNull
   @Override
-  public synchronized ThreeState hasReportedProblems() {
+  public synchronized @NotNull ThreeState hasReportedProblems() {
     if (myContents == null) return ThreeState.UNSURE;
     return myContents.isEmpty() ? ThreeState.NO : ThreeState.YES;
   }
 
-  @NotNull
   @Override
-  public synchronized Map<String, Set<RefEntity>> getContent() {
+  public synchronized @NotNull Map<String, Set<RefEntity>> getContent() {
     return Collections.synchronizedMap(myContents == null ? new HashMap<>(1) : myContents);
   }
 

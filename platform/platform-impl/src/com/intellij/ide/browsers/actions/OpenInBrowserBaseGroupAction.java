@@ -32,7 +32,7 @@ public abstract class OpenInBrowserBaseGroupAction extends ActionGroup implement
     p.setHideGroupIfEmpty(true);
     p.setText(IdeBundle.messagePointer("open.in.browser"));
     p.setDescription(IdeBundle.messagePointer("open.selected.file.in.browser"));
-    p.setIcon(AllIcons.Nodes.PpWeb);
+    p.setIconSupplier(() -> AllIcons.Nodes.PpWeb);
   }
 
   @Override
@@ -70,7 +70,7 @@ public abstract class OpenInBrowserBaseGroupAction extends ActionGroup implement
     if (addDefaultBrowser) {
       OpenFileInDefaultBrowserAction defaultBrowserAction = new OpenFileInDefaultBrowserAction();
       defaultBrowserAction.getTemplatePresentation().setText(IdeBundle.messagePointer("default"));
-      defaultBrowserAction.getTemplatePresentation().setIcon(AllIcons.Nodes.PpWeb);
+      defaultBrowserAction.getTemplatePresentation().setIconSupplier(() -> AllIcons.Nodes.PpWeb);
       actions[hasLocalBrowser ? 1 : 0] = defaultBrowserAction;
     }
 

@@ -256,8 +256,8 @@ final class UpdateSettingsEntryPointActionProvider implements ActionProvider {
                                    pluginResults);
               }
 
-              private @NotNull InternalPluginResults getInternalPluginUpdates(@NotNull PlatformUpdates.Loaded loadedResult,
-                                                                              @NotNull ProgressIndicator indicator) {
+              private static @NotNull InternalPluginResults getInternalPluginUpdates(@NotNull PlatformUpdates.Loaded loadedResult,
+                                                                                     @NotNull ProgressIndicator indicator) {
                 return UpdateChecker.getInternalPluginUpdates(loadedResult.getNewBuild().getApiVersion(),
                                                               indicator);
               }

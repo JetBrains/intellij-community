@@ -3,9 +3,13 @@ package com.intellij.modcommand;
 
 import com.intellij.analysis.AnalysisBundle;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.psi.PsiFile;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,6 +39,15 @@ public interface ModCommandExecutor {
    */
   @RequiresEdt
   @NotNull BatchExecutionResult executeInBatch(@NotNull ActionContext context, @NotNull ModCommand command);
+
+  /**
+   * Apply a command for non-physical file copy.
+   *
+   * @param command command to apply
+   * @param file a non-physical file copy to apply the command to
+   * @throws UnsupportedOperationException if the command does something except modifying the specified file
+   */
+  void executeForFileCopy(@NotNull ModCommand command, @NotNull PsiFile file) throws UnsupportedOperationException;
 
   /**
    * @return an instance of this service

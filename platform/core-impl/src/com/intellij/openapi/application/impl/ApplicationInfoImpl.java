@@ -20,15 +20,16 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.text.MessageFormat;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.*;
 
-import static java.util.Objects.requireNonNull;
-
 /**
- * Provides access to content of *ApplicationInfo.xml file. Scheme for *ApplicationInfo.xml files is defined
- * in platform/platform-resources/src/idea/ApplicationInfo.xsd,
+ * Provides access to content of *ApplicationInfo.xml file.
+ * The scheme for *ApplicationInfo.xml files is defined in platform/platform-resources/src/idea/ApplicationInfo.xsd,
  * so you need to update it when adding or removing support for some XML elements in this class.
  */
+@ApiStatus.Internal
 public final class ApplicationInfoImpl extends ApplicationInfoEx {
   public static final String DEFAULT_PLUGINS_HOST = "https://plugins.jetbrains.com";
          static final String IDEA_PLUGINS_HOST_PROPERTY = "idea.plugins.host";
@@ -61,8 +62,8 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   private String mySmallSvgEapIconUrl;
   private String myWelcomeScreenLogoUrl;
 
-  private Calendar myBuildDate;
-  private Calendar myMajorReleaseBuildDate;
+  private ZonedDateTime buildTime;
+  private ZonedDateTime majorReleaseBuildDate;
   private String myProductUrl;
   private UpdateUrls myUpdateUrls;
   private String myDocumentationUrl;
@@ -71,8 +72,8 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   private String myFeedbackUrl;
   private String myPluginManagerUrl;
   private String myPluginsListUrl;
-  private String myChannelsListUrl;
-  private String myPluginsDownloadUrl;
+  private String channelListUrl;
+  private String pluginDownloadUrl;
   private String myBuiltinPluginsUrl;
   private String myWhatsNewUrl;
   private boolean myShowWhatsNewOnUpdate;
@@ -82,7 +83,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   private boolean myHasHelp = true;
   private boolean myHasContextHelp = true;
   private String myWebHelpUrl = "https://www.jetbrains.com/idea/webhelp/";
-  private final List<PluginId> essentialPluginsIds = new ArrayList<>();
+  private final List<PluginId> essentialPluginIds = new ArrayList<>();
   private String myJetBrainsTvUrl;
 
   private String mySubscriptionFormId;
@@ -223,7 +224,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
         case "essential-plugin": {
           String id = child.content;
           if (id != null && !id.isEmpty()) {
-            essentialPluginsIds.add(PluginId.getId(id));
+            essentialPluginIds.add(PluginId.getId(id));
           }
         }
         break;
@@ -270,12 +271,12 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
       readPluginInfo(null);
     }
     
-    requireNonNull(mySvgIconUrl, "Missing attribute: //icon@svg");
-    requireNonNull(mySmallSvgIconUrl, "Missing attribute: //icon@svg-small");
+    Objects.requireNonNull(mySvgIconUrl, "Missing attribute: //icon@svg");
+    Objects.requireNonNull(mySmallSvgIconUrl, "Missing attribute: //icon@svg-small");
 
     overrideFromProperties();
 
-    essentialPluginsIds.sort(null);
+    essentialPluginIds.sort(null);
   }
 
   private void overrideFromProperties() {
@@ -313,27 +314,32 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
     return result;
   }
 
-  public static @NotNull String orFromPluginsCompatibleBuild(@Nullable BuildNumber buildNumber) {
-    BuildNumber number = buildNumber != null ? buildNumber : getShadowInstanceImpl().getPluginsCompatibleBuildAsNumber();
+  public static @NotNull String orFromPluginCompatibleBuild(@Nullable BuildNumber buildNumber) {
+    BuildNumber number = buildNumber == null ? getShadowInstanceImpl().getPluginCompatibleBuildAsNumber() : buildNumber;
     return number.asString();
   }
 
   @Override
   public Calendar getBuildDate() {
-    if (myBuildDate == null) {
-      myBuildDate = Calendar.getInstance();
-    }
-    return myBuildDate;
+    return GregorianCalendar.from(getBuildTime());
   }
 
   @Override
-  public Calendar getMajorReleaseBuildDate() {
-    return myMajorReleaseBuildDate != null ? myMajorReleaseBuildDate : myBuildDate;
+  public @NotNull ZonedDateTime getBuildTime() {
+    if (buildTime == null) {
+      buildTime = ZonedDateTime.now();
+    }
+    return buildTime;
+  }
+
+  @Override
+  public @NotNull Calendar getMajorReleaseBuildDate() {
+    return majorReleaseBuildDate == null ? getBuildDate() : GregorianCalendar.from(majorReleaseBuildDate);
   }
 
   @Override
   public @NotNull BuildNumber getBuild() {
-    return requireNonNull(BuildNumber.fromString(myBuildNumber));
+    return Objects.requireNonNull(BuildNumber.fromString(myBuildNumber));
   }
 
   @Override
@@ -514,13 +520,13 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   }
 
   @Override
-  public String getChannelsListUrl() {
-    return myChannelsListUrl;
+  public String getChannelListUrl() {
+    return channelListUrl;
   }
 
   @Override
-  public @NotNull String getPluginsDownloadUrl() {
-    return myPluginsDownloadUrl;
+  public @NotNull String getPluginDownloadUrl() {
+    return pluginDownloadUrl;
   }
 
   @Override
@@ -588,21 +594,21 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
     return mySubscriptionTipsAvailable;
   }
 
-  public @NotNull @NlsSafe String getPluginsCompatibleBuild() {
-    return getPluginsCompatibleBuildAsNumber().asString();
+  public @NotNull @NlsSafe String getPluginCompatibleBuild() {
+    return getPluginCompatibleBuildAsNumber().asString();
   }
 
-  public @NotNull BuildNumber getPluginsCompatibleBuildAsNumber() {
-    BuildNumber compatibleBuild = BuildNumber.fromPluginsCompatibleBuild();
+  public @NotNull BuildNumber getPluginCompatibleBuildAsNumber() {
+    BuildNumber compatibleBuild = BuildNumber.fromPluginCompatibleBuild();
     if (LOG.isDebugEnabled()) {
       LOG.debug("getPluginsCompatibleBuildAsNumber: compatibleBuild=" + (compatibleBuild == null ? "null" : compatibleBuild.asString()));
     }
-    BuildNumber version = compatibleBuild != null ? compatibleBuild : getApiVersionAsNumber();
+    BuildNumber version = compatibleBuild == null ? getApiVersionAsNumber() : compatibleBuild;
     if (LOG.isDebugEnabled()) {
       LOG.debug("getPluginsCompatibleBuildAsNumber: version=" + version.asString());
     }
     BuildNumber buildNumber = BuildNumber.fromStringWithProductCode(version.asString(), getBuild().getProductCode());
-    return requireNonNull(buildNumber);
+    return Objects.requireNonNull(buildNumber);
   }
 
   private static @Nullable String getAttributeValue(XmlElement element, String name) {
@@ -616,20 +622,20 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
 
     String dateString = element.getAttributeValue("date");
     if (dateString != null && !dateString.equals("__BUILD_DATE__")) {
-      myBuildDate = parseDate(dateString);
+      buildTime = parseDate(dateString);
     }
 
     String majorReleaseDateString = element.getAttributeValue("majorReleaseDate");
     if (majorReleaseDateString != null) {
-      myMajorReleaseBuildDate = parseDate(majorReleaseDateString);
+      majorReleaseBuildDate = parseDate(majorReleaseDateString);
     }
   }
 
   private void readPluginInfo(@Nullable XmlElement element) {
     String pluginManagerUrl = DEFAULT_PLUGINS_HOST;
-    String pluginsListUrl = null;
-    myChannelsListUrl = null;
-    myPluginsDownloadUrl = null;
+    String pluginListUrl = null;
+    channelListUrl = null;
+    pluginDownloadUrl = null;
     if (element != null) {
       String url = element.getAttributeValue("url");
       if (url != null) {
@@ -638,17 +644,17 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
 
       String listUrl = element.getAttributeValue("list-url");
       if (listUrl != null) {
-        pluginsListUrl = listUrl;
+        pluginListUrl = listUrl;
       }
 
       String channelListUrl = element.getAttributeValue("channel-list-url");
       if (channelListUrl != null) {
-        myChannelsListUrl = channelListUrl;
+        this.channelListUrl = channelListUrl;
       }
 
       String downloadUrl = element.getAttributeValue("download-url");
       if (downloadUrl != null) {
-        myPluginsDownloadUrl = downloadUrl;
+        pluginDownloadUrl = downloadUrl;
       }
 
       String builtinPluginsUrl = element.getAttributeValue("builtin-url");
@@ -660,16 +666,16 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
     String pluginHost = System.getProperty(IDEA_PLUGINS_HOST_PROPERTY);
     if (pluginHost != null) {
       pluginManagerUrl = pluginHost.endsWith("/") ? pluginHost.substring(0, pluginHost.length() - 1) : pluginHost;
-      pluginsListUrl = myChannelsListUrl = myPluginsDownloadUrl = null;
+      pluginListUrl = channelListUrl = pluginDownloadUrl = null;
     }
 
     myPluginManagerUrl = pluginManagerUrl;
-    myPluginsListUrl = pluginsListUrl == null ? (pluginManagerUrl + "/plugins/list/") : pluginsListUrl;
-    if (myChannelsListUrl == null) {
-      myChannelsListUrl = pluginManagerUrl + "/channels/list/";
+    myPluginsListUrl = pluginListUrl == null ? (pluginManagerUrl + "/plugins/list/") : pluginListUrl;
+    if (channelListUrl == null) {
+      channelListUrl = pluginManagerUrl + "/channels/list/";
     }
-    if (myPluginsDownloadUrl == null) {
-      myPluginsDownloadUrl = pluginManagerUrl + "/pluginManager/";
+    if (pluginDownloadUrl == null) {
+      pluginDownloadUrl = pluginManagerUrl + "/pluginManager/";
     }
   }
 
@@ -681,23 +687,27 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
     return name;
   }
 
-  private static GregorianCalendar parseDate(String dateString) {
-    GregorianCalendar calendar = new GregorianCalendar(TimeZone.getTimeZone("UTC"));
+  private static @Nullable ZonedDateTime parseDate(@NotNull String dateString) {
     try {
-      calendar.set(Calendar.YEAR, Integer.parseInt(dateString.substring(0, 4)));
-      calendar.set(Calendar.MONTH, Integer.parseInt(dateString.substring(4, 6)) - 1);
-      calendar.set(Calendar.DAY_OF_MONTH, Integer.parseInt(dateString.substring(6, 8)));
+      int year = Integer.parseInt(dateString.substring(0, 4));
+      // 0-based for old GregorianCalendar and 1-based for ZonedDateTime
+      int month = Integer.parseInt(dateString.substring(4, 6));
+      int dayOfMonth = Integer.parseInt(dateString.substring(6, 8));
+      int hour;
+      int minute;
       if (dateString.length() > 8) {
-        calendar.set(Calendar.HOUR_OF_DAY, Integer.parseInt(dateString.substring(8, 10)));
-        calendar.set(Calendar.MINUTE, Integer.parseInt(dateString.substring(10, 12)));
+        hour = Integer.parseInt(dateString.substring(8, 10));
+        minute = Integer.parseInt(dateString.substring(10, 12));
       }
       else {
-        calendar.set(Calendar.HOUR_OF_DAY, 0);
-        calendar.set(Calendar.MINUTE, 0);
+        hour = 0;
+        minute = 0;
       }
+      return ZonedDateTime.of(year, month, dayOfMonth, hour, minute, 0, 0, ZoneOffset.UTC);
     }
-    catch (Exception ignore) { }
-    return calendar;
+    catch (Exception ignore) {
+      return null;
+    }
   }
 
   @ReviseWhenPortedToJDK("9")
@@ -712,12 +722,12 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
 
   @Override
   public boolean isEssentialPlugin(@NotNull PluginId pluginId) {
-    return PluginManagerCore.CORE_ID.equals(pluginId) || Collections.binarySearch(essentialPluginsIds, pluginId) >= 0;
+    return PluginManagerCore.CORE_ID.equals(pluginId) || Collections.binarySearch(essentialPluginIds, pluginId) >= 0;
   }
 
   @Override
-  public @NotNull List<PluginId> getEssentialPluginsIds() {
-    return essentialPluginsIds;
+  public @NotNull List<PluginId> getEssentialPluginIds() {
+    return essentialPluginIds;
   }
 
   @Override

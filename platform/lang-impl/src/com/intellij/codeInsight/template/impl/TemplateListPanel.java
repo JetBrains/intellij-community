@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -161,8 +161,8 @@ public class TemplateListPanel extends JPanel implements Disposable {
 
     for (TemplateGroup templateGroup : templateGroups) {
       for (TemplateImpl template : templateGroup.getElements()) {
-        template.applyOptions(getTemplateOptions(template));
         template.applyContext(getTemplateContext(template));
+        template.applyOptions(getTemplateOptions(template));
       }
     }
     TemplateSettings templateSettings = TemplateSettings.getInstance();
@@ -761,7 +761,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
     final DumbAwareAction revert =
       new DumbAwareAction(CodeInsightBundle.messagePointer("action.DumbAware.TemplateListPanel.text.restore.defaults"),
                           CodeInsightBundle.messagePointer("action.DumbAware.TemplateListPanel.description.restore.default.setting"),
-                          null) {
+                          (Icon)null) {
 
       @Override
       public void update(@NotNull AnActionEvent e) {

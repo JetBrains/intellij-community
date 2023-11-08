@@ -283,3 +283,9 @@ private fun addPreviewInfo(editor: Editor) {
 }
 
 private fun hasPreviewInfo(editor: Editor) = PREVIEW_INFO_KEY.get(editor) != null
+
+internal class VcsCodeAuthorInfo(val mainAuthor: String?, val otherAuthorsCount: Int, val isModified: Boolean) {
+  companion object {
+    val NEW_CODE: VcsCodeAuthorInfo = VcsCodeAuthorInfo(null, 0, true)
+  }
+}

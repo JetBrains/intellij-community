@@ -10,7 +10,7 @@ import java.nio.file.Path;
 public class NonParallelNonPersistentInToMultiIntMapTest extends IntToMultiIntMapTestBase<NonDurableNonParallelIntToMultiIntMap> {
 
   @Override
-  protected NonDurableNonParallelIntToMultiIntMap create(@NotNull Path tempDir) {
+  protected NonDurableNonParallelIntToMultiIntMap openInDir(@NotNull Path tempDir) {
     return new NonDurableNonParallelIntToMultiIntMap();
   }
 

@@ -2,7 +2,6 @@
 package com.intellij.xdebugger.impl.ui;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.codeWithMe.RemoteTransferUIManager;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -19,10 +18,7 @@ import com.intellij.openapi.editor.impl.event.MarkupModelListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.ui.CollectionComboBoxModel;
-import com.intellij.ui.EditorComboBoxEditor;
-import com.intellij.ui.EditorComboBoxRenderer;
-import com.intellij.ui.EditorTextField;
+import com.intellij.ui.*;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.ui.EdtInvocationManager;
@@ -134,6 +130,7 @@ public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
       .inSmartMode(getProject())
       .finishOnUiThread(ModalityState.any(), document -> {
         myEditor.getEditorTextField().setNewDocumentAndFileType(getFileType(text), document);
+        getEditorsProvider().afterEditorCreated(getEditor());
       })
       .coalesceBy(this)
       .submit(AppExecutorUtil.getAppExecutorService());
@@ -202,7 +199,7 @@ public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
         @Override
         protected void onEditorCreate(EditorEx editor) {
           editor.putUserData(DebuggerCopyPastePreprocessor.REMOVE_NEWLINES_ON_PASTE, true);
-          RemoteTransferUIManager.forbidEditorBeControlization(editor);   // TODO(GTW-6142): Remove after RDCT-543 is done
+          RemoteTransferUIManager.forbidBeControlizationInLux(editor, "debugger");   // TODO(GTW-6142): Remove after RDCT-543 is done
           prepareEditor(editor);
           if (showMultiline) {
             setExpandable(editor);

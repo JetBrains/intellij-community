@@ -153,8 +153,10 @@ public class VfsAwareMapReduceIndex<Key, Value, FileCachedData extends VfsAwareM
   }
 
   @Override
-  public void setIndexedStateForFileOnFileIndexMetaData(int fileId, @Nullable FileCachedData fileData) {
-    IndexingStamp.setFileIndexedStateCurrent(fileId, (ID<?, ?>)myIndexId);
+  public void setIndexedStateForFileOnFileIndexMetaData(int fileId,
+                                                        @Nullable FileCachedData fileData,
+                                                        boolean isProvidedByInfrastructureExtension) {
+    IndexingStamp.setFileIndexedStateCurrent(fileId, (ID<?, ?>)myIndexId, isProvidedByInfrastructureExtension);
     if (mySubIndexerRetriever != null) {
       LOG.assertTrue(fileData != null,
                      "getFileIndexMetaData() shouldn't have returned null in " + getClass() + ", " + myIndexId.getName());
@@ -168,8 +170,8 @@ public class VfsAwareMapReduceIndex<Key, Value, FileCachedData extends VfsAwareM
   }
 
   @Override
-  public void setIndexedStateForFile(int fileId, @NotNull IndexedFile file) {
-    IndexingStamp.setFileIndexedStateCurrent(fileId, (ID<?, ?>)myIndexId);
+  public void setIndexedStateForFile(int fileId, @NotNull IndexedFile file, boolean isProvidedByInfrastructureExtension) {
+    IndexingStamp.setFileIndexedStateCurrent(fileId, (ID<?, ?>)myIndexId, isProvidedByInfrastructureExtension);
     if (mySubIndexerRetriever != null) {
       try {
         mySubIndexerRetriever.setIndexedState(fileId, file);

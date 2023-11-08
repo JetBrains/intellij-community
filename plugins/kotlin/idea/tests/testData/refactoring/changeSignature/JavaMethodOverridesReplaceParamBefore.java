@@ -23,3 +23,4 @@ class Test {
         new Z().foo("");
     }
 }
+// IGNORE_K2

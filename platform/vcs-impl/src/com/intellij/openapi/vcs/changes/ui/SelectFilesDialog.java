@@ -5,6 +5,7 @@ package com.intellij.openapi.vcs.changes.ui;
 import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.actions.DeleteAction;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.fileChooser.actions.VirtualFileDeleteProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
@@ -18,8 +19,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.tree.DefaultTreeModel;
 import java.util.Collection;
 import java.util.List;
-
-import static com.intellij.openapi.actionSystem.EmptyAction.setupAction;
 
 
 public class SelectFilesDialog extends AbstractSelectFilesDialog {
@@ -104,7 +103,8 @@ public class SelectFilesDialog extends AbstractSelectFilesDialog {
           myFileList.rebuildTree();
         }
       };
-      setupAction(deleteAction, IdeActions.ACTION_DELETE, getFileList());
+      ActionUtil.mergeFrom(deleteAction, IdeActions.ACTION_DELETE);
+      deleteAction.registerCustomShortcutSet(getFileList(), null);
       defaultGroup.add(deleteAction);
     }
     return defaultGroup;

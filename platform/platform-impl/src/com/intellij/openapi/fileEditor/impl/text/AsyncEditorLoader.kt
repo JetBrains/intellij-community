@@ -9,11 +9,11 @@ import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.fileEditor.FileEditorStateLevel
-import com.intellij.openapi.fileEditor.impl.EditorsSplitters
-import com.intellij.openapi.progress.runWithModalProgressBlocking
-import com.intellij.openapi.progress.withRawProgressReporter
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
+import com.intellij.platform.util.progress.withRawProgressReporter
 import com.intellij.ui.EditorNotifications
 import com.intellij.util.awaitCancellationAndInvoke
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -39,6 +39,11 @@ class AsyncEditorLoader internal constructor(private val project: Project,
   private val delayedScrollState = AtomicReference<DelayedScrollState?>()
 
   companion object {
+    internal val OPENED_IN_BULK = Key.create<Boolean>("EditorSplitters.opened.in.bulk")
+
+    @Internal
+    fun isOpenedInBulk(file: VirtualFile): Boolean = file.getUserData(OPENED_IN_BULK) != null
+
     @JvmStatic
     @RequiresEdt
     fun performWhenLoaded(editor: Editor, runnable: Runnable) {
@@ -75,9 +80,9 @@ class AsyncEditorLoader internal constructor(private val project: Project,
     }
 
     coroutineScope.launch(CoroutineName("AsyncEditorLoader.wait")) {
-      // don't show yet another loading indicator on project open - use 3-second delay
+      // don't show another loading indicator on project open - use 3-second delay yet
       val indicatorJob = showLoadingIndicator(
-        startDelay = if (EditorsSplitters.isOpenedInBulk(textEditor.file)) 3_000.milliseconds else 300.milliseconds,
+        startDelay = if (isOpenedInBulk(textEditor.file)) 3_000.milliseconds else 300.milliseconds,
         addUi = textEditor.component::addLoadingDecoratorUi
       )
       // await instead of join to get errors here
@@ -122,7 +127,7 @@ class AsyncEditorLoader internal constructor(private val project: Project,
 
   @RequiresEdt
   fun setEditorState(state: TextEditorState, exactState: Boolean, editor: EditorEx) {
-    provider.setStateImpl(project, editor, state, exactState)
+    provider.setStateImpl(project = project, editor = editor, state = state, exactState = exactState)
 
     if (!isEditorLoaded(editor)) {
       delayedScrollState.set(DelayedScrollState(relativeCaretPosition = state.relativeCaretPosition, exactState = exactState))

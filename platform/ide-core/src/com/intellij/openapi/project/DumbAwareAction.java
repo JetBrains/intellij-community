@@ -1,16 +1,18 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project;
 
 import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.openapi.actionSystem.ActionWithDelegate;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Objects;
 import java.util.function.Supplier;
 
 /**
@@ -19,28 +21,23 @@ import java.util.function.Supplier;
  * @see DumbAware
  */
 public abstract class DumbAwareAction extends AnAction implements DumbAware {
-
-  @NotNull
-  public static DumbAwareAction create(@NotNull Consumer<? super AnActionEvent> actionPerformed) {
+  public static @NotNull DumbAwareAction create(@NotNull Consumer<? super AnActionEvent> actionPerformed) {
     return new SimpleDumbAwareAction(actionPerformed);
   }
 
-  @NotNull
-  public static DumbAwareAction create(@Nullable @NlsActions.ActionText String text,
-                                       @NotNull Consumer<? super AnActionEvent> actionPerformed) {
+  public static @NotNull DumbAwareAction create(@Nullable @NlsActions.ActionText String text,
+                                                @NotNull Consumer<? super AnActionEvent> actionPerformed) {
     return new SimpleDumbAwareAction(text, actionPerformed);
   }
 
-  @NotNull
-  public static DumbAwareAction create(@Nullable Icon icon,
-                                       @NotNull Consumer<? super AnActionEvent> actionPerformed) {
+  public static @NotNull DumbAwareAction create(@Nullable Icon icon,
+                                                @NotNull Consumer<? super AnActionEvent> actionPerformed) {
     return new SimpleDumbAwareAction(icon, actionPerformed);
   }
 
-  @NotNull
-  public static DumbAwareAction create(@Nullable @NlsActions.ActionText String text,
-                                       @Nullable Icon icon,
-                                       @NotNull Consumer<? super AnActionEvent> actionPerformed) {
+  public static @NotNull DumbAwareAction create(@Nullable @NlsActions.ActionText String text,
+                                                @Nullable Icon icon,
+                                                @NotNull Consumer<? super AnActionEvent> actionPerformed) {
     DumbAwareAction action = new SimpleDumbAwareAction(text, actionPerformed);
     action.getTemplatePresentation().setIcon(icon);
     return action;
@@ -68,10 +65,21 @@ public abstract class DumbAwareAction extends AnAction implements DumbAware {
     super(text, description, icon);
   }
 
+  protected DumbAwareAction(@NotNull Supplier<@NlsActions.ActionText String> text,
+                            @Nullable Supplier<@NlsActions.ActionDescription String> description,
+                            @Nullable Supplier<? extends @Nullable Icon> iconSupplier) {
+    super(text, Objects.requireNonNullElse(description, Presentation.NULL_STRING), iconSupplier);
+  }
+
   protected DumbAwareAction(@NotNull Supplier<@NlsActions.ActionText String> dynamicText,
                             @NotNull Supplier<@NlsActions.ActionDescription String> dynamicDescription,
                             @Nullable Icon icon) {
     super(dynamicText, dynamicDescription, icon);
+  }
+
+  protected DumbAwareAction(@NotNull Supplier<@NlsActions.ActionText String> dynamicText,
+                            @NotNull Supplier<@NlsActions.ActionDescription String> dynamicDescription) {
+    super(dynamicText, dynamicDescription);
   }
 
   protected DumbAwareAction(@NotNull Supplier<@NlsActions.ActionText String> dynamicText, @Nullable Icon icon) {
@@ -103,9 +111,8 @@ public abstract class DumbAwareAction extends AnAction implements DumbAware {
       myActionPerformed.consume(e);
     }
 
-    @NotNull
     @Override
-    public Consumer<? super AnActionEvent> getDelegate() {
+    public @NotNull Consumer<? super AnActionEvent> getDelegate() {
       return myActionPerformed;
     }
   }

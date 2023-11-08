@@ -7,14 +7,12 @@ import com.intellij.build.DefaultBuildDescriptor;
 import com.intellij.build.events.BuildEventsNls;
 import com.intellij.build.events.StartBuildEvent;
 import com.intellij.execution.filters.Filter;
-import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.actionSystem.AnAction;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
-import java.util.function.Supplier;
 
 /**
  * @author Vladislav.Soroka
@@ -43,15 +41,6 @@ public final class StartBuildEventImpl extends StartEventImpl implements StartBu
   @Deprecated(forRemoval = true)
   public StartBuildEventImpl withRestartActions(AnAction... actions) {
     Arrays.stream(actions).forEach(myBuildDescriptor::withRestartAction);
-    return this;
-  }
-
-  /**
-   * @deprecated use {@link DefaultBuildDescriptor#withProcessHandler}
-   */
-  @Deprecated(forRemoval = true)
-  public StartBuildEventImpl withContentDescriptorSupplier(Supplier<? extends RunContentDescriptor> contentDescriptorSupplier) {
-    myBuildDescriptor.withContentDescriptor(contentDescriptorSupplier);
     return this;
   }
 

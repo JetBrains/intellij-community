@@ -4,7 +4,7 @@ package org.jetbrains.plugins.gradle.execution.build
 import com.intellij.openapi.externalSystem.test.compileModules
 import com.intellij.testFramework.utils.module.assertModules
 import org.gradle.util.GradleVersion
-import org.jetbrains.plugins.gradle.execution.test.events.GradleExecutionTestCase
+import org.jetbrains.plugins.gradle.testFramework.GradleExecutionTestCase
 import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
 import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
 import org.jetbrains.plugins.gradle.testFramework.util.withBuildFile
@@ -68,7 +68,7 @@ class GradleBuildOutputTest : GradleExecutionTestCase() {
       waitForAnyGradleTaskExecution {
         compileModules(project, true, "project.impl.main")
       }
-      assertBuildExecutionTree {
+      assertBuildViewTree {
         assertNode("successful") {
           assertNode(":api:compileJava")
           assertNode(":api:processResources")
@@ -90,7 +90,7 @@ class GradleBuildOutputTest : GradleExecutionTestCase() {
       waitForAnyGradleTaskExecution {
         compileModules(project, true, "project.brokenProject.main")
       }
-      assertBuildExecutionTree {
+      assertBuildViewTree {
         assertNode("failed") {
           assertNode(":brokenProject:compileJava") {
             assertNode("App2.java", skipIf = !isPerTaskOutputSupported()) {

@@ -7,6 +7,7 @@ import com.intellij.openapi.vfs.newvfs.impl.VfsData;
 import com.intellij.util.indexing.contentQueue.IndexUpdateRunner;
 import com.intellij.util.indexing.dependencies.FileIndexingStamp;
 import com.intellij.util.indexing.diagnostic.FileIndexingStatistics;
+import com.intellij.util.indexing.diagnostic.IndexesEvaluated;
 import com.intellij.util.indexing.events.VfsEventsMerger;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -106,11 +107,23 @@ public final class FileIndexesValuesApplier {
     if (logEmptyProvidedIndexes && indexesProvidedByExtensions.isEmpty()) {
       FileBasedIndexImpl.LOG.info("no shared indexes were provided for file " + file.getName());
     }
+
+    final IndexesEvaluated indexesEvaluated;
+    if (wasFullyIndexedByInfrastructureExtension && !indexesProvidedByExtensions.isEmpty()) {
+      indexesEvaluated = IndexesEvaluated.BY_EXTENSIONS;
+    }
+    else if (appliers.isEmpty() && removers.isEmpty() && !removeDataFromIndicesForFile) {
+      indexesEvaluated = IndexesEvaluated.NOTHING_TO_WRITE;
+    }
+    else {
+      indexesEvaluated = IndexesEvaluated.BY_USUAL_INDEXES;
+    }
+
     return new FileIndexingStatistics(fileType,
                                       indexesProvidedByExtensions,
-                                      !indexesProvidedByExtensions.isEmpty() && wasFullyIndexedByInfrastructureExtension,
                                       perIndexerEvaluatingIndexValueAppliersTimes,
-                                      perIndexerEvaluatingIndexValueRemoversTimes);
+                                      perIndexerEvaluatingIndexValueRemoversTimes,
+                                      indexesEvaluated);
   }
 
   /**

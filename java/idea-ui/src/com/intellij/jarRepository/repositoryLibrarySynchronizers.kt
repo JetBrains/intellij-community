@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.jarRepository
 
 import com.intellij.openapi.Disposable
@@ -8,12 +8,12 @@ import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryTable
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
-import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
-import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
+import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.storage.EntityChange
-import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.platform.workspace.storage.EntityStorage
+import com.intellij.platform.workspace.storage.VersionedStorageChange
+import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
 
 internal class GlobalChangedRepositoryLibrarySynchronizer(private val queue: LibrarySynchronizationQueue,
                                                           private val disposable: Disposable)
@@ -43,25 +43,24 @@ internal class GlobalChangedRepositoryLibrarySynchronizer(private val queue: Lib
     }
   }
 
-  fun installOnExistingLibraries() = getGlobalAndCustomLibraryTables()
-    .flatMap { it.libraries.asIterable() }
-    .filterIsInstance<LibraryEx>()
-    .forEach { it.rootProvider.addRootSetChangedListener(this, disposable) }
-
-  companion object {
-    @JvmStatic
-    fun getGlobalAndCustomLibraryTables(): List<LibraryTable> {
-      return LibraryTablesRegistrar.getInstance().customLibraryTables + LibraryTablesRegistrar.getInstance().libraryTable
-    }
+  fun installOnExistingLibraries() {
+    getGlobalAndCustomLibraryTables()
+      .flatMap { it.libraries.asIterable() }
+      .filterIsInstance<LibraryEx>()
+      .forEach { it.rootProvider.addRootSetChangedListener(this, disposable) }
   }
+}
+
+internal fun getGlobalAndCustomLibraryTables(): Sequence<LibraryTable> {
+  return LibraryTablesRegistrar.getInstance().customLibraryTables.asSequence() + LibraryTablesRegistrar.getInstance().libraryTable
 }
 
 internal class ChangedRepositoryLibrarySynchronizer(private val project: Project,
                                                     private val queue: LibrarySynchronizationQueue) : WorkspaceModelChangeListener {
   /**
-   * This is a flag indicating that the [beforeChanged] method was called. Due to the fact that we subscribe using the code, this
-   *   may lead to IDEA-324532.
-   * With this flag we skip the "after" event if the before event wasn't called.
+   * This is a flag indicating that the [beforeChanged] method was called.
+   * Since we subscribe using the code, this may lead to IDEA-324532.
+   * With this flag, we skip the "after" event if the before event wasn't called.
    */
   private var beforeCalled = false
 

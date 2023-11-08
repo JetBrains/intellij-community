@@ -175,14 +175,14 @@ internal object MarkdownImportExportUtils {
     }
   }
 
-  fun notifyAndRefreshIfExportSuccess(file: File, project: Project) {
+  fun notifyAndRefreshIfExportSuccess(file: VirtualFile, project: Project) {
     MarkdownNotifications.showInfo(
       project,
       id = MarkdownExportProvider.Companion.NotificationIds.exportSuccess,
       message = MarkdownBundle.message("markdown.export.success.msg", file.name)
     )
     val dirToExport = file.parent
-    refreshProjectDirectory(project, dirToExport)
+    refreshProjectDirectory(project, dirToExport.path)
   }
 }
 

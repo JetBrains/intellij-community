@@ -48,7 +48,6 @@ public interface IXMLValidator {
    */
   void parseDTD(String publicID, StdXMLReader reader, IXMLEntityResolver entityResolver, boolean external) throws Exception;
 
-
   /**
    * Indicates that an element has been started.
    *
@@ -58,18 +57,6 @@ public interface IXMLValidator {
    * @throws Exception If the element could not be validated.
    */
   void elementStarted(String name, String systemId, int lineNr) throws Exception;
-
-
-  /**
-   * Indicates that the current element has ended.
-   *
-   * @param name     the name of the element.
-   * @param systemId the system ID of the XML data of the element.
-   * @param lineNr   the line number in the XML data of the element.
-   * @throws Exception If the element could not be validated.
-   */
-  void elementEnded(String name, String systemId, int lineNr) throws Exception;
-
 
   /**
    * Indicates that an attribute has been added to the current element.
@@ -81,7 +68,6 @@ public interface IXMLValidator {
    * @throws Exception If the attribute could not be validated.
    */
   void attributeAdded(String key, String value, String systemId, int lineNr) throws Exception;
-
 
   /**
    * This method is called when the attributes of an XML element have been
@@ -96,14 +82,4 @@ public interface IXMLValidator {
    * @throws Exception if the element could not be validated.
    */
   void elementAttributesProcessed(String name, Properties extraAttributes, String systemId, int lineNr) throws Exception;
-
-
-  /**
-   * Indicates that a new #PCDATA element has been encountered.
-   *
-   * @param systemId the system ID of the XML data of the element.
-   * @param lineNr   the line number in the XML data of the element.
-   * @throws Exception if the element could not be validated.
-   */
-  void PCDataAdded(String systemId, int lineNr) throws Exception;
 }

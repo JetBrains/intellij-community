@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.impl
 
 import com.intellij.ide.trustedProjects.TrustedProjectsLocator
@@ -10,24 +10,23 @@ import com.intellij.openapi.project.modules
 import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.util.io.NioPathPrefixTreeFactory
 import com.intellij.openapi.util.io.getResolvedPath
-import com.intellij.openapi.util.io.toNioPath
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.testFramework.utils.vfs.createDirectory
 import com.intellij.openapi.vfs.findOrCreateDirectory
-import com.intellij.testFramework.utils.vfs.refreshAndGetVirtualDirectory
+import com.intellij.platform.backend.workspace.WorkspaceModel
+import com.intellij.platform.backend.workspace.toVirtualFileUrl
+import com.intellij.platform.workspace.jps.entities.ContentRootEntity
+import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.testFramework.closeOpenedProjectsIfFailAsync
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
 import com.intellij.testFramework.fixtures.TempDirTestFixture
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
+import com.intellij.testFramework.utils.vfs.createDirectory
+import com.intellij.testFramework.utils.vfs.refreshAndGetVirtualDirectory
 import com.intellij.workspaceModel.ide.NonPersistentEntitySource
-import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.workspaceModel.ide.getInstance
-import com.intellij.platform.backend.workspace.toVirtualFileUrl
-import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.platform.workspace.jps.entities.ContentRootEntity
-import com.intellij.platform.workspace.jps.entities.ModuleEntity
-import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeEach
@@ -49,7 +48,7 @@ abstract class TrustedProjectsHeavyTestCase {
     fileFixture = IdeaTestFixtureFactory.getFixtureFactory()
       .createTempDirTestFixture()
     fileFixture.setUp()
-    testRoot = fileFixture.tempDirPath.toNioPath().refreshAndGetVirtualDirectory()
+    testRoot = Path.of(fileFixture.tempDirPath).refreshAndGetVirtualDirectory()
   }
 
   @AfterEach

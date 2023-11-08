@@ -28,24 +28,46 @@ class JavaSuggestedRefactoringAvailability(refactoringSupport: SuggestedRefactor
 
   override fun amendStateInBackground(state: SuggestedRefactoringState): Iterator<SuggestedRefactoringState> {
     return iterator {
-      if (state.additionalData[HAS_OVERRIDES] == null) {
+      var updatedState = state
+      if (updatedState.additionalData[HAS_OVERRIDES] == null) {
         val method = state.declaration as? PsiMethod
-        if (method != null && method.canHaveOverrides(state.oldSignature)) {
-          val restoredMethod = state.restoredDeclarationCopy() as PsiMethod
-          val hasOverrides = OverridingMethodsSearch.search(restoredMethod, false).findFirst() != null
-          yield(state.withAdditionalData(HAS_OVERRIDES, hasOverrides))
+        if (method != null) {
+          val hasOverrides: Boolean
+          if (!method.canHaveOverrides(state.oldSignature)) {
+            hasOverrides = false
+          } else {
+            val restoredMethod = state.restoredDeclarationCopy() as PsiMethod
+            hasOverrides = OverridingMethodsSearch.search(restoredMethod, false).findFirst() != null
+          }
+          updatedState = state.withAdditionalData(HAS_OVERRIDES, hasOverrides)
+          yield(updatedState)
         }
       }
 
-      if (state.additionalData[HAS_USAGES] == null) {
+      if (updatedState.additionalData[HAS_USAGES] == null) {
         val declarationCopy = state.restoredDeclarationCopy()
         val useScope = declarationCopy?.useScope
         if (useScope is LocalSearchScope) {
           val hasUsages = ReferencesSearch.search(declarationCopy, useScope).findFirst() != null
-          yield(state.withAdditionalData(HAS_USAGES, hasUsages))
+          updatedState = updatedState.withAdditionalData(HAS_USAGES, hasUsages)
+          yield(updatedState)
         }
       }
     }
+  }
+
+  override fun isAvailable(state: SuggestedRefactoringState): Boolean {
+    val method = state.declaration as? PsiMethod
+    val declarationCopy = state.restoredDeclarationCopy()
+    if (method != null && method.canHaveOverrides(state.oldSignature)) {
+      val restoredMethod = declarationCopy as PsiMethod
+      if (OverridingMethodsSearch.search(restoredMethod, false).findFirst() != null) return true
+    }
+    if (declarationCopy != null) {
+      if (ReferencesSearch.search(declarationCopy, LocalSearchScope(declarationCopy.containingFile)).findFirst() != null) return true
+      if (ReferencesSearch.search(declarationCopy, declarationCopy.useScope).findFirst() != null) return true
+    }
+    return false
   }
 
   private fun callStateToDeclarationState(state: SuggestedRefactoringState): SuggestedRefactoringState? {
@@ -118,7 +140,7 @@ class JavaSuggestedRefactoringAvailability(refactoringSupport: SuggestedRefactor
       return SuggestedRenameData(declaration as PsiNamedElement, oldSignature.name)
     }
 
-    val canHaveOverrides = declaration.canHaveOverrides(oldSignature) && updatedState.additionalData[HAS_OVERRIDES] != false
+    val canHaveOverrides = updatedState.additionalData[HAS_OVERRIDES] != false
     if (updatedState.additionalData[HAS_USAGES] == false && !canHaveOverrides) return null
 
     val updateUsagesData = SuggestedChangeSignatureData.create(updatedState, whatToUpdate)

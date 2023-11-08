@@ -1,0 +1,2 @@
+Cannot perform refactoring.
+The caret should be positioned at the name of the function or constructor to be refactored.

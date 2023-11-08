@@ -4,7 +4,6 @@ package com.intellij.psi.impl;
 import com.intellij.lang.PsiBuilderFactory;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -24,6 +23,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.file.impl.FileManager;
 import com.intellij.psi.impl.file.impl.FileManagerImpl;
 import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.Topic;
@@ -54,6 +54,7 @@ public final class PsiManagerImpl extends PsiManagerEx implements Disposable {
 
   private final AtomicInteger myBatchFilesProcessingModeCount = new AtomicInteger(0);
 
+  @Topic.ProjectLevel
   public static final Topic<AnyPsiChangeListener> ANY_PSI_CHANGE_TOPIC = new Topic<>(AnyPsiChangeListener.class, Topic.BroadcastDirection.TO_PARENT);
 
   public PsiManagerImpl(@NotNull Project project) {
@@ -86,9 +87,10 @@ public final class PsiManagerImpl extends PsiManagerEx implements Disposable {
   }
 
   @Override
+  @RequiresEdt
   public void dropPsiCaches() {
     dropResolveCaches();
-    WriteAction.run(myFileManager::firePropertyChangedForUnloadedPsi);
+    ApplicationManager.getApplication().runWriteAction(myFileManager::firePropertyChangedForUnloadedPsi);
   }
 
   @Override

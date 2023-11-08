@@ -21,7 +21,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileFilter
 import com.intellij.util.SystemProperties
 import com.intellij.util.indexing.UnindexedFilesIndexer
-import com.intellij.util.indexing.dependencies.ProjectIndexingDependenciesService
 import com.intellij.util.indexing.roots.IndexableEntityProviderMethods.createIterators
 import com.intellij.util.indexing.roots.IndexableFilesIterator
 import com.intellij.util.indexing.roots.IndexableSetContributorFilesIterator.Companion.createProjectUnAwareIndexableSetContributors
@@ -70,8 +69,7 @@ internal class SdkPreIndexingService: Disposable {
 
     val task = object : Task.Backgroundable(null, JavaUiBundle.message("project.wizard.sdk.preindexing.progress.title")) {
       override fun run(indicator: ProgressIndicator) {
-        UnindexedFilesIndexer(defaultProject, providers, "SDK pre-indexing", LongSets.emptySet(),
-                              defaultProject.service<ProjectIndexingDependenciesService>().getLatestIndexingRequestToken()).perform(indicator)
+        UnindexedFilesIndexer(defaultProject, providers, "SDK pre-indexing", LongSets.emptySet()).perform(indicator)
       }
     }
 

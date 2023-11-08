@@ -18,6 +18,10 @@ fun demoComponents(): DialogPanel {
       checkBox("checkBox")
     }
 
+    row {
+      threeStateCheckBox("threeStateCheckBox")
+    }
+
     var radioButtonValue = 2
     buttonsGroup {
       row("radioButton") {

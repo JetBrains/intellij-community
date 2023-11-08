@@ -28,5 +28,11 @@
     <constantExpressionEvaluator
             language="kotlin"
             implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.KotlinFirConstantExpressionEvaluator"/>
+
+    <platform.backend.documentation.psiTargetProvider id="KotlinDocumentationTargetProvider"
+                                                      implementation="org.jetbrains.kotlin.idea.k2.codeinsight.quickDoc.KotlinPsiDocumentationTargetProvider"/>
+    <platform.backend.documentation.linkHandler implementation="org.jetbrains.kotlin.idea.k2.codeinsight.quickDoc.KotlinDocumentationLinkHandler"/>
+    <platform.backend.documentation.targetProvider id="KotlinDocumentationTargetProvider"
+                                                   implementation="org.jetbrains.kotlin.idea.k2.codeinsight.quickDoc.KotlinDocumentationTargetProvider"/>
   </extensions>
 </idea-plugin>

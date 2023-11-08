@@ -2,11 +2,10 @@
 package com.intellij.platform.workspace.storage.tests.metadata.serialization
 
 import com.intellij.platform.workspace.storage.EntityStorage
+import com.intellij.platform.workspace.storage.EntityTypesResolver
 import com.intellij.platform.workspace.storage.impl.*
 import com.intellij.platform.workspace.storage.impl.serialization.EntityStorageSerializerImpl
-import com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.SimpleSealedClass
 import com.intellij.platform.workspace.storage.tests.BaseSerializationChecker
-import com.intellij.platform.workspace.storage.tests.TestEntityTypesResolver
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.util.ReflectionUtil
 import org.junit.Assert
@@ -14,12 +13,19 @@ import java.nio.file.Files
 
 internal var deserialization = false
 
-object MetadataDiffTestResolver: TestEntityTypesResolver() {
+object MetadataDiffTestResolver: EntityTypesResolver {
+  private val pluginPrefix = "PLUGIN___"
+
+  override fun getPluginId(clazz: Class<*>): String = pluginPrefix + clazz.name
 
   override fun resolveClass(name: String, pluginId: String?): Class<*> {
     return resolveClass(
       if (deserialization) name.replaceCacheVersion() else name
     )
+  }
+
+  override fun getClassLoader(pluginId: String?): ClassLoader? {
+    return javaClass.classLoader
   }
 
   fun resolveClass(name: String): Class<*> {

@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.psi.unquoteKotlinIdentifier
 import org.jetbrains.kotlin.idea.kdoc.KDocElementFactory
 import org.jetbrains.kotlin.idea.refactoring.intentions.OperatorToFunctionConverter
+import org.jetbrains.kotlin.idea.refactoring.moveFunctionLiteralOutsideParentheses
 import org.jetbrains.kotlin.idea.references.*
 import org.jetbrains.kotlin.lexer.KtSingleValueToken
 import org.jetbrains.kotlin.lexer.KtToken
@@ -252,7 +253,18 @@ abstract class KtReferenceMutateServiceBase : KtReferenceMutateService {
     private fun convertOperatorToFunctionCall(opExpression: KtOperationExpression): Pair<KtExpression, KtSimpleNameExpression> =
         OperatorToFunctionConverter.convert(opExpression)
 
-    protected abstract fun replaceWithImplicitInvokeInvocation(newExpression: KtDotQualifiedExpression): KtExpression?
+    protected abstract fun canMoveLambdaOutsideParentheses(newExpression: KtDotQualifiedExpression): Boolean
+
+    protected fun replaceWithImplicitInvokeInvocation(newExpression: KtDotQualifiedExpression): KtExpression? {
+        val canMoveLambda = canMoveLambdaOutsideParentheses(newExpression)
+        return OperatorToFunctionConverter.replaceExplicitInvokeCallWithImplicit(newExpression)?.let { newQualifiedExpression ->
+            newQualifiedExpression.getPossiblyQualifiedCallExpression()
+                ?.takeIf { canMoveLambda }
+                ?.let(KtCallExpression::moveFunctionLiteralOutsideParentheses)
+
+            newQualifiedExpression
+        }
+    }
 
     private fun AbstractKtReference<out KtExpression>.renameImplicitConventionalCall(newName: String): KtExpression {
         val (newExpression, newNameElement) = OperatorToFunctionConverter.convert(expression)

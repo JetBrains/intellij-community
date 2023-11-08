@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.mock.MockVirtualFile;
@@ -360,7 +360,7 @@ public class FileDocumentManagerImplTest extends HeavyPlatformTestCase {
             long oldStamp = getModificationStamp();
             setModificationStamp(newModificationStamp);
             setText(toString());
-            myDocumentManager.contentsChanged(new VFileContentChangeEvent(null, self, oldStamp, getModificationStamp(), false));
+            myDocumentManager.contentsChanged(new VFileContentChangeEvent(null, self, oldStamp, getModificationStamp()));
           }
         };
       }
@@ -435,7 +435,7 @@ public class FileDocumentManagerImplTest extends HeavyPlatformTestCase {
       public void refresh(boolean asynchronous, boolean recursive, Runnable postRunnable) {
         long oldStamp = getModificationStamp();
         setModificationStamp(LocalTimeCounter.currentTime());
-        myDocumentManager.contentsChanged(new VFileContentChangeEvent(null, this, oldStamp, getModificationStamp(), false));
+        myDocumentManager.contentsChanged(new VFileContentChangeEvent(null, this, oldStamp, getModificationStamp()));
       }
     };
     Document document = myDocumentManager.getDocument(file);
@@ -460,7 +460,7 @@ public class FileDocumentManagerImplTest extends HeavyPlatformTestCase {
       public void refresh(boolean asynchronous, boolean recursive, Runnable postRunnable) {
         long oldStamp = getModificationStamp();
         setModificationStamp(LocalTimeCounter.currentTime());
-        myDocumentManager.contentsChanged(new VFileContentChangeEvent(null, this, oldStamp, getModificationStamp(), false));
+        myDocumentManager.contentsChanged(new VFileContentChangeEvent(null, this, oldStamp, getModificationStamp()));
       }
     };
 

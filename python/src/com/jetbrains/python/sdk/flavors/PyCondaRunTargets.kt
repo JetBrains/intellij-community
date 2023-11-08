@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.sdk.flavors
 
-import com.google.gson.annotations.SerializedName
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.RunCanceledByUserException
 import com.intellij.execution.process.CapturingProcessHandler
@@ -11,17 +10,12 @@ import com.intellij.execution.target.TargetProgressIndicator
 import com.intellij.execution.target.TargetedCommandLineBuilder
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.text.StringUtil
 import com.jetbrains.python.PySdkBundle
 import com.jetbrains.python.packaging.IndicatedProcessOutputListener
-import com.jetbrains.python.packaging.PyCondaPackageService
 import com.jetbrains.python.packaging.PyExecutionException
-import com.jetbrains.python.run.PythonCommandLineState
-import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest
+import com.jetbrains.python.packaging.getCondaBasePython
 import com.jetbrains.python.sdk.PySdkUtil
-import com.jetbrains.python.target.PyTargetAwareAdditionalData
 
 @Deprecated("Do not run conda directly, use  configureBuilderToRunPythonOnTarget")
 @Throws(ExecutionException::class)
@@ -58,7 +52,7 @@ private fun runOnTarget(targetEnvironmentRequest: TargetEnvironmentRequest,
 
 @Deprecated("Do not run conda directly, use  configureBuilderToRunPythonOnTarget")
 private fun readCondaEnv(condaExecutable: String): Map<String, String>? {
-  return PyCondaPackageService.getCondaBasePython(condaExecutable)?.let { PySdkUtil.activateVirtualEnv(it) }
+  return getCondaBasePython(condaExecutable)?.let { PySdkUtil.activateVirtualEnv(it) }
 }
 
 @Throws(PyExecutionException::class)

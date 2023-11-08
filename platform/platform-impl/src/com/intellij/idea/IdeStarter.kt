@@ -12,13 +12,17 @@ import com.intellij.ide.lightEdit.LightEditService
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginManagerMain
 import com.intellij.internal.inspector.UiInspectorAction
+import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
+import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.SystemInfo
@@ -28,6 +32,7 @@ import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
 import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
+import com.intellij.platform.ide.bootstrap.LAUNCHER_INITIAL_DIRECTORY_ENV_VAR
 import com.intellij.ui.mac.touchbar.TouchbarSupport
 import com.intellij.ui.updateAppWindowIcon
 import com.intellij.util.io.URLUtil.SCHEME_SEPARATOR
@@ -73,7 +78,9 @@ open class IdeStarter : ModernApplicationStarter() {
       launch { reportPluginErrors() }
 
       LoadingState.compareAndSetCurrentState(LoadingState.COMPONENTS_LOADED, LoadingState.APP_STARTED)
-      lifecyclePublisher.appStarted()
+      runCatching {
+        lifecyclePublisher.appStarted()
+      }.getOrLogException(thisLogger())
 
       if (!app.isHeadlessEnvironment) {
         postOpenUiTasks()
@@ -90,7 +97,9 @@ open class IdeStarter : ModernApplicationStarter() {
     lateinit var recentProjectManager: RecentProjectsManager
     val isOpenProjectNeeded = span("isOpenProjectNeeded") {
       span("app frame created callback") {
-        lifecyclePublisher.appFrameCreated(args)
+        runCatching {
+          lifecyclePublisher.appFrameCreated(args)
+        }.getOrLogException(thisLogger())
       }
 
       // must be after `AppLifecycleListener#appFrameCreated`, because some listeners can mutate the state of `RecentProjectsManager`
@@ -105,7 +114,7 @@ open class IdeStarter : ModernApplicationStarter() {
 
       if (app.isInternal) {
         asyncCoroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-          UiInspectorAction.initGlobalInspector()
+          UiInspectorAction.initStacktracesSaving()
         }
       }
 
@@ -156,7 +165,9 @@ open class IdeStarter : ModernApplicationStarter() {
     val showWelcomeFrameTask = WelcomeFrame.prepareToShow() ?: return true
     serviceAsync<CoreUiCoroutineScopeHolder>().coroutineScope.launch(Dispatchers.EDT) {
       showWelcomeFrameTask()
-      lifecyclePublisher.welcomeScreenDisplayed()
+      runCatching {
+        lifecyclePublisher.welcomeScreenDisplayed()
+      }.getOrLogException(thisLogger())
     }
     return false
   }
@@ -202,7 +213,7 @@ open class IdeStarter : ModernApplicationStarter() {
 private suspend fun loadProjectFromExternalCommandLine(commandLineArgs: List<String>): Project? {
   val currentDirectory = System.getenv(LAUNCHER_INITIAL_DIRECTORY_ENV_VAR)
   @Suppress("SSBasedInspection")
-  Logger.getInstance("#com.intellij.ide.bootstrap.ApplicationLoader").info("ApplicationLoader.loadProject (cwd=${currentDirectory})")
+  Logger.getInstance("#com.intellij.platform.ide.bootstrap.ApplicationLoader").info("ApplicationLoader.loadProject (cwd=${currentDirectory})")
   val result = CommandLineProcessor.processExternalCommandLine(commandLineArgs, currentDirectory)
   if (result.hasError) {
     withContext(Dispatchers.EDT) {
@@ -223,7 +234,7 @@ private fun CoroutineScope.postOpenUiTasks() {
       TouchbarSupport.onApplicationLoaded()
     }
   }
-  else if (SystemInfoRt.isXWindow && SystemInfo.isJetBrainsJvm) {
+  else if (SystemInfoRt.isUnix && !SystemInfoRt.isMac && SystemInfo.isJetBrainsJvm) {
     launch(CoroutineName("input method disabling on Linux")) {
       disableInputMethodsIfPossible()
     }
@@ -235,13 +246,14 @@ private fun CoroutineScope.postOpenUiTasks() {
 }
 
 private suspend fun reportPluginErrors() {
-  val pluginErrors = PluginManagerCore.getAndClearPluginLoadingErrors()
+  val pluginErrors = PluginManagerCore.getAndClearPluginLoadingErrors().toMutableList()
   if (pluginErrors.isEmpty()) {
     return
   }
 
   withContext(Dispatchers.EDT + ModalityState.nonModal().asContextElement()) {
     val title = IdeBundle.message("title.plugin.error")
+    val actions = linksToActions(pluginErrors)
     val content = HtmlBuilder().appendWithSeparators(HtmlChunk.p(), pluginErrors).toString()
     @Suppress("DEPRECATION")
     NotificationGroupManager.getInstance().getNotificationGroup(
@@ -250,6 +262,34 @@ private suspend fun reportPluginErrors() {
         notification.expire()
         PluginManagerMain.onEvent(event.description)
       }
+      .addActions(actions)
       .notify(null)
   }
+}
+
+private fun linksToActions(errors: MutableList<HtmlChunk>): Collection<AnAction> {
+  val link = "<a href=\""
+  val actions = ArrayList<AnAction>()
+
+  while (!errors.isEmpty()) {
+    val builder = StringBuilder()
+    errors[errors.lastIndex].appendTo(builder)
+    val error = builder.toString()
+
+    if (error.startsWith(link)) {
+      val descriptionEnd = error.indexOf('"', link.length)
+      val description = error.substring(link.length, descriptionEnd)
+      val text = error.substring(descriptionEnd + 2, error.lastIndexOf("</a>"))
+      errors.removeAt(errors.lastIndex)
+
+      actions.add(NotificationAction.createSimpleExpiring(text) {
+        PluginManagerMain.onEvent(description)
+      })
+    }
+    else {
+      break
+    }
+  }
+
+  return actions
 }

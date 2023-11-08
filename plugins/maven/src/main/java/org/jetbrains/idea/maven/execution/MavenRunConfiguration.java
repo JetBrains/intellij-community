@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.execution;
 
 import com.intellij.build.*;
@@ -61,6 +61,7 @@ import org.jetbrains.idea.maven.execution.run.configuration.MavenRunConfiguratio
 import org.jetbrains.idea.maven.execution.target.MavenCommandLineSetup;
 import org.jetbrains.idea.maven.execution.target.MavenRuntimeTargetConfiguration;
 import org.jetbrains.idea.maven.execution.target.MavenRuntimeType;
+import org.jetbrains.idea.maven.execution.target.MavenRuntimeTypeConstants;
 import org.jetbrains.idea.maven.externalSystemIntegration.output.MavenParsingContext;
 import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
@@ -440,7 +441,7 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
         MavenDistribution mavenDistribution =
           MavenDistributionsCache.getInstance(myConfiguration.getProject()).getMavenDistribution(myConfiguration.getRunnerParameters()
                                                                                                    .getWorkingDirPath());
-        String mavenHome = StringUtil.notNullize(config.getDistribution().getWslPath(mavenDistribution.getMavenHome().toString()));
+        String mavenHome = StringUtil.notNullize(config.getDistribution().getWslPath(mavenDistribution.getMavenHome()));
         String mavenVersion = StringUtil.notNullize(mavenDistribution.getVersion());
 
         MavenRuntimeTargetConfiguration mavenConfig = new MavenRuntimeTargetConfiguration();
@@ -605,7 +606,7 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
       };
       if (!(targetEnvironment instanceof LocalTargetEnvironment)) {
         TargetEnvironmentRequest targetEnvironmentRequest = getTargetEnvironmentRequest();
-        LanguageRuntimeType.VolumeType mavenProjectFolderVolumeType = MavenRuntimeType.getPROJECT_FOLDER_VOLUME().getType();
+        LanguageRuntimeType.VolumeType mavenProjectFolderVolumeType = MavenRuntimeTypeConstants.getPROJECT_FOLDER_VOLUME().getType();
         Set<TargetEnvironment.UploadRoot> uploadVolumes = targetEnvironmentRequest.getUploadVolumes();
         for (TargetEnvironment.UploadRoot uploadVolume : uploadVolumes) {
           String localPath = uploadVolume.getLocalRootPath().toString();

@@ -4,11 +4,11 @@ package com.intellij.testFramework
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.contextModality
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
-import com.intellij.openapi.progress.runWithModalProgressBlocking
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.DumbServiceImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ThrowableComputable
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.application
 import kotlinx.coroutines.*

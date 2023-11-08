@@ -400,9 +400,18 @@ public class GradleExecutionHelper {
     String buildRootDir = getBuildRoot(buildEnvironment);
     GradleProgressListener progressListener = new GradleProgressListener(listener, id, buildRootDir);
     operation.addProgressListener((ProgressListener)progressListener);
-    operation.addProgressListener(progressListener, OperationType.TASK, OperationType.FILE_DOWNLOAD);
+    operation.addProgressListener(
+      progressListener,
+      OperationType.TASK,
+      OperationType.FILE_DOWNLOAD
+    );
     if (settings.isRunAsTest() && settings.isBuiltInTestEventsUsed()) {
-      operation.addProgressListener(progressListener, OperationType.TEST, OperationType.TEST_OUTPUT);
+      operation.addProgressListener(
+        progressListener,
+        OperationType.TEST,
+        OperationType.TEST_OUTPUT,
+        OperationType.TASK
+      );
     }
   }
 

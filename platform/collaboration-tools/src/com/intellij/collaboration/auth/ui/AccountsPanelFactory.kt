@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.collaboration.auth.ui
 
 import com.intellij.collaboration.auth.Account
@@ -17,8 +17,8 @@ import com.intellij.openapi.actionSystem.CommonShortcuts
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.options.ex.Settings
-import com.intellij.openapi.progress.ModalTaskOwner
 import com.intellij.openapi.progress.runBlockingModalWithRawProgressReporter
+import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.ui.LayeredIcon
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.ToolbarDecorator

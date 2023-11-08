@@ -12,10 +12,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiErrorElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -164,7 +161,8 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
                                                   level.isOlderThan(LanguageLevel.PYTHON311) &&
                                                   registerForLanguageLevel(level),
                                          PyPsiBundle.message("INSP.compatibility.feature.support.starred.expressions.in.subscriptions"),
-                                         node);
+                                         node,
+                                         new PyReplaceStarByUnpackQuickFix());
         }
       }
       if (node.getParent() instanceof PySubscriptionExpression || node.getParent() instanceof PySliceItem) {
@@ -172,7 +170,8 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
                                                 level.isOlderThan(LanguageLevel.PYTHON311) &&
                                                 registerForLanguageLevel(level),
                                        PyPsiBundle.message("INSP.compatibility.feature.support.starred.expressions.in.subscriptions"),
-                                       node);
+                                       node,
+                                       new PyReplaceStarByUnpackQuickFix());
       }
     }
 
@@ -709,7 +708,87 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
     final ASTNode equalitySignInFStringFragment = node.getNode().findChildByType(PyTokenTypes.EQ);
     if (equalitySignInFStringFragment != null) {
       registerForAllMatchingVersions(level -> level.isOlderThan(LanguageLevel.PYTHON38) && registerForLanguageLevel(level),
-                                     PyPsiBundle.message("INSP.compatibility.support.equality.signs.in.fstrings"), equalitySignInFStringFragment.getPsi());
+                                     PyPsiBundle.message("INSP.compatibility.support.equality.signs.in.fstrings"),
+                                     equalitySignInFStringFragment.getPsi());
+    }
+
+    List<PyFStringFragment> containingFragmentsOfSameFString = 
+      PsiTreeUtil.collectParents(node, PyFStringFragment.class, false, o -> o instanceof PyStringLiteralExpression);
+    
+    if (containingFragmentsOfSameFString.size() > 1) {
+      // At the moment, there is a limit of 2 for CPython 3.12, but it's implementation-dependent.
+      // See https://peps.python.org/pep-0701/#specification
+      registerForAllMatchingVersions(level -> level.isOlderThan(LanguageLevel.PYTHON312) && registerForLanguageLevel(level),
+                                     PyPsiBundle.message("INSP.compatibility.feature.allow.deep.expression.nesting.in.f-strings"), node);
+    }
+
+    boolean isTopmostFragment = PsiTreeUtil.getParentOfType(node, PyFStringFragment.class, true) == null;
+    if (isTopmostFragment) {
+      List<PyFStringFragment> fragments = new ArrayList<>();
+      fragments.add(node);
+      PyFStringFragmentFormatPart formatPart = node.getFormatPart();
+      if (formatPart != null) {
+        fragments.addAll(formatPart.getFragments());
+      }
+      for (PyFStringFragment fragment : fragments) {
+        String wholeNodeText = fragment.getText();
+        TextRange range = fragment.getExpressionContentRange();
+        for (int i = range.getStartOffset(); i < range.getEndOffset(); i++) {
+          if (wholeNodeText.charAt(i) == '\\') {
+            TextRange backslashRange = TextRange.from(i, 1).shiftRight(fragment.getTextRange().getStartOffset());
+            registerForAllMatchingVersions(
+              level -> level.isOlderThan(LanguageLevel.PYTHON312) && registerForLanguageLevel(level),
+              PyPsiBundle.message("INSP.compatibility.feature.allow.backslashes.in.f-strings"),
+              node, backslashRange, true
+            );
+          }
+        }
+      }
+    }
+
+
+    List<PyFormattedStringElement> containingFStrings =
+      PsiTreeUtil.collectParents(node, PyFormattedStringElement.class, false, e -> e instanceof PyStatement);
+    assert !containingFStrings.isEmpty();
+    PyFormattedStringElement parentFString = containingFStrings.get(0);
+    List<PyFormattedStringElement> remainingEnclosingFStrings = ContainerUtil.subList(containingFStrings, 1);
+    // Report only on fragments of the topmost single-quoted f-string to avoid duplicates
+    // in cases like: f'{f'{1<BR>
+    // + 1}'}'
+    boolean isFragmentOfTopmostSingleQuotedFString = !parentFString.isTripleQuoted() &&
+                                                     ContainerUtil.all(remainingEnclosingFStrings, PyStringElement::isTripleQuoted);
+    if (isFragmentOfTopmostSingleQuotedFString && node.textContains('\n')) {
+      int lineBreakOffset = node.getText().indexOf('\n');
+      if (node.getExpressionContentRange().contains(lineBreakOffset)) {
+        PsiElement multiLineLeaf = node.findElementAt(lineBreakOffset);
+        assert multiLineLeaf != null;
+        registerForAllMatchingVersions(level -> level.isOlderThan(LanguageLevel.PYTHON312) && registerForLanguageLevel(level),
+                                       PyPsiBundle.message("INSP.compatibility.feature.allow.new.lines.in.f-strings"), multiLineLeaf);
+      }
+    }
+    
+    
+    String parentFStringQuote = parentFString.getQuote();
+    // Report only on fragments of the topmost f-string with this quote type to avoid duplicates in cases like: f'{f'{f"'"}'}'
+    boolean isFragmentOfTopmostFStringWithSuchQuotes = ContainerUtil.all(remainingEnclosingFStrings,
+                                                                         fString -> !fString.getQuote().equals(parentFStringQuote));
+    if (isFragmentOfTopmostFStringWithSuchQuotes) {
+      int illegalQuoteOffset = node.getText().indexOf(parentFStringQuote);
+      if (node.getExpressionContentRange().contains(illegalQuoteOffset)) {
+        TextRange illegalQuoteRange = TextRange.from(illegalQuoteOffset, parentFStringQuote.length());
+        registerForAllMatchingVersions(level -> level.isOlderThan(LanguageLevel.PYTHON312) && registerForLanguageLevel(level),
+                                       PyPsiBundle.message("INSP.compatibility.feature.allow.quote.reuse.in.f-strings"),
+                                       node, illegalQuoteRange.shiftRight(node.getTextRange().getStartOffset()), true);
+      }
+    }
+  }
+
+  @Override
+  public void visitComment(@NotNull PsiComment node) {
+    boolean insideFStringFragment = PsiTreeUtil.getParentOfType(node, PyFStringFragment.class) != null;
+    if (insideFStringFragment) {
+      registerForAllMatchingVersions(level -> level.isOlderThan(LanguageLevel.PYTHON312) && registerForLanguageLevel(level),
+                                     PyPsiBundle.message("INSP.compatibility.feature.line.comments.in.f-strings"), node);
     }
   }
 
@@ -745,6 +824,23 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
     registerForAllMatchingVersions(level -> level.isOlderThan(LanguageLevel.PYTHON310),
                                    PyPsiBundle.message("INSP.compatibility.feature.support.match.statements"),
                                    matchStatement.getFirstChild());
+  }
+
+  @Override
+  public void visitPyTypeAliasStatement(@NotNull PyTypeAliasStatement node) {
+    registerForAllMatchingVersions(level -> level.isOlderThan(LanguageLevel.PYTHON312),
+                                   PyPsiBundle.message("INSP.compatibility.feature.support.type.alias.statements"),
+                                   node);
+  }
+
+  @Override
+  public void visitPyTypeParameterList(@NotNull PyTypeParameterList node) {
+    // No need to report an error inside the statement which is already reported as unsupported
+    if (!(node.getParent() instanceof PyTypeAliasStatement)) {
+      registerForAllMatchingVersions(level -> level.isOlderThan(LanguageLevel.PYTHON312),
+                                     PyPsiBundle.message("INSP.compatibility.feature.support.this.syntax"),
+                                     node);
+    }
   }
 
   private void checkBitwiseOrUnionSyntax(@NotNull PyBinaryExpression node) {

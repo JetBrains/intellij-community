@@ -8,10 +8,10 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.startup.ProjectActivity
-import com.intellij.util.messages.Topic
 import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
-import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.platform.workspace.jps.entities.LibraryEntity
+import com.intellij.platform.workspace.storage.VersionedStorageChange
+import com.intellij.util.messages.Topic
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.jps.util.JpsPathUtil

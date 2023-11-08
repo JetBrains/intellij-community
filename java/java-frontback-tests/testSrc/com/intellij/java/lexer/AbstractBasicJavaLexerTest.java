@@ -253,11 +253,10 @@ public abstract class AbstractBasicJavaLexerTest extends LexerTestCase {
     doTest("\"\"\" \n\"\"\" ", "TEXT_BLOCK_LITERAL ('\"\"\" \\n\"\"\"')\nWHITE_SPACE (' ')");
     doTest("\"\"\"\n \\u005C\"\"\"\n \"\"\"", "TEXT_BLOCK_LITERAL ('\"\"\"\\n \\u005C\"\"\"\\n \"\"\"')"); // unicode escaped backslash '\'
 
-    doTest("\"\"\"\n\\{}\"\"\"", "TEXT_BLOCK_LITERAL ('\"\"\"\\n\\{}\"\"\"')");
     doTest("\"\"\"\n ...\n\"\" \"\"\" ", "TEXT_BLOCK_LITERAL ('\"\"\"\\n ...\\n\"\" \"\"\"')\nWHITE_SPACE (' ')");
   }
 
-  public void testStringTemplatesJDK21_Preview() {
+  public void testStringTemplates() {
     doTest("\"\\{}\"", "STRING_TEMPLATE_BEGIN ('\"\\{')\nSTRING_TEMPLATE_END ('}\"')");
     doTest("\"\"\"\n\\{}\"\"\"", "TEXT_BLOCK_TEMPLATE_BEGIN ('\"\"\"\\n\\{')\nTEXT_BLOCK_TEMPLATE_END ('}\"\"\"')");
     doTest("\"\\{123}\"", "STRING_TEMPLATE_BEGIN ('\"\\{')\nINTEGER_LITERAL ('123')\nSTRING_TEMPLATE_END ('}\"')");
@@ -429,8 +428,6 @@ public abstract class AbstractBasicJavaLexerTest extends LexerTestCase {
 
     // see also com.intellij.java.codeInsight.daemon.LightAdvHighlightingTest#testStringLiterals
     doTest(" \"\\u000a\" ", "WHITE_SPACE (' ')\nSTRING_LITERAL ('\"\\u000a\"')\nWHITE_SPACE (' ')");
-
-    doTest("\"\\{}\"", "STRING_LITERAL ('\"\\{}\"')");
   }
 
   public void testCharLiterals() {

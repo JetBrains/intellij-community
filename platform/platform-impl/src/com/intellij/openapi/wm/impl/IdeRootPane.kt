@@ -55,6 +55,7 @@ import com.intellij.ui.mac.screenmenu.Menu
 import com.intellij.util.childScope
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.UIUtil
 import com.jetbrains.JBR
 import com.jetbrains.WindowDecorations
@@ -256,19 +257,28 @@ open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
     glassPaneInitialized = true
 
     if (hideNativeLinuxTitle) {
-      val windowResizeListener = WindowResizeListenerEx(glassPane = glassPane,
-                                                        content = frame,
-                                                        border = JBUI.insets(4),
-                                                        corner = null)
-      windowResizeListener.install(coroutineScope)
-      windowResizeListener.setLeftMouseButtonOnly(true)
+      // Under Wayland, interactive resizing can only be done with the help
+      // of the server as soon as it involves the change in the location
+      // of the window like resizing from the top/left does.
+      // Therefore, resizing is implemented entirely in JBR and does not require
+      // any additional work. For other toolkits, we resize programmatically
+      // with WindowResizeListenerEx
+      val toolkitCannotResizeUndecorated = !StartupUiUtil.isWaylandToolkit()
+      if (toolkitCannotResizeUndecorated) {
+        val windowResizeListener = WindowResizeListenerEx(glassPane = glassPane,
+                                                          content = frame,
+                                                          border = JBUI.insets(4),
+                                                          corner = null)
+        windowResizeListener.install(coroutineScope)
+        windowResizeListener.setLeftMouseButtonOnly(true)
+      }
     }
 
     putClientProperty(UIUtil.NO_BORDER_UNDER_WINDOW_TITLE_KEY, true)
 
     ComponentUtil.decorateWindowHeader(this)
 
-    if (SystemInfoRt.isXWindow) {
+    if (SystemInfoRt.isUnix && !SystemInfoRt.isMac) {
       installLinuxBorder()
     }
     else {
@@ -320,21 +330,21 @@ open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
      */
     internal val isMenuButtonInToolbar: Boolean
       get() = ExperimentalUI.isNewUI() &&
-              (SystemInfoRt.isXWindow && !UISettings.shadowInstance.separateMainMenu && !hideNativeLinuxTitle
+              (SystemInfoRt.isUnix && !SystemInfoRt.isMac && !UISettings.shadowInstance.separateMainMenu && !hideNativeLinuxTitle
                || SystemInfo.isMac && !Menu.isJbScreenMenuEnabled())
 
     internal val hideNativeLinuxTitle: Boolean
       get() = hideNativeLinuxTitleAvailable && hideNativeLinuxTitleSupported && UISettings.shadowInstance.mergeMainMenuWithWindowTitle
 
     internal val hideNativeLinuxTitleSupported: Boolean
-      get() = SystemInfoRt.isXWindow
+      get() = SystemInfoRt.isUnix && !SystemInfoRt.isMac
               && ExperimentalUI.isNewUI()
               && JBR.isWindowMoveSupported()
-              && !X11UiUtil.isWSL()
-              && !X11UiUtil.isTileWM()
+              && ((StartupUiUtil.isXToolkit() && !X11UiUtil.isWSL() && !X11UiUtil.isTileWM())
+                  || StartupUiUtil.isWaylandToolkit())
 
     internal val hideNativeLinuxTitleAvailable: Boolean
-      get() = SystemInfoRt.isXWindow
+      get() = SystemInfoRt.isUnix && !SystemInfoRt.isMac
               && ExperimentalUI.isNewUI()
               && Registry.`is`("ide.linux.hide.native.title", false)
 
@@ -413,7 +423,7 @@ open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
   open fun getToolWindowPane(): ToolWindowPane = toolWindowPane!!
 
   private fun installLinuxBorder() {
-    if (SystemInfoRt.isXWindow) {
+    if (SystemInfoRt.isUnix && !SystemInfoRt.isMac) {
       val maximized = frame.extendedState and Frame.MAXIMIZED_BOTH == Frame.MAXIMIZED_BOTH
       border = JBUI.CurrentTheme.Window.getBorder(!fullScreen && !maximized && hideNativeLinuxTitle)
     }
@@ -428,7 +438,7 @@ open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
       })
       helper.customFrameTitlePane.getComponent().isVisible = isCustomFrameHeaderVisible
     }
-    else if (SystemInfoRt.isXWindow) {
+    else if (SystemInfoRt.isUnix && !SystemInfoRt.isMac) {
       if (toolbar != null) {
         val isNewToolbar = ExperimentalUI.isNewUI()
         toolbar!!.isVisible = !fullScreen && ((!isCompactHeader {
@@ -531,17 +541,15 @@ open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
       val customFrameTitlePane = helper.customFrameTitlePane
       helper.ideMenu.updateMenuActions(forceRebuild = false)
       // The menu bar is decorated, we update it indirectly.
-      coroutineScope.launch(ModalityState.any().asContextElement()) {
+      coroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
         customFrameTitlePane.updateMenuActions(forceRebuild = false)
-        withContext(Dispatchers.EDT) {
-          customFrameTitlePane.getComponent().repaint()
-        }
+        customFrameTitlePane.getComponent().repaint()
       }
     }
     else if (menuBar != null) {
       // no decorated menu bar, but there is a regular one, update it directly
-      (menuBar as ActionAwareIdeMenuBar).updateMenuActions(forceRebuild = false)
       coroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+        (menuBar as ActionAwareIdeMenuBar).updateMenuActions(forceRebuild = false)
         menuBar.repaint()
       }
     }
@@ -607,7 +615,8 @@ open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
       }
       return
     }
-    val customTitleBar = ((helper as? DecoratedHelper)?.customFrameTitlePane as? CustomHeader)?.customTitleBar ?: return
+    val titlePane = (helper as? DecoratedHelper)?.customFrameTitlePane
+    val customTitleBar = (titlePane as? CustomHeader)?.customTitleBar ?: (titlePane as? MacToolbarFrameHeader)?.customTitleBar ?: return
 
     val listener = HeaderClickTransparentListener(customTitleBar)
     component.addMouseListener(listener)

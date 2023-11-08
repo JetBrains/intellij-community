@@ -50,6 +50,9 @@
     <projectService
             serviceInterface="org.jetbrains.kotlin.idea.base.projectStructure.LibrarySourceScopeService"
             serviceImplementation="org.jetbrains.kotlin.idea.decompiler.navigation.Fe10LibrarySourceScopeService"/>
+    <applicationService
+            serviceInterface="org.jetbrains.kotlin.idea.codeInsight.KotlinReferenceImporterFacility"
+            serviceImplementation="org.jetbrains.kotlin.idea.codeInsight.K1ReferenceImporterFacility"/>
 
     <projectService serviceImplementation="org.jetbrains.kotlin.idea.migration.KotlinMigrationProjectService"/>
 
@@ -106,10 +109,6 @@
     <lang.jvm.actions.jvmElementActionsFactory
             implementation="org.jetbrains.kotlin.idea.quickfix.crossLanguage.KotlinElementActionsFactory"/>
 
-    <referenceImporter
-            id="KotlinReferenceImporter"
-            implementation="org.jetbrains.kotlin.idea.codeInsight.KotlinReferenceImporter"/>
-
     <codeInsight.unresolvedReferenceQuickFixProvider
             id="kotlinUnresolvedReferenceQuickFixProvider"
             implementation="org.jetbrains.kotlin.idea.codeInsight.KotlinUnresolvedReferenceQuickFixProvider"/>
@@ -160,8 +159,6 @@
     <codeInsight.parameterNameHints language="kotlin"
                                     implementationClass="org.jetbrains.kotlin.idea.codeInsight.hints.KotlinInlayParameterHintsProvider"/>
 
-    <codeInsight.inlayProvider language="kotlin"
-                               implementationClass="org.jetbrains.kotlin.idea.codeInsight.hints.KotlinCodeAuthorInlayHintsProvider"/>
     <codeInsight.inlayProvider language="kotlin"
                                implementationClass="org.jetbrains.kotlin.idea.codeInsight.codevision.KotlinCodeVisionProvider"/>
     <codeInsight.inlayProvider language="kotlin"

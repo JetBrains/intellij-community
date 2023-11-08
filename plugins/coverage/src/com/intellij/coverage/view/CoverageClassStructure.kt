@@ -7,6 +7,7 @@ import com.intellij.coverage.analysis.JavaCoverageAnnotator
 import com.intellij.coverage.analysis.PackageAnnotator
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
@@ -18,6 +19,9 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.ui.tree.TreeUtil
 import javax.swing.tree.DefaultMutableTreeNode
 
+
+private val LOG = logger<CoverageClassStructure>()
+
 data class CoverageNodeInfo(val id: String,
                             val name: String,
                             val value: PsiNamedElement,
@@ -26,7 +30,7 @@ data class CoverageNodeInfo(val id: String,
 }
 
 
-class CoverageClassStructure(val project: Project) : Disposable {
+class CoverageClassStructure(val project: Project, val annotator: JavaCoverageAnnotator) : Disposable {
   private val fileStatusManager = FileStatusManager.getInstance(project)
   private val state = CoverageViewManager.getInstance(project).stateBean
   private val cache = hashMapOf<String, PsiNamedElement?>()
@@ -57,7 +61,7 @@ class CoverageClassStructure(val project: Project) : Disposable {
 
     hasVCSFilteredChildren = false
     hasFullyCoveredChildren = false
-    val classes = JavaCoverageAnnotator.getInstance(project).classesCoverage.mapNotNull { (fqn, counter) ->
+    val classes = annotator.classesCoverage.mapNotNull { (fqn, counter) ->
       if (hideFullyCovered && counter.isFullyCovered) {
         hasFullyCoveredChildren = true
         null
@@ -74,7 +78,7 @@ class CoverageClassStructure(val project: Project) : Disposable {
     }
 
     val root = CoverageTreeNode(CoverageNodeInfo("", "", getPsiPackage("")!!))
-    for (clazz in classes) {
+    loop@ for (clazz in classes) {
       val packageName = StringUtil.getPackageName(clazz.id)
       if (flattenPackages) {
         root.userObject.counter.append(clazz.counter)
@@ -89,7 +93,11 @@ class CoverageClassStructure(val project: Project) : Disposable {
           for (part in packageName.split('.')) {
             node.userObject.counter.append(clazz.counter)
             val newId = if (node.userObject.id.isEmpty()) part else "${node.userObject.id}.$part"
-            val psiPackage = getPsiPackage(newId)!!
+            val psiPackage = getPsiPackage(newId)
+            if (psiPackage == null) {
+              LOG.warn("Failed to locate package $newId, skip it in coverage results")
+              continue@loop
+            }
             node = node.getOrCreateChild(CoverageNodeInfo(newId, part, psiPackage))
           }
         }
@@ -139,11 +147,11 @@ class CoverageClassStructure(val project: Project) : Disposable {
     return CoverageTreeNode(info).also { add(it) }
   }
 
-  private fun isModified(className: String): Boolean {
-    val psiClass = runReadAction { getPsiClass(className)?.takeIf { it.isValid } } ?: return false
-    val virtualFile = runReadAction { psiClass.containingFile.virtualFile }
+  private fun isModified(className: String): Boolean = runReadAction {
+    val psiClass = getPsiClass(className)?.takeIf { it.isValid } ?: return@runReadAction false
+    val virtualFile = psiClass.containingFile.virtualFile
     val status = fileStatusManager.getStatus(virtualFile)
-    return CoverageViewExtension.isModified(status)
+    return@runReadAction CoverageViewExtension.isModified(status)
   }
 
   private fun getPsiClass(className: String): PsiNamedElement? = cache.getOrPut(className) {

@@ -60,7 +60,7 @@ public abstract class CodeStyleDeriveProcessor {
     Class<?> cls = instance.getClass();
     List<Value> ret = new ArrayList<>();
     ClassSerializer serializer = new ClassSerializer(instanceName, instance);
-    for (Field field : cls.getDeclaredFields()) {
+    for (Field field : cls.getFields()) {
       field = ClassSerializer.getPreparedField(field);
       if (field == null || field.getName().endsWith("_FORCE")) continue;
       try {

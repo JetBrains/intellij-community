@@ -3,26 +3,24 @@ package org.jetbrains.jps.dependency.java;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.dependency.Node;
-import org.jetbrains.jps.dependency.ReferenceID;
 import org.jetbrains.jps.dependency.Usage;
 import org.jetbrains.jps.dependency.diff.DiffCapable;
 import org.jetbrains.jps.dependency.diff.Difference;
-import org.jetbrains.jps.dependency.impl.StringReferenceID;
 
 public abstract class JVMClassNode<T extends JVMClassNode<T, D>, D extends Difference> extends Proto implements Node<T, D> {
-  private final ReferenceID myId;
+  private final JvmNodeReferenceID myId;
   private final String outFilePath;
   private final Iterable<Usage> myUsages;
 
   public JVMClassNode(JVMFlags flags, String signature, String name, String outFilePath, @NotNull Iterable<TypeRepr.ClassType> annotations, @NotNull Iterable<Usage> usages) {
     super(flags, signature, name, annotations);
-    myId = new StringReferenceID(name);
+    myId = new JvmNodeReferenceID(name);
     this.outFilePath = outFilePath;
     myUsages = usages;
   }
 
   @Override
-  public @NotNull ReferenceID getReferenceID() {
+  public @NotNull JvmNodeReferenceID getReferenceID() {
     return myId;
   }
 

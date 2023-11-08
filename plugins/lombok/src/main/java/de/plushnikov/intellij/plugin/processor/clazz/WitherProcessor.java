@@ -1,10 +1,9 @@
 package de.plushnikov.intellij.plugin.processor.clazz;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.Service;
 import com.intellij.psi.*;
 import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.problem.ProblemSink;
+import de.plushnikov.intellij.plugin.processor.LombokProcessorManager;
 import de.plushnikov.intellij.plugin.processor.LombokPsiElementUsage;
 import de.plushnikov.intellij.plugin.processor.field.AccessorsInfo;
 import de.plushnikov.intellij.plugin.processor.field.WitherFieldProcessor;
@@ -13,12 +12,12 @@ import de.plushnikov.intellij.plugin.util.LombokProcessorUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-@Service
 public final class WitherProcessor extends AbstractClassProcessor {
   private static final String BUILDER_DEFAULT_ANNOTATION = LombokClassNames.BUILDER_DEFAULT;
 
@@ -27,7 +26,21 @@ public final class WitherProcessor extends AbstractClassProcessor {
   }
 
   private static WitherFieldProcessor getWitherFieldProcessor() {
-    return ApplicationManager.getApplication().getService(WitherFieldProcessor.class);
+    return LombokProcessorManager.getInstance().getWitherFieldProcessor();
+  }
+
+  @Override
+  protected boolean possibleToGenerateElementNamed(@NotNull String nameHint,
+                                                   @NotNull PsiClass psiClass,
+                                                   @NotNull PsiAnnotation psiAnnotation) {
+    if (!nameHint.startsWith("with")) return false;
+    final Collection<? extends PsiVariable> possibleWithElements = getPossibleWithElements(psiClass);
+    if (possibleWithElements.isEmpty()) return false;
+    final AccessorsInfo accessorsInfo = AccessorsInfo.buildFor(psiClass).withFluent(false);
+    for (PsiVariable possibleWithElement : possibleWithElements) {
+      if (nameHint.equals(LombokUtils.getWitherName(possibleWithElement, accessorsInfo))) return true;
+    }
+    return false;
   }
 
   @Override
@@ -81,7 +94,7 @@ public final class WitherProcessor extends AbstractClassProcessor {
   @Override
   protected void generatePsiElements(@NotNull PsiClass psiClass,
                                      @NotNull PsiAnnotation psiAnnotation,
-                                     @NotNull List<? super PsiElement> target) {
+                                     @NotNull List<? super PsiElement> target, @Nullable String nameHint) {
     final String methodVisibility = LombokProcessorUtil.getMethodModifier(psiAnnotation);
     if (methodVisibility != null) {
       final AccessorsInfo accessorsInfo = AccessorsInfo.buildFor(psiClass).withFluent(false);

@@ -49,6 +49,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.vcs.ViewUpdateInfoNotification;
 import com.intellij.vcs.console.VcsConsoleTabService;
+import com.intellij.vcsUtil.VcsImplUtil;
 import kotlin.Pair;
 import org.jdom.Attribute;
 import org.jdom.DataConversionException;
@@ -501,6 +502,7 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
   }
 
   @Override
+  @Deprecated
   public List<VirtualFile> getDetailedVcsMappings(@NotNull AbstractVcs vcs) {
     return MappingsToRoots.getDetailedVcsMappings(myProject, myMappings, vcs);
   }
@@ -744,7 +746,7 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
       if (myProject.isDisposed() || myProject.isDefault()) return false;
 
       if (Registry.is("ide.hide.excluded.files")) {
-        VirtualFile vf = ChangesUtil.findValidParentAccurately(filePath);
+        VirtualFile vf = VcsImplUtil.findValidParentAccurately(filePath);
         return vf != null && myExcludedIndex.isExcludedFile(vf);
       }
       else {

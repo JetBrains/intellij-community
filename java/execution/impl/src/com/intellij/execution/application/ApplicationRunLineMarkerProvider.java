@@ -62,15 +62,13 @@ public class ApplicationRunLineMarkerProvider extends RunLineMarkerContributor {
       if (!(containingClass instanceof PsiUnnamedClass) && PsiTreeUtil.getParentOfType(containingClass, PsiUnnamedClass.class) != null) return null;
       if (containingClass == null || PsiUtil.isLocalOrAnonymousClass(containingClass)) return null;
       if (containingClass.isInterface() && !method.hasModifierProperty(PsiModifier.STATIC)) return null;
-      if (containingClass instanceof PsiUnnamedClass) {
-        Optional<PsiMethod> mainMethod =
-          Arrays.stream(containingClass.getMethods())
-            .filter(m -> "main".equals(m.getName()) && PsiMethodUtil.isMainMethod(m))
-            .min(mainCandidateComparator);
-        assert mainMethod.isPresent();
-        PsiMethod mainCandidate = mainMethod.get();
-        if (mainCandidate != method) return null;
-      }
+      Optional<PsiMethod> mainMethod =
+        Arrays.stream(containingClass.getMethods())
+          .filter(m -> "main".equals(m.getName()) && PsiMethodUtil.isMainMethod(m))
+          .min(mainCandidateComparator);
+      assert mainMethod.isPresent();
+      PsiMethod mainCandidate = mainMethod.get();
+      if (mainCandidate != method) return null;
     }
     else {
       return null;

@@ -9,8 +9,10 @@ import com.intellij.internal.statistic.eventLog.events.*;
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector;
 import com.intellij.internal.statistic.utils.EventRateThrottleResult;
 import com.intellij.internal.statistic.utils.EventsRateWindowThrottle;
+import com.intellij.internal.statistic.utils.StatisticsUploadAssistant;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
@@ -19,6 +21,8 @@ import com.intellij.openapi.editor.EditorKind;
 import com.intellij.openapi.editor.actionSystem.LatencyListener;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
+import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
@@ -27,12 +31,12 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 
 public final class TypingEventsLogger extends CounterUsagesCollector {
-  private static final EventLogGroup GROUP = new EventLogGroup("editor.typing", 7);
+  private static final EventLogGroup GROUP = new EventLogGroup("editor.typing", 8);
 
   private static final EnumEventField<EditorKind> EDITOR_KIND = EventFields.Enum("editor_kind", EditorKind.class);
   private static final StringEventField TOOL_WINDOW =
     EventFields.StringValidatedByCustomRule("toolwindow_id", ToolWindowUtilValidator.class);
-  private static final VarargEventId TYPED = GROUP.registerVarargEvent("typed", EDITOR_KIND, TOOL_WINDOW);
+  private static final VarargEventId TYPED = GROUP.registerVarargEvent("typed", EDITOR_KIND, TOOL_WINDOW, EventFields.Language);
   private static final EventId TOO_MANY_EVENTS = GROUP.registerEvent("too.many.events");
   private static final IntEventField LATENCY_MAX = EventFields.Int("latency_max_ms");
   private static final IntEventField LATENCY_90 = EventFields.Int("latency_90_ms");
@@ -49,10 +53,12 @@ public final class TypingEventsLogger extends CounterUsagesCollector {
   public static final class TypingEventsListener implements AnActionListener {
     @Override
     public void beforeEditorTyping(char c, @NotNull DataContext dataContext) {
+      if (!StatisticsUploadAssistant.isCollectAllowedOrForced()) return;
+
       EventRateThrottleResult result = ourThrottle.tryPass(System.currentTimeMillis());
       Project project = CommonDataKeys.PROJECT.getData(dataContext);
       if (result == EventRateThrottleResult.ACCEPT) {
-        ArrayList<EventPair<?>> pairs = new ArrayList<>(2);
+        ArrayList<EventPair<?>> pairs = new ArrayList<>(3);
 
         Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
         if (editor != null) {
@@ -66,6 +72,17 @@ public final class TypingEventsLogger extends CounterUsagesCollector {
         ToolWindow toolWindow = PlatformDataKeys.TOOL_WINDOW.getData(dataContext);
         if (toolWindow != null) {
           pairs.add(TOOL_WINDOW.with(toolWindow.getId()));
+        }
+
+        FileEditor fileEditor = PlatformCoreDataKeys.FILE_EDITOR.getData(dataContext);
+        if (fileEditor != null) {
+          VirtualFile virtualFile = fileEditor.getFile();
+          if (virtualFile != null) {
+            FileType fileType = FileTypeRegistry.getInstance().getFileTypeByFileName(virtualFile.getNameSequence());
+            if (fileType instanceof LanguageFileType) {
+              pairs.add(EventFields.Language.with(((LanguageFileType)fileType).getLanguage()));
+            }
+          }
         }
 
         TYPED.log(project, pairs);

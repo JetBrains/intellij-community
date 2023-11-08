@@ -4,20 +4,25 @@ package com.intellij.collaboration.ui.util
 import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.ui.ComboBoxWithActionsModel
 import com.intellij.collaboration.ui.setHtmlBody
+import com.intellij.collaboration.ui.setItems
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
+import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.util.Disposer
+import com.intellij.ui.MutableCollectionComboBoxModel
 import com.intellij.ui.components.JBList
 import com.intellij.ui.components.panels.Wrapper
+import com.intellij.ui.dsl.builder.Cell
+import com.intellij.util.awaitCancellationAndInvoke
+import com.intellij.util.namedChildScope
 import com.intellij.util.ui.update.Activatable
 import com.intellij.util.ui.update.UiNotifyConnector
 import com.intellij.vcs.log.ui.frame.ProgressStripe
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
 import org.jetbrains.annotations.Nls
 import javax.swing.*
@@ -26,20 +31,44 @@ import javax.swing.event.ListDataListener
 import javax.swing.text.JTextComponent
 import kotlin.coroutines.CoroutineContext
 
-//TODO: generalise
-fun <T : Any> ComboBoxWithActionsModel<T>.bindIn(scope: CoroutineScope,
-                                                 itemsState: StateFlow<Collection<T>>,
-                                                 selectionState: MutableStateFlow<T?>,
-                                                 sortComparator: Comparator<T>) {
-  scope.launch(start = CoroutineStart.UNDISPATCHED) {
-    itemsState.collect {
-      items = it.sortedWith(sortComparator)
+/**
+ * Binds the state of the combo box model with the given items state and selection flows.
+ */
+fun <T : Any> MutableCollectionComboBoxModel<T>.bindIn(scope: CoroutineScope,
+                                                       items: Flow<Collection<T>>,
+                                                       selectionState: MutableStateFlow<T?>,
+                                                       sortComparator: Comparator<T>) {
+  scope.launchNow {
+    items.collect {
+      setItems(it.sortedWith(sortComparator))
+    }
+  }
+  addSelectionChangeListenerIn(scope) {
+    @Suppress("UNCHECKED_CAST")
+    selectionState.value = selectedItem as? T
+  }
+  scope.launchNow {
+    selectionState.collect { item ->
+      if (selectedItem != item) {
+        selectedItem = item
+      }
+    }
+  }
+}
+
+fun <T> ComboBoxWithActionsModel<T>.bindIn(scope: CoroutineScope,
+                                           items: Flow<Collection<T>>,
+                                           selectionState: MutableStateFlow<T?>,
+                                           sortComparator: Comparator<T>) {
+  scope.launchNow {
+    items.collect {
+      this@bindIn.items = it.sortedWith(sortComparator)
     }
   }
   addSelectionChangeListenerIn(scope) {
     selectionState.value = selectedItem?.wrappee
   }
-  scope.launch(start = CoroutineStart.UNDISPATCHED) {
+  scope.launchNow {
     selectionState.collect { item ->
       if (selectedItem?.wrappee != item) {
         selectedItem = item?.let { ComboBoxWithActionsModel.Item.Wrapper(it) }
@@ -48,17 +77,16 @@ fun <T : Any> ComboBoxWithActionsModel<T>.bindIn(scope: CoroutineScope,
   }
 }
 
-//TODO: generalise
-fun <T : Any> ComboBoxWithActionsModel<T>.bindIn(scope: CoroutineScope,
-                                                 itemsState: StateFlow<Collection<T>>,
-                                                 selectionState: MutableStateFlow<T?>,
-                                                 actionsState: StateFlow<List<Action>>,
-                                                 sortComparator: Comparator<T>) {
-  bindIn(scope, itemsState, selectionState, sortComparator)
+fun <T> ComboBoxWithActionsModel<T>.bindIn(scope: CoroutineScope,
+                                           items: Flow<Collection<T>>,
+                                           selectionState: MutableStateFlow<T?>,
+                                           actions: Flow<List<Action>>,
+                                           sortComparator: Comparator<T>) {
+  bindIn(scope, items, selectionState, sortComparator)
 
-  scope.launch(start = CoroutineStart.UNDISPATCHED) {
-    actionsState.collect {
-      actions = it
+  scope.launchNow {
+    actions.collect {
+      this@bindIn.actions = it
     }
   }
 }
@@ -267,9 +295,43 @@ fun <D> JPanel.bindChildIn(scope: CoroutineScope, dataFlow: Flow<D>,
   }
 }
 
+fun JCheckBox.bindSelectedIn(scope: CoroutineScope, flow: MutableStateFlow<Boolean>) {
+  val listener = { _: Any -> flow.value = model.isSelected }
+  model.addChangeListener(listener)
+
+  scope.launchNow {
+    flow.collect {
+      model.isSelected = it
+    }
+  }
+
+  scope.awaitCancellationAndInvoke {
+    model.removeChangeListener(listener)
+  }
+}
+
+fun Cell<JCheckBox>.bindSelectedIn(scope: CoroutineScope, flow: MutableStateFlow<Boolean>) = applyToComponent {
+  bindSelectedIn(scope, flow)
+}
+
+fun <T> ComboBoxModel<T>.bindSelectedItemIn(scope: CoroutineScope, flow: MutableStateFlow<T?>) {
+  @Suppress("UNCHECKED_CAST")
+  addSelectionChangeListenerIn(scope) { flow.value = (selectedItem as T?) }
+
+  scope.launchNow {
+    flow.collect {
+      selectedItem = it
+    }
+  }
+}
+
+fun <T> Cell<ComboBox<T>>.bindSelectedItemIn(scope: CoroutineScope, flow: MutableStateFlow<T?>) = applyToComponent {
+  model.bindSelectedItemIn(scope, flow)
+}
+
 private typealias Block = CoroutineScope.() -> Unit
 
-class ActivatableCoroutineScopeProvider(private val context: () -> CoroutineContext = { SupervisorJob() + Dispatchers.Main })
+class ActivatableCoroutineScopeProvider(private val context: () -> CoroutineContext = { Dispatchers.Main })
   : Activatable {
 
   private var scope: CoroutineScope? = null
@@ -288,8 +350,9 @@ class ActivatableCoroutineScopeProvider(private val context: () -> CoroutineCont
     }
   }
 
+  @OptIn(DelicateCoroutinesApi::class)
   override fun showNotify() {
-    scope = CoroutineScope(context()).apply {
+    scope = GlobalScope.namedChildScope("ActivatableCoroutineScopeProvider", context(), true).apply {
       for (block in blocks) {
         launch { block() }
       }

@@ -12,7 +12,6 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl
-import com.intellij.openapi.externalSystem.statistics.runImportActivitySync
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.impl.UnloadedModulesListStorage
@@ -144,7 +143,7 @@ internal class WorkspaceProjectImporter(
 
   private fun migrateToExternalStorageIfNeeded(): Boolean {
     var migratedToExternalStorage = false
-    val externalStorageManager = myProject.getService(ExternalStorageConfigurationManager::class.java)
+    val externalStorageManager = ExternalStorageConfigurationManager.getInstance(myProject)
     if (!externalStorageManager.isEnabled) {
       ExternalProjectsManagerImpl.getInstance(myProject).setStoreExternally(true)
       migratedToExternalStorage = true
@@ -383,7 +382,7 @@ internal class WorkspaceProjectImporter(
       .filter { it.contentRoots.isEmpty() }
       .forEach { currentStorage.removeEntity(it) }
 
-    LegacyToWorkspaceImportUtil.retainLegacyImportEntities(myProject, currentStorage, newStorage)
+    WorkspaceChangesRetentionUtil.retainManualChanges(myProject, currentStorage, newStorage)
 
     currentStorage.replaceBySource({ isMavenEntity(it) }, newStorage)
 
@@ -520,16 +519,6 @@ internal class WorkspaceProjectImporter(
         }
       }
     }
-  }
-
-  private fun logErrorIfNotControlFlow(methodName: String, e: Exception) {
-    if (e is ControlFlowException) {
-      ExceptionUtil.rethrowAllAsUnchecked(e)
-    }
-    if (e is CancellationException) {
-      throw e
-    }
-    MavenLog.LOG.error("Exception in MavenWorkspaceConfigurator.$methodName, skipping it.", e)
   }
 
   private fun configLegacyFacets(mavenProjectsWithModules: List<MavenProjectWithModulesData<Module>>,
@@ -696,7 +685,7 @@ private class AfterImportConfiguratorsTask(private val contextData: UserDataHold
         configurator.afterImport(context)
       }
       catch (e: Exception) {
-        MavenLog.LOG.error("Exception in MavenAfterImportConfigurator.afterImport, skipping it.", e)
+        logErrorIfNotControlFlow("Exception in MavenAfterImportConfigurator.afterImport, skipping it.", e)
       }
     }
   }
@@ -730,6 +719,16 @@ private class NotifyUserAboutWorkspaceImportTask : MavenProjectsProcessorTask {
 
     ApplicationManager.getApplication().invokeLater(showNotification, project.disposed)
   }
+}
+
+private fun logErrorIfNotControlFlow(methodName: String, e: Exception) {
+  if (e is ControlFlowException) {
+    ExceptionUtil.rethrowAllAsUnchecked(e)
+  }
+  if (e is CancellationException) {
+    throw e
+  }
+  MavenLog.LOG.error("Exception in MavenWorkspaceConfigurator.$methodName, skipping it.", e)
 }
 
 private class ModuleWithTypeData<M>(

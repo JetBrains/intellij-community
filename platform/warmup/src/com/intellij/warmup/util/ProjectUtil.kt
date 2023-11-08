@@ -9,14 +9,12 @@ import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.PatchProjectUtil
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.impl.runUnderModalProgressIfIsEdt
-import com.intellij.ide.observation.Observation
 import com.intellij.ide.warmup.WarmupConfigurator
 import com.intellij.ide.warmup.WarmupStatus
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.progress.blockingContext
-import com.intellij.openapi.progress.durationStep
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.JdkOrderEntry
 import com.intellij.openapi.roots.OrderRootType
@@ -24,6 +22,8 @@ import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.platform.backend.observation.Observation
+import com.intellij.platform.util.progress.durationStep
 import com.intellij.util.asSafely
 import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.indexing.FileBasedIndexImpl
@@ -100,8 +100,9 @@ private suspend fun importOrOpenProjectImpl(args: OpenProjectArgs): Project {
   if (isPredicateBasedWarmup()) {
     runTaskAndLogTime("awaiting completion predicates") {
       withLoggingProgressReporter {
-        Observation.awaitConfiguration(project)
+        Observation.awaitConfiguration(project, WarmupLogger::logInfo)
       }
+      dumpThreadsAfterConfiguration()
     }
   }
 

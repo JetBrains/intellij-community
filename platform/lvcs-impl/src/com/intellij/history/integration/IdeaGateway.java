@@ -147,7 +147,7 @@ public class IdeaGateway {
     }
   }
 
-  private static final class VersionedFilterData {
+  protected static final class VersionedFilterData {
     final List<Project> myOpenedProjects = new ArrayList<>();
     final List<ProjectFileIndex> myProjectFileIndices = new ArrayList<>();
 
@@ -363,7 +363,7 @@ public class IdeaGateway {
     return res;
   }
 
-  private @NotNull Entry doCreateFileEntry(@NotNull VirtualFile file, Pair<StoredContent, Long> contentAndStamps) {
+  private static @NotNull Entry doCreateFileEntry(@NotNull VirtualFile file, Pair<StoredContent, Long> contentAndStamps) {
     if (file instanceof VirtualFileSystemEntry) {
       return new FileEntry(((VirtualFileSystemEntry)file).getNameId(), contentAndStamps.first, contentAndStamps.second, !file.isWritable());
     }

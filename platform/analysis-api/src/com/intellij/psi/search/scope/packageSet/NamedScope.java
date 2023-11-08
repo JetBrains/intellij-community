@@ -64,7 +64,7 @@ public class NamedScope {
     return null;
   }
 
-  public static class UnnamedScope extends NamedScope {
+  public static final class UnnamedScope extends NamedScope {
     public UnnamedScope(@NotNull PackageSet value) {
       super(value.getText(), () -> value.getText(), AllIcons.Ide.LocalScope, value);
     }

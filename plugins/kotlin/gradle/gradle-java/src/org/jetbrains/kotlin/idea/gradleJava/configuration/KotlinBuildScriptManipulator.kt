@@ -247,7 +247,11 @@ class KotlinBuildScriptManipulator(
         if (!settingsFile.canBeConfigured()) {
             return
         }
+        addFoojayPlugin(settingsFile)
+    }
 
+    override fun addFoojayPlugin(settingsFile: PsiFile) {
+        if (settingsFile !is KtFile) return
         val pluginBlock = settingsFile.getSettingsPluginsBlock() ?: return
         if (pluginBlock.findPluginInPluginsGroup("id(\"$FOOJAY_RESOLVER_NAME\")") != null) return
         if (pluginBlock.findPluginInPluginsGroup("id(\"$FOOJAY_RESOLVER_CONVENTION_NAME\")") != null) return

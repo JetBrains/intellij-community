@@ -5,7 +5,7 @@ import com.google.common.collect.HashBiMap
 import com.google.common.collect.HashMultimap
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
-import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.WorkspaceEntity
 import java.nio.file.Path
 import java.util.*
 
@@ -82,22 +82,14 @@ internal class AddDiffOperation(val target: MutableEntityStorageImpl, val diff: 
           if (!replaceMap.containsValue(sourceEntityId)) {
             target.indexes.entityRemoved(sourceEntityId.id)
             if (target.entityDataById(sourceEntityId.id) != null) {
-              target.removeEntityByEntityId(sourceEntityId.id)
+              // As we generate a remove event for each cascade removed entities, we can remove entities one by one
+              target.removeSingleEntity(sourceEntityId.id)
             }
           }
         }
         is ChangeEntry.ReplaceEntity -> {
           LOG.trace { "addDiff: replace entity" }
           replaceOperation(entityId, change)
-        }
-        is ChangeEntry.ChangeEntitySource -> {
-          LOG.trace { "addDiff: change entity source" }
-          replaceSourceOperation(change.newData, change.originalSource)
-        }
-        is ChangeEntry.ReplaceAndChangeSource -> {
-          LOG.trace { "addDiff: replace and change source" }
-          replaceOperation(entityId, change.dataChange)
-          replaceSourceOperation(change.sourceChange.newData, change.sourceChange.originalSource)
         }
       }
     }
@@ -109,20 +101,6 @@ internal class AddDiffOperation(val target: MutableEntityStorageImpl, val diff: 
     }
     else {
       target.brokenConsistency = true
-    }
-  }
-
-  private fun replaceSourceOperation(data: WorkspaceEntityData<out WorkspaceEntity>, originalSource: EntitySource) {
-    val outdatedId = data.createEntityId().notThis()
-    val usedPid = replaceMap.getOrDefault(outdatedId, outdatedId.id.asThis())
-
-    // We don't modify entity that isn't exist in target version of storage
-    val existingEntityData = target.entitiesByType.getEntityDataForModificationOrNull(usedPid.id)
-    if (existingEntityData != null) {
-      val newEntitySource = data.entitySource
-      existingEntityData.entitySource = newEntitySource
-      target.indexes.entitySourceIndex.index(usedPid.id, newEntitySource)
-      target.changeLog.addChangeSourceEvent(usedPid.id, existingEntityData, originalSource)
     }
   }
 
@@ -149,7 +127,7 @@ internal class AddDiffOperation(val target: MutableEntityStorageImpl, val diff: 
       if (targetParentId != null) {
 
         // For one-to-one connections it's necessary to remove the obsolete children to avoid "entity leaks" and the state of broken store
-        if (connectionId.connectionType == ConnectionId.ConnectionType.ONE_TO_ONE || connectionId.connectionType == ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE) {
+        if (connectionId.isOneToOne && !connectionId.isParentNullable) {
           val obsoleteChild = target.extractOneToOneChild<WorkspaceEntityBase>(connectionId, targetParentId.id)
           if (obsoleteChild != null && obsoleteChild.id != targetEntityId.id) {
             target.removeEntity(obsoleteChild)
@@ -209,10 +187,6 @@ internal class AddDiffOperation(val target: MutableEntityStorageImpl, val diff: 
     }
 
     val originalEntityData = target.getOriginalEntityData(targetEntityId.id)
-    val originalParents = target.getOriginalParents(targetEntityId.id.asChild())
-
-    // Replace entity doesn't modify entitySource
-    newTargetEntityData.entitySource = existingTargetEntityData.entitySource
 
     target.indexes.updateIndices(sourceEntityId.id, newTargetEntityData, diff)
 
@@ -237,7 +211,7 @@ internal class AddDiffOperation(val target: MutableEntityStorageImpl, val diff: 
     replaceRestoreParents(change, newEntityId)
 
     MutableEntityStorageImpl.addReplaceEvent(target, sourceEntityId.id, beforeChildren, beforeParents, newTargetEntityData,
-                                             originalEntityData, originalParents)
+                                             originalEntityData)
   }
 
   private fun replaceRestoreChildren(
@@ -319,47 +293,46 @@ internal class AddDiffOperation(val target: MutableEntityStorageImpl, val diff: 
     change: ChangeEntry.ReplaceEntity,
     newEntityId: EntityId,
   ) {
-    val updatedModifiedParents = change.references?.modifiedParents?.mapValues { it.value } ?: emptyMap()
+    val removedParents = change.references?.removedParents?.mapValues { it.value } ?: emptyMap()
+    val newParents = change.references?.newParents?.mapValues { it.value } ?: emptyMap()
+    val modifiableNewParents = newParents.toMutableMap()
 
-    val modifiedParentsMap = updatedModifiedParents.toMutableMap()
     val newChildEntityId = newEntityId.asChild()
     val existingParents = target.refs.getParentRefsOfChild(newChildEntityId)
     for ((connectionId, existingParent) in existingParents) {
-      if (connectionId in modifiedParentsMap) {
-        val newParent = modifiedParentsMap.getValue(connectionId)
-        if (newParent == null) {
-          // target child doesn't have a parent anymore
-          if (!connectionId.canRemoveParent()) target.addDiffAndReport("Cannot restore some dependencies; $connectionId",
-                                                                       initialStorage, diff)
-          else target.refs.removeParentToChildRef(connectionId, existingParent, newChildEntityId)
+      if (connectionId in removedParents) {
+        // target child doesn't have a parent anymore
+        if (!connectionId.canRemoveParent() && connectionId !in newParents) {
+          target.addDiffAndReport("Cannot restore some dependencies; $connectionId", initialStorage, diff)
+        }
+        else target.refs.removeParentToChildRef(connectionId, existingParent, newChildEntityId)
+      }
+      if (connectionId in newParents) {
+        val newParent = newParents[connectionId]!!
+        if (diffLog[newParent.id] is ChangeEntry.AddEntity) {
+          var possibleNewParent = replaceMap[newParent.id.notThis()]
+          if (possibleNewParent == null) {
+            possibleNewParent = target.entitiesByType.book(newParent.id.clazz).asThis()
+            replaceMap[newParent.id.notThis()] = possibleNewParent
+          }
+          target.refs.replaceParentOfChild(connectionId, newEntityId.asChild(), possibleNewParent.id.asParent())
         }
         else {
-          if (diffLog[newParent.id] is ChangeEntry.AddEntity) {
-            var possibleNewParent = replaceMap[newParent.id.notThis()]
-            if (possibleNewParent == null) {
-              possibleNewParent = target.entitiesByType.book(newParent.id.clazz).asThis()
-              replaceMap[newParent.id.notThis()] = possibleNewParent
-            }
-            target.refs.replaceParentOfChild(connectionId, newEntityId.asChild(), possibleNewParent.id.asParent())
+          if (target.entityDataById(newParent.id) != null) {
+            target.refs.replaceParentOfChild(connectionId, newEntityId.asChild(), newParent)
           }
           else {
-            if (target.entityDataById(newParent.id) != null) {
-              target.refs.replaceParentOfChild(connectionId, newEntityId.asChild(), newParent)
-            }
-            else {
-              if (!connectionId.canRemoveParent()) target.addDiffAndReport("Cannot restore some dependencies; $connectionId",
-                                                                           initialStorage, diff)
-              target.refs.removeParentToChildRef(connectionId, existingParent, newChildEntityId)
-            }
+            if (!connectionId.canRemoveParent()) target.addDiffAndReport("Cannot restore some dependencies; $connectionId",
+                                                                         initialStorage, diff)
+            target.refs.removeParentToChildRef(connectionId, existingParent, newChildEntityId)
           }
         }
-        modifiedParentsMap.remove(connectionId)
+        modifiableNewParents.remove(connectionId)
       }
     }
 
     // Any new parents? Add them
-    for ((connectionId, parentId) in modifiedParentsMap) {
-      if (parentId == null) continue
+    for ((connectionId, parentId) in modifiableNewParents) {
       if (diffLog[parentId.id] is ChangeEntry.AddEntity) {
         var possibleNewParent = replaceMap[parentId.id.notThis()]
         if (possibleNewParent == null) {
@@ -397,15 +370,6 @@ internal class AddDiffOperation(val target: MutableEntityStorageImpl, val diff: 
         }
       }
     }
-  }
-
-  // For serializing current model during the debug process
-  @Suppress("unused")
-  private fun serialize(path: String) {
-    val folder = Path.of(path)
-    target.serializeTo(folder.resolve("Instant_Save_Target"))
-    diff.serializeTo(folder.resolve("Instant_Save_Source"))
-    diff.serializeDiff(folder.resolve("Instant_Save_Diff"))
   }
 
   companion object {

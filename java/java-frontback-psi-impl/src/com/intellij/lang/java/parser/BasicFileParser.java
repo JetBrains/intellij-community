@@ -34,7 +34,7 @@ public class BasicFileParser {
     myParser = javaParser;
     myJavaElementTypeContainer = javaParser.getJavaElementTypeFactory().getContainer();
     IMPORT_LIST_STOPPER_SET = TokenSet.orSet(
-      BasicElementTypes.BASIC_MODIFIER_BIT_SET.toTokenSet(),
+      BasicElementTypes.BASIC_MODIFIER_BIT_SET,
       TokenSet.create(JavaTokenType.CLASS_KEYWORD, JavaTokenType.INTERFACE_KEYWORD, JavaTokenType.ENUM_KEYWORD, JavaTokenType.AT));
     UNNAMED_CLASS_INDICATORS =
     TokenSet.create(myJavaElementTypeContainer.METHOD, myJavaElementTypeContainer.FIELD, myJavaElementTypeContainer.CLASS_INITIALIZER);
@@ -71,9 +71,9 @@ public class BasicFileParser {
         }
         if (firstDeclarationOk == null) {
           firstDeclarationOk = exprType(declaration) != myJavaElementTypeContainer.MODIFIER_LIST;
-          if (firstDeclarationOk) {
-            firstDeclaration = declaration;
-          }
+        }
+        if (firstDeclaration == null) {
+          firstDeclaration = declaration;
         }
         if (!isUnnamedClass && UNNAMED_CLASS_INDICATORS.contains(exprType(declaration))) {
           isUnnamedClass = true;
@@ -96,7 +96,7 @@ public class BasicFileParser {
       impListInfo.first.setCustomEdgeTokenBinders(myWhiteSpaceAndCommentSetHolder.getPrecedingCommentBinder(), null);  // pass comments behind fake import list
       firstDeclaration.setCustomEdgeTokenBinders(myWhiteSpaceAndCommentSetHolder.getSpecialPrecedingCommentBinder(), null);
     }
-    if (isUnnamedClass && firstDeclaration != null) {
+    if (isUnnamedClass) {
       PsiBuilder.Marker beforeFirst = firstDeclaration.precede();
       done(beforeFirst, myJavaElementTypeContainer.UNNAMED_CLASS, myWhiteSpaceAndCommentSetHolder);
     }

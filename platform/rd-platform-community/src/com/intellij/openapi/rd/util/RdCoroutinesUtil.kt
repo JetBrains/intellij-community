@@ -1,10 +1,15 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:OptIn(ExperimentalCoroutinesApi::class)
+
 package com.intellij.openapi.rd.util
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
-import com.jetbrains.rd.framework.util.*
+import com.jetbrains.rd.framework.util.launch
+import com.jetbrains.rd.framework.util.startAsync
+import com.jetbrains.rd.framework.util.synchronizeWith
+import com.jetbrains.rd.framework.util.withContext
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.lifetime.isEternal
 import kotlinx.coroutines.*
@@ -14,12 +19,19 @@ import java.util.concurrent.CompletableFuture
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 
-private val applicationThreadPool get() = RdCoroutineHost.applicationThreadPool
-private val processIODispatcher get() = RdCoroutineHost.processIODispatcher
-private val nonUrgentDispatcher get() = RdCoroutineHost.nonUrgentDispatcher
-private val uiDispatcher get() = RdCoroutineHost.instance.uiDispatcher
-private val uiDispatcherWithInlining get() = RdCoroutineHost.instance.uiDispatcherWithInlining
-private val uiDispatcherAnyModality get() = RdCoroutineHost.instance.uiDispatcherAnyModality
+private val applicationThreadPool: CoroutineDispatcher
+  get() = Dispatchers.IO
+private val processIODispatcher: ExecutorCoroutineDispatcher
+  get() = RdCoroutineHost.processIODispatcher
+
+private val nonUrgentDispatcher: CoroutineDispatcher = Dispatchers.Default.limitedParallelism(2)
+
+private val uiDispatcher: CoroutineContext
+  get() = RdCoroutineHost.instance.uiDispatcher
+private val uiDispatcherWithInlining: CoroutineDispatcher
+  get() = RdCoroutineHost.instance.uiDispatcherWithInlining
+private val uiDispatcherAnyModality: CoroutineContext
+  get() = RdCoroutineHost.instance.uiDispatcherAnyModality
 
 fun Lifetime.launchOnUi(
   context: CoroutineContext = EmptyCoroutineContext,
@@ -124,6 +136,7 @@ fun <T> Lifetime.startIOBackgroundAsync(
   action: suspend CoroutineScope.() -> T
 ): Deferred<T> = startAsync(processIODispatcher + context, start, action)
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Use startBackgroundAsync", ReplaceWith("startBackgroundAsync(start, action)"))
 fun <T> Lifetime.startLongBackgroundAsync(
   context: CoroutineContext = EmptyCoroutineContext,
@@ -149,14 +162,6 @@ fun <T> Lifetime.startNonUrgentBackgroundAsync(
   action: suspend CoroutineScope.() -> T
 ): Deferred<T> = startAsync(nonUrgentDispatcher + context, start, action)
 
-@ApiStatus.ScheduledForRemoval
-@Deprecated("Use launchChildOnUi without lifetime or use lifetimedCoroutineScope", ReplaceWith("launchChildOnUi(start, action)"))
-fun CoroutineScope.launchChildOnUi(
-  lifetime: Lifetime,
-  start: CoroutineStart = CoroutineStart.DEFAULT,
-  action: suspend CoroutineScope.() -> Unit
-): Job = launchChild(lifetime, uiDispatcher, start, action)
-
 fun CoroutineScope.launchChildOnUi(
   start: CoroutineStart = CoroutineStart.DEFAULT,
   action: suspend CoroutineScope.() -> Unit
@@ -166,14 +171,6 @@ fun CoroutineScope.launchChildOnUiAllowInlining(
   start: CoroutineStart = CoroutineStart.DEFAULT,
   action: suspend CoroutineScope.() -> Unit
 ): Job = launch(uiDispatcherWithInlining, start, action)
-
-@ApiStatus.ScheduledForRemoval
-@Deprecated("Use launchChildSyncIOBackground or launchChildBackground or use lifetimedCoroutineScope")
-fun CoroutineScope.launchChildIOBackground(
-  lifetime: Lifetime = Lifetime.Eternal,
-  start: CoroutineStart = CoroutineStart.DEFAULT,
-  action: suspend CoroutineScope.() -> Unit
-): Job = launchChild(lifetime, processIODispatcher, start, action)
 
 fun CoroutineScope.launchChildSyncIOBackground(
   start: CoroutineStart = CoroutineStart.DEFAULT,
@@ -185,34 +182,10 @@ fun CoroutineScope.launchChildBackground(
   action: suspend CoroutineScope.() -> Unit
 ): Job = launch(applicationThreadPool, start, action)
 
-@ApiStatus.ScheduledForRemoval
-@Deprecated("Use launchChildBackground or use lifetimedCoroutineScope", ReplaceWith("launchChildBackground(start, action)"))
-fun CoroutineScope.launchChildLongBackground(
-  lifetime: Lifetime = Lifetime.Eternal,
-  start: CoroutineStart = CoroutineStart.DEFAULT,
-  action: suspend CoroutineScope.() -> Unit
-): Job = launchChild(lifetime, applicationThreadPool, start, action)
-
-@ApiStatus.ScheduledForRemoval
-@Deprecated("Use launchChildNonUrgentBackground without lifetime or use lifetimedCoroutineScope", ReplaceWith("launchChildNonUrgentBackground(start, action)"))
-fun CoroutineScope.launchChildNonUrgentBackground(
-  lifetime: Lifetime,
-  start: CoroutineStart = CoroutineStart.DEFAULT,
-  action: suspend CoroutineScope.() -> Unit
-): Job = launchChild(lifetime, nonUrgentDispatcher, start, action)
-
 fun CoroutineScope.launchChildNonUrgentBackground(
   start: CoroutineStart = CoroutineStart.DEFAULT,
   action: suspend CoroutineScope.() -> Unit
 ): Job = launch(nonUrgentDispatcher, start, action)
-
-@ApiStatus.ScheduledForRemoval
-@Deprecated("Use startChildOnUiAsync without lifetime or use lifetimedCoroutineScope", ReplaceWith("startChildOnUiAsync(start, action)"))
-fun <T> CoroutineScope.startChildOnUiAsync(
-  lifetime: Lifetime,
-  start: CoroutineStart = CoroutineStart.DEFAULT,
-  action: suspend CoroutineScope.() -> T
-): Deferred<T> = startChildAsync(lifetime, uiDispatcher, start, action)
 
 fun <T> CoroutineScope.startChildOnUiAsync(
   start: CoroutineStart = CoroutineStart.DEFAULT,
@@ -224,26 +197,10 @@ fun <T> CoroutineScope.startChildOnUiAllowInliningAsync(
   action: suspend CoroutineScope.() -> T
 ): Deferred<T> = async(uiDispatcherWithInlining, start, action)
 
-@ApiStatus.ScheduledForRemoval
-@Deprecated("Use startChildSyncIOBackgroundAsync or startChildBackgroundAsync or use lifetimedCoroutineScope")
-fun <T> CoroutineScope.startChildIOBackgroundAsync(
-  lifetime: Lifetime = Lifetime.Eternal,
-  start: CoroutineStart = CoroutineStart.DEFAULT,
-  action: suspend CoroutineScope.() -> T
-): Deferred<T> = startChildAsync(lifetime, processIODispatcher, start, action)
-
 fun <T> CoroutineScope.startChildSyncIOBackgroundAsync(
   start: CoroutineStart = CoroutineStart.DEFAULT,
   action: () -> T
 ): Deferred<T> = async(processIODispatcher, start) { action() }
-
-@ApiStatus.ScheduledForRemoval
-@Deprecated("Use startChildBackgroundAsync without lifetime or use lifetimedCoroutineScope", ReplaceWith("startChildBackgroundAsync(start, action)"))
-fun <T> CoroutineScope.startChildLongBackgroundAsync(
-  lifetime: Lifetime = Lifetime.Eternal,
-  start: CoroutineStart = CoroutineStart.DEFAULT,
-  action: suspend CoroutineScope.() -> T
-) = startChildAsync(lifetime, applicationThreadPool, start, action)
 
 fun <T> CoroutineScope.startChildBackgroundAsync(
   start: CoroutineStart = CoroutineStart.DEFAULT,

@@ -5,13 +5,14 @@ import com.intellij.internal.statistic.beans.MetricEvent
 import com.intellij.internal.statistic.eventLog.EventLogConfiguration
 import com.intellij.internal.statistic.utils.StatisticsUtil
 import com.intellij.internal.statistic.utils.StatisticsUtil.getCurrentHourInUTC
-import com.intellij.internal.statistic.utils.StatisticsUtil.getNextPowerOfTwo
 import com.intellij.internal.statistic.utils.StatisticsUtil.getTimestampDateInUTC
+import com.intellij.internal.statistic.utils.StatisticsUtil.roundLogarithmicTest
 import com.intellij.internal.statistic.utils.StatisticsUtil.roundToHighestDigit
 import com.intellij.internal.statistic.utils.StatisticsUtil.roundToPowerOfTwo
-import com.intellij.internal.statistic.utils.StatisticsUtil.roundToUpperBound
+import com.intellij.internal.statistic.utils.StatisticsUtil.roundToUpperBoundInternalTest
 import com.intellij.testFramework.LightPlatformTestCase
 import junit.framework.TestCase
+import org.assertj.core.api.Assertions
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -22,22 +23,6 @@ import kotlin.test.assertEquals
 @Suppress("SameParameterValue")
 @RunWith(JUnit4::class)
 class StatisticsUtilTest : LightPlatformTestCase() {
-  @Test
-  fun `test next power of two`() {
-    testPowerOfTwo(0, 1)
-    testPowerOfTwo(-5, 1)
-    testPowerOfTwo(1, 1)
-    testPowerOfTwo(2, 2)
-    testPowerOfTwo(3, 4)
-    testPowerOfTwo(5, 8)
-    testPowerOfTwo(8, 8)
-    testPowerOfTwo(9, 16)
-  }
-
-  private fun testPowerOfTwo(value: Int, expected: Int) {
-    assertEquals(expected, getNextPowerOfTwo(value), "Incorrect key for value `$value`")
-  }
-
   @Test
   fun `test round to power of two int`() {
     testRoundToPowerOfTwoInt(0, 0)
@@ -181,15 +166,7 @@ class StatisticsUtilTest : LightPlatformTestCase() {
   }
 
   @Test
-  fun `test round to upper bound`() {
-    // Test empty bounds return next power of two
-    testRoundToUpperBound(0, intArrayOf(), 0)
-    testRoundToUpperBound(1, intArrayOf(), 1)
-    testRoundToUpperBound(2, intArrayOf(), 2)
-    testRoundToUpperBound(3, intArrayOf(), 4)
-    testRoundToUpperBound(10, intArrayOf(), 16)
-    testRoundToUpperBound(Int.MAX_VALUE, intArrayOf(), Int.MAX_VALUE)
-
+  fun `test round int to upper bound`() {
     // Test with bounds
     // on the edge
     testRoundToUpperBound(0, intArrayOf(0, 1, 2), 0)
@@ -204,11 +181,10 @@ class StatisticsUtilTest : LightPlatformTestCase() {
     // corner cases
     testRoundToUpperBound(Int.MIN_VALUE, intArrayOf(0, 1, 2), 0)
     testRoundToUpperBound(Int.MAX_VALUE, intArrayOf(0, 1, 2), 2)
-
   }
 
   private fun testRoundToUpperBound(value: Int, bounds: IntArray, expected: Int) {
-    assertEquals(expected, roundToUpperBound(value, bounds), "Incorrect key for value `$value`")
+    assertEquals(expected, roundToUpperBoundInternalTest(value, bounds), "Incorrect key for value `$value`")
   }
 
 
@@ -366,5 +342,46 @@ class StatisticsUtilTest : LightPlatformTestCase() {
   private fun assertRoundedValue(raw: Int, expected: Long) {
     val rounded = StatisticsUtil.roundDuration(raw.toLong())
     assertEquals("Failed rounding for '$raw'", expected, rounded)
+  }
+
+  @Test
+  fun roundLogarithmic_exact() {
+    1.roundLogarithmicTest() mustBe 1
+    2.roundLogarithmicTest() mustBe 2
+    5.roundLogarithmicTest() mustBe 5
+    1_000.roundLogarithmicTest() mustBe 1_000
+    2_000_000_000.roundLogarithmicTest() mustBe 2_000_000_000
+  }
+
+  @Test
+  fun roundLogarithmic_rounded() {
+    4.roundLogarithmicTest() mustBe 5
+    101.roundLogarithmicTest() mustBe 100
+    123_456_789.roundLogarithmicTest() mustBe 100_000_000
+    2_000_000_000.roundLogarithmicTest() mustBe 2_000_000_000
+  }
+
+  @Test
+  fun roundLogarithmic_zero() {
+    0.roundLogarithmicTest() mustBe 0
+  }
+
+  @Test
+  fun roundLogarithmic_negative() {
+    (-1).roundLogarithmicTest() mustBe -1
+    Int.MIN_VALUE.roundLogarithmicTest() mustBe -2_000_000_000
+  }
+
+  @Test
+  fun roundLogarithmic_huge() {
+    2_000_000_001.roundLogarithmicTest() mustBe 2_000_000_000
+    Int.MAX_VALUE.roundLogarithmicTest() mustBe 2_000_000_000
+  }
+
+  private infix fun <S> S?.mustBe(expected: S): S {
+    Assertions.assertThat(this).isNotNull()
+    this!!
+    Assertions.assertThat(this).isEqualTo(expected)
+    return this
   }
 }

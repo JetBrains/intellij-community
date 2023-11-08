@@ -13,10 +13,7 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.InheritanceUtil
 import com.intellij.psi.util.PsiUtil
 import com.siyeh.ig.psiutils.MethodMatcher
-import org.jetbrains.uast.UAnnotation
-import org.jetbrains.uast.ULocalVariable
-import org.jetbrains.uast.UVariable
-import org.jetbrains.uast.toUElement
+import org.jetbrains.uast.*
 import kotlin.streams.asSequence
 
 
@@ -28,6 +25,7 @@ class TaintValueFactory(private val myConfiguration: UntaintedConfiguration) {
   private val myUnTaintedAnnotations: MutableSet<String> = HashSet()
   private val customFactories: MutableList<(CustomContext) -> TaintValue?> = ArrayList()
   private val customReturnFactories:  MutableList<(PsiMethod, PsiClass?) -> ReturnFactoriesResult?> = ArrayList()
+  private val customQualifierCleaner: MutableList<(UCallExpression)->Boolean> = ArrayList()
   init {
     myTaintedAnnotations.addAll(myConfiguration.taintedAnnotations.filterNotNull())
     myUnTaintedAnnotations.addAll(myConfiguration.unTaintedAnnotations.filterNotNull())
@@ -37,6 +35,49 @@ class TaintValueFactory(private val myConfiguration: UntaintedConfiguration) {
                                       targetValue = TaintValue.UNTAINTED))
 
     add(fromField(myConfiguration))
+  }
+
+  fun addQualifierCleaner(methodNames: List<String?>,
+                          methodClass: List<String?>,
+                          methodParams: List<String?>){
+    val fromMethodResult = fromMethodResult(methodNames, methodClass, TaintValue.UNTAINTED)
+    customQualifierCleaner.add { element ->
+      val psiMethod = element.resolve() ?: return@add false
+      val factoriesResult = fromMethodResult.invoke(psiMethod, null)
+      if (factoriesResult == null || factoriesResult.taintValue != TaintValue.UNTAINTED) {
+        return@add false
+      }
+      val className = factoriesResult.className
+      val index = methodClass.indexOf(className)
+      if (index < 0 || methodParams.size <= index) {
+        return@add false
+      }
+      val params = methodParams[index]
+      if (params == null) {
+        return@add false
+      }
+      val expectedParams = params.split(",")
+      val valueArguments = element.valueArguments
+      if (valueArguments.size != expectedParams.size) {
+        return@add false
+      }
+      for (i in valueArguments.indices) {
+        val uExpression = valueArguments[i]
+        if (uExpression is ULiteralExpression) {
+          val value = uExpression.value.toString()
+          if (value == expectedParams[i]) {
+            continue
+          }
+          else {
+            return@add false
+          }
+        }
+        else {
+          return@add false
+        }
+      }
+      return@add true
+    }
   }
 
   fun addReturnFactory(customReturnFactory: (PsiMethod, PsiClass?) -> ReturnFactoriesResult?) {
@@ -272,6 +313,10 @@ class TaintValueFactory(private val myConfiguration: UntaintedConfiguration) {
 
   fun getConfiguration(): UntaintedConfiguration {
     return myConfiguration
+  }
+
+  fun needToCleanQualifier(node: UCallExpression): Boolean {
+    return customQualifierCleaner.any { it.invoke(node) }
   }
 
   companion object {

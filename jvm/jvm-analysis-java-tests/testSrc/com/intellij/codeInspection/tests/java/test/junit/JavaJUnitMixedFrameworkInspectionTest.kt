@@ -1,7 +1,7 @@
 package com.intellij.codeInspection.tests.java.test.junit
 
-import com.intellij.codeInspection.tests.JvmLanguage
-import com.intellij.codeInspection.tests.test.junit.JUnitMixedFrameworkInspectionTestBase
+import com.intellij.jvm.analysis.internal.testFramework.test.junit.JUnitMixedFrameworkInspectionTestBase
+import com.intellij.jvm.analysis.testFramework.JvmLanguage
 
 class JavaJUnitMixedFrameworkInspectionTest : JUnitMixedFrameworkInspectionTestBase() {
   fun `test no highlighting`() {
@@ -153,15 +153,15 @@ class JavaJUnitMixedFrameworkInspectionTest : JUnitMixedFrameworkInspectionTestB
     """.trimIndent(), """
       import org.junit.jupiter.api.Test;
       
-      public class MyTest {
+      class MyTest {
         @Test
-        public void testFoo() { }
+        void testFoo() { }
         
         @org.junit.jupiter.api.Test
-        public void testBar() { }
+        void testBar() { }
         
         @org.junit.jupiter.api.Test
-        public void testFooBar() { }
+        void testFooBar() { }
       }
     """.trimIndent(), fileName = "MyTest", hint = "Migrate to JUnit 5")
   }

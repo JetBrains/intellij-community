@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.execution.target
 
 import com.intellij.execution.Platform
@@ -37,7 +37,7 @@ import org.jetbrains.plugins.gradle.tooling.proxy.TargetBuildParameters
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.jetbrains.plugins.gradle.util.GradleConstants.INIT_SCRIPT_CMD_OPTION
 import org.slf4j.LoggerFactory
-import org.slf4j.impl.JDK14LoggerFactory
+import org.slf4j.jul.JDK14LoggerFactory
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path

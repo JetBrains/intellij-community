@@ -68,7 +68,7 @@ fun staticNavBarPanel(
       if (window != null) {
         coroutineScope {
           val windowScope = this@coroutineScope
-          cs.launch {
+          cs.launch(start = CoroutineStart.UNDISPATCHED) {
             attachAsChildTo(windowScope)
             handleWindow(window)
           }

@@ -144,7 +144,7 @@ abstract class GitBranchesTreeRenderer(private val project: Project,
 
   private fun getIncomingOutgoingIconWithTooltip(branch: GitBranch): Pair<Icon?, String?> {
     val branchName = branch.name
-    val incomingOutgoingManager = project.service<GitBranchIncomingOutgoingManager>()
+    val incomingOutgoingManager = GitBranchIncomingOutgoingManager.getInstance(project)
 
     val hasIncoming = affectedRepositories.any { incomingOutgoingManager.hasIncomingFor(it, branchName) }
     val hasOutgoing = affectedRepositories.any { incomingOutgoingManager.hasOutgoingFor(it, branchName) }

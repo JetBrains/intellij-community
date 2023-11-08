@@ -61,7 +61,7 @@ internal class MacToolbarFrameHeader(private val coroutineScope: CoroutineScope,
     }
   }
 
-  private val customTitleBar: WindowDecorations.CustomTitleBar?
+  val customTitleBar: WindowDecorations.CustomTitleBar?
 
   init {
     // color full toolbar
@@ -163,6 +163,8 @@ internal class MacToolbarFrameHeader(private val coroutineScope: CoroutineScope,
   private suspend fun updateView(isCompactHeader: Boolean): Boolean {
     val view = withContext(Dispatchers.EDT) {
       if (isCompactHeader == (view is CompactHeaderView)) {
+        // IDEA-324521 Colored toolbar rendering is broken when enabling/disabling colored toolbar via main toolbar context menu
+        repaint()
         return@withContext null
       }
 

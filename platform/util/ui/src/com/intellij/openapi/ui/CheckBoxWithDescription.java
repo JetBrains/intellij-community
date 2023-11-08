@@ -7,6 +7,10 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 
+/**
+ * @deprecated Use Kotlin UI DSL 2, for description use {@link com.intellij.ui.dsl.builder.Cell#comment}
+ */
+@Deprecated(forRemoval = true)
 public final class CheckBoxWithDescription extends JPanel {
 
   private final JCheckBox myCheckBox;

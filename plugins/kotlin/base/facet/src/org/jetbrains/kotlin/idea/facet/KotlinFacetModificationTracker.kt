@@ -7,11 +7,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
 import com.intellij.platform.backend.workspace.WorkspaceModelTopics
-import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.platform.workspace.jps.entities.FacetEntity
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
-import org.jetbrains.kotlin.idea.base.util.caching.oldEntity
+import com.intellij.platform.workspace.storage.VersionedStorageChange
 import org.jetbrains.kotlin.idea.base.util.caching.newEntity
+import org.jetbrains.kotlin.idea.base.util.caching.oldEntity
 
 class KotlinFacetModificationTracker(project: Project) :
     SimpleModificationTracker(), WorkspaceModelChangeListener, Disposable {

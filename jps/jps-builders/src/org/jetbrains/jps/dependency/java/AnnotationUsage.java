@@ -1,18 +1,16 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.dependency.java;
 
-import org.jetbrains.jps.dependency.impl.StringReferenceID;
-
 public final class AnnotationUsage extends JvmElementUsage {
 
   private final TypeRepr.ClassType myClassType;
-  private final Iterable<String> myUserArgNames;
+  private final Iterable<String> myUsedArgNames;
   private final Iterable<ElemType> myTargets;
 
-  public AnnotationUsage(TypeRepr.ClassType classType, Iterable<String> userArgNames, Iterable<ElemType> targets) {
-    super(new StringReferenceID(classType.getJvmName()));
+  public AnnotationUsage(TypeRepr.ClassType classType, Iterable<String> usedArgNames, Iterable<ElemType> targets) {
+    super(new JvmNodeReferenceID(classType.getJvmName()));
     myClassType = classType;
-    myUserArgNames = userArgNames;
+    myUsedArgNames = usedArgNames;
     myTargets = targets;
   }
 
@@ -20,8 +18,8 @@ public final class AnnotationUsage extends JvmElementUsage {
     return myClassType;
   }
 
-  public Iterable<String> getUserArgNames() {
-    return myUserArgNames;
+  public Iterable<String> getUsedArgNames() {
+    return myUsedArgNames;
   }
 
   public Iterable<ElemType> getTargets() {
@@ -42,7 +40,7 @@ public final class AnnotationUsage extends JvmElementUsage {
     if (!myClassType.equals(that.myClassType)) {
       return false;
     }
-    if (!myUserArgNames.equals(that.myUserArgNames)) {
+    if (!myUsedArgNames.equals(that.myUsedArgNames)) {
       return false;
     }
     if (!myTargets.equals(that.myTargets)) {
@@ -55,7 +53,7 @@ public final class AnnotationUsage extends JvmElementUsage {
   @Override
   public int hashCode() {
     int result = myClassType.hashCode();
-    result = 31 * result + myUserArgNames.hashCode();
+    result = 31 * result + myUsedArgNames.hashCode();
     result = 31 * result + myTargets.hashCode();
     return result;
   }

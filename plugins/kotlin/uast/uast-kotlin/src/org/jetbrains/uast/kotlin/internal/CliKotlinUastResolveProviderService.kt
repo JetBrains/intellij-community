@@ -30,11 +30,6 @@ class CliKotlinUastResolveProviderService : KotlinUastResolveProviderService {
                 .firstOrNull()
         }
 
-    @Deprecated("For binary compatibility, please, use KotlinUastTypeMapper")
-    override fun getTypeMapper(element: KtElement): KotlinTypeMapper? {
-        @Suppress("DEPRECATION")
-        return element.project.analysisCompletedHandler?.getTypeMapper()
-    }
     @Deprecated(
         "Do not use the old frontend, retroactively named as FE1.0, since K2 with the new frontend is coming.\n" +
                 "Please use analysis API: https://github.com/JetBrains/kotlin/blob/master/docs/analysis/analysis-api/analysis-api.md",
@@ -59,22 +54,6 @@ class UastAnalysisHandlerExtension : AnalysisHandlerExtension {
     fun getBindingContext() = context
 
     fun getLanguageVersionSettings() = languageVersionSettings
-
-    @ApiStatus.ScheduledForRemoval
-    @Deprecated("For binary compatibility, please, use KotlinUastTypeMapper")
-    fun getTypeMapper(): KotlinTypeMapper? {
-        if (typeMapper != null) return typeMapper
-        val bindingContext = context ?: return null
-
-        val typeMapper = KotlinTypeMapper(
-            bindingContext, ClassBuilderMode.LIGHT_CLASSES,
-            JvmProtoBufUtil.DEFAULT_MODULE_NAME,
-            KotlinTypeMapper.LANGUAGE_VERSION_SETTINGS_DEFAULT, // TODO use proper LanguageVersionSettings
-            useOldInlineClassesManglingScheme = false
-        )
-        this.typeMapper = typeMapper
-        return typeMapper
-    }
 
     override fun doAnalysis(
         project: Project,

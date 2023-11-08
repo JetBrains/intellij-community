@@ -16,7 +16,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 private class DocRenderTextEditorInitializer : TextEditorInitializer {
-  override suspend fun initializeEditor(project: Project, file: VirtualFile, document: Document, editorSupplier: suspend () -> EditorEx) {
+  override suspend fun initializeEditor(project: Project,
+                                        file: VirtualFile,
+                                        document: Document,
+                                        editorSupplier: suspend () -> EditorEx,
+                                        highlighterReady: suspend () -> Unit) {
     val editor = editorSupplier.invoke()
     if (!DocRenderManager.isDocRenderingEnabled(editor)) {
       return
@@ -35,7 +39,11 @@ private class DocRenderTextEditorInitializer : TextEditorInitializer {
 }
 
 private class FocusZoneTextEditorInitializer : TextEditorInitializer {
-  override suspend fun initializeEditor(project: Project, file: VirtualFile, document: Document, editorSupplier: suspend () -> EditorEx) {
+  override suspend fun initializeEditor(project: Project,
+                                        file: VirtualFile,
+                                        document: Document,
+                                        editorSupplier: suspend () -> EditorEx,
+                                        highlighterReady: suspend () -> Unit) {
     if (!FocusModePassFactory.isEnabled()) {
       return
     }

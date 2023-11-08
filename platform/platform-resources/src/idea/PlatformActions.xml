@@ -251,7 +251,7 @@
       <action id="EditorMoveDownAndScroll" class="com.intellij.openapi.editor.actions.MoveDownAndScrollAction"/>
       <action id="EditorMoveUpAndScrollWithSelection" class="com.intellij.openapi.editor.actions.MoveUpWithSelectionAndScrollAction"/>
       <action id="EditorMoveDownAndScrollWithSelection" class="com.intellij.openapi.editor.actions.MoveDownWithSelectionAndScrollAction"/>
-      <action id="EditorAddOrRemoveCaret" class="com.intellij.openapi.editor.actions.AddOrRemoveCaretDummyAction"/>
+      <action id="EditorAddOrRemoveCaret" class="com.intellij.openapi.actionSystem.EmptyAction"/>
       <action id="EditorCreateRectangularSelection" class="com.intellij.openapi.editor.actions.CreateRectangularSelectionAction"/>
       <action id="EditorAddRectangularSelectionOnMouseDrag"
               class="com.intellij.openapi.editor.actions.AddRectangularSelectionOnMouseDragAction"/>
@@ -414,8 +414,6 @@
         <action id="Diff.CompareWithBase.Right" class="com.intellij.openapi.actionSystem.EmptyAction"
                 icon="AllIcons.Diff.Compare4RightBottom"/>
       </group>
-
-      <action id="CompareDirs" class="com.intellij.diff.actions.CompareFilesAction" use-shortcut-of="CompareTwoFiles"/>
 
       <separator/>
       <add-to-group group-id="Vcs.KeymapGroup"/>
@@ -629,12 +627,13 @@
             <action id="ToggleCompactMode" class="com.intellij.ide.actions.ToggleCompactModeAction" />
           </group>
 
-          <separator/>
           <action id="SwitchIdeScaleAction" class="com.intellij.ide.actions.SwitchIdeScaleAction">
             <synonym key="action.SwitchIdeScaleAction.text"/>
           </action>
 
           <group id="UIToggleActions">
+            <separator/>
+            <action id="TogglePresentationAssistantAction" class="com.intellij.platform.ide.impl.presentationAssistant.TogglePresentationAssistantAction"/>
             <separator/>
             <action id="ViewMainMenu" class="com.intellij.ide.actions.ViewMainMenuAction"/>
             <action id="MainMenuAsSeparateToolbarAction" class="com.intellij.ide.actions.MainMenuAsSeparateToolbarAction"/>
@@ -744,6 +743,7 @@
         <action id="CreateDesktopEntry" class="com.intellij.ide.actions.CreateDesktopEntryAction"/>
         <separator/>
         <group id="OtherMenu"/>
+        <group id="ToolsMenu.Services" popup="true"/>
       </group>
 
       <group id="WindowMenu" popup="true">
@@ -811,8 +811,8 @@
             <synonym key="action.SplitHorizontally.synonym"/>
           </action>
           <action id="MoveTabDown" class="com.intellij.ide.actions.MoveTabDownAction"/>
-          <action id="SplitChooser" class="com.intellij.ide.actions.InteractiveSplitAction" internal="true"/>
-          <group id="SplitChooser.Actions" text="Split with Chooser Navigation" searchable="false" compact="true" popup="true" internal="true">
+          <action id="SplitChooser" class="com.intellij.ide.actions.InteractiveSplitAction"/>
+          <group id="SplitChooser.Actions" searchable="false" compact="true" popup="true">
             <action id="SplitChooser.NextWindow" class="com.intellij.ide.actions.InteractiveSplitAction$Key$NextWindow"/>
             <action id="SplitChooser.PreviousWindow" class="com.intellij.ide.actions.InteractiveSplitAction$Key$PreviousWindow"/>
             <action id="SplitChooser.Exit" class="com.intellij.ide.actions.InteractiveSplitAction$Key$Exit" use-shortcut-of="EditorEscape"/>
@@ -1296,8 +1296,6 @@
           <mouse-shortcut keymap="$default" keystroke="control alt button3"/>
           <mouse-shortcut keymap="$default" keystroke="control alt shift button3"/>
         </action>
-        <action id="ToggleUiInspectorHierarchyTrace" internal="true"
-                class="com.intellij.internal.inspector.UiInspectorAction$ToggleHierarchyTraceAction"/>
         <action id="GrayFilterConfig" internal="true" class="com.intellij.internal.GrayFilterConfig"/>
         <action id="TextGrayFilterConfig" internal="true" class="com.intellij.internal.TextGrayFilterConfig"/>
         <action id="ShowSplash" internal="true" class="com.intellij.ui.ShowSplashAction"/>
@@ -1325,6 +1323,7 @@
         <action id="TestDndAction" class="com.intellij.internal.validation.TestDnd"/>
         <action id="PositionTrackerTestAction" internal="true" class="com.intellij.internal.ui.PositionTrackerTestAction"/>
         <action id="ShowProgressTestDialogAction" internal="true" class="com.intellij.openapi.wm.impl.status.ShowProgressTestDialogAction"/>
+        <action id="TestRubberDuckDebuggerAction" internal="true" class="com.intellij.openapi.wm.impl.status.TestRubberDuckDebuggerAction"/>
         <action id="ShowSouthPanelTestDialogAction" internal="true"
                 class="com.intellij.openapi.wm.impl.status.ShowSouthPanelTestDialogAction"/>
         <action id="TestTextFieldAction" internal="true" class="com.intellij.ui.components.TestTextFieldAction"/>
@@ -1636,15 +1635,17 @@
 
     <group id="ChangeProjectColorActionGroup" class="com.intellij.openapi.wm.impl.welcomeScreen.projectActions.ChangeProjectColorActionGroup" searchable="false" popup="true"/>
 
+    <group id="PresentationAssistantQuickSettingsGroup" class="com.intellij.platform.ide.impl.presentationAssistant.PresentationAssistantQuickSettingsGroup" searchable="false" popup="true"/>
+
     <group id="ToolbarPopupActions"/>
 
     <group id="ToolbarPopupActions.MainToolbarNewUI">
       <reference id="MainToolbarQuickActions"/>
+      <reference id="MainMenuAsSeparateToolbarAction"/>
       <separator/>
       <reference id="ChangeProjectColorActionGroup"/>
       <reference id="WelcomeScreen.ChangeProjectIcon"/>
       <action id="ColoredHeaderAction" class="com.intellij.ide.ui.customization.UseProjectColorsCheckboxAction"/>
-      <reference id="MainMenuAsSeparateToolbarAction"/>
     </group>
   </actions>
 </idea-plugin>

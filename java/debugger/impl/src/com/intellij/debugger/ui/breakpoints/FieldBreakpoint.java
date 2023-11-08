@@ -282,7 +282,7 @@ public final class FieldBreakpoint extends BreakpointWithHighlighter<JavaFieldBr
   //      if (file != null) {
   //        PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
   //        if (psiFile != null) {
-  //          document = PsiDocumentManager.getInstance(project).getDocument(psiFile);
+  //          document = psiFile.getViewProvider().getDocument();
   //        }
   //      }
   //    }

@@ -110,7 +110,7 @@ public final class CallerMethodsTreeStructure extends HierarchyTreeStructure {
             // ignore impossible candidates. E.g. when A < B,A < C and we invoked call hierarchy for method in C we should filter out methods in B because B and C are assignment-incompatible
             return true;
           }
-          for (CallReferenceProcessor processor : CallReferenceProcessor.EP_NAME.getExtensions()) {
+          for (CallReferenceProcessor processor : CallReferenceProcessor.EP_NAME.getExtensionList()) {
             if (!processor.process(reference, data)) break;
           }
           return true;

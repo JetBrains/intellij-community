@@ -2,21 +2,25 @@
 package org.jetbrains.jps.dependency.java;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.dependency.Usage;
 import org.jetbrains.jps.dependency.diff.Difference;
 import org.jetbrains.jps.javac.Iterators;
 
 import java.lang.annotation.RetentionPolicy;
 import java.util.Objects;
+import java.util.Set;
 
 public final class JvmClass extends JVMClassNode<JvmClass, JvmClass.Diff> {
+  public static final String OBJECT_CLASS_NAME = "java/lang/Object";
+  
   private final String mySuperFqName;
   private final String myOuterFqName;
   private final Iterable<String> myInterfaces;
   private final Iterable<JvmField> myFields;
   private final Iterable<JvmMethod> myMethods;
   private final Iterable<ElemType> myAnnotationTargets;
-  private final RetentionPolicy myRetentionPolicy;
+  private final @Nullable RetentionPolicy myRetentionPolicy;
 
   public JvmClass(
     JVMFlags flags, String signature, String fqName, String outFilePath,
@@ -26,12 +30,12 @@ public final class JvmClass extends JVMClassNode<JvmClass, JvmClass.Diff> {
     Iterable<JvmField> fields,
     Iterable<JvmMethod> methods,
     Iterable<TypeRepr.ClassType> annotations,
-    Iterable<ElemType> annotationTargets, RetentionPolicy retentionPolicy, Iterable<Usage> usages
+    Iterable<ElemType> annotationTargets, @Nullable RetentionPolicy retentionPolicy, Iterable<Usage> usages
     ) {
     
     super(flags, signature, fqName, outFilePath, annotations, usages);
-    mySuperFqName = superFqName;
-    myOuterFqName = outerFqName;
+    mySuperFqName = superFqName == null || OBJECT_CLASS_NAME.equals(superFqName)? "" : superFqName;
+    myOuterFqName = outerFqName == null? "" : outerFqName;
     myInterfaces = interfaces;
     myFields = fields;
     myMethods = methods;
@@ -39,14 +43,46 @@ public final class JvmClass extends JVMClassNode<JvmClass, JvmClass.Diff> {
     myRetentionPolicy = retentionPolicy;
   }
 
+  //@Override
+  //public Iterable<Usage> getUsages() {
+  //  return Iterators.unique(Iterators.flat(List.of(
+  //    super.getUsages(),
+  //    Iterators.flat(Iterators.map(getSuperTypes(), s -> new TypeRepr.ClassType(s).getUsages())),
+  //    Iterators.flat(Iterators.map(getFields(), field -> field.getType().getUsages())),
+  //    Iterators.flat(Iterators.map(getMethods(), method -> Iterators.flat(List.of(
+  //      method.getType().getUsages(),
+  //      Iterators.flat(Iterators.map(method.getArgTypes(), t -> t.getUsages())),
+  //      Iterators.flat(Iterators.map(method.getExceptions(), t -> t.getUsages()))
+  //    ))))
+  //  )));
+  //}
+
   public @NotNull String getPackageName() {
-    String name = getName();
-    int index = name.lastIndexOf('/');
-    return index >= 0? name.substring(0, index) : "";
+    return getPackageName(getName());
   }
 
-  public final boolean isAnonymous() {
+  public @NotNull String getShortName() {
+    String jvmClassName = getName();
+    int index = jvmClassName.lastIndexOf('/');
+    return index >= 0? jvmClassName.substring(index + 1) : jvmClassName;
+  }
+
+  @NotNull
+  public static String getPackageName(@NotNull String jvmClassName) {
+    int index = jvmClassName.lastIndexOf('/');
+    return index >= 0? jvmClassName.substring(0, index) : "";
+  }
+
+  public boolean isInterface() {
+    return getFlags().isInterface();
+  }
+
+  public boolean isAnonymous() {
     return getFlags().isAnonymous();
+  }
+
+  public boolean isLocal() {
+    return getFlags().isLocal();
   }
 
   public String getSuperFqName() {
@@ -57,12 +93,16 @@ public final class JvmClass extends JVMClassNode<JvmClass, JvmClass.Diff> {
     return myOuterFqName;
   }
 
+  public boolean isInnerClass() {
+    return myOuterFqName != null && !myOuterFqName.isBlank();
+  }
+
   public Iterable<String> getInterfaces() {
     return myInterfaces;
   }
 
   public Iterable<String> getSuperTypes() {
-    return Iterators.flat(Iterators.asIterable(mySuperFqName), getInterfaces());
+    return mySuperFqName.isEmpty() || OBJECT_CLASS_NAME.equals(mySuperFqName)? getInterfaces() : Iterators.flat(Iterators.asIterable(mySuperFqName), getInterfaces());
   }
 
   public Iterable<JvmField> getFields() {
@@ -77,6 +117,7 @@ public final class JvmClass extends JVMClassNode<JvmClass, JvmClass.Diff> {
     return myAnnotationTargets;
   }
 
+  @Nullable
   public RetentionPolicy getRetentionPolicy() {
     return myRetentionPolicy;
   }
@@ -110,11 +151,13 @@ public final class JvmClass extends JVMClassNode<JvmClass, JvmClass.Diff> {
     }
 
     public boolean extendsAdded() {
-      return "java/lang/Object".equals(myPast.getSuperFqName()) && superClassChanged();
+      String pastSuper = myPast.getSuperFqName();
+      return (pastSuper.isEmpty() || OBJECT_CLASS_NAME.equals(pastSuper)) && superClassChanged();
     }
 
     public boolean extendsRemoved() {
-      return "java/lang/Object".equals(getSuperFqName()) && superClassChanged();
+      String currentSuper = getSuperFqName();
+      return (currentSuper.isEmpty() || OBJECT_CLASS_NAME.equals(currentSuper)) && superClassChanged();
     }
 
     public boolean outerClassChanged() {
@@ -140,5 +183,18 @@ public final class JvmClass extends JVMClassNode<JvmClass, JvmClass.Diff> {
     public Specifier<ElemType, ?> annotationTargets() {
       return Difference.diff(myPast.getAnnotationTargets(), getAnnotationTargets());
     }
+
+    public boolean targetAttributeCategoryMightChange() {
+      Specifier<ElemType, ?> targetsDiff = annotationTargets();
+      if (!targetsDiff.unchanged()) {
+        for (ElemType elemType : Set.of(ElemType.TYPE_USE, ElemType.RECORD_COMPONENT)) {
+          if (Iterators.contains(targetsDiff.added(), elemType) || Iterators.contains(targetsDiff.removed(), elemType) || Iterators.contains(myPast.getAnnotationTargets(), elemType) ) {
+            return true;
+          }
+        }
+      }
+      return false;
+    }
+
   }
 }

@@ -2,13 +2,11 @@
 
 package org.jetbrains.kotlin.idea.core
 
-import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.psi.util.elementType
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.builtins.isFunctionOrSuspendFunctionType
@@ -27,6 +25,9 @@ import org.jetbrains.kotlin.idea.base.psi.setDefaultValue
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
+import org.jetbrains.kotlin.idea.refactoring.getLastLambdaExpression
+import org.jetbrains.kotlin.idea.refactoring.isComplexCallWithLambdaArgument
+import org.jetbrains.kotlin.idea.refactoring.moveFunctionLiteralOutsideParentheses
 import org.jetbrains.kotlin.idea.resolve.frontendService
 import org.jetbrains.kotlin.idea.resolve.languageVersionSettings
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
@@ -121,17 +122,6 @@ fun KtLambdaExpression.moveFunctionLiteralOutsideParenthesesIfPossible() {
     }
 }
 
-fun KtCallExpression.getLastLambdaExpression(): KtLambdaExpression? {
-    if (lambdaArguments.isNotEmpty()) return null
-    return valueArguments.lastOrNull()?.getArgumentExpression()?.unpackFunctionLiteral()
-}
-
-fun KtCallExpression.isComplexCallWithLambdaArgument(): Boolean = when {
-    valueArguments.lastOrNull()?.isNamed() == true -> true
-    valueArguments.count { it.getArgumentExpression()?.unpackFunctionLiteral() != null } > 1 -> true
-    else -> false
-}
-
 @OptIn(FrontendInternals::class)
 fun KtCallExpression.canMoveLambdaOutsideParentheses(skipComplexCalls: Boolean = true): Boolean {
     if (skipComplexCalls && isComplexCallWithLambdaArgument()) return false
@@ -216,46 +206,6 @@ private fun FunctionDescriptor.allowsMoveOfLastParameterOutsideParentheses(
         it.type.allowsMoveOutsideParentheses(samConversionTransformer, samConversionOracle, newInferenceEnabled)
     }
     return movableParametersOfCandidateCount == lambdaAndCallableReferencesInOriginalCallCount
-}
-
-fun KtCallExpression.moveFunctionLiteralOutsideParentheses() {
-    assert(lambdaArguments.isEmpty())
-    val argumentList = valueArgumentList!!
-    val argument = argumentList.arguments.last()
-    val expression = argument.getArgumentExpression()!!
-    assert(expression.unpackFunctionLiteral() != null)
-
-    fun isWhiteSpaceOrComment(e: PsiElement) = e is PsiWhiteSpace || e is PsiComment
-    val prevComma = argument.siblings(forward = false, withItself = false).firstOrNull { it.elementType == KtTokens.COMMA }
-    val prevComments = (prevComma ?: argumentList.leftParenthesis)
-        ?.siblings(forward = true, withItself = false)
-        ?.takeWhile(::isWhiteSpaceOrComment)?.toList().orEmpty()
-    val nextComments = argumentList.rightParenthesis
-        ?.siblings(forward = false, withItself = false)
-        ?.takeWhile(::isWhiteSpaceOrComment)?.toList()?.reversed().orEmpty()
-
-    val psiFactory = KtPsiFactory(project)
-    val dummyCall = psiFactory.createExpression("foo() {}") as KtCallExpression
-    val functionLiteralArgument = dummyCall.lambdaArguments.single()
-    functionLiteralArgument.getArgumentExpression()?.replace(expression)
-
-    if (prevComments.any { it is PsiComment }) {
-        if (prevComments.firstOrNull() !is PsiWhiteSpace) this.add(psiFactory.createWhiteSpace())
-        prevComments.forEach { this.add(it) }
-        prevComments.forEach { if (it is PsiComment) it.delete() }
-    }
-    this.add(functionLiteralArgument)
-    if (nextComments.any { it is PsiComment }) {
-        nextComments.forEach { this.add(it) }
-        nextComments.forEach { if (it is PsiComment) it.delete() }
-    }
-
-    /* we should not remove empty parenthesis when callee is a call too - it won't parse */
-    if (argumentList.arguments.size == 1 && calleeExpression !is KtCallExpression) {
-        argumentList.delete()
-    } else {
-        argumentList.removeArgument(argument)
-    }
 }
 
 fun KtBlockExpression.appendElement(element: KtElement, addNewLine: Boolean = false): KtElement {

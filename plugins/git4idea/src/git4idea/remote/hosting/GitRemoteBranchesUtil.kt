@@ -4,10 +4,10 @@ package git4idea.remote.hosting
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.notification.CollaborationToolsNotificationIdsHolder
 import com.intellij.openapi.progress.coroutineToIndicator
-import com.intellij.openapi.progress.withBackgroundProgress
-import com.intellij.openapi.progress.withRawProgressReporter
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.VcsNotifier
+import com.intellij.platform.ide.progress.withBackgroundProgress
+import com.intellij.platform.util.progress.withRawProgressReporter
 import git4idea.GitLocalBranch
 import git4idea.GitRemoteBranch
 import git4idea.GitStandardRemoteBranch
@@ -112,13 +112,17 @@ object GitRemoteBranchesUtil {
     }
   }
 
-  private fun checkoutRemoteBranch(repository: GitRepository, branch: GitRemoteBranch, newLocalBranchPrefix: String? = null) {
+  fun checkoutRemoteBranch(repository: GitRepository,
+                           branch: GitRemoteBranch,
+                           newLocalBranchPrefix: String? = null,
+                           callInAwtLater: Runnable? = null) {
     val existingLocalBranch = findLocalBranchTrackingRemote(repository, branch)
     val suggestedName = existingLocalBranch?.name
                         ?: newLocalBranchPrefix?.let { "$it/${branch.nameForRemoteOperations}" }
                         ?: branch.nameForRemoteOperations
+
     GitBranchPopupActions.RemoteBranchActions.CheckoutRemoteBranchAction
-      .checkoutRemoteBranch(repository.project, listOf(repository), branch.name, suggestedName)
+      .checkoutRemoteBranch(repository.project, listOf(repository), branch.name, suggestedName, callInAwtLater)
   }
 
   private fun notifyRemoteError(project: Project, remote: HostedGitRepositoryRemote) {
@@ -156,12 +160,12 @@ object GitRemoteBranchesUtil {
     }
   }
 
-  private fun findRemote(repository: GitRepository, remote: HostedGitRepositoryRemote): GitRemote? =
+  fun findRemote(repository: GitRepository, remote: HostedGitRepositoryRemote): GitRemote? =
     repository.remotes.find {
-      val url = it.firstUrl
-      url != null &&
-      GitHostingUrlUtil.match(remote.serverUri, url) &&
-      (url.removeSuffix("/").removeSuffix(GitUtil.DOT_GIT).endsWith(remote.path))
+      val absoluteUrl = it.firstUrl ?: return@find false
+      val url = absoluteUrl.removeSuffix("/").removeSuffix(GitUtil.DOT_GIT)
+      val pathWithOwner = "${remote.name}/${remote.path}"
+      GitHostingUrlUtil.match(remote.serverUri, absoluteUrl) && url.endsWith(pathWithOwner)
     }
 
   private fun shouldAddHttpRemote(repository: GitRepository): Boolean {

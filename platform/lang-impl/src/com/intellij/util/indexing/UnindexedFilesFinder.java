@@ -19,7 +19,7 @@ import com.intellij.psi.search.FileTypeIndex;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.dependencies.FileIndexingStamp;
-import com.intellij.util.indexing.dependencies.IndexingRequestToken;
+import com.intellij.util.indexing.dependencies.ScanningRequestToken;
 import com.intellij.util.indexing.projectFilter.FileAddStatus;
 import com.intellij.util.indexing.projectFilter.ProjectIndexableFilesFilterHolder;
 import org.jetbrains.annotations.Contract;
@@ -34,7 +34,7 @@ import java.util.stream.Collectors;
 
 final class UnindexedFilesFinder {
   private static final Logger LOG = Logger.getInstance(UnindexedFilesFinder.class);
-  private static final boolean TRUST_INDEXING_FLAG = Registry.is("scanning.trust.indexing.flag", false);
+  private static final boolean TRUST_INDEXING_FLAG = Registry.is("scanning.trust.indexing.flag", true);
 
   private final Project myProject;
   private final FileBasedIndexImpl myFileBasedIndex;
@@ -44,7 +44,7 @@ final class UnindexedFilesFinder {
   private final @NotNull ProjectIndexableFilesFilterHolder myIndexableFilesFilterHolder;
   private final boolean myShouldProcessUpToDateFiles;
   private final IndexingReasonExplanationLogger explanationLogger;
-  private final IndexingRequestToken indexingRequest;
+  private final ScanningRequestToken indexingRequest;
 
   private static final class UnindexedFileStatusBuilder {
     boolean shouldIndex = false;
@@ -142,7 +142,7 @@ final class UnindexedFilesFinder {
                        IndexingReasonExplanationLogger explanationLogger,
                        @NotNull FileBasedIndexImpl fileBasedIndex,
                        @Nullable Predicate<? super IndexedFile> forceReindexingTrigger,
-                       @Nullable VirtualFile root, IndexingRequestToken indexingRequest) {
+                       @Nullable VirtualFile root, ScanningRequestToken indexingRequest) {
     this.explanationLogger = explanationLogger;
     myProject = project;
     myFileBasedIndex = fileBasedIndex;
@@ -171,9 +171,6 @@ final class UnindexedFilesFinder {
     FileIndexesValuesApplier.ApplicationMode applicationMode = FileBasedIndexImpl.getContentIndependentIndexesApplicationMode();
 
     if (TRUST_INDEXING_FLAG) {
-      // TODO: we should check shared indexes. For example, if shared indexes are invalidated via clean caches, but VFS is not invalidated,
-      //  all the files indexed by shared indexes will be considered as indexed, but there will be no actual data for them.
-      //  Other possible corner cases should also be analyzed.
       if (IndexingFlag.isFileIndexed(file, indexingStamp)) {
         myIndexableFilesFilterHolder.addFileId(FileBasedIndex.getFileId(file), myProject);
         return new UnindexedFileStatusBuilder(applicationMode).build();
@@ -329,7 +326,7 @@ final class UnindexedFilesFinder {
       final Throwable cause = e.getCause();
       if (cause instanceof IOException || cause instanceof StorageException) {
         LOG.info(e);
-        myFileBasedIndex.requestRebuild(indexId);
+        myFileBasedIndex.requestRebuild(indexId, cause);
       }
       else {
         throw e;
@@ -436,7 +433,7 @@ final class UnindexedFilesFinder {
   private boolean tryIndexWithoutContentViaInfrastructureExtension(IndexedFile fileContent, int inputId, ID<?, ?> indexId) {
     for (FileBasedIndexInfrastructureExtension.FileIndexingStatusProcessor processor : myStateProcessors) {
       if (processor.tryIndexFileWithoutContent(fileContent, inputId, indexId)) {
-        FileBasedIndexImpl.setIndexedState(myFileBasedIndex.getIndex(indexId), fileContent, inputId, true);
+        myFileBasedIndex.getIndex(indexId).setIndexedStateForFile(inputId, fileContent, true);
         if (myFileBasedIndex.doTraceStubUpdates(indexId)) {
           LOG.info("File " + fileContent.getFileName() + " indexed using extension for " + indexId + " without content");
         }

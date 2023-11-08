@@ -30,6 +30,9 @@ class KotlinExpressionNameSuggesterTest : NewLightKotlinCodeInsightFixtureTestCa
     fun testJavaFile() = test("java.io.File(\".\")", "file", "message")
     fun testAnonymousFunction() = test("fun(s: String): Boolean = s.isNotEmpty()", "function", "fn", "f", "message")
     fun testLambda() = test("{ s: String -> s.isNotEmpty() }", "function", "fn", "f", "message")
+    fun testShortUnresolvedCall() = test("E()", "e")
+    fun testShortUnresolvedCallWithPrefixIs() = test("isE()", "e")
+    fun testShortUnresolvedCallWithPrefixGet() = test("getE()", "e")
 
     private fun test(expressionText: String, vararg names: String) {
         val fileText = "fun test() { print<caret>($expressionText) }"

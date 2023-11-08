@@ -11,10 +11,7 @@ import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.ui.GroupedComboBoxRenderer;
-import com.intellij.ui.GroupedElementsRenderer;
-import com.intellij.ui.SimpleColoredComponent;
-import com.intellij.ui.TitledSeparator;
+import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.WizardPopup;
 import com.intellij.util.ui.JBEmptyBorder;
@@ -128,6 +125,16 @@ public class ComboBoxPopup<T> extends ListPopupImpl {
   }
 
   @Override
+  protected @NotNull JComponent createPopupComponent(JComponent content) {
+    final var component = super.createPopupComponent(content);
+    final var renderer = ((MyBasePopupState<?>)myStep).myGetRenderer.get();
+    if (component instanceof JScrollPane scrollPane && isRendererWithInsets(renderer)) {
+      scrollPane.getVerticalScrollBar().setBackground(UIManager.getColor("ComboBox.background"));
+    }
+    return component;
+  }
+
+  @Override
   public JList<T> getList() {
     //noinspection unchecked
     return super.getList();
@@ -139,6 +146,11 @@ public class ComboBoxPopup<T> extends ListPopupImpl {
     // to ensure getComponent().getPreferredSize() is computed
     // correctly. Fixes the sub-popup jump's to the left on mac
     return new MyDelegateRenderer();
+  }
+
+  public static boolean isRendererWithInsets(ListCellRenderer<?> comboRenderer) {
+    return comboRenderer instanceof ExperimentalUI.NewUIComboBoxRenderer
+           || comboRenderer instanceof ComboBoxWithWidePopup<?>.AdjustingListCellRenderer r && r.delegate instanceof ExperimentalUI.NewUIComboBoxRenderer;
   }
 
   private void configurePopup() {
@@ -155,8 +167,7 @@ public class ComboBoxPopup<T> extends ListPopupImpl {
     list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
     final var renderer = ((MyBasePopupState<?>)myStep).myGetRenderer.get();
-    if (renderer instanceof GroupedComboBoxRenderer<?> ||
-        renderer instanceof ComboBoxWithWidePopup<?>.AdjustingListCellRenderer r && r.delegate instanceof GroupedComboBoxRenderer<?>) {
+    if (isRendererWithInsets(renderer)) {
       list.setBorder(JBUI.Borders.empty(PopupUtil.getListInsets(false, false)));
       mySpeedSearch.addChangeListener(x -> {
         list.setBorder(JBUI.Borders.empty(PopupUtil.getListInsets(!mySpeedSearch.getFilter().isBlank(), false)));

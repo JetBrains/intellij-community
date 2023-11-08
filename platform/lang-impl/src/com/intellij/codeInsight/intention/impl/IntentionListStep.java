@@ -56,7 +56,7 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
                            @NotNull CachedIntentions intentions) {
     this(popup, editor, file, project, (IntentionContainer)intentions);
   }
-  
+
   public IntentionListStep(@Nullable IntentionHintComponent.IntentionPopup popup,
                            @Nullable Editor editor,
                            @NotNull PsiFile file,
@@ -146,6 +146,9 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
   @NotNull
   IntentionListStep getSubStep(@NotNull IntentionActionWithTextCaching action, @NlsContexts.PopupTitle String title) {
     ShowIntentionsPass.IntentionsInfo intentions = new ShowIntentionsPass.IntentionsInfo();
+    if (myCachedIntentions instanceof CachedIntentions cachedIntentions) {
+      intentions.setOffset(cachedIntentions.getOffset());
+    }
     for (IntentionAction optionIntention : action.getOptionIntentions()) {
       intentions.intentionsToShow.add(
         new HighlightInfo.IntentionActionDescriptor(optionIntention, null, null, getIcon(optionIntention), null, null, null));

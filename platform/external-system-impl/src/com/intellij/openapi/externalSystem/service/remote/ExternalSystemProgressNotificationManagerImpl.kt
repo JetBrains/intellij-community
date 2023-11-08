@@ -3,7 +3,6 @@ package com.intellij.openapi.externalSystem.service.remote
 
 import com.intellij.execution.rmi.RemoteObject
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
@@ -175,8 +174,7 @@ class ExternalSystemProgressNotificationManagerImpl : RemoteObject(), ExternalSy
 
     @JvmStatic
     fun getInstanceImpl(): ExternalSystemProgressNotificationManagerImpl {
-      val application = ApplicationManager.getApplication()
-      return application.getService(ExternalSystemProgressNotificationManager::class.java) as ExternalSystemProgressNotificationManagerImpl
+      return ExternalSystemProgressNotificationManager.getInstance() as ExternalSystemProgressNotificationManagerImpl
     }
 
     @JvmStatic

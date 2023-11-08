@@ -40,6 +40,7 @@ public final class MavenProjectReader {
     myReadHelper = MavenUtil.createModelReadHelper(project);
   }
 
+  @NotNull
   public MavenProjectReaderResult readProject(MavenGeneralSettings generalSettings,
                                               VirtualFile file,
                                               MavenExplicitProfiles explicitProfiles,
@@ -211,7 +212,7 @@ public final class MavenProjectReader {
     return calculateParentVersion(parentXmlProject, problems, parentFile, isAutomaticVersionFeatureEnabled);
   }
 
-  private void repairModelBody(MavenModel model) {
+  private static void repairModelBody(MavenModel model) {
     MavenBuild build = model.getBuild();
 
     if (isEmptyOrSpaces(build.getFinalName())) {
@@ -231,7 +232,7 @@ public final class MavenProjectReader {
                                  ? "${project.build.directory}/test-classes" : build.getTestOutputDirectory());
   }
 
-  private List<MavenResource> repairResources(List<MavenResource> resources, @NotNull String defaultDir) {
+  private static List<MavenResource> repairResources(List<MavenResource> resources, @NotNull String defaultDir) {
     List<MavenResource> result = new ArrayList<>();
     if (resources.isEmpty()) {
       result.add(createResource(defaultDir));
@@ -245,7 +246,7 @@ public final class MavenProjectReader {
     return result;
   }
 
-  private MavenResource createResource(@NotNull String directory) {
+  private static MavenResource createResource(@NotNull String directory) {
     return new MavenResource(directory, false, null, Collections.emptyList(), Collections.emptyList());
   }
 

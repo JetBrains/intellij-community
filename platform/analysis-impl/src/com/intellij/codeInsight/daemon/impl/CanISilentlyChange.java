@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.ide.scratch.ScratchUtil;
@@ -60,8 +60,7 @@ final class CanISilentlyChange {
     }
   }
 
-  @NotNull
-  static Result thisFile(@NotNull PsiFileSystemItem file) {
+  static @NotNull Result thisFile(@NotNull PsiFileSystemItem file) {
     ThreadingAssertions.assertEventDispatchThread();
     Project project = file.getProject();
     VirtualFile virtualFile = file.getVirtualFile();

@@ -39,6 +39,7 @@ internal class GitSquashLogAction : GitMultipleCommitEditingAction() {
         if (operationResult is GitCommitEditingOperationResult.Complete) {
           operationResult.notifySuccess(
             GitBundle.message("rebase.log.squash.success.notification.title"),
+            null,
             GitBundle.message("rebase.log.squash.undo.progress.title"),
             GitBundle.message("rebase.log.squash.undo.impossible.title"),
             GitBundle.message("rebase.log.squash.undo.failed.title")

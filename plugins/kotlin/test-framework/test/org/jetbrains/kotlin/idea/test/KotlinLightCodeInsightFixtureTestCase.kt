@@ -34,10 +34,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.psi.search.FileTypeIndex
 import com.intellij.psi.search.ProjectScope
-import com.intellij.testFramework.IdeaTestUtil
-import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.testFramework.LoggedErrorProcessor
-import com.intellij.testFramework.RunAll
+import com.intellij.testFramework.*
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
 import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
@@ -67,6 +64,7 @@ import org.jetbrains.kotlin.idea.test.CompilerTestDirectives.JVM_TARGET_DIRECTIV
 import org.jetbrains.kotlin.idea.test.CompilerTestDirectives.KOTLIN_COMPILER_VERSION_DIRECTIVE
 import org.jetbrains.kotlin.idea.test.CompilerTestDirectives.LANGUAGE_VERSION_DIRECTIVE
 import org.jetbrains.kotlin.idea.test.CompilerTestDirectives.PROJECT_LANGUAGE_VERSION_DIRECTIVE
+import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.idea.test.util.slashedPath
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.utils.addIfNotNull
@@ -373,12 +371,12 @@ object CompilerTestDirectives {
 
 fun <T> withCustomCompilerOptions(fileText: String, project: Project, module: Module, body: () -> T): T {
     val removeFacet = !module.hasKotlinFacet()
-    val configured = configureCompilerOptions(fileText, project, module)
+    val configured = runInEdtAndGet { configureCompilerOptions(fileText, project, module) }
     try {
         return body()
     } finally {
         if (configured) {
-            rollbackCompilerOptions(project, module, removeFacet)
+            runInEdtAndWait { rollbackCompilerOptions(project, module, removeFacet) }
         }
     }
 }

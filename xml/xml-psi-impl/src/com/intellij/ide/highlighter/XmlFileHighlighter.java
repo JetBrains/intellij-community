@@ -3,7 +3,7 @@ package com.intellij.ide.highlighter;
 
 import com.intellij.lexer.DtdLexer;
 import com.intellij.lexer.Lexer;
-import com.intellij.lexer.XHtmlHighlightingLexer;
+import com.intellij.lexer.XHtmlLexer;
 import com.intellij.lexer.XmlHighlightingLexer;
 import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.XmlHighlighterColors;
@@ -132,7 +132,7 @@ public class XmlFileHighlighter extends SyntaxHighlighterBase {
     if (myIsDtd) {
       return new DtdLexer(true);
     } else if (myIsXHtml) {
-      return new XHtmlHighlightingLexer();
+      return new XHtmlLexer(true);
     } else {
       return new XmlHighlightingLexer();
     }

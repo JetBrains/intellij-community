@@ -1,7 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.uast.test.common.kotlin
 
 import com.intellij.openapi.project.Project
+import com.intellij.platform.uast.testFramework.env.findElementByText
+import com.intellij.platform.uast.testFramework.env.findElementByTextFromPsi
+import com.intellij.platform.uast.testFramework.env.findUElementByTextFromPsi
 import com.intellij.psi.*
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.testFramework.UsefulTestCase
@@ -23,9 +26,6 @@ import org.jetbrains.kotlin.utils.addToStdlib.cast
 import org.jetbrains.uast.*
 import org.jetbrains.uast.kotlin.KotlinUFile
 import org.jetbrains.uast.kotlin.KotlinUFunctionCallExpression
-import com.intellij.platform.uast.testFramework.env.findElementByText
-import com.intellij.platform.uast.testFramework.env.findElementByTextFromPsi
-import com.intellij.platform.uast.testFramework.env.findUElementByTextFromPsi
 import org.jetbrains.uast.visitor.AbstractUastVisitor
 
 interface UastResolveApiFixtureTestBase : UastPluginSelection {
@@ -509,6 +509,46 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
         TestCase.assertEquals("it", (uCallExpression.receiver as? USimpleNameReferenceExpression)?.identifier)
         // No source for implicit lambda parameter. Expect to be resolved to fake PsiParameter used inside ULambdaExpression
         val resolved = (uCallExpression.receiver?.tryResolve() as? PsiParameter)
+            .orFail("cant resolve implicit lambda parameter")
+        TestCase.assertEquals("it", resolved.name)
+    }
+
+    fun checkResolveImplicitLambdaParameter_binary(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.addClass(
+            """
+                package test.pkg;
+                
+                public class Foo {
+                }
+            """.trimIndent()
+        )
+        myFixture.configureByText(
+            "main.kt", """
+                package test.pkg
+
+                inline fun <T, R> T.use(block: (T) -> R): R {
+                  return block(this)
+                }
+                
+                class Test {
+                  lateinit var x: Foo
+                    private set
+                    
+                  init {
+                    Foo().use {
+                      x = it
+                    }
+                  }
+                }
+            """.trimIndent()
+        )
+
+        val assign = myFixture.file.findUElementByTextFromPsi<UBinaryExpression>("x = it", strict = false)
+            .orFail("cant convert to UBinaryExpression")
+        val ref = assign.rightOperand as USimpleNameReferenceExpression
+        TestCase.assertEquals("it", ref.identifier)
+        // No source for implicit lambda parameter. Expect to be resolved to fake PsiParameter used inside ULambdaExpression
+        val resolved = (ref.resolve() as? PsiParameter)
             .orFail("cant resolve implicit lambda parameter")
         TestCase.assertEquals("it", resolved.name)
     }
@@ -1245,6 +1285,58 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
         }
     }
 
+    fun checkResolveBackingField(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "main.kt", """
+                class Test {
+                  var prop: String = "42"
+                    get() {
+                      return field + "?"
+                    }
+                    set(value) {
+                      field = value + "!"
+                    }
+                }
+            """.trimIndent()
+        )
+
+        myFixture.file.toUElement()!!.accept(BackingFieldResolveVisitor)
+    }
+
+    fun checkResolveBackingFieldInCompanionObject(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "main.kt", """
+                class Test {
+                  companion object {
+                    var prop: String = "42"
+                      get() {
+                        return field + "?"
+                      }
+                      set(value) {
+                        field = value + "!"
+                      }
+                  }
+                }
+            """.trimIndent()
+        )
+
+        myFixture.file.toUElement()!!.accept(BackingFieldResolveVisitor)
+    }
+
+    private object BackingFieldResolveVisitor : AbstractUastVisitor() {
+        override fun visitSimpleNameReferenceExpression(node: USimpleNameReferenceExpression): Boolean {
+            if (node.identifier != "field")
+                return super.visitSimpleNameReferenceExpression(node)
+
+            val resolved = node.resolve()
+            TestCase.assertNotNull(resolved)
+            TestCase.assertEquals("prop", (resolved as PsiField).name)
+            TestCase.assertEquals("Test", resolved.containingClass?.name)
+
+            return super.visitSimpleNameReferenceExpression(node)
+        }
+    }
+
     fun checkResolveStaticImportFromObject(myFixture: JavaCodeInsightTestFixture) {
         myFixture.configureByText(
             "main.kt", """
@@ -1470,7 +1562,7 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
         })
     }
 
-    fun checkCompanionConstantAsVarargAnnotationValue(myFixture: JavaCodeInsightTestFixture, isK2: Boolean = false) {
+    fun checkCompanionConstantAsVarargAnnotationValue(myFixture: JavaCodeInsightTestFixture) {
         myFixture.configureByText(
             "main.kt", """
                 package test.pkg
@@ -1510,13 +1602,150 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
         for (value in varargs.valueArguments) {
             TestCase.assertTrue(value is USimpleNameReferenceExpression)
             val resolved = (value as USimpleNameReferenceExpression).resolve()
-            // TODO(KT-61497): should be resolved
-            TestCase.assertEquals(isK2, resolved == null)
-            if (!isK2) {
-                // TODO(KT-61497): and resolution should point to const properties
-                TestCase.assertEquals(remote.javaPsi, (resolved as PsiField).containingClass)
-            }
+            TestCase.assertEquals(remote.javaPsi, (resolved as PsiField).containingClass)
         }
     }
 
+    fun checkResolveThisExpression(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "main.kt", """
+                class Foo {
+                  fun myMethod() = 42
+                  
+                  fun test() {
+                    this.myMethod()
+                  }
+                }
+                
+                fun Foo.ext() = this.myMethod()
+                
+                val Foo.ext: Int
+                    get() = this.myMethod()
+            """.trimIndent()
+        )
+
+        myFixture.file.toUElement()!!.accept(
+            object : AbstractUastVisitor() {
+                var currentMethod: String? = null
+
+                override fun visitMethod(node: UMethod): Boolean {
+                    currentMethod = node.name
+
+                    return super.visitMethod(node)
+                }
+
+                override fun afterVisitMethod(node: UMethod) {
+                    currentMethod = null
+
+                    super.afterVisitMethod(node)
+                }
+
+                override fun visitThisExpression(node: UThisExpression): Boolean {
+                    val resolved = node.resolve()
+                    TestCase.assertNotNull(resolved)
+
+                    if (currentMethod == "ext" || currentMethod == "getExt") {
+                        TestCase.assertTrue(resolved is PsiParameter)
+                        TestCase.assertEquals("\$this\$ext", (resolved as PsiParameter).name)
+                        TestCase.assertEquals("Foo", resolved.type.canonicalText)
+                    } else {
+                        TestCase.assertTrue(resolved is PsiClass)
+                        TestCase.assertEquals("Foo", (resolved as PsiClass).name)
+                    }
+
+                    return super.visitThisExpression(node)
+                }
+            }
+        )
+    }
+
+    fun checkResolveThisExpressionAsLambdaReceiver(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "main.kt", """
+                package some
+                
+                interface MyCoroutineScope
+                
+                suspend fun <R> coroutineScope(block: MyCoroutineScope.() -> R): R = TODO()
+                
+                class Foo {
+                  val list = listOf(1)
+
+                  fun myMethod() {}
+
+                  fun consumeScope(scope: MyCoroutineScope) {}
+
+                  suspend fun testClassProperty() = coroutineScope outer@{ // this: MyCoroutineScope
+                    list.isEmpty()
+                    this@Foo.list.isEmpty()
+
+                    list.apply { // this: List
+                      this@apply.isEmpty()
+                      this.isEmpty() // same as above, just no label
+
+                      consumeScope(this@outer)
+                    }
+
+                    myMethod()
+                    this@Foo.myMethod()
+
+                    consumeScope(this@outer)
+                    consumeScope(this) // same as above, just no label
+                  }
+                }
+            """.trimIndent()
+        )
+
+        val callables = setOf("TODO", "listOf", "coroutineScope", "isEmpty", "apply", "myMethod", "consumeScope")
+        myFixture.file.toUElement()!!.accept(
+            object : AbstractUastVisitor() {
+                override fun visitCallExpression(node: UCallExpression): Boolean {
+                    val resolved = node.resolve()
+                    TestCase.assertNotNull(resolved)
+                    TestCase.assertTrue(resolved!!.name in callables)
+
+                    return super.visitCallExpression(node)
+                }
+
+                var lastThis: PsiParameter? = null
+
+                override fun visitThisExpression(node: UThisExpression): Boolean {
+                    val resolved = node.resolve()
+                    TestCase.assertNotNull(resolved)
+
+                    val text = node.sourcePsi?.text ?: "not this?"
+                    if (text.contains("@Foo")) {
+                        // this@Foo
+                        TestCase.assertTrue(resolved is PsiClass)
+                        TestCase.assertEquals("Foo", (resolved as PsiClass).name)
+                    } else {
+                        // this@apply, this, this@outer
+                        TestCase.assertTrue(resolved is PsiParameter)
+                        TestCase.assertEquals("<this>", (resolved as PsiParameter).name)
+
+                        when (text) {
+                            "this" -> {
+                                // `this` is deliberately tested always *after* labeled `this`
+                                TestCase.assertEquals(lastThis!!.type.canonicalText, resolved.type.canonicalText)
+                            }
+                            "this@apply" -> {
+                                TestCase.assertEquals(
+                                    "java.util.List<? extends java.lang.Integer>",
+                                    resolved.type.canonicalText
+                                )
+                            }
+                            "this@outer" -> {
+                                TestCase.assertEquals("some.MyCoroutineScope", resolved.type.canonicalText)
+                            }
+                            else -> error("unexpected UThisExpression: $text")
+                        }
+
+                        lastThis = resolved
+                    }
+
+                    return super.visitThisExpression(node)
+                }
+            }
+        )
+    }
 }

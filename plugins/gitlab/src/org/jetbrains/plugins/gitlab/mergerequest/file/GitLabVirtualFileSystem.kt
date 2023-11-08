@@ -11,6 +11,7 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.vcs.editor.ComplexPathVirtualFileSystem
 import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
+import org.jetbrains.plugins.gitlab.util.GitLabRegistry
 
 internal class GitLabVirtualFileSystem : ComplexPathVirtualFileSystem<GitLabVirtualFileSystem.FilePath>(PathSerializer()) {
 
@@ -22,12 +23,20 @@ internal class GitLabVirtualFileSystem : ComplexPathVirtualFileSystem<GitLabVirt
     if (project.locationHash != path.projectHash) return null
 
     return filesCache.getOrPut(path) {
-      if(path.isDiff == true) {
-        GitLabMergeRequestDiffFile(path.sessionId, project, path.repository, path.mrIid)
-      } else {
+      if (path.isDiff == true) {
+        createDiffFile(path, project)
+      }
+      else {
         GitLabMergeRequestTimelineFile(path.sessionId, project, path.repository, path.mrIid)
       }
     }
+  }
+
+  private fun createDiffFile(path: FilePath, project: Project): VirtualFile {
+    if (GitLabRegistry.isCombinedDiffEnabled()) {
+      return GitLabMergeRequestCombinedDiffFile(path.sessionId, project, path.repository, path.mrIid)
+    }
+    return GitLabMergeRequestDiffFile(path.sessionId, project, path.repository, path.mrIid)
   }
 
   fun getPath(sessionId: String,

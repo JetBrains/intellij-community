@@ -1,3 +1,4 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.customize.transferSettings.providers.vscode.parsers
 
 import com.fasterxml.jackson.core.JsonFactory
@@ -14,10 +15,12 @@ import com.intellij.ide.customize.transferSettings.models.Settings
 import com.intellij.ide.customize.transferSettings.providers.vscode.mappings.ThemesMappings
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.registry.Registry
 import com.jetbrains.rd.util.URI
 import java.io.File
 import java.nio.file.Path
 import kotlin.io.path.absolutePathString
+import kotlin.io.path.exists
 
 class StorageParser(private val settings: Settings) {
   private val logger = logger<StorageParser>()
@@ -37,6 +40,12 @@ class StorageParser(private val settings: Settings) {
         projectOpenTimestamp = modifiedTime ?: 0
         buildTimestamp = projectOpenTimestamp
         displayName = path.fileName.toString()
+      }
+
+      if (Registry.`is`("transferSettings.vscode.onlyCargoToml")) {
+        if (!path.resolve("Cargo.toml").exists()) {
+          return null
+        }
       }
 
       return RecentPathInfo(workaroundWindowsIssue(path.absolutePathString()), info)

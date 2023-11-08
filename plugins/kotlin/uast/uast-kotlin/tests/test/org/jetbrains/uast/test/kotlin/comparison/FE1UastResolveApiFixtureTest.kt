@@ -79,6 +79,10 @@ class FE1UastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
         checkResolveImplicitLambdaParameter(myFixture)
     }
 
+    fun testResolveImplicitLambdaParameter_binary() {
+        checkResolveImplicitLambdaParameter_binary(myFixture)
+    }
+
     fun testResolveSyntheticMethod() {
         checkResolveSyntheticMethod(myFixture)
     }
@@ -139,6 +143,14 @@ class FE1UastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
         checkResolveKotlinPropertyAccessor(myFixture)
     }
 
+    fun testResolveBackingField() {
+        checkResolveBackingField(myFixture)
+    }
+
+    fun testResolveBackingFieldInCompanionObject() {
+        checkResolveBackingFieldInCompanionObject(myFixture)
+    }
+
     fun testResolveStaticImportFromObject() {
         checkResolveStaticImportFromObject(myFixture)
     }
@@ -177,5 +189,13 @@ class FE1UastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
 
     fun testCompanionConstantAsVarargAnnotationValue() {
         checkCompanionConstantAsVarargAnnotationValue(myFixture)
+    }
+
+    fun testResolveThisExpression() {
+        checkResolveThisExpression(myFixture)
+    }
+
+    fun testResolveThisExpressionAsLambdaReceiver() {
+        checkResolveThisExpressionAsLambdaReceiver(myFixture)
     }
 }

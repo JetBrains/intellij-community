@@ -54,7 +54,7 @@ class DistributedTestModel private constructor(
         
         private val __RdTestSessionNullableSerializer = RdTestSession.nullable()
         
-        const val serializationHash = -5352657358741472348L
+        const val serializationHash = -1448630240120114754L
         
     }
     override val serializersOwner: ISerializersOwner get() = DistributedTestModel
@@ -105,7 +105,7 @@ data class RdAgentInfo (
     val id: String,
     val launchNumber: Int,
     val agentType: RdAgentType,
-    val productTypeType: RdProductType
+    val productType: RdProductType
 ) : IPrintable {
     //companion
     
@@ -117,15 +117,15 @@ data class RdAgentInfo (
             val id = buffer.readString()
             val launchNumber = buffer.readInt()
             val agentType = buffer.readEnum<RdAgentType>()
-            val productTypeType = buffer.readEnum<RdProductType>()
-            return RdAgentInfo(id, launchNumber, agentType, productTypeType)
+            val productType = buffer.readEnum<RdProductType>()
+            return RdAgentInfo(id, launchNumber, agentType, productType)
         }
         
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: RdAgentInfo)  {
             buffer.writeString(value.id)
             buffer.writeInt(value.launchNumber)
             buffer.writeEnum(value.agentType)
-            buffer.writeEnum(value.productTypeType)
+            buffer.writeEnum(value.productType)
         }
         
         
@@ -144,7 +144,7 @@ data class RdAgentInfo (
         if (id != other.id) return false
         if (launchNumber != other.launchNumber) return false
         if (agentType != other.agentType) return false
-        if (productTypeType != other.productTypeType) return false
+        if (productType != other.productType) return false
         
         return true
     }
@@ -154,7 +154,7 @@ data class RdAgentInfo (
         __r = __r*31 + id.hashCode()
         __r = __r*31 + launchNumber.hashCode()
         __r = __r*31 + agentType.hashCode()
-        __r = __r*31 + productTypeType.hashCode()
+        __r = __r*31 + productType.hashCode()
         return __r
     }
     //pretty print
@@ -164,7 +164,7 @@ data class RdAgentInfo (
             print("id = "); id.print(printer); println()
             print("launchNumber = "); launchNumber.print(printer); println()
             print("agentType = "); agentType.print(printer); println()
-            print("productTypeType = "); productTypeType.print(printer); println()
+            print("productType = "); productType.print(printer); println()
         }
         printer.print(")")
     }

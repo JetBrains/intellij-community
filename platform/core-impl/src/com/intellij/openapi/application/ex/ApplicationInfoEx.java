@@ -16,7 +16,7 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
     return (ApplicationInfoEx)getInstance();
   }
 
-  public abstract Calendar getMajorReleaseBuildDate();
+  public abstract @NotNull Calendar getMajorReleaseBuildDate();
 
   /**
    * Returns a path to an SVG icon of the product.
@@ -87,7 +87,7 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
   public abstract String getFeedbackUrl();
 
   /**
-   * Returns URL to plugins repository without trailing slash.
+   * Returns URL to plugins repository without a trailing slash.
    */
   public abstract @NotNull String getPluginManagerUrl();
 
@@ -100,9 +100,9 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
    */
   @ApiStatus.ScheduledForRemoval
   @Deprecated
-  public abstract String getChannelsListUrl();
+  public abstract String getChannelListUrl();
 
-  public abstract @NotNull String getPluginsDownloadUrl();
+  public abstract @NotNull String getPluginDownloadUrl();
 
   /**
    * @deprecated use {@link com.intellij.ide.plugins.RepositoryHelper#CUSTOM_BUILT_IN_PLUGIN_REPOSITORY_PROPERTY} system property to pass
@@ -153,13 +153,6 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
     String getPatchesUrl();
   }
 
-  /**
-   * @return {@code true} if the specified plugin is an essential part of the IDE, so it cannot be disabled and isn't shown in <em>Settings | Plugins</em>.
-   */
-  public abstract boolean isEssentialPlugin(@NotNull String pluginId);
-
-  public abstract boolean isEssentialPlugin(@NotNull PluginId pluginId);
-
   public abstract String getSubscriptionFormId();
 
   public abstract boolean areSubscriptionTipsAvailable();
@@ -173,7 +166,7 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
 
   public abstract @NotNull BuildNumber getApiVersionAsNumber();
 
-  public abstract @NotNull List<PluginId> getEssentialPluginsIds();
+  public abstract @NotNull List<PluginId> getEssentialPluginIds();
 
   public abstract @Nullable String getDefaultLightLaf();
 

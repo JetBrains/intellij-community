@@ -3,7 +3,8 @@ package org.intellij.plugins.markdown.fileActions
 
 import com.intellij.ide.util.DirectoryUtil
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.command.CommandProcessor
+import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.command.executeCommand
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.fileChooser.impl.FileChooserUtil
 import com.intellij.openapi.project.Project
@@ -24,6 +25,7 @@ import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.layout.ValidationInfoBuilder
+import com.intellij.util.IncorrectOperationException
 import com.intellij.util.PathUtilRt
 import com.intellij.util.ui.JBUI
 import org.intellij.plugins.markdown.MarkdownBundle
@@ -93,7 +95,10 @@ internal abstract class MarkdownFileActionsBaseDialog(
       writeFile(fileUrl, targetDirPath)
     }
 
-    FileChooserUtil.setLastOpenedFile(project, srcDirectory.virtualFile.toNioPath())
+    val path = srcDirectory.virtualFile.fileSystem.getNioPath(srcDirectory.virtualFile)
+    if (path != null) {
+      FileChooserUtil.setLastOpenedFile(project, path)
+    }
     RecentsManager.getInstance(project).registerRecentEntry(RECENT_KEYS, targetDirPath)
     super.doOKAction()
   }
@@ -103,12 +108,21 @@ internal abstract class MarkdownFileActionsBaseDialog(
   protected abstract fun getFileNameIfExist(dir: String, fileNameWithoutExtension: String): String?
 
   private fun createDirIfNotExist(dirPath: String) {
-    CommandProcessor.getInstance().executeCommand(project, {
-      ApplicationManager.getApplication().runWriteAction {
-        val path = FileUtil.toSystemIndependentName(dirPath)
-        DirectoryUtil.mkdirs(PsiManager.getInstance(project), path)
+    var targetDirectory: PsiDirectory? = null
+    executeCommand(project, MarkdownBundle.message("markdown.import.export.dialog.create.directory"), null) {
+      runWriteAction {
+        try {
+          val path = FileUtil.toSystemIndependentName(dirPath)
+          targetDirectory = DirectoryUtil.mkdirs(PsiManager.getInstance(project), path)
+        }
+        catch (ignored: IncorrectOperationException) {
+        }
       }
-    }, MarkdownBundle.message("markdown.import.export.dialog.create.directory"), null)
+    }
+
+    if (targetDirectory == null) {
+      error(RefactoringBundle.message("cannot.create.directory"))
+    }
   }
 
   private fun createTargetDirField() {
@@ -119,7 +133,12 @@ internal abstract class MarkdownFileActionsBaseDialog(
       if (resDirRecent != null) {
         childComponent.history = resDirRecent
       }
-      childComponent.text = File(suggestedFilePath).parent
+
+      val suggestedDir = file.parent.path
+      if (resDirRecent == null && childComponent.history.isEmpty()) {
+        childComponent.history = listOf(suggestedDir)
+      }
+      childComponent.text = suggestedDir
 
       addBrowseFolderListener(
         MarkdownBundle.message("markdown.import.export.dialog.target.directory"),

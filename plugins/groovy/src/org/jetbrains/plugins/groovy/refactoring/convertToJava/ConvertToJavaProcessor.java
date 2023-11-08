@@ -85,7 +85,7 @@ public class ConvertToJavaProcessor extends BaseRefactoringProcessor {
       PsiElement newFile;
       try {
         String filePathBeforeConvert = file.getVirtualFile().getPath();
-        RenameTrackingKt.setPathBeforeGroovyToJavaConversion(file.getVirtualFile(), filePathBeforeConvert);
+        file.getVirtualFile().putUserData(RenameTrackingKt.getPathBeforeGroovyToJavaConversion(), filePathBeforeConvert);
 
         newFile = file.setName(fileName);
       }

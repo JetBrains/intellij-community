@@ -8,11 +8,13 @@ import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.ParentAwareTokenSet;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class PairedBraceAndAnglesMatcher extends PairedBraceMatcherAdapter {
   private final TokenSet myTokenSetAllowedInsideAngleBrackets;
+  private final ParentAwareTokenSet myBasicTokenSetAllowedInsideAngleBrackets;
   private final LanguageFileType myFileType;
 
   public PairedBraceAndAnglesMatcher(@NotNull PairedBraceMatcher matcher,
@@ -21,6 +23,17 @@ public abstract class PairedBraceAndAnglesMatcher extends PairedBraceMatcherAdap
                                      @NotNull TokenSet tokenSetAllowedInsideAngleBrackets) {
     super(matcher, language);
     myTokenSetAllowedInsideAngleBrackets = tokenSetAllowedInsideAngleBrackets;
+    myBasicTokenSetAllowedInsideAngleBrackets = null;
+    myFileType = fileType;
+  }
+
+  public PairedBraceAndAnglesMatcher(@NotNull PairedBraceMatcher matcher,
+                                     @NotNull Language language,
+                                     @NotNull LanguageFileType fileType,
+                                     @NotNull ParentAwareTokenSet basicTokenSetAllowedInsideAngleBrackets) {
+    super(matcher, language);
+    myTokenSetAllowedInsideAngleBrackets = null;
+    myBasicTokenSetAllowedInsideAngleBrackets = basicTokenSetAllowedInsideAngleBrackets;
     myFileType = fileType;
   }
 
@@ -75,7 +88,9 @@ public abstract class PairedBraceAndAnglesMatcher extends PairedBraceMatcherAdap
           continue;
         }
 
-        if (!myTokenSetAllowedInsideAngleBrackets.contains(tokenType)) {
+        if (
+          (myTokenSetAllowedInsideAngleBrackets == null || !myTokenSetAllowedInsideAngleBrackets.contains(tokenType)) &&
+          (myBasicTokenSetAllowedInsideAngleBrackets == null || !myBasicTokenSetAllowedInsideAngleBrackets.contains(tokenType))) {
           return false;
         }
       }

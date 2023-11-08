@@ -61,7 +61,7 @@ class GitPullDialog(private val project: Project,
 
   val selectedOptions = mutableSetOf<GitPullOption>()
 
-  private val fetchSupport = project.service<GitFetchSupport>()
+  private val fetchSupport = GitFetchSupport.fetchSupport(project)
 
   private val pullSettings = project.service<GitPullSettings>()
 

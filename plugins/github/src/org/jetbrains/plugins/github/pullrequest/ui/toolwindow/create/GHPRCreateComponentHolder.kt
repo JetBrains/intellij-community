@@ -19,7 +19,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vcs.changes.Change
-import com.intellij.openapi.vcs.changes.EditorTabDiffPreviewManager.Companion.EDITOR_TAB_DIFF_PREVIEW
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer
 import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain
 import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain.Producer
@@ -42,15 +41,13 @@ import kotlinx.coroutines.flow.map
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.i18n.GithubBundle
-import org.jetbrains.plugins.github.pullrequest.GHPRCombinedDiffPreviewBase.Companion.createAndSetupDiffPreview
-import org.jetbrains.plugins.github.pullrequest.GHPRDiffPreview
-import org.jetbrains.plugins.github.pullrequest.GHPRToolWindowProjectViewModel
 import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.pullrequest.ui.*
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRDiffController
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRViewTabsFactory
+import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.model.GHPRToolWindowProjectViewModel
 import org.jetbrains.plugins.github.ui.util.DisableableDocument
 import org.jetbrains.plugins.github.util.ChangeDiffRequestProducerFactory
 import org.jetbrains.plugins.github.util.DiffRequestChainProducer
@@ -241,11 +238,8 @@ internal class GHPRCreateComponentHolder(private val actionManager: ActionManage
                                 emptyTextText: @Nls String): JComponent {
     val tree = CodeReviewChangesTreeFactory(project, model).create(emptyTextText)
 
-    val diffPreviewHolder = createAndSetupDiffPreview(tree, GHPRDiffPreview(null, dataContext.filesManager))
-
     DataManager.registerDataProvider(parentPanel) { dataId ->
       when {
-        EDITOR_TAB_DIFF_PREVIEW.`is`(dataId) -> diffPreviewHolder.activePreview
         tree.isShowing -> tree.getData(dataId)
         else -> null
       }

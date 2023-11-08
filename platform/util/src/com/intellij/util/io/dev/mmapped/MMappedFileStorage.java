@@ -3,24 +3,33 @@ package com.intellij.util.io.dev.mmapped;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diagnostic.ThrottledLogger;
+import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.ReflectionUtil;
+import com.intellij.util.io.CleanableStorage;
 import com.intellij.util.io.ClosedStorageException;
 import com.intellij.util.io.IOUtil;
+import com.intellij.util.io.Unmappable;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
+import static com.intellij.util.SystemProperties.getBooleanProperty;
 import static com.intellij.util.SystemProperties.getIntProperty;
 import static java.nio.ByteOrder.nativeOrder;
 import static java.nio.channels.FileChannel.MapMode.READ_WRITE;
@@ -34,33 +43,69 @@ import static java.util.concurrent.TimeUnit.NANOSECONDS;
  * {@link com.intellij.openapi.vfs.newvfs.persistent.mapped.MappedFileStorageHelper} or {@link com.intellij.openapi.vfs.newvfs.persistent.dev.FastFileAttributes}
  */
 @ApiStatus.Internal
-public final class MMappedFileStorage implements Closeable {
+public final class MMappedFileStorage implements Closeable, Unmappable, CleanableStorage {
   private static final Logger LOG = Logger.getInstance(MMappedFileStorage.class);
   private static final ThrottledLogger THROTTLED_LOG = new ThrottledLogger(LOG, 1000);
 
-  //RC: do we need method like 'unmap', which forcibly unmaps pages, or it is enough to rely on JVM which will
-  //    unmap pages eventually, as they are collected by GC?
-  //    Forcible unmap allows to 'clean after yourself', but carries a risk of JVM crash if somebody still tries
-  //    to access unmapped pages.
-  //    So far, my take is: in regular use, it is better to let JVM unmap pages, and not carry the risk of JVM
-  //    crash after too eager unmapping. There is no clear benefits for explicit (eager) unmap, that outweigh
-  //    risk of JVM crash.
-  //MAYBE: but we _could_ provide 'unmap' as a dedicated method, not as a part of .close() -- so it
-  //    could be used in e.g. tests, and in other cases there we could 100% guarantee no usages anymore,
-  //    and we're ready to take risk of JVM crash if we're wrong.
+  /**
+   * Use fsync() on .flush() by default? <br/>
+   * Under normal conditions, there is no need to issue .fsync() on mapped storages -- OS is responsible
+   * for page flushing even if an app crashes.<br/>
+   * The only reason for doing .fsync() is to prevent data loss on OS crash/power outage, which is
+   * a) quite rare cases
+   * b) I doubt our persistent data structures really <i>could</i> provide reliability in such cases anyway
+   * -- so the flag is false by default.<br/>
+   * The flag seems quite generic, so made public, for all memory-mapped storages to refer.
+   */
+  public static final boolean FSYNC_ON_FLUSH_BY_DEFAULT = getBooleanProperty("MMappedFileStorage.FSYNC_BY_DEFAULT_ON_FLUSH", false);
 
+
+  //Explicit 'unmap' vs rely on JVM which will unmap pages eventually, as they are collected by GC?
+  //  Explicit unmap allows to 'clean after yourself', but carries a risk of JVM crash if somebody still tries
+  //  to access unmapped pages.
+  //  Current take:
+  //  1) .close() by default rely on GC
+  //  2) .close(unmap=true) method closes AND unmap explicitly if needed (synonym: .closeAndUnsafelyUnmap())
+  //  3) .closeAndClean() method always unmaps buffers explicitly, since on Windows it is impossible to delete
+  //     (=clean) the files that are currently mapped, and GC is proved unreliable for that task.
+
+  /** 'always', 'never', 'on-windows' */
+  private static final String UNMAP_ON_CLOSE_KIND = System.getProperty("MMappedFileStorage.UNMAP_ON_CLOSE", "never");
+  private static final boolean UNMAP_ON_CLOSE = "always".equals(UNMAP_ON_CLOSE_KIND)
+                                                || ("on-windows".equals(UNMAP_ON_CLOSE_KIND) && SystemInfoRt.isWindows);
+
+  /**
+   * What if memory mapped buffer is impossible to unmap (by any reason: can't access Unsafe, bad luck, etc)?
+   * True: throw an exception
+   * False: log warning, and continue (i.e. rely on GC to unmap the buffer eventually)
+   */
+  private static final boolean FAIL_ON_FAILED_UNMAP = getBooleanProperty("idea.fs.fail-if-unmap-failed", true);
+
+  /** Log each unmapped buffer */
+  private static final boolean LOG_UNMAP_OPERATIONS = getBooleanProperty("MMappedFileStorage.LOG_UNMAP_OPERATIONS", false);
+
+
+  //============== statistics/monitoring: ===================================================================
 
   //Keep track of mapped buffers allocated & their total size, numbers are reported to OTel.Metrics.
-  //Why: mapped buffers are limited resources (~4096 per app by default), so it is worth to monitor
+  //Why: mapped buffers are limited resources (~16k on linux by default?), so it is worth to monitor
   //     how we use them, and issue the alarm early on as we start to use too many
-  private static final AtomicInteger storages = new AtomicInteger();
+
+  /** Log warn if > PAGES_TO_WARN_THRESHOLD pages were mapped */
+  private static final int PAGES_TO_WARN_THRESHOLD = getIntProperty("vfs.memory-mapped-storage.pages-to-warn-threshold", 256);
+
+  private static volatile int openedStoragesCount = 0;
   private static final AtomicInteger totalPagesMapped = new AtomicInteger();
   private static final AtomicLong totalBytesMapped = new AtomicLong();
   /** total time (nanos) spent inside {@link Page#map(FileChannel, int)} call */
   private static final AtomicLong totalTimeForPageMapNs = new AtomicLong();
 
-  /** Log warn if > PAGES_TO_WARN_THRESHOLD pages were mapped */
-  private static final int PAGES_TO_WARN_THRESHOLD = getIntProperty("vfs.memory-mapped-storage.pages-to-warn-threshold", 256);
+  /** Track opened storages to prevent open the same file more than once: Map[absolutePath -> storage] */
+  //@GuardedBy(openedStorages)
+  private static final Map<Path, MMappedFileStorage> openedStorages = new HashMap<>();
+
+  //=========================================================================================================
+
 
   private final Path storagePath;
 
@@ -97,19 +142,67 @@ public final class MMappedFileStorage implements Closeable {
     pageSizeMask = pageSize - 1;
     this.pageSize = pageSize;
 
-    this.storagePath = path;
+    Path absolutePath = path.toAbsolutePath();
+    this.storagePath = absolutePath;
 
-    channel = FileChannel.open(storagePath, READ, WRITE, CREATE);
+    synchronized (openedStorages) {
+      MMappedFileStorage alreadyExistingStorage = openedStorages.get(absolutePath);
+      if (alreadyExistingStorage != null) {
+        throw new IllegalStateException("Storage[" + absolutePath + "] is already opened (and not yet closed)" +
+                                        " -- can't open same file more than once");
+      }
 
-    //map initial pages:
-    pages = new Page[pagesCountToMapInitially];
-    for (int i = 0; i < pagesCountToMapInitially; i++) {
-      pageByIndex(i);
+      channel = FileChannel.open(storagePath, READ, WRITE, CREATE);
+
+      //map initial pages:
+      pages = new Page[pagesCountToMapInitially];
+      for (int i = 0; i < pagesCountToMapInitially; i++) {
+        pageByIndex(i);
+      }
+
+      openedStorages.put(absolutePath, this);
+      //noinspection AssignmentToStaticFieldFromInstanceMethod
+      openedStoragesCount++;
     }
-
-    storages.incrementAndGet();
   }
 
+  public Path storagePath() {
+    return storagePath;
+  }
+
+  public int pageSize() {
+    return pageSize;
+  }
+
+  public ByteOrder byteOrder() {
+    return nativeOrder();
+  }
+
+  public boolean isOpen() {
+    return channel.isOpen();
+  }
+
+  /**
+   * @return current file size. Returned size is always N*pageSize
+   * </p>
+   * <b>BEWARE</b>: file pages are mapped <i>lazily</i>, hence if file size = N*pageSize -- it does NOT mean there
+   * are N {@link Page}s currently mapped into memory -- it could be only pages #0, 5, 8, N-1 are mapped, but
+   * pages in between those were never requested, hence not mapped (yet?).
+   */
+  public long actualFileSize() throws IOException {
+    synchronized (pagesLock) {
+      //RC: Lock the pages to prevent file expansion (file expansion also acquires .pagesLock, see .pageByOffset())
+      //    If file is expanded concurrently with this method, we could see not-pageSize-aligned file size,
+      //    which is confusing to deal with.
+      //    Better to just prohibit such cases: file expansion (=new page allocation) is a relatively rare
+      //    event, so this lock is mostly uncontended, so the cost is negligible.
+      long channelSize = channel.size();
+      if ((channelSize & pageSizeMask) != 0) {
+        throw new AssertionError("Bug: [" + storagePath + "].channelSize(=" + channelSize + ") is not pageSize(=" + pageSize + ")-aligned");
+      }
+      return channelSize;
+    }
+  }
 
   public @NotNull Page pageByOffset(long offsetInFile) throws IOException {
     int pageIndex = pageIndexByOffset(offsetInFile);
@@ -133,41 +226,27 @@ public final class MMappedFileStorage implements Closeable {
     return page;
   }
 
-  private Page pageByIndexLocked(int pageIndex) throws IOException {
+  /**
+   * Truncates the file so that it has size=0, and all previous content is lost.
+   * This method is unsafe and should be used with caution: it should be no chance storage is used by other
+   * threads concurrently, nobody should keep any {@link Page} reference. This is because writing to a buffer
+   * mapped over a non-existing file region (e.g. after truncation) is 'undefined behavior', and could lead
+   * to all sorts of weird behaviors -- immediate/delayed JVM crash (#SIGBUS), immediate/delayed data loss, etc.
+   * <p/>
+   * Basically, the main safe use-case for this method is to call it immediately after the storage instance
+   * is opened -- and no reference to it is ever leaked. E.g., one opens the file, reads the header, and
+   * finds out file content is corrupted -- so .truncate() the storage, and use as-if it was a new file
+   * just created.
+   *
+   * @deprecated to be removed: it doesn't work on Windows, but Windows was the main reason to introduce
+   * the method in the first place, so better get rid of it before it got more usages.
+   */
+  @ApiStatus.Obsolete
+  public void truncate() throws IOException {
     synchronized (pagesLock) {
-      if (!channel.isOpen()) {
-        throw new ClosedStorageException("Storage already closed");
-      }
-      if (pageIndex >= pages.length) {
-        pages = Arrays.copyOf(pages, pageIndex + 1);
-      }
-      Page page = pages[pageIndex];
-
-      if (page == null) {
-        page = new Page(pageIndex, channel, pageSize, byteOrder());
-        pages[pageIndex] = page;
-
-        registerMappedPage(pageSize);
-      }
-      return page;
+      channel.truncate(0L);
+      pages = new Page[0];
     }
-  }
-
-  //TODO RC:
-  //public void trancate() throws IOException {
-  //  synchronized (pagesLock) {
-  //    channel.truncate(0L);
-  //    pages = new Page[0];
-  //  }
-  //}
-
-
-  private static @Nullable Page pageOrNull(Page[] pages,
-                                           int pageIndex) {
-    if (0 <= pageIndex && pageIndex < pages.length) {
-      return pages[pageIndex];
-    }
-    return null;
   }
 
   public int pageIndexByOffset(long offsetInFile) {
@@ -183,23 +262,23 @@ public final class MMappedFileStorage implements Closeable {
 
   @Override
   public void close() throws IOException {
-    synchronized (pagesLock) {
-      if (channel.isOpen()) {
-        channel.close();
-        for (Page page : pages) {
-          if (page != null) {
-            unregisterMappedPage(pageSize);
-          }
-        }
-        //actual buffer unmap()-ing is done later, by GC
-        // let's not delay it by keeping references:
-        Arrays.fill(pages, null);
-
-        storages.decrementAndGet();
-      }
-    }
+    close( /*unmap: */ UNMAP_ON_CLOSE);
   }
 
+  /**
+   * Close the storage, and unmap all the pages mapped.
+   * BEWARE: explicit buffer unmapping is unsafe, since any use of mapped buffer after unmapping leads to a
+   * JVM crash. Because of that, this method is inherently risky.
+   * 'Safe' use of this method requires all the uses of this storage to be stopped beforehand -- ideally, it
+   * should be no reference to any Page alive/in use by any thread, i.e., no chance any thread accesses any Page
+   * of this storage after _starting_ the invocation of this method.
+   * Generally, it is much safer to call {@link #close()} without unmap -- in which case JVM/GC is responsible to
+   * keep buffers mapped until at least someone uses them.
+   */
+  @Override
+  public void closeAndUnsafelyUnmap() throws IOException {
+    close( /*unmap: */ true);
+  }
 
   public void fsync() throws IOException {
     if (channel.isOpen()) {
@@ -207,16 +286,11 @@ public final class MMappedFileStorage implements Closeable {
     }
   }
 
-  public Path storagePath() {
-    return storagePath;
-  }
-
-  public int pageSize() {
-    return pageSize;
-  }
-
-  public boolean isOpen() {
-    return channel.isOpen();
+  @Override
+  public void closeAndClean() throws IOException {
+    //on Windows it is impossible to delete the file without unmapping it first, so take the risk:
+    closeAndUnsafelyUnmap();
+    FileUtil.delete(storagePath);
   }
 
   /**
@@ -253,6 +327,10 @@ public final class MMappedFileStorage implements Closeable {
     }
   }
 
+  /**
+   * Fills with zeroes a region starting with startOffsetInFile (inclusive) and until the end-of-file.
+   * If startOffsetInFile is beyond EOF -- do nothing
+   */
   public void zeroizeTillEOF(long startOffsetInFile) throws IOException {
     long actualFileSize = actualFileSize();
     if (actualFileSize == 0) {
@@ -261,38 +339,90 @@ public final class MMappedFileStorage implements Closeable {
     zeroizeRegion(startOffsetInFile, actualFileSize - 1);
   }
 
-  /**
-   * @return current file size. Returned size is always N*pageSize
-   * </p>
-   * <b>BEWARE</b>: file pages are mapped <i>lazily</i>, hence if file size = N*pageSize -- it does NOT mean there
-   * are N {@link Page}s currently mapped into memory -- it could be only pages #0, 5, 8, N-1 are mapped, but
-   * pages in between those were never requested, hence not mapped (yet?).
-   */
-  public long actualFileSize() throws IOException {
-    synchronized (pagesLock) {
-      //RC: Lock the pages to prevent file expansion (file expansion also acquires .pagesLock, see .pageByOffset())
-      //    If file is expanded concurrently with this method, we could see not-pageSize-aligned file size,
-      //    which is confusing to deal with.
-      //    Better to just prohibit such cases: file expansion (=new page allocation) is a relatively rare
-      //    event, so this lock is mostly uncontended, so the cost is negligible.
-      long channelSize = channel.size();
-      if ((channelSize & pageSizeMask) != 0) {
-        throw new AssertionError("Bug: channelSize(=" + channelSize + ") is not pageSize(=" + pageSize + ")-aligned");
-      }
-      return channelSize;
-    }
-  }
-
-  public ByteOrder byteOrder() {
-    return nativeOrder();
-  }
-
   @Override
   public String toString() {
     return "MMappedFileStorage[" + storagePath + "]" +
-           "[pageSize: " + pageSize +
-           ", pages: " + pages.length +
-           ']';
+           "[" + pages.length + " pages of " + pageSize + "b]";
+  }
+
+  private void close(boolean unmap) throws IOException {
+    try {
+      synchronized (pagesLock) {
+        if (channel.isOpen()) {
+          channel.close();
+          for (Page page : pages) {
+            if (page != null) {
+              unregisterMappedPage(pageSize);
+            }
+          }
+        }
+
+        if (unmap) {
+          try {
+            for (Page page : pages) {
+              if (page != null) {
+                page.unmap();
+              }
+            }
+          }
+          finally {
+            //Tradeoff: we can _always_ clean the .pages array, regardless of unmap or not -- then .close(unmap:false)
+            // benefits from faster page unmapping by GC (it is quite often storage itself is still strongly-reachable
+            // after the .close() => without nulling the .pages pageBuffers also remain strongly-reachable => not
+            // unmapped)
+            // But this way we lose the ability to ask storage explicitly unmap pages _after_ the .close() -- because
+            // .pages is already cleared, nothing to unmap.
+            // This close-then-unmap is really frequent scenario: it is quite often storage is .close()-ed during
+            // some regular resource-deallocation-procedure, but in the very end we want to _delete_ the storage
+            // file, hence we need to explicitly unmap it beforehand -- which we can't do if page refs were already
+            // cleared during regular .close()
+            // So I chose to lean the other side, and do NOT clear page refs on close(unmap:false), so later
+            // .close(unmap:true) if called -- could still unmap them. But this means that without explicit
+            // .close(unmap:true) mapped buffers will remain mapped for longer, even after storage was already
+            // .close()-ed.
+            Arrays.fill(pages, null);
+          }
+        }
+      }
+    }
+    finally {
+      synchronized (openedStorages) {
+        MMappedFileStorage removed = openedStorages.get(storagePath);
+        if (removed == this) {
+          openedStorages.remove(storagePath);
+          //noinspection AssignmentToStaticFieldFromInstanceMethod
+          openedStoragesCount--;
+        }
+      }
+    }
+  }
+
+  private Page pageByIndexLocked(int pageIndex) throws IOException {
+    synchronized (pagesLock) {
+      if (!channel.isOpen()) {
+        throw new ClosedStorageException("Storage already closed");
+      }
+      if (pageIndex >= pages.length) {
+        pages = Arrays.copyOf(pages, pageIndex + 1);
+      }
+      Page page = pages[pageIndex];
+
+      if (page == null) {
+        page = new Page(pageIndex, channel, pageSize, byteOrder());
+        pages[pageIndex] = page;
+
+        registerMappedPage(pageSize);
+      }
+      return page;
+    }
+  }
+
+  private static @Nullable Page pageOrNull(Page[] pages,
+                                           int pageIndex) {
+    if (0 <= pageIndex && pageIndex < pages.length) {
+      return pages[pageIndex];
+    }
+    return null;
   }
 
   public static final class Page {
@@ -308,8 +438,7 @@ public final class MMappedFileStorage implements Closeable {
       this.pageIndex = pageIndex;
       this.pageSize = pageSize;
       this.offsetInFile = pageIndex * (long)pageSize;
-      this.pageBuffer = map(channel, pageSize);
-      pageBuffer.order(byteOrder);
+      this.pageBuffer = map(channel, pageSize).order(byteOrder);
     }
 
     private MappedByteBuffer map(FileChannel channel,
@@ -330,6 +459,20 @@ public final class MMappedFileStorage implements Closeable {
       }
     }
 
+    private void unmap() throws IOException {
+      try {
+        unmapBuffer(pageBuffer);
+      }
+      catch (Throwable t) {
+        if (FAIL_ON_FAILED_UNMAP) {
+          throw new IOException("Can't unmap pageBuffer", t);
+        }
+        else {
+          THROTTLED_LOG.warn("Can't unmap pageBuffer explicitly -- rely on GC to do it eventually", t);
+        }
+      }
+    }
+
     public ByteBuffer rawPageBuffer() {
       return pageBuffer;
     }
@@ -346,12 +489,43 @@ public final class MMappedFileStorage implements Closeable {
     public String toString() {
       return "Page[#" + pageIndex + "][offset: " + offsetInFile + ", length: " + pageBuffer.capacity() + " b)";
     }
+
+
+    public static void unmapBuffer(@NotNull ByteBuffer buffer) throws Exception {
+      if (!buffer.isDirect()) {
+        return;
+      }
+      if (INVOKE_CLEANER_METHOD == null) {
+        throw new IllegalStateException("No access to Unsafe.invokeCleaner() -- explicit mapped buffers unmapping is unavailable");
+      }
+
+      INVOKE_CLEANER_METHOD.invoke(ReflectionUtil.getUnsafe(), buffer);
+      if (LOG_UNMAP_OPERATIONS) {
+        LOG.info("Buffer unmapped: " + buffer);
+      }
+    }
+
+    private static final Method INVOKE_CLEANER_METHOD;
+
+    static {
+      Method cleanerMethod;
+      try {
+        Object unsafe = ReflectionUtil.getUnsafe();
+        Class<?> unsafeClass = unsafe.getClass();
+        cleanerMethod = ReflectionUtil.getDeclaredMethod(unsafeClass, "invokeCleaner", ByteBuffer.class);
+      }
+      catch (Throwable t) {
+        LOG.error("Can't get access to Unsafe.invokeCleaner() -- explicit mapped buffers unmapping will be unavailable", t);
+        cleanerMethod = null;
+      }
+      INVOKE_CLEANER_METHOD = cleanerMethod;
+    }
   }
 
   // ============ statistics accessors ======================================================================
 
-  public static int storages() {
-    return storages.get();
+  public static int openedStoragesCount() {
+    return openedStoragesCount;
   }
 
   public static int totalPagesMapped() {
@@ -375,7 +549,7 @@ public final class MMappedFileStorage implements Closeable {
 
     if (pagesMapped > PAGES_TO_WARN_THRESHOLD) {
       THROTTLED_LOG.warn("Too many pages were mapped: " + pagesMapped + " > " + PAGES_TO_WARN_THRESHOLD + " threshold. " +
-                         "Total mapped size: " + totalBytesMapped.get() + " bytes, storages: " + storages.get());
+                         "Total mapped size: " + totalBytesMapped.get() + " bytes, storages: " + openedStoragesCount);
     }
   }
 

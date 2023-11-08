@@ -3,6 +3,8 @@ package org.jetbrains.plugins.gitlab.mergerequest.data
 
 import com.intellij.collaboration.ui.codereview.details.data.ReviewRequestState
 import com.intellij.openapi.util.NlsSafe
+import git4idea.remote.hosting.HostedGitRepositoryRemote
+import org.jetbrains.plugins.gitlab.api.GitLabServerPath
 import org.jetbrains.plugins.gitlab.api.dto.*
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestDTO
 import java.util.*
@@ -29,7 +31,7 @@ data class GitLabMergeRequestFullDetails(
   val isApproved: Boolean,
   val conflicts: Boolean,
   val commits: List<GitLabCommit>,
-  val diffRefs: GitLabDiffRefs,
+  val diffRefs: GitLabDiffRefs?,
   val headPipeline: GitLabPipelineDTO?,
   val userPermissions: GitLabMergeRequestPermissionsDTO,
   val shouldBeRebased: Boolean,
@@ -84,3 +86,14 @@ val GitLabMergeRequestFullDetails.reviewState: ReviewRequestState
       GitLabMergeRequestState.OPENED -> ReviewRequestState.OPENED
       else -> ReviewRequestState.OPENED // to avoid null state
     }
+
+fun GitLabMergeRequestFullDetails.getRemoteDescriptor(server: GitLabServerPath): HostedGitRepositoryRemote? =
+  sourceProject?.let {
+    HostedGitRepositoryRemote(
+      it.ownerPath,
+      server.toURI(),
+      it.path,
+      it.httpUrlToRepo,
+      it.sshUrlToRepo
+    )
+  }

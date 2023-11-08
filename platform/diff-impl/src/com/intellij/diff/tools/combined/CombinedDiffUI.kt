@@ -2,7 +2,6 @@
 package com.intellij.diff.tools.combined
 
 import com.intellij.openapi.editor.colors.EditorColorsManager
-import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.JBColor
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
@@ -10,9 +9,8 @@ import java.awt.Color
 import java.awt.Insets
 
 internal object CombinedDiffUI {
-  val MAIN_HEADER_BACKGROUND: Color = JBColor.lazy {
-    if (ExperimentalUI.isNewUI()) JBUI.CurrentTheme.EditorTabs.background() else UIUtil.getPanelBackground()
-  }
+  val MAIN_HEADER_BACKGROUND: Color
+    get() = UIUtil.getPanelBackground()
 
   val MAIN_HEADER_INSETS: Insets
     get() = JBUI.CurrentTheme.VersionControl.CombinedDiff.mainToolbarInsets()
@@ -32,4 +30,13 @@ internal object CombinedDiffUI {
   }
 
   val LOADING_BLOCK_PROGRESS_DELAY = 200
+
+  val GAP_BETWEEN_BLOCKS: Int
+    get() = JBUI.CurrentTheme.VersionControl.CombinedDiff.gapBetweenBlocks()
+
+  val LEFT_RIGHT_INSET: Int
+    get() = JBUI.CurrentTheme.VersionControl.CombinedDiff.leftRightBlockInset()
+
+  val BLOCK_ARC: Int
+    get() = 12
 }

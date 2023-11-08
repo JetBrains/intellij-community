@@ -426,6 +426,7 @@ public class PsiTreeUtil {
     return result;
   }
 
+  @Contract("null, _ -> null")
   public static @Nullable <T extends PsiElement> T getStubChildOfType(@Nullable PsiElement element, @NotNull Class<T> aClass) {
     if (element == null) return null;
 

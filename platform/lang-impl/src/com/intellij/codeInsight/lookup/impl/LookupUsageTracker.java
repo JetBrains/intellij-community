@@ -15,6 +15,7 @@ import com.intellij.internal.statistic.eventLog.events.*;
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.lang.Language;
+import com.intellij.openapi.editor.EditorKind;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
@@ -33,9 +34,10 @@ import static com.intellij.codeInsight.lookup.impl.LookupTypedHandler.CANCELLATI
 public final class LookupUsageTracker extends CounterUsagesCollector {
   public static final String FINISHED_EVENT_ID = "finished";
   public static final String GROUP_ID = "completion";
-  public static final EventLogGroup GROUP = new EventLogGroup(GROUP_ID, 20);
+  public static final EventLogGroup GROUP = new EventLogGroup(GROUP_ID, 24);
   private static final EventField<String> SCHEMA = EventFields.StringValidatedByCustomRule("schema", FileTypeSchemaValidator.class);
   private static final BooleanEventField ALPHABETICALLY = EventFields.Boolean("alphabetically");
+  private static final EnumEventField<EditorKind> EDITOR_KIND = EventFields.Enum("editor_kind", EditorKind.class);
   private static final EnumEventField<FinishType> FINISH_TYPE = EventFields.Enum("finish_type", FinishType.class);
   private static final LongEventField DURATION = EventFields.Long("duration");
   private static final IntEventField SELECTED_INDEX = EventFields.Int("selected_index");
@@ -59,6 +61,7 @@ public final class LookupUsageTracker extends CounterUsagesCollector {
                                                                          EventFields.CurrentFile,
                                                                          SCHEMA,
                                                                          ALPHABETICALLY,
+                                                                         EDITOR_KIND,
                                                                          FINISH_TYPE,
                                                                          DURATION,
                                                                          SELECTED_INDEX,
@@ -209,6 +212,7 @@ public final class LookupUsageTracker extends CounterUsagesCollector {
         }
       }
       data.add(ALPHABETICALLY.with(UISettings.getInstance().getSortLookupElementsLexicographically()));
+      data.add(EDITOR_KIND.with(myLookup.getEditor().getEditorKind()));
 
       // Quality
       data.add(FINISH_TYPE.with(finishType));

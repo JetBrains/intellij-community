@@ -16,6 +16,25 @@ class KotlinDslGradleBuildScriptBuilder(
 
   override fun generate() = KotlinScriptBuilder().generate(generateTree())
 
+  override fun withKotlinJvmPlugin(version: String?): KotlinDslGradleBuildScriptBuilder = apply {
+    withMavenCentral()
+    withPlugin {
+      if (version != null) {
+        infixCall(call("kotlin", "jvm"), "version", string(version))
+      } else {
+        call("kotlin", "jvm")
+      }
+    }
+  }
+
+  override fun withKotlinTest() = apply {
+    withMavenCentral()
+    addTestImplementationDependency(call("kotlin", "test"))
+    configureTestTask {
+      call("useJUnitPlatform")
+    }
+  }
+
   override fun configureTestTask(configure: ScriptTreeBuilder.() -> Unit) =
     withPostfix {
       callIfNotEmpty("tasks.test", configure)

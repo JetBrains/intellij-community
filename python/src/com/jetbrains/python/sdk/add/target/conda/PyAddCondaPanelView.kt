@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.add.target.conda
 
 import com.intellij.execution.target.TargetBrowserHints
@@ -8,14 +8,14 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.observable.util.bind
-import com.intellij.openapi.progress.progressSink
 import com.intellij.openapi.progress.runBlockingModalWithRawProgressReporter
-import com.intellij.openapi.progress.runWithModalProgressBlocking
-import com.intellij.openapi.progress.withRawProgressReporter
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.emptyText
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
+import com.intellij.platform.util.progress.rawProgressReporter
+import com.intellij.platform.util.progress.withRawProgressReporter
 import com.intellij.ui.dsl.builder.*
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory.Companion.extendWithTargetSpecificFields
@@ -62,7 +62,7 @@ class PyAddCondaPanelView(private val model: PyAddCondaPanelModel) : PyAddSdkVie
 
       button(PyBundle.message("python.add.sdk.panel.load.envs")) {
         runBlockingModalWithRawProgressReporter(model.project, PyBundle.message("python.sdk.conda.getting.list.envs")) {
-          model.onLoadEnvsClicked(Dispatchers.EDT, this.progressSink)
+          model.onLoadEnvsClicked(Dispatchers.EDT, this.rawProgressReporter)
         }.onFailure {
           showError(PyBundle.message("python.sdk.conda.getting.list.envs"), it.localizedMessage)
         }
@@ -111,7 +111,7 @@ class PyAddCondaPanelView(private val model: PyAddCondaPanelModel) : PyAddSdkVie
 
   override fun onSelected() {
     runBlockingModalWithRawProgressReporter(model.project, PyBundle.message("python.add.sdk.conda.detecting")) {
-      model.detectConda(Dispatchers.EDT, progressSink)
+      model.detectConda(Dispatchers.EDT, rawProgressReporter)
     }
   }
 
@@ -126,7 +126,7 @@ class PyAddCondaPanelView(private val model: PyAddCondaPanelModel) : PyAddSdkVie
     return runWithModalProgressBlocking(model.project, PyBundle.message("python.add.sdk.panel.wait")) {
       withRawProgressReporter {
         targetPanelExtension?.applyToTargetConfiguration()
-        model.onCondaCreateSdkClicked((Dispatchers.EDT + ModalityState.any().asContextElement()), progressSink,
+        model.onCondaCreateSdkClicked((Dispatchers.EDT + ModalityState.any().asContextElement()), rawProgressReporter,
                                       model.targetConfiguration).onFailure {
           logger<PyAddCondaPanelModel>().warn(it)
           showError(

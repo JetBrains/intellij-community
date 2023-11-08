@@ -20,6 +20,7 @@ import com.intellij.refactoring.PackageWrapper;
 import com.intellij.refactoring.util.CommonMoveClassesOrPackagesUtil;
 import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,8 +33,9 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public final class CreateTestUtils {
-  @Nullable
-  public static PsiDirectory selectTargetDirectory(String packageName, Project project, Module targetModule) throws
+
+  @RequiresEdt
+  public static @Nullable PsiDirectory selectTargetDirectory(String packageName, Project project, Module targetModule) throws
                                                                                                              IncorrectOperationException {
     final PackageWrapper targetPackage = new PackageWrapper(PsiManager.getInstance(project), packageName);
 

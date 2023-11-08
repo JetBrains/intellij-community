@@ -14,7 +14,7 @@ data class Gaps(val top: Int = 0, val left: Int = 0, val bottom: Int = 0, val ri
     @Deprecated("Use UnscaledGaps instead")
     @ApiStatus.ScheduledForRemoval
     @JvmField
-    val EMPTY: Gaps = Gaps(0)
+    val EMPTY: Gaps = Gaps(0, 0, 0, 0)
   }
 
   init {
@@ -23,10 +23,6 @@ data class Gaps(val top: Int = 0, val left: Int = 0, val bottom: Int = 0, val ri
     checkNonNegative("bottom", bottom)
     checkNonNegative("right", right)
   }
-
-  @Deprecated("Use UnscaledGaps instead")
-  @ApiStatus.ScheduledForRemoval
-  constructor(size: Int) : this(size, size, size, size)
 
   @get:ApiStatus.ScheduledForRemoval
   @get:Deprecated("Use UnscaledGaps instead")

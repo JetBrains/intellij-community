@@ -5,11 +5,11 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.project.stateStore
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.WorkspaceModelTopics
 import com.intellij.platform.backend.workspace.virtualFile
 import com.intellij.platform.workspace.jps.entities.ContentRootEntity
+import com.intellij.project.stateStore
 
 open class ModuleDefaultVcsRootPolicy(project: Project) : DefaultVcsRootPolicy(project) {
   init {
@@ -45,6 +45,7 @@ open class ModuleDefaultVcsRootPolicy(project: Project) : DefaultVcsRootPolicy(p
   private inner class MyModulesListener : ContentRootChangeListener(skipFileChanges = true) {
     override fun contentRootsChanged(removed: List<VirtualFile>, added: List<VirtualFile>) {
       scheduleMappedRootsUpdate()
+      scheduleRootsChangeProcessing(removed, added)
     }
   }
 }

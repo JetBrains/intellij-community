@@ -5,6 +5,8 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Test
 import org.junit.jupiter.api.fail
+import javax.swing.border.Border
+import javax.swing.border.EmptyBorder
 
 class TransferablePropertiesTest {
 
@@ -67,6 +69,8 @@ class TransferablePropertiesTest {
       var prop1: Any by property(42)
       var list2: List<Any> by property(listOf(1, 2, 3))
       var list4: MutableList<Any> by property(mutableListOf(1, 2, 3))
+      var chars: CharSequence by property("text")  // CharSequence interface shouldn't be serializable
+      var border: Border by property(EmptyBorder(1,2,3,4))
     }
 
     for (property in state.__getProperties()) {

@@ -3,14 +3,16 @@ package org.jetbrains.jps.dependency;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.io.Closeable;
+
 /**
  * A representation of the main dependency storage
  */
-public interface DependencyGraph extends Graph {
+public interface DependencyGraph extends Graph, Closeable {
 
   Delta createDelta(Iterable<NodeSource> sourcesToProcess, Iterable<NodeSource> deletedSources);
 
-  DifferentiateResult differentiate(Delta delta);
+  DifferentiateResult differentiate(Delta delta, DifferentiateParameters params);
 
   /**
    * Merge data from the Delta into this dependency storage

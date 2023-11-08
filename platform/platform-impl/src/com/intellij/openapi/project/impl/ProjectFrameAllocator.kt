@@ -15,7 +15,6 @@ import com.intellij.ide.RecentProjectMetaInfo
 import com.intellij.ide.RecentProjectsManagerBase
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.util.runOnceForProject
-import com.intellij.idea.getAndUnsetSplashProjectFrame
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
@@ -33,8 +32,11 @@ import com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions
 import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.progress.blockingContext
-import com.intellij.openapi.project.*
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ReadmeShownUsageCollector.README_OPENED_ON_START_TS
+import com.intellij.openapi.project.guessProjectDir
+import com.intellij.openapi.project.isNotificationSilentMode
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.ToolWindowManager
@@ -43,6 +45,7 @@ import com.intellij.openapi.wm.impl.*
 import com.intellij.platform.diagnostic.telemetry.impl.getTraceActivity
 import com.intellij.platform.diagnostic.telemetry.impl.rootTask
 import com.intellij.platform.diagnostic.telemetry.impl.span
+import com.intellij.platform.ide.bootstrap.getAndUnsetSplashProjectFrame
 import com.intellij.problems.WolfTheProblemSolver
 import com.intellij.psi.PsiManager
 import com.intellij.toolWindow.computeToolWindowBeans
@@ -137,7 +140,7 @@ private class FrameAllocatorProjectInitObserver(
   override val rawProjectDeferred = CompletableDeferred<Project>()
 }
 
-internal class ProjectUiFrameAllocator(val options: OpenProjectTask,
+internal class ProjectUiFrameAllocator(@JvmField val options: OpenProjectTask,
                                        private val projectStoreBaseDir: Path) : ProjectFrameAllocator(options) {
   private val deferredProjectFrameHelper = CompletableDeferred<ProjectFrameHelper>()
 

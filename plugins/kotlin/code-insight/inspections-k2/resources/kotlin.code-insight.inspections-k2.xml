@@ -4,6 +4,7 @@
     <module name="kotlin.code-insight.inspections-shared"/>
     <module name="kotlin.searching.k2"/>
     <module name="kotlin.highlighting.k2"/>
+    <module name="kotlin.refactorings.k2"/>
   </dependencies>
   <extensions defaultExtensionNs="com.intellij">
     <localInspection
@@ -25,6 +26,15 @@
             level="WARNING" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
             language="kotlin"
             key="inspection.redundant.visibility.modifier.display.name" bundle="messages.KotlinBundle"/>
+
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.RedundantUnitExpressionInspection"
+                     groupPath="Kotlin"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.redundant.constructs"
+                     enabledByDefault="true"
+                     level="WARNING"
+                     language="kotlin"
+                     cleanupTool="true" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
+                     key="inspection.redundant.unit.expression.display.name" bundle="messages.KotlinBundle"/>
 
     <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.CanBePrimaryConstructorPropertyInspection"
                      groupPath="Kotlin"
@@ -250,6 +260,13 @@
                      enabledByDefault="true"
                      level="WEAK WARNING"
                      language="kotlin" key="inspection.protected.in.final.display.name" bundle="messages.KotlinBundle"/>
+
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.MoveLambdaOutsideParenthesesInspection"
+                     groupPath="Kotlin"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.style.issues"
+                     enabledByDefault="true"
+                     level="WEAK WARNING"
+                     language="kotlin" key="inspection.move.lambda.outside.parentheses.display.name" bundle="messages.KotlinBundle"/>
 
     <!-- TODO: We currently have a performance issue caused by reference search. See https://kotlin.jetbrains.space/p/kotlin/reviews/710.
                We have an idea of indexing reference counts. Enable this inspection after implement it. -->

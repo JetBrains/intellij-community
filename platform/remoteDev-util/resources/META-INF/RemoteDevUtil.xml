@@ -10,7 +10,7 @@
     <registryKey key="rdct.enable.per.connection.client.process" defaultValue="true"
                  description="Use client handle lifetime to track the process of clients of the same version"
                  restartRequired="false" />
-    <registryKey key="rdct.use.embedded.client" defaultValue="false"
+    <registryKey key="rdct.use.embedded.client" defaultValue="true"
                  description="Enable to run JetBrains Client process from the current IDE instead of downloading it when connecting to an IDE of same version"/>
     <registryKey key="rdct.embedded.client.debug.port" defaultValue="-1" 
                  description="Specify a positive value to make a client process started from an IDE listen for debug connections on that port."/>

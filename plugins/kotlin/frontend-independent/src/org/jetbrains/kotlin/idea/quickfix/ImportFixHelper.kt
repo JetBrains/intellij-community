@@ -22,6 +22,7 @@ import javax.swing.ListCellRenderer
 object ImportFixHelper {
     enum class ImportKind(private val key: String, val groupedByPackage: Boolean = false) {
         CLASS("text.class.0", true),
+        TYPE_ALIAS("text.type.alias.0", true),
         PROPERTY("text.property.0"),
         OBJECT("text.object.0", true),
         FUNCTION("text.function.0"),
@@ -43,7 +44,7 @@ object ImportFixHelper {
             val sortedImportInfos = TreeSet<ImportInfo<T>>(compareBy({ it.priority }, { it.name }))
             sortedImportInfos.addAll(names)
             val firstName = sortedImportInfos.first().name
-            val singlePackage = suggestions.groupBy { it.parentOrNull() ?: FqName.ROOT }.size == 1
+            val singlePackage = suggestionsAreFromSameParent(suggestions)
 
             if (singlePackage) {
                 val sortedByName = sortedImportInfos.toSortedSet(compareBy { it.name })
@@ -174,6 +175,9 @@ object ImportFixHelper {
             override fun getIconFor(value: AutoImportVariant) = value.icon
         }
     }
+
+    fun suggestionsAreFromSameParent(suggestions: Iterable<FqName>): Boolean =
+        suggestions.distinctBy { it.parentOrNull() ?: FqName.ROOT }.size == 1
 }
 
 

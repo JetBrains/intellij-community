@@ -4,6 +4,7 @@ package com.jetbrains.python.newProject.steps;
 import com.intellij.ide.util.projectWizard.AbstractNewProjectStep;
 import com.intellij.ide.util.projectWizard.ProjectSettingsStepBase;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.platform.DirectoryProjectGenerator;
 import com.intellij.util.ObjectUtils;
 import com.jetbrains.python.newProject.*;
@@ -40,6 +41,9 @@ public final class PyCharmNewProjectStep extends AbstractNewProjectStep<PyNewPro
       if (npwGenerator != null) {
         //noinspection unchecked
         return new NewProjectWizardProjectSettingsStep<PyNewProjectSettings>(npwGenerator);
+      }
+      else if (Registry.is("python.new.interpreter.creation.ui")) {
+        return new PythonProjectSpecificSettingsStep<>(projectGenerator, callback);
       }
       else {
         return new ProjectSpecificSettingsStep<>(projectGenerator, callback);

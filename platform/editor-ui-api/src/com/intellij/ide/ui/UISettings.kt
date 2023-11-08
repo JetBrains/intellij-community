@@ -115,7 +115,7 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
     }
 
   var separateMainMenu: Boolean
-    get() = (SystemInfoRt.isWindows || SystemInfoRt.isXWindow) && state.separateMainMenu
+    get() = !SystemInfoRt.isMac && state.separateMainMenu
     set(value) {
       state.separateMainMenu = value
     }
@@ -592,6 +592,11 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
       g2d.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, getPreferredFractionalMetricsValue())
     }
 
+    @JvmStatic
+    fun setupFractionalMetrics(component: JComponent) {
+      component.putClientProperty(RenderingHints.KEY_FRACTIONALMETRICS, getPreferredFractionalMetricsValue())
+    }
+
     /**
      * This method must not be used for set up antialiasing for editor components. To make sure antialiasing settings are taken into account
      * when preferred size of component is calculated, [.setupComponentAntialiasing] method should be called from
@@ -685,7 +690,9 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
     // todo remove when all old properties will be converted
     state._incrementModificationCount()
 
-    IconLoader.setFilter(ColorBlindnessSupport.get(state.colorBlindness)?.filter)
+    ColorBlindnessSupport.get(state.colorBlindness)?.filter?.let {
+      IconLoader.setFilter(it)
+    }
 
     // if this is the main UISettings instance (and not on first call to getInstance), push event to bus and to all current components
     if (this === cachedInstance) {

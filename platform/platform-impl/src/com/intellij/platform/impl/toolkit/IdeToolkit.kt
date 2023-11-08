@@ -1,10 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE")
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.impl.toolkit
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.components.service
 import com.intellij.openapi.util.Disposer
 import sun.awt.LightweightFrame
 import sun.awt.SunToolkit
@@ -17,24 +15,22 @@ import java.awt.im.spi.InputMethodDescriptor
 import java.awt.image.ImageObserver
 import java.awt.peer.*
 import java.util.*
-import javax.swing.JComponent
 
 class IdeToolkit : SunToolkit() {
   companion object {
     @JvmStatic
     fun getInstance(): IdeToolkit = getDefaultToolkit() as IdeToolkit
 
-    private fun clientInstance(): ClientToolkit = service()
-
     private val clipboard = Clipboard("System")
   }
+
+  fun clientInstance() = ClientToolkit.getInstance()
 
   fun peerCreated(target: Component, peer: ComponentPeer, disposable: Disposable) {
     targetCreatedPeer(target, peer)
     Disposer.register(disposable) { targetDisposedPeer(target, peer) }
   }
 
-  fun createPanelWindow(panel: Component, target: Window, realParent: Container?): WindowPeer = clientInstance().createPanelWindow(panel, target, realParent)
   override fun createWindow(target: Window): WindowPeer = clientInstance().createWindow(target)
   override fun createDialog(target: Dialog): DialogPeer = clientInstance().createDialog(target)
   override fun createFrame(target: Frame): FramePeer = clientInstance().createFrame(target)

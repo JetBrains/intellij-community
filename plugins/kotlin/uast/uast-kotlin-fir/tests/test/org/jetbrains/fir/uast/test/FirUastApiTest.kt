@@ -182,7 +182,7 @@ abstract class FirUastApiTest : AbstractFirUastTest() {
 
         @TestMetadata("SAM.kt")
         fun testSAM() {
-            doCheck("uast-kotlin/tests/testData/SAM.kt", ::checkCallbackForSAM)
+            doCheck("uast-kotlin/tests/testData/SAM.kt") { uFilePath, uFile -> checkCallbackForSAM(uFilePath, uFile, "java.lang.String", "java.lang.String") }
         }
 
         @TestMetadata("Simple.kt")

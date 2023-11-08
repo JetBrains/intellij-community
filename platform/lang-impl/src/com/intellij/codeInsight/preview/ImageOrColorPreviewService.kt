@@ -93,11 +93,9 @@ internal class ImageOrColorPreviewService(
       else {
         psiFile
       }
-    } ?: return
+    }
+    if (psiFile == null) return
     withContext(Dispatchers.EDT) {
-      if (!psiFile.isValid) { // could be invalidated between the read action and dispatch to EDT
-        return@withContext
-      }
       val mouseListener = MyMouseMotionListener()
       editor.addEditorMouseMotionListener(mouseListener)
       EDITOR_MOUSE_LISTENER_ADDED[editor] = mouseListener

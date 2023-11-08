@@ -13,7 +13,7 @@ import org.jetbrains.annotations.TestOnly
 
 interface WebSymbolsQueryConfigurator {
 
-  fun getScope(project: Project, element: PsiElement?, context: WebSymbolsContext, allowResolve: Boolean): List<WebSymbolsScope> =
+  fun getScope(project: Project, location: PsiElement?, context: WebSymbolsContext, allowResolve: Boolean): List<WebSymbolsScope> =
     emptyList()
 
   fun getContextRulesProviders(project: Project, dir: VirtualFile): List<WebSymbolsContextRulesProvider> =

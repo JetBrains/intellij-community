@@ -4,6 +4,8 @@ package com.intellij.java.codeInsight.completion;
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase;
+import com.intellij.pom.java.LanguageLevel;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.NeedsIndex;
 import com.intellij.util.ArrayUtil;
@@ -54,6 +56,45 @@ public class NormalSwitchCompletionVariantsTest extends LightFixtureCompletionTe
     //if null - it is ok
   }
 
+  public void testCompletionDefaultNotShow() {
+    List<String> lookup = doTestAndGetLookup();
+    if (lookup != null) {
+      assertDoesntContain(lookup, "default");
+      assertDoesntContain(lookup, "case null, default");
+    }
+    //if null - it is ok
+  }
+
+  public void testCompletionNullDefault() {
+    List<String> lookup = doTestAndGetLookup();
+    assertNotNull(lookup);
+    assertContainsElements(lookup, "case null", "case null, default", "default");
+  }
+
+  @NeedsIndex.Full
+  public void testCompletionUsedSealedNotShow() {
+    List<String> lookup = doTestAndGetLookup();
+    assertNotNull(lookup);
+    assertDoesntContain(lookup, "case A");
+    assertContainsElements(lookup, "case B");
+  }
+  @NeedsIndex.Full
+  public void testCompletionAnonymousAndLocalNotShow() {
+    List<String> lookup = doTestAndGetLookup();
+    assertNotNull(lookup);
+    assertContainsElements(lookup, "case C1");
+  }
+
+  @NeedsIndex.Full
+  public void testCompletionSmartCase() {
+    IdeaTestUtil.withLevel(myFixture.getModule(), LanguageLevel.JDK_21, () -> {
+      myFixture.configureByFile(getTestName(false) + ".java");
+      myFixture.complete(CompletionType.SMART);
+      List<String> lookup = myFixture.getLookupElementStrings();
+      assertContainsElements(lookup, "case A", "case B", "default", "case null", "case null, default");
+    });
+  }
+
   @NeedsIndex.Full
   public void testCompletionSealedHierarchyStmt() {
     doTest(ArrayUtil.mergeArrays(COMMON_OBJECT_VARIANTS, "case Variant1", "case Variant2"));
@@ -62,6 +103,10 @@ public class NormalSwitchCompletionVariantsTest extends LightFixtureCompletionTe
   @NeedsIndex.Full
   public void testCompletionSealedHierarchyExpr() {
     doTest(ArrayUtil.mergeArrays(COMMON_OBJECT_VARIANTS, "case Variant1", "case Variant2"));
+  }
+  @NeedsIndex.Full
+  public void testCompletionSealedHierarchyExprBeforeCase() {
+    doTest(new String[]{"case null", "case R", "case R2"});
   }
 
   private void doTest(String[] variants) {

@@ -10,6 +10,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.dsl.listCellRenderer.KotlinUIDslRenderer;
+import com.intellij.ui.popup.list.ComboBoxPopup;
 import com.intellij.ui.render.RenderingUtil;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ObjectUtils;
@@ -781,9 +782,18 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
 
     @Override
     public void show(Component invoker, int x, int y) {
+      int sideBorders = 0;
+
+      if (ExperimentalUI.isNewUI() && ComboBoxPopup.isRendererWithInsets(comboBox.getRenderer())) {
+        scroller.setViewportBorder(JBUI.Borders.empty(PopupUtil.getListInsets(false, false)));
+        scroller.setBackground(UIManager.getColor("ComboBox.background"));
+        scroller.getVerticalScrollBar().setBackground(UIManager.getColor("ComboBox.background"));
+        sideBorders = 10;
+      }
+
       if (comboBox instanceof ComboBoxWithWidePopup) {
         Dimension popupSize = comboBox.getSize();
-        int minPopupWidth = ((ComboBoxWithWidePopup<?>)comboBox).getMinimumPopupWidth();
+        int minPopupWidth = ((ComboBoxWithWidePopup<?>)comboBox).getMinimumPopupWidth() + 2 * sideBorders;
         Insets insets = getInsets();
 
         popupSize.width = Math.max(popupSize.width, minPopupWidth);
@@ -795,7 +805,8 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
 
         list.revalidate();
       }
-      super.show(invoker, x, y);
+
+      super.show(invoker, x - sideBorders, y);
     }
 
     @Override

@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 import java.awt.*;
 import java.awt.event.WindowEvent;
 
-import static com.intellij.idea.SplashManagerKt.hideSplash;
+import static com.intellij.platform.ide.bootstrap.SplashManagerKt.hideSplash;
 
 final class FrameStateManagerAppListener implements ApplicationActivationListener {
   private final FrameStateListener publisher = ApplicationManager.getApplication().getMessageBus().syncPublisher(FrameStateListener.TOPIC);

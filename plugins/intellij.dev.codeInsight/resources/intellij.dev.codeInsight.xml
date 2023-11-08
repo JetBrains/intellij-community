@@ -1,4 +1,0 @@
-<idea-plugin package="com.intellij.dev.codeInsight">
-  <resource-bundle>messages.DevCodeInsightBundle</resource-bundle>
-
-</idea-plugin>

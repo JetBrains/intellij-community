@@ -34,7 +34,7 @@ public class GitRebaseEditorApp implements ExternalApp {
                                                                      handlerId, bodyContent);
 
       if (result.isError) {
-        System.err.println(result.error);
+        System.err.println(result.getPresentableError());
         System.exit(ERROR_EXIT_CODE);
       }
 

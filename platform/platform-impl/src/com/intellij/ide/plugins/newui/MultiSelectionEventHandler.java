@@ -96,6 +96,8 @@ public final class MultiSelectionEventHandler extends EventHandler {
             return;
           }
 
+          PluginsViewCustomizerKt.getListPluginComponentCustomizer().processCreatePopupMenu(component, group, getSelection());
+
           ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu("PluginManagerConfigurable", group);
           popupMenu.setTargetComponent(component);
           popupMenu.getComponent().show(event.getComponent(), event.getX(), event.getY());
@@ -186,6 +188,8 @@ public final class MultiSelectionEventHandler extends EventHandler {
             component.setSelection(SelectionType.SELECTION);
           }
           component.handleKeyAction(event, getSelection());
+
+          PluginsViewCustomizerKt.getListPluginComponentCustomizer().processHandleKeyAction(component, event, getSelection());
         }
       }
 

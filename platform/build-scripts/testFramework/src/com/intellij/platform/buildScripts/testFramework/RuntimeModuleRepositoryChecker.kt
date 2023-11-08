@@ -1,8 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.buildScripts.testFramework
 
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.platform.runtime.repository.*
 import com.intellij.platform.runtime.repository.serialization.RuntimeModuleRepositorySerialization
+import com.intellij.util.containers.FList
 import org.assertj.core.api.SoftAssertions
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.impl.MODULE_DESCRIPTORS_JAR_PATH
@@ -18,7 +20,8 @@ import kotlin.io.path.*
 class RuntimeModuleRepositoryChecker private constructor(
   private val commonDistPath: Path,
   private val osSpecificDistPath: Path?,
-  private val context: BuildContext, 
+  private val currentMode: ProductMode,
+  private val context: BuildContext,
 ): AutoCloseable {
   private val descriptorsJarFile: Path
   private val repository: RuntimeModuleRepository
@@ -43,8 +46,8 @@ class RuntimeModuleRepositoryChecker private constructor(
   }
   
   companion object {
-    fun checkProductModules(productModulesModule: String, context: BuildContext, softly: SoftAssertions) {
-      createCheckers(context).forEach { 
+    fun checkProductModules(productModulesModule: String, currentMode: ProductMode, context: BuildContext, softly: SoftAssertions) {
+      createCheckers(currentMode, context).forEach { 
         it().use { checker ->
           checker.checkProductModules(productModulesModule, softly)
         }
@@ -56,24 +59,24 @@ class RuntimeModuleRepositoryChecker private constructor(
      * separate product: JARs referenced from its modules must not include resources from modules not included to the product, or they are
      * split by packages in a way that the class-loader may load relevant classes only.
      */
-    fun checkIntegrityOfEmbeddedProduct(productModulesModule: String, context: BuildContext, softly: SoftAssertions) {
-      createCheckers(context).forEach {
+    fun checkIntegrityOfEmbeddedProduct(productModulesModule: String, currentMode: ProductMode, context: BuildContext, softly: SoftAssertions) {
+      createCheckers(currentMode, context).forEach {
         it().use { checker ->
           checker.checkIntegrityOfEmbeddedProduct(productModulesModule, softly)
         }
       }
     }
 
-    private fun createCheckers(context: BuildContext): List<() -> RuntimeModuleRepositoryChecker> {
+    private fun createCheckers(currentMode: ProductMode, context: BuildContext): List<() -> RuntimeModuleRepositoryChecker> {
       val commonDistPath = context.paths.distAllDir 
       if (commonDistPath.resolve(MODULE_DESCRIPTORS_JAR_PATH).exists()) {
-        return listOf { RuntimeModuleRepositoryChecker(commonDistPath, null, context) }
+        return listOf { RuntimeModuleRepositoryChecker(commonDistPath, null, currentMode, context) }
       }
       return SUPPORTED_DISTRIBUTIONS
         .mapNotNull { distribution ->
           val osSpecificDistPath = getOsAndArchSpecificDistDirectory(distribution.os, distribution.arch, context)
           if (osSpecificDistPath.resolve(MODULE_DESCRIPTORS_JAR_PATH).exists()) {
-            { RuntimeModuleRepositoryChecker(commonDistPath, osSpecificDistPath, context) }
+            { RuntimeModuleRepositoryChecker(commonDistPath, osSpecificDistPath, currentMode, context) }
           }
           else null
         }
@@ -84,13 +87,13 @@ class RuntimeModuleRepositoryChecker private constructor(
   private fun checkProductModules(productModulesModule: String, softly: SoftAssertions) {
     try {
       val productModules = loadProductModules(productModulesModule)
-      val allDependencies = HashSet<RuntimeModuleId>()
+      val allDependencies = HashMap<RuntimeModuleId, FList<String>>()
       productModules.mainModuleGroup.includedModules.forEach { 
-        repository.collectDependencies(it.moduleDescriptor, allDependencies)
+        repository.collectDependencies(it.moduleDescriptor, FList.emptyList(), allDependencies)
       }
       productModules.bundledPluginModuleGroups.forEach { group ->
         group.includedModules.forEach { 
-          repository.collectDependencies(it.moduleDescriptor, allDependencies)
+          repository.collectDependencies(it.moduleDescriptor, FList.emptyList(), allDependencies)
         }
       }
     }
@@ -102,18 +105,27 @@ class RuntimeModuleRepositoryChecker private constructor(
   private fun checkIntegrityOfEmbeddedProduct(productModulesModule: String, softly: SoftAssertions) {
     val productModules = loadProductModules(productModulesModule)
 
-    val allProductModules = LinkedHashSet<RuntimeModuleId>()
-    allProductModules.add(RuntimeModuleId.module("intellij.platform.bootstrap"))
-    productModules.mainModuleGroup.includedModules.flatMapTo(allProductModules) {
-      repository.collectDependencies(it.moduleDescriptor)
+    val allProductModules = LinkedHashMap<RuntimeModuleId, FList<String>>()
+    allProductModules[RuntimeModuleId.module("intellij.platform.bootstrap")] = FList.singleton("bootstrap")
+    val mainModuleGroupPath = FList.singleton("main module group")
+    productModules.mainModuleGroup.includedModules.forEach { mainModule ->
+      repository.collectDependencies(mainModule.moduleDescriptor, mainModuleGroupPath, allProductModules)
     }
-    productModules.bundledPluginModuleGroups.flatMapTo(allProductModules) { group ->
-      group.includedModules.flatMap {
-        repository.collectDependencies(it.moduleDescriptor)
+    productModules.bundledPluginModuleGroups.forEach { group ->
+      if (group.includedModules.isEmpty()) {
+        softly.collectAssertionError(AssertionError("""
+           |No modules from '$group' are included in a product running in '${currentMode.id}' mode, so corresponding plugin won't be loaded.
+           |Probably it indicates that some incorrect dependency was added to the main plugin module.  
+        """.trimMargin()))
+        return@forEach
+      }
+      val pluginPath = FList.singleton("bundled plugin ${group.includedModules[0].moduleDescriptor.moduleId.stringId}")
+      group.includedModules.forEach {
+        repository.collectDependencies(it.moduleDescriptor, pluginPath.prepend(it.moduleDescriptor.moduleId.stringId), allProductModules)
       }
     }
 
-    val productResourceRoots = allProductModules.flatMap { moduleId ->
+    val productResourceRoots = allProductModules.keys.flatMap { moduleId ->
       repository.getModule(moduleId).resourceRootPaths.map { it to moduleId }
     }.groupBy({ it.first }, { it.second })
     
@@ -137,12 +149,15 @@ class RuntimeModuleRepositoryChecker private constructor(
       }*/
       val included = resourceRoots.find { it in productResourceRoots }
       if (included != null && moduleId !in allProductModules) {
+        val includedModules = productResourceRoots.getValue(included)
+        val firstIncludedModuleData = includedModules.take(3).joinToString(", ") { includedModuleId ->
+          "'${includedModuleId.stringId}' (<- ${allProductModules.getValue(includedModuleId).joinToString(" <- ")})"
+        }
+        val rest = includedModules.size - 3
+        val more = if (rest > 0) " and $rest more ${StringUtil.pluralize("module", rest)}" else ""
         softly.collectAssertionError(AssertionError("""
           |Module '${moduleId.stringId}' is not part of '$productModulesModule', but it's packed in ${included.pathString},
-          |which is included in classpath because ${productResourceRoots.getValue(included).joinToString(", ") { 
-            it.stringId  
-          }} are also packed in it. 
-          |
+          |which is included in classpath because $firstIncludedModuleData$more are also packed in it. 
         """.trimMargin()))
       }
     }
@@ -150,13 +165,14 @@ class RuntimeModuleRepositoryChecker private constructor(
 
   private fun loadProductModules(productModulesModule: String): ProductModules {
     val moduleOutputDir = context.getModuleOutputDir(context.findRequiredModule(productModulesModule))
-    return RuntimeModuleRepositorySerialization.loadProductModules(moduleOutputDir.resolve("META-INF/$productModulesModule/product-modules.xml"), repository)
+    return RuntimeModuleRepositorySerialization.loadProductModules(moduleOutputDir.resolve("META-INF/$productModulesModule/product-modules.xml"), currentMode, repository)
   }
 
-  private fun RuntimeModuleRepository.collectDependencies(moduleDescriptor: RuntimeModuleDescriptor, result: MutableSet<RuntimeModuleId> = HashSet()): Set<RuntimeModuleId> {
-    if (result.add(moduleDescriptor.moduleId)) {
+  private fun RuntimeModuleRepository.collectDependencies(moduleDescriptor: RuntimeModuleDescriptor, path: FList<String>, result: MutableMap<RuntimeModuleId, FList<String>> = LinkedHashMap()): MutableMap<RuntimeModuleId, FList<String>> {
+    if (result.putIfAbsent(moduleDescriptor.moduleId, path) == null) {
+      val newPath = path.prepend(moduleDescriptor.moduleId.stringId)
       for (dependency in moduleDescriptor.dependencies) {
-        collectDependencies(dependency, result)
+        collectDependencies(dependency, newPath, result)
       }
     }
     return result

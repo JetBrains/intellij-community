@@ -25,8 +25,9 @@ internal class GitLabProjectConnectionManager(project: Project, cs: CoroutineSco
     serviceGet<GitLabAccountManager>()
   ) { glProject, account, tokenState ->
     val apiClient = service<GitLabApiManager>().getClient(account.server) { tokenState.value }
-    val currentUser = apiClient.graphQL.getCurrentUser() ?: error("Unable to load current user")
-    GitLabProjectConnection(project, this, glProject, account, currentUser, apiClient, tokenState)
+    val glMetadata = apiClient.getMetadataOrNull()
+    val currentUser = apiClient.graphQL.getCurrentUser()
+    GitLabProjectConnection(project, this, glProject, account, currentUser, apiClient, glMetadata, tokenState)
   }
 
   private val delegate = SingleHostedGitRepositoryConnectionManagerImpl(cs, connectionFactory)

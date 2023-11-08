@@ -3,6 +3,7 @@
 package org.jetbrains.uast.kotlin
 
 import com.intellij.psi.*
+import com.intellij.psi.impl.PsiImplUtil
 import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.uast.*
@@ -30,7 +31,12 @@ interface BaseKotlinUastResolveProviderService {
 
     fun findAttributeValueExpression(uAnnotation: KotlinUAnnotation, arg: ValueArgument): UExpression?
 
-    fun findDefaultValueForAnnotationAttribute(ktCallElement: KtCallElement, name: String): KtExpression?
+    fun findDefaultValueForAnnotationAttribute(ktCallElement: KtCallElement, name: String): UExpression?
+
+    fun findAttributeValueExpression(annotationClass: PsiClass, name: String): UExpression? {
+        val attributeValue = PsiImplUtil.findAttributeValue(annotationClass, name) ?: return null
+        return attributeValue.toUElement(UExpression::class.java) ?: UastEmptyExpression(null)
+    }
 
     fun getArgumentForParameter(ktCallElement: KtCallElement, index: Int, parent: UElement): UExpression?
 

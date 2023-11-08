@@ -1,7 +1,7 @@
 package com.intellij.codeInspection.tests.java.test.junit
 
-import com.intellij.codeInspection.tests.JvmLanguage
-import com.intellij.codeInspection.tests.test.junit.JUnitMalformedDeclarationInspectionTestBase
+import com.intellij.jvm.analysis.internal.testFramework.test.junit.JUnitMalformedDeclarationInspectionTestBase
+import com.intellij.jvm.analysis.testFramework.JvmLanguage
 import org.junit.experimental.runners.Enclosed
 import org.junit.runner.RunWith
 

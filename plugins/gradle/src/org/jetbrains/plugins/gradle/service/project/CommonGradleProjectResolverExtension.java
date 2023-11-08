@@ -210,7 +210,7 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
     return mainModuleNode;
   }
 
-  private void populateBuildScriptSource(@NotNull IdeaModule ideaModule, @NotNull DataNode<? extends ModuleData> mainModuleNode) {
+  private static void populateBuildScriptSource(@NotNull IdeaModule ideaModule, @NotNull DataNode<? extends ModuleData> mainModuleNode) {
     try {
       File buildScriptSource = ideaModule.getGradleProject().getBuildScript().getSourceFile();
       GradleProjectBuildScriptData buildProjectData = new GradleProjectBuildScriptData(buildScriptSource);

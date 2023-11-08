@@ -68,7 +68,7 @@ public final class JsonCopyPasteProcessor implements CopyPastePreProcessor {
     return StringUtil.escapeStringCharacters(text);
   }
 
-  private boolean isSupportedFile(PsiFile file) {
+  private static boolean isSupportedFile(PsiFile file) {
     return file instanceof JsonFile && file.isPhysical();
   }
 

@@ -23,8 +23,8 @@ import java.util.List;
 public class ProblemDescriptorBase extends CommonProblemDescriptorImpl implements ProblemDescriptor {
   private static final Logger LOG = Logger.getInstance(ProblemDescriptorBase.class);
 
-  @NotNull private final SmartPsiElementPointer<?> myStartSmartPointer;
-  @Nullable private final SmartPsiElementPointer<?> myEndSmartPointer; // null means it's the same as myStartSmartPointer
+  private final @NotNull SmartPsiElementPointer<?> myStartSmartPointer;
+  private final @Nullable SmartPsiElementPointer<?> myEndSmartPointer; // null means it's the same as myStartSmartPointer
 
   private final ProblemHighlightType myHighlightType;
   private final boolean myOnTheFly;
@@ -105,8 +105,7 @@ public class ProblemDescriptorBase extends CommonProblemDescriptorImpl implement
     return myOnTheFly;
   }
 
-  @Nullable
-  private static TextRange getAnnotationRange(@NotNull PsiElement startElement) {
+  private static @Nullable TextRange getAnnotationRange(@NotNull PsiElement startElement) {
     return startElement instanceof ExternallyAnnotated
            ? ((ExternallyAnnotated)startElement).getAnnotationRegion()
            : startElement.getTextRange();
@@ -134,8 +133,7 @@ public class ProblemDescriptorBase extends CommonProblemDescriptorImpl implement
   }
 
   @Override
-  @Nullable
-  public TextRange getTextRangeInElement() {
+  public @Nullable TextRange getTextRangeInElement() {
     return myTextRangeInElement;
   }
 
@@ -149,8 +147,7 @@ public class ProblemDescriptorBase extends CommonProblemDescriptorImpl implement
     return myEndSmartPointer == null ? getStartElement() : myEndSmartPointer.getElement();
   }
 
-  @NotNull
-  public Project getProject() {
+  public @NotNull Project getProject() {
     return myStartSmartPointer.getProject();
   }
 
@@ -186,9 +183,8 @@ public class ProblemDescriptorBase extends CommonProblemDescriptorImpl implement
     return document.getLineStartOffset(getLineNumber());
   }
 
-  @NotNull
   @Override
-  public ProblemHighlightType getHighlightType() {
+  public @NotNull ProblemHighlightType getHighlightType() {
     return myHighlightType;
   }
 
@@ -206,16 +202,14 @@ public class ProblemDescriptorBase extends CommonProblemDescriptorImpl implement
     return myEnforcedTextAttributes;
   }
 
-  @Nullable
-  public TextRange getTextRangeForNavigation() {
+  public @Nullable TextRange getTextRangeForNavigation() {
     TextRange textRange = getTextRange();
     if (textRange == null) return null;
     PsiElement element = getPsiElement();
     return InjectedLanguageManager.getInstance(element.getProject()).injectedToHost(element, textRange);
   }
 
-  @Nullable
-  public TextRange getTextRange() {
+  public @Nullable TextRange getTextRange() {
     PsiElement startElement = getStartElement();
     PsiElement endElement = myEndSmartPointer == null ? startElement : getEndElement();
     if (startElement == null || endElement == null) {
@@ -250,8 +244,7 @@ public class ProblemDescriptorBase extends CommonProblemDescriptorImpl implement
     return myNavigatable;
   }
 
-  @Nullable
-  public VirtualFile getContainingFile() {
+  public @Nullable VirtualFile getContainingFile() {
     return myStartSmartPointer.getVirtualFile();
   }
 
@@ -260,8 +253,7 @@ public class ProblemDescriptorBase extends CommonProblemDescriptorImpl implement
   }
 
   @Override
-  @Nullable
-  public ProblemGroup getProblemGroup() {
+  public @Nullable ProblemGroup getProblemGroup() {
     return myProblemGroup;
   }
 

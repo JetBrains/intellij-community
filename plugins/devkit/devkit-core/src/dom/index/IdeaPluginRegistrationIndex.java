@@ -46,7 +46,7 @@ import java.util.*;
  * </ul>
  */
 @SuppressWarnings("UnusedReturnValue")
-public class IdeaPluginRegistrationIndex extends PluginXmlIndexBase<String, List<RegistrationEntry>> {
+public final class IdeaPluginRegistrationIndex extends PluginXmlIndexBase<String, List<RegistrationEntry>> {
 
   private static final int INDEX_VERSION = 8;
 

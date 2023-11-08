@@ -93,6 +93,9 @@ private val PLATFORM_IMPLEMENTATION_MODULES = persistentListOf(
   "intellij.platform.collaborationTools",
   "intellij.platform.collaborationTools.auth",
 
+  "intellij.platform.compose",
+  "intellij.platform.compose.skikoRuntime",
+
   "intellij.platform.markdown.utils",
   "intellij.platform.util.commonsLangV2Shim",
 )
@@ -169,7 +172,7 @@ internal suspend fun createPlatformLayout(addPlatformCoverage: Boolean,
   layout.withoutProjectLibrary("jps-javac-extension")
   layout.withoutProjectLibrary("Eclipse")
   
-  //this library is used in some modules compatible with Java 7, it's replaced by its superset 'jetbrains-annotations' in the distribution 
+  // this library is used in some modules compatible with Java 7, it's replaced by its superset 'jetbrains-annotations' in the distribution
   layout.withoutProjectLibrary("jetbrains-annotations-java5")
   
   for (customizer in productLayout.platformLayoutSpec) {
@@ -185,7 +188,14 @@ internal suspend fun createPlatformLayout(addPlatformCoverage: Boolean,
   ), productLayout = productLayout, layout = layout)
   layout.withProjectLibrary(libraryName = "ion", jarName = UTIL_RT_JAR)
 
-  // Maven uses JDOM in an external process
+  // skiko-runtime needed for Compose
+  layout.withModuleLibrary(
+    libraryName = "jetbrains.skiko.awt.runtime.all",
+    moduleName = "intellij.platform.compose.skikoRuntime",
+    relativeOutputPath = "skiko-runtime.jar"
+  )
+
+  // maven uses JDOM in an external process
   addModule(UTIL_8_JAR, listOf(
     "intellij.platform.util.jdom",
     "intellij.platform.util.xmlDom",
@@ -203,11 +213,11 @@ internal suspend fun createPlatformLayout(addPlatformCoverage: Boolean,
   // make sure that all ktor libraries bundled into the platform
   layout.withProjectLibrary(libraryName = "ktor-client-content-negotiation")
   layout.withProjectLibrary(libraryName = "ktor-client-logging")
+  layout.withProjectLibrary(libraryName = "ktor-serialization-kotlinx-json")
 
-  // used by intellij.database.jdbcConsole -
-  // cannot be in 3rd-party-rt.jar, because this JAR must contain classes for java versions <= 7 only
+  // used by intellij.database.jdbcConsole - put to a small util module
   layout.withProjectLibrary(libraryName = "jbr-api", jarName = UTIL_JAR)
-  // boot.jar is loaded by JVM classloader as part of loading our custom PathClassLoader class - reduce file size
+  // platform-loader.jar is loaded by JVM classloader as part of loading our custom PathClassLoader class - reduce file size
   addModule(PLATFORM_LOADER_JAR, listOf(
     "intellij.platform.util.rt.java8",
     "intellij.platform.util.classLoader",

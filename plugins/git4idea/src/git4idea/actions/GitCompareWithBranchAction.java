@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.actions;
 
 import com.intellij.dvcs.actions.DvcsCompareWithBranchAction;
@@ -37,9 +37,8 @@ public class GitCompareWithBranchAction extends DvcsCompareWithBranchAction<GitR
     return locals == 0 && !haveRemotes; // there are at least 1 branch to compare
   }
 
-  @NotNull
   @Override
-  protected List<String> getBranchNamesExceptCurrent(@NotNull GitRepository repository) {
+  protected @NotNull List<String> getBranchNamesExceptCurrent(@NotNull GitRepository repository) {
     List<GitBranch> localBranches = new ArrayList<>(repository.getBranches().getLocalBranches());
     Collections.sort(localBranches);
     List<GitBranch> remoteBranches = new ArrayList<>(repository.getBranches().getRemoteBranches());
@@ -59,16 +58,14 @@ public class GitCompareWithBranchAction extends DvcsCompareWithBranchAction<GitR
     return branchNames;
   }
 
-  @NotNull
   @Override
-  protected GitRepositoryManager getRepositoryManager(@NotNull Project project) {
+  protected @NotNull GitRepositoryManager getRepositoryManager(@NotNull Project project) {
     return GitUtil.getRepositoryManager(project);
   }
 
   @Override
-  @NotNull
-  protected Collection<Change> getDiffChanges(@NotNull Project project, @NotNull VirtualFile file,
-                                              @NotNull String branchName) throws VcsException {
+  protected @NotNull Collection<Change> getDiffChanges(@NotNull Project project, @NotNull VirtualFile file,
+                                                       @NotNull String branchName) throws VcsException {
     FilePath filePath = VcsUtil.getFilePath(file);
     final GitRepository gitRepository = GitUtil.getRepositoryForFile(project, file);
     GitBranch branch = gitRepository.getBranches().findBranchByName(branchName);

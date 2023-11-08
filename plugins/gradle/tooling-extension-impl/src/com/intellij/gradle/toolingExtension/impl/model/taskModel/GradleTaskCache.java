@@ -1,8 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.gradle.toolingExtension.impl.model.taskModel;
 
+import com.intellij.gradle.toolingExtension.impl.modelBuilder.Messages;
 import com.intellij.gradle.toolingExtension.impl.util.GradleProjectUtil;
 import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase;
+import com.intellij.gradle.toolingExtension.util.GradleNegotiationUtil;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.tooling.model.ProjectIdentifier;
@@ -44,9 +46,10 @@ public final class GradleTaskCache {
     Set<Task> projectTasks = allTasks.get(projectIdentifier);
     if (projectTasks == null) {
       context.getMessageReporter().createMessage()
-        .withTitle("Project tasks aren't found")
+        .withGroup(Messages.TASK_CACHE_GET_GROUP)
+        .withTitle("Task model aren't found")
         .withText(
-          "Tasks for " + project + " wasn't collected. " +
+          "Tasks for " + GradleNegotiationUtil.getProjectDisplayName(project) + " wasn't collected. " +
           "All tasks should be collected during " + GradleModelFetchPhase.TASK_WARM_UP_PHASE + "."
         )
         .withException(new IllegalStateException())
@@ -62,12 +65,22 @@ public final class GradleTaskCache {
     Set<Task> previousTasks = allTasks.put(projectIdentifier, tasks);
     if (previousTasks != null) {
       context.getMessageReporter().createMessage()
-        .withTitle("Project tasks redefinition")
-        .withText("Tasks for " + project + " was already collected.")
+        .withGroup(Messages.TASK_CACHE_SET_GROUP)
+        .withTitle("Task model redefinition")
+        .withText("Tasks for " + GradleNegotiationUtil.getProjectDisplayName(project) + " was already collected.")
         .withException(new IllegalStateException())
         .withKind(Message.Kind.ERROR)
         .reportMessage(project);
     }
+  }
+
+  /**
+   * Marks that project source set model is loaded with errors.
+   * This mark means that error for {@code project} is already processed and reported.
+   */
+  public void markTaskModelAsError(@NotNull Project project) {
+    ProjectIdentifier projectIdentifier = GradleProjectUtil.getProjectIdentifier(project);
+    allTasks.put(projectIdentifier, Collections.emptySet());
   }
 
   private static final @NotNull DataProvider<GradleTaskCache> INSTANCE_PROVIDER = GradleTaskCache::new;

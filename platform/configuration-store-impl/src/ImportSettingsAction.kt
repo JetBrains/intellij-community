@@ -30,6 +30,7 @@ import java.util.zip.ZipInputStream
 import kotlin.io.path.exists
 import kotlin.io.path.inputStream
 import kotlin.io.path.isDirectory
+import kotlin.io.path.pathString
 
 // the class is open for Rider purpose
 open class ImportSettingsAction : AnAction(), ActionRemoteBehaviorSpecification.Frontend, DumbAware {
@@ -59,7 +60,7 @@ open class ImportSettingsAction : AnAction(), ActionRemoteBehaviorSpecification.
       withFileFilter { ConfigImportHelper.isSettingsFile(it) }
     }
 
-    chooseSettingsFile(descriptor, PathManager.getConfigPath(), component) {
+    chooseSettingsFile(descriptor, PathManager.getOriginalConfigDir().pathString, component) {
       val saveFile = Paths.get(it.path)
       try {
         doImport(saveFile)
@@ -103,7 +104,7 @@ open class ImportSettingsAction : AnAction(), ActionRemoteBehaviorSpecification.
       return
     }
 
-    val configPath = Paths.get(PathManager.getConfigPath())
+    val configPath = PathManager.getOriginalConfigDir()
     val dialog = ChooseComponentsToExportDialog(
       getExportableComponents(relativePaths), false,
       ConfigurationStoreBundle.message("title.select.components.to.import"),
@@ -149,7 +150,7 @@ open class ImportSettingsAction : AnAction(), ActionRemoteBehaviorSpecification.
 
   private fun doImportFromDirectory(saveFile: Path) {
     val confirmationMessage = ConfigurationStoreBundle.message("restore.default.settings.confirmation.message",
-                                                               ConfigBackup.getNextBackupPath(PathManager.getConfigDir()))
+                                                               ConfigBackup.getNextBackupPath(PathManager.getOriginalConfigDir()))
     if (confirmRestart(confirmationMessage)) {
       CustomConfigMigrationOption.MigrateFromCustomPlace(saveFile).writeConfigMarkerFile()
       restart()

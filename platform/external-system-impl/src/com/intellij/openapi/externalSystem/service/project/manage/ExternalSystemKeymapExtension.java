@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.project.manage;
 
 import com.intellij.execution.ProgramRunnerUtil;
@@ -22,6 +22,7 @@ import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.model.task.TaskData;
 import com.intellij.openapi.externalSystem.service.execution.AbstractExternalSystemTaskConfigurationType;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration;
+import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode;
 import com.intellij.openapi.externalSystem.service.ui.SelectExternalTaskDialog;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
@@ -143,7 +144,7 @@ public final class ExternalSystemKeymapExtension implements KeymapExtension {
       }
     }
 
-    for (ActionsProvider extension : ActionsProvider.EP_NAME.getExtensions()) {
+    for (ActionsProvider extension : ActionsProvider.EP_NAME.getExtensionList()) {
       KeymapGroup keymapGroup = extension.createGroup(condition, project);
       if (isGroupFiltered(condition, keymapGroup)) {
         result.addGroup(keymapGroup);
@@ -306,7 +307,8 @@ public final class ExternalSystemKeymapExtension implements KeymapExtension {
     public void actionPerformed(@NotNull AnActionEvent e) {
       final ExternalTaskExecutionInfo taskExecutionInfo = ExternalSystemActionUtil.buildTaskInfo(myTaskData);
       ExternalSystemUtil.runTask(
-        taskExecutionInfo.getSettings(), taskExecutionInfo.getExecutorId(), getProject(e), myTaskData.getOwner());
+        taskExecutionInfo.getSettings(), taskExecutionInfo.getExecutorId(), getProject(e), myTaskData.getOwner(), null,
+        ProgressExecutionMode.NO_PROGRESS_ASYNC);
     }
 
     public TaskData getTaskData() {

@@ -29,7 +29,7 @@ internal class GitLabSettingsConfigurable(private val project: Project)
 
     val scope = DisposingMainScope(disposable!!) + ModalityState.any().asContextElement()
     val accountsModel = GitLabAccountsListModel()
-    val detailsProvider = GitLabAccountsDetailsProvider(scope) { account ->
+    val detailsProvider = GitLabAccountsDetailsProvider(scope, accountsModel) { account ->
       accountsModel.newCredentials.getOrElse(account) {
         accountManager.findCredentials(account)
       }?.let {

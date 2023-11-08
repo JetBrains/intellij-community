@@ -33,6 +33,7 @@ public class SplitSwitchBranchWithSeveralCaseValuesAction implements ModCommandA
 
   @Override
   public @Nullable Presentation getPresentation(@NotNull ActionContext context) {
+    if (!BaseIntentionAction.canModify(context.file())) return null;
     PsiElement element = context.findLeaf();
     if (element == null) return null;
     PsiSwitchLabelStatementBase labelStatement = findLabelStatement(context, element);

@@ -16,7 +16,6 @@ import com.intellij.openapi.observable.util.transform
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ValidationInfo
-import com.intellij.openapi.util.io.toNioPath
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.findOrCreateDirectory
 import com.intellij.psi.PsiDirectory
@@ -288,7 +287,7 @@ private class CreateMissedActualsDialog(
 }
 
 private fun KtNamedDeclaration.getDefaultFilePath() = containingKtFile.let { file ->
-    file.sourceRoot?.toNioPath()?.relativize(file.virtualFilePath.toNioPath()).toString()
+    file.sourceRoot?.toNioPath()?.relativize(Path.of(file.virtualFilePath)).toString()
 }
 
 private fun getNewFilePathForModule(commonFilePath: String, module: Module, simpleModuleNames: Map<Module, String>): Path {

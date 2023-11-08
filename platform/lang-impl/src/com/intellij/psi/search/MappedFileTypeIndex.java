@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecordsImpl;
@@ -42,11 +43,13 @@ import static com.intellij.util.SystemProperties.getIntProperty;
 public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
   private static final Logger LOG = Logger.getInstance(MappedFileTypeIndex.class);
 
-  private static final int INVERTED_INDEX_SIZE_THRESHOLD = getIntProperty("mapped.file.type.index.inverse.upgrade.threshold", 256);
+  private static final int INVERTED_INDEX_SIZE_THRESHOLD = getIntProperty("mapped.file.type.index.inverse.upgrade.threshold", 16384);
 
   /** Use experimental forward-index implementation over fast (mapped) file attributes? */
   private static final boolean FORWARD_INDEX_OVER_MMAPPED_ATTRIBUTE =
     getBooleanProperty("mapped-file-type-index.forward-index-over-mapped-attribute", true);
+  private static final boolean USE_UNMAP_FOR_INDEX_DISPOSAL = // reduce the risk of JVM crash for linux and macOS
+    getBooleanProperty("mapped-file-type-index.use-unmap-for-dispose", SystemInfo.isWindows);
 
   private final @NotNull MappedFileTypeIndex.IndexDataController myDataController;
 
@@ -62,9 +65,16 @@ public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
   private static @NotNull MappedFileTypeIndex.IndexDataController loadIndexToMemory(@NotNull Path forwardIndexStorageFile,
                                                                                     @NotNull IntConsumer invertedIndexChangeCallback)
     throws StorageException {
-    var forwardIndex = FORWARD_INDEX_OVER_MMAPPED_ATTRIBUTE ?
-                       new ForwardIndexFileControllerOverMappedFile() :
-                       new ForwardIndexFileControllerOverFile(forwardIndexStorageFile);
+    final IndexDataController.ForwardIndexFileController forwardIndex;
+    if (FORWARD_INDEX_OVER_MMAPPED_ATTRIBUTE) {
+      forwardIndex = new ForwardIndexFileControllerOverMappedFile(
+        // TODO put this piece in the constructor after OverFile implementation is removed
+        forwardIndexStorageFile.resolveSibling(forwardIndexStorageFile.getFileName().toString() + ".mmap")
+      );
+    }
+    else {
+      forwardIndex = new ForwardIndexFileControllerOverFile(forwardIndexStorageFile);
+    }
     Int2ObjectMap<RandomAccessIntContainer> invertedIndex = new Int2ObjectOpenHashMap<>();
     forwardIndex.processEntries((inputId, data) -> {
       if (data != 0) {
@@ -95,6 +105,14 @@ public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
   public @NotNull Computable<Boolean> mapInputAndPrepareUpdate(int inputId, @Nullable FileContent content) {
     try {
       int fileTypeId = getFileTypeId(content == null ? null : content.getFileType());
+      if (LOG.isDebugEnabled()) {
+        if (content == null) {
+          LOG.debug("Map input: inputId(" + inputId + ") -> null, because content is null");
+        }
+        else {
+          LOG.debug("Map input: inputId(" + inputId + ") -> fileType(" + content.getFileType() + ", fileTypeId=" + fileTypeId + ")");
+        }
+      }
       return () -> updateIndex(inputId, checkFileTypeIdIsShort(fileTypeId));
     }
     catch (StorageException e) {
@@ -145,7 +163,11 @@ public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
 
   @Override
   public void clear() throws StorageException {
-    myDataController.clear();
+    try {
+      myDataController.clear();
+    } finally {
+      super.clear();
+    }
   }
 
   @Override
@@ -155,6 +177,9 @@ public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
     }
     catch (StorageException e) {
       throw new RuntimeException(e);
+    }
+    finally {
+      super.dispose();
     }
   }
 
@@ -204,9 +229,11 @@ public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
         if (lastRangeStart == -1) {
           lastRangeStart = key;
           lastRangeEnd = key;
-        } else if (lastRangeEnd == key - 1) {
+        }
+        else if (lastRangeEnd == key - 1) {
           lastRangeEnd = key;
-        } else {
+        }
+        else {
           invertedIndexInitKeysRanges.add(new IntRange(lastRangeStart, lastRangeEnd));
           lastRangeStart = key;
           lastRangeEnd = key;
@@ -225,7 +252,8 @@ public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
           var indexedSet = myInvertedIndex.get(indexedData);
           var ok = indexedSet != null && indexedSet.contains(inputId);
           if (!ok) {
-            logInconsistencySameValueIndexedSetIsNullOrDoesntContainInputId(inputId, indexedData, indexedData, indexedSet == null, myExtraChecksInfo);
+            logInconsistencySameValueIndexedSetIsNullOrDoesntContainInputId(inputId, indexedData, indexedData, indexedSet == null,
+                                                                            myExtraChecksInfo);
           }
         }
         return;
@@ -247,7 +275,8 @@ public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
                   keyWitness.set(key);
                 }
               });
-            } else {
+            }
+            else {
               keyWitness = null;
             }
             logInconsistencyIndexedSetValueNotRemoved(inputId, indexedData, data, keyWitness, myExtraChecksInfo);
@@ -360,7 +389,7 @@ public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
     return new UpgradableRandomAccessIntContainer<>(
       INVERTED_INDEX_SIZE_THRESHOLD,
       () -> {
-        return new IntHashSetAsRAIntContainer(INVERTED_INDEX_SIZE_THRESHOLD, Hash.DEFAULT_LOAD_FACTOR);
+        return new IntHashSetAsRAIntContainer(Hash.DEFAULT_INITIAL_SIZE, Hash.DEFAULT_LOAD_FACTOR);
       },
       (container) -> {
         // calculate needed capacity so there are less memory allocations
@@ -582,11 +611,11 @@ public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
 
     private final AtomicLong modificationsCounter = new AtomicLong(0);
 
-    private ForwardIndexFileControllerOverMappedFile() throws StorageException {
+    private ForwardIndexFileControllerOverMappedFile(@NotNull Path forwardIndexStorageFile) throws StorageException {
       try {
         storage = MappedFileStorageHelper.openHelperAndVerifyVersions(
           FSRecords.getInstance(),
-          STORAGE_NAME,
+          forwardIndexStorageFile.toAbsolutePath(),
           BINARY_FORMAT_VERSION,
           FIELD_WIDTH,
           CHECK_FILE_ID_BELOW_MAX
@@ -664,8 +693,19 @@ public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
     }
 
     @Override
-    public void close() {
-      //storage is closed by FSRecordsImpl
+    public void close() throws StorageException {
+      try {
+        if (USE_UNMAP_FOR_INDEX_DISPOSAL) {
+          // unmap is required for correct index re-instantiation on windows,
+          // but may result in JVM crash if we are not careful enough
+          storage.closeAndUnsafelyUnmap();
+        } else {
+          storage.close();
+        }
+      }
+      catch (IOException e) {
+        throw new StorageException(e);
+      }
     }
 
     private void writeImpl(int inputId,

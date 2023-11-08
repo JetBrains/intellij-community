@@ -44,7 +44,8 @@ internal class UnusedVariableInspection
     context(KtAnalysisSession)
     private fun isApplicableByDiagnostic(element: KtNamedDeclaration, diagnostic: KtFirDiagnostic.UnusedVariable): Boolean {
         val ktProperty = diagnostic.psi as? KtProperty ?: return false
-        return !ktProperty.isExplicitTypeReferenceNeededForTypeInference()
+        val typeReference = ktProperty.typeReference ?: return true
+        return !ktProperty.isExplicitTypeReferenceNeededForTypeInference(typeReference)
     }
     context(KtAnalysisSession)
     override fun isApplicableByAnalyze(element: KtNamedDeclaration): Boolean {

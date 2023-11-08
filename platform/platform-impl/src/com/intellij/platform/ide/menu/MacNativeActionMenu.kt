@@ -46,8 +46,9 @@ internal fun createMacNativeActionMenu(context: DataContext?,
                      useDarkIcons = NSDefaults.isDarkMenuBar(),
                      expire = { !menuPeer.isOpened })
     }
-    catch (ignore: ProcessCanceledException) {
-      logger<Menu>().warn("ProcessCanceledException is not expected")
+    catch (e: ProcessCanceledException) {
+      // a possible fix is to update PotemkinProgress.isUrgentInvocationEvent()
+      logger<Menu>().warn("ProcessCanceledException is not expected", Throwable().initCause(e))
     }
     catch (e: Throwable) {
       logger<Menu>().error(e)
@@ -75,7 +76,7 @@ private fun getDataContext(frame: JFrame): DataContext {
   if (PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(context) == null) {
     context = dataManager.getDataContext(IdeFocusManager.getGlobalInstance().getLastFocusedFor(frame))
   }
-  return Utils.wrapDataContext(context)
+  return context
 }
 
 

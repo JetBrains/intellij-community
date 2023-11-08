@@ -27,7 +27,7 @@ class KotlinFacetBridge(/*facetType: KotlinFacetType,*/
             moduleId = kotlinSettingsEntity.moduleId
             module = mutableStorage.resolve(kotlinSettingsEntity.moduleId)!!
             useProjectSettings = kotlinSettingsEntity.useProjectSettings
-            mergedCompilerArguments = kotlinSettingsEntity.mergedCompilerArguments
+            //mergedCompilerArguments = kotlinSettingsEntity.mergedCompilerArguments
             compilerArguments = kotlinSettingsEntity.compilerArguments
             compilerSettings = kotlinSettingsEntity.compilerSettings
             //externalSystemRunTasks = kotlinSettingsEntity.externalSystemRunTasks

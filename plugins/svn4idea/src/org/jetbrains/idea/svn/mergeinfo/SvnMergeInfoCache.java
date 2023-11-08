@@ -35,6 +35,7 @@ public final class SvnMergeInfoCache {
   // key - working copy root url
   @NotNull private final Map<Url, MyCurrentUrlData> myCurrentUrlMapping;
 
+  @Topic.ProjectLevel
   public static final Topic<SvnMergeInfoCacheListener> SVN_MERGE_INFO_CACHE =
     new Topic<>("SVN_MERGE_INFO_CACHE", SvnMergeInfoCacheListener.class);
 

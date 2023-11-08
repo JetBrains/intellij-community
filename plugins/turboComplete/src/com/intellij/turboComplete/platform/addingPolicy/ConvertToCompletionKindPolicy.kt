@@ -12,7 +12,7 @@ class ConvertToCompletionKindPolicy(
   private val suggestionGeneratorConsumer: SuggestionGeneratorConsumer,
   private val convertedKind: CompletionKind,
   private val parameters: CompletionParameters
-) : ElementsAddingPolicy {
+) : ElementsAddingPolicy.Default {
   private val buffer = mutableListOf<LookupElement>()
 
   override fun onResultStop(result: CompletionResultSet) {
@@ -23,7 +23,7 @@ class ConvertToCompletionKindPolicy(
     buffer.add(element)
   }
 
-  override fun addAllElements(result: CompletionResultSet, elements: MutableIterable<LookupElement>) {
+  override fun addAllElements(result: CompletionResultSet, elements: Iterable<LookupElement>) {
     buffer.addAll(elements)
   }
 

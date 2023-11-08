@@ -10,6 +10,8 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public final class EntireFileDifferenceModel extends FileDifferenceModel {
   private final Entry myLeft;
@@ -32,32 +34,37 @@ public final class EntireFileDifferenceModel extends FileDifferenceModel {
   }
 
   @Override
-  protected boolean isLeftContentAvailable(RevisionProcessingProgress p) {
+  protected boolean isLeftContentAvailable(@NotNull RevisionProcessingProgress p) {
     return myLeft.getContent().isAvailable();
   }
 
   @Override
-  protected boolean isRightContentAvailable(RevisionProcessingProgress p) {
+  protected boolean isRightContentAvailable(@NotNull RevisionProcessingProgress p) {
     return myRight.getContent().isAvailable();
   }
 
   @Override
-  protected DiffContent doGetLeftDiffContent(RevisionProcessingProgress p) {
+  protected @Nullable DiffContent getReadOnlyLeftDiffContent(@NotNull RevisionProcessingProgress p) {
     return getDiffContent(myLeft);
   }
 
   @Override
-  protected DiffContent getReadOnlyRightDiffContent(RevisionProcessingProgress p) {
+  protected @Nullable DiffContent getReadOnlyRightDiffContent(@NotNull RevisionProcessingProgress p) {
     return getDiffContent(myRight);
   }
 
   @Override
-  protected DiffContent getEditableRightDiffContent(RevisionProcessingProgress p) {
-    Document d = getDocument();
+  protected @Nullable DiffContent getEditableRightDiffContent(@NotNull RevisionProcessingProgress p) {
+    if (myRight == null) return null;
+
+    Document d = myGateway.getDocument(myRight.getPath());
+    if (d == null) return null;
+
     return DiffContentFactory.getInstance().create(myProject, d);
   }
 
-  private DiffContent getDiffContent(Entry e) {
+  private @Nullable DiffContent getDiffContent(@Nullable Entry e) {
+    if (e == null) return null;
     byte[] content = e.getContent().getBytes();
     VirtualFile virtualFile = myGateway.findVirtualFile(e.getPath());
     if (virtualFile != null) {

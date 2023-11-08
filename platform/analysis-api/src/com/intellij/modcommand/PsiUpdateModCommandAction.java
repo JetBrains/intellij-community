@@ -1,11 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.modcommand;
 
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.function.Predicate;
 
 /**
  * A convenient abstract class to implement {@link ModCommandAction}
@@ -35,20 +34,17 @@ public abstract class PsiUpdateModCommandAction<E extends PsiElement> extends Ps
     super(elementClass);
   }
 
-  /**
-   * Constructs an instance, which will look for an element
-   * of a specified class at the caret offset, satisfying the specified filter.
-   *
-   * @param elementClass element class
-   * @param filter       predicate to check the elements: elements that don't satisfy will be skipped
-   */
-  protected PsiUpdateModCommandAction(@NotNull Class<E> elementClass, @NotNull Predicate<? super E> filter) {
-    super(elementClass, filter);
-  }
-
   @Override
   protected final @NotNull ModCommand perform(@NotNull ActionContext context, @NotNull E element) {
-    return ModCommand.psiUpdate(element, (e, upd) -> invoke(context, e, upd));
+    try {
+      return ModCommand.psiUpdate(element, (e, upd) -> invoke(context, e, upd));
+    }
+    catch (ProcessCanceledException e) {
+      throw e;
+    }
+    catch (RuntimeException e) {
+      throw new RuntimeException("When launching " + getFamilyName() + " (" + getClass().getName() + ")", e);
+    }
   }
 
   /**

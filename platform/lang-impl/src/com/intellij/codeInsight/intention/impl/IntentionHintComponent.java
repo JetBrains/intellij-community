@@ -136,7 +136,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
                                                                   @NotNull IntentionContainer cachedIntentions) {
     IntentionHintComponent component = new IntentionHintComponent(project, file, editor, cachedIntentions);
 
-    if (editor.getSettings().isShowIntentionBulb() && !IntentionsUIImpl.DISABLE_INTENTION_BULB.get(project, false)) {
+    if (editor.getSettings().isShowIntentionBulb()) {
       component.showIntentionHintImpl(!showExpanded);
     }
     if (showExpanded) {
@@ -239,7 +239,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
       return;
     }
     CodeFloatingToolbar toolbar = getFloatingToolbar();
-    if (toolbar != null) {
+    if (toolbar != null && toolbar.canBeShownAtCurrentSelection()) {
       showPopupFromToolbar(toolbar);
       return;
     }
@@ -444,8 +444,12 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
       if (lineY + panelHeight >= visibleArea.y + visibleArea.height) return null;
 
       int x = visibleArea.x;
+      int anotherLineWithShift = IntentionsUIImpl.SHOW_INTENTION_BULB_ON_ANOTHER_LINE.get(editor.getProject(), 0);
+      if (anotherLineWithShift != 0) {
+        x += anotherLineWithShift;
+      }
       int y;
-      if (lineHeight >= iconHeight && fitsInCaretLine(editor, x + panelWidth)) {
+      if (anotherLineWithShift == 0 && lineHeight >= iconHeight && fitsInCaretLine(editor, x + panelWidth)) {
         // Center the light bulb icon in the caret line.
         // The (usually invisible) border may be outside the caret line.
         y = lineY + (lineHeight - panelHeight) / 2;

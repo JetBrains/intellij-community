@@ -1,5 +1,5 @@
-// IS_APPLICABLE: false
 // WITH_STDLIB
+// AFTER-WARNING: Variable 'myFoo' is never used
 
 fun foo() {
     val myFoo = Foo().apply {

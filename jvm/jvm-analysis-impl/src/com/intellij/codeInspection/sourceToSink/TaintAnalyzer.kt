@@ -15,6 +15,7 @@ import com.intellij.util.containers.MultiMap
 import com.siyeh.ig.psiutils.ClassUtils
 import org.jetbrains.uast.*
 import org.jetbrains.uast.UastBinaryOperator.AssignOperator
+import org.jetbrains.uast.internal.acceptList
 import org.jetbrains.uast.visitor.AbstractUastVisitor
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -427,9 +428,17 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
     if (sourcePsi == null) return TaintValue.UNKNOWN
     val variableFlow = getVariableFlow(sourcePsi)
 
-    return variableFlow.process(this, initValue, uVariable, analyzeContext, usedReference, skipAfterReference).taintValue
+    return variableFlow.process(this, initValue, uVariable, analyzeContext, usedReference, skipAfterReference, myTaintValueFactory).taintValue
   }
 
+  private fun getVariableFlow(sourcePsi: PsiElement): VariableFlow =
+    CachedValuesManager.getManager(sourcePsi.project)
+      .getCachedValue(sourcePsi, CachedValueProvider {
+        val method = sourcePsi.toUElement() as? UMethod
+        val visitor = FlowVisitor()
+        method?.uastBody?.accept(visitor)
+        return@CachedValueProvider CachedValueProvider.Result.create(visitor.flow, PsiModificationTracker.MODIFICATION_COUNT)
+      })
 
   private fun fromParam(expression: UExpression, target: PsiElement?, analyzeContext: AnalyzeContext): TaintValue? {
     val psiParameter = (target as? PsiParameter) ?: return null
@@ -702,6 +711,22 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
         return withCache(uExpression) { fromExpressionWithoutCollection(uExpression.expression, analyzeContext.withDecrementedParts()) }
       }
       is UIfExpression, is USwitchExpression, is UBlockExpression -> {
+        if (uExpression is UIfExpression) {
+          val condition = uExpression.condition
+          val value: Any? = getConstant(condition)
+          val thenExpression = uExpression.thenExpression
+          val elseExpression = uExpression.elseExpression
+          if (value == true && thenExpression != null) {
+            return withCache(thenExpression) {
+              fromExpressionWithoutCollection(thenExpression, analyzeContext.withDecrementedParts())
+            }
+          }
+          else if (value == false && elseExpression != null) {
+            return withCache(elseExpression) {
+              fromExpressionWithoutCollection(elseExpression, analyzeContext.withDecrementedParts())
+            }
+          }
+        }
         return withCache(uExpression) {
           val nonStructuralChildren = nonStructuralChildren(uExpression).toList()
           nonStructuralChildren
@@ -746,15 +771,94 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
     private fun getAllReturns(sourcePsi: PsiElement): MutableSet<UExpression> =
       CachedValuesManager.getManager(sourcePsi.project)
         .getCachedValue(sourcePsi, CachedValueProvider {
-          val method = sourcePsi.toUElement() as? UMethod
-          val visitor = object : AbstractUastVisitor() {
+          class ReturnFinder: AbstractUastVisitor() {
             val returns = mutableSetOf<UExpression>()
+            var stop = false
+            var onlyInSameLevel = true
+
+            override fun visitBreakExpression(node: UBreakExpression): Boolean {
+              onlyInSameLevel = false
+              return super.visitBreakExpression(node)
+            }
+
+            override fun visitYieldExpression(node: UYieldExpression): Boolean {
+              onlyInSameLevel = false
+              return super.visitYieldExpression(node)
+            }
+
+            override fun visitContinueExpression(node: UContinueExpression): Boolean {
+              onlyInSameLevel = false
+              return super.visitContinueExpression(node)
+            }
+
+            override fun visitClass(node: UClass): Boolean {
+              return true
+            }
+
+            override fun visitSwitchExpression(node: USwitchExpression): Boolean {
+              if (stop) {
+                return true
+              }
+              //simplification
+              onlyInSameLevel = false
+              return super.visitSwitchExpression(node)
+            }
+
+            override fun visitIfExpression(node: UIfExpression): Boolean {
+              val constant = getConstant(node.condition)
+              val returnFinder = ReturnFinder()
+              var nextExpression: UExpression? = null
+              if (constant == true) {
+                nextExpression = node.thenExpression
+              }
+              else if (constant == false) {
+                nextExpression = node.elseExpression
+              }
+              if (nextExpression != null) {
+                if (nextExpression is UBlockExpression) {
+                  processList(nextExpression.expressions, returnFinder)
+                }
+                else {
+                  nextExpression.accept(returnFinder)
+                }
+              }
+              returns.addAll(returnFinder.returns)
+              if (returnFinder.onlyInSameLevel && returnFinder.returns.isNotEmpty()) {
+                stop = true
+              }
+              return true
+            }
+
+            private fun processList(expressions: List<UExpression>, returnFinder: ReturnFinder) {
+              expressions.acceptList(returnFinder)
+            }
+
+            override fun visitBlockExpression(node: UBlockExpression): Boolean {
+              if (stop) {
+                return true
+              }
+              val returnFinder = ReturnFinder()
+              processList(node.expressions, returnFinder)
+              returns.addAll(returnFinder.returns)
+              onlyInSameLevel = false
+              return true
+            }
+
+            override fun visitElement(node: UElement): Boolean {
+              return stop
+            }
+
             override fun visitReturnExpression(node: UReturnExpression): Boolean {
+              if (stop) {
+                return true
+              }
               val returnExpression = node.returnExpression ?: return super.visitReturnExpression(node)
               returns.add(returnExpression)
               return super.visitReturnExpression(node)
             }
           }
+          val method = sourcePsi.toUElement() as? UMethod
+          val visitor = ReturnFinder()
           method?.uastBody?.accept(visitor)
           return@CachedValueProvider CachedValueProvider.Result.create(visitor.returns, PsiModificationTracker.MODIFICATION_COUNT)
         })
@@ -784,14 +888,6 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
         return true
       }
 
-      private fun getConstant(condition: UExpression): Any? {
-        val sourcePsi = condition.sourcePsi
-        if (sourcePsi == null) return null
-        val sourceToSinkProvider = SourceToSinkProvider.sourceToSinkLanguageProvider.forLanguage(sourcePsi.getLanguage())
-        if(sourceToSinkProvider==null) return null
-        return sourceToSinkProvider.computeConstant(sourcePsi)
-      }
-
       override fun visitSwitchExpression(node: USwitchExpression): Boolean {
         val flows = mutableListOf<VariableFlow>()
         val body = node.body
@@ -813,12 +909,14 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
 
       override fun afterVisitCallExpression(node: UCallExpression) {
         val javaPsi = node.resolveToUElementOfType<UMethod>()?.javaPsi
+        val receiver = node.receiver
         if (javaPsi != null && JavaMethodContractUtil.isPure(javaPsi)) {
+          flow.addCleaning(receiver, node)
           return
         }
-        val receiver = node.receiver
         if (receiver != null) {
           checkUsages(listOf(receiver), node.valueArguments)
+          flow.addCleaning(receiver, node)
         }
         if (javaPsi != null && HardcodedContracts.isKnownNoParameterLeak(javaPsi)) {
           return
@@ -845,15 +943,6 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
         }
       }
     }
-
-    private fun getVariableFlow(sourcePsi: PsiElement): VariableFlow =
-      CachedValuesManager.getManager(sourcePsi.project)
-        .getCachedValue(sourcePsi, CachedValueProvider {
-          val method = sourcePsi.toUElement() as? UMethod
-          val visitor = FlowVisitor()
-          method?.uastBody?.accept(visitor)
-          return@CachedValueProvider CachedValueProvider.Result.create(visitor.flow, PsiModificationTracker.MODIFICATION_COUNT)
-        })
 
     private fun equalFiles(analyzeContext: AnalyzeContext, element: UElement): Boolean {
       val file = element.getContainingUFile()
@@ -975,6 +1064,8 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
   private class VariableFlow {
     private interface VariableStep
 
+    private class CleaningStep(val node: UCallExpression) : VariableStep
+
     private class DropLocalityStep(val dependsOn: List<UExpression?>?) : VariableStep
 
     private data class UsagesStep(val usages: MutableSet<PsiElement> = hashSetOf()) : VariableStep
@@ -1003,6 +1094,15 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
       }
     }
 
+    fun addCleaning(uExpression: UExpression?, node: UCallExpression) {
+      if (uExpression == null) {
+        return
+      }
+      val currentVariable = (uExpression as? UResolvable)?.resolveToUElementOfType<UVariable>() ?: return
+      val psiElement = currentVariable.sourcePsi ?: return
+      variables.putValue(psiElement, CleaningStep(node))
+    }
+
     fun addAssign(currentVariable: UVariable, assign: UExpression) {
       val psiElement = currentVariable.sourcePsi ?: return
       variables.putValue(psiElement, AssignmentStep(assign))
@@ -1024,7 +1124,8 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
                 uVariable: UVariable,
                 analyzeContext: AnalyzeContext,
                 usedReference: UExpression?,
-                skipAfterReference: Boolean): FlowResult {
+                skipAfterReference: Boolean,
+                taintValueFactory: TaintValueFactory): FlowResult {
       val psiElement = uVariable.sourcePsi ?: return FlowResult(TaintValue.UNKNOWN, false)
       val variableSteps = variables[psiElement]
       if (variableSteps.isEmpty()) return FlowResult(initValue, false)
@@ -1070,7 +1171,7 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
               processValue = resultValue
             }
             val flowResults = variableStep.flows.map {
-              it.process(taintAnalyzer, resultValue, uVariable, analyzeContext, usedReference, skipAfterReference)
+              it.process(taintAnalyzer, resultValue, uVariable, analyzeContext, usedReference, skipAfterReference, taintValueFactory)
             }
             val fastExit = flowResults.firstOrNull { it.fast }
             if (fastExit != null) {
@@ -1090,12 +1191,25 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
             val expression = variableStep.expression
             resultValue = taintAnalyzer.fromExpressionWithoutCollection(expression, analyzeContext)
           }
+          is CleaningStep -> {
+            if (taintValueFactory.needToCleanQualifier(variableStep.node)) {
+              resultValue = TaintValue.UNTAINTED
+            }
+          }
         }
       }
 
       return FlowResult(resultValue, false)
     }
   }
+}
+
+private fun getConstant(condition: UExpression): Any? {
+  val sourcePsi = condition.sourcePsi
+  if (sourcePsi == null) return null
+  val sourceToSinkProvider = SourceToSinkProvider.sourceToSinkLanguageProvider.forLanguage(sourcePsi.getLanguage())
+  if(sourceToSinkProvider==null) return null
+  return sourceToSinkProvider.computeConstant(sourcePsi)
 }
 
 class DeepTaintAnalyzerException : RuntimeException()

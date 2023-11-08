@@ -14,7 +14,6 @@ import com.intellij.terminal.pty.PtyProcessTtyConnector;
 import com.intellij.terminal.ui.TerminalWidget;
 import com.intellij.util.Alarm;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.jediterm.terminal.ProcessTtyConnector;
 import com.jediterm.terminal.Terminal;
@@ -33,12 +32,9 @@ import org.jetbrains.plugins.terminal.action.TerminalSplitAction;
 
 import java.awt.event.KeyEvent;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.Queue;
-import java.util.concurrent.ExecutorService;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -47,14 +43,10 @@ public class ShellTerminalWidget extends JBTerminalWidget {
 
   private static final Logger LOG = Logger.getInstance(ShellTerminalWidget.class);
   private static final long VFS_REFRESH_DELAY_MS = 500;
-  private static final ExecutorService EXECUTOR = AppExecutorUtil.createBoundedApplicationPoolExecutor(
-    ShellTerminalWidget.class.getSimpleName() + " command executor", 1);
 
-  private boolean myEscapePressed = false;
   private String myCommandHistoryFilePath;
   private List<String> myShellCommand;
   private final Prompt myPrompt = new Prompt();
-  private final Queue<String> myPendingCommandsToExecute = new LinkedList<>();
   private final TerminalShellCommandHandlerHelper myShellCommandHandlerHelper;
 
   private final Alarm myVfsRefreshAlarm;
@@ -85,9 +77,6 @@ public class ShellTerminalWidget extends JBTerminalWidget {
 
     getTerminalPanel().addPreKeyEventHandler(e -> {
       if (e.getID() != KeyEvent.KEY_PRESSED) return;
-      if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
-        myEscapePressed = true;
-      }
       handleAnyKeyPressed();
 
       if (!e.isConsumed() && e.getKeyCode() == KeyEvent.VK_ENTER) {
@@ -108,7 +97,6 @@ public class ShellTerminalWidget extends JBTerminalWidget {
         }
         if (!e.isConsumed()) {
           handleEnterPressed();
-          myEscapePressed = false;
         }
       }
       else {
@@ -182,18 +170,15 @@ public class ShellTerminalWidget extends JBTerminalWidget {
     return Math.max(0, Math.min(terminal.getCursorY() - 1, textBuffer.getHeight() - 1));
   }
 
+  @Override
   public void executeCommand(@NotNull String shellCommand) throws IOException {
     String typedCommand = getTypedShellCommand();
     if (!typedCommand.isEmpty()) {
       throw new IOException("Cannot execute command when another command is typed: " + typedCommand); //NON-NLS
     }
-    TtyConnector connector = getTtyConnector();
-    if (connector != null) {
-      doExecuteCommand(shellCommand, connector);
-    }
-    else {
-      myPendingCommandsToExecute.add(shellCommand);
-    }
+    doWithTerminalStarter(terminalStarter -> {
+      TerminalUtil.sendCommandToExecute(shellCommand, terminalStarter);
+    });
   }
 
   public void executeWithTtyConnector(@NotNull Consumer<TtyConnector> consumer) {
@@ -207,41 +192,6 @@ public class ShellTerminalWidget extends JBTerminalWidget {
       return TerminalOptionsProvider.getInstance().getTabName();
     }
     return super.getDefaultSessionName(connector);
-  }
-
-  @Override
-  public void setTtyConnector(@NotNull TtyConnector ttyConnector) {
-    super.setTtyConnector(ttyConnector);
-
-    String command;
-    while ((command = myPendingCommandsToExecute.poll()) != null) {
-      doExecuteCommand(command, ttyConnector);
-    }
-  }
-
-  private void doExecuteCommand(@NotNull String shellCommand, @NotNull TtyConnector connector) {
-    EXECUTOR.execute(() -> {
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("Before writing command " + shellCommand);
-      }
-      if (connector.isConnected()) {
-        StringBuilder result = new StringBuilder();
-        if (myEscapePressed) {
-          result.append((char)KeyEvent.VK_BACK_SPACE); // remove Escape first, workaround for IDEA-221031
-        }
-        String enterCode = new String(getTerminal().getCodeForKey(KeyEvent.VK_ENTER, 0), StandardCharsets.UTF_8);
-        result.append(shellCommand).append(enterCode);
-        try {
-          connector.write(result.toString());
-        }
-        catch (IOException e) {
-          LOG.info("Failed to write command for execution in terminal", e);
-        }
-      }
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("After writing command " + shellCommand);
-      }
-    });
   }
 
   public boolean hasRunningCommands() throws IllegalStateException {
@@ -413,5 +363,9 @@ public class ShellTerminalWidget extends JBTerminalWidget {
 
   public static @Nullable ShellTerminalWidget asShellJediTermWidget(@NotNull TerminalWidget widget) {
     return ObjectUtils.tryCast(JBTerminalWidget.asJediTermWidget(widget), ShellTerminalWidget.class);
+  }
+
+  public static @NotNull ShellTerminalWidget toShellJediTermWidgetOrThrow(@NotNull TerminalWidget widget) {
+    return (ShellTerminalWidget)Objects.requireNonNull(JBTerminalWidget.asJediTermWidget(widget));
   }
 }

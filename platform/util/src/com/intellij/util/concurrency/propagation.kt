@@ -197,7 +197,7 @@ fun <T> runAsCoroutine(continuation: Continuation<Unit>, completeOnFinish: Boole
     catch (e: ProcessCanceledException) {
       // A raw PCE scares coroutine framework. Instead, we should message coroutines that we intend to cancel an activity, not fail it.
       originalPCE.set(e)
-      throw CancellationException("Masking ProcessCancelledException: ${e.message}", e)
+      throw CancellationException("Masking ProcessCanceledException: ${e.message}", e)
     }
   }
   deferred.invokeOnCompletion {

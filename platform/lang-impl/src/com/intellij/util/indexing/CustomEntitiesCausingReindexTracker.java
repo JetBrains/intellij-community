@@ -10,7 +10,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.roots.IndexableEntityProvider;
 import com.intellij.workspaceModel.core.fileIndex.DependencyDescription;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndexContributor;
-import com.intellij.workspaceModel.core.fileIndex.impl.PlatformInternalWorkspaceFileIndexContributor;
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexImpl;
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleDependencyIndex;
 import org.jetbrains.annotations.NotNull;
@@ -22,7 +21,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 final class CustomEntitiesCausingReindexTracker {
-  private final boolean useWorkspaceFileIndexContributors = IndexableFilesIndex.isEnabled();
   @NotNull
   private Set<Class<? extends WorkspaceEntity>> customEntitiesToRescan;
 
@@ -56,15 +54,12 @@ final class CustomEntitiesCausingReindexTracker {
     customEntitiesToRescan = listCustomEntitiesCausingRescan();
   }
 
-  private Set<Class<? extends WorkspaceEntity>> listCustomEntitiesCausingRescan() {
+  private static Set<Class<? extends WorkspaceEntity>> listCustomEntitiesCausingRescan() {
     Stream<Class<? extends WorkspaceEntity>> allClasses = WorkspaceFileIndexImpl.Companion.getEP_NAME().getExtensionList().stream()
-      .filter(contributor -> useWorkspaceFileIndexContributors ||
-                                                        !(contributor instanceof PlatformInternalWorkspaceFileIndexContributor))
       .flatMap(contributor -> getEntityClassesToCauseReindexing(contributor));
     allClasses = Stream.concat(allClasses,
                                IndexableEntityProvider.EP_NAME.getExtensionList().stream()
-                                 .filter(provider -> !useWorkspaceFileIndexContributors ||
-                                                     provider instanceof IndexableEntityProvider.Enforced<? extends WorkspaceEntity>)
+                                 .filter(provider -> provider instanceof IndexableEntityProvider.Enforced<? extends WorkspaceEntity>)
                                  .map(provider -> provider.getEntityClass()));
     return Set.copyOf(allClasses.filter(aClass -> !isEntityReindexingCustomised(aClass)).collect(Collectors.toSet()));
   }

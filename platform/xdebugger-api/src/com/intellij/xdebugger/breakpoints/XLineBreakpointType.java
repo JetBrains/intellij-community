@@ -10,9 +10,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerBundle;
+import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.XSourcePosition;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -74,12 +76,18 @@ public abstract class XLineBreakpointType<P extends XBreakpointProperties> exten
   }
 
   private int getColumn(XLineBreakpoint<P> breakpoint) {
-    var pos = breakpoint.getSourcePosition();
-    if (pos == null) return -1;
+    if (!XDebuggerUtil.areInlineBreakpointsEnabled()) return -1;
+
     return ReadAction.compute(() -> {
-      var document = FileDocumentManager.getInstance().getDocument(pos.getFile());
+      var range = breakpoint.getType().getHighlightRange(breakpoint);
+      if (range == null) return 0; // full line breakpoint
+      var offset = range.getStartOffset();
+
+      var file = VirtualFileManager.getInstance().findFileByUrl(breakpoint.getFileUrl());
+      if (file == null) return -1;
+      var document = FileDocumentManager.getInstance().getDocument(file);
       if (document == null) return -1;
-      var offset = pos.getOffset();
+      if (0 > offset || offset > document.getTextLength()) return -1;
       return offset - document.getLineStartOffset(document.getLineNumber(offset));
     });
   }

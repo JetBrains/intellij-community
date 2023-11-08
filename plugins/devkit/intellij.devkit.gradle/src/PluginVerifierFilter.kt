@@ -43,9 +43,10 @@ internal class PluginVerifierFilter(private val project: Project) : Filter {
   private val VERIFICATION_SAVED_TO = " saved to "
 
   override fun applyFilter(line: String, entireLength: Int): Filter.Result? {
-    if (line.startsWith("Plugin ")) {
+    if (line.startsWith("Plugin ") && line.contains(" against ")) {
       val initialOffset = entireLength - line.length
       val idx = line.indexOf(": ")
+      if (idx == -1) return null
 
       return Filter.Result(initialOffset, initialOffset + idx + 1, null,
                            TextAttributes(JBColor.CYAN, null, JBColor.CYAN, EffectType.BOLD_DOTTED_LINE, Font.BOLD))

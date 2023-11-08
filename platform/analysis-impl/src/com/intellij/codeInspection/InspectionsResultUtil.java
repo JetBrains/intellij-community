@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
@@ -27,12 +27,12 @@ import java.util.*;
 import java.util.function.Function;
 
 public final class InspectionsResultUtil {
-  @NonNls public static final String DESCRIPTIONS = ".descriptions";
-  @NonNls public static final String XML_EXTENSION = ".xml";
+  public static final @NonNls String DESCRIPTIONS = ".descriptions";
+  public static final @NonNls String XML_EXTENSION = ".xml";
   private static final Logger LOG = Logger.getInstance(InspectionsResultUtil.class);
 
-  @NonNls public static final String PROFILE = "profile";
-  @NonNls public static final String INSPECTIONS_NODE = "inspections";
+  public static final @NonNls String PROFILE = "profile";
+  public static final @NonNls String INSPECTIONS_NODE = "inspections";
   private static final String ROOT = "root";
   public static final String AGGREGATE = "_aggregate";
 

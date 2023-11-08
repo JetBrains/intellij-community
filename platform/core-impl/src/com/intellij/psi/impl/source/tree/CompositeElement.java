@@ -42,7 +42,6 @@ public class CompositeElement extends TreeElement {
   private volatile PsiElement myWrapper;
   private static final AtomicReferenceFieldUpdater<CompositeElement, PsiElement>
     myWrapperUpdater = AtomicReferenceFieldUpdater.newUpdater(CompositeElement.class, PsiElement.class, "myWrapper");
-  private static final boolean ASSERT_THREADING = true;//DebugUtil.CHECK || ApplicationManagerEx.getApplicationEx().isInternal() || ApplicationManagerEx.getApplicationEx().isUnitTestMode();
 
 
   public CompositeElement(@NotNull IElementType type) {
@@ -92,11 +91,8 @@ public class CompositeElement extends TreeElement {
   }
 
   private static void assertThreading(@NotNull PsiFile file) {
-    if (ASSERT_THREADING) {
-      boolean ok = ApplicationManager.getApplication().isWriteAccessAllowed() || isNonPhysicalOrInjected(file);
-      if (!ok) {
-        LOG.error("Threading assertion. " + getThreadingDiagnostics(file));
-      }
+    if (!ApplicationManager.getApplication().isWriteAccessAllowed() && !isNonPhysicalOrInjected(file)) {
+      LOG.error("Threading assertion. " + getThreadingDiagnostics(file));
     }
   }
 
@@ -201,6 +197,11 @@ public class CompositeElement extends TreeElement {
     return TreeUtil.findSibling(anchor, typesSet);
   }
 
+  /**
+   * @implNote Optimization. Instead of just calling new {@code String(textToCharArray())} we try to delegate the text computation to the
+   * first child, if there's only one, in hope it has optimized its own {@code getText()} and we thus can skip allocating buffer in
+   * {@link AstBufferUtil}
+   */
   @Override
   public @NotNull String getText() {
     TreeElement firstChildNode = getFirstChildNode();

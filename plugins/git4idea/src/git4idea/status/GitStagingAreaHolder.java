@@ -1,32 +1,33 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.status;
 
 import com.intellij.internal.statistic.StructuredIdeActivity;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vcs.changes.ChangesUtil;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.VcsDirtyScope;
-import com.intellij.openapi.vcs.impl.projectlevelman.RecursiveFilePathSet;
+import com.intellij.openapi.vcs.util.paths.RootDirtySet;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.Topic;
-import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitRefreshUsageCollector;
+import git4idea.GitVcsDirtyScope;
 import git4idea.commands.GitHandler;
 import git4idea.index.GitFileStatus;
 import git4idea.index.GitIndexStatusUtilKt;
 import git4idea.repo.GitConflict;
 import git4idea.repo.GitRepository;
+import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 public class GitStagingAreaHolder {
   private static final Logger LOG = Logger.getInstance(GitStagingAreaHolder.class);
@@ -43,15 +44,13 @@ public class GitStagingAreaHolder {
     myRepository = repository;
   }
 
-  @NotNull
-  public List<GitFileStatus> getAllRecords() {
+  public @NotNull List<GitFileStatus> getAllRecords() {
     synchronized (LOCK) {
       return new ArrayList<>(myRecords);
     }
   }
 
-  @Nullable
-  public GitFileStatus findRecord(@NotNull FilePath path) {
+  public @Nullable GitFileStatus findRecord(@NotNull FilePath path) {
     synchronized (LOCK) {
       return ContainerUtil.find(myRecords, it -> it.getPath().equals(path));
     }
@@ -63,33 +62,28 @@ public class GitStagingAreaHolder {
     }
   }
 
-  @NotNull
-  public List<GitConflict> getAllConflicts() {
+  public @NotNull List<GitConflict> getAllConflicts() {
     synchronized (LOCK) {
       return ContainerUtil.mapNotNull(myRecords, this::createConflict);
     }
   }
 
-  @Nullable
-  public GitConflict findConflict(@NotNull FilePath path) {
+  public @Nullable GitConflict findConflict(@NotNull FilePath path) {
     return createConflict(findRecord(path));
   }
 
-  @Nullable
-  private GitConflict createConflict(@Nullable GitFileStatus record) {
+  private @Nullable GitConflict createConflict(@Nullable GitFileStatus record) {
     if (record == null) return null;
     return createConflict(myRepository.getRoot(), record);
   }
 
-  @Nullable
-  public static GitConflict createConflict(@NotNull VirtualFile root, @NotNull GitFileStatus record) {
+  public static @Nullable GitConflict createConflict(@NotNull VirtualFile root, @NotNull GitFileStatus record) {
     if (!GitIndexStatusUtilKt.isConflicted(record.getIndex(), record.getWorkTree())) return null;
     return new GitConflict(root, record.getPath(),
                            getConflictStatus(record.getIndex()), getConflictStatus(record.getWorkTree()));
   }
 
-  @NotNull
-  private static GitConflict.Status getConflictStatus(char status) {
+  private static @NotNull GitConflict.Status getConflictStatus(char status) {
     if (status == 'A') return GitConflict.Status.ADDED;
     if (status == 'D') return GitConflict.Status.DELETED;
     return GitConflict.Status.MODIFIED;
@@ -99,22 +93,17 @@ public class GitStagingAreaHolder {
   /**
    * untracked/ignored files are processed separately in {@link git4idea.repo.GitUntrackedFilesHolder} and {@link git4idea.ignore.GitRepositoryIgnoredFilesHolder}
    */
-  @NotNull
   @ApiStatus.Internal
-  public List<GitFileStatus> refresh(@NotNull List<FilePath> dirtyPaths) throws VcsException {
+  public @NotNull List<GitFileStatus> refresh(@NotNull RootDirtySet dirtyPaths) throws VcsException {
     ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
     VirtualFile root = myRepository.getRoot();
 
-    RecursiveFilePathSet dirtyScope = new RecursiveFilePathSet(true); // GitVcs#needsCaseSensitiveDirtyScope is true
-    dirtyScope.addAll(dirtyPaths);
-
-    boolean everythingDirty = dirtyScope.contains(VcsUtil.getFilePath(root));
-    StructuredIdeActivity activity = GitRefreshUsageCollector.logStatusRefresh(myProject, everythingDirty);
-    List<GitFileStatus> rootRecords = GitIndexStatusUtilKt.getStatus(myProject, root, dirtyPaths, true, false, false);
+    StructuredIdeActivity activity = GitRefreshUsageCollector.logStatusRefresh(myProject, dirtyPaths.isEverythingDirty());
+    List<GitFileStatus> rootRecords = GitIndexStatusUtilKt.getStatus(myProject, root, dirtyPaths.collectFilePaths(), true, false, false);
     activity.finished();
 
     rootRecords.removeIf(record -> {
-      boolean isUnderDirtyScope = isUnder(record, dirtyScope);
+      boolean isUnderDirtyScope = isUnder(record, dirtyPaths);
       if (!isUnderDirtyScope) return true;
 
       VirtualFile recordRoot = vcsManager.getVcsRootFor(record.getPath());
@@ -128,7 +117,7 @@ public class GitStagingAreaHolder {
     });
 
     synchronized (LOCK) {
-      myRecords.removeIf(record -> isUnder(record, dirtyScope));
+      myRecords.removeIf(record -> isUnder(record, dirtyPaths));
       myRecords.addAll(rootRecords);
     }
 
@@ -137,9 +126,9 @@ public class GitStagingAreaHolder {
     return rootRecords;
   }
 
-  private static boolean isUnder(@NotNull GitFileStatus record, @NotNull RecursiveFilePathSet dirtyScope) {
-    return dirtyScope.hasAncestor(record.getPath()) ||
-           record.getOrigPath() != null && dirtyScope.hasAncestor(record.getOrigPath());
+  private static boolean isUnder(@NotNull GitFileStatus record, @NotNull RootDirtySet dirtySet) {
+    return dirtySet.belongsTo(record.getPath()) ||
+           record.getOrigPath() != null && dirtySet.belongsTo(record.getOrigPath());
   }
 
   private static boolean isSubmoduleStatus(@NotNull GitFileStatus record, @Nullable VirtualFile candidateRoot) {
@@ -155,77 +144,42 @@ public class GitStagingAreaHolder {
    * @return the map whose values are lists of dirty paths to check, grouped by root
    * The paths will be automatically collapsed later if the summary length more than limit, see {@link GitHandler#isLargeCommandLine()}.
    */
-  @NotNull
   @ApiStatus.Internal
-  public static Map<VirtualFile, List<FilePath>> collectDirtyPaths(@NotNull VcsDirtyScope dirtyScope) {
+  public static @NotNull Map<VirtualFile, RootDirtySet> collectDirtyPathsPerRoot(@NotNull VcsDirtyScope dirtyScope) {
     Project project = dirtyScope.getProject();
-    AbstractVcs vcs = dirtyScope.getVcs();
-    ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
+    Map<VirtualFile, RootDirtySet> dirtySetPerRoot = ((GitVcsDirtyScope)dirtyScope).getDirtySetsPerRoot();
 
-    Map<VirtualFile, List<FilePath>> result = new HashMap<>();
-    for (FilePath p : dirtyScope.getRecursivelyDirtyDirectories()) {
-      addToPaths(p, result, vcs, vcsManager);
-    }
-    for (FilePath p : dirtyScope.getDirtyFilesNoExpand()) {
-      addToPaths(p, result, vcs, vcsManager);
-    }
+    // Git will not detect renames unless both affected paths are passed to the 'git status' command.
+    // Thus, we are forced to pass all deleted/added files in a repository to ensure all renames are detected.
+    for (VirtualFile root : dirtySetPerRoot.keySet()) {
+      RootDirtySet rootPaths = dirtySetPerRoot.get(root);
+      if (rootPaths.isEverythingDirty()) continue;
 
-    // Git will not detect renames, unless both affected paths are passed to the 'git status' command.
-    // Thus we are forced to pass all deleted/added files to ensure all renames are detected.
-    for (Change c : ChangeListManager.getInstance(project).getAllChanges()) {
-      switch (c.getType()) {
-        case NEW:
-        case DELETED:
-        case MOVED:
-          FilePath afterPath = ChangesUtil.getAfterPath(c);
-          if (afterPath != null) {
-            addToPaths(afterPath, result, vcs, vcsManager);
-          }
-          FilePath beforePath = ChangesUtil.getBeforePath(c);
-          if (beforePath != null) {
-            addToPaths(beforePath, result, vcs, vcsManager);
-          }
-        case MODIFICATION:
-        default:
-          // do nothing
+      GitRepository gitRepository = GitRepositoryManager.getInstance(project).getRepositoryForRoot(root);
+      if (gitRepository == null) continue;
+
+      List<GitFileStatus> records = gitRepository.getStagingAreaHolder().getAllRecords();
+      for (GitFileStatus record : records) {
+        FilePath filePath = record.getPath();
+        FilePath origPath = record.getOrigPath();
+        if (origPath != null) {
+          rootPaths.markDirty(origPath);
+          rootPaths.markDirty(filePath);
+        }
+        else if (isStatusCodeForPotentialRename(record.getIndex()) ||
+                 isStatusCodeForPotentialRename(record.getWorkTree())) {
+          rootPaths.markDirty(filePath);
+        }
       }
     }
 
-    for (VirtualFile root : result.keySet()) {
-      List<FilePath> paths = result.get(root);
-      removeCommonParents(paths);
-    }
-
-    return result;
+    return dirtySetPerRoot;
   }
 
-  private static void addToPaths(@NotNull FilePath filePath,
-                                 @NotNull Map<VirtualFile, List<FilePath>> result,
-                                 @NotNull AbstractVcs vcs,
-                                 @NotNull ProjectLevelVcsManager vcsManager) {
-    VcsRoot vcsRoot = vcsManager.getVcsRootObjectFor(filePath);
-    if (vcsRoot != null && vcs.equals(vcsRoot.getVcs())) {
-      VirtualFile root = vcsRoot.getPath();
-      List<FilePath> paths = result.computeIfAbsent(root, key -> new ArrayList<>());
-      paths.add(filePath);
-    }
-  }
-
-  private static void removeCommonParents(List<FilePath> paths) {
-    paths.sort(Comparator.comparing(FilePath::getPath));
-
-    FilePath prevPath = null;
-    Iterator<FilePath> it = paths.iterator();
-    while (it.hasNext()) {
-      FilePath path = it.next();
-      // the file is under previous file, so enough to check the parent
-      if (prevPath != null && FileUtil.startsWith(path.getPath(), prevPath.getPath(), true)) {
-        it.remove();
-      }
-      else {
-        prevPath = path;
-      }
-    }
+  private static boolean isStatusCodeForPotentialRename(char statusCode) {
+    return GitIndexStatusUtilKt.isRenamed(statusCode) ||
+           GitIndexStatusUtilKt.isDeleted(statusCode) ||
+           GitIndexStatusUtilKt.isAdded(statusCode);
   }
 
   public interface StagingAreaListener {

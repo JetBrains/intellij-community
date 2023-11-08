@@ -4,7 +4,7 @@
 package org.jetbrains.intellij.build
 
 import com.intellij.platform.diagnostic.telemetry.AsyncSpanExporter
-import com.intellij.platform.diagnostic.telemetry.BatchSpanProcessor
+import com.intellij.platform.diagnostic.telemetry.exporters.BatchSpanProcessor
 import com.intellij.platform.diagnostic.telemetry.exporters.JaegerJsonSpanExporter
 import com.intellij.platform.diagnostic.telemetry.exporters.OtlpSpanExporter
 import com.intellij.platform.diagnostic.telemetry.exporters.normalizeOtlpEndPoint
@@ -63,7 +63,7 @@ object TracerProviderManager {
         jaegerJsonSpanExporter.get()?.export(spans)
       }
 
-      override fun shutdown() {
+      override suspend fun shutdown() {
         jaegerJsonSpanExporter.getAndSet(null)?.shutdown()
       }
     })
@@ -75,14 +75,14 @@ object TracerProviderManager {
 
   fun setOutput(file: Path) {
     Files.createDirectories(file.parent)
-    jaegerJsonSpanExporter.getAndSet(JaegerJsonSpanExporter(file, serviceName = "build"))?.shutdown()
+    jaegerJsonSpanExporter.getAndSet(JaegerJsonSpanExporter(file, serviceName = "build"))?.shutdownSync()
     if (shutdownHookAdded.compareAndSet(false, true)) {
       Runtime.getRuntime().addShutdownHook(Thread({
                                                     tracerProvider?.let {
                                                       tracerProvider = null
 
                                                       it.forceFlush()?.join(10, TimeUnit.SECONDS)
-                                                      jaegerJsonSpanExporter.getAndSet(null)?.shutdown()
+                                                      jaegerJsonSpanExporter.getAndSet(null)?.shutdownSync()
                                                       it.shutdown().join(10, TimeUnit.SECONDS)
                                                     }
                                                   }, "close tracer"))
@@ -94,7 +94,7 @@ object TracerProviderManager {
       tracerProvider?.forceFlush()?.join(10, TimeUnit.SECONDS)
       return jaegerJsonSpanExporter.getAndSet(null)?.let {
         val file = it.file
-        it.shutdown()
+        it.shutdownSync()
         file
       }
     }

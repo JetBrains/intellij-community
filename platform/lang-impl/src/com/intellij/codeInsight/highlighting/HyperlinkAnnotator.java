@@ -32,7 +32,8 @@ import java.util.List;
 import static com.intellij.util.containers.ContainerUtil.unmodifiableOrEmptyList;
 import static java.util.Objects.requireNonNull;
 
-public final class HyperlinkAnnotator implements Annotator {
+@ApiStatus.NonExtendable
+public class HyperlinkAnnotator implements Annotator {
 
   private static final Key<@Nls String> messageKey = Key.create("hyperlink.message");
 

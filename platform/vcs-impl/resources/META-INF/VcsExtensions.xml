@@ -35,7 +35,6 @@
                     serviceImplementation="com.intellij.openapi.vcs.contentAnnotation.VcsContentAnnotationImpl"/>
     <projectService serviceInterface="com.intellij.openapi.vcs.changes.VcsAnnotationLocalChangesListener"
                     serviceImplementation="com.intellij.openapi.vcs.changes.VcsAnnotationLocalChangesListenerImpl"/>
-    <projectService serviceImplementation="com.intellij.openapi.vcs.impl.VcsCacheManager"/>
     <projectService serviceInterface="com.intellij.openapi.vcs.contentAnnotation.ContentAnnotationCache"
                     serviceImplementation="com.intellij.openapi.vcs.contentAnnotation.ContentAnnotationCacheImpl"/>
     <projectService serviceImplementation="com.intellij.openapi.vcs.changes.ignore.cache.PatternCache"/>
@@ -65,7 +64,7 @@
                     serviceImplementation="com.intellij.openapi.vcs.changes.VcsDirtyScopeManagerImpl"/>
 
     <projectService serviceImplementation="com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager"/>
-    <postStartupActivity implementation="com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager$PostStartupActivity"/>
+    <postStartupActivity implementation="com.intellij.openapi.vcs.changes.shelf.ShelveChangeManagerProjectActivity"/>
     <projectService serviceImplementation="com.intellij.openapi.vcs.changes.shelf.ShelvedChangesViewManager"
                     headlessImplementation=""/>
 
@@ -76,7 +75,8 @@
 
     <diff.merge.MergeTool implementation="com.intellij.openapi.vcs.changes.patch.tool.ApplyPatchMergeTool"/>
     <diff.DiffTool implementation="com.intellij.openapi.vcs.changes.patch.tool.ApplyPatchDiffTool"/>
-    <diff.DiffTool implementation="com.intellij.openapi.vcs.changes.patch.tool.PatchDiffTool"/>
+    <diff.DiffTool implementation="com.intellij.openapi.vcs.changes.patch.tool.PatchDiffTool$Unified"/>
+    <diff.DiffTool implementation="com.intellij.openapi.vcs.changes.patch.tool.PatchDiffTool$SideBySide"/>
     <diff.DiffTool implementation="com.intellij.diff.tools.combined.CombinedSideBySideDiffTool"/>
     <diff.DiffTool implementation="com.intellij.diff.tools.combined.CombinedUnifiedDiffTool"/>
     <diff.impl.DiffToolSubstitutor implementation="com.intellij.openapi.vcs.changes.actions.diff.lst.LocalChangeListDiffTool$Simple"/>
@@ -264,6 +264,7 @@
     <checkinHandlerFactory implementation="com.intellij.openapi.vcs.impl.LineStatusTrackerManager$CheckinFactory"/>
     <projectService serviceInterface="com.intellij.openapi.vcs.impl.ActiveChangeListTracker"
                     serviceImplementation="com.intellij.openapi.vcs.impl.ActiveChangeListTrackerImpl"/>
+    <gutterMarkPreprocessor implementation="com.intellij.openapi.vcs.ex.ClientIdGutterIconMerge"/>
 
     <checkoutListener implementation="com.intellij.openapi.vcs.checkout.ProjectDirCheckoutListener"
                       order="first"/>

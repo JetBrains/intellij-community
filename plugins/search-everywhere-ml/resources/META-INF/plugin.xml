@@ -24,7 +24,24 @@
     <module name="intellij.searchEverywhereMl.semantics.testCommands"/>
   </content>
 
+  <resource-bundle>messages.searchEverywhereMlCoreBundle</resource-bundle>
+
   <extensions defaultExtensionNs="com.intellij">
+    <advancedSetting default="true" id="searcheverywhere.ml.sort.action"
+                     groupKey="advanced.setting.searcheverywhere.ml.name"
+                     bundle="messages.searchEverywhereMlCoreBundle"/>
+    <advancedSetting default="true" id="searcheverywhere.ml.sort.files"
+                     groupKey="advanced.setting.searcheverywhere.ml.name"
+                     bundle="messages.searchEverywhereMlCoreBundle"/>
+    <advancedSetting default="true" id="searcheverywhere.ml.sort.classes"
+                     groupKey="advanced.setting.searcheverywhere.ml.name"
+                     bundle="messages.searchEverywhereMlCoreBundle"/>
+    <advancedSetting default="false" id="searcheverywhere.ml.sort.all"
+                     groupKey="advanced.setting.searcheverywhere.ml.name"
+                     bundle="messages.searchEverywhereMlCoreBundle"
+                     service="com.intellij.searchEverywhereMl.settings.SearchEverywhereMlSettingsStorage"
+                     property="enableMlRankingInAll"/>
+
     <searchEverywhereMlService implementation="com.intellij.searchEverywhereMl.SearchEverywhereMlServiceImpl"/>
     <statistic.eventLog.eventLoggerProvider
       implementation="com.intellij.searchEverywhereMl.SearchEverywhereEventLoggerProvider"
@@ -32,6 +49,9 @@
   </extensions>
 
   <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.searchEverywhereMl.searchEverywhereSessionPropertyProvider"
+                    interface="com.intellij.searchEverywhereMl.SearchEverywhereSessionPropertyProvider"
+                    dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.searchEverywhereMl.rankingService"
                     interface="com.intellij.ide.actions.searcheverywhere.SearchEverywhereMlService"
                     dynamic="true"/>

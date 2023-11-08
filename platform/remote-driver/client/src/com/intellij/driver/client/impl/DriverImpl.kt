@@ -4,6 +4,7 @@ import com.intellij.driver.client.Driver
 import com.intellij.driver.client.ProjectRef
 import com.intellij.driver.client.Remote
 import com.intellij.driver.client.Timed
+import com.intellij.driver.client.screenshot.TakeScreenshot
 import com.intellij.driver.model.LockSemantics
 import com.intellij.driver.model.OnDispatcher
 import com.intellij.driver.model.ProductVersion
@@ -13,6 +14,7 @@ import java.lang.reflect.ParameterizedType
 import java.lang.reflect.Proxy
 import java.lang.reflect.UndeclaredThrowableException
 import java.util.concurrent.ConcurrentHashMap
+import javax.management.AttributeNotFoundException
 import javax.management.InstanceNotFoundException
 import kotlin.reflect.KClass
 
@@ -30,7 +32,8 @@ internal class DriverImpl(host: JmxHost?) : Driver {
         return invoker.isApplicationInitialized()
       }
       catch (ut: UndeclaredThrowableException) {
-        if (ut.cause is InstanceNotFoundException) {
+        if (ut.cause is InstanceNotFoundException
+            || ut.cause is AttributeNotFoundException) {
           return false // Invoker is not yet registered in JMX
         }
         throw ut
@@ -296,6 +299,10 @@ internal class DriverImpl(host: JmxHost?) : Driver {
     return try {
       this.code()
     }
+    catch (t: Throwable) {
+      new(TakeScreenshot::class).takeScreenshot("beforeKill")
+      throw t
+    }
     finally {
       if (currentValue != null) {
         sessionHolder.set(currentValue)
@@ -318,7 +325,12 @@ internal class DriverImpl(host: JmxHost?) : Driver {
   }
 
   override fun close() {
-    invoker.close()
+    try {
+      invoker.close()
+    } catch (t: Throwable) {
+      System.err.println("Error on close of JMX session")
+      t.printStackTrace()
+    }
   }
 
   override fun <T> withReadAction(dispatcher: OnDispatcher, code: Driver.() -> T): T {

@@ -2,6 +2,7 @@
 package com.intellij.util.io.storage.lf;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.ByteArraySequence;
@@ -25,7 +26,7 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
 
-public abstract class AbstractStorageLF implements IStorage {
+public abstract class AbstractStorageLF implements IStorage, CleanableStorage {
   public static final StorageLockContext SHARED = new StorageLockContext(true, true);
   public static final int PAGE_SIZE = SystemProperties.getIntProperty("idea.io.page.size", 8 * 1024);
 
@@ -33,6 +34,8 @@ public abstract class AbstractStorageLF implements IStorage {
 
   public static final @NonNls String INDEX_EXTENSION = ".storageRecordIndex";
   public static final @NonNls String DATA_EXTENSION = ".storageData";
+
+  private final Path storagePath;
 
   protected IRecordsTable recordsTable;
   protected IDataTable dataTable;
@@ -85,6 +88,7 @@ public abstract class AbstractStorageLF implements IStorage {
   protected AbstractStorageLF(@NotNull Path storageFilePath,
                               @NotNull StorageLockContext context,
                               @Nullable CapacityAllocationPolicy capacityAllocationPolicy) throws IOException {
+    this.storagePath = storageFilePath;
     this.capacityAllocationPolicy = capacityAllocationPolicy != null ? capacityAllocationPolicy
                                                                      : CapacityAllocationPolicy.DEFAULT;
     tryInit(storageFilePath, context, 0);
@@ -348,6 +352,13 @@ public abstract class AbstractStorageLF implements IStorage {
       IOUtil.closeSafe(LOG, dataTable);
     });
   }
+
+  @Override
+  public void closeAndClean() throws IOException {
+    Disposer.dispose(this);
+    deleteFiles(storagePath);
+  }
+
 
   @Override
   public void checkSanity(final int record) throws IOException {

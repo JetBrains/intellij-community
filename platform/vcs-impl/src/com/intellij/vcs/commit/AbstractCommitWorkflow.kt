@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.commit
 
 import com.intellij.BundleBase
@@ -9,7 +9,9 @@ import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.progress.*
+import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.blockingContext
+import com.intellij.openapi.progress.withCurrentJob
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageDialogBuilder
@@ -27,6 +29,10 @@ import com.intellij.openapi.vcs.checkin.*
 import com.intellij.openapi.vcs.impl.CheckinHandlersManager
 import com.intellij.openapi.vcs.impl.PartialChangesUtil
 import com.intellij.openapi.vcs.impl.PartialChangesUtil.getPartialTracker
+import com.intellij.platform.ide.progress.withModalProgress
+import com.intellij.platform.util.progress.durationStep
+import com.intellij.platform.util.progress.indeterminateStep
+import com.intellij.platform.util.progress.progressStep
 import com.intellij.util.EventDispatcher
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.ContainerUtil.unmodifiableOrEmptySet
@@ -35,7 +41,6 @@ import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.Nls
 import java.util.*
-import kotlin.coroutines.coroutineContext
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.properties.ReadWriteProperty
@@ -215,7 +220,7 @@ abstract class AbstractCommitWorkflow(val project: Project) {
     commitCustomEventDispatcher.addListener(listener, parent)
 
   suspend fun executeSession(sessionInfo: CommitSessionInfo, commitInfo: DynamicCommitInfo): Boolean {
-    return withModalProgressIndicator(project, message("commit.checks.on.commit.progress.text")) {
+    return withModalProgress(project, message("commit.checks.on.commit.progress.text")) {
       withContext(Dispatchers.EDT) {
         fireBeforeCommitChecksStarted(sessionInfo)
         val result = runModalBeforeCommitChecks(commitInfo)
@@ -274,16 +279,28 @@ abstract class AbstractCommitWorkflow(val project: Project) {
         return CommitChecksResult.Cancelled
       }
 
-      runModalCommitChecks(commitInfo, commitChecks[CommitCheck.ExecutionOrder.EARLY])?.let { return it }
+      progressStep(PROGRESS_FRACTION_EARLY) {
+        runModalCommitChecks(commitInfo, commitChecks[CommitCheck.ExecutionOrder.EARLY])
+      }?.let { return it }
 
-      @Suppress("DEPRECATION") val metaHandlers = handlers.filterIsInstance<CheckinMetaHandler>()
-      runMetaHandlers(metaHandlers)
+      indeterminateStep {
+        @Suppress("DEPRECATION") val metaHandlers = handlers.filterIsInstance<CheckinMetaHandler>()
+        runMetaHandlers(metaHandlers)
+      }
 
-      runModalCommitChecks(commitInfo, commitChecks[CommitCheck.ExecutionOrder.MODIFICATION])?.let { return it }
+      progressStep(PROGRESS_FRACTION_MODIFICATIONS) {
+        runModalCommitChecks(commitInfo, commitChecks[CommitCheck.ExecutionOrder.MODIFICATION])
+      }?.let { return it }
+
       FileDocumentManager.getInstance().saveAllDocuments()
 
-      runModalCommitChecks(commitInfo, commitChecks[CommitCheck.ExecutionOrder.LATE])?.let { return it }
-      runModalCommitChecks(commitInfo, commitChecks[CommitCheck.ExecutionOrder.POST_COMMIT])?.let { return it }
+      progressStep(PROGRESS_FRACTION_LATE) {
+        runModalCommitChecks(commitInfo, commitChecks[CommitCheck.ExecutionOrder.LATE])
+      }?.let { return it }
+
+      progressStep(PROGRESS_FRACTION_POST) {
+        runModalCommitChecks(commitInfo, commitChecks[CommitCheck.ExecutionOrder.POST_COMMIT])
+      }?.let { return it }
 
       return CommitChecksResult.Passed
     }
@@ -308,28 +325,37 @@ abstract class AbstractCommitWorkflow(val project: Project) {
       .ask(project)
   }
 
-  private suspend fun runModalCommitChecks(commitInfo: DynamicCommitInfo,
-                                           commitChecks: List<CommitCheck>?): CommitChecksResult? {
-    for (commitCheck in commitChecks.orEmpty()) {
-      try {
-        val problem = runCommitCheck(project, commitCheck, commitInfo)
-        if (problem == null) continue
+  private suspend fun runModalCommitChecks(commitInfo: DynamicCommitInfo, commitChecks: List<CommitCheck>?): CommitChecksResult? {
+    if (commitChecks.isNullOrEmpty()) return null
 
-        val result = blockingContext {
-          problem.showModalSolution(project, commitInfo)
-        }
-        return when (result) {
-          CheckinHandler.ReturnResult.COMMIT -> continue
-          CheckinHandler.ReturnResult.CANCEL -> CommitChecksResult.Failed()
-          CheckinHandler.ReturnResult.CLOSE_WINDOW -> CommitChecksResult.Failed(toCloseWindow = true)
-        }
+    val duration = 1.0 / commitChecks.size
+    for (commitCheck in commitChecks) {
+      val result = durationStep(duration) {
+        runModalCommitCheck(commitInfo, commitCheck)
       }
-      catch (e: CancellationException) {
-        LOG.debug("CheckinHandler cancelled $commitCheck")
-        throw e
+      if (result != null) {
+        return result
       }
     }
-    return null // check passed
+    return null
+  }
+
+  private suspend fun runModalCommitCheck(commitInfo: DynamicCommitInfo, commitCheck: CommitCheck): CommitChecksResult? {
+    try {
+      val problem = runCommitCheck(project, commitCheck, commitInfo) ?: return null
+      val result = blockingContext {
+        problem.showModalSolution(project, commitInfo)
+      }
+      when (result) {
+        CheckinHandler.ReturnResult.COMMIT -> return null
+        CheckinHandler.ReturnResult.CANCEL -> return CommitChecksResult.Failed()
+        CheckinHandler.ReturnResult.CLOSE_WINDOW -> return CommitChecksResult.Failed(toCloseWindow = true)
+      }
+    }
+    catch (e: CancellationException) {
+      LOG.debug("CheckinHandler cancelled $commitCheck")
+      throw e
+    }
   }
 
   protected open fun getBeforeCommitChecksChangelist(): LocalChangeList? = null
@@ -349,6 +375,11 @@ abstract class AbstractCommitWorkflow(val project: Project) {
   }
 
   companion object {
+    internal const val PROGRESS_FRACTION_EARLY = 0.2
+    internal const val PROGRESS_FRACTION_MODIFICATIONS = 0.5
+    internal const val PROGRESS_FRACTION_LATE = 0.75
+    internal const val PROGRESS_FRACTION_POST = 1.0
+
     @JvmStatic
     fun getCommitHandlerFactories(vcses: Collection<AbstractVcs>): List<BaseCheckinHandlerFactory> =
       CheckinHandlersManager.getInstance().getRegisteredCheckinHandlerFactories(vcses.toTypedArray())
@@ -413,9 +444,7 @@ abstract class AbstractCommitWorkflow(val project: Project) {
 
       try {
         LOG.debug("Running commit check $commitCheck")
-        val ctx = coroutineContext
-        ctx.ensureActive()
-        ctx.progressSink?.update(text = "", details = "")
+        currentCoroutineContext().ensureActive()
 
         val problem = commitCheck.runCheck(commitInfo)
         success = problem == null

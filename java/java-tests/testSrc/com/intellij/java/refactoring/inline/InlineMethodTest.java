@@ -576,6 +576,8 @@ public class InlineMethodTest extends LightRefactoringTestCase {
   public void testNewWithSideEffect() { doTest(); }
   
   public void testSplitIfAndCollapseBack() { doTest(); }
+  
+  public void testThisVariableName() { doTest(); }
 
   @Override
   protected Sdk getProjectJDK() {

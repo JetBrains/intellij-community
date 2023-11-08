@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.lookup.*;
@@ -71,12 +71,12 @@ public final class TemplateState extends TemplateStateBase implements Disposable
   private boolean myDocumentChangesTerminateTemplate = true;
   private boolean myDocumentChanged;
 
-  @Nullable private LookupListener myLookupListener;
+  private @Nullable LookupListener myLookupListener;
 
   private final List<TemplateEditingListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private DocumentListener myEditorDocumentListener;
   private boolean myTemplateIndented;
-  @Nullable private PairProcessor<? super String, ? super String> myProcessor;
+  private @Nullable PairProcessor<? super String, ? super String> myProcessor;
   private boolean mySelectionCalculated;
   private boolean myStarted;
 
@@ -86,7 +86,7 @@ public final class TemplateState extends TemplateStateBase implements Disposable
 
   public static final Key<Boolean> FORCE_TEMPLATE_RUNNING = Key.create("TemplateState.forTemplateRunning");
 
-  TemplateState(@NotNull Project project, @Nullable final Editor editor, @NotNull Document document,
+  TemplateState(@NotNull Project project, final @Nullable Editor editor, @NotNull Document document,
                 @NotNull TemplateStateProcessor processor) {
     super(editor, document);
     myProject = project;
@@ -245,15 +245,13 @@ public final class TemplateState extends TemplateStateBase implements Disposable
     myCurrentSegmentNumber = isFinished ? -1 : getCurrentSegmentNumber();
   }
 
-  @Nullable
-  public TextRange getCurrentVariableRange() {
+  public @Nullable TextRange getCurrentVariableRange() {
     int number = getCurrentSegmentNumber();
     if (number == -1) return null;
     return new TextRange(getSegments().getSegmentStart(number), getSegments().getSegmentEnd(number));
   }
 
-  @Nullable
-  public TextRange getVariableRange(String variableName) {
+  public @Nullable TextRange getVariableRange(String variableName) {
     int segment = getTemplate().getVariableSegmentNumber(variableName);
     if (segment < 0) return null;
 
@@ -352,7 +350,7 @@ public final class TemplateState extends TemplateStateBase implements Disposable
     }
   }
 
-  private void processAllExpressions(@NotNull final TemplateImpl template) {
+  private void processAllExpressions(final @NotNull TemplateImpl template) {
     Runnable action = () -> {
       if (!template.isInline()) getDocument().insertString(myTemplateRange.getStartOffset(), template.getTemplateText());
       for (int i = 0; i < template.getSegmentsCount(); i++) {
@@ -580,8 +578,7 @@ public final class TemplateState extends TemplateStateBase implements Disposable
     return createExpressionContext(getSegments().getSegmentStart(segmentNumber));
   }
 
-  @NotNull
-  private Expression getCurrentExpression() {
+  private @NotNull Expression getCurrentExpression() {
     return getTemplate().getExpressionAt(myCurrentVariableNumber);
   }
 
@@ -717,8 +714,7 @@ public final class TemplateState extends TemplateStateBase implements Disposable
     }
   }
 
-  @NotNull
-  private String getVariableValueText(String variableName) {
+  private @NotNull String getVariableValueText(String variableName) {
     TextResult value = getVariableValue(variableName);
     return value != null ? value.getText() : "";
   }
@@ -913,9 +909,8 @@ public final class TemplateState extends TemplateStateBase implements Disposable
         return (T)getProperties().get(key);
       }
 
-      @Nullable
       @Override
-      public PsiElement getPsiElementAtStartOffset() {
+      public @Nullable PsiElement getPsiElementAtStartOffset() {
         Project project = getProject();
         int templateStartOffset = getTemplateStartOffset();
         int offset = templateStartOffset > 0 ? getTemplateStartOffset() - 1 : getTemplateStartOffset();

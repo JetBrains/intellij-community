@@ -40,12 +40,11 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.gitlab.api.dto.*
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.GitLabMergeRequestViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.error.GitLabMergeRequestTimelineErrorStatusPresenter
-import org.jetbrains.plugins.gitlab.mergerequest.ui.issues.IssuesUtil
 import org.jetbrains.plugins.gitlab.mergerequest.ui.timeline.GitLabMergeRequestTimelineUIUtil.createTitleTextPane
-import org.jetbrains.plugins.gitlab.ui.comment.GitLabNoteEditorComponentFactory
-import org.jetbrains.plugins.gitlab.ui.comment.NewGitLabNoteViewModel
-import org.jetbrains.plugins.gitlab.ui.comment.submitActionIn
+import org.jetbrains.plugins.gitlab.ui.GitLabUIUtil
+import org.jetbrains.plugins.gitlab.ui.comment.*
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
+import org.jetbrains.plugins.gitlab.util.GitLabStatistics
 import javax.swing.JComponent
 import javax.swing.JScrollPane
 
@@ -103,10 +102,6 @@ internal object GitLabMergeRequestTimelineComponentFactory {
         val scheme = EditorColorsManager.getInstance().globalScheme
         scheme.defaultBackground
       }
-    }.also {
-      UiNotifyConnector.doWhenFirstShown(it) {
-        timelineVm.requestLoad()
-      }
     }
   }
 
@@ -114,8 +109,16 @@ internal object GitLabMergeRequestTimelineComponentFactory {
                                                 iconsProvider: IconsProvider<GitLabUserDTO>,
                                                 editVm: NewGitLabNoteViewModel): JComponent {
     val noteCs = this
+
+    val addAction = editVm.submitActionIn(noteCs, CollaborationToolsBundle.message("review.comment.submit"),
+                                          project, NewGitLabNoteType.STANDALONE, GitLabStatistics.MergeRequestNoteActionPlace.TIMELINE)
+    val addAsDraftAction = editVm.submitAsDraftActionIn(noteCs, CollaborationToolsBundle.message("review.comments.save-as-draft.action"),
+                                                        project, NewGitLabNoteType.STANDALONE,
+                                                        GitLabStatistics.MergeRequestNoteActionPlace.TIMELINE)
+
     val actions = CommentInputActionsComponentFactory.Config(
-      primaryAction = MutableStateFlow(editVm.submitActionIn(noteCs, CollaborationToolsBundle.message("review.comments.reply.action"))),
+      primaryAction = editVm.primarySubmitActionIn(noteCs, addAction, addAsDraftAction),
+      secondaryActions = editVm.secondarySubmitActionIn(noteCs, addAction, addAsDraftAction),
       submitHint = MutableStateFlow(CollaborationToolsBundle.message("review.comments.reply.hint",
                                                                      CommentInputActionsComponentFactory.submitShortcutText))
     )
@@ -204,7 +207,7 @@ internal object GitLabMergeRequestTimelineComponentFactory {
         thisLogger().warn("Error occurred while parsing the note with added commits", e)
       }
     }
-    return StatusMessageComponentFactory.create(SimpleHtmlPane(IssuesUtil.convertMarkdownToHtmlWithIssues(project, content)))
+    return StatusMessageComponentFactory.create(SimpleHtmlPane(GitLabUIUtil.convertToHtml(project, content)))
   }
 
   private val noUlGapsStyleSheet by lazy {

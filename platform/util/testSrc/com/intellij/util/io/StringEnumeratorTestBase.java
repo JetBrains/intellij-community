@@ -10,16 +10,16 @@ import org.jetbrains.annotations.NotNull;
 import org.junit.*;
 import org.junit.rules.TemporaryFolder;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Random;
-import java.util.Set;
+import java.util.*;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Stream;
 
 import static com.intellij.util.io.DataEnumeratorEx.NULL_ID;
 import static org.junit.Assert.*;
+import static org.junit.Assume.assumeTrue;
 
 public abstract class StringEnumeratorTestBase<T extends ScannableDataEnumeratorEx<String>> {
 
@@ -36,6 +36,8 @@ public abstract class StringEnumeratorTestBase<T extends ScannableDataEnumerator
   protected Path storageFile;
   protected String[] manyValues;
 
+  private final List<T> enumeratorsOpened = new ArrayList<>();
+
   protected StringEnumeratorTestBase(int valuesToTest) {
     valuesCountToTest = valuesToTest;
   }
@@ -49,7 +51,18 @@ public abstract class StringEnumeratorTestBase<T extends ScannableDataEnumerator
 
   @After
   public void tearDown() throws Exception {
-    closeEnumerator(enumerator);
+    //RC: it is important to first unmap _all_, and then try to clean (delete) _all_, because it could be
+    //    >1 enumerators opened over same file, hence >1 mapped buffers, and on Windows one can't delete
+    //    the file until at least 1 mapped region not yet unmapped, so attempt to delete the file after
+    //    unmapping buffers of 1st enumerator will fail because same file is mapped in the 2nd enumerator:
+    for (T enumeratorOpened : enumeratorsOpened) {
+      closeEnumerator(enumeratorOpened);
+    }
+    for (T enumeratorOpened : enumeratorsOpened) {
+      if (enumeratorOpened instanceof CleanableStorage) {
+        ((CleanableStorage)enumeratorOpened).closeAndClean();
+      }
+    }
   }
 
   @Test
@@ -433,19 +446,35 @@ public abstract class StringEnumeratorTestBase<T extends ScannableDataEnumerator
     );
   }
 
+  @Test
+  public void ifEnumeratorCloseable_CloseIsSafeToCallTwice() throws IOException {
+    assumeTrue(enumerator instanceof Closeable);
+
+    ((Closeable)enumerator).close();
+    ((Closeable)enumerator).close();
+  }
+
 
   protected void closeEnumerator(DataEnumerator<String> enumerator) throws Exception {
-    if (enumerator instanceof AutoCloseable) {
+    if (enumerator instanceof Unmappable) {
+      ((Unmappable)enumerator).closeAndUnsafelyUnmap();
+    }
+    else if (enumerator instanceof AutoCloseable) {
       ((AutoCloseable)enumerator).close();
     }
   }
 
-  protected abstract T openEnumerator(@NotNull Path storagePath) throws IOException;
+  protected final T openEnumerator(@NotNull Path storagePath) throws IOException {
+    T enumerator = openEnumeratorImpl(storagePath);
+    enumeratorsOpened.add(enumerator);
+    return enumerator;
+  }
+
+  protected abstract T openEnumeratorImpl(@NotNull Path storagePath) throws IOException;
 
   protected static String @NotNull [] generateUniqueValues(int poolSize, int minStringSize, int maxStringSize) {
-    //ThreadLocalRandom rnd = ThreadLocalRandom.current();
-    Random rnd = new Random(1);
-    HashSet<String> unique = new HashSet<>();
+    ThreadLocalRandom rnd = ThreadLocalRandom.current();
+    //Random rnd = new Random(1);//for debugging
     return Stream.generate(() -> {
         int length = rnd.nextInt(minStringSize, maxStringSize);
         char[] chars = new char[length];

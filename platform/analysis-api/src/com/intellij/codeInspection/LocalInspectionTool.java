@@ -136,7 +136,7 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry {
     return new PsiFileElementVisitor(holder, isOnTheFly);
   }
 
-  private class PsiFileElementVisitor extends PsiElementVisitor implements HintedPsiElementVisitor {
+  private final class PsiFileElementVisitor extends PsiElementVisitor implements HintedPsiElementVisitor {
     private final @NotNull ProblemsHolder myHolder;
     private final boolean myIsOnTheFly;
 

@@ -2,7 +2,6 @@
 package com.intellij.openapi.project.ex
 
 import com.intellij.ide.impl.OpenProjectTask
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
@@ -40,7 +39,7 @@ abstract class ProjectManagerEx : ProjectManager() {
     const val PER_PROJECT_SUFFIX: String = "INTERNAL_perProject"
 
     @JvmStatic
-    fun getInstanceEx(): ProjectManagerEx = ApplicationManager.getApplication().getService(ProjectManager::class.java) as ProjectManagerEx
+    fun getInstanceEx(): ProjectManagerEx = getInstance() as ProjectManagerEx
 
     @JvmStatic
     fun getInstanceExIfCreated(): ProjectManagerEx? = getInstanceIfCreated() as ProjectManagerEx?

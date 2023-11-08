@@ -3,6 +3,7 @@ package com.intellij.ide.ui.laf;
 
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.LafManagerListener;
+import com.intellij.ide.ui.LafReference;
 import com.intellij.ide.ui.laf.darcula.ui.ComboBoxButtonUI;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.ui.CollectionComboBoxModel;
@@ -10,6 +11,8 @@ import com.intellij.ui.components.BasicOptionButtonUI;
 import com.intellij.ui.components.DarculaSearchFieldWithExtensionUI;
 import com.intellij.ui.components.DefaultLinkButtonUI;
 import com.intellij.ui.tree.ui.DefaultTreeUI;
+import kotlin.sequences.Sequence;
+import kotlin.sequences.SequencesKt;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -27,6 +30,11 @@ final class HeadlessLafManagerImpl extends LafManager {
   @Override
   public UIManager.LookAndFeelInfo @NotNull [] getInstalledLookAndFeels() {
     return new UIManager.LookAndFeelInfo[0];
+  }
+
+  @Override
+  public Sequence<UIThemeLookAndFeelInfo> getInstalledThemes() {
+    return SequencesKt.emptySequence();
   }
 
   @Override
@@ -63,7 +71,7 @@ final class HeadlessLafManagerImpl extends LafManager {
   }
 
   @Override
-  public UIThemeLookAndFeelInfo findLaf(LafReference reference) {
+  public UIThemeLookAndFeelInfo findLaf(@NotNull String themeId) {
     return null;
   }
 

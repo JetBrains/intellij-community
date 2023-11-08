@@ -31,6 +31,7 @@ public class BindFieldsFromParametersAction implements ModCommandAction {
 
   @Override
   public @Nullable Presentation getPresentation(@NotNull ActionContext context) {
+    if (!BaseIntentionAction.canModify(context.file())) return null;
     PsiParameter psiParameter = FieldFromParameterUtils.findParameterAtOffset(context.file(), context.offset());
     PsiMethod method = findMethod(psiParameter, context);
     if (method == null) return null;

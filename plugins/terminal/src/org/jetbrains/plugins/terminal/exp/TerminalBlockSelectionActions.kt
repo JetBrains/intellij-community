@@ -3,10 +3,6 @@ package org.jetbrains.plugins.terminal.exp
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.editor.Caret
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.actionSystem.EditorActionHandler
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.editor
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.isOutputEditor
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.isPromptEditor
@@ -28,9 +24,10 @@ class TerminalSelectLastBlockAction : TerminalPromotedDumbAwareAction() {
 abstract class TerminalOutputSelectionAction : TerminalPromotedDumbAwareAction() {
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabledAndVisible = e.editor?.isOutputEditor == true
+                                         && e.selectionController?.primarySelection != null
   }
 
-  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 }
 
 /** Removes the selection and moves the focus to the prompt */
@@ -42,27 +39,24 @@ class TerminalSelectPromptAction : TerminalOutputSelectionAction() {
 
 class TerminalSelectBlockBelowAction : TerminalOutputSelectionAction() {
   override fun actionPerformed(e: AnActionEvent) {
-    e.selectionController?.selectRelativeBlock(isBelow = true)
+    e.selectionController?.selectRelativeBlock(isBelow = true, dropCurrentSelection = true)
   }
 }
 
 class TerminalSelectBlockAboveAction : TerminalOutputSelectionAction() {
   override fun actionPerformed(e: AnActionEvent) {
-    e.selectionController?.selectRelativeBlock(isBelow = false)
+    e.selectionController?.selectRelativeBlock(isBelow = false, dropCurrentSelection = true)
   }
 }
 
-class TerminalSelectPromptHandler(private val originalHandler: EditorActionHandler) : EditorActionHandler() {
-  override fun doExecute(editor: Editor, caret: Caret?, dataContext: DataContext) {
-    val selectionController = dataContext.selectionController
-    if (selectionController != null && (selectionController.primarySelection != null || editor.selectionModel.hasSelection())) {
-      // clear selection to move the focus to the prompt
-      selectionController.clearSelection()
-    }
-    else originalHandler.execute(editor, caret, dataContext)
+class TerminalExpandBlockSelectionBelowAction : TerminalOutputSelectionAction() {
+  override fun actionPerformed(e: AnActionEvent) {
+    e.selectionController?.selectRelativeBlock(isBelow = true, dropCurrentSelection = false)
   }
+}
 
-  override fun isEnabledForCaret(editor: Editor, caret: Caret, dataContext: DataContext): Boolean {
-    return dataContext.editor?.isOutputEditor == true || originalHandler.isEnabled(editor, caret, dataContext)
+class TerminalExpandBlockSelectionAboveAction : TerminalOutputSelectionAction() {
+  override fun actionPerformed(e: AnActionEvent) {
+    e.selectionController?.selectRelativeBlock(isBelow = false, dropCurrentSelection = false)
   }
 }

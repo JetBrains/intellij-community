@@ -10,9 +10,8 @@ interface LauncherOptions {
   val javaArguments: List<String> get() = listOf()
   val ideaArguments: List<String> get() = listOf()
   val environment: Map<String, String> get() = mapOf()
-  val beforeProcessStart: (ProcessBuilder) -> Unit get() = { }
+  val beforeProcessStart: () -> Unit get() = { }
   val redirectOutputIntoParentProcess: Boolean get() = false
-  val runInDocker: Boolean get() = false
 }
 
 data class DockerNetworkEntry(
@@ -26,8 +25,10 @@ data class DockerNetworkEntry(
 
 interface DockerLauncherOptions : LauncherOptions {
   val exposedPorts: List<Int> get() = debugPort?.let { listOf(it) }.orEmpty()
-  val runBashBeforeJava: String? get() = null
+  val runBashBeforeJava: List<String>?
+  val runBashBackgroundBeforeJava: List<String>?
   val address: InetAddress get() = InetAddress.getLoopbackAddress()
   val network: DockerNetworkEntry get() = DockerNetworkEntry.AUTO
+  val dockerImageName: String
   val containerName: String
 }

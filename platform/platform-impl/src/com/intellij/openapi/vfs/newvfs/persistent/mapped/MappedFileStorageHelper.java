@@ -1,12 +1,13 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent.mapped;
 
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecordsImpl;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSConnection;
+import com.intellij.util.io.CleanableStorage;
+import com.intellij.util.io.Unmappable;
 import com.intellij.util.io.dev.mmapped.MMappedFileStorage;
 import com.intellij.util.io.dev.mmapped.MMappedFileStorage.Page;
 import com.intellij.util.io.dev.mmapped.MMappedFileStorageFactory;
@@ -48,12 +49,60 @@ import static java.nio.ByteOrder.nativeOrder;
  * one still needs to understand the underlying code.
  */
 @ApiStatus.Internal
-public final class MappedFileStorageHelper implements Closeable {
+public final class MappedFileStorageHelper implements Closeable, CleanableStorage, Unmappable {
   /**
    * Keeps a registry of all {@link MappedFileStorageHelper} -- prevents creating duplicates, i.e. >1 storage
    * for the same path.
    */
+  //@GuardedBy(storagesRegistry)
   private static final Map<Path, MappedFileStorageHelper> storagesRegistry = new HashMap<>();
+
+  public static @NotNull MappedFileStorageHelper openHelper(@NotNull FSRecordsImpl vfs,
+                                                            @NotNull Path absoluteStoragePath,
+                                                            int bytesPerRow,
+                                                            boolean checkFileIdsBelowMax) throws IOException {
+    if (!absoluteStoragePath.isAbsolute()) {
+      throw new IllegalArgumentException("absoluteStoragePath(=" + absoluteStoragePath + ") is not absolute");
+    }
+    if (bytesPerRow <= 0) {
+      throw new IllegalArgumentException("bytesPerRow(=" + bytesPerRow + ") must be >0");
+    }
+    var storageDir = absoluteStoragePath.getParent().normalize();
+
+    Files.createDirectories(storageDir);
+    PersistentFSConnection connection = vfs.connection();
+
+    var recordsStorage = connection.getRecords();
+
+    synchronized (storagesRegistry) {
+      MappedFileStorageHelper alreadyExistingHelper = storagesRegistry.get(absoluteStoragePath);
+      if (alreadyExistingHelper != null && alreadyExistingHelper.storage.isOpen()) {
+        if (alreadyExistingHelper.bytesPerRow != bytesPerRow) {
+          throw new IllegalStateException(
+            "StorageHelper[" + absoluteStoragePath + "] is already registered, " +
+            "but with .bytesPerRow(=" + bytesPerRow + ") != storage.bytesPerRow(=" + alreadyExistingHelper.bytesPerRow + ")"
+          );
+        }
+        return alreadyExistingHelper;
+      }
+
+      return MMappedFileStorageFactory.withDefaults()
+        .pageSize(DEFAULT_PAGE_SIZE)
+        .wrapStorageSafely(
+          absoluteStoragePath,
+          mappedFileStorage -> {
+            MappedFileStorageHelper storageHelper = new MappedFileStorageHelper(
+              mappedFileStorage,
+              bytesPerRow,
+              recordsStorage::maxAllocatedID,
+              checkFileIdsBelowMax
+            );
+            storagesRegistry.put(absoluteStoragePath, storageHelper);
+            return storageHelper;
+          }
+        );
+    }
+  }
 
   public static @NotNull MappedFileStorageHelper openHelper(@NotNull FSRecordsImpl vfs,
                                                             @NotNull String storageName,
@@ -65,44 +114,10 @@ public final class MappedFileStorageHelper implements Closeable {
                                                             @NotNull String storageName,
                                                             int bytesPerRow,
                                                             boolean checkFileIdsBelowMax) throws IOException {
-    if (bytesPerRow <= 0) {
-      throw new IllegalArgumentException("bytesPerRow(=" + bytesPerRow + ") must be >0");
-    }
     PersistentFSConnection connection = vfs.connection();
     Path fastAttributesDir = connection.getPersistentFSPaths().storagesSubDir("extended-attributes");
-    Files.createDirectories(fastAttributesDir);
-
     Path storagePath = fastAttributesDir.resolve(storageName).toAbsolutePath();
-
-    var recordsStorage = connection.getRecords();
-
-    synchronized (storagesRegistry) {
-      MappedFileStorageHelper alreadyExistingHelper = storagesRegistry.get(storagePath);
-      if (alreadyExistingHelper != null && alreadyExistingHelper.storage.isOpen()) {
-        if (alreadyExistingHelper.bytesPerRow != bytesPerRow) {
-          throw new IllegalStateException(
-            "StorageHelper[" + storageName + "] is already registered, " +
-            "but with .bytesPerRow(=" + bytesPerRow + ") != storage.bytesPerRow(=" + alreadyExistingHelper.bytesPerRow + ")"
-          );
-        }
-        return alreadyExistingHelper;
-      }
-
-      return MMappedFileStorageFactory.withPageSize(DEFAULT_PAGE_SIZE)
-        .wrapStorageSafely(
-          storagePath,
-          mappedFileStorage -> {
-            MappedFileStorageHelper storageHelper = new MappedFileStorageHelper(
-              mappedFileStorage,
-              bytesPerRow,
-              recordsStorage::maxAllocatedID,
-              checkFileIdsBelowMax
-            );
-            storagesRegistry.put(storagePath, storageHelper);
-            return storageHelper;
-          }
-        );
-    }
+    return openHelper(vfs, storagePath, bytesPerRow, checkFileIdsBelowMax);
   }
 
   public static @NotNull MappedFileStorageHelper openHelperAndVerifyVersions(@NotNull FSRecordsImpl vfs,
@@ -118,9 +133,17 @@ public final class MappedFileStorageHelper implements Closeable {
                                                                              int bytesPerRow,
                                                                              boolean checkFileIdBelowMax) throws IOException {
     MappedFileStorageHelper helper = openHelper(vfs, storageName, bytesPerRow, checkFileIdBelowMax);
-
     verifyTagsAndVersions(helper, vfs.getCreationTimestamp(), storageFormatVersion);
+    return helper;
+  }
 
+  public static @NotNull MappedFileStorageHelper openHelperAndVerifyVersions(@NotNull FSRecordsImpl vfs,
+                                                                             @NotNull Path absoluteStoragePath,
+                                                                             int storageFormatVersion,
+                                                                             int bytesPerRow,
+                                                                             boolean checkFileIdBelowMax) throws IOException {
+    MappedFileStorageHelper helper = openHelper(vfs, absoluteStoragePath, bytesPerRow, checkFileIdBelowMax);
+    verifyTagsAndVersions(helper, vfs.getCreationTimestamp(), storageFormatVersion);
     return helper;
   }
 
@@ -174,6 +197,9 @@ public final class MappedFileStorageHelper implements Closeable {
 
   public static final int DEFAULT_PAGE_SIZE = 4 * MiB;
 
+  //TODO RC: byteBufferViewVarHandle(byte[].class) is not supported by JDK
+  //private static final VarHandle BYTE_HANDLE = byteBufferViewVarHandle(byte[].class, nativeOrder())
+  //  .withInvokeExactBehavior();
   private static final VarHandle SHORT_HANDLE = byteBufferViewVarHandle(short[].class, nativeOrder())
     .withInvokeExactBehavior();
   private static final VarHandle INT_HANDLE = byteBufferViewVarHandle(int[].class, nativeOrder())
@@ -183,6 +209,7 @@ public final class MappedFileStorageHelper implements Closeable {
 
 
   private final int bytesPerRow;
+  private final transient byte[] rowOfZeroes;
 
   private final @NotNull MMappedFileStorage storage;
 
@@ -210,6 +237,8 @@ public final class MappedFileStorageHelper implements Closeable {
     this.bytesPerRow = bytesPerRow;
     maxAllocatedFileIdSupplier = maxRowsSupplier;
     this.checkFileIdsBelowMax = checkFileIdsBelowMax;
+
+    this.rowOfZeroes = new byte[bytesPerRow];
   }
 
   public int getVersion() throws IOException {
@@ -226,6 +255,10 @@ public final class MappedFileStorageHelper implements Closeable {
 
   public void setVFSCreationTag(long vfsCreationTag) throws IOException {
     writeLongHeaderField(HeaderLayout.VFS_CREATION_TIMESTAMP_OFFSET, vfsCreationTag);
+  }
+
+  public int bytesPerRow() {
+    return bytesPerRow;
   }
 
 
@@ -308,36 +341,98 @@ public final class MappedFileStorageHelper implements Closeable {
     //         -- state it has undefined behavior in such a context.
   }
 
+  /** It should be used in a rare occasions only: see {@link MMappedFileStorage#FSYNC_ON_FLUSH_BY_DEFAULT} docs */
   public void fsync() throws IOException {
     storage.fsync();
   }
 
   @Override
   public void close() throws IOException {
-    //MAYBE RC: is it better to always fsync here? -- or better state that fsync should be called explicitly, if
-    //          needed, otherwise leave it to OS to decide when to flush the pages?
+    //We don't fsync() by default on close -- leave it to OS to decide when to flush the pages
     storage.close();
 
     storagesRegistry.remove(storage.storagePath());
   }
 
-  /**
-   * Closes the file, releases the mapped buffers, and tries to delete the file.
-   * <p/>
-   * Implementation note: the exact moment file memory-mapping is actually released and the file could be
-   * deleted -- is very OS/platform-dependent. E.g., Win is known to keep file 'in use' for some time even
-   * after unmap() call is already finished. JVM release mapped buffers with GC, which adds another level
-   * of uncertainty. Hence, if one needs to re-create the storage, it may be more reliable to just .clear()
-   * the current storage, than to close->remove->create-fresh-new.
-   */
-  public void closeAndRemove() throws IOException {
-    close();
-    FileUtil.delete(storage.storagePath());
+  @Override
+  public void closeAndUnsafelyUnmap() throws IOException {
+    storage.closeAndUnsafelyUnmap();
+
+    storagesRegistry.remove(storage.storagePath());
+  }
+
+  /** Closes the file, releases the mapped buffers, and 'make the best effort' to delete the file. */
+  @Override
+  public void closeAndClean() throws IOException {
+    closeAndUnsafelyUnmap();
+    storage.closeAndClean();
   }
 
   @Override
   public String toString() {
     return "MappedFileStorageHelper[" + storage.storagePath() + "]";
+  }
+
+  //TODO RC: We can fill the row just byte-by-bytes, but we can't keep reasonable atomicity/memory semantics
+  //         -- to write 4 bytes is not the same as write 1 int. I doubt: is it really worth to deal with all
+  //         possible complications arising from that, or better to keep that pandora-box closed, and not
+  //         expose clearRow() method? If users want to clear the row -- they could implement it with
+  //         .writeXXXField() methods.
+  private void clearRow(int fileId) throws IOException {
+    int offsetInFile = toOffsetInFile(fileId);
+    int offsetInPage = storage.toOffsetInPage(offsetInFile);
+
+    Page page = storage.pageByOffset(offsetInFile);
+    ByteBuffer rawPageBuffer = page.rawPageBuffer();
+
+    rawPageBuffer.put(offsetInPage, rowOfZeroes);//plain write, not volatile!
+  }
+
+  //public byte readByteField(int fileId,
+  //                          int fieldOffsetInRow) throws IOException {
+  //  int offsetInFile = toOffsetInFile(fileId) + fieldOffsetInRow;
+  //  int offsetInPage = storage.toOffsetInPage(offsetInFile);
+  //
+  //  Page page = storage.pageByOffset(offsetInFile);
+  //  ByteBuffer rawPageBuffer = page.rawPageBuffer();
+  //
+  //  return (byte)BYTE_HANDLE.getVolatile(rawPageBuffer, offsetInPage);
+  //}
+  //
+  //public void writeByteField(int fileId,
+  //                           int fieldOffsetInRow,
+  //                           byte attributeValue) throws IOException {
+  //  int offsetInFile = toOffsetInFile(fileId) + fieldOffsetInRow;
+  //  int offsetInPage = storage.toOffsetInPage(offsetInFile);
+  //
+  //  Page page = storage.pageByOffset(offsetInFile);
+  //  ByteBuffer rawPageBuffer = page.rawPageBuffer();
+  //
+  //  BYTE_HANDLE.setVolatile(rawPageBuffer, offsetInPage, attributeValue);
+  //}
+
+
+  public short readShortField(int fileId,
+                              int fieldOffsetInRow) throws IOException {
+    int offsetInFile = toOffsetInFile(fileId) + fieldOffsetInRow;
+    int offsetInPage = storage.toOffsetInPage(offsetInFile);
+
+    Page page = storage.pageByOffset(offsetInFile);
+    ByteBuffer rawPageBuffer = page.rawPageBuffer();
+
+    return (short)SHORT_HANDLE.getVolatile(rawPageBuffer, offsetInPage);
+  }
+
+  public void writeShortField(int fileId,
+                              int fieldOffsetInRow,
+                              short attributeValue) throws IOException {
+    int offsetInFile = toOffsetInFile(fileId) + fieldOffsetInRow;
+    int offsetInPage = storage.toOffsetInPage(offsetInFile);
+
+    Page page = storage.pageByOffset(offsetInFile);
+    ByteBuffer rawPageBuffer = page.rawPageBuffer();
+
+    SHORT_HANDLE.setVolatile(rawPageBuffer, offsetInPage, attributeValue);
   }
 
   public int readIntField(int fileId,
@@ -363,30 +458,6 @@ public final class MappedFileStorageHelper implements Closeable {
     INT_HANDLE.setVolatile(rawPageBuffer, offsetInPage, attributeValue);
   }
 
-  public short readShortField(int fileId,
-                              int fieldOffsetInRow) throws IOException {
-    int offsetInFile = toOffsetInFile(fileId) + fieldOffsetInRow;
-    int offsetInPage = storage.toOffsetInPage(offsetInFile);
-
-    Page page = storage.pageByOffset(offsetInFile);
-    ByteBuffer rawPageBuffer = page.rawPageBuffer();
-
-    return (short)SHORT_HANDLE.getVolatile(rawPageBuffer, offsetInPage);
-  }
-
-  public void writeShortField(int fileId,
-                              int fieldOffsetInRow,
-                              short attributeValue) throws IOException {
-    int offsetInFile = toOffsetInFile(fileId) + fieldOffsetInRow;
-    int offsetInPage = storage.toOffsetInPage(offsetInFile);
-
-    Page page = storage.pageByOffset(offsetInFile);
-    ByteBuffer rawPageBuffer = page.rawPageBuffer();
-
-    SHORT_HANDLE.setVolatile(rawPageBuffer, offsetInPage, attributeValue);
-  }
-
-
   public int updateIntField(int fileId,
                             int fieldOffsetInRow,
                             @NotNull IntUnaryOperator updateOperator) throws IOException {
@@ -403,6 +474,7 @@ public final class MappedFileStorageHelper implements Closeable {
       }
     }
   }
+
 
   public long readLongField(int fileId,
                             int fieldOffsetInRow) throws IOException {
@@ -474,6 +546,7 @@ public final class MappedFileStorageHelper implements Closeable {
 
 
   // ============== implementation: ======================================================================
+
   private int toOffsetInFile(int fileId) {
     checkFileIdValid(fileId);
     return (fileId - FSRecords.ROOT_FILE_ID) * bytesPerRow + HeaderLayout.HEADER_SIZE;

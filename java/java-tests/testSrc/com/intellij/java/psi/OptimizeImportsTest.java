@@ -4,6 +4,7 @@ package com.intellij.java.psi;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.application.options.codeStyle.excludedFiles.NamedScopeDescriptor;
 import com.intellij.codeInsight.CodeInsightWorkspaceSettings;
+import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
@@ -21,7 +22,6 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -29,10 +29,11 @@ import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.codeStyle.PackageEntry;
 import com.intellij.psi.codeStyle.PackageEntryTable;
 import com.intellij.psi.codeStyle.modifier.CodeStyleSettingsModifier;
-import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.ServiceContainerUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
@@ -43,6 +44,11 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
   @Override
   protected String getTestDataPath() {
     return BASE_PATH;
+  }
+
+  @Override
+  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_21;
   }
 
   @Override
@@ -82,24 +88,21 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
     doTest();
   }
   public void testStringTemplates() {
-    IdeaTestUtil.setModuleLanguageLevel(getModule(), LanguageLevel.JDK_21_PREVIEW);
-    myFixture.addClass("""
-      package java.lang;
-      public interface StringTemplate {
-        Processor<String, RuntimeException> STR = null;
-        
-        @PreviewFeature(feature=PreviewFeature.Feature.STRING_TEMPLATES)
-        @FunctionalInterface
-        public interface Processor<R, E extends Throwable> {
-          R process(StringTemplate stringTemplate) throws E;
-        }
-      }""");
     doTest();
   }
   public void testNewImportListIsEmptyAndCommentPreserved() { doTest(); }
   public void testNewImportListIsEmptyAndJavaDocWithInvalidCodePreserved() { doTest(); }
 
   public void testDontCollapseToOnDemandImport() { doTest(); }
+  public void testDontInsertRedundantJavaLangImports() {
+    myFixture.addClass("""
+      package imports;
+      
+      public enum Values {
+        String, Object, Double
+      }""");
+    doTest();
+  }
   public void testIgnoreInaccessible() { doTest();}
 
   public void testEnsureConflictingImportsNotCollapsed() {
@@ -111,6 +114,36 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
   }
 
   public void testConflictingWithJavaLang() {
+    doTest();
+  }
+
+  public void testDoNotInsertImportForClassVisibleByInheritance() {
+    myFixture.addClass("""
+                         package one;
+                         public interface Super {
+                           class Result {}
+                           
+                           Result x();
+                         }
+                         """);
+    myFixture.addClass("""
+                         package two;
+                         public class Result {}
+                         public class One {}
+                         public class Two {}
+                         public class Three {}
+                         public class Four {}
+                         public class Five {}
+                         """);
+    myFixture.addClass("""
+                         package three;
+                         public class Result {}
+                         public class Six {}
+                         public class Seven {}
+                         public class Eight {}
+                         public class Nine {}
+                         public class Ten {}
+                         """);
     doTest();
   }
 
@@ -181,7 +214,7 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
       import java.util.Collection;
 
       class Foo {}""");
-    myFixture.launchAction(myFixture.findSingleIntention("Remove unused import"));
+    myFixture.launchAction(myFixture.findSingleIntention(JavaErrorBundle.message("remove.unused.imports.quickfix.text")));
 
     // whatever: main thing it didn't throw
     myFixture.checkResult("""
@@ -200,7 +233,7 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
       import java.util.Map;
 
       class Foo {}""");
-    myFixture.launchAction(myFixture.findSingleIntention("Remove unused import"));
+    myFixture.launchAction(myFixture.findSingleIntention(JavaErrorBundle.message("remove.unused.imports.quickfix.text")));
 
     // whatever: main thing it didn't throw
     assertNotEmpty(myFixture.doHighlighting(HighlightSeverity.ERROR));
@@ -226,7 +259,7 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
       import java.<caret>util.Set;
 
       """);
-    myFixture.launchAction(myFixture.findSingleIntention("Remove unused import"));
+    myFixture.launchAction(myFixture.findSingleIntention(JavaErrorBundle.message("remove.unused.imports.quickfix.text")));
     myFixture.checkResult("package p;\n\n");
   }
   public void testRemoveUnusedImportFixShownEvenForUnresolvedImport() {
@@ -237,8 +270,35 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
       import java.<caret>blahblah.Set;
 
       """);
-    myFixture.launchAction(myFixture.findSingleIntention("Remove unused import"));
+    myFixture.launchAction(myFixture.findSingleIntention(JavaErrorBundle.message("remove.unused.imports.quickfix.text")));
     myFixture.checkResult("package p;\n\n");
+  }
+  public void testRemoveUnusedImportFixMustDeleteAllUnusedImports() {
+    myFixture.enableInspections(new UnusedImportInspection());
+    myFixture.configureByText("a.java", """
+      package p;
+
+      // just remove, not reorganize
+      import java.util.List;
+      import java.util.HashSet;
+      // this for sure
+      import java.<caret>util.Set;
+      import java.util.ArrayList;
+      import java.util.HashMap;
+      
+      class X { List a = new ArrayList(); }
+      """);
+    myFixture.launchAction(myFixture.findSingleIntention(JavaErrorBundle.message("remove.unused.imports.quickfix.text")));
+    myFixture.checkResult("""
+                            package p;
+
+                            // just remove, not reorganize
+                            import java.util.List;
+                            // this for sure
+                            import java.util.ArrayList;
+
+                            class X { List a = new ArrayList(); }
+                            """);
   }
 
   public void testPerFileImportSettings() {

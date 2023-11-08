@@ -129,9 +129,24 @@ public abstract class HighLevelQuickFixMultiModuleTestGenerated extends Abstract
             runTest("../idea/tests/testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect/copyNotSuggestedWhenActualFakeOverride/");
         }
 
+        @TestMetadata("copyNotSuggestedWhenActualHasDefaultEmptyConstructor")
+        public void testCopyNotSuggestedWhenActualHasDefaultEmptyConstructor() throws Exception {
+            runTest("../idea/tests/testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect/copyNotSuggestedWhenActualHasDefaultEmptyConstructor/");
+        }
+
+        @TestMetadata("copyNotSuggestedWhenActualHasDefaultGetter")
+        public void testCopyNotSuggestedWhenActualHasDefaultGetter() throws Exception {
+            runTest("../idea/tests/testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect/copyNotSuggestedWhenActualHasDefaultGetter/");
+        }
+
         @TestMetadata("copyNotSuggestedWhenActualTypealias")
         public void testCopyNotSuggestedWhenActualTypealias() throws Exception {
             runTest("../idea/tests/testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect/copyNotSuggestedWhenActualTypealias/");
+        }
+
+        @TestMetadata("copyNotSuggestedWhenExpectWithUseSiteTarget")
+        public void testCopyNotSuggestedWhenExpectWithUseSiteTarget() throws Exception {
+            runTest("../idea/tests/testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect/copyNotSuggestedWhenExpectWithUseSiteTarget/");
         }
 
         @TestMetadata("copyToActualConstExpression")
@@ -169,6 +184,11 @@ public abstract class HighLevelQuickFixMultiModuleTestGenerated extends Abstract
             runTest("../idea/tests/testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect/copyToActualTypeParameter/");
         }
 
+        @TestMetadata("copyToActualTypeUsage")
+        public void testCopyToActualTypeUsage() throws Exception {
+            runTest("../idea/tests/testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect/copyToActualTypeUsage/");
+        }
+
         @TestMetadata("copyToActualValueParameter")
         public void testCopyToActualValueParameter() throws Exception {
             runTest("../idea/tests/testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect/copyToActualValueParameter/");
@@ -187,6 +207,11 @@ public abstract class HighLevelQuickFixMultiModuleTestGenerated extends Abstract
         @TestMetadata("removeFromExpectSuggestedWhenActualFakeOverride")
         public void testRemoveFromExpectSuggestedWhenActualFakeOverride() throws Exception {
             runTest("../idea/tests/testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect/removeFromExpectSuggestedWhenActualFakeOverride/");
+        }
+
+        @TestMetadata("removeFromExpectSuggestedWhenActualHasDefaultEmptyConstructor")
+        public void testRemoveFromExpectSuggestedWhenActualHasDefaultEmptyConstructor() throws Exception {
+            runTest("../idea/tests/testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect/removeFromExpectSuggestedWhenActualHasDefaultEmptyConstructor/");
         }
 
         @TestMetadata("removeFromExpectSuggestedWhenActualHasNoSource")

@@ -9,45 +9,60 @@ import com.esotericsoftware.kryo.kryo5.io.Input
 import com.esotericsoftware.kryo.kryo5.io.Output
 import com.esotericsoftware.kryo.kryo5.objenesis.strategy.StdInstantiatorStrategy
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.platform.diagnostic.telemetry.JPS
+import com.intellij.platform.diagnostic.telemetry.TelemetryManager
+import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMs
 import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.impl.*
-import com.intellij.platform.workspace.storage.impl.EntityStorageSnapshotImpl
-import com.intellij.platform.workspace.storage.impl.ImmutableEntitiesBarrel
-import com.intellij.platform.workspace.storage.impl.KryoInput
-import com.intellij.platform.workspace.storage.impl.KryoOutput
-import com.intellij.platform.workspace.storage.impl.MutableEntityStorageImpl
-import com.intellij.platform.workspace.storage.impl.RefsTable
-import com.intellij.platform.workspace.storage.impl.StorageIndexes
-import com.intellij.platform.workspace.storage.impl.containers.*
+import com.intellij.platform.workspace.storage.impl.containers.BidirectionalLongMultiMap
 import com.intellij.platform.workspace.storage.impl.indices.*
 import com.intellij.platform.workspace.storage.impl.serialization.registration.StorageClassesRegistrar
 import com.intellij.platform.workspace.storage.impl.serialization.registration.StorageRegistrar
-import com.intellij.platform.workspace.storage.impl.serialization.serializer.*
-import com.intellij.platform.workspace.storage.metadata.model.*
 import com.intellij.platform.workspace.storage.impl.serialization.registration.registerEntitiesClasses
+import com.intellij.platform.workspace.storage.impl.serialization.serializer.StorageSerializerUtil
 import com.intellij.platform.workspace.storage.metadata.diff.CacheMetadataComparator
 import com.intellij.platform.workspace.storage.metadata.diff.ComparisonResult
-import com.intellij.platform.workspace.storage.metadata.diff.MetadataComparator
+import com.intellij.platform.workspace.storage.metadata.model.StorageTypeMetadata
 import com.intellij.platform.workspace.storage.url.UrlRelativizer
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
+import io.opentelemetry.api.metrics.Meter
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap
-import it.unimi.dsi.fastutil.objects.*
+import it.unimi.dsi.fastutil.objects.Object2IntMap
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
+import it.unimi.dsi.fastutil.objects.Object2LongMap
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap
 import org.jetbrains.annotations.TestOnly
-import java.lang.UnsupportedOperationException
 import java.nio.file.Path
+import java.util.concurrent.atomic.AtomicLong
 import java.util.function.Consumer
-import kotlin.system.measureNanoTime
 
 private val LOG = logger<EntityStorageSerializerImpl>()
 
 public class EntityStorageSerializerImpl(
-  internal val typesResolver: EntityTypesResolver,
+  private val typesResolver: EntityTypesResolver,
   private val virtualFileManager: VirtualFileUrlManager,
   private val urlRelativizer: UrlRelativizer? = null
 ) : EntityStorageSerializer {
   public companion object {
-    public const val STORAGE_SERIALIZATION_VERSION: String = "v1"
+    public const val STORAGE_SERIALIZATION_VERSION: String = "version2"
+
+    private val loadCacheMetadataFromFileTimeMs: AtomicLong = AtomicLong()
+
+    private fun setupOpenTelemetryReporting(meter: Meter) {
+      val loadCacheMetadataFromFileTimeGauge = meter.gaugeBuilder("workspaceModel.load.cache.metadata.from.file.ms")
+        .ofLongs().setDescription("Total time spent on metadata deserialization").buildObserver()
+
+      meter.batchCallback({
+          loadCacheMetadataFromFileTimeGauge.record(loadCacheMetadataFromFileTimeMs.get())
+        },
+        loadCacheMetadataFromFileTimeGauge
+      )
+    }
+
+    init {
+      setupOpenTelemetryReporting(TelemetryManager.getMeter(JPS))
+    }
   }
 
   private val interner: StorageInterner = StorageInternerImpl()
@@ -71,7 +86,8 @@ public class EntityStorageSerializerImpl(
         interner,
         urlRelativizer,
         classCache
-      )
+      ),
+      typesResolver
     )
 
     registrar.registerClasses(kryo)
@@ -134,6 +150,7 @@ public class EntityStorageSerializerImpl(
         }
 
         var time = System.nanoTime()
+        val metadataDeserializationStartTimeMs = System.currentTimeMillis()
 
         val cacheMetadata = kryo.readObject(input, CacheMetadata::class.java)
         val currentMetadata = loadCurrentEntitiesMetadata(cacheMetadata, typesResolver)
@@ -142,6 +159,8 @@ public class EntityStorageSerializerImpl(
           LOG.info("Cache isn't loaded. Reason:\n${comparisonResult.info}")
           return Result.failure(UnsupportedEntitiesVersionException())
         }
+
+        loadCacheMetadataFromFileTimeMs.addElapsedTimeMs(metadataDeserializationStartTimeMs)
 
         time = logAndResetTime(time) { measuredTime -> "Read cache metadata and compare it with the existing metadata: $measuredTime ns" }
 
@@ -184,7 +203,9 @@ public class EntityStorageSerializerImpl(
         val builder = MutableEntityStorageImpl(storage)
 
         builder.entitiesByType.entityFamilies.forEach { family ->
-          family?.entities?.asSequence()?.filterNotNull()?.forEach { entityData -> builder.createAddEvent(entityData) }
+          family?.entities?.asSequence()?.filterNotNull()?.forEach { entityData ->
+            builder.changeLog.addAddEvent(entityData.createEntityId(), entityData)
+          }
         }
 
         if (LOG.isTraceEnabled) {
@@ -245,63 +266,6 @@ public class EntityStorageSerializerImpl(
   internal val Class<*>.typeInfo: TypeInfo
     get() = getTypeInfo(this, interner, typesResolver)
 
-  @TestOnly
-  @Suppress("UNCHECKED_CAST")
-  public fun deserializeCacheAndDiffLog(file: Path, diffLogFile: Path): MutableEntityStorage? {
-    val builder = deserializeCache(file).getOrThrow() ?: return null
-
-    var log: ChangeLog
-    createKryoInput(diffLogFile).use { input ->
-      val (kryo, classCache) = createKryo()
-
-      // Read version
-      val cacheVersion = input.readString()
-      if (cacheVersion != serializerDataFormatVersion) {
-        LOG.info("Cache isn't loaded. Current version of cache: $serializerDataFormatVersion, version of cache file: $cacheVersion")
-        return null
-      }
-
-      val cacheMetadata = kryo.readObject(input, CacheMetadata::class.java)
-      val currentMetadata = loadCurrentEntitiesMetadata(cacheMetadata, typesResolver)
-      val comparisonResult = compareMetadata(cacheMetadata, currentMetadata)
-      if (!comparisonResult.areEquals) {
-        LOG.info("Cache isn't loaded. Reason:\n${comparisonResult.info}")
-        return null
-      }
-
-      readAndRegisterClasses(kryo, input, cacheMetadata, classCache)
-
-      log = kryo.readClassAndObject(input) as ChangeLog
-    }
-
-    builder as MutableEntityStorageImpl
-    builder.changeLog.changeLog.clear()
-    builder.changeLog.changeLog.putAll(log)
-
-    return builder
-  }
-
-  @TestOnly
-  @Suppress("UNCHECKED_CAST")
-  public fun deserializeClassToIntConverter(file: Path) {
-    createKryoInput(file).use { input ->
-      val (kryo, _) = createKryo()
-
-      // Read version
-      val cacheVersion = input.readString()
-      if (cacheVersion != serializerDataFormatVersion) {
-        LOG.info("Cache isn't loaded. Current version of cache: $serializerDataFormatVersion, version of cache file: $cacheVersion")
-        return
-      }
-
-      val classes = kryo.readClassAndObject(input) as List<Pair<TypeInfo, Int>>
-      val map = Object2IntOpenHashMap<Class<*>>()
-      for ((first, second) in classes) {
-        map.put(typesResolver.resolveClass(first.fqName, first.pluginId), second)
-      }
-      ClassToIntConverter.getInstance().fromMap(map)
-    }
-  }
 
   internal fun createKryoOutput(file: Path): Output {
     val output = KryoOutput(file)

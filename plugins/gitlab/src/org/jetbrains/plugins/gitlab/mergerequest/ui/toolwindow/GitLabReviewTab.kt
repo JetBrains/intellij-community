@@ -9,4 +9,9 @@ internal sealed interface GitLabReviewTab : ReviewTab {
     override val id: @NonNls String = "ReviewDetails!${mrIid}"
     override val reuseTabOnRequest: Boolean = true
   }
+
+  object NewMergeRequest : GitLabReviewTab {
+    override val id: @NonNls String = "New Merge Request"
+    override val reuseTabOnRequest: Boolean = false
+  }
 }

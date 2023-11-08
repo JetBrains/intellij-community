@@ -208,7 +208,8 @@
     <iconMapper mappingFile="FeaturesTrainerIconMappings.json"/>
 
     <newProject.onboarding.tips implementation="training.onboarding.NewProjectOnboardingTipsImpl"/>
-    <backgroundPostStartupActivity implementation="training.onboarding.InstallOnboardingTooltip"/>
+    <postStartupActivity implementation="training.onboarding.InstallOnboardingTooltip"/>
+    <editorFactoryListener implementation="training.onboarding.InstallOnboardingTipsEditorListener"/>
     <editorNotificationProvider implementation="training.onboarding.DoNotGenerateTipsNotification"/>
     <statistics.counterUsagesCollector
       implementationClass="training.onboarding.OnboardingTipsStatistics"/>

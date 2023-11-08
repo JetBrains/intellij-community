@@ -1,9 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.editor.tables.ui
 
-import com.intellij.codeInsight.daemon.impl.InlayHintsPassFactory
+import com.intellij.codeInsight.daemon.impl.InlayHintsPassFactoryInternal
 import com.intellij.openapi.application.ReadAction
-import com.intellij.openapi.application.readAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.EditorFactoryEvent
 import com.intellij.openapi.editor.event.EditorFactoryListener
@@ -23,7 +22,7 @@ internal class MarkdownInlayUpdateOnSoftWrapListener: EditorFactoryListener {
       val softWrapModel = (editor.softWrapModel as? SoftWrapModelEx) ?: return
       softWrapModel.addSoftWrapChangeListener(object : SoftWrapChangeListener {
         override fun softWrapsChanged() {
-          InlayHintsPassFactory.forceHintsUpdateOnNextPass()
+          InlayHintsPassFactoryInternal.forceHintsUpdateOnNextPass()
         }
 
         override fun recalculationEnds() = Unit

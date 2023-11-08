@@ -298,8 +298,14 @@ public final class JavaLibraryUtil {
     }
   }
 
+  private static final List<String> BAZEL_PREFIXES = List.of("processed_", "header_");
+
   private static @NotNull String sanitizeLibraryName(@NotNull String nameWithoutExtension) {
-    return StringsKt.removePrefix(nameWithoutExtension, "processed_"); // omit this prefix for Bazel
+    var name = nameWithoutExtension;
+    for (String prefix : BAZEL_PREFIXES) {
+      name = StringsKt.removePrefix(name, prefix);
+    }
+    return name; // omit this prefix for Bazel
   }
 
   private record Libraries(Set<String> mavenLibraries,

@@ -72,7 +72,7 @@ public class ChangeSignatureProcessor extends ChangeSignatureProcessorBase {
                                   ThrownExceptionInfo[] thrownExceptions,
                                   Set<PsiMethod> propagateParametersMethods,
                                   Set<PsiMethod> propagateExceptionsMethods) {
-    this(project, JavaChangeInfoImpl.generateChangeInfo(method, generateDelegate, newVisibility, newName, newType, parameterInfo, thrownExceptions,
+    this(project, JavaChangeInfoImpl.generateChangeInfo(method, generateDelegate, true, newVisibility, newName, newType, parameterInfo, thrownExceptions,
                                                         propagateParametersMethods, propagateExceptionsMethods));
   }
 

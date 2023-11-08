@@ -1,8 +1,8 @@
 package com.intellij.codeInspection.tests.kotlin.logging
 
 import com.intellij.codeInspection.logging.LoggingPlaceholderCountMatchesArgumentCountInspection
-import com.intellij.codeInspection.tests.JvmLanguage
-import com.intellij.codeInspection.tests.logging.LoggingPlaceholderCountMatchesArgumentCountInspectionTestBase
+import com.intellij.jvm.analysis.internal.testFramework.logging.LoggingPlaceholderCountMatchesArgumentCountInspectionTestBase
+import com.intellij.jvm.analysis.testFramework.JvmLanguage
 import org.junit.experimental.runners.Enclosed
 import org.junit.runner.RunWith
 
@@ -373,6 +373,23 @@ class KotlinLoggingPlaceholderCountMatchesArgumentCountInspectionTest {
     }
 
 
+    fun `test error type`(){
+      myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+      import org.apache.logging.log4j.LogManager
+
+      class Log4j {
+          fun m() {
+            var e = <error descr="[UNRESOLVED_REFERENCE] Unresolved reference: Ce">Ce</error>;
+            LOG.error("<warning descr="Fewer arguments provided (2) than placeholders specified (3)">1 {} {} {}</warning>" , <error descr="[DEBUG] Resolved to error element">e</error>, <error descr="[DEBUG] Resolved to error element">e</error>)
+          }
+      
+          companion object {
+              val LOG = LogManager.getLogger()
+          }
+      }
+      """.trimIndent())
+    }
+
     fun `test formatted log4j with partial known strings`() {
       myFixture.testHighlighting(JvmLanguage.KOTLIN, """
           import org.apache.logging.log4j.LogManager
@@ -544,7 +561,29 @@ class KotlinLoggingPlaceholderCountMatchesArgumentCountInspectionTest {
           LoggerFactory.getLogger().atError().log("{}", RuntimeException("test"))
           LoggerFactory.getLogger().atError().log("{} {}", 1, RuntimeException("test"))
           LoggerFactory.getLogger().atError().log( "<warning descr="More arguments provided (2) than placeholders specified (1)">{}</warning>" , 1, RuntimeException("test"))
-          builder.log("<warning descr="Fewer arguments provided (1) than placeholders specified (2)">{} {}</warning>", 1)
+          logger2.atError().log("<warning descr="Fewer arguments provided (1) than placeholders specified (2)">{} {}</warning>", 1)
+          
+          val loggingEventBuilder = logger2.atError()
+          loggingEventBuilder
+              .log("{} {}", 2) //skip, because it can be complex cases
+  
+          logger2.atError()
+          .log("<warning descr="Fewer arguments provided (1) than placeholders specified (2)">{} {}</warning>", 2) //warn
+  
+          logger2.atError()
+              .addArgument("s")
+              .addKeyValue("1", "1")
+              .log("{} {}", 2)
+              
+          logger2.atError()
+          .setMessage("<warning descr="Fewer arguments provided (0) than placeholders specified (2)">{} {}</warning>")
+          .log()
+  
+          logger2.atError()
+          .addArgument("")
+          .addArgument("")
+          .setMessage("{} {}")
+          .log()
       }
       
       private val logger2 = LoggerFactory.getLogger()

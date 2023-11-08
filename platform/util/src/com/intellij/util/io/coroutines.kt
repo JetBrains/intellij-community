@@ -11,11 +11,11 @@ import kotlin.time.Duration
 suspend fun <T> Future<T>.await(): T {
   if (isDone) {
     try {
+      @Suppress("BlockingMethodInNonBlockingContext")
       return get()
     }
     catch (e: ExecutionException) {
-      throw e.cause
-            ?: e
+      throw e.cause ?: e
     }
   }
   return loopInterruptible { timeout: Duration ->
@@ -24,20 +24,18 @@ suspend fun <T> Future<T>.await(): T {
         Attempt.success(get())
       }
       catch (e: ExecutionException) {
-        throw e.cause
-              ?: e
+        throw e.cause ?: e
       }
     }
     else {
       try {
         Attempt.success(get(timeout.inWholeNanoseconds, TimeUnit.NANOSECONDS))
       }
-      catch (e: TimeoutException) {
+      catch (_: TimeoutException) {
         Attempt.tryAgain()
       }
       catch (e: ExecutionException) {
-        throw e.cause
-              ?: e
+        throw e.cause ?: e
       }
     }
   }

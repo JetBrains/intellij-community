@@ -65,7 +65,9 @@ class ClassLoaderConfigurator(
     if (mainDescriptor.pluginDependencies.find { it.subDescriptor === moduleDescriptor && it.isOptional } != null) {
       // dynamically enabled optional dependency module in old format
       // based on what's happening in [configureDependenciesInOldFormat]
-      assert(moduleDescriptor.pluginClassLoader == null) { "subdescriptor $moduleDescriptor of $mainDescriptor seems to be already enabled" }
+      assert(moduleDescriptor.pluginClassLoader == null) {
+        "sub descriptor $moduleDescriptor of $mainDescriptor seems to be already enabled"
+      }
       val mainDependentClassLoader = mainDescriptor.pluginClassLoader
       assert(mainDependentClassLoader != null) { "plugin $mainDescriptor is not yet enabled"}
       moduleDescriptor.pluginClassLoader = mainDependentClassLoader!!
@@ -110,7 +112,10 @@ class ClassLoaderConfigurator(
       }
 
       val mimicJarUrlConnection = !module.isBundled && module.vendor != "JetBrains"
-      val pluginClassPath = ClassPath(files, DEFAULT_CLASSLOADER_CONFIGURATION, resourceFileFactory, mimicJarUrlConnection)
+      val pluginClassPath = ClassPath(/* files = */ files,
+                                      /* configuration = */ DEFAULT_CLASSLOADER_CONFIGURATION,
+                                      /* resourceFileFactory = */ resourceFileFactory,
+                                      /* mimicJarUrlConnection = */ mimicJarUrlConnection)
       val mainInfo = MainInfo(classPath = pluginClassPath, files = files, libDirectories = libDirectories)
       val existing = mainToClassPath.put(module.pluginId, mainInfo)
       if (existing != null) {

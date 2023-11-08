@@ -330,6 +330,7 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
   private Component myOriginalFocusOwner;
   private final boolean myEnableButtons;
   private final Dimension myPointerSize;
+  private boolean myPointerShiftedToStart;
   private final int myCornerToPointerDistance;
   private int myCornerRadius = -1;
   private int myClipY = -1;
@@ -1175,6 +1176,10 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
     myShowPointer = show;
   }
 
+  public void setPointerShiftedToStart(boolean pointerShiftedToStart) {
+    myPointerShiftedToStart = pointerShiftedToStart;
+  }
+
   public Icon getCloseButton() {
     return AllIcons.Ide.Notification.Close;
   }
@@ -1240,6 +1245,19 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
                          ? getLocation(layeredPaneSize, point, contentSize, distance)
                          // Now distance is used for pointer enabled balloons only
                          : new Point(point.x - contentSize.width / 2, point.y - contentSize.height / 2);
+        if (balloon.myShowPointer && balloon.myPointerShiftedToStart) {
+          int offset = JBUI.scale(20);
+          if (this == ABOVE || this == BELOW) {
+            if (contentSize.width / 2 > offset) {
+              location.x = point.x - offset;
+            }
+          }
+          else if (this == AT_LEFT || this == AT_RIGHT) {
+            if (contentSize.height / 2 > offset) {
+              location.y = point.y - offset;
+            }
+          }
+        }
         bounds = new Rectangle(location.x, location.y, contentSize.width, contentSize.height);
 
         JBInsets.addTo(bounds, shadowInsets);
@@ -2037,7 +2055,7 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
       }
 
       setBounds(bounds);
-
+      doLayout();
 
       if (getParent() != null) {
         if (myActionButtons == null) {

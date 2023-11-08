@@ -1,6 +1,5 @@
 package de.plushnikov.intellij.plugin.processor.method;
 
-import com.intellij.openapi.components.Service;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -21,7 +20,6 @@ import java.util.Objects;
  * @author Tomasz Kalkosiński
  * @author Michail Plushnikov
  */
-@Service
 public final class BuilderClassMethodProcessor extends AbstractMethodProcessor {
 
   public BuilderClassMethodProcessor() {

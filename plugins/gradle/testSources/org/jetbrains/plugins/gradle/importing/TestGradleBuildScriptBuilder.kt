@@ -54,7 +54,10 @@ open class TestGradleBuildScriptBuilder(
       }
     }
 
-  fun configure(expression: Expression, configure: Consumer<TestGradleBuildScriptBuilder>) = configure(expression) { configure.accept(this) }
+  fun configure(expression: Expression, configure: Consumer<TestGradleBuildScriptBuilder>) = configure(expression) {
+    configure.accept(this)
+  }
+
   fun configure(expression: Expression, configure: TestGradleBuildScriptBuilder.() -> Unit) =
     withPrefix {
       call("configure", expression) {
@@ -106,36 +109,22 @@ open class TestGradleBuildScriptBuilder(
   }
 
   override fun withBuildScriptMavenCentral() =
-    withBuildScriptMavenCentral(false)
+    withBuildScriptRepository {
+      mavenCentralRepository()
+    }
 
   override fun withMavenCentral() =
-    withMavenCentral(false)
-
-  fun withBuildScriptMavenCentral(useOldStyleMetadata: Boolean) =
-    withBuildScriptRepository {
-      mavenCentralRepository(useOldStyleMetadata)
-    }
-
-  fun withMavenCentral(useOldStyleMetadata: Boolean) =
     withRepository {
-      mavenCentralRepository(useOldStyleMetadata)
+      mavenCentralRepository()
     }
 
-  private fun ScriptTreeBuilder.mavenCentralRepository(useOldStyleMetadata: Boolean = false) {
-    if (!UsefulTestCase.IS_UNDER_TEAMCITY) {
+  private fun ScriptTreeBuilder.mavenCentralRepository() {
+    if (UsefulTestCase.IS_UNDER_TEAMCITY) {
+      mavenRepository("https://repo.labs.intellij.net/repo1", false)
+    }
+    else {
       // IntelliJ internal maven repo is not available in local environment
       call("mavenCentral")
-      return
-    }
-
-    call("maven") {
-      call("url", "https://repo.labs.intellij.net/repo1")
-      if (useOldStyleMetadata) {
-        call("metadataSources") {
-          call("mavenPom")
-          call("artifact")
-        }
-      }
     }
   }
 
@@ -170,5 +159,17 @@ open class TestGradleBuildScriptBuilder(
     @JvmStatic
     fun extPluginVersionIsAtLeast(version: String) =
       Version.parseVersion(IDEA_EXT_PLUGIN_VERSION)!! >= Version.parseVersion(version)!!
+
+    fun ScriptTreeBuilder.mavenRepository(url: String, useOldStyleMetadata: Boolean) {
+      call("maven") {
+        call("url", url)
+        if (useOldStyleMetadata) {
+          call("metadataSources") {
+            call("mavenPom")
+            call("artifact")
+          }
+        }
+      }
+    }
   }
 }

@@ -2,14 +2,14 @@
 package org.jetbrains.plugins.groovy.intentions.conversions;
 
 import com.intellij.codeInspection.util.IntentionName;
-import com.intellij.openapi.editor.Editor;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle;
-import org.jetbrains.plugins.groovy.intentions.base.Intention;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
+import org.jetbrains.plugins.groovy.intentions.base.GrPsiUpdateIntention;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
@@ -24,13 +24,13 @@ import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 /**
  * @author Max Medvedev
  */
-public class GrSplitDeclarationIntention extends Intention {
-
+public class GrSplitDeclarationIntention extends GrPsiUpdateIntention {
 
   @Override
-  protected void processIntention(@NotNull PsiElement element, @NotNull Project project, Editor editor) throws IncorrectOperationException {
+  protected void processIntention(@NotNull PsiElement element, @NotNull ActionContext context, @NotNull ModPsiUpdater updater) {
     if (!(element instanceof GrVariableDeclaration declaration)) return;
 
+    Project project = context.project();
     GrVariable[] variables = declaration.getVariables();
     if (variables.length == 1) {
       processSingleVar(project, declaration, variables[0]);
@@ -117,12 +117,20 @@ public class GrSplitDeclarationIntention extends Intention {
     return decl;
   }
 
-  private @IntentionName String myText = "";
-
   @NotNull
   @Override
-  public @IntentionName String getText() {
-    return myText;
+  public @IntentionName String getText(@NotNull PsiElement element) {
+    GrVariableDeclaration decl = (GrVariableDeclaration)element;
+    GrVariable[] variables = decl.getVariables();
+    if (variables.length > 1 && PsiUtil.isLocalVariable(variables[0])) {
+      if (!decl.isTuple() || decl.getTupleInitializer() instanceof GrListOrMap) {
+        return GroovyIntentionsBundle.message("split.into.separate.declaration");
+      }
+      else {
+        return GroovyIntentionsBundle.message("split.into.declaration.and.assignment");
+      }
+    }
+    return GroovyIntentionsBundle.message("split.into.declaration.and.assignment");
   }
 
   @NotNull
@@ -133,21 +141,8 @@ public class GrSplitDeclarationIntention extends Intention {
       public boolean satisfiedBy(@NotNull PsiElement element) {
         if (element instanceof GrVariableDeclaration decl) {
           GrVariable[] variables = decl.getVariables();
-          if (variables.length > 1 && PsiUtil.isLocalVariable(variables[0])) {
-            if (!decl.isTuple() || decl.getTupleInitializer() instanceof GrListOrMap) {
-              myText = GroovyIntentionsBundle.message("split.into.separate.declaration");
-            }
-            else {
-              myText = GroovyIntentionsBundle.message("split.into.declaration.and.assignment");
-            }
-            return true;
-          }
-          else if (variables.length == 1 &&
-                   PsiUtil.isLocalVariable(variables[0]) &&
-                   variables[0].getInitializerGroovy() != null) {
-            myText = GroovyIntentionsBundle.message("split.into.declaration.and.assignment");
-            return true;
-          }
+          return variables.length > 1 && PsiUtil.isLocalVariable(variables[0]) || 
+                 variables.length == 1 && PsiUtil.isLocalVariable(variables[0]) && variables[0].getInitializerGroovy() != null;
         }
         return false;
       }

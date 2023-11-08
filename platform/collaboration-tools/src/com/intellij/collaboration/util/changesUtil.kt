@@ -76,6 +76,9 @@ sealed class ChangesSelection(
 val ChangesSelection.selectedChange: Change?
   get() = selectedIdx.let { changes.getOrNull(it) }
 
+fun ChangesSelection.Precise.withLocation(location: DiffLineLocation): ChangesSelection.Precise =
+  ChangesSelection.Precise(changes, selectedIdx, location)
+
 @ApiStatus.Experimental
 fun ChangesSelection?.equalChanges(other: Any?): Boolean {
   if (this == null && other != null) return false

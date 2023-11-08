@@ -1,11 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ide.impl.customization
 
-import com.intellij.ide.feedback.FeedbackForm
-import com.intellij.openapi.application.ex.ApplicationInfoEx
+import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.ide.customization.FeedbackReporter
+import com.intellij.platform.ide.impl.feedback.PlatformFeedbackDialogs
 import com.intellij.ui.LicensingFacade
 import com.intellij.util.Url
 import com.intellij.util.Urls
@@ -13,12 +12,13 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 class JetBrainsFeedbackReporter(private val productName: String,
-                                private val zenDeskFormData: ZenDeskFeedbackFormData?) : FeedbackReporter {
+                                private val useInIdeGeneralFeedback: Boolean,
+                                private val useInIdeEvaluationFeedback: Boolean) : FeedbackReporter {
   override val destinationDescription: String
     get() = "jetbrains.com"
 
   override fun feedbackFormUrl(description: String): Url {
-    val appInfo = ApplicationInfoEx.getInstanceEx()
+    val appInfo = ApplicationInfo.getInstance()
     val build = appInfo.getBuild()
 
     return Urls.newFromEncoded("https://www.jetbrains.com/feedback/feedback.jsp")
@@ -31,37 +31,20 @@ class JetBrainsFeedbackReporter(private val productName: String,
   }
 
   override fun showFeedbackForm(project: Project?, requestedForEvaluation: Boolean): Boolean {
-    if (Registry.`is`("ide.in.product.feedback") && zenDeskFormData != null) {
-      FeedbackForm(project, zenDeskFormData, requestedForEvaluation).show()
+    if (requestedForEvaluation && useInIdeEvaluationFeedback) {
+      val feedbackDialogs = PlatformFeedbackDialogs.getInstance()
+      val evaluationFeedbackDialog = feedbackDialogs.createEvaluationFeedbackDialog(project) ?: return false
+      evaluationFeedbackDialog.show()
       return true
     }
+
+    if (!requestedForEvaluation && useInIdeGeneralFeedback) {
+      val feedbackDialogs = PlatformFeedbackDialogs.getInstance()
+      val generalFeedbackDialog = feedbackDialogs.createGeneralFeedbackDialog(project) ?: return false
+      generalFeedbackDialog.show()
+      return true
+    }
+
     return false
   }
-}
-
-/**
- * Provides information about ZenDesk form used to send feedback.
- */
-interface ZenDeskFeedbackFormData {
-  val formUrl: String
-  val formId: Long
-  val productId: String
-  val fieldIds: ZenDeskFeedbackFormFieldIds
-}
-
-/**
- * IDs of elements in ZenDesk feedback form. 
- * They are used in JSON sent to zendesk.com, see [ZenDeskRequests][com.intellij.ide.feedback.ZenDeskRequests] for implementation details.
- */
-interface ZenDeskFeedbackFormFieldIds {
-  val product: Long
-  val country: Long
-  val rating: Long
-  val build: Long
-  val os: Long
-  val timezone: Long
-  val eval: Long
-  val systemInfo: Long
-  val needSupport: Long
-  val topic: Long
 }

@@ -108,7 +108,7 @@ val INTERPRETER_TYPE = EventFields.String("interpreterType", listOf(PIPENV.value
 
 
 private val Sdk.pythonImplementation: String get() = PythonSdkFlavor.getFlavor(this)?.name ?: "Python"
-val Sdk.version: LanguageLevel get() = PythonSdkType.getLanguageLevelForSdk(this)
+val Sdk?.version: LanguageLevel get() = PythonSdkType.getLanguageLevelForSdk(this)
 val Sdk.executionType: InterpreterTarget
   get() =
     when (val additionalData = sdkAdditionalData) {

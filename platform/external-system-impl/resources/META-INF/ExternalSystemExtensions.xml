@@ -130,6 +130,7 @@
     <statistics.projectUsagesCollector implementation="com.intellij.openapi.externalSystem.statistics.ExternalSystemUsagesCollector"/>
     <statistics.projectUsagesCollector implementation="com.intellij.openapi.externalSystem.statistics.ExternalSystemSettingsCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.externalSystem.statistics.ExternalSystemActionsCollector"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.externalSystem.statistics.ExternalSystemSourceAttachCollector"/>
     <statistics.validation.customValidationRule implementation="com.intellij.openapi.externalSystem.statistics.SystemIdValidationRule"/>
     <notificationGroup id="Build sync orphan modules" displayType="TOOL_WINDOW" toolWindowId="Build" bundle="messages.ExternalSystemBundle" key="notification.group.orphan.modules"/>
     <notificationGroup id="Content root duplicates" displayType="BALLOON" bundle="messages.ExternalSystemBundle" key="notification.group.duplicate.content.roots"/>
@@ -138,7 +139,7 @@
 
     <externalSystemSettingsListener implementation="com.intellij.openapi.externalSystem.service.ui.ExternalToolWindowManager"/>
 
-    <activityInProgressPredicate implementation="com.intellij.openapi.externalSystem.service.ExternalSystemInProgressPredicate"/>
+    <activityTracker implementation="com.intellij.openapi.externalSystem.util.ExternalSystemTracker"/>
 
     <trustedProjectsLocator implementation="com.intellij.openapi.externalSystem.service.project.trusted.ExternalSystemTrustedProjectsLocator"/>
   </extensions>

@@ -11,8 +11,8 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.BasicJavaAstTreeUtil;
-import com.intellij.psi.impl.source.BasicJavaTokenSet;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.ParentAwareTokenSet;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,15 +23,15 @@ import static com.intellij.psi.impl.source.BasicJavaElementType.BASIC_LITERAL_EX
 import static com.intellij.psi.impl.source.BasicJavaElementType.REFERENCE_EXPRESSION_SET;
 
 public class JavaQuoteHandler extends SimpleTokenSetQuoteHandler implements JavaLikeQuoteHandler, MultiCharQuoteHandler {
-  private final BasicJavaTokenSet myConcatenableStrings = BasicJavaTokenSet.create(JavaTokenType.STRING_LITERAL);
-  private final BasicJavaTokenSet myAppropriateElementTypeForLiteral = BasicJavaTokenSet.orSet(
-    BasicJavaTokenSet.create(JavaDocTokenType.ALL_JAVADOC_TOKENS),
-    BASIC_JAVA_COMMENT_OR_WHITESPACE_BIT_SET, BasicJavaTokenSet.create(BASIC_TEXT_LITERALS),
-    BasicJavaTokenSet.create(JavaTokenType.SEMICOLON, JavaTokenType.COMMA, JavaTokenType.RPARENTH, JavaTokenType.RBRACKET,
-                             JavaTokenType.RBRACE));
+  private final TokenSet myConcatenableStrings = TokenSet.create(JavaTokenType.STRING_LITERAL);
+  private final ParentAwareTokenSet myAppropriateElementTypeForLiteral = ParentAwareTokenSet.orSet(
+    ParentAwareTokenSet.create(JavaDocTokenType.ALL_JAVADOC_TOKENS),
+    BASIC_JAVA_COMMENT_OR_WHITESPACE_BIT_SET, ParentAwareTokenSet.create(BASIC_TEXT_LITERALS),
+    ParentAwareTokenSet.create(JavaTokenType.SEMICOLON, JavaTokenType.COMMA, JavaTokenType.RPARENTH, JavaTokenType.RBRACKET,
+                               JavaTokenType.RBRACE));
 
   public JavaQuoteHandler() {
-    super(BasicJavaTokenSet.orSet(BasicJavaTokenSet.create(BASIC_TEXT_LITERALS), BasicJavaTokenSet.create(JavaDocTokenType.DOC_TAG_VALUE_QUOTE)).toTokenSet());
+    super(TokenSet.orSet(BASIC_TEXT_LITERALS, TokenSet.create(JavaDocTokenType.DOC_TAG_VALUE_QUOTE)));
   }
 
   @Override
@@ -73,7 +73,7 @@ public class JavaQuoteHandler extends SimpleTokenSetQuoteHandler implements Java
   @NotNull
   @Override
   public TokenSet getConcatenatableStringTokenTypes() {
-    return myConcatenableStrings.toTokenSet();
+    return myConcatenableStrings;
   }
 
   @Override
@@ -102,12 +102,13 @@ public class JavaQuoteHandler extends SimpleTokenSetQuoteHandler implements Java
   @Nullable
   @Override
   public CharSequence getClosingQuote(@NotNull HighlighterIterator iterator, int offset) {
-    return iterator.getTokenType() == JavaTokenType.TEXT_BLOCK_LITERAL && offset == iterator.getStart() + 3 ? "\"\"\"" : null;
+    return (iterator.getTokenType() == JavaTokenType.TEXT_BLOCK_LITERAL || iterator.getTokenType() == JavaTokenType.TEXT_BLOCK_TEMPLATE_BEGIN) 
+           && offset == iterator.getStart() + 3 ? "\"\"\"" : null;
   }
 
   @Override
   public boolean hasNonClosedLiteral(Editor editor, HighlighterIterator iterator, int offset) {
-    if (iterator.getTokenType() == JavaTokenType.TEXT_BLOCK_LITERAL) {
+    if (iterator.getTokenType() == JavaTokenType.TEXT_BLOCK_LITERAL || iterator.getTokenType() == JavaTokenType.TEXT_BLOCK_TEMPLATE_BEGIN) {
       Document document = editor.getDocument();
       Project project = editor.getProject();
       PsiFile file = project == null ? null : PsiDocumentManager.getInstance(project).getPsiFile(document);

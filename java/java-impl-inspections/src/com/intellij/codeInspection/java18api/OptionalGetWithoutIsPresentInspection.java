@@ -52,7 +52,7 @@ public class OptionalGetWithoutIsPresentInspection extends AbstractBaseJavaLocal
         }
       }
 
-      private boolean isOptionalProblem(@NotNull PsiExpression context, @NotNull JavaDfaAnchor anchor) {
+      private static boolean isOptionalProblem(@NotNull PsiExpression context, @NotNull JavaDfaAnchor anchor) {
         CommonDataflow.DataflowResult result = CommonDataflow.getDataflowResult(context);
         if (result == null || !result.anchorWasAnalyzed(anchor)) return false;
         DfType dfType = SpecialField.OPTIONAL_VALUE.getFromQualifier(result.getDfType(anchor));

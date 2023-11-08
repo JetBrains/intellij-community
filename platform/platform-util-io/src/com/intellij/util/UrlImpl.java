@@ -34,7 +34,8 @@ final class UrlImpl implements Url {
 
   @Override
   public @NotNull Url resolve(@NotNull String subPath) {
-    return new UrlImpl(scheme, authority, path.isEmpty() ? subPath : (path + "/" + subPath), parameters);
+    String newPath = path.isEmpty() && authority == null ? subPath : StringUtil.trimEnd(path, '/') + "/" + subPath;
+    return new UrlImpl(scheme, authority, newPath, parameters);
   }
 
   @Override

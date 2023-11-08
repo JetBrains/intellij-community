@@ -46,8 +46,10 @@ class GitBranchesTreeMultiRepoFilteringModel(
     branchesTreeCache.keys.clear()
     val localBranches = GitBranchUtil.getCommonLocalBranches(repositories)
     val remoteBranches = GitBranchUtil.getCommonRemoteBranches(repositories)
-    commonLocalBranchesTree = LazyBranchesSubtreeHolder(localBranches, repositories, matcher, ::isPrefixGrouping)
-    commonRemoteBranchesTree = LazyBranchesSubtreeHolder(remoteBranches, repositories, matcher, ::isPrefixGrouping)
+    val localFavorites = project.service<GitBranchManager>().getFavoriteBranches(GitBranchType.LOCAL)
+    val remoteFavorites = project.service<GitBranchManager>().getFavoriteBranches(GitBranchType.REMOTE)
+    commonLocalBranchesTree = LazyBranchesSubtreeHolder(repositories, localBranches, localFavorites, matcher, ::isPrefixGrouping)
+    commonRemoteBranchesTree = LazyBranchesSubtreeHolder(repositories, remoteBranches, remoteFavorites, matcher, ::isPrefixGrouping)
     repositoriesTree = LazyRepositoryBranchesHolder()
     treeStructureChanged(TreePath(arrayOf(root)), null, null)
   }
@@ -77,7 +79,8 @@ class GitBranchesTreeMultiRepoFilteringModel(
       is BranchesPrefixGroup -> {
         branchesTreeCache
           .getOrPut(parent) {
-            getBranchTreeNodes(parent.type, parent.prefix, parent.repository).sortedWith(getSubTreeComparator(repositories))
+            getBranchTreeNodes(parent.type, parent.prefix, parent.repository)
+              .sortedWith(getSubTreeComparator(project.service<GitBranchManager>().getFavoriteBranches(parent.type), repositories))
           }
       }
       is BranchTypeUnderRepository -> {
@@ -159,10 +162,16 @@ class GitBranchesTreeMultiRepoFilteringModel(
 
   private inner class LazyRepositoryBranchesSubtreeHolder(repository: GitRepository) {
     val localBranches by lazy {
-      LazyBranchesSubtreeHolder(repository.localBranchesOrCurrent, listOf(repository), branchNameMatcher, ::isPrefixGrouping)
+      LazyBranchesSubtreeHolder(listOf(repository),
+                                repository.localBranchesOrCurrent,
+                                project.service<GitBranchManager>().getFavoriteBranches(GitBranchType.LOCAL), branchNameMatcher,
+                                ::isPrefixGrouping)
     }
     val remoteBranches by lazy {
-      LazyBranchesSubtreeHolder(repository.branches.remoteBranches, listOf(repository), branchNameMatcher, ::isPrefixGrouping)
+      LazyBranchesSubtreeHolder(listOf(repository),
+                                repository.branches.remoteBranches,
+                                project.service<GitBranchManager>().getFavoriteBranches(GitBranchType.REMOTE), branchNameMatcher,
+                                ::isPrefixGrouping)
     }
   }
 }

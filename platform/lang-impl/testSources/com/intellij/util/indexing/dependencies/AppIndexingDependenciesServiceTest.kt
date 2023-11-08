@@ -87,7 +87,7 @@ class AppIndexingDependenciesServiceTest {
   fun `test invalidateAllStamps`() {
     val inst = factory.newAppIndexingDependenciesService()
     val oldStamp = inst.getCurrentTokenInTest()
-    inst.invalidateAllStamps()
+    inst.invalidateAllStamps("test invalidateAllStamps")
     val newStamp = inst.getCurrentTokenInTest()
 
     assertNotEquals(oldStamp, newStamp)
@@ -98,7 +98,7 @@ class AppIndexingDependenciesServiceTest {
     val file = factory.nonExistingFile()
     val inst1 = factory.newAppIndexingDependenciesService(file)
 
-    inst1.invalidateAllStamps() // make some non-default sate
+    inst1.invalidateAllStamps("test service reload keeps state") // make some non-default sate
     val oldStamp = inst1.getCurrentTokenInTest()
 
     val inst2 = factory.newAppIndexingDependenciesService(file)

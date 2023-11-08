@@ -5,6 +5,7 @@ package com.intellij.ide
 
 import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.util.IntellijInternalApi
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.wm.impl.FrameInfo
 import com.intellij.util.xmlb.annotations.Attribute
 import com.intellij.util.xmlb.annotations.MapAnnotation
@@ -24,7 +25,7 @@ class RecentProjectMetaInfo : BaseState() {
   var hidden: Boolean by property(false)
 
   @get:Attribute
-  var displayName: String? by string()
+  var displayName: @NlsSafe String? by string()
 
   // to set frame title as early as possible
   @get:Attribute

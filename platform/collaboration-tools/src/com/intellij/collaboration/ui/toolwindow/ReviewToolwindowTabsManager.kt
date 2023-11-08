@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.collaboration.ui.toolwindow
 
-import com.intellij.collaboration.async.disposingMainScope
+import com.intellij.collaboration.async.cancelledWith
 import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.ui.codereview.list.ReviewListViewModel
 import com.intellij.openapi.util.Disposer
@@ -10,6 +10,7 @@ import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.ui.content.*
 import com.intellij.util.childScope
+import com.intellij.util.namedChildScope
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.collectLatest
 import org.jetbrains.annotations.ApiStatus
@@ -64,7 +65,7 @@ private class ReviewToolwindowTabsManager<
       projectVm.collectLatest { vm ->
         try {
           if (vm == null) {
-            val loginContent = createDisposableContent { content, contentCs ->
+            val loginContent = createDisposableContent(createTabDebugName("Login")) { content, contentCs ->
               content.component = tabComponentFactory.createEmptyTabContent(contentCs)
               content.isCloseable = false
             }
@@ -150,37 +151,40 @@ private class ReviewToolwindowTabsManager<
     contentManager.addContent(content)
   }
 
-  private fun createReviewListContent(projectVm: PVM): Content = createDisposableContent { content, contentCs ->
-    content.isCloseable = false
-    content.displayName = projectVm.projectName
+  private fun createReviewListContent(projectVm: PVM): Content =
+    createDisposableContent(createTabDebugName(projectVm.projectName)) { content, contentCs ->
+      content.isCloseable = false
+      content.displayName = projectVm.projectName
 
-    content.component = tabComponentFactory.createReviewListComponent(contentCs, projectVm)
-  }
+      content.component = tabComponentFactory.createReviewListComponent(contentCs, projectVm)
+    }
 
-  private fun createTabContent(tab: T, projectVm: PVM, tabVm: TVM): Content = createDisposableContent { content, contentCs ->
-    content.isCloseable = true
-    content.displayName = tabVm.displayName
-    content.description = "${projectVm.projectName}: ${tabVm.description}"
+  private fun createTabContent(tab: T, projectVm: PVM, tabVm: TVM): Content =
+    createDisposableContent(createTabDebugName(tabVm.displayName)) { content, contentCs ->
+      content.isCloseable = true
+      content.displayName = tabVm.displayName
+      content.description = "${projectVm.projectName}: ${tabVm.description}"
 
-    content.component = tabComponentFactory.createTabComponent(contentCs, projectVm, tabVm)
+      content.component = tabComponentFactory.createTabComponent(contentCs, projectVm, tabVm)
 
-    content.putUserData(REVIEW_TAB_KEY, tab)
-    content.putUserData(REVIEW_TAB_VM_KEY, tabVm)
-  }
+      content.putUserData(REVIEW_TAB_KEY, tab)
+      content.putUserData(REVIEW_TAB_VM_KEY, tabVm)
+    }
 
-
-  private fun createDisposableContent(modifier: (Content, CoroutineScope) -> Unit): Content {
+  private fun createDisposableContent(debugName: String, modifier: (Content, CoroutineScope) -> Unit): Content {
     val factory = ContentFactory.getInstance()
     return factory.createContent(null, tabTitle, false).apply {
       val disposable = Disposer.newDisposable()
       setDisposer(disposable)
-      modifier(this, disposable.disposingMainScope())
+      modifier(this, cs.namedChildScope(debugName).cancelledWith(disposable))
     }
   }
 
   private val REVIEW_TAB_KEY: Key<T> = Key.create("com.intellij.collaboration.toolwindow.review.tab")
   private val REVIEW_TAB_VM_KEY: Key<TVM> = Key.create("com.intellij.collaboration.toolwindow.review.tab.vm")
 }
+
+private fun createTabDebugName(name: String) = "Review Toolwindow Tab [$name]"
 
 private fun refreshReviewListOnTabSelection(listVm: ReviewListViewModel, contentManager: ContentManager, content: Content) {
   val listener = object : ContentManagerListener {

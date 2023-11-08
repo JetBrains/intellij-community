@@ -8,10 +8,10 @@ project.appleTest
     targetPlatform = Native (ios_arm64)
 
 project.commonMain
-    targetPlatform = JS/JVM (1.8)/Native (general)
+    targetPlatform = JS/JVM (17)/Native (general)
 
 project.commonTest
-    targetPlatform = JS/JVM (1.8)/Native (general)
+    targetPlatform = JS/JVM (17)/Native (general)
 
 project.iosArm64V1Main
     targetPlatform = Native (ios_arm64)
@@ -68,10 +68,10 @@ project.sharedJsTest
     targetPlatform = JS
 
 project.sharedJvmMain
-    targetPlatform = JVM (1.8)
+    targetPlatform = JVM (17)
 
 project.sharedJvmTest
-    targetPlatform = JVM (1.8)
+    targetPlatform = JVM (17)
 
 
 Test configuration:

@@ -173,7 +173,7 @@ abstract class WebTypesScopeBase :
 
           buildNameConverters(config.canonicalNames?.additionalProperties, { mergeConverters(listOf(it)) }, builder::addCanonicalNamesRule)
           buildNameConverters(config.matchNames?.additionalProperties, { mergeConverters(it) }, builder::addMatchNamesRule)
-          buildNameConverters(config.nameVariants?.additionalProperties, { mergeConverters(it) }, builder::addNameVariantsRule)
+          buildNameConverters(config.nameVariants?.additionalProperties, { mergeConverters(it) }, builder::addCompletionVariantsRule)
 
           Pair(framework, builder.build())
         }

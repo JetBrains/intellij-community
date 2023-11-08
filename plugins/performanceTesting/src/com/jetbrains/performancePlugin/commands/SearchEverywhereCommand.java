@@ -1,8 +1,6 @@
 package com.jetbrains.performancePlugin.commands;
 
-import com.intellij.openapi.editor.impl.EditorComponentImpl;
-import com.intellij.openapi.ui.TypingTarget;
-import com.intellij.platform.diagnostic.telemetry.helpers.TraceUtil;
+import com.intellij.find.impl.TextSearchContributor;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.actions.searcheverywhere.*;
@@ -12,12 +10,15 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.impl.EditorComponentImpl;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.TypingTarget;
 import com.intellij.openapi.ui.playback.PlaybackContext;
 import com.intellij.openapi.ui.playback.commands.AbstractCommand;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.platform.diagnostic.telemetry.helpers.TraceUtil;
 import com.intellij.util.ConcurrencyUtil;
 import com.jetbrains.performancePlugin.PerformanceTestSpan;
 import com.jetbrains.performancePlugin.utils.ActionCallbackProfilerStopper;
@@ -33,7 +34,6 @@ import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
 import java.awt.*;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 import java.util.concurrent.Semaphore;
@@ -56,7 +56,7 @@ public class SearchEverywhereCommand extends AbstractCommand {
 
   public SearchEverywhereCommand(@NotNull String text, int line) {
     super(text, line);
-    Args.parse(myOptions, extractCommandArgument(PREFIX).split("\\|")[0].split(" "));
+    getArgs();
   }
 
   @SuppressWarnings("BlockingMethodInNonBlockingContext")
@@ -65,14 +65,13 @@ public class SearchEverywhereCommand extends AbstractCommand {
     final ActionCallback actionCallback = new ActionCallbackProfilerStopper();
     Project project = context.getProject();
 
-    String input = extractCommandArgument(PREFIX);
-    String[] args = input.split("\\|");
-    Args.parse(myOptions, args[0].split(" "));
+    String[] args = getArgs();
     final String tab = myOptions.tab;
     final String insertText = args.length > 1 ? args[1] : "";
 
     Ref<String> tabId = new Ref<>();
     switch (tab) {
+      case "text" -> tabId.set(TextSearchContributor.class.getSimpleName());
       case "file" -> tabId.set(FileSearchEverywhereContributor.class.getSimpleName());
       case "class" -> tabId.set(ClassSearchEverywhereContributor.class.getSimpleName());
       case "action" -> tabId.set(ActionSearchEverywhereContributor.class.getSimpleName());
@@ -80,6 +79,7 @@ public class SearchEverywhereCommand extends AbstractCommand {
       case "all" -> tabId.set(SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID);
       default -> throw new RuntimeException("Tab is not set");
     }
+    LOG.info(tabId.get());
 
     int numberOfPermits;
     if(insertText.isEmpty() && myOptions.typingText.isEmpty()){
@@ -108,7 +108,9 @@ public class SearchEverywhereCommand extends AbstractCommand {
             actionCallback.reject("Project is null, SE requires project to show any tab except actions.");
           }
           TraceUtil.runWithSpanThrows(PerformanceTestSpan.TRACER, "searchEverywhere_dialog_shown", dialogSpan -> {
-            SearchEverywhereManager.getInstance(project).show(tabId.get(), "", actionEvent);
+            var manager = SearchEverywhereManager.getInstance(project);
+            manager.show(tabId.get(), "", actionEvent);
+            attachSearchListeners(manager.getCurrentlyShownUI());
           });
           if (!insertText.isEmpty()) {
             insertText(context.getProject(), insertText, typingSemaphore);
@@ -144,34 +146,65 @@ public class SearchEverywhereCommand extends AbstractCommand {
     return Promises.toPromise(actionCallback);
   }
 
+  @NotNull
+  protected String[] getArgs() {
+    return getArgs(PREFIX);
+  }
+
+  @NotNull
+  protected String[] getArgs(String prefix) {
+    String input = extractCommandArgument(prefix);
+    String[] args = input.split("\\|");
+    Args.parse(myOptions, args[0].split(" "));
+    return args;
+  }
+
   @SuppressWarnings("BlockingMethodInNonBlockingContext")
   private static void insertText(Project project, String insertText, Semaphore typingSemaphore) {
     SearchEverywhereUI ui = SearchEverywhereManager.getInstance(project).getCurrentlyShownUI();
     Span insertSpan = PerformanceTestSpan.TRACER.spanBuilder("searchEverywhere_items_loaded").startSpan();
+    Span firstBatchAddedSpan = PerformanceTestSpan.TRACER.spanBuilder("searchEverywhere_first_elements_added").startSpan();
+    ui.addSearchListener(new SearchAdapter(){
+      @Override
+      public void elementsAdded(@NotNull List<? extends SearchEverywhereFoundElementInfo> list) {
+        super.elementsAdded(list);
+        firstBatchAddedSpan.setAttribute("number", list.size());
+        firstBatchAddedSpan.end();
+      }
+    });
     //noinspection TestOnlyProblems
     Future<List<Object>> elements = ui.findElementsForPattern(insertText);
     ApplicationManager.getApplication().executeOnPooledThread(Context.current().wrap((Callable<Object>)() -> {
       insertSpan.setAttribute("text", insertText);
       List<Object> result = elements.get();
-      insertSpan.end();
       insertSpan.setAttribute("number", result.size());
+      insertSpan.end();
       typingSemaphore.release();
       return result;
     }));
   }
 
   @SuppressWarnings("BlockingMethodInNonBlockingContext")
-  private static void typeText(Project project, String typingText, Semaphore typingSemaphore) throws InterruptedException {
+  private static void typeText(Project project, String typingText, Semaphore typingSemaphore) {
     SearchEverywhereUI ui = SearchEverywhereManager.getInstance(project).getCurrentlyShownUI();
     Document document = ui.getSearchField().getDocument();
     Semaphore oneLetterLock = new Semaphore(1);
     ThreadPoolExecutor typing = ConcurrencyUtil.newSingleThreadExecutor("Performance plugin delayed type");
     Ref<Boolean> isTypingFinished = new Ref<>(false);
     Ref<Span> oneLetterSpan = new Ref<>();
+    Ref<Span> firstBatchAddedSpan = new Ref<>();
     ui.addSearchListener(new SearchAdapter() {
       @Override
-      public void searchFinished(@NotNull Map<SearchEverywhereContributor<?>, Boolean> hasMoreContributors) {
+      public void elementsAdded(@NotNull List<? extends SearchEverywhereFoundElementInfo> list) {
+        firstBatchAddedSpan.get().setAttribute("number", list.size());
+        firstBatchAddedSpan.get().end();
+      }
+
+      @Override
+      public void searchFinished(@NotNull List<Object> items) {
+        super.searchFinished(items);
         oneLetterLock.release();
+        oneLetterSpan.get().setAttribute("number", items.size());
         oneLetterSpan.get().end();
         if (isTypingFinished.get()) {
           typingSemaphore.release();
@@ -194,6 +227,7 @@ public class SearchEverywhereCommand extends AbstractCommand {
             oneLetterSpan.set(
               PerformanceTestSpan.TRACER.spanBuilder("searchEverywhere_items_loaded").startSpan()
                 .setAttribute("text", String.valueOf(currentChar)));
+            firstBatchAddedSpan.set(PerformanceTestSpan.TRACER.spanBuilder("searchEverywhere_first_elements_added").startSpan());
             document.insertString(document.getLength(), String.valueOf(currentChar), null);
             if (index == typingText.length() - 1) {
               isTypingFinished.set(true);
@@ -206,6 +240,8 @@ public class SearchEverywhereCommand extends AbstractCommand {
       }));
     }
   }
+
+  protected void attachSearchListeners(@NotNull SearchEverywhereUI ui){}
 
   static class Options {
     @Argument

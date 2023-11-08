@@ -3,9 +3,8 @@
   "dark": false,
   "author": "JetBrains",
   "parentTheme": "ExperimentalLight",
-  "editorScheme": "/themes/expUI/expUI_lightScheme.xml",
   "nameKey": "light.header.theme.name",
-
+  "editorScheme": "Light",
   "ui": {
     "CodeWithMe.MainToolbar.NoConnectionLabelForeground": "Grey7",
 
@@ -199,6 +198,30 @@
       }
     },
 
-    "DataSummary.Chart.background": "Blue4"
+    "DataSummary.Chart.barColor": "Blue4",
+    "PresentationAssistant": {
+      "Pale": {
+        "Popup": {
+          "foreground": "Grey2",
+          "border": "Grey9"
+        },
+        "PopupBackground": "Grey14",
+        "keymapLabel": "Grey7"
+      },
+      "Bright": {
+        "Popup": {
+          "foreground": "Grey14",
+          "border": "Grey2"
+        },
+        "PopupBackground": "Grey2",
+        "keymapLabel": "Grey9"
+      }
+    },
+
+    "DataSummary.Chart.background": "Blue4",
+
+    "ManagedIdeBadgeBorder": "Grey11",
+    "ManagedIdeBadgeBackground": "Grey13",
+    "ManagedIdeBadgeBackgroundHover": "Grey12"
   }
 }

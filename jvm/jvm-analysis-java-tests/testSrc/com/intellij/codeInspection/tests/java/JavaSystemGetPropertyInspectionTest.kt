@@ -1,7 +1,7 @@
 package com.intellij.codeInspection.tests.java
 
-import com.intellij.codeInspection.tests.JvmLanguage
-import com.intellij.codeInspection.tests.SystemGetPropertyInspectionTestBase
+import com.intellij.jvm.analysis.internal.testFramework.SystemGetPropertyInspectionTestBase
+import com.intellij.jvm.analysis.testFramework.JvmLanguage
 
 class JavaSystemGetPropertyInspectionTest : SystemGetPropertyInspectionTestBase() {
   fun `test highlighting`() {

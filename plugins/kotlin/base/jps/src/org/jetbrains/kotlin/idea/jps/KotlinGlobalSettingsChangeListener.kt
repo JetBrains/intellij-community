@@ -9,6 +9,8 @@ class KotlinGlobalSettingsChangeListener(val project: Project): KotlinCompilerSe
     override fun <T> settingsChanged(oldSettings: T?, newSettings: T?) {
         // Clear currently resident JPS processes on any kotlin compiler settings changes
         // this includes changes in org.jetbrains.kotlin.idea.compiler.configuration.KotlinJpsPluginSettings
-        BuildManager.getInstance().clearState(project)
+        if (!project.isDefault) {
+            BuildManager.getInstance().clearState(project)
+        }
     }
 }

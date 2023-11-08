@@ -34,65 +34,12 @@ class KotlinFormatterUsageCollector : ProjectUsagesCollector() {
         )
     }
 
-    companion object {
-        private val GROUP = EventLogGroup("kotlin.ide.formatter", 4)
-        private val settingsEvent = GROUP.registerEvent(
-            eventId = "settings",
-            eventField1 = EventFields.Enum("kind", KotlinFormatterKind::class.java),
-            eventField2 = EventFields.PluginInfo,
-        )
-
-        private val KOTLIN_OFFICIAL_CODE_STYLE: CodeStyleSettings by lazy {
-            CodeStyleSettingsManager.getInstance().cloneSettings(CodeStyle.getDefaultSettings()).also(KotlinStyleGuideCodeStyle::apply)
-        }
-
-        private val KOTLIN_OBSOLETE_CODE_STYLE: CodeStyleSettings by lazy {
-            CodeStyleSettingsManager.getInstance().cloneSettings(CodeStyle.getDefaultSettings()).also(KotlinObsoleteCodeStyle::apply)
-        }
-
-        private fun codeStylesIsEquals(lhs: CodeStyleSettings, rhs: CodeStyleSettings): Boolean =
-            lhs.kotlinCustomSettings == rhs.kotlinCustomSettings && lhs.kotlinCommonSettings == rhs.kotlinCommonSettings
-
-        fun getKotlinFormatterKind(project: Project): KotlinFormatterKind {
-            val isProject = CodeStyle.usesOwnSettings(project)
-            val currentSettings = CodeStyle.getSettings(project)
-
-            val codeStyleDefaults = currentSettings.kotlinCodeStyleDefaults()
-            return when (val supposedCodeStyleDefaults = currentSettings.supposedKotlinCodeStyleDefaults()) {
-                KotlinStyleGuideCodeStyle.CODE_STYLE_ID -> when {
-                    supposedCodeStyleDefaults != codeStyleDefaults -> paired(IDEA_WITH_BROKEN_OFFICIAL_KOTLIN, isProject)
-                    codeStylesIsEquals(currentSettings, KOTLIN_OFFICIAL_CODE_STYLE) -> paired(IDEA_OFFICIAL_KOTLIN, isProject)
-                    else -> paired(IDEA_OFFICIAL_KOTLIN_WITH_CUSTOM, isProject)
-                }
-
-                KotlinObsoleteCodeStyle.CODE_STYLE_ID -> when {
-                    supposedCodeStyleDefaults != codeStyleDefaults -> paired(IDEA_WITH_BROKEN_OBSOLETE_KOTLIN, isProject)
-                    codeStylesIsEquals(currentSettings, KOTLIN_OBSOLETE_CODE_STYLE) -> paired(IDEA_OBSOLETE_KOTLIN, isProject)
-                    else -> paired(IDEA_OBSOLETE_KOTLIN_WITH_CUSTOM, isProject)
-                }
-
-                else -> paired(IDEA_CUSTOM, isProject)
-            }
-        }
-
-        private fun paired(kind: KotlinFormatterKind, isProject: Boolean): KotlinFormatterKind {
-            if (!isProject) return kind
-
-            return when (kind) {
-                IDEA_CUSTOM -> PROJECT_CUSTOM
-
-                IDEA_OFFICIAL_KOTLIN -> PROJECT_OFFICIAL_KOTLIN
-                IDEA_OFFICIAL_KOTLIN_WITH_CUSTOM -> PROJECT_OFFICIAL_KOTLIN_WITH_CUSTOM
-                IDEA_WITH_BROKEN_OFFICIAL_KOTLIN -> PROJECT_WITH_BROKEN_OFFICIAL_KOTLIN
-
-                IDEA_OBSOLETE_KOTLIN -> PROJECT_OBSOLETE_KOTLIN
-                IDEA_OBSOLETE_KOTLIN_WITH_CUSTOM -> PROJECT_OBSOLETE_KOTLIN_WITH_CUSTOM
-                IDEA_WITH_BROKEN_OBSOLETE_KOTLIN -> PROJECT_WITH_BROKEN_OBSOLETE_KOTLIN
-
-                else -> kind
-            }
-        }
-    }
+    private val GROUP = EventLogGroup("kotlin.ide.formatter", 4)
+    private val settingsEvent = GROUP.registerEvent(
+        eventId = "settings",
+        eventField1 = EventFields.Enum("kind", KotlinFormatterKind::class.java),
+        eventField2 = EventFields.PluginInfo,
+    )
 
     enum class KotlinFormatterKind {
         IDEA_CUSTOM, PROJECT_CUSTOM,
@@ -104,5 +51,59 @@ class KotlinFormatterUsageCollector : ProjectUsagesCollector() {
         IDEA_OBSOLETE_KOTLIN, PROJECT_OBSOLETE_KOTLIN,
         IDEA_OBSOLETE_KOTLIN_WITH_CUSTOM, PROJECT_OBSOLETE_KOTLIN_WITH_CUSTOM,
         IDEA_WITH_BROKEN_OBSOLETE_KOTLIN, PROJECT_WITH_BROKEN_OBSOLETE_KOTLIN,
+    }
+}
+
+private val KOTLIN_OFFICIAL_CODE_STYLE: CodeStyleSettings by lazy {
+    CodeStyleSettingsManager.getInstance().cloneSettings(CodeStyle.getDefaultSettings()).also(KotlinStyleGuideCodeStyle::apply)
+}
+
+private val KOTLIN_OBSOLETE_CODE_STYLE: CodeStyleSettings by lazy {
+    CodeStyleSettingsManager.getInstance().cloneSettings(CodeStyle.getDefaultSettings()).also(KotlinObsoleteCodeStyle::apply)
+}
+
+private fun codeStylesIsEquals(lhs: CodeStyleSettings, rhs: CodeStyleSettings): Boolean =
+    lhs.kotlinCustomSettings == rhs.kotlinCustomSettings && lhs.kotlinCommonSettings == rhs.kotlinCommonSettings
+
+fun getKotlinFormatterKind(project: Project): KotlinFormatterUsageCollector.KotlinFormatterKind {
+    val isProject = CodeStyle.usesOwnSettings(project)
+    val currentSettings = CodeStyle.getSettings(project)
+
+    val codeStyleDefaults = currentSettings.kotlinCodeStyleDefaults()
+    return when (val supposedCodeStyleDefaults = currentSettings.supposedKotlinCodeStyleDefaults()) {
+        KotlinStyleGuideCodeStyle.CODE_STYLE_ID -> when {
+            supposedCodeStyleDefaults != codeStyleDefaults -> paired(IDEA_WITH_BROKEN_OFFICIAL_KOTLIN, isProject)
+            codeStylesIsEquals(currentSettings, KOTLIN_OFFICIAL_CODE_STYLE) -> paired(IDEA_OFFICIAL_KOTLIN, isProject)
+            else -> paired(IDEA_OFFICIAL_KOTLIN_WITH_CUSTOM, isProject)
+        }
+
+        KotlinObsoleteCodeStyle.CODE_STYLE_ID -> when {
+            supposedCodeStyleDefaults != codeStyleDefaults -> paired(IDEA_WITH_BROKEN_OBSOLETE_KOTLIN, isProject)
+            codeStylesIsEquals(currentSettings, KOTLIN_OBSOLETE_CODE_STYLE) -> paired(IDEA_OBSOLETE_KOTLIN, isProject)
+            else -> paired(IDEA_OBSOLETE_KOTLIN_WITH_CUSTOM, isProject)
+        }
+
+        else -> paired(IDEA_CUSTOM, isProject)
+    }
+}
+
+private fun paired(
+    kind: KotlinFormatterUsageCollector.KotlinFormatterKind,
+    isProject: Boolean
+): KotlinFormatterUsageCollector.KotlinFormatterKind {
+    if (!isProject) return kind
+
+    return when (kind) {
+        IDEA_CUSTOM -> PROJECT_CUSTOM
+
+        IDEA_OFFICIAL_KOTLIN -> PROJECT_OFFICIAL_KOTLIN
+        IDEA_OFFICIAL_KOTLIN_WITH_CUSTOM -> PROJECT_OFFICIAL_KOTLIN_WITH_CUSTOM
+        IDEA_WITH_BROKEN_OFFICIAL_KOTLIN -> PROJECT_WITH_BROKEN_OFFICIAL_KOTLIN
+
+        IDEA_OBSOLETE_KOTLIN -> PROJECT_OBSOLETE_KOTLIN
+        IDEA_OBSOLETE_KOTLIN_WITH_CUSTOM -> PROJECT_OBSOLETE_KOTLIN_WITH_CUSTOM
+        IDEA_WITH_BROKEN_OBSOLETE_KOTLIN -> PROJECT_WITH_BROKEN_OBSOLETE_KOTLIN
+
+        else -> kind
     }
 }

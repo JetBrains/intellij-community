@@ -2,12 +2,8 @@
   "name": "Dark",
   "dark": true,
   "author": "JetBrains",
-  "editorScheme": "/themes/expUI/expUI_darkScheme.xml",
   "nameKey": "dark.theme.name",
-  "additionalEditorSchemes": [
-    "/themes/expUI/expUI_darculaContrastScheme.xml"
-  ],
-
+  "editorScheme": "Dark",
   "colors": {
     "Grey1": "#1E1F22",
     "Grey2": "#2B2D30",
@@ -266,10 +262,12 @@
 
     "EditorTabs": {
       "underlineArc": 4,
+      "underlineHeight": 4,
+      "unselectedAlpha": 0.75,
       "unselectedBlend": 0.7,
       "background": "Grey1",
       "hoverBackground": "#1E1F2200",
-      "inactiveHoverBackground": "#1E1F2200",
+      "hoverInactiveBackground": "#1E1F2200",
       "inactiveColoredFileBackground": "#1E1F2280",
       "underlinedTabBackground": "Grey1",
       "underTabsBorderColor":"Grey3"
@@ -282,6 +280,18 @@
 
       "Toolbar" : {
         "borderColor" : "Grey3"
+      },
+
+      "ToolTip": {
+        "foreground": "Grey12",
+        "background": "Grey3",
+        "border": "Grey4",
+        "errorBackground": "Red1",
+        "errorBorder": "Red2",
+        "successBackground": "Green1",
+        "successBorder": "Green2",
+        "warningBackground": "Yellow1",
+        "warningBorder": "Yellow2"
       }
     },
 
@@ -435,8 +445,11 @@
         "Background.Hover": "Grey4"
       },
       "State": {
-        "Background": "Grey3",
-        "Foreground": "Grey7"
+        "Background": "Grey4",
+        "Foreground": "Grey8"
+      },
+      "ChatItem":{
+        "Hover": "#5A5D6333"
       }
     },
 
@@ -567,9 +580,11 @@
 
     "ValidationTooltip": {
       "errorBackground": "Red3",
-      "errorBorderColor": "Red3",
+      "errorBorderColor": "Red6",
+      "errorForeground": "Gray14",
       "warningBackground": "Yellow2",
-      "warningBorderColor": "Yellow2"
+      "warningBorderColor": "Yellow5",
+      "warningForeground": "Gray14"
     },
 
     "ToolWindow": {
@@ -888,6 +903,24 @@
         "foreground" : "Grey5"
       }
     },
+    "PresentationAssistant": {
+      "Bright": {
+        "Popup": {
+          "foreground": "Grey14",
+          "border": "Blue4"
+        },
+        "PopupBackground": "Blue4",
+        "keymapLabel": "Blue11"
+      },
+      "Pale": {
+        "Popup": {
+          "foreground": "Grey14",
+          "border": "Grey3"
+        },
+        "PopupBackground": "Grey3",
+        "keymapLabel": "Grey8"
+      }
+    },
     "HelpBrowser": {
       "titleHighlightForeground": "Blue6",
       "UserMessage": {
@@ -915,7 +948,12 @@
       }
     },
 
-    "DataSummary.Chart.background": "Blue6"
+    "DataSummary.Chart.barColor": "Blue6",
+
+    "ManagedIdeBadgeBorder": "Grey5",
+    "ManagedIdeBadgeBackground": "Grey3",
+    "ManagedIdeBadgeBackgroundHover": "Grey4",
+    "ManagedIdeMenuItemHover": "Grey4"
   },
 
   "icons": {

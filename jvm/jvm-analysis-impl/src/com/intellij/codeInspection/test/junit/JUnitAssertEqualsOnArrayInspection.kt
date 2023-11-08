@@ -3,9 +3,9 @@ package com.intellij.codeInspection.test.junit
 
 import com.intellij.analysis.JvmAnalysisBundle
 import com.intellij.codeInspection.*
-import com.intellij.codeInspection.fix.CallableExpression
-import com.intellij.codeInspection.fix.Method
-import com.intellij.codeInspection.fix.ReplaceCallableExpressionQuickFix
+import com.intellij.jvm.analysis.quickFix.ReplaceCallableExpressionQuickFix
+import com.intellij.jvm.analysis.refactoring.CallChainReplacementInfo
+import com.intellij.jvm.analysis.refactoring.CallReplacementInfo
 import com.intellij.psi.PsiArrayType
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiFile
@@ -37,9 +37,8 @@ private class JUnitAssertEqualsOnArrayVisitor(private val holder: ProblemsHolder
     val sectArgType = assertHint.secondArgument.getExpressionType() ?: return true
     if (firstArgType !is PsiArrayType || sectArgType !is PsiArrayType) return true
     val message = JvmAnalysisBundle.message("jvm.inspections.junit.assertequals.on.array.problem.descriptor")
-    holder.registerUProblem(node, message, ReplaceCallableExpressionQuickFix(CallableExpression(
-      null,
-      listOf(Method("assertArrayEquals", null, node.valueArguments)))))
+    holder.registerUProblem(node, message, ReplaceCallableExpressionQuickFix(CallChainReplacementInfo(
+      null, CallReplacementInfo("assertArrayEquals", null, *node.valueArguments.toTypedArray()))))
     return true
   }
 }

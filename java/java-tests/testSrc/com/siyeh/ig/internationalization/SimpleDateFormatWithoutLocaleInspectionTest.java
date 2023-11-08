@@ -2,7 +2,9 @@
 package com.siyeh.ig.internationalization;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.siyeh.ig.LightJavaInspectionTestCase;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Bas Leijdekkers
@@ -14,26 +16,8 @@ public class SimpleDateFormatWithoutLocaleInspectionTest extends LightJavaInspec
   }
 
   @Override
-  protected String[] getEnvironmentClasses() {
-    return new String[] {
-      "package java.text;" +
-      "import java.util.Locale;" +
-      "public class SimpleDateFormat {" +
-      "  public SimpleDateFormat(String pattern) {}" +
-      "  public SimpleDateFormat(String pattern, Locale locale) {}" +
-      "}",
-
-      "package java.time.format;" +
-      "import java.util.Locale;" +
-      "public final class DateTimeFormatter {" +
-      "  public static DateTimeFormatter ofPattern(String pattern) {" +
-      "    return null;" +
-      "  }" +
-      "  public static DateTimeFormatter ofPattern(String pattern, Locale locale) {" +
-      "    return null;" +
-      "  }" +
-      "}"
-    };
+  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_21;
   }
 
   public void testSimpleDateFormatWithoutLocale() { doTest(); }

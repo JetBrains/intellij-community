@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.settingsRepository
 
 import com.intellij.configurationStore.ComponentStoreImpl
@@ -8,10 +8,10 @@ import com.intellij.configurationStore.schemeManager.SchemeManagerFactoryBase
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.options.SchemeManagerFactory
-import com.intellij.openapi.progress.ModalTaskOwner
 import com.intellij.openapi.progress.runBlockingModalWithRawProgressReporter
 import com.intellij.openapi.progress.runModalTask
 import com.intellij.openapi.ui.DialogPanel
+import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.ui.ComboBoxModelEditor

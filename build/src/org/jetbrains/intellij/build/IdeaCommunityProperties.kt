@@ -23,11 +23,13 @@ open class IdeaCommunityProperties(private val communityHomeDir: Path) : BaseIde
   companion object {
     val MAVEN_ARTIFACTS_ADDITIONAL_MODULES = persistentListOf(
       "intellij.tools.jps.build.standalone",
+      "intellij.devkit.runtimeModuleRepository.jps",
       "intellij.idea.community.build.tasks",
       "intellij.platform.debugger.testFramework",
       "intellij.platform.vcs.testFramework",
       "intellij.platform.externalSystem.testFramework",
-      "intellij.maven.testFramework"
+      "intellij.maven.testFramework",
+      "intellij.platform.reproducibleBuilds.diffTool",
     )
   }
 
@@ -60,7 +62,7 @@ open class IdeaCommunityProperties(private val communityHomeDir: Path) : BaseIde
     productLayout.buildAllCompatiblePlugins = false
     productLayout.pluginLayouts = CommunityRepositoryModules.COMMUNITY_REPOSITORY_PLUGINS.addAll(listOf(
       JavaPluginLayout.javaPlugin(),
-      CommunityRepositoryModules.androidPlugin(emptyMap()),
+      CommunityRepositoryModules.androidPlugin(allPlatforms = true),
       CommunityRepositoryModules.groovyPlugin()
     ))
 

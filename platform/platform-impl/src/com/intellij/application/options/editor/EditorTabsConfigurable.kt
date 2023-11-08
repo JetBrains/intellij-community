@@ -46,7 +46,6 @@ internal class EditorTabsConfigurable : BoundCompositeSearchableConfigurable<Sea
         }.bottomGap(BottomGap.SMALL)
 
         if (ExperimentalUI.isNewUI()) {
-          @Suppress("DialogTitleCapitalization")
           buttonsGroup(message("button.group.title.show.tabs.in")) {
             lateinit var singleRowButton: JBRadioButton
             row {

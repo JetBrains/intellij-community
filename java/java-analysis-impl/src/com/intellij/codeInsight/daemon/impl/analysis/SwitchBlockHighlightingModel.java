@@ -245,6 +245,8 @@ public class SwitchBlockHighlightingModel {
           // if default is not the only case in the label, insufficient language level will be reported
           // see HighlightVisitorImpl#visitDefaultCaseLabelElement
           HighlightInfo.Builder info = createError(defaultElement, JavaErrorBundle.message("default.label.must.not.contains.case.keyword"));
+          ModCommandAction fix = getFixFactory().createReplaceCaseDefaultWithDefaultFix(labelElementList);
+          info.registerFix(fix, null, null, null, null);
           errorSink.accept(info);
           reported = true;
         }
@@ -656,7 +658,7 @@ public class SwitchBlockHighlightingModel {
         break;
       }
     }
-    return new SealedResult(missingClasses, coveredClasses) ;
+    return new SealedResult(missingClasses, coveredClasses);
   }
 
   static boolean isAbstractSealed(@Nullable PsiClass psiClass) {
@@ -992,11 +994,11 @@ public class SwitchBlockHighlightingModel {
         for (PsiSwitchLabelStatementBase switchLabelElement : switchLabel) {
           PsiCaseLabelElementList labelElementList = switchLabelElement.getCaseLabelElementList();
           if (labelElementList == null || labelElementList.getElementCount() == 0) continue;
+          CaseLabelCombinationProblem problem = checkCaseLabelCombination(labelElementList);
           PsiCaseLabelElement[] elements = labelElementList.getElements();
           final PsiCaseLabelElement first = elements[0];
-          CaseLabelCombinationProblem problem = checkCaseLabelCombination(elements);
           if (problem != null) {
-            HighlightInfo.Builder info = addIllegalFallThroughError(problem.element(), problem.message(), alreadyFallThroughElements);
+            HighlightInfo.Builder info = addIllegalFallThroughError(problem.element(), problem.message(), problem.customAction(), alreadyFallThroughElements);
             errorSink.accept(info);
             reported = true;
           }
@@ -1010,7 +1012,7 @@ public class SwitchBlockHighlightingModel {
               }
               if (PsiTreeUtil.skipWhitespacesAndCommentsForward(switchLabelElement) instanceof PsiSwitchLabelStatement ||
                   PsiTreeUtil.skipWhitespacesAndCommentsBackward(switchLabelElement) instanceof PsiSwitchLabelStatement) {
-                HighlightInfo.Builder info = addIllegalFallThroughError(first, "multiple.switch.labels", alreadyFallThroughElements);
+                HighlightInfo.Builder info = addIllegalFallThroughError(first, "multiple.switch.labels", null, alreadyFallThroughElements);
                 errorSink.accept(info);
                 reported = true;
               }
@@ -1022,14 +1024,17 @@ public class SwitchBlockHighlightingModel {
     }
 
     private record CaseLabelCombinationProblem(@NotNull PsiCaseLabelElement element,
-                                               @NotNull @PropertyKey(resourceBundle = JavaErrorBundle.BUNDLE) String message) {
+                                               @NotNull @PropertyKey(resourceBundle = JavaErrorBundle.BUNDLE) String message,
+                                               @Nullable ModCommandAction customAction) {
     }
 
-    private static @Nullable CaseLabelCombinationProblem checkCaseLabelCombination(PsiCaseLabelElement[] elements) {
+    private static @Nullable CaseLabelCombinationProblem checkCaseLabelCombination(PsiCaseLabelElementList labelElementList) {
+      PsiCaseLabelElement[] elements = labelElementList.getElements();
       PsiCaseLabelElement firstElement = elements[0];
       if (elements.length == 1) {
         if (firstElement instanceof PsiDefaultCaseLabelElement) {
-          return new CaseLabelCombinationProblem(firstElement, "default.label.must.not.contains.case.keyword");
+          ModCommandAction fix = SwitchBlockHighlightingModel.getFixFactory().createReplaceCaseDefaultWithDefaultFix(labelElementList);
+          return new CaseLabelCombinationProblem(firstElement, "default.label.must.not.contains.case.keyword", fix);
         }
         return null;
       }
@@ -1037,7 +1042,8 @@ public class SwitchBlockHighlightingModel {
         if (firstElement instanceof PsiDefaultCaseLabelElement &&
             elements[1] instanceof PsiExpression expr &&
             ExpressionUtils.isNullLiteral(expr)) {
-          return new CaseLabelCombinationProblem(firstElement, "invalid.default.and.null.order");
+          ModCommandAction fix = SwitchBlockHighlightingModel.getFixFactory().createReverseCaseDefaultNullFixFix(labelElementList);
+          return new CaseLabelCombinationProblem(firstElement, "invalid.default.and.null.order", fix);
         }
         if (firstElement instanceof PsiExpression expr &&
             ExpressionUtils.isNullLiteral(expr) &&
@@ -1065,10 +1071,10 @@ public class SwitchBlockHighlightingModel {
       }
 
       if (defaultIndex != -1) {
-        return new CaseLabelCombinationProblem(elements[defaultIndex], "default.label.not.allowed.here");
+        return new CaseLabelCombinationProblem(elements[defaultIndex], "default.label.not.allowed.here", null);
       }
       if (nullIndex != -1) {
-        return new CaseLabelCombinationProblem(elements[nullIndex], "null.label.not.allowed.here");
+        return new CaseLabelCombinationProblem(elements[nullIndex], "null.label.not.allowed.here", null);
       }
       if (firstElement instanceof PsiExpression && patternIndex != -1) {
         return getPatternConstantCombinationProblem(elements[patternIndex]);
@@ -1081,10 +1087,10 @@ public class SwitchBlockHighlightingModel {
         if (HighlightingFeature.UNNAMED_PATTERNS_AND_VARIABLES.isAvailable(firstElement)) {
           PsiCaseLabelElement patternVarElement = ContainerUtil.find(elements, JavaPsiPatternUtil::containsNamedPatternVariable);
           if (patternVarElement != null) {
-            return new CaseLabelCombinationProblem(patternVarElement, "invalid.case.label.combination.several.patterns.unnamed");
+            return new CaseLabelCombinationProblem(patternVarElement, "invalid.case.label.combination.several.patterns.unnamed", null);
           }
         } else {
-          return new CaseLabelCombinationProblem(elements[1], "invalid.case.label.combination.several.patterns");
+          return new CaseLabelCombinationProblem(elements[1], "invalid.case.label.combination.several.patterns", null);
         }
       }
       return null;
@@ -1093,20 +1099,23 @@ public class SwitchBlockHighlightingModel {
     @NotNull
     private static CaseLabelCombinationProblem getPatternConstantCombinationProblem(PsiCaseLabelElement anchor) {
       if (HighlightingFeature.UNNAMED_PATTERNS_AND_VARIABLES.isAvailable(anchor)) {
-        return new CaseLabelCombinationProblem(anchor, "invalid.case.label.combination.constants.and.patterns.unnamed");
+        return new CaseLabelCombinationProblem(anchor, "invalid.case.label.combination.constants.and.patterns.unnamed", null);
       } else {
-        return new CaseLabelCombinationProblem(anchor, "invalid.case.label.combination.constants.and.patterns");
+        return new CaseLabelCombinationProblem(anchor, "invalid.case.label.combination.constants.and.patterns", null);
       }
     }
 
-    @NotNull
-    private static HighlightInfo.Builder addIllegalFallThroughError(@NotNull PsiElement element,
-                                                   @NotNull @PropertyKey(resourceBundle = JavaErrorBundle.BUNDLE) String key,
-                                                   @NotNull Set<? super PsiElement> alreadyFallThroughElements) {
+    private static HighlightInfo.@NotNull Builder addIllegalFallThroughError(@NotNull PsiElement element,
+                                                                             @NotNull @PropertyKey(resourceBundle = JavaErrorBundle.BUNDLE) String key,
+                                                                             @Nullable ModCommandAction customAction,
+                                                                             @NotNull Set<? super PsiElement> alreadyFallThroughElements) {
       alreadyFallThroughElements.add(element);
       HighlightInfo.Builder info = createError(element, JavaErrorBundle.message(key));
       IntentionAction action = getFixFactory().createSplitSwitchBranchWithSeveralCaseValuesAction();
       info.registerFix(action, null, null, null, null);
+      if (customAction != null) {
+        info.registerFix(customAction, null, null, null, null);
+      }
       return info;
     }
 
@@ -1385,6 +1394,8 @@ public class SwitchBlockHighlightingModel {
         if (permitsList == null) {
           results = SyntaxTraverser.psiTraverser(psiClass.getContainingFile())
             .filter(PsiClass.class)
+            //local classes and anonymous classes must not extend sealed
+            .filter(cls -> !(cls instanceof PsiAnonymousClass || PsiUtil.isLocalClass(cls)))
             .filter(cls -> cls.isInheritor(psiClass, false))
             .toList();
         }

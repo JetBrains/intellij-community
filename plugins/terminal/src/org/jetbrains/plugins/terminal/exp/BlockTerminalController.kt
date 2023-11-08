@@ -33,7 +33,7 @@ class BlockTerminalController(
 
     // Show initial terminal output (prior to the first prompt) in a separate block.
     // `initialized` event will finish the block.
-    outputController.startCommandBlock(null)
+    outputController.startCommandBlock(command = null, promptText = null)
     promptController.promptIsVisible = false
     session.model.isCommandRunning = true
   }
@@ -52,9 +52,9 @@ class BlockTerminalController(
   }
 
   private fun startCommand(command: String) {
-    outputController.startCommandBlock(command)
+    outputController.startCommandBlock(command, promptText = promptController.promptText)
     promptController.promptIsVisible = false
-    session.executeCommand(command)
+    session.sendCommandToExecute(command)
   }
 
   override fun commandStarted(command: String) {
@@ -77,7 +77,7 @@ class BlockTerminalController(
 
     // prepare terminal for the next command
     model.withContentLock {
-      model.clearAllExceptPrompt()
+      model.clearAllAndMoveCursorToTopLeftCorner(session.controller)
     }
 
     invokeLater {

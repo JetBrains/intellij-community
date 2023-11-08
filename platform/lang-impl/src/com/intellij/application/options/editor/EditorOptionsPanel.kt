@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.editor
 
 import com.intellij.application.options.editor.EditorCaretStopPolicyItem.*
@@ -6,8 +6,10 @@ import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings
 import com.intellij.codeInsight.daemon.impl.IdentifierHighlighterPass
+import com.intellij.ide.DataManager
 import com.intellij.ide.GeneralSettings
 import com.intellij.ide.ui.UISettings
+import com.intellij.ide.ui.UISettingsListener
 import com.intellij.ide.ui.search.OptionDescription
 import com.intellij.ide.ui.search.SearchUtil.ADDITIONAL_SEARCH_LABELS_KEY
 import com.intellij.lang.LangBundle
@@ -28,11 +30,15 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.keymap.KeymapUtil
+import com.intellij.openapi.observable.properties.AtomicBooleanProperty
+import com.intellij.openapi.observable.properties.whenPropertyChanged
+import com.intellij.openapi.observable.util.not
 import com.intellij.openapi.options.BoundCompositeConfigurable
 import com.intellij.openapi.options.Configurable.WithEpDependencies
 import com.intellij.openapi.options.Scheme
 import com.intellij.openapi.options.UnnamedConfigurable
 import com.intellij.openapi.options.ex.ConfigurableWrapper
+import com.intellij.openapi.options.ex.Settings
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.SystemInfo
@@ -155,32 +161,21 @@ internal val optionDescriptors: List<OptionDescription>
 
 private val EP_NAME = ExtensionPointName<GeneralEditorOptionsProviderEP>("com.intellij.generalEditorOptionsExtension")
 
-class EditorOptionsPanel : BoundCompositeConfigurable<UnnamedConfigurable>(message("title.editor"), ID), WithEpDependencies {
+private val screenReaderEnabledProperty = AtomicBooleanProperty(GeneralSettings.getInstance().isSupportScreenReaders)
+
+internal fun reinitAllEditors() {
+  EditorFactory.getInstance().refreshAllEditors()
+}
+
+internal fun restartDaemons() {
+  for (project in ProjectManager.getInstance().openProjects) {
+    DaemonCodeAnalyzer.getInstance(project).settingsChanged()
+  }
+}
+
+internal class EditorOptionsPanel : BoundCompositeConfigurable<UnnamedConfigurable>(message("title.editor"), ID), WithEpDependencies {
   companion object {
     const val ID: String = "preferences.editor"
-
-    private fun clearAllIdentifierHighlighters() {
-      for (project in ProjectManager.getInstance().openProjects) {
-        for (fileEditor in FileEditorManager.getInstance(project).allEditors) {
-          if (fileEditor is TextEditor) {
-            val document = fileEditor.editor.document
-            IdentifierHighlighterPass.clearMyHighlights(document, project)
-          }
-        }
-      }
-    }
-
-    @JvmStatic
-    fun reinitAllEditors() {
-      EditorFactory.getInstance().refreshAllEditors()
-    }
-
-    @JvmStatic
-    fun restartDaemons() {
-      for (project in ProjectManager.getInstance().openProjects) {
-        DaemonCodeAnalyzer.getInstance(project).settingsChanged()
-      }
-    }
   }
 
   override fun createConfigurables(): List<UnnamedConfigurable> = ConfigurableWrapper.createConfigurables(EP_NAME)
@@ -348,11 +343,28 @@ class EditorOptionsPanel : BoundCompositeConfigurable<UnnamedConfigurable>(messa
       ApplicationManager.getApplication().messageBus.syncPublisher(EditorOptionsListener.OPTIONS_PANEL_TOPIC).changesApplied()
     }
   }
+
+  private fun clearAllIdentifierHighlighters() {
+    for (project in ProjectManager.getInstance().openProjects) {
+      for (fileEditor in FileEditorManager.getInstance(project).allEditors) {
+        if (fileEditor is TextEditor) {
+          val document = fileEditor.editor.document
+          IdentifierHighlighterPass.clearMyHighlights(document, project)
+        }
+      }
+    }
+  }
 }
 
-private class EditorCodeEditingConfigurable : BoundCompositeConfigurable<ErrorOptionsProvider>(message("title.code.editing"), ID), WithEpDependencies {
+internal class EditorCodeEditingConfigurable : BoundCompositeConfigurable<ErrorOptionsProvider>(message("title.code.editing"), ID), WithEpDependencies {
   companion object {
     const val ID = "preferences.editor.code.editing"
+  }
+
+  init {
+    ApplicationManager.getApplication().messageBus.connect().subscribe(UISettingsListener.TOPIC, UISettingsListener {
+      screenReaderEnabledProperty.set(GeneralSettings.getInstance().isSupportScreenReaders)
+    })
   }
 
   override fun createConfigurables() = ConfigurableWrapper.createConfigurables(ErrorOptionsProviderEP.EP_NAME)
@@ -365,9 +377,25 @@ private class EditorCodeEditingConfigurable : BoundCompositeConfigurable<ErrorOp
         row { checkBox(highlightScope) }
         row { checkBox(highlightIdentifierUnderCaret) }
       }
-      if (!GeneralSettings.getInstance().isSupportScreenReaders) {
-        group(message("group.quick.documentation")) {
-          row { checkBox(cdShowQuickDocOnMouseMove) }
+      group(message("group.quick.documentation")) {
+        row {
+          val quickDocCheckBox = checkBox(cdShowQuickDocOnMouseMove).enabledIf(screenReaderEnabledProperty.not())
+          screenReaderEnabledProperty.whenPropertyChanged {
+            quickDocCheckBox.selected(editorSettings.isShowQuickDocOnMouseOverElement)
+          }
+        }
+        indent {
+          row {
+            comment(message("editor.options.quick.doc.on.mouse.hover.comment.screen.reader.support")) {
+              DataManager.getInstance().dataContextFromFocusAsync.onSuccess { context ->
+                if (context == null) {
+                  return@onSuccess
+                }
+                val settings = context.getData(Settings.KEY) ?: return@onSuccess
+                settings.select(settings.find("preferences.lookFeel"))
+              }
+            }.visibleIf(screenReaderEnabledProperty)
+          }
         }
       }
       if (!EditorOptionsPageCustomizer.EP_NAME.extensionList.any { it.shouldHideRefactoringsSection() }) {

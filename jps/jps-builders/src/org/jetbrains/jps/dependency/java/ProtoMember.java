@@ -16,7 +16,7 @@ public abstract class ProtoMember extends Proto {
     this.value = value;
   }
 
-  public abstract MemberUsage createUsage(String owner);
+  public abstract MemberUsage createUsage(JvmNodeReferenceID owner);
 
   public @NotNull TypeRepr getType() {
     return type;
@@ -43,6 +43,14 @@ public abstract class ProtoMember extends Proto {
 
     public boolean valueChanged() {
       return !Objects.equals(myPast.getValue(), getValue());
+    }
+
+    public boolean valueAdded() {
+      return myPast.getValue() == null && getValue() != null;
+    }
+
+    public boolean valueRemoved() {
+      return myPast.getValue() != null && getValue() == null;
     }
   }
 }

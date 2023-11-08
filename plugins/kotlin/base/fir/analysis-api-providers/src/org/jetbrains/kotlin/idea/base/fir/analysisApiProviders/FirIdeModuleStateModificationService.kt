@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.base.fir.analysisApiProviders
 import java.util.regex.Pattern
 import com.intellij.ide.plugins.DynamicPluginListener
 import com.intellij.ide.plugins.IdeaPluginDescriptor
+import com.intellij.java.workspace.entities.JavaModuleSettingsEntity
 import com.intellij.java.workspace.entities.JavaSourceRootPropertiesEntity
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runWriteAction
@@ -29,10 +30,10 @@ import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent
 import com.intellij.platform.workspace.jps.entities.ContentRootEntity
 import com.intellij.platform.workspace.jps.entities.FacetEntity
 import com.intellij.platform.workspace.jps.entities.LibraryEntity
+import com.intellij.platform.workspace.jps.entities.LibraryTableId.GlobalLibraryTableId
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.entities.SourceRootEntity
 import com.intellij.platform.workspace.storage.EntityChange
-import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.util.concurrency.ThreadingAssertions
@@ -47,6 +48,7 @@ import org.jetbrains.kotlin.analysis.providers.topics.KotlinModuleStateModificat
 import org.jetbrains.kotlin.analysis.providers.topics.KotlinTopics
 import org.jetbrains.kotlin.idea.base.projectStructure.getBinaryAndSourceModuleInfos
 import org.jetbrains.kotlin.idea.base.projectStructure.toKtModule
+import org.jetbrains.kotlin.idea.base.util.caching.newEntity
 import org.jetbrains.kotlin.idea.util.AbstractSingleFileModuleBeforeFileEventListener
 import org.jetbrains.kotlin.idea.util.toKtModulesForModificationEvents
 import org.jetbrains.kotlin.idea.facet.isKotlinFacet
@@ -252,13 +254,17 @@ class FirIdeModuleStateModificationService(val project: Project) : Disposable {
                 is EntityChange.Added -> {}
                 is EntityChange.Removed -> {
                     change.oldEntity
-                        .findLibraryBridge(event.storageBefore)
+                        .takeIf { it.tableId !is GlobalLibraryTableId }
+                        ?.findLibraryBridge(event.storageBefore)
                         ?.let { it.publishModuleStateModification(project, KotlinModuleStateModificationKind.REMOVAL) }
                 }
 
                 is EntityChange.Replaced -> {
-                    val changedLibrary = change.getReplacedEntity(event, LibraryEntity::findLibraryBridge) ?: continue
-                    changedLibrary.publishModuleStateModification(project)
+                    change.newEntity()
+                        ?.takeIf { it.tableId !is GlobalLibraryTableId }
+                        ?.findLibraryBridge(event.storageAfter)?.let {
+                        it.publishModuleStateModification(project)
+                    }
                 }
             }
         }
@@ -268,26 +274,33 @@ class FirIdeModuleStateModificationService(val project: Project) : Disposable {
      * Invalidates removed and replaced [Module]s and returns the set of these invalidated modules.
      */
     private fun handleModuleChanges(event: VersionedStorageChange): Set<Module> {
-        val moduleEntities = event.getChanges(ModuleEntity::class.java).ifEmpty { return emptySet() }
+        val moduleEntities = event.getChanges(ModuleEntity::class.java)
+        val moduleSettingChanges: List<EntityChange<JavaModuleSettingsEntity>> = event.getChanges(JavaModuleSettingsEntity::class.java)
 
-        return buildSet {
-            for (change in moduleEntities) {
+        fun <T : WorkspaceEntity> MutableSet<Module>.processEntities(changes: List<EntityChange<T>>, toModule: (T) -> ModuleEntity?) {
+            for (change: EntityChange<T> in changes) {
                 when (change) {
                     is EntityChange.Added -> {}
                     is EntityChange.Removed -> {
-                        change.oldEntity.findModule(event.storageBefore)?.let { module ->
+                        toModule(change.oldEntity)?.findModule(event.storageBefore)?.let { module ->
                             module.publishModuleStateModification(KotlinModuleStateModificationKind.REMOVAL)
                             add(module)
                         }
                     }
 
                     is EntityChange.Replaced -> {
-                        val changedModule = change.getReplacedEntity(event, ModuleEntity::findModule) ?: continue
-                        changedModule.publishModuleStateModification()
-                        add(changedModule)
+                        toModule(change.newEntity)?.findModule(event.storageAfter)?.let { module ->
+                            module.publishModuleStateModification()
+                            add(module)
+                        }
                     }
                 }
             }
+        }
+
+        return buildSet {
+            processEntities(moduleEntities) { it }
+            processEntities(moduleSettingChanges) { it.module }
         }
     }
 
@@ -297,18 +310,6 @@ class FirIdeModuleStateModificationService(val project: Project) : Disposable {
         fun getInstance(project: Project): FirIdeModuleStateModificationService =
             project.getService(FirIdeModuleStateModificationService::class.java)
     }
-}
-
-private fun <C : WorkspaceEntity, E> EntityChange.Replaced<C>.getReplacedEntity(
-    event: VersionedStorageChange,
-    get: (C, EntityStorage) -> E
-): E {
-    val old = get(oldEntity, event.storageBefore)
-    val new = get(newEntity, event.storageAfter)
-    check(old == new) {
-        "$old should be equal to $new for ${EntityChange.Replaced::class.java}"
-    }
-    return new
 }
 
 private fun Module.publishModuleStateModification(

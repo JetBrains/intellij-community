@@ -1,0 +1,221 @@
+package pkg;
+
+public class TestComplexInstanceOfRecordPatternJavac {
+   public static void main(String[] args) {
+   }// 6
+
+   public static void instanceOfTest1(Object o) {
+      if (o instanceof R(R(Object var4))) {// 9
+         System.out.println(var4);// 10
+         System.out.println(var4);// 11
+      }
+
+      System.out.println("1");// 13
+   }
+
+   public static void instanceOfTest2(Object o) {
+      if (o instanceof R(R(String s1))) {// 17
+         System.out.println(s1);// 18
+         System.out.println(s1);// 19
+      }
+
+      System.out.println("4");// 21
+   }
+
+   public static void instanceOfTest3(Object o) {
+      if (o instanceof R2(String s1, Object var8)) {// 25
+         System.out.println(s1);// 26
+         System.out.println(s1);// 27
+      }
+
+      System.out.println("12");// 29
+   }
+
+   public static void instanceOfTest3_2(Object o) {
+      if (o instanceof R2(Object var8, String s1)) {// 33
+         System.out.println(s1);// 34
+         System.out.println(s1);// 35
+      }
+
+      System.out.println("3");// 37
+   }
+
+   public static void instanceOfTest4(Object o) {
+      if (o instanceof R2(String s1, R(String s))) {// 41
+         System.out.println(s1);// 42
+         System.out.println(s);// 43
+         if (o instanceof R2(String s2, R(String s3))) {// 45
+            System.out.println(s2);// 46
+            System.out.println(s3);// 47
+         }
+      }
+
+      System.out.println("1");// 50
+   }
+
+   static record R(Object o) {
+      R(Object o) {
+         this.o = o;
+      }
+
+      public Object o() {
+         return this.o;// 53
+      }
+   }
+
+   static record R2(Object o1, Object o2) {
+      R2(Object o1, Object o2) {
+         this.o1 = o1;
+         this.o2 = o2;
+      }
+
+      public Object o1() {
+         return this.o1;
+      }
+
+      public Object o2() {
+         return this.o2;// 56
+      }
+   }
+}
+
+class 'pkg/TestComplexInstanceOfRecordPatternJavac' {
+   method 'main ([Ljava/lang/String;)V' {
+      0      4
+   }
+
+   method 'instanceOfTest1 (Ljava/lang/Object;)V' {
+      1      7
+      4      7
+      29      8
+      2d      8
+      30      9
+      34      9
+      37      12
+      3a      12
+      3c      12
+      3f      13
+   }
+
+   method 'instanceOfTest2 (Ljava/lang/Object;)V' {
+      1      16
+      4      16
+      34      17
+      38      17
+      3b      18
+      3f      18
+      42      21
+      45      21
+      47      21
+      4a      22
+   }
+
+   method 'instanceOfTest3 (Ljava/lang/Object;)V' {
+      1      25
+      4      25
+      29      26
+      2d      26
+      30      27
+      34      27
+      37      30
+      3a      30
+      3c      30
+      3f      31
+   }
+
+   method 'instanceOfTest3_2 (Ljava/lang/Object;)V' {
+      1      34
+      4      34
+      29      35
+      2d      35
+      30      36
+      34      36
+      37      39
+      3a      39
+      3c      39
+      3f      40
+   }
+
+   method 'instanceOfTest4 (Ljava/lang/Object;)V' {
+      1      43
+      4      43
+      49      44
+      4d      44
+      50      45
+      55      45
+      59      46
+      5c      46
+      a7      47
+      ac      47
+      af      48
+      b4      48
+      b7      52
+      ba      52
+      bc      52
+      bf      53
+   }
+}
+
+class 'pkg/TestComplexInstanceOfRecordPatternJavac$R' {
+   method '<init> (Ljava/lang/Object;)V' {
+      6      57
+      9      58
+   }
+
+   method 'o ()Ljava/lang/Object;' {
+      1      61
+      4      61
+   }
+}
+
+class 'pkg/TestComplexInstanceOfRecordPatternJavac$R2' {
+   method '<init> (Ljava/lang/Object;Ljava/lang/Object;)V' {
+      6      67
+      b      68
+      e      69
+   }
+
+   method 'o1 ()Ljava/lang/Object;' {
+      1      72
+      4      72
+   }
+
+   method 'o2 ()Ljava/lang/Object;' {
+      1      76
+      4      76
+   }
+}
+
+Lines mapping:
+6 <-> 5
+9 <-> 8
+10 <-> 9
+11 <-> 10
+13 <-> 13
+17 <-> 17
+18 <-> 18
+19 <-> 19
+21 <-> 22
+25 <-> 26
+26 <-> 27
+27 <-> 28
+29 <-> 31
+33 <-> 35
+34 <-> 36
+35 <-> 37
+37 <-> 40
+41 <-> 44
+42 <-> 45
+43 <-> 46
+45 <-> 47
+46 <-> 48
+47 <-> 49
+50 <-> 53
+53 <-> 62
+56 <-> 77
+Not mapped:
+14
+22
+30
+38
+51

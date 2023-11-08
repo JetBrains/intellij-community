@@ -3,6 +3,8 @@ package com.intellij.java.slicer;
 
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -19,12 +21,17 @@ import org.jetbrains.annotations.NonNls;
 import java.util.*;
 
 public class SliceTreeTest extends SliceTestCase {
-  private SliceTreeStructure configureTree(@NonNls String name) throws Exception {
-    configureByFile("/codeInsight/slice/backward/"+ name +".java");
+  @Override
+  protected String getBasePath() {
+    return "/java/java-tests/testData/codeInsight/slice/backward/";
+  }
+
+  private SliceTreeStructure configureTree(@NonNls String name) {
+    myFixture.configureByFile(name + ".java");
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     PsiElement element = SliceHandler.create(true).getExpressionAtCaret(getEditor(), getFile());
     assertNotNull(element);
-    Collection<HighlightInfo> errors = highlightErrors();
+    Collection<HighlightInfo> errors = myFixture.doHighlighting(HighlightSeverity.ERROR);
     assertEmpty(errors);
 
     SliceAnalysisParams params = new SliceAnalysisParams();
@@ -34,7 +41,7 @@ public class SliceTreeTest extends SliceTestCase {
     SliceUsage usage = LanguageSlicing.getProvider(element).createRootUsage(element, params);
 
 
-    ToolWindowHeadlessManagerImpl.MockToolWindow toolWindow = new ToolWindowHeadlessManagerImpl.MockToolWindow(myProject);
+    ToolWindowHeadlessManagerImpl.MockToolWindow toolWindow = new ToolWindowHeadlessManagerImpl.MockToolWindow(getProject());
     SlicePanel panel = new SlicePanel(getProject(), true, new SliceRootNode(getProject(), new DuplicateMap(), usage), false, toolWindow) {
       @Override
       public boolean isAutoScroll() {
@@ -68,7 +75,7 @@ public class SliceTreeTest extends SliceTestCase {
     }
   }
 
-  public void testTypingDoesNotInterfereWithDuplicates() throws Exception {
+  public void testTypingDoesNotInterfereWithDuplicates() {
     SliceTreeStructure treeStructure = configureTree("DupSlice");
     SliceNode root = treeStructure.getRootElement();
     List<SliceNode> nodes = new ArrayList<>();
@@ -83,7 +90,7 @@ public class SliceTreeTest extends SliceTestCase {
       }
     }
 
-    type("   xx");
+    myFixture.type("   xx");
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     backspace();
     backspace();
@@ -109,7 +116,11 @@ public class SliceTreeTest extends SliceTestCase {
     assertTrue(hasDups.isEmpty());
   }
 
-  public void testLeafExpressionsAreEmptyInCaseOfInfinitelyExpandingTreeWithDuplicateNodes() throws Exception {
+  private void backspace() {
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_BACKSPACE);
+  }
+
+  public void testLeafExpressionsAreEmptyInCaseOfInfinitelyExpandingTreeWithDuplicateNodes() {
     SliceTreeStructure treeStructure = configureTree("Tuple");
     SliceNode root = treeStructure.getRootElement();
     SliceLeafAnalyzer analyzer = JavaSlicerAnalysisUtil.createLeafAnalyzer();
@@ -118,7 +129,7 @@ public class SliceTreeTest extends SliceTestCase {
     assertEmpty(leaves);
   }
 
-  public void testLeafExpressionsSimple() throws Exception {
+  public void testLeafExpressionsSimple() {
     SliceTreeStructure treeStructure = configureTree("DupSlice");
     SliceNode root = treeStructure.getRootElement();
     SliceLeafAnalyzer analyzer = JavaSlicerAnalysisUtil.createLeafAnalyzer();
@@ -129,7 +140,7 @@ public class SliceTreeTest extends SliceTestCase {
     assertEquals(1111111111, ((PsiLiteral)element).getValue());
   }
 
-  public void testLeafExpressionsMoreComplex() throws Exception {
+  public void testLeafExpressionsMoreComplex() {
     SliceTreeStructure treeStructure = configureTree("Duplicate");
     SliceNode root = treeStructure.getRootElement();
     SliceLeafAnalyzer analyzer = JavaSlicerAnalysisUtil.createLeafAnalyzer();
@@ -147,7 +158,7 @@ public class SliceTreeTest extends SliceTestCase {
   }
 
   @SuppressWarnings("ConstantConditions")
-  public void testGroupByValuesCorrectLeaves() throws Exception {
+  public void testGroupByValuesCorrectLeaves() {
     SliceTreeStructure treeStructure = configureTree("DuplicateLeaves");
     SliceRootNode root = treeStructure.getRootElement();
     SliceLeafAnalyzer analyzer = JavaSlicerAnalysisUtil.createLeafAnalyzer();
@@ -192,7 +203,7 @@ public class SliceTreeTest extends SliceTestCase {
     assertEquals(child.getValue().getElement(), leaf);
   }
 
-  public void testNullness() throws Exception {
+  public void testNullness() {
     SliceTreeStructure treeStructure = configureTree("Nulls");
     SliceRootNode root = treeStructure.getRootElement();
     Map<SliceNode, JavaSliceNullnessAnalyzer.NullAnalysisResult> map = SliceNullnessAnalyzerBase.createMap();
@@ -292,7 +303,7 @@ public class SliceTreeTest extends SliceTestCase {
     assertEquals(dataExpected, dataActual);
   }
 
-  public void testDoubleNullness() throws Exception {
+  public void testDoubleNullness() {
     SliceTreeStructure treeStructure = configureTree("DoubleNulls");
     SliceRootNode root = treeStructure.getRootElement();
     Map<SliceNode, JavaSliceNullnessAnalyzer.NullAnalysisResult> map = SliceNullnessAnalyzerBase.createMap();
@@ -310,7 +321,7 @@ public class SliceTreeTest extends SliceTestCase {
       """);
   }
 
-  public void testGroupByLeavesWithLists() throws Exception {
+  public void testGroupByLeavesWithLists() {
     SliceTreeStructure treeStructure = configureTree(getTestName(false));
     SliceRootNode root = treeStructure.getRootElement();
     SliceLeafAnalyzer analyzer = JavaSlicerAnalysisUtil.createLeafAnalyzer();
@@ -321,13 +332,13 @@ public class SliceTreeTest extends SliceTestCase {
     assertEquals(ContainerUtil.newHashSet("\"uuu\"", "\"xxx\""), names);
   }
 
-  public void testCollectionTrack() throws Exception {
+  public void testCollectionTrack() {
     Set<String> names = groupByLeaves();
     assertEquals(3, names.size());
     assertEquals(ContainerUtil.newHashSet("\"uuu\"", "\"x\"", "\"y\""), names);
   }
 
-  private Set<String> groupByLeaves() throws Exception {
+  private Set<String> groupByLeaves() {
     SliceTreeStructure treeStructure = configureTree(getTestName(false));
     SliceRootNode root = treeStructure.getRootElement();
     SliceLeafAnalyzer analyzer = JavaSlicerAnalysisUtil.createLeafAnalyzer();
@@ -336,17 +347,17 @@ public class SliceTreeTest extends SliceTestCase {
     return ContainerUtil.map2Set(leaves, PsiElement::getText);
   }
 
-  public void testArrayCopyTrack() throws Exception {
+  public void testArrayCopyTrack() {
     Set<String> names = groupByLeaves();
     assertOrderedEquals(Collections.singletonList("\"x\""), assertOneElement(names));
   }
 
-  public void testMapValuesTrack() throws Exception {
+  public void testMapValuesTrack() {
     Set<String> names = groupByLeaves();
     assertOrderedEquals(Collections.singletonList("\"y\""), assertOneElement(names));
   }
 
-  public void testMapKeysTrack() throws Exception {
+  public void testMapKeysTrack() {
     Set<String> names = groupByLeaves();
     assertOrderedEquals(Collections.singletonList("\"x\""), assertOneElement(names));
   }

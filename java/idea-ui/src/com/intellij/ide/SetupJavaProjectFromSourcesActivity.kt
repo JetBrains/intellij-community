@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide
 
 import com.google.common.collect.ArrayListMultimap
@@ -22,7 +22,9 @@ import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.module.JavaModuleType
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleType
-import com.intellij.openapi.progress.*
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.blockingContext
+import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil
@@ -34,6 +36,8 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.*
 import com.intellij.platform.PlatformProjectOpenProcessor
 import com.intellij.platform.PlatformProjectOpenProcessor.Companion.isOpenedByPlatformProcessor
+import com.intellij.platform.ide.progress.withBackgroundProgress
+import com.intellij.platform.util.progress.withRawProgressReporter
 import com.intellij.projectImport.ProjectOpenProcessor
 import com.intellij.util.SystemProperties
 import kotlinx.coroutines.CoroutineScope

@@ -4,6 +4,7 @@ package org.jetbrains.plugins.gitlab.ui.clone.model
 import com.intellij.collaboration.async.mapState
 import com.intellij.collaboration.async.modelFlow
 import com.intellij.collaboration.messages.CollaborationToolsBundle
+import com.intellij.collaboration.util.ResultUtil.runCatchingUser
 import com.intellij.collaboration.util.SingleCoroutineLauncher
 import com.intellij.dvcs.ui.CloneDvcsValidationUtils
 import com.intellij.openapi.components.service
@@ -65,7 +66,7 @@ internal class GitLabCloneRepositoriesViewModelImpl(
   private val switchToLoginAction: (GitLabAccount) -> Unit
 ) : GitLabCloneRepositoriesViewModel {
   private val apiManager: GitLabApiManager = service<GitLabApiManager>()
-  private val vcsNotifier: VcsNotifier = project.service<VcsNotifier>()
+  private val vcsNotifier: VcsNotifier = VcsNotifier.getInstance(project)
 
   private val cs: CoroutineScope = parentCs.childScope()
 
@@ -122,7 +123,7 @@ internal class GitLabCloneRepositoriesViewModelImpl(
 
   private val directoryPath: MutableStateFlow<String> = MutableStateFlow("")
 
-  override val accountDetailsProvider = GitLabAccountsDetailsProvider(cs) { account ->
+  override val accountDetailsProvider = GitLabAccountsDetailsProvider(cs, accountManager) { account ->
     val token = accountManager.findCredentials(account) ?: return@GitLabAccountsDetailsProvider null
     apiManager.getClient(account.server) { token }
   }
@@ -178,9 +179,11 @@ internal class GitLabCloneRepositoriesViewModelImpl(
           GitLabCloneListItem.Error(account, GitLabCloneException.MissingAccessToken { switchToLoginAction(account) })
         )
         val apiClient = apiManager.getClient(account.server) { token }
-        val currentUser = apiClient.graphQL.getCurrentUser() ?: return@withContext listOf(
-          GitLabCloneListItem.Error(account, GitLabCloneException.RevokedToken { switchToLoginAction(account) })
-        )
+        val currentUser = runCatchingUser { apiClient.graphQL.getCurrentUser() }.getOrElse {
+          return@withContext listOf(
+            GitLabCloneListItem.Error(account, GitLabCloneException.RevokedToken { switchToLoginAction(account) })
+          )
+        }
         val accountRepositories = currentUser.projectMemberships.map { projectMember ->
           GitLabCloneListItem.Repository(account, projectMember)
         }

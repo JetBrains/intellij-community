@@ -80,7 +80,7 @@ class EventsTestSchemeGroupConfiguration(private val project: Project,
     })
 
     tempFile = com.intellij.internal.statistic.devkit.actions.TestParseEventsSchemeDialog.createTempFile(project, "event-log-validation-rules", currentGroup.customRules)!!
-    tempFile.virtualFile.putUserData(EventsSchemeJsonSchemaProviderFactory.EVENTS_TEST_SCHEME_VALIDATION_RULES_KEY, true)
+    tempFile.virtualFile.putUserData(EVENTS_TEST_SCHEME_VALIDATION_RULES_KEY, true)
     tempFile.putUserData(FUS_TEST_SCHEME_COMMON_RULES_KEY, ProductionRules(productionGroups.rules))
     validationRulesEditor = createEditor(project, tempFile)
     validationRulesEditor.document.addDocumentListener(object : DocumentListener {
@@ -285,7 +285,7 @@ class EventsTestSchemeGroupConfiguration(private val project: Project,
       }
       else {
         val psiFile = PsiFileFactory.getInstance(project).createFileFromText(JsonLanguage.INSTANCE, customRules)
-        psiFile.virtualFile.putUserData(EventsSchemeJsonSchemaProviderFactory.EVENTS_TEST_SCHEME_VALIDATION_RULES_KEY, true)
+        psiFile.virtualFile.putUserData(EVENTS_TEST_SCHEME_VALIDATION_RULES_KEY, true)
         psiFile
       }
       val map: Map<LocalInspectionToolWrapper, List<ProblemDescriptor>> = InspectionEngine.inspectEx(

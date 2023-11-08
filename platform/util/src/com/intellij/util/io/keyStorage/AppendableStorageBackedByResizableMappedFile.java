@@ -204,7 +204,8 @@ public final class AppendableStorageBackedByResizableMappedFile<Data> implements
   @Override
   public void close() throws IOException {
     ExceptionUtil.runAllAndRethrowAllExceptions(
-      new IOException("Can't .close() appendable storage [" + storage.getPagedFileStorage().getFile() + "]"),
+      IOException.class,
+      () -> new IOException("Can't .close() appendable storage [" + storage.getPagedFileStorage().getFile() + "]"),
       this::force,
       storage::close
     );

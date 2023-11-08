@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage;
 
+import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.PageCacheUtils;
 import com.intellij.util.io.PagedFileStorageWithRWLockedPageContent;
 import com.intellij.util.io.blobstorage.SpaceAllocationStrategy;
@@ -42,27 +43,18 @@ public class StreamlinedBlobStorageOverLockFreePagedStorageTest
 
   @Override
   protected StreamlinedBlobStorageOverLockFreePagedStorage openStorage(final Path pathToStorage) throws IOException {
-    PagedFileStorageWithRWLockedPageContent pagedStorage = new PagedFileStorageWithRWLockedPageContent(
-      pathToStorage,
-      LOCK_CONTEXT,
-      pageSize,
-      PageContentLockingStrategy.LOCK_PER_PAGE
-    );
-    try {
-      return new StreamlinedBlobStorageOverLockFreePagedStorage(
+    return IOUtil.wrapSafely(
+      new PagedFileStorageWithRWLockedPageContent(pathToStorage, LOCK_CONTEXT, pageSize, PageContentLockingStrategy.LOCK_PER_PAGE),
+      pagedStorage -> new StreamlinedBlobStorageOverLockFreePagedStorage(
         pagedStorage,
         allocationStrategy
-      );
-    }
-    catch (Throwable t) {
-      storage.close();
-      throw t;
-    }
+      )
+    );
   }
 
   @Override
   public void tearDown() throws Exception {
-    if (storage != null) {
+    if (storage != null && !storage.isClosed() ) {
       System.out.printf("Storage after test: %d records allocated, %d deleted, %d relocated, live records %.1f%% of total \n",
                         storage.recordsAllocated(),
                         storage.recordsDeleted(),

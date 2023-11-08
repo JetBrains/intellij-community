@@ -3,20 +3,28 @@ package org.jetbrains.jps.dependency.java;
 
 import org.jetbrains.jps.dependency.Node;
 
-import java.util.HashSet;
-
 public final class InheritanceConstraint extends PackageConstraint{
   private final Utils myUtils;
-  private final String myRootClass;
+  private final JvmNodeReferenceID myRootClass;
 
   public InheritanceConstraint(Utils utils, JvmClass rootClass) {
     super(rootClass.getPackageName());
-    myRootClass = rootClass.getName();
+    myRootClass = rootClass.getReferenceID();
     myUtils = utils;
   }
 
   @Override
   public boolean test(Node<?, ?> node) {
-    return super.test(node) && !myUtils.collectAllSupertypes(((JvmClass)node).getName(), new HashSet<>()).contains(myRootClass);
+    if (!super.test(node)) {
+      return false;
+    }
+    if (node instanceof JvmClass) {
+      for (JvmNodeReferenceID s : myUtils.allSupertypes(((JvmClass)node).getReferenceID())) {
+        if (myRootClass.equals(s)) {
+          return false;
+        }
+      }
+    }
+    return true;
   }
 }

@@ -149,7 +149,8 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
       holder.bounds.y = bounds.y + top;
     }
 
-    c.setMargin(margin);
+    if (!Objects.equals(c.getMargin(), margin))
+      c.setMargin(margin);
   }
 
   @SuppressWarnings("unused")

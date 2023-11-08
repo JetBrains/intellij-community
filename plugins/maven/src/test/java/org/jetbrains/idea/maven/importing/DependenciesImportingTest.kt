@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.importing
 
+import com.intellij.maven.testFramework.InstantImportCompatible
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteAction
@@ -30,6 +31,7 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
+  @InstantImportCompatible
   fun testLibraryDependency() = runBlocking {
     importProjectAsync("""
                     <groupId>test</groupId>
@@ -145,6 +147,7 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
+  @InstantImportCompatible
   fun testPreservingDependenciesOrder() = runBlocking {
     importProjectAsync("""
                     <groupId>test</groupId>
@@ -169,6 +172,7 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
+  @InstantImportCompatible
   fun testPreservingDependenciesOrderWithTestDependencies() = runBlocking {
     importProjectAsync("""
                     <groupId>test</groupId>
@@ -241,6 +245,7 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
+  @InstantImportCompatible
   fun testInterModuleDependencies() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
@@ -360,6 +365,7 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
+  @InstantImportCompatible
   fun testInterModuleDependenciesWithoutModuleVersions() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
@@ -440,6 +446,7 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
+  @InstantImportCompatible
   fun testInterModuleDependenciesWithoutModuleGroup() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
@@ -705,6 +712,7 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
+  @InstantImportCompatible
   fun testDependencyOnSelf() = runBlocking {
     importProjectAsync("""
                     <groupId>test</groupId>
@@ -882,6 +890,7 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
+  @InstantImportCompatible
   fun testDependenciesAreNotExported() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
@@ -1179,6 +1188,7 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
+  @InstantImportCompatible
   fun testPropertyInTheModuleDependency() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
@@ -1343,6 +1353,7 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
                            </dependency>
                          </dependencies>
                        </dependencyManagement>
+       
                        <modules>
                          <module>m</module>
                        </modules>
@@ -1495,6 +1506,7 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
+  @InstantImportCompatible
   fun testDoNotCreateSameLibraryTwice() = runBlocking {
     importProjectAsync("""
                     <groupId>test</groupId>
@@ -1552,6 +1564,7 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
+  @InstantImportCompatible
   fun testDoNotResetUserLibraryDependencies() = runBlocking {
     if (!supportsKeepingManualChanges()) return@runBlocking
 
@@ -1730,7 +1743,7 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
     projectsManager.embeddersManager.reset() // to recognize repository change
 
     updateAllProjects()
-    projectsManager.waitForPluginResolution()
+    projectsManager.waitForAfterImportJobs()
 
     assertModuleLibDep("project", "Maven: junit:junit:4.0",
                        "jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0.jar!/",
@@ -1764,7 +1777,7 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
     projectsManager.embeddersManager.reset() // to recognize repository change
 
     updateAllProjects()
-    projectsManager.waitForPluginResolution()
+    projectsManager.waitForAfterImportJobs()
 
     assertModuleLibDep("project", "Maven: org.testng:testng:jdk15:5.8",
                        "jar://" + getRepositoryPath() + "/org/testng/testng/5.8/testng-5.8-jdk15.jar!/",
@@ -1773,6 +1786,7 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
+  @InstantImportCompatible
   fun testDoNotPopulateSameRootEntriesOnEveryImport() = runBlocking {
     importProjectAsync("""
                     <groupId>test</groupId>
@@ -1976,6 +1990,7 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
+  @InstantImportCompatible
   fun testDoNoRemoveUnusedLibraryIfItWasChanged() = runBlocking {
     importProjectAsync("""
                     <groupId>test</groupId>
@@ -2056,6 +2071,7 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
+  @InstantImportCompatible
   fun testDoNoRemoveUnusedUserProjectLibraries() = runBlocking {
     importProjectAsync("""
                     <groupId>test</groupId>

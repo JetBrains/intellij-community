@@ -16,10 +16,7 @@ import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
 public class UnifiedEditorHighlighter implements EditorHighlighter {
   private static final Logger LOG = Logger.getInstance(UnifiedEditorHighlighter.class);
@@ -107,7 +104,7 @@ public class UnifiedEditorHighlighter implements EditorHighlighter {
       Element oldElement = myPieces.get(myPieces.size() - 1);
       if (oldElement.getEnd() >= element.getStart() &&
           Comparing.equal(oldElement.getAttributes(), element.getAttributes()) &&
-          Comparing.equal(oldElement.getAttributesKeys(), element.getAttributesKeys()) &&
+          Arrays.equals(oldElement.getAttributesKeys(), element.getAttributesKeys()) &&
           Comparing.equal(oldElement.getElementType(), element.getElementType())) {
         merged = true;
         myPieces.remove(myPieces.size() - 1);

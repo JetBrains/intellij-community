@@ -65,7 +65,7 @@ class WebSymbolsPatternReferenceResolver(private vararg val items: Reference) : 
                     queryExecutor: WebSymbolsQueryExecutor,
                     expandPatterns: Boolean): List<WebSymbol> {
       val symbols = queryExecutor.withNameConversionRules(nameConversionRules)
-        .runListSymbolsQuery(location, qualifiedKind.namespace, qualifiedKind.kind,
+        .runListSymbolsQuery(location, qualifiedKind,
                              expandPatterns, includeVirtual, includeAbstract, false, scope)
       if (filter == null) return symbols
       return filter.filterNameMatches(symbols, queryExecutor, scope, emptyMap())

@@ -11,6 +11,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
+import com.intellij.terminal.TerminalTitle
+import com.intellij.terminal.bindApplicationTitle
 import com.intellij.ui.util.preferredHeight
 import com.jediterm.core.util.TermSize
 import com.jediterm.terminal.RequestOrigin
@@ -21,14 +23,14 @@ import java.awt.BorderLayout
 import java.awt.Dimension
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
-import java.util.concurrent.CompletableFuture
 import javax.swing.JComponent
 import javax.swing.JPanel
 
 class BlockTerminalView(
   private val project: Project,
   private val session: TerminalSession,
-  private val settings: JBTerminalSystemSettingsProviderBase
+  private val settings: JBTerminalSystemSettingsProviderBase,
+  terminalTitle: TerminalTitle
 ) : TerminalContentView, TerminalCommandExecutor {
   private val controller: BlockTerminalController
   private val selectionController: TerminalSelectionController
@@ -42,7 +44,8 @@ class BlockTerminalView(
   override val preferredFocusableComponent: JComponent
     get() = when {
       alternateBufferView != null -> alternateBufferView!!.preferredFocusableComponent
-      promptView.component.isVisible -> promptView.preferredFocusableComponent
+      controller.searchSession != null -> controller.searchSession!!.component.searchTextComponent
+      promptView.component.isVisible && selectionController.primarySelection == null -> promptView.preferredFocusableComponent
       else -> outputView.preferredFocusableComponent
     }
 
@@ -68,7 +71,7 @@ class BlockTerminalView(
       }
     })
 
-    val focusModel = TerminalFocusModel(project, outputView, promptView)
+    val focusModel = TerminalFocusModel(project, this, outputView, promptView)
     selectionController = TerminalSelectionController(focusModel, outputView.controller.selectionModel, outputView.controller.outputModel)
     controller = BlockTerminalController(project, session, outputView.controller, promptView.controller, selectionController, focusModel)
 
@@ -86,6 +89,8 @@ class BlockTerminalView(
       }
     })
 
+    terminalTitle.bindApplicationTitle(session.controller, this)
+
     controller.addListener(object : BlockTerminalControllerListener {
       override fun searchSessionStarted(session: SearchSession) {
         outputView.installSearchComponent(session.component)
@@ -100,7 +105,7 @@ class BlockTerminalView(
   }
 
   override fun connectToTty(ttyConnector: TtyConnector, initialTermSize: TermSize) {
-    session.controller.resize(initialTermSize, RequestOrigin.User, CompletableFuture.completedFuture(Unit))
+    session.controller.resize(initialTermSize, RequestOrigin.User)
     session.start(ttyConnector)
   }
 
@@ -169,6 +174,10 @@ class BlockTerminalView(
     session.addTerminationCallback(onTerminated, parentDisposable)
   }
 
+  override fun sendCommandToExecute(shellCommand: String) {
+    controller.startCommandExecution(shellCommand)
+  }
+
   override fun dispose() {}
 
   private inner class BlockTerminalPanel : JPanel(), DataProvider {
@@ -184,6 +193,7 @@ class BlockTerminalView(
         SimpleTerminalController.KEY.name -> alternateBufferView?.controller
         BlockTerminalController.KEY.name -> controller
         TerminalSelectionController.KEY.name -> selectionController
+        TerminalSession.DATA_KEY.name -> session
         else -> null
       }
     }

@@ -15,7 +15,7 @@ object DistributedTestModel : Ext(TestRoot) {
     field("id", string)
     field("launchNumber", int)
     field("agentType", RdAgentType)
-    field("productTypeType", RdProductType)
+    field("productType", RdProductType)
   }
 
   private val RdAgentType = enum {

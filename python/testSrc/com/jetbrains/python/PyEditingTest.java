@@ -126,7 +126,7 @@ public class PyEditingTest extends PyTestCase {
   public void testEnterInSingleLineFStringFragment() {
     doTestEnter("f'foo{1 +<caret> 2}bar'",
                 "f'foo{1 +\n" +
-                "2}bar'");
+                "      2}bar'");
   }
 
   public void testEnterInFStringTextPart() {

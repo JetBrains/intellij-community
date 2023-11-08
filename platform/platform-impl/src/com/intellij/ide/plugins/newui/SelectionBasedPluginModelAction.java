@@ -73,12 +73,14 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent, D extends I
     private static final CustomShortcutSet SHORTCUT_SET = new CustomShortcutSet(KeyEvent.VK_SPACE);
 
     private final @NotNull PluginEnableDisableAction myAction;
+    private final @NotNull Runnable myOnFinishAction;
 
     EnableDisableAction(@NotNull MyPluginModel pluginModel,
                         @NotNull PluginEnableDisableAction action,
                         boolean showShortcut,
                         @NotNull List<? extends C> selection,
-                        @NotNull Function<? super C, ? extends IdeaPluginDescriptor> pluginDescriptor) {
+                        @NotNull Function<? super C, ? extends IdeaPluginDescriptor> pluginDescriptor,
+                        @NotNull Runnable onFinishAction) {
       super(action.getPresentableText(),
             pluginModel,
             showShortcut,
@@ -86,6 +88,7 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent, D extends I
             pluginDescriptor);
 
       myAction = action;
+      myOnFinishAction = onFinishAction;
     }
 
     @Override
@@ -118,6 +121,7 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent, D extends I
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       myPluginModel.setEnabledState(getAllDescriptors(), myAction);
+      myOnFinishAction.run();
     }
   }
 
@@ -133,12 +137,14 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent, D extends I
     }
 
     private final @NotNull JComponent myUiParent;
+    private final @NotNull Runnable myOnFinishAction;
 
     UninstallAction(@NotNull MyPluginModel pluginModel,
                     boolean showShortcut,
                     @NotNull JComponent uiParent,
                     @NotNull List<? extends C> selection,
-                    @NotNull Function<? super C, ? extends IdeaPluginDescriptor> pluginDescriptor) {
+                    @NotNull Function<? super C, ? extends IdeaPluginDescriptor> pluginDescriptor,
+                    @NotNull Runnable onFinishAction) {
       super(IdeBundle.message("plugins.configurable.uninstall"),
             pluginModel,
             showShortcut,
@@ -148,6 +154,7 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent, D extends I
                                                    null));
 
       myUiParent = uiParent;
+      myOnFinishAction = onFinishAction;
     }
 
     @Override
@@ -185,6 +192,8 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent, D extends I
           myPluginModel.uninstallAndUpdateUi(descriptor);
         }
       }
+
+      myOnFinishAction.run();
     }
 
     private static @NotNull @Nls String getUninstallAllMessage(@NotNull Collection<IdeaPluginDescriptorImpl> descriptors) {

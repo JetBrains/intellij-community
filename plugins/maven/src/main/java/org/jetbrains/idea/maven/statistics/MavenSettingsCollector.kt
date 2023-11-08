@@ -21,9 +21,7 @@ import org.jetbrains.idea.maven.server.MavenDistributionsCache
 
 class MavenSettingsCollector : ProjectUsagesCollector() {
 
-  override fun getGroup(): EventLogGroup {
-    return GROUP
-  }
+  override fun getGroup(): EventLogGroup = GROUP
 
   override fun getMetrics(project: Project): Set<MetricEvent> {
     val manager = MavenProjectsManager.getInstance(project)
@@ -31,7 +29,7 @@ class MavenSettingsCollector : ProjectUsagesCollector() {
 
     val usages = mutableSetOf<MetricEvent>()
 
-    // to have a total users base line to calculate pertentages of settings
+    // to have a total users baseline to calculate percentages of settings
     usages.add(HAS_MAVEN_PROJECT.metric(true))
 
     // Main page
@@ -99,51 +97,55 @@ class MavenSettingsCollector : ProjectUsagesCollector() {
     return usages
   }
 
-  companion object {
-    private val GROUP = EventLogGroup("build.maven.state", 11)
-    private val HAS_MAVEN_PROJECT = GROUP.registerEvent("hasMavenProject", EventFields.Enabled)
-    private val ALWAYS_UPDATE_SNAPSHOTS = GROUP.registerEvent("alwaysUpdateSnapshots", EventFields.Enabled)
-    private val NON_RECURSIVE = GROUP.registerEvent("nonRecursive", EventFields.Enabled)
-    private val PRINT_ERROR_STACK_TRACES = GROUP.registerEvent("printErrorStackTraces", EventFields.Enabled)
-    private val WORK_OFFLINE = GROUP.registerEvent("workOffline", EventFields.Enabled)
-    private val LOCAL_REPOSITORY = GROUP.registerEvent("localRepository", EventFields.Enabled)
-    private val USER_SETTINGS_FILE = GROUP.registerEvent("userSettingsFile", EventFields.Enabled)
-    private val LOOK_FOR_NESTED = GROUP.registerEvent("lookForNested", EventFields.Enabled)
-    private val USE_WORKSPACE_IMPORT = GROUP.registerEvent("useWorkspaceImport", EventFields.Enabled)
-    private val DEDICATED_MODULE_DIR = GROUP.registerEvent("dedicatedModuleDir", EventFields.Enabled)
-    private val STORE_PROJECT_FILES_EXTERNALLY = GROUP.registerEvent("storeProjectFilesExternally", EventFields.Enabled)
-    private val IS_DIRECTORY_BASED_PROJECT = GROUP.registerEvent("useDirectoryBasedProject", EventFields.Enabled)
-    private val AUTO_DETECT_COMPILER = GROUP.registerEvent("autoDetectCompiler", EventFields.Enabled)
-    private val CREATE_MODULES_FOR_AGGREGATORS = GROUP.registerEvent("createModulesForAggregators", EventFields.Enabled)
-    private val KEEP_SOURCE_FOLDERS = GROUP.registerEvent("keepSourceFolders", EventFields.Enabled)
-    private val EXCLUDE_TARGET_FOLDER = GROUP.registerEvent("excludeTargetFolder", EventFields.Enabled)
-    private val USE_MAVEN_OUTPUT = GROUP.registerEvent("useMavenOutput", EventFields.Enabled)
-    private val DOWNLOAD_DOCS_AUTOMATICALLY = GROUP.registerEvent("downloadDocsAutomatically", EventFields.Enabled)
-    private val DOWNLOAD_SOURCES_AUTOMATICALLY = GROUP.registerEvent("downloadSourcesAutomatically", EventFields.Enabled)
-    private val CUSTOM_DEPENDENCY_TYPES = GROUP.registerEvent("customDependencyTypes", EventFields.Enabled)
-    private val HAS_VM_OPTIONS_FOR_IMPORTER = GROUP.registerEvent("hasVmOptionsForImporter", EventFields.Enabled)
-    private val HAS_IGNORED_FILES = GROUP.registerEvent("hasIgnoredFiles", EventFields.Enabled)
-    private val HAS_IGNORED_PATTERNS = GROUP.registerEvent("hasIgnoredPatterns", EventFields.Enabled)
-    private val DELEGATE_BUILD_RUN = GROUP.registerEvent("delegateBuildRun", EventFields.Enabled)
-    private val HAS_RUNNER_VM_OPTIONS = GROUP.registerEvent("hasRunnerVmOptions", EventFields.Enabled)
-    private val HAS_RUNNER_ENV_VARIABLES = GROUP.registerEvent("hasRunnerEnvVariables", EventFields.Enabled)
-    private val PASS_PARENT_ENV = GROUP.registerEvent("passParentEnv", EventFields.Enabled)
-    private val SKIP_TESTS = GROUP.registerEvent("skipTests", EventFields.Enabled)
-    private val HAS_RUNNER_MAVEN_PROPERTIES = GROUP.registerEvent("hasRunnerMavenProperties", EventFields.Enabled)
+  private val GROUP = EventLogGroup("build.maven.state", 11)
+  private val HAS_MAVEN_PROJECT = GROUP.registerEvent("hasMavenProject", EventFields.Enabled)
+  private val ALWAYS_UPDATE_SNAPSHOTS = GROUP.registerEvent("alwaysUpdateSnapshots", EventFields.Enabled)
+  private val NON_RECURSIVE = GROUP.registerEvent("nonRecursive", EventFields.Enabled)
+  private val PRINT_ERROR_STACK_TRACES = GROUP.registerEvent("printErrorStackTraces", EventFields.Enabled)
+  private val WORK_OFFLINE = GROUP.registerEvent("workOffline", EventFields.Enabled)
+  private val LOCAL_REPOSITORY = GROUP.registerEvent("localRepository", EventFields.Enabled)
+  private val USER_SETTINGS_FILE = GROUP.registerEvent("userSettingsFile", EventFields.Enabled)
+  private val LOOK_FOR_NESTED = GROUP.registerEvent("lookForNested", EventFields.Enabled)
+  private val USE_WORKSPACE_IMPORT = GROUP.registerEvent("useWorkspaceImport", EventFields.Enabled)
+  private val DEDICATED_MODULE_DIR = GROUP.registerEvent("dedicatedModuleDir", EventFields.Enabled)
+  private val STORE_PROJECT_FILES_EXTERNALLY = GROUP.registerEvent("storeProjectFilesExternally", EventFields.Enabled)
+  private val IS_DIRECTORY_BASED_PROJECT = GROUP.registerEvent("useDirectoryBasedProject", EventFields.Enabled)
+  private val AUTO_DETECT_COMPILER = GROUP.registerEvent("autoDetectCompiler", EventFields.Enabled)
+  private val CREATE_MODULES_FOR_AGGREGATORS = GROUP.registerEvent("createModulesForAggregators", EventFields.Enabled)
+  private val KEEP_SOURCE_FOLDERS = GROUP.registerEvent("keepSourceFolders", EventFields.Enabled)
+  private val EXCLUDE_TARGET_FOLDER = GROUP.registerEvent("excludeTargetFolder", EventFields.Enabled)
+  private val USE_MAVEN_OUTPUT = GROUP.registerEvent("useMavenOutput", EventFields.Enabled)
+  private val DOWNLOAD_DOCS_AUTOMATICALLY = GROUP.registerEvent("downloadDocsAutomatically", EventFields.Enabled)
+  private val DOWNLOAD_SOURCES_AUTOMATICALLY = GROUP.registerEvent("downloadSourcesAutomatically", EventFields.Enabled)
+  private val CUSTOM_DEPENDENCY_TYPES = GROUP.registerEvent("customDependencyTypes", EventFields.Enabled)
+  private val HAS_VM_OPTIONS_FOR_IMPORTER = GROUP.registerEvent("hasVmOptionsForImporter", EventFields.Enabled)
+  private val HAS_IGNORED_FILES = GROUP.registerEvent("hasIgnoredFiles", EventFields.Enabled)
+  private val HAS_IGNORED_PATTERNS = GROUP.registerEvent("hasIgnoredPatterns", EventFields.Enabled)
+  private val DELEGATE_BUILD_RUN = GROUP.registerEvent("delegateBuildRun", EventFields.Enabled)
+  private val HAS_RUNNER_VM_OPTIONS = GROUP.registerEvent("hasRunnerVmOptions", EventFields.Enabled)
+  private val HAS_RUNNER_ENV_VARIABLES = GROUP.registerEvent("hasRunnerEnvVariables", EventFields.Enabled)
+  private val PASS_PARENT_ENV = GROUP.registerEvent("passParentEnv", EventFields.Enabled)
+  private val SKIP_TESTS = GROUP.registerEvent("skipTests", EventFields.Enabled)
+  private val HAS_RUNNER_MAVEN_PROPERTIES = GROUP.registerEvent("hasRunnerMavenProperties", EventFields.Enabled)
 
-    private val VERSION_FIELD = EventFields.StringValidatedByRegexp("value", "version")
+  private val VERSION_FIELD = EventFields.StringValidatedByRegexp("value", "version")
 
-    private val CHECKSUM_POLICY = GROUP.registerEvent("checksumPolicy", EventFields.Enum("value", MavenExecutionOptions.ChecksumPolicy::class.java) { it.name.lowercase() })
-    private val FAILURE_BEHAVIOR = GROUP.registerEvent("failureBehavior", EventFields.Enum("value", MavenExecutionOptions.FailureMode::class.java) { it.name.lowercase() })
-    private val OUTPUT_LEVEL = GROUP.registerEvent("outputLevel", EventFields.Enum("value", MavenExecutionOptions.LoggingLevel::class.java) { it.name.lowercase() })
-    private val LOGGING_LEVEL = GROUP.registerEvent("loggingLevel", EventFields.Enum("value", MavenExecutionOptions.LoggingLevel::class.java) { it.name.lowercase() })
-    private val MAVEN_VERSION = GROUP.registerEvent("mavenVersion", VERSION_FIELD)
-    private val GENERATED_SOURCES_FOLDER = GROUP.registerEvent("generatedSourcesFolder", EventFields.Enum("value", GeneratedSourcesFolder::class.java) { it.name.lowercase() })
-    private val UPDATE_FOLDERS_ON_IMPORT_PHASE = GROUP.registerEvent("updateFoldersOnImportPhase", EventFields.String("value", UPDATE_FOLDERS_PHASES.toList()))
+  private val CHECKSUM_POLICY = GROUP.registerEvent("checksumPolicy", EventFields.Enum("value",
+                                                                                       MavenExecutionOptions.ChecksumPolicy::class.java) { it.name.lowercase() })
+  private val FAILURE_BEHAVIOR = GROUP.registerEvent("failureBehavior", EventFields.Enum("value",
+                                                                                         MavenExecutionOptions.FailureMode::class.java) { it.name.lowercase() })
+  private val OUTPUT_LEVEL = GROUP.registerEvent("outputLevel", EventFields.Enum("value",
+                                                                                 MavenExecutionOptions.LoggingLevel::class.java) { it.name.lowercase() })
+  private val LOGGING_LEVEL = GROUP.registerEvent("loggingLevel", EventFields.Enum("value",
+                                                                                   MavenExecutionOptions.LoggingLevel::class.java) { it.name.lowercase() })
+  private val MAVEN_VERSION = GROUP.registerEvent("mavenVersion", VERSION_FIELD)
+  private val GENERATED_SOURCES_FOLDER = GROUP.registerEvent("generatedSourcesFolder", EventFields.Enum("value",
+                                                                                                        GeneratedSourcesFolder::class.java) { it.name.lowercase() })
+  private val UPDATE_FOLDERS_ON_IMPORT_PHASE = GROUP.registerEvent("updateFoldersOnImportPhase",
+                                                                   EventFields.String("value", UPDATE_FOLDERS_PHASES.toList()))
 
-    private val RUNNER_JRE_VERSION = GROUP.registerEvent("runnerJreVersion", VERSION_FIELD)
-    private val JDK_VERSION_FOR_IMPORTER = GROUP.registerEvent("jdkVersionForImporter", VERSION_FIELD)
-    private val RUNNER_JRE_TYPE = GROUP.registerEvent("runnerJreType", JRE_TYPE_FIELD)
-    private val JDK_TYPE_FOR_IMPORTER = GROUP.registerEvent("jdkTypeForImporter", JRE_TYPE_FIELD)
-  }
+  private val RUNNER_JRE_VERSION = GROUP.registerEvent("runnerJreVersion", VERSION_FIELD)
+  private val JDK_VERSION_FOR_IMPORTER = GROUP.registerEvent("jdkVersionForImporter", VERSION_FIELD)
+  private val RUNNER_JRE_TYPE = GROUP.registerEvent("runnerJreType", JRE_TYPE_FIELD)
+  private val JDK_TYPE_FOR_IMPORTER = GROUP.registerEvent("jdkTypeForImporter", JRE_TYPE_FIELD)
 }

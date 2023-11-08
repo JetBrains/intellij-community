@@ -7,6 +7,7 @@ import com.intellij.psi.impl.compiled.ClsMemberImpl
 import com.intellij.psi.impl.file.PsiPackageImpl
 import com.intellij.util.SmartList
 import com.intellij.util.containers.addIfNotNull
+import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.base.KtConstantValue
 import org.jetbrains.kotlin.analysis.api.calls.*
 import org.jetbrains.kotlin.analysis.api.components.KtConstantEvaluationMode
@@ -14,7 +15,10 @@ import org.jetbrains.kotlin.analysis.api.components.buildClassType
 import org.jetbrains.kotlin.analysis.api.components.buildTypeParameterType
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
-import org.jetbrains.kotlin.analysis.api.types.*
+import org.jetbrains.kotlin.analysis.api.types.KtErrorType
+import org.jetbrains.kotlin.analysis.api.types.KtType
+import org.jetbrains.kotlin.analysis.api.types.KtTypeMappingMode
+import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
 import org.jetbrains.kotlin.analysis.project.structure.KtLibraryModule
 import org.jetbrains.kotlin.analysis.project.structure.KtSourceModule
 import org.jetbrains.kotlin.analysis.project.structure.ProjectStructureProvider
@@ -84,12 +88,17 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
         }
     }
 
-    override fun findDefaultValueForAnnotationAttribute(ktCallElement: KtCallElement, name: String): KtExpression? {
+    override fun findDefaultValueForAnnotationAttribute(ktCallElement: KtCallElement, name: String): UExpression? {
         analyzeForUast(ktCallElement) {
             val resolvedAnnotationConstructorSymbol =
                 ktCallElement.resolveCall()?.singleConstructorCallOrNull()?.symbol ?: return null
+            val psi = resolvedAnnotationConstructorSymbol.psi
+            if (psi is PsiClass) {
+                // a usage Java annotation
+                return findAttributeValueExpression(psi, name)
+            }
             val parameter = resolvedAnnotationConstructorSymbol.valueParameters.find { it.name.asString() == name } ?: return null
-            return (parameter.psi as? KtParameter)?.defaultValue
+            return (parameter.psi as? KtParameter)?.defaultValue?.let(languagePlugin::convertWithParent)
         }
     }
 
@@ -355,9 +364,18 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
 
         analyzeForUast(ktExpression) {
             val resolvedTargetSymbol = when (ktExpression) {
+                is KtInstanceExpressionWithLabel -> {
+                    // A subtype of [KtExpressionWithLabel], including [KtThisExpression]/[KtSuperExpression]
+                    // Therefore, it must be handled *before* that super type.
+                    val reference =
+                        // `this@withLabel`
+                        ktExpression.getTargetLabel()?.mainReference
+                            // just `this` without label
+                            ?: ktExpression.instanceReference.mainReference
+                    reference.resolveToSymbol()
+                }
                 is KtExpressionWithLabel -> {
                     ktExpression.getTargetLabel()?.mainReference?.resolveToSymbol()
-
                 }
 
                 is KtCallExpression -> {
@@ -378,8 +396,19 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
 
             val project = ktExpression.project
 
-            val resolvedTargetElement = psiForUast(resolvedTargetSymbol, project)
-
+            val resolvedTargetElement =
+                when (resolvedTargetSymbol) {
+                    is KtBackingFieldSymbol -> {
+                        // [KtBackingFieldSymbol] itself has `null` psi, and thus going to
+                        // the below default logic, [psiForUast], will return `null` too.
+                        // Use the owning property's psi and let [getMaybeLightElement] find
+                        // the corresponding [PsiField] for the backing field.
+                        resolvedTargetSymbol.owningProperty.psi
+                    }
+                    else -> {
+                        psiForUast(resolvedTargetSymbol, project)
+                    }
+                }
 
             // Shortcut: if the resolution target is compiled class/member, package info, or pure Java declarations,
             //   we can return it early here (to avoid expensive follow-up steps: module retrieval and light element conversion).
@@ -457,6 +486,31 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
                     )?.let { return it }
                 }
 
+                is KtTypeReference -> {
+                    if (resolvedTargetSymbol is KtReceiverParameterSymbol) {
+                        // Explicit `this` resolved to type reference if it belongs to an extension callable
+                        when (val callable = resolvedTargetSymbol.owningCallableSymbol) {
+                            is KtFunctionLikeSymbol -> {
+                                val psiMethod = toPsiMethod(callable, ktExpression)
+                                psiMethod?.parameterList?.parameters?.firstOrNull()?.let { return it }
+                            }
+                            is KtPropertySymbol -> {
+                                val getter = callable.getter?.let { toPsiMethod(it, ktExpression) }
+                                getter?.parameterList?.parameters?.firstOrNull()?.let { return it }
+                            }
+                            else -> {}
+                        }
+                    } else {
+                        val ktType = resolvedTargetElement.getKtType()
+                        toPsiClass(
+                            ktType,
+                            ktExpression.toUElement(),
+                            resolvedTargetElement,
+                            resolvedTargetElement.typeOwnerKind
+                        )?.let { return it }
+                    }
+                }
+
                 is KtFunctionLiteral -> {
                     // Implicit lambda parameter `it`
                     if ((resolvedTargetSymbol as? KtValueParameterSymbol)?.isImplicitLambdaParameter == true) {
@@ -464,6 +518,17 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
                         val lambda = resolvedTargetElement.toUElementOfType<ULambdaExpression>()
                         // and return javaPsi of the corresponding lambda implicit parameter
                         lambda?.valueParameters?.singleOrNull()?.javaPsi?.let { return it }
+                    }
+                    val isLambdaReceiver =
+                        // Implicit `this` as the lambda receiver
+                        resolvedTargetSymbol is KtAnonymousFunctionSymbol ||
+                                // Explicit `this`
+                                resolvedTargetSymbol is KtReceiverParameterSymbol
+                    if (isLambdaReceiver) {
+                        // From its containing lambda (of function literal), build ULambdaExpression
+                        val lambda = resolvedTargetElement.toUElementOfType<ULambdaExpression>()
+                        // and return javaPsi of the corresponding lambda receiver
+                        lambda?.parameters?.firstOrNull()?.javaPsi?.let { return it }
                     }
                 }
             }
@@ -623,44 +688,54 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
     }
 
     override fun hasInheritedGenericType(psiElement: PsiElement): Boolean {
-        return when (psiElement) {
-            is KtTypeReference ->
-                analyzeForUast(psiElement) {
-                    isInheritedGenericType(psiElement.getKtType())
-                }
-
-            is KtCallableDeclaration ->
-                analyzeForUast(psiElement) {
-                    isInheritedGenericType(getKtType(psiElement))
-                }
-
-            is KtDestructuringDeclaration ->
-                analyzeForUast(psiElement) {
-                    isInheritedGenericType(psiElement.getReturnKtType())
-                }
-
-            else -> false
+        return getTargetType(psiElement, false) { ktType ->
+            isInheritedGenericType(ktType)
         }
     }
 
     override fun nullability(psiElement: PsiElement): KtTypeNullability? {
+        return getTargetType(psiElement, null) { ktType ->
+            nullability(ktType)
+        }
+    }
+
+    private inline fun <R> getTargetType(
+        psiElement: PsiElement,
+        defaultValue: R,
+        typeConsumer: KtAnalysisSession.(KtType?) -> R,
+    ): R {
         return when (psiElement) {
-            is KtTypeReference ->
+            is KtTypeReference -> {
                 analyzeForUast(psiElement) {
-                    nullability(psiElement.getKtType())
+                    typeConsumer(psiElement.getKtType())
                 }
+            }
 
-            is KtCallableDeclaration ->
+            is KtCallableDeclaration -> {
+                // NB: We should not use [KtDeclaration.getReturnKtType]; see its comment:
+                // IMPORTANT: For `vararg foo: T` parameter returns full `Array<out T>` type
+                // (unlike [KtValueParameterSymbol.returnType] which returns `T`).
                 analyzeForUast(psiElement) {
-                    nullability(getKtType(psiElement))
+                    typeConsumer(getKtType(psiElement))
                 }
+            }
 
-            is KtDestructuringDeclaration ->
+            is KtPropertyAccessor -> {
+                // Not necessary to use the containing property
+                // getter: its return type should be the same as property
+                // setter: it's always `void`, and its (implicit) setter parameter is callable.
                 analyzeForUast(psiElement) {
-                    nullability(psiElement.getReturnKtType())
+                    typeConsumer(psiElement.getReturnKtType())
                 }
+            }
 
-            else -> null
+            is KtDestructuringDeclaration -> {
+                analyzeForUast(psiElement) {
+                    typeConsumer(psiElement.getReturnKtType())
+                }
+            }
+
+            else -> defaultValue
         }
     }
 

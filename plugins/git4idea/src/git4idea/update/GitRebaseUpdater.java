@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.update;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -30,7 +30,7 @@ import java.util.List;
 public final class GitRebaseUpdater extends GitUpdater {
   private static final Logger LOG = Logger.getInstance(GitRebaseUpdater.class.getName());
   private final GitRebaser myRebaser;
-  @NotNull private final GitBranchPair myBranchPair;
+  private final @NotNull GitBranchPair myBranchPair;
 
   public GitRebaseUpdater(@NotNull Project project,
                           @NotNull Git git,
@@ -56,9 +56,8 @@ public final class GitRebaseUpdater extends GitUpdater {
     }
   }
 
-  @NotNull
   @Override
-  protected GitUpdateResult doUpdate() {
+  protected @NotNull GitUpdateResult doUpdate() {
     LOG.info("doUpdate ");
     String remoteBranch = getRemoteBranchToMerge();
     List<String> params = Collections.singletonList(remoteBranch);
@@ -69,8 +68,7 @@ public final class GitRebaseUpdater extends GitUpdater {
     return result;
   }
 
-  @NotNull
-  private String getRemoteBranchToMerge() {
+  private @NotNull String getRemoteBranchToMerge() {
     return myBranchPair.getTarget().getName();
   }
 

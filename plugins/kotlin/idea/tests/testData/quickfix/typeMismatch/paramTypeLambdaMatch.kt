@@ -5,3 +5,4 @@ fun simple() {
 
 fun str(block: () -> String) {}
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.SurroundWithLambdaFix
+/* IGNORE_K2 */

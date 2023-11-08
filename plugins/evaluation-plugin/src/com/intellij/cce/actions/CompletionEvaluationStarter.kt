@@ -55,7 +55,7 @@ internal class CompletionEvaluationStarter : ApplicationStarter {
     }
 
     protected fun loadProject(projectPath: String): Project = try {
-      println("Open and load project $projectPath. Operation may take few minutes.")
+      println("Open and load project $projectPath. Operation may take a few minutes.")
       val project = OpenProjectMethodProvider.find()?.openProjectInHeadlessMode(projectPath) ?: openProjectHeadless(projectPath)
       println("Project loaded!")
       project
@@ -99,7 +99,7 @@ internal class CompletionEvaluationStarter : ApplicationStarter {
     private val configPath by argument(name = "config-path", help = "Path to config").default(ConfigFactory.DEFAULT_CONFIG_NAME)
 
     override fun run() {
-      val feature = EvaluableFeature.forFeature(featureName) ?: throw Exception("No support for the feature")
+      val feature = EvaluableFeature.forFeature(featureName) ?: throw Exception("No support for the $featureName")
       val config = loadConfig(Paths.get(configPath), feature.getStrategySerializer())
       val project = loadProject(config.projectPath)
       val workspace = EvaluationWorkspace.create(config)

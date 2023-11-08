@@ -3,6 +3,7 @@ package de.plushnikov.intellij.plugin.util;
 import com.intellij.java.library.JavaLibraryUtil;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderEntry;
@@ -19,6 +20,7 @@ import com.intellij.psi.PsiPackage;
 import com.intellij.psi.util.CachedValueProvider.Result;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.concurrency.ThreadingAssertions;
+import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.Version;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,6 +41,10 @@ public final class LombokLibraryUtil {
            || detectLombokJarsSlow(project);
   }
 
+  public static boolean hasLombokClasses(@Nullable Module module) {
+    return JavaLibraryUtil.hasLibraryClass(module, LombokClassNames.GETTER);
+  }
+
   private static boolean detectLombokJarsSlow(Project project) {
     // it is required for JARs attached directly from disk
     // or via build systems that do not supply Maven coordinates properly via LibraryWithMavenCoordinatesProperties
@@ -53,12 +59,6 @@ public final class LombokLibraryUtil {
 
           for (VirtualFile libraryFile : libraryFiles) {
             if (libraryFile.getFileSystem() != jarFileSystem) continue;
-
-            String nameWithoutExtension = libraryFile.getNameWithoutExtension();
-            if (nameWithoutExtension.contains("lombok")) {
-              exists.set(true);
-              return false;
-            }
 
             // look into every JAR for top level package entry
             if (libraryFile.findChild("lombok") != null) {

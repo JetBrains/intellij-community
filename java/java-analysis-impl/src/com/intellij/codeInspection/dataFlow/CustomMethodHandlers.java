@@ -597,18 +597,12 @@ public final class CustomMethodHandlers {
     if (type != null) {
       PsiClass psiClass = type.resolve();
       if (psiClass != null) {
-        String result;
-        switch (name) {
-          case "getSimpleName" -> result = psiClass instanceof PsiAnonymousClass ? "" : psiClass.getName();
-          case "getName" -> {
-            if (PsiUtil.isLocalOrAnonymousClass(psiClass)) {
-              return DfType.TOP;
-            }
-            result = ClassUtil.getJVMClassName(psiClass);
-          }
-          default -> result = psiClass.getQualifiedName();
-        }
-        return constant(result, stringType);
+        String result = switch (name) {
+          case "getSimpleName" -> psiClass instanceof PsiAnonymousClass ? "" : psiClass.getName();
+          case "getName" -> PsiUtil.isLocalOrAnonymousClass(psiClass) ? null : ClassUtil.getJVMClassName(psiClass);
+          default -> psiClass.getQualifiedName();
+        };
+        return result == null && !name.equals("getCanonicalName") ? DfType.TOP : constant(result, stringType);
       }
     }
     return DfType.TOP;

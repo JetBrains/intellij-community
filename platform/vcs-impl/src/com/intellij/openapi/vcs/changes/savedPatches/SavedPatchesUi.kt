@@ -137,12 +137,7 @@ open class SavedPatchesUi(project: Project,
     if (!isInitial && !needUpdatePreviews) return
 
     val diffPreviewProcessor = changesBrowser.installDiffPreview(isInEditor)
-    if (isInEditor) {
-      treeDiffSplitter.secondComponent = null
-    }
-    else {
-      treeDiffSplitter.secondComponent = diffPreviewProcessor.component
-    }
+    treeDiffSplitter.secondComponent = if (isInEditor) null else diffPreviewProcessor.component
   }
 
   override fun dispose() {

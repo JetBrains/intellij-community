@@ -104,11 +104,11 @@ object DefaultNotebookEditorAppearanceSizes: NotebookEditorAppearanceSizes {
   override val EDIT_MODE_CELL_LEFT_LINE_WIDTH = 2
   override val CODE_AND_CODE_TOP_GRAY_HEIGHT = 6
   override val CODE_AND_CODE_BOTTOM_GRAY_HEIGHT = 6
-  override val INNER_CELL_TOOLBAR_HEIGHT = 25
+  override val INNER_CELL_TOOLBAR_HEIGHT = 24
   override val CELL_BORDER_HEIGHT = 20
   override val SPACER_HEIGHT = CELL_BORDER_HEIGHT / 2
   override val EXECUTION_TIME_HEIGHT = SPACER_HEIGHT + 6
-  override val SPACE_BELOW_CELL_TOOLBAR = 12
+  override val SPACE_BELOW_CELL_TOOLBAR = 4
   override val CELL_TOOLBAR_TOTAL_HEIGHT = INNER_CELL_TOOLBAR_HEIGHT + SPACE_BELOW_CELL_TOOLBAR
   override val PROGRESS_STATUS_HEIGHT = 2
 

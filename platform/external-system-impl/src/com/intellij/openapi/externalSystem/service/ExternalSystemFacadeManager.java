@@ -59,7 +59,7 @@ public final class ExternalSystemFacadeManager {
   public ExternalSystemFacadeManager() {
     Application app = ApplicationManager.getApplication();
 
-    myProgressManager = (RemoteExternalSystemProgressNotificationManager)app.getService(ExternalSystemProgressNotificationManager.class);
+    myProgressManager = (RemoteExternalSystemProgressNotificationManager)ExternalSystemProgressNotificationManager.getInstance();
     myRemoteCommunicationManager = app.getService(RemoteExternalSystemCommunicationManager.class);
     myInProcessCommunicationManager = app.getService(InProcessExternalSystemCommunicationManager.class);
   }

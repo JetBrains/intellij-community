@@ -7,8 +7,6 @@ import com.intellij.ide.IdeBundle
 import com.intellij.java.analysis.JavaAnalysisBundle
 import com.intellij.java.ift.JavaLessonsBundle
 import com.intellij.openapi.editor.impl.EditorComponentImpl
-import com.intellij.openapi.wm.ToolWindowId
-import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.impl.content.BaseLabel
 import com.intellij.ui.InplaceButton
 import com.intellij.ui.UIBundle
@@ -73,8 +71,7 @@ class JavaInheritanceHierarchyLesson
         closeAllFindTabs()
       }
       text(JavaLessonsBundle.message("java.inheritance.hierarchy.open.in.find.tool.window", findToolWindow(),
-                                     icon(ToolWindowManager.getInstance(project).getLocationIcon(ToolWindowId.FIND,
-                                                                                                 AllIcons.General.Pin_tab))))
+                                     icon(AllIcons.General.Pin_tab)))
       triggerUI().component { ui: BaseLabel ->
         ui.text == (CodeInsightBundle.message("goto.implementation.findUsages.title", "foo")) ||
         ui.text == (JavaAnalysisBundle.message("navigate.to.overridden.methods.title", "foo"))

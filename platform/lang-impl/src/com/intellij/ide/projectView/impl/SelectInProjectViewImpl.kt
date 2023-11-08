@@ -32,7 +32,7 @@ import java.util.function.Supplier
 @VisibleForTesting
 fun isSelectInProjectViewServiceBusy(project: Project):Boolean = project.serviceOrNull<SelectInProjectViewImpl>()?.isBusy == true
 
-@Service
+@Service(Service.Level.PROJECT)
 internal class SelectInProjectViewImpl(
   private val project: Project,
   private val coroutineScope: CoroutineScope,

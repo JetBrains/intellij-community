@@ -20,10 +20,12 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.Alarm
+import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.PositionTracker
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import java.awt.Component
+import java.awt.Insets
 import java.awt.Point
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
@@ -240,6 +242,31 @@ class GotItTooltip internal constructor(@NonNls val id: String,
   }
 
   /**
+   * Make the tooltip focused when it's shown.
+   */
+  fun withFocus(): GotItTooltip {
+    gotItBuilder.requestFocus(true)
+    return this
+  }
+
+  /**
+   * Action to invoke when "Got It" button clicked.
+   */
+  fun withGotItButtonAction(action: () -> Unit): GotItTooltip {
+    gotItBuilder.onButtonClick(action)
+    return this
+  }
+
+  /**
+   * Show additional button on the right side of the "GotIt" button.
+   * Will be shown only if "GotIt" button is shown.
+   */
+  fun withSecondaryButton(@Nls label: String, action: () -> Unit = {}): GotItTooltip {
+    gotItBuilder.withSecondaryButton(label, action)
+    return this
+  }
+
+  /**
    * Show close shortcut next to the "Got It" button.
    */
   @Deprecated("Not supported in the updated design")
@@ -327,7 +354,7 @@ class GotItTooltip internal constructor(@NonNls val id: String,
     if (canShow()) {
       val balloonProperty = ClientProperty.get(component, BALLOON_PROPERTY)
       if (balloonProperty == null) {
-        balloon = createAndShow(component, pointProvider).also { ClientProperty.put(component, BALLOON_PROPERTY, it) }
+        balloon = createAndShow(component, pointProvider)
       }
       else if (balloonProperty is BalloonImpl && balloonProperty.isVisible) {
         balloonProperty.revalidate()
@@ -348,16 +375,32 @@ class GotItTooltip internal constructor(@NonNls val id: String,
 
   fun createAndShow(component: JComponent, pointProvider: (Component, Balloon) -> Point): Balloon {
     val tracker = object : PositionTracker<Balloon>(component) {
-      override fun recalculateLocation(balloon: Balloon): RelativePoint? =
-        if (getComponent().isShowing)
-          RelativePoint(component, pointProvider(component, balloon))
+      override fun recalculateLocation(balloon: Balloon): RelativePoint? {
+        if (!component.isShowing) {
+          hideBalloon(balloon)
+          return null
+        }
+        val point = pointProvider(component, balloon)
+
+        @Suppress("UseDPIAwareInsets")
+        // need to include the corners, because Rectangle#contains() check that point is really inside the rectangle
+        val visibleRect = (component as? JComponent)?.visibleRect?.also { JBInsets.addTo(it, Insets(1, 1, 1, 1)) }
+        // hide the balloon if the target point is not inside the visible rect (except the heavyweight components)
+        return if (visibleRect == null || visibleRect.contains(point)) {
+          RelativePoint(component, point)
+        }
         else {
-          SwingUtilities.invokeLater {
-            balloon.hide(true)
-            GotItUsageCollector.instance.logClose(id, GotItUsageCollectorGroup.CloseType.AncestorRemoved)
-          }
+          hideBalloon(balloon)
           null
         }
+      }
+
+      private fun hideBalloon(balloon: Balloon) {
+        SwingUtilities.invokeLater {
+          balloon.hide(true)
+          GotItUsageCollector.instance.logClose(id, GotItUsageCollectorGroup.CloseType.AncestorRemoved)
+        }
+      }
     }
     val balloon = createBalloon().also {
       val dispatcherDisposable = Disposer.newDisposable()
@@ -404,6 +447,7 @@ class GotItTooltip internal constructor(@NonNls val id: String,
       onBalloonCreated(it)
     }
     this.balloon = balloon
+    ClientProperty.put(component, BALLOON_PROPERTY, balloon)
 
     when {
       currentlyShown == null -> {
@@ -482,7 +526,12 @@ class GotItTooltip internal constructor(@NonNls val id: String,
   }
 
   override fun hidePopup() {
-    balloon?.hide(false)
+    val ok = false
+    hidePopup(ok)
+  }
+
+  internal fun hidePopup(ok: Boolean) {
+    balloon?.hide(ok)
     balloon = null
   }
 
@@ -522,5 +571,8 @@ class GotItTooltip internal constructor(@NonNls val id: String,
 
     // Global tooltip queue start element
     private var currentlyShown: GotItTooltip? = null
+
+    @JvmStatic
+    fun isCurrentlyShownFor(component: Component): Boolean = ClientProperty.isSet(component, BALLOON_PROPERTY)
   }
 }

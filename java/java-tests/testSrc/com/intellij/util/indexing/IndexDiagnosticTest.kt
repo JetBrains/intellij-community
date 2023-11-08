@@ -163,7 +163,8 @@ class IndexDiagnosticTest : JavaCodeInsightFixtureTestCase() {
         fileCount = JsonProjectDumbIndexingFileCount(
           numberOfFilesIndexedByInfrastructureExtensionsDuringIndexingStage = 0,
           numberOfFilesIndexedWithLoadingContent = 0,
-          numberOfChangedDuringIndexingFiles = 0
+          numberOfChangedDuringIndexingFiles = 0,
+          numberOfNothingToWriteFiles = 0,
         ),
         totalStatsPerFileType = listOf(
           JsonProjectDumbIndexingHistory.JsonStatsPerFileType(
@@ -198,6 +199,7 @@ class IndexDiagnosticTest : JavaCodeInsightFixtureTestCase() {
             providerName = "providerName",
             totalNumberOfIndexedFiles = 444,
             totalNumberOfFilesFullyIndexedByExtensions = 33,
+            totalNumberOfNothingToWriteFiles = 15,
             totalIndexingVisibleTime = JsonDuration(123),
             contentLoadingVisibleTime = JsonDuration(456),
             numberOfTooLargeForIndexingFiles = 1,
@@ -212,7 +214,8 @@ class IndexDiagnosticTest : JavaCodeInsightFixtureTestCase() {
             indexedFiles = listOf(
               JsonFileProviderIndexStatistics.JsonIndexedFile(
                 path = PortableFilePath.RelativePath(PortableFilePath.ProjectRoot, "src/a.java"),
-                wasFullyIndexedByExtensions = true
+                wasFullyIndexedByExtensions = true,
+                nothingToWrite = false,
               )
             ),
             separateApplyingIndexesVisibleTime = JsonDuration(362)

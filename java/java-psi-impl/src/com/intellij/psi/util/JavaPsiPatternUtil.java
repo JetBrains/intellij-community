@@ -175,7 +175,7 @@ public final class JavaPsiPatternUtil {
     }
     return false;
   }
-  
+
   public static boolean isGuarded(@NotNull PsiCaseLabelElement pattern) {
     PsiElement parent = pattern.getParent();
     if (parent instanceof PsiCaseLabelElementList) {
@@ -234,7 +234,7 @@ public final class JavaPsiPatternUtil {
     }
     return null;
   }
-  
+
   @Contract("null,_,_ -> false")
   public static boolean isUnconditionalForType(@Nullable PsiCaseLabelElement pattern, @NotNull PsiType type, boolean forDomination) {
     PsiPrimaryPattern unconditionalPattern = findUnconditionalPattern(pattern);
@@ -562,9 +562,9 @@ public final class JavaPsiPatternUtil {
     private final @NotNull PsiRecordComponent myRecordComponent;
 
     DestructionComponent(@NotNull PsiPatternVariable variable,
-              @NotNull PsiPatternVariable parent,
-              @NotNull PsiRecordComponent recordComponent,
-              boolean isFake) {
+                         @NotNull PsiPatternVariable parent,
+                         @NotNull PsiRecordComponent recordComponent,
+                         boolean isFake) {
       super(variable, isFake);
       myParent = parent;
       myRecordComponent = recordComponent;

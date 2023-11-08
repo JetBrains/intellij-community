@@ -21,7 +21,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 
@@ -42,7 +41,7 @@ public class FastFileAttributesTest {
 
   @AfterEach
   public void tearDown() throws Exception {
-    vfs.dispose();
+    StorageTestingUtils.bestEffortToCloseAndClean(vfs);
   }
 
   @Test

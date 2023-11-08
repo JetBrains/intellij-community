@@ -3,16 +3,19 @@ package com.intellij.java.configurationStore
 
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.components.stateStore
-import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.platform.workspace.jps.CustomModuleEntitySource
 import com.intellij.platform.workspace.jps.JpsFileEntitySource
-import com.intellij.platform.workspace.jps.serialization.impl.*
-import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.jps.entities.LibraryId
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.jps.serialization.impl.*
+import com.intellij.platform.workspace.storage.DummyParentEntitySource
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.EntityStorage
+import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
+import com.intellij.testFramework.rules.ProjectModelRule
 import kotlinx.coroutines.runBlocking
 import java.nio.file.Path
 import java.nio.file.Paths

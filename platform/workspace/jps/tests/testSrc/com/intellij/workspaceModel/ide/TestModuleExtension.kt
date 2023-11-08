@@ -53,10 +53,6 @@ class TestModuleExtension : ModuleExtension, PersistentStateComponentWithModific
     return mySource != null && mySource.myState != myState
   }
 
-  override fun dispose() {
-    myState = null
-  }
-
   var languageLevel: LanguageLevel?
     set(value) {
       if (myState!!.languageLevel == value) return

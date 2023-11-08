@@ -2,6 +2,7 @@
 package org.jetbrains.uast.kotlin.psi
 
 import com.intellij.lang.Language
+import com.intellij.psi.PsiAnnotation
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiType
@@ -20,6 +21,16 @@ open class UastKotlinPsiParameterBase<T : KtElement>(
     isVarArgs: Boolean = false,
     val ktDefaultValue: KtExpression? = null,
 ) : LightParameter(name, type, parent, language, isVarArgs) {
+
+    protected open val _annotations: Array<PsiAnnotation> = arrayOf()
+
+    override fun getAnnotations(): Array<PsiAnnotation> {
+        return _annotations
+    }
+
+    override fun hasAnnotation(fqn: String): Boolean {
+        return _annotations.find { it.hasQualifiedName(fqn) } != null
+    }
 
     override fun getParent(): PsiElement = parent
 

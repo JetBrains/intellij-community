@@ -7,6 +7,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -59,7 +60,7 @@ public abstract class PsiManager extends UserDataHolderBase {
    * <p>
    * Can be used to match two versions of the PSI tree with each other after a reparse.
    * <p>
-   * For example, Java classes with the same fully-qualified name are equivalent, which is useful when working
+   * For example, Java classes with the same fully qualified name are equivalent, which is useful when working
    * with both library source and class roots. Source and compiled classes are definitely different ({@code equals()} returns {@code false}),
    * but for reference resolve or inheritance checks, they're equivalent.
    *
@@ -151,8 +152,8 @@ public abstract class PsiManager extends UserDataHolderBase {
   /**
    * Clears all {@link com.intellij.psi.util.CachedValue} depending on {@link PsiModificationTracker#MODIFICATION_COUNT} and resolve caches.
    * Can be used to reduce memory consumption in batch operations sequentially processing multiple files.
-   * Should be invoked on Write thread.
    */
+  @RequiresEdt
   public abstract void dropPsiCaches();
 
   /**

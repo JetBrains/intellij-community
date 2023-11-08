@@ -4,11 +4,8 @@ package org.jetbrains.plugins.gitlab.mergerequest.action
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.service
-import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.project.DumbAwareAction
-import com.intellij.openapi.wm.ToolWindowManager
-import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabToolWindowViewModel
-import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.GitLabToolWindowFactory
+import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.model.GitLabToolWindowViewModel
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 
 class GitLabShowMergeRequestsAction : DumbAwareAction() {
@@ -33,6 +30,8 @@ class GitLabShowMergeRequestsAction : DumbAwareAction() {
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    e.project!!.service<GitLabToolWindowViewModel>().activate()
+    e.project!!.service<GitLabToolWindowViewModel>().activateAndAwaitProject {
+      selectTab(null)
+    }
   }
 }

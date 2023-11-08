@@ -10,7 +10,7 @@ class LightApplicationService1
 @Service(Service.Level.APP)
 class LightApplicationService2 {
   companion object {
-    val <warning descr="Provide explicit 'getInstance()' method to access application service instead of a property">instance1</warning>: LightApplicationService2
+    val instance1: LightApplicationService2
       get() = service()
 
     val <warning descr="Provide explicit 'getInstance()' method to access application service instead of a property">instance2</warning> = service<LightApplicationService2>()

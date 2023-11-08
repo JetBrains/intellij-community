@@ -45,6 +45,8 @@
     <applicationService serviceImplementation="org.jetbrains.plugins.gitlab.authentication.accounts.GitLabPersistentAccounts"/>
     <applicationService serviceInterface="org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager"
                         serviceImplementation="org.jetbrains.plugins.gitlab.authentication.accounts.PersistentGitLabAccountManager"/>
+    <applicationService serviceInterface="org.jetbrains.plugins.gitlab.api.GitLabApiManager"
+                        serviceImplementation="org.jetbrains.plugins.gitlab.api.GitLabApiManagerImpl"/>
     <applicationService serviceInterface="org.jetbrains.plugins.gitlab.GitLabServersManager"
                         serviceImplementation="org.jetbrains.plugins.gitlab.CachingGitLabServersManager"/>
 
@@ -69,17 +71,33 @@
       implementation="org.jetbrains.plugins.gitlab.mergerequest.diff.action.GitLabMergeRequestShowDiffActionProvider"/>
     <iconMapper mappingFile="GitlabIconMappings.json"/>
 
-    <statistics.applicationUsagesCollector
-      implementation="org.jetbrains.plugins.gitlab.util.GitLabStatistics$GitLabAccountsStatisticsCollector"/>
-    <statistics.counterUsagesCollector
-      implementationClass="org.jetbrains.plugins.gitlab.util.GitLabStatistics$GitLabCountersCollector"/>
-
     <vcsAnnotationGutterActionProvider implementation="org.jetbrains.plugins.gitlab.ui.action.GitLabAnnotationGutterActionProvider"/>
 
     <openapi.vcs.ui.cloneDialog.VcsCloneDialogExtension
       id="org.jetbrains.plugins.gitlab.ui.clone.GitLabCloneDialogExtension"
       implementation="org.jetbrains.plugins.gitlab.ui.clone.GitLabCloneDialogExtension"
       order="after org.jetbrains.plugins.github.ui.cloneDialog.GHECloneDialogExtension"/>
+
+    <editorFactoryListener
+      implementation="org.jetbrains.plugins.gitlab.mergerequest.ui.editor.GitLabMergeRequestEditorReviewController$InstallerListener"/>
+    <iw.actionProvider
+      implementation="org.jetbrains.plugins.gitlab.mergerequest.ui.editor.action.GitLabMergeRequestEditorReviewModeActionProvider"/>
+
+    <registryKey key="vcs.gitlab.connect.silently"
+                 description="Connect to GitLab repository without an explicit user action"
+                 defaultValue="true"/>
+    <registryKey defaultValue="true" description="Enable all-in-one diff for GitLab merge requests" key="gitlab.enable.combined.diff"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="com.intellij.statistics">
+    <applicationUsagesCollector
+      implementation="org.jetbrains.plugins.gitlab.util.GitLabStatistics$GitLabAccountsStatisticsCollector"/>
+    <counterUsagesCollector
+      implementationClass="org.jetbrains.plugins.gitlab.util.GitLabStatistics$GitLabCountersCollector"/>
+    <notificationIdsHolder
+      implementation="org.jetbrains.plugins.gitlab.notification.GitLabNotificationIdsHolder"/>
+    <actionCustomPlaceAllowlist id="GitLabActionCustomPlaceAllowlist"
+                                places="GitLabMergeRequestListPopup;GitLabMergeRequestChangesTreePopup;GitLabMergeRequestDetailsPopup"/>
   </extensions>
 
   <extensions defaultExtensionNs="Git4Idea">
@@ -110,6 +128,11 @@
     <action id="GitLab.Merge.Request.Copy.Link"
             class="org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestCopyURLAction"
             icon="org.jetbrains.plugins.gitlab.GitlabIcons.GitLabLogo"/>
+    <action id="GitLab.Merge.Request.Create"
+            class="org.jetbrains.plugins.gitlab.mergerequest.ui.create.action.GitLabMergeRequestOpenCreateTabAction"
+            icon="AllIcons.General.Add">
+      <add-to-group group-id="Git.Menu"/>
+    </action>
 
     <action id="GitLab.Create.Snippet"
             class="org.jetbrains.plugins.gitlab.snippets.GitLabCreateSnippetAction"
@@ -166,7 +189,7 @@
     </group>
 
     <group id="GitLab.Merge.Request.Diff.Discussions.View.Options"
-           class="org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestDiffReviewDiscussionsToggleAction"
+           class="org.jetbrains.plugins.gitlab.mergerequest.ui.diff.action.GitLabMergeRequestDiffReviewDiscussionsToggleAction"
            icon="AllIcons.Actions.Show"
            popup="true">
       <add-to-group group-id="Diff.EditorGutterPopupMenu.EditorSettings"
@@ -191,10 +214,34 @@
       <add-to-group group-id="Git.Hosting.Copy.Link.Group"/>
     </group>
 
-    <action id="GitLab.Show.In.Toolwindow"
-            class="org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestOnCurrentBranchService$ShowAction"
-            icon="org.jetbrains.plugins.gitlab.GitlabIcons.GitLabLogo">
-      <add-to-group group-id="Git.Branches.List"/>
+    <group id="GitLab.Merge.Request.Review.Editor.Branch.Popup.Actions">
+      <separator/>
+      <action id="GitLab.Merge.Request.Show.In.Toolwindow"
+              class="org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestOnCurrentBranchService$ShowAction"
+              icon="org.jetbrains.plugins.gitlab.GitlabIcons.GitLabLogo">
+      </action>
+      <reference id="GitLab.MergeRequest.Review.Submit"/>
+      <action id="GitLab.Merge.Request.Branch.Update"
+              class="org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestOnCurrentBranchService$UpdateAction"
+              icon="org.jetbrains.plugins.gitlab.GitlabIcons.GitLabWarning">
+      </action>
+      <action id="GitLab.MergeRequest.Review.Mode.Toggle"
+              class="org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestOnCurrentBranchService$ToggleReviewAction">
+      </action>
+      <add-to-group group-id="Git.Experimental.Branch.Popup.Actions"/>
+    </group>
+
+    <action id="GitLab.Merge.Request.Review.Editor.Show.Diff"
+            class="org.jetbrains.plugins.gitlab.mergerequest.ui.editor.action.GitLabMergeRequestShowFileDiffAction">
+      <add-to-group group-id="EditorPopupMenu"/>
     </action>
   </actions>
+
+  <projectListeners>
+    <listener class="org.jetbrains.plugins.gitlab.notification.GitLabPushNotificationListener"
+              topic="git4idea.push.GitPushListener"
+              activeInHeadlessMode="false"
+              activeInTestMode="false"/>
+  </projectListeners>
+
 </idea-plugin>

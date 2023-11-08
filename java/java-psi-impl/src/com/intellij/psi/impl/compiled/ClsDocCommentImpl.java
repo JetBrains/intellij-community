@@ -47,7 +47,7 @@ class ClsDocCommentImpl extends ClsElementImpl implements PsiDocComment, JavaTok
   }
 
   @Override
-  public void setMirror(@NotNull TreeElement element) throws InvalidMirrorException {
+  protected void setMirror(@NotNull TreeElement element) throws InvalidMirrorException {
     setMirrorCheckingType(element, JavaDocElementType.DOC_COMMENT);
   }
 

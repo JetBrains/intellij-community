@@ -42,6 +42,22 @@ class KotlinQuickFixesList @ForKtQuickFixesListBuilder @OptIn(PrivateForInline::
         is KotlinQuickFixFactory.KotlinQuickFixesPsiBasedFactory -> quickFixFactory.psiFactory.createQuickFix(diagnostic.psi)
     }
 
+    /**
+     * Returns new `KotlinQuickFixesList`, which creates only quick fixes produced by factories from original list that are [T].
+     */
+    @OptIn(ForKtQuickFixesListBuilder::class, PrivateForInline::class)
+    internal inline fun <reified T> filterByFactoryType(): KotlinQuickFixesList  {
+        val fixes = quickFixes.mapValues { (_, factories) ->
+            factories.filter { factory ->
+                when (factory) {
+                    is KotlinQuickFixFactory.KotlinApplicatorBasedFactory -> factory.applicatorFactory is T
+                    is KotlinQuickFixFactory.KotlinQuickFixesPsiBasedFactory -> factory.psiFactory is T
+                    is KotlinQuickFixFactory.KotlinApplicatorModCommandBasedFactory -> factory.applicatorFactory is T
+                }
+            }
+        }
+        return KotlinQuickFixesList(fixes)
+    }
 
     companion object {
         @OptIn(ForKtQuickFixesListBuilder::class, PrivateForInline::class)

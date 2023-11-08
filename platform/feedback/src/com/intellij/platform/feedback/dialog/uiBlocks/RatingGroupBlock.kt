@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.feedback.dialog.uiBlocks
 
-import com.intellij.ide.feedback.RatingComponent
+import com.intellij.platform.feedback.dialog.components.RatingComponent
 import com.intellij.platform.feedback.impl.bundle.CommonFeedbackBundle
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.dsl.builder.BottomGap
@@ -25,7 +25,7 @@ class RatingGroupBlock(@Nls private val topLabel: String,
       row {
         label(topLabel).bold().errorOnApply(CommonFeedbackBundle.message("dialog.feedback.block.required")) {
           allRatings.any { it.myRating == 0 }
-        }
+        }.validationRequestor { validate -> validate() }
 
         myHint?.let { rowComment(it) }
       }.bottomGap(BottomGap.NONE)

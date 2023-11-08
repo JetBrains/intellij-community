@@ -6,7 +6,6 @@ import org.jetbrains.jps.dependency.MapletFactory;
 import org.jetbrains.jps.dependency.Node;
 import org.jetbrains.jps.dependency.ReferenceID;
 import org.jetbrains.jps.dependency.impl.BackDependencyIndexImpl;
-import org.jetbrains.jps.dependency.impl.StringReferenceID;
 import org.jetbrains.jps.javac.Iterators;
 
 import java.util.Collections;
@@ -24,6 +23,6 @@ public final class SubclassesIndex extends BackDependencyIndexImpl {
       return Collections.emptyList();
     }
     JvmClass classNode = (JvmClass)node;
-    return Iterators.map(Iterators.flat(Iterators.asIterable(classNode.getSuperFqName()), classNode.getInterfaces()), name -> new StringReferenceID(name));
+    return Iterators.map(classNode.getSuperTypes(), name -> new JvmNodeReferenceID(name));
   }
 }

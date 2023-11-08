@@ -2,15 +2,18 @@
 package org.jetbrains.jps.dependency.java;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.dependency.impl.StringReferenceID;
 
 public final class ImportStaticOnDemandUsage extends JvmElementUsage {
 
   public ImportStaticOnDemandUsage(@NotNull String importedClassName) {
-    super(new StringReferenceID(importedClassName));
+    this(new JvmNodeReferenceID(importedClassName));
   }
-  
+
+  public ImportStaticOnDemandUsage(@NotNull JvmNodeReferenceID importedClassId) {
+    super(importedClassId);
+  }
+
   public String getImportedClassName() {
-    return ((StringReferenceID)getElementOwner()).getValue();
+    return ((JvmNodeReferenceID)getElementOwner()).getNodeName();
   }
 }

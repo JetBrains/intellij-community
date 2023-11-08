@@ -87,7 +87,7 @@ public final class TemplateExpandShortcutPanel extends JPanel {
         }
       }
 
-      private boolean isConfigurableOpenEvent(PropertyChangeEvent evt) {
+      private static boolean isConfigurableOpenEvent(PropertyChangeEvent evt) {
         return evt.getPropertyName().equals("ancestor") && evt.getNewValue() != null && evt.getOldValue() == null;
       }
     });

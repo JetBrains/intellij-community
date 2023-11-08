@@ -50,7 +50,7 @@ public class CustomizableActionsPanel {
   public CustomizableActionsPanel() {
     //noinspection HardCodedStringLiteral
     @SuppressWarnings("DialogTitleCapitalization")
-    Group rootGroup = new Group("root", null, null);
+    Group rootGroup = new Group("root");
     final DefaultMutableTreeNode root = new DefaultMutableTreeNode(rootGroup);
     MyActionsTreeModel model = new MyActionsTreeModel(root);
     myActionsTree = new Tree(model);
@@ -342,16 +342,16 @@ public class CustomizableActionsPanel {
     if (userObj instanceof String actionId) {
       AnAction action = ActionManager.getInstance().getAction(actionId);
       if (action != null) {
-        return Pair.create(actionId, action.getTemplatePresentation().getIcon());
+        return new Pair<>(actionId, action.getTemplatePresentation().getIcon());
       }
     }
     else if (userObj instanceof Group group) {
-      return Pair.create(group.getId(), group.getIcon());
+      return new Pair<>(group.getId(), group.getIcon());
     }
     else if (userObj instanceof Pair<?, ?> pair) {
       Object first = pair.first;
       String actionId = first instanceof Group group ? group.getId() : (String)first;
-      return Pair.create(actionId, (Icon)pair.second);
+      return new Pair<>(actionId, (Icon)pair.second);
     }
     return Pair.empty();
   }
@@ -392,15 +392,15 @@ public class CustomizableActionsPanel {
 
     AnAction reuseFrom = actionManager.getAction(path);
     if (reuseFrom != null) {
-      Icon toSet = CustomizationUtil.getOriginalIconFrom(reuseFrom);
-      Icon defaultIcon = CustomizationUtil.getOriginalIconFrom(action);
+      Icon toSet = CustomActionsSchemaKt.getOriginalIconFrom(reuseFrom);
+      Icon defaultIcon = CustomActionsSchemaKt.getOriginalIconFrom(action);
       node.setUserObject(Pair.create(value, toSet));
       schema.addIconCustomization(actionId, toSet != defaultIcon ? path : null);
     }
     else {
       Icon icon;
       try {
-        icon = CustomActionsSchema.loadCustomIcon(path);
+        icon = CustomActionsSchemaKt.loadCustomIcon(path);
       }
       catch (Throwable t) {
         Logger.getInstance(CustomizableActionsPanel.class)
@@ -530,8 +530,8 @@ public class CustomizableActionsPanel {
                 if (path.isEmpty()) {
                   path = actionId;
                 }
-                Icon icon = CustomizationUtil.getIconForPath(ActionManager.getInstance(), path);
-                newNode.setUserObject(Pair.create(actionId, icon));
+                Icon icon = CustomActionsSchemaKt.getIconForPath(ActionManager.getInstance(), path);
+                newNode.setUserObject(new Pair<>(actionId, icon));
               }
             }
 

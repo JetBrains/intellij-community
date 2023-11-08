@@ -17,7 +17,6 @@ import org.jetbrains.jps.builders.impl.BuildRootIndexImpl;
 import org.jetbrains.jps.builders.impl.BuildTargetIndexImpl;
 import org.jetbrains.jps.builders.impl.BuildTargetRegistryImpl;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
-import org.jetbrains.jps.builders.java.dependencyView.Callbacks;
 import org.jetbrains.jps.builders.logging.BuildLoggingManager;
 import org.jetbrains.jps.builders.storage.BuildDataPaths;
 import org.jetbrains.jps.incremental.*;
@@ -117,20 +116,6 @@ public final class BuildRunner {
 
   public void setForceCleanCaches(boolean forceCleanCaches) {
     myForceCleanCaches = forceCleanCaches;
-  }
-
-  /**
-   * @deprecated Use {@link #runBuild(ProjectDescriptor, CanceledStatus, MessageHandler, BuildType, List, boolean)} instead.
-   * constantSearch parameter is ignored
-   */
-  @Deprecated(forRemoval = true)
-  public void runBuild(ProjectDescriptor pd,
-                       CanceledStatus cs,
-                       @Nullable Callbacks.ConstantAffectionResolver constantSearch,
-                       MessageHandler msgHandler,
-                       BuildType buildType,
-                       List<TargetTypeBuildScope> scopes, final boolean includeDependenciesToScope) throws Exception {
-    runBuild(pd, cs, msgHandler, buildType, scopes, includeDependenciesToScope);
   }
 
   public void runBuild(@NotNull ProjectDescriptor pd,

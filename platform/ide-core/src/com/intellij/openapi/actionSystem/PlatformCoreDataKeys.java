@@ -27,7 +27,7 @@ public class PlatformCoreDataKeys extends CommonDataKeys {
 
   /**
    * Returns the text of currently selected file/file revision
-   * @deprecated Use what's needed from {@link com.intellij.ide.impl.dataRules.FileTextRule}
+   * @deprecated Use {@link com.intellij.openapi.editor.Document} from {@link #VIRTUAL_FILE} or {@link #EDITOR}.
    */
   @Deprecated(forRemoval = true)
   public static final DataKey<String> FILE_TEXT = DataKey.create("fileText");
@@ -87,7 +87,7 @@ public class PlatformCoreDataKeys extends CommonDataKeys {
   public static final DataKey<DataProvider> BGT_DATA_PROVIDER = DataKey.create("bgtDataProvider");
 
   /** @deprecated Use {@link #BGT_DATA_PROVIDER} and {@link CompositeDataProvider} */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static final DataKey<Iterable<DataProvider>> SLOW_DATA_PROVIDERS = DataKey.create("slowDataProviders");
 
   /**

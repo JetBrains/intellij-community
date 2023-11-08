@@ -28,5 +28,6 @@
     <orderEntry type="library" scope="TEST" name="mockito" level="project" />
     <orderEntry type="module" module-name="intellij.java.impl.inspections" />
     <orderEntry type="module" module-name="intellij.java.impl.refactorings" />
+    <orderEntry type="module" module-name="intellij.tools.ide.metrics.benchmark" scope="TEST" />
   </component>
 </module>

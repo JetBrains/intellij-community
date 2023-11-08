@@ -28,7 +28,7 @@ public final class OffsetMap implements Disposable {
   /**
    * @param key key
    * @return offset An offset registered earlier with this key.
-   * -1 if offset wasn't registered or became invalidated due to document changes
+   * @throws IllegalArgumentException if offset wasn't registered or became invalidated due to document changes
    */
   public int getOffset(OffsetKey key) {
     synchronized (myMap) {

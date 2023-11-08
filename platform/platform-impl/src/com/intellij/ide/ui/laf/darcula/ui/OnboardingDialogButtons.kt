@@ -12,13 +12,22 @@ import java.awt.event.MouseEvent
 import javax.swing.*
 
 object OnboardingDialogButtons {
-  fun createLinkButton(@Nls text: String, icon: Icon?, onClick: Runnable): JButton {
-    val action: Action = object : AbstractAction(text, icon) {
-      override fun actionPerformed(e: ActionEvent) {
-        onClick.run()
+  fun createLinkButton(@Nls text: String, icon: Icon?, onClick: Runnable?): JButton {
+    val btn = createLinkButton()
+    onClick?.let {runnable ->
+      btn.action = object : AbstractAction(text, icon) {
+        override fun actionPerformed(e: ActionEvent) {
+          runnable.run()
+        }
       }
     }
-    val btn = JButton(action)
+
+    return btn
+  }
+
+  fun createLinkButton(): JButton {
+    val btn = JButton()
+
     btn.putClientProperty("ActionToolbar.smallVariant", true)
     btn.setHorizontalTextPosition(SwingConstants.LEFT)
     btn.setContentAreaFilled(false)
@@ -29,10 +38,8 @@ object OnboardingDialogButtons {
     return btn
   }
 
-  @JvmStatic
-  fun createHoveredLinkButton(@Nls text: String, icon: Icon?, onClick: Runnable): JComponent {
-
-    val btn = createLinkButton(text, icon, onClick)
+  fun createHoveredLinkButton(): JButton {
+    val btn = createLinkButton()
     btn.preferredSize = Dimension(280, 40)
     btn.isBorderPainted = true
     btn.putClientProperty("JButton.backgroundColor", JBUI.CurrentTheme.ActionButton.hoverBackground())
@@ -55,26 +62,47 @@ object OnboardingDialogButtons {
     return btn
   }
 
-  private val BUTTON_HOVER_BORDER_COLOR: Color = JBColor(0xa8adbd, 0x6f737a)
-  private val DEFAULT_BUTTON_HOVER_BORDER_COLOR: Color = JBColor(0xa8adbd, 0x6f737a)
+  @JvmStatic
+  fun createHoveredLinkButton(@Nls text: String, icon: Icon?, onClick: Runnable?): JButton {
+    val btn = createHoveredLinkButton()
+
+    onClick?.let {runnable ->
+      btn.action = object : AbstractAction(text, icon) {
+        override fun actionPerformed(e: ActionEvent) {
+          runnable.run()
+        }
+      }
+    }
+
+    return btn
+  }
+
+  val BUTTON_HOVER_BORDER_COLOR: Color = JBColor(0xa8adbd, 0x6f737a)
+  val DEFAULT_BUTTON_HOVER_BORDER_COLOR: Color = JBColor(0xa8adbd, 0x6f737a)
 
   @JvmStatic
-  fun createMainButton(@Nls text: String, icon: Icon?, onClick: Runnable): JButton {
+  fun createMainButton(@Nls text: String, icon: Icon?, onClick: Runnable? = null): JButton {
     return createButton(true, text, icon, onClick)
   }
   @JvmStatic
-  fun createButton(@Nls text: String, icon: Icon?, onClick: Runnable): JButton {
+  fun createButton(@Nls text: String, icon: Icon?, onClick: Runnable? = null): JButton {
     return createButton(false, text, icon, onClick)
   }
 
-  private fun createButton(isDefault: Boolean, @Nls text: String, icon: Icon?, onClick: Runnable): JButton {
-    val action: Action = object : AbstractAction(text, icon) {
-      override fun actionPerformed(e: ActionEvent) {
-        onClick.run()
+  private fun createButton(isDefault: Boolean, @Nls text: String, icon: Icon?, onClick: Runnable? = null): JButton {
+    val btn = createButton(isDefault)
+    onClick?.let {runnable ->
+      btn.action = object : AbstractAction(text, icon) {
+        override fun actionPerformed(e: ActionEvent) {
+          runnable.run()
+        }
       }
     }
-    val btn = JButton(action)
-    btn.preferredSize = Dimension(280, 40)
+    return btn
+  }
+
+  fun createButton(isDefault: Boolean): JButton {
+    val btn = JButton()
     btn.putClientProperty("ActionToolbar.smallVariant", true)
     btn.putClientProperty(DarculaButtonUI.DEFAULT_STYLE_KEY, isDefault)
     val listener: MouseAdapter = object : MouseAdapter() {

@@ -9,9 +9,9 @@ import org.jetbrains.intellij.build.fus.FeatureUsageStatisticsProperties
 import java.nio.file.Path
 
 /**
- * Describes proprietary tools which are used to build the product. Pass the instance of this class to [org.jetbrains.intellij.build.impl.BuildContextImpl.createContext] method.
+ * Describes proprietary tools which are used to build the product. Pass the instance of this class to [org.jetbrains.intellij.build.impl.BuildContextImpl.Companion.createContext] method.
  */
-class ProprietaryBuildTools(
+data class ProprietaryBuildTools(
   /**
    * This tool is required to sign files in distribution. If it is null the files won't be signed and OS may show
    * a warning when user tries to run them.

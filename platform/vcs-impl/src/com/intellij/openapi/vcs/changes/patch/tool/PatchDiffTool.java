@@ -2,177 +2,59 @@
 package com.intellij.openapi.vcs.changes.patch.tool;
 
 import com.intellij.diff.DiffContext;
+import com.intellij.diff.DiffToolType;
 import com.intellij.diff.FrameDiffTool;
-import com.intellij.diff.fragments.DiffFragment;
 import com.intellij.diff.requests.DiffRequest;
-import com.intellij.diff.tools.util.DiffDataKeys;
-import com.intellij.diff.tools.util.PrevNextDifferenceIterableBase;
-import com.intellij.diff.tools.util.SimpleDiffPanel;
-import com.intellij.diff.util.DiffDrawUtil;
-import com.intellij.diff.util.DiffUtil;
-import com.intellij.diff.util.LineRange;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.impl.LineNumberConverterAdapter;
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.diff.impl.patch.TextFilePatch;
 import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.ui.components.panels.Wrapper;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
-import java.util.ArrayList;
-import java.util.List;
+final class PatchDiffTool {
+  static class Unified implements FrameDiffTool {
+    @NotNull
+    @Override
+    public String getName() {
+      return VcsBundle.message("patch.content.viewer.name");
+    }
 
-final class PatchDiffTool implements FrameDiffTool {
-  @NotNull
-  @Override
-  public String getName() {
-    return VcsBundle.message("patch.content.viewer.name");
-  }
-
-  @Override
-  public boolean canShow(@NotNull DiffContext context, @NotNull DiffRequest request) {
-    return request instanceof PatchDiffRequest;
-  }
-
-  @NotNull
-  @Override
-  public DiffViewer createComponent(@NotNull DiffContext context, @NotNull DiffRequest request) {
-    return new MyPatchViewer(context, (PatchDiffRequest)request);
-  }
-
-  private static class MyPatchViewer implements DiffViewer, DataProvider {
-
-
-    private final Project myProject;
-    private final SimpleDiffPanel myPanel;
-    private final EditorEx myEditor;
-    private final DiffContext myContext;
-    private final PatchDiffRequest myRequest;
-    private final MyPrevNextDifferenceIterable myPrevNextDifferenceIterable;
-    private final List<PatchChangeBuilder.Hunk> myHunks = new ArrayList<>();
-
-    MyPatchViewer(DiffContext context, PatchDiffRequest request) {
-      myProject = context.getProject();
-      myContext = context;
-      myRequest = request;
-      Document document = EditorFactory.getInstance().createDocument("");
-      myEditor = DiffUtil.createEditor(document, myProject, true, true);
-      myPrevNextDifferenceIterable = new MyPrevNextDifferenceIterable();
-
-      Wrapper editorPanel = new Wrapper(new BorderLayout(0, DiffUtil.TITLE_GAP.get()), myEditor.getComponent());
-      String panelTitle = request.getPanelTitle();
-      if (panelTitle != null) {
-        editorPanel.add(DiffUtil.createTitle(panelTitle), BorderLayout.NORTH);
-      }
-      myPanel = new SimpleDiffPanel(editorPanel, this, context);
+    @Override
+    public boolean canShow(@NotNull DiffContext context, @NotNull DiffRequest request) {
+      return request instanceof PatchDiffRequest;
     }
 
     @NotNull
     @Override
-    public JComponent getComponent() {
-      return myPanel;
+    public DiffViewer createComponent(@NotNull DiffContext context, @NotNull DiffRequest request) {
+      return new PatchDiffViewer(context, (PatchDiffRequest)request);
     }
 
-    @Nullable
     @Override
-    public JComponent getPreferredFocusedComponent() {
-      return myEditor.getContentComponent();
+    public @NotNull DiffToolType getToolType() {
+      return DiffToolType.Unified.INSTANCE;
+    }
+  }
+
+  static class SideBySide implements FrameDiffTool {
+    @NotNull
+    @Override
+    public String getName() {
+      return VcsBundle.message("patch.content.viewer.side.by.side.name");
+    }
+
+    @Override
+    public boolean canShow(@NotNull DiffContext context, @NotNull DiffRequest request) {
+      return request instanceof PatchDiffRequest;
     }
 
     @NotNull
     @Override
-    public ToolbarComponents init() {
-      myPanel.setPersistentNotifications(DiffUtil.createCustomNotifications(this, myContext, myRequest));
-      onInit();
-      return new FrameDiffTool.ToolbarComponents();
-    }
-
-    @Override
-    public void dispose() {
-      EditorFactory.getInstance().releaseEditor(myEditor);
-    }
-
-    private void onInit() {
-      PatchChangeBuilder.PatchState state = new PatchChangeBuilder().build(myRequest.getPatch().getHunks());
-      myHunks.addAll(state.getHunks());
-
-      Document patchDocument = myEditor.getDocument();
-      WriteAction.run(() -> patchDocument.setText(state.getPatchContent().toString()));
-
-      myEditor.getGutter().setLineNumberConverter(
-        new LineNumberConverterAdapter(state.getLineConvertor1().createConvertor()),
-        new LineNumberConverterAdapter(state.getLineConvertor2().createConvertor())
-      );
-
-      state.getSeparatorLines().forEach(line -> {
-        int offset = patchDocument.getLineStartOffset(line);
-        DiffDrawUtil.createLineSeparatorHighlighter(myEditor, offset, offset);
-      });
-
-      // highlighting
-      for (PatchChangeBuilder.Hunk hunk : myHunks) {
-        List<DiffFragment> innerFragments = PatchChangeBuilder.computeInnerDifferences(patchDocument, hunk);
-        DiffDrawUtil.createUnifiedChunkHighlighters(myEditor, hunk.getPatchDeletionRange(), hunk.getPatchInsertionRange(), innerFragments);
+    public DiffViewer createComponent(@NotNull DiffContext context, @NotNull DiffRequest request) {
+      PatchDiffRequest patchRequest = (PatchDiffRequest)request;
+      TextFilePatch patch = patchRequest.getPatch();
+      if (patch.isDeletedFile() || patch.isNewFile()) {
+        return new PatchDiffViewer(context, patchRequest);
       }
-
-      myEditor.getGutterComponentEx().revalidateMarkup();
-    }
-
-    @Nullable
-    @Override
-    public Object getData(@NotNull @NonNls String dataId) {
-      if (CommonDataKeys.PROJECT.is(dataId)) return myProject;
-      if (DiffDataKeys.PREV_NEXT_DIFFERENCE_ITERABLE.is(dataId)) return myPrevNextDifferenceIterable;
-      if (DiffDataKeys.CURRENT_EDITOR.is(dataId)) return myEditor;
-      if (DiffDataKeys.CURRENT_CHANGE_RANGE.is(dataId)) {
-        return myPrevNextDifferenceIterable.getHunkRangeByLine(myEditor.getCaretModel().getLogicalPosition().line);
-      }
-      return null;
-    }
-
-    private class MyPrevNextDifferenceIterable extends PrevNextDifferenceIterableBase<PatchChangeBuilder.Hunk> {
-      @NotNull
-      @Override
-      protected List<PatchChangeBuilder.Hunk> getChanges() {
-        return myHunks;
-      }
-
-      @NotNull
-      @Override
-      protected EditorEx getEditor() {
-        return myEditor;
-      }
-
-      @Override
-      protected int getStartLine(@NotNull PatchChangeBuilder.Hunk change) {
-        return change.getPatchDeletionRange().start;
-      }
-
-      @Override
-      protected int getEndLine(@NotNull PatchChangeBuilder.Hunk change) {
-        return change.getPatchInsertionRange().end;
-      }
-
-      @Nullable
-      LineRange getHunkRangeByLine(int line) {
-        for (PatchChangeBuilder.Hunk hunk : getChanges()) {
-          int start = hunk.getPatchDeletionRange().start;
-          int end = hunk.getPatchInsertionRange().end;
-          if (start <= line && end > line) {
-            return new LineRange(start, end);
-          }
-          if (start > line) return null;
-        }
-        return null;
-      }
+      return new SideBySidePatchDiffViewer(context, patchRequest);
     }
   }
 }

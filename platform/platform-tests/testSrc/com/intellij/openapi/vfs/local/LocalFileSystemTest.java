@@ -321,7 +321,7 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
       root2 = myFS.findFileByPath("//SOME-UNC-SERVER/SOME-UNC-SHARE");
       assertSame(String.valueOf(root), root, root2);
       assertEquals("\\\\some-unc-server\\some-unc-share", root.getPresentableName());
-      RefreshQueue.getInstance().processEvents(false, List.of(new VFileDeleteEvent(this, root, false)));
+      RefreshQueue.getInstance().processEvents(false, List.of(new VFileDeleteEvent(this, root)));
     }
     else if (SystemInfo.isUnix) {
       VirtualFile root = myFS.findFileByPath("/");
@@ -390,7 +390,7 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
       assertThat(uncRootFile.getChildren()).isEmpty();
     }
     finally {
-      RefreshQueue.getInstance().processEvents(false, List.of(new VFileDeleteEvent(this, uncRootFile, false)));
+      RefreshQueue.getInstance().processEvents(false, List.of(new VFileDeleteEvent(this, uncRootFile)));
       assertFalse("still valid: " + uncRootFile, uncRootFile.isValid());
     }
   }
@@ -737,7 +737,7 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
       RefreshSession session = RefreshQueue.getInstance().createSession(false, true, null);
       String stopAt = top.getName() + "/sub_2/sub_2";
       RefreshQueueImpl.setTestListener(file -> {
-        if (file.getPath().endsWith(stopAt)) RefreshQueue.getInstance().cancelSession(session.getId());
+        if (file.getPath().endsWith(stopAt)) session.cancel();
       });
       session.addFile(topDir);
       session.launch();

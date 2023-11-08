@@ -1,7 +1,7 @@
 package com.intellij.codeInspection.tests.kotlin.logging
 
-import com.intellij.codeInspection.tests.JvmLanguage
-import com.intellij.codeInspection.tests.logging.LoggingConditionDisagreesWithLogLevelStatementInspectionTestBase
+import com.intellij.jvm.analysis.internal.testFramework.logging.LoggingConditionDisagreesWithLogLevelStatementInspectionTestBase
+import com.intellij.jvm.analysis.testFramework.JvmLanguage
 
 class KotlinLoggingConditionDisagreesWithLogLevelStatementInspectionTest : LoggingConditionDisagreesWithLogLevelStatementInspectionTestBase() {
   fun `test slf4j`() {

@@ -99,16 +99,16 @@ public final class Presentation implements Cloneable {
   private static final int IS_TEMPLATE = 0x1000;
 
   private int myFlags = IS_ENABLED | IS_VISIBLE | IS_DISABLE_GROUP_IF_EMPTY;
-  private @NotNull Supplier<@ActionDescription String> myDescriptionSupplier = () -> null;
-  private @NotNull Supplier<TextWithMnemonic> myTextWithMnemonicSupplier = () -> null;
+  private @NotNull Supplier<@ActionDescription String> descriptionSupplier = NULL_STRING;
+  private @NotNull Supplier<TextWithMnemonic> textWithMnemonicSupplier = () -> null;
   private @NotNull SmartFMap<String, Object> myUserMap = SmartFMap.emptyMap();
 
-  private Icon myIcon;
-  private Icon myDisabledIcon;
-  private Icon myHoveredIcon;
-  private Icon mySelectedIcon;
+  private @Nullable Supplier<? extends @Nullable Icon> icon;
+  private Icon disabledIcon;
+  private Icon hoveredIcon;
+  private Icon selectedIcon;
 
-  private PropertyChangeSupport myChangeSupport;
+  private PropertyChangeSupport changeSupport;
   private double myWeight = DEFAULT_WEIGHT;
 
   private static final @NotNull NotNullLazyValue<Boolean> removeMnemonics = NotNullLazyValue.createValue(() -> {
@@ -126,23 +126,23 @@ public final class Presentation implements Cloneable {
 
   public Presentation(@NotNull @ActionText String text) {
     TextWithMnemonic textWithMnemonic = TextWithMnemonic.fromPlainText(text);
-    myTextWithMnemonicSupplier = () -> textWithMnemonic;
+    textWithMnemonicSupplier = () -> textWithMnemonic;
   }
 
   public Presentation(@NotNull Supplier<@ActionText String> dynamicText) {
-    myTextWithMnemonicSupplier = () -> TextWithMnemonic.fromPlainText(dynamicText.get());
+    textWithMnemonicSupplier = () -> TextWithMnemonic.fromPlainText(dynamicText.get());
   }
 
   public void addPropertyChangeListener(@NotNull PropertyChangeListener l) {
-    PropertyChangeSupport support = myChangeSupport;
+    PropertyChangeSupport support = changeSupport;
     if (support == null) {
-      myChangeSupport = support = new PropertyChangeSupport(this);
+      changeSupport = support = new PropertyChangeSupport(this);
     }
     support.addPropertyChangeListener(l);
   }
 
   public void removePropertyChangeListener(@NotNull PropertyChangeListener l) {
-    PropertyChangeSupport support = myChangeSupport;
+    PropertyChangeSupport support = changeSupport;
     if (support != null) {
       support.removePropertyChangeListener(l);
     }
@@ -165,13 +165,13 @@ public final class Presentation implements Cloneable {
   }
 
   public @ActionText String getText(boolean withSuffix) {
-    TextWithMnemonic textWithMnemonic = myTextWithMnemonicSupplier.get();
+    TextWithMnemonic textWithMnemonic = textWithMnemonicSupplier.get();
     return textWithMnemonic == null ? null : textWithMnemonic.getText(withSuffix);
   }
 
   @ApiStatus.Internal
   public boolean hasText() {
-    return myTextWithMnemonicSupplier.get() != null;
+    return textWithMnemonicSupplier.get() != null;
   }
 
   /**
@@ -224,8 +224,8 @@ public final class Presentation implements Cloneable {
    * @param textWithMnemonicSupplier text with mnemonic to set
    */
   public void setTextWithMnemonic(@NotNull Supplier<TextWithMnemonic> textWithMnemonicSupplier) {
-    if (myChangeSupport == null) {
-      myTextWithMnemonicSupplier = textWithMnemonicSupplier;
+    if (changeSupport == null) {
+      this.textWithMnemonicSupplier = textWithMnemonicSupplier;
       return;
     }
 
@@ -233,7 +233,7 @@ public final class Presentation implements Cloneable {
     String oldTextWithSuffix = getText(true);
     int oldMnemonic = getMnemonic();
     int oldIndex = getDisplayedMnemonicIndex();
-    myTextWithMnemonicSupplier = textWithMnemonicSupplier;
+    this.textWithMnemonicSupplier = textWithMnemonicSupplier;
 
     fireObjectPropertyChange(PROP_TEXT, oldText, getText());
     fireObjectPropertyChange(PROP_TEXT_WITH_SUFFIX, oldTextWithSuffix, getText(true));
@@ -259,9 +259,9 @@ public final class Presentation implements Cloneable {
 
   @ApiStatus.Internal
   public void setFallbackPresentationText(@NotNull Supplier<String> supplier) {
-    Supplier<TextWithMnemonic> original = myTextWithMnemonicSupplier;
+    Supplier<TextWithMnemonic> original = textWithMnemonicSupplier;
     Supplier<TextWithMnemonic> fallback = getTextWithMnemonic(supplier, true);
-    myTextWithMnemonicSupplier = () -> {
+    textWithMnemonicSupplier = () -> {
       TextWithMnemonic result = original.get();
       return result == null ? fallback.get() : result;
     };
@@ -271,12 +271,12 @@ public final class Presentation implements Cloneable {
    * @return the text with mnemonic, properly escaped, so it could be passed to {@link #setText(String)} (e.g. to copy the presentation).
    */
   public @ActionText @Nullable String getTextWithMnemonic() {
-    TextWithMnemonic textWithMnemonic = myTextWithMnemonicSupplier.get();
+    TextWithMnemonic textWithMnemonic = textWithMnemonicSupplier.get();
     return textWithMnemonic == null ? null : textWithMnemonic.toString();
   }
 
   public @NotNull Supplier<TextWithMnemonic> getTextWithPossibleMnemonic() {
-    return myTextWithMnemonicSupplier;
+    return textWithMnemonicSupplier;
   }
 
   public void restoreTextWithMnemonic(Presentation presentation) {
@@ -284,66 +284,100 @@ public final class Presentation implements Cloneable {
   }
 
   public @ActionDescription String getDescription() {
-    return myDescriptionSupplier.get();
+    return descriptionSupplier.get();
   }
 
   public void setDescription(@NotNull Supplier<@ActionDescription String> dynamicDescription) {
-    Supplier<String> oldDescription = myDescriptionSupplier;
-    myDescriptionSupplier = dynamicDescription;
-    fireObjectPropertyChange(PROP_DESCRIPTION, oldDescription.get(), myDescriptionSupplier.get());
+    Supplier<String> oldDescription = descriptionSupplier;
+    descriptionSupplier = dynamicDescription;
+    if (changeSupport != null) {
+      fireObjectPropertyChange(PROP_DESCRIPTION, oldDescription.get(), descriptionSupplier.get());
+    }
   }
 
   public void setDescription(@ActionDescription String description) {
-    Supplier<String> oldDescriptionSupplier = myDescriptionSupplier;
-    myDescriptionSupplier = () -> description;
-    fireObjectPropertyChange(PROP_DESCRIPTION, oldDescriptionSupplier.get(), description);
+    Supplier<String> oldDescriptionSupplier = descriptionSupplier;
+    descriptionSupplier = () -> description;
+    if (changeSupport != null) {
+      fireObjectPropertyChange(PROP_DESCRIPTION, oldDescriptionSupplier.get(), description);
+    }
   }
 
   public Icon getIcon() {
-    return myIcon;
+    Supplier<? extends Icon> icon = this.icon;
+    return icon == null ? null : icon.get();
+  }
+
+  public @Nullable Supplier<? extends @Nullable Icon> getIconSupplier() {
+    return icon;
+  }
+
+  public void copyIconIfUnset(@NotNull Presentation other) {
+    if (icon == null && other.icon != null) {
+      icon = other.icon;
+    }
   }
 
   public void setIcon(@Nullable Icon icon) {
-    Icon oldIcon = myIcon;
-    myIcon = icon;
-    fireObjectPropertyChange(PROP_ICON, oldIcon, myIcon);
+    if (changeSupport == null) {
+      this.icon = icon == null ? null : () -> icon;
+      return;
+    }
+
+    Icon oldIcon = getIcon();
+    this.icon = () -> icon;
+    fireObjectPropertyChange(PROP_ICON, oldIcon, this.icon.get());
+  }
+
+  public void setIconSupplier(@Nullable Supplier<? extends @Nullable Icon> icon) {
+    Supplier<? extends @Nullable Icon> oldIcon = this.icon;
+    this.icon = icon;
+
+    PropertyChangeSupport support = changeSupport;
+    if (support != null) {
+      Icon icon1 = oldIcon == null ? null : oldIcon.get();
+      Icon icon2 = icon == null ? null : icon.get();
+      if (!Objects.equals(icon1, icon2)) {
+        support.firePropertyChange(PROP_ICON, icon1, icon2);
+      }
+    }
   }
 
   public Icon getDisabledIcon() {
-    return myDisabledIcon;
+    return disabledIcon;
   }
 
   public void setDisabledIcon(@Nullable Icon icon) {
-    Icon oldDisabledIcon = myDisabledIcon;
-    myDisabledIcon = icon;
-    fireObjectPropertyChange(PROP_DISABLED_ICON, oldDisabledIcon, myDisabledIcon);
+    Icon oldDisabledIcon = disabledIcon;
+    disabledIcon = icon;
+    fireObjectPropertyChange(PROP_DISABLED_ICON, oldDisabledIcon, disabledIcon);
   }
 
   public Icon getHoveredIcon() {
-    return myHoveredIcon;
+    return hoveredIcon;
   }
 
   public void setHoveredIcon(final @Nullable Icon hoveredIcon) {
-    Icon old = myHoveredIcon;
-    myHoveredIcon = hoveredIcon;
-    fireObjectPropertyChange(PROP_HOVERED_ICON, old, myHoveredIcon);
+    Icon old = this.hoveredIcon;
+    this.hoveredIcon = hoveredIcon;
+    fireObjectPropertyChange(PROP_HOVERED_ICON, old, this.hoveredIcon);
   }
 
   public Icon getSelectedIcon() {
-    return mySelectedIcon;
+    return selectedIcon;
   }
 
   public void setSelectedIcon(Icon selectedIcon) {
-    Icon old = mySelectedIcon;
-    mySelectedIcon = selectedIcon;
-    fireObjectPropertyChange(PROP_SELECTED_ICON, old, mySelectedIcon);
+    Icon old = this.selectedIcon;
+    this.selectedIcon = selectedIcon;
+    fireObjectPropertyChange(PROP_SELECTED_ICON, old, this.selectedIcon);
   }
 
   /**
    * @return an extended key code for a mnemonic character, or {@code KeyEvent.VK_UNDEFINED} if mnemonic is not set
    */
   public int getMnemonic() {
-    TextWithMnemonic textWithMnemonic = myTextWithMnemonicSupplier.get();
+    TextWithMnemonic textWithMnemonic = textWithMnemonicSupplier.get();
     return textWithMnemonic == null ? 0 : textWithMnemonic.getMnemonicCode();
   }
 
@@ -351,7 +385,7 @@ public final class Presentation implements Cloneable {
    * @return a mnemonic index in the whole text, or {@code -1} if mnemonic is not set
    */
   public int getDisplayedMnemonicIndex() {
-    TextWithMnemonic textWithMnemonic = myTextWithMnemonicSupplier.get();
+    TextWithMnemonic textWithMnemonic = textWithMnemonicSupplier.get();
     return textWithMnemonic == null ? -1 : textWithMnemonic.getMnemonicIndex();
   }
 
@@ -457,14 +491,14 @@ public final class Presentation implements Cloneable {
   }
 
   private void fireBooleanPropertyChange(String propertyName, boolean oldValue, boolean newValue) {
-    PropertyChangeSupport support = myChangeSupport;
+    PropertyChangeSupport support = changeSupport;
     if (oldValue != newValue && support != null) {
       support.firePropertyChange(propertyName, oldValue, newValue);
     }
   }
 
   private void fireObjectPropertyChange(String propertyName, Object oldValue, Object newValue) {
-    PropertyChangeSupport support = myChangeSupport;
+    PropertyChangeSupport support = changeSupport;
     if (support != null && !Objects.equals(oldValue, newValue)) {
       support.firePropertyChange(propertyName, oldValue, newValue);
     }
@@ -481,7 +515,7 @@ public final class Presentation implements Cloneable {
     try {
       Presentation clone = (Presentation)super.clone();
       clone.myFlags = BitUtil.set(clone.myFlags, IS_TEMPLATE, false);
-      clone.myChangeSupport = null;
+      clone.changeSupport = null;
       return clone;
     }
     catch (CloneNotSupportedException e) {
@@ -505,7 +539,10 @@ public final class Presentation implements Cloneable {
                         @Nullable Component customComponent,
                         boolean forceNullComponent,
                         boolean allFlags) {
-    if (presentation == this) return;
+    if (presentation == this) {
+      return;
+    }
+
     boolean oldEnabled = isEnabled(), oldVisible = isVisible();
     if (allFlags) {
       myFlags = BitUtil.set(presentation.myFlags, IS_TEMPLATE, isTemplate());
@@ -518,8 +555,10 @@ public final class Presentation implements Cloneable {
     fireBooleanPropertyChange(PROP_VISIBLE, oldVisible, isVisible());
 
     setTextWithMnemonic(presentation.getTextWithPossibleMnemonic());
-    setDescription(presentation.myDescriptionSupplier);
-    setIcon(presentation.getIcon());
+    setDescription(presentation.descriptionSupplier);
+
+    setIconSupplier(presentation.icon);
+
     setSelectedIcon(presentation.getSelectedIcon());
     setDisabledIcon(presentation.getDisabledIcon());
     setHoveredIcon(presentation.getHoveredIcon());
@@ -601,6 +640,6 @@ public final class Presentation implements Cloneable {
 
   @Override
   public @Nls String toString() {
-    return getText() + " (" + myDescriptionSupplier.get() + ")";
+    return getText() + " (" + descriptionSupplier.get() + ")";
   }
 }

@@ -3,6 +3,7 @@ package com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.IntRef;
+import com.intellij.serviceContainer.AlreadyDisposedException;
 import com.intellij.util.io.dev.mmapped.MMappedFileStorage;
 import com.intellij.util.io.dev.mmapped.MMappedFileStorage.Page;
 import com.intellij.util.io.blobstorage.ByteBufferReader;
@@ -14,6 +15,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.lang.invoke.VarHandle;
 import java.nio.ByteBuffer;
 import java.nio.file.Path;
 
@@ -21,6 +23,8 @@ import static com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.RecordL
 import static com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.RecordLayout.ActualRecords.recordSizeTypeByCapacity;
 import static com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.RecordLayout.OFFSET_BUCKET;
 import static com.intellij.util.io.IOUtil.magicWordToASCII;
+import static java.lang.invoke.MethodHandles.byteBufferViewVarHandle;
+import static java.nio.ByteOrder.nativeOrder;
 
 
 /**
@@ -35,6 +39,9 @@ public final class StreamlinedBlobStorageOverMMappedFile extends StreamlinedBlob
   private static final Logger LOG = Logger.getInstance(StreamlinedBlobStorageOverMMappedFile.class);
 
   public static final int STORAGE_VERSION_CURRENT = 1;
+
+  private static final VarHandle INT_HANDLE = byteBufferViewVarHandle(int[].class, nativeOrder())
+    .withInvokeExactBehavior();
 
   //For general persistent format description see comments in superclass
 
@@ -86,7 +93,7 @@ public final class StreamlinedBlobStorageOverMMappedFile extends StreamlinedBlob
       final int version = readHeaderInt(HeaderLayout.STORAGE_VERSION_OFFSET);
       if (version != STORAGE_VERSION_CURRENT) {
         throw new IOException(
-          "Can't read file[" + storage + "]: file version(" + version + ") != current impl version (" + STORAGE_VERSION_CURRENT + ")");
+          "[" + storage.storagePath() + "]: file version(" + version + ") != current impl version (" + STORAGE_VERSION_CURRENT + ")");
       }
 
       final int filePageSize = readHeaderInt(HeaderLayout.PAGE_SIZE_OFFSET);
@@ -95,8 +102,9 @@ public final class StreamlinedBlobStorageOverMMappedFile extends StreamlinedBlob
                               " but current storage.pageSize=" + pageSize);
       }
 
-      int nextRecordId = readHeaderInt(HeaderLayout.NEXT_RECORD_ID_OFFSET);
-      updateNextRecordId(nextRecordId);
+      //No need to copy from the header into field: we read/update header
+      // slot directly:
+      //updateNextRecordId(readHeaderInt(HeaderLayout.NEXT_RECORD_ID_OFFSET));
 
       recordsAllocated.set(readHeaderInt(HeaderLayout.RECORDS_ALLOCATED_OFFSET));
       recordsRelocated.set(readHeaderInt(HeaderLayout.RECORDS_RELOCATED_OFFSET));
@@ -486,31 +494,24 @@ public final class StreamlinedBlobStorageOverMMappedFile extends StreamlinedBlob
 
   @Override
   public boolean isDirty() {
-    if (closed.get()) {
-      return false;
-    }
-    //RC: as always, with mapped storage it is tricky to say when it is 'dirty' -- 'cos almost all writes
-    // go directly to the mapped buffer, and mapped buffer dirty/flush management is up to OS. We can manage
-    // .dirty flag ourself, but it seems an overhead for (almost) nothing -- there is not so many realy usages
-    // for .isDirty() in mmapped storages. I just define some heuristics: storage is dirty if there are new
-    // records allocated since last .force() call -- which is not precise, but kind of good enough.
-    //TODO: Ideally, we should just replace all class fields (nextRecordId, recordsAllocated, etc) with direct
-    // header fields access -- this way we could always safely 'return false' from this method.
-    return readHeaderInt(HeaderLayout.NEXT_RECORD_ID_OFFSET) < nextRecordId;
+    //RC: as always, with mapped storage it is tricky to say when it is 'dirty' -- 'cos almost all the
+    // writes go directly to the mapped buffer, and mapped buffer dirty/flush management is up to OS.
+    // We can manage .dirty flag ourself, but it seems an overhead for (almost) nothing -- there are
+    // very few real usages for .isDirty() in mmapped storages. I just define: storage is not dirty
+    // by default:
+    return false;
   }
 
   @Override
   public void force() throws IOException {
     checkNotClosed();
 
-    putHeaderInt(HeaderLayout.NEXT_RECORD_ID_OFFSET, nextRecordId);
+    //putHeaderInt(HeaderLayout.NEXT_RECORD_ID_OFFSET, nextRecordId());
     putHeaderInt(HeaderLayout.RECORDS_ALLOCATED_OFFSET, recordsAllocated.get());
     putHeaderInt(HeaderLayout.RECORDS_RELOCATED_OFFSET, recordsRelocated.get());
     putHeaderInt(HeaderLayout.RECORDS_DELETED_OFFSET, recordsDeleted.get());
     putHeaderLong(HeaderLayout.RECORDS_LIVE_TOTAL_PAYLOAD_SIZE_OFFSET, totalLiveRecordsPayloadBytes.get());
     putHeaderLong(HeaderLayout.RECORDS_LIVE_TOTAL_CAPACITY_SIZE_OFFSET, totalLiveRecordsCapacityBytes.get());
-
-    storage.fsync();
   }
 
   @Override
@@ -528,12 +529,17 @@ public final class StreamlinedBlobStorageOverMMappedFile extends StreamlinedBlob
 
       openTelemetryCallback.close();
 
-      //MAYBE RC: it shouldn't be this class's responsibility to close storage, since not this class creates it?
-      //          Better whoever creates it -- is responsible for closing it?
+      synchronized (this) {//ensure updateNextRecordId() is finished
+        headerPage = null;
+      }
       storage.close();
-
-      headerPage = null;
     }
+  }
+
+  @Override
+  public void closeAndClean() throws IOException {
+    close();
+    storage.closeAndClean();
   }
 
   // ============================= implementation: ========================================================================
@@ -577,7 +583,30 @@ public final class StreamlinedBlobStorageOverMMappedFile extends StreamlinedBlob
    * in advance.
    */
   private long actualLength() {
-    return idToOffset(nextRecordId);
+    return idToOffset(nextRecordId());
+  }
+
+  @Override
+  protected int nextRecordId() {
+    if (headerPage == null) {
+      throw new AlreadyDisposedException("Storage is closed");
+    }
+    ByteBuffer headerBuffer = headerPage.rawPageBuffer();
+    return (int)INT_HANDLE.getVolatile(headerBuffer, HeaderLayout.NEXT_RECORD_ID_OFFSET);
+  }
+
+  //@GuardedBy(this)
+  @Override
+  protected void updateNextRecordId(int nextRecordId) {
+    Page _headerPage = headerPage;
+    if (_headerPage == null) {
+      throw new AlreadyDisposedException("Storage is closed");
+    }
+    if (nextRecordId <= NULL_ID) {
+      throw new IllegalArgumentException("nextRecordId(=" + nextRecordId + ") must be >0");
+    }
+    ByteBuffer headerBuffer = _headerPage.rawPageBuffer();
+    INT_HANDLE.setVolatile(headerBuffer, HeaderLayout.NEXT_RECORD_ID_OFFSET, nextRecordId);
   }
 
   // === storage records accessors: ===

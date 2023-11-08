@@ -6,26 +6,19 @@ import org.jetbrains.annotations.Nls
 
 @ApiStatus.Experimental
 @LcrDslMarker
-interface LcrInitParams {
+sealed class LcrInitParams {
 
   enum class Align {
     LEFT,
-
-    /**
-     * The cell occupies all available free space, so next cells will be near right edge
-     */
-    FILL,
-
-    /**
-     * Similar to [FILL] but additionally aligns the cell to the right
-     */
+    CENTER,
     RIGHT
   }
 
   /**
-   * Default value is [Align.LEFT]
+   * If specified then the cell occupies all available free space (so next cells will be near right edge) and the content of the cell
+   * is placed according to the [align] value
    */
-  var align: Align
+  var align: Align? = null
 
-  var accessibleName: @Nls String?
+  var accessibleName: @Nls String? = null
 }

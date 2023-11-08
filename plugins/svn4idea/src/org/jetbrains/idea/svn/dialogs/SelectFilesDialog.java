@@ -145,7 +145,7 @@ public class SelectFilesDialog extends DialogWrapper implements ActionListener {
       return Collections.unmodifiableSortedSet(selected);
     }
 
-    private boolean isChecked(@Nullable Boolean value) {
+    private static boolean isChecked(@Nullable Boolean value) {
       return Boolean.TRUE.equals(value);
     }
   }

@@ -16,31 +16,28 @@
 package com.siyeh.ig.inheritance;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInsight.FileModificationService;
-import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.options.OptPane;
-import com.intellij.openapi.application.WriteAction;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.ModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.javadoc.PsiDocMethodOrFieldRef;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.SmartList;
-import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
 
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
@@ -51,7 +48,7 @@ public class AbstractMethodOverridesAbstractMethodInspection extends BaseInspect
   public boolean ignoreJavaDoc = false;
 
   @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
+  protected LocalQuickFix buildFix(Object... infos) {
     return new AbstractMethodOverridesAbstractMethodFix();
   }
 
@@ -68,7 +65,7 @@ public class AbstractMethodOverridesAbstractMethodInspection extends BaseInspect
         "abstract.method.overrides.abstract.method.ignore.different.javadoc.option")));
   }
 
-  private static class AbstractMethodOverridesAbstractMethodFix extends InspectionGadgetsFix {
+  private static class AbstractMethodOverridesAbstractMethodFix extends ModCommandQuickFix {
 
     @Override
     @NotNull
@@ -77,48 +74,23 @@ public class AbstractMethodOverridesAbstractMethodInspection extends BaseInspect
     }
 
     @Override
-    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      doFix(project, descriptor, false);
-    }
-
-    private static void doFix(Project project, ProblemDescriptor descriptor, boolean inPreview) {
+    public @NotNull ModCommand perform(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement methodNameIdentifier = descriptor.getPsiElement();
       final PsiMethod method = (PsiMethod)methodNameIdentifier.getParent();
       assert method != null;
       final PsiMethod[] superMethods = method.findSuperMethods();
       SearchScope scope = GlobalSearchScope.allScope(project);
-      if (inPreview) {
-        scope = scope.intersectWith(new LocalSearchScope(method.getContainingFile()));
-      }
       final Collection<PsiReference> references = ReferencesSearch.search(method, scope).findAll();
-      final List<PsiElement> elements =
-        references.stream().map(ref -> ref.getElement())
-          .filter(a -> a instanceof PsiDocMethodOrFieldRef)
-          .collect(Collectors.toCollection(() -> new SmartList<>()));
-      elements.add(method);
-      if (!FileModificationService.getInstance().preparePsiElementsForWrite(elements)) {
-        return;
-      }
-      ThrowableRunnable<RuntimeException> fixRefsRunnable = () -> {
-        deleteElement(method);
-        references.forEach(a -> a.bindToElement(superMethods[0]));
-      };
-      if (inPreview) {
-        fixRefsRunnable.run();
-      } else {
-        WriteAction.run(fixRefsRunnable);
-      }
-    }
-
-    @Override
-    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
-      doFix(project, previewDescriptor, true);
-      return IntentionPreviewInfo.DIFF;
-    }
-
-    @Override
-    public boolean startInWriteAction() {
-      return false;
+      return ModCommand.psiUpdate(method, (m, updater) -> {
+        List<PsiElement> writableRefs = ContainerUtil.map(references, ref -> updater.getWritable(ref.getElement()));
+        for (PsiElement e : writableRefs) {
+          PsiReference reference = e.getReference();
+          if (reference != null) {
+            reference.bindToElement(superMethods[0]);
+          }
+        }
+        m.delete();
+      });
     }
   }
 
@@ -210,7 +182,7 @@ public class AbstractMethodOverridesAbstractMethodInspection extends BaseInspect
     if (exceptions1.length != exceptions2.length) {
       return false;
     }
-    final Set<PsiClassType> set1 = new HashSet<>(Arrays.asList(exceptions1));
+    final Set<PsiClassType> set1 = ContainerUtil.newHashSet(exceptions1);
     for (PsiClassType anException : exceptions2) {
       if (!set1.contains(anException)) {
         return false;

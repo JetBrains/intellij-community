@@ -37,12 +37,6 @@
                          id="terminalUp" order="first"/>
     <editorActionHandler action="EditorDown" implementationClass="org.jetbrains.plugins.terminal.exp.TerminalCaretDownHandler"
                          id="terminalDown" order="first"/>
-    <editorActionHandler action="EditorEscape" implementationClass="org.jetbrains.plugins.terminal.exp.TerminalCloseHistoryHandler"
-                         id="terminalCloseHistory" order="first"/>
-    <editorActionHandler action="EditorEscape" implementationClass="org.jetbrains.plugins.terminal.exp.TerminalSelectPromptHandler"
-                         id="terminalSelectPrompt" order="first, after terminalCloseHistory"/>
-    <editorActionHandler action="EditorEscape" implementationClass="org.jetbrains.plugins.terminal.exp.TerminalCloseSearchHandler"
-                         id="terminalCloseSearch" order="first, after terminalSelectPrompt"/>
     <editorActionHandler action="Find" implementationClass="org.jetbrains.plugins.terminal.exp.TerminalFindHandler"
                          id="terminalFind" order="first"/>
     <editorActionHandler action="FindNext" implementationClass="org.jetbrains.plugins.terminal.exp.TerminalFindNextHandler"
@@ -63,6 +57,8 @@
              implementationClass="org.jetbrains.plugins.terminal.exp.completion.CommandSpecCompletionWeigher"/>
     <applicationService serviceInterface="com.intellij.terminal.completion.CommandSpecManager"
                         serviceImplementation="org.jetbrains.plugins.terminal.exp.completion.IJCommandSpecManager"/>
+    <!--suppress PluginXmlValidity -->
+    <inline.completion.provider implementation="org.jetbrains.plugins.terminal.exp.TerminalInlineCompletionProvider"/>
 
     <advancedSetting bundle="messages.TerminalBundle"  id="terminal.character.encoding" default="UTF-8" groupKey="group.advanced.settings.terminal"/>
     <applicationService serviceInterface="com.intellij.terminal.search.JediTermSearchComponentProvider"
@@ -87,6 +83,11 @@
       <with attribute="implementationClass" implements="org.jetbrains.plugins.terminal.exp.completion.TerminalShellSupport"/>
     </extensionPoint>
   </extensionPoints>
+
+  <projectListeners>
+    <listener class="org.jetbrains.plugins.terminal.exp.TerminalLookupManagerListener"
+              topic="com.intellij.codeInsight.lookup.LookupManagerListener"/>
+  </projectListeners>
 
   <actions>
     <group id="TerminalToolwindowActionGroup">

@@ -121,7 +121,7 @@ public final class DvcsUtil {
    * @deprecated Prefer {@link #guessWidgetRepository} or {@link #guessRepositoryForOperation}.
    */
   @Nullable
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @CalledInAny
   public static VirtualFile getSelectedFile(@NotNull DataContext dataProvider) {
     FileEditor fileEditor = PlatformDataKeys.LAST_ACTIVE_FILE_EDITOR.getData(dataProvider);
@@ -492,7 +492,7 @@ public final class DvcsUtil {
    * @deprecated Prefer {@link #findVcsRootFor}, {@link #guessWidgetRepository} or {@link #guessRepositoryForOperation}.
    */
   @Nullable
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static VirtualFile guessVcsRoot(@NotNull Project project, @Nullable VirtualFile file) {
     return findVcsRootFor(project, file);
   }

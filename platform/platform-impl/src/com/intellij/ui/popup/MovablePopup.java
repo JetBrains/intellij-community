@@ -216,7 +216,11 @@ public final class MovablePopup {
           SwingUtilities.convertPointFromScreen(location, parent);
           myViewBounds.setLocation(location);
         }
-        myView.setBackground(myTransparent ? Gray.TRANSPARENT : UIUtil.getLabelBackground());
+        boolean isTranslucencySupported =
+          !(myView instanceof Window) ||
+          GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice()
+            .isWindowTranslucencySupported(GraphicsDevice.WindowTranslucency.PERPIXEL_TRANSLUCENT);
+        myView.setBackground(myTransparent && isTranslucencySupported ? Gray.TRANSPARENT : UIUtil.getLabelBackground());
         myView.setBounds(myViewBounds);
         myView.setVisible(true);
         myViewBounds = null;

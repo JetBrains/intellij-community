@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.execution;
 
 import com.intellij.compiler.options.CompileStepBeforeRun;
@@ -12,7 +12,9 @@ import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.impl.DefaultJavaProgramRunner;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
@@ -35,7 +37,7 @@ import java.util.List;
 
 import static icons.OpenapiIcons.RepositoryLibraryLogo;
 
-public final class MavenRunConfigurationType implements ConfigurationType {
+public final class MavenRunConfigurationType implements ConfigurationType, DumbAware {
   private static final Key<Boolean> IS_DELEGATE_BUILD = new Key<>("IS_DELEGATE_BUILD");
   private final ConfigurationFactory myFactory;
   private static final int MAX_NAME_LENGTH = 40;
@@ -175,17 +177,19 @@ public final class MavenRunConfigurationType implements ConfigurationType {
                                                                                          generateName(project, params),
                                                                                          isDelegateBuild);
 
-    ProgramRunner runner = isDelegateBuild ? DelegateBuildRunner.getDelegateRunner() : DefaultJavaProgramRunner.getInstance();
+    ProgramRunner runner = isDelegateBuild ? DelegateBuildRunner.Util.getDelegateRunner() : DefaultJavaProgramRunner.getInstance();
     Executor executor = DefaultRunExecutor.getRunExecutorInstance();
     ExecutionEnvironment environment = new ExecutionEnvironment(executor, runner, configSettings, project);
     environment.putUserData(IS_DELEGATE_BUILD, isDelegateBuild);
     environment.setCallback(callback);
-    try {
-      runner.execute(environment);
-    }
-    catch (ExecutionException e) {
-      MavenUtil.showError(project, RunnerBundle.message("notification.title.failed.to.execute.maven.goal"), e);
-    }
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      try {
+        runner.execute(environment);
+      }
+      catch (ExecutionException e) {
+        MavenUtil.showError(project, RunnerBundle.message("notification.title.failed.to.execute.maven.goal"), e);
+      }
+    });
   }
 
   @NotNull

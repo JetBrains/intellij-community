@@ -286,7 +286,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
     return commandLineOptions;
   }
 
-  private MavenId extractIdFromException(Throwable exception) {
+  private static MavenId extractIdFromException(Throwable exception) {
     try {
       Field field = exception.getClass().getDeclaredField("extension");
       field.setAccessible(true);
@@ -521,6 +521,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
         workspaceMap,
         myConsoleWrapper,
         myLocalRepository,
+        request.getUserProperties(),
         canResolveDependenciesInParallel()
       );
       try {
@@ -554,7 +555,8 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
   @Override
   public MavenExecutionRequest createRequest(@Nullable File file,
                                              @Nullable List<String> activeProfiles,
-                                             @Nullable List<String> inactiveProfiles) {
+                                             @Nullable List<String> inactiveProfiles,
+                                             @NotNull Properties customProperties) {
 
     MavenExecutionRequest result = new DefaultMavenExecutionRequest();
 
@@ -570,6 +572,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
       if (file != null) {
         userProperties.putAll(MavenServerConfigUtil.getMavenAndJvmConfigPropertiesForNestedProjectDir(file.getParentFile()));
       }
+      userProperties.putAll(customProperties);
       result.setUserProperties(userProperties);
 
       result.setActiveProfiles(collectActiveProfiles(result.getActiveProfiles(), activeProfiles, inactiveProfiles));
@@ -1155,7 +1158,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
     return createEmbedderExecutionResult(file, result);
   }
 
-  private MavenExecutionResult safeExecute(MavenExecutionRequest request, Maven maven) {
+  private static MavenExecutionResult safeExecute(MavenExecutionRequest request, Maven maven) {
     MavenLeakDetector detector = new MavenLeakDetector().mark();
     MavenExecutionResult result = maven.execute(request);
     detector.check();

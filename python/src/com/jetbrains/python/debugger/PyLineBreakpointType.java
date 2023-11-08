@@ -37,8 +37,6 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonLanguage;
-import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
-import com.jetbrains.python.sdk.PythonSdkUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -70,7 +68,7 @@ public class PyLineBreakpointType extends XLineBreakpointTypeBase {
     final Ref<Boolean> stoppable = Ref.create(false);
     final Document document = FileDocumentManager.getInstance().getDocument(file);
     if (document != null && isSuitableFileType(project, file)) {
-      lineHasStoppablePsi(project, file, line, document, getUnstoppableElements(), getUnstoppableElementTypes(), stoppable);
+      lineHasStoppablePsi(project, line, document, getUnstoppableElements(), getUnstoppableElementTypes(), stoppable);
     }
 
     return stoppable.get();
@@ -111,25 +109,22 @@ public class PyLineBreakpointType extends XLineBreakpointTypeBase {
   }
 
   protected void lineHasStoppablePsi(@NotNull Project project,
-                                     @NotNull VirtualFile file,
                                      int line,
                                      Document document,
                                      Class<? extends PsiElement>[] unstoppablePsiElements,
                                      Set<IElementType> unstoppableElementTypes,
                                      Ref<? super Boolean> stoppable) {
-    if (!isSkeleton(project, file)) {
-      XDebuggerUtil.getInstance().iterateLine(project, document, line, psiElement -> {
-        if (PsiTreeUtil.getNonStrictParentOfType(psiElement, unstoppablePsiElements) != null) return true;
-        if (psiElement.getNode() != null && unstoppableElementTypes.contains(psiElement.getNode().getElementType())) return true;
-        if (isPsiElementStoppable(psiElement)) {
-          stoppable.set(true);
-        }
-        return false;
-      });
-
-      if (PyDebugSupportUtils.isContinuationLine(document, line - 1)) {
-        stoppable.set(false);
+    XDebuggerUtil.getInstance().iterateLine(project, document, line, psiElement -> {
+      if (PsiTreeUtil.getNonStrictParentOfType(psiElement, unstoppablePsiElements) != null) return true;
+      if (psiElement.getNode() != null && unstoppableElementTypes.contains(psiElement.getNode().getElementType())) return true;
+      if (isPsiElementStoppable(psiElement)) {
+        stoppable.set(true);
       }
+      return false;
+    });
+
+    if (PyDebugSupportUtils.isContinuationLine(document, line - 1)) {
+      stoppable.set(false);
     }
   }
 
@@ -141,13 +136,6 @@ public class PyLineBreakpointType extends XLineBreakpointTypeBase {
   @Override
   public SuspendPolicy getDefaultSuspendPolicy() {
     return SuspendPolicy.THREAD;
-  }
-
-  private static boolean isSkeleton(@NotNull Project project, @NotNull VirtualFile file) {
-    if (PyUserSkeletonsUtil.isUnderUserSkeletonsDirectory(file)) return true;
-
-    final PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
-    return psiFile != null && PythonSdkUtil.isElementInSkeletons(psiFile);
   }
 
   @Override

@@ -4,10 +4,10 @@ package org.jetbrains.idea.maven.importing
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootEvent
 import com.intellij.openapi.roots.ModuleRootListener
-import com.intellij.util.messages.MessageBusConnection
 import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
 import com.intellij.platform.backend.workspace.WorkspaceModelTopics
 import com.intellij.platform.workspace.storage.VersionedStorageChange
+import com.intellij.util.messages.MessageBusConnection
 import org.junit.Assert
 
 class MavenEventsTestHelper {

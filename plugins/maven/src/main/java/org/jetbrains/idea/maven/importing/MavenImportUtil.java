@@ -36,7 +36,6 @@ import org.jetbrains.idea.maven.project.MavenProjectsTree;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.nio.file.Path;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Supplier;
 
@@ -244,16 +243,6 @@ public final class MavenImportUtil {
    */
   @NotNull
   @Deprecated(forRemoval = true)
-  public static String getModuleName(@NotNull MavenProject mavenProject, @NotNull Project project) {
-    MavenProjectsTree projectsTree = MavenProjectsManager.getInstance(project).getProjectsTree();
-    return getModuleName(mavenProject, projectsTree, new HashMap<>());
-  }
-
-  /**
-   * @deprecated only used for experimental tree importer. Not used in Workpsace import
-   */
-  @NotNull
-  @Deprecated
   public static String getModuleName(@NotNull MavenProject project,
                                       @NotNull MavenProjectsTree projectsTree,
                                       @NotNull Map<MavenProject, String> moduleNameMap) {

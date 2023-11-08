@@ -6,14 +6,20 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.KeyedExtensionCollector;
 import com.intellij.util.KeyedLazyInstance;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.*;
+import kotlinx.collections.immutable.PersistentList;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
+
+import static kotlinx.collections.immutable.ExtensionsKt.persistentListOf;
 
 public class LanguageExtension<T> extends KeyedExtensionCollector<T, Language> {
   private final T myDefaultImplementation;
   private final /* non static!!! */ Key<T> myCacheKey;
-  private final /* non static!!! */ Key<List<T>> myAllCacheKey;
+  private final /* non static!!! */ Key<PersistentList<T>> allCacheKey;
 
   public LanguageExtension(final @NotNull ExtensionPointName<? extends KeyedLazyInstance<T>> epName) {
     this(epName.getName(), null);
@@ -31,11 +37,11 @@ public class LanguageExtension<T> extends KeyedExtensionCollector<T, Language> {
     super(epName);
     myDefaultImplementation = defaultImplementation;
     myCacheKey = Key.create("EXTENSIONS_IN_LANGUAGE_" + epName);
-    myAllCacheKey = Key.create("ALL_EXTENSIONS_IN_LANGUAGE_" + epName);
+    allCacheKey = Key.create("ALL_EXTENSIONS_IN_LANGUAGE_" + epName);
   }
 
   @Override
-  protected @NotNull String keyToString(final @NotNull Language key) {
+  protected @NotNull String keyToString(@NotNull Language key) {
     return key.getID();
   }
 
@@ -66,7 +72,7 @@ public class LanguageExtension<T> extends KeyedExtensionCollector<T, Language> {
 
   private void clearCacheForLanguage(@NotNull Language language) {
     language.putUserData(myCacheKey, null);
-    language.putUserData(myAllCacheKey, null);
+    language.putUserData(allCacheKey, null);
     super.invalidateCacheForExtension(language.getID());
   }
 
@@ -104,44 +110,31 @@ public class LanguageExtension<T> extends KeyedExtensionCollector<T, Language> {
    *  @see #allForLanguageOrAny(Language)
    */
   public @NotNull List<T> allForLanguage(@NotNull Language language) {
-    List<T> cached = language.getUserData(myAllCacheKey);
-    if (cached != null) return cached;
-    List<T> result = collectAllForLanguage(language);
-    return language.putUserDataIfAbsent(myAllCacheKey, result);
+    List<T> cached = language.getUserData(allCacheKey);
+    if (cached != null) {
+      return cached;
+    }
+
+    PersistentList<T> result = collectAllForLanguage(language);
+    return language.putUserDataIfAbsent(allCacheKey, result);
   }
 
-  private @NotNull List<T> collectAllForLanguage(@NotNull Language language) {
-    boolean copyList = true;
-    List<T> result = null;
+  private @NotNull PersistentList<T> collectAllForLanguage(@NotNull Language language) {
+    PersistentList<T> result = persistentListOf();
     for (Language l = language; l != null; l = l.getBaseLanguage()) {
-      List<T> list = forKey(l);
-      if (result == null) {
-        result = list;
-      }
-      else if (!list.isEmpty()) {
-        if (copyList) {
-          List<T> newResult = new ArrayList<>(result.size() + list.size());
-          newResult.addAll(result);
-          newResult.addAll(list);
-          result = newResult;
-          copyList = false;
-        }
-        else {
-          result.addAll(list);
-        }
-      }
+      result = result.addAll(forKey(l));
     }
     return result;
   }
 
   @Override
-  protected @NotNull List<T> buildExtensions(@NotNull String stringKey, @NotNull Language key) {
-    Collection<MetaLanguage> metaLanguages = LanguageUtil.matchingMetaLanguages(key);
+  protected @NotNull PersistentList<T> buildExtensions(@NotNull String stringKey, @NotNull Language key) {
+    List<MetaLanguage> metaLanguages = LanguageUtil.matchingMetaLanguages(key);
     if (metaLanguages.isEmpty()) {
       return super.buildExtensions(stringKey, key);
     }
 
-    Set<String> allKeys = new HashSet<>(metaLanguages.size()+1);
+    Set<String> allKeys = new HashSet<>(metaLanguages.size() + 1);
     allKeys.add(stringKey);
     for (MetaLanguage language : metaLanguages) {
       allKeys.add(keyToString(language));

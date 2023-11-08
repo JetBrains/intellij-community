@@ -24,7 +24,11 @@ import java.util.Objects;
 public class UnusedReturnValue extends GlobalJavaBatchInspectionTool{
   public boolean IGNORE_BUILDER_PATTERN;
   public static final AccessModifier DEFAULT_HIGHEST_MODIFIER = AccessModifier.PUBLIC;
-  public @NotNull AccessModifier highestModifier = DEFAULT_HIGHEST_MODIFIER;
+  public AccessModifier highestModifier = DEFAULT_HIGHEST_MODIFIER;
+  
+  protected @NotNull AccessModifier getHighestModifier() {
+    return Objects.requireNonNullElse(highestModifier, DEFAULT_HIGHEST_MODIFIER);
+  }
 
   @Override
   public CommonProblemDescriptor @Nullable [] checkElement(@NotNull RefEntity refEntity,
@@ -33,7 +37,7 @@ public class UnusedReturnValue extends GlobalJavaBatchInspectionTool{
                                                            @NotNull GlobalInspectionContext globalContext,
                                                            @NotNull ProblemDescriptionsProcessor processor) {
     if (refEntity instanceof RefMethod refMethod) {
-      if (Objects.requireNonNull(AccessModifier.fromPsiModifier(refMethod.getAccessModifier())).compareTo(highestModifier) < 0 ||
+      if (Objects.requireNonNull(AccessModifier.fromPsiModifier(refMethod.getAccessModifier())).compareTo(getHighestModifier()) < 0 ||
           refMethod.isConstructor() ||
           !refMethod.getSuperMethods().isEmpty() ||
           refMethod.getInReferences().isEmpty() ||

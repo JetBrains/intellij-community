@@ -18,7 +18,7 @@ public final class LanguageNamesValidation extends LanguageExtension<NamesValida
     return super.forLanguage(l);
   }
 
-  protected static class DefaultNamesValidator implements NamesValidator {
+  protected static final class DefaultNamesValidator implements NamesValidator {
     @Override
     public boolean isIdentifier(final @NotNull String name, final Project project) {
       final int len = name.length();

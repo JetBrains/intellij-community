@@ -65,14 +65,15 @@ import org.jetbrains.kotlin.idea.editor.backspaceHandler.AbstractBackspaceHandle
 import org.jetbrains.kotlin.idea.editor.commenter.AbstractKotlinCommenterTest
 import org.jetbrains.kotlin.idea.editor.quickDoc.AbstractQuickDocProviderTest
 import org.jetbrains.kotlin.idea.externalAnnotations.AbstractExternalAnnotationTest
+import org.jetbrains.kotlin.idea.externalAnnotations.AbstractK1ExternalAnnotationTest
 import org.jetbrains.kotlin.idea.folding.AbstractKotlinFoldingTest
 import org.jetbrains.kotlin.idea.hierarchy.AbstractHierarchyTest
 import org.jetbrains.kotlin.idea.hierarchy.AbstractHierarchyWithLibTest
 import org.jetbrains.kotlin.idea.highlighter.*
-import org.jetbrains.kotlin.idea.imports.AbstractAutoImportTest
-import org.jetbrains.kotlin.idea.imports.AbstractFilteringAutoImportTest
 import org.jetbrains.kotlin.idea.imports.AbstractJsOptimizeImportsTest
 import org.jetbrains.kotlin.idea.imports.AbstractJvmOptimizeImportsTest
+import org.jetbrains.kotlin.idea.imports.AbstractK1AutoImportTest
+import org.jetbrains.kotlin.idea.imports.AbstractK1FilteringAutoImportTest
 import org.jetbrains.kotlin.idea.index.AbstractKotlinTypeAliasByExpansionShortNameIndexTest
 import org.jetbrains.kotlin.idea.inspections.AbstractInspectionTest
 import org.jetbrains.kotlin.idea.inspections.AbstractLocalInspectionTest
@@ -461,8 +462,8 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("search/annotations")
         }
 
-        testClass<AbstractExternalAnnotationTest> {
-            model("externalAnnotations")
+        testClass<AbstractK1ExternalAnnotationTest> {
+            model("externalAnnotations", pattern = KT_WITHOUT_DOTS)
         }
 
         testClass<AbstractQuickFixMultiFileTest> {
@@ -518,7 +519,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
 
         testClass<AbstractBreadcrumbsTest> {
-            model("codeInsight/breadcrumbs")
+            model("codeInsight/breadcrumbs", pattern = KT_OR_KTS)
         }
 
         testClass<AbstractK1IntentionTest> {
@@ -800,7 +801,11 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("exitPoints")
         }
 
-        testClass<AbstractCustomHighlightUsageHandlerTest>("KotlinReceiverUsageHighlightingTestGenerated") {
+        testClass<AbstractCustomHighlightUsageHandlerTest>("KotlinHighlightUsagesTestGenerated") {
+            model("highlightUsages")
+        }
+
+        testClass<AbstractKotlinReceiverUsageHighlightingTest>("KotlinReceiverUsageHighlightingTestGenerated") {
             model("receiverUsageHighlighting")
         }
 
@@ -861,14 +866,12 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("decompiler/decompiledTextJvm", pattern = Patterns.forRegex("""^([^\.]+)$"""))
         }
 
-        testClass<AbstractAutoImportTest> {
+        testClass<AbstractK1AutoImportTest> {
             model("editor/autoImport", testMethodName = "doTest", testClassName = "WithAutoImport", pattern = DIRECTORY, isRecursive = false)
-            model("editor/autoImport", testMethodName = "doTestWithoutAutoImport", testClassName = "WithoutAutoImport", pattern = DIRECTORY, isRecursive = false)
         }
 
-        testClass<AbstractFilteringAutoImportTest> {
+        testClass<AbstractK1FilteringAutoImportTest> {
             model("editor/autoImportExtension", testMethodName = "doTest", testClassName = "WithAutoImport", pattern = DIRECTORY, isRecursive = false)
-            model("editor/autoImportExtension", testMethodName = "doTestWithoutAutoImport", testClassName = "WithoutAutoImport", pattern = DIRECTORY, isRecursive = false)
         }
 
         testClass<AbstractJvmOptimizeImportsTest> {
@@ -1214,6 +1217,11 @@ private fun assembleWorkspace(): TWorkspace = workspace {
 
         testClass<AbstractK1JvmBasicCompletionTest>("org.jetbrains.kotlin.idea.completion.test.K1KDocCompletionTestGenerated") {
             model("kdoc", pattern = KT_WITHOUT_DOT_AND_FIR_PREFIX)
+        }
+
+        testClass<AbstractK1MLPerformanceCompletionTest> {
+            model("basic/common", pattern = KT_WITHOUT_FIR_PREFIX)
+            model("basic/java", pattern = KT_WITHOUT_FIR_PREFIX)
         }
 
         testClass<AbstractJava8BasicCompletionTest> {

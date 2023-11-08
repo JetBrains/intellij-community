@@ -4,15 +4,13 @@ package com.intellij.ide.ui;
 import com.intellij.ide.ui.laf.UIThemeLookAndFeelInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.CollectionComboBoxModel;
+import kotlin.sequences.Sequence;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.Objects;
 
 public abstract class LafManager {
   public static LafManager getInstance() {
@@ -25,11 +23,15 @@ public abstract class LafManager {
   @Deprecated
   public abstract UIManager.LookAndFeelInfo @NotNull [] getInstalledLookAndFeels();
 
+  @SuppressWarnings("unused")
+  @ApiStatus.Experimental
+  public abstract Sequence<UIThemeLookAndFeelInfo> getInstalledThemes();
+
   @ApiStatus.Internal
   public abstract @NotNull CollectionComboBoxModel<LafReference> getLafComboBoxModel();
 
   @ApiStatus.Internal
-  public abstract UIThemeLookAndFeelInfo findLaf(LafReference reference);
+  public abstract UIThemeLookAndFeelInfo findLaf(@NotNull String themeId);
 
   /**
    * @deprecated Use {@link LafManager#getCurrentUIThemeLookAndFeel()}
@@ -99,40 +101,6 @@ public abstract class LafManager {
    */
   @Deprecated(forRemoval = true)
   public abstract void removeLafManagerListener(@NotNull LafManagerListener listener);
-
-  public static final class LafReference {
-    private final String name;
-    private final String themeId;
-
-    public LafReference(@NotNull String name, @Nullable String themeId) {
-      this.name = name;
-      this.themeId = themeId;
-    }
-
-    @Override
-    public @NlsSafe @NlsContexts.Label String toString() {
-      return name;
-    }
-
-    public String getThemeId() {
-      return themeId;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-      LafReference reference = (LafReference)o;
-      return name.equals(reference.name) &&
-             Objects.equals(themeId, reference.themeId);
-    }
-
-    @Override
-    public int hashCode() {
-      return Objects.hash(name, themeId);
-    }
-
-  }
 
   public abstract @Nullable UIThemeLookAndFeelInfo getDefaultLightLaf();
 

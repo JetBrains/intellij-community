@@ -17,12 +17,12 @@ private const val ATTEMPTS_REGISTRY_KEY = "kotlin.scripting.deferred.definition.
 
 internal class DeferredScriptDefinition(
     val scriptCode: SourceCode,
-    private val definitionsProvider: ScriptDefinitionsManager
+    private val definitionsProvider: OldLogicDelegate
 ) : ScriptDefinition() {
 
     private val definition : ScriptDefinition by lazy {
         val sleepMs = 100L
-        var attemptsLeft = Registry.intValue(ATTEMPTS_REGISTRY_KEY, 20)
+        var attemptsLeft = Registry.intValue(ATTEMPTS_REGISTRY_KEY, 30)
         var deferredDefinition: ScriptDefinition? = tryGetDefinition()
 
         val ms = measureTimeMillis {

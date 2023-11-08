@@ -17,7 +17,7 @@ import com.intellij.collaboration.ui.codereview.timeline.TimelineDiffComponentFa
 import com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFieldFactory
 import com.intellij.collaboration.ui.codereview.timeline.thread.TimelineThreadCommentsPanel
 import com.intellij.collaboration.ui.html.AsyncHtmlImageLoader
-import com.intellij.collaboration.ui.icon.OverlaidOffsetIconsIcon
+import com.intellij.ui.OverlaidOffsetIconsIcon
 import com.intellij.collaboration.ui.util.ActivatableCoroutineScopeProvider
 import com.intellij.collaboration.ui.util.swingAction
 import com.intellij.diff.util.LineRange
@@ -32,6 +32,7 @@ import com.intellij.util.containers.nullize
 import com.intellij.util.text.JBDateFormat
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.github.api.data.GHActor
 import org.jetbrains.plugins.github.api.data.GHUser
@@ -125,7 +126,7 @@ object GHPRReviewThreadComponent {
     }
   }
 
-  private fun createDiff(thread: GHPRReviewThreadModel, project: Project): JComponent {
+  private fun CoroutineScope.createDiff(thread: GHPRReviewThreadModel, project: Project): JComponent {
     val hunk = thread.patchHunk
     if (hunk == null || hunk.lines.isEmpty()) {
       return JLabel(CollaborationToolsBundle.message("review.thread.diff.not.loaded"))
@@ -146,7 +147,7 @@ object GHPRReviewThreadComponent {
 
     val anchorRange = LineRange(truncatedHunk.lines.lastIndex - anchorLength, truncatedHunk.lines.size)
     return TimelineDiffComponentFactory
-      .createDiffComponent(project, EditorFactory.getInstance(), truncatedHunk, anchorRange)
+      .createDiffComponentIn(this, project, EditorFactory.getInstance(), truncatedHunk, anchorRange)
   }
 
   private fun getThreadActionsComponent(

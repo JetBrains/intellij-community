@@ -5,6 +5,9 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceInterface="com.intellij.platform.ide.impl.feedback.PlatformFeedbackDialogs"
+                        serviceImplementation="com.intellij.platform.feedback.impl.PlatformFeedbackDialogsImpl"
+                        overrides="true"/>
 
     <applicationService serviceImplementation="com.intellij.platform.feedback.impl.state.DontShowAgainFeedbackService"/>
 
@@ -27,6 +30,8 @@
     <statistics.applicationUsagesCollector implementation="com.intellij.platform.feedback.impl.statistics.FeedbackSurveysStateCollector"/>
     <statistics.counterUsagesCollector
       implementationClass="com.intellij.platform.feedback.impl.statistics.FeedbackNotificationCountCollector"/>
+    <statistics.counterUsagesCollector
+      implementationClass="com.intellij.platform.feedback.general.evaluation.EvaluationFeedbackCountCollector"/>
 
     <feedback.idleFeedbackSurvey implementation="com.intellij.platform.feedback.demo.DemoInIdeFeedbackSurvey"/>
     <feedback.idleFeedbackSurvey implementation="com.intellij.platform.feedback.demo.DemoExternalFeedbackSurvey"/>
@@ -55,6 +60,8 @@
               class="com.intellij.platform.feedback.kafka.TestShowKafkaConsumerFeedbackAction" internal="true"/>
       <action id="com.intellij.platform.feedback.kafka.TestShowKafkaProducerFeedbackAction"
               class="com.intellij.platform.feedback.kafka.TestShowKafkaProducerFeedbackAction" internal="true"/>
+      <action id="com.intellij.platform.feedback.pycharmce.TestPyCharmFeedbackAction"
+              class="com.intellij.platform.feedback.pycharmce.TestPyCharmFeedbackAction" internal="true"/>
       <add-to-group group-id="Internal.UI" anchor="last"/>
     </group>
 

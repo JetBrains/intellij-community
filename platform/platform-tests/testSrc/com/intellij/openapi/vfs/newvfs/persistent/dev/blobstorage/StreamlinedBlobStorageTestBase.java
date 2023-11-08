@@ -361,6 +361,21 @@ public abstract class StreamlinedBlobStorageTestBase<S extends StreamlinedBlobSt
     }
   }
 
+  @Test
+  public void closeCouldBeCalledTwice() throws IOException {
+    storage.close();
+    storage.close();
+  }
+
+  @Test
+  public void afterCloseAndClean_noFilesRemain() throws IOException {
+    storage.closeAndClean();
+    assertFalse(
+      "No ["+storagePath+"] must remain after .closeAndClean()",
+      Files.exists(storagePath)
+    );
+  }
+
   //TODO test write/read records of size=0
 
   //TODO test delete records

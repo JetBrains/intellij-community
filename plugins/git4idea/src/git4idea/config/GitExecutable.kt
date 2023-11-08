@@ -7,11 +7,15 @@ import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.util.ExecUtil
 import com.intellij.execution.wsl.WSLCommandLineOptions
 import com.intellij.execution.wsl.WSLDistribution
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.vcs.VcsLocaleHelper
 import git4idea.commands.GitHandler
 import git4idea.i18n.GitBundle
+import git4idea.repo.GitConfigKey
+import git4idea.repo.GitConfigurationCache
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import java.io.File
@@ -41,6 +45,8 @@ sealed class GitExecutable {
 
   @Throws(ExecutionException::class)
   abstract fun createBundledCommandLine(project: Project?, vararg command: String): GeneralCommandLine
+
+  abstract fun getLocaleEnv(): Map<@NonNls String, @NonNls String>
 
   data class Local(override val exePath: String)
     : GitExecutable() {
@@ -82,6 +88,10 @@ sealed class GitExecutable {
     private fun buildShellCommand(commandLine: List<String>): String {
       return commandLine.joinToString(" ") { CommandLineUtil.posixQuote(it) }
     }
+
+    override fun getLocaleEnv(): Map<String, String> {
+      return VcsLocaleHelper.getDefaultLocaleEnvironmentVars("git")
+    }
   }
 
   data class Wsl(override val exePath: String,
@@ -95,7 +105,7 @@ sealed class GitExecutable {
       val path = file.absolutePath
 
       // 'C:\Users\file.txt' -> '/mnt/c/Users/file.txt'
-      val wslPath = distribution.getWslPath(path)
+      val wslPath = distribution.getWslPath(file.toPath().toAbsolutePath())
       return wslPath ?: path
     }
 
@@ -145,6 +155,20 @@ sealed class GitExecutable {
       }
       distribution.patchCommandLine(commandLine, project, options)
     }
+
+    override fun getLocaleEnv(): Map<String, String> {
+      if (Registry.`is`("git.wsl.exe.executable.detect.lang.by.env")) {
+        val userLocale = VcsLocaleHelper.getEnvFromRegistry("git")
+        if (userLocale != null) return userLocale
+
+        val envMap = GitConfigurationCache.getInstance().computeCachedValue(WslSupportedLocaleKey(distribution)) {
+          computeWslSupportedLocaleKey(distribution)
+        }
+        if (envMap != null) return envMap
+      }
+
+      return VcsLocaleHelper.getDefaultLocaleEnvironmentVars("git")
+    }
   }
 
   data class Unknown(override val id: String,
@@ -164,5 +188,43 @@ sealed class GitExecutable {
     override fun createBundledCommandLine(project: Project?, vararg command: String): GeneralCommandLine {
       throw ExecutionException(errorMessage)
     }
+
+    override fun getLocaleEnv(): Map<String, String> = emptyMap()
   }
+}
+
+
+private data class WslSupportedLocaleKey(
+  val distribution: WSLDistribution
+) : GitConfigKey<Map<String, String>?>
+
+private fun computeWslSupportedLocaleKey(distribution: WSLDistribution): Map<String, String>? {
+  val knownLocales = listOf(VcsLocaleHelper.EN_UTF_LOCALE, VcsLocaleHelper.C_UTF_LOCALE)
+
+  val env = distribution.getEnvironmentVariable("LANG")
+  if (env != null) {
+    val envLocale = VcsLocaleHelper.findMatchingLocale(env, knownLocales)
+    if (envLocale != null) {
+      logger<WslSupportedLocaleKey>().debug("Detected locale by ENV: $env")
+      return envLocale
+    }
+  }
+
+  try {
+    val locales = distribution.executeOnWsl(10_000, "locale", "-a").stdout
+    val systemLocales = locales.lineSequence().map { it.trim() }.filter { it.isNotBlank() }
+    for (locale in systemLocales) {
+      val someLocale = VcsLocaleHelper.findMatchingLocale(locale, knownLocales)
+      if (someLocale != null) {
+        logger<WslSupportedLocaleKey>().debug("Detected locale from available: $env")
+        return someLocale
+      }
+    }
+  }
+  catch (e: ExecutionException) {
+    logger<GitConfigurationCache>().warn(e)
+    return null
+  }
+
+  return null
 }

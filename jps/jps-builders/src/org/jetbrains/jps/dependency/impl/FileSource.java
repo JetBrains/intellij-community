@@ -19,6 +19,12 @@ public final class FileSource implements NodeSource {
     myPath = path;
   }
 
+  //@Override
+  //public void write(DataOutput out) throws IOException {
+  //  String path = myPath.toString();
+    //FileUtil.writeS
+  //}
+
   @Override
   public Path getPath() {
     return myPath;
@@ -45,5 +51,10 @@ public final class FileSource implements NodeSource {
   @Override
   public int hashCode() {
     return myPath.hashCode();
+  }
+
+  @Override
+  public String toString() {
+    return "NodeSource {" + myPath + "}";
   }
 }

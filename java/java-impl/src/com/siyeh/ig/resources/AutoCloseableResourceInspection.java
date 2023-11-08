@@ -1,24 +1,24 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.resources;
 
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInsight.options.JavaClassValidator;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
 import com.intellij.codeInspection.options.OptPane;
-import com.intellij.codeInspection.options.OptionController;
 import com.intellij.codeInspection.resources.ImplicitResourceCloser;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.ModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
-import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.MethodMatcher;
@@ -113,7 +113,7 @@ public class AutoCloseableResourceInspection extends ResourceInspection {
 
   @Nullable
   @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
+  protected LocalQuickFix buildFix(Object... infos) {
     final boolean buildQuickfix = ((Boolean)infos[1]).booleanValue();
     if (!buildQuickfix) {
       return null;
@@ -185,12 +185,7 @@ public class AutoCloseableResourceInspection extends ResourceInspection {
     return new AutoCloseableResourceVisitor();
   }
 
-  private class AutoCloseableResourceFix extends InspectionGadgetsFix {
-    @Override
-    public boolean startInWriteAction() {
-      return false;
-    }
-
+  private class AutoCloseableResourceFix extends ModCommandQuickFix {
     @Nls
     @NotNull
     @Override
@@ -199,13 +194,25 @@ public class AutoCloseableResourceInspection extends ResourceInspection {
     }
 
     @Override
-    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+    public @NotNull ModCommand perform(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiMethodCallExpression methodCallExpression = PsiTreeUtil.getParentOfType(element, PsiMethodCallExpression.class);
       if (methodCallExpression == null) {
-        return;
+        return ModCommand.nop();
       }
-      myMethodMatcher.add(methodCallExpression);
+      return ModCommand.updateOption(element, AutoCloseableResourceInspection.this, insp -> insp.myMethodMatcher.add(methodCallExpression));
+    }
+
+    @Override
+    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+      final PsiElement element = previewDescriptor.getPsiElement();
+      final PsiMethodCallExpression methodCallExpression = PsiTreeUtil.getParentOfType(element, PsiMethodCallExpression.class);
+      if (methodCallExpression == null) return IntentionPreviewInfo.EMPTY;
+      PsiMethod method = methodCallExpression.resolveMethod();
+      if (method == null) return IntentionPreviewInfo.EMPTY;
+      String methodText = PsiFormatUtil.formatMethod(method, PsiSubstitutor.EMPTY,
+                                                  PsiFormatUtilBase.SHOW_CONTAINING_CLASS | PsiFormatUtilBase.SHOW_NAME, 0);
+      return new IntentionPreviewInfo.Html(InspectionGadgetsBundle.message("auto.closeable.resource.quickfix.preview", methodText));
     }
   }
 
@@ -230,7 +237,7 @@ public class AutoCloseableResourceInspection extends ResourceInspection {
       registerMethodCallError(expression, expression.getType(), !isStreamHoldingResource(expression));
     }
 
-    private boolean isReturnedByContract(PsiMethodCallExpression expression) {
+    private static boolean isReturnedByContract(PsiMethodCallExpression expression) {
       PsiExpression returnedValue = JavaMethodContractUtil.findReturnedValue(expression);
       PsiExpression[] arguments = expression.getArgumentList().getExpressions();
       PsiExpression qualifier = expression.getMethodExpression().getQualifierExpression();

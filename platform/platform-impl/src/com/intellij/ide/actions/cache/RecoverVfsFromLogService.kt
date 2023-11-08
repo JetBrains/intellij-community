@@ -4,7 +4,6 @@ package com.intellij.ide.actions.cache
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.RecoverVfsFromOperationsLogDialog
 import com.intellij.ide.actions.SuggestAutomaticVfsRecoveryDialog
-import com.intellij.idea.hideSplash
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.EDT
@@ -13,12 +12,11 @@ import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.progress.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper.CANCEL_EXIT_CODE
 import com.intellij.openapi.ui.DialogWrapper.OK_EXIT_CODE
-import com.intellij.openapi.util.io.toNioPath
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.vfs.newvfs.ManagingFS
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
 import com.intellij.openapi.vfs.newvfs.persistent.VfsRecoveryUtils
@@ -28,6 +26,15 @@ import com.intellij.openapi.vfs.newvfs.persistent.log.OperationLogStorage
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLogEx
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLogQueryContext
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLogQueryContextEx
+import com.intellij.platform.ide.bootstrap.hideSplash
+import com.intellij.platform.ide.progress.ModalTaskOwner
+import com.intellij.platform.ide.progress.TaskCancellation
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
+import com.intellij.platform.ide.progress.withModalProgress
+import com.intellij.platform.util.progress.RawProgressReporter
+import com.intellij.platform.util.progress.progressReporter
+import com.intellij.platform.util.progress.rawProgressReporter
+import com.intellij.util.asSafely
 import com.intellij.util.io.delete
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
@@ -91,7 +98,7 @@ class RecoverVfsFromLogService(val coroutineScope: CoroutineScope) {
           CANCEL_EXIT_CODE -> {}
           OK_EXIT_CODE -> {
             val rpList = recoveryPoints.take(2).toList()
-            // choose second recovery point because it should be safer
+            // choose a second recovery point because it should be safer
             val recoveryPoint = if (rpList.size > 1) rpList[1] else rpList.first()
             queryContext.transferLock().launchRecovery(null, recoveryPoint, restart)
           }
@@ -177,9 +184,9 @@ class RecoverVfsFromLogService(val coroutineScope: CoroutineScope) {
   }
 
   internal companion object {
-    val LOG = Logger.getInstance(RecoverVfsFromLogService::class.java)
+    private val LOG = Logger.getInstance(RecoverVfsFromLogService::class.java)
 
-    private val cachesDir = FSRecords.getCachesDir().toNioPath()
+    private val cachesDir = FSRecords.getCacheDir()
     private val recoveredCachesDir = cachesDir.parent / "recovered-caches"
 
     // used only in vfs init
@@ -204,7 +211,7 @@ class RecoverVfsFromLogService(val coroutineScope: CoroutineScope) {
 
       try {
         // TODO FileBasedIndexTumbler disable indexing while recovery is in progress
-        val vfsLogEx = serviceIfCreated<PersistentFS>()?.vfsLog as? VfsLogEx
+        val vfsLogEx = serviceIfCreated<ManagingFS>().asSafely<PersistentFS>()?.vfsLog as? VfsLogEx
         vfsLogEx?.awaitPendingWrites()
         vfsLogEx?.flush()
       } catch (ignored: Throwable) {}

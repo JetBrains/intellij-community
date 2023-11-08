@@ -13,11 +13,9 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicator
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicatorInput
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicator
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinApplicatorBasedQuickFix
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.diagnosticFixFactory
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.*
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinApplicatorBasedModCommand
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.diagnosticModCommandFixFactory
 import org.jetbrains.kotlin.idea.core.FirKotlinNameSuggester
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
@@ -61,10 +59,11 @@ object WrapWithSafeLetCallFixFactories {
      *  `isImplicitInvokeCallToMemberProperty` controls the behavior when hoisting up the nullable expression. It should be set to true
      *  if the call is to a invocable member property.
      */
-    private val applicator: KotlinApplicator<KtExpression, Input> = applicator {
+    private val applicator: KotlinModCommandApplicator<KtExpression, Input> = modCommandApplicator {
         familyAndActionName(KotlinBundle.lazyMessage("wrap.with.let.call"))
-        applyTo { targetExpression, input ->
-            val nullableExpression = input.nullableExpressionPointer.element ?: return@applyTo
+        applyTo { targetExpression, input, _, updater ->
+            val nullableExpression =
+                input.nullableExpressionPointer.element?.let<KtExpression, KtExpression?>(updater::getWritable) ?: return@applyTo
             if (!nullableExpression.parents.contains(targetExpression)) {
                 LOG.warn(
                     "Unexpected input for WrapWithSafeLetCall. Nullable expression '${nullableExpression.text}' should be a descendant" +
@@ -138,15 +137,15 @@ object WrapWithSafeLetCallFixFactories {
         }
     }
 
-    val forUnsafeCall = diagnosticFixFactory(KtFirDiagnostic.UnsafeCall::class) { diagnostic ->
+    val forUnsafeCall = diagnosticModCommandFixFactory(KtFirDiagnostic.UnsafeCall::class) { diagnostic ->
         val nullableExpression = diagnostic.receiverExpression
         createWrapWithSafeLetCallInputForNullableExpressionIfMoreThanImmediateParentIsWrapped(nullableExpression)
     }
 
-    val forUnsafeImplicitInvokeCall = diagnosticFixFactory(KtFirDiagnostic.UnsafeImplicitInvokeCall::class) { diagnostic ->
-        val callExpression = diagnostic.psi.parentOfType<KtCallExpression>(withSelf = true) ?: return@diagnosticFixFactory emptyList()
+    val forUnsafeImplicitInvokeCall = diagnosticModCommandFixFactory(KtFirDiagnostic.UnsafeImplicitInvokeCall::class) { diagnostic ->
+        val callExpression = diagnostic.psi.parentOfType<KtCallExpression>(withSelf = true) ?: return@diagnosticModCommandFixFactory emptyList()
         val callingFunctionalVariableInLocalScope =
-            isCallingFunctionalTypeVariableInLocalScope(callExpression) ?: return@diagnosticFixFactory emptyList()
+            isCallingFunctionalTypeVariableInLocalScope(callExpression) ?: return@diagnosticModCommandFixFactory emptyList()
         createWrapWithSafeLetCallInputForNullableExpression(
             callExpression.calleeExpression,
             isImplicitInvokeCallToMemberProperty = !callingFunctionalVariableInLocalScope
@@ -167,15 +166,15 @@ object WrapWithSafeLetCallFixFactories {
         }
     }
 
-    val forUnsafeInfixCall = diagnosticFixFactory(KtFirDiagnostic.UnsafeInfixCall::class) { diagnostic ->
+    val forUnsafeInfixCall = diagnosticModCommandFixFactory(KtFirDiagnostic.UnsafeInfixCall::class) { diagnostic ->
         createWrapWithSafeLetCallInputForNullableExpressionIfMoreThanImmediateParentIsWrapped(diagnostic.receiverExpression)
     }
 
-    val forUnsafeOperatorCall = diagnosticFixFactory(KtFirDiagnostic.UnsafeOperatorCall::class) { diagnostic ->
+    val forUnsafeOperatorCall = diagnosticModCommandFixFactory(KtFirDiagnostic.UnsafeOperatorCall::class) { diagnostic ->
         createWrapWithSafeLetCallInputForNullableExpressionIfMoreThanImmediateParentIsWrapped(diagnostic.receiverExpression)
     }
 
-    val forArgumentTypeMismatch = diagnosticFixFactory(KtFirDiagnostic.ArgumentTypeMismatch::class) { diagnostic ->
+    val forArgumentTypeMismatch = diagnosticModCommandFixFactory(KtFirDiagnostic.ArgumentTypeMismatch::class) { diagnostic ->
         if (diagnostic.isMismatchDueToNullability) createWrapWithSafeLetCallInputForNullableExpression(diagnostic.psi.wrappingExpressionOrSelf)
         else emptyList()
     }
@@ -184,7 +183,7 @@ object WrapWithSafeLetCallFixFactories {
     private fun createWrapWithSafeLetCallInputForNullableExpressionIfMoreThanImmediateParentIsWrapped(
         nullableExpression: KtExpression?,
         isImplicitInvokeCallToMemberProperty: Boolean = false,
-    ): List<KotlinApplicatorBasedQuickFix<KtExpression, Input>> {
+    ): List<KotlinApplicatorBasedModCommand<KtExpression, Input>> {
         val surroundingExpression = nullableExpression?.surroundingExpression
         if (
             surroundingExpression == null ||
@@ -210,7 +209,7 @@ object WrapWithSafeLetCallFixFactories {
         isImplicitInvokeCallToMemberProperty: Boolean = false,
         surroundingExpression: KtExpression? = findParentExpressionAtNullablePosition(nullableExpression)
             ?: nullableExpression?.surroundingExpression
-    ): List<KotlinApplicatorBasedQuickFix<KtExpression, Input>> {
+    ): List<KotlinApplicatorBasedModCommand<KtExpression, Input>> {
         if (nullableExpression == null || surroundingExpression == null) return emptyList()
         val scope = nullableExpression.containingKtFile.getScopeContextForPosition(nullableExpression).getCompositeScope()
         val existingNames = scope.getPossibleCallableNames().mapNotNull { it.identifierOrNullIfSpecial }
@@ -220,7 +219,7 @@ object WrapWithSafeLetCallFixFactories {
         val candidateNames = listOfNotNull(StandardNames.IMPLICIT_LAMBDA_PARAMETER_NAME.identifier, getDeclaredParameterNameForArgument(nullableExpression))
         val suggestedName = FirKotlinNameSuggester.suggestNameByMultipleNames(candidateNames) { it !in existingNames }
         return listOf(
-            KotlinApplicatorBasedQuickFix(
+            KotlinApplicatorBasedModCommand(
                 surroundingExpression,
                 Input(nullableExpression.createSmartPointer(), suggestedName, isImplicitInvokeCallToMemberProperty),
                 applicator

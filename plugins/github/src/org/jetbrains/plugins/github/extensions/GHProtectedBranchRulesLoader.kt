@@ -52,7 +52,7 @@ internal class GHProtectedBranchRulesLoader : GitFetchHandler {
     val accounts = accountManager.accountsState.value
     if (!GitSharedSettings.getInstance(project).isSynchronizeBranchProtectionRules || accounts.isEmpty()) {
       runInEdt {
-        project.service<GithubProjectSettings>().branchProtectionPatterns = arrayListOf()
+        GithubProjectSettings.getInstance(project).branchProtectionPatterns = arrayListOf()
       }
       return
     }
@@ -96,7 +96,7 @@ internal class GHProtectedBranchRulesLoader : GitFetchHandler {
     }
 
     runInEdt {
-      project.service<GithubProjectSettings>().branchProtectionPatterns = branchProtectionPatterns.toMutableList()
+      GithubProjectSettings.getInstance(project).branchProtectionPatterns = branchProtectionPatterns.toMutableList()
     }
   }
 

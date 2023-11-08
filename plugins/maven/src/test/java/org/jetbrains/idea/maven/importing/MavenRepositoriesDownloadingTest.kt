@@ -4,8 +4,6 @@ package org.jetbrains.idea.maven.importing
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.maven.testFramework.utils.MavenHttpRepositoryServerFixture
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.testFramework.RunAll.Companion.runAll
-import com.intellij.util.ThrowableRunnable
 import junit.framework.TestCase
 import kotlinx.coroutines.runBlocking
 import org.intellij.lang.annotations.Language
@@ -31,12 +29,15 @@ class MavenRepositoriesDownloadingTest : MavenMultiVersionImportingTestCase() {
 
 
   public override fun tearDown() {
-    runAll(
-      ThrowableRunnable<Throwable> {
-        httpServerFixture.tearDown()
-      },
-      ThrowableRunnable<Throwable> { super.tearDown() }
-    )
+    try {
+      httpServerFixture.tearDown()
+    }
+    catch (e: Throwable) {
+      addSuppressedException(e)
+    }
+    finally {
+      super.tearDown()
+    }
   }
 
   @Test
@@ -58,6 +59,31 @@ class MavenRepositoriesDownloadingTest : MavenMultiVersionImportingTestCase() {
     assertFalse(helper.getTestData("local1/org/mytest/myartifact/1.0/myartifact-1.0.jar").isFile)
     importProjectAsync(pom())
     assertTrue(helper.getTestData("local1/org/mytest/myartifact/1.0/myartifact-1.0.jar").isFile)
+    assertFalse(helper.getTestData("local1/org/mytest/myartifact/1.0/myartifact-1.0-sources.jar").isFile)
+
+  }
+
+  @Test
+  fun testDownloadSourcesFromRepository() = runBlocking {
+    val helper = MavenCustomRepositoryHelper(myDir, "local1", "remote")
+    val remoteRepoPath = helper.getTestDataPath("remote")
+    val localRepoPath = helper.getTestDataPath("local1")
+    httpServerFixture.startRepositoryFor(remoteRepoPath)
+    repositoryPath = localRepoPath
+    val settingsXml = createProjectSubFile(
+      "settings.xml",
+      """
+       <settings>
+          <localRepository>$localRepoPath</localRepository>
+       </settings>
+       """.trimIndent())
+    mavenGeneralSettings.setUserSettingsFile(settingsXml.canonicalPath)
+    mavenImporterSettings.isDownloadSourcesAutomatically = true
+    removeFromLocalRepository("org/mytest/myartifact/")
+    assertFalse(helper.getTestData("local1/org/mytest/myartifact/1.0/myartifact-1.0.jar").isFile)
+    importProjectAsync(pom())
+    assertTrue(helper.getTestData("local1/org/mytest/myartifact/1.0/myartifact-1.0.jar").isFile)
+    assertTrue(helper.getTestData("local1/org/mytest/myartifact/1.0/myartifact-1.0-sources.jar").isFile)
   }
 
   @Test
@@ -78,7 +104,7 @@ class MavenRepositoriesDownloadingTest : MavenMultiVersionImportingTestCase() {
     removeFromLocalRepository("org/mytest/myartifact/")
     assertFalse(helper.getTestData("local1/org/mytest/myartifact/1.0/myartifact-1.0.jar").isFile)
     importProjectAsync(pomPlugins())
-    projectsManager.waitForPluginResolution()
+    projectsManager.waitForAfterImportJobs()
     assertTrue(helper.getTestData("local1/org/mytest/myartifact/1.0/myartifact-1.0.jar").isFile)
   }
 
@@ -251,6 +277,9 @@ class MavenRepositoriesDownloadingTest : MavenMultiVersionImportingTestCase() {
       TestCase.assertEquals(1, projectsManager.rootProjects.size)
       TestCase.assertEquals(0, projectsManager.rootProjects[0].problems.size)
     }
+    val helper = MavenCustomRepositoryHelper(myDir, "local1", "remote")
+    removeFromLocalRepository("org/mytest/myartifact/")
+    assertFalse(helper.getTestData("local1/org/mytest/myartifact/1.0/myartifact-1.0.jar").isFile)
   }
 
   private fun doLastUpdatedTest(updateSnapshots: Boolean, pomContent: String, checks: () -> Unit) = runBlocking {
@@ -282,7 +311,7 @@ class MavenRepositoriesDownloadingTest : MavenMultiVersionImportingTestCase() {
     File(dir, "myartifact-1.0.pom.lastUpdated").writeText(lastUpdatedText)
 
     importProjectAsync(pomContent)
-    projectsManager.waitForPluginResolution()
+    projectsManager.waitForAfterImportJobs()
     checks()
   }
 

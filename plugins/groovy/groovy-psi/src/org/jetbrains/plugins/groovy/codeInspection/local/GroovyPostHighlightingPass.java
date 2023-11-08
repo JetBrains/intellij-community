@@ -231,8 +231,8 @@ public class GroovyPostHighlightingPass extends TextEditorHighlightingPass {
   }
 
   @NotNull
-  private List<HighlightInfo> convertUnusedImportsToInfos(@NotNull List<? extends HighlightInfo> unusedDeclarations,
-                                                          @NotNull Set<? extends GrImportStatement> unusedImports) {
+  private static List<HighlightInfo> convertUnusedImportsToInfos(@NotNull List<? extends HighlightInfo> unusedDeclarations,
+                                                                 @NotNull Set<? extends GrImportStatement> unusedImports) {
     List<HighlightInfo> infos = new ArrayList<>(unusedDeclarations);
     for (GrImportStatement unusedImport : unusedImports) {
       IntentionAction action = GroovyQuickFixFactory.getInstance().createOptimizeImportsFix(false);

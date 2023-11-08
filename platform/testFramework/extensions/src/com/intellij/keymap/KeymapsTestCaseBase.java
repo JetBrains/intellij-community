@@ -10,7 +10,6 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.keymap.impl.KeymapImpl;
 import com.intellij.openapi.keymap.impl.MacOSDefaultKeymap;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.ApplicationExtension;
@@ -187,28 +186,29 @@ public abstract class KeymapsTestCaseBase {
       Map<Shortcut, List<String>> expected = ContainerUtil.notNullize(expectedDuplicates.get(keymap));
 
       for (Shortcut shortcut : ContainerUtil.union(actual.keySet(), expected.keySet())) {
-        List<String> expectedActions = ContainerUtil.notNullize(expected.get(shortcut));
-        List<String> actualActions = ContainerUtil.notNullize(actual.get(shortcut));
-        if (!Comparing.haveEqualElements(expectedActions, actualActions)) {
-          String key = getText(shortcut);
-
-          String replacement = "      {\"" + key + '"' + ", " + " ".repeat(Math.max(0, KEY_LENGTH - key.length())) +
-                               (actualActions.isEmpty()
-                                ? "NO_DUPLICATES"
-                                : actualActions.stream().sorted().map(a -> '"' + a + '"').collect(Collectors.joining(", "))
-                               ) +
-                               "},\n";
-
-          String message = String.format("""
-                                           Shortcut conflicts found in keymap '%s':
-
-                                           Please specify 'use-shortcut-of' attribute for your action if it is similar to another action (but it won't appear in Settings/Keymap),
-                                           reassign shortcut, or, if absolutely must, modify the 'known duplicates list'
-
-                                           %s""",
-                                         keymap, replacement);
-          failures.add(new NamedFailure("duplicate shortcut in keymap " + keymap + ": " + key, message));
+        List<String> actualActions = Objects.requireNonNullElse(actual.get(shortcut), Collections.emptyList());
+        if (Objects.requireNonNullElse(expected.get(shortcut), Collections.emptyList()).containsAll(actualActions)) {
+          continue;
         }
+
+        String key = getText(shortcut);
+
+        String replacement = "      {\"" + key + '"' + ", " + " ".repeat(Math.max(0, KEY_LENGTH - key.length())) +
+                             (actualActions.isEmpty()
+                              ? "NO_DUPLICATES"
+                              : actualActions.stream().sorted().map(a -> '"' + a + '"').collect(Collectors.joining(", "))
+                             ) +
+                             "},\n";
+
+        String message = String.format("""
+                                         Shortcut conflicts found in keymap '%s':
+
+                                         Please specify 'use-shortcut-of' attribute for your action if it is similar to another action (but it won't appear in Settings/Keymap),
+                                         reassign shortcut, or, if absolutely must, modify the 'known duplicates list'
+
+                                         %s""",
+                                       keymap, replacement);
+        failures.add(new NamedFailure("duplicate shortcut in keymap " + keymap + ": " + key, message));
       }
     }
 
@@ -264,7 +264,7 @@ public abstract class KeymapsTestCaseBase {
       }
     }
 
-    if (SystemInfo.isXWindow) {
+    if (SystemInfo.isUnix && !SystemInfo.isMac) {
       // hack: add hardcoded shortcut from DefaultKeymapImpl to make keymaps identical under all OS
       Map<Shortcut, List<String>> defaultKeymap = result.get(KeymapManager.DEFAULT_IDEA_KEYMAP);
       List<String> actionList = defaultKeymap.computeIfAbsent(new MouseShortcut(MouseEvent.BUTTON2, 0, 1), key -> new ArrayList<>());

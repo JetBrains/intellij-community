@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.caches.project
 
+import com.intellij.java.workspace.entities.JavaModuleSettingsEntity
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.service
@@ -18,22 +19,23 @@ import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SimpleModificationTracker
+import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
+import com.intellij.platform.backend.workspace.WorkspaceModelTopics
+import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.jps.entities.SourceRootEntity
+import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.util.messages.MessageBusConnection
-import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
-import com.intellij.platform.backend.workspace.WorkspaceModelTopics
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
-import com.intellij.platform.workspace.storage.EntityChange
-import com.intellij.platform.workspace.storage.VersionedStorageChange
-import com.intellij.platform.workspace.jps.entities.ModuleEntity
-import com.intellij.platform.workspace.jps.entities.SourceRootEntity
 import org.jetbrains.kotlin.idea.base.projectStructure.LibraryInfoCache
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.*
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.sourceModuleInfos
 import org.jetbrains.kotlin.idea.base.util.caching.SynchronizedFineGrainedEntityCache
+import org.jetbrains.kotlin.idea.base.util.caching.newEntity
+import org.jetbrains.kotlin.idea.base.util.caching.oldEntity
 import org.jetbrains.kotlin.idea.caches.trackers.KotlinCodeBlockModificationListener
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.isCommon
@@ -178,8 +180,9 @@ class FineGrainedIdeaModelInfosCache(private val project: Project) : IdeaModelIn
 
             val moduleChanges = event.getChanges(ModuleEntity::class.java)
             val sourceRootChanges = event.getChanges(SourceRootEntity::class.java)
+            val moduleSettingChanges = event.getChanges(JavaModuleSettingsEntity::class.java)
 
-            if (moduleChanges.isEmpty() && sourceRootChanges.isEmpty()) {
+            if (moduleChanges.isEmpty() && sourceRootChanges.isEmpty() && moduleSettingChanges.isEmpty()) {
                 return
             }
 
@@ -190,46 +193,36 @@ class FineGrainedIdeaModelInfosCache(private val project: Project) : IdeaModelIn
             fun Module.scheduleRemove() = modulesToRemove.add(this)
 
             for (moduleChange in moduleChanges) {
-                when (moduleChange) {
-                    is EntityChange.Added -> {
-                        moduleChange.newEntity.findModule(storageAfter)?.scheduleRegister()
-                    }
-
-                    is EntityChange.Removed -> moduleChange.entity.findModule(storageBefore)?.scheduleRemove()
-                    is EntityChange.Replaced -> {
-                        moduleChange.oldEntity.findModule(storageBefore)?.scheduleRemove()
-                        moduleChange.newEntity.findModule(storageAfter)?.scheduleRegister()
-                    }
-                }
+                moduleChange.oldEntity()?.findModule(storageBefore)?.scheduleRemove()
+                moduleChange.newEntity()?.findModule(storageAfter)?.scheduleRegister()
             }
 
-            val modulesToUpdate = mutableListOf<Module>()
-
+            val changedModules = mutableSetOf<Module>()
             for (sourceRootChange in sourceRootChanges) {
-                val modules: List<Module> = when (sourceRootChange) {
-                    is EntityChange.Added -> listOfNotNull(
-                        sourceRootChange.newEntity.contentRoot.module.findModule(storageAfter)
-                    )
-
-                    is EntityChange.Removed -> listOfNotNull(sourceRootChange.entity.contentRoot.module.findModule(storageBefore))
-                    is EntityChange.Replaced -> listOfNotNull(
-                        sourceRootChange.oldEntity.contentRoot.module.findModule(storageBefore),
-                        sourceRootChange.newEntity.contentRoot.module.findModule(storageAfter)
-                    )
+                sourceRootChange.oldEntity()?.contentRoot?.module?.findModule(storageBefore)?.let {
+                    changedModules.add(it)
                 }
-
-                for (module in modules) {
-                    if (module in modulesToRemove && module !in modulesToRegister) {
-                        // The module itself is gone. No need in updating it because of source root modification.
-                        // Note that on module deletion, both module and source root deletion events arrive.
-                        continue
-                    }
-
-                    modulesToUpdate.add(module)
+                sourceRootChange.newEntity()?.contentRoot?.module?.findModule(storageAfter)?.let {
+                    changedModules.add(it)
                 }
             }
 
-            for (module in modulesToUpdate) {
+            for (moduleSettingChange in moduleSettingChanges) {
+                moduleSettingChange.oldEntity()?.module?.findModule(storageBefore)?.let {
+                    changedModules.add(it)
+                }
+                moduleSettingChange.newEntity()?.module?.findModule(storageAfter)?.let {
+                    changedModules.add(it)
+                }
+            }
+
+            for (module in changedModules) {
+                if (module in modulesToRemove && module !in modulesToRegister) {
+                    // The module itself is gone. No need in updating it because of source root modification.
+                    // Note that on module deletion, both module and source root deletion events arrive.
+                    continue
+                }
+
                 module.scheduleRemove()
                 module.scheduleRegister()
             }

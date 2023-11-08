@@ -64,7 +64,8 @@
                         serviceImplementation="org.jetbrains.kotlin.idea.fir.plugin.FirKotlinPluginKindProvider"/>
     <applicationService serviceInterface="org.jetbrains.kotlin.idea.codeInsight.overrideImplement.OverrideImplementFacility"
                         serviceImplementation="org.jetbrains.kotlin.idea.core.overrideImplement.OverrideImplementFacilityImpl"/>
-
+    <applicationService serviceInterface="org.jetbrains.kotlin.idea.codeInsight.KotlinReferenceImporterFacility"
+                        serviceImplementation="org.jetbrains.kotlin.idea.k2.codeinsight.K2ReferenceImporterFacility"/>
     <projectService serviceInterface="org.jetbrains.kotlin.analysis.api.session.KtAnalysisSessionProvider"
                     serviceImplementation="org.jetbrains.kotlin.analysis.api.fir.KtFirAnalysisSessionProvider"/>
     <projectService serviceInterface="org.jetbrains.kotlin.idea.references.KotlinReferenceProviderContributor"
@@ -116,11 +117,6 @@
                                implementationClass="org.jetbrains.kotlin.idea.parameterInfo.KotlinHighLevelClassTypeArgumentInfoHandler"/>
     <codeInsight.parameterInfo language="kotlin"
                                implementationClass="org.jetbrains.kotlin.idea.parameterInfo.KotlinHighLevelFunctionTypeArgumentInfoHandler"/>
-    <platform.backend.documentation.psiTargetProvider id="KotlinDocumentationTargetProvider"
-                                                      implementation="org.jetbrains.kotlin.idea.quickDoc.KotlinPsiDocumentationTargetProvider"/>
-    <platform.backend.documentation.linkHandler implementation="org.jetbrains.kotlin.idea.quickDoc.KotlinDocumentationLinkHandler"/>
-    <platform.backend.documentation.targetProvider id="KotlinDocumentationTargetProvider"
-                                                   implementation="org.jetbrains.kotlin.idea.quickDoc.KotlinDocumentationTargetProvider"/>
   </extensions>
 
 
@@ -226,6 +222,8 @@
     <module name="kotlin.gradle.code-insight-groovy"/>
     <module name="kotlin.gradle.gradle-java"/>
 
+    <module name="kotlin.onboarding"/>
+
     <module name="kotlin.project-wizard.idea"/>
     <module name="kotlin.project-wizard.gradle"/>
     <module name="kotlin.project-wizard.maven"/>
@@ -255,5 +253,8 @@
     <module name="kotlin.compiler-reference-index"/>
     <module name="kotlin.compiler-plugins.assignment.common-k2"/>
     <module name="kotlin.compiler-plugins.scripting"/>
+
+    <module name="kotlin.injection-k2"/>
+    <module name="kotlin.base.injection"/>
   </content>
 </idea-plugin>

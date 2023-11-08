@@ -20,5 +20,6 @@ data class JsonProjectScanningFileCount(
 data class JsonProjectDumbIndexingFileCount(
   val numberOfChangedDuringIndexingFiles: Int = 0,
   val numberOfFilesIndexedByInfrastructureExtensionsDuringIndexingStage: Int = 0,
-  val numberOfFilesIndexedWithLoadingContent: Int = 0
+  val numberOfFilesIndexedWithLoadingContent: Int = 0,
+  val numberOfNothingToWriteFiles: Int = 0,
 ) : JsonProjectIndexingActivityFileCount

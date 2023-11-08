@@ -82,7 +82,7 @@ public final class MavenProjectsTree {
   private final Map<MavenProject, MavenProject> myModuleToAggregatorMapping = new HashMap<>();
 
   private final DisposableWrapperList<Listener> myListeners = new DisposableWrapperList<>();
-  private final @NotNull  Project myProject;
+  private final @NotNull Project myProject;
 
 
   private final MavenProjectReaderProjectLocator myProjectLocator = new MavenProjectReaderProjectLocator() {
@@ -480,7 +480,8 @@ public final class MavenProjectsTree {
                                                ProgressIndicator process) {
     UpdateContext updateContext = new UpdateContext();
 
-    var updater = new MavenProjectsTreeUpdater(this, explicitProfiles, updateContext, projectReader, generalSettings, process, updateModules);
+    var updater =
+      new MavenProjectsTreeUpdater(this, explicitProfiles, updateContext, projectReader, generalSettings, process, updateModules);
     var filesToAddModules = new HashSet<VirtualFile>();
     for (VirtualFile file : files) {
       if (null == findProject(file)) {
@@ -1590,6 +1591,52 @@ public final class MavenProjectsTree {
     }
     finally {
       myStructureWriteLock.unlock();
+    }
+  }
+
+
+  public Updater updater() {
+    return new Updater();
+  }
+
+  public class Updater {
+    public Updater setManagedFiles(@NotNull List<String> paths) {
+      myManagedFilesPaths.clear();
+      myManagedFilesPaths.addAll(paths);
+      return this;
+    }
+
+    public Updater setRootProjects(List<MavenProject> roots) {
+      myRootProjects.clear();
+      myRootProjects.addAll(roots);
+      roots.forEach(root -> {
+        myVirtualFileToProjectMapping.put(root.getFile(), root);
+      });
+
+      return this;
+    }
+
+    public Updater setAggregatorMappings(Map<MavenProject, List<MavenProject>> map) {
+      myAggregatorToModuleMapping.clear();
+      myModuleToAggregatorMapping.clear();
+
+      for (Map.Entry<MavenProject, List<MavenProject>> entry : map.entrySet()) {
+        List<MavenProject> result = new ArrayList<>(entry.getValue());
+        myAggregatorToModuleMapping.put(entry.getKey(), result);
+        for (MavenProject c : result) {
+          myModuleToAggregatorMapping.put(c, entry.getKey());
+          myVirtualFileToProjectMapping.put(c.getFile(), c);
+        }
+      }
+
+      return this;
+    }
+
+    public Updater setMavenIdMappings(@NotNull List<MavenProject> projects) {
+      projects.forEach(it -> {
+        myMavenIdToProjectMapping.put(it.getMavenId(), it);
+      });
+      return this;
     }
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -21,8 +21,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.io.File;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Comparator;
+import java.util.List;
 
 /**
  * Inherit from this class and register implementation as {@code sdkType} extension in plugin.xml to provide a custom type of
@@ -52,8 +52,7 @@ public abstract class SdkType implements SdkTypeId {
    * for more advanced scenarios
    * @see #suggestHomePaths()
    */
-  @Nullable
-  public abstract String suggestHomePath();
+  public abstract @Nullable String suggestHomePath();
 
   /**
    * Returns a list of all valid SDKs found on this host.
@@ -65,8 +64,7 @@ public abstract class SdkType implements SdkTypeId {
    * an alternative {@link #suggestHomePath()} method for EDT-friendly calls.
    * @see #suggestHomePath()
    */
-  @NotNull
-  public Collection<String> suggestHomePaths() {
+  public @NotNull Collection<String> suggestHomePaths() {
     String home = suggestHomePath();
     return ContainerUtil.createMaybeSingletonList(home);
   }
@@ -74,7 +72,7 @@ public abstract class SdkType implements SdkTypeId {
   /**
    * This method is used to decide if a given {@link VirtualFile} has something in common
    * with this {@link SdkType}.
-   *
+   * <p>
    * For example, it can be used by the IDE to decide showing SDK related editor notifications or quick fixes
    */
   public boolean isRelevantForFile(@NotNull Project project, @NotNull VirtualFile file) {
@@ -88,8 +86,7 @@ public abstract class SdkType implements SdkTypeId {
    * @param homePath the path selected in the file chooser.
    * @return the path to be used as the SDK home.
    */
-  @NotNull
-  public String adjustSelectedSdkHome(@NotNull String homePath) {
+  public @NotNull String adjustSelectedSdkHome(@NotNull String homePath) {
     return homePath;
   }
 
@@ -105,26 +102,22 @@ public abstract class SdkType implements SdkTypeId {
   }
 
   @Override
-  @Nullable
-  public String getVersionString(@NotNull Sdk sdk) {
+  public @Nullable String getVersionString(@NotNull Sdk sdk) {
     String homePath = sdk.getHomePath();
     return homePath == null ? null : getVersionString(homePath);
   }
 
-  @Nullable
-  public String getVersionString(@NotNull String sdkHome) {
+  public @Nullable String getVersionString(@NotNull String sdkHome) {
     return null;
   }
 
-  @NotNull
-  public abstract String suggestSdkName(@Nullable String currentSdkName, @NotNull String sdkHome);
+  public abstract @NotNull String suggestSdkName(@Nullable String currentSdkName, @NotNull String sdkHome);
 
   /**
    * Returns a comparator used to order SDKs in project or module settings combo boxes.
    * When different SDK types return the same comparator instance, they are sorted together.
    */
-  @NotNull
-  public Comparator<Sdk> getComparator() {
+  public @NotNull Comparator<Sdk> getComparator() {
     return ALPHABETICAL_COMPARATOR;
   }
 
@@ -138,36 +131,29 @@ public abstract class SdkType implements SdkTypeId {
   /**
    * @return Configurable object for the SDKs additional data or null if not applicable
    */
-  @Nullable
-  public abstract AdditionalDataConfigurable createAdditionalDataConfigurable(@NotNull SdkModel sdkModel, @NotNull SdkModificator sdkModificator);
+  public abstract @Nullable AdditionalDataConfigurable createAdditionalDataConfigurable(@NotNull SdkModel sdkModel, @NotNull SdkModificator sdkModificator);
 
-  @Nullable
-  public SdkAdditionalData loadAdditionalData(@NotNull Element additional) {
+  public @Nullable SdkAdditionalData loadAdditionalData(@NotNull Element additional) {
     return null;
   }
 
   @Override
-  @Nullable
-  public SdkAdditionalData loadAdditionalData(@NotNull Sdk currentSdk, @NotNull Element additional) {
+  public @Nullable SdkAdditionalData loadAdditionalData(@NotNull Sdk currentSdk, @NotNull Element additional) {
     return loadAdditionalData(additional);
   }
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return myName;
   }
 
-  @NotNull
-  @Nls(capitalization = Nls.Capitalization.Title)
-  public abstract String getPresentableName();
+  public abstract @NotNull @Nls(capitalization = Nls.Capitalization.Title) String getPresentableName();
 
   public Icon getIcon() {
     return null;
   }
 
-  @NotNull
-  public String getHelpTopic() {
+  public @NotNull String getHelpTopic() {
     return "preferences.jdks";
   }
 
@@ -199,8 +185,7 @@ public abstract class SdkType implements SdkTypeId {
     return getName();
   }
 
-  @NotNull
-  public FileChooserDescriptor getHomeChooserDescriptor() {
+  public @NotNull FileChooserDescriptor getHomeChooserDescriptor() {
     FileChooserDescriptor descriptor = new FileChooserDescriptor(false, true, false, false, false, false) {
       @Override
       public void validateSelectedFiles(VirtualFile @NotNull [] files) throws Exception {
@@ -221,30 +206,34 @@ public abstract class SdkType implements SdkTypeId {
     return descriptor;
   }
 
-  @NotNull
-  public @NlsContexts.Label String getHomeFieldLabel() {
+  public @NotNull @NlsContexts.Label String getHomeFieldLabel() {
     return ProjectBundle.message("sdk.configure.type.home.path", getPresentableName());
   }
 
-  @Nullable
-  public String getDefaultDocumentationUrl(@NotNull Sdk sdk) {
+  public @Nullable String getDefaultDocumentationUrl(@NotNull Sdk sdk) {
     return null;
   }
 
-  @Nullable
-  public String getDownloadSdkUrl() {
+  public @Nullable String getDownloadSdkUrl() {
     return null;
   }
 
+  /**
+   * @deprecated Please use {@link #getAllTypeList()}
+   */
+  @Deprecated
   public static SdkType @NotNull [] getAllTypes() {
     return EP_NAME.getExtensions();
   }
 
-  @Nullable
-  public static SdkType findByName(@Nullable String sdkName) {
+  public static @NotNull List<SdkType> getAllTypeList() {
+    return EP_NAME.getExtensionList();
+  }
+
+  public static @Nullable SdkType findByName(@Nullable String sdkName) {
     if (sdkName == null) return null;
 
-    for (SdkType sdkType : getAllTypes()) {
+    for (SdkType sdkType : EP_NAME.getExtensionList()) {
       if (Comparing.strEqual(sdkType.getName(), sdkName)) {
         return sdkType;
       }
@@ -252,8 +241,7 @@ public abstract class SdkType implements SdkTypeId {
     return null;
   }
 
-  @NotNull
-  public static <T extends SdkType> T findInstance(@NotNull Class<T> sdkTypeClass) {
+  public static @NotNull <T extends SdkType> T findInstance(@NotNull Class<T> sdkTypeClass) {
     for (SdkType sdkType : EP_NAME.getExtensionList()) {
       if (sdkTypeClass.equals(sdkType.getClass())) {
         return sdkTypeClass.cast(sdkType);
@@ -316,8 +304,7 @@ public abstract class SdkType implements SdkTypeId {
     return homeDir != null && homeDir.isValid();
   }
 
-  @NotNull
-  public String sdkPath(@NotNull VirtualFile homePath) {
+  public @NotNull String sdkPath(@NotNull VirtualFile homePath) {
     return homePath.getPath();
   }
 

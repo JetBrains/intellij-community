@@ -10,7 +10,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.IconLoader
+import com.intellij.ui.icons.CachedImageIcon
 
 fun getEditor(project: Project): Editor? = (FileEditorManager.getInstance(project).selectedEditor as? TextEditor)?.editor
 
@@ -38,9 +38,9 @@ fun sourceFromPresentation(presentation: LookupElementPresentation): SuggestionS
   val typeText = presentation.typeText
 
   return when {
-    icon is IconLoader.CachedImageIcon && icon.originalPath == "/icons/codota-color-icon.png" -> SuggestionSource.CODOTA
+    icon is CachedImageIcon && icon.originalPath == "/icons/codota-color-icon.png" -> SuggestionSource.CODOTA
     typeText == "@tab-nine" -> SuggestionSource.TAB_NINE
-    typeText == "full-line" -> SuggestionSource.INTELLIJ
+    typeText == "Full Line" -> SuggestionSource.INTELLIJ
     else -> SuggestionSource.STANDARD
   }
 }

@@ -95,7 +95,7 @@ public class ProcessorProfilePanel extends JPanel {
       }
 
       @NotNull
-      private @NlsSafe String getPathString(VirtualFile[] files) {
+      private static @NlsSafe String getPathString(VirtualFile[] files) {
         final StringBuilder builder = new StringBuilder();
         for (VirtualFile file : files) {
           if (builder.length() > 0) {

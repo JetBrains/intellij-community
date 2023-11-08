@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.references;
 
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -26,7 +26,7 @@ import static com.intellij.patterns.uast.UastPatterns.injectionHostUExpression;
 import static com.intellij.patterns.uast.UastPatterns.uExpression;
 import static com.intellij.psi.UastReferenceRegistrar.registerUastReferenceProvider;
 
-public class NotificationGroupIdReferenceContributor extends PsiReferenceContributor {
+final class NotificationGroupIdReferenceContributor extends PsiReferenceContributor {
   @Override
   public void registerReferenceProviders(@NotNull PsiReferenceRegistrar registrar) {
     registerUastReferenceProvider(registrar,

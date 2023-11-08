@@ -25,10 +25,10 @@ import java.util.Map;
  * </p>
  */
 public final class GitBranchesCollection {
-  @NotNull private final Map<GitLocalBranch, Hash> myLocalBranches;
-  @NotNull private final Map<GitRemoteBranch, Hash> myRemoteBranches;
+  private final @NotNull Map<GitLocalBranch, Hash> myLocalBranches;
+  private final @NotNull Map<GitRemoteBranch, Hash> myRemoteBranches;
 
-  @NotNull private final List<GitLocalBranch> myRecentCheckoutBranches;
+  private final @NotNull List<GitLocalBranch> myRecentCheckoutBranches;
 
   public GitBranchesCollection(@NotNull Map<GitLocalBranch, Hash> localBranches,
                                @NotNull Map<GitRemoteBranch, Hash> remoteBranches,
@@ -38,46 +38,38 @@ public final class GitBranchesCollection {
     myRecentCheckoutBranches = recentCheckoutBranches;
   }
 
-  @NotNull
-  public List<GitLocalBranch> getRecentCheckoutBranches() {
+  public @NotNull List<GitLocalBranch> getRecentCheckoutBranches() {
     return Collections.unmodifiableList(myRecentCheckoutBranches);
   }
 
-  @NotNull
-  public Collection<GitLocalBranch> getLocalBranches() {
+  public @NotNull Collection<GitLocalBranch> getLocalBranches() {
     return Collections.unmodifiableCollection(myLocalBranches.keySet());
   }
 
-  @NotNull
-  public Collection<GitRemoteBranch> getRemoteBranches() {
+  public @NotNull Collection<GitRemoteBranch> getRemoteBranches() {
     return Collections.unmodifiableCollection(myRemoteBranches.keySet());
   }
 
-  @Nullable
-  public Hash getHash(@NotNull GitBranch branch) {
+  public @Nullable Hash getHash(@NotNull GitBranch branch) {
     if (branch instanceof GitLocalBranch) return myLocalBranches.get(branch);
     if (branch instanceof GitRemoteBranch) return myRemoteBranches.get(branch);
     return null;
   }
 
-  @NotNull
-  public Collection<GitLocalBranch> findLocalBranchesByHash(@NotNull Hash hash) {
+  public @NotNull Collection<GitLocalBranch> findLocalBranchesByHash(@NotNull Hash hash) {
     return ContainerUtil.filter(myLocalBranches.keySet(), key -> myLocalBranches.get(key).equals(hash));
   }
 
-  @NotNull
-  public Collection<GitRemoteBranch> findRemoteBranchesByHash(@NotNull Hash hash) {
+  public @NotNull Collection<GitRemoteBranch> findRemoteBranchesByHash(@NotNull Hash hash) {
     return ContainerUtil.filter(myRemoteBranches.keySet(), key -> myRemoteBranches.get(key).equals(hash));
   }
 
-  @Nullable
-  public GitLocalBranch findLocalBranch(@NotNull String name) {
+  public @Nullable GitLocalBranch findLocalBranch(@NotNull String name) {
     GitLocalBranch branch = new GitLocalBranch(name);
     return myLocalBranches.containsKey(branch) ? branch : null;
   }
 
-  @Nullable
-  public GitRemoteBranch findRemoteBranch(@NotNull String name) {
+  public @Nullable GitRemoteBranch findRemoteBranch(@NotNull String name) {
     return findByName(myRemoteBranches.keySet(), name);
   }
 
@@ -86,8 +78,7 @@ public final class GitBranchesCollection {
     return result == null ? findRemoteBranch(name) : result;
   }
 
-  @Nullable
-  private static <T extends GitBranch> T findByName(@NotNull Collection<T> branches, @NotNull String name) {
+  private static @Nullable <T extends GitBranch> T findByName(@NotNull Collection<T> branches, @NotNull String name) {
     return ContainerUtil.find(branches, branch -> GitReference.BRANCH_NAME_HASHING_STRATEGY.equals(name, branch.getName()));
   }
 }

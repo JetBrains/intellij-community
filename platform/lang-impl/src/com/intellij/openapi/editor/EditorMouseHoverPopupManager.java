@@ -317,7 +317,11 @@ public class EditorMouseHoverPopupManager implements Disposable {
   }
 
   @Nullable
-  private Context createContext(@NotNull Editor editor, int offset, long startTimestamp, boolean showImmediately) {
+  private static Context createContext(@NotNull Editor editor,
+                                       int offset,
+                                       long startTimestamp,
+                                       boolean showImmediately,
+                                       boolean showDocumentation) {
     Project project = Objects.requireNonNull(editor.getProject());
 
     HighlightInfo info = null;
@@ -331,7 +335,7 @@ public class EditorMouseHoverPopupManager implements Disposable {
     PsiElement elementForQuickDoc = findElementForQuickDoc(editor, offset, project);
     return info == null && elementForQuickDoc == null
            ? null
-           : new Context(startTimestamp, offset, info, elementForQuickDoc, showImmediately);
+           : new Context(startTimestamp, offset, info, elementForQuickDoc, showImmediately, showDocumentation);
   }
 
   private static @Nullable PsiElement findElementForQuickDoc(@NotNull Editor editor, int offset, @NotNull Project project) {
@@ -401,7 +405,7 @@ public class EditorMouseHoverPopupManager implements Disposable {
       closeHint();
       return;
     }
-    myPreparationTask = ReadAction.nonBlocking(() -> createContext(editor, targetOffset, startTimestamp, showImmediately))
+    myPreparationTask = ReadAction.nonBlocking(() -> createContext(editor, targetOffset, startTimestamp, showImmediately, true))
       .coalesceBy(this)
       .withDocumentsCommitted(Objects.requireNonNull(editor.getProject()))
       .expireWhen(() -> editor.isDisposed())
@@ -432,20 +436,25 @@ public class EditorMouseHoverPopupManager implements Disposable {
                               int offset,
                               boolean requestFocus,
                               boolean showImmediately) {
+    showInfoTooltip(editor, info, offset, requestFocus, showImmediately, false);
+  }
+
+  public void showInfoTooltip(@NotNull Editor editor,
+                              @NotNull HighlightInfo info,
+                              int offset,
+                              boolean requestFocus,
+                              boolean showImmediately,
+                              boolean showDocumentation) {
     if (editor.getProject() == null) return;
     cancelProcessingAndCloseHint();
-    Context context = new Context(System.currentTimeMillis(), offset, info, null, showImmediately) {
-      @Override
-      public boolean showDocumentation() {
-        return false;
-      }
-    };
+    Context context = new Context(System.currentTimeMillis(), offset, info, null, showImmediately, showDocumentation);
     scheduleProcessing(editor, context, false, true, requestFocus);
   }
 
-  protected static class Context {
+  private static class Context {
     private final long startTimestamp;
     private final boolean showImmediately;
+    private final boolean showDocumentation;
     private final int targetOffset;
     private final WeakReference<HighlightInfo> highlightInfo;
     private final WeakReference<PsiElement> elementForQuickDoc;
@@ -454,12 +463,14 @@ public class EditorMouseHoverPopupManager implements Disposable {
                       int targetOffset,
                       HighlightInfo highlightInfo,
                       PsiElement elementForQuickDoc,
-                      boolean showImmediately) {
+                      boolean showImmediately,
+                      boolean showDocumentation) {
       this.startTimestamp = startTimestamp;
       this.targetOffset = targetOffset;
       this.highlightInfo = highlightInfo == null ? null : new WeakReference<>(highlightInfo);
       this.elementForQuickDoc = elementForQuickDoc == null ? null : new WeakReference<>(elementForQuickDoc);
       this.showImmediately = showImmediately;
+      this.showDocumentation = showDocumentation;
     }
 
     @Nullable PsiElement getElementForQuickDoc() {
@@ -467,7 +478,7 @@ public class EditorMouseHoverPopupManager implements Disposable {
     }
 
     public boolean showDocumentation() {
-      return true;
+      return showDocumentation;
     }
 
     public HighlightInfo getHighlightInfo() {

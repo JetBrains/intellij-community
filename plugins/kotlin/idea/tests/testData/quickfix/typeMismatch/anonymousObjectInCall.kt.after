@@ -9,3 +9,4 @@ fun foo() {
     1.foo(object: T{})
 }
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeParameterTypeFix
+/* IGNORE_K2 */

@@ -6,6 +6,9 @@ import com.intellij.psi.XmlElementFactory
 import com.intellij.psi.html.HtmlTag
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase
+import org.intellij.plugins.markdown.images.editor.ConfigureHtmlImageLineMarkerProvider
+import org.intellij.plugins.markdown.images.editor.ConfigureMarkdownImageLineMarkerProvider
+import org.intellij.plugins.markdown.images.editor.MarkdownImageData
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownImage
 import java.io.File
 

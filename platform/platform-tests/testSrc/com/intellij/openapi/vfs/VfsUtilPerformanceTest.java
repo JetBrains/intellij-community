@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs;
 
 import com.intellij.concurrency.JobLauncher;
@@ -12,14 +12,13 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
-import com.intellij.openapi.vfs.newvfs.ManagingFS;
-import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
-import com.intellij.openapi.vfs.newvfs.RefreshQueue;
+import com.intellij.openapi.vfs.newvfs.*;
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.testFramework.*;
+import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
 import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl;
 import com.intellij.testFramework.rules.TempDirectory;
 import com.intellij.util.ExceptionUtil;
@@ -42,6 +41,7 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.IntStream;
 
 import static java.util.Objects.requireNonNull;
 import static org.junit.Assert.*;
@@ -49,10 +49,8 @@ import static org.junit.Assert.*;
 @RunFirst
 @SkipSlowTestLocally
 @HardwareAgentRequired
-public class VfsUtilPerformanceTest {
-  @Rule public ApplicationRule appRule = new ApplicationRule();
+public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
   @Rule public TempDirectory tempDir = new TempDirectory();
-  @Rule public DisposableRule testDisposable = new DisposableRule();
 
   @BeforeClass
   public static void setupInStressTestsFlag() {
@@ -169,7 +167,7 @@ public class VfsUtilPerformanceTest {
   public void testGetPathPerformance() throws Exception {
     LightTempDirTestFixtureImpl fixture = new LightTempDirTestFixtureImpl();
     fixture.setUp();
-    Disposer.register(testDisposable.getDisposable(), () -> EdtTestUtil.runInEdtAndWait(() -> {
+    Disposer.register(getTestRootDisposable(), () -> EdtTestUtil.runInEdtAndWait(() -> {
       try {
         fixture.tearDown();
       }
@@ -196,10 +194,10 @@ public class VfsUtilPerformanceTest {
   @Test
   public void testAsyncRefresh() throws Throwable {
     var ex = new AtomicReference<Throwable>();
-    var tasks = Collections.nCopies(JobSchedulerImpl.getJobPoolParallelism(), null);
-    var success = JobLauncher.getInstance().invokeConcurrentlyUnderProgress(tasks, null, __ -> {
+    var tasks = IntStream.range(0, JobSchedulerImpl.getJobPoolParallelism()).boxed().toList();
+    var success = JobLauncher.getInstance().invokeConcurrentlyUnderProgress(tasks, null, task -> {
       try {
-        doAsyncRefreshTest();
+        doAsyncRefreshTest(task);
       }
       catch (Throwable t) {
         ex.set(t);
@@ -211,11 +209,11 @@ public class VfsUtilPerformanceTest {
     assertTrue(success);
   }
 
-  private void doAsyncRefreshTest() throws Exception {
+  private void doAsyncRefreshTest(int task) throws Exception {
     var N = 1_000;
     var vFiles = new VirtualFile[N];
     var modStamps = new long[N];
-    var temp = tempDir.newDirectoryPath();
+    var temp = tempDir.newDirectoryPath("dir" + task);
     var fs = LocalFileSystem.getInstance();
 
     for (int i = 0; i < N; i++) {
@@ -256,7 +254,7 @@ public class VfsUtilPerformanceTest {
     assertTrue(latch.await(2, TimeUnit.MINUTES));
 
     for (int i = 0; i < N; i++) {
-      assertEquals(modStamps[i], vFiles[i].getTimeStamp());
+      assertEquals(vFiles[i].getPresentableUrl(), modStamps[i], vFiles[i].getTimeStamp());
     }
   }
 
@@ -310,7 +308,7 @@ public class VfsUtilPerformanceTest {
   private VirtualDirectoryImpl createTempFsDirectory() {
     VirtualFile root = TempFileSystem.getInstance().findFileByPath("/");
     VirtualDirectoryImpl temp = (VirtualDirectoryImpl)VfsTestUtil.createDir(root, "temp");
-    Disposer.register(testDisposable.getDisposable(), () -> VfsTestUtil.deleteFile(temp));
+    Disposer.register(getTestRootDisposable(), () -> VfsTestUtil.deleteFile(temp));
     return temp;
   }
 
@@ -324,7 +322,7 @@ public class VfsUtilPerformanceTest {
     for (int i = 0; i < N; i++) {
       String childName = i + ".txt";
       fs.createIfNotExists(temp, childName);
-      events.add(new VFileCreateEvent(this, temp, childName, false, null, null, false, null));
+      events.add(new VFileCreateEvent(this, temp, childName, false, null, null, null));
     }
     List<CharSequence> names = ContainerUtil.map(events, e -> ((VFileCreateEvent)e).getChildName());
     temp.removeChildren(IntSortedSets.EMPTY_SET, names);
@@ -333,7 +331,7 @@ public class VfsUtilPerformanceTest {
   private void eventsForDeleting(List<VFileEvent> events, VirtualDirectoryImpl temp) {
     events.clear();
     temp.getCachedChildren().stream()
-      .map(v->new VFileDeleteEvent(this, v, false))
+      .map(v->new VFileDeleteEvent(this, v))
       .forEach(events::add);
   }
 }

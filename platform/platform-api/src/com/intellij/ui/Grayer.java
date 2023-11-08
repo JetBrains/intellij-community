@@ -54,7 +54,7 @@ public final class Grayer extends Graphics2DDelegate {
   }
 
   @Override
-  public void drawChars(char data[], int offset, int length, int x, int y) {
+  public void drawChars(char[] data, int offset, int length, int x, int y) {
     setTextColor();
     super.drawChars(data, offset, length, x, y);
   }

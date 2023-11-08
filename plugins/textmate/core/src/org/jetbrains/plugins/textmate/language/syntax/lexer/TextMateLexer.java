@@ -54,7 +54,7 @@ public final class TextMateLexer {
     myText = text;
     myCurrentOffset = startOffset;
 
-    myStates = FList.<TextMateLexerState>emptyList().prepend(myLanguageInitialState);
+    myStates = FList.singleton(myLanguageInitialState);
     myCurrentScope = new TextMateScope(myLanguageScopeName, null);
   }
 
@@ -279,6 +279,7 @@ public final class TextMateLexer {
             openScopeSelector(output, scopeName.subSequence(selectorStartOffset, indexOfSpace), startLineOffset + captureRange.start);
             selectorStartOffset = indexOfSpace + 1;
             indexOfSpace = Strings.indexOf(scopeName, ' ', selectorStartOffset);
+            activeCaptureRanges.push(captureRange);
           }
           openScopeSelector(output, scopeName.subSequence(selectorStartOffset, scopeName.length()), startLineOffset + captureRange.start);
           activeCaptureRanges.push(captureRange);

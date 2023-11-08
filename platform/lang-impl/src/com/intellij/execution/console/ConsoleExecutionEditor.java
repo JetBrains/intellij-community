@@ -4,8 +4,8 @@ package com.intellij.execution.console;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.EmptyAction;
 import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -20,6 +20,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.RemoteTransferUIManager;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.messages.MessageBusConnection;
@@ -48,6 +49,7 @@ public final class ConsoleExecutionEditor implements Disposable {
     myConsoleEditor.getSettings().setVirtualSpace(false);
     myCurrentEditor = myConsoleEditor;
     myConsoleEditor.putUserData(SEARCH_DISABLED, true);
+    RemoteTransferUIManager.forbidBeControlizationInLux(myConsoleEditor, "language-console");
 
     myConsolePromptDecorator = new ConsolePromptDecorator(myConsoleEditor);
     myConsoleEditor.getGutter().registerTextAnnotation(myConsolePromptDecorator);
@@ -174,7 +176,7 @@ public final class ConsoleExecutionEditor implements Disposable {
           if (selectedTextEditor == editor) { // already focused
             myCurrentEditor = editor;
           }
-          EmptyAction.registerActionShortcuts(editor.getComponent(), myConsoleEditor.getComponent());
+          ActionUtil.copyRegisteredShortcuts(editor.getComponent(), myConsoleEditor.getComponent());
         }
       }
 

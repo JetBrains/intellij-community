@@ -5,7 +5,7 @@
     <content url="file://$MODULE_DIR$" />
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" name="kotlinc.kotlin-stdlib" level="project" />
+    <orderEntry type="library" name="kotlin-stdlib" level="project" />
     <orderEntry type="module" module-name="kotlin.plugin.k1" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.core" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.jvm.analysis.kotlin.tests" scope="RUNTIME" />
@@ -61,6 +61,9 @@
     <orderEntry type="module" module-name="kotlin.uast.uast-kotlin-base.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.statistics" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.parcelize.tests" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.refactorings.common.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.facet.tests" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.injection.tests" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.base.indices.tests" scope="RUNTIME" />
   </component>
 </module>

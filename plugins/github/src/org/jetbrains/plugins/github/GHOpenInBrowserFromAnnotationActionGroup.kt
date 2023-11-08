@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github
 
 import com.intellij.icons.AllIcons
@@ -16,11 +16,10 @@ import git4idea.remote.hosting.action.HostedGitRepositoryReferenceUtil
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.util.GHHostedRepositoriesManager
 
-
-class GHOpenInBrowserFromAnnotationActionGroup(val annotation: FileAnnotation)
+internal class GHOpenInBrowserFromAnnotationActionGroup(val annotation: FileAnnotation)
   : HostedGitRepositoryReferenceActionGroup(GithubBundle.messagePointer("open.on.github.action"),
                                             GithubBundle.messagePointer("open.on.github.action.description"),
-                                            AllIcons.Vcs.Vendors.Github) {
+                                            { AllIcons.Vcs.Vendors.Github }) {
   override fun findReferences(dataContext: DataContext): List<HostedGitRepositoryReference> {
     if (annotation !is GitFileAnnotation) return emptyList()
     val project = annotation.project

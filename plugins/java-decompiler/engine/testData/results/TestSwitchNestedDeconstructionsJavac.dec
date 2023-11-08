@@ -1,0 +1,612 @@
+package pkg;
+
+public class TestSwitchNestedDeconstructionsJavac {
+   public static void main(String[] args) {
+   }// 6
+
+   public static void testNestedSwitches(Object o) {
+      switch (o) {// 14
+         case R2(String s, String var5) when s.length() > 123456789:// 15
+            if (s.length() == 2) {// 16
+               System.out.println(o);// 17
+            }
+
+            return;// 42
+         case R2(String s, String var6) when s.length() > 2:// 20
+            if (s.length() == 2) {// 21
+               System.out.println(o);// 22
+            }
+
+            return;
+         case R2(String s, Object var23) when s.length() > 45:// 25
+            if (s.length() == 2) {// 26
+               System.out.println(o);// 27
+            }
+
+            return;
+         case R2(Object var19, Object var22) when var19.hashCode() > 7:// 30
+            if (var19.hashCode() == 2) {// 31
+               System.out.println(o);// 32
+            }
+
+            return;
+         case R2(Object var13, Object var24):
+            if (var13.hashCode() == 2) {// 36
+               System.out.println(o);// 37
+            }
+
+            return;
+         default:
+            System.out.println(o);// 40
+            return;
+      }
+   }
+
+   public static void testStringString(Object o) {
+      switch (o) {// 45
+         case R2(String var4, String s2):
+            if (s2.isEmpty()) {// 47
+               System.out.println("3");// 48
+            }
+            break;
+         default:
+            System.out.println("3");// 51
+            break;
+      }
+
+      System.out.println("1");// 53
+   }
+
+   public static void testNestedLevel2(Object o) {
+      switch (o) {// 57
+         case R2(String s, String var5) when var5.length() > 11:// 58
+            if (s.length() == 9) {// 59
+               System.out.println(o);// 60
+            }
+
+            return;// 70
+         case R2(Object var9, R1(String var8)) when var8.length() > 7:// 63
+            if (var9.hashCode() == 2) {// 64
+               System.out.println(o);// 65
+            }
+
+            return;
+         default:
+            System.out.println(o);// 68
+            return;
+      }
+   }
+
+   public static void testNumberString(Object o) {
+      switch (o) {// 73
+         case R2(String s, String var5) when var5.length() > 10:// 74
+            if (s.length() == 9) {// 75
+               System.out.println(o);// 76
+            }
+
+            return;// 91
+         case R2(Number s, String var7) when var7.length() > 9:// 79
+            if (s.hashCode() == 9) {// 80
+               System.out.println(o);// 81
+            }
+
+            return;
+         case R2(String s, Object var18) when s.length() > 7:// 84
+            if (s.length() == 2) {// 85
+               System.out.println(o);// 86
+            }
+
+            return;
+         default:
+            System.out.println(o);// 89
+            return;
+      }
+   }
+
+   public static void test2DeepDeconstruction(Object o) {
+      switch (o) {// 94
+         case R1(R1(String var5)) when var5.hashCode() == 5 -> System.out.println("123456789");// 95 96
+         case R1(String var6) when var6.hashCode() == 3 -> System.out.println("3");// 98 99
+         default -> System.out.println("3");// 101
+      }
+
+      System.out.println("1");// 103
+   }
+
+   public static void testDoubleLongCase(Object o) {
+      switch (o) {// 107
+         case R2(String s, String var5) when s.length() > 3:// 108
+            if (s.length() == 2) {// 109
+               System.out.println(o);// 110
+            }
+            break;
+         case R2(String s, String var6) when s.length() > 4:// 113
+            if (s.length() == 2) {// 114
+               System.out.println(o);// 115
+            }
+            break;
+         case R2(String s, Object var28) when s.length() > 3:// 118
+            if (s.length() == 2) {// 119
+               System.out.println(o);// 120
+            }
+            break;
+         case R2(Object var24, Object var27) when var24.hashCode() > 3:// 123
+            if (var24.hashCode() == 2) {// 124
+               System.out.println(o);// 125
+            }
+            break;
+         case R2(Object var13, Object var29):
+            if (var13.hashCode() == 2) {// 129
+               System.out.println(o);// 130
+            }
+            break;
+         default:
+            System.out.println(o);
+            break;// 133
+      }
+
+      switch (o) {// 136
+         case R2(String s, String var5) when s.length() > 3:// 137
+            if (s.length() == 2) {// 138
+               System.out.println(o);// 139
+            }
+
+            return;// 164
+         case R2(String s, String var6) when s.length() > 4:// 142
+            if (s.length() == 2) {// 143
+               System.out.println(o);// 144
+            }
+
+            return;
+         case R2(String s, Object var32) when s.length() > 3:// 147
+            if (s.length() == 2) {// 148
+               System.out.println(o);// 149
+            }
+
+            return;
+         case R2(Object var24, Object var31) when var24.hashCode() > 3:// 152
+            if (var24.hashCode() == 2) {// 153
+               System.out.println(o);// 154
+            }
+
+            return;
+         case R2(Object var13, Object var33):
+            if (var13.hashCode() == 2) {// 158
+               System.out.println(o);// 159
+            }
+
+            return;
+         default:
+            System.out.println(o);// 162
+            return;
+      }
+   }
+
+   public static void testTryWithDoubleDo(Object o, Object o2) {
+      try {
+         System.out.println("1");// 168
+      } catch (Exception var16) {// 169
+         switch (o2) {// 170
+            case R2(Number var6, String var7):
+               System.out.println("10");// 171 172
+               return;// 180
+            case R2(String var8, Number var9):
+               System.out.println(o);// 174 175
+               return;
+            default:
+               System.out.println(o);// 177
+               return;
+         }
+      }
+
+   }
+
+   static record R2(Object o, Object o2) {
+      R2(Object o, Object o2) {
+         this.o = o;
+         this.o2 = o2;
+      }
+
+      public Object o() {
+         return this.o;
+      }
+
+      public Object o2() {
+         return this.o2;// 183
+      }
+   }
+
+   static record R1(Object o) {
+      R1(Object o) {
+         this.o = o;
+      }
+
+      public Object o() {
+         return this.o;// 8
+      }
+   }
+}
+
+class 'pkg/TestSwitchNestedDeconstructionsJavac' {
+   method 'main ([Ljava/lang/String;)V' {
+      0      4
+   }
+
+   method 'testNestedSwitches (Ljava/lang/Object;)V' {
+      10      7
+      9d      8
+      a0      8
+      a2      8
+      ad      9
+      b0      9
+      b1      9
+      b4      10
+      b8      10
+      c7      14
+      ca      14
+      cb      14
+      d6      15
+      d9      15
+      da      15
+      dd      16
+      e1      16
+      ed      20
+      f0      20
+      f2      20
+      fd      21
+      100      21
+      101      21
+      104      22
+      108      22
+      124      26
+      127      26
+      129      26
+      134      27
+      137      27
+      138      27
+      13b      28
+      13f      28
+      168      33
+      16b      33
+      16c      33
+      16f      34
+      173      34
+      17c      39
+      180      39
+      197      13
+   }
+
+   method 'testStringString (Ljava/lang/Object;)V' {
+      10      45
+      5b      47
+      5d      47
+      63      48
+      66      48
+      68      48
+      6e      52
+      71      52
+      73      52
+      76      53
+      79      56
+      7c      56
+      7e      56
+      81      57
+   }
+
+   method 'testNestedLevel2 (Ljava/lang/Object;)V' {
+      10      60
+      72      61
+      75      61
+      77      61
+      82      62
+      85      62
+      87      62
+      8a      63
+      8e      63
+      c5      67
+      c8      67
+      ca      67
+      d5      68
+      d8      68
+      d9      68
+      dc      69
+      e0      69
+      ee      74
+      f2      74
+      109      66
+   }
+
+   method 'testNumberString (Ljava/lang/Object;)V' {
+      10      80
+      76      81
+      79      81
+      7b      81
+      86      82
+      89      82
+      8b      82
+      8e      83
+      92      83
+      b6      87
+      b9      87
+      bb      87
+      c6      88
+      c9      88
+      cb      88
+      ce      89
+      d2      89
+      eb      93
+      ee      93
+      f0      93
+      fb      94
+      fe      94
+      ff      94
+      102      95
+      106      95
+      114      100
+      118      100
+      12f      86
+   }
+
+   method 'test2DeepDeconstruction (Ljava/lang/Object;)V' {
+      10      106
+      73      107
+      76      107
+      77      107
+      80      107
+      83      107
+      85      107
+      94      108
+      97      108
+      98      108
+      a1      108
+      a4      108
+      a6      108
+      b1      109
+      b4      109
+      b6      109
+      bc      112
+      bf      112
+      c1      112
+      c4      113
+   }
+
+   method 'testDoubleLongCase (Ljava/lang/Object;)V' {
+      10      116
+      9d      117
+      a0      117
+      a1      117
+      ac      118
+      af      118
+      b0      118
+      b3      119
+      b7      119
+      c6      122
+      c9      122
+      ca      122
+      d5      123
+      d8      123
+      d9      123
+      dc      124
+      e0      124
+      ec      127
+      ef      127
+      f0      127
+      fb      128
+      fe      128
+      ff      128
+      102      129
+      106      129
+      122      132
+      125      132
+      126      132
+      131      133
+      134      133
+      135      133
+      138      134
+      13c      134
+      165      138
+      168      138
+      169      138
+      16c      139
+      170      139
+      179      143
+      17d      143
+      180      144
+      193      147
+      21d      148
+      220      148
+      221      148
+      22c      149
+      22f      149
+      230      149
+      233      150
+      237      150
+      246      154
+      249      154
+      24a      154
+      255      155
+      258      155
+      259      155
+      25c      156
+      260      156
+      26c      160
+      26f      160
+      270      160
+      27b      161
+      27e      161
+      27f      161
+      282      162
+      286      162
+      2a2      166
+      2a5      166
+      2a6      166
+      2b1      167
+      2b4      167
+      2b5      167
+      2b8      168
+      2bc      168
+      2e5      173
+      2e8      173
+      2e9      173
+      2ec      174
+      2f0      174
+      2f9      179
+      2fd      179
+      314      153
+   }
+
+   method 'testTryWithDoubleDo (Ljava/lang/Object;Ljava/lang/Object;)V' {
+      0      186
+      3      186
+      5      186
+      b      187
+      1e      188
+      81      190
+      8a      190
+      8d      190
+      b2      193
+      be      193
+      ce      196
+      d2      196
+      e9      191
+   }
+}
+
+class 'pkg/TestSwitchNestedDeconstructionsJavac$R2' {
+   method '<init> (Ljava/lang/Object;Ljava/lang/Object;)V' {
+      6      205
+      b      206
+      e      207
+   }
+
+   method 'o ()Ljava/lang/Object;' {
+      1      210
+      4      210
+   }
+
+   method 'o2 ()Ljava/lang/Object;' {
+      1      214
+      4      214
+   }
+}
+
+class 'pkg/TestSwitchNestedDeconstructionsJavac$R1' {
+   method '<init> (Ljava/lang/Object;)V' {
+      6      220
+      9      221
+   }
+
+   method 'o ()Ljava/lang/Object;' {
+      1      224
+      4      224
+   }
+}
+
+Lines mapping:
+6 <-> 5
+8 <-> 225
+14 <-> 8
+15 <-> 9
+16 <-> 10
+17 <-> 11
+20 <-> 15
+21 <-> 16
+22 <-> 17
+25 <-> 21
+26 <-> 22
+27 <-> 23
+30 <-> 27
+31 <-> 28
+32 <-> 29
+36 <-> 34
+37 <-> 35
+40 <-> 40
+42 <-> 14
+45 <-> 46
+47 <-> 48
+48 <-> 49
+51 <-> 53
+53 <-> 57
+57 <-> 61
+58 <-> 62
+59 <-> 63
+60 <-> 64
+63 <-> 68
+64 <-> 69
+65 <-> 70
+68 <-> 75
+70 <-> 67
+73 <-> 81
+74 <-> 82
+75 <-> 83
+76 <-> 84
+79 <-> 88
+80 <-> 89
+81 <-> 90
+84 <-> 94
+85 <-> 95
+86 <-> 96
+89 <-> 101
+91 <-> 87
+94 <-> 107
+95 <-> 108
+96 <-> 108
+98 <-> 109
+99 <-> 109
+101 <-> 110
+103 <-> 113
+107 <-> 117
+108 <-> 118
+109 <-> 119
+110 <-> 120
+113 <-> 123
+114 <-> 124
+115 <-> 125
+118 <-> 128
+119 <-> 129
+120 <-> 130
+123 <-> 133
+124 <-> 134
+125 <-> 135
+129 <-> 139
+130 <-> 140
+133 <-> 145
+136 <-> 148
+137 <-> 149
+138 <-> 150
+139 <-> 151
+142 <-> 155
+143 <-> 156
+144 <-> 157
+147 <-> 161
+148 <-> 162
+149 <-> 163
+152 <-> 167
+153 <-> 168
+154 <-> 169
+158 <-> 174
+159 <-> 175
+162 <-> 180
+164 <-> 154
+168 <-> 187
+169 <-> 188
+170 <-> 189
+171 <-> 191
+172 <-> 191
+174 <-> 194
+175 <-> 194
+177 <-> 197
+180 <-> 192
+183 <-> 215
+Not mapped:
+35
+46
+54
+97
+100
+104
+128
+157
+173
+176
+179

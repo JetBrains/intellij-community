@@ -19,6 +19,12 @@ import com.intellij.platform.backend.workspace.*
 import com.intellij.platform.workspace.jps.JpsEntitySourceFactory
 import com.intellij.platform.workspace.jps.JpsProjectFileEntitySource
 import com.intellij.platform.workspace.jps.entities.*
+import com.intellij.platform.workspace.storage.EntityStorageSnapshot
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.VersionedStorageChange
+import com.intellij.platform.workspace.storage.impl.url.toVirtualFileUrl
+import com.intellij.platform.workspace.storage.toBuilder
+import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.project.stateStore
 import com.intellij.testFramework.*
 import com.intellij.testFramework.UsefulTestCase.assertEmpty
@@ -35,12 +41,6 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModuleEntity
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleRootComponentBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
-import com.intellij.platform.workspace.storage.EntityStorageSnapshot
-import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.platform.workspace.storage.VersionedStorageChange
-import com.intellij.platform.workspace.storage.impl.url.toVirtualFileUrl
-import com.intellij.platform.workspace.storage.toBuilder
-import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext

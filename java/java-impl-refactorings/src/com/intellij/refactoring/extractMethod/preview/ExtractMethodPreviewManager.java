@@ -14,7 +14,7 @@ import com.intellij.refactoring.extractMethod.ExtractMethodProcessor;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 
-@Service
+@Service(Service.Level.PROJECT)
 public final class ExtractMethodPreviewManager {
   private final Project myProject;
   private ContentManager myContentManager;

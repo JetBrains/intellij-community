@@ -17,25 +17,22 @@ import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvider
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferencesInRange
-import org.jetbrains.kotlin.idea.completion.FirCompletionSessionParameters
-import org.jetbrains.kotlin.idea.completion.ItemPriority
-import org.jetbrains.kotlin.idea.completion.KOTLIN_CAST_REQUIRED_COLOR
-import org.jetbrains.kotlin.idea.completion.LookupElementSink
+import org.jetbrains.kotlin.idea.completion.*
 import org.jetbrains.kotlin.idea.completion.context.FirBasicCompletionContext
-import org.jetbrains.kotlin.idea.completion.context.FirRawPositionCompletionContext
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.CallableMetadataProvider
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.CompletionSymbolOrigin
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.KtSymbolWithOrigin
 import org.jetbrains.kotlin.idea.completion.impl.k2.ImportStrategyDetector
+import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.FirCompletionContributor
 import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionOptions
 import org.jetbrains.kotlin.idea.completion.lookups.ImportStrategy
 import org.jetbrains.kotlin.idea.completion.lookups.factories.KotlinFirLookupElementFactory
-import org.jetbrains.kotlin.idea.completion.priority
 import org.jetbrains.kotlin.idea.completion.weighers.CallableWeigher.callableWeight
 import org.jetbrains.kotlin.idea.completion.weighers.Weighers
 import org.jetbrains.kotlin.idea.completion.weighers.Weighers.applyWeighsToLookupElement
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
 import org.jetbrains.kotlin.idea.references.mainReference
+import org.jetbrains.kotlin.idea.util.positionContext.KotlinRawPositionContext
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.types.Variance
@@ -48,10 +45,10 @@ internal class FirCompletionContributorOptions(
     }
 }
 
-internal abstract class FirCompletionContributorBase<C : FirRawPositionCompletionContext>(
+internal abstract class FirCompletionContributorBase<C : KotlinRawPositionContext>(
     protected val basicContext: FirBasicCompletionContext,
     options: FirCompletionContributorOptions,
-) {
+) : FirCompletionContributor<C> {
 
     constructor(basicContext: FirBasicCompletionContext, priority: Int) :
             this(basicContext, FirCompletionContributorOptions(priority))
@@ -72,13 +69,6 @@ internal abstract class FirCompletionContributorBase<C : FirRawPositionCompletio
 
     protected val scopeNameFilter: KtScopeNameFilter =
         { name -> !name.isSpecial && prefixMatcher.prefixMatches(name.identifier) }
-
-    context(KtAnalysisSession)
-    abstract fun complete(
-        positionContext: C,
-        weighingContext: WeighingContext,
-        sessionParameters: FirCompletionSessionParameters,
-    )
 
     context(KtAnalysisSession)
     protected fun addSymbolToCompletion(expectedType: KtType?, symbol: KtSymbol) {
@@ -183,8 +173,8 @@ internal abstract class FirCompletionContributorBase<C : FirRawPositionCompletio
     }
 }
 
-internal fun <C : FirRawPositionCompletionContext> KtAnalysisSession.complete(
-    contextContributor: FirCompletionContributorBase<C>,
+internal fun <C : KotlinRawPositionContext> KtAnalysisSession.complete(
+    contextContributor: FirCompletionContributor<C>,
     positionContext: C,
     weighingContext: WeighingContext,
     sessionParameters: FirCompletionSessionParameters,

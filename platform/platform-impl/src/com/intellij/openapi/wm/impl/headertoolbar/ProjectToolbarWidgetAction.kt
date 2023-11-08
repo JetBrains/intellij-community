@@ -41,7 +41,7 @@ import javax.swing.*
 private const val MAX_RECENT_COUNT = 100
 private val projectKey = Key.create<Project>("project-widget-project")
 
-private class DefaultOpenProjectSelectionPredicateSupplier : OpenProjectSelectionPredicateSupplier {
+internal class DefaultOpenProjectSelectionPredicateSupplier : OpenProjectSelectionPredicateSupplier {
   override fun getPredicate(): Predicate<AnAction> {
     val openProjects = ProjectUtilCore.getOpenProjects()
     val paths = openProjects.map { it.basePath }

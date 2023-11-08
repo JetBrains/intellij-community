@@ -11,7 +11,7 @@ import com.intellij.ide.trustedProjects.TrustedProjectsLocator
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
-import com.intellij.openapi.project.*
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.util.ThreeState
 import com.intellij.util.messages.Topic
@@ -21,6 +21,7 @@ import java.nio.file.Path
 import java.util.function.Consumer
 
 @Suppress("DEPRECATION", "DeprecatedCallableAddReplaceWith")
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Use com.intellij.ide.impl.trustedProjects.TrustedProjectsDialog instead")
 fun confirmOpeningOrLinkingUntrustedProject(
   projectRoot: Path,
@@ -65,6 +66,7 @@ fun isTrustedCheckDisabled(): Boolean = TrustedProjects.isTrustedCheckDisabled()
 @JvmOverloads
 @ApiStatus.Internal
 @Suppress("DEPRECATION")
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Use TrustedProjects.isProjectTrusted instead")
 fun isProjectImplicitlyTrusted(projectDir: Path?, project: Project? = null): Boolean =
   TrustedProjects.isProjectImplicitlyTrusted(projectDir, project)
@@ -133,12 +135,14 @@ interface TrustStateListener {
 }
 
 @JvmOverloads
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Use onceWhenProjectTrusted instead", ReplaceWith("onceWhenProjectTrusted(parentDisposable, listener)"))
 fun whenProjectTrusted(parentDisposable: Disposable? = null, listener: (Project) -> Unit) {
   TrustedProjectsListener.onceWhenProjectTrusted(parentDisposable, listener)
 }
 
 @JvmOverloads
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Use onceWhenProjectTrusted instead", ReplaceWith("onceWhenProjectTrusted(parentDisposable, listener::accept)"))
 fun whenProjectTrusted(parentDisposable: Disposable? = null, listener: Consumer<Project>): Unit =
   TrustedProjectsListener.onceWhenProjectTrusted(parentDisposable, listener::accept)

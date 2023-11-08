@@ -8,11 +8,13 @@ import com.intellij.build.progress.BuildProgress
 import com.intellij.build.progress.BuildProgressDescriptor
 import com.intellij.openapi.components.service
 import com.intellij.testFramework.LightPlatformTestCase
+import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.RunAll
 import com.intellij.testFramework.fixtures.BuildViewTestFixture
 import com.intellij.util.ThrowableRunnable
 import org.jetbrains.annotations.NotNull
 import org.junit.Test
+import java.io.File
 
 class KotlincOutputParserTest : LightPlatformTestCase() {
 
@@ -94,6 +96,32 @@ class KotlincOutputParserTest : LightPlatformTestCase() {
           -
            -finished
             C:\A.kt: (7, 5): Unresolved reference: bbb
+        """.trimIndent()
+      )
+    }
+  }
+
+  @Test
+  fun `test kotlin warning message after successful build`() {
+    val pathToBuildGradleKtsWithWarning =
+      PlatformTestUtil.getCommunityPath().replace(File.separatorChar, '/') +
+      "/platform/lang-impl/testData/build/output/warning/build.gradle.kts"
+    generateBuildWithOutput(
+      """    
+      > Configure project :
+      w: file://$pathToBuildGradleKtsWithWarning:23:1: The expression is unused
+      
+      BUILD SUCCESSFUL in 35s
+
+      """.trimIndent()
+    )
+    with(buildViewTestFixture) {
+      assertBuildViewTreeEquals(
+        """
+          -
+           -finished
+            -build.gradle.kts
+             The expression is unused
         """.trimIndent()
       )
     }

@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui
 
-import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.popup.ListSeparator
 import com.intellij.openapi.ui.popup.util.PopupUtil
 import com.intellij.openapi.util.NlsContexts
@@ -25,8 +24,10 @@ import javax.swing.border.CompoundBorder
  * Instead of using a [ComboBox]<[Any]> (model with [T] and the separator) with a custom renderer,
  * this renderer makes it possible to use [ComboBox]<[T]> and specify which items should be preceded
  * by a separator. (see [GroupedComboBoxRenderer.separatorFor])
+ *
+ * [component] is the [JComponent] opening the list.
  */
-abstract class GroupedComboBoxRenderer<T>(val combo: ComboBox<T>? = null) : GroupedElementsRenderer(), ListCellRenderer<T> {
+abstract class GroupedComboBoxRenderer<T>(val component: JComponent? = null) : GroupedElementsRenderer(), ListCellRenderer<T>, ExperimentalUI.NewUIComboBoxRenderer {
 
   /**
    * @return The item title displayed in the combo
@@ -56,7 +57,7 @@ abstract class GroupedComboBoxRenderer<T>(val combo: ComboBox<T>? = null) : Grou
                      index: Int,
                      isSelected: Boolean,
                      cellHasFocus: Boolean) {
-    val text = getText(value)
+    val text = if (value == null) "" else getText(value)
     item.append(text)
 
     val secondaryText = getSecondaryText(value)
@@ -118,7 +119,7 @@ abstract class GroupedComboBoxRenderer<T>(val combo: ComboBox<T>? = null) : Grou
   }
 
   private val enabled: Boolean
-    get() = combo?.isEnabled ?: true
+    get() = component?.isEnabled ?: true
 
   override fun getBackground(): Color = if (enabled) UIUtil.getListBackground(false, false) else UIUtil.getComboBoxDisabledBackground()
   override fun getForeground(): Color = if (enabled) UIUtil.getListForeground(false, false) else UIUtil.getComboBoxDisabledForeground()

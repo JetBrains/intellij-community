@@ -862,7 +862,7 @@ public class PyStubsTest extends PyTestCase {
     final PyFile libFile = (PyFile)manager.findFile(myFixture.findFileInTempDir("mod.py"));
 
     final PyTargetExpression instance = originFile.findTopLevelAttribute("expr");
-    assertType("tuple[int, None, LiteralString]", instance, TypeEvalContext.codeAnalysis(myFixture.getProject(), originFile));
+    assertType("tuple[int, None, str]", instance, TypeEvalContext.codeAnalysis(myFixture.getProject(), originFile));
     assertNotParsed(libFile);
   }
 
@@ -1090,6 +1090,30 @@ public class PyStubsTest extends PyTestCase {
     assertNotParsed(file);
   }
 
+  // PY-62608
+  public void testTypeParameterListInFunctionDeclaration() {
+    PyFile file = getTestFile();
+    PyFunction function = file.findTopLevelFunction("foo");
+    assertNotNull(function);
+    doTestTypeParameterStub(function, file);
+  }
+
+  // PY-62608
+  public void testTypeParameterListInClassDeclaration() {
+    PyFile file = getTestFile();
+    PyClass cls = file.findTopLevelClass("Clazz");
+    assertNotNull(cls);
+    doTestTypeParameterStub(cls, file);
+  }
+
+  // PY-62608
+  public void testTypeAliasStatement() {
+    PyFile file = getTestFile();
+    PyTypeAliasStatement typeAliasStatement = file.findTypeAliasStatement("myType");
+    assertNotNull(typeAliasStatement);
+    doTestTypeParameterStub(typeAliasStatement, file);
+  }
+
 
   private void doTestTypingTypedDictArguments() {
     doTestTypedDict("name", Arrays.asList("x", "y"), Arrays.asList("str", "int"), QualifiedName.fromComponents("TypedDict"));
@@ -1151,6 +1175,32 @@ public class PyStubsTest extends PyTestCase {
 
     assertFalse(fieldsNamesIterator.hasNext());
     assertFalse(fieldsTypesIterator.hasNext());
+  }
+
+  private static void doTestTypeParameterStub(@NotNull PyTypeParameterListOwner parameterListOwner, @NotNull PyFile file) {
+    PyTypeParameter firstTypeParameter = parameterListOwner.getTypeParameterList().getTypeParameters().get(0);
+    PyTypeParameter secondTypeParameter = parameterListOwner.getTypeParameterList().getTypeParameters().get(1);
+    PyTypeParameter typeVarTupleTypeParameter = parameterListOwner.getTypeParameterList().getTypeParameters().get(2);
+    PyTypeParameter paramSpecTypeParameter = parameterListOwner.getTypeParameterList().getTypeParameters().get(3);
+
+    assertNotNull(firstTypeParameter);
+    assertNotNull(secondTypeParameter);
+    assertNotNull(typeVarTupleTypeParameter);
+    assertNotNull(paramSpecTypeParameter);
+
+    assertEquals("T", firstTypeParameter.getName());
+    assertEquals(PyTypeParameter.Kind.TypeVar, firstTypeParameter.getKind());
+    assertEquals("U", secondTypeParameter.getName());
+    assertEquals(PyTypeParameter.Kind.TypeVar, secondTypeParameter.getKind());
+    assertEquals("Ts", typeVarTupleTypeParameter.getName());
+    assertEquals(PyTypeParameter.Kind.TypeVarTuple, typeVarTupleTypeParameter.getKind());
+    assertEquals("P", paramSpecTypeParameter.getName());
+    assertEquals(PyTypeParameter.Kind.ParamSpec, paramSpecTypeParameter.getKind());
+
+    assertNull(firstTypeParameter.getBoundExpressionText());
+    assertEquals(secondTypeParameter.getBoundExpressionText(), "str");
+
+    assertNotParsed(file);
   }
 
   private static final class DataclassFieldChecker {

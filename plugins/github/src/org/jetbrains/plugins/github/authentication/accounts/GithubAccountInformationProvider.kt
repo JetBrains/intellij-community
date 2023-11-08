@@ -2,12 +2,13 @@
 package org.jetbrains.plugins.github.authentication.accounts
 
 import com.github.benmanes.caffeine.cache.Caffeine
-import com.intellij.collaboration.async.disposingScope
-import com.intellij.collaboration.auth.AccountsListener
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.util.childScope
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubApiRequests
@@ -20,14 +21,15 @@ import java.time.temporal.ChronoUnit
  * Loads the account information or provides it from cache
  * TODO: more abstraction
  */
-class GithubAccountInformationProvider : Disposable {
+@Service(Service.Level.APP)
+class GithubAccountInformationProvider(cs: CoroutineScope) : Disposable {
 
   private val informationCache = Caffeine.newBuilder()
     .expireAfterWrite(Duration.of(30, ChronoUnit.MINUTES))
     .build<GithubAccount, GithubAuthenticatedUser>()
 
   init {
-    disposingScope().launch {
+    cs.childScope().launch {
       service<GHAccountManager>().accountsState.collect {
         informationCache.invalidateAll()
       }

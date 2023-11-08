@@ -7,12 +7,11 @@ import com.intellij.ide.wizard.LanguageNewProjectWizardData.Companion.languageDa
 import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.baseData
 import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.modules
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable
+import com.intellij.testFramework.closeProjectAsync
 import com.intellij.testFramework.useProjectAsync
 import com.intellij.testFramework.utils.module.assertModules
 import com.intellij.testFramework.withProjectAsync
@@ -20,7 +19,6 @@ import com.intellij.ui.UIBundle
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
-import org.jetbrains.idea.maven.buildtool.MavenImportSpec
 import org.jetbrains.idea.maven.importing.MavenProjectImporter.Companion.isImportToWorkspaceModelEnabled
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.wizards.MavenJavaNewProjectWizardData.Companion.javaMavenData
@@ -70,7 +68,7 @@ class MavenProjectWizardTest : MavenNewProjectWizardTestCase() {
 
       // verify pom unignored
       assertSize(0, mavenProjectsManager.ignoredFilesPaths)
-    }
+    }.closeProjectAsync()
     return@runBlocking
   }
 
@@ -149,23 +147,5 @@ class MavenProjectWizardTest : MavenNewProjectWizardTestCase() {
       }
     }
     return@runBlocking
-  }
-
-  private suspend fun waitForProjectCreation(createProject: () -> Project): Project {
-    val project = withContext(Dispatchers.EDT) { createProject() }
-
-    // hack to wait for all the pending updates on newly created project
-    MavenProjectsManager.getInstance(project).updateAllMavenProjects(MavenImportSpec(false, false, false))
-
-    return project
-  }
-
-  private suspend fun waitForModuleCreation(createModule: () -> Module): Module {
-    val module = withContext(Dispatchers.EDT) { createModule() }
-
-    // hack to wait for all the pending updates
-    MavenProjectsManager.getInstance(module.project).updateAllMavenProjects(MavenImportSpec(false, false, false))
-
-    return module
   }
 }

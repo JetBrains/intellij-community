@@ -1,6 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.packaging.impl.artifacts
 
+import com.intellij.java.workspace.entities.ArtifactEntity
+import com.intellij.java.workspace.entities.FileOrDirectoryPackagingElementEntity
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
@@ -15,16 +17,14 @@ import com.intellij.packaging.artifacts.ArtifactManager
 import com.intellij.packaging.impl.artifacts.workspacemodel.ArtifactBridge
 import com.intellij.packaging.impl.artifacts.workspacemodel.ArtifactManagerBridge.Companion.artifactsMap
 import com.intellij.packaging.impl.elements.FileOrDirectoryCopyPackagingElement
-import com.intellij.util.PathUtil
 import com.intellij.platform.backend.workspace.WorkspaceModel.Companion.getInstance
-import com.intellij.java.workspace.entities.ArtifactEntity
-import com.intellij.java.workspace.entities.FileOrDirectoryPackagingElementEntity
 import com.intellij.platform.backend.workspace.useNewWorkspaceModelApi
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.query.entities
 import com.intellij.platform.workspace.storage.query.flatMap
 import com.intellij.platform.workspace.storage.query.groupBy
+import com.intellij.util.PathUtil
 
 internal class ArtifactVirtualFileListener(private val project: Project) : BulkFileListener {
   private val parentPathsToArtifacts: CachedValue<Map<String, List<ArtifactEntity>>> = CachedValue { storage: EntityStorage ->

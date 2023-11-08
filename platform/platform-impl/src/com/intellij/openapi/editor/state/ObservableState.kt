@@ -5,14 +5,15 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Ref
 import com.intellij.util.EventDispatcher
 import kotlinx.serialization.serializer
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
+import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
 import kotlin.reflect.KType
+import kotlin.reflect.full.isSubclassOf
 import kotlin.reflect.typeOf
 
-fun <T: ObservableState> T.init() : T {
+fun <T : ObservableState> T.init(): T {
   refreshAll()
   return this
 }
@@ -56,36 +57,52 @@ abstract class ObservableState {
     initialValue, SyncDefaultValueCalculator(defaultValueCalculator))
 
   inline fun <reified T> property(initialValue: T,
-                                  defaultValueCalculator: SyncDefaultValueCalculator<T>,
-                                  outValueModifier: CustomOutValueModifier<T>? = null): StateProperty<T> = property(
-    typeOf<T>(), initialValue, defaultValueCalculator, outValueModifier)
-
-  inline fun <reified T> property(defaultValue: T): StateProperty<T> = property(
-    typeOf<T>(), defaultValue, FixedDefaultValue(defaultValue))
+                                  defaultValueCalculator: SyncDefaultValueCalculator<T>? = null,
+                                  outValueModifier: CustomOutValueModifier<T>? = null,
+                                  customPropertySerializer: CustomPropertySerializer<T>? = null): StateProperty<T> = property(
+    typeOf<T>(), initialValue, defaultValueCalculator, outValueModifier, customPropertySerializer)
 
   fun <T> property(clazz: KType,
                    initialValue: T,
-                   defaultValueCalculator: SyncDefaultValueCalculator<T>,
-                   outValueModifier: CustomOutValueModifier<T>? = null): StateProperty<T> {
-    val property = createProperty(clazz, initialValue, defaultValueCalculator, outValueModifier)
+                   defaultValueCalculator: SyncDefaultValueCalculator<T>? = null,
+                   outValueModifier: CustomOutValueModifier<T>? = null,
+                   customPropertySerializer: CustomPropertySerializer<T>? = null): StateProperty<T> {
+    val property = createProperty(clazz, initialValue,
+                                  defaultValueCalculator ?: FixedDefaultValue(initialValue),
+                                  outValueModifier, customPropertySerializer)
     return addProperty(property)
   }
 
   private fun <T> createProperty(clazz: KType,
-                                        initialValue: T,
-                                        defaultValueCalculator: SyncDefaultValueCalculator<T>,
-                                        outValueModifier: CustomOutValueModifier<T>?): ObjectStateProperty<T> {
-    val serializer = try {
+                                 initialValue: T,
+                                 defaultValueCalculator: SyncDefaultValueCalculator<T>,
+                                 outValueModifier: CustomOutValueModifier<T>?,
+                                 customPropertySerializer: CustomPropertySerializer<T>?): ObjectStateProperty<T> {
+    if (customPropertySerializer != null)
+      return TransferableObjectStateProperty(clazz, initialValue, defaultValueCalculator, outValueModifier, customPropertySerializer)
+
+    val defaultSerializer = if (isNotRecommendedForSerialization(clazz)) null
+    else try {
       serializer(clazz)
     }
     catch (e: Exception) {
       null
     }
 
-    return if (serializer != null)
-      TransferableObjectStateProperty(clazz, initialValue, defaultValueCalculator, outValueModifier)
+    return if (defaultSerializer != null)
+      TransferableObjectStateProperty(clazz, initialValue, defaultValueCalculator, outValueModifier, null)
     else
       ObjectStateProperty(initialValue, defaultValueCalculator, outValueModifier)
+  }
+
+  private fun isNotRecommendedForSerialization(clazz: KType): Boolean {
+    val classifier = clazz.classifier
+    if (classifier !is KClass<*>) return true
+
+    // Lists work fine, CharSequences - no
+    if (classifier.isSubclassOf(List::class)) return false
+
+    return classifier.isAbstract
   }
 
   fun refreshAll() {

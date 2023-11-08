@@ -23,7 +23,6 @@ import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.util.maximumWidth
 import com.intellij.ui.util.preferredWidth
@@ -269,7 +268,7 @@ class BlockTerminalSearchSession(
   }
 
   private inner class TerminalSearchResults : SearchResults(editor, project) {
-    override fun getLocalSearchArea(editor: Editor, findModel: FindModel): Pair<IntArray, IntArray> {
+    override fun getLocalSearchArea(editor: Editor, findModel: FindModel): SearchArea {
       return if (findModel.isSearchInBlock) {
         val blocks = selectionModel.selectedBlocks.sortedBy { it.startOffset }
         val starts = IntArray(blocks.size)
@@ -278,9 +277,9 @@ class BlockTerminalSearchSession(
           starts[index] = blocks[index].startOffset
           ends[index] = blocks[index].endOffset
         }
-        Pair.create(starts, ends)
+        SearchArea.create(starts, ends)
       }
-      else Pair.create(intArrayOf(0), intArrayOf(Int.MAX_VALUE))
+      else SearchArea.create(intArrayOf(0), intArrayOf(Int.MAX_VALUE))
     }
 
     /**
@@ -318,9 +317,9 @@ class BlockTerminalSearchSession(
     private val SEARCH_IN_BLOCK_KEY: Key<Boolean> = Key.create("SearchInBlock")
 
     var FindModel.isSearchInBlock: Boolean
-      get() = getUserData(SEARCH_IN_BLOCK_KEY) == true
+      get() = getCopyableUserData(SEARCH_IN_BLOCK_KEY) == true
       set(value) {
-        putUserData(SEARCH_IN_BLOCK_KEY, value)
+        putCopyableUserData(SEARCH_IN_BLOCK_KEY, value)
       }
   }
 }

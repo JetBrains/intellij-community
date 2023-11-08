@@ -35,15 +35,13 @@ public class RedundantSlf4jDefinitionInspection extends LombokJavaInspectionBase
       findRedundantDefinition(field, field.getContainingClass());
     }
 
-    private void findRedundantDefinition(PsiVariable field, PsiClass containingClass) {
+    private void findRedundantDefinition(@NotNull PsiField field, PsiClass containingClass) {
       if (field.getType().equalsToText(LOGGER_SLF4J_FQCN)) {
         final PsiExpression initializer = field.getInitializer();
         if (initializer != null && containingClass != null) {
           if (initializer.getText().contains(format(LOGGER_INITIALIZATION, containingClass.getQualifiedName()))) {
-            holder.registerProblem(field,
-                                   LombokBundle.message("inspection.message.slf4j.logger.defined.explicitly"),
-                                   ProblemHighlightType.WARNING,
-                                   new UseSlf4jAnnotationQuickFix(field, containingClass));
+            holder.problem(field, LombokBundle.message("inspection.message.slf4j.logger.defined.explicitly"))
+              .highlight(ProblemHighlightType.WARNING).fix(new UseSlf4jAnnotationQuickFix(field, containingClass)).register();
           }
         }
       }

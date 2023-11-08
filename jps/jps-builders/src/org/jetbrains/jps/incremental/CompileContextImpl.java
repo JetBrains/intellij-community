@@ -122,12 +122,12 @@ public final class CompileContextImpl extends UserDataHolderBase implements Comp
   }
 
   @Override
-  public final @NotNull CanceledStatus getCancelStatus() {
+  public @NotNull CanceledStatus getCancelStatus() {
     return myCancelStatus;
   }
 
   @Override
-  public final void checkCanceled() throws ProjectBuildException {
+  public void checkCanceled() throws ProjectBuildException {
     if (getCancelStatus().isCanceled()) {
       throw new StopBuildException(JpsBuildBundle.message("build.message.the.build.has.been.canceled"));
     }

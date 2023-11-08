@@ -1,6 +1,5 @@
 package de.plushnikov.intellij.plugin.processor.clazz.fieldnameconstants;
 
-import com.intellij.openapi.components.Service;
 import com.intellij.psi.*;
 import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.problem.ProblemProcessingSink;
@@ -19,7 +18,6 @@ import java.util.*;
  *
  * @author alanachtenberg
  */
-@Service
 public final class FieldNameConstantsPredefinedInnerClassFieldProcessor extends AbstractFieldNameConstantsProcessor {
 
   public FieldNameConstantsPredefinedInnerClassFieldProcessor() {
@@ -36,7 +34,7 @@ public final class FieldNameConstantsPredefinedInnerClassFieldProcessor extends 
         if (super.validate(psiAnnotation, parentClass, problemBuilder)) {
           final String typeName = FieldNameConstantsHandler.getTypeName(parentClass, psiAnnotation);
           if (typeName.equals(psiClass.getName())
-            && possibleToGenerateElementNamed(nameHint, psiClass, psiAnnotation)
+            && noHintOrPossibleToGenerateElementNamed(nameHint, psiClass, psiAnnotation)
             && validate(psiAnnotation, parentClass, problemBuilder)) {
 
             List<? super PsiElement> result = new ArrayList<>();
@@ -64,7 +62,8 @@ public final class FieldNameConstantsPredefinedInnerClassFieldProcessor extends 
   }
 
   @Override
-  protected void generatePsiElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
+  protected void generatePsiElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target,
+                                     @Nullable String nameHint) {
     //do nothing
   }
 

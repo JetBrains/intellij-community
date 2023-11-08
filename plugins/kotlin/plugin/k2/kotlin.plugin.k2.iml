@@ -106,5 +106,8 @@
     <orderEntry type="module" module-name="kotlin.compiler-plugins.parcelize.k2" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.code-insight.structural-search-k2" />
     <orderEntry type="module" module-name="kotlin.i18n" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.injection-k2" />
+    <orderEntry type="module" module-name="kotlin.base.injection" />
+    <orderEntry type="module" module-name="kotlin.onboarding" scope="RUNTIME" />
   </component>
 </module>

@@ -2,6 +2,7 @@
 package com.intellij.gradle.toolingExtension.impl.modelBuilder;
 
 import com.intellij.gradle.toolingExtension.impl.model.projectModel.ExternalProjectBuilderImpl;
+import com.intellij.gradle.toolingExtension.util.GradleNegotiationUtil;
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
 import org.gradle.StartParameter;
 import org.gradle.api.Project;
@@ -13,11 +14,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.internal.DummyModel;
 import org.jetbrains.plugins.gradle.model.internal.TurnOffDefaultTasks;
-import org.jetbrains.plugins.gradle.tooling.Message;
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext;
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
 import java.util.List;
@@ -47,8 +45,6 @@ public class ExtraModelBuilder implements ToolingModelBuilder {
       return buildModel(modelName, parameter, project);
     }
   }
-
-  private static final Logger LOG = LoggerFactory.getLogger("org.jetbrains.plugins.gradle.toolingExtension.modelBuilder");
 
   private final List<ModelBuilderService> modelBuilderServices =
     Lists.newArrayList(ServiceLoader.load(ModelBuilderService.class, ExtraModelBuilder.class.getClassLoader()));
@@ -140,7 +136,7 @@ public class ExtraModelBuilder implements ToolingModelBuilder {
         //Probably checked exception might still pop from poorly behaving implementation
         throw asRuntimeException(exception);
       }
-      reportModelBuilderFailure(project, service, context, exception);
+      service.reportErrorMessage(modelName, project, context, exception);
       return null;
     }
     finally {
@@ -157,25 +153,10 @@ public class ExtraModelBuilder implements ToolingModelBuilder {
     @NotNull String modelName,
     long timeInMs
   ) {
-    String projectName = project.getDisplayName();
+    String projectName = GradleNegotiationUtil.getProjectDisplayName(project);
     String serviceName = service.getClass().getSimpleName();
     String msg = String.format("%s: service %s imported '%s' in %d ms", projectName, serviceName, modelName, timeInMs);
     project.getLogger().error(msg);
-  }
-
-  public static void reportModelBuilderFailure(
-    @NotNull Project project,
-    @NotNull ModelBuilderService service,
-    @NotNull ModelBuilderContext context,
-    @NotNull Exception exception
-  ) {
-    try {
-      Message message = service.getErrorMessageBuilder(project, exception).buildMessage();
-      context.getMessageReporter().reportMessage(project, message);
-    }
-    catch (Throwable e) {
-      LOG.warn("Failed to report model builder error", e);
-    }
   }
 
   private static @NotNull RuntimeException asRuntimeException(@NotNull Exception exception) {

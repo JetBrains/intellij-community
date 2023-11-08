@@ -164,6 +164,12 @@ class DesktopLayout(
   }
 
   internal fun getSortedList(): List<WindowInfoImpl> = idToInfo.values.sortedWith(windowInfoComparator)
+
+  override fun toString(): String =
+    "DesktopLayout(\n" +
+      "unifiedWeights: $unifiedWeights,\n" +
+      idToInfo.entries.joinToString("\n") { "${it.key}: (${it.value})" } +
+    "\n)"
 }
 
 private val LOG = logger<DesktopLayout>()

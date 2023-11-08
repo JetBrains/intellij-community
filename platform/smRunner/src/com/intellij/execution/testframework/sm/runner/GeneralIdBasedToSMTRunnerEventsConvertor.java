@@ -122,6 +122,12 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
     }
     Node node = findNode(startedNodeEvent, false);
     if (node != null) {
+      SMTestProxy testProxy = node.getProxy();
+      final String metainfo = startedNodeEvent.getMetainfo();
+      if (metainfo != null) {
+        // we change the meta-information if its value is different from the default value `null`
+        testProxy.setMetainfo(metainfo);
+      }
       if (node.getState() == State.NOT_RUNNING && startedNodeEvent.isRunning()) {
         setNodeAndAncestorsRunning(node);
       }

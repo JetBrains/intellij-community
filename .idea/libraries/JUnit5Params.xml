@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="JUnit5Params" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.junit.jupiter:junit-jupiter-params:5.9.1">
+    <properties include-transitive-deps="false" maven-id="org.junit.jupiter:junit-jupiter-params:5.10.0">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/junit/jupiter/junit-jupiter-params/5.9.1/junit-jupiter-params-5.9.1.jar">
-          <sha256sum>30157f26d857ba4f84c0d84d156f55f056e80dc09b4281affa8b1ed4d3205c08</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/junit/jupiter/junit-jupiter-params/5.10.0/junit-jupiter-params-5.10.0.jar">
+          <sha256sum>f259a7322cce375430c2236a2dcb24d4a49d22045b723ad85af88e11704391c2</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/junit/jupiter/junit-jupiter-params/5.9.1/junit-jupiter-params-5.9.1.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/junit/jupiter/junit-jupiter-params/5.10.0/junit-jupiter-params-5.10.0.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/junit/jupiter/junit-jupiter-params/5.9.1/junit-jupiter-params-5.9.1-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/junit/jupiter/junit-jupiter-params/5.10.0/junit-jupiter-params-5.10.0-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

@@ -57,7 +57,7 @@
     <orderEntry type="library" name="imgscalr" level="project" />
     <orderEntry type="module" module-name="intellij.platform.builtInServer" />
     <orderEntry type="library" exported="" name="kotlin-stdlib" level="project" />
-    <orderEntry type="library" scope="RUNTIME" name="Slf4j" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="slf4j-api" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="slf4j-jdk14" level="project" />
     <orderEntry type="module" module-name="intellij.platform.configurationStore.impl" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.credentialStore.ui" scope="RUNTIME" />
@@ -65,7 +65,6 @@
     <orderEntry type="library" name="StreamEx" level="project" />
     <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
     <orderEntry type="library" name="netty-codec-http" level="project" />
-    <orderEntry type="library" scope="RUNTIME" name="error-prone-annotations" level="project" />
     <orderEntry type="library" name="jackson" level="project" />
     <orderEntry type="library" name="Java Compatibility" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="javax.activation" level="project" />
@@ -79,6 +78,7 @@
     <orderEntry type="module" module-name="intellij.platform.ide.util.io.impl" />
     <orderEntry type="module" module-name="intellij.platform.util" />
     <orderEntry type="module" module-name="intellij.platform.externalSystem.impl" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.instanceContainer" />
     <orderEntry type="module" module-name="intellij.platform.serviceContainer" />
     <orderEntry type="library" name="jcef" level="project" />
     <orderEntry type="module" module-name="intellij.platform.statistics" />
@@ -151,5 +151,7 @@
     <orderEntry type="module" module-name="intellij.platform.diagnostic.startUpPerformanceReporter" />
     <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry.impl" />
     <orderEntry type="module" module-name="intellij.platform.diagnostic" />
+    <orderEntry type="module" module-name="intellij.platform.ijent" />
+    <orderEntry type="module" module-name="intellij.platform.backend.observation" />
   </component>
 </module>

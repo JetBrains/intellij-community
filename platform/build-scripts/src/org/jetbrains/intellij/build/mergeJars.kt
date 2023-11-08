@@ -7,23 +7,22 @@ package org.jetbrains.intellij.build
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
-import kotlinx.coroutines.runBlocking
-import org.jetbrains.annotations.ApiStatus.Obsolete
+import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
 import org.jetbrains.intellij.build.io.*
 import java.nio.ByteBuffer
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.PathMatcher
-import java.util.function.IntConsumer
 import java.util.zip.Deflater
 
-const val UTIL_JAR = "util.jar"
-const val PLATFORM_LOADER_JAR = "platform-loader.jar"
-const val UTIL_RT_JAR = "util_rt.jar"
-const val UTIL_8_JAR = "util-8.jar"
+const val UTIL_JAR: String = "util.jar"
+const val PLATFORM_LOADER_JAR: String = "platform-loader.jar"
+const val UTIL_RT_JAR: String = "util_rt.jar"
+const val UTIL_8_JAR: String = "util-8.jar"
 
 sealed interface Source {
-  val sizeConsumer: IntConsumer?
+  var size: Int
+  var hash: Long
 
   val filter: ((String) -> Boolean)?
     get() = null
@@ -38,9 +37,11 @@ data class ZipSource(
   @JvmField val file: Path,
   @JvmField val excludes: List<Regex> = emptyList(),
   @JvmField val isPreSignedAndExtractedCandidate: Boolean = false,
-  override val filter: ((String) -> Boolean)? = null,
-  override val sizeConsumer: IntConsumer? = null,
+  val distributionFileEntryProducer: ((Int, Long) -> DistributionFileEntry)?,
 ) : Source, Comparable<ZipSource> {
+  override var size: Int = 0
+  override var hash: Long = 0
+
   override fun compareTo(other: ZipSource): Int {
     return if (isWindows) file.toString().compareTo(other.file.toString()) else file.compareTo(other.file)
   }
@@ -53,21 +54,65 @@ data class ZipSource(
     }
     return "zip(file=$shortPath)"
   }
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (other !is ZipSource) return false
+
+    if (file != other.file) return false
+    if (excludes != other.excludes) return false
+    if (isPreSignedAndExtractedCandidate != other.isPreSignedAndExtractedCandidate) return false
+    if (filter != other.filter) return false
+
+    return true
+  }
+
+  override fun hashCode(): Int {
+    var result = file.hashCode()
+    result = 31 * result + excludes.hashCode()
+    result = 31 * result + isPreSignedAndExtractedCandidate.hashCode()
+    result = 31 * result + (filter?.hashCode() ?: 0)
+    return result
+  }
 }
 
 data class DirSource(@JvmField val dir: Path,
                      @JvmField val excludes: List<PathMatcher> = emptyList(),
-                     override val sizeConsumer: IntConsumer? = null,
                      @JvmField val prefix: String = "",
                      @JvmField val removeModuleInfo: Boolean = true) : Source {
+  override var size: Int = 0
+  override var hash: Long = 0
+
   override fun toString(): String {
     val shortPath = if (dir.startsWith(USER_HOME)) "~/${USER_HOME.relativize(dir)}" else dir.toString()
     return "dir(dir=$shortPath, excludes=${excludes.size})"
   }
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (other !is DirSource) return false
+
+    if (dir != other.dir) return false
+    if (excludes != other.excludes) return false
+    if (prefix != other.prefix) return false
+    if (removeModuleInfo != other.removeModuleInfo) return false
+
+    return true
+  }
+
+  override fun hashCode(): Int {
+    var result = dir.hashCode()
+    result = 31 * result + excludes.hashCode()
+    result = 31 * result + prefix.hashCode()
+    result = 31 * result + removeModuleInfo.hashCode()
+    return result
+  }
 }
 
-data class InMemoryContentSource(@JvmField val relativePath: String,
-                                 @JvmField val data: ByteArray, override val sizeConsumer: IntConsumer? = null) : Source {
+data class InMemoryContentSource(@JvmField val relativePath: String, @JvmField val data: ByteArray) : Source {
+  override var size: Int = 0
+  override var hash: Long = 0
+
   override fun toString() = "inMemory(relativePath=$relativePath)"
 
   override fun equals(other: Any?): Boolean {
@@ -76,13 +121,12 @@ data class InMemoryContentSource(@JvmField val relativePath: String,
 
     if (relativePath != other.relativePath) return false
     if (!data.contentEquals(other.data)) return false
-    return sizeConsumer == other.sizeConsumer
+    return true
   }
 
   override fun hashCode(): Int {
     var result = relativePath.hashCode()
     result = 31 * result + data.contentHashCode()
-    result = 31 * result + (sizeConsumer?.hashCode() ?: 0)
     return result
   }
 }
@@ -93,13 +137,6 @@ internal interface NativeFileHandler {
   suspend fun sign(name: String, dataSupplier: () -> ByteBuffer): Path?
 }
 
-@Obsolete
-fun buildJarSync(targetFile: Path, sources: List<Source>) {
-  runBlocking {
-    buildJar(targetFile, sources)
-  }
-}
-
 suspend fun buildJar(targetFile: Path, sources: List<Source>, compress: Boolean = false) {
   buildJar(targetFile = targetFile, sources = sources, compress = compress, nativeFileHandler = null)
 }
@@ -108,17 +145,16 @@ internal suspend fun buildJar(targetFile: Path,
                               sources: List<Source>,
                               compress: Boolean = false,
                               dryRun: Boolean = false,
+                              notify: Boolean = true,
                               nativeFileHandler: NativeFileHandler? = null) {
   if (dryRun) {
-    for (source in sources) {
-      source.sizeConsumer?.accept(0)
-    }
     return
   }
 
   val packageIndexBuilder = if (compress) null else PackageIndexBuilder()
   writeNewFile(targetFile) { outChannel ->
-    ZipFileWriter(outChannel, if (compress) Deflater(Deflater.DEFAULT_COMPRESSION, true) else null).use { zipCreator ->
+    ZipFileWriter(channel = outChannel,
+                  deflater = if (compress) Deflater(Deflater.DEFAULT_COMPRESSION, true) else null).use { zipCreator ->
       val uniqueNames = HashMap<String, Path>()
 
       for (source in sources) {
@@ -136,7 +172,7 @@ internal suspend fun buildJar(targetFile: Path,
             })
             val normalizedDir = source.dir.toAbsolutePath().normalize()
             archiver.setRootDir(normalizedDir, source.prefix)
-            archiveDir(normalizedDir, archiver, excludes = source.excludes.takeIf(List<PathMatcher>::isNotEmpty))
+            archiveDir(startDir = normalizedDir, archiver = archiver, excludes = source.excludes.takeIf(List<PathMatcher>::isNotEmpty))
           }
 
           is InMemoryContentSource -> {
@@ -162,7 +198,10 @@ internal suspend fun buildJar(targetFile: Path,
           }
         }
 
-        source.sizeConsumer?.accept((zipCreator.channelPosition - positionBefore).toInt())
+        if (notify) {
+          source.size = (zipCreator.channelPosition - positionBefore).toInt()
+          source.hash = 0
+        }
       }
 
       packageIndexBuilder?.writePackageIndex(zipCreator)
@@ -249,13 +288,16 @@ private fun isDuplicated(uniqueNames: MutableMap<String, Path>, name: String, so
 }
 
 fun isNative(name: String): Boolean {
+  @Suppress("SpellCheckingInspection")
   return name.endsWith(".jnilib") ||
          name.endsWith(".dylib") ||
          name.endsWith(".so") ||
          name.endsWith(".exe") ||
          name.endsWith(".dll") ||
          name.endsWith(".node") ||
-         name.endsWith(".tbd")
+         name.endsWith(".tbd") ||
+         // needed for skiko (Compose backend) on Windows
+         name == "icudtl.dat"
 }
 
 @Suppress("SpellCheckingInspection")
@@ -312,10 +354,11 @@ private fun getIgnoredNames(): Set<String> {
       set.add("META-INF/$name.md")
     }
   }
+  //set.add("kotlinx/coroutines/debug/internal/ByteBuddyDynamicAttach.class")
   return java.util.Set.copyOf(set)
 }
 
-private val ignoredNames = java.util.Set.copyOf(getIgnoredNames())
+private val ignoredNames = getIgnoredNames()
 
 private fun checkNameForZipSource(name: String, excludes: List<Regex>, includeManifest: Boolean): Boolean {
   @Suppress("SpellCheckingInspection")
@@ -363,6 +406,8 @@ private fun checkNameForZipSource(name: String, excludes: List<Regex>, includeMa
          !name.startsWith("META-INF/versions/9/org/bouncycastle/") &&
          !name.startsWith("META-INF/versions/10/org/bouncycastle/") &&
          !name.startsWith("META-INF/versions/15/org/bouncycastle/") &&
+
+         //!name.startsWith("kotlinx/coroutines/repackaged/") &&
 
          !name.startsWith("native/") &&
          !name.startsWith("licenses/") &&

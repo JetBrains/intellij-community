@@ -78,6 +78,13 @@ internal class NotificationSettingsUi(private var notification: NotificationSett
     this.notification = notification
     type.model = createComboboxModel(notification)
     type.model.selectedItem = notification.displayType
+    // Assistive tools use popup list's selection as the current combo box value.
+    // When setting a new model, list selection is cleared, and in some cases could still be empty even after setting a new selectedItem.
+    // In that case, set the list selection manually.
+    val popupList = type.popup?.list
+    if (popupList != null && popupList.selectedIndex == -1) {
+      popupList.selectedIndex = type.selectedIndex
+    }
     log.isSelected = notification.isShouldLog
     if (isReadAloudEnabled()) {
       readAloud.isSelected = notification.isShouldReadAloud && !isNotificationAnnouncerEnabled()

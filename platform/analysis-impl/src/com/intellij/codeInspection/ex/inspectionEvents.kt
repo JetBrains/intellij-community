@@ -1,10 +1,10 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.ex
 
-import java.util.concurrent.Callable
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import com.intellij.util.TimeoutUtil
+import java.util.concurrent.Callable
 
 fun reportWhenInspectionFinished(inspectListener: InspectListener,
                                  toolWrapper: InspectionToolWrapper<*, *>,
@@ -16,6 +16,10 @@ fun reportWhenInspectionFinished(inspectListener: InspectListener,
   var problemsCount = -1
   try {
     problemsCount = inspectAction.call()
+  }
+  catch (e: Exception) {
+    inspectListener.inspectionFailed(toolWrapper.tool.getShortName(), e, file, project)
+    throw e
   }
   finally {
     inspectListener.inspectionFinished(TimeoutUtil.getDurationMillis(start), Thread.currentThread().id, problemsCount, toolWrapper,

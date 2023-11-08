@@ -9,6 +9,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.TokenSet
 import com.intellij.util.containers.stopAfter
+import com.intellij.util.takeWhileInclusive
 import org.jetbrains.annotations.ApiStatus
 import java.util.*
 import kotlin.reflect.KClass
@@ -126,6 +127,18 @@ fun PsiElement.siblings(forward: Boolean = true): Sequence<PsiElement> {
 fun PsiElement?.isAncestor(element: PsiElement, strict: Boolean = false): Boolean {
   return PsiTreeUtil.isAncestor(this, element, strict)
 }
+
+val PsiElement.firstLeaf: PsiElement
+  get() = PsiTreeUtil.firstChild(this)
+
+val PsiElement.lastLeaf: PsiElement
+  get() = PsiTreeUtil.lastChild(this)
+
+val PsiElement.childLeafs: Sequence<PsiElement>
+  get() {
+    val lastLeaf = lastLeaf
+    return generateSequence(firstLeaf) { it.nextLeaf() }.takeWhileInclusive { it !== lastLeaf }
+  }
 
 fun PsiElement.prevLeaf(skipEmptyElements: Boolean = false): PsiElement? = PsiTreeUtil.prevLeaf(this, skipEmptyElements)
 

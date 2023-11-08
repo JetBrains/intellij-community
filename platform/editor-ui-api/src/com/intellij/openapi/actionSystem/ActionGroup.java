@@ -67,6 +67,12 @@ public abstract class ActionGroup extends AnAction {
     super(text, description, icon);
   }
 
+  public ActionGroup(@NotNull Supplier<@ActionText String> text,
+                     @NotNull Supplier<@ActionDescription String> description,
+                     @Nullable Supplier<? extends @Nullable Icon> icon) {
+    super(text, description, icon);
+  }
+
   public ActionGroup(@NotNull Supplier<@ActionText String> dynamicText,
                      @NotNull Supplier<@ActionDescription String> dynamicDescription,
                      @Nullable Icon icon) {
@@ -126,8 +132,10 @@ public abstract class ActionGroup extends AnAction {
    *
    * @see #getActionUpdateThread()
    */
+  @ApiStatus.OverrideOnly
   public abstract AnAction @NotNull [] getChildren(@Nullable AnActionEvent e);
 
+  @ApiStatus.Internal
   public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e, @NotNull ActionManager actionManager) {
     return getChildren(null);
   }
@@ -150,6 +158,7 @@ public abstract class ActionGroup extends AnAction {
   /**
    * Allows the group to intercept and transform its expanded content.
    */
+  @ApiStatus.OverrideOnly
   public @NotNull List<AnAction> postProcessVisibleChildren(@NotNull List<? extends AnAction> visibleChildren,
                                                             @NotNull UpdateSession updateSession) {
     return Collections.unmodifiableList(visibleChildren);

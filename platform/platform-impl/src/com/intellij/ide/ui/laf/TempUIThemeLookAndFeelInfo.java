@@ -2,19 +2,11 @@
 package com.intellij.ide.ui.laf;
 
 import com.intellij.ide.ui.UITheme;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.editor.colors.impl.AbstractColorsScheme;
-import com.intellij.openapi.editor.colors.impl.DefaultColorsScheme;
 import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl;
-import com.intellij.openapi.editor.colors.impl.EditorColorsSchemeImpl;
 import com.intellij.openapi.util.IconPathPatcher;
-import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.messages.MessageBusConnection;
-import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -33,23 +25,19 @@ public final class TempUIThemeLookAndFeelInfo extends UIThemeLookAndFeelInfoImpl
   private static final Logger LOG = Logger.getInstance(TempUIThemeLookAndFeelInfo.class);
   private static final @NonNls String ID = "Temp theme";
 
-  private final @Nullable VirtualFile mySchemeFile;
-  private final @Nullable UIThemeLookAndFeelInfo myPreviousLaf;
+  private final @Nullable UIThemeLookAndFeelInfo previousLaf;
 
-  public TempUIThemeLookAndFeelInfo(@NotNull UITheme theme,
-                                    @Nullable VirtualFile editorSchemeFile,
-                                    @Nullable UIThemeLookAndFeelInfo previousLaf) {
+  public TempUIThemeLookAndFeelInfo(@NotNull UITheme theme, @Nullable UIThemeLookAndFeelInfo previousLaf) {
     super(theme);
     assert ID.equals(theme.getId());
 
-    mySchemeFile = editorSchemeFile;
-    myPreviousLaf = previousLaf instanceof TempUIThemeLookAndFeelInfo ?
-                    ((TempUIThemeLookAndFeelInfo)previousLaf).getPreviousLaf() :
-                    previousLaf;
+    this.previousLaf = previousLaf instanceof TempUIThemeLookAndFeelInfo ?
+                       ((TempUIThemeLookAndFeelInfo)previousLaf).getPreviousLaf() :
+                       previousLaf;
   }
 
   public @Nullable UIThemeLookAndFeelInfo getPreviousLaf() {
-    return myPreviousLaf;
+    return previousLaf;
   }
 
   @Override
@@ -68,40 +56,15 @@ public final class TempUIThemeLookAndFeelInfo extends UIThemeLookAndFeelInfoImpl
   }
 
   @Override
-  public void installEditorScheme(@Nullable EditorColorsScheme previousSchemeForLaf) {
-    String schemePath = getTheme().getEditorSchemePath();
-    if (schemePath == null || mySchemeFile == null) {
+  public void installEditorScheme(@Nullable EditorColorsScheme previousEditorColorSchemeForLaf) {
+    String schemeId = getEditorSchemeId();
+    if (schemeId == null) {
       return;
     }
 
-    EditorColorsManagerImpl cm = (EditorColorsManagerImpl)EditorColorsManager.getInstance();
-    AbstractColorsScheme tmpScheme = new DefaultColorsScheme();
-    boolean loaded = false;
-    try {
-      Element xml = JDOMUtil.load(mySchemeFile.getInputStream());
-      String parentSchemeName = xml.getAttributeValue("parent_scheme", EditorColorsManager.DEFAULT_SCHEME_NAME);
-      EditorColorsScheme parentScheme = EditorColorsManager.getInstance().getScheme(parentSchemeName);
-      tmpScheme = new EditorColorsSchemeImpl(parentScheme);
-      tmpScheme.readExternal(xml);
-      loaded = true;
-    }
-    catch (Exception e) {
-      LOG.warn(e);
-    }
-
-    if (loaded) {
-      AbstractColorsScheme scheme = tmpScheme;
-      EditorColorsManagerImpl.Companion.setTempScheme(scheme, mySchemeFile);
-      cm.setGlobalScheme(scheme);
-      MessageBusConnection connect = ApplicationManager.getApplication().getMessageBus().connect();
-      connect.subscribe(EditorColorsManager.TOPIC, editorColorsScheme -> {
-        if (editorColorsScheme == scheme || editorColorsScheme == null) {
-          return;
-        }
-        cm.getSchemeManager().removeScheme(scheme);
-        connect.disconnect();
-      });
-    }
+    EditorColorsManagerImpl editorColorSchemeManager = (EditorColorsManagerImpl)EditorColorsManager.getInstance();
+    editorColorSchemeManager.reloadKeepingActiveScheme();
+    editorColorSchemeManager.setGlobalScheme(editorColorSchemeManager.getScheme(schemeId));
   }
 
   public static @NotNull UITheme loadTempTheme(@NotNull InputStream stream, @NotNull IconPathPatcher patcher) throws IOException {

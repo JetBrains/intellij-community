@@ -1,6 +1,4 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet", "ReplaceJavaStaticMethodWithKotlinAnalog")
-
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope2
@@ -35,7 +33,7 @@ import java.util.function.BiConsumer
  * Generates Maven artifacts for IDE and plugin modules. Artifacts aren't generated for modules which depend on non-repository libraries.
  *
  * @see [org.jetbrains.intellij.build.ProductProperties.mavenArtifacts]
- * @see [org.jetbrains.intellij.build.BuildOptions.MAVEN_ARTIFACTS_STEP]
+ * @see [org.jetbrains.intellij.build.BuildOptions.Companion.MAVEN_ARTIFACTS_STEP]
  */
 open class MavenArtifactsBuilder(protected val context: BuildContext, private val skipNothing: Boolean = false) {
   companion object {
@@ -81,7 +79,6 @@ open class MavenArtifactsBuilder(protected val context: BuildContext, private va
       return result
     }
 
-    @Suppress("SpellCheckingInspection")
     fun isOptionalDependency(library: JpsLibrary?): Boolean {
       //todo: this is a temporary workaround until these libraries are published to Maven repository;
       // it's unlikely that code which depend on these libraries will be used when running tests so skipping these dependencies shouldn't cause real problems.
@@ -146,7 +143,7 @@ open class MavenArtifactsBuilder(protected val context: BuildContext, private va
                                         nonMavenizableModules: MutableSet<JpsModule>,
                                         computationInProgress: MutableSet<JpsModule>): MavenArtifactData? {
     if (results.containsKey(module)) {
-      return results.get(module)
+      return results[module]
     }
     if (nonMavenizableModules.contains(module)) {
       return null
@@ -343,7 +340,7 @@ private fun splitByCamelHumpsMergingNumbers(s: String): List<String> {
  * the second component of module names which describes a common group rather than a specific framework
  * and therefore should be excluded from artifactId
  */
-private val COMMON_GROUP_NAMES: Set<String> = java.util.Set.of("platform", "vcs", "tools", "clouds")
+private val COMMON_GROUP_NAMES: Set<String> = setOf("platform", "vcs", "tools", "clouds")
 
 private suspend fun layoutMavenArtifacts(modulesToPublish: Map<MavenArtifactData, List<JpsModule>>,
                                          outputDir: Path,

@@ -5,7 +5,6 @@ package org.jetbrains.kotlin.idea.highlighter
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.psi.PsiElement
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
 
@@ -20,7 +19,3 @@ abstract class KotlinHighlightingVisitorExtension {
         val EP_NAME = ExtensionPointName.create<KotlinHighlightingVisitorExtension>("org.jetbrains.kotlin.highlighterExtension")
     }
 }
-
-@ApiStatus.ScheduledForRemoval
-@Deprecated("Extend 'KotlinHighlightingVisitorExtension' instead", level = DeprecationLevel.ERROR)
-abstract class HighlighterExtension : KotlinHighlightingVisitorExtension()

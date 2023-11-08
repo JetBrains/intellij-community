@@ -461,10 +461,9 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
 
   protected fun linkGradleProject(
     project: Project,
+    builder: AbstractGradleModuleBuilder = GradleJavaModuleBuilder(),
     configureBuildScript: GradleBuildScriptBuilder<*>.() -> Unit
   ): Module? {
-    val builder = GradleJavaModuleBuilder()
-
     builder.moduleJdk = sdk
     builder.name = parentStep.name
     builder.contentEntryPath = parentStep.path + "/" + parentStep.name

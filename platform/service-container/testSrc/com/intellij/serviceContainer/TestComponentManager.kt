@@ -10,18 +10,23 @@ import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.extensions.DefaultPluginDescriptor
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.util.messages.MessageBus
-import com.intellij.util.namedChildScope
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import org.jetbrains.annotations.TestOnly
 import java.nio.file.Path
+import kotlin.coroutines.EmptyCoroutineContext
 
 val testPluginDescriptor: DefaultPluginDescriptor = DefaultPluginDescriptor("test")
 
 @OptIn(DelicateCoroutinesApi::class)
 @TestOnly
 class TestComponentManager(override var isGetComponentAdapterOfTypeCheckEnabled: Boolean = true) :
-  ComponentManagerImpl(null, GlobalScope.namedChildScope("TestComponentManager"), setExtensionsRootArea = false /* must work without */) {
+  ComponentManagerImpl(
+    parent = null,
+    parentScope = GlobalScope,
+    additionalContext = EmptyCoroutineContext,
+  ) {
+
   init {
     registerService(IComponentStore::class.java, TestComponentStore::class.java, testPluginDescriptor, false)
   }

@@ -3,11 +3,12 @@ package com.intellij.openapi.application
 
 import com.intellij.configurationStore.saveSettings
 import com.intellij.ide.CliResult
-import com.intellij.idea.LAUNCHER_INITIAL_DIRECTORY_ENV_VAR
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.ide.bootstrap.LAUNCHER_INITIAL_DIRECTORY_ENV_VAR
+import com.intellij.platform.ide.bootstrap.commandNameFromExtension
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -38,8 +39,7 @@ abstract class ApplicationStarterBase protected constructor(private vararg val a
   override fun canProcessExternalCommandLine(): Boolean = true
 
   override suspend fun processExternalCommandLine(args: List<String>, currentDirectory: String?): CliResult {
-    @Suppress("DEPRECATION")
-    val commandName = commandName
+    val commandName = commandNameFromExtension
     if (!checkArguments(args)) {
       val title = ApplicationBundle.message("app.command.exec.error.title", commandName)
       withContext(Dispatchers.EDT) {
@@ -55,7 +55,7 @@ abstract class ApplicationStarterBase protected constructor(private vararg val a
       throw e
     }
     catch (e: Exception) {
-      e.printStackTrace() // The dialog may sometimes not be shown, e.g. in remote dev scenarios.
+      e.printStackTrace() // The dialog may sometimes not be shown, e.g., in remote dev scenarios.
       val title = ApplicationBundle.message("app.command.exec.error.title", commandName)
       val message = ApplicationBundle.message("app.command.exec.error", commandName, e.message)
       withContext(Dispatchers.EDT) {
@@ -66,8 +66,7 @@ abstract class ApplicationStarterBase protected constructor(private vararg val a
   }
 
   protected open fun checkArguments(args: List<String>): Boolean {
-    @Suppress("DEPRECATION")
-    return Arrays.binarySearch(argsCount, args.size - 1) >= 0 && commandName == args[0]
+    return Arrays.binarySearch(argsCount, args.size - 1) >= 0 && commandNameFromExtension == args[0]
   }
 
   protected abstract suspend fun executeCommand(args: List<String>, currentDirectory: String?): CliResult

@@ -46,7 +46,6 @@ import org.gradle.util.GradleVersion;
 import org.gradle.wrapper.GradleWrapperMain;
 import org.gradle.wrapper.PathAssembler;
 import org.gradle.wrapper.WrapperConfiguration;
-import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -356,18 +355,18 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
     super.importProject(skipIndexing);
   }
 
-  protected void importProjectUsingSingeModulePerGradleProject(@NonNls @Language("Groovy") String config, Boolean skipIndexing)
+  protected void importProjectUsingSingeModulePerGradleProject(@NonNls String config, Boolean skipIndexing)
     throws IOException {
     getCurrentExternalProjectSettings().setResolveModulePerSourceSet(false);
     importProject(config, skipIndexing);
   }
 
-  protected void importProjectUsingSingeModulePerGradleProject(@NonNls @Language("Groovy") String config) throws IOException {
+  protected void importProjectUsingSingeModulePerGradleProject(@NonNls String config) throws IOException {
     importProjectUsingSingeModulePerGradleProject(config, null);
   }
 
   @Override
-  protected void importProject(@NonNls @Language("Groovy") String config, Boolean skipIndexing) throws IOException {
+  protected void importProject(@NonNls String config, Boolean skipIndexing) throws IOException {
     if (UsefulTestCase.IS_UNDER_TEAMCITY) {
       config = injectRepo(config);
     }
@@ -415,7 +414,7 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
     super.handleImportFailure(errorMessage, errorDetails);
   }
 
-  public void importProject(@NonNls @Language("Groovy") String config) throws IOException {
+  public void importProject(@NonNls String config) throws IOException {
     importProject(config, null);
   }
 
@@ -446,7 +445,7 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
   private static final String MAVEN_REPOSITORY_PATCH_PLACE = "// Place for Maven repository patch";
 
   @NotNull
-  protected String injectRepo(@NonNls @Language("Groovy") String config) {
+  protected String injectRepo(@NonNls String config) {
     String mavenRepositoryPatch =
       """
         allprojects {
@@ -482,7 +481,7 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
     return GradleConstants.SYSTEM_ID;
   }
 
-  protected VirtualFile createSettingsFile(@NonNls @Language("Groovy") String content) throws IOException {
+  protected VirtualFile createSettingsFile(@NonNls String content) throws IOException {
     return createProjectSubFile("settings.gradle", content);
   }
 

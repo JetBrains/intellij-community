@@ -223,18 +223,6 @@ public final class Disposer {
     return ourTree.isDisposed(disposable);
   }
 
-
-  /**
-   * @deprecated use {@link #isDisposed(Disposable)} instead
-   */
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated
-  public static boolean isDisposing(@NotNull Disposable disposable) {
-    String message = "this method is deprecated and going to be removed soon. Please use isDisposed() instead";
-    Logger.getInstance(Disposer.class).error(message);
-    return isDisposed(disposable);
-  }
-
   /**
    * @deprecated Store and use your own Disposable instead. Instead of {@code Disposer.get("ui")} use {@link com.intellij.openapi.application.ApplicationManager#getApplication()}
    */

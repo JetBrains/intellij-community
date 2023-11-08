@@ -45,7 +45,7 @@ public class ToggleFieldBreakpointAction extends AnAction implements ActionRemot
     final SourcePosition place = getPlace(e);
 
     if (place != null) {
-      Document document = PsiDocumentManager.getInstance(project).getDocument(place.getFile());
+      Document document = place.getFile().getViewProvider().getDocument();
       if (document != null) {
         DebuggerManagerEx debuggerManager = DebuggerManagerEx.getInstanceEx(project);
         BreakpointManager manager = debuggerManager.getBreakpointManager();
@@ -88,7 +88,7 @@ public class ToggleFieldBreakpointAction extends AnAction implements ActionRemot
   }
 
   @Nullable
-  private SourcePosition getPlace(AnActionEvent event) {
+  private static SourcePosition getPlace(AnActionEvent event) {
     final DataContext dataContext = event.getDataContext();
     final Project project = event.getData(CommonDataKeys.PROJECT);
     if (project == null) {

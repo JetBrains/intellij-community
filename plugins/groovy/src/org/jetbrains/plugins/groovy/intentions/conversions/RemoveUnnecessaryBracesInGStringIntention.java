@@ -16,13 +16,12 @@
 
 package org.jetbrains.plugins.groovy.intentions.conversions;
 
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.intentions.base.Intention;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
+import org.jetbrains.plugins.groovy.intentions.base.GrPsiUpdateIntention;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrStringInjection;
 import org.jetbrains.plugins.groovy.lang.psi.util.ErrorUtil;
@@ -31,27 +30,24 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
 /**
  * @author Maxim.Medvedev
  */
-public class RemoveUnnecessaryBracesInGStringIntention extends Intention {
+public class RemoveUnnecessaryBracesInGStringIntention extends GrPsiUpdateIntention {
   @NotNull
   @Override
   protected PsiElementPredicate getElementPredicate() {
-    return new PsiElementPredicate() {
-      @Override
-      public boolean satisfiedBy(@NotNull PsiElement element) {
-        if (!(element instanceof GrString)) return false;
+    return element -> {
+      if (!(element instanceof GrString)) return false;
 
-        if (ErrorUtil.containsError(element)) return false;
+      if (ErrorUtil.containsError(element)) return false;
 
-        for (GrStringInjection child : ((GrString)element).getInjections()) {
-          if (GrStringUtil.checkGStringInjectionForUnnecessaryBraces(child)) return true;
-        }
-        return false;
+      for (GrStringInjection child : ((GrString)element).getInjections()) {
+        if (GrStringUtil.checkGStringInjectionForUnnecessaryBraces(child)) return true;
       }
+      return false;
     };
   }
 
   @Override
-  protected void processIntention(@NotNull PsiElement element, @NotNull Project project, Editor editor) throws IncorrectOperationException {
+  protected void processIntention(@NotNull PsiElement element, @NotNull ActionContext context, @NotNull ModPsiUpdater updater) {
     GrStringUtil.removeUnnecessaryBracesInGString((GrString)element);
   }
 }

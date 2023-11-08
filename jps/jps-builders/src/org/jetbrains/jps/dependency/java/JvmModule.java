@@ -6,6 +6,7 @@ import org.jetbrains.jps.dependency.Usage;
 import org.jetbrains.jps.dependency.diff.Difference;
 
 import java.util.Collections;
+import java.util.Objects;
 
 public final class JvmModule extends JVMClassNode<JvmModule, JvmModule.Diff>{
 
@@ -15,12 +16,20 @@ public final class JvmModule extends JVMClassNode<JvmModule, JvmModule.Diff>{
 
   public JvmModule(JVMFlags flags, String name, String outFilePath, String version, @NotNull Iterable<ModuleRequires> requires, @NotNull Iterable<ModulePackage> exports, @NotNull Iterable<Usage> usages) {
     super(flags, "", name, outFilePath, Collections.emptyList(), usages);
-    myVersion = version;
+    myVersion = version == null? "" : version;
     myRequires = requires;
     myExports = exports;
   }
 
-  public final String getVersion() {
+  //@Override
+  //public Iterable<Usage> getUsages() {
+  //  return Iterators.unique(Iterators.flat(
+  //    super.getUsages(),
+  //    Iterators.map(Iterators.filter(getRequires(), r -> !Objects.equals(getName(), r.getName())), r -> new ModuleUsage(r.getName()))
+  //  ));
+  //}
+
+  public String getVersion() {
     return myVersion;
   }
 
@@ -30,6 +39,15 @@ public final class JvmModule extends JVMClassNode<JvmModule, JvmModule.Diff>{
 
   public Iterable<ModulePackage> getExports() {
     return myExports;
+  }
+
+  public boolean requiresTransitively(String requirementName) {
+    for (ModuleRequires require : getRequires()) {
+      if (Objects.equals(require.getName(), requirementName)) {
+        return require.getFlags().isTransitive();
+      }
+    }
+    return false;
   }
 
   @Override
@@ -45,7 +63,7 @@ public final class JvmModule extends JVMClassNode<JvmModule, JvmModule.Diff>{
 
     @Override
     public boolean unchanged() {
-      return super.unchanged() && requires().unchanged() && exports().unchanged();
+      return super.unchanged() && !versionChanged() && requires().unchanged() && exports().unchanged();
     }
 
     public Specifier<ModuleRequires, ModuleRequires.Diff> requires() {
@@ -54,6 +72,10 @@ public final class JvmModule extends JVMClassNode<JvmModule, JvmModule.Diff>{
 
     public Specifier<ModulePackage, ModulePackage.Diff> exports() {
       return Difference.deepDiff(myPast.getExports(), getExports());
+    }
+
+    public boolean versionChanged() {
+      return !Objects.equals(myPast.getVersion(), getVersion());
     }
   }
 

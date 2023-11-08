@@ -14,6 +14,9 @@ import org.jetbrains.kotlin.psi.KtImportDirective
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.resolve.ImportPath
 
+/**
+ * @return newly added import if it's not present in the file, and already existing import, otherwise.
+ */
 fun KtFile.addImport(fqName: FqName, allUnder: Boolean = false, alias: Name? = null, project: Project = this.project): KtImportDirective {
     val importPath = ImportPath(fqName, allUnder, alias)
 
@@ -60,6 +63,8 @@ fun KtFile.addImport(fqName: FqName, allUnder: Boolean = false, alias: Name? = n
                 val directivePath = it.importPath
                 directivePath != null && importPathComparator.compare(directivePath, importPath) <= 0
             }
+
+            if (insertAfter != null && newDirective.importPath == insertAfter.importPath) return insertAfter
 
             (importList.addAfter(newDirective, insertAfter) as KtImportDirective).also {
                 importList.addBefore(psiFactory.createNewLine(1), it)

@@ -22,10 +22,11 @@ import java.awt.event.MouseEvent
 val editorLensContextKey: Key<EditorCodeVisionContext> = Key<EditorCodeVisionContext>("EditorCodeLensContext")
 // used externally
 val codeVisionEntryOnHighlighterKey: Key<CodeVisionEntry> = Key.create("CodeLensEntryOnHighlighter")
-internal val codeVisionEntryMouseEventKey: Key<MouseEvent> = Key.create("CodeVisionEntryMouseEventKey")
+val highlighterOnCodeVisionEntryKey: Key<RangeMarker> = Key.create("HighlighterOnHighlighterCodeLensEntry")
+val codeVisionEntryMouseEventKey: Key<MouseEvent> = Key.create("CodeVisionEntryMouseEventKey")
+val editorCodeVisionEntryKey: Key<CodeVisionEntry> = Key.create("EditorCodeVisionEntryKey")
 
-// used by Rider
-val Editor.lensContext: EditorCodeVisionContext
+val Editor.lensContext: EditorCodeVisionContext?
   get() = getOrCreateCodeVisionContext(this)
 
 val RangeMarker.codeVisionEntryOrThrow: CodeVisionEntry
@@ -43,10 +44,12 @@ open class EditorCodeVisionContext(
   private var hasPendingLenses = false
 
   private val submittedGroupings = ArrayList<Pair<TextRange, (Int) -> Unit>>()
+  val codeVisionModel : CodeVisionModel = CodeVisionModel()
 
   init {
     (editor as EditorImpl).disposable.createLifetime().onTermination {
       frontendResults.forEach { it.dispose() }
+      codeVisionModel.removeLenses(frontendResults)
     }
   }
 
@@ -69,10 +72,12 @@ open class EditorCodeVisionContext(
     ThreadingAssertions.assertEventDispatchThread()
     LOG.trace("Have new frontend lenses ${lenses.size}")
     frontendResults.forEach { it.dispose() }
+    codeVisionModel.removeLenses(frontendResults)
     frontendResults = lenses.mapNotNull { (range, entry) ->
       if (!range.isValidFor(editor.document)) return@mapNotNull null
       editor.document.createRangeMarker(range).apply {
         putUserData(codeVisionEntryOnHighlighterKey, entry)
+        entry.putUserData(highlighterOnCodeVisionEntryKey, this)
       }
     }
     resubmitThings()
@@ -86,12 +91,17 @@ open class EditorCodeVisionContext(
   // used externally
   @Suppress("MemberVisibilityCanBePrivate")
   fun resubmitThings() {
-    val viewService = editor.project!!.service<CodeVisionView>()
+    val project = editor.project
+    if (project == null) {
+      LOG.warn("Project wasn't available from editor during code vision calculation")
+      return
+    }
+    val viewService = project.service<CodeVisionView>()
 
     viewService.runWithReusingLenses {
       val lifetime = outputLifetimes.next()
       val mergedLenses = getValidResult().groupBy { editor.document.getLineNumber(it.startOffset) }
-
+      
       submittedGroupings.clear()
       for ((_, lineLenses) in mergedLenses) {
         if (lineLenses.isEmpty()) {
@@ -99,7 +109,6 @@ open class EditorCodeVisionContext(
         }
 
         val lastFilteredLineLenses = lineLenses.groupBy { it.codeVisionEntryOrThrow.providerId }.map { it.value.last() }
-
         val groupedLenses = lastFilteredLineLenses.groupBy { codeVisionHost.getAnchorForEntry(it.codeVisionEntryOrThrow) }
 
         val anchoringRange = groupedLenses.first().value.first()
@@ -107,6 +116,7 @@ open class EditorCodeVisionContext(
         val handlerLambda = viewService.addCodeLenses(lifetime,
                                                       editor as EditorImpl,
                                                       range,
+                                                      codeVisionModel,
                                                       groupedLenses.map {
                                                         it.key to it.value.map { it.codeVisionEntryOrThrow }.sortedBy {
                                                           codeVisionHost.getPriorityForEntry(it)
@@ -124,7 +134,7 @@ open class EditorCodeVisionContext(
     setResults(emptyList())
   }
 
-  protected open fun getValidResult(): Sequence<RangeMarker> = frontendResults.asSequence().filter { it.isValid }
+  open fun getValidResult(): Sequence<RangeMarker> = frontendResults.asSequence().filter { it.isValid }
 
   protected fun TextRange.isValidFor(document: Document): Boolean {
     return this.startOffset >= 0 && this.endOffset <= document.textLength
@@ -142,13 +152,17 @@ open class EditorCodeVisionContext(
   }
 }
 
-private fun getOrCreateCodeVisionContext(editor: Editor): EditorCodeVisionContext {
+private fun getOrCreateCodeVisionContext(editor: Editor): EditorCodeVisionContext? {
   val context = editor.getUserData(editorLensContextKey)
   if (context != null) {
     return context
   }
-
-  val newContext = editor.project!!.service<CodeVisionContextProvider>().createCodeVisionContext(editor)
+  val project = editor.project
+  if (project == null) {
+    LOG.warn("Project wasn't available from editor during creating of code vision context")
+    return null
+  }
+  val newContext = project.service<CodeVisionContextProvider>().createCodeVisionContext(editor)
   editor.putUserData(editorLensContextKey, newContext)
   return newContext
 }

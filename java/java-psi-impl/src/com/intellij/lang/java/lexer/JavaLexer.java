@@ -3,7 +3,6 @@ package com.intellij.lang.java.lexer;
 
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.impl.source.tree.JavaDocElementTypeFactory;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -40,20 +39,5 @@ public final class JavaLexer extends BasicJavaLexer {
            level.isAtLeast(LanguageLevel.JDK_14) && YIELD.contentEquals(id) ||
            level.isAtLeast(LanguageLevel.JDK_17) && (SEALED.contentEquals(id) || PERMITS.contentEquals(id)) ||
            level.isAtLeast(LanguageLevel.JDK_20_PREVIEW) && WHEN.contentEquals(id);
-  }
-
-  @Override
-  public IElementType getTokenType() {
-    return super.getTokenType();
-  }
-
-  @Override
-  public int getTokenStart() {
-    return super.getTokenStart();
-  }
-
-  @Override
-  public int getTokenEnd() {
-    return super.getTokenEnd();
   }
 }

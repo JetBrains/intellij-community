@@ -29,10 +29,7 @@ import com.intellij.ui.dsl.gridLayout.VerticalGaps
 import com.intellij.ui.layout.ComponentPredicate
 import com.intellij.util.Function
 import com.intellij.util.MathUtil
-import com.intellij.util.ui.JBEmptyBorder
-import com.intellij.util.ui.JBFont
-import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.event.ActionEvent
@@ -135,11 +132,7 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
   }
 
   override fun enabledIf(property: ObservableProperty<Boolean>): RowImpl {
-    enabled(property.get())
-    property.whenPropertyChanged {
-      enabled(it)
-    }
-    return this
+    return enabledIf(ComponentPredicate.fromObservableProperty(property))
   }
 
   override fun visible(isVisible: Boolean): RowImpl {
@@ -150,18 +143,14 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
     return this
   }
 
-  override fun visibleIf(predicate: ComponentPredicate): Row {
+  override fun visibleIf(predicate: ComponentPredicate): RowImpl {
     visible(predicate())
     predicate.addListener { visible(it) }
     return this
   }
 
   override fun visibleIf(property: ObservableProperty<Boolean>): RowImpl {
-    visible(property.get())
-    property.whenPropertyChanged {
-      visible(it)
-    }
-    return this
+    return visibleIf(ComponentPredicate.fromObservableProperty(property))
   }
 
   fun visibleFromParent(parentVisible: Boolean): RowImpl {
@@ -195,7 +184,13 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
       isOpaque = false
     }
   }
-  
+
+  override fun threeStateCheckBox(@NlsContexts.Checkbox text: String): Cell<ThreeStateCheckBox> {
+    return cell(ThreeStateCheckBox(text)).applyToComponent {
+      isOpaque = false
+    }
+  }
+
   override fun radioButton(text: String, value: Any?): Cell<JBRadioButton> {
     val result = cell(JBRadioButton(text)).applyToComponent {
       isOpaque = false

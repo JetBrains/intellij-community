@@ -1666,6 +1666,11 @@ public abstract class IrKotlinEvaluateExpressionWithIRFragmentCompilerTestGenera
                 runTest("testData/evaluation/singleBreakpoint/unsafeCall.kt");
             }
 
+            @TestMetadata("unsignedArrayOf.kt")
+            public void testUnsignedArrayOf() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/unsignedArrayOf.kt");
+            }
+
             @TestMetadata("unusedTransitiveDependencies.kt")
             public void testUnusedTransitiveDependencies() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/unusedTransitiveDependencies.kt");
@@ -1799,6 +1804,11 @@ public abstract class IrKotlinEvaluateExpressionWithIRFragmentCompilerTestGenera
             @TestMetadata("isInsideInlineLambda.kt")
             public void testIsInsideInlineLambda() throws Exception {
                 runTest("testData/evaluation/multipleBreakpoints/isInsideInlineLambda.kt");
+            }
+
+            @TestMetadata("isInsideLocalFun.kt")
+            public void testIsInsideLocalFun() throws Exception {
+                runTest("testData/evaluation/multipleBreakpoints/isInsideLocalFun.kt");
             }
 
             @TestMetadata("lambdaParameters.kt")

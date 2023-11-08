@@ -23,14 +23,13 @@ import javax.swing.JLabel
 
 private const val PROMO_URL = "https://youtu.be/WGwECgPmQ-8"
 
-/**
- * @author Konstantin Bulenkov
- */
-open class ExperimentalUIConfigurable : BoundSearchableConfigurable(IdeBundle.message("configurable.new.ui.name"), "reference.settings.ide.settings.new.ui") {
+@Suppress("ExtensionClassShouldBeFinalAndNonPublic")
+open class ExperimentalUIConfigurable : BoundSearchableConfigurable(IdeBundle.message("configurable.new.ui.name"),
+                                                                    "reference.settings.ide.settings.new.ui") {
+
+  private val EP_NAME: ExtensionPointName<ExperimentalUIConfigurable> = ExtensionPointName.create("com.intellij.newUIConfigurable")
 
   companion object {
-    @JvmStatic
-    val EP_NAME: ExtensionPointName<ExperimentalUIConfigurable> = ExtensionPointName.create("com.intellij.newUIConfigurable")
     const val EXPLORE_NEW_UI_URL_TEMPLATE = "https://www.jetbrains.com/%s/new-ui/?utm_source=product&utm_medium=link&utm_campaign=new_ui_release"
   }
 
@@ -72,12 +71,12 @@ open class ExperimentalUIConfigurable : BoundSearchableConfigurable(IdeBundle.me
             .enabledIf(newUiCheckBox.selected)
             .comment(IdeBundle.message("checkbox.compact.mode.description"))
         }
-        if (SystemInfo.isWindows || SystemInfo.isXWindow) {
+        if (!SystemInfo.isMac) {
           row {
             checkBox(IdeBundle.message("checkbox.main.menu.separate.toolbar"))
               .bindSelected(UISettings.getInstance()::separateMainMenu)
               .apply {
-                if (SystemInfo.isXWindow) {
+                if (SystemInfo.isUnix) {
                   comment(IdeBundle.message("ide.restart.required.comment"))
                 }
               }.enabledIf(newUiCheckBox.selected)

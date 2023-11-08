@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.newui;
 
+import com.intellij.ide.plugins.enums.SortBy;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NotNull;
@@ -75,8 +76,10 @@ public abstract class SearchQueryParser {
     public final Set<String> vendors = new HashSet<>();
     public final Set<String> tags = new HashSet<>();
     public final Set<String> repositories = new HashSet<>();
-    public String sortBy;
+    public SortBy sortBy;
     public boolean suggested;
+    public boolean internal;
+    public boolean staffPicks = false;
 
     public Marketplace(@NotNull String query) {
       parse(query);
@@ -117,6 +120,12 @@ public abstract class SearchQueryParser {
       if (query.equals(SearchWords.SUGGESTED.getValue())) {
         suggested = true;
       }
+      else if (query.equals(SearchWords.INTERNAL.getValue())) {
+        internal = true;
+      }
+      else if (query.equals(SearchWords.STAFF_PICKS.getValue())) {
+        staffPicks = true;
+      }
       else {
         super.addToSearchQuery(query);
       }
@@ -127,12 +136,12 @@ public abstract class SearchQueryParser {
         tags.add(value);
       }
       else if (name.equals(SearchWords.SORT_BY.getValue())) {
-        sortBy = value;
+        sortBy = SortBy.getByQueryOrNull(value);
       }
       else if (name.equals(SearchWords.REPOSITORY.getValue())) {
         repositories.add(value);
       }
-      else if (name.equals(SearchWords.ORGANIZATION.getValue())) {
+      else if (name.equals(SearchWords.VENDOR.getValue())) {
         vendors.add(value);
       }
     }
@@ -140,38 +149,33 @@ public abstract class SearchQueryParser {
     public @NotNull String getUrlQuery() {
       StringBuilder url = new StringBuilder();
 
-      if ("featured".equals(sortBy)) {
+      if (sortBy != null) {
+        url.append(sortBy.getMpParameter());
+      }
+
+      if (staffPicks) {
+        if (!url.isEmpty()) {
+          url.append("&");
+        }
         url.append("is_featured_search=true");
-      }
-      else if ("updated".equals(sortBy)) {
-        url.append("orderBy=update+date");
-      }
-      else if ("downloads".equals(sortBy)) {
-        url.append("orderBy=downloads");
-      }
-      else if ("rating".equals(sortBy)) {
-        url.append("orderBy=rating");
-      }
-      else if ("name".equals(sortBy)) {
-        url.append("orderBy=name");
       }
 
       for (String tag : tags) {
-        if (url.length() > 0) {
+        if (!url.isEmpty()) {
           url.append("&");
         }
         url.append("tags=").append(URLUtil.encodeURIComponent(tag));
       }
 
       for (String vendor : vendors) {
-        if (url.length() > 0) {
+        if (!url.isEmpty()) {
           url.append("&");
         }
         url.append("organization=").append(URLUtil.encodeURIComponent(vendor));
       }
 
       if (searchQuery != null) {
-        if (url.length() > 0) {
+        if (!url.isEmpty()) {
           url.append("&");
         }
         url.append("search=").append(URLUtil.encodeURIComponent(searchQuery));
@@ -208,7 +212,7 @@ public abstract class SearchQueryParser {
       while (index < size) {
         String name = words.get(index++);
         if (name.startsWith("/")) {
-          if (name.equals(SearchWords.ORGANIZATION.getValue()) || name.equals(SearchWords.TAG.getValue())) {
+          if (name.equals(SearchWords.VENDOR.getValue()) || name.equals(SearchWords.TAG.getValue())) {
             if (index < size) {
               handleAttribute(name, words.get(index++));
             }
@@ -248,7 +252,7 @@ public abstract class SearchQueryParser {
       else if ("/outdated".equals(name)) {
         needUpdate = true;
       }
-      else if (SearchWords.ORGANIZATION.getValue().equals(name)) {
+      else if (SearchWords.VENDOR.getValue().equals(name)) {
         vendors.add(value);
       }
       else if (SearchWords.TAG.getValue().equals(name)) {

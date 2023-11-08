@@ -36,6 +36,7 @@ final class ProblemsViewStatsCollector extends CounterUsagesCollector {
     "select.item", TAB_NAME, PROBLEM_SEVERITY);
 
   private static @NotNull String tabName(@NotNull ProblemsViewPanel panel) {
+    if (panel.getSession().isDisposed()) return UNKNOWN;
     ToolWindow window = ProblemsView.getToolWindow(panel.getProject());
     if (window == null) return UNKNOWN;
     ContentManager manager = window.getContentManagerIfCreated();

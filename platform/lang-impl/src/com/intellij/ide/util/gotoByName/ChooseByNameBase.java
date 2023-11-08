@@ -56,6 +56,7 @@ import com.intellij.psi.statistics.StatisticsInfo;
 import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.*;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.PopupOwner;
@@ -838,12 +839,9 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
       return Boolean.TRUE;
     }).setFocusable(true).setRequestFocus(true).setModalContext(false).setCancelOnClickOutside(false);
 
-    Point point = new Point(x, y);
-    SwingUtilities.convertPointToScreen(point, layeredPane);
-    Rectangle bounds = new Rectangle(point, new Dimension(preferredTextFieldPanelSize.width + 20, preferredTextFieldPanelSize.height));
+    Dimension size = new Dimension(preferredTextFieldPanelSize.width + 20, preferredTextFieldPanelSize.height);
     myTextPopup = builder.createPopup();
-    myTextPopup.setSize(bounds.getSize());
-    myTextPopup.setLocation(bounds.getLocation());
+    myTextPopup.setSize(size);
 
     if (myProject != null && !myProject.isDefault()) {
       DaemonCodeAnalyzer.getInstance(myProject).disableUpdateByTimer(myTextPopup);
@@ -851,7 +849,9 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
 
     Disposer.register(myTextPopup, () -> cancelListUpdater());
     IdeEventQueue.getInstance().getPopupManager().closeAllPopups(false);
-    myTextPopup.show(layeredPane);
+
+    RelativePoint location = new RelativePoint(layeredPane, new Point(x, y));
+    myTextPopup.show(location);
   }
 
   private JLayeredPane getLayeredPane() {
@@ -1048,14 +1048,6 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
     }
   }
 
-  /**
-   * @deprecated unused
-   */
-  @Deprecated(forRemoval = true)
-  public boolean hasPostponedAction() {
-    return false;
-  }
-
   protected abstract void showList();
 
   protected abstract void hideList();
@@ -1111,7 +1103,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
     }
 
     @Nullable
-    private KeyStroke getShortcut(@NotNull String actionCodeCompletion) {
+    private static KeyStroke getShortcut(@NotNull String actionCodeCompletion) {
       final Shortcut[] shortcuts = KeymapUtil.getActiveKeymapShortcuts(actionCodeCompletion).getShortcuts();
       for (final Shortcut shortcut : shortcuts) {
         if (shortcut instanceof KeyboardShortcut) {
@@ -1606,9 +1598,9 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
       }
     }
 
-    private void fillUsages(@NotNull Collection<Object> matchElementsArray,
-                            @NotNull Collection<? super Usage> usages,
-                            @NotNull List<? super PsiElement> targets) {
+    private static void fillUsages(@NotNull Collection<Object> matchElementsArray,
+                                   @NotNull Collection<? super Usage> usages,
+                                   @NotNull List<? super PsiElement> targets) {
       for (Object o : matchElementsArray) {
         if (o instanceof PsiElement element) {
           if (element.getTextRange() != null) {

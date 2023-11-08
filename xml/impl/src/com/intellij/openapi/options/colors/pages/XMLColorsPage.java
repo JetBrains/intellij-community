@@ -77,7 +77,7 @@ public class XMLColorsPage implements ColorSettingsPage {
               ]]>
          </withCData>
          <indexitem text="project" target="project.management"/>
-         <<custom_tag_name>custom-tag</custom_tag_name>>hello</<custom_tag_name>custom_tag</custom_tag_name>>
+         <<custom_tag_name>custom-tag</custom_tag_name>>hello</<custom_tag_name>custom-tag</custom_tag_name>>
          <<bg><np>pf</np></bg>:foo <bg><np>pf</np></bg>:bar="bar"/>
       </index>""";
   }

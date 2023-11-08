@@ -15,7 +15,7 @@ import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor;
 import java.util.Set;
 import java.util.function.Supplier;
 
-public class FileEqualsUsageInspection extends DevKitUastInspectionBase {
+final class FileEqualsUsageInspection extends DevKitUastInspectionBase {
 
   private static final Set<String> METHOD_NAMES = Set.of("equals", "compareTo", "hashCode");
 

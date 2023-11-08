@@ -1,63 +1,60 @@
 package com.intellij.searchEverywhereMl.typos.models
 
-import ai.grazie.spell.lists.FrequencyMetadata
-import com.intellij.ide.actions.ShowSettingsUtilImpl
+import com.intellij.ide.ui.search.SearchableOptionsRegistrar
+import com.intellij.ide.ui.search.SearchableOptionsRegistrarImpl
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
-import com.intellij.openapi.components.serviceIfCreated
-import com.intellij.openapi.options.SearchableConfigurable
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.ProjectActivity
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.wm.IdeFrame
+import com.intellij.openapi.wm.ex.WindowManagerEx
+import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.searchEverywhereMl.typos.SearchEverywhereStringToken
+import com.intellij.searchEverywhereMl.typos.TyposBundle
 import com.intellij.searchEverywhereMl.typos.isTypoFixingEnabled
 import com.intellij.searchEverywhereMl.typos.splitText
-import com.intellij.serviceContainer.NonInjectable
-import com.intellij.spellchecker.dictionary.Dictionary
-import com.intellij.spellchecker.dictionary.RuntimeDictionaryProvider
-import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.async
+import java.util.regex.Pattern
 
-@Service(Service.Level.PROJECT)
-internal class ActionsLanguageModel @NonInjectable constructor(private val actionDictionary: ActionDictionary,
-                                                               private val project: Project,
-                                                               coroutineScope: CoroutineScope) :
-  Dictionary by actionDictionary, FrequencyMetadata by actionDictionary {
-
-  @Suppress("unused")
-  constructor(project: Project, coroutineScope: CoroutineScope) : this(actionDictionary = ActionDictionaryImpl(), project, coroutineScope)
+@Service(Service.Level.APP)
+internal class ActionsLanguageModel(val coroutineScope: CoroutineScope) {
 
   companion object {
     /**
      * Returns null if the application is not in an internal mode
      */
-    fun getInstance(project: Project): ActionsLanguageModel? {
+    fun getInstance(): ActionsLanguageModel? {
       if (!isTypoFixingEnabled) {
         return null
       }
-      return project.service<ActionsLanguageModel>()
+      return service<ActionsLanguageModel>()
     }
   }
 
-  private val languageModelComputationJob: Job
-
-  init {
-    languageModelComputationJob = coroutineScope.launch {
-      asyncInit()
+  val deferredDictionary: Deferred<LanguageModelDictionary> = coroutineScope.async {
+    val project = guessProject()
+    if (project == null) {
+      computeLanguageModelDictionary()
+    }
+    else {
+      withBackgroundProgress(project,
+                             TyposBundle.getMessage("progress.title.computing.actions.language.model"),
+                             cancellable = false) {
+        computeLanguageModelDictionary()
+      }
     }
   }
 
-  /**
-   * Returns true if all words from actions and options have been processed and added to the dictionary
-   */
-  val isComputed: Boolean
-    get() = languageModelComputationJob.isCompleted
+  // Accept any word that consist of only alphabetical characters, that are between 3 and 45 characters long
+  private val acceptableWordsPattern = Pattern.compile("^[a-zA-Z]{3,45}\$")
 
   private fun getWordsFromActions(): Sequence<@NlsActions.ActionText String> {
     return (ActionManager.getInstance() as ActionManagerImpl).actionsOrStubs()
@@ -65,62 +62,37 @@ internal class ActionsLanguageModel @NonInjectable constructor(private val actio
       .mapNotNull { it.templateText }
   }
 
-  private fun getWordsFromSettings(): Sequence<@NlsContexts.ConfigurableName String> {
-    return ShowSettingsUtilImpl.configurables(project = project, withIdeSettings = true, checkNonDefaultProject = true)
-      .filterIsInstance<SearchableConfigurable>()
-      .mapNotNull { it.displayNameFast }
-  }
-
-  internal interface ActionDictionary : Dictionary, FrequencyMetadata {
-    fun addWord(word: String)
-  }
-
-  private class ActionDictionaryImpl : ActionDictionary {
-    private val words = Object2IntOpenHashMap<String>(1500)
-
-    override fun addWord(word: String) {
-      words.addTo(word, 1)
+  private fun getWordsFromSettings(): Sequence<@NlsContexts.ConfigurableName CharSequence> {
+    val registrar = SearchableOptionsRegistrar.getInstance() as? SearchableOptionsRegistrarImpl
+    if (registrar == null) {
+      thisLogger().warn("Failed to cast SearchableOptionsRegistrar")
+      return emptySequence()
     }
 
-    override fun getName(): String = "Actions Dictionary"
-
-    override fun contains(word: String): Boolean = words.containsKey(word)
-
-    override fun getWords(): Set<String> = words.keys.toSet()
-
-    override val defaultFrequency: Int = 0
-
-    override val maxFrequency: Int
-      get() = words.maxOf { it.value }
-
-    override fun getFrequency(word: String): Int? = if (words.containsKey(word)) words.getInt(word) else null
+    registrar.initialize()
+    return registrar.allOptionNames.asSequence()
   }
 
-  private fun asyncInit() {
-    (getWordsFromActions() + getWordsFromSettings())
+  private fun computeLanguageModelDictionary(): LanguageModelDictionary {
+    return (getWordsFromActions() + getWordsFromSettings())
       .flatMap {
         splitText(it)
           .filter { token -> token is SearchEverywhereStringToken.Word }
           .map { token -> token.value }
       }
-      .map { it.filter { c -> c.isLetterOrDigit() } }
-      .filterNot { it.isEmpty() || it.isSingleCharacter() }
+      .filter { acceptableWordsPattern.matcher(it).matches() }
       .map { it.lowercase() }
-      .forEach(actionDictionary::addWord)
+      .groupingBy { it }.eachCount()
+      .let { SimpleLanguageModelDictionary(it) }
+  }
+
+  private fun guessProject(): Project? {
+    val recentFocusedWindow = WindowManagerEx.getInstanceEx().mostRecentFocusedWindow
+    if (recentFocusedWindow is IdeFrame) {
+      return (recentFocusedWindow as IdeFrame).project
+    }
+    else {
+      return ProjectManager.getInstance().openProjects.firstOrNull { o -> o.isInitialized && !o.isDisposed }
+    }
   }
 }
-
-private class ModelComputationStarter : ProjectActivity {
-  override suspend fun execute(project: Project) {
-    ActionsLanguageModel.getInstance(project)
-  }
-}
-
-
-private class RuntimeActionsDictionaryProvider : RuntimeDictionaryProvider {
-  override fun getDictionaries(): Array<Dictionary> {
-    return serviceIfCreated<ActionsLanguageModel>()?.let { arrayOf(it) } ?: arrayOf()
-  }
-}
-
-private fun String.isSingleCharacter(): Boolean = this.length == 1

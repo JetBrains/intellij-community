@@ -38,7 +38,7 @@ internal object GitLabStatistics {
   //endregion
 
   //region Counters
-  private val COUNTERS_GROUP = EventLogGroup("vcs.gitlab.counters", version = 10)
+  private val COUNTERS_GROUP = EventLogGroup("vcs.gitlab.counters", version = 14)
 
   /**
    * Server metadata was fetched
@@ -153,6 +153,11 @@ internal object GitLabStatistics {
    */
   private val MR_ACTION_FIELD = EventFields.Enum<MergeRequestAction>("action")
 
+  /**
+   * Where merge request notes action was executed
+   */
+  private val MR_NOTE_ACTION_PLACE_FIELD = EventFields.NullableEnum<MergeRequestNoteActionPlace>("note_action_place")
+
   enum class MergeRequestAction {
     MERGE,
     SQUASH_MERGE,
@@ -164,21 +169,33 @@ internal object GitLabStatistics {
     SET_REVIEWERS,
     REVIEWER_REREVIEW,
     ADD_NOTE,
+    ADD_DRAFT_NOTE,
     ADD_DIFF_NOTE,
+    ADD_DRAFT_DIFF_NOTE,
     ADD_DISCUSSION_NOTE,
+    ADD_DRAFT_DISCUSSION_NOTE,
     CHANGE_DISCUSSION_RESOLVE,
     UPDATE_NOTE,
     DELETE_NOTE,
+    POST_DRAFT_NOTE,
     SUBMIT_DRAFT_NOTES,
-    POST_REVIEW
+    POST_REVIEW,
+    BRANCH_CHECKOUT
+  }
+
+  enum class MergeRequestNoteActionPlace {
+    TIMELINE,
+    DIFF,
+    EDITOR
   }
 
   /**
    * Some mutation action was requested on merge request via API
    */
-  private val MR_ACTION_EVENT = COUNTERS_GROUP.registerEvent("mergerequests.action.performed", MR_ACTION_FIELD)
+  private val MR_ACTION_EVENT = COUNTERS_GROUP.registerEvent("mergerequests.action.performed", MR_ACTION_FIELD, MR_NOTE_ACTION_PLACE_FIELD)
 
-  fun logMrActionExecuted(project: Project, action: MergeRequestAction): Unit = MR_ACTION_EVENT.log(project, action)
+  fun logMrActionExecuted(project: Project, action: MergeRequestAction, place: MergeRequestNoteActionPlace? = null): Unit =
+    MR_ACTION_EVENT.log(project, action, place)
 
   private val SNIPPET_ACTION_EVENT = COUNTERS_GROUP.registerEvent("snippets.action.performed",
                                                                   EventFields.Enum<SnippetAction>("action"))
@@ -197,6 +214,7 @@ internal object GitLabStatistics {
 
 enum class GitLabApiRequestName {
   REST_GET_CURRENT_USER,
+  REST_GET_PROJECT_NAMESPACE,
   REST_GET_PROJECT_USERS,
   REST_GET_COMMIT,
   REST_GET_COMMIT_DIFF,
@@ -205,6 +223,8 @@ enum class GitLabApiRequestName {
   REST_DELETE_DRAFT_NOTE,
   REST_GET_DRAFT_NOTES,
   REST_SUBMIT_DRAFT_NOTES,
+  REST_SUBMIT_SINGLE_DRAFT_NOTE,
+  REST_CREATE_DRAFT_NOTE,
   REST_UPDATE_DRAFT_NOTE,
   REST_GET_MERGE_REQUESTS,
   REST_APPROVE_MERGE_REQUEST,
@@ -222,6 +242,7 @@ enum class GitLabApiRequestName {
   GQL_FIND_MERGE_REQUEST,
   GQL_GET_MERGE_REQUEST_DISCUSSIONS,
   GQL_GET_PROJECT_LABELS,
+  GQL_GET_PROJECT_REPOSITORY,
   GQL_GET_MEMBER_PROJECTS,
   GQL_TOGGLE_MERGE_REQUEST_DISCUSSION_RESOLVE,
   GQL_CREATE_NOTE,
@@ -232,6 +253,7 @@ enum class GitLabApiRequestName {
   GQL_UPDATE_SNIPPET_BLOB,
   GQL_DESTROY_NOTE,
   GQL_MERGE_REQUEST_ACCEPT,
+  GQL_MERGE_REQUEST_CREATE,
   GQL_MERGE_REQUEST_SET_DRAFT,
   GQL_MERGE_REQUEST_SET_REVIEWERS,
   GQL_MERGE_REQUEST_UPDATE,
@@ -245,6 +267,7 @@ enum class GitLabApiRequestName {
       GitLabGQLQuery.FIND_MERGE_REQUESTS -> GQL_FIND_MERGE_REQUEST
       GitLabGQLQuery.GET_MERGE_REQUEST_DISCUSSIONS -> GQL_GET_MERGE_REQUEST_DISCUSSIONS
       GitLabGQLQuery.GET_PROJECT_LABELS -> GQL_GET_PROJECT_LABELS
+      GitLabGQLQuery.GET_PROJECT_REPOSITORY -> GQL_GET_PROJECT_REPOSITORY
       GitLabGQLQuery.GET_MEMBER_PROJECTS -> GQL_GET_MEMBER_PROJECTS
       GitLabGQLQuery.TOGGLE_MERGE_REQUEST_DISCUSSION_RESOLVE -> GQL_TOGGLE_MERGE_REQUEST_DISCUSSION_RESOLVE
       GitLabGQLQuery.CREATE_NOTE -> GQL_CREATE_NOTE
@@ -255,6 +278,7 @@ enum class GitLabApiRequestName {
       GitLabGQLQuery.UPDATE_SNIPPET_BLOB -> GQL_UPDATE_SNIPPET_BLOB
       GitLabGQLQuery.DESTROY_NOTE -> GQL_DESTROY_NOTE
       GitLabGQLQuery.MERGE_REQUEST_ACCEPT -> GQL_MERGE_REQUEST_ACCEPT
+      GitLabGQLQuery.MERGE_REQUEST_CREATE -> GQL_MERGE_REQUEST_CREATE
       GitLabGQLQuery.MERGE_REQUEST_SET_DRAFT -> GQL_MERGE_REQUEST_SET_DRAFT
       GitLabGQLQuery.MERGE_REQUEST_SET_REVIEWERS -> GQL_MERGE_REQUEST_SET_REVIEWERS
       GitLabGQLQuery.MERGE_REQUEST_UPDATE -> GQL_MERGE_REQUEST_UPDATE

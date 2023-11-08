@@ -4,7 +4,7 @@ package com.intellij.conversion.impl;
 import com.intellij.conversion.CannotConvertException;
 import com.intellij.conversion.ConverterProvider;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.LazyExtension;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.util.PathUtilRt;
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
@@ -47,7 +47,7 @@ final class CachedConversionResult {
     Element root = new Element("conversion");
     Element appliedConverters = new Element("applied-converters");
     root.addContent(appliedConverters);
-    Iterator<ExtensionPointName.LazyExtension<ConverterProvider>> extensionIterator = ConverterProvider.EP_NAME.filterableLazySequence().iterator();
+    Iterator<LazyExtension<ConverterProvider>> extensionIterator = ConverterProvider.EP_NAME.filterableLazySequence().iterator();
     while (extensionIterator.hasNext()) {
       String providerId = extensionIterator.next().getId();
       if (providerId != null) {

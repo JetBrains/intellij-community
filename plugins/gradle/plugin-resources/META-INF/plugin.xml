@@ -60,7 +60,7 @@
     <issueChecker implementation="org.jetbrains.plugins.gradle.issue.GradleDaemonStartupIssueChecker"/>
     <issueChecker implementation="org.jetbrains.plugins.gradle.issue.GradleBuildCancelledIssueChecker"/>
     <issueChecker implementation="org.jetbrains.plugins.gradle.issue.GradleOutOfMemoryIssueChecker"/>
-    <operationHelperExtension implementation="org.jetbrains.plugins.gradle.service.execution.GradleExecutionMeasuringExtension"/>
+    <operationHelperExtension implementation="org.jetbrains.plugins.gradle.service.execution.GradleTaskExecutionMeasuringExtension"/>
 
     <autoReloadSettingsCollector
       implementation="org.jetbrains.plugins.gradle.service.project.GradleAutoImportAware$GradlePropertiesCollector"/>
@@ -118,6 +118,8 @@
     <externalExecutionAware id="gradle" key="GRADLE" implementationClass="org.jetbrains.plugins.gradle.service.execution.LocalGradleExecutionAware"/>
     <externalSystemNotificationExtension implementation="org.jetbrains.plugins.gradle.service.notification.GradleNotificationExtension" order="last"/>
 
+    <externalSystemTaskProgressIndicatorUpdater
+      implementation="org.jetbrains.plugins.gradle.service.execution.GradleExternalSystemTaskProgressIndicatorUpdater"/>
     <externalSystemTaskNotificationListener
       implementation="org.jetbrains.plugins.gradle.service.GradleInstallationManager$BuildLayoutParametersCacheCleanupListener"/>
 
@@ -159,10 +161,11 @@
     <runAnything.executionProvider implementation="org.jetbrains.plugins.gradle.execution.GradleRunAnythingProvider" order="first"/>
 
     <statistics.projectUsagesCollector implementation="org.jetbrains.plugins.gradle.statistics.GradleSettingsCollector"/>
+    <statistics.counterUsagesCollector implementationClass="org.jetbrains.plugins.gradle.statistics.GradleModelBuilderMessageCollector"/>
     <statistics.counterUsagesCollector implementationClass="org.jetbrains.plugins.gradle.statistics.GradleActionsUsagesCollector"/>
-    <statistics.counterUsagesCollector implementationClass="org.jetbrains.plugins.gradle.statistics.GradleExecutionPerformanceCollector"/>
-    <statistics.validation.customValidationRule implementation="org.jetbrains.plugins.gradle.statistics.GradleExecutionPerformanceCollector$TaskNameValidator"/>
-    <statistics.validation.customValidationRule implementation="org.jetbrains.plugins.gradle.statistics.GradleExecutionPerformanceCollector$TaskPluginValidator"/>
+    <statistics.counterUsagesCollector implementationClass="org.jetbrains.plugins.gradle.statistics.GradleTaskExecutionCollector"/>
+    <statistics.validation.customValidationRule implementation="org.jetbrains.plugins.gradle.statistics.GradleTaskExecutionCollector$TaskNameValidator"/>
+    <statistics.validation.customValidationRule implementation="org.jetbrains.plugins.gradle.statistics.GradleTaskExecutionCollector$TaskPluginValidator"/>
 
     <externalSystem.runConfigurationEx implementation="org.jetbrains.plugins.gradle.service.execution.GradleRunConfigurationExtension"/>
     <externalSystem.runConfigurationImporter
@@ -175,7 +178,7 @@
     <registryKey defaultValue="https://download.jetbrains.com/resources/intellij/plugins/gradle/v1/compatibility.json"
                  description="URL to get updates for gradle/jvm compatibility matrix" key="gradle.compatibility.config.url"/>
 
-    <registryKey defaultValue="14"
+    <registryKey defaultValue="1"
                  description="Time to check in days for gradle compatibility update. Set to 0 to disable updates"
                  key="gradle.compatibility.update.interval"/>
 
@@ -197,15 +200,16 @@
                  description="Send information on recently saved files to Gradle Daemon right before executing a task"/>
     <registryKey key="gradle.version.catalogs.dynamic.support" defaultValue="true"
                  description="Enable experimental support of version catalogs based on after-sync gradle models"/>
-    <registryKey key="gradle.download.sources" defaultValue="false"
-                 description="Download sources of project dependencies during import"/>
-    <registryKey key="gradle.import.performance.statistics" defaultValue="true"
-                 description="Collect performance-related statistics of Gradle import"/>
+    <registryKey key="gradle.output.sync.progress.events" defaultValue="true"
+                 description="Send progress information like files download during project import to `Build Output`"/>
     <commandLineInspectionProjectConfigurator implementation="org.jetbrains.plugins.gradle.GradleCommandLineProjectConfigurator"/>
     <warmupConfigurator implementation="org.jetbrains.plugins.gradle.GradleWarmupConfigurator"/>
     <notificationGroup id="Gradle Notification Group" displayType="STICKY_BALLOON" bundle="messages.GradleBundle" key="notification.group.gradle"/>
     <statistics.notificationIdsHolder implementation="org.jetbrains.plugins.gradle.service.project.GradleNotificationIdsHolder"/>
     <iconMapper mappingFile="GradleIconMappings.json"/>
+
+    <!--advanced settings-->
+    <advancedSetting id="gradle.download.sources" default="false" bundle="messages.GradleBundle" groupKey="advanced.settings.gradle"/>
   </extensions>
 
   <applicationListeners>
@@ -225,6 +229,8 @@
     </action>
     <action id="Gradle.ToggleOfflineAction" class="org.jetbrains.plugins.gradle.action.ToggleOfflineAction"
             icon="AllIcons.Actions.OfflineMode"/>
+    <action id="Gradle.DownloadSources" class="org.jetbrains.plugins.gradle.action.GradleDownloadSourcesAction"
+            icon="AllIcons.Actions.Download"/>
     <action id="Gradle.OpenProjectCompositeConfiguration" class="org.jetbrains.plugins.gradle.action.GradleOpenProjectCompositeConfigurationAction"/>
 
     <action id="Gradle.RefreshDependencies" class="org.jetbrains.plugins.gradle.action.GradleRefreshProjectDependenciesAction"/>
@@ -247,6 +253,7 @@
 
     <group id="Gradle.View.ActionsToolbar.LeftPanel">
       <separator/>
+      <reference id="Gradle.DownloadSources"/>
       <reference id="Gradle.ExecuteTask"/>
       <add-to-group group-id="ExternalSystemView.ActionsToolbar.LeftPanel"/>
     </group>

@@ -29,7 +29,7 @@ import java.io.File;
 import java.lang.reflect.Method;
 import java.util.*;
 
-import static org.jetbrains.plugins.gradle.tooling.util.ReflectionUtil.reflectiveCall;
+import static com.intellij.gradle.toolingExtension.util.GradleReflectionUtil.reflectiveCall;
 import static org.jetbrains.plugins.gradle.tooling.util.resolve.DependencyResolverImpl.toComponentIdentifier;
 import static org.jetbrains.plugins.gradle.tooling.util.resolve.deprecated.DeprecatedDependencyResolver.*;
 

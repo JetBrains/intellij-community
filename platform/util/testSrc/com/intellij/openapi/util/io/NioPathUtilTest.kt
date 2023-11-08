@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.CsvSource
 import java.io.IOException
+import java.nio.file.Path
 import kotlin.io.path.extension
 
 
@@ -176,9 +177,9 @@ class NioPathUtilTest : NioPathUtilTestCase() {
     basePath: String, relativePath: String,
     expectedBasePath: String, expectedRelativePath: String
   ) {
-    val (actualBasePath, actualRelativePath) = basePath.toNioPath()
+    val (actualBasePath, actualRelativePath) = Path.of(basePath)
       .relativizeToClosestAncestor(relativePath)
-    Assertions.assertEquals(expectedBasePath.toNioPath(), actualBasePath)
-    Assertions.assertEquals(expectedRelativePath.toNioPath(), actualRelativePath)
+    Assertions.assertEquals(Path.of(expectedBasePath), actualBasePath)
+    Assertions.assertEquals(Path.of(expectedRelativePath), actualRelativePath)
   }
 }

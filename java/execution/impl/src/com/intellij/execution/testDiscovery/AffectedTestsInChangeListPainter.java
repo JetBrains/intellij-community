@@ -35,7 +35,7 @@ final class AffectedTestsInChangeListPainter implements ChangeListDecorator {
     if (changeList.getChanges().isEmpty()) return;
 
     renderer.append(", ", SimpleTextAttributes.GRAYED_ATTRIBUTES);
-    renderer.append(JavaCompilerBundle.message("test.discovery.show.affected.tests"), new SimpleTextAttributes(STYLE_UNDERLINE, NamedColorUtil.getInactiveTextColor()), (Runnable)() -> {
+    renderer.append(JavaCompilerBundle.message("test.discovery.find.affected.tests"), new SimpleTextAttributes(STYLE_UNDERLINE, NamedColorUtil.getInactiveTextColor()), (Runnable)() -> {
       DataContext dataContext = DataManager.getInstance().getDataContext(renderer.getTree());
       Change[] changes = changeList.getChanges().toArray(Change.EMPTY_CHANGE_ARRAY);
       ShowAffectedTestsAction.showDiscoveredTestsByChanges(myProject, changes, changeList.getName(), dataContext);

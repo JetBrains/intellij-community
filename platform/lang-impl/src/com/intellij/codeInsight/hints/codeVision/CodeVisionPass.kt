@@ -75,7 +75,7 @@ class CodeVisionPass(
                 val duration = measureTimeMillis {
                   results = provider.computeForEditor(editor, file)
                 }
-                CodeVisionFusCollector.CODE_VISION_FINISHED.log(file.project, duration, provider::class.java, file.language)
+                CodeVisionFusCollector.reportCodeVisionProviderDuration(editor, file.language, duration, provider::class.java)
                 providerIdToLenses[provider.id] = DaemonBoundCodeVisionCacheService.CodeVisionWithStamp(results,
                                                                                                         modificationTracker.modificationCount)
               }
@@ -107,6 +107,7 @@ class CodeVisionPass(
 
   override fun doCollectInformation(progress: ProgressIndicator) {
     val settings = CodeVisionSettings.instance()
+    if (!settings.codeVisionEnabled) return
     val providers = DaemonBoundCodeVisionProvider.extensionPoint.extensionList
       .filter {  settings.isProviderEnabled(it.groupId) }
     collect(progress, editor, myFile, providerIdToLenses, providers)

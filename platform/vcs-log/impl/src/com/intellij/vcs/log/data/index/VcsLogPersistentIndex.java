@@ -13,8 +13,9 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.objectTree.ThrowableInterner;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.telemetry.VcsTelemetrySpan.LogData;
+import com.intellij.openapi.vcs.telemetry.VcsTelemetrySpan;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.backend.observation.TrackingUtil;
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
@@ -25,10 +26,7 @@ import com.intellij.vcs.log.VcsLogProvider;
 import com.intellij.vcs.log.data.SingleTaskController;
 import com.intellij.vcs.log.data.VcsLogProgress;
 import com.intellij.vcs.log.data.VcsLogStorage;
-import com.intellij.vcs.log.impl.HeavyAwareListener;
-import com.intellij.vcs.log.impl.VcsIndexableLogProvider;
-import com.intellij.vcs.log.impl.VcsLogErrorHandler;
-import com.intellij.vcs.log.impl.VcsLogIndexer;
+import com.intellij.vcs.log.impl.*;
 import com.intellij.vcs.log.statistics.VcsLogIndexCollector;
 import com.intellij.vcs.log.util.IntCollectionUtil;
 import com.intellij.vcs.log.util.StopWatch;
@@ -147,7 +145,9 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
   }
 
   private void doScheduleIndex(boolean full) {
-    doScheduleIndex(full, request -> mySingleTaskController.request(request));
+    TrackingUtil.trackActivity(myProject, VcsActivityKey.INSTANCE, () -> {
+      doScheduleIndex(full, request -> mySingleTaskController.request(request));
+    });
   }
 
   @TestOnly
@@ -282,6 +282,10 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
     return indexers;
   }
 
+  public static @NotNull Collection<VcsLogIndexer> getAvailableIndexers(@NotNull Project project) {
+    return getAvailableIndexers(VcsProjectLog.getLogProviders(project)).values();
+  }
+
   private final class MyHeavyAwareListener extends HeavyAwareListener {
 
     private MyHeavyAwareListener(int delay) {
@@ -410,7 +414,7 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
       indicator.setIndeterminate(false);
       indicator.setFraction(0);
 
-      mySpan = TelemetryManager.getInstance().getTracer(VcsScope).spanBuilder(LogData.Indexing.getName()).startSpan();
+      mySpan = TelemetryManager.getInstance().getTracer(VcsScope).spanBuilder(VcsTelemetrySpan.LogIndex.Indexing.getName()).startSpan();
       myScope = mySpan.makeCurrent();
       myStartTime = getCurrentTimeMillis();
 
@@ -471,10 +475,11 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
         myNumberOfTasks.get(myRoot).decrementAndGet();
 
         myIndexingTime.get(myRoot).updateAndGet(t -> t + (getCurrentTimeMillis() - myStartTime));
-        if (isIndexed(myRoot)) {
+        boolean isIndexed = isIndexed(myRoot);
+        if (isIndexed || myBigRepositoriesList.isBig(myRoot)) {
           long time = myIndexingTime.get(myRoot).getAndSet(0);
-          myIndexCollector.reportIndexingTime(time);
-          myListeners.forEach(listener -> listener.indexingFinished(myRoot));
+          myIndexCollector.reportIndexingTime(myRoot, time);
+          if (isIndexed) myListeners.forEach(listener -> listener.indexingFinished(myRoot));
         }
 
         report();

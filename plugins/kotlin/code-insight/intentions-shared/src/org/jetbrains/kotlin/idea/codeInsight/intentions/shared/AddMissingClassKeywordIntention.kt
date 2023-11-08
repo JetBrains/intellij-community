@@ -8,6 +8,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiErrorElement
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingIntention
+import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtModifierList
@@ -18,15 +19,6 @@ internal class AddMissingClassKeywordIntention : SelfTargetingIntention<PsiEleme
     PsiElement::class.java,
     KotlinBundle.lazyMessage("add.missing.class.keyword")
 ) {
-    companion object {
-        private val targetKeywords = listOf(
-            KtTokens.ANNOTATION_KEYWORD,
-            KtTokens.DATA_KEYWORD,
-            KtTokens.SEALED_KEYWORD,
-            KtTokens.INNER_KEYWORD
-        )
-    }
-
     override fun isApplicableTo(element: PsiElement, caretOffset: Int): Boolean {
         if (element.node?.elementType != KtTokens.IDENTIFIER) return false
         val ktClass = element.parent as? KtClass
@@ -46,3 +38,10 @@ internal class AddMissingClassKeywordIntention : SelfTargetingIntention<PsiEleme
         PsiDocumentManager.getInstance(element.project).commitDocument(document)
     }
 }
+
+private val targetKeywords: List<KtModifierKeywordToken> = listOf(
+    KtTokens.ANNOTATION_KEYWORD,
+    KtTokens.DATA_KEYWORD,
+    KtTokens.SEALED_KEYWORD,
+    KtTokens.INNER_KEYWORD
+)

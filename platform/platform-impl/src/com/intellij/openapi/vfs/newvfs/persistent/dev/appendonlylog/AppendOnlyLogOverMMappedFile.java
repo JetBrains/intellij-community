@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent.dev.appendonlylog;
 
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.io.Unmappable;
 import com.intellij.util.io.dev.mmapped.MMappedFileStorage;
 import com.intellij.util.io.dev.mmapped.MMappedFileStorage.Page;
 import com.intellij.util.io.IOUtil;
@@ -26,15 +26,13 @@ import static java.nio.ByteOrder.nativeOrder;
  * There are other caveats, pitfalls, and dragons, so beware
  */
 @ApiStatus.Internal
-public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog {
+public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog, Unmappable {
   //@formatter:off
   private static final boolean MORE_DIAGNOSTIC_INFORMATION = getBooleanProperty("AppendOnlyLogOverMMappedFile.MORE_DIAGNOSTIC_INFORMATION", true);
   private static final boolean ADD_LOG_CONTENT = getBooleanProperty("AppendOnlyLogOverMMappedFile.ADD_LOG_CONTENT", true);
+  /** How wide region around questionable record to dump for debug diagnostics (see {@link #dumpContentAroundId(long, int)}) */
+  private static final int DEBUG_DUMP_REGION_WIDTH = 256;
   //@formatter:on
-
-  /** First header int32, used to recognize this storage's file type */
-  private static final int MAGIC_WORD = IOUtil.asciiToMagicWord("AOLM");
-
 
   private static final VarHandle INT32_OVER_BYTE_BUFFER = byteBufferViewVarHandle(int[].class, nativeOrder()).withInvokeExactBehavior();
   private static final VarHandle INT64_OVER_BYTE_BUFFER = byteBufferViewVarHandle(long[].class, nativeOrder()).withInvokeExactBehavior();
@@ -42,46 +40,83 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog {
   /** We assume the mapped file is filled with 0 initially, so 0 for any field is the value before anything was set */
   private static final int UNSET_VALUE = 0;
 
-  private static final int CURRENT_IMPLEMENTATION_VERSION = 1;
+
+  /** First header int32, used to recognize this storage's file type */
+  public static final int MAGIC_WORD = IOUtil.asciiToMagicWord("AOLM");
+
+  public static final int CURRENT_IMPLEMENTATION_VERSION = 1;
 
   public static final int MAX_PAYLOAD_SIZE = RecordLayout.RECORD_LENGTH_MASK;
+
 
   //TODO/MAYBE:
   //    1) connectionStatus: do we need it? Updates are atomic, every saved state is at least self-consistent.
   //       We could use (committed < allocated) as a marker of 'not everything was committed'
-  //    2) Make record header recognizable: i.e. reserve first byte for type+committed only -- so we can recognize
+  //    2) Make record header 'recognizable': i.e. reserve first byte for type+committed only -- so we can recognize
   //       'false id' with high probability. This leaves us with 3bytes record length, which is still enough for
   //       the most applications
 
-  private static final class HeaderLayout {
-    private static final int MAGIC_WORD_OFFSET = 0;
-    private static final int IMPLEMENTATION_VERSION_OFFSET = MAGIC_WORD_OFFSET + Integer.BYTES;
+  public static final class HeaderLayout {
+    public static final int MAGIC_WORD_OFFSET = 0;
+    public static final int IMPLEMENTATION_VERSION_OFFSET = MAGIC_WORD_OFFSET + Integer.BYTES;
 
-    private static final int EXTERNAL_VERSION_OFFSET = IMPLEMENTATION_VERSION_OFFSET + Integer.BYTES;
+    public static final int EXTERNAL_VERSION_OFFSET = IMPLEMENTATION_VERSION_OFFSET + Integer.BYTES;
 
     /**
      * We align records to pages, hence storage.pageSize is a parameter of binary layout.
      * E.g. if we created the log with pageSize=1Mb, and re-open it with pageSize=512Kb -- now some records could
      * break page borders, which is incorrect. Hence we need to store pageSize, and check it on opening
      */
-    private static final int PAGE_SIZE_OFFSET = EXTERNAL_VERSION_OFFSET + Integer.BYTES;
+    public static final int PAGE_SIZE_OFFSET = EXTERNAL_VERSION_OFFSET + Integer.BYTES;
 
 
     /** Offset (in file) of the next-record-to-be-allocated */
-    private static final int NEXT_RECORD_TO_BE_ALLOCATED_OFFSET = PAGE_SIZE_OFFSET + Integer.BYTES;
+    public static final int NEXT_RECORD_TO_BE_ALLOCATED_OFFSET = PAGE_SIZE_OFFSET + Integer.BYTES;
     /** Records with offset < recordsCommittedUpToOffset are guaranteed to be already written. */
-    private static final int NEXT_RECORD_TO_BE_COMMITTED_OFFSET = NEXT_RECORD_TO_BE_ALLOCATED_OFFSET + Long.BYTES;
+    public static final int NEXT_RECORD_TO_BE_COMMITTED_OFFSET = NEXT_RECORD_TO_BE_ALLOCATED_OFFSET + Long.BYTES;
 
-    private static final int FIRST_UNUSED_OFFSET = NEXT_RECORD_TO_BE_COMMITTED_OFFSET + Long.BYTES;
+    public static final int FIRST_UNUSED_OFFSET = NEXT_RECORD_TO_BE_COMMITTED_OFFSET + Long.BYTES;
 
     //reserve [8 x int64] just in the case
-    private static final int HEADER_SIZE = 8 * Long.BYTES;
+    public static final int HEADER_SIZE = 8 * Long.BYTES;
 
     static {
       if (HEADER_SIZE < FIRST_UNUSED_OFFSET) {
         throw new ExceptionInInitializerError(
           "FIRST_UNUSED_OFFSET(" + FIRST_UNUSED_OFFSET + ") is > reserved HEADER_SIZE(=" + HEADER_SIZE + ")");
       }
+    }
+
+    //Header fields below are accessed only in ctor, hence do not require volatile/VarHandle. And they're
+    // also accessed from the AppendOnlyLogFactory for eager file type/param check. So they are here, while
+    // more 'private' header fields constantly modified during aolog lifetime are accessed in a different way
+    // see set/getHeaderField()
+
+    public static int readMagicWord(@NotNull ByteBuffer buffer) {
+      return buffer.getInt(MAGIC_WORD_OFFSET);
+    }
+
+    public static int readImplementationVersion(@NotNull ByteBuffer buffer) {
+      return buffer.getInt(IMPLEMENTATION_VERSION_OFFSET);
+    }
+
+    public static int readPageSize(@NotNull ByteBuffer buffer) {
+      return buffer.getInt(PAGE_SIZE_OFFSET);
+    }
+
+    public static void putMagicWord(@NotNull ByteBuffer buffer,
+                                    int magicWord) {
+      buffer.putInt(MAGIC_WORD_OFFSET, magicWord);
+    }
+
+    public static void putImplementationVersion(@NotNull ByteBuffer buffer,
+                                                int implVersion) {
+      buffer.putInt(IMPLEMENTATION_VERSION_OFFSET, implVersion);
+    }
+
+    public static void putPageSize(@NotNull ByteBuffer buffer,
+                                   int pageSize) {
+      buffer.putInt(PAGE_SIZE_OFFSET, pageSize);
     }
   }
 
@@ -127,7 +162,8 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog {
                                      int payloadSize,
                                      ByteBufferWriter writer) throws IOException {
       INT32_OVER_BYTE_BUFFER.setVolatile(buffer, offsetInBuffer + HEADER_OFFSET, dataRecordHeader(payloadSize, /*commited: */false));
-      writer.write(buffer.slice(offsetInBuffer + DATA_OFFSET, payloadSize));
+      ByteBuffer writableRegionSlice = buffer.slice(offsetInBuffer + DATA_OFFSET, payloadSize).order(buffer.order());
+      writer.write(writableRegionSlice);
       INT32_OVER_BYTE_BUFFER.setVolatile(buffer, offsetInBuffer + HEADER_OFFSET, dataRecordHeader(payloadSize, /*commited: */true));
     }
 
@@ -245,30 +281,14 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog {
 
     headerPage = storage.pageByOffset(0L);
 
+    ByteBuffer headerPageBuffer = headerPage.rawPageBuffer();
     if (fileIsEmpty) {
-      setIntHeaderField(HeaderLayout.MAGIC_WORD_OFFSET, MAGIC_WORD);
-      setImplementationVersion(CURRENT_IMPLEMENTATION_VERSION);
-      setIntHeaderField(HeaderLayout.PAGE_SIZE_OFFSET, pageSize);
+      HeaderLayout.putMagicWord(headerPageBuffer, MAGIC_WORD);
+      HeaderLayout.putImplementationVersion(headerPageBuffer, CURRENT_IMPLEMENTATION_VERSION);
+      HeaderLayout.putPageSize(headerPageBuffer, pageSize);
     }
     else {
-      int magicWord = getIntHeaderField(HeaderLayout.MAGIC_WORD_OFFSET);
-      if (magicWord != MAGIC_WORD) {
-        throw new IOException("[" + storage.storagePath() + "] is of incorrect type: " +
-                              ".magicWord(=" + magicWord + ", '" + magicWordToASCII(magicWord) + "') != " + MAGIC_WORD + " expected");
-      }
-
-      int implementationVersion = getImplementationVersion();
-      if (implementationVersion != CURRENT_IMPLEMENTATION_VERSION) {
-        throw new IOException("[" + storage.storagePath() + "]" +
-                              ".implementationVersion(=" + implementationVersion + ") is not supported: " +
-                              CURRENT_IMPLEMENTATION_VERSION + " is the currently supported version.");
-      }
-
-      int filePageSize = getIntHeaderField(HeaderLayout.PAGE_SIZE_OFFSET);
-      if (pageSize != filePageSize) {
-        throw new IOException("[" + storage.storagePath() + "]: file created with pageSize=" + filePageSize +
-                              " but current storage.pageSize=" + pageSize);
-      }
+      checkFileParamsCompatible(storage.storagePath(), headerPageBuffer, pageSize);
     }
 
 
@@ -322,16 +342,13 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog {
     setLongHeaderField(HeaderLayout.NEXT_RECORD_TO_BE_COMMITTED_OFFSET, nextRecordToBeCommittedOffset);
   }
 
+
   /**
    * @return version of the log implementation (i.e., this class) used to create the file.
    * Current version is {@link #CURRENT_IMPLEMENTATION_VERSION}
    */
   public int getImplementationVersion() {
-    return getIntHeaderField(HeaderLayout.IMPLEMENTATION_VERSION_OFFSET);
-  }
-
-  private void setImplementationVersion(int implementationVersion) {
-    setIntHeaderField(HeaderLayout.IMPLEMENTATION_VERSION_OFFSET, implementationVersion);
+    return HeaderLayout.readImplementationVersion(headerPage.rawPageBuffer());
   }
 
   /** @return version of _data_ stored in records -- up to the client to define/recognize it */
@@ -411,7 +428,8 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog {
     if (recordOffsetInFile >= recordsAllocatedUpTo) {
       throw new IllegalArgumentException(
         "Can't read recordId(=" + recordId + ", offset: " + recordOffsetInFile + "]: " +
-        "outside of allocated region [<" + recordsAllocatedUpTo + "]");
+        "outside of allocated region [<" + recordsAllocatedUpTo + "] " +
+        moreDiagnosticInfo(recordOffsetInFile));
     }
 
 
@@ -430,7 +448,7 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog {
       throw new IOException("record[" + recordId + "][@" + recordOffsetInFile + "] is not commited: " +
                             "(header=" + Integer.toHexString(recordHeader) + ") either not yet written or corrupted. " +
                             moreDiagnosticInfo(recordOffsetInFile) +
-                            (ADD_LOG_CONTENT ? "\n" + dumpContentAroundId(recordId, 1024) : "")
+                            (ADD_LOG_CONTENT ? "\n" + dumpContentAroundId(recordId, DEBUG_DUMP_REGION_WIDTH) : "")
       );
     }
     int payloadLength = RecordLayout.extractPayloadLength(recordHeader);
@@ -439,10 +457,12 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog {
                             "is incorrect: page[0.." + pageBuffer.limit() + "], " +
                             "committedUpTo: " + firstUnCommittedOffset() + ", allocatedUpTo: " + firstUnAllocatedOffset() + ". " +
                             moreDiagnosticInfo(recordOffsetInFile) +
-                            (ADD_LOG_CONTENT ? "\n" + dumpContentAroundId(recordId, 1024) : "")
+                            (ADD_LOG_CONTENT ? "\n" + dumpContentAroundId(recordId, DEBUG_DUMP_REGION_WIDTH) : "")
       );
     }
-    ByteBuffer recordDataSlice = pageBuffer.slice(recordOffsetInPage + RecordLayout.DATA_OFFSET, payloadLength);
+    ByteBuffer recordDataSlice = pageBuffer.slice(recordOffsetInPage + RecordLayout.DATA_OFFSET, payloadLength)
+      //.asReadOnlyBuffer()
+      .order(pageBuffer.order());
     return reader.read(recordDataSlice);
   }
 
@@ -469,7 +489,7 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog {
       int recordOffsetInPage = storage.toOffsetInPage(recordOffsetInFile);
       ByteBuffer pageBuffer = page.rawPageBuffer();
 
-      if (pageSize - recordOffsetInPage <= RecordLayout.RECORD_HEADER_SIZE) {
+      if (pageSize - recordOffsetInPage < RecordLayout.RECORD_HEADER_SIZE) {
         throw new IOException(
           getClass().getSimpleName() + " corrupted: recordOffsetInPage(=" + recordOffsetInPage + ") less than " +
           "RECORD_HEADER(=" + RecordLayout.RECORD_HEADER_SIZE + "b) left until " +
@@ -496,7 +516,9 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog {
                                   " is incorrect: page[0.." + pageBuffer.limit() + "]" +
                                   moreDiagnosticInfo(recordOffsetInFile));
           }
-          ByteBuffer recordDataSlice = pageBuffer.slice(recordOffsetInPage + RecordLayout.DATA_OFFSET, payloadLength);
+          ByteBuffer recordDataSlice = pageBuffer.slice(recordOffsetInPage + RecordLayout.DATA_OFFSET, payloadLength)
+            //.asReadOnlyBuffer()
+            .order(pageBuffer.order());
 
           boolean shouldContinue = reader.read(recordId, recordDataSlice);
           if (!shouldContinue) {
@@ -523,15 +545,17 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog {
     throw new UnsupportedOperationException("Method not implemented yet");
   }
 
+  @Override
   public void flush() throws IOException {
-    //nothing to do: everything is already in the mapped buffer
+    flush(MMappedFileStorage.FSYNC_ON_FLUSH_BY_DEFAULT);
   }
 
-  @Override
+  /** fsync=true should be used in a rare occasions only: see {@link MMappedFileStorage#FSYNC_ON_FLUSH_BY_DEFAULT} */
   public void flush(boolean fsync) throws IOException {
     if (fsync) {
       storage.fsync();
     }
+    //else: nothing to do -- everything is already in the mapped buffer
   }
 
   @Override
@@ -542,12 +566,17 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog {
 
   @Override
   public void close() throws IOException {
-    //MAYBE RC: is it better to state that flush(true) should be called
-    //          explicitly, if needed, otherwise leave it to OS to decide
-    //          when to sync the pages?
-    flush(true);
-    storage.close();
-    headerPage = null;//help GC unmap pages sooner
+    if (storage.isOpen()) {
+      flush();
+      storage.close();
+      headerPage = null;//help GC unmap pages sooner
+    }
+  }
+
+  @Override
+  public void closeAndUnsafelyUnmap() throws IOException {
+    close();
+    storage.closeAndUnsafelyUnmap();
   }
 
   /**
@@ -559,14 +588,44 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog {
    * adds another level of uncertainty. Hence, if one needs to re-create the storage, it may be more reliable
    * to just .clear() the current storage, than to closeAndRemove -> create-fresh-new.
    */
-  public void closeAndRemove() throws IOException {
+  @Override
+  public void closeAndClean() throws IOException {
     close();
-    FileUtil.delete(storage.storagePath());
+    storage.closeAndClean();
   }
 
   @Override
   public String toString() {
     return "AppendOnlyLogOverMMappedFile[" + storage.storagePath() + "]";
+  }
+
+  /**
+   * Reads key storage params from the header byte buffer, and checks them against params supported by this
+   * implementation. Throws {@link IOException} if there is an incompatibility.
+   */
+  public static void checkFileParamsCompatible(@NotNull Path storagePath,
+                                               @NotNull ByteBuffer headerPageBuffer,
+                                               int pageSize) throws IOException {
+    int magicWord = HeaderLayout.readMagicWord(headerPageBuffer);
+    if (magicWord != MAGIC_WORD) {
+      throw new IOException(
+        "[" + storagePath + "] is of incorrect type: " +
+        ".magicWord(=" + magicWord + ", '" + magicWordToASCII(magicWord) + "') != " + MAGIC_WORD + " expected");
+    }
+
+    int implementationVersion = HeaderLayout.readImplementationVersion(headerPageBuffer);
+    if (implementationVersion != CURRENT_IMPLEMENTATION_VERSION) {
+      throw new IOException(
+        "[" + storagePath + "].implementationVersion(=" + implementationVersion + ") is not supported: " +
+        CURRENT_IMPLEMENTATION_VERSION + " is the currently supported version.");
+    }
+
+    int filePageSize = HeaderLayout.readPageSize(headerPageBuffer);
+    if (pageSize != filePageSize) {
+      throw new IOException(
+        "[" + storagePath + "]: file created with pageSize=" + filePageSize +
+        " but current storage.pageSize=" + pageSize);
+    }
   }
 
   // ============== implementation: ======================================================================
@@ -664,22 +723,13 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog {
     int pageSize = storage.pageSize();
     int offsetInPage = storage.toOffsetInPage(nextRecordOffset);
     int remainingOnPage = pageSize - offsetInPage;
-    if (remainingOnPage == RecordLayout.RECORD_HEADER_SIZE) {
-      //no room on the current page even for the record header => jump to the next page:
-      return nextPageStartingOffset(recordOffsetInFile, pageSize);
-    }
-    else if (remainingOnPage < RecordLayout.RECORD_HEADER_SIZE) {
+    if (remainingOnPage < RecordLayout.RECORD_HEADER_SIZE) {
       throw new IllegalStateException(
         "remainingOnPage(=" + remainingOnPage + ") <= recordHeader(=" + RecordLayout.RECORD_HEADER_SIZE + ")");
     }
     return nextRecordOffset;
   }
 
-  /** @return starting offset of the next page, given recordOffsetInFile in current page, and pageSize */
-  private static long nextPageStartingOffset(long recordOffsetInFile,
-                                             int pageSize) {
-    return ((recordOffsetInFile / pageSize) + 1) * pageSize;
-  }
 
   private long firstUnAllocatedOffset() {
     return getLongHeaderField(HeaderLayout.NEXT_RECORD_TO_BE_ALLOCATED_OFFSET);
@@ -778,9 +828,18 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog {
                                          " (first uncommitted offset: " + firstUnCommittedOffset() +
                                          ", first unallocated: " + firstUnAllocatedOffset() + ")\n");
     forEachRecord((recordId, buffer) -> {
-      if (aroundRecordId - regionWidth <= recordId && recordId <= aroundRecordId + regionWidth) {
+      long nextRecordId = recordOffsetToId(
+        nextRecordOffset(recordIdToOffset(recordId), buffer.remaining())
+      );
+      //MAYBE RC: only use insideQuestionableRecord? Seems like records around are of little use
+      boolean insideQuestionableRecord = (recordId <= aroundRecordId && aroundRecordId <= nextRecordId);
+      boolean insideNeighbourRegion = (aroundRecordId - regionWidth <= recordId
+                                       && recordId <= aroundRecordId + regionWidth);
+
+      if (insideQuestionableRecord || insideNeighbourRegion) {
         String bufferAsHex = IOUtil.toHexString(buffer);
-        sb.append("[id: ").append(recordId).append("][offset: ").append(recordIdToOffset(recordId)).append("][hex: ")
+        sb.append(insideQuestionableRecord ? "*" : "")
+          .append("[id: ").append(recordId).append("][offset: ").append(recordIdToOffset(recordId)).append("][hex: ")
           .append(bufferAsHex).append("]\n");
       }
       return recordId <= aroundRecordId + regionWidth;

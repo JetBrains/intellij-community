@@ -101,10 +101,10 @@ final class DoNotShowInspectionIntentionMenuContributor implements IntentionMenu
     for (InspectionToolWrapper<?,?> toolWrapper : profile.getInspectionTools(hostFile)) {
       if (!isTests && !toolWrapper.isApplicable(projectTypes)) continue;
 
-      if (toolWrapper instanceof GlobalInspectionToolWrapper) {
-        toolWrapper = ((GlobalInspectionToolWrapper)toolWrapper).getSharedLocalInspectionToolWrapper();
+      if (toolWrapper instanceof GlobalInspectionToolWrapper global) {
+        toolWrapper = global.getSharedLocalInspectionToolWrapper();
       }
-      if (toolWrapper instanceof LocalInspectionToolWrapper && !((LocalInspectionToolWrapper)toolWrapper).isUnfair()) {
+      if (toolWrapper instanceof LocalInspectionToolWrapper local && !local.isUnfair()) {
         HighlightDisplayKey key = HighlightDisplayKey.find(toolWrapper.getShortName());
         if (profile.isToolEnabled(key, hostFile) &&
             HighlightDisplayLevel.DO_NOT_SHOW.equals(profile.getErrorLevel(key, hostFile))) {
@@ -141,8 +141,8 @@ final class DoNotShowInspectionIntentionMenuContributor implements IntentionMenu
       List<ProblemDescriptor> descriptors = entry.getValue();
       String shortName = entry.getKey().getShortName();
       for (ProblemDescriptor problemDescriptor : descriptors) {
-        if (problemDescriptor instanceof ProblemDescriptorBase) {
-          TextRange range = ((ProblemDescriptorBase)problemDescriptor).getTextRange();
+        if (problemDescriptor instanceof ProblemDescriptorBase base) {
+          TextRange range = base.getTextRange();
           if (range != null && range.containsOffset(offset)) {
             QuickFix[] fixes = problemDescriptor.getFixes();
             for (int k = 0; k < fixes.length; k++) {

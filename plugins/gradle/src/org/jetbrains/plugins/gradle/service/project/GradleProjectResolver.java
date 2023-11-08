@@ -566,14 +566,12 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
   private static void configureExecutionArgumentsAndVmOptions(@NotNull GradleExecutionSettings executionSettings,
                                                               @NotNull DefaultProjectResolverContext resolverCtx,
                                                               boolean isBuildSrcProject) {
-    if (!executionSettings.isDownloadSources()) {
-      executionSettings.withArgument("-Didea.gradle.download.sources=false");
-    }
+    executionSettings.withArgument("-Didea.gradle.download.sources=" + executionSettings.isDownloadSources());
     executionSettings.withArgument("-Didea.sync.active=true");
     if (resolverCtx.isResolveModulePerSourceSet()) {
       executionSettings.withArgument("-Didea.resolveSourceSetDependencies=true");
     }
-    if (executionSettings.isParallelModelFetch()) {
+    if (executionSettings.isParallelModelFetch() && isGradleVersionAtLeast("7.4", resolverCtx)) {
       executionSettings.withArgument("-Didea.parallelModelFetch.enabled=true");
     }
     if (!isBuildSrcProject) {
@@ -595,6 +593,14 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       // collect extra command-line arguments
       executionSettings.withArguments(extension.getExtraCommandLineArgs());
     });
+  }
+
+  private static boolean isGradleVersionAtLeast(@NotNull String requiredVersion, @NotNull DefaultProjectResolverContext ctx) {
+    String versionStr = ctx.getProjectGradleVersion();
+    if (versionStr != null) {
+      return GradleVersion.version(versionStr).compareTo(GradleVersion.version(requiredVersion)) >= 0;
+    }
+    return false;
   }
 
   @NotNull

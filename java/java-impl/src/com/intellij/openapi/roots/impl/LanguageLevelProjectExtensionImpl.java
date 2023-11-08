@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.impl;
 
+import com.intellij.java.workspace.entities.JavaModuleSettingsEntity;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
@@ -8,13 +9,12 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.roots.ProjectExtension;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.pom.java.LanguageLevel;
-import com.intellij.util.ObjectUtils;
 import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener;
 import com.intellij.platform.backend.workspace.WorkspaceModelTopics;
 import com.intellij.platform.workspace.storage.EntityChange;
 import com.intellij.platform.workspace.storage.VersionedStorageChange;
-import com.intellij.java.workspace.entities.JavaModuleSettingsEntity;
+import com.intellij.pom.java.LanguageLevel;
+import com.intellij.util.ObjectUtils;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -56,8 +56,12 @@ public class LanguageLevelProjectExtensionImpl extends LanguageLevelProjectExten
     return (LanguageLevelProjectExtensionImpl)getInstance(project);
   }
 
-  private void readExternal(final Element element) {
+  /**
+   * Returns true if the state was changed after read
+   */
+  private boolean readExternal(final Element element) {
     String level = element.getAttributeValue(LANGUAGE_LEVEL);
+    LanguageLevel languageLevelOldValue = myLanguageLevel;
     if (level == null) {
       myLanguageLevel = null;
     }
@@ -65,9 +69,11 @@ public class LanguageLevelProjectExtensionImpl extends LanguageLevelProjectExten
       myLanguageLevel = readLanguageLevel(level);
     }
     String aDefault = element.getAttributeValue(DEFAULT_ATTRIBUTE);
+    Boolean defaultOldValue = getDefault();
     if (aDefault != null) {
       setDefault(Boolean.parseBoolean(aDefault));
     }
+    return !Objects.equals(defaultOldValue, getDefault()) || languageLevelOldValue != myLanguageLevel;
   }
 
   private static LanguageLevel readLanguageLevel(String level) {
@@ -152,8 +158,8 @@ public class LanguageLevelProjectExtensionImpl extends LanguageLevelProjectExten
     }
 
     @Override
-    public void readExternal(@NotNull Element element) {
-      myInstance.readExternal(element);
+    public boolean readExternalElement(@NotNull Element element) {
+      return myInstance.readExternal(element);
     }
 
     @Override

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
@@ -11,11 +11,21 @@ public class MismatchedStringBuilderQueryUpdateInspectionTest extends LightJavaI
   public void testMismatchedStringBuilderQueryUpdate() {
     doTest();
   }
+  public void testRepeatAbstractStringBuilder() {
+    myFixture.addClass("""
+                         package java.lang;
+                        
+                         public final class StringBuilder2 extends AbstractStringBuilder {
+                             public native StringBuilder2 repeat(CharSequence cs, int count);
+                         }
+                         """);
+    doTest();
+  }
 
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_LATEST_WITH_LATEST_JDK; // need switch expressions
+    return JAVA_21;
   }
 
   @Override

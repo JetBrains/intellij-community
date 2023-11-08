@@ -125,7 +125,7 @@ public final class UIUtil {
   }
 
   private static final Supplier<Boolean> X_RENDER_ACTIVE = new SynchronizedClearableLazy<>(() -> {
-    if (!SystemInfoRt.isXWindow) {
+    if (!StartupUiUtil.isXToolkit()) {
       return false;
     }
 
@@ -315,7 +315,7 @@ public final class UIUtil {
    * @return the property value from the specified component or {@code null}
    * @deprecated use {@link ClientProperty#get(Component, Object)} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static Object getClientProperty(Object component, @NotNull @NonNls Object key) {
     return component instanceof Component ? ClientProperty.get((Component)component, key) : null;
   }
@@ -987,7 +987,7 @@ public final class UIUtil {
 
   @Deprecated(forRemoval = true)
   public static boolean isUnderGTKLookAndFeel() {
-    return SystemInfoRt.isXWindow && UIManager.getLookAndFeel().getName().contains("GTK");
+    return SystemInfoRt.isUnix && !SystemInfoRt.isMac && UIManager.getLookAndFeel().getName().contains("GTK");
   }
 
   public static boolean isGraphite() {
@@ -3258,7 +3258,7 @@ public final class UIUtil {
 
   public static boolean isXServerOnWindows() {
     // This is heuristics to detect using Cygwin/X or other build of X.Org server on Windows in a WSL 2 environment
-    return SystemInfo.isXWindow && !SystemInfo.isWayland && System.getenv("WSLENV") != null;
+    return SystemInfoRt.isUnix && !SystemInfoRt.isMac && !SystemInfo.isWayland && System.getenv("WSLENV") != null;
   }
 
   public static void applyDeprecatedBackground(@Nullable JComponent component) {
@@ -3276,5 +3276,10 @@ public final class UIUtil {
 
   public static boolean isMetalRendering() {
     return SystemInfo.isMac && Boolean.getBoolean("sun.java2d.metal");
+  }
+
+  public static boolean isFullScreenSupportedByDefaultGD() {
+    GraphicsDevice gd = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
+    return gd.isFullScreenSupported();
   }
 }

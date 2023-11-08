@@ -20,11 +20,11 @@ class PathClassLoaderTest {
   fun `sub url resolve`(@TempDir dir: Path) {
     val file = dir.resolve("plugin.jar")
     val expectedData = byteArrayOf(42, 24)
-    Compressor.Zip(file.toFile()).use { compressor ->
+    Compressor.Zip(file).use { compressor ->
       compressor.addFile("help/help.html", "<img draggable=\"false\" src=\"screenshot.png\" alt=\"Settings\">".toByteArray(Charsets.UTF_8))
       compressor.addFile("help/screenshot.png", expectedData)
     }
-    val classPath = ClassPath(listOf(file), UrlClassLoader.build(), PathClassLoader.getResourceFileFactory(), true)
+    val classPath = ClassPath(listOf(file), UrlClassLoader.build(), PathClassLoader.getResourceFileFactory(), false)
     val resource = classPath.findResource("help/help.html")
     assertThat(resource).isNotNull()
     assertThat(URL(resource!!.url, "screenshot.png").content).isEqualTo(expectedData)
@@ -34,11 +34,11 @@ class PathClassLoaderTest {
   fun `relative jar path`(@TempDir dir: Path) {
     // Regression test for IDEA-314175.
     val jarAbsolutePath = dir.resolve("lib.jar")
-    Compressor.Zip(jarAbsolutePath.toFile()).use { compressor ->
+    Compressor.Zip(jarAbsolutePath).use { compressor ->
       compressor.addFile("resource.txt", "contents".encodeToByteArray())
     }
     val jarRelativePath = Paths.get("").toAbsolutePath().relativize(jarAbsolutePath)
-    val classPath = ClassPath(listOf(jarRelativePath), UrlClassLoader.build(), PathClassLoader.getResourceFileFactory(), true)
+    val classPath = ClassPath(listOf(jarRelativePath), UrlClassLoader.build(), PathClassLoader.getResourceFileFactory(), false)
     val resource = checkNotNull(classPath.findResource("resource.txt"))
     assertThat(resource.url.toString()).isEqualTo("jar:file:${jarAbsolutePath.invariantSeparatorsPathString}!/resource.txt")
   }

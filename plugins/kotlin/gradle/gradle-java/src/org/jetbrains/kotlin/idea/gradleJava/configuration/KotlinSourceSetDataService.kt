@@ -18,6 +18,7 @@ import com.intellij.openapi.roots.ExportableOrderEntry
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.util.io.FileUtil
 import org.jetbrains.kotlin.cli.common.arguments.K2JSCompilerArguments
+import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
 import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.idea.base.codeInsight.tooling.tooling
 import org.jetbrains.kotlin.idea.base.externalSystem.KotlinGradleFacade
@@ -26,7 +27,6 @@ import org.jetbrains.kotlin.idea.gradle.configuration.KotlinSourceSetInfo
 import org.jetbrains.kotlin.idea.gradle.configuration.findChildModuleById
 import org.jetbrains.kotlin.idea.gradle.configuration.kotlinAndroidSourceSets
 import org.jetbrains.kotlin.idea.gradle.configuration.kotlinSourceSetData
-import org.jetbrains.kotlin.idea.gradleJava.KotlinGradleFacadeImpl
 import org.jetbrains.kotlin.idea.gradleJava.migrateNonJvmSourceFolders
 import org.jetbrains.kotlin.idea.gradleJava.pathAsUrl
 import org.jetbrains.kotlin.idea.projectModel.KotlinCompilation
@@ -129,17 +129,19 @@ class KotlinSourceSetDataService : AbstractProjectDataService<GradleSourceSetDat
         }
 
         private fun IdePlatformKind.toSimplePlatforms(
-            moduleData: ModuleData,
+            mainModuleNode: DataNode<ModuleData>,
+            sourceSetModuleData: ModuleData,
+            sourceSetInfo: KotlinSourceSetInfo,
             isHmppModule: Boolean,
             projectPlatforms: List<KotlinPlatform>
         ): Collection<SimplePlatform> {
             if (this is JvmIdePlatformKind) {
-                val jvmTarget = JvmTarget.fromString(moduleData.targetCompatibility ?: "") ?: JvmTarget.DEFAULT
+                val jvmTarget = inferJvmTarget(mainModuleNode, sourceSetInfo)
                 return JvmPlatforms.jvmPlatformByTargetVersion(jvmTarget)
             }
 
             if (this is NativeIdePlatformKind) {
-                return NativePlatforms.nativePlatformByTargetNames(moduleData.konanTargets)
+                return NativePlatforms.nativePlatformByTargetNames(sourceSetModuleData.konanTargets)
             }
 
             return if (isHmppModule) {
@@ -147,6 +149,43 @@ class KotlinSourceSetDataService : AbstractProjectDataService<GradleSourceSetDat
             } else {
                 this.defaultPlatform
             }
+        }
+
+        /**
+         * Will infer the [JvmTarget] of the provided [sourceSet] by looking into imported compiler arguments.
+         * This method will take dependsOn edges into account.
+         *
+         * In case of conflicting jvmTargets (e.g. 1.8 vs 11) the smallest one will be returned as convention
+         */
+        private fun inferJvmTarget(mainModuleNode: DataNode<out ModuleData>, sourceSet: KotlinSourceSetInfo): JvmTarget {
+            /**
+             * All SourceSets that dependOn the given [sourceSet] (plus the [sourceSet] itself).
+             * ### Example: Simple multiplatform setup with jvm and multiple iOS targets:
+             * In this case this will return `[commonMain, jvmMain]` for when the [sourceSet] is 'commonMain'
+             * and `[jvmMain]`  if the [sourceSet] is jvmMain
+             */
+            val sourceSetWithDependingSourceSets = ExternalSystemApiUtil.findAll(mainModuleNode, GradleSourceSetData.KEY)
+                .mapNotNull { sourceSetNode -> sourceSetNode.kotlinSourceSetData?.sourceSetInfo }
+                .filter { otherSourceSetInfo -> sourceSet.moduleId in otherSourceSetInfo.dependsOn }
+                .plus(sourceSet)
+
+            val allJvmTargets = sourceSetWithDependingSourceSets
+                /* Resolve the compilerArguments, as they will contain the 'jvmTarget' */
+                .asSequence()
+                .mapNotNull { currentSourceSet -> currentSourceSet.compilerArguments?.get() }
+
+                /* Only K2JVMCompilerArguments will ship the 'jvmTarget' */
+                .mapNotNull { compilerArguments -> compilerArguments as? K2JVMCompilerArguments }
+                .mapNotNull { jvmCompilerArguments -> jvmCompilerArguments.jvmTarget }
+                .mapNotNull { jvmTargetString -> JvmTarget.fromString(jvmTargetString) }
+                .toSet()
+
+            /*
+            In case of conflict: Choose the **lowest** jvmTarget version.
+            Checkers like 'InlinePlatformCompatibilityChecker' will be more useful like this:
+            Basically alerting that the code shared across multiple jvm targets will not work for at least one platform.
+            */
+            return allJvmTargets.minOrNull() ?: JvmTarget.DEFAULT
         }
 
         fun configureFacet(
@@ -183,13 +222,20 @@ class KotlinSourceSetDataService : AbstractProjectDataService<GradleSourceSetDat
             projectPlatforms: List<KotlinPlatform>,
             additionalRunTasks: Collection<ExternalSystemRunTask>? = null
         ): KotlinFacet {
-
             val compilerVersion = KotlinGradleFacade.getInstance()?.findKotlinPluginVersion(mainModuleNode)
             // ?: return null TODO: Fix in CLion or our plugin KT-27623
 
             val platformKinds = kotlinSourceSet.actualPlatforms.platforms //TODO(auskov): fix calculation of jvm target
-                .map { it.tooling.kind }
-                .flatMap { it.toSimplePlatforms(moduleData, mainModuleNode.kotlinGradleProjectDataOrFail.isHmpp, projectPlatforms) }
+                .map { kotlinPlatform -> kotlinPlatform.tooling.kind }
+                .flatMap { idePlatformKind ->
+                    idePlatformKind.toSimplePlatforms(
+                        mainModuleNode = mainModuleNode,
+                        sourceSetModuleData = moduleData,
+                        sourceSetInfo = kotlinSourceSet,
+                        isHmppModule = mainModuleNode.kotlinGradleProjectDataOrFail.isHmpp,
+                        projectPlatforms = projectPlatforms
+                    )
+                }
                 .distinct()
                 .toSet()
 
@@ -212,7 +258,12 @@ class KotlinSourceSetDataService : AbstractProjectDataService<GradleSourceSetDat
             )
 
             if (compilerArguments != null) {
-                applyCompilerArgumentsToFacetSettings(compilerArguments, kotlinFacet.configuration.settings, kotlinFacet.module, modelsProvider)
+                applyCompilerArgumentsToFacetSettings(
+                    compilerArguments,
+                    kotlinFacet.configuration.settings,
+                    kotlinFacet.module,
+                    modelsProvider
+                )
             }
 
             with(kotlinFacet.configuration.settings) {

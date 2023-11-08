@@ -37,6 +37,10 @@ public final class JVMFlags {
     return new JVMFlags(~myFlags & past.myFlags);
   }
 
+  public boolean isWeakerAccess(JVMFlags than) {
+    return (isPrivate() && !than.isPrivate()) || (isProtected() && than.isPublic()) || (isPackageLocal() && (than.myFlags & (Opcodes.ACC_PROTECTED | Opcodes.ACC_PUBLIC)) != 0);
+  }
+
   // standard access flags
   public boolean isPublic() {
     return isSet(Opcodes.ACC_PUBLIC);
@@ -157,10 +161,13 @@ public final class JVMFlags {
     return isSet(GENERATED_MASK);
   }
 
+  public boolean isAllSet(JVMFlags flags) {
+    return (myFlags & flags.myFlags) == flags.myFlags;
+  }
+
   private boolean isSet(int mask) {
     return (myFlags & mask) != 0;
   }
-
 
   @Override
   public boolean equals(Object o) {

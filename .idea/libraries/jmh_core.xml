@@ -1,28 +1,28 @@
 <component name="libraryTable">
   <library name="jmh-core" type="repository">
-    <properties jar-repository-id="central-proxy" maven-id="org.openjdk.jmh:jmh-core:1.36">
+    <properties maven-id="org.openjdk.jmh:jmh-core:1.37">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/openjdk/jmh/jmh-core/1.36/jmh-core-1.36.jar">
-          <sha256sum>f90974e37d0da8886b5c05e6e3e7e20556900d747c5a41c1023b47c3301ea73c</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/openjdk/jmh/jmh-core/1.37/jmh-core-1.37.jar">
+          <sha256sum>dc0eaf2bbf0036a70b60798c785d6e03a9daf06b68b8edb0f1ba9eb3421baeb3</sha256sum>
         </artifact>
         <artifact url="file://$MAVEN_REPOSITORY$/net/sf/jopt-simple/jopt-simple/5.0.4/jopt-simple-5.0.4.jar">
           <sha256sum>df26cc58f235f477db07f753ba5a3ab243ebe5789d9f89ecf68dd62ea9a66c28</sha256sum>
         </artifact>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/apache/commons/commons-math3/3.2/commons-math3-3.2.jar">
-          <sha256sum>6268a9a0ea3e769fc493a21446664c0ef668e48c93d126791f6f3f757978fee2</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/apache/commons/commons-math3/3.6.1/commons-math3-3.6.1.jar">
+          <sha256sum>1e56d7b058d28b65abd256b8458e3885b674c1d588fa43cd7d1cbb9c7ef2b308</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/openjdk/jmh/jmh-core/1.36/jmh-core-1.36.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/openjdk/jmh/jmh-core/1.37/jmh-core-1.37.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/net/sf/jopt-simple/jopt-simple/5.0.4/jopt-simple-5.0.4.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/apache/commons/commons-math3/3.2/commons-math3-3.2.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/apache/commons/commons-math3/3.6.1/commons-math3-3.6.1.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/openjdk/jmh/jmh-core/1.36/jmh-core-1.36-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/openjdk/jmh/jmh-core/1.37/jmh-core-1.37-sources.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/net/sf/jopt-simple/jopt-simple/5.0.4/jopt-simple-5.0.4-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/apache/commons/commons-math3/3.2/commons-math3-3.2-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/apache/commons/commons-math3/3.6.1/commons-math3-3.6.1-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

@@ -6,6 +6,8 @@ import com.intellij.codeInspection.duplicateStringLiteral.DuplicateStringLiteral
 import com.intellij.java.i18n.JavaI18nBundle;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
+import com.intellij.openapi.roots.ModuleRootModificationUtil;
+import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 
 import java.util.List;
@@ -17,6 +19,7 @@ public class DuplicateStringLiteralInspectionTest extends JavaCodeInsightFixture
   public void setUp() throws Exception {
     super.setUp();
     myFixture.enableInspections(myInspection);
+    ModuleRootModificationUtil.updateModel(getModule(), DefaultLightProjectDescriptor::addJetBrainsAnnotations);
   }
 
   @Override

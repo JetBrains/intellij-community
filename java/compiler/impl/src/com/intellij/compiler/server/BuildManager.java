@@ -1,6 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.server;
 
+import com.github.benmanes.caffeine.cache.Caffeine;
+import com.github.benmanes.caffeine.cache.LoadingCache;
 import com.intellij.DynamicBundle;
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerConfigurationImpl;
@@ -84,7 +86,6 @@ import com.intellij.util.concurrency.AppJavaExecutorUtil;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.SLRUCache;
 import com.intellij.util.io.BaseOutputReader;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.lang.JavaVersion;
@@ -119,8 +120,7 @@ import org.jetbrains.jps.model.java.compiler.JavaCompilers;
 import org.jvnet.winp.Priority;
 import org.jvnet.winp.WinProcess;
 
-import javax.tools.JavaCompiler;
-import javax.tools.ToolProvider;
+import javax.tools.*;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
@@ -1449,7 +1449,7 @@ public final class BuildManager implements Disposable {
       catch (IOException e) {
         LOG.warn("Failed to copy YK libraries", e);
       }
-      @SuppressWarnings("SpellCheckingInspection") 
+      @SuppressWarnings("SpellCheckingInspection")
       final StringBuilder parameters = new StringBuilder().append("-agentpath:").append(cmdLine.getYjpAgentPath(service)).append("=disablealloc,delay=10000,sessionname=ExternalBuild");
       final String buildSnapshotPath = System.getProperty("build.snapshots.path");
       if (buildSnapshotPath != null) {
@@ -1917,7 +1917,7 @@ public final class BuildManager implements Disposable {
           final CmdlineRemoteProto.Message.BuilderMessage.CompileMessage compileMessage = _message.getCompileMessage();
           if (compileMessage.hasSourceFilePath()) {
             final CmdlineRemoteProto.Message.BuilderMessage.CompileMessage.Builder builder = CmdlineRemoteProto.Message.BuilderMessage.CompileMessage.newBuilder(compileMessage);
-            builder.setSourceFilePath(myPathMapper.apply(compileMessage.getSourceFilePath())); 
+            builder.setSourceFilePath(myPathMapper.apply(compileMessage.getSourceFilePath()));
             _message = CmdlineRemoteProto.Message.BuilderMessage.newBuilder(_message).setCompileMessage(builder).build();
           }
         }
@@ -1974,23 +1974,22 @@ public final class BuildManager implements Disposable {
       if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
         return;
       }
-      final MessageBusConnection connection = project.getMessageBus().connect();
-      if (!project.isDefault()) {
-        connection.subscribe(WorkspaceModelTopics.CHANGED, new WSModelChangeListener(project));
 
-        connection.subscribe(ModuleRootListener.TOPIC, new ModuleRootListener() {
-          @Override
-          public void rootsChanged(@NotNull ModuleRootEvent event) {
-            if (!event.isCausedByWorkspaceModelChangesOnly()) {
-              // only process events that are not covered by events from the workspace model
-              final Object source = event.getSource();
-              if (source instanceof Project) {
-                getInstance().clearState((Project)source);
-              }
+      MessageBusConnection connection = project.getMessageBus().connect();
+      connection.subscribe(WorkspaceModelTopics.CHANGED, new WSModelChangeListener(project));
+
+      connection.subscribe(ModuleRootListener.TOPIC, new ModuleRootListener() {
+        @Override
+        public void rootsChanged(@NotNull ModuleRootEvent event) {
+          if (!event.isCausedByWorkspaceModelChangesOnly()) {
+            // only process events that are not covered by events from the workspace model
+            final Object source = event.getSource();
+            if (source instanceof Project) {
+              getInstance().clearState((Project)source);
             }
           }
-        });
-      }
+        }
+      });
       connection.subscribe(ExecutionManager.EXECUTION_TOPIC, new ExecutionListener() {
         @Override
         public void processStarting(@NotNull String executorId, @NotNull ExecutionEnvironment env) {
@@ -2038,50 +2037,73 @@ public final class BuildManager implements Disposable {
             candidates.addAll(myRootsToRefresh);
             myRootsToRefresh.clear();
           }
-          if (compileContext.isAnnotationProcessorsEnabled()) {
-            // annotation processors may have re-generated code
-            final CompilerConfiguration config = CompilerConfiguration.getInstance(project);
-            for (Module module : compileContext.getCompileScope().getAffectedModules()) {
-              if (config.getAnnotationProcessingConfiguration(module).isEnabled()) {
-                final String productionPath = CompilerPaths.getAnnotationProcessorsGenerationPath(module, false);
-                if (productionPath != null) {
-                  candidates.add(productionPath);
-                }
-                final String testsPath = CompilerPaths.getAnnotationProcessorsGenerationPath(module, true);
-                if (testsPath != null) {
-                  candidates.add(testsPath);
-                }
-              }
-            }
+
+          if (candidates.isEmpty() && !compileContext.isAnnotationProcessorsEnabled()) {
+            return;
           }
 
-          if (!candidates.isEmpty()) {
-            ApplicationManager.getApplication().executeOnPooledThread(() -> {
-              if (project.isDisposed()) {
-                return;
+          ApplicationManager.getApplication().executeOnPooledThread(() -> {
+            if (project.isDisposed()) {
+              return;
+            }
+
+            if (compileContext.isAnnotationProcessorsEnabled()) {
+              // annotation processors may have re-generated code
+              final CompilerConfiguration config = CompilerConfiguration.getInstance(project);
+              try {
+                for (Module module : ReadAction.nonBlocking(() -> compileContext.getCompileScope().getAffectedModules()).executeSynchronously()) {
+                  if (project.isDisposed()) {
+                    return;
+                  }
+                  if (module.isDisposed()) {
+                    continue;
+                  }
+                  if (config.getAnnotationProcessingConfiguration(module).isEnabled()) {
+                    final String productionPath = CompilerPaths.getAnnotationProcessorsGenerationPath(module, false);
+                    if (productionPath != null) {
+                      candidates.add(productionPath);
+                    }
+                    final String testsPath = CompilerPaths.getAnnotationProcessorsGenerationPath(module, true);
+                    if (testsPath != null) {
+                      candidates.add(testsPath);
+                    }
+                  }
+                }
               }
+              catch (ProcessCanceledException ignored) {
+              }
+              catch (Throwable e) {
+                LOG.info(e);
+              }
+            }
 
-              CompilerUtil.refreshOutputRoots(candidates);
+            if (candidates.isEmpty()) {
+              return;
+            }
 
-              LocalFileSystem lfs = LocalFileSystem.getInstance();
-              Set<VirtualFile> toRefresh = ReadAction.compute(() -> {
+            CompilerUtil.refreshOutputRoots(candidates);
+
+            LocalFileSystem lfs = LocalFileSystem.getInstance();
+            try {
+              Collection<VirtualFile> toRefresh = ReadAction.nonBlocking(() -> {
                 if (project.isDisposed()) {
-                  return Collections.emptySet();
+                  return Collections.<VirtualFile>emptySet();
                 }
-                else {
-                  ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-                  return candidates.stream()
-                    .map(lfs::findFileByPath)
-                    .filter(root -> root != null && fileIndex.isInSourceContent(root))
-                    .collect(Collectors.toSet());
-                }
-              });
+                ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
+                return candidates.stream().map(lfs::findFileByPath).filter(root -> root != null && fileIndex.isInSourceContent(root)).collect(Collectors.toSet());
+
+              }).executeSynchronously();
 
               if (!toRefresh.isEmpty()) {
                 lfs.refreshFiles(toRefresh, true, true, null);
               }
-            });
-          }
+            }
+            catch (ProcessCanceledException ignored) {
+            }
+            catch (Throwable e) {
+              LOG.info(e);
+            }
+          });
         }
 
         @Override
@@ -2225,22 +2247,20 @@ public final class BuildManager implements Disposable {
   }
 
   private abstract static class InternedPath {
-    private static final SLRUCache<CharSequence, CharSequence> ourNameCache = SLRUCache.create(1024, 1024, key -> key);
+    private static final LoadingCache<String, String> nameCache = Caffeine.newBuilder().maximumSize(1024).build(key -> key);
 
-    protected final CharSequence[] myPath;
+    protected final String[] path;
 
     /**
      * @param path assuming a system-independent path with forward slashes
      */
     InternedPath(String path) {
-      final List<CharSequence> list = new ArrayList<>();
-      final StringTokenizer tokenizer = new StringTokenizer(path, "/", false);
-      synchronized (ourNameCache) {
-        while(tokenizer.hasMoreTokens()) {
-          list.add(ourNameCache.get(tokenizer.nextToken()));
-        }
+      List<CharSequence> list = new ArrayList<>();
+      StringTokenizer tokenizer = new StringTokenizer(path, "/", false);
+      while (tokenizer.hasMoreTokens()) {
+        list.add(nameCache.get(tokenizer.nextToken()));
       }
-      myPath = list.toArray(CharSequence[]::new);
+      this.path = list.toArray(String[]::new);
     }
 
     public abstract String getValue();
@@ -2252,18 +2272,16 @@ public final class BuildManager implements Disposable {
 
       InternedPath path = (InternedPath)o;
 
-      return Arrays.equals(myPath, path.myPath);
+      return Arrays.equals(this.path, path.path);
     }
 
     @Override
     public int hashCode() {
-      return Arrays.hashCode(myPath);
+      return Arrays.hashCode(path);
     }
 
     public static void clearCache() {
-      synchronized (ourNameCache) {
-        ourNameCache.clear();
-      }
+      nameCache.invalidateAll();
     }
 
     public static InternedPath create(String path) {
@@ -2278,14 +2296,14 @@ public final class BuildManager implements Disposable {
 
     @Override
     public String getValue() {
-      if (myPath.length == 1) {
-        final String name = myPath[0].toString();
+      if (path.length == 1) {
+        String name = path[0];
         // handle the case of a Windows volume name
         return name.length() == 2 && name.endsWith(":")? name + "/" : name;
       }
 
       final StringBuilder buf = new StringBuilder();
-      for (CharSequence element : myPath) {
+      for (CharSequence element : path) {
         if (!buf.isEmpty()) {
           buf.append("/");
         }
@@ -2302,10 +2320,10 @@ public final class BuildManager implements Disposable {
 
     @Override
     public String getValue() {
-      if (myPath.length > 0) {
+      if (path.length > 0) {
         final StringBuilder buf = new StringBuilder();
-        for (CharSequence element : myPath) {
-          buf.append("/").append(element);
+        for (CharSequence element : path) {
+          buf.append('/').append(element);
         }
         return buf.toString();
       }

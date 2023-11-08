@@ -9,7 +9,7 @@ import com.intellij.ide.actions.searcheverywhere.footer.ActionHistoryManager;
 import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.search.BooleanOptionDescription;
-import com.intellij.ide.util.gotoByName.GotoActionItemProvider;
+import com.intellij.ide.util.gotoByName.ActionAsyncProvider;
 import com.intellij.ide.util.gotoByName.GotoActionModel;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -51,7 +51,7 @@ public class ActionSearchEverywhereContributor implements WeightedSearchEverywhe
   private final Project myProject;
   private final WeakReference<Component> myContextComponent;
   private final GotoActionModel myModel;
-  private final GotoActionItemProvider myProvider;
+  private final ActionAsyncProvider myProvider;
   protected boolean myDisabledActions;
 
   public ActionSearchEverywhereContributor(ActionSearchEverywhereContributor other) {
@@ -66,7 +66,7 @@ public class ActionSearchEverywhereContributor implements WeightedSearchEverywhe
     myProject = project;
     myContextComponent = new WeakReference<>(contextComponent);
     myModel = new GotoActionModel(project, contextComponent, editor);
-    myProvider = new GotoActionItemProvider(myModel);
+    myProvider = new ActionAsyncProvider(myModel);
   }
 
   protected GotoActionModel getModel()  {
@@ -118,29 +118,33 @@ public class ActionSearchEverywhereContributor implements WeightedSearchEverywhe
 
     if (StringUtil.isEmptyOrSpaces(pattern)) {
       if (isRecentEnabled()) {
-        Set<String> actionIDs = ActionHistoryManager.getInstance().getState().getIds();
-        Predicate<GotoActionModel.MatchedValue> actionDegreePredicate =
-          element -> {
-            if (!myDisabledActions && !((GotoActionModel.ActionWrapper)element.value).isAvailable()) return true;
+        if (!SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID.equals(
+          SearchEverywhereManager.getInstance(myProject).getSelectedTabID())) {
+          Set<String> actionIDs = ActionHistoryManager.getInstance().getState().getIds();
+          Predicate<GotoActionModel.MatchedValue> actionDegreePredicate =
+            element -> {
+              if (!myDisabledActions && !((GotoActionModel.ActionWrapper)element.value).isAvailable()) return true;
 
-            AnAction action = getAction(element);
-            if (action == null) return true;
+              AnAction action = getAction(element);
+              if (action == null) return true;
 
-            String id = ActionManager.getInstance().getId(action);
-            int degree = actionIDs.stream().toList().indexOf(id);
+              String id = ActionManager.getInstance().getId(action);
+              int degree = actionIDs.stream().toList().indexOf(id);
 
-            return consumer.process(new FoundItemDescriptor<>(element, degree));
-          };
+              return consumer.process(new FoundItemDescriptor<>(element, degree));
+            };
 
-        myProvider.processActions(pattern, actionDegreePredicate, new HashSet<>(actionIDs));
+          ProgressManager.getInstance().runProcess(() -> {
+            myProvider.processActions(pattern, new HashSet<>(actionIDs), actionDegreePredicate);
+          }, progressIndicator);
+        }
       }
       return;
     }
 
-    ProgressManager.getInstance().executeProcessUnderProgress(() -> {
+    ProgressManager.getInstance().runProcess(() -> {
+      LOG.debug("Start actions search");
       myProvider.filterElements(pattern, element -> {
-        if (progressIndicator.isCanceled()) return false;
-
         if (element == null) {
           LOG.error("Null action has been returned from model");
           return true;
@@ -151,7 +155,7 @@ public class ActionSearchEverywhereContributor implements WeightedSearchEverywhe
           return true;
         }
 
-        final var descriptor = new FoundItemDescriptor<GotoActionModel.MatchedValue>(element, element.getMatchingDegree());
+        final var descriptor = new FoundItemDescriptor<>(element, element.getMatchingDegree());
         return consumer.process(descriptor);
       });
     }, progressIndicator);
@@ -298,6 +302,6 @@ public class ActionSearchEverywhereContributor implements WeightedSearchEverywhe
 
   @Override
   public boolean isEmptyPatternSupported() {
-    return true;
+    return isRecentEnabled();
   }
 }

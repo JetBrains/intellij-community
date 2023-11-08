@@ -15,6 +15,7 @@ import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.TimerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.maven.model.MavenRepositoryInfo;
 import org.jetbrains.idea.maven.project.MavenConfigurableBundle;
 
 import javax.swing.*;
@@ -110,7 +111,7 @@ public class MavenRepositoriesConfigurable implements SearchableConfigurable, Co
   }
 
   private void doUpdateIndex() {
-    MavenIndicesManager.getInstance(myProject).scheduleUpdateContent(getSelectedIndices());
+    MavenIndicesManager.getInstance(myProject).scheduleUpdateContent(getSelectedIndices(), true);
   }
 
   private List<MavenIndex> getSelectedIndices() {
@@ -233,7 +234,11 @@ public class MavenRepositoriesConfigurable implements SearchableConfigurable, Co
           if (timestamp == -1) yield IndicesBundle.message("maven.index.updated.never");
           yield DateFormatUtil.formatDate(timestamp);
         }
-        case 3 -> MavenIndicesManager.getInstance(myProject).getUpdatingState(i);
+        case 3 -> {
+          MavenRepositoryInfo repository = i.getRepository();
+          if (repository == null) yield MavenIndexUpdateManager.IndexUpdatingState.IDLE;
+          yield MavenSystemIndicesManager.getInstance().getUpdatingStateSync(myProject, repository);
+        }
         default -> throw new RuntimeException();
       };
     }

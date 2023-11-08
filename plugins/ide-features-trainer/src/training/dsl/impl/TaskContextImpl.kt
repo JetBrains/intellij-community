@@ -322,7 +322,8 @@ internal class TaskContextImpl(private val lessonExecutor: LessonExecutor,
     val options = LearningUiHighlightingManager.HighlightingOptions(p.highlightBorder,
                                                                     p.highlightInside,
                                                                     p.usePulsation,
-                                                                    p.clearPreviousHighlights)
+                                                                    p.clearPreviousHighlights,
+                                                                    p.allowHighlightingToCrossBorder)
     return object : HighlightingTriggerMethods() {
       override fun treeItem(checkPath: TaskRuntimeContext.(tree: JTree, path: TreePath) -> Boolean) {
         triggerByFoundPathAndHighlight(options) { tree ->

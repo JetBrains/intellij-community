@@ -16,5 +16,7 @@
     <orderEntry type="module" module-name="intellij.searchEverywhereMl.semantics.kotlin" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.plugin.community.main" scope="TEST" />
     <orderEntry type="module" module-name="intellij.searchEverywhereMl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.ml.embeddings" />
+    <orderEntry type="library" scope="TEST" name="kotlinx-coroutines-test" level="project" />
   </component>
 </module>

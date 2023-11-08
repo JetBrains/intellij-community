@@ -4,12 +4,11 @@ package org.jetbrains.plugins.github.authentication.accounts
 import com.intellij.collaboration.auth.PersistentDefaultAccountHolder
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.runInEdt
-import com.intellij.openapi.components.State
-import com.intellij.openapi.components.Storage
-import com.intellij.openapi.components.StoragePathMacros
-import com.intellij.openapi.components.service
+import com.intellij.openapi.components.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.VcsNotifier
+import com.intellij.util.childScope
+import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.util.GithubNotificationIdsHolder
 import org.jetbrains.plugins.github.util.GithubNotifications
@@ -18,9 +17,10 @@ import org.jetbrains.plugins.github.util.GithubUtil
 /**
  * Handles default Github account for project
  */
+@Service(Service.Level.PROJECT)
 @State(name = "GithubDefaultAccount", storages = [Storage(StoragePathMacros.WORKSPACE_FILE)], reportStatistic = false)
-internal class GithubProjectDefaultAccountHolder(project: Project)
-  : PersistentDefaultAccountHolder<GithubAccount>(project) {
+internal class GithubProjectDefaultAccountHolder(project: Project, parentCs: CoroutineScope)
+  : PersistentDefaultAccountHolder<GithubAccount>(project, parentCs.childScope()) {
 
   override fun accountManager() = service<GHAccountManager>()
 

@@ -16,7 +16,7 @@ import java.util.Set;
 
 public abstract class JavaRefactoringFactory extends RefactoringFactory {
   public static JavaRefactoringFactory getInstance(Project project) {
-    return (JavaRefactoringFactory)project.getService(RefactoringFactory.class);
+    return (JavaRefactoringFactory)RefactoringFactory.getInstance(project);
   }
 
   @Override

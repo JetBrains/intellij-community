@@ -54,7 +54,7 @@ import java.util.List;
  * @author Konstantin Bulenkov
  * @deprecated unused in ide.navBar.v2. If you do a change here, please also update v2 implementation
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public final class NavBarListener
   implements ProblemListener, FocusListener, FileStatusListener, AnActionListener, FileEditorManagerListener,
              PsiTreeChangeListener, ModuleRootListener, NavBarModelListener, PropertyChangeListener, KeyListener, WindowFocusListener,

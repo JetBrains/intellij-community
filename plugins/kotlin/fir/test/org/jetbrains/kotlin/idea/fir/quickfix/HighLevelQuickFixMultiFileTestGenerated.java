@@ -20,6 +20,29 @@ import org.junit.runner.RunWith;
 @TestMetadata("../idea/tests/testData/quickfix/autoImports")
 public abstract class HighLevelQuickFixMultiFileTestGenerated extends AbstractHighLevelQuickFixMultiFileTest {
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../idea/tests/testData/quickfix/autoImports/innerClass")
+    public static class InnerClass extends AbstractHighLevelQuickFixMultiFileTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTestWithExtraFile, this, testDataFilePath);
+        }
+
+        @TestMetadata("innerClassInCallableReference.test")
+        public void testInnerClassInCallableReference() throws Exception {
+            runTest("../idea/tests/testData/quickfix/autoImports/innerClass/innerClassInCallableReference.test");
+        }
+
+        @TestMetadata("innerClassInExpression.test")
+        public void testInnerClassInExpression() throws Exception {
+            runTest("../idea/tests/testData/quickfix/autoImports/innerClass/innerClassInExpression.test");
+        }
+
+        @TestMetadata("innerClassInTypeReference.test")
+        public void testInnerClassInTypeReference() throws Exception {
+            runTest("../idea/tests/testData/quickfix/autoImports/innerClass/innerClassInTypeReference.test");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../idea/tests/testData/quickfix/autoImports/invisible")
     public static class Invisible extends AbstractHighLevelQuickFixMultiFileTest {
         private void runTest(String testDataFilePath) throws Exception {
@@ -520,6 +543,11 @@ public abstract class HighLevelQuickFixMultiFileTestGenerated extends AbstractHi
             runTest("../idea/tests/testData/quickfix/autoImports/iteratorOperator.before.Main.kt");
         }
 
+        @TestMetadata("ktij27440.test")
+        public void testKtij27440() throws Exception {
+            runTest("../idea/tests/testData/quickfix/autoImports/ktij27440.test");
+        }
+
         @TestMetadata("memberImportFunction.test")
         public void testMemberImportFunction() throws Exception {
             runTest("../idea/tests/testData/quickfix/autoImports/memberImportFunction.test");
@@ -795,6 +823,11 @@ public abstract class HighLevelQuickFixMultiFileTestGenerated extends AbstractHi
             runTest("../idea/tests/testData/quickfix/autoImports/timesAssign.before.Main.kt");
         }
 
+        @TestMetadata("typeAliasConstructorImport.test")
+        public void testTypeAliasConstructorImport() throws Exception {
+            runTest("../idea/tests/testData/quickfix/autoImports/typeAliasConstructorImport.test");
+        }
+
         @TestMetadata("typeAliasExtensionFunction.before.Main.kt")
         public void testTypeAliasExtensionFunction() throws Exception {
             runTest("../idea/tests/testData/quickfix/autoImports/typeAliasExtensionFunction.before.Main.kt");
@@ -823,6 +856,11 @@ public abstract class HighLevelQuickFixMultiFileTestGenerated extends AbstractHi
         @TestMetadata("unaryPlusOperator.before.Main.kt")
         public void testUnaryPlusOperator() throws Exception {
             runTest("../idea/tests/testData/quickfix/autoImports/unaryPlusOperator.before.Main.kt");
+        }
+
+        @TestMetadata("unresolvedImplicitReceiver.test")
+        public void testUnresolvedImplicitReceiver() throws Exception {
+            runTest("../idea/tests/testData/quickfix/autoImports/unresolvedImplicitReceiver.test");
         }
 
         @TestMetadata("withSmartCastQualifier.before.Main.kt")

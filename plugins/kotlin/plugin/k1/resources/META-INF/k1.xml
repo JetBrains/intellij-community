@@ -53,6 +53,7 @@
     <module name="kotlin.gradle.code-insight-groovy"/>
     <module name="kotlin.gradle.gradle-java"/>
     <module name="kotlin.maven"/>
+    <module name="kotlin.onboarding"/>
     <module name="kotlin.project-wizard.idea"/>
     <module name="kotlin.project-wizard.idea-k1"/>
     <module name="kotlin.project-wizard.gradle"/>
@@ -93,6 +94,7 @@
 
     <module name="kotlin.copyright"/>
     <module name="kotlin.injection"/>
+    <module name="kotlin.base.injection"/>
 
     <module name="kotlin.code-insight.intentions-shared"/>
     <module name="kotlin.code-insight.inspections-shared"/>

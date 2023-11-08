@@ -277,8 +277,8 @@ final class PassExecutorService implements Disposable {
       dependentPasses.add(scheduledPass);
     }
 
-    if (pass.isRunIntentionPassAfter() && fileEditor instanceof TextEditor) {
-      Editor editor = ((TextEditor)fileEditor).getEditor();
+    if (pass.isRunIntentionPassAfter() && fileEditor instanceof TextEditor text) {
+      Editor editor = text.getEditor();
       ShowIntentionsPass ip = new ShowIntentionsPass(psiFile, editor, false);
       assignUniqueId(ip, id2Pass);
       ip.setCompletionPredecessorIds(new int[]{passId});
@@ -487,10 +487,10 @@ final class PassExecutorService implements Disposable {
           if (UIUtil.isShowing(fileEditor.getComponent())) {
             pass.applyInformationToEditor();
             repaintErrorStripeAndIcon(fileEditor);
-            if (pass instanceof TextEditorHighlightingPass) {
+            if (pass instanceof TextEditorHighlightingPass text) {
               FileStatusMap fileStatusMap = DaemonCodeAnalyzerEx.getInstanceEx(myProject).getFileStatusMap();
-              Document document = ((TextEditorHighlightingPass)pass).getDocument();
-              int passId = ((TextEditorHighlightingPass)pass).getId();
+              Document document = text.getDocument();
+              int passId = text.getId();
               fileStatusMap.markFileUpToDate(document, passId);
             }
             log(updateProgress, pass, " Applied");
@@ -526,8 +526,8 @@ final class PassExecutorService implements Disposable {
   }
 
   private void repaintErrorStripeAndIcon(@NotNull FileEditor fileEditor) {
-    if (fileEditor instanceof TextEditor) {
-      Editor editor = ((TextEditor)fileEditor).getEditor();
+    if (fileEditor instanceof TextEditor textEditor) {
+      Editor editor = textEditor.getEditor();
       DefaultHighlightInfoProcessor.repaintErrorStripeAndIcon(editor, myProject,
                                                               PsiDocumentManager.getInstance(myProject).getCachedPsiFile(editor.getDocument()));
     }
@@ -555,7 +555,7 @@ final class PassExecutorService implements Disposable {
 
   static void log(ProgressIndicator progressIndicator, HighlightingPass pass, @NonNls Object @NotNull ... info) {
     if (LOG.isDebugEnabled()) {
-      Document document = pass instanceof TextEditorHighlightingPass ? ((TextEditorHighlightingPass)pass).getDocument() : null;
+      Document document = pass instanceof TextEditorHighlightingPass text ? text.getDocument() : null;
       CharSequence docText = document == null ? "" : ": '" + StringUtil.first(document.getCharsSequence(), 10, true)+ "'";
       synchronized (PassExecutorService.class) {
         String infos = StringUtil.join(info, Functions.TO_STRING(), " ");

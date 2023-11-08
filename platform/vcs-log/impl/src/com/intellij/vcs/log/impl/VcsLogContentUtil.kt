@@ -17,10 +17,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.vcs.log.VcsLogBundle
 import com.intellij.vcs.log.VcsLogUi
 import com.intellij.vcs.log.impl.VcsLogManager.VcsLogUiFactory
-import com.intellij.vcs.log.ui.MainVcsLogUi
-import com.intellij.vcs.log.ui.VcsLogNotificationIdsHolder
-import com.intellij.vcs.log.ui.VcsLogPanel
-import com.intellij.vcs.log.ui.VcsLogUiEx
+import com.intellij.vcs.log.ui.*
 import java.util.function.Function
 import java.util.function.Supplier
 import javax.swing.JComponent
@@ -31,7 +28,7 @@ import javax.swing.JComponent
 object VcsLogContentUtil {
 
   private fun getLogUi(c: JComponent): VcsLogUiEx? {
-    val uis = VcsLogPanel.getLogUis(c)
+    val uis = VcsLogUiHolder.getLogUis(c)
     require(uis.size <= 1) { "Component $c has more than one log ui: $uis" }
     return uis.singleOrNull()
   }

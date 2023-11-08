@@ -3,15 +3,15 @@
 
 package com.intellij.openapi.extensions.impl
 
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPoint
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.progress.ProcessCanceledException
+import kotlinx.collections.immutable.persistentListOf
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.NotNull
 import java.util.AbstractMap.SimpleImmutableEntry
 import java.util.concurrent.CancellationException
 import java.util.concurrent.ConcurrentMap
-import java.util.function.Consumer
 import java.util.function.Function
 import java.util.function.Predicate
 import java.util.function.Supplier
@@ -24,39 +24,14 @@ import java.util.function.Supplier
 // but also supporting the ability to mock an extension list in tests (a custom list is set).
 @ApiStatus.Internal
 object ExtensionProcessingHelper {
-  fun <T : Any> forEachExtensionSafe(iterable: Iterable<T?>, extensionConsumer: Consumer<@NotNull T>) {
-    for (t in iterable) {
-      if (t == null) {
-        break
-      }
-
-      try {
-        extensionConsumer.accept(t)
-      }
-      catch (e: ProcessCanceledException) {
-        throw e
-      }
-      catch (e: CancellationException) {
-        throw e
-      }
-      catch (e: Throwable) {
-        ExtensionPointImpl.LOG.error(e)
-      }
-    }
+  internal fun <T : Any> findFirstSafe(predicate: Predicate<in T>, sequence: Sequence<T>): T? {
+    return computeSafeIfAny(processor = { if (predicate.test(it)) it else null }, sequence = sequence)
   }
 
-  fun <T> findFirstSafe(predicate: Predicate<in T>, iterable: Iterable<T?>): T? {
-    return computeSafeIfAny({ if (predicate.test(it)) it else null }, iterable)
-  }
-
-  fun <T : Any, R> computeSafeIfAny(processor: Function<T, out R>, iterable: Iterable<T?>): R? {
-    for (t in iterable) {
-      if (t == null) {
-        return null
-      }
-
+  internal inline fun <T : Any, R> computeSafeIfAny(processor: (T) -> R, sequence: Sequence<T>): R? {
+    for (t in sequence) {
       try {
-        processor.apply(t)?.let {
+        processor(t)?.let {
           return it
         }
       }
@@ -67,7 +42,7 @@ object ExtensionProcessingHelper {
         throw e
       }
       catch (e: Throwable) {
-        ExtensionPointImpl.LOG.error(e)
+        logger<ExtensionPointImpl<*>>().error(e)
       }
     }
     return null
@@ -89,7 +64,7 @@ object ExtensionProcessingHelper {
         cache = prev
       }
     }
-    return cache.get(key) ?: emptyList()
+    return cache.get(key) ?: persistentListOf()
   }
 
   /**
@@ -112,22 +87,25 @@ object ExtensionProcessingHelper {
   /**
    * See [com.intellij.openapi.extensions.ExtensionPointName.getByKey].
    */
-  @ApiStatus.Internal
-  fun <K : Any, T : Any> getByKey(point: ExtensionPointImpl<T>,
-                                  key: K,
-                                  cacheId: Class<*>,
-                                  keyMapper: Function<T, K?>): T? {
-    return doGetByKey(point, cacheId, key, keyMapper, Function.identity(), point.getCacheMap())
+  internal fun <K : Any, T : Any> getByKey(point: ExtensionPointImpl<T>,
+                                           key: K,
+                                           cacheId: Class<*>,
+                                           keyMapper: Function<T, K?>): T? {
+    return doGetByKey(point = point,
+                      cacheId = cacheId,
+                      key = key,
+                      keyMapper = keyMapper,
+                      valueMapper = Function.identity(),
+                      keyMapperToCache = point.getCacheMap())
   }
 
   /**
    * See [com.intellij.openapi.extensions.ExtensionPointName.getByKey].
    */
-  @ApiStatus.Internal
-  fun <K: Any, T: Any, V : Any> computeIfAbsent(point: ExtensionPointImpl<T>,
-                                       key: K,
-                                       cacheId: Class<*>,
-                                       valueProducer: Function<K, V>): V {
+  internal fun <K : Any, T : Any, V : Any> computeIfAbsent(point: ExtensionPointImpl<T>,
+                                                           key: K,
+                                                           cacheId: Class<*>,
+                                                           valueProducer: Function<K, V>): V {
     // Or to have a double look-up (map for valueProducer, map for a key), or using of a composite key.
     // Java GC is quite good, so, composite key.
     val cache = point.getCacheMap<SimpleImmutableEntry<K, Class<*>>, V>()
@@ -136,10 +114,9 @@ object ExtensionProcessingHelper {
     }
   }
 
-  @ApiStatus.Internal
-  fun <T : Any, V : Any> computeIfAbsent(point: ExtensionPointImpl<T>,
-                                         cacheId: Class<*>,
-                                         valueProducer: Supplier<V>): V {
+  internal fun <T : Any, V : Any> computeIfAbsent(point: ExtensionPointImpl<T>,
+                                                  cacheId: Class<*>,
+                                                  valueProducer: Supplier<V>): V {
     val cache = point.getCacheMap<Class<*>, V>()
     return cache.computeIfAbsent(cacheId) { valueProducer.get() }
   }
@@ -192,5 +169,5 @@ object ExtensionProcessingHelper {
 inline fun <T : Any> ExtensionPointName<T>.findByIdOrFromInstance(id: String, idGetter: (T) -> String?): T? {
   val point = point as ExtensionPointImpl<T>
   return point.sortedAdapters.firstOrNull { it.orderId == id }?.createInstance(point.componentManager)
-         ?: lazySequence().firstOrNull { idGetter(it) == id }
+         ?: point.firstOrNull { idGetter(it) == id }
 }

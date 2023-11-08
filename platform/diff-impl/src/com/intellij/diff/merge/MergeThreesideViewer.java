@@ -44,6 +44,7 @@ import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.EditorGutterFreePainterAreaState;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
@@ -306,7 +307,7 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
 
       if (getTextSettings().isEnableLstGutterMarkersInMerge()) {
         myLineStatusTracker.setBaseRevision(baseDocument.getCharsSequence());
-        getEditor().getGutterComponentEx().setForceShowRightFreePaintersArea(true);
+        getEditor().getGutterComponentEx().setRightFreePaintersAreaState(EditorGutterFreePainterAreaState.SHOW);
       }
     });
   }

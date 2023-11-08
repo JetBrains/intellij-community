@@ -3,11 +3,16 @@ package com.intellij.openapi.editor.colors;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.ui.ColorUtil;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.messages.Topic;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public abstract class EditorColorsManager {
+
+  @Topic.AppLevel
   public static final Topic<EditorColorsListener> TOPIC = new Topic<>(EditorColorsListener.class, Topic.BroadcastDirection.TO_DIRECT_CHILDREN);
 
   public static final @NonNls String DEFAULT_SCHEME_NAME = "Default";
@@ -22,7 +27,11 @@ public abstract class EditorColorsManager {
 
   public abstract EditorColorsScheme @NotNull [] getAllSchemes();
 
-  public abstract void setGlobalScheme(EditorColorsScheme scheme);
+  public abstract void setGlobalScheme(@Nullable EditorColorsScheme scheme);
+
+  @ApiStatus.Internal
+  @RequiresEdt
+  public abstract void setCurrentSchemeOnLafChange(@NotNull EditorColorsScheme scheme);
 
   public abstract @NotNull EditorColorsScheme getGlobalScheme();
 
@@ -56,4 +65,7 @@ public abstract class EditorColorsManager {
    */
   public void reloadKeepingActiveScheme() {
   }
+
+  @ApiStatus.Experimental
+  public abstract long getSchemeModificationCounter();
 }

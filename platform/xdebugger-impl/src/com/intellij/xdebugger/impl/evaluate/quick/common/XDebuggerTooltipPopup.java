@@ -4,6 +4,7 @@ package com.intellij.xdebugger.impl.evaluate.quick.common;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.icons.AllIcons;
 import com.intellij.icons.ExpUiIcons;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
@@ -15,8 +16,12 @@ import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.JBPopupListener;
+import com.intellij.openapi.ui.popup.LightweightWindowEvent;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.codeFloatingToolbar.CodeFloatingToolbar;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.xdebugger.XDebuggerBundle;
@@ -81,8 +86,36 @@ class XDebuggerTooltipPopup {
       myPopup.cancel();
       return null;
     }
+    hideAndDisableFloatingToolbar(myEditor, myPopup);
     myPopup.show(new RelativePoint(myEditor.getContentComponent(), myPoint));
     return myPopup;
+  }
+
+  private static void hideAndDisableFloatingToolbar(@NotNull Editor editor, @NotNull JBPopup popup){
+    CodeFloatingToolbar floatingToolbar = CodeFloatingToolbar.getToolbar(editor);
+    if (floatingToolbar == null) return;
+    boolean wasVisible = floatingToolbar.isShown();
+    floatingToolbar.scheduleHide();
+    Disposable disposable = getPopupDisposable(popup);
+    CodeFloatingToolbar.temporarilyDisable(true);
+    Disposer.register(disposable, () -> {
+      if (wasVisible) {
+        floatingToolbar.allowInstantShowing();
+      }
+      CodeFloatingToolbar.temporarilyDisable(false);
+    });
+  }
+
+  private static Disposable getPopupDisposable(@NotNull JBPopup popup){
+    Disposable disposable = Disposer.newDisposable();
+    Disposer.register(popup, disposable);
+    popup.addListener(new JBPopupListener() {
+      @Override
+      public void onClosed(@NotNull LightweightWindowEvent event) {
+        Disposer.dispose(disposable);
+      }
+    });
+    return disposable;
   }
 
   private class ShowErrorsAction extends AnAction {

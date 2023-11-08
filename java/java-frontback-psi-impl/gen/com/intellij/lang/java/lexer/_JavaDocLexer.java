@@ -12,7 +12,7 @@ import com.intellij.psi.tree.IElementType;
 
 @SuppressWarnings("ALL")
 
-class _JavaDocLexer implements FlexLexer {
+final class _JavaDocLexer implements FlexLexer {
 
   /** This character denotes the end of file */
   public static final int YYEOF = -1;

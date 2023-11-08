@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic
 
 import com.intellij.credentialStore.Credentials
@@ -13,15 +13,16 @@ import com.intellij.notification.NotificationListener
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.ErrorReportSubmitter
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.SubmittedReportInfo
 import com.intellij.openapi.extensions.InternalIgnoreDependencyViolation
-import com.intellij.openapi.progress.withBackgroundProgress
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
+import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.util.Consumer
 import com.intellij.xml.util.XmlStringUtil
 import kotlinx.coroutines.CancellationException
@@ -99,7 +100,7 @@ private fun submit(project: Project?,
                    parentComponent: Component,
                    newThreadPostUrl: String,
                    callback: (SubmittedReportInfo) -> Unit) {
-  ITNProxy.cs.launch {
+  service<ITNProxyCoroutineScopeHolder>().coroutineScope.launch {
     try {
       val credentials = credentialsLazy()
       val threadId = if (project != null) {

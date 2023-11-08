@@ -29,7 +29,9 @@ import java.io.IOException;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.LockSupport;
 
 public class PlaybackRunner {
@@ -82,6 +84,14 @@ public class PlaybackRunner {
         }
       }
     };
+  }
+
+  public void runBlocking(long timeoutMs) throws ExecutionException, InterruptedException, TimeoutException {
+    if (timeoutMs > 0) {
+      run().get(timeoutMs, TimeUnit.MILLISECONDS);
+    } else {
+      run().get();
+    }
   }
 
   public CompletableFuture<?> run() {

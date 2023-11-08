@@ -2,12 +2,12 @@
 package com.intellij.util.indexing.roots;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.util.SmartList;
-import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders;
-import com.intellij.platform.workspace.storage.EntityStorage;
 import com.intellij.platform.workspace.jps.entities.LibraryId;
 import com.intellij.platform.workspace.jps.entities.ModuleDependencyItem;
 import com.intellij.platform.workspace.jps.entities.ModuleEntity;
+import com.intellij.platform.workspace.storage.EntityStorage;
+import com.intellij.util.SmartList;
+import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -15,29 +15,11 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 
-public final class ModuleDependencyEntitiesIndexableEntityProvider implements IndexableEntityProvider.Existing<ModuleEntity>,
-                                                                              IndexableEntityProvider.Enforced<ModuleEntity> {
+public final class ModuleDependencyEntitiesIndexableEntityProvider implements IndexableEntityProvider.Enforced<ModuleEntity> {
 
   @Override
   public @NotNull Class<ModuleEntity> getEntityClass() {
     return ModuleEntity.class;
-  }
-
-  @Override
-  public @NotNull Collection<? extends IndexableIteratorBuilder> getExistingEntityIteratorBuilder(@NotNull ModuleEntity entity,
-                                                                                                  @NotNull Project project) {
-    List<IndexableIteratorBuilder> iterators = new SmartList<>();
-    for (ModuleDependencyItem dependency : entity.getDependencies()) {
-      iterators.addAll(createIteratorBuildersForDependency(dependency));
-    }
-    return iterators;
-  }
-
-  @Override
-  public @NotNull Collection<? extends IndexableIteratorBuilder> getIteratorBuildersForExistingModule(@NotNull ModuleEntity entity,
-                                                                                                      @NotNull EntityStorage entityStorage,
-                                                                                                      @NotNull Project project) {
-    return Collections.emptyList();
   }
 
   @Override

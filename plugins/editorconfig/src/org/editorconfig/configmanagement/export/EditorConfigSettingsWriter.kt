@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.editorconfig.configmanagement.export
 
 import com.intellij.application.options.codeStyle.properties.*
@@ -9,7 +9,7 @@ import com.intellij.openapi.util.Comparing
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.util.containers.MultiMap
 import org.editorconfig.Utils
-import org.editorconfig.configmanagement.ConfigEncodingManager
+import org.editorconfig.configmanagement.ConfigEncodingCharsetUtil
 import org.editorconfig.configmanagement.StandardEditorConfigProperties
 import org.editorconfig.configmanagement.extended.EditorConfigIntellijNameUtil
 import org.editorconfig.configmanagement.extended.EditorConfigPropertyKind
@@ -41,7 +41,7 @@ class EditorConfigSettingsWriter(private val myProject: Project?,
     if (myProject != null) {
       val encoding = Utils.getEncoding(myProject)
       if (encoding != null) {
-        target[ConfigEncodingManager.charsetKey] = encoding
+        target[ConfigEncodingCharsetUtil.charsetKey] = encoding
       }
     }
     val lineSeparator = Utils.getLineSeparatorString(mySettings.lineSeparator)

@@ -9,7 +9,6 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.intention.IntentionActionWithOptions
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixUpdater
-import com.intellij.modcommand.ActionContext
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.util.NlsSafe
@@ -30,7 +29,7 @@ import org.jetbrains.kotlin.idea.statistics.compilationError.KotlinCompilationEr
 import org.jetbrains.kotlin.psi.KtFile
 
 class KotlinDiagnosticHighlightVisitor : HighlightVisitor {
-    lateinit var holder: HighlightInfoHolder
+    var holder: HighlightInfoHolder? = null
     override fun suitableForFile(file: PsiFile): Boolean {
         return file is KtFile
     }
@@ -48,6 +47,10 @@ class KotlinDiagnosticHighlightVisitor : HighlightVisitor {
             // TODO: Port KotlinHighlightingSuspender to K2 to avoid the issue with infinite highlighting loop restart
             throw e
         }
+        finally {
+            // do not leak Editor, since KotlinDiagnosticHighlightVisitor is an app-level extension
+            this.holder = null
+        }
         return true
     }
 
@@ -55,7 +58,7 @@ class KotlinDiagnosticHighlightVisitor : HighlightVisitor {
         analyze(file) {
             val diagnostics = file.collectDiagnosticsForFile(KtDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
             for (diagnostic in diagnostics) {
-                addDiagnostic(file, diagnostic, holder)
+                addDiagnostic(file, diagnostic, holder!!)
             }
             KotlinCompilationErrorFrequencyStatsCollector.recordCompilationErrorsHappened(
                 diagnostics.asSequence().filter { it.severity == Severity.ERROR }.mapNotNull(KtDiagnosticWithPsi<*>::factoryName),

@@ -19,7 +19,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import static com.intellij.gradle.toolingExtension.impl.util.GradleNegotiationUtil.isConfigurationCanBeResolved;
+import static com.intellij.gradle.toolingExtension.util.GradleNegotiationUtil.isConfigurationCanBeResolved;
 
 public class GradleDependencyReportTask extends DefaultTask {
 

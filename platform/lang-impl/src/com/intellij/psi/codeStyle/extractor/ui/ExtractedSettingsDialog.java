@@ -66,7 +66,7 @@ public final class ExtractedSettingsDialog extends DialogWrapper {
     return valueIsSelectedInTree(myRoot, value);
   }
 
-  private boolean valueIsSelectedInTree(@NotNull TreeNode startNode, @NotNull Value value) {
+  private static boolean valueIsSelectedInTree(@NotNull TreeNode startNode, @NotNull Value value) {
     for (Enumeration children = startNode.children(); children.hasMoreElements();) {
       Object child = children.nextElement();
       if (child instanceof SettingsTreeNode settingsChild) {
@@ -199,7 +199,7 @@ public final class ExtractedSettingsDialog extends DialogWrapper {
       }
     };
 
-    private void updateAncestorsUi(boolean accepted, SettingsTreeNode node) {
+    private static void updateAncestorsUi(boolean accepted, SettingsTreeNode node) {
       TreeNode parent = node.getParent();
       if (parent instanceof SettingsTreeNode settingsParent) {
         settingsParent.accepted = false;
@@ -217,7 +217,7 @@ public final class ExtractedSettingsDialog extends DialogWrapper {
       }
     }
 
-    private void updateChildrenUi(SettingsTreeNode node) {
+    private static void updateChildrenUi(SettingsTreeNode node) {
       for (Enumeration children = node.children(); children.hasMoreElements(); ) {
         Object child = children.nextElement();
         if (child instanceof SettingsTreeNode settingsChild) {

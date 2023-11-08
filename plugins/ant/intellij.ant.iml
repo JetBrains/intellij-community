@@ -39,6 +39,7 @@
     <orderEntry type="module" module-name="intellij.properties.psi.impl" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.io" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
+    <orderEntry type="module" module-name="intellij.tools.ide.metrics.benchmark" scope="TEST" />
   </component>
   <component name="copyright">
     <Base>

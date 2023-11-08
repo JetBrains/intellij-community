@@ -78,9 +78,12 @@ public class GradleNotificationExtension implements ExternalSystemNotificationEx
   }
 
   @Override
-  public void customize(@NotNull NotificationData notification,
-                        @NotNull Project project,
-                        @Nullable Throwable error) {
+  public void customize(
+    @NotNull NotificationData notification,
+    @NotNull Project project,
+    @NotNull String externalProjectPath,
+    @Nullable Throwable error
+  ) {
     if (error == null) return;
     Throwable unwrapped = RemoteUtil.unwrap(error);
     if (unwrapped instanceof ExternalSystemException) {

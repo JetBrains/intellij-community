@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.completion
 import com.intellij.codeInsight.completion.CompletionLocation
 import com.intellij.codeInsight.completion.CompletionStatistician
 import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.openapi.project.DumbService
 import com.intellij.psi.PsiElement
 import com.intellij.psi.statistics.StatisticsInfo
 import com.intellij.psi.util.ProximityLocation
@@ -26,11 +27,11 @@ class KotlinCompletionStatistician : CompletionStatistician() {
 
         val context = element.getUserDataDeep(STATISTICS_INFO_CONTEXT_KEY) ?: ""
 
-        if (o.descriptor != null) {
-            return KotlinStatisticsInfo.forDescriptor(o.descriptor!!.original, context)
+        return if (o.descriptor != null) {
+            KotlinStatisticsInfo.forDescriptor(o.descriptor!!.original, context)
         } else {
             val fqName = o.importableFqName ?: return StatisticsInfo.EMPTY
-            return StatisticsInfo(context, fqName.asString())
+            StatisticsInfo(context, fqName.asString())
         }
     }
 }
@@ -38,6 +39,7 @@ class KotlinCompletionStatistician : CompletionStatistician() {
 class KotlinProximityStatistician : ProximityStatistician() {
     override fun serialize(element: PsiElement, location: ProximityLocation): StatisticsInfo? {
         if (element !is KtDeclaration) return null
+        if (DumbService.isDumb(element.project)) return null
         val descriptor = element.resolveToDescriptorIfAny() ?: return null
         return KotlinStatisticsInfo.forDescriptor(descriptor)
     }

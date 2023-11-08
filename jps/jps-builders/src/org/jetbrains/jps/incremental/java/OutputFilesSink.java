@@ -21,7 +21,7 @@ import org.jetbrains.jps.javac.OutputFileConsumer;
 import org.jetbrains.jps.javac.OutputFileObject;
 import org.jetbrains.org.objectweb.asm.ClassReader;
 
-import javax.tools.*;
+import javax.tools.JavaFileObject;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;

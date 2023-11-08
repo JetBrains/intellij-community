@@ -57,7 +57,7 @@ public final class ExternalSystemProcessingManager implements ExternalSystemTask
     if (app.isUnitTestMode()) {
       return;
     }
-    app.getService(ExternalSystemProgressNotificationManager.class).addNotificationListener(this, this);
+    ExternalSystemProgressNotificationManager.getInstance().addNotificationListener(this, this);
   }
 
   @Override

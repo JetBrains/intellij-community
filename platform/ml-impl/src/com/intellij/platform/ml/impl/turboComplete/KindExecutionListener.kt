@@ -15,7 +15,7 @@ interface KindExecutionListener {
   /**
    * Code completion was just called
    */
-  fun onInitialize(parameters: CompletionParameters)
+  fun onInitialize(parameters: CompletionParameters) {}
 
   /**
    * Called before any [KindCollector] has collected any kinds,

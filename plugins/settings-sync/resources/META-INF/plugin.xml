@@ -41,6 +41,9 @@
     <registryKey key="settingsSync.autoSync.frequency.sec" defaultValue="3600"
                  description="Settings will be automatically synced with the server every N seconds.
                               Settings the value to 0 or less disables syncing by timer."/>
+    <registryKey key="settingsSync.promotion.in.settings" defaultValue="true"
+                 description="Whether to show GotIt tooltip with promotion to enable the Settings Sync
+                              on Apply button click in the Settings dialog"/>
 
     <settingsEntryPointIconCustomizer implementation="com.intellij.settingsSync.config.SettingsSyncStatusAction$IconCustomizer"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.settingsSync.SettingsSyncStateStatistics"/>
@@ -50,6 +53,8 @@
 
   <applicationListeners>
     <listener class="com.intellij.settingsSync.SettingsSynchronizer" topic="com.intellij.openapi.application.ApplicationActivationListener"
+              activeInTestMode="false" activeInHeadlessMode="false"/>
+    <listener class="com.intellij.settingsSync.SettingsSyncPromotion" topic="com.intellij.openapi.options.newEditor.SettingsDialogListener"
               activeInTestMode="false" activeInHeadlessMode="false"/>
   </applicationListeners>
 

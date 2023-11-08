@@ -52,12 +52,17 @@ gradle.projectsEvaluated {
   rootProject
     .repositories
     .addAll(projectRepositories())
-  Configuration configuration = rootProject.configurations.create('downloadSources_' + UUID.randomUUID())
-  configuration.transitive = false
-  rootProject.dependencies.add(configuration.name, Properties.dependencyNotation)
-  def lazyArtifacts = configuration.incoming.files
-  rootProject.tasks.register(Properties.gradleTaskName, IjDownloadTask) {
-    collectionProvider = lazyArtifacts
-    targetPathProvider = Properties.targetPath
+}
+
+afterProject {
+  if (it.name == rootProject.name) {
+    Configuration configuration = it.configurations.create('downloadSources_' + UUID.randomUUID())
+    configuration.transitive = false
+    it.dependencies.add(configuration.name, Properties.dependencyNotation)
+    def lazyArtifacts = configuration.incoming.files
+    it.tasks.register(Properties.gradleTaskName, IjDownloadTask) {
+      collectionProvider = lazyArtifacts
+      targetPathProvider = Properties.targetPath
+    }
   }
 }

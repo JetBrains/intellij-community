@@ -388,6 +388,8 @@
       <add-to-group group-id="ViewMenu" relative-to-action="QuickActions" anchor="after"/>
     </group>
 
+    <action id="ShowHoverInfo" class="com.intellij.openapi.editor.actions.ShowHoverInfoAction"/>
+
     <action id="ShowGutterIconsSettings" class="com.intellij.application.options.editor.GutterIconsConfigurable$ShowSettingsAction">
       <add-to-group group-id="EditorGutterPopupMenu.Appearance" anchor="last"/>
       <add-to-group group-id="DocCommentGutterIconContextMenu"/>
@@ -498,7 +500,18 @@
         <action id="Floating.CodeToolbar.SurroundWithIf" class="com.intellij.codeInsight.generation.actions.SurroundWithActionBase" />
       </group>
     </group>
+    <action id="CodeFloatingToolbar.GotoNextMenu" class="com.intellij.ui.codeFloatingToolbar.GotoNextFloatingToolbarMenu" />
+    <action id="CodeFloatingToolbar.GotoPrevMenu" class="com.intellij.ui.codeFloatingToolbar.GotoPreviousFloatingToolbarMenu" />
     <action id="Floating.CodeToolbar.Disable" class="com.intellij.ui.codeFloatingToolbar.DisableCodeFloatingToolbarAction" />
+
+    <group id="InlineCompletion" popup="true">
+      <action id="CallInlineCompletionAction" class="com.intellij.codeInsight.inline.completion.CallInlineCompletionAction"/>
+      <action id="InsertInlineCompletionAction" class="com.intellij.codeInsight.inline.completion.InsertInlineCompletionAction">
+        <keyboard-shortcut first-keystroke="TAB" keymap="$default"/>
+      </action>
+      <separator/>
+      <group id="InlineCompletion.Settings" popup="true" internal="true"/>
+    </group>
 
     <group id="CodeMenu" popup="true">
       <reference ref="OverrideMethods"/>
@@ -516,6 +529,8 @@
         <separator/>
         <action id="HippieCompletion" class="com.intellij.codeInsight.completion.actions.HippieCompletionAction"/>
         <action id="HippieBackwardCompletion" class="com.intellij.codeInsight.completion.actions.HippieBackwardCompletionAction"/>
+        <separator/>
+        <reference ref="InsertInlineCompletionAction"/>
       </group>
 
       <group id="InspectCodeInCodeMenuGroup">
@@ -1315,6 +1330,13 @@
       <action id="XDebugger.UnmuteOnStop" class="com.intellij.xdebugger.impl.actions.UnmuteOnStopAction" />
     </group>
 
+    <group id="XDebugger.Code.Toolbar" class="com.intellij.xdebugger.impl.actions.DebuggerCodeToolbarGroup">
+      <separator/>
+      <reference ref="EvaluateExpression"/>
+      <reference ref="Debugger.AddToWatch"/>
+      <add-to-group group-id="Floating.CodeToolbar" relative-to-action="ReformatCode" anchor="after"/>
+    </group>
+
     <group id="RunnerLayoutActions">
       <action id="Runner.ToggleTabLabels" class="com.intellij.execution.ui.layout.actions.ToggleShowTabLabelsAction"/>
       <group id="Runner.Layout">
@@ -1705,8 +1727,6 @@
       <add-to-group group-id="ActivateToolWindowActions"/>
     </action>
 
-    <action class="com.intellij.internal.DumpRunDebugActionStateAction" internal="true" text="Dump State of Run/Debug Combobox"/>
-
     <action id="SwitchFileBasedIndexStorageAction"
             class="com.intellij.util.indexing.impl.storage.SwitchFileBasedIndexStorageAction"/>
 
@@ -1750,23 +1770,6 @@
       <add-to-group group-id="Internal" anchor="last"/>
     </group>
     <action internal="true" id="ShowUsageFeatures" class ="com.intellij.usages.similarity.internal.ShowUsageFeaturesInternalAction"/>
-
-    <action id="InsertInlineCompletionAction" class="com.intellij.codeInsight.inline.completion.InsertInlineCompletionAction">
-      <keyboard-shortcut first-keystroke="TAB" keymap="$default"/>
-    </action>
-
-    <group id="InlineCompletion.Settings" popup="true" internal="true"/>
-    <action id="CallInlineCompletionAction" class="com.intellij.codeInsight.inline.completion.CallInlineCompletionAction"/>
-    <action id="ResetICOnboardingAtFirstShowAction"
-            class="com.intellij.codeInsight.inline.completion.onboarding.ResetICOnboardingAtFirstShowAction"/>
-    <action id="ResetICOnboardingAtFirstAcceptAction"
-            class="com.intellij.codeInsight.inline.completion.onboarding.ResetICOnboardingAtFirstAcceptAction"/>
-    <action id="ResetICOnboardingShowSettingsAction"
-            class="com.intellij.codeInsight.inline.completion.onboarding.ResetICOnboardingShowSettingsAction"/>
-
-    <!--<action id="ShortcutChangeInlineCompletionAction" class="com.intellij.codeInsight.inline.completion.ShortcutChangeInlineCompletionAction"/>-->
-    <!--<action id="ChangeToEnterInlineCompletionAction" class="com.intellij.codeInsight.inline.completion.ChangeToEnterInlineCompletionAction"/>-->
-    <!--<action id="ChangeToCustomInlineCompletionAction" class="com.intellij.codeInsight.inline.completion.ChangeToCustomInlineCompletionAction"/>-->
 
     <!-- copy of CheckVfsSanityInMenu: !internal so could be invoked via 'search everywhere' -->
     <action id="CheckVfsSanity" class="com.intellij.openapi.vfs.newvfs.persistent.CheckVFSHealthAction"/>

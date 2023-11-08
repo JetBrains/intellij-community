@@ -7,6 +7,7 @@ import com.intellij.lang.LangBundle;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.navigation.NavigationItemFileStatus;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
@@ -22,6 +23,7 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.IconUtil;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.text.Matcher;
 import com.intellij.util.text.MatcherHolder;
 import com.intellij.util.ui.UIUtil;
@@ -122,9 +124,11 @@ public class NavigationItemListCellRenderer extends JPanel implements ListCellRe
           VirtualFile virtualFile = PsiUtilCore.getVirtualFile(psiElement);
           isProblemFile = virtualFile != null && WolfTheProblemSolver.getInstance(project).isProblemFile(virtualFile);
 
-          Color fileColor = virtualFile == null ? null : getFileBackgroundColor(project, virtualFile);
-          if (fileColor != null) {
-            bgColor = fileColor;
+          try (AccessToken ignore = SlowOperations.knownIssue("IDEA-333526, EA-659478")) {
+            Color fileColor = virtualFile == null ? null : getFileBackgroundColor(project, virtualFile);
+            if (fileColor != null) {
+              bgColor = fileColor;
+            }
           }
         }
 

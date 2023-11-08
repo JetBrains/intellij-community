@@ -3,6 +3,7 @@ package org.jetbrains.jps.dependency.java;
 
 import org.jetbrains.jps.dependency.diff.DiffCapable;
 import org.jetbrains.jps.dependency.diff.Difference;
+import org.jetbrains.jps.javac.Iterators;
 
 import java.util.Collections;
 
@@ -13,6 +14,10 @@ public final class ModulePackage extends Proto implements DiffCapable<ModulePack
   public ModulePackage(String name, Iterable<String> modules) {
     super(JVMFlags.EMPTY, "", name, Collections.emptyList());
     myModules = modules;
+  }
+
+  public boolean isQualified() {
+    return !Iterators.isEmpty(myModules);
   }
 
   public Iterable<String> getModules() {

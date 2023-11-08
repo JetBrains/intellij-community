@@ -56,7 +56,6 @@ public final class PersistentHashMapValueStorage {
    * Instances of the class are immutable, all mutation methods return new instances -- one could
    * safely keep any instance of this class for later use.
    */
-  //@Immutable
   public static final class CreationTimeOptions {
     public static final ThreadLocal<Boolean> READONLY = new ThreadLocal<>();
     public static final ThreadLocal<Boolean> COMPACT_CHUNKS_WITH_VALUE_DESERIALIZATION = new ThreadLocal<>();
@@ -74,7 +73,7 @@ public final class PersistentHashMapValueStorage {
     private final boolean myHasNoChunks;
     private final boolean myUseCompression;
 
-    private CreationTimeOptions(boolean readOnly,
+    public CreationTimeOptions(boolean readOnly,
                                 boolean compactChunksWithValueDeserialization,
                                 boolean hasNoChunks,
                                 boolean doCompression) {
@@ -162,8 +161,7 @@ public final class PersistentHashMapValueStorage {
 
   // cache size is twice larger than constants because (when used) it replaces two caches
   private static final FileAccessorCache<Path, FileChannelWithSizeTracking> ourFileChannelCache =
-    new FileAccessorCache<Path, FileChannelWithSizeTracking>(
-      2 * CACHE_PROTECTED_QUEUE_SIZE, 2 * CACHE_PROBATIONAL_QUEUE_SIZE) {
+    new FileAccessorCache<Path, FileChannelWithSizeTracking>(2 * CACHE_PROTECTED_QUEUE_SIZE, 2 * CACHE_PROBATIONAL_QUEUE_SIZE) {
       @Override
       protected @NotNull FileChannelWithSizeTracking createAccessor(Path path) throws IOException {
         return new FileChannelWithSizeTracking(path);

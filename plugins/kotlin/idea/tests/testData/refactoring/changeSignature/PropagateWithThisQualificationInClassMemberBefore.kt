@@ -5,3 +5,5 @@ class A(val n: Int) {
         return foo() + n
     }
 }
+
+// IGNORE_K2

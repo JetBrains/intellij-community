@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.execution.target
 
 import com.intellij.execution.CantRunException
@@ -108,7 +108,7 @@ class MavenCommandLineSetup(private val project: Project,
   private fun setupMavenExtClassPath() {
     val mavenEventListener = MavenServerManager.getInstance().mavenEventListener
     val uploadPath = Paths.get(toSystemDependentName(mavenEventListener.path))
-    val uploadRoot = createUploadRoot(MavenRuntimeType.MAVEN_EXT_CLASS_PATH_VOLUME, uploadPath.parent)
+    val uploadRoot = createUploadRoot(MavenRuntimeTypeConstants.MAVEN_EXT_CLASS_PATH_VOLUME, uploadPath.parent)
     request.uploadVolumes += uploadRoot
     val targetValue = upload(uploadRoot, uploadPath.toString(), uploadPath.fileName.toString())
     commandLine.addParameter(TargetValue.map(targetValue) { "-D" + MavenServerEmbedder.MAVEN_EXT_CLASS_PATH + "=" + it })
@@ -225,7 +225,7 @@ class MavenCommandLineSetup(private val project: Project,
     val pathsToUpload = findPathsToUpload(mavenProjectsManager, mavenProject)
     val commonAncestor = findCommonAncestor(pathsToUpload)
     val uploadPath = Paths.get(toSystemDependentName(commonAncestor!!))
-    val uploadRoot = createUploadRoot(MavenRuntimeType.PROJECT_FOLDER_VOLUME, uploadPath)
+    val uploadRoot = createUploadRoot(MavenRuntimeTypeConstants.PROJECT_FOLDER_VOLUME, uploadPath)
     request.uploadVolumes += uploadRoot
     val targetFileSeparator = request.targetPlatform.platform.fileSeparator
 

@@ -31,16 +31,17 @@ class RemoveUnnecessaryParenthesesIntention : SelfTargetingRangeIntention<KtPare
             innerExpression is KtBinaryExpression &&
             binaryExpressionParent.right == element
         ) {
-            binaryExpressionParent.replace(
-                KtPsiFactory(element.project).createExpressionByPattern(
-                    "$0 $1 $2 $3 $4",
-                    binaryExpressionParent.left!!.text,
-                    binaryExpressionParent.operationReference.text,
-                    innerExpression.left!!.text,
-                    innerExpression.operationReference.text,
-                    innerExpression.right!!.text,
-                )
+            val ktPsiFactory = KtPsiFactory(element.project)
+            val newElement = ktPsiFactory.createExpressionByPattern(
+                "$0 $1 $2 $3 $4",
+                binaryExpressionParent.left!!,
+                binaryExpressionParent.operationReference,
+                innerExpression.left!!,
+                innerExpression.operationReference,
+                innerExpression.right!!,
             )
+            val replace = binaryExpressionParent.replace(newElement)
+            replace.replace(ktPsiFactory.createExpression(replace.text))
         } else
             element.replace(innerExpression)
 

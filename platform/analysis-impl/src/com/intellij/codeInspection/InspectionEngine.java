@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.analysis.AnalysisScope;
@@ -60,11 +60,10 @@ public final class InspectionEngine {
     return true;
   }
 
-  @NotNull
-  public static PsiElementVisitor createVisitor(@NotNull LocalInspectionTool tool,
-                                                @NotNull ProblemsHolder holder,
-                                                boolean isOnTheFly,
-                                                @NotNull LocalInspectionToolSession session) {
+  public static @NotNull PsiElementVisitor createVisitor(@NotNull LocalInspectionTool tool,
+                                                         @NotNull ProblemsHolder holder,
+                                                         boolean isOnTheFly,
+                                                         @NotNull LocalInspectionToolSession session) {
     PsiElementVisitor visitor = tool.buildVisitor(holder, isOnTheFly, session);
     //noinspection ConstantConditions
     if (visitor == null) {
@@ -120,8 +119,7 @@ public final class InspectionEngine {
   }
 
   // returns map (tool -> problem descriptors)
-  @NotNull
-  public static Map<LocalInspectionToolWrapper, List<ProblemDescriptor>> inspectEx(@NotNull List<? extends LocalInspectionToolWrapper> toolWrappers,
+  public static @NotNull Map<LocalInspectionToolWrapper, List<ProblemDescriptor>> inspectEx(@NotNull List<? extends LocalInspectionToolWrapper> toolWrappers,
                                                                                    @NotNull PsiFile psiFile,
                                                                                    @NotNull TextRange restrictRange,
                                                                                    @NotNull TextRange priorityRange,
@@ -290,8 +288,11 @@ public final class InspectionEngine {
 
       Map<Class<?>, Collection<Class<?>>> targetPsiClasses = InspectionVisitorsOptimizer.getTargetPsiClasses(elements);
 
+      final @Nullable var inspectionListener =
+        isOnTheFly ? null : psiFile.getProject().getMessageBus().syncPublisher(GlobalInspectionContextEx.INSPECT_TOPIC);
+
       Processor<LocalInspectionToolWrapper> processor = toolWrapper -> {
-        ProblemsHolder holder = new ProblemsHolder(InspectionManager.getInstance(psiFile.getProject()), psiFile, isOnTheFly){
+        ProblemsHolder holder = new ProblemsHolder(InspectionManager.getInstance(psiFile.getProject()), psiFile, isOnTheFly) {
           @Override
           public void registerProblem(@NotNull ProblemDescriptor descriptor) {
             if (!isOnTheFly) {
@@ -311,11 +312,34 @@ public final class InspectionEngine {
         };
         LocalInspectionTool tool = toolWrapper.getTool();
 
-        long inspectionStartTime = System.nanoTime();
-        boolean inspectionWasRun = createVisitorAndAcceptElements(tool, holder, isOnTheFly, session, elements, targetPsiClasses);
-        long inspectionDuration = TimeoutUtil.getDurationMillis(inspectionStartTime);
+        try {
+          long inspectionStartTime = System.nanoTime();
+          boolean inspectionWasRun = createVisitorAndAcceptElements(tool, holder, isOnTheFly, session, elements, targetPsiClasses);
+          long inspectionDuration = TimeoutUtil.getDurationMillis(inspectionStartTime);
 
-        reportToQodana(psiFile, isOnTheFly, toolWrapper, inspectionWasRun, inspectionDuration, holder.getResultCount());
+          if (inspectionListener != null && inspectionWasRun) {
+            inspectionListener.inspectionFinished(
+              inspectionDuration,
+              Thread.currentThread().getId(),
+              holder.getResultCount(),
+              toolWrapper,
+              InspectListener.InspectionKind.LOCAL,
+              psiFile,
+              psiFile.getProject()
+            );
+          }
+        }
+        catch (Exception e) {
+          if (inspectionListener != null) {
+            inspectionListener.inspectionFailed(
+              toolWrapper.getID(),
+              e,
+              psiFile,
+              psiFile.getProject()
+            );
+          }
+          throw e;
+        }
 
         if (holder.hasResults()) {
           List<ProblemDescriptor> descriptors = ContainerUtil.filter(holder.getResults(), descriptor -> {
@@ -331,19 +355,6 @@ public final class InspectionEngine {
     });
 
     return resultDescriptors;
-  }
-
-  private static void reportToQodana(@NotNull PsiFile psiFile,
-                                     boolean isOnTheFly,
-                                     @NotNull LocalInspectionToolWrapper toolWrapper,
-                                     boolean inspectionWasRun,
-                                     long inspectionDuration, int resultCount) {
-    boolean needToReportStatsToQodana = inspectionWasRun && !isOnTheFly;
-    if (needToReportStatsToQodana) {
-      InspectListener publisher = psiFile.getProject().getMessageBus().syncPublisher(GlobalInspectionContextEx.INSPECT_TOPIC);
-      publisher.inspectionFinished(inspectionDuration, Thread.currentThread().getId(), resultCount, toolWrapper,
-                                   InspectListener.InspectionKind.LOCAL, psiFile, psiFile.getProject());
-    }
   }
 
   public static @NotNull @Unmodifiable List<ProblemDescriptor> runInspectionOnFile(@NotNull PsiFile psiFile,

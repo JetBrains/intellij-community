@@ -16,7 +16,7 @@ import com.intellij.psi.PsiManager
 import com.intellij.psi.util.PsiTreeUtil
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.lang.MarkdownFileType
-import org.intellij.plugins.markdown.lang.MarkdownLanguageUtils.hasMarkdownType
+import org.intellij.plugins.markdown.lang.hasMarkdownType
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFence
 import org.intellij.plugins.markdown.settings.MarkdownSettings
 import org.intellij.plugins.markdown.ui.MarkdownNotifications

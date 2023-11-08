@@ -3,7 +3,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypeInfoImpl;
-import com.intellij.codeInsight.TailType;
+import com.intellij.codeInsight.TailTypes;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -179,7 +179,9 @@ public class CreateMethodFromMethodReferenceFix extends CreateFromUsageBaseFix {
       LOG.assertTrue(interfaceReturnType != null);
   
       final PsiSubstitutor substitutor = LambdaUtil.getSubstitutor(interfaceMethod, classResolveResult);
-      final ExpectedTypeInfo[] expectedTypes = {new ExpectedTypeInfoImpl(interfaceReturnType, ExpectedTypeInfo.TYPE_OR_SUBTYPE, interfaceReturnType, TailType.NONE, null, ExpectedTypeInfoImpl.NULL)};
+      final ExpectedTypeInfo[] expectedTypes =
+        {new ExpectedTypeInfoImpl(interfaceReturnType, ExpectedTypeInfo.TYPE_OR_SUBTYPE, interfaceReturnType, TailTypes.noneType(), null,
+                                  ExpectedTypeInfoImpl.NULL)};
       PsiParameter[] parameters = interfaceMethod.getParameterList().getParameters();
       List<Pair<PsiExpression, PsiType>> origArgs = ContainerUtil.map(parameters, parameter -> Pair.create(null, substitutor.substitute(parameter.getType())));
       return new ExpectedSignature(expectedTypes, origArgs);

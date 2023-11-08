@@ -38,6 +38,15 @@
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.kotlin.inspections.CompanionObjectInExtensionInspection"
                      key="inspections.companion.object.in.extension"/>
+
+    <localInspection language="kotlin"
+                     projectType="INTELLIJ_PLUGIN"
+                     groupBundle="messages.DevKitBundle"
+                     groupPathKey="inspections.group.path" groupKey="inspections.group.code"
+                     enabledByDefault="true" level="ERROR"
+                     implementationClass="org.jetbrains.idea.devkit.kotlin.inspections.UsePlatformProcessAwaitExitInspection"
+                     key="inspection.use.platform.process.await.exit.display.name"/>
+
   </extensions>
 
   <extensions defaultExtensionNs="DevKit.lang">
@@ -70,8 +79,5 @@
       implementationClass="org.jetbrains.idea.devkit.kotlin.inspections.KtUElementAsPsiCheckProvider"/>
     <staticInitializationInExtensionsVisitorProvider language="kotlin"
       implementationClass="org.jetbrains.idea.devkit.kotlin.inspections.KtStaticInitializationInExtensionsVisitorProvider"/>
-  </extensions>
-  <extensions defaultExtensionNs="DevKit.lang">
-    <goodCodeRedVisitor language="kotlin" implementationClass="org.jetbrains.idea.devkit.kotlin.inspections.KotlinGoodCodeRedVisitor"/>
   </extensions>
 </idea-plugin>

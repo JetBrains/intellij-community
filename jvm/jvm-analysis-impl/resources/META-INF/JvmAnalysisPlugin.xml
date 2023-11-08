@@ -201,6 +201,7 @@
     <notificationGroup id="UAST" displayType="BALLOON" hideFromSettings="true"/>
     <projectService serviceInterface="com.intellij.codeInsight.AnnotationCacheOwnerNormalizer"
                     serviceImplementation="com.intellij.psi.UastAnnotationCacheOwnerNormalizer"/>
+    <gotoRelatedProvider implementation="com.intellij.codeInspection.test.junit.JUnitParameterizedSourceGotoRelatedProvider"/>
     <inspectionCustomComponent implementation="com.intellij.codeInsight.options.JavaInspectionButtons"/>
   </extensions>
   <extensions defaultExtensionNs="com.intellij.codeInsight">

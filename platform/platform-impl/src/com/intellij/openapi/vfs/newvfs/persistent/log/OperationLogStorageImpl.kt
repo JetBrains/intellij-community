@@ -7,92 +7,26 @@ import com.intellij.openapi.vfs.newvfs.persistent.log.OperationLogStorage.Operat
 import com.intellij.openapi.vfs.newvfs.persistent.log.io.AppendLogStorage
 import com.intellij.openapi.vfs.newvfs.persistent.log.io.AppendLogStorage.AppendContext
 import com.intellij.openapi.vfs.newvfs.persistent.log.io.AppendLogStorage.Companion.Mode
-import com.intellij.platform.diagnostic.telemetry.TelemetryManager.Companion.getMeter
-import com.intellij.platform.diagnostic.telemetry.VFS
-import com.intellij.util.SystemProperties
 import com.intellij.util.io.DataEnumerator
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.NonCancellable
-import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import java.io.IOException
 import java.nio.file.Path
-import java.util.concurrent.atomic.AtomicInteger
-import java.util.concurrent.atomic.AtomicLong
 
 class OperationLogStorageImpl(
   storagePath: Path,
-  private val stringEnumerator: DataEnumerator<String>,
-  private val scope: CoroutineScope,
-  private val maxWorkers: Int,
-  trackJobStatistics: Boolean = true
+  private val stringEnumerator: DataEnumerator<String>
 ) : OperationLogStorage {
   private val appendLogStorage: AppendLogStorage = AppendLogStorage(storagePath, Mode.ReadWrite, PAGE_SIZE)
-  private val writeQueue = Channel<() -> Unit>(
-    capacity = SystemProperties.getIntProperty("idea.vfs.log-vfs-operations.buffer-capacity", 5_000),
-    BufferOverflow.SUSPEND
-  )
-
-  private val telemetry = object : AutoCloseable {
-    val jobsOffloadedToWorkers: AtomicLong = AtomicLong(0)
-    val jobsPerformedOnMainThread: AtomicLong = AtomicLong(0)
-    val workersLaunched: AtomicInteger = AtomicInteger(0)
-
-    @Volatile
-    private var batchCallback: AutoCloseable? = null
-
-    fun setupTelemetry() {
-      val meter = getMeter(VFS)
-
-      val jobsOffloadedToWorkersCounter = meter.counterBuilder("VfsLog.OperationsLogStorage.jobsOffloadedToWorkers").buildObserver()
-      val jobsPerformedOnMainThreadCounter = meter.counterBuilder("VfsLog.OperationsLogStorage.jobsPerformedOnMainThread").buildObserver()
-      val workersLaunchedGauge = meter.gaugeBuilder("VfsLog.OperationsLogStorage.workersLaunched").ofLongs().buildObserver()
-
-      batchCallback = meter.batchCallback(
-        {
-          jobsOffloadedToWorkersCounter.record(jobsOffloadedToWorkers.get())
-          jobsPerformedOnMainThreadCounter.record(jobsPerformedOnMainThread.get())
-          workersLaunchedGauge.record(workersLaunched.get().toLong())
-        },
-        jobsOffloadedToWorkersCounter, jobsPerformedOnMainThreadCounter, workersLaunchedGauge
-      )
-    }
-
-    override fun close() {
-      batchCallback?.close()
-    }
-  }
-
-  private fun launchWorker(workersBefore: Int): Boolean { // can be invoked concurrently
-    if (telemetry.workersLaunched.compareAndSet(workersBefore, workersBefore + 1)) {
-      scope.launch { writeWorker() }
-      return true
-    }
-    return false
-  }
-
-  init {
-    check(launchWorker(0))
-    if (maxWorkers > 1) check(launchWorker(1))
-
-    if (trackJobStatistics) telemetry.setupTelemetry()
-  }
 
   override fun bytesForOperationDescriptor(tag: VfsOperationTag): Int =
     tag.operationSerializer.valueSizeBytes + VfsOperationTag.SIZE_BYTES * 2
 
   private fun sizeOfValueInDescriptor(size: Int) = size - VfsOperationTag.SIZE_BYTES * 2
 
-  private suspend fun writeWorker() {
-    withContext(NonCancellable) {
-      for (job in writeQueue) {
-        performWriteJob(job)
-      }
-    }
-  }
-
+  /**
+   * note: there was a job queue before with a set of workers launched on Dispatchers.IO that processed the jobs,
+   * i.e., performed writes in IO threads, but it turned out to be slower than just to always perform the job on the current thread.
+   * commit ref: eacc0732949021b7d7be0a9b48f755ee321d7f0e
+   */
   private fun performWriteJob(job: () -> Unit) {
     try {
       job()
@@ -102,42 +36,19 @@ class OperationLogStorageImpl(
     }
   }
 
-  private fun enqueueWriteJob(job: () -> Unit) {
-    val submitted = writeQueue.trySend(job)
-    if (submitted.isSuccess) {
-      telemetry.jobsOffloadedToWorkers.incrementAndGet()
-    }
-    else {
-      val missedJobCount = telemetry.jobsPerformedOnMainThread.incrementAndGet()
-      performWriteJob(job)
-      launchMoreWorkers(missedJobCount)
-    }
-  }
-
-  private fun launchMoreWorkers(missedJobCount: Long) {
-    val currentWorkers = telemetry.workersLaunched.get()
-    if (missedJobCount <= 0 || currentWorkers >= maxWorkers) return
-    // large number of workers increase contention on the job channel, so let's tolerate missed jobs if there aren't many of them
-    val shouldLaunch: Boolean = when (currentWorkers) {
-      1 -> missedJobCount >= 1000
-      2 -> missedJobCount >= 5000
-      3 -> missedJobCount >= 10000
-      else -> missedJobCount >= currentWorkers * 10000L
-    }
-    if (shouldLaunch) launchWorker(currentWorkers)
-  }
-
-  private inner class TrackContext(val tag: VfsOperationTag, val appendLogEntry: AppendContext): OperationTracker {
+  private inner class TrackContext(val tag: VfsOperationTag, val appendLogEntry: AppendContext) : OperationTracker {
     override fun completeTracking(trackingCompletedCallback: (() -> Unit)?, composeOperation: () -> VfsOperation<*>) {
       if (trackingCompletedCallback == null) {
-        enqueueWriteJob {
+        performWriteJob {
           writeJobImpl(tag, composeOperation, appendLogEntry)
         }
-      } else {
-        enqueueWriteJob {
+      }
+      else {
+        performWriteJob {
           try {
             writeJobImpl(tag, composeOperation, appendLogEntry)
-          } finally {
+          }
+          finally {
             trackingCompletedCallback()
           }
         }
@@ -322,13 +233,10 @@ class OperationLogStorageImpl(
 
   fun closeWriteQueue() {
     appendLogStorage.forbidNewAppends()
-    writeQueue.close()
   }
 
   override fun dispose() {
     flush()
-    // FIXME: safe close()
-    telemetry.close()
     appendLogStorage.close()
   }
 

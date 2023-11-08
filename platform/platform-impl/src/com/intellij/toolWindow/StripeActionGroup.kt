@@ -68,15 +68,15 @@ class StripeActionGroup: ActionGroup(), DumbAware {
 
   override fun getChildren(e: AnActionEvent?): Array<AnAction> {
     val project = e?.project ?: return emptyArray()
-    val layout = ToolWindowManagerEx.getInstanceEx(project).getLayout()
+    val twm = ToolWindowManagerEx.getInstanceEx(project)
     val toolWindows = ToolWindowsGroup.getToolWindowActions(project, false)
-    val actions = toolWindows.sortedBy { getOrder(layout, it.toolWindowId) }.mapNotNullTo(ArrayList(), myFactory::get)
+    val actions = toolWindows.sortedBy { getOrder(twm, it.toolWindowId) }.mapNotNullTo(ArrayList(), myFactory::get)
     actions += myMore
     return actions.toTypedArray()
   }
 
-  private fun getOrder(layout: DesktopLayout, twId: String): Int =
-    layout.getInfo(twId)?.run {
+  private fun getOrder(twm: ToolWindowManagerEx, twId: String): Int =
+    (twm.getLayout().getInfo(twId) ?: (twm as? ToolWindowManagerImpl)?.getEntry(twId)?.readOnlyWindowInfo)?.run {
       when (anchor) {
         ToolWindowAnchor.LEFT -> order
         ToolWindowAnchor.TOP -> 100 + order
@@ -98,7 +98,25 @@ class StripeActionGroup: ActionGroup(), DumbAware {
     }
 
     override fun setSelected(e: AnActionEvent?, state: Boolean) {
-      if (e != null) activateAction.actionPerformed(e)
+      val project = e?.project ?: return
+      val twm = ToolWindowManager.getInstance(project)
+      val toolWindowId = activateAction.toolWindowId
+      val toolWindow = twm.getToolWindow(toolWindowId)
+      val visible = toolWindow?.isVisible == true
+      if (visible == state) {
+        return
+      }
+      if (visible) {
+        if (twm is ToolWindowManagerImpl) {
+          twm.hideToolWindow(toolWindowId, false, true, false, ToolWindowEventSource.StripeButton)
+        }
+        else {
+          toolWindow!!.hide(null)
+        }
+      }
+      else {
+        activateAction.actionPerformed(e)
+      }
     }
 
     override fun createCustomComponent(presentation: Presentation, place: String): JComponent {

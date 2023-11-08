@@ -14,7 +14,7 @@ public class DurableStringEnumeratorTest extends StringEnumeratorTestBase<Durabl
   }
 
   @Override
-  protected DurableStringEnumerator openEnumerator(@NotNull Path storagePath) throws IOException {
+  protected DurableStringEnumerator openEnumeratorImpl(@NotNull Path storagePath) throws IOException {
     return DurableStringEnumerator.open(storagePath);
   }
 }

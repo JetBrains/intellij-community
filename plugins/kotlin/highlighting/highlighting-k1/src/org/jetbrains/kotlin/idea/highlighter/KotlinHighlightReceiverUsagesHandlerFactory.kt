@@ -32,9 +32,13 @@ import org.jetbrains.kotlin.resolve.scopes.receivers.ReceiverValue
 
 class KotlinHighlightReceiverUsagesHandlerFactory : HighlightUsagesHandlerFactoryBase() {
     override fun createHighlightUsagesHandler(editor: Editor, file: PsiFile, target: PsiElement): HighlightUsagesHandlerBase<*>? {
-        if (!Registry.`is`("kotlin.receiver.usage.highlighting")) return null
+        if (!Registry.`is`(REGISTRY_FLAG)) return null
         val receiverInfo = ReceiverInfoSearcher.findReceiverInfoForUsageHighlighting(target) ?: return null
         return KotlinHighlightReceiverUsagesHandler(receiverInfo, editor, true)
+    }
+
+    companion object {
+        const val REGISTRY_FLAG = "kotlin.receiver.usage.highlighting"
     }
 }
 

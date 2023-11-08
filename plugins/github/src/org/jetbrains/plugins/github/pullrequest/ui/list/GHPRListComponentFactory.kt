@@ -5,6 +5,7 @@ import com.intellij.collaboration.ui.codereview.Avatar
 import com.intellij.collaboration.ui.codereview.list.*
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.ColorHexUtil
 import com.intellij.ui.PopupHandler
@@ -32,7 +33,7 @@ internal class GHPRListComponentFactory(private val listModel: ListModel<GHPullR
       val actionGroup = ActionManager.getInstance().getAction("Github.PullRequest.ToolWindow.List.Popup") as ActionGroup
       PopupHandler.installPopupMenu(it, actionGroup, ActionPlaces.POPUP)
       val shortcuts = CompositeShortcutSet(CommonShortcuts.ENTER, CommonShortcuts.DOUBLE_CLICK_1)
-      EmptyAction.registerWithShortcutSet("Github.PullRequest.Show", shortcuts, it)
+      ActionUtil.wrap("Github.PullRequest.Show").registerCustomShortcutSet(shortcuts, it)
     }
   }
 

@@ -1,6 +1,6 @@
 <component name="libraryTable">
   <library name="mockito" type="repository">
-    <properties jar-repository-id="central-proxy" maven-id="org.mockito:mockito-core:5.5.0">
+    <properties maven-id="org.mockito:mockito-core:5.5.0">
       <verification>
         <artifact url="file://$MAVEN_REPOSITORY$/org/mockito/mockito-core/5.5.0/mockito-core-5.5.0.jar">
           <sha256sum>ebfa1aa7f5acd96f4fdf04576d56c1c9f5146574a2bb3dd1faccf74d72bc9230</sha256sum>

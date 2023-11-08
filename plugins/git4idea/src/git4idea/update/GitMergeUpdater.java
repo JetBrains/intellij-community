@@ -45,8 +45,8 @@ import static java.util.Arrays.asList;
 public class GitMergeUpdater extends GitUpdater {
   private static final Logger LOG = Logger.getInstance(GitMergeUpdater.class);
 
-  @NotNull private final ChangeListManager myChangeListManager;
-  @NotNull private final GitBranchPair myBranchPair;
+  private final @NotNull ChangeListManager myChangeListManager;
+  private final @NotNull GitBranchPair myBranchPair;
 
   public GitMergeUpdater(@NotNull Project project,
                          @NotNull Git git,
@@ -60,8 +60,7 @@ public class GitMergeUpdater extends GitUpdater {
   }
 
   @Override
-  @NotNull
-  protected GitUpdateResult doUpdate() {
+  protected @NotNull GitUpdateResult doUpdate() {
     LOG.info("doUpdate ");
     final GitMerger merger = new GitMerger(myProject);
 
@@ -85,11 +84,10 @@ public class GitMergeUpdater extends GitUpdater {
     }
   }
 
-  @NotNull
-  private GitUpdateResult handleMergeFailure(MergeLineListener mergeLineListener,
-                                             GitMessageWithFilesDetector untrackedFilesWouldBeOverwrittenByMergeDetector,
-                                             final GitMerger merger,
-                                             GitCommandResult commandResult) {
+  private @NotNull GitUpdateResult handleMergeFailure(MergeLineListener mergeLineListener,
+                                                      GitMessageWithFilesDetector untrackedFilesWouldBeOverwrittenByMergeDetector,
+                                                      final GitMerger merger,
+                                                      GitCommandResult commandResult) {
     final MergeError error = mergeLineListener.getMergeError();
     LOG.info("merge error: " + error);
     if (error == MergeError.CONFLICT) {

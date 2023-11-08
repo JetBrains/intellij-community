@@ -20,10 +20,10 @@ import com.intellij.openapi.util.LowMemoryWatcher
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
 import com.intellij.platform.backend.workspace.WorkspaceModelTopics
-import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
+import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.storage.EntityChange
 import com.intellij.platform.workspace.storage.VersionedStorageChange
-import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
 import org.jetbrains.kotlin.caches.project.cacheInvalidatingOnRootModifications
 import org.jetbrains.kotlin.cli.common.arguments.K2JSCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments

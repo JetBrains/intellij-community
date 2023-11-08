@@ -100,7 +100,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
       Collections.reverse(myImportedNameDefiners);
     }
 
-    private boolean processDeclarations(@NotNull List<PsiElement> elements, @NotNull Processor<? super PsiElement> processor) {
+    private static boolean processDeclarations(@NotNull List<PsiElement> elements, @NotNull Processor<? super PsiElement> processor) {
       for (PsiElement child : elements) {
         if (!processor.process(child)) {
           return false;
@@ -223,6 +223,17 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   @Override
   public PyTargetExpression findTopLevelAttribute(@NotNull String name) {
     return findByName(name, getTopLevelAttributes());
+  }
+
+  @Override
+  public @NotNull List<PyTypeAliasStatement> getTypeAliasStatements() {
+    return PyPsiUtils.collectStubChildren(this, getGreenStub(), PyTypeAliasStatement.class);
+  }
+
+  @Override
+  @Nullable
+  public PyTypeAliasStatement findTypeAliasStatement(@NotNull String name) {
+    return findByName(name, getTypeAliasStatements());
   }
 
   @Nullable
@@ -795,7 +806,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
       }
 
       @NotNull
-      private String getModuleName(@NotNull PyFile file) {
+      private static String getModuleName(@NotNull PyFile file) {
         if (PyUtil.isPackage(file)) {
           final PsiDirectory dir = file.getContainingDirectory();
           if (dir != null) {

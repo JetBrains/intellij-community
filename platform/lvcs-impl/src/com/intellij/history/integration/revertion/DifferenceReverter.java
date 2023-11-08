@@ -101,14 +101,14 @@ public final class DifferenceReverter extends Reverter {
     }
   }
 
-  private void revertContentChange(Entry l, VirtualFile file) throws IOException {
+  private static void revertContentChange(Entry l, VirtualFile file) throws IOException {
     if (l.isDirectory()) return;
     if (file.getTimeStamp() != l.getTimestamp()) {
       setContent(l, file);
     }
   }
 
-  private void setContent(Entry l, VirtualFile file) throws IOException {
+  private static void setContent(Entry l, VirtualFile file) throws IOException {
     Content c = l.getContent();
     if (!c.isAvailable()) return;
     file.setBinaryContent(c.getBytes());

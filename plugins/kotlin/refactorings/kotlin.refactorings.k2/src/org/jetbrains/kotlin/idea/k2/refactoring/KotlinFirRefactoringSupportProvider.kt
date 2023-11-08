@@ -4,6 +4,8 @@ package org.jetbrains.kotlin.idea.k2.refactoring
 import com.intellij.lang.refactoring.RefactoringSupportProvider
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.RefactoringActionHandler
+import com.intellij.refactoring.changeSignature.ChangeSignatureHandler
+import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinChangeSignatureHandler
 import org.jetbrains.kotlin.idea.k2.refactoring.introduce.introduceVariable.KotlinIntroduceVariableHandler
 
 class KotlinFirRefactoringSupportProvider : RefactoringSupportProvider() {
@@ -23,4 +25,6 @@ class KotlinFirRefactoringSupportProvider : RefactoringSupportProvider() {
      * @see org.jetbrains.kotlin.idea.refactoring.KotlinRefactoringSupportProvider.getIntroduceVariableHandler
      */
     override fun getIntroduceVariableHandler(): RefactoringActionHandler = KotlinIntroduceVariableHandler
+
+    override fun getChangeSignatureHandler(): ChangeSignatureHandler? = KotlinChangeSignatureHandler
 }

@@ -8,7 +8,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.testFramework.DumbModeTestUtils.EternalTaskShutdownToken;
 import com.intellij.util.indexing.FileBasedIndex;
-import com.intellij.util.indexing.UnindexedFilesUpdater;
+import com.intellij.util.indexing.UnindexedFilesScanner;
 import junit.framework.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,7 +45,7 @@ public interface TestIndexingModeSupporter {
       @Override
       public void ensureIndexingStatus(@NotNull Project project) {
         ApplicationManager.getApplication().invokeAndWait(() -> {
-          new UnindexedFilesUpdater(project).queue();
+          new UnindexedFilesScanner(project, "TestIndexingModeSupporter").queue();
         });
       }
     }, DUMB_RUNTIME_ONLY_INDEX {
@@ -101,7 +101,7 @@ public interface TestIndexingModeSupporter {
     }
 
     private static EternalTaskShutdownToken indexEverythingAndBecomeDumb(@NotNull Project project) {
-      new UnindexedFilesUpdater(project).queue();
+      new UnindexedFilesScanner(project, "TestIndexingModeSupporter").queue();
       return becomeDumb(project);
     }
   }

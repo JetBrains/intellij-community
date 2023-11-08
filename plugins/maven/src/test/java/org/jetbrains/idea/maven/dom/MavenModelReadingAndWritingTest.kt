@@ -48,7 +48,8 @@ class MavenModelReadingAndWritingTest : MavenMultiVersionImportingTestCase() {
 
     UsefulTestCase.assertSameLines("""
                       <?xml version="1.0"?>${'\r'}
-                      <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"${'\r'}
+                      <project xmlns="http://maven.apache.org/POM/4.0.0"${'\r'}
+                               xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"${'\r'}
                                xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">${'\r'}
                           <modelVersion>4.0.0</modelVersion>${'\r'}
                           <groupId>foo</groupId>${'\r'}
@@ -74,7 +75,8 @@ class MavenModelReadingAndWritingTest : MavenMultiVersionImportingTestCase() {
 
     UsefulTestCase.assertSameLines("""
                       <?xml version="1.0"?>${'\r'}
-                      <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"${'\r'}
+                      <project xmlns="http://maven.apache.org/POM/4.0.0"${'\r'}
+                               xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"${'\r'}
                                xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">${'\r'}
                           <modelVersion>4.0.0</modelVersion>${'\r'}
                           <groupId>test</groupId>${'\r'}

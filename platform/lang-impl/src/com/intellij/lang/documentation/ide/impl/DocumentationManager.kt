@@ -43,7 +43,7 @@ import java.awt.Point
 import java.lang.ref.WeakReference
 
 @ApiStatus.Internal
-@Service
+@Service(Service.Level.PROJECT)
 class DocumentationManager(private val project: Project, private val cs: CoroutineScope) : Disposable {
   companion object {
     fun getInstance(project: Project): DocumentationManager = project.service()
@@ -93,14 +93,14 @@ class DocumentationManager(private val project: Project, private val cs: Corouti
     }
 
     val targets = dataContext.getData(DOCUMENTATION_TARGETS)
-    val target = targets?.firstOrNull() ?: return // TODO multiple targets
-
     // This happens in the UI thread because IntelliJ action system returns `DocumentationTarget` instance from the `DataContext`,
     // and it's not possible to guarantee that it will still be valid when sent to another thread,
-    // so we create pointer and presentation right in the UI thread.
-    val request = target.documentationRequest()
+    // so we create pointers and presentations right in the UI thread.
+    val requests = targets?.map { it.documentationRequest() }
+
+    if (requests.isNullOrEmpty()) return
     val popupContext = secondaryPopupContext ?: DefaultPopupContext(project, editor)
-    showDocumentation(request, popupContext, popupDependencies)
+    showDocumentation(requests, popupContext, popupDependencies)
   }
 
   private var popup: WeakReference<AbstractPopup>? = null
@@ -137,12 +137,15 @@ class DocumentationManager(private val project: Project, private val cs: Corouti
     popupDependencies?.let { Disposer.register(popup, it) }
   }
 
-  private fun showDocumentation(request: DocumentationRequest, popupContext: PopupContext, popupDependencies: Disposable? = null) {
+  private fun showDocumentation(requests: List<DocumentationRequest>,
+                                popupContext: PopupContext,
+                                popupDependencies: Disposable? = null) {
+    val initial = requests.first()
     if (skipPopup) {
-      toolWindowManager.showInToolWindow(request)
+      toolWindowManager.showInToolWindow(requests)
       return
     }
-    else if (toolWindowManager.updateVisibleReusableTab(request)) {
+    else if (toolWindowManager.updateVisibleReusableTab(initial)) {
       return
     }
 
@@ -151,7 +154,7 @@ class DocumentationManager(private val project: Project, private val cs: Corouti
     }
     popupScope.coroutineContext.job.cancelChildren()
     popupScope.launch(context = Dispatchers.EDT + ModalityState.current().asContextElement(), start = CoroutineStart.UNDISPATCHED) {
-      val popup = showDocumentationPopup(project, request, popupContext)
+      val popup = showDocumentationPopup(project, requests, popupContext)
       setPopup(popup, popupDependencies)
     }
   }
@@ -209,7 +212,7 @@ class DocumentationManager(private val project: Project, private val cs: Corouti
     if (request == null) {
       return
     }
-    showDocumentation(request, LookupPopupContext(lookup))
+    showDocumentation(listOf(request), LookupPopupContext(lookup))
   }
 
   fun navigateInlineLink(
@@ -261,7 +264,7 @@ class DocumentationManager(private val project: Project, private val cs: Corouti
         browseAbsolute(project, url)
       }
       else {
-        showDocumentation(result.value, InlinePopupContext(project, editor, popupPosition))
+        showDocumentation(listOf(result.value), InlinePopupContext(project, editor, popupPosition))
         true
       }
     }

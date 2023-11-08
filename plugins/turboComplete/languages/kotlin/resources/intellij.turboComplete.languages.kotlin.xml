@@ -4,7 +4,6 @@
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij.turboComplete">
-    <kindCollector implementation="org.jetbrains.kotlin.idea.completion.KotlinKindCollector"/>
     <suggestionGeneratorExecutorProvider implementation="com.intellij.turboComplete.languages.kotlin.MLKotlinSuggestionGeneratorExecutorProvider"/>
   </extensions>
   <extensions defaultExtensionNs="com.intellij">

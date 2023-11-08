@@ -65,8 +65,9 @@ object KotlinUnusedSymbolUtil {
       if (declaration is KtObjectDeclaration && declaration.isCompanion()) return false
 
       if (declaration is KtParameter) {
-          // nameless parameters like `(Type) -> Unit` make no sense to highlight
-          if (declaration.name == null) return false
+          // nameless parameters like `(Type) -> Unit` or `_` make no sense to highlight
+          val name = declaration.name
+          if (name == null || name == "_") return false
           // functional type params like `fun foo(u: (usedParam: Type) -> Unit)` shouldn't be highlighted because they could be implicitly used by lambda arguments
           if (declaration.isFunctionTypeParameter) return false
           val ownerFunction = declaration.getOwnerFunction()
@@ -704,7 +705,11 @@ object KotlinUnusedSymbolUtil {
             return emptyArray()
         }
         if (declaration is KtParameter && declaration.isCatchParameter) {
-            return arrayOf(com.intellij.codeInsight.daemon.impl.quickfix.RenameElementFix(declaration, "_"))
+            return if (declaration.name == "_") {
+                emptyArray()
+            } else {
+                arrayOf(com.intellij.codeInsight.daemon.impl.quickfix.RenameElementFix(declaration, "_"))
+            }
         }
         // TODO: Implement K2 counterpart of `createAddToDependencyInjectionAnnotationsFix` and use it for `element` with annotations here.
         return arrayOf(SafeDeleteFix(declaration))

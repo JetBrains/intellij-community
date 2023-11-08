@@ -17,7 +17,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.BasicJavaAstTreeUtil;
-import com.intellij.psi.impl.source.BasicJavaTokenSet;
+import com.intellij.psi.impl.source.BasicJavaElementType;
+import com.intellij.psi.tree.ParentAwareTokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -111,6 +112,22 @@ public abstract class AbstractBasicJavaTypedHandler extends TypedHandlerDelegate
     if (c == ';') {
       if (handleSemicolon(project, editor, file, fileType)) return Result.STOP;
     }
+    if (fileType instanceof JavaFileType && c == '}') {
+      // Normal RBrace handler doesn't work with \{}, because braces in string template are not separate tokens
+      int offset = editor.getCaretModel().getOffset();
+      
+      HighlighterIterator iterator = editor.getHighlighter().createIterator(offset-1);
+      CharSequence sequence = editor.getDocument().getCharsSequence();
+      if (!iterator.atEnd() && 
+          (iterator.getTokenType() == JavaTokenType.STRING_TEMPLATE_BEGIN || iterator.getTokenType() == JavaTokenType.TEXT_BLOCK_TEMPLATE_BEGIN ||
+           iterator.getTokenType() == JavaTokenType.STRING_TEMPLATE_MID || iterator.getTokenType() == JavaTokenType.TEXT_BLOCK_TEMPLATE_MID) &&
+          iterator.getEnd() == offset && sequence.subSequence(iterator.getStart(), iterator.getEnd()).toString().equals("\\{")) {
+        if (sequence.length() > offset && sequence.charAt(offset) == '}') {
+          editor.getCaretModel().moveToOffset(offset + 1);
+          return Result.STOP;
+        }
+      }
+    }
     if (fileType instanceof JavaFileType && c == '{') {
       int offset = editor.getCaretModel().getOffset();
       if (offset == 0) {
@@ -125,10 +142,21 @@ public abstract class AbstractBasicJavaTypedHandler extends TypedHandlerDelegate
         return Result.CONTINUE;
       }
       Document doc = editor.getDocument();
+      if (!iterator.atEnd() &&
+          (iterator.getTokenType() == StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN ||
+            iterator.getTokenType() == StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN) &&
+          CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET) { // "\{}" in strings
+        CharSequence sequence = doc.getCharsSequence();
+        if (sequence.charAt(offset - 1) == '\\' && (sequence.length() == offset || sequence.charAt(offset) != '}')) {
+          doc.insertString(offset, "{}");
+          editor.getCaretModel().moveToOffset(offset + 1);
+          return Result.STOP;
+        }
+      }
       PsiDocumentManager.getInstance(project).commitDocument(doc);
       final PsiElement leaf = file.findElementAt(offset);
       if (BasicJavaAstTreeUtil.getParentOfType(leaf, BASIC_ARRAY_INITIALIZER_EXPRESSION, false,
-                                               BasicJavaTokenSet.orSet(BasicJavaTokenSet.create(BASIC_CODE_BLOCK), MEMBER_SET)) != null) {
+                                               ParentAwareTokenSet.orSet(ParentAwareTokenSet.create(BASIC_CODE_BLOCK), MEMBER_SET)) != null) {
         return Result.CONTINUE;
       }
       PsiElement st = leaf != null ? leaf.getParent() : null;
@@ -157,7 +185,7 @@ public abstract class AbstractBasicJavaTypedHandler extends TypedHandlerDelegate
     // lambda
     if (prevLeaf != null && prevLeaf.getNode().getElementType() == JavaTokenType.ARROW) return true;
     // anonymous class
-    BasicJavaTokenSet stopAt = BasicJavaTokenSet.orSet(MEMBER_SET, BasicJavaTokenSet.create(BASIC_CODE_BLOCK));
+    ParentAwareTokenSet stopAt = ParentAwareTokenSet.orSet(MEMBER_SET, ParentAwareTokenSet.create(BASIC_CODE_BLOCK));
     if (BasicJavaAstTreeUtil.getParentOfType(prevLeaf, BASIC_NEW_EXPRESSION, true, stopAt) != null) return true;
     // local class
     if (prevLeaf != null && prevLeaf.getParent() != null && BasicJavaAstTreeUtil.is(prevLeaf.getNode(), JavaTokenType.IDENTIFIER) &&

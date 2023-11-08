@@ -3,6 +3,7 @@ package com.intellij.profile.codeInspection.ui.inspectionsTree;
 
 import com.intellij.analysis.AnalysisBundle;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
+import com.intellij.codeHighlighting.HighlightDisplayLevelColoredIcon;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.ScopeToolState;
@@ -149,6 +150,14 @@ public final class InspectionsConfigTreeTable extends TreeTable {
     TreePath[] paths = getTree().getSelectionPaths();
     return paths != null && paths.length == 1 && paths[0].getLastPathComponent() instanceof InspectionConfigTreeNode.Tool
            ? (InspectionConfigTreeNode.Tool)paths[0].getLastPathComponent()
+           : null;
+  }
+
+  @Nullable
+  public InspectionConfigTreeNode.Group getStrictlySelectedGroupNode() {
+    TreePath[] paths = getTree().getSelectionPaths();
+    return paths != null && paths.length == 1 && paths[0].getLastPathComponent() instanceof InspectionConfigTreeNode.Group
+           ? (InspectionConfigTreeNode.Group)paths[0].getLastPathComponent()
            : null;
   }
 
@@ -501,7 +510,7 @@ public final class InspectionsConfigTreeTable extends TreeTable {
       }
       final Icon icon = state.getLevel().getIcon();
       final String scopeName = state.getScopeName();
-      if (icon instanceof HighlightDisplayLevel.ColoredIcon) {
+      if (icon instanceof HighlightDisplayLevelColoredIcon) {
         final SeverityAndOccurrences severityAndOccurrences = myScopeToAverageSeverityMap.get(scopeName);
         final String inspectionName = state.getTool().getShortName();
         if (severityAndOccurrences == null) {

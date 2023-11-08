@@ -26,6 +26,7 @@ import com.intellij.execution.target.*;
 import com.intellij.execution.target.local.LocalTargetEnvironment;
 import com.intellij.execution.target.value.TargetEnvironmentFunctions;
 import com.intellij.execution.ui.ConsoleView;
+import com.intellij.execution.util.ProgramParametersConfigurator;
 import com.intellij.facet.Facet;
 import com.intellij.facet.FacetManager;
 import com.intellij.openapi.application.ApplicationManager;
@@ -84,6 +85,9 @@ import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Function;
+
+import static com.intellij.execution.util.EnvFilesUtilKt.configureEnvsFromFiles;
+import static com.jetbrains.python.run.PythonScriptCommandLineState.getExpandedWorkingDir;
 
 /**
  * Since this state is async, any method could be called on any thread
@@ -253,7 +257,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
     // TODO workaround
     if (PythonSdkUtil.isRemote(myConfig.getSdk()) && processHandler instanceof ProcessControlWithMappings) {
       consoleView
-        .addMessageFilter(new PyRemoteTracebackFilter(project, myConfig.getWorkingDirectory(), (ProcessControlWithMappings)processHandler));
+        .addMessageFilter(new PyRemoteTracebackFilter(project, getExpandedWorkingDir(myConfig), (ProcessControlWithMappings)processHandler));
     }
     else {
       consoleView.addMessageFilter(new PythonTracebackFilter(project, myConfig.getWorkingDirectorySafe()));
@@ -666,6 +670,8 @@ public abstract class PythonCommandLineState extends CommandLineState {
                                       @NotNull HelpersAwareTargetEnvironmentRequest helpersAwareTargetRequest,
                                       @Nullable Sdk sdk) {
     Map<String, String> env = Maps.newHashMap();
+    var envParameters = configureEnvsFromFiles(runParams, true);
+    env.putAll(envParameters);
     if (runParams.getEnvs() != null) {
       env.putAll(runParams.getEnvs());
     }

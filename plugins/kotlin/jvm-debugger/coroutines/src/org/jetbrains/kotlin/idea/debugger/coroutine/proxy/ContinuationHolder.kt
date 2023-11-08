@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger.coroutine.proxy
 
@@ -29,9 +29,9 @@ class ContinuationHolder private constructor(val context: DefaultExecutionContex
             }
             val lastRestoredFrame = continuationStack.coroutineStack.lastOrNull()
             return findCoroutineInformation(lastRestoredFrame?.baseContinuationImpl?.coroutineOwner, consumer)
-        } catch (e: VMDisconnectedException) {
+        } catch (_: VMDisconnectedException) {
         } catch (e: Exception) {
-            log.warn("Error while looking for stack frame", e)
+            log.error("Error while looking for stack frame", e)
         }
         return null
     }
@@ -56,10 +56,10 @@ class ContinuationHolder private constructor(val context: DefaultExecutionContex
                     }
                 CoroutineDescriptor.instance(ci)
             } else {
-                CoroutineDescriptor(CoroutineInfoData.DEFAULT_COROUTINE_NAME, "-1", State.UNKNOWN, null)
+                CoroutineDescriptor(CoroutineInfoData.DEFAULT_COROUTINE_NAME, "-1", State.UNKNOWN, null, null)
             }
         }
-        return CompleteCoroutineInfoData(realState, stackFrameItems, creationStackTrace)
+        return CompleteCoroutineInfoData(realState, stackFrameItems, creationStackTrace, jobHierarchy = emptyList())
     }
 
     fun state(value: ObjectReference?): CoroutineDescriptor? {
@@ -76,7 +76,7 @@ class ContinuationHolder private constructor(val context: DefaultExecutionContex
             if (matcher.matches()) {
                 val state = stateOf(matcher.group(1))
                 val hexAddress = matcher.group(2)
-                return CoroutineDescriptor(name, id?.toString() ?: hexAddress, state, standAloneCoroutineMirror.context.dispatcher)
+                return CoroutineDescriptor(name, id?.toString() ?: hexAddress, state, standAloneCoroutineMirror.context.dispatcher, null)
             }
         }
         return null

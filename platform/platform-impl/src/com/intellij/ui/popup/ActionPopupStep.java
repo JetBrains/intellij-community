@@ -121,9 +121,8 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
       LOG.error("isPopupOrMainMenuPlace(" + actionPlace + ")==false. Use ActionPlaces.getPopupPlace.");
       actionPlace = getPopupOrMainMenuPlace(actionPlace);
     }
-    DataContext wrappedContext = Utils.wrapDataContext(dataContext);
     ActionStepBuilder builder = new ActionStepBuilder(
-      wrappedContext, showNumbers, useAlphaAsNumbers, showDisabledActions, honorActionMnemonics, actionPlace, presentationFactory);
+      dataContext, showNumbers, useAlphaAsNumbers, showDisabledActions, honorActionMnemonics, actionPlace, presentationFactory);
     builder.buildGroup(actionGroup);
     return builder.getItems();
   }
@@ -265,7 +264,7 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
   }
 
   public void updateStepItems(@NotNull JComponent component) {
-    DataContext dataContext = Utils.wrapDataContext(myContext.get());
+    DataContext dataContext = myContext.get();
     PresentationFactory presentationFactory = myPresentationFactory != null ? myPresentationFactory : new PresentationFactory();
     List<PopupFactoryImpl.ActionItem> values = getValues();
     Utils.updateComponentActions(

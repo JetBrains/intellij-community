@@ -158,9 +158,10 @@ final class ServiceModel implements Disposable, InvokerSupplier {
         default -> reset(e.contributorClass);
       }
       notifyListeners(e);
+      LOG.debug("Event handled: " + e);
     };
     if (e.type != ServiceEventListener.EventType.UNLOAD_SYNC_RESET) {
-      return getInvoker().invoke(handler);
+      return getInvoker().invokeLater(handler);
     }
     handler.run();
     return Promises.resolvedCancellablePromise(null);

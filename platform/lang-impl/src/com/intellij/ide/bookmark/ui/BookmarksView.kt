@@ -5,6 +5,7 @@ import com.intellij.execution.Location
 import com.intellij.ide.DefaultTreeExpander
 import com.intellij.ide.OccurenceNavigator
 import com.intellij.ide.bookmark.*
+import com.intellij.ide.bookmark.actions.BookmarksDeleteProvider
 import com.intellij.ide.bookmark.actions.registerNavigateOnEnterAction
 import com.intellij.ide.bookmark.ui.tree.BookmarksTreeStructure
 import com.intellij.ide.bookmark.ui.tree.FolderNodeComparator
@@ -13,7 +14,6 @@ import com.intellij.ide.bookmark.ui.tree.VirtualFileVisitor
 import com.intellij.ide.dnd.DnDSupport
 import com.intellij.ide.dnd.aware.DnDAwareTree
 import com.intellij.ide.ui.UISettings
-import com.intellij.ide.util.DeleteHandler.DefaultDeleteProvider
 import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.ToggleOptionAction.Option
 import com.intellij.openapi.actionSystem.impl.PopupMenuPreloader
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState.stateForComponent
+import com.intellij.openapi.client.currentSession
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl.Companion.OPEN_IN_PREVIEW_TAB
 import com.intellij.openapi.fileTypes.FileTypes
 import com.intellij.openapi.module.ModuleUtilCore
@@ -63,7 +64,7 @@ class BookmarksView(val project: Project, showToolbar: Boolean?)
   private val editSourceListeners: MutableList<EditSourceListener> = mutableListOf()
 
   private val state = BookmarksViewState.getInstance(project)
-  private val preview = DescriptorPreview(this, false, null)
+  private val preview = DescriptorPreview(this, false, project.currentSession)
 
   private val selectionAlarm = SingleAlarm(this::selectionChanged, 50, this, ThreadToUse.SWING_THREAD, stateForComponent(this))
 
@@ -101,7 +102,7 @@ class BookmarksView(val project: Project, showToolbar: Boolean?)
     PlatformDataKeys.SELECTED_ITEMS.`is`(dataId) -> selectedNodes?.toArray(emptyArray<Any>())
     PlatformDataKeys.SELECTED_ITEM.`is`(dataId) -> selectedNodes?.firstOrNull()
     PlatformDataKeys.PROJECT.`is`(dataId) -> project
-    PlatformDataKeys.DELETE_ELEMENT_PROVIDER.`is`(dataId) -> DefaultDeleteProvider()
+    PlatformDataKeys.DELETE_ELEMENT_PROVIDER.`is`(dataId) -> BookmarksDeleteProvider()
     PlatformDataKeys.BGT_DATA_PROVIDER.`is`(dataId) -> {
       val selectedNodes = selectedNodes
       DataProvider { slowDataId -> getSlowData(slowDataId, selectedNodes) }

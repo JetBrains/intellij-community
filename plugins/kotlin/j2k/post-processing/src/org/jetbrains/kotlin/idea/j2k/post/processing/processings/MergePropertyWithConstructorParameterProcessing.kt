@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.idea.j2k.post.processing.processings
 
 import com.intellij.openapi.application.runReadAction
-import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.search.LocalSearchScope
@@ -14,7 +13,8 @@ import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget.FIEL
 import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics.findAnnotation
 import org.jetbrains.kotlin.idea.core.setVisibility
 import org.jetbrains.kotlin.idea.intentions.addUseSiteTarget
-import org.jetbrains.kotlin.idea.j2k.post.processing.*
+import org.jetbrains.kotlin.idea.j2k.post.processing.ElementsBasedPostProcessing
+import org.jetbrains.kotlin.idea.j2k.post.processing.runUndoTransparentActionInEdt
 import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.lexer.KtTokens.DATA_KEYWORD
 import org.jetbrains.kotlin.name.FqName

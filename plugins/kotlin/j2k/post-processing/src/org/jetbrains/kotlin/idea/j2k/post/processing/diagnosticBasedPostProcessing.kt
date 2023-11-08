@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.j2k.post.processing
 
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.editor.RangeMarker
-import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.suggested.range
 import org.jetbrains.kotlin.caches.resolve.KotlinCacheService

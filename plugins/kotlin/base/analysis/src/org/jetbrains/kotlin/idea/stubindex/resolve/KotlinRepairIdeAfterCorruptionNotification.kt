@@ -36,6 +36,6 @@ internal class KotlinRepairIdeAfterCorruptionNotification(private val project: P
 
 private class KotlinRepairIdeAction(private val project: Project) : Runnable {
     override fun run() {
-        project.service<Saul>().sortThingsOut(ProjectRecoveryScope(project))
+        service<Saul>().sortThingsOut(ProjectRecoveryScope(project))
     }
 }

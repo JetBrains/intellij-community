@@ -6,6 +6,9 @@ class A {
     }
 
     public void setValue(String s) {
+        takesString(s);
         o = s;
     }
+
+    private void takesString(String s) {}
 }

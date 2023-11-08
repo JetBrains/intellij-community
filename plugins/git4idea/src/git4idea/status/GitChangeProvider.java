@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.status;
 
 import com.intellij.openapi.components.Service;
@@ -8,12 +8,14 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
-import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vcs.util.paths.RootDirtySet;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitContentRevision;
 import git4idea.GitUtil;
@@ -33,7 +35,7 @@ public final class GitChangeProvider implements ChangeProvider {
   static final Logger LOG = Logger.getInstance("#GitStatus");
   private volatile boolean isRefreshInProgress = false;
 
-  @NotNull private final Project project;
+  private final @NotNull Project project;
 
   public GitChangeProvider(@NotNull Project project) {
     this.project = project;
@@ -48,28 +50,27 @@ public final class GitChangeProvider implements ChangeProvider {
     isRefreshInProgress = true;
     try {
       LOG.debug("initial dirty scope: ", dirtyScope);
-      appendNestedVcsRootsToDirt((VcsModifiableDirtyScope)dirtyScope);
-      LOG.debug("after adding nested vcs roots to dirt: ", dirtyScope);
-
       GitRepositoryManager repositoryManager = GitUtil.getRepositoryManager(project);
-      Collection<VirtualFile> affectedRoots = dirtyScope.getAffectedContentRoots();
-      Set<GitRepository> repos = ContainerUtil.map2SetNotNull(affectedRoots, repositoryManager::getRepositoryForRoot);
 
       List<FilePath> newDirtyPaths = new ArrayList<>();
       NonChangedHolder holder = new NonChangedHolder(project, addGate);
 
-      Map<VirtualFile, List<FilePath>> dirtyPaths = GitStagingAreaHolder.collectDirtyPaths(dirtyScope);
+      Map<VirtualFile, RootDirtySet> dirtyPaths = GitStagingAreaHolder.collectDirtyPathsPerRoot(dirtyScope);
+      LOG.debug("after adding nested vcs roots to dirt: ", dirtyPaths);
 
-      for (GitRepository repo : repos) {
-        LOG.debug("checking root: ", repo.getRoot());
-        List<FilePath> rootDirtyPaths = ContainerUtil.notNullize(dirtyPaths.get(repo.getRoot()));
-        if (rootDirtyPaths.isEmpty()) continue;
+      for (Map.Entry<VirtualFile, RootDirtySet> entry : dirtyPaths.entrySet()) {
+        VirtualFile root = entry.getKey();
+        RootDirtySet rootDirtyPaths = entry.getValue();
+
+        LOG.debug("checking root: ", root);
+        GitRepository repo = repositoryManager.getRepositoryForRoot(root);
+        if (repo == null) continue;
 
         GitStagingAreaHolder stageAreaHolder = repo.getStagingAreaHolder();
         List<GitFileStatus> newChanges = stageAreaHolder.refresh(rootDirtyPaths);
 
         GitChangesCollector collector = GitChangesCollector.collect(project, repo, newChanges);
-        holder.markHeadRevision(repo.getRoot(), collector.getHead());
+        holder.markHeadRevision(root, collector.getHead());
 
         Collection<Change> changes = collector.getChanges();
         for (Change change : changes) {
@@ -100,37 +101,6 @@ public final class GitChangeProvider implements ChangeProvider {
     finally {
       isRefreshInProgress = false;
       BackgroundTaskUtil.syncPublisher(project, GitRefreshListener.TOPIC).progressStopped();
-    }
-  }
-
-  private static void appendNestedVcsRootsToDirt(@NotNull VcsModifiableDirtyScope dirtyScope) {
-    ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(dirtyScope.getProject());
-
-    final Set<FilePath> recursivelyDirtyDirectories = dirtyScope.getRecursivelyDirtyDirectories();
-    if (recursivelyDirtyDirectories.isEmpty()) {
-      return;
-    }
-
-    VirtualFile[] rootsUnderGit = vcsManager.getRootsUnderVcs(dirtyScope.getVcs());
-
-    Set<VirtualFile> dirtyDirs = new HashSet<>();
-    for (FilePath dir : recursivelyDirtyDirectories) {
-      VirtualFile vf = VcsUtil.getVirtualFileWithRefresh(dir.getIOFile());
-      if (vf != null) {
-        dirtyDirs.add(vf);
-      }
-    }
-
-    for (VirtualFile root : rootsUnderGit) {
-      if (dirtyDirs.contains(root)) continue;
-
-      for (VirtualFile dirtyDir : dirtyDirs) {
-        if (VfsUtilCore.isAncestor(dirtyDir, root, false)) {
-          LOG.debug("adding git root for check. root: ", root, ", dir: ", dirtyDir);
-          dirtyScope.addDirtyDirRecursively(VcsUtil.getFilePath(root));
-          break;
-        }
-      }
     }
   }
 

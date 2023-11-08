@@ -767,15 +767,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
     private final @Nullable Predicate<Object[]> myCondition;
 
     public MyDeleteAction() {
-      this((Predicate<Object[]>)null);
-    }
-
-    /**
-     * @deprecated Use {@link #MyDeleteAction(Predicate)}
-     */
-    @Deprecated(forRemoval = true)
-    public MyDeleteAction(@Nullable Condition<Object[]> availableCondition) {
-      this(availableCondition == null ? null : (Predicate<Object[]>)availableCondition::value);
+      this(null);
     }
 
     public MyDeleteAction(@Nullable Predicate<Object[]> availableCondition) {

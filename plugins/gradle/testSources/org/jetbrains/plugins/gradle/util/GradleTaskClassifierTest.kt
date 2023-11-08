@@ -28,7 +28,6 @@ class GradleTaskClassifierTest {
     assertFalse(GradleTaskClassifier.isClassified("publish"))
   }
 
-
   private companion object {
     @JvmStatic
     fun argumentToValidateTaskClassification(): List<Arguments> = listOf(
@@ -42,6 +41,7 @@ class GradleTaskClassifierTest {
       Arguments.of("other", null),
       Arguments.of("other", ""),
       Arguments.of("compileJava", "userCompileJava"),
+      Arguments.of("dokkaJavadoc", "dokkaJavadoc")
     )
   }
 }

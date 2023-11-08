@@ -8,6 +8,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.platform.diagnostic.telemetry.IJTracer;
 import com.intellij.platform.diagnostic.telemetry.Scope;
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
+import com.intellij.platform.testFramework.diagnostic.MetricsPublisher;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.io.StorageLockContext;
@@ -18,8 +19,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static com.intellij.platform.diagnostic.telemetry.helpers.TraceKt.computeWithSpanAttribute;
-import static com.intellij.platform.diagnostic.telemetry.helpers.TraceKt.runWithSpanSimple;
+import static com.intellij.platform.diagnostic.telemetry.helpers.TraceKt.*;
 
 
 public class PerformanceTestInfo {
@@ -132,83 +132,94 @@ public class PerformanceTestInfo {
     }
     int initialMaxRetries = maxRetries;
 
-    runWithSpanSimple(tracer, what, () -> {
-      try {
-        for (int attempt = 1; attempt <= maxRetries; attempt++) {
-          AtomicInteger actualInputSize;
+    try {
+      runWithSpanSimple(tracer, what, () -> {
+        try {
+          for (int attempt = 1; attempt <= maxRetries; attempt++) {
+            AtomicInteger actualInputSize;
 
-          if (setup != null) setup.run();
-          PlatformTestUtil.waitForAllBackgroundActivityToCalmDown();
-          actualInputSize = new AtomicInteger(expectedInputSize);
-          if (warmupIterations != Integer.MIN_VALUE) {
-            for (int i = 0; i < warmupIterations; i++) {
-              test.compute();
+            if (setup != null) setup.run();
+            PlatformTestUtil.waitForAllBackgroundActivityToCalmDown();
+            actualInputSize = new AtomicInteger(expectedInputSize);
+            if (warmupIterations != Integer.MIN_VALUE) {
+              for (int i = 0; i < warmupIterations; i++) {
+                test.compute();
+              }
             }
-          }
 
-          IterationStatus status =
-            computeWithSpanAttribute(tracer, "Attempt: " + attempt, "Attempt status", (st) -> String.valueOf(st.passed()), () -> {
-              CpuUsageData currentData;
-              try {
-                currentData = CpuUsageData.measureCpuUsage(() -> actualInputSize.set(test.compute()));
-              }
-              catch (Throwable e) {
-                ExceptionUtil.rethrowUnchecked(e);
-                throw new RuntimeException(e);
-              }
-              int actualUsedCpuCores = usedReferenceCpuCores < 8
-                                       ? Math.min(JobSchedulerImpl.getJobPoolParallelism(), usedReferenceCpuCores)
-                                       : JobSchedulerImpl.getJobPoolParallelism();
-              int expectedOnMyMachine = getExpectedTimeOnThisMachine(actualInputSize.get(), actualUsedCpuCores);
-              IterationResult iterationResult = currentData.getIterationResult(expectedOnMyMachine);
+            IterationStatus status =
+              computeWithSpanAttribute(tracer, "Attempt: " + attempt, "Attempt status", (st) -> String.valueOf(st.passed()), () -> {
+                CpuUsageData currentData;
+                try {
+                  currentData = CpuUsageData.measureCpuUsage(() -> actualInputSize.set(test.compute()));
+                }
+                catch (Throwable e) {
+                  ExceptionUtil.rethrowUnchecked(e);
+                  throw new RuntimeException(e);
+                }
+                int actualUsedCpuCores = usedReferenceCpuCores < 8
+                                         ? Math.min(JobSchedulerImpl.getJobPoolParallelism(), usedReferenceCpuCores)
+                                         : JobSchedulerImpl.getJobPoolParallelism();
+                int expectedOnMyMachine = getExpectedTimeOnThisMachine(actualInputSize.get(), actualUsedCpuCores);
+                IterationResult iterationResult = currentData.getIterationResult(expectedOnMyMachine);
 
-              boolean passed = iterationResult == IterationResult.ACCEPTABLE || iterationResult == IterationResult.BORDERLINE;
-              String message =
-                formatMessage(currentData, expectedOnMyMachine, actualInputSize.get(), actualUsedCpuCores, iterationResult,
-                              initialMaxRetries);
-              return new IterationStatus(iterationResult, passed, message);
-            });
+                boolean passed = iterationResult == IterationResult.ACCEPTABLE || iterationResult == IterationResult.BORDERLINE;
+                String message =
+                  formatMessage(currentData, expectedOnMyMachine, actualInputSize.get(), actualUsedCpuCores, iterationResult,
+                                initialMaxRetries);
+                return new IterationStatus(iterationResult, passed, message);
+              });
 
-          boolean testPassed = status.passed();
-          String logMessage = status.logMessage();
-          IterationResult iterationResult = status.iterationResult();
+            boolean testPassed = status.passed();
+            String logMessage = status.logMessage();
+            IterationResult iterationResult = status.iterationResult();
 
-          if (testPassed) {
-            TeamCityLogger.info(logMessage);
-            System.out.println("\nSUCCESS: " + logMessage);
-            return;
-          }
-          TeamCityLogger.warning(logMessage, null);
-          if (UsefulTestCase.IS_UNDER_TEAMCITY) {
-            System.out.println("\nWARNING: " + logMessage);
-          }
+            if (testPassed) {
+              TeamCityLogger.info(logMessage);
+              System.out.println("\nSUCCESS: " + logMessage);
+              return;
+            }
+            TeamCityLogger.warning(logMessage, null);
+            if (UsefulTestCase.IS_UNDER_TEAMCITY) {
+              System.out.println("\nWARNING: " + logMessage);
+            }
 
-          JitUsageResult jitUsage = updateJitUsage();
-          if (attempt == maxRetries) {
-            throw new AssertionFailedError(logMessage);
+            JitUsageResult jitUsage = updateJitUsage();
+            if (attempt == maxRetries) {
+              throw new AssertionFailedError(logMessage);
+            }
+            if ((iterationResult == IterationResult.DISTRACTED || jitUsage == JitUsageResult.UNCLEAR) &&
+                attempt < initialMaxRetries + 30 &&
+                maxRetries != 1) {
+              // completely ignore this attempt (by incrementing maxRetries) and retry (but do no more than 30 extra retries caused by JIT)
+              maxRetries++;
+            }
+            String s = "  " + (maxRetries - attempt) + " " + StringUtil.pluralize("attempt", maxRetries - attempt) + " remain" +
+                       (jitUsage == JitUsageResult.UNCLEAR ? " (waiting for JITc; its usage was " + jitUsage + " in this iteration)" : "");
+            TeamCityLogger.warning(s, null);
+            if (UsefulTestCase.IS_UNDER_TEAMCITY) {
+              System.out.println(s);
+            }
+            //noinspection CallToSystemGC
+            System.gc();
+            StorageLockContext.forceDirectMemoryCache();
           }
-          if ((iterationResult == IterationResult.DISTRACTED || jitUsage == JitUsageResult.UNCLEAR) &&
-              attempt < initialMaxRetries + 30 &&
-              maxRetries != 1) {
-            // completely ignore this attempt (by incrementing maxRetries) and retry (but do no more than 30 extra retries caused by JIT)
-            maxRetries++;
-          }
-          String s = "  " + (maxRetries - attempt) + " " + StringUtil.pluralize("attempt", maxRetries - attempt) + " remain" +
-                     (jitUsage == JitUsageResult.UNCLEAR ? " (waiting for JITc; its usage was " + jitUsage + " in this iteration)" : "");
-          TeamCityLogger.warning(s, null);
-          if (UsefulTestCase.IS_UNDER_TEAMCITY) {
-            System.out.println(s);
-          }
-          //noinspection CallToSystemGC
-          System.gc();
-          StorageLockContext.forceDirectMemoryCache();
         }
+        catch (Throwable throwable) {
+          ExceptionUtil.rethrowUnchecked(throwable);
+          throw new RuntimeException(throwable);
+        }
+      });
+    }
+    finally {
+      try {
+        MetricsPublisher.getInstance().publish(what);
       }
-      catch (Throwable throwable) {
-        ExceptionUtil.rethrowUnchecked(throwable);
-        throw new RuntimeException(throwable);
+      catch (Throwable t) {
+        System.err.println("Something unexpected happened during publishing performance metrics");
+        t.printStackTrace();
       }
-    });
+    }
   }
 
   private @NotNull String formatMessage(@NotNull CpuUsageData data,

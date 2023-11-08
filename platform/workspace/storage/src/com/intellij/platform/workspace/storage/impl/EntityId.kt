@@ -1,8 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.platform.workspace.storage.impl
 
-import com.intellij.platform.workspace.storage.WorkspaceEntity
-
 internal fun createEntityId(arrayId: Int, clazz: Int): EntityId {
   return createPackedEntityId(arrayId, clazz)
 }
@@ -27,7 +25,7 @@ internal const val invalidEntityId: EntityId = -1
 
 internal val EntityId.arrayId: Int
   get() {
-    assert(this >= 0)
+    assert(this >= 0) { "arrayId is $this, but it should be >=0" }
     return (this shr 32).toInt()
   }
 

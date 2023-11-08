@@ -35,7 +35,6 @@ abstract class GradlePlugin(context: Context) : BuildSystemPlugin(context) {
         override val pluginPath = "buildSystem.gradle"
 
         val gradleProperties by listProperty(
-
             "kotlin.code.style" to "official"
         )
 
@@ -171,7 +170,6 @@ abstract class GradlePlugin(context: Context) : BuildSystemPlugin(context) {
                 }
             }
         }
-
 
         val createSettingsFileTask by pipelineTask(GenerationPhase.PROJECT_GENERATION) {
             runAfter(KotlinPlugin.createModules)

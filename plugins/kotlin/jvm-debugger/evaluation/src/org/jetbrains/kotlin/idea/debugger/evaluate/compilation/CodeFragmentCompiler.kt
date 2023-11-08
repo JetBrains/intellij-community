@@ -62,13 +62,7 @@ class CodeFragmentCompiler(private val executionContext: ExecutionContext) {
         compilingStrategy: CodeFragmentCompilingStrategy, bindingContext: BindingContext, moduleDescriptor: ModuleDescriptor
     ): CompilationResult {
         val result = compilingStrategy.stats.startAndMeasureCompilationUnderReadAction {
-            try {
-                Result.success(doCompile(codeFragment, filesToCompile, compilingStrategy, bindingContext, moduleDescriptor))
-            } catch (ex: ProcessCanceledException) {
-                throw ex
-            } catch (ex: Exception) {
-                Result.failure(ex)
-            }
+            doCompile(codeFragment, filesToCompile, compilingStrategy, bindingContext, moduleDescriptor)
         }
         return result.getOrThrow()
     }
@@ -346,7 +340,11 @@ private fun computeInternalClassName(path: String): String {
     return path.dropLast(".class".length).replace('/', '.')
 }
 
-class CodeFragmentCompilationStats {
+internal class CodeFragmentCompilationStats {
+    val startTimeMs: Long = System.currentTimeMillis()
+
+    var wrapTimeMs: Long = -1L
+        private set
     var analysisTimeMs: Long = -1L
         private set
     var compilationTimeMs: Long = -1L
@@ -354,20 +352,29 @@ class CodeFragmentCompilationStats {
     var interruptions: Int = 0
         private set
 
-    fun <R> startAndMeasureAnalysisUnderReadAction(block: () -> R): R = startAndMeasureUnderReadAction(block) { analysisTimeMs = it }
-    fun <R> startAndMeasureCompilationUnderReadAction(block: () -> R): R = startAndMeasureUnderReadAction(block) { compilationTimeMs = it }
+    fun <R> startAndMeasureWrapAnalysisUnderReadAction(block: () -> R): Result<R> = startAndMeasureUnderReadAction(block) { wrapTimeMs = it }
+    fun <R> startAndMeasureAnalysisUnderReadAction(block: () -> R): Result<R> = startAndMeasureUnderReadAction(block) { analysisTimeMs = it }
+    fun <R> startAndMeasureCompilationUnderReadAction(block: () -> R): Result<R> = startAndMeasureUnderReadAction(block) { compilationTimeMs = it }
 
-    private fun <R> startAndMeasureUnderReadAction(block: () -> R, timeUpdater: (Long) -> Unit): R {
-        val startMs = System.currentTimeMillis()
-        val result = ReadAction.nonBlocking(Callable {
-            try {
-                block()
-            } catch (e: ProcessCanceledException) {
-                interruptions++
-                throw e
-            }
-        }).executeSynchronously()
-        timeUpdater(System.currentTimeMillis() - startMs)
-        return result
+    private fun <R> startAndMeasureUnderReadAction(block: () -> R, timeUpdater: (Long) -> Unit): Result<R> {
+        return try {
+            val startMs = System.currentTimeMillis()
+            val result = ReadAction.nonBlocking(Callable {
+                try {
+                    block()
+                } catch (e: ProcessCanceledException) {
+                    interruptions++
+                    throw e
+                }
+            }).executeSynchronously()
+            timeUpdater(System.currentTimeMillis() - startMs)
+            Result.success(result)
+        }
+        catch (e: ProcessCanceledException) {
+            throw e
+        }
+        catch (e: Exception) {
+            Result.failure(e)
+        }
     }
 }

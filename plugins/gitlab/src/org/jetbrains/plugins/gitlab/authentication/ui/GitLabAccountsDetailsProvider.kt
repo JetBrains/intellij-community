@@ -2,7 +2,9 @@
 package org.jetbrains.plugins.gitlab.authentication.ui
 
 import com.intellij.collaboration.auth.ui.LazyLoadingAccountsDetailsProvider
+import com.intellij.collaboration.auth.ui.cancelOnRemoval
 import com.intellij.collaboration.messages.CollaborationToolsBundle
+import com.intellij.collaboration.util.ResultUtil.runCatchingUser
 import com.intellij.openapi.components.service
 import icons.CollaborationToolsIcons
 import kotlinx.coroutines.CancellationException
@@ -10,21 +12,42 @@ import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.plugins.gitlab.GitLabServersManager
 import org.jetbrains.plugins.gitlab.api.GitLabApi
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
-import org.jetbrains.plugins.gitlab.api.getMetadata
 import org.jetbrains.plugins.gitlab.api.request.getCurrentUser
 import org.jetbrains.plugins.gitlab.api.request.loadImage
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
+import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
+import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.GitLabSelectorErrorStatusPresenter.Companion.isAuthorizationException
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import java.awt.Image
 
-internal class GitLabAccountsDetailsProvider(scope: CoroutineScope,
-                                             private val apiClientSupplier: suspend (GitLabAccount) -> GitLabApi?)
-  : LazyLoadingAccountsDetailsProvider<GitLabAccount, GitLabUserDTO>(scope, CollaborationToolsIcons.Review.DefaultAvatar) {
+internal class GitLabAccountsDetailsProvider private constructor(
+  scope: CoroutineScope,
+  private val apiClientSupplier: suspend (GitLabAccount) -> GitLabApi?
+) : LazyLoadingAccountsDetailsProvider<GitLabAccount, GitLabUserDTO>(scope, CollaborationToolsIcons.Review.DefaultAvatar) {
+
+  constructor(
+    scope: CoroutineScope,
+    accountsModel: GitLabAccountsListModel,
+    apiClientSupplier: suspend (GitLabAccount) -> GitLabApi?
+  ) : this(scope, apiClientSupplier) {
+    cancelOnRemoval(accountsModel.accountsListModel)
+  }
+
+  constructor(
+    scope: CoroutineScope,
+    accountManager: GitLabAccountManager,
+    apiClientSupplier: suspend (GitLabAccount) -> GitLabApi?
+  ) : this(scope, apiClientSupplier) {
+    cancelOnRemoval(scope, accountManager)
+  }
 
   override suspend fun loadDetails(account: GitLabAccount): Result<GitLabUserDTO> {
     try {
       val api = apiClientSupplier(account) ?: return Result.Error(CollaborationToolsBundle.message("account.token.missing"), true)
-      val details = api.graphQL.getCurrentUser() ?: return Result.Error(CollaborationToolsBundle.message("account.token.invalid"), true)
+      val details = runCatchingUser { api.graphQL.getCurrentUser() }.getOrElse {
+        if (isAuthorizationException(it)) return Result.Error(CollaborationToolsBundle.message("account.token.invalid"), true)
+        return Result.Error(it.localizedMessage, false)
+      }
       val serversManager = service<GitLabServersManager>()
       val supported = serversManager.earliestSupportedVersion <= api.getMetadata().version
       if (!supported) return Result.Error(GitLabBundle.message("server.version.unsupported.short"), false)

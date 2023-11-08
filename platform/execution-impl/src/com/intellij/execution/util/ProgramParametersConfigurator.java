@@ -7,7 +7,6 @@ import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.configurations.RuntimeConfigurationWarning;
 import com.intellij.execution.configurations.SimpleProgramParameters;
-import com.intellij.execution.envFile.EnvFileParserKt;
 import com.intellij.execution.impl.ExecutionManagerImpl;
 import com.intellij.ide.macro.Macro;
 import com.intellij.ide.macro.MacroManager;
@@ -22,7 +21,6 @@ import com.intellij.openapi.module.WorkingDirectoryProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ExternalProjectSystemRegistry;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.OSAgnosticPathUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -35,9 +33,6 @@ import com.intellij.util.execution.ParametersListUtil;
 import org.jetbrains.annotations.*;
 import org.jetbrains.jps.model.serialization.PathMacroUtil;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Paths;
@@ -46,12 +41,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static com.intellij.execution.util.EnvFilesUtilKt.configureEnvsFromFiles;
+
 public class ProgramParametersConfigurator {
   private static final ExtensionPointName<WorkingDirectoryProvider> WORKING_DIRECTORY_PROVIDER_EP_NAME =
     ExtensionPointName.create("com.intellij.module.workingDirectoryProvider");
 
   /** @deprecated use {@link PathMacroUtil#MODULE_WORKING_DIR} instead */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @SuppressWarnings("DeprecatedIsStillUsed")
   public static final String MODULE_WORKING_DIR = "%MODULE_WORKING_DIR%";
   private static final DataKey<Boolean> VALIDATION_MODE = DataKey.create("validation.mode");
@@ -63,7 +60,7 @@ public class ProgramParametersConfigurator {
 
     Map<String, String> envs = new HashMap<>();
     if (configuration instanceof EnvFilesOptions) {
-      envs.putAll(configureEnvsFromFiles((EnvFilesOptions)configuration));
+      envs.putAll(configureEnvsFromFiles((EnvFilesOptions)configuration, true));
     }
     envs.putAll(configuration.getEnvs());
     EnvironmentUtil.inlineParentOccurrences(envs);
@@ -79,23 +76,6 @@ public class ProgramParametersConfigurator {
 
     parameters.setWorkingDirectory(getWorkingDir(configuration, project, module));
     parameters.setPassParentEnvs(configuration.isPassParentEnvs());
-  }
-
-  static Map<String, String> configureEnvsFromFiles(EnvFilesOptions configuration) throws ParametersConfiguratorException {
-    Map<String, String> result = new HashMap<>();
-    for (String path : configuration.getEnvFilePaths()) {
-      try {
-        String text = FileUtil.loadFile(new File(path));
-        result.putAll(EnvFileParserKt.parseEnvFile(text));
-      }
-      catch (FileNotFoundException e) {
-        throw new ParametersConfiguratorException(ExecutionBundle.message("file.not.found.0", path), e);
-      }
-      catch (IOException e) {
-        throw new ParametersConfiguratorException(ExecutionBundle.message("cannot.read.file.0", path), e);
-      }
-    }
-    return result;
   }
 
   /**
@@ -144,7 +124,7 @@ public class ProgramParametersConfigurator {
     if (StringUtil.isEmpty(parametersStringWithMacros)) {
       return Collections.emptyList();
     }
-    String expandedParametersString = expandMacros(parametersStringWithMacros, DataContext.EMPTY_CONTEXT, true);
+    String expandedParametersString = expandMacros(parametersStringWithMacros, createContext(DataContext.EMPTY_CONTEXT), true);
     return ParametersListUtil.parse(expandedParametersString);
   }
 
@@ -153,23 +133,7 @@ public class ProgramParametersConfigurator {
       return path;
     }
 
-    DataContext envContext = ExecutionManagerImpl.getEnvironmentDataContext();
-    if (fallbackDataContext == DataContext.EMPTY_CONTEXT && envContext != null) {
-      Project project = CommonDataKeys.PROJECT.getData(envContext);
-      Module module = PlatformCoreDataKeys.MODULE.getData(envContext);
-      if (project != null) {
-        fallbackDataContext = projectContext(project, module, null);
-      }
-    }
-
-    DataContext finalFallbackDataContext = fallbackDataContext;
-    DataContext context = envContext == null ? fallbackDataContext : new DataContext() {
-      @Override
-      public @Nullable Object getData(@NotNull String dataId) {
-        Object data = envContext.getData(dataId);
-        return data != null ? data : finalFallbackDataContext.getData(dataId);
-      }
-    };
+    DataContext context = createContext(fallbackDataContext);
     for (Macro macro : MacroManager.getInstance().getMacros()) {
       boolean paramsMacro = macro instanceof MacroWithParams;
       String template = "$" + macro.getName() + (paramsMacro ? "(" : "$");
@@ -205,6 +169,27 @@ public class ProgramParametersConfigurator {
     return path;
   }
 
+  private static DataContext createContext(@NotNull DataContext fallbackDataContext) {
+    DataContext envContext = ExecutionManagerImpl.getEnvironmentDataContext();
+    if (fallbackDataContext == DataContext.EMPTY_CONTEXT && envContext != null) {
+      Project project = CommonDataKeys.PROJECT.getData(envContext);
+      Module module = PlatformCoreDataKeys.MODULE.getData(envContext);
+      if (project != null) {
+        fallbackDataContext = projectContext(project, module, null);
+      }
+    }
+
+    DataContext finalFallbackDataContext = fallbackDataContext;
+    DataContext context = envContext == null ? fallbackDataContext : new DataContext() {
+      @Override
+      public @Nullable Object getData(@NotNull String dataId) {
+        Object data = envContext.getData(dataId);
+        return data != null ? data : finalFallbackDataContext.getData(dataId);
+      }
+    };
+    return context;
+  }
+
   private static @Nullable String previewOrExpandMacro(Macro macro, DataContext dataContext, String @NotNull ... args) {
     try {
       if (macro instanceof PromptingMacro || macro instanceof MacroWithParams) {
@@ -233,17 +218,16 @@ public class ProgramParametersConfigurator {
       if (workingDirectory == null) return null;
     }
 
-    workingDirectory = expandPathAndMacros(workingDirectory, module, project);
+    workingDirectory = expandPathAndMacros(workingDirectory, module, project)
+      .replace(PathMacroUtil.DEPRECATED_MODULE_DIR, PathMacroUtil.MODULE_WORKING_DIR)
+      .replace(MODULE_WORKING_DIR, PathMacroUtil.MODULE_WORKING_DIR);
 
-    if (MODULE_WORKING_DIR.equals(workingDirectory) || PathMacroUtil.DEPRECATED_MODULE_DIR.equals(workingDirectory)) {
-      workingDirectory = PathMacroUtil.MODULE_WORKING_DIR;
-    }
-    if (PathMacroUtil.MODULE_WORKING_DIR.equals(workingDirectory)) {
+    if (workingDirectory.contains(PathMacroUtil.MODULE_WORKING_DIR)) {
       if (module != null) {
         String moduleDirectory = getDefaultWorkingDir(module);
-        if (moduleDirectory != null) return moduleDirectory;
+        if (moduleDirectory != null) return workingDirectory.replace(PathMacroUtil.MODULE_WORKING_DIR, moduleDirectory);
       }
-      if (projectDirectory != null) return projectDirectory;
+      if (projectDirectory != null) return workingDirectory.replace(PathMacroUtil.MODULE_WORKING_DIR, projectDirectory);
     }
 
     if (projectDirectory != null && !OSAgnosticPathUtil.isAbsolute(workingDirectory)) {

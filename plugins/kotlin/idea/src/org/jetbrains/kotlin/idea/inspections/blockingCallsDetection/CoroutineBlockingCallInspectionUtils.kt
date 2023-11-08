@@ -2,7 +2,6 @@
 package org.jetbrains.kotlin.idea.inspections.blockingCallsDetection
 
 import com.intellij.codeInsight.actions.OptimizeImportsProcessor
-import com.intellij.openapi.components.service
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.intellij.psi.JavaPsiFacade
@@ -45,9 +44,7 @@ internal object CoroutineBlockingCallInspectionUtils {
     fun isKotlinxOnClasspath(ktElement: KtElement): Boolean {
         val module = ModuleUtilCore.findModuleForPsiElement(ktElement) ?: return false
         val searchScope = GlobalSearchScope.moduleWithLibrariesScope(module)
-        return module.project
-            .service<JavaPsiFacade>()
-            .findClass(DISPATCHERS_FQN, searchScope) != null
+        return JavaPsiFacade.getInstance(module.project).findClass(DISPATCHERS_FQN, searchScope) != null
     }
 
     fun isInsideFlowChain(resolvedCall: ResolvedCall<*>): Boolean {

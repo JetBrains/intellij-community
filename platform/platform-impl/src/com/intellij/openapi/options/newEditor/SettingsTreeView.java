@@ -79,7 +79,7 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
   private static final Color WRONG_CONTENT = JBColor.namedColor("Tree.errorForeground", JBColor.RED);
   private static final Color MODIFIED_CONTENT = JBColor.namedColor("Tree.modifiedItemForeground", JBColor.BLUE);
 
-  final SimpleTree myTree;
+  private final SimpleTree myTree;
 
   private final SettingsFilter myFilter;
   private final JScrollPane myScroller;
@@ -214,6 +214,11 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
     myControl = null;
   }
 
+  @ApiStatus.Internal
+  public @NotNull SimpleTree getTree() {
+    return myTree;
+  }
+
   private Icon getIcon(@Nullable DefaultMutableTreeNode node, boolean selected) {
     if (myControl == null) myControl = new MyControl();
     if (node == null || 0 == node.getChildCount()) return myControl.empty;
@@ -321,7 +326,8 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
     return path;
   }
 
-  static Configurable getConfigurable(SimpleNode node) {
+  @ApiStatus.Internal
+  public static Configurable getConfigurable(SimpleNode node) {
     return node instanceof MyNode
            ? ((MyNode)node).myConfigurable
            : null;
@@ -665,6 +671,13 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
         myTextLabel.setIcon(AllIcons.General.Beta);
       }
 
+      Configurable.Promo promo = asPromo(configurable);
+      if (promo != null) {
+        myTextLabel.setIconOnTheRight(true);
+        myTextLabel.setIconTextGap(JBUIScale.scale(8));
+        myTextLabel.setIcon(promo.getPromoIcon());
+      }
+
       if (node != null && UISettings.getInstance().getShowInplaceCommentsInternal()) {
         ConfigurableWrapper wrapper = configurable instanceof ConfigurableWrapper ?
                                       ((ConfigurableWrapper)configurable) :
@@ -785,6 +798,16 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
   private static boolean isBeta(Configurable c) {
     return c instanceof Configurable.Beta ||
            (c instanceof ConfigurableWrapper w && w.getConfigurable() instanceof Configurable.Beta);
+  }
+
+  private static @Nullable Configurable.Promo asPromo(Configurable c) {
+    if (c instanceof Configurable.Promo) return (Configurable.Promo)c;
+
+    if (c instanceof ConfigurableWrapper w && w.getConfigurable() instanceof Configurable.Promo) {
+      return (Configurable.Promo)w.getConfigurable();
+    }
+
+    return null;
   }
 
   @SuppressWarnings("unused")

@@ -62,8 +62,7 @@ public final class ResolveScopeManagerImpl extends ResolveScopeManager implement
     ResolveScopeEnlarger.EP_NAME.addChangeListener(() -> myDefaultResolveScopesCache.clear(), this);
   }
 
-  @NotNull
-  private GlobalSearchScope createScopeByFile(@NotNull VirtualFile key) {
+  private @NotNull GlobalSearchScope createScopeByFile(@NotNull VirtualFile key) {
     VirtualFile file = key;
     VirtualFile original = key instanceof LightVirtualFile ? ((LightVirtualFile)key).getOriginalFile() : null;
     if (original != null) {
@@ -75,7 +74,7 @@ public final class ResolveScopeManagerImpl extends ResolveScopeManager implement
       if (scope != null) break;
     }
     if (scope == null) scope = getInherentResolveScope(file);
-    for (ResolveScopeEnlarger enlarger : ResolveScopeEnlarger.EP_NAME.getExtensions()) {
+    for (ResolveScopeEnlarger enlarger : ResolveScopeEnlarger.EP_NAME.getExtensionList()) {
       SearchScope extra = enlarger.getAdditionalResolveScope(file, myProject);
       if (extra != null) {
         scope = scope.union(extra);
@@ -87,13 +86,11 @@ public final class ResolveScopeManagerImpl extends ResolveScopeManager implement
     return scope;
   }
 
-  @NotNull
-  private GlobalSearchScope getResolveScopeFromProviders(@NotNull VirtualFile vFile) {
+  private @NotNull GlobalSearchScope getResolveScopeFromProviders(@NotNull VirtualFile vFile) {
     return myDefaultResolveScopesCache.get(vFile);
   }
 
-  @NotNull
-  private GlobalSearchScope getInherentResolveScope(@NotNull VirtualFile vFile) {
+  private @NotNull GlobalSearchScope getInherentResolveScope(@NotNull VirtualFile vFile) {
     ProjectFileIndex projectFileIndex = myProjectRootManager.getFileIndex();
     Module module = projectFileIndex.getModuleForFile(vFile);
     if (module != null) {
@@ -113,8 +110,7 @@ public final class ResolveScopeManagerImpl extends ResolveScopeManager implement
   }
 
   @Override
-  @NotNull
-  public GlobalSearchScope getResolveScope(@NotNull PsiElement element) {
+  public @NotNull GlobalSearchScope getResolveScope(@NotNull PsiElement element) {
     ProgressIndicatorProvider.checkCanceled();
 
     if (element instanceof PsiDirectory) {
@@ -142,8 +138,7 @@ public final class ResolveScopeManagerImpl extends ResolveScopeManager implement
     return getPsiFileResolveScope(containingFile);
   }
 
-  @NotNull
-  private GlobalSearchScope getPsiFileResolveScope(@NotNull PsiFile psiFile) {
+  private @NotNull GlobalSearchScope getPsiFileResolveScope(@NotNull PsiFile psiFile) {
     if (psiFile instanceof FileResolveScopeProvider) {
       return ((FileResolveScopeProvider)psiFile).getFileResolveScope();
     }
@@ -160,9 +155,8 @@ public final class ResolveScopeManagerImpl extends ResolveScopeManager implement
   }
 
 
-  @NotNull
   @Override
-  public GlobalSearchScope getDefaultResolveScope(@NotNull VirtualFile vFile) {
+  public @NotNull GlobalSearchScope getDefaultResolveScope(@NotNull VirtualFile vFile) {
     PsiFile psiFile = myManager.findFile(vFile);
     assert psiFile != null : "directory=" + vFile.isDirectory() + "; " + myProject+"; vFile="+vFile+"; type="+vFile.getFileType();
     return getResolveScopeFromProviders(vFile);
@@ -170,8 +164,7 @@ public final class ResolveScopeManagerImpl extends ResolveScopeManager implement
 
 
   @Override
-  @NotNull
-  public GlobalSearchScope getUseScope(@NotNull PsiElement element) {
+  public @NotNull GlobalSearchScope getUseScope(@NotNull PsiElement element) {
     VirtualFile vDirectory;
     VirtualFile virtualFile;
     PsiFile containingFile;

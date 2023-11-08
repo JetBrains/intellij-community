@@ -1,6 +1,6 @@
 package com.intellij.searchEverywhereMl.ranking.features
 
-import com.intellij.searchEverywhereMl.ranking.features.SearchEverywhereCommonFeaturesProvider.Companion.PRIORITY_DATA_KEY
+import com.intellij.searchEverywhereMl.ranking.features.SearchEverywhereCommonFeaturesProvider.Fields.PRIORITY_DATA_KEY
 
 
 internal class SearchEverywhereCommonFeaturesProviderTest

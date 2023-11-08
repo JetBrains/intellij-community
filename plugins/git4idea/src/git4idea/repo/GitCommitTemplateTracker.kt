@@ -272,7 +272,7 @@ internal class GitCommitTemplateTracker(private val project: Project) : GitConfi
   internal class GitCommitTemplateTrackerStartupActivity : ProjectActivity {
     override suspend fun execute(project: Project): Unit = blockingContext {
       ProjectLevelVcsManager.getInstance(project).runAfterInitialization {
-        project.service<GitCommitTemplateTracker>().start()
+        getInstance(project).start()
       }
     }
   }

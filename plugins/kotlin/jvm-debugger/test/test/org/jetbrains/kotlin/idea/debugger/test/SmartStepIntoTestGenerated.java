@@ -93,6 +93,16 @@ public class SmartStepIntoTestGenerated extends AbstractSmartStepIntoTest {
         runTest("testData/smartStepInto/funWithExpressionBody.kt");
     }
 
+    @TestMetadata("idea335207.kt")
+    public void testIdea335207() throws Exception {
+        runTest("testData/smartStepInto/idea335207.kt");
+    }
+
+    @TestMetadata("idea335263.kt")
+    public void testIdea335263() throws Exception {
+        runTest("testData/smartStepInto/idea335263.kt");
+    }
+
     @TestMetadata("if.kt")
     public void testIf() throws Exception {
         runTest("testData/smartStepInto/if.kt");
@@ -116,6 +126,31 @@ public class SmartStepIntoTestGenerated extends AbstractSmartStepIntoTest {
     @TestMetadata("inlinedFunctionalExpression.kt")
     public void testInlinedFunctionalExpression() throws Exception {
         runTest("testData/smartStepInto/inlinedFunctionalExpression.kt");
+    }
+
+    @TestMetadata("insideAddChain.kt")
+    public void testInsideAddChain() throws Exception {
+        runTest("testData/smartStepInto/insideAddChain.kt");
+    }
+
+    @TestMetadata("insideCallChain.kt")
+    public void testInsideCallChain() throws Exception {
+        runTest("testData/smartStepInto/insideCallChain.kt");
+    }
+
+    @TestMetadata("insideCallChain2.kt")
+    public void testInsideCallChain2() throws Exception {
+        runTest("testData/smartStepInto/insideCallChain2.kt");
+    }
+
+    @TestMetadata("insideCallChain3.kt")
+    public void testInsideCallChain3() throws Exception {
+        runTest("testData/smartStepInto/insideCallChain3.kt");
+    }
+
+    @TestMetadata("insideCallChain4.kt")
+    public void testInsideCallChain4() throws Exception {
+        runTest("testData/smartStepInto/insideCallChain4.kt");
     }
 
     @TestMetadata("invoke.kt")

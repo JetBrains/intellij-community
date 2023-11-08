@@ -8,6 +8,7 @@ import org.jetbrains.annotations.NotNull;
 @ApiStatus.Internal
 public interface ProgressManagerListener {
 
+  @Topic.AppLevel
   Topic<ProgressManagerListener> TOPIC = new Topic<>(ProgressManagerListener.class,
                                                      Topic.BroadcastDirection.NONE,
                                                      true);

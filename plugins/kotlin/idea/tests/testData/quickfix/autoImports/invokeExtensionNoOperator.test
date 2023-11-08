@@ -5,6 +5,7 @@
 // ACTION: Create extension function 'Some.invoke'
 // ACTION: Create member function 'Some.invoke'
 // ACTION: Introduce import alias
+/* IGNORE_K2 */
 
 
 package testing

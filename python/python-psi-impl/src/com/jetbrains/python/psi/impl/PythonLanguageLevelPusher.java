@@ -19,7 +19,6 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.FilePropertyPusher;
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.*;
@@ -45,6 +44,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
+import java.util.function.Supplier;
 
 public final class PythonLanguageLevelPusher implements FilePropertyPusher<LanguageLevel> {
   private static final Key<String> PROJECT_LANGUAGE_LEVEL = new Key<>("python.project.language.level");
@@ -72,12 +72,11 @@ public final class PythonLanguageLevelPusher implements FilePropertyPusher<Langu
   @Override
   public void initExtra(@NotNull Project project) {
     final Map<Module, Sdk> moduleSdks = getPythonModuleSdks(project);
-    final Set<Sdk> distinctSdks = new LinkedHashSet<>(moduleSdks.values());
 
     myModuleSdks.putAll(moduleSdks);
     resetProjectLanguageLevel(project);
     updateSdkLanguageLevels(project, moduleSdks);
-    guessLanguageLevelWithCaching(project, () -> distinctSdks);
+    guessLanguageLevelWithCaching(project, moduleSdks::values);
   }
 
   @Override
@@ -264,10 +263,10 @@ public final class PythonLanguageLevelPusher implements FilePropertyPusher<Langu
   }
 
   private static @NotNull LanguageLevel guessLanguageLevelWithCaching(@NotNull Project project,
-                                                                      @NotNull Computable<@NotNull Collection<? extends @NotNull Sdk>> pythonModuleSdks) {
+                                                                      @NotNull Supplier<@NotNull Collection<? extends Sdk>> pythonModuleSdks) {
     LanguageLevel languageLevel = LanguageLevel.fromPythonVersion(PROJECT_LANGUAGE_LEVEL.get(project));
     if (languageLevel == null) {
-      languageLevel = guessLanguageLevel(pythonModuleSdks.compute());
+      languageLevel = guessLanguageLevel(pythonModuleSdks.get());
       PROJECT_LANGUAGE_LEVEL.set(project, languageLevel.toPythonVersion());
     }
 
@@ -279,17 +278,12 @@ public final class PythonLanguageLevelPusher implements FilePropertyPusher<Langu
   }
 
   private static @NotNull LanguageLevel guessLanguageLevel(@NotNull Collection<? extends @NotNull Sdk> pythonModuleSdks) {
-    LanguageLevel maxLevel = null;
-    for (Sdk sdk : pythonModuleSdks) {
-      final LanguageLevel level = PythonRuntimeService.getInstance().getLanguageLevelForSdk(sdk);
-      if (maxLevel == null || maxLevel.isOlderThan(level)) {
-        maxLevel = level;
-      }
-    }
-    if (maxLevel != null) {
-      return maxLevel;
-    }
-    return LanguageLevel.getDefault();
+    PythonRuntimeService pythonRuntimeService = PythonRuntimeService.getInstance();
+    return pythonModuleSdks.stream()
+      .distinct()
+      .map(sdk -> pythonRuntimeService.getLanguageLevelForSdk(sdk))
+      .max(LanguageLevel.VERSION_COMPARATOR)
+      .orElse(LanguageLevel.getDefault());
   }
 
   /**

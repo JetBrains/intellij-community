@@ -12,6 +12,7 @@ import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.fixtures.PyTestCase;
+import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.refactoring.inline.PyInlineLocalHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -216,6 +217,11 @@ public class PyInlineLocalTest extends PyTestCase {
   }
 
   // PY-40797
+  public void testStringToFStringsDifferentQuotesBefore312() {
+    runWithLanguageLevel(LanguageLevel.PYTHON311, this::doTest);
+  }
+
+  // PY-59594
   public void testStringToFStringsDifferentQuotes() {
     doTest();
   }
@@ -236,10 +242,14 @@ public class PyInlineLocalTest extends PyTestCase {
   }
 
   // PY-40797
+  public void testExpressionWithStringToFStringsDifferentQuotesBefore312() {
+    runWithLanguageLevel(LanguageLevel.PYTHON311, this::doTest);
+  }
+
+  // PY-59594
   public void testExpressionWithStringToFStringsDifferentQuotes() {
     doTest();
   }
-
 
   // PY-40797
   public void testStringToFStringAndOtherPlaces() {
@@ -262,33 +272,69 @@ public class PyInlineLocalTest extends PyTestCase {
   }
 
   // PY-40797
+  public void testExpressionWithStringsContainingQuotesToFStringNotAvailableBefore312() {
+    runWithLanguageLevel(LanguageLevel.PYTHON311, 
+                         () -> doTest(PyPsiBundle.message("refactoring.inline.can.not.string.with.backslashes.or.quotes.to.f.string")));
+  }
+
+  // PY-59594
   public void testExpressionWithStringsContainingQuotesToFString() {
-    doTest(PyPsiBundle.message("refactoring.inline.can.not.string.with.backslashes.or.quotes.to.f.string"));
+    doTest();
   }
 
   // PY-40797
-  public void testExpressionWithStringsToFStringInFString() {
-    doTest(PyPsiBundle.message("refactoring.inline.can.not.string.to.nested.f.string"));
+  public void testExpressionContainingStringsWithBothTypesOfQuotesIntoNestedFStringNotAvailableBefore312() {
+    runWithLanguageLevel(LanguageLevel.PYTHON311,
+                         () -> doTest(PyPsiBundle.message("refactoring.inline.can.not.string.to.nested.f.string")));
+  }
+
+  // PY-59594
+  public void testExpressionContainingStringsWithBothTypesOfQuotesIntoNestedFString() {
+    doTest();
   }
 
   // PY-40797
+  public void testStringWithQuotesToFStringInFStringNotAvailableBefore312() {
+    runWithLanguageLevel(LanguageLevel.PYTHON311, 
+                         () -> doTest(PyPsiBundle.message("refactoring.inline.can.not.string.with.backslashes.or.quotes.to.f.string")));
+  }
+
+  // PY-59594
   public void testStringWithQuotesToFStringInFString() {
-    doTest(PyPsiBundle.message("refactoring.inline.can.not.string.with.backslashes.or.quotes.to.f.string"));
+    doTest();
   }
 
   // PY-40797
+  public void testMultilineStringToFStringNotAvailableBefore312() {
+    runWithLanguageLevel(LanguageLevel.PYTHON311,
+                         () -> doTest(PyPsiBundle.message("refactoring.inline.can.not.multiline.string.to.f.string")));
+  }
+
+  // PY-59594
   public void testMultilineStringToFString() {
-    doTest(PyPsiBundle.message("refactoring.inline.can.not.multiline.string.to.f.string"));
+    doTest();
   }
 
   // PY-40797
+  public void testMultilineStringToExpressionFStringNotAvailableBefore312() {
+    runWithLanguageLevel(LanguageLevel.PYTHON311,
+                         () -> doTest(PyPsiBundle.message("refactoring.inline.can.not.multiline.string.to.f.string")));
+  }
+
+  // PY-59594
   public void testMultilineStringToExpressionFString() {
-    doTest(PyPsiBundle.message("refactoring.inline.can.not.multiline.string.to.f.string"));
+    doTest();
   }
 
   // PY-40797
-  public void testStringWithBackslashToFStringNotAvailable() {
-    doTest(PyPsiBundle.message("refactoring.inline.can.not.string.with.backslashes.or.quotes.to.f.string"));
+  public void testStringWithBackslashToFStringNotAvailableBefore312() {
+    runWithLanguageLevel(LanguageLevel.PYTHON311,
+                         () -> doTest(PyPsiBundle.message("refactoring.inline.can.not.string.with.backslashes.or.quotes.to.f.string")));
+  }
+
+  // PY-59594
+  public void testStringWithBackslashToFString() {
+    doTest();
   }
 
   private void checkOperatorPrecedence(@NotNull final String firstLine, @NotNull String resultPrefix) {

@@ -9,26 +9,28 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.searchEverywhereMl.RANKING_EP_NAME
 import com.intellij.searchEverywhereMl.SearchEverywhereMlExperiment
 import com.intellij.searchEverywhereMl.SearchEverywhereTabWithMlRanking
-import com.intellij.searchEverywhereMl.settings.SearchEverywhereMlSettings
 import com.intellij.searchEverywhereMl.SemanticSearchEverywhereContributor
+import com.intellij.searchEverywhereMl.settings.SearchEverywhereMlSettings
 import com.intellij.ui.components.JBList
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 import javax.swing.ListCellRenderer
 
+internal val searchEverywhereMlRankingService: SearchEverywhereMlRankingService?
+  get() = RANKING_EP_NAME.findExtensionOrFail(SearchEverywhereMlRankingService::class.java).takeIf { it.isEnabled() }
 
 @ApiStatus.Internal
 class SearchEverywhereMlRankingService : SearchEverywhereMlService {
-  companion object {
-    fun getService(): SearchEverywhereMlRankingService?
-      = RANKING_EP_NAME.findExtensionOrFail(SearchEverywhereMlRankingService::class.java).takeIf { it.isEnabled() }
-  }
-
   private val sessionIdCounter = AtomicInteger()
   private var activeSession: AtomicReference<SearchEverywhereMLSearchSession?> = AtomicReference()
 
   internal val experiment: SearchEverywhereMlExperiment = SearchEverywhereMlExperiment()
+
+  override val shouldAllTabPrioritizeRecentFiles: Boolean
+    get() = experiment.getExperimentForTab(
+      SearchEverywhereTabWithMlRanking.ALL) != SearchEverywhereMlExperiment.ExperimentType.NO_RECENT_FILES_PRIORITIZATION
+
 
   override fun isEnabled(): Boolean {
     val settings = service<SearchEverywhereMlSettings>()
@@ -36,7 +38,11 @@ class SearchEverywhereMlRankingService : SearchEverywhereMlService {
   }
 
   internal fun shouldUseExperimentalModel(tab: SearchEverywhereTabWithMlRanking): Boolean {
-    return experiment.getExperimentForTab(tab) == SearchEverywhereMlExperiment.ExperimentType.USE_EXPERIMENTAL_MODEL
+    return when (experiment.getExperimentForTab(tab)) {
+      SearchEverywhereMlExperiment.ExperimentType.USE_EXPERIMENTAL_MODEL -> true
+      SearchEverywhereMlExperiment.ExperimentType.NO_RECENT_FILES_PRIORITIZATION -> true
+      else -> false
+    }
   }
 
   internal fun getCurrentSession(): SearchEverywhereMLSearchSession? {
@@ -129,6 +135,7 @@ class SearchEverywhereMlRankingService : SearchEverywhereMlService {
     else {
       return settings.isSortingByMlEnabled(tab)
              || experiment.getExperimentForTab(tab) == SearchEverywhereMlExperiment.ExperimentType.USE_EXPERIMENTAL_MODEL
+             || experiment.getExperimentForTab(tab) == SearchEverywhereMlExperiment.ExperimentType.NO_RECENT_FILES_PRIORITIZATION
     }
   }
 

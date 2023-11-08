@@ -15,7 +15,6 @@ import com.intellij.codeInsight.lookup.impl.actions.ChooseItemAction;
 import com.intellij.codeInsight.template.impl.actions.NextVariableAction;
 import com.intellij.codeWithMe.ClientId;
 import com.intellij.featureStatistics.FeatureUsageTracker;
-import com.intellij.ide.ui.UISettings;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger;
@@ -110,6 +109,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   private boolean myFinishing;
   boolean myUpdating;
   private LookupUi myUi;
+  private LookupPresentation myPresentation = new LookupPresentation.Builder().build();
   private final ClientId myClientId = ClientId.getCurrent();
   private final AtomicInteger myDummyItemCount = new AtomicInteger();
   private final EmptyLookupItem myDummyItem = new EmptyLookupItem(CommonBundle.message("tree.node.loading"), true);
@@ -183,6 +183,17 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   @Override
   public boolean isFocused() {
     return getLookupFocusDegree() == LookupFocusDegree.FOCUSED;
+  }
+
+  @Override
+  public @NotNull LookupPresentation getPresentation() {
+    return myPresentation;
+  }
+
+  @Override
+  public void setPresentation(@NotNull LookupPresentation presentation) {
+    myPresentation = presentation;
+    refreshUi(false, true);
   }
 
   @NotNull
@@ -429,6 +440,10 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
       LOG.error("Arranger " + myPresentableArranger + " returned invalid selection index=" + toSelect + "; items=" + items);
       toSelect = 0;
     }
+    if (!myPresentation.getMostRelevantOnTop()) {
+      items = ContainerUtil.reverse(items);
+      toSelect = Math.max(0, items.size() - toSelect - 1);
+    }
 
     if (!myFirstElementAdded && !items.isEmpty()) {
       myFirstElementAdded = true;
@@ -438,13 +453,14 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     myOffsets.checkMinPrefixLengthChanges(items, this);
     List<LookupElement> oldModel = listModel.toList();
 
+    List<LookupElement> finalItems = items;
     listModel.performBatchUpdate(model -> {
       synchronized (myUiLock) {
         model.removeAll();
-        if (!items.isEmpty()) {
+        if (!finalItems.isEmpty()) {
           Long currentTimeMillis = System.currentTimeMillis();
-          items.forEach(item -> item.putUserDataIfAbsent(LOOKUP_ELEMENT_SHOW_TIMESTAMP_MILLIS, currentTimeMillis));
-          model.add(items);
+          finalItems.forEach(item -> item.putUserDataIfAbsent(LOOKUP_ELEMENT_SHOW_TIMESTAMP_MILLIS, currentTimeMillis));
+          model.add(finalItems);
           addDummyItems(myDummyItemCount.get());
         }
         else {
@@ -501,7 +517,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
 
   private void updateListHeight(ListModel<LookupElement> model) {
     myList.setFixedCellHeight(myCellRenderer.getListCellRendererComponent(myList, model.getElementAt(0), 0, false, false).getPreferredSize().height);
-    myList.setVisibleRowCount(Math.min(model.getSize(), UISettings.getInstance().getMaxLookupListHeight()));
+    myList.setVisibleRowCount(Math.min(model.getSize(), myPresentation.getMaxVisibleItemsCount()));
   }
 
   private void addEmptyItem(CollectionListModel<? super LookupElement> model) {

@@ -135,7 +135,7 @@ public final class UnusedPropertyInspection extends PropertiesInspectionBase {
 
         ASTNode[] nodes = propertyNode.getChildren(null);
         PsiElement key = nodes.length == 0 ? property : nodes[0].getPsi();
-        LocalQuickFix fix = PropertiesQuickFixFactory.getInstance().createRemovePropertyLocalFix();
+        LocalQuickFix fix = PropertiesQuickFixFactory.getInstance().createRemovePropertyLocalFix(property);
         holder.registerProblem(key, isOnTheFly ? PropertiesBundle.message("unused.property.problem.descriptor.name")
                                                : PropertiesBundle
                                       .message("unused.property.problem.descriptor.name.offline", property.getUnescapedKey()), fix);

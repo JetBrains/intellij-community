@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="commons-io" type="repository">
-    <properties jar-repository-id="central-proxy" maven-id="commons-io:commons-io:2.13.0">
+    <properties maven-id="commons-io:commons-io:2.14.0">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/commons-io/commons-io/2.13.0/commons-io-2.13.0.jar">
-          <sha256sum>671eaa39688dac2ffaa4645b3c9980ae2d0ea2471e4ae6a5da199cd15ae23666</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/commons-io/commons-io/2.14.0/commons-io-2.14.0.jar">
+          <sha256sum>e35d1df7232568ed4b81d9a9ed94a0159b3ff6cf1915cc21eef5cb55d7b157a2</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/commons-io/commons-io/2.13.0/commons-io-2.13.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/commons-io/commons-io/2.14.0/commons-io-2.14.0.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/commons-io/commons-io/2.13.0/commons-io-2.13.0-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/commons-io/commons-io/2.14.0/commons-io-2.14.0-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

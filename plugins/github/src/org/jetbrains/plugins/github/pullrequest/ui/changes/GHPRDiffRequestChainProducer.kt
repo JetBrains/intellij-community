@@ -52,7 +52,7 @@ open class GHPRDiffRequestChainProducer(
     val fetchFuture = CompletableFuture.allOf(changesData.fetchBaseBranch(), changesData.fetchHeadBranch())
 
     val indicator = ProgressManager.getInstance().progressIndicator ?: EmptyProgressIndicator()
-    val changeDataKeys = loadRequestDataKeys(indicator, change, changesProviderFuture, fetchFuture)
+    val changeDataKeys = createData(this, change, loadBranchComparisonResult(changesProviderFuture, indicator, fetchFuture))
     val customDataKeys = createCustomContext(change)
 
     ChangeDiffRequestProducer.create(project, change, changeDataKeys + customDataKeys)
@@ -68,47 +68,77 @@ open class GHPRDiffRequestChainProducer(
 
   protected open fun createCustomContext(change: Change): Map<Key<*>, Any> = emptyMap()
 
-  private fun loadRequestDataKeys(indicator: ProgressIndicator,
-                                  change: Change,
-                                  changesProviderFuture: CompletableFuture<GitBranchComparisonResult>,
-                                  fetchFuture: CompletableFuture<Void>): Map<Key<out Any>, Any?> {
+  companion object {
+    private fun createData(producer: GHPRDiffRequestChainProducer, change: Change,
+                           changesProvider: GitBranchComparisonResult): Map<Key<out Any>, Any?> {
+      val requestDataKeys = mutableMapOf<Key<out Any>, Any?>()
+      VcsDiffUtil.putFilePathsIntoChangeContext(change, requestDataKeys)
 
-    val changesProvider = ProgressIndicatorUtils.awaitWithCheckCanceled(changesProviderFuture, indicator)
-    ProgressIndicatorUtils.awaitWithCheckCanceled(fetchFuture, indicator)
+      installDiffComputer(changesProvider, change, requestDataKeys)
 
-    val requestDataKeys = mutableMapOf<Key<out Any>, Any?>()
-
-    VcsDiffUtil.putFilePathsIntoChangeContext(change, requestDataKeys)
-
-    val diffComputer = changesProvider.patchesByChange[change]?.getDiffComputer()
-    if (diffComputer != null) {
-      requestDataKeys[DiffUserDataKeysEx.CUSTOM_DIFF_COMPUTER] = diffComputer
-    }
-
-    val reviewSupport = getReviewSupport(changesProvider, change)
-    if (reviewSupport != null) {
-      requestDataKeys[GHPRDiffReviewSupport.KEY] = reviewSupport
-      requestDataKeys[DiffUserDataKeys.DATA_PROVIDER] = GenericDataProvider().apply {
-        putData(GHPRActionKeys.PULL_REQUEST_DATA_PROVIDER, dataProvider)
-        putData(GHPRDiffReviewSupport.DATA_KEY, reviewSupport)
+      val reviewSupport = createReviewSupport(producer, changesProvider, change)
+      if (reviewSupport != null) {
+        installReviewSupport(requestDataKeys, reviewSupport, producer.dataProvider)
+        requestDataKeys[DiffUserDataKeys.CONTEXT_ACTIONS] = listOf(
+          ImmutableToolbarLabelAction(CollaborationToolsBundle.message("review.diff.toolbar.label")),
+          GHPRDiffReviewThreadsReloadAction(),
+          ActionManager.getInstance().getAction("Github.PullRequest.Review.Submit"))
       }
-      requestDataKeys[DiffUserDataKeys.CONTEXT_ACTIONS] = listOf(
-        ImmutableToolbarLabelAction(CollaborationToolsBundle.message("review.diff.toolbar.label")),
-        GHPRDiffReviewThreadsReloadAction(),
-        ActionManager.getInstance().getAction("Github.PullRequest.Review.Submit"))
+      return requestDataKeys
     }
-    return requestDataKeys
+
+    private fun loadBranchComparisonResult(changesProviderFuture: CompletableFuture<GitBranchComparisonResult>,
+                                          indicator: ProgressIndicator,
+                                          fetchFuture: CompletableFuture<Void>): GitBranchComparisonResult {
+      val changesProvider = ProgressIndicatorUtils.awaitWithCheckCanceled(changesProviderFuture, indicator)
+      ProgressIndicatorUtils.awaitWithCheckCanceled(fetchFuture, indicator)
+      return changesProvider
+    }
+
+    private fun createReviewSupport(producer: GHPRDiffRequestChainProducer, changesProvider: GitBranchComparisonResult, change: Change) =
+      createReviewSupport(producer.project, changesProvider, change, producer.dataProvider, producer.htmlImageLoader,
+                          producer.avatarIconsProvider,
+                          producer.repositoryDataService,
+                          producer.ghostUser,
+                          producer.currentUser)
   }
+}
 
-  private fun getReviewSupport(changesProvider: GitBranchComparisonResult, change: Change): GHPRDiffReviewSupport? {
-    val diffData = changesProvider.patchesByChange[change] ?: return null
+internal fun createReviewSupport(project: Project,
+                                 changesProvider: GitBranchComparisonResult,
+                                 change: Change,
+                                 dataProvider: GHPRDataProvider,
+                                 imageLoader: AsyncHtmlImageLoader,
+                                 iconsProvider: GHAvatarIconsProvider,
+                                 repositoryDataService: GHPRRepositoryDataService,
+                                 ghostUser: GHUser,
+                                 currentUser: GHUser
+): GHPRDiffReviewSupport? {
+  val diffData = changesProvider.patchesByChange[change] ?: return null
 
-    return GHPRDiffReviewSupportImpl(project,
-                                     dataProvider.reviewData, dataProvider.detailsData,
-                                     htmlImageLoader, avatarIconsProvider,
-                                     repositoryDataService,
-                                     diffData,
-                                     ghostUser,
-                                     currentUser)
+  return GHPRDiffReviewSupportImpl(project,
+                                   dataProvider.reviewData, dataProvider.detailsData,
+                                   imageLoader,
+                                   iconsProvider,
+                                   repositoryDataService,
+                                   diffData,
+                                   ghostUser,
+                                   currentUser)
+}
+
+internal fun installDiffComputer(changesProvider: GitBranchComparisonResult,
+                                change: Change,
+                                requestDataKeys: MutableMap<Key<out Any>, Any?>) {
+  val diffComputer = changesProvider.patchesByChange[change]?.getDiffComputer() ?: return
+  requestDataKeys[DiffUserDataKeysEx.CUSTOM_DIFF_COMPUTER] = diffComputer
+}
+
+internal fun installReviewSupport(keys: MutableMap<Key<out Any>, Any?>,
+                                 reviewSupport: GHPRDiffReviewSupport,
+                                 dataProvider: GHPRDataProvider) {
+  keys[GHPRDiffReviewSupport.KEY] = reviewSupport
+  keys[DiffUserDataKeys.DATA_PROVIDER] = GenericDataProvider().apply {
+    putData(GHPRActionKeys.PULL_REQUEST_DATA_PROVIDER, dataProvider)
+    putData(GHPRDiffReviewSupport.DATA_KEY, reviewSupport)
   }
 }

@@ -9,7 +9,6 @@ import com.intellij.ide.DataManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentEP
-import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentProvider
 import com.intellij.ui.components.JBPanel
 import com.intellij.ui.content.Content
@@ -147,13 +146,6 @@ class VcsLogContentProvider(project: Project) : ChangesViewContentProvider {
   internal class VcsLogVisibilityPredicate : Predicate<Project> {
     override fun test(project: Project): Boolean {
       return !getLogProviders(project).isEmpty()
-    }
-  }
-
-  internal class VcsLogContentPreloader : ChangesViewContentProvider.Preloader {
-    override fun preloadTabContent(content: Content) {
-      content.putUserData(ChangesViewContentManager.ORDER_WEIGHT_KEY,
-                          ChangesViewContentManager.TabOrderWeight.BRANCHES.weight)
     }
   }
 

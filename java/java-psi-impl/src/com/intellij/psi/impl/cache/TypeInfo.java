@@ -63,14 +63,15 @@ public /*sealed*/ abstract class TypeInfo {
     .nonNullKeys().toImmutableMap();
 
   /**
-   * Kind of a type
+   * Kind of a type.
+   * @implNote Ordinal values are used in the serialization protocol. 
+   * Any changes in this enum should be accompanied by serialization version bump.
    */
   public enum TypeKind {
-    // Ordinal affects the serialization! Do not insert new elements in the middle
     /**
      * Absent type (e.g., constructor return value)
      */
-    NULL, 
+    NULL,
     // Reference
 
     /**
@@ -81,7 +82,7 @@ public /*sealed*/ abstract class TypeInfo {
      * Reference with generic parameters
      */
     GENERIC,
-    
+
     // References to widely used classes (skip encoding the class name)
     JAVA_LANG_OBJECT(CommonClassNames.JAVA_LANG_OBJECT), JAVA_LANG_STRING(CommonClassNames.JAVA_LANG_STRING),
     JAVA_LANG_THROWABLE(CommonClassNames.JAVA_LANG_THROWABLE), JAVA_LANG_EXCEPTION(CommonClassNames.JAVA_LANG_EXCEPTION),
@@ -104,7 +105,7 @@ public /*sealed*/ abstract class TypeInfo {
     INNER_GENERIC,
     // Derived
     /**
-     * Wildcard type, like {@code ? extends X} 
+     * Wildcard type, like {@code ? extends X}
      */
     EXTENDS,
     /**
@@ -119,24 +120,24 @@ public /*sealed*/ abstract class TypeInfo {
      * Ellipsis type (vararg parameter of a method, or a record component)
      */
     ELLIPSIS,
-    BOOLEAN("boolean"), BYTE("byte"), CHAR("char"), DOUBLE("double"), FLOAT("float"), INT("int"), LONG("long"), SHORT("short"), 
-    VOID("void"), 
+    BOOLEAN("boolean"), BYTE("byte"), CHAR("char"), DOUBLE("double"), FLOAT("float"), INT("int"), LONG("long"), SHORT("short"),
+    VOID("void"),
     OBJECT("Object"), STRING("String"), WILDCARD("?");
-    
+
     private final @Nullable String text;
 
     TypeKind() {
       this(null);
     }
 
-    TypeKind(@Nullable String text) { 
+    TypeKind(@Nullable String text) {
       this.text = text;
     }
-    
+
     boolean isReference() {
-      return ordinal() >= REF.ordinal() && ordinal() <= INNER_GENERIC.ordinal(); 
+      return ordinal() >= REF.ordinal() && ordinal() <= INNER_GENERIC.ordinal();
     }
-    
+
     boolean isDerived() {
       return ordinal() >= EXTENDS.ordinal() && ordinal() <= ELLIPSIS.ordinal();
     }
@@ -275,7 +276,7 @@ public /*sealed*/ abstract class TypeInfo {
    */
   public static final class SimpleTypeInfo extends TypeInfo {
     public static final SimpleTypeInfo NULL = new SimpleTypeInfo(TypeKind.NULL);
-    
+
     public SimpleTypeInfo(@NotNull TypeKind kind) {
       super(kind);
       if (kind.isDerived() || kind.isReference()) {
@@ -283,7 +284,7 @@ public /*sealed*/ abstract class TypeInfo {
       }
     }
   }
-  
+
   private TypeInfo(@NotNull TypeKind kind) {
     this.kind = kind;
   }
@@ -319,7 +320,7 @@ public /*sealed*/ abstract class TypeInfo {
   public boolean isEllipsis() {
     return kind == TypeKind.ELLIPSIS;
   }
-  
+
   /**
    * @return this array type replacing the latest component with an ellipsis
    * @throws UnsupportedOperationException if this type is not an array type
@@ -418,7 +419,7 @@ public /*sealed*/ abstract class TypeInfo {
   private static void collectAnnotations(@NotNull TypeInfo info,
                                          @NotNull TypeAnnotationContainer.Collector collector,
                                          @NotNull LighterAST tree,
-                                         @NotNull LighterASTNode element, 
+                                         @NotNull LighterASTNode element,
                                          byte @NotNull [] prefix) {
     // TODO: support bounds, generics and enclosing types
     int arrayCount = 0;
@@ -553,7 +554,7 @@ public /*sealed*/ abstract class TypeInfo {
     TypeInfo typeInfo = fromString(text);
     return ellipsis ? typeInfo.withEllipsis() : typeInfo;
   }
-  
+
   @NotNull
   public static TypeInfo fromString(@Nullable String text) {
     if (text == null) return TypeInfo.SimpleTypeInfo.NULL;
@@ -637,7 +638,7 @@ public /*sealed*/ abstract class TypeInfo {
         info = new RefTypeInfo(Objects.requireNonNull(record.readNameString()), outer);
         break;
       case INNER_GENERIC:
-        outer = (RefTypeInfo)readTYPE(record); 
+        outer = (RefTypeInfo)readTYPE(record);
       case GENERIC:
         String name = Objects.requireNonNull(record.readNameString());
         byte count = record.readByte();
@@ -690,7 +691,7 @@ public /*sealed*/ abstract class TypeInfo {
 
   /**
    * @return type text without annotations
-   * @deprecated Use simply {@link TypeInfo#text()} 
+   * @deprecated Use simply {@link TypeInfo#text()}
    */
   @Nullable
   @Deprecated

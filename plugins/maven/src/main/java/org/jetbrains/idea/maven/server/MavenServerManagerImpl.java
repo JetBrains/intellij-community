@@ -217,7 +217,7 @@ final class MavenServerManagerImpl implements MavenServerManager {
 
   private void registerDisposable(Project project, MavenServerConnector connector) {
     Disposer.register(MavenDisposable.getInstance(project), () -> {
-      ApplicationManager.getApplication().executeOnPooledThread(() -> shutdownConnector(connector, true));
+      ApplicationManager.getApplication().executeOnPooledThread(() -> shutdownConnector(connector, false));
     });
   }
 
@@ -366,9 +366,9 @@ final class MavenServerManagerImpl implements MavenServerManager {
         new MavenIndexerWrapper(null) {
 
           @Override
-          protected MavenIndices createMavenIndices() {
-            MavenIndices indices = new MavenIndices(this, MavenSystemIndicesManager.getInstance().getIndicesDir().toFile());
-            Disposer.register(MavenServerManagerImpl.this, indices);
+          protected MavenIndices createMavenIndices(Project project) {
+            MavenIndices indices = new MavenIndices(this, MavenSystemIndicesManager.getInstance().getIndicesDir().toFile(), project);
+            Disposer.register(MavenDisposable.getInstance(project), indices);
             return indices;
           }
 
@@ -427,9 +427,9 @@ final class MavenServerManagerImpl implements MavenServerManager {
     if (MavenWslUtil.tryGetWslDistributionForPath(path) != null) {
       return new MavenIndexerWrapper(null) {
         @Override
-        protected MavenIndices createMavenIndices() {
-          MavenIndices indices = new MavenIndices(this, MavenSystemIndicesManager.getInstance().getIndicesDir().toFile());
-          Disposer.register(project, indices);
+        protected MavenIndices createMavenIndices(Project project) {
+          MavenIndices indices = new MavenIndices(this, MavenSystemIndicesManager.getInstance().getIndicesDir().toFile(), project);
+          Disposer.register(MavenDisposable.getInstance(project), indices);
           return indices;
         }
 
@@ -441,9 +441,9 @@ final class MavenServerManagerImpl implements MavenServerManager {
     }
     return new MavenIndexerWrapper(null) {
       @Override
-      protected MavenIndices createMavenIndices() {
-        MavenIndices indices = new MavenIndices(this, MavenSystemIndicesManager.getInstance().getIndicesDir().toFile());
-        Disposer.register(project, indices);
+      protected MavenIndices createMavenIndices(Project project) {
+        MavenIndices indices = new MavenIndices(this, MavenSystemIndicesManager.getInstance().getIndicesDir().toFile(), project);
+        Disposer.register(MavenDisposable.getInstance(project), indices);
         return indices;
       }
 

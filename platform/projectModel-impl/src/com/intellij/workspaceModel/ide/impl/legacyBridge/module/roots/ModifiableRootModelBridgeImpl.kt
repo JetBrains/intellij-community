@@ -22,22 +22,22 @@ import com.intellij.platform.workspace.jps.CustomModuleEntitySource
 import com.intellij.platform.workspace.jps.JpsFileDependentEntitySource
 import com.intellij.platform.workspace.jps.JpsFileEntitySource
 import com.intellij.platform.workspace.jps.entities.*
-import com.intellij.util.ArrayUtilRt
-import com.intellij.workspaceModel.ide.*
-import com.intellij.workspaceModel.ide.impl.legacyBridge.LegacyBridgeModifiableBase
-import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridge
-import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridgeImpl
 import com.intellij.platform.workspace.jps.serialization.impl.LibraryNameGenerator
-import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModuleEntity
-import com.intellij.workspaceModel.ide.legacyBridge.ModifiableRootModelBridge
-import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
-import com.intellij.workspaceModel.ide.legacyBridge.ModuleExtensionBridge
 import com.intellij.platform.workspace.storage.CachedValue
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
+import com.intellij.util.ArrayUtilRt
+import com.intellij.workspaceModel.ide.getInstance
+import com.intellij.workspaceModel.ide.impl.legacyBridge.LegacyBridgeModifiableBase
+import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridge
+import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridgeImpl
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModuleEntity
+import com.intellij.workspaceModel.ide.legacyBridge.ModifiableRootModelBridge
+import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
+import com.intellij.workspaceModel.ide.legacyBridge.ModuleExtensionBridge
 import org.jdom.Element
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
@@ -564,13 +564,14 @@ class ModifiableRootModelBridgeImpl(
     val moduleDiff = module.diff
     if (moduleDiff != null) {
       moduleDiff.addDiff(diff)
+      postCommit()
     }
     else {
       WorkspaceModel.getInstance(project).updateProjectModel("Root model commit") {
         it.addDiff(diff)
       }
+      postCommit()
     }
-    postCommit()
   }
 
   override fun prepareForCommit() {

@@ -14,7 +14,6 @@ data class SettingsPreferences(
   var laf: Boolean = true,
   var syntaxScheme: Boolean = true,
   var keymap: Boolean = true,
-  var otherSettings: Boolean = true,
   var recentProjects: Boolean = true,
   var plugins: Boolean = true
 ) {
@@ -54,7 +53,7 @@ data class SettingsPreferences(
     return listOf(
       SettingsPreferencesKind.Keymap to keymap,
       SettingsPreferencesKind.RecentProjects to (recentProjects && settings.recentProjects.isNotEmpty()),
-      SettingsPreferencesKind.Plugins to (plugins && settings.plugins.any { !it.isHidden })
+      SettingsPreferencesKind.Plugins to (plugins && settings.plugins.values.any { !it.isHidden })
     )
   }
 

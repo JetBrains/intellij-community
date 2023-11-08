@@ -31,7 +31,7 @@
     <orderEntry type="library" name="XStream" level="project" />
     <orderEntry type="module" module-name="intellij.python.helpers" scope="RUNTIME" />
     <orderEntry type="library" name="libthrift" level="project" />
-    <orderEntry type="library" name="Slf4j" level="project" />
+    <orderEntry type="library" name="slf4j-api" level="project" />
     <orderEntry type="library" name="slf4j-jdk14" level="project" />
     <orderEntry type="library" name="netty-codec-http" level="project" />
     <orderEntry type="library" name="jsoup" level="project" />
@@ -125,21 +125,22 @@
     <orderEntry type="module" module-name="intellij.platform.backend.workspace" />
     <orderEntry type="module-library">
       <library name="completion-ranking-python-with-full-line" type="repository">
-        <properties maven-id="org.jetbrains.intellij.deps.completion:completion-ranking-python-with-full-line:0.0.5">
+        <properties maven-id="org.jetbrains.intellij.deps.completion:completion-ranking-python-with-full-line:0.2.1">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-python-with-full-line/0.0.5/completion-ranking-python-with-full-line-0.0.5.jar">
-              <sha256sum>9f82410163d8dd2929ca5a3bfe25e4323757e72f2110db56d18ba84112cdef2f</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-python-with-full-line/0.2.1/completion-ranking-python-with-full-line-0.2.1.jar">
+              <sha256sum>141df5d2e70b27911bb5b601e1574623dc43b31bc6b4160f164ddd6f2ca27e6f</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-python-with-full-line/0.0.5/completion-ranking-python-with-full-line-0.0.5.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-python-with-full-line/0.2.1/completion-ranking-python-with-full-line-0.2.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-python-with-full-line/0.0.5/completion-ranking-python-with-full-line-0.0.5-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-python-with-full-line/0.2.1/completion-ranking-python-with-full-line-0.2.1-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
+    <orderEntry type="module" module-name="intellij.platform.backend.observation" />
   </component>
 </module>

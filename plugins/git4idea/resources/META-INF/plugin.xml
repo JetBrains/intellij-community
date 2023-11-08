@@ -343,10 +343,8 @@
       <add-to-group group-id="VcsToolbarActions" anchor="after" relative-to-action="CheckinProject"/>
       <add-to-group group-id="VcsNavBarToolbarActions" anchor="after" relative-to-action="CheckinProject"/>
     </action>
-    <action id="Git.Stage.Enable" class="git4idea.index.actions.GitEnableStagingAreaAction" icon="AllIcons.Ide.Gift">
-      <add-to-group group-id="ChangesViewToolbar" anchor="last"/>
-    </action>
-    <action id="Git.Stage.Disable" class="git4idea.index.actions.GitDisableStagingAreaAction" icon="AllIcons.Vcs.Changelist"/>
+    <action id="Git.Stage.Enable" class="git4idea.index.actions.GitEnableStagingAreaAction"/>
+    <action id="Git.Stage.Disable" class="git4idea.index.actions.GitDisableStagingAreaAction"/>
     <action id="Git.Stage.Add" class="git4idea.index.actions.GitAddAction" use-shortcut-of="ChangesView.AddUnversioned"/>
     <action id="Git.Stage.Add.No.Content" class="git4idea.index.actions.GitAddWithoutContent"/>
     <action id="Git.Stage.Reset" class="git4idea.index.actions.GitResetAction" use-shortcut-of="ChangesView.Revert"/>
@@ -380,6 +378,13 @@
 
     <action id="Git.Stash.Silently" class="git4idea.index.actions.GitStashSilentlyAction" icon="AllIcons.Vcs.Stash"/>
 
+    <group id="Git.Stage.Configure" popup="true">
+      <separator key="separator.Git.Stage.Configure.display.as"/>
+      <reference id="Git.Stage.Enable"/>
+      <reference id="Git.Stage.Disable"/>
+      <add-to-group group-id="CommitView.GearActions"/>
+    </group>
+
     <group id="Git.Stage.Toolbar">
       <reference id="Diff.ShowDiff"/>
       <reference id="ChangesView.Refresh"/>
@@ -390,7 +395,6 @@
         <separator key="separator.show"/>
         <reference id="Git.Stage.ToggleIgnored"/>
       </group>
-      <reference id="Git.Stage.Disable"/>
     </group>
     <group id="Git.Stage.Tree.Menu">
       <reference id="Git.Stage.Merge"/>
@@ -557,13 +561,15 @@
                  description="Use workaround for Native SSH support in Git. Batch file cannot properly handle arguments with newlines when used as SSH_ASKPASS."/>
     <registryKey key="git.use.setsid.for.native.ssh" defaultValue="true"
                  description="Wrap 'git' process with 'setsid' for remote operations.
-                              This fixes issue with SSH_ASKPASS if IDE is executed from terminal or under DM/WM that pass system TTY from Xorg to GUI applications."/>
+                              This fixes issue with SSH_ASKPASS if IDE is executed from terminal or under DM/WM that pass system TTY from Xorg to GUI applications. IDEA-201054"/>
     <registryKey key="git.use.setsid.wait.for.wsl.ssh" defaultValue="true"
                  description="Wrap 'git' process with 'setsid -w' for remote operations with WSL executable."/>
     <registryKey key="git.wsl.exe.executable.no.shell" defaultValue="false"
                  description="Run git process for WSL executables without wrapping into a shell command."/>
     <registryKey key="git.wsl.exe.executable.login.shell" defaultValue="false"
                  description="Run git process for WSL executables using login shell command."/>
+    <registryKey key="git.wsl.exe.executable.detect.lang.by.env" defaultValue="true"
+                 description="Run git process for WSL executables using LANG detected from ENV."/>
     <registryKey key="git.use.no.optional.locks" defaultValue="true"
                  description="Use 'GIT_OPTIONAL_LOCKS' env variable to avoid taking unnecessary locks in git. Ex: to avoid 'git status' to interfere with 'git rebase' process in terminal."/>
     <registryKey key="git.merge.conflicts.toolwindow" defaultValue="false"
@@ -585,7 +591,7 @@
     <registryKey key="git.stage.separate.undo.stack" defaultValue="true"
                  description="Do not record stage operations in the undo stack of the document"/>
     <registryKey key="git.stage.navigate.to.index.file" defaultValue="false"
-                 description="Navigate to the staging area content from diff instead of the local file" />
+                 description="Navigate to the staging area content from diff instead of the local file"/>
     <registryKey key="git.stage.enable.commit.all" defaultValue="true"
                  description="Deprecated. Use the option in the Commit tool window 'Options' menu.
                  When no changes are staged, stage and commit all changes in the project"/>
@@ -600,6 +606,9 @@
                  description="Max amount of entry to process from Git reflog to parse recently checkout branches"/>
     <registryKey key="git.show.recent.checkout.branches" defaultValue="5"
                  description="Max count of recently checkout branches to show (e.g. in branches tree popup)"/>
+    <registryKey key="git.log.index.inexact.renames" description="Detect and store inexact renames during indexing" defaultValue="false"/>
+    <registryKey key="git.experimental.compose.branches.popup" defaultValue="false"
+                 description="Introduce new experimental branches popup written in Compose"/>
 
     <search.projectOptionsTopHitProvider implementation="git4idea.config.GitOptionsTopHitProvider"/>
     <vcs name="Git" vcsClass="git4idea.GitVcs" displayName="Git" administrativeAreaName=".git"/>
@@ -787,12 +796,12 @@
     <vcs.commitMessageProvider implementation="git4idea.commit.GitTemplateCommitMessageProvider" order="first"/>
     <jbProtocolRevisionResolver implementation="git4idea.GitNavigateRevisionResolver"/>
 
-    <toolbarQuickAction implementationClass="git4idea.ui.toolbar.UpdateQuickAction" listGroupID="MainToolbarQuickActions.VCS" />
-    <toolbarQuickAction implementationClass="git4idea.ui.toolbar.CommitQuickAction" listGroupID="MainToolbarQuickActions.VCS" />
-    <toolbarQuickAction implementationClass="git4idea.ui.toolbar.PushQuickAction" listGroupID="MainToolbarQuickActions.VCS" />
-    <toolbarQuickAction implementationClass="git4idea.ui.toolbar.DiffQuickAction" listGroupID="MainToolbarQuickActions.VCS" />
-    <toolbarQuickAction implementationClass="git4idea.ui.toolbar.HistoryQuickAction" listGroupID="MainToolbarQuickActions.VCS" />
-    <toolbarQuickAction implementationClass="git4idea.ui.toolbar.RollbackQuickAction" listGroupID="MainToolbarQuickActions.VCS" />
+    <toolbarQuickAction implementationClass="git4idea.ui.toolbar.UpdateQuickAction" listGroupID="MainToolbarQuickActions.VCS"/>
+    <toolbarQuickAction implementationClass="git4idea.ui.toolbar.CommitQuickAction" listGroupID="MainToolbarQuickActions.VCS"/>
+    <toolbarQuickAction implementationClass="git4idea.ui.toolbar.PushQuickAction" listGroupID="MainToolbarQuickActions.VCS"/>
+    <toolbarQuickAction implementationClass="git4idea.ui.toolbar.DiffQuickAction" listGroupID="MainToolbarQuickActions.VCS"/>
+    <toolbarQuickAction implementationClass="git4idea.ui.toolbar.HistoryQuickAction" listGroupID="MainToolbarQuickActions.VCS"/>
+    <toolbarQuickAction implementationClass="git4idea.ui.toolbar.RollbackQuickAction" listGroupID="MainToolbarQuickActions.VCS"/>
 
     <changesViewContent tabName="Git Conflicts"
                         className="git4idea.conflicts.GitConflictsToolWindowManager$ContentProvider"
@@ -824,6 +833,9 @@
   <projectListeners>
     <listener class="git4idea.conflicts.GitConflictsToolWindowManager$MyStagingAreaListener"
               topic="git4idea.status.GitStagingAreaHolder$StagingAreaListener"
+              activeInHeadlessMode="false"/>
+    <listener class="git4idea.conflicts.MergeConflictResolveUtil$MyStagingAreaListener"
+              topic="git4idea.status.GitStagingAreaHolder.StagingAreaListener"
               activeInHeadlessMode="false"/>
     <listener class="git4idea.conflicts.GitConflictsToolWindowManager$MyRepositoryListener"
               topic="com.intellij.dvcs.repo.VcsRepositoryMappingListener"

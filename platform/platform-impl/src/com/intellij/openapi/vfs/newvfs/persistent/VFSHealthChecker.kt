@@ -41,10 +41,14 @@ private val LOG: Logger
 
 private object VFSHealthCheckerConstants {
   val HEALTH_CHECKING_ENABLED = getBooleanProperty("vfs.health-check.enabled",
-                                                   ApplicationManager.getApplication().isEAP && !ApplicationManager.getApplication().isUnitTestMode)
+                                                   !ApplicationManager.getApplication().isUnitTestMode)
 
   val HEALTH_CHECKING_PERIOD_MS = getIntProperty("vfs.health-check.checking-period-ms",
-                                                 1.hours.inWholeMilliseconds.toInt())
+                                                 if (ApplicationManager.getApplication().isEAP)
+                                                   1.hours.inWholeMilliseconds.toInt()
+                                                 else
+                                                   12.hours.inWholeMilliseconds.toInt()
+  )
 
   /** 10min in most cases enough for the initial storm of requests to VFS (scanning/indexing/etc)
    *  to finish, so VFS _likely_ +/- settles down after that.
@@ -78,7 +82,7 @@ private class VFSHealthCheckServiceStarter : ApplicationInitializedListener {
         delay(HEALTH_CHECKING_START_DELAY_MS.toDuration(MILLISECONDS))
 
         val checkingPeriod = HEALTH_CHECKING_PERIOD_MS.toDuration(MILLISECONDS)
-        while (isActive && !FSRecords.getInstance().isDisposed) {
+        while (isActive && !FSRecords.getInstance().isClosed) {
 
           //MAYBE RC: track FSRecords.getLocalModCount() to run the check only if there are enough changes
           //          since the last check.
@@ -96,6 +100,9 @@ private class VFSHealthCheckServiceStarter : ApplicationInitializedListener {
 
           delay(checkingPeriod)
 
+          //MAYBE RC: this seems useless -- i.e. VFS h-check is ~10sec long once/(few) hours,
+          //          which is negligible comparing to (GC/JIT/bg tasks) load accumulated
+          //          through that few hours
           if (PowerStatus.getPowerStatus() == PowerStatus.BATTERY) {
             LOG.info("VFS health-check delayed: power source is battery")
             delay(checkingPeriod) //make it twice rarer
@@ -110,7 +117,7 @@ private class VFSHealthCheckServiceStarter : ApplicationInitializedListener {
 
   private fun doCheckupAndReportResults() {
     val fsRecordsImpl = FSRecords.getInstance()
-    if (fsRecordsImpl.isDisposed) {
+    if (fsRecordsImpl.isClosed) {
       return
     }
     val checker = VFSHealthChecker(fsRecordsImpl, LOG)
@@ -129,6 +136,7 @@ private class VFSHealthCheckServiceStarter : ApplicationInitializedListener {
       checkHealthReport.recordsReport.fileRecordsDeleted,
       checkHealthReport.recordsReport.nullNameIds,
       checkHealthReport.recordsReport.unresolvableNameIds,
+      checkHealthReport.recordsReport.unresolvableAttributesIds,
       checkHealthReport.recordsReport.notNullContentIds,
       checkHealthReport.recordsReport.unresolvableContentIds,
       checkHealthReport.recordsReport.nullParents,
@@ -231,6 +239,15 @@ class VFSHealthChecker(private val impl: FSRecordsImpl,
             )
           }
 
+          try {
+            connection.attributes.checkAttributeRecordSanity(fileId, attributeRecordId)
+          }
+          catch (t: Throwable) {
+            unresolvableAttributesIds++.alsoLogThrottled(
+              "file[#$fileId]{$fileName}: attribute[#$attributeRecordId] can't be read", t
+            )
+          }
+
 
           if (contentId != DataEnumeratorEx.NULL_ID) {
             notNullContentIds++
@@ -315,14 +332,6 @@ class VFSHealthChecker(private val impl: FSRecordsImpl,
               "file[#$fileId]{$fileName}: !directory (flags: ${Integer.toBinaryString(flags)}) but has children(${children.size})"
             )
           }
-
-          //TODO RC: try read _all_ attributes, check all them are readable
-          //TODO RC: check attribute storage _has_ such a record (not deleted)
-          //if(attributeRecordId!=AbstractAttributesStorage.NON_EXISTENT_ATTR_RECORD_ID) {
-          //  connection.attributes.forEachAttribute(connection, fileId){
-          //  }
-          //}
-
         }
         catch (t: Throwable) {
           generalErrors++.alsoLogThrottled("file[#$fileId]: unhandled exception while checking", t)
@@ -382,7 +391,6 @@ class VFSHealthChecker(private val impl: FSRecordsImpl,
             //MAYBE RC: dedicated counter for that kind of errors?
             generalErrors++.alsoLogThrottled(
               "root[#$rootId]: is outside of allocated IDs range [${FSRecords.MIN_REGULAR_FILE_ID}..$maxAllocatedID]")
-            
             continue
           }
           val rootParentId = records.getParent(rootId)
@@ -407,7 +415,7 @@ class VFSHealthChecker(private val impl: FSRecordsImpl,
     val namesEnumerator = impl.connection().names
     val report = VFSHealthCheckReport.NamesEnumeratorReport()
     try {
-      namesEnumerator.forEach{ id, name ->
+      namesEnumerator.forEach { id, name ->
         try {
           report.namesChecked++
           val nameId = namesEnumerator.tryEnumerate(name)
@@ -446,7 +454,7 @@ class VFSHealthChecker(private val impl: FSRecordsImpl,
     val connection = impl.connection()
     val contentHashesEnumerator = connection.contentHashesEnumerator
     val contentsStorage = connection.contents
-    contentHashesEnumerator.forEach{ contentId, contentHash ->
+    contentHashesEnumerator.forEach { contentId, contentHash ->
       if (contentHash == null) {
         report.generalErrors++.alsoLogThrottled(
           "contentId[#$contentId]: contentHash is absent in contentHashes -> contentHashEnumerator is corrupted?")
@@ -486,6 +494,8 @@ class VFSHealthChecker(private val impl: FSRecordsImpl,
                                  var notNullContentIds: Int = 0,
                                  /* contentEnumerator.valueOf(record.contentId) = null */
                                  var unresolvableContentIds: Int = 0,
+                                 /* failure to read attribute record from the attribute storage */
+                                 var unresolvableAttributesIds: Int = 0,
                                  /* record.parentId = NULL_ID & record is not ROOT */
                                  var nullParents: Int = 0,
                                  var childrenChecked: Int = 0,
@@ -496,6 +506,7 @@ class VFSHealthChecker(private val impl: FSRecordsImpl,
       val healthy: Boolean
         get() = nullNameIds == 0
                 && unresolvableNameIds == 0
+                && unresolvableAttributesIds == 0
                 && unresolvableContentIds == 0
                 && nullParents == 0
                 && inconsistentParentChildRelationships == 0

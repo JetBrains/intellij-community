@@ -15,13 +15,14 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtilBase
 import com.intellij.psi.util.parents
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import org.intellij.plugins.markdown.lang.MarkdownLanguageUtils.isMarkdownLanguage
+import org.intellij.plugins.markdown.lang.isMarkdownLanguage
 import org.intellij.plugins.markdown.lang.psi.util.hasType
 import org.intellij.plugins.markdown.ui.preview.MarkdownEditorWithPreview
 import org.intellij.plugins.markdown.ui.preview.MarkdownPreviewFileEditor
 import org.jetbrains.annotations.ApiStatus
 
-internal object MarkdownActionUtil {
+@ApiStatus.Internal
+object MarkdownActionUtil {
   @RequiresEdt
   @JvmStatic
   fun findSplitEditor(event: AnActionEvent): MarkdownEditorWithPreview? {
@@ -62,16 +63,6 @@ internal object MarkdownActionUtil {
   fun findRequiredMarkdownEditor(event: AnActionEvent): Editor {
     val editor = findMarkdownEditor(event)
     return checkNotNull(editor) { "Markdown editor was expected to be found in data context" }
-  }
-
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated(
-    message = "Use findMarkdownEditor instead",
-    replaceWith = ReplaceWith("findMarkdownEditor")
-  )
-  @JvmStatic
-  fun findMarkdownTextEditor(event: AnActionEvent): Editor? {
-    return findMarkdownEditor(event)
   }
 
   @RequiresEdt

@@ -10,104 +10,157 @@ interface VcsTelemetrySpan {
 
   enum class LogHistory : VcsTelemetrySpan {
     Computing {
-      override fun getName() = "computing history"
+      override fun getName() = "file-history-computing"
     },
 
     CollectingRenames {
-      override fun getName() = "collecting renames"
+      override fun getName() = "file-history-collecting-renames"
     }
   }
 
   object LogFilter : VcsTelemetrySpan {
-    private const val NAME = "filter"
-    override fun getName() = NAME
+    override fun getName() = "vcs-log-filtering"
   }
 
   enum class LogData : VcsTelemetrySpan {
+
+    // Top-level tasks
+
+    /**
+     * Initializing VCS Log by reading initial portion of commits and references.
+     */
+    Initializing {
+      override fun getName() = "vcs-log-initializing"
+    },
+
+    /**
+     * Refreshing VCS Log when repositories change (on commit, rebase, checkout branch, etc.).
+     */
+    Refreshing {
+      override fun getName() = "vcs-log-refreshing"
+    },
+
+    /**
+     * Loading full VCS Log (all commits and references).
+     */
+    LoadingFullLog {
+      override fun getName() = "vcs-log-loading-full-log"
+    },
+
+    // Reading information from the VcsLogProvider
+
+    /**
+     * Reading a small number of last commits and references from [com.intellij.vcs.log.VcsLogProvider] for all roots.
+     */
+    ReadingRecentCommits {
+      override fun getName() = "vcs-log-reading-recent-commits"
+    },
+
+    /**
+     * Reading a small number of last commits and references from [com.intellij.vcs.log.VcsLogProvider] per each root.
+     */
+    ReadingRecentCommitsInRoot {
+      override fun getName() = "vcs-log-reading-recent-commits-in-root"
+    },
+
+    /**
+     * Reading all commits and references from [com.intellij.vcs.log.VcsLogProvider] for all roots.
+     */
+    ReadingAllCommits {
+      override fun getName() = "vcs-log-reading-all-commits"
+    },
+
+    /**
+     * Reading all commits and references from [com.intellij.vcs.log.VcsLogProvider] per each root.
+     */
+    ReadingAllCommitsInRoot {
+      override fun getName() = "vcs-log-reading-all-commits-in-root"
+    },
+
+    /**
+     * Reading current user from [com.intellij.vcs.log.VcsLogProvider].
+     */
+    ReadingCurrentUser {
+      override fun getName() = "vcs-log-reading-current-user"
+    },
+
+    // Building new DataPack
+
+    /**
+     * Building a [com.intellij.vcs.log.graph.PermanentGraph] for the list of commits.
+     */
     BuildingGraph {
-      override fun getName() = "building graph"
+      override fun getName() = "vcs-log-building-graph"
     },
 
-    LoadingCommits {
-      override fun getName() = "loading commits"
-    },
-
+    /**
+     * Converting [com.intellij.vcs.log.TimedVcsCommit] instances received from [com.intellij.vcs.log.VcsLogProvider]
+     * to [com.intellij.vcs.log.graph.GraphCommit] instances using [com.intellij.vcs.log.data.VcsLogStorage] for converting hashes to integers.
+     *
+     * Only reported during [Refreshing] and [Initializing].
+     */
     CompactingCommits {
-      override fun getName() = "compacting commits"
+      override fun getName() = "vcs-log-compacting-commits"
     },
 
-    JoiningNewCommits {
-      override fun getName() = "joining new commits"
+    /**
+     * Combining new commits, received during [Refreshing], with previously loaded commits, to get a single commit list.
+     */
+    JoiningNewAndOldCommits {
+      override fun getName() = "vcs-log-joining-new-and-old-commits"
     },
 
-    Refresh {
-      override fun getName() = "refresh"
+    /**
+     * Combining commits from multiple repositories to a single commit list.
+     */
+    JoiningMultiRepoCommits {
+      override fun getName() = "vcs-log-joining-multi-repo-commits"
     },
 
-    FullLogReload {
-      override fun getName() = "full log reload"
+    // Other
+
+    /**
+     * Getting a list of containing branches for a commit.
+     */
+    GettingContainingBranches {
+      override fun getName() = "vcs-log-getting-containing-branches"
     },
 
-    ReadFullLogFromVcs {
-      override fun getName() = "read full log from VCS"
-    },
+  }
 
-    ReadFullLogFromVcsForRoot {
-      override fun getName() = "read full log from VCS for root"
-    },
-
-    GetContainingBranches {
-      override fun getName() = "get containing branches"
-    },
-
-    Initialize {
-      override fun getName() = "initialize"
-    },
-
-    ReadCurrentUser {
-      override fun getName() = "readCurrentUser"
-    },
-
-    MultiRepoJoin {
-      override fun getName() = "multi-repo join"
-    },
-
+  enum class LogIndex : VcsTelemetrySpan {
     Indexing {
       override fun getName() = "vcs-log-indexing"
-    },
-
-    StoreDetail {
-      override fun getName() = "store detail"
     }
   }
 
   enum class Shelve : VcsTelemetrySpan {
     TotalShelving {
-      override fun getName() = "total shelving"
+      override fun getName() = "shelf-total-shelving"
     },
 
     StoringBaseRevision {
-      override fun getName() = "storing base revisions"
+      override fun getName() = "shelf-storing-base-revisions"
     },
 
     StoringPathFile {
-      override fun getName() = "saving patch file"
+      override fun getName() = "shelf-saving-patch-file"
     },
 
     BatchShelving {
-      override fun getName() = "batch shelving"
+      override fun getName() = "shelf-batch-shelving"
     },
 
     PreloadingBaseRevisions {
-      override fun getName() = "preloading base revisions"
+      override fun getName() = "shelf-preloading-base-revisions"
     },
 
     BuildingPatches {
-      override fun getName() = "building patches"
+      override fun getName() = "shelf-building-patches"
     },
 
     RollbackAfterShelve {
-      override fun getName() = "rollback after shelve"
+      override fun getName() = "shelf-rollback-after-shelve"
     }
   }
 

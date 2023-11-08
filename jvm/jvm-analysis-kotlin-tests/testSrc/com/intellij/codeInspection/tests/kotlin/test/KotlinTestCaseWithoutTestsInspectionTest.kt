@@ -1,7 +1,7 @@
 package com.intellij.codeInspection.tests.kotlin.test
 
-import com.intellij.codeInspection.tests.JvmLanguage
-import com.intellij.codeInspection.tests.test.TestCaseWithoutTestsInspectionTestBase
+import com.intellij.jvm.analysis.internal.testFramework.test.TestCaseWithoutTestsInspectionTestBase
+import com.intellij.jvm.analysis.testFramework.JvmLanguage
 
 class KotlinTestCaseWithoutTestsInspectionTest : TestCaseWithoutTestsInspectionTestBase() {
   fun `test case without test methods`() {

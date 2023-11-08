@@ -4,6 +4,7 @@ package com.intellij.ui.jcef;
 import com.intellij.credentialStore.Credentials;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.BrowserUtil;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -739,6 +740,7 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
 
   public void openDevtools() {
     if (myDevtoolsFrame != null) {
+      myDevtoolsFrame.setVisible(true);
       myDevtoolsFrame.toFront();
       return;
     }
@@ -753,18 +755,20 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
 
     myDevtoolsFrame = new JDialog(ancestor);
     myDevtoolsFrame.setTitle("JCEF DevTools");
-    myDevtoolsFrame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+    myDevtoolsFrame.setDefaultCloseOperation(WindowConstants.HIDE_ON_CLOSE);
     myDevtoolsFrame.setBounds(bounds.width / 4 + 100, bounds.height / 4 + 100, bounds.width / 2, bounds.height / 2);
     myDevtoolsFrame.setLayout(new BorderLayout());
     JBCefBrowser devTools = JBCefBrowser.createBuilder().setCefBrowser(myCefBrowser.getDevTools()).setClient(myCefClient).build();
     myDevtoolsFrame.add(devTools.getComponent(), BorderLayout.CENTER);
-    myDevtoolsFrame.addWindowListener(new WindowAdapter() {
+
+    Disposer.register(this, devTools);
+    Disposer.register(this, new Disposable() {
       @Override
-      public void windowClosed(WindowEvent e) {
-        myDevtoolsFrame = null;
-        Disposer.dispose(devTools);
+      public void dispose() {
+        myDevtoolsFrame.dispose();
       }
     });
+
     myDevtoolsFrame.setVisible(true);
   }
 

@@ -24,6 +24,7 @@ import javax.swing.event.HyperlinkEvent
 object ErrorStatusPanelFactory {
   private const val ERROR_ACTION_HREF = "ERROR_ACTION"
 
+  @JvmOverloads
   fun <T> create(
     scope: CoroutineScope,
     errorState: Flow<T?>,

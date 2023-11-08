@@ -1,69 +1,84 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
+import com.dynatrace.hash4j.hashing.Hashing;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
+import com.intellij.concurrency.ConcurrentCollectionFactory;
+import com.intellij.featureStatistics.fusCollectors.FileEditorCollector;
+import com.intellij.featureStatistics.fusCollectors.FileEditorCollector.MarkupGraveEvent;
 import com.intellij.lang.annotation.HighlightSeverity;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorKind;
 import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.markup.*;
-import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.TextEditor;
+import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.ui.icons.CachedImageIcon;
-import com.intellij.util.containers.ContainerUtil;
-import org.jdom.Element;
+import com.intellij.openapi.vfs.VirtualFileWithId;
+import com.intellij.util.containers.ConcurrentIntObjectMap;
+import com.intellij.util.io.IOUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
-import java.net.MalformedURLException;
-import java.net.URL;
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.stream.Collectors;
+
+import static com.intellij.util.io.DataInputOutputUtil.readINT;
+import static com.intellij.util.io.DataInputOutputUtil.writeINT;
 
 /**
- * Stores the highlighting markup for the last opened files on disk on project close and restores it back to the editor on file open,
+ * Stores the highlighting markup on disk on file close and restores it back to the editor on file open,
  * to reduce the "opened editor-to-some highlighting shown" perceived interval.
  */
 @Service(Service.Level.PROJECT)
-@State(name = "HighlightingMarkupGrave", storages = @Storage(StoragePathMacros.CACHE_FILE))
-final class HighlightingMarkupGrave implements PersistentStateComponent<Element> {
+final class HighlightingMarkupGrave implements Disposable {
   private static final Logger LOG = Logger.getInstance(HighlightingMarkupGrave.class);
   private static final Key<Boolean> IS_ZOMBIE = Key.create("IS_ZOMBIE");
-  @NotNull private final Project myProject;
-  private ConcurrentMap<VirtualFile, FileMarkupInfo> cachedMarkup = new ConcurrentHashMap<>();
+
+  private final @NotNull Project myProject;
+  private final @NotNull ConcurrentIntObjectMap<Boolean> myResurrectedZombies; // fileId -> isMarkupModelPreferable
+  private final @NotNull HighlightingMarkupStore myMarkupStore;
 
   HighlightingMarkupGrave(@NotNull Project project) {
-    myProject = project;
     // check that important TextAttributesKeys are initialized
     assert DefaultLanguageHighlighterColors.INSTANCE_FIELD.getFallbackAttributeKey() != null : DefaultLanguageHighlighterColors.INSTANCE_FIELD;
 
+    myProject = project;
+    myResurrectedZombies = ConcurrentCollectionFactory.createConcurrentIntObjectMap();
+    myMarkupStore = HighlightingMarkupStore.create(project);
+
+    subscribeDaemonFinished();
+    subscribeFileClosed();
+  }
+
+  private void subscribeDaemonFinished() {
     // as soon as highlighting kicks in and displays its own range highlighters, remove ones we applied from the on-disk cache,
     // but only after the highlighting finished, to avoid flicker
-    project.getMessageBus().connect().subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC, new DaemonCodeAnalyzer.DaemonListener() {
+    myProject.getMessageBus().connect().subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC, new DaemonCodeAnalyzer.DaemonListener() {
       @Override
       public void daemonFinished(@NotNull Collection<? extends @NotNull FileEditor> fileEditors) {
         if (!DumbService.getInstance(myProject).isDumb()) {
           for (FileEditor fileEditor : fileEditors) {
-            if (DaemonCodeAnalyzerEx.isHighlightingCompleted(fileEditor, project)) {
-              putDownActiveZombiesInFile(fileEditor);
+            if (fileEditor instanceof TextEditor textEditor &&
+                textEditor.getEditor().getEditorKind() == EditorKind.MAIN_EDITOR &&
+                DaemonCodeAnalyzerEx.isHighlightingCompleted(textEditor, myProject)) {
+              putDownActiveZombiesInFile(textEditor);
             }
           }
         }
@@ -71,23 +86,44 @@ final class HighlightingMarkupGrave implements PersistentStateComponent<Element>
     });
   }
 
-  private void putDownActiveZombiesInFile(@NotNull FileEditor fileEditor) {
-    if (cachedMarkup.remove(fileEditor.getFile()) == null) {
+  private void subscribeFileClosed() {
+    myProject.getMessageBus().connect().subscribe(
+      FileEditorManagerListener.Before.FILE_EDITOR_MANAGER,
+      new FileEditorManagerListener.Before() {
+        @Override
+        public void beforeFileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
+          putInGrave(source, file);
+        }
+      }
+    );
+  }
+
+  private void putDownActiveZombiesInFile(@NotNull TextEditor textEditor) {
+    if (!(textEditor.getFile() instanceof VirtualFileWithId fileWithId)) {
       return;
     }
-    List<RangeHighlighter> toRemove = new ArrayList<>();
-    if (fileEditor instanceof TextEditor textEditor) {
-      MarkupModel markupModel = DocumentMarkupModel.forDocument(textEditor.getEditor().getDocument(), myProject, false);
-      if (markupModel != null) {
-        for (RangeHighlighter highlighter : markupModel.getAllHighlighters()) {
-          if (isZombieMarkup(highlighter)) {
-            toRemove.add(highlighter);
+    boolean replaced = myResurrectedZombies.replace(fileWithId.getId(), false, true);
+    if (!replaced) {
+      // no zombie or zombie already disposed
+      return;
+    }
+    List<RangeHighlighter> toRemove = null;
+    MarkupModel markupModel = DocumentMarkupModel.forDocument(textEditor.getEditor().getDocument(), myProject, false);
+    if (markupModel != null) {
+      for (RangeHighlighter highlighter : markupModel.getAllHighlighters()) {
+        if (isZombieMarkup(highlighter)) {
+          if (toRemove == null) {
+            toRemove = new ArrayList<>();
           }
+          toRemove.add(highlighter);
         }
       }
     }
+    if (toRemove == null) {
+      return;
+    }
     if (LOG.isDebugEnabled()) {
-      LOG.debug("removing " + toRemove.size() + " markups for " + fileEditor + "; dumb=" + DumbService.getInstance(myProject).isDumb());
+      LOG.debug("removing " + toRemove.size() + " markups for " + textEditor + "; dumb=" + DumbService.getInstance(myProject).isDumb());
     }
 
     for (RangeHighlighter highlighter : toRemove) {
@@ -95,24 +131,34 @@ final class HighlightingMarkupGrave implements PersistentStateComponent<Element>
     }
   }
 
-  void resurrectZombies(@NotNull Document document, @NotNull VirtualFile file) {
-    FileMarkupInfo markupInfo = cachedMarkup.get(file);
+  void resurrectZombies(@NotNull Document document, @NotNull VirtualFileWithId file) {
+    if (myResurrectedZombies.containsKey(file.getId())) {
+      return;
+    }
+    FileMarkupInfo markupInfo = myMarkupStore.getMarkup(file);
     if (markupInfo == null) {
+      myResurrectedZombies.put(file.getId(), true);
+      logFusStatistic(file, MarkupGraveEvent.NOT_RESTORED_CACHE_MISS);
       return;
     }
 
-    if (document.getText().hashCode() != markupInfo.contentHash()) {
+    if (contentHash(document) != markupInfo.contentHash()) {
       // text changed since the cached markup was saved on-disk
       if (LOG.isDebugEnabled()) {
-        LOG.debug("restore canceled hash mismatch " + markupInfo.highlighters().size() + " for " + file);
+        LOG.debug("restore canceled hash mismatch " + markupInfo.size() + " for " + file);
       }
+      myMarkupStore.removeMarkup(file);
+      myResurrectedZombies.put(file.getId(), true);
+      logFusStatistic(file, MarkupGraveEvent.NOT_RESTORED_CONTENT_CHANGED);
       return;
     }
 
     MarkupModel markupModel = DocumentMarkupModel.forDocument(document, myProject, true);
     for (HighlighterState state : markupInfo.highlighters()) {
-      if (state.end() > document.getTextLength()) {
+      int textLength = document.getTextLength();
+      if (state.end() > textLength) {
         // something's wrong, the document has changed in the other thread?
+        LOG.warn("skipped " + state + " as it is out of document with length " + textLength);
         continue;
       }
       RangeHighlighter highlighter;
@@ -120,10 +166,10 @@ final class HighlightingMarkupGrave implements PersistentStateComponent<Element>
       // (still store TextAttributesKey by instance, instead of String, to intern its external name)
       TextAttributesKey key = state.textAttributesKey() == null ? null : TextAttributesKey.find(state.textAttributesKey().getExternalName());
       if (key == null) {
-        highlighter = markupModel.addRangeHighlighter(state.start(), state.end(), state.layer(), state.textAttributes(), state.target());
+        highlighter = markupModel.addRangeHighlighter(state.start(), state.end(), state.layer(), state.textAttributes(), state.targetArea());
       }
       else {
-        highlighter = markupModel.addRangeHighlighter(key, state.start(), state.end(), state.layer(), state.target());
+        highlighter = markupModel.addRangeHighlighter(key, state.start(), state.end(), state.layer(), state.targetArea());
       }
       if (state.gutterIcon() != null) {
         GutterIconRenderer fakeIcon = new GutterIconRenderer() {
@@ -145,118 +191,183 @@ final class HighlightingMarkupGrave implements PersistentStateComponent<Element>
         highlighter.setGutterIconRenderer(fakeIcon);
       }
       markZombieMarkup(highlighter);
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("create " + highlighter + "; key=" + highlighter.getTextAttributesKey() +
-                 "; attr=" + highlighter.getTextAttributes(null) + "; icon=" + state.gutterIcon());
-      }
     }
+    logFusStatistic(file, MarkupGraveEvent.RESTORED, markupInfo.size());
     if (LOG.isDebugEnabled()) {
-      LOG.debug("restored " + markupInfo.highlighters().size() + " for " + file);
+      LOG.debug("restored " + markupInfo.size() + " for " + file);
     }
+    myResurrectedZombies.put(file.getId(), false);
   }
 
-  private record FileMarkupInfo(@NotNull VirtualFile virtualFile, int contentHash, @NotNull List<HighlighterState> highlighters) {
-    private FileMarkupInfo(@NotNull Project project, @NotNull VirtualFile virtualFile, @NotNull Document document, @NotNull Editor editor) {
-      this(virtualFile, document.getText().hashCode(), HighlighterState.allHighlightersFromMarkup(project, document, editor));
+  private void putInGrave(@NotNull FileEditorManager editorManager, @NotNull VirtualFile file) {
+    if (!(file instanceof VirtualFileWithId fileWithId)) {
+      return;
     }
+    FileEditor fileEditor = editorManager.getSelectedEditor(file);
+    if (!(fileEditor instanceof TextEditor textEditor)) {
+      return;
+    }
+    if (textEditor.getEditor().getEditorKind() != EditorKind.MAIN_EDITOR) {
+      return;
+    }
+    Document document = FileDocumentManager.getInstance().getCachedDocument(file);
+    if (document == null) {
+      return;
+    }
+    EditorColorsScheme colorsScheme = textEditor.getEditor().getColorsScheme();
+    HighlightingMarkupStore.getExecutor().execute(() -> {
+      ReadAction.run(() -> {
+        FileMarkupInfo markupFromModel = getMarkupFromModel(document, colorsScheme);
+        FileMarkupInfo storedMarkup = myMarkupStore.getMarkup(fileWithId);
+        Boolean zombieDisposed = myResurrectedZombies.get(fileWithId.getId());
+        GraveDecision graveDecision = GraveDecision.getDecision(markupFromModel, storedMarkup, zombieDisposed);
+        switch (graveDecision) {
+          case STORE_NEW -> {
+            myMarkupStore.putMarkup(fileWithId, markupFromModel);
+            if (LOG.isDebugEnabled()) {
+              LOG.debug("stored markup " + markupFromModel.size() + " for " + file);
+            }
+          }
+          case REMOVE_OLD -> {
+            myMarkupStore.removeMarkup(fileWithId);
+            if (LOG.isDebugEnabled() && storedMarkup != null) {
+              LOG.debug("removed outdated markup " + storedMarkup.size() + " for " + file);
+            }
+          }
+          case KEEP_OLD -> {
+            if (LOG.isDebugEnabled() && storedMarkup != null) {
+              LOG.debug("preserved markup " + storedMarkup.size() + " for " + file);
+            }
+          }
+        }
+      });
+    });
+  }
 
-    static FileMarkupInfo exhume(@NotNull Element element) {
-      String url = element.getAttributeValue("url", "");
-      VirtualFile virtualFile = VirtualFileManager.getInstance().findFileByUrl(url);
-      if (virtualFile == null) {
-        return null;
+  private @NotNull FileMarkupInfo getMarkupFromModel(@NotNull Document document, @NotNull EditorColorsScheme colorsScheme) {
+    return new FileMarkupInfo(
+      contentHash(document),
+      HighlighterState.allHighlightersFromMarkup(myProject, document, colorsScheme)
+    );
+  }
+
+  @Override
+  public void dispose() {
+    // TODO: it is not allowed to close on EDT
+    myMarkupStore.close(false);
+  }
+
+  record FileMarkupInfo(int contentHash, @NotNull List<@NotNull HighlighterState> highlighters) {
+    static @NotNull FileMarkupInfo exhume(@NotNull DataInput in) throws IOException {
+      int contentHash = readINT(in);
+      int hCount = readINT(in);
+      ArrayList<HighlighterState> highlighters = new ArrayList<>(hCount);
+      for (int i = 0; i < hCount; i++) {
+        HighlighterState highlighterState = HighlighterState.exhume(in);
+        highlighters.add(highlighterState);
       }
-      int contentHash = Integer.parseInt(element.getAttributeValue("contentHash", ""));
-      List<HighlighterState> highlighters = ContainerUtil.map(element.getChildren("highlighter"), e -> HighlighterState.exhume(e));
-      return new FileMarkupInfo(virtualFile, contentHash, highlighters);
+      return new FileMarkupInfo(contentHash, Collections.unmodifiableList(highlighters));
     }
-    @NotNull
-    Element bury() {
-      Element element = new Element("markupCoffin");
-      element.setAttribute("contentHash", Integer.toString(contentHash()));
-      element.setAttribute("url", virtualFile().getUrl());
-      element.addContent(ContainerUtil.map(highlighters(), h -> h.bury()));
-      return element;
+
+    void bury(@NotNull DataOutput out) throws IOException {
+      writeINT(out, contentHash);
+      writeINT(out, highlighters.size());
+      for (HighlighterState highlighterState : highlighters) {
+        highlighterState.bury(out);
+      }
+    }
+
+    boolean isEmpty() {
+      return highlighters.isEmpty();
+    }
+
+    int size() {
+      return highlighters.size();
     }
   }
-  private record HighlighterState(int start, int end, int layer,
-                                  @NotNull HighlighterTargetArea target,
-                                  @Nullable TextAttributesKey textAttributesKey,
-                                  @Nullable TextAttributes textAttributes,
-                                  @Nullable Icon gutterIcon) {
-    private HighlighterState(@NotNull RangeHighlighter highlighter, @NotNull Editor editor) {
-      this(highlighter.getStartOffset(), highlighter.getEndOffset(),
-           highlighter.getLayer(),
-           highlighter.getTargetArea(),
-           highlighter.getTextAttributesKey(),
-           highlighter.getTextAttributes(editor.getColorsScheme()),
-           highlighter.getGutterIconRenderer() == null ? null : highlighter.getGutterIconRenderer().getIcon()
+
+  record HighlighterState(
+    int start,
+    int end,
+    int layer,
+    @NotNull HighlighterTargetArea targetArea,
+    @Nullable TextAttributesKey textAttributesKey,
+    @Nullable TextAttributes textAttributes,
+    @Nullable Icon gutterIcon
+  ) {
+    private HighlighterState(@NotNull RangeHighlighter highlighter, @NotNull EditorColorsScheme colorsScheme) {
+      this(
+        highlighter.getStartOffset(),
+        highlighter.getEndOffset(),
+        highlighter.getLayer(),
+        highlighter.getTargetArea(),
+        highlighter.getTextAttributesKey(),
+        highlighter.getTextAttributes(colorsScheme),
+        highlighter.getGutterIconRenderer() == null ? null : highlighter.getGutterIconRenderer().getIcon()
       );
     }
 
-    @NotNull
-    private static HighlighterState exhume(@NotNull Element state) {
-      String keyExternalName = state.getAttributeValue("key");
-      TextAttributesKey key = keyExternalName == null ? null : TextAttributesKey.find(keyExternalName);
-      TextAttributes attributes = key == null ? new TextAttributes(state) : null;
-      if (attributes != null && attributes.isEmpty()) attributes = null;
-      int start = Integer.parseInt(state.getAttributeValue("start", ""));
-      int end = Integer.parseInt(state.getAttributeValue("end", ""));
-      int layer = Integer.parseInt(state.getAttributeValue("layer", String.valueOf(HighlighterLayer.ADDITIONAL_SYNTAX)));
-      HighlighterTargetArea target = HighlighterTargetArea.values()[Integer.parseInt(state.getAttributeValue("target", "0"))];
-      String gutterIconUrl = state.getAttributeValue("gutterIconUrl", "");
-      Icon icon = null;
-      if (!StringUtil.isEmpty(gutterIconUrl)) {
-        try {
-          URL url = new URL(gutterIconUrl);
-          icon = IconLoader.findIcon(url);
-        }
-        catch (MalformedURLException ignored) {
-        }
-      }
-
-      return new HighlighterState(start, end, layer, target, key, attributes, icon);
+    static @NotNull HighlighterState exhume(@NotNull DataInput in) throws IOException {
+      int start = readINT(in);
+      int end = readINT(in);
+      int layer = readINT(in);
+      int target = readINT(in);
+      TextAttributesKey key = in.readBoolean() ? TextAttributesKey.find(IOUtil.readUTF(in)) : null;
+      TextAttributes attributes = in.readBoolean() ? new TextAttributes(in) : null;
+      Icon icon = EditorCacheKt.readGutterIcon(in);
+      return new HighlighterState(start, end, layer, HighlighterTargetArea.values()[target], key, attributes, icon);
     }
 
-    @NotNull
-    private Element bury() {
-      TextAttributesKey key = textAttributesKey();
-      TextAttributes attributes = textAttributes();
-      int start = start();
-      int end = end();
-      int layer = layer();
-      HighlighterTargetArea target = target();
-      Element element = new Element("highlighter");
-      if (key != null) {
-        element.setAttribute("key", key.getExternalName());
-      }
-      else if (attributes != null) {
-        attributes.writeExternal(element);
-      }
-      element.setAttribute("start", Integer.toString(start));
-      element.setAttribute("end", Integer.toString(end));
-      if (layer != HighlighterLayer.ADDITIONAL_SYNTAX) {
-        // there are more HighlighterLayer.ADDITIONAL_SYNTAX highlighters than anything else
-        element.setAttribute("layer", Integer.toString(layer));
-      }
-      if (target != HighlighterTargetArea.EXACT_RANGE) {
-        element.setAttribute("target", Integer.toString(target.ordinal()));
-      }
-      Icon icon = gutterIcon();
-      if (icon instanceof CachedImageIcon cii) {
-        URL url = cii.getUrl();
-        if (url != null) {
-          element.setAttribute("gutterIconUrl", url.toExternalForm());
-        }
-      }
+    void bury(@NotNull DataOutput out) throws IOException {
+      writeINT(out, start);
+      writeINT(out, end);
+      writeINT(out, layer);
+      writeINT(out, targetArea.ordinal());
+      writeTextAttributesKey(out);
+      writeTextAttributes(out);
+      EditorCacheKt.writeGutterIcon(gutterIcon, out);
+    }
 
-      return element;
+    private void writeTextAttributesKey(@NotNull DataOutput out) throws IOException {
+      boolean attributesKeyExists = textAttributesKey != null;
+      out.writeBoolean(attributesKeyExists);
+      if (attributesKeyExists) {
+        IOUtil.writeUTF(out, textAttributesKey.getExternalName());
+      }
+    }
+
+    private void writeTextAttributes(@NotNull DataOutput out) throws IOException {
+      boolean attributesExists = textAttributes != null && textAttributesKey == null;
+      out.writeBoolean(attributesExists);
+      if (attributesExists) {
+        textAttributes.writeExternal(out);
+      }
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      // exclude gutterIcon
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      HighlighterState state = (HighlighterState)o;
+      return start == state.start &&
+             end == state.end &&
+             layer == state.layer &&
+             targetArea == state.targetArea &&
+             Objects.equals(textAttributesKey, state.textAttributesKey) &&
+             Objects.equals(textAttributes, state.textAttributes);
+    }
+
+    @Override
+    public int hashCode() {
+      // exclude gutterIcon
+      return Objects.hash(start, end, layer, targetArea, textAttributesKey, textAttributes);
     }
 
     @NotNull
     private static List<HighlighterState> allHighlightersFromMarkup(@NotNull Project project,
                                                                     @NotNull Document document,
-                                                                    @NotNull Editor editor) {
+                                                                    @NotNull EditorColorsScheme colorsScheme) {
       MarkupModel markupModel = DocumentMarkupModel.forDocument(document, project, false);
       if (markupModel == null) {
         return Collections.emptyList();
@@ -275,64 +386,67 @@ final class HighlightingMarkupGrave implements PersistentStateComponent<Element>
                  || (lm = LineMarkersUtil.getLineMarkerInfo(h)) != null && lm.getIcon() != null; // or a line marker with a gutter icon
           }
         )
-        .map(h -> new HighlighterState(h, editor))
+        .map(h -> new HighlighterState(h, colorsScheme))
         .sorted(comparator)
         .toList();
     }
   }
 
-  @Override
-  public void loadState(@NotNull Element state) {
-    if (!isEnabled()) return;
-    cachedMarkup =
-    state.getChildren("markupCoffin")
-      .stream()
-      .map(markupElement -> FileMarkupInfo.exhume(markupElement))
-      .filter(Objects::nonNull)
-      .collect(Collectors.toConcurrentMap(m->m.virtualFile(), m->m));
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("loaded markup for " + StringUtil.join(cachedMarkup.keySet(), v -> v.getName(), ","));
-    }
-  }
+  private enum GraveDecision {
+    STORE_NEW,
+    KEEP_OLD,
+    REMOVE_OLD;
 
-  @Override
-  public Element getState() {
-    if (!isEnabled()) return null;
-    Map<VirtualFile, FileMarkupInfo> markup = new HashMap<>();
-    for (FileEditor fileEditor : FileEditorManager.getInstance(myProject).getAllEditors()) {
-      if (fileEditor instanceof TextEditor textEditor && fileEditor.getFile() != null) {
-        Editor editor = textEditor.getEditor();
-        VirtualFile file = fileEditor.getFile();
-        Document document = editor.getDocument();
-        markup.put(file, new FileMarkupInfo(myProject, file, document, editor));
+    static GraveDecision getDecision(
+      @NotNull FileMarkupInfo newMarkup,
+      @Nullable FileMarkupInfo oldMarkup,
+      @Nullable Boolean isNewMoreRelevant
+    ) {
+      if (oldMarkup == null && !newMarkup.isEmpty()) {
+        // put zombie's limbs
+        return STORE_NEW;
       }
+      if (oldMarkup == null) {
+        // no a limb to put in grave
+        return KEEP_OLD;
+      }
+      if (oldMarkup.contentHash() != newMarkup.contentHash() && !newMarkup.isEmpty()) {
+        // fresh limbs
+        return STORE_NEW;
+      }
+      if (oldMarkup.contentHash() != newMarkup.contentHash()) {
+        // graved zombie is rotten and there is no a limb to bury
+        return REMOVE_OLD;
+      }
+      if (newMarkup.isEmpty()) {
+        // graved zombie is still fresh
+        return KEEP_OLD;
+      }
+      if (isNewMoreRelevant == null) {
+        // should never happen. file is closed without being opened before
+        return STORE_NEW;
+      }
+      if (isNewMoreRelevant) {
+        // limbs form complete zombie
+        return STORE_NEW;
+      }
+      return KEEP_OLD;
     }
-
-    List<Element> markupElements = markup.entrySet().stream()
-      .filter(e -> !e.getValue().highlighters.isEmpty())
-      .sorted(Comparator.comparing(e -> e.getKey().getUrl()))
-      .map(e -> e.getValue().bury())
-      .toList();
-    Element element = new Element("root");
-    element.addContent(markupElements);
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("saved markup for " + StringUtil.join(markup.keySet(), v -> v.getName(), ","));
-    }
-    return element;
   }
 
   static boolean isEnabled() {
-    return Registry.is("cache.higlighting.markup.on.disk");
+    return Registry.is("cache.highlighting.markup.on.disk", true);
   }
 
+  @TestOnly
   static void runInEnabled(@NotNull Runnable runnable) {
     boolean wasEnabled = isEnabled();
-    Registry.get("cache.higlighting.markup.on.disk").setValue(true);
+    Registry.get("cache.highlighting.markup.on.disk").setValue(true);
     try {
       runnable.run();
     }
     finally {
-      Registry.get("cache.higlighting.markup.on.disk").setValue(wasEnabled);
+      Registry.get("cache.highlighting.markup.on.disk").setValue(wasEnabled);
     }
   }
 
@@ -346,5 +460,22 @@ final class HighlightingMarkupGrave implements PersistentStateComponent<Element>
 
   static void unmarkZombieMarkup(@NotNull RangeMarker highlighter) {
     highlighter.putUserData(IS_ZOMBIE, null);
+  }
+
+  @TestOnly
+  void clearResurrectedZombies() {
+    myResurrectedZombies.clear();
+  }
+
+  private static int contentHash(@NotNull Document document) {
+    return Hashing.komihash5_0().hashCharsToInt(document.getImmutableCharSequence());
+  }
+
+  private void logFusStatistic(@NotNull VirtualFileWithId file, @NotNull MarkupGraveEvent event) {
+    logFusStatistic(file, event, 0);
+  }
+
+  private void logFusStatistic(@NotNull VirtualFileWithId file, @NotNull MarkupGraveEvent event, int restoredCount) {
+    FileEditorCollector.logEditorMarkupGrave(myProject, (VirtualFile) file, event, restoredCount);
   }
 }

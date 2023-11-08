@@ -1,6 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.impl;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Throwable2Computable;
@@ -9,7 +11,6 @@ import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.encoding.EncodingRegistry;
-import com.intellij.util.containers.SLRUMap;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -17,33 +18,25 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.ref.SoftReference;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.Map;
-
-import static com.intellij.reference.SoftReference.dereference;
+import java.util.Objects;
 
 public final class ContentRevisionCache {
-  private final Object myLock;
-  private final SLRUMap<Key, SoftReference<byte[]>> myCache;
+  private final Object myLock = new Object();
+  private final Cache<Key, byte[]> myCache = Caffeine.newBuilder().maximumSize(100).softValues().build();
   private final Map<Key, byte[]> myConstantCache = new HashMap<>();
-
-  public ContentRevisionCache() {
-    myLock = new Object();
-    myCache = new SLRUMap<>(100, 50);
-  }
 
   private void put(@NotNull FilePath path,
                    @NotNull VcsRevisionNumber number,
                    @NotNull VcsKey vcsKey,
                    @NotNull UniqueType type,
                    byte @Nullable [] bytes) {
-    if (bytes == null) return;
-    synchronized (myLock) {
-      myCache.put(new Key(path, number, vcsKey, type), new SoftReference<>(bytes));
+    if (bytes != null) {
+      myCache.put(new Key(path, number, vcsKey, type), bytes);
     }
   }
 
@@ -56,29 +49,6 @@ public final class ContentRevisionCache {
     else {
       return CharsetToolkit.bytesToString(bytes, charset);
     }
-  }
-
-  public static @NotNull String getOrLoadAsString(@NotNull Project project,
-                                                  @NotNull FilePath file,
-                                                  @NotNull VcsRevisionNumber number,
-                                                  @NotNull VcsKey key,
-                                                  @NotNull UniqueType type,
-                                                  @NotNull Throwable2Computable<byte[], ? extends VcsException, ? extends IOException> loader,
-                                                  @Nullable Charset charset)
-    throws VcsException, IOException {
-    final byte[] bytes = getOrLoadAsBytes(project, file, number, key, type, loader);
-    return getAsString(bytes, file, charset);
-  }
-
-
-  public static @NotNull String getOrLoadAsString(@NotNull Project project,
-                                                  @NotNull FilePath path,
-                                                  @NotNull VcsRevisionNumber number,
-                                                  @NotNull VcsKey vcsKey,
-                                                  @NotNull UniqueType type,
-                                                  @NotNull Throwable2Computable<byte[], ? extends VcsException, ? extends IOException> loader)
-    throws VcsException, IOException {
-    return getOrLoadAsString(project, path, number, vcsKey, type, loader, null);
   }
 
   private static @NotNull String bytesToString(FilePath path, byte @NotNull [] bytes) {
@@ -97,10 +67,7 @@ public final class ContentRevisionCache {
   }
 
   public byte @Nullable [] getBytes(FilePath path, VcsRevisionNumber number, @NotNull VcsKey vcsKey, @NotNull UniqueType type) {
-    synchronized (myLock) {
-      final SoftReference<byte[]> reference = myCache.get(new Key(path, number, vcsKey, type));
-      return dereference(reference);
-    }
+    return myCache.getIfPresent(new Key(path, number, vcsKey, type));
   }
 
   public static byte @NotNull [] loadAsBytes(@NotNull FilePath path,
@@ -204,21 +171,13 @@ public final class ContentRevisionCache {
       myVcsKey = vcsKey;
     }
 
-    public FilePath getPath() {
-      return myPath;
-    }
-
     @Override
     public boolean equals(Object o) {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
 
       CurrentKey that = (CurrentKey)o;
-
-      if (myPath != null ? !myPath.equals(that.myPath) : that.myPath != null) return false;
-      if (myVcsKey != null ? !myVcsKey.equals(that.myVcsKey) : that.myVcsKey != null) return false;
-
-      return true;
+      return Objects.equals(myPath, that.myPath) && Objects.equals(myVcsKey, that.myVcsKey);
     }
 
     @Override
@@ -239,14 +198,6 @@ public final class ContentRevisionCache {
       myType = type;
     }
 
-    public VcsRevisionNumber getNumber() {
-      return myNumber;
-    }
-
-    public UniqueType getType() {
-      return myType;
-    }
-
     @Override
     public boolean equals(Object o) {
       if (this == o) return true;
@@ -254,20 +205,14 @@ public final class ContentRevisionCache {
       if (!super.equals(o)) return false;
 
       Key key = (Key)o;
-
-      if (myNumber != null ? !myNumber.equals(key.myNumber) : key.myNumber != null) return false;
-      if (!myPath.equals(key.myPath)) return false;
-      if (myType != key.myType) return false;
-      if (!myVcsKey.equals(key.myVcsKey)) return false;
-
-      return true;
+      return Objects.equals(myNumber, key.myNumber) && myPath.equals(key.myPath) && myType == key.myType && myVcsKey.equals(key.myVcsKey);
     }
 
     @Override
     public int hashCode() {
       int result = super.hashCode();
       result = 31 * result + myPath.hashCode();
-      result = 31 * result + (myNumber != null ? myNumber.hashCode() : 0);
+      result = 31 * result + (myNumber == null ? 0 : myNumber.hashCode());
       result = 31 * result + myVcsKey.hashCode();
       result = 31 * result + myType.hashCode();
       return result;
@@ -280,8 +225,8 @@ public final class ContentRevisionCache {
   }
 
   public void clearAll() {
+    myCache.invalidateAll();
     synchronized (myLock) {
-      myCache.clear();
       myConstantCache.clear();
     }
   }

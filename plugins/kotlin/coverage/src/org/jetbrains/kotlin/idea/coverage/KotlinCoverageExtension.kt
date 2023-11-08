@@ -50,9 +50,10 @@ class KotlinCoverageExtension : JavaCoverageEngineExtension() {
         element: PsiNamedElement
     ): PackageAnnotator.ClassCoverageInfo? {
         if (element is KtClassOrObject) {
-            val searchScope = CoverageDataManager.getInstance(element.project)
-                ?.currentSuitesBundle
-                ?.getSearchScope(element.project) ?: return null
+            val project = element.project
+            val bundle = CoverageDataManager.getInstance(project).activeSuites()
+                .firstOrNull { it.getAnnotator(project).javaClass == coverageAnnotator.javaClass } ?: return null
+            val searchScope = bundle.getSearchScope(project) ?: return null
             val vFile = PsiUtilCore.getVirtualFile(element) ?: return null
             if (!searchScope.contains(vFile)) return null
             return coverageAnnotator.getClassCoverageInfo(element.fqName?.asString())

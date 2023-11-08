@@ -34,8 +34,7 @@ class LookupElementsCollector(
 
     private val elements = ArrayList<LookupElement>()
 
-    private val resultSet = resultSet.withPrefixMatcher(prefixMatcher).withRelevanceSorter(sorter)
-
+    val resultSet = resultSet.withPrefixMatcher(prefixMatcher).withRelevanceSorter(sorter)
     private val postProcessors = ArrayList<(LookupElement) -> LookupElement>()
     private val processedCallables = HashSet<CallableDescriptor>()
 

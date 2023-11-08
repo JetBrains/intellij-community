@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
-import com.intellij.ide.ui.AntialiasingType;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -9,7 +8,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.dsl.builder.DslComponentProperty;
 import com.intellij.ui.dsl.gridLayout.UnscaledGapsKt;
 import com.intellij.ui.paint.LinePainter2D;
-import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
@@ -46,7 +44,8 @@ public class HighlightableComponent extends JComponent implements Accessible {
   }
 
   @Override public void updateUI() {
-    GraphicsUtil.setAntialiasingType(this, AntialiasingType.getAAHintForSwingComponent());
+    UISettings.setupComponentAntialiasing(this);
+    UISettings.setupFractionalMetrics(this);
   }
 
   public void setText(@Nullable @Nls String text) {

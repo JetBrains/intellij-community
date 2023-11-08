@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Comparator;
 
-public class RefEntityAlphabeticalComparator implements Comparator<RefEntity> {
+public final class RefEntityAlphabeticalComparator implements Comparator<RefEntity> {
 
   @Override
   public int compare(final @NotNull RefEntity o1, final @NotNull RefEntity o2) {
@@ -15,7 +15,7 @@ public class RefEntityAlphabeticalComparator implements Comparator<RefEntity> {
     return o1.getQualifiedName().compareToIgnoreCase(o2.getQualifiedName());
   }
 
-  private static class RefEntityAlphabeticalComparatorHolder {
+  private static final class RefEntityAlphabeticalComparatorHolder {
     private static final RefEntityAlphabeticalComparator ourEntity = new RefEntityAlphabeticalComparator();
   }
 

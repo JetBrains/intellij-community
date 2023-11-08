@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
 package com.intellij.navigation
 
@@ -23,8 +23,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.coroutineToIndicator
-import com.intellij.openapi.progress.withBackgroundProgress
-import com.intellij.openapi.progress.withRawProgressReporter
+import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.roots.ProjectRootManager
@@ -34,6 +33,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.wm.IdeFocusManager
+import com.intellij.platform.util.progress.withRawProgressReporter
 import com.intellij.psi.PsiElement
 import com.intellij.util.PsiNavigateUtil
 import com.intellij.util.containers.ComparatorUtil.max

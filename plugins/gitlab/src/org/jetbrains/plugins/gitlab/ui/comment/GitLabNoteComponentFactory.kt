@@ -23,22 +23,25 @@ import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.ui.timeline.GitLabMergeRequestTimelineUIUtil
+import org.jetbrains.plugins.gitlab.util.GitLabStatistics
 import java.net.URL
 import javax.swing.JComponent
 
-object GitLabNoteComponentFactory {
+internal object GitLabNoteComponentFactory {
 
   fun create(componentType: ComponentType,
              project: Project,
              cs: CoroutineScope,
              avatarIconsProvider: IconsProvider<GitLabUserDTO>,
-             vm: GitLabNoteViewModel): JComponent {
+             vm: GitLabNoteViewModel,
+             place: GitLabStatistics.MergeRequestNoteActionPlace): JComponent {
     val textPanel = createTextPanel(cs, vm.bodyHtml, vm.serverUrl)
 
     val actionsVm = vm.actionsVm
     val contentPanel = if (actionsVm != null) {
       EditableComponentFactory.create(cs, textPanel, actionsVm.editVm) { editVm ->
-        val editor = GitLabNoteEditorComponentFactory.create(project, this, editVm, createEditActionsConfig(actionsVm, editVm))
+        val actions = createEditActionsConfig(actionsVm, editVm, project, place)
+        val editor = GitLabNoteEditorComponentFactory.create(project, this, editVm, actions)
         editVm.requestFocus()
         editor
       }
@@ -47,16 +50,17 @@ object GitLabNoteComponentFactory {
       textPanel
     }
 
-    val actionsPanel = createActions(cs, flowOf(vm))
+    val actionsPanel = createActions(cs, flowOf(vm), project, place)
     return CodeReviewChatItemUIUtil.build(componentType,
                                           { avatarIconsProvider.getIcon(vm.author, it) },
                                           contentPanel) {
-      withHeader(createTitle(cs, vm), actionsPanel)
+      withHeader(createTitle(cs, vm, project, place), actionsPanel)
     }
   }
 
   @OptIn(ExperimentalCoroutinesApi::class)
-  fun createTitle(cs: CoroutineScope, vm: GitLabNoteViewModel): JComponent {
+  fun createTitle(cs: CoroutineScope, vm: GitLabNoteViewModel,
+                  project: Project, place: GitLabStatistics.MergeRequestNoteActionPlace): JComponent {
     return HorizontalListPanel(CodeReviewCommentUIUtil.Title.HORIZONTAL_GAP).apply {
       add(GitLabMergeRequestTimelineUIUtil.createTitleTextPane(vm.author, vm.createdAt))
 
@@ -78,13 +82,27 @@ object GitLabNoteComponentFactory {
           null
         }
       }
+
+      val actionsVm = vm.actionsVm
+      if (vm.isDraft && actionsVm != null) {
+        add(CodeReviewCommentUIUtil.createPostNowButton { _ ->
+          actionsVm.submitDraft()
+          GitLabStatistics.logMrActionExecuted(project, GitLabStatistics.MergeRequestAction.POST_DRAFT_NOTE, place)
+        }.apply {
+          isVisible = actionsVm.canSubmit()
+          if (actionsVm.canSubmit()) {
+            bindDisabledIn(cs, actionsVm.busy)
+          }
+        })
+      }
       if (vm.isDraft) {
         add(CollaborationToolsUIUtil.createTagLabel(CollaborationToolsBundle.message("review.thread.pending.tag")))
       }
     }
   }
 
-  fun createActions(cs: CoroutineScope, note: Flow<GitLabNoteViewModel>): JComponent {
+  fun createActions(cs: CoroutineScope, note: Flow<GitLabNoteViewModel>,
+                    project: Project, place: GitLabStatistics.MergeRequestNoteActionPlace): JComponent {
     val panel = HorizontalListPanel(CodeReviewCommentUIUtil.Actions.HORIZONTAL_GAP).apply {
       cs.launch {
         note.mapNotNull { it.actionsVm }.collectLatest {
@@ -96,7 +114,10 @@ object GitLabNoteComponentFactory {
                 bindDisabledIn(this@coroutineScope, it.busy)
               }
             }.also(::add)
-            CodeReviewCommentUIUtil.createDeleteCommentIconButton { _ -> it.delete() }.apply {
+            CodeReviewCommentUIUtil.createDeleteCommentIconButton { _ ->
+              it.delete()
+              GitLabStatistics.logMrActionExecuted(project, GitLabStatistics.MergeRequestAction.DELETE_NOTE, place)
+            }.apply {
               bindDisabledIn(this@coroutineScope, it.busy)
             }.also(::add)
             repaint()
@@ -116,9 +137,11 @@ object GitLabNoteComponentFactory {
     }
 
   fun CoroutineScope.createEditActionsConfig(actionsVm: GitLabNoteAdminActionsViewModel,
-                                             editVm: GitLabNoteEditingViewModel): CommentInputActionsComponentFactory.Config =
+                                             editVm: ExistingGitLabNoteEditingViewModel,
+                                             project: Project,
+                                             place: GitLabStatistics.MergeRequestNoteActionPlace): CommentInputActionsComponentFactory.Config =
     CommentInputActionsComponentFactory.Config(
-      primaryAction = MutableStateFlow(editVm.submitActionIn(this, CollaborationToolsBundle.message("review.comment.save"))),
+      primaryAction = MutableStateFlow(editVm.saveActionIn(this, CollaborationToolsBundle.message("review.comment.save"), project, place)),
       cancelAction = MutableStateFlow(swingAction(CommonBundle.getCancelButtonText()) {
         actionsVm.stopEditing()
       }),

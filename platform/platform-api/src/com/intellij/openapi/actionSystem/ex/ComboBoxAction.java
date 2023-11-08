@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem.ex;
 
 import com.intellij.icons.AllIcons;
@@ -233,20 +233,20 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
       });
     }
 
-    protected void presentationChanged(PropertyChangeEvent evt) {
-      String propertyName = evt.getPropertyName();
+    protected void presentationChanged(PropertyChangeEvent event) {
+      String propertyName = event.getPropertyName();
       if (Presentation.PROP_TEXT.equals(propertyName)) {
-        setText((String)evt.getNewValue());
+        setText((String)event.getNewValue());
       }
       else if (Presentation.PROP_DESCRIPTION.equals(propertyName)) {
-        myTooltipText = (String)evt.getNewValue();
+        myTooltipText = (String)event.getNewValue();
         updateTooltipText();
       }
       else if (Presentation.PROP_ICON.equals(propertyName)) {
-        setIcon((Icon)evt.getNewValue());
+        setIcon((Icon)event.getNewValue());
       }
       else if (Presentation.PROP_ENABLED.equals(propertyName)) {
-        setEnabled((Boolean)evt.getNewValue());
+        setEnabled((Boolean)event.getNewValue());
       }
     }
 

@@ -6,6 +6,7 @@ import com.intellij.find.findInProject.FindInProjectManager;
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
 import com.intellij.find.impl.SearchEverywhereItem;
 import com.intellij.find.impl.TextSearchRightActionAction;
+import com.intellij.find.impl.UsageAdaptersKt;
 import com.intellij.icons.AllIcons;
 import com.intellij.icons.ExpUiIcons;
 import com.intellij.ide.DataManager;
@@ -20,6 +21,7 @@ import com.intellij.ide.actions.searcheverywhere.statistics.SearchFieldStatistic
 import com.intellij.ide.actions.searcheverywhere.statistics.SearchPerformanceTracker;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.laf.darcula.ui.TextFieldWithPopupHandlerUI;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.gotoByName.QuickSearchComponent;
 import com.intellij.ide.util.scopeChooser.ScopeDescriptor;
 import com.intellij.internal.statistic.eventLog.events.EventFields;
@@ -40,6 +42,7 @@ import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.progress.util.TooManyUsagesStatus;
 import com.intellij.openapi.project.*;
+import com.intellij.openapi.ui.OnePixelDivider;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
@@ -67,6 +70,7 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.*;
+import com.intellij.usages.impl.UsagePreviewPanel;
 import com.intellij.usages.impl.UsageViewManagerImpl;
 import com.intellij.util.Alarm;
 import com.intellij.util.Processor;
@@ -143,6 +147,10 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
   private ExtendedInfoComponent myExtendedInfoComponent;
   private final SearchListener topicPublisher = ApplicationManager.getApplication().getMessageBus().syncPublisher(SEARCH_EVENTS);
 
+  private UsagePreviewPanel myUsagePreviewPanel;
+  private UsageViewPresentation myUsageViewPresentation;
+  private static final String SPLITTER_SERVICE_KEY = "search.everywhere.splitter";
+  static final String PREVIEW_PROPERTY_KEY = "SearchEverywhere.previewPropertyKey";
 
   public SearchEverywhereUI(@Nullable Project project, List<SearchEverywhereContributor<?>> contributors) {
     this(project, contributors, s -> null);
@@ -157,9 +165,6 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
                             @NotNull Function<? super String, String> shortcutSupplier,
                             @Nullable SearchEverywhereSpellingCorrector spellingCorrector) {
     super(project);
-    myListFactory = Experiments.getInstance().isFeatureEnabled("search.everywhere.mixed.results")
-                    ? new MixedListFactory()
-                    : new GroupedListFactory();
 
     mySpellingCorrector = spellingCorrector;
 
@@ -167,10 +172,27 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
       updateSearchFieldAdvertisement();
       scheduleRebuildList(SearchRestartReason.SCOPE_CHANGED);
     };
+
+    if (project != null && isPreviewEnabled() && !PropertiesComponent.getInstance().isValueSet(PREVIEW_PROPERTY_KEY)) {
+      PropertiesComponent.getInstance().setValue(PREVIEW_PROPERTY_KEY, true);
+    }
+
+    AnAction showInFindToolWindowAction = project == null ? null : new ShowInFindToolWindowAction();
     myHeader = new SearchEverywhereHeader(project, contributors, scopeChangedCallback,
-                                          shortcutSupplier, project == null ? null : new ShowInFindToolWindowAction(), this);
+                                          shortcutSupplier, showInFindToolWindowAction,
+                                          this);
 
     myMlService = SearchEverywhereMlService.getInstance();
+
+    if (Experiments.getInstance().isFeatureEnabled("search.everywhere.mixed.results")) {
+      myListFactory =
+        (myMlService != null && !myMlService.getShouldAllTabPrioritizeRecentFiles()) ?
+        new MixedListFactory(true) : new MixedListFactory();
+    }
+    else {
+      myListFactory = new GroupedListFactory();
+    }
+
     if (myMlService != null) {
       myMlService.onSessionStarted(myProject, new SearchEverywhereMixedListInfo(myListFactory));
     }
@@ -594,6 +616,57 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
   }
 
   @Override
+  protected JPanel createSuggestionsPanel() {
+    if (myProject == null) return super.createSuggestionsPanel();
+
+    JScrollPane resultScroll = createListPane();
+
+    myUsageViewPresentation = new UsageViewPresentation();
+    myUsagePreviewPanel = new UsagePreviewPanel(myProject, myUsageViewPresentation, true) {
+      @Override
+      public Dimension getPreferredSize() {
+        return new Dimension(myHeader.getComponent().getWidth(), Math.max(getHeight(), getLineHeight() * 10));
+      }
+    };
+
+    updatePreviewVisibility(myHeader.getSelectedTab());
+
+    ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(
+      SETabSwitcherListener.Companion.getSE_TAB_TOPIC(), new SETabSwitcherListener() {
+        @Override
+        public void tabSwitched(@NotNull SETabSwitcherListener.SETabSwitchedEvent event) {
+          updatePreviewVisibility(event.getNewTab());
+        }
+      });
+
+    ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(
+      SEHeaderActionListener.Companion.getSE_HEADER_ACTION_TOPIC(), new SEHeaderActionListener() {
+        @Override
+        public void performed(@NotNull SEHeaderActionListener.SearchEverywhereActionEvent event) {
+          if (event.getActionID().equals("Preview")) {
+            updatePreviewVisibility(myHeader.getSelectedTab());
+          }
+        }
+      });
+
+    OnePixelSplitter splitter = new OnePixelSplitter(true, .33f);
+    splitter.setSplitterProportionKey(SPLITTER_SERVICE_KEY);
+    splitter.getDivider().setBackground(OnePixelDivider.BACKGROUND);
+    splitter.setFirstComponent(resultScroll);
+    splitter.setSecondComponent(myUsagePreviewPanel);
+
+    JPanel panel = new JPanel(new BorderLayout());
+    panel.add(splitter, BorderLayout.CENTER);
+
+    return createFooterPanel(panel);
+  }
+
+  private void updatePreviewVisibility(@NotNull SETab tab) {
+    boolean noProviders = ContainerUtil.filterIsInstance(tab.getContributors(), SearchEverywherePreviewProvider.class).isEmpty();
+    myUsagePreviewPanel.setVisible(isPreviewEnabled() && isPreviewActive() && !noProviders);
+  }
+
+  @Override
   protected @NotNull JPanel createFooterPanel(@NotNull JPanel panel) {
     if (!isExtendedInfoEnabled()) return super.createFooterPanel(panel);
 
@@ -827,6 +900,10 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
           myExtendedInfoComponent.updateElement(selectedValue, this);
         }
       }
+
+      if (isPreviewEnabled() && myProject != null && selectedValue != null && myUsagePreviewPanel != null) {
+        schedulePreview(selectedValue);
+      }
     });
 
     MessageBusConnection busConnection = myProject != null
@@ -855,9 +932,50 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
       }
     });
   }
-  
+
+  private void schedulePreview(@NotNull Object selectedValue) {
+    new Task.Backgroundable(myProject, IdeBundle.message("search.everywhere.preview.showing"), true) {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        UsageInfo usageInfo = ReadAction.compute(() -> SearchEverywherePreview.getFileFirstUsage(selectedValue));
+
+        List<UsageInfo2UsageAdapter> usages = new ArrayList<>();
+        if (usageInfo != null) {
+          usages.add(new UsageInfo2UsageAdapter(usageInfo));
+        }
+        else {
+          if (selectedValue instanceof UsageInfo2UsageAdapter) {
+            usages.add((UsageInfo2UsageAdapter)selectedValue);
+          }
+          else if (selectedValue instanceof SearchEverywhereItem) {
+            usages.add(((SearchEverywhereItem)selectedValue).getUsage());
+          }
+        }
+
+        if (myProject != null) {
+          UsageAdaptersKt.getUsageInfo(usages, myProject).thenAccept(infos -> {
+            ReadAction.nonBlocking(() -> UsagePreviewPanel.isOneAndOnlyOnePsiFileInUsages(infos))
+              .finishOnUiThread(ModalityState.nonModal(), isOneAndOnlyOnePsiFileInUsages -> {
+                myUsagePreviewPanel.updateLayout(infos);
+              })
+              .coalesceBy(this)
+              .submit(AppExecutorUtil.getAppExecutorService());
+          });
+        }
+      }
+    }.queue();
+  }
+
   static boolean isExtendedInfoEnabled() {
     return Registry.is("search.everywhere.footer.extended.info") || ApplicationManager.getApplication().isInternal();
+  }
+
+  static boolean isPreviewEnabled() {
+    return Registry.is("search.everywhere.preview");
+  }
+
+  private static boolean isPreviewActive() {
+    return PropertiesComponent.getInstance().isTrueValue(PREVIEW_PROPERTY_KEY);
   }
 
   /**
@@ -1018,7 +1136,8 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
 
   private void onMouseClicked(@NotNull MouseEvent e) {
     boolean multiSelectMode = e.isShiftDown() || UIUtil.isControlKeyDown(e);
-    if (e.getButton() == MouseEvent.BUTTON1 && !multiSelectMode) {
+    boolean previewMode = isPreviewActive();
+    if (e.getButton() == MouseEvent.BUTTON1 && !multiSelectMode && !previewMode) {
       e.consume();
       final int i = myResultsList.locationToIndex(e.getPoint());
       if (i > -1) {

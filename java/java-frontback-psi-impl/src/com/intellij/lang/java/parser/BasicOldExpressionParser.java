@@ -49,7 +49,7 @@ public class BasicOldExpressionParser {
     myParser = javaParser;
     myJavaElementTypeContainer = javaParser.getJavaElementTypeFactory().getContainer();
     TYPE_START = TokenSet.orSet(
-      BASIC_PRIMITIVE_TYPE_BIT_SET.toTokenSet(), TokenSet.create(JavaTokenType.IDENTIFIER, JavaTokenType.AT));
+      BASIC_PRIMITIVE_TYPE_BIT_SET, TokenSet.create(JavaTokenType.IDENTIFIER, JavaTokenType.AT));
   }
 
   @Nullable

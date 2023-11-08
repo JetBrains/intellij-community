@@ -68,5 +68,6 @@
     <orderEntry type="module" module-name="intellij.platform.tracing.rt" exported="" />
     <orderEntry type="module" module-name="intellij.platform.runtime.repository" />
     <orderEntry type="module" module-name="intellij.platform.util.zip" />
+    <orderEntry type="library" name="caffeine" level="project" />
   </component>
 </module>

@@ -133,10 +133,25 @@ class KotlinNameSuggester(
     context(KtAnalysisSession)
     fun suggestExpressionNames(expression: KtExpression, validator: (String) -> Boolean = { true }): Sequence<String> {
         return (suggestNamesByValueArgument(expression, validator) +
+                suggestNameBySimpleExpression(expression, validator) +
                 suggestNamesByExpressionPSI(expression, validator).filter { name ->
                     name.length >= MIN_LENGTH_OF_NAME_BASED_ON_EXPRESSION_PSI
                 } +
                 suggestNamesByType(expression, validator)).distinct()
+    }
+
+    /**
+     * Returns a `Sequence` consisting of the name, based on a simple expression and validated
+     * by the [validator], and improved by adding a numeric suffix in case of conflicts.
+     * Examples:
+     *  - `point.x` -> {x}
+     *  - `getX()` -> {x}
+     *  - `FooBar()` -> {fooBar}
+     */
+    private fun suggestNameBySimpleExpression(expression: KtExpression, validator: (String) -> Boolean): Sequence<String> {
+        val simpleExpressionName = getSimpleExpressionName(expression) ?: return emptySequence()
+        val s = cutAccessorPrefix(simpleExpressionName) ?: return emptySequence()
+        return suggestNameByValidIdentifierName(s, validator)?.let { sequenceOf(it) } ?: emptySequence()
     }
 
     /**
@@ -390,18 +405,7 @@ class KotlinNameSuggester(
 
     companion object {
         fun getCamelNames(name: String, validator: (String) -> Boolean, startLowerCase: Boolean = true): Sequence<String> {
-            if (name === "" || !name.unquoteKotlinIdentifier().isIdentifier()) return emptySequence()
-            var s = extractIdentifiers(name)
-
-            for (prefix in ACCESSOR_PREFIXES) {
-                if (!s.startsWith(prefix)) continue
-
-                val len = prefix.length
-                if (len < s.length && Character.isUpperCase(s[len])) {
-                    s = s.substring(len)
-                    break
-                }
-            }
+            val s = cutAccessorPrefix(name) ?: return emptySequence()
 
             var upperCaseLetterBefore = false
             return sequence {
@@ -410,21 +414,33 @@ class KotlinNameSuggester(
                     val upperCaseLetter = Character.isUpperCase(c)
 
                     if (i == 0) {
-                        suggestNameByValidIdentifierName(
-                            if (startLowerCase) s.decapitalizeSmart() else s, validator
-                        )?.let { yield(it) }
+                        suggestNameByValidIdentifierName(s, validator, startLowerCase)?.let { yield(it) }
                     } else {
                         if (upperCaseLetter && !upperCaseLetterBefore) {
                             val substring = s.substring(i)
-                            suggestNameByValidIdentifierName(
-                                if (startLowerCase) substring.decapitalizeSmart() else substring, validator
-                            )?.let { yield(it) }
+                            suggestNameByValidIdentifierName(substring, validator, startLowerCase)?.let { yield(it) }
                         }
                     }
 
                     upperCaseLetterBefore = upperCaseLetter
                 }
             }
+        }
+
+        private fun cutAccessorPrefix(name: String): String? {
+            if (name === "" || !name.unquoteKotlinIdentifier().isIdentifier()) return null
+            val s = extractIdentifiers(name)
+
+            for (prefix in ACCESSOR_PREFIXES) {
+                if (!s.startsWith(prefix)) continue
+
+                val len = prefix.length
+                if (len < s.length && Character.isUpperCase(s[len])) {
+                    return s.substring(len)
+                }
+            }
+
+            return s
         }
 
         private fun extractIdentifiers(s: String): String {
@@ -449,22 +465,32 @@ class KotlinNameSuggester(
          *  - `collection.isEmpty()` -> {empty}
          */
         fun suggestNamesByExpressionPSI(expression: KtExpression?, validator: (String) -> Boolean): Sequence<String> {
-            if (expression == null) return emptySequence()
+            val simpleExpressionName = getSimpleExpressionName(expression) ?: return emptySequence()
+            return getCamelNames(simpleExpressionName, validator)
+        }
+
+        private fun getSimpleExpressionName(expression: KtExpression?): String? {
+            if (expression == null) return null
             return when (val deparenthesized = KtPsiUtil.safeDeparenthesize(expression)) {
-                is KtSimpleNameExpression -> getCamelNames(deparenthesized.getReferencedName(), validator)
-                is KtQualifiedExpression -> suggestNamesByExpressionPSI(deparenthesized.selectorExpression, validator)
-                is KtCallExpression -> suggestNamesByExpressionPSI(deparenthesized.calleeExpression, validator)
-                is KtPostfixExpression -> suggestNamesByExpressionPSI(deparenthesized.baseExpression, validator)
-                else -> emptySequence()
+                is KtSimpleNameExpression -> return deparenthesized.getReferencedName()
+                is KtQualifiedExpression -> getSimpleExpressionName(deparenthesized.selectorExpression)
+                is KtCallExpression -> getSimpleExpressionName(deparenthesized.calleeExpression)
+                is KtPostfixExpression -> getSimpleExpressionName(deparenthesized.baseExpression)
+                else -> null
             }
         }
 
         /**
-         * Checks whether the passed [name] is a valid identifier, validates it using [validator], and improves it
-         * by adding a numeric suffix in case of conflicts.
+         * Decapitalizes the passed [name] if [mustStartWithLowerCase] is `true`, checks whether the result is a valid identifier,
+         * validates it using [validator], and improves it by adding a numeric suffix in case of conflicts.
          */
-        fun suggestNameByValidIdentifierName(name: String?, validator: (String) -> Boolean): String? {
+        fun suggestNameByValidIdentifierName(
+            name: String?,
+            validator: (String) -> Boolean,
+            mustStartWithLowerCase: Boolean = true
+        ): String? {
             if (name == null) return null
+            if (mustStartWithLowerCase) return suggestNameByValidIdentifierName(name.decapitalizeSmart(), validator, false)
             val correctedName = when {
                 name.isIdentifier() -> name
                 name == "class" -> "clazz"

@@ -138,7 +138,7 @@ public final class CompilerConfigurationImpl extends CompilerConfiguration imple
   }
 
   @NotNull
-  private ExcludedEntriesConfiguration createExcludedEntriesConfiguration(@NotNull Project project) {
+  private static ExcludedEntriesConfiguration createExcludedEntriesConfiguration(@NotNull Project project) {
     final ExcludedEntriesConfiguration cfg = new ExcludedEntriesConfiguration(project.getMessageBus().syncPublisher(ExcludedEntriesListener.TOPIC));
     Disposer.register(project, cfg);
     project.getMessageBus().connect().subscribe(ExcludedEntriesListener.TOPIC, new ExcludedEntriesListener() {

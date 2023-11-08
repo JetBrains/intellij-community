@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.branch;
 
 import com.intellij.concurrency.JobScheduler;
@@ -64,6 +64,8 @@ import static git4idea.repo.GitRefUtil.getResolvedHashes;
 @Service(Service.Level.PROJECT)
 public final class GitBranchIncomingOutgoingManager implements GitRepositoryChangeListener, GitAuthenticationListener, Disposable {
   private static final Logger LOG = Logger.getInstance(GitBranchIncomingOutgoingManager.class);
+
+  @Topic.ProjectLevel
   public static final Topic<GitIncomingOutgoingListener> GIT_INCOMING_OUTGOING_CHANGED =
     new Topic<>("Git incoming outgoing info changed", GitIncomingOutgoingListener.class);
 

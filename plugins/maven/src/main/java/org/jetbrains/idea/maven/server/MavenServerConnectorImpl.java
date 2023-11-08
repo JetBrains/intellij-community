@@ -108,7 +108,10 @@ public class MavenServerConnectorImpl extends MavenServerConnectorBase {
         mySupport = factory.create(myJdk, myVmOptions, myDistribution, myProject, myDebugPort);
         mySupport.onTerminate(e -> {
           MavenLog.LOG.debug("[connector] terminate " + MavenServerConnectorImpl.this);
-          MavenServerManager.getInstance().shutdownConnector(MavenServerConnectorImpl.this, false);
+          MavenServerManager mavenServerManager = ApplicationManager.getApplication().getServiceIfCreated(MavenServerManager.class);
+          if (mavenServerManager != null) {
+            mavenServerManager.shutdownConnector(MavenServerConnectorImpl.this, false);
+          }
         });
         // Maven server's lifetime is bigger than the activity that spawned it, so we let it go untracked
         try (AccessToken ignored = ThreadContext.resetThreadContext()) {

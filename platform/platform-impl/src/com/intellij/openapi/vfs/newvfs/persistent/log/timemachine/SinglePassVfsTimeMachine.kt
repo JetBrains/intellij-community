@@ -128,7 +128,7 @@ class FillInVfsSnapshot(point: OperationLogStorage.Iterator,
       (given `newAttr == oldAttr`, but they may have different versions) will not change the key object and
       the map would look like `formingAttributesDataMap[oldAttr] = newRef`. This is not a problem now because
       data is put using only `putIfAbsent` method. */
-    internal val formingAttributesDataMap = mutableMapOf<EnumeratedFileAttribute, PayloadRef>()
+    internal val formingAttributesDataMap = hashMapOf<EnumeratedFileAttribute, PayloadRef>()
     internal val attributesFinished: Boolean get() = attributeDataMap.state is State.Ready<*> // whether DELETE ATTRS operation met
 
     override val recordAllocationExists = FillInProperty<Boolean> { false.let(State::Ready) }

@@ -421,7 +421,7 @@ public class LineBreakpoint<P extends JavaBreakpointProperties> extends Breakpoi
   //  if (!super.canMoveTo(position)) {
   //    return false;
   //  }
-  //  final Document document = PsiDocumentManager.getInstance(getProject()).getDocument(position.getFile());
+  //  final Document document = position.getFile().getViewProvider().getDocument();
   //  return canAddLineBreakpoint(myProject, document, position.getLine());
   //}
 

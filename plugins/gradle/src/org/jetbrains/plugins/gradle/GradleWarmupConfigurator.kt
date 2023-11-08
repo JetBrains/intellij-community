@@ -21,8 +21,8 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.progress.blockingContextScope
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.io.toNioPath
 import com.intellij.util.io.createParentDirectories
+import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.plugins.gradle.service.notification.ExternalAnnotationsProgressNotificationListener
 import org.jetbrains.plugins.gradle.service.notification.ExternalAnnotationsProgressNotificationManager
 import org.jetbrains.plugins.gradle.service.notification.ExternalAnnotationsTaskId
@@ -35,6 +35,7 @@ import java.io.File
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicReference
 import kotlin.coroutines.coroutineContext
 import kotlin.io.path.appendText
 import kotlin.io.path.createFile
@@ -43,7 +44,7 @@ import kotlin.io.path.div
 
 private val LOG = logger<GradleCommandLineProjectConfigurator>()
 
-private val gradleLogWriterPath = PathManager.getLogPath().toNioPath() / "gradle-import.log"
+private val gradleLogWriterPath = Path.of(PathManager.getLogPath()) / "gradle-import.log"
 
 private const val DISABLE_GRADLE_AUTO_IMPORT = "external.system.auto.import.disabled"
 private const val DISABLE_GRADLE_JDK_FIX = "gradle.auto.auto.jdk.fix.disabled"
@@ -75,7 +76,10 @@ class GradleWarmupConfigurator : WarmupConfigurator {
       linkProjects(basePath, project)
     }
     val progressManager = ExternalSystemProgressNotificationManager.getInstance()
-    val notificationListener = StateNotificationListener(project)
+    val scope = CoroutineScope(coroutineContext)
+
+    val notificationListener = StateNotificationListener(project, scope)
+    val errorListener = ImportErrorListener(project, scope)
 
     val externalAnnotationsNotificationManager = ExternalAnnotationsProgressNotificationManager.getInstance()
     val externalAnnotationsProgressListener = StateExternalAnnotationNotificationListener()
@@ -83,12 +87,17 @@ class GradleWarmupConfigurator : WarmupConfigurator {
     try {
       externalAnnotationsNotificationManager.addNotificationListener(externalAnnotationsProgressListener)
       progressManager.addNotificationListener(notificationListener)
+      progressManager.addNotificationListener(errorListener)
+
       blockingContextScope {
         importProjects(project)
       }
+      errorListener.error?.let { throw it }
     }
     finally {
       progressManager.removeNotificationListener(notificationListener)
+      progressManager.removeNotificationListener(errorListener)
+
       externalAnnotationsNotificationManager.removeNotificationListener(externalAnnotationsProgressListener)
     }
     return false
@@ -158,33 +167,36 @@ class GradleWarmupConfigurator : WarmupConfigurator {
     }
   }
 
-  class StateNotificationListener(private val project: Project) : ExternalSystemTaskNotificationListenerAdapter() {
+  class StateNotificationListener(
+    private val project: Project, private val scope: CoroutineScope
+  ) : ExternalSystemTaskNotificationListenerAdapter() {
 
     override fun onSuccess(id: ExternalSystemTaskId) {
       if (!id.isGradleProjectResolveTask()) return
       LOG.info("Gradle resolve stage finished with success: ${id.ideProjectId}")
-      val connection = project.messageBus.simpleConnect()
-      connection.subscribe(ProjectDataImportListener.TOPIC, object : ProjectDataImportListener {
-        override fun onImportStarted(projectPath: String?) {
-          LOG.info("Gradle data import stage started: ${id.ideProjectId}")
-        }
 
-        override fun onImportFinished(projectPath: String?) {
-          LOG.info("Gradle data import stage finished with success: ${id.ideProjectId}")
-        }
+      project.messageBus.connect(scope)
+        .subscribe(ProjectDataImportListener.TOPIC, object : ProjectDataImportListener {
+          override fun onImportStarted(projectPath: String?) {
+            LOG.info("Gradle data import stage started: ${id.ideProjectId}")
+          }
 
-        override fun onFinalTasksFinished(projectPath: String?) {
-          LOG.info("Gradle data import(final tasks) stage finished: ${id.ideProjectId}")
-        }
+          override fun onImportFinished(projectPath: String?) {
+            LOG.info("Gradle data import stage finished with success: ${id.ideProjectId}")
+          }
 
-        override fun onFinalTasksStarted(projectPath: String?) {
-          LOG.info("Gradle data import(final tasks) stage started: ${id.ideProjectId}")
-        }
+          override fun onFinalTasksFinished(projectPath: String?) {
+            LOG.info("Gradle data import(final tasks) stage finished: ${id.ideProjectId}")
+          }
 
-        override fun onImportFailed(projectPath: String?, t: Throwable) {
-          LOG.info("Gradle data import stage finished with failure: ${id.ideProjectId}")
-        }
-      })
+          override fun onFinalTasksStarted(projectPath: String?) {
+            LOG.info("Gradle data import(final tasks) stage started: ${id.ideProjectId}")
+          }
+
+          override fun onImportFailed(projectPath: String?, t: Throwable) {
+            LOG.info("Gradle data import stage finished with failure: ${id.ideProjectId}")
+          }
+        })
     }
 
     override fun onFailure(id: ExternalSystemTaskId, e: Exception) {
@@ -201,9 +213,35 @@ class GradleWarmupConfigurator : WarmupConfigurator {
       if (!id.isGradleProjectResolveTask()) return
       LOG.info("Gradle resolve stage started ${id.ideProjectId}, working dir: $workingDir")
     }
+  }
 
-    private fun ExternalSystemTaskId.isGradleProjectResolveTask() = this.projectSystemId == GradleConstants.SYSTEM_ID &&
-                                                                    this.type == ExternalSystemTaskType.RESOLVE_PROJECT
+
+  class ImportErrorListener(
+    private val project: Project, private val scope: CoroutineScope
+  )  : ExternalSystemTaskNotificationListenerAdapter() {
+    private val _error = AtomicReference<Throwable?>()
+    val error get() = _error.get()
+
+    private fun storeError(t: Throwable) {
+      // thread safe version of if(error == null) error = t else error.addSuppressed(t)
+      _error.compareAndExchange(null, t)?.addSuppressed(t)
+    }
+
+    override fun onSuccess(id: ExternalSystemTaskId) {
+      if (!id.isGradleProjectResolveTask()) return
+
+      project.messageBus.connect(scope)
+        .subscribe(ProjectDataImportListener.TOPIC, object : ProjectDataImportListener {
+          override fun onImportFailed(projectPath: String?, t: Throwable) {
+            storeError(t)
+          }
+        })
+    }
+
+    override fun onFailure(id: ExternalSystemTaskId, e: Exception) {
+      if (!id.isGradleProjectResolveTask()) return
+      storeError(e)
+    }
   }
 
   class LoggingNotificationListener(val logger: CommandLineInspectionProgressReporter?) : ExternalSystemTaskNotificationListenerAdapter() {
@@ -241,7 +279,7 @@ class GradleWarmupConfigurator : WarmupConfigurator {
   }
 }
 
-internal fun prepareGradleConfiguratorEnvironment(logger : CommandLineInspectionProgressReporter?)  {
+internal fun prepareGradleConfiguratorEnvironment(logger: CommandLineInspectionProgressReporter?) {
   System.setProperty(DISABLE_GRADLE_AUTO_IMPORT, true.toString())
   System.setProperty(DISABLE_GRADLE_JDK_FIX, true.toString())
   System.setProperty(DISABLE_ANDROID_GRADLE_PROJECT_STARTUP_ACTIVITY, true.toString())
@@ -252,3 +290,7 @@ internal fun prepareGradleConfiguratorEnvironment(logger : CommandLineInspection
   }
   Unit
 }
+
+
+private fun ExternalSystemTaskId.isGradleProjectResolveTask() = this.projectSystemId == GradleConstants.SYSTEM_ID &&
+                                                                this.type == ExternalSystemTaskType.RESOLVE_PROJECT

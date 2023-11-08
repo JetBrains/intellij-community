@@ -84,7 +84,7 @@ class KotlinFacetDeserializationTest {
                 assertEmpty(additionalVisibleModuleNames)
                 assertEmpty(externalProjectId)
                 assertEquals(KotlinModuleKind.DEFAULT, kind)
-                assertNull(compilerArguments)
+                assertNotNull(compilerArguments)
             }
         }
     }

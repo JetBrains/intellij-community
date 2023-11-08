@@ -50,6 +50,8 @@ class ToolWindowDefaultLayoutManager(private val isNewUi: Boolean)
 
   fun getLayoutCopy(): DesktopLayout = state.getActiveLayoutCopy(isNewUi)
 
+  fun getFactoryDefaultLayoutCopy(): DesktopLayout = state.getLayoutCopy(FACTORY_DEFAULT_LAYOUT_NAME, isNewUi)
+
   fun setLayout(layout: DesktopLayout): Unit = setLayout(activeLayoutName, layout)
 
   fun setLayout(name: String, layout: DesktopLayout) {
@@ -124,19 +126,21 @@ class ToolWindowDefaultLayoutManager(private val isNewUi: Boolean)
     val v2: List<ToolWindowDescriptor> = emptyList(),
   ) {
 
-    fun getActiveLayoutCopy(isNewUi: Boolean): DesktopLayout {
+    fun getActiveLayoutCopy(isNewUi: Boolean): DesktopLayout = getLayoutCopy(activeLayoutName, isNewUi)
+
+    fun getLayoutCopy(layoutName: String, isNewUi: Boolean): DesktopLayout {
       return DesktopLayout(
-        convertWindowDescriptorsToWindowInfos(getDescriptors(isNewUi)),
-        convertUnifiedWeightsDescriptorToUnifiedWeights(getUnifiedWeights())
+        convertWindowDescriptorsToWindowInfos(getDescriptors(layoutName, isNewUi)),
+        convertUnifiedWeightsDescriptorToUnifiedWeights(getUnifiedWeights(layoutName))
       )
     }
 
-    private fun getDescriptors(isNewUi: Boolean): List<ToolWindowDescriptor> =
-      (layouts[activeLayoutName]?.let { if (isNewUi) it.v2 else it.v1 } ?: emptyList())
+    private fun getDescriptors(layoutName: String, isNewUi: Boolean): List<ToolWindowDescriptor> =
+      (layouts[layoutName]?.let { if (isNewUi) it.v2 else it.v1 } ?: emptyList())
         .ifEmpty { getDefaultLayoutToolWindowDescriptors(isNewUi) }
 
-    private fun getUnifiedWeights(): Map<String, Float> =
-        layouts[activeLayoutName]?.unifiedWeights ?: DEFAULT_UNIFIED_WEIGHTS_DESCRIPTOR
+    private fun getUnifiedWeights(layoutName: String): Map<String, Float> =
+        layouts[layoutName]?.unifiedWeights ?: DEFAULT_UNIFIED_WEIGHTS_DESCRIPTOR
 
     fun withRenamedLayout(oldName: String, newName: String): ToolWindowLayoutStorageManagerState =
       copy(
@@ -239,34 +243,35 @@ private fun convertUnifiedWeightsToDescriptor(unifiedToolWindowWeights: UnifiedT
   }
 
 private fun convertWindowDescriptorsToWindowInfos(list: List<ToolWindowDescriptor>): MutableMap<String, WindowInfoImpl> {
-  return list.associateTo(hashMapOf()) { it.id to
+  return list.associateTo(hashMapOf()) { descriptor ->
+    descriptor.id to
     WindowInfoImpl().apply {
-      id = it.id
-      order = it.order
+      id = descriptor.id
+      order = descriptor.order
 
-      toolWindowPaneId = it.paneId
-      anchor = when (it.anchor) {
+      toolWindowPaneId = descriptor.paneId
+      anchor = when (descriptor.anchor) {
         ToolWindowDescriptor.ToolWindowAnchor.TOP -> ToolWindowAnchor.TOP
         ToolWindowDescriptor.ToolWindowAnchor.LEFT -> ToolWindowAnchor.LEFT
         ToolWindowDescriptor.ToolWindowAnchor.BOTTOM -> ToolWindowAnchor.BOTTOM
         ToolWindowDescriptor.ToolWindowAnchor.RIGHT -> ToolWindowAnchor.RIGHT
       }
-      isAutoHide = it.isAutoHide
-      floatingBounds = it.floatingBounds?.let { Rectangle(it.get(0), it.get(1), it.get(2), it.get(3)) }
-      isMaximized = it.isMaximized
+      isAutoHide = descriptor.isAutoHide
+      floatingBounds = descriptor.floatingBounds?.let { Rectangle(it.get(0), it.get(1), it.get(2), it.get(3)) }
+      isMaximized = descriptor.isMaximized
 
-      isActiveOnStart = it.isActiveOnStart
-      isVisible = it.isVisible
-      isShowStripeButton = it.isShowStripeButton
+      isActiveOnStart = descriptor.isActiveOnStart
+      isVisible = descriptor.isVisible
+      isShowStripeButton = descriptor.isShowStripeButton
 
-      weight = it.weight
-      sideWeight = it.sideWeight
+      weight = descriptor.weight
+      sideWeight = descriptor.sideWeight
 
-      isSplit = it.isSplit
+      isSplit = descriptor.isSplit
 
-      type = it.type
-      internalType = it.internalType
-      contentUiType = when (it.contentUiType) {
+      type = descriptor.type
+      internalType = descriptor.internalType
+      contentUiType = when (descriptor.contentUiType) {
         ToolWindowDescriptor.ToolWindowContentUiType.TABBED -> ToolWindowContentUiType.TABBED
         ToolWindowDescriptor.ToolWindowContentUiType.COMBO -> ToolWindowContentUiType.COMBO
       }

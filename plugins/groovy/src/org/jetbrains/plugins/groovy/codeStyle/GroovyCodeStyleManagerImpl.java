@@ -53,13 +53,13 @@ public class GroovyCodeStyleManagerImpl extends GroovyCodeStyleManager {
   }
 
   @Nullable
-  private PsiElement getShellComment(@NotNull PsiElement psiFile) {
+  private static PsiElement getShellComment(@NotNull PsiElement psiFile) {
     final ASTNode node = psiFile.getNode().findChildByType(GroovyTokenTypes.mSH_COMMENT);
     return node == null ? null : node.getPsi();
   }
 
   @Nullable
-  private PsiElement getAnchorToInsertImportAfter(@NotNull GroovyFile psiFile, @NotNull GrImportStatement statement) {
+  private static PsiElement getAnchorToInsertImportAfter(@NotNull GroovyFile psiFile, @NotNull GrImportStatement statement) {
     final GroovyCodeStyleSettings settings = GroovyCodeStyleSettings.getInstance(psiFile);
     final PackageEntryTable layoutTable = settings.IMPORT_LAYOUT_TABLE;
     final PackageEntry[] entries = layoutTable.getEntries();

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.update;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -50,14 +36,14 @@ import static git4idea.config.UpdateMethod.REBASE;
 public abstract class GitUpdater {
   private static final Logger LOG = Logger.getInstance(GitUpdater.class);
 
-  @NotNull protected final Project myProject;
-  @NotNull protected final Git myGit;
-  @NotNull protected final VirtualFile myRoot;
-  @NotNull protected final GitRepository myRepository;
-  @NotNull protected final ProgressIndicator myProgressIndicator;
-  @NotNull protected final UpdatedFiles myUpdatedFiles;
-  @NotNull protected final AbstractVcsHelper myVcsHelper;
-  @NotNull protected final GitRepositoryManager myRepositoryManager;
+  protected final @NotNull Project myProject;
+  protected final @NotNull Git myGit;
+  protected final @NotNull VirtualFile myRoot;
+  protected final @NotNull GitRepository myRepository;
+  protected final @NotNull ProgressIndicator myProgressIndicator;
+  protected final @NotNull UpdatedFiles myUpdatedFiles;
+  protected final @NotNull AbstractVcsHelper myVcsHelper;
+  protected final @NotNull GitRepositoryManager myRepositoryManager;
   protected final GitVcs myVcs;
 
   protected GitRevisionNumber myBefore; // The revision that was before update
@@ -82,8 +68,7 @@ public abstract class GitUpdater {
    * Returns proper updater based on the update policy (merge or rebase) selected by user or stored in his .git/config
    * @return {@link GitMergeUpdater} or {@link GitRebaseUpdater}.
    */
-  @NotNull
-  public static GitUpdater getUpdater(@NotNull Project project,
+  public static @NotNull GitUpdater getUpdater(@NotNull Project project,
                                       @NotNull Git git,
                                       @NotNull GitBranchPair trackedBranches,
                                       @NotNull GitRepository repository,
@@ -98,8 +83,7 @@ public abstract class GitUpdater {
            new GitMergeUpdater(project, git, repository, trackedBranches, progressIndicator, updatedFiles);
   }
 
-  @NotNull
-  public static UpdateMethod resolveUpdateMethod(@NotNull GitRepository repository) {
+  public static @NotNull UpdateMethod resolveUpdateMethod(@NotNull GitRepository repository) {
     Project project = repository.getProject();
     GitLocalBranch branch = repository.getCurrentBranch();
     if (branch != null) {
@@ -141,8 +125,7 @@ public abstract class GitUpdater {
            configValue.equalsIgnoreCase("preserve"); // 'yes' is not specified in the man, but actually works
   }
 
-  @NotNull
-  public GitUpdateResult update() throws VcsException {
+  public @NotNull GitUpdateResult update() throws VcsException {
     markStart(myRepository);
     try {
       GitUpdateResult result = doUpdate();
@@ -178,8 +161,7 @@ public abstract class GitUpdater {
   /**
    * Performs update (via rebase or merge - depending on the implementing classes).
    */
-  @NotNull
-  protected abstract GitUpdateResult doUpdate();
+  protected abstract @NotNull GitUpdateResult doUpdate();
 
   protected void markStart(GitRepository repository) throws VcsException {
     // remember the current position

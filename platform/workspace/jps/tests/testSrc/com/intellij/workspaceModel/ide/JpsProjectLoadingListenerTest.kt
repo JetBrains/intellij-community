@@ -108,7 +108,7 @@ class JpsProjectLoadingListenerTest {
     Disposer.register(disposableRule.disposable, Disposable {
       PlatformTestUtil.forceCloseProjectWithoutSaving(project)
     })
-    DelayedProjectSynchronizer.backgroundPostStartupProjectLoading(project)
+    DelayedProjectSynchronizer.Util.backgroundPostStartupProjectLoading(project)
     return project
   }
 

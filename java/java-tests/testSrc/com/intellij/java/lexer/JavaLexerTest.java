@@ -9,9 +9,6 @@ import org.jetbrains.annotations.NotNull;
 public class JavaLexerTest extends AbstractBasicJavaLexerTest {
   @Override
   protected @NotNull Lexer createLexer() {
-    if (getTestName(false).endsWith("JDK21_Preview")) {
-      return JavaParserDefinition.createLexer(LanguageLevel.JDK_21_PREVIEW);
-    }
     return JavaParserDefinition.createLexer(LanguageLevel.HIGHEST);
   }
 }

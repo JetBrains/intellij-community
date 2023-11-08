@@ -2,8 +2,8 @@
 package org.jetbrains.intellij.build.io
 
 import com.intellij.util.lang.ImmutableZipFile
+import com.intellij.util.lang.Xxh3
 import org.jetbrains.ikv.builder.IkvIndexBuilder
-import org.jetbrains.xxh3.Xxh3
 import java.io.IOException
 import java.nio.ByteBuffer
 import java.nio.ByteOrder

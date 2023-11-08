@@ -1,10 +1,10 @@
 package de.plushnikov.intellij.plugin.processor.clazz;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.Service;
 import com.intellij.psi.*;
+import com.intellij.util.containers.ContainerUtil;
 import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.problem.ProblemSink;
+import de.plushnikov.intellij.plugin.processor.LombokProcessorManager;
 import de.plushnikov.intellij.plugin.processor.LombokPsiElementUsage;
 import de.plushnikov.intellij.plugin.processor.field.AccessorsInfo;
 import de.plushnikov.intellij.plugin.processor.field.SetterFieldProcessor;
@@ -14,6 +14,7 @@ import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import de.plushnikov.intellij.plugin.util.PsiMethodUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -25,14 +26,25 @@ import java.util.List;
  *
  * @author Plushnikov Michail
  */
-@Service
 public final class SetterProcessor extends AbstractClassProcessor {
   public SetterProcessor() {
     super(PsiMethod.class, LombokClassNames.SETTER);
   }
 
   private static SetterFieldProcessor getSetterFieldProcessor() {
-    return ApplicationManager.getApplication().getService(SetterFieldProcessor.class);
+    return LombokProcessorManager.getInstance().getSetterFieldProcessor();
+  }
+
+  @Override
+  protected boolean possibleToGenerateElementNamed(@NotNull String nameHint,
+                                                   @NotNull PsiClass psiClass,
+                                                   @NotNull PsiAnnotation psiAnnotation) {
+    final AccessorsInfo.AccessorsValues classAccessorsValues = AccessorsInfo.getAccessorsValues(psiClass);
+    for (PsiField psiField : PsiClassUtil.collectClassFieldsIntern(psiClass)) {
+      final AccessorsInfo accessorsInfo = AccessorsInfo.buildFor(psiField, classAccessorsValues);
+      if (nameHint.equals(LombokUtils.getSetterName(psiField, accessorsInfo))) return true;
+    }
+    return false;
   }
 
   @Override
@@ -71,20 +83,21 @@ public final class SetterProcessor extends AbstractClassProcessor {
   }
 
   @Override
-  protected void generatePsiElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
+  protected void generatePsiElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target,
+                                     @Nullable String nameHint) {
     final String methodVisibility = LombokProcessorUtil.getMethodModifier(psiAnnotation);
     if (methodVisibility != null) {
-      target.addAll(createFieldSetters(psiClass, methodVisibility));
+      target.addAll(createFieldSetters(psiClass, methodVisibility, nameHint));
     }
   }
 
-  public Collection<PsiMethod> createFieldSetters(@NotNull PsiClass psiClass, @NotNull String methodModifier) {
+  public Collection<PsiMethod> createFieldSetters(@NotNull PsiClass psiClass, @NotNull String methodModifier, @Nullable String nameHint) {
     Collection<PsiMethod> result = new ArrayList<>();
 
     final Collection<PsiField> setterFields = filterSetterFields(psiClass);
 
     for (PsiField setterField : setterFields) {
-      result.add(SetterFieldProcessor.createSetterMethod(setterField, psiClass, methodModifier));
+      ContainerUtil.addIfNotNull(result, SetterFieldProcessor.createSetterMethod(setterField, psiClass, methodModifier, nameHint));
     }
     return result;
   }

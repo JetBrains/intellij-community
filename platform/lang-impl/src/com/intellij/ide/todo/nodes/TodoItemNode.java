@@ -18,7 +18,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.search.TodoItem;
 import com.intellij.ui.HighlightedRegion;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -32,18 +31,17 @@ import java.util.List;
 public final class TodoItemNode extends BaseToDoNode<SmartTodoItemPointer> implements HighlightedRegionProvider {
   private static final Logger LOG = Logger.getInstance(TodoItem.class);
 
-  private final List<HighlightedRegion> myHighlightedRegions;
-  private final List<HighlightedRegionProvider> myAdditionalLines;
-
   public TodoItemNode(Project project,
                       @NotNull SmartTodoItemPointer value,
                       TodoTreeBuilder builder) {
     super(project, value, builder);
     RangeMarker rangeMarker = value.getRangeMarker();
     LOG.assertTrue(rangeMarker.isValid());
+  }
 
-    myHighlightedRegions = ContainerUtil.createConcurrentList();
-    myAdditionalLines = ContainerUtil.createConcurrentList();
+  @Override
+  protected @NotNull PresentationData createPresentation() {
+    return new TodoItemNodePresentationData();
   }
 
   @Override
@@ -70,7 +68,7 @@ public final class TodoItemNode extends BaseToDoNode<SmartTodoItemPointer> imple
 
   @Override
   public List<HighlightedRegion> getHighlightedRegions() {
-    return myHighlightedRegions;
+    return Collections.unmodifiableList(((TodoItemNodePresentationData)getPresentation()).getHighlightedRegions());
   }
 
   @Override
@@ -91,6 +89,8 @@ public final class TodoItemNode extends BaseToDoNode<SmartTodoItemPointer> imple
       return;
     }
 
+    @NotNull List<HighlightedRegion> myHighlightedRegions = ((TodoItemNodePresentationData) presentation).getHighlightedRegions();
+    @NotNull List<HighlightedRegionProvider> myAdditionalLines = ((TodoItemNodePresentationData) presentation).getAdditionalLines();
     myHighlightedRegions.clear();
     myAdditionalLines.clear();
 
@@ -196,7 +196,7 @@ public final class TodoItemNode extends BaseToDoNode<SmartTodoItemPointer> imple
 
   @NotNull
   public List<HighlightedRegionProvider> getAdditionalLines() {
-    return myAdditionalLines;
+    return Collections.unmodifiableList(((TodoItemNodePresentationData)getPresentation()).getAdditionalLines());
   }
 
   private static final class AdditionalTodoLine implements HighlightedRegionProvider {

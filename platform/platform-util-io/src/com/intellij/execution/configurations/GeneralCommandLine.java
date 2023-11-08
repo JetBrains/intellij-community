@@ -5,7 +5,10 @@ import com.intellij.diagnostic.LoadingState;
 import com.intellij.execution.*;
 import com.intellij.execution.process.ProcessNotCreatedException;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
@@ -23,6 +26,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.*;
+import java.util.function.Function;
 
 /**
  * OS-independent way of executing external processes with complex parameters.
@@ -60,6 +64,7 @@ import java.util.*;
  */
 public class GeneralCommandLine implements UserDataHolder {
   private static final Logger LOG = Logger.getInstance(GeneralCommandLine.class);
+  private Function<ProcessBuilder, Process> myProcessCreator;
 
   /**
    * Determines the scope of a parent environment passed to a child process.
@@ -354,6 +359,14 @@ public class GeneralCommandLine implements UserDataHolder {
     }
   }
 
+  protected final Function<ProcessBuilder, Process> getProcessCreator() {
+    return myProcessCreator;
+  }
+
+  public final void setProcessCreator(Function<ProcessBuilder, Process> processCreator) {
+    myProcessCreator = processCreator;
+  }
+
   public @NotNull ProcessBuilder toProcessBuilder() throws ExecutionException {
     List<String> escapedCommands = validateAndPrepareCommandLine();
     return toProcessBuilderInternal(escapedCommands);
@@ -426,7 +439,8 @@ public class GeneralCommandLine implements UserDataHolder {
     if (LOG.isDebugEnabled()) {
       LOG.debug("Building process with commands: " + escapedCommands);
     }
-    return toProcessBuilderInternal(escapedCommands).start();
+
+    return createProcess(toProcessBuilderInternal(escapedCommands));
   }
 
   // This is caused by the fact there are external usages overriding startProcess(List<String>).
@@ -450,6 +464,10 @@ public class GeneralCommandLine implements UserDataHolder {
    */
   protected @NotNull ProcessBuilder buildProcess(@NotNull ProcessBuilder builder) {
     return builder;
+  }
+
+  protected Process createProcess(ProcessBuilder processBuilder) throws IOException {
+    return myProcessCreator != null ? myProcessCreator.apply(processBuilder) : processBuilder.start();
   }
 
   protected void setupEnvironment(@NotNull Map<String, String> environment) {

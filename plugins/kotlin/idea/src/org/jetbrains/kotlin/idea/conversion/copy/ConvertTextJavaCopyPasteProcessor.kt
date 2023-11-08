@@ -6,9 +6,11 @@ import com.intellij.codeInsight.editorActions.CopyPastePostProcessor
 import com.intellij.codeInsight.editorActions.TextBlockTransferable
 import com.intellij.codeInsight.editorActions.TextBlockTransferableData
 import com.intellij.ide.highlighter.JavaFileType
+import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.fileTypes.LanguageFileType
@@ -17,6 +19,7 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Ref
+import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiErrorElement
 import com.intellij.psi.PsiFile
@@ -100,12 +103,12 @@ class ConvertTextJavaCopyPasteProcessor : CopyPastePostProcessor<TextBlockTransf
         val text = TextBlockTransferable.convertLineSeparators(editor, (values.single() as MyTransferableData).text, values)
 
         val psiDocumentManager = PsiDocumentManager.getInstance(project)
-        val targetFile = psiDocumentManager.getPsiFile(editor.document).safeAs<KtFile>()?.takeIf { it.virtualFile.isWritable } ?: return
-        psiDocumentManager.commitDocument(editor.document)
+        val (targetFile, targetBounds, targetDocument) = getTargetData(project, editor, caretOffset, bounds) ?: return
+        psiDocumentManager.commitDocument(targetDocument)
 
         val useNewJ2k = checkUseNewJ2k(targetFile)
         val targetModule = targetFile.module
-        val pasteTarget = detectPasteTarget(targetFile, bounds.startOffset, bounds.endOffset) ?: return
+        val pasteTarget = detectPasteTarget(targetFile, targetBounds.startOffset, targetBounds.endOffset) ?: return
         val conversionContext = detectConversionContext(pasteTarget.pasteContext, text, project) ?: return
         if (!confirmConvertJavaOnPaste(project, isPlainText = true)) return
 
@@ -126,15 +129,15 @@ class ConvertTextJavaCopyPasteProcessor : CopyPastePostProcessor<TextBlockTransf
                     convertedImportsText = "\n" + convertedImportsText
 
                 if (convertedImportsText.isNotBlank())
-                    editor.document.insertString(importsInsertOffset, convertedImportsText)
+                    targetDocument.insertString(importsInsertOffset, convertedImportsText)
 
-                val startOffset = bounds.startOffset
-                editor.document.replaceString(startOffset, bounds.endOffset, convertedText)
+                val startOffset = targetBounds.startOffset
+                targetDocument.replaceString(startOffset, targetBounds.endOffset, convertedText)
 
-                val endOffsetAfterCopy = startOffset + convertedText.length
+                val endOffsetAfterCopy = bounds.startOffset + convertedText.length
                 editor.caretModel.moveToOffset(endOffsetAfterCopy)
 
-                editor.document.createRangeMarker(startOffset, startOffset + convertedText.length)
+                targetDocument.createRangeMarker(startOffset, startOffset + convertedText.length)
             }
 
             psiDocumentManager.commitAllDocuments()
@@ -165,6 +168,47 @@ class ConvertTextJavaCopyPasteProcessor : CopyPastePostProcessor<TextBlockTransf
     private fun DataForConversion.convertCodeToKotlin(project: Project, targetModule: Module?, useNewJ2k: Boolean): ConversionResult {
         return elementsAndTexts.convertCodeToKotlin(project, targetModule, useNewJ2k)
     }
+
+    private fun getTargetData(project: Project, editor: Editor, caretOffset: Int, bounds: RangeMarker): TargetData? {
+        val topLevelDocument = editor.document
+        val psiDocumentManager = PsiDocumentManager.getInstance(project)
+
+        val topLevelPsiFile = psiDocumentManager.getPsiFile(topLevelDocument) ?: return null
+
+        var newBounds = bounds
+        var newDocument = topLevelDocument
+
+        val ktFile: KtFile? = topLevelPsiFile.safeAs<KtFile>() ?: run {
+            val injectedLanguageManager = InjectedLanguageManager.getInstance(project)
+            val injectedDocuments = injectedLanguageManager.getCachedInjectedDocumentsInRange(topLevelPsiFile, TextRange(caretOffset, caretOffset + 1))
+            val injectedDocument = injectedDocuments.firstOrNull() ?: return@run null
+            val injectedPsiFile = psiDocumentManager.getPsiFile(injectedDocument)?.safeAs<KtFile>() ?: return@run null
+
+            newBounds = injectedDocument.createRangeMarker(
+                TextRange(
+                    injectedDocument.hostToInjected(bounds.startOffset),
+                    injectedDocument.hostToInjected(bounds.endOffset)
+                )
+            )
+            newDocument = injectedDocument
+
+            injectedPsiFile
+        }
+
+        val targetFile = ktFile?.takeIf { it.virtualFile.isWritable } ?: return null
+
+        return TargetData(
+            targetFile,
+            newBounds,
+            newDocument,
+        )
+    }
+
+    private data class TargetData(
+        val ktFile: KtFile,
+        val targetBounds: RangeMarker,
+        val targetDocument: Document,
+    )
 
     private val KtElement.pasteContext: KotlinContext
         get() = when (this) {

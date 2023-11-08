@@ -1321,4 +1321,13 @@ class Foo {
     children[1].actionPerformed(event)
     assert template.isDeactivated()
   }
+  
+  void testEquality() {
+    TemplateManager manager = TemplateManager.getInstance(getProject())
+    TemplateImpl t1 = (TemplateImpl)manager.createTemplate('k', 'g', 't')
+    TemplateImpl t2 = (TemplateImpl)manager.createTemplate('k', 'g', 't')
+    assert t1 == t2
+    t1.setValue(Template.Property.USE_STATIC_IMPORT_IF_POSSIBLE, true)
+    assert t1 != t2
+  }
 }

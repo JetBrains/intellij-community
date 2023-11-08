@@ -22,7 +22,7 @@ internal object PreviewLAFThemeStyles {
    * @return String containing generated CSS rules.
    */
   fun createStylesheet(): String {
-    val scheme = obtainColorsScheme()
+    val scheme = obtainColorScheme()
     val contrastedForeground = scheme.defaultForeground.contrast(0.1)
 
     val panelBackground = UIUtil.getPanelBackground()
@@ -78,13 +78,9 @@ internal object PreviewLAFThemeStyles {
     """.trimIndent()
   }
 
-  private fun obtainColorsScheme(): EditorColorsScheme {
+  private fun obtainColorScheme(): EditorColorsScheme {
     val manager = EditorColorsManager.getInstance() as EditorColorsManagerImpl
-    val activeScheme = manager.schemeManager.activeScheme
-    if (activeScheme != null) {
-      return activeScheme
-    }
-    return DefaultColorSchemesManager.getInstance().firstScheme
+    return manager.schemeManager.activeScheme ?: DefaultColorSchemesManager.getInstance().firstScheme
   }
 
   private fun Color.webRgba(alpha: Double = this.alpha.toDouble()): String {

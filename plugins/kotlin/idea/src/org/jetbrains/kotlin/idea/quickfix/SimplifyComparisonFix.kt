@@ -17,9 +17,11 @@ import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
 class SimplifyComparisonFix(element: KtExpression, val value: Boolean) : KotlinQuickFixAction<KtExpression>(element) {
-    override fun getFamilyName() = KotlinBundle.message("simplify.0.to.1", element.toString(), value)
+    override fun getFamilyName(): String =
+        KotlinBundle.message("simplify.comparison")
 
-    override fun getText() = KotlinBundle.message("simplify.comparison")
+    override fun getText(): String =
+        KotlinBundle.message("simplify.comparison")
 
     override fun invoke(project: Project, editor: Editor?, file: KtFile) {
         val element = element ?: return

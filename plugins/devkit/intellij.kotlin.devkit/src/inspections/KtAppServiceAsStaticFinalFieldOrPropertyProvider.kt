@@ -11,6 +11,7 @@ import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.util.PsiEditorUtil
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.idea.devkit.inspections.AppServiceAsStaticFinalFieldOrPropertyVisitorProvider
+import org.jetbrains.idea.devkit.inspections.LevelType
 import org.jetbrains.idea.devkit.inspections.getLevelType
 import org.jetbrains.idea.devkit.inspections.quickfix.WrapInSupplierQuickFix
 import org.jetbrains.idea.devkit.kotlin.DevKitKotlinBundle
@@ -45,7 +46,7 @@ internal class KtAppServiceAsStaticFinalFieldOrPropertyVisitorProvider : AppServ
   override fun getVisitor(holder: ProblemsHolder): PsiElementVisitor {
     return object : KtVisitorVoid() {
       override fun visitProperty(property: KtProperty) {
-        if (property.isVar || !property.isStatic()) return
+        if (property.isVar || !property.isStatic() || !property.hasBackingField()) return
 
         @OptIn(KtAllowAnalysisOnEdt::class)
         val typeClassElement = allowAnalysisOnEdt {
@@ -60,8 +61,9 @@ internal class KtAppServiceAsStaticFinalFieldOrPropertyVisitorProvider : AppServ
           }
         }
 
-        val serviceLevel = getLevelType(holder.project, typeClassElement.toUElementOfType<UClass>()!!)
-        if (serviceLevel == null || !serviceLevel.isApp()) return
+        val serviceClassCandidate = typeClassElement.toUElementOfType<UClass>() ?: return
+        val serviceLevel = getLevelType(holder.project, serviceClassCandidate)
+        if (serviceLevel == LevelType.NOT_REGISTERED || !serviceLevel.isApp()) return
 
         val anchor = property.nameIdentifier ?: property
 
@@ -81,15 +83,13 @@ internal class KtAppServiceAsStaticFinalFieldOrPropertyVisitorProvider : AppServ
           return
         }
 
-        if (property.hasBackingField()) {
-          holder.registerProblem(
-            anchor,
-            DevKitKotlinBundle.message("inspections.application.service.as.static.immutable.property.with.backing.field.message"),
-            ProblemHighlightType.WARNING,
-            IntentionWrapper(ConvertPropertyToFunctionIntention()),
-            KtWrapInSupplierQuickFix(property),
-          )
-        }
+        holder.registerProblem(
+          anchor,
+          DevKitKotlinBundle.message("inspections.application.service.as.static.immutable.property.with.backing.field.message"),
+          ProblemHighlightType.WARNING,
+          IntentionWrapper(ConvertPropertyToFunctionIntention()),
+          KtWrapInSupplierQuickFix(property),
+        )
       }
     }
   }

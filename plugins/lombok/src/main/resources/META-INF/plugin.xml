@@ -48,8 +48,6 @@
   <depends>com.intellij.modules.java</depends>
 
   <extensions defaultExtensionNs="com.intellij">
-    <postStartupActivity implementation="de.plushnikov.intellij.plugin.activity.LombokProjectValidatorActivity"/>
-
     <applicationService serviceImplementation="de.plushnikov.intellij.plugin.lombokconfig.ConfigDiscovery"/>
 
     <lang.psiAugmentProvider implementation="de.plushnikov.intellij.plugin.provider.LombokAugmentProvider"/>
@@ -70,8 +68,7 @@
     <lang.inferredAnnotationProvider implementation="de.plushnikov.intellij.plugin.extension.LombokInferredAnnotationProvider"/>
 
     <fileType implementationClass="de.plushnikov.intellij.plugin.language.LombokConfigFileType" name="LOMBOK_CONFIG"
-              language="Lombok.Config"
-              fieldName="INSTANCE" extensions="config" fileNames="lombok.config"/>
+              language="Lombok.Config" fieldName="INSTANCE" fileNames="lombok.config"/>
     <lang.parserDefinition language="Lombok.Config"
                            implementationClass="de.plushnikov.intellij.plugin.language.LombokConfigParserDefinition"/>
     <lang.syntaxHighlighterFactory language="Lombok.Config"
@@ -226,6 +223,8 @@
     <notificationGroup id="Lombok plugin" displayType="BALLOON" bundle="messages.LombokBundle" key="notification.group.lombok"/>
 
     <dependencySupport coordinate="org.projectlombok:lombok" kind="java" displayName="Lombok"/>
+
+    <iconMapper mappingFile="LombokIconMappings.json"/>
   </extensions>
 
   <projectListeners>

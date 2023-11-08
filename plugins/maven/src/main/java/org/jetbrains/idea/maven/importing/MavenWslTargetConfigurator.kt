@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing
 
 import com.intellij.execution.target.TargetEnvironmentsManager
@@ -23,6 +23,12 @@ import org.jetbrains.idea.maven.utils.MavenUtil
 import org.jetbrains.idea.maven.utils.MavenWslUtil
 import org.jetbrains.idea.maven.utils.MavenWslUtil.collectWslMavenDirectories
 import java.io.File
+
+private val MAVEN_HOME_DIR = Key.create<File>("MAVEN_HOME_DIR")
+private val MAVEN_HOME_VERSION = Key.create<String>("MAVEN_WSL_HOME_VERSION")
+private val MAVEN_TARGET_PATH = Key.create<String>("MAVEN_TARGET_PATH")
+private val WSL_DISTRIBUTION = Key.create<WSLDistribution>("WSL_DISTRIBUTION")
+private val JDK_PATH = Key.create<String>("JDK_PATH")
 
 class MavenWslTargetConfigurator : MavenImporter("", ""),
                                    MavenWorkspaceConfigurator {
@@ -62,7 +68,7 @@ class MavenWslTargetConfigurator : MavenImporter("", ""),
     val mavenPath = wslDistribution.collectWslMavenDirectories()
       .firstOrNull()?.let { MavenUtil.getMavenHomeFile(it) }
     dataHolder.putUserData(MAVEN_HOME_DIR, mavenPath)
-    val targetMavenPath = mavenPath?.let { wslDistribution.getWslPath(it.path) }
+    val targetMavenPath = mavenPath?.let { wslDistribution.getWslPath(it.toPath()) }
     dataHolder.putUserData(MAVEN_TARGET_PATH, targetMavenPath)
     val mavenVersion = MavenUtil.getMavenVersion(mavenPath)
     dataHolder.putUserData(MAVEN_HOME_VERSION, mavenVersion)
@@ -143,12 +149,4 @@ class MavenWslTargetConfigurator : MavenImporter("", ""),
     return configuration
   }
 
-
-  companion object {
-    private val MAVEN_HOME_DIR = Key.create<File>("MAVEN_HOME_DIR")
-    private val MAVEN_HOME_VERSION = Key.create<String>("MAVEN_WSL_HOME_VERSION")
-    private val MAVEN_TARGET_PATH = Key.create<String>("MAVEN_TARGET_PATH")
-    private val WSL_DISTRIBUTION = Key.create<WSLDistribution>("WSL_DISTRIBUTION")
-    private val JDK_PATH = Key.create<String>("JDK_PATH")
-  }
 }

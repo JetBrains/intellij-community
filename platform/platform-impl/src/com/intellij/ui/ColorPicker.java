@@ -403,22 +403,6 @@ public final class ColorPicker extends JPanel implements ColorListener, Document
    * @deprecated this method doesn't support remote development. Replace with ColorChooserService.getInstance().showPopup
    */
   @Deprecated(forRemoval = true)
-  public static void showColorPickerPopup(@Nullable Project project, @Nullable Color currentColor, @Nullable Editor editor, @NotNull ColorListener listener, boolean showAlpha) {
-    showColorPickerPopup(project, currentColor, listener, bestLocationForColorPickerPopup(editor), showAlpha);
-  }
-
-  /**
-   * @deprecated this method doesn't support remote development. Replace with ColorChooserService.getInstance().showPopup
-   */
-  @Deprecated(forRemoval = true)
-  public static void showColorPickerPopup(@Nullable Project project, @Nullable Color currentColor, @Nullable Editor editor, @NotNull ColorListener listener, boolean showAlpha, boolean showAlphaAsPercent) {
-    showColorPickerPopup(project, currentColor, listener, bestLocationForColorPickerPopup(editor), showAlpha, showAlphaAsPercent);
-  }
-
-  /**
-   * @deprecated this method doesn't support remote development. Replace with ColorChooserService.getInstance().showPopup
-   */
-  @Deprecated(forRemoval = true)
   public static void showColorPickerPopup(@Nullable Project project, @Nullable Color currentColor, @NotNull ColorListener listener) {
     showColorPickerPopup(project, currentColor, listener, null);
   }
@@ -436,25 +420,7 @@ public final class ColorPicker extends JPanel implements ColorListener, Document
    */
   @Deprecated(forRemoval = true)
   public static void showColorPickerPopup(final @Nullable Project project, @Nullable Color currentColor, final @NotNull ColorListener listener, @Nullable RelativePoint location, boolean showAlpha) {
-    showColorPickerPopup(project, currentColor, listener, location, showAlpha, false);
-  }
-
-  /**
-   * @deprecated this method doesn't support remote development. Replace with ColorChooserService.getInstance().showPopup
-   */
-  @Deprecated(forRemoval = true)
-  public static void showColorPickerPopup(final @Nullable Project project, @Nullable Color currentColor, final @NotNull ColorListener listener, @Nullable RelativePoint location, boolean showAlpha, boolean showAlphaAsPercent) {
-    showColorPickerPopup(project, currentColor, listener, location, showAlpha, showAlphaAsPercent, null);
-  }
-
-  static void showColorPickerPopup(final @Nullable Project project,
-                                   @Nullable Color currentColor,
-                                   final @Nullable Editor editor,
-                                   final @NotNull ColorListener listener,
-                                   boolean showAlpha,
-                                   boolean showAlphaAsPercent,
-                                   final @Nullable ColorPickerPopupCloseListener popupCloseListener) {
-    showColorPickerPopup(project, currentColor, listener, bestLocationForColorPickerPopup(editor), showAlpha, showAlphaAsPercent, popupCloseListener);
+    showColorPickerPopup(project, currentColor, listener, location, showAlpha, false, null);
   }
 
   static void showColorPickerPopup(final @Nullable Project project,

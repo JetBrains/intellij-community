@@ -67,7 +67,7 @@
     <orderEntry type="module" module-name="intellij.copyright" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.guiForms.designer" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.dev" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.dev.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.devkit.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.eclipse" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.vcs.git" scope="RUNTIME" />
@@ -140,6 +140,7 @@
     <orderEntry type="module" module-name="intellij.terminal.sh" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.gradle.java.maven" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.markdown" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.markdown.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.textmate" scope="TEST" />
     <orderEntry type="module" module-name="intellij.webp" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.space.java.jps" scope="TEST" />
@@ -208,5 +209,6 @@
     <orderEntry type="module" module-name="intellij.xml.xmlbeans" scope="TEST" />
     <orderEntry type="module" module-name="intellij.jsonpath" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ide.newUiOnboarding" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.compose" scope="RUNTIME" />
   </component>
 </module>

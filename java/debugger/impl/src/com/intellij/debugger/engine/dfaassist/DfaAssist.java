@@ -26,6 +26,8 @@ import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.EdtScheduledExecutorService;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebugSessionListener;
+import com.intellij.xdebugger.XDebuggerManager;
+import com.intellij.xdebugger.XDebuggerManagerListener;
 import com.intellij.xdebugger.impl.dfaassist.DfaAssistBase;
 import com.intellij.xdebugger.impl.dfaassist.DfaResult;
 import com.sun.jdi.*;
@@ -39,14 +41,16 @@ import java.util.concurrent.TimeUnit;
 
 import static com.intellij.xdebugger.impl.dfaassist.DfaAssistBase.AssistMode.*;
 
-public final class DfaAssist extends DfaAssistBase implements DebuggerContextListener {
+public final class DfaAssist extends DfaAssistBase implements DebuggerContextListener, XDebuggerManagerListener {
   private static final int CLEANUP_DELAY_MILLIS = 300;
   private volatile CancellablePromise<?> myComputation;
   private volatile ScheduledFuture<?> myScheduledCleanup;
+  private volatile boolean myInactive = false;
   private final DebuggerStateManager myManager;
 
   private DfaAssist(@NotNull Project project, @NotNull DebuggerStateManager manager) {
     super(project);
+    project.getMessageBus().connect(this).subscribe(XDebuggerManager.TOPIC, this);
     myManager = manager;
     updateFromSettings();
   }
@@ -55,16 +59,36 @@ public final class DfaAssist extends DfaAssistBase implements DebuggerContextLis
     AssistMode newMode = fromSettings();
     if (myMode != newMode) {
       myMode = newMode;
-      if (newMode == NONE) {
-        cleanUp();
+      update();
+    }
+  }
+
+  private void update() {
+    if (myMode == NONE || myInactive) {
+      cleanUp();
+    }
+    else {
+      DebuggerSession session = myManager.getContext().getDebuggerSession();
+      if (session != null) {
+        DebuggerInvocationUtil.invokeLater(myProject, () -> {
+          session.refresh(false);
+        });
       }
-      else {
-        DebuggerSession session = myManager.getContext().getDebuggerSession();
-        if (session != null) {
-          DebuggerInvocationUtil.invokeLater(myProject, () -> {
-            session.refresh(false);
-          });
-        }
+    }
+  }
+
+  @Override
+  public void currentSessionChanged(@Nullable XDebugSession previousSession, @Nullable XDebugSession currentSession) {
+    DebuggerSession session = myManager.getContext().getDebuggerSession();
+    if (session != null) {
+      XDebugSession xDebugSession = session.getXDebugSession();
+      if (xDebugSession == previousSession && !myInactive) {
+        myInactive = true;
+        update();
+      }
+      else if (xDebugSession == currentSession && myInactive) {
+        myInactive = false;
+        update();
       }
     }
   }

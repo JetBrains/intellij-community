@@ -4,14 +4,12 @@ package com.intellij.util.indexing.roots;
 import com.intellij.openapi.project.Project;
 import com.intellij.platform.workspace.jps.entities.LibraryId;
 import com.intellij.platform.workspace.jps.entities.LibraryPropertiesEntity;
-import com.intellij.platform.workspace.storage.WorkspaceEntity;
 import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 
 @ApiStatus.Internal
 @ApiStatus.Experimental
@@ -23,17 +21,18 @@ public final class LibraryPropertyEntityIndexableEntityProvider implements Index
   }
 
   @Override
-  public @NotNull Collection<DependencyOnParent<? extends WorkspaceEntity>> getDependencies() {
-    return Collections.emptyList();
-  }
-
-  @Override
   public @NotNull Collection<? extends IndexableIteratorBuilder> getAddedEntityIteratorBuilders(@NotNull LibraryPropertiesEntity entity,
                                                                                                 @NotNull Project project) {
     //  sure we are interested only in libraries used in project, but in case registered library is downloaded
     // no change in dependencies happen, only Added event on LibraryEntity.
     // For debug see com.intellij.roots.libraries.LibraryTest
     return IndexableIteratorBuilders.INSTANCE.forLibraryEntity(entity.getLibrary().getSymbolicId(), false);
+  }
+
+  @Override
+  public @NotNull Collection<? extends IndexableIteratorBuilder> getRemovedEntityIteratorBuilders(@NotNull LibraryPropertiesEntity entity,
+                                                                                                  @NotNull Project project) {
+    return getAddedEntityIteratorBuilders(entity, project);
   }
 
   @Override

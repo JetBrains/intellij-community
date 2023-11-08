@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.gradleCodeInsightCommon
 
 import com.intellij.codeInsight.CodeInsightUtilCore
@@ -13,10 +13,8 @@ import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtil
-import com.intellij.openapi.progress.rawProgressReporter
-import com.intellij.openapi.progress.runWithModalProgressBlocking
-import com.intellij.openapi.progress.withModalProgress
-import com.intellij.openapi.progress.withRawProgressReporter
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
+import com.intellij.platform.ide.progress.withModalProgress
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.project.modules
@@ -26,6 +24,8 @@ import com.intellij.openapi.roots.ExternalLibraryDescriptor
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.util.progress.rawProgressReporter
+import com.intellij.platform.util.progress.withRawProgressReporter
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.gradle.util.GradleVersion
@@ -131,21 +131,8 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
             OpenFileAction.openFile(file.virtualFile, project)
         }
 
+        KotlinAutoConfigurationNotificationHolder.getInstance(project).onManualConfigurationCompleted()
         result.collector.showNotification()
-    }
-
-    private fun getAllConfigurableKotlinVersions(): List<IdeKotlinVersion> {
-        return KotlinGradleCompatibilityStore.allKotlinVersions()
-    }
-
-    /**
-     * Currently, returns true if this module has a jvmTarget >= 8.
-     * If a future Kotlin version requires a higher jvmTarget, then it will be required for that [kotlinVersion].
-     */
-    private fun Module.kotlinSupportsJvmTarget(kotlinVersion: IdeKotlinVersion): Boolean {
-        val jvmTarget = getTargetBytecodeVersionFromModule(this, kotlinVersion) ?: return false
-        val jvmTargetNum = getJvmTargetNumber(jvmTarget) ?: return false
-        return jvmTargetNum >= 8
     }
 
     private fun Project.isGradleSyncPending(): Boolean {
@@ -319,10 +306,7 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
         val writeActions = mutableListOf<() -> Unit>()
 
         val rootModule = getRootModule(project)
-        val definedVersionInPluginSettings = rootModule?.getBuildScriptSettingsPsiFile()?.let {
-            GradleBuildScriptSupport.getManipulator(it)
-                .findKotlinPluginManagementVersion()
-        }
+        val definedVersionInPluginSettings = rootModule?.let { getPluginManagementVersion(it) }
         var addVersionToModuleBuildScript = definedVersionInPluginSettings?.parsedVersion != kotlinVersion
 
         if (rootModule != null) {
@@ -639,6 +623,53 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
     companion object {
         @NonNls
         const val CLASSPATH = "classpath \"$GROUP_ID:$GRADLE_PLUGIN_ID:\$kotlin_version\""
+
+        private fun getAllConfigurableKotlinVersions(): List<IdeKotlinVersion> {
+            return KotlinGradleCompatibilityStore.allKotlinVersions()
+        }
+
+        /**
+         * Currently, returns true if this module has a jvmTarget >= 8.
+         * If a future Kotlin version requires a higher jvmTarget, then it will be required for that [kotlinVersion].
+         */
+        private fun Module.kotlinSupportsJvmTarget(kotlinVersion: IdeKotlinVersion): Boolean {
+            val jvmTarget = getTargetBytecodeVersionFromModule(this, kotlinVersion) ?: return false
+            val jvmTargetNum = getJvmTargetNumber(jvmTarget) ?: return false
+            return jvmTargetNum >= 8
+        }
+
+        /**
+         * Returns the best Kotlin version that can be used for a new child of the [parentModule],
+         * or null if there is a version conflict and no version can be used without issues.
+         */
+        fun findBestKotlinVersion(parentModule: Module, gradleVersion: GradleVersion): IdeKotlinVersion? {
+            val project = parentModule.project
+            val hierarchy = project.buildKotlinModuleHierarchy()
+            val parentModuleNode = hierarchy?.getNodeForModule(parentModule) ?: return null
+            if (parentModuleNode.hasKotlinVersionConflict()) return null
+
+            val forcedKotlinVersion = parentModuleNode.getForcedKotlinVersion()
+            val allConfigurableKotlinVersions = getAllConfigurableKotlinVersions()
+            if (forcedKotlinVersion != null) return forcedKotlinVersion
+
+            val remainingKotlinVersions = allConfigurableKotlinVersions
+                .filter { parentModule.kotlinSupportsJvmTarget(it) }
+                .filter { KotlinGradleCompatibilityStore.kotlinVersionSupportsGradle(it, gradleVersion) }
+
+            return remainingKotlinVersions.maxOrNull()
+        }
+
+        /**
+         * Returns the defined Kotlin version in the pluginManagement block in the settings.gradle file for the [module].
+         * Returns null if the version is not defined in the settings.gradle file.
+         * Returns a non-null value, but null version inside the object, if the version was defined but could not be parsed.
+         */
+        fun getPluginManagementVersion(module: Module): DefinedKotlinPluginManagementVersion? {
+            return module.getBuildScriptSettingsPsiFile()?.let {
+                GradleBuildScriptSupport.getManipulator(it)
+                    .findKotlinPluginManagementVersion()
+            }
+        }
 
         fun getGroovyDependencySnippet(
             artifactName: String,

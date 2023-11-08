@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.patch.tool;
 
+import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.diff.*;
 import com.intellij.diff.actions.ProxyUndoRedoAction;
 import com.intellij.diff.actions.impl.FocusOppositePaneAction;
@@ -25,8 +26,10 @@ import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.VisibleAreaListener;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.EditorGutterFreePainterAreaState;
 import com.intellij.openapi.editor.ex.EditorMarkupModel;
 import com.intellij.openapi.editor.impl.LineNumberConverterAdapter;
+import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -102,7 +105,7 @@ class ApplyPatchViewer implements DataProvider, Disposable {
     ((EditorMarkupModel)myResultEditor.getMarkupModel()).setErrorStripeVisible(false);
     myResultEditor.setVerticalScrollbarOrientation(EditorEx.VERTICAL_SCROLLBAR_LEFT);
 
-    myPatchEditor.getGutterComponentEx().setForceShowRightFreePaintersArea(true);
+    myPatchEditor.getGutterComponentEx().setRightFreePaintersAreaState(EditorGutterFreePainterAreaState.SHOW);
     ((EditorMarkupModel)myPatchEditor.getMarkupModel()).setErrorStripeVisible(false);
 
 
@@ -443,6 +446,16 @@ class ApplyPatchViewer implements DataProvider, Disposable {
     myModel.replaceChange(change.getIndex(), newContent);
 
     markChangeResolved(change);
+  }
+
+  public void copyChangeToClipboard(@NotNull ApplyPatchChange change) {
+    LineRange patchRange = change.getPatchInsertionRange();
+    CharSequence newContent = DiffUtil.getLinesContent(myPatchEditor.getDocument(), patchRange.start, patchRange.end);
+
+    CopyPasteManager.copyTextToClipboard(newContent.toString());
+
+    myPatchEditor.getCaretModel().moveToOffset(myPatchEditor.getDocument().getLineStartOffset(patchRange.start));
+    HintManager.getInstance().showInformationHint(myPatchEditor, DiffBundle.message("patch.dialog.copy.change.command.balloon"), HintManager.UNDER);
   }
 
   private final class ApplySelectedChangesAction extends ApplySelectedChangesActionBase {

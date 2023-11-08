@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.analysis.AnalysisScope;
@@ -36,8 +36,7 @@ public abstract class RedundantSuppressInspectionBase extends GlobalSimpleInspec
   }
 
   @Override
-  @NonNls
-  public @NotNull String getShortName() {
+  public @NonNls @NotNull String getShortName() {
     return SHORT_NAME;
   }
 
@@ -59,18 +58,15 @@ public abstract class RedundantSuppressInspectionBase extends GlobalSimpleInspec
     InspectionProfileImpl profile = getProfile(manager, globalContext);
     CommonProblemDescriptor[] descriptors = checkElement(file, redundantSuppressionDetector, manager, profile);
     for (CommonProblemDescriptor descriptor : descriptors) {
-      if (descriptor instanceof ProblemDescriptor) {
-        PsiElement psiElement = ((ProblemDescriptor)descriptor).getPsiElement();
+      if (descriptor instanceof ProblemDescriptor problemDescriptor) {
+        PsiElement psiElement = problemDescriptor.getPsiElement();
         if (psiElement != null) {
           PsiElement member = globalContext.getRefManager().getContainerElement(psiElement);
           RefElement reference = globalContext.getRefManager().getReference(member);
           if (reference != null) {
             problemDescriptionsProcessor.addProblemElement(reference, descriptor);
+            continue;
           }
-          else {
-            problemsHolder.registerProblem(psiElement, descriptor.getDescriptionTemplate());
-          }
-          continue;
         }
       }
       problemsHolder.registerProblem(file, descriptor.getDescriptionTemplate());
@@ -150,8 +146,8 @@ public abstract class RedundantSuppressInspectionBase extends GlobalSimpleInspec
             PsiElement suppressedScope = e.getKey();
             if (!suppressedIds.contains(toolId)) continue;
             for (CommonProblemDescriptor descriptor : descriptors) {
-              if (!(descriptor instanceof ProblemDescriptor)) continue;
-              PsiElement element = ((ProblemDescriptor)descriptor).getPsiElement();
+              if (!(descriptor instanceof ProblemDescriptor problemDescriptor)) continue;
+              PsiElement element = problemDescriptor.getPsiElement();
               if (element == null) continue;
               PsiLanguageInjectionHost host = InjectedLanguageManager.getInstance(element.getProject()).getInjectionHost(element);
               if (extension.isSuppressionFor(suppressedScope, ObjectUtils.notNull(host, element), toolId)) {
@@ -178,8 +174,8 @@ public abstract class RedundantSuppressInspectionBase extends GlobalSimpleInspec
                 }
               }
               PsiElement identifier;
-              if (suppressedScope instanceof PsiNameIdentifierOwner && suppressedScope == documentedElement) {
-                identifier = ObjectUtils.notNull(((PsiNameIdentifierOwner)suppressedScope).getNameIdentifier(), suppressedScope);
+              if (suppressedScope instanceof PsiNameIdentifierOwner nameIdentifierOwner && suppressedScope == documentedElement) {
+                identifier = ObjectUtils.notNull(nameIdentifierOwner.getNameIdentifier(), suppressedScope);
               }
               else {
                 identifier = suppressedScope;
@@ -199,10 +195,9 @@ public abstract class RedundantSuppressInspectionBase extends GlobalSimpleInspec
     return result.toArray(ProblemDescriptor.EMPTY_ARRAY);
   }
 
-  @NotNull
-  public LocalInspectionTool createLocalTool(@NotNull RedundantSuppressionDetector suppressor,
-                                             @NotNull Map<String, ? extends Set<PsiElement>> toolToSuppressScopes,
-                                             @NotNull Set<String> activeTools) {
+  public @NotNull LocalInspectionTool createLocalTool(@NotNull RedundantSuppressionDetector suppressor,
+                                                      @NotNull Map<String, ? extends Set<PsiElement>> toolToSuppressScopes,
+                                                      @NotNull Set<String> activeTools) {
     return new LocalRedundantSuppressionInspection(suppressor, activeTools, toolToSuppressScopes);
   }
 
@@ -232,15 +227,14 @@ public abstract class RedundantSuppressInspectionBase extends GlobalSimpleInspec
     return false;
   }
 
-  @NotNull
-  protected static GlobalInspectionContextBase createContext(@NotNull PsiFile file) {
+  protected static @NotNull GlobalInspectionContextBase createContext(@NotNull PsiFile file) {
     InspectionManager inspectionManagerEx = InspectionManager.getInstance(file.getProject());
     return (GlobalInspectionContextBase)inspectionManagerEx.createNewGlobalContext();
   }
 
   private static @NotNull InspectionProfileImpl getProfile(@NotNull InspectionManager manager, @NotNull GlobalInspectionContext globalContext) {
-    if (globalContext instanceof GlobalInspectionContextBase) {
-      InspectionProfileImpl profile = ((GlobalInspectionContextBase)globalContext).getCurrentProfile();
+    if (globalContext instanceof GlobalInspectionContextBase globalInspectionContext) {
+      InspectionProfileImpl profile = globalInspectionContext.getCurrentProfile();
       if (profile.getSingleTool() == null) {
         return profile;
       }
@@ -250,10 +244,9 @@ public abstract class RedundantSuppressInspectionBase extends GlobalSimpleInspec
     return ObjectUtils.notNull(profileManager.getProfile(currentProfileName, false), profileManager.getCurrentProfile());
   }
 
-  @NotNull
-  private static List<InspectionToolWrapper<?, ?>> findReportingTools(@NotNull List<? extends InspectionToolWrapper<?, ?>> toolWrappers,
-                                                                      @NotNull String suppressedId,
-                                                                      @NotNull Language language) {
+  private static @NotNull List<InspectionToolWrapper<?, ?>> findReportingTools(@NotNull List<? extends InspectionToolWrapper<?, ?>> toolWrappers,
+                                                                               @NotNull String suppressedId,
+                                                                               @NotNull Language language) {
     List<InspectionToolWrapper<?, ?>> wrappers = Collections.emptyList();
     List<String> mergedToolName = InspectionElementsMerger.getMergedToolNames(suppressedId);
     for (InspectionToolWrapper<?, ?> toolWrapper : toolWrappers) {
@@ -321,12 +314,9 @@ public abstract class RedundantSuppressInspectionBase extends GlobalSimpleInspec
   }
 
   private final class LocalRedundantSuppressionInspection extends LocalInspectionTool implements UnfairLocalInspectionTool {
-    @NotNull
-    private final RedundantSuppressionDetector mySuppressor;
-    @NotNull
-    private final Set<String> myActiveTools;
-    @NotNull
-    private final Map<String, ? extends Set<PsiElement>> myToolToSuppressScopes;
+    private final @NotNull RedundantSuppressionDetector mySuppressor;
+    private final @NotNull Set<String> myActiveTools;
+    private final @NotNull Map<String, ? extends Set<PsiElement>> myToolToSuppressScopes;
 
     private LocalRedundantSuppressionInspection(@NotNull RedundantSuppressionDetector suppressor,
                                                 @NotNull Set<String> activeTools,

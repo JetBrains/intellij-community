@@ -51,7 +51,7 @@ public class BasicDeclarationParser {
     myParser = javaParser;
     myJavaElementTypeContainer = javaParser.getJavaElementTypeFactory().getContainer();
     TYPE_START = TokenSet.orSet(
-      BASIC_PRIMITIVE_TYPE_BIT_SET.toTokenSet(),
+      BASIC_PRIMITIVE_TYPE_BIT_SET,
       TokenSet.create(JavaTokenType.IDENTIFIER, JavaTokenType.AT, JavaTokenType.VAR_KEYWORD));
     RESOURCE_EXPRESSIONS = TokenSet.create(
       myJavaElementTypeContainer.REFERENCE_EXPRESSION, myJavaElementTypeContainer.THIS_EXPRESSION,
@@ -437,7 +437,7 @@ public class BasicDeclarationParser {
 
   @NotNull
   public Pair<PsiBuilder.Marker, Boolean> parseModifierList(final PsiBuilder builder) {
-    return parseModifierList(builder, BASIC_MODIFIER_BIT_SET.toTokenSet());
+    return parseModifierList(builder, BASIC_MODIFIER_BIT_SET);
   }
 
   @NotNull

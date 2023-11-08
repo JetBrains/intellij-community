@@ -3,6 +3,7 @@ package com.intellij.build;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.impl.DataValidators;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -125,12 +126,10 @@ public class CompositeView<T extends ComponentContainer> extends JPanel implemen
   @Override
   public @Nullable Object getData(@NotNull @NonNls String dataId) {
     String visibleViewName = myVisibleViewRef.get();
-    if (visibleViewName != null) {
-      T visibleView = getView(visibleViewName);
-      if (visibleView instanceof DataProvider) {
-        Object data = ((DataProvider)visibleView).getData(dataId);
-        if (data != null) return data;
-      }
+    T visibleView = visibleViewName != null ? getView(visibleViewName) : null;
+    Object data = visibleView instanceof DataProvider ? ((DataProvider)visibleView).getData(dataId) : null;
+    if (data != null) {
+      return DataValidators.validOrNull(data, dataId, visibleView);
     }
     return null;
   }

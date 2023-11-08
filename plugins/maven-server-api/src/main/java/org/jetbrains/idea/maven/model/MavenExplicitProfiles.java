@@ -1,6 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.model;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.Collections;
@@ -12,7 +14,8 @@ public class MavenExplicitProfiles implements Serializable {
   private final HashSet<String> myEnabledProfiles;
   private final HashSet<String> myDisabledProfiles;
 
-  public MavenExplicitProfiles(Collection<String> enabledProfiles, Collection<String> disabledProfiles) {
+  public MavenExplicitProfiles(@NotNull Collection<@NotNull String> enabledProfiles,
+                               @NotNull Collection<@NotNull String> disabledProfiles) {
     myEnabledProfiles = new HashSet<>(enabledProfiles);
     myDisabledProfiles = new HashSet<>(disabledProfiles);
   }
@@ -21,11 +24,11 @@ public class MavenExplicitProfiles implements Serializable {
     this(enabledProfiles, Collections.emptySet());
   }
 
-  public Collection<String> getEnabledProfiles() {
+  public @NotNull Collection<@NotNull String> getEnabledProfiles() {
     return myEnabledProfiles;
   }
 
-  public Collection<String> getDisabledProfiles() {
+  public @NotNull Collection<@NotNull String> getDisabledProfiles() {
     return myDisabledProfiles;
   }
 

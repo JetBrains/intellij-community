@@ -22,15 +22,19 @@ class AvatarIcon(val targetSize: Int,
                  val avatarName: String,
                  val palette: ColorPalette = AvatarPalette) : JBCachingScalableIcon<AvatarIcon>() {
   private var cachedImage: BufferedImage? = null
-  private var cachedImageScale: Float? = null
+  private var cachedImageSysScale: Float? = null
+  private var cachedImagePixScale: Float? = null
   private var cachedImageColor: Color? = null
 
   override fun paintIcon(c: Component?, g: Graphics, x: Int, y: Int) {
     g as Graphics2D
     val iconSize = getIconSize()
-    val scale = JBUIScale.scale(1f)
+    val sysScale = JBUIScale.sysScale(g)
+    val pixScale = JBUI.pixScale(g.deviceConfiguration)
     val imageColor = palette.gradient(gradientSeed).first
-    if (scale != cachedImageScale || imageColor != cachedImageColor) {
+    if (sysScale != cachedImageSysScale
+        || pixScale != cachedImagePixScale
+        || imageColor != cachedImageColor) {
       cachedImage = null
     }
 
@@ -43,7 +47,8 @@ class AvatarIcon(val targetSize: Int,
                                           name = avatarName,
                                           palette = palette)
       this.cachedImage = cachedImage
-      cachedImageScale = scale
+      cachedImageSysScale = sysScale
+      cachedImagePixScale = pixScale
       cachedImageColor = palette.gradient(gradientSeed).first
     }
 

@@ -221,15 +221,18 @@ private fun TR.printIndexingActivityRow(times: JsonProjectIndexingActivityHistor
         td(NOT_APPLICABLE)
       }
       td(fileCount.numberOfFilesIndexedByInfrastructureExtensionsDuringIndexingStage.toString())
-      if (fileCount.numberOfChangedDuringIndexingFiles > 0) {
-        td {
-          text(fileCount.numberOfFilesIndexedWithLoadingContent.toString())
+      td {
+        text(fileCount.numberOfFilesIndexedWithLoadingContent.toString())
+
+        if (fileCount.numberOfChangedDuringIndexingFiles > 0) {
           br()
           text("(incl. ${fileCount.numberOfChangedDuringIndexingFiles} changed in VFS)")
         }
-      }
-      else {
-        td(fileCount.numberOfFilesIndexedWithLoadingContent.toString())
+
+        if (fileCount.numberOfNothingToWriteFiles > 0) {
+          br()
+          text("(incl. ${fileCount.numberOfNothingToWriteFiles} with nothing to write)")
+        }
       }
     }
   }

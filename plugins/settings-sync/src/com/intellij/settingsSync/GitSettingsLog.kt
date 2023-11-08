@@ -3,6 +3,7 @@ package com.intellij.settingsSync
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.settingsSync.SettingsSnapshot.MetaInfo
 import com.intellij.settingsSync.SettingsSnapshotZipSerializer.deserializeSettingsProviders
 import com.intellij.settingsSync.SettingsSnapshotZipSerializer.serializeSettingsProviders
@@ -10,6 +11,7 @@ import com.intellij.settingsSync.plugins.SettingsSyncPluginsState
 import com.intellij.settingsSync.plugins.SettingsSyncPluginsStateMerger.mergePluginStates
 import com.intellij.ui.JBAccountInfoService
 import com.intellij.util.io.createParentDirectories
+import com.intellij.util.io.lastModified
 import com.intellij.util.io.write
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -34,10 +36,7 @@ import java.nio.file.Path
 import java.time.Instant
 import java.util.function.Consumer
 import java.util.regex.Pattern
-import kotlin.io.path.createFile
-import kotlin.io.path.div
-import kotlin.io.path.exists
-import kotlin.io.path.readText
+import kotlin.io.path.*
 
 
 internal class GitSettingsLog(private val settingsSyncStorage: Path,
@@ -78,26 +77,15 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
       repository.create()
       addInitialCommit(repository)
     } else {
-      // ensure directory is unlocked:
-      // IDEA-305967 org.eclipse.jgit.api.errors.JGitInternalException: Cannot lock /home/user/.config/JetBrains/IntelliJIdea2023.1/settingsSync/.git/index
-      val dummyIndexChangedListener = IndexChangedListener {
-        // do nothing
-      }
-      for (i in 1..3) {
-        try {
-          val dirCache = DirCache.lock(repository, dummyIndexChangedListener)
-          dirCache.unlock()
-          break
-        } catch (lfex: LockFailedException) {
-          if (i > 1) {
-            LOG.warn("Repository directory $dotGit cannot be locked. Please remove index.lock manually", lfex)
-          }
-          if (!LockFile.unlock(lfex.file)){
-            LOG.warn("Unable to unlock ${lfex.file}. Will try again")
-          }
-          if (i==3){
-            throw lfex // we weren't able to do this in 3 attempts, give up and throw exception
-          }
+      val lockEntries = dotGit.listDirectoryEntries("*.lock")
+      val FIVE_SECONDS = 5000
+      for(lock in lockEntries) {
+        if (System.currentTimeMillis() - lock.getLastModifiedTime().toMillis() > FIVE_SECONDS) {
+          FileUtil.delete(lock)
+        } else {
+          // Repository is currently in process of operating.
+          // Shouldn't delete the lock, otherwise we'll damage the repo. Just log instead
+          LOG.warn("Found new lock (${lock.fileName}) modified ${lock.getLastModifiedTime().toInstant()}. Repo initialization might fail")
         }
       }
     }

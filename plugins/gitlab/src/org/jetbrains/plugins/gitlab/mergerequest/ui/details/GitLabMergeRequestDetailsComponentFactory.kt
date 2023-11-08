@@ -13,7 +13,6 @@ import com.intellij.collaboration.ui.util.gap
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.project.Project
 import com.intellij.ui.PopupHandler
 import com.intellij.ui.components.panels.Wrapper
@@ -29,12 +28,13 @@ import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountViewModel
+import org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestActionPlaces
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabCommit
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestChangeListViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestDetailsLoadingViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestDetailsViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.error.GitLabMergeRequestErrorStatusPresenter
-import org.jetbrains.plugins.gitlab.mergerequest.ui.issues.IssuesUtil
+import org.jetbrains.plugins.gitlab.ui.GitLabUIUtil
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import javax.swing.JComponent
 import javax.swing.JPanel
@@ -63,7 +63,7 @@ internal object GitLabMergeRequestDetailsComponentFactory {
             val detailsVm = loadingState.detailsVm
             val detailsPanel = createDetailsComponent(project, detailsVm, avatarIconsProvider).apply {
               val actionGroup = ActionManager.getInstance().getAction("GitLab.Merge.Request.Details.Popup") as ActionGroup
-              PopupHandler.installPopupMenu(this, actionGroup, ActionPlaces.POPUP)
+              PopupHandler.installPopupMenu(this, actionGroup, GitLabMergeRequestActionPlaces.DETAILS_POPUP)
 
               val changesModelState = detailsVm.changesVm.changeListVm.map { it.getOrNull() }
                 .stateIn(this@bindContentIn, SharingStarted.Eagerly, null)
@@ -128,7 +128,7 @@ internal object GitLabMergeRequestDetailsComponentFactory {
       add(CodeReviewDetailsCommitInfoComponentFactory.create(cs, changesVm.selectedCommit,
                                                              commitPresentation = { commit ->
                                                                createCommitInfoPresenter(commit) {
-                                                                 IssuesUtil.convertMarkdownToHtmlWithIssues(project, it)
+                                                                 GitLabUIUtil.convertToHtml(project, it)
                                                                }
                                                              },
                                                              htmlPaneFactory = { SimpleHtmlPane() }),
@@ -137,7 +137,7 @@ internal object GitLabMergeRequestDetailsComponentFactory {
           CC().grow().shrinkPrioY(200))
       add(GitLabMergeRequestDetailsStatusChecksComponentFactory.create(cs, statusVm, detailsReviewFlowVm, avatarIconsProvider),
           CC().growX().gap(ReviewDetailsUIUtil.STATUSES_GAPS).maxHeight("${ReviewDetailsUIUtil.STATUSES_MAX_HEIGHT}"))
-      add(GitLabMergeRequestDetailsActionsComponentFactory.create(cs, detailsReviewFlowVm, avatarIconsProvider),
+      add(GitLabMergeRequestDetailsActionsComponentFactory.create(cs, detailsReviewFlowVm),
           CC().growX().gap(ReviewDetailsUIUtil.ACTIONS_GAPS).minHeight("pref"))
     }
   }

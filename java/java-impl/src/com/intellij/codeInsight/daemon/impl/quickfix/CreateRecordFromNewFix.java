@@ -3,7 +3,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypesProvider;
-import com.intellij.codeInsight.TailType;
+import com.intellij.codeInsight.TailTypes;
 import com.intellij.codeInsight.template.Expression;
 import com.intellij.codeInsight.template.TemplateBuilder;
 import com.intellij.codeInsight.template.TemplateBuilderImpl;
@@ -113,7 +113,7 @@ public class CreateRecordFromNewFix extends CreateClassFromNewFix {
 
       int kind =
         TypeConversionUtil.isPrimitiveAndNotNull(data.myType) ? ExpectedTypeInfo.TYPE_STRICTLY : ExpectedTypeInfo.TYPE_OR_SUPERTYPE;
-      ExpectedTypeInfo info = ExpectedTypesProvider.createInfo(data.myType, kind, data.myType, TailType.NONE);
+      ExpectedTypeInfo info = ExpectedTypesProvider.createInfo(data.myType, kind, data.myType, TailTypes.noneType());
 
       PsiElement context = PsiTreeUtil.getParentOfType(elements[i], PsiClass.class, PsiMethod.class);
       guesser.setupTypeElement(Objects.requireNonNull(component.getTypeElement()), new ExpectedTypeInfo[]{info}, context, containingClass);

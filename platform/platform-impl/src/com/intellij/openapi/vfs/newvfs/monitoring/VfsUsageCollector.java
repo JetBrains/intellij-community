@@ -12,6 +12,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+import java.lang.Enum;
 import java.lang.Long;
 import java.util.List;
 import java.util.stream.Stream;
@@ -21,23 +22,25 @@ import static com.intellij.internal.statistic.eventLog.events.EventFields.Enum;
 import static com.intellij.internal.statistic.eventLog.events.EventFields.Long;
 import static com.intellij.internal.statistic.eventLog.events.EventFields.*;
 
-import java.lang.Enum;
-
 @ApiStatus.Internal
 public final class VfsUsageCollector extends CounterUsagesCollector {
   private static final int DURATION_THRESHOLD_MS = 100;
 
-  private static final EventLogGroup GROUP_VFS = new EventLogGroup("vfs", 14);
-
-
-  /* ================== EVENT_INITIAL_REFRESH: ====================================================== */
+  private static final EventLogGroup GROUP_VFS = new EventLogGroup("vfs", 16);
 
   private static final LongEventField FIELD_WAIT_MS = Long("wait_ms");  // -1 for synchronous refresh/events
 
-  private static final EventId1<Long> EVENT_INITIAL_REFRESH = GROUP_VFS.registerEvent(
-    "initial_refresh",
-    EventFields.DurationMs
-  );
+  /* ================== EVENT_INITIAL_REFRESH: ====================================================== */
+
+  private static final EventId1<Long> EVENT_INITIAL_REFRESH = GROUP_VFS.registerEvent("initial_refresh", DurationMs);
+
+  /* ================== EVENT_BACKGROUND_REFRESH: ====================================================== */
+
+  private static final RoundedIntEventField FIELD_BG_REFRESH_SESSIONS = RoundedInt("sessions");
+  private static final RoundedIntEventField FIELD_BG_REFRESH_EVENTS = RoundedInt("events");
+
+  private static final EventId3<Long, Integer, Integer> EVENT_BACKGROUND_REFRESH = GROUP_VFS.registerEvent(
+    "background_refresh", DurationMs, FIELD_BG_REFRESH_SESSIONS, FIELD_BG_REFRESH_EVENTS);
 
   /* ================== EVENT_REFRESH_SESSION: ====================================================== */
 
@@ -51,7 +54,7 @@ public final class VfsUsageCollector extends CounterUsagesCollector {
   private static final VarargEventId EVENT_REFRESH_SESSION = GROUP_VFS.registerVarargEvent(
     "refresh_session",
     FIELD_REFRESH_RECURSIVE, FIELD_REFRESH_LOCAL_ROOTS, FIELD_REFRESH_ARCHIVE_ROOTS, FIELD_REFRESH_OTHER_ROOTS,
-    FIELD_REFRESH_CANCELLED, FIELD_WAIT_MS, EventFields.DurationMs, FIELD_REFRESH_TRIES
+    FIELD_REFRESH_CANCELLED, FIELD_WAIT_MS, DurationMs, FIELD_REFRESH_TRIES
   );
 
   /* ================== EVENT_REFRESH_SCAN: ====================================================== */
@@ -64,7 +67,7 @@ public final class VfsUsageCollector extends CounterUsagesCollector {
 
   private static final VarargEventId EVENT_REFRESH_SCAN = GROUP_VFS.registerVarargEvent(
     "refresh_scan",
-    FIELD_REFRESH_FULL_SCANS, FIELD_REFRESH_PARTIAL_SCANS, FIELD_REFRESH_RETRIES, EventFields.DurationMs, FIELD_REFRESH_VFS_TIME_MS,
+    FIELD_REFRESH_FULL_SCANS, FIELD_REFRESH_PARTIAL_SCANS, FIELD_REFRESH_RETRIES, DurationMs, FIELD_REFRESH_VFS_TIME_MS,
     FIELD_REFRESH_IO_TIME_MS
   );
 
@@ -76,17 +79,14 @@ public final class VfsUsageCollector extends CounterUsagesCollector {
 
   private static final VarargEventId EVENT_EVENTS = GROUP_VFS.registerVarargEvent(
     "events",
-    FIELD_WAIT_MS, FIELD_EVENT_LISTENERS_MS, FIELD_EVENT_TRIES, EventFields.DurationMs, FIELD_EVENT_NUMBER
+    FIELD_WAIT_MS, FIELD_EVENT_LISTENERS_MS, FIELD_EVENT_TRIES, DurationMs, FIELD_EVENT_NUMBER
   );
 
   /* ================== EVENT_VFS_INITIALIZATION: ====================================================== */
 
   /** What causes VFS rebuild (if any) */
   private static final EnumEventField<VFSInitKind> FIELD_INITIALIZATION_KIND = Enum("init_kind", VFSInitKind.class);
-  /**
-   * How many attempts to init VFS were made.
-   * In regular caqse, it is only 1 atte22mpt, but could be >1 if VFS was rebuilt.
-   */
+  /** A number of attempts to init VFS. Usually =1, but could be more if VFS was rebuilt. */
   private static final IntEventField FIELD_INITIALIZATION_ATTEMPTS = Int("init_attempts");
   /** Timestamp current VFS was created & initialized (ms, unix origin) */
   private static final LongEventField FIELD_CREATION_TIMESTAMP = Long("creation_timestamp");
@@ -95,18 +95,12 @@ public final class VfsUsageCollector extends CounterUsagesCollector {
   private static final LongEventField FIELD_TOTAL_INIT_DURATION_MS = Long("init_duration_ms");
   private static final StringListEventField FIELD_ERRORS_HAPPENED = StringList(
     "errors_happened",
-    Stream.of(VFSInitException.ErrorCategory.values())
-      .map(Enum::name)
-      .toList()
+    Stream.of(VFSInitException.ErrorCategory.values()).map(Enum::name).toList()
   );
 
   private static final VarargEventId EVENT_VFS_INITIALIZATION = GROUP_VFS.registerVarargEvent(
     "initialization",
-    FIELD_INITIALIZATION_KIND,
-    FIELD_CREATION_TIMESTAMP,
-    FIELD_INITIALIZATION_ATTEMPTS,
-    FIELD_IMPL_VERSION,
-    FIELD_TOTAL_INIT_DURATION_MS,
+    FIELD_INITIALIZATION_KIND, FIELD_CREATION_TIMESTAMP, FIELD_INITIALIZATION_ATTEMPTS, FIELD_IMPL_VERSION, FIELD_TOTAL_INIT_DURATION_MS,
     FIELD_ERRORS_HAPPENED
   );
 
@@ -122,6 +116,7 @@ public final class VfsUsageCollector extends CounterUsagesCollector {
   private static final IntEventField FIELD_HEALTH_CHECK_FILE_RECORDS_NAME_NULL = Int("file_records_name_null");
   /** Number of file-records there nameId can't be resolved against NamesEnumerator */
   private static final IntEventField FIELD_HEALTH_CHECK_FILE_RECORDS_NAME_UNRESOLVABLE = Int("file_records_name_unresolvable");
+  private static final IntEventField FIELD_HEALTH_CHECK_FILE_RECORDS_ATTRIBUTE_ID_UNRESOLVABLE = Int("file_records_attribute_unresolvable");
   private static final IntEventField FIELD_HEALTH_CHECK_FILE_RECORDS_CONTENT_NOT_NULL = Int("file_records_content_not_null");
   /** Number of file-records there contentId can't be resolved against NamesEnumerator */
   private static final IntEventField FIELD_HEALTH_CHECK_FILE_RECORDS_CONTENT_UNRESOLVABLE = Int("file_records_content_unresolvable");
@@ -154,7 +149,6 @@ public final class VfsUsageCollector extends CounterUsagesCollector {
 
   private static final IntEventField FIELD_HEALTH_CHECK_ATTRIBUTES_ERRORS = Int("attributes_errors");
 
-
   private static final VarargEventId EVENT_VFS_HEALTH_CHECK = GROUP_VFS.registerVarargEvent(
     "health_check",
     FIELD_HEALTH_CHECK_VFS_CREATION_TIMESTAMP_MS,
@@ -165,6 +159,7 @@ public final class VfsUsageCollector extends CounterUsagesCollector {
     FIELD_HEALTH_CHECK_FILE_RECORDS_DELETED,
     FIELD_HEALTH_CHECK_FILE_RECORDS_NAME_NULL,
     FIELD_HEALTH_CHECK_FILE_RECORDS_NAME_UNRESOLVABLE,
+    FIELD_HEALTH_CHECK_FILE_RECORDS_ATTRIBUTE_ID_UNRESOLVABLE,
     FIELD_HEALTH_CHECK_FILE_RECORDS_CONTENT_NOT_NULL,
     FIELD_HEALTH_CHECK_FILE_RECORDS_CONTENT_UNRESOLVABLE,
     FIELD_HEALTH_CHECK_FILE_RECORDS_NULL_PARENTS,
@@ -192,8 +187,8 @@ public final class VfsUsageCollector extends CounterUsagesCollector {
   /* ================== EVENT_VFS_ACCUMULATED_ERRORS: ====================================================== */
 
   /**
-   * Not any errors, but errors that are likely internal VFS errors, i.e. corruptions or
-   * code bugs. E.g. error due to illegal argument passed from outside is not counted.
+   * Not any errors, but errors that are likely internal VFS errors, i.e., corruptions or code bugs.
+   * E.g., error due to illegal argument passed from the outside is not counted.
    */
   private static final IntEventField FIELD_ACCUMULATED_VFS_ERRORS = Int("accumulated_errors");
   private static final LongEventField FIELD_TIME_SINCE_STARTUP = Long("time_since_startup_ms");
@@ -201,7 +196,6 @@ public final class VfsUsageCollector extends CounterUsagesCollector {
   private static final VarargEventId EVENT_VFS_INTERNAL_ERRORS = GROUP_VFS.registerVarargEvent(
     "internal_errors",
     FIELD_HEALTH_CHECK_VFS_CREATION_TIMESTAMP_MS,
-
     FIELD_TIME_SINCE_STARTUP,
     FIELD_ACCUMULATED_VFS_ERRORS
   );
@@ -218,14 +212,14 @@ public final class VfsUsageCollector extends CounterUsagesCollector {
     EVENT_INITIAL_REFRESH.log(project, duration);
   }
 
-  public static void logRefreshSession(boolean recursive,
-                                       int lfsRoots,
-                                       int arcRoots,
-                                       int otherRoots,
-                                       boolean cancelled,
-                                       long wait,
-                                       long duration,
-                                       int tries) {
+  public static void logBackgroundRefresh(long duration, int sessions, int events) {
+    if (duration > DURATION_THRESHOLD_MS) {
+      EVENT_BACKGROUND_REFRESH.log(duration, sessions, events);
+    }
+  }
+
+  public static void logRefreshSession(boolean recursive, int lfsRoots, int arcRoots, int otherRoots, boolean cancelled,
+                                       long wait, long duration, int tries) {
     if (duration >= DURATION_THRESHOLD_MS) {
       EVENT_REFRESH_SESSION.log(
         FIELD_REFRESH_RECURSIVE.with(recursive),
@@ -234,7 +228,7 @@ public final class VfsUsageCollector extends CounterUsagesCollector {
         FIELD_REFRESH_OTHER_ROOTS.with(otherRoots),
         FIELD_REFRESH_CANCELLED.with(cancelled),
         FIELD_WAIT_MS.with(wait),
-        EventFields.DurationMs.with(duration),
+        DurationMs.with(duration),
         FIELD_REFRESH_TRIES.with(tries));
     }
   }
@@ -245,7 +239,7 @@ public final class VfsUsageCollector extends CounterUsagesCollector {
         FIELD_REFRESH_FULL_SCANS.with(fullScans),
         FIELD_REFRESH_PARTIAL_SCANS.with(partialScans),
         FIELD_REFRESH_RETRIES.with(retries),
-        EventFields.DurationMs.with(duration),
+        DurationMs.with(duration),
         FIELD_REFRESH_VFS_TIME_MS.with(vfsTime),
         FIELD_REFRESH_IO_TIME_MS.with(ioTime));
     }
@@ -257,7 +251,7 @@ public final class VfsUsageCollector extends CounterUsagesCollector {
         FIELD_WAIT_MS.with(wait),
         FIELD_EVENT_LISTENERS_MS.with(listenerTime),
         FIELD_EVENT_TRIES.with(listenerTries),
-        EventFields.DurationMs.with(edtTime),
+        DurationMs.with(edtTime),
         FIELD_EVENT_NUMBER.with(events));
     }
   }
@@ -278,13 +272,13 @@ public final class VfsUsageCollector extends CounterUsagesCollector {
     );
   }
 
-
   public static void logVfsHealthCheck(long creationTimestampMs,
                                        long checkDurationMs,
                                        int fileRecordsChecked,
                                        int fileRecordsDeleted,
                                        int fileRecordsNameIdsNull,
                                        int fileRecordsNameIdsUnresolvable,
+                                       int fileRecordsAttributeIdUnresolvable,
                                        int fileRecordsContentIdsNotNull,
                                        int fileRecordsContentIdsUnresolvable,
                                        int fileRecordsNullParents,
@@ -313,6 +307,7 @@ public final class VfsUsageCollector extends CounterUsagesCollector {
       FIELD_HEALTH_CHECK_FILE_RECORDS_DELETED.with(fileRecordsDeleted),
       FIELD_HEALTH_CHECK_FILE_RECORDS_NAME_NULL.with(fileRecordsNameIdsNull),
       FIELD_HEALTH_CHECK_FILE_RECORDS_NAME_UNRESOLVABLE.with(fileRecordsNameIdsUnresolvable),
+      FIELD_HEALTH_CHECK_FILE_RECORDS_ATTRIBUTE_ID_UNRESOLVABLE.with(fileRecordsAttributeIdUnresolvable),
       FIELD_HEALTH_CHECK_FILE_RECORDS_CONTENT_NOT_NULL.with(fileRecordsContentIdsNotNull),
       FIELD_HEALTH_CHECK_FILE_RECORDS_CONTENT_UNRESOLVABLE.with(fileRecordsContentIdsUnresolvable),
       FIELD_HEALTH_CHECK_FILE_RECORDS_NULL_PARENTS.with(fileRecordsNullParents),

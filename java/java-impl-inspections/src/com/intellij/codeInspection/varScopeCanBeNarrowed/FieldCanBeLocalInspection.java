@@ -28,7 +28,6 @@ import com.intellij.refactoring.util.CommonJavaInlineUtil;
 import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jdom.Element;
@@ -91,13 +90,11 @@ public class FieldCanBeLocalInspection extends AbstractBaseJavaLocalInspectionTo
         }
         final String message = JavaBundle.message("inspection.field.can.be.local.problem.descriptor");
         final ArrayList<LocalQuickFix> fixes = new ArrayList<>();
-        SpecialAnnotationsUtilBase.createAddToSpecialAnnotationFixes(field, qualifiedName -> {
-          final LocalQuickFix quickFix = SpecialAnnotationsUtilBase.createAddToSpecialAnnotationsListQuickFix(
-            InspectionGadgetsBundle.message("add.0.to.ignore.if.annotated.by.list.quickfix", qualifiedName),
-            QuickFixBundle.message("fix.add.special.annotation.family"),
-            JavaBundle.message("special.annotations.annotations.list"), EXCLUDE_ANNOS, qualifiedName
-          );
-          fixes.add(quickFix);
+        SpecialAnnotationsUtilBase.processUnknownAnnotations(field, qualifiedName -> {
+          fixes.add(new AddToInspectionOptionListFix<>(
+            this,
+            QuickFixBundle.message("fix.add.special.annotation.text", qualifiedName),
+            qualifiedName, insp -> insp.EXCLUDE_ANNOS));
           return true;
         });
         fixes.add(new ConvertFieldToLocalQuickFix(refs));

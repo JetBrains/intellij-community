@@ -7,5 +7,31 @@ package org.apache.commons.lang;
  * Or consider using the corresponding API from IJ Platform.
  */
 @Deprecated(forRemoval = true)
-public final class NotImplementedException extends  org.apache.commons.lang3.NotImplementedException  {
+public final class NotImplementedException extends org.apache.commons.lang3.NotImplementedException {
+  public NotImplementedException() {
+  }
+
+  public NotImplementedException(String message) {
+    super(message);
+  }
+
+  public NotImplementedException(Throwable cause) {
+    super(cause);
+  }
+
+  public NotImplementedException(String message, Throwable cause) {
+    super(message, cause);
+  }
+
+  public NotImplementedException(String message, String code) {
+    super(message, code);
+  }
+
+  public NotImplementedException(Throwable cause, String code) {
+    super(cause, code);
+  }
+
+  public NotImplementedException(String message, Throwable cause, String code) {
+    super(message, cause, code);
+  }
 }

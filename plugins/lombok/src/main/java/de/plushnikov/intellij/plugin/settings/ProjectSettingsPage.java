@@ -16,7 +16,6 @@ public class ProjectSettingsPage implements SearchableConfigurable, Configurable
 
   private JPanel myGeneralPanel;
 
-  private JCheckBox myEnableLombokVersionWarning;
   private JCheckBox myEnableJSPFix;
   private final Project myProject;
 
@@ -37,20 +36,17 @@ public class ProjectSettingsPage implements SearchableConfigurable, Configurable
   }
 
   private void initFromSettings() {
-    myEnableLombokVersionWarning.setSelected(isEnabled(myProject, ProjectSettings.IS_LOMBOK_VERSION_CHECK_ENABLED, false));
     myEnableJSPFix.setSelected(isEnabled(myProject, ProjectSettings.IS_LOMBOK_JPS_FIX_ENABLED));
   }
 
   @Override
   public boolean isModified() {
     return
-      myEnableLombokVersionWarning.isSelected() != isEnabled(myProject, ProjectSettings.IS_LOMBOK_VERSION_CHECK_ENABLED, false) ||
       myEnableJSPFix.isSelected() != isEnabled(myProject, ProjectSettings.IS_LOMBOK_JPS_FIX_ENABLED);
   }
 
   @Override
   public void apply() {
-    setEnabled(myProject, ProjectSettings.IS_LOMBOK_VERSION_CHECK_ENABLED, myEnableLombokVersionWarning.isSelected());
     setEnabled(myProject, ProjectSettings.IS_LOMBOK_JPS_FIX_ENABLED, myEnableJSPFix.isSelected());
   }
 

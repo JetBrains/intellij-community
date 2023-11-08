@@ -47,15 +47,14 @@ class IJShellRuntimeDataProvider(private val session: TerminalSession) : ShellRu
         }
       }, disposable)
 
-      session.executeCommand(command)
+      session.sendCommandToExecute(command)
       return resultFuture.await()
     }
     finally {
       Disposer.dispose(disposable)
       val model = session.model
       model.withContentLock {
-        model.clearAll()
-        model.setCursor(0, 1)
+        model.clearAllAndMoveCursorToTopLeftCorner(session.controller)
       }
     }
   }

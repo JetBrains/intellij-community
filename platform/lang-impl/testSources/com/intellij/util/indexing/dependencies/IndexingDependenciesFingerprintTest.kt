@@ -50,13 +50,13 @@ class IndexingDependenciesFingerprintTest {
 
   @Test
   fun `test NULL fingerprint size`() {
-    assertEquals(FINGERPRINT_SIZE_IN_BYTES, NULL_FINGERPRINT.fingerprint.asBytes().size)
+    assertEquals(FINGERPRINT_SIZE_IN_BYTES, NULL_FINGERPRINT.toByteBuffer().remaining())
   }
 
   @Test
   fun `test not-NULL fingerprint size`() {
     val fingerprintService = application.service<IndexingDependenciesFingerprint>()
-    assertEquals(FINGERPRINT_SIZE_IN_BYTES, fingerprintService.getFingerprint().fingerprint.asBytes().size)
+    assertEquals(FINGERPRINT_SIZE_IN_BYTES, fingerprintService.getFingerprint().toByteBuffer().remaining())
   }
 
   @Test

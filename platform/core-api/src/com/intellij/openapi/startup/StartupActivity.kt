@@ -46,7 +46,7 @@ interface StartupActivity {
 
 /**
  * Runs an activity after project open.
- * Coroutine scope: from project opening to project closing (or plugin unloading).
+ * [execute] gets called inside a coroutine scope spanning from project opening to project closing (or plugin unloading).
  * Flow and any other long-running activities are allowed and natural.
  *
  * @see StartupManager

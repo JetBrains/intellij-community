@@ -13,7 +13,7 @@ import java.util.List;
  * Each info consists of "context" and "value", and the manager tracks per each "context", how many times a "value"
  * has occurred in that context and in which order.
  */
-public class StatisticsInfo {
+public final class StatisticsInfo {
   /**
    * A special value meaning that no statistics should be tracked.
    */

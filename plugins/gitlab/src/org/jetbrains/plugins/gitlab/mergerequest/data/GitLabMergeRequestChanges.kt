@@ -8,6 +8,7 @@ import com.intellij.openapi.diff.impl.patch.PatchReader
 import com.intellij.openapi.diff.impl.patch.TextFilePatch
 import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vcs.FileStatus
 import com.intellij.util.childScope
 import git4idea.changes.GitBranchComparisonResult
 import git4idea.changes.GitBranchComparisonResultImpl
@@ -22,16 +23,24 @@ import kotlinx.coroutines.flow.map
 import org.jetbrains.plugins.gitlab.api.GitLabApi
 import org.jetbrains.plugins.gitlab.api.GitLabVersion
 import org.jetbrains.plugins.gitlab.api.dto.GitLabDiffDTO
-import org.jetbrains.plugins.gitlab.api.getMetadata
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.*
 import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
 import java.nio.charset.StandardCharsets
 
 interface GitLabMergeRequestChanges {
+  /**
+   * List of merge request commits
+   */
   val commits: List<GitLabCommit>
 
+  /**
+   * Load and parse changes diffs
+   */
   suspend fun getParsedChanges(): GitBranchComparisonResult
 
+  /**
+   * Check that all merge request revisions are fetched and fetch the missing revisions
+   */
   suspend fun ensureAllRevisionsFetched()
 }
 
@@ -59,8 +68,9 @@ class GitLabMergeRequestChangesImpl(
 
   private suspend fun loadChanges(commits: List<GitLabCommit>): GitBranchComparisonResult {
     val repository = projectMapping.remote.repository
-    val baseSha = mergeRequestDetails.diffRefs.startSha
-    val mergeBaseSha = mergeRequestDetails.diffRefs.baseSha ?: error("Missing merge base revision")
+    val diffRefs = mergeRequestDetails.diffRefs ?: error("Missing diff refs")
+    val baseSha = diffRefs.startSha
+    val mergeBaseSha = diffRefs.baseSha ?: error("Missing merge base revision")
 
     val commitsWithPatches = withContext(Dispatchers.IO) {
       coroutineScope {
@@ -92,21 +102,21 @@ class GitLabMergeRequestChangesImpl(
 
   override suspend fun ensureAllRevisionsFetched() {
     val revsToCheck = commits.map { it.sha }.toMutableList()
-    mergeRequestDetails.diffRefs.baseSha?.also {
+    mergeRequestDetails.diffRefs?.baseSha?.also {
       revsToCheck.add(it)
     }
     withContext(Dispatchers.IO) {
-      if (areAllRevisionPresent(revsToCheck)) return@withContext
+      if (areAllRevisionsPresent(revsToCheck)) return@withContext
 
       fetch(mergeRequestDetails.targetBranch)
       fetch("""merge-requests/${mergeRequestDetails.iid}/head:""")
 
-      check(areAllRevisionPresent(revsToCheck)) { "Failed to fetch some revisions" }
+      check(areAllRevisionsPresent(revsToCheck)) { "Failed to fetch some revisions" }
     }
   }
 
-  private suspend fun areAllRevisionPresent(revisions: List<String>): Boolean {
-    return coroutineToIndicator {
+  private suspend fun areAllRevisionsPresent(revisions: List<String>): Boolean =
+    coroutineToIndicator {
       val h = GitLineHandler(project, projectMapping.remote.repository.root, GitCommand.CAT_FILE)
       h.setSilent(true)
       h.addParameters("--batch-check=%(objecttype)")
@@ -115,7 +125,6 @@ class GitLabMergeRequestChangesImpl(
 
       !Git.getInstance().runCommand(h).getOutputOrThrow().contains("missing")
     }
-  }
 
   private suspend fun fetch(refspec: String) {
     coroutineToIndicator {
@@ -129,13 +138,20 @@ class GitLabMergeRequestChangesImpl(
 private fun GitLabDiffDTO.toPatch(): TextFilePatch {
   val beforeFilePath = oldPath.takeIf { !newFile }
   val afterFilePath = newPath.takeIf { !deletedFile }
-  val header = """--- a/${beforeFilePath ?: "/dev/null"}
-+++ b/${afterFilePath ?: "/dev/null"}
-"""
+  val headerFileBefore = beforeFilePath?.let { "a/$it" } ?: "/dev/null"
+  val headerFileAfter = afterFilePath?.let { "b/$it" } ?: "/dev/null"
+  val header = "--- $headerFileBefore\n+++ $headerFileAfter\n"
+
+  val fileStatus = when {
+    newFile -> FileStatus.ADDED
+    deletedFile -> FileStatus.DELETED
+    else -> FileStatus.MODIFIED
+  }
 
   val patchReader = PatchReader(header + diff)
   return patchReader.readTextPatches().firstOrNull()?.apply {
     beforeName = beforeFilePath
     afterName = afterFilePath
+    setFileStatus(fileStatus)
   } ?: throw IllegalStateException("Could not parse diff $this")
 }

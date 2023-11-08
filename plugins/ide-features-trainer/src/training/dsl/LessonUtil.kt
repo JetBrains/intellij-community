@@ -444,11 +444,11 @@ fun LessonContext.highlightOldDebugActionsToolbar(highlightInside: Boolean = fal
   }
 }
 
-private fun TaskContext.highlightToolbarWithAction(place: String,
-                                                   actionId: String,
-                                                   highlightInside: Boolean,
-                                                   usePulsation: Boolean,
-                                                   clearPreviousHighlights: Boolean = true) {
+fun TaskContext.highlightToolbarWithAction(place: String,
+                                           actionId: String,
+                                           highlightInside: Boolean,
+                                           usePulsation: Boolean,
+                                           clearPreviousHighlights: Boolean = true) {
   val needAction = getActionById(actionId)
   triggerAndBorderHighlight {
     this.highlightInside = highlightInside

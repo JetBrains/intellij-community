@@ -9,7 +9,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
-public class ComplementPackageSet extends PackageSetBase {
+public final class ComplementPackageSet extends PackageSetBase {
   private final @NotNull PackageSet myComplementarySet;
 
   public ComplementPackageSet(@NotNull PackageSet set) {

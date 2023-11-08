@@ -610,14 +610,4 @@ public final class TextDiffViewerUtil {
       }
     }
   }
-
-  /**
-   * @deprecated Use {@link DiffUtil#recursiveRegisterShortcutSet}
-   */
-  @Deprecated(forRemoval = true)
-  public static void recursiveRegisterShortcutSet(@NotNull ActionGroup group,
-                                                  @NotNull JComponent component,
-                                                  @Nullable Disposable parentDisposable) {
-    DiffUtil.recursiveRegisterShortcutSet(group, component, parentDisposable);
-  }
 }

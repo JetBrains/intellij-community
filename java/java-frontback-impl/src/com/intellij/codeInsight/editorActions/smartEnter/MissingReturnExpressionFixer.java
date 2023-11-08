@@ -8,7 +8,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiJavaToken;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.impl.source.BasicJavaAstTreeUtil;
-import com.intellij.psi.impl.source.BasicJavaTokenSet;
+import com.intellij.psi.tree.ParentAwareTokenSet;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,7 +35,7 @@ public class MissingReturnExpressionFixer implements Fixer {
       return;
     }
 
-    ASTNode parent = BasicJavaAstTreeUtil.getParentOfType(astNode, BasicJavaTokenSet.create(BASIC_CLASS_INITIALIZER, BASIC_METHOD));
+    ASTNode parent = BasicJavaAstTreeUtil.getParentOfType(astNode, ParentAwareTokenSet.create(BASIC_CLASS_INITIALIZER, BASIC_METHOD));
     if (BasicJavaAstTreeUtil.is(parent, BASIC_METHOD)) {
       ASTNode type = BasicJavaAstTreeUtil.findChildByType(parent, BASIC_TYPE);
       if (type != null && !type.getText().equals("void")) {
@@ -68,7 +68,7 @@ public class MissingReturnExpressionFixer implements Fixer {
       int offset = returnStatement.getTextRange().getEndOffset();
       final PsiElement psiMethod =
         BasicJavaAstTreeUtil.getParentOfType(BasicJavaAstTreeUtil.toPsi(returnStatement), BASIC_METHOD, true,
-                                             BasicJavaTokenSet.create(BASIC_LAMBDA_EXPRESSION));
+                                             ParentAwareTokenSet.create(BASIC_LAMBDA_EXPRESSION));
       ASTNode method = BasicJavaAstTreeUtil.toNode(psiMethod);
       ASTNode type = BasicJavaAstTreeUtil.findChildByType(method, BASIC_TYPE);
       if (method != null && type != null && type.getText().equals("void")) {

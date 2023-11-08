@@ -123,7 +123,11 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection impl
       final String fullyQualifiedText = referenceElement.getText();
       final QualificationRemover qualificationRemover = new QualificationRemover(fullyQualifiedText);
       file.accept(qualificationRemover);
-      qualificationRemover.getShortenedElements().forEach(updater::highlight);
+      qualificationRemover.getShortenedElements().forEach(element -> {
+        if (element.isValid()) {
+          updater.highlight(element);
+        }
+      });
     }
   }
 

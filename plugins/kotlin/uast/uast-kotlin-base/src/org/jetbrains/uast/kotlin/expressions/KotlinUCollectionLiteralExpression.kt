@@ -1,5 +1,4 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package org.jetbrains.uast.kotlin
 
 import com.intellij.psi.PsiArrayType
@@ -17,11 +16,15 @@ class KotlinUCollectionLiteralExpression(
     givenParent: UElement?
 ) : KotlinAbstractUExpression(givenParent), UCallExpressionEx, DelegatedMultiResolve, KotlinUElementWithType {
 
+    private val methodIdentifierPart = UastLazyPart<UIdentifier?>()
+    private val valueArgumentsPart = UastLazyPart<List<UExpression>>()
+
     override val classReference: UReferenceExpression? get() = null
 
     override val kind: UastCallKind = UastCallKind.NESTED_ARRAY_INITIALIZER
 
-    override val methodIdentifier: UIdentifier? by lz { UIdentifier(sourcePsi.leftBracket, this) }
+    override val methodIdentifier: UIdentifier?
+        get() = methodIdentifierPart.getOrBuild { UIdentifier(sourcePsi.leftBracket, this) }
 
     override val methodName: String? get() = null
 
@@ -38,11 +41,12 @@ class KotlinUCollectionLiteralExpression(
     override val valueArgumentCount: Int
         get() = sourcePsi.getInnerExpressions().size
 
-    override val valueArguments by lz {
-        sourcePsi.getInnerExpressions().map {
-            baseResolveProviderService.baseKotlinConverter.convertOrEmpty(it, this)
+    override val valueArguments: List<UExpression>
+        get() = valueArgumentsPart.getOrBuild {
+            sourcePsi.getInnerExpressions().map {
+                baseResolveProviderService.baseKotlinConverter.convertOrEmpty(it, this)
+            }
         }
-    }
 
     override fun asRenderString(): String = "collectionLiteral[" + valueArguments.joinToString { it.asRenderString() } + "]"
 

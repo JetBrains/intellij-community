@@ -158,6 +158,8 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
   }
 
   private boolean tryAddBranches(ArrayList<? super ColumnInfo> infos, CoverageRunner coverageRunner, boolean branchCoverage) {
+    // cannot determine per-test branch coverage as test tracking works with line granularity only
+    if (CoverageDataManager.getInstance(myProject).isSubCoverageActive()) return false;
     if (isBranchInfoAvailable(coverageRunner, branchCoverage)) {
       infos.add(new PercentageCoverageColumnInfo(4, JavaCoverageBundle.message("coverage.view.column.branch"), mySuitesBundle, myStateBean));
       return true;

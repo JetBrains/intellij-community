@@ -1,8 +1,6 @@
 // "Fix all 'SequencedCollection method can be used' problems in file" "true"
-package java.util;
+import java.util.*;
 
-interface SequencedCollection<E> extends Collection<E> {
-}
 interface Foo extends SequencedCollection<String> {}
 
 public class Test {

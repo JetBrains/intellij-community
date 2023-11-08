@@ -1,10 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
+import com.intellij.codeInsight.daemon.impl.analysis.AnnotationSessionImpl;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
-import com.intellij.codeInsight.daemon.impl.analysis.AnnotationSessionImpl;
 import com.intellij.lang.annotation.ExternalAnnotator;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -77,15 +77,13 @@ public class ExternalAnnotatorInspectionVisitor extends PsiElementVisitor {
       myAction = action;
     }
 
-    @NotNull
     @Override
-    public String getName() {
+    public @NotNull String getName() {
       return myAction.getText();
     }
 
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return myAction.getFamilyName();
     }
 
@@ -101,14 +99,12 @@ public class ExternalAnnotatorInspectionVisitor extends PsiElementVisitor {
                                       Objects.requireNonNull(getPsiFile(previewDescriptor)));
     }
 
-    @Nullable
     @Override
-    public PsiElement getElementToMakeWritable(@NotNull PsiFile file) {
+    public @Nullable PsiElement getElementToMakeWritable(@NotNull PsiFile file) {
       return myAction.getElementToMakeWritable(file);
     }
 
-    @Nullable
-    private static PsiFile getPsiFile(@NotNull ProblemDescriptor descriptor) {
+    private static @Nullable PsiFile getPsiFile(@NotNull ProblemDescriptor descriptor) {
       PsiElement startElement = descriptor.getStartElement();
       if (startElement != null) {
         return startElement.getContainingFile();

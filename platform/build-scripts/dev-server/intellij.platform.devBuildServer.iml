@@ -34,7 +34,7 @@
     <orderEntry type="library" name="kotlinx-serialization-core" level="project" />
     <orderEntry type="library" name="kotlinx-serialization-json" level="project" />
     <orderEntry type="module" module-name="intellij.idea.community.build.tasks" />
-    <orderEntry type="library" name="Slf4j" level="project" />
+    <orderEntry type="library" name="slf4j-api" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util" />
     <orderEntry type="module" module-name="intellij.platform.jps.model" />
     <orderEntry type="library" name="opentelemetry" level="project" />
@@ -46,5 +46,8 @@
     <orderEntry type="module" module-name="intellij.platform.util.classLoader" />
     <orderEntry type="module" module-name="intellij.platform.util.rt.java8" />
     <orderEntry type="library" scope="RUNTIME" name="xz" level="project" />
+    <orderEntry type="library" name="fastutil-min" level="project" />
+    <orderEntry type="library" name="hash4j" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry.exporters" />
   </component>
 </module>

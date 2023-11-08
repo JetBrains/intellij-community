@@ -19,6 +19,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.JBTreeTraverser;
 import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -57,6 +58,7 @@ public abstract class VcsTreeModelData {
    * @deprecated Prefer using {@link #allUnder(ChangesBrowserNode)} with non-ambiguous name.
    */
   @NotNull
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   public static VcsTreeModelData children(@NotNull ChangesBrowserNode<?> node) {
     return allUnder(node);
@@ -95,48 +97,12 @@ public abstract class VcsTreeModelData {
 
 
   /**
-   * @deprecated use {@link #iterateRawNodes()}
-   */
-  @NotNull
-  @Deprecated(forRemoval = true)
-  public final Stream<ChangesBrowserNode<?>> rawNodesStream() {
-    return iterateRawNodes().toStream();
-  }
-
-  /**
    * @deprecated use {@link #iterateNodes()}
    */
   @NotNull
   @Deprecated
   public final Stream<ChangesBrowserNode<?>> nodesStream() {
     return iterateNodes().toStream();
-  }
-
-  /**
-   * @deprecated use {@link #iterateRawUserObjects()}
-   */
-  @NotNull
-  @Deprecated(forRemoval = true)
-  public final Stream<Object> rawUserObjectsStream() {
-    return iterateRawUserObjects().toStream();
-  }
-
-  /**
-   * @deprecated use {@link #iterateRawUserObjects(Class)}
-   */
-  @NotNull
-  @Deprecated(forRemoval = true)
-  public final <U> Stream<U> rawUserObjectsStream(@NotNull Class<U> clazz) {
-    return iterateRawUserObjects(clazz).toStream();
-  }
-
-  /**
-   * @deprecated use {@link #iterateUserObjects()}
-   */
-  @NotNull
-  @Deprecated(forRemoval = true)
-  public final Stream<Object> userObjectsStream() {
-    return iterateUserObjects().toStream();
   }
 
   /**

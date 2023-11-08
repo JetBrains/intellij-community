@@ -12,6 +12,7 @@ import javax.swing.border.EmptyBorder
 import kotlin.math.max
 import kotlin.random.Random
 import kotlin.test.assertEquals
+import kotlin.test.assertNull
 
 class GridLayoutTest {
 
@@ -242,6 +243,32 @@ class GridLayoutTest {
 
       assertEquals(Dimension(preferredWidth, preferredHeight), panel.preferredSize)
     }
+  }
+
+  @Test
+  fun testGetConstraints() {
+    val label1 = JLabel()
+    val label2 = JLabel()
+    val label3 = JLabel()
+    val layout = GridLayout()
+    val panel = JPanel(layout)
+    val subGridConstraints = Constraints(layout.rootGrid, 1, 0)
+    val subGrid = layout.addLayoutSubGrid(subGridConstraints)
+
+    val constraints1 = Constraints(layout.rootGrid, 0, 0)
+    panel.add(label1, constraints1)
+
+    val constraints2 = Constraints(subGrid, 0, 0)
+    panel.add(label2, constraints2)
+
+    val constraints3 = Constraints(layout.rootGrid, 2, 0)
+    panel.add(label3, constraints3)
+
+    assertEquals(constraints1, layout.getConstraints(label1))
+    assertEquals(constraints2, layout.getConstraints(label2))
+    assertEquals(constraints3, layout.getConstraints(label3))
+    assertEquals(subGridConstraints, layout.getConstraints(subGrid))
+    assertNull(layout.getConstraints(layout.rootGrid))
   }
 
   /**

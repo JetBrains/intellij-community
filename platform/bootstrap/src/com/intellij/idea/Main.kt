@@ -1,26 +1,27 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("Main")
-@file:Suppress("RAW_RUN_BLOCKING", "JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE")
+@file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE")
 
 package com.intellij.idea
 
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory
+import com.intellij.diagnostic.CoroutineTracerShim
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.ide.BootstrapBundle
-import com.intellij.ide.BytecodeTransformer
-import com.intellij.ide.plugins.ProductLoadingStrategy
-import com.intellij.ide.plugins.StartupAbortedException
 import com.intellij.ide.startup.StartupActionScriptManager
 import com.intellij.openapi.application.ApplicationNamesInfo
+import com.intellij.openapi.application.ConfigImportHelper
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
+import com.intellij.platform.bootstrap.initMarketplace
 import com.intellij.platform.diagnostic.telemetry.impl.rootTask
 import com.intellij.platform.diagnostic.telemetry.impl.span
+import com.intellij.platform.ide.bootstrap.AppStarter
+import com.intellij.platform.ide.bootstrap.StartupErrorReporter
+import com.intellij.platform.ide.bootstrap.startApplication
 import com.intellij.platform.impl.toolkit.IdeFontManager
 import com.intellij.platform.impl.toolkit.IdeGraphicsEnvironment
 import com.intellij.platform.impl.toolkit.IdeToolkit
-import com.intellij.util.lang.PathClassLoader
-import com.intellij.util.lang.UrlClassLoader
 import com.jetbrains.JBR
 import kotlinx.coroutines.*
 import sun.font.FontManagerFactory
@@ -31,11 +32,10 @@ import java.lang.invoke.MethodType
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
+import java.util.function.Consumer
 import kotlin.coroutines.AbstractCoroutineContextElement
 import kotlin.coroutines.CoroutineContext
 import kotlin.system.exitProcess
-
-private const val MARKETPLACE_BOOTSTRAP_JAR = "marketplace-bootstrap.jar"
 
 fun main(rawArgs: Array<String>) {
   val startupTimings = ArrayList<Any>(12)
@@ -43,46 +43,31 @@ fun main(rawArgs: Array<String>) {
   val startTimeUnixNano = System.currentTimeMillis() * 1000000
   startupTimings.add("startup begin")
   startupTimings.add(startTimeNano)
-  mainImpl(rawArgs, startupTimings, startTimeUnixNano)
+  mainImpl(rawArgs = rawArgs, startupTimings = startupTimings, startTimeUnixNano = startTimeUnixNano)
 }
 
-internal fun mainImpl(rawArgs: Array<String>, startupTimings: ArrayList<Any>, startTimeUnixNano: Long) {
+internal fun mainImpl(rawArgs: Array<String>,
+                      startupTimings: ArrayList<Any>,
+                      startTimeUnixNano: Long,
+                      changeClassPath: Consumer<ClassLoader>? = null) {
   val args = preprocessArgs(rawArgs)
   AppMode.setFlags(args)
   addBootstrapTiming("AppMode.setFlags", startupTimings)
   try {
-    bootstrap(startupTimings)
+    PathManager.loadProperties()
+    addBootstrapTiming("properties loading", startupTimings)
+    PathManager.customizePaths()
+    addBootstrapTiming("customizePaths", startupTimings)
+
+    @Suppress("RAW_RUN_BLOCKING")
     runBlocking {
       addBootstrapTiming("main scope creating", startupTimings)
+
       val busyThread = Thread.currentThread()
       withContext(Dispatchers.Default + StartupAbortedExceptionHandler() + rootTask()) {
         addBootstrapTiming("init scope creating", startupTimings)
         StartUpMeasurer.addTimings(startupTimings, "bootstrap", startTimeUnixNano)
-        span("startApplication") {
-          val mainClassLoaderDeferred = async(CoroutineName("main class loader initializing")) {
-            val classLoader = AppStarter::class.java.classLoader
-            ProductLoadingStrategy.strategy.addMainModuleGroupToClassPath(classLoader)
-            return@async classLoader
-          }
-          
-          // not IO-, but CPU-bound due to descrambling, don't use here IO dispatcher
-          val appStarterDeferred = async(CoroutineName("main class loading")) {
-            val aClass = mainClassLoaderDeferred.await().loadClass("com.intellij.idea.MainImpl")
-            MethodHandles.lookup().findConstructor(aClass, MethodType.methodType(Void.TYPE)).invoke() as AppStarter
-          }
-
-          launch(CoroutineName("ForkJoin CommonPool configuration")) {
-            IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(AppMode.isHeadless())
-          }
-
-          if (AppMode.isRemoteDevHost()) {
-            span("cwm host init") {
-              initRemoteDev()
-            }
-          }
-
-          startApplication(args = args, mainClassLoaderDeferred = mainClassLoaderDeferred, appStarterDeferred = appStarterDeferred, mainScope = this@runBlocking, busyThread = busyThread)
-        }
+        startApp(args = args, mainScope = this@runBlocking, busyThread = busyThread, changeClassPath = changeClassPath)
       }
 
       awaitCancellation()
@@ -94,16 +79,120 @@ internal fun mainImpl(rawArgs: Array<String>, startupTimings: ArrayList<Any>, st
   }
 }
 
-private fun initRemoteDev() {
+private suspend fun startApp(args: List<String>, mainScope: CoroutineScope, busyThread: Thread, changeClassPath: Consumer<ClassLoader>?) {
+  span("startApplication") {
+    launch {
+      CoroutineTracerShim.coroutineTracer = object : CoroutineTracerShim {
+        override suspend fun getTraceActivity() = com.intellij.platform.diagnostic.telemetry.impl.getTraceActivity()
+        override fun rootTrace() = rootTask()
+
+        override suspend fun <T> span(name: String, context: CoroutineContext, action: suspend CoroutineScope.() -> T): T {
+          return com.intellij.platform.diagnostic.telemetry.impl.span(name = name, context = context, action = action)
+        }
+      }
+    }
+
+    if (AppMode.isRemoteDevHost()) {
+      span("cwm host init") {
+        initRemoteDev(args)
+      }
+    }
+
+    launch(CoroutineName("ForkJoin CommonPool configuration")) {
+      IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(AppMode.isHeadless())
+    }
+
+    val configImportNeededDeferred = if (AppMode.isHeadless()) {
+      CompletableDeferred(false)
+    }
+    else {
+      async(Dispatchers.IO) {
+        isConfigImportNeeded(PathManager.getConfigDir())
+      }
+    }
+
+    // this check must be performed before system directories are locked
+    if (!AppMode.isCommandLine() || java.lang.Boolean.getBoolean(AppMode.FORCE_PLUGIN_UPDATES)) {
+      span("plugin updates installation") {
+        val configImportNeeded = !AppMode.isHeadless() && !Files.exists(Path.of(PathManager.getConfigPath()))
+        if (!configImportNeeded) {
+          // Consider following steps:
+          // - user opens settings, and installs some plugins;
+          // - the plugins are downloaded and saved somewhere;
+          // - IDE prompts for restart;
+          // - after restart, the plugins are moved to proper directories ("installed") by the next line.
+          // TODO get rid of this: plugins should be installed before restarting the IDE
+          installPluginUpdates()
+        }
+      }
+    }
+
+    // must be after installPluginUpdates
+    span("marketplace init") {
+      // 'marketplace' plugin breaks JetBrains Client, so for now this condition is used to disable it
+      if (changeClassPath == null) {  
+        initMarketplace()
+      }
+    }
+
+    // must be after initMarketplace because initMarketplace can affect the main class loading (byte code transformer)
+    val appStarterDeferred: Deferred<AppStarter>
+    val mainClassLoaderDeferred: Deferred<ClassLoader>?
+    if (changeClassPath == null) {
+      appStarterDeferred = async(CoroutineName("main class loading")) {
+        val aClass = AppMode::class.java.classLoader.loadClass("com.intellij.idea.MainImpl")
+        MethodHandles.lookup().findConstructor(aClass, MethodType.methodType(Void.TYPE)).invoke() as AppStarter
+      }
+      mainClassLoaderDeferred = null
+    }
+    else {
+      mainClassLoaderDeferred = async(CoroutineName("main class loader initializing")) {
+        val classLoader = AppMode::class.java.classLoader
+        changeClassPath.accept(classLoader)
+        classLoader
+      }
+
+      appStarterDeferred = async(CoroutineName("main class loading")) {
+        val aClass = mainClassLoaderDeferred.await().loadClass("com.intellij.idea.MainImpl")
+        MethodHandles.lookup().findConstructor(aClass, MethodType.methodType(Void.TYPE)).invoke() as AppStarter
+      }
+    }
+
+    startApplication(args = args,
+                     configImportNeededDeferred = configImportNeededDeferred,
+                     targetDirectoryToImportConfig = customTargetDirectoryToImportConfig,
+                     mainClassLoaderDeferred = mainClassLoaderDeferred,
+                     appStarterDeferred = appStarterDeferred,
+                     mainScope = mainScope,
+                     busyThread = busyThread)
+  }
+}
+
+/**
+ * Directory where the configuration files should be imported to.
+ * This property is used to override the default target directory ([PathManager.getConfigPath]) when a custom way to read and write
+ * configuration files is implemented.
+ */
+@JvmField
+internal var customTargetDirectoryToImportConfig: Path? = null
+
+internal fun isConfigImportNeeded(configPath: Path): Boolean {
+  return !Files.exists(configPath) ||
+         Files.exists(configPath.resolve(ConfigImportHelper.CUSTOM_MARKER_FILE_NAME)) ||
+         customTargetDirectoryToImportConfig != null
+}
+
+private fun initRemoteDev(args: List<String>) {
   if (!JBR.isGraphicsUtilsSupported()) {
     error("JBR version 17.0.6b796 or later is required to run a remote-dev server with lux")
   }
 
+  if (args.firstOrNull() == AppMode.SPLIT_MODE_COMMAND) {
+    System.setProperty("idea.initially.ask.config", "never")
+  }
   initRemoteDevGraphicsEnvironment()
   initLux()
 }
-
-private fun isLuxEnabled() = System.getProperty("lux.enabled", "true").toBoolean()
 
 private fun initRemoteDevGraphicsEnvironment() {
   JBR.getProjectorUtils().setLocalGraphicsEnvironmentProvider { IdeGraphicsEnvironment.instance }
@@ -119,10 +208,6 @@ private fun setStaticField(clazz: Class<out Any>, fieldName: String, value: Any)
 }
 
 private fun initLux() {
-  if (!isLuxEnabled()) {
-    return
-  }
-
   System.setProperty("java.awt.headless", false.toString())
   System.setProperty("swing.volatileImageBufferEnabled", false.toString())
   System.setProperty("keymap.current.os.only", false.toString())
@@ -135,84 +220,6 @@ private fun initLux() {
   setStaticField(FontManagerFactory::class.java, "instance", IdeFontManager())
   @Suppress("SpellCheckingInspection")
   System.setProperty("sun.font.fontmanager", IdeFontManager::class.java.canonicalName)
-}
-
-private fun bootstrap(startupTimings: MutableList<Any>) {
-  PathManager.loadProperties()
-  addBootstrapTiming("properties loading", startupTimings)
-
-  PathManager.customizePaths()
-  addBootstrapTiming("customizePaths", startupTimings)
-
-  // this check must be performed before system directories are locked
-  if (!AppMode.isCommandLine() || java.lang.Boolean.getBoolean(AppMode.FORCE_PLUGIN_UPDATES)) {
-    val configImportNeeded = !AppMode.isHeadless() && !Files.exists(Path.of(PathManager.getConfigPath()))
-    if (!configImportNeeded) {
-      // Consider following steps:
-      // - user opens settings, and installs some plugins;
-      // - the plugins are downloaded and saved somewhere;
-      // - IDE prompts for restart;
-      // - after restart, the plugins are moved to proper directories ("installed") by the next line.
-      // TODO get rid of this: plugins should be installed before restarting the IDE
-      installPluginUpdates()
-    }
-    addBootstrapTiming("plugin updates installation", startupTimings)
-  }
-
-  initClassLoader()
-  addBootstrapTiming("classloader init", startupTimings)
-}
-
-fun initClassLoader() {
-  val distDir = Path.of(PathManager.getHomePath())
-  val classLoader = AppMode::class.java.classLoader as? PathClassLoader
-                    ?: throw RuntimeException("You must run JVM with -Djava.system.class.loader=com.intellij.util.lang.PathClassLoader")
-  val preinstalledPluginDir = distDir.resolve("plugins")
-
-  var pluginDir = preinstalledPluginDir
-  var marketPlaceBootDir = BootstrapClassLoaderUtil.findMarketplaceBootDir(pluginDir)
-  var mpBoot = marketPlaceBootDir.resolve(MARKETPLACE_BOOTSTRAP_JAR)
-  // enough to check for existence as preinstalled plugin is always compatible
-  var installMarketplace = Files.exists(mpBoot)
-
-  if (!installMarketplace) {
-    pluginDir = Path.of(PathManager.getPluginsPath())
-    marketPlaceBootDir = BootstrapClassLoaderUtil.findMarketplaceBootDir(pluginDir)
-    mpBoot = marketPlaceBootDir.resolve(MARKETPLACE_BOOTSTRAP_JAR)
-    installMarketplace = BootstrapClassLoaderUtil.isMarketplacePluginCompatible(distDir, pluginDir, mpBoot)
-  }
-
-  val classpath = LinkedHashSet<Path>()
-  if (installMarketplace) {
-    val marketplaceImpl = marketPlaceBootDir.resolve("marketplace-impl.jar")
-    if (Files.exists(marketplaceImpl)) {
-      classpath.add(marketplaceImpl)
-    }
-    else {
-      installMarketplace = false
-    }
-  }
-
-  if (!classpath.isEmpty()) {
-    classLoader.classPath.addFiles(classpath)
-  }
-
-  if (installMarketplace) {
-    try {
-      val spiLoader = PathClassLoader(UrlClassLoader.build().files(listOf(mpBoot)).parent(classLoader))
-      val transformers = ServiceLoader.load(BytecodeTransformer::class.java, spiLoader).iterator()
-      if (transformers.hasNext()) {
-        classLoader.setTransformer(BytecodeTransformerAdapter(transformers.next()))
-      }
-    }
-    catch (e: Throwable) {
-      // at this point, logging is not initialized yet, so reporting the error directly
-      val path = pluginDir.resolve(BootstrapClassLoaderUtil.MARKETPLACE_PLUGIN_DIR).toString()
-      val message = "As a workaround, you may uninstall or update JetBrains Marketplace Support plugin at $path"
-      StartupErrorReporter.showMessage(BootstrapBundle.message("bootstrap.error.title.jetbrains.marketplace.boot.failure"),
-                                       Exception(message, e))
-    }
-  }
 }
 
 private fun addBootstrapTiming(name: String, startupTimings: MutableList<Any>) {
@@ -294,18 +301,8 @@ private fun installPluginUpdates() {
 // separate class for nicer presentation in dumps
 private class StartupAbortedExceptionHandler : AbstractCoroutineContextElement(CoroutineExceptionHandler), CoroutineExceptionHandler {
   override fun handleException(context: CoroutineContext, exception: Throwable) {
-    StartupAbortedException.processException(exception)
+    StartupErrorReporter.processException(exception)
   }
 
   override fun toString() = "StartupAbortedExceptionHandler"
-}
-
-private class BytecodeTransformerAdapter(private val impl: BytecodeTransformer) : PathClassLoader.BytecodeTransformer {
-  override fun isApplicable(className: String, loader: ClassLoader): Boolean {
-    return impl.isApplicable(className, loader, null)
-  }
-
-  override fun transform(loader: ClassLoader, className: String, classBytes: ByteArray): ByteArray? {
-    return impl.transform(loader, className, null, classBytes)
-  }
 }

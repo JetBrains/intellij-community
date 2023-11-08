@@ -60,7 +60,8 @@ public final class TextMateFileType extends LanguageFileType implements FileType
   private static boolean isTypeShouldBeReplacedByTextMateType(@Nullable FileType registeredType) {
     return registeredType == UnknownFileType.INSTANCE
            || registeredType == INSTANCE
-           || registeredType == PlainTextFileType.INSTANCE;
+           || registeredType == PlainTextFileType.INSTANCE
+           || registeredType instanceof TextMateBackedFileType;
   }
 
   @Override

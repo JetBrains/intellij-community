@@ -52,14 +52,16 @@ import org.jetbrains.kotlin.idea.refactoring.memberInfo.extractClassMembers
 import org.jetbrains.kotlin.idea.refactoring.selectElement
 import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.idea.test.util.findElementByCommentPrefix
+import org.jetbrains.kotlin.idea.util.ElementKind
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.parsing.KotlinParserDefinition
-import org.jetbrains.kotlin.idea.util.ElementKind
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.renderer.DescriptorRenderer
+import org.jetbrains.kotlin.test.utils.IgnoreTests
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstance
+import org.junit.Assert
 import java.io.File
 import java.util.*
 import kotlin.test.assertEquals
@@ -69,8 +71,8 @@ abstract class AbstractExtractionTest : KotlinLightCodeInsightFixtureTestCase() 
 
     val fixture: JavaCodeInsightTestFixture get() = myFixture
 
-    protected fun doIntroduceVariableTest(unused: String) {
-        doTest { file ->
+    protected open fun doIntroduceVariableTest(unused: String) {
+        doTestIfNotDisabledByFileDirective { file ->
             file as KtFile
 
             KotlinIntroduceVariableHandler.invoke(
@@ -132,7 +134,7 @@ abstract class AbstractExtractionTest : KotlinLightCodeInsightFixtureTestCase() 
 
     protected fun doIntroduceJavaParameterTest(unused: String) {
         // Copied from com.intellij.refactoring.IntroduceParameterTest.perform()
-        doTest(true) { file ->
+        doTest(checkAdditionalAfterdata = true) { file ->
             file as PsiJavaFile
 
             var elementToWorkOn: ElementToWorkOn? = null
@@ -317,7 +319,7 @@ abstract class AbstractExtractionTest : KotlinLightCodeInsightFixtureTestCase() 
     }
 
     protected fun doExtractSuperTest(unused: String, isInterface: Boolean) {
-        doTest(true) { file ->
+        doTest(checkAdditionalAfterdata = true) { file ->
             file as KtFile
 
             markMembersInfo(file)
@@ -350,7 +352,17 @@ abstract class AbstractExtractionTest : KotlinLightCodeInsightFixtureTestCase() 
 
     protected fun doExtractInterfaceTest(path: String) = doExtractSuperTest(path, true)
 
-    protected fun doTest(checkAdditionalAfterdata: Boolean = false, action: (PsiFile) -> Unit) {
+    protected fun doTestIfNotDisabledByFileDirective(action: (PsiFile) -> Unit) {
+        val disableTestDirective = if (isFirPlugin) IgnoreTests.DIRECTIVES.IGNORE_K2 else  IgnoreTests.DIRECTIVES.IGNORE_K1
+
+        IgnoreTests.runTestIfNotDisabledByFileDirective(
+            dataFilePath(),
+            disableTestDirective,
+            directivePosition = IgnoreTests.DirectivePosition.LAST_LINE_IN_FILE
+        ) { isTestEnabled -> doTest(generateMissingFiles = isTestEnabled, action = action) }
+    }
+
+    protected fun doTest(checkAdditionalAfterdata: Boolean = false, generateMissingFiles: Boolean = true, action: (PsiFile) -> Unit) {
         val mainFile = File(testDataDirectory, fileName())
 
         PluginTestCaseBase.addJdk(myFixture.projectDisposable, IdeaTestUtil::getMockJdk18)
@@ -382,8 +394,9 @@ abstract class AbstractExtractionTest : KotlinLightCodeInsightFixtureTestCase() 
 
             try {
                 checkExtract(
-                    ExtractTestFiles(mainFile.path, fixture.configureByFile(mainFileName), extraFilesToPsi),
+                    ExtractTestFiles(mainFile.path, fixture.configureByFile(mainFileName), extraFilesToPsi, isFirPlugin),
                     checkAdditionalAfterdata,
+                    generateMissingFiles,
                     action,
                 )
             } finally {
@@ -403,11 +416,29 @@ class ExtractTestFiles(
     val conflictFile: File,
     val extraFilesToPsi: Map<PsiFile, File> = emptyMap()
 ) {
-    constructor(path: String, mainFile: PsiFile, extraFilesToPsi: Map<PsiFile, File> = emptyMap()) :
-            this(mainFile, File("$path.after"), File("$path.conflicts"), extraFilesToPsi)
+    constructor(path: String, mainFile: PsiFile, extraFilesToPsi: Map<PsiFile, File> = emptyMap(), isFirPlugin: Boolean) :
+            this(mainFile, getAfterFile(path, isFirPlugin), File("$path.conflicts"), extraFilesToPsi)
+
+
 }
 
-fun checkExtract(files: ExtractTestFiles, checkAdditionalAfterdata: Boolean = false, action: (PsiFile) -> Unit) {
+private fun getAfterFile(path: String, isFirPlugin: Boolean): File {
+    var file = File("$path.after")
+    if (isFirPlugin) {
+        val firSpecific = File("$path.fir.after")
+        if (firSpecific.exists()) {
+            file = firSpecific
+        }
+    }
+    return file
+}
+
+fun checkExtract(
+    files: ExtractTestFiles,
+    checkAdditionalAfterdata: Boolean = false,
+    generateMissingFiles: Boolean = true,
+    action: (PsiFile) -> Unit
+) {
     val conflictFile = files.conflictFile
     val afterFile = files.afterFile
 
@@ -430,13 +461,20 @@ fun checkExtract(files: ExtractTestFiles, checkAdditionalAfterdata: Boolean = fa
         }
     } catch (e: ConflictsInTestsException) {
         val message = e.messages.sorted().joinToString(" ").replace("\n", " ")
-        KotlinTestUtils.assertEqualsToFile(conflictFile, message)
+        assertEqualsToFile(conflictFile, message, generateMissingFiles)
     } catch (e: CommonRefactoringUtil.RefactoringErrorHintException) {
-        KotlinTestUtils.assertEqualsToFile(conflictFile, e.message!!)
+        assertEqualsToFile(conflictFile, e.message!!, generateMissingFiles)
     } catch (e: RuntimeException) { // RuntimeException is thrown by IDEA code in CodeInsightUtils.java
         if (e::class.java != RuntimeException::class.java) throw e
-        KotlinTestUtils.assertEqualsToFile(conflictFile, e.message!!)
+        assertEqualsToFile(conflictFile, e.message!!, generateMissingFiles)
     }
+}
+
+private fun assertEqualsToFile(expectedFile: File, actualText: String, generateMissingFiles: Boolean) {
+    if (!generateMissingFiles && !expectedFile.exists()) {
+        Assert.fail("Expected data file doesn't exist: $expectedFile")
+    }
+    KotlinTestUtils.assertEqualsToFile(expectedFile, actualText)
 }
 
 fun doExtractFunction(fixture: CodeInsightTestFixture, file: KtFile) {

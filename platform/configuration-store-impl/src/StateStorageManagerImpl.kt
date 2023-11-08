@@ -6,6 +6,8 @@ package com.intellij.configurationStore
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
 import com.intellij.openapi.components.StateStorageChooserEx.Resolution
+import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.roots.ProjectModelElement
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.AsyncFileListener
@@ -42,16 +44,11 @@ open class StateStorageManagerImpl(@NonNls private val rootTagName: String,
   val compoundStreamProvider: CompoundStreamProvider = CompoundStreamProvider()
 
   override fun addStreamProvider(provider: StreamProvider, first: Boolean) {
-    if (first) {
-      compoundStreamProvider.providers.add(0, provider)
-    }
-    else {
-      compoundStreamProvider.providers.add(provider)
-    }
+    compoundStreamProvider.addStreamProvider(provider = provider, first = first)
   }
 
   override fun removeStreamProvider(aClass: Class<out StreamProvider>) {
-    compoundStreamProvider.providers.removeAll(aClass::isInstance)
+    compoundStreamProvider.removeStreamProvider(aClass)
   }
 
   // access under storageLock
@@ -141,8 +138,6 @@ open class StateStorageManagerImpl(@NonNls private val rootTagName: String,
   }
 
   fun getCachedFileStorages(): Set<StateStorage> = storageLock.read { storages.values.toSet() }
-
-  fun findCachedFileStorage(name: String): StateStorage? = storageLock.read { storages.get(name) }
 
   fun getCachedFileStorages(changed: Collection<String>,
                             deleted: Collection<String>,
@@ -403,8 +398,13 @@ fun checkStorageIsNotTracked(module: ComponentManager) {
 
 private class MyAsyncVfsListener : AsyncFileListener {
   override fun prepareChange(events: List<VFileEvent>): AsyncFileListener.ChangeApplier? {
+    LOG.debug { "Got a change in MyAsyncVfsListener: $events" }
     service<StorageVirtualFileTracker>().schedule(events)
     return null
+  }
+
+  companion object {
+    private val LOG = logger<MyAsyncVfsListener>()
   }
 }
 

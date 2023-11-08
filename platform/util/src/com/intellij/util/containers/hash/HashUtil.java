@@ -1,24 +1,12 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.containers.hash;
 
-import org.jetbrains.annotations.NotNull;
-
 import java.util.Arrays;
 
 final class HashUtil {
   static final int MIN_CAPACITY = 5;
 
-  static final float DEFAULT_LOAD_FACTOR = 1;
-
   static final float CAPACITY_MULTIPLE = 1.618033989f;
-
-  public static int hash(Object key) {
-    return key == null ? 0 : key.hashCode() & 0x7fffffff;
-  }
-
-  public static <K> int hash(K key, @NotNull EqualityPolicy<? super K> hashingStrategy) {
-    return key == null ? 0 : hashingStrategy.getHashCode(key) & 0x7fffffff;
-  }
 
   static int adjustTableSize(int size) {
     int i = Arrays.binarySearch(tableSizes, size);

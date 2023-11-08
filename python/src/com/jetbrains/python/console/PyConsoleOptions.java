@@ -25,7 +25,9 @@ import com.jetbrains.python.run.PythonRunParams;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 @State(
   name = "PyConsoleOptionsProvider",
@@ -136,6 +138,8 @@ public class PyConsoleOptions implements PersistentStateComponent<PyConsoleOptio
     public boolean myUseModuleSdk;
     public String myModuleName = null;
     public Map<String, String> myEnvs = Maps.newHashMap();
+    @NotNull
+    public List<String> myEnvFiles = Collections.emptyList();
     public boolean myPassParentEnvs = true;
     public String myWorkingDirectory = "";
     public boolean myAddContentRoots = true;
@@ -156,10 +160,12 @@ public class PyConsoleOptions implements PersistentStateComponent<PyConsoleOptio
       mySdk = form.getSdk();
       myInterpreterOptions = form.getInterpreterOptions();
       myEnvs = form.getEnvs();
+      myEnvFiles = form.getEnvFilePaths();
       myPassParentEnvs = form.isPassParentEnvs();
       myUseModuleSdk = form.isUseModuleSdk();
       myModuleName = form.getModule() == null ? null : form.getModule().getName();
       myWorkingDirectory = form.getWorkingDirectory();
+
 
       myAddContentRoots = form.shouldAddContentRoots();
       myAddSourceRoots = form.shouldAddSourceRoots();
@@ -170,6 +176,7 @@ public class PyConsoleOptions implements PersistentStateComponent<PyConsoleOptio
       return !ComparatorUtil.equalsNullable(mySdkHome, form.getSdkHome()) ||
              !myInterpreterOptions.equals(form.getInterpreterOptions()) ||
              !myEnvs.equals(form.getEnvs()) ||
+             !myEnvFiles.equals(form.getEnvFilePaths()) ||
              myPassParentEnvs != form.isPassParentEnvs() ||
              myUseModuleSdk != form.isUseModuleSdk() ||
              myAddContentRoots != form.shouldAddContentRoots() ||
@@ -181,6 +188,7 @@ public class PyConsoleOptions implements PersistentStateComponent<PyConsoleOptio
 
     public void reset(Project project, AbstractPythonRunConfigurationParams form) {
       form.setEnvs(myEnvs);
+      form.setEnvFilePaths(myEnvFiles);
       form.setPassParentEnvs(myPassParentEnvs);
       form.setInterpreterOptions(myInterpreterOptions);
       form.setSdkHome(mySdkHome);
@@ -358,6 +366,17 @@ public class PyConsoleOptions implements PersistentStateComponent<PyConsoleOptio
 
     public void setUseSoftWraps(boolean useSoftWraps) {
       myUseSoftWraps = useSoftWraps;
+    }
+
+    @NotNull
+    @Override
+    public List<String> getEnvFilePaths() {
+      return myEnvFiles;
+    }
+
+    @Override
+    public void setEnvFilePaths(@NotNull List<String> strings) {
+      myEnvFiles = strings;
     }
   }
 }

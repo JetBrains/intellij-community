@@ -19,7 +19,7 @@ public class DurableEnumeratorOfStringsWithInMemoryMapTest extends StringEnumera
   }
 
   @Override
-  protected DurableEnumerator<String> openEnumerator(@NotNull Path storagePath) throws IOException {
+  protected DurableEnumerator<String> openEnumeratorImpl(@NotNull Path storagePath) throws IOException {
     return DurableEnumeratorFactory.defaultWithDurableMap(StringAsUTF8.INSTANCE)
       .valuesLogFactory(DurableEnumeratorFactory.DEFAULT_VALUES_LOG_FACTORY)
       .mapFactory((StorageFactory<? extends DurableIntToMultiIntMap>)path -> new NonDurableNonParallelIntToMultiIntMap())

@@ -320,8 +320,9 @@ public final class PagedFileStorage implements Forceable/*, PagedStorage*/, Clos
   @Override
   public void close() throws IOException {
     ExceptionUtil.runAllAndRethrowAllExceptions(
-      new IOException("Failed to close PagedFileStorage[" + getFile() + "]"),
-      
+      IOException.class,
+      () -> new IOException("Failed to close PagedFileStorage[" + getFile() + "]"),
+
       this::force,
       () -> {
         unmapAll();

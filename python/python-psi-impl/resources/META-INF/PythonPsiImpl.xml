@@ -10,6 +10,12 @@
     <projectService serviceInterface="com.jetbrains.python.psi.PyPsiFacade"
                     serviceImplementation="com.jetbrains.python.psi.impl.PyPsiFacadeImpl"/>
 
+    <applicationService serviceInterface="com.jetbrains.python.PyElementTypesFacade"
+                        serviceImplementation="com.jetbrains.python.PyElementTypesFacadeImpl"/>
+
+    <applicationService serviceInterface="com.jetbrains.python.PyLanguageFacade"
+                        serviceImplementation="com.jetbrains.python.PyLanguageFacadeImpl"/>
+
     <projectService serviceInterface="com.jetbrains.python.debugger.PySignatureCacheManager"
                     serviceImplementation="com.jetbrains.python.debugger.PySignatureCacheManagerImpl"/>
 
@@ -219,12 +225,14 @@
     <localInspection language="Python" shortName="PyAbstractClassInspection" suppressId="PyAbstractClass" bundle="messages.PyPsiBundle" key="INSP.NAME.abstract.class" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WEAK WARNING" implementationClass="com.jetbrains.python.inspections.PyAbstractClassInspection"/>
     <localInspection language="Python" shortName="PyMissingTypeHintsInspection" suppressId="PyMissingTypeHints" bundle="messages.PyPsiBundle" key="INSP.NAME.missing.type.hints" groupKey="INSP.GROUP.python" enabledByDefault="false" level="WEAK WARNING" implementationClass="com.jetbrains.python.inspections.PyMissingTypeHintsInspection"/>
     <localInspection language="Python" shortName="PyOverloadsInspection" suppressId="PyOverloads" bundle="messages.PyPsiBundle" key="INSP.NAME.overloads.in.regular.python.files" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WARNING" implementationClass="com.jetbrains.python.inspections.PyOverloadsInspection"/>
+    <localInspection language="Python" shortName="PyOverridesInspection" suppressId="PyOverrides" bundle="messages.PyPsiBundle" key="INSP.NAME.invalid.usages.of.override.decorator" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WARNING" implementationClass="com.jetbrains.python.inspections.PyOverridesInspection"/>
     <localInspection language="Python" shortName="PyProtocolInspection" suppressId="PyProtocol" bundle="messages.PyPsiBundle" key="INSP.NAME.protocol.definition.and.usages" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WARNING" implementationClass="com.jetbrains.python.inspections.PyProtocolInspection"/>
     <localInspection language="Python" shortName="PyTypeHintsInspection" suppressId="PyTypeHints" bundle="messages.PyPsiBundle" key="INSP.NAME.type.hints" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WARNING" implementationClass="com.jetbrains.python.inspections.PyTypeHintsInspection"/>
     <localInspection language="Python" shortName="PyTypedDictInspection" suppressId="PyTypedDict" bundle="messages.PyPsiBundle" key="INSP.NAME.typed.dict" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WARNING" implementationClass="com.jetbrains.python.inspections.PyTypedDictInspection"/>
     <localInspection language="Python" shortName="PyChainedComparisonsInspection" suppressId="PyChainedComparisons" bundle="messages.PyPsiBundle" key="INSP.NAME.chained.comparisons" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WEAK WARNING" implementationClass="com.jetbrains.python.inspections.PyChainedComparisonsInspection"/>
     <localInspection language="Python" shortName="PyPep8NamingInspection" suppressId="PyPep8Naming" bundle="messages.PyPsiBundle" key="INSP.NAME.pep8.naming" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WEAK WARNING" implementationClass="com.jetbrains.python.inspections.PyPep8NamingInspection"/>
     <localInspection language="Python" shortName="PyShadowingBuiltinsInspection" suppressId="PyShadowingBuiltins" bundle="messages.PyPsiBundle" key="INSP.NAME.shadowing.builtins" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WEAK WARNING" implementationClass="com.jetbrains.python.inspections.PyShadowingBuiltinsInspection"/>
+    <localInspection language="Python" shortName="PyNewStyleGenericSyntaxInspection" suppressId="PyNewStyleGenericSyntax" bundle="messages.PyPsiBundle" key="INSP.NAME.new.style.generics.type.param.syntax" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WARNING" implementationClass="com.jetbrains.python.inspections.PyNewStyleGenericSyntaxInspection"/>
 
     <codeInsight.parameterNameHints language="Python"
                                     implementationClass="com.jetbrains.python.inlayHints.PythonInlayParameterHintsProvider"/>

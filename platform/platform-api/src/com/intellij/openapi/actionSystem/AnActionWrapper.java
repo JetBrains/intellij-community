@@ -19,7 +19,9 @@ public class AnActionWrapper extends AnAction implements ActionWithDelegate<AnAc
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    myDelegate.update(e);
+    UpdateSession session = e.getUpdateSession();
+    if (session == UpdateSession.EMPTY) myDelegate.update(e);
+    else e.getPresentation().copyFrom(session.presentation(myDelegate), null, true);
   }
 
   @Override

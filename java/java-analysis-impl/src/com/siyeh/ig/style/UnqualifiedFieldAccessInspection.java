@@ -11,6 +11,7 @@ import com.siyeh.ig.fixes.AddThisQualifierFix;
 import org.jetbrains.annotations.NotNull;
 
 public class UnqualifiedFieldAccessInspection extends BaseInspection implements CleanupLocalInspectionTool {
+  public static final String SHORT_NAME = "UnqualifiedFieldAccess"; 
 
   @Override
   public BaseInspectionVisitor buildVisitor() {
@@ -21,6 +22,11 @@ public class UnqualifiedFieldAccessInspection extends BaseInspection implements 
   @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("unqualified.field.access.problem.descriptor");
+  }
+
+  @Override
+  public @NotNull String getShortName() {
+    return SHORT_NAME;
   }
 
   @Override

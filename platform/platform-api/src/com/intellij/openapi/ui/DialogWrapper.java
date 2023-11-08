@@ -123,6 +123,8 @@ public abstract class DialogWrapper {
   public static final String DEFAULT_ACTION = "DefaultAction";
 
   public static final String FOCUSED_ACTION = "FocusedAction";
+  public static final String MAC_ACTION_ORDER = "MacActionOrder";
+  public static final int DEFAULT_ACTION_ORDER = 100;
 
   public static final Object DIALOG_CONTENT_PANEL_PROPERTY = new Object();
 
@@ -520,31 +522,17 @@ public abstract class DialogWrapper {
       addHelpToLeftSide = true;
     }
 
+    if (!Registry.is("ide.allow.merge.buttons", true)) {
+      actions = flattenOptionsActions(actions);
+      leftSideActions = flattenOptionsActions(leftSideActions);
+    }
     if (SystemInfoRt.isMac) {
       Action macOtherAction = ContainerUtil.find(actions, MacOtherAction.class::isInstance);
       if (macOtherAction != null) {
         leftSideActions.add(macOtherAction);
         actions.remove(macOtherAction);
       }
-
-      // move ok action to the right
-      int okNdx = actions.indexOf(getOKAction());
-      if (okNdx >= 0 && okNdx != actions.size() - 1) {
-        actions.remove(getOKAction());
-        actions.add(getOKAction());
-      }
-
-      // move cancel action to the left of OK action, if present, and to the leftmost position otherwise
-      int cancelNdx = actions.indexOf(getCancelAction());
-      if (cancelNdx > 0) {
-        actions.remove(getCancelAction());
-        actions.add(okNdx < 0 ? 0 : actions.size() - 1, getCancelAction());
-      }
-    }
-
-    if (!Registry.is("ide.allow.merge.buttons", true)) {
-      actions = flattenOptionsActions(actions);
-      leftSideActions = flattenOptionsActions(leftSideActions);
+      sortActionsOnMac(actions);
     }
 
     List<JButton> leftSideButtons = createButtons(leftSideActions);
@@ -563,6 +551,11 @@ public abstract class DialogWrapper {
       Touchbar.setButtonActions(result, leftSideButtons, rightSideButtons, null);
     }
     return result;
+  }
+
+  protected void sortActionsOnMac(@NotNull List<Action> actions) {
+    actions.sort(Comparator.comparing(action -> Objects.<Integer>requireNonNullElse(
+      (Integer)action.getValue(MAC_ACTION_ORDER), action.getValue(DEFAULT_ACTION) == null ? 0 : DEFAULT_ACTION_ORDER)));
   }
 
   protected @NotNull JButton createHelpButton(@NotNull Insets insets) {
@@ -595,7 +588,10 @@ public abstract class DialogWrapper {
     for (Action action : actions) {
       newActions.add(action);
       if (action instanceof OptionAction it) {
-        Collections.addAll(newActions, it.getOptions());
+        for (Action option : it.getOptions()) {
+          option.putValue(MAC_ACTION_ORDER, action.getValue(DEFAULT_ACTION) != null ? DEFAULT_ACTION_ORDER - 1 : 0);
+          newActions.add(option);
+        }
       }
     }
     return newActions;
@@ -1354,6 +1350,7 @@ public abstract class DialogWrapper {
     if (SystemInfoRt.isWindows || (SystemInfoRt.isLinux && Registry.is("ide.linux.enter.on.dialog.triggers.focused.button", true))) {
       installEnterHook(myRoot, myDisposable);
     }
+    ActionUtil.initActionContextForComponent(myRoot);
   }
 
   protected int getErrorTextAlignment() {
@@ -1903,6 +1900,7 @@ public abstract class DialogWrapper {
       super(CommonBundle.getOkButtonText());
       addPropertyChangeListener(myRepaintOnNameChangeListener);
       putValue(DEFAULT_ACTION, Boolean.TRUE);
+      putValue(MAC_ACTION_ORDER, DEFAULT_ACTION_ORDER);
     }
 
     @Override
@@ -1937,6 +1935,7 @@ public abstract class DialogWrapper {
   protected final class CancelAction extends DialogWrapperAction {
     private CancelAction() {
       super(CommonBundle.getCancelButtonText());
+      putValue(MAC_ACTION_ORDER, -10);
       addPropertyChangeListener(myRepaintOnNameChangeListener);
     }
 
@@ -1995,10 +1994,25 @@ public abstract class DialogWrapper {
    * Use this method only in circumstances when the exact invalid component is hard to
    * detect or the valid status is based on several fields. In other cases use
    * <code>{@link #setErrorText(String, JComponent)}</code> method.
-   * @param text the error text to display
+   * @param text the error text (HTML) to display
    */
   protected void setErrorText(@NlsContexts.DialogMessage @Nullable String text) {
     setErrorText(text, null);
+  }
+
+  /**
+   * @param errorHtml HTML chunk to display as an error text, null if there's no error to display
+   */
+  protected final void setErrorHtml(@Nullable HtmlChunk errorHtml) {
+    setErrorInfoAll(errorHtml == null ? List.of() : List.of(new ValidationInfo(errorHtml, null)));
+  }
+
+  /**
+   * @param errorHtml HTML chunk to display as an error text, null if there's no error to display
+   * @param component the component the error belongs to 
+   */
+  protected final void setErrorHtml(@Nullable HtmlChunk errorHtml, @Nullable JComponent component) {
+    setErrorInfoAll(errorHtml == null ? List.of() : List.of(new ValidationInfo(errorHtml, component)));
   }
 
   protected void setErrorText(@NlsContexts.DialogMessage @Nullable String text, @Nullable JComponent component) {

@@ -5,13 +5,17 @@ import com.intellij.ide.IdeBundle
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.openapi.progress.*
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.FilesScanningTask
 import com.intellij.openapi.project.MergeableQueueTask
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.UnindexedFilesScannerExecutor
 import com.intellij.openapi.util.NlsContexts.*
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.ide.progress.withBackgroundProgress
+import com.intellij.platform.util.progress.rawProgressReporter
+import com.intellij.platform.util.progress.withRawProgressReporter
 import com.intellij.util.application
 import com.intellij.util.flow.mapStateIn
 import kotlinx.collections.immutable.PersistentList
@@ -37,7 +41,7 @@ abstract class FilesScanningTaskBase(private val project: Project) : MergeableQu
 
     val taskScope = CoroutineScope(Dispatchers.Default + Job())
     try {
-      val pauseReason = project.service<UnindexedFilesScannerExecutor>().getPauseReason()
+      val pauseReason = UnindexedFilesScannerExecutor.getInstance(project).getPauseReason()
       val taskIndicator = CheckCancelOnlyProgressIndicator(indicator, taskScope, pauseReason)
       launchIndexingProgressUIReporter(taskScope, project, shouldShowProgress, progressReporter,
                                        IndexingBundle.message("progress.indexing.scanning"),
@@ -49,7 +53,7 @@ abstract class FilesScanningTaskBase(private val project: Project) : MergeableQu
     }
   }
 
-  protected open fun shouldHideProgressInSmartMode() = Registry.`is`("scanning.hide.progress.in.smart.mode", false)
+  protected open fun shouldHideProgressInSmartMode() = Registry.`is`("scanning.hide.progress.in.smart.mode", true)
 
   abstract fun perform(indicator: CheckCancelOnlyProgressIndicator, progressReporter: IndexingProgressReporter)
 

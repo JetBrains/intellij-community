@@ -17,7 +17,6 @@ import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.packaging.artifacts.ModifiableArtifactModel;
@@ -262,15 +261,6 @@ public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject
     Project project = getProjectToUpdate();
     if (project == null || project.isDisposed()) project = ProjectManager.getInstance().getDefaultProject();
     return project;
-  }
-
-  /**
-   * @deprecated Use {@link #getRootPath()}
-   */
-  @Deprecated(forRemoval = true)
-  public @Nullable VirtualFile getRootDirectory() {
-    Path rootPath = getRootPath();
-    return rootPath == null ? null : VfsUtil.findFile(rootPath, false);
   }
 
   public @Nullable Path getRootPath() {

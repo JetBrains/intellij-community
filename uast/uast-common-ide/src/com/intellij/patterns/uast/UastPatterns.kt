@@ -126,7 +126,7 @@ private fun isPropertyAssignCall(argument: UElement, methodPattern: ElementPatte
 class UCallExpressionPattern : UElementPattern<UCallExpression, UCallExpressionPattern>(UCallExpression::class.java) {
 
   fun withReceiver(classPattern: ElementPattern<PsiClass>): UCallExpressionPattern =
-    filterWithContext { it, context -> (it.receiverType as? PsiClassType)?.resolve()?.let { classPattern.accepts(it, context) } ?: false }
+    filterWithContext { it, context -> (it.receiverType as? PsiClassType)?.takeIf { it.isValid }?.resolve()?.let { classPattern.accepts(it, context) } ?: false }
 
   fun withMethodName(methodName: String): UCallExpressionPattern = withMethodNames(listOf(methodName))
 

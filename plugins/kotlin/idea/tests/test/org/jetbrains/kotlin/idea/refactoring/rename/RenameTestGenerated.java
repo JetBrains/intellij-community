@@ -1043,6 +1043,11 @@ public class RenameTestGenerated extends AbstractRenameTest {
         runTest("testData/refactoring/rename/renameKotlinPrimaryConstructorProperty/renameKotlinPrimaryConstructorProperty.test");
     }
 
+    @TestMetadata("renameKotlinPropertySameNameAsFilename/renameKotlinPropertySameNameAsFilename.test")
+    public void testRenameKotlinPropertySameNameAsFilename_RenameKotlinPropertySameNameAsFilename() throws Exception {
+        runTest("testData/refactoring/rename/renameKotlinPropertySameNameAsFilename/renameKotlinPropertySameNameAsFilename.test");
+    }
+
     @TestMetadata("renameKotlinPropertyWithCustomGetterSetterJvmNameByGetterRef/renameKotlinPropertyWithCustomGetterSetterJvmNameByGetterRef.test")
     public void testRenameKotlinPropertyWithCustomGetterSetterJvmNameByGetterRef_RenameKotlinPropertyWithCustomGetterSetterJvmNameByGetterRef() throws Exception {
         runTest("testData/refactoring/rename/renameKotlinPropertyWithCustomGetterSetterJvmNameByGetterRef/renameKotlinPropertyWithCustomGetterSetterJvmNameByGetterRef.test");
@@ -1301,6 +1306,16 @@ public class RenameTestGenerated extends AbstractRenameTest {
     @TestMetadata("syntheticPropertyUsages3/renameSetMethod.test")
     public void testSyntheticPropertyUsages3_RenameSetMethod() throws Exception {
         runTest("testData/refactoring/rename/syntheticPropertyUsages3/renameSetMethod.test");
+    }
+
+    @TestMetadata("testMethodRenamerJava/renameTestMethod.test")
+    public void testTestMethodRenamerJava_RenameTestMethod() throws Exception {
+        runTest("testData/refactoring/rename/testMethodRenamerJava/renameTestMethod.test");
+    }
+
+    @TestMetadata("testMethodRenamerKotlin/renameTestMethod.test")
+    public void testTestMethodRenamerKotlin_RenameTestMethod() throws Exception {
+        runTest("testData/refactoring/rename/testMethodRenamerKotlin/renameTestMethod.test");
     }
 
     @TestMetadata("topLevelClassRedeclaration/topLevelClassRedeclaration.test")

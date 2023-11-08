@@ -22,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.Objects;
 
-public class HtmlGotoSymbolProvider implements ChooseByNameContributorEx {
+public final class HtmlGotoSymbolProvider implements ChooseByNameContributorEx {
   @Override
   public void processNames(@NotNull Processor<? super String> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter filter) {
     FileBasedIndex.getInstance().processAllKeys(HtmlTagIdIndex.INDEX, (name) -> processor.process(name) && processor.process("#" + name),
@@ -79,9 +79,8 @@ public class HtmlGotoSymbolProvider implements ChooseByNameContributorEx {
           return myName;
         }
 
-        @Nullable
         @Override
-        public String getLocationString() {
+        public @Nullable String getLocationString() {
           PsiFile psiFile = PsiManager.getInstance(myProject).findFile(myFile);
           return psiFile != null ? "(" + SymbolPresentationUtil.getFilePathPresentation(psiFile) + ")" : null;
         }

@@ -164,6 +164,11 @@ class JpsBootstrapMain(args: Array<String>?) {
     } else  {
       writeJavaArgfile(moduleRuntimeClasspath, null)
     }
+
+    val classpathFileTargetString = System.getenv(CLASSPATH_FILE_TARGET_ENV)
+    if (!classpathFileTargetString.isNullOrBlank()) {
+      writeClasspathFile(moduleRuntimeClasspath, Path.of(classpathFileTargetString))
+    }
   }
 
   private fun removeOpenedPackage(openedPackages: MutableList<String>, openedPackage: String, unknownPackages: MutableList<String>) {
@@ -261,6 +266,16 @@ class JpsBootstrapMain(args: Array<String>?) {
     info("java argfile:\n${Files.readString(javaArgsFileTarget)}")
   }
 
+  @Throws(Exception::class)
+  private fun writeClasspathFile(moduleRuntimeClasspath: List<File>, classpathFileTarget: Path) {
+    CommandLineWrapperUtil.writeArgumentsFile(
+      classpathFileTarget.toFile(),
+      moduleRuntimeClasspath.map { it.path },
+      StandardCharsets.UTF_8
+    )
+    info("classpath file:\n${Files.readString(classpathFileTarget)}")
+  }
+
   @Throws(Throwable::class)
   private fun downloadOrBuildClasses(module: JpsModule, model: JpsModel, kotlincHome: Path) {
     val fromJpsBuildEnvValue = System.getenv(JpsBuild.CLASSES_FROM_JPS_BUILD_ENV_NAME)
@@ -287,12 +302,14 @@ class JpsBootstrapMain(args: Array<String>?) {
     val modulesSubset = JpsProjectUtils.getRuntimeModulesClasspath(module)
     val jpsBuild = JpsBuild(communityHome, model, jpsBootstrapWorkDir, kotlincHome)
 
+    // Some workarounds like 'kotlinx.kotlinx-serialization-compiler-plugin-for-compilation' library (used as Kotlin compiler plugin)
+    // require that the corresponding library was downloaded. It's unclear from modules structure which libraries exactly required
+    // so download them all
+    //
+    // In case of running from read-to-use classes we need all dependent libraries as well
+    // Instead of calculating what libraries are exactly required, download them all
+    jpsBuild.resolveProjectDependencies()
     if (manifestJsonUrl != null) {
-      // In case of running from read-to-use classes we need all dependent libraries as well
-      // Instead of calculating what libraries are exactly required, download them all
-      // since downloading dependencies only for a few modules is not supported by JPS now
-      jpsBuild.resolveProjectDependencies()
-
       info("Downloading project classes from $manifestJsonUrl")
       ClassesFromCompileInc.downloadProjectClasses(model.project, communityHome, modulesSubset)
     }
@@ -306,6 +323,7 @@ class JpsBootstrapMain(args: Array<String>?) {
 
   companion object {
     private const val DEFAULT_BUILD_SCRIPT_XMX = "4g"
+    private const val CLASSPATH_FILE_TARGET_ENV = "JPS_BOOTSTRAP_CLASSPATH_FILE_TARGET"
     private const val COMMUNITY_HOME_ENV = "JPS_BOOTSTRAP_COMMUNITY_HOME"
     private const val JPS_BOOTSTRAP_VERBOSE = "JPS_BOOTSTRAP_VERBOSE"
     private val OPT_HELP = Option.builder("h").longOpt("help").build()

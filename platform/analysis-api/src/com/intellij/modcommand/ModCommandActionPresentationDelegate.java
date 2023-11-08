@@ -7,7 +7,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.function.UnaryOperator;
 
-class ModCommandActionPresentationDelegate implements ModCommandAction {
+final class ModCommandActionPresentationDelegate implements ModCommandAction {
   private final @NotNull ModCommandAction myAction;
   private final @NotNull UnaryOperator<@NotNull Presentation> myPresentationModifier;
 

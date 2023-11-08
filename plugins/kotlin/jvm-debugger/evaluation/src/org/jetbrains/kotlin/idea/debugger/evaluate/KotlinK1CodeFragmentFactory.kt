@@ -10,6 +10,7 @@ import com.intellij.debugger.impl.DebuggerContextImpl
 import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
@@ -56,7 +57,10 @@ class KotlinK1CodeFragmentFactory : CodeFragmentFactory() {
                 semaphore.down()
                 val nameRef = AtomicReference<KotlinType>()
                 val worker = object : KotlinRuntimeTypeEvaluator(
-                    null, expression, debuggerContext, ProgressManager.getInstance().progressIndicator!!
+                    null,
+                    expression,
+                    debuggerContext,
+                    ProgressManager.getInstance().progressIndicator ?: EmptyProgressIndicator(),
                 ) {
                     override fun typeCalculationFinished(type: KotlinType?) {
                         nameRef.set(type)

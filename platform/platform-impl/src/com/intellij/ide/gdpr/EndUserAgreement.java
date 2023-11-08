@@ -164,7 +164,7 @@ public final class EndUserAgreement {
     return new Document(docName, "");
   }
 
-  private static @Nullable Document loadContent(String docName, Path file) {
+  public static @Nullable Document loadContent(String docName, Path file) {
     try {
       return new Document(docName, Files.readString(file));
     }

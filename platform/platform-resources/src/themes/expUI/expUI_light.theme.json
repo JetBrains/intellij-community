@@ -3,9 +3,8 @@
   "dark": false,
   "author": "JetBrains",
   "parentTheme": "IntelliJ",
-  "editorScheme": "/themes/expUI/expUI_lightScheme.xml",
   "nameKey": "light.theme.name",
-
+  "editorScheme": "Light",
   "colors": {
     "Grey1": "#000000",
     "Grey2": "#27282E",
@@ -251,6 +250,8 @@
 
     "EditorTabs": {
       "underlineArc": 4,
+      "underlineHeight": 4,
+      "unselectedAlpha": 0.75,
       "unselectedBlend": 0.9,
       "background": "Grey14",
       "hoverBackground": "#FFFFFF00",
@@ -268,7 +269,14 @@
       },
       "ToolTip": {
         "foreground": "Grey1",
-        "background": "Grey14"
+        "background": "Grey14",
+        "border": "Grey9",
+        "errorBackground": "Red12",
+        "errorBorder": "Red9",
+        "successBackground": "Green11",
+        "successBorder": "Green8",
+        "warningBackground": "Yellow9",
+        "warningBorder": "Yellow6"
       }
     },
 
@@ -328,6 +336,9 @@
       "State": {
         "Background": "Grey11",
         "Foreground": "Grey6"
+      },
+      "ChatItem":{
+        "Hover": "#DFE1E533"
       }
     },
 
@@ -579,9 +590,11 @@
 
     "ValidationTooltip": {
       "errorBackground": "Red11",
-      "errorBorderColor": "Red11",
+      "errorBorderColor": "Red7",
+      "errorForeground": "Gray1",
       "warningBackground": "Yellow9",
-      "warningBorderColor": "Yellow9"
+      "warningBorderColor": "Yellow5",
+      "warningForeground": "Gray1"
     },
 
     "ToolWindow": {
@@ -916,6 +929,24 @@
         "foreground" : "Grey8"
       }
     },
+    "PresentationAssistant": {
+      "Bright": {
+        "Popup": {
+          "foreground": "Grey14",
+          "border": "Grey2"
+        },
+        "PopupBackground": "Grey2",
+        "keymapLabel": "Grey9"
+      },
+      "Pale": {
+        "Popup": {
+          "foreground": "Grey2",
+          "border": "Grey9"
+        },
+        "PopupBackground": "Grey14",
+        "keymapLabel": "Grey7"
+      }
+    },
     "HelpBrowser": {
       "AiEditor" : {
         "verticalMarkerColor": "Purple5",
@@ -947,7 +978,12 @@
       }
     },
 
-    "DataSummary.Chart.background": "Blue4"
+    "DataSummary.Chart.barColor": "Blue4",
+
+    "ManagedIdeBadgeBorder": "Grey5",
+    "ManagedIdeBadgeBackground": "Grey3",
+    "ManagedIdeBadgeBackgroundHover": "Grey4",
+    "ManagedIdeMenuItemHover": "Grey12"
   },
 
   "icons": {

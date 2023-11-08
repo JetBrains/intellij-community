@@ -13,10 +13,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.python.PyElementTypes;
-import com.jetbrains.python.PyNames;
-import com.jetbrains.python.PyTokenTypes;
-import com.jetbrains.python.PythonDialectsTokenSetProvider;
+import com.jetbrains.python.*;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import com.jetbrains.python.psi.resolve.ResolveImportUtil;
@@ -106,7 +103,7 @@ public class PyFromImportStatementImpl extends PyBaseElementImpl<PyFromImportSta
   @Override
   @Nullable
   public PyStarImportElement getStarImportElement() {
-    return getStubOrPsiChild(PyElementTypes.STAR_IMPORT_ELEMENT);
+    return getStubOrPsiChild(PyStubElementTypes.STAR_IMPORT_ELEMENT);
   }
 
   @Override

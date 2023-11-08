@@ -1,7 +1,7 @@
 package com.intellij.codeInspection.tests.java
 
-import com.intellij.codeInspection.tests.JvmLanguage
-import com.intellij.codeInspection.tests.ObsoleteApiUsageInspectionTestBase
+import com.intellij.jvm.analysis.internal.testFramework.ObsoleteApiUsageInspectionTestBase
+import com.intellij.jvm.analysis.testFramework.JvmLanguage
 
 class JavaObsoleteApiUsageInspectionTest : ObsoleteApiUsageInspectionTestBase() {
   fun `test direct usage`() {

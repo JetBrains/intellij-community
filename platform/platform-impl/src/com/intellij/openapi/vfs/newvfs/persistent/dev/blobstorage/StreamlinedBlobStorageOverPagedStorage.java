@@ -90,11 +90,11 @@ public final class StreamlinedBlobStorageOverPagedStorage extends StreamlinedBlo
           final int version = readHeaderInt(HeaderLayout.STORAGE_VERSION_OFFSET);
           if (version != STORAGE_VERSION_CURRENT) {
             throw new IOException(
-              "Can't read file[" + pagedStorage + "]: file version(" + version + ") != current impl version (" + STORAGE_VERSION_CURRENT + ")");
+              "[" + pagedStorage.getFile() + "]: file version(" + version + ") != current impl version (" + STORAGE_VERSION_CURRENT + ")");
           }
           if (length > MAX_FILE_LENGTH) {
             throw new IOException(
-              "Can't read file[" + pagedStorage + "]: too big, " + length + " > Integer.MAX_VALUE * " + OFFSET_BUCKET);
+              "[" + pagedStorage.getFile() + "]: too big, " + length + " > Integer.MAX_VALUE * " + OFFSET_BUCKET);
           }
 
           final int filePageSize = readHeaderInt(HeaderLayout.PAGE_SIZE_OFFSET);
@@ -602,7 +602,7 @@ public final class StreamlinedBlobStorageOverPagedStorage extends StreamlinedBlo
     try {
       final DirectBufferWrapper headerPage = pagedStorage.getByteBuffer(0, /*forWrite: */ true);
       try {
-        putHeaderInt(HeaderLayout.NEXT_RECORD_ID_OFFSET, nextRecordId);
+        putHeaderInt(HeaderLayout.NEXT_RECORD_ID_OFFSET, nextRecordId());
         putHeaderInt(HeaderLayout.RECORDS_ALLOCATED_OFFSET, recordsAllocated.get());
         putHeaderInt(HeaderLayout.RECORDS_RELOCATED_OFFSET, recordsRelocated.get());
         putHeaderInt(HeaderLayout.RECORDS_DELETED_OFFSET, recordsDeleted.get());

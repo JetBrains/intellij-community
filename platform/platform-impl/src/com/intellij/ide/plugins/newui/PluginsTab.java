@@ -260,6 +260,7 @@ public abstract class PluginsTab {
 
   public void hideSearchPanel() {
     if (!mySearchPanel.isEmpty()) {
+      onSearchReset();
       myCardPanel.select(0, true);
       mySearchPanel.setQuery("");
       updateMainSelection(mySelectionListener);
@@ -268,6 +269,8 @@ public abstract class PluginsTab {
       mySearchPanel.controller.hidePopup();
     }
   }
+
+  protected abstract void onSearchReset();
 
   private void showSearchPopup() {
     if (mySearchPanel.controller != null) {

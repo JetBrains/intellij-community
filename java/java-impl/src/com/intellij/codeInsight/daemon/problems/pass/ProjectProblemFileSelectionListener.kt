@@ -1,8 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.problems.pass
 
-import com.intellij.codeInsight.codeVision.settings.CodeVisionSettings
-import com.intellij.codeInsight.daemon.impl.InlayHintsPassFactory.Companion.restartDaemonUpdatingHints
+import com.intellij.codeInsight.daemon.impl.InlayHintsPassFactoryInternal.Companion.restartDaemonUpdatingHints
 import com.intellij.codeInsight.daemon.problems.FileStateCache
 import com.intellij.codeInsight.daemon.problems.FileStateUpdater.Companion.removeState
 import com.intellij.codeInsight.daemon.problems.FileStateUpdater.Companion.setPreviousState
@@ -40,7 +39,7 @@ import com.intellij.testFramework.TestModeFlags
  * 5. PSI tree changed -> rollback file state for all the editors with this file<br></br>
  */
 
-private class ProjectProblemFileFileEditorManagerListener : FileEditorManagerListener {
+internal class ProjectProblemFileFileEditorManagerListener : FileEditorManagerListener {
   override fun selectionChanged(event: FileEditorManagerEvent) {
     val project = event.manager.project
     if (!isCodeVisionEnabled(project)) {
@@ -73,7 +72,7 @@ private class ProjectProblemFileFileEditorManagerListener : FileEditorManagerLis
   }
 }
 
-private class ProjectProblemFileInlaySelectionListenerSettingsListener(private val project: Project) : InlayHintsSettings.SettingsListener {
+internal class ProjectProblemFileInlaySelectionListenerSettingsListener(private val project: Project) : InlayHintsSettings.SettingsListener {
   override fun settingsChanged() {
     if (!isCodeVisionEnabled(project)) {
       onHintsDisabled(project)
@@ -93,7 +92,7 @@ private class ProjectProblemFileInlaySelectionListenerSettingsListener(private v
   }
 }
 
-private class ProjectProblemFileRefactoringEventListener(private val project: Project) : RefactoringEventListener {
+internal class ProjectProblemFileRefactoringEventListener(private val project: Project) : RefactoringEventListener {
   override fun refactoringDone(refactoringId: String, afterData: RefactoringEventData?) {
     val psiJavaFile = (afterData?.getUserData(RefactoringEventData.PSI_ELEMENT_KEY) as? PsiMember)?.containingFile as? PsiJavaFile
                       ?: return
@@ -107,7 +106,7 @@ private class ProjectProblemFileRefactoringEventListener(private val project: Pr
   }
 }
 
-private class ProjectProblemFileSelectionListenerStartupActivity : ProjectActivity {
+internal class ProjectProblemFileSelectionListenerStartupActivity : ProjectActivity {
   override suspend fun execute(project: Project) {
     if (ApplicationManager.getApplication().isHeadlessEnvironment && !TestModeFlags.`is`(ProjectProblemUtils.ourTestingProjectProblems)) {
       return

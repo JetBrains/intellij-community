@@ -4,11 +4,11 @@ package com.intellij.collaboration.ui.codereview.details
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.HorizontalListPanel
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangesViewModel
-import com.intellij.collaboration.ui.codereview.list.search.ChooserPopupUtil
-import com.intellij.collaboration.ui.codereview.list.search.PopupConfig
 import com.intellij.collaboration.ui.util.bindDisabledIn
 import com.intellij.collaboration.ui.util.bindTextIn
 import com.intellij.collaboration.ui.util.bindVisibilityIn
+import com.intellij.collaboration.ui.util.popup.ChooserPopupUtil
+import com.intellij.collaboration.ui.util.popup.PopupConfig
 import com.intellij.icons.AllIcons
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.ActionLink

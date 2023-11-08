@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent.dev.enumerator;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.appendonlylog.AppendOnlyLogFactory;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.intmultimaps.extendiblehashmap.ExtendibleMapFactory;
 import com.intellij.util.io.dev.StorageFactory;
@@ -15,23 +16,27 @@ import java.io.IOException;
 import java.nio.file.Path;
 
 import static com.intellij.openapi.vfs.newvfs.persistent.dev.enumerator.DurableEnumerator.fillValueHashToIdMap;
+import static com.intellij.openapi.vfs.newvfs.persistent.dev.intmultimaps.extendiblehashmap.ExtendibleMapFactory.NotClosedProperlyAction.DROP_AND_CREATE_EMPTY_MAP;
 import static com.intellij.util.io.IOUtil.MiB;
 
-/**
- *
- */
 @ApiStatus.Internal
 public class DurableEnumeratorFactory<V> implements StorageFactory<DurableEnumerator<V>> {
+  private static final Logger LOG = Logger.getInstance(DurableEnumeratorFactory.class);
+
   public static final int DEFAULT_PAGE_SIZE = 8 * MiB;
 
   public static final StorageFactory<DurableIntToMultiIntMap> DEFAULT_IN_MEMORY_MAP_FACTORY =
     (storagePath) -> new NonDurableNonParallelIntToMultiIntMap();
 
   public static final StorageFactory<? extends AppendOnlyLog> DEFAULT_VALUES_LOG_FACTORY = AppendOnlyLogFactory
-    .withPageSize(DEFAULT_PAGE_SIZE)
+    .withDefaults()
+    .pageSize(DEFAULT_PAGE_SIZE)
+    .cleanFileIfIncompatible()
     .failIfDataFormatVersionNotMatch(DurableEnumerator.DATA_FORMAT_VERSION);
 
-  public static final StorageFactory<? extends DurableIntToMultiIntMap> DEFAULT_DURABLE_MAP_FACTORY = ExtendibleMapFactory.defaults();
+  public static final StorageFactory<? extends DurableIntToMultiIntMap> DEFAULT_DURABLE_MAP_FACTORY = ExtendibleMapFactory.defaults()
+    .cleanIfFileIncompatible()
+    .ifNotClosedProperly(DROP_AND_CREATE_EMPTY_MAP);
 
   public static final String MAP_FILE_SUFFIX = ".hashToId";
 
@@ -103,22 +108,28 @@ public class DurableEnumeratorFactory<V> implements StorageFactory<DurableEnumer
       valuesLog -> valueHashToIdFactory.wrapStorageSafely(
         hashToIdPath,
         valueHashToId -> {
-          //TODO RC: We could recover the map from valuesLog -- but we need valueHashToIdFactory.clean() to remove
-          //         the files, and reopen from 0
-
           if (rebuildMapFromLogIfInconsistent) {
+            //If hashToId map is durable, but its factory configured to 'create an empty map if (corrupted, inconsistent,
+            // wasn't properly closed...)' -- then this branch rebuilds such a map, hence provides a recovery even for
+            // durable maps
             if (!valuesLog.isEmpty() && valueHashToId.isEmpty()) {
+              LOG.warn("[" + name + "]: .valueToId map is out-of-sync with .valuesLog data -> rebuilding it");
+              //TODO RC: valueHashToId could be loaded async -- to not delay initialization (see DurableStringEnumerator)
               fillValueHashToIdMap(valuesLog, valueDescriptor, valueHashToId);
             }
-            //TODO RC: check other (potential) inconsistencies:
-            //         log was recovered,
-            //         valueHashToIdMap has 'not closed properly' marker, etc
-            //         ...but to rebuild map in those cases we need .clean() or .createFromScratch() method for map!
+            //TODO RC: what if valuesLog was recovered? -- could it be the .hashToId map is somehow wasClosedProperly,
+            //         but is inconsistent with valuesLog? It seems like there is a chance that value is appended to
+            //         the log, and inserted into the map -- but one of the previous values in the log wasn't committed,
+            //         and even record header wasn't written -- and because of that whole region after that
+            //         allocated-but-not-yet-started record is lost -- so the id put in the map is now invalid.
+            //         So we should either modify AppendOnlyLog so that it doesn't allow that (e.g. we could not return
+            //         from allocateRecord until at least header is written) -- or we should rebuild the map even if
+            //         the map itself wasClosedProperly, but AppendOnlyLog was recovered, and recovered region >0
+
             //MAYBE separate 'always rebuild map' and 'rebuild map if inconsistent'
             //      (both requires .open(path,CREATE_NEW) method)
           }
 
-          //TODO RC: valueHashToId could be loaded async -- to not delay initialization (see DurableStringEnumerator)
 
           return new DurableEnumerator<>(
             valueDescriptor,

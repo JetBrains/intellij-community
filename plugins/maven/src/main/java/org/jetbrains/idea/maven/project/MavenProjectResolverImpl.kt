@@ -2,12 +2,12 @@
 package org.jetbrains.idea.maven.project
 
 import com.intellij.build.events.MessageEvent
-import com.intellij.openapi.progress.RawProgressReporter
 import com.intellij.openapi.progress.checkCancelled
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.util.progress.RawProgressReporter
 import com.intellij.util.ExceptionUtil
 import org.jetbrains.idea.maven.buildtool.MavenSyncConsole
 import org.jetbrains.idea.maven.externalSystemIntegration.output.quickfixes.MavenConfigBuildIssue.getIssue
@@ -21,6 +21,7 @@ import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException
 import org.jetbrains.idea.maven.utils.MavenUtil
 import java.lang.reflect.InvocationTargetException
+import java.util.*
 import java.util.concurrent.ConcurrentLinkedQueue
 
 internal class MavenProjectResolverImpl(private val myProject: Project) : MavenProjectResolver {
@@ -38,8 +39,12 @@ internal class MavenProjectResolverImpl(private val myProject: Project) : MavenP
     for ((baseDir, mavenProjectsInBaseDir) in projectMultiMap.entrySet()) {
       val embedder = embeddersManager.getEmbedder(MavenEmbeddersManager.FOR_DEPENDENCIES_RESOLVE, baseDir)
       try {
+        val userProperties = Properties()
         for (mavenProject in mavenProjectsInBaseDir) {
           mavenProject.configFileError = null
+          for (mavenImporter in MavenImporter.getSuitableImporters(mavenProject)) {
+            mavenImporter.customizeUserProperties(myProject, mavenProject, userProperties)
+          }
         }
         val projectsWithUnresolvedPluginsChunk = doResolve(
           mavenProjectsInBaseDir,
@@ -50,7 +55,8 @@ internal class MavenProjectResolverImpl(private val myProject: Project) : MavenP
           syncConsole,
           console,
           tree.workspaceMap,
-          updateSnapshots)
+          updateSnapshots,
+          userProperties)
         projectsWithUnresolvedPlugins[baseDir] = projectsWithUnresolvedPluginsChunk
       }
       catch (t: Throwable) {
@@ -86,7 +92,8 @@ internal class MavenProjectResolverImpl(private val myProject: Project) : MavenP
                                 syncConsole: MavenSyncConsole?,
                                 console: MavenConsole,
                                 workspaceMap: MavenWorkspaceMap?,
-                                updateSnapshots: Boolean): Collection<MavenProjectWithHolder> {
+                                updateSnapshots: Boolean,
+                                userProperties: Properties): Collection<MavenProjectWithHolder> {
     if (mavenProjects.isEmpty()) return listOf()
     checkCancelled()
     val names = mavenProjects.map { it.displayName }
@@ -105,7 +112,8 @@ internal class MavenProjectResolverImpl(private val myProject: Project) : MavenP
       syncConsole,
       console,
       workspaceMap,
-      updateSnapshots)
+      updateSnapshots,
+      userProperties)
     val problems = MavenResolveResultProblemProcessor.getProblems(results)
     MavenResolveResultProblemProcessor.notifySyncForProblem(myProject, problems)
     val artifactIdToMavenProjects = mavenProjects
@@ -128,7 +136,11 @@ internal class MavenProjectResolverImpl(private val myProject: Project) : MavenP
                         projectsWithUnresolvedPlugins: ConcurrentLinkedQueue<MavenProjectWithHolder>) {
     val mavenId = result.mavenModel.mavenId
     val artifactId = mavenId.artifactId
-    val mavenProjects = artifactIdToMavenProjects[artifactId] ?: return
+    val mavenProjects = artifactIdToMavenProjects[artifactId]
+    if (mavenProjects == null) {
+      MavenLog.LOG.warn("Maven projects not found for $artifactId")
+      return
+    }
     var mavenProjectCandidate: MavenProject? = null
     for (mavenProject in mavenProjects) {
       if (mavenProject.mavenId == mavenId) {
@@ -139,15 +151,21 @@ internal class MavenProjectResolverImpl(private val myProject: Project) : MavenP
         mavenProjectCandidate = mavenProject
       }
     }
-    if (mavenProjectCandidate == null) return
+    if (mavenProjectCandidate == null) {
+      MavenLog.LOG.warn("Maven project not found for $artifactId")
+      return
+    }
     val snapshot = mavenProjectCandidate.snapshot
     val resetArtifacts = MavenUtil.shouldResetDependenciesAndFolders(result.readingProblems)
-    mavenProjectCandidate[result, generalSettings, false, resetArtifacts] = false
+    mavenProjectCandidate.set(result, generalSettings, false, resetArtifacts, false)
     val nativeMavenProject = result.nativeMavenProject
     if (nativeMavenProject != null) {
       for (eachImporter in MavenImporter.getSuitableImporters(mavenProjectCandidate)) {
         eachImporter.resolve(myProject, mavenProjectCandidate, nativeMavenProject, embedder)
       }
+    }
+    else {
+      MavenLog.LOG.warn("Native maven project not found for $artifactId")
     }
     // project may be modified by MavenImporters, so we need to collect the changes after them:
     val changes = mavenProjectCandidate.getChangesSinceSnapshot(snapshot)

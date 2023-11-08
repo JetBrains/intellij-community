@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application;
 
+import com.intellij.idea.AppMode;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.xml.dom.XmlDomReader;
@@ -28,8 +29,9 @@ public final class ApplicationNamesInfo {
 
   private static @NotNull XmlElement loadData() {
     String prefix = System.getProperty(PlatformUtils.PLATFORM_PREFIX_KEY, "");
+    String appInfoData = getAppInfoData();
 
-    if (Boolean.getBoolean("idea.use.dev.build.server")) {
+    if (AppMode.isDevServer() && appInfoData.isEmpty()) {
       String module = null;
       if (prefix.isEmpty() || prefix.equals(PlatformUtils.IDEA_PREFIX)) {
         module = "intellij.idea.ultimate.customization";
@@ -65,14 +67,10 @@ public final class ApplicationNamesInfo {
         }
       }
 
-      //this property is used when a product is started from distribution of another product
+      // this property is used when a product is started from distribution of another product
       boolean forceLoadingFromResources = "true".equals(System.getProperty("intellij.platform.load.app.info.from.resources"));
-      if (!forceLoadingFromResources) {
-        // production
-        String appInfoData = getAppInfoData();
-        if (!appInfoData.isEmpty()) {
-          return XmlDomReader.readXmlAsModel(appInfoData.getBytes(StandardCharsets.UTF_8));
-        }
+      if (!forceLoadingFromResources && !appInfoData.isEmpty()) {
+        return XmlDomReader.readXmlAsModel(appInfoData.getBytes(StandardCharsets.UTF_8));
       }
     }
 
@@ -191,13 +189,6 @@ public final class ApplicationNamesInfo {
    */
   public String getScriptName() {
     return myScriptName;
-  }
-
-  /** @deprecated separate command-line launchers are no longer supported. Please use {@link #getScriptName()} instead. */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  public String getDefaultLauncherName() {
-    return getScriptName();
   }
 
   /**

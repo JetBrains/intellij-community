@@ -120,7 +120,7 @@ public class CharsetObjectCanBeUsedInspection extends AbstractBaseJavaLocalInspe
       }
 
       @Nullable
-      private String getCharsetString(PsiExpression charsetExpression) {
+      private static String getCharsetString(PsiExpression charsetExpression) {
         charsetExpression = PsiUtil.skipParenthesizedExprDown(charsetExpression);
         String charsetString = ObjectUtils.tryCast(ExpressionUtils.computeConstantExpression(charsetExpression), String.class);
         if (charsetString == null && charsetExpression instanceof PsiMethodCallExpression) {

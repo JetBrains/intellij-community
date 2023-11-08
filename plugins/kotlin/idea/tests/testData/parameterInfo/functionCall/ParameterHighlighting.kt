@@ -6,8 +6,5 @@ open class A(x: Int) {
     }
 }
 /*
-Text: (a: String = "a",
-b: String = "b",
-<highlight>c: String = "c"</highlight>,
-d: String = "d"), Disabled: false, Strikeout: false, Green: true
+Text: (a: String = "a", b: String = "b", <highlight>c: String = "c"</highlight>, d: String = "d"), Disabled: false, Strikeout: false, Green: true
 */

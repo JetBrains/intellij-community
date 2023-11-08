@@ -30,7 +30,6 @@ import com.jetbrains.python.packaging.PyCondaPackageService
 import com.jetbrains.python.sdk.PyDetectedSdk
 import com.jetbrains.python.sdk.associateWithModule
 import com.jetbrains.python.sdk.conda.PyCondaSdkCustomizer
-import com.jetbrains.python.sdk.flavors.conda.CondaEnvSdkFlavor
 import com.jetbrains.python.sdk.setupAssociated
 import icons.PythonIcons
 import java.awt.BorderLayout

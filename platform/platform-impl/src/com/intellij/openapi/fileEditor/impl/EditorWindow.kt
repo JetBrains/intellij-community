@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.fileEditor.TextEditor
+import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
@@ -334,7 +335,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, private val
       file.putUserData(DRAG_START_INDEX_KEY, null)
       file.putUserData(DRAG_START_PINNED_KEY, null)
 
-      if (!EditorsSplitters.isOpenedInBulk(composite.file)) {
+      if (!AsyncEditorLoader.isOpenedInBulk(composite.file)) {
         trimToSize(fileToIgnore = file, transferFocus = false)
       }
 
@@ -342,7 +343,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, private val
     }
 
     owner.updateFileColorAsync(composite.file)
-    if (!EditorsSplitters.isOpenedInBulk(composite.file)) {
+    if (!AsyncEditorLoader.isOpenedInBulk(composite.file)) {
       if (options.selectAsCurrent) {
         setSelectedComposite(composite, options.requestFocus)
       }
@@ -852,12 +853,11 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, private val
   fun isFileOpen(file: VirtualFile): Boolean = getComposite(file) != null
 
   fun isFilePinned(file: VirtualFile): Boolean {
-    return requireNotNull(getComposite(file)) { "file is not open: ${file.path}" }.isPinned
+    return requireNotNull(getComposite(file)) { "file is not open: $file" }.isPinned
   }
 
   fun setFilePinned(file: VirtualFile, pinned: Boolean) {
-    val composite = requireNotNull(getComposite(file)) { "file is not open: ${file.path}" }
-    setFilePinned(composite, pinned)
+    setFilePinned(composite = requireNotNull(getComposite(file)) { "file is not open: $file" }, pinned = pinned)
   }
 
   internal fun setFilePinned(composite: EditorComposite, pinned: Boolean) {
