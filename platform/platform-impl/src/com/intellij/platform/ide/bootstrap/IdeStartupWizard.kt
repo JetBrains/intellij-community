@@ -65,25 +65,23 @@ internal suspend fun runStartupWizard(isInitialStart: Job, app: Application) {
       }
 
       log.info("Passing execution control to $wizard.")
-      span("${adapter.assignableToClassName}.run") {
-        val shouldProceed = withContext(Dispatchers.EDT) block@{
-          val successfulStart = com.intellij.platform.ide.bootstrap.isInitialStart
+      span("${adapter.assignableToClassName}.run", Dispatchers.EDT) block@{
+        val successfulStart = com.intellij.platform.ide.bootstrap.isInitialStart
+        try {
           if (successfulStart != null && successfulStart.isCompleted && !successfulStart.isCancelled) {
             val wasSuccessful = successfulStart.getCompleted()
             if (!wasSuccessful) {
               log.info("Initial start unsuccessful, terminating the wizard flow.")
-              return@block false
+              return@block
             }
           }
-
+        } finally {
           successfulStart?.cancel()
           com.intellij.platform.ide.bootstrap.isInitialStart = null
-          true
         }
 
-        if (shouldProceed) {
-          wizard.run()
-        }
+        log.info("Passing execution control to $wizard.")
+        wizard.run()
       }
 
       // first wizard wins
