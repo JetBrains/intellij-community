@@ -16,6 +16,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.externalSystem.issue.BuildIssueException
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType
@@ -35,15 +36,18 @@ import org.jetbrains.idea.maven.buildtool.quickfix.UseBundledMavenQuickFix
 import org.jetbrains.idea.maven.execution.SyncBundle
 import org.jetbrains.idea.maven.externalSystemIntegration.output.importproject.quickfixes.DownloadArtifactBuildIssue
 import org.jetbrains.idea.maven.model.MavenProjectProblem
+import org.jetbrains.idea.maven.project.MavenConsole
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent
 import org.jetbrains.idea.maven.server.MavenArtifactEvent
 import org.jetbrains.idea.maven.server.MavenArtifactEvent.ArtifactEventType
 import org.jetbrains.idea.maven.server.MavenDistributionsCache
+import org.jetbrains.idea.maven.server.MavenServerConsoleEvent
 import org.jetbrains.idea.maven.server.MavenServerConsoleIndicator
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
 import java.io.File
+import java.text.MessageFormat
 
 class MavenSyncConsole(private val myProject: Project) {
   @Volatile
@@ -546,6 +550,14 @@ class MavenSyncConsole(private val myProject: Project) {
   companion object {
     val EXIT_CODE_OK = 0
     val EXIT_CODE_SIGTERM = 143
+    private val LINE_SEPARATOR: String = System.lineSeparator()
+    private val LEVEL_TO_PREFIX = mapOf(
+      MavenServerConsoleIndicator.LEVEL_DEBUG to "DEBUG",
+      MavenServerConsoleIndicator.LEVEL_INFO to "INFO",
+      MavenServerConsoleIndicator.LEVEL_WARN to "WARNING",
+      MavenServerConsoleIndicator.LEVEL_ERROR to "ERROR",
+      MavenServerConsoleIndicator.LEVEL_FATAL to "FATAL_ERROR"
+    )
 
     @ApiStatus.Experimental
     @JvmStatic
@@ -582,6 +594,49 @@ class MavenSyncConsole(private val myProject: Project) {
         ArtifactEventType.DOWNLOAD_FAILED -> listener.downloadFailed(id, e.errorMessage, e.stackTrace)
       }
     }
+  }
+
+  fun handleConsoleEvents(consoleEvents: List<MavenServerConsoleEvent>) {
+    for (e in consoleEvents) {
+      printMessage(e.level, e.message, e.throwable)
+    }
+  }
+
+  private fun printMessage(level: Int, string: String, throwable: Throwable?) {
+    if (isSuppressed(level)) return
+
+    var type = MavenConsole.OutputType.NORMAL
+    if (throwable != null || level == MavenServerConsoleIndicator.LEVEL_WARN || level == MavenServerConsoleIndicator.LEVEL_ERROR || level == MavenServerConsoleIndicator.LEVEL_FATAL) {
+      type = MavenConsole.OutputType.ERROR
+    }
+
+    doPrint(composeLine(level, string), type)
+
+    if (throwable != null) {
+      val throwableText = ExceptionUtil.getThrowableText(throwable)
+      if (Registry.`is`("maven.print.import.stacktraces") || ApplicationManager.getApplication().isUnitTestMode) { //NO-UT-FIX
+        doPrint(LINE_SEPARATOR + composeLine(MavenServerConsoleIndicator.LEVEL_ERROR, throwableText), type)
+      }
+      else {
+        doPrint(LINE_SEPARATOR + composeLine(MavenServerConsoleIndicator.LEVEL_ERROR, throwable.message), type)
+      }
+    }
+  }
+
+  private fun doPrint(text: String, type: MavenConsole.OutputType) {
+    addText(text, type == MavenConsole.OutputType.NORMAL)
+  }
+
+  private fun isSuppressed(level: Int): Boolean {
+    return level < MavenProjectsManager.getInstance(myProject).generalSettings.outputLevel.level
+  }
+
+  private fun composeLine(level: Int, message: String?): String {
+    return MessageFormat.format("[{0}] {1}", getPrefixByLevel(level), message)
+  }
+
+  private fun getPrefixByLevel(level: Int): String? {
+    return LEVEL_TO_PREFIX[level]
   }
 }
 
