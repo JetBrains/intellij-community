@@ -4,11 +4,11 @@ package git4idea.ui.branch.popup.compose
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.IntRect
-import com.intellij.compose.ActionGroupPopup
-import com.intellij.compose.JBPopupPlacer
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.ui.popup.JBPopup
+import com.intellij.platform.compose.ActionGroupPopup
+import com.intellij.platform.compose.JBPopupPlacer
 import com.intellij.ui.ScreenUtil
 import java.awt.Component
 import java.awt.Point

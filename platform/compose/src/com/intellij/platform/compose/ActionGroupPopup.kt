@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.compose
+package com.intellij.platform.compose
 
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -19,7 +19,6 @@ import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
-import com.intellij.platform.compose.LocalComponent
 import org.jetbrains.annotations.ApiStatus.Experimental
 import java.awt.Component
 
