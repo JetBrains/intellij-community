@@ -19,6 +19,12 @@ public final class FileSource implements NodeSource {
     myPath = path;
   }
 
+  //@Override
+  //public void write(DataOutput out) throws IOException {
+  //  String path = myPath.toString();
+    //FileUtil.writeS
+  //}
+
   @Override
   public Path getPath() {
     return myPath;
