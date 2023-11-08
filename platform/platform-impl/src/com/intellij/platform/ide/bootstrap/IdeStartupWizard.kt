@@ -31,7 +31,6 @@ internal suspend fun runStartupWizard(isInitialStart: Job, app: Application) {
     }
 
     try {
-      val wizard = adapter.createInstance<IdeStartupWizard>(app) ?: continue
       val timeoutMs = System.getProperty("intellij.startup.wizard.initial.timeout").orEmpty().toIntOrNull() ?: 2000
 
       span("app manager initial state waiting") {
@@ -45,10 +44,14 @@ internal suspend fun runStartupWizard(isInitialStart: Job, app: Application) {
         }
       }
 
+      //wizard disabled for 233
+      /*
       log.info("Passing execution control to $adapter.")
       span("${adapter.assignableToClassName}.run") {
+        val wizard = adapter.createInstance<IdeStartupWizard>(app) ?: continue
         wizard.run()
       }
+      */
 
       // first wizard wins
       break
