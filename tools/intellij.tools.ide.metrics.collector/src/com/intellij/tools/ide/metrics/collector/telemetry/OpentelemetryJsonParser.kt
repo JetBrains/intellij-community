@@ -7,7 +7,7 @@ import com.intellij.tools.ide.util.common.withRetry
 import java.io.File
 import kotlin.time.Duration.Companion.milliseconds
 
-class OpentelemetryJsonParser(private val spanFilter: SpanFilter) {
+open class OpentelemetryJsonParser(private val spanFilter: SpanFilter) {
 
   private fun getSpans(file: File): JsonNode {
     val spanData: JsonNode? = withRetry(messageOnFailure = "Failure during spans extraction from OpenTelemetry json file",
@@ -58,7 +58,7 @@ class OpentelemetryJsonParser(private val spanFilter: SpanFilter) {
     return result.asSequence()
   }
 
-  private fun processChild(result: MutableSet<SpanElement>, parent: SpanElement, index: Map<String, Collection<SpanElement>>) {
+  protected open fun processChild(result: MutableSet<SpanElement>, parent: SpanElement, index: Map<String, Collection<SpanElement>>) {
     index[parent.spanId]?.forEach {
       if (parent.isWarmup) {
         it.isWarmup = true

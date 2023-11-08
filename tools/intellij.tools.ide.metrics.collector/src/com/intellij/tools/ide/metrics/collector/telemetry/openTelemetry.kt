@@ -86,6 +86,27 @@ fun getSpansMetricsMap(file: File,
   return spanToMetricMap
 }
 
+fun getMetricsForStartup(file: File): List<Metric> {
+  val spansToPublish = listOf("bootstrap", "startApplication", "ProjectImpl container")
+  val spansSuffixesToIgnore = listOf(": scheduled", ": completing")
+  val filter = SpanFilter.containsIn(spansToPublish)
+  val childFilter = SpanFilter { span -> spansSuffixesToIgnore.none { span.name.endsWith(it) } }
+
+  val spanElements = OpentelemetryJsonParserWithChildrenFiltering(filter, childFilter).getSpanElements(file)
+  val startTime = spanElements.first { it.name == "bootstrap" }.startTimestamp
+  val spansWithoutDuplicatedNames = spanElements.groupBy { it.name }.filter { it.value.size == 1 }.flatMap { it.value }
+
+  val metricSpanProcessor = MetricSpanProcessor()
+  val spanToMetricMap = spansWithoutDuplicatedNames.mapNotNull { metricSpanProcessor.process(it) }.groupBy { it.metric.id.name }
+
+  val spanElementsWithoutRoots = spansWithoutDuplicatedNames.filterNot { it.name in spansToPublish }
+  val startMetrics = spanElementsWithoutRoots.map { span -> Metric(Duration(span.name + ".start"), span.startTimestamp - startTime) }
+  val endMetrics = spanElementsWithoutRoots.map { span ->
+    Metric(Duration(span.name + ".end"), span.startTimestamp - startTime + span.duration)
+  }
+  return combineMetrics(spanToMetricMap) + startMetrics + endMetrics
+}
+
 private fun combineMetrics(metrics: Map<String, List<MetricWithAttributes>>): List<Metric> {
   val result = mutableListOf<Metric>()
   metrics.forEach { entry ->

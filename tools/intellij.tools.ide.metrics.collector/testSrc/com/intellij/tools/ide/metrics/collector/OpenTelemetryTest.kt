@@ -3,11 +3,14 @@ package com.intellij.tools.ide.metrics.collector
 import com.intellij.tools.ide.metrics.collector.metrics.PerformanceMetrics.Metric
 import com.intellij.tools.ide.metrics.collector.metrics.PerformanceMetrics.MetricId.Counter
 import com.intellij.tools.ide.metrics.collector.metrics.PerformanceMetrics.MetricId.Duration
-import com.intellij.tools.ide.metrics.collector.telemetry.getMetricsBasedOnDiffBetweenSpans
-import com.intellij.tools.ide.metrics.collector.telemetry.getMetricsFromSpanAndChildren
 import com.intellij.tools.ide.metrics.collector.telemetry.SpanFilter
+import com.intellij.tools.ide.metrics.collector.telemetry.getMetricsBasedOnDiffBetweenSpans
+import com.intellij.tools.ide.metrics.collector.telemetry.getMetricsForStartup
+import com.intellij.tools.ide.metrics.collector.telemetry.getMetricsFromSpanAndChildren
+import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.collections.shouldContainAll
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
+import io.kotest.matchers.collections.shouldHaveSize
 import org.junit.jupiter.api.Test
 import java.nio.file.Paths
 import kotlin.io.path.div
@@ -17,6 +20,20 @@ class OpenTelemetryTest {
 
   private val openTelemetryReports by lazy {
     Paths.get(this::class.java.classLoader.getResource("opentelemetry")!!.toURI())
+  }
+
+  @Test
+  fun startupMetricsCollected(){
+    val file = (openTelemetryReports / "startup.json").toFile()
+    val result = getMetricsForStartup(file)
+    result.shouldHaveSize(560)
+    result.shouldContain(Metric(Duration("bootstrap"), 58))
+    result.shouldContain(Metric(Duration("startApplication"), 3036))
+    result.shouldContain(Metric(Duration("status bar pre-init"), 136))
+    result.shouldContain(Metric(Duration("status bar pre-init.start"), 1584))
+    result.shouldContain(Metric(Duration("status bar pre-init.end"), 1584 + 136))
+    result.filter { it.id.name.contains(": scheduling") }.shouldHaveSize(0)
+    result.filter { it.id.name.contains(": completing") }.shouldHaveSize(0)
   }
 
   @Test
