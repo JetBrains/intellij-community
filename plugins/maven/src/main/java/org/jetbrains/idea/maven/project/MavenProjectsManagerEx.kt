@@ -12,10 +12,7 @@ import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsPr
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
 import com.intellij.openapi.externalSystem.statistics.ProjectImportCollector
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.blockingContext
-import com.intellij.openapi.progress.coroutineToIndicator
-import com.intellij.openapi.progress.runBlockingMaybeCancellable
+import com.intellij.openapi.progress.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.vfs.VirtualFile
@@ -45,9 +42,11 @@ import org.jetbrains.idea.maven.model.MavenArtifact
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles
 import org.jetbrains.idea.maven.project.preimport.MavenProjectPreImporter
 import org.jetbrains.idea.maven.server.MavenWrapperDownloader
-import org.jetbrains.idea.maven.utils.*
+import org.jetbrains.idea.maven.utils.MavenActivityKey
+import org.jetbrains.idea.maven.utils.MavenCoroutineScopeProvider
+import org.jetbrains.idea.maven.utils.MavenLog
+import org.jetbrains.idea.maven.utils.MavenUtil
 import java.util.concurrent.ConcurrentHashMap
-import java.util.function.Supplier
 
 @ApiStatus.Experimental
 interface MavenAsyncProjectsManager {
@@ -135,9 +134,9 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
 
     withBackgroundProgress(project, MavenProjectBundle.message("maven.post.processing"), true) {
       blockingContext {
-        val indicator = MavenProgressIndicator(project, Supplier { syncConsole })
+        val indicator = EmptyProgressIndicator()
         for (task in importResult.postTasks) {
-          task.perform(myProject, embeddersManager, mavenConsole, indicator)
+          task.perform(myProject, embeddersManager, indicator)
         }
       }
     }
