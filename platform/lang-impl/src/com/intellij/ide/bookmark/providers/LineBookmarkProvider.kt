@@ -39,6 +39,7 @@ import java.awt.event.MouseEvent
 import javax.swing.SwingUtilities
 import javax.swing.tree.TreePath
 
+@kotlin.Suppress("ExtensionClassShouldBeFinalAndNonPublic")
 class LineBookmarkProvider(private val project: Project) : BookmarkProvider, EditorMouseListener, Simple, AsyncFileListener {
   override fun getWeight(): Int = Int.MIN_VALUE
   override fun getProject(): Project = project
@@ -227,7 +228,7 @@ class LineBookmarkProvider(private val project: Project) : BookmarkProvider, Edi
     }
   }
 
-  companion object {
+  object Util {
     @JvmStatic
     fun find(project: Project): LineBookmarkProvider? = when {
       project.isDisposed -> null

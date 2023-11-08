@@ -39,7 +39,7 @@ internal class SearchEverywhereFileFeaturesProviderTest
   fun testIsInFavorites() {
     val addFileToBookmarks = { file: PsiFileSystemItem ->
       val manager = BookmarksManager.getInstance(project)
-      val bookmark = LineBookmarkProvider.find(project)?.createBookmark(file.virtualFile)
+      val bookmark = LineBookmarkProvider.Util.find(project)?.createBookmark(file.virtualFile)
       if (manager != null && bookmark != null)
         manager.add(bookmark, com.intellij.ide.bookmark.BookmarkType.DEFAULT)
     }
