@@ -125,14 +125,14 @@ class MavenCommandLineInspectionProjectConfigurator : CommandLineInspectionProje
     for (mavenProject in mavenProjectsManager.projects) {
       val hasReadingProblems = mavenProject.hasReadingProblems()
       if (hasReadingProblems) {
-        throw IllegalStateException("Maven project ${mavenProject.name} has import problems:" + mavenProject.problems)
+        throw IllegalStateException("Maven project ${mavenProject} has import problems:" + mavenProject.problems)
       }
 
       val hasUnresolvedArtifacts = mavenProject.hasUnresolvedArtifacts()
       if (hasUnresolvedArtifacts) {
         val unresolvedArtifacts = mavenProject.dependencies.filterNot { it.resolved() } +
                                   mavenProject.externalAnnotationProcessors.filterNot { it.resolved() }
-        throw IllegalStateException("Maven project ${mavenProject.name} has unresolved artifacts: $unresolvedArtifacts")
+        throw IllegalStateException("Maven project ${mavenProject} has unresolved artifacts: $unresolvedArtifacts")
       }
 
       val hasUnresolvedPlugins = mavenProject.hasUnresolvedPlugins()
@@ -140,7 +140,7 @@ class MavenCommandLineInspectionProjectConfigurator : CommandLineInspectionProje
         val unresolvedPlugins = mavenProject.declaredPlugins.filterNot { plugin ->
           MavenArtifactUtil.hasArtifactFile(mavenProject.localRepository, plugin.mavenId)
         }
-        val errorMessage = "maven project: ${mavenProject.name} has unresolved plugins: $unresolvedPlugins"
+        val errorMessage = "maven project: ${mavenProject} has unresolved plugins: $unresolvedPlugins"
         if (System.getProperty(MAVEN_COMMAND_LINE_CONFIGURATOR_EXIT_ON_UNRESOLVED_PLUGINS, "false").toBoolean()) {
           throw IllegalStateException(errorMessage)
         }
