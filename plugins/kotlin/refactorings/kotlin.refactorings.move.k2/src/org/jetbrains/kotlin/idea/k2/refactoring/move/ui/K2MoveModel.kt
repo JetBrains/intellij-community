@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring.move.ui
 
+import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
@@ -26,6 +27,8 @@ sealed class K2MoveModel {
     val searchForText: Setting = Setting.SEARCH_FOR_TEXT
 
     val searchInComments: Setting = Setting.SEARCH_IN_COMMENTS
+
+    abstract val inSourceRoot: Boolean
 
     val searchReferences: Setting = Setting.SEARCH_REFERENCES
 
@@ -61,27 +64,39 @@ sealed class K2MoveModel {
     /**
      * @see org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveDescriptor.Files
      */
-    class Files(override val source: K2MoveSourceModel.FileSource, override val target: K2MoveTargetModel.SourceDirectory) : K2MoveModel() {
+    class Files(
+        override val source: K2MoveSourceModel.FileSource,
+        override val target: K2MoveTargetModel.SourceDirectory,
+        override val inSourceRoot: Boolean,
+    ) : K2MoveModel() {
         override fun toDescriptor(): K2MoveDescriptor {
             val srcDescr = source.toDescriptor()
             val targetDescr = target.toDescriptor()
-            return K2MoveDescriptor.Files(srcDescr, targetDescr, searchForText.state, searchReferences.state, searchInComments.state)
+            val searchReferences = if (inSourceRoot) searchReferences.state else false
+            return K2MoveDescriptor.Files(srcDescr, targetDescr, searchForText.state, searchReferences, searchInComments.state)
         }
     }
 
     /**
      * @see org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveDescriptor.Members
      */
-    class Members(override val source: K2MoveSourceModel.ElementSource, override val target: K2MoveTargetModel.File) : K2MoveModel() {
+    class Members(
+        override val source: K2MoveSourceModel.ElementSource,
+        override val target: K2MoveTargetModel.File,
+        override val inSourceRoot: Boolean,
+    ) : K2MoveModel() {
         override fun toDescriptor(): K2MoveDescriptor {
             val srcDescr = source.toDescriptor()
             val targetDescr = target.toDescriptor()
-            return K2MoveDescriptor.Members(srcDescr, targetDescr, searchForText.state, searchReferences.state, searchInComments.state)
+            val searchReferences = if (inSourceRoot) searchReferences.state else false
+            return K2MoveDescriptor.Members(srcDescr, targetDescr, searchForText.state, searchReferences, searchInComments.state)
         }
     }
 
     companion object {
         fun create(elements: Array<out PsiElement>, targetContainer: PsiElement?): K2MoveModel {
+            val project = elements.firstOrNull()?.project ?: error("Elements not part of project")
+
             /** When moving elements to or from a class we expect the user to want to move them to the containing file instead */
             fun KtElement.correctForProjectView(): KtElement {
                 val containingFile = containingKtFile
@@ -89,8 +104,18 @@ sealed class K2MoveModel {
                 return this
             }
 
+            fun inSourceRoot(): Boolean {
+                val sourceFiles = elements.map { it.containingFile }.toSet()
+                val fileIndex = ProjectFileIndex.getInstance(project)
+                if (sourceFiles.any { !fileIndex.isInSourceContent(it.virtualFile) }) return false
+                if (targetContainer == null || targetContainer is PsiDirectory) return true
+                val targetFile = targetContainer.containingFile?.virtualFile ?: return false
+                return fileIndex.isInSourceContent(targetFile)
+            }
+
             val correctedTarget = if (targetContainer is KtElement) targetContainer.correctForProjectView() else targetContainer
             val elementsToMove = elements.map { (it as? KtElement)?.correctForProjectView() }.toSet()
+            val inSourceRoot = inSourceRoot()
             return when {
                 elementsToMove.all { it is KtFile } -> {
                     val source = K2MoveSourceModel.FileSource(elementsToMove.filterIsInstance<KtFile>().toSet())
@@ -100,7 +125,7 @@ sealed class K2MoveModel {
                         val file = elementsToMove.firstOrNull()?.containingKtFile ?: error("No default target found")
                         K2MoveTargetModel.SourceDirectory(file.containingDirectory ?: error("No default target found"))
                     }
-                    Files(source, target)
+                    Files(source, target, inSourceRoot)
                 }
 
                 elementsToMove.all { it is KtNamedDeclaration } -> {
@@ -111,7 +136,7 @@ sealed class K2MoveModel {
                         val file = elementsToMove.firstOrNull()?.containingKtFile ?: error("No default target found")
                         K2MoveTargetModel.File(file)
                     }
-                    Members(source, target)
+                    Members(source, target, inSourceRoot)
                 }
                 else -> error("Can't mix file and element source")
             }
