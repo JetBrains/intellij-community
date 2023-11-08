@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.idea.debugger.core.KotlinPositionManagerFactory
 import org.jetbrains.kotlin.idea.debugger.core.KotlinSourcePositionHighlighter
 import org.junit.Assert
 
-abstract class AbstractBreakpointHighlightingTest : AbstractKotlinSteppingTest() {
+abstract class AbstractIrBreakpointHighlightingTest : AbstractIrKotlinSteppingTest() {
   override fun extraPrintContext(context: SuspendContextImpl) {
     val positionManager = createPositionManager(context.debugProcess)
     val position = positionManager.getSourcePosition(context.location)
@@ -30,14 +30,6 @@ abstract class AbstractBreakpointHighlightingTest : AbstractKotlinSteppingTest()
     Assert.assertNotNull(positionManager)
     return positionManager
   }
-}
-
-abstract class AbstractIndyLambdaBreakpointHighlightingTest : AbstractBreakpointHighlightingTest() {
-  override fun lambdasGenerationScheme() = JvmClosureGenerationScheme.INDY
-}
-
-abstract class AbstractIrBreakpointHighlightingTest : AbstractBreakpointHighlightingTest() {
-  override fun useIrBackend() = true
 }
 
 abstract class AbstractK1IdeK2CodeBreakpointHighlightingTest : AbstractIrBreakpointHighlightingTest() {

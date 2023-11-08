@@ -4,6 +4,6 @@ package org.jetbrains.kotlin.idea.debugger.test
 
 import org.jetbrains.kotlin.config.JvmClosureGenerationScheme
 
-abstract class AbstractIndyLambdaKotlinSteppingTest : AbstractIrKotlinSteppingTest() {
+abstract class AbstractIndyLambdaIrKotlinSteppingTest : AbstractIrKotlinSteppingTest() {
     override fun lambdasGenerationScheme() = JvmClosureGenerationScheme.INDY
 }

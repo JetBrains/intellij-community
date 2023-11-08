@@ -18,10 +18,10 @@ import org.junit.runner.RunWith;
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
 @TestMetadata("testData/sequence/streams/sequence")
-public abstract class SequenceTraceTestCaseGenerated extends AbstractSequenceTraceTestCase {
+public abstract class IrSequenceTraceTestCaseGenerated extends AbstractIrSequenceTraceTestCase {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/sequence/streams/sequence/append")
-    public static class Append extends AbstractSequenceTraceTestCase {
+    public static class Append extends AbstractIrSequenceTraceTestCase {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -49,7 +49,7 @@ public abstract class SequenceTraceTestCaseGenerated extends AbstractSequenceTra
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/sequence/streams/sequence/distinct")
-    public static class Distinct extends AbstractSequenceTraceTestCase {
+    public static class Distinct extends AbstractIrSequenceTraceTestCase {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -92,7 +92,7 @@ public abstract class SequenceTraceTestCaseGenerated extends AbstractSequenceTra
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/sequence/streams/sequence/filter")
-    public static class Filter extends AbstractSequenceTraceTestCase {
+    public static class Filter extends AbstractIrSequenceTraceTestCase {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -150,7 +150,7 @@ public abstract class SequenceTraceTestCaseGenerated extends AbstractSequenceTra
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/sequence/streams/sequence/flatMap")
-    public static class FlatMap extends AbstractSequenceTraceTestCase {
+    public static class FlatMap extends AbstractIrSequenceTraceTestCase {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -168,7 +168,7 @@ public abstract class SequenceTraceTestCaseGenerated extends AbstractSequenceTra
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/sequence/streams/sequence/map")
-    public static class Map extends AbstractSequenceTraceTestCase {
+    public static class Map extends AbstractIrSequenceTraceTestCase {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -196,7 +196,7 @@ public abstract class SequenceTraceTestCaseGenerated extends AbstractSequenceTra
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/sequence/streams/sequence/misc")
-    public static class Misc extends AbstractSequenceTraceTestCase {
+    public static class Misc extends AbstractIrSequenceTraceTestCase {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -279,7 +279,7 @@ public abstract class SequenceTraceTestCaseGenerated extends AbstractSequenceTra
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/sequence/streams/sequence/sort")
-    public static class Sort extends AbstractSequenceTraceTestCase {
+    public static class Sort extends AbstractIrSequenceTraceTestCase {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }

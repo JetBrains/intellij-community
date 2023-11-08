@@ -78,12 +78,10 @@ import java.io.File
  * /* optionally code and test directives for debugger */
  * ```
  */
-abstract class AbstractKotlinEvaluateExpressionInMppTest : AbstractKotlinEvaluateExpressionTest() {
+abstract class AbstractIrKotlinEvaluateExpressionInMppTest : AbstractIrKotlinEvaluateExpressionTest() {
     private lateinit var context: ConfigurationContext
     private lateinit var perModuleLibraryOutputDirectory: File
     private lateinit var perModuleLibrarySourceDirectory: File
-
-    override fun useIrBackend() = true
 
     override fun fragmentCompilerBackend() =
         FragmentCompilerBackend.JVM_IR
@@ -322,7 +320,7 @@ abstract class AbstractKotlinEvaluateExpressionInMppTest : AbstractKotlinEvaluat
 private typealias PlatformName = String
 private typealias ModuleName = String
 
-abstract class AbstractK1IdeK2CodeKotlinEvaluateExpressionInMppTest : AbstractKotlinEvaluateExpressionInMppTest() {
+abstract class AbstractK1IdeK2CodeKotlinEvaluateExpressionInMppTest : AbstractIrKotlinEvaluateExpressionInMppTest() {
     override val compileWithK2 = true
 
     override fun lambdasGenerationScheme() = JvmClosureGenerationScheme.INDY
