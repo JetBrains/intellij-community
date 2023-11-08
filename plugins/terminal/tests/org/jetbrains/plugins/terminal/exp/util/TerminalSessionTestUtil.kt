@@ -25,7 +25,7 @@ object TerminalSessionTestUtil {
                            size: TermSize = TermSize(200, 20)): TerminalSession {
     Registry.get(LocalTerminalDirectRunner.BLOCK_TERMINAL_REGISTRY).setValue(true, disposable)
     val runner = LocalTerminalDirectRunner.createTerminalRunner(project)
-    val baseOptions = ShellStartupOptions.Builder().shellCommand(listOf(shellPath, "-i")).build()
+    val baseOptions = ShellStartupOptions.Builder().shellCommand(listOf(shellPath, "-i")).initialTermSize(size).build()
     val configuredOptions = runner.configureStartupOptions(baseOptions)
     val process = runner.createProcess(configuredOptions)
     val ttyConnector = runner.createTtyConnector(process)
@@ -35,7 +35,6 @@ object TerminalSessionTestUtil {
     val model: TerminalModel = session.model
 
     val promptShownFuture = CompletableFuture<Boolean>()
-    val resizedFuture = CompletableFuture<Boolean>()
     val listenersDisposable = Disposer.newDisposable()
     session.addCommandListener(object : ShellCommandListener {
       override fun promptShown() {
@@ -43,20 +42,10 @@ object TerminalSessionTestUtil {
       }
     }, listenersDisposable)
 
-    model.addTerminalListener(object : TerminalModel.TerminalListener {
-      override fun onSizeChanged(width: Int, height: Int) {
-        if (size.columns == width && size.rows == height) {
-          resizedFuture.complete(true)
-        }
-      }
-    }, listenersDisposable)
-
     session.start(ttyConnector)
-    session.postResize(size)
 
     try {
       promptShownFuture.get(5000, TimeUnit.MILLISECONDS)
-      resizedFuture.get(5000, TimeUnit.MILLISECONDS)
     }
     catch (ex: TimeoutException) {
       BasePlatformTestCase.fail(
