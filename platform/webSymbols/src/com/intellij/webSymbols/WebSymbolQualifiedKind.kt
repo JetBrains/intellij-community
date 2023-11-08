@@ -8,4 +8,6 @@ data class WebSymbolQualifiedKind(
   val kind: @NlsSafe SymbolKind,
 ) {
   fun withName(name: String) = WebSymbolQualifiedName(namespace, kind, name)
+
+  override fun toString(): String = "/$namespace/$kind"
 }
