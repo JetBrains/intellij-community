@@ -655,7 +655,10 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
     splitter.setFirstComponent(resultScroll);
     splitter.setSecondComponent(myUsagePreviewPanel);
 
-    return createFooterPanel(splitter);
+    JPanel panel = new JPanel(new BorderLayout());
+    panel.add(splitter, BorderLayout.CENTER);
+
+    return createFooterPanel(panel);
   }
 
   private void updatePreviewVisibility(@NotNull SETab tab) {
