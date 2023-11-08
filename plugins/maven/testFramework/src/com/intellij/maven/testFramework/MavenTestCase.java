@@ -69,7 +69,6 @@ public abstract class MavenTestCase extends UsefulTestCase {
             <maven.compiler.target>1.7</maven.compiler.target>
     </properties>
     """;
-  protected static final MavenConsole NULL_MAVEN_CONSOLE = new NullMavenConsole();
   private MavenProgressIndicator myProgressIndicator;
   private WSLDistribution myWSLDistribution;
   protected RemotePathTransformerFactory.Transformer myPathTransformer;
