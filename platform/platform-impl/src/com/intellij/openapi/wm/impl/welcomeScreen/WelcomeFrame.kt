@@ -31,6 +31,7 @@ import com.intellij.platform.ide.bootstrap.hideSplashBeforeShow
 import com.intellij.platform.ide.menu.installAppMenuIfNeeded
 import com.intellij.ui.BalloonLayout
 import com.intellij.ui.BalloonLayoutImpl
+import com.intellij.ui.DisposableWindow
 import com.intellij.ui.mac.touchbar.TouchbarSupport
 import com.intellij.ui.updateAppWindowIcon
 import com.intellij.util.ui.JBUI
@@ -50,10 +51,11 @@ import javax.swing.JFrame
 import javax.swing.JRootPane
 import javax.swing.KeyStroke
 
-class WelcomeFrame : JFrame(), IdeFrame, AccessibleContextAccessor {
+class WelcomeFrame : JFrame(), IdeFrame, AccessibleContextAccessor, DisposableWindow {
   private val myScreen: WelcomeScreen
   private val myBalloonLayout: BalloonLayout
   private val listenerDisposable = Disposer.newDisposable()
+  private var isDisposed = false
 
   init {
     hideSplashBeforeShow(this)
@@ -208,7 +210,10 @@ class WelcomeFrame : JFrame(), IdeFrame, AccessibleContextAccessor {
     Disposer.dispose(myScreen)
     Disposer.dispose(listenerDisposable)
     resetInstance()
+    isDisposed = true
   }
+
+  override fun isWindowDisposed(): Boolean = isDisposed
 
   override fun getStatusBar(): StatusBar? {
     val pane = contentPane

@@ -75,7 +75,7 @@ import javax.swing.event.ListDataListener
 @Suppress("LeakingThis")
 open class FlatWelcomeFrame @JvmOverloads constructor(
   suggestedScreen: AbstractWelcomeScreen? = if (USE_TABBED_WELCOME_SCREEN) TabbedWelcomeScreen() else null
-) : JFrame(), IdeFrame, AccessibleContextAccessor {
+) : JFrame(), IdeFrame, AccessibleContextAccessor, DisposableWindow {
   val screen: AbstractWelcomeScreen
   private val content: Wrapper
   private var balloonLayout: WelcomeBalloonLayoutImpl?
@@ -270,6 +270,8 @@ open class FlatWelcomeFrame @JvmOverloads constructor(
     Disposer.dispose(screen)
     WelcomeFrame.resetInstance()
   }
+
+  override fun isWindowDisposed(): Boolean = isDisposed
 
   override fun getStatusBar(): StatusBar? = null
 
