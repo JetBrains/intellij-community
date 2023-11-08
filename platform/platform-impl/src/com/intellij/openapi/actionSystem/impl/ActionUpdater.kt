@@ -18,6 +18,8 @@ import com.intellij.openapi.actionSystem.impl.ActionMenu.Companion.ALWAYS_VISIBL
 import com.intellij.openapi.actionSystem.impl.ActionMenu.Companion.SUPPRESS_SUBMENU
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.CeProcessCanceledException
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -465,11 +467,9 @@ internal class ActionUpdater @JvmOverloads constructor(
   private suspend fun <T> computeOnEdt(supplier: () -> T): T {
     // We need the block below to escape the current scope to let runBlocking in UpdateSession
     // free while the EDT block is still waiting to be cancelled in EDT queue
-    return computeDetached {
-      withContext(edtDispatcher) {
-        blockingContext {
-          supplier()
-        }
+    return computeDetached(edtDispatcher + ModalityState.any().asContextElement()) {
+      blockingContext {
+        supplier()
       }
     }
   }
