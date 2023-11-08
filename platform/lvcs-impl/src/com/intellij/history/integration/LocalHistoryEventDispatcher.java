@@ -7,6 +7,7 @@ import com.intellij.history.core.tree.Entry;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.command.CommandListener;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
@@ -16,6 +17,7 @@ import com.intellij.openapi.vfs.VirtualFileManagerListener;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.*;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.DisposableWrapperList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,6 +28,9 @@ import java.util.Objects;
 final class LocalHistoryEventDispatcher {
   private static final Key<Boolean> WAS_VERSIONED_KEY =
     Key.create(LocalHistoryEventDispatcher.class.getSimpleName() + ".WAS_VERSIONED_KEY");
+
+  private static final Boolean USE_WORKSPACE_TRAVERSAL =
+    SystemProperties.getBooleanProperty("lvcs.use-workspace-traversal", false);
 
   private final LocalHistoryFacade myVcs;
   private final IdeaGateway myGateway;
@@ -61,7 +66,31 @@ final class LocalHistoryEventDispatcher {
     endChangeSet(null);
   }
 
-  private void createRecursively(VirtualFile f) {
+  /**
+   * @return true if the creation was processed
+   */
+  private boolean createRecursivelyUsingWorkspaceTraversal(@NotNull VirtualFile dir) {
+    var projectIndexes = IdeaGateway.getVersionedFilterData().myProjectFileIndices;
+    ProjectFileIndex containingProjectIndex = null;
+    for (var projectIndex : projectIndexes) {
+      if (!projectIndex.isInProject(dir)) continue;
+      if (containingProjectIndex != null) return false; // more than 1 project contains this dir
+      containingProjectIndex = projectIndex;
+    }
+    if (containingProjectIndex == null) return false; // no project contains this dir
+    containingProjectIndex.iterateContentUnderDirectory(dir, fileOrDir -> {
+      if (isVersioned(fileOrDir)) {
+        myVcs.created(myGateway.getPathOrUrl(fileOrDir), fileOrDir.isDirectory());
+      }
+      return true;
+    }, file -> isVersioned(file));
+    return true;
+  }
+
+  private void createRecursively(@NotNull VirtualFile f) {
+    if (f.isDirectory() && USE_WORKSPACE_TRAVERSAL) {
+      if (createRecursivelyUsingWorkspaceTraversal(f)) return;
+    }
     VfsUtilCore.visitChildrenRecursively(f, new VirtualFileVisitor<Void>() {
       @Override
       public boolean visitFile(@NotNull VirtualFile f) {
