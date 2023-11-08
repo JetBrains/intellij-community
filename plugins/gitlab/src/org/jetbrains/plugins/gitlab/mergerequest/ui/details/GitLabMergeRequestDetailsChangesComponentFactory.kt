@@ -26,11 +26,13 @@ internal object GitLabMergeRequestDetailsChangesComponentFactory {
   fun create(cs: CoroutineScope, vm: GitLabMergeRequestChangesViewModel): JComponent {
     val wrapper = Wrapper(LoadingLabel()).apply {
       bindContentIn(cs, vm.changeListVm) { res ->
-        res.fold(onSuccess = {
-          createChangesTree(vm, it)
-        }, onFailure = {
-          SimpleHtmlPane(it.localizedMessage)
-        })
+        res.result?.let {
+          it.fold(onSuccess = {
+            createChangesTree(vm, it)
+          }, onFailure = {
+            SimpleHtmlPane(it.localizedMessage)
+          })
+        } ?: LoadingLabel()
       }
     }
     return TransparentScrollPane(wrapper).apply {

@@ -70,7 +70,7 @@ internal object GitLabMergeRequestDetailsComponentFactory {
               val actionGroup = ActionManager.getInstance().getAction("GitLab.Merge.Request.Details.Popup") as ActionGroup
               PopupHandler.installPopupMenu(this, actionGroup, GitLabMergeRequestActionPlaces.DETAILS_POPUP)
 
-              val changesModelState = detailsVm.changesVm.changeListVm.map { it.getOrNull() }
+              val changesModelState = detailsVm.changesVm.changeListVm.map { it.result?.getOrNull() }
                 .stateIn(this@bindContentIn, SharingStarted.Eagerly, null)
               DataManager.registerDataProvider(this) { dataId ->
                 when {

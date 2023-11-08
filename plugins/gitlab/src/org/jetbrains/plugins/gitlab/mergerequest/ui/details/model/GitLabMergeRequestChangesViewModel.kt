@@ -7,6 +7,7 @@ import com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangesC
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangesViewModel
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangesViewModelDelegate
 import com.intellij.collaboration.util.CODE_REVIEW_CHANGE_HASHING_STRATEGY
+import com.intellij.collaboration.util.ComputedResult
 import com.intellij.collaboration.util.ResultUtil.runCatchingUser
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
@@ -25,7 +26,7 @@ internal interface GitLabMergeRequestChangesViewModel : CodeReviewChangesViewMod
   /**
    * View model of a current change list
    */
-  val changeListVm: SharedFlow<Result<GitLabMergeRequestChangeListViewModel>>
+  val changeListVm: StateFlow<ComputedResult<GitLabMergeRequestChangeListViewModel>>
 
   /**
    * Discussions data for current [changeListVm]
@@ -55,7 +56,7 @@ internal class GitLabMergeRequestChangesViewModelImpl(
   }
 
   private val delegate = CodeReviewChangesViewModelDelegate(cs, changesContainer) {
-    GitLabMergeRequestChangeListViewModelImpl(project, this)
+    GitLabMergeRequestChangeListViewModelImpl(project, this, it)
   }
 
   override val reviewCommits: SharedFlow<List<GitLabCommit>> =
@@ -70,7 +71,7 @@ internal class GitLabMergeRequestChangesViewModelImpl(
     index.takeIf { it >= 0 }?.let { commits[it] }
   }.modelFlow(cs, LOG)
 
-  override val changeListVm: SharedFlow<Result<GitLabMergeRequestChangeListViewModelImpl>> = delegate.changeListVm
+  override val changeListVm: StateFlow<ComputedResult<GitLabMergeRequestChangeListViewModelImpl>> = delegate.changeListVm
 
   override val mappedDiscussionsCounts: SharedFlow<Map<Change, Int>> =
     combine(createUnresolvedDiscussionsPositionsFlow(mergeRequest),

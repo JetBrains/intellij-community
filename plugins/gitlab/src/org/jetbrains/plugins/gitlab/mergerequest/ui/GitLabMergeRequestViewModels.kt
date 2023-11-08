@@ -77,7 +77,7 @@ internal class GitLabMergeRequestViewModels(private val project: Project,
       }
     }
 
-    val changeListVms = vm.changesVm.changeListVm.mapNotNull { it.getOrNull() }
+    val changeListVms = vm.changesVm.changeListVm.mapNotNull { it.result?.getOrNull() }
     cs.launchNow {
       changeListVms.flatMapLatest {
         it.changesSelection

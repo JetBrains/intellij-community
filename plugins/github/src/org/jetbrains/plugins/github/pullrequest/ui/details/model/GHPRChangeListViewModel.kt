@@ -2,8 +2,9 @@
 package org.jetbrains.plugins.github.pullrequest.ui.details.model
 
 import com.intellij.collaboration.async.nestedDisposable
+import com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangeList
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangeListViewModel
-import com.intellij.collaboration.ui.codereview.details.model.MutableCodeReviewChangeListViewModel
+import com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangeListViewModelBase
 import com.intellij.collaboration.util.ChangesSelection
 import com.intellij.diff.DiffDialogHints
 import com.intellij.diff.DiffManager
@@ -65,8 +66,9 @@ internal class GHPRChangeListViewModelImpl(
   override val project: Project,
   private val dataContext: GHPRDataContext,
   private val dataProvider: GHPRDataProvider,
-  private val reviewVmHelper: GHPRReviewViewModelHelper
-) : GHPRChangeListViewModel, MutableCodeReviewChangeListViewModel(parentCs) {
+  private val reviewVmHelper: GHPRReviewViewModelHelper,
+  changeList: CodeReviewChangeList
+) : GHPRChangeListViewModel, CodeReviewChangeListViewModelBase(parentCs, changeList) {
   private val repository: GitRepository get() = dataContext.repositoryDataService.remoteCoordinates.repository
 
   private val _isUpdating = MutableStateFlow(false)

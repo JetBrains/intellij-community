@@ -6,6 +6,7 @@ import com.intellij.collaboration.async.nestedDisposable
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangesContainer
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangesViewModel
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangesViewModelDelegate
+import com.intellij.collaboration.util.ComputedResult
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -30,7 +31,7 @@ import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRCommitBrowserC
 
 @ApiStatus.Experimental
 interface GHPRChangesViewModel : CodeReviewChangesViewModel<GHCommit>, GHPRCommitBrowserComponentController {
-  val changeListVm: SharedFlow<Result<GHPRChangeListViewModel>>
+  val changeListVm: StateFlow<ComputedResult<GHPRChangeListViewModel>>
   val changesLoadingErrorHandler: GHApiLoadingErrorHandler
 }
 
@@ -102,7 +103,7 @@ internal class GHPRChangesViewModelImpl(
   }
 
   private val delegate = CodeReviewChangesViewModelDelegate(cs, changesContainer) {
-    GHPRChangeListViewModelImpl(this, project, dataContext, dataProvider, reviewVmHelper).also { vm ->
+    GHPRChangeListViewModelImpl(this, project, dataContext, dataProvider, reviewVmHelper, it).also { vm ->
       launch {
         isUpdatingChanges.collect {
           vm.setUpdating(it)
@@ -120,7 +121,7 @@ internal class GHPRChangesViewModelImpl(
     index.takeIf { it >= 0 }?.let { commits[it] }
   }.modelFlow(cs, thisLogger())
 
-  override val changeListVm: SharedFlow<Result<GHPRChangeListViewModelImpl>> = delegate.changeListVm
+  override val changeListVm: StateFlow<ComputedResult<GHPRChangeListViewModelImpl>> = delegate.changeListVm
 
   init {
     dataProvider.diffRequestModel.addFilePathSelectionListener(cs.nestedDisposable()) {

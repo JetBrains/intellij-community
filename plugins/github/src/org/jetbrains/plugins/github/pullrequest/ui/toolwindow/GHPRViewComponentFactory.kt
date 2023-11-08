@@ -92,15 +92,16 @@ internal class GHPRViewComponentFactory(actionManager: ActionManager,
   }
 
   private fun CoroutineScope.createChangesComponent(changesVm: GHPRChangesViewModel): JComponent {
-    val cs = this
+    val cs = this    
     return Wrapper(LoadingLabel()).apply {
-      isOpaque = false
-
-      bindContentIn(cs, changesVm.changeListVm) { result ->
-        result.fold(
-          onSuccess = { createChangesPanel(changesVm, it) },
-          onFailure = { createChangesErrorComponent(changesVm, it) }
-        )
+      bindContentIn(cs, changesVm.changeListVm) { res ->
+        res.result?.let {
+          it.fold(onSuccess = {
+            createChangesPanel(changesVm, it)
+          }, onFailure = {
+            createChangesErrorComponent(changesVm, it)
+          })
+        } ?: LoadingLabel()
       }
     }
   }
