@@ -4,12 +4,11 @@ package com.intellij.ide.projectWizard.generators
 import com.intellij.ide.JavaUiBundle
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.Base.logAddSampleCodeChanged
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.Base.logAddSampleOnboardingTipsChangedEvent
-import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logSdkChanged
-import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logSdkFinished
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.Intellij.logContentRootChanged
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.Intellij.logModuleFileLocationChanged
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.Intellij.logModuleNameChanged
 import com.intellij.ide.projectWizard.generators.AssetsJavaNewProjectWizardStep.Companion.proposeToGenerateOnboardingTipsByDefault
+import com.intellij.ide.projectWizard.projectWizardJdkComboBox
 import com.intellij.ide.util.projectWizard.ProjectWizardUtil
 import com.intellij.ide.wizard.AbstractNewProjectWizardStep
 import com.intellij.ide.wizard.NewProjectWizardBaseData
@@ -19,15 +18,11 @@ import com.intellij.ide.wizard.NewProjectWizardStep.Companion.GENERATE_ONBOARDIN
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.module.StdModuleTypes
 import com.intellij.openapi.observable.util.bindBooleanStorage
 import com.intellij.openapi.observable.util.toUiPathProperty
-import com.intellij.openapi.projectRoots.JavaSdkType
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.projectRoots.SdkTypeId
-import com.intellij.openapi.projectRoots.impl.DependentSdkType
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable
-import com.intellij.openapi.roots.ui.configuration.sdkComboBox
+import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTask
 import com.intellij.openapi.ui.BrowseFolderDescriptor.Companion.withPathToTextConvertor
 import com.intellij.openapi.ui.BrowseFolderDescriptor.Companion.withTextToPathConvertor
 import com.intellij.openapi.ui.ValidationInfo
@@ -43,6 +38,7 @@ abstract class IntelliJNewProjectWizardStep<ParentStep>(val parent: ParentStep) 
         ParentStep : NewProjectWizardBaseData {
 
   final override val sdkProperty = propertyGraph.property<Sdk?>(null)
+  final override val sdkDownloadTaskProperty = propertyGraph.property<SdkDownloadTask?>(null)
   final override val moduleNameProperty = propertyGraph.lazyProperty(::suggestModuleName)
   final override val contentRootProperty = propertyGraph.lazyProperty(::suggestContentRoot)
   final override val moduleFileLocationProperty = propertyGraph.lazyProperty(::suggestModuleFilePath)
@@ -52,6 +48,7 @@ abstract class IntelliJNewProjectWizardStep<ParentStep>(val parent: ParentStep) 
     .bindBooleanStorage(GENERATE_ONBOARDING_TIPS_NAME)
 
   final override var sdk by sdkProperty
+  final override var sdkDownloadTask by sdkDownloadTaskProperty
   final override var moduleName by moduleNameProperty
   final override var contentRoot by contentRootProperty
   final override var moduleFileLocation by moduleFileLocationProperty
@@ -90,11 +87,7 @@ abstract class IntelliJNewProjectWizardStep<ParentStep>(val parent: ParentStep) 
 
   protected fun setupJavaSdkUI(builder: Panel) {
     builder.row(JavaUiBundle.message("label.project.wizard.new.project.jdk")) {
-      val sdkTypeFilter = { it: SdkTypeId -> it is JavaSdkType && it !is DependentSdkType }
-      sdkComboBox(context, sdkProperty, StdModuleTypes.JAVA.id, sdkTypeFilter)
-        .columns(COLUMNS_MEDIUM)
-        .whenItemSelectedFromUi { logSdkChanged(sdk) }
-        .onApply { logSdkFinished(sdk) }
+      projectWizardJdkComboBox(sdkProperty, sdkDownloadTaskProperty)
     }.bottomGap(BottomGap.SMALL)
   }
 

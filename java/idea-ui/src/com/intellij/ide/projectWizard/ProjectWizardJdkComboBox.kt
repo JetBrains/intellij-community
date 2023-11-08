@@ -5,6 +5,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.JavaUiBundle
 import com.intellij.ide.projectWizard.ProjectWizardJdkIntent.*
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.project.DefaultProjectFactory
 import com.intellij.openapi.projectRoots.*
 import com.intellij.openapi.projectRoots.impl.DependentSdkType
@@ -26,6 +27,9 @@ import com.intellij.ui.GroupedComboBoxRenderer
 import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.JBLabel
+import com.intellij.ui.dsl.builder.COLUMNS_LARGE
+import com.intellij.ui.dsl.builder.Row
+import com.intellij.ui.dsl.builder.columns
 import com.intellij.util.system.CpuArch
 import com.intellij.util.ui.EmptyIcon
 import org.jetbrains.concurrency.runAsync
@@ -57,6 +61,26 @@ sealed class ProjectWizardJdkIntent {
   data class AddJdkFromJdkListDownloader(val extension: SdkDownload) : ProjectWizardJdkIntent()
 
   data class DetectedJdk(val version: @NlsSafe String, val home: @NlsSafe String) : ProjectWizardJdkIntent()
+}
+
+fun Row.projectWizardJdkComboBox(sdkProperty: GraphProperty<Sdk?>, sdkDownloadTaskProperty: GraphProperty<SdkDownloadTask?>) {
+  cell(ProjectWizardJdkComboBox())
+    .columns(COLUMNS_LARGE)
+    .apply {
+      val commentCell = comment("")
+      component.addItemListener {
+        commentCell.comment?.let { it.text = component.comment }
+      }
+    }
+    .onChanged {
+      val (sdk, downloadTask) = when (val intent = it.selectedItem) {
+        is ExistingJdk -> (intent.jdk to null)
+        is DownloadJdk -> (null to intent.task)
+        else -> (null to null)
+      }
+      sdkProperty.set(sdk)
+      sdkDownloadTaskProperty.set(downloadTask)
+    }
 }
 
 class ProjectWizardJdkComboBox(): ComboBox<ProjectWizardJdkIntent>() {
