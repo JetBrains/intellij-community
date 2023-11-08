@@ -282,6 +282,11 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
                                 "RPAREN_ON_NEW_LINE_IN_DECONSTRUCTION_PATTERN",
                                 ApplicationBundle.message("wrapping.rpar.on.new.line"),
                                 deconstructionComponentsGroup);
+
+      consumer.renameStandardOption(
+        "SWITCH_EXPRESSIONS_WRAP",
+        ApplicationBundle.message("wrapping.switch.statement.or.expression")
+      );
     }
     else if (settingsType == SettingsType.BLANK_LINES_SETTINGS) {
       consumer.showAllStandardOptions();

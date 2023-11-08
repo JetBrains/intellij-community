@@ -859,8 +859,8 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
 
   public void testSpaceBetweenGenericsAndName() {
     doTextTest("record A(List<String> string){}",
-                 "record A(List<String> string) {\n" +
-                 "}");
+               "record A(List<String> string) {\n" +
+               "}");
   }
 
   public void testSpaceWithinRecordHeader() {
@@ -1059,11 +1059,41 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
         }""");
   }
 
+  public void testEmptyCaseinSwitch() {
+    getSettings().RIGHT_MARGIN = 30;
+    doMethodTest("""
+                   switch (b) {
+                       case   
+                                        -> 1;
+                       default -> -1;
+                   }""",
+                 """
+                   switch (b) {
+                       case -> 1;
+                       default -> -1;
+                   }"""
+                 );
+  }
+
+  public void testUnfinishedCaseinSwitch() {
+    getSettings().RIGHT_MARGIN = 30;
+    doMethodTest("""
+                   switch (b) {
+                       case 1,   
+                                     -> 1;
+                       default -> -1;
+                   }""",
+                 """
+                   switch (b) {
+                       case 1, -> 1;
+                       default -> -1;
+                   }"""
+    );
+  }
 
   public void testForeachPatternInside() {
     doMethodTest(
       "for (Rec(): foo)",
       "for (Rec() : foo)");
   }
-
 }

@@ -36,7 +36,7 @@ public final class CodeStyleSettingsCustomizableOptions {
   public final @Label String WRAPPING_FOR_STATEMENT = ApplicationBundle.message("wrapping.for.statement");
   public final @Label String WRAPPING_WHILE_STATEMENT = ApplicationBundle.message("wrapping.while.statement");
   public final @Label String WRAPPING_DOWHILE_STATEMENT = ApplicationBundle.message("wrapping.dowhile.statement");
-  public final @Label String WRAPPING_SWITCH_EXPRESSION = ApplicationBundle.message("wrapping.switch.expression");
+  public final @Label String WRAPPING_SWITCH_STATEMENT = ApplicationBundle.message("wrapping.switch.statement");
   public final @Label String WRAPPING_TRY_STATEMENT = ApplicationBundle.message("wrapping.try.statement");
   public final @Label String WRAPPING_TRY_RESOURCE_LIST = ApplicationBundle.message("wrapping.try.resources");
   public final @Label String WRAPPING_BINARY_OPERATION = ApplicationBundle.message("wrapping.binary.operations");
