@@ -106,6 +106,6 @@ class MavenFolderResolver(private val project: Project) {
   private val mavenConsole: MavenConsole
     get() {
       val mavenGeneralSettings = projectsManager.generalSettings
-      return BTWMavenConsole(project, mavenGeneralSettings.outputLevel, mavenGeneralSettings.isPrintErrorStackTraces)
+      return BTWMavenConsole(project, mavenGeneralSettings.outputLevel)
     }
 }

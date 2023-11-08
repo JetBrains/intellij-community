@@ -485,7 +485,7 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
 
   private val mavenConsole: MavenConsole
     get() {
-      return BTWMavenConsole(project, generalSettings.outputLevel, generalSettings.isPrintErrorStackTraces)
+      return BTWMavenConsole(project, generalSettings.outputLevel)
     }
 
   override fun scheduleDownloadArtifacts(projects: Collection<MavenProject>,
