@@ -553,7 +553,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     }
   }
 
-  private static final class MyDialog extends JDialog implements DialogWrapperDialog, DataProvider, Queryable, AbstractDialog {
+  private static final class MyDialog extends JDialog implements DialogWrapperDialog, DataProvider, Queryable, AbstractDialog, DisposableWindow {
     private final WeakReference<DialogWrapper> myDialogWrapper;
 
     /**
@@ -564,6 +564,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     private Dimension myInitialSize;
     private String myDimensionServiceKey;
     private boolean myOpened = false;
+    private boolean myDisposed = false;
 
     private MyDialog.MyWindowListener myWindowListener;
 
@@ -594,6 +595,11 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     @Override
     public JDialog getWindow() {
       return this;
+    }
+
+    @Override
+    public boolean isWindowDisposed() {
+      return myDisposed;
     }
 
     @Override
@@ -964,6 +970,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       DialogWrapper.cleanupRootPane(rootPane);
       DialogWrapper.cleanupWindowListeners(this);
       rootPane = null;
+      myDisposed = true;
 
     }
 
