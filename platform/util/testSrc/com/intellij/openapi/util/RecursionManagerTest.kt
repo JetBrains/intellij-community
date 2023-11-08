@@ -1,304 +1,295 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util
 
 import com.intellij.openapi.Disposable
 import com.intellij.testFramework.UsefulTestCase
-import groovy.transform.CompileStatic
-import groovy.transform.Immutable
 import junit.framework.TestCase
 
-@CompileStatic
-class RecursionManagerTest extends TestCase {
-  private final RecursionGuard myGuard = RecursionManager.createGuard("RecursionManagerTest")
-  private final Disposable myDisposable = Disposer.newDisposable()
+class RecursionManagerTest : TestCase() {
+  private val myGuard: RecursionGuard<Any> = RecursionManager.createGuard("RecursionManagerTest")
+  private val myDisposable: Disposable = Disposer.newDisposable()
 
-  @Override
-  protected void setUp() throws Exception {
+  public override fun setUp() {
     RecursionManager.assertOnMissedCache(myDisposable)
     super.setUp()
   }
 
-  @Override
-  protected void tearDown() throws Exception {
+  public override fun tearDown() {
     Disposer.dispose(myDisposable)
     super.tearDown()
   }
 
-  def prevent(Object key, boolean memoize = true, Closure c) {
-    myGuard.doPreventingRecursion(key, memoize, c as Computable)
+  fun prevent(key: Any, memoize: Boolean = true, c: Computable<Any>): Any? {
+    return myGuard.doPreventingRecursion(key, memoize, c)
   }
 
-  void testPreventRecursion() {
-    assert "foo-return" == prevent(["foo"]) {
-      assert "bar-return" == prevent("bar") {
-        assert null == prevent(["foo"]) { "foo-return" }
-        return "bar-return"
-      }
-      return "foo-return"
-    }
+  fun testPreventRecursion() {
+    assertEquals("foo-return", prevent("foo") {
+      assertEquals("bar-return", prevent("bar") {
+        assertEquals(null, prevent("foo") { "foo-return" })
+        "bar-return"
+      })
+      "foo-return"
+    })
   }
 
-  void testAssertOnMissedCache() {
-    assert "foo-return" == prevent("foo") {
-      def stamp = RecursionManager.markStack()
-      assert null == prevent("foo") { fail() }
-      UsefulTestCase.assertThrows(RecursionManager.CachingPreventedException) { stamp.mayCacheNow() }
-      return "foo-return"
-    }
+  fun testAssertOnMissedCache() {
+    assertEquals("foo-return", prevent("foo") {
+      val stamp = RecursionManager.markStack()
+      assertEquals(null, prevent("foo") { fail() })
+      UsefulTestCase.assertThrows(RecursionManager.CachingPreventedException::class.java) { stamp.mayCacheNow() }
+      "foo-return"
+    })
   }
 
-  private def 'method which should be present in prevention trace'() {
+  private fun methodWhichShouldBePresentInPreventionTrace() {
     prevent("inner") {
-      assert null == prevent("outer") {
+      assertEquals(null, prevent("outer") {
         fail()
-      }
+      })
       "inner-return"
     }
   }
 
-  void testMemoizedValueAccessDoesntClearPreventionTrace() {
-    assert "outer-return" == prevent("outer") {
-      def stamp = RecursionManager.markStack()
-      'method which should be present in prevention trace'()  // prevents caching until exited from 'outer'
-      assert "inner-return" == prevent("inner") {             // memoized value from previous call
+  fun testMemoizedValueAccessDoesntClearPreventionTrace() {
+    assertEquals("outer-return", prevent("outer") {
+      val stamp = RecursionManager.markStack()
+      methodWhichShouldBePresentInPreventionTrace()  // prevents caching until exited from 'outer'
+      assertEquals("inner-return", prevent("inner") {             // memoized value from previous call
         fail()
-      }
+      })
       try {
         stamp.mayCacheNow()
         fail()
       }
-      catch (RecursionManager.CachingPreventedException e) {
-        def soe = UsefulTestCase.assertInstanceOf(e.cause, StackOverflowPreventedException)
-        assert soe.stackTrace.any { StackTraceElement ste ->
-          ste.methodName == 'method which should be present in prevention trace'
-        }
+      catch (e: RecursionManager.CachingPreventedException) {
+        val soe = UsefulTestCase.assertInstanceOf(e.cause, StackOverflowPreventedException::class.java)
+        assertTrue(soe.stackTrace.any { ste ->
+          ste.methodName == "methodWhichShouldBePresentInPreventionTrace"
+        })
       }
       "outer-return"
-    }
+    })
   }
 
-  void testMemoization() {
-    assert "foo-return" == prevent("foo") {
-      assert "bar-return" == prevent("bar") {
-        assert null == prevent("foo") { "foo-return" }
-        return "bar-return"
-      }
-      assert "bar-return" == prevent("bar") {
+  fun testMemoization() {
+    assertEquals("foo-return", prevent("foo") {
+      assertEquals("bar-return", prevent("bar") {
+        assertEquals(null, prevent("foo") { "foo-return" })
+        "bar-return"
+      })
+      assertEquals("bar-return", prevent("bar") {
         fail()
-      }
-      return "foo-return"
-    }
+      })
+      "foo-return"
+    })
   }
 
-  void testNoMemoizationAfterExit() {
-    assert "foo-return" == prevent("foo") {
-      assert "bar-return" == prevent("bar") {
-        assert null == prevent("foo") { "foo-return" }
-        return "bar-return"
-      }
-      return "foo-return"
-    }
-    assert "bar-return2" == prevent("bar") {
-      return "bar-return2"
-    }
+  fun testNoMemoizationAfterExit() {
+    assertEquals("foo-return", prevent("foo") {
+      assertEquals("bar-return", prevent("bar") {
+        assertEquals(null, prevent("foo") { "foo-return" })
+        "bar-return"
+      })
+      "foo-return"
+    })
+    assertEquals("bar-return2", prevent("bar") {
+      "bar-return2"
+    })
   }
 
-  void "test no memoization after exiting SOE loop inside another preventing call"() {
+  fun `test no memoization after exiting SOE loop inside another preventing call`() {
     prevent("unrelated") {
       testNoMemoizationAfterExit()
     }
   }
 
-  void "test memoize when the we run into the same prevention via different route"() {
+  fun `test memoize when the we run into the same prevention via different route`() {
     prevent("foo") {
       prevent("foo") { fail() }
-      assert "x" == prevent("bar") {
+      assertEquals("x", prevent("bar") {
         prevent("foo") { fail() }
-        return "x"
-      }
-      assert "x" == prevent("bar") { fail() }
+        "x"
+      })
+      assertEquals("x", prevent("bar") { fail() })
     }
   }
 
-  void testMayCache() {
+  fun testMayCache() {
     RecursionManager.disableMissedCacheAssertions(myDisposable)
-    def doo1 = RecursionManager.markStack()
-    assert "doo-return" == prevent("doo") {
-      def foo1 = RecursionManager.markStack()
-      assert "foo-return" == prevent("foo") {
-        def bar1 = RecursionManager.markStack()
-        assert "bar-return" == prevent("bar") {
-          def foo2 = RecursionManager.markStack()
-          assert null == prevent("foo") { "foo-return" }
-          assert !foo2.mayCacheNow()
-          return "bar-return"
-        }
-        assert !bar1.mayCacheNow()
+    val doo1 = RecursionManager.markStack()
+    assertEquals("doo-return", prevent("doo") {
+      val foo1 = RecursionManager.markStack()
+      assertEquals("foo-return", prevent("foo") {
+        val bar1 = RecursionManager.markStack()
+        assertEquals("bar-return", prevent("bar") {
+          val foo2 = RecursionManager.markStack()
+          assertEquals(null, prevent("foo") { "foo-return" })
+          assertFalse(foo2.mayCacheNow())
+          "bar-return"
+        })
+        assertFalse(bar1.mayCacheNow())
 
-        def goo1 = RecursionManager.markStack()
-        assert "goo-return" == prevent("goo") {
-          return "goo-return"
-        }
-        assert goo1.mayCacheNow()
-        assert !bar1.mayCacheNow()
+        val goo1 = RecursionManager.markStack()
+        assertEquals("goo-return", prevent("goo") {
+          "goo-return"
+        })
+        assertTrue(goo1.mayCacheNow())
+        assertFalse(bar1.mayCacheNow())
 
-        return "foo-return"
-      }
-      assert foo1.mayCacheNow()
-      return "doo-return"
-    }
-    assert doo1.mayCacheNow()
+        "foo-return"
+      })
+      assertTrue(foo1.mayCacheNow())
+      "doo-return"
+    })
+    assertTrue(doo1.mayCacheNow())
   }
 
-  void testNoCachingForMemoizedValues() {
+  fun testNoCachingForMemoizedValues() {
     RecursionManager.disableMissedCacheAssertions(myDisposable)
-    assert "foo-return" == prevent("foo") {
-      assert "bar-return" == prevent("bar") {
-        assert null == prevent("foo") { "foo-return" }
-        return "bar-return"
-      }
-      def stamp = RecursionManager.markStack()
-      assert "bar-return" == prevent("bar") {
+    assertEquals("foo-return", prevent("foo") {
+      assertEquals("bar-return", prevent("bar") {
+        assertEquals(null, prevent("foo") { "foo-return" })
+        "bar-return"
+      })
+      val stamp = RecursionManager.markStack()
+      assertEquals("bar-return", prevent("bar") {
         fail()
-      }
-      assert !stamp.mayCacheNow()
-      return "foo-return"
-    }
+      })
+      assertFalse(stamp.mayCacheNow())
+      "foo-return"
+    })
   }
 
-  void testNoCachingForMemoizedValues2() {
+  fun testNoCachingForMemoizedValues2() {
     RecursionManager.disableMissedCacheAssertions(myDisposable)
-    assert "1-return" == prevent("1") {
-      assert "2-return" == prevent("2") {
-        assert "3-return" == prevent("3") {
-          assert null == prevent("2") { "2-return" }
-          assert null == prevent("1") { "1-return" }
-          return "3-return"
-        }
-        return "2-return"
-      }
-      def stamp = RecursionManager.markStack()
-      assert "2-return" == prevent("2") { fail() }
-      assert !stamp.mayCacheNow()
+    assertEquals("1-return", prevent("1") {
+      assertEquals("2-return", prevent("2") {
+        assertEquals("3-return", prevent("3") {
+          assertEquals(null, prevent("2") { "2-return" })
+          assertEquals(null, prevent("1") { "1-return" })
+          "3-return"
+        })
+        "2-return"
+      })
+      var stamp = RecursionManager.markStack()
+      assertEquals("2-return", prevent("2") { fail() })
+      assertFalse(stamp.mayCacheNow())
 
       stamp = RecursionManager.markStack()
-      assert "3-return" == prevent("3") { fail() }
-      assert !stamp.mayCacheNow()
+      assertEquals("3-return", prevent("3") { fail() })
+      assertFalse(stamp.mayCacheNow())
 
-      return "1-return"
-    }
+      "1-return"
+    })
   }
 
-  void testNoMemoizationForNoReentrancy() {
-    assert "foo-return" == prevent("foo") {
-      assert null == prevent("foo") { "foo-return" }
-      assert "bar-return" == prevent("bar") { "bar-return" }
-      def stamp = RecursionManager.markStack()
-      assert "bar-return2" == prevent("bar") { "bar-return2" }
-      assert stamp.mayCacheNow()
-      return "foo-return"
-    }
+  fun testNoMemoizationForNoReentrancy() {
+    assertEquals("foo-return", prevent("foo") {
+      assertEquals(null, prevent("foo") { "foo-return" })
+      assertEquals("bar-return", prevent("bar") { "bar-return" })
+      val stamp = RecursionManager.markStack()
+      assertEquals("bar-return2", prevent("bar") { "bar-return2" })
+      assertTrue(stamp.mayCacheNow())
+      "foo-return"
+    })
   }
 
-  void testFullGraphPerformance() throws Exception {
-    long start = System.currentTimeMillis()
-    int count = 20
-    Closure cl
+  fun testFullGraphPerformance() {
+    val start = System.currentTimeMillis()
+    val count = 20
+    var cl: () -> Any = {}
     cl = {
-      for (i in 1..count) {
-        prevent("foo" + i, cl)
+      (1..count).forEach { i ->
+        prevent("foo" + i, c = cl)
       }
-      return "zoo"
+      "zoo"
     }
 
-    assert "zoo" == cl()
+    assertEquals("zoo", cl())
 
-    assert System.currentTimeMillis() - start < 10000
+    assertTrue(System.currentTimeMillis() - start < 10000)
   }
 
-  private class FullGraphCorrectness {
-    Set<String> a() {
-      return (prevent("a") { a() + b() + ["a"] } ?: []) as Set
+  private inner class FullGraphCorrectness {
+    fun a(): Set<String> {
+      return prevent("a") { a() + b() + setOf("a") } as Set<String>? ?: setOf()
     }
 
-    Set<String> b() {
-      return (prevent("b") { a() + b() + ["b"] } ?: []) as Set
+    fun b(): Set<String> {
+      return prevent("b") { a() + b() + setOf("b") } as Set<String>? ?: setOf()
     }
 
-    void ensureSymmetric() {
-      assert a() == ["a", "b"] as Set
-      assert b() == ["a", "b"] as Set
+    fun ensureSymmetric() {
+      assertEquals(setOf("a", "b"), a())
+      assertEquals(setOf("a", "b"), b())
     }
   }
 
-  void "test full graph correctness"() {
-    new FullGraphCorrectness().ensureSymmetric()
+  fun `test full graph correctness`() {
+    FullGraphCorrectness().ensureSymmetric()
     prevent("unrelated") {
-      new FullGraphCorrectness().ensureSymmetric()
+      FullGraphCorrectness().ensureSymmetric()
     }
   }
 
-  void "test changing hash code doesn't crash RecursionManager"() {
-    def key = ["b"]
+  fun `test changing hash code doesn't crash RecursionManager`() {
+    val key = mutableListOf("b")
     prevent(key) {
-      key << "a"
+      key.add("a")
     }
   }
 
-  void "test key equals that invokes RecursionManager"() {
-    prevent(new RecursiveKey('a')) {
-      prevent(new RecursiveKey('b')) {
-        prevent(new RecursiveKey('a')) {
-          throw new AssertionError((Object)"shouldn't be called")
+  fun `test key equals that invokes RecursionManager`() {
+    prevent(RecursiveKey("a")) {
+      prevent(RecursiveKey("b")) {
+        prevent(RecursiveKey("a")) {
+          throw AssertionError("shouldn't be called")
         }
       }
     }
   }
 
-  @Immutable
-  private static class RecursiveKey {
-    final String id
-
-    @Override
-    int hashCode() {
+  data class RecursiveKey(val id: String) {
+    override fun hashCode(): Int {
       return id.hashCode()
     }
 
-    @Override
-    boolean equals(Object obj) {
+    override fun equals(other: Any?): Boolean {
       RecursionManager.doPreventingRecursion("abc", false) { true }
-      return obj instanceof RecursiveKey && obj.id == id
+      return other is RecursiveKey && other.id == id
     }
   }
 
-  void "test exception from hashCode on exiting"() {
-    ThrowingKey key1 = new ThrowingKey()
-    ThrowingKey key2 = new ThrowingKey()
-    ThrowingKey key3 = new ThrowingKey()
+  fun `test exception from hashCode on exiting`() {
+    val key1 = ThrowingKey()
+    val key2 = ThrowingKey()
+    val key3 = ThrowingKey()
     prevent(key1) {
       prevent(key2) {
         prevent(key3) {
-          key1.fail = key2.fail = key3.fail = true
+          key1.fail = true
+          key2.fail = true
+          key3.fail = true
+          true
         }
       }
     }
   }
 
-  private static class ThrowingKey {
-    boolean fail = false
+  private class ThrowingKey {
+    var fail = false
 
-    @Override
-    int hashCode() {
+    override fun hashCode(): Int {
       if (fail) {
-        throw new RuntimeException()
+        throw RuntimeException()
       }
       return 0
     }
 
-    @Override
-    boolean equals(Object obj) {
+    override fun equals(obj: Any?): Boolean {
       if (fail) {
-        throw new RuntimeException()
+        throw RuntimeException()
       }
       return super.equals(obj)
     }

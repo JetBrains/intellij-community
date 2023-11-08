@@ -1,69 +1,51 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.codeStyle.arrangement
 
 import com.intellij.psi.codeStyle.arrangement.group.ArrangementGroupingRule
 import com.intellij.psi.codeStyle.arrangement.match.StdArrangementMatchRule
 import com.intellij.psi.codeStyle.arrangement.std.StdArrangementSettings
+import com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.EntryType.*
+import com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Modifier.*
+import java.util.*
 
-import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.EntryType.INTERFACE
-import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.EntryType.METHOD
-import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.EntryType.FIELD
-import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Modifier.GETTER
-import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Modifier.OVERRIDDEN
-import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Modifier.PROTECTED
-import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Modifier.SETTER
-import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Modifier.PUBLIC
+class ArrangementSettingsRulesPriorityTest : AbstractRearrangerTest() {
 
-class ArrangementSettingsRulesPriorityTest extends AbstractRearrangerTest {
-
-  def getRulesSortedByPriority(List<StdArrangementMatchRule> rules) {
-    def sectionRules = getSectionRules(rules)
-    List<ArrangementGroupingRule> groupingRules = Collections.emptyList()
-    def settings = new StdArrangementSettings(groupingRules, sectionRules)
-    return settings.getRulesSortedByPriority()
-  }
-    
-  void "test getter and setter rules comes first"() {
-    def getter = rule(GETTER)
-    def setter = rule(SETTER)
-    def publicMethod = rule(PUBLIC, METHOD)
-    def method = rule(METHOD)
-
-    def rules = getRulesSortedByPriority([rule(INTERFACE), publicMethod, method, getter, rule(FIELD), setter, rule(FIELD, PUBLIC)])
-    assert rules.indexOf(getter) < rules.indexOf(publicMethod) && rules.indexOf(getter) < rules.indexOf(method)
-    assert rules.indexOf(setter) < rules.indexOf(publicMethod) && rules.indexOf(setter) < rules.indexOf(method)
+  private fun getRulesSortedByPriority(rules: List<StdArrangementMatchRule>): List<StdArrangementMatchRule> {
+    val sectionRules = getSectionRules(rules)
+    val groupingRules: List<ArrangementGroupingRule> = Collections.emptyList()
+    val settings = StdArrangementSettings(groupingRules, sectionRules)
+    return settings.getRulesSortedByPriority() as List<StdArrangementMatchRule>
   }
 
-  void "test overriden rule comes before"() {
-    def publicMethod = rule(PUBLIC, METHOD)
-    def protectedMethod = rule(PROTECTED, METHOD)
-    def method = rule(METHOD)
-    def getter = rule(GETTER)
-    def setter = rule(SETTER)
-    def overridenMethod = rule(OVERRIDDEN)
+  fun testGetterAndSetterRulesComesFirst() {
+    val getter = rule(GETTER)
+    val setter = rule(SETTER)
+    val publicMethod = rule(PUBLIC, METHOD)
+    val method = rule(METHOD)
 
-    def rules = [rule(INTERFACE), publicMethod, method, rule(FIELD), rule(FIELD, PUBLIC), overridenMethod, protectedMethod, getter, setter]
-    def sortedRules = getRulesSortedByPriority(rules)
-    def overridenRuleIndex = sortedRules.indexOf(overridenMethod)
+    val rules = getRulesSortedByPriority(listOf(rule(INTERFACE), publicMethod, method, getter, rule(FIELD), setter, rule(FIELD, PUBLIC)))
 
-    assert overridenRuleIndex < sortedRules.indexOf(publicMethod)
-    assert overridenRuleIndex < sortedRules.indexOf(method)
-    assert overridenRuleIndex < sortedRules.indexOf(protectedMethod)
-    assert overridenRuleIndex < sortedRules.indexOf(getter)
-    assert overridenRuleIndex < sortedRules.indexOf(setter)
+    assertTrue(rules.indexOf(getter) < rules.indexOf(publicMethod) && rules.indexOf(getter) < rules.indexOf(method))
+    assertTrue(rules.indexOf(setter) < rules.indexOf(publicMethod) && rules.indexOf(setter) < rules.indexOf(method))
+  }
+
+  fun testOverridenRuleComesBefore() {
+    val publicMethod = rule(PUBLIC, METHOD)
+    val protectedMethod = rule(PROTECTED, METHOD)
+    val method = rule(METHOD)
+    val getter = rule(GETTER)
+    val setter = rule(SETTER)
+    val overridenMethod = rule(OVERRIDDEN)
+
+    val rules = listOf(rule(INTERFACE), publicMethod, method, rule(FIELD), rule(FIELD, PUBLIC), overridenMethod, protectedMethod, getter,
+                       setter)
+    val sortedRules = getRulesSortedByPriority(rules)
+    val overridenRuleIndex = sortedRules.indexOf(overridenMethod)
+
+    assertTrue(overridenRuleIndex < sortedRules.indexOf(publicMethod))
+    assertTrue(overridenRuleIndex < sortedRules.indexOf(method))
+    assertTrue(overridenRuleIndex < sortedRules.indexOf(protectedMethod))
+    assertTrue(overridenRuleIndex < sortedRules.indexOf(getter))
+    assertTrue(overridenRuleIndex < sortedRules.indexOf(setter))
   }
 }
