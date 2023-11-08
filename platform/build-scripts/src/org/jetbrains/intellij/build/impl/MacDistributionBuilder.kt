@@ -197,13 +197,7 @@ class MacDistributionBuilder(override val context: BuildContext,
   }
 
   override fun writeVmOptions(distBinDir: Path): Path {
-    val executable = context.productProperties.baseFileName
-    val fileVmOptions = VmOptionsGenerator.computeVmOptions(context) +
-                        listOf("-Dapple.awt.application.appearance=system")
-    val vmOptionsPath = distBinDir.resolve("$executable.vmoptions")
-    VmOptionsGenerator.writeVmOptions(vmOptionsPath, fileVmOptions, "\n")
-
-    return vmOptionsPath
+    return writeMacOsVmOptions(distBinDir, context)
   }
 
   private suspend fun layoutMacApp(ideaPropertyContent: CharSequence,
@@ -544,4 +538,14 @@ private suspend fun buildMacZip(macDistributionBuilder: MacDistributionBuilder,
         checkInArchive(archiveFile = targetFile, pathInArchive = "$zipRoot/Resources", context = macDistributionBuilder.context)
       }
   }
+}
+
+private fun writeMacOsVmOptions(distBinDir: Path, context: BuildContext): Path {
+  val executable = context.productProperties.baseFileName
+  val fileVmOptions = VmOptionsGenerator.computeVmOptions(context) +
+                      listOf("-Dapple.awt.application.appearance=system")
+  val vmOptionsPath = distBinDir.resolve("$executable.vmoptions")
+  VmOptionsGenerator.writeVmOptions(vmOptionsPath, fileVmOptions, "\n")
+
+  return vmOptionsPath
 }
