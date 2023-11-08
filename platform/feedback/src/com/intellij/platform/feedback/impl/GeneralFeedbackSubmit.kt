@@ -175,7 +175,7 @@ internal fun getProductTag(): String {
     PlatformUtils.isRubyMine() -> "ij_rubymine1"
     PlatformUtils.isAppCode() -> "ij_appcode1"
     PlatformUtils.isCLion() && !isCLionNova() -> "ij_clion1"
-    isCLionNova() -> "ij_clion_nova1"
+    PlatformUtils.isCLion() && isCLionNova() -> "ij_clion_nova1"
     PlatformUtils.isDataGrip() -> "ij_datagrip1"
     PlatformUtils.isGoIde() -> "ij_goland1"
     PlatformUtils.isJetBrainsClient() -> "ij_code_with_me1"
