@@ -40,12 +40,7 @@ class CodeFragmentCompilerHandler(val strategy: CodeFragmentCompilingStrategy) {
                     strategy.onSuccess()
                 }
         } catch (e: Exception) {
-            val exceptionToReport = when (e) {
-                is CodeFragmentCodegenException -> e.reason
-                is ExecutionException -> e.cause
-                is ProcessCanceledException -> null
-                else -> e
-            }
+            val exceptionToReport = unwrapException(e)
             if (exceptionToReport == null) {
                 throw e
             }
@@ -60,5 +55,12 @@ class CodeFragmentCompilerHandler(val strategy: CodeFragmentCompilingStrategy) {
             // in EA dialog / log / wherever else
             throw e
         }
+    }
+
+    private fun unwrapException(e: Throwable?): Throwable? = when (e) {
+        is CodeFragmentCodegenException -> e.reason
+        is ExecutionException -> unwrapException(e.cause)
+        is ProcessCanceledException -> null
+        else -> e
     }
 }
