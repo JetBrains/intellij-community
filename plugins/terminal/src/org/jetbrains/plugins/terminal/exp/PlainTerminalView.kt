@@ -30,7 +30,7 @@ class PlainTerminalView(
   private val view: SimpleTerminalView
 
   init {
-    val eventsHandler = TerminalEventsHandler(session, settings)
+    val eventsHandler = SimpleTerminalEventsHandler(session, settings)
     view = SimpleTerminalView(project, settings, session, eventsHandler)
     view.component.addComponentListener(object : ComponentAdapter() {
       override fun componentResized(e: ComponentEvent?) {

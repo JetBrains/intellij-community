@@ -184,10 +184,10 @@ internal fun setupKeyEventDispatcher(editor: EditorEx,
   val eventDispatcher: TerminalEventDispatcher = object : TerminalEventDispatcher(editor, disposable) {
     override fun handleKeyEvent(e: KeyEvent) {
       if (e.id == KeyEvent.KEY_TYPED) {
-        eventsHandler.handleKeyTyped(e)
+        eventsHandler.keyTyped(e)
       }
       else if (e.id == KeyEvent.KEY_PRESSED) {
-        eventsHandler.handleKeyPressed(e)
+        eventsHandler.keyPressed(e)
       }
     }
   }
@@ -244,14 +244,14 @@ internal fun setupMouseListener(editor: EditorEx,
     override fun mousePressed(event: EditorMouseEvent) {
       if (settings.enableMouseReporting() && isRemoteMouseAction(event.mouseEvent)) {
         val p = event.logicalPosition
-        eventsHandler.handleMousePressed(p.column, p.line + historyLinesCount(), event.mouseEvent)
+        eventsHandler.mousePressed(p.column, p.line + historyLinesCount(), event.mouseEvent)
       }
     }
 
     override fun mouseReleased(event: EditorMouseEvent) {
       if (settings.enableMouseReporting() && isRemoteMouseAction(event.mouseEvent)) {
         val p = event.logicalPosition
-        eventsHandler.handleMouseReleased(p.column, p.line + historyLinesCount(), event.mouseEvent)
+        eventsHandler.mouseReleased(p.column, p.line + historyLinesCount(), event.mouseEvent)
       }
     }
   }, disposable)
@@ -260,14 +260,14 @@ internal fun setupMouseListener(editor: EditorEx,
     override fun mouseMoved(event: EditorMouseEvent) {
       if (settings.enableMouseReporting() && isRemoteMouseAction(event.mouseEvent)) {
         val p = event.logicalPosition
-        eventsHandler.handleMouseMoved(p.column, p.line + historyLinesCount(), event.mouseEvent)
+        eventsHandler.mouseMoved(p.column, p.line + historyLinesCount(), event.mouseEvent)
       }
     }
 
     override fun mouseDragged(event: EditorMouseEvent) {
       if (settings.enableMouseReporting() && isRemoteMouseAction(event.mouseEvent)) {
         val p = event.logicalPosition
-        eventsHandler.handleMouseDragged(p.column, p.line + historyLinesCount(), event.mouseEvent)
+        eventsHandler.mouseDragged(p.column, p.line + historyLinesCount(), event.mouseEvent)
       }
     }
   }, disposable)
@@ -276,7 +276,7 @@ internal fun setupMouseListener(editor: EditorEx,
     if (settings.enableMouseReporting() && isRemoteMouseAction(event)) {
       editor.selectionModel.removeSelection()
       val p = editor.xyToLogicalPosition(event.point)
-      eventsHandler.handleMouseWheelMoved(p.column, p.line + historyLinesCount(), event)
+      eventsHandler.mouseWheelMoved(p.column, p.line + historyLinesCount(), event)
     }
   }
   editor.scrollPane.addMouseWheelListener(mouseWheelListener)
