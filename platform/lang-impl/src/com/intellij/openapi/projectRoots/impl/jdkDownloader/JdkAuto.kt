@@ -219,7 +219,7 @@ class JdkAuto : UnknownSdkResolver, JdkDownloaderBase {
             val jdkInstaller = JdkInstaller.getInstance()
             val homeDir = jdkInstaller.defaultInstallDir(jdkToDownload, projectWslDistribution)
             val request = jdkInstaller.prepareJdkInstallation(jdkToDownload, homeDir)
-            return newDownloadTask(request, project)
+            return JdkDownloaderBase.newDownloadTask(request, project)
           }
 
           override fun toString() = "UnknownSdkDownloadableFix{${jdkToDownload.fullPresentationText}, wsl=${projectWslDistribution}}"
