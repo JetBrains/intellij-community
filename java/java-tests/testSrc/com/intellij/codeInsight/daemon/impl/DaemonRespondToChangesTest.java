@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
-import com.intellij.application.options.editor.CodeFoldingConfigurable;
 import com.intellij.application.options.editor.CodeFoldingConfigurableKt;
 import com.intellij.codeHighlighting.*;
 import com.intellij.codeInsight.EditorInfo;
@@ -19,6 +18,7 @@ import com.intellij.codeInsight.intention.impl.IntentionContainer;
 import com.intellij.codeInsight.intention.impl.IntentionHintComponent;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.accessStaticViaInstance.AccessStaticViaInstance;
+import com.intellij.codeInspection.dataFlow.ConstantValueInspection;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
@@ -3723,5 +3723,27 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     finally {
       stallMs.set(0);
     }
+  }
+
+  public void testModificationInsideCommentDoesNotAffectNearbyInspectionWarning() throws Exception {
+    enableInspectionTool(new ConstantValueInspection());
+    configureByText(JavaFileType.INSTANCE, """
+      class AClass {
+        public int foo() {
+          //<caret>
+          if (this == null) return 0;
+          return 1;
+        }
+      }
+    """);
+
+    assertEmpty(highlightErrors());
+    List<HighlightInfo> infos = doHighlighting(HighlightSeverity.WARNING);
+    HighlightInfo error = ContainerUtil.find(infos, e->e.getDescription().contains("always 'false'"));
+    assertNotNull(infos.toString(), error);
+    type("d");
+    List<HighlightInfo> infos2 = doHighlighting(HighlightSeverity.WARNING);
+    HighlightInfo error2 = ContainerUtil.find(infos2, e->e.getDescription().contains("always 'false'"));
+    assertNotNull(infos2.toString(), error2);
   }
 }

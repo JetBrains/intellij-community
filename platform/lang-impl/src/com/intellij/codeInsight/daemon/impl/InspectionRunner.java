@@ -161,7 +161,9 @@ class InspectionRunner {
       BlockingQueue<InspectionContext> contexts = new ArrayBlockingQueue<>(allContexts.size() + 1, false, allContexts);
       boolean added = contexts.offer(TOMB_STONE);
       assert added;
-      ForkJoinTask<Boolean> regularElementsFuture = processInOrderAsync(contexts, TOMB_STONE, context -> processContext(finalPriorityRange, context, onComplete));
+      ForkJoinTask<Boolean> regularElementsFuture = processInOrderAsync(contexts, TOMB_STONE, context -> processContext(finalPriorityRange,
+                                                                                                                        myRestrictRange,
+                                                                                                                        context, onComplete));
 
       ForkJoinTask<Boolean> injectedElementsFuture = null;
       if (myInspectInjected && InjectionUtils.shouldInspectInjectedFiles(myPsiFile)) {
@@ -414,19 +416,16 @@ class InspectionRunner {
    * maintaining parallelism during this process (i.e., several visitors from {@code init} can be executed concurrently, but elements from the list head get higher priority than the list tail).
    */
   private static void processContext(long priorityRange,
-                                     @NotNull InspectionContext context,
+                                     @NotNull TextRange restrictRange, @NotNull InspectionContext context,
                                      @NotNull Consumer<? super InspectionContext> afterProcessCallback) {
     List<? extends PsiElement> elements = context.elements();
-    //if (elements.size() == 31 && context.tool().getID().equals("UnreachableCodeJS")) {
-    //  System.out.println("processCOntext "+context + ExceptionUtil.currentStackTrace());
-    //}
     Map<Class<?>, Collection<Class<?>>> targetPsiClasses = InspectionVisitorsOptimizer.getTargetPsiClasses(elements);
     InspectionProblemHolder holder = context.holder;
     int resultCount = holder.getResultCount();
     PsiElement favoriteElement = holder.myFavoriteElement;
 
     // accept favoriteElement only if it belongs to the correct inside/outside list
-    if (favoriteElement != null && context.isVisible() == TextRangeScalarUtil.intersects(favoriteElement.getTextRange(), priorityRange)) {
+    if (favoriteElement != null && context.isVisible() == TextRangeScalarUtil.intersects(favoriteElement.getTextRange(), priorityRange) && restrictRange.contains(favoriteElement.getTextRange())) {
       holder.myFavoriteElement = null; // null the element to make sure it will hold the new favorite after this method finished
       // run first for the element we know resulted in the diagnostics during the previous run
       favoriteElement.accept(context.visitor);
