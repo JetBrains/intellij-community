@@ -1,46 +1,35 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow.fix;
 
-import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
-import com.intellij.codeInsight.unwrap.ScopeHighlighter;
-import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.dataFlow.TrackingRunner;
-import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.java.JavaBundle;
 import com.intellij.java.analysis.JavaAnalysisBundle;
+import com.intellij.lang.LangBundle;
 import com.intellij.lang.injection.InjectedLanguageManager;
-import com.intellij.openapi.application.ReadAction;
+import com.intellij.modcommand.*;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.ui.popup.JBPopupListener;
-import com.intellij.openapi.ui.popup.LightweightWindowEvent;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
 
-public final class FindDfaProblemCauseFix implements LocalQuickFix, LowPriorityAction {
+public final class FindDfaProblemCauseFix extends ModCommandQuickFix implements LowPriorityAction {
   private final boolean myIgnoreAssertStatements;
   private final SmartPsiElementPointer<PsiExpression> myAnchor;
   private final TrackingRunner.DfaProblemType myProblemType;
@@ -51,11 +40,6 @@ public final class FindDfaProblemCauseFix implements LocalQuickFix, LowPriorityA
     myIgnoreAssertStatements = ignoreAssertStatements;
     myAnchor = SmartPointerManager.createPointer(anchor);
     myProblemType = problemType;
-  }
-
-  @Override
-  public boolean startInWriteAction() {
-    return false;
   }
 
   @Override
@@ -71,18 +55,12 @@ public final class FindDfaProblemCauseFix implements LocalQuickFix, LowPriorityA
   }
 
   @Override
-  public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    ThrowableComputable<TrackingRunner.CauseItem, RuntimeException> causeFinder = () -> {
-      PsiExpression element = myAnchor.getElement();
-      if (element == null) return null;
-      return TrackingRunner.findProblemCause(myIgnoreAssertStatements, element, myProblemType);
-    };
-    TrackingRunner.CauseItem item = ProgressManager.getInstance().runProcessWithProgressSynchronously(
-      () -> ReadAction.compute(causeFinder), JavaBundle.message("progress.title.finding.cause"), true, project);
-    PsiFile file = myAnchor.getContainingFile();
-    if (item != null && file != null) {
-      displayProblemCause(file, item);
-    }
+  public @NotNull ModCommand perform(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+    PsiExpression element = myAnchor.getElement();
+    if (element == null) return ModCommand.nop();
+    TrackingRunner.CauseItem item = TrackingRunner.findProblemCause(myIgnoreAssertStatements, element, myProblemType);
+    PsiFile file = element.getContainingFile();
+    return displayProblemCause(file, item);
   }
 
   @Override
@@ -90,83 +68,75 @@ public final class FindDfaProblemCauseFix implements LocalQuickFix, LowPriorityA
     return new IntentionPreviewInfo.Html(JavaBundle.message("quickfix.find.cause.description"));
   }
 
-  private static void displayProblemCause(PsiFile file, TrackingRunner.CauseItem root) {
-    Project project = file.getProject();
-    Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
-    if (editor == null) return;
-    Document document = editor.getDocument();
-    PsiFile topLevelFile = InjectedLanguageManager.getInstance(project).getTopLevelFile(file);
-    if (topLevelFile == null || document != topLevelFile.getViewProvider().getDocument()) return;
-    class CauseWithDepth {
-      final int myDepth;
-      final TrackingRunner.CauseItem myCauseItem;
-      final CauseWithDepth myParent;
+  static class CauseWithDepth {
+    final int myDepth;
+    final TrackingRunner.CauseItem myCauseItem;
+    final CauseWithDepth myParent;
+    final Document myDocument;
 
-      CauseWithDepth(CauseWithDepth parent, TrackingRunner.CauseItem item) {
-        myParent = parent;
-        myDepth = parent == null ? 0 : parent.myDepth + 1;
-        myCauseItem = item;
-      }
-
-      @Override
-      public String toString() {
-        return StringUtil.repeat("  ", myDepth - 1) + myCauseItem.render(document, myParent == null ? null : myParent.myCauseItem);
-      }
+    CauseWithDepth(CauseWithDepth parent, TrackingRunner.CauseItem item, Document document) {
+      myParent = parent;
+      myDepth = parent == null ? 0 : parent.myDepth + 1;
+      myCauseItem = item;
+      myDocument = document;
     }
+
+    @Override
+    public @Nls String toString() {
+      return StringUtil.repeat("  ", myDepth - 1) + myCauseItem.render(myDocument, myParent == null ? null : myParent.myCauseItem);
+    }
+  }
+
+  private static @NotNull ModCommand displayProblemCause(@NotNull PsiFile file, @Nullable TrackingRunner.CauseItem root) {
+    Project project = file.getProject();
+    PsiFile topLevelFile = InjectedLanguageManager.getInstance(project).getTopLevelFile(file);
+    Document document = topLevelFile.getViewProvider().getDocument();
     List<CauseWithDepth> causes;
     if (root == null) {
       causes = Collections.emptyList();
     } else {
-      causes = StreamEx.ofTree(new CauseWithDepth(null, root), cwd -> cwd.myCauseItem.children()
-        .map(child -> new CauseWithDepth(cwd, child))).skip(1).toList();
+      causes = StreamEx.ofTree(new CauseWithDepth(null, root, document), cwd -> cwd.myCauseItem.children()
+        .map(child -> new CauseWithDepth(cwd, child, document))).skip(1).toList();
     }
     if (causes.isEmpty()) {
-      HintManager hintManager = HintManager.getInstance();
-      hintManager.showErrorHint(editor, JavaAnalysisBundle.message("dfa.find.cause.unable"));
-      return;
+      return ModCommand.error(JavaAnalysisBundle.message("dfa.find.cause.unable"));
     }
-    if (causes.size() == 1) {
-      TrackingRunner.CauseItem item = causes.get(0).myCauseItem;
-      navigate(editor, file, item);
-      return;
-    }
-    AtomicReference<ScopeHighlighter> highlighter = new AtomicReference<>(new ScopeHighlighter(editor));
-    JBPopup popup = JBPopupFactory.getInstance().createPopupChooserBuilder(causes)
-      .setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
-      .setAccessibleName(root.toString())
-      .setTitle(StringUtil.wordsToBeginFromUpperCase(root.toString()))
-      .setMovable(false)
-      .setResizable(false)
-      .setRequestFocus(true)
-      .setItemSelectedCallback((cause) -> {
-        ScopeHighlighter h = highlighter.get();
-        if (h == null) return;
-        h.dropHighlight();
-        if (cause == null) return;
-        Segment target = cause.myCauseItem.getTargetSegment();
-        if (target == null) return;
-        TextRange range = TextRange.create(target);
-        h.highlight(Pair.create(range, Collections.singletonList(range)));
-      })
-      .addListener(new JBPopupListener() {
-        @Override
-        public void onClosed(@NotNull LightweightWindowEvent event) {
-          highlighter.getAndSet(null).dropHighlight();
-        }
-      })
-      .setItemChosenCallback(cause -> navigate(editor, file, cause.myCauseItem))
-      .createPopup();
-    popup.showInBestPositionFor(editor);
+    return new ModChooseAction(StringUtil.wordsToBeginFromUpperCase(root.toString()),
+                               ContainerUtil.map(causes, NavigateToCauseAction::new));
   }
+  
+  private static final class NavigateToCauseAction implements ModCommandAction {
+    private final @NotNull CauseWithDepth myCauseWithDepth;
+    
+    NavigateToCauseAction(@NotNull CauseWithDepth causeWithDepth) {
+      myCauseWithDepth = causeWithDepth;
+    }
 
-  private static void navigate(Editor editor, PsiFile file, TrackingRunner.CauseItem item) {
-    Segment range = item.getTargetSegment();
-    if (range == null) return;
-    PsiFile targetFile = item.getFile();
-    assert targetFile == file;
-    PsiNavigationSupport.getInstance().createNavigatable(file.getProject(), targetFile.getVirtualFile(), range.getStartOffset())
-      .navigate(true);
-    HintManager hintManager = HintManager.getInstance();
-    hintManager.showInformationHint(editor, StringUtil.escapeXmlEntities(StringUtil.capitalize(item.toString())));
+    @Override
+    public @NotNull String getFamilyName() {
+      return LangBundle.message("command.name.navigate");
+    }
+
+    @Override
+    public @NotNull Presentation getPresentation(@NotNull ActionContext context) {
+      Presentation presentation = Presentation.of(myCauseWithDepth.toString());
+      Segment segment = myCauseWithDepth.myCauseItem.getTargetSegment();
+      if (segment != null) {
+        presentation = presentation.withHighlighting(TextRange.create(segment));
+      }
+      return presentation;
+    }
+
+    @Override
+    public @NotNull ModCommand perform(@NotNull ActionContext context) {
+      TrackingRunner.CauseItem item = myCauseWithDepth.myCauseItem;
+      Segment range = item.getTargetSegment();
+      if (range == null) return ModCommand.nop();
+      PsiFile targetFile = item.getFile();
+      if (targetFile == null) return ModCommand.nop();
+      VirtualFile virtualFile = targetFile.getVirtualFile();
+      return new ModNavigate(virtualFile, range.getStartOffset(), range.getStartOffset(), range.getStartOffset())
+        .andThen(ModCommand.info(StringUtil.capitalize(item.toString())));
+    }
   }
 }
