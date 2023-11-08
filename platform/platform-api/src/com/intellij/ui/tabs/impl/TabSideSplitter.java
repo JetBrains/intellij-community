@@ -3,7 +3,7 @@ package com.intellij.ui.tabs.impl;
 
 import com.intellij.openapi.ui.OnePixelDivider;
 import com.intellij.openapi.ui.Splittable;
-import com.intellij.ui.ComponentUtil;
+import com.intellij.ui.ClientProperty;
 import com.intellij.ui.tabs.JBTabsPosition;
 import com.intellij.ui.tabs.TabInfo;
 import org.jetbrains.annotations.NotNull;
@@ -13,50 +13,47 @@ import java.awt.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
+class TabSideSplitter implements Splittable, PropertyChangeListener {
+  private final @NotNull JBTabsImpl tabs;
+  private int sideTabsLimit = JBTabsImpl.DEFAULT_MAX_TAB_WIDTH;
+  private final OnePixelDivider divider;
 
-class TabsSideSplitter implements Splittable, PropertyChangeListener {
-
-  private final @NotNull JBTabsImpl myTabs;
-  private int mySideTabsLimit = JBTabsImpl.DEFAULT_MAX_TAB_WIDTH;
-  private final OnePixelDivider myDivider;
-
-
-  TabsSideSplitter(@NotNull JBTabsImpl tabs) {
-    myTabs = tabs;
-    myTabs.addPropertyChangeListener(JBTabsImpl.SIDE_TABS_SIZE_LIMIT_KEY.toString(), this);
-    myDivider = new OnePixelDivider(false, this);
+  TabSideSplitter(@NotNull JBTabsImpl tabs) {
+    this.tabs = tabs;
+    this.tabs.addPropertyChangeListener(JBTabsImpl.SIDE_TABS_SIZE_LIMIT_KEY.toString(), this);
+    divider = new OnePixelDivider(false, this);
   }
 
   OnePixelDivider getDivider() {
-    return myDivider;
+    return divider;
   }
 
   @Override
   public float getMinProportion(boolean first) {
-    return Math.min(.5F, (float)JBTabsImpl.MIN_TAB_WIDTH / Math.max(1, myTabs.getWidth()));
+    return Math.min(.5F, (float)JBTabsImpl.MIN_TAB_WIDTH / Math.max(1, tabs.getWidth()));
   }
 
   @Override
   public void setProportion(float proportion) {
-    int width = myTabs.getWidth();
-    if (myTabs.getTabsPosition() == JBTabsPosition.left) {
+    int width = tabs.getWidth();
+    if (tabs.getTabsPosition() == JBTabsPosition.left) {
       setSideTabsLimit((int)Math.max(JBTabsImpl.MIN_TAB_WIDTH, proportion * width));
     }
-    else if (myTabs.getTabsPosition() == JBTabsPosition.right) {
+    else if (tabs.getTabsPosition() == JBTabsPosition.right) {
       setSideTabsLimit(width - (int)Math.max(JBTabsImpl.MIN_TAB_WIDTH, proportion * width));
     }
   }
 
   int getSideTabsLimit() {
-    return mySideTabsLimit;
+    return sideTabsLimit;
   }
 
   void setSideTabsLimit(int sideTabsLimit) {
-    if (mySideTabsLimit != sideTabsLimit) {
-      mySideTabsLimit = sideTabsLimit;
-      ComponentUtil.putClientProperty(myTabs, JBTabsImpl.SIDE_TABS_SIZE_LIMIT_KEY, mySideTabsLimit);
-      myTabs.relayout(true,true);
-      TabInfo info = myTabs.getSelectedInfo();
+    if (this.sideTabsLimit != sideTabsLimit) {
+      this.sideTabsLimit = sideTabsLimit;
+      tabs.putClientProperty(JBTabsImpl.SIDE_TABS_SIZE_LIMIT_KEY, this.sideTabsLimit);
+      tabs.relayout(true, true);
+      TabInfo info = tabs.getSelectedInfo();
       JComponent page = info != null ? info.getComponent() : null;
       if (page != null) {
         page.revalidate();
@@ -82,14 +79,18 @@ class TabsSideSplitter implements Splittable, PropertyChangeListener {
 
   @Override
   public @NotNull Component asComponent() {
-    return myTabs;
+    return tabs;
   }
 
   @Override
-  public void propertyChange(PropertyChangeEvent evt) {
-    if (evt.getSource() != myTabs) return;
-    Integer limit = ComponentUtil.getClientProperty(myTabs, JBTabsImpl.SIDE_TABS_SIZE_LIMIT_KEY);
-    if (limit == null) limit = JBTabsImpl.DEFAULT_MAX_TAB_WIDTH;
+  public void propertyChange(PropertyChangeEvent event) {
+    if (event.getSource() != tabs) {
+      return;
+    }
+    Integer limit = ClientProperty.get(tabs, JBTabsImpl.SIDE_TABS_SIZE_LIMIT_KEY);
+    if (limit == null) {
+      limit = JBTabsImpl.DEFAULT_MAX_TAB_WIDTH;
+    }
     setSideTabsLimit(limit);
   }
 }

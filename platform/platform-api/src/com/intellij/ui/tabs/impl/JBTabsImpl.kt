@@ -185,7 +185,7 @@ open class JBTabsImpl(private var project: Project?,
   private var tableLayout = createMultiRowLayout()
 
   // it's an invisible splitter intended for changing the size of tab zone
-  private val splitter = TabsSideSplitter(this)
+  private val splitter = TabSideSplitter(this)
   internal var effectiveLayout: TabLayout? = null
   var lastLayoutPass: LayoutPassInfo? = null
     private set
