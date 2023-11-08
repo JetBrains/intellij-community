@@ -1015,23 +1015,24 @@ private suspend fun openFile(file: VirtualFile,
   }
 
   val session = fileEditorManager.project.currentSession
+  val options = FileEditorOpenOptions(
+    selectAsCurrent = false,
+    pin = fileEntry.pinned,
+    index = index,
+    usePreviewTab = fileEntry.isPreview,
+  )
   if (session.isLocal) {
     fileEditorManager.openFileOnStartup(
       windowDeferred = windowDeferred,
       file = file,
       document = document,
       fileEditorStateProvider = fileEditorStateProvider,
-      options = FileEditorOpenOptions(
-        selectAsCurrent = false,
-        pin = fileEntry.pinned,
-        index = index,
-        usePreviewTab = fileEntry.isPreview,
-      ),
+      options = options,
       providers = deferredProviders.await(),
     )
   }
   else {
-    session.serviceOrNull<ClientFileEditorManager>()?.openFileAsync(file = file, forceCreate = false, requestFocus = true)
+    session.serviceOrNull<ClientFileEditorManager>()?.openFileAsync(file = file, options)
   }
 
   // This is just to make sure document reference is kept on stack till this point

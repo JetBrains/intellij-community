@@ -1066,8 +1066,7 @@ open class FileEditorManagerImpl(
                                     options: FileEditorOpenOptions): FileEditorComposite {
     if (!ClientId.isCurrentlyUnderLocalId) {
       return clientFileEditorManager?.openFileAsync(file = file,
-                                                    forceCreate = false,
-                                                    requestFocus = options.requestFocus) ?: FileEditorComposite.EMPTY
+                                                    options = options) ?: FileEditorComposite.EMPTY
     }
 
     val existingComposite = withContext(Dispatchers.EDT) { window.getComposite(file) }
@@ -1098,7 +1097,7 @@ open class FileEditorManagerImpl(
 
   private fun openFileUsingClient(file: VirtualFile, options: FileEditorOpenOptions): FileEditorComposite {
     val clientManager = clientFileEditorManager ?: return FileEditorComposite.EMPTY
-    return clientManager.openFile(file = file, forceCreate = false, requestFocus = options.requestFocus)
+    return clientManager.openFile(file = file, options)
   }
 
   @Suppress("DuplicatedCode")
