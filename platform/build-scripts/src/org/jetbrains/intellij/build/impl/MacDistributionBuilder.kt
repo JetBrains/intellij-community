@@ -15,6 +15,7 @@ import org.apache.commons.compress.archivers.zip.ZipArchiveEntry
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.impl.OsSpecificDistributionBuilder.Companion.suffix
+import org.jetbrains.intellij.build.impl.client.createJetBrainsClientContextForLaunchers
 import org.jetbrains.intellij.build.impl.productInfo.*
 import org.jetbrains.intellij.build.io.*
 import java.io.File
@@ -257,6 +258,10 @@ class MacDistributionBuilder(override val context: BuildContext,
     val classPath = context.bootClassPathJarNames.joinToString(separator = ":") { "\$APP_PACKAGE/Contents/lib/${it}" }
 
     writeVmOptions(macBinDir)
+    val jetBrainsClientContext = createJetBrainsClientContextForLaunchers(context)
+    if (jetBrainsClientContext != null) {
+      writeMacOsVmOptions(macBinDir, jetBrainsClientContext)
+    }
 
     val errorFilePath = "-XX:ErrorFile=\$USER_HOME/java_error_in_${executable}_%p.log"
     val heapDumpPath = "-XX:HeapDumpPath=\$USER_HOME/java_error_in_${executable}.hprof"
@@ -446,21 +451,39 @@ private fun propertiesToXml(properties: List<String>, moreProperties: Map<String
 internal fun getMacZipRoot(customizer: MacDistributionCustomizer, context: BuildContext): String =
   "${customizer.getRootDirectoryName(context.applicationInfo, context.buildNumber)}/Contents"
 
-private fun generateProductJson(context: BuildContext, arch: JvmArchitecture, withRuntime: Boolean = true): String =
-  generateProductInfoJson(
+private fun generateProductJson(context: BuildContext, arch: JvmArchitecture, withRuntime: Boolean = true): String {
+  val launcherFileName = context.productProperties.baseFileName
+  val defaultLaunchData = createProductInfoLaunchData(context, arch, withRuntime, launcherFileName)
+  val launchDataList = mutableListOf(defaultLaunchData)
+  val jetbrainsClientContext = createJetBrainsClientContextForLaunchers(context)
+  if (jetbrainsClientContext != null && SystemProperties.getBooleanProperty("intellij.build.include.jetbrains.client.in.product.info.mac", false)) {
+    launchDataList.add(createProductInfoLaunchData(
+      jetbrainsClientContext, arch, withRuntime, launcherFileName,
+      relevantCommands = listOf("thinClient", "thinClient-headless") 
+    ))
+  }
+  return generateProductInfoJson(
     relativePathToBin = "../bin",
     builtinModules = context.builtinModule,
-    launch = listOf(ProductInfoLaunchData(
-      os = OsFamily.MACOS.osName,
-      arch = arch.dirName,
-      launcherPath = "../MacOS/${context.productProperties.baseFileName}",
-      javaExecutablePath = if (withRuntime) "../jbr/Contents/Home/bin/java" else null,
-      vmOptionsFilePath = "../bin/${context.productProperties.baseFileName}.vmoptions",
-      startupWmClass = null,
-      bootClassPathJarNames = context.bootClassPathJarNames,
-      additionalJvmArguments = context.getAdditionalJvmArguments(OsFamily.MACOS, arch),
-      mainClass = context.ideMainClassName)),
-    context = context)
+    launch = launchDataList,
+    context = context
+  )
+}
+
+private fun createProductInfoLaunchData(context: BuildContext, arch: JvmArchitecture, withRuntime: Boolean, launcherFileName: String,
+                                        relevantCommands: List<String> = emptyList()) = 
+  ProductInfoLaunchData(
+    os = OsFamily.MACOS.osName,
+    arch = arch.dirName,
+    relevantCommands = relevantCommands,
+    launcherPath = "../MacOS/$launcherFileName",
+    javaExecutablePath = if (withRuntime) "../jbr/Contents/Home/bin/java" else null,
+    vmOptionsFilePath = "../bin/${context.productProperties.baseFileName}.vmoptions",
+    startupWmClass = null,
+    bootClassPathJarNames = context.bootClassPathJarNames,
+    additionalJvmArguments = context.getAdditionalJvmArguments(OsFamily.MACOS, arch),
+    mainClass = context.ideMainClassName,
+  )
 
 private suspend fun buildMacZip(macDistributionBuilder: MacDistributionBuilder,
                                 targetFile: Path,
