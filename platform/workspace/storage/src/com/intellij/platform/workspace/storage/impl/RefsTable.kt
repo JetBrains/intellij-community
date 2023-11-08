@@ -446,6 +446,10 @@ internal class MutableRefsTable(
   ): List<Modification> {
     return buildList {
       val copiedMap = getOneToManyMutableMap(connectionId)
+
+      // Check if the reference already exists. This is needed to make fewer operations and not to break children ordering
+      if (copiedMap.get(childId.arrayId) == parentId.id.arrayId) return emptyList()
+
       val removedParent = copiedMap.removeKey(childId.arrayId)
       val removedChildren = copiedMap.putAll(intArrayOf(childId.arrayId), parentId.id.arrayId)
       if (removedParent != null) add(Modification.Remove(createEntityId(removedParent, connectionId.parentClass), childId))
@@ -462,6 +466,10 @@ internal class MutableRefsTable(
     parentId: ParentEntityId
   ): List<Modification> {
     val copiedMap = getOneToAbstractManyMutableMap(connectionId)
+
+    // Check if the reference already exists. This is needed to make fewer operations and not to break children ordering
+    if (copiedMap[childId] == parentId) return emptyList()
+
     val removedParent = copiedMap.remove(childId)
     copiedMap.put(childId, parentId)
     return buildList {

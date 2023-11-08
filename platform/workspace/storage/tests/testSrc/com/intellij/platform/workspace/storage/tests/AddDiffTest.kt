@@ -812,4 +812,44 @@ class AddDiffTest {
 
     assertTrue(target.referrers(NameId("id"), WithSoftLinkEntity::class.java).toList().isEmpty())
   }
+
+  @RepeatedTest(10)
+  fun `the order of children is not changed in abstract entities`() {
+    val source = createBuilderFrom(target)
+    source addEntity RightEntity(MySource) {
+      this.children = listOf(
+        LeftEntity(MySource),
+        LeftEntity(AnotherSource),
+      )
+    }
+
+    target.addDiff(source)
+
+    target.assertConsistency()
+
+    val children = target.entities(RightEntity::class.java).single().children
+    assertEquals(2, children.size)
+    assertEquals(MySource, children.first().entitySource)
+    assertEquals(AnotherSource, children.last().entitySource)
+  }
+
+  @RepeatedTest(10)
+  fun `the order of children is not changed`() {
+    val source = createBuilderFrom(target)
+    source addEntity ParentMultipleEntity("", MySource) {
+      this.children = listOf(
+        ChildMultipleEntity("data1", MySource),
+        ChildMultipleEntity("data2", AnotherSource),
+      )
+    }
+
+    target.addDiff(source)
+
+    target.assertConsistency()
+
+    val children = target.entities(ParentMultipleEntity::class.java).single().children
+    assertEquals(2, children.size)
+    assertEquals(MySource, children.first().entitySource)
+    assertEquals(AnotherSource, children.last().entitySource)
+  }
 }
