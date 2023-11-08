@@ -165,6 +165,8 @@ fun main(@Suppress("UNUSED_PARAMETER") args: Array<String>) {
     generateK1Tests()
 }
 
+fun assembleK1Workspace(): TWorkspace = assembleWorkspace()
+
 fun generateK1Tests(isUpToDateCheck: Boolean = false) {
     System.setProperty("java.awt.headless", "true")
     TestGenerator.write(assembleWorkspace(), isUpToDateCheck)
@@ -337,7 +339,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("resolve/resolveModeComparison")
         }
 
-        testClass<AbstractKotlinHighlightVisitorTest> {
+        testClass<AbstractKotlinHighlightVisitorTest>(commonSuite = false) {
             model("checker", isRecursive = false, pattern = KT.withPrecondition(excludedFirPrecondition))
             model("checker/regression", pattern = KT.withPrecondition(excludedFirPrecondition))
             model("checker/recovery", pattern = KT.withPrecondition(excludedFirPrecondition))
@@ -348,7 +350,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("checker/diagnosticsMessage", pattern = KT.withPrecondition(excludedFirPrecondition))
         }
 
-        testClass<AbstractKotlinHighlightWolfPassTest> {
+        testClass<AbstractKotlinHighlightWolfPassTest>(commonSuite = false) {
             model("checker/wolf", isRecursive = false, pattern = KT.withPrecondition(excludedFirPrecondition))
         }
 
@@ -456,7 +458,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("typealiasExpansionIndex")
         }
 
-        testClass<AbstractHighlightingTest> {
+        testClass<AbstractHighlightingTest>(commonSuite = false) {
             model("highlighter", pattern = Patterns.KT_OR_JAVA)
         }
 
@@ -1201,7 +1203,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("kdoc", pattern = KT_WITHOUT_DOT_AND_FIR_PREFIX)
         }
 
-        testClass<AbstractK1MLPerformanceCompletionTest> {
+        testClass<AbstractK1MLPerformanceCompletionTest>(commonSuite = false) {
             model("basic/common", pattern = KT_WITHOUT_FIR_PREFIX)
             model("basic/java", pattern = KT_WITHOUT_FIR_PREFIX)
         }
@@ -1268,27 +1270,27 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("partialConverter", pattern = Patterns.forRegex("""^([^.]+)\.java$"""))
         }
 
-        testClass<AbstractCommonConstraintCollectorTest> {
+        testClass<AbstractCommonConstraintCollectorTest>(commonSuite = false) {
             model("inference/common")
         }
 
-        testClass<AbstractNullabilityInferenceTest> {
+        testClass<AbstractNullabilityInferenceTest>(commonSuite = false) {
             model("inference/nullability")
         }
 
-        testClass<AbstractMutabilityInferenceTest> {
+        testClass<AbstractMutabilityInferenceTest>(commonSuite = false) {
             model("inference/mutability")
         }
 
-        testClass<AbstractNewJavaToKotlinCopyPasteConversionTest> {
+        testClass<AbstractNewJavaToKotlinCopyPasteConversionTest>(commonSuite = false) {
             model("copyPaste", pattern = Patterns.forRegex("""^([^.]+)\.java$"""))
         }
 
-        testClass<AbstractTextNewJavaToKotlinCopyPasteConversionTest> {
+        testClass<AbstractTextNewJavaToKotlinCopyPasteConversionTest>(commonSuite = false) {
             model("copyPastePlainText", pattern = Patterns.forRegex("""^([^.]+)\.txt$"""))
         }
 
-        testClass<AbstractNewJavaToKotlinConverterMultiFileTest> {
+        testClass<AbstractNewJavaToKotlinConverterMultiFileTest>(commonSuite = false) {
             model("multiFile", pattern = DIRECTORY, isRecursive = false)
         }
     }
@@ -1357,58 +1359,58 @@ private fun assembleWorkspace(): TWorkspace = workspace {
     }
 
     testGroup("performance-tests", testDataPath = "../idea/tests/testData") {
-        testClass<AbstractPerformanceJavaToKotlinCopyPasteConversionTest> {
+        testClass<AbstractPerformanceJavaToKotlinCopyPasteConversionTest>(commonSuite = false) {
             model("copyPaste/conversion", testMethodName = "doPerfTest", pattern = Patterns.forRegex("""^([^.]+)\.java$"""))
         }
 
-        testClass<AbstractPerformanceNewJavaToKotlinCopyPasteConversionTest> {
+        testClass<AbstractPerformanceNewJavaToKotlinCopyPasteConversionTest>(commonSuite = false) {
             model("copyPaste/conversion", testMethodName = "doPerfTest", pattern = Patterns.forRegex("""^([^.]+)\.java$"""))
         }
 
-        testClass<AbstractPerformanceLiteralKotlinToKotlinCopyPasteTest> {
+        testClass<AbstractPerformanceLiteralKotlinToKotlinCopyPasteTest>(commonSuite = false) {
             model("copyPaste/literal", testMethodName = "doPerfTest", pattern = Patterns.forRegex("""^([^.]+)\.kt$"""))
         }
 
-        testClass<AbstractPerformanceHighlightingTest> {
+        testClass<AbstractPerformanceHighlightingTest>(commonSuite = false) {
             model("highlighter", testMethodName = "doPerfTest")
         }
 
-        testClass<AbstractPerformanceHighlightingStatNamesTest> {
+        testClass<AbstractPerformanceHighlightingStatNamesTest>(commonSuite = false) {
             model("highlighter", testMethodName = "doPerfTest", pattern = Patterns.forRegex("""^(InvokeCall)\.kt$"""))
         }
 
-        testClass<AbstractPerformanceAddImportTest> {
+        testClass<AbstractPerformanceAddImportTest>(commonSuite = false) {
             model("addImport", testMethodName = "doPerfTest", pattern = KT_WITHOUT_DOTS)
         }
 
-        testClass<AbstractPerformanceTypingIndentationTest> {
+        testClass<AbstractPerformanceTypingIndentationTest>(commonSuite = false) {
             model("editor/enterHandler", pattern = Patterns.forRegex("""^([^.]+)\.after\.kt.*$"""), testMethodName = "doNewlineTest", testClassName = "DirectSettings")
             model("editor/enterHandler", pattern = Patterns.forRegex("""^([^.]+)\.after\.inv\.kt.*$"""), testMethodName = "doNewlineTestWithInvert", testClassName = "InvertedSettings")
         }
     }
 
     testGroup("performance-tests", testDataPath = "../completion/testData") {
-        testClass<AbstractPerformanceCompletionIncrementalResolveTest> {
+        testClass<AbstractPerformanceCompletionIncrementalResolveTest>(commonSuite = false) {
             model("incrementalResolve", testMethodName = "doPerfTest")
         }
 
-        testClass<AbstractPerformanceBasicCompletionHandlerTest> {
+        testClass<AbstractPerformanceBasicCompletionHandlerTest>(commonSuite = false) {
             model("handlers/basic", testMethodName = "doPerfTest", pattern = KT_WITHOUT_DOTS)
         }
 
-        testClass<AbstractPerformanceBasicCompletionHandlerStatNamesTest> {
+        testClass<AbstractPerformanceBasicCompletionHandlerStatNamesTest>(commonSuite = false) {
             model("handlers/basic", testMethodName = "doPerfTest", pattern = Patterns.forRegex("""^(GetOperator)\.kt$"""))
         }
 
-        testClass<AbstractPerformanceSmartCompletionHandlerTest> {
+        testClass<AbstractPerformanceSmartCompletionHandlerTest>(commonSuite = false) {
             model("handlers/smart", testMethodName = "doPerfTest")
         }
 
-        testClass<AbstractPerformanceKeywordCompletionHandlerTest> {
+        testClass<AbstractPerformanceKeywordCompletionHandlerTest>(commonSuite = false) {
             model("handlers/keywords", testMethodName = "doPerfTest")
         }
 
-        testClass<AbstractPerformanceCompletionCharFilterTest> {
+        testClass<AbstractPerformanceCompletionCharFilterTest>(commonSuite = false) {
             model("handlers/charFilter", testMethodName = "doPerfTest", pattern = KT_WITHOUT_DOTS)
         }
     }

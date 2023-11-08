@@ -153,8 +153,16 @@ class SuiteElement private constructor(
         }
     }
 
+    fun testDataPath(): File =
+        File(group.testDataRoot, model.path)
+
+    fun testDataMethodPaths(): List<File> {
+        val testDataPath = testDataPath()
+        return methods.filterIsInstance<TestCaseMethod>().map { it.testDataPath(testDataPath) } + nestedSuites.flatMap { it.testDataMethodPaths() }
+    }
+
     override fun Code.render() {
-        val testDataPath = File(group.testDataRoot, model.path).toRelativeStringSystemIndependent(group.moduleRoot)
+        val testDataPath = testDataPath().toRelativeStringSystemIndependent(group.moduleRoot)
 
         appendAnnotation(TAnnotation<RunWith>(JUnit3RunnerWithInners::class.java))
         appendAnnotation(TAnnotation<TestMetadata>(testDataPath))

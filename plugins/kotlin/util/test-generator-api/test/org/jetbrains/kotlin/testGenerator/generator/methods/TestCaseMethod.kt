@@ -36,6 +36,9 @@ class TestCaseMethod(
         )
     }
 
+    fun testDataPath(parent: File): File =
+        File(parent, localPath)
+
     override fun Code.render() {
         appendAnnotation(TAnnotation<TestMetadata>(localPath))
         appendBlock("public void $methodName() throws Exception") {

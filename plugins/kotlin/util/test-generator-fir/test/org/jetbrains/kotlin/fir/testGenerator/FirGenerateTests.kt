@@ -61,6 +61,8 @@ fun main(@Suppress("UNUSED_PARAMETER") args: Array<String>) {
     generateK2Tests()
 }
 
+fun assembleK2Workspace(): TWorkspace = assembleWorkspace()
+
 fun generateK2Tests(isUpToDateCheck: Boolean = false) {
     System.setProperty("java.awt.headless", "true")
     TestGenerator.write(assembleWorkspace(), isUpToDateCheck)
