@@ -1,7 +1,4 @@
-/*
- * Copyright 2010-2022 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.uast.kotlin.psi
 
 import com.intellij.psi.PsiClass
@@ -14,9 +11,7 @@ import org.jetbrains.kotlin.psi.KtFunction
  * that are in source, but not converted/supported by light classes (e.g., due to the presence of @JvmSynthetic).
  * To keep the semantics of [UastFakeSourceLightMethod], here we introduce a dummy abstraction as a placeholder.
  */
-internal class UastFakeDeserializedLightMethod(
-    private val original: KtFunction,
+internal class UastFakeDeserializedSourceLightMethod(
+    original: KtFunction,
     containingClass: PsiClass,
-) : UastFakeSourceLightMethod(original, containingClass) {
-    override fun toString(): String = "${this::class.simpleName} of ${original.name}"
-}
+) : UastFakeSourceLightMethod(original, containingClass)
