@@ -149,39 +149,37 @@ public final class ConfigImportHelper {
           log.error("Couldn't backup current config or delete current config directory", e);
         }
       }
-      else if (!Boolean.getBoolean("intellij.startup.wizard")) {
-        if (shouldAskForConfig()) {
-          oldConfigDirAndOldIdePath = showDialogAndGetOldConfigPath(guessedOldConfigDirs.getPaths());
-          importScenarioStatistics = SHOW_DIALOG_REQUESTED_BY_PROPERTY;
-        }
-        else if (guessedOldConfigDirs.isEmpty()) {
-          boolean importedFromCloud = false;
-          CloudConfigProvider configProvider = CloudConfigProvider.getProvider();
-          if (configProvider != null) {
-            importedFromCloud = configProvider.importSettingsSilently(newConfigDir);
+      else if (shouldAskForConfig()) {
+        oldConfigDirAndOldIdePath = showDialogAndGetOldConfigPath(guessedOldConfigDirs.getPaths());
+        importScenarioStatistics = SHOW_DIALOG_REQUESTED_BY_PROPERTY;
+      }
+      else if (guessedOldConfigDirs.isEmpty()) {
+        boolean importedFromCloud = false;
+        CloudConfigProvider configProvider = CloudConfigProvider.getProvider();
+        if (configProvider != null) {
+          importedFromCloud = configProvider.importSettingsSilently(newConfigDir);
 
-            if (importedFromCloud) {
-              importScenarioStatistics = IMPORTED_FROM_CLOUD;
-            }
+          if (importedFromCloud) {
+            importScenarioStatistics = IMPORTED_FROM_CLOUD;
           }
-          if (!importedFromCloud && !veryFirstStartOnThisComputer) {
-            oldConfigDirAndOldIdePath = showDialogAndGetOldConfigPath(guessedOldConfigDirs.getPaths());
-            importScenarioStatistics = SHOW_DIALOG_NO_CONFIGS_FOUND;
-          }
+        }
+        if (!importedFromCloud && !veryFirstStartOnThisComputer) {
+          oldConfigDirAndOldIdePath = showDialogAndGetOldConfigPath(guessedOldConfigDirs.getPaths());
+          importScenarioStatistics = SHOW_DIALOG_NO_CONFIGS_FOUND;
+        }
+      }
+      else {
+        Pair<Path, FileTime> bestConfigGuess = guessedOldConfigDirs.getFirstItem();
+        if (isConfigOld(bestConfigGuess.second)) {
+          log.info("The best config guess [" + bestConfigGuess.first + "] is too old, it won't be used for importing.");
+          oldConfigDirAndOldIdePath = showDialogAndGetOldConfigPath(guessedOldConfigDirs.getPaths());
+          importScenarioStatistics = SHOW_DIALOG_CONFIGS_ARE_TOO_OLD;
         }
         else {
-          Pair<Path, FileTime> bestConfigGuess = guessedOldConfigDirs.getFirstItem();
-          if (isConfigOld(bestConfigGuess.second)) {
-            log.info("The best config guess [" + bestConfigGuess.first + "] is too old, it won't be used for importing.");
-            oldConfigDirAndOldIdePath = showDialogAndGetOldConfigPath(guessedOldConfigDirs.getPaths());
-            importScenarioStatistics = SHOW_DIALOG_CONFIGS_ARE_TOO_OLD;
-          }
-          else {
-            oldConfigDirAndOldIdePath = findConfigDirectoryByPath(bestConfigGuess.first);
-            if (oldConfigDirAndOldIdePath == null) {
-              log.info("Previous config directory was detected but not accepted: " + bestConfigGuess.first);
-              importScenarioStatistics = CONFIG_DIRECTORY_NOT_FOUND;
-            }
+          oldConfigDirAndOldIdePath = findConfigDirectoryByPath(bestConfigGuess.first);
+          if (oldConfigDirAndOldIdePath == null) {
+            log.info("Previous config directory was detected but not accepted: " + bestConfigGuess.first);
+            importScenarioStatistics = CONFIG_DIRECTORY_NOT_FOUND;
           }
         }
       }
