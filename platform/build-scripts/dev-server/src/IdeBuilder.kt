@@ -29,6 +29,7 @@ import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 import java.time.OffsetDateTime
 import java.time.temporal.TemporalAdjusters
+import kotlin.String
 import kotlin.time.Duration.Companion.seconds
 
 private const val PLUGIN_CACHE_DIR_NAME = "plugin-cache"
@@ -100,7 +101,7 @@ internal suspend fun buildProduct(productConfiguration: ProductConfiguration, re
       createPlatformLayout(pluginsToPublish = emptySet(), context = context)
     }
 
-    val platformDistributionEntries = async {
+    val platformDistributionEntriesDeferred = async {
       launch(Dispatchers.IO) {
         // PathManager.getBinPath() is used as a working dir for maven
         val binDir = Files.createDirectories(runDir.resolve("bin"))
@@ -125,66 +126,25 @@ internal suspend fun buildProduct(productConfiguration: ProductConfiguration, re
       platformDistributionEntries
     }
 
-    val pluginDistributionEntries = async {
-      val artifactTask = launch {
-        val artifactOutDir = request.homePath.resolve("out/classes/artifacts").toString()
-        for (artifact in JpsArtifactService.getInstance().getArtifacts(context.project)) {
-          artifact.outputPath = "$artifactOutDir/${PathUtilRt.getFileName(artifact.outputPath)}"
-        }
+    val artifactTask = launch {
+      val artifactOutDir = request.homePath.resolve("out/classes/artifacts").toString()
+      for (artifact in JpsArtifactService.getInstance().getArtifacts(context.project)) {
+        artifact.outputPath = "$artifactOutDir/${PathUtilRt.getFileName(artifact.outputPath)}"
       }
+    }
 
-      val bundledMainModuleNames = getBundledMainModuleNames(context.productProperties, request.additionalModules)
-
-      val pluginRootDir = runDir.resolve("plugins")
-      val pluginCacheRootDir = runDir.resolve(PLUGIN_CACHE_DIR_NAME)
-
-      val moduleNameToPluginBuildDescriptor = HashMap<String, PluginBuildDescriptor>()
-      val pluginBuildDescriptors = mutableListOf<PluginBuildDescriptor>()
-      for (plugin in getPluginLayoutsByJpsModuleNames(bundledMainModuleNames, context.productProperties.productLayout)) {
-        if (!isPluginApplicable(bundledMainModuleNames = bundledMainModuleNames, plugin = plugin, context = context)) {
-          continue
-        }
-
-        // remove all modules without a content root
-        val modules = plugin.includedModules.asSequence()
-          .map { it.moduleName }
-          .distinct()
-          .filter { it == plugin.mainModule || !context.findRequiredModule(it).contentRootsList.urls.isEmpty() }
-          .toList()
-        val pluginBuildDescriptor = PluginBuildDescriptor(dir = pluginRootDir.resolve(plugin.directoryName),
-                                                          layout = plugin,
-                                                          moduleNames = modules)
-        for (name in modules) {
-          moduleNameToPluginBuildDescriptor.put(name, pluginBuildDescriptor)
-        }
-        pluginBuildDescriptors.add(pluginBuildDescriptor)
-      }
-
-      withContext(Dispatchers.IO) {
-        Files.createDirectories(pluginRootDir)
-      }
-
-      artifactTask.join()
-      val pluginEntries = buildPlugins(pluginBuildDescriptors = pluginBuildDescriptors,
-                                       outDir = request.productionClassOutput,
-                                       platformLayout = platformLayout.await(),
-                                       pluginCacheRootDir = pluginCacheRootDir,
-                                       context = context)
-
-      val additionalPluginPaths = context.productProperties.getAdditionalPluginPaths(context)
-      if (additionalPluginPaths.isNotEmpty()) {
-        withContext(Dispatchers.IO) {
-          for (sourceDir in additionalPluginPaths) {
-            copyDir(sourceDir = sourceDir, targetDir = pluginRootDir.resolve(sourceDir.fileName))
-          }
-        }
-      }
-      pluginEntries
+    val pluginDistributionEntriesDeferred = async {
+      buildPlugins(request = request,
+                   context = context,
+                   runDir = runDir,
+                   platformLayout = platformLayout,
+                   artifactTask = artifactTask)
     }
 
     if (context.generateRuntimeModuleRepository) {
       launch {
-        val allDistributionEntries = platformDistributionEntries.await() + pluginDistributionEntries.await().flatten()
+        val allDistributionEntries = platformDistributionEntriesDeferred.await().asSequence() +
+                                     pluginDistributionEntriesDeferred.await().asSequence().map { it.second }.flatten()
         spanBuilder("generate runtime repository").useWithScope2 {
           withContext(Dispatchers.IO) {
             generateRuntimeModuleRepositoryForDevBuild(entries = allDistributionEntries, targetDirectory = runDir, context = context)
@@ -192,9 +152,114 @@ internal suspend fun buildProduct(productConfiguration: ProductConfiguration, re
         }
       }
     }
+
+    launch {
+      computeIdeFingerprint(platformDistributionEntriesDeferred = platformDistributionEntriesDeferred,
+                            pluginDistributionEntriesDeferred = pluginDistributionEntriesDeferred,
+                            runDir = runDir,
+                            homePath = request.homePath)
+    }
   }
 
   return runDir
+}
+
+private suspend fun computeIdeFingerprint(
+  platformDistributionEntriesDeferred: Deferred<List<DistributionFileEntry>>,
+  pluginDistributionEntriesDeferred: Deferred<List<Pair<PluginBuildDescriptor, List<DistributionFileEntry>>>>,
+  runDir: Path,
+  homePath: Path,
+) {
+  val hasher = Hashing.komihash5_0().hashStream()
+
+  val debug = StringBuilder()
+
+  val distributionFileEntries = platformDistributionEntriesDeferred.await()
+  hasher.putInt(distributionFileEntries.size)
+  debug.append(distributionFileEntries.size).append('\n')
+  for (entry in distributionFileEntries) {
+    hasher.putLong(entry.hash)
+
+    var path = entry.path
+    if (path.startsWith(homePath)) {
+      path = homePath.relativize(path)
+    }
+    debug.append(java.lang.Long.toUnsignedString(entry.hash, Character.MAX_RADIX)).append(" ").append(path).append('\n')
+  }
+
+  val pluginDistributionEntries = pluginDistributionEntriesDeferred.await()
+  hasher.putInt(pluginDistributionEntries.size)
+  for ((plugin, entries) in pluginDistributionEntries) {
+    hasher.putInt(entries.size)
+
+    debug.append('\n').append(plugin.layout.mainModule).append('\n')
+    for (entry in entries) {
+      hasher.putLong(entry.hash)
+      debug.append("  ").append(java.lang.Long.toUnsignedString(entry.hash, Character.MAX_RADIX)).append(" ").append(entry.path).append('\n')
+    }
+  }
+
+  val fingerprint = java.lang.Long.toUnsignedString(hasher.asLong, Character.MAX_RADIX)
+  withContext(Dispatchers.IO) {
+    Files.writeString(runDir.resolve("fingerprint.txt"), fingerprint)
+    Files.writeString(runDir.resolve("fingerprint-debug.txt"), debug)
+  }
+  Span.current().addEvent("IDE fingerprint: $fingerprint")
+}
+
+private suspend fun buildPlugins(request: BuildRequest,
+                                 context: BuildContext,
+                                 runDir: Path,
+                                 platformLayout: Deferred<PlatformLayout>,
+                                 artifactTask: Job): List<Pair<PluginBuildDescriptor, List<DistributionFileEntry>>> {
+  val bundledMainModuleNames = getBundledMainModuleNames(context.productProperties, request.additionalModules)
+
+  val pluginRootDir = runDir.resolve("plugins")
+  val pluginCacheRootDir = runDir.resolve(PLUGIN_CACHE_DIR_NAME)
+
+  val moduleNameToPluginBuildDescriptor = HashMap<String, PluginBuildDescriptor>()
+  val pluginBuildDescriptors = mutableListOf<PluginBuildDescriptor>()
+  for (plugin in getPluginLayoutsByJpsModuleNames(bundledMainModuleNames, context.productProperties.productLayout)) {
+    if (!isPluginApplicable(bundledMainModuleNames = bundledMainModuleNames, plugin = plugin, context = context)) {
+      continue
+    }
+
+    // remove all modules without a content root
+    val modules = plugin.includedModules.asSequence()
+      .map { it.moduleName }
+      .distinct()
+      .filter { it == plugin.mainModule || !context.findRequiredModule(it).contentRootsList.urls.isEmpty() }
+      .toList()
+    val pluginBuildDescriptor = PluginBuildDescriptor(dir = pluginRootDir.resolve(plugin.directoryName),
+                                                      layout = plugin,
+                                                      moduleNames = modules)
+    for (name in modules) {
+      moduleNameToPluginBuildDescriptor.put(name, pluginBuildDescriptor)
+    }
+    pluginBuildDescriptors.add(pluginBuildDescriptor)
+  }
+
+  withContext(Dispatchers.IO) {
+    Files.createDirectories(pluginRootDir)
+  }
+
+  artifactTask.join()
+
+  val pluginEntries = buildPlugins(pluginBuildDescriptors = pluginBuildDescriptors,
+                                   outDir = request.productionClassOutput,
+                                   platformLayout = platformLayout.await(),
+                                   pluginCacheRootDir = pluginCacheRootDir,
+                                   context = context)
+
+  val additionalPluginPaths = context.productProperties.getAdditionalPluginPaths(context)
+  if (additionalPluginPaths.isNotEmpty()) {
+    withContext(Dispatchers.IO) {
+      for (sourceDir in additionalPluginPaths) {
+        copyDir(sourceDir = sourceDir, targetDir = pluginRootDir.resolve(sourceDir.fileName))
+      }
+    }
+  }
+  return pluginEntries
 }
 
 private suspend fun createBuildContext(productConfiguration: ProductConfiguration,
@@ -348,7 +413,6 @@ private suspend fun layoutPlatform(runDir: Path,
     launch {
       val classPath = LinkedHashSet<Path>()
       val libDir = runDir.resolve("lib")
-      val hasher = Hashing.komihash5_0().hashStream()
       for (entry in entries) {
         val file = entry.path
         // exclude files like ext/platform-main.jar - if file in lib, take only direct children in an account
@@ -357,16 +421,8 @@ private suspend fun layoutPlatform(runDir: Path,
         }
 
         classPath.add(file)
-
-        hasher.putLong(entry.hash)
       }
       sortedClassPath = computeAppClassPath(libDir = libDir, existing = classPath, homeDir = runDir)
-
-      withContext(Dispatchers.IO) {
-        val fingerprint = java.lang.Long.toUnsignedString(hasher.asLong, Character.MAX_RADIX)
-        Files.writeString(runDir.resolve("fingerprint.txt"), fingerprint)
-        Span.current().addEvent("IDE fingerprint: $fingerprint")
-      }
     }
 
     launch(Dispatchers.IO) {

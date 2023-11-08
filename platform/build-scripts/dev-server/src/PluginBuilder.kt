@@ -24,18 +24,18 @@ internal suspend fun buildPlugins(pluginBuildDescriptors: List<PluginBuildDescri
                                   outDir: Path,
                                   pluginCacheRootDir: Path,
                                   platformLayout: PlatformLayout,
-                                  context: BuildContext): List<List<DistributionFileEntry>> {
+                                  context: BuildContext): List<Pair<PluginBuildDescriptor, List<DistributionFileEntry>>> {
   return spanBuilder("build plugins").setAttribute(AttributeKey.longKey("count"), pluginBuildDescriptors.size.toLong()).useWithScope2 { span ->
     val counter = LongAdder()
     val pluginEntries = coroutineScope {
       pluginBuildDescriptors.map { plugin ->
         async {
-          buildPluginIfNotCached(plugin = plugin,
-                                 platformLayout = platformLayout,
-                                 outDir = outDir,
-                                 pluginCacheRootDir = pluginCacheRootDir,
-                                 context = context,
-                                 reusedPluginsCounter = counter)        
+          plugin to buildPluginIfNotCached(plugin = plugin,
+                                           platformLayout = platformLayout,
+                                           outDir = outDir,
+                                           pluginCacheRootDir = pluginCacheRootDir,
+                                           context = context,
+                                           reusedPluginsCounter = counter)
         }
       }
     }.map { it.getCompleted() }
@@ -68,7 +68,6 @@ internal suspend fun buildPluginIfNotCached(plugin: PluginBuildDescriptor,
     reusedPluginsCounter.add(1)
     if (context.generateRuntimeModuleRepository) {
       return buildPlugin(plugin = plugin,
-                         outDir = outDir,
                          reason = "generate runtime module repository",
                          platformLayout = platformLayout,
                          context = context,
@@ -78,7 +77,6 @@ internal suspend fun buildPluginIfNotCached(plugin: PluginBuildDescriptor,
   }
 
   return buildPlugin(plugin = plugin,
-                     outDir = outDir,
                      reason = reason,
                      platformLayout = platformLayout,
                      context = context,
@@ -86,7 +84,6 @@ internal suspend fun buildPluginIfNotCached(plugin: PluginBuildDescriptor,
 }
 
 private suspend fun buildPlugin(plugin: PluginBuildDescriptor,
-                                outDir: Path,
                                 reason: String,
                                 platformLayout: PlatformLayout,
                                 context: BuildContext,

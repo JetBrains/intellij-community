@@ -14,7 +14,6 @@ import com.intellij.openapi.progress.ProgressManager
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.nio.file.Files
 import java.nio.file.LinkOption
-import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import java.nio.file.attribute.BasicFileAttributes
 import kotlin.io.path.ExperimentalPathApi
@@ -92,7 +91,6 @@ private fun addPluginFingerprint(plugin: IdeaPluginDescriptor, hasher: HashStrea
 
 @OptIn(ExperimentalPathApi::class)
 private fun hashByFileContent(descriptor: IdeaPluginDescriptorImpl, hasher: HashStream64) {
-  val isDevMode = AppMode.isDevServer()
   if (descriptor.useCoreClassLoader) {
     hasher.putLong(0)
     return
@@ -103,33 +101,15 @@ private fun hashByFileContent(descriptor: IdeaPluginDescriptorImpl, hasher: Hash
   val files = descriptor.jarFiles!!
   hasher.putInt(files.size)
   for (file in files) {
-    if (isDevMode) {
-      val path = file.toString()
-      if (path.endsWith(".jar")) {
-        hashFile(file = file, hasher = hasher, path = path)
-      }
-      else {
-        // classpath.index cannot be used as it is created not before but during IDE launch, .unmodified must be present
-        try {
-          hashFile(file = file.resolve(".unmodified"), hasher = hasher, path = path)
-        }
-        catch (e: NoSuchFileException) {
-          Logger.getInstance("com.intellij.platform.ide.IdeFingerprint")
-            .warn(".unmodified doesn't exist, cannot compute module fingerprint", e)
-        }
-      }
-    }
-    else {
-      // if the path is not a directory, only "this" file will be visited
-      // if the path is a directory, all the regular files will be visited
-      // note, that symlinks are not followed
-      file.walk().sorted().forEach { f ->
-        // /tmp/byteBuddyAgent12978532094762450051.jar:1261:2023-09-21T12:46:17.196727952Z <= this file is always different :(
-        // see also https://youtrack.jetbrains.com/issue/IJPL-166
-        val absolutePathString = f.toAbsolutePath().toString()
-        if (!absolutePathString.startsWith("/tmp/byteBuddyAgent")) {
-          hashFile(file = f, hasher = hasher, path = absolutePathString)
-        }
+    // if the path is not a directory, only "this" file will be visited
+    // if the path is a directory, all the regular files will be visited
+    // note, that symlinks are not followed
+    file.walk().sorted().forEach { f ->
+      // /tmp/byteBuddyAgent12978532094762450051.jar:1261:2023-09-21T12:46:17.196727952Z <= this file is always different :(
+      // see also https://youtrack.jetbrains.com/issue/IJPL-166
+      val absolutePathString = f.toAbsolutePath().toString()
+      if (!absolutePathString.startsWith("/tmp/byteBuddyAgent")) {
+        hashFile(file = f, hasher = hasher, path = absolutePathString)
       }
     }
   }

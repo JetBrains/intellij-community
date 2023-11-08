@@ -202,6 +202,11 @@ public final class ImmutableZipFile implements ZipFile {
       throw new ZipException("Archive is not a ZIP archive");
     }
 
+    if (offset == 0) {
+      // empty file
+      return new EmptyZipFile();
+    }
+
     boolean isZip64 = true;
     if (buffer.getInt(offset - 20) == 0x07064b50) {
       offset = (int)buffer.getLong(offset - (20 - 8));
@@ -262,5 +267,37 @@ public final class ImmutableZipFile implements ZipFile {
   @Override
   public void close() throws Exception {
     ikv.close();
+  }
+}
+
+final class EmptyZipFile implements ZipFile {
+  @Override
+  public @Nullable InputStream getInputStream(@NotNull String path) throws IOException {
+    return null;
+  }
+
+  @Override
+  public @Nullable ByteBuffer getByteBuffer(@NotNull String path) throws IOException {
+    return null;
+  }
+
+  @Override
+  public byte @Nullable [] getData(String name) throws IOException {
+    return null;
+  }
+
+  @Override
+  public @Nullable ZipResource getResource(String name) {
+    return null;
+  }
+
+  @Override
+  public void processResources(@NotNull String dir,
+                               @NotNull Predicate<? super String> nameFilter,
+                               @NotNull BiConsumer<? super String, ? super InputStream> consumer) throws IOException {
+  }
+
+  @Override
+  public void close() throws Exception {
   }
 }

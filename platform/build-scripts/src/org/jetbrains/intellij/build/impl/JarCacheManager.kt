@@ -36,7 +36,8 @@ internal sealed interface JarCacheManager {
                               targetFile: Path,
                               nativeFiles: MutableMap<ZipSource, List<String>>?,
                               span: Span,
-                              producer: suspend () -> Unit)
+                              useCacheAsTargetFile: Boolean,
+                              producer: suspend () -> Unit): Path
 }
 
 internal data object NonCachingJarCacheManager : JarCacheManager {
@@ -44,8 +45,10 @@ internal data object NonCachingJarCacheManager : JarCacheManager {
                                        targetFile: Path,
                                        nativeFiles: MutableMap<ZipSource, List<String>>?,
                                        span: Span,
-                                       producer: suspend () -> Unit) {
+                                       useCacheAsTargetFile: Boolean,
+                                       producer: suspend () -> Unit): Path {
     producer()
+    return targetFile
   }
 }
 
@@ -58,7 +61,8 @@ private val json by lazy {
   }
 }
 
-internal class LocalDiskJarCacheManager(private val cacheDir: Path, private val classOutDirectory: Path) : JarCacheManager {
+internal class LocalDiskJarCacheManager(private val cacheDir: Path,
+                                        private val classOutDirectory: Path) : JarCacheManager {
   init {
     Files.createDirectories(cacheDir)
     CacheDirCleanup(cacheDir).runCleanupIfRequired()
@@ -68,7 +72,8 @@ internal class LocalDiskJarCacheManager(private val cacheDir: Path, private val 
                                        targetFile: Path,
                                        nativeFiles: MutableMap<ZipSource, List<String>>?,
                                        span: Span,
-                                       producer: suspend () -> Unit) {
+                                       useCacheAsTargetFile: Boolean,
+                                       producer: suspend () -> Unit): Path {
     val items = createSourceAndCacheStrategyList(sources = sources, classOutDirectory = classOutDirectory)
 
     // 224 bit and not 256/512 - use a slightly shorter filename
@@ -97,8 +102,10 @@ internal class LocalDiskJarCacheManager(private val cacheDir: Path, private val 
                    items = items,
                    span = span,
                    nativeFiles = nativeFiles)) {
-      Files.createDirectories(targetFile.parent)
-      Files.copy(cacheFile, targetFile)
+      if (!useCacheAsTargetFile) {
+        Files.createDirectories(targetFile.parent)
+        Files.copy(cacheFile, targetFile)
+      }
       span.addEvent(
         "use cache",
         Attributes.of(
@@ -109,7 +116,11 @@ internal class LocalDiskJarCacheManager(private val cacheDir: Path, private val 
 
       // update file modification time to maintain FIFO caches i.e., in persistent cache folder on TeamCity agent and for CacheDirCleanup
       Files.setLastModifiedTime(cacheFile, FileTime.from(Instant.now()))
-      return
+
+      if (useCacheAsTargetFile) {
+        return cacheFile
+      }
+      return targetFile
     }
 
     producer()
@@ -141,6 +152,11 @@ internal class LocalDiskJarCacheManager(private val cacheDir: Path, private val 
         notifyAboutMetadata(sources = sourceCacheItems, items = items, nativeFiles = nativeFiles)
       }
     }
+
+    if (useCacheAsTargetFile) {
+      return cacheFile
+    }
+    return targetFile
   }
 }
 

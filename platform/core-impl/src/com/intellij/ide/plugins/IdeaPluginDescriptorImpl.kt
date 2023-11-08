@@ -74,7 +74,10 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
   init {
     // https://youtrack.jetbrains.com/issue/IDEA-206274
     val list = raw.depends
-    if (list != null) {
+    if (list.isNullOrEmpty()) {
+      pluginDependencies = persistentListOf()
+    }
+    else {
       val iterator = list.iterator()
       while (iterator.hasNext()) {
         val item = iterator.next()
@@ -88,8 +91,8 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
           }
         }
       }
+      pluginDependencies = list.toPersistentList()
     }
-    pluginDependencies = list ?: Collections.emptyList()
   }
 
   @Transient @JvmField var jarFiles: List<Path>? = null
@@ -148,8 +151,7 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
 
   override fun getDescriptorPath(): String? = descriptorPath
 
-  override fun getDependencies(): List<IdeaPluginDependency> =
-    if (pluginDependencies.isEmpty()) Collections.emptyList() else Collections.unmodifiableList(pluginDependencies)
+  override fun getDependencies(): List<IdeaPluginDependency> = pluginDependencies
 
   override fun getPluginPath(): Path = path
 
@@ -160,7 +162,11 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
                         dataLoader: DataLoader,
                         moduleName: String?): IdeaPluginDescriptorImpl {
     raw.name = name
-    val result = IdeaPluginDescriptorImpl(raw, path = path, isBundled = isBundled, id = id, moduleName = moduleName,
+    val result = IdeaPluginDescriptorImpl(raw = raw,
+                                          path = path,
+                                          isBundled = isBundled,
+                                          id = id,
+                                          moduleName = moduleName,
                                           useCoreClassLoader = useCoreClassLoader)
     context.debugData?.recordDescriptorPath(result, raw, descriptorPath)
     result.descriptorPath = descriptorPath

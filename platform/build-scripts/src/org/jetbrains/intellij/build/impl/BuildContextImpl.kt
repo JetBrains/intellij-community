@@ -308,7 +308,11 @@ class BuildContextImpl(
   override fun getExtraExecutablePattern(os: OsFamily): List<String> = extraExecutablePatterns.get().get(os) ?: emptyList()
 
   override suspend fun buildJar(targetFile: Path, sources: List<Source>, compress: Boolean) {
-    jarCacheManager.computeIfAbsent(sources = sources, targetFile = targetFile, nativeFiles = null, span = Span.current()) {
+    jarCacheManager.computeIfAbsent(sources = sources,
+                                    targetFile = targetFile,
+                                    nativeFiles = null,
+                                    span = Span.current(),
+                                    useCacheAsTargetFile = false) {
       buildJar(targetFile = targetFile, sources = sources, compress = compress, notify = false)
     }
   }

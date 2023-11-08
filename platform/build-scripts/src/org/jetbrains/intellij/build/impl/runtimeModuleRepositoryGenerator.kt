@@ -62,7 +62,7 @@ internal fun generateRuntimeModuleRepository(entries: List<DistributionFileEntry
  * and distribution files are generated under [targetDirectory].
  */
 @ApiStatus.Internal
-fun generateRuntimeModuleRepositoryForDevBuild(entries: List<DistributionFileEntry>, targetDirectory: Path, context: BuildContext) {
+fun generateRuntimeModuleRepositoryForDevBuild(entries: Sequence<DistributionFileEntry>, targetDirectory: Path, context: BuildContext) {
   val (repositoryForCompiledModulesPath, compiledModulesDescriptors) = loadForCompiledModules(context)
   val actualEntries = entries.mapNotNull { entry ->
     if (targetDirectory.isAncestor(entry.path, false)) {
@@ -76,7 +76,7 @@ fun generateRuntimeModuleRepositoryForDevBuild(entries: List<DistributionFileEnt
     }
   }
   generateRepositoryForDistribution(targetDirectory = targetDirectory,
-                                    entries = actualEntries,
+                                    entries = actualEntries.toList(),
                                     compiledModulesDescriptors = compiledModulesDescriptors,
                                     context = context,
                                     repositoryForCompiledModulesPath = repositoryForCompiledModulesPath)
