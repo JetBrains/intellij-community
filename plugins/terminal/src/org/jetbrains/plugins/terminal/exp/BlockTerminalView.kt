@@ -132,8 +132,7 @@ class BlockTerminalView(
   }
 
   private fun installAlternateBufferPanel() {
-    val eventsHandler = SimpleTerminalEventsHandler(session, settings)
-    val view = SimpleTerminalView(project, settings, session, eventsHandler, withVerticalScroll = false)
+    val view = SimpleTerminalView(project, settings, session, withVerticalScroll = false)
     Disposer.register(this, view)
     alternateBufferView = view
 

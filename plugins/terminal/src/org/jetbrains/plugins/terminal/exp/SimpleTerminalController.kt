@@ -20,8 +20,7 @@ import org.jetbrains.plugins.terminal.exp.TerminalUiUtils.toTextAttributes
 class SimpleTerminalController(
   settings: JBTerminalSystemSettingsProviderBase,
   private val session: TerminalSession,
-  private val editor: EditorEx,
-  eventsHandler: TerminalEventsHandler
+  private val editor: EditorEx
 ) : Disposable {
   val document: Document
     get() = editor.document
@@ -43,6 +42,7 @@ class SimpleTerminalController(
     terminalModel.isCommandRunning = true
 
     setupContentListener()
+    val eventsHandler = SimpleTerminalEventsHandler(session, settings)
     setupKeyEventDispatcher(editor, settings, eventsHandler, outputModel, selectionModel, disposable = this)
     setupMouseListener(editor, settings, terminalModel, eventsHandler, disposable = this)
     terminalModel.withContentLock {

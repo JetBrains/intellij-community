@@ -25,7 +25,6 @@ class SimpleTerminalView(
   private val project: Project,
   private val settings: JBTerminalSystemSettingsProviderBase,
   session: TerminalSession,
-  eventsHandler: TerminalEventsHandler,
   private val withVerticalScroll: Boolean = true
 ) : Disposable {
   private val editor: EditorImpl
@@ -48,7 +47,7 @@ class SimpleTerminalView(
   init {
     val palette = session.colorPalette
     editor = createEditor(palette)
-    controller = SimpleTerminalController(settings, session, editor, eventsHandler)
+    controller = SimpleTerminalController(settings, session, editor)
     component = SimpleTerminalPanel(palette)
     editor.addFocusListener(object : FocusChangeListener {
       override fun focusGained(editor: Editor) {
