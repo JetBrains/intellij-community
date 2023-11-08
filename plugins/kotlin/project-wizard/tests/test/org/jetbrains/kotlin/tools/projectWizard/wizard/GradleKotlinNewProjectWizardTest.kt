@@ -350,7 +350,10 @@ class GradleKotlinNewProjectWizardTest : GradleCreateProjectTestCase() {
             expectedNewModules = listOf("project.module", "project.module.main", "project.module.test"),
             projectInfo = simpleJavaProject(false),
             addSampleCode = true
-        )
+        ) { project ->
+            val propertiesExist = project.findRelativeFile("module/gradle.properties")?.exists() == true
+            Assertions.assertFalse(propertiesExist, "Gradle properties file should not exist in modules")
+        }
     }
 
     @Test
@@ -360,7 +363,10 @@ class GradleKotlinNewProjectWizardTest : GradleCreateProjectTestCase() {
             projectInfo = simpleJavaProject(true),
             addSampleCode = true,
             useKotlinDsl = true
-        )
+        ) { project ->
+            val propertiesExist = project.findRelativeFile("module/gradle.properties")?.exists() == true
+            Assertions.assertFalse(propertiesExist, "Gradle properties file should not exist in modules")
+        }
     }
 
     @Test
