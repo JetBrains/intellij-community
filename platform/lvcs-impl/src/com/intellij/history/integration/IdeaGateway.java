@@ -147,7 +147,7 @@ public class IdeaGateway {
     }
   }
 
-  private static final class VersionedFilterData {
+  protected static final class VersionedFilterData {
     final List<Project> myOpenedProjects = new ArrayList<>();
     final List<ProjectFileIndex> myProjectFileIndices = new ArrayList<>();
 
