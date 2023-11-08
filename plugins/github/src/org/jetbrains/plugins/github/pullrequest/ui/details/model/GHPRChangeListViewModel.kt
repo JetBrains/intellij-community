@@ -1,10 +1,12 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui.details.model
 
-import com.intellij.collaboration.async.nestedDisposable
+import com.intellij.collaboration.async.CompletableFutureUtil.handleOnEdt
+import com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangeDetails
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangeList
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangeListViewModel
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangeListViewModelBase
+import com.intellij.collaboration.util.CODE_REVIEW_CHANGE_HASHING_STRATEGY
 import com.intellij.collaboration.util.ChangesSelection
 import com.intellij.diff.DiffDialogHints
 import com.intellij.diff.DiffManager
@@ -17,29 +19,27 @@ import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ChangesUtil
 import com.intellij.openapi.vcs.changes.DiffPreview
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.containers.CollectionFactory
 import com.intellij.vcsUtil.VcsFileUtil.relativePath
 import git4idea.repo.GitRepository
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestFileViewedState
 import org.jetbrains.plugins.github.api.data.pullrequest.isViewed
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRDiffRequestChainProducer
-import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRProgressTreeModel
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRViewedStateDiffSupport
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRViewedStateDiffSupportImpl
 import org.jetbrains.plugins.github.pullrequest.ui.review.DelegatingGHPRReviewViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.review.GHPRReviewViewModelHelper
 
 @ApiStatus.Experimental
-interface GHPRChangeListViewModel : CodeReviewChangeListViewModel, DiffPreview {
+interface GHPRChangeListViewModel : CodeReviewChangeListViewModel.WithDetails, DiffPreview {
   val isUpdating: StateFlow<Boolean>
-
-  val progressModel: GHPRProgressTreeModel
 
   fun canShowDiff(): Boolean
   fun showDiff()
@@ -93,9 +93,12 @@ internal class GHPRChangeListViewModelImpl(
       )
     }
 
-  override val progressModel: GHPRProgressTreeModel =
-    GHPRProgressTreeModel(repository, dataProvider.reviewData, viewedStateData) { selectedCommit == null }.also {
-      Disposer.register(cs.nestedDisposable(), it)
+  override val detailsByChange: StateFlow<Map<Change, CodeReviewChangeDetails>> =
+    if (changeList.commitSha == null) {
+      createDetailsByChangeFlow().stateIn(cs, SharingStarted.Eagerly, emptyMap())
+    }
+    else {
+      MutableStateFlow(emptyMap())
     }
 
   fun setUpdating(updating: Boolean) {
@@ -161,6 +164,53 @@ internal class GHPRChangeListViewModelImpl(
       state[it]?.isViewed() != viewed
     }.forEach {
       viewedStateData.updateViewedState(it, viewed)
+    }
+  }
+
+  private fun createDetailsByChangeFlow(): Flow<Map<Change, CodeReviewChangeDetails>> = channelFlow {
+    var unresolvedThreadsByPath = emptyMap<String, Int>()
+    var viewedStateByPath = emptyMap<String, GHPullRequestFileViewedState>()
+    val disposable = Disposer.newDisposable()
+
+    fun updateAndSend() {
+      val result: MutableMap<Change, CodeReviewChangeDetails> =
+        CollectionFactory.createCustomHashingStrategyMap(CODE_REVIEW_CHANGE_HASHING_STRATEGY)
+      changeList.changes.associateWithTo(result) {
+        val path = relativePath(repository.root, ChangesUtil.getFilePath(it))
+        CodeReviewChangeDetails(viewedStateByPath[path]?.isViewed() ?: true, unresolvedThreadsByPath[path] ?: 0)
+      }.let {
+        trySend(it)
+      }
+    }
+
+    fun loadThreads() {
+      dataProvider.reviewData.loadReviewThreads().handleOnEdt(disposable) { threads, _ ->
+        threads ?: return@handleOnEdt // error
+
+        unresolvedThreadsByPath = threads.asSequence().filter { !it.isResolved }.groupingBy { it.path }.eachCount()
+        updateAndSend()
+      }
+    }
+
+    fun loadViewedState() {
+      viewedStateData.loadViewedState().handleOnEdt(disposable) { viewedState, _ ->
+        viewedState ?: return@handleOnEdt // error
+
+        viewedStateByPath = viewedState
+        updateAndSend()
+      }
+    }
+
+    loadViewedState()
+    viewedStateData.addViewedStateListener(disposable) { loadViewedState() }
+
+    loadThreads()
+    dataProvider.reviewData.addReviewThreadsListener(disposable) { loadThreads() }
+
+    send(emptyMap())
+
+    awaitClose {
+      Disposer.dispose(disposable)
     }
   }
 }

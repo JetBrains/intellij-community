@@ -4,6 +4,7 @@ package org.jetbrains.plugins.github.pullrequest.ui.toolwindow
 import com.intellij.collaboration.async.nestedDisposable
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.collaboration.ui.LoadingLabel
+import com.intellij.collaboration.ui.codereview.CodeReviewProgressTreeModelFromDetails
 import com.intellij.collaboration.ui.codereview.changes.CodeReviewChangeListComponentFactory
 import com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPanelFactory
 import com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPresenter
@@ -108,7 +109,8 @@ internal class GHPRViewComponentFactory(actionManager: ActionManager,
 
   private fun CoroutineScope.createChangesPanel(changesVm: GHPRChangesViewModel,
                                                 changeListVm: GHPRChangeListViewModel): JComponent {
-    val tree = CodeReviewChangeListComponentFactory.createIn(this, changeListVm, changeListVm.progressModel,
+    val progressModel = CodeReviewProgressTreeModelFromDetails(this, changeListVm)
+    val tree = CodeReviewChangeListComponentFactory.createIn(this, changeListVm, progressModel,
                                                              GithubBundle.message("pull.request.does.not.contain.changes"))
     ClientProperty.put(tree, GHPRCommitBrowserComponentController.KEY, changesVm)
 

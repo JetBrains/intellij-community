@@ -37,6 +37,13 @@ interface CodeReviewChangeListViewModel {
    */
   fun showDiffPreview()
 
+  interface WithDetails : CodeReviewChangeListViewModel {
+    /**
+     * Map of additional details for changes
+     */
+    val detailsByChange: StateFlow<Map<Change, CodeReviewChangeDetails>>
+  }
+
   sealed interface SelectionRequest {
     data object All : SelectionRequest
     data class OneChange(val change: Change) : SelectionRequest

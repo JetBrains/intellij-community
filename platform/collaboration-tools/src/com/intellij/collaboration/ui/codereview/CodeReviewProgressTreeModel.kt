@@ -1,13 +1,21 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.collaboration.ui.codereview
 
+import com.intellij.collaboration.async.launchNow
+import com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangeDetails
+import com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangeListViewModel
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNodeRenderer
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
 import com.intellij.util.containers.DisposableWrapperList
 import com.intellij.util.containers.TreeTraversal
 import com.intellij.util.ui.tree.TreeUtil
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.flow.debounce
+import kotlin.properties.Delegates
 
 fun ChangesTree.setupCodeReviewProgressModel(parent: Disposable, model: CodeReviewProgressTreeModel<*>) {
   val nodeRenderer = ChangesBrowserNodeRenderer(project, { isShowFlatten }, false)
@@ -74,4 +82,26 @@ abstract class CodeReviewProgressTreeModel<T> {
     stateCache.clear()
     listeners.forEach { it() }
   }
+}
+
+@OptIn(FlowPreview::class)
+class CodeReviewProgressTreeModelFromDetails(cs: CoroutineScope, vm: CodeReviewChangeListViewModel.WithDetails)
+  : CodeReviewProgressTreeModel<Change>() {
+  private var details by Delegates.observable<Map<Change, CodeReviewChangeDetails>>(emptyMap()) { _, _, _ ->
+    fireModelChanged()
+  }
+
+  init {
+    cs.launchNow {
+      vm.detailsByChange.debounce(100).collect {
+        details = it
+      }
+    }
+  }
+
+  override fun asLeaf(node: ChangesBrowserNode<*>): Change? = node.userObject as? Change
+
+  override fun isRead(leafValue: Change): Boolean = details[leafValue]?.isRead ?: true
+
+  override fun getUnresolvedDiscussionsCount(leafValue: Change): Int = details[leafValue]?.discussions ?: 0
 }

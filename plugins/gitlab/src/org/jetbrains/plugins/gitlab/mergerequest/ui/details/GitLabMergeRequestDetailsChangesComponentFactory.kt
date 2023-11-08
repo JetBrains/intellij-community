@@ -4,6 +4,7 @@ package org.jetbrains.plugins.gitlab.mergerequest.ui.details
 import com.intellij.collaboration.ui.LoadingLabel
 import com.intellij.collaboration.ui.SimpleHtmlPane
 import com.intellij.collaboration.ui.TransparentScrollPane
+import com.intellij.collaboration.ui.codereview.CodeReviewProgressTreeModelFromDetails
 import com.intellij.collaboration.ui.codereview.changes.CodeReviewChangeListComponentFactory
 import com.intellij.collaboration.ui.util.bindContentIn
 import com.intellij.openapi.actionSystem.ActionGroup
@@ -28,7 +29,7 @@ internal object GitLabMergeRequestDetailsChangesComponentFactory {
       bindContentIn(cs, vm.changeListVm) { res ->
         res.result?.let {
           it.fold(onSuccess = {
-            createChangesTree(vm, it)
+            createChangesTree(it)
           }, onFailure = {
             SimpleHtmlPane(it.localizedMessage)
           })
@@ -42,9 +43,8 @@ internal object GitLabMergeRequestDetailsChangesComponentFactory {
     }
   }
 
-  private fun CoroutineScope.createChangesTree(changesVm: GitLabMergeRequestChangesViewModel,
-                                               vm: GitLabMergeRequestChangeListViewModel): JComponent {
-    val progressModel = GitLabMergeRequestProgressTreeModel(this, changesVm)
+  private fun CoroutineScope.createChangesTree(vm: GitLabMergeRequestChangeListViewModel): JComponent {
+    val progressModel = CodeReviewProgressTreeModelFromDetails(this, vm)
     return CodeReviewChangeListComponentFactory.createIn(this, vm, progressModel,
                                                          GitLabBundle.message("merge.request.details.changes.empty")).also {
       val popupGroup = ActionManager.getInstance().getAction("GitLab.Merge.Request.Changes.Popup") as ActionGroup
