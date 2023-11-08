@@ -271,7 +271,6 @@ open class StartupManagerImpl(private val project: Project, private val coroutin
               runOldActivity(activity as StartupActivity)
             }
           }
-          continue
         }
         else if (!isProjectLightEditCompatible) {
           LOG.warn(PluginException("Migrate ${item.implementationClassName} to ProjectActivity", pluginDescriptor.pluginId))
@@ -311,12 +310,7 @@ open class StartupManagerImpl(private val project: Project, private val coroutin
       throw e
     }
     catch (e: Throwable) {
-      if (ApplicationManager.getApplication().isUnitTestMode) {
-        postStartupActivitiesPassed = -1
-      }
-      else {
-        throw e
-      }
+      throw e
     }
   }
 
