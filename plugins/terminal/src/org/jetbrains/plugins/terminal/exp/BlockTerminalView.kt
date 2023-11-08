@@ -23,6 +23,8 @@ import java.awt.BorderLayout
 import java.awt.Dimension
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
+import java.awt.event.KeyAdapter
+import java.awt.event.KeyEvent
 import javax.swing.JComponent
 import javax.swing.JPanel
 
@@ -101,6 +103,11 @@ class BlockTerminalView(
       }
     })
 
+    // Forward key typed events from the output view to the prompt.
+    // So, user can start typing even when some block is selected.
+    // The focus and the events will just move to the prompt without an explicit focus switch.
+    installTypingEventsForwarding(outputView.preferredFocusableComponent, promptView.preferredFocusableComponent)
+
     installPromptAndOutput()
   }
 
@@ -144,6 +151,19 @@ class BlockTerminalView(
       add(promptView.component, BorderLayout.SOUTH)
       revalidate()
     }
+  }
+
+  private fun installTypingEventsForwarding(origin: JComponent, destination: JComponent) {
+    origin.addKeyListener(object : KeyAdapter() {
+      override fun keyTyped(e: KeyEvent) {
+        if (e.id == KeyEvent.KEY_TYPED && destination.isShowing) {
+          e.consume()
+          IdeFocusManager.getInstance(project).requestFocus(destination, true)
+          val newEvent = KeyEvent(destination, e.id, e.`when`, e.modifiers, e.keyCode, e.keyChar, e.keyLocation)
+          destination.dispatchEvent(newEvent)
+        }
+      }
+    })
   }
 
   override fun startCommandExecution(command: String) {
