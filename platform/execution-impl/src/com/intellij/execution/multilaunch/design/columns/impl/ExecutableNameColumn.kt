@@ -16,8 +16,8 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.execution.multilaunch.design.ExecutableRow
 import com.intellij.execution.multilaunch.design.MultiLaunchConfigurationViewModel
 import com.intellij.execution.multilaunch.design.actions.AddExecutableAction
-import com.intellij.execution.multilaunch.design.actions.EditExecutableAction
 import com.intellij.execution.multilaunch.design.actions.ManageExecutableAction
+import com.intellij.execution.multilaunch.design.actions.ReplaceExecutableAction
 import com.intellij.execution.multilaunch.design.columns.ExecutableTableColumn
 import com.intellij.execution.multilaunch.design.components.BadgeLabel
 import com.intellij.execution.multilaunch.design.components.DropDownDecorator
@@ -171,7 +171,7 @@ class ExecutableNameColumn(
         val bounds = getSuggestedCellPopupBounds(table, row, column)
         val dataContext = ManageExecutableAction.createContext(viewModel.project, viewModel, executableRow, bounds)
         val actionEvent = AnActionEvent.createFromDataContext(ActionPlaces.POPUP, Presentation.newTemplatePresentation(), dataContext)
-        EditExecutableAction().actionPerformed(actionEvent)
+        ReplaceExecutableAction().actionPerformed(actionEvent)
       }
 
       override fun getSelectorPopupProviders() = listOf<SelectorPopupProvider>(this)
