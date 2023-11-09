@@ -9,6 +9,8 @@ import com.intellij.ide.gdpr.Consent
 import com.intellij.ide.gdpr.ConsentOptions
 import com.intellij.ide.gdpr.ConsentSettingsUi
 import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.ui.UISettings
+import com.intellij.idea.AppMode
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
@@ -398,11 +400,13 @@ object AppUIUtil {
   @JvmStatic
   fun isInFullScreen(window: Window?): Boolean = window is IdeFrame && (window as IdeFrame).isInFullScreen
 
-  fun adjustFractionalMetrics(defaultValue: Any): Any {
-    if (!SystemInfoRt.isMac || GraphicsEnvironment.isHeadless()) {
+  private fun adjustFractionalMetrics(defaultValue: Any): Any {
+    if (!SystemInfoRt.isMac || GraphicsEnvironment.isHeadless() || AppMode.isRemoteDevHost()) {
       return defaultValue
     }
     val gc = GraphicsEnvironment.getLocalGraphicsEnvironment().defaultScreenDevice.defaultConfiguration
     return if (sysScale(gc) == 1.0f) RenderingHints.VALUE_FRACTIONALMETRICS_OFF else defaultValue
   }
+
+  fun getAdjustedFractionalMetricsValue(): Any = adjustFractionalMetrics(UISettings.getPreferredFractionalMetricsValue())
 }
