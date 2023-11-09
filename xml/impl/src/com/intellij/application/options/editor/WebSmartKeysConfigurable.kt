@@ -78,7 +78,7 @@ internal class WebSmartKeysConfigurable : BoundCompositeConfigurable<UnnamedConf
     return ConfigurableWrapper.createConfigurables(EP_NAME)
   }
 
-  private val EP_NAME get() = ExtensionPointName.create<WebSmartKeysConfigurableEP>("com.intellij.webSmartKeysConfigurable")
+  private val EP_NAME = ExtensionPointName.create<WebSmartKeysConfigurableEP>("com.intellij.webSmartKeysConfigurable")
 
   override fun getDependencies(): Collection<BaseExtensionPointName<*>> {
     return listOf(EP_NAME)
