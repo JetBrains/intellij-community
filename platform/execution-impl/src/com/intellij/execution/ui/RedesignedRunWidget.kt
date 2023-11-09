@@ -8,6 +8,7 @@ import com.intellij.execution.actions.RunConfigurationsComboBoxAction
 import com.intellij.execution.actions.StopAction
 import com.intellij.execution.compound.CompoundRunConfiguration
 import com.intellij.execution.impl.ExecutionManagerImpl
+import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl
 import com.intellij.execution.impl.isOfSameType
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
@@ -25,7 +26,6 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.project.DumbAware
-import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
@@ -40,7 +40,6 @@ import com.intellij.openapi.wm.impl.WindowManagerImpl
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.getHeaderBackgroundColor
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.lightThemeDarkHeaderDisableFilter
 import com.intellij.openapi.wm.impl.headertoolbar.adjustIconForHeader
-import com.intellij.psi.PsiDocumentManager
 import com.intellij.ui.*
 import com.intellij.ui.icons.IconReplacer
 import com.intellij.ui.icons.TextHoledIcon
@@ -176,14 +175,11 @@ private class RedesignedRunToolbarWrapper : WindowHeaderPlaceholder() {
     }
 
     if (selectedConfiguration == null) {
-      if (!RunConfigurationsComboBoxAction.hasRunCurrentFileItem(project) || DumbService.isDumb(project)) {
-        // cannot get current PSI file for the Run Current configuration in dumb mode
+      if (!RunConfigurationsComboBoxAction.hasRunCurrentFileItem(project)) {
         return false
       }
-      val editor = e.getData(CommonDataKeys.EDITOR) ?: return false
-      val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.document) ?: return false
-      val runConfigsForCurrentFile = ExecutorRegistryImpl.ExecutorAction.getRunConfigsForCurrentFile(psiFile, false)
-      val runningDescriptors = ExecutionManagerImpl.getInstance(project).getRunningDescriptors { runConfigsForCurrentFile.contains(it) }
+      val runningDescriptors = ExecutionManagerImpl.getInstance(project)
+        .getRunningDescriptors { (it as? RunnerAndConfigurationSettingsImpl)?.filePathIfRunningCurrentFile != null }
       return !runningDescriptors.isEmpty()
     }
     else {
