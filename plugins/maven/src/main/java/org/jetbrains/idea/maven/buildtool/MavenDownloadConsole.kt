@@ -14,47 +14,47 @@ import org.jetbrains.idea.maven.execution.DownloadBundle
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
 
-/**
- * An instance of this class is not supposed to be reused in multiple downloads
- */
-class MavenDownloadConsole(private val myProject: Project,
-                           private val myProgressListener: BuildProgressListener,
-                           private val downloadSources: Boolean,
-                           private val downloadDocs: Boolean) {
+abstract class MavenSyncConsoleBase(protected val myProject: Project,
+                                    private val myProgressListener: BuildProgressListener) {
+  protected abstract val title: String
+  protected abstract val message: String
+
   private val myTaskId = createTaskId()
-  private val myStartedSet = LinkedHashSet<Pair<Any, String>>()
+  private val myStartedSet = LinkedHashSet<Pair<ExternalSystemTaskId, String>>()
 
   private var hasErrors = false
 
-  fun startDownload() {
-    val descriptor = DefaultBuildDescriptor(myTaskId, DownloadBundle.message("maven.download.title"), myProject.basePath!!, System.currentTimeMillis())
+  protected fun createTaskId() = ExternalSystemTaskId.create(MavenUtil.SYSTEM_ID, ExternalSystemTaskType.RESOLVE_PROJECT, myProject)
+
+  fun start() {
+    val descriptor = DefaultBuildDescriptor(myTaskId, title, myProject.basePath!!, System.currentTimeMillis())
     descriptor.isActivateToolWindowWhenFailed = false
     descriptor.isActivateToolWindowWhenAdded = false
-    val message = if (downloadSources) {
-      if (downloadDocs) {
-        DownloadBundle.message("maven.download.sources.and.docs")
-      } else {
-        DownloadBundle.message("maven.download.sources")
-      }
-    } else {
-      DownloadBundle.message("maven.download.docs")
-    }
     myProgressListener.onEvent(myTaskId, StartBuildEventImpl(descriptor, message))
   }
 
-  private fun createTaskId() = ExternalSystemTaskId.create(MavenUtil.SYSTEM_ID, ExternalSystemTaskType.RESOLVE_PROJECT, myProject)
-
-  fun finishDownload() {
-    debugLog("Maven download: finishDownload")
-    doFinish()
+  protected fun startTask(parentId: ExternalSystemTaskId, @NlsSafe taskName: String) {
+    debugLog("Maven task: start $taskName")
+    if (myStartedSet.add(parentId to taskName)) {
+      myProgressListener.onEvent(myTaskId, StartEventImpl(taskName, parentId, System.currentTimeMillis(), taskName))
+    }
   }
 
-  fun startDownloadTask() {
-    startTask(myTaskId, DownloadBundle.message("maven.download.task"))
+  protected fun startTask(@NlsSafe taskName: String) {
+    startTask(myTaskId, taskName)
   }
 
-  fun finishDownloadTask() {
-    completeTask(myTaskId, DownloadBundle.message("maven.download.task"), SuccessResultImpl())
+  protected fun completeTask(parentId: ExternalSystemTaskId, @NlsSafe taskName: String, result: EventResult) {
+    hasErrors = hasErrors || result is FailureResultImpl
+
+    debugLog("Maven task: complete $taskName with $result")
+    if (myStartedSet.remove(parentId to taskName)) {
+      myProgressListener.onEvent(myTaskId, FinishEventImpl(taskName, parentId, System.currentTimeMillis(), taskName, result))
+    }
+  }
+
+  protected fun completeTask(@NlsSafe taskName: String, result: EventResult) {
+    completeTask(myTaskId, taskName, result)
   }
 
   @ApiStatus.Internal
@@ -64,34 +64,44 @@ class MavenDownloadConsole(private val myProject: Project,
     myProgressListener.onEvent(myTaskId, createMessageEvent(myProject, myTaskId, e))
   }
 
-  private fun doFinish() {
+  fun finish() {
     val tasks = myStartedSet.toList().asReversed()
     debugLog("Tasks $tasks are not completed! Force complete")
     tasks.forEach { completeTask(it.first, it.second, DerivedResultImpl()) }
     myProgressListener.onEvent(myTaskId, FinishBuildEventImpl(myTaskId, null, System.currentTimeMillis(), "",
                                                               if (hasErrors) FailureResultImpl() else DerivedResultImpl()))
-
   }
 
-  private fun startTask(parentId: Any, @NlsSafe taskName: String) {
-    debugLog("Maven download: start $taskName")
-    if (myStartedSet.add(parentId to taskName)) {
-      myProgressListener.onEvent(myTaskId, StartEventImpl(taskName, parentId, System.currentTimeMillis(), taskName))
+  private fun debugLog(s: String, exception: Throwable? = null) {
+    MavenLog.LOG.debug(s, exception)
+  }
+}
+
+/**
+ * An instance of this class is not supposed to be reused in multiple downloads
+ */
+class MavenDownloadConsole(myProject: Project,
+                           myProgressListener: BuildProgressListener,
+                           downloadSources: Boolean,
+                           downloadDocs: Boolean) : MavenSyncConsoleBase(myProject, myProgressListener) {
+  override val title: String = DownloadBundle.message("maven.download.title")
+  override val message: String = if (downloadSources) {
+    if (downloadDocs) {
+      DownloadBundle.message("maven.download.sources.and.docs")
+    }
+    else {
+      DownloadBundle.message("maven.download.sources")
     }
   }
-
-  private fun completeTask(parentId: Any, @NlsSafe taskName: String, result: EventResult) {
-    hasErrors = hasErrors || result is FailureResultImpl
-
-    debugLog("Maven download: complete $taskName with $result")
-    if (myStartedSet.remove(parentId to taskName)) {
-      myProgressListener.onEvent(myTaskId, FinishEventImpl(taskName, parentId, System.currentTimeMillis(), taskName, result))
-    }
+  else {
+    DownloadBundle.message("maven.download.docs")
   }
 
-  companion object {
-    private fun debugLog(s: String, exception: Throwable? = null) {
-      MavenLog.LOG.debug(s, exception)
-    }
+  fun startDownloadTask() {
+    startTask(DownloadBundle.message("maven.download.task"))
+  }
+
+  fun finishDownloadTask() {
+    completeTask(DownloadBundle.message("maven.download.task"), SuccessResultImpl())
   }
 }
