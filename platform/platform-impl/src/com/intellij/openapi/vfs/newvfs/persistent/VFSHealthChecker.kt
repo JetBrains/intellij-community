@@ -186,7 +186,12 @@ class VFSHealthChecker(private val impl: FSRecordsImpl,
                                                     rootsReport = rootsReport,
                                                     contentEnumeratorReport = contentEnumeratorReport,
                                                     timeTaken = (finishedAtNs - startedAtNs).nanoseconds)
-    log.info("Checking VFS finished: $vfsHealthCheckReport")
+    if (vfsHealthCheckReport.healthy) {
+      log.info("Checking VFS finished (healthy): $vfsHealthCheckReport")
+    }
+    else {
+      log.warn("Checking VFS finished (non-healthy): $vfsHealthCheckReport")
+    }
 
     return vfsHealthCheckReport
   }
