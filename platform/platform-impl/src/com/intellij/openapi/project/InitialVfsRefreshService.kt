@@ -4,6 +4,7 @@ package com.intellij.openapi.project
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.openapi.vfs.newvfs.RefreshQueue
 import com.intellij.openapi.vfs.newvfs.monitoring.VfsUsageCollector
@@ -39,7 +40,9 @@ class InitialVfsRefreshService(private val project: Project, private val scope: 
         scope.awaitCancellationAndInvoke { session.cancel() }
         session.addAllFiles(roots)
         val t = System.nanoTime()
-        session.launch()
+        blockingContext {
+          session.launch()
+        }
         val duration = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - t)
         logger.info("${projectId}: initial VFS refresh finished in ${duration} ms")
         VfsUsageCollector.logInitialRefresh(project, duration)
