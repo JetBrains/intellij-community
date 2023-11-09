@@ -18,15 +18,6 @@ import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.*
 
-fun applyCodeFoldingSettingsChanges() {
-  reinitAllEditors()
-  for (editor in EditorFactory.getInstance().allEditors) {
-    val project = editor.project
-    if (project != null && !project.isDefault) CodeFoldingManager.getInstance(project).scheduleAsyncFoldingUpdate(editor)
-  }
-  ApplicationManager.getApplication().messageBus.syncPublisher(EditorOptionsListener.FOLDING_CONFIGURABLE_TOPIC).changesApplied()
-}
-
 internal class CodeFoldingConfigurable : BoundCompositeConfigurable<CodeFoldingOptionsProvider>(
   ApplicationBundle.message("group.code.folding"), "reference.settingsdialog.IDE.editor.code.folding"),
                                          EditorOptionsProvider, WithEpDependencies {
@@ -92,11 +83,24 @@ internal class CodeFoldingConfigurable : BoundCompositeConfigurable<CodeFoldingO
 
   override fun apply() {
     super.apply()
-    ApplicationManager.getApplication().invokeLater({ applyCodeFoldingSettingsChanges() }, ModalityState.nonModal())
+    ApplicationManager.getApplication().invokeLater({ Util.applyCodeFoldingSettingsChanges() }, ModalityState.nonModal())
   }
 
   private fun sortByTitle(p: CodeFoldingOptionsProvider): String {
     val title = ConfigurableBuilder.getConfigurableTitle(p)
     return if (ApplicationBundle.message("title.general") == title) "" else title ?: "z"
+  }
+
+  object Util {
+
+    fun applyCodeFoldingSettingsChanges() {
+      reinitAllEditors()
+      for (editor in EditorFactory.getInstance().allEditors) {
+        val project = editor.project
+        if (project != null && !project.isDefault) CodeFoldingManager.getInstance(project).scheduleAsyncFoldingUpdate(editor)
+      }
+      ApplicationManager.getApplication().messageBus.syncPublisher(EditorOptionsListener.FOLDING_CONFIGURABLE_TOPIC).changesApplied()
+    }
+
   }
 }
