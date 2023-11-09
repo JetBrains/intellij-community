@@ -153,5 +153,6 @@
     <orderEntry type="module" module-name="intellij.platform.diagnostic" />
     <orderEntry type="module" module-name="intellij.platform.ijent" />
     <orderEntry type="module" module-name="intellij.platform.backend.observation" />
+    <orderEntry type="library" name="pty4j" level="project" />
   </component>
 </module>

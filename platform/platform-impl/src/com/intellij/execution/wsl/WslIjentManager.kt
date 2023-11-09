@@ -2,7 +2,8 @@
 package com.intellij.execution.wsl
 
 import com.intellij.execution.configurations.GeneralCommandLine
-import com.intellij.execution.process.UnixSignal
+import com.intellij.execution.ijent.IjentChildProcessAdapter
+import com.intellij.execution.ijent.IjentChildPtyProcessAdapter
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -14,21 +15,12 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.ijent.*
 import com.intellij.util.SuspendingLazy
-import com.intellij.util.channel.ChannelInputStream
-import com.intellij.util.channel.ChannelOutputStream
 import com.intellij.util.suspendingLazy
 import com.jetbrains.rd.util.concurrentMapOf
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.VisibleForTesting
-import java.io.ByteArrayInputStream
 import java.io.IOException
-import java.io.InputStream
-import java.io.OutputStream
-import java.util.concurrent.CancellationException
-import java.util.concurrent.atomic.AtomicBoolean
-import kotlin.io.path.absolutePathString
 
 @Service
 class WslIjentManager private constructor(private val scope: CoroutineScope) {
@@ -58,14 +50,15 @@ class WslIjentManager private constructor(private val scope: CoroutineScope) {
     return runBlocking {
       val command = processBuilder.command()
 
-      when (val processResult = getIjentApi(wslDistribution, project, options.isSudo).executeProcess(
+      val ijentApi = getIjentApi(wslDistribution, project, options.isSudo)
+      when (val processResult = ijentApi.executeProcess(
         exe = FileUtil.toSystemIndependentName(command.first()),
         args = *command.toList().drop(1).toTypedArray(),
         env = processBuilder.environment(),
         pty = pty,
         workingDirectory = processBuilder.directory()?.let { wslDistribution.getWslPath(it.toPath()) }
       )) {
-        is IjentApi.ExecuteProcessResult.Success -> processResult.process.toProcess(pty != null)
+        is IjentApi.ExecuteProcessResult.Success -> processResult.process.toProcess(ijentApi.coroutineScope, pty != null)
         is IjentApi.ExecuteProcessResult.Failure -> throw IOException(processResult.message)
       }
     }
@@ -83,49 +76,11 @@ class WslIjentManager private constructor(private val scope: CoroutineScope) {
   }
 }
 
-@OptIn(ExperimentalCoroutinesApi::class)
-private fun IjentChildProcess.toProcess(isPty: Boolean): Process {
-  return object : Process() {
-    private val myIsDestroyed = AtomicBoolean(false)
-    private val myOutStream by lazy { ChannelOutputStream(stdin) }
-    private val myInputStream by lazy { ChannelInputStream(stdout) }
-    private val myErrorStream by lazy { if (isPty) ByteArrayInputStream(byteArrayOf()) else ChannelInputStream(stderr) }
-
-    override fun waitFor(): Int {
-      return try {
-        runBlocking {
-          exitCode.await()
-        }
-      }
-      catch (e: Throwable) {
-        when (e) {
-          is CancellationException -> throw InterruptedException()
-          else -> throw RuntimeException(e)
-        }
-      }
-    }
-
-    override fun getOutputStream(): OutputStream = myOutStream
-    override fun getInputStream(): InputStream = myInputStream
-    override fun getErrorStream(): InputStream = myErrorStream
-
-    override fun destroy() {
-      if (myIsDestroyed.compareAndSet(false, true)) {
-        runBlocking {
-          sendSignal(UnixSignal.SIGTERM.linuxCode)
-        }
-
-        myOutStream.close()
-        myInputStream.close()
-        myErrorStream.close()
-      }
-    }
-
-    override fun exitValue(): Int {
-      return if (exitCode.isCompleted) exitCode.getCompleted() else -1
-    }
-  }
-}
+private fun IjentChildProcess.toProcess(coroutineScope: CoroutineScope, isPty: Boolean): Process =
+  if (isPty)
+    IjentChildPtyProcessAdapter(coroutineScope, this)
+  else
+    IjentChildProcessAdapter(coroutineScope, this)
 
 suspend fun deployAndLaunchIjent(
   ijentCoroutineScope: CoroutineScope,

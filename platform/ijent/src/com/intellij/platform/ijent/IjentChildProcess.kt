@@ -8,6 +8,9 @@ import org.jetbrains.annotations.ApiStatus
 
 /**
  * Represents some process which was launched by IJent via [IjentApi.executeProcess].
+ *
+ * There are adapters for already written code: [com.intellij.execution.ijent.IjentChildProcessAdapter]
+ * and [com.intellij.execution.ijent.IjentChildPtyProcessAdapter].
  */
 @ApiStatus.Experimental
 interface IjentChildProcess {
