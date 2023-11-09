@@ -11,7 +11,6 @@ import com.intellij.ide.HelpTooltip
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.QuickChangeLookAndFeel
 import com.intellij.ide.ui.*
-import com.intellij.ide.ui.UISettings.Companion.getPreferredFractionalMetricsValue
 import com.intellij.ide.ui.laf.SystemDarkThemeDetector.Companion.createDetector
 import com.intellij.ide.ui.laf.darcula.DarculaLaf
 import com.intellij.ide.ui.laf.intellij.IdeaPopupMenuUI
@@ -559,7 +558,7 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
     uiDefaults.put("laf.scaleFactor", scale(1f))
     uiDefaults.put(RenderingHints.KEY_TEXT_ANTIALIASING, AntialiasingType.getKeyForCurrentScope(false))
     uiDefaults.put(RenderingHints.KEY_TEXT_LCD_CONTRAST, StartupUiUtil.getLcdContrastValue())
-    uiDefaults.put(RenderingHints.KEY_FRACTIONALMETRICS, AppUIUtil.adjustFractionalMetrics(getPreferredFractionalMetricsValue()))
+    uiDefaults.put(RenderingHints.KEY_FRACTIONALMETRICS, AppUIUtil.getAdjustedFractionalMetricsValue())
     usedValuesOfUiOptions = computeValuesOfUsedUiOptions()
     if (!isFirstSetup) {
       ExperimentalUI.getInstance().lookAndFeelChanged()
