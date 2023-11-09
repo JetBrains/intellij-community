@@ -1065,7 +1065,9 @@ open class FileEditorManagerImpl(
                                     options: FileEditorOpenOptions): FileEditorComposite {
     if (!ClientId.isCurrentlyUnderLocalId) {
       return clientFileEditorManager?.openFileAsync(file = file,
-                                                    options = options) ?: FileEditorComposite.EMPTY
+                                                    // it used to be passed as forceCreate=false there, so we need to pass it as reuseOpen=true
+                                                    // otherwise, any navigation will open a new editor composite which is invisible in RD mode
+                                                    options = options.withReuseOpen(true)) ?: FileEditorComposite.EMPTY
     }
 
     val existingComposite = withContext(Dispatchers.EDT) { window.getComposite(file) }
