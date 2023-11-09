@@ -18,10 +18,8 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.*
-import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.text.TextRange
@@ -337,16 +335,12 @@ private fun BranchListItem(
   closePopup: () -> Unit
 ) {
   val hoverSource = remember { MutableInteractionSource() }
-  val pointerInside = hoverSource.collectIsHoveredAsState()
-  var hovered by remember { mutableStateOf(false) }
+  val hovered by hoverSource.collectIsHoveredAsState()
   var showActions by remember { mutableStateOf(false) }
 
-  LaunchedEffect(pointerInside) {
-    snapshotFlow { pointerInside.value }.collectLatest { isPointerInside ->
-      if (!isPointerInside) {
-        hovered = false
-        onHoverChanged(false)
-      }
+  LaunchedEffect(hoverSource) {
+    snapshotFlow { hovered }.collectLatest { hovered ->
+      onHoverChanged(hovered)
     }
   }
 
@@ -364,22 +358,6 @@ private fun BranchListItem(
       showActions = true
     }
     .pointerHoverIcon(PointerIcon.Hand)
-    .pointerInput(pointerInside) {
-      awaitPointerEventScope {
-        while (true) {
-          val event = awaitPointerEvent()
-          when (event.type) {
-            PointerEventType.Move -> {
-              val isSyntheticEvent = event.nativeEvent == null
-              if (!isSyntheticEvent && pointerInside.value && !hovered) {
-                hovered = true
-                onHoverChanged(true)
-              }
-            }
-          }
-        }
-      }
-    }
     .hoverable(hoverSource)
     .background(
       if (selected) {
