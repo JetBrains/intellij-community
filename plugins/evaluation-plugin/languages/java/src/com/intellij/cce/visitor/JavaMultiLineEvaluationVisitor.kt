@@ -16,16 +16,16 @@ class JavaMultiLineEvaluationVisitor : EvaluationVisitor, JavaRecursiveElementVi
   }
 
   override fun visitClass(aClass: PsiClass) {
-    //codeFragment?.let { file ->
-    //  for (child in aClass.children) {
-    //    when (child) {
-    //      is PsiField, is PsiMethod -> {
-    //        val start = child.textRange.startOffset
-    //        file.addChild(CodeToken(child.text, start, FIELD_PROPERTIES))
-    //      }
-    //    }
-    //  }
-    //}
+    codeFragment?.let { file ->
+      for (child in aClass.children) {
+        when (child) {
+          is PsiField, is PsiMethod -> {
+            val start = child.textRange.startOffset
+            file.addChild(CodeToken(child.text, start, FIELD_PROPERTIES))
+          }
+        }
+      }
+    }
     super.visitClass(aClass)
   }
 
