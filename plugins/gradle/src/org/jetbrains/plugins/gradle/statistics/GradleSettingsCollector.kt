@@ -8,8 +8,8 @@ import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesColle
 import com.intellij.openapi.externalSystem.model.ConfigurationDataImpl
 import com.intellij.openapi.externalSystem.model.ProjectKeys
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
-import com.intellij.openapi.externalSystem.statistics.ExternalSystemUsagesCollector
-import com.intellij.openapi.externalSystem.statistics.ExternalSystemUsagesCollector.Companion.JRE_TYPE_FIELD
+import com.intellij.openapi.externalSystem.statistics.ExternalSystemUsageFields
+import com.intellij.openapi.externalSystem.statistics.ExternalSystemUsageFields.JRE_TYPE_FIELD
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Version
@@ -20,10 +20,8 @@ import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.settings.TestRunner
 import org.jetbrains.plugins.gradle.util.GradleConstants
 
-class GradleSettingsCollector : ProjectUsagesCollector() {
-  override fun getGroup(): EventLogGroup {
-    return GROUP
-  }
+internal class GradleSettingsCollector : ProjectUsagesCollector() {
+  override fun getGroup(): EventLogGroup = GROUP
 
   override fun getMetrics(project: Project): Set<MetricEvent> {
     val gradleSettings = GradleSettings.getInstance(project)
@@ -58,8 +56,8 @@ class GradleSettingsCollector : ProjectUsagesCollector() {
       usages.add(IS_COMPOSITE_BUILDS.metric(setting.compositeBuild != null))
       usages.add(DISABLE_WRAPPER_SOURCE_DISTRIBUTION_NOTIFICATION.metric(setting.isDisableWrapperSourceDistributionNotification))
 
-      usages.add(GRADLE_JVM_TYPE.metric(ExternalSystemUsagesCollector.getJreType(setting.gradleJvm)))
-      usages.add(GRADLE_JVM_VERSION.metric(ExternalSystemUsagesCollector.getJreVersion(project, setting.gradleJvm)))
+      usages.add(GRADLE_JVM_TYPE.metric(ExternalSystemUsageFields.getJreType(setting.gradleJvm)))
+      usages.add(GRADLE_JVM_VERSION.metric(ExternalSystemUsageFields.getJreVersion(project, setting.gradleJvm)))
 
       val gradleVersion = setting.resolveGradleVersion()
       if (gradleVersion.isSnapshot) {
