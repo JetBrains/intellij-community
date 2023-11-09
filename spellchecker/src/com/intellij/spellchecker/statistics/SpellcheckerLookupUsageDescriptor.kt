@@ -13,7 +13,7 @@ import com.intellij.openapi.util.Key
 import java.util.*
 
 private const val SPELLCHECKER_KEY_NAME = "spellchecker"
-private val SPELLCHECKER get() = EventFields.Boolean(SPELLCHECKER_KEY_NAME)
+private val SPELLCHECKER = EventFields.Boolean(SPELLCHECKER_KEY_NAME)
 
 internal class SpellcheckerLookupUsageDescriptor : LookupUsageDescriptor {
 
