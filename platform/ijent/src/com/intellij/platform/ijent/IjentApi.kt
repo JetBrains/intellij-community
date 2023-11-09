@@ -31,6 +31,11 @@ interface IjentApi : AutoCloseable {
   val coroutineScope: CoroutineScope
 
   /**
+   * Returns basic info about the process that doesn't change during the lifetime of the process.
+   */
+  suspend fun info(): Info
+
+  /**
    * Explicitly terminates the process on the remote machine.
    */
   override fun close() {
@@ -88,6 +93,13 @@ interface IjentApi : AutoCloseable {
    * ```
    */
   suspend fun listenOnUnixSocket(path: CreateFilePath = CreateFilePath.MkTemp()): ListenOnUnixSocketResult
+
+  /**
+   * [remotePid] is a process ID of IJent running on the remote machine.
+   */
+  data class Info(
+    val remotePid: Long,
+  )
 
   data class ListenOnUnixSocketResult(
     val unixSocketPath: String,
