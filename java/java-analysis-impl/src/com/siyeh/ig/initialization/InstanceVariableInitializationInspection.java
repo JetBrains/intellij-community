@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2023 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@ package com.siyeh.ig.initialization;
 
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.TestFrameworks;
-import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
+import com.intellij.codeInsight.daemon.impl.UnusedSymbolUtil;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.psi.*;
@@ -98,10 +98,8 @@ public class InstanceVariableInitializationInspection extends BaseInspection {
       if (aClass == null) {
         return;
       }
-      for (ImplicitUsageProvider provider : ImplicitUsageProvider.EP_NAME.getExtensionList()) {
-        if (provider.isImplicitWrite(field)) {
-          return;
-        }
+      if (UnusedSymbolUtil.isImplicitWrite(field)) {
+        return;
       }
       final boolean isTestClass = TestFrameworks.getInstance().isTestClass(aClass);
       if (isTestClass) {
