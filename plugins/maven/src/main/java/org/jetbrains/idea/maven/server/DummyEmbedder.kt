@@ -34,8 +34,8 @@ abstract class DummyEmbedder(val myProject: Project) : MavenServerEmbedder {
   override fun resolvePlugins(longRunningTaskId: String,
                               pluginResolutionRequests: ArrayList<PluginResolutionRequest>,
                               forceUpdateSnapshots: Boolean,
-                              token: MavenToken?): ArrayList<PluginResolutionResponse> {
-    return ArrayList()
+                              token: MavenToken?): MavenServerResponse<ArrayList<PluginResolutionResponse>> {
+    return MavenServerResponse(ArrayList(), LongRunningTaskStatus.EMPTY)
   }
 
   override fun executeGoal(longRunningTaskId: String,

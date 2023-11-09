@@ -647,10 +647,10 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
 
 
   @Override
-  public ArrayList<PluginResolutionResponse> resolvePlugins(@NotNull String longRunningTaskId,
-                                                       @NotNull ArrayList<PluginResolutionRequest> pluginResolutionRequests,
-                                                       boolean forceUpdateSnapshots,
-                                                       MavenToken token) {
+  public MavenServerResponse<ArrayList<PluginResolutionResponse>> resolvePlugins(@NotNull String longRunningTaskId,
+                                                                                 @NotNull ArrayList<PluginResolutionRequest> pluginResolutionRequests,
+                                                                                 boolean forceUpdateSnapshots,
+                                                                                 MavenToken token) {
     MavenServerUtil.checkToken(token);
 
     boolean runInParallel = canResolveDependenciesInParallel();
@@ -685,7 +685,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
       List<PluginResolutionResponse> results = ParallelRunner.execute(runInParallel, resolutions, resolution ->
         resolvePlugin(task, resolution.mavenPluginId, resolution.pluginDependencies, resolution.remoteRepos, session)
       );
-      return new ArrayList<>(results);
+      return new MavenServerResponse<>(new ArrayList<>(results), getLongRunningTaskStatus(longRunningTaskId, token));
     }
   }
 

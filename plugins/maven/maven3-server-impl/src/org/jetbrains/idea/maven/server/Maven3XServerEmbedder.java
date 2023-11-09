@@ -840,10 +840,10 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
   }
 
   @Override
-  public ArrayList<PluginResolutionResponse> resolvePlugins(@NotNull String longRunningTaskId,
-                                                            @NotNull ArrayList<PluginResolutionRequest> pluginResolutionRequests,
-                                                            boolean forceUpdateSnapshots,
-                                                            MavenToken token) {
+  public MavenServerResponse<ArrayList<PluginResolutionResponse>> resolvePlugins(@NotNull String longRunningTaskId,
+                                                                                 @NotNull ArrayList<PluginResolutionRequest> pluginResolutionRequests,
+                                                                                 boolean forceUpdateSnapshots,
+                                                                                 MavenToken token) {
     MavenServerUtil.checkToken(token);
 
     String mavenVersion = System.getProperty(MAVEN_EMBEDDER_VERSION);
@@ -879,7 +879,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
       List<PluginResolutionResponse> results = ParallelRunner.execute(runInParallel, resolutions, resolution ->
         resolvePlugin(task, resolution.mavenPluginId, resolution.pluginDependencies, resolution.remoteRepos, session)
       );
-      return new ArrayList<>(results);
+      return new MavenServerResponse<>(new ArrayList<>(results), getLongRunningTaskStatus(longRunningTaskId, token));
     }
   }
 

@@ -161,9 +161,7 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
     }
     return runLongRunningTask(
       LongRunningEmbedderTask { embedder, taskId ->
-        // TODO: proper status
-        MavenServerResponse(embedder.resolvePlugins(taskId, pluginResolutionRequests, forceUpdateSnapshots, ourToken),
-                            LongRunningTaskStatus.EMPTY)
+        embedder.resolvePlugins(taskId, pluginResolutionRequests, forceUpdateSnapshots, ourToken)
       },
       progressReporter, eventHandler)
   }
