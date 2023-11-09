@@ -76,6 +76,17 @@ public final class WindowWithActions {
     showConsole(consoleWithProcess, actionListenerComponent, consoleTitle, project, toolWindowTitle, toolWindowIcon, resultCloseListeners, resultActions);
   }
 
+  @Nullable
+  public static JComponent findWindowByName(@NotNull Project project, @NotNull String toolWindowTitle, @NotNull String windowName) {
+    final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
+    ToolWindow window = toolWindowManager.getToolWindow(toolWindowTitle);
+    if (window == null) {
+      return null;
+    }
+    Content content = window.getContentManager().findContent(windowName);
+    return content.getComponent();
+  }
+
   /**
    * Displays console in the toolwindow
    *
@@ -96,7 +107,14 @@ public final class WindowWithActions {
                                  @Nullable final Collection<? extends Runnable> closeListeners,
                                  final AnAction @NotNull ... customActions) {
     final AnAction[] actions = ArrayUtil.mergeArrays(customActions, consoleView.createConsoleActions());
-    show(consoleView.getComponent(), actionListenerComponent, consoleTitle, toolWindowTitle, toolWindowIcon, project, closeListeners, actions);
+
+    final ToolWindowApi api = new ToolWindowApi(project, toolWindowTitle, toolWindowIcon);
+
+    final Collection<Runnable> closeListenersToAdd = new ArrayList<>(Collections.singleton(new MyToolWindowCloser(api)));
+    if (closeListeners != null) {
+      closeListenersToAdd.addAll(closeListeners);
+    }
+    api.add(new ConsolePanelWithActions(consoleView, closeListenersToAdd, actionListenerComponent, actions), consoleTitle);
   }
 
   /**
@@ -124,7 +142,7 @@ public final class WindowWithActions {
     if (closeListeners != null) {
       closeListenersToAdd.addAll(closeListeners);
     }
-    api.add(PanelWithActions.wrap(dataComponent, closeListenersToAdd, actionListenerComponent, customActions), componentWindowTitle);
+    api.add(new PanelWithActions(dataComponent, closeListenersToAdd, actionListenerComponent, customActions), componentWindowTitle);
   }
 
   /**

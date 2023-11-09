@@ -36,30 +36,22 @@ import java.util.List;
  * @author Ilya.Kazakevich
  */
 @SuppressWarnings({"SerializableClassInSecureContext"}) // Who will serialize panel?
-final class PanelWithActions extends JPanel {
-  private PanelWithActions() {
-
-  }
+class PanelWithActions extends JPanel {
 
   /**
-   * Wraps component with panel with buttons returning composite component to add somewhere.
-   *
-   * @param dataComponent           component to wrap with action panel
+   * @param dataComponent           component to be added in the action panel
    * @param closeListeners          Listeners to delegate "close all" command (when user clicks red cross aka "close" button)
    * @param actionListenerComponent component to bind to action shortcuts (null if no shortcuts will be used)
    * @param customActions           additional actions to add
-   * @return composite component with console on the right part and buttons on the left part
    */
-  @NotNull
-  static JComponent wrap(@NotNull final JComponent dataComponent,
-                         @NotNull final Collection<Runnable> closeListeners,
-                         @Nullable final JComponent actionListenerComponent,
-                         final AnAction @NotNull ... customActions) {
-    final PanelWithActions instance = new PanelWithActions();
+  protected PanelWithActions(@NotNull final JComponent dataComponent,
+                             @NotNull final Collection<Runnable> closeListeners,
+                             @Nullable final JComponent actionListenerComponent,
+                             final AnAction @NotNull ... customActions) {
 
     // Box layout: panel goes to the left, console to the right
-    final LayoutManager layout = new BoxLayout(instance, BoxLayout.LINE_AXIS);
-    instance.setLayout(layout);
+    final LayoutManager layout = new BoxLayout(this, BoxLayout.LINE_AXIS);
+    this.setLayout(layout);
 
     // use actions from console itself
 
@@ -72,12 +64,11 @@ final class PanelWithActions extends JPanel {
     final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.EDITOR_TOOLBAR, toolbarActions, false);
     toolbar.setTargetComponent(dataComponent);
 
-    instance.add(toolbar.getComponent());
-    instance.add(dataComponent);
+    this.add(toolbar.getComponent());
+    this.add(dataComponent);
     if (actionListenerComponent != null) {
       AbstractConsoleRunnerWithHistory.registerActionShortcuts(actionList, actionListenerComponent);
     }
-    return instance;
   }
 
   /**
