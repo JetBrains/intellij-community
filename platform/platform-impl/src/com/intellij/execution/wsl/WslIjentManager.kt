@@ -37,7 +37,7 @@ class WslIjentManager private constructor(private val scope: CoroutineScope) {
   suspend fun getIjentApi(wslDistribution: WSLDistribution, project: Project?, rootUser: Boolean): IjentApi {
     return myCache.computeIfAbsent(wslDistribution.id + if (rootUser) ":root" else "") {
       scope.suspendingLazy {
-        deployAndLaunchIjent(scope, project, wslDistribution, WSLCommandLineOptions().setSudo(rootUser))
+        deployAndLaunchIjent(scope, project, wslDistribution, wslCommandLineOptionsModifier = { it.setSudo(rootUser) })
       }
     }.getValue()
   }
@@ -127,21 +127,28 @@ private fun IjentChildProcess.toProcess(isPty: Boolean): Process {
   }
 }
 
-@VisibleForTesting
 suspend fun deployAndLaunchIjent(
   ijentCoroutineScope: CoroutineScope,
   project: Project?,
   wslDistribution: WSLDistribution,
-  wslCommandLineOptions: WSLCommandLineOptions = WSLCommandLineOptions(),
-): IjentApi = deployAndLaunchIjentGettingPath(ijentCoroutineScope, project, wslDistribution, wslCommandLineOptions).second
+  wslCommandLineOptionsModifier: (WSLCommandLineOptions) -> Unit = {},
+): IjentApi = deployAndLaunchIjentGettingPath(ijentCoroutineScope, project, wslDistribution, wslCommandLineOptionsModifier).second
 
 @VisibleForTesting
 suspend fun deployAndLaunchIjentGettingPath(
   ijentCoroutineScope: CoroutineScope,
   project: Project?,
   wslDistribution: WSLDistribution,
-  wslCommandLineOptions: WSLCommandLineOptions = WSLCommandLineOptions(),
+  wslCommandLineOptionsModifier: (WSLCommandLineOptions) -> Unit = {},
 ): Pair<String, IjentApi> {
+  // IJent can start an interactive shell by itself whenever it needs.
+  // Enabling an interactive shell for IJent by default can bring problems, because stdio of IJent must not be populated
+  // with possible user extensions in ~/.profile
+  val wslCommandLineOptions = WSLCommandLineOptions()
+    .setExecuteCommandInInteractiveShell(false)
+
+  wslCommandLineOptionsModifier(wslCommandLineOptions)
+
   val targetPlatform = IjentExecFileProvider.SupportedPlatform.X86_64__LINUX
   val ijentBinary = IjentExecFileProvider.getIjentBinary(targetPlatform)
 
