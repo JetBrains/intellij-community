@@ -26,7 +26,7 @@ import org.jetbrains.concurrency.resolvedPromise
 import javax.swing.Icon
 import javax.swing.JCheckBox
 
-internal val ID: Key<LaunchBrowserBeforeRunTask> get() = Key.create("LaunchBrowser.Before.Run")
+private val ID: Key<LaunchBrowserBeforeRunTask> = Key.create("LaunchBrowser.Before.Run")
 
 internal class LaunchBrowserBeforeRunTaskProvider : BeforeRunTaskProvider<LaunchBrowserBeforeRunTask>(), DumbAware {
 
