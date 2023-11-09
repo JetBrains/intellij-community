@@ -25,6 +25,6 @@ public interface CurrentEditorProvider {
 
   @Nullable
   default FileEditor getCurrentEditor(@Nullable Project project) {
-    return null;
+    return getCurrentEditor();
   }
 }

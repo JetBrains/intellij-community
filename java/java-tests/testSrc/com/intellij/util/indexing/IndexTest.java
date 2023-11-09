@@ -88,6 +88,7 @@ import com.intellij.util.ui.UIUtil;
 import com.siyeh.ig.JavaOverridingMethodUtil;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
 
@@ -344,7 +345,7 @@ public class IndexTest extends JavaCodeInsightFixtureTestCase {
     final FileEditor selectedEditor = FileEditorManager.getInstance(getProject()).openFile(vFile, false)[0];
     ((UndoManagerImpl)undoManager).setEditorProvider(new CurrentEditorProvider() {
       @Override
-      public FileEditor getCurrentEditor() {
+      public FileEditor getCurrentEditor(@Nullable Project project) {
         return selectedEditor;
       }
     });

@@ -7,8 +7,10 @@ import com.intellij.openapi.command.impl.FinishMarkAction;
 import com.intellij.openapi.command.impl.StartMarkAction;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.impl.CurrentEditorProvider;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TestDialog;
 import com.intellij.openapi.ui.TestDialogManager;
+import org.jetbrains.annotations.Nullable;
 
 public class StartFinishUndoTest extends EditorUndoTestCase {
   public void testCompoundUndo() {
@@ -94,7 +96,7 @@ public class StartFinishUndoTest extends EditorUndoTestCase {
     try {
       myManager.setEditorProvider(new CurrentEditorProvider() {
         @Override
-        public FileEditor getCurrentEditor() {
+        public FileEditor getCurrentEditor(@Nullable Project project) {
           return getFileEditor(getSecondEditor());
         }
       });
@@ -125,7 +127,7 @@ public class StartFinishUndoTest extends EditorUndoTestCase {
     try {
       myManager.setEditorProvider(new CurrentEditorProvider() {
         @Override
-        public FileEditor getCurrentEditor() {
+        public FileEditor getCurrentEditor(@Nullable Project project) {
           return getFileEditor(getSecondEditor());
         }
       });
