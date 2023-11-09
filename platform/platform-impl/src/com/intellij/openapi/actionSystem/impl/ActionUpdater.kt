@@ -47,6 +47,7 @@ import io.opentelemetry.context.Context
 import io.opentelemetry.extension.kotlin.asContextElement
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
+import org.jetbrains.annotations.ApiStatus
 import java.awt.AWTEvent
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
@@ -485,7 +486,7 @@ internal class ActionUpdater @JvmOverloads constructor(
     }
   }
 
-  fun asUpdateSession(): UpdateSession {
+  fun asUpdateSession(): SuspendingUpdateSession {
     return UpdateSessionImpl(this)
   }
 
@@ -607,7 +608,7 @@ internal class ActionUpdater @JvmOverloads constructor(
     }
   }
 
-  private class UpdateSessionImpl(val updater: ActionUpdater) : UpdateSession {
+  private class UpdateSessionImpl(val updater: ActionUpdater) : SuspendingUpdateSession {
     override fun expandedChildren(actionGroup: ActionGroup): Iterable<AnAction> =
       updater.computeSessionDataOrThrow(Pair("expandedChildren", actionGroup)) {
         updater.iterateGroupChildren(actionGroup).toCollection(ArrayList())
@@ -637,6 +638,26 @@ internal class ActionUpdater @JvmOverloads constructor(
       val operationNameFull = Utils.operationName(action, operationName, updater.place)
       updater.callAction(action = action, operationName = operationNameFull, updateThreadOrig = updateThread) { supplier.get() }
     }
+
+    override suspend fun presentationSuspend(action: AnAction): Presentation {
+      return updater.presentation(action)
+    }
+
+    override suspend fun expandSuspend(group: ActionGroup): List<AnAction> {
+      return updater.expandActionGroup(group, group is CompactActionGroup)
+    }
+
+    override suspend fun <T: Any?> sharedDataSuspend(key: Key<T>, supplier: suspend () -> T): T {
+      return updater.getSessionDataDeferred(Pair(key.toString(), key), supplier).await()
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    override fun visitCaches(visitor: (AnAction, String, Any) -> Unit) {
+      updater.updatedPresentations.forEach { action, presentation -> visitor(action, "presentation", presentation) }
+      updater.groupChildren.forEach { action, children -> visitor(action, "children", children) }
+      updater.sessionData.forEach { pair, deferred ->
+        if (pair.first == "expandedChildren") visitor(pair.second as ActionGroup, pair.first, deferred.getCompleted()!!) }
+    }
   }
 }
 
@@ -650,7 +671,8 @@ private class ComputeOnEDTSkipped : RuntimeException() {
   override fun fillInStackTrace(): Throwable = this
 }
 
-internal fun cancelAllUpdates(reason: String) {
+@ApiStatus.Internal
+fun cancelAllUpdates(reason: String) {
   val adjusted = "$reason (cancelling all updates)"
   cancelAllUpdates(ourToolbarJobs, adjusted)
   cancelAllUpdates(ourOtherJobs, adjusted)

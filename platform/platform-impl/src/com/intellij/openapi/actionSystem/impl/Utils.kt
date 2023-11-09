@@ -264,7 +264,8 @@ object Utils {
     val updater = ActionUpdater(presentationFactory, asyncDataContext, place, isContextMenu, isToolbarAction, edtDispatcher)
     val deferred = async(edtDispatcher, CoroutineStart.UNDISPATCHED) {
       updater.runUpdateSession(updaterContext(place, fastTrackTime, isContextMenu, isToolbarAction)) {
-        ActionUpdaterInterceptor.expandActionGroup(presentationFactory, asyncDataContext, place, group, isToolbarAction) {
+        ActionUpdaterInterceptor.expandActionGroup(presentationFactory, asyncDataContext, place, group, isToolbarAction,
+                                                   updater.asUpdateSession()) {
           updater.expandActionGroup(group, group is CompactActionGroup)
         }
       }
@@ -342,7 +343,8 @@ object Utils {
       val edtDispatcher = coroutineContext[CoroutineDispatcher]!!
       val updater = ActionUpdater(presentationFactory, asyncDataContext, place, isContextMenu, false, edtDispatcher)
       updater.runUpdateSession(updaterContext(place, fastTrackTime, isContextMenu, false)) {
-        ActionUpdaterInterceptor.expandActionGroup(presentationFactory, asyncDataContext, place, group, false) {
+        ActionUpdaterInterceptor.expandActionGroup(presentationFactory, asyncDataContext, place, group, false,
+                                                   updater.asUpdateSession()) {
           updater.expandActionGroup(group, group is CompactActionGroup)
         }
       }
@@ -806,6 +808,17 @@ object Utils {
     e.updateSession = actionUpdater.asUpdateSession()
   }
 
+  @Suppress("DEPRECATION", "removal")
+  suspend fun <R> withSuspendingUpdateSession(e: AnActionEvent, factory: PresentationFactory,
+                                              block: suspend CoroutineScope.(SuspendingUpdateSession) -> R): R = coroutineScope {
+    val edtDispatcher = Dispatchers.EDT[CoroutineDispatcher]!!
+    val updater = ActionUpdater(factory, e.dataContext, e.place, e.isFromContextMenu, e.isFromActionToolbar, edtDispatcher)
+    e.updateSession = updater.asUpdateSession()
+    updater.runUpdateSession(updaterContext(e.place, 0, e.isFromContextMenu, e.isFromActionToolbar)) {
+      block(e.updateSession as SuspendingUpdateSession)
+    }
+  }
+
   fun <R> runWithInputEventEdtDispatcher(contextComponent: Component?, block: suspend CoroutineScope.() -> R): R? {
     val applicationEx = ApplicationManagerEx.getApplicationEx()
     if (ProgressIndicatorUtils.isWriteActionRunningOrPending(applicationEx)) {
@@ -867,7 +880,7 @@ object Utils {
     cancelAllUpdates("'$place' invoked")
 
     val result = actionUpdater.runUpdateSession(shortcutUpdateDispatcher) {
-      ActionUpdaterInterceptor.runUpdateSessionForInputEvent(actions, place, dataContext) { promoted ->
+      ActionUpdaterInterceptor.runUpdateSessionForInputEvent(actions, place, dataContext, actionUpdater.asUpdateSession()) { promoted ->
         val rearranged = if (promoted.isNotEmpty()) promoted
         else rearrangeByPromoters(actions, dataContext)
         function(rearranged, actionUpdater::presentation, events)
@@ -900,7 +913,8 @@ object Utils {
   }
 }
 
-private suspend fun rearrangeByPromoters(actions: List<AnAction>, dataContext: DataContext): List<AnAction> {
+@ApiStatus.Internal
+suspend fun rearrangeByPromoters(actions: List<AnAction>, dataContext: DataContext): List<AnAction> {
   val frozenContext = Utils.freezeDataContext(dataContext, null)
   return SlowOperations.startSection(SlowOperations.FORCE_ASSERT).use {
     try {
@@ -1120,4 +1134,14 @@ internal suspend inline fun <R> readActionUndispatchedForActionExpand(noinline b
   else {
     return blockingContext { ApplicationManager.getApplication().runReadAction<R, Throwable> { block() } }
   }
+}
+
+@ApiStatus.Internal
+interface SuspendingUpdateSession: UpdateSession {
+  suspend fun presentationSuspend(action: AnAction): Presentation
+  suspend fun expandSuspend(action: ActionGroup): List<AnAction>
+
+  suspend fun <T : Any?> sharedDataSuspend(key: Key<T>, supplier: suspend () -> T): T
+
+  fun visitCaches(visitor: (AnAction, String, Any) -> Unit)
 }

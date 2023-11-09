@@ -3,6 +3,7 @@ package com.intellij.openapi.actionSystem
 
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.actionSystem.impl.PresentationFactory
+import com.intellij.openapi.actionSystem.impl.SuspendingUpdateSession
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
@@ -26,12 +27,14 @@ interface ActionUpdaterInterceptor {
                                 place: String,
                                 group: ActionGroup,
                                 isToolbarAction: Boolean,
+                                updateSession: SuspendingUpdateSession,
                                 original: suspend () -> List<AnAction>): List<AnAction> =
     original()
 
   suspend fun <R> runUpdateSessionForInputEvent(actions: List<AnAction>,
                                                 place: String,
                                                 context: DataContext,
+                                                updateSession: SuspendingUpdateSession,
                                                 original: suspend (List<AnAction>) -> R): R? =
     original(emptyList())
 
@@ -44,10 +47,11 @@ interface ActionUpdaterInterceptor {
                                          place: String,
                                          group: ActionGroup,
                                          isToolbarAction: Boolean,
+                                         updateSession: SuspendingUpdateSession,
                                          noinline original: suspend () -> List<AnAction>): List<AnAction> =
       if (isDefaultImpl) original()
       else serviceAsync<ActionUpdaterInterceptor>().expandActionGroup(
-        presentationFactory, context, place, group, isToolbarAction, original)
+        presentationFactory, context, place, group, isToolbarAction, updateSession, original)
 
     suspend inline fun getGroupChildren(group: ActionGroup,
                                         event: AnActionEvent,
@@ -64,9 +68,10 @@ interface ActionUpdaterInterceptor {
     suspend inline fun <R> runUpdateSessionForInputEvent(actions: List<AnAction>,
                                                          place: String,
                                                          context: DataContext,
+                                                         updateSession: SuspendingUpdateSession,
                                                          noinline original: suspend (List<AnAction>) -> R): R? =
       if (isDefaultImpl) original(emptyList())
       else serviceAsync<ActionUpdaterInterceptor>().runUpdateSessionForInputEvent(
-        actions, place, context, original)
+        actions, place, context, updateSession, original)
   }
 }
