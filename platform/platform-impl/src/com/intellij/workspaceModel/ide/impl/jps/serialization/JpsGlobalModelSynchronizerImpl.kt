@@ -2,8 +2,10 @@
 package com.intellij.workspaceModel.ide.impl.jps.serialization
 
 import com.intellij.openapi.application.*
+import com.intellij.openapi.application.ApplicationManager.getApplication
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMs
 import com.intellij.platform.workspace.jps.JpsGlobalFileEntitySource
@@ -13,6 +15,7 @@ import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.workspaceModel.ide.*
 import com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModel
+import com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModel.Companion.getInstance
 import com.intellij.workspaceModel.ide.impl.jpsMetrics
 import com.intellij.workspaceModel.ide.legacyBridge.GlobalLibraryTableBridge
 import com.intellij.workspaceModel.ide.legacyBridge.sdk.GlobalSdkTableBridge
@@ -71,16 +74,18 @@ class JpsGlobalModelSynchronizerImpl(private val coroutineScope: CoroutineScope)
     return callback
   }
 
-  fun saveGlobalEntities(writer: JpsFileContentWriter) {
+  suspend fun saveGlobalEntities() {
     jpsSaveGlobalEntitiesMs.addAndGet(
       measureTimeMillis {
         val serializers = createSerializers()
-        val entityStorage = GlobalWorkspaceModel.getInstance().entityStorage.current
+        val contentWriter = (getApplication().stateStore as ApplicationStoreJpsContentReader).createContentWriter()
+        val entityStorage = getInstance().entityStorage.current
         serializers.forEach { serializer ->
           val entities = entityStorage.entities(serializer.mainEntityClass).toList()
           LOG.info("Saving global entities ${serializer.mainEntityClass.name} to files")
-          serializer.saveEntities(entities, emptyMap(), entityStorage, writer)
+          serializer.saveEntities(entities, emptyMap(), entityStorage, contentWriter)
         }
+        contentWriter.saveSession()
       })
   }
 
@@ -107,12 +112,12 @@ class JpsGlobalModelSynchronizerImpl(private val coroutineScope: CoroutineScope)
         LOG.warn(message)
       }
     }
-    serializers.forEach { serializer ->
-      LOG.info("Loading global entities ${serializer.mainEntityClass.name} from files")
-      val newEntities = serializer.loadEntities(contentReader, errorReporter, VirtualFileUrlManager.getGlobalInstance())
-      serializer.checkAndAddToBuilder(mutableStorage, mutableStorage, newEntities.data)
-      newEntities.exception?.let { throw it }
-    }
+    //serializers.forEach { serializer ->
+    //  LOG.info("Loading global entities ${serializer.mainEntityClass.name} from files")
+    //  val newEntities = serializer.loadEntities(contentReader, errorReporter, VirtualFileUrlManager.getGlobalInstance())
+    //  serializer.checkAndAddToBuilder(mutableStorage, mutableStorage, newEntities.data)
+    //  newEntities.exception?.let { throw it }
+    //}
     val callback = bridgesInitializationCallback(mutableStorage, initialEntityStorage)
     loadedFromDisk = true
     return callback

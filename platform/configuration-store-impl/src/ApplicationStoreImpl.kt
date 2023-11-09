@@ -15,7 +15,9 @@ import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.util.NamedJDOMExternalizable
 import com.intellij.platform.workspace.jps.serialization.impl.ApplicationStoreJpsContentReader
+import com.intellij.platform.workspace.jps.serialization.impl.JpsAppFileContentWriter
 import com.intellij.platform.workspace.jps.serialization.impl.JpsFileContentReader
+import com.intellij.platform.workspace.jps.serialization.impl.JpsFileContentWriter
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.workspaceModel.ide.JpsGlobalModelSynchronizer
 import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsGlobalModelSynchronizerImpl
@@ -52,11 +54,10 @@ open class ApplicationStoreImpl(private val app: Application)
   }
 
   override suspend fun doSave(result: SaveResult, forceSavingAllSettings: Boolean) {
+    println("ApplicationStoreImpl.doSave ${Thread.currentThread()}")
     val saveSessionManager = createSaveSessionProducerManager()
     if (GlobalLibraryTableBridge.isEnabled() || GlobalSdkTableBridge.isEnabled()) {
-      blockingContext {
-        (JpsGlobalModelSynchronizer.getInstance() as JpsGlobalModelSynchronizerImpl).saveGlobalEntities(AppStorageContentWriter(saveSessionManager))
-      }
+      (JpsGlobalModelSynchronizer.getInstance() as JpsGlobalModelSynchronizerImpl).saveGlobalEntities()
     }
     saveSettingsSavingComponentsAndCommitComponents(result, forceSavingAllSettings, saveSessionManager)
     // todo can we store default project in parallel to regular saving? for now only flush on disk is async, but not component committing
@@ -67,6 +68,7 @@ open class ApplicationStoreImpl(private val app: Application)
 
       @Suppress("TestOnlyProblems")
       if (ProjectManagerEx.getInstanceEx().isDefaultProjectInitialized) {
+        println("Default project is initialized")
         launch {
           // here, because no Project (and so, ProjectStoreImpl) on a Welcome Screen
           val r = serviceAsync<DefaultProjectExportableAndSaveTrigger>().save(forceSavingAllSettings)
@@ -76,6 +78,11 @@ open class ApplicationStoreImpl(private val app: Application)
         }
       }
     }
+  }
+
+  override fun createContentWriter(): JpsAppFileContentWriter {
+    val saveSessionManager = createSaveSessionProducerManager()
+    return AppStorageContentWriter(saveSessionManager)
   }
 
   override fun createContentReader(): JpsFileContentReader = AppStorageContentReader()

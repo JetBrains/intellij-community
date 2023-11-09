@@ -701,6 +701,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
                                  writer: JpsFileContentWriter) {
     val externalSystemOptions = module.exModuleOptions
     val customImlData = module.customImlData
+    println("Saving setting for module ${module.name}")
     saveModuleOptions(externalSystemOptions, module.type, customImlData, writer)
     val moduleOptions = customImlData?.customModuleOptions
     val customSerializerId = moduleOptions?.get(JpsProjectLoader.CLASSPATH_ATTRIBUTE)

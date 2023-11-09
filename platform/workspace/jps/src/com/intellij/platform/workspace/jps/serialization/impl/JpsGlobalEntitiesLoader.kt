@@ -34,5 +34,6 @@ object JpsGlobalEntitiesSerializers {
 }
 
 interface ApplicationStoreJpsContentReader {
+  fun createContentWriter(): JpsAppFileContentWriter
   fun createContentReader(): JpsFileContentReader
 }

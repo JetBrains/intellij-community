@@ -62,6 +62,7 @@ abstract class ComponentStoreWithExtraComponents : ComponentStoreImpl() {
       for (settingsSavingComponent in asyncSettingsSavingComponents.value) {
         launch {
           runAndCollectException(result) {
+            println("Saving ${settingsSavingComponent}  ${Thread.currentThread()}")
             settingsSavingComponent.save()
           }
         }
