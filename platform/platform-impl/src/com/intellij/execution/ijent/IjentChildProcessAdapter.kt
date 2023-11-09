@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.ijent
 
+import com.intellij.platform.ijent.AutoClosingIjentChildProcess
 import com.intellij.platform.ijent.IjentChildProcess
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
@@ -18,7 +19,7 @@ import java.util.concurrent.TimeUnit
 class IjentChildProcessAdapter(coroutineScope: CoroutineScope, private val ijentChildProcess: IjentChildProcess) : Process() {
   private val delegate = IjentChildProcessAdapterDelegate(
     coroutineScope,
-    ijentChildProcess,
+    AutoClosingIjentChildProcess.create(coroutineScope, ijentChildProcess),
   )
 
   override fun toString(): String = "${javaClass.simpleName}($ijentChildProcess)"

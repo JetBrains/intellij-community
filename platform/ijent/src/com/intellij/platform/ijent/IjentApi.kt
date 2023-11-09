@@ -49,6 +49,9 @@ interface IjentApi : AutoCloseable {
    * Starts a process on a remote machine. Right now, the child process may outlive the instance of IJent.
    * stdin, stdout and stderr of the process are always forwarded, if there are.
    *
+   * Every successfully started process MUST be destroyed later with [IjentChildProcess.close].
+   * Otherwise, it can cause memory leaks on the remote side.
+   *
    * Beware that processes with [pty] don't have stderr.
    *
    * By default, environment is always inherited from the running IJent instance, which may be unwanted. [env] allows to alter

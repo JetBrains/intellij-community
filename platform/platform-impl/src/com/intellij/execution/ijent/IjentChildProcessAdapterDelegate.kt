@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.ijent
 
-import com.intellij.platform.ijent.IjentChildProcess
+import com.intellij.platform.ijent.AutoClosingIjentChildProcess
 import com.intellij.util.channel.ChannelInputStream
 import com.intellij.util.channel.ChannelOutputStream
 import kotlinx.coroutines.*
@@ -14,7 +14,7 @@ import kotlin.time.Duration.Companion.milliseconds
 
 internal class IjentChildProcessAdapterDelegate(
   val coroutineScope: CoroutineScope,
-  val ijentChildProcess: IjentChildProcess,
+  val ijentChildProcess: AutoClosingIjentChildProcess,
 ) {
   val inputStream: InputStream = ChannelInputStream(ijentChildProcess.stdout)
 

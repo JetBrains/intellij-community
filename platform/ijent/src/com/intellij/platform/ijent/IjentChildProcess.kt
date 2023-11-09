@@ -13,7 +13,7 @@ import org.jetbrains.annotations.ApiStatus
  * and [com.intellij.execution.ijent.IjentChildPtyProcessAdapter].
  */
 @ApiStatus.Experimental
-interface IjentChildProcess {
+interface IjentChildProcess : AutoCloseable {
   val pid: Int
   val stdin: SendChannel<ByteArray>
   val stdout: ReceiveChannel<ByteArray>
@@ -29,12 +29,20 @@ interface IjentChildProcess {
   @Throws(ResizePtyError::class)  // Can't use @CheckReturnValue: KTIJ-7061
   suspend fun resizePty(columns: Int, rows: Int)
 
-  sealed class ResizePtyError : Exception {
-    constructor() : super()
-    constructor(msg: String) : super(msg)
+  /**
+   * This method should return immediately and produce no errors. The actual destruction should happen in background. Errors may be logged.
+   * The method must be idempotent.
+   *
+   * It is safe to call the method even if the process hasn't exited. However, all further calls to other methods of the interface will fail
+   * in that case.
+   *
+   * If it is cumbersome to call [close] explicitly, [AutoClosingIjentChildProcess] may be useful.
+   */
+  override fun close()
 
-    class ProcessExited : ResizePtyError()
-    class NoPty : ResizePtyError()
+  sealed class ResizePtyError(msg: String) : Exception(msg) {
+    class ProcessExited : ResizePtyError("Process exited")
+    class NoPty : ResizePtyError("Process has no PTY")
     data class Errno(val errno: Int, override val message: String) : ResizePtyError("[$errno] $message")
   }
 }

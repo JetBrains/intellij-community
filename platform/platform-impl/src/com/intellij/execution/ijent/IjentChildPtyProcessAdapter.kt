@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.ijent
 
+import com.intellij.platform.ijent.AutoClosingIjentChildProcess
 import com.intellij.platform.ijent.IjentChildProcess
 import com.pty4j.PtyProcess
 import com.pty4j.WinSize
@@ -18,7 +19,10 @@ import java.util.concurrent.TimeUnit
  * See also [IjentChildProcessAdapter].
  */
 class IjentChildPtyProcessAdapter(coroutineScope: CoroutineScope, private val ijentChildProcess: IjentChildProcess) : PtyProcess() {
-  private val delegate = IjentChildProcessAdapterDelegate(coroutineScope, ijentChildProcess)
+  private val delegate = IjentChildProcessAdapterDelegate(
+    coroutineScope,
+    AutoClosingIjentChildProcess.create(coroutineScope, ijentChildProcess),
+  )
 
   override fun toString(): String = "${javaClass.simpleName}($ijentChildProcess)"
 
