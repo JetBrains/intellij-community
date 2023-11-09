@@ -15,7 +15,6 @@ import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.util.EditorUtil
-import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.DumbModeBlockedFunctionality
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.IndexNotReadyException
@@ -72,9 +71,6 @@ object GotoDeclarationOrUsageHandler2 : CodeInsightActionHandler {
         CodeInsightBundle.message("message.navigation.is.not.available.here.during.index.update"),
         DumbModeBlockedFunctionality.GotoDeclarationOrUsage
       )
-    }
-    catch (e: ProcessCanceledException) {
-      return
     }
   }
 
