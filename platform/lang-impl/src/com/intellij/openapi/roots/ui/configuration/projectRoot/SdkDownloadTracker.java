@@ -28,7 +28,8 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.util.Consumer;
-import com.intellij.util.concurrency.ThreadingAssertions;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -67,8 +68,8 @@ public final class SdkDownloadTracker {
     task.cancel();
   }
 
+  @RequiresEdt
   private void removeTask(@NotNull PendingDownload task) {
-    ThreadingAssertions.assertEventDispatchThread();
     myPendingTasks.remove(task);
   }
 
@@ -92,9 +93,9 @@ public final class SdkDownloadTracker {
     task.registerEditableSdk(editable);
   }
 
+  @RequiresEdt
   public void registerSdkDownload(@NotNull Sdk originalSdk,
                                   @NotNull SdkDownloadTask item) {
-    ThreadingAssertions.assertEventDispatchThread();
     LOG.assertTrue(findTask(originalSdk) == null, "Download is already running for the SDK " + originalSdk);
 
     PendingDownload pd = new PendingDownload(originalSdk, item, new SmartPendingDownloadModalityTracker());
@@ -112,9 +113,8 @@ public final class SdkDownloadTracker {
     task.mySdkFailedHandlers.add(onSdkFailed);
   }
 
+  @RequiresEdt
   public void startSdkDownloadIfNeeded(@NotNull Sdk sdkFromTable) {
-    ThreadingAssertions.assertEventDispatchThread();
-
     PendingDownload task = findTask(sdkFromTable);
     if (task == null) return;
 
@@ -159,11 +159,11 @@ public final class SdkDownloadTracker {
    *                                   with {@code true} to indicate success and {@code false} for a failure
    * @return true if the given Sdk is downloading right now
    */
+  @RequiresEdt
   public boolean tryRegisterDownloadingListener(@NotNull Sdk sdk,
                                                 @NotNull Disposable lifetime,
                                                 @NotNull ProgressIndicator indicator,
                                                 @NotNull Consumer<? super Boolean> onDownloadCompleteCallback) {
-    ThreadingAssertions.assertEventDispatchThread();
     PendingDownload pd = findTask(sdk);
     if (pd == null) return false;
 
@@ -174,11 +174,10 @@ public final class SdkDownloadTracker {
   /**
    * Performs synchronous SDK download. Must not run on EDT thread.
    */
+  @RequiresBackgroundThread
   public void downloadSdk(@NotNull SdkDownloadTask task,
                           @NotNull List<? extends Sdk> sdks,
                           @NotNull ProgressIndicator indicator) {
-    ApplicationManager.getApplication().assertIsNonDispatchThread();
-
     if (sdks.isEmpty()) throw new IllegalArgumentException("There must be at least one SDK in the list for " + task);
     @NotNull Sdk sdk = Objects.requireNonNull(ContainerUtil.getFirstItem(sdks));
 
