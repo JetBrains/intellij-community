@@ -99,7 +99,7 @@ class DumbServiceImplTest {
   }
 
   @Test
-  @Suppress("INVISIBLE_MEMBER")
+  @Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
   fun `test runWhenSmart does not hang in scheduler queue after Default dispatcher starvation`() {
     val releaseDefaultDispatcher = CountDownLatch(1)
     val inSmartMode = CountDownLatch(1)

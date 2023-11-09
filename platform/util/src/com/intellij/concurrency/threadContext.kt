@@ -237,7 +237,7 @@ fun getContextSkeleton(context: CoroutineContext): Set<CoroutineContext.Element>
     when (element.key) {
       Job -> Unit
       CoroutineName -> Unit
-      @Suppress("INVISIBLE_MEMBER") kotlinx.coroutines.CoroutineId -> Unit
+      @Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE") kotlinx.coroutines.CoroutineId -> Unit
       else -> acc.add(element)
     }
     acc
