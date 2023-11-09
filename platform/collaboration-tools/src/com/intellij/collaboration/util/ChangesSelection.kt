@@ -33,12 +33,6 @@ val ChangesSelection.selectedChange: RefComparisonChange?
 fun ChangesSelection.Precise.withLocation(location: DiffLineLocation): ChangesSelection.Precise =
   ChangesSelection.Precise(changes, selectedIdx, location)
 
-fun ChangesSelection.copyWithSelection(change: RefComparisonChange): ChangesSelection =
-  when (this) {
-    is ChangesSelection.Fuzzy -> copy(selectedIdx = changes.indexOfFirst { it == change })
-    is ChangesSelection.Precise -> copy(selectedIdx = changes.indexOfFirst { it == change })
-  }
-
 @ApiStatus.Experimental
 fun ChangesSelection?.equalChanges(other: Any?): Boolean {
   if (this == null && other != null) return false

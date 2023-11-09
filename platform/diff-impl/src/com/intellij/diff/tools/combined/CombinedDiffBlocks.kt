@@ -142,7 +142,7 @@ class CombinedSimpleDiffHeader(project: Project,
   }
 }
 
-data class CombinedPathBlockId(val path: FilePath, val fileStatus: FileStatus, val tag: Any? = null) : CombinedBlockId
+data class CombinedPathBlockId(val path: FilePath, val fileStatus: FileStatus?, val tag: Any? = null) : CombinedBlockId
 
 internal class CombinedSimpleDiffBlock(project: Project,
                                        override val id: CombinedPathBlockId,

@@ -37,7 +37,6 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -88,11 +87,6 @@ public final class ChangeDiffRequestProducer implements DiffRequestProducer, Cha
   @Override
   public @NotNull FileStatus getFileStatus() {
     return myChange.getFileStatus();
-  }
-
-  @ApiStatus.Internal
-  public @NotNull Map<Key<?>, Object> getChangeContext() {
-    return myChangeContext;
   }
 
   @Override

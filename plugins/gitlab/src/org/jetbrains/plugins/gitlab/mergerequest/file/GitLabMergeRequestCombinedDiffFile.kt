@@ -37,7 +37,7 @@ internal class GitLabMergeRequestCombinedDiffFile(
   override fun getInputStream() = throw UnsupportedOperationException()
   override fun getOutputStream(requestor: Any?, newModificationStamp: Long, newTimeStamp: Long) = throw UnsupportedOperationException()
 
-  override fun isValid(): Boolean = findProjectVm(project, connectionId) != null
+  override fun isValid(): Boolean = GitLabMergeRequestDiffService.isDiffFileValid(project, connectionId)
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true

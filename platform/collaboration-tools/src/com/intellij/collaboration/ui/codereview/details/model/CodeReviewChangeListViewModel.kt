@@ -75,8 +75,11 @@ abstract class CodeReviewChangeListViewModelBase(
         _selectionRequests.emit(SelectionRequest.All)
       }
       else {
-        _changesSelection.value = ChangesSelection.Precise(changeList.changes, change)
-        _selectionRequests.emit(SelectionRequest.OneChange(change))
+        val currentSelection = _changesSelection.value
+        if (currentSelection == null || currentSelection !is ChangesSelection.Fuzzy || !currentSelection.changes.contains(change)) {
+          _changesSelection.value = ChangesSelection.Precise(changeList.changes, change)
+          _selectionRequests.emit(SelectionRequest.OneChange(change))
+        }
       }
     }
   }
