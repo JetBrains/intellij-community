@@ -563,7 +563,7 @@ internal class MutableEntityStorageImpl(
         val parentId = parent.asBase().id
         check(newChildren.size <= 1) { "ONE_TO_ONE connection may have only one child" }
         val childId = newChildren.singleOrNull()?.asBase()?.id?.asChild()
-        val existingChildId = refs.getOneToOneChild(connectionId, parentId.arrayId)?.let { createEntityId(it, connectionId.childClass) }
+        val existingChildId = refs.getChildrenByParent(connectionId, parentId.asParent()).singleOrNull()?.id
         if (!connectionId.isParentNullable && existingChildId != null && (childId == null || childId.id != existingChildId)) {
           removeEntityByEntityId(existingChildId)
         }
@@ -581,13 +581,11 @@ internal class MutableEntityStorageImpl(
         val parentId = parent.asBase().id
         val childrenIds = newChildren.map { it.asBase().id.asChild() }
         if (!connectionId.isParentNullable) {
-          val existingChildren = refs.getOneToManyChildren(connectionId, parentId.arrayId)
-                                   ?.map { createEntityId(it, connectionId.childClass) }
-                                   ?.toHashSet() ?: mutableSetOf()
+          val existingChildren = refs.getChildrenByParent(connectionId, parentId.asParent()).toMutableSet()
           childrenIds.forEach {
-            existingChildren.remove(it.id)
+            existingChildren.remove(it)
           }
-          existingChildren.forEach { removeEntityByEntityId(it) }
+          existingChildren.forEach { removeEntityByEntityId(it.id) }
         }
 
         childrenIds.forEach { checkCircularDependency(connectionId, it.id.arrayId, parentId.arrayId, this) }
@@ -1088,7 +1086,7 @@ internal sealed class AbstractEntityStorage : EntityStorageInstrumentation {
       }
       ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE -> {
         val parentId = parent.asBase().id
-        val childId = refs.getAbstractOneToOneChildren(connectionId, parentId.asParent())?.id ?: return null
+        val childId = refs.getChildrenByParent(connectionId, parentId.asParent()).singleOrNull()?.id ?: return null
         return entityDataByIdOrDie(childId).createEntity(this)
       }
       ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY, ConnectionId.ConnectionType.ONE_TO_MANY -> {
@@ -1101,15 +1099,16 @@ internal sealed class AbstractEntityStorage : EntityStorageInstrumentation {
     when (connectionId.connectionType) {
       ConnectionId.ConnectionType.ONE_TO_MANY -> {
         val parentId = parent.asBase().id
-        return refs.getOneToManyChildren(connectionId, parentId.arrayId)
-                 ?.map { entityDataByIdOrDie(createEntityId(it, connectionId.childClass)) }
-                 ?.map { it.createEntity(this) } ?: emptySequence()
+        return refs.getChildrenByParent(connectionId, parentId.asParent())
+          .asSequence()
+          .map { entityDataByIdOrDie(it.id) }
+          .map { it.createEntity(this) }
       }
       ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY -> {
-        return refs.getOneToAbstractManyChildren(connectionId, parent.asBase().id.asParent())
-                 ?.asSequence()
-                 ?.map { entityDataByIdOrDie(it.id) }
-                 ?.map { it.createEntity(this) } ?: emptySequence()
+        return refs.getChildrenByParent(connectionId, parent.asBase().id.asParent())
+                 .asSequence()
+                 .map { entityDataByIdOrDie(it.id) }
+                 .map { it.createEntity(this) }
       }
       ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE, ConnectionId.ConnectionType.ONE_TO_ONE -> {
         error("This function works only with one-to-many connections")

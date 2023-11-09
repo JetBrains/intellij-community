@@ -606,19 +606,20 @@ internal sealed class AbstractRefsTable {
 
   fun getChildrenByParent(connectionId: ConnectionId, parentId: ParentEntityId): List<ChildEntityId> {
     return when (connectionId.connectionType) {
-      ConnectionType.ONE_TO_ONE -> getOneToOneChild(connectionId, parentId.id.arrayId)?.let {
-        listOf(createEntityId(it, connectionId.childClass).asChild())
-      } ?: emptyList()
+      ConnectionType.ONE_TO_ONE -> oneToOneContainer[connectionId]
+                                     ?.getKey(parentId.id.arrayId)
+                                     ?.let { listOf(createEntityId(it, connectionId.childClass).asChild()) } ?: emptyList()
       ConnectionType.ONE_TO_MANY -> {
-        getOneToManyChildren(connectionId, parentId.id.arrayId)
+        oneToManyContainer[connectionId]
+          ?.getKeys(parentId.id.arrayId)
           ?.map { createEntityId(it, connectionId.childClass).asChild() }
           ?.toList() ?: emptyList()
       }
       ConnectionType.ONE_TO_ABSTRACT_MANY -> {
-        getOneToAbstractManyChildren(connectionId, parentId) ?: emptyList()
+        oneToAbstractManyContainer[connectionId]?.getKeysByValue(parentId) ?: emptyList()
       }
       ConnectionType.ABSTRACT_ONE_TO_ONE -> {
-        getAbstractOneToOneChildren(connectionId, parentId)?.let { listOf(it) } ?: emptyList()
+        abstractOneToOneContainer[connectionId]?.inverse()?.get(parentId)?.let { listOf(it) } ?: emptyList()
       }
     }
   }
@@ -697,20 +698,6 @@ internal sealed class AbstractRefsTable {
     return res
   }
 
-  fun getOneToManyChildren(connectionId: ConnectionId, parentId: Int): NonNegativeIntIntMultiMap.IntSequence? {
-    return oneToManyContainer[connectionId]?.getKeys(parentId)
-  }
-
-  fun getOneToAbstractManyChildren(connectionId: ConnectionId, parentId: ParentEntityId): List<ChildEntityId>? {
-    val map = oneToAbstractManyContainer[connectionId]
-    return map?.getKeysByValue(parentId)
-  }
-
-  fun getAbstractOneToOneChildren(connectionId: ConnectionId, parentId: ParentEntityId): ChildEntityId? {
-    val map = abstractOneToOneContainer[connectionId]
-    return map?.inverse()?.get(parentId)
-  }
-
   fun getOneToAbstractOneParent(connectionId: ConnectionId, childId: ChildEntityId): ParentEntityId? {
     return abstractOneToOneContainer[connectionId]?.get(childId)
   }
@@ -718,10 +705,6 @@ internal sealed class AbstractRefsTable {
   fun getOneToAbstractManyParent(connectionId: ConnectionId, childId: ChildEntityId): ParentEntityId? {
     val map = oneToAbstractManyContainer[connectionId]
     return map?.get(childId)
-  }
-
-  fun getOneToOneChild(connectionId: ConnectionId, parentId: Int): Int? {
-     return oneToOneContainer[connectionId]?.getKey(parentId)
   }
 
   fun <Child : WorkspaceEntity> getOneToOneChild(connectionId: ConnectionId, parentId: Int, transformer: IntFunction<Child?>): Child? {
