@@ -5,23 +5,31 @@ import com.intellij.build.DefaultBuildDescriptor
 import com.intellij.build.SyncViewManager
 import com.intellij.build.events.EventResult
 import com.intellij.build.events.impl.*
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.util.ExceptionUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.execution.MavenConsoleBundle
+import org.jetbrains.idea.maven.project.MavenProjectsManager
+import org.jetbrains.idea.maven.server.MavenArtifactEvent
+import org.jetbrains.idea.maven.server.MavenServerConsoleEvent
+import org.jetbrains.idea.maven.server.MavenServerConsoleIndicator
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
+import java.text.MessageFormat
 
-abstract class MavenSyncConsoleBase(protected val myProject: Project) {
+abstract class MavenSyncConsoleBase(protected val myProject: Project) : MavenEventHandler {
   protected abstract val title: String
   protected abstract val message: String
 
   private val myTaskId = createTaskId()
   private val myStartedSet = LinkedHashSet<Pair<ExternalSystemTaskId, String>>()
   private val progressListener = myProject.getService(SyncViewManager::class.java)
-
 
   private var hasErrors = false
 
@@ -73,8 +81,75 @@ abstract class MavenSyncConsoleBase(protected val myProject: Project) {
                                                               if (hasErrors) FailureResultImpl() else DerivedResultImpl()))
   }
 
+  override fun handleDownloadEvents(downloadEvents: List<MavenArtifactEvent>) {
+    // TODO: show in UI?
+    MavenLogEventHandler.handleDownloadEvents(downloadEvents)
+  }
+
+  override fun handleConsoleEvents(consoleEvents: List<MavenServerConsoleEvent>) {
+    for (e in consoleEvents) {
+      printMessage(e.level, e.message, e.throwable)
+    }
+  }
+
+  private fun printMessage(level: Int, string: String, throwable: Throwable?) {
+    if (isSuppressed(level)) return
+
+    var type = OutputType.NORMAL
+    if (throwable != null || level == MavenServerConsoleIndicator.LEVEL_WARN || level == MavenServerConsoleIndicator.LEVEL_ERROR || level == MavenServerConsoleIndicator.LEVEL_FATAL) {
+      type = OutputType.ERROR
+    }
+
+    doPrint(composeLine(level, string), type)
+
+    if (throwable != null) {
+      val throwableText = ExceptionUtil.getThrowableText(throwable)
+      if (Registry.`is`("maven.print.import.stacktraces") || ApplicationManager.getApplication().isUnitTestMode) { //NO-UT-FIX
+        doPrint(LINE_SEPARATOR + composeLine(MavenServerConsoleIndicator.LEVEL_ERROR, throwableText), type)
+      }
+      else {
+        doPrint(LINE_SEPARATOR + composeLine(MavenServerConsoleIndicator.LEVEL_ERROR, throwable.message), type)
+      }
+    }
+  }
+
+  private fun isSuppressed(level: Int): Boolean {
+    return level < MavenProjectsManager.getInstance(myProject).generalSettings.outputLevel.level
+  }
+
+  private fun composeLine(level: Int, message: String?): String {
+    return MessageFormat.format("[{0}] {1}", getPrefixByLevel(level), message)
+  }
+
+  private fun getPrefixByLevel(level: Int): String? {
+    return LEVEL_TO_PREFIX[level]
+  }
+
+  private fun doPrint(text: String, type: OutputType) {
+    val stdout = type == OutputType.NORMAL
+    if (StringUtil.isEmpty(text)) {
+      return
+    }
+    val toPrint = if (text.endsWith('\n')) text else "$text\n"
+    progressListener.onEvent(myTaskId, OutputBuildEventImpl(myTaskId, toPrint, stdout))
+  }
+
   private fun debugLog(s: String, exception: Throwable? = null) {
     MavenLog.LOG.debug(s, exception)
+  }
+
+  companion object {
+    private val LINE_SEPARATOR: String = System.lineSeparator()
+    private enum class OutputType {
+      NORMAL, ERROR
+    }
+    private val LEVEL_TO_PREFIX = mapOf(
+      MavenServerConsoleIndicator.LEVEL_DEBUG to "DEBUG",
+      MavenServerConsoleIndicator.LEVEL_INFO to "INFO",
+      MavenServerConsoleIndicator.LEVEL_WARN to "WARNING",
+      MavenServerConsoleIndicator.LEVEL_ERROR to "ERROR",
+      MavenServerConsoleIndicator.LEVEL_FATAL to "FATAL_ERROR"
+    )
   }
 }
 

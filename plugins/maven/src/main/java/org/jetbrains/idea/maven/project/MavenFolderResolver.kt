@@ -61,7 +61,7 @@ class MavenFolderResolver(private val project: Project) {
       val projectsWithChanges = mutableMapOf<MavenProject, MavenProjectChanges>()
       for ((baseDir, mavenProjectsForBaseDir) in projectMultiMap.entrySet()) {
         console.startSourceGeneration(baseDir)
-        val chunk = resolveFolders(baseDir, mavenProjectsForBaseDir, tree, progressReporter)
+        val chunk = resolveFolders(baseDir, mavenProjectsForBaseDir, tree, progressReporter, console)
         projectsWithChanges.putAll(chunk)
         console.finishSourceGeneration(baseDir)
       }
@@ -75,7 +75,8 @@ class MavenFolderResolver(private val project: Project) {
   private suspend fun resolveFolders(baseDir: String,
                                      mavenProjects: Collection<MavenProject>,
                                      tree: MavenProjectsTree,
-                                     progressReporter: RawProgressReporter): Map<MavenProject, MavenProjectChanges> {
+                                     progressReporter: RawProgressReporter,
+                                     console: MavenSourceGenerationConsole): Map<MavenProject, MavenProjectChanges> {
     val goal = projectsManager.importingSettings.updateFoldersOnImportPhase
 
     val fileToProject = mavenProjects.associateBy({ File(it.file.path) }, { it })
@@ -86,7 +87,7 @@ class MavenFolderResolver(private val project: Project) {
     val goalResults: List<MavenGoalExecutionResult>
     val embedder: MavenEmbedderWrapper = projectsManager.embeddersManager.getEmbedder(MavenEmbeddersManager.FOR_FOLDERS_RESOLVE, baseDir)
     try {
-      goalResults = embedder.executeGoal(requests, goal, progressReporter, projectsManager.syncConsole)
+      goalResults = embedder.executeGoal(requests, goal, progressReporter, console)
     }
     finally {
       projectsManager.embeddersManager.release(embedder)
