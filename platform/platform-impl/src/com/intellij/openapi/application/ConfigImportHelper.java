@@ -164,7 +164,8 @@ public final class ConfigImportHelper {
         }
       }
       else {
-        if (shouldAskForConfig()) {
+        boolean askForConfig = shouldAskForConfig();
+        if (askForConfig) {
           oldConfigDirAndOldIdePath = showDialogAndGetOldConfigPath(guessedOldConfigDirs.getPaths());
           importScenarioStatistics = SHOW_DIALOG_REQUESTED_BY_PROPERTY;
         }
@@ -933,7 +934,12 @@ public final class ConfigImportHelper {
     catch (IOException e) {
       log.info("Non-existing plugins directory: " + oldPluginsDir, e);
     }
-
+    Set<PluginId> disabledPlugins = DisabledPluginsState.Companion.loadDisabledPlugins(oldConfigDir.resolve(DisabledPluginsState.DISABLED_PLUGINS_FILENAME));
+    for (IdeaPluginDescriptor pluginToMigrate: pluginsToMigrate) {
+      if (disabledPlugins.contains(pluginToMigrate.getPluginId())) {
+        pluginToMigrate.setEnabled(false);
+      }
+    }
     if (options.importSettings != null) {
       options.importSettings.processPluginsToMigrate(newConfigDir, oldConfigDir, pluginsToMigrate, pluginsToDownload);
     }
