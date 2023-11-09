@@ -142,7 +142,6 @@ class KotlinFacetConfigurationBridge : KotlinFacetConfiguration, FacetConfigurat
         kotlinSettingsEntity.isHmppEnabled = diffEntity.isHmppEnabled
         kotlinSettingsEntity.pureKotlinSourceFolders = diffEntity.pureKotlinSourceFolders.toMutableList()
         kotlinSettingsEntity.kind = diffEntity.kind
-        //kotlinSettingsEntity.mergedCompilerArguments = diffEntity.mergedCompilerArguments
         kotlinSettingsEntity.compilerArguments = diffEntity.compilerArguments
         kotlinSettingsEntity.compilerSettings = diffEntity.compilerSettings
         kotlinSettingsEntity.targetPlatform = diffEntity.targetPlatform

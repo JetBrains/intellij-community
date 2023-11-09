@@ -33,7 +33,7 @@ class KotlinFacetSettingsWorkspaceModel(val entity: KotlinSettingsEntity.Builder
         }
 
     override fun updateMergedArguments() {
-        //_mergedCompilerArguments = computeMergedArguments()
+        // Do nothing
     }
 
     private fun computeMergedArguments(): CommonCompilerArguments? {
@@ -105,7 +105,9 @@ class KotlinFacetSettingsWorkspaceModel(val entity: KotlinSettingsEntity.Builder
     override var externalSystemRunTasks: List<ExternalSystemRunTask>
         get() = _externalSystemRunTasks
         set(value) {
-            //TODO: entity
+            // This class is not stored in workspace model entity because it is needed only for MPP
+            // As far as there is no plans to migrate Gradle import on new workspace model in the nearest future, it will be absent in entity
+            // But serialization definitely needs to be implemented in process of migrating Gradle import
             _externalSystemRunTasks = value
         }
 

@@ -8,7 +8,7 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetConfiguratio
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
 import org.jetbrains.kotlin.idea.facet.KotlinFacetConfiguration
 
-class KotlinFacetBridge(/*facetType: KotlinFacetType,*/
+class KotlinFacetBridge(
                         module: Module,
                         name: String,
                         configuration: KotlinFacetConfiguration
@@ -27,10 +27,8 @@ class KotlinFacetBridge(/*facetType: KotlinFacetType,*/
             moduleId = kotlinSettingsEntity.moduleId
             module = mutableStorage.resolve(kotlinSettingsEntity.moduleId)!!
             useProjectSettings = kotlinSettingsEntity.useProjectSettings
-            //mergedCompilerArguments = kotlinSettingsEntity.mergedCompilerArguments
             compilerArguments = kotlinSettingsEntity.compilerArguments
             compilerSettings = kotlinSettingsEntity.compilerSettings
-            //externalSystemRunTasks = kotlinSettingsEntity.externalSystemRunTasks
             implementedModuleNames = kotlinSettingsEntity.implementedModuleNames.toMutableList()
             dependsOnModuleNames = kotlinSettingsEntity.dependsOnModuleNames.toMutableList()
             additionalVisibleModuleNames = kotlinSettingsEntity.additionalVisibleModuleNames.toMutableSet()

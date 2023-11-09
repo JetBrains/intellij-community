@@ -18,9 +18,6 @@ import com.intellij.util.descriptors.ConfigFileItem
 import org.jetbrains.kotlin.config.KotlinModuleKind
 
 interface KotlinSettingsEntity : ModuleSettingsBase {
-    // Looks like useless for Kotlin facet,
-    // in that case should be removed during
-    // the process of implementing Maven import for workspace model
     val sourceRoots: List<String>
     val configFileItems: List<ConfigFileItem>
 
@@ -30,22 +27,15 @@ interface KotlinSettingsEntity : ModuleSettingsBase {
     val useProjectSettings: Boolean
     val implementedModuleNames: List<String>
     val dependsOnModuleNames: List<String>
-
     val additionalVisibleModuleNames: Set<String>
-
     val productionOutputPath: String
     val testOutputPath: String
-
-
     val sourceSetNames: List<String>
     val isTestModule: Boolean
-
     val externalProjectId: String
-
     val isHmppEnabled: Boolean
         @Deprecated(message = "Use mppVersion.isHmppEnabled", ReplaceWith("mppVersion.isHmpp"))
         get
-
     val pureKotlinSourceFolders: List<String>
 
     //semi-trivial parameters (enums)
@@ -55,12 +45,9 @@ interface KotlinSettingsEntity : ModuleSettingsBase {
     //TODO: remove?
     val mergedCompilerArguments: String
     val compilerArguments: String
-
-    // Check weather it can be nullable (along with productionOutputPath and testOutputPath)
     val compilerSettings: CompilerSettingsData
 
     val targetPlatform: String
-    //externalSystemRunTasks
 
     override val symbolicId: KotlinSettingsId
         get() = KotlinSettingsId(name, moduleId)
