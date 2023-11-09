@@ -212,7 +212,7 @@ final class PerFileElementTypeStubModificationTracker implements StubIndexImpl.F
 
   private static @Nullable FileContent getTransientAwareFileContent(FileInfo info) throws IOException {
     var file = info.file;
-    var doc = FileDocumentManager.getInstance().getDocument(file);
+    var doc = FileDocumentManager.getInstance().getCachedDocument(file);
     var project = info.project;
     if (doc == null) {
       try {
