@@ -36,6 +36,7 @@ class BlockTerminalView(
 ) : TerminalContentView, TerminalCommandExecutor {
   private val controller: BlockTerminalController
   private val selectionController: TerminalSelectionController
+  private val focusModel: TerminalFocusModel
 
   private val outputView: TerminalOutputView = TerminalOutputView(project, session, settings)
   private val promptView: TerminalPromptView = TerminalPromptView(project, settings, session, this)
@@ -73,7 +74,7 @@ class BlockTerminalView(
       }
     })
 
-    val focusModel = TerminalFocusModel(project, this, outputView, promptView)
+    focusModel = TerminalFocusModel(project, this, outputView, promptView)
     selectionController = TerminalSelectionController(focusModel, outputView.controller.selectionModel, outputView.controller.outputModel)
     controller = BlockTerminalController(project, session, outputView.controller, promptView.controller, selectionController, focusModel)
 
@@ -212,6 +213,7 @@ class BlockTerminalView(
         SimpleTerminalController.KEY.name -> alternateBufferView?.controller
         BlockTerminalController.KEY.name -> controller
         TerminalSelectionController.KEY.name -> selectionController
+        TerminalFocusModel.KEY.name -> focusModel
         TerminalSession.DATA_KEY.name -> session
         else -> null
       }

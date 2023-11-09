@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.terminal.exp
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.IdeFocusManager
@@ -84,5 +85,9 @@ class TerminalFocusModel(private val project: Project,
     fun promptFocused() {}
 
     fun activeStateChanged(isActive: Boolean) {}
+  }
+
+  companion object {
+    val KEY: DataKey<TerminalFocusModel> = DataKey.create("TerminalFocusModel")
   }
 }
