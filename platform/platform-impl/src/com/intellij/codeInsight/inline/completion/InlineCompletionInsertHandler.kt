@@ -11,7 +11,7 @@ import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
 
-data class InlineCompletionInsertEnvironment(
+class InlineCompletionInsertEnvironment(
   val editor: Editor,
   val file: PsiFile,
   val insertedRange: TextRange,

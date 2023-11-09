@@ -15,7 +15,7 @@ import com.intellij.openapi.util.Disposer
 import java.awt.Graphics
 import java.awt.Rectangle
 
-data class InlineCompletionGrayTextElement(override val text: String) : InlineCompletionElement {
+class InlineCompletionGrayTextElement(override val text: String) : InlineCompletionElement {
 
   override fun toPresentable(): InlineCompletionElement.Presentable = Presentable(this)
 

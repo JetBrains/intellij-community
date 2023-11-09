@@ -13,7 +13,7 @@ import org.jetbrains.annotations.ApiStatus
  */
 @ApiStatus.Internal
 interface InlineCompletionProviderSpecificUsageData {
-  data class InvocationDescriptor(val editor: Editor, val file: PsiFile?)
+  class InvocationDescriptor(val editor: Editor, val file: PsiFile?)
   /**
    * Use this function carefully.
    * If you write information on every typing and cancellation, it slows down the editor and typing.
