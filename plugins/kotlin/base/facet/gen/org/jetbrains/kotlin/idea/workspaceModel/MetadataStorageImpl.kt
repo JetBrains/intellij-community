@@ -1,4 +1,3 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.workspaceModel
 
 import com.intellij.platform.workspace.storage.impl.ConnectionId
@@ -53,7 +52,6 @@ OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = 
 "java.io.Serializable"), values = listOf("DEFAULT",
 "SOURCE_SET_HOLDER",
 "COMPILATION_AND_SOURCE_SET_HOLDER"))), withDefault = false),
-OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "mergedCompilerArguments", valueType = primitiveTypeStringNotNullable, withDefault = false),
 OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "compilerArguments", valueType = primitiveTypeStringNotNullable, withDefault = false),
 OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "compilerSettings", valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = false, typeMetadata = FinalClassMetadata.ClassMetadata(fqName = "org.jetbrains.kotlin.idea.workspaceModel.CompilerSettingsData", properties = listOf(OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "additionalArguments", valueType = primitiveTypeStringNotNullable, withDefault = false),
 OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "scriptTemplates", valueType = primitiveTypeStringNotNullable, withDefault = false),

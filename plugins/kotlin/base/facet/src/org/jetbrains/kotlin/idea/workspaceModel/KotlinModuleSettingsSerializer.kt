@@ -51,7 +51,6 @@ class KotlinModuleSettingsSerializer : CustomFacetRelatedEntitySerializer<Kotlin
             emptyList(),
             KotlinModuleKind.DEFAULT,
             "",
-            "",
             CompilerSettingsData("", "", "", true, "lib"),
             "",
             entitySource

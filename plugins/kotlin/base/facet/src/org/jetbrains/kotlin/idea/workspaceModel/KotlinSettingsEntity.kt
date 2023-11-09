@@ -42,8 +42,6 @@ interface KotlinSettingsEntity : ModuleSettingsBase {
     val kind: KotlinModuleKind
 
     //non-trivial parameters
-    //TODO: remove?
-    val mergedCompilerArguments: String
     val compilerArguments: String
     val compilerSettings: CompilerSettingsData
 
@@ -74,7 +72,6 @@ interface KotlinSettingsEntity : ModuleSettingsBase {
         override var isHmppEnabled: Boolean
         override var pureKotlinSourceFolders: MutableList<String>
         override var kind: KotlinModuleKind
-        override var mergedCompilerArguments: String
         override var compilerArguments: String
         override var compilerSettings: CompilerSettingsData
         override var targetPlatform: String
@@ -101,7 +98,6 @@ interface KotlinSettingsEntity : ModuleSettingsBase {
             isHmppEnabled: Boolean,
             pureKotlinSourceFolders: List<String>,
             kind: KotlinModuleKind,
-            mergedCompilerArguments: String,
             compilerArguments: String,
             compilerSettings: CompilerSettingsData,
             targetPlatform: String,
@@ -125,7 +121,6 @@ interface KotlinSettingsEntity : ModuleSettingsBase {
             builder.isHmppEnabled = isHmppEnabled
             builder.pureKotlinSourceFolders = pureKotlinSourceFolders.toMutableWorkspaceList()
             builder.kind = kind
-            builder.mergedCompilerArguments = mergedCompilerArguments
             builder.compilerArguments = compilerArguments
             builder.compilerSettings = compilerSettings
             builder.targetPlatform = targetPlatform

@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.serialization
 
-import org.jetbrains.kotlin.build.serializeToPlainText
 import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.copyOf
@@ -25,12 +24,7 @@ class KotlinFacetSettingsWorkspaceModel(val entity: KotlinSettingsEntity.Builder
             myUseProjectSettings = value
         }
 
-    private var _version = 5
-    override var version: Int
-        get() = _version
-        set(value) {
-            _version = value
-        }
+    override var version: Int = KotlinFacetSettings.CURRENT_VERSION
 
     override fun updateMergedArguments() {
         // Do nothing
@@ -207,11 +201,6 @@ class KotlinFacetSettingsWorkspaceModel(val entity: KotlinSettingsEntity.Builder
             entity.testOutputPath = value ?: ""
             _testOutputPath = value
         }
-
-    private fun CommonCompilerArguments.updateMergedCompilerArguments(block: CommonCompilerArguments.() -> Unit) {
-        this.block()
-        entity.mergedCompilerArguments = serializeToPlainText(this)
-    }
 
     private fun CommonCompilerArguments.updateCompilerArguments(block: CommonCompilerArguments.() -> Unit) {
         this.block()
