@@ -1280,14 +1280,13 @@ record App() {
     FileEditor editor
     edt { editor = FileEditorManager.getInstance(project).openFile(myFixture.file.virtualFile, false)[0] }
     def manager = (UndoManagerImpl) UndoManager.getInstance(project)
-    def old = manager.editorProvider
-    manager.editorProvider = new CurrentEditorProvider() {
+    manager.overriddenEditorProvider = new CurrentEditorProvider() {
       @Override
       FileEditor getCurrentEditor(@Nullable Project project) {
         return editor
       }
     }
-    disposeOnTearDown ({ manager.editorProvider = old } as Disposable)
+    disposeOnTearDown ({ manager.overriddenEditorProvider = null } as Disposable)
     return editor
   }
 

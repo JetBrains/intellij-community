@@ -732,7 +732,7 @@ public final class UndoManagerImpl extends UndoManager {
   }
 
   @TestOnly
-  public void setEditorProvider(@NotNull CurrentEditorProvider p) {
+  public void setOverriddenEditorProvider(@Nullable CurrentEditorProvider p) {
     myOverriddenEditorProvider = p;
   }
 

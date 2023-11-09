@@ -1224,7 +1224,7 @@ public class GlobalUndoTest extends UndoTestCase implements TestDialog {
     myFile = createFile("Test.java", "abcd efgh ijk");
     myEditor = createEditor(myFile.getVirtualFile());
 
-    myManager.setEditorProvider(new CurrentEditorProvider() {
+    myManager.setOverriddenEditorProvider(new CurrentEditorProvider() {
       @Override
       public @Nullable FileEditor getCurrentEditor(@Nullable Project project) {
         return TextEditorProvider.getInstance().getTextEditor(myEditor);
