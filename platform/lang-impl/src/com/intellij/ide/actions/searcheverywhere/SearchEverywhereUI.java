@@ -1604,6 +1604,8 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
       mySelectionTracker.resetSelectionIfNeeded();
       myHintHelper.setSearchInProgress(false);
 
+      myUsagePreviewPanel.setVisible(!myResultsList.isEmpty());
+
       myExternalSearchListeners.forEach(listener -> {
         listener.searchFinished(hasMoreContributors);
         if (listener instanceof SearchListenerEx listenerEx) listenerEx.searchFinished(myListModel.getItems());
