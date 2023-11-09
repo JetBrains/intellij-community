@@ -6,6 +6,7 @@ import com.jetbrains.rd.util.lifetime.Lifetime
 import com.intellij.execution.multilaunch.execution.BeforeExecuteTask
 import com.intellij.execution.multilaunch.execution.ExecutionMode
 import com.intellij.execution.multilaunch.state.ExecutableSnapshot
+import com.intellij.internal.statistic.StructuredIdeActivity
 import javax.swing.Icon
 
 abstract class Executable(
@@ -14,7 +15,7 @@ abstract class Executable(
   val icon: Icon?,
   val template: ExecutableTemplate
 ) {
-  abstract suspend fun execute(mode: ExecutionMode, lifetime: Lifetime): RunContentDescriptor?
+  abstract suspend fun execute(mode: ExecutionMode, activity: StructuredIdeActivity, lifetime: Lifetime): RunContentDescriptor?
   open suspend fun cancel() {}
 
   open val beforeExecuteTasks: List<BeforeExecuteTask> = emptyList()

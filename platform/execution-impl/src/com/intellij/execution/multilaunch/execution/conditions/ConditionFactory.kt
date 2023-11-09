@@ -13,7 +13,7 @@ class ConditionFactory(private val project: Project) {
   }
 
   fun create(snapshot: ConditionSnapshot): Condition? {
-    val templates = ConditionTemplate.EP_NAME.getExtensionList(project).associateBy { it.type }
+    val templates = ConditionTemplate.EP_NAME.extensionList.associateBy { it.type }
     val type = snapshot.type ?: return null
     val template = templates[type] ?: return null
     return template.createCondition().apply { loadAttributes(snapshot) }

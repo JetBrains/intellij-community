@@ -6,6 +6,7 @@ import com.jetbrains.rd.util.lifetime.Lifetime
 import com.intellij.execution.multilaunch.execution.*
 import com.intellij.execution.multilaunch.execution.executables.Executable
 import com.intellij.execution.multilaunch.state.ExecutableSnapshot
+import com.intellij.internal.statistic.StructuredIdeActivity
 import java.util.concurrent.CancellationException
 
 class ExecutableNotifierProxy(
@@ -19,7 +20,7 @@ class ExecutableNotifierProxy(
   override fun saveAttributes(snapshot: ExecutableSnapshot) {}
   override fun loadAttributes(snapshot: ExecutableSnapshot) {}
 
-  override suspend fun execute(mode: ExecutionMode, lifetime: Lifetime): RunContentDescriptor? {
+  override suspend fun execute(mode: ExecutionMode, activity: StructuredIdeActivity, lifetime: Lifetime): RunContentDescriptor? {
     lifetime.onTerminationIfAlive {
       configurationModel.executables[actualExecutable]?.let { model ->
         if (!model.status.value.isDone()) {
@@ -31,7 +32,7 @@ class ExecutableNotifierProxy(
     var descriptor: RunContentDescriptor? = null
     try {
       publisher.execute(configurationModel.configuration, this)
-      descriptor = actualExecutable.execute(mode, lifetime)
+      descriptor = actualExecutable.execute(mode, activity, lifetime)
       publisher.afterSuccess(configurationModel.configuration, this)
     }
     catch (_: CancellationException) {

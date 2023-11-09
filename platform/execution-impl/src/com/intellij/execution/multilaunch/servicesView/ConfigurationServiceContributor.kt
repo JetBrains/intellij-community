@@ -22,8 +22,8 @@ class ConfigurationServiceContributor(
 
     private val toolbarActions by lazy {
       DefaultActionGroup(
-        RunMultiLaunchAction(model.configuration),
-        DebugMultiLaunchAction(model.configuration),
+        RunMultiLaunchAction(model.settings),
+        DebugMultiLaunchAction(model.settings),
         StopMultiLaunchAction(model)
       )
     }

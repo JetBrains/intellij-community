@@ -108,6 +108,7 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
 
     internal val TERMINATING_FOR_RERUN = Key.create<Boolean>("TERMINATING_FOR_RERUN")
     internal val REPORT_NEXT_START_AS_RERUN = Key.create<Boolean>("REPORT_NEXT_START_AS_RERUN")
+    internal val PARENT_PROFILE_IDE_ACTIVITY = Key.create<StructuredIdeActivity>("PARENT_PROFILE_IDE_ACTIVITY")
 
     @JvmStatic
     fun getInstance(project: Project): ExecutionManagerImpl {
@@ -918,9 +919,12 @@ private fun triggerUsage(environment: ExecutionEnvironment): StructuredIdeActivi
   // The 'Rerun' button in the Run tool window will reuse the same ExecutionEnvironment object again.
   // If there are no processes to stop, the REPORT_NEXT_START_AS_RERUN won't be set in restartRunProfile(), so need to set it here.
   if (!isRerun) environment.putUserData(ExecutionManagerImpl.REPORT_NEXT_START_AS_RERUN, true)
-
-  return RunConfigurationUsageTriggerCollector
-    .trigger(environment.project, configurationFactory, environment.executor, runConfiguration, isRerun)
+  return when(val parentIdeActivity = environment.getUserData(ExecutionManagerImpl.PARENT_PROFILE_IDE_ACTIVITY)) {
+    null -> RunConfigurationUsageTriggerCollector
+      .trigger(environment.project, configurationFactory, environment.executor, runConfiguration, isRerun)
+    else -> RunConfigurationUsageTriggerCollector
+      .triggerWithParent(parentIdeActivity, environment.project, configurationFactory, environment.executor, runConfiguration, isRerun)
+  }
 }
 
 private fun createEnvironmentBuilder(project: Project,
