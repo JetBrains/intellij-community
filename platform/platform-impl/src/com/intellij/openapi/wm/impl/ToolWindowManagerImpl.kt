@@ -127,6 +127,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     set(value) {
       state.layoutToRestoreLater = value
     }
+
   private var currentState = KeyState.WAITING
   private val waiterForSecondPress: SingleAlarm?
   private val recentToolWindowsState: LinkedList<String>
@@ -136,8 +137,8 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
   private val toolWindowSetInitializer = ToolWindowSetInitializer(project, this)
 
   @Suppress("TestOnlyProblems")
-  constructor(project: Project, coroutineScope: CoroutineScope) : this(project, isNewUi = ExperimentalUI.isNewUI(), isEdtRequired = true,
-                                                                       coroutineScope = coroutineScope)
+  constructor(project: Project, coroutineScope: CoroutineScope)
+    : this(project, isNewUi = ExperimentalUI.isNewUI(), isEdtRequired = true, coroutineScope = coroutineScope)
 
   init {
     if (project.isDefault) {
@@ -588,11 +589,8 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
   }
 
   internal fun projectClosed() {
-    val actionManager = serviceIfCreated<ActionManager>()
     // hide everything outside the frame (floating and windowed) - frame contents are handled separately elsewhere
     for (entry in idToEntry.values) {
-      actionManager?.unregisterAction(ActivateToolWindowAction.getActionIdForToolWindow(entry.id))
-
       if (entry.toolWindow.windowInfo.type.isInternal) {
         continue
       }
