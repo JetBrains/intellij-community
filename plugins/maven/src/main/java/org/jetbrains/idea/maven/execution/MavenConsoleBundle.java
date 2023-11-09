@@ -9,7 +9,7 @@ import org.jetbrains.annotations.PropertyKey;
 
 import java.util.function.Supplier;
 
-public class DownloadBundle extends DynamicBundle {
+public class MavenConsoleBundle extends DynamicBundle {
 
   public static @Nls String message(@NotNull @PropertyKey(resourceBundle = PATH_TO_BUNDLE) String key, Object @NotNull ... params) {
     return ourInstance.getMessage(key, params);
@@ -20,10 +20,10 @@ public class DownloadBundle extends DynamicBundle {
     return ourInstance.getLazyMessage(key, params);
   }
 
-  private static final String PATH_TO_BUNDLE = "messages.MavenDownloadBundle";
-  private static final AbstractBundle ourInstance = new DownloadBundle();
+  private static final String PATH_TO_BUNDLE = "messages.MavenConsoleBundle";
+  private static final AbstractBundle ourInstance = new MavenConsoleBundle();
 
-  private DownloadBundle() {
+  private MavenConsoleBundle() {
     super(PATH_TO_BUNDLE);
   }
 }

@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.project
 
-import com.intellij.build.SyncViewManager
 import com.intellij.internal.statistic.StructuredIdeActivity
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
@@ -522,8 +521,7 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
                                           docs: Boolean,
                                           progressReporter: RawProgressReporter): MavenArtifactDownloader.DownloadResult {
     project.messageBus.syncPublisher<MavenImportListener>(MavenImportListener.TOPIC).artifactDownloadingStarted()
-    val progressListener = project.getService(SyncViewManager::class.java)
-    val downloadConsole = MavenDownloadConsole(project, progressListener, sources, docs)
+    val downloadConsole = MavenDownloadConsole(project, sources, docs)
     try {
       downloadConsole.start()
       downloadConsole.startDownloadTask()

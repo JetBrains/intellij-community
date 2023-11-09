@@ -10,6 +10,7 @@ import com.intellij.platform.util.progress.rawProgressReporter
 import com.intellij.platform.util.progress.withRawProgressReporter
 import com.intellij.util.lang.JavaVersion
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.idea.maven.buildtool.MavenSourceGenerationConsole
 import org.jetbrains.idea.maven.server.MavenEmbedderWrapper
 import org.jetbrains.idea.maven.server.MavenGoalExecutionRequest
 import org.jetbrains.idea.maven.server.MavenGoalExecutionResult
@@ -51,15 +52,24 @@ class MavenFolderResolver(private val project: Project) {
 
   suspend fun resolveFolders(mavenProjects: Collection<MavenProject>,
                              progressReporter: RawProgressReporter): Map<MavenProject, MavenProjectChanges> {
-    val tree = projectsManager.projectsTree
-    val mavenProjectsToResolve = collectMavenProjectsToResolve(mavenProjects, tree)
-    val projectMultiMap = MavenUtil.groupByBasedir(mavenProjectsToResolve, tree)
-    val projectsWithChanges = mutableMapOf<MavenProject, MavenProjectChanges>()
-    for ((baseDir, mavenProjectsForBaseDir) in projectMultiMap.entrySet()) {
-      val chunk = resolveFolders(baseDir, mavenProjectsForBaseDir, tree, progressReporter)
-      projectsWithChanges.putAll(chunk)
+    val console = MavenSourceGenerationConsole(project)
+    try {
+      console.start()
+      val tree = projectsManager.projectsTree
+      val mavenProjectsToResolve = collectMavenProjectsToResolve(mavenProjects, tree)
+      val projectMultiMap = MavenUtil.groupByBasedir(mavenProjectsToResolve, tree)
+      val projectsWithChanges = mutableMapOf<MavenProject, MavenProjectChanges>()
+      for ((baseDir, mavenProjectsForBaseDir) in projectMultiMap.entrySet()) {
+        console.startSourceGeneration(baseDir)
+        val chunk = resolveFolders(baseDir, mavenProjectsForBaseDir, tree, progressReporter)
+        projectsWithChanges.putAll(chunk)
+        console.finishSourceGeneration(baseDir)
+      }
+      return projectsWithChanges
     }
-    return projectsWithChanges
+    finally {
+      console.finish()
+    }
   }
 
   private suspend fun resolveFolders(baseDir: String,
