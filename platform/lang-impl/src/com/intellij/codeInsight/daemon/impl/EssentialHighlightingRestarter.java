@@ -31,10 +31,10 @@ public final class EssentialHighlightingRestarter implements SaveAndSyncHandlerL
   public void beforeSave(@NotNull SaveAndSyncHandler.SaveTask task, boolean forceExecuteImmediately) {
     boolean hasFilesWithEssentialHighlightingConfigured =
       Arrays.stream(FileEditorManager.getInstance(myProject).getOpenFiles())
-        .map(vf -> ReadAction.compute(() -> PsiManagerEx.getInstanceEx(myProject).getFileManager().findFile(vf)))
+        .map(vf -> ReadAction.nonBlocking(() -> PsiManagerEx.getInstanceEx(myProject).getFileManager().findFile(vf)).executeSynchronously())
         .filter(Objects::nonNull)
-        .anyMatch(psiFile -> ReadAction.compute(() -> HighlightingSettingsPerFile.getInstance(myProject).getHighlightingSettingForRoot(psiFile) ==
-                                                      FileHighlightingSetting.ESSENTIAL));
+        .anyMatch(psiFile -> ReadAction.nonBlocking(() -> HighlightingSettingsPerFile.getInstance(myProject).getHighlightingSettingForRoot(psiFile) ==
+                                                      FileHighlightingSetting.ESSENTIAL).executeSynchronously());
     if (hasFilesWithEssentialHighlightingConfigured) {
       DaemonCodeAnalyzerImpl codeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(myProject);
       codeAnalyzer.restartToCompleteEssentialHighlighting();
