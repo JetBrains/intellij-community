@@ -343,7 +343,7 @@ public class IndexTest extends JavaCodeInsightFixtureTestCase {
 
     final UndoManager undoManager = UndoManager.getInstance(getProject());
     final FileEditor selectedEditor = FileEditorManager.getInstance(getProject()).openFile(vFile, false)[0];
-    ((UndoManagerImpl)undoManager).setEditorProvider(new CurrentEditorProvider() {
+    ((UndoManagerImpl)undoManager).setOverriddenEditorProvider(new CurrentEditorProvider() {
       @Override
       public FileEditor getCurrentEditor(@Nullable Project project) {
         return selectedEditor;

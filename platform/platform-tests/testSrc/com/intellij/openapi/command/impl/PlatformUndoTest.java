@@ -48,9 +48,8 @@ public class PlatformUndoTest extends LightPlatformTestCase {
 
   private void runWithCurrentEditor(FileEditor currentEditor, Runnable task) {
     UndoManagerImpl undoManager = getUndoManager();
-    CurrentEditorProvider savedProvider = undoManager.getEditorProvider();
     try {
-      undoManager.setEditorProvider(new CurrentEditorProvider() {
+      undoManager.setOverriddenEditorProvider(new CurrentEditorProvider() {
         @Override
         public @Nullable FileEditor getCurrentEditor(@Nullable Project project) {
           return currentEditor;
@@ -59,7 +58,7 @@ public class PlatformUndoTest extends LightPlatformTestCase {
       task.run();
     }
     finally {
-      undoManager.setEditorProvider(savedProvider);
+      undoManager.setOverriddenEditorProvider(null);
     }
   }
 
