@@ -134,7 +134,7 @@
     <action id="Terminal.Copy" class="org.jetbrains.plugins.terminal.action.TerminalCopyAction"
             use-shortcut-of="$Copy" icon="AllIcons.Actions.Copy"/>
 
-    <group id="Terminal.PopupMenu">
+    <group id="Terminal.OutputContextMenu">
       <reference ref="Terminal.Copy"/>
     </group>
   </actions>

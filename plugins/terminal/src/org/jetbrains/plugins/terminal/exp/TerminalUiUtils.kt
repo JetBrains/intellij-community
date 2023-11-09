@@ -2,17 +2,13 @@
 package org.jetbrains.plugins.terminal.exp
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.ActionGroup
-import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.EditorKind
-import com.intellij.openapi.editor.event.EditorMouseEvent
 import com.intellij.openapi.editor.ex.EditorGutterFreePainterAreaState
-import com.intellij.openapi.editor.impl.ContextMenuPopupHandler
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.markup.EffectType
 import com.intellij.openapi.editor.markup.TextAttributes
@@ -70,9 +66,7 @@ object TerminalUiUtils {
       isBlockCursor = true
     }
 
-    editor.installPopupHandler(object:ContextMenuPopupHandler() {
-      override fun getActionGroup(event: EditorMouseEvent) =
-        ActionManager.getInstance().getAction("Terminal.PopupMenu") as ActionGroup})
+    editor.contextMenuGroupId = "Terminal.OutputContextMenu"
     return editor
   }
 
