@@ -7,7 +7,6 @@ import com.intellij.execution.lineMarker.ExecutorAction
 import com.intellij.execution.lineMarker.RunLineMarkerContributor
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiMethod
 import com.intellij.testIntegration.TestFramework
 import com.intellij.util.Function
 import org.jetbrains.kotlin.asJava.toLightMethods
@@ -48,14 +47,10 @@ class KotlinTestRunLineMarkerContributor : RunLineMarkerContributor() {
                 RunManager.getInstance(getProject()).selectedConfiguration?.type?.displayName == "Gradle"
             } ?: return false
             val ktClassOrObject = ktNamedFunction.containingClassOrObject ?: return false
-
-            var lightMethod: PsiMethod? = null
-
+            
             return TestFramework.EXTENSION_NAME.extensionList.any {
                 if (includeSlowProviders && it !is KotlinPsiBasedTestFramework) {
-                    if (lightMethod == null) {
-                        lightMethod = ktNamedFunction.toLightMethods().firstOrNull()
-                    }
+                    val lightMethod = ktNamedFunction.toLightMethods().firstOrNull()
                     it?.isIgnoredMethod(lightMethod) == true
                 } else if (it is KotlinPsiBasedTestFramework) {
                     it.isTestClass(ktClassOrObject) && it.isIgnoredMethod(ktNamedFunction)
