@@ -8,6 +8,7 @@
 
       <option name="SELECTION_BACKGROUND" value="5974ab"/>
       <option name="CARET_ROW_COLOR" value="fffae3"/>
+      <option name="GRID_STRIPE_COLOR" value="f5f8fe" />
       <option name="METHOD_SEPARATORS_COLOR" value="c0c0c0"/>
       <option name="WHITESPACES" value="adadad"/>
       <option name="INDENT_GUIDE" value="e6e6e6"/>
