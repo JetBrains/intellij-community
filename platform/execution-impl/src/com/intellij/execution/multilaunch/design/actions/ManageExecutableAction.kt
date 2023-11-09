@@ -9,7 +9,7 @@ import com.intellij.execution.multilaunch.design.ExecutableRow
 import com.intellij.execution.multilaunch.design.MultiLaunchConfigurationViewModel
 import java.awt.Rectangle
 
-abstract class ManageExecutableAction(@NlsActions.ActionText text: String) : AnAction(text) {
+abstract class ManageExecutableAction(@NlsActions.ActionText text: String? = null) : AnAction(text) {
   companion object {
     val MULTILAUNCH_CONFIGURATION_KEY = DataKey.create<MultiLaunchConfiguration>("MULTILAUNCH_CONFIGURATION")
     val MULTILAUNCH_POPUP_BOUNDS_KEY = DataKey.create<Rectangle>("MULTILAUNCH_POPUP_BOUNDS")
