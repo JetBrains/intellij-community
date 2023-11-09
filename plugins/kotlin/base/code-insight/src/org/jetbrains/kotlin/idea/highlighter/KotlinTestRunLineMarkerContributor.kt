@@ -56,7 +56,9 @@ class KotlinTestRunLineMarkerContributor : RunLineMarkerContributor() {
 
             return TestFramework.EXTENSION_NAME.extensionList.any {
                 if (includeSlowProviders && it !is KotlinPsiBasedTestFramework) {
-                    lightMethod = lightMethod ?: ktNamedFunction.toLightMethods().firstOrNull()
+                    if (lightMethod == null) {
+                        lightMethod = ktNamedFunction.toLightMethods().firstOrNull()
+                    }
                     it?.isIgnoredMethod(lightMethod) == true
                 } else if (it is KotlinPsiBasedTestFramework) {
                     it.isTestClass(ktClassOrObject) && it.isIgnoredMethod(ktNamedFunction)
