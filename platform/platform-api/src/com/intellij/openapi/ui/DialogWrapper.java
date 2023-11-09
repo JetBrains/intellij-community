@@ -1284,7 +1284,7 @@ public abstract class DialogWrapper {
       }
     };
     myErrorText.addComponentListener(resizeListener);
-    Disposer.register(myDisposable, () -> myErrorText.myLabel.removeComponentListener(resizeListener));
+    Disposer.register(myDisposable, () -> myErrorText.removeComponentListener(resizeListener));
 
     myRoot.setLayout(createRootLayout());
     myPeer.setContentPane(myRoot);
