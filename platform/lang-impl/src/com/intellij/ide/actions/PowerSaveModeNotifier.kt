@@ -14,43 +14,46 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.Disposer
 
-private const val IGNORE_POWER_SAVE_MODE = "ignore.power.save.mode"
-
-internal fun notifyOnPowerSaveMode(project: Project?) {
-  if (PropertiesComponent.getInstance().getBoolean(IGNORE_POWER_SAVE_MODE)) {
-    return
-  }
-
-  val notification = NotificationGroupManager.getInstance().getNotificationGroup("Power Save Mode").createNotification(
-    IdeBundle.message("power.save.mode.on.notification.title"),
-    IdeBundle.message("power.save.mode.on.notification.content"),
-    NotificationType.WARNING
-  )
-  notification.addAction(object : NotificationAction(IdeBundle.message("action.Anonymous.text.do.not.show.again")) {
-    override fun actionPerformed(e: AnActionEvent, notification: Notification) {
-      PropertiesComponent.getInstance().setValue(IGNORE_POWER_SAVE_MODE, true)
-      notification.expire()
-    }
-  })
-  notification.addAction(object : NotificationAction(IdeBundle.message("power.save.mode.disable.action.title")) {
-    override fun actionPerformed(e: AnActionEvent, notification: Notification) {
-      PowerSaveMode.setEnabled(false)
-      notification.expire()
-    }
-  })
-  notification.notify(project)
-  val balloon = notification.balloon ?: return
-  val bus = project?.messageBus ?: ApplicationManager.getApplication().messageBus
-  val connection = bus.connect()
-  Disposer.register(balloon, connection)
-  connection.subscribe(PowerSaveMode.TOPIC, PowerSaveMode.Listener(notification::expire))
-}
-
 internal class PowerSaveModeNotifier : ProjectActivity {
   override suspend fun execute(project: Project) {
     if (PowerSaveMode.isEnabled()) {
-      notifyOnPowerSaveMode(project)
+      Util.notifyOnPowerSaveMode(project)
     }
   }
 
+  object Util {
+
+    private const val IGNORE_POWER_SAVE_MODE = "ignore.power.save.mode"
+
+    @JvmStatic
+    fun notifyOnPowerSaveMode(project: Project?) {
+      if (PropertiesComponent.getInstance().getBoolean(IGNORE_POWER_SAVE_MODE)) {
+        return
+      }
+
+      val notification = NotificationGroupManager.getInstance().getNotificationGroup("Power Save Mode").createNotification(
+        IdeBundle.message("power.save.mode.on.notification.title"),
+        IdeBundle.message("power.save.mode.on.notification.content"),
+        NotificationType.WARNING
+      )
+      notification.addAction(object : NotificationAction(IdeBundle.message("action.Anonymous.text.do.not.show.again")) {
+        override fun actionPerformed(e: AnActionEvent, notification: Notification) {
+          PropertiesComponent.getInstance().setValue(IGNORE_POWER_SAVE_MODE, true)
+          notification.expire()
+        }
+      })
+      notification.addAction(object : NotificationAction(IdeBundle.message("power.save.mode.disable.action.title")) {
+        override fun actionPerformed(e: AnActionEvent, notification: Notification) {
+          PowerSaveMode.setEnabled(false)
+          notification.expire()
+        }
+      })
+      notification.notify(project)
+      val balloon = notification.balloon ?: return
+      val bus = project?.messageBus ?: ApplicationManager.getApplication().messageBus
+      val connection = bus.connect()
+      Disposer.register(balloon, connection)
+      connection.subscribe(PowerSaveMode.TOPIC, PowerSaveMode.Listener(notification::expire))
+    }
+  }
 }

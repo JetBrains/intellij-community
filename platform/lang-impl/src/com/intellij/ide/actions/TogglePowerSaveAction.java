@@ -20,7 +20,7 @@ final class TogglePowerSaveAction extends ToggleAction implements DumbAware, Act
   public void setSelected(@NotNull AnActionEvent e, boolean state) {
     PowerSaveMode.setEnabled(state);
     if (state) {
-      PowerSaveModeNotifierKt.notifyOnPowerSaveMode(e.getData(CommonDataKeys.PROJECT));
+      PowerSaveModeNotifier.Util.notifyOnPowerSaveMode(e.getData(CommonDataKeys.PROJECT));
     }
   }
 
