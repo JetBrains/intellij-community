@@ -13,11 +13,17 @@ import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.io.StorageLockContext;
 import junit.framework.AssertionFailedError;
+import kotlin.Unit;
+import kotlin.reflect.KFunction;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Method;
+import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
 
 import static com.intellij.platform.diagnostic.telemetry.helpers.TraceKt.*;
 
@@ -121,7 +127,72 @@ public class PerformanceTestInfo {
     return this;
   }
 
+  private static Method filterMethodFromStackTrace(Function<Method, Boolean> methodFilter) {
+    StackTraceElement[] stackTraceElements = Thread.currentThread().getStackTrace();
+
+    for (StackTraceElement element : stackTraceElements) {
+      try {
+        Class<?> aClass = Class.forName(element.getClassName());
+
+        for (Method method : aClass.getDeclaredMethods()) {
+          if (method.getName().equals(element.getMethodName())) {
+            if (methodFilter.apply(method)) return method;
+          }
+        }
+      }
+      catch (ClassNotFoundException e) {
+        // do nothing
+      }
+    }
+    return null;
+  }
+
+  private static Method tryToFindCallingTestMethodByJUnitAnnotation() {
+    return filterMethodFromStackTrace(
+      method -> {
+        if (method.toGenericString().contains("Gradle")) {
+          int x = 9;
+        }
+        for (Annotation annotation : method.getDeclaredAnnotations()) {
+          if (annotation.annotationType().getName().contains("junit")) {
+            return true;
+          }
+        }
+        return false;
+      });
+  }
+
+  private static Method tryToFindCallingTestMethodByNamePattern() {
+    return filterMethodFromStackTrace(
+      method -> {
+        return method.getName().toLowerCase(Locale.ROOT).startsWith("test");
+      });
+  }
+
   public void assertTiming() {
+    Method callingTestMethod = tryToFindCallingTestMethodByJUnitAnnotation();
+
+    if (callingTestMethod == null) {
+      callingTestMethod = tryToFindCallingTestMethodByNamePattern();
+      if (callingTestMethod == null) {
+        throw new AssertionError(
+          "Couldn't manage to detect the calling test method. Please use overloaded method com.intellij.testFramework.PerformanceTestInfo.assertTiming(Method callingTestMethod)"
+        );
+      }
+    }
+
+    assertTiming(callingTestMethod);
+  }
+
+  public void assertTiming(@NotNull Method javaTestMethod) {
+    assertTiming(String.format("%s.%s", javaTestMethod.getDeclaringClass().getName(), javaTestMethod.getName()));
+  }
+
+  public void assertTiming(@NotNull KFunction<?> kotlinTestMethod) {
+    assertTiming(String.format("%s.%s", kotlinTestMethod.getClass().getName(), kotlinTestMethod.getName()));
+  }
+
+  public void assertTiming(String fullQualifiedTestMethodName) {
     if (PlatformTestUtil.COVERAGE_ENABLED_BUILD) return;
     Timings.getStatistics(); // warm-up, measure
     updateJitUsage();
@@ -213,7 +284,7 @@ public class PerformanceTestInfo {
     }
     finally {
       try {
-        MetricsPublisher.getInstance().publish(what);
+        MetricsPublisher.getInstance().publish(fullQualifiedTestMethodName, what);
       }
       catch (Throwable t) {
         System.err.println("Something unexpected happened during publishing performance metrics");
