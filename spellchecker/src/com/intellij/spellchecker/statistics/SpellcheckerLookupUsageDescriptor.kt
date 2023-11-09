@@ -17,7 +17,7 @@ private val SPELLCHECKER = EventFields.Boolean(SPELLCHECKER_KEY_NAME)
 
 internal class SpellcheckerLookupUsageDescriptor : LookupUsageDescriptor {
 
-  private val SPELLCHECKER_KEY get() = Key<Boolean>(SPELLCHECKER_KEY_NAME)
+  private val SPELLCHECKER_KEY = Key<Boolean>(SPELLCHECKER_KEY_NAME)
 
   override fun getExtensionKey(): String = SPELLCHECKER_KEY_NAME
 
