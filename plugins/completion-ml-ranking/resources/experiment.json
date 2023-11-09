@@ -169,13 +169,13 @@
     {
       "id": "html",
       "experimentBucketsCount": 8,
-      "includeGroups": [ 7, 8, 12, 13 ],
+      "includeGroups": [ 7, 7, 12, 12, 13, 13 ],
       "shouldLogElementFeatures": false
     },
     {
       "id": "css",
       "experimentBucketsCount": 8,
-      "includeGroups": [ 7, 8, 12, 13 ],
+      "includeGroups": [ 7, 7, 12, 12, 13, 13 ],
       "shouldLogElementFeatures": false
     }
   ]
