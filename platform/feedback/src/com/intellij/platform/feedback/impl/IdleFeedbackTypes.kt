@@ -20,9 +20,9 @@ import com.intellij.platform.feedback.aqua.state.AquaOldUserInfoState
 import com.intellij.platform.feedback.impl.bundle.CommonFeedbackBundle
 import com.intellij.platform.feedback.impl.notification.RequestFeedbackNotification
 import com.intellij.platform.feedback.impl.state.DontShowAgainFeedbackService
-import com.intellij.platform.feedback.impl.statistics.FeedbackNotificationCountCollector
-import com.intellij.platform.feedback.impl.statistics.FeedbackNotificationCountCollector.Companion.logRequestNotificationShown
-import com.intellij.platform.feedback.impl.statistics.FeedbackNotificationCountCollector.Companion.logRespondNotificationActionInvoked
+import com.intellij.platform.feedback.impl.statistics.FeedbackNotificationCountCollector.Util.logDisableNotificationActionInvoked
+import com.intellij.platform.feedback.impl.statistics.FeedbackNotificationCountCollector.Util.logRequestNotificationShown
+import com.intellij.platform.feedback.impl.statistics.FeedbackNotificationCountCollector.Util.logRespondNotificationActionInvoked
 import com.intellij.platform.feedback.kafka.bundle.KafkaFeedbackBundle
 import com.intellij.platform.feedback.kafka.dialog.KafkaConsumerFeedbackDialog
 import com.intellij.platform.feedback.kafka.dialog.KafkaProducerFeedbackDialog
@@ -423,7 +423,7 @@ enum class IdleFeedbackTypes {
       NotificationAction.createSimpleExpiring(getCancelFeedbackNotificationLabel()) {
         if (!forTest) {
           DontShowAgainFeedbackService.dontShowFeedbackInCurrentVersion()
-          FeedbackNotificationCountCollector.logDisableNotificationActionInvoked(this)
+          logDisableNotificationActionInvoked(this)
         }
         getNotificationOnCancelAction(project)()
       }

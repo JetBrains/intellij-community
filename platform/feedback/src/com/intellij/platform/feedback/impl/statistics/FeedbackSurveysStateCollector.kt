@@ -9,53 +9,48 @@ import com.intellij.platform.feedback.impl.state.CommonFeedbackSurveyService
 
 class FeedbackSurveysStateCollector : ApplicationUsagesCollector() {
 
-  companion object {
-    private val GROUP = EventLogGroup("feedback.surveys.state", 1)
-
-    private val NUMBER_FEEDBACK_SURVEY_SHOWS = GROUP.registerEvent(
+  private object GroupAndEvents {
+    val GROUP = EventLogGroup("feedback.surveys.state", 1)
+    val NUMBER_FEEDBACK_SURVEY_SHOWS = GROUP.registerEvent(
       "number.of.notifications.shown",
       EventFields.StringValidatedByCustomRule("survey_id", FeedbackSurveyIdValidationRule::class.java),
       EventFields.Count
     )
-
-    private val NUMBER_RESPOND_ACTION_INVOKED = GROUP.registerEvent(
+    val NUMBER_RESPOND_ACTION_INVOKED = GROUP.registerEvent(
       "number.of.respond.actions.invoked",
       EventFields.StringValidatedByCustomRule("survey_id", FeedbackSurveyIdValidationRule::class.java),
       EventFields.Count
     )
-
-    private val NUMBER_DISABLE_ACTION_INVOKED = GROUP.registerEvent(
+    val NUMBER_DISABLE_ACTION_INVOKED = GROUP.registerEvent(
       "number.of.disable.actions.invoked",
       EventFields.StringValidatedByCustomRule("survey_id", FeedbackSurveyIdValidationRule::class.java),
       EventFields.Count
     )
-
-    private val FEEDBACK_SURVEY_ANSWER_SENT = GROUP.registerEvent(
+    val FEEDBACK_SURVEY_ANSWER_SENT = GROUP.registerEvent(
       "feedback.survey.answered",
       EventFields.StringValidatedByCustomRule("survey_id", FeedbackSurveyIdValidationRule::class.java),
     )
-
   }
 
-  override fun getGroup(): EventLogGroup = GROUP
+  override fun getGroup(): EventLogGroup = GroupAndEvents.GROUP
 
   override fun getMetrics(): Set<MetricEvent> {
     val result: MutableSet<MetricEvent> = mutableSetOf()
 
     CommonFeedbackSurveyService.getNumberShowsForAllSurveys().entries.forEach {
-      result.add(NUMBER_FEEDBACK_SURVEY_SHOWS.metric(it.key, it.value))
+      result.add(GroupAndEvents.NUMBER_FEEDBACK_SURVEY_SHOWS.metric(it.key, it.value))
     }
 
     CommonFeedbackSurveyService.getNumberRespondActionInvokedForAllSurveys().entries.forEach {
-      result.add(NUMBER_RESPOND_ACTION_INVOKED.metric(it.key, it.value))
+      result.add(GroupAndEvents.NUMBER_RESPOND_ACTION_INVOKED.metric(it.key, it.value))
     }
 
     CommonFeedbackSurveyService.getNumberDisableActionInvokedForAllSurveys().entries.forEach {
-      result.add(NUMBER_DISABLE_ACTION_INVOKED.metric(it.key, it.value))
+      result.add(GroupAndEvents.NUMBER_DISABLE_ACTION_INVOKED.metric(it.key, it.value))
     }
 
     CommonFeedbackSurveyService.getAllAnsweredFeedbackSurveys().forEach {
-      result.add(FEEDBACK_SURVEY_ANSWER_SENT.metric(it))
+      result.add(GroupAndEvents.FEEDBACK_SURVEY_ANSWER_SENT.metric(it))
     }
 
     return result
