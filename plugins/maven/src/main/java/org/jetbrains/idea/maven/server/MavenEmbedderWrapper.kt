@@ -119,10 +119,7 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
                                progressReporter: RawProgressReporter?,
                                eventHandler: MavenEventHandler): List<MavenArtifact> {
     return runLongRunningTask(
-      LongRunningEmbedderTask { embedder, taskId ->
-        // TODO: proper status
-        MavenServerResponse(embedder.resolveArtifacts(taskId, ArrayList(requests), ourToken), LongRunningTaskStatus.EMPTY)
-      },
+      LongRunningEmbedderTask { embedder, taskId -> embedder.resolveArtifacts(taskId, ArrayList(requests), ourToken) },
       progressReporter, eventHandler)
   }
 

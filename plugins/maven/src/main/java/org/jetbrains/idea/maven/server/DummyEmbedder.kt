@@ -21,8 +21,8 @@ abstract class DummyEmbedder(val myProject: Project) : MavenServerEmbedder {
 
   override fun resolveArtifacts(longRunningTaskId: String,
                                 requests: ArrayList<MavenArtifactResolutionRequest>,
-                                token: MavenToken?): ArrayList<MavenArtifact> {
-    return ArrayList()
+                                token: MavenToken?): MavenServerResponse<ArrayList<MavenArtifact>> {
+    return MavenServerResponse(ArrayList(), LongRunningTaskStatus.EMPTY)
   }
 
   override fun resolveArtifactsTransitively(artifacts: ArrayList<MavenArtifactInfo>,

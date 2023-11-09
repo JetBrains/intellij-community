@@ -995,12 +995,12 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
 
   @NotNull
   @Override
-  public ArrayList<MavenArtifact> resolveArtifacts(@NotNull String longRunningTaskId,
-                                                   @NotNull ArrayList<MavenArtifactResolutionRequest> requests,
-                                                   MavenToken token) {
+  public MavenServerResponse<ArrayList<MavenArtifact>> resolveArtifacts(@NotNull String longRunningTaskId,
+                                                                        @NotNull ArrayList<MavenArtifactResolutionRequest> requests,
+                                                                        MavenToken token) {
     MavenServerUtil.checkToken(token);
     try (LongRunningTask task = newLongRunningTask(longRunningTaskId, requests.size(), myConsoleWrapper)) {
-      return doResolveArtifacts(task, requests);
+      return new MavenServerResponse<>(doResolveArtifacts(task, requests), getLongRunningTaskStatus(longRunningTaskId, token));
     }
   }
 
