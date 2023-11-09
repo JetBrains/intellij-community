@@ -19,6 +19,8 @@ import com.intellij.platform.feedback.aqua.state.AquaOldUserFeedbackService
 import com.intellij.platform.feedback.aqua.state.AquaOldUserInfoState
 import com.intellij.platform.feedback.impl.bundle.CommonFeedbackBundle
 import com.intellij.platform.feedback.impl.notification.RequestFeedbackNotification
+import com.intellij.platform.feedback.impl.state.DontShowAgainFeedbackService
+import com.intellij.platform.feedback.impl.statistics.FeedbackNotificationCountCollector
 import com.intellij.platform.feedback.impl.statistics.FeedbackNotificationCountCollector.Companion.logRequestNotificationShown
 import com.intellij.platform.feedback.impl.statistics.FeedbackNotificationCountCollector.Companion.logRespondNotificationActionInvoked
 import com.intellij.platform.feedback.kafka.bundle.KafkaFeedbackBundle
@@ -413,6 +415,15 @@ enum class IdleFeedbackTypes {
         else {
           BrowserUtil.browse(url)
           updateStateAfterDialogClosedOk()
+        }
+        getNotificationOnCancelAction(project)()
+      }
+    )
+    notification.addAction(
+      NotificationAction.createSimpleExpiring(getCancelFeedbackNotificationLabel()) {
+        if (!forTest) {
+          DontShowAgainFeedbackService.dontShowFeedbackInCurrentVersion()
+          FeedbackNotificationCountCollector.logDisableNotificationActionInvoked(this)
         }
         getNotificationOnCancelAction(project)()
       }
