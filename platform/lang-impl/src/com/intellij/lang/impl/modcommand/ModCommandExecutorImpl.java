@@ -297,9 +297,9 @@ public class ModCommandExecutorImpl implements ModCommandExecutor {
         List<Object> oldList = (List<Object>)Objects.requireNonNull(controller.getOption(bindId));
         oldList.clear();
         oldList.addAll(list);
-      } else {
-        controller.setOption(bindId, value);
+        value = oldList;
       }
+      controller.setOption(bindId, value);
     }
   }
 

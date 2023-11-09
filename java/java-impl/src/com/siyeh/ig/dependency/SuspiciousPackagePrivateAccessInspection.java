@@ -313,11 +313,6 @@ public final class SuspiciousPackagePrivateAccessInspection extends AbstractBase
     }
 
     @Override
-    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
-      return IntentionPreviewInfo.EMPTY;
-    }
-
-    @Override
     public @NotNull ModCommand perform(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiElement psiElement = descriptor.getPsiElement();
       return ModCommand.updateOption(psiElement, SuspiciousPackagePrivateAccessInspection.this, inspection -> {
