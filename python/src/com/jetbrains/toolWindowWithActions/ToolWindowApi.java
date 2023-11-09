@@ -21,6 +21,7 @@ import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.impl.ContentImpl;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -54,15 +55,14 @@ final class ToolWindowApi {
     window.activate(null);
 
     myContentManager = window.getContentManager();
-    myContentManager.removeAllContents(true);
     myWindowName = windowName;
   }
 
   /**
    * @param component component to add to window
    */
-  void add(@NotNull final JComponent component) {
-    myContentManager.addContent(new ContentImpl(component, "", true));
+  void add(@NotNull final JComponent component, @Nls(capitalization = Nls.Capitalization.Title) String componentTitle) {
+    myContentManager.addContent(new ContentImpl(component, componentTitle, true));
   }
 
   /**
