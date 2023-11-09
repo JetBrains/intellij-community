@@ -29,6 +29,7 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.util.ProgressIndicatorBase
 import com.intellij.openapi.project.DumbService
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ContentIterator
 import com.intellij.openapi.roots.impl.FilePropertyPusher
 import com.intellij.openapi.roots.impl.JavaLanguageLevelPusher
@@ -87,6 +88,7 @@ import com.intellij.util.ui.UIUtil
 import com.siyeh.ig.JavaOverridingMethodUtil
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
+import org.jetbrains.annotations.Nullable
 import org.jetbrains.plugins.groovy.GroovyFileType
 import org.jetbrains.plugins.groovy.GroovyLanguage
 
@@ -341,9 +343,9 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
 
     final UndoManager undoManager = UndoManager.getInstance(getProject())
     final FileEditor selectedEditor = FileEditorManager.getInstance(getProject()).openFile(vFile, false)[0]
-    ((UndoManagerImpl)undoManager).setEditorProvider(new CurrentEditorProvider() {
+    ((UndoManagerImpl)undoManager).setOverriddenEditorProvider(new CurrentEditorProvider() {
       @Override
-      FileEditor getCurrentEditor() {
+      FileEditor getCurrentEditor(@Nullable Project project) {
         return selectedEditor
       }
     })
