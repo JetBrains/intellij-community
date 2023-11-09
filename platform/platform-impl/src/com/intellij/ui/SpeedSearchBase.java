@@ -104,6 +104,11 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
     setupListeners();
   }
 
+  @Override
+  public boolean supportsNavigation() {
+    return true;
+  }
+
   public void setupListeners() {
     myComponent.addComponentListener(new ComponentAdapter() {
       @Override

@@ -9,6 +9,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.Couple;
+import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NonNls;
@@ -559,7 +560,10 @@ public final class ScrollingUtil {
     }
 
     protected boolean isEnabled() {
-      return !isEmpty(myComponent);
+      var speedSearch = SpeedSearchSupply.getSupply(myComponent);
+      // Check if the speed search supports its own navigation (such as go to next/previous match).
+      // If it doesn't, we take over instead.
+      return (speedSearch == null || !speedSearch.supportsNavigation()) && !isEmpty(myComponent);
     }
   }
 
