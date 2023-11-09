@@ -55,6 +55,7 @@ class ConfigureDialogWithModulesAndVersion(
 
     init {
         KotlinJ2KOnboardingFUSCollector.logShowConfigureKtWindow(project)
+        title = message("configure.kotlin.title", configurator.presentableText)
         val compatibility = checkModuleJvmTargetCompatibility(
             chooseModulePanel.modules, IdeKotlinVersion.get(DEFAULT_KOTLIN_VERSION)
         )
