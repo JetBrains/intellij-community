@@ -35,6 +35,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.openapi.util.text.StringUtil;
@@ -54,6 +55,8 @@ import com.jetbrains.python.debugger.settings.PyDebuggerSettings;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.run.*;
 import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest;
+import com.jetbrains.python.sdk.PySdkExtKt;
+import com.jetbrains.python.sdk.flavors.CPythonSdkFlavor;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -66,10 +69,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -99,6 +99,10 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
 
   @SuppressWarnings("SpellCheckingInspection")
   private static final @NonNls String PYTHONPATH_ENV_NAME = "PYTHONPATH";
+
+  @NonNls private static final String PYTHON_DONT_WRITE_PYC_FLAG = "-B";
+
+  @NonNls private static final String PYTHON3_PYCACHE_PREFIX_OPTION = "pycache_prefix=";
 
   private static final Logger LOG = Logger.getInstance(PyDebugRunner.class);
 
@@ -909,16 +913,65 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
         prepareDebuggerScriptExecution(myProject, ideServerPortBindingValue, myPyState, pythonScript, myProfile,
                                        helpersAwareTargetRequest);
 
-      // TODO [Targets API] We loose interpreter parameters here :(
+      var configuredInterpreterParameters = myPyState.getConfiguredInterpreterParameters();
 
-      PythonSdkFlavor flavor = myPyState.getSdkFlavor();
-      List<String> interpreterParameters = new ArrayList<>(myPyState.getConfiguredInterpreterParameters());
+      var flavor = myPyState.getSdkFlavor();
       if (flavor != null) {
-        interpreterParameters.addAll(flavor.getExtraDebugOptions());
+        debuggerScript.getAdditionalInterpreterParameters().addAll(flavor.getExtraDebugOptions());
       }
+
+      debuggerScript.getAdditionalInterpreterParameters().addAll(
+        createInterpreterParametersToPreventPycGenerationInHelpersDir(configuredInterpreterParameters));
+
       debuggerScript.setCharset(PydevConsoleRunnerImpl.CONSOLE_CHARSET);
 
       return debuggerScript;
+    }
+
+    private List<String> createInterpreterParametersToPreventPycGenerationInHelpersDir(@NotNull List<String>
+                                                                                         existingInterpreterParameters) {
+      var sdk = myPyState.getSdk();
+
+      if (sdk == null) {
+        return Collections.emptyList();
+      }
+
+      var pythonVersion = sdk.getVersionString();
+
+      if (pythonVersion == null) {
+        return Collections.emptyList();
+      }
+
+      var pythonSdkFlavor = PySdkExtKt.getOrCreateAdditionalData(sdk).getFlavor();
+
+      if (!(pythonSdkFlavor instanceof CPythonSdkFlavor)) {
+        return Collections.emptyList();
+      }
+
+      // Note, that we don't modify the parameters if the options are already set by the user.
+
+      if (pythonSdkFlavor.getLanguageLevel(sdk).isOlderThan(LanguageLevel.PYTHON38)) {
+        // There is no option for defining a custom directory for .pyc files in Python 3.7 and older, thus disable cache generation entirely.
+        if (!existingInterpreterParameters.contains(PYTHON_DONT_WRITE_PYC_FLAG)) {
+          return List.of(PYTHON_DONT_WRITE_PYC_FLAG);
+        }
+      }
+      else {
+        for (int i = 0; i < existingInterpreterParameters.size(); i++) {
+          if (existingInterpreterParameters.get(i).startsWith(PYTHON3_PYCACHE_PREFIX_OPTION)
+              && i > 0 && existingInterpreterParameters.get(i - 1).equals("-X")) {
+            return Collections.emptyList();
+          }
+        }
+        return List.of( "-X", PYTHON3_PYCACHE_PREFIX_OPTION + prepareAndGetPycacheDirectory());
+      }
+      return Collections.emptyList();
+    }
+
+    private static File prepareAndGetPycacheDirectory() {
+      var pycacheDir = new File(PathManager.getSystemPath(), "cpython-cache");
+      FileUtil.createDirectory(pycacheDir);
+      return pycacheDir;
     }
 
     private @NotNull ServerSocket createServerSocketForDebugging(@NotNull TargetEnvironment environment,

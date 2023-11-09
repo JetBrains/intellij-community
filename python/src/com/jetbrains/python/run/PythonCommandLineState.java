@@ -4,6 +4,7 @@ package com.jetbrains.python.run;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import com.google.common.collect.Streams;
 import com.intellij.execution.DefaultExecutionResult;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
@@ -341,9 +342,11 @@ public abstract class PythonCommandLineState extends CommandLineState {
     TargetEnvironment targetEnvironment =
       helpersAwareTargetRequest.getTargetEnvironmentRequest().prepareEnvironment(TargetProgressIndicator.EMPTY);
 
-    List<String> interpreterParameters = getConfiguredInterpreterParameters();
+    // TODO Detect and discard existing overrides of configured parameters.
+    List<String> allInterpreterParameters = Streams.concat(getConfiguredInterpreterParameters().stream(),
+                                                        realPythonExecution.getAdditionalInterpreterParameters().stream()).toList();
     TargetedCommandLine targetedCommandLine =
-      PythonScripts.buildTargetedCommandLine(realPythonExecution, targetEnvironment, sdk, interpreterParameters, myRunWithPty);
+      PythonScripts.buildTargetedCommandLine(realPythonExecution, targetEnvironment, sdk, allInterpreterParameters, myRunWithPty);
 
     // TODO [Targets API] `myConfig.isPassParentEnvs` must be handled (at least for the local case)
     ProcessHandler processHandler = doStartProcess(targetEnvironment, targetedCommandLine, progressIndicator);
