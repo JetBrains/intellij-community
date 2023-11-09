@@ -68,7 +68,7 @@
       <keyboard-shortcut first-keystroke="control C" keymap="$default"/>
       <keyboard-shortcut first-keystroke="control INSERT" keymap="$default"/>
     </action>
-    <action id="Terminal.Paste" class="org.jetbrains.plugins.terminal.action.TerminalPasteAction">
+    <action id="Terminal.Paste" class="org.jetbrains.plugins.terminal.action.TerminalPasteAction" icon="AllIcons.Actions.MenuPaste">
       <!-- use keyboard-shortcuts of $Paste with Ctrl+Shift+V on Linux  -->
       <keyboard-shortcut first-keystroke="control shift V" keymap="Default for XWin"/>
       <keyboard-shortcut first-keystroke="control V" keymap="Default for XWin"/>
@@ -136,6 +136,14 @@
 
     <group id="Terminal.OutputContextMenu">
       <reference ref="Terminal.Copy"/>
+      <reference ref="Terminal.Paste"/>
+    </group>
+
+    <group id="Terminal.PromptContextMenu">
+      <!-- todo: replace editor actions with dedicated terminal actions -->
+      <reference ref="EditorCut"/>
+      <reference ref="EditorCopy"/>
+      <reference ref="Terminal.Paste"/>
     </group>
   </actions>
 

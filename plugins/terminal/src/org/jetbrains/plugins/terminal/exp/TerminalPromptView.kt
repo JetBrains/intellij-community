@@ -124,6 +124,8 @@ class TerminalPromptView(
     }
     TerminalInlineCompletion.getInstance(project).install(editor)
 
+    editor.contextMenuGroupId = "Terminal.PromptContextMenu"
+
     return textField
   }
 
