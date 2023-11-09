@@ -23,6 +23,7 @@ import org.jetbrains.kotlin.builtins.functions.FunctionTypeKind
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.fixes.AbstractKotlinApplicableQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.diagnosticFixFactory
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.CallableReturnTypeUpdaterUtils
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.CallableReturnTypeUpdaterUtils.updateType
 import org.jetbrains.kotlin.idea.quickfix.ChangeTypeFixUtils
@@ -95,18 +96,43 @@ object ChangeTypeQuickFixFactories {
     val initializerTypeMismatch =
         diagnosticFixFactory(KtFirDiagnostic.InitializerTypeMismatch::class) { diagnostic ->
             val declaration = diagnostic.psi as? KtProperty ?: return@diagnosticFixFactory emptyList()
-            listOf(UpdateTypeQuickFix(declaration, TargetType.VARIABLE, createTypeInfo(getActualType(diagnostic.actualType))))
+            registerVariableTypeFixes(declaration, getActualType(diagnostic.actualType))
         }
 
     val assignmentTypeMismatch =
         diagnosticFixFactory(KtFirDiagnostic.AssignmentTypeMismatch::class) { diagnostic ->
-            val assignment = diagnostic.psi.parent as? KtBinaryExpression ?: return@diagnosticFixFactory emptyList()
+            val expression = diagnostic.psi
+            val assignment = expression.parent as? KtBinaryExpression ?: return@diagnosticFixFactory emptyList()
             val declaration = (assignment.left as? KtNameReferenceExpression)?.mainReference?.resolve() as? KtProperty ?: return@diagnosticFixFactory emptyList()
             if (!declaration.isVar || declaration.typeReference != null) return@diagnosticFixFactory emptyList()
             val actualType = getActualType(diagnostic.actualType)
             val type = if (declaration.initializer?.isNull() == true) actualType.withNullability(KtTypeNullability.NULLABLE) else actualType
-            listOf(UpdateTypeQuickFix(declaration, TargetType.VARIABLE, createTypeInfo(type)))
+            registerVariableTypeFixes(declaration, type)
         }
+
+    val parameterTypeMismatch =
+        diagnosticFixFactory(KtFirDiagnostic.ArgumentTypeMismatch::class) { diagnostic ->
+            val expression = diagnostic.psi
+            val actualType = getActualType(diagnostic.actualType)
+            val expectedType = diagnostic.expectedType
+            buildList {
+                if (expression is KtConstantExpression && expectedType.isNumberOrUNumberType() && actualType.isNumberOrUNumberType()) {
+                    add(WrongPrimitiveLiteralFix(expression, expectedType))
+                }
+            }
+        }
+
+    context(KtAnalysisSession)
+    private fun registerVariableTypeFixes(declaration: KtProperty, type: KtType): List<KotlinQuickFixAction<KtExpression>> {
+        val expectedType = declaration.getReturnKtType()
+        val expression = declaration.initializer
+        return buildList {
+            add(UpdateTypeQuickFix(declaration, TargetType.VARIABLE, createTypeInfo(type)))
+            if (expression is KtConstantExpression && expectedType.isNumberOrUNumberType() && type.isNumberOrUNumberType()) {
+                add(WrongPrimitiveLiteralFix(expression, expectedType))
+            }
+        }
+    }
 
     val returnTypeNullableTypeMismatch =
         diagnosticFixFactory(KtFirDiagnostic.NullForNonnullType::class) { diagnostic ->
@@ -254,3 +280,12 @@ object ChangeTypeQuickFixFactories {
             return ChangeTypeFixUtils.functionOrConstructorParameterPresentation(this, containerName?.asString())
         }
 }
+
+context(KtAnalysisSession)
+fun KtType.isNumberOrUNumberType(): Boolean = isNumberType() || isUNumberType()
+
+context(KtAnalysisSession)
+fun KtType.isNumberType(): Boolean = isPrimitive && !isBoolean && !isChar
+
+context(KtAnalysisSession)
+fun KtType.isUNumberType(): Boolean = isUByte || isUShort || isUInt || isULong

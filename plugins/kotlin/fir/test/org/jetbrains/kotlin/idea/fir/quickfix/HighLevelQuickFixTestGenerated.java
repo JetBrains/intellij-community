@@ -3598,6 +3598,84 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../idea/tests/testData/quickfix/typeMismatch/wrongPrimitive")
+    public static class WrongPrimitive extends AbstractHighLevelQuickFixTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("doubleToIntDecimalPlaces.kt")
+        public void testDoubleToIntDecimalPlaces() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/wrongPrimitive/doubleToIntDecimalPlaces.kt");
+        }
+
+        @TestMetadata("doubleToLongNotInRange.kt")
+        public void testDoubleToLongNotInRange() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/wrongPrimitive/doubleToLongNotInRange.kt");
+        }
+
+        @TestMetadata("doubleToShortNotInRange.kt")
+        public void testDoubleToShortNotInRange() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/wrongPrimitive/doubleToShortNotInRange.kt");
+        }
+
+        @TestMetadata("floatToDoubleWithDecimal.kt")
+        public void testFloatToDoubleWithDecimal() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/wrongPrimitive/floatToDoubleWithDecimal.kt");
+        }
+
+        @TestMetadata("floatToInt.kt")
+        public void testFloatToInt() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/wrongPrimitive/floatToInt.kt");
+        }
+
+        @TestMetadata("floatToInt2.kt")
+        public void testFloatToInt2() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/wrongPrimitive/floatToInt2.kt");
+        }
+
+        @TestMetadata("floatToLong.kt")
+        public void testFloatToLong() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/wrongPrimitive/floatToLong.kt");
+        }
+
+        @TestMetadata("hexToFloat.kt")
+        public void testHexToFloat() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/wrongPrimitive/hexToFloat.kt");
+        }
+
+        @TestMetadata("intToFloat.kt")
+        public void testIntToFloat() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/wrongPrimitive/intToFloat.kt");
+        }
+
+        @TestMetadata("intToUnsigned.kt")
+        public void testIntToUnsigned() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/wrongPrimitive/intToUnsigned.kt");
+        }
+
+        @TestMetadata("longToDouble.kt")
+        public void testLongToDouble() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/wrongPrimitive/longToDouble.kt");
+        }
+
+        @TestMetadata("longToInt.kt")
+        public void testLongToInt() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/wrongPrimitive/longToInt.kt");
+        }
+
+        @TestMetadata("longToIntBinary.kt")
+        public void testLongToIntBinary() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/wrongPrimitive/longToIntBinary.kt");
+        }
+
+        @TestMetadata("unsignedToInt.kt")
+        public void testUnsignedToInt() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/wrongPrimitive/unsignedToInt.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../idea/tests/testData/quickfix/typeMismatch")
     public static class TypeMismatch extends AbstractHighLevelQuickFixTest {
         private void runTest(String testDataFilePath) throws Exception {
