@@ -2,7 +2,6 @@
 package com.intellij.platform.workspace.storage.impl
 
 import com.google.common.collect.HashBiMap
-import com.google.common.collect.HashMultimap
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.platform.workspace.storage.WorkspaceEntity
@@ -200,12 +199,11 @@ internal class AddDiffOperation(val target: MutableEntityStorageImpl, val diff: 
     // Restore soft references
     target.indexes.updateSymbolicIdIndexes(target, newTargetEntityData.createEntity(target), oldSymbolicId, newTargetEntityData)
 
+    val addedChildrenMap = HashMap<ConnectionId, MutableList<ChildEntityId>>()
+    change.references?.newChildren?.forEach { addedChildrenMap.getOrPut(it.first) { ArrayList() }.add(it.second) }
 
-    val addedChildrenMap = HashMultimap.create<ConnectionId, ChildEntityId>()
-    change.references?.newChildren?.forEach { addedChildrenMap.put(it.first, it.second) }
-
-    val removedChildrenMap = HashMultimap.create<ConnectionId, ChildEntityId>()
-    change.references?.removedChildren?.forEach { removedChildrenMap.put(it.first, it.second) }
+    val removedChildrenMap = HashMap<ConnectionId, MutableList<ChildEntityId>>()
+    change.references?.removedChildren?.forEach { removedChildrenMap.getOrPut(it.first) { ArrayList() }.add(it.second) }
 
     replaceRestoreChildren(sourceEntityId.id.asParent(), newEntityId.asParent(), addedChildrenMap, removedChildrenMap)
 
@@ -217,16 +215,16 @@ internal class AddDiffOperation(val target: MutableEntityStorageImpl, val diff: 
   private fun replaceRestoreChildren(
     sourceEntityId: ParentEntityId,
     newEntityId: ParentEntityId,
-    addedChildrenMap: HashMultimap<ConnectionId, ChildEntityId>,
-    removedChildrenMap: HashMultimap<ConnectionId, ChildEntityId>,
+    addedChildrenMap: MutableMap<ConnectionId, MutableList<ChildEntityId>>,
+    removedChildrenMap: MutableMap<ConnectionId, MutableList<ChildEntityId>>,
   ) {
     // Children from target store with connectionIds of affected references
     val existingChildrenOfAffectedIds: MutableMap<ConnectionId, List<ChildEntityId>> = HashMap()
-    addedChildrenMap.keys().forEach { connectionId ->
+    addedChildrenMap.keys.forEach { connectionId ->
       val existingChildren = target.refs.getChildrenByParent(connectionId, newEntityId)
       existingChildrenOfAffectedIds[connectionId] = existingChildren
     }
-    removedChildrenMap.keys().forEach { connectionId ->
+    removedChildrenMap.keys.forEach { connectionId ->
       val existingChildren = target.refs.getChildrenByParent(connectionId, newEntityId)
       existingChildrenOfAffectedIds[connectionId] = existingChildren
     }
@@ -242,20 +240,25 @@ internal class AddDiffOperation(val target: MutableEntityStorageImpl, val diff: 
       }
       else {
         // Take current children....
-        val mutableChildren = children.toMutableSet()
+        // We use linked hash set because we'd like to preserve the order of children, but at the same time
+        //   we'd like to quickly clear the list from duplicates
+        val mutableChildren = LinkedHashSet<ChildEntityId>().also { it.addAll(children) }
 
-        val addedChildrenSet = addedChildrenMap[connectionId] ?: emptySet()
-        val updatedAddedChildren = addedChildrenSet.mapNotNull { childrenMapper(it) }
+        val addedChildren = addedChildrenMap[connectionId] ?: emptyList()
+        val updatedAddedChildren = addedChildren.mapNotNull { childrenMapper(it) }
         if (connectionId.isOneToOne && updatedAddedChildren.isNotEmpty()) {
           mutableChildren.clear()
           mutableChildren.add(updatedAddedChildren.single())
         }
         else {
+          // Firstly, we remove the children references that already exist
+          //  This is needed to preserve the ordering of children that exist in diff builder (practically, order in updatedAddedChildren)
+          mutableChildren.removeAll(updatedAddedChildren)
           mutableChildren.addAll(updatedAddedChildren)
         }
 
-        val removedChildrenSet = removedChildrenMap[connectionId] ?: emptySet()
-        for (removedChild in removedChildrenSet) {
+        val removedChildren = removedChildrenMap[connectionId] ?: emptyList()
+        for (removedChild in removedChildren) {
           // This method may return false if this child is already removed
           mutableChildren.remove(childrenMapper(removedChild))
         }
@@ -266,14 +269,14 @@ internal class AddDiffOperation(val target: MutableEntityStorageImpl, val diff: 
           target.createReplaceEventsForUpdates(modifications, connectionId)
         }
       }
-      addedChildrenMap.removeAll(connectionId)
-      removedChildrenMap.removeAll(connectionId)
+      addedChildrenMap.remove(connectionId)
+      removedChildrenMap.remove(connectionId)
     }
 
     // N.B: removedChildrenMap may contain some entities, but this means that these entities was already removed
 
     // Do we have more children to add? Add them
-    for ((connectionId, children) in addedChildrenMap.asMap()) {
+    for ((connectionId, children) in addedChildrenMap) {
       val updatedChildren = children.mapNotNull { childrenMapper(it) }
 
       val modifications = target.refs.replaceChildrenOfParent(connectionId, newEntityId, updatedChildren)

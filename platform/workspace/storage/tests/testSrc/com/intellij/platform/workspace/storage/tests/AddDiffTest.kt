@@ -852,4 +852,34 @@ class AddDiffTest {
     assertEquals(MySource, children.first().entitySource)
     assertEquals(AnotherSource, children.last().entitySource)
   }
+
+  @RepeatedTest(10)
+  fun `the orde2r of children is not changed`() {
+    val parent = target addEntity ParentMultipleEntity("info", MySource) {
+      this.children = listOf(
+        ChildMultipleEntity("data1", MySource),
+        ChildMultipleEntity("data2", MySource),
+        ChildMultipleEntity("data3", MySource),
+      )
+    }
+    val source = createBuilderFrom(target)
+    source.entities(ChildMultipleEntity::class.java).forEach { source.removeEntity(it) }
+    source.modifyEntity(parent.from(source)) {
+      this.children = listOf(
+        ChildMultipleEntity("data11", MySource),
+        ChildMultipleEntity("data21", MySource),
+        ChildMultipleEntity("data31", MySource),
+      )
+    }
+
+    target.addDiff(source)
+
+    target.assertConsistency()
+
+    val children = target.entities(ParentMultipleEntity::class.java).single().children
+    assertEquals(3, children.size)
+    assertEquals("data11", children.get(0).childData)
+    assertEquals("data21", children.get(1).childData)
+    assertEquals("data31", children.get(2).childData)
+  }
 }
