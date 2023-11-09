@@ -24,6 +24,7 @@ import com.intellij.execution.multilaunch.state.ExecutableSnapshot
 import com.intellij.openapi.wm.ToolWindowId
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.suspendCancellableCoroutine
+import com.intellij.internal.statistic.StructuredIdeActivity
 
 @Service(Service.Level.PROJECT)
 class RunConfigurationExecutableManager(private val project: Project) : ExecutableTemplate {
@@ -32,7 +33,7 @@ class RunConfigurationExecutableManager(private val project: Project) : Executab
   }
 
   override val type = "runConfig"
-  override fun createExecutable(configuration: MultiLaunchConfiguration, uniqueId: String): Executable? {
+  override fun createExecutable(project: Project, configuration: MultiLaunchConfiguration, uniqueId: String): Executable? {
     return listExecutables(configuration).firstOrNull { it.uniqueId == uniqueId }
   }
 
@@ -62,7 +63,7 @@ class RunConfigurationExecutableManager(private val project: Project) : Executab
     override fun saveAttributes(snapshot: ExecutableSnapshot) {}
     override fun loadAttributes(snapshot: ExecutableSnapshot) {}
 
-    override suspend fun execute(mode: ExecutionMode, lifetime: Lifetime): RunContentDescriptor? {
+    override suspend fun execute(mode: ExecutionMode, activity: StructuredIdeActivity, lifetime: Lifetime): RunContentDescriptor? {
       val executor = when (mode) {
         ExecutionMode.Run -> DefaultRunExecutor.getRunExecutorInstance()
         ExecutionMode.Debug -> ExecutorRegistry.getInstance().getExecutorById(ToolWindowId.DEBUG)!!
@@ -76,6 +77,7 @@ class RunConfigurationExecutableManager(private val project: Project) : Executab
           null,
           null)
         { executionEnvironment ->
+          executionEnvironment.putUserData(ExecutionManagerImpl.PARENT_PROFILE_IDE_ACTIVITY, activity)
           val oldCallback = executionEnvironment.callback
           executionEnvironment.callback = object : ProgramRunner.Callback {
             override fun processStarted(rcd: RunContentDescriptor) {

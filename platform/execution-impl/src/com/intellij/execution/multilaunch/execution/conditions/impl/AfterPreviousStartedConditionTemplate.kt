@@ -16,6 +16,7 @@ import com.intellij.execution.multilaunch.execution.conditions.ConditionTemplate
 import com.intellij.execution.multilaunch.execution.executables.Executable
 import com.intellij.execution.multilaunch.execution.messaging.ExecutionNotifier
 import com.intellij.execution.multilaunch.state.ConditionSnapshot
+import com.intellij.internal.statistic.StructuredIdeActivity
 
 class AfterPreviousStartedConditionTemplate : ConditionTemplate {
   override val type = "afterPreviousStarted"
@@ -34,8 +35,9 @@ class AfterPreviousStartedConditionTemplate : ConditionTemplate {
 
     override fun createExecutionListener(descriptor: ExecutionDescriptor,
                                          mode: ExecutionMode,
+                                         activity: StructuredIdeActivity,
                                          lifetime: Lifetime): ExecutionNotifier =
-      Listener(descriptor.executable, mode, lifetime)
+      Listener(descriptor.executable, mode, activity, lifetime)
 
     override fun saveAttributes(snapshot: ConditionSnapshot) {}
     override fun loadAttributes(snapshot: ConditionSnapshot) {}
@@ -43,6 +45,7 @@ class AfterPreviousStartedConditionTemplate : ConditionTemplate {
     inner class Listener(
       private val targetExecutable: Executable,
       private val mode: ExecutionMode,
+      private val activity: StructuredIdeActivity,
       private val lifetime: Lifetime
     ) : DefaultExecutionNotifier() {
       private var previousExecutable: Executable? = null
@@ -58,7 +61,7 @@ class AfterPreviousStartedConditionTemplate : ConditionTemplate {
       override fun execute(configuration: MultiLaunchConfiguration, executable: Executable) {
         if (executable == previousExecutable) {
           lifetime.launchBackground {
-            targetExecutable.execute(mode, lifetime)
+            targetExecutable.execute(mode, activity, lifetime)
           }
         }
       }

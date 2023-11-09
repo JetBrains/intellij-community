@@ -2,13 +2,6 @@ package com.intellij.execution.multilaunch.execution
 
 import com.intellij.execution.CantRunException
 import com.intellij.execution.ExecutionBundle
-import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.service
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.rd.util.launchBackground
-import com.intellij.util.messages.MessageBusConnection
-import com.jetbrains.rd.util.concurrentMapOf
-import com.jetbrains.rd.util.reactive.AddRemove
 import com.intellij.execution.multilaunch.MultiLaunchConfiguration
 import com.intellij.execution.multilaunch.design.toRow
 import com.intellij.execution.multilaunch.execution.executables.Executable
@@ -17,10 +10,15 @@ import com.intellij.execution.multilaunch.execution.messaging.ExecutableNotifier
 import com.intellij.execution.multilaunch.execution.messaging.ExecutionEventsBus
 import com.intellij.execution.multilaunch.execution.messaging.ExecutionNotifier
 import com.intellij.execution.multilaunch.servicesView.MultiLaunchServicesRefresher
+import com.intellij.internal.statistic.StructuredIdeActivity
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.rd.util.launchBackground
 import com.intellij.openapi.rd.util.lifetime
-import java.util.concurrent.locks.ReentrantReadWriteLock
-import kotlin.concurrent.read
-import kotlin.concurrent.write
+import com.intellij.util.messages.MessageBusConnection
+import com.jetbrains.rd.util.concurrentMapOf
+import com.jetbrains.rd.util.reactive.AddRemove
 
 @Service(Service.Level.PROJECT)
 class ExecutionEngine(private val project: Project) {
@@ -54,7 +52,7 @@ class ExecutionEngine(private val project: Project) {
     }
   }
 
-  suspend fun execute(configuration: MultiLaunchConfiguration, executionMode: ExecutionMode) {
+  suspend fun execute(configuration: MultiLaunchConfiguration, executionMode: ExecutionMode, activity: StructuredIdeActivity) {
     val configurationModel = executionModel.configurations[configuration] ?: throw CantRunException(
       ExecutionBundle.message("run.configurations.multilaunch.error.configuration.doesnt.exist"))
 
@@ -64,7 +62,8 @@ class ExecutionEngine(private val project: Project) {
     sessionManager.setActiveSession(configuration, session)
 
     markNotStarted(session, configurationModel)
-    createConditionListeners(session, configurationModel, eventBus, executionMode)
+    createConditionListeners(session, configurationModel, eventBus, executionMode, activity)
+
     startMultiLaunch(session, publisher, configurationModel)
 
     session.awaitExecution()
@@ -109,7 +108,8 @@ class ExecutionEngine(private val project: Project) {
     session: ExecutionSession,
     configurationModel: MultiLaunchExecutionModel,
     eventBus: ExecutionEventsBus,
-    executionMode: ExecutionMode
+    executionMode: ExecutionMode,
+    activity: StructuredIdeActivity
   ): List<MessageBusConnection> {
     return configurationModel.executables.values
       .mapNotNull {
@@ -120,7 +120,7 @@ class ExecutionEngine(private val project: Project) {
             setStatus(configurationModel.configuration, it.descriptor.executable, ExecutionStatus.Canceled)
           }
         }
-        val notifier = it.descriptor.createListener(lifetime, mode)
+        val notifier = it.descriptor.createListener(lifetime, mode, activity)
         eventBus.subscribe(configurationModel.configuration, notifier, lifetime)
       }
   }
@@ -175,26 +175,6 @@ class ExecutionEngine(private val project: Project) {
       left.remove(executable)
       if (left.isEmpty()) {
         session.stop()
-      }
-    }
-  }
-
-  private class ExecutionSessionManager {
-    private var activeSessions = mutableMapOf<MultiLaunchConfiguration, ExecutionSession>()
-    private val rwLock = ReentrantReadWriteLock()
-
-    fun setActiveSession(configuration: MultiLaunchConfiguration, session: ExecutionSession?) {
-      rwLock.write {
-        when (session) {
-          null -> activeSessions.remove(configuration)
-          else -> activeSessions.put(configuration, session)
-        }
-      }
-    }
-
-    fun getActiveSession(configuration: MultiLaunchConfiguration): ExecutionSession? {
-      return rwLock.read {
-        activeSessions[configuration]
       }
     }
   }
