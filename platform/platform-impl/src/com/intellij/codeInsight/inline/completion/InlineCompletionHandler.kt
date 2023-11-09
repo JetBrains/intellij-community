@@ -137,7 +137,7 @@ class InlineCompletionHandler(
   @RequiresBlockingContext
   fun hide(context: InlineCompletionContext, finishType: FinishType = FinishType.OTHER) {
     LOG.assertTrue(!context.isDisposed)
-    trace(InlineCompletionEventType.Hide(finishType))
+    trace(InlineCompletionEventType.Hide(finishType, context.isCurrentlyDisplaying()))
 
     InlineCompletionSession.remove(editor)
     sessionManager.sessionRemoved()
