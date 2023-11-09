@@ -44,7 +44,7 @@ class KotlinTestRunLineMarkerContributor : RunLineMarkerContributor() {
          */
         private fun KtNamedDeclaration.isIgnoredForGradleConfiguration(includeSlowProviders: Boolean): Boolean {
             val ktNamedFunction = this.safeAs<KtNamedFunction>().takeIf {
-                RunManager.getInstance(getProject()).selectedConfiguration?.type?.displayName == "Gradle"
+                RunManager.getInstance(getProject()).selectedConfiguration?.type?.id == "GradleRunConfiguration"
             } ?: return false
             val ktClassOrObject = ktNamedFunction.containingClassOrObject ?: return false
             

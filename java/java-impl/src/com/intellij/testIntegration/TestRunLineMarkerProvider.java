@@ -51,7 +51,7 @@ public class TestRunLineMarkerProvider extends RunLineMarkerContributor {
     RunnerAndConfigurationSettings currentConfiguration = RunManager.getInstance(psiClass.getProject()).getSelectedConfiguration();
     if (currentConfiguration == null) return false;
     ConfigurationType configurationType = currentConfiguration.getType();
-    if (!configurationType.getDisplayName().equals("Gradle")) return false;
+    if (!configurationType.getId().equals("GradleRunConfiguration")) return false;
     for (TestFramework testFramework : TestFramework.EXTENSION_NAME.getExtensionList()) {
       if (testFramework.isTestClass(psiClass) && testFramework.isIgnoredMethod(psiMethod)) {
         return true;
