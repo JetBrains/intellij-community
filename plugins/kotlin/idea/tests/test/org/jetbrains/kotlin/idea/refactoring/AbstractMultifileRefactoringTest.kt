@@ -26,8 +26,6 @@ import org.jetbrains.kotlin.util.prefixIfNot
 import java.io.File
 
 abstract class AbstractMultifileRefactoringTest : KotlinLightCodeInsightFixtureTestCase() {
-    protected var myDoCompare = false
-
     interface RefactoringAction {
         fun runRefactoring(rootDir: VirtualFile, mainFile: PsiFile, elementsAtCaret: List<PsiElement>, config: JsonObject)
     }
@@ -79,9 +77,7 @@ abstract class AbstractMultifileRefactoringTest : KotlinLightCodeInsightFixtureT
 
         PsiDocumentManager.getInstance(project).commitAllDocuments()
         FileDocumentManager.getInstance().saveAllDocuments()
-        if (myDoCompare) {
-            PlatformTestUtil.assertDirectoriesEqual(afterVFile, beforeVFile) { file -> !KotlinTestUtils.isMultiExtensionName(file.name) }
-        }
+        PlatformTestUtil.assertDirectoriesEqual(afterVFile, beforeVFile) { file -> !KotlinTestUtils.isMultiExtensionName(file.name) }
     }
 }
 
