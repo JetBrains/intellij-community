@@ -304,7 +304,7 @@ public class CodeCompletionHandlerBase {
       phase = new CompletionPhase.BgCalculation(indicator);
       indicator.showLookup();
     } else {
-      phase = new CompletionPhase.CommittingDocuments(indicator, InjectedLanguageEditorUtil.getTopLevelEditor(indicator.getEditor()));
+      phase = new CompletionPhase.CommittingDocuments(indicator, InjectedLanguageEditorUtil.getTopLevelEditor(indicator.getEditor()), null);
     }
     CompletionServiceImpl.setCompletionPhase(phase);
 

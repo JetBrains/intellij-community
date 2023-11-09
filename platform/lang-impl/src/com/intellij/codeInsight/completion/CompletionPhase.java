@@ -16,9 +16,7 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.FocusChangeListener;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.*;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -41,6 +39,8 @@ import java.util.Set;
 import java.util.concurrent.ExecutorService;
 
 public abstract class CompletionPhase implements Disposable {
+  public static final Key<Object> AUTO_POPUP_TYPED_EVENT_ID = Key.create("AutoPopupTypedEventId");
+
   private static final Logger LOG = Logger.getInstance(CompletionPhase.class);
 
   public static final CompletionPhase NoCompletion = new CompletionPhase(null) {
@@ -71,10 +71,14 @@ public abstract class CompletionPhase implements Disposable {
     private static final ExecutorService ourExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Completion Preparation", 1);
     boolean replaced;
     private final ActionTracker myTracker;
+    private final @Nullable Object myEventId;
+    private int myRequestCount = 1;
 
-    CommittingDocuments(@Nullable CompletionProgressIndicator prevIndicator, @NotNull Editor editor) {
+    CommittingDocuments(@Nullable CompletionProgressIndicator prevIndicator, @NotNull Editor editor,
+                        @Nullable Object eventId) {
       super(prevIndicator);
       myTracker = new ActionTracker(editor, this);
+      myEventId = eventId;
     }
 
     public void ignoreCurrentDocumentChange() {
@@ -82,7 +86,23 @@ public abstract class CompletionPhase implements Disposable {
     }
 
     private boolean isExpired() {
-      return myTracker.hasAnythingHappened();
+      return myTracker.hasAnythingHappened() || myRequestCount <= 0;
+    }
+
+    private @Nullable Object getEventId() {
+      return myEventId;
+    }
+
+    void incrementRequestCount() {
+      myRequestCount++;
+    }
+
+    private void decrementRequestCount() {
+      myRequestCount--;
+    }
+
+    private void requestCompleted() {
+      myRequestCount = 0;
     }
 
     @Override
@@ -92,6 +112,7 @@ public abstract class CompletionPhase implements Disposable {
 
     @Override
     public void dispose() {
+      myRequestCount = 0;
       if (!replaced && indicator != null) {
         indicator.closeAndFinish(true);
       }
@@ -111,9 +132,8 @@ public abstract class CompletionPhase implements Disposable {
       Editor topLevelEditor = InjectedLanguageEditorUtil.getTopLevelEditor(_editor);
       int offset = topLevelEditor.getCaretModel().getOffset();
 
-      CommittingDocuments phase = new CommittingDocuments(prevIndicator, topLevelEditor);
-      CompletionServiceImpl.setCompletionPhase(phase);
-      phase.ignoreCurrentDocumentChange();
+      Object eventId = condition == null ? null : _editor.getUserData(AUTO_POPUP_TYPED_EVENT_ID);
+      CommittingDocuments phase = getCompletionPhase(prevIndicator, topLevelEditor, eventId);
 
       boolean autopopup = prevIndicator == null || prevIndicator.isAutopopupCompletion();
 
@@ -139,15 +159,38 @@ public abstract class CompletionPhase implements Disposable {
         .expireWith(phase)
         .finishOnUiThread(ModalityState.current(), completionEditor -> {
           if (completionEditor != null && !phase.isExpired()) {
+            phase.requestCompleted();
             int time = prevIndicator == null ? 0 : prevIndicator.getInvocationCount();
             CodeCompletionHandlerBase handler = CodeCompletionHandlerBase.createHandler(completionType, false, autopopup, false);
             handler.invokeCompletion(project, completionEditor, time, false);
           }
           else if (phase == CompletionServiceImpl.getCompletionPhase()) {
-            CompletionServiceImpl.setCompletionPhase(NoCompletion);
+            phase.decrementRequestCount();
+            if (phase.isExpired()) {
+              CompletionServiceImpl.setCompletionPhase(NoCompletion);
+            }
           }
         })
         .submit(ourExecutor);
+    }
+
+    @NotNull
+    private static CommittingDocuments getCompletionPhase(@Nullable CompletionProgressIndicator prevIndicator,
+                                                          Editor topLevelEditor,
+                                                          @Nullable Object eventId) {
+      if (eventId != null) {
+        CompletionPhase currentPhase = CompletionServiceImpl.getCompletionPhase();
+        if (currentPhase instanceof CommittingDocuments committingPhase &&
+            !committingPhase.isExpired() &&
+            Comparing.equal(eventId, committingPhase.getEventId())) {
+          committingPhase.incrementRequestCount();
+          return committingPhase;
+        }
+      }
+      CommittingDocuments phase = new CommittingDocuments(prevIndicator, topLevelEditor, eventId);
+      CompletionServiceImpl.setCompletionPhase(phase);
+      phase.ignoreCurrentDocumentChange();
+      return phase;
     }
 
     @ApiStatus.Internal

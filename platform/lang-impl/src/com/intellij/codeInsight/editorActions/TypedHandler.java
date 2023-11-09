@@ -4,6 +4,7 @@ package com.intellij.codeInsight.editorActions;
 import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.completion.CompletionContributor;
+import com.intellij.codeInsight.completion.CompletionPhase;
 import com.intellij.codeInsight.highlighting.BraceMatcher;
 import com.intellij.codeInsight.highlighting.BraceMatchingUtil;
 import com.intellij.codeInsight.highlighting.NontrivialBraceMatcher;
@@ -44,6 +45,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
@@ -161,74 +163,81 @@ public final class TypedHandler extends TypedActionHandlerBase {
       Editor editor = injectedEditorIfCharTypedIsSignificant(charTyped, originalEditor, originalFile);
       PsiFile file = editor == originalEditor ? originalFile : Objects.requireNonNull(psiDocumentManager.getPsiFile(editor.getDocument()));
 
-      if (caret == originalEditor.getCaretModel().getPrimaryCaret()) {
-        boolean handled = callDelegates(TypedHandlerDelegate::checkAutoPopup, charTyped, project, editor, file);
-        if (!handled) {
-          autoPopupCompletion(editor, charTyped, project, file);
-          autoPopupParameterInfo(editor, charTyped, project, file);
+      editor.putUserData(CompletionPhase.AUTO_POPUP_TYPED_EVENT_ID,
+                         ObjectUtils.sentinel("charTyped: " + charTyped + "; offset: " + editor.getCaretModel().getOffset()));
+      try {
+        if (caret == originalEditor.getCaretModel().getPrimaryCaret()) {
+          boolean handled = callDelegates(TypedHandlerDelegate::checkAutoPopup, charTyped, project, editor, file);
+          if (!handled) {
+            autoPopupCompletion(editor, charTyped, project, file);
+            autoPopupParameterInfo(editor, charTyped, project, file);
+          }
         }
-      }
-      if (editor instanceof EditorWindow && !((EditorWindow)editor).isValid()) {
-        // delegate must have invalidated injected editor by calling commitDocument() or similar
-        editor = injectedEditorIfCharTypedIsSignificant(charTyped, originalEditor, originalFile);
-        file = editor == originalEditor ? originalFile : Objects.requireNonNull(psiDocumentManager.getPsiFile(editor.getDocument()));
-      }
-      if (!editor.isInsertMode()) {
+        if (editor instanceof EditorWindow && !((EditorWindow)editor).isValid()) {
+          // delegate must have invalidated injected editor by calling commitDocument() or similar
+          editor = injectedEditorIfCharTypedIsSignificant(charTyped, originalEditor, originalFile);
+          file = editor == originalEditor ? originalFile : Objects.requireNonNull(psiDocumentManager.getPsiFile(editor.getDocument()));
+        }
+        if (!editor.isInsertMode()) {
+          type(originalEditor, project, charTyped);
+          return;
+        }
+
+        if (callDelegates(TypedHandlerDelegate::beforeSelectionRemoved, charTyped, project, editor, file)) {
+          return;
+        }
+
+        EditorModificationUtilEx.deleteSelectedText(editor);
+
+        FileType fileType = getFileType(file, editor);
+
+        TypedDelegateFunc func = (delegate, c1, p1, e1, f1) -> delegate.beforeCharTyped(c1, p1, e1, f1, fileType);
+        if (callDelegates(func, charTyped, project, editor, file)) {
+          return;
+        }
+
+        if (')' == charTyped || ']' == charTyped || '}' == charTyped) {
+          if (FileTypes.PLAIN_TEXT != fileType) {
+            if (handleRParen(editor, fileType, charTyped)) return;
+          }
+        }
+        else if ('"' == charTyped || '\'' == charTyped || '`' == charTyped/* || '/' == charTyped*/) {
+          if (handleQuote(project, editor, charTyped, file)) return;
+        }
+
+        long modificationStampBeforeTyping = editor.getDocument().getModificationStamp();
         type(originalEditor, project, charTyped);
-        return;
-      }
+        AutoHardWrapHandler.getInstance().wrapLineIfNecessary(originalEditor, dataContext, modificationStampBeforeTyping);
 
-      if (callDelegates(TypedHandlerDelegate::beforeSelectionRemoved, charTyped, project, editor, file)) {
-        return;
-      }
+        if (editor.isDisposed()) { // can be that injected editor disappear
+          return;
+        }
 
-      EditorModificationUtilEx.deleteSelectedText(editor);
+        if (('(' == charTyped || '[' == charTyped || '{' == charTyped) &&
+            CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET &&
+            fileType != FileTypes.PLAIN_TEXT) {
+          handleAfterLParen(project, editor, fileType, file, charTyped);
+        }
+        else if ('}' == charTyped) {
+          indentClosingBrace(project, editor);
+        }
+        else if (')' == charTyped) {
+          indentClosingParenth(project, editor);
+        }
 
-      FileType fileType = getFileType(file, editor);
+        if (callDelegates(TypedHandlerDelegate::charTyped, charTyped, project, editor, file)) {
+          return;
+        }
 
-      TypedDelegateFunc func = (delegate, c1, p1, e1, f1) -> delegate.beforeCharTyped(c1, p1, e1, f1, fileType);
-      if (callDelegates(func, charTyped, project, editor, file)) {
-        return;
-      }
-
-      if (')' == charTyped || ']' == charTyped || '}' == charTyped) {
-        if (FileTypes.PLAIN_TEXT != fileType) {
-          if (handleRParen(editor, fileType, charTyped)) return;
+        if ('{' == charTyped) {
+          indentOpenedBrace(project, editor);
+        }
+        else if ('(' == charTyped) {
+          indentOpenedParenth(project, editor);
         }
       }
-      else if ('"' == charTyped || '\'' == charTyped || '`' == charTyped/* || '/' == charTyped*/) {
-        if (handleQuote(project, editor, charTyped, file)) return;
-      }
-
-      long modificationStampBeforeTyping = editor.getDocument().getModificationStamp();
-      type(originalEditor, project, charTyped);
-      AutoHardWrapHandler.getInstance().wrapLineIfNecessary(originalEditor, dataContext, modificationStampBeforeTyping);
-
-      if (editor.isDisposed()) { // can be that injected editor disappear
-        return;
-      }
-
-      if (('(' == charTyped || '[' == charTyped || '{' == charTyped) &&
-          CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET &&
-          fileType != FileTypes.PLAIN_TEXT) {
-        handleAfterLParen(project, editor, fileType, file, charTyped);
-      }
-      else if ('}' == charTyped) {
-        indentClosingBrace(project, editor);
-      }
-      else if (')' == charTyped) {
-        indentClosingParenth(project, editor);
-      }
-
-      if (callDelegates(TypedHandlerDelegate::charTyped, charTyped, project, editor, file)) {
-        return;
-      }
-
-      if ('{' == charTyped) {
-        indentOpenedBrace(project, editor);
-      }
-      else if ('(' == charTyped) {
-        indentOpenedParenth(project, editor);
+      finally {
+        editor.putUserData(CompletionPhase.AUTO_POPUP_TYPED_EVENT_ID, null);
       }
     });
   }
