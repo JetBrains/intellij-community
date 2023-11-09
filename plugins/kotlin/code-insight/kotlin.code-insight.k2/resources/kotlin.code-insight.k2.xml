@@ -39,5 +39,8 @@
 
     <codeInsight.unresolvedReferenceQuickFixProvider
             implementation="org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.KotlinCreateFromUsageQuickFixProvider"/>
+
+    <applicationService serviceInterface="org.jetbrains.kotlin.idea.codeInsight.KotlinReferenceImporterFacility"
+                        serviceImplementation="org.jetbrains.kotlin.idea.k2.codeinsight.K2ReferenceImporterFacility"/>
   </extensions>
 </idea-plugin>
