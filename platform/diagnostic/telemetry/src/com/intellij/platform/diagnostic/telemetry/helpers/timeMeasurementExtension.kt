@@ -6,10 +6,10 @@ import kotlin.system.measureTimeMillis
 
 /**
  * Add now-startTime in ms to the current value
- * [startTime] - start time of measurement in milliseconds
+ * [startTimeMs] - start time of measurement in milliseconds
  */
-fun AtomicLong.addElapsedTimeMs(startTime: Long) {
-  this.addAndGet(System.currentTimeMillis() - startTime)
+fun AtomicLong.addElapsedTimeMs(startTimeMs: Long) {
+  this.addAndGet(System.currentTimeMillis() - startTimeMs)
 }
 
 /**

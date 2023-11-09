@@ -7,7 +7,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.packaging.elements.PackagingElementOutputKind
 import com.intellij.packaging.elements.PackagingElementResolvingContext
-import com.intellij.packaging.impl.artifacts.workspacemodel.mutableElements
+import com.intellij.packaging.impl.artifacts.workspacemodel.packaging.mutableElements
 import com.intellij.packaging.impl.ui.DelegatedPackagingElementPresentation
 import com.intellij.packaging.impl.ui.ModuleElementPresentation
 import com.intellij.packaging.ui.ArtifactEditorContext

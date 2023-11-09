@@ -22,13 +22,19 @@ import com.intellij.packaging.elements.PackagingElementResolvingContext
 import com.intellij.packaging.impl.artifacts.ArtifactPointerManagerImpl
 import com.intellij.packaging.impl.artifacts.DefaultPackagingElementResolvingContext
 import com.intellij.packaging.impl.artifacts.InvalidArtifact
+import com.intellij.packaging.impl.artifacts.workspacemodel.packaging.elements
 import com.intellij.platform.backend.workspace.workspaceModel
+import com.intellij.platform.diagnostic.telemetry.Compiler
+import com.intellij.platform.diagnostic.telemetry.TelemetryManager
+import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMs
 import com.intellij.platform.workspace.storage.*
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.util.containers.BidirectionalMap
 import com.intellij.util.xmlb.XmlSerializer
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
+import io.opentelemetry.api.metrics.Meter
+import java.util.concurrent.atomic.AtomicLong
 
 class ArtifactManagerBridge(private val project: Project) : ArtifactManager(), Disposable {
 
@@ -44,27 +50,35 @@ class ArtifactManagerBridge(private val project: Project) : ArtifactManager(), D
 
   @RequiresReadLock
   override fun getArtifacts(): Array<ArtifactBridge> {
+    val start = System.currentTimeMillis()
+
     initBridges()
 
     val store = project.workspaceModel.currentSnapshot
 
-    return store
+    val artifacts: Array<ArtifactBridge> = store
       .entities(ArtifactEntity::class.java)
       .map { store.artifactsMap.getDataByEntity(it) ?: error("All artifact bridges should be already created at this moment") }
       .filter { VALID_ARTIFACT_CONDITION.value(it) }
       .toList().toTypedArray()
+
+    getArtifactsMs.addElapsedTimeMs(start)
+    return artifacts
   }
 
   @RequiresReadLock
   override fun findArtifact(name: String): Artifact? {
+    val start = System.currentTimeMillis()
     initBridges()
 
     val store = project.workspaceModel.currentSnapshot
 
     val artifactEntity = store.resolve(ArtifactId(name)) ?: return null
 
-    return store.artifactsMap.getDataByEntity(artifactEntity)
-           ?: error("All artifact bridges should be already created at this moment")
+    val artifactBridge: ArtifactBridge = store.artifactsMap.getDataByEntity(artifactEntity)
+                                         ?: error("All artifact bridges should be already created at this moment")
+    findArtifactMs.addElapsedTimeMs(start)
+    return artifactBridge
   }
 
   override fun getArtifactByOriginal(artifact: Artifact): Artifact = artifact
@@ -73,6 +87,8 @@ class ArtifactManagerBridge(private val project: Project) : ArtifactManager(), D
 
   @RequiresReadLock
   override fun getArtifactsByType(type: ArtifactType): List<ArtifactBridge> {
+    val start = System.currentTimeMillis()
+
     // XXX @RequiresReadLock annotation doesn't work for kt now
     ApplicationManager.getApplication().assertReadAccessAllowed()
     initBridges()
@@ -80,11 +96,14 @@ class ArtifactManagerBridge(private val project: Project) : ArtifactManager(), D
     val store = project.workspaceModel.currentSnapshot
     val typeId = type.id
 
-    return store
+    val artifacts: List<ArtifactBridge> = store
       .entities(ArtifactEntity::class.java)
       .filter { it.artifactType == typeId }
       .map { store.artifactsMap.getDataByEntity(it) ?: error("All artifact bridges should be already created at this moment") }
       .toList()
+
+    getArtifactsByTypeMs.addElapsedTimeMs(start)
+    return artifacts
   }
 
   @RequiresReadLock
@@ -124,7 +143,8 @@ class ArtifactManagerBridge(private val project: Project) : ArtifactManager(), D
   override fun getResolvingContext(): PackagingElementResolvingContext = resolvingContext
 
   override fun addArtifact(name: String, type: ArtifactType, root: CompositePackagingElement<*>?): Artifact {
-    return WriteAction.compute(ThrowableComputable<ModifiableArtifact, RuntimeException> {
+    val start = System.currentTimeMillis()
+    val artifact = WriteAction.compute(ThrowableComputable<ModifiableArtifact, RuntimeException> {
       val model = createModifiableModel()
       val artifact = model.addArtifact(name, type)
       if (root != null) {
@@ -133,6 +153,9 @@ class ArtifactManagerBridge(private val project: Project) : ArtifactManager(), D
       model.commit()
       artifact
     })
+
+    addArtifactMs.addElapsedTimeMs(start)
+    return artifact
   }
 
   override fun addElementsToDirectory(artifact: Artifact, relativePath: String, elements: Collection<PackagingElement<*>>) {
@@ -152,6 +175,8 @@ class ArtifactManagerBridge(private val project: Project) : ArtifactManager(), D
 
   @RequiresWriteLock
   fun commit(artifactModel: ArtifactModifiableModelBridge) {
+    val start = System.currentTimeMillis()
+
     // XXX @RequiresReadLock annotation doesn't work for kt now
     ApplicationManager.getApplication().assertWriteAccessAllowed()
     LOG.trace { "Committing artifact manager bridge. diff: ${artifactModel.diff}" }
@@ -246,6 +271,8 @@ class ArtifactManagerBridge(private val project: Project) : ArtifactManager(), D
     if (changes.isNotEmpty()) {
       BuildManager.getInstance().clearState(project)
     }
+
+    commitMs.addElapsedTimeMs(start)
   }
 
   private fun updateCustomElements(diff: MutableEntityStorage) {
@@ -265,6 +292,8 @@ class ArtifactManagerBridge(private val project: Project) : ArtifactManager(), D
   // Initialize all artifact bridges
   @RequiresReadLock
   private fun initBridges() {
+    val start = System.currentTimeMillis()
+
     // XXX @RequiresReadLock annotation doesn't work for kt now
     ApplicationManager.getApplication().assertReadAccessAllowed()
     val workspaceModel = project.workspaceModel
@@ -293,6 +322,8 @@ class ArtifactManagerBridge(private val project: Project) : ArtifactManager(), D
         }
       }
     }
+
+    initBridgesMs.addElapsedTimeMs(start)
   }
 
   companion object {
@@ -308,6 +339,54 @@ class ArtifactManagerBridge(private val project: Project) : ArtifactManager(), D
     private val LOG = logger<ArtifactManagerBridge>()
 
     val VALID_ARTIFACT_CONDITION: Condition<Artifact> = Condition { it !is InvalidArtifact }
+
+    // -------------- Metrics ----------------------------
+
+    private val getArtifactsMs: AtomicLong = AtomicLong()
+    private val findArtifactMs: AtomicLong = AtomicLong()
+    private val getArtifactsByTypeMs: AtomicLong = AtomicLong()
+    private val addArtifactMs: AtomicLong = AtomicLong()
+
+    private val initBridgesMs: AtomicLong = AtomicLong()
+    private val commitMs: AtomicLong = AtomicLong()
+    private val dropMappingsMs: AtomicLong = AtomicLong()
+
+    private fun setupOpenTelemetryReporting(meter: Meter): Unit {
+      val getArtifactsGauge = meter.gaugeBuilder("compiler.ArtifactManagerBridge.getArtifacts.ms")
+        .ofLongs().setDescription("Total time spent in method").buildObserver()
+      val findArtifactGauge = meter.gaugeBuilder("compiler.ArtifactManagerBridge.findArtifact.ms")
+        .ofLongs().setDescription("Total time spent in method").buildObserver()
+      val getArtifactsByTypeGauge = meter.gaugeBuilder("compiler.ArtifactManagerBridge.getArtifactsByType.ms")
+        .ofLongs().setDescription("Total time spent in method").buildObserver()
+      val addArtifactGauge = meter.gaugeBuilder("compiler.ArtifactManagerBridge.addArtifact.ms")
+        .ofLongs().setDescription("Total time spent in method").buildObserver()
+
+      val initBridgesGauge = meter.gaugeBuilder("compiler.ArtifactManagerBridge.initBridges.ms")
+        .ofLongs().setDescription("Total time spent in method").buildObserver()
+      val commitGauge = meter.gaugeBuilder("compiler.ArtifactManagerBridge.commit.ms")
+        .ofLongs().setDescription("Total time spent in method").buildObserver()
+      val dropMappingsGauge = meter.gaugeBuilder("compiler.ArtifactManagerBridge.dropMappings.ms")
+        .ofLongs().setDescription("Total time spent in method").buildObserver()
+
+      meter.batchCallback(
+        {
+          getArtifactsGauge.record(getArtifactsMs.get())
+          findArtifactGauge.record(findArtifactMs.get())
+          getArtifactsByTypeGauge.record(getArtifactsByTypeMs.get())
+          addArtifactGauge.record(addArtifactMs.get())
+
+          initBridgesGauge.record(initBridgesMs.get())
+          commitGauge.record(commitMs.get())
+          dropMappingsGauge.record(dropMappingsMs.get())
+        },
+        getArtifactsGauge, findArtifactGauge, getArtifactsByTypeGauge, addArtifactGauge,
+        initBridgesGauge, commitGauge, dropMappingsGauge
+      )
+    }
+
+    init {
+      setupOpenTelemetryReporting(TelemetryManager.getMeter(Compiler))
+    }
   }
 
   override fun dispose() {
@@ -316,6 +395,8 @@ class ArtifactManagerBridge(private val project: Project) : ArtifactManager(), D
 
   @RequiresWriteLock
   fun dropMappings(selector: (ArtifactEntity) -> Boolean) {
+    val start = System.currentTimeMillis()
+
     // XXX @RequiresWriteLock annotation doesn't work for kt now
     ApplicationManager.getApplication().assertWriteAccessAllowed()
     (project.workspaceModel as WorkspaceModelImpl).updateProjectModelSilent("Drop artifact mappings") {
@@ -324,5 +405,7 @@ class ArtifactManagerBridge(private val project: Project) : ArtifactManager(), D
         map.removeMapping(artifact)
       }
     }
+
+    dropMappingsMs.addElapsedTimeMs(start)
   }
 }

@@ -12,10 +12,14 @@ import com.intellij.packaging.elements.CompositePackagingElement
 import com.intellij.packaging.elements.PackagingElement
 import com.intellij.packaging.impl.artifacts.InvalidArtifactType
 import com.intellij.packaging.impl.artifacts.workspacemodel.ArtifactManagerBridge.Companion.artifactsMap
+import com.intellij.packaging.impl.artifacts.workspacemodel.packaging.elements
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
 import com.intellij.platform.backend.workspace.WorkspaceModelTopics
 import com.intellij.platform.backend.workspace.virtualFile
+import com.intellij.platform.diagnostic.telemetry.Compiler
+import com.intellij.platform.diagnostic.telemetry.TelemetryManager
+import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMs
 import com.intellij.platform.workspace.jps.JpsImportedEntitySource
 import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.impl.VersionedEntityStorageOnBuilder
@@ -23,8 +27,10 @@ import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.util.EventDispatcher
 import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.ide.toExternalSource
+import io.opentelemetry.api.metrics.Meter
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.jps.util.JpsPathUtil
+import java.util.concurrent.atomic.AtomicLong
 
 open class ArtifactBridge(
   _artifactId: ArtifactId,
@@ -37,6 +43,7 @@ open class ArtifactBridge(
   init {
     project.messageBus.connect().subscribe(WorkspaceModelTopics.CHANGED, object : WorkspaceModelChangeListener {
       override fun beforeChanged(event: VersionedStorageChange) {
+        val start = System.currentTimeMillis()
         event.getChanges(ArtifactEntity::class.java).filterIsInstance<EntityChange.Removed<ArtifactEntity>>().forEach {
           if (it.entity.symbolicId != artifactId) return@forEach
 
@@ -54,6 +61,8 @@ open class ArtifactBridge(
           entityStorage = VersionedEntityStorageOnBuilder(event.storageBefore.toBuilder())
           assert(artifactId in entityStorage.current) { "Cannot resolve artifact $artifactId." }
         }
+
+        beforeChangedMs.addElapsedTimeMs(start)
       }
     })
   }
@@ -276,6 +285,24 @@ open class ArtifactBridge(
       val entity = builder.get(id)
       val previousProperties = entity.customProperties.toList()
       previousProperties.forEach { builder.removeEntity(it) }
+    }
+
+    private val beforeChangedMs: AtomicLong = AtomicLong()
+
+    private fun setupOpenTelemetryReporting(meter: Meter): Unit {
+      val beforeChangedGauge = meter.gaugeBuilder("compiler.ArtifactBridge.beforeChanged.ms")
+        .ofLongs().setDescription("Total time spent in method").buildObserver()
+
+      meter.batchCallback(
+        {
+          beforeChangedGauge.record(beforeChangedMs.get())
+        },
+        beforeChangedGauge,
+      )
+    }
+
+    init {
+      setupOpenTelemetryReporting(TelemetryManager.getMeter(Compiler))
     }
   }
 }
