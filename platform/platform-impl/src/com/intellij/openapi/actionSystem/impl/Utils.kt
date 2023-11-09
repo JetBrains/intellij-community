@@ -342,9 +342,9 @@ object Utils {
       addLoadingIcon(loadingIconPoint, place)
     }
     try {
+      val edtDispatcher = coroutineContext[CoroutineDispatcher]!!
+      val updater = ActionUpdater(presentationFactory, asyncDataContext, place, isContextMenu, false, edtDispatcher)
       service<ActionUpdaterInterceptor>().expandActionGroup(presentationFactory, asyncDataContext, place, group, false) {
-        val edtDispatcher = coroutineContext[CoroutineDispatcher]!!
-        val updater = ActionUpdater(presentationFactory, asyncDataContext, place, isContextMenu, false, edtDispatcher)
         updater.runUpdateSession(updaterContext(place, fastTrackTime, isContextMenu, false)) {
           updater.expandActionGroup(group, group is CompactActionGroup)
         }
