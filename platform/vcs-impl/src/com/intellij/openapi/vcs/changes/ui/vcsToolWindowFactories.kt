@@ -52,7 +52,8 @@ private class ChangeViewToolWindowFactory : VcsToolWindowFactory() {
     }
 
     toolWindow.stripeTitleProvider = Supplier {
-      ProjectLevelVcsManager.getInstance(toolWindow.project).allActiveVcss.singleOrNull()?.displayName
+      val project = toolWindow.project.takeIf { !it.isDisposed }
+      project?.let { ProjectLevelVcsManager.getInstance(it) }?.allActiveVcss?.singleOrNull()?.displayName
       ?: IdeBundle.message("toolwindow.stripe.Version_Control")
     }
   }
