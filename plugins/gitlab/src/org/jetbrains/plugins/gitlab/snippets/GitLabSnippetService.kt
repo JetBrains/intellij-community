@@ -239,7 +239,7 @@ class GitLabSnippetService(private val project: Project, private val serviceScop
                                  files: List<VirtualFile>): GitLabCreateSnippetResult? =
     coroutineScope {
       val availablePathHandlingModes =
-        PathHandlingMode.values().filter {
+        PathHandlingMode.entries.filter {
           val extractor = getFileNameExtractor(project, files, it)
           files.map { file -> extractor(file) }.toSet().size == files.size // Check that there are no duplicates when mapped
         }
