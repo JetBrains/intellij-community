@@ -88,6 +88,14 @@ class MavenFolderResolver(private val project: Project) {
     val embedder: MavenEmbedderWrapper = projectsManager.embeddersManager.getEmbedder(MavenEmbeddersManager.FOR_FOLDERS_RESOLVE, baseDir)
     try {
       goalResults = embedder.executeGoal(requests, goal, progressReporter, console)
+      for (goalResult in goalResults) {
+        for (problem in goalResult.problems) {
+          val description = problem.description
+          if (null != description) {
+            console.addError(description)
+          }
+        }
+      }
     }
     finally {
       projectsManager.embeddersManager.release(embedder)

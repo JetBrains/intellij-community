@@ -4,6 +4,7 @@ package org.jetbrains.idea.maven.buildtool
 import com.intellij.build.DefaultBuildDescriptor
 import com.intellij.build.SyncViewManager
 import com.intellij.build.events.EventResult
+import com.intellij.build.events.MessageEvent
 import com.intellij.build.events.impl.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
@@ -15,6 +16,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.ExceptionUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.execution.MavenConsoleBundle
+import org.jetbrains.idea.maven.execution.SyncBundle
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.server.MavenArtifactEvent
 import org.jetbrains.idea.maven.server.MavenServerConsoleEvent
@@ -37,7 +39,7 @@ abstract class MavenSyncConsoleBase(protected val myProject: Project) : MavenEve
 
   fun start() {
     val descriptor = DefaultBuildDescriptor(myTaskId, title, myProject.basePath!!, System.currentTimeMillis())
-    descriptor.isActivateToolWindowWhenFailed = false
+    descriptor.isActivateToolWindowWhenFailed = true
     descriptor.isActivateToolWindowWhenAdded = false
     progressListener.onEvent(myTaskId, StartBuildEventImpl(descriptor, message))
   }
@@ -71,6 +73,11 @@ abstract class MavenSyncConsoleBase(protected val myProject: Project) : MavenEve
     MavenLog.LOG.warn(e)
     hasErrors = true
     progressListener.onEvent(myTaskId, createMessageEvent(myProject, myTaskId, e))
+  }
+
+  fun addError(message: String) {
+    val group = SyncBundle.message("build.event.title.error")
+    progressListener.onEvent(myTaskId, MessageEventImpl(myTaskId, MessageEvent.Kind.ERROR, group, message, message))
   }
 
   fun finish() {
