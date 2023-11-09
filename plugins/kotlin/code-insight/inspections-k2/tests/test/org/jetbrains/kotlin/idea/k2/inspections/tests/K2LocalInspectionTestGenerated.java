@@ -3307,6 +3307,74 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/inspectionsLocal/redundantElseInIf")
+    public static class RedundantElseInIf extends AbstractK2LocalInspectionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("empty.kt")
+        public void testEmpty() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantElseInIf/empty.kt");
+        }
+
+        @TestMetadata("inLambda.kt")
+        public void testInLambda() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantElseInIf/inLambda.kt");
+        }
+
+        @TestMetadata("noElse.kt")
+        public void testNoElse() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantElseInIf/noElse.kt");
+        }
+
+        @TestMetadata("notNothing.kt")
+        public void testNotNothing() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantElseInIf/notNothing.kt");
+        }
+
+        @TestMetadata("notReturn.kt")
+        public void testNotReturn() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantElseInIf/notReturn.kt");
+        }
+
+        @TestMetadata("redundant.kt")
+        public void testRedundant() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantElseInIf/redundant.kt");
+        }
+
+        @TestMetadata("redundant2.kt")
+        public void testRedundant2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantElseInIf/redundant2.kt");
+        }
+
+        @TestMetadata("redundant3.kt")
+        public void testRedundant3() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantElseInIf/redundant3.kt");
+        }
+
+        @TestMetadata("redundant4.kt")
+        public void testRedundant4() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantElseInIf/redundant4.kt");
+        }
+
+        @TestMetadata("redundantSingleLine.kt")
+        public void testRedundantSingleLine() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantElseInIf/redundantSingleLine.kt");
+        }
+
+        @TestMetadata("redundantSingleLine2.kt")
+        public void testRedundantSingleLine2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantElseInIf/redundantSingleLine2.kt");
+        }
+
+        @TestMetadata("usedAsExpression.kt")
+        public void testUsedAsExpression() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantElseInIf/usedAsExpression.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal")
     public abstract static class InspectionsLocal extends AbstractK2LocalInspectionTest {
         @RunWith(JUnit3RunnerWithInners.class)

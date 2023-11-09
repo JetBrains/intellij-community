@@ -293,5 +293,12 @@
                      enabledByDefault="true"
                      level="INFORMATION" key="if.null.return.break.foldable.to" bundle="messages.KotlinBundle"/>
 
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.RedundantElseInIfInspection"
+                     language="kotlin"
+                     groupPath="Kotlin"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.naming.conventions"
+                     enabledByDefault="true"
+                     level="INFORMATION" key="redundant.else" bundle="messages.KotlinBundle"/>
+
   </extensions>
 </idea-plugin>
