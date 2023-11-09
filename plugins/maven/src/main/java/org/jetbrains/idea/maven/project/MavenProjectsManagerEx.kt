@@ -523,9 +523,9 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
                                           progressReporter: RawProgressReporter): MavenArtifactDownloader.DownloadResult {
     project.messageBus.syncPublisher<MavenImportListener>(MavenImportListener.TOPIC).artifactDownloadingStarted()
     val progressListener = project.getService(SyncViewManager::class.java)
-    val downloadConsole = MavenDownloadConsole(project)
+    val downloadConsole = MavenDownloadConsole(project, progressListener, sources, docs)
     try {
-      downloadConsole.startDownload(progressListener, sources, docs)
+      downloadConsole.startDownload()
       downloadConsole.startDownloadTask()
       val downloader = MavenArtifactDownloader(project, projectsTree, artifacts, progressReporter, MavenLogEventHandler)
       val result = downloader.downloadSourcesAndJavadocs(projects, sources, docs, embeddersManager)

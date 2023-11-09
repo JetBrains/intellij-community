@@ -17,23 +17,20 @@ import org.jetbrains.idea.maven.utils.MavenUtil
 /**
  * An instance of this class is not supposed to be reused in multiple downloads
  */
-class MavenDownloadConsole(private val myProject: Project) {
+class MavenDownloadConsole(private val myProject: Project,
+                           private val myProgressListener: BuildProgressListener,
+                           private val downloadSources: Boolean,
+                           private val downloadDocs: Boolean) {
+  private val myTaskId = createTaskId()
+  private val myStartedSet = LinkedHashSet<Pair<Any, String>>()
+
   private var hasErrors = false
 
-  private var myTaskId = createTaskId()
-  private var myStartedSet = LinkedHashSet<Pair<Any, String>>()
-
-  private var myProgressListener: BuildProgressListener = BuildProgressListener { _, _ -> }
-
-  fun startDownload(progressListener: BuildProgressListener, downloadSources: Boolean, downloadDocs: Boolean) {
-    hasErrors = false
-    myProgressListener = progressListener
-    myTaskId = createTaskId()
+  fun startDownload() {
     val descriptor = DefaultBuildDescriptor(myTaskId, DownloadBundle.message("maven.download.title"), myProject.basePath!!, System.currentTimeMillis())
     descriptor.isActivateToolWindowWhenFailed = false
     descriptor.isActivateToolWindowWhenAdded = false
-    var message = ""
-    message = if (downloadSources) {
+    val message = if (downloadSources) {
       if (downloadDocs) {
         DownloadBundle.message("maven.download.sources.and.docs")
       } else {
