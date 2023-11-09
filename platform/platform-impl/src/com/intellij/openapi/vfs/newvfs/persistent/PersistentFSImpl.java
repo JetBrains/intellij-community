@@ -80,8 +80,13 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
   /** Show notification about successful VFS recovery if VFS init takes longer than [nanoseconds] */
   private static final long NOTIFY_OF_RECOVERY_IF_LONGER_NS = SECONDS.toNanos(
-    getLongProperty("vfs.notify-user-if-recovery-longer-sec", ApplicationManager.getApplication().isEAP() ? 10 : Long.MAX_VALUE)
+    getLongProperty("vfs.notify-user-if-recovery-longer-sec", defaultLongRecoveryThresholdSec())
   );
+
+  private static long defaultLongRecoveryThresholdSec() {
+    Application app = ApplicationManager.getApplication();
+    return (app != null && app.isEAP()) ? 10 : Long.MAX_VALUE;
+  }
 
   private final Map<String, VirtualFileSystemEntry> myRoots;
 
