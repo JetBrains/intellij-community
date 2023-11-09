@@ -76,7 +76,7 @@ class IntentionManagerSettings : PersistentStateComponent<Element> {
 
   internal class IntentionSearchableOptionContributor : SearchableOptionContributor() {
 
-    private val HTML_PATTERN get() = Pattern.compile("<[^<>]*>")
+    private val HTML_PATTERN = Pattern.compile("<[^<>]*>")
 
     override fun processOptions(processor: SearchableOptionProcessor) {
       for (metaData in getInstance().getMetaData()) {
