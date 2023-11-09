@@ -235,6 +235,36 @@ public interface OptionController {
       }
     };
   }
+  
+  @Contract(pure = true)
+  static @NotNull OptionController onPrefix(@NotNull Function<@NotNull String, @Nullable OptionController> locator) {
+    return of(
+      bindId -> {
+        int dot = bindId.indexOf('.');
+        if (dot == -1) {
+          throw new IllegalArgumentException("Dot is expected in " + bindId);
+        }
+        String prefix = bindId.substring(0, dot);
+        OptionController subController = locator.apply(prefix);
+        if (subController == null) {
+          throw new IllegalArgumentException("Controller is not found for prefix '" + prefix + "'; bindId = " + bindId);
+        }
+        return subController.getOption(bindId.substring(dot + 1));
+      },
+      (bindId, value) -> {
+        int dot = bindId.indexOf('.');
+        if (dot == -1) {
+          throw new IllegalArgumentException("Dot is expected in " + bindId);
+        }
+        String prefix = bindId.substring(0, dot);
+        OptionController subController = locator.apply(prefix);
+        if (subController == null) {
+          throw new IllegalArgumentException("Controller is not found for prefix '" + prefix + "'; bindId = " + bindId);
+        }
+        subController.setOption(bindId.substring(dot + 1), value);
+      }
+    );
+  }
 
   /**
    * @param obj object to bind to

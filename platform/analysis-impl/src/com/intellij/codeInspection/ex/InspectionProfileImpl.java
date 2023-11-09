@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.codeInspection.InspectionEP;
 import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.codeInspection.options.OptionController;
 import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.configurationStore.SchemeDataHolder;
 import com.intellij.lang.annotation.HighlightSeverity;
@@ -1082,6 +1083,22 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     for (ScopeToolState scopeToolState : profile.getTools(shortName, project).getTools()) {
       scopeToolState.setEnabled(newState);
     }
+  }
+
+  public @NotNull OptionController controllerFor(@NotNull PsiElement element) {
+    return OptionController.onPrefix(toolId -> containerForTool(toolId, element));
+  }
+
+  private @Nullable OptionController containerForTool(@NotNull String toolShortName, @NotNull PsiElement element) {
+    var model = new InspectionProfileModifiableModel(this);
+    ToolsImpl toolList = model.getToolsOrNull(toolShortName, element.getProject());
+    if (toolList == null) return null;
+    return OptionController.empty()
+      .onPrefix("options", toolList.getInspectionTool(element).getTool().getOptionController())
+      .onValueSet((bindId, value) -> {
+        model.commit();
+        getProfileManager().fireProfileChanged(this);
+      });
   }
 
   private static final class MyInspectionElementsMerger extends InspectionElementsMergerBase {

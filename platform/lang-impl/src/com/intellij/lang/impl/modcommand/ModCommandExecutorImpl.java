@@ -13,9 +13,9 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.lookup.LookupFocusDegree;
 import com.intellij.codeInsight.template.*;
-import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionProfileModifiableModelKt;
-import com.intellij.codeInspection.ex.InspectionToolWrapper;
+import com.intellij.codeInspection.options.OptionController;
 import com.intellij.diff.comparison.ComparisonManager;
 import com.intellij.diff.comparison.ComparisonPolicy;
 import com.intellij.diff.fragments.DiffFragment;
@@ -45,6 +45,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.search.LocalSearchScope;
@@ -68,7 +69,10 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.datatransfer.StringSelection;
 import java.io.IOException;
-import java.util.*;
+import java.util.Collection;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.Callable;
 
 import static java.util.Objects.requireNonNullElse;
@@ -282,24 +286,21 @@ public class ModCommandExecutorImpl implements ModCommandExecutor {
   private static void setOption(@NotNull Project project, VirtualFile vFile, @NotNull ModUpdateInspectionOptions options, boolean newValue) {
     PsiFile file = PsiManager.getInstance(project).findFile(vFile);
     if (file == null) return;
-    InspectionProfileModifiableModelKt.modifyAndCommitProjectProfile(project, model -> {
-      InspectionToolWrapper<?, ?> tool = model.getInspectionTool(options.inspectionShortName(), file);
-      if (tool == null) {
-        throw new IllegalStateException("Inspection not found: " + options.inspectionShortName());
+    InspectionProfileImpl profile = InspectionProfileManager.getInstance(project).getCurrentProfile();
+    for (ModUpdateInspectionOptions.ModifiedInspectionOption option : options.options()) {
+      OptionController controller = profile.controllerFor(file);
+      String name = options.inspectionShortName();
+      Object value = newValue ? option.newValue() : option.oldValue();
+      String bindId = name + ".options." + option.bindId();
+      if (value instanceof List<?> list) {
+        @SuppressWarnings("unchecked")
+        List<Object> oldList = (List<Object>)Objects.requireNonNull(controller.getOption(bindId));
+        oldList.clear();
+        oldList.addAll(list);
+      } else {
+        controller.setOption(bindId, value);
       }
-      InspectionProfileEntry inspection = tool.getTool();
-      for (ModUpdateInspectionOptions.ModifiedInspectionOption option : options.options()) {
-        Object value = newValue ? option.newValue() : option.oldValue();
-        if (value instanceof List<?> list) {
-          @SuppressWarnings("unchecked")
-          List<Object> oldList = (List<Object>)Objects.requireNonNull(inspection.getOptionController().getOption(option.bindId()));
-          oldList.clear();
-          oldList.addAll(list);
-        } else {
-          inspection.getOptionController().setOption(option.bindId(), value);
-        }
-      }
-    });
+    }
   }
 
   private boolean executeChooseMember(@NotNull ActionContext context, @NotNull ModChooseMember modChooser, @Nullable Editor editor) {
