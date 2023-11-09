@@ -365,7 +365,12 @@ public final class SettingsEntryPointAction extends DumbAwareAction
 
     public void paintButton(@NotNull ActionButton button, @NotNull ActionButtonLook look, @NotNull Graphics g) {
       int radius = JBUI.scale(6);
+      boolean compactMode = UISettings.getInstance().getCompactMode();
       Insets insets = button.getInsets();
+      if (compactMode) {
+        int compact = JBUI.scale(3);
+        insets.set(insets.top + compact, insets.left + compact, insets.bottom + compact, insets.right + compact);
+      }
       Dimension size = button.getSize();
       JBInsets.removeFrom(size, insets);
 
@@ -375,7 +380,7 @@ public final class SettingsEntryPointAction extends DumbAwareAction
       g.setColor(JBUI.CurrentTheme.ManagedIde.BADGE_BORDER);
       g.drawRoundRect(insets.left, insets.top, size.width, size.height, radius, radius);
 
-      int offset = JBUI.scale(4);
+      int offset = JBUI.scale(compactMode ? 2 : 4);
       int iconSize = JBUI.scale(20);
       int height = button.getHeight();
       look.paintIcon(g, button, myFirstIcon, insets.left + offset + (iconSize - myFirstIcon.getIconWidth()) / 2,
