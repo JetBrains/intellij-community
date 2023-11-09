@@ -45,7 +45,7 @@ interface InlineCompletionOvertyper {
    * @param overtypedLength represents a number of symbols that were over typed during this update.
    * This number is for logs only, it does not influence on the execution.
    */
-  data class UpdatedElements(val elements: List<InlineCompletionElement>, val overtypedLength: Int)
+  class UpdatedElements(val elements: List<InlineCompletionElement>, val overtypedLength: Int)
 
 
   abstract class Adapter : InlineCompletionOvertyper {
