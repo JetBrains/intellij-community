@@ -239,13 +239,16 @@ class VFSHealthChecker(private val impl: FSRecordsImpl,
             )
           }
 
+          var attributesAreResolvable: Boolean
           try {
             connection.attributes.checkAttributeRecordSanity(fileId, attributeRecordId)
+            attributesAreResolvable = true
           }
           catch (t: Throwable) {
             unresolvableAttributesIds++.alsoLogThrottled(
               "file[#$fileId]{$fileName}: attribute[#$attributeRecordId] can't be read", t
             )
+            attributesAreResolvable = false
           }
 
 
@@ -285,52 +288,56 @@ class VFSHealthChecker(private val impl: FSRecordsImpl,
               )
             }
 
-            if (checkForOrphanRecords) {
-              checkRecordIsOrphan(fileRecords, fileId, parentId, parentFlags, fileName)
+            if (attributesAreResolvable) { //children are part of file attributes
+              if (checkForOrphanRecords) {
+                checkRecordIsOrphan(fileRecords, fileId, parentId, parentFlags, fileName)
+              }
             }
           }
 
-          val isDirectory = BitUtil.isSet(flags, IS_DIRECTORY)
+          if (attributesAreResolvable) { //children are part of file attributes
+            val isDirectory = BitUtil.isSet(flags, IS_DIRECTORY)
 
-          val children = try {
-            impl.listIds(fileId)
-          }
-          catch (e: Throwable) {
-            generalErrors++.alsoLogThrottled("file[#$fileId]{$fileName}: error accessing children", e)
-            IntArray(0)
-          }
-          if (isDirectory) {
-            for (i in children.indices) {
-              childrenChecked++
-              val childId = children[i]
-              //re-request maxAllocatedID before loop so racing changes will be accounted for:
-              @Suppress("NAME_SHADOWING")
-              val maxAllocatedID = fileRecords.maxAllocatedID()
-              if (childId < FSRecords.MIN_REGULAR_FILE_ID || childId > maxAllocatedID) {
-                //RC: actually this branch is now unreachable -- childId is checked inside .listIds(), and
-                //    CorruptionException is thrown if childId is outside the range.
+            val children = try {
+              impl.listIds(fileId)
+            }
+            catch (e: Throwable) {
+              generalErrors++.alsoLogThrottled("file[#$fileId]{$fileName}: error accessing children", e)
+              IntArray(0)
+            }
+            if (isDirectory) {
+              for (i in children.indices) {
+                childrenChecked++
+                val childId = children[i]
+                //re-request maxAllocatedID before loop so racing changes will be accounted for:
+                @Suppress("NAME_SHADOWING")
+                val maxAllocatedID = fileRecords.maxAllocatedID()
+                if (childId < FSRecords.MIN_REGULAR_FILE_ID || childId > maxAllocatedID) {
+                  //RC: actually this branch is now unreachable -- childId is checked inside .listIds(), and
+                  //    CorruptionException is thrown if childId is outside the range.
 
-                generalErrors++.alsoLogThrottled(
-                  "file[#$fileId]{$fileName}: children[$i][#$childId] " +
-                  "is outside of allocated IDs range [${FSRecords.MIN_REGULAR_FILE_ID}..$maxAllocatedID]"
-                )
-              }
-              else {
-                val childParentId = fileRecords.getParent(childId)
-                if (fileId != childParentId) {
-                  inconsistentParentChildRelationships++.alsoLogThrottled(
-                    "file[#$fileId]{$fileName}: children[$i][#$childId].parent[=#$childParentId] != this " +
-                    "-> parent-child relationship is inconsistent (records are broken?)"
+                  generalErrors++.alsoLogThrottled(
+                    "file[#$fileId]{$fileName}: children[$i][#$childId] " +
+                    "is outside of allocated IDs range [${FSRecords.MIN_REGULAR_FILE_ID}..$maxAllocatedID]"
                   )
+                }
+                else {
+                  val childParentId = fileRecords.getParent(childId)
+                  if (fileId != childParentId) {
+                    inconsistentParentChildRelationships++.alsoLogThrottled(
+                      "file[#$fileId]{$fileName}: children[$i][#$childId].parent[=#$childParentId] != this " +
+                      "-> parent-child relationship is inconsistent (records are broken?)"
+                    )
+                  }
                 }
               }
             }
-          }
-          else if (children.isNotEmpty()) {
-            //MAYBE RC: dedicated counter for that kind of errors?
-            inconsistentParentChildRelationships++.alsoLogThrottled(
-              "file[#$fileId]{$fileName}: !directory (flags: ${Integer.toBinaryString(flags)}) but has children(${children.size})"
-            )
+            else if (children.isNotEmpty()) {
+              //MAYBE RC: dedicated counter for that kind of errors?
+              inconsistentParentChildRelationships++.alsoLogThrottled(
+                "file[#$fileId]{$fileName}: !directory (flags: ${Integer.toBinaryString(flags)}) but has children(${children.size})"
+              )
+            }
           }
 
           //TODO RC: try read _all_ attributes, check all them are readable
