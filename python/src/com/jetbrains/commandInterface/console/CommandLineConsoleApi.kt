@@ -21,6 +21,7 @@ import com.intellij.openapi.module.Module
 import com.jetbrains.commandInterface.command.Command
 import com.jetbrains.commandInterface.command.CommandExecutor
 import com.jetbrains.toolWindowWithActions.WindowWithActions
+import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 
 /**
@@ -78,12 +79,13 @@ fun jbFilter(filter: (String) -> String): (String) -> String {
  *
  * @return newly created console. You do not need to do anything with this value to display console: it will be displayed automatically
  */
-fun createConsole(
+fun createConsoleInToolWindow(
   module: Module,
-  consoleName: String,
+  @Nls(capitalization = Nls.Capitalization.Title) consoleName: String,
   prompt: String = consoleName,
   commandsInfo: CommandsInfo?,
-  icon: Icon): LanguageConsoleView {
+  toolWindowTitle: String,
+  toolWindowIcon: Icon): LanguageConsoleView {
   val project = module.project
   val console = CommandConsole.createConsole(module, prompt, commandsInfo)
 
@@ -93,11 +95,10 @@ fun createConsole(
                                            console.editor.component,
                                            consoleName,
                                            project,
-                                           icon,
+                                           toolWindowTitle,
+                                           toolWindowIcon,
                                            null)
 
   ArgumentHintLayer.attach(console) // Display [arguments]
   return console
 }
-
-
