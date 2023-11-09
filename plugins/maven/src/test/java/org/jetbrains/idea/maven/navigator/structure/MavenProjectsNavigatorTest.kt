@@ -269,13 +269,13 @@ class MavenProjectsNavigatorTest : MavenMultiVersionImportingTestCase() {
     myNavigator!!.showIgnored = true
     assertTrue(rootNodes[0].isVisible())
     val childNodeNamesBefore = rootNodes[0].children.map { it.name }.toSet()
-    assertEquals(setOf("Lifecycle", "Plugins", "m"), childNodeNamesBefore)
+    assertEquals(setOf("Lifecycle", "Plugins", "Repositories", "m"), childNodeNamesBefore)
 
     myNavigator!!.showIgnored = false
     assertTrue(rootNodes[0].isVisible())
     waitForPluginNodesUpdated()
     val childNodeNamesAfter = rootNodes[0].children.map { it.name }.toSet()
-    assertEquals(setOf("Lifecycle", "Plugins"), childNodeNamesAfter)
+    assertEquals(setOf("Lifecycle", "Plugins", "Repositories"), childNodeNamesAfter)
   }
 
   private suspend fun waitForPluginNodesUpdated() = withContext(Dispatchers.EDT) {
