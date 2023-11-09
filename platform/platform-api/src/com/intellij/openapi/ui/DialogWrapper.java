@@ -257,6 +257,15 @@ public abstract class DialogWrapper {
       }
     };
     window.addComponentListener(myResizeListener);
+    Disposer.register(myDisposable, this::disposeResizeListener);
+  }
+
+  private void disposeResizeListener() {
+    Window window = getWindow();
+    if (window != null && myResizeListener != null) {
+      window.removeComponentListener(myResizeListener);
+      myResizeListener = null;
+    }
   }
 
   /**
@@ -452,11 +461,7 @@ public abstract class DialogWrapper {
     if (myClosed) return;
     myClosed = true;
     myExitCode = exitCode;
-    Window window = getWindow();
-    if (window != null && myResizeListener != null) {
-      window.removeComponentListener(myResizeListener);
-      myResizeListener = null;
-    }
+    disposeResizeListener();
 
     if (isOk) {
       processDoNotAskOnOk(exitCode);
