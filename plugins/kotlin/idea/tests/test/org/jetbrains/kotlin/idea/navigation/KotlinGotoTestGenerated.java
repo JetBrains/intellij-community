@@ -153,6 +153,11 @@ public abstract class KotlinGotoTestGenerated extends AbstractKotlinGotoTest {
             runTest("testData/navigation/gotoSymbol/properties.kt");
         }
 
+        @TestMetadata("propertiesInDumbMode.kt")
+        public void testPropertiesInDumbMode() throws Exception {
+            runTest("testData/navigation/gotoSymbol/propertiesInDumbMode.kt");
+        }
+
         @TestMetadata("stdLibArrayListOf.kt")
         public void testStdLibArrayListOf() throws Exception {
             runTest("testData/navigation/gotoSymbol/stdLibArrayListOf.kt");

@@ -46,11 +46,8 @@ abstract class AbstractKotlinGotoSymbolContributor<T : NavigatablePsiElement>(
             }
         val filter = parameters.idFilter
         val wrapProcessor = wrapProcessor(processor)
-        val p = Processor<T> {
-            wrapProcessor.process(it)
-        }
         DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode {
-            helper.processElements(name, project, scope, filter, p)
+            helper.processElements(name, project, scope, filter, wrapProcessor)
         }
     }
 
