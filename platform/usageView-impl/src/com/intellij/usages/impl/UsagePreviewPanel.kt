@@ -504,6 +504,9 @@ open class UsagePreviewPanel @JvmOverloads constructor(project: Project,
     private val PREVIEW_EDITOR_FLAG = Key.create<UsagePreviewPanel>("PREVIEW_EDITOR_FLAG")
     @Contract("null -> !null")
     private fun cannotPreviewMessage(infos: List<UsageInfo>?): @NlsContexts.StatusText String? {
+      if (infos == null) {
+        return UsageViewBundle.message("usage.preview.isnt.available")
+      }
       if (ContainerUtil.isEmpty(infos)) {
         return UsageViewBundle.message("select.the.usage.to.preview")
       }
@@ -525,7 +528,7 @@ open class UsagePreviewPanel @JvmOverloads constructor(project: Project,
     @RequiresReadLock
     @RequiresBackgroundThread
     @JvmStatic
-    fun isOneAndOnlyOnePsiFileInUsages(infos: List<UsageInfo>) = cannotPreviewMessage(infos) == null
+    fun isOneAndOnlyOnePsiFileInUsages(infos: List<UsageInfo>?) = cannotPreviewMessage(infos) == null
 
     private fun isOnlyGroupNodesSelected(infos: List<UsageInfo>, groupNodes: Set<GroupNode>): Boolean {
       return infos.isEmpty() && !groupNodes.isEmpty()
