@@ -1115,13 +1115,13 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
 
   @NotNull
   @Override
-  public ArrayList<MavenGoalExecutionResult> executeGoal(@NotNull String longRunningTaskId,
-                                                         @NotNull ArrayList<MavenGoalExecutionRequest> requests,
-                                                         @NotNull String goal,
-                                                         MavenToken token) {
+  public MavenServerResponse<ArrayList<MavenGoalExecutionResult>> executeGoal(@NotNull String longRunningTaskId,
+                                                                              @NotNull ArrayList<MavenGoalExecutionRequest> requests,
+                                                                              @NotNull String goal,
+                                                                              MavenToken token) {
     MavenServerUtil.checkToken(token);
     try (LongRunningTask task = newLongRunningTask(longRunningTaskId, requests.size(), myConsoleWrapper)) {
-      return executeGoal(task, requests, goal);
+      return new MavenServerResponse<>(executeGoal(task, requests, goal), getLongRunningTaskStatus(longRunningTaskId, token));
     }
   }
 

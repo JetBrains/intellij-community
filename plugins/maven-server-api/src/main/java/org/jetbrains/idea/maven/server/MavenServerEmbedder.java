@@ -23,7 +23,9 @@ import org.jetbrains.idea.maven.server.security.MavenToken;
 import java.io.File;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 
 public interface MavenServerEmbedder extends Remote {
   String MAVEN_EMBEDDER_VERSION = "idea.maven.embedder.version";
@@ -64,7 +66,7 @@ public interface MavenServerEmbedder extends Remote {
     MavenToken token) throws RemoteException;
 
   @NotNull
-  ArrayList<MavenGoalExecutionResult> executeGoal(
+  MavenServerResponse<ArrayList<MavenGoalExecutionResult>> executeGoal(
     @NotNull String longRunningTaskId,
     @NotNull ArrayList<MavenGoalExecutionRequest> requests,
     @NotNull String goal,

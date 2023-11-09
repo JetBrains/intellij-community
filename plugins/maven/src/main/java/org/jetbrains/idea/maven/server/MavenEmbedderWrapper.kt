@@ -19,6 +19,7 @@ import org.jetbrains.idea.maven.server.MavenEmbedderWrapper.LongRunningEmbedderT
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException
 import java.io.File
+import java.io.Serializable
 import java.nio.file.Path
 import java.rmi.RemoteException
 import java.util.*
@@ -70,7 +71,10 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
       userProperties
     )
     val results = runLongRunningTask(
-      LongRunningEmbedderTask { embedder, taskId -> embedder.resolveProjects(taskId, request, ourToken) },
+      LongRunningEmbedderTask { embedder, taskId ->
+        // TODO: proper status
+        MavenServerResponse(embedder.resolveProjects(taskId, request, ourToken), LongRunningTaskStatus.EMPTY)
+      },
       progressReporter, eventHandler)
     if (transformer !== RemotePathTransformerFactory.Transformer.ID) {
       for (result in results) {
@@ -115,7 +119,10 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
                                progressReporter: RawProgressReporter?,
                                eventHandler: MavenEventHandler): List<MavenArtifact> {
     return runLongRunningTask(
-      LongRunningEmbedderTask { embedder, taskId -> embedder.resolveArtifacts(taskId, ArrayList(requests), ourToken) },
+      LongRunningEmbedderTask { embedder, taskId ->
+        // TODO: proper status
+        MavenServerResponse(embedder.resolveArtifacts(taskId, ArrayList(requests), ourToken), LongRunningTaskStatus.EMPTY)
+      },
       progressReporter, eventHandler)
   }
 
@@ -154,7 +161,9 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
     }
     return runLongRunningTask(
       LongRunningEmbedderTask { embedder, taskId ->
-        embedder.resolvePlugins(taskId, pluginResolutionRequests, forceUpdateSnapshots, ourToken)
+        // TODO: proper status
+        MavenServerResponse(embedder.resolvePlugins(taskId, pluginResolutionRequests, forceUpdateSnapshots, ourToken),
+                            LongRunningTaskStatus.EMPTY)
       },
       progressReporter, eventHandler)
   }
@@ -231,9 +240,9 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
   }
 
   @Throws(MavenProcessCanceledException::class)
-  private suspend fun <R> runLongRunningTask(task: LongRunningEmbedderTask<R>,
-                                             progressReporter: RawProgressReporter?,
-                                             eventHandler: MavenEventHandler): R {
+  private suspend fun <R : Serializable> runLongRunningTask(task: LongRunningEmbedderTask<R>,
+                                                            progressReporter: RawProgressReporter?,
+                                                            eventHandler: MavenEventHandler): R {
     val longRunningTaskId = UUID.randomUUID().toString()
     val embedder = getOrCreateWrappee()
 
@@ -264,7 +273,11 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
       try {
         withContext(Dispatchers.IO) {
           blockingContext {
-            task.run(embedder, longRunningTaskId)
+            val response = task.run(embedder, longRunningTaskId)
+            val status = response.status
+            eventHandler.handleConsoleEvents(status.consoleEvents())
+            eventHandler.handleDownloadEvents(status.downloadEvents())
+            response.result
           }
         }
       }
@@ -277,8 +290,7 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
     }
   }
 
-  protected fun interface LongRunningEmbedderTask<R> {
-    @Throws(RemoteException::class, MavenServerProcessCanceledException::class)
-    fun run(embedder: MavenServerEmbedder, longRunningTaskId: String): R
+  protected fun interface LongRunningEmbedderTask<R : Serializable> {
+    fun run(embedder: MavenServerEmbedder, longRunningTaskId: String): MavenServerResponse<R>
   }
 }
