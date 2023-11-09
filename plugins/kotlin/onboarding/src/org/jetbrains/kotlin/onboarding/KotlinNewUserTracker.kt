@@ -1,13 +1,13 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.onboarding
 
+import com.intellij.internal.statistic.DeviceIdManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.stats.completion.tracker.InstallationIdProvider
 import org.jetbrains.kotlin.idea.KotlinFileType
 import java.time.Duration
 import java.time.Instant
@@ -42,15 +42,20 @@ class KotlinNewUserTracker : PersistentStateComponent<KotlinNewUserTrackerState>
 
     private var currentState: KotlinNewUserTrackerState = KotlinNewUserTrackerState()
 
+    private fun getInstallationId(): String? {
+        return runCatching {
+            DeviceIdManager.getOrGenerateId(object : DeviceIdManager.DeviceIdToken {}, "FUS")
+        }.getOrNull()
+    }
+
     private fun getInstallationDate(): LocalDate? {
-        val installationId = serviceOrNull<InstallationIdProvider>()?.installationId() ?: return null
+        val installationId = getInstallationId() ?: return null
         val dateSubstring = installationId.take(6).takeIf { it.length == 6 } ?: return null
         val day = dateSubstring.substring(0..1).toIntOrNull() ?: return null
         val month = dateSubstring.substring(2..3).toIntOrNull() ?: return null
         val year = dateSubstring.substring(4..5).toIntOrNull() ?: return null
 
-        // installationId is 000000 in case of error (i.e. year 2000). In that case, return null.
-        return LocalDate.of(year + 2000, month, day).takeIf { it.year > 2000 }
+        return LocalDate.of(year + 2000, month, day)
     }
 
     /**
