@@ -2240,7 +2240,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       boolean savedValue = settings.isCollapseMethods();
       try {
         settings.setCollapseMethods(true);
-        CodeFoldingConfigurable.Util.INSTANCE.applyCodeFoldingSettingsChanges();
+        CodeFoldingConfigurable.Util.applyCodeFoldingSettingsChanges();
         waitForDaemon();
         checkFoldingState("[FoldRegion +(22:27), placeholder='{}']");
       }

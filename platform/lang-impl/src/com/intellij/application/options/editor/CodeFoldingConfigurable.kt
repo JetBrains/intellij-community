@@ -93,6 +93,7 @@ internal class CodeFoldingConfigurable : BoundCompositeConfigurable<CodeFoldingO
 
   object Util {
 
+    @JvmStatic
     fun applyCodeFoldingSettingsChanges() {
       reinitAllEditors()
       for (editor in EditorFactory.getInstance().allEditors) {
