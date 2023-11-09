@@ -1,0 +1,9 @@
+fragment groupMember on GroupMember {
+  group {
+    projects {
+      nodes {
+        ...project
+      }
+    }
+  }
+}

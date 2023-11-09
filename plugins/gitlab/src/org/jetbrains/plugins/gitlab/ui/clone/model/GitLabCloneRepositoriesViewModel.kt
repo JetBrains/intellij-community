@@ -19,6 +19,7 @@ import git4idea.commands.Git
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.gitlab.api.GitLabApiManager
+import org.jetbrains.plugins.gitlab.api.dto.GitLabGroupMemberDTO
 import org.jetbrains.plugins.gitlab.api.request.getCurrentUser
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
@@ -184,10 +185,15 @@ internal class GitLabCloneRepositoriesViewModelImpl(
             GitLabCloneListItem.Error(account, GitLabCloneException.RevokedToken { switchToLoginAction(account) })
           )
         }
-        val accountRepositories = currentUser.projectMemberships.map { projectMember ->
-          GitLabCloneListItem.Repository(account, projectMember)
-        }
-        accountRepositories.sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER) { it.presentation() })
+        val projectRepositories = currentUser.projectMemberships
+          .map { projectMember -> GitLabCloneListItem.Repository(account, projectMember) }
+        val groupProjectRepositories = currentUser.groupMemberships
+          .flatMap(GitLabGroupMemberDTO::projectMemberships)
+          .map { projectMember -> GitLabCloneListItem.Repository(account, projectMember) }
+
+        (projectRepositories + groupProjectRepositories)
+          .distinctBy { repository -> repository.projectMember.project.fullPath }
+          .sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER) { it.presentation() })
       }
       catch (e: CancellationException) {
         throw e

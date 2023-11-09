@@ -15,10 +15,16 @@ class GitLabUserDetailedDTO(
   name: @NlsSafe String,
   avatarUrl: String?,
   webUrl: String,
-  @SinceGitLab("13.1") projectMemberships: ProjectMemberConnection
+  @SinceGitLab("13.1") projectMemberships: ProjectMemberConnection,
+  @SinceGitLab("13.1") groupMemberships: GroupMemberConnection
 ) : GitLabUserDTO(id, username, name, avatarUrl, webUrl) {
-  val projectMemberships: List<ProjectMemberDTO> = projectMemberships.nodes
+  val projectMemberships: List<GitLabProjectMemberDTO> = projectMemberships.nodes
 
-  class ProjectMemberConnection(pageInfo: GraphQLCursorPageInfoDTO, nodes: List<ProjectMemberDTO>)
-    : GraphQLConnectionDTO<ProjectMemberDTO>(pageInfo, nodes)
+  val groupMemberships: List<GitLabGroupMemberDTO> = groupMemberships.nodes
+
+  class ProjectMemberConnection(pageInfo: GraphQLCursorPageInfoDTO, nodes: List<GitLabProjectMemberDTO>)
+    : GraphQLConnectionDTO<GitLabProjectMemberDTO>(pageInfo, nodes)
+
+  class GroupMemberConnection(pageInfo: GraphQLCursorPageInfoDTO, nodes: List<GitLabGroupMemberDTO>)
+    : GraphQLConnectionDTO<GitLabGroupMemberDTO>(pageInfo, nodes)
 }
