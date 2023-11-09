@@ -17,7 +17,7 @@
             <arrayArg name="pluginClasspaths">
               <args>
                 <arg>$KOTLIN_BUNDLED$/lib/kotlinx-serialization-compiler-plugin.jar</arg>
-                <arg>$MAVEN_REPOSITORY$/org/jetbrains/compose/compiler/compiler-hosted/1.5.2/compiler-hosted-1.5.2.jar</arg>
+                <arg>$MAVEN_REPOSITORY$/org/jetbrains/compose/compiler/compiler-hosted/1.5.3/compiler-hosted-1.5.3.jar</arg>
               </args>
             </arrayArg>
             <arrayArg name="pluginOptions" />

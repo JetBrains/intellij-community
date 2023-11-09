@@ -7,19 +7,19 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" scope="PROVIDED">
       <library name="jetbrains.compose.compiler.hosted" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.jetbrains.compose.compiler:compiler-hosted:1.5.2">
+        <properties include-transitive-deps="false" maven-id="org.jetbrains.compose.compiler:compiler-hosted:1.5.3">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/compose/compiler/compiler-hosted/1.5.2/compiler-hosted-1.5.2.jar">
-              <sha256sum>85c728301ca182a24476900aee60e8196ce844f7a2fe936d3ac49dc320f47756</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/compose/compiler/compiler-hosted/1.5.3/compiler-hosted-1.5.3.jar">
+              <sha256sum>3656edf648787796c8e823c7d2288b50562a9d6da2768847c81f0127c99d6bcf</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/compiler/compiler-hosted/1.5.2/compiler-hosted-1.5.2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/compiler/compiler-hosted/1.5.3/compiler-hosted-1.5.3.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/compiler/compiler-hosted/1.5.2/compiler-hosted-1.5.2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/compiler/compiler-hosted/1.5.3/compiler-hosted-1.5.3-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
