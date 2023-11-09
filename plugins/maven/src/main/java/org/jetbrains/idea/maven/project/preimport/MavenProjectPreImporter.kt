@@ -14,6 +14,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.findFile
+import com.intellij.openapi.vfs.isFile
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
@@ -42,6 +43,7 @@ class MavenProjectPreImporter(val project: Project, val coroutineScope: Coroutin
                         importingSettings: MavenImportingSettings,
                         generalSettings: MavenGeneralSettings,
                         parentActivity: StructuredIdeActivity): List<Module> {
+
 
     val activity = PREIMPORT_ACTIVITY.startedWithParent(project, parentActivity)
     val statisticsData = StatisticsData(project, rootProjectFiles.size)
@@ -118,10 +120,15 @@ class MavenProjectPreImporter(val project: Project, val coroutineScope: Coroutin
     }
   }
 
-  private fun CoroutineScope.preimport(rootProjectFile: VirtualFile): Deferred<ProjectTree?> = async {
+  private fun CoroutineScope.preimport(rootProjectFileOrDir: VirtualFile): Deferred<ProjectTree?> = async {
 
     val tree = ProjectTree()
+
     try {
+      val rootProjectFile = if (rootProjectFileOrDir.isFile) rootProjectFileOrDir else rootProjectFileOrDir.findChild("pom.xml")
+      if (rootProjectFile == null) {
+        return@async null
+      }
       val rootModel = MavenJDOMUtil.read(rootProjectFile, null) ?: return@async null
 
       // reading
