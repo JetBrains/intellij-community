@@ -504,8 +504,9 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
 
   @NotNull
   @Override
-  public ArrayList<MavenServerExecutionResult> resolveProjects(@NotNull String longRunningTaskId,
-                                                               @NotNull ProjectResolutionRequest request, MavenToken token) {
+  public MavenServerResponse<ArrayList<MavenServerExecutionResult>> resolveProjects(@NotNull String longRunningTaskId,
+                                                                                    @NotNull ProjectResolutionRequest request,
+                                                                                    MavenToken token) {
     MavenServerUtil.checkToken(token);
     List<File> files = request.getPomFiles();
     List<String> activeProfiles = request.getActiveProfiles();
@@ -526,7 +527,8 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
       );
       try {
         customizeComponents(workspaceMap);
-        return projectResolver.resolveProjects(task, files, activeProfiles, inactiveProfiles);
+        ArrayList<MavenServerExecutionResult> result = projectResolver.resolveProjects(task, files, activeProfiles, inactiveProfiles);
+        return new MavenServerResponse(result, getLongRunningTaskStatus(longRunningTaskId, token));
       }
       finally {
         resetComponents();

@@ -81,7 +81,7 @@ abstract class DummyEmbedder(val myProject: Project) : MavenServerEmbedder {
 class UntrustedDummyEmbedder(myProject: Project) : DummyEmbedder(myProject) {
   override fun resolveProjects(longRunningTaskId: String,
                                request: ProjectResolutionRequest,
-                               token: MavenToken?): ArrayList<MavenServerExecutionResult> {
+                               token: MavenToken?): MavenServerResponse<ArrayList<MavenServerExecutionResult>> {
     MavenProjectsManager.getInstance(myProject).syncConsole.addBuildIssue(
       object : BuildIssue {
         override val title = SyncBundle.message("maven.sync.not.trusted.title")
@@ -94,7 +94,7 @@ class UntrustedDummyEmbedder(myProject: Project) : DummyEmbedder(myProject) {
       },
       MessageEvent.Kind.WARNING
     )
-    return ArrayList()
+    return MavenServerResponse(ArrayList(), LongRunningTaskStatus.EMPTY)
   }
 }
 
@@ -105,7 +105,7 @@ class MisconfiguredPlexusDummyEmbedder(myProject: Project,
                                        private val myUnresolvedId: MavenId?) : DummyEmbedder(myProject) {
   override fun resolveProjects(longRunningTaskId: String,
                                request: ProjectResolutionRequest,
-                               token: MavenToken?): ArrayList<MavenServerExecutionResult> {
+                               token: MavenToken?): MavenServerResponse<ArrayList<MavenServerExecutionResult>> {
 
     MavenProjectsManager.getInstance(myProject).syncConsole.addBuildIssue(
       MavenCoreInitializationFailureIssue(myExceptionMessage,
@@ -115,7 +115,7 @@ class MisconfiguredPlexusDummyEmbedder(myProject: Project,
       ),
       MessageEvent.Kind.ERROR
     )
-    return ArrayList()
+    return MavenServerResponse(ArrayList(), LongRunningTaskStatus.EMPTY)
   }
 
 }

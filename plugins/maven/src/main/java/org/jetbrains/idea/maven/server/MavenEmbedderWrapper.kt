@@ -71,10 +71,7 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
       userProperties
     )
     val results = runLongRunningTask(
-      LongRunningEmbedderTask { embedder, taskId ->
-        // TODO: proper status
-        MavenServerResponse(embedder.resolveProjects(taskId, request, ourToken), LongRunningTaskStatus.EMPTY)
-      },
+      LongRunningEmbedderTask { embedder, taskId -> embedder.resolveProjects(taskId, request, ourToken) },
       progressReporter, eventHandler)
     if (transformer !== RemotePathTransformerFactory.Transformer.ID) {
       for (result in results) {

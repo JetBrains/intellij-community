@@ -33,7 +33,7 @@ public interface MavenServerEmbedder extends Remote {
   String MAVEN_EXT_CLASS_PATH = "maven.ext.class.path";
 
   @NotNull
-  ArrayList<MavenServerExecutionResult> resolveProjects(
+  MavenServerResponse<ArrayList<MavenServerExecutionResult>> resolveProjects(
     @NotNull String longRunningTaskId,
     @NotNull ProjectResolutionRequest request,
     MavenToken token) throws RemoteException;
