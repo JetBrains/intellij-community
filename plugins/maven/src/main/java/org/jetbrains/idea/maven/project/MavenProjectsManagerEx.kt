@@ -20,6 +20,7 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.backend.observation.trackActivity
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.platform.ide.progress.withBackgroundProgress
+import com.intellij.platform.util.progress.RawProgressReporter
 import com.intellij.platform.util.progress.rawProgressReporter
 import com.intellij.platform.util.progress.withRawProgressReporter
 import com.intellij.util.ExceptionUtil
@@ -506,9 +507,7 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
 
     val result = withBackgroundProgress(myProject, MavenProjectBundle.message("maven.downloading"), true) {
       withRawProgressReporter {
-        coroutineToIndicator {
-          doDownloadArtifacts(projects, artifacts, sources, docs)
-        }
+        doDownloadArtifacts(projects, artifacts, sources, docs, rawProgressReporter!!)
       }
     }
 
@@ -517,18 +516,18 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
     return result
   }
 
-  private fun doDownloadArtifacts(projects: Collection<MavenProject>,
-                                  artifacts: Collection<MavenArtifact>?,
-                                  sources: Boolean,
-                                  docs: Boolean): MavenArtifactDownloader.DownloadResult {
+  private suspend fun doDownloadArtifacts(projects: Collection<MavenProject>,
+                                          artifacts: Collection<MavenArtifact>?,
+                                          sources: Boolean,
+                                          docs: Boolean,
+                                          progressReporter: RawProgressReporter): MavenArtifactDownloader.DownloadResult {
     project.messageBus.syncPublisher<MavenImportListener>(MavenImportListener.TOPIC).artifactDownloadingStarted()
-    val indicator = ProgressManager.getGlobalProgressIndicator()
     val progressListener = project.getService(SyncViewManager::class.java)
     val downloadConsole = MavenDownloadConsole(project)
     try {
       downloadConsole.startDownload(progressListener, sources, docs)
       downloadConsole.startDownloadTask()
-      val downloader = MavenArtifactDownloader(project, projectsTree, artifacts, indicator, MavenLogEventHandler)
+      val downloader = MavenArtifactDownloader(project, projectsTree, artifacts, progressReporter, MavenLogEventHandler)
       val result = downloader.downloadSourcesAndJavadocs(projects, sources, docs, embeddersManager)
       downloadConsole.finishDownloadTask()
       return result

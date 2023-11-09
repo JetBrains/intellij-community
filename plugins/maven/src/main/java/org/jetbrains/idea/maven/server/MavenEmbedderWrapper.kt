@@ -9,7 +9,6 @@ import com.intellij.openapi.util.Pair
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.util.progress.RawProgressReporter
 import kotlinx.coroutines.*
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.idea.maven.buildtool.MavenEventHandler
 import org.jetbrains.idea.maven.buildtool.MavenLogEventHandler
@@ -98,7 +97,7 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
   @Throws(MavenProcessCanceledException::class)
   fun resolve(info: MavenArtifactInfo, remoteRepositories: List<MavenRemoteRepository>): MavenArtifact {
     val requests = listOf(MavenArtifactResolutionRequest(info, ArrayList(remoteRepositories)))
-    return resolveArtifacts(requests, null, MavenLogEventHandler)[0]
+    return runBlockingMaybeCancellable { resolveArtifacts(requests, null, MavenLogEventHandler)[0] }
   }
 
   @Deprecated("use {@link MavenEmbedderWrapper#resolveArtifacts(requests, indicator, syncConsole)}",
@@ -108,16 +107,16 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
                        indicator: ProgressIndicator?,
                        syncConsole: MavenSyncConsole?,
                        console: MavenConsole?): List<MavenArtifact> {
-    return resolveArtifacts(requests, indicator, syncConsole ?: MavenLogEventHandler)
+    return runBlockingMaybeCancellable { resolveArtifacts(requests, null, syncConsole ?: MavenLogEventHandler) }
   }
 
   @Throws(MavenProcessCanceledException::class)
-  fun resolveArtifacts(requests: Collection<MavenArtifactResolutionRequest>,
-                       indicator: ProgressIndicator?,
-                       eventHandler: MavenEventHandler): List<MavenArtifact> {
-    return runLongRunningTaskBlocking(
+  suspend fun resolveArtifacts(requests: Collection<MavenArtifactResolutionRequest>,
+                               progressReporter: RawProgressReporter?,
+                               eventHandler: MavenEventHandler): List<MavenArtifact> {
+    return runLongRunningTask(
       LongRunningEmbedderTask { embedder, taskId -> embedder.resolveArtifacts(taskId, ArrayList(requests), ourToken) },
-      indicator, eventHandler)
+      progressReporter, eventHandler)
   }
 
   @Deprecated("use {@link MavenEmbedderWrapper#resolveArtifactTransitively()}")
@@ -229,49 +228,6 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
   // used in https://plugins.jetbrains.com/plugin/8053-azure-toolkit-for-intellij
   @Deprecated("This method does nothing (kept for a while for compatibility reasons).")
   fun clearCachesFor(projectId: MavenId?) {
-  }
-
-  @ApiStatus.Obsolete
-  @Throws(MavenProcessCanceledException::class)
-  private fun <R> runLongRunningTaskBlocking(task: LongRunningEmbedderTask<R>,
-                                             indicator: ProgressIndicator?,
-                                             eventHandler: MavenEventHandler): R {
-    val longRunningTaskId = UUID.randomUUID().toString()
-    val embedder = getOrCreateWrappee()
-
-    @Suppress("RAW_RUN_BLOCKING")
-    return runBlocking {
-      val progressIndication = launch {
-        while (isActive) {
-          delay(500)
-          blockingContext {
-            val status = embedder.getLongRunningTaskStatus(longRunningTaskId, ourToken)
-            indicator?.fraction = status.fraction()
-            eventHandler.handleConsoleEvents(status.consoleEvents())
-            eventHandler.handleDownloadEvents(status.downloadEvents())
-            if (null != indicator && indicator.isCanceled) {
-              if (embedder.cancelLongRunningTask(longRunningTaskId, ourToken)) {
-                throw CancellationException()
-              }
-            }
-          }
-        }
-      }
-
-      try {
-        withContext(Dispatchers.IO) {
-          blockingContext {
-            task.run(embedder, longRunningTaskId)
-          }
-        }
-      }
-      catch (e: Exception) {
-        throw MavenProcessCanceledException(e)
-      }
-      finally {
-        progressIndication.cancelAndJoin()
-      }
-    }
   }
 
   @Throws(MavenProcessCanceledException::class)
