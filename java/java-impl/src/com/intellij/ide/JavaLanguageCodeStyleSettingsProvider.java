@@ -285,7 +285,7 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
 
       consumer.renameStandardOption(
         "SWITCH_EXPRESSIONS_WRAP",
-        ApplicationBundle.message("wrapping.switch.statement.or.expression")
+        JavaBundle.message("wrapping.switch.statement.or.expression")
       );
     }
     else if (settingsType == SettingsType.BLANK_LINES_SETTINGS) {
