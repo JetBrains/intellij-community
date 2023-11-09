@@ -122,18 +122,7 @@ public class GradleProgressListener implements ProgressListener, org.gradle.tool
     try {
       Message message = new GsonBuilder().create()
         .fromJson(StringUtil.substringAfter(eventDescription, MessageReporter.MODEL_BUILDER_SERVICE_MESSAGE_PREFIX), Message.class);
-      MessageEvent.Kind kind = MessageEvent.Kind.valueOf(message.getKind().name());
-      Message.FilePosition messageFilePosition = message.getFilePosition();
-      FilePosition filePosition = messageFilePosition == null ? null :
-                                  new FilePosition(new File(messageFilePosition.getFilePath()), messageFilePosition.getLine(),
-                                                   messageFilePosition.getColumn());
-      MessageEvent messageEvent = new MessageEventImpl(myTaskId, kind, message.getGroup(), message.getTitle(), message.getText()) {
-        @Override
-        public @Nullable Navigatable getNavigatable(@NotNull Project project) {
-          if (filePosition == null) return null;
-          return new FileNavigatable(project, filePosition);
-        }
-      };
+      MessageEvent messageEvent = getModelBuilderMessage(message);
 
       GradleModelBuilderMessageCollector.logModelBuilderMessage(myTaskId.findProject(), myTaskId.getId(), message);
       myListener.onStatusChange(new ExternalSystemBuildEvent(myTaskId, messageEvent));
@@ -143,6 +132,30 @@ public class GradleProgressListener implements ProgressListener, org.gradle.tool
       LOG.warn("Failed to report model builder message using event '" + eventDescription + "'", e);
     }
     return false;
+  }
+
+  @NotNull
+  private MessageEvent getModelBuilderMessage(@NotNull Message message) {
+    MessageEvent.Kind kind = MessageEvent.Kind.valueOf(message.getKind().name());
+    Message.FilePosition messageFilePosition = message.getFilePosition();
+    FilePosition filePosition = messageFilePosition == null ? null : new FilePosition(
+      new File(messageFilePosition.getFilePath()),
+      messageFilePosition.getLine(),
+      messageFilePosition.getColumn()
+    );
+    return new MessageEventImpl(
+      myTaskId,
+      kind,
+      message.getGroup(),
+      message.getTitle(),
+      message.getText()
+    ) {
+      @Override
+      public @Nullable Navigatable getNavigatable(@NotNull Project project) {
+        if (filePosition == null) return null;
+        return new FileNavigatable(project, filePosition);
+      }
+    };
   }
 
   private void sendProgressEventToOutput(ExternalSystemTaskNotificationEvent event) {
