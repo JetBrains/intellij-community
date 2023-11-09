@@ -32,8 +32,6 @@ import javax.accessibility.AccessibleContext;
 import javax.accessibility.AccessibleRole;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellRenderer;
@@ -88,23 +86,18 @@ public final class RevisionsList {
     table.getSelectionModel().setSelectionInterval(newIdx, newIdx);
   }
 
-  private void addSelectionListener(SelectionListener listener) {
-    table.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-      private final SelectionListener mySelectionListener = listener;
+  private void addSelectionListener(@NotNull SelectionListener listener) {
+    table.getSelectionModel().addListSelectionListener(e -> {
+      if (e.getValueIsAdjusting()) return;
 
-      @Override
-      public void valueChanged(ListSelectionEvent e) {
-        if (e.getValueIsAdjusting()) return;
+      ListSelectionModel sm = table.getSelectionModel();
+      int selectedRow1 = sm.getMinSelectionIndex();
+      int selectedRow2 = sm.getMaxSelectionIndex();
 
-        ListSelectionModel sm = table.getSelectionModel();
-        int selectedRow1 = sm.getMinSelectionIndex();
-        int selectedRow2 = sm.getMaxSelectionIndex();
-
-        FilteringTableModel<?> model = getFilteringModel();
-        int origRow1 = model.getOriginalIndex(selectedRow1);
-        int origRow2 = model.getOriginalIndex(selectedRow2);
-        mySelectionListener.revisionsSelected(origRow1, origRow2);
-      }
+      FilteringTableModel<?> model = getFilteringModel();
+      int origRow1 = model.getOriginalIndex(selectedRow1);
+      int origRow2 = model.getOriginalIndex(selectedRow2);
+      listener.revisionsSelected(origRow1, origRow2);
     });
   }
 
@@ -465,7 +458,8 @@ public final class RevisionsList {
         public String getAccessibleName() {
           if (myPeriodLabel.isVisible()) {
             return AccessibleContextUtil.getCombinedName(", ", myPeriodLabel, myTitleLabel, myFilesCountLabel, myDateLabel);
-          } else {
+          }
+          else {
             return AccessibleContextUtil.getCombinedName(", ", myTitleLabel, myFilesCountLabel, myDateLabel);
           }
         }
