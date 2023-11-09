@@ -10,7 +10,6 @@ import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ui.InspectionResultsView;
 import com.intellij.codeInspection.ui.actions.ExportToXMLAction;
-import com.intellij.codeInspection.ui.actions.ExportToXMLActionKt;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.playback.PlaybackContext;
@@ -70,8 +69,8 @@ public class SingleInspectionCommand extends AbstractCommand {
             File tempDirectory = FileUtil.createTempDirectory("inspection", "result");
             final InspectionResultsView view = getView();
             if (view != null) {
-              ExportToXMLActionKt.dumpToXml(view.getCurrentProfile(), view.getTree(), view.getProject(),
-                                            view.getGlobalInspectionContext(), tempDirectory.toPath());
+              ExportToXMLAction.Util.dumpToXml(view.getCurrentProfile(), view.getTree(), view.getProject(),
+                                               view.getGlobalInspectionContext(), tempDirectory.toPath());
 
               File[] files = tempDirectory.listFiles();
               if (files != null) {

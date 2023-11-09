@@ -18,52 +18,6 @@ import java.io.IOException
 import java.nio.file.Path
 import java.util.function.Supplier
 
-fun dumpToXml(profile: InspectionProfileImpl,
-              tree: InspectionTree,
-              project: Project,
-              globalInspectionContext: GlobalInspectionContextImpl,
-              outputPath: Path) {
-  fun getWrappersForAllScopes(shortName: String,
-                              context: GlobalInspectionContextImpl): Collection<InspectionToolWrapper<*, *>> {
-    return when (val tools = context.tools[shortName]) {
-      null -> emptyList() //dummy entry points tool
-      else -> ContainerUtil.map(tools.tools) { obj: ScopeToolState -> obj.tool }
-    }
-  }
-
-  val singleTool = profile.singleTool
-  val shortName2Wrapper = MultiMap<String, InspectionToolWrapper<*, *>>()
-  if (singleTool != null) {
-    shortName2Wrapper.put(singleTool, getWrappersForAllScopes(singleTool, globalInspectionContext))
-  }
-  else {
-    val model: InspectionTreeModel = tree.inspectionTreeModel
-    model
-      .traverse(model.root)
-      .filter(InspectionNode::class.java)
-      .filter { !it.isExcluded }
-      .map { obj: InspectionNode -> obj.toolWrapper }
-      .forEach { w: InspectionToolWrapper<*, *> -> shortName2Wrapper.putValue(w.shortName, w) }
-  }
-
-  for (entry in shortName2Wrapper.entrySet()) {
-    val shortName: String = entry.key
-    val wrappers: Collection<InspectionToolWrapper<*, *>> = entry.value
-    InspectionsResultUtil.writeInspectionResult(project, shortName, wrappers, outputPath) { wrapper: InspectionToolWrapper<*, *> ->
-      globalInspectionContext.getPresentation(wrapper)
-    }
-  }
-
-  val descriptionsFile: Path = outputPath.resolve(InspectionsResultUtil.DESCRIPTIONS + InspectionsResultUtil.XML_EXTENSION)
-  try {
-    InspectionsResultUtil.describeInspections(descriptionsFile, profile.name, profile)
-  }
-  catch (e: javax.xml.stream.XMLStreamException) {
-    throw IOException(e)
-  }
-
-}
-
 @Suppress("ComponentNotRegistered") // false positive: AnAction inheritor vs EP
 internal class ExportToXMLAction : InspectionResultsExportActionProvider(Supplier { "XML" },
                                                                          InspectionsBundle.messagePointer(
@@ -75,7 +29,56 @@ internal class ExportToXMLAction : InspectionResultsExportActionProvider(Supplie
                             globalInspectionContext: GlobalInspectionContextImpl,
                             project: Project,
                             outputPath: Path) {
-    dumpToXml(profile, tree, project, globalInspectionContext, outputPath)
+    Util.dumpToXml(profile, tree, project, globalInspectionContext, outputPath)
   }
 
+  object Util {
+
+    @JvmStatic
+    fun dumpToXml(profile: InspectionProfileImpl,
+                  tree: InspectionTree,
+                  project: Project,
+                  globalInspectionContext: GlobalInspectionContextImpl,
+                  outputPath: Path) {
+      fun getWrappersForAllScopes(shortName: String,
+                                  context: GlobalInspectionContextImpl): Collection<InspectionToolWrapper<*, *>> {
+        return when (val tools = context.tools[shortName]) {
+          null -> emptyList() //dummy entry points tool
+          else -> ContainerUtil.map(tools.tools) { obj: ScopeToolState -> obj.tool }
+        }
+      }
+
+      val singleTool = profile.singleTool
+      val shortName2Wrapper = MultiMap<String, InspectionToolWrapper<*, *>>()
+      if (singleTool != null) {
+        shortName2Wrapper.put(singleTool, getWrappersForAllScopes(singleTool, globalInspectionContext))
+      }
+      else {
+        val model: InspectionTreeModel = tree.inspectionTreeModel
+        model
+          .traverse(model.root)
+          .filter(InspectionNode::class.java)
+          .filter { !it.isExcluded }
+          .map { obj: InspectionNode -> obj.toolWrapper }
+          .forEach { w: InspectionToolWrapper<*, *> -> shortName2Wrapper.putValue(w.shortName, w) }
+      }
+
+      for (entry in shortName2Wrapper.entrySet()) {
+        val shortName: String = entry.key
+        val wrappers: Collection<InspectionToolWrapper<*, *>> = entry.value
+        InspectionsResultUtil.writeInspectionResult(project, shortName, wrappers, outputPath) { wrapper: InspectionToolWrapper<*, *> ->
+          globalInspectionContext.getPresentation(wrapper)
+        }
+      }
+
+      val descriptionsFile: Path = outputPath.resolve(InspectionsResultUtil.DESCRIPTIONS + InspectionsResultUtil.XML_EXTENSION)
+      try {
+        InspectionsResultUtil.describeInspections(descriptionsFile, profile.name, profile)
+      }
+      catch (e: javax.xml.stream.XMLStreamException) {
+        throw IOException(e)
+      }
+
+    }
+  }
 }
