@@ -1676,6 +1676,10 @@ public final class PluginDetailsPageComponent extends MultiPanel {
         return notes;
       }
     }
+    String notes = myPlugin.getChangeNotes();
+    if (!Strings.isEmptyOrSpaces(notes)) {
+      return notes;
+    }
     PluginNode node = getInstalledPluginMarketplaceNode();
     if (node != null) {
       String changeNotes = node.getChangeNotes();
@@ -1683,8 +1687,7 @@ public final class PluginDetailsPageComponent extends MultiPanel {
         return changeNotes;
       }
     }
-    String notes = myPlugin.getChangeNotes();
-    return Strings.isEmptyOrSpaces(notes) ? null : notes;
+    return null;
   }
 
   private static @NotNull BorderLayoutPanel createNotificationPanel(@NotNull Icon icon, @NotNull @Nls String message) {
