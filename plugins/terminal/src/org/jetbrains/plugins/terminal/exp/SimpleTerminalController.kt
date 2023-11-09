@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.util.Disposer
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jediterm.terminal.StyledTextConsumer
 import com.jediterm.terminal.TextStyle
 import com.jediterm.terminal.model.CharBuffer
@@ -48,6 +49,11 @@ class SimpleTerminalController(
     terminalModel.withContentLock {
       updateEditorContent()
     }
+  }
+
+  @RequiresEdt
+  fun clearTextSelection() {
+    editor.selectionModel.removeSelection()
   }
 
   private fun setupContentListener() {

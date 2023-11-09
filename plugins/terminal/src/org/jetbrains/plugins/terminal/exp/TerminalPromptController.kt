@@ -1,7 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.exp
 
+import com.intellij.ide.DataManager
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.event.DocumentListener
@@ -73,6 +75,12 @@ class TerminalPromptController(
   @RequiresEdt
   fun handleEnterPressed() {
     commandExecutor.startCommandExecution(editor.document.text)
+  }
+
+  @RequiresEdt
+  fun performPaste(dataContext: DataContext? = null) {
+    val context = dataContext ?: DataManager.getInstance().getDataContext(editor.contentComponent)
+    editor.pasteProvider.performPaste(context)
   }
 
   @RequiresEdt

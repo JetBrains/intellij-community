@@ -68,7 +68,7 @@
       <keyboard-shortcut first-keystroke="control C" keymap="$default"/>
       <keyboard-shortcut first-keystroke="control INSERT" keymap="$default"/>
     </action>
-    <action id="Terminal.Paste" class="com.intellij.openapi.actionSystem.EmptyAction">
+    <action id="Terminal.Paste" class="org.jetbrains.plugins.terminal.action.TerminalPasteAction">
       <!-- use keyboard-shortcuts of $Paste with Ctrl+Shift+V on Linux  -->
       <keyboard-shortcut first-keystroke="control shift V" keymap="Default for XWin"/>
       <keyboard-shortcut first-keystroke="control V" keymap="Default for XWin"/>
