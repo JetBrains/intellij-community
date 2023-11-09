@@ -5,6 +5,7 @@ import com.intellij.analysis.AnalysisBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.options.*;
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -171,26 +172,26 @@ public class ModCommandServiceImpl implements ModCommandService {
   }
 
   private static @NotNull HtmlChunk createOptionsPreview(@NotNull ActionContext context, @NotNull ModUpdateInspectionOptions options) {
-    InspectionToolWrapper<?, ?> tool =
-      InspectionProfileManager.getInstance(context.project()).getCurrentProfile().getInspectionTool(options.inspectionShortName(), context.file());
-    if (tool == null) {
-      return HtmlChunk.empty();
-    }
+    InspectionProfileImpl profile = InspectionProfileManager.getInstance(context.project()).getCurrentProfile();
+    OptionController controller = profile.controllerFor(context.file());
     HtmlBuilder builder = new HtmlBuilder();
     for (var option : options.options()) {
-      builder.append(createOptionPreview(tool.getTool(), option));
+      builder.append(createOptionPreview(controller, options.inspectionShortName()+".options."+option.bindId(), option));
     }
     return builder.toFragment();
   }
 
-  private static @NotNull HtmlChunk createOptionPreview(@NotNull InspectionProfileEntry inspection,
-                                               ModUpdateInspectionOptions.@NotNull ModifiedInspectionOption option) {
-    OptPane pane = inspection.getOptionsPane();
+  private static @NotNull HtmlChunk createOptionPreview(@NotNull OptionController controller, 
+                                                        @NotNull String bindId,
+                                                        ModUpdateInspectionOptions.@NotNull ModifiedInspectionOption option) {
+    OptionController.OptionControlInfo controlInfo = controller.findControl(bindId);
+    if (controlInfo == null) return HtmlChunk.empty();
+    OptControl control = controlInfo.control();
     Object newValue = option.newValue();
     if (newValue instanceof Boolean value) {
-      OptCheckbox control = ObjectUtils.tryCast(pane.findControl(option.bindId()), OptCheckbox.class);
-      if (control == null) return HtmlChunk.empty();
-      HtmlChunk label = text(control.label().label());
+      OptCheckbox optCheckBox = ObjectUtils.tryCast(control, OptCheckbox.class);
+      if (optCheckBox == null) return HtmlChunk.empty();
+      HtmlChunk label = text(optCheckBox.label().label());
       HtmlChunk.Element checkbox = tag("input").attr("type", "checkbox").attr("readonly", "true");
       if (value) {
         checkbox = checkbox.attr("checked", "true");
@@ -205,9 +206,9 @@ public class ModCommandServiceImpl implements ModCommandService {
           .br().br().append(info).toFragment();
     }
     if (newValue instanceof Integer value) {
-      OptNumber control = ObjectUtils.tryCast(pane.findControl(option.bindId()), OptNumber.class);
-      if (control == null) return HtmlChunk.empty();
-      LocMessage.PrefixSuffix prefixSuffix = control.splitLabel().splitLabel();
+      OptNumber optNumber = ObjectUtils.tryCast(control, OptNumber.class);
+      if (optNumber == null) return HtmlChunk.empty();
+      LocMessage.PrefixSuffix prefixSuffix = optNumber.splitLabel().splitLabel();
       HtmlChunk.Element input = tag("input").attr("type", "text").attr("value", value)
         .attr("size", value.toString().length() + 1).attr("readonly", "true");
       HtmlChunk info = tag("table").child(tag("tr").children(
@@ -219,12 +220,11 @@ public class ModCommandServiceImpl implements ModCommandService {
           .br().br().append(info).br().toFragment();
     }
     if (newValue instanceof List<?> list) {
-      OptStringList control = ObjectUtils.tryCast(pane.findControl(option.bindId()), OptStringList.class);
-      if (control == null) return HtmlChunk.empty();
+      OptStringList optList = ObjectUtils.tryCast(control, OptStringList.class);
+      if (optList == null) return HtmlChunk.empty();
       List<?> oldList = (List<?>)option.oldValue();
       //noinspection unchecked
-      return IntentionPreviewInfo.addListOption((List<String>)list, control.label().label(), value -> !oldList.contains(value)).content();
-      
+      return IntentionPreviewInfo.addListOption((List<String>)list, optList.label().label(), value -> !oldList.contains(value)).content();
     }
     throw new IllegalStateException("Value of type " + newValue.getClass() + " is not supported");
   }

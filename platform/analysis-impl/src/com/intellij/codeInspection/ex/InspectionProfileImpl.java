@@ -1086,7 +1086,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
   }
 
   public @NotNull OptionController controllerFor(@NotNull PsiElement element) {
-    return OptionController.onPrefix(toolId -> containerForTool(toolId, element));
+    return OptionController.empty().onPrefixes(toolId -> containerForTool(toolId, element));
   }
 
   private @Nullable OptionController containerForTool(@NotNull String toolShortName, @NotNull PsiElement element) {

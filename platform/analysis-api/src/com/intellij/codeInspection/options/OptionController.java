@@ -45,6 +45,23 @@ public interface OptionController {
   Object getOption(@NotNull String bindId);
 
   /**
+   * Information about control UI
+   * 
+   * @param pane a pane that contains a particular control
+   * @param control a control itself
+   */
+  record OptionControlInfo(@NotNull OptPane pane, @NotNull OptControl control) {}
+
+  /**
+   * @param bindId control ID to lookup
+   * @return an {@link OptPane} and the corresponding control to create UI that allows to change the option addressed by a bindId;
+   * null if there's no pane which changes this particular option, or option is invalid.
+   */
+  default @Nullable OptionControlInfo findControl(@NotNull String bindId) {
+    return null;
+  }
+
+  /**
    * @param bindId bindId of the option value to process especially; setting of this option is not supported
    *               (can be used e.g. with {@link OptStringList} control where setter is unnecessary)
    * @param getter getter for an option with a given bindId
@@ -104,6 +121,11 @@ public interface OptionController {
         }
         return controller.getOption(_bindId);
       }
+
+      @Override
+      public @Nullable OptionControlInfo findControl(@NotNull String bindId) {
+        return controller.findControl(bindId);
+      }
     };
   }
 
@@ -128,6 +150,11 @@ public interface OptionController {
       public Object getOption(@NotNull String bindId) {
         return delegate.getOption(bindId);
       }
+
+      @Override
+      public @Nullable OptionControlInfo findControl(@NotNull String bindId) {
+        return delegate.findControl(bindId);
+      }
     };
   }
 
@@ -148,6 +175,11 @@ public interface OptionController {
       @Override
       public Object getOption(@NotNull String bindId) {
         return delegate.getOption(bindId);
+      }
+
+      @Override
+      public @Nullable OptionControlInfo findControl(@NotNull String bindId) {
+        return delegate.findControl(bindId);
       }
     };
   }
@@ -194,6 +226,97 @@ public interface OptionController {
         }
         return controller.getOption(bindId);
       }
+
+      @Override
+      public @Nullable OptionControlInfo findControl(@NotNull String bindId) {
+        if (bindId.startsWith(fullPrefix)) {
+          return prefixController.findControl(bindId.substring(fullPrefix.length()));
+        }
+        return controller.findControl(bindId);
+      }
+    };
+  }
+
+  /**
+   * Returns a controller, which is based on this one and handles prefixes using a specified function
+   * 
+   * @param locator a function that returns sub-controller for known prefixes and null for unknown ones
+   * @return a new controller, which delegates known prefixes to sub-controller and the rest to this controller. 
+   */
+  @Contract(pure = true)
+  default @NotNull OptionController onPrefixes(@NotNull Function<@NotNull String, @Nullable OptionController> locator) {
+    OptionController controller = this;
+    return new OptionController() {
+      @Override
+      public void setOption(@NotNull String bindId, Object value) {
+        int dot = bindId.indexOf('.');
+        if (dot == -1) {
+          controller.setOption(bindId, value);
+          return;
+        }
+        String prefix = bindId.substring(0, dot);
+        OptionController subController = locator.apply(prefix);
+        if (subController == null) {
+          controller.setOption(bindId, value);
+          return;
+        }
+        subController.setOption(bindId.substring(dot + 1), value);
+      }
+
+      @Override
+      public Object getOption(@NotNull String bindId) {
+        int dot = bindId.indexOf('.');
+        if (dot == -1) {
+          return controller.getOption(bindId);
+        }
+        String prefix = bindId.substring(0, dot);
+        OptionController subController = locator.apply(prefix);
+        if (subController == null) {
+          return controller.getOption(bindId);
+        }
+        return subController.getOption(bindId.substring(dot + 1));
+      }
+
+      @Override
+      public @Nullable OptionControlInfo findControl(@NotNull String bindId) {
+        int dot = bindId.indexOf('.');
+        if (dot == -1) {
+          return controller.findControl(bindId);
+        }
+        String prefix = bindId.substring(0, dot);
+        OptionController subController = locator.apply(prefix);
+        if (subController == null) {
+          return controller.findControl(bindId);
+        }
+        return subController.findControl(bindId.substring(dot + 1));
+      }
+    };
+  }
+
+  /**
+   * @param paneSupplier a function that returns an option pane which allows to control options resolvable by this controller
+   * @return new controller whose {@link #findControl(String)} method looks for a control inside the supplied pane
+   */
+  default @NotNull OptionController withRootPane(@NotNull Supplier<@NotNull OptPane> paneSupplier) {
+    var delegate = this;
+    return new OptionController() {
+      @Override
+      public void setOption(@NotNull String bindId, Object value) {
+        delegate.setOption(bindId, value);
+      }
+
+      @Override
+      public @Nullable Object getOption(@NotNull String bindId) {
+        return delegate.getOption(bindId);
+      }
+
+      @Override
+      public @Nullable OptionControlInfo findControl(@NotNull String bindId) {
+        OptPane optPane = paneSupplier.get();
+        OptControl control = optPane.findControl(bindId);
+        if (control == null) return null;
+        return new OptionControlInfo(optPane, control);
+      }
     };
   }
 
@@ -234,36 +357,6 @@ public interface OptionController {
         throw new IllegalArgumentException(bindId);
       }
     };
-  }
-  
-  @Contract(pure = true)
-  static @NotNull OptionController onPrefix(@NotNull Function<@NotNull String, @Nullable OptionController> locator) {
-    return of(
-      bindId -> {
-        int dot = bindId.indexOf('.');
-        if (dot == -1) {
-          throw new IllegalArgumentException("Dot is expected in " + bindId);
-        }
-        String prefix = bindId.substring(0, dot);
-        OptionController subController = locator.apply(prefix);
-        if (subController == null) {
-          throw new IllegalArgumentException("Controller is not found for prefix '" + prefix + "'; bindId = " + bindId);
-        }
-        return subController.getOption(bindId.substring(dot + 1));
-      },
-      (bindId, value) -> {
-        int dot = bindId.indexOf('.');
-        if (dot == -1) {
-          throw new IllegalArgumentException("Dot is expected in " + bindId);
-        }
-        String prefix = bindId.substring(0, dot);
-        OptionController subController = locator.apply(prefix);
-        if (subController == null) {
-          throw new IllegalArgumentException("Controller is not found for prefix '" + prefix + "'; bindId = " + bindId);
-        }
-        subController.setOption(bindId.substring(dot + 1), value);
-      }
-    );
   }
 
   /**
