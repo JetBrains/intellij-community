@@ -35,7 +35,7 @@ public abstract class EditorUndoTestCase extends UndoTestCase {
 
     super.setUp();
 
-    myManager.setEditorProvider(new CurrentEditorProvider() {
+    myManager.setOverriddenEditorProvider(new CurrentEditorProvider() {
       @Override
       public FileEditor getCurrentEditor(@Nullable Project project) {
         return getFileEditor(mySecondEditorSelected ? getSecondEditor() : getFirstEditor());

@@ -193,9 +193,8 @@ public class EditorUndoTransparentCommandsTest extends EditorUndoTestCase {
     }
     typeInChar('a');
 
-    CurrentEditorProvider savedProvider = myManager.getEditorProvider();
     try {
-      myManager.setEditorProvider(new CurrentEditorProvider() {
+      myManager.setOverriddenEditorProvider(new CurrentEditorProvider() {
         @Override
         public @Nullable FileEditor getCurrentEditor(@Nullable Project project) {
           return null;
@@ -204,7 +203,7 @@ public class EditorUndoTransparentCommandsTest extends EditorUndoTestCase {
       executeTransparentlyInWriteAction(() -> getFirstEditor().getDocument().insertString(0, " "));
     }
     finally {
-      myManager.setEditorProvider(savedProvider);
+      myManager.setOverriddenEditorProvider(null);
     }
     executeEditorAction(getFirstEditor(), IdeActions.ACTION_EDITOR_TEXT_START);
 

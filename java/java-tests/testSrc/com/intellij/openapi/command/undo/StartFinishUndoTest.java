@@ -92,9 +92,8 @@ public class StartFinishUndoTest extends EditorUndoTestCase {
   public void testGlobalCommandInBothEditors() {
     final StartMarkAction[] compound = new StartMarkAction[1];
     start(compound);
-    final CurrentEditorProvider editorProvider = myManager.getEditorProvider();
     try {
-      myManager.setEditorProvider(new CurrentEditorProvider() {
+      myManager.setOverriddenEditorProvider(new CurrentEditorProvider() {
         @Override
         public FileEditor getCurrentEditor(@Nullable Project project) {
           return getFileEditor(getSecondEditor());
@@ -103,7 +102,7 @@ public class StartFinishUndoTest extends EditorUndoTestCase {
       typeInText(getSecondEditor(), "initial ");
     }
     finally {
-      myManager.setEditorProvider(editorProvider);
+      myManager.setOverriddenEditorProvider(null);
     }
 
     assertNotNull(compound);
@@ -125,7 +124,7 @@ public class StartFinishUndoTest extends EditorUndoTestCase {
     undo(getFirstEditor());
     checkEditorText("initial ", getSecondEditor());
     try {
-      myManager.setEditorProvider(new CurrentEditorProvider() {
+      myManager.setOverriddenEditorProvider(new CurrentEditorProvider() {
         @Override
         public FileEditor getCurrentEditor(@Nullable Project project) {
           return getFileEditor(getSecondEditor());
@@ -134,7 +133,7 @@ public class StartFinishUndoTest extends EditorUndoTestCase {
       undo(getSecondEditor());
     }
     finally {
-      myManager.setEditorProvider(editorProvider);
+      myManager.setOverriddenEditorProvider(null);
     }
     checkEditorText("", getSecondEditor());
     assertUndoNotAvailable(getSecondEditor());
