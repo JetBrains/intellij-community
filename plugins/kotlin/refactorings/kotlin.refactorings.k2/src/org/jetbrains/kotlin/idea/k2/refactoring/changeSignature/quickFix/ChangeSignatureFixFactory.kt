@@ -321,7 +321,7 @@ object ChangeSignatureFixFactory {
     ): List<KotlinApplicatorTargetWithInput<PsiElement, Input>> {
         if (ktCallableSymbol !is KtFunctionLikeSymbol) return emptyList()
         val isConstructor = ktCallableSymbol is KtConstructorSymbol
-        val name = getDeclarationName(isConstructor, ktCallableSymbol) ?: return emptyList()
+        val name = getDeclarationName(ktCallableSymbol) ?: return emptyList()
         val valueArgument = psi.parentOfType<KtValueArgument>(true) ?: return emptyList()
         val callElement = valueArgument.parentOfType<KtCallElement>() ?: return emptyList()
         val valueArguments = callElement.valueArguments
@@ -356,22 +356,6 @@ object ChangeSignatureFixFactory {
     }
 
     context(KtAnalysisSession)
-    private fun getDeclarationName(isConstructor: Boolean, functionLikeSymbol: KtFunctionLikeSymbol): String? {
-        return when {
-            isConstructor -> {
-                val constructorSymbol = functionLikeSymbol as KtConstructorSymbol
-                if ((constructorSymbol.getContainingSymbol() as? KtNamedClassOrObjectSymbol)?.isInline == true) {
-                    null
-                } else (constructorSymbol).containingClassIdIfNonLocal?.shortClassName
-            }
-
-            else -> {
-                (functionLikeSymbol as KtFunctionSymbol).name
-            }
-        }?.asString()
-    }
-
-    context(KtAnalysisSession)
     private fun createMismatchParameterTypeFix(
         psi: PsiElement, expectedType: KtType
     ): List<KotlinApplicatorTargetWithInput<PsiElement, Input>> {
@@ -384,7 +368,7 @@ object ChangeSignatureFixFactory {
                 ?: return emptyList()
 
         val isConstructor = functionLikeSymbol is KtConstructorSymbol
-        val name = getDeclarationName(isConstructor, functionLikeSymbol) ?: return emptyList()
+        val name = getDeclarationName(functionLikeSymbol) ?: return emptyList()
 
         val newParametersCnt = callElement.valueArguments.size - functionLikeSymbol.valueParameters.size
 
@@ -401,4 +385,20 @@ object ChangeSignatureFixFactory {
             )
         )
     }
+}
+
+context(KtAnalysisSession)
+internal fun getDeclarationName(functionLikeSymbol: KtFunctionLikeSymbol): String? {
+    return when {
+        functionLikeSymbol is KtConstructorSymbol -> {
+            val constructorSymbol = functionLikeSymbol
+            if ((constructorSymbol.getContainingSymbol() as? KtNamedClassOrObjectSymbol)?.isInline == true) {
+                null
+            } else constructorSymbol.containingClassIdIfNonLocal?.shortClassName
+        }
+
+        else -> {
+            (functionLikeSymbol as KtFunctionSymbol).name
+        }
+    }?.asString()
 }

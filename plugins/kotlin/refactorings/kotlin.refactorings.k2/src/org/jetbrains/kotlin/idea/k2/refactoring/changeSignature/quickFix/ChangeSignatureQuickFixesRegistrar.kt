@@ -11,6 +11,7 @@ class ChangeSignatureQuickFixesRegistrar: KotlinQuickFixRegistrar() {
         registerApplicator(ChangeSignatureFixFactory.removeParameterFactory)
         registerApplicator(ChangeSignatureFixFactory.typeMismatchFactory)
         registerApplicator(ChangeSignatureFixFactory.nullForNotNullFactory)
+        registerApplicator(ChangeParameterTypeFixFactory.typeMismatchFactory)
     }
 
     override val list: KotlinQuickFixesList = changeSignature

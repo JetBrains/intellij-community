@@ -3393,6 +3393,99 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../idea/tests/testData/quickfix/typeMismatch/parameterTypeMismatch")
+    public static class ParameterTypeMismatch extends AbstractHighLevelQuickFixTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("changeFunctionParameterType1.kt")
+        public void testChangeFunctionParameterType1() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/parameterTypeMismatch/changeFunctionParameterType1.kt");
+        }
+
+        @TestMetadata("changeFunctionParameterType2.kt")
+        public void testChangeFunctionParameterType2() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/parameterTypeMismatch/changeFunctionParameterType2.kt");
+        }
+
+        @TestMetadata("changeFunctionParameterType3.kt")
+        public void testChangeFunctionParameterType3() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/parameterTypeMismatch/changeFunctionParameterType3.kt");
+        }
+
+        @TestMetadata("changeFunctionParameterType4.kt")
+        public void testChangeFunctionParameterType4() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/parameterTypeMismatch/changeFunctionParameterType4.kt");
+        }
+
+        @TestMetadata("changeFunctionParameterTypeWithComment.kt")
+        public void testChangeFunctionParameterTypeWithComment() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/parameterTypeMismatch/changeFunctionParameterTypeWithComment.kt");
+        }
+
+        @TestMetadata("changeParameterTypeLongNameRuntime.kt")
+        public void testChangeParameterTypeLongNameRuntime() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/parameterTypeMismatch/changeParameterTypeLongNameRuntime.kt");
+        }
+
+        @TestMetadata("changePrimaryConstructorParameterType.kt")
+        public void testChangePrimaryConstructorParameterType() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/parameterTypeMismatch/changePrimaryConstructorParameterType.kt");
+        }
+
+        @TestMetadata("changePrimaryConstructorParameterTypeOnPropertyDelegate.kt")
+        public void testChangePrimaryConstructorParameterTypeOnPropertyDelegate() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/parameterTypeMismatch/changePrimaryConstructorParameterTypeOnPropertyDelegate.kt");
+        }
+
+        @TestMetadata("convertKClassToJavaClass.kt")
+        public void testConvertKClassToJavaClass() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/parameterTypeMismatch/convertKClassToJavaClass.kt");
+        }
+
+        @TestMetadata("convertKClassToJavaClassSubtype.kt")
+        public void testConvertKClassToJavaClassSubtype() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/parameterTypeMismatch/convertKClassToJavaClassSubtype.kt");
+        }
+
+        @TestMetadata("convertKClassToJavaClassTypeMismatch.kt")
+        public void testConvertKClassToJavaClassTypeMismatch() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/parameterTypeMismatch/convertKClassToJavaClassTypeMismatch.kt");
+        }
+
+        @TestMetadata("convertKClassToJavaClassVariable.kt")
+        public void testConvertKClassToJavaClassVariable() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/parameterTypeMismatch/convertKClassToJavaClassVariable.kt");
+        }
+
+        @TestMetadata("genericType.kt")
+        public void testGenericType() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/parameterTypeMismatch/genericType.kt");
+        }
+
+        @TestMetadata("genericType2.kt")
+        public void testGenericType2() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/parameterTypeMismatch/genericType2.kt");
+        }
+
+        @TestMetadata("multiFakeOverride.kt")
+        public void testMultiFakeOverride() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/parameterTypeMismatch/multiFakeOverride.kt");
+        }
+
+        @TestMetadata("stdlibFunction.kt")
+        public void testStdlibFunction() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/parameterTypeMismatch/stdlibFunction.kt");
+        }
+
+        @TestMetadata("unsigned.kt")
+        public void testUnsigned() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/parameterTypeMismatch/unsigned.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../idea/tests/testData/quickfix/typeMismatch/typeMismatchOnReturnedExpression")
     public abstract static class TypeMismatchOnReturnedExpression extends AbstractHighLevelQuickFixTest {
         @RunWith(JUnit3RunnerWithInners.class)
