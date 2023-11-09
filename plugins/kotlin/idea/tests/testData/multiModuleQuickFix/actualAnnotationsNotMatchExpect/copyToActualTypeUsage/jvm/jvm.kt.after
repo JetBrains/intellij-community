@@ -1,4 +1,4 @@
-// "Copy mismatched annotation 'Ann' from expect to actual declaration (may change semantics)" "true"
+// "Copy mismatched annotation 'Ann' from 'expect' to 'actual' declaration (may change semantics)" "true"
 // IGNORE_K1
 // DISABLE-ERRORS
 // FIR_COMPARISON
