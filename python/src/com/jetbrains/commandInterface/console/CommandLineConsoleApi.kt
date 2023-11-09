@@ -70,8 +70,23 @@ fun jbFilter(filter: (String) -> String): (String) -> String {
 }
 
 /**
+ * Returns [LanguageConsoleView] if is already present in the toolwindow, null otherwise.
+ */
+fun findExistingConsole(
+  module: Module,
+  consoleName: String,
+  toolWindowTitle: String
+): LanguageConsoleView? {
+  val project = module.project
+  val consoleComponent = WindowWithActions.findWindowByName(project, toolWindowTitle, consoleName)
+  if (consoleComponent is ConsolePanelWithActions && consoleComponent.consoleView is LanguageConsoleView) {
+    return consoleComponent.consoleView
+  }
+  return null
+}
+
+/**
  * Creates and displays command-line console for user.
- * If the console is already present in the toolwindow, it will be reused
  *
  * @param module                     module to display console for.
  * @param consoleName                Console name (would be used in prompt, history etc)
@@ -90,10 +105,6 @@ fun createConsoleInToolWindow(
   toolWindowIcon: Icon
 ): LanguageConsoleView {
   val project = module.project
-  val consoleComponent = WindowWithActions.findWindowByName(project, toolWindowTitle, consoleName)
-  if (consoleComponent is ConsolePanelWithActions && consoleComponent.consoleView is LanguageConsoleView) {
-    return consoleComponent.consoleView
-  }
 
   val console = CommandConsole.createConsole(module, prompt, commandsInfo)
 
