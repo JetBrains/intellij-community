@@ -80,10 +80,11 @@ public class ModCommandServiceImpl implements ModCommandService {
       Object oldValue = oldController.getOption(control.bindId());
       Object newValue = newController.getOption(control.bindId());
       if (oldValue != null && newValue != null && !oldValue.equals(newValue)) {
-        modifiedOptions.add(new ModUpdateInspectionOptions.ModifiedInspectionOption(control.bindId(), oldValue, newValue));
+        String bindId = inspection.getShortName() + ".options." + control.bindId();
+        modifiedOptions.add(new ModUpdateInspectionOptions.ModifiedInspectionOption(bindId, oldValue, newValue));
       }
     }
-    return modifiedOptions.isEmpty() ? ModCommand.nop() : new ModUpdateInspectionOptions(inspection.getShortName(), modifiedOptions);
+    return modifiedOptions.isEmpty() ? ModCommand.nop() : new ModUpdateInspectionOptions(modifiedOptions);
   }
 
   @NotNull
@@ -176,15 +177,14 @@ public class ModCommandServiceImpl implements ModCommandService {
     OptionController controller = profile.controllerFor(context.file());
     HtmlBuilder builder = new HtmlBuilder();
     for (var option : options.options()) {
-      builder.append(createOptionPreview(controller, options.inspectionShortName()+".options."+option.bindId(), option));
+      builder.append(createOptionPreview(controller, option));
     }
     return builder.toFragment();
   }
 
-  private static @NotNull HtmlChunk createOptionPreview(@NotNull OptionController controller, 
-                                                        @NotNull String bindId,
+  private static @NotNull HtmlChunk createOptionPreview(@NotNull OptionController controller,
                                                         ModUpdateInspectionOptions.@NotNull ModifiedInspectionOption option) {
-    OptionController.OptionControlInfo controlInfo = controller.findControl(bindId);
+    OptionController.OptionControlInfo controlInfo = controller.findControl(option.bindId());
     if (controlInfo == null) return HtmlChunk.empty();
     OptControl control = controlInfo.control();
     Object newValue = option.newValue();

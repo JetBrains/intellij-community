@@ -289,17 +289,15 @@ public class ModCommandExecutorImpl implements ModCommandExecutor {
     InspectionProfileImpl profile = InspectionProfileManager.getInstance(project).getCurrentProfile();
     for (ModUpdateInspectionOptions.ModifiedInspectionOption option : options.options()) {
       OptionController controller = profile.controllerFor(file);
-      String name = options.inspectionShortName();
       Object value = newValue ? option.newValue() : option.oldValue();
-      String bindId = name + ".options." + option.bindId();
       if (value instanceof List<?> list) {
         @SuppressWarnings("unchecked")
-        List<Object> oldList = (List<Object>)Objects.requireNonNull(controller.getOption(bindId));
+        List<Object> oldList = (List<Object>)Objects.requireNonNull(controller.getOption(option.bindId()));
         oldList.clear();
         oldList.addAll(list);
         value = oldList;
       }
-      controller.setOption(bindId, value);
+      controller.setOption(option.bindId(), value);
     }
   }
 
