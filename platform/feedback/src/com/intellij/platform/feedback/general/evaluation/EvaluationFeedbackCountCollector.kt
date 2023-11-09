@@ -6,26 +6,22 @@ import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 
 internal class EvaluationFeedbackCountCollector : CounterUsagesCollector() {
-  companion object {
-    private val GROUP = EventLogGroup("evaluation.feedback", 2)
-
+  internal object Util {
+    internal val GROUP = EventLogGroup("evaluation.feedback", 2)
     private val INTERFACE_RATING_FIELD = EventFields.Int("interface_rating")
     private val PRICE_RATING_FIELD = EventFields.Int("price_rating")
     private val STABILITY_RATING_FIELD = EventFields.Int("stability_rating")
     private val FEATURE_SET_RATING_FIELD = EventFields.Int("feature_set_rating")
     private val PERFORMANCE_RATING_FIELD = EventFields.Int("performance_rating")
-
     private val EVALUATION_FEEDBACK_SENT = GROUP.registerVarargEvent("evaluation.feedback.sent",
                                                                      EventFields.Int("interface_rating"),
                                                                      EventFields.Int("price_rating"),
                                                                      EventFields.Int("stability_rating"),
                                                                      EventFields.Int("feature_set_rating"),
                                                                      EventFields.Int("performance_rating"))
-
     private val EVALUATION_FEEDBACK_DIALOG_SHOWN = GROUP.registerVarargEvent("evaluation.feedback.shown")
     private val EVALUATION_FEEDBACK_DIALOG_CANCELED = GROUP.registerVarargEvent("evaluation.feedback.cancelled")
-
-    fun logEvaluationFeedbackSent(interfaceRating: Int,
+    internal fun logEvaluationFeedbackSent(interfaceRating: Int,
                                   priceRating: Int,
                                   stabilityRating: Int,
                                   featureSetRating: Int,
@@ -40,14 +36,14 @@ internal class EvaluationFeedbackCountCollector : CounterUsagesCollector() {
       )
     }
 
-    fun logEvaluationFeedbackDialogShown() {
+    internal fun logEvaluationFeedbackDialogShown() {
       EVALUATION_FEEDBACK_DIALOG_SHOWN.log()
     }
 
-    fun logEvaluationFeedbackDialogCanceled() {
+    internal fun logEvaluationFeedbackDialogCanceled() {
       EVALUATION_FEEDBACK_DIALOG_CANCELED.log()
     }
   }
 
-  override fun getGroup(): EventLogGroup = GROUP
+  override fun getGroup(): EventLogGroup = Util.GROUP
 }
