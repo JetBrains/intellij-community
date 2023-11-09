@@ -3,7 +3,6 @@ package com.intellij.ide.macro;
 
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.VisualPosition;
 
 
 public class SelectionEndColumnMacro extends EditorMacro {
@@ -13,10 +12,6 @@ public class SelectionEndColumnMacro extends EditorMacro {
 
   @Override
   protected String expand(Editor editor) {
-    VisualPosition selectionEndPosition = editor.getSelectionModel().getSelectionEndPosition();
-    if (selectionEndPosition == null) {
-      return null;
-    }
-    return getColumnNumber(editor, editor.visualToLogicalPosition(selectionEndPosition));
+    return getColumnNumber(editor, editor.getSelectionModel().getSelectionEnd());
   }
 }
