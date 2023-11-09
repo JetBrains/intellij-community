@@ -7,6 +7,7 @@ import com.intellij.execution.lineMarker.ExecutorAction
 import com.intellij.execution.lineMarker.RunLineMarkerContributor
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiMethod
 import com.intellij.testIntegration.TestFramework
 import com.intellij.util.Function
 import org.jetbrains.kotlin.asJava.toLightMethods
@@ -51,23 +52,17 @@ class KotlinTestRunLineMarkerContributor : RunLineMarkerContributor() {
             } ?: return false
             val ktClassOrObject = ktNamedFunction.containingClassOrObject ?: return false
 
-            val testFramework = TestFramework.EXTENSION_NAME.extensionList.firstOrNull {
-                if (includeSlowProviders) {
-                    it !is KotlinPsiBasedTestFramework
+            var lightMethod: PsiMethod? = null
+
+            return TestFramework.EXTENSION_NAME.extensionList.any {
+                if (includeSlowProviders && it !is KotlinPsiBasedTestFramework) {
+                    lightMethod = lightMethod ?: ktNamedFunction.toLightMethods().firstOrNull()
+                    it?.isIgnoredMethod(lightMethod) == true
                 } else if (it is KotlinPsiBasedTestFramework) {
-                    it.isTestClass(ktClassOrObject)
+                    it.isTestClass(ktClassOrObject) && it.isIgnoredMethod(ktNamedFunction)
                 } else {
                     false
                 }
-            }
-
-            return when {
-              testFramework is KotlinPsiBasedTestFramework -> testFramework.isIgnoredMethod(ktNamedFunction)
-              includeSlowProviders -> {
-                  val lightMethod = ktNamedFunction.toLightMethods().firstOrNull() ?: return false
-                  testFramework?.isIgnoredMethod(lightMethod) == true
-              }
-              else -> false
             }
         }
 
