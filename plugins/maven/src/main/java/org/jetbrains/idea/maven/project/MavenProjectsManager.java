@@ -5,7 +5,6 @@ import com.intellij.build.BuildProgressListener;
 import com.intellij.build.SyncViewManager;
 import com.intellij.configurationStore.SettingsSavingComponentJavaAdapter;
 import com.intellij.ide.impl.ProjectUtilKt;
-import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -17,7 +16,6 @@ import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.roots.*;
@@ -26,7 +24,6 @@ import com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.platform.backend.observation.TrackingUtil;
@@ -757,7 +754,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   /**
-   * @deprecated Use {@link #scheduleUpdateAllMavenProjects(MavenImportSpec)}}
+   * @deprecated Use {@link #scheduleUpdateAllMavenProjects(MavenImportSpec)}
    */
   @Deprecated
   protected abstract List<Module> updateAllMavenProjectsSync(MavenImportSpec spec);
@@ -850,25 +847,13 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
     return promise;
   }
 
+  /**
+   * @deprecated use {@link MavenFolderResolver}
+   */
   // used in third-party plugins
+  @Deprecated
   public void scheduleFoldersResolveForAllProjects() {
     MavenProjectsManagerUtilKt.scheduleFoldersResolveForAllProjects(myProject);
-  }
-
-
-  @ApiStatus.Internal
-  public void runWhenFullyOpen(final Runnable runnable) {
-    if (!isInitialized()) return; // may be called from scheduleImport after project started closing and before it is closed.
-
-    final Ref<Runnable> wrapper = new Ref<>();
-    wrapper.set((DumbAwareRunnable)() -> {
-      if (!StartupManagerEx.getInstanceEx(myProject).postStartupActivityPassed()) {
-        myInitializationAlarm.addRequest(wrapper.get(), 1000);
-        return;
-      }
-      runnable.run();
-    });
-    MavenUtil.runWhenInitialized(myProject, wrapper.get());
   }
 
   public void waitForReadingCompletion() {
