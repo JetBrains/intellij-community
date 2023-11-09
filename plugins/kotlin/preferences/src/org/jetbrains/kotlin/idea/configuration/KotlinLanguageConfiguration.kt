@@ -19,6 +19,7 @@ import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.ui.JBFont
 import org.jetbrains.kotlin.idea.configuration.ui.KotlinPluginKindSwitcherController
 import org.jetbrains.kotlin.idea.preferences.KotlinPreferencesBundle
+import java.awt.Component
 import javax.swing.JComponent
 
 class KotlinLanguageConfiguration : SearchableConfigurable, Configurable.NoScroll {
@@ -81,7 +82,7 @@ class KotlinLanguageConfiguration : SearchableConfigurable, Configurable.NoScrol
                         text(
                             text = KotlinPreferencesBundle.message("check.for.ide.updates"),
                             maxLineLength = DEFAULT_COMMENT_WIDTH,
-                            action = { selectUpdatesConfigurable() },
+                            action = { selectUpdatesConfigurable(it.inputEvent?.component) },
                         ).applyToComponent { font = JBFont.medium() }
                     }
                 }
@@ -97,9 +98,9 @@ class KotlinLanguageConfiguration : SearchableConfigurable, Configurable.NoScrol
         }
     }
 
-    private fun selectUpdatesConfigurable() {
-        DataManager.getInstance().dataContextFromFocusAsync.then { dataContext ->
-            Settings.KEY.getData(dataContext)?.let { settings ->
+    private fun selectUpdatesConfigurable(component: Component?) {
+        if (component != null) {
+            Settings.KEY.getData(DataManager.getInstance().getDataContext(component))?.let { settings ->
                 settings.select(settings.find("preferences.updates"))
             }
         }
