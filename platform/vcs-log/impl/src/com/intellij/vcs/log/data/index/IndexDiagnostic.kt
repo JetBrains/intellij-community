@@ -77,7 +77,7 @@ internal object IndexDiagnostic {
     }
     val paths = details.parents.indices.flatMapTo(mutableSetOf()) { parentIndex ->
       ChangesUtil.getPaths(details.getChanges(parentIndex))
-    }.take(FILTERED_PATHS_LIMIT).filter { !ProjectLevelVcsManager.getInstance(project).isIgnored(it) }
+    }.take(FILTERED_PATHS_LIMIT).filter { getRoot(it)?.path == details.root.path }
     val pathsFilter = if (paths.isNotEmpty()) { VcsLogFilterObject.fromPaths(paths) } else null
 
     val sb = StringBuilder()
