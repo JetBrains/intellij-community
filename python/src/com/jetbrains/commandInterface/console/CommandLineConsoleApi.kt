@@ -20,6 +20,7 @@ import com.intellij.execution.console.LanguageConsoleView
 import com.intellij.openapi.module.Module
 import com.jetbrains.commandInterface.command.Command
 import com.jetbrains.commandInterface.command.CommandExecutor
+import com.jetbrains.toolWindowWithActions.ConsolePanelWithActions
 import com.jetbrains.toolWindowWithActions.WindowWithActions
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon
@@ -70,7 +71,8 @@ fun jbFilter(filter: (String) -> String): (String) -> String {
 
 /**
  * Creates and displays command-line console for user.
-
+ * If the console is already present in the toolwindow, it will be reused
+ *
  * @param module                     module to display console for.
  * @param consoleName                Console name (would be used in prompt, history etc)
  * @param commandsInfo  commands, executor and other stuff (see [CommandsInfo]).
@@ -85,8 +87,14 @@ fun createConsoleInToolWindow(
   prompt: String = consoleName,
   commandsInfo: CommandsInfo?,
   toolWindowTitle: String,
-  toolWindowIcon: Icon): LanguageConsoleView {
+  toolWindowIcon: Icon
+): LanguageConsoleView {
   val project = module.project
+  val consoleComponent = WindowWithActions.findWindowByName(project, toolWindowTitle, consoleName)
+  if (consoleComponent is ConsolePanelWithActions && consoleComponent.consoleView is LanguageConsoleView) {
+    return consoleComponent.consoleView
+  }
+
   val console = CommandConsole.createConsole(module, prompt, commandsInfo)
 
 
