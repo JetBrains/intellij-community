@@ -15,6 +15,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.gradle.tooling.FileComparisonTestAssertionFailure;
 import org.gradle.tooling.events.FailureResult;
 import org.gradle.tooling.events.OperationDescriptor;
 import org.gradle.tooling.events.SkippedResult;
@@ -29,6 +30,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.StringJoiner;
 
@@ -38,6 +41,8 @@ import java.util.StringJoiner;
 public final class GradleProgressEventConverter {
 
   private static final Logger LOG = Logger.getInstance("com.intellij.openapi.externalSystem.event-processing");
+
+  private static final Charset FILE_COMPARISON_CONTENT_CHARSET = StandardCharsets.UTF_8;
 
   private static @NotNull String createEventId(@NotNull OperationDescriptor descriptor, @NotNull String operationId) {
     var joiner = new StringJoiner(" > ");
@@ -163,6 +168,19 @@ public final class GradleProgressEventConverter {
     var message = failure.getMessage();
     var description = failure.getDescription();
     var causes = ContainerUtil.map(failure.getCauses(), it -> convertTestFailure(it));
+    if (failure instanceof FileComparisonTestAssertionFailure comparisonFailure) {
+      var exceptionName = comparisonFailure.getClassName();
+      var stackTrace = comparisonFailure.getStacktrace();
+      var expectedContent = comparisonFailure.getExpectedContent();
+      var actualContent = comparisonFailure.getActualContent();
+      var expectedText = ObjectUtils.doIfNotNull(expectedContent, it -> new String(it, FILE_COMPARISON_CONTENT_CHARSET));
+      var actualText = ObjectUtils.doIfNotNull(actualContent, it -> new String(it, FILE_COMPARISON_CONTENT_CHARSET));
+      var expectedFile = comparisonFailure.getExpected();
+      var actualFile = comparisonFailure.getActual();
+      if (expectedText != null && actualText != null) {
+        return new TestAssertionFailure(exceptionName, message, stackTrace, description, causes, expectedText, actualText, expectedFile, actualFile);
+      }
+    }
     if (failure instanceof org.gradle.tooling.TestAssertionFailure assertionFailure) {
       var exceptionName = assertionFailure.getClassName();
       var stackTrace = assertionFailure.getStacktrace();
