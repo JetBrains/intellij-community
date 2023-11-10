@@ -4,7 +4,11 @@ package org.jetbrains.jps.dependency.java;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.dependency.Usage;
 import org.jetbrains.jps.dependency.diff.Difference;
+import org.jetbrains.jps.dependency.impl.RW;
 
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
 import java.util.Collections;
 import java.util.Objects;
 
@@ -21,7 +25,22 @@ public final class JvmModule extends JVMClassNode<JvmModule, JvmModule.Diff>{
     myExports = exports;
   }
 
-  //@Override
+  public JvmModule(DataInput in) throws IOException {
+    super(in);
+    myVersion = RW.readUTF(in);
+    myRequires = RW.readCollection(in, () -> new ModuleRequires(in));
+    myExports = RW.readCollection(in, () -> new ModulePackage(in));
+  }
+
+  @Override
+  public void write(DataOutput out) throws IOException {
+    super.write(out);
+    RW.writeUTF(out, myVersion);
+    RW.writeCollection(out, myRequires, r -> r.write(out));
+    RW.writeCollection(out, myExports, p -> p.write(out));
+  }
+
+//@Override
   //public Iterable<Usage> getUsages() {
   //  return Iterators.unique(Iterators.flat(
   //    super.getUsages(),

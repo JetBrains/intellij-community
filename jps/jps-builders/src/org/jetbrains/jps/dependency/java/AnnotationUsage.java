@@ -1,6 +1,12 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.dependency.java;
 
+import org.jetbrains.jps.dependency.impl.RW;
+
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
+
 public final class AnnotationUsage extends JvmElementUsage {
 
   private final TypeRepr.ClassType myClassType;
@@ -12,6 +18,21 @@ public final class AnnotationUsage extends JvmElementUsage {
     myClassType = classType;
     myUsedArgNames = usedArgNames;
     myTargets = targets;
+  }
+
+  public AnnotationUsage(DataInput in) throws IOException {
+    super(in);
+    myClassType = new TypeRepr.ClassType(RW.readUTF(in));
+    myUsedArgNames = RW.readCollection(in, () -> RW.readUTF(in));
+    myTargets = RW.readCollection(in, ()-> ElemType.fromOrdinal(RW.readINT(in)));
+  }
+
+  @Override
+  public void write(DataOutput out) throws IOException {
+    super.write(out);
+    RW.writeUTF(out, myClassType.getJvmName());
+    RW.writeCollection(out, myUsedArgNames, s -> RW.writeUTF(out, s));
+    RW.writeCollection(out, myTargets, t -> RW.writeINT(out, t.ordinal()));
   }
 
   public TypeRepr.ClassType getClassType() {

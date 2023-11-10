@@ -8,12 +8,13 @@ import org.jetbrains.jps.dependency.ReferenceID;
 import org.jetbrains.jps.dependency.impl.BackDependencyIndexImpl;
 import org.jetbrains.jps.javac.Iterators;
 
+import java.io.IOException;
 import java.util.Collections;
 
 public final class SubclassesIndex extends BackDependencyIndexImpl {
   public static final String NAME = "direct-subclasses";
 
-  public SubclassesIndex(@NotNull MapletFactory cFactory) {
+  public SubclassesIndex(@NotNull MapletFactory cFactory) throws IOException {
     super(NAME, cFactory);
   }
 

@@ -3,6 +3,9 @@ package org.jetbrains.jps.dependency.java;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.io.DataInput;
+import java.io.IOException;
+
 public final class ModuleUsage extends JvmElementUsage {
 
   public ModuleUsage(@NotNull String moduleName) {
@@ -13,7 +16,11 @@ public final class ModuleUsage extends JvmElementUsage {
     super(modId);
   }
 
+  public ModuleUsage(DataInput in) throws IOException {
+    super(in);
+  }
+
   public String getModuleName() {
-    return ((JvmNodeReferenceID)getElementOwner()).getNodeName();
+    return getElementOwner().getNodeName();
   }
 }

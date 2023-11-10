@@ -3,8 +3,12 @@ package org.jetbrains.jps.dependency.java;
 
 import org.jetbrains.jps.dependency.diff.DiffCapable;
 import org.jetbrains.jps.dependency.diff.Difference;
+import org.jetbrains.jps.dependency.impl.RW;
 import org.jetbrains.jps.javac.Iterators;
 
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
 import java.util.Collections;
 
 public final class ModulePackage extends Proto implements DiffCapable<ModulePackage, ModulePackage.Diff> {
@@ -14,6 +18,17 @@ public final class ModulePackage extends Proto implements DiffCapable<ModulePack
   public ModulePackage(String name, Iterable<String> modules) {
     super(JVMFlags.EMPTY, "", name, Collections.emptyList());
     myModules = modules;
+  }
+
+  public ModulePackage(DataInput in) throws IOException {
+    super(in);
+    myModules = RW.readCollection(in, () -> RW.readUTF(in));
+  }
+
+  @Override
+  public void write(DataOutput out) throws IOException {
+    super.write(out);
+    RW.writeCollection(out, myModules, m -> RW.writeUTF(out, m));
   }
 
   public boolean isQualified() {

@@ -9,6 +9,7 @@ import org.jetbrains.jps.dependency.java.JavaDifferentiateStrategy;
 import org.jetbrains.jps.dependency.java.SubclassesIndex;
 import org.jetbrains.jps.javac.Iterators;
 
+import java.io.IOException;
 import java.util.*;
 import java.util.function.BiPredicate;
 import java.util.function.Predicate;
@@ -18,14 +19,14 @@ public final class DependencyGraphImpl extends GraphImpl implements DependencyGr
     new JavaDifferentiateStrategy()
   );
 
-  public DependencyGraphImpl(MapletFactory containerFactory) {
+  public DependencyGraphImpl(MapletFactory containerFactory) throws IOException {
     super(containerFactory);
     addIndex(new SubclassesIndex(containerFactory));
     addIndex(new ClassShortNameIndex(containerFactory));
   }
 
   @Override
-  public Delta createDelta(Iterable<NodeSource> compiledSources, Iterable<NodeSource> deletedSources) {
+  public Delta createDelta(Iterable<NodeSource> compiledSources, Iterable<NodeSource> deletedSources) throws IOException {
     return new DeltaImpl(completeSourceSet(compiledSources, deletedSources), deletedSources);
   }
 

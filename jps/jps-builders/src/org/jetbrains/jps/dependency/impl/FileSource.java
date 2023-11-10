@@ -4,7 +4,10 @@ package org.jetbrains.jps.dependency.impl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.dependency.NodeSource;
 
+import java.io.DataInput;
+import java.io.DataOutput;
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Path;
 
 public final class FileSource implements NodeSource {
@@ -19,11 +22,14 @@ public final class FileSource implements NodeSource {
     myPath = path;
   }
 
-  //@Override
-  //public void write(DataOutput out) throws IOException {
-  //  String path = myPath.toString();
-    //FileUtil.writeS
-  //}
+  public FileSource(@NotNull DataInput in) throws IOException {
+    myPath = Path.of(RW.readUTF(in));
+  }
+
+  @Override
+  public void write(DataOutput out) throws IOException {
+    RW.writeUTF(out, myPath.toString());
+  }
 
   @Override
   public Path getPath() {

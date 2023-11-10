@@ -3,7 +3,11 @@ package org.jetbrains.jps.dependency.java;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.dependency.impl.RW;
 
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
 import java.util.Objects;
 
 public abstract class ProtoMember extends Proto {
@@ -14,6 +18,19 @@ public abstract class ProtoMember extends Proto {
     super(flags, signature, name, annotations);
     this.type = type;
     this.value = value;
+  }
+
+  public ProtoMember(DataInput in) throws IOException {
+    super(in);
+    type = TypeRepr.getType(RW.readUTF(in));
+    value = JvmProtoMemberValueExternalizer.read(in);
+  }
+
+  @Override
+  public void write(DataOutput out) throws IOException {
+    super.write(out);
+    RW.writeUTF(out, type.getDescriptor());
+    JvmProtoMemberValueExternalizer.write(out, value);
   }
 
   public abstract MemberUsage createUsage(JvmNodeReferenceID owner);

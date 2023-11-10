@@ -495,7 +495,7 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
       @Override
       public void visitEnd() {
         if ((access & Opcodes.ACC_SYNTHETIC) == 0 || (access & Opcodes.ACC_BRIDGE) > 0) {
-          myMethods.add(new JvmMethod(new JVMFlags(access), signature, n, desc, annotations, paramAnnotations, exceptions, defaultValue.get()));
+          myMethods.add(new JvmMethod(new JVMFlags(access), signature, n, desc, annotations, paramAnnotations, Iterators.asIterable(exceptions), defaultValue.get()));
         }
       }
 

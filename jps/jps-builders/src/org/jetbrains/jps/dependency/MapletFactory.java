@@ -2,5 +2,7 @@
 package org.jetbrains.jps.dependency;
 
 public interface MapletFactory {
-  <K extends SerializableGraphElement, V extends SerializableGraphElement> MultiMaplet<K, V> createSetMultiMaplet(String storageName);
+  <K extends ExternalizableGraphElement, V extends ExternalizableGraphElement> MultiMaplet<K, V> createSetMultiMaplet(
+    String storageName, Externalizer<K> keyExternalizer, Externalizer<V> valueExternalizer
+  );
 }

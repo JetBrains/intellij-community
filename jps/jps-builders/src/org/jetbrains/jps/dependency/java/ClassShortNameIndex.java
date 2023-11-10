@@ -8,12 +8,13 @@ import org.jetbrains.jps.dependency.ReferenceID;
 import org.jetbrains.jps.dependency.impl.BackDependencyIndexImpl;
 import org.jetbrains.jps.javac.Iterators;
 
+import java.io.IOException;
 import java.util.Collections;
 
 public final class ClassShortNameIndex extends BackDependencyIndexImpl {
   public static final String NAME = "class-short-names";
 
-  public ClassShortNameIndex(@NotNull MapletFactory cFactory) {
+  public ClassShortNameIndex(@NotNull MapletFactory cFactory) throws IOException {
     super(NAME, cFactory);
   }
 

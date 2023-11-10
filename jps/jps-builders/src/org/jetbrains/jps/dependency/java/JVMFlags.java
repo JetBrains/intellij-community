@@ -187,6 +187,10 @@ public final class JVMFlags {
     return true;
   }
 
+  public int getValue() {
+    return myFlags;
+  }
+
   @Override
   public int hashCode() {
     return myFlags;

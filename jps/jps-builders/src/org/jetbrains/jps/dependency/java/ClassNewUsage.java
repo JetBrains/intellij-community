@@ -3,6 +3,9 @@ package org.jetbrains.jps.dependency.java;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.io.DataInput;
+import java.io.IOException;
+
 public final class ClassNewUsage extends ClassUsage {
 
   public ClassNewUsage(@NotNull String className) {
@@ -11,6 +14,10 @@ public final class ClassNewUsage extends ClassUsage {
 
   public ClassNewUsage(@NotNull JvmNodeReferenceID clsId) {
     super(clsId);
+  }
+
+  public ClassNewUsage(DataInput in) throws IOException {
+    super(in);
   }
 
   @Override

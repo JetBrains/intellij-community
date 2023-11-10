@@ -1,6 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.dependency.java;
 
+import java.io.DataInput;
+import java.io.IOException;
+
 public final class ImportStaticMemberUsage extends MemberUsage{
 
   public ImportStaticMemberUsage(String className, String name) {
@@ -9,6 +12,10 @@ public final class ImportStaticMemberUsage extends MemberUsage{
 
   public ImportStaticMemberUsage(JvmNodeReferenceID clsId, String name) {
     super(clsId, name);
+  }
+
+  public ImportStaticMemberUsage(DataInput in) throws IOException {
+    super(in);
   }
 
   @Override

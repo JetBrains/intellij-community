@@ -4,6 +4,8 @@ package org.jetbrains.jps.dependency.impl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.dependency.*;
+import org.jetbrains.jps.dependency.java.JvmNodeElementExternalizer;
+import org.jetbrains.jps.dependency.java.JvmNodeReferenceID;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -22,8 +24,14 @@ abstract class GraphImpl implements Graph {
   protected GraphImpl(@NotNull MapletFactory cFactory) {
     myContainerFactory = cFactory;
     addIndex(myDependencyIndex = new NodeDependenciesIndex(cFactory));
-    myNodeToSourcesMap = cFactory.createSetMultiMaplet("node-sources-map");
-    mySourceToNodesMap = cFactory.createSetMultiMaplet("source-nodes-map");
+
+    // important: if multiple implementations of NodeSource are available, change to createMultitypeExternalizer
+    Externalizer<NodeSource> srcExternalizer = JvmNodeElementExternalizer.getMonotypeExternalizer(FileSource::new);
+    // important: if multiple implementations of ReferenceID are available, change to createMultitypeExternalizer
+    Externalizer<ReferenceID> idExternalizer = JvmNodeElementExternalizer.getMonotypeExternalizer(JvmNodeReferenceID::new);
+    
+    myNodeToSourcesMap = cFactory.createSetMultiMaplet("node-sources-map", idExternalizer, srcExternalizer);
+    mySourceToNodesMap = cFactory.createSetMultiMaplet("source-nodes-map", srcExternalizer, JvmNodeElementExternalizer.getMultitypeExternalizer());
   }
 
   // todo: ensure both dependency-graph and delta always have the same set of back-deps indices

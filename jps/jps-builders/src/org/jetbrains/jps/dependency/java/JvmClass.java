@@ -5,17 +5,21 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.dependency.Usage;
 import org.jetbrains.jps.dependency.diff.Difference;
+import org.jetbrains.jps.dependency.impl.RW;
 import org.jetbrains.jps.javac.Iterators;
 
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
 import java.lang.annotation.RetentionPolicy;
 import java.util.Objects;
 import java.util.Set;
 
 public final class JvmClass extends JVMClassNode<JvmClass, JvmClass.Diff> {
   public static final String OBJECT_CLASS_NAME = "java/lang/Object";
-  
-  private final String mySuperFqName;
+
   private final String myOuterFqName;
+  private final String mySuperFqName;
   private final Iterable<String> myInterfaces;
   private final Iterable<JvmField> myFields;
   private final Iterable<JvmMethod> myMethods;
@@ -41,6 +45,38 @@ public final class JvmClass extends JVMClassNode<JvmClass, JvmClass.Diff> {
     myMethods = methods;
     myAnnotationTargets = annotationTargets;
     myRetentionPolicy = retentionPolicy;
+  }
+
+  public JvmClass(DataInput in) throws IOException {
+    super(in);
+    myOuterFqName = RW.readUTF(in);
+    mySuperFqName = RW.readUTF(in);
+    myInterfaces = RW.readCollection(in, () -> RW.readUTF(in));
+    myFields = RW.readCollection(in, () -> new JvmField(in));
+    myMethods = RW.readCollection(in, () -> new JvmMethod(in));
+    myAnnotationTargets = RW.readCollection(in, () -> ElemType.fromOrdinal(RW.readINT(in)));
+
+    RetentionPolicy policy = null;
+    int policyOrdinal = RW.readINT(in);
+    if (policyOrdinal >= 0) {
+      for (RetentionPolicy value : Iterators.filter(Iterators.asIterable(RetentionPolicy.values()), v -> v.ordinal() == policyOrdinal)) {
+        policy = value;
+        break;
+      }
+    }
+    myRetentionPolicy = policy;
+  }
+
+  @Override
+  public void write(DataOutput out) throws IOException {
+    super.write(out);
+    RW.writeUTF(out, myOuterFqName);
+    RW.writeUTF(out, mySuperFqName);
+    RW.writeCollection(out, myInterfaces, s -> RW.writeUTF(out, s));
+    RW.writeCollection(out, myFields, f -> f.write(out));
+    RW.writeCollection(out, myMethods, m -> m.write(out));
+    RW.writeCollection(out, myAnnotationTargets, t -> RW.writeINT(out, t.ordinal()));
+    RW.writeINT(out, myRetentionPolicy == null? -1 : myRetentionPolicy.ordinal());
   }
 
   //@Override

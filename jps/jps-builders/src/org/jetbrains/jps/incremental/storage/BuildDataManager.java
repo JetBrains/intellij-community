@@ -476,7 +476,7 @@ public final class BuildDataManager {
   private static DependencyGraph asSynchronizableGraph(DependencyGraph graph, Object lock) {
     return new DependencyGraph() {
       @Override
-      public Delta createDelta(Iterable<NodeSource> sourcesToProcess, Iterable<NodeSource> deletedSources) {
+      public Delta createDelta(Iterable<NodeSource> sourcesToProcess, Iterable<NodeSource> deletedSources) throws IOException {
         synchronized (lock) {
           return graph.createDelta(sourcesToProcess, deletedSources);
         }

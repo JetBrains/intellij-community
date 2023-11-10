@@ -25,7 +25,7 @@ public abstract class TypeRepr {
 
     private final @NotNull String myDescriptor;
 
-    public PrimitiveType(String descriptor) {
+    public PrimitiveType(@NotNull String descriptor) {
       myDescriptor = descriptor;
     }
 

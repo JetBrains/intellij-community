@@ -3,6 +3,9 @@ package org.jetbrains.jps.dependency.java;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.io.DataInput;
+import java.io.IOException;
+
 public final class ImportStaticOnDemandUsage extends JvmElementUsage {
 
   public ImportStaticOnDemandUsage(@NotNull String importedClassName) {
@@ -13,7 +16,11 @@ public final class ImportStaticOnDemandUsage extends JvmElementUsage {
     super(importedClassId);
   }
 
+  public ImportStaticOnDemandUsage(DataInput in) throws IOException {
+    super(in);
+  }
+
   public String getImportedClassName() {
-    return ((JvmNodeReferenceID)getElementOwner()).getNodeName();
+    return getElementOwner().getNodeName();
   }
 }

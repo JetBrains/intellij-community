@@ -38,11 +38,13 @@ public class NodeGraphPersistentTest extends BasePlatformTestCase {
       graph.integrate(differentiateResult);
 
       // Check graph
-      Iterator<NodeSource> nodeSourcesFromGraph = graph.getSources().iterator();
-      assertEquals(aSrc, nodeSourcesFromGraph.next());
-      assertEquals(bSrc, nodeSourcesFromGraph.next());
+      List<NodeSource> nodeSourcesFromGraph = Iterators.collect(graph.getSources(), new ArrayList<>());
+      assertContainsElements(nodeSourcesFromGraph, aSrc, bSrc);
 
-      JvmClass jvmClassFromGraph = (JvmClass)graph.getNodes(graph.getSources().iterator().next()).iterator().next();
+      JvmClass jvmClassFromGraph = graph.getNodes(nodeSourcesFromGraph.get(0), JvmClass.class).iterator().next();
+      JvmClass jvmClassFromGraphByDifferentSource = graph.getNodes(nodeSourcesFromGraph.get(1), JvmClass.class).iterator().next();
+      JvmClassTestUtil.checkJvmClassEquals(jvmClassFromGraph, jvmClassFromGraphByDifferentSource);
+      
       JvmClassTestUtil.checkJvmClassEquals(jvmClassNode, jvmClassFromGraph);
     }
     finally {

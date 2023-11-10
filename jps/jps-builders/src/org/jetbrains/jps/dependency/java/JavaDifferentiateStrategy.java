@@ -141,7 +141,7 @@ public final class JavaDifferentiateStrategy implements DifferentiateStrategy {
         TypeRepr.ClassType exClass = new TypeRepr.ClassType(changedClass.getName());
         for (JvmClass depClass : Iterators.flat(Iterators.map(context.getGraph().getDependingNodes(changedClass.getReferenceID()), dep -> present.getNodes(dep, JvmClass.class)))) {
           for (JvmMethod method : depClass.getMethods()) {
-            if (method.getExceptions().contains(exClass)) {
+            if (Iterators.contains(method.getExceptions(), exClass)) {
               context.affectUsage(method.createUsage(depClass.getReferenceID()));
               debug("Affecting usages of methods throwing ", exClass.getJvmName(), " exception; class ", depClass.getName());
             }

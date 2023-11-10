@@ -6,6 +6,11 @@ import org.jetbrains.jps.dependency.Node;
 import org.jetbrains.jps.dependency.Usage;
 import org.jetbrains.jps.dependency.diff.DiffCapable;
 import org.jetbrains.jps.dependency.diff.Difference;
+import org.jetbrains.jps.dependency.impl.RW;
+
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
 
 public abstract class JVMClassNode<T extends JVMClassNode<T, D>, D extends Difference> extends Proto implements Node<T, D> {
   private final JvmNodeReferenceID myId;
@@ -17,6 +22,21 @@ public abstract class JVMClassNode<T extends JVMClassNode<T, D>, D extends Diffe
     myId = new JvmNodeReferenceID(name);
     this.outFilePath = outFilePath;
     myUsages = usages;
+  }
+
+  public JVMClassNode(DataInput in) throws IOException {
+    super(in);
+    myId = new JvmNodeReferenceID(in);
+    outFilePath = RW.readUTF(in);
+    myUsages = RW.readCollection(in, () -> JvmNodeElementExternalizer.<Usage>getMultitypeExternalizer().load(in));
+  }
+
+  @Override
+  public void write(DataOutput out) throws IOException {
+    super.write(out);
+    myId.write(out);
+    RW.writeUTF(out, outFilePath);
+    RW.writeCollection(out, myUsages,  u -> JvmNodeElementExternalizer.getMultitypeExternalizer().save(out, u));
   }
 
   @Override

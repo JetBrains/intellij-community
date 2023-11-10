@@ -4,13 +4,14 @@ package org.jetbrains.jps.dependency;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.Closeable;
+import java.io.IOException;
 
 /**
  * A representation of the main dependency storage
  */
 public interface DependencyGraph extends Graph, Closeable {
 
-  Delta createDelta(Iterable<NodeSource> sourcesToProcess, Iterable<NodeSource> deletedSources);
+  Delta createDelta(Iterable<NodeSource> sourcesToProcess, Iterable<NodeSource> deletedSources) throws IOException;
 
   DifferentiateResult differentiate(Delta delta, DifferentiateParameters params);
 

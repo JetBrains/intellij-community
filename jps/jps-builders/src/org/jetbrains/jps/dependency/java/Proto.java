@@ -2,12 +2,17 @@
 package org.jetbrains.jps.dependency.java;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.dependency.ExternalizableGraphElement;
 import org.jetbrains.jps.dependency.diff.Difference;
+import org.jetbrains.jps.dependency.impl.RW;
 import org.jetbrains.jps.dependency.java.TypeRepr.ClassType;
 
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
 import java.util.Objects;
 
-public class Proto {
+public class Proto implements ExternalizableGraphElement {
   private final JVMFlags access;
   private final String signature;
   private final String name;
@@ -18,6 +23,21 @@ public class Proto {
     this.signature = signature == null? "" : signature;
     this.name = name == null? "" : name;
     this.annotations = annotations;
+  }
+
+  public Proto(DataInput in) throws IOException {
+    access = new JVMFlags(RW.readINT(in));
+    signature = RW.readUTF(in);
+    name = RW.readUTF(in);
+    annotations = RW.readCollection(in, () -> new ClassType(RW.readUTF(in)));
+  }
+
+  @Override
+  public void write(DataOutput out) throws IOException {
+    RW.writeINT(out, access.getValue());
+    RW.writeUTF(out, signature);
+    RW.writeUTF(out, name);
+    RW.writeCollection(out, annotations, t -> RW.writeUTF(out, t.getJvmName()));
   }
 
   public JVMFlags getFlags() {

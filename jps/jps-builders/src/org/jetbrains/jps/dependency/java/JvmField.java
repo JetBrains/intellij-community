@@ -5,6 +5,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.dependency.diff.DiffCapable;
 import org.jetbrains.org.objectweb.asm.Opcodes;
 
+import java.io.DataInput;
+import java.io.IOException;
 import java.util.Objects;
 
 public final class JvmField extends ProtoMember implements DiffCapable<JvmField, JvmField.Diff> {
@@ -12,6 +14,10 @@ public final class JvmField extends ProtoMember implements DiffCapable<JvmField,
   
   public JvmField(JVMFlags flags, String signature, String name, String descriptor, @NotNull Iterable<TypeRepr.ClassType> annotations, Object value) {
     super(flags, signature, name, TypeRepr.getType(descriptor), annotations, value);
+  }
+
+  public JvmField(DataInput in) throws IOException {
+    super(in);
   }
 
   public boolean isSameKind(JvmField other) {

@@ -2,7 +2,11 @@
 package org.jetbrains.jps.dependency.java;
 
 import org.jetbrains.jps.dependency.diff.DiffCapable;
+import org.jetbrains.jps.dependency.impl.RW;
 
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
 import java.util.Collections;
 import java.util.Objects;
 
@@ -13,6 +17,17 @@ public final class ModuleRequires extends Proto implements DiffCapable<ModuleReq
   public ModuleRequires(JVMFlags flags, String name, String version) {
     super(flags, "", name, Collections.emptyList());
     myVersion = version == null? "" : version;
+  }
+
+  public ModuleRequires(DataInput in) throws IOException {
+    super(in);
+    myVersion = RW.readUTF(in);
+  }
+
+  @Override
+  public void write(DataOutput out) throws IOException {
+    super.write(out);
+    RW.writeUTF(out, myVersion);
   }
 
   public boolean isTransitive() {

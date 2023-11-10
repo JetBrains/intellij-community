@@ -6,7 +6,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * A base class describing a "usage" of some graph Node or one of the Node's internal elements
  */
-public interface Usage {
+public interface Usage extends ExternalizableGraphElement {
 
   /**
    * @return the ID referring to the Node being used or the Node, to which the used element belongs to

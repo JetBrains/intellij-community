@@ -10,8 +10,8 @@ import com.intellij.util.io.PersistentHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
+import org.jetbrains.jps.dependency.ExternalizableGraphElement;
 import org.jetbrains.jps.dependency.MultiMaplet;
-import org.jetbrains.jps.dependency.SerializableGraphElement;
 import org.jetbrains.jps.javac.Iterators;
 
 import java.io.DataInput;
@@ -23,24 +23,35 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.function.Supplier;
 
-public final class PersistentSetMultiMaplet<K extends SerializableGraphElement, V extends SerializableGraphElement>
-  implements MultiMaplet<K, V> {
-
-  private static final Collection<?> NULL_COLLECTION = Collections.emptyList();
-  private static final int CACHE_SIZE = 128;
-
+public final class PersistentSetMultiMaplet<K extends ExternalizableGraphElement, V extends ExternalizableGraphElement> implements MultiMaplet<K, V> {
+  private static final Iterable<?> NULL_COLLECTION = Collections.emptyList();
+  private static final int CACHE_SIZE = 512;
   private final PersistentHashMap<K, Collection<V>> myMap;
   private final LoadingCache<K, Collection<V>> myCache;
+  private final DataExternalizer<V> myValuesExternalizer;
 
-  public PersistentSetMultiMaplet(Path mapFile) {
+  public PersistentSetMultiMaplet(Path mapFile, KeyDescriptor<K> keyDescriptor, DataExternalizer<V> valueExternalizer) {
     try {
-      Supplier<Collection<V>> fileCollectionFactory = NodeKeyDescriptor::createNodeSet;
-      KeyDescriptor<K> keyDescriptor = NodeKeyDescriptorImpl.getInstance();
-      DataExternalizer<Collection<V>> valueExternalizer =
-        new CollectionDataExternalizer<>(NodeKeyDescriptorImpl.getInstance(), fileCollectionFactory);
-      myMap = new PersistentHashMap<>(mapFile, keyDescriptor, valueExternalizer);
+      myValuesExternalizer = valueExternalizer;
+      myMap = new PersistentHashMap<>(mapFile, keyDescriptor, new DataExternalizer<>() {
+        @Override
+        public void save(@NotNull DataOutput out, Collection<V> value) throws IOException {
+          for (V v : value) {
+            valueExternalizer.save(out, v);
+          }
+        }
+
+        @Override
+        public Collection<V> read(@NotNull DataInput in) throws IOException {
+          Collection<V> acc = new HashSet<>();
+          final DataInputStream stream = (DataInputStream)in;
+          while (stream.available() > 0) {
+            acc.add(valueExternalizer.read(stream));
+          }
+          return acc;
+        }
+      });
     }
     catch (IOException e) {
       throw new RuntimeException(e);
@@ -113,9 +124,8 @@ public final class PersistentSetMultiMaplet<K extends SerializableGraphElement, 
       myMap.appendData(key, new AppendablePersistentMap.ValueDataAppender() {
         @Override
         public void append(final @NotNull DataOutput out) throws IOException {
-          var descriptor = NodeKeyDescriptorImpl.getInstance();
-          for (V value : values) {
-            descriptor.save(out, value);
+          for (V v : values) {
+            myValuesExternalizer.save(out, v);
           }
         }
       });
@@ -175,30 +185,4 @@ public final class PersistentSetMultiMaplet<K extends SerializableGraphElement, 
     }
   }
 
-  private static final class CollectionDataExternalizer<V extends SerializableGraphElement> implements DataExternalizer<Collection<V>> {
-    private final DataExternalizer<V> myElementExternalizer;
-    private final Supplier<? extends Collection<V>> myCollectionFactory;
-
-    CollectionDataExternalizer(DataExternalizer<V> elementExternalizer, Supplier<? extends Collection<V>> collectionFactory) {
-      myElementExternalizer = elementExternalizer;
-      myCollectionFactory = collectionFactory;
-    }
-
-    @Override
-    public void save(final @NotNull DataOutput out, final Collection<V> value) throws IOException {
-      for (V x : value) {
-        myElementExternalizer.save(out, x);
-      }
-    }
-
-    @Override
-    public Collection<V> read(final @NotNull DataInput in) throws IOException {
-      final Collection<V> result = myCollectionFactory.get();
-      final DataInputStream stream = (DataInputStream)in;
-      while (stream.available() > 0) {
-        result.add(myElementExternalizer.read(in));
-      }
-      return result;
-    }
-  }
 }
