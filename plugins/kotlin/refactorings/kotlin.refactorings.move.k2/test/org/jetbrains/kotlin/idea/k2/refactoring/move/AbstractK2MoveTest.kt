@@ -14,6 +14,8 @@ import com.intellij.refactoring.move.moveClassesOrPackages.MultipleRootsMoveDest
 import com.intellij.refactoring.move.moveInner.MoveInnerProcessor
 import com.intellij.refactoring.move.moveMembers.MockMoveMembersOptions
 import com.intellij.refactoring.move.moveMembers.MoveMembersProcessor
+import org.jetbrains.kotlin.idea.KotlinFileType
+import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.idea.core.util.toPsiDirectory
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.idea.jsonUtils.getNullableString
@@ -24,9 +26,9 @@ import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveTargetDesc
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.K2MoveFilesOrDirectoriesRefactoringProcessor
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.K2MoveMembersRefactoringProcessor
 import org.jetbrains.kotlin.idea.refactoring.AbstractMultifileRefactoringTest
-import org.jetbrains.kotlin.idea.refactoring.createKotlinFile
 import org.jetbrains.kotlin.idea.refactoring.runRefactoringTest
 import org.jetbrains.kotlin.idea.test.ProjectDescriptorWithStdlibSources
+import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
@@ -174,7 +176,11 @@ object K2MoveAction : AbstractMultifileRefactoringTest.RefactoringAction {
                 is K2MoveTargetDescriptor.File -> specifiedTarget
                 is K2MoveTargetDescriptor.SourceDirectory -> {
                     val file = runWriteAction {
-                        createKotlinFile(source.elements.first().name?.capitalizeAsciiOnly() + ".kt", specifiedTarget.directory, specifiedTarget.pkg.name)
+                        createKotlinFile(
+                            source.elements.first().name?.capitalizeAsciiOnly() + ".kt",
+                            specifiedTarget.directory,
+                            specifiedTarget.pkg.name
+                        )
                     }
                     K2MoveTargetDescriptor.File(file)
                 }
@@ -191,5 +197,18 @@ object K2MoveAction : AbstractMultifileRefactoringTest.RefactoringAction {
                 /* callback = */ null
             )
         }
+    }
+
+    private fun createKotlinFile(
+        fileName: String,
+        targetDir: PsiDirectory,
+        packageName: String? = targetDir.kotlinFqName?.asString()
+    ): KtFile {
+        targetDir.checkCreateFile(fileName)
+        val packageFqName = packageName?.let(::FqName) ?: FqName.ROOT
+        val file = PsiFileFactory.getInstance(targetDir.project).createFileFromText(
+            fileName, KotlinFileType.INSTANCE, if (!packageFqName.isRoot) "package ${packageFqName} \n\n" else ""
+        )
+        return targetDir.add(file) as KtFile
     }
 }
