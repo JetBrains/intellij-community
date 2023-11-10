@@ -37,6 +37,7 @@ import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.GitLabReviewTab
 import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.model.GitLabToolWindowProjectViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.util.GitLabMergeRequestBranchUtil
 import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
+import org.jetbrains.plugins.gitlab.util.GitLabStatistics
 
 @OptIn(ExperimentalCoroutinesApi::class)
 internal class GitLabMergeRequestEditorReviewViewModel internal constructor(
@@ -155,8 +156,8 @@ internal class GitLabMergeRequestEditorReviewViewModel internal constructor(
   /**
    * Show merge request details in a standard view
    */
-  fun showMergeRequest() {
-    projectVm.showTab(GitLabReviewTab.ReviewSelected(mergeRequestIid))
+  fun showMergeRequest(place: GitLabStatistics.ToolWindowOpenTabActionPlace) {
+    projectVm.showTab(GitLabReviewTab.ReviewSelected(mergeRequestIid), place)
     projectVm.twVm.activate()
   }
 

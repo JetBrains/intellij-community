@@ -38,7 +38,7 @@ internal object GitLabStatistics {
   //endregion
 
   //region Counters
-  private val COUNTERS_GROUP = EventLogGroup("vcs.gitlab.counters", version = 14)
+  private val COUNTERS_GROUP = EventLogGroup("vcs.gitlab.counters", version = 15)
 
   /**
    * Server metadata was fetched
@@ -119,28 +119,6 @@ internal object GitLabStatistics {
       EventPair(FILTER_LABEL_PRESENT, filters.label != null)
     )
 
-
-  /**
-   * Merge requests toolwindow login view was opened
-   */
-  private val MR_TW_LOGIN_OPENED_EVENT = COUNTERS_GROUP.registerEvent("mergerequests.toolwindow.login.opened")
-
-  fun logMrTwLoginOpened(project: Project): Unit = MR_TW_LOGIN_OPENED_EVENT.log(project)
-
-  /**
-   * Merge requests toolwindow was opened
-   */
-  private val MR_LIST_OPENED_EVENT = COUNTERS_GROUP.registerEvent("mergerequests.list.opened")
-
-  fun logMrListOpened(project: Project): Unit = MR_LIST_OPENED_EVENT.log(project)
-
-  /**
-   * Merge request details were opened
-   */
-  private val MR_DETAILS_OPENED_EVENT = COUNTERS_GROUP.registerEvent("mergerequests.details.opened")
-
-  fun logMrDetailsOpened(project: Project): Unit = MR_DETAILS_OPENED_EVENT.log(project)
-
   /**
    * Merge request diff was opened
    */
@@ -208,6 +186,39 @@ internal object GitLabStatistics {
     CREATE_CANCEL,
     CREATE_CREATED,
     CREATE_ERRORED
+  }
+
+  /**
+   * GitLab tool window tab <type> was opened from <place>
+   */
+  private val TW_TAB_OPENED_EVENT = COUNTERS_GROUP.registerEvent(
+    "toolwindow.tab.opened",
+    EventFields.Enum<ToolWindowTabType>("tab_type"),
+    EventFields.Enum<ToolWindowOpenTabActionPlace>("open_action_place")
+  )
+
+  fun logTwTabOpened(project: Project, tabType: ToolWindowTabType, actionPlace: ToolWindowOpenTabActionPlace): Unit =
+    TW_TAB_OPENED_EVENT.log(project, tabType, actionPlace)
+
+  /**
+   * GitLab tool window tab <type> was closed
+   */
+  private val TW_TAB_CLOSED_EVENT = COUNTERS_GROUP.registerEvent("toolwindow.tab.closed", EventFields.Enum<ToolWindowTabType>("tab_type"))
+
+  fun logTwTabClosed(project: Project, tabType: ToolWindowTabType): Unit = TW_TAB_CLOSED_EVENT.log(project, tabType)
+
+  enum class ToolWindowTabType {
+    CREATION,
+    DETAILS,
+    LIST,
+    SELECTOR
+  }
+
+  enum class ToolWindowOpenTabActionPlace {
+    ACTION,
+    CREATION,
+    TOOLWINDOW,
+    NOTIFICATION
   }
   //endregion
 }

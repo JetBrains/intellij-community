@@ -31,6 +31,8 @@ import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.model.GitLabToolW
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
 import org.jetbrains.plugins.gitlab.util.GitLabStatistics
+import org.jetbrains.plugins.gitlab.util.GitLabStatistics.ToolWindowOpenTabActionPlace
+import org.jetbrains.plugins.gitlab.util.GitLabStatistics.ToolWindowTabType
 import java.awt.BorderLayout
 import java.awt.event.ActionEvent
 import javax.swing.*
@@ -44,7 +46,7 @@ internal class GitLabReviewTabComponentFactory(
     cs: CoroutineScope,
     projectVm: GitLabToolWindowProjectViewModel
   ): JComponent {
-    GitLabStatistics.logMrListOpened(project)
+    GitLabStatistics.logTwTabOpened(project, ToolWindowTabType.LIST, ToolWindowOpenTabActionPlace.TOOLWINDOW)
     return GitLabMergeRequestsPanelFactory().create(cs, projectVm.accountVm, projectVm.listVm)
   }
 
@@ -53,7 +55,6 @@ internal class GitLabReviewTabComponentFactory(
                                   tabVm: GitLabReviewTabViewModel): JComponent {
     return when (tabVm) {
       is GitLabReviewTabViewModel.Details -> {
-        GitLabStatistics.logMrDetailsOpened(project)
         createReviewDetailsComponent(cs, projectVm, tabVm.detailsVm).also {
           tabVm.detailsVm.apply {
             refreshData()
@@ -67,7 +68,7 @@ internal class GitLabReviewTabComponentFactory(
   }
 
   override fun createEmptyTabContent(cs: CoroutineScope): JComponent {
-    GitLabStatistics.logMrTwLoginOpened(project)
+    GitLabStatistics.logTwTabOpened(project, ToolWindowTabType.SELECTOR, ToolWindowOpenTabActionPlace.TOOLWINDOW)
     return createSelectorsComponent(cs)
   }
 

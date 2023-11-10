@@ -43,6 +43,7 @@ import org.jetbrains.plugins.gitlab.mergerequest.ui.list.GitLabMergeRequestsList
 import org.jetbrains.plugins.gitlab.mergerequest.ui.list.GitLabMergeRequestsListViewModelImpl
 import org.jetbrains.plugins.gitlab.mergerequest.ui.timeline.GitLabMergeRequestTimelineViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.GitLabReviewTab
+import org.jetbrains.plugins.gitlab.util.GitLabStatistics
 
 private val LOG = logger<GitLabToolWindowProjectViewModel>()
 
@@ -105,7 +106,7 @@ private constructor(parentCs: CoroutineScope,
 
   private val tabsGuard = Mutex()
 
-  fun showTab(tab: GitLabReviewTab) {
+  fun showTab(tab: GitLabReviewTab, place: GitLabStatistics.ToolWindowOpenTabActionPlace) {
     cs.launch {
       tabsGuard.withLock {
         val current = _tabs.value
@@ -113,6 +114,7 @@ private constructor(parentCs: CoroutineScope,
         if (currentVm == null || !tab.reuseTabOnRequest) {
           currentVm?.destroy()
           val tabVm = createVm(tab)
+          GitLabStatistics.logTwTabOpened(project, tab.toStatistics(), place)
           _tabs.value = current.copy(current.tabs + (tab to tabVm), tab)
         }
         else {
@@ -129,7 +131,7 @@ private constructor(parentCs: CoroutineScope,
       project, cs, projectsManager, connection.projectData, avatarIconProvider,
       openReviewTabAction = { mrIid ->
         closeTabAsync(GitLabReviewTab.NewMergeRequest)
-        showTab(GitLabReviewTab.ReviewSelected(mrIid))
+        showTab(GitLabReviewTab.ReviewSelected(mrIid), GitLabStatistics.ToolWindowOpenTabActionPlace.CREATION)
       },
       onReviewCreated = {
         cs.launchNow {
@@ -152,6 +154,7 @@ private constructor(parentCs: CoroutineScope,
   override fun closeTab(tab: GitLabReviewTab) {
     cs.launch {
       closeTabAsync(tab)
+      GitLabStatistics.logTwTabClosed(project, tab.toStatistics())
     }
   }
 
@@ -166,9 +169,9 @@ private constructor(parentCs: CoroutineScope,
     }
   }
 
-  fun showCreationTab() {
+  fun showCreationTab(place: GitLabStatistics.ToolWindowOpenTabActionPlace) {
     cs.launch {
-      showTab(GitLabReviewTab.NewMergeRequest)
+      showTab(GitLabReviewTab.NewMergeRequest, place)
     }
   }
 
@@ -218,6 +221,13 @@ private constructor(parentCs: CoroutineScope,
                                                                  connection: GitLabProjectConnection,
                                                                  twVm: GitLabToolWindowViewModel) =
       GitLabToolWindowProjectViewModel(this, project, accountManager, projectsManager, connection, twVm)
+
+    private fun GitLabReviewTab.toStatistics(): GitLabStatistics.ToolWindowTabType {
+      return when (this) {
+        GitLabReviewTab.NewMergeRequest -> GitLabStatistics.ToolWindowTabType.CREATION
+        is GitLabReviewTab.ReviewSelected -> GitLabStatistics.ToolWindowTabType.DETAILS
+      }
+    }
   }
 }
 
