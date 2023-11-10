@@ -24,6 +24,8 @@ import com.intellij.openapi.util.text.Strings
 import com.intellij.psi.codeStyle.MinusculeMatcher
 import com.intellij.psi.codeStyle.NameUtil
 import com.intellij.ui.switcher.QuickActionProvider
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import java.util.*
@@ -40,6 +42,8 @@ class ActionAsyncProvider(private val myModel: GotoActionModel) {
   private val myActionManager: ActionManager = ActionManager.getInstance()
   private val myIntentions = ConcurrentHashMap<String, ApplyIntentionAction>()
 
+  @RequiresBlockingContext
+  @RequiresBackgroundThread
   fun processActions(pattern: String, ids: Set<String>, consumer: Predicate<in MatchedValue>): Unit = runBlockingCancellable {
     runUpdateSessionForActionSearch(myModel.getUpdateSession()) { presentationProvider ->
       myModel.buildGroupMappings()
@@ -54,6 +58,8 @@ class ActionAsyncProvider(private val myModel: GotoActionModel) {
     }
   }
 
+  @RequiresBlockingContext
+  @RequiresBackgroundThread
   fun filterElements(pattern: String, consumer: Predicate<in MatchedValue>) {
     if (pattern.isEmpty()) return
 
