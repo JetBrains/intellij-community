@@ -51,7 +51,7 @@ import static com.intellij.lang.WhitespacesBinders.DEFAULT_RIGHT_BINDER;
 
 public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuilder {
   private static final Logger LOG = Logger.getInstance(PsiBuilderImpl.class);
-
+  private long myLexingTimeNs = 0;
   static PsiBuilderDiagnostics DIAGNOSTICS;
 
   // function stored in PsiBuilderImpl's user data that is called during reparse when the algorithm is not sure what to merge
@@ -194,7 +194,13 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
       return fromParent;
     }
 
-    return TokenSequence.performLexing(myText, myLexer);
+    long startTime = System.nanoTime();
+    try{
+      return TokenSequence.performLexing(myText, myLexer);
+    }
+    finally {
+      myLexingTimeNs = System.nanoTime() - startTime;
+    }
   }
 
   private static boolean doLexingOptimizationCorrectionCheck() {
@@ -1752,5 +1758,13 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
     else {
       super.putUserData(key, value);
     }
+  }
+
+  /**
+   * @return lexing time in nanoseconds
+   * @see #performLexing(Object)
+   */
+  public long getLexingTimeNs() {
+    return myLexingTimeNs;
   }
 }
