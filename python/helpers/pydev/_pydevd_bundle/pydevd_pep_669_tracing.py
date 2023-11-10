@@ -12,7 +12,8 @@ from _pydevd_bundle.pydevd_breakpoints import stop_on_unhandled_exception
 from _pydevd_bundle.pydevd_bytecode_utils import find_last_call_name, \
     find_last_func_call_order
 from _pydevd_bundle.pydevd_comm_constants import CMD_STEP_OVER, CMD_SMART_STEP_INTO, \
-    CMD_SET_BREAK, CMD_STEP_INTO, CMD_STEP_INTO_MY_CODE, CMD_STEP_INTO_COROUTINE
+    CMD_SET_BREAK, CMD_STEP_INTO, CMD_STEP_INTO_MY_CODE, CMD_STEP_INTO_COROUTINE, \
+    CMD_STEP_RETURN
 from _pydevd_bundle.pydevd_constants import get_current_thread_id, PYDEVD_TOOL_NAME, \
     STATE_RUN, STATE_SUSPEND
 from _pydevd_bundle.pydevd_dont_trace_files import DONT_TRACE
@@ -531,7 +532,7 @@ class PyReturnCallback(PEP669CallbackBase):
 
             step_cmd = info.pydev_step_cmd
 
-            if step_cmd == CMD_STEP_OVER:
+            if step_cmd in (CMD_STEP_OVER, CMD_STEP_RETURN):
                 if frame.f_back:
                     back = frame.f_back
                     back_code = back.f_code
