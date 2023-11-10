@@ -27,7 +27,7 @@ public abstract class JVMClassNode<T extends JVMClassNode<T, D>, D extends Diffe
   public JVMClassNode(DataInput in) throws IOException {
     super(in);
     myId = new JvmNodeReferenceID(in);
-    outFilePath = RW.readUTF(in);
+    outFilePath = in.readUTF();
     myUsages = RW.readCollection(in, () -> JvmNodeElementExternalizer.<Usage>getMultitypeExternalizer().load(in));
   }
 
@@ -35,7 +35,7 @@ public abstract class JVMClassNode<T extends JVMClassNode<T, D>, D extends Diffe
   public void write(DataOutput out) throws IOException {
     super.write(out);
     myId.write(out);
-    RW.writeUTF(out, outFilePath);
+    out.writeUTF(outFilePath);
     RW.writeCollection(out, myUsages,  u -> JvmNodeElementExternalizer.getMultitypeExternalizer().save(out, u));
   }
 

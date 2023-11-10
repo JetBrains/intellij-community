@@ -3,7 +3,6 @@ package org.jetbrains.jps.dependency.java;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.dependency.ReferenceID;
-import org.jetbrains.jps.dependency.impl.RW;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -17,12 +16,12 @@ public final class JvmNodeReferenceID implements ReferenceID {
   }
 
   public JvmNodeReferenceID(DataInput in) throws IOException {
-    myName = RW.readUTF(in);
+    myName = in.readUTF();
   }
 
   @Override
   public void write(DataOutput out) throws IOException {
-    RW.writeUTF(out, myName);
+    out.writeUTF(myName);
   }
 
   /**

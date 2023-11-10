@@ -3,7 +3,6 @@ package org.jetbrains.jps.dependency.java;
 
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.dependency.Externalizer;
-import org.jetbrains.jps.dependency.impl.RW;
 import org.jetbrains.org.objectweb.asm.Type;
 
 import java.io.DataInput;
@@ -25,67 +24,67 @@ enum JvmProtoMemberValueExternalizer implements Externalizer<Object> {
   STRING(String.class) {
     @Override
     public void save(DataOutput out, Object v) throws IOException {
-      RW.writeUTF(out, (String)v);
+      out.writeUTF((String)v);
     }
 
     @Override
     public Object load(DataInput in) throws IOException {
-      return RW.readUTF(in);
+      return in.readUTF();
     }
   },
   INTEGER(Integer.class) {
     @Override
     public void save(DataOutput out, Object v) throws IOException {
-      RW.writeINT(out, (Integer)v);
+      out.writeInt((Integer)v);
     }
 
     @Override
     public Object load(DataInput in) throws IOException {
-      return RW.readINT(in);
+      return in.readInt();
     }
   },
   LONG(Long.class) {
     @Override
     public void save(DataOutput out, Object v) throws IOException {
-      RW.writeLONG(out, (Long)v);
+      out.writeLong((Long)v);
     }
 
     @Override
     public Object load(DataInput in) throws IOException {
-      return RW.readLONG(in);
+      return in.readLong();
     }
   },
   FLOAT(Float.class) {
     @Override
     public void save(DataOutput out, Object v) throws IOException {
-      RW.writeFLOAT(out, (Float)v);
+      out.writeFloat((Float)v);
     }
 
     @Override
     public Object load(DataInput in) throws IOException {
-      return RW.readFLOAT(in);
+      return in.readFloat();
     }
   },
   DOUBLE(Double.class) {
     @Override
     public void save(DataOutput out, Object v) throws IOException {
-      RW.writeDOUBLE(out, (Double)v);
+      out.writeDouble((Double)v);
     }
 
     @Override
     public Object load(DataInput in) throws IOException {
-      return RW.readDOUBLE(in);
+      return in.readDouble();
     }
   },
   TYPE(Type.class) {
     @Override
     public void save(DataOutput out, Object v) throws IOException {
-      RW.writeUTF(out, ((Type)v).getDescriptor());
+      out.writeUTF(((Type)v).getDescriptor());
     }
 
     @Override
     public Object load(DataInput in) throws IOException {
-      return Type.getType(RW.readUTF(in));
+      return Type.getType(in.readUTF());
     }
   },
   ARRAY(Array.class) {
@@ -94,9 +93,9 @@ enum JvmProtoMemberValueExternalizer implements Externalizer<Object> {
     public void save(DataOutput out, Object val) throws IOException {
       final int length = Array.getLength(val);
       JvmProtoMemberValueExternalizer ext = find(length > 0? Array.get(val, 0).getClass() : val.getClass().getComponentType());
-      RW.writeINT(out, ext.ordinal());
+      out.writeInt(ext.ordinal());
       if (ext != NONE) {
-        RW.writeINT(out, length);
+        out.writeInt(length);
         for (int idx = 0; idx < length; idx++) {
           ext.save(out, Array.get(val, idx));
         }
@@ -105,11 +104,11 @@ enum JvmProtoMemberValueExternalizer implements Externalizer<Object> {
 
     @Override
     public Object load(DataInput in) throws IOException {
-      int ord = RW.readINT(in);
+      int ord = in.readInt();
       if (NONE.ordinal() != ord) {
         for (JvmProtoMemberValueExternalizer ext : values()) {
           if (ext.ordinal() == ord) {
-            int length = RW.readINT(in);
+            int length = in.readInt();
             final Object array = Array.newInstance(ext.dataType, length);
             for (int idx = 0; idx < length; idx++) {
               Array.set(array, idx, ext.load(in));
@@ -152,12 +151,12 @@ enum JvmProtoMemberValueExternalizer implements Externalizer<Object> {
 
   static void write(DataOutput out, @Nullable Object value) throws IOException {
     JvmProtoMemberValueExternalizer ext = find(value != null? value.getClass() : null);
-    RW.writeINT(out, ext.ordinal());
+    out.writeInt(ext.ordinal());
     ext.save(out, value);
   }
 
   static Object read(DataInput in) throws IOException {
-    int ord = RW.readINT(in);
+    int ord = in.readInt();
     for (JvmProtoMemberValueExternalizer ext : values()) {
       if (ext.ordinal() == ord) {
         return ext.load(in);

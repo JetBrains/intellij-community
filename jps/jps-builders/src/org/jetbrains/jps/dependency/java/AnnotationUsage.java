@@ -22,17 +22,17 @@ public final class AnnotationUsage extends JvmElementUsage {
 
   public AnnotationUsage(DataInput in) throws IOException {
     super(in);
-    myClassType = new TypeRepr.ClassType(RW.readUTF(in));
-    myUsedArgNames = RW.readCollection(in, () -> RW.readUTF(in));
-    myTargets = RW.readCollection(in, ()-> ElemType.fromOrdinal(RW.readINT(in)));
+    myClassType = new TypeRepr.ClassType(in.readUTF());
+    myUsedArgNames = RW.readCollection(in, () -> in.readUTF());
+    myTargets = RW.readCollection(in, ()-> ElemType.fromOrdinal(in.readInt()));
   }
 
   @Override
   public void write(DataOutput out) throws IOException {
     super.write(out);
-    RW.writeUTF(out, myClassType.getJvmName());
-    RW.writeCollection(out, myUsedArgNames, s -> RW.writeUTF(out, s));
-    RW.writeCollection(out, myTargets, t -> RW.writeINT(out, t.ordinal()));
+    out.writeUTF(myClassType.getJvmName());
+    RW.writeCollection(out, myUsedArgNames, s -> out.writeUTF(s));
+    RW.writeCollection(out, myTargets, t -> out.writeInt(t.ordinal()));
   }
 
   public TypeRepr.ClassType getClassType() {

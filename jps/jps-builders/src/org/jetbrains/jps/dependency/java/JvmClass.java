@@ -49,15 +49,15 @@ public final class JvmClass extends JVMClassNode<JvmClass, JvmClass.Diff> {
 
   public JvmClass(DataInput in) throws IOException {
     super(in);
-    myOuterFqName = RW.readUTF(in);
-    mySuperFqName = RW.readUTF(in);
-    myInterfaces = RW.readCollection(in, () -> RW.readUTF(in));
+    myOuterFqName = in.readUTF();
+    mySuperFqName = in.readUTF();
+    myInterfaces = RW.readCollection(in, () -> in.readUTF());
     myFields = RW.readCollection(in, () -> new JvmField(in));
     myMethods = RW.readCollection(in, () -> new JvmMethod(in));
-    myAnnotationTargets = RW.readCollection(in, () -> ElemType.fromOrdinal(RW.readINT(in)));
+    myAnnotationTargets = RW.readCollection(in, () -> ElemType.fromOrdinal(in.readInt()));
 
     RetentionPolicy policy = null;
-    int policyOrdinal = RW.readINT(in);
+    int policyOrdinal = in.readInt();
     if (policyOrdinal >= 0) {
       for (RetentionPolicy value : Iterators.filter(Iterators.asIterable(RetentionPolicy.values()), v -> v.ordinal() == policyOrdinal)) {
         policy = value;
@@ -70,13 +70,13 @@ public final class JvmClass extends JVMClassNode<JvmClass, JvmClass.Diff> {
   @Override
   public void write(DataOutput out) throws IOException {
     super.write(out);
-    RW.writeUTF(out, myOuterFqName);
-    RW.writeUTF(out, mySuperFqName);
-    RW.writeCollection(out, myInterfaces, s -> RW.writeUTF(out, s));
+    out.writeUTF(myOuterFqName);
+    out.writeUTF(mySuperFqName);
+    RW.writeCollection(out, myInterfaces, s -> out.writeUTF(s));
     RW.writeCollection(out, myFields, f -> f.write(out));
     RW.writeCollection(out, myMethods, m -> m.write(out));
-    RW.writeCollection(out, myAnnotationTargets, t -> RW.writeINT(out, t.ordinal()));
-    RW.writeINT(out, myRetentionPolicy == null? -1 : myRetentionPolicy.ordinal());
+    RW.writeCollection(out, myAnnotationTargets, t -> out.writeInt(t.ordinal()));
+    out.writeInt(myRetentionPolicy == null? -1 : myRetentionPolicy.ordinal());
   }
 
   //@Override

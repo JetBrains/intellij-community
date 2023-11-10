@@ -35,24 +35,24 @@ public final class JvmMethod extends ProtoMember implements DiffCapable<JvmMetho
 
   public JvmMethod(DataInput in) throws IOException {
     super(in);
-    myArgTypes = RW.readCollection(in, () -> TypeRepr.getType(RW.readUTF(in)));
+    myArgTypes = RW.readCollection(in, () -> TypeRepr.getType(in.readUTF()));
     myParamAnnotations = RW.readCollection(in, () -> {
-      int index = RW.readINT(in);
-      String jvmName = RW.readUTF(in);
+      int index = in.readInt();
+      String jvmName = in.readUTF();
       return new ParamAnnotation(index, new TypeRepr.ClassType(jvmName));
     });
-    myExceptions = RW.readCollection(in, () -> new TypeRepr.ClassType(RW.readUTF(in)));
+    myExceptions = RW.readCollection(in, () -> new TypeRepr.ClassType(in.readUTF()));
   }
 
   @Override
   public void write(DataOutput out) throws IOException {
     super.write(out);
-    RW.writeCollection(out, myArgTypes, t -> RW.writeUTF(out, t.getDescriptor()));
+    RW.writeCollection(out, myArgTypes, t -> out.writeUTF(t.getDescriptor()));
     RW.writeCollection(out, myParamAnnotations, pa -> {
-      RW.writeINT(out, pa.paramIndex);
-      RW.writeUTF(out, pa.type.getJvmName());
+      out.writeInt(pa.paramIndex);
+      out.writeUTF(pa.type.getJvmName());
     });
-    RW.writeCollection(out, myExceptions, t -> RW.writeUTF(out, t.getJvmName()));
+    RW.writeCollection(out, myExceptions, t -> out.writeUTF(t.getJvmName()));
   }
 
   public boolean isConstructor() {

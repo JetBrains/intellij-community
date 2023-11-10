@@ -36,6 +36,7 @@ public final class PersistentSetMultiMaplet<K extends ExternalizableGraphElement
       myMap = new PersistentHashMap<>(mapFile, keyDescriptor, new DataExternalizer<>() {
         @Override
         public void save(@NotNull DataOutput out, Set<V> value) throws IOException {
+          out = GraphDataOutput.wrap(out);
           for (V v : value) {
             valueExternalizer.save(out, v);
           }
@@ -45,8 +46,9 @@ public final class PersistentSetMultiMaplet<K extends ExternalizableGraphElement
         public Set<V> read(@NotNull DataInput in) throws IOException {
           Set<V> acc = new HashSet<>();
           final DataInputStream stream = (DataInputStream)in;
+          in = GraphDataInput.wrap(in);
           while (stream.available() > 0) {
-            acc.add(valueExternalizer.read(stream));
+            acc.add(valueExternalizer.read(in));
           }
           return acc;
         }
@@ -123,7 +125,8 @@ public final class PersistentSetMultiMaplet<K extends ExternalizableGraphElement
     try {
       myMap.appendData(key, new AppendablePersistentMap.ValueDataAppender() {
         @Override
-        public void append(final @NotNull DataOutput out) throws IOException {
+        public void append(@NotNull DataOutput out) throws IOException {
+          out = GraphDataOutput.wrap(out);
           for (V v : values) {
             myValuesExternalizer.save(out, v);
           }

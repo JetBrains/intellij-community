@@ -3,7 +3,6 @@ package org.jetbrains.jps.dependency.java;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.dependency.impl.RW;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -22,14 +21,14 @@ public abstract class ProtoMember extends Proto {
 
   public ProtoMember(DataInput in) throws IOException {
     super(in);
-    type = TypeRepr.getType(RW.readUTF(in));
+    type = TypeRepr.getType(in.readUTF());
     value = JvmProtoMemberValueExternalizer.read(in);
   }
 
   @Override
   public void write(DataOutput out) throws IOException {
     super.write(out);
-    RW.writeUTF(out, type.getDescriptor());
+    out.writeUTF(type.getDescriptor());
     JvmProtoMemberValueExternalizer.write(out, value);
   }
 

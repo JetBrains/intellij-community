@@ -4,7 +4,6 @@ package org.jetbrains.jps.dependency.java;
 import org.jetbrains.jps.dependency.DataReader;
 import org.jetbrains.jps.dependency.ExternalizableGraphElement;
 import org.jetbrains.jps.dependency.Externalizer;
-import org.jetbrains.jps.dependency.impl.RW;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -61,12 +60,12 @@ public final class JvmNodeElementExternalizer {
   private static final Externalizer<? extends ExternalizableGraphElement> ourMultitypeExternalizer = new Externalizer<>() {
     @Override
     public ExternalizableGraphElement load(DataInput in) throws IOException {
-      return ElementDescriptor.find(RW.readINT(in)).factory.load(in);
+      return ElementDescriptor.find(in.readInt()).factory.load(in);
     }
 
     @Override
     public void save(DataOutput out, ExternalizableGraphElement value) throws IOException {
-      RW.writeINT(out, ElementDescriptor.find(value).ordinal());
+      out.writeInt(ElementDescriptor.find(value).ordinal());
       value.write(out);
     }
   };

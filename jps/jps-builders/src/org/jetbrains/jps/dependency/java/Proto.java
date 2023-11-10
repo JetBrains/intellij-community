@@ -26,18 +26,18 @@ public class Proto implements ExternalizableGraphElement {
   }
 
   public Proto(DataInput in) throws IOException {
-    access = new JVMFlags(RW.readINT(in));
-    signature = RW.readUTF(in);
-    name = RW.readUTF(in);
-    annotations = RW.readCollection(in, () -> new ClassType(RW.readUTF(in)));
+    access = new JVMFlags(in.readInt());
+    signature = in.readUTF();
+    name = in.readUTF();
+    annotations = RW.readCollection(in, () -> new ClassType(in.readUTF()));
   }
 
   @Override
   public void write(DataOutput out) throws IOException {
-    RW.writeINT(out, access.getValue());
-    RW.writeUTF(out, signature);
-    RW.writeUTF(out, name);
-    RW.writeCollection(out, annotations, t -> RW.writeUTF(out, t.getJvmName()));
+    out.writeInt(access.getValue());
+    out.writeUTF(signature);
+    out.writeUTF(name);
+    RW.writeCollection(out, annotations, t -> out.writeUTF(t.getJvmName()));
   }
 
   public JVMFlags getFlags() {

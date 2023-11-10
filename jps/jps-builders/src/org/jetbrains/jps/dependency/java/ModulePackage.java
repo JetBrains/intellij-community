@@ -22,13 +22,13 @@ public final class ModulePackage extends Proto implements DiffCapable<ModulePack
 
   public ModulePackage(DataInput in) throws IOException {
     super(in);
-    myModules = RW.readCollection(in, () -> RW.readUTF(in));
+    myModules = RW.readCollection(in, () -> in.readUTF());
   }
 
   @Override
   public void write(DataOutput out) throws IOException {
     super.write(out);
-    RW.writeCollection(out, myModules, m -> RW.writeUTF(out, m));
+    RW.writeCollection(out, myModules, m -> out.writeUTF(m));
   }
 
   public boolean isQualified() {

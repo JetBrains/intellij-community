@@ -27,7 +27,7 @@ public final class JvmModule extends JVMClassNode<JvmModule, JvmModule.Diff>{
 
   public JvmModule(DataInput in) throws IOException {
     super(in);
-    myVersion = RW.readUTF(in);
+    myVersion = in.readUTF();
     myRequires = RW.readCollection(in, () -> new ModuleRequires(in));
     myExports = RW.readCollection(in, () -> new ModulePackage(in));
   }
@@ -35,7 +35,7 @@ public final class JvmModule extends JVMClassNode<JvmModule, JvmModule.Diff>{
   @Override
   public void write(DataOutput out) throws IOException {
     super.write(out);
-    RW.writeUTF(out, myVersion);
+    out.writeUTF(myVersion);
     RW.writeCollection(out, myRequires, r -> r.write(out));
     RW.writeCollection(out, myExports, p -> p.write(out));
   }

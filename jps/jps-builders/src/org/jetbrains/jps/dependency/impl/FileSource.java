@@ -23,12 +23,12 @@ public final class FileSource implements NodeSource {
   }
 
   public FileSource(@NotNull DataInput in) throws IOException {
-    myPath = Path.of(RW.readUTF(in));
+    myPath = Path.of(in.readUTF());
   }
 
   @Override
   public void write(DataOutput out) throws IOException {
-    RW.writeUTF(out, myPath.toString());
+    out.writeUTF(myPath.toString());
   }
 
   @Override
