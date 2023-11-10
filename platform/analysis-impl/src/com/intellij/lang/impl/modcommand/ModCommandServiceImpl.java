@@ -155,7 +155,8 @@ public class ModCommandServiceImpl implements ModCommandService {
           AnalysisBundle.message("preview.copy.to.clipboard", StringUtil.shortenTextWithEllipsis(copy.content(), 50, 10))));
       }
       else if (command instanceof ModUpdateSystemOptions options) {
-        navigateInfo = new IntentionPreviewInfo.Html(createOptionsPreview(context, options));
+        HtmlChunk preview = createOptionsPreview(context, options);
+        navigateInfo = preview.isEmpty() ? IntentionPreviewInfo.EMPTY : new IntentionPreviewInfo.Html(preview);
       }
     }
     return customDiffList.isEmpty() ? navigateInfo :
