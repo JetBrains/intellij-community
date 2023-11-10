@@ -30,6 +30,7 @@ import org.jetbrains.kotlin.idea.quickfix.ChangeTypeFixUtils
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.isNull
@@ -89,10 +90,11 @@ object ChangeTypeQuickFixFactories {
     }
 
     context(KtAnalysisSession)
-    private fun KtCallableDeclaration.returnType(candidateType: KtType): KtType {
+    private fun KtElement.returnType(candidateType: KtType): KtType {
         val (initializers, functionOrGetter) = when (this) {
             is KtNamedFunction -> listOfNotNull(this.initializer) to this
             is KtProperty -> listOfNotNull(this.initializer, this.getter?.initializer) to this.getter
+            is KtPropertyAccessor -> listOfNotNull(this.initializer) to this
             else -> return candidateType
         }
         val returnedExpressions = if (functionOrGetter != null) {
@@ -106,12 +108,13 @@ object ChangeTypeQuickFixFactories {
         }.map { KtPsiUtil.safeDeparenthesize(it) }
 
         returnedExpressions.singleOrNull()?.let {
-            if (it.isNull() || this.typeReference == null) return candidateType
+            if (it.isNull() || this is KtCallableDeclaration && this.typeReference == null || this is KtPropertyAccessor && this.returnTypeReference == null) return candidateType
         }
 
+        val property = this as? KtProperty
         val returnTypes = buildList {
-            addAll(returnedExpressions.map<KtExpression, KtType> { returnExpr ->
-                returnExpr.getKtType()?.let<KtType, KtType> { getActualType(it) } ?: candidateType
+            addAll(returnedExpressions.mapNotNull { returnExpr ->
+                (property?.let { it.getPropertyInitializerType() } ?: returnExpr.getKtType())?.let { getActualType(it) }
             })
             if (!candidateType.isUnit) {
                 add(candidateType)
@@ -120,11 +123,20 @@ object ChangeTypeQuickFixFactories {
         return commonSuperType(returnTypes) ?: candidateType
     }
 
+    context(KtAnalysisSession)
+    private fun KtProperty.getPropertyInitializerType(): KtType? {
+        val initializer = initializer
+        return if (typeReference != null && initializer != null) {
+            //copy property initializer to calculate initializer's type without property's declared type
+            KtPsiFactory(project).createExpressionCodeFragment(initializer.text, this).getContentElement()?.getKtType()
+        } else null
+    }
+
     val returnTypeMismatch =
         diagnosticFixFactory(KtFirDiagnostic.ReturnTypeMismatch::class) { diagnostic ->
-            val element = diagnostic.targetFunction.psi
+            val element = diagnostic.targetFunction.psi as? KtElement ?: return@diagnosticFixFactory emptyList()
             val declaration = element as? KtCallableDeclaration ?: (element as? KtPropertyAccessor)?.property  ?: return@diagnosticFixFactory emptyList()
-            listOf(UpdateTypeQuickFix(declaration, if (element is KtPropertyAccessor) TargetType.VARIABLE else TargetType.ENCLOSING_DECLARATION, createTypeInfo(declaration.returnType(getActualType(diagnostic.actualType)))))
+            listOf(UpdateTypeQuickFix(declaration, if (element is KtPropertyAccessor) TargetType.VARIABLE else TargetType.ENCLOSING_DECLARATION, createTypeInfo(element.returnType(getActualType(diagnostic.actualType)))))
         }
 
     val returnTypeNullableTypeMismatch =
@@ -153,9 +165,10 @@ object ChangeTypeQuickFixFactories {
 
     val typeMismatch =
         diagnosticFixFactory(KtFirDiagnostic.TypeMismatch::class) { diagnostic ->
-            val property = diagnostic.psi.parent as? KtProperty ?: return@diagnosticFixFactory emptyList()
-            val actualType = getActualType(diagnostic.actualType)
-            registerVariableTypeFixes(property, property.returnType(actualType))
+            val expr = diagnostic.psi
+            val property = expr.parent as? KtProperty ?: return@diagnosticFixFactory emptyList()
+            val actualType = property.getPropertyInitializerType() ?: diagnostic.actualType
+            registerVariableTypeFixes(property, getActualType(actualType))
         }
 
     context(KtAnalysisSession)
@@ -163,7 +176,7 @@ object ChangeTypeQuickFixFactories {
         val expectedType = declaration.getReturnKtType()
         val expression = declaration.initializer
         return buildList {
-            add(UpdateTypeQuickFix(declaration, TargetType.VARIABLE, createTypeInfo(type)))
+            add(UpdateTypeQuickFix(declaration, TargetType.VARIABLE, createTypeInfo(declaration.returnType(type))))
             if (expression is KtConstantExpression && expectedType.isNumberOrUNumberType() && type.isNumberOrUNumberType()) {
                 add(WrongPrimitiveLiteralFix(expression, expectedType))
             }

@@ -9,4 +9,3 @@
 // WITH_STDLIB
 val a: Array<Int> = arrayOf(1)
 val b: Array<Int> = <caret>arrayOf(a)
-/* IGNORE_K2 */
