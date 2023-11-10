@@ -13,7 +13,6 @@ public interface MultiMaplet<K, V> {
 
   void remove(final K key);
 
-
   void appendValue(final K key, final V value);
 
   default void appendValues(final K key, final Iterable<? extends V> values) {

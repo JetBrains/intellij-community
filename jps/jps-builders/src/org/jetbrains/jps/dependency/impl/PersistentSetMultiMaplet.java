@@ -10,7 +10,6 @@ import com.intellij.util.io.PersistentHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
-import org.jetbrains.jps.dependency.ExternalizableGraphElement;
 import org.jetbrains.jps.dependency.MultiMaplet;
 import org.jetbrains.jps.javac.Iterators;
 
@@ -23,7 +22,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
-public final class PersistentSetMultiMaplet<K extends ExternalizableGraphElement, V extends ExternalizableGraphElement> implements MultiMaplet<K, V> {
+public final class PersistentSetMultiMaplet<K, V> implements MultiMaplet<K, V> {
   private static final Set<?> NULL_COLLECTION = Collections.emptySet();
   private static final int CACHE_SIZE = 1024;
   private final PersistentHashMap<K, Set<V>> myMap;
@@ -33,7 +32,27 @@ public final class PersistentSetMultiMaplet<K extends ExternalizableGraphElement
   public PersistentSetMultiMaplet(Path mapFile, KeyDescriptor<K> keyDescriptor, DataExternalizer<V> valueExternalizer) {
     try {
       myValuesExternalizer = valueExternalizer;
-      myMap = new PersistentHashMap<>(mapFile, keyDescriptor, new DataExternalizer<>() {
+      myMap = new PersistentHashMap<>(mapFile, new KeyDescriptor<>() {
+        @Override
+        public int getHashCode(K value) {
+          return keyDescriptor.getHashCode(value);
+        }
+
+        @Override
+        public void save(@NotNull DataOutput out, K value) throws IOException {
+          keyDescriptor.save(GraphDataOutput.wrap(out), value);
+        }
+
+        @Override
+        public boolean isEqual(K val1, K val2) {
+          return keyDescriptor.isEqual(val1, val2);
+        }
+
+        @Override
+        public K read(@NotNull DataInput in) throws IOException {
+          return keyDescriptor.read(GraphDataInput.wrap(in));
+        }
+      }, new DataExternalizer<>() {
         @Override
         public void save(@NotNull DataOutput out, Set<V> value) throws IOException {
           out = GraphDataOutput.wrap(out);
