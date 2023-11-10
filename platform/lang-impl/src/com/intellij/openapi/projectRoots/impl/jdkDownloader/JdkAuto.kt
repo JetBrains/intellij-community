@@ -191,21 +191,25 @@ class JdkAuto : UnknownSdkResolver, JdkDownloaderBase {
         if (sdk.sdkType != sdkType) return null
 
         val req = parseSdkRequirement(sdk) ?: return null
-        LOG.info("Looking for a possible download for ${sdk.sdkType.presentableName} with name ${sdk}")
+        LOG.info("Looking for a possible download for ${sdk.sdkType.presentableName} with name ${sdk.sdkName} ; $req")
 
         //we select the newest matching version for a possible fix
-        val jdkToDownload = lazyDownloadModel
-                              .asSequence()
-                              .filter { req.matches(it) }
-                              .filter { CpuArch.fromString(it.arch) == CpuArch.CURRENT }
-                              .mapNotNull {
-                                val v = JavaVersion.tryParse(it.versionString)
-                                if (v != null) {
-                                  it to v
-                                }
-                                else null
-                              }.maxByOrNull { it.second }
-                              ?.first ?: return null
+        val jdks = lazyDownloadModel
+                     .asSequence()
+                     .filter { CpuArch.fromString(it.arch) == CpuArch.CURRENT }
+                     .mapNotNull {
+                       val v = JavaVersion.tryParse(it.versionString)
+                       if (v != null) {
+                         it to v
+                       }
+                       else null
+                     }
+
+        val jdkToDownload =
+          jdks.filter { req.matches(it.first) }.maxByOrNull { it.second }?.first
+          ?: jdks.filter { it.first.suggestedSdkName == sdk.sdkName }.maxByOrNull { it.second }?.first
+          ?: jdks.filter { it.first.product.vendor == "Oracle" }.maxByOrNull { it.second }?.first
+          ?: return null
 
         val jarConfigurator = JarSdkConfigurator(resolveHint(sdk)?.includeJars ?: listOf())
 
@@ -256,10 +260,10 @@ class JdkAuto : UnknownSdkResolver, JdkDownloaderBase {
         }
 
         val req = parseSdkRequirement(sdk) ?: run {
-          LOG.info("Failed to parse unknown SDK requirement ${sdk}")
+          LOG.info("Failed to parse unknown SDK requirement ${sdk.sdkName}")
           return null
         }
-        LOG.info("Looking for a local SDK for ${sdk.sdkType.presentableName} with name ${sdk}")
+        LOG.info("Looking for a local SDK for ${sdk.sdkType.presentableName} with name ${sdk.sdkName}")
 
         fun List<JavaLocalSdkFix>.pickBestMatch() = this.maxByOrNull { it.version }
 
