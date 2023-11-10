@@ -53,7 +53,6 @@ import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.*;
-import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.ExperimentalUI;
@@ -65,7 +64,10 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.UIUtil;
-import com.siyeh.ig.psiutils.*;
+import com.siyeh.ig.psiutils.ControlFlowUtils;
+import com.siyeh.ig.psiutils.InstanceOfUtils;
+import com.siyeh.ig.psiutils.VariableAccessUtils;
+import com.siyeh.ig.psiutils.VariableNameGenerator;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.*;
 
@@ -3640,8 +3642,20 @@ public final class HighlightUtil {
 
   public static boolean isSerializationImplicitlyUsedField(@NotNull PsiField field) {
     String name = field.getName();
-    if (!CommonClassNames.SERIAL_VERSION_UID_FIELD_NAME.equals(name) && !SERIAL_PERSISTENT_FIELDS_FIELD_NAME.equals(name)) return false;
-    if (!field.hasModifierProperty(PsiModifier.STATIC)) return false;
+    if (CommonClassNames.SERIAL_VERSION_UID_FIELD_NAME.equals(name)) {
+      if (!PsiTypes.longType().equals(field.getType())) return false;
+    }
+    else if (SERIAL_PERSISTENT_FIELDS_FIELD_NAME.equals(name)) {
+      if (!field.hasModifierProperty(PsiModifier.PRIVATE)) return false;
+      if (!(field.getType() instanceof PsiArrayType arrayType) || arrayType.getArrayDimensions() != 1) return false;
+      PsiType componentType = arrayType.getComponentType();
+      PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(componentType);
+      if (aClass != null && !"java.io.ObjectStreamField".equals(aClass.getQualifiedName())) return false;
+    }
+    else {
+      return false;
+    }
+    if (!field.hasModifierProperty(PsiModifier.STATIC) || !field.hasModifierProperty(PsiModifier.FINAL)) return false;
     PsiClass aClass = field.getContainingClass();
     return aClass == null || JavaHighlightUtil.isSerializable(aClass);
   }
