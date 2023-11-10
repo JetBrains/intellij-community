@@ -17,6 +17,7 @@ import com.intellij.openapi.editor.actionSystem.EditorAction
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.SystemInfo
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -42,6 +43,10 @@ class TerminalInlineCompletionProvider : InlineCompletionProvider {
         val lookup = LookupManager.getActiveLookup(request.editor) ?: return@withContext null
         val item = lookup.currentItem ?: return@withContext null
         val itemPrefix = lookup.itemPattern(item)
+        if (SystemInfo.isFileSystemCaseSensitive && !item.lookupString.startsWith(itemPrefix)) {
+          // do not show inline completion if prefix is written in different case in case-sensitive file system
+          return@withContext null
+        }
         val itemSuffix = item.lookupString.removeRange(0, itemPrefix.length)
         InlineCompletionGrayTextElement(itemSuffix)
       }?.let {
