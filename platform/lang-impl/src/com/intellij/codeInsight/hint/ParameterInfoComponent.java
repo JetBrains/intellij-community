@@ -294,7 +294,14 @@ public final class ParameterInfoComponent extends JPanel {
       result.signatures.add(item);
 
       myPanels[i].setup(htmlText, getDefaultParameterColor());
-      if (!mySimpleDesignMode) {
+      if (mySimpleDesignMode) {
+        if (!isSingleParameterInfo() && isHighlighted() && myPanels.length > 1) {
+          if (htmlText.contains("<p>") || htmlText.contains("<p ")) { //NON-NLS
+            myPanels[i].setLineBorder(i > 0, !isLastParameterOwner());
+          }
+        }
+      }
+      else {
         myPanels[i].setBorder(isLastParameterOwner() || isSingleParameterInfo() ? EMPTY_BORDER : BOTTOM_BORDER);
       }
     }
