@@ -59,6 +59,7 @@ internal class KeyChainCredentialStore : CredentialStore {
           library.SecKeychainItemFreeAttributesAndData(attributeList, null)
         }
       }
+      itemRef.value?.let { library.CFRelease(it) }
       return Credentials(effectiveAccountName, password)
     }
 
