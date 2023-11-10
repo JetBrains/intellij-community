@@ -4345,7 +4345,7 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-61883
   public void testTypeAliasStatementTypeNotInterpretedAsAssignedTypeOutsideOfTypeHint() {
-    doTest("Any",
+    doTest("TypeAliasType",
            """
              type myType = str
              expr = myType
