@@ -746,6 +746,10 @@ fun <T : CommandChain> T.waitInlineCompletion(): T = apply {
   addCommand("${CMD_PREFIX}waitInlineCompletion")
 }
 
+fun <T : CommandChain> T.clearLLMInlineCompletionCache(): T = apply {
+  addCommand("${CMD_PREFIX}clearLLMInlineCompletionCache")
+}
+
 /**
  * Will wait and throw exception if the condition wasn't satisfied
  */
