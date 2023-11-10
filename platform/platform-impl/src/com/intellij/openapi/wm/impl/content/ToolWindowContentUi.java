@@ -20,7 +20,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.*;
-import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.impl.ToolWindowImpl;
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl;
 import com.intellij.toolWindow.InternalDecoratorImpl;
@@ -466,16 +465,6 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
           }
         }
         ui.window.fireActivated(ToolWindowEventSource.ToolWindowHeader);
-      }
-
-      @Override
-      public void mouseClicked(MouseEvent e) {
-        if (SwingUtilities.isLeftMouseButton(e) && e.getClickCount() == 2) {
-          if (ui.tabsLayout.doubleClickActions.isEmpty() || !(e.getComponent() instanceof ContentTabLabel)) {
-            ToolWindowManagerEx manager = ui.window.getToolWindowManager();
-            manager.setMaximized(ui.window, !manager.isMaximized(ui.window));
-          }
-        }
       }
 
       @Override
