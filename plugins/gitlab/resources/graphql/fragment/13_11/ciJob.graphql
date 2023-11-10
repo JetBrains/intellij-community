@@ -2,4 +2,7 @@
 # <13.11 remove allowFailure
 fragment ciJob on CiJob {
   name
+  detailedStatus {
+    detailsPath
+  }
 }

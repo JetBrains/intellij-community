@@ -6,9 +6,9 @@ import com.intellij.collaboration.async.modelFlow
 import com.intellij.collaboration.ui.codereview.details.data.CodeReviewCIJob
 import com.intellij.collaboration.ui.codereview.details.data.CodeReviewCIJobState
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewStatusViewModel
-import com.intellij.collaboration.util.resolveRelative
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.util.childScope
+import com.intellij.util.io.URLUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -19,7 +19,6 @@ import org.jetbrains.plugins.gitlab.api.dto.GitLabCiJobDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabPipelineDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabCiJobStatus
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
-import java.net.URI
 
 class GitLabMergeRequestStatusViewModel(
   parentCs: CoroutineScope,
@@ -51,10 +50,14 @@ class GitLabMergeRequestStatusViewModel(
   }
 
   private fun GitLabCiJobDTO.convert(): CodeReviewCIJob? {
-    val jobUrl: URI? = webPath?.let { serverPath.toURI().resolveRelative(it) }
+    val jobUrl: String? = detailedStatus?.detailsPath?.let { url ->
+      if (URLUtil.canContainUrl(url)) url
+      else "$serverPath$url"
+    }
     val status = status?.let { it.toCiState() } ?: return null
     val isRequired = allowFailure?.not() ?: true
-    return CodeReviewCIJob(name, status, isRequired, jobUrl?.toString())
+
+    return CodeReviewCIJob(name, status, isRequired, jobUrl)
   }
 
   private fun GitLabCiJobStatus.toCiState(): CodeReviewCIJobState = when (this) {
