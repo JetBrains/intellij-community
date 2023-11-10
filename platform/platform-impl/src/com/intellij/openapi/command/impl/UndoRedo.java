@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsContexts.DialogMessage;
 import com.intellij.openapi.util.NlsContexts.DialogTitle;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -108,7 +109,7 @@ abstract class UndoRedo {
     else {
       if (!shouldMove && restore(getBeforeState(), true)) {
         setBeforeState(new EditorAndState(myEditor, myEditor.getState(FileEditorStateLevel.UNDO)));
-        return true;
+        if (!Registry.is("ide.undo.transparent.caret.movement")) return true;
       }
     }
 
