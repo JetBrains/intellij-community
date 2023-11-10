@@ -1,12 +1,16 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeInsight
 
+import com.intellij.execution.RunManager
+import com.intellij.execution.impl.RunManagerImpl
+import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl
+import com.intellij.java.codeInsight.navigation.MockGradleRunConfiguration
 import com.intellij.rt.execution.junit.FileComparisonFailure
 import com.intellij.testFramework.ExtensionTestUtil.maskExtensions
 import com.intellij.testIntegration.TestFramework
 import org.jetbrains.kotlin.idea.testIntegration.framework.KotlinPsiBasedTestFramework
 
-abstract class AbstractKotlinPsiBasedTestFrameworkTest: AbstractLineMarkersTest() {
+abstract class AbstractKotlinPsiBasedTestFrameworkTest : AbstractLineMarkersTest() {
     fun doPsiBasedTest(path: String) {
         // to test LightTestFramework detection only
         // i.e. w/o fallback to LightClasses and TestFrameworks.detectFramework
@@ -16,16 +20,7 @@ abstract class AbstractKotlinPsiBasedTestFrameworkTest: AbstractLineMarkersTest(
             try {
                 super.doTest(path) {}
             } catch (e: FileComparisonFailure) {
-                val lines = e.actual.split("\n")
-                e.message?.let { msg ->
-                    val regex = "^${Regex.escapeReplacement(dataFile().name)}: missing \\((\\d+):".toRegex()
-                    regex.findAll(msg).toList().takeIf { it.isNotEmpty() }?.forEach {
-                        val lineNo = it.groupValues[1].toInt()
-                        val line = lines[lineNo - 1]
-                        // known fallback to LightClass-based TestFramework detection
-                        if (!line.contains("LIGHT_CLASS_FALLBACK")) throw e
-                    } ?: throw e
-                } ?: throw e
+                checkSuppressions("LIGHT_CLASS_FALLBACK", e)
             }
         }
     }
@@ -36,6 +31,35 @@ abstract class AbstractKotlinPsiBasedTestFrameworkTest: AbstractLineMarkersTest(
         doRunTest(true) {
             super.doTest(path) {}
         }
+    }
+
+    fun doTestWithGradleConfiguration(path: String) {
+        val runManager = RunManager.getInstance(myFixture.project)
+        val mockConfiguration = MockGradleRunConfiguration(myFixture.project, "runTest")
+        val runnerAndConfigurationSettings = RunnerAndConfigurationSettingsImpl(runManager as RunManagerImpl, mockConfiguration)
+        runManager.addConfiguration(runnerAndConfigurationSettings)
+        runManager.selectedConfiguration = runnerAndConfigurationSettings
+        try {
+            super.doTest(path) {}
+        } catch (e : FileComparisonFailure) {
+            checkSuppressions("DISABLED_WITH_GRADLE_CONFIGURATION", e)
+        }
+        finally {
+            runManager.removeConfiguration(runnerAndConfigurationSettings)
+        }
+    }
+
+    private fun checkSuppressions(suppressionName : String, e: FileComparisonFailure) {
+        val lines = e.actual.split("\n")
+        e.message?.let { msg ->
+            val regex = "^${Regex.escapeReplacement(dataFile().name)}: missing \\((\\d+):".toRegex()
+            regex.findAll(msg).toList().takeIf { it.isNotEmpty() }?.forEach {
+                val lineNo = it.groupValues[1].toInt()
+                val line = lines[lineNo - 1]
+                // known fallback to LightClass-based TestFramework detection
+                if (!line.contains(suppressionName)) throw e
+            } ?: throw e
+        } ?: throw e
     }
 
     private fun doRunTest(lightClass: Boolean, task: () -> Unit) {

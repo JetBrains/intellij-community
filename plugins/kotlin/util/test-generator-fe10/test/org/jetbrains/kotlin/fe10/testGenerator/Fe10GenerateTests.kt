@@ -800,6 +800,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         testClass<AbstractKotlinPsiBasedTestFrameworkTest> {
             model("codeInsight/lineMarker/runMarkers", pattern = Patterns.forRegex("^((jUnit|test)\\w*)\\.kt$"), testMethodName = "doPsiBasedTest", testClassName = "WithLightTestFramework")
             model("codeInsight/lineMarker/runMarkers", pattern = Patterns.forRegex("^((jUnit|test)\\w*)\\.kt$"), testMethodName = "doPureTest", testClassName = "WithoutLightTestFramework")
+            model("codeInsight/lineMarker/runMarkers", pattern = Patterns.forRegex("^((jUnit|test)\\w*)\\.kt$"), testMethodName = "doTestWithGradleConfiguration", testClassName = "WithGradleConfiguration")
         }
 
         testClass<AbstractLineMarkersTestInLibrarySources> {
