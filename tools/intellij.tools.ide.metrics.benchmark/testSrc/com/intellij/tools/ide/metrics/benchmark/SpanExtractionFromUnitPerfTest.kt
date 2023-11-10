@@ -41,8 +41,14 @@ class SpanExtractionFromUnitPerfTest {
     val extractedMetrics = MetricsExtractor((openTelemetryReports / "open-telemetry-unit-perf-test.json").toFile())
       .waitTillMetricsExported(spanName = mainMetricName)
 
-    Assertions.assertEquals(27, extractedMetrics.single { it.id.name == "attempt.average.ms" }.value)
-    Assertions.assertEquals(12283, extractedMetrics.single { it.id.name == "total.test.duration.ms" }.value)
+    Assertions.assertEquals(32, extractedMetrics.single { it.id.name == "attempt.mean.ms" }.value)
+    Assertions.assertEquals(29, extractedMetrics.single { it.id.name == "attempt.median.ms" }.value)
+    Assertions.assertEquals(29, extractedMetrics.single { it.id.name == "attempt.mode" }.value)
+    Assertions.assertEquals(34, extractedMetrics.single { it.id.name == "attempt.range.ms" }.value)
+    Assertions.assertEquals(524, extractedMetrics.single { it.id.name == "attempt.sum.ms" }.value)
+    Assertions.assertEquals(16, extractedMetrics.single { it.id.name == "attempt.count" }.value)
+    Assertions.assertEquals(8, extractedMetrics.single { it.id.name == "attempt.standard.deviation" }.value)
+    Assertions.assertEquals(14019, extractedMetrics.single { it.id.name == "total.test.duration.ms" }.value)
 
     val reportFile = Files.createTempFile("temp", ".json")
 
@@ -73,7 +79,7 @@ class SpanExtractionFromUnitPerfTest {
 
   private fun checkMetricsAreFlushedToTelemetryFile(spanName: String) {
     val extractedMetrics = MetricsExtractor().waitTillMetricsExported(spanName = spanName)
-    Assertions.assertTrue(extractedMetrics.single { it.id.name == "attempt.average.ms" }.value != 0L,
+    Assertions.assertTrue(extractedMetrics.single { it.id.name == "attempt.mean.ms" }.value != 0L,
                           "Attempt metric should have non 0 value")
     Assertions.assertTrue(extractedMetrics.single { it.id.name == "total.test.duration.ms" }.value != 0L,
                           "Total test duration metric should have non 0 value")

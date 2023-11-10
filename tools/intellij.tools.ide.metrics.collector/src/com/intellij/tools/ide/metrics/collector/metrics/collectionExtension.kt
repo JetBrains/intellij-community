@@ -1,5 +1,8 @@
 package com.intellij.tools.ide.metrics.collector.metrics
 
+import kotlin.math.pow
+import kotlin.math.sqrt
+
 /** Returns median (not average) value of a collection */
 fun Iterable<Long>.median(): Long {
   val size = this.count()
@@ -17,3 +20,24 @@ fun Iterable<Long>.median(): Long {
 }
 
 fun Iterable<PerformanceMetrics.Metric>.medianValue(): Long = this.map { it.value }.median()
+
+fun <T : Number> Iterable<T>.standardDeviation(): Long {
+  val mean = this.map { it.toDouble() }.average()
+  return sqrt(this.map { (it.toDouble() - mean).pow(2) }.average()).toLong()
+}
+
+fun Iterable<PerformanceMetrics.Metric>.standardDeviationValue(): Long = this.map { it.value }.standardDeviation()
+
+fun <T : Number> Iterable<T>.mode(): T {
+  return this.groupingBy { it }.eachCount().maxBy { it.value }.key
+}
+
+fun Iterable<PerformanceMetrics.Metric>.modeValue(): Long = this.map { it.value }.mode()
+
+fun Iterable<Long>.range(): Long {
+  val sorted = this.sorted()
+  return sorted.last() - sorted.first()
+}
+
+fun Iterable<PerformanceMetrics.Metric>.rangeValue(): Long = this.map { it.value }.range()
+

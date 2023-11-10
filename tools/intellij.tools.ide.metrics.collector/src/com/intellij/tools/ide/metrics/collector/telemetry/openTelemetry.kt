@@ -4,10 +4,9 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.tools.ide.metrics.collector.metrics.PerformanceMetrics.Metric
 import com.intellij.tools.ide.metrics.collector.metrics.PerformanceMetrics.MetricId.Counter
 import com.intellij.tools.ide.metrics.collector.metrics.PerformanceMetrics.MetricId.Duration
+import com.intellij.tools.ide.metrics.collector.metrics.standardDeviation
 import com.intellij.util.alsoIfNull
 import java.io.File
-import kotlin.math.pow
-import kotlin.math.sqrt
 
 const val TOTAL_TEST_TIMER_NAME: String = "test"
 const val DEFAULT_SPAN_NAME: String = "performance_test"
@@ -147,22 +146,17 @@ private fun combineMetrics(metrics: Map<String, List<MetricWithAttributes>>): Li
         }
 
         result.add(Metric(Duration(attr.key + "#mean_value"), attr.value.average().toLong()))
-        result.add(Metric(Duration(attr.key + "#standard_deviation"), standardDeviation(attr.value)))
+        result.add(Metric(Duration(attr.key + "#standard_deviation"), attr.value.standardDeviation()))
       }
       val sum = entry.value.sumOf { it.metric.value }
       val mean = sum / entry.value.size
-      val standardDeviation = standardDeviation(entry.value.map { it.metric.value })
+      val standardDeviation = entry.value.map { it.metric.value }.standardDeviation()
       result.add(Metric(Duration(entry.key), sum))
       result.add(Metric(Duration(entry.key + "#mean_value"), mean))
       result.add(Metric(Duration(entry.key + "#standard_deviation"), standardDeviation))
     }
   }
   return result
-}
-
-private fun <T : Number> standardDeviation(data: Collection<T>): Long {
-  val mean = data.map { it.toDouble() }.average()
-  return sqrt(data.map { (it.toDouble() - mean).pow(2) }.average()).toLong()
 }
 
 private fun getAttributes(spanName: String, metric: MetricWithAttributes): Collection<Metric> {
