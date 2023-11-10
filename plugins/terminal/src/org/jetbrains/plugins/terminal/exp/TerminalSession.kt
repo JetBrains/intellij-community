@@ -20,7 +20,7 @@ class TerminalSession(settings: JBTerminalSystemSettingsProviderBase,
                       val colorPalette: TerminalColorPalette,
                       val shellIntegration: ShellIntegration?) : Disposable {
   val model: TerminalModel
-  internal val terminalStarterFuture: CompletableFuture<TerminalStarter> = CompletableFuture()
+  internal val terminalStarterFuture: CompletableFuture<TerminalStarter?> = CompletableFuture()
 
   private val executorServiceManager: TerminalExecutorServiceManager = TerminalExecutorServiceManagerImpl()
 
@@ -72,13 +72,15 @@ class TerminalSession(settings: JBTerminalSystemSettingsProviderBase,
     // Simulate pressing Ctrl+U in the terminal to clear all typings in the prompt
     val fullCommand = "\u0015" + shellCommand
     terminalStarterFuture.thenAccept {
-      TerminalUtil.sendCommandToExecute(fullCommand, it)
+      if (it != null) {
+        TerminalUtil.sendCommandToExecute(fullCommand, it)
+      }
     }
   }
 
   fun postResize(newSize: TermSize) {
     terminalStarterFuture.thenAccept {
-      if (newSize.columns != model.width || newSize.rows != model.height) {
+      if (it != null && (newSize.columns != model.width || newSize.rows != model.height)) {
         typeAheadManager.onResize()
         it.postResize(newSize, RequestOrigin.User)
       }
@@ -91,7 +93,8 @@ class TerminalSession(settings: JBTerminalSystemSettingsProviderBase,
 
   override fun dispose() {
     executorServiceManager.shutdownWhenAllExecuted()
-    // Can be disposed before session is started
+    // Complete to avoid memory leaks with hanging callbacks. If already completed, nothing will change.
+    terminalStarterFuture.complete(null)
     terminalStarterFuture.getNow(null)?.close()
   }
 

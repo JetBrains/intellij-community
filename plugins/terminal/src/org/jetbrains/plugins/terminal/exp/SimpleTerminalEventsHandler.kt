@@ -4,7 +4,6 @@ package org.jetbrains.plugins.terminal.exp
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.jediterm.core.util.Ascii
-import com.jediterm.terminal.TerminalStarter
 import com.jediterm.terminal.emulator.mouse.MouseButtonCodes
 import com.jediterm.terminal.emulator.mouse.MouseButtonModifierFlags
 import com.jediterm.terminal.emulator.mouse.MouseFormat
@@ -28,11 +27,6 @@ open class SimpleTerminalEventsHandler(
 ) : TerminalEventsHandler {
   private var ignoreNextKeyTypedEvent: Boolean = false
   private var lastMotionReport: Point? = null
-
-  private val terminalStarter: TerminalStarter
-    // Hope the process is created fast enough - before user starts interacting with the terminal.
-    // TODO: buffering events until the process is started will fix the problem.
-    get() = session.terminalStarterFuture.getNow(null)!!
 
   private val model: TerminalModel
     get() = session.model
@@ -72,20 +66,20 @@ open class SimpleTerminalEventsHandler(
       val keyCode = e.keyCode
       val keyChar = e.keyChar
 
-      // numLock does not change the code sent by keypad VK_DELETE
+      // numLock does not change the code sent by keypad VK_DELETE,
       // although it send the char '.'
       if (keyCode == KeyEvent.VK_DELETE && keyChar == '.') {
-        terminalStarter.sendBytes(byteArrayOf('.'.code.toByte()), true)
+        sendUserInput(byteArrayOf('.'.code.toByte()))
         return true
       }
       // CTRL + Space is not handled in KeyEvent; handle it manually
       if (keyChar == ' ' && e.modifiersEx and InputEvent.CTRL_DOWN_MASK != 0) {
-        terminalStarter.sendBytes(byteArrayOf(Ascii.NUL), true)
+        sendUserInput(byteArrayOf(Ascii.NUL))
         return true
       }
-      val code = terminalStarter.terminal.getCodeForKey(keyCode, e.modifiers)
+      val code = session.controller.getCodeForKey(keyCode, e.modifiers)
       if (code != null) {
-        terminalStarter.sendBytes(code, true)
+        sendUserInput(code)
         // TODO
         //if (settings.scrollToBottomOnTyping() && TerminalPanel.isCodeThatScrolls(keyCode)) {
         //  scrollToBottom()
@@ -97,7 +91,7 @@ open class SimpleTerminalEventsHandler(
         //  Option+f produces e.getKeyChar()='ƒ' (402), but 'f' (102) is needed.
         //  Option+b produces e.getKeyChar()='∫' (8747), but 'b' (98) is needed.
         val string = String(charArrayOf(Ascii.ESC.toInt().toChar(), simpleMapKeyCodeToChar(e)))
-        terminalStarter.sendString(string, true)
+        sendUserInput(string)
         return true
       }
       if (Character.isISOControl(keyChar)) { // keys filtered out here will be processed in processTerminalKeyTyped
@@ -119,7 +113,7 @@ open class SimpleTerminalEventsHandler(
       // Command + backtick is a short-cut on Mac OSX, so we shouldn't type anything
       return false
     }
-    terminalStarter.sendString(keyChar.toString(), true)
+    sendUserInput(keyChar.toString())
     // TODO
     //if (settings.scrollToBottomOnTyping()) {
     //scrollToBottom()
@@ -155,7 +149,7 @@ open class SimpleTerminalEventsHandler(
           code = code or MouseButtonModifierFlags.MOUSE_BUTTON_SCROLL_FLAG
         }
         code = applyModifierKeys(event, code)
-        terminalStarter.sendBytes(mouseReport(code, x + 1, y + 1), true)
+        sendUserInput(mouseReport(code, x + 1, y + 1))
       }
     }
   }
@@ -173,7 +167,7 @@ open class SimpleTerminalEventsHandler(
           MouseButtonCodes.RELEASE
         }
         code = applyModifierKeys(event, code)
-        terminalStarter.sendBytes(mouseReport(code, x + 1, y + 1), true)
+        sendUserInput(mouseReport(code, x + 1, y + 1))
       }
     }
     lastMotionReport = null
@@ -184,7 +178,7 @@ open class SimpleTerminalEventsHandler(
       return
     }
     if (shouldSendMouseData(MouseMode.MOUSE_REPORTING_ALL_MOTION)) {
-      terminalStarter.sendBytes(mouseReport(MouseButtonCodes.RELEASE, x + 1, y + 1), true)
+      sendUserInput(mouseReport(MouseButtonCodes.RELEASE, x + 1, y + 1))
     }
     lastMotionReport = Point(x, y)
   }
@@ -199,7 +193,7 @@ open class SimpleTerminalEventsHandler(
       if (code != MouseButtonCodes.NONE) {
         code = code or MouseButtonModifierFlags.MOUSE_BUTTON_MOTION_FLAG
         code = applyModifierKeys(event, code)
-        terminalStarter.sendBytes(mouseReport(code, x + 1, y + 1), true)
+        sendUserInput(mouseReport(code, x + 1, y + 1))
       }
     }
     lastMotionReport = Point(x, y)
@@ -276,6 +270,18 @@ open class SimpleTerminalEventsHandler(
     }
     LOG.debug(model.mouseFormat.toString() + " (" + charset + ") report : " + button + ", " + x + "x" + y + " = " + command)
     return command.toByteArray(Charset.forName(charset))
+  }
+
+  private fun sendUserInput(data: String) {
+    session.terminalStarterFuture.thenAccept {
+      it?.sendString(data, true)
+    }
+  }
+
+  private fun sendUserInput(bytes: ByteArray) {
+    session.terminalStarterFuture.thenAccept {
+      it?.sendBytes(bytes, true)
+    }
   }
 
   companion object {

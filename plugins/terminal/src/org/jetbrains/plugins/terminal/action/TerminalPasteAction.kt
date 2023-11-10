@@ -60,7 +60,9 @@ class TerminalPasteAction : TerminalPromotedDumbAwareAction(), ActionRemoteBehav
     e.simpleTerminalController?.clearTextSelection()
 
     session.terminalStarterFuture.thenAccept {
-      doPasteIntoTerminalSession(it)
+      if (it != null) {
+        doPasteIntoTerminalSession(it)
+      }
     }
   }
 
