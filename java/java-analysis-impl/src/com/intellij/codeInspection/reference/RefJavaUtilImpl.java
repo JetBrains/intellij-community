@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.reference;
 
 import com.intellij.codeInsight.daemon.impl.analysis.GenericsHighlightUtil;
@@ -78,11 +78,12 @@ public class RefJavaUtilImpl extends RefJavaUtil {
                                for (PsiType parameter : classType.getParameters()) {
                                  parameter.accept(this);
                                }
-                               UClass target = UastContextKt.toUElement(classType.resolve(), UClass.class);
+                               PsiClass aClass = classType.resolve();
+                               UClass target = UastContextKt.toUElement(aClass, UClass.class);
                                if (target != null) {
                                  final RefElement refElement = refManager.getReference(target.getSourcePsi());
                                  if (refElement != null) refElement.initializeIfNeeded();
-                                 refFrom.addReference(refElement, target.getSourcePsi(), decl, false, true, null);
+                                 refFrom.addReference(refElement, aClass, decl, false, true, null);
                                }
                                return null;
                              }
@@ -184,6 +185,27 @@ public class RefJavaUtilImpl extends RefJavaUtil {
                          catch (UnsupportedOperationException e) {
                            //TODO happens somewhere in kotlin plugin. Please assign those exception for Dmitry Batkovich
                            LOG.error(e);
+                         }
+                         return false;
+                       }
+
+                       @Override
+                       public boolean visitTryExpression(@NotNull UTryExpression node) {
+                         // hack to workaround the problem that UAST does not support resource expressions IDEA-337821
+                         PsiTryStatement tryStatement = (PsiTryStatement)node.getJavaPsi();
+                         if (tryStatement != null) {
+                           PsiResourceList resourceList = tryStatement.getResourceList();
+                           if (resourceList != null) {
+                             for (PsiResourceListElement resourceListElement : resourceList) {
+                               if (resourceListElement instanceof PsiResourceExpression rExpression) {
+                                 PsiExpression expression = rExpression.getExpression();
+                                 UElement uElement = UastContextKt.toUElement(expression);
+                                 if (uElement instanceof UExpression exp) {
+                                   exp.accept(this);
+                                 }
+                               }
+                             }
+                           }
                          }
                          return false;
                        }

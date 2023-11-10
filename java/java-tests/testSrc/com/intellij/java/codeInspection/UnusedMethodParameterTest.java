@@ -49,6 +49,10 @@ public class UnusedMethodParameterTest extends JavaInspectionTestCase {
     doTest();
   }
 
+  public void testParameterUsedInResourceExpression() {
+    doTest();
+  }
+
   public void testEntryPointUnusedParameter() {
     doTest("unusedMethodParameter/" + getTestName(true), new UnusedDeclarationInspection(), true, true);
   }
