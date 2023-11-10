@@ -735,6 +735,15 @@ fun <T : CommandChain> T.startNameSuggestionBenchmark(): T = apply {
 
 fun <T : CommandChain> T.stopNameSuggestionBenchmark(reportPath: String): T = apply {
   addCommand("${CMD_PREFIX}stopNameSuggestionBenchmark $reportPath")
+
+}
+
+fun <T : CommandChain> T.registerCompletionMockResponse(code: String, language: String): T = apply {
+  addCommand("${CMD_PREFIX}registerCompletionMockResponse -code ${code.replace(System.lineSeparator(), "<newLine>")} | -language ${language}")
+}
+
+fun <T : CommandChain> T.waitInlineCompletion(): T = apply {
+  addCommand("${CMD_PREFIX}waitInlineCompletion")
 }
 
 /**
