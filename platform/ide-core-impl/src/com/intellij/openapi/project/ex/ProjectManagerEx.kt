@@ -89,8 +89,10 @@ abstract class ProjectManagerEx : ProjectManager() {
   /**
    * The project and the app settings will be not saved.
    */
-  @TestOnly
-  fun forceCloseProject(project: Project): Boolean = forceCloseProject(project, save = false)
+  @Internal
+  fun forceCloseProject(project: Project): Boolean =
+    @Suppress("TestOnlyProblems")
+    forceCloseProject(project, save = false)
 
   @TestOnly
   abstract fun forceCloseProject(project: Project, save: Boolean): Boolean
