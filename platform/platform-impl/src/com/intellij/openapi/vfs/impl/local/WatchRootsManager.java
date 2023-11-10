@@ -9,9 +9,11 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem.WatchRequest;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
@@ -104,7 +106,23 @@ final class WatchRootsManager {
 
       SymlinkData existing = mySymlinksByPath.get(linkPath);
       if (existing != null) {
-        LOG.error("Path conflict. Existing symlink: " + existing + " vs. new symlink: " + data);
+        //TODO RC more diagnostics:
+        //  1) store VFS ref in SymlinkData and check here?
+        //  2) Check existing/incoming ids against current VFS?
+        int existingId = existing.id;
+        int incomingId = data.id;
+        try {
+          PersistentFS pfs = PersistentFS.getInstance();
+          VirtualFile existingFile = pfs.findFileById(existingId);
+          VirtualFile incomingFile = pfs.findFileById(incomingId);
+          LOG.error("Path conflict. " +
+                    "Existing symlink: " + existing + " (" + existingFile + ") " +
+                    "vs. incoming symlink: " + data + " (" + incomingFile + ")");
+        }
+        catch (Throwable t) {
+          LOG.error("Path conflict. " +
+                    "Existing symlink: " + existing + "vs. incoming symlink: " + data + " (can't resolve ids)", t);
+        }
         return;
       }
 
