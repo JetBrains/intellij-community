@@ -109,14 +109,22 @@ object ChangeTypeQuickFixFactories {
             if (it.isNull() || this.typeReference == null) return candidateType
         }
 
-        val returnTypes = returnedExpressions.map { returnExpr -> returnExpr.getKtType()?.let { getActualType(it) } ?: candidateType }.distinct()
-        return returnTypes.singleOrNull() ?: commonSuperType(returnTypes) ?: candidateType
+        val returnTypes = buildList {
+            addAll(returnedExpressions.map<KtExpression, KtType> { returnExpr ->
+                returnExpr.getKtType()?.let<KtType, KtType> { getActualType(it) } ?: candidateType
+            })
+            if (!candidateType.isUnit) {
+                add(candidateType)
+            }
+        }.distinct()
+        return commonSuperType(returnTypes) ?: candidateType
     }
 
     val returnTypeMismatch =
         diagnosticFixFactory(KtFirDiagnostic.ReturnTypeMismatch::class) { diagnostic ->
-            val declaration = diagnostic.targetFunction.psi as? KtCallableDeclaration ?: return@diagnosticFixFactory emptyList()
-            listOf(UpdateTypeQuickFix(declaration, TargetType.ENCLOSING_DECLARATION, createTypeInfo(declaration.returnType(getActualType(diagnostic.actualType)))))
+            val element = diagnostic.targetFunction.psi
+            val declaration = element as? KtCallableDeclaration ?: (element as? KtPropertyAccessor)?.property  ?: return@diagnosticFixFactory emptyList()
+            listOf(UpdateTypeQuickFix(declaration, if (element is KtPropertyAccessor) TargetType.VARIABLE else TargetType.ENCLOSING_DECLARATION, createTypeInfo(declaration.returnType(getActualType(diagnostic.actualType)))))
         }
 
     val returnTypeNullableTypeMismatch =
@@ -141,6 +149,13 @@ object ChangeTypeQuickFixFactories {
             val actualType = getActualType(diagnostic.actualType)
             val type = if (declaration.initializer?.isNull() == true) actualType.withNullability(KtTypeNullability.NULLABLE) else actualType
             registerVariableTypeFixes(declaration, type)
+        }
+
+    val typeMismatch =
+        diagnosticFixFactory(KtFirDiagnostic.TypeMismatch::class) { diagnostic ->
+            val property = diagnostic.psi.parent as? KtProperty ?: return@diagnosticFixFactory emptyList()
+            val actualType = getActualType(diagnostic.actualType)
+            registerVariableTypeFixes(property, property.returnType(actualType))
         }
 
     context(KtAnalysisSession)
