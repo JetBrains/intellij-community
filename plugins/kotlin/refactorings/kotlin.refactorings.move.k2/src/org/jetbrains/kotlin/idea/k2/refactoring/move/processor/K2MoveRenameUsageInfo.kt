@@ -174,7 +174,7 @@ sealed class K2MoveRenameUsageInfo(
             val usages = mutableListOf<K2MoveRenameUsageInfo>()
             containingDecl.forEachDescendantOfType<KtSimpleNameExpression> { refExpr ->
                 if (refExpr is KtEnumEntrySuperclassReferenceExpression) return@forEachDescendantOfType
-                if (refExpr.parent is KtThisExpression) return@forEachDescendantOfType
+                if (refExpr.parent is KtThisExpression || refExpr.parent is KtSuperExpression) return@forEachDescendantOfType
                 analyze(refExpr) {
                     val ref = refExpr.mainReference
                     val declSymbol = ref.resolveToSymbol() as? KtDeclarationSymbol? ?: return@forEachDescendantOfType
