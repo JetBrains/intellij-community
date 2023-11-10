@@ -28,6 +28,10 @@ internal class GitLabMergeRequestCreateDirectionModel(
     private set
   override var headSetByUser: Boolean = false
 
+  fun addDirectionChangesListener(listener: () -> Unit) {
+    return SimpleEventListener.addListener(changeEventDispatcher, listener)
+  }
+
   override fun addAndInvokeDirectionChangesListener(listener: () -> Unit) {
     return SimpleEventListener.addAndInvokeListener(changeEventDispatcher, listener)
   }

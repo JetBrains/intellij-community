@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.ui.create.model
 
+import com.intellij.collaboration.api.HttpStatusErrorException
 import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.async.modelFlow
 import com.intellij.collaboration.ui.ListenableProgressIndicator
@@ -30,6 +31,7 @@ import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabProject
 import org.jetbrains.plugins.gitlab.mergerequest.util.GitLabMergeRequestReviewersUtil
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
+import org.jetbrains.plugins.gitlab.util.GitLabStatistics
 
 internal interface GitLabMergeRequestCreateViewModel {
   val projectsManager: GitLabProjectsManager
@@ -174,11 +176,13 @@ internal class GitLabMergeRequestCreateViewModelImpl(
 
       updatedReviewers ?: return@launchNow
       _adjustedReviewers.value = updatedReviewers
+      GitLabStatistics.logMrCreationReviewersAdjusted(project)
     }
   }
 
   override fun createMergeRequest() {
     taskLauncher.launch {
+      GitLabStatistics.logMrCreationStarted(project)
       val (_, baseBranch, headRepo, headBranch) = _branchState.value ?: return@launch
       _reviewCreatingError.value = null
       try {
@@ -191,12 +195,15 @@ internal class GitLabMergeRequestCreateViewModelImpl(
         projectData.adjustReviewers(mergeRequest.iid, adjustedReviewers.value)
         openReviewTabAction(mergeRequest.iid)
         onReviewCreated()
+        GitLabStatistics.logMrCreationSucceeded(project)
       }
       catch (e: CancellationException) {
         throw e
       }
       catch (e: Throwable) {
         _reviewCreatingError.value = e
+        val errorCode = (e as? HttpStatusErrorException)?.statusCode ?: -1
+        GitLabStatistics.logMrCreationFailed(project, errorCode)
       }
     }
   }

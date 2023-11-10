@@ -22,6 +22,7 @@ import org.jetbrains.plugins.gitlab.mergerequest.ui.create.model.GitLabMergeRequ
 import org.jetbrains.plugins.gitlab.mergerequest.ui.create.model.GitLabMergeRequestCreateViewModel
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
+import org.jetbrains.plugins.gitlab.util.GitLabStatistics
 import javax.swing.JComponent
 import javax.swing.event.DocumentEvent
 import javax.swing.event.DocumentListener
@@ -35,9 +36,13 @@ internal object GitLabMergeRequestCreateComponentFactory {
         directionModel.setHead(branchState.baseRepo, branchState.headBranch)
       }
     }
-    directionModel.addAndInvokeDirectionChangesListener {
+
+    val branchState = BranchState.fromDirectionModel(directionModel)
+    createVm.updateBranchState(branchState)
+    directionModel.addDirectionChangesListener {
       val branchState = BranchState.fromDirectionModel(directionModel)
       createVm.updateBranchState(branchState)
+      GitLabStatistics.logMrCreationBranchesChanged(project)
     }
 
     val directionSelector = createDirectionSelector(directionModel)

@@ -38,7 +38,7 @@ internal object GitLabStatistics {
   //endregion
 
   //region Counters
-  private val COUNTERS_GROUP = EventLogGroup("vcs.gitlab.counters", version = 15)
+  private val COUNTERS_GROUP = EventLogGroup("vcs.gitlab.counters", version = 16)
 
   /**
    * Server metadata was fetched
@@ -187,6 +187,41 @@ internal object GitLabStatistics {
     CREATE_CREATED,
     CREATE_ERRORED
   }
+
+  /**
+   * Merge request creation started
+   */
+  private val MR_CREATION_STARTED_EVENT = COUNTERS_GROUP.registerEvent("mergerequests.creation.started")
+
+  fun logMrCreationStarted(project: Project): Unit = MR_CREATION_STARTED_EVENT.log(project)
+
+  /**
+   * Merge request creation succeeded
+   */
+  private val MR_CREATION_SUCCEEDED_EVENT = COUNTERS_GROUP.registerEvent("mergerequests.creation.succeeded")
+
+  fun logMrCreationSucceeded(project: Project): Unit = MR_CREATION_SUCCEEDED_EVENT.log(project)
+
+  /**
+   * Merge request creation failed
+   */
+  private val MR_CREATION_FAILED_EVENT = COUNTERS_GROUP.registerEvent("mergerequests.creation.failed", EventFields.Int("error_status_code"))
+
+  fun logMrCreationFailed(project: Project, errorStatusCode: Int): Unit = MR_CREATION_FAILED_EVENT.log(project, errorStatusCode)
+
+  /**
+   * Reviewers have been adjusted to the creation of merge request
+   */
+  private val MR_CREATION_REVIEWERS_ADJUSTED_EVENT = COUNTERS_GROUP.registerEvent("mergerequests.creation.reviewer.adjusted")
+
+  fun logMrCreationReviewersAdjusted(project: Project): Unit = MR_CREATION_REVIEWERS_ADJUSTED_EVENT.log(project)
+
+  /**
+   * Merge request creation branches were changed
+   */
+  private val MR_CREATION_BRANCHES_CHANGED_EVENT = COUNTERS_GROUP.registerEvent("mergerequests.creation.branches.changed")
+
+  fun logMrCreationBranchesChanged(project: Project): Unit = MR_CREATION_BRANCHES_CHANGED_EVENT.log(project)
 
   /**
    * GitLab tool window tab <type> was opened from <place>
