@@ -1208,6 +1208,8 @@
     <statistics.validation.customValidationRule
       implementation="com.intellij.execution.impl.statistics.RunConfigurationUsageTriggerCollector$RunTargetValidator"/>
     <statistics.validation.customValidationRule
+      implementation="com.intellij.execution.impl.statistics.MacroNameValidationRule"/>
+    <statistics.validation.customValidationRule
       implementation="com.intellij.codeInsight.template.postfix.templates.PostfixTemplateLogger$PostfixTemplateValidator"/>
     <statistics.validation.customValidationRule
       implementation="com.intellij.internal.statistic.InspectionUsageFUSCollector$InspectionToolValidator"/>
@@ -1249,6 +1251,7 @@
     <statistics.counterUsagesCollector
       implementationClass="com.intellij.ide.projectView.impl.ProjectViewImpl$ProjectViewPaneChangesCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.execution.impl.statistics.RunConfigurationUsageTriggerCollector"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.execution.impl.statistics.MacroUsageCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.internal.statistic.IntentionFUSCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.codeInsight.template.postfix.templates.PostfixTemplateLogger"/>
 
