@@ -147,12 +147,12 @@ suspend fun deployAndLaunchIjentGettingPath(
 
   val wslIjentBinary = wslDistribution.getWslPath(ijentBinary.toAbsolutePath())!!
 
-  val commandLine = GeneralCommandLine(
+  val commandLine = WSLDistribution.neverRunTTYFix(GeneralCommandLine(
     // It's supposed that WslDistribution always converts commands into SHELL.
     // There's no strict reason to call 'exec', just a tiny optimization.
     listOf("exec") +
     getIjentGrpcArgv(wslIjentBinary)
-  )
+  ))
   wslDistribution.doPatchCommandLine(commandLine, project, wslCommandLineOptions)
 
   LOG.debug {

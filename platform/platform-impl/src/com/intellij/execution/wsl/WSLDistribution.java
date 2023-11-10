@@ -83,6 +83,7 @@ public class WSLDistribution implements AbstractWslDistribution {
   public static final String EXEC_PARAMETER = "--exec";
 
   private static final Key<ProcessListener> SUDO_LISTENER_KEY = Key.create("WSL sudo listener");
+  private static final Key<Boolean> NEVER_RUN_TTY_FIX = Key.create("Never run ttyfix");
 
   /**
    * @see <a href="https://www.gnu.org/software/bash/manual/html_node/Definitions.html#index-name">bash identifier definition</a>
@@ -371,11 +372,22 @@ public class WSLDistribution implements AbstractWslDistribution {
     return commandLine;
   }
 
+
+  /***
+   * Never run {@link #fixTTYSize(GeneralCommandLine)}
+   */
+  @NotNull
+  public static GeneralCommandLine neverRunTTYFix(@NotNull GeneralCommandLine commandLine) {
+    commandLine.putUserData(NEVER_RUN_TTY_FIX, true);
+    return commandLine;
+  }
+
   /**
    * Workaround for <a href="https://github.com/microsoft/WSL/issues/10701">wrong tty size WSL problem</a>
    */
   private void fixTTYSize(@NotNull GeneralCommandLine cmd) {
     if (!WslDistributionDescriptor.isCalculatingMountRootCommand(cmd)
+        && cmd.getUserData(NEVER_RUN_TTY_FIX) == null // ttyfix not disabled explicitly
         // Even though mount root is calculated with `options.isExecuteCommandInShell()=false`,
         // let's protect from possible infinite recursion.
         && !(cmd instanceof PtyCommandLine)  // PTY command line has correct tty size
