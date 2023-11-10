@@ -4,9 +4,13 @@ package com.intellij.platform.lvcs.impl
 import com.intellij.diff.chains.DiffRequestProducer
 import com.intellij.diff.requests.DiffRequest
 import com.intellij.diff.requests.ErrorDiffRequest
+import com.intellij.history.core.LocalHistoryFacade
 import com.intellij.history.core.revisions.CurrentRevision
 import com.intellij.history.core.revisions.Difference
 import com.intellij.history.integration.IdeaGateway
+import com.intellij.history.integration.revertion.DifferenceReverter
+import com.intellij.history.integration.revertion.Reverter
+import com.intellij.history.integration.revertion.SelectionReverter
 import com.intellij.history.integration.ui.models.*
 import com.intellij.history.integration.ui.views.DirectoryChange
 import com.intellij.history.integration.ui.views.RevisionProcessingProgressAdapter
@@ -42,8 +46,26 @@ private fun Difference.getChange(gateway: IdeaGateway, scope: ActivityScope): Ch
   return Change(getLeftContentRevision(gateway), getRightContentRevision(gateway))
 }
 
+fun RevisionSelection.getChanges(gateway: IdeaGateway, scope: ActivityScope): Iterable<Change> {
+  return JBIterable.from(diff).map { d -> d.getChange(gateway, scope) }
+}
+
 private fun ActivityScope.Selection.createSelectionCalculator(gateway: IdeaGateway, selection: RevisionSelection): SelectionCalculator {
   return SelectionCalculator(gateway, listOf(createCurrentRevision(selection)) + selection.allRevisions, from, to)
+}
+
+/**
+ * @see com.intellij.history.integration.ui.models.HistoryDialogModel.createReverter
+ */
+fun ActivityScope.createReverter(project: Project,
+                                 facade: LocalHistoryFacade,
+                                 gateway: IdeaGateway,
+                                 selection: RevisionSelection): Reverter {
+  if (this is ActivityScope.Selection) {
+    val calculator = createSelectionCalculator(gateway, selection)
+    return SelectionReverter(project, facade, gateway, calculator, selection.leftRevision, selection.rightEntry, from, to)
+  }
+  return DifferenceReverter(project, facade, gateway, selection.diff, selection.leftRevision)
 }
 
 fun ActivityScope.diffModel(project: Project?, gateway: IdeaGateway, selection: RevisionSelection): FileDifferenceModel {
