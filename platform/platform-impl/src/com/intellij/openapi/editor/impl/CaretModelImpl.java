@@ -524,7 +524,7 @@ public final class CaretModelImpl implements CaretModel, PrioritizedDocumentList
   }
 
   void updateSystemSelection() {
-    if (GraphicsEnvironment.isHeadless()) return;
+    if (GraphicsEnvironment.isHeadless() || !Registry.is("editor.caret.update.primary.selection")) return;
 
     final Clipboard clip = myEditor.getComponent().getToolkit().getSystemSelection();
     if (clip != null) {
