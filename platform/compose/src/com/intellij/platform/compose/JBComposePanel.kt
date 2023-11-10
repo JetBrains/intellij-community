@@ -6,7 +6,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.awt.ComposePanel
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.util.registry.Registry
 import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.jewel.bridge.actionSystem.ComponentDataProviderBridge
 import org.jetbrains.jewel.bridge.theme.SwingBridgeTheme
@@ -23,6 +25,9 @@ import javax.swing.JComponent
 fun JBComposePanel(
   content: @Composable () -> Unit
 ): JComponent {
+  if (ApplicationManager.getApplication().isInternal) {
+    System.setProperty("compose.swing.render.on.graphics", Registry.stringValue("compose.swing.render.on.graphics"))
+  }
   return ComposePanel(ComposeAnalytics()).apply {
     setContent {
       SwingBridgeTheme {
