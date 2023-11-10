@@ -24,11 +24,15 @@ class DelegatePlain {
 	}
 
 	@java.lang.SuppressWarnings("all")
+
+
 	public void bar(final java.util.ArrayList<java.lang.String> list) {
 		this.bar.bar(list);
 	}
 
 	@java.lang.SuppressWarnings("all")
+
+
 	public void foo() {
 		this.foo.foo();
 	}

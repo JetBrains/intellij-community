@@ -228,7 +228,7 @@ public abstract class AbstractLombokParsingTestCase extends AbstractLombokLightC
 
       final Collection<PsiMethod> matchedMethods = filterMethods(beforeMethods, afterMethod);
       if (matchedMethods.isEmpty()) {
-        fail("Method names are not equal, Method: (" + afterMethod.getName() + ") not found in class : " + beforeClass.getName());
+        fail("Method names are not equal, Method: " + afterMethod.getPresentation().getPresentableText() + " not found in class : " + beforeClass.getName());
       }
 
       for (PsiMethod beforeMethod : matchedMethods) {

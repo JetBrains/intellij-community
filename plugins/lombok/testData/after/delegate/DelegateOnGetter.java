@@ -1,29 +1,29 @@
 class DelegateOnGetter {
-	private final java.util.concurrent.atomic.AtomicReference<java.util.concurrent.atomic.AtomicReference<Bar>> bar = new java.util.concurrent.atomic.AtomicReference<java.util.concurrent.atomic.AtomicReference<Bar>>();
+	private final java.util.concurrent.atomic.AtomicReference<java.lang.Object> bar = new java.util.concurrent.atomic.AtomicReference<java.lang.Object>();
 	private interface Bar {
 		void setList(java.util.ArrayList<java.lang.String> list);
 		int getInt();
 	}
-	@java.lang.SuppressWarnings("all")
+	@java.lang.SuppressWarnings({"all", "unchecked"})
 	public Bar getBar() {
-		java.util.concurrent.atomic.AtomicReference<Bar> value = this.bar.get();
+		java.lang.Object value = this.bar.get();
 		if (value == null) {
 			synchronized (this.bar) {
 				value = this.bar.get();
 				if (value == null) {
-					final Bar actualValue = new Bar(){
+					final Bar actualValue = new Bar() {
 						public void setList(java.util.ArrayList<String> list) {
 						}
 						public int getInt() {
 							return 42;
 						}
 					};
-					value = new java.util.concurrent.atomic.AtomicReference<Bar>(actualValue);
+					value = actualValue == null ? this.bar : actualValue;
 					this.bar.set(value);
 				}
 			}
 		}
-		return value.get();
+		return (Bar) (value == this.bar ? null : value);
 	}
 	@java.lang.SuppressWarnings("all")
 	public void setList(final java.util.ArrayList<java.lang.String> list) {
