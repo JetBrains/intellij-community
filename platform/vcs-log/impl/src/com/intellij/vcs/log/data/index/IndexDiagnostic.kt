@@ -2,7 +2,6 @@
 package com.intellij.vcs.log.data.index
 
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.changes.ChangesUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.applyIf

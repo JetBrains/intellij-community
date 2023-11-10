@@ -11,9 +11,7 @@ import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcs.log.VcsLogBundle
-import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.data.index.*
-import com.intellij.vcs.log.impl.VcsLogSharedSettings
 import com.intellij.vcs.log.impl.VcsProjectLog
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys
