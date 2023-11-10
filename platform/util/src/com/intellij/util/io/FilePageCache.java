@@ -49,6 +49,15 @@ import static java.util.concurrent.TimeUnit.NANOSECONDS;
 final class FilePageCache {
   private static final Logger LOG = Logger.getInstance(FilePageCache.class);
   //@formatter:off
+  /**
+   * By default, we throw errors, since it is almost 100% incorrect and buggy to create >1 storage over the same file.
+   * But some legacy code relies on that (RIDER-100680), and for backward-compatibility one could set the flag to false,
+   * returning to the old behavior there it was allowed to have >1 storage (and exception is logged as warning).
+   * This is only a temporary, short-term solution, because it just suppresses error, which almost always manifests
+   * itself later as data corruption.
+   * Beware: 99%+ data corruption risks are on you then.
+   */
+  private static final boolean THROW_ERROR_ON_DUPLICATE_STORAGE_REGISTRATION = getBooleanProperty("FilePageCache.THROW_ERROR_ON_DUPLICATE_STORAGE_REGISTRATION", true);
   private static final boolean KEEP_STACK_TRACE_AT_STORAGE_REGISTRATION = getBooleanProperty("FilePageCache.KEEP_STACK_TRACE_AT_STORAGE_REGISTRATION", true);
   //@formatter:on
 
@@ -407,7 +416,12 @@ final class FilePageCache {
             ex.addSuppressed(stackTraceHolder);
           }
         }
-        throw ex;
+        if (THROW_ERROR_ON_DUPLICATE_STORAGE_REGISTRATION) {
+          throw ex;
+        }
+        else {
+          LOG.warn(ex.getMessage(), ex);
+        }
       }
 
       //Generate unique 'id' (index) for a new storage: just find the number not occupied yet. Assume
@@ -420,7 +434,8 @@ final class FilePageCache {
       storageById.put(storageIndex, storage);
       storageByAbsolutePath.put(storageAbsolutePath, storage);
       if (KEEP_STACK_TRACE_AT_STORAGE_REGISTRATION) {
-        stackTracesOfStorageRegistration.put(storageAbsolutePath, new Exception("Storage[" + storageAbsolutePath + "] registration stack trace"));
+        stackTracesOfStorageRegistration.put(storageAbsolutePath,
+                                             new Exception("Storage[" + storageAbsolutePath + "] registration stack trace"));
       }
       myMaxRegisteredFiles = Math.max(myMaxRegisteredFiles, storageById.size());
       return (long)storageIndex << 32;
