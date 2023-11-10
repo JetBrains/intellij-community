@@ -19,16 +19,15 @@ import java.io.DataInputStream;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
 public final class PersistentSetMultiMaplet<K extends ExternalizableGraphElement, V extends ExternalizableGraphElement> implements MultiMaplet<K, V> {
-  private static final Iterable<?> NULL_COLLECTION = Collections.emptyList();
-  private static final int CACHE_SIZE = 512;
-  private final PersistentHashMap<K, Collection<V>> myMap;
-  private final LoadingCache<K, Collection<V>> myCache;
+  private static final Set<?> NULL_COLLECTION = Collections.emptySet();
+  private static final int CACHE_SIZE = 1024;
+  private final PersistentHashMap<K, Set<V>> myMap;
+  private final LoadingCache<K, Set<V>> myCache;
   private final DataExternalizer<V> myValuesExternalizer;
 
   public PersistentSetMultiMaplet(Path mapFile, KeyDescriptor<K> keyDescriptor, DataExternalizer<V> valueExternalizer) {
@@ -36,15 +35,15 @@ public final class PersistentSetMultiMaplet<K extends ExternalizableGraphElement
       myValuesExternalizer = valueExternalizer;
       myMap = new PersistentHashMap<>(mapFile, keyDescriptor, new DataExternalizer<>() {
         @Override
-        public void save(@NotNull DataOutput out, Collection<V> value) throws IOException {
+        public void save(@NotNull DataOutput out, Set<V> value) throws IOException {
           for (V v : value) {
             valueExternalizer.save(out, v);
           }
         }
 
         @Override
-        public Collection<V> read(@NotNull DataInput in) throws IOException {
-          Collection<V> acc = new HashSet<>();
+        public Set<V> read(@NotNull DataInput in) throws IOException {
+          Set<V> acc = new HashSet<>();
           final DataInputStream stream = (DataInputStream)in;
           while (stream.available() > 0) {
             acc.add(valueExternalizer.read(stream));
@@ -59,9 +58,9 @@ public final class PersistentSetMultiMaplet<K extends ExternalizableGraphElement
 
     myCache = Caffeine.newBuilder().maximumSize(CACHE_SIZE).build(key -> {
       try {
-        Collection<V> collection = myMap.get(key);
+        Set<V> collection = myMap.get(key);
         //noinspection unchecked
-        return collection == null ? (Collection<V>)NULL_COLLECTION : collection;
+        return collection == null ? (Set<V>)NULL_COLLECTION : collection;
       }
       catch (IOException e) {
         throw new BuildDataCorruptedException(e);
@@ -80,8 +79,8 @@ public final class PersistentSetMultiMaplet<K extends ExternalizableGraphElement
   }
 
   @Override
-  public @Nullable Iterable<V> get(K key) {
-    final Collection<V> collection = myCache.get(key);
+  public @Nullable Set<V> get(K key) {
+    final Set<V> collection = myCache.get(key);
     return collection == NULL_COLLECTION ? null : collection;
   }
 
@@ -89,7 +88,8 @@ public final class PersistentSetMultiMaplet<K extends ExternalizableGraphElement
   public void put(K key, Iterable<? extends V> values) {
     try {
       myCache.invalidate(key);
-      Set<V> data = Iterators.collect(values, new HashSet<>());
+      //noinspection unchecked
+      Set<V> data = values instanceof Set? (Set<V>)values : Iterators.collect(values, new HashSet<>());
       if (data.isEmpty()) {
         myMap.remove(key);
       }
@@ -143,7 +143,7 @@ public final class PersistentSetMultiMaplet<K extends ExternalizableGraphElement
   @Override
   public void removeValues(K key, Iterable<? extends V> values) {
     try {
-      final Collection<V> collection = myCache.get(key);
+      final Set<V> collection = myCache.get(key);
       if (!collection.isEmpty()) {
         boolean changes = false;
         for (V value : values) {
