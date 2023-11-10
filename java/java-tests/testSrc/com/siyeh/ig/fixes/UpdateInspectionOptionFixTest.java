@@ -33,9 +33,10 @@ public class UpdateInspectionOptionFixTest extends BasePlatformTestCase {
       tool.mySuggestMapComputeIfAbsent = false;
       tool.mySuggestMapGetOrDefault = false;
     });
-    assertEquals("ModUpdateInspectionOptions[inspectionShortName=Java8MapApi, " +
-                 "options=[ModifiedInspectionOption[bindId=mySuggestMapComputeIfAbsent, oldValue=true, newValue=false], " +
-                 "ModifiedInspectionOption[bindId=mySuggestMapGetOrDefault, oldValue=true, newValue=false]]]", command.toString());
+    assertEquals("""
+                   ModUpdateSystemOptions[options=[\
+                   ModifiedOption[bindId=currentProfile.Java8MapApi.options.mySuggestMapComputeIfAbsent, oldValue=true, newValue=false], \
+                   ModifiedOption[bindId=currentProfile.Java8MapApi.options.mySuggestMapGetOrDefault, oldValue=true, newValue=false]]]""", command.toString());
     IntentionPreviewInfo preview = IntentionPreviewUtils.getModCommandPreview(command, myFixture.getActionContext());
     assertTrue(preview instanceof IntentionPreviewInfo.Html);
     assertEquals("Uncheck inspection option:<br/><br/><table><tr><td><input readonly=\"true\" type=\"checkbox\"/></td><td>Suggest conversion to Map.computeIfAbsent</td></tr></table>" +

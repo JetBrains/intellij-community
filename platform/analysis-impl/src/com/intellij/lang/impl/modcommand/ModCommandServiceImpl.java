@@ -5,7 +5,6 @@ import com.intellij.analysis.AnalysisBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.options.*;
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -75,16 +74,16 @@ public class ModCommandServiceImpl implements ModCommandService {
     updater.accept((T)copiedTool);
     OptionController oldController = inspection.getOptionController();
     OptionController newController = copiedTool.getOptionController();
-    List<ModUpdateInspectionOptions.ModifiedInspectionOption> modifiedOptions = new ArrayList<>();
+    List<ModUpdateSystemOptions.ModifiedOption> modifiedOptions = new ArrayList<>();
     for (OptControl control : controls) {
       Object oldValue = oldController.getOption(control.bindId());
       Object newValue = newController.getOption(control.bindId());
       if (oldValue != null && newValue != null && !oldValue.equals(newValue)) {
-        String bindId = inspection.getShortName() + ".options." + control.bindId();
-        modifiedOptions.add(new ModUpdateInspectionOptions.ModifiedInspectionOption(bindId, oldValue, newValue));
+        String bindId = "currentProfile." + inspection.getShortName() + ".options." + control.bindId();
+        modifiedOptions.add(new ModUpdateSystemOptions.ModifiedOption(bindId, oldValue, newValue));
       }
     }
-    return modifiedOptions.isEmpty() ? ModCommand.nop() : new ModUpdateInspectionOptions(modifiedOptions);
+    return modifiedOptions.isEmpty() ? ModCommand.nop() : new ModUpdateSystemOptions(modifiedOptions);
   }
 
   @NotNull
@@ -155,7 +154,7 @@ public class ModCommandServiceImpl implements ModCommandService {
         navigateInfo = new IntentionPreviewInfo.Html(HtmlChunk.text(
           AnalysisBundle.message("preview.copy.to.clipboard", StringUtil.shortenTextWithEllipsis(copy.content(), 50, 10))));
       }
-      else if (command instanceof ModUpdateInspectionOptions options) {
+      else if (command instanceof ModUpdateSystemOptions options) {
         navigateInfo = new IntentionPreviewInfo.Html(createOptionsPreview(context, options));
       }
     }
@@ -172,18 +171,16 @@ public class ModCommandServiceImpl implements ModCommandService {
       .orElse(IntentionPreviewInfo.EMPTY);
   }
 
-  private static @NotNull HtmlChunk createOptionsPreview(@NotNull ActionContext context, @NotNull ModUpdateInspectionOptions options) {
-    InspectionProfileImpl profile = InspectionProfileManager.getInstance(context.project()).getCurrentProfile();
-    OptionController controller = profile.controllerFor(context.file());
+  private static @NotNull HtmlChunk createOptionsPreview(@NotNull ActionContext context, @NotNull ModUpdateSystemOptions options) {
     HtmlBuilder builder = new HtmlBuilder();
     for (var option : options.options()) {
-      builder.append(createOptionPreview(controller, option));
+      builder.append(createOptionPreview(context.file(), option));
     }
     return builder.toFragment();
   }
 
-  private static @NotNull HtmlChunk createOptionPreview(@NotNull OptionController controller,
-                                                        ModUpdateInspectionOptions.@NotNull ModifiedInspectionOption option) {
+  private static @NotNull HtmlChunk createOptionPreview(@NotNull PsiFile file, ModUpdateSystemOptions.@NotNull ModifiedOption option) {
+    OptionController controller = OptionControllerProvider.rootController(file);
     OptionController.OptionControlInfo controlInfo = controller.findControl(option.bindId());
     if (controlInfo == null) return HtmlChunk.empty();
     OptControl control = controlInfo.control();

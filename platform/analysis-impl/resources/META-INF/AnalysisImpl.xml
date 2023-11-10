@@ -66,5 +66,6 @@
     <inspectionsReportConverter implementation="com.intellij.codeInspection.ex.PlainTextFormatter"/>
     <inspectionsReportConverter implementation="com.intellij.codeInspection.ex.JsonInspectionsReportConverter"/>
     <inspectionsReportConverter implementation="com.intellij.codeInspection.ex.JsonSingleFileInspectionsReportConverter"/>
+    <optionController implementation="com.intellij.codeInspection.ex.CurrentProfileOptionControllerProvider"/>
   </extensions>
 </idea-plugin>
