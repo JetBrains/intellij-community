@@ -19,6 +19,7 @@ fun Iterable<Long>.median(): Long {
   }
 }
 
+/** @see [com.intellij.tools.ide.metrics.collector.metrics.CollectionExtensionKt.median] */
 fun Iterable<PerformanceMetrics.Metric>.medianValue(): Long = this.map { it.value }.median()
 
 fun <T : Number> Iterable<T>.standardDeviation(): Long {
@@ -28,16 +29,20 @@ fun <T : Number> Iterable<T>.standardDeviation(): Long {
 
 fun Iterable<PerformanceMetrics.Metric>.standardDeviationValue(): Long = this.map { it.value }.standardDeviation()
 
+/** Frequency of the value in the collection */
 fun <T : Number> Iterable<T>.mode(): T {
   return this.groupingBy { it }.eachCount().maxBy { it.value }.key
 }
 
+/** @see [com.intellij.tools.ide.metrics.collector.metrics.CollectionExtensionKt.mode] */
 fun Iterable<PerformanceMetrics.Metric>.modeValue(): Long = this.map { it.value }.mode()
 
+/** Difference between the smallest and the largest values */
 fun Iterable<Long>.range(): Long {
   val sorted = this.sorted()
   return sorted.last() - sorted.first()
 }
 
+/** @see [com.intellij.tools.ide.metrics.collector.metrics.CollectionExtensionKt.range] */
 fun Iterable<PerformanceMetrics.Metric>.rangeValue(): Long = this.map { it.value }.range()
 

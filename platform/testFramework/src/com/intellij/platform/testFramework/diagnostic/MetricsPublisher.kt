@@ -6,7 +6,7 @@ import com.intellij.util.concurrency.SynchronizedClearableLazy
 import java.util.*
 
 interface MetricsPublisher {
-  fun publish(fullQualifiedTestMethodName: String, vararg metricName: String): Unit
+  fun publish(fullQualifiedTestMethodName: String, metricName: String): Unit
 
   companion object {
     @JvmStatic
@@ -16,7 +16,7 @@ interface MetricsPublisher {
 
 /** Dummy that always "works successfully" */
 class NoopMetricsPublisher : MetricsPublisher {
-  override fun publish(fullQualifiedTestMethodName: String, vararg metricName: String) {}
+  override fun publish(fullQualifiedTestMethodName: String, metricName: String) {}
 }
 
 private val instance: SynchronizedClearableLazy<MetricsPublisher> = SynchronizedClearableLazy {

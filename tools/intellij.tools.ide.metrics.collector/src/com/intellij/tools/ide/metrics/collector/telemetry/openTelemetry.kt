@@ -15,6 +15,7 @@ data class MetricWithAttributes(val metric: Metric,
                                 val attributes: MutableList<Metric> = mutableListOf())
 
 private val logger = logger<OpentelemetryJsonParser>()
+
 /**
  * Reports duration of `nameSpan` and all its children spans.
  * Besides, all attributes are reported as counters.
@@ -24,10 +25,10 @@ private val logger = logger<OpentelemetryJsonParser>()
  * 2a. If attribute ends with `#max`, in sum the max of max will be recorded
  * 3a. If attribute ends with `#mean_value`, the mean value of mean values will be recorded
  */
-
-fun getMetricsFromSpanAndChildren(file: File, filter: SpanFilter): List<Metric> {
-  val spanElements = OpentelemetryJsonParser(filter).getSpanElements(file)
-  val metricSpanProcessor = MetricSpanProcessor()
+fun getMetricsFromSpanAndChildren(file: File,
+                                  filter: SpanFilter,
+                                  metricSpanProcessor: MetricSpanProcessor = MetricSpanProcessor()): List<Metric> {
+  val spanElements = OpentelemetryJsonParser(filter).getSpanElements(file).toList()
   val spanToMetricMap = spanElements.map { metricSpanProcessor.process(it) }
     .filterNotNull()
     .groupBy { it.metric.id.name }

@@ -14,9 +14,9 @@ interface SpanProcessor<T> {
 
 }
 
-class MetricSpanProcessor : SpanProcessor<MetricWithAttributes> {
+class MetricSpanProcessor(val ignoreWarmupSpan: Boolean = true) : SpanProcessor<MetricWithAttributes> {
   override fun process(span: SpanElement): MetricWithAttributes? {
-    if (!span.isWarmup && (span.duration > 0 || !shouldAvoidIfZero(span))) {
+    if (span.isWarmup != ignoreWarmupSpan && (span.duration > 0 || !shouldAvoidIfZero(span))) {
       val metrics = MetricWithAttributes(PerformanceMetrics.Metric(PerformanceMetrics.MetricId.Duration(span.name), span.duration))
       populateAttributes(metrics, span)
       return metrics

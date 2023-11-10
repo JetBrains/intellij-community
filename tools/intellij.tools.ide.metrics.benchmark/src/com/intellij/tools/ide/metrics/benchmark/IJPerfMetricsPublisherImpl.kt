@@ -52,6 +52,8 @@ class IJPerfMetricsPublisherImpl : MetricsPublisher {
       val metrics: List<PerformanceMetrics.Metric> = MetricsExtractor(PathManager.getLogDir().resolve("opentelemetry.json").toFile())
         .waitTillMetricsExported(spanName)
 
+      teamCityClient.publishTeamCityArtifacts(source = PathManager.getLogDir(), artifactPath = fullQualifiedTestMethodName)
+
       val buildInfo = CIServerBuildInfo(
         buildId = teamCityClient.buildId,
         typeId = teamCityClient.buildTypeId,
@@ -77,17 +79,15 @@ class IJPerfMetricsPublisherImpl : MetricsPublisher {
     }
   }
 
-  override fun publish(fullQualifiedTestMethodName: String, vararg metricName: String) {
-    metricName.forEach {
-      val metricsDto = prepareMetricsForPublishing(fullQualifiedTestMethodName, it)
+  override fun publish(fullQualifiedTestMethodName: String, metricName: String) {
+    val metricsDto = prepareMetricsForPublishing(fullQualifiedTestMethodName, metricName)
 
-      val artifactName = "metrics.performance.json"
-      val reportFile = Files.createTempFile("unit-perf-metric", artifactName)
-      jacksonObjectMapper().writerWithDefaultPrettyPrinter().writeValue(reportFile.toFile(), metricsDto)
-      teamCityClient.publishTeamCityArtifacts(source = reportFile,
-                                              artifactPath = fullQualifiedTestMethodName,
-                                              artifactName = "metrics.performance.json",
-                                              zipContent = false)
-    }
+    val artifactName = "metrics.performance.json"
+    val reportFile = Files.createTempFile("unit-perf-metric", artifactName)
+    jacksonObjectMapper().writerWithDefaultPrettyPrinter().writeValue(reportFile.toFile(), metricsDto)
+    teamCityClient.publishTeamCityArtifacts(source = reportFile,
+                                            artifactPath = fullQualifiedTestMethodName,
+                                            artifactName = "metrics.performance.json",
+                                            zipContent = false)
   }
 }

@@ -5,6 +5,7 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.tool.withRetry
 import com.intellij.tools.ide.metrics.collector.metrics.*
+import com.intellij.tools.ide.metrics.collector.telemetry.MetricSpanProcessor
 import com.intellij.tools.ide.metrics.collector.telemetry.SpanFilter
 import com.intellij.tools.ide.metrics.collector.telemetry.getMetricsFromSpanAndChildren
 import java.io.File
@@ -15,31 +16,36 @@ class MetricsExtractor(val telemetryJsonFile: File = PathManager.getLogDir().res
   fun waitTillMetricsExported(spanName: String): List<PerformanceMetrics.Metric> {
     val originalMetrics: List<PerformanceMetrics.Metric>? = withRetry(retries = 3, delayBetweenRetries = 300.milliseconds) {
       TelemetryManager.getInstance().forceFlushMetrics()
-      extractOpenTelemetrySpanMetrics(spanName)
+      extractOpenTelemetrySpanMetrics(spanName, forWarmup = true).plus(extractOpenTelemetrySpanMetrics(spanName, forWarmup = false))
     }
 
     return requireNotNull(originalMetrics) { "Couldn't find metrics for '$spanName' in $telemetryJsonFile" }
   }
 
-  private fun extractOpenTelemetrySpanMetrics(spanName: String): List<PerformanceMetrics.Metric> {
-    val originalMetrics = getMetricsFromSpanAndChildren(telemetryJsonFile, SpanFilter.equals(spanName))
+  private fun extractOpenTelemetrySpanMetrics(spanName: String, forWarmup: Boolean): List<PerformanceMetrics.Metric> {
+    val originalMetrics = getMetricsFromSpanAndChildren(file = telemetryJsonFile,
+                                                        filter = SpanFilter { it.name == spanName && it.isWarmup == forWarmup },
+                                                        metricSpanProcessor = MetricSpanProcessor(ignoreWarmupSpan = !forWarmup))
+
+    var metricsPrefix = ""
+    if (forWarmup) metricsPrefix = "warmup."
 
     val attempts = originalMetrics.filter { it.id.name.contains("Attempt", ignoreCase = true) }
+
     val medianValueOfAttempts: Long = attempts.medianValue()
 
-    val attemptMeanMetric = "attempt.mean.ms".toPerformanceMetricDuration(attempts.map { it.value }.average().toLong())
-    val attemptMedianMetric = "attempt.median.ms".toPerformanceMetricDuration(medianValueOfAttempts)
-    val attemptModeMetric = "attempt.mode".toPerformanceMetricDuration(attempts.modeValue())
-    val attemptRangeMetric = "attempt.range.ms".toPerformanceMetricDuration(attempts.rangeValue())
-    val attemptSumMetric = "attempt.sum.ms".toPerformanceMetricDuration(attempts.sumOf { it.value })
-    val attemptCountMetric = "attempt.count".toPerformanceMetricDuration(attempts.size.toLong())
-    val attemptStandardDeviationMetric = "attempt.standard.deviation".toPerformanceMetricDuration(attempts.standardDeviationValue())
+    val attemptMeanMetric = "${metricsPrefix}attempt.mean.ms".toPerformanceMetricDuration(attempts.map { it.value }.average().toLong())
+    val attemptMedianMetric = "${metricsPrefix}attempt.median.ms".toPerformanceMetricDuration(medianValueOfAttempts)
+    val attemptRangeMetric = "${metricsPrefix}attempt.range.ms".toPerformanceMetricDuration(attempts.rangeValue())
+    val attemptSumMetric = "${metricsPrefix}attempt.sum.ms".toPerformanceMetricDuration(attempts.sumOf { it.value })
+    val attemptCountMetric = "${metricsPrefix}attempt.count".toPerformanceMetricDuration(attempts.size.toLong())
+    val attemptStandardDeviationMetric = "${metricsPrefix}attempt.standard.deviation".toPerformanceMetricDuration(
+      attempts.standardDeviationValue())
 
     val mainMetricValue: Long = originalMetrics.single { it.id.name == spanName }.value
-    val totalTestDurationMetric = "total.test.duration.ms".toPerformanceMetricDuration(mainMetricValue)
+    val totalTestDurationMetric = "${metricsPrefix}total.test.duration.ms".toPerformanceMetricDuration(mainMetricValue)
 
     return listOf(totalTestDurationMetric, attemptMeanMetric, attemptMedianMetric,
-                  attemptModeMetric, attemptRangeMetric, attemptSumMetric,
-                  attemptCountMetric, attemptStandardDeviationMetric)
+                  attemptRangeMetric, attemptSumMetric, attemptCountMetric, attemptStandardDeviationMetric)
   }
 }

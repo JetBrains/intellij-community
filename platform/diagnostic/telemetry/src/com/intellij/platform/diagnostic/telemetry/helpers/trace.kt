@@ -58,6 +58,19 @@ fun <T> computeWithSpanAttribute(tracer: IJTracer,
   }
 }
 
+fun <T> computeWithSpanAttributes(tracer: IJTracer,
+                                  spanName: String,
+                                  attributesGenerator: (T) -> Map<String, String>,
+                                  operation: () -> T): T {
+  return computeWithSpan(tracer, spanName) { span ->
+    val result = operation.invoke()
+    attributesGenerator.invoke(result).forEach { (attributeName, attributeValue) ->
+      span.setAttribute(attributeName, attributeValue)
+    }
+    return@computeWithSpan result
+  }
+}
+
 inline fun <T> computeWithSpan(tracer: Tracer, spanName: String, operation: (Span) -> T): T {
   return tracer.spanBuilder(spanName).useWithScope(operation)
 }
