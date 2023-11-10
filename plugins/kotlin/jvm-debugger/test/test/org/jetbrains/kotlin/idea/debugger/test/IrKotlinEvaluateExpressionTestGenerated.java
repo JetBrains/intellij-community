@@ -1331,6 +1331,11 @@ public abstract class IrKotlinEvaluateExpressionTestGenerated extends AbstractIr
                 runTest("testData/evaluation/singleBreakpoint/genericWithMultipleUpperBounds.kt");
             }
 
+            @TestMetadata("getPropertyInInitContext.kt")
+            public void testGetPropertyInInitContext() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/getPropertyInInitContext.kt");
+            }
+
             @TestMetadata("imports.kt")
             public void testImports() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/imports.kt");

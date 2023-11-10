@@ -128,7 +128,7 @@ class CodeFragmentParameterAnalyzer(
                 var processed = false
 
                 fun processImplicitReceiver(receiver: ReceiverValue?) {
-                    if (receiver is ImplicitReceiver) {
+                    if (receiver is ImplicitReceiver && !isPrimaryConstructorParameter(descriptor)) {
                         val parameter = processReceiver(receiver)
                         if (parameter != null) {
                             checkBounds(receiver.declarationDescriptor, expression, parameter)
@@ -231,7 +231,7 @@ class CodeFragmentParameterAnalyzer(
     }
 
     private fun processDispatchReceiver(descriptor: ClassDescriptor): Smart? {
-        if (descriptor.kind == ClassKind.OBJECT || containingPrimaryConstructor != null) {
+        if (descriptor.kind == ClassKind.OBJECT) {
             return null
         }
 
@@ -316,13 +316,7 @@ class CodeFragmentParameterAnalyzer(
             )
         }
 
-        val isLocalTarget = (target as? DeclarationDescriptorWithVisibility)?.visibility == DescriptorVisibilities.LOCAL
-
-        val isPrimaryConstructorParameter = !isLocalTarget
-                && target is PropertyDescriptor
-                && isContainingPrimaryConstructorParameter(target)
-
-        if (!isLocalTarget && !isPrimaryConstructorParameter) {
+        if (!isPrimaryConstructorParameter(target)) {
             return null
         }
 
@@ -344,6 +338,16 @@ class CodeFragmentParameterAnalyzer(
             }
             else -> null
         }
+    }
+
+    private fun isPrimaryConstructorParameter(target: DeclarationDescriptor): Boolean {
+        val isLocalTarget = (target as? DeclarationDescriptorWithVisibility)?.visibility == DescriptorVisibilities.LOCAL
+
+        val isPrimaryConstructorParameter = !isLocalTarget
+                && target is PropertyDescriptor
+                && isContainingPrimaryConstructorParameter(target)
+
+        return isLocalTarget || isPrimaryConstructorParameter
     }
 
     private fun isAssignmentLValue(expression: PsiElement): Boolean {
