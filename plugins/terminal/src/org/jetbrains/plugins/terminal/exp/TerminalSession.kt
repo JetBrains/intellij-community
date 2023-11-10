@@ -69,8 +69,10 @@ class TerminalSession(settings: JBTerminalSystemSettingsProviderBase,
   }
 
   fun sendCommandToExecute(shellCommand: String) {
+    // Simulate pressing Ctrl+U in the terminal to clear all typings in the prompt
+    val fullCommand = "\u0015" + shellCommand
     terminalStarterFuture.thenAccept {
-      TerminalUtil.sendCommandToExecute(shellCommand, it)
+      TerminalUtil.sendCommandToExecute(fullCommand, it)
     }
   }
 
