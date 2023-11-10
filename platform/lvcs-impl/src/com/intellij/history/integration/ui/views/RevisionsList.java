@@ -15,10 +15,8 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.ui.ExpandableItemsHandler;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SeparatorWithText;
-import com.intellij.ui.TableCell;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.speedSearch.FilteringTableModel;
 import com.intellij.ui.table.JBTable;
@@ -276,10 +274,7 @@ public final class RevisionsList {
     private final MyLabelContainer myLabelContainer = new MyLabelContainer();
     private final JBLabel myLabelLabel = new JBLabel();
 
-    private final ExpandableItemsHandler<TableCell> myToolTipHandler;
-
     public MyCellRenderer(@NotNull JBTable table) {
-      myToolTipHandler = table.getExpandableItemsHandler();
       JPanel headersPanel = new JPanel(new BorderLayout());
       headersPanel.setOpaque(false);
       headersPanel.add(myPeriodLabel, BorderLayout.NORTH);
