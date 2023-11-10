@@ -596,6 +596,10 @@ class RunConfigurationStartHistory(private val project: Project) : PersistentSta
     _state = state
   }
 
+  fun reloadState() {
+    _state = State(_state.history, _state.pinned, _state.allConfigurationsExpanded)
+  }
+
   interface Listener {
     fun togglePin(setting: RunnerAndConfigurationSettings) {}
     fun register(setting: RunnerAndConfigurationSettings) {}
