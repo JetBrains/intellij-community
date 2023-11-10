@@ -37,7 +37,7 @@ internal class ApplicationInfoPropertiesImpl: ApplicationInfoProperties {
   override val minorVersionMainPart: String
   override val shortProductName: String
   override lateinit var productCode: String
-  override val productName: String
+  override val fullProductName: String
   override val majorReleaseDate: String
   override val edition: String?
   override val motto: String?
@@ -111,7 +111,7 @@ internal class ApplicationInfoPropertiesImpl: ApplicationInfoProperties {
       }
       formatMajorReleaseDate(majorReleaseDateRaw = majorReleaseDate, buildDateInSeconds = buildOptions.buildDateInSeconds)
     }
-    productName = namesTag.getAttributeValue("fullname") ?: shortProductName
+    fullProductName = namesTag.getAttributeValue("fullname") ?: shortProductName
     edition = namesTag.getAttributeValue("edition")
     motto = namesTag.getAttributeValue("motto")
     launcherName = namesTag.getAttributeValue("script")!!
@@ -136,7 +136,7 @@ internal class ApplicationInfoPropertiesImpl: ApplicationInfoProperties {
   override val fullVersion: String
     get() = MessageFormat.format(fullVersionFormat, majorVersion, minorVersion, microVersion, patchVersion)
   override val productNameWithEdition: String
-    get() = if (edition == null) productName else "$productName $edition"
+    get() = if (edition == null) fullProductName else "$fullProductName $edition"
 
 
   override fun toString() = appInfoXml

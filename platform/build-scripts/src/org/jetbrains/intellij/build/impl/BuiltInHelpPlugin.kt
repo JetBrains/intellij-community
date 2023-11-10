@@ -18,7 +18,7 @@ private const val MODULE_NAME = "intellij.platform.builtInHelp"
 private val LUCENE_LIBRARIES = setOf("lucene-queryparser", "lucene-highlighter", "lucene-memory")
 
 internal fun buildHelpPlugin(pluginVersion: String, context: BuildContext): PluginLayout? {
-  val productName = context.applicationInfo.productName
+  val productName = context.applicationInfo.fullProductName
   val resourceRoot = context.paths.projectHome.resolve("help/plugin-resources")
   if (Files.notExists(resourceRoot.resolve("topics/app.js"))) {
     Span.current().addEvent("skip $productName Help plugin because $resourceRoot/topics/app.js not present")
@@ -54,7 +54,7 @@ internal fun buildHelpPlugin(pluginVersion: String, context: BuildContext): Plug
 }
 
 private fun pluginXml(buildContext: BuildContext, version: String): String {
-  val productName = buildContext.applicationInfo.productName
+  val productName = buildContext.applicationInfo.fullProductName
   val productLowerCase = productName.replace(" ", "-").lowercase()
   val pluginId = "bundled-$productLowerCase-help"
   val pluginName = "$productName Help"

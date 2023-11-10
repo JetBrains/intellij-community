@@ -169,7 +169,7 @@ internal class WindowsDistributionBuilder(
   }
 
   private fun generateScripts(distBinDir: Path, arch: JvmArchitecture) {
-    val fullName = context.applicationInfo.productName
+    val fullName = context.applicationInfo.fullProductName
     val baseName = context.productProperties.baseFileName
     val scriptName = "${baseName}.bat"
     val vmOptionsFileName = "${baseName}64.exe"

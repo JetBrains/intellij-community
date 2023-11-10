@@ -51,7 +51,7 @@ class MacDistributionBuilder(override val context: BuildContext,
         <key>CFBundleTypeIconFile</key>
         <string>${targetIcnsFileName}</string>
         <key>CFBundleTypeName</key>
-        <string>${context.applicationInfo.productName} Project File</string>
+        <string>${context.applicationInfo.fullProductName} Project File</string>
         <key>CFBundleTypeRole</key>
         <string>Editor</string>
       </dict>"""
@@ -243,7 +243,7 @@ class MacDistributionBuilder(override val context: BuildContext,
       }
     }
 
-    val fullName = context.applicationInfo.productName
+    val fullName = context.applicationInfo.fullProductName
 
     //todo improve
     val minor = context.applicationInfo.minorVersion

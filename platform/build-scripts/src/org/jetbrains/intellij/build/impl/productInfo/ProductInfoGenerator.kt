@@ -33,7 +33,7 @@ internal fun generateProductInfoJson(relativePathToBin: String,
                                      context: BuildContext): String {
   val appInfo = context.applicationInfo
   val json = ProductInfoData(
-    name = appInfo.productName,
+    name = appInfo.fullProductName,
     version = appInfo.fullVersion,
     versionSuffix = appInfo.versionSuffix,
     buildNumber = context.buildNumber,

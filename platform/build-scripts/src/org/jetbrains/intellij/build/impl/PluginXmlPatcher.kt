@@ -80,7 +80,7 @@ internal fun patchPluginXml(moduleOutputPatcher: ModuleOutputPatcher,
                        toPublish = pluginsToPublish.contains(plugin),
                        retainProductDescriptorForBundledPlugin = plugin.retainProductDescriptorForBundledPlugin,
                        isEap = context.applicationInfo.isEAP,
-                       productName = context.applicationInfo.productName),
+                       productName = context.applicationInfo.fullProductName),
       context,
     )
   }

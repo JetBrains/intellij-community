@@ -130,7 +130,7 @@ class LinuxDistributionBuilder(override val context: BuildContext,
   }
 
   private fun generateReadme(unixDistPath: Path) {
-    val fullName = context.applicationInfo.productName
+    val fullName = context.applicationInfo.fullProductName
     val sourceFile = context.paths.communityHomeDir.resolve("platform/build-scripts/resources/linux/Install-Linux-tar.txt")
     val targetFile = unixDistPath.resolve("Install-Linux-tar.txt")
     substituteTemplatePlaceholders(sourceFile, targetFile, "@@", listOf(
@@ -397,7 +397,7 @@ private fun copyScript(sourceFile: Path,
     outputFile = targetFile,
     placeholder = "__",
     values = listOf(
-      Pair("product_full", context.applicationInfo.productName),
+      Pair("product_full", context.applicationInfo.fullProductName),
       Pair("product_uc", context.productProperties.getEnvironmentVariableBaseName(context.applicationInfo)),
       Pair("product_vendor", context.applicationInfo.shortCompanyName),
       Pair("product_code", context.applicationInfo.productCode),
