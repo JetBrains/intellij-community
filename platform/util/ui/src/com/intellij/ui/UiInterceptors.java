@@ -137,8 +137,9 @@ public final class UiInterceptors {
     }
 
     public final void intercept(@NotNull Object component, @Nullable RelativePoint relativePoint) {
-      if (!isApplicable(component)) {
-        return;
+      if (!myClass.isInstance(component)) {
+        throw new IllegalStateException("Unexpected UI component appears: wanted " + myClass.getName() + "; got: "
+                                        + component.getClass().getName() + " (" + component + ")");
       }
       doIntercept(myClass.cast(component), relativePoint);
     }
