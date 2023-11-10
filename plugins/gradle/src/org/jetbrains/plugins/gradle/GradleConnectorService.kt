@@ -278,7 +278,6 @@ internal class GradleConnectorService(@Suppress("UNUSED_PARAMETER") project: Pro
       }
       else if (connectorParams.distributionType == DistributionType.WRAPPED) {
         if (connectorParams.wrapperPropertyFile != null) {
-          val gradleUserHomeLocalFile = localPathToGradleUserHome?.let { File(localPathToGradleUserHome) }
           DistributionFactoryExt.setWrappedDistribution(connector, connectorParams.wrapperPropertyFile)
         }
       }
