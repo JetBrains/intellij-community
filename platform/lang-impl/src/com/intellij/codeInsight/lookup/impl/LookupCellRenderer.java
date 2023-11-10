@@ -658,7 +658,7 @@ public final class LookupCellRenderer implements ListCellRenderer<LookupElement>
   }
 
   int getTextIndent() {
-    return myNameComponent.getIpad().left + myEmptyIcon.getIconWidth() + myNameComponent.getIconTextGap();
+    return myPanel.getInsets().left + myNameComponent.getIpad().left + myEmptyIcon.getIconWidth() + myNameComponent.getIconTextGap();
   }
 
   private static int calculateWidth(LookupElementPresentation presentation, FontMetrics normalMetrics, FontMetrics boldMetrics) {
