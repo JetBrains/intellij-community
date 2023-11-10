@@ -8,6 +8,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.jediterm.core.util.TermSize
+import com.jediterm.terminal.RequestOrigin
 import org.jetbrains.plugins.terminal.LocalTerminalDirectRunner
 import org.jetbrains.plugins.terminal.ShellStartupOptions
 import org.jetbrains.plugins.terminal.exp.ShellCommandListener
@@ -23,10 +24,10 @@ object TerminalSessionTestUtil {
   fun startBlockTerminalSession(project: Project,
                                 shellPath: String,
                                 disposable: Disposable,
-                                size: TermSize = TermSize(200, 20)): TerminalSession {
+                                initialTermSize: TermSize = TermSize(200, 20)): TerminalSession {
     Registry.get(LocalTerminalDirectRunner.BLOCK_TERMINAL_REGISTRY).setValue(true, disposable)
     val runner = LocalTerminalDirectRunner.createTerminalRunner(project)
-    val baseOptions = ShellStartupOptions.Builder().shellCommand(listOf(shellPath, "-i")).initialTermSize(size).build()
+    val baseOptions = ShellStartupOptions.Builder().shellCommand(listOf(shellPath, "-i")).initialTermSize(initialTermSize).build()
     val configuredOptions = runner.configureStartupOptions(baseOptions)
     assumeBlockShellIntegration(configuredOptions)
     val process = runner.createProcess(configuredOptions)
@@ -34,6 +35,7 @@ object TerminalSessionTestUtil {
 
     val colorPalette = BlockTerminalColorPalette(EditorColorsManager.getInstance().globalScheme)
     val session = TerminalSession(runner.settingsProvider, colorPalette, configuredOptions.shellIntegration)
+    session.controller.resize(initialTermSize, RequestOrigin.User)
     val model: TerminalModel = session.model
 
     val promptShownFuture = CompletableFuture<Boolean>()
