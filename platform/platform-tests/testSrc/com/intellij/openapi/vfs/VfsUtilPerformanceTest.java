@@ -151,7 +151,7 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
         }
       };
 
-      PlatformTestUtil.startPerformanceTest("getParent before movement", time, checkPerformance).assertTiming();
+      PlatformTestUtil.startPerformanceTest("getParent before movement", time, checkPerformance).assertTiming(getQualifiedTestMethodName());
 
       VirtualFile dir1 = root.createChildDirectory(this, "dir1");
       VirtualFile dir2 = root.createChildDirectory(this, "dir2");
@@ -159,7 +159,7 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
         dir1.createChildData(this, "a" + i + ".txt").move(this, dir2);
       }
 
-      PlatformTestUtil.startPerformanceTest("getParent after movement", time, checkPerformance).assertTiming();
+      PlatformTestUtil.startPerformanceTest("getParent after movement", time, checkPerformance).assertTiming(getQualifiedTestMethodName());
     });
   }
 
@@ -187,7 +187,7 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
         for (int i = 0; i < 1_000_000; ++i) {
           file.getPath();
         }
-      }).assertTiming();
+      }).assertTiming(getQualifiedTestMethodName());
     });
   }
 
@@ -281,7 +281,7 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
         eventsForCreating(events, N, temp);
         assertEquals(N, TempFileSystem.getInstance().list(temp).length); // do not call getChildren which caches everything
       })
-      .assertTiming();
+      .assertTiming(getQualifiedTestMethodName());
 
       PlatformTestUtil.startPerformanceTest("many files deletions", 3_300, () -> {
         assertEquals(N, events.size());
@@ -300,7 +300,7 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
         eventsForDeleting(events, temp);
         assertEquals(N, TempFileSystem.getInstance().list(temp).length); // do not call getChildren which caches everything
       })
-      .assertTiming();
+      .assertTiming(getQualifiedTestMethodName());
       }
     );
   }

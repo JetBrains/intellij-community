@@ -176,7 +176,7 @@ public class PerformanceTestInfo {
       callingTestMethod = tryToFindCallingTestMethodByNamePattern();
       if (callingTestMethod == null) {
         throw new AssertionError(
-          "Couldn't manage to detect the calling test method. Please use overloaded method com.intellij.testFramework.PerformanceTestInfo.assertTiming(Method callingTestMethod)"
+          "Couldn't manage to detect the calling test method. Please use one of the overloads of com.intellij.testFramework.PerformanceTestInfo.assertTiming"
         );
       }
     }
