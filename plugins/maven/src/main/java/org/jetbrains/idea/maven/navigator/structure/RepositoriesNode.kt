@@ -1,12 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.navigator.structure
 
-import com.intellij.ide.projectView.PresentationData
-import com.intellij.openapi.ui.getPresentablePath
 import com.intellij.util.containers.mapSmart
 import icons.MavenIcons
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectBundle
+import org.jetbrains.idea.maven.server.MavenIndexUpdateState
 import java.util.concurrent.CopyOnWriteArrayList
 
 internal class RepositoriesNode(structure: MavenProjectsStructure, parent: ProjectNode) : GroupNode(structure, parent) {
@@ -28,7 +27,17 @@ internal class RepositoriesNode(structure: MavenProjectsStructure, parent: Proje
     val local = mavenProject.localRepository
     val remotes = mavenProject.remoteRepositories
     myRepositoryNodes.clear()
-    myRepositoryNodes.add(RepositoryNode(myMavenProjectsStructure, this, "local", getPresentablePath(local.absolutePath), true))
+    myRepositoryNodes.add(RepositoryNode(myMavenProjectsStructure, this, "local", local.absolutePath, true))
     myRepositoryNodes.addAll(remotes.mapSmart { RepositoryNode(myMavenProjectsStructure, this, it.id, it.url, false) })
+  }
+
+  public fun updateStatus(state: MavenIndexUpdateState) {
+    val nodesToUpdate = myRepositoryNodes.filter { it.url == state.myUrl }
+    if (nodesToUpdate.isEmpty()) return;
+
+    nodesToUpdate.forEach {
+      it.setLastStatus(state)
+      it.update()
+    }
   }
 }

@@ -216,6 +216,10 @@ class ProjectNode extends ProjectsGroupNode implements MavenProjectNode {
                 "</tr>");
   }
 
+  RepositoriesNode getRepositoriesNode() {
+    return myRepositoriesNode;
+  }
+
   private static String wrappedText(MavenProjectProblem each) {
     String description = ObjectUtils.chooseNotNull(each.getDescription(), each.getPath());
     if (description == null) return "";

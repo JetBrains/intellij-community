@@ -377,7 +377,7 @@ private class StatisticsData(val project: Project, val rootProjects: Int) {
     }
     finally {
       MavenLog.LOG.info("preimport statistics: " +
-                        "linked: $linkedProject of $rootProjects with total $totalProjects modules" +
+                        "linked: $linkedProject of $rootProjects with total $totalProjects modules " +
                         "interpolated $resolvedDependencies of $totalDependencies, " +
                         "$addedModules modules added. This statistics calculated for ${System.currentTimeMillis() - time} millis")
     }

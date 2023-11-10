@@ -41,7 +41,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class MavenIdeaIndexerImpl extends MavenRemoteObject implements MavenServerIndexer {
 
-  private final Map<String, IndexingContext> myContexts = new HashMap<>();
+  protected final Map<String, IndexingContext> myContexts = new HashMap<>();
   private final Indexer myIndexer;
   private final IndexUpdater myUpdater;
   private final Scanner myScanner;
@@ -132,6 +132,11 @@ public class MavenIdeaIndexerImpl extends MavenRemoteObject implements MavenServ
     throws RemoteException, MavenServerIndexerException, MavenServerProcessCanceledException {
     MavenServerUtil.checkToken(token);
     MavenServerProgressIndicator indicator = new MavenServerSideCancelledThrottler(remoteIndicator);
+    doUpdateIndex(mavenIndexId, multithreaded, indicator);
+  }
+
+  protected void doUpdateIndex(MavenIndexId mavenIndexId, boolean multithreaded, MavenServerProgressIndicator indicator)
+    throws MavenServerProcessCanceledException, MavenServerIndexerException {
     try {
       final IndexingContext context = getIndex(mavenIndexId);
       synchronized (context) {
@@ -154,7 +159,7 @@ public class MavenIdeaIndexerImpl extends MavenRemoteObject implements MavenServ
     }
   }
 
-  private void downloadRemoteIndex(MavenServerProgressIndicator indicator, IndexingContext context)
+  protected void downloadRemoteIndex(MavenServerProgressIndicator indicator, IndexingContext context)
     throws ComponentLookupException, IOException {
     Wagon httpWagon = myContainer.lookup(Wagon.class, "http");
     ResourceFetcher resourceFetcher = new WagonHelper.WagonFetcher(httpWagon, new WagonTransferListenerAdapter(indicator),
@@ -166,7 +171,7 @@ public class MavenIdeaIndexerImpl extends MavenRemoteObject implements MavenServ
     updateIndicatorStatus(indicator, context, updateResult, currentTimestamp);
   }
 
-  private void scanAndUpdateLocalRepositoryIndex(MavenServerProgressIndicator indicator, IndexingContext context, boolean multithreaded)
+  protected void scanAndUpdateLocalRepositoryIndex(MavenServerProgressIndicator indicator, IndexingContext context, boolean multithreaded)
     throws
     IOException {
 

@@ -307,7 +307,8 @@
     <statistics.counterUsagesCollector implementationClass="org.jetbrains.idea.maven.statistics.MavenDependencyInsertionCollector"/>
     <statistics.projectUsagesCollector implementation="org.jetbrains.idea.maven.statistics.MavenPluginCollector"/>
 
-    <statistics.validation.customValidationRule implementation="org.jetbrains.idea.maven.statistics.MavenPluginCoordinatesWhitelistValidationRule"/>
+    <statistics.validation.customValidationRule
+      implementation="org.jetbrains.idea.maven.statistics.MavenPluginCoordinatesWhitelistValidationRule"/>
 
     <registryKey key="maven.collect.local.stat" defaultValue="false"
                  description="Collect local maven statistics. Used in Internal mode. Does not affect FUS"/>
@@ -826,6 +827,11 @@
       <group id="Maven.CreateRunConfiguration" class="com.intellij.execution.actions.CreateAction"/>
       <separator/>
       <reference ref="Maven.TasksGroup"/>
+    </group>
+
+    <group id="Maven.RepositoryMenu" class="org.jetbrains.idea.maven.navigator.actions.RepositoryMenu" popup="true">
+      <action id="Maven.UpdateLocalIndex" class="org.jetbrains.idea.maven.navigator.actions.UpdateLocalIndexAction"/>
+      <action id="Maven.ShowIndexData" class="org.jetbrains.idea.maven.navigator.actions.ShowIndexAction"/>
     </group>
 
     <group id="Maven.GlobalProjectMenu" class="org.jetbrains.idea.maven.utils.actions.MavenActionGroup" popup="true"

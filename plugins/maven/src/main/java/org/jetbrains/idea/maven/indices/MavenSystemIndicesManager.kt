@@ -9,11 +9,13 @@ import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.util.PathUtilRt
+import com.intellij.util.messages.Topic
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.idea.maven.model.MavenRepositoryInfo
+import org.jetbrains.idea.maven.server.MavenIndexUpdateState
 import org.jetbrains.idea.maven.server.MavenIndexerWrapper
 import org.jetbrains.idea.maven.server.MavenServerManager
 import org.jetbrains.idea.maven.utils.MavenLog
@@ -24,11 +26,48 @@ import java.net.URI
 import java.net.URISyntaxException
 import java.nio.file.Path
 
+interface IndexChangeProgressListener {
+  fun indexStatusChanged(state: MavenIndexUpdateState)
+
+}
+
 @Service
 class MavenSystemIndicesManager(val cs: CoroutineScope) {
+
+
   private val openedIndices = HashMap<String, MavenIndex>()
   private val updatingIndices = HashMap<String, Deferred<MavenIndex>>()
   private val mutex = Mutex()
+  private val statuses = HashMap<String, MavenIndexUpdateState>()
+
+  @Volatile
+  private var needPoll: Boolean = false
+
+
+  init {
+    cs.launch {
+      while (isActive) {
+        delay(2000)
+        val statusToSend = ArrayList<MavenIndexUpdateState>();
+        if (!needPoll) continue
+        var anyInProgress = false;
+        status().forEach { s ->
+          anyInProgress = anyInProgress || s.myState == MavenIndexUpdateState.State.INDEXING
+          val oldStatus = statuses[s.myUrl];
+          if (oldStatus == null || oldStatus.timestamp < s.timestamp) {
+            statusToSend.add(s)
+            statuses[s.myUrl] = s
+          }
+        }
+
+        statusToSend.forEach {
+          ApplicationManager.getApplication().messageBus.syncPublisher(TOPIC).indexStatusChanged(it)
+        }
+        needPoll = anyInProgress
+      }
+
+    }
+  }
 
   private var ourTestIndicesDir: Path? = null
   suspend fun getClassIndexForRepository(repo: MavenRepositoryInfo): MavenSearchIndex {
@@ -110,6 +149,23 @@ class MavenSystemIndicesManager(val cs: CoroutineScope) {
 
   }
 
+  fun startUpdateIndex(repo: MavenRepositoryInfo) {
+    val indexFile = getDirForMavenIndex(repo).toFile()
+    val status = getIndexWrapper().startIndexing(repo, indexFile)
+    needPoll = true
+    if (status != null) {
+      statuses[repo.url] = status;
+      ApplicationManager.getApplication().messageBus.syncPublisher(TOPIC).indexStatusChanged(status)
+    }
+  }
+
+  fun stopIndexing(repo: MavenRepositoryInfo) {
+    getIndexWrapper().stopIndexing(repo)
+  }
+
+  fun status(): List<MavenIndexUpdateState> = getIndexWrapper().status()
+
+
   private suspend fun getIndexForRepo(repo: MavenRepositoryInfo): MavenIndex {
     return cs.async(Dispatchers.IO) {
       val dir = getDirForMavenIndex(repo)
@@ -184,6 +240,11 @@ class MavenSystemIndicesManager(val cs: CoroutineScope) {
 
     @JvmStatic
     fun getInstance(): MavenSystemIndicesManager = ApplicationManager.getApplication().service()
+
+
+    @JvmField
+    @Topic.AppLevel
+    val TOPIC: Topic<IndexChangeProgressListener> = Topic("indexChangeProgressListener", IndexChangeProgressListener::class.java)
   }
 }
 
