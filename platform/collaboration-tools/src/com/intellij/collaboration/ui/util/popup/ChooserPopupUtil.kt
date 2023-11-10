@@ -56,6 +56,10 @@ object ChooserPopupUtil {
       .setResizable(true)
       .setMovable(true)
       .setFilterAlwaysVisible(popupConfig.alwaysShowSearchField)
+      .also { builder ->
+        val title = popupConfig.title ?: return@also
+        builder.setTitle(title)
+      }
       .createPopup()
 
     CollaborationToolsPopupUtil.configureSearchField(popup, popupConfig)
@@ -88,6 +92,10 @@ object ChooserPopupUtil {
       .setMovable(true)
       .setFilterAlwaysVisible(popupConfig.alwaysShowSearchField)
       .addListener(loadingListener)
+      .also { builder ->
+        val title = popupConfig.title ?: return@also
+        builder.setTitle(title)
+      }
       .createPopup()
 
     CollaborationToolsPopupUtil.configureSearchField(popup, popupConfig)
@@ -121,6 +129,10 @@ object ChooserPopupUtil {
       .setMovable(true)
       .setFilterAlwaysVisible(popupConfig.alwaysShowSearchField)
       .addListener(loadingListener)
+      .also { builder ->
+        val title = popupConfig.title ?: return@also
+        builder.setTitle(title)
+      }
       .createPopup()
 
     CollaborationToolsPopupUtil.configureSearchField(popup, popupConfig)
@@ -196,8 +208,9 @@ object ChooserPopupUtil {
 }
 
 data class PopupConfig(
-  val alwaysShowSearchField: Boolean = true,
+  val title: @NlsContexts.PopupTitle String? = null,
   val searchTextPlaceHolder: @NlsContexts.StatusText String? = null,
+  val alwaysShowSearchField: Boolean = true,
   val showDirection: ShowDirection = ShowDirection.BELOW
 ) {
   companion object {
