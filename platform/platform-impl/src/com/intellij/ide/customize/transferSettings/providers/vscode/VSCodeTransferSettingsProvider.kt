@@ -43,7 +43,10 @@ class VSCodeTransferSettingsProvider : TransferSettingsProvider {
     return cachedIdeVersion
   }
 
-  private fun isVSCodeDetected() = Files.isDirectory(Paths.get(vsCodeHome)) && processor.willDetectAtLeastSomething()
+  private fun isVSCodeDetected() =
+    Files.isDirectory(Paths.get(vsCodeHome))
+    && processor.isInstanceRecentEnough()
+    && processor.willDetectAtLeastSomething()
 
   override fun getRightPanel(ideV: IdeVersion, config: TransferSettingsConfiguration): TransferSettingsRightPanelChooser
     = VSCodeTransferSettingsRightPanelChooser(ideV, config)

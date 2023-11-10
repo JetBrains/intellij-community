@@ -1,3 +1,4 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.customize.transferSettings.providers.vscode
 
 import com.intellij.ide.customize.transferSettings.db.KnownColorSchemes
@@ -9,6 +10,10 @@ import com.intellij.ide.customize.transferSettings.providers.vscode.parsers.*
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
 import java.io.File
+import java.io.IOException
+import java.nio.file.Files
+import java.time.Duration
+import java.time.Instant
 
 class VSCodeSettingsProcessor {
   companion object {
@@ -32,9 +37,26 @@ class VSCodeSettingsProcessor {
       syntaxScheme = KnownColorSchemes.Darcula,
       keymap = if (SystemInfoRt.isMac) KnownKeymaps.VSCodeMac else KnownKeymaps.VSCode
     )
+
+    private val timeAfterLastModificationToConsiderTheInstanceRecent = Duration.ofHours(365 * 24) // one year
   }
 
   fun willDetectAtLeastSomething(): Boolean = keyBindingsFile.exists() || pluginsDirectory.exists() || storageFile.exists() || generalSettingsFile.exists()
+
+  fun isInstanceRecentEnough(): Boolean {
+    try {
+      val fileToCheck = database
+      if (fileToCheck.exists()) {
+        val time = Files.getLastModifiedTime(fileToCheck.toPath())
+        return time.toInstant() > Instant.now() - timeAfterLastModificationToConsiderTheInstanceRecent
+      }
+
+      return false
+    }
+    catch (_: IOException) {
+      return false
+    }
+  }
 
   fun getProcessedSettings(): Settings {
     val settings = getDefaultSettings()
