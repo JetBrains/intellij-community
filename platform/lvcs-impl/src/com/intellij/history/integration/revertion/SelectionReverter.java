@@ -12,6 +12,7 @@ import com.intellij.history.integration.ui.models.SelectionCalculator;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.List;
@@ -45,7 +46,7 @@ public final class SelectionReverter extends Reverter {
   }
 
   @Override
-  protected List<VirtualFile> getFilesToClearROStatus() {
+  protected @NotNull List<VirtualFile> getFilesToClearROStatus() {
     VirtualFile file = myGateway.findVirtualFile(myRightEntry.getPath());
     return Collections.singletonList(file);
   }

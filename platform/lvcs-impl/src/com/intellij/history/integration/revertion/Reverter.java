@@ -17,8 +17,6 @@
 package com.intellij.history.integration.revertion;
 
 import com.intellij.history.core.LocalHistoryFacade;
-import com.intellij.history.core.changes.ChangeVisitor;
-import com.intellij.history.core.changes.StructuralChange;
 import com.intellij.history.core.revisions.Revision;
 import com.intellij.history.integration.IdeaGateway;
 import com.intellij.history.integration.LocalHistoryBundle;
@@ -27,9 +25,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.text.DateFormatUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
 
 public abstract class Reverter {
   private final Project myProject;
@@ -55,23 +55,6 @@ public abstract class Reverter {
 
   protected boolean askForReadOnlyStatusClearing() {
     return myGateway.ensureFilesAreWritable(myProject, getFilesToClearROStatus());
-  }
-
-  protected List<VirtualFile> getFilesToClearROStatus() {
-    final Set<VirtualFile> files = new HashSet<>();
-
-    myVcs.accept(selective(new ChangeVisitor() {
-      @Override
-      public void visit(StructuralChange c) {
-        files.addAll(myGateway.getAllFilesFrom(c.getPath()));
-      }
-    }));
-
-    return new ArrayList<>(files);
-  }
-
-  protected ChangeVisitor selective(ChangeVisitor v) {
-    return v;
   }
 
   public void revert() throws Exception {
@@ -104,6 +87,8 @@ public abstract class Reverter {
   }
 
   protected abstract Revision getTargetRevision();
+
+  protected abstract @NotNull List<VirtualFile> getFilesToClearROStatus();
 
   protected abstract void doRevert() throws IOException;
 }

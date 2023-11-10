@@ -11,6 +11,7 @@ import com.intellij.history.integration.IdeaGateway;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.*;
@@ -31,7 +32,7 @@ public final class DifferenceReverter extends Reverter {
   }
 
   @Override
-  protected List<VirtualFile> getFilesToClearROStatus() {
+  protected @NotNull List<VirtualFile> getFilesToClearROStatus() {
     LinkedHashSet<VirtualFile> files = new LinkedHashSet<>();
     for (Difference each : myDiffs) {
       Entry l = each.getLeft();
