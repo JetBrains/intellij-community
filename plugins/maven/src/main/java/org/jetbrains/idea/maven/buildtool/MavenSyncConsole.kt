@@ -49,8 +49,7 @@ import java.io.File
 import java.text.MessageFormat
 
 class MavenSyncConsole(private val myProject: Project) : MavenEventHandler {
-  @Volatile
-  private var mySyncView: BuildProgressListener = BuildProgressListener { _, _ -> }
+  private val mySyncView: BuildProgressListener = myProject.getService(SyncViewManager::class.java)
   private var mySyncId = createTaskId()
   private var finished = false
   private var started = false
@@ -65,7 +64,7 @@ class MavenSyncConsole(private val myProject: Project) : MavenEventHandler {
   private var myStartedSet = LinkedHashSet<Pair<Any, String>>()
 
   @Synchronized
-  fun startImport(syncView: BuildProgressListener, spec: MavenImportSpec) {
+  fun startImport(spec: MavenImportSpec) {
     if (started) {
       return
     }
@@ -87,7 +86,6 @@ class MavenSyncConsole(private val myProject: Project) : MavenEventHandler {
     finished = false
     hasErrors = false
     hasUnresolved = false
-    mySyncView = syncView
     shownIssues.clear()
     mySyncId = createTaskId()
 
@@ -193,7 +191,7 @@ class MavenSyncConsole(private val myProject: Project) : MavenEventHandler {
   @Synchronized
   fun startWrapperResolving() {
     if (!started || finished) {
-      startImport(myProject.getService(SyncViewManager::class.java), MavenImportSpec.EXPLICIT_IMPORT)
+      startImport(MavenImportSpec.EXPLICIT_IMPORT)
     }
     startTask(mySyncId, SyncBundle.message("maven.sync.wrapper"))
   }
@@ -260,7 +258,14 @@ class MavenSyncConsole(private val myProject: Project) : MavenEventHandler {
 
   @Synchronized
   @ApiStatus.Internal
-  fun addException(e: Throwable, progressListener: BuildProgressListener) {
+  @Deprecated("use {@link #addException(Throwable)}", ReplaceWith("addException(e)"))
+  fun addException(e: Throwable, ignoredProgressListener: BuildProgressListener) {
+    addException(e)
+  }
+
+  @Synchronized
+  @ApiStatus.Internal
+  fun addException(e: Throwable) {
     if (started && !finished) {
       MavenLog.LOG.warn(e)
       hasErrors = true
@@ -274,8 +279,8 @@ class MavenSyncConsole(private val myProject: Project) : MavenEventHandler {
 
     }
     else {
-      this.startImport(progressListener, MavenImportSpec.EXPLICIT_IMPORT)
-      this.addException(e, progressListener)
+      this.startImport(MavenImportSpec.EXPLICIT_IMPORT)
+      this.addException(e)
       this.finishImport()
     }
   }

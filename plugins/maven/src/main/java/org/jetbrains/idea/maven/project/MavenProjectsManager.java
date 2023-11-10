@@ -1,8 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.project;
 
-import com.intellij.build.BuildProgressListener;
-import com.intellij.build.SyncViewManager;
 import com.intellij.configurationStore.SettingsSavingComponentJavaAdapter;
 import com.intellij.ide.impl.ProjectUtilKt;
 import com.intellij.openapi.Disposable;
@@ -30,7 +28,6 @@ import com.intellij.platform.backend.observation.TrackingUtil;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
-import com.intellij.util.Alarm;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
@@ -78,16 +75,12 @@ import static org.jetbrains.idea.maven.server.MavenWrapperSupport.getWrapperDist
 public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   implements PersistentStateComponent<MavenProjectsManagerState>, SettingsSavingComponentJavaAdapter, Disposable,
              MavenAsyncProjectsManager {
-  private static final int IMPORT_DELAY = 1000;
-
   private final ReentrantLock initLock = new ReentrantLock();
   private final AtomicBoolean isInitialized = new AtomicBoolean();
   private final AtomicBoolean isActivated = new AtomicBoolean();
   private final AtomicBoolean runImportOnStartup = new AtomicBoolean();
 
   private MavenProjectsManagerState myState = new MavenProjectsManagerState();
-
-  private final Alarm myInitializationAlarm;
 
   private final MavenEmbeddersManager myEmbeddersManager;
 
@@ -98,7 +91,6 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
     EventDispatcher.create(MavenProjectsTree.Listener.class);
   private final List<Listener> myManagerListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final ModificationTracker myModificationTracker;
-  protected BuildProgressListener myProgressListener;
 
   private MavenWorkspaceSettings myWorkspaceSettings;
 
@@ -122,9 +114,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
 
     myEmbeddersManager = new MavenEmbeddersManager(project);
     myModificationTracker = new MavenModificationTracker(this);
-    myInitializationAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
     mySaveQueue = new MavenMergingUpdateQueue("Maven save queue", SAVE_DELAY, !MavenUtil.isMavenUnitTestModeEnabled(), this);
-    myProgressListener = myProject.getService(SyncViewManager.class);
     MavenRehighlighter.install(project, this);
     Disposer.register(this, this::projectClosed);
     CacheForCompilerErrorMessages.connectToJdkListener(project, this);
@@ -132,16 +122,6 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
 
   @ApiStatus.Internal
   public abstract void waitForAfterImportJobs();
-
-  @TestOnly
-  public void setProgressListener(BuildProgressListener testViewManager) {
-    myProgressListener = testViewManager;
-  }
-
-  @TestOnly
-  public BuildProgressListener getProgressListener() {
-    return myProgressListener;
-  }
 
   @Override
   public MavenProjectsManagerState getState() {
@@ -830,7 +810,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   public void showServerException(Throwable e) {
-    getSyncConsole().addException(e, myProgressListener);
+    getSyncConsole().addException(e);
   }
 
   public void terminateImport(int exitCode) {

@@ -29,12 +29,6 @@ class InvalidEnvironmentImportingTest : MavenMultiVersionImportingTestCase() {
       }
     }
     myProject.replaceService(SyncViewManager::class.java, myTestSyncViewManager, testRootDisposable)
-    setupTestManagerForLegacyImport()
-  }
-
-  private fun setupTestManagerForLegacyImport() {
-
-    projectsManager.setProgressListener(myTestSyncViewManager)
   }
 
   @Test

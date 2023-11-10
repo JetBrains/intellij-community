@@ -33,7 +33,6 @@ class MavenDistributionResolveTest : MavenMultiVersionImportingTestCase() {
       }
     }
     myProject.replaceService(SyncViewManager::class.java, mySyncViewManager, testRootDisposable)
-    MavenProjectsManager.getInstance(myProject).setProgressListener(mySyncViewManager)
   }
 
   @Throws(IOException::class)

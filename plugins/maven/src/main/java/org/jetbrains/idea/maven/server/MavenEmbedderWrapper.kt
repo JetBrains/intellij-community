@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.server
 
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
@@ -231,7 +232,6 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
   fun clearCachesFor(projectId: MavenId?) {
   }
 
-  @Throws(MavenProcessCanceledException::class)
   private suspend fun <R : Serializable> runLongRunningTask(task: LongRunningEmbedderTask<R>,
                                                             progressReporter: RawProgressReporter?,
                                                             eventHandler: MavenEventHandler): R {
@@ -274,7 +274,7 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
         }
       }
       catch (e: Exception) {
-        throw MavenProcessCanceledException(e)
+        throw ProcessCanceledException(e)
       }
       finally {
         progressIndication.cancelAndJoin()

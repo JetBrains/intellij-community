@@ -302,7 +302,7 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
       if (spec.isForceResolve) {
 
         val console = syncConsole
-        console.startImport(myProgressListener, spec)
+        console.startImport(spec)
         if (MavenUtil.enablePreimport()) {
           val result = console.runTask(MavenProjectBundle.message("maven.project.preimporting")) {
             return@runTask MavenProjectPreImporter.getInstance(myProject).preimport(projectsTree.rootProjectsFiles, modelsProvider,
