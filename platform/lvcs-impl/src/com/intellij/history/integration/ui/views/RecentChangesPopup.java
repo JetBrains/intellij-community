@@ -11,13 +11,14 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 
 public final class RecentChangesPopup {
-  public static void show(Project project, IdeaGateway gw, LocalHistoryFacade vcs) {
+  public static void show(Project project, @NotNull IdeaGateway gw, @NotNull LocalHistoryFacade vcs) {
     List<RecentChange> cc = vcs.getRecentChanges(gw.createTransientRootEntry());
     String title = LocalHistoryBundle.message("recent.changes.popup.title");
     if (cc.isEmpty()) {
@@ -53,7 +54,7 @@ public final class RecentChangesPopup {
 
     @Override
     public Component getListCellRendererComponent(JList<? extends RecentChange> list,
-                                                  RecentChange value,
+                                                  @NotNull RecentChange value,
                                                   int index,
                                                   boolean isSelected,
                                                   boolean cellHasFocus) {
@@ -71,7 +72,7 @@ public final class RecentChangesPopup {
       setColors(bg, fg, myPanel, myActionLabel, myDateLabel, mySpacePanel);
     }
 
-    private static void setColors(Color bg, Color fg, JComponent... cc) {
+    private static void setColors(Color bg, Color fg, JComponent @NotNull ... cc) {
       for (JComponent c : cc) {
         c.setBackground(bg);
         c.setForeground(fg);

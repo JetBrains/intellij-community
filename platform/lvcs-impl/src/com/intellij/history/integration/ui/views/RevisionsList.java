@@ -169,7 +169,7 @@ public final class RevisionsList {
     restoreSelection(sel);
   }
 
-  private void restoreSelection(List<Object> sel) {
+  private void restoreSelection(@NotNull List<Object> sel) {
     ListSelectionModel sm = table.getSelectionModel();
     sm.clearSelection();
     for (Object o : sel) {
@@ -202,7 +202,7 @@ public final class RevisionsList {
     return (FilteringTableModel<?>)table.getModel();
   }
 
-  private static MyModel getMyModel(JTable table) {
+  private static MyModel getMyModel(@NotNull JTable table) {
     return ((MyModel)((FilteringTableModel<?>)table.getModel()).getOriginalModel());
   }
 
@@ -278,7 +278,7 @@ public final class RevisionsList {
 
     private final ExpandableItemsHandler<TableCell> myToolTipHandler;
 
-    public MyCellRenderer(JBTable table) {
+    public MyCellRenderer(@NotNull JBTable table) {
       myToolTipHandler = table.getExpandableItemsHandler();
       JPanel headersPanel = new JPanel(new BorderLayout());
       headersPanel.setOpaque(false);
@@ -422,7 +422,7 @@ public final class RevisionsList {
       return StringUtil.isEmpty(s) ? " " : s;
     }
 
-    private static LabelsAndColor getLabelsAndColor(RevisionItem item) {
+    private static LabelsAndColor getLabelsAndColor(@NotNull RevisionItem item) {
       Revision r = item.revision;
 
       final Pair<List<String>, Integer> affected = r.getAffectedFileNames();
@@ -506,7 +506,7 @@ public final class RevisionsList {
       }
 
       @Override
-      public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
+      public void paintBorder(Component c, @NotNull Graphics g, int x, int y, int width, int height) {
         Graphics2D g2d = (Graphics2D)g.create();
         g2d.setColor(JBColor.border());
         g2d.setStroke(new BasicStroke(1.0f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 10.0f, new float[]{1}, 1));
@@ -533,7 +533,7 @@ public final class RevisionsList {
       }
 
       @Override
-      protected void paintComponent(Graphics g) {
+      protected void paintComponent(@NotNull Graphics g) {
         Graphics2D g2d = (Graphics2D)g.create();
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 

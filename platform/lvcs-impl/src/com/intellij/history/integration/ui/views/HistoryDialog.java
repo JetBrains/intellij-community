@@ -185,7 +185,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
 
   protected abstract Pair<JComponent, Dimension> createDiffPanel(JPanel root, ExcludingTraversalPolicy traversalPolicy);
 
-  private JComponent createRevisionsSide(Dimension prefToolBarSize) {
+  private @NotNull JComponent createRevisionsSide(Dimension prefToolBarSize) {
     ActionGroup actions = createRevisionsActions();
 
     myToolBar = createRevisionsToolbar(actions);
@@ -217,12 +217,12 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
   protected void addExtraToolbar(JPanel toolBarPanel) {
   }
 
-  private static ActionToolbar createRevisionsToolbar(ActionGroup actions) {
+  private static @NotNull ActionToolbar createRevisionsToolbar(ActionGroup actions) {
     ActionManager am = ActionManager.getInstance();
     return am.createActionToolbar("HistoryDialogRevisions", actions, true);
   }
 
-  private ActionGroup createRevisionsActions() {
+  private @NotNull ActionGroup createRevisionsActions() {
     DefaultActionGroup result = new DefaultActionGroup();
     result.add(new RevertAction());
     result.add(new CreatePatchAction());
@@ -373,7 +373,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
     });
   }
 
-  private static String formatErrors(List<String> errors) {
+  private static String formatErrors(@NotNull List<String> errors) {
     if (errors.size() == 1) return errors.get(0);
 
     StringBuilder result = new StringBuilder();
@@ -534,7 +534,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
     }
 
     @Override
-    protected @Nullable JComponent createCenterPanel() {
+    protected @NotNull JComponent createCenterPanel() {
       return myPanel.getPanel();
     }
 

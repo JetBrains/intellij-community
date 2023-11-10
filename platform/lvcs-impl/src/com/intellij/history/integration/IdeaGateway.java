@@ -141,7 +141,7 @@ public class IdeaGateway {
     }
   }
 
-  public void runWithVfsEventsDispatchContext(List<? extends VFileEvent> events, boolean beforeEvents, Runnable action) {
+  public void runWithVfsEventsDispatchContext(List<? extends VFileEvent> events, boolean beforeEvents, @NotNull Runnable action) {
     try (VfsEventDispatchContext ignored = new VfsEventDispatchContext(events, beforeEvents)) {
       action.run();
     }
@@ -261,7 +261,7 @@ public class IdeaGateway {
     return root;
   }
 
-  private static List<VirtualFile> getLocalRoots() {
+  private static @NotNull List<VirtualFile> getLocalRoots() {
     List<VirtualFile> roots = new SmartList<>();
 
     for (VirtualFile root : ManagingFS.getInstance().getRoots()) {
@@ -461,7 +461,7 @@ public class IdeaGateway {
     return Pair.create(result.content, result.registeredTimestamp);
   }
 
-  private static byte[] bytesFromDocument(@NotNull Document d) {
+  private static byte @NotNull [] bytesFromDocument(@NotNull Document d) {
     VirtualFile file = getFile(d);
     Charset charset = file != null ? file.getCharset() : EncodingRegistry.getInstance().getDefaultCharset();
     return d.getText().getBytes(charset);

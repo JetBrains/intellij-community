@@ -75,7 +75,7 @@ public final class DifferenceReverter extends Reverter {
     }
   }
 
-  private void revertCreation(Entry r, Set<String> vetoedFiles) throws IOException {
+  private void revertCreation(@NotNull Entry r, @NotNull Set<String> vetoedFiles) throws IOException {
     String path = r.getPath();
     for (String each : vetoedFiles) {
       if (Paths.isParent(path, each)) return;
@@ -85,13 +85,13 @@ public final class DifferenceReverter extends Reverter {
     if (f != null) f.delete(this);
   }
 
-  private void revertDeletion(Entry l) throws IOException {
+  private void revertDeletion(@NotNull Entry l) throws IOException {
     VirtualFile f = myGateway.findOrCreateFileSafely(l.getPath(), l.isDirectory());
     if (l.isDirectory()) return;
     setContent(l, f);
   }
 
-  private void revertRename(Entry l, VirtualFile file) throws IOException {
+  private void revertRename(@NotNull Entry l, @NotNull VirtualFile file) throws IOException {
     String oldName = l.getName();
     if (!oldName.equals(file.getName())) {
       VirtualFile existing = file.getParent().findChild(oldName);
@@ -102,14 +102,14 @@ public final class DifferenceReverter extends Reverter {
     }
   }
 
-  private static void revertContentChange(Entry l, VirtualFile file) throws IOException {
+  private static void revertContentChange(@NotNull Entry l, VirtualFile file) throws IOException {
     if (l.isDirectory()) return;
     if (file.getTimeStamp() != l.getTimestamp()) {
       setContent(l, file);
     }
   }
 
-  private static void setContent(Entry l, VirtualFile file) throws IOException {
+  private static void setContent(@NotNull Entry l, VirtualFile file) throws IOException {
     Content c = l.getContent();
     if (!c.isAvailable()) return;
     file.setBinaryContent(c.getBytes());

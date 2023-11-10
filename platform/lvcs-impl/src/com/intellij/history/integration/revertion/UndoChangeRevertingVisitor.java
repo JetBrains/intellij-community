@@ -42,7 +42,7 @@ public final class UndoChangeRevertingVisitor extends ChangeVisitor {
     myToChangeId = toChangeId == null ? -1 : toChangeId;
   }
 
-  private boolean shouldRevert(Change c) {
+  private boolean shouldRevert(@NotNull Change c) {
     if (c.getId() == myFromChangeId) {
       isReverting = true;
     }
@@ -53,12 +53,12 @@ public final class UndoChangeRevertingVisitor extends ChangeVisitor {
     return shouldRevert;
   }
 
-  private void checkShouldStop(Change c) throws StopVisitingException {
+  private void checkShouldStop(@NotNull Change c) throws StopVisitingException {
     if (c.getId() == myToChangeId) stop();
   }
 
   @Override
-  public void visit(CreateEntryChange c) throws StopVisitingException {
+  public void visit(@NotNull CreateEntryChange c) throws StopVisitingException {
     if (shouldRevert(c)) {
       VirtualFile f = myGateway.findVirtualFile(c.getPath());
       if (f != null) {
@@ -75,7 +75,7 @@ public final class UndoChangeRevertingVisitor extends ChangeVisitor {
   }
 
   @Override
-  public void visit(ContentChange c) throws StopVisitingException {
+  public void visit(@NotNull ContentChange c) throws StopVisitingException {
     if (shouldRevert(c)) {
       try {
         VirtualFile f = myGateway.findOrCreateFileSafely(c.getPath(), false);
@@ -89,7 +89,7 @@ public final class UndoChangeRevertingVisitor extends ChangeVisitor {
   }
 
   @Override
-  public void visit(RenameChange c) throws StopVisitingException {
+  public void visit(@NotNull RenameChange c) throws StopVisitingException {
     if (shouldRevert(c)) {
       VirtualFile f = myGateway.findVirtualFile(c.getPath());
       if (f != null) {
@@ -109,7 +109,7 @@ public final class UndoChangeRevertingVisitor extends ChangeVisitor {
   }
 
   @Override
-  public void visit(ROStatusChange c) throws StopVisitingException {
+  public void visit(@NotNull ROStatusChange c) throws StopVisitingException {
     if (shouldRevert(c)) {
       VirtualFile f = myGateway.findVirtualFile(c.getPath());
       if (f != null) {
@@ -120,7 +120,7 @@ public final class UndoChangeRevertingVisitor extends ChangeVisitor {
   }
 
   @Override
-  public void visit(MoveChange c) throws StopVisitingException {
+  public void visit(@NotNull MoveChange c) throws StopVisitingException {
     if (shouldRevert(c)) {
       VirtualFile f = myGateway.findVirtualFile(c.getPath());
       if (f != null) {
@@ -139,7 +139,7 @@ public final class UndoChangeRevertingVisitor extends ChangeVisitor {
   }
 
   @Override
-  public void visit(DeleteChange c) throws StopVisitingException {
+  public void visit(@NotNull DeleteChange c) throws StopVisitingException {
     if (shouldRevert(c)) {
       try {
         VirtualFile parent = myGateway.findOrCreateFileSafely(Paths.getParentOf(c.getPath()), true);
@@ -152,7 +152,7 @@ public final class UndoChangeRevertingVisitor extends ChangeVisitor {
     checkShouldStop(c);
   }
 
-  private void revertDeletion(VirtualFile parent, Entry e) throws IOException {
+  private void revertDeletion(VirtualFile parent, @NotNull Entry e) throws IOException {
     VirtualFile f = myGateway.findOrCreateFileSafely(parent, e.getName(), e.isDirectory());
     if (e.isDirectory()) {
       for (Entry child : e.getChildren()) revertDeletion(f, child);
