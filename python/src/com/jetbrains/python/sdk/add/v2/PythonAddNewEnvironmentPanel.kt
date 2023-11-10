@@ -20,10 +20,14 @@ import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.ui.dsl.builder.*
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.configuration.PyConfigurableInterpreterList
+import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
 import com.jetbrains.python.newProject.steps.ProjectSpecificSettingsStep
 import com.jetbrains.python.sdk.add.target.conda.createCondaSdkFromExistingEnv
 import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMode.*
 import com.jetbrains.python.sdk.configuration.createVirtualEnvSynchronously
+import com.jetbrains.python.statistics.InterpreterCreationMode
+import com.jetbrains.python.statistics.InterpreterTarget
+import com.jetbrains.python.statistics.InterpreterType
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -144,4 +148,21 @@ class PythonAddNewEnvironmentPanel(val projectPath: ObservableProperty<String>) 
       }
       CUSTOM -> custom.getSdk()
     }
+
+
+  fun createStatisticsInfo(): InterpreterStatisticsInfo = when (selectedMode.get()) {
+    PROJECT_VENV -> InterpreterStatisticsInfo(InterpreterType.VIRTUALENV,
+                                              InterpreterTarget.LOCAL,
+                                              false,
+                                              false,
+                                              false,
+                                              InterpreterCreationMode.SIMPLE)
+    BASE_CONDA -> InterpreterStatisticsInfo(InterpreterType.BASE_CONDA,
+                                            InterpreterTarget.LOCAL,
+                                            false,
+                                            false,
+                                            true,
+                                            InterpreterCreationMode.SIMPLE)
+    CUSTOM -> custom.createStatisticsInfo()
+  }
 }

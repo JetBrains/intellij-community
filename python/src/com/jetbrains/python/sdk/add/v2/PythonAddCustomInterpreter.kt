@@ -4,6 +4,7 @@ package com.jetbrains.python.sdk.add.v2
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.validation.DialogValidationRequestor
 import com.intellij.ui.dsl.builder.Panel
+import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
 import com.jetbrains.python.sdk.add.v2.PythonInterpreterCreationTargets.LOCAL_MACHINE
 
 class PythonAddCustomInterpreter(presenter: PythonAddInterpreterPresenter) {
@@ -44,6 +45,12 @@ class PythonAddCustomInterpreter(presenter: PythonAddInterpreterPresenter) {
     // todo uncomment for all available targets
     //return targets[targetSelector.selectedItem]!!.getSdk()
     return targets[LOCAL_MACHINE]!!.getSdk()
+  }
+
+  fun createStatisticsInfo(): InterpreterStatisticsInfo {
+    // todo uncomment for all available targets
+    //return targets[targetSelector.selectedItem]!!.createStatisticsInfo()
+    return targets[LOCAL_MACHINE]!!.createStatisticsInfo()
   }
 
 }
