@@ -51,7 +51,7 @@ public final class InstallAndEnableTask extends Task.Modal {
   public void run(@NotNull ProgressIndicator indicator) {
     try {
       List<PluginNode> marketplacePlugins = MarketplaceRequests.loadLastCompatiblePluginDescriptors(myPluginIds);
-      myCustomPlugins = PluginsAdvertiser.loadPluginsFromCustomRepositories(indicator);
+      myCustomPlugins = RepositoryHelper.loadPluginsFromCustomRepositories(indicator);
 
       List<IdeaPluginDescriptor> descriptors =
         new ArrayList<>(RepositoryHelper.mergePluginsFromRepositories(marketplacePlugins, myCustomPlugins, true));

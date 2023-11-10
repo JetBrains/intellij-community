@@ -1,10 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement
 
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.DEPENDENCY_SUPPORT_FEATURE
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.PluginNode
+import com.intellij.ide.plugins.RepositoryHelper
 import com.intellij.ide.plugins.advertiser.PluginDataSet
 import com.intellij.ide.plugins.advertiser.PluginFeatureCacheService
 import com.intellij.ide.plugins.advertiser.PluginFeatureMap
@@ -33,7 +34,7 @@ internal class PluginsAdvertiserStartupActivity : ProjectActivity {
       return
     }
 
-    val customPlugins = loadPluginsFromCustomRepositories()
+    val customPlugins = RepositoryHelper.loadPluginsFromCustomRepositories(null)
 
     coroutineContext.ensureActive()
 

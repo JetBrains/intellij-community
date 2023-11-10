@@ -571,7 +571,7 @@ open class PluginAdvertiserServiceImpl(
     val dependencyUnknownFeatures = UnknownFeaturesCollector.getInstance(project).unknownFeatures
     if (dependencyUnknownFeatures.isNotEmpty()) {
       run(
-        customPlugins = loadPluginsFromCustomRepositories(),
+        customPlugins = RepositoryHelper.loadPluginsFromCustomRepositories(null),
         unknownFeatures = dependencyUnknownFeatures,
       )
     }
