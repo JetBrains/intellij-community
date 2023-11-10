@@ -42,7 +42,7 @@ class TerminalInlineCompletionProvider : InlineCompletionProvider {
         val lookup = LookupManager.getActiveLookup(request.editor) ?: return@withContext null
         val item = lookup.currentItem ?: return@withContext null
         val itemPrefix = lookup.itemPattern(item)
-        val itemSuffix = item.lookupString.removePrefix(itemPrefix)
+        val itemSuffix = item.lookupString.removeRange(0, itemPrefix.length)
         InlineCompletionGrayTextElement(itemSuffix)
       }?.let {
         emit(it)
