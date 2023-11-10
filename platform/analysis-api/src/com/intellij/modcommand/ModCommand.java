@@ -2,6 +2,7 @@
 package com.intellij.modcommand;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.codeInspection.options.OptionControllerProvider;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -14,6 +15,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -22,6 +24,7 @@ import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.UnaryOperator;
 
 /**
  * A transparent command, which modifies the project/workspace state (writes file, changes setting, moves editor caret, etc.),
@@ -146,6 +149,24 @@ public sealed interface ModCommand
   static <T extends InspectionProfileEntry> @NotNull ModCommand updateOption(
     @NotNull PsiElement context, @NotNull T inspection, @NotNull Consumer<@NotNull T> updater) {
     return ModCommandService.getInstance().updateOption(context, inspection, updater);
+  }
+
+  /**
+   * @param context context PSI element
+   * @param bindId global option locator
+   * @param valueSupplier function that returns a new value of the option taking old value as an input
+   * @return a command that updates the given option
+   * @see OptionControllerProvider for details
+   */
+  static @NotNull ModCommand updateOption(
+    @NotNull PsiElement context, @NotNull @NonNls String bindId, @NotNull UnaryOperator<Object> valueSupplier) {
+    Object origOldValue = OptionControllerProvider.getOption(context, bindId);
+    Object fnOldValue = origOldValue;
+    if (fnOldValue instanceof List<?> list) {
+      // Defensive copy, as function may try to modify the list right here
+      fnOldValue = new ArrayList<>(list);
+    }
+    return new ModUpdateSystemOptions(List.of(new ModUpdateSystemOptions.ModifiedOption(bindId, origOldValue, valueSupplier.apply(fnOldValue))));
   }
 
   /**

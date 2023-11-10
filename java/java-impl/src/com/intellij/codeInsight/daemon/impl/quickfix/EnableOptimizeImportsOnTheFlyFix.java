@@ -2,47 +2,36 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightWorkspaceSettings;
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.intention.LowPriorityAction;
+import com.intellij.codeInsight.intention.PriorityAction;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
-import com.intellij.ide.SaveAndSyncHandler;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiFile;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.ModCommandAction;
+import com.intellij.modcommand.Presentation;
 import com.intellij.psi.PsiJavaFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public final class EnableOptimizeImportsOnTheFlyFix implements IntentionAction, LowPriorityAction{
+public final class EnableOptimizeImportsOnTheFlyFix implements ModCommandAction {
   @Override
-  @NotNull
-  public String getText() {
-    return QuickFixBundle.message("enable.optimize.imports.on.the.fly");
+  public @Nullable Presentation getPresentation(@NotNull ActionContext context) {
+    if (BaseIntentionAction.canModify(context.file())
+        && context.file() instanceof PsiJavaFile
+        && !CodeInsightWorkspaceSettings.getInstance(context.project()).isOptimizeImportsOnTheFly()) {
+      return Presentation.of(getFamilyName()).withPriority(PriorityAction.Priority.LOW);
+    }
+    return null;
   }
 
   @Override
   @NotNull
   public String getFamilyName() {
-    return getText();
+    return QuickFixBundle.message("enable.optimize.imports.on.the.fly");
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return BaseIntentionAction.canModify(file)
-           && file instanceof PsiJavaFile
-           && !CodeInsightWorkspaceSettings.getInstance(project).isOptimizeImportsOnTheFly();
-  }
-
-  @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
-    CodeInsightWorkspaceSettings.getInstance(project).setOptimizeImportsOnTheFly(true);
-    SaveAndSyncHandler.getInstance().scheduleProjectSave(project, true);
-    DaemonCodeAnalyzer.getInstance(project).restart();
-  }
-
-  @Override
-  public boolean startInWriteAction() {
-    return false;
+  public @NotNull ModCommand perform(@NotNull ActionContext context) {
+    return ModCommand.updateOption(context.file(), "CodeInsightWorkspaceSettings.optimizeImportsOnTheFly", old -> true);
   }
 }

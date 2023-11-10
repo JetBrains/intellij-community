@@ -1738,6 +1738,7 @@
     <projectService serviceInterface="com.intellij.codeInsight.daemon.HighlightingPassesCache"
                     serviceImplementation="com.intellij.codeInsight.daemon.impl.HighlightingPassesCacheImpl"/>
     <codeCompletionConfigurable provider="com.intellij.application.options.MLCodeCompletionConfigurableProvider"/>
+    <optionController implementation="com.intellij.codeInsight.CodeInsightWorkspaceSettings$Provider"/>
   </extensions>
   <extensions defaultExtensionNs="com.intellij.platform.backend">
     <documentation.targetProvider

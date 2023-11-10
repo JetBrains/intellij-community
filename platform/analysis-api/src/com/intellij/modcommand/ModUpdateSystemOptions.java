@@ -2,6 +2,7 @@
 package com.intellij.modcommand;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -24,5 +25,5 @@ public record ModUpdateSystemOptions(@NotNull List<@NotNull ModifiedOption> opti
    * @param oldValue old value of the option
    * @param newValue new value of the option
    */
-  public record ModifiedOption(@NotNull String bindId, @NotNull Object oldValue, @NotNull Object newValue) {}
+  public record ModifiedOption(@NotNull String bindId, @Nullable Object oldValue, @Nullable Object newValue) {}
 }
