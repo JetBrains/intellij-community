@@ -5,6 +5,7 @@ import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -16,6 +17,9 @@ public interface IProjectStore extends IComponentStore {
   Key<Boolean> COMPONENT_STORE_LOADING_ENABLED = Key.create("COMPONENT_STORE_LOADING_ENABLED");
 
   @NotNull Path getProjectBasePath();
+
+  @ApiStatus.Internal
+  @NotNull String getLocationHash();
 
   @NotNull String getProjectName();
 

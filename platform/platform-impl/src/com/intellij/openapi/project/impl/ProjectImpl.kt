@@ -226,20 +226,7 @@ open class ProjectImpl(parent: ComponentManagerImpl, filePath: Path, projectName
 
   final override fun getPresentableUrl(): String = componentStore.presentableUrl
 
-  override fun getLocationHash(): String {
-    val store = componentStore
-    val prefix: String
-    val path: Path
-    if (store.storageScheme == StorageScheme.DIRECTORY_BASED) {
-      path = store.projectBasePath
-      prefix = ""
-    }
-    else {
-      path = store.projectFilePath
-      prefix = getName()
-    }
-    return "$prefix${Integer.toHexString(path.systemIndependentPath.hashCode())}"
-  }
+  override fun getLocationHash(): String = componentStore.locationHash
 
   final override fun getWorkspaceFile(): VirtualFile? {
     return LocalFileSystem.getInstance().findFileByNioFile(componentStore.workspacePath)

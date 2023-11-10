@@ -97,6 +97,20 @@ abstract class ProjectStoreBase(final override val project: Project) : Component
     }
   }
 
+  final override fun getLocationHash(): String {
+    val prefix: String
+    val path: Path
+    if (storageScheme == StorageScheme.DIRECTORY_BASED) {
+      path = dirOrFile ?: throw IllegalStateException("setPath was not yet called")
+      prefix = ""
+    }
+    else {
+      path = projectFilePath
+      prefix = projectName
+    }
+    return "$prefix${Integer.toHexString(path.systemIndependentPath.hashCode())}"
+  }
+
   override fun getPresentableUrl(): String {
     if (isDirectoryBased) {
       return (dirOrFile ?: throw IllegalStateException("setPath was not yet called")).systemIndependentPath
