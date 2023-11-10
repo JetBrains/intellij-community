@@ -89,10 +89,13 @@ class ItemsDecoratorInitializer : LookupTracker() {
   override fun lookupCreated(lookup: LookupImpl, storage: MutableLookupStorage) {
     if (shouldShowDiff(storage) || shouldShowRelevant(storage)) {
       lookup.addPresentationCustomizer(object : LookupCellRenderer.ItemPresentationCustomizer {
+        val shouldShowRelevant: Boolean
+          get() = lookup.getUserData(HAS_RELEVANT_KEY) ?: false
+        val shouldShowDiff: Boolean
+          get() = lookup.getUserData(POSITION_CHANGED_KEY) ?: false
+
         override fun customizePresentation(item: LookupElement,
                                            presentation: LookupElementPresentation): LookupElementPresentation {
-          val shouldShowRelevant = lookup.getUserData(HAS_RELEVANT_KEY) ?: false
-          val shouldShowDiff = lookup.getUserData(POSITION_CHANGED_KEY) ?: false
           if (!shouldShowRelevant && !shouldShowDiff) return presentation
 
           val isRelevant = item.getUserData(IS_RELEVANT_KEY) ?: false
@@ -108,6 +111,9 @@ class ItemsDecoratorInitializer : LookupTracker() {
           newPresentation.icon = LeftDecoratedIcon(decorationIcon, newPresentation.icon)
           return newPresentation
         }
+
+        override fun customizeEmptyIcon(emptyIcon: Icon): Icon =
+          if (!shouldShowRelevant && !shouldShowDiff) emptyIcon else LeftDecoratedIcon(EMPTY_ICON, emptyIcon)
       })
     }
   }
