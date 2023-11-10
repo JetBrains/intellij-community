@@ -5,6 +5,7 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.descriptors.utils.collectReachableInlineDelegatedPropertyAccessors
 import org.jetbrains.kotlin.analysis.api.descriptors.utils.getInlineFunctionAnalyzer
 import org.jetbrains.kotlin.descriptors.ClassConstructorDescriptor
+import org.jetbrains.kotlin.descriptors.DeclarationDescriptorWithVisibility
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
 import org.jetbrains.kotlin.descriptors.MemberDescriptor
 import org.jetbrains.kotlin.descriptors.ReceiverParameterDescriptor
@@ -105,10 +106,16 @@ private fun analyzeCalls(
                 val thisReceiver = descriptor.dispatchReceiverParameter?.value as? ThisClassReceiver ?: return
                 val declaration = DescriptorToSourceUtils.getSourceFromDescriptor(thisReceiver.classDescriptor) ?: return
                 files.add(declaration.containingFile as? KtFile ?: return)
+            } else if (descriptor.extensionReceiverParameter?.visibility == DescriptorVisibilities.LOCAL) {
+                val thisReceiver = descriptor.extensionReceiverParameter?.value as? ExtensionReceiver ?: return
+                val declarationDescriptor = thisReceiver.type.constructor.declarationDescriptor ?: return
+                if ((declarationDescriptor as? DeclarationDescriptorWithVisibility)?.visibility != DescriptorVisibilities.LOCAL) return
+                val declaration = DescriptorToSourceUtilsIde.getAnyDeclaration(project, declarationDescriptor) ?: return
+                files.add(declaration.containingFile as? KtFile ?: return)
             } else if ((descriptor as? ClassConstructorDescriptor)?.constructedClass?.visibility == DescriptorVisibilities.LOCAL) {
                 val declaration = DescriptorToSourceUtils.getSourceFromDescriptor((descriptor).constructedClass) ?: return
                 files.add(declaration.containingFile as? KtFile ?: return)
-            } // TODO: Extension receivers?
+            }
         }
     })
 }
