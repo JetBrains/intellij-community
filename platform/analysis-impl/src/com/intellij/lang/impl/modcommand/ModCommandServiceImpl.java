@@ -198,8 +198,8 @@ public class ModCommandServiceImpl implements ModCommandService {
           tag("td").child(checkbox),
           tag("td").child(label)
         ));
-      return new HtmlBuilder().append(value ? AnalysisBundle.message("set.inspection.option.description.check")
-                                       : AnalysisBundle.message("set.inspection.option.description.uncheck"))
+      return new HtmlBuilder().append(value ? AnalysisBundle.message("set.option.description.check")
+                                       : AnalysisBundle.message("set.option.description.uncheck"))
           .br().br().append(info).toFragment();
     }
     if (newValue instanceof Integer value) {
@@ -213,7 +213,7 @@ public class ModCommandServiceImpl implements ModCommandService {
         tag("td").child(input),
         tag("td").child(text(prefixSuffix.suffix()))
       ));
-      return new HtmlBuilder().append(AnalysisBundle.message("set.inspection.option.description.input"))
+      return new HtmlBuilder().append(AnalysisBundle.message("set.option.description.input"))
           .br().br().append(info).br().toFragment();
     }
     if (newValue instanceof List<?> list) {

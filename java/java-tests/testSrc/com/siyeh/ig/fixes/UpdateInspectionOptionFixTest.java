@@ -39,8 +39,8 @@ public class UpdateInspectionOptionFixTest extends BasePlatformTestCase {
                    ModifiedOption[bindId=currentProfile.Java8MapApi.options.mySuggestMapGetOrDefault, oldValue=true, newValue=false]]]""", command.toString());
     IntentionPreviewInfo preview = IntentionPreviewUtils.getModCommandPreview(command, myFixture.getActionContext());
     assertTrue(preview instanceof IntentionPreviewInfo.Html);
-    assertEquals("Uncheck inspection option:<br/><br/><table><tr><td><input readonly=\"true\" type=\"checkbox\"/></td><td>Suggest conversion to Map.computeIfAbsent</td></tr></table>" +
-                 "Uncheck inspection option:<br/><br/><table><tr><td><input readonly=\"true\" type=\"checkbox\"/></td><td>Suggest conversion to Map.getOrDefault</td></tr></table>",
+    assertEquals("Uncheck option:<br/><br/><table><tr><td><input readonly=\"true\" type=\"checkbox\"/></td><td>Suggest conversion to Map.computeIfAbsent</td></tr></table>" +
+                 "Uncheck option:<br/><br/><table><tr><td><input readonly=\"true\" type=\"checkbox\"/></td><td>Suggest conversion to Map.getOrDefault</td></tr></table>",
                  ((IntentionPreviewInfo.Html)preview).content().toString());
   }
   
@@ -51,7 +51,7 @@ public class UpdateInspectionOptionFixTest extends BasePlatformTestCase {
     UpdateInspectionOptionFix fix = new UpdateInspectionOptionFix(inspection, "mySuggestMapComputeIfAbsent", "Update", false);
     IntentionPreviewInfo info = fix.generatePreview(myFixture.getActionContext());
     assertTrue(info instanceof IntentionPreviewInfo.Html);
-    assertEquals("Uncheck inspection option:<br/><br/><table><tr><td><input readonly=\"true\" type=\"checkbox\"/></td>" +
+    assertEquals("Uncheck option:<br/><br/><table><tr><td><input readonly=\"true\" type=\"checkbox\"/></td>" +
                  "<td>Suggest conversion to Map.computeIfAbsent</td></tr></table>", ((IntentionPreviewInfo.Html)info).content().toString());
     assertTrue(((Java8MapApiInspection)InspectionProfileManager.getInstance(getProject()).getCurrentProfile()
       .getUnwrappedTool("Java8MapApi", myFixture.getFile())).mySuggestMapComputeIfAbsent);
