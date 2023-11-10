@@ -11,7 +11,7 @@ import org.jetbrains.plugins.gradle.jvmcompat.GradleCompatibilityState
  */
 internal val DEFAULT_DATA = GradleCompatibilityState(
   supportedJavaVersions = listOf(
-    "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20"
+    "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21"
   ),
   supportedGradleVersions = listOf(
     "3.0", "3.1", "3.2", "3.3", "3.4", "3.5",
@@ -35,6 +35,7 @@ internal val DEFAULT_DATA = GradleCompatibilityState(
     VersionMapping(java = "17-18", gradle = "7.2-INF"),
     VersionMapping(java = "18-19", gradle = "7.5-INF"),
     VersionMapping(java = "19-20", gradle = "7.6-INF"),
-    VersionMapping(java = "20-21", gradle = "8.3-INF")
+    VersionMapping(java = "20-21", gradle = "8.3-INF"),
+    VersionMapping(java = "21-22", gradle = "8.5-INF")
   )
 );
