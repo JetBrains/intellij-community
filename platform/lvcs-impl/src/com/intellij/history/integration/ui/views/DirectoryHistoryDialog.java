@@ -160,7 +160,7 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
     }
 
     @Override
-    protected void doPerform(DirectoryHistoryDialogModel model, List<? extends DirectoryChange> selected) {
+    protected void doPerform(DirectoryHistoryDialogModel model, List<DirectoryChange> selected) {
       final Set<DirectoryChange> selectedSet = new HashSet<>(selected);
 
       int index = 0;
@@ -178,7 +178,7 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
     }
 
     @Override
-    protected boolean isEnabledFor(DirectoryHistoryDialogModel model, List<? extends DirectoryChange> changes) {
+    protected boolean isEnabledFor(DirectoryHistoryDialogModel model, List<DirectoryChange> changes) {
       return ContainerUtil.exists(getDisplayedChanges(), each -> each.canShowFileDifference());
     }
   }
@@ -189,7 +189,7 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
     }
 
     @Override
-    protected void doPerform(DirectoryHistoryDialogModel model, List<? extends DirectoryChange> selected) {
+    protected void doPerform(DirectoryHistoryDialogModel model, List<DirectoryChange> selected) {
       List<Difference> diffs = new ArrayList<>();
       for (DirectoryChange each : selected) {
         diffs.add(each.getModel().getDifference());
@@ -198,7 +198,7 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
     }
 
     @Override
-    protected boolean isEnabledFor(DirectoryHistoryDialogModel model, List<? extends DirectoryChange> changes) {
+    protected boolean isEnabledFor(DirectoryHistoryDialogModel model, List<DirectoryChange> changes) {
       return model.isRevertEnabled();
     }
   }
@@ -213,7 +213,7 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
       doPerform(model, getSelectedChanges());
     }
 
-    protected abstract void doPerform(DirectoryHistoryDialogModel model, List<? extends DirectoryChange> selected);
+    protected abstract void doPerform(DirectoryHistoryDialogModel model, List<DirectoryChange> selected);
 
     @Override
     public @NotNull ActionUpdateThread getActionUpdateThread() {
@@ -227,7 +227,7 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
       return isEnabledFor(model, changes);
     }
 
-    protected boolean isEnabledFor(DirectoryHistoryDialogModel model, List<? extends DirectoryChange> changes) {
+    protected boolean isEnabledFor(DirectoryHistoryDialogModel model, List<DirectoryChange> changes) {
       return true;
     }
   }

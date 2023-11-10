@@ -17,10 +17,10 @@ import java.io.IOException;
 import java.util.*;
 
 public final class DifferenceReverter extends Reverter {
-  private final List<? extends Difference> myDiffs;
+  private final List<Difference> myDiffs;
   private final Revision myLeftRevision;
 
-  public DifferenceReverter(Project p, LocalHistoryFacade vcs, IdeaGateway gw, List<? extends Difference> diffs, Revision leftRevision) {
+  public DifferenceReverter(Project p, LocalHistoryFacade vcs, IdeaGateway gw, List<Difference> diffs, Revision leftRevision) {
     super(p, vcs, gw);
     myDiffs = diffs;
     myLeftRevision = leftRevision;
