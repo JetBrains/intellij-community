@@ -27,11 +27,17 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.withContext
 import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
 @TestApplication
 @RunInEdt(allMethods = false)
 class ActionUpdaterTest {
+
+  @BeforeEach
+  internal fun setUp() {
+    ActionManager.getInstance() // preload ActionManager
+  }
 
   @Test
   @RunMethodInEdt
