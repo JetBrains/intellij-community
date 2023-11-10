@@ -39,6 +39,7 @@ class MermaidHighlighter : SyntaxHighlighterBase() {
       addTimelineHighlights(holder)
       addQuadrantHighlights(holder)
       addSankeyHighlights(holder)
+      addXYChartHighlights(holder)
       return holder
     }
 
@@ -331,8 +332,6 @@ class MermaidHighlighter : SyntaxHighlighterBase() {
       fillMap(
         holder,
         MermaidTextAttributes.keyword,
-        MermaidTokens.Quadrant.X_AXIS,
-        MermaidTokens.Quadrant.Y_AXIS,
         MermaidTokens.Quadrant.QUADRANT
       )
     }
@@ -344,6 +343,17 @@ class MermaidHighlighter : SyntaxHighlighterBase() {
         MermaidTextAttributes.string,
         MermaidTokens.Sankey.SANKEY_TEXT
       )
+    }
+
+    private fun addXYChartHighlights(holder: MutableMap<IElementType, TextAttributesKey>) {
+      holder[MermaidTokens.XYChart.XY_CHART] = MermaidTextAttributes.diagram_name
+      fillMap(
+        holder,
+        MermaidTextAttributes.keyword,
+        MermaidTokens.XYChart.LINE_KEYWORD,
+        MermaidTokens.XYChart.BAR_KEYWORD,
+      )
+      holder[MermaidTokens.XYChart.ORIENTATION_VALUE] = MermaidTextAttributes.constant
     }
 
     private fun addBaseHighlights(holder: MutableMap<IElementType, TextAttributesKey>) {
@@ -369,6 +379,8 @@ class MermaidHighlighter : SyntaxHighlighterBase() {
         MermaidTokens.Mindmap.OPEN_ICON,
         MermaidTokens.Mindmap.CLOSE_ICON,
         MermaidTokens.STYLE_OPT,
+        MermaidTokens.X_AXIS,
+        MermaidTokens.Y_AXIS,
       )
       fillMap(
         holder,

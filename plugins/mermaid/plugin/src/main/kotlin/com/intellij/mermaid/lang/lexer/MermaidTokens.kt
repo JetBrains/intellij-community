@@ -217,6 +217,12 @@ object MermaidTokens {
 
   @JvmField
   val GENERIC_TYPE = MermaidToken("GENERIC_TYPE")
+
+  @JvmField
+  val X_AXIS = MermaidToken("X_AXIS")
+
+  @JvmField
+  val Y_AXIS = MermaidToken("Y_AXIS")
   //endregion
 
   object Directives {
@@ -903,12 +909,6 @@ object MermaidTokens {
     val QUADRANT_CHART = MermaidToken("Quadrant.QUADRANT_CHART")
 
     @JvmField
-    val X_AXIS = MermaidToken("Quadrant.X_AXIS")
-
-    @JvmField
-    val Y_AXIS = MermaidToken("Quadrant.Y_AXIS")
-
-    @JvmField
     val QUADRANT = MermaidToken("Quadrant.QUADRANT")
 
     @JvmField
@@ -928,5 +928,23 @@ object MermaidTokens {
 
     @JvmField
     val SANKEY_TEXT = MermaidToken("Sankey.SANKEY_TEXT")
+  }
+
+
+  object XYChart {
+    @JvmField
+    val XY_CHART = MermaidToken("XYChart.XY_CHART")
+
+    @JvmField
+    val ORIENTATION_VALUE = MermaidToken("XYChart.ORIENTATION_VALUE")
+
+    @JvmField
+    val LINE_KEYWORD = MermaidToken("XYChart.LINE_KEYWORD")
+
+    @JvmField
+    val BAR_KEYWORD = MermaidToken("XYChart.BAR_KEYWORD")
+
+    @JvmField
+    val XY_CHART_TEXT = MermaidToken("XYChart.XY_CHART_TEXT")
   }
 }

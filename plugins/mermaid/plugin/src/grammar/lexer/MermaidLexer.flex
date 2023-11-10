@@ -79,6 +79,8 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
 
 %states sankey, sankey_quoted_text
 
+%states xy_chart
+
 %%
 
 "%%"/"{"[^]* { yypushstate(directive); return Directives.OPEN_DIRECTIVE; }
@@ -112,6 +114,7 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
   "quadrantChart" { yybegin(quadrant); return Quadrant.QUADRANT_CHART; }
   "zenuml"[^]* { return ZenUML.ZEN_UML; }
   "sankey-beta" { yybegin(sankey); return Sankey.SANKEY; }
+  "xychart-beta" { yybegin(xy_chart); return XYChart.XY_CHART; }
 
   --- { yybegin(frontmatter); return Frontmatter.FRONTMATTER_START; }
 
@@ -137,7 +140,7 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
 <pie, journey, flowchart, flowchart_body, sequence, class_diagram, struct, state_diagram, state_statement, entity_relationship, entity_attributes, note_content, gantt, requirement_diagram, requirement, requirement_value, req_element, gitgraph, c4, mindmap, timeline, quadrant, sankey> {
   %%([^{][^\n\r]*)? { return LINE_COMMENT; }
 }
-<pie, journey, flowchart, flowchart_body, sequence, class_diagram, struct, state_diagram, state_statement, entity_relationship, entity_attributes, note_content, gantt, requirement_diagram, requirement, requirement_value, req_element, gitgraph, c4, timeline, quadrant> {
+<pie, journey, flowchart, flowchart_body, sequence, class_diagram, struct, state_diagram, state_statement, entity_relationship, entity_attributes, note_content, gantt, requirement_diagram, requirement, requirement_value, req_element, gitgraph, c4, timeline, quadrant, xy_chart> {
   "accTitle" { yypushstate(acc_title); return ACC_TITLE; }
   "accDescr" { yypushstate(acc_descr); return ACC_DESCR; }
 }
@@ -994,8 +997,8 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
 <quadrant> {
   "title" { yypushstate(title); return TITLE; }
 
-  "x-axis" { return Quadrant.X_AXIS; }
-  "y-axis" { return Quadrant.Y_AXIS; }
+  "x-axis" { return X_AXIS; }
+  "y-axis" { return Y_AXIS; }
 
   \-\-+\> { return ARROW; }
 
@@ -1031,6 +1034,33 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
   [\"]/[^\"]? { yypopstate(); return DOUBLE_QUOTE; }
   [\"] { return DOUBLE_QUOTE; }
   [^,\"\s]* { return Sankey.SANKEY_TEXT; }
+}
+
+//---xy-chart--------------------------------------------------------------------
+<xy_chart> {
+  "title" { yypushstate(title); return TITLE; }
+
+  "x-axis" { return X_AXIS; }
+  "y-axis" { return Y_AXIS; }
+
+  "vertical" | "horizontal" { return XYChart.ORIENTATION_VALUE; }
+
+  "line" { return XYChart.LINE_KEYWORD; }
+  "bar" { return XYChart.BAR_KEYWORD; }
+
+  "[" { return OPEN_SQUARE; }
+  "]" { return CLOSE_SQUARE; }
+  "-->" { return ARROW; }
+
+  [+-]?(\d+(\.\d+)?|\.\d+) { return NUM; }
+
+  [\w&+=*\.#\-]+ { return XYChart.XY_CHART_TEXT; }
+  ":" { return COLON; }
+  "," { return COMMA; }
+  ";" { return SEMICOLON;}
+
+  \" { yypushstate(double_quoted_string); return DOUBLE_QUOTE; }
+  [\"]/` { yypushstate(md_string); return DOUBLE_QUOTE; }
 }
 
 //--------------------------------------------------------------------------------

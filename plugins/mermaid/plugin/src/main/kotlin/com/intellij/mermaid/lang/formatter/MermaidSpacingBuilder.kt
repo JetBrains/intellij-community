@@ -324,8 +324,8 @@ internal object MermaidSpacingBuilder {
       .between(MermaidTokens.Mindmap.NODE_DESCR, MermaidTokens.Mindmap.NODE_DESCR).spaces(1)
       .betweenInside(MermaidTokens.ID, MermaidTokens.ID, MermaidElements.MINDMAP_NODE_ID).spaces(1)
       // Quadrant
-      .after(MermaidTokens.Quadrant.X_AXIS).spaces(1)
-      .after(MermaidTokens.Quadrant.Y_AXIS).spaces(1)
+      .after(MermaidTokens.X_AXIS).spaces(1)
+      .after(MermaidTokens.Y_AXIS).spaces(1)
       .between(MermaidTokens.Quadrant.QUADRANT_TEXT, MermaidTokens.Quadrant.QUADRANT_TEXT).spaces(1)
       // Gantt
       .between(MermaidTokens.Gantt.DATE_FORMAT, MermaidTokens.Gantt.GANTT_VALUE).spaces(1)
@@ -336,6 +336,10 @@ internal object MermaidSpacingBuilder {
       .between(MermaidTokens.Gantt.AXIS_FORMAT, MermaidTokens.Gantt.GANTT_VALUE).spaces(1)
       // Sankey
       .between(MermaidTokens.Sankey.SANKEY_TEXT, MermaidTokens.Sankey.SANKEY_TEXT).spaces(1)
+      // XYChart
+      .between(MermaidTokens.XYChart.XY_CHART, MermaidTokens.XYChart.ORIENTATION_VALUE).spaces(1)
+      .after(MermaidTokens.XYChart.LINE_KEYWORD).spaces(1)
+      .after(MermaidTokens.XYChart.BAR_KEYWORD).spaces(1)
   }
 
   private fun SpacingBuilder.addBlankLinesRules(mermaid: MermaidCustomCodeStyleSettings): SpacingBuilder {

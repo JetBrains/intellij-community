@@ -686,6 +686,47 @@
             }
           }
         },
+        "xyChart": {
+          "properties": {
+            "useWidth": {
+              "type": "number"
+            },
+            "useMaxWidth": {
+              "type": "boolean"
+            },
+            "width": {
+              "type": "number"
+            },
+            "height": {
+              "type": "number"
+            },
+            "titleFontSize": {
+              "type": "number"
+            },
+            "titlePadding": {
+              "type": "number"
+            },
+            "showTitle": {
+              "type": "boolean"
+            },
+            "xAxis": {
+              "$ref": "#/definitions/XYChartAxisConfig"
+            },
+            "yAxis": {
+              "$ref": "#/definitions/XYChartAxisConfig"
+            },
+            "chartOrientation": {
+              "type": "string",
+              "enum": [
+                "vertical",
+                "horizontal"
+              ]
+            },
+            "plotReservedSpacePercent": {
+              "type": "number"
+            }
+          }
+        },
         "requirement": {
           "properties": {
             "useWidth": {
@@ -1373,6 +1414,43 @@
                 "string",
                 "number"
               ]
+            }
+          }
+        },
+        "XYChartAxisConfig": {
+          "properties": {
+            "showLabel": {
+              "type": "boolean"
+            },
+            "labelFontSize": {
+              "type": "number"
+            },
+            "labelPadding": {
+              "type": "number"
+            },
+            "showTitle": {
+              "type": "boolean"
+            },
+            "titleFontSize": {
+              "type": "number"
+            },
+            "titlePadding": {
+              "type": "number"
+            },
+            "showTick": {
+              "type": "boolean"
+            },
+            "tickLength": {
+              "type": "number"
+            },
+            "tickWidth": {
+              "type": "number"
+            },
+            "showAxisLine": {
+              "type": "boolean"
+            },
+            "axisLineWidth": {
+              "type": "number"
             }
           }
         }

@@ -28,6 +28,7 @@
     'static com.intellij.mermaid.lang.lexer.MermaidTokens.Quadrant.*'
     'static com.intellij.mermaid.lang.lexer.MermaidTokens.ZenUML.*'
     'static com.intellij.mermaid.lang.lexer.MermaidTokens.Sankey.*'
+    'static com.intellij.mermaid.lang.lexer.MermaidTokens.XYChart.*'
     'static com.intellij.mermaid.lang.parser.ParserUtils.*'
   ]
   generateTokens=false
@@ -56,6 +57,7 @@ private oldDiagram ::= pieHeader EOL* [pieBody]
   | mindmapHeader EOL* mindmapBody
   | timelineHeader EOL* [timelineBody]
   | quadrantHeader EOL* [quadrantBody]
+  | xyChartHeader EOL* [xyChartBody]
 
 private newDiagram ::= ZEN_UML
   | sankeyHeader EOL* [sankeyBody]
@@ -875,6 +877,33 @@ quotedSankeyFieldInnerValue ::= DOUBLE_QUOTE DOUBLE_QUOTE quotedSankeyFieldValue
 
 complexSankeyText ::= SANKEY_TEXT+
 
+
+xyChartHeader ::= XY_CHART [ORIENTATION_VALUE]
+
+xyChartBody ::= xyChartLines { implements="com.intellij.mermaid.lang.psi.MermaidDiagramBlock" }
+private xyChartLines ::= xyChartLine [xyChartLines]
+private xyChartLine ::= xyChartStatement [separator] | separator
+private xyChartStatement ::= titleStatement
+  | directive
+  | accStatement
+  | xAxisStatement
+  | yAxisStatement
+  | lineStatement
+  | barStatement
+
+xAxisStatement ::= X_AXIS xAxisData
+private xAxisData ::= xyChartText* (bandData | arrowData)
+
+yAxisStatement ::= Y_AXIS yAxisData
+private yAxisData ::= xyChartText* arrowData
+
+lineStatement ::= LINE_KEYWORD [xyChartText] plotData
+barStatement ::= BAR_KEYWORD [xyChartText] plotData
+
+plotData ::= OPEN_SQUARE (NUM (COMMA NUM)*) CLOSE_SQUARE
+bandData ::= OPEN_SQUARE (xyChartText (COMMA xyChartText)*) CLOSE_SQUARE
+arrowData ::= NUM ARROW NUM
+private xyChartText ::= XY_CHART_TEXT | maybeEmptyString | maybeEmptyMdText
 
 directive ::= OPEN_DIRECTIVE directiveValue? CLOSE_DIRECTIVE
 external directiveValue ::= directiveParser

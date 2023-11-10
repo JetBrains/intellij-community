@@ -131,6 +131,12 @@ object MermaidTokenTypeSets {
     //region SANKEY
     MermaidElements.SANKEY_RECORD_STATEMENT,
     //endregion
+    //region XYCHART
+    MermaidElements.X_AXIS_STATEMENT,
+    MermaidElements.Y_AXIS_STATEMENT,
+    MermaidElements.LINE_STATEMENT,
+    MermaidElements.BAR_STATEMENT,
+    //endregion
   )
   //endregion
 
@@ -168,6 +174,7 @@ object MermaidTokenTypeSets {
     MermaidElements.TIMELINE_SECTION_BLOCK,
     MermaidElements.QUADRANT_BODY,
     MermaidElements.SANKEY_BODY,
+    MermaidElements.XY_CHART_BODY,
   )
   //endregion
 
@@ -237,6 +244,8 @@ object MermaidTokenTypeSets {
     MermaidTokens.Timeline.TIMELINE,
     MermaidTokens.Quadrant.QUADRANT_CHART,
     MermaidTokens.Sankey.SANKEY,
+    MermaidTokens.XYChart.XY_CHART,
+    MermaidTokens.XYChart.ORIENTATION_VALUE,
   )
   //endregion
 }

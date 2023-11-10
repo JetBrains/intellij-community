@@ -38,6 +38,8 @@ class MermaidFormatterTest : MermaidBaseTestCase("formatter") {
   fun `test quadrant`() = doTest()
 
   fun `test sankey`() = doTest()
+
+  fun `test xychart`() = doTest()
   
   fun `test semicolon as separator`() = doTest {
     getLanguageIndentOptions(MermaidLanguage).apply {

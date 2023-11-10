@@ -32,6 +32,7 @@ class MermaidDiagramCompletionProvider : CompletionProvider<CompletionParameters
       "timeline",
       "zenuml",
       "sankey-beta",
+      "xychart-beta",
     )
 
   override fun addCompletions(
@@ -318,3 +319,10 @@ class C4CompletionProvider : MermaidLiveTemplateCompletionProvider() {
 
 class QuadrantCompletionProvider :
   MermaidSimpleCompletionProvider(listOf("x-axis", "y-axis", "quadrant-1", "quadrant-2", "quadrant-3", "quadrant-4"))
+
+
+class XYChartCompletionProvider :
+  MermaidSimpleCompletionProvider(listOf("x-axis", "y-axis", "bar", "line"))
+
+class XYChartOrientationCompletionProvider :
+  MermaidSimpleCompletionProvider(listOf("horizontal", "vertical"))
