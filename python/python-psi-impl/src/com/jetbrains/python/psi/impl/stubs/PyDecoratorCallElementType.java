@@ -12,8 +12,10 @@ import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyCustomDecoratorIndexer;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyDecoratorImpl;
+import com.jetbrains.python.psi.impl.PyEvaluator;
 import com.jetbrains.python.psi.stubs.PyDecoratorStub;
 import com.jetbrains.python.psi.stubs.PyDecoratorStubIndex;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -51,32 +53,24 @@ public class PyDecoratorCallElementType extends PyStubElementType<PyDecoratorStu
     for (PyExpression argument : arguments) {
       if (argument instanceof PyKeywordArgument keywordArgument) {
         String keyword = keywordArgument.getKeyword();
-        String value = extractLiteralValue(keywordArgument.getValueExpression());
+        String value = evaluateArgumentValue(keywordArgument);
         if (keyword != null && value != null) {
           namedArguments.put(keyword, value);
         }
       }
       else {
-        String value = extractLiteralValue(argument);
+        String value = evaluateArgumentValue(argument);
         positionalArguments.add(value);
       }
     }
-    return new PyDecoratorStubImpl(psi.getQualifiedName(), psi.hasArgumentList(), parentStub, ContainerUtil.unmodifiableOrEmptyList(positionalArguments),
-                                   ContainerUtil.unmodifiableOrEmptyMap(namedArguments));
+    return new PyDecoratorStubImpl(psi.getQualifiedName(), psi.hasArgumentList(), parentStub, ContainerUtil.unmodifiableOrEmptyList(
+      positionalArguments), ContainerUtil.unmodifiableOrEmptyMap(namedArguments));
   }
 
-  private static @Nullable String extractLiteralValue(PyExpression expression) {
-    if (expression instanceof PyLiteralExpression literal) {
-      String value;
-      if (literal instanceof PyStringLiteralExpression) {
-        value = ((PyStringLiteralExpression)literal).getStringValue();
-      }
-      else {
-        value = literal.getText();
-      }
-      return value;
-    }
-    return null;
+  @Nullable
+  @ApiStatus.Internal
+  public static String evaluateArgumentValue(@Nullable PyExpression expression) {
+    return PyEvaluator.evaluateNoResolve(expression, String.class);
   }
 
   @Override
