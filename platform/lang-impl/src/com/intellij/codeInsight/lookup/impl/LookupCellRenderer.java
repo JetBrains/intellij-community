@@ -247,6 +247,7 @@ public final class LookupCellRenderer implements ListCellRenderer<LookupElement>
 
   void addPresentationCustomizer(@NotNull ItemPresentationCustomizer customizer) {
     myCustomizers.add(customizer);
+    updateIconWidth(EmptyIcon.ICON_0); // Need to make sure we've got at least enough space for the customizations alone.
   }
 
   private static int calcSpacing(@NotNull SimpleColoredComponent component, @Nullable Icon icon) {
@@ -539,8 +540,6 @@ public final class LookupCellRenderer implements ListCellRenderer<LookupElement>
     }
     if (icon == null) {
       return standard;
-    } else if (icon instanceof IconDecorator decoratorIcon) {
-      return decoratorIcon.withDelegate(augmentIcon(editor, decoratorIcon.getDelegate(), standard));
     }
 
     icon = removeVisibilityIfNeeded(editor, icon, standard);
@@ -619,7 +618,7 @@ public final class LookupCellRenderer implements ListCellRenderer<LookupElement>
   }
 
   void itemAdded(@NotNull LookupElement element, @NotNull LookupElementPresentation fastPresentation) {
-    updateIconWidth(fastPresentation);
+    updateIconWidth(fastPresentation.getIcon());
     scheduleUpdateLookupWidthFromVisibleItems();
     AsyncRendering.rememberPresentation(element, fastPresentation);
 
@@ -633,14 +632,20 @@ public final class LookupCellRenderer implements ListCellRenderer<LookupElement>
     }
   }
 
-  private void updateIconWidth(LookupElementPresentation p){
-    Icon icon = p.getIcon();
-    if (icon != null && (icon.getIconWidth() > myEmptyIcon.getIconWidth() || icon.getIconHeight() > myEmptyIcon.getIconHeight())) {
-      if (icon instanceof DeferredIcon) {
-        icon = ((DeferredIcon)icon).getBaseIcon();
-      }
-      icon = removeVisibilityIfNeeded(myLookup.getEditor(), icon, myEmptyIcon);
-
+  private void updateIconWidth(@Nullable Icon baseIcon) {
+    Icon icon = baseIcon;
+    if (icon == null) {
+      return;
+    }
+    if (icon instanceof DeferredIcon) {
+      icon = ((DeferredIcon)icon).getBaseIcon();
+    }
+    icon = removeVisibilityIfNeeded(myLookup.getEditor(), icon, myEmptyIcon);
+    icon = EmptyIcon.create(icon);
+    for (ItemPresentationCustomizer customizer : myCustomizers) {
+      icon = customizer.customizeEmptyIcon(icon);
+    }
+    if (icon.getIconWidth() > myEmptyIcon.getIconWidth() || icon.getIconHeight() > myEmptyIcon.getIconHeight()) {
       myEmptyIcon = EmptyIcon.create(Math.max(icon.getIconWidth(), myEmptyIcon.getIconWidth()),
                                      Math.max(icon.getIconHeight(), myEmptyIcon.getIconHeight()));
       setIconInsets(myNameComponent);
@@ -652,7 +657,7 @@ public final class LookupCellRenderer implements ListCellRenderer<LookupElement>
   }
 
   private int updateMaximumWidth(LookupElementPresentation p, LookupElement item) {
-    updateIconWidth(p);
+    updateIconWidth(p.getIcon());
     return calculateWidth(p, getRealFontMetrics(item, false, CUSTOM_NAME_FONT), getRealFontMetrics(item, true, CUSTOM_NAME_FONT)) +
            calcSpacing(myTailComponent, null) + calcSpacing(myTypeLabel, null);
   }
@@ -740,7 +745,10 @@ public final class LookupCellRenderer implements ListCellRenderer<LookupElement>
   /**
    * Allows to update element's presentation during completion session.
    * <p>
-   * Be careful, the lookup won't be resized according to the changes inside {@link #customizePresentation}.
+   * Be careful, the lookup won't be resized according to the changes inside {@link #customizePresentation}
+   * except for the customization of the icon size, which needs to be properly implemented in
+   * {@link #customizeEmptyIcon(Icon)} for the completion popup to be aligned properly with
+   * the text in the editor.
    */
   @ApiStatus.Internal
   public interface ItemPresentationCustomizer {
@@ -752,6 +760,17 @@ public final class LookupCellRenderer implements ListCellRenderer<LookupElement>
     @NotNull
     LookupElementPresentation customizePresentation(@NotNull LookupElement item,
                                                     @NotNull LookupElementPresentation presentation);
+
+    /**
+     * Invoked to compute the size of the icon area to ensure proper popup alignment.
+     * <p>
+     *   Should mimic what {@link #customizePresentation(LookupElement, LookupElementPresentation)} does
+     *   to the presentation's icon as close as far as the icon size is concerned.
+     * </p>
+     * @param emptyIcon the empty icon, possibly already customized by the previous customizers
+     * @return the modified empty icon, or {@code emptyIcon} if the size doesn't need to be changed
+     */
+    @NotNull Icon customizeEmptyIcon(@NotNull Icon emptyIcon);
   }
 
   /**
