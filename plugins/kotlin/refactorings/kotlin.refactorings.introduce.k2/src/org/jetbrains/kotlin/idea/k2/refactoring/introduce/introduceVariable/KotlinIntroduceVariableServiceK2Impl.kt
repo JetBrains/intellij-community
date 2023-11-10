@@ -8,6 +8,7 @@ import org.jetbrains.kotlin.idea.base.analysis.api.utils.analyzeInModalWindow
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.k2.refactoring.introduce.introduceVariable.KotlinIntroduceVariableHandler.getCandidateContainers
 import org.jetbrains.kotlin.idea.refactoring.introduce.IntroduceRefactoringException
+import org.jetbrains.kotlin.idea.refactoring.introduce.KotlinIntroduceVariableHelper
 import org.jetbrains.kotlin.idea.refactoring.introduce.KotlinIntroduceVariableService
 import org.jetbrains.kotlin.idea.util.ElementKind
 import org.jetbrains.kotlin.idea.util.findElement
@@ -35,8 +36,8 @@ internal class KotlinIntroduceVariableServiceK2Impl(private val project: Project
         return element
     }
 
-    override fun getContainersForExpression(expression: KtExpression): List<Pair<KtElement, KtElement>> {
-        return expression.getCandidateContainers().map { expression to it }
+    override fun getContainersForExpression(expression: KtExpression): List<KotlinIntroduceVariableHelper.Containers> {
+        return expression.getCandidateContainers().map { KotlinIntroduceVariableHelper.Containers(expression, it) }
     }
 
     override fun findOccurrences(

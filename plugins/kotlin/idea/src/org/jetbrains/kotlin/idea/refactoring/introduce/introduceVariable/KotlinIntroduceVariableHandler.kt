@@ -38,6 +38,7 @@ import org.jetbrains.kotlin.idea.refactoring.addTypeArgumentsIfNeeded
 import org.jetbrains.kotlin.idea.refactoring.chooseContainer.chooseContainerElementIfNecessary
 import org.jetbrains.kotlin.idea.refactoring.getQualifiedTypeArgumentList
 import org.jetbrains.kotlin.idea.refactoring.introduce.*
+import org.jetbrains.kotlin.idea.refactoring.introduce.KotlinIntroduceVariableHelper.Containers
 import org.jetbrains.kotlin.idea.refactoring.selectElement
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.idea.util.ElementKind
@@ -672,7 +673,7 @@ object KotlinIntroduceVariableHandler : RefactoringActionHandler {
     private fun KtExpression.getCandidateContainers(
         resolutionFacade: ResolutionFacade,
         originalContext: BindingContext
-    ): List<Pair<KtElement, KtElement>> {
+    ): List<Containers> {
         val physicalExpression = substringContextOrThis
         val contentRange = extractableSubstringInfo?.contentRange
 
@@ -702,7 +703,9 @@ object KotlinIntroduceVariableHandler : RefactoringActionHandler {
         val containers = SmartList(firstContainer)
         val occurrenceContainers = SmartList(firstOccurrenceContainer)
 
-        if (!firstContainer.isFunExpressionOrLambdaBody()) return listOf(firstContainer to firstOccurrenceContainer)
+        if (!firstContainer.isFunExpressionOrLambdaBody()) {
+            return listOf(Containers(firstContainer, firstOccurrenceContainer))
+        }
 
         val lambdasAndContainers = ArrayList<Pair<KtExpression, KtElement>>().apply {
             var container = firstContainer
@@ -717,10 +720,10 @@ object KotlinIntroduceVariableHandler : RefactoringActionHandler {
 
         lambdasAndContainers.mapTo(containers) { it.second }
         lambdasAndContainers.mapTo(occurrenceContainers) { it.first.getOccurrenceContainer() }
-        return ArrayList<Pair<KtElement, KtElement>>().apply {
+        return ArrayList<Containers>().apply {
             for ((container, occurrenceContainer) in (containers zip occurrenceContainers)) {
                 if (occurrenceContainer == null) continue
-                add(container to occurrenceContainer)
+                add(Containers(container, occurrenceContainer))
             }
         }
     }
@@ -732,7 +735,7 @@ object KotlinIntroduceVariableHandler : RefactoringActionHandler {
         isVar: Boolean,
         occurrencesToReplace: List<KtExpression>?,
         onNonInteractiveFinish: ((KtDeclaration) -> Unit)?,
-        selectContainer: (List<Pair<KtElement, KtElement>>, (Pair<KtElement, KtElement>) -> Unit) -> Unit
+        selectContainer: (List<Containers>, (Containers) -> Unit) -> Unit
     ) {
         val expression = expressionToExtract?.let { KtPsiUtil.safeDeparenthesize(it) }
             ?: return showErrorHint(project, editor, KotlinBundle.message("cannot.refactor.no.expression"))
@@ -782,7 +785,7 @@ object KotlinIntroduceVariableHandler : RefactoringActionHandler {
         } else {
             chooseContainerElementIfNecessary(
                 candidateContainers, editor,
-                KotlinBundle.message("text.select.target.code.block"), true, { it.first },
+                KotlinBundle.message("text.select.target.code.block"), true, { it.targetContainer },
                 doRefactoring
             )
         }
@@ -804,13 +807,13 @@ object KotlinIntroduceVariableHandler : RefactoringActionHandler {
         occurrencesToReplace,
         onNonInteractiveFinish
     ) { candidateContainers, doRefactoring ->
-        val foundPair = candidateContainers.find { it.first.textRange == container.textRange }
+        val foundPair = candidateContainers.find { it.targetContainer.textRange == container.textRange }
         if (foundPair != null) {
             doRefactoring(foundPair)
         }
     }
 
-    fun getContainersForExpression(expression: KtExpression): List<Pair<KtElement, KtElement>> {
+    fun getContainersForExpression(expression: KtExpression): List<Containers> {
         val physicalExpression = expression.substringContextOrThis
 
         val resolutionFacade = physicalExpression.getResolutionFacade()
