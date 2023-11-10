@@ -33,15 +33,19 @@ internal class IndexDiagnosticRunner(private val index: VcsLogModifiableIndex,
   private val executor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Index Diagnostic Runner", 1)
   private val bigRepositoriesList = VcsLogBigRepositoriesList.getInstance()
   private val indexingListener = VcsLogIndex.IndexingFinishedListener { root -> runDiagnostic(listOf(root)) }
+  private val disposedFlag = Disposer.newCheckedDisposable()
   private val checkedRoots = ConcurrentCollectionFactory.createConcurrentSet<VirtualFile>()
 
   init {
     index.addListener(indexingListener)
     bigRepositoriesList.addListener(MyBigRepositoriesListListener(), this)
     Disposer.register(parent, this)
+    Disposer.register(this, disposedFlag)
   }
 
   private fun runDiagnostic(rootsToCheck: Collection<VirtualFile>) {
+    if (disposedFlag.isDisposed) return
+
     val backgroundTask = submitTask(executor, this) {
       doRunDiagnostic(rootsToCheck)
     }
