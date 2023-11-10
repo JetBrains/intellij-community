@@ -49,7 +49,7 @@ suspend fun <T> computeDetached(
   context: CoroutineContext = EmptyCoroutineContext,
   action: suspend CoroutineScope.() -> T,
 ): T {
-  val deferred = GlobalScope.async(context + blockingDispatcher, block = action)
+  val deferred = GlobalScope.async(blockingDispatcher + context, block = action)
   try {
     return deferred.await()
   }
