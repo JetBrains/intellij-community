@@ -134,9 +134,7 @@ private fun KtNamedDeclaration.findNonCodeUsages(
  * Retargets [usages] to the moved elements stored in [oldToNewMap].
  */
 internal fun retargetUsagesAfterMove(usages: List<UsageInfo>, oldToNewMap: MutableMap<PsiElement, PsiElement>) {
-    for (usageInfo in usages.filterIsInstance<K2MoveRenameUsageInfo>()) {
-        usageInfo.retarget()
-    }
+    K2MoveRenameUsageInfo.retargetUsages(usages, oldToNewMap)
     val project = oldToNewMap.values.firstOrNull()?.project ?: return
     RenameUtil.renameNonCodeUsages(project, usages.filterIsInstance<NonCodeUsageInfo>().toTypedArray())
 }

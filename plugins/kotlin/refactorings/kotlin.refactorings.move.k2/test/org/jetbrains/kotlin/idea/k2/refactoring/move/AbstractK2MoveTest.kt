@@ -24,9 +24,11 @@ import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveTargetDesc
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.K2MoveFilesOrDirectoriesRefactoringProcessor
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.K2MoveMembersRefactoringProcessor
 import org.jetbrains.kotlin.idea.refactoring.AbstractMultifileRefactoringTest
+import org.jetbrains.kotlin.idea.refactoring.createKotlinFile
 import org.jetbrains.kotlin.idea.refactoring.runRefactoringTest
 import org.jetbrains.kotlin.idea.test.ProjectDescriptorWithStdlibSources
 import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 
 abstract class AbstractK2MoveTest : AbstractMultifileRefactoringTest() {
@@ -56,7 +58,7 @@ object K2MoveAction : AbstractMultifileRefactoringTest.RefactoringAction {
 
     override fun runRefactoring(rootDir: VirtualFile, mainFile: PsiFile, elementsAtCaret: List<PsiElement>, config: JsonObject) {
         if (doJavaMove(mainFile, elementsAtCaret, config)) return
-        doKotlinMove(rootDir, mainFile, config)
+        doKotlinMove(rootDir, elementsAtCaret, mainFile, config)
     }
 
     private fun doJavaMove(mainFile: PsiFile, elementsAtCaret: List<PsiElement>, config: JsonObject): Boolean {
@@ -109,7 +111,7 @@ object K2MoveAction : AbstractMultifileRefactoringTest.RefactoringAction {
         }
     }
 
-    private fun doKotlinMove(rootDir: VirtualFile, mainFile: PsiFile, config: JsonObject) {
+    private fun doKotlinMove(rootDir: VirtualFile, elementsAtCaret: List<PsiElement>, mainFile: PsiFile, config: JsonObject) {
         fun getFilesToMove(project: Project, rootDir: VirtualFile, config: JsonObject): Set<PsiFileSystemItem>? {
             return config.getAsJsonArray("filesToMove")?.map { filePath ->
                 val virtualFile = rootDir.findFileByRelativePath(filePath.asString) ?: error("Can't find file ${filePath.asString}")
@@ -117,10 +119,17 @@ object K2MoveAction : AbstractMultifileRefactoringTest.RefactoringAction {
             }?.toSet()
         }
 
-        fun buildSource(files: Set<KtFile>, config: JsonObject): K2MoveSourceDescriptor<*> {
+        fun buildSource(files: Set<KtFile>, elementsAtCaret: List<PsiElement>, config: JsonObject): K2MoveSourceDescriptor<*> {
             val type = config.getString("type")
             return when (type) {
-                "MOVE_FILES", "MOVE_KOTLIN_TOP_LEVEL_DECLARATIONS", "MOVE_FILES_WITH_DECLARATIONS" -> K2MoveSourceDescriptor.FileSource(files)
+                "MOVE_FILES", "MOVE_FILES_WITH_DECLARATIONS" -> K2MoveSourceDescriptor.FileSource(files)
+                "MOVE_KOTLIN_TOP_LEVEL_DECLARATIONS" -> {
+                    if (elementsAtCaret.isNotEmpty()) {
+                        K2MoveSourceDescriptor.ElementSource(elementsAtCaret.filterIsInstance<KtNamedDeclaration>().toSet())
+                    } else {
+                        K2MoveSourceDescriptor.FileSource(files)
+                    }
+                }
                 else -> error("Unsupported test type")
             }
         }
@@ -154,20 +163,30 @@ object K2MoveAction : AbstractMultifileRefactoringTest.RefactoringAction {
         val filesToMove = getFilesToMove(project, rootDir, config) ?: setOf(mainFile)
         val source = if (filesToMove.all { it is KtFile }) {
             @Suppress("UNCHECKED_CAST")
-            buildSource(filesToMove as Set<KtFile>, config)
+            buildSource(filesToMove as Set<KtFile>, elementsAtCaret, config)
         } else null
-        val target = buildTarget(project, rootDir, config)
-        if (source is K2MoveSourceDescriptor.FileSource && target is K2MoveTargetDescriptor.SourceDirectory) {
-            val descriptor = K2MoveDescriptor.Files(source, target, true, true, true)
+        val specifiedTarget = buildTarget(project, rootDir, config)
+        if (source is K2MoveSourceDescriptor.FileSource && specifiedTarget is K2MoveTargetDescriptor.SourceDirectory) {
+            val descriptor = K2MoveDescriptor.Files(source, specifiedTarget, true, true, true)
             K2MoveFilesOrDirectoriesRefactoringProcessor(descriptor).run()
-        } else if (source is K2MoveSourceDescriptor.ElementSource && target is K2MoveTargetDescriptor.File) {
-            val descriptor = K2MoveDescriptor.Members(source, target, true, true, true)
+        } else if (source is K2MoveSourceDescriptor.ElementSource) {
+            val actualTarget = when (specifiedTarget) {
+                is K2MoveTargetDescriptor.File -> specifiedTarget
+                is K2MoveTargetDescriptor.SourceDirectory -> {
+                    val file = runWriteAction {
+                        createKotlinFile(source.elements.first().name!! + ".kt", specifiedTarget.directory, specifiedTarget.pkg.name)
+                    }
+                    K2MoveTargetDescriptor.File(file)
+                }
+                else -> throw IllegalStateException("Invalid specified target")
+            }
+            val descriptor = K2MoveDescriptor.Members(source, actualTarget, true, true, true)
             K2MoveMembersRefactoringProcessor(descriptor).run()
-        } else if (target is PsiElement) {
+        } else if (specifiedTarget is PsiElement) {
             MoveHandler.doMove(
                 project,
                 source?.elements?.toTypedArray() ?: arrayOf(mainFile),
-                target,
+                specifiedTarget,
                 /* dataContext = */ null,
                 /* callback = */ null
             )
