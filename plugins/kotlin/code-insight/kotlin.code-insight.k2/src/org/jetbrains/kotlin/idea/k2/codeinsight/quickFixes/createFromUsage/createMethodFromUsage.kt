@@ -3,15 +3,16 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage
 
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.lang.jvm.JvmClass
+import com.intellij.lang.jvm.JvmModifier
 import com.intellij.lang.jvm.actions.CreateMethodRequest
 import com.intellij.lang.jvm.actions.EP_NAME
 import com.intellij.lang.jvm.actions.groupActionsByType
+import com.intellij.psi.PsiElement
 import com.intellij.psi.util.InheritanceUtil
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.calls.singleVariableAccessCall
+import org.jetbrains.kotlin.analysis.api.calls.KtCallableMemberCall
+import org.jetbrains.kotlin.analysis.api.calls.singleCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.symbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtSymbolOrigin
 import org.jetbrains.kotlin.analysis.utils.printer.parentOfType
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.idea.KotlinLanguage
@@ -34,36 +35,41 @@ class MethodRequestsBuilder(private val myCall: KtCallExpression) {
     private val myRequests = LinkedHashMap<JvmClass, CreateMethodRequest>()
 
     fun buildRequests(): Map<JvmClass, CreateMethodRequest> {
-        val request = CreateMethodFromKotlinUsageRequest(myCall, mutableSetOf())
         val parent = myCall.parent
+        val manager = myCall.manager
+
+        val targetClasses = mutableSetOf<JvmClass>()
+
+        fun addTargetClass(psi: PsiElement?) {
+            val jvmClass = (psi as? KtClassOrObject)?.toLightClass() ?: psi as? JvmClass
+            if (jvmClass is PsiElement && manager.isInProject(jvmClass)) {
+                targetClasses.add(jvmClass)
+            }
+        }
+
         if (parent is KtDotQualifiedExpression) {
             analyze(myCall) {
                 val call = parent.receiverExpression.resolveCall()
-                val symbol = (call?.singleFunctionCallOrNull() ?: call?.singleVariableAccessCall())?.partiallyAppliedSymbol
+                val symbol = call?.singleCallOrNull<KtCallableMemberCall<*,*>>()?.partiallyAppliedSymbol
                 if (symbol != null) {
                     val classSymbol = symbol.symbol.returnType.expandedClassSymbol ?: return myRequests
-                    (classSymbol.psi as? KtClassOrObject)?.toLightClass()?.let { klass ->
-                        myRequests[klass] = request
-                    }
+                    addTargetClass(classSymbol.psi)
                     classSymbol.superTypes.forEach { ktSuperType ->
-                        val superClass = ktSuperType.expandedClassSymbol ?: return@forEach
-                        if (superClass.origin == KtSymbolOrigin.SOURCE) {
-                            (superClass.psi as? KtClassOrObject)?.toLightClass()
-                                ?.let { myRequests[it] = request }
-                        }
+                        addTargetClass(ktSuperType.expandedClassSymbol?.psi)
                     }
                 }
             }
         } else {
             val lightClass = myCall.parentOfType<KtClassOrObject>()?.toLightClass()
             if (lightClass != null) {
-                myRequests[lightClass] = request
                 InheritanceUtil.getSuperClasses(lightClass).forEach { superClass ->
-                    if (lightClass.manager.isInProject(superClass)) {
-                        myRequests[superClass] = request
-                    }
+                    addTargetClass(superClass)
                 }
             }
+        }
+
+        targetClasses.forEach {
+            myRequests[it] = CreateMethodFromKotlinUsageRequest(myCall, mutableSetOf<JvmModifier>())
         }
 
         return myRequests
