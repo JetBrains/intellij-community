@@ -3,5 +3,5 @@
   "type": "MOVE_INNER_CLASS",
   "targetPackage": "a",
   "newClassName": "Y",
-  "enabledInK2": "false"
+  "enabledInK2": "true"
 }

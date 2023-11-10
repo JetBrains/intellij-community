@@ -33,19 +33,18 @@ import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 
 abstract class AbstractK2MoveTest : AbstractMultifileRefactoringTest() {
     /**
-     * Move tests are not 100% stable ATM, so we only run the tests that will definitely pass.
-     *
-     * Use this flag locally to find out which tests might be enabled.
+     * Can be enabled to find tests tha are passing but are still disabled.
      */
-    private val onlyRunEnabledTests: Boolean = true
+    private val onlyPassingDisabledTests: Boolean = false
 
     override fun getProjectDescriptor() = ProjectDescriptorWithStdlibSources.getInstanceWithStdlibSources()
 
     override fun isFirPlugin(): Boolean = true
 
-    override fun isEnabled(config: JsonObject): Boolean = config.get("enabledInK2")?.asBoolean == true && onlyRunEnabledTests
+    override fun isEnabled(config: JsonObject): Boolean = config.get("enabledInK2")?.asBoolean == true || onlyPassingDisabledTests
 
     override fun runRefactoring(path: String, config: JsonObject, rootDir: VirtualFile, project: Project) {
+        if (config.get("enabledInK2")?.asBoolean == true && onlyPassingDisabledTests) fail()
         runMoveRefactoring(path, config, rootDir, project)
     }
 }
