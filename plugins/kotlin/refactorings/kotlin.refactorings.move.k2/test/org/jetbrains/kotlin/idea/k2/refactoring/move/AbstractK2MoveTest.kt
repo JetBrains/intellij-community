@@ -30,6 +30,7 @@ import org.jetbrains.kotlin.idea.test.ProjectDescriptorWithStdlibSources
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
+import org.jetbrains.kotlin.util.capitalizeDecapitalize.capitalizeAsciiOnly
 
 abstract class AbstractK2MoveTest : AbstractMultifileRefactoringTest() {
     /**
@@ -173,7 +174,7 @@ object K2MoveAction : AbstractMultifileRefactoringTest.RefactoringAction {
                 is K2MoveTargetDescriptor.File -> specifiedTarget
                 is K2MoveTargetDescriptor.SourceDirectory -> {
                     val file = runWriteAction {
-                        createKotlinFile(source.elements.first().name!! + ".kt", specifiedTarget.directory, specifiedTarget.pkg.name)
+                        createKotlinFile(source.elements.first().name?.capitalizeAsciiOnly() + ".kt", specifiedTarget.directory, specifiedTarget.pkg.name)
                     }
                     K2MoveTargetDescriptor.File(file)
                 }
