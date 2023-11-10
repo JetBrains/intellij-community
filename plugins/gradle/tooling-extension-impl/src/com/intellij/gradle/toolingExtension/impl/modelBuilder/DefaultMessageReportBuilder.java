@@ -57,6 +57,12 @@ public class DefaultMessageReportBuilder implements MessageReportBuilder {
   }
 
   @Override
+  public @NotNull MessageReportBuilder withStackTrace() {
+    myException = new IllegalStateException();
+    return this;
+  }
+
+  @Override
   public @NotNull MessageReportBuilder withLocation(String filePath, int line, int column) {
     myFilePosition = new Message.FilePosition(filePath, line, column);
     return this;

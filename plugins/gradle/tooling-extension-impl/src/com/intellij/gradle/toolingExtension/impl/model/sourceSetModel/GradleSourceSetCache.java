@@ -37,7 +37,7 @@ public class GradleSourceSetCache {
           "Source sets for " + GradleNegotiationUtil.getProjectDisplayName(project) + " wasn't collected. " +
           "All source sets should be collected during " + GradleModelFetchPhase.PROJECT_SOURCE_SET_PHASE + "."
         )
-        .withException(new IllegalStateException())
+        .withStackTrace()
         .withKind(Message.Kind.ERROR)
         .reportMessage(project);
       return new DefaultGradleSourceSetModel();
@@ -53,7 +53,7 @@ public class GradleSourceSetCache {
         .withGroup(Messages.SOURCE_SET_CACHE_SET_GROUP)
         .withTitle("Source set model redefinition")
         .withText("Source sets for " + GradleNegotiationUtil.getProjectDisplayName(project) + " was already collected.")
-        .withException(new IllegalStateException())
+        .withStackTrace()
         .withKind(Message.Kind.ERROR)
         .reportMessage(project);
     }

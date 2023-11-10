@@ -116,14 +116,14 @@ class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
       }
 
       @Override
-      void visitAfterAccept(Jar element, @NotNull Exception stackTrace) {
+      void visitAfterAccept(Jar element) {
         context.getMessageReporter().createMessage()
           .withGroup(Messages.SOURCE_SET_MODEL_SKIPPED_PROJECT_TASK_ARTIFACT_GROUP)
           .withTitle("Jar task configuration error")
           .withText("Artifact files collecting for project Jar task was finished. " +
                     "Resolution for Jar task " + element.path + " will be skipped.")
           .withKind(Message.Kind.WARNING)
-          .withException(stackTrace)
+          .withStackTrace()
           .reportMessage(project)
       }
     })
@@ -160,14 +160,14 @@ class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
       }
 
       @Override
-      void visitAfterAccept(Jar element, @NotNull Exception stackTrace) {
+      void visitAfterAccept(Jar element) {
         context.getMessageReporter().createMessage()
           .withGroup(Messages.SOURCE_SET_MODEL_SKIPPED_NON_SOURCE_SET_ARTIFACT_GROUP)
           .withTitle("Jar task configuration error")
           .withText("Artifact files collecting for project Jar task was finished. " +
                     "Resolution for Jar task " + element.path + " will be skipped.")
           .withKind(Message.Kind.WARNING)
-          .withException(stackTrace)
+          .withStackTrace()
           .reportMessage(project)
       }
     })
@@ -202,14 +202,14 @@ class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
       }
 
       @Override
-      void visitAfterAccept(Configuration element, @NotNull Exception stackTrace) {
+      void visitAfterAccept(Configuration element) {
         context.getMessageReporter().createMessage()
           .withGroup(Messages.SOURCE_SET_MODEL_SKIPPED_PROJECT_CONFIGURATION_ARTIFACT_GROUP)
           .withTitle("Project configuration error")
           .withText("Artifact files collecting for project configuration was finished. " +
                     "Resolution for configuration " + element + " will be skipped.")
           .withKind(Message.Kind.WARNING)
-          .withException(stackTrace)
+          .withStackTrace()
           .reportMessage(project)
       }
     })

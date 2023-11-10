@@ -52,7 +52,7 @@ public final class GradleTaskCache {
           "Tasks for " + GradleNegotiationUtil.getProjectDisplayName(project) + " wasn't collected. " +
           "All tasks should be collected during " + GradleModelFetchPhase.TASK_WARM_UP_PHASE + "."
         )
-        .withException(new IllegalStateException())
+        .withStackTrace()
         .withKind(Message.Kind.ERROR)
         .reportMessage(project);
       return Collections.emptySet();
@@ -68,7 +68,7 @@ public final class GradleTaskCache {
         .withGroup(Messages.TASK_CACHE_SET_GROUP)
         .withTitle("Task model redefinition")
         .withText("Tasks for " + GradleNegotiationUtil.getProjectDisplayName(project) + " was already collected.")
-        .withException(new IllegalStateException())
+        .withStackTrace()
         .withKind(Message.Kind.ERROR)
         .reportMessage(project);
     }
