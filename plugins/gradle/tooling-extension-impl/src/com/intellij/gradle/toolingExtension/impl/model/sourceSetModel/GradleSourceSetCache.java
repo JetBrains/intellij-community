@@ -60,7 +60,7 @@ public class GradleSourceSetCache {
   }
 
   /**
-   * Marks that project source set model is loaded with errors.
+   * Marks that a project source set model is loaded with errors.
    * This mark means that error for {@code project} is already processed and reported.
    */
   public void markSourceSetModelAsError(@NotNull Project project) {
