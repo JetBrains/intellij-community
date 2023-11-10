@@ -23,11 +23,16 @@ import com.intellij.ui.dsl.builder.components.validationTooltip
 import com.intellij.util.PathUtil
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.PyBundle.message
+import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
 import com.jetbrains.python.sdk.PySdkSettings
 import com.jetbrains.python.sdk.add.LocalContext
 import com.jetbrains.python.sdk.add.ProjectLocationContext
+import com.jetbrains.python.sdk.add.WslContext
 import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMethod.SELECT_EXISTING
 import com.jetbrains.python.sdk.configuration.createVirtualEnvSynchronously
+import com.jetbrains.python.statistics.InterpreterCreationMode
+import com.jetbrains.python.statistics.InterpreterTarget
+import com.jetbrains.python.statistics.InterpreterType
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collectLatest
@@ -230,5 +235,15 @@ class PythonNewVirtualenvCreator(presenter: PythonAddInterpreterPresenter) : Pyt
       catch (e: InvalidPathException) {
         false
       }
+  }
+
+  override fun createStatisticsInfo(target: PythonInterpreterCreationTargets): InterpreterStatisticsInfo {
+    val statisticsTarget = if (presenter.projectLocationContext is WslContext) InterpreterTarget.TARGET_WSL else target.toStatisticsField()
+    return InterpreterStatisticsInfo(InterpreterType.VIRTUALENV,
+                                     statisticsTarget,
+                                     inheritSitePackages.get(),
+                                     makeAvailable.get(),
+                                     false,
+                                     InterpreterCreationMode.CUSTOM)
   }
 }

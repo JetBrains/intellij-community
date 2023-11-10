@@ -12,9 +12,14 @@ import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.util.text.nullize
 import com.jetbrains.python.PyBundle.message
+import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
+import com.jetbrains.python.sdk.add.WslContext
 import com.jetbrains.python.sdk.poetry.detectPoetryExecutable
 import com.jetbrains.python.sdk.poetry.poetryPath
 import com.jetbrains.python.sdk.poetry.setupPoetrySdkUnderProgress
+import com.jetbrains.python.statistics.InterpreterCreationMode
+import com.jetbrains.python.statistics.InterpreterTarget
+import com.jetbrains.python.statistics.InterpreterType
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -64,6 +69,14 @@ class PoetryNewEnvironmentCreator(presenter: PythonAddInterpreterPresenter) : Py
     return setupPoetrySdkUnderProgress(null, null, state.basePythonSdks.get(), state.projectPath.get(),
                                        basePythonVersion.get()!!.homePath, false)!!
   }
-
-
+  
+  override fun createStatisticsInfo(target: PythonInterpreterCreationTargets): InterpreterStatisticsInfo {
+    val statisticsTarget = if (presenter.projectLocationContext is WslContext) InterpreterTarget.TARGET_WSL else target.toStatisticsField()
+    return InterpreterStatisticsInfo(InterpreterType.POETRY,
+                                     statisticsTarget,
+                                     false,
+                                     false,
+                                     false,
+                                     InterpreterCreationMode.CUSTOM)
+  }
 }

@@ -6,6 +6,11 @@ import com.intellij.openapi.ui.validation.DialogValidationRequestor
 import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.Panel
 import com.jetbrains.python.PyBundle.message
+import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
+import com.jetbrains.python.sdk.add.WslContext
+import com.jetbrains.python.statistics.InterpreterCreationMode
+import com.jetbrains.python.statistics.InterpreterTarget
+import com.jetbrains.python.statistics.InterpreterType
 
 class PythonExistingEnvironmentSelector(presenter: PythonAddInterpreterPresenter) : PythonAddEnvironment(presenter) {
 
@@ -21,5 +26,15 @@ class PythonExistingEnvironmentSelector(presenter: PythonAddInterpreterPresenter
 
   override fun getOrCreateSdk(): Sdk {
     return state.selectedVenv.get()!!
+  }
+
+  override fun createStatisticsInfo(target: PythonInterpreterCreationTargets): InterpreterStatisticsInfo {
+    val statisticsTarget = if (presenter.projectLocationContext is WslContext) InterpreterTarget.TARGET_WSL else target.toStatisticsField()
+    return InterpreterStatisticsInfo(InterpreterType.REGULAR,
+                                     statisticsTarget,
+                                     false,
+                                     false,
+                                     true,
+                                     InterpreterCreationMode.CUSTOM)
   }
 }

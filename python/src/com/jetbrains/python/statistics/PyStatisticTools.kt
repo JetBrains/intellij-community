@@ -20,6 +20,7 @@ import com.jetbrains.python.sdk.PythonSdkUtil
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.sdk.pipenv.isPipEnv
 import com.jetbrains.python.sdk.poetry.isPoetry
+import com.jetbrains.python.statistics.InterpreterCreationMode.*
 import com.jetbrains.python.statistics.InterpreterTarget.*
 import com.jetbrains.python.statistics.InterpreterType.*
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
@@ -95,9 +96,16 @@ val EXECUTION_TYPE = EventFields.String("executionType", listOf(
 enum class InterpreterType(val value: String) {
   PIPENV("pipenv"),
   CONDAVENV("condavenv"),
+  BASE_CONDA("base_conda"),
   VIRTUALENV("virtualenv"),
   REGULAR("regular"),
   POETRY("poetry")
+}
+
+enum class InterpreterCreationMode(val value: String) {
+  SIMPLE("simple"),
+  CUSTOM("custom"),
+  NA("not_applicable"),
 }
 
 val INTERPRETER_TYPE = EventFields.String("interpreterType", listOf(PIPENV.value,
@@ -105,6 +113,10 @@ val INTERPRETER_TYPE = EventFields.String("interpreterType", listOf(PIPENV.value
                                                                           VIRTUALENV.value,
                                                                           REGULAR.value,
                                                                           POETRY.value))
+
+val INTERPRETER_CREATION_MODE = EventFields.String("interpreterCreationMode", listOf(SIMPLE.value,
+                                                                                     CUSTOM.value,
+                                                                                     NA.value))
 
 
 private val Sdk.pythonImplementation: String get() = PythonSdkFlavor.getFlavor(this)?.name ?: "Python"

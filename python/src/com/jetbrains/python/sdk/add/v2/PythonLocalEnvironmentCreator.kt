@@ -11,6 +11,7 @@ import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.bind
 import com.intellij.ui.dsl.builder.bindItem
 import com.jetbrains.python.PyBundle.message
+import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
 import com.jetbrains.python.sdk.add.v2.PythonSupportedEnvironmentManagers.*
 
 class PythonLocalEnvironmentCreator(val presenter: PythonAddInterpreterPresenter) : PythonTargetEnvironmentInterpreterCreator {
@@ -33,6 +34,12 @@ class PythonLocalEnvironmentCreator(val presenter: PythonAddInterpreterPresenter
     PYTHON to PythonExistingEnvironmentSelector(presenter),
     CONDA to CondaExistingEnvironmentSelector(presenter),
   )
+
+  private val currentSdkManager: PythonAddEnvironment
+    get() {
+      return if (_selectExisting.get()) existingInterpreterSelectors[existingInterpreterManager.get()]!!
+      else newInterpreterCreators[newInterpreterManager.get()]!!
+    }
 
 
   override fun buildPanel(outerPanel: Panel, validationRequestor: DialogValidationRequestor) {
@@ -97,10 +104,9 @@ class PythonLocalEnvironmentCreator(val presenter: PythonAddInterpreterPresenter
     existingInterpreterSelectors.values.forEach(PythonAddEnvironment::onShown)
   }
 
-  override fun getSdk(): Sdk {
-    val sdkManager =
-      if (_selectExisting.get()) existingInterpreterSelectors[existingInterpreterManager.get()]
-      else newInterpreterCreators[newInterpreterManager.get()]
-    return sdkManager!!.getOrCreateSdk()
+  override fun getSdk(): Sdk = currentSdkManager.getOrCreateSdk()
+
+  override fun createStatisticsInfo(): InterpreterStatisticsInfo {
+    return currentSdkManager.createStatisticsInfo(PythonInterpreterCreationTargets.LOCAL_MACHINE)
   }
 }

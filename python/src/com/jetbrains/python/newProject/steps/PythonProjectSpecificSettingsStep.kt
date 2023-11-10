@@ -29,6 +29,7 @@ import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.PlatformUtils
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.newProject.PythonProjectGenerator
+import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
 import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.sdk.PyLazySdk
 import com.jetbrains.python.sdk.add.v2.PythonAddNewEnvironmentPanel
@@ -170,6 +171,11 @@ class PythonProjectSpecificSettingsStep<T>(projectGenerator: DirectoryProjectGen
 
   override fun getSdk(): Sdk {
     return PyLazySdk("Uninitialized environment") { interpreterPanel?.getSdk() }
+  }
+
+
+  override fun getInterpreterInfoForStatistics(): InterpreterStatisticsInfo {
+    return interpreterPanel!!.createStatisticsInfo()
   }
 
 
