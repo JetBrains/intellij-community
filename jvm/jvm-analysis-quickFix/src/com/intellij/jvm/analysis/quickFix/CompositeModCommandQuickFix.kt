@@ -34,17 +34,10 @@ abstract class CompositeModCommandQuickFix : PsiUpdateModCommandQuickFix() {
       actions.forEach { action ->
         val project = containingFile.project
         val document = containingFile.viewProvider.document
-        val modCommandAction = action.asModCommandAction()
         val manager = PsiDocumentManager.getInstance(project)
         manager.doPostponedOperationsAndUnblockDocument(document)
-        if (modCommandAction != null) {
-          ModCommandExecutor.getInstance()
-            .executeForFileCopy(modCommandAction.perform(ActionContext.from(null, containingFile)), containingFile)
-        }
-        else {
-          action.invoke(project, null, containingFile)
-          manager.commitDocument(document)
-        }
+        action.invoke(project, null, containingFile)
+        manager.commitDocument(document)
       }
     }
   }

@@ -676,7 +676,7 @@ public class ModCommandExecutorImpl implements ModCommandExecutor {
     }
   }
 
-  private void updateText(@NotNull Project project, @NotNull Document document, @NotNull ModUpdateFileText upd)
+  private static void updateText(@NotNull Project project, @NotNull Document document, @NotNull ModUpdateFileText upd)
     throws IllegalStateException {
     String oldText = upd.oldText();
     if (!document.getText().equals(oldText)) {

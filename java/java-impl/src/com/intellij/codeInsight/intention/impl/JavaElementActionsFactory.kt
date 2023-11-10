@@ -88,7 +88,7 @@ class JavaElementActionsFactory : JvmElementActionsFactory() {
     if (!AddAnnotationPsiFix.isAvailable(declaration, request.qualifiedName)) {
       return emptyList()
     }
-    return listOf(CreateAnnotationAction(declaration, request))
+    return listOf(CreateAnnotationAction(declaration, request).asIntention())
   }
 
   override fun createRemoveAnnotationActions(target: JvmModifiersOwner, request: AnnotationRequest): List<IntentionAction> {
