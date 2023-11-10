@@ -31,13 +31,13 @@ import org.jetbrains.kotlin.psi.psiUtil.forEachDescendantOfType
 sealed class K2MoveRenameUsageInfo(
   element: PsiElement,
   reference: PsiReference,
-  referencedElement: PsiElement
+  val referencedElement: KtNamedDeclaration
 ) : MoveRenameUsageInfo(element, reference, referencedElement) {
     abstract val isInternal: Boolean
 
     open fun refresh(referenceElement: PsiElement, referencedElement: KtNamedDeclaration): K2MoveRenameUsageInfo = this
 
-    abstract fun retarget()
+    abstract fun retarget(to: KtNamedDeclaration)
 
     class Light(
         element: PsiElement,
@@ -49,10 +49,9 @@ sealed class K2MoveRenameUsageInfo(
     ) : K2MoveRenameUsageInfo(element, reference, referencedElement) {
         override val isInternal: Boolean = false // internal usages are always Kotlin usages
 
-        override fun retarget() {
+        override fun retarget(to: KtNamedDeclaration) {
             val element = element ?: return
-            val referencedElement = (upToDateReferencedElement as? KtNamedDeclaration) ?: return
-            val newLightElement = referencedElement.toLightElements()[lightElementIndex]
+            val newLightElement = to.toLightElements()[lightElementIndex]
             if (element is PsiReferenceExpression
                 && wasMember
                 && newLightElement is PsiMember
@@ -115,9 +114,8 @@ sealed class K2MoveRenameUsageInfo(
            return Qualifiable(referenceElement, reference, referencedElement, isInternal)
         }
 
-        override fun retarget() {
-            val referencedElement = upToDateReferencedElement ?: return
-            reference?.bindToElement(referencedElement)
+        override fun retarget(to: KtNamedDeclaration) {
+            reference?.bindToElement(to)
         }
     }
 
@@ -137,9 +135,9 @@ sealed class K2MoveRenameUsageInfo(
             return Unqualifiable(referenceElement, reference, referencedElement, isInternal)
         }
 
-        override fun retarget() {
+        override fun retarget(to: KtNamedDeclaration) {
             val element = (element as? KtElement) ?: return
-            val referencedElement = (upToDateReferencedElement as? KtNamedDeclaration) ?: return
+            val referencedElement = (to as? KtNamedDeclaration) ?: return
             referencedElement.fqName?.let(element.containingKtFile::addImport)
         }
     }
@@ -253,7 +251,7 @@ sealed class K2MoveRenameUsageInfo(
 
         internal fun retargetUsages(usages: List<UsageInfo>, oldToNewMap: MutableMap<PsiElement, PsiElement>) {
             retargetInternalUsages(oldToNewMap)
-            retargetExternalUsages(usages)
+            retargetExternalUsages(usages, oldToNewMap)
         }
 
         /**
@@ -274,12 +272,19 @@ sealed class K2MoveRenameUsageInfo(
         private fun retargetInternalUsages(oldToNewMap: MutableMap<PsiElement, PsiElement>) {
             val newDeclarations = oldToNewMap.values.filterIsInstance<KtNamedDeclaration>()
             val restoredInternalUsages = newDeclarations.flatMap { decl -> restoreInternalUsages(decl, oldToNewMap) }
-            restoredInternalUsages.forEach { (it as K2MoveRenameUsageInfo).retarget()  }
+            restoredInternalUsages.forEach {  usageInfo ->
+                (usageInfo as K2MoveRenameUsageInfo).retarget(usageInfo.referencedElement)
+            }
         }
 
-        private fun retargetExternalUsages(usages: List<UsageInfo>) {
+        private fun retargetExternalUsages(usages: List<UsageInfo>, oldToNewMap: MutableMap<PsiElement, PsiElement>) {
             val externalUsages = usages.filter { it is K2MoveRenameUsageInfo && !it.isInternal }
-            externalUsages.forEach { (it as K2MoveRenameUsageInfo).retarget() }
+            externalUsages.forEach { usageInfo ->
+                if (usageInfo is K2MoveRenameUsageInfo) {
+                    val newElement = oldToNewMap[usageInfo.referencedElement] as? KtNamedDeclaration ?: usageInfo.referencedElement
+                    usageInfo.retarget(newElement)
+                }
+            }
         }
     }
 }
