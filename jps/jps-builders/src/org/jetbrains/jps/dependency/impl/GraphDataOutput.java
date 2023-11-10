@@ -89,4 +89,17 @@ public class GraphDataOutput implements DataOutput {
   public static DataOutput wrap(DataOutput out) {
     return new GraphDataOutput(out);
   }
+  
+  public interface StringEnumerator {
+    int toNumber(String str) throws IOException;
+  }
+
+  public static DataOutput wrap(DataOutput out, StringEnumerator enumerator) {
+    return new GraphDataOutput(out) {
+      @Override
+      public void writeUTF(@NotNull String s) throws IOException {
+        writeInt(enumerator.toNumber(s));
+      }
+    };
+  }
 }

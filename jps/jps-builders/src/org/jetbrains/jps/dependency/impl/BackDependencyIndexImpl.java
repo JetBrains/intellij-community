@@ -7,7 +7,10 @@ import org.jetbrains.jps.dependency.java.JvmNodeElementExternalizer;
 import org.jetbrains.jps.dependency.java.JvmNodeReferenceID;
 import org.jetbrains.jps.javac.Iterators;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 public abstract class BackDependencyIndexImpl implements BackDependencyIndex {
   private final String myName;
@@ -38,8 +41,7 @@ public abstract class BackDependencyIndexImpl implements BackDependencyIndex {
 
   @Override
   public @NotNull Iterable<ReferenceID> getDependencies(@NotNull ReferenceID id) {
-    Iterable<ReferenceID> nodes = myMap.get(id);
-    return nodes != null? nodes : Collections.emptyList();
+    return myMap.get(id);
   }
 
   @Override

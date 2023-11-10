@@ -10,7 +10,6 @@ import org.jetbrains.jps.dependency.java.JvmNodeReferenceID;
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 abstract class GraphImpl implements Graph {
@@ -61,8 +60,7 @@ abstract class GraphImpl implements Graph {
 
   @Override
   public Iterable<NodeSource> getSources(@NotNull ReferenceID id) {
-    Iterable<NodeSource> nodeSources = myNodeToSourcesMap.get(id);
-    return nodeSources != null? nodeSources : Collections.emptyList();
+    return myNodeToSourcesMap.get(id);
   }
 
   @Override
@@ -77,8 +75,7 @@ abstract class GraphImpl implements Graph {
 
   @Override
   public Iterable<Node<?, ?>> getNodes(@NotNull NodeSource source) {
-    var nodes = mySourceToNodesMap.get(source);
-    return nodes != null? nodes : Collections.emptyList();
+    return mySourceToNodesMap.get(source);
   }
 
   public void close() throws IOException {

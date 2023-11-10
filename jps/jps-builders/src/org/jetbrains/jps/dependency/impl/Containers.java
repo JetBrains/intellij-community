@@ -10,10 +10,11 @@ import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
-import org.jetbrains.jps.dependency.ExternalizableGraphElement;
 import org.jetbrains.jps.dependency.Externalizer;
+import org.jetbrains.jps.dependency.Maplet;
 import org.jetbrains.jps.dependency.MapletFactory;
 import org.jetbrains.jps.dependency.MultiMaplet;
+import org.jetbrains.jps.javac.Iterators;
 
 import java.io.*;
 import java.nio.file.Path;
@@ -29,8 +30,13 @@ public final class Containers {
 
   public static final MapletFactory MEMORY_CONTAINER_FACTORY = new MapletFactory() {
     @Override
-    public <K extends ExternalizableGraphElement, V extends ExternalizableGraphElement> MultiMaplet<K, V> createSetMultiMaplet(String storageName, Externalizer<K> keyExternalizer, Externalizer<V> valueExternalizer) {
-      return new MemorySetMultiMaplet<>();
+    public <K, V> MultiMaplet<K, V> createSetMultiMaplet(String storageName, Externalizer<K> keyExternalizer, Externalizer<V> valueExternalizer) {
+      return new MemoryMultiMaplet<>(() -> (Set<V>)new HashSet<V>());
+    }
+
+    @Override
+    public <K, V> Maplet<K, V> createMaplet(String storageName, Externalizer<K> keyExternalizer, Externalizer<V> valueExternalizer) {
+      return new MemoryMaplet<>();
     }
   };
 
@@ -61,27 +67,37 @@ public final class Containers {
   }
 
   private static class PersistentMapletFactory implements MapletFactory, Closeable {
-
+    private static final int MAX_CACHE_SIZE = 1024; // todo: make configurable?
     private final String myRootDirPath;
-    private final List<PersistentSetMultiMaplet<?, ?>> myContainers = new ArrayList<>();
+    private final List<MultiMaplet<?, ?>> myMultiMaplets = new ArrayList<>();
+    private final List<Maplet<?, ?>> myMaplets = new ArrayList<>();
 
     PersistentMapletFactory(String rootDirPath) {
       myRootDirPath = rootDirPath;
     }
 
     @Override
-    public <K extends ExternalizableGraphElement, V extends ExternalizableGraphElement> MultiMaplet<K, V> createSetMultiMaplet(String storageName, Externalizer<K> keyExternalizer, Externalizer<V> valueExternalizer) {
-      PersistentSetMultiMaplet<K, V> container = new PersistentSetMultiMaplet<>(
-        getMapFile(storageName), new ElementKeyDescriptor<>(keyExternalizer), new ElementDataExternalizer<>(valueExternalizer)
+    public <K, V> MultiMaplet<K, V> createSetMultiMaplet(String storageName, Externalizer<K> keyExternalizer, Externalizer<V> valueExternalizer) {
+      MultiMaplet<K, V> container = new CachingMultiMaplet<>(
+        new PersistentMultiMaplet<>(getMapFile(storageName), new ElementKeyDescriptor<>(keyExternalizer), new ElementDataExternalizer<>(valueExternalizer), () -> (Set<V>)new HashSet<V>()), MAX_CACHE_SIZE
       );
-      myContainers.add(container);
+      myMultiMaplets.add(container);
+      return container;
+    }
+
+    @Override
+    public <K, V> Maplet<K, V> createMaplet(String storageName, Externalizer<K> keyExternalizer, Externalizer<V> valueExternalizer) {
+      Maplet<K, V> container = new CachingMaplet<>(
+        new PersistentMaplet<>(getMapFile(storageName), new ElementKeyDescriptor<>(keyExternalizer), new ElementDataExternalizer<>(valueExternalizer)), MAX_CACHE_SIZE
+      );
+      myMaplets.add(container);
       return container;
     }
 
     @Override
     public void close() {
       Throwable ex = null;
-      for (PersistentSetMultiMaplet<?, ?> container : myContainers) {
+      for (Closeable container : Iterators.flat(myMultiMaplets, myMaplets)) {
         try {
           container.close();
         }
@@ -91,7 +107,8 @@ public final class Containers {
           }
         }
       }
-      myContainers.clear();
+      myMultiMaplets.clear();
+      myMaplets.clear();
       if (ex instanceof IOException) {
         throw new BuildDataCorruptedException((IOException)ex);
       }
@@ -107,7 +124,7 @@ public final class Containers {
     }
   }
 
-  private static class ElementDataExternalizer<T extends ExternalizableGraphElement> implements DataExternalizer<T> {
+  private static class ElementDataExternalizer<T> implements DataExternalizer<T> {
     private final Externalizer<T> myExternalizer;
 
     ElementDataExternalizer(Externalizer<T> externalizer) {
@@ -116,16 +133,16 @@ public final class Containers {
 
     @Override
     public void save(@NotNull DataOutput out, T value) throws IOException {
-      myExternalizer.save(out, value);
+      myExternalizer.save(GraphDataOutput.wrap(out), value);
     }
 
     @Override
     public T read(@NotNull DataInput in) throws IOException {
-      return myExternalizer.load(in);
+      return myExternalizer.load(GraphDataInput.wrap(in));
     }
   }
 
-  private static class ElementKeyDescriptor<T extends ExternalizableGraphElement> extends ElementDataExternalizer<T> implements KeyDescriptor<T> {
+  private static class ElementKeyDescriptor<T> extends ElementDataExternalizer<T> implements KeyDescriptor<T> {
 
     ElementKeyDescriptor(Externalizer<T> externalizer) {
       super(externalizer);
@@ -142,18 +159,4 @@ public final class Containers {
     }
   }
 
-
-  //private static <T> DataExternalizer<Collection<T>> asCollectionExternalizer(DataExternalizer<T> ext) {
-  //  return new DataExternalizer<>() {
-  //    @Override
-  //    public void save(@NotNull DataOutput out, Collection<T> value) throws IOException {
-  //      RW.writeCollection(out, value, v -> ext.save(out, v));
-  //    }
-  //
-  //    @Override
-  //    public Collection<T> read(@NotNull DataInput in) throws IOException {
-  //      return RW.readCollection(in, () -> ext.read(in), new HashSet<>());
-  //    }
-  //  };
-  //}
 }

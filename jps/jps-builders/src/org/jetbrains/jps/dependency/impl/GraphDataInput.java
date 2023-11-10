@@ -95,4 +95,17 @@ public class GraphDataInput implements DataInput {
   public static DataInput wrap(DataInput in) {
     return new GraphDataInput(in);
   }
+
+  public interface StringEnumerator {
+    String toString(int num) throws IOException;
+  }
+
+  public static DataInput wrap(DataInput in, StringEnumerator enumerator) {
+    return new GraphDataInput(in) {
+      @Override
+      public @NotNull String readUTF() throws IOException {
+        return enumerator.toString(readInt());
+      }
+    };
+  }
 }

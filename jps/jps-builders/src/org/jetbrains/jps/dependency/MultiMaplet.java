@@ -1,33 +1,41 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.dependency;
 
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
-public interface MultiMaplet<K, V> {
-  boolean containsKey(final K key);
+import java.io.Closeable;
+import java.io.IOException;
 
-  @Nullable
-  Iterable<V> get(final K key);
+public interface MultiMaplet<K, V> extends Closeable {
+  
+  boolean containsKey(K key);
 
-  void put(final K key, final Iterable<? extends V> values);
+  @NotNull
+  Iterable<V> get(K key);
 
-  void remove(final K key);
+  void put(K key, @NotNull Iterable<? extends V> values);
 
-  void appendValue(final K key, final V value);
+  void remove(K key);
 
-  default void appendValues(final K key, final Iterable<? extends V> values) {
+  void appendValue(K key, final V value);
+
+  default void appendValues(K key, @NotNull Iterable<? extends V> values) {
     for (V value : values) {
       appendValue(key, value);
     }
   }
 
-  void removeValue(final K key, final V value);
+  void removeValue(K key, V value);
 
-  default void removeValues(final K key, final Iterable<? extends V> values) {
+  default void removeValues(K key, @NotNull Iterable<? extends V> values) {
     for (V value : values) {
       removeValue(key, value);
     }
   }
 
+  @NotNull
   Iterable<K> getKeys();
+
+  @Override
+  void close() throws IOException;
 }
