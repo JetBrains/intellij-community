@@ -44,8 +44,9 @@ class TerminalCommandSpecCompletionContributor : CompletionContributor(), DumbAw
       val cursorOffset = insertValue?.indexOf("{cursor}")
       val realInsertValue = insertValue?.replace("{cursor}", "")
       val nextSuggestions = getNextSuggestionsString(this).takeIf { it.isNotEmpty() }
-      val element = LookupElementBuilder.create(this, realInsertValue ?: name)
-        .withPresentableText(displayName ?: name)
+      val escapedInsertValue = (realInsertValue ?: name).escapeSpaces()
+      val element = LookupElementBuilder.create(this, escapedInsertValue)
+        .withPresentableText(displayName ?: name.escapeSpaces())
         .withTailText(nextSuggestions, true)
         .withInsertHandler { context, _ ->
           if (cursorOffset != null && cursorOffset != -1) {
@@ -55,6 +56,8 @@ class TerminalCommandSpecCompletionContributor : CompletionContributor(), DumbAw
       PrioritizedLookupElement.withPriority(element, priority / 100.0)
     }
   }
+
+  private fun String.escapeSpaces(): String = replace(" ", """\ """)
 
   private fun getNextSuggestionsString(suggestion: BaseSuggestion): String {
     val result = when (suggestion) {
