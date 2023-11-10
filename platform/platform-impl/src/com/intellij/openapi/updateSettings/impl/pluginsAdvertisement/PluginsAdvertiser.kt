@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("PluginsAdvertiser")
 
 package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement
@@ -71,13 +71,12 @@ fun getInstallAndEnableTask(
   selectAlInDialog: Boolean = false,
   modalityState: ModalityState? = null,
   onSuccess: Runnable,
-): InstallAndEnableTaskImpl {
+): InstallAndEnableTask {
   require(!showDialog || modalityState == null) {
     "`modalityState` can be not null only if plugin installation won't show the dialog"
   }
-  return InstallAndEnableTaskImpl(project, pluginIds, showDialog, selectAlInDialog, modalityState, onSuccess)
+  return InstallAndEnableTask(project, pluginIds, showDialog, selectAlInDialog, modalityState, onSuccess)
 }
-
 
 internal fun getBundledPluginToInstall(
   plugins: Collection<PluginData>,
