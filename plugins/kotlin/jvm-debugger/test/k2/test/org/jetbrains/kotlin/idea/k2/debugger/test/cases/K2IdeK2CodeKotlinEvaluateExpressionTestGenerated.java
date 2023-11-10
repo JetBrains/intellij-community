@@ -1035,6 +1035,11 @@ public abstract class K2IdeK2CodeKotlinEvaluateExpressionTestGenerated extends A
                 runTest("../testData/evaluation/singleBreakpoint/simpleLocals/localClass.kt");
             }
 
+            @TestMetadata("localExtensionFunction.kt")
+            public void testLocalExtensionFunction() throws Exception {
+                runTest("../testData/evaluation/singleBreakpoint/simpleLocals/localExtensionFunction.kt");
+            }
+
             @TestMetadata("localFunction.kt")
             public void testLocalFunction() throws Exception {
                 runTest("../testData/evaluation/singleBreakpoint/simpleLocals/localFunction.kt");
@@ -1093,6 +1098,11 @@ public abstract class K2IdeK2CodeKotlinEvaluateExpressionTestGenerated extends A
             @TestMetadata("variableFinderShouldNotImplementDynamicScoping5.kt")
             public void testVariableFinderShouldNotImplementDynamicScoping5() throws Exception {
                 runTest("../testData/evaluation/singleBreakpoint/simpleLocals/variableFinderShouldNotImplementDynamicScoping5.kt");
+            }
+
+            @TestMetadata("withAnonymousObject.kt")
+            public void testWithAnonymousObject() throws Exception {
+                runTest("../testData/evaluation/singleBreakpoint/simpleLocals/withAnonymousObject.kt");
             }
         }
 
