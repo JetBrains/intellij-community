@@ -19,15 +19,18 @@ class InlineCompletionGrayTextElement(override val text: String) : InlineComplet
 
   override fun toPresentable(): InlineCompletionElement.Presentable = Presentable(this)
 
-  class Presentable(override val element: InlineCompletionElement) : InlineCompletionElement.Presentable {
+  open class Presentable(override val element: InlineCompletionElement) : InlineCompletionElement.Presentable {
     private var suffixInlay: Inlay<*>? = null
     private var blockInlay: Inlay<*>? = null
 
     override fun isVisible(): Boolean = suffixInlay != null || blockInlay != null
 
+    protected open fun getText(): String = element.text
+
     override fun render(editor: Editor, offset: Int) {
-      if (element.text.isEmpty()) return
-      val lines = element.text.lines()
+      val text = getText()
+      if (text.isEmpty()) return
+      val lines = text.lines()
       renderSuffix(editor, lines, offset)
       if (lines.size > 1) {
         renderBlock(lines.drop(1), editor, offset)
