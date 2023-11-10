@@ -36,7 +36,6 @@ import com.intellij.platform.diagnostic.telemetry.helpers.computeWithSpan
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.util.SlowOperations
 import com.intellij.util.TimeoutUtil
-import com.intellij.util.application
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.FList
@@ -67,6 +66,8 @@ private val LOG = logger<ActionUpdater>()
 @JvmField
 internal val SUPPRESS_SUBMENU_IMPL: Key<Boolean> = Key.create("SUPPRESS_SUBMENU_IMPL")
 private const val OLD_EDT_MSG_SUFFIX = ". Revise AnAction.getActionUpdateThread property"
+private const val OP_getChildren = "getChildren"
+private const val OP_update = "update"
 
 private val ourToolbarJobs: MutableSet<Job> = ConcurrentCollectionFactory.createConcurrentSet()
 private val ourOtherJobs: MutableSet<Job> = ConcurrentCollectionFactory.createConcurrentSet()
@@ -105,20 +106,6 @@ internal class ActionUpdater @JvmOverloads constructor(
     }
   }
 
-  private suspend fun updateActionReal(action: AnAction): Presentation? {
-    // clone the presentation to avoid partially changing the cached one if the update is interrupted
-    val presentation = presentationFactory.getPresentation(action).clone()
-    // reset enabled/visible flags (actions are encouraged to always set them in `update`)
-    presentation.setEnabledAndVisible(true)
-    val event = createActionEvent(presentation)
-    val success = ActionUpdaterInterceptor.updateAction(action, event) {
-      callAction(action, Op.Update) {
-        doUpdate(action, event)
-      }
-    }
-    return if (success) presentation else null
-  }
-
   @RequiresEdt
   fun applyPresentationChanges() {
     for ((action, copy) in updatedPresentations) {
@@ -136,8 +123,8 @@ internal class ActionUpdater @JvmOverloads constructor(
     }
   }
 
-  private suspend fun <T> callAction(action: AnAction, operation: Op, call: () -> T): T {
-    val operationName = Utils.operationName(action, operation.name, place)
+  private suspend fun <T> callAction(action: AnAction, operationName: String, call: () -> T): T {
+    val operationName = Utils.operationName(action, operationName, place)
     return callAction(action, operationName, action.getActionUpdateThread(), call)
   }
 
@@ -224,7 +211,7 @@ internal class ActionUpdater @JvmOverloads constructor(
     }
     finally {
       if (currentEDTWaitMillis > 300) {
-        LOG.warn("$currentEDTWaitMillis ms to grab EDT for $operationName")
+        LOG.info("$currentEDTWaitMillis ms to grab EDT for $operationName")
       }
       if (currentEDTPerformMillis > 300) {
         val throwable: Throwable = PluginException.createByClass(
@@ -332,7 +319,7 @@ internal class ActionUpdater @JvmOverloads constructor(
       throw IllegalStateException("ActionGroupStub cannot be expanded")
     }
     checkCancelled()
-    val presentation = update(group)
+    val presentation = updateAction(group)
     if (presentation == null || !presentation.isVisible) {
       // don't process invisible groups
       return@coroutineScope emptyList()
@@ -356,46 +343,48 @@ internal class ActionUpdater @JvmOverloads constructor(
     for (action in actions) {
       if (action is InlineActionsHolder) {
         for (inlineAction in action.getInlineActions()) {
-          update(inlineAction)
+          updateAction(inlineAction)
         }
       }
     }
     actions
   }
 
+  /** same event/retry/intercept/cache logic as in [updateAction] */
   private suspend fun getGroupChildren(group: ActionGroup): List<AnAction> {
-    return groupChildren.getOrPut(group) {
-      val event = createActionEvent(updatedPresentations[group] ?: initialBgtPresentation(group))
-      val children = try {
-        retryOnAwaitSharedData {
-          ActionUpdaterInterceptor.getGroupChildren(group, event) {
-            callAction(group, Op.GetChildren) {
-              doGetChildren(group, event)
-            }
+    val cached = groupChildren[group]
+    if (cached != null) {
+      return cached
+    }
+    // use initial presentation if there's no updated presentation (?)
+    val event = createActionEvent(updatedPresentations[group] ?: initialBgtPresentation(group))
+    val children = try {
+      retryOnAwaitSharedData {
+        ActionUpdaterInterceptor.getGroupChildren(group, event) {
+          callAction(group, OP_getChildren) {
+            group.getChildren(event)
+          }.let {
+            ensureNotNullChildren(it, group, place)
           }
         }
-      }
-      catch (_: ComputeOnEDTSkipped) {
-        emptyArray()
-      }
-
-      val nullIndex = (children as Array<*>).indexOf(null)
-      if (nullIndex < 0) {
-        children.asList()
-      }
-      else {
-        LOG.error("action is null: i=$nullIndex group=$group group id=${ActionManager.getInstance().getId(group)}")
-        @Suppress("UselessCallOnCollection")
-        children.filterNotNull()
-      }
+      }.asList()
     }
+    catch (_: ComputeOnEDTSkipped) {
+      emptyList()
+    }
+    catch (ex: Throwable) {
+      handleException(group, OP_getChildren, event, ex)
+      return emptyList()
+    }
+    groupChildren[group] = children
+    return children
   }
 
   private suspend fun expandGroupChild(child: AnAction, hideDisabledBase: Boolean): List<AnAction> {
     if (application.isDisposed()) {
       return emptyList()
     }
-    val presentation = update(child)
+    val presentation = updateAction(child)
     if (presentation == null) {
       return emptyList()
     }
@@ -421,7 +410,7 @@ internal class ActionUpdater @JvmOverloads constructor(
     if (checkChildren) {
       val childrenFlow = iterateGroupChildren(child)
       childrenFlow.take(100).filter { it !is Separator }.takeWhile { action ->
-        val p = update(action)
+        val p = updateAction(action)
         hasVisible = hasVisible or (p?.isVisible == true)
         hasEnabled = hasEnabled or (p?.isEnabled == true)
         // stop early if all the required flags are collected
@@ -497,7 +486,7 @@ internal class ActionUpdater @JvmOverloads constructor(
       if (isDumb && !o.isDumbAware()) return@tree null
       // in all clients the next call is `update`
       // let's update both actions and groups
-      val presentation = update(o)
+      val presentation = updateAction(o)
       if (o !is ActionGroup) {
         return@tree null
       }
@@ -511,8 +500,9 @@ internal class ActionUpdater @JvmOverloads constructor(
         getGroupChildren(o)
       }
     }
-    val roots = getGroupChildren(group)
     return flow {
+      val roots = getGroupChildren(group)
+      if (roots.isEmpty()) return@flow
       val set = HashSet<AnAction>()
       val queue = ArrayDeque(roots)
       while (!queue.isEmpty()) {
@@ -527,25 +517,39 @@ internal class ActionUpdater @JvmOverloads constructor(
   }
 
   suspend fun presentation(action: AnAction): Presentation {
-    return update(action) ?: initialBgtPresentation(action)
+    return updateAction(action) ?: initialBgtPresentation(action)
   }
 
-  private suspend fun update(action: AnAction): Presentation? {
+  /** same event/retry/intercept/cache logic as in [getGroupChildren] */
+  private suspend fun updateAction(action: AnAction): Presentation? {
     val cached = updatedPresentations[action]
     if (cached != null) {
       return cached
     }
-    try {
-      val presentation = retryOnAwaitSharedData {
-        updateActionReal(action)
-      }
-      if (presentation != null) {
-        updatedPresentations[action] = presentation
-        return presentation
+    // clone the presentation to avoid partially changing the cached one if the update is interrupted
+    val presentation = presentationFactory.getPresentation(action).clone()
+    // reset enabled/visible flags (actions are encouraged to always set them in `update`)
+    presentation.setEnabledAndVisible(true)
+    val event = createActionEvent(presentation)
+    val success = try {
+      retryOnAwaitSharedData {
+        ActionUpdaterInterceptor.updateAction(action, event) {
+          callAction(action, OP_update) {
+            !ActionUtil.performDumbAwareUpdate(action, event, false)
+          }
+        }
       }
     }
     catch (_: ComputeOnEDTSkipped) {
-      return null
+      false
+    }
+    catch (ex: Throwable) {
+      handleException(action, OP_update, event, ex)
+      false
+    }
+    if (success) {
+      updatedPresentations[action] = presentation
+      return presentation
     }
     return null
   }
@@ -621,7 +625,7 @@ internal class ActionUpdater @JvmOverloads constructor(
 
     override fun presentation(action: AnAction): Presentation =
       updater.updatedPresentations[action] ?: updater.computeSessionDataOrThrow(Pair("presentation", action)) {
-        updater.update(action) ?: updater.initialBgtPresentation(action)
+        updater.updateAction(action) ?: updater.initialBgtPresentation(action)
       }
 
     override fun <T : Any> sharedData(key: Key<T>, supplier: Supplier<out T>): T =
@@ -665,8 +669,6 @@ private fun reportRecursiveUpdateSession() {
   LOG.error("Recursive update sessions are forbidden. Reuse existing AnActionEvent#getUpdateSession instead.")
 }
 
-private enum class Op { Update, GetChildren }
-
 private class ComputeOnEDTSkipped : RuntimeException() {
   override fun fillInStackTrace(): Throwable = this
 }
@@ -706,41 +708,32 @@ private fun elapsedReport(elapsed: Long, isEDT: Boolean, operationName: String):
   return elapsed.toString() + (if (isEDT) " ms to call on EDT " else " ms to call on BGT ") + operationName
 }
 
-private fun handleException(action: AnAction, op: Op, event: AnActionEvent?, ex: Throwable) {
-  if (ex is ProcessCanceledException) throw ex
+private fun handleException(action: AnAction, operationName: String, event: AnActionEvent?, ex: Throwable) {
+  if (ex is CancellationException) throw ex
   if (ex is AwaitSharedData) throw ex
   if (ex is ComputeOnEDTSkipped) throw ex
   val id = ActionManager.getInstance().getId(action)
   val place = event?.place
   val text = event?.presentation?.text
-  val message = Utils.operationName(action, op.name, place) +
+  val message = Utils.operationName(action, operationName, place) +
                 (if (id != null) ", actionId=$id" else "") +
                 if (StringUtil.isNotEmpty(text)) ", text='$text'" else ""
   LOG.error(message, ex)
 }
 
-// returns false if exception was thrown and handled
-private fun doUpdate(action: AnAction, e: AnActionEvent): Boolean = try {
-  if (application.isDisposed()) false
-  else !ActionUtil.performDumbAwareUpdate(action, e, false)
-}
-catch (ex: Throwable) {
-  handleException(action, Op.Update, e, ex)
-  false
-}
-
-private fun doGetChildren(group: ActionGroup, e: AnActionEvent?): Array<AnAction> {
-  try {
-    return if (application.isDisposed()) AnAction.EMPTY_ARRAY
-    else group.getChildren(e)
+private fun ensureNotNullChildren(children: Array<AnAction?>, group: ActionGroup, place: String): Array<AnAction> {
+  val nullIndex = (children as Array<*>).indexOf(null)
+  return if (nullIndex < 0) {
+    @Suppress("UNCHECKED_CAST")
+    children as Array<AnAction>
   }
-  catch (ex: Throwable) {
-    handleException(group, Op.GetChildren, e, ex)
-    return AnAction.EMPTY_ARRAY
+  else {
+    LOG.error("$nullIndex item is null in ${Utils.operationName(group, OP_getChildren, place)}")
+    children.filterNotNull().toTypedArray()
   }
 }
 
-private suspend inline fun <R> retryOnAwaitSharedData(block: suspend () -> R): R {
+private suspend inline fun <R> retryOnAwaitSharedData(block: () -> R): R {
   while (true) {
     try {
       return block()
