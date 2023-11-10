@@ -26,6 +26,7 @@ private val BUILD_DATE_PATTERN = DateTimeFormatter.ofPattern("uuuuMMddHHmm")
 @Suppress("SpellCheckingInspection")
 internal val MAJOR_RELEASE_DATE_PATTERN: DateTimeFormatter = DateTimeFormatter.ofPattern("uuuuMMdd")
 
+@Suppress("KotlinRedundantDiagnosticSuppress", "UNNECESSARY_LATEINIT")
 internal class ApplicationInfoPropertiesImpl: ApplicationInfoProperties {
   override lateinit var majorVersion: String
   override lateinit var minorVersion: String
@@ -45,19 +46,17 @@ internal class ApplicationInfoPropertiesImpl: ApplicationInfoProperties {
   override val shortCompanyName: String
   override val svgRelativePath: String?
   override val svgProductIcons: List<String>
+  @Suppress("OVERRIDE_DEPRECATION")
   override val patchesUrl: String?
   override val launcherName: String
+
   private lateinit var context: BuildContext
 
-  constructor(context: BuildContext) : this(project = context.project,
-                                            productProperties = context.productProperties,
-                                            buildOptions = context.options) {
+  constructor(context: BuildContext) : this(context.project, context.productProperties, context.options) {
     this.context = context
   }
 
-  constructor(project: JpsProject,
-              productProperties: ProductProperties,
-              buildOptions: BuildOptions) {
+  constructor(project: JpsProject, productProperties: ProductProperties, buildOptions: BuildOptions) {
     val root = findApplicationInfoInSources(project, productProperties)
       .bufferedReader()
       .use(::readXmlAsModel)
@@ -211,7 +210,7 @@ fun formatMajorReleaseDate(majorReleaseDateRaw: String?, buildDateInSeconds: Lon
       MAJOR_RELEASE_DATE_PATTERN.parse(majorReleaseDateRaw)
       return majorReleaseDateRaw
     }
-    catch (ignored: Exception) {
+    catch (_: Exception) {
       return MAJOR_RELEASE_DATE_PATTERN.format(BUILD_DATE_PATTERN.parse(majorReleaseDateRaw))
     }
   }
