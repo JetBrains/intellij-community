@@ -5,6 +5,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.psi.*
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.isAncestor
+import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassHandler
 import com.intellij.refactoring.move.moveMembers.MoveMemberHandler
 import com.intellij.refactoring.move.moveMembers.MoveMembersOptions
 import com.intellij.refactoring.move.moveMembers.MoveMembersProcessor
@@ -143,7 +144,17 @@ sealed class K2MoveRenameUsageInfo(
     }
 
     companion object {
-        fun find(declaration: KtNamedDeclaration) = findInternalUsages(declaration) + findExternalUsages(declaration)
+        fun find(declaration: KtNamedDeclaration): List<UsageInfo> {
+            return preProcessUsages(findInternalUsages(declaration) + findExternalUsages(declaration))
+        }
+
+        /**
+         * Removes unwanted usages, like for example usages through import aliases.
+         */
+        private fun preProcessUsages(usages: List<UsageInfo>): List<UsageInfo> {
+            MoveClassHandler.EP_NAME.extensionList.forEach { handler -> handler.preprocessUsages(usages) }
+            return usages
+        }
 
         /**
          * Used to store usage info for an internal reference so that after the move the referenced can be restored.
