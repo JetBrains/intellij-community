@@ -838,9 +838,14 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     return contentStream;
   }
 
-  //TODO RC: rename to !skipCachingHugeFileIfBusy(len)
   private static boolean shouldCache(long len) {
-    return len <= PersistentFSConstants.FILE_LENGTH_TO_CACHE_THRESHOLD && !HeavyProcessLatch.INSTANCE.isRunning();
+    if(len > PersistentFSConstants.FILE_LENGTH_TO_CACHE_THRESHOLD){
+      return false;
+    }
+    if (HeavyProcessLatch.INSTANCE.isRunning()) {
+      return false;
+    }
+    return true;
   }
 
   private boolean mustReloadContent(@NotNull VirtualFile file) {
