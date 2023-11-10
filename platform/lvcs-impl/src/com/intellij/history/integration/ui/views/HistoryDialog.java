@@ -345,8 +345,6 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
 
   protected void revert(Reverter r) {
     try {
-      if (!askForProceeding(r)) return;
-
       List<String> errors = r.checkCanRevert();
       if (!errors.isEmpty()) {
         showError(message("message.cannot.revert.because", formatErrors(errors)));
@@ -359,31 +357,6 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
     catch (Exception e) {
       showError(message("message.error.during.revert", e));
     }
-  }
-
-  private boolean askForProceeding(Reverter r) throws IOException {
-    List<String> questions = r.askUserForProceeding();
-    if (questions.isEmpty()) return true;
-
-    return Messages.showYesNoDialog(myProject, message("message.do.you.want.to.proceed", formatQuestions(questions)),
-                                    message("dialog.title.revert"), Messages.getWarningIcon()) == Messages.YES;
-  }
-
-  private static String formatQuestions(List<String> questions) {
-    // format into something like this:
-    // 1) message one
-    // message one continued
-    // 2) message two
-    // message one continued
-    // ...
-
-    if (questions.size() == 1) return questions.get(0);
-
-    StringBuilder result = new StringBuilder();
-    for (int i = 0; i < questions.size(); i++) {
-      result.append(i + 1).append(") ").append(questions.get(i)).append("\n");
-    }
-    return result.substring(0, result.length() - 1);
   }
 
   private void showNotification(@NlsContexts.PopupContent String title) {

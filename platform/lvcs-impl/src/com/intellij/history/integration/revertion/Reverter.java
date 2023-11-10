@@ -42,6 +42,10 @@ public abstract class Reverter {
     myGateway = gw;
   }
 
+  /**
+   * @deprecated always returns empty list
+   */
+  @Deprecated
   public List<String> askUserForProceeding() throws IOException {
     return Collections.emptyList();
   }
