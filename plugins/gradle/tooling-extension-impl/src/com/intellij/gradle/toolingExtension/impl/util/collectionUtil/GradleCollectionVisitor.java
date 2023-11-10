@@ -25,7 +25,7 @@ public interface GradleCollectionVisitor<T> {
    * Defines the handler of an element that was added into a Gradle collection after iteration over this collection.
    * This handler is invoked when an element registers in a collection when the collecting process is finished.
    */
-  void onElementSkip(T element, @NotNull Exception stackTrace);
+  void visitAfterAccept(T element, @NotNull Exception stackTrace);
 
   /**
    * This method is used to iterate over a DomainObjectCollection and perform defined collector on each element.
@@ -39,7 +39,7 @@ public interface GradleCollectionVisitor<T> {
     collection.all(element -> {
       if (isCollected.get()) {
         IllegalStateException stackTrace = new IllegalStateException();
-        visitor.onElementSkip(element, stackTrace);
+        visitor.visitAfterAccept(element, stackTrace);
       }
       try {
         visitor.visit(element);
