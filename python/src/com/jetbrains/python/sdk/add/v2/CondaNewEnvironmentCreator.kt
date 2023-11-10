@@ -15,10 +15,15 @@ import com.intellij.ui.dsl.builder.bindItem
 import com.intellij.ui.dsl.builder.bindText
 import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import com.jetbrains.python.PyBundle.message
+import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
 import com.jetbrains.python.psi.LanguageLevel
+import com.jetbrains.python.sdk.add.WslContext
 import com.jetbrains.python.sdk.add.target.conda.condaSupportedLanguages
 import com.jetbrains.python.sdk.add.target.conda.createCondaSdkAlongWithNewEnv
 import com.jetbrains.python.sdk.flavors.conda.NewCondaEnvRequest
+import com.jetbrains.python.statistics.InterpreterCreationMode
+import com.jetbrains.python.statistics.InterpreterTarget
+import com.jetbrains.python.statistics.InterpreterType
 import kotlinx.coroutines.Dispatchers
 import java.io.File
 
@@ -64,4 +69,13 @@ class CondaNewEnvironmentCreator(presenter: PythonAddInterpreterPresenter) : Pyt
     }
   }
 
+  override fun createStatisticsInfo(target: PythonInterpreterCreationTargets): InterpreterStatisticsInfo {
+    val statisticsTarget = if (presenter.projectLocationContext is WslContext) InterpreterTarget.TARGET_WSL else target.toStatisticsField()
+    return InterpreterStatisticsInfo(InterpreterType.CONDAVENV,
+                                     statisticsTarget,
+                                     false,
+                                     false,
+                                     false,
+                                     InterpreterCreationMode.CUSTOM)
+  }
 }
