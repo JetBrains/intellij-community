@@ -117,7 +117,7 @@ sealed class K2MoveModel {
             val elementsToMove = elements.map { (it as? KtElement)?.correctForProjectView() }.toSet()
             val inSourceRoot = inSourceRoot()
             return when {
-                elementsToMove.all { it is KtFile } -> {
+                elementsToMove.all { it is KtFile } && correctedTarget !is KtFile -> {
                     val source = K2MoveSourceModel.FileSource(elementsToMove.filterIsInstance<KtFile>().toSet())
                     val target = if (correctedTarget is PsiDirectory) {
                         K2MoveTargetModel.SourceDirectory(correctedTarget)
@@ -128,12 +128,19 @@ sealed class K2MoveModel {
                     Files(source, target, inSourceRoot)
                 }
 
-                elementsToMove.all { it is KtNamedDeclaration } -> {
-                    val source = K2MoveSourceModel.ElementSource(elementsToMove.filterIsInstance<KtNamedDeclaration>().toSet())
+                elementsToMove.all { it is KtNamedDeclaration } || correctedTarget is KtFile -> {
+                    val elementsFromFiles = elementsToMove.flatMap { elem ->
+                        when (elem) {
+                            is KtFile -> elem.declarations.filterIsInstance<KtNamedDeclaration>()
+                            is KtNamedDeclaration -> listOf(elem)
+                            else -> emptyList()
+                        }
+                    }.toSet()
+                    val source = K2MoveSourceModel.ElementSource(elementsFromFiles)
                     val target = if (correctedTarget is KtFile) {
                         K2MoveTargetModel.File(correctedTarget)
                     } else { // no default target is provided, happens when invoking refactoring via keyboard instead of drag-and-drop
-                        val file = elementsToMove.firstOrNull()?.containingKtFile ?: error("No default target found")
+                        val file = elementsFromFiles.firstOrNull()?.containingKtFile ?: error("No default target found")
                         K2MoveTargetModel.File(file)
                     }
                     Members(source, target, inSourceRoot)
