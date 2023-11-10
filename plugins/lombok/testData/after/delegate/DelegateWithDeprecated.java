@@ -3,7 +3,9 @@ class DelegateWithDeprecated {
 	private interface Bar {
 		@Deprecated
 		void deprecatedAnnotation();
-		/** @deprecated */
+		/**
+		 * @deprecated
+		 */
 		void deprecatedComment();
 		void notDeprecated();
 	}

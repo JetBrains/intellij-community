@@ -1,4 +1,5 @@
-import lombok.Delegate;
+//platform !eclipse: Requires a 'full' eclipse with intialized workspace, and we don't (yet) have that set up properly in the test run.
+import lombok.experimental.Delegate;
 class DelegatePlain {
 	@Delegate(types = Bar.class)
 	private final BarImpl bar = new BarImpl();
