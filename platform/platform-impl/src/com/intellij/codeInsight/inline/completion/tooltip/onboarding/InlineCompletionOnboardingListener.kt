@@ -19,7 +19,7 @@ internal class InlineCompletionOnboardingListener private constructor(private va
   }
 
   override fun onCompletion(event: InlineCompletionEventType.Completion) {
-    if (state?.isEmpty == false) {
+    if (state?.isEmpty == false && event.cause == null) {
       InlineCompletionSession.getOrNull(editor)?.let { session ->
         if (InlineCompletionOnboardingComponent.getInstance().shouldExplicitlyDisplayTooltip()) {
           InlineCompletionTooltip.show(session)
