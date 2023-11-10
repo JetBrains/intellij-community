@@ -1112,7 +1112,9 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
   override fun replaceAction(actionId: String, newAction: AnAction) {
     val callerClass = ReflectionUtil.getGrandCallerClass()
     val plugin = if (callerClass == null) null else PluginManager.getPluginByClass(callerClass)
-    replaceAction(actionId = actionId, newAction = newAction, pluginId = plugin?.pluginId)
+    synchronized(lock) {
+      replaceAction(actionId = actionId, newAction = newAction, pluginId = plugin?.pluginId)
+    }
   }
 
   private fun replaceAction(actionId: String, newAction: AnAction, pluginId: PluginId?): AnAction? {
