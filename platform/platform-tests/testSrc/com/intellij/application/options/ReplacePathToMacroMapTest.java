@@ -89,6 +89,12 @@ public class ReplacePathToMacroMapTest {
     assertEquals("$APPLICATION_HOME_DIR$", substitute("/root"));
   }
 
+  @Test
+  public void testUnknownProtocol() {
+    assertEquals("unknown:/tmp/foo", substitute("unknown:/tmp/foo")); // not substituted
+    assertEquals("-Dprop=unknown:$MODULE_DIR$", myMap.substituteRecursively("-Dprop=unknown:/tmp/foo", true).toString()); // substituted
+  }
+
   private String substitute(@NotNull String s) {
     return myMap.substitute(s, true);
   }
