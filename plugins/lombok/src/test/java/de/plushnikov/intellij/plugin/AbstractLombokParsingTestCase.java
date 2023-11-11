@@ -295,7 +295,7 @@ public abstract class AbstractLombokParsingTestCase extends AbstractLombokLightC
 
   private static String[] toList(PsiNamedElement[] beforeMethods) {
     return Arrays.stream(beforeMethods).map(PsiNamedElement::getName)
-      .filter(java.util.Objects::isNull).sorted(String.CASE_INSENSITIVE_ORDER).toArray(String[]::new);
+      .filter(java.util.Objects::nonNull).sorted(String.CASE_INSENSITIVE_ORDER).toArray(String[]::new);
   }
 
   private static void compareThrows(PsiReferenceList beforeThrows, PsiReferenceList afterThrows, PsiMethod psiMethod) {
