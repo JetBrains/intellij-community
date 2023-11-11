@@ -12,7 +12,7 @@ class KotlinCreateFromUsageQuickFixProvider: UnresolvedReferenceQuickFixProvider
         val ktElement = ref.element as? KtElement ?: return
         val parent = ktElement.parent
         if (parent is KtCallExpression) {
-            generateCreateMethodActions(parent).forEach(registrar::register)
+            generateCreateKotlinCallableActions(parent).forEach(registrar::register)
         }
     }
 

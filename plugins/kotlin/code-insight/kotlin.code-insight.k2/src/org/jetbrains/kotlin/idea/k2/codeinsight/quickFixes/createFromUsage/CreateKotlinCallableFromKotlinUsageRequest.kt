@@ -8,10 +8,10 @@ import com.intellij.openapi.util.NlsSafe
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 
-internal class CreateMethodFromKotlinUsageRequest (
-    methodCall: KtCallExpression,
+internal class CreateKotlinCallableFromKotlinUsageRequest (
+    functionCall: KtCallExpression,
     modifiers: Collection<JvmModifier>
-) : CreateExecutableFromKotlinUsageRequest<KtCallExpression>(methodCall, modifiers), CreateMethodRequest {
+) : CreateExecutableFromKotlinUsageRequest<KtCallExpression>(functionCall, modifiers), CreateMethodRequest {
 
     override fun isValid(): Boolean = super.isValid() && getReferenceName() != null
 
