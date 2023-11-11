@@ -6,6 +6,7 @@ import com.intellij.psi.impl.light.LightTypeParameterBuilder;
 import com.intellij.psi.impl.source.PsiExtensibleClass;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.problem.ProblemSink;
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
@@ -268,15 +269,16 @@ public final class DelegateHandler {
       return false;
     }
 
-    PsiParameter[] firstMethodParameterListParameters = firstMethodParameterList.getParameters();
-    PsiParameter[] secondMethodParameterListParameters = secondMethodParameterList.getParameters();
-    for (int i = 0; i < firstMethodParameterListParameters.length; i++) {
-      PsiType firstMethodParameterListParameterType = firstSubstitutor.substitute(firstMethodParameterListParameters[i].getType());
-      PsiType secondMethodParameterListParameterType = secondSubstitutor.substitute(secondMethodParameterListParameters[i].getType());
-      if (PsiTypes.nullType().equals(firstMethodParameterListParameterType)) {
-        continue;
-      }
-      if (!PsiElementUtil.typesAreEquivalent(firstMethodParameterListParameterType, secondMethodParameterListParameterType)) {
+    PsiParameter[] firstMethodParameters = firstMethodParameterList.getParameters();
+    PsiParameter[] secondMethodParameters = secondMethodParameterList.getParameters();
+    for (int i = 0; i < firstMethodParameters.length; i++) {
+      final PsiType firstMethodParameterListParameterType = firstSubstitutor.substitute(firstMethodParameters[i].getType());
+      final PsiType secondMethodParameterListParameterType = secondSubstitutor.substitute(secondMethodParameters[i].getType());
+
+      final PsiType firstParameterType = TypeConversionUtil.erasure(firstMethodParameterListParameterType, firstSubstitutor);
+      final PsiType secondParameterType = TypeConversionUtil.erasure(secondMethodParameterListParameterType, secondSubstitutor);
+
+      if (!PsiElementUtil.typesAreEquivalent(firstParameterType, secondParameterType)) {
         return false;
       }
     }
