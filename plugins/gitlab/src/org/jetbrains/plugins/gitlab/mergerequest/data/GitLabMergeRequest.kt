@@ -156,6 +156,9 @@ internal class LoadedGitLabMergeRequest(
 
   override val draftReviewText: MutableStateFlow<String> = MutableStateFlow("")
 
+  private val discussionsContainer =
+    GitLabMergeRequestDiscussionsContainerImpl(parentCs, project, api, glMetadata, projectMapping.repository, this)
+
   init {
     cs.launch {
       mergeRequestRefreshRequest
@@ -338,9 +341,6 @@ internal class LoadedGitLabMergeRequest(
     discussionsContainer.checkUpdates()
     GitLabStatistics.logMrActionExecuted(project, GitLabStatistics.MergeRequestAction.REVIEWER_REREVIEW)
   }
-
-  private val discussionsContainer =
-    GitLabMergeRequestDiscussionsContainerImpl(parentCs, project, api, glMetadata, projectMapping.repository, this)
 
   override val discussions: Flow<Result<Collection<GitLabMergeRequestDiscussion>>> = discussionsContainer.discussions
   override val systemNotes: Flow<Result<Collection<GitLabNote>>> = discussionsContainer.systemNotes
