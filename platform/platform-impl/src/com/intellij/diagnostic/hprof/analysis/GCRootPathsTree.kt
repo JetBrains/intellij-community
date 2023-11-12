@@ -365,7 +365,14 @@ class GCRootPathsTree(
               val childrenToReport =
                 currentNodeEdges
                   .entries
-                  .sortedByDescending { it.value.pathsSize }
+                  .sortedWith { a, b ->
+                    if (a.value.pathsSize != b.value.pathsSize)
+                    // Descending
+                      b.value.pathsSize.compareTo(a.value.pathsSize)
+                    else
+                    // To have a deterministic report, sort by field# if the size is the same
+                      a.key.refIndex.compareTo(b.key.refIndex)
+                  }
                   .filterIndexed { index, e ->
                     index == 0 ||
                     e.value.pathsCount >= minimumObjectsForReport ||
