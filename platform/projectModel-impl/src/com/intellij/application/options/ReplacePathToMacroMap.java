@@ -102,11 +102,12 @@ public final class ReplacePathToMacroMap extends PathMacroMap {
         if (startsWith(text, path, caseSensitive, prefixLength)) {
           return prefix;
         }
-        if (text.charAt(prefixLength) == '/') {
+        if (text.length() > prefixLength && text.charAt(prefixLength) == '/') {
           if (startsWith(text, path, caseSensitive, prefixLength + 1)) {
             return text.substring(0, prefixLength + 1);
           }
-          else if (text.charAt(prefixLength + 1) == '/' && startsWith(text, path, caseSensitive, prefixLength + 2)) {
+          else if (text.length() > prefixLength + 1 && text.charAt(prefixLength + 1) == '/' &&
+                   startsWith(text, path, caseSensitive, prefixLength + 2)) {
             return text.substring(0, prefixLength + 2);
           }
         }

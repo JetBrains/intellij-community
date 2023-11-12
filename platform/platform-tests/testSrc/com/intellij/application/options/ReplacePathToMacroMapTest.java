@@ -95,6 +95,17 @@ public class ReplacePathToMacroMapTest {
     assertEquals("-Dprop=unknown:$MODULE_DIR$", myMap.substituteRecursively("-Dprop=unknown:/tmp/foo", true).toString()); // substituted
   }
 
+  @Test
+  public void testShortPath() {
+    myMap.put("x", "$MACRO$");
+    assertEquals("file:", substitute("file:"));
+    assertEquals("file:/", substitute("file:/"));
+    assertEquals("file://", substitute("file://"));
+    assertEquals("file:$MACRO$", substitute("file:x"));
+    assertEquals("file:/$MACRO$", substitute("file:/x"));
+    assertEquals("file://$MACRO$", substitute("file://x"));
+  }
+
   private String substitute(@NotNull String s) {
     return myMap.substitute(s, true);
   }
