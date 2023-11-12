@@ -15,15 +15,9 @@ private val metricIdBadCharacters: Regex = Regex("[^\\w.-]+")
 
 class ParsingDiagnosticsHandlerImpl : ParserDiagnosticsHandler {
   private val meter = TelemetryManager.getInstance().getMeter(PlatformMetrics)
-  private val sizeCounters: MutableMap<String, LongCounter> = ConcurrentHashMap()
-  private val timeCounters: MutableMap<String, LongCounter> = ConcurrentHashMap()
-
-  private fun sizeCounter(key: String): LongCounter = sizeCounters.computeIfAbsent(key) { meter.counterBuilder(it).setUnit("byte").build() }
-  private fun timeCounter(key: String): LongCounter = timeCounters.computeIfAbsent(key) { meter.counterBuilder(it).setUnit("ns").build() }
+  private val diagnosticsEntries: MutableMap<String, DiagnosticsEntry> = ConcurrentHashMap()
 
   override fun registerParse(builder: PsiBuilder, language: Language, parsingTimeNs: Long) {
-    val languageId = language.id.replace(metricIdBadCharacters, ".")
-
     var effectiveBuilder = builder
     while(effectiveBuilder is PsiBuilderAdapter){
       effectiveBuilder = effectiveBuilder.delegate
@@ -31,12 +25,32 @@ class ParsingDiagnosticsHandlerImpl : ParserDiagnosticsHandler {
 
     val textLength = effectiveBuilder.originalText.length.toLong()
 
-    if(effectiveBuilder is PsiBuilderImpl && effectiveBuilder.lexingTimeNs > 0){
-      sizeCounter("lexer.$languageId.size.bytes").add(textLength)
-      timeCounter("lexer.$languageId.time.ns").add(effectiveBuilder.lexingTimeNs)
-    }
+    diagnosticsEntries.computeIfAbsent(language.id) { DiagnosticsEntry(it) }.apply {
+      if (effectiveBuilder is PsiBuilderImpl && effectiveBuilder.lexingTimeNs > 0) {
+        lexerSizeCounter.add(textLength)
+        lexerTimeCounter.add(effectiveBuilder.lexingTimeNs)
+      }
 
-    sizeCounter("parser.$languageId.size.bytes").add(textLength)
-    timeCounter("parser.$languageId.time.ns").add(parsingTimeNs)
+      parserSizeCounter.add(textLength)
+      parserTimeCounter.add(parsingTimeNs)
+    }
   }
+
+  private inner class DiagnosticsEntry(languageId: String) {
+    val lexerSizeCounter: LongCounter
+    val lexerTimeCounter: LongCounter
+    val parserSizeCounter: LongCounter
+    val parserTimeCounter: LongCounter
+
+    init {
+      val sanitizedId = languageId.replace(metricIdBadCharacters, ".")
+      meter.apply {
+        lexerSizeCounter = counterBuilder("lexer.$sanitizedId.size.bytes").setUnit("byte").build()
+        lexerTimeCounter = counterBuilder("lexer.$sanitizedId.time.ns").setUnit("ns").build()
+        parserSizeCounter = counterBuilder("parser.$sanitizedId.size.bytes").setUnit("byte").build()
+        parserTimeCounter = counterBuilder("parser.$sanitizedId.time.ns").setUnit("ns").build()
+      }
+    }
+  }
+
 }
