@@ -14,7 +14,6 @@ import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.FilePath
-import com.intellij.openapi.vcs.changes.DiffPreview
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.vcsUtil.VcsFileUtil.relativePath
 import git4idea.repo.GitRepository
@@ -34,11 +33,10 @@ import org.jetbrains.plugins.github.pullrequest.ui.review.DelegatingGHPRReviewVi
 import org.jetbrains.plugins.github.pullrequest.ui.review.GHPRReviewViewModelHelper
 
 @ApiStatus.Experimental
-interface GHPRChangeListViewModel : CodeReviewChangeListViewModel.WithDetails, DiffPreview {
+interface GHPRChangeListViewModel : CodeReviewChangeListViewModel.WithDetails {
   val isUpdating: StateFlow<Boolean>
 
   fun canShowDiff(): Boolean
-  fun showDiff()
 
   /**
    * Tests if the viewed state matches for all files
@@ -113,13 +111,6 @@ internal class GHPRChangeListViewModelImpl(
   override fun showDiffPreview() {
     dataContext.filesManager.createAndOpenDiffFile(dataProvider.id, true)
   }
-
-  override fun openPreview(requestFocus: Boolean): Boolean {
-    dataContext.filesManager.createAndOpenDiffFile(dataProvider.id, requestFocus)
-    return true
-  }
-
-  override fun closePreview() = Unit
 
   override fun canShowDiff(): Boolean = dataProvider.diffRequestModel.requestChain != null
 

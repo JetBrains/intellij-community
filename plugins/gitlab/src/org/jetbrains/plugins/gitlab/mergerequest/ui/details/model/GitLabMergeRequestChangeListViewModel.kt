@@ -7,7 +7,6 @@ import com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangeLi
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangeListViewModel
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangeListViewModelBase
 import com.intellij.collaboration.util.RefComparisonChange
-import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
@@ -18,16 +17,7 @@ import org.jetbrains.plugins.gitlab.mergerequest.data.firstNote
 import org.jetbrains.plugins.gitlab.mergerequest.data.mapToLocation
 import java.util.concurrent.ConcurrentHashMap
 
-internal interface GitLabMergeRequestChangeListViewModel : CodeReviewChangeListViewModel.WithDetails {
-  /**
-   * Request standalone diff for [changesSelection]
-   */
-  fun showDiff()
-
-  companion object {
-    val DATA_KEY = DataKey.create<GitLabMergeRequestChangeListViewModel>("GitLab.MergeRequest.Changes.ViewModel")
-  }
-}
+interface GitLabMergeRequestChangeListViewModel : CodeReviewChangeListViewModel.WithDetails
 
 internal class GitLabMergeRequestChangeListViewModelImpl(
   override val project: Project,

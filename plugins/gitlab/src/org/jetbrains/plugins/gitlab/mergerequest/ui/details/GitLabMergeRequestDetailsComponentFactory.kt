@@ -5,6 +5,7 @@ import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.collaboration.ui.LoadingLabel
 import com.intellij.collaboration.ui.SimpleHtmlPane
 import com.intellij.collaboration.ui.codereview.details.*
+import com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangeListViewModel
 import com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPanelFactory
 import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.collaboration.ui.util.bindContentIn
@@ -31,7 +32,6 @@ import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestActionPlaces
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabCommit
-import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestChangeListViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestDetailsLoadingViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestDetailsViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.error.GitLabMergeRequestErrorStatusPresenter
@@ -75,7 +75,7 @@ internal object GitLabMergeRequestDetailsComponentFactory {
               DataManager.registerDataProvider(this) { dataId ->
                 when {
                   GitLabMergeRequestViewModel.DATA_KEY.`is`(dataId) -> detailsVm
-                  GitLabMergeRequestChangeListViewModel.DATA_KEY.`is`(dataId) -> changesModelState.value
+                  CodeReviewChangeListViewModel.DATA_KEY.`is`(dataId) -> changesModelState.value
                   else -> null
                 }
               }

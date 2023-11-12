@@ -4,6 +4,7 @@ package com.intellij.collaboration.ui.codereview.details.model
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangeListViewModel.SelectionRequest
 import com.intellij.collaboration.util.ChangesSelection
 import com.intellij.collaboration.util.RefComparisonChange
+import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.project.Project
 import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.CoroutineScope
@@ -37,6 +38,11 @@ interface CodeReviewChangeListViewModel {
    */
   fun showDiffPreview()
 
+  /**
+   * Request standalone diff for [changesSelection]
+   */
+  fun showDiff()
+
   interface WithDetails : CodeReviewChangeListViewModel {
     /**
      * Map of additional details for changes
@@ -47,6 +53,10 @@ interface CodeReviewChangeListViewModel {
   sealed interface SelectionRequest {
     data object All : SelectionRequest
     data class OneChange(val change: RefComparisonChange) : SelectionRequest
+  }
+
+  companion object {
+    val DATA_KEY = DataKey.create<CodeReviewChangeListViewModel>("Code.Review.Changes.List.ViewModel")
   }
 }
 

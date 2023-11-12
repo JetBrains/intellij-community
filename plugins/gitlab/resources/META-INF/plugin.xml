@@ -67,10 +67,6 @@
     <virtualFileSystem key="gitlabmr" implementationClass="org.jetbrains.plugins.gitlab.mergerequest.file.GitLabVirtualFileSystem"/>
     <fileEditorProvider implementation="org.jetbrains.plugins.gitlab.mergerequest.file.GitLabFileEditorProvider"/>
     <diff.DiffExtension implementation="org.jetbrains.plugins.gitlab.mergerequest.diff.GitLabMergeRequestDiffExtension"/>
-    <diff.actions.ShowDiffAction.ExtensionProvider
-      implementation="org.jetbrains.plugins.gitlab.mergerequest.diff.action.GitLabMergeRequestShowDiffActionProvider"/>
-    <diff.actions.ShowStandaloneDiffAction.ExtensionProvider
-      implementation="org.jetbrains.plugins.gitlab.mergerequest.diff.action.GitLabMergeRequestShowDiffActionProvider"/>
     <fileIconProvider implementation="org.jetbrains.plugins.gitlab.ui.GitLabCiConfigIconProvider"/>
     <iconMapper mappingFile="GitlabIconMappings.json"/>
 

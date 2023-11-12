@@ -7,5 +7,10 @@
                        displayType="BALLOON"
                        bundle="messages.CollaborationToolsBundle"
                        key="notification.group.vcs.hosting.integrations"/>
+
+    <diff.actions.ShowDiffAction.ExtensionProvider
+      implementation="com.intellij.collaboration.ui.codereview.action.CodeReviewShowDiffActionProvider$Preview"/>
+    <diff.actions.ShowStandaloneDiffAction.ExtensionProvider
+      implementation="com.intellij.collaboration.ui.codereview.action.CodeReviewShowDiffActionProvider$Standalone"/>
   </extensions>
 </idea-plugin>

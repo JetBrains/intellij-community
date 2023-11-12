@@ -6,6 +6,7 @@ import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.collaboration.ui.LoadingLabel
 import com.intellij.collaboration.ui.codereview.CodeReviewProgressTreeModelFromDetails
 import com.intellij.collaboration.ui.codereview.changes.CodeReviewChangeListComponentFactory
+import com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangeListViewModel
 import com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPanelFactory
 import com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPresenter
 import com.intellij.collaboration.ui.util.bindContentIn
@@ -16,7 +17,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ChangesUtil
-import com.intellij.openapi.vcs.changes.EditorTabDiffPreviewManager.Companion.EDITOR_TAB_DIFF_PREVIEW
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
 import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData
 import com.intellij.ui.ClientProperty
@@ -120,11 +120,11 @@ internal class GHPRViewComponentFactory(actionManager: ActionManager,
 
     DataManager.registerDataProvider(stripe) { dataId ->
       when {
-        EDITOR_TAB_DIFF_PREVIEW.`is`(dataId) -> changeListVm
         tree.isShowing ->
           when {
             GHPRActionKeys.PULL_REQUEST_FILES.`is`(dataId) -> tree.getPullRequestFiles()
             GHPRChangeListViewModel.DATA_KEY.`is`(dataId) -> changeListVm
+            CodeReviewChangeListViewModel.DATA_KEY.`is`(dataId) -> changeListVm
             else -> null
           } ?: tree.getData(dataId)
         else -> null
