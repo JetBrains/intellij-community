@@ -14,9 +14,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.jediterm.terminal.StyledTextConsumer
 import com.jediterm.terminal.TextStyle
-import com.jediterm.terminal.model.CharBuffer
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.IS_OUTPUT_EDITOR_KEY
 import org.jetbrains.plugins.terminal.exp.TerminalUiUtils.toTextAttributes
 import java.awt.Font
@@ -28,7 +26,7 @@ class TerminalOutputController(
 ) : TerminalModel.TerminalListener {
   val outputModel: TerminalOutputModel = TerminalOutputModel(editor)
   val selectionModel: TerminalSelectionModel = TerminalSelectionModel(outputModel)
-  private val terminalModel: TerminalModel = session.model
+  private val scraper: ShellCommandOutputScraper = ShellCommandOutputScraper(session)
   private val blocksDecorator: TerminalBlocksDecorator = TerminalBlocksDecorator(outputModel, editor)
   private val textHighlighter: TerminalTextHighlighter = TerminalTextHighlighter(outputModel)
 
@@ -129,91 +127,33 @@ class TerminalOutputController(
     }
     else {
       installRunningCommandListeners()
-      terminalModel.withContentLock {
-        updateEditorContent()
-      }
     }
   }
 
   private fun setupContentListener(disposable: Disposable) {
-    terminalModel.addContentListener(object : TerminalModel.ContentListener {
-      override fun onContentChanged() {
-        updateEditorContent()
+    scraper.addListener(object : ShellCommandOutputListener {
+      override fun commandOutputChanged(output: StyledCommandOutput) {
+        updateEditorContent(output)
       }
     }, disposable)
   }
 
-  private fun updateEditorContent() {
-    val output = computeCommandOutput()
+  private fun updateEditorContent(output: StyledCommandOutput) {
     // Can not use invokeAndWait here because deadlock may happen. TerminalTextBuffer is locked at this place,
     // and EDT can be frozen now trying to acquire this lock
     invokeLater(ModalityState.any()) {
       if (!editor.isDisposed) {
-        updateEditor(output)
+        updateEditor(toHighlightedCommandOutput(output))
       }
     }
   }
 
-  private fun computeCommandOutput(): CommandOutput {
+  private fun toHighlightedCommandOutput(output: StyledCommandOutput): CommandOutput {
     val block = outputModel.getLastBlock()!!
     val baseOffset = block.outputStartOffset
-    val builder = StringBuilder()
-    val highlightings = mutableListOf<HighlightingInfo>()
-    val consumer = object : StyledTextConsumer {
-      override fun consume(x: Int,
-                           y: Int,
-                           style: TextStyle,
-                           characters: CharBuffer,
-                           startRow: Int) {
-        val startOffset = baseOffset + builder.length
-        builder.append(characters.toString())
-        val attributes = style.toTextAttributes()
-        highlightings.add(HighlightingInfo(startOffset, baseOffset + builder.length, attributes))
-      }
-
-      override fun consumeNul(x: Int,
-                              y: Int,
-                              nulIndex: Int,
-                              style: TextStyle,
-                              characters: CharBuffer,
-                              startRow: Int) {
-        val startOffset = baseOffset + builder.length
-        repeat(characters.buf.size) {
-          builder.append(' ')
-        }
-        highlightings.add(HighlightingInfo(startOffset, baseOffset + builder.length, TextStyle.EMPTY.toTextAttributes()))
-      }
-
-      override fun consumeQueue(x: Int, y: Int, nulIndex: Int, startRow: Int) {
-        val startOffset = baseOffset + builder.length
-        builder.append("\n")
-        highlightings.add(HighlightingInfo(startOffset, startOffset + 1, TextStyle.EMPTY.toTextAttributes()))
-      }
-    }
-
-    val commandLines = block.command?.let { command ->
-      command.split("\n").sumOf { it.length / terminalModel.width + if (it.length % terminalModel.width > 0) 1 else 0 }
-    } ?: 0
-    val historyLines = terminalModel.historyLinesCount
-    if (terminalModel.historyLinesCount > 0) {
-      if (commandLines <= historyLines) {
-        terminalModel.processHistoryAndScreenLines(commandLines - historyLines, historyLines - commandLines, consumer)
-        terminalModel.processScreenLines(0, terminalModel.cursorY, consumer)
-      }
-      else {
-        terminalModel.processHistoryAndScreenLines(-historyLines, historyLines, consumer)
-        terminalModel.processScreenLines(commandLines - historyLines, terminalModel.cursorY, consumer)
-      }
-    }
-    else {
-      terminalModel.processScreenLines(commandLines, terminalModel.cursorY - commandLines, consumer)
-    }
-
-    while (builder.lastOrNull() == '\n') {
-      builder.deleteCharAt(builder.lastIndex)
-      highlightings.removeLast()
-    }
-    return CommandOutput(builder.toString(), highlightings)
+    return CommandOutput(output.text, output.styleRanges.map {
+      HighlightingInfo(baseOffset + it.startOffset, baseOffset + it.endOffset, it.style.toTextAttributes())
+    })
   }
 
   private fun updateEditor(output: CommandOutput) {

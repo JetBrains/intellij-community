@@ -26,7 +26,7 @@ class TerminalSession(settings: JBTerminalSystemSettingsProviderBase,
 
   private val textBuffer: TerminalTextBuffer
   internal val controller: JediTerminal
-  private val commandManager: ShellCommandManager
+  internal val commandManager: ShellCommandManager
   private val typeAheadManager: TerminalTypeAheadManager
   private val terminationListeners: MutableList<Runnable> = CopyOnWriteArrayList()
 

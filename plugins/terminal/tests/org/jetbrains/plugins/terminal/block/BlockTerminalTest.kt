@@ -1,0 +1,85 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.plugins.terminal.block
+
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.testFramework.DisposableRule
+import com.intellij.testFramework.ProjectRule
+import com.intellij.testFramework.RuleChain
+import com.intellij.testFramework.rules.TempDirectory
+import com.jediterm.core.util.TermSize
+import org.jetbrains.plugins.terminal.exp.*
+import org.jetbrains.plugins.terminal.exp.ShellCommandOutputListener
+import org.jetbrains.plugins.terminal.exp.ShellCommandOutputScraper
+import org.jetbrains.plugins.terminal.exp.util.TerminalSessionTestUtil
+import org.junit.Assert
+import org.junit.Rule
+import org.junit.runner.RunWith
+import org.junit.runners.Parameterized
+import java.io.File
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicReference
+
+@RunWith(Parameterized::class)
+class BlockTerminalTest(private val shellPath: String) {
+
+  private val projectRule: ProjectRule = ProjectRule()
+  private val tmpDir: TempDirectory = TempDirectory()
+  private val disposableRule = DisposableRule()
+
+  companion object {
+    @JvmStatic
+    @Parameterized.Parameters(name = "{0}")
+    fun shells(): List<String> = listOf(
+      "/bin/zsh",
+      "/bin/bash",
+    ).filter { File(it).exists() }
+  }
+
+  @Rule
+  @JvmField
+  val ruleChain: RuleChain = RuleChain(projectRule, tmpDir, disposableRule)
+
+  @org.junit.Test
+  fun `test echo output is read`() {
+    val session = TerminalSessionTestUtil.startBlockTerminalSession(projectRule.project, shellPath, disposableRule.disposable, TermSize(20, 10))
+    val outputFuture: CompletableFuture<CommandResult> = getCommandResultFuture(session)
+    session.sendCommandToExecute("echo qqq")
+    assertCommandResult(0, "qqq\n", outputFuture)
+  }
+
+  @Suppress("SameParameterValue")
+  private fun assertCommandResult(expectedExitCode: Int, expectedOutput: String, actualResultFuture: CompletableFuture<CommandResult>) {
+    val actualResult = actualResultFuture.get(5000, TimeUnit.MILLISECONDS)
+    var actualOutput = StringUtil.splitByLinesDontTrim(actualResult.output).joinToString("\n") { it.trimEnd() }
+    if (expectedOutput == actualOutput + "\n") {
+      actualOutput += "\n"
+    }
+    Assert.assertEquals(stringify(expectedExitCode, expectedOutput), stringify(actualResult.exitCode, actualOutput))
+  }
+
+  private fun stringify(exitCode: Int, output: String): String {
+    return "exit_code:$exitCode, output: $output"
+  }
+}
+
+fun getCommandResultFuture(session: TerminalSession): CompletableFuture<CommandResult> {
+  val disposable = Disposer.newDisposable(session)
+  val scraper = ShellCommandOutputScraper(session)
+  val lastOutput: AtomicReference<StyledCommandOutput> = AtomicReference()
+  scraper.addListener(object : ShellCommandOutputListener {
+    override fun commandOutputChanged(output: StyledCommandOutput) {
+      lastOutput.set(output)
+    }
+  }, disposable)
+  val result: CompletableFuture<CommandResult> = CompletableFuture()
+  session.commandManager.addListener(object : ShellCommandListener {
+    override fun commandFinished(command: String, exitCode: Int, duration: Long) {
+      result.complete(CommandResult(exitCode, lastOutput.get()?.text.orEmpty()))
+    }
+  }, disposable)
+  return result
+}
+
+data class CommandResult(val exitCode: Int, val output: String)

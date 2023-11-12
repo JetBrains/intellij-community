@@ -23,9 +23,9 @@ import java.util.concurrent.TimeoutException
 object TerminalSessionTestUtil {
   fun startBlockTerminalSession(project: Project,
                                 shellPath: String,
-                                disposable: Disposable,
+                                parentDisposable: Disposable,
                                 initialTermSize: TermSize = TermSize(200, 20)): TerminalSession {
-    Registry.get(LocalTerminalDirectRunner.BLOCK_TERMINAL_REGISTRY).setValue(true, disposable)
+    Registry.get(LocalTerminalDirectRunner.BLOCK_TERMINAL_REGISTRY).setValue(true, parentDisposable)
     val runner = LocalTerminalDirectRunner.createTerminalRunner(project)
     val baseOptions = ShellStartupOptions.Builder().shellCommand(listOf(shellPath, "-i")).initialTermSize(initialTermSize).build()
     val configuredOptions = runner.configureStartupOptions(baseOptions)
@@ -35,6 +35,7 @@ object TerminalSessionTestUtil {
 
     val colorPalette = BlockTerminalColorPalette(EditorColorsManager.getInstance().globalScheme)
     val session = TerminalSession(runner.settingsProvider, colorPalette, configuredOptions.shellIntegration)
+    Disposer.register(parentDisposable, session)
     session.controller.resize(initialTermSize, RequestOrigin.User)
     val model: TerminalModel = session.model
 
