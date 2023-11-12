@@ -19,7 +19,7 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
     val idea = "idea/tests/testData/"
 
     testGroup("code-insight/inspections-k2/tests", testDataPath = "../../..") {
-        testClass<AbstractK2LocalInspectionTest> {
+        testClass<AbstractK2LocalInspectionTest>(commonSuite = false) {
             val pattern = Patterns.forRegex("^([\\w\\-_]+)\\.(kt|kts)$")
             model("${idea}/inspectionsLocal/unusedVariable", pattern = pattern)
             model("${idea}/inspectionsLocal/redundantVisibilityModifier", pattern = pattern)
