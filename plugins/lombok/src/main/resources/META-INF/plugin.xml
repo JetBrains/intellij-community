@@ -146,6 +146,16 @@
 
     <localInspection
       language="JAVA"
+      groupPath="Java"
+      groupKey="inspection.lombok.group.name.lombok"
+      groupBundle="messages.LombokBundle"
+      shortName="StaticMethodImportLombok"
+      enabledByDefault="true"
+      implementationClass="de.plushnikov.intellij.plugin.inspection.StaticMethodImportLombokInspection"
+      key="inspection.builder.static.import.name" bundle="messages.LombokBundle"/>
+
+    <localInspection
+      language="JAVA"
       groupPath="Java,Lombok"
       groupKey="inspection.lombok.group.name.redundant.modifiers"
       groupBundle="messages.LombokBundle"
