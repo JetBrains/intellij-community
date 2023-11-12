@@ -214,6 +214,12 @@
       <bundleName>messages.LombokBundle</bundleName>
       <categoryKey>intention.category.lombok</categoryKey>
     </intentionAction>
+    <intentionAction>
+      <language>JAVA</language>
+      <className>de.plushnikov.intellij.plugin.intention.ReplaceSynchronizedWithLombokAction</className>
+      <bundleName>messages.LombokBundle</bundleName>
+      <categoryKey>intention.category.lombok</categoryKey>
+    </intentionAction>
 
     <codeInsight.template.postfixTemplateProvider language="JAVA"
                                                   implementationClass="de.plushnikov.intellij.plugin.extension.postfix.LombokPostfixTemplateProvider"/>
