@@ -79,7 +79,7 @@ sealed class PythonExecution {
     const val SKIP_ARGUMENT = """\xdc'S>\x02\x03%\x14\xee\xc0\xa1`\xcb\r\xf0\x95"""
 
     @Deprecated("Temporarily kept to ease resolvation of possible merge conflicts")
-    @ScheduledForRemoval
+    @ApiStatus.ScheduledForRemoval
     const val REMOVE_ARGUMENT = SKIP_ARGUMENT
   }
 }
