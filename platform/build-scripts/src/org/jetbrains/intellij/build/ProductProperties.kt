@@ -229,7 +229,7 @@ abstract class ProductProperties {
    * A config map for [org.jetbrains.intellij.build.impl.ClassFileChecker],
    * when .class file version verification is needed.
    */
-  var versionCheckerConfig: PersistentMap<String, String> = persistentMapOf()
+  var versionCheckerConfig: Map<String, String> = java.util.Map.of()
 
   /**
    * Strings which are forbidden as a part of resulting class file path. E.g.:
