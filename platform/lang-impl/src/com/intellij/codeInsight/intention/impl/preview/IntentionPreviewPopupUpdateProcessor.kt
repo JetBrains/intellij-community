@@ -39,6 +39,8 @@ import java.awt.Dimension
 import java.awt.Rectangle
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
+import java.awt.event.HierarchyBoundsAdapter
+import java.awt.event.HierarchyEvent
 import javax.swing.JWindow
 import kotlin.math.max
 import kotlin.math.min
@@ -94,6 +96,7 @@ class IntentionPreviewPopupUpdateProcessor(private val project: Project,
         }
       })
       adjustPosition(originalPopup)
+      addMoveListener(originalPopup) { adjustPosition(originalPopup) }
     }
 
     val value = component.multiPanel.getValue(index, false)
@@ -112,6 +115,15 @@ class IntentionPreviewPopupUpdateProcessor(private val project: Project,
       .coalesceBy(this)
       .finishOnUiThread(ModalityState.defaultModalityState()) { renderPreview(it) }
       .submit(AppExecutorUtil.getAppExecutorService())
+  }
+
+  private fun addMoveListener(popup: JBPopup?, action: () -> Unit){
+    if (popup == null) return
+    popup.content.addHierarchyBoundsListener(object : HierarchyBoundsAdapter() {
+      override fun ancestorMoved(e: HierarchyEvent?) {
+        action.invoke()
+      }
+    })
   }
 
   private fun adjustPosition(originalPopup: JBPopup?, checkResizing: Boolean = false) {
