@@ -3,6 +3,7 @@
 
 package com.intellij.openapi.fileEditor.impl
 
+import com.intellij.codeWithMe.ClientId
 import com.intellij.diagnostic.Activity
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.featureStatistics.fusCollectors.FileEditorCollector.EmptyStateCause
@@ -12,7 +13,8 @@ import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.*
-import com.intellij.openapi.client.currentSession
+import com.intellij.openapi.client.ClientProjectSession
+import com.intellij.openapi.client.ClientSessionsManager
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.diagnostic.logger
@@ -902,7 +904,6 @@ private class UiBuilder(private val splitters: EditorsSplitters) {
         editorWindow
       }
 
-      var focusedFile: VirtualFile? = null
       val fileEditorManager = splitters.manager
       val fileDocumentManager = serviceAsync<FileDocumentManager>()
       val fileEditorProviderManager = serviceAsync<FileEditorProviderManager>()
@@ -915,30 +916,22 @@ private class UiBuilder(private val splitters: EditorsSplitters) {
       })
 
       val virtualFileManager = VirtualFileManager.getInstance()
+      var focusedFile: VirtualFile? = null
       for ((index, fileEntry) in sorted) {
         span("opening editor") {
-          val file = virtualFileManager.findFileByUrl(fileEntry.url) ?: virtualFileManager.refreshAndFindFileByUrl(fileEntry.url)
-          if (file == null || !file.isValid) {
-            val message = "No file exists: ${fileEntry.url}"
-            if (ApplicationManager.getApplication().isUnitTestMode) {
-              LOG.error(message)
-            }
-            else {
-              LOG.warn(message)
-            }
-            return@span
-          }
-
+          val file = resolveFileOrLogError(virtualFileManager, fileEntry) ?: return@span
           file.putUserData(AsyncEditorLoader.OPENED_IN_BULK, true)
           try {
-            focusedFile = openFile(file = file,
-                                   fileEntry = fileEntry,
-                                   fileEditorProviderManager = fileEditorProviderManager,
-                                   fileEditorManager = fileEditorManager,
-                                   fileDocumentManager = fileDocumentManager,
-                                   windowDeferred = windowDeferred,
-                                   index = index,
-                                   asyncScope = this@coroutineScope)
+            openFile(file = file,
+                     fileEntry = fileEntry,
+                     fileEditorProviderManager = fileEditorProviderManager,
+                     fileEditorManager = fileEditorManager,
+                     fileDocumentManager = fileDocumentManager,
+                     windowDeferred = windowDeferred,
+                     index = index)
+            if (fileEntry.currentInTab) {
+              focusedFile = file
+            }
           }
           finally {
             file.putUserData(AsyncEditorLoader.OPENED_IN_BULK, null)
@@ -958,85 +951,101 @@ private class UiBuilder(private val splitters: EditorsSplitters) {
   }
 }
 
+private fun resolveFileOrLogError(virtualFileManager: VirtualFileManager, fileEntry: FileEntry): VirtualFile? {
+  val file = virtualFileManager.findFileByUrl(fileEntry.url) ?: virtualFileManager.refreshAndFindFileByUrl(fileEntry.url)
+  if (file != null && file.isValid) {
+    return file
+  }
+
+  val message = "No file exists: ${fileEntry.url}"
+  if (ApplicationManager.getApplication().isUnitTestMode) {
+    LOG.error(message)
+  }
+  else {
+    LOG.warn(message)
+  }
+  return null
+}
+
 private suspend fun openFile(file: VirtualFile,
                              fileEntry: FileEntry,
                              fileEditorProviderManager: FileEditorProviderManager,
                              fileEditorManager: FileEditorManagerImpl,
                              fileDocumentManager: FileDocumentManager,
                              windowDeferred: Deferred<EditorWindow>,
-                             index: Int,
-                             asyncScope: CoroutineScope): VirtualFile? {
-  val deferredProviders: Deferred<List<FileEditorProvider>> = if (fileEntry.ideFingerprint == ideFingerprint()) {
-    asyncScope.async(CoroutineName("editor provider resolving")) {
-      val list = fileEntry.providers.keys.mapNotNullTo(ArrayList(fileEntry.providers.size)) {
-        fileEditorProviderManager.getProvider(it)
-      }
+                             index: Int) {
+  coroutineScope {
+    val deferredProviders: Deferred<List<FileEditorProvider>> = if (fileEntry.ideFingerprint == ideFingerprint()) {
+      async(CoroutineName("editor provider resolving")) {
+        val list = fileEntry.providers.keys.mapNotNullTo(ArrayList(fileEntry.providers.size)) {
+          fileEditorProviderManager.getProvider(it)
+        }
 
-      // if some provider is not found, compute without taking cache in an account
-      if (fileEntry.providers.size == list.size) {
-        list
+        // if some provider is not found, compute without taking cache in an account
+        if (fileEntry.providers.size == list.size) {
+          list
+        }
+        else {
+          fileEditorProviderManager.getProvidersAsync(fileEditorManager.project, file)
+        }
       }
-      else {
+    }
+    else {
+      async(CoroutineName("editor provider computing")) {
         fileEditorProviderManager.getProvidersAsync(fileEditorManager.project, file)
       }
     }
-  }
-  else {
-    asyncScope.async(CoroutineName("editor provider computing")) {
-      fileEditorProviderManager.getProvidersAsync(fileEditorManager.project, file)
-    }
-  }
 
-  val fileEditorStateProvider = object : FileEditorStateProvider {
-    // preload
-    private val providerAndStateList = asyncScope.async {
-      val providers = deferredProviders.await()
-      providers.mapNotNullTo(ArrayList(providers.size)) { provider ->
-        val stateData = fileEntry.providers.get(provider.editorTypeId) ?: return@mapNotNullTo null
-        val state = provider.readState(stateData, fileEditorManager.project, file)
-        provider to state
+    val fileEditorStateProvider = object : FileEditorStateProvider {
+      // preload
+      private val providerAndStateList = async {
+        val providers = deferredProviders.await()
+        providers.mapNotNullTo(ArrayList(providers.size)) { provider ->
+          val stateData = fileEntry.providers.get(provider.editorTypeId) ?: return@mapNotNullTo null
+          val state = provider.readState(stateData, fileEditorManager.project, file)
+          provider to state
+        }
+      }
+
+      override suspend fun getSelectedProvider(): FileEditorProvider? {
+        return deferredProviders.await().firstOrNull { it.editorTypeId == fileEntry.selectedProvider }
+      }
+
+      override suspend fun getState(provider: FileEditorProvider): FileEditorState? {
+        return providerAndStateList.await().firstOrNull { it.first === provider }?.second
       }
     }
 
-    override suspend fun getSelectedProvider(): FileEditorProvider? {
-      return deferredProviders.await().firstOrNull { it.editorTypeId == fileEntry.selectedProvider }
+    val document = readActionBlocking {
+      fileDocumentManager.getDocument(file)
     }
 
-    override suspend fun getState(provider: FileEditorProvider): FileEditorState? {
-      return providerAndStateList.await().firstOrNull { it.first === provider }?.second
-    }
-  }
-
-  val document = readActionBlocking {
-    fileDocumentManager.getDocument(file)
-  }
-
-  val session = fileEditorManager.project.currentSession
-  val options = FileEditorOpenOptions(
-    selectAsCurrent = false,
-    pin = fileEntry.pinned,
-    index = index,
-    usePreviewTab = fileEntry.isPreview,
-  )
-  if (session.isLocal) {
-    fileEditorManager.openFileOnStartup(
-      windowDeferred = windowDeferred,
-      file = file,
-      document = document,
-      fileEditorStateProvider = fileEditorStateProvider,
-      options = options,
-      providers = deferredProviders.await(),
+    val session = fileEditorManager.project.serviceAsync<ClientSessionsManager<ClientProjectSession>>().getSession(ClientId.current)
+    val options = FileEditorOpenOptions(
+      selectAsCurrent = false,
+      pin = fileEntry.pinned,
+      index = index,
+      usePreviewTab = fileEntry.isPreview,
     )
-  }
-  else {
-    session.serviceOrNull<ClientFileEditorManager>()?.openFileAsync(file = file, options)
-  }
+    if (session == null || session.isLocal) {
+      fileEditorManager.openFileOnStartup(
+        windowDeferred = windowDeferred,
+        file = file,
+        document = document,
+        fileEditorStateProvider = fileEditorStateProvider,
+        options = options,
+        providers = deferredProviders.await(),
+      )
+    }
+    else {
+      session.serviceOrNull<ClientFileEditorManager>()?.openFileAsync(file = file, options)
+    }
 
-  // This is just to make sure document reference is kept on stack till this point
-  // so that a document is available for folding state deserialization in HistoryEntry constructor,
-  // and that document will be created only once during file opening
-  Reference.reachabilityFence(document)
-  return if (fileEntry.currentInTab) file else null
+    // This is just to make sure document reference is kept on stack till this point
+    // so that a document is available for folding state deserialization in HistoryEntry constructor,
+    // and that document will be created only once during file opening
+    Reference.reachabilityFence(document)
+  }
 }
 
 private val ACTIVATE_EDITOR_ON_ESCAPE_HANDLER = KeyEventPostProcessor { e ->
