@@ -332,5 +332,6 @@
     <projectService serviceInterface="com.intellij.java.analysis.OuterModelsModificationTrackerManager"
                     serviceImplementation="com.intellij.lang.OuterModelsModificationTrackerManagerImpl"/>
     <optionController implementation="com.intellij.codeInspection.ex.EntryPointsManagerBase$Provider"/>
+    <optionController implementation="com.intellij.codeInsight.NullableNotNullManagerImpl$Provider"/>
   </extensions>
 </idea-plugin>
