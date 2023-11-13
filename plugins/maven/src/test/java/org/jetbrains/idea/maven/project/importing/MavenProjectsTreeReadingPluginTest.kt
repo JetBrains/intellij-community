@@ -56,7 +56,6 @@ class MavenProjectsTreeReadingPluginTest : MavenProjectsTreeTestCase() {
                                     progressReporter,
                                     MavenLogEventHandler,
                                     false)
-      MavenFolderResolver(myProject).resolveFolders(listOf(parentProject), progressReporter)
     }
     finally {
       embeddersManager.releaseInTests()
@@ -65,16 +64,14 @@ class MavenProjectsTreeReadingPluginTest : MavenProjectsTreeTestCase() {
       log()
         .add("updated", "parent", "child")
         .add("deleted")
-        .add("resolved", "parent")
-        .add("folders", "parent"),
+        .add("resolved", "parent"),
       listener.log)
     tree.updateAll(false, mavenGeneralSettings, mavenProgressIndicator.indicator)
     assertEquals(
       log()
         .add("updated", "parent", "child")
         .add("deleted")
-        .add("resolved", "parent")
-        .add("folders", "parent"),
+        .add("resolved", "parent"),
       listener.log)
   }
 }

@@ -50,8 +50,8 @@ class MavenFolderResolver(private val project: Project) {
     }
   }
 
-  suspend fun resolveFolders(mavenProjects: Collection<MavenProject>,
-                             progressReporter: RawProgressReporter): Map<MavenProject, MavenProjectChanges> {
+  private suspend fun resolveFolders(mavenProjects: Collection<MavenProject>,
+                                     progressReporter: RawProgressReporter): Map<MavenProject, MavenProjectChanges> {
     val console = MavenSourceGenerationConsole(project)
     try {
       console.start()
