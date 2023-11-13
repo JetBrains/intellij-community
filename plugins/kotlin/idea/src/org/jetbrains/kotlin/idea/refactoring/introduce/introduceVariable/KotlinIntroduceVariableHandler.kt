@@ -469,8 +469,6 @@ object KotlinIntroduceVariableHandler : RefactoringActionHandler {
         expression: KtExpression,
         container: KtElement,
         occurrenceContainer: KtElement,
-        resolutionFacade: ResolutionFacade,
-        bindingContext: BindingContext,
         isVar: Boolean,
         occurrencesToReplace: List<KtExpression>?,
         onNonInteractiveFinish: ((KtDeclaration) -> Unit)?
@@ -502,6 +500,9 @@ object KotlinIntroduceVariableHandler : RefactoringActionHandler {
         )?.let {
             return showErrorHint(project, editor, KotlinBundle.message("cannot.refactor.no.container"))
         }
+
+        val resolutionFacade = physicalExpression.getResolutionFacade()
+        val bindingContext = resolutionFacade.analyze(physicalExpression, BodyResolveMode.FULL)
 
         val expressionType = substringInfo?.type ?: bindingContext.getType(physicalExpression) //can be null or error type
         val scope = physicalExpression.getResolutionScope(bindingContext, resolutionFacade)
@@ -670,10 +671,7 @@ object KotlinIntroduceVariableHandler : RefactoringActionHandler {
         return parent.bodyExpression == this && (parent is KtFunctionLiteral || parent.isFunctionalExpression())
     }
 
-    private fun KtExpression.getCandidateContainers(
-        resolutionFacade: ResolutionFacade,
-        originalContext: BindingContext
-    ): List<Containers> {
+    fun KtExpression.getCandidateContainers(): List<Containers> {
         val physicalExpression = substringContextOrThis
         val contentRange = extractableSubstringInfo?.contentRange
 
@@ -681,6 +679,9 @@ object KotlinIntroduceVariableHandler : RefactoringActionHandler {
 
         val references =
             physicalExpression.collectDescendantsOfType<KtReferenceExpression> { contentRange == null || contentRange.contains(it.textRange) }
+
+        val resolutionFacade = physicalExpression.getResolutionFacade()
+        val originalContext = resolutionFacade.analyze(physicalExpression, BodyResolveMode.FULL)
 
         fun isResolvableNextTo(neighbour: KtExpression): Boolean {
             val scope = neighbour.getResolutionScope(originalContext, resolutionFacade)
@@ -746,18 +747,13 @@ object KotlinIntroduceVariableHandler : RefactoringActionHandler {
 
         if (!CommonRefactoringUtil.checkReadOnlyStatus(project, expression)) return
 
-        val physicalExpression = expression.substringContextOrThis
-
-        val resolutionFacade = physicalExpression.getResolutionFacade()
-        val bindingContext = resolutionFacade.analyze(physicalExpression, BodyResolveMode.FULL)
-
-        val candidateContainers = expression.getCandidateContainers(resolutionFacade, bindingContext).ifEmpty {
+        val candidateContainers = expression.getCandidateContainers().ifEmpty {
             return showErrorHint(project, editor, KotlinBundle.message("cannot.refactor.no.container"))
         }
 
         selectTargetContainerAndDoRefactoring(editor, targetContainer, candidateContainers) { (targetContainer, occurrenceContainer) ->
             doRefactoring(
-                project, editor, expression, targetContainer, occurrenceContainer, resolutionFacade, bindingContext,
+                project, editor, expression, targetContainer, occurrenceContainer,
                 isVar, occurrencesToReplace, onNonInteractiveFinish
             )
         }
@@ -785,14 +781,6 @@ object KotlinIntroduceVariableHandler : RefactoringActionHandler {
                 doRefactoring
             )
         }
-    }
-
-    fun getContainersForExpression(expression: KtExpression): List<Containers> {
-        val physicalExpression = expression.substringContextOrThis
-
-        val resolutionFacade = physicalExpression.getResolutionFacade()
-        val bindingContext = resolutionFacade.analyze(physicalExpression, BodyResolveMode.FULL)
-        return expression.getCandidateContainers(resolutionFacade, bindingContext)
     }
 
     override fun invoke(project: Project, editor: Editor, file: PsiFile, dataContext: DataContext) {

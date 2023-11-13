@@ -53,9 +53,8 @@ internal class KotlinIntroduceVariableServiceK1Impl(private val project: Project
         return element
     }
 
-    override fun getContainersForExpression(expression: KtExpression): List<KotlinIntroduceVariableHelper.Containers> {
-        return KotlinIntroduceVariableHandler.getContainersForExpression(expression)
-    }
+    override fun getContainersForExpression(expression: KtExpression): List<KotlinIntroduceVariableHelper.Containers> =
+        with(KotlinIntroduceVariableHandler) { expression.getCandidateContainers() }
 
     override fun findOccurrences(
         expression: KtExpression,
