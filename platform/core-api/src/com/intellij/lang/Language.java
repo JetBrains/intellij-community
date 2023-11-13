@@ -14,8 +14,8 @@ import com.intellij.openapi.util.text.Strings;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.containers.UnmodifiableHashMap;
 import kotlinx.collections.immutable.PersistentList;
-import kotlinx.collections.immutable.PersistentMap;
 import kotlinx.collections.immutable.PersistentSet;
 import org.jetbrains.annotations.*;
 
@@ -24,7 +24,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import static kotlinx.collections.immutable.ExtensionsKt.*;
+import static kotlinx.collections.immutable.ExtensionsKt.persistentHashSetOf;
+import static kotlinx.collections.immutable.ExtensionsKt.persistentListOf;
 
 /**
  * A language represents a programming language such as Java,
@@ -44,9 +45,9 @@ public abstract class Language extends UserDataHolderBase {
   public static final Language[] EMPTY_ARRAY = new Language[0];
 
   private static final Object staticLock = new Object();
-  private static volatile PersistentMap<Class<? extends Language>, @NotNull Language> registeredLanguages = persistentHashMapOf();
-  private static volatile PersistentMap<String, PersistentList<Language>> registeredMimeTypes = persistentHashMapOf();
-  private static volatile PersistentMap<String, Language> registeredIds = persistentHashMapOf();
+  private static volatile UnmodifiableHashMap<Class<? extends Language>, @NotNull Language> registeredLanguages = UnmodifiableHashMap.empty();
+  private static volatile UnmodifiableHashMap<String, PersistentList<Language>> registeredMimeTypes = UnmodifiableHashMap.empty();
+  private static volatile UnmodifiableHashMap<String, Language> registeredIds = UnmodifiableHashMap.empty();
 
   private final Language myBaseLanguage;
   private final String myID;
@@ -102,8 +103,8 @@ public abstract class Language extends UserDataHolderBase {
         throw new ImplementationConflictException("Language with ID '" + ID + "' is already registered: " + existing.getClass(), null, existing, this);
       }
 
-      registeredLanguages = registeredLanguages.put(langClass, this);
-      registeredIds = registeredIds.put(ID, this);
+      registeredLanguages = registeredLanguages.with(langClass, this);
+      registeredIds = registeredIds.with(ID, this);
 
       for (String mimeType : mimeTypes) {
         if (Strings.isEmpty(mimeType)) {
@@ -111,7 +112,7 @@ public abstract class Language extends UserDataHolderBase {
         }
 
         PersistentList<Language> list = registeredMimeTypes.get(mimeType);
-        registeredMimeTypes = registeredMimeTypes.put(mimeType, list == null ? persistentListOf(this) : list.add(this));
+        registeredMimeTypes = registeredMimeTypes.with(mimeType, list == null ? persistentListOf(this) : list.add(this));
       }
     }
 
@@ -158,10 +159,10 @@ public abstract class Language extends UserDataHolderBase {
     }
 
     synchronized (staticLock) {
-      registeredLanguages = registeredLanguages.remove(getClass());
-      registeredIds = registeredIds.remove(getID());
+      registeredLanguages = registeredLanguages.without(getClass());
+      registeredIds = registeredIds.without(getID());
       for (String mimeType : getMimeTypes()) {
-        registeredMimeTypes.remove(mimeType);
+        registeredMimeTypes = registeredMimeTypes.without(mimeType);
       }
     }
 
