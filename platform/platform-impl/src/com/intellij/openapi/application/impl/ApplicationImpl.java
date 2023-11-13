@@ -521,6 +521,10 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
       return;
     }
 
+    if (restart) {
+      RecentProjectsManagerBase.getInstanceEx().forceReopenProjects();
+    }
+
     myExitInProgress = true;
     if (isDispatchThread()) {
       doExit(flags, restart, beforeRestart, exitCode);
