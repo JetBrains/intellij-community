@@ -193,6 +193,10 @@ final class UpdateSettingsEntryPointActionProvider implements ActionProvider {
     updateState();
   }
 
+  public static @Nullable Collection<PluginDownloader> getPendingUpdates() {
+    return myUpdatedPlugins;
+  }
+
   private static void newUpdatedPlugins(@Nullable Collection<PluginDownloader> updatedPlugins) {
     myUpdatedPlugins = ContainerUtil.isEmpty(updatedPlugins) ? null : updatedPlugins;
     updateState();

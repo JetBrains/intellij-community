@@ -19,11 +19,10 @@ import org.jetbrains.ide.ToolboxUpdateAction
 import javax.swing.JComponent
 import javax.swing.JLabel
 
-const val IDE_UPDATE = "ide.update"
 private val LOG = logger<IdeUpdateStep>()
 
-class IdeUpdateStep: StepOption {
-  override val id = IDE_UPDATE
+class IdeUpdateStep : StepOption {
+  override val id = "ide.update"
   override val stepName: String = SmartUpdateBundle.message("checkbox.update.ide")
   override val optionName: String = SmartUpdateBundle.message("update.ide.option.toolbox")
   override val groupName: String = SmartUpdateBundle.message("update.ide.group")
