@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.exp
 
-import com.intellij.ide.DataManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.DataKey
@@ -79,7 +78,7 @@ class TerminalPromptController(
 
   @RequiresEdt
   fun performPaste(dataContext: DataContext? = null) {
-    val context = dataContext ?: DataManager.getInstance().getDataContext(editor.contentComponent)
+    val context = dataContext ?: editor.dataContext
     editor.pasteProvider.performPaste(context)
   }
 
