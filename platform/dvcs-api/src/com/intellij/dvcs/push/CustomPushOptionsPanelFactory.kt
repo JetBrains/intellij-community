@@ -4,7 +4,9 @@ package com.intellij.dvcs.push
 import com.intellij.dvcs.repo.Repository
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.extensions.ExtensionPointName
+import org.jetbrains.annotations.ApiStatus.Experimental
 
+@Experimental
 interface CustomPushOptionsPanelFactory {
   companion object {
     @JvmField

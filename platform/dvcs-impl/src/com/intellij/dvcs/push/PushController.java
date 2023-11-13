@@ -601,6 +601,7 @@ public final class PushController implements Disposable {
     return result;
   }
 
+  @ApiStatus.Experimental
   public Map<String, VcsPushOptionsPanel> createCustomPanels(Collection<? extends Repository> repos) {
     return ContainerUtil.map2MapNotNull(CustomPushOptionsPanelFactory.EP_NAME.getExtensionList(), panelProvider -> {
       VcsPushOptionsPanel panel = panelProvider.createOptionsPanel(this, repos);
