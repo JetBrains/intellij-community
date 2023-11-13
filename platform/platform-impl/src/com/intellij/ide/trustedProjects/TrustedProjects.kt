@@ -7,10 +7,8 @@ import com.intellij.ide.impl.TrustedProjectsStatistics
 import com.intellij.ide.lightEdit.LightEdit
 import com.intellij.ide.trustedProjects.TrustedProjectsLocator.LocatedProject
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.project.Project
 import com.intellij.util.ThreeState
 import org.jetbrains.annotations.ApiStatus
-import java.nio.file.Path
 
 @ApiStatus.Internal
 internal object TrustedProjects {
@@ -53,25 +51,20 @@ internal object TrustedProjects {
     }
   }
 
-  fun isTrustedCheckDisabled(): Boolean = ApplicationManager.getApplication().isUnitTestMode ||
-                                          ApplicationManager.getApplication().isHeadlessEnvironment ||
-                                          java.lang.Boolean.getBoolean("idea.trust.all.projects")
+  /**
+   * Checks that IDEA is loaded in safe mode. In this mode, trusted checks aren't needed at all.
+   */
+  fun isTrustedCheckDisabled(): Boolean =
+    ApplicationManager.getApplication().isUnitTestMode ||
+    ApplicationManager.getApplication().isHeadlessEnvironment ||
+    java.lang.Boolean.getBoolean("idea.trust.all.projects")
 
-  private fun isTrustedCheckDisabledForProduct(): Boolean = java.lang.Boolean.getBoolean("idea.trust.disabled")
-
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use isProjectTrusted instead")
-  fun isProjectImplicitlyTrusted(projectDir: Path?, project: Project?): Boolean {
-    val locatedProject = when {
-      projectDir != null -> TrustedProjectsLocator.locateProject(projectDir, project)
-      project != null -> TrustedProjectsLocator.locateProject(project)
-      else -> null
-    }
-    return getImplicitTrustedProjectState(locatedProject) == ThreeState.YES
-  }
+  private fun isTrustedCheckDisabledForProduct(): Boolean =
+    isTrustedCheckDisabled() ||
+    java.lang.Boolean.getBoolean("idea.trust.disabled")
 
   private fun getImplicitTrustedProjectState(locatedProject: LocatedProject?): ThreeState {
-    if (isTrustedCheckDisabled() || isTrustedCheckDisabledForProduct()) {
+    if (isTrustedCheckDisabledForProduct()) {
       return ThreeState.YES
     }
     if (LightEdit.owns(locatedProject?.project)) {

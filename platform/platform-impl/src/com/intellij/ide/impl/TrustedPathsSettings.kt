@@ -8,6 +8,7 @@ import java.nio.file.Path
 import java.util.*
 
 @ApiStatus.Internal
+@Suppress("unused") // Used externally
 fun isPathTrustedInSettings(path: Path): Boolean = service<TrustedPathsSettings>().isPathTrusted(path)
 
 @ApiStatus.Internal
