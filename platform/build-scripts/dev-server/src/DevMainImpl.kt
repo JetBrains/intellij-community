@@ -5,6 +5,7 @@ package org.jetbrains.intellij.build.devServer
 
 import com.intellij.openapi.application.PathManager
 import com.intellij.platform.diagnostic.telemetry.exporters.BatchSpanProcessor
+import com.intellij.util.SystemProperties
 import com.intellij.platform.util.coroutines.childScope
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
@@ -59,6 +60,7 @@ fun buildDevMain(): Collection<Path> {
             System.setProperty(name, value)
           }
         },
+        generateRuntimeModuleRepository = SystemProperties.getBooleanProperty("intellij.build.generate.runtime.module.repository", false)
       ))
     }
     finally {
