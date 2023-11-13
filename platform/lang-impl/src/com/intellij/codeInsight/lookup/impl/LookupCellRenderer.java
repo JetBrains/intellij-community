@@ -632,6 +632,11 @@ public final class LookupCellRenderer implements ListCellRenderer<LookupElement>
     }
   }
 
+  void refreshUi() {
+    // Something has changed, possibly the customizers are affected, make sure the icon area is still large enough.
+    updateIconWidth(EmptyIcon.ICON_0);
+  }
+
   private void updateIconWidth(@Nullable Icon baseIcon) {
     Icon icon = baseIcon;
     if (icon == null) {
