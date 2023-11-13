@@ -53,7 +53,7 @@
     },
     {
       "number": 16,
-      "description": "Full Line - Inline independent DEBOUNCE",
+      "description": "Full Line - Inline with trigger model",
       "useMLRanking": true,
       "showArrows": false,
       "calculateFeatures": true
