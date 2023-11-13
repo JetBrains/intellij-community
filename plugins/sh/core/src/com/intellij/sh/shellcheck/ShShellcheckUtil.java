@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.sh.shellcheck;
 
 import com.intellij.execution.ExecutionException;
@@ -32,16 +32,14 @@ import com.intellij.util.download.DownloadableFileDescription;
 import com.intellij.util.download.DownloadableFileService;
 import com.intellij.util.download.FileDownloader;
 import com.intellij.util.io.Decompressor;
+import com.intellij.util.text.SemVer;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
 
 import static com.intellij.sh.ShBundle.message;
 import static com.intellij.sh.ShBundle.messagePointer;
@@ -198,9 +196,16 @@ public final class ShShellcheckUtil {
 
   private static void checkForUpdateInBackgroundThread(@NotNull Project project) {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
-    if (!isNewVersionAvailable()) return;
-    Notification notification = NOTIFICATION_GROUP.createNotification(message("sh.shell.script"), message("sh.shellcheck.update.question"),
-                                                 NotificationType.INFORMATION);
+    Pair<String, String> newVersionAvailable = getVersionUpdate();
+    if (newVersionAvailable == null) return;
+
+    String currentVersion = newVersionAvailable.first;
+    String newVersion = newVersionAvailable.second;
+
+    Notification notification = NOTIFICATION_GROUP.createNotification(
+      message("sh.shell.script"),
+      message("sh.shellcheck.update.question", currentVersion, newVersion),
+      NotificationType.INFORMATION);
     notification.setDisplayId(ShNotificationDisplayIds.UPDATE_SHELLCHECK);
     notification.setSuggestionType(true);
     notification.addAction(
@@ -224,23 +229,52 @@ public final class ShShellcheckUtil {
     Notifications.Bus.notify(notification, project);
   }
 
-  private static boolean isNewVersionAvailable() {
+  /**
+   * @return pair of old and new versions or null if there's no update
+   */
+  private static Pair<String, String> getVersionUpdate() {
+    final String updateVersion = SHELLCHECK_VERSION;
+    final SemVer updateVersionVer = SemVer.parseFromText(updateVersion);
+    if (updateVersionVer == null) return null;
+    if (ShSettings.getSkippedShellcheckVersion().equals(updateVersion)) return null;
+
     String path = ShSettings.getShellcheckPath();
-    if (ShSettings.I_DO_MIND_SUPPLIER.get().equals(path)) return false;
+    if (ShSettings.I_DO_MIND_SUPPLIER.get().equals(path)) return null;
     File file = new File(path);
-    if (!file.canExecute()) return false;
-    if (!file.getName().contains(SHELLCHECK)) return false;
+    if (!file.canExecute()) return null;
+    if (!file.getName().contains(SHELLCHECK)) return null;
     try {
       GeneralCommandLine commandLine = new GeneralCommandLine().withExePath(path).withParameters("--version");
       ProcessOutput processOutput = ExecUtil.execAndGetOutput(commandLine, 3000);
 
       String stdout = processOutput.getStdout();
-      return !stdout.contains(SHELLCHECK_VERSION) && !ShSettings.getSkippedShellcheckVersion().equals(SHELLCHECK_VERSION);
+      String current = getVersionFromStdOut(stdout);
+      if (current == null) {
+        current = "unknown";
+        return Pair.create(current, updateVersion);
+      }
+      SemVer currentVersion = SemVer.parseFromText(current);
+      if (currentVersion == null || updateVersionVer.isGreaterOrEqualThan(currentVersion)) {
+        return Pair.create(current, updateVersion);
+      }
+      return null;
     }
     catch (ExecutionException e) {
       LOG.debug("Exception in process execution", e);
     }
-    return false;
+    return null;
+  }
+
+  private static String getVersionFromStdOut(String stdout) {
+    String[] lines = StringUtil.splitByLines(stdout);
+    for (String line : lines) {
+      line = line.trim().toLowerCase(Locale.ENGLISH);
+      String prefix = "version:";
+      if (line.contains(prefix)) {
+        return line.substring(prefix.length()).trim();
+      }
+    }
+    return null;
   }
 
   static @NotNull String decompressShellcheck(File tarPath, File directory) throws IOException {
@@ -258,6 +292,7 @@ public final class ShShellcheckUtil {
     return SHELLCHECK_URL + SHELLCHECK_ARTIFACT_VERSION + "/shellcheck-" + SHELLCHECK_ARTIFACT_VERSION + '-' + platform + SHELLCHECK_ARCHIVE_EXTENSION;
   }
 
+  @SuppressWarnings("SpellCheckingInspection")
   public static final Map<@NlsSafe String, @Nls String> SHELLCHECK_CODES = new TreeMap<>(){{
     put("SC1000", message("check1000.is.not.used.specially.and.should.therefore.be.escaped"));
     put("SC1001", message("check1001.this.o.will.be.a.regular.o.in.this.context"));
