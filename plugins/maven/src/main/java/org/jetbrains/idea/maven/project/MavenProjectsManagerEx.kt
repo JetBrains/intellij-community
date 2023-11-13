@@ -344,9 +344,9 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
     }
   }
 
-  private suspend fun MavenProjectsManagerEx.importModules(syncActivity: StructuredIdeActivity,
-                                                           projectsToResolve: Collection<MavenProject>,
-                                                           modelsProvider: IdeModifiableModelsProvider?): List<Module> {
+  private suspend fun importModules(syncActivity: StructuredIdeActivity,
+                                    projectsToResolve: Collection<MavenProject>,
+                                    modelsProvider: IdeModifiableModelsProvider?): List<Module> {
     val resolver = MavenProjectResolver.getInstance(project)
     val resolutionResult = withBackgroundProgress(myProject, MavenProjectBundle.message("maven.resolving"), true) {
       withRawProgressReporter {
