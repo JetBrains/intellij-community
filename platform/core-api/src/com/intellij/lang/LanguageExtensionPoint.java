@@ -57,7 +57,7 @@ public class LanguageExtensionPoint<T> extends CustomLoadingExtensionPointBean<T
   }
 
   @Override
-  public String getKey() {
+  public @NotNull String getKey() {
     return language;
   }
 }

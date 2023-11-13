@@ -77,7 +77,7 @@ public class LanguageExtension<T> extends KeyedExtensionCollector<T, Language> {
   }
 
   @Override
-  public void invalidateCacheForExtension(String key) {
+  public void invalidateCacheForExtension(@NotNull String key) {
     super.invalidateCacheForExtension(key);
 
     final Language language = Language.findLanguageByID(key);

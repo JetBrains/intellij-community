@@ -702,13 +702,15 @@ private fun logEnvVar(log: Logger, variable: String) {
   }
 }
 
-private fun logPath(path: String): String = try {
-  val configured = Path.of(path)
-  val real = configured.toRealPath()
-  if (configured == real) path else "${path} -> ${real}"
-}
-catch (e: Exception) {
-  "${path} -> ${e.javaClass.name}: ${e.message}"
+private fun logPath(path: String): String {
+  return try {
+    val configured = Path.of(path)
+    val real = configured.toRealPath()
+    if (configured == real) path else "${path} -> ${real}"
+  }
+  catch (e: Exception) {
+    "${path} -> ${e.javaClass.name}: ${e.message}"
+  }
 }
 
 interface AppStarter {
@@ -725,11 +727,16 @@ interface AppStarter {
 
 @VisibleForTesting
 @Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
-class Java11ShimImpl : Java11Shim {
-  override fun <K, V> copyOf(map: Map<K, V>): Map<K, V> = java.util.Map.copyOf(map)
+class Java11ShimImpl : Java11Shim() {
+  override fun <K, V : Any> copyOf(map: Map<K, V>) = java.util.Map.copyOf(map)
+
+  override fun <K, V : Any> mapOf(k: K, v: V): Map<K, V> = java.util.Map.of(k, v)
 
   override fun <E> copyOf(collection: Collection<E>): Set<E> = java.util.Set.copyOf(collection)
 
-  override fun <V : Any> createConcurrentLongObjectMap(): ConcurrentLongObjectMap<V> =
-    ConcurrentCollectionFactory.createConcurrentLongObjectMap()
+  override fun <K, V : Any> emptyMap(): Map<K, V> = java.util.Map.of()
+
+  override fun <V : Any> createConcurrentLongObjectMap(): ConcurrentLongObjectMap<V> {
+    return ConcurrentCollectionFactory.createConcurrentLongObjectMap()
+  }
 }

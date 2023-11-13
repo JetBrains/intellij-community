@@ -6,6 +6,7 @@ import com.intellij.openapi.extensions.RequiredElement;
 import com.intellij.serviceContainer.BaseKeyedLazyInstance;
 import com.intellij.util.KeyedLazyInstance;
 import com.intellij.util.xmlb.annotations.Attribute;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -24,7 +25,7 @@ public final class QuoteHandlerEP extends BaseKeyedLazyInstance<QuoteHandler> im
   public String className;
 
   @Override
-  public String getKey() {
+  public @NotNull String getKey() {
     return fileType;
   }
 

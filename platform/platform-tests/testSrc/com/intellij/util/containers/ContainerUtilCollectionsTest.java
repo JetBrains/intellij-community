@@ -434,7 +434,7 @@ public class ContainerUtilCollectionsTest extends Assert {
 
   @Test(timeout = TIMEOUT)
   public void testOldConcurrentLongObjectHashMap() {
-    ConcurrentLongObjectMap<Object> map = Java11Shim.Companion.getINSTANCE().createConcurrentLongObjectMap();
+    ConcurrentLongObjectMap<Object> map = Java11Shim.INSTANCE.createConcurrentLongObjectMap();
     check(map);
   }
 
@@ -716,7 +716,7 @@ public class ContainerUtilCollectionsTest extends Assert {
     checkEntrySetIterator(ContainerUtil.createIntKeyWeakValueMap());
 
     checkEntrySetIterator(ConcurrentCollectionFactory.createConcurrentLongObjectMap());
-    checkEntrySetIterator(Java11Shim.Companion.getINSTANCE().createConcurrentLongObjectMap());
+    checkEntrySetIterator(Java11Shim.INSTANCE.createConcurrentLongObjectMap());
   }
 
   @Test

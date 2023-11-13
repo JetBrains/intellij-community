@@ -147,7 +147,7 @@ public abstract class ParsingTestCase extends UsefulTestCase {
     Language language = definition.getFileNodeType().getLanguage();
     myLangParserDefinition.registerExtension(new KeyedLazyInstance<>() {
       @Override
-      public String getKey() {
+      public @NotNull String getKey() {
         return language.getID();
       }
 

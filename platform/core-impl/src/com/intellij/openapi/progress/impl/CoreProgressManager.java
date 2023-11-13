@@ -50,10 +50,10 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   private static final Map<ProgressIndicator, Set<Thread>> threadsUnderIndicator = new HashMap<>(); // guarded by threadsUnderIndicator
   // the active indicator for the thread id
   private static final ConcurrentLongObjectMap<ProgressIndicator> currentIndicators =
-    Java11Shim.Companion.getINSTANCE().createConcurrentLongObjectMap();
+    Java11Shim.INSTANCE.createConcurrentLongObjectMap();
   // top-level indicators for the thread id
   private static final ConcurrentLongObjectMap<ProgressIndicator> threadTopLevelIndicators =
-    Java11Shim.Companion.getINSTANCE().createConcurrentLongObjectMap();
+    Java11Shim.INSTANCE.createConcurrentLongObjectMap();
   // threads which are running under canceled indicator
   // THashSet is avoided here because of possible tombstones overhead
   static final Set<Thread> threadsUnderCanceledIndicator = new HashSet<>(); // guarded by threadsUnderIndicator

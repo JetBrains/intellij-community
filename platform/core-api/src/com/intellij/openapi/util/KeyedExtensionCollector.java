@@ -7,8 +7,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.*;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.util.KeyedLazyInstance;
+import com.intellij.util.containers.UnmodifiableHashMap;
 import kotlinx.collections.immutable.PersistentList;
-import kotlinx.collections.immutable.PersistentMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -21,7 +21,6 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
 
-import static kotlinx.collections.immutable.ExtensionsKt.persistentHashMapOf;
 import static kotlinx.collections.immutable.ExtensionsKt.persistentListOf;
 
 public class KeyedExtensionCollector<T, KeyT> implements ModificationTracker {
@@ -31,9 +30,9 @@ public class KeyedExtensionCollector<T, KeyT> implements ModificationTracker {
 
   /** Guarded by {@link #lock} */
   @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
-  private PersistentMap<String, PersistentList<T>> explicitExtensions = persistentHashMapOf();
+  private UnmodifiableHashMap<String, PersistentList<T>> explicitExtensions = UnmodifiableHashMap.empty();
 
-  private volatile PersistentMap<String, PersistentList<T>> cache = persistentHashMapOf();
+  private volatile UnmodifiableHashMap<String, PersistentList<T>> cache = UnmodifiableHashMap.empty();
   private final String epName;
   private final SimpleModificationTracker tracker = new SimpleModificationTracker();
 
@@ -50,7 +49,7 @@ public class KeyedExtensionCollector<T, KeyT> implements ModificationTracker {
 
   public void clearCache() {
     synchronized (lock) {
-      cache = cache.clear();
+      cache = UnmodifiableHashMap.empty();
       tracker.incModificationCount();
     }
   }
@@ -61,11 +60,13 @@ public class KeyedExtensionCollector<T, KeyT> implements ModificationTracker {
     }
   }
 
-  protected void invalidateCacheForExtension(String key) {
+  protected void invalidateCacheForExtension(@NotNull String key) {
+    if (!cache.containsKey(key)) {
+      return;
+    }
+
     synchronized (lock) {
-      if (key != null) {
-        cache = cache.remove(key);
-      }
+      cache = cache.without(key);
       tracker.incModificationCount();
     }
   }
@@ -74,7 +75,7 @@ public class KeyedExtensionCollector<T, KeyT> implements ModificationTracker {
     String stringKey = keyToString(key);
     synchronized (lock) {
       PersistentList<T> value = explicitExtensions.get(stringKey);
-      explicitExtensions = explicitExtensions.put(stringKey, value == null ? persistentListOf(t) : value.add(t));
+      explicitExtensions = explicitExtensions.with(stringKey, value == null ? persistentListOf(t) : value.add(t));
       invalidateCacheForExtension(stringKey);
     }
   }
@@ -90,7 +91,7 @@ public class KeyedExtensionCollector<T, KeyT> implements ModificationTracker {
       PersistentList<T> list = explicitExtensions.get(stringKey);
       if (list != null) {
         list = list.remove(t);
-        explicitExtensions = list.isEmpty() ? explicitExtensions.remove(stringKey) : explicitExtensions.put(stringKey, list);
+        explicitExtensions = list.isEmpty() ? explicitExtensions.without(stringKey) : explicitExtensions.with(stringKey, list);
       }
       invalidateCacheForExtension(stringKey);
     }
@@ -119,7 +120,7 @@ public class KeyedExtensionCollector<T, KeyT> implements ModificationTracker {
         return recent;
       }
 
-      cache = cache.put(stringKey, cached);
+      cache = cache.with(stringKey, cached);
       return cached;
     }
   }
@@ -258,7 +259,7 @@ public class KeyedExtensionCollector<T, KeyT> implements ModificationTracker {
     @Override
     public void areaReplaced(@NotNull ExtensionsArea area) {
       synchronized (lock) {
-        cache = cache.clear();
+        cache = UnmodifiableHashMap.empty();
         tracker.incModificationCount();
       }
     }

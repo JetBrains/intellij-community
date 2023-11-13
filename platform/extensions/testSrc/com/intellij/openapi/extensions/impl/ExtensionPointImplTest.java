@@ -311,7 +311,7 @@ public class ExtensionPointImplTest {
                                true);
     KeyedLazyInstance<Integer> extension = new KeyedLazyInstance<Integer>() {
       @Override
-      public String getKey() {
+      public @NotNull String getKey() {
         return "one";
       }
 

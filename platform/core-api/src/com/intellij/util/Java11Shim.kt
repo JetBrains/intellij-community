@@ -7,22 +7,31 @@ import java.util.*
 
 @ApiStatus.Internal
 // implementation of `copyOf` is allowed to not do copy - it can return the same map, read `copyOf` as `immutable`
-interface Java11Shim {
+abstract class Java11Shim {
   companion object {
-    var INSTANCE: Java11Shim = object : Java11Shim {
-      override fun <K, V> copyOf(map: Map<K, V>): Map<K, V> = Collections.unmodifiableMap(map)
+    @JvmField
+    var INSTANCE: Java11Shim = object : Java11Shim() {
+      override fun <K, V : Any> copyOf(map: Map<K, V>) = Collections.unmodifiableMap(map)
+
+      override fun <K, V : Any> mapOf(k: K, v: V): Map<K, V> = Collections.singletonMap(k, v)
 
       override fun <E> copyOf(collection: Collection<E>): Set<E> = Collections.unmodifiableSet(HashSet(collection))
 
       override fun <V : Any> createConcurrentLongObjectMap(): ConcurrentLongObjectMap<V> {
         return ConcurrentLongObjectHashMap()
       }
+
+      override fun <K, V : Any> emptyMap(): Map<K, V> = Collections.emptyMap()
     }
   }
 
-  fun <K, V : Any?> copyOf(map: Map<K, V>): Map<K, V>
+  abstract fun <K, V : Any> copyOf(map: Map<K, V>): Map<K, V>
 
-  fun <E> copyOf(collection: Collection<E>): Set<E>
+  abstract fun <K, V : Any> mapOf(k: K, v: V): Map<K, V>
 
-  fun <V : Any> createConcurrentLongObjectMap(): ConcurrentLongObjectMap<V>
+  abstract fun <K, V : Any> emptyMap(): Map<K, V>
+
+  abstract fun <E> copyOf(collection: Collection<E>): Set<E>
+
+  abstract fun <V : Any> createConcurrentLongObjectMap(): ConcurrentLongObjectMap<V>
 }
