@@ -137,7 +137,8 @@ fun KtIfExpression.introduceValueForCondition(occurrenceInThenClause: KtExpressi
         editor,
         occurrenceInConditional,
         false,
-        listOf(occurrenceInConditional, occurrenceInThenClause), null
+        listOf(occurrenceInConditional, occurrenceInThenClause),
+        onNonInteractiveFinish = null,
     )
 }
 

@@ -609,12 +609,11 @@ object KotlinIntroduceVariableHandler : RefactoringActionHandler {
         return containers
     }
 
-    private fun doRefactoring(
+    fun doRefactoring(
         project: Project,
         editor: Editor?,
         expressionToExtract: KtExpression?,
         isVar: Boolean,
-        selectContainer: (List<KtElement>, (KtElement) -> Unit) -> Unit
     ) {
         val expression = expressionToExtract?.let { KtPsiUtil.safeDeparenthesize(it) }
             ?: return showErrorHint(project, editor, KotlinBundle.message("cannot.refactor.no.expression"))
@@ -629,22 +628,16 @@ object KotlinIntroduceVariableHandler : RefactoringActionHandler {
             return showErrorHint(project, editor, KotlinBundle.message("cannot.refactor.no.container"))
         }
 
-        selectContainer(candidateContainers) { container ->
+        selectTargetContainerAndDoRefactoring(editor, candidateContainers) { container ->
             doRefactoring(project, editor, expression, container, isVar)
         }
     }
 
-    fun doRefactoring(
-        project: Project,
+    private fun selectTargetContainerAndDoRefactoring(
         editor: Editor?,
-        expressionToExtract: KtExpression?,
-        isVar: Boolean,
-    ) = doRefactoring(
-        project,
-        editor,
-        expressionToExtract,
-        isVar,
-    ) { candidateContainers, doRefactoring ->
+        candidateContainers: List<KtElement>,
+        doRefactoring: (KtElement) -> Unit,
+    ) {
         if (editor == null) {
             doRefactoring(candidateContainers.first())
         } else if (isUnitTestMode()) {

@@ -728,14 +728,14 @@ object KotlinIntroduceVariableHandler : RefactoringActionHandler {
         }
     }
 
-    private fun doRefactoring(
+    fun doRefactoring(
         project: Project,
         editor: Editor?,
         expressionToExtract: KtExpression?,
         isVar: Boolean,
-        occurrencesToReplace: List<KtExpression>?,
-        onNonInteractiveFinish: ((KtDeclaration) -> Unit)?,
-        selectContainer: (List<Containers>, (Containers) -> Unit) -> Unit
+        occurrencesToReplace: List<KtExpression>? = null,
+        targetContainer: KtElement? = null,
+        onNonInteractiveFinish: ((KtDeclaration) -> Unit)? = null,
     ) {
         val expression = expressionToExtract?.let { KtPsiUtil.safeDeparenthesize(it) }
             ?: return showErrorHint(project, editor, KotlinBundle.message("cannot.refactor.no.expression"))
@@ -755,30 +755,26 @@ object KotlinIntroduceVariableHandler : RefactoringActionHandler {
             return showErrorHint(project, editor, KotlinBundle.message("cannot.refactor.no.container"))
         }
 
-        selectContainer(candidateContainers) { (container, occurrenceContainer) ->
+        selectTargetContainerAndDoRefactoring(editor, targetContainer, candidateContainers) { (targetContainer, occurrenceContainer) ->
             doRefactoring(
-                project, editor, expression, container, occurrenceContainer, resolutionFacade, bindingContext,
+                project, editor, expression, targetContainer, occurrenceContainer, resolutionFacade, bindingContext,
                 isVar, occurrencesToReplace, onNonInteractiveFinish
             )
         }
     }
 
-    fun doRefactoring(
-        project: Project,
+    private fun selectTargetContainerAndDoRefactoring(
         editor: Editor?,
-        expressionToExtract: KtExpression?,
-        isVar: Boolean,
-        occurrencesToReplace: List<KtExpression>?,
-        onNonInteractiveFinish: ((KtDeclaration) -> Unit)?
-    ) = doRefactoring(
-        project,
-        editor,
-        expressionToExtract,
-        isVar,
-        occurrencesToReplace,
-        onNonInteractiveFinish
-    ) { candidateContainers, doRefactoring ->
-        if (editor == null) {
+        targetContainer: KtElement?,
+        candidateContainers: List<Containers>,
+        doRefactoring: (Containers) -> Unit,
+    ) {
+        if (targetContainer != null) {
+            val foundPair = candidateContainers.find { it.targetContainer.textRange == targetContainer.textRange }
+            if (foundPair != null) {
+                doRefactoring(foundPair)
+            }
+        } else if (editor == null) {
             doRefactoring(candidateContainers.first())
         } else if (isUnitTestMode()) {
             doRefactoring(candidateContainers.last())
@@ -788,28 +784,6 @@ object KotlinIntroduceVariableHandler : RefactoringActionHandler {
                 KotlinBundle.message("text.select.target.code.block"), true, { it.targetContainer },
                 doRefactoring
             )
-        }
-    }
-
-    fun doRefactoringWithContainer(
-        project: Project,
-        editor: Editor?,
-        expressionToExtract: KtExpression?,
-        container: KtElement,
-        isVar: Boolean,
-        occurrencesToReplace: List<KtExpression>?,
-        onNonInteractiveFinish: ((KtDeclaration) -> Unit)?
-    ) = doRefactoring(
-        project,
-        editor,
-        expressionToExtract,
-        isVar,
-        occurrencesToReplace,
-        onNonInteractiveFinish
-    ) { candidateContainers, doRefactoring ->
-        val foundPair = candidateContainers.find { it.targetContainer.textRange == container.textRange }
-        if (foundPair != null) {
-            doRefactoring(foundPair)
         }
     }
 
@@ -826,7 +800,7 @@ object KotlinIntroduceVariableHandler : RefactoringActionHandler {
 
         try {
             selectElement(editor, file, ElementKind.EXPRESSION) {
-                doRefactoring(project, editor, it as KtExpression?, false, null, null)
+                doRefactoring(project, editor, it as KtExpression?, isVar = false)
             }
         } catch (e: IntroduceRefactoringException) {
             showErrorHint(project, editor, e.message!!)
