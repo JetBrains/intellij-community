@@ -24,6 +24,8 @@ suspend fun <R> Project.trackActivity(marker: ActivityKey, action: suspend () ->
  * Its behavior is similar to [com.intellij.openapi.progress.blockingContextScope].
  *
  * **For usage in non-suspending Kotlin.**
+ *
+ * **The name means that the function is intended for blocking context, though it in fact does not block by itself.**
  * @see ActivityKey for high-level explanations
  */
 @RequiresBlockingContext
