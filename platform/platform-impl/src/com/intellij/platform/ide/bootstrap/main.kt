@@ -99,6 +99,10 @@ fun CoroutineScope.startApplication(args: List<String>,
                                     appStarterDeferred: Deferred<AppStarter>,
                                     mainScope: CoroutineScope,
                                     busyThread: Thread) {
+  launch {
+    Java11Shim.INSTANCE = Java11ShimImpl()
+  }
+
   val appInfoDeferred = async {
     mainClassLoaderDeferred?.await()
     span("app info") {
@@ -161,10 +165,6 @@ fun CoroutineScope.startApplication(args: List<String>,
     val result = ZipFilePoolImpl()
     ZipFilePool.POOL = result
     result
-  }
-
-  launch {
-    Java11Shim.INSTANCE = Java11ShimImpl()
   }
 
   launch {

@@ -5,10 +5,9 @@ import com.intellij.openapi.components.ComponentConfig
 import com.intellij.openapi.components.ServiceDescriptor
 import com.intellij.openapi.extensions.ExtensionDescriptor
 import com.intellij.openapi.extensions.ExtensionPointDescriptor
+import com.intellij.util.Java11Shim
 import com.intellij.util.messages.ListenerDescriptor
 import kotlinx.collections.immutable.PersistentList
-import kotlinx.collections.immutable.PersistentMap
-import kotlinx.collections.immutable.persistentHashMapOf
 import kotlinx.collections.immutable.persistentListOf
 import org.jetbrains.annotations.ApiStatus
 
@@ -24,7 +23,7 @@ class ContainerDescriptor {
   @JvmField var extensionPoints: PersistentList<ExtensionPointDescriptor> = persistentListOf()
 
   @Transient var distinctExtensionPointCount: Int = -1
-  @Transient @JvmField var extensions: PersistentMap<String, PersistentList<ExtensionDescriptor>> = persistentHashMapOf()
+  @Transient @JvmField var extensions: Map<String, PersistentList<ExtensionDescriptor>> = Java11Shim.INSTANCE.emptyMap()
 
   fun addService(serviceDescriptor: ServiceDescriptor) {
     if (_services == null) {

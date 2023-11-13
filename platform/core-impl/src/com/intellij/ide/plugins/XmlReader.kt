@@ -12,14 +12,13 @@ import com.intellij.openapi.extensions.ExtensionDescriptor
 import com.intellij.openapi.extensions.ExtensionPointDescriptor
 import com.intellij.openapi.extensions.LoadingOrder
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.util.Java11Shim
 import com.intellij.util.lang.ZipFilePool
 import com.intellij.util.messages.ListenerDescriptor
 import com.intellij.util.xml.dom.NoOpXmlInterner
 import com.intellij.util.xml.dom.XmlInterner
 import com.intellij.util.xml.dom.createNonCoalescingXmlStreamReader
 import com.intellij.util.xml.dom.readXmlAsModel
-import kotlinx.collections.immutable.mutate
-import kotlinx.collections.immutable.persistentHashMapOf
 import kotlinx.collections.immutable.persistentHashSetOf
 import kotlinx.collections.immutable.persistentListOf
 import org.codehaus.stax2.XMLStreamReader2
@@ -303,8 +302,9 @@ private fun readRootElementChild(reader: XMLStreamReader2,
 }
 
 private val actionNameToEnum = run {
-  persistentHashMapOf<String, ActionDescriptorName>().mutate { map ->
+  HashMap<String, ActionDescriptorName>().let { map ->
     ActionDescriptorName.entries.associateByTo(map, ActionDescriptorName::name)
+    Java11Shim.INSTANCE.copyOf(map)
   }
 }
 
@@ -461,7 +461,7 @@ private fun readExtensions(reader: XMLStreamReader2, descriptor: RawPluginDescri
         val list = descriptor.epNameToExtensions.get(qualifiedExtensionPointName)
         @Suppress("IfThenToElvis")
         descriptor.epNameToExtensions = descriptor.epNameToExtensions
-          .put(qualifiedExtensionPointName, if (list == null) persistentListOf(extensionDescriptor) else list.add(extensionDescriptor))
+          .with(qualifiedExtensionPointName, if (list == null) persistentListOf(extensionDescriptor) else list.add(extensionDescriptor))
 
         assert(reader.isEndElement)
         return@consumeChildElements

@@ -10,7 +10,11 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.ExtensionDescriptor
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
-import kotlinx.collections.immutable.*
+import com.intellij.util.Java11Shim
+import com.intellij.util.containers.UnmodifiableHashMap
+import kotlinx.collections.immutable.PersistentList
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.toPersistentList
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
@@ -101,9 +105,9 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
   @JvmField val actions: List<RawPluginDescriptor.ActionDescriptor> = raw.actions ?: Collections.emptyList()
 
   // extension point name -> list of extension descriptors
-  @JvmField val epNameToExtensions: PersistentMap<String, PersistentList<ExtensionDescriptor>> = raw.epNameToExtensions.let { rawMap ->
+  @JvmField val epNameToExtensions: Map<String, PersistentList<ExtensionDescriptor>> = raw.epNameToExtensions.let { rawMap ->
     if (rawMap.size < 2 || !rawMap.containsKey(registryEpName)) {
-      rawMap.toPersistentHashMap()
+      rawMap
     }
     else {
       /**
@@ -113,12 +117,13 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
        * or transformed into a HashMap somewhere, but it seems it's not the case right now.
        * TODO: one way to make a better fix is to introduce loadingOrder on extension points (as it is made for extensions).
        */
-      persistentMapOf<String, PersistentList<ExtensionDescriptor>>().mutate {
+      HashMap<String, PersistentList<ExtensionDescriptor>>().let {
         val keys = rawMap.keys.toTypedArray()
         keys.sortWith(extensionPointNameComparator)
         for (key in keys) {
           it.put(key, rawMap.get(key)!!)
         }
+        Java11Shim.INSTANCE.copyOf(it)
       }
     }
   }
@@ -396,8 +401,8 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
       containerDescriptor.distinctExtensionPointCount = registeredCount
 
       if (registeredCount == map.size) {
-        projectContainerDescriptor.extensions = persistentHashMapOf()
-        moduleContainerDescriptor.extensions = persistentHashMapOf()
+        projectContainerDescriptor.extensions = UnmodifiableHashMap.empty()
+        moduleContainerDescriptor.extensions = UnmodifiableHashMap.empty()
       }
     }
     else if (containerDescriptor === projectContainerDescriptor) {
@@ -406,21 +411,21 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
 
       if (registeredCount == map.size) {
         containerDescriptor.extensions = map
-        moduleContainerDescriptor.extensions = persistentHashMapOf()
+        moduleContainerDescriptor.extensions = UnmodifiableHashMap.empty()
       }
       else if (registeredCount == (map.size - appContainerDescriptor.distinctExtensionPointCount)) {
-        moduleContainerDescriptor.extensions = persistentHashMapOf()
+        moduleContainerDescriptor.extensions = UnmodifiableHashMap.empty()
       }
     }
     else {
       val registeredCount = doRegisterExtensions(map = map, nameToPoint = nameToPoint, listenerCallbacks = listenerCallbacks)
       if (registeredCount == 0) {
-        moduleContainerDescriptor.extensions = persistentHashMapOf()
+        moduleContainerDescriptor.extensions = UnmodifiableHashMap.empty()
       }
     }
   }
 
-  private fun doRegisterExtensions(map: PersistentMap<String, PersistentList<ExtensionDescriptor>>,
+  private fun doRegisterExtensions(map: Map<String, PersistentList<ExtensionDescriptor>>,
                                    nameToPoint: Map<String, ExtensionPointImpl<*>>,
                                    listenerCallbacks: MutableList<in Runnable>?): Int {
     var registeredCount = 0
