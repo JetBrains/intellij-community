@@ -2456,6 +2456,7 @@
     <notificationGroup id="Invalid Compilation Errors" displayType="STICKY_BALLOON" hideFromSettings="true" />
 
     <iconMapper mappingFile="JavaUIIconsMapping.json"/>
+    <optionController implementation="com.intellij.compiler.JavaCompilerConfiguration$Provider"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains">

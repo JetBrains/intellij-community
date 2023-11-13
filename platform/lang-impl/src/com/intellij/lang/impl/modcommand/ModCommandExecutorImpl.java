@@ -287,13 +287,6 @@ public class ModCommandExecutorImpl implements ModCommandExecutor {
     for (ModUpdateSystemOptions.ModifiedOption option : options.options()) {
       OptionController controller = OptionControllerProvider.rootController(file);
       Object value = newValue ? option.newValue() : option.oldValue();
-      if (value instanceof List<?> list) {
-        @SuppressWarnings("unchecked")
-        List<Object> oldList = (List<Object>)Objects.requireNonNull(controller.getOption(option.bindId()));
-        oldList.clear();
-        oldList.addAll(list);
-        value = oldList;
-      }
       controller.setOption(option.bindId(), value);
     }
   }

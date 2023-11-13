@@ -9,6 +9,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
+import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -404,15 +406,26 @@ public interface OptionController {
                                                e);
           }
         }
-        // Avoid updating field if new value is not the same
-        // this way we can support final mutable fields, used by e.g. OptSet 
         else if (curValue != value) {
           try {
             field.set(obj, value);
           }
-          catch (IllegalAccessException e) {
+          catch (IllegalAccessException | IllegalArgumentException e) {
+            Throwable cause = e;
+            if (value instanceof List<?> newList && curValue instanceof List<?> oldList) {
+              try {
+                // May throw if the final field contains unmodifiable list: this is expected
+                oldList.clear();
+                //noinspection unchecked
+                ((List<Object>)oldList).addAll(newList);
+                return;
+              }
+              catch (UnsupportedOperationException ex) {
+                cause = ex;
+              }
+            }
             throw new IllegalArgumentException(
-              "Inspection " + obj.getClass().getName() + ": Unable to assign field " + field.getName() + " (bindId = " + bindId + ")", e);
+              "Inspection " + obj.getClass().getName() + ": Unable to assign field " + field.getName() + " (bindId = " + bindId + ")", cause);
           }
         }
       }
