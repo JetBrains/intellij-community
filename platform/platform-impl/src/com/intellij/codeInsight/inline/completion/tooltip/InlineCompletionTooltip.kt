@@ -6,6 +6,7 @@ import com.intellij.codeInsight.hint.HintManagerImpl
 import com.intellij.codeInsight.inline.completion.session.InlineCompletionSession
 import com.intellij.codeInsight.inline.completion.tooltip.onboarding.InlineCompletionOnboardingComponent
 import com.intellij.codeInsight.lookup.LookupManager
+import com.intellij.idea.AppMode
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
@@ -21,6 +22,10 @@ internal object InlineCompletionTooltip {
   fun show(session: InlineCompletionSession) {
     val editor = session.context.editor
     if (tooltipKey.isIn(editor)) {
+      return
+    }
+
+    if (AppMode.isRemoteDevHost() && !System.getProperty("inline.completion.tooltip.remote.dev").toBoolean()) {
       return
     }
 
