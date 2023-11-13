@@ -8,6 +8,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.externalSystem.autolink.UnlinkedProjectNotificationAware
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
+import com.intellij.openapi.externalSystem.util.ExternalSystemActivityKey
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
@@ -16,6 +17,7 @@ import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.ui.getPresentablePath
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.backend.observation.trackActivity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
@@ -71,7 +73,9 @@ abstract class AbstractOpenProjectProvider {
         else {
           project.putUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT, true)
           project.putUserData(ExternalSystemDataKeys.NEWLY_IMPORTED_PROJECT, true)
-          linkToExistingProjectAsync(projectFile, project)
+          project.trackActivity(ExternalSystemActivityKey) {
+            linkToExistingProjectAsync(projectFile, project)
+          }
           ProjectUtil.updateLastProjectLocation(nioPath)
         }
         true
