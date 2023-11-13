@@ -4,9 +4,7 @@ fun <caret>foo(k: Int): Boolean {
     return length() - k > 0
 }
 
-class X(val k: Int) {
-    fun length() = 2
-}
+class X(val k: Int) {}
 
 fun test() {
     foo(2)

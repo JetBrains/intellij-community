@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.psi.psiUtil.PsiChildRange
 import org.jetbrains.kotlin.utils.ifEmpty
 
 internal class KotlinComponentUsageInDestructuring(element: KtDestructuringDeclarationEntry) :
-    UsageInfo(element), KotlinBaseUsage {
+  UsageInfo(element), KotlinBaseChangeSignatureUsage {
     @OptIn(KtAllowAnalysisFromWriteAction::class, KtAllowAnalysisOnEdt::class)
     override fun processUsage(
         changeInfo: KotlinChangeInfoBase,

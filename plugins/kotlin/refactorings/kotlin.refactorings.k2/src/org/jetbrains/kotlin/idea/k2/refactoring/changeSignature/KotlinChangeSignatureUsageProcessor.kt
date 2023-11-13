@@ -21,7 +21,7 @@ import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.util.useScope
-import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.usages.KotlinBaseUsage
+import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.usages.KotlinBaseChangeSignatureUsage
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.usages.KotlinByConventionCallUsage
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.usages.KotlinConstructorDelegationCallUsage
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.usages.KotlinEnumEntryWithoutSuperCallUsage
@@ -205,7 +205,7 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
         if (!element.language.`is`(KotlinLanguage.INSTANCE)) return false
         val kotlinChangeInfo = fromJavaChangeInfo(changeInfo, usageInfo) ?: return false
         if (!beforeMethodChange) {
-            if (usageInfo is KotlinBaseUsage) {
+            if (usageInfo is KotlinBaseChangeSignatureUsage) {
                 usageInfo.processUsage(kotlinChangeInfo, element as KtElement, usages)?.let { shortenReferences(it) }
             }
         }
@@ -272,7 +272,7 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
         else {
             val parameterList = (element as? KtCallableDeclaration)?.valueParameterList
             if (parameterList != null) {
-                val offset = if ((element as? KtCallableDeclaration)?.receiverTypeReference != null) 1 else 0
+                val offset = if (element.receiverTypeReference != null) 1 else 0
                 val parameterTypes = mutableMapOf<KtParameter, KtTypeReference>()
                 for ((paramIndex, parameter) in parameterList.parameters.withIndex()) {
                     val parameterInfo = changeInfo.newParameters[paramIndex + offset]

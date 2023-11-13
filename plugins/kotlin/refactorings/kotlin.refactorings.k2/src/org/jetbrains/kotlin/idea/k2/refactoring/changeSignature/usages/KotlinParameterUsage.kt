@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.psi.psiUtil.isIdentifier
 internal class KotlinParameterUsage(
     element: KtElement,
     private val parameterInfo: KotlinParameterInfo
-) : UsageInfo(element), KotlinBaseUsage {
+) : UsageInfo(element), KotlinBaseChangeSignatureUsage {
     override fun processUsage(
         changeInfo: KotlinChangeInfoBase,
         element: KtElement,
@@ -38,7 +38,7 @@ internal class KotlinParameterUsage(
 internal class KotlinNonQualifiedOuterThisUsage(
     element: KtThisExpression,
     private val targetDescriptor: Name
-) : UsageInfo(element), KotlinBaseUsage {
+) : UsageInfo(element), KotlinBaseChangeSignatureUsage {
     override fun processUsage(
         changeInfo: KotlinChangeInfoBase,
         element: KtElement,
@@ -55,7 +55,7 @@ internal class KotlinNonQualifiedOuterThisUsage(
 internal class KotlinImplicitThisToParameterUsage(
     callElement: KtElement,
     val parameterInfo: KotlinParameterInfo,
-) : UsageInfo(callElement), KotlinBaseUsage {
+) : UsageInfo(callElement), KotlinBaseChangeSignatureUsage {
     private fun getNewReceiverText(): String = parameterInfo.getInheritedName(null)
     override fun processUsage(
         changeInfo: KotlinChangeInfoBase,
@@ -70,7 +70,7 @@ internal class KotlinImplicitThisToParameterUsage(
 internal class KotlinImplicitThisUsage(
     callElement: KtElement,
     private val targetDescriptor: Name
-) : UsageInfo(callElement), KotlinBaseUsage {
+) : UsageInfo(callElement), KotlinBaseChangeSignatureUsage {
     private fun getNewReceiverText() = when {
         targetDescriptor.isSpecial -> "this"
         else -> "this@${targetDescriptor.asString()}"

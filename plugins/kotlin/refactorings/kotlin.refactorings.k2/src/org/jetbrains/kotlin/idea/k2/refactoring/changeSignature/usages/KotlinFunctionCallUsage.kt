@@ -38,7 +38,7 @@ import org.jetbrains.kotlin.utils.sure
 internal class KotlinFunctionCallUsage(
     element: KtCallElement,
     private val callee: PsiElement
-) : UsageInfo(element), KotlinBaseUsage {
+) : UsageInfo(element), KotlinBaseChangeSignatureUsage {
 
     @OptIn(KtAllowAnalysisFromWriteAction::class, KtAllowAnalysisOnEdt::class)
     private val indexToExpMap: Map<Int, SmartPsiElementPointer<KtExpression>>? = allowAnalysisFromWriteAction {

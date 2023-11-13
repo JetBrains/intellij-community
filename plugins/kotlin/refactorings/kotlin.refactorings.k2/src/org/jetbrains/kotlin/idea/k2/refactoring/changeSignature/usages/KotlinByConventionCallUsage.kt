@@ -20,7 +20,7 @@ import org.jetbrains.kotlin.util.OperatorNameConventions
 internal class KotlinByConventionCallUsage(
     expression: KtExpression,
     private val callee: PsiElement
-) : UsageInfo(expression), KotlinBaseUsage {
+) : UsageInfo(expression), KotlinBaseChangeSignatureUsage {
     private var convertedCallExpression: KtCallExpression? = null
 
     private fun foldExpression(expression: KtDotQualifiedExpression, changeInfo: ChangeInfo) {

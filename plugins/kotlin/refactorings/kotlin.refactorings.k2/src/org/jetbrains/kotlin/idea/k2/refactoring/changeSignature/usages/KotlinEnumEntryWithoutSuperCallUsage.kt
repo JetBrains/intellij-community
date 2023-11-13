@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.psi.KtInitializerList
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtSuperTypeCallEntry
 
-class KotlinEnumEntryWithoutSuperCallUsage(enumEntry: KtEnumEntry) : KotlinBaseUsage, UsageInfo(enumEntry) {
+class KotlinEnumEntryWithoutSuperCallUsage(enumEntry: KtEnumEntry) : KotlinBaseChangeSignatureUsage, UsageInfo(enumEntry) {
     private var callProcessor: KotlinFunctionCallUsage? = null
     fun preprocess(changeInfo: KotlinChangeInfoBase, element: KtElement) {
         if (changeInfo.newParameters.isNotEmpty()) {

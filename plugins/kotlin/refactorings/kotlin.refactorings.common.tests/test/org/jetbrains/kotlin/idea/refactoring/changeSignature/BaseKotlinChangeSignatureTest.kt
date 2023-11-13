@@ -825,6 +825,11 @@ abstract class BaseKotlinChangeSignatureTest<C: KotlinModifiableChangeInfo<P>, P
         receiverParameterInfo = createKotlinParameter("_", "Any", defaultValueForCall, currentType = "X")
     }
 
+    fun testAddNewReceiverNoConflict() = doTest {
+        val defaultValueForCall = KtPsiFactory(project).createExpression("X(0)")
+        receiverParameterInfo = createKotlinParameter("_", "Any", defaultValueForCall, currentType = "X")
+    }
+
     fun testConvertParameterToReceiver1() = doTest { receiverParameterInfo = newParameters[0] } //this@label not collapsed
 
     fun testConvertParameterToReceiver2() = doTest { receiverParameterInfo = newParameters[1] }//this@label not collapsed

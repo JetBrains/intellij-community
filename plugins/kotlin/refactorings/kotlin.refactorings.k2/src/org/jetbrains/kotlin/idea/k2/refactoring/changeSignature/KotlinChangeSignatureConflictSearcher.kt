@@ -14,6 +14,7 @@ import com.intellij.usageView.UsageInfo
 import com.intellij.util.containers.MultiMap
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.usages.KotlinByConventionCallUsage
+import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.usages.KotlinChangeSignatureConflictingUsageInfo
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.usages.KotlinFunctionCallUsage
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.usages.KotlinOverrideUsageInfo
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.usages.KotlinPropertyCallUsage
@@ -69,7 +70,11 @@ class KotlinChangeSignatureConflictSearcher(
         val newReceiverInfo = originalInfo.receiverParameterInfo
         val originalReceiverInfo = originalInfo.methodDescriptor.receiver
         if (newReceiverInfo != originalReceiverInfo) {
-            //todo new receiver conflict
+            if (function.receiverTypeReference == null && newReceiverInfo != null && newReceiverInfo.isNewParameter) {
+                val usages = mutableListOf<UsageInfo>()
+                KotlinChangeSignatureUsageSearcher.findReceiverReferences(function, usages, originalInfo)
+                usages.filterIsInstance<KotlinChangeSignatureConflictingUsageInfo>().forEach { result.putValue(it.element, it.conflictMessage) }
+            }
             findInternalExplicitReceiverConflicts(function, refUsages.get(), originalReceiverInfo)
             findReceiverToParameterInSafeCallsConflicts(refUsages.get())
         }
@@ -106,7 +111,14 @@ class KotlinChangeSignatureConflictSearcher(
         val valueParameters = callableDeclaration.valueParameters
         val hasReceiver = callableDeclaration.receiverTypeReference != null
         if (hasReceiver && toRemove[0]) {
-            findReceiverUsages(callableDeclaration)
+            val usages = mutableListOf<UsageInfo>()
+            KotlinChangeSignatureUsageSearcher.findReceiverReferences(callableDeclaration, usages, originalInfo)
+            if (usages.isNotEmpty()) {
+                result.putValue(
+                    callableDeclaration.receiverTypeReference,
+                    KotlinBundle.message("parameter.used.in.declaration.body.warning", KotlinBundle.message("text.receiver")),
+                )
+            }
         }
 
         for ((i, parameter) in valueParameters.withIndex()) {
@@ -167,19 +179,6 @@ class KotlinChangeSignatureConflictSearcher(
                     )
                 )
             }
-        }
-    }
-
-    private fun findReceiverUsages(
-        callableDeclaration: KtCallableDeclaration,
-    ) {
-        val usages = mutableListOf<UsageInfo>()
-        KotlinChangeSignatureUsageSearcher.findReceiverReferences(callableDeclaration, usages, originalInfo)
-        if (!usages.isEmpty()) {
-            result.putValue(
-                callableDeclaration.receiverTypeReference,
-                KotlinBundle.message("parameter.used.in.declaration.body.warning", KotlinBundle.message("text.receiver")),
-            )
         }
     }
 

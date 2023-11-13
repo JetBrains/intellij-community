@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.psi.KtSecondaryConstructor
 internal class KotlinConstructorDelegationCallUsage(
     call: KtConstructorDelegationCall,
     method: PsiElement
-) : UsageInfo(call), KotlinBaseUsage {
+) : UsageInfo(call), KotlinBaseChangeSignatureUsage {
     val delegate = KotlinFunctionCallUsage(call, method)
     override fun processUsage(
         changeInfo: KotlinChangeInfoBase,
