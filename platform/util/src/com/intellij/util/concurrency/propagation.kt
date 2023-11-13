@@ -11,7 +11,7 @@ import com.intellij.concurrency.currentThreadContext
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Ref
-import com.intellij.openapi.util.registry.Registry
+import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.SchedulingWrapper.MyScheduledFutureTask
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -26,9 +26,9 @@ import kotlin.coroutines.cancellation.CancellationException
 import com.intellij.openapi.util.Pair as JBPair
 
 private object Holder {
-  var propagateThreadContext: Boolean = Registry.`is`("ide.propagate.context")
-  var propagateThreadCancellation: Boolean = Registry.`is`("ide.propagate.cancellation")
-  var checkIdeAssertion: Boolean = Registry.`is`("ide.check.context.assertion")
+  var propagateThreadContext: Boolean = SystemProperties.getBooleanProperty("ide.propagate.context", true)
+  var propagateThreadCancellation: Boolean = SystemProperties.getBooleanProperty("ide.propagate.cancellation", true)
+  var checkIdeAssertion: Boolean = SystemProperties.getBooleanProperty("ide.check.context.assertion", false)
 }
 
 @TestOnly
