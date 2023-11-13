@@ -335,7 +335,7 @@ abstract class CommonDebugLesson(id: String) : KLesson(id, LessonsBundle.message
     caret(position)
 
     task {
-      triggerAndBorderHighlight{
+      if (InlayRunToCursorEditorListener.isInlayRunToCursorEnabled) triggerAndBorderHighlight {
         limitByVisibleRect = false
       }.componentPart l@{ ui: EditorComponentImpl ->
         if (ui.editor != editor) return@l null
@@ -353,8 +353,11 @@ abstract class CommonDebugLesson(id: String) : KLesson(id, LessonsBundle.message
       }
       val intro = LessonsBundle.message("debug.workflow.run.to.cursor.intro", code(debuggingMethodName), code("return"))
       val actionPart = LessonsBundle.message("debug.workflow.run.to.cursor.press", action(it))
-      val alternative = LessonsBundle.message("debug.workflow.run.to.cursor.alternative", LessonUtil.actionName(it))
-      "$intro $actionPart $alternative"
+      val alternative = if (InlayRunToCursorEditorListener.isInlayRunToCursorEnabled)
+        " " + LessonsBundle.message("debug.workflow.run.to.cursor.alternative", LessonUtil.actionName(it))
+      else ""
+      val notePart = LessonsBundle.message("debug.workflow.run.to.cursor.note", LessonUtil.actionName(it))
+      "$intro $actionPart$alternative $notePart"
     }
   }
 
