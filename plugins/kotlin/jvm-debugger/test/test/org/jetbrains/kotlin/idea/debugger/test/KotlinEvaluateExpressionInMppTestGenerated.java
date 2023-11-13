@@ -1611,6 +1611,16 @@ public abstract class KotlinEvaluateExpressionInMppTestGenerated extends Abstrac
                 runTest("testData/evaluation/singleBreakpoint/properties.kt");
             }
 
+            @TestMetadata("protectedGetterFromJavaInsideClass.kt")
+            public void testProtectedGetterFromJavaInsideClass() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/protectedGetterFromJavaInsideClass.kt");
+            }
+
+            @TestMetadata("protectedGetterFromJavaOutsideClass.kt")
+            public void testProtectedGetterFromJavaOutsideClass() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/protectedGetterFromJavaOutsideClass.kt");
+            }
+
             @TestMetadata("protectedMember.kt")
             public void testProtectedMember() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/protectedMember.kt");
