@@ -13,6 +13,12 @@ mod tests {
     }
 
     #[test]
+    fn product_info_with_empty_custom_commands_test() {
+        assert_default_values("product_info_empty_custom_commands.json", None);
+        assert_default_values("product_info_empty_custom_commands.json", Some(&String::from("custom-command")));
+    }
+
+    #[test]
     fn product_info_with_custom_command_test() {
         assert_default_values("product_info_custom_command.json", None);
         assert_custom_values("product_info_custom_command.json", Some(&String::from("custom-command")));

@@ -144,8 +144,7 @@ pub struct ProductInfoLaunchField {
     pub bootClassPathJarNames: Vec<String>,
     pub additionalJvmArguments: Vec<String>,
     pub mainClass: String,
-    #[serde(default = "Vec::new")]
-    pub customCommands: Vec<ProductInfoCustomCommandField>,
+    pub customCommands: Option<Vec<ProductInfoCustomCommandField>>,
 }
 
 #[allow(non_snake_case)]
