@@ -20,6 +20,7 @@ import org.jetbrains.jps.builders.java.dependencyView.Mappings;
 import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
 import org.jetbrains.jps.dependency.Delta;
 import org.jetbrains.jps.dependency.DependencyGraph;
+import org.jetbrains.jps.dependency.DifferentiateParameters;
 import org.jetbrains.jps.dependency.DifferentiateResult;
 import org.jetbrains.jps.dependency.impl.DifferentiateParametersBuilder;
 import org.jetbrains.jps.dependency.impl.FileSource;
@@ -426,7 +427,8 @@ public final class JavaBuilderUtil {
       .processConstantsIncrementally(dataManager.isProcessConstantsIncrementally())
       .withAffectionFilter(s -> moduleBasedFilter.accept(s.getPath().toFile()))
       .withChunkStructureFilter(s -> moduleBasedFilter.belongsToCurrentTargetChunk(s.getPath().toFile()));
-    DifferentiateResult diffResult = graph.differentiate(delta, params.get());
+    DifferentiateParameters differentiateParams = params.get();
+    DifferentiateResult diffResult = graph.differentiate(delta, differentiateParams);
 
     final boolean compilingIncrementally = isCompileJavaIncrementally(context);
 
@@ -436,9 +438,11 @@ public final class JavaBuilderUtil {
         new HashSet<>()
       );
 
-      final String infoMessage = JpsBuildBundle.message("progress.message.dependency.analysis.found.0.affected.files", affectedFiles.size());
-      LOG.info(infoMessage);
-      context.processMessage(new ProgressMessage(infoMessage));
+      if (differentiateParams.isCalculateAffected()) {
+        final String infoMessage = JpsBuildBundle.message("progress.message.dependency.analysis.found.0.affected.files", affectedFiles.size());
+        LOG.info(infoMessage);
+        context.processMessage(new ProgressMessage(infoMessage));
+      }
 
       if (!affectedFiles.isEmpty()) {
         

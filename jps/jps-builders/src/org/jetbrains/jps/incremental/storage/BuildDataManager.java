@@ -76,6 +76,7 @@ public final class BuildDataManager {
     if (JavaBuilderUtil.isDepGraphEnabled()) {
       myMappings = null;
       createDependencyGraph(mappingsRoot, false);
+      LOG.info("Using DependencyGraph-based build incremental analysis");
     }
     else {
       myMappings = new Mappings(mappingsRoot, relativizer);

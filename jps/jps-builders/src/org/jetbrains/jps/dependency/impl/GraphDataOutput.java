@@ -94,7 +94,7 @@ public class GraphDataOutput implements DataOutput {
     int toNumber(String str) throws IOException;
   }
 
-  public static DataOutput wrap(DataOutput out, StringEnumerator enumerator) {
+  public static DataOutput wrap(DataOutput out, @NotNull StringEnumerator enumerator) {
     return new GraphDataOutput(out) {
       @Override
       public void writeUTF(@NotNull String s) throws IOException {

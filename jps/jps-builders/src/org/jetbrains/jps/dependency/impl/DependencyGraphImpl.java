@@ -18,16 +18,25 @@ public final class DependencyGraphImpl extends GraphImpl implements DependencyGr
   private static final List<DifferentiateStrategy> ourDifferentiateStrategies = List.of(
     new JavaDifferentiateStrategy()
   );
+  private Set<String> myRegisteredIndices;
 
   public DependencyGraphImpl(MapletFactory containerFactory) throws IOException {
     super(containerFactory);
     addIndex(new SubclassesIndex(containerFactory));
     addIndex(new ClassShortNameIndex(containerFactory));
+    myRegisteredIndices = Collections.unmodifiableSet(Iterators.collect(Iterators.map(getIndices(), index -> index.getName()), new HashSet<>()));
   }
 
   @Override
   public Delta createDelta(Iterable<NodeSource> compiledSources, Iterable<NodeSource> deletedSources) throws IOException {
-    return new DeltaImpl(completeSourceSet(compiledSources, deletedSources), deletedSources);
+    DeltaImpl delta = new DeltaImpl(completeSourceSet(compiledSources, deletedSources), deletedSources);
+
+    Set<String> deltaIndices = Iterators.collect(Iterators.map(delta.getIndices(), index -> index.getName()), new HashSet<>());
+    if (!myRegisteredIndices.equals(deltaIndices)) {
+      throw new RuntimeException("Graph delta should contain the same set of indices as the base graph\n\tCurrent graph indices: " + myRegisteredIndices + "\n\tCurrent Delta indices: " + deltaIndices);
+    }
+
+    return delta;
   }
 
   @Override

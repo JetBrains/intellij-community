@@ -100,7 +100,7 @@ public class GraphDataInput implements DataInput {
     String toString(int num) throws IOException;
   }
 
-  public static DataInput wrap(DataInput in, StringEnumerator enumerator) {
+  public static DataInput wrap(DataInput in, @NotNull StringEnumerator enumerator) {
     return new GraphDataInput(in) {
       @Override
       public @NotNull String readUTF() throws IOException {

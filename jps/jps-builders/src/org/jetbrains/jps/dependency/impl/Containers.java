@@ -4,6 +4,8 @@ package org.jetbrains.jps.dependency.impl;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.KeyDescriptor;
+import com.intellij.util.io.PersistentStringEnumerator;
+import com.intellij.util.io.StorageLockContext;
 import it.unimi.dsi.fastutil.Hash;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
@@ -24,7 +26,7 @@ import java.util.function.Function;
 
 public final class Containers {
 
-  public static MapletFactory createPersistentContainerFactory(String rootDirPath) {
+  public static MapletFactory createPersistentContainerFactory(String rootDirPath) throws IOException {
     return new PersistentMapletFactory(rootDirPath);
   }
 
@@ -69,27 +71,33 @@ public final class Containers {
   private static class PersistentMapletFactory implements MapletFactory, Closeable {
     private static final int MAX_CACHE_SIZE = 1024; // todo: make configurable?
     private final String myRootDirPath;
+    private final PersistentStringEnumerator myStringTable;
     private final List<MultiMaplet<?, ?>> myMultiMaplets = new ArrayList<>();
     private final List<Maplet<?, ?>> myMaplets = new ArrayList<>();
+    private final GraphDataInput.StringEnumerator myInputEnumerator;
+    private final GraphDataOutput.StringEnumerator myOutEnumerator;
 
-    PersistentMapletFactory(String rootDirPath) {
+    PersistentMapletFactory(String rootDirPath) throws IOException {
       myRootDirPath = rootDirPath;
+      myStringTable = new PersistentStringEnumerator(getMapFile("strings.tab"), 1024 * 4, true, new StorageLockContext());
+      myInputEnumerator = num -> myStringTable.valueOf(num);
+      myOutEnumerator = str -> myStringTable.enumerate(str);
     }
 
     @Override
     public <K, V> MultiMaplet<K, V> createSetMultiMaplet(String storageName, Externalizer<K> keyExternalizer, Externalizer<V> valueExternalizer) {
-      MultiMaplet<K, V> container = new CachingMultiMaplet<>(
-        new PersistentMultiMaplet<>(getMapFile(storageName), new ElementKeyDescriptor<>(keyExternalizer), new ElementDataExternalizer<>(valueExternalizer), () -> (Set<V>)new HashSet<V>()), MAX_CACHE_SIZE
-      );
+      KeyDescriptor<K> keyDescriptor = new GraphKeyDescriptor<>(keyExternalizer, myInputEnumerator, myOutEnumerator);
+      DataExternalizer<V> valueDescriptor = new GraphDataExternalizer<>(valueExternalizer, myInputEnumerator, myOutEnumerator);
+      MultiMaplet<K, V> container = new CachingMultiMaplet<>(new PersistentMultiMaplet<>(getMapFile(storageName), keyDescriptor, valueDescriptor, () -> (Set<V>)new HashSet<V>()), MAX_CACHE_SIZE);
       myMultiMaplets.add(container);
       return container;
     }
 
     @Override
     public <K, V> Maplet<K, V> createMaplet(String storageName, Externalizer<K> keyExternalizer, Externalizer<V> valueExternalizer) {
-      Maplet<K, V> container = new CachingMaplet<>(
-        new PersistentMaplet<>(getMapFile(storageName), new ElementKeyDescriptor<>(keyExternalizer), new ElementDataExternalizer<>(valueExternalizer)), MAX_CACHE_SIZE
-      );
+      KeyDescriptor<K> keyDescriptor = new GraphKeyDescriptor<>(keyExternalizer, myInputEnumerator, myOutEnumerator);
+      DataExternalizer<V> valueDescriptor = new GraphDataExternalizer<>(valueExternalizer, myInputEnumerator, myOutEnumerator);
+      Maplet<K, V> container = new CachingMaplet<>(new PersistentMaplet<>(getMapFile(storageName), keyDescriptor, valueDescriptor), MAX_CACHE_SIZE);
       myMaplets.add(container);
       return container;
     }
@@ -97,7 +105,7 @@ public final class Containers {
     @Override
     public void close() {
       Throwable ex = null;
-      for (Closeable container : Iterators.flat(myMultiMaplets, myMaplets)) {
+      for (Closeable container : Iterators.flat(List.of(myMultiMaplets, myMaplets, Iterators.asIterable(myStringTable)))) {
         try {
           container.close();
         }
@@ -124,28 +132,34 @@ public final class Containers {
     }
   }
 
-  private static class ElementDataExternalizer<T> implements DataExternalizer<T> {
+  private static class GraphDataExternalizer<T> implements DataExternalizer<T> {
     private final Externalizer<T> myExternalizer;
+    @Nullable
+    private final GraphDataOutput.StringEnumerator myOutEnumerator;
+    @Nullable
+    private final GraphDataInput.StringEnumerator myInputEnumerator;
 
-    ElementDataExternalizer(Externalizer<T> externalizer) {
+    GraphDataExternalizer(Externalizer<T> externalizer, @Nullable GraphDataInput.StringEnumerator inputEnumerator, @Nullable GraphDataOutput.StringEnumerator outEnumerator) {
       myExternalizer = externalizer;
+      myOutEnumerator = outEnumerator;
+      myInputEnumerator = inputEnumerator;
     }
 
     @Override
     public void save(@NotNull DataOutput out, T value) throws IOException {
-      myExternalizer.save(GraphDataOutput.wrap(out), value);
+      myExternalizer.save(myOutEnumerator != null? GraphDataOutput.wrap(out, myOutEnumerator) : GraphDataOutput.wrap(out), value);
     }
 
     @Override
     public T read(@NotNull DataInput in) throws IOException {
-      return myExternalizer.load(GraphDataInput.wrap(in));
+      return myExternalizer.load(myInputEnumerator != null? GraphDataInput.wrap(in, myInputEnumerator) : GraphDataInput.wrap(in));
     }
   }
 
-  private static class ElementKeyDescriptor<T> extends ElementDataExternalizer<T> implements KeyDescriptor<T> {
+  private static class GraphKeyDescriptor<T> extends GraphDataExternalizer<T> implements KeyDescriptor<T> {
 
-    ElementKeyDescriptor(Externalizer<T> externalizer) {
-      super(externalizer);
+    GraphKeyDescriptor(Externalizer<T> externalizer, GraphDataInput.@Nullable StringEnumerator inputEnumerator, GraphDataOutput.@Nullable StringEnumerator outEnumerator) {
+      super(externalizer, inputEnumerator, outEnumerator);
     }
 
     @Override

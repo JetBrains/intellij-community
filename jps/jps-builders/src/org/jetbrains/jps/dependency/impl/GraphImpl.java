@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+// this is a base implementation for shared functionality in both DependencyGraph and Delta
 abstract class GraphImpl implements Graph {
 
   private final BackDependencyIndex myDependencyIndex; // nodeId -> nodes, referencing the nodeId
@@ -33,7 +34,6 @@ abstract class GraphImpl implements Graph {
     mySourceToNodesMap = cFactory.createSetMultiMaplet("source-nodes-map", srcExternalizer, JvmNodeElementExternalizer.getMultitypeExternalizer());
   }
 
-  // todo: ensure both dependency-graph and delta always have the same set of back-deps indices
   protected final void addIndex(BackDependencyIndex index) {
     myIndices.add(index);
   }
