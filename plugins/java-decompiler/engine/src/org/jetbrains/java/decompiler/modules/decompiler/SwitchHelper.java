@@ -46,13 +46,16 @@ public final class SwitchHelper {
    * Method searches and simplifies "switch-on-references" patterns in the statement graph.
    *
    * @param root statement to start traversal
+   * @param cl - struct class to check java version
    */
-  public static void simplifySwitchesOnReferences(@NotNull RootStatement root) {
+  public static void simplifySwitchesOnReferences(@NotNull RootStatement root, StructClass cl) {
     List<SwitchOnCandidate> candidates = new ArrayList<>();
-    collectSwitchesOn(root, new ArrayList<>(
-      Arrays.asList(new StringSwitchRecognizer.JavacStringRecognizer(), new StringSwitchRecognizer.EcjStringRecognizer(),
-                    new SwitchPatternHelper.JavacReferenceRecognizer()
-      )), candidates, new HashSet<>());
+    ArrayList<SwitchRecognizer> recognizers = new ArrayList<>(
+      Arrays.asList(new StringSwitchRecognizer.JavacStringRecognizer(), new StringSwitchRecognizer.EcjStringRecognizer()));
+    if (cl.hasRecordPatternSupport()) {
+      recognizers.add(new SwitchPatternHelper.JavacReferenceRecognizer());
+    }
+    collectSwitchesOn(root, recognizers, candidates, new HashSet<>());
     if (candidates.isEmpty()) return;
     List<TempVarAssignmentItem> tempVarAssignments = new ArrayList<>();
     candidates.forEach(candidate -> tempVarAssignments.addAll(candidate.prepareTempAssignments()));
