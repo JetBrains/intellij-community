@@ -102,6 +102,7 @@ public final class HighlightUtil {
 
   private static final String SERIAL_PERSISTENT_FIELDS_FIELD_NAME = "serialPersistentFields";
   public static final TokenSet BRACKET_TOKENS = TokenSet.create(JavaTokenType.LBRACKET, JavaTokenType.RBRACKET);
+  private static final String ANONYMOUS = "anonymous";
 
   static {
     ourClassIncompatibleModifiers.put(PsiModifier.ABSTRACT, Set.of(PsiModifier.FINAL));
@@ -509,7 +510,7 @@ public final class HighlightUtil {
     }
     return null;
   }
-  
+
   static HighlightInfo.Builder checkVarTypeApplicability(@NotNull PsiVariable variable) {
     if (variable instanceof PsiLocalVariable && variable.getTypeElement().isInferredType()) {
       PsiElement parent = variable.getParent();
@@ -837,7 +838,7 @@ public final class HighlightUtil {
   static HighlightInfo.Builder checkUnderscore(@NotNull PsiIdentifier identifier, @NotNull LanguageLevel languageLevel) {
     if ("_".equals(identifier.getText())) {
       PsiElement parent = identifier.getParent();
-      if (languageLevel.isAtLeast(LanguageLevel.JDK_1_9) && !(parent instanceof PsiUnnamedPattern) && 
+      if (languageLevel.isAtLeast(LanguageLevel.JDK_1_9) && !(parent instanceof PsiUnnamedPattern) &&
           !(parent instanceof PsiVariable var && var.isUnnamed())) {
         String text = HighlightingFeature.UNNAMED_PATTERNS_AND_VARIABLES.isSufficient(languageLevel) ?
                       JavaErrorBundle.message("underscore.identifier.error.unnamed")
@@ -1140,8 +1141,8 @@ public final class HighlightUtil {
         else {
           if (PsiModifier.STATIC.equals(modifier) || privateOrProtected || PsiModifier.PACKAGE_LOCAL.equals(modifier)) {
             isAllowed = modifierOwnerParent instanceof PsiClass &&
-                        (PsiModifier.STATIC.equals(modifier) || 
-                         PsiUtil.isLanguageLevel16OrHigher(modifierOwnerParent) || 
+                        (PsiModifier.STATIC.equals(modifier) ||
+                         PsiUtil.isLanguageLevel16OrHigher(modifierOwnerParent) ||
                          ((PsiClass)modifierOwnerParent).getQualifiedName() != null) ||
                         FileTypeUtils.isInServerPageFile(modifierOwnerParent) ||
                         // non-physical dummy holder might not have FQN
@@ -1161,7 +1162,7 @@ public final class HighlightUtil {
           isAllowed &= !PsiModifier.ABSTRACT.equals(modifier);
         }
 
-        if (aClass.getContainingClass() instanceof PsiAnonymousClass && 
+        if (aClass.getContainingClass() instanceof PsiAnonymousClass &&
             privateOrProtected && !PsiUtil.isLanguageLevel16OrHigher(modifierOwnerParent)) {
           isAllowed = false;
         }
@@ -1809,8 +1810,8 @@ public final class HighlightUtil {
         String message = JavaErrorBundle.message("exception.already.caught.warn", formatTypes(caughtCopy), caughtCopy.size());
         HighlightInfo.Builder builder =
           HighlightInfo.newHighlightInfo(HighlightInfoType.WARNING).range(catchSection).descriptionAndTooltip(message);
-        IntentionAction action = isMultiCatch ? 
-                                 getFixFactory().createDeleteMultiCatchFix(catchTypeElement) : 
+        IntentionAction action = isMultiCatch ?
+                                 getFixFactory().createDeleteMultiCatchFix(catchTypeElement) :
                                  getFixFactory().createDeleteCatchFix(parameter);
         builder.registerFix(action, null, null, null, null);
         errorSink.accept(builder);
@@ -3172,24 +3173,63 @@ public final class HighlightUtil {
                                                            @NotNull TextRange textRange,
                                                            int navigationShift,
                                                            @NotNull String reason) {
-    lType = PsiUtil.convertAnonymousToBaseType(lType);
-    rType = rType == null ? null : PsiUtil.convertAnonymousToBaseType(rType);
+    PsiType baseLType = PsiUtil.convertAnonymousToBaseType(lType);
+    PsiType baseRType = rType == null ? null : PsiUtil.convertAnonymousToBaseType(rType);
     String styledReason = reason.isEmpty() ? ""
                                            : String
                             .format("<table><tr><td style=''padding-top: 10px; padding-left: 4px;''>%s</td></tr></table>", reason);
-    String toolTip = createIncompatibleTypesTooltip(lType, rType,
-                                                    (lRawType, lTypeArguments, rRawType, rTypeArguments) ->
-                                                      JavaErrorBundle
-                                                        .message("incompatible.types.html.tooltip", lRawType, lTypeArguments, rRawType,
+    String toolTip = createIncompatibleTypesTooltip(baseLType, baseRType,
+                                                    (lRawType, lTypeArguments, rRawType, rTypeArguments) -> {
+                                                      PairTypeResult result = getDifferentAnonymousTypes(lType, rType, lRawType, rRawType, baseLType, baseRType);
+                                                      return JavaErrorBundle
+                                                        .message("incompatible.types.html.tooltip", result.lRawType(), lTypeArguments,
+                                                                 result.rRawType(),
                                                                  rTypeArguments, styledReason,
-                                                                 "#" + ColorUtil.toHex(UIUtil.getContextHelpForeground())));
+                                                                 "#" + ColorUtil.toHex(UIUtil.getContextHelpForeground()));
+                                                    });
+
+    String lRawType = JavaHighlightUtil.formatType(baseLType);
+    String rRawType = JavaHighlightUtil.formatType(baseRType);
+    PairTypeResult result = getDifferentAnonymousTypes(lType, rType, lRawType, rRawType, baseLType, baseRType);
     String description = JavaErrorBundle.message(
-      "incompatible.types", JavaHighlightUtil.formatType(lType), JavaHighlightUtil.formatType(rType));
+      "incompatible.types", result.lRawType(), result.rRawType());
     return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
       .range(textRange)
       .description(description)
       .escapedToolTip(toolTip)
       .navigationShift(navigationShift);
+  }
+
+  /**
+   * Gets the different types if they are equal and one of them or both is anonymous types
+   *
+   * @param lType      the left type
+   * @param rType      the right type
+   * @param lRawType   the left raw type (base type of anonymous type)
+   * @param rRawType   the right raw type (base type of anonymous type)
+   * @param baseLType  the base left type (text representation)
+   * @param baseRType  the base right type (text representation)
+   * @return a PairTypeResult object representing the different types
+   */
+  @NotNull
+  private static PairTypeResult getDifferentAnonymousTypes(@NotNull PsiType lType,
+                                                           @Nullable PsiType rType,
+                                                           @NotNull String lRawType,
+                                                           @NotNull String rRawType,
+                                                           @NotNull PsiType baseLType,
+                                                           @Nullable PsiType baseRType) {
+    if (lRawType.equals(rRawType)) {
+      if (!lType.equals(baseLType)) {
+        lRawType = ANONYMOUS + " " + lRawType;
+      }
+      if (rType != null && !rType.equals(baseRType)) {
+        rRawType = ANONYMOUS + " " + rRawType;
+      }
+    }
+    return new PairTypeResult(lRawType, rRawType);
+  }
+
+  private record PairTypeResult(@NotNull String lRawType, @NotNull String rRawType) {
   }
 
   public static HighlightInfo.Builder checkArrayType(PsiTypeElement type) {
