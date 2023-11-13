@@ -60,6 +60,12 @@ class TerminalPromptController(
     }
   }
 
+  override fun initialized(currentDirectory: String?) {
+    if (currentDirectory != null) {
+      promptText = computePromptText(currentDirectory)
+    }
+  }
+
   override fun directoryChanged(newDirectory: String) {
     promptText = computePromptText(newDirectory)
   }

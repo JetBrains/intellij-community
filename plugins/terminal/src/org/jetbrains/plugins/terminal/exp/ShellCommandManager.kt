@@ -20,7 +20,7 @@ class ShellCommandManager(terminal: Terminal) {
   init {
     terminal.addCustomCommandListener(TerminalCustomCommandListener {
       when (it.getOrNull(0)) {
-        "initialized" -> fireInitialized()
+        "initialized" -> processInitialized(it)
         "prompt_shown" -> firePromptShown()
         "command_started" -> processCommandStartedEvent(it)
         "command_finished" -> processCommandFinishedEvent(it)
@@ -28,6 +28,15 @@ class ShellCommandManager(terminal: Terminal) {
         "generator_finished" -> processGeneratorFinishedEvent(it)
       }
     })
+  }
+
+  private fun processInitialized(event: List<String>) {
+    val directory = event.getOrNull(1)
+    val dir = if (directory != null && directory.startsWith("current_directory=")) {
+      decodeHex(directory.removePrefix("current_directory="))
+    }
+    else null
+    fireInitialized(dir)
   }
 
   private fun processCommandStartedEvent(event: List<String>) {
@@ -83,12 +92,12 @@ class ShellCommandManager(terminal: Terminal) {
     }
   }
 
-  private fun fireInitialized() {
+  private fun fireInitialized(currentDirectory: String?) {
     if (LOG.isDebugEnabled) {
       LOG.debug("Shell event: initialized")
     }
     for (listener in listeners) {
-      listener.initialized()
+      listener.initialized(currentDirectory)
     }
   }
 
@@ -167,8 +176,11 @@ class ShellCommandManager(terminal: Terminal) {
 }
 
 interface ShellCommandListener {
-  /** Fired before the first prompt is printed */
-  fun initialized() {}
+  /**
+   * Fired before the first prompt is printed
+   * todo: make current directory notnull when all shell integrations adapt it
+   */
+  fun initialized(currentDirectory: String?) {}
 
   /**
    * Fired each time when prompt is printed.

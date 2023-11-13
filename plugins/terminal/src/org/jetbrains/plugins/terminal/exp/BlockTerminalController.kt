@@ -64,7 +64,7 @@ class BlockTerminalController(
     session.model.isCommandRunning = true
   }
 
-  override fun initialized() {
+  override fun initialized(currentDirectory: String?) {
     finishCommandBlock(exitCode = 0)
   }
 

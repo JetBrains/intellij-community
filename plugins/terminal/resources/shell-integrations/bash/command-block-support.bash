@@ -109,14 +109,14 @@ __jetbrains_intellij_command_terminated() {
 
   __jetbrains_intellij_configure_prompt
 
+  builtin local current_directory="$PWD"
   if [ -z "$__jetbrains_intellij_initialized" ]; then
     __jetbrains_intellij_initialized='1'
     __jetbrains_intellij_debug_log 'initialized'
-    builtin printf '\e]1341;initialized\a'
+    builtin printf '\e]1341;initialized;current_directory=%s\a' "$(__jetbrains_intellij_encode "$current_directory")"
     builtin local hist="$(builtin history)"
     builtin printf '\e]1341;command_history;history_string=%s\a' "$(__jetbrains_intellij_encode "$hist")"
   else
-    builtin local current_directory="$PWD"
     __jetbrains_intellij_debug_log "command_finished exit_code=$last_exit_code"
     builtin printf '\e]1341;command_finished;exit_code=%s;current_directory=%s\a' "$last_exit_code" \
        "$(__jetbrains_intellij_encode "$current_directory")"
