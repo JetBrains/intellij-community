@@ -140,10 +140,12 @@ public class ShellTerminalWidget extends JBTerminalWidget {
     return myCommandHistoryFilePath;
   }
 
+  @Override
   public void setShellCommand(@Nullable List<String> shellCommand) {
     myShellCommand = shellCommand != null ? List.copyOf(shellCommand) : null;
   }
 
+  @Override
   public @Nullable List<String> getShellCommand() {
     return myShellCommand;
   }

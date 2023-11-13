@@ -21,6 +21,12 @@ interface TerminalWidget : ComponentContainer {
    */
   val termSize: TermSize?
 
+  /**
+   * Command used to run the session related to this widget
+   * todo: would be great to find better place for it
+   */
+  var shellCommand: List<String>?
+
   fun connectToTty(ttyConnector: TtyConnector, initialTermSize: TermSize)
 
   val ttyConnectorAccessor: TtyConnectorAccessor

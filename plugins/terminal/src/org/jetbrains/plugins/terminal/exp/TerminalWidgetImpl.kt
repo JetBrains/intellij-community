@@ -34,6 +34,8 @@ class TerminalWidgetImpl(private val project: Project,
 
   override val ttyConnectorAccessor: TtyConnectorAccessor = TtyConnectorAccessor()
 
+  override var shellCommand: List<String>? = null
+
   @Volatile
   private var view: TerminalContentView = TerminalPlaceholder()
 

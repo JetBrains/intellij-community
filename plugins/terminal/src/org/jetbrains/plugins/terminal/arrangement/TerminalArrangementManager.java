@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.terminal.JBTerminalWidget;
+import com.intellij.terminal.ui.TerminalWidget;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.util.ObjectUtils;
@@ -78,14 +79,15 @@ public final class TerminalArrangementManager implements PersistentStateComponen
       if (runner == null || !runner.isTerminalSessionPersistent()) {
         continue;
       }
-      JBTerminalWidget terminalWidget = TerminalToolWindowManager.getWidgetByContent(content);
+      TerminalWidget terminalWidget = TerminalToolWindowManager.findWidgetByContent(content);
       if (terminalWidget == null) continue;
-      ShellTerminalWidget shellTerminalWidget = ObjectUtils.tryCast(terminalWidget, ShellTerminalWidget.class);
       TerminalTabState tabState = new TerminalTabState();
       tabState.myTabName = content.getTabName();
-      tabState.myShellCommand = shellTerminalWidget != null ? shellTerminalWidget.getShellCommand() : null;
+      tabState.myShellCommand = terminalWidget.getShellCommand();
       tabState.myIsUserDefinedTabTitle = tabState.myTabName.equals(terminalWidget.getTerminalTitle().getUserDefinedTitle());
       tabState.myWorkingDirectory = myWorkingDirectoryManager.getWorkingDirectory(content);
+      JBTerminalWidget jbTerminalWidget = JBTerminalWidget.asJediTermWidget(terminalWidget);
+      ShellTerminalWidget shellTerminalWidget = ObjectUtils.tryCast(jbTerminalWidget, ShellTerminalWidget.class);
       tabState.myCommandHistoryFileName = TerminalCommandHistoryManager.getFilename(
         shellTerminalWidget != null ? shellTerminalWidget.getCommandHistoryFilePath() : null
       );

@@ -362,6 +362,14 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
     throw new RuntimeException("Should be called for ShellTerminalWidget only");
   }
 
+  protected @Nullable List<String> getShellCommand() {
+    throw new RuntimeException("Should be called for ShellTerminalWidget only");
+  }
+
+  protected void setShellCommand(@Nullable List<String> command) {
+    throw new RuntimeException("Should be called for ShellTerminalWidget only");
+  }
+
   private final TerminalWidgetBridge myBridge = new TerminalWidgetBridge();
 
   public @NotNull TerminalWidget asNewWidget() {
@@ -473,6 +481,17 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
       catch (IOException e) {
         LOG.info("Cannot execute shell command: " + shellCommand);
       }
+    }
+
+    @Nullable
+    @Override
+    public List<String> getShellCommand() {
+      return widget().getShellCommand();
+    }
+
+    @Override
+    public void setShellCommand(@Nullable List<String> command) {
+      widget().setShellCommand(command);
     }
   }
 }

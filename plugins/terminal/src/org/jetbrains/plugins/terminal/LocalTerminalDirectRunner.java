@@ -205,7 +205,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     Map<String, String> envs = getTerminalEnvironment(workingDir);
 
     List<String> initialCommand = doGetInitialCommand(baseOptions, envs);
-    ShellTerminalWidget widget = getShellTerminalWidget(baseOptions);
+    TerminalWidget widget = baseOptions.getWidget();
     if (widget != null) {
       widget.setShellCommand(initialCommand);
     }
@@ -528,7 +528,11 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     if (idx >= 0) {
       arguments.remove(idx);
       if (idx < arguments.size()) {
-        envs.put(JEDITERM_USER_RCFILE, FileUtil.expandUserHome(arguments.get(idx)));
+        String userRcFile = FileUtil.expandUserHome(arguments.get(idx));
+        // do not set the same RC file path to avoid sourcing recursion
+        if (!userRcFile.equals(rcFilePath)) {
+          envs.put(JEDITERM_USER_RCFILE, FileUtil.expandUserHome(arguments.get(idx)));
+        }
         arguments.remove(idx);
       }
     }
