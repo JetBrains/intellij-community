@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.types.KtErrorType
 import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.descriptors.Visibility
+import org.jetbrains.kotlin.idea.codeinsight.utils.AddQualifiersUtil
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinChangeInfo
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinChangeSignatureProcessor
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinMethodDescriptor
@@ -79,8 +80,10 @@ class KotlinChangePropertySignatureDialog(project: Project,
     override fun doAction() {
         val changeInfo = evaluateKotlinChangeInfo()
         changeInfo.receiverParameterInfo?.let {
-            val defaultValue = it.defaultValueForCall
-            //todo it.defaultValueForCall = AddFullQualifierIntention.Holder.addQualifiersRecursively(defaultValue) as? KtExpression
+            val codeFragment = receiverTypeCodeFragment.getContentElement()
+            if (codeFragment != null) {
+                it.defaultValue = AddQualifiersUtil.addQualifiersRecursively(codeFragment) as? KtExpression
+            }
         }
         invokeRefactoring(KotlinChangeSignatureProcessor(myProject, changeInfo))
     }

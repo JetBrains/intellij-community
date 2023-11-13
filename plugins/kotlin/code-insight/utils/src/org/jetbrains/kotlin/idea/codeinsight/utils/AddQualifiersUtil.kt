@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeinsight.utils
 
+import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.psi.util.descendantsOfType
 import com.intellij.psi.util.elementType
 import com.intellij.psi.util.prevLeaf
@@ -18,7 +19,6 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
 import org.jetbrains.kotlin.idea.base.util.quoteIfNeeded
 import org.jetbrains.kotlin.idea.references.mainReference
-import org.jetbrains.kotlin.idea.util.application.runWriteActionIfPhysical
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtCallExpression
@@ -33,6 +33,7 @@ import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtUserType
 import org.jetbrains.kotlin.psi.createExpressionByPattern
 import org.jetbrains.kotlin.psi.psiUtil.getPrevSiblingIgnoringWhitespaceAndComments
+import java.lang.RuntimeException
 
 object AddQualifiersUtil {
     fun addQualifiersRecursively(root: KtElement): KtElement {
@@ -84,16 +85,20 @@ object AddQualifiersUtil {
     }
 
     fun applyTo(referenceExpression: KtNameReferenceExpression, fqName: FqName): KtElement {
-        return runWriteActionIfPhysical(referenceExpression) {
+        val action = {
             val qualifier = fqName.parent().quoteIfNeeded().asString()
             val psiFactory = KtPsiFactory(referenceExpression.project)
-             when (val parent = referenceExpression.parent) {
+            when (val parent = referenceExpression.parent) {
                 is KtCallableReferenceExpression -> addOrReplaceQualifier(psiFactory, parent, qualifier)
                 is KtCallExpression -> replaceExpressionWithDotQualifier(psiFactory, parent, qualifier)
                 is KtUserType -> addQualifierToType(psiFactory, parent, qualifier)
                 else -> replaceExpressionWithQualifier(psiFactory, referenceExpression, fqName)
             }
         }
+        if (referenceExpression.isPhysical) {
+            return WriteCommandAction.writeCommandAction(referenceExpression.project).compute<KtElement, RuntimeException> { action() }
+        }
+        return action()
     }
 
     fun getFqName(symbol: KtSymbol): FqName? {
