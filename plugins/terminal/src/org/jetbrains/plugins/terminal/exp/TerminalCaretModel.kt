@@ -60,7 +60,7 @@ class TerminalCaretModel(private val session: TerminalSession,
     updateCaretPosition(position)
   }
 
-  override fun commandFinished(command: String, exitCode: Int, duration: Long) {
+  override fun commandFinished(command: String?, exitCode: Int, duration: Long?) {
     updateCaretPosition(newPosition = null)
   }
 

@@ -60,8 +60,9 @@ class ShellCommandManager(terminal: Terminal) {
         if (commandRun.workingDirectory != newDirectory) {
           fireDirectoryChanged(newDirectory)
         }
-        fireCommandFinished(commandRun, exitCode)
       }
+      fireCommandFinished(commandRun, exitCode)
+      this.commandRun = null
     }
   }
 
@@ -109,12 +110,13 @@ class ShellCommandManager(terminal: Terminal) {
     }
   }
 
-  private fun fireCommandFinished(commandRun: CommandRun, exitCode: Int) {
+  private fun fireCommandFinished(commandRun: CommandRun?, exitCode: Int) {
     if (LOG.isDebugEnabled) {
       LOG.debug("Shell event: command_finished - $commandRun, exit code: $exitCode")
     }
     for (listener in listeners) {
-      listener.commandFinished(commandRun.command, exitCode, TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - commandRun.commandStartedNano))
+      val duration = commandRun?.commandStartedNano?.let { TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - it) }
+      listener.commandFinished(commandRun?.command, exitCode, duration)
     }
   }
 
@@ -178,7 +180,7 @@ interface ShellCommandListener {
   fun commandStarted(command: String) {}
 
   /** Fired after command is executed and before prompt is printed */
-  fun commandFinished(command: String, exitCode: Int, duration: Long) {}
+  fun commandFinished(command: String?, exitCode: Int, duration: Long?) {}
 
   fun directoryChanged(newDirectory: String) {}
 
