@@ -16,6 +16,7 @@
 package com.intellij.dvcs.push;
 
 import com.intellij.dvcs.repo.Repository;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,6 +39,7 @@ public abstract class Pusher<Repo extends Repository, Source extends PushSource,
                             @Nullable VcsPushOptionValue additionalOption,
                             boolean force);
 
+  @ApiStatus.Experimental
   public void push(@NotNull Map<Repo, PushSpec<Source, Target>> pushSpecs,
                    @Nullable VcsPushOptionValue additionalOption,
                    boolean force,

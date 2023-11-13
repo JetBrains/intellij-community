@@ -29,10 +29,7 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import net.miginfocom.swing.MigLayout;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -376,6 +373,7 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
     return null;
   }
 
+  @ApiStatus.Experimental
   @NotNull
   public Map<String, VcsPushOptionValue> getCustomParams() {
     Map<String, VcsPushOptionValue> ret = new HashMap<>();
@@ -459,7 +457,7 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
 
   private static class OptionsPanel extends JPanel {
     OptionsPanel() {
-      super(new MigLayout("ins 0 0, flowy"));
+      super(new MigLayout("ins 0 0, flowy, gap 0"));
     }
 
     @Override
