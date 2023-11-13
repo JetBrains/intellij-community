@@ -243,17 +243,9 @@ public class WhileCanBeDoWhileInspection extends AbstractBaseJavaLocalInspection
     private static class BreakTrackingEquivalenceChecker extends TrackingEquivalenceChecker {
       @Override
       protected Match breakStatementsMatch(@NotNull PsiBreakStatement statement1, @NotNull PsiBreakStatement statement2) {
-        return !isParentFor(getFirstLoop(statement1), getFirstLoop(statement2))
+        return !isParentFor(statement1.findExitedStatement(), statement2.findExitedStatement())
                ? super.breakStatementsMatch(statement1, statement2)
                : EXACT_MISMATCH;
-      }
-
-      @Nullable
-      private static PsiElement getFirstLoop(PsiElement element) {
-        while ((element = element.getParent()) != null) {
-          if (element instanceof PsiLoopStatement) return element;
-        }
-        return element;
       }
 
       private static boolean isParentFor(@Nullable PsiElement element1, @Nullable PsiElement element2) {

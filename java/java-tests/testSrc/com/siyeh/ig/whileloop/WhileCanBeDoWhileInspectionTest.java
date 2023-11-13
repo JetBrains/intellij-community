@@ -235,6 +235,39 @@ public class WhileCanBeDoWhileInspectionTest extends LightJavaCodeInsightFixture
              }""");
   }
 
+  public void testSwitchCase() {
+    doTest("""
+             class DoWhileClass {
+               void test() {
+                 int i = 9;
+                 switch (i) {
+                   case 7: System.out.println(7);
+                   default: i--; break;
+                 }
+                 while<caret>(i > 2) {
+                   switch (i) {
+                     case 7: System.out.println(7);
+                     default: i--; break;
+                   }
+                 }
+               }
+             }""", """
+             class DoWhileClass {
+               void test() {
+                 int i = 9;
+                   do {
+                       switch (i) {
+                           case 7:
+                               System.out.println(7);
+                           default:
+                               i--;
+                               break;
+                       }
+                   } while (i > 2);
+               }
+             }""");
+  }
+
   public void testNoBraces() {
     doTest("""
              class DoWhileClass {
