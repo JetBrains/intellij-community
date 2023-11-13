@@ -65,6 +65,7 @@ class DefaultImportPerformer(private val partials: Collection<PartialImportPerfo
     val installAndEnableTask = getInstallAndEnableTask(project, pluginsToInstall, false, false, pi.modalityState) {}
     installAndEnableTask.run(pi)
 
+    if (installAndEnableTask.plugins.isEmpty()) return PluginInstallationState.NoPlugins
     val cp = installAndEnableTask.customPlugins ?: return PluginInstallationState.NoPlugins
     val restartRequiringPlugins = AtomicInteger()
     val installStatus = suspendCoroutine { cont ->
