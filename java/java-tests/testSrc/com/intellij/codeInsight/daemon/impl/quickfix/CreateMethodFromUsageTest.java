@@ -6,7 +6,6 @@ import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCa
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.preview.IntentionPreviewPopupUpdateProcessor;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
@@ -17,11 +16,6 @@ public class CreateMethodFromUsageTest extends LightQuickFixParameterizedTestCas
   @Override
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/createMethodFromUsage";
-  }
-
-  @Override
-  protected LanguageLevel getLanguageLevel() {
-    return LanguageLevel.JDK_21_PREVIEW;
   }
 
   @Override
