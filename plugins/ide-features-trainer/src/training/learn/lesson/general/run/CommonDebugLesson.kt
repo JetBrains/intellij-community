@@ -336,7 +336,7 @@ abstract class CommonDebugLesson(id: String) : KLesson(id, LessonsBundle.message
 
     task {
       triggerAndBorderHighlight{
-        allowHighlightingToCrossBorder = true
+        limitByVisibleRect = false
       }.componentPart l@{ ui: EditorComponentImpl ->
         if (ui.editor != editor) return@l null
         val line = editor.offsetToVisualLine(position.startOffset, true)

@@ -323,7 +323,7 @@ internal class TaskContextImpl(private val lessonExecutor: LessonExecutor,
                                                                     p.highlightInside,
                                                                     p.usePulsation,
                                                                     p.clearPreviousHighlights,
-                                                                    p.allowHighlightingToCrossBorder)
+                                                                    p.limitByVisibleRect)
     return object : HighlightingTriggerMethods() {
       override fun treeItem(checkPath: TaskRuntimeContext.(tree: JTree, path: TreePath) -> Boolean) {
         triggerByFoundPathAndHighlight(options) { tree ->

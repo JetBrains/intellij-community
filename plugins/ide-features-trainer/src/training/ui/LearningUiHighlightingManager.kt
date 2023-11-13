@@ -24,7 +24,7 @@ object LearningUiHighlightingManager {
     val highlightInside: Boolean = true,
     val usePulsation: Boolean = false,
     val clearPreviousHighlights: Boolean = true,
-    val allowHighlightingToCrossBorder: Boolean = false,
+    val limitByVisibleRect: Boolean = true,
   )
 
   private val highlights: MutableList<RepaintHighlighting<*>> = ArrayList()
@@ -66,7 +66,7 @@ object LearningUiHighlightingManager {
         val intersection = component.visibleRect.intersection(rect)
         when {
           intersection.isEmpty -> null
-          options.allowHighlightingToCrossBorder -> rect
+          !options.limitByVisibleRect -> rect
           else -> intersection
         }
       }
