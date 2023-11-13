@@ -46,7 +46,7 @@ class TerminalCommandSpecCompletionContributor : CompletionContributor(), DumbAw
       val nextSuggestions = getNextSuggestionsString(this).takeIf { it.isNotEmpty() }
       val escapedInsertValue = (realInsertValue ?: name).escapeSpaces()
       val element = LookupElementBuilder.create(this, escapedInsertValue)
-        .withPresentableText(displayName ?: name.escapeSpaces())
+        .withPresentableText(displayName ?: name)
         .withTailText(nextSuggestions, true)
         .withInsertHandler { context, _ ->
           if (cursorOffset != null && cursorOffset != -1) {
