@@ -28,6 +28,12 @@ class TerminalModel(internal val textBuffer: TerminalTextBuffer) {
     private set
 
   var isCommandRunning: Boolean = false
+    set(value) {
+      if (value != field) {
+        field = value
+        terminalListeners.forEach { it.onCommandRunningChanged(value) }
+      }
+    }
 
   var cursorShape: CursorShape = CursorShape.BLINK_BLOCK
     set(value) {
@@ -204,6 +210,8 @@ class TerminalModel(internal val textBuffer: TerminalTextBuffer) {
     fun onSizeChanged(width: Int, height: Int) {}
 
     fun onWindowTitleChanged(title: String) {}
+
+    fun onCommandRunningChanged(isRunning: Boolean) {}
 
     fun onAlternateBufferChanged(enabled: Boolean) {}
 

@@ -61,9 +61,6 @@ class BlockTerminalController(
       promptController.promptIsVisible = false
     }, 50)
     session.sendCommandToExecute(command)
-  }
-
-  override fun commandStarted(command: String) {
     session.model.isCommandRunning = true
   }
 

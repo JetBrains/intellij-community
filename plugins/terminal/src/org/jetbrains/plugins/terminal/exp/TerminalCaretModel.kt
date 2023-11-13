@@ -7,9 +7,11 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.util.Disposer
 import java.util.concurrent.CopyOnWriteArrayList
 
-class TerminalCaretModel(private val session: TerminalSession,
-                         private val outputModel: TerminalOutputModel,
-                         private val editor: EditorEx) : ShellCommandListener, TerminalModel.CursorListener, Disposable {
+class TerminalCaretModel(
+  private val session: TerminalSession,
+  private val outputModel: TerminalOutputModel,
+  private val editor: EditorEx
+) : TerminalModel.CursorListener, TerminalModel.TerminalListener, Disposable {
   private val terminalModel: TerminalModel
     get() = session.model
 
@@ -24,7 +26,7 @@ class TerminalCaretModel(private val session: TerminalSession,
     private set
 
   init {
-    session.addCommandListener(this, parentDisposable = this)
+    terminalModel.addTerminalListener(this, parentDisposable = this)
     terminalModel.addCursorListener(this, parentDisposable = this)
   }
 
@@ -54,18 +56,13 @@ class TerminalCaretModel(private val session: TerminalSession,
     listeners.forEach { it.caretBlinkingChanged(blinking) }
   }
 
-  override fun commandStarted(command: String) {
-    // place the caret to the next line after the command
-    val position = calculateCaretPosition(0, 2)
-    updateCaretPosition(position)
-  }
-
-  override fun commandFinished(command: String?, exitCode: Int, duration: Long?) {
-    updateCaretPosition(newPosition = null)
-  }
-
-  override fun initialized() {
-    updateCaretPosition(newPosition = null)
+  override fun onCommandRunningChanged(isRunning: Boolean) {
+    if (isRunning) {
+      // place the caret to the next line after the command
+      val position = calculateCaretPosition(0, 2)
+      updateCaretPosition(position)
+    }
+    else updateCaretPosition(newPosition = null)
   }
 
   private fun calculateCaretPosition(cursorX: Int, cursorY: Int): LogicalPosition {
