@@ -267,8 +267,8 @@ public final class ExecutionEnvironment extends UserDataHolderBase implements Di
       if (PlatformCoreDataKeys.MODULE.is(dataId)) {
         Module module = null;
         if (myRunnerAndConfigurationSettings != null &&
-            myRunnerAndConfigurationSettings.getConfiguration() instanceof ModuleBasedConfiguration<?, ?>) {
-          module = ((ModuleBasedConfiguration<?, ?>)myRunnerAndConfigurationSettings.getConfiguration()).getConfigurationModule().getModule();
+            myRunnerAndConfigurationSettings.getConfiguration() instanceof ModuleBasedConfiguration<?, ?> configuration) {
+          module = configuration.getConfigurationModule().getModule();
         }
         return module == null ? CustomizedDataContext.EXPLICIT_NULL : module;
       }
