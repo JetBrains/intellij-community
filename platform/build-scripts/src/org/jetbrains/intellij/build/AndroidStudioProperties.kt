@@ -89,6 +89,9 @@ class AndroidStudioProperties(home: Path) : BaseIdeaProperties() {
       "-Didea.required.plugins.id=org.jetbrains.kotlin",
       // Enable use of the deprecated SecurityManager (b/302171264).
       "-Djava.security.manager=allow",
+      // Configure the feedback URL displayed for IDE startup failures. This system property should match
+      // StartupErrorReporter.STARTUP_ERROR_REPORTING_URL_PROPERTY. Eventually we may want a better landing page (b/295896403).
+      "-Dintellij.custom.startup.error.reporting.url=https://issuetracker.google.com/issues/new?component=192708",
     )
 
     embeddedJetBrainsClientMainModule = null // Overrides org.jetbrains.intellij.build.configureJetBrainsProduct().
