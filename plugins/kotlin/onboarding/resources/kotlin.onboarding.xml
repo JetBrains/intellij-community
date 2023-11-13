@@ -1,8 +1,4 @@
 <idea-plugin package="org.jetbrains.kotlin.onboarding">
-  <dependencies>
-    <module name="intellij.platform.feedback"/>
-  </dependencies>
-
   <projectListeners>
     <listener topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"
               class="org.jetbrains.kotlin.onboarding.KotlinNewUserTrackerFileListener"/>
