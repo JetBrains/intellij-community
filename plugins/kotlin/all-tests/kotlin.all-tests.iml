@@ -65,5 +65,6 @@
     <orderEntry type="module" module-name="kotlin.base.facet.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.injection.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.indices.tests" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.onboarding" />
   </component>
 </module>
