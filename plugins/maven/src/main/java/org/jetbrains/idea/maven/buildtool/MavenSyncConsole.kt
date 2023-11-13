@@ -68,7 +68,7 @@ class MavenSyncConsole(private val myProject: Project) : MavenEventHandler {
     if (started) {
       return
     }
-    val restartAction: AnAction = object : AnAction() {
+    val restartAction: AnAction = object : AnAction(SyncBundle.message("maven.sync.title")) {
       override fun update(e: AnActionEvent) {
         e.presentation.isEnabled = !started || finished
         e.presentation.icon = AllIcons.Actions.Refresh
