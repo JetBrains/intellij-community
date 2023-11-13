@@ -50,6 +50,8 @@ class KotlinMPPGradleModelBuilder : AbstractModelBuilderService() {
                 modelBuilderContext = builderContext ?: return null
             )
 
+            val dependenciesContainer = buildIdeaKotlinDependenciesContainer(importingContext, kotlinExtensionReflection)
+
             val sourceSets = buildSourceSets(importingContext)
             importingContext.initializeSourceSets(sourceSets)
 
@@ -62,7 +64,6 @@ class KotlinMPPGradleModelBuilder : AbstractModelBuilderService() {
             val coroutinesState = getCoroutinesState(project)
             val kotlinNativeHome = KotlinNativeHomeEvaluator.getKotlinNativeHome(project) ?: NO_KOTLIN_NATIVE_HOME
 
-            val dependenciesContainer = buildIdeaKotlinDependenciesContainer(importingContext, kotlinExtensionReflection)
 
             val model = KotlinMPPGradleModelImpl(
                 sourceSetsByName = filterOrphanSourceSets(importingContext),
