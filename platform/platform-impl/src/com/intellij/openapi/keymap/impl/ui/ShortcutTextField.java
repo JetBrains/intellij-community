@@ -57,14 +57,9 @@ public final class ShortcutTextField extends ExtendableTextField {
       }
     }
 
-    final boolean isNotModifierKey = keyCode != KeyEvent.VK_SHIFT &&
-                                     keyCode != KeyEvent.VK_ALT &&
-                                     keyCode != KeyEvent.VK_CONTROL &&
-                                     keyCode != KeyEvent.VK_ALT_GRAPH &&
-                                     keyCode != KeyEvent.VK_META &&
-                                     !absolutelyUnknownKey(e);
+    final boolean isAcceptableShortcutKey = !absolutelyUnknownKey(e);
 
-    if (isNotModifierKey) {
+    if (isAcceptableShortcutKey) {
       // NOTE: when user presses 'Alt + Right' at Linux the IDE can receive next sequence KeyEvents: ALT_PRESSED -> RIGHT_RELEASED ->  ALT_RELEASED
       // RIGHT_PRESSED can be skipped, it depends on WM
       if (
