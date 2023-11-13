@@ -18,6 +18,7 @@ struct PerProjectPathOverrides {
     logs_dir: Option<PathBuf>,
 }
 
+#[allow(dead_code)]
 pub struct RemoteDevLaunchConfiguration {
     default: DefaultLaunchConfiguration,
     launcher_name: String,
