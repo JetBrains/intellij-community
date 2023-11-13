@@ -9,8 +9,7 @@ import java.util.*
  */
 public enum class ConsistencyCheckingMode {
   DISABLED,
-  ASYNCHRONOUS,
-  SYNCHRONOUS;
+  ENABLED;
 
   internal companion object {
     internal val current by lazy {

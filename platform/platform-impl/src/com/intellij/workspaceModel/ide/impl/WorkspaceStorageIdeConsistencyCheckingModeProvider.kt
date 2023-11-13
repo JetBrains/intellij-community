@@ -11,9 +11,9 @@ class WorkspaceStorageIdeConsistencyCheckingModeProvider : ConsistencyCheckingMo
     get() {
       val application = ApplicationManager.getApplication()
       return when {
-        application != null && application.isUnitTestMode -> ConsistencyCheckingMode.SYNCHRONOUS
-        application != null && application.isEAP -> ConsistencyCheckingMode.ASYNCHRONOUS
-        Registry.`is`("ide.new.project.model.strict.mode.rbs", false) -> ConsistencyCheckingMode.ASYNCHRONOUS
+        application != null && application.isUnitTestMode -> ConsistencyCheckingMode.ENABLED
+        application != null && application.isEAP -> ConsistencyCheckingMode.ENABLED
+        Registry.`is`("ide.new.project.model.strict.mode.rbs", false) -> ConsistencyCheckingMode.ENABLED
         else -> ConsistencyCheckingMode.DISABLED
       }
     }

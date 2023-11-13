@@ -1,8 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.platform.workspace.storage.impl
 
-import com.google.common.collect.HashMultimap
-import com.google.common.collect.Multimap
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
@@ -13,8 +11,6 @@ import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.impl.cache.EntityStorageCacheImpl
 import com.intellij.platform.workspace.storage.impl.cache.TracedSnapshotCache
 import com.intellij.platform.workspace.storage.impl.cache.TracedSnapshotCacheImpl
-import com.intellij.platform.workspace.storage.impl.containers.getDiff
-import com.intellij.platform.workspace.storage.impl.exceptions.AddDiffException
 import com.intellij.platform.workspace.storage.impl.exceptions.SymbolicIdAlreadyExistsException
 import com.intellij.platform.workspace.storage.impl.external.EmptyExternalEntityMapping
 import com.intellij.platform.workspace.storage.impl.external.ExternalEntityMappingImpl
@@ -26,7 +22,6 @@ import com.intellij.platform.workspace.storage.url.MutableVirtualFileUrlIndex
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlIndex
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.ObjectUtils
-import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.containers.CollectionFactory
 import io.opentelemetry.api.metrics.Meter
 import org.jetbrains.annotations.NonNls
@@ -213,7 +208,6 @@ internal class MutableEntityStorageImpl(
         .getIdsByEntry(source)!!.map {
           val entityDataById: WorkspaceEntityData<WorkspaceEntity> = this.entityDataById(it) as? WorkspaceEntityData<WorkspaceEntity>
                                                                      ?: run {
-                                                                       reportErrorAndAttachStorage("Cannot find an entity by id $it")
                                                                        error("Cannot find an entity by id $it")
                                                                      }
           entityDataById.wrapAsModifiable(this)
@@ -750,11 +744,6 @@ internal class MutableEntityStorageImpl(
     return virtualFileIndex
   }
 
-  internal fun addDiffAndReport(message: String, left: EntityStorage?, right: EntityStorage) {
-    this.reportConsistencyIssue(message, AddDiffException(message), null, left, right,
-                                ConsistencyCheckingMode.current == ConsistencyCheckingMode.ASYNCHRONOUS)
-  }
-
   private fun applyDiffProtection(diff: AbstractEntityStorage) {
     LOG.trace { "Applying addDiff. Builder: $diff" }
     if (diff.storageIsAlreadyApplied) {
@@ -1016,7 +1005,6 @@ internal sealed class AbstractEntityStorage : EntityStorageInstrumentation {
       indexes.entitySourceIndex
         .getIdsByEntry(source)!!.map {
           this.entityDataById(it)?.createEntity(this) ?: run {
-            reportErrorAndAttachStorage("Cannot find an entity by id $it")
             error("Cannot find an entity by id $it")
           }
         }
@@ -1039,35 +1027,15 @@ internal sealed class AbstractEntityStorage : EntityStorageInstrumentation {
 
   override fun <T: WorkspaceEntity> initializeEntity(entityId: EntityId, newInstance: (() -> T)): T = newInstance()
 
-  internal fun assertConsistencyInStrictMode(message: String,
-                                             sourceFilter: ((EntitySource) -> Boolean)?,
-                                             left: EntityStorage?,
-                                             right: EntityStorage?) {
+  internal fun assertConsistencyInStrictMode(message: String) {
     if (ConsistencyCheckingMode.current != ConsistencyCheckingMode.DISABLED) {
       try {
         this.assertConsistency()
       }
       catch (e: Throwable) {
         brokenConsistency = true
-        reportConsistencyIssue(message, e, sourceFilter, left, right,
-                               ConsistencyCheckingMode.current == ConsistencyCheckingMode.ASYNCHRONOUS)
+        LOG.error(message, e)
       }
-    }
-  }
-
-  internal fun reportConsistencyIssue(message: String,
-                                      e: Throwable,
-                                      sourceFilter: ((EntitySource) -> Boolean)?,
-                                      left: EntityStorage?,
-                                      right: EntityStorage?,
-                                      reportInBackgroundThread: Boolean) {
-    val storage = if (this is MutableEntityStorage) this.toSnapshot() as AbstractEntityStorage else this
-    val report = { reportConsistencyIssue(message, e, sourceFilter, left, right) }
-    if (reportInBackgroundThread) {
-      consistencyChecker.execute(report)
-    }
-    else {
-      report()
     }
   }
 
@@ -1143,8 +1111,6 @@ internal sealed class AbstractEntityStorage : EntityStorageInstrumentation {
 
   companion object {
     val LOG = logger<AbstractEntityStorage>()
-
-    private val consistencyChecker = AppExecutorUtil.createBoundedApplicationPoolExecutor("Check workspace model consistency", 1)
   }
 }
 

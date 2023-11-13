@@ -5,15 +5,13 @@ import com.google.common.collect.HashBiMap
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.platform.workspace.storage.impl.exceptions.AddDiffException
 import java.util.*
 
 internal class AddDiffOperation(val target: MutableEntityStorageImpl, val diff: MutableEntityStorageImpl) {
 
   private val replaceMap = HashBiMap.create<NotThisEntityId, ThisEntityId>()
   private val diffLog = diff.changeLog.changeLog
-
-  // Initial storage is required in case something will fail and we need to send a report
-  private val initialStorage = if (ConsistencyCheckingMode.current != ConsistencyCheckingMode.DISABLED) target.toSnapshot() else null
 
   var shaker = -1L
 
@@ -95,7 +93,7 @@ internal class AddDiffOperation(val target: MutableEntityStorageImpl, val diff: 
 
     // Assert consistency
     if (!target.brokenConsistency && !diff.brokenConsistency) {
-      target.assertConsistencyInStrictMode("Check after add Diff", null, initialStorage, diff)
+      target.assertConsistencyInStrictMode("Check after add Diff")
     }
     else {
       target.brokenConsistency = true
@@ -117,7 +115,8 @@ internal class AddDiffOperation(val target: MutableEntityStorageImpl, val diff: 
         if (target.entityDataById(sourceParentId.id) != null) sourceParentId.id.asThis()
         else {
           if (!connectionId.canRemoveParent()) {
-            target.addDiffAndReport("Cannot restore dependency. $connectionId, $sourceParentId.id", initialStorage, diff)
+            val message = "Cannot restore dependency. $connectionId, $sourceParentId.id"
+            LOG.error(message, AddDiffException(message))
           }
           null
         }
@@ -318,7 +317,8 @@ internal class AddDiffOperation(val target: MutableEntityStorageImpl, val diff: 
       if (connectionId in removedParents) {
         // target child doesn't have a parent anymore
         if (!connectionId.canRemoveParent() && connectionId !in newParents) {
-          target.addDiffAndReport("Cannot restore some dependencies; $connectionId", initialStorage, diff)
+          val message = "Cannot restore some dependencies; $connectionId"
+          LOG.error(message, AddDiffException(message))
         }
         else {
           val modifications = target.refs.removeParentToChildRef(connectionId, existingParent, newChildEntityId)
@@ -342,8 +342,10 @@ internal class AddDiffOperation(val target: MutableEntityStorageImpl, val diff: 
             target.createReplaceEventsForUpdates(modifications, connectionId)
           }
           else {
-            if (!connectionId.canRemoveParent()) target.addDiffAndReport("Cannot restore some dependencies; $connectionId",
-                                                                         initialStorage, diff)
+            if (!connectionId.canRemoveParent()) {
+              val message = "Cannot restore some dependencies; $connectionId"
+              LOG.error(message, AddDiffException(message))
+            }
             val modifications = target.refs.removeParentToChildRef(connectionId, existingParent, newChildEntityId)
             target.createReplaceEventsForUpdates(modifications, connectionId)
           }
@@ -383,13 +385,13 @@ internal class AddDiffOperation(val target: MutableEntityStorageImpl, val diff: 
           val existingEntityData = target.entityDataByIdOrDie(existingIds)
           LOG.debug("Removing existing entity... $existingIds")
           target.removeEntity(existingEntityData.createEntity(target))
-          target.addDiffAndReport(
-            """
-                        Symbolic ID already exists. Removing old entity
-                        Symbolic ID: $newSymbolicId
-                        Existing entity data: $existingEntityData
-                        New entity data: $entityData
-                        """.trimIndent(), initialStorage, diff)
+          val message = """
+                                  Symbolic ID already exists. Removing old entity
+                                  Symbolic ID: $newSymbolicId
+                                  Existing entity data: $existingEntityData
+                                  New entity data: $entityData
+                                  """.trimIndent()
+          LOG.error(message, AddDiffException(message))
         }
       }
     }

@@ -10,7 +10,6 @@ import com.intellij.platform.workspace.jps.*
 import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.jps.serialization.SerializationContext
 import com.intellij.platform.workspace.storage.*
-import com.intellij.platform.workspace.storage.impl.reportErrorAndAttachStorage
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.util.PathUtilRt
@@ -724,7 +723,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
                 separator = "||") { "$it (Persistent Id: ${(it as? WorkspaceEntityWithSymbolicId)?.symbolicId})" }
             }
               """.trimMargin()
-            reportErrorAndAttachStorage(message)
+            LOG.error(message)
           }
           if (existingSerializers.isEmpty() || existingSerializers.any { it.internalEntitySource != actualFileSource }) {
             processNewlyAddedDirectoryEntities(entities, serializersToRun)
