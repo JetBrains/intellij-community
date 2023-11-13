@@ -84,6 +84,9 @@ public final class WindowWithActions {
       return null;
     }
     Content content = window.getContentManager().findContent(windowName);
+    if (content == null) {
+      return null;
+    }
     return content.getComponent();
   }
 
