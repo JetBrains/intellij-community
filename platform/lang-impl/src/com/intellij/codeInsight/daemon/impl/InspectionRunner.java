@@ -167,7 +167,7 @@ class InspectionRunner {
 
       ForkJoinTask<Boolean> injectedElementsFuture = null;
       if (myInspectInjected && InjectionUtils.shouldInspectInjectedFiles(myPsiFile)) {
-        BlockingQueue<Pair<PsiFile, PsiElement>> queue = new ArrayBlockingQueue<>(1000);
+        BlockingQueue<Pair<PsiFile, PsiElement>> queue = new LinkedBlockingQueue<>();
         Pair<PsiFile, PsiElement> tombStone = Pair.create(null, null);
         try {
           injectedElementsFuture =
@@ -176,7 +176,12 @@ class InspectionRunner {
           getInjectedWithHosts(ContainerUtil.concat(inside, outside), queue);
         }
         finally {
-          queue.add(tombStone);
+          try {
+            queue.put(tombStone);
+          }
+          catch (InterruptedException e) {
+            throw new ProcessCanceledException(e);
+          }
         }
       }
 
@@ -558,14 +563,19 @@ class InspectionRunner {
     });
   }
 
-  private void getInjectedWithHosts(@NotNull List<? extends PsiElement> elements, @NotNull Collection<? super Pair<PsiFile, PsiElement>> result) {
+  private void getInjectedWithHosts(@NotNull List<? extends PsiElement> elements, @NotNull BlockingQueue<? super Pair<PsiFile, PsiElement>> result) {
     Map<PsiFile, PsiElement> injectedToHost = createInjectedFileMap();
     Project project = myPsiFile.getProject();
     for (PsiElement element : elements) {
       InjectedLanguageManager.getInstance(project).enumerateEx(element, myPsiFile, false,
                                                                (injectedPsi, __) -> {
                                                                  if (injectedToHost.put(injectedPsi, element) == null) {
-                                                                   result.add(Pair.create(injectedPsi, element));
+                                                                   try {
+                                                                     result.put(Pair.create(injectedPsi, element));
+                                                                   }
+                                                                   catch (InterruptedException e) {
+                                                                     throw new ProcessCanceledException(e);
+                                                                   }
                                                                  }
                                                                });
     }
