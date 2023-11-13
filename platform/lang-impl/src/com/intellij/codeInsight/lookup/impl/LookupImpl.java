@@ -1206,6 +1206,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
       boolean itemsChanged = updateList(onExplicitAction, reused);
       if (isVisible()) {
         LOG.assertTrue(!ApplicationManager.getApplication().isUnitTestMode());
+        myCellRenderer.refreshUi();
         myUi.refreshUi(selectionVisible, itemsChanged, reused, onExplicitAction);
       }
     }
