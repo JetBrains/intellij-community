@@ -59,7 +59,7 @@ open class ArtifactBridge(
           // We inject a builder instead of store because requesting of packaging elements adds new bridges to this builder.
           // If case of storage here, the new bridges will be added to the store.
           entityStorage = VersionedEntityStorageOnBuilder(event.storageBefore.toBuilder())
-          assert(artifactId in entityStorage.current) { "Cannot resolve artifact $artifactId." }
+          assert(artifactId in entityStorage.base) { "Cannot resolve artifact $artifactId." }
         }
 
         beforeChangedMs.addElapsedTimeMs(start)
