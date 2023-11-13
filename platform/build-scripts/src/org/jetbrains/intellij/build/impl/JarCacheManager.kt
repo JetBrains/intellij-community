@@ -140,7 +140,9 @@ internal class LocalDiskJarCacheManager(private val cacheDir: Path,
         catch (e: FileAlreadyExistsException) {
           // concurrent access?
           span.addEvent("Cache file $cacheFile already exists")
-          check(Files.size(targetFile) == Files.size(cacheFile))
+          check(Files.size(targetFile) == Files.size(cacheFile)) {
+            "targetFile=$targetFile, cacheFile=$cacheFile, sources=$sources"
+          }
         }
       }
 
