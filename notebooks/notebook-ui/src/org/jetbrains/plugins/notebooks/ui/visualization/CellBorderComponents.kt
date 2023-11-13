@@ -90,20 +90,18 @@ private class SausageBorder(private val editor: Editor) : AbstractBorder() {
     val components = c.parent?.components
     val leftButton = getLeftButton(components)
     val rightButton = getRightButton(components)
-    val radius = height / 2
     when {
       components == null || components.size <= 1 -> g.drawRoundRect(x, y, width, height, height, height)
       leftButton === c -> {
-        g.drawLine(x + radius, y, x + width, y)
-        g.drawLine(x + width + radius, y, x + width, y + height)
-        g.drawLine(x + radius, y + height, x + width, y + height)
-        g.drawArc(x, y, height, height, 90, 180)
+        g.drawLine(x, y, x + width + 1, y)
+        g.drawLine(x, y + height, x + width + 1, y + height)
+        g.drawLine(x, y, x, y + height)
       }
       rightButton === c -> {
-        g.drawLine(x, y, x + width - radius, y)
+        g.drawLine(x, y, x + width, y)
         g.drawLine(x, y, x, y + height)
-        g.drawLine(x, y + height, x + width - radius, y + height)
-        g.drawArc(x + width - height, y, height, height, -90, 180)
+        g.drawLine(x, y + height, x + width, y + height)
+        g.drawLine(x + width, y, x + width, y + height )
       }
       else -> g.drawRect(x, y, width + height, height)
     }
@@ -125,15 +123,14 @@ private class SausageButtonUI(val editor: Editor) : BasicButtonUI() {
     val components = c.parent?.components
     val leftButton = getLeftButton(components)
     val rightButton = getRightButton(components)
-    val radius = height / 2
     when {
       components == null || components.size <= 1 -> g.fillRoundRect(x, y, width, height, height, height)
       leftButton === c -> {
-        g.fillRect(x + radius, y, width, height)
+        g.fillRect(x, y, width, height)
         g.fillArc(x, y, height, height, 90, 180)
       }
       rightButton === c -> {
-        g.fillRect(x, y, width - radius, height)
+        g.fillRect(x, y, width, height)
         g.fillArc(x + width - height, y, height, height, -90, 180)
       }
       else -> g.fillRect(x, y, width, height)
