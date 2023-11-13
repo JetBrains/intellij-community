@@ -110,9 +110,10 @@ internal class ApplicationInfoPropertiesImpl: ApplicationInfoProperties {
       }
       formatMajorReleaseDate(majorReleaseDateRaw = majorReleaseDate, buildDateInSeconds = buildOptions.buildDateInSeconds)
     }
-    fullProductName = namesTag.getAttributeValue("fullname") ?: shortProductName
-    edition = namesTag.getAttributeValue("edition")
-    motto = namesTag.getAttributeValue("motto")
+    val productNameOverride = productProperties.productNameOverride(project)
+    fullProductName = productNameOverride?.fullProductName ?: namesTag.getAttributeValue("fullname") ?: shortProductName
+    edition = productNameOverride?.editionName ?: namesTag.getAttributeValue("edition")
+    motto = productNameOverride?.motto ?: namesTag.getAttributeValue("motto")
     launcherName = namesTag.getAttributeValue("script")!!
 
     val companyTag = root.getChild("company")!!
@@ -171,14 +172,38 @@ internal class ApplicationInfoPropertiesImpl: ApplicationInfoProperties {
 
     val isEapOverride = System.getProperty(BuildOptions.INTELLIJ_BUILD_OVERRIDE_APPLICATION_VERSION_IS_EAP)
     val suffixOverride = System.getProperty(BuildOptions.INTELLIJ_BUILD_OVERRIDE_APPLICATION_VERSION_SUFFIX)
-    if (isEapOverride != null || suffixOverride != null) {
+    val newNamesOverride = context.productProperties.productNameOverride(context.project)
+    if (isEapOverride != null || suffixOverride != null || newNamesOverride != null) {
       val element = JDOMUtil.load(patchedAppInfo)
       @Suppress("HttpUrlsUsage")
-      val version = element.getChildren("version",
-                                        Namespace.getNamespace("http://jetbrains.org/intellij/schema/application-info"))
-                      .singleOrNull() ?: error("Could not find child element 'version' under root of '$appInfoXmlPath'")
-      isEapOverride?.let { version.setAttribute("eap", it) }
-      suffixOverride?.let { version.setAttribute("suffix", it) }
+      val namespace = Namespace.getNamespace("http://jetbrains.org/intellij/schema/application-info")
+
+      if (isEapOverride != null || suffixOverride != null) {
+        val version = element.getChildren("version", namespace)
+                        .singleOrNull() ?: error("Could not find child element 'version' under root of '$appInfoXmlPath'")
+        isEapOverride?.let { version.setAttribute("eap", it) }
+        suffixOverride?.let { version.setAttribute("suffix", it) }
+      }
+
+      if (newNamesOverride != null) {
+        val names = element.getChildren("names", namespace)
+          .singleOrNull() ?: error("Could not find child element 'names' under root of '$appInfoXmlPath'")
+
+        names.setAttribute("fullname", newNamesOverride.fullProductName)
+
+        if (newNamesOverride.editionName != null) {
+          names.setAttribute("edition", newNamesOverride.editionName)
+        } else {
+          names.removeAttribute("edition")
+        }
+
+        if (newNamesOverride.motto != null) {
+          names.setAttribute("motto", newNamesOverride.motto)
+        } else {
+          names.removeAttribute("motto")
+        }
+      }
+
       patchedAppInfo = JDOMUtil.write(element)
     }
     return@lazy patchedAppInfo
