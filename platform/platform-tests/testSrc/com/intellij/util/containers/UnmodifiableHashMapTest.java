@@ -198,9 +198,11 @@ public class UnmodifiableHashMapTest {
   }
 
   @Test
-  public void testFromMap() {
+  public void fromMap() {
     UnmodifiableHashMap<Integer, String> map = create(10);
     assertThat(map).isSameAs(UnmodifiableHashMap.fromMap(map));
+
+    assertThat(UnmodifiableHashMap.fromMap(Map.of())).isSameAs(UnmodifiableHashMap.empty());
   }
 
   @Test

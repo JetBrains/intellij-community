@@ -25,6 +25,9 @@ import java.util.function.Consumer;
  * same table when a new element is added. Thanks to this rehashing occurs only once in four additions.
  */
 public final class UnmodifiableHashMap<K, V> implements Map<K, V> {
+  private static final UnmodifiableHashMap<Object, Object> EMPTY
+    = new UnmodifiableHashMap<>(HashingStrategy.canonical(), ArrayUtilRt.EMPTY_OBJECT_ARRAY, null, null, null, null, null, null);
+
   private final @NotNull HashingStrategy<K> strategy;
   private final Object @NotNull [] data;
   private final K k1;
@@ -44,7 +47,8 @@ public final class UnmodifiableHashMap<K, V> implements Map<K, V> {
    * @return an empty {@code UnmodifiableHashMap}.
    */
   public static @NotNull <K, V> UnmodifiableHashMap<K, V> empty() {
-    return empty(HashingStrategy.canonical());
+    //noinspection unchecked
+    return (UnmodifiableHashMap<K, V>)EMPTY;
   }
 
   /**
@@ -54,7 +58,10 @@ public final class UnmodifiableHashMap<K, V> implements Map<K, V> {
    * @param <V> type of map values
    * @return an empty {@code UnmodifiableHashMap}.
    */
-  public static @NotNull <K, V> UnmodifiableHashMap<K, V> empty(HashingStrategy<K> strategy) {
+  public static @NotNull <K, V> UnmodifiableHashMap<K, V> empty(@NotNull HashingStrategy<K> strategy) {
+    if (strategy == HashingStrategy.canonical()) {
+      return empty();
+    }
     return new UnmodifiableHashMap<>(strategy, ArrayUtilRt.EMPTY_OBJECT_ARRAY, null, null, null, null, null, null);
   }
 
@@ -86,7 +93,10 @@ public final class UnmodifiableHashMap<K, V> implements Map<K, V> {
       //noinspection unchecked
       return (UnmodifiableHashMap<K, V>)map;
     }
-    if (map.size() <= 3) {
+    else if (map.isEmpty()) {
+      return empty(strategy);
+    }
+    else if (map.size() <= 3) {
       K k1 = null;
       K k2 = null;
       K k3 = null;
@@ -112,9 +122,11 @@ public final class UnmodifiableHashMap<K, V> implements Map<K, V> {
       }
       return new UnmodifiableHashMap<>(strategy, ArrayUtilRt.EMPTY_OBJECT_ARRAY, k1, v1, k2, v2, k3, v3);
     }
-    Object[] newData = new Object[map.size() * 4];
-    map.forEach((k, v) -> insert(strategy, newData, Objects.requireNonNull(k), v));
-    return new UnmodifiableHashMap<>(strategy, newData, null, null, null, null, null, null);
+    else {
+      Object[] newData = new Object[map.size() * 4];
+      map.forEach((k, v) -> insert(strategy, newData, Objects.requireNonNull(k), v));
+      return new UnmodifiableHashMap<>(strategy, newData, null, null, null, null, null, null);
+    }
   }
 
   private UnmodifiableHashMap(@NotNull HashingStrategy<K> strategy, Object @NotNull [] data, @Nullable K k1, @Nullable V v1,
