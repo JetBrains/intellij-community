@@ -5,8 +5,8 @@ import com.intellij.ide.plugins.PluginUtil;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
+import com.intellij.util.containers.UnmodifiableHashMap;
 import com.intellij.util.io.SimpleStringPersistentEnumerator;
-import kotlinx.collections.immutable.PersistentMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -17,8 +17,6 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
-
-import static kotlinx.collections.immutable.ExtensionsKt.persistentHashMapOf;
 
 /**
  * @author Eugene Zhuravlev
@@ -31,8 +29,8 @@ public class ID<K, V> extends IndexId<K,V> {
   private static final Map<String, ID<?, ?>> idObjects = new ConcurrentHashMap<>();
 
   private static final Object lock = new Object();
-  private static volatile PersistentMap<ID<?, ?>, PluginId> idToPluginId = persistentHashMapOf();
-  private static volatile PersistentMap<ID<?, ?>, Throwable> idToRegistrationStackTrace = persistentHashMapOf();
+  private static volatile UnmodifiableHashMap<ID<?, ?>, PluginId> idToPluginId = UnmodifiableHashMap.empty();
+  private static volatile UnmodifiableHashMap<ID<?, ?>, Throwable> idToRegistrationStackTrace = UnmodifiableHashMap.empty();
   static final int MAX_NUMBER_OF_INDICES = Short.MAX_VALUE;
 
   private volatile int uniqueId;
@@ -102,8 +100,9 @@ public class ID<K, V> extends IndexId<K,V> {
                                    pluginId;
 
       //noinspection AssignmentToStaticFieldFromInstanceMethod
-      idToPluginId = idToPluginId.put(this, pluginId);
-      idToRegistrationStackTrace = idToRegistrationStackTrace.put(this, new Throwable());
+      idToPluginId = idToPluginId.with(this, pluginId);
+      //noinspection AssignmentToStaticFieldFromInstanceMethod
+      idToRegistrationStackTrace = idToRegistrationStackTrace.with(this, new Throwable());
     }
   }
 
@@ -205,8 +204,8 @@ public class ID<K, V> extends IndexId<K,V> {
     synchronized (lock) {
       ID<?, ?> oldID = idObjects.remove(name);
       LOG.assertTrue(id.equals(oldID), "Failed to unload: " + name);
-      idToPluginId = idToPluginId.remove(id);
-      idToRegistrationStackTrace.remove(id);
+      idToPluginId = idToPluginId.without(id);
+      idToRegistrationStackTrace.without(id);
     }
   }
 }

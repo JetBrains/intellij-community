@@ -5,8 +5,7 @@ package com.intellij.ide.plugins
 
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.SystemInfoRt
-import kotlinx.collections.immutable.mutate
-import kotlinx.collections.immutable.persistentHashMapOf
+import com.intellij.util.Java11Shim
 import org.jetbrains.annotations.ApiStatus
 
 private const val moduleNamePrefix = "com.intellij.platform."
@@ -44,8 +43,9 @@ enum class IdeaPluginPlatform {
   abstract fun isHostPlatform(): Boolean
 
   companion object {
-    private val directory = persistentHashMapOf<PluginId, IdeaPluginPlatform>().mutate {
-      map -> entries.associateByTo(map) { it.moduleId }
+    private val directory = HashMap<PluginId, IdeaPluginPlatform>().let { map ->
+      entries.associateByTo(map) { it.moduleId }
+      Java11Shim.INSTANCE.copyOf(map)
     }
 
     fun getHostPlatformModuleIds(): List<PluginId> = entries.mapNotNull { it.takeIf { it.isHostPlatform() }?.moduleId }
