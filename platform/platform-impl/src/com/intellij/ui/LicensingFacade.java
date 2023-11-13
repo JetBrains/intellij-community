@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 
 public final class LicensingFacade {
+  public String platformProductCode;
   public String licensedTo;
   public @NlsSafe String licenseeEmail;
   public List<String> restrictions;
