@@ -37,7 +37,7 @@ internal class KotlinIntroduceVariableServiceK2Impl(private val project: Project
     }
 
     override fun getContainersForExpression(expression: KtExpression): List<KotlinIntroduceVariableHelper.Containers> {
-        return expression.getCandidateContainers().map { KotlinIntroduceVariableHelper.Containers(expression, it) }
+        return expression.getCandidateContainers()
     }
 
     override fun findOccurrences(
@@ -54,7 +54,8 @@ internal class KotlinIntroduceVariableServiceK2Impl(private val project: Project
         KotlinIntroduceVariableHandler.doRefactoring(
             project, editor,
             expressionToExtract,
-            container,
+            // TODO: fix occurence container (currently it is not used in K2-implementation)
+            KotlinIntroduceVariableHelper.Containers(container, container),
             isVar = false,
         )
     }

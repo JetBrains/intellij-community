@@ -3,18 +3,13 @@ package org.jetbrains.kotlin.idea.k2.refactoring.introduce.introduceVariable
 
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.codeInsight.template.*
-import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.command.impl.FinishMarkAction
 import com.intellij.openapi.command.impl.StartMarkAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.NlsContexts
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.refactoring.HelpID
-import com.intellij.refactoring.RefactoringActionHandler
-import com.intellij.refactoring.util.CommonRefactoringUtil
 import com.intellij.util.SlowOperations
 import com.intellij.util.SmartList
 import com.intellij.util.application
@@ -37,13 +32,11 @@ import org.jetbrains.kotlin.idea.codeinsight.utils.NamedArgumentUtils
 import org.jetbrains.kotlin.idea.codeinsight.utils.addTypeArguments
 import org.jetbrains.kotlin.idea.codeinsight.utils.getRenderedTypeArguments
 import org.jetbrains.kotlin.idea.refactoring.KotlinCommonRefactoringSettings
-import org.jetbrains.kotlin.idea.refactoring.chooseContainer.chooseContainerElementIfNecessary
-import org.jetbrains.kotlin.idea.refactoring.introduce.IntroduceRefactoringException
+import org.jetbrains.kotlin.idea.refactoring.introduce.AbstractKotlinIntroduceVariableHandler
+import org.jetbrains.kotlin.idea.refactoring.introduce.KotlinIntroduceVariableHelper.Containers
 import org.jetbrains.kotlin.idea.refactoring.introduce.findExpressionByCopyableDataAndClearIt
 import org.jetbrains.kotlin.idea.refactoring.introduce.mustBeParenthesizedInInitializerPosition
 import org.jetbrains.kotlin.idea.refactoring.introduce.removeTemplateEntryBracesIfPossible
-import org.jetbrains.kotlin.idea.refactoring.selectElement
-import org.jetbrains.kotlin.idea.util.ElementKind
 import org.jetbrains.kotlin.idea.util.application.executeCommand
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
@@ -52,14 +45,10 @@ import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.types.Variance
-import org.jetbrains.kotlin.utils.ifEmpty
 import org.jetbrains.kotlin.utils.sure
 import kotlin.math.min
 
-object KotlinIntroduceVariableHandler : RefactoringActionHandler {
-
-    val INTRODUCE_VARIABLE get() = KotlinBundle.message("introduce.variable")
-
+object KotlinIntroduceVariableHandler : AbstractKotlinIntroduceVariableHandler() {
     private val EXPRESSION_KEY = Key.create<Boolean>("EXPRESSION_KEY")
 
     private var KtExpression.isOccurrence: Boolean by NotNullablePsiCopyableUserDataProperty(Key.create("OCCURRENCE"), false)
@@ -80,9 +69,6 @@ object KotlinIntroduceVariableHandler : RefactoringActionHandler {
         val references = ArrayList<SmartPsiElementPointer<KtExpression>>()
         var mustSpecifyTypeExplicitly = false
         var renderedTypeArgumentsIfMightBeNeeded: String? = renderedTypeArguments
-
-        private fun findElementByOffsetAndText(offset: Int, text: String, newContainer: PsiElement): PsiElement? =
-            newContainer.findElementAt(offset)?.parentsWithSelf?.firstOrNull { (it as? KtExpression)?.text == text }
 
         private fun replaceExpression(
             expressionToReplace: KtExpression,
@@ -332,43 +318,11 @@ object KotlinIntroduceVariableHandler : RefactoringActionHandler {
         return container.allChildren.lastOrNull { it.textRange.contains(startOffset) }
     }
 
-    private fun PsiElement.isAssignmentLHS(): Boolean = parents.any {
-        KtPsiUtil.isAssignment(it) && (it as KtBinaryExpression).left == this
-    }
-
     private fun KtExpression.shouldReplaceOccurrence(container: PsiElement?): Boolean {
         val effectiveParent = (parent as? KtScriptInitializer)?.parent ?: parent
         return container != effectiveParent || analyzeInModalWindow(this, KotlinBundle.message("find.usages.prepare.dialog.progress")) {
             isUsedAsExpression()
         }
-    }
-
-    private fun KtElement.getContainer(): KtElement? {
-        if (this is KtBlockExpression) return this
-
-        return (parentsWithSelf.zip(parents)).firstOrNull {
-            val (place, parent) = it
-            when (parent) {
-                is KtContainerNode -> !parent.isBadContainerNode(place)
-                is KtBlockExpression -> true
-                is KtWhenEntry -> place == parent.expression
-                is KtDeclarationWithBody -> parent.bodyExpression == place
-                is KtClassBody -> true
-                is KtFile -> true
-                else -> false
-            }
-        }?.second as? KtElement
-    }
-
-    private fun KtContainerNode.isBadContainerNode(place: PsiElement): Boolean = when (val parent = parent) {
-        is KtIfExpression -> parent.condition == place
-        is KtLoopExpression -> parent.body != place
-        is KtArrayAccessExpression -> true
-        else -> false
-    }
-
-    private fun showErrorHint(project: Project, editor: Editor?, @NlsContexts.DialogMessage message: String) {
-        CommonRefactoringUtil.showErrorHint(project, editor, message, INTRODUCE_VARIABLE, HelpID.INTRODUCE_VARIABLE)
     }
 
     private fun KtExpression.chooseApplicableComponentNamesForVariableDeclaration(
@@ -419,12 +373,14 @@ object KotlinIntroduceVariableHandler : RefactoringActionHandler {
         }
     }
 
-    internal fun doRefactoring(
+    override fun doRefactoring(
         project: Project,
         editor: Editor?,
         expression: KtExpression,
-        container: KtElement,
+        containers: Containers,
         isVar: Boolean,
+        occurrencesToReplace: List<KtExpression>?,
+        onNonInteractiveFinish: ((KtDeclaration) -> Unit)?
     ) {
         val parent = expression.parent
 
@@ -468,10 +424,11 @@ object KotlinIntroduceVariableHandler : RefactoringActionHandler {
         val isInplaceAvailable = editor != null && !isUnitTestMode()
 
         val callback = {
-            val replaceOccurrence = expression.shouldReplaceOccurrence(container)
+            val replaceOccurrence = expression.shouldReplaceOccurrence(containers.targetContainer)
 
             expression.chooseApplicableComponentNamesForVariableDeclaration(replaceOccurrence, editor) { componentNames ->
-                val anchor = calculateAnchor(expression, container) as? KtElement ?: return@chooseApplicableComponentNamesForVariableDeclaration
+                val anchor = calculateAnchor(expression, containers.targetContainer) as? KtElement
+                    ?: return@chooseApplicableComponentNamesForVariableDeclaration
                 val suggestedNames = analyzeInModalWindow(expression, KotlinBundle.message("find.usages.prepare.dialog.progress")) {
                     val nameValidator = KotlinDeclarationNameValidator(
                         anchor,
@@ -491,7 +448,7 @@ object KotlinIntroduceVariableHandler : RefactoringActionHandler {
                 val introduceVariableContext = IntroduceVariableContext(
                     expression,
                     suggestedNames,
-                    container,
+                    containers.targetContainer,
                     replaceOccurrence,
                     expressionRenderedType,
                     componentNames,
@@ -545,6 +502,7 @@ object KotlinIntroduceVariableHandler : RefactoringActionHandler {
                                 suggestedNames.single(),
                                 expressionRenderedType,
                                 introduceVariableContext.mustSpecifyTypeExplicitly,
+                                title = INTRODUCE_VARIABLE,
                                 project,
                                 editor,
                                 ::postProcess,
@@ -580,18 +538,12 @@ object KotlinIntroduceVariableHandler : RefactoringActionHandler {
         return (diagnostics.any { diagnostic -> diagnostic is KtFirDiagnostic.NewInferenceNoInformationForParameter })
     }
 
-    private fun PsiElement.isFunExpressionOrLambdaBody(): Boolean {
-        if (isFunctionalExpression()) return true
-        val parent = parent as? KtFunction ?: return false
-        return parent.bodyExpression == this && (parent is KtFunctionLiteral || parent.isFunctionalExpression())
-    }
-
-    internal fun KtExpression.getCandidateContainers(): List<KtElement> {
+    override fun KtExpression.getCandidateContainers(): List<Containers> {
         val firstContainer = getContainer() ?: return emptyList()
 
         val containers = SmartList(firstContainer)
 
-        if (!firstContainer.isFunExpressionOrLambdaBody()) return listOf(firstContainer)
+        if (!firstContainer.isFunExpressionOrLambdaBody()) return listOf(Containers(firstContainer, firstContainer))
 
         val lambdasAndContainers = ArrayList<Pair<KtExpression, KtElement>>().apply {
             var container = firstContainer
@@ -606,72 +558,6 @@ object KotlinIntroduceVariableHandler : RefactoringActionHandler {
         }
 
         lambdasAndContainers.mapTo(containers) { it.second }
-        return containers
-    }
-
-    fun doRefactoring(
-        project: Project,
-        editor: Editor?,
-        expressionToExtract: KtExpression?,
-        isVar: Boolean,
-    ) {
-        val expression = expressionToExtract?.let { KtPsiUtil.safeDeparenthesize(it) }
-            ?: return showErrorHint(project, editor, KotlinBundle.message("cannot.refactor.no.expression"))
-
-        if (expression.isAssignmentLHS()) {
-            return showErrorHint(project, editor, KotlinBundle.message("cannot.refactor.no.expression"))
-        }
-
-        if (!CommonRefactoringUtil.checkReadOnlyStatus(project, expression)) return
-
-        val candidateContainers = expression.getCandidateContainers().ifEmpty {
-            return showErrorHint(project, editor, KotlinBundle.message("cannot.refactor.no.container"))
-        }
-
-        selectTargetContainerAndDoRefactoring(editor, candidateContainers) { container ->
-            doRefactoring(project, editor, expression, container, isVar)
-        }
-    }
-
-    private fun selectTargetContainerAndDoRefactoring(
-        editor: Editor?,
-        candidateContainers: List<KtElement>,
-        doRefactoring: (KtElement) -> Unit,
-    ) {
-        if (editor == null) {
-            doRefactoring(candidateContainers.first())
-        } else if (isUnitTestMode()) {
-            doRefactoring(candidateContainers.last())
-        } else {
-            chooseContainerElementIfNecessary(
-                candidateContainers,
-                editor,
-                KotlinBundle.message("text.select.target.code.block"),
-                true,
-                { it },
-                doRefactoring,
-            )
-        }
-    }
-
-    override fun invoke(project: Project, editor: Editor, file: PsiFile?, dataContext: DataContext?) {
-        if (file !is KtFile) return
-
-        try {
-            selectElement(editor, file, ElementKind.EXPRESSION) {
-                doRefactoring(
-                    project,
-                    editor,
-                    it as KtExpression?,
-                    KotlinCommonRefactoringSettings.getInstance().INTRODUCE_DECLARE_WITH_VAR
-                )
-            }
-        } catch (e: IntroduceRefactoringException) {
-            showErrorHint(project, editor, e.message!!)
-        }
-    }
-
-    override fun invoke(project: Project, elements: Array<out PsiElement>, dataContext: DataContext?) {
-        // do nothing
+        return containers.map { Containers(it, it) } // TODO: fix occurence container (currently it is not used in K2-implementation)
     }
 }

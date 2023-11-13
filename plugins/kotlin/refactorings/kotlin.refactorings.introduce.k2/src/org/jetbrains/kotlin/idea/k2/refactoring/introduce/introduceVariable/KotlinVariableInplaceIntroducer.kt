@@ -22,6 +22,7 @@ import com.intellij.ui.dsl.builder.actionListener
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.builder.selected
 import com.intellij.util.application
+import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.analyzeInModalWindow
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -45,6 +46,7 @@ class KotlinVariableInplaceIntroducer(
     suggestedNames: Collection<String>,
     private val expressionRenderedType: String?,
     private val mustSpecifyTypeExplicitly: Boolean,
+    @Nls title: String,
     project: Project,
     editor: Editor,
     private val postProcess: KFunction2<KtDeclaration, Editor?, Unit>,
@@ -52,7 +54,7 @@ class KotlinVariableInplaceIntroducer(
     localVariable = addedVariable.takeIf { it.isLocal },
     expression = originalExpression,
     occurrences = occurrencesToReplace,
-    title = KotlinIntroduceVariableHandler.INTRODUCE_VARIABLE,
+    title = title,
     project = project,
     editor = editor,
 ) {
