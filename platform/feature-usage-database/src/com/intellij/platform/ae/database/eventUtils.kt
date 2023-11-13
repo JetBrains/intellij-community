@@ -2,11 +2,14 @@
 package com.intellij.platform.ae.database
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.ae.database.activities.UserActivity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.sqlite.SqliteResultSet
+
+object AEEventUtils
 
 /**
  * Wrap the call to your update() function in user activity into this method,
@@ -19,7 +22,12 @@ inline fun <T : UserActivity> runUpdateEvent(activity: T, crossinline action: su
   if (ApplicationManager.getApplication().isUnitTestMode) return
   AEDatabaseLifetime.getScope().launch {
     withContext(Dispatchers.Default) {
-      action(activity)
+      try {
+        action(activity)
+      }
+      catch (t: Throwable) {
+        logger<AEEventUtils>().error(t)
+      }
     }
   }
 }
