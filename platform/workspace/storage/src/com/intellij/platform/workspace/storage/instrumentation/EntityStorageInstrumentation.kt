@@ -70,6 +70,11 @@ public interface MutableEntityStorageInstrumentation : MutableEntityStorage, Ent
   public fun addChild(connectionId: ConnectionId, parent: WorkspaceEntity?, child: WorkspaceEntity)
 }
 
+/**
+ * A record of reference modification on two entities.
+ * The reference may be added or removed. Replacement of the reference with a new one is presented as a combination of
+ *   remove and add modifications.
+ */
 internal sealed interface Modification {
   data class Add(val parent: EntityId, val child: EntityId) : Modification {
     override fun toString(): String {

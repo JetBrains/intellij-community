@@ -224,9 +224,6 @@ internal class MutableRefsTable(
     return modifications
   }
 
-  /**
-   * Returns the removed child or null of there was no child
-   */
   fun removeOneToOneRefByParent(connectionId: ConnectionId, parentId: EntityId): List<Modification> {
     val removedValue = getOneToOneMutableMap(connectionId).removeValue(parentId.arrayId)
     return if (removedValue != null) {
@@ -320,9 +317,6 @@ internal class MutableRefsTable(
     }
   }
 
-  /**
-   * Returns list of [Modification] that were performed after this operation
-   */
   fun replaceOneToManyChildrenOfParent(connectionId: ConnectionId,
                                        parentId: EntityId,
                                        newChildrenEntityIds: List<ChildEntityId>): List<Modification> {
@@ -387,9 +381,6 @@ internal class MutableRefsTable(
     }
   }
 
-  /**
-   * Return list of modifications in references after this operation
-   */
   fun replaceOneToOneChildOfParent(connectionId: ConnectionId, parentId: EntityId, childEntityId: ChildEntityId): List<Modification> {
     val copiedMap = getOneToOneMutableMap(connectionId)
     val removedParentId = copiedMap.removeKey(childEntityId.id.arrayId)
