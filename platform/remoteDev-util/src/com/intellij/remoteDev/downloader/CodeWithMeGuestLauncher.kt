@@ -101,8 +101,7 @@ object CodeWithMeGuestLauncher {
             val embeddedClientLauncher = EmbeddedClientLauncher.create()
             if (embeddedClientLauncher != null) {
               LOG.debug("Launching client process from current IDE")
-              val lifetime = embeddedClientLauncher.launch(url, parentLifetime, NotificationBasedEmbeddedClientErrorReporter(project))
-              onDone(lifetime)
+              clientLifetime = embeddedClientLauncher.launch(url, parentLifetime, NotificationBasedEmbeddedClientErrorReporter(project))
               return
             }
             else {
