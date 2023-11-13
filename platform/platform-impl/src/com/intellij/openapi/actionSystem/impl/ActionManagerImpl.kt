@@ -59,11 +59,11 @@ import com.intellij.util.ReflectionUtil
 import com.intellij.util.childScope
 import com.intellij.util.concurrency.*
 import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.containers.UnmodifiableHashMap
 import com.intellij.util.ui.StartupUiUtil.addAwtListener
 import com.intellij.util.xml.dom.XmlElement
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
-import kotlinx.collections.immutable.persistentHashMapOf
 import kotlinx.collections.immutable.persistentHashSetOf
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
@@ -97,7 +97,7 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
   private val lock = Any()
 
   @Volatile
-  private var idToAction = persistentHashMapOf<String, AnAction>()
+  private var idToAction = UnmodifiableHashMap.empty<String, AnAction>()
   private val pluginToId = HashMap<PluginId, MutableList<String>>()
   private val idToIndex = Object2IntOpenHashMap<String>()
 
@@ -349,7 +349,7 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
 
     actionToId.put(convertedAction, stub.id)
     val result = (if (stub is ActionStub) stub.projectType else null)?.let { ChameleonAction(convertedAction, it) } ?: convertedAction
-    idToAction = idToAction.put(stub.id, result)
+    idToAction = idToAction.with(stub.id, result)
     return result
   }
 
@@ -945,16 +945,16 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
       // we need to create ChameleonAction even if 'projectType==null', in case 'ActionStub.getProjectType() != null'
       val chameleonAction = ChameleonAction(existing, null)
       if (!chameleonAction.addAction(action, projectType)) return false
-      idToAction = idToAction.put(actionId, chameleonAction)
+      idToAction = idToAction.with(actionId, chameleonAction)
       return true
     }
     else if (projectType != null) {
       val chameleonAction = ChameleonAction(action, projectType)
-      idToAction = idToAction.put(actionId, chameleonAction)
+      idToAction = idToAction.with(actionId, chameleonAction)
       return true
     }
     else {
-      idToAction = idToAction.put(actionId, action)
+      idToAction = idToAction.with(actionId, action)
       return true
     }
   }
@@ -1008,7 +1008,7 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
         return
       }
 
-      idToAction = idToAction.remove(actionId)
+      idToAction = idToAction.without(actionId)
 
       actionToId.remove(actionToRemove)
       idToIndex.removeInt(actionId)
