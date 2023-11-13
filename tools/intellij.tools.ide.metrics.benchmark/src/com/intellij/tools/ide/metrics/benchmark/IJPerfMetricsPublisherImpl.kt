@@ -66,7 +66,7 @@ class IJPerfMetricsPublisherImpl : MetricsPublisher {
       )
 
       return PerformanceMetricsDto.create(
-        projectName = "",
+        projectName = fullQualifiedTestMethodName,
         projectURL = "",
         projectDescription = "",
         methodName = fullQualifiedTestMethodName,
