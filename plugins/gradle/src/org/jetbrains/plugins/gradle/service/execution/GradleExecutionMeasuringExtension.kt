@@ -3,38 +3,24 @@ package org.jetbrains.plugins.gradle.service.execution
 
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import org.gradle.tooling.LongRunningOperation
-import org.gradle.tooling.events.OperationType
-import org.gradle.tooling.events.ProgressListener
 import org.gradle.tooling.model.build.BuildEnvironment
-import org.gradle.util.GradleVersion
-import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.isGradleOlderThan
-import org.jetbrains.plugins.gradle.service.execution.statistics.GradleExecutionStageFusHandler
 import org.jetbrains.plugins.gradle.service.project.GradleOperationHelperExtension
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings
-import java.lang.ref.WeakReference
 
+/**
+ * This extension is obsolete and has already been removed in 233. Metrics collected by extensions are no longer needed in 232.
+ * The reason for removing logic from this extension is to prevent performance degradation (IDEA-331512) introduced in IDEA-323893.
+ *
+ * The remaining code is kept in the repository to prevent possible bugs, as the amount of affected code is quite large.
+ */
 class GradleExecutionMeasuringExtension : GradleOperationHelperExtension {
 
   override fun prepareForExecution(id: ExternalSystemTaskId,
                                    operation: LongRunningOperation,
                                    gradleExecutionSettings: GradleExecutionSettings,
-                                   buildEnvironment: BuildEnvironment?) {
-    val gradleVersion = buildEnvironment?.gradleVersion()
-    if (gradleVersion == null || gradleVersion.isGradleOlderThan("5.1")) {
-      return
-    }
-    val handler = GradleExecutionStageFusHandler(id.id, WeakReference(id.findProject()))
-    val router = TaskExecutionAggregatedRouter(handler)
-    operation.addProgressListener(
-      ProgressListener {
-        router.route(it)
-      },
-      OperationType.TASK, OperationType.GENERIC
-    )
-  }
+                                   buildEnvironment: BuildEnvironment?) = Unit
 
   override fun prepareForSync(operation: LongRunningOperation, resolverCtx: ProjectResolverContext) = Unit
 
-  private fun BuildEnvironment.gradleVersion(): GradleVersion? = gradle?.gradleVersion?.let { GradleVersion.version(it) }
 }

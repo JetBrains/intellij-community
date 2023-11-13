@@ -23,6 +23,7 @@ import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
 import org.jetbrains.plugins.gradle.importing.TestGradleBuildScriptBuilder
 import org.jetbrains.plugins.gradle.statistics.GradleExecutionPerformanceCollector
 import org.jetbrains.plugins.gradle.util.GradleConstants
+import org.junit.Ignore
 import org.junit.Test
 import org.junit.runners.Parameterized
 import java.util.concurrent.CompletableFuture
@@ -31,6 +32,7 @@ import java.util.function.Consumer
 
 class GradleTasksExecutionTest : GradleImportingTestCase() {
 
+  @Ignore("IDEA-335960")
   @Test
   fun `test fus contains only well known task metrics`() {
     val buildScript = createBuildScriptBuilder()

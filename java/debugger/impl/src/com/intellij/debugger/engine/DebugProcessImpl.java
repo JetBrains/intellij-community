@@ -1064,6 +1064,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
 
     E start(EvaluationContextImpl evaluationContext, boolean internalEvaluate) throws EvaluateException {
+      ReferenceType lastLoadedClass = null;
       while (true) {
         try {
           return startInternal(evaluationContext, internalEvaluate);
@@ -1081,6 +1082,11 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
           if (loadedClass == null) {
             throw EvaluateExceptionUtil.createEvaluateException(e);
           }
+          else if (loadedClass.equals(lastLoadedClass)) { // check for endless loading in the incorrect class loader, see IDEA-335672
+            throw EvaluateExceptionUtil.createEvaluateException(
+              "Loading class " + e.className() + " in the wrong classloader " + evaluationContext.getClassLoader());
+          }
+          lastLoadedClass = loadedClass;
         }
       }
     }
