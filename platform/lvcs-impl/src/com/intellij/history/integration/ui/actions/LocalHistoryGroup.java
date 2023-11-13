@@ -24,12 +24,7 @@ public final class LocalHistoryGroup extends NonTrivialActionGroup implements Du
 
     if (ActionPlaces.isPopupPlace(e.getPlace())) {
       VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);
-      if (file != null && !(file.isInLocalFileSystem() || VersionManagingFileSystem.isEnforcedNonLocal(file))) {
-        e.getPresentation().setEnabledAndVisible(false);
-        return;
-      }
-
-      if (file == null && e.getData(CommonDataKeys.PSI_ELEMENT) != null) {
+      if (file == null || !(file.isInLocalFileSystem() || VersionManagingFileSystem.isEnforcedNonLocal(file))) {
         e.getPresentation().setEnabledAndVisible(false);
         return;
       }
