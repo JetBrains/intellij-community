@@ -799,7 +799,7 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
   }
 
   private void reportError(String key, AtomicReference<String> error) {
-    String message = error.get();
+    var message = error.get();
     myErrorSink.accept(message != null ? UIBundle.message(key, message) : null);
   }
 
