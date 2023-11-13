@@ -90,11 +90,16 @@ __jetbrains_intellij_command_started() {
     return 0
   fi
 
+  __jetbrains_intellij_clear_all_and_move_cursor_to_top_left
   __jetbrains_intellij_debug_log "command_started '$bash_command'"
   builtin local current_directory="$PWD"
   builtin printf '\e]1341;command_started;command=%s;current_directory=%s\a' \
      "$(__jetbrains_intellij_encode "$bash_command")" \
      "$(__jetbrains_intellij_encode "$current_directory")"
+}
+
+__jetbrains_intellij_clear_all_and_move_cursor_to_top_left() {
+  builtin printf '\e[3J\e[1;1H'
 }
 
 __jetbrains_intellij_initialized=""

@@ -78,11 +78,6 @@ class BlockTerminalController(
     val model = session.model
     model.isCommandRunning = false
 
-    // prepare terminal for the next command
-    model.withContentLock {
-      model.clearAllAndMoveCursorToTopLeftCorner(session.controller)
-    }
-
     promptVisibilityAlarm.cancelAllRequests()
     invokeLater {
       promptController.promptIsVisible = true

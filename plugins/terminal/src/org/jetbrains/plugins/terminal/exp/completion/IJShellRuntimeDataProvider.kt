@@ -52,10 +52,6 @@ class IJShellRuntimeDataProvider(private val session: TerminalSession) : ShellRu
     }
     finally {
       Disposer.dispose(disposable)
-      val model = session.model
-      model.withContentLock {
-        model.clearAllAndMoveCursorToTopLeftCorner(session.controller)
-      }
     }
   }
 

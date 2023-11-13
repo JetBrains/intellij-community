@@ -5,7 +5,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
 import com.jediterm.terminal.CursorShape
 import com.jediterm.terminal.StyledTextConsumer
-import com.jediterm.terminal.Terminal
 import com.jediterm.terminal.emulator.mouse.MouseFormat
 import com.jediterm.terminal.emulator.mouse.MouseMode
 import com.jediterm.terminal.model.TerminalLine
@@ -148,12 +147,6 @@ class TerminalModel(internal val textBuffer: TerminalTextBuffer) {
   }
 
   //-------------------MODIFICATION METHODS------------------------------------------------
-
-  fun clearAllAndMoveCursorToTopLeftCorner(terminal: Terminal) {
-    terminal.eraseInDisplay(2)
-    terminal.cursorPosition(1, 1)
-    textBuffer.clearHistory()
-  }
 
   fun lockContent() = textBuffer.lock()
 

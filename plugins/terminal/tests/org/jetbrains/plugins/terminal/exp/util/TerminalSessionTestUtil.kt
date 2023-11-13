@@ -39,18 +39,18 @@ object TerminalSessionTestUtil {
     session.controller.resize(initialTermSize, RequestOrigin.User)
     val model: TerminalModel = session.model
 
-    val promptShownFuture = CompletableFuture<Boolean>()
+    val initializedFuture = CompletableFuture<Boolean>()
     val listenersDisposable = Disposer.newDisposable()
     session.addCommandListener(object : ShellCommandListener {
-      override fun promptShown() {
-        promptShownFuture.complete(true)
+      override fun initialized(currentDirectory: String?) {
+        initializedFuture.complete(true)
       }
     }, listenersDisposable)
 
     session.start(ttyConnector)
 
     try {
-      promptShownFuture.get(5000, TimeUnit.MILLISECONDS)
+      initializedFuture.get(5000, TimeUnit.MILLISECONDS)
     }
     catch (ex: TimeoutException) {
       BasePlatformTestCase.fail(
@@ -59,8 +59,6 @@ object TerminalSessionTestUtil {
     finally {
       Disposer.dispose(listenersDisposable)
     }
-    // Remove all welcome messages
-    model.withContentLock { model.clearAllAndMoveCursorToTopLeftCorner(session.controller) }
 
     return session
   }

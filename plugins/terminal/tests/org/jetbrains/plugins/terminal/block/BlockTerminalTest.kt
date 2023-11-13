@@ -32,6 +32,7 @@ class BlockTerminalTest(private val shellPath: String) {
     fun shells(): List<String> = listOf(
       "/bin/zsh",
       "/bin/bash",
+      "/usr/local/bin/fish",
     ).filter { File(it).exists() }
   }
 
@@ -75,6 +76,7 @@ fun getCommandResultFuture(session: TerminalSession): CompletableFuture<CommandR
   session.commandManager.addListener(object : ShellCommandListener {
     override fun commandFinished(command: String?, exitCode: Int, duration: Long?) {
       result.complete(CommandResult(exitCode, lastOutput.get()?.text.orEmpty()))
+      Disposer.dispose(disposable)
     }
   }, disposable)
   return result

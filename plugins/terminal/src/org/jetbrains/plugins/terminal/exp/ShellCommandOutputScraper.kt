@@ -4,7 +4,6 @@ package org.jetbrains.plugins.terminal.exp
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
 import com.jediterm.terminal.StyledTextConsumer
-import com.jediterm.terminal.Terminal
 import com.jediterm.terminal.TextStyle
 import com.jediterm.terminal.model.CharBuffer
 import com.jediterm.terminal.model.TerminalModelListener
@@ -13,11 +12,10 @@ import org.jetbrains.plugins.terminal.TerminalUtil
 import java.util.concurrent.CopyOnWriteArrayList
 
 internal class ShellCommandOutputScraper(private val textBuffer: TerminalTextBuffer,
-                                         private val terminal: Terminal,
                                          commandManager: ShellCommandManager,
                                          parentDisposable: Disposable) {
 
-  constructor(session: TerminalSession): this(session.model.textBuffer, session.controller, session.commandManager, session)
+  constructor(session: TerminalSession): this(session.model.textBuffer, session.commandManager, session)
 
   private val listeners: CopyOnWriteArrayList<ShellCommandOutputListener> = CopyOnWriteArrayList()
   private var runningCommand: String? = null
@@ -51,13 +49,31 @@ internal class ShellCommandOutputScraper(private val textBuffer: TerminalTextBuf
     val builder = StringBuilder()
     val highlightings = mutableListOf<StyleRange>()
     val consumer = object : StyledTextConsumer {
+
+      private var pendingNewLines: Int = 0
+      private var pendingNuls: Int = 0
+
       override fun consume(x: Int,
                            y: Int,
                            style: TextStyle,
                            characters: CharBuffer,
                            startRow: Int) {
+        repeat(pendingNewLines) {
+          val startOffset = baseOffset + builder.length
+          builder.append("\n")
+          highlightings.add(StyleRange(startOffset, startOffset + 1, TextStyle.EMPTY))
+        }
+        pendingNewLines = 0
+        repeat(pendingNuls) {
+          builder.append(' ')
+        }
+        pendingNuls = 0
         val startOffset = baseOffset + builder.length
-        builder.append(characters.toString())
+        val text = characters.toString()
+        check(text.isNotEmpty()) {
+          "unexpected empty text chunk"
+        }
+        builder.append(text)
         highlightings.add(StyleRange(startOffset, baseOffset + builder.length, style))
       }
 
@@ -67,42 +83,16 @@ internal class ShellCommandOutputScraper(private val textBuffer: TerminalTextBuf
                               style: TextStyle,
                               characters: CharBuffer,
                               startRow: Int) {
-        val startOffset = baseOffset + builder.length
-        repeat(characters.buf.size) {
-          builder.append(' ')
-        }
-        highlightings.add(StyleRange(startOffset, baseOffset + builder.length, TextStyle.EMPTY))
+        pendingNuls += characters.length
       }
 
       override fun consumeQueue(x: Int, y: Int, nulIndex: Int, startRow: Int) {
-        val startOffset = baseOffset + builder.length
-        builder.append("\n")
-        highlightings.add(StyleRange(startOffset, startOffset + 1, TextStyle.EMPTY))
+        pendingNewLines++
+        pendingNuls = 0
       }
     }
-
-    val commandLines = runningCommand?.let { command ->
-      command.split("\n").sumOf { it.length / textBuffer.width + if (it.length % textBuffer.width > 0) 1 else 0 }
-    } ?: 0
-    val historyLines = textBuffer.historyLinesCount
-    if (historyLines > 0) {
-      if (commandLines <= historyLines) {
-        textBuffer.processHistoryAndScreenLines(commandLines - historyLines, historyLines - commandLines, consumer)
-        textBuffer.processScreenLines(0, terminal.cursorY, consumer)
-      }
-      else {
-        textBuffer.processHistoryAndScreenLines(-historyLines, historyLines, consumer)
-        textBuffer.processScreenLines(commandLines - historyLines, terminal.cursorY, consumer)
-      }
-    }
-    else {
-      textBuffer.processScreenLines(commandLines, terminal.cursorY - commandLines, consumer)
-    }
-
-    while (builder.lastOrNull() == '\n') {
-      builder.deleteCharAt(builder.lastIndex)
-      highlightings.removeLast()
-    }
+    val historyLines = -textBuffer.historyLinesCount
+    textBuffer.processHistoryAndScreenLines(-historyLines, historyLines + textBuffer.height, consumer)
     return StyledCommandOutput(builder.toString(), highlightings)
   }
 }
