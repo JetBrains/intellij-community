@@ -4,6 +4,7 @@ package com.intellij.util.containers;
 import com.intellij.util.ArrayUtilRt;
 import it.unimi.dsi.fastutil.Hash;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -244,18 +245,27 @@ public final class UnmodifiableHashMap<K, V> implements Map<K, V> {
       return with(entry.getKey(), entry.getValue());
     }
 
-    // Could be optimized further for map.size() == 2 or 3.
-    Map<K, V> newMap = new Object2ObjectOpenCustomHashMap<>(this, new Hash.Strategy<K>() {
-      @Override
-      public int hashCode(@Nullable K o) {
-        return o == null ? 0 : strategy.hashCode(o);
-      }
+    Map<K, V> newMap;
+    if (strategy == HashingStrategy.canonical()) {
+      //noinspection SSBasedInspection
+      newMap = new Object2ObjectOpenHashMap<>(map.size() + size);
+    }
+    else {
+      // Could be optimized further for map.size() == 2 or 3.
+      newMap = new Object2ObjectOpenCustomHashMap<>(this, new Hash.Strategy<K>() {
+        @Override
+        public int hashCode(@Nullable K o) {
+          return o == null ? 0 : strategy.hashCode(o);
+        }
 
-      @Override
-      public boolean equals(@Nullable K a, @Nullable K b) {
-        return a == b || (a != null && b != null && strategy.equals(a, b));
-      }
-    });
+        @Override
+        public boolean equals(@Nullable K a, @Nullable K b) {
+          return a == b || (a != null && b != null && strategy.equals(a, b));
+        }
+      });
+    }
+
+    newMap.putAll(this);
     newMap.putAll(map);
     return fromMap(strategy, newMap);
   }
