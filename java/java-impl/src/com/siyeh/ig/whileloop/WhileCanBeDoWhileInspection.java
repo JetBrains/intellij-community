@@ -249,7 +249,7 @@ public class WhileCanBeDoWhileInspection extends AbstractBaseJavaLocalInspection
       }
 
       private static boolean isParentFor(@Nullable PsiElement element1, @Nullable PsiElement element2) {
-        if (element1 == null || element2 == null) return false;
+        if (element1 == null || element2 == null) return true;
         if (element1.equals(element2)) return false;
 
         PsiElement pinedElement1 = element1;
