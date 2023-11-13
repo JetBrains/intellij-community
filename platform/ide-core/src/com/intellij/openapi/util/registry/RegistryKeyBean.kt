@@ -14,8 +14,6 @@ import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.xmlb.annotations.Attribute
 import com.intellij.util.xmlb.annotations.Property
-import kotlinx.collections.immutable.mutate
-import kotlinx.collections.immutable.persistentHashMapOf
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
@@ -38,11 +36,12 @@ class RegistryKeyBean private constructor() {
     fun addKeysFromPlugins() {
       val point = (ApplicationManager.getApplication().extensionArea)
         .getExtensionPoint<RegistryKeyBean>("com.intellij.registryKey") as ExtensionPointImpl
-      Registry.setKeys(persistentHashMapOf<String, RegistryKeyDescriptor>().mutate { mutator ->
+      Registry.setKeys(HashMap<String, RegistryKeyDescriptor>().let { mutator ->
         point.processUnsortedWithPluginDescriptor { bean, pluginDescriptor ->
           val descriptor = createRegistryKeyDescriptor(bean, pluginDescriptor)
           mutator.put(descriptor.name, descriptor)
         }
+        java.util.Map.copyOf(mutator)
       })
 
       point.addExtensionPointListener(object : ExtensionPointListener<RegistryKeyBean>, ExtensionPointPriorityListener {
