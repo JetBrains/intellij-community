@@ -30,6 +30,7 @@ import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.platform.instanceContainer.internal.*
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
+import com.intellij.util.containers.UnmodifiableHashMap
 import com.intellij.util.messages.*
 import com.intellij.util.messages.impl.MessageBusEx
 import com.intellij.util.messages.impl.MessageBusImpl
@@ -426,7 +427,7 @@ abstract class ComponentManagerImpl(
     }
 
     if (precomputedExtensionModel == null) {
-      val immutableExtensionPoints = if (extensionPoints!!.isEmpty()) persistentHashMapOf() else extensionPoints.toPersistentHashMap()
+      val immutableExtensionPoints = UnmodifiableHashMap.fromMap(extensionPoints!!)
       extensionArea.reset(immutableExtensionPoints)
 
       for (rootModule in modules) {
@@ -464,10 +465,11 @@ abstract class ComponentManagerImpl(
       return
     }
 
-    val result = persistentHashMapOf<String, ExtensionPointImpl<*>>().mutate { map ->
+    val result = HashMap<String, ExtensionPointImpl<*>>().let { map ->
       for ((pluginDescriptor, points) in precomputedExtensionModel.extensionPoints) {
         createExtensionPoints(points = points, componentManager = this, result = map, pluginDescriptor = pluginDescriptor)
       }
+      UnmodifiableHashMap.fromMap(map)
     }
 
     assert(extensionArea.nameToPointMap.isEmpty())

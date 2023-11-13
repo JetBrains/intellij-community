@@ -9,9 +9,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.*
 import com.intellij.openapi.util.Disposer
-import kotlinx.collections.immutable.PersistentMap
-import kotlinx.collections.immutable.mutate
-import kotlinx.collections.immutable.persistentHashMapOf
+import com.intellij.util.containers.UnmodifiableHashMap
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
@@ -57,7 +55,7 @@ fun createExtensionPoints(points: List<ExtensionPointDescriptor>,
 @Internal
 class ExtensionsAreaImpl(private val componentManager: ComponentManager) : ExtensionsArea {
   @Volatile
-  private var extensionPoints: PersistentMap<String, ExtensionPointImpl<*>> = persistentHashMapOf()
+  private var extensionPoints: UnmodifiableHashMap<String, ExtensionPointImpl<*>> = UnmodifiableHashMap.empty()
 
   private val epTraces = if (DEBUG_REGISTRATION) HashMap<String, Throwable>() else null
 
@@ -66,7 +64,7 @@ class ExtensionsAreaImpl(private val componentManager: ComponentManager) : Exten
 
   private val lock = Any()
 
-  fun reset(nameToPointMap: PersistentMap<String, ExtensionPointImpl<*>>) {
+  fun reset(nameToPointMap: UnmodifiableHashMap<String, ExtensionPointImpl<*>>) {
     extensionPoints = nameToPointMap
   }
 
@@ -157,10 +155,8 @@ class ExtensionsAreaImpl(private val componentManager: ComponentManager) : Exten
     }
 
     synchronized(lock) {
-      extensionPoints = extensionPoints.mutate { map ->
-        for (descriptor in descriptors) {
-          map.remove(descriptor.getQualifiedName(pluginDescriptor))
-        }
+      for (descriptor in descriptors) {
+        extensionPoints = extensionPoints.without(descriptor.getQualifiedName(pluginDescriptor))
       }
     }
   }
@@ -227,7 +223,7 @@ class ExtensionsAreaImpl(private val componentManager: ComponentManager) : Exten
     }
     checkThatPointNotDuplicated(name, point.getPluginDescriptor())
     synchronized(lock) {
-      extensionPoints = extensionPoints.put(name, point)
+      extensionPoints = extensionPoints.with(name, point)
     }
     if (DEBUG_REGISTRATION) {
       epTraces!!.put(name, Throwable("Original registration for $name"))
@@ -262,10 +258,10 @@ class ExtensionsAreaImpl(private val componentManager: ComponentManager) : Exten
 
   // _only_ for CoreApplicationEnvironment
   fun registerExtensionPoints(points: List<ExtensionPointDescriptor>, pluginDescriptor: PluginDescriptor) {
+    val map = HashMap<String, ExtensionPointImpl<*>>()
+    createExtensionPoints(points = points, componentManager = componentManager, result = map, pluginDescriptor = pluginDescriptor)
     synchronized(lock) {
-      extensionPoints = extensionPoints.mutate {
-        createExtensionPoints(points = points, componentManager = componentManager, result = it, pluginDescriptor = pluginDescriptor)
-      }
+      extensionPoints = extensionPoints.withAll(map)
     }
   }
 
@@ -293,7 +289,7 @@ class ExtensionsAreaImpl(private val componentManager: ComponentManager) : Exten
     val extensionPoint = getExtensionPointIfRegistered<Any>(extensionPointName) ?: return
     extensionPoint.reset()
     synchronized(lock) {
-    extensionPoints = extensionPoints.remove(extensionPointName)
+    extensionPoints = extensionPoints.without(extensionPointName)
       }
   }
 
