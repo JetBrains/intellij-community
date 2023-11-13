@@ -13,7 +13,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 class PrecomputedExtensionModel(
   @JvmField val extensionPoints: PersistentList<Pair<IdeaPluginDescriptor, PersistentList<ExtensionPointDescriptor>>>,
-  @JvmField val nameToExtensions: PersistentMap<String, PersistentList<Pair<IdeaPluginDescriptor, PersistentList<ExtensionDescriptor>>>>,
+  @JvmField val nameToExtensions: Map<String, PersistentList<Pair<IdeaPluginDescriptor, PersistentList<ExtensionDescriptor>>>>,
 )
 
 @ApiStatus.Internal
@@ -21,7 +21,7 @@ fun precomputeModuleLevelExtensionModel(): PrecomputedExtensionModel {
   val modules = PluginManagerCore.getPluginSet().getEnabledModules()
 
   var extensionPointTotalCount = 0
-  var nameToExtensions = persistentHashMapOf<String, PersistentList<Pair<IdeaPluginDescriptor, PersistentList<ExtensionDescriptor>>>>()
+  val nameToExtensions = HashMap<String, PersistentList<Pair<IdeaPluginDescriptor, PersistentList<ExtensionDescriptor>>>>()
 
   // step 1 - collect container level extension points
   val extensionPointDescriptors = persistentListOf<Pair<IdeaPluginDescriptor, PersistentList<ExtensionPointDescriptor>>>().mutate { mutator ->
@@ -32,27 +32,25 @@ fun precomputeModuleLevelExtensionModel(): PrecomputedExtensionModel {
         extensionPointTotalCount += list.size
 
         for (descriptor in list) {
-          nameToExtensions = nameToExtensions.put(descriptor.getQualifiedName(pluginDescriptor), persistentListOf())
+          nameToExtensions.put(descriptor.getQualifiedName(pluginDescriptor), persistentListOf())
         }
       }
     }
   }
 
   // step 2 - collect container level extensions
-  nameToExtensions = nameToExtensions.mutate { mutator ->
-    executeRegisterTask(modules) { pluginDescriptor ->
-      val map = pluginDescriptor.epNameToExtensions
-      for ((name, list) in map.entries) {
-        mutator.get(name)?.let {
-          mutator.put(name, it.add(pluginDescriptor to list))
-        }
+  executeRegisterTask(modules) { pluginDescriptor ->
+    val map = pluginDescriptor.epNameToExtensions
+    for ((name, list) in map.entries) {
+      nameToExtensions.get(name)?.let {
+        nameToExtensions.putIfAbsent(name, it.add(pluginDescriptor to list))
       }
     }
   }
 
   return PrecomputedExtensionModel(
     extensionPoints = extensionPointDescriptors,
-    nameToExtensions = nameToExtensions,
+    nameToExtensions = java.util.Map.copyOf(nameToExtensions),
   )
 }
 
