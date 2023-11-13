@@ -762,13 +762,13 @@ internal class MutableEntityStorageImpl(
     }
     else {
       diff.storageIsAlreadyApplied = true
-      var info = "Applying builder using addDiff. Previous stack trace >>>>\n"
       if (LOG.isTraceEnabled) {
-        val currentStackTrace = ExceptionUtil.currentStackTrace()
-        info += "\n$currentStackTrace"
+        diff.applyInfo = buildString {
+          appendLine("Applying builder using addDiff. Previous stack trace >>>>")
+          appendLine(ExceptionUtil.currentStackTrace())
+          appendLine("<<<<")
+        }
       }
-      info += "<<<<"
-      diff.applyInfo = info
     }
   }
 
