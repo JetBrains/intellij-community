@@ -21,7 +21,6 @@ import com.intellij.codeInspection.dataFlow.fix.DeleteSwitchLabelFix;
 import com.intellij.codeInspection.ex.EntryPointsManagerBase;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.util.IntentionName;
-import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
 import com.intellij.diagnostic.CoreAttachmentFactory;
 import com.intellij.ide.scratch.ScratchUtil;
 import com.intellij.java.JavaBundle;
@@ -746,18 +745,13 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   @Override
   public IntentionAction createAddToDependencyInjectionAnnotationsFix(@NotNull Project project,
                                                                       @NotNull String qualifiedName) {
-    final EntryPointsManagerBase entryPointsManager = EntryPointsManagerBase.getInstance(project);
-    return SpecialAnnotationsUtil.createAddToSpecialAnnotationsListIntentionAction(
-      QuickFixBundle.message("fix.unused.symbol.injection.text", qualifiedName),
-      QuickFixBundle.message("fix.unused.symbol.injection.family"),
-      JavaBundle.message("separator.mark.as.entry.point.if.annotated.by"), entryPointsManager.ADDITIONAL_ANNOTATIONS, qualifiedName);
+    return EntryPointsManagerBase.createAddEntryPointAnnotation(qualifiedName).asIntention();
   }
 
   @NotNull
   @Override
   public IntentionAction createAddToImplicitlyWrittenFieldsFix(@NotNull Project project, @NotNull final String qualifiedName) {
-    EntryPointsManagerBase entryPointsManagerBase = EntryPointsManagerBase.getInstance(project);
-    return entryPointsManagerBase.new AddImplicitlyWriteAnnotation(qualifiedName);
+    return EntryPointsManagerBase.createAddImplicitWriteAnnotation(qualifiedName).asIntention();
   }
 
   @NotNull
