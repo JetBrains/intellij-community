@@ -195,6 +195,9 @@ class CodeFloatingToolbar(
   }
 
   fun attachPopupToButton(button: ActionButton, popup: JBPopup) {
+    editor.scrollingModel.addVisibleAreaListener( {
+      alignButtonPopup(popup)
+    }, popup)
     popup.addListener(object : JBPopupListener {
 
       override fun beforeShown(event: LightweightWindowEvent) {
