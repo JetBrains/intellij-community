@@ -173,9 +173,9 @@ public class ProgramParametersConfigurator {
   private static DataContext createContext(@NotNull DataContext fallbackDataContext) {
     DataContext envContext = ExecutionManagerImpl.getEnvironmentDataContext();
     if (fallbackDataContext == DataContext.EMPTY_CONTEXT && envContext != null) {
-      Project project = CommonDataKeys.PROJECT.getData(envContext);
-      Module module = PlatformCoreDataKeys.MODULE.getData(envContext);
+      Project project = ReadAction.compute(() -> CommonDataKeys.PROJECT.getData(envContext));
       if (project != null) {
+        Module module = ReadAction.compute(() -> PlatformCoreDataKeys.MODULE.getData(envContext));
         fallbackDataContext = projectContext(project, module, null);
       }
     }
