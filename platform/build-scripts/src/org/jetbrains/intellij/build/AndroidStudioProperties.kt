@@ -81,10 +81,14 @@ class AndroidStudioProperties(home: Path) : BaseIdeaProperties() {
     includeIntoSourcesArchiveFilter = BiPredicate { _, _ -> true }
     customJvmMemoryOptions = customJvmMemoryOptions.putAll(arrayOf("-Xms" to "256m", "-Xmx" to "2048m"))
     additionalIdeJvmArguments = mutableListOf(
-      "-XX:FlightRecorderOptions=stackdepth=256", // Reduces the chance of truncated JFR stacks (ag/I16b829882).
-      "--add-opens=java.base/sun.net.www.protocol.https=ALL-UNNAMED", // Required by instantapps-api.jar (ag/I55803b347).
-      "-Didea.required.plugins.id=org.jetbrains.kotlin", // Stopgap solution to ensure the Kotlin plugin stays enabled (b/202048599).
-      "-Djava.security.manager=allow", // Enable use of the deprecated SecurityManager (b/302171264).
+      // Reduces the chance of truncated JFR stacks (ag/I16b829882).
+      "-XX:FlightRecorderOptions=stackdepth=256",
+      // Required by instantapps-api.jar (ag/I55803b347).
+      "--add-opens=java.base/sun.net.www.protocol.https=ALL-UNNAMED",
+      // Stopgap solution to ensure the Kotlin plugin stays enabled (b/202048599).
+      "-Didea.required.plugins.id=org.jetbrains.kotlin",
+      // Enable use of the deprecated SecurityManager (b/302171264).
+      "-Djava.security.manager=allow",
     )
 
     embeddedJetBrainsClientMainModule = null // Overrides org.jetbrains.intellij.build.configureJetBrainsProduct().
