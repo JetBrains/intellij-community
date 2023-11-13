@@ -8,7 +8,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.util.FlushingDaemon;
-import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.FilePageCacheLockFree;
 import com.intellij.util.ui.EDT;
@@ -18,7 +17,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.io.NettyUtil;
 
-import java.lang.reflect.Method;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
 import java.util.*;
 import java.util.concurrent.ForkJoinWorkerThread;
 import java.util.concurrent.TimeUnit;
@@ -31,15 +32,15 @@ public final class ThreadLeakTracker {
 
   private ThreadLeakTracker() { }
 
-  private static final Method getThreads = Objects.requireNonNull(ReflectionUtil.getDeclaredMethod(Thread.class, "getThreads"));
+  private static final MethodHandle getThreads = getThreadsMethodHandle();
 
   public static @NotNull Map<String, Thread> getThreads() {
     Thread[] threads;
     try {
       // faster than Thread.getAllStackTraces().keySet()
-      threads = (Thread[])getThreads.invoke(null);
+      threads = (Thread[])getThreads.invokeExact();
     }
-    catch (Exception e) {
+    catch (Throwable e) {
       throw new RuntimeException(e);
     }
 
@@ -208,11 +209,9 @@ public final class ThreadLeakTracker {
 
   private static boolean shouldIgnore(@NotNull Thread thread, StackTraceElement @NotNull [] stackTrace) {
     if (!thread.isAlive()) return true;
+    if (stackTrace.length == 0) return true;
     if (isWellKnownOffender(thread.getName())) return true;
 
-    if (stackTrace.length == 0) {
-      return true; // ignore threads with empty stack traces for now. Seems they are zombies unwilling to die.
-    }
     return isIdleApplicationPoolThread(stackTrace)
            || isIdleCommonPoolThread(thread, stackTrace)
            || isFutureTaskAboutToFinish(stackTrace)
@@ -383,5 +382,15 @@ public final class ThreadLeakTracker {
              " . " + stackTrace[2].getMethodName() +
              " : " + stackTrace[2].getMethodName().equals("finishCompletion") +
              ")";
+  }
+
+  private static @NotNull MethodHandle getThreadsMethodHandle() {
+    try {
+      return MethodHandles.privateLookupIn(Thread.class, MethodHandles.lookup())
+        .findStatic(Thread.class, "getThreads", MethodType.methodType(Thread[].class));
+    }
+    catch (Throwable e) {
+      throw new IllegalStateException("Unable to access the Thread#getThreads method", e);
+    }
   }
 }
