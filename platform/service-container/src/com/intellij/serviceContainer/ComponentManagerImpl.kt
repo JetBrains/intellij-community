@@ -75,6 +75,7 @@ val emptyConstructorMethodType: MethodType = MethodType.methodType(Void.TYPE)
 val coroutineScopeMethodType: MethodType = MethodType.methodType(Void.TYPE, CoroutineScope::class.java)
 
 private val applicationMethodType = MethodType.methodType(Void.TYPE, Application::class.java)
+private val componentManagerMethodType = MethodType.methodType(Void.TYPE, ComponentManager::class.java)
 
 @Internal
 fun MethodHandles.Lookup.findConstructorOrNull(clazz: Class<*>, type: MethodType): MethodHandle? {
@@ -192,13 +193,19 @@ abstract class ComponentManagerImpl(
     containerName = debugString(true),
   )
 
+  open val supportedSignaturesOfLightServiceConstructors: List<MethodType> = persistentListOf(
+    emptyConstructorMethodType,
+    coroutineScopeMethodType,
+    applicationMethodType,
+    componentManagerMethodType,
+  )
+
   @Suppress("LeakingThis")
   private val serviceContainer = InstanceContainerImpl(
     scopeHolder = scopeHolder,
     containerName = "${debugString(true)} services",
     dynamicInstanceSupport = if (isLightServiceSupported) LightServiceInstanceSupport(
       componentManager = this,
-      supportedSignatures = supportedSignaturesOfLightServiceConstructors(),
       onDynamicInstanceRegistration = ::registerDynamicInstanceForUnloading
     )
     else null,
@@ -1390,14 +1397,6 @@ abstract class ComponentManagerImpl(
     }
   }
 
-  protected open fun supportedSignaturesOfLightServiceConstructors(): List<MethodType> {
-    return listOf(
-      emptyConstructorMethodType,
-      coroutineScopeMethodType,
-      applicationMethodType,
-    )
-  }
-
   final override fun <T : Any> instantiateClassWithConstructorInjection(aClass: Class<T>, key: Any, pluginId: PluginId): T {
     return resetThreadContext().use {
       instantiateUsingPicoContainer(aClass = aClass, requestorKey = key, pluginId = pluginId, componentManager = this)
@@ -1604,8 +1603,14 @@ abstract class ComponentManagerImpl(
             }
             catch (e: Throwable) {
               if (!isServicePreloadingCancelled && !isDisposed) {
-                val adapter = componentKeyToAdapter.get(serviceInterface) as ServiceComponentAdapter?
-                LOG.error(PluginException(e, adapter?.pluginId))
+                // instanceHolder will throw PluginException if needed
+                if (useInstanceContainer || e is PluginException) {
+                  LOG.error(e)
+                }
+                else {
+                  val adapter = componentKeyToAdapter.get(serviceInterface) as ServiceComponentAdapter?
+                  LOG.error(PluginException(e, adapter?.pluginId))
+                }
               }
             }
           }

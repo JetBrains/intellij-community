@@ -44,6 +44,7 @@ import com.intellij.util.childScope
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.messages.impl.MessageBusEx
+import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -146,14 +147,12 @@ open class ProjectImpl(parent: ComponentManagerImpl, filePath: Path, projectName
                                       "expected (Project), (Project, CoroutineScope), (CoroutineScope), or ()")) as T
   }
 
-  final override fun supportedSignaturesOfLightServiceConstructors(): List<MethodType> {
-    return listOf(
-      projectMethodType,
-      projectAndScopeMethodType,
-      coroutineScopeMethodType,
-      emptyConstructorMethodType,
-    )
-  }
+  final override val supportedSignaturesOfLightServiceConstructors: List<MethodType> = persistentListOf(
+    projectMethodType,
+    projectAndScopeMethodType,
+    coroutineScopeMethodType,
+    emptyConstructorMethodType,
+  )
 
   override fun isInitialized(): Boolean {
     val containerState = containerState.get()

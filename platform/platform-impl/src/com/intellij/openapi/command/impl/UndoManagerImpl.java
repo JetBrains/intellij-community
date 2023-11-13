@@ -31,6 +31,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.ExternalChangeAction;
+import com.intellij.serviceContainer.NonInjectable;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.ThreadingAssertions;
@@ -78,8 +79,14 @@ public final class UndoManagerImpl extends UndoManager {
     private DocumentReference myOriginatorReference;
 
     @SuppressWarnings("unused")
-    private ClientState(@NotNull ComponentManager componentManager) {
-      myManager = getUndoManager(componentManager);
+    private ClientState(@NotNull Project project) {
+      myManager = getUndoManager(project);
+      myMerger = new CommandMerger(this);
+    }
+
+    @SuppressWarnings("unused")
+    private ClientState() {
+      myManager = getUndoManager(ApplicationManager.getApplication());
       myMerger = new CommandMerger(this);
     }
 
@@ -114,7 +121,17 @@ public final class UndoManagerImpl extends UndoManager {
     return Registry.intValue("undo.documentUndoLimit");
   }
 
-  @SuppressWarnings("NonDefaultConstructor")
+  @SuppressWarnings("unused")
+  private UndoManagerImpl(@NotNull Project project) {
+    this((ComponentManager)project);
+  }
+
+  @SuppressWarnings("unused")
+  private UndoManagerImpl() {
+    this((ComponentManager)null);
+  }
+
+  @NonInjectable
   private UndoManagerImpl(@Nullable ComponentManager componentManager) {
     myProject = componentManager instanceof Project ? (Project)componentManager : null;
   }

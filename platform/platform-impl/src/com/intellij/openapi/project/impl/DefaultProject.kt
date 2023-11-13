@@ -27,6 +27,7 @@ import com.intellij.serviceContainer.coroutineScopeMethodType
 import com.intellij.serviceContainer.emptyConstructorMethodType
 import com.intellij.serviceContainer.findConstructorOrNull
 import com.intellij.util.messages.MessageBus
+import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.SystemIndependent
@@ -197,14 +198,12 @@ private class DefaultProjectImpl(
             ?: throw RuntimeException("Cannot find suitable constructor, expected (Project) or ()")) as T
   }
 
-  override fun supportedSignaturesOfLightServiceConstructors(): List<MethodType> {
-    return listOf(
-      projectMethodType,
-      emptyConstructorMethodType,
-      projectAndScopeMethodType,
-      coroutineScopeMethodType,
-    )
-  }
+  override val supportedSignaturesOfLightServiceConstructors: List<MethodType> = persistentListOf(
+    projectMethodType,
+    emptyConstructorMethodType,
+    projectAndScopeMethodType,
+    coroutineScopeMethodType,
+  )
 
   override fun isParentLazyListenersIgnored(): Boolean = true
 

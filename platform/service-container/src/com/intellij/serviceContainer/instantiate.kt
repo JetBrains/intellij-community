@@ -18,10 +18,13 @@ internal suspend fun <T> instantiateWithContainer(
   try {
     return instantiate(resolver, parentScope, instanceClass)
   }
-  catch (ce: CancellationException) {
-    throw ce
+  catch (e: CancellationException) {
+    throw e
   }
-  catch (t: Throwable) {
-    throw PluginException(t, pluginId)
+  catch (e: PluginException) {
+    throw e
+  }
+  catch (e: Throwable) {
+    throw PluginException(e, pluginId)
   }
 }
