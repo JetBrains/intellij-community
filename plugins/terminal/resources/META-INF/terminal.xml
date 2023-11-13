@@ -89,7 +89,7 @@
               topic="com.intellij.codeInsight.lookup.LookupManagerListener"/>
   </projectListeners>
 
-  <actions>
+  <actions resource-bundle="messages.TerminalBundle">
     <group id="TerminalToolwindowActionGroup">
       <action id="Terminal.NewTab" class="org.jetbrains.plugins.terminal.action.TerminalNewTabAction">
         <keyboard-shortcut first-keystroke="control shift T" keymap="$default"/>
@@ -98,7 +98,8 @@
         <keyboard-shortcut first-keystroke="ctrl shift BACK_QUOTE" keymap="VSCode" replace-all="true"/>
         <keyboard-shortcut first-keystroke="ctrl shift BACK_QUOTE" keymap="VSCode OSX" replace-all="true"/>
       </action>
-      <action id="TerminalNewPredefinedSession" class="org.jetbrains.plugins.terminal.action.TerminalNewPredefinedSessionAction"/>
+      <action id="TerminalNewPredefinedSession" class="org.jetbrains.plugins.terminal.action.TerminalNewPredefinedSessionAction"
+              icon="AllIcons.Toolbar.Expand"/>
     </group>
   </actions>
 </idea-plugin>

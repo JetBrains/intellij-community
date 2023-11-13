@@ -24,7 +24,10 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.terminal.*;
+import org.jetbrains.plugins.terminal.LocalTerminalDirectRunner;
+import org.jetbrains.plugins.terminal.TerminalOptionsConfigurable;
+import org.jetbrains.plugins.terminal.TerminalTabState;
+import org.jetbrains.plugins.terminal.TerminalToolWindowManager;
 import org.jetbrains.plugins.terminal.ui.OpenPredefinedTerminalActionProvider;
 
 import javax.swing.*;
@@ -40,11 +43,6 @@ import java.util.Map;
 import java.util.function.Supplier;
 
 public final class TerminalNewPredefinedSessionAction extends DumbAwareAction {
-
-  public TerminalNewPredefinedSessionAction() {
-    super(TerminalBundle.messagePointer("action.NewPredefinedSession.label"));
-    getTemplatePresentation().setIcon(AllIcons.Toolbar.Expand);
-  }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
