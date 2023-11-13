@@ -28,7 +28,7 @@ fun createDelegatePresentation(
   selectionListener: Consumer<Boolean>,
 ): InlayPresentation {
   val editor = templateState.editor
-  val factory = PresentationFactory(editor as EditorImpl)
+  val factory = PresentationFactory(editor)
 
   val textPresentation = WithAttributesPresentation(factory.inset(factory.text(title), 4, 0, 6, 3), INLINE_PARAMETER_HINT_CURRENT, editor,
                                                     WithAttributesPresentation.AttributesFlags().withIsDefault(true))
