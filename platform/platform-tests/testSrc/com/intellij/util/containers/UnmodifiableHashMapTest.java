@@ -21,6 +21,9 @@ public class UnmodifiableHashMapTest {
     assertThat(empty).doesNotContainKey("foo");
     //noinspection RedundantOperationOnEmptyContainer
     assertThat(empty.get("foo")).isNull();
+
+    Map<String, String> map = Map.of("k", "v");
+    assertThat(empty.withAll(map)).isEqualTo(map);
   }
 
   @SuppressWarnings("deprecation")

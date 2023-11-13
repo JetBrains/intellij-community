@@ -239,8 +239,10 @@ public final class UnmodifiableHashMap<K, V> implements Map<K, V> {
     if (map.isEmpty()) {
       return this;
     }
-
-    if (map.size() == 1) {
+    else if (isEmpty()) {
+      return fromMap(strategy, map);
+    }
+    else if (map.size() == 1) {
       Entry<? extends K, ? extends V> entry = map.entrySet().iterator().next();
       return with(entry.getKey(), entry.getValue());
     }
