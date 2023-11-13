@@ -56,6 +56,7 @@ import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.run.*;
 import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest;
 import com.jetbrains.python.sdk.PySdkExtKt;
+import com.jetbrains.python.sdk.PythonSdkUtil;
 import com.jetbrains.python.sdk.flavors.CPythonSdkFlavor;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import org.jetbrains.annotations.NonNls;
@@ -932,7 +933,7 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
                                                                                          existingInterpreterParameters) {
       var sdk = myPyState.getSdk();
 
-      if (sdk == null) {
+      if (sdk == null || PythonSdkUtil.isRemote(sdk)) {
         return Collections.emptyList();
       }
 
