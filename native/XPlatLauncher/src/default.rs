@@ -342,9 +342,12 @@ pub fn compute_launch_info(product_info: &ProductInfo, command_name: Option<&Str
     let launch_data = &product_info.launch[0];
     let custom_command_data = match command_name {
         Some(command_name) => {
-            launch_data.customCommands.iter().find(
-                |custom| custom.commands.contains(command_name)
-            )
+            match &launch_data.customCommands {
+                Some(commands) => commands.iter().find(
+                    |custom| custom.commands.contains(command_name)
+                ),
+                None => None
+            }
         },
         None => None
     };
@@ -367,7 +370,7 @@ pub fn compute_launch_info(product_info: &ProductInfo, command_name: Option<&Str
                     launch_data.additionalJvmArguments.clone()
                 },
                 mainClass: custom_command_data.mainClass.clone().unwrap_or(launch_data.mainClass.clone()),
-                customCommands: Vec::new()
+                customCommands: None
             }, custom_command_data.dataDirectoryName.clone())
         }
     };
