@@ -9,8 +9,6 @@ import com.intellij.testFramework.RuleChain
 import com.intellij.testFramework.rules.TempDirectory
 import com.jediterm.core.util.TermSize
 import org.jetbrains.plugins.terminal.exp.*
-import org.jetbrains.plugins.terminal.exp.ShellCommandOutputListener
-import org.jetbrains.plugins.terminal.exp.ShellCommandOutputScraper
 import org.jetbrains.plugins.terminal.exp.util.TerminalSessionTestUtil
 import org.junit.Assert
 import org.junit.Rule
@@ -75,7 +73,7 @@ fun getCommandResultFuture(session: TerminalSession): CompletableFuture<CommandR
   }, disposable)
   val result: CompletableFuture<CommandResult> = CompletableFuture()
   session.commandManager.addListener(object : ShellCommandListener {
-    override fun commandFinished(command: String, exitCode: Int, duration: Long) {
+    override fun commandFinished(command: String?, exitCode: Int, duration: Long?) {
       result.complete(CommandResult(exitCode, lastOutput.get()?.text.orEmpty()))
     }
   }, disposable)
