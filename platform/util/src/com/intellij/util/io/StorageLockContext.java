@@ -208,6 +208,15 @@ public final class StorageLockContext {
     }
   }
 
+  @ApiStatus.Internal
+  public void checkReadLockNotHeld() {
+    if (!disableAssertions) {
+      if (lock.getReadHoldCount() > 0 ) {
+        throw new IllegalStateException("StorageLock.readLock must NOT be held here (write lock is about to be taken?)");
+      }
+    }
+  }
+
   void assertUnderSegmentAllocationLock() {
     if (IndexDebugProperties.DEBUG) {
       legacyFilePageCache.assertUnderSegmentAllocationLock();
