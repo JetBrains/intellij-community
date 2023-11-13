@@ -776,6 +776,10 @@
                      key="if.can.be.assertion.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.control.flow.issues" enabledByDefault="true" level="INFORMATION"
                      implementationClass="com.siyeh.ig.asserttoif.IfCanBeAssertionInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="WhileCanBeDoWhile" enabledByDefault="true" level="WEAK WARNING"
+                     bundle="messages.InspectionGadgetsBundle" key="inspection.while.can.be.replaced.with.do.while.display.name"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.control.flow.issues"
+                     implementationClass="com.siyeh.ig.whileloop.WhileCanBeDoWhileInspection"/>
 
     <!--group.names.data.flow.issues-->
     <localInspection groupPath="Java" language="JAVA" shortName="BooleanVariableAlwaysNegated" bundle="messages.InspectionGadgetsBundle"
