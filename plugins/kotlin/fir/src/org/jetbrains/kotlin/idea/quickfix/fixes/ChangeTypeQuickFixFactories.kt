@@ -141,7 +141,8 @@ object ChangeTypeQuickFixFactories {
 
     val returnTypeNullableTypeMismatch =
         diagnosticFixFactory(KtFirDiagnostic.NullForNonnullType::class) { diagnostic ->
-            val declaration = diagnostic.psi.parentOfType<KtCallableDeclaration>() ?: return@diagnosticFixFactory emptyList()
+            val returnExpr = diagnostic.psi.parentOfType<KtReturnExpression>() ?: return@diagnosticFixFactory emptyList()
+            val declaration = returnExpr.getReturnTargetSymbol()?.psi as? KtCallableDeclaration ?: return@diagnosticFixFactory emptyList()
             val withNullability = diagnostic.expectedType.withNullability(KtTypeNullability.NULLABLE)
             listOf(UpdateTypeQuickFix(declaration, TargetType.ENCLOSING_DECLARATION, createTypeInfo(declaration.returnType(withNullability))))
         }
