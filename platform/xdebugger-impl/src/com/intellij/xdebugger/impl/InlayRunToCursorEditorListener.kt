@@ -235,9 +235,9 @@ class InlayRunToCursorEditorListener(private val project: Project, private val c
 
     val editorGutterComponentEx = editor.gutter as? EditorGutterComponentEx ?: return
 
-    val needShowOnGutter = firstNonSpacePos.x < JBUI.scale(MINIMAL_TEXT_OFFSET)
+    val needShowOnGutter = firstNonSpacePos.x < JBUI.scale(MINIMAL_TEXT_OFFSET + ACTION_BUTTON_SIZE * (group.childrenCount - 1))
     val xPosition = JBUI.scale(NEGATIVE_INLAY_PANEL_SHIFT) -
-                    (if (needShowOnGutter) JBUI.scale(ACTION_BUTTON_SIZE) else 0)
+                    (if (needShowOnGutter) JBUI.scale(ACTION_BUTTON_SIZE) * group.childrenCount else 0)
 
     val gutterRenderer = editorGutterComponentEx.getGutterRenderer(Point(editorGutterComponentEx.width + xPosition, lineY))
     if (gutterRenderer != null) {
