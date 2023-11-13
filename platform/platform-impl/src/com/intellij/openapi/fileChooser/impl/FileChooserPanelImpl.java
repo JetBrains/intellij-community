@@ -582,7 +582,7 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
     var selection = new AtomicReference<FsItem>();
     var error = new AtomicReference<String>();
     try {
-      PlatformNioHelper.visitDirectory(directory, (file, result) -> {
+      PlatformNioHelper.visitDirectory(directory, null, (file, result) -> {
         BasicFileAttributes attrs;
         try {
           attrs = result.get();
