@@ -292,13 +292,16 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
       OrderEntryFix fix = null;
       if (resolveResult != null &&
           facade.findClass(resolveResult.getQualifiedClassName(), currentModule.getModuleWithDependenciesAndLibrariesScope(true)) == null) {
-        fix = new AddExtLibraryDependencyFix(reference, currentModule, resolveResult.getLibraryDescriptor(), scope, resolveResult.getQualifiedClassName());
+        final ExternalLibraryDescriptor descriptor = resolveResult.getLibraryDescriptor();
+        final DependencyScope useScope = Optional.ofNullable(descriptor.getPreferredScope()).orElse(scope);
+        fix = new AddExtLibraryDependencyFix(reference, currentModule, descriptor, useScope, resolveResult.getQualifiedClassName());
       }
-      else if (!fullReferenceText.equals(shortReferenceName) && 
+      else if (!fullReferenceText.equals(shortReferenceName) &&
                facade.findClass(fullReferenceText, currentModule.getModuleWithDependenciesAndLibrariesScope(true)) == null) {
         ExternalLibraryDescriptor descriptor = resolver.resolvePackage(fullReferenceText);
         if (descriptor != null) {
-          fix = new AddExtLibraryDependencyFix(reference, currentModule, descriptor, scope, null);
+          final DependencyScope useScope = Optional.ofNullable(descriptor.getPreferredScope()).orElse(scope);
+          fix = new AddExtLibraryDependencyFix(reference, currentModule, descriptor, useScope, null);
         }
       }
       if (fix != null) {

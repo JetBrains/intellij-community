@@ -19,6 +19,7 @@ public class ExternalLibraryDescriptor {
   private final String myMinVersion;
   private final String myMaxVersion;
   private final String myPreferredVersion;
+  private final DependencyScope myPreferredScope;
 
   public ExternalLibraryDescriptor(@NotNull String libraryGroupId, @NotNull String libraryArtifactId) {
     this(libraryGroupId, libraryArtifactId, null, null, null);
@@ -30,11 +31,17 @@ public class ExternalLibraryDescriptor {
 
   public ExternalLibraryDescriptor(@NotNull String libraryGroupId, @NotNull String libraryArtifactId,
                                    @Nullable String minVersion, @Nullable String maxVersion, @Nullable String preferredVersion) {
+    this(libraryGroupId, libraryArtifactId, minVersion, maxVersion, preferredVersion, null);
+  }
+  public ExternalLibraryDescriptor(@NotNull String libraryGroupId, @NotNull String libraryArtifactId,
+                                   @Nullable String minVersion, @Nullable String maxVersion, @Nullable String preferredVersion,
+                                   @Nullable DependencyScope preferredScope) {
     myLibraryGroupId = libraryGroupId;
     myLibraryArtifactId = libraryArtifactId;
     myMinVersion = minVersion;
     myMaxVersion = maxVersion;
     myPreferredVersion = preferredVersion;
+    myPreferredScope = preferredScope;
     if (preferredVersion != null && maxVersion != null) {
       LOG.assertTrue(VersionComparatorUtil.compare(preferredVersion, maxVersion) <= 0,
                      "Preferred version (" + preferredVersion + ") must not be newer than max version (" + maxVersion + ")");
@@ -72,6 +79,11 @@ public class ExternalLibraryDescriptor {
   @Nullable
   public String getPreferredVersion() {
     return myPreferredVersion;
+  }
+
+  @Nullable
+  public DependencyScope getPreferredScope() {
+    return myPreferredScope;
   }
 
   @NotNull
