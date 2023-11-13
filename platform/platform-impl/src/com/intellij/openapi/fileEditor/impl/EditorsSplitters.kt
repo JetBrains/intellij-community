@@ -352,7 +352,7 @@ open class EditorsSplitters internal constructor(
   }
 
   internal suspend fun doUpdateFileIcon(file: VirtualFile) {
-    val icon = readActionBlocking {
+    val icon = readAction {
       IconUtil.computeFileIcon(file = file, flags = Iconable.ICON_FLAG_READ_STATUS, project = manager.project)
     }
     withContext(Dispatchers.EDT) {
@@ -424,7 +424,7 @@ open class EditorsSplitters internal constructor(
         window.getComposites().filter { updatedFile == null || it.file.nameSequence.contentEquals(updatedFile.nameSequence) }.toList()
       }
       for (composite in composites) {
-        val title = readActionBlocking {
+        val title = readAction {
           EditorTabPresentationUtil.getEditorTabTitle(manager.project, composite.file)
         }
         withContext(Dispatchers.EDT) {
@@ -1016,7 +1016,7 @@ private suspend fun openFile(file: VirtualFile,
       }
     }
 
-    val document = readActionBlocking {
+    val document = readAction {
       fileDocumentManager.getDocument(file)
     }
 
