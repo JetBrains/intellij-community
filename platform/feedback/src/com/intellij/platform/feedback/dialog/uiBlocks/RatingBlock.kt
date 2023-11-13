@@ -13,6 +13,7 @@ class RatingBlock(@NlsContexts.Label private val myLabel: String,
                   private val myJsonElementName: String) : FeedbackBlock, TextDescriptionProvider, JsonDataProvider {
 
   private var myProperty: Int = 0
+  private var requireAnswer: Boolean = true
 
   override fun addToPanel(panel: Panel) {
     panel.apply {
@@ -23,9 +24,12 @@ class RatingBlock(@NlsContexts.Label private val myLabel: String,
             onApply {
               myProperty = this.component.myRating
             }
-          }
-          .errorOnApply(CommonFeedbackBundle.message("dialog.feedback.rating.required")) {
-            it.myRating == 0
+
+            if (requireAnswer) {
+              errorOnApply(CommonFeedbackBundle.message("dialog.feedback.rating.required")) {
+                it.myRating == 0
+              }
+            }
           }
       }.bottomGap(BottomGap.MEDIUM)
     }
@@ -43,6 +47,11 @@ class RatingBlock(@NlsContexts.Label private val myLabel: String,
     jsonObjectBuilder.apply {
       put(myJsonElementName, myProperty)
     }
+  }
+
+  fun doNotRequireAnswer(): RatingBlock {
+    requireAnswer = false
+    return this
   }
 }
 
