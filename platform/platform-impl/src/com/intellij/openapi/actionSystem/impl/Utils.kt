@@ -197,6 +197,16 @@ object Utils {
     }
   }
 
+  /**
+   * Computing fields from data context might be slow and cause freezes.
+   * To avoid it, we report only those fields which were already computed
+   * in [AnAction.update] or [AnAction.actionPerformed]
+   */
+  @JvmStatic
+  fun getCachedDataContext(dataContext: DataContext): DataContext {
+    return DataContext { dataId: String? -> getRawDataIfCached(dataContext, dataId!!) }
+  }
+
   @JvmStatic
   fun getRawDataIfCached(dataContext: DataContext, dataId: String): Any? = when (dataContext) {
     is PreCachedDataContext -> dataContext.getRawDataIfCached(dataId)
