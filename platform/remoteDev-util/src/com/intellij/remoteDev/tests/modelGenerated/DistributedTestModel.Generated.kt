@@ -26,13 +26,14 @@ class DistributedTestModel private constructor(
     companion object : ISerializersOwner {
         
         override fun registerSerializersCore(serializers: ISerializers)  {
-            serializers.register(RdAgentInfo)
-            serializers.register(RdAgentType.marshaller)
-            serializers.register(RdProductType.marshaller)
-            serializers.register(RdTestSessionStackTraceElement)
-            serializers.register(RdTestSessionExceptionCause)
-            serializers.register(RdTestSessionException)
-            serializers.register(RdTestSession)
+            val classLoader = javaClass.classLoader
+            serializers.register(LazyCompanionMarshaller(RdId(552672907393362222), classLoader, "com.intellij.remoteDev.tests.modelGenerated.RdAgentInfo"))
+            serializers.register(LazyCompanionMarshaller(RdId(552672907393700794), classLoader, "com.intellij.remoteDev.tests.modelGenerated.RdAgentType"))
+            serializers.register(LazyCompanionMarshaller(RdId(-3824320616986309148), classLoader, "com.intellij.remoteDev.tests.modelGenerated.RdProductType"))
+            serializers.register(LazyCompanionMarshaller(RdId(-4029698853809470560), classLoader, "com.intellij.remoteDev.tests.modelGenerated.RdTestSessionStackTraceElement"))
+            serializers.register(LazyCompanionMarshaller(RdId(3844250127064816121), classLoader, "com.intellij.remoteDev.tests.modelGenerated.RdTestSessionExceptionCause"))
+            serializers.register(LazyCompanionMarshaller(RdId(-6820612235039581104), classLoader, "com.intellij.remoteDev.tests.modelGenerated.RdTestSessionException"))
+            serializers.register(LazyCompanionMarshaller(RdId(-3821381997278381377), classLoader, "com.intellij.remoteDev.tests.modelGenerated.RdTestSession"))
         }
         
         
@@ -111,6 +112,7 @@ data class RdAgentInfo (
     
     companion object : IMarshaller<RdAgentInfo> {
         override val _type: KClass<RdAgentInfo> = RdAgentInfo::class
+        override val id: RdId get() = RdId(552672907393362222)
         
         @Suppress("UNCHECKED_CAST")
         override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): RdAgentInfo  {
@@ -182,9 +184,20 @@ enum class RdAgentType {
     CLIENT, 
     GATEWAY;
     
-    companion object {
+    companion object : IMarshaller<RdAgentType> {
         val marshaller = FrameworkMarshallers.enum<RdAgentType>()
         
+        
+        override val _type: KClass<RdAgentType> = RdAgentType::class
+        override val id: RdId get() = RdId(552672907393700794)
+        
+        override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): RdAgentType {
+            return marshaller.read(ctx, buffer)
+        }
+        
+        override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: RdAgentType)  {
+            marshaller.write(ctx, buffer, value)
+        }
     }
 }
 
@@ -196,9 +209,20 @@ enum class RdProductType {
     REMOTE_DEVELOPMENT, 
     CODE_WITH_ME;
     
-    companion object {
+    companion object : IMarshaller<RdProductType> {
         val marshaller = FrameworkMarshallers.enum<RdProductType>()
         
+        
+        override val _type: KClass<RdProductType> = RdProductType::class
+        override val id: RdId get() = RdId(-3824320616986309148)
+        
+        override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): RdProductType {
+            return marshaller.read(ctx, buffer)
+        }
+        
+        override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: RdProductType)  {
+            marshaller.write(ctx, buffer, value)
+        }
     }
 }
 
@@ -227,6 +251,7 @@ class RdTestSession private constructor(
     
     companion object : IMarshaller<RdTestSession> {
         override val _type: KClass<RdTestSession> = RdTestSession::class
+        override val id: RdId get() = RdId(-3821381997278381377)
         
         @Suppress("UNCHECKED_CAST")
         override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): RdTestSession  {
@@ -401,6 +426,7 @@ data class RdTestSessionException (
     
     companion object : IMarshaller<RdTestSessionException> {
         override val _type: KClass<RdTestSessionException> = RdTestSessionException::class
+        override val id: RdId get() = RdId(-6820612235039581104)
         
         @Suppress("UNCHECKED_CAST")
         override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): RdTestSessionException  {
@@ -481,6 +507,7 @@ data class RdTestSessionExceptionCause (
     
     companion object : IMarshaller<RdTestSessionExceptionCause> {
         override val _type: KClass<RdTestSessionExceptionCause> = RdTestSessionExceptionCause::class
+        override val id: RdId get() = RdId(3844250127064816121)
         
         @Suppress("UNCHECKED_CAST")
         override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): RdTestSessionExceptionCause  {
@@ -552,6 +579,7 @@ data class RdTestSessionStackTraceElement (
     
     companion object : IMarshaller<RdTestSessionStackTraceElement> {
         override val _type: KClass<RdTestSessionStackTraceElement> = RdTestSessionStackTraceElement::class
+        override val id: RdId get() = RdId(-4029698853809470560)
         
         @Suppress("UNCHECKED_CAST")
         override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): RdTestSessionStackTraceElement  {
