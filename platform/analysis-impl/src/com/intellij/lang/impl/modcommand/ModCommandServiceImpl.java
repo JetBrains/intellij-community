@@ -207,14 +207,16 @@ public class ModCommandServiceImpl implements ModCommandService {
       OptNumber optNumber = ObjectUtils.tryCast(control, OptNumber.class);
       if (optNumber == null) return HtmlChunk.empty();
       LocMessage.PrefixSuffix prefixSuffix = optNumber.splitLabel().splitLabel();
-      HtmlChunk.Element input = tag("input").attr("type", "text").attr("value", value)
-        .attr("size", value.toString().length() + 1).attr("readonly", "true");
-      HtmlChunk info = tag("table").child(tag("tr").children(
-        tag("td").child(text(prefixSuffix.prefix())),
-        tag("td").child(input),
-        tag("td").child(text(prefixSuffix.suffix()))
-      ));
+      HtmlChunk info = getValueChunk(value, prefixSuffix);
       return new HtmlBuilder().append(AnalysisBundle.message("set.option.description.input"))
+          .br().br().append(info).br().toFragment();
+    }
+    if (newValue instanceof String value) {
+      OptString optString = ObjectUtils.tryCast(control, OptString.class);
+      if (optString == null) return HtmlChunk.empty();
+      LocMessage.PrefixSuffix prefixSuffix = optString.splitLabel().splitLabel();
+      HtmlChunk info = getValueChunk(value, prefixSuffix);
+      return new HtmlBuilder().append(AnalysisBundle.message("set.option.description.string"))
           .br().br().append(info).br().toFragment();
     }
     if (newValue instanceof List<?> list) {
@@ -225,5 +227,16 @@ public class ModCommandServiceImpl implements ModCommandService {
       return IntentionPreviewInfo.addListOption((List<String>)list, optList.label().label(), value -> !oldList.contains(value)).content();
     }
     throw new IllegalStateException("Value of type " + newValue.getClass() + " is not supported");
+  }
+
+  @NotNull
+  private static HtmlChunk getValueChunk(Object value, LocMessage.PrefixSuffix prefixSuffix) {
+    HtmlChunk.Element input = tag("input").attr("type", "text").attr("value", String.valueOf(value))
+      .attr("size", value.toString().length() + 1).attr("readonly", "true");
+    return tag("table").child(tag("tr").children(
+      tag("td").child(text(prefixSuffix.prefix())),
+      tag("td").child(input),
+      tag("td").child(text(prefixSuffix.suffix()))
+    ));
   }
 }
