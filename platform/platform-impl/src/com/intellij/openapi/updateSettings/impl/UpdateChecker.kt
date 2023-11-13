@@ -77,11 +77,12 @@ private class UpdateCheckerHelper(private val coroutineScope: CoroutineScope) {
   /**
    * For scheduled update checks.
    */
-  fun updateAndShowResult(): ActionCallback {
+  fun updateAndShowResult(showResults: Boolean = false): ActionCallback {
     val callback = ActionCallback()
     coroutineScope.launch(limitedDispatcher) {
       doUpdateAndShowResult(
         userInitiated = false,
+        showResults = showResults,
         preferDialog = false,
         showSettingsLink = true,
         callback = callback,
@@ -145,6 +146,9 @@ object UpdateChecker {
   fun updateAndShowResult(): ActionCallback =
     service<UpdateCheckerHelper>().updateAndShowResult()
 
+  fun getUpdates(): ActionCallback =
+    service<UpdateCheckerHelper>().updateAndShowResult(false)
+
   /**
    * For manual update checks (Help | Check for Updates, Settings | Updates | Check Now)
    * (the latter action passes customized update settings and forces result presentation in a dialog).
@@ -158,6 +162,7 @@ object UpdateChecker {
           project = getProject(),
           customSettings = customSettings,
           userInitiated = true,
+          showResults = true,
           preferDialog = isConditionalModal,
           showSettingsLink = shouldStartInBackground(),
           indicator = indicator,
@@ -621,6 +626,7 @@ private fun doUpdateAndShowResult(
   project: Project? = null,
   customSettings: UpdateSettings? = null,
   userInitiated: Boolean,
+  showResults: Boolean,
   preferDialog: Boolean,
   showSettingsLink: Boolean,
   indicator: ProgressIndicator? = null,
@@ -676,12 +682,16 @@ private fun doUpdateAndShowResult(
     showErrors(project = project, message = builder.wrapWithHtmlBody().toString(), preferDialog = preferDialog)
   }
 
+  fun nonIgnored(downloaders: Collection<PluginDownloader>) = downloaders.filterNot { UpdateChecker.isIgnored(it.descriptor) }
+
+  val enabledPlugins = nonIgnored(pluginUpdates.allEnabled)
+  val updatedPlugins = enabledPlugins + nonIgnored(pluginUpdates.allDisabled)
+  if (!showResults) {
+    UpdateSettingsEntryPointActionProvider.newPluginUpdates(updatedPlugins, customRepoPlugins)
+    callback?.setDone()
+    return null
+  }
   return {
-    fun nonIgnored(downloaders: Collection<PluginDownloader>) = downloaders.filterNot { UpdateChecker.isIgnored(it.descriptor) }
-
-    val enabledPlugins = nonIgnored(pluginUpdates.allEnabled)
-    val updatedPlugins = enabledPlugins + nonIgnored(pluginUpdates.allDisabled)
-
     val forceDialog = preferDialog || userInitiated && !notificationsEnabled()
 
     if (platformUpdates is PlatformUpdates.Loaded) {

@@ -3,8 +3,10 @@ package com.intellij.smartUpdate
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.updateSettings.impl.UpdateChecker
 import com.intellij.openapi.updateSettings.impl.getPendingUpdates
 import com.intellij.openapi.updateSettings.impl.installUpdates
+import com.intellij.ui.SpinningProgressIcon
 import org.jetbrains.annotations.Nls
 import javax.swing.JComponent
 import javax.swing.JLabel
@@ -26,7 +28,14 @@ class PluginsUpdateStep: SmartUpdateStep {
   }
 
   override fun getDetailsComponent(project: Project): JComponent {
-    return JLabel(getDescription())
+    val label = JLabel(SmartUpdateBundle.message("checking.for.updates")).apply {
+      icon = SpinningProgressIcon()
+    }
+    UpdateChecker.getUpdates().doWhenProcessed(Runnable {
+      label.text = getDescription()
+      label.icon = null
+    })
+    return label
   }
 
   @Nls
