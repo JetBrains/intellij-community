@@ -190,7 +190,18 @@ public class KeyedExtensionCollector<T, KeyT> implements ModificationTracker {
     List<KeyedLazyInstance<T>> extensions = getExtensions();
     synchronized (lock) {
       PersistentList<T> explicit = buildExtensionsFromExplicitRegistration(keys::contains);
-      PersistentList<T> result = buildExtensionsFromExtensionPoint(bean -> keys.contains(bean.getKey()), extensions);
+      PersistentList<T> result = buildExtensionsFromExtensionPoint(bean -> {
+        String key;
+        try {
+          key = bean.getKey();
+        }
+        catch (IllegalStateException e) {
+          LOG.error(e);
+          return false;
+        }
+
+        return keys.contains(key);
+      }, extensions);
       return explicit.addAll(result);
     }
   }

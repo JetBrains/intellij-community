@@ -1657,7 +1657,7 @@
     <notificationGroup id="Incorrect Formatting" displayType="STICKY_BALLOON" bundle="messages.LangBundle"
                        key="inspection.incorrect.formatting.notification.group"/>
 
-    <codeInsight.lineMarkerProvider implementationClass="com.intellij.codeInsight.documentation.render.DocRenderDummyLineMarkerProvider"/>
+    <codeInsight.lineMarkerProvider language="" implementationClass="com.intellij.codeInsight.documentation.render.DocRenderDummyLineMarkerProvider"/>
 
     <psi.treeChangeListener implementation="com.intellij.openapi.fileEditor.impl.FileEditorPsiTreeChangeListener"/>
 
