@@ -1253,7 +1253,7 @@ public final class FSRecordsImpl implements Closeable {
   @NotNull
   DataInputStream readContentById(int contentId) {
     try {
-      return contentAccessor.readContentDirectly(contentId);
+      return contentAccessor.readContentByContentId(contentId);
     }
     catch (InterruptedIOException ie) {
       //RC: goal is to just not go into handleError(), which likely marks VFS corrupted,

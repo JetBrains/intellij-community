@@ -19,6 +19,8 @@ import java.security.MessageDigest;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+import static java.util.concurrent.TimeUnit.NANOSECONDS;
+
 public final class PersistentFSContentAccessor {
   private static final Logger LOG = Logger.getInstance(PersistentFSContentAccessor.class);
 
@@ -28,11 +30,15 @@ public final class PersistentFSContentAccessor {
 
   private final ReadWriteLock lock = new ReentrantReadWriteLock();
 
-  private long totalContents;
-  private long totalReuses;
-  private long time;
-  private int contents;
-  private int reuses;
+  //=========== monitoring: ===========
+  private long totalContentBytesStored;
+  private long totalContentBytesReused;
+  private int totalContentRecordsStored;
+  private int totalContentRecordsReused;
+
+  private long totalHashCalculationTimeNs;
+
+
 
   PersistentFSContentAccessor(@NotNull PersistentFSConnection connection) {
     this.connection = connection;
@@ -43,9 +49,9 @@ public final class PersistentFSContentAccessor {
     PersistentFSConnection.ensureIdIsValid(fileId);
     lock.readLock().lock();
     try {
-      int page = connection.getRecords().getContentRecordId(fileId);
-      if (page == 0) return null;
-      return readContentDirectly(page);
+      int contentId = connection.getRecords().getContentRecordId(fileId);
+      if (contentId == 0) return null;
+      return readContentByContentId(contentId);
     }
     finally {
       lock.readLock().unlock();
@@ -53,7 +59,7 @@ public final class PersistentFSContentAccessor {
   }
 
   @NotNull
-  DataInputStream readContentDirectly(int contentId) throws IOException {
+  DataInputStream readContentByContentId(int contentId) throws IOException {
     lock.readLock().lock();
     try {
       return connection.getContents().readStream(contentId);
@@ -64,6 +70,9 @@ public final class PersistentFSContentAccessor {
   }
 
   void deleteContent(int fileId) throws IOException {
+    if (USE_CONTENT_HASHES) {
+      return;
+    }
     lock.writeLock().lock();
     try {
       final int contentRecordId = connection.getRecords().getContentRecordId(fileId);
@@ -172,16 +181,16 @@ public final class PersistentFSContentAccessor {
   private int findOrCreateContentRecord(byte[] bytes, int offset, int length) throws IOException {
     assert USE_CONTENT_HASHES;
 
-    long started = System.nanoTime();
+    long hashStartedNs = System.nanoTime();
     byte[] contentHash = calculateHash(bytes, offset, length);
-    long done = System.nanoTime() - started;
-    time += done;
+    totalHashCalculationTimeNs += (System.nanoTime() - hashStartedNs);
 
-    ++contents;
-    totalContents += length;
 
-    if ((contents & 0x3FFF) == 0) {
-      LOG.info("Contents:" + contents + " of " + totalContents + ", reuses:" + reuses + " of " + totalReuses + " for " + time / 1000000);
+    if ((totalContentRecordsStored & 0x3FFF) == 0) {
+      LOG.info("Contents: " +
+               totalContentRecordsStored + " records of " + totalContentBytesStored + "b total were actually stored, " +
+               totalContentRecordsReused + " records of " + totalContentBytesReused + "b were reused, " +
+               "for " + NANOSECONDS.toSeconds(totalHashCalculationTimeNs)+" ms spent on hashing");
     }
 
     ContentHashEnumerator hashesEnumerator = connection.getContentHashesEnumerator();
@@ -189,9 +198,10 @@ public final class PersistentFSContentAccessor {
 
     if (hashId < 0) {//already known hash -> already stored content
       int contentRecordId = -hashId;
-      ++reuses;
       connection.getContents().acquireRecord(contentRecordId);
-      totalReuses += length;
+
+      totalContentRecordsReused++;
+      totalContentBytesReused += length;
 
       return contentRecordId;
     }
@@ -202,6 +212,10 @@ public final class PersistentFSContentAccessor {
       //hashesEnumerator.enumerateEx() returns positive value (which means 'new hash')
       assert contentRecordId == newRecord
         : "Unexpected content storage modification: contentHashId=" + hashId + "; newContentRecord=" + newRecord;
+
+      totalContentRecordsStored++;
+      totalContentBytesStored += length;
+
       return -contentRecordId;
     }
   }
