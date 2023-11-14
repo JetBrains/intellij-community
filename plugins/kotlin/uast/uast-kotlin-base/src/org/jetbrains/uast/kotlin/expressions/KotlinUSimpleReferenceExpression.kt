@@ -37,7 +37,7 @@ class KotlinUSimpleReferenceExpression(
     override val referenceNameElement: UElement? by lz { sourcePsi.getIdentifier()?.toUElement() }
 
     override fun accept(visitor: UastVisitor) {
-        visitor.visitSimpleNameReferenceExpression(this)
+        if (visitor.visitSimpleNameReferenceExpression(this)) return
 
         if (sourcePsi.parent.destructuringDeclarationInitializer != true) {
             visitAccessorCalls(visitor)
