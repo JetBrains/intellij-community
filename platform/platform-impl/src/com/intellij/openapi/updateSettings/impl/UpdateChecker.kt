@@ -768,7 +768,8 @@ private fun showResults(
           message = message,
           actions = listOf(
             NotificationAction.createExpiring(IdeBundle.message("updates.all.plugins.action", updatedPlugins.size)) { e, _ ->
-              PluginUpdateDialog.runUpdateAll(updatedPlugins, e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT) as JComponent?, null)
+              val component = e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT) as JComponent?
+              PluginUpdateDialog.runUpdateAll(updatedPlugins, component, null, null)
             },
             NotificationAction.createSimpleExpiring(IdeBundle.message("updates.plugins.dialog.action"), runnable),
             NotificationAction.createSimpleExpiring(IdeBundle.message("updates.ignore.updates.link", updatedPlugins.size)) {

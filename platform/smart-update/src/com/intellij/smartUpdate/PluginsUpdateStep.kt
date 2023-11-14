@@ -2,12 +2,14 @@ package com.intellij.smartUpdate
 
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformDataKeys
+import com.intellij.openapi.application.ex.ApplicationManagerEx.getApplicationEx
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.updateSettings.impl.UpdateChecker
 import com.intellij.openapi.updateSettings.impl.getPendingUpdates
 import com.intellij.openapi.updateSettings.impl.installUpdates
 import com.intellij.ui.SpinningProgressIcon
 import org.jetbrains.annotations.Nls
+import java.util.function.Consumer
 import javax.swing.JComponent
 import javax.swing.JLabel
 
@@ -18,13 +20,29 @@ class PluginsUpdateStep: SmartUpdateStep {
   override val stepName = SmartUpdateBundle.message("update.plugins")
 
   override fun performUpdateStep(project: Project, e: AnActionEvent?, onSuccess: () -> Unit) {
-    val updates = getPendingUpdates()
-    if (updates.isNullOrEmpty()) {
-      onSuccess.invoke()
-      return
+    val doUpdate = {
+      val updates = getPendingUpdates()
+      if (updates.isNullOrEmpty()) {
+        onSuccess()
+      }
+      else {
+        val component = e?.dataContext?.getData(PlatformDataKeys.CONTEXT_COMPONENT) as? JComponent
+        installUpdates(updates, component, Consumer { restartRequired ->
+          if (restartRequired) {
+            restartIde(project, SmartUpdateBundle.message("dialog.title.plugin.updates.ready.to.install")) { getApplicationEx().restart(true) }
+          }
+          else {
+            onSuccess()
+          }
+        })
+      }
     }
-    val component = e?.dataContext?.getData(PlatformDataKeys.CONTEXT_COMPONENT) as? JComponent
-    installUpdates(updates, component, Runnable { onSuccess.invoke() }, )
+    if (e == null) {
+      UpdateChecker.getUpdates().doWhenProcessed(Runnable(doUpdate))
+    }
+    else {
+      doUpdate()
+    }
   }
 
   override fun getDetailsComponent(project: Project): JComponent {

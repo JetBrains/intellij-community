@@ -13,6 +13,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.updateSettings.impl.restartOrNotify
+import com.intellij.openapi.util.NlsContexts
 import org.jetbrains.annotations.Nls
 import org.jetbrains.ide.ToolboxSettingsActionRegistry
 import org.jetbrains.ide.ToolboxUpdateAction
@@ -51,10 +52,10 @@ class IdeUpdateStep : StepOption {
 
 private fun getUpdateAction() = service<ToolboxSettingsActionRegistry>().getActions().find { it is ToolboxUpdateAction } as? ToolboxUpdateAction
 
-fun restartIde(project: Project, updateAction: ToolboxUpdateAction) {
-    restartOrNotify(project, true) {
+fun restartIde(project: Project, @NlsContexts.DialogTitle progressTitle: String = IdeBundle.message("action.UpdateIde.progress.title"), restart: () -> Unit) {
+    restartOrNotify(project, true, progressTitle) {
       beforeRestart()
-      updateAction.perform()
+      restart()
     }
 }
 
