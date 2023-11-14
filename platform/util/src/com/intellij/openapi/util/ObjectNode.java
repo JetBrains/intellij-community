@@ -127,8 +127,10 @@ final class ObjectNode {
     }
   }
 
-  ObjectNode findChildNode(@NotNull Disposable object) {
-    return myChildren.findChildNode(object);
+  @Nullable ObjectNode findChildNode(@NotNull Disposable object) {
+    NodeChildren children = myChildren;
+    //noinspection ConstantValue
+    return children == null ? null : children.findChildNode(object);
   }
 
   @NotNull
@@ -162,7 +164,8 @@ final class ObjectNode {
 
     @Override
     public @Nullable ObjectNode findChildNode(@NotNull Disposable object) {
-      return myChildren.get(object);
+      Map<Disposable, ObjectNode> children = myChildren;
+      return children == null ? null : children.get(object);
     }
 
     @Override
