@@ -2,6 +2,10 @@
 package org.jetbrains.kotlin.onboarding
 
 import com.intellij.internal.statistic.DeviceIdManager
+import org.jetbrains.kotlin.onboarding.KotlinNewUserTracker.Companion.NEW_IDEA_USER_DATE
+import org.jetbrains.kotlin.onboarding.KotlinNewUserTracker.Companion.NEW_USER_DURATION
+import org.jetbrains.kotlin.onboarding.KotlinNewUserTracker.Companion.NEW_USER_RESET
+import org.jetbrains.kotlin.onboarding.KotlinNewUserTracker.Companion.NEW_USER_SURVEY_DELAY
 import org.junit.jupiter.api.Test
 import java.time.Duration
 import java.time.Instant
@@ -19,7 +23,7 @@ class KotlinNewUserTrackerTest {
         return Duration.between(Instant.ofEpochSecond(this), Instant.now()) < Duration.ofSeconds(30)
     }
 
-    private fun createInstance(installationDate: LocalDate? = LocalDate.of(2023, 3, 1)): KotlinNewUserTracker {
+    private fun createInstance(installationDate: LocalDate? = NEW_IDEA_USER_DATE.minusDays(1)): KotlinNewUserTracker {
         val installationId = installationDate?.let {
             val calendar = GregorianCalendar.from(installationDate.atStartOfDay(ZoneId.systemDefault()))
             DeviceIdManager.generateId(calendar, 'B')
@@ -51,7 +55,7 @@ class KotlinNewUserTrackerTest {
 
     @Test
     fun `New idea users should be marked as new if they open a kotlin file for the first time`() {
-        val instance = createInstance(LocalDate.now().minusDays(3))
+        val instance = createInstance(NEW_IDEA_USER_DATE.atStartOfDay().toLocalDate().plusDays(1))
         instance.onKtFileOpened()
         assertTrue(instance.state.firstKtFileOpened.isRecentEpochTimestamp())
         assertTrue(instance.state.lastKtFileOpened.isRecentEpochTimestamp())
@@ -62,10 +66,11 @@ class KotlinNewUserTrackerTest {
     @Test
     fun `Old users coming back to Kotlin after a long time should be marked as new users`() {
         val instance = createInstance()
-        instance.state.newKtUserSince = (now - Duration.ofDays(180)).epochSecond
-        instance.state.lastKtFileOpened = (now - Duration.ofDays(100)).epochSecond
+        instance.state.lastKtFileOpened = (now - NEW_USER_RESET - Duration.ofHours(1)).epochSecond
+        // This is just some random time that we want to stay unaltered, the actual value does not matter
         val originalFirstKtFileOpened = (now - Duration.ofDays(180)).epochSecond
         instance.state.firstKtFileOpened = originalFirstKtFileOpened
+        instance.state.newKtUserSince = (now - NEW_USER_DURATION - Duration.ofHours(1)).epochSecond
         assertFalse(instance.isNewKtUser())
         assertFalse(instance.shouldShowNewUserDialog())
 
@@ -82,21 +87,21 @@ class KotlinNewUserTrackerTest {
     @Test
     fun `Show new user dialog if enough time has passed since becoming new user`() {
         val instance = createInstance()
-        instance.state.newKtUserSince = (now - Duration.ofDays(10)).epochSecond
+        instance.state.newKtUserSince = (now - NEW_USER_SURVEY_DELAY + Duration.ofHours(1)).epochSecond
         assertFalse(instance.shouldShowNewUserDialog())
     }
 
     @Test
     fun `Do not show new user dialog if not enough time has passed since becoming new user`() {
         val instance = createInstance()
-        instance.state.newKtUserSince = (now - Duration.ofDays(4)).epochSecond
+        instance.state.newKtUserSince = (now - NEW_USER_SURVEY_DELAY - Duration.ofHours(1)).epochSecond
         assertFalse(instance.shouldShowNewUserDialog())
     }
 
     @Test
     fun `Do not show new user dialog if too much time has passed since becoming new user`() {
         val instance = createInstance()
-        instance.state.newKtUserSince = (now - Duration.ofDays(90)).epochSecond
+        instance.state.newKtUserSince = (now - NEW_USER_DURATION - Duration.ofHours(1)).epochSecond
         assertFalse(instance.shouldShowNewUserDialog())
     }
 
@@ -104,9 +109,9 @@ class KotlinNewUserTrackerTest {
     fun `New user status should expire after some time`() {
         val instance = createInstance()
         assertFalse(instance.isNewKtUser())
-        instance.state.newKtUserSince = (now - Duration.ofDays(4)).epochSecond
+        instance.state.newKtUserSince = (now - NEW_USER_DURATION + Duration.ofHours(1)).epochSecond
         assertTrue(instance.isNewKtUser())
-        instance.state.newKtUserSince = (now - Duration.ofDays(180)).epochSecond
+        instance.state.newKtUserSince = (now - NEW_USER_DURATION - Duration.ofHours(1)).epochSecond
         assertFalse(instance.isNewKtUser())
     }
 
