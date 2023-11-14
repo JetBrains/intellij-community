@@ -11,6 +11,9 @@
     <action id="ImportProgressSimpleDialogAction" class="com.intellij.ide.startup.importSettings.chooser.testActions.ImportProgressSimpleDialogAction" text="[INTERNAL] 3simple Transfer: Simple Import Progress Dialog" internal="true"/>
     <action id="ImportProgressSingleDialogAction" class="com.intellij.ide.startup.importSettings.chooser.testActions.ImportProgressSingleDialogAction" text="[INTERNAL] 3s Transfer: Import Progress Dialog Single" internal="true"/>
 
+
+    <action id="ImportSettingDialogAction" class="com.intellij.ide.startup.importSettings.chooser.testActions.ImportSettingDialogAction" text="[INTERNAL] 3 Transfer: ONE" internal="true"/>
+
     <action id="ErrorTestDialogAction" class="com.intellij.ide.startup.importSettings.chooser.testActions.ErrorTestDialogAction" text="[INTERNAL] 4 Transfer: Error Dispatcher Dialog Single" internal="true"/>
 
 

@@ -93,11 +93,11 @@ class TestJbService : JbService {
              TestChildrenSettings("Build Solution"),
              TestChildrenSettings("Go to Everything")),
       listOf(TestChildrenSettings("Go to Eveing"),
-             TestChildrenSettings("3 Go to Everything Go to Everything Everyth ingEverything Go to Eve 3333 rything Everyth ingEverything Go to Everything Everyth ingEverything 333"),
+             TestChildrenSettings("3 Go to Everything"),
              TestChildrenSettings("Go to Everything Everything"),
              TestChildrenSettings("Go to ")),
       listOf(TestChildrenSettings("Go to Everything Everyth ingEverything"),
-             TestChildrenSettings("Find Usages Go to Everything Go to Everything Everyth ingEverything Go to Eve rything Everyth ing444Everything Go to Everything Everyth ingEverything  Everyth ingEverything Go to Eve rything Everyth ingEverything Go to Everything Everyth ingEverything  Everyth ingEverything Go to Eve rything Everyth ingEverything Go to Everything Everyth ingEverything 444"),
+             TestChildrenSettings("Find Usages Go to"),
              TestChildrenSettings("Build Solution"),
              TestChildrenSettings("Go to Everything")),
     )

@@ -3,11 +3,8 @@ package com.intellij.ide.startup.importSettings.chooser.productChooser
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.startup.importSettings.ImportSettingsBundle
-import com.intellij.ide.startup.importSettings.chooser.ui.PageProvider
-import com.intellij.ide.startup.importSettings.data.ActionsDataProvider
-import com.intellij.ide.startup.importSettings.data.JBrActionsDataProvider
-import com.intellij.ide.startup.importSettings.data.Product
-import com.intellij.ide.startup.importSettings.data.SyncActionsDataProvider
+import com.intellij.ide.startup.importSettings.chooser.ui.ImportSettingsController
+import com.intellij.ide.startup.importSettings.data.*
 import com.intellij.ide.ui.laf.darcula.ui.OnboardingDialogButtons
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -16,14 +13,14 @@ import org.jetbrains.annotations.Nls
 import javax.swing.JButton
 import javax.swing.JComponent
 
-class OtherOptions(private val callback: (PageProvider) -> Unit) : ProductChooserAction() {
+class OtherOptions(private val controller: ImportSettingsController) : ProductChooserAction() {
 
   private val jbDataProvider = JBrActionsDataProvider.getInstance()
   private val syncDataProvider = SyncActionsDataProvider.getInstance()
 
   private var jb: List<AnAction>? = null
   private var sync: List<AnAction>? = null
-  private val config = ConfigAction(callback)
+  private val config = ConfigAction(controller)
 
   init {
     templatePresentation.text = ImportSettingsBundle.message("choose.product.other.options")
@@ -72,7 +69,7 @@ class OtherOptions(private val callback: (PageProvider) -> Unit) : ProductChoose
       title?.let {
         list.add(Separator(it))
       }
-      list.addAll(productsToActions(products, provider, callback))
+      list.addAll(productsToActions(products, provider, controller))
     }
     return list
   }

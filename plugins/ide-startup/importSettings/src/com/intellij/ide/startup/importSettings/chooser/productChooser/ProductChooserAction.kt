@@ -2,7 +2,7 @@
 package com.intellij.ide.startup.importSettings.chooser.productChooser
 
 import com.intellij.ide.startup.importSettings.chooser.settingChooser.SettingChooserItemAction
-import com.intellij.ide.startup.importSettings.chooser.ui.PageProvider
+import com.intellij.ide.startup.importSettings.chooser.ui.ImportSettingsController
 import com.intellij.ide.startup.importSettings.chooser.ui.UiUtils
 import com.intellij.ide.startup.importSettings.data.ActionsDataProvider
 import com.intellij.ide.startup.importSettings.data.Product
@@ -28,7 +28,7 @@ abstract class ProductChooserAction : ChooseProductActionButton(null) {
 
   abstract fun getChildren(e: AnActionEvent?): Array<AnAction>
 
-  protected fun productsToActions(products: List<Product>, provider: ActionsDataProvider<*>, callback: (PageProvider) -> Unit): List<AnAction> {
+  protected fun productsToActions(products: List<Product>, provider: ActionsDataProvider<*>, callback: ImportSettingsController): List<AnAction> {
     return products.map { pr -> SettingChooserItemAction(pr, provider, callback) }
   }
 

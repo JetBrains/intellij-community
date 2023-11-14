@@ -3,25 +3,26 @@ package com.intellij.ide.startup.importSettings.chooser.productChooser
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.startup.importSettings.ImportSettingsBundle
-import com.intellij.ide.startup.importSettings.chooser.ui.BannerOverlay
-import com.intellij.ide.startup.importSettings.chooser.ui.PageProvider
+import com.intellij.ide.startup.importSettings.chooser.ui.ImportSettingsPage
+import com.intellij.ide.startup.importSettings.chooser.ui.ImportSettingsController
 import com.intellij.ide.startup.importSettings.chooser.ui.UiUtils
-import com.intellij.ide.startup.importSettings.chooser.ui.WizardPageTracker
 import com.intellij.ide.startup.importSettings.data.SettingsService
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
-import com.intellij.openapi.rd.createLifetime
-import com.intellij.platform.ide.bootstrap.StartupWizardStage
 import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.util.preferredHeight
-import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
 import java.awt.*
-import javax.swing.*
+import javax.swing.JComponent
+import javax.swing.JLabel
+import javax.swing.JPanel
+import javax.swing.SwingConstants
 
-class ProductChooserDialog : PageProvider(false) {
-
+class ProductChooserPage(val controller: ImportSettingsController, private val disposable: Disposable) : ImportSettingsPage {
   private val accountLabel = JLabel("user.name").apply {
     icon = AllIcons.General.User
   }
@@ -32,45 +33,16 @@ class ProductChooserDialog : PageProvider(false) {
     })
   }
 
-  private val callback: (PageProvider) -> Unit = {
-    nextStep(it, OK_EXIT_CODE)
-  }
-
-  private val doClose = {
-    doClose()
-  }
-
-  private val overlay = BannerOverlay()
 
   init {
     val group = DefaultActionGroup()
     group.isPopup = false
 
     group.add(SyncStateAction())
-/*    group.add(SyncChooserAction(callback))
-    group.add(JbChooserAction(callback))
-    group.add(ExpChooserAction(callback))
-    group.add(SkipImportAction(doClose))*/
-
-    val settService = SettingsService.getInstance()
-    val lifetime = disposable.createLifetime()
-
-    settService.doClose.advise(lifetime) {
-      doClose()
-    }
-
-    settService.error.advise(lifetime) {
-      overlay.showError(it)
-    }
-
-    settService.jbAccount.advise(lifetime) {
-      accountLabel.isVisible = it != null
-      if (!accountLabel.isVisible) {
-        return@advise
-      }
-
-      accountLabel.text = it?.loginName
-    }
+    group.add(SyncChooserAction(controller))
+    group.add(JbChooserAction(controller))
+    group.add(ExpChooserAction(controller))
+    group.add(SkipImportAction { controller.skipImport() })
 
     val act = ActionManager.getInstance().createActionToolbar(ActionPlaces.IMPORT_SETTINGS_DIALOG, group, false).apply {
       if (this is ActionToolbarImpl) {
@@ -84,36 +56,26 @@ class ProductChooserDialog : PageProvider(false) {
     act.targetComponent = pane
 
     pane.add(act.component)
+
+    prepareSubscriptions()
   }
 
-  override fun createContent(): JComponent {
-    val comp = JPanel(GridBagLayout()).apply {
-      preferredSize = JBDimension(640, 410)
-      val gbc = GridBagConstraints()
-      gbc.gridx = 0
-      gbc.gridy = 0
-      gbc.weightx = 1.0
-      gbc.weighty = 1.0
-      gbc.fill = GridBagConstraints.NONE
-      add(pane, gbc)
+  private fun prepareSubscriptions() {
+    val settService = SettingsService.getInstance()
 
-      gbc.gridy = 1
-      gbc.weighty = 0.0
-      gbc.anchor = GridBagConstraints.SOUTH
-      gbc.fill = GridBagConstraints.HORIZONTAL
-      add(south, gbc)
+    settService.jbAccount.advise(controller.lifetime) {
+      accountLabel.isVisible = it != null
+      if (!accountLabel.isVisible) {
+        return@advise
+      }
+
+      accountLabel.text = it?.loginName
     }
-
-    return overlay.wrapComponent(comp)
-  }
-
-  override fun createActions(): Array<Action> {
-    return emptyArray()
   }
 
   private val south = JPanel(BorderLayout()).apply {
     val group = DefaultActionGroup()
-   // group.add(OtherOptions(callback))
+    group.add(OtherOptions(controller))
 
     val at = object : ActionToolbarImpl(ActionPlaces.IMPORT_SETTINGS_DIALOG, group, true) {
 
@@ -132,5 +94,23 @@ class ProductChooserDialog : PageProvider(false) {
     preferredHeight = 47
   }
 
-  override val tracker = WizardPageTracker(StartupWizardStage.ProductChoicePage)
+  private val contentPage = JPanel(GridBagLayout()).apply {
+    val gbc = GridBagConstraints()
+    gbc.gridx = 0
+    gbc.gridy = 0
+    gbc.weightx = 1.0
+    gbc.weighty = 1.0
+    gbc.fill = GridBagConstraints.NONE
+    add(pane, gbc)
+
+    gbc.gridy = 1
+    gbc.weighty = 0.0
+    gbc.anchor = GridBagConstraints.SOUTH
+    gbc.fill = GridBagConstraints.HORIZONTAL
+    add(south, gbc)
+
+    border = JBUI.Borders.empty()
+  }
+
+  override val content: JComponent = contentPage
 }

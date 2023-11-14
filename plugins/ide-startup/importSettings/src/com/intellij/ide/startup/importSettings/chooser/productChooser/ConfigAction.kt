@@ -3,16 +3,12 @@ package com.intellij.ide.startup.importSettings.chooser.productChooser
 
 import com.intellij.ide.startup.importSettings.ImportSettingsBundle
 import com.intellij.ide.startup.importSettings.StartupImportIcons
-import com.intellij.ide.startup.importSettings.chooser.settingChooser.createDialog
-import com.intellij.ide.startup.importSettings.chooser.ui.PageProvider
-import com.intellij.ide.startup.importSettings.data.JBrActionsDataProvider
+import com.intellij.ide.startup.importSettings.chooser.ui.ImportSettingsController
 import com.intellij.ide.startup.importSettings.data.SettingsService
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.fileChooser.FileChooser
-import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.project.DumbAwareAction
 
-class ConfigAction(val callback: (PageProvider) -> Unit) : DumbAwareAction() {
+class ConfigAction(val controller: ImportSettingsController) : DumbAwareAction() {
   val service = SettingsService.getInstance().getJbService()
 
 
@@ -30,6 +26,6 @@ class ConfigAction(val callback: (PageProvider) -> Unit) : DumbAwareAction() {
 
   override fun actionPerformed(e: AnActionEvent) {
     //TODO implement
-    //callback(createDialog(JBrActionsDataProvider.getInstance(), config))
+    //callback(JBrActionsDataProvider.getInstance(), config)
   }
 }
