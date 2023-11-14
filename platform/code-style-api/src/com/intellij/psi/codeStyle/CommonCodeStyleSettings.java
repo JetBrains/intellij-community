@@ -57,8 +57,10 @@ public class CommonCodeStyleSettings {
   private boolean             myForceArrangeMenuAvailable;
 
   private final SoftMargins mySoftMargins = new SoftMargins();
+  private final CommentStyleSettings myCommentStyleSettings = new DefaultCommentStyleSettings();
 
   @NonNls private static final String INDENT_OPTIONS_TAG = "indentOptions";
+
 
   private final static Logger LOG = Logger.getInstance(CommonCodeStyleSettings.class);
 
@@ -103,6 +105,11 @@ public class CommonCodeStyleSettings {
   @Nullable
   public ArrangementSettings getArrangementSettings() {
     return myArrangementSettings;
+  }
+
+  @NotNull
+  public CommentStyleSettings getCommentStyleSettings() {
+    return myCommentStyleSettings;
   }
 
   public void setArrangementSettings(@NotNull ArrangementSettings settings) {
@@ -203,6 +210,24 @@ public class CommonCodeStyleSettings {
       }
     }
   }
+
+  private final class DefaultCommentStyleSettings implements CommentStyleSettings {
+    @Override
+    public boolean isLineCommentInTheFirstColumn() {
+      return LINE_COMMENT_AT_FIRST_COLUMN;
+    }
+
+    @Override
+    public boolean isLineCommentFollowedWithSpace() {
+      return LINE_COMMENT_ADD_SPACE;
+    }
+
+    @Override
+    public boolean isBlockCommentIncludesSpace() {
+      return BLOCK_COMMENT_ADD_SPACE;
+    }
+  }
+
 
   public static final class SupportedFieldsDiffFilter extends DifferenceFilter<CommonCodeStyleSettings> {
     private final Set<String> mySupportedFieldNames;
