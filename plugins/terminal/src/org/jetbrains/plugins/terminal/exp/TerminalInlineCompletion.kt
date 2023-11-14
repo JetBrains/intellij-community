@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.terminal.exp
 
 import com.intellij.codeInsight.inline.completion.*
+import com.intellij.codeInsight.inline.completion.elements.InlineCompletionElement
 import com.intellij.codeInsight.inline.completion.elements.InlineCompletionGrayTextElement
 import com.intellij.codeInsight.inline.completion.session.InlineCompletionContext
 import com.intellij.codeInsight.lookup.LookupManager
@@ -20,7 +21,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.editor
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.isPromptEditor
 
@@ -38,21 +40,24 @@ class TerminalInlineCompletion(private val scope: CoroutineScope) {
 class TerminalInlineCompletionProvider : InlineCompletionProvider {
   override val id: InlineCompletionProviderID = InlineCompletionProviderID("TerminalInlineCompletionProvider")
   override suspend fun getSuggestion(request: InlineCompletionRequest): InlineCompletionSuggestion {
-    return InlineCompletionSuggestion.withFlow {
-      withContext(Dispatchers.EDT) {
-        val lookup = LookupManager.getActiveLookup(request.editor) ?: return@withContext null
-        val item = lookup.currentItem ?: return@withContext null
-        val itemPrefix = lookup.itemPattern(item)
-        if (SystemInfo.isFileSystemCaseSensitive && !item.lookupString.startsWith(itemPrefix)) {
-          // do not show inline completion if prefix is written in different case in case-sensitive file system
-          return@withContext null
-        }
-        val itemSuffix = item.lookupString.removeRange(0, itemPrefix.length)
-        InlineCompletionGrayTextElement(itemSuffix)
-      }?.let {
+    val flow = flow {
+      getCompletionElement(request.editor)?.let {
         emit(it)
       }
+    }.flowOn(Dispatchers.EDT)
+    return InlineCompletionSuggestion.Default(flow)
+  }
+
+  private fun getCompletionElement(editor: Editor): InlineCompletionElement? {
+    val lookup = LookupManager.getActiveLookup(editor) ?: return null
+    val item = lookup.currentItem ?: return null
+    val itemPrefix = lookup.itemPattern(item)
+    if (SystemInfo.isFileSystemCaseSensitive && !item.lookupString.startsWith(itemPrefix)) {
+      // do not show inline completion if prefix is written in different case in case-sensitive file system
+      return null
     }
+    val itemSuffix = item.lookupString.removeRange(0, itemPrefix.length)
+    return InlineCompletionGrayTextElement(itemSuffix)
   }
 
   override fun isEnabled(event: InlineCompletionEvent): Boolean {
