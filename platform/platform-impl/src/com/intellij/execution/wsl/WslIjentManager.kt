@@ -18,6 +18,7 @@ import com.intellij.util.SuspendingLazy
 import com.intellij.util.suspendingLazy
 import com.jetbrains.rd.util.concurrentMapOf
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
@@ -27,12 +28,23 @@ import java.io.IOException
 class WslIjentManager private constructor(private val scope: CoroutineScope) {
   private val myCache: MutableMap<String, SuspendingLazy<IjentApi>> = concurrentMapOf()
 
+  /**
+   * The returned instance is not supposed to be closed by the caller. [WslIjentManager] closes [IjentApi] by itself during shutdown.
+   */
   suspend fun getIjentApi(wslDistribution: WSLDistribution, project: Project?, rootUser: Boolean): IjentApi {
-    return myCache.computeIfAbsent(wslDistribution.id + if (rootUser) ":root" else "") {
-      scope.suspendingLazy {
+    return myCache.compute(wslDistribution.id + if (rootUser) ":root" else "") { _, oldHolder ->
+      val validOldHolder = when (oldHolder?.isInitialized()) {
+        true ->
+          if (oldHolder.getInitialized().coroutineScope.isActive) oldHolder
+          else null
+        false -> oldHolder
+        null -> null
+      }
+
+      validOldHolder ?: scope.suspendingLazy {
         deployAndLaunchIjent(scope, project, wslDistribution, wslCommandLineOptionsModifier = { it.setSudo(rootUser) })
       }
-    }.getValue()
+    }!!.getValue()
   }
 
   fun fetchLoginShellEnv(wslDistribution: WSLDistribution, project: Project?, rootUser: Boolean): Map<String, String> {
@@ -62,6 +74,16 @@ class WslIjentManager private constructor(private val scope: CoroutineScope) {
         is IjentApi.ExecuteProcessResult.Success -> processResult.process.toProcess(ijentApi.coroutineScope, pty != null)
         is IjentApi.ExecuteProcessResult.Failure -> throw IOException(processResult.message)
       }
+    }
+  }
+
+  @VisibleForTesting
+  fun dropCache() {
+    myCache.values.removeAll { ijent ->
+      if (ijent.isInitialized()) {
+        ijent.getInitialized().close()
+      }
+      true
     }
   }
 
