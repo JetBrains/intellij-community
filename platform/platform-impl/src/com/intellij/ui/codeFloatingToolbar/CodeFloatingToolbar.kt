@@ -6,6 +6,7 @@ import com.intellij.codeInsight.hint.HintManagerImpl
 import com.intellij.codeInsight.template.TemplateManager
 import com.intellij.ide.HelpTooltip
 import com.intellij.ide.ui.customization.CustomActionsSchema
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.Toggleable
@@ -246,6 +247,34 @@ class CodeFloatingToolbar(
     }
     point.translate(1, 1)
     popup.setLocation(point)
+  }
+
+  /**
+   * Hides the toolbar if it intersects another popup.
+   */
+  fun hideOnPopupConflict(popup: JBPopup){
+    val wasVisible = isShown()
+    val wasDisabled = TEMPORARILY_DISABLED
+    val disposable = getPopupDisposable(popup)
+    temporarilyDisable(true)
+    scheduleHide()
+    Disposer.register(disposable) {
+      temporarilyDisable(wasDisabled)
+      if (wasVisible) {
+        allowInstantShowing()
+      }
+    }
+  }
+
+  private fun getPopupDisposable(popup: JBPopup): Disposable {
+    val disposable = Disposer.newDisposable()
+    Disposer.register(popup, disposable)
+    popup.addListener(object : JBPopupListener {
+      override fun onClosed(event: LightweightWindowEvent) {
+        Disposer.dispose(disposable)
+      }
+    })
+    return disposable
   }
 
   private fun showMenuPopupOnMouseHover(button: ActionButton) {
