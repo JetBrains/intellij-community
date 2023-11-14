@@ -28,10 +28,7 @@ import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Functions;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.io.File;
 import java.io.OutputStream;
@@ -229,7 +226,7 @@ public class WSLDistribution implements AbstractWslDistribution {
   public @NotNull <T extends GeneralCommandLine> T patchCommandLine(@NotNull T commandLine,
                                                                     @Nullable Project project,
                                                                     @NotNull WSLCommandLineOptions options) throws ExecutionException {
-    if (WslIjentManager.isIjentAvailable() && !options.isLaunchWithWslExe()) {
+    if (mustRunCommandLineWithIjent(options)) {
       if (commandLine instanceof PtyCommandLine) {
         commandLine.setProcessCreator((processBuilder) -> {
           var ptyOptions = ((PtyCommandLine)commandLine).getPtyOptions();
@@ -249,6 +246,11 @@ public class WSLDistribution implements AbstractWslDistribution {
     }
 
     return commandLine;
+  }
+
+  @VisibleForTesting
+  public static boolean mustRunCommandLineWithIjent(@NotNull WSLCommandLineOptions options) {
+    return WslIjentManager.isIjentAvailable() && !options.isLaunchWithWslExe();
   }
 
   final @NotNull <T extends GeneralCommandLine> T doPatchCommandLine(@NotNull T commandLine,

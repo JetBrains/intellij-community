@@ -19,6 +19,7 @@ import com.intellij.util.suspendingLazy
 import com.jetbrains.rd.util.concurrentMapOf
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.runBlocking
+import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
 import java.io.IOException
 
@@ -73,6 +74,16 @@ class WslIjentManager private constructor(private val scope: CoroutineScope) {
 
     @JvmStatic
     fun getInstance(): WslIjentManager = service()
+
+    @TestOnly
+    @JvmStatic
+    fun overrideIsIjentAvailable(value: Boolean): AutoCloseable {
+      val registry = Registry.get("wsl.use.remote.agent.for.launch.processes")
+      registry.setValue(value)
+      return AutoCloseable {
+        registry.resetToDefault()
+      }
+    }
   }
 }
 
