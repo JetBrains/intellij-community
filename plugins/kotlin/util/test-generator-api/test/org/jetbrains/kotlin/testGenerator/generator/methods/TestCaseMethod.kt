@@ -41,6 +41,9 @@ data class TestCaseMethod(
         )
     }
 
+    fun testDataPath(parent: File): File =
+        File(parent, localPath)
+
     override fun Code.render() {
         if (ignored) return
         appendAnnotation(TAnnotation<TestMetadata>(localPath))

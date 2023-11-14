@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.testGenerator.generator.methods.TestCaseMethod
 import org.jetbrains.kotlin.testGenerator.generator.toRelativeStringSystemIndependent
 import org.jetbrains.kotlin.testGenerator.model.TWorkspace
 import java.io.File
+import java.util.Date
 import java.util.concurrent.atomic.AtomicInteger
 
 fun main() {
@@ -36,7 +37,9 @@ object ParityReportGenerator {
 
     fun generateReport(k1Workspace: TWorkspace, k2Workspace: TWorkspace) {
         val md = buildString {
-            appendLine("# K2/K1 feature parity report").appendLine()
+            appendLine("# K2/K1 feature parity report").appendLine().appendLine()
+            appendLine("Generated on ${Date()}").appendLine()
+
             val extraBuilder = StringBuilder()
             val k1Cases = buildCases("K1", k1Workspace, extraBuilder)
             val k2Cases = buildCases("K2", k2Workspace, extraBuilder)
@@ -49,7 +52,7 @@ object ParityReportGenerator {
 
             append(extraBuilder)
         }
-        File("parity-report.md").writeText(md.replace("\n", System.lineSeparator()))
+        File(KotlinRoot.DIR, "k2-k1-parity-report.md").writeText(md.replace("\n", System.lineSeparator()))
     }
 
     data class CaseNameFile(val generatedClassName: String, val testCaseMethod: TestCaseMethod, val fileName: String)
@@ -80,8 +83,13 @@ object ParityReportGenerator {
                     }
 
                     val testCaseMethods = suiteElements.fold(mutableMapOf<String, List<TestCaseMethod>>()) { acc, curr ->
-                        acc += curr.testCaseMethods()
+                        curr.testCaseMethods().forEach { (k, v) ->
+                            acc[k] = (acc[k] ?: ArrayList<TestCaseMethod>()) + v
+                        }
                         acc
+                    }
+                    if (testCaseMethods.any { it.value.any { !it.file.exists() } }) {
+                        error(testCaseMethods.flatMap { it.value.filter { !it.file.exists() } }.joinToString())
                     }
                     testCaseMethods.forEach { (className, files) ->
                         val testDataMethodFiles = files.filter { it.file.isFile }
@@ -193,10 +201,12 @@ object ParityReportGenerator {
                         val line = StatusLine("[${first.name}]", second.sumOf { it.k2 }, second.sumOf { it.k1 }, second.sumOf { it.files })
                         appendLine(line.renderToMd())
                     } else {
-                        if (first.name != second.first().name) {
+                        // summary
+                        if (first.name != second.first().name && second.size > 1) {
                             val line = StatusLine("[${first.name}]", second.sumOf { it.k2 }, second.sumOf { it.k1 }, second.sumOf { it.files })
                             appendLine(line.renderToMd())
                         }
+                        // detailed
                         second.sortedWith(compareBy({ it.rate }, { it.name })).forEach {
                             appendLine(it.renderToMd())
                         }

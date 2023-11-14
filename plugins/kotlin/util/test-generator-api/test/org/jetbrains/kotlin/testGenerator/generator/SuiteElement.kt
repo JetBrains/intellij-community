@@ -159,10 +159,11 @@ class SuiteElement private constructor(
         File(group.testDataRoot, model.path)
 
     fun testCaseMethods(): Map<String, List<TestCaseMethod>> {
+        val testDataPath = testDataPath()
         val className = suite.generatedClassName + (if (isNested) "$" + this.className else "")
         return this.nestedSuites.fold<SuiteElement, MutableMap<String, List<TestCaseMethod>>>(
             mutableMapOf<String, List<TestCaseMethod>>(
-                className to this.methods.filterIsInstance<TestCaseMethod>())
+                className to this.methods.filterIsInstance<TestCaseMethod>().map { it.copy(file = it.testDataPath(testDataPath))})
         ) { acc: MutableMap<String, List<TestCaseMethod>>, curr: SuiteElement ->
             val testDataMethodPaths = curr.testCaseMethods()
             acc += testDataMethodPaths.map<String, List<TestCaseMethod>, Pair<String, List<TestCaseMethod>>> {
