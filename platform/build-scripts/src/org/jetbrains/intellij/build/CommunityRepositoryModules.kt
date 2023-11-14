@@ -365,7 +365,7 @@ object CommunityRepositoryModules {
   }
 
   fun androidPlugin(additionalModulesToJars: Map<String, String> = emptyMap(),
-                    mainModuleName: String = "intellij.android.plugin",
+                    mainModuleName: String = "intellij.android.plugin.descriptor",
                     allPlatforms: Boolean = false,
                     addition: ((PluginLayout.PluginLayoutSpec) -> Unit)? = null,): PluginLayout {
     return createAndroidPluginLayout(mainModuleName, additionalModulesToJars, allPlatforms, addition)
@@ -493,8 +493,7 @@ object CommunityRepositoryModules {
       spec.withModule("intellij.android.android-material", "android.jar")
       spec.withModule("intellij.android.observable.ui", "android.jar")
       spec.withModule("intellij.android.observable", "android.jar")
-      if (mainModuleName != "intellij.android.plugin") {
-        spec.withModule("intellij.android.plugin", "android.jar")
+      if (mainModuleName != "intellij.android.plugin.descriptor") {
         spec.withModule("intellij.android.plugin.descriptor", "android.jar")
       }
       spec.withModule("intellij.android.profilersAndroid", "android.jar")
