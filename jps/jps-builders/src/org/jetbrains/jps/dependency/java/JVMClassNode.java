@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.dependency.java;
 
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.dependency.Node;
 import org.jetbrains.jps.dependency.Usage;
@@ -11,8 +12,17 @@ import org.jetbrains.jps.dependency.impl.RW;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public abstract class JVMClassNode<T extends JVMClassNode<T, D>, D extends Difference> extends Proto implements Node<T, D> {
+  private static final MethodHandles.Lookup ourLookup = MethodHandles.lookup();
+  private static final MethodType ourConstructorType = MethodType.methodType(void.class, DataInput.class);
+
   private final JvmNodeReferenceID myId;
   private final String outFilePath;
   private final Iterable<Usage> myUsages;
@@ -28,7 +38,34 @@ public abstract class JVMClassNode<T extends JVMClassNode<T, D>, D extends Diffe
     super(in);
     myId = new JvmNodeReferenceID(in);
     outFilePath = in.readUTF();
-    myUsages = RW.readCollection(in, () -> JvmNodeElementExternalizer.<Usage>getMultitypeExternalizer().load(in));
+
+    List<Usage> usages = new SmartList<>();
+    try {
+      int groupCount = in.readInt();
+      while(groupCount-- > 0) {
+        MethodHandle constructor = ourLookup.findConstructor(Class.forName(in.readUTF()), ourConstructorType);
+        RW.readCollection(in, () -> {
+          try {
+            return (Usage)constructor.invoke(in);
+          }
+          catch (IOException e) {
+            throw e;
+          }
+          catch (Throwable e) {
+            throw new IOException(e);
+          }
+        }, usages);
+      }
+    }
+    catch (IOException e) {
+      throw e;
+    }
+    catch (Throwable e) {
+      throw new IOException(e);
+    }
+    finally {
+      myUsages = usages;
+    }
   }
 
   @Override
@@ -36,7 +73,22 @@ public abstract class JVMClassNode<T extends JVMClassNode<T, D>, D extends Diffe
     super.write(out);
     myId.write(out);
     out.writeUTF(outFilePath);
-    RW.writeCollection(out, myUsages,  u -> JvmNodeElementExternalizer.getMultitypeExternalizer().save(out, u));
+
+    Map<Class<? extends Usage>, List<Usage>> usageGroups = new HashMap<>();
+    for (Usage usage : myUsages) {
+      Class<? extends Usage> uClass = usage.getClass();
+      List<Usage> acc = usageGroups.get(uClass);
+      if (acc == null) {
+        usageGroups.put(uClass, acc = new SmartList<>());
+      }
+      acc.add(usage);
+    }
+    
+    out.writeInt(usageGroups.size());
+    for (Map.Entry<Class<? extends Usage>, List<Usage>> entry : usageGroups.entrySet()) {
+      out.writeUTF(entry.getKey().getName());
+      RW.writeCollection(out, entry.getValue(), u -> u.write(out));
+   }
   }
 
   @Override

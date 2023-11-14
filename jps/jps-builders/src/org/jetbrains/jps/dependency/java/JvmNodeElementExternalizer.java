@@ -8,64 +8,31 @@ import org.jetbrains.jps.dependency.Externalizer;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
 
 public final class JvmNodeElementExternalizer {
-  
-  /** @noinspection SSBasedInspection*/
-  private enum ElementDescriptor {
-    CLASS(JvmClass.class, JvmClass::new),
-    MODULE(JvmModule.class, JvmModule::new),
-    CLASS_USAGE(ClassUsage.class, ClassUsage::new),
-    CLASS_AS_GENERIC_BOUND_USAGE(ClassAsGenericBoundUsage.class, ClassAsGenericBoundUsage::new),
-    CLASS_EXTENDS_USAGE(ClassExtendsUsage.class, ClassExtendsUsage::new),
-    CLASS_NEW_USAGE(ClassNewUsage.class, ClassNewUsage::new),
-    METHOD_USAGE(MethodUsage.class, MethodUsage::new),
-    FILED_USAGE(FieldUsage.class, FieldUsage::new),
-    FIELD_ASSIGN_USAGE(FieldAssignUsage.class, FieldAssignUsage::new),
-    ANNOTATION_USAGE(AnnotationUsage.class, AnnotationUsage::new),
-    IMPORT_STATIC_MEMBER_USAGE(ImportStaticMemberUsage.class, ImportStaticMemberUsage::new),
-    IMPORT_STATIC_ON_DEMAND_USAGE(ImportStaticOnDemandUsage.class, ImportStaticOnDemandUsage::new),
-    MODULE_USAGE(ModuleUsage.class, ModuleUsage::new);
+  private static final MethodType ourConstructorType = MethodType.methodType(void.class, DataInput.class);
+  private static final MethodHandles.Lookup ourLookup = MethodHandles.lookup();
 
-    public final Class<? extends ExternalizableGraphElement> elementClass;
-    public final DataReader<? extends ExternalizableGraphElement> factory;
-
-    ElementDescriptor(Class<? extends ExternalizableGraphElement> elementClass, DataReader<? extends ExternalizableGraphElement> factory) {
-      this.elementClass = elementClass;
-      this.factory = factory;
-    }
-
-    private static final Map<Class<? extends ExternalizableGraphElement>, ElementDescriptor> ourClassToElementMap = new HashMap<>();
-    private static final Map<Integer, ElementDescriptor> ourOrdinalToElementMap = new HashMap<>();
-    static {
-      for (ElementDescriptor elem : values()) {
-        ourClassToElementMap.put(elem.elementClass, elem);
-        ourOrdinalToElementMap.put(elem.ordinal(), elem);
-      }
-    }
-
-    public static ElementDescriptor find(int ordinal) {
-      return ourOrdinalToElementMap.get(ordinal);
-    }
-    public static ElementDescriptor find(ExternalizableGraphElement element) {
-      return find(element.getClass());
-    }
-    public static ElementDescriptor find(Class<? extends ExternalizableGraphElement> ordinal) {
-      return ourClassToElementMap.get(ordinal);
-    }
-  }
-  
   private static final Externalizer<? extends ExternalizableGraphElement> ourMultitypeExternalizer = new Externalizer<>() {
+
     @Override
     public ExternalizableGraphElement load(DataInput in) throws IOException {
-      return ElementDescriptor.find(in.readInt()).factory.load(in);
+      try {
+        return (ExternalizableGraphElement)ourLookup.findConstructor(Class.forName(in.readUTF()), ourConstructorType).invoke(in);
+      }
+      catch(IOException e) {
+        throw e;
+      }
+      catch (Throwable e) {
+        throw new IOException(e);
+      }
     }
 
     @Override
     public void save(DataOutput out, ExternalizableGraphElement value) throws IOException {
-      out.writeInt(ElementDescriptor.find(value).ordinal());
+      out.writeUTF(value.getClass().getName());
       value.write(out);
     }
   };

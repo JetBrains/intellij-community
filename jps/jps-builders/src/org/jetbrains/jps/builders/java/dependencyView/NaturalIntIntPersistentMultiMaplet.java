@@ -16,7 +16,7 @@ import java.util.function.ObjIntConsumer;
 
 final class NaturalIntIntPersistentMultiMaplet extends IntIntMultiMaplet {
   private static final IntSet NULL_COLLECTION = new IntOpenHashSet();
-  private static final int CACHE_SIZE = 128;
+  private static final int CACHE_SIZE = 256;
   private static final DataExternalizer<IntSet> EXTERNALIZER = new DataExternalizer<>() {
     @Override
     public void save(final @NotNull DataOutput out, final IntSet value) throws IOException {
