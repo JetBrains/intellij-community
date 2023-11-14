@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.analysis.decompiler.psi.KotlinBuiltInFileType
 import org.jetbrains.kotlin.asJava.LightClassUtil
 import org.jetbrains.kotlin.fileClasses.JvmFileClassUtil
 import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope
+import org.jetbrains.kotlin.idea.base.util.isInDumbMode
 import org.jetbrains.kotlin.idea.stubindex.*
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
@@ -81,6 +82,8 @@ class KotlinGotoTypeAliasContributor: AbstractKotlinGotoSymbolContributor<KtType
 
 class KotlinGotoFunctionSymbolContributor: AbstractKotlinGotoSymbolContributor<KtNamedFunction>(KotlinFunctionShortNameIndex) {
     override fun wrapProcessor(processor: Processor<in KtNamedFunction>): Processor<KtNamedFunction> = Processor {
+        if (it.project.isInDumbMode) return@Processor true
+
         val method = LightClassUtil.getLightClassMethod(it)
         if (method == null || it.name != method.name) {
             processor.process(it)
@@ -93,6 +96,8 @@ class KotlinGotoFunctionSymbolContributor: AbstractKotlinGotoSymbolContributor<K
 class KotlinGotoPropertySymbolContributor: AbstractKotlinGotoSymbolContributor<KtNamedDeclaration>(KotlinPropertyShortNameIndex) {
 
     override fun wrapProcessor(processor: Processor<in KtNamedDeclaration>): Processor<KtNamedDeclaration> = Processor {
+        if (it.project.isInDumbMode) return@Processor true
+
         if (LightClassUtil.getLightClassBackingField(it) == null || it.containingClass()?.isInterface() == true) {
             processor.process(it)
         } else {

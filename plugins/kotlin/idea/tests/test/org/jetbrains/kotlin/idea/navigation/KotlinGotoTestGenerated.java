@@ -123,6 +123,11 @@ public abstract class KotlinGotoTestGenerated extends AbstractKotlinGotoTest {
             runTest("testData/navigation/gotoSymbol/jvmNameAnnotatedFileMultiAnnotations.kt");
         }
 
+        @TestMetadata("jvmNameAnnotatedFileMultiAnnotationsInDumbMode.kt")
+        public void testJvmNameAnnotatedFileMultiAnnotationsInDumbMode() throws Exception {
+            runTest("testData/navigation/gotoSymbol/jvmNameAnnotatedFileMultiAnnotationsInDumbMode.kt");
+        }
+
         @TestMetadata("jvmNameAnnotatedFilesKt.kt")
         public void testJvmNameAnnotatedFilesKt() throws Exception {
             runTest("testData/navigation/gotoSymbol/jvmNameAnnotatedFilesKt.kt");
@@ -151,11 +156,6 @@ public abstract class KotlinGotoTestGenerated extends AbstractKotlinGotoTest {
         @TestMetadata("properties.kt")
         public void testProperties() throws Exception {
             runTest("testData/navigation/gotoSymbol/properties.kt");
-        }
-
-        @TestMetadata("propertiesInDumbMode.kt")
-        public void testPropertiesInDumbMode() throws Exception {
-            runTest("testData/navigation/gotoSymbol/propertiesInDumbMode.kt");
         }
 
         @TestMetadata("stdLibArrayListOf.kt")
