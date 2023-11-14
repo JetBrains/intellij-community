@@ -41,7 +41,7 @@ import static com.intellij.psi.codeStyle.CodeStyleDefaults.*;
  * Common code style settings can be used by several programming languages. Each language may have its own
  * instance of {@code CommonCodeStyleSettings}.
  */
-public class CommonCodeStyleSettings {
+public class CommonCodeStyleSettings implements CommentStyleSettings {
   // Dev. notes:
   // - Do not add language-specific options here, use CustomCodeStyleSettings instead.
   // - New options should be added to CodeStyleSettingsCustomizable as well.
@@ -57,7 +57,6 @@ public class CommonCodeStyleSettings {
   private boolean             myForceArrangeMenuAvailable;
 
   private final SoftMargins mySoftMargins = new SoftMargins();
-  private final CommentStyleSettings myCommentStyleSettings = new DefaultCommentStyleSettings();
 
   @NonNls private static final String INDENT_OPTIONS_TAG = "indentOptions";
 
@@ -105,11 +104,6 @@ public class CommonCodeStyleSettings {
   @Nullable
   public ArrangementSettings getArrangementSettings() {
     return myArrangementSettings;
-  }
-
-  @NotNull
-  public CommentStyleSettings getCommentStyleSettings() {
-    return myCommentStyleSettings;
   }
 
   public void setArrangementSettings(@NotNull ArrangementSettings settings) {
@@ -211,21 +205,19 @@ public class CommonCodeStyleSettings {
     }
   }
 
-  private final class DefaultCommentStyleSettings implements CommentStyleSettings {
-    @Override
-    public boolean isLineCommentInTheFirstColumn() {
-      return LINE_COMMENT_AT_FIRST_COLUMN;
-    }
+  @Override
+  public boolean isLineCommentInTheFirstColumn() {
+    return LINE_COMMENT_AT_FIRST_COLUMN;
+  }
 
-    @Override
-    public boolean isLineCommentFollowedWithSpace() {
-      return LINE_COMMENT_ADD_SPACE;
-    }
+  @Override
+  public boolean isLineCommentFollowedWithSpace() {
+    return LINE_COMMENT_ADD_SPACE;
+  }
 
-    @Override
-    public boolean isBlockCommentIncludesSpace() {
-      return BLOCK_COMMENT_ADD_SPACE;
-    }
+  @Override
+  public boolean isBlockCommentIncludesSpace() {
+    return BLOCK_COMMENT_ADD_SPACE;
   }
 
 
