@@ -30,7 +30,7 @@ class TypeFilterConfiguration : EvaluationFilterConfiguration {
   override val hasUI: Boolean = true
 
   override fun isLanguageSupported(languageName: String): Boolean =
-    listOf(Language.JAVA, Language.KOTLIN, Language.PYTHON, Language.JS, Language.TYPESCRIPT).any { it.displayName == languageName }
+    listOf(Language.JAVA, Language.KOTLIN, Language.PYTHON, Language.JS, Language.TYPESCRIPT, Language.RUBY).any { it.displayName == languageName }
 
   override fun buildFromJson(json: Any?): EvaluationFilter =
     if (json == null) EvaluationFilter.ACCEPT_ALL
