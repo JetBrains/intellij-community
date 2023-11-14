@@ -663,7 +663,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
 
   private void updatePreviewVisibility(@NotNull SETab tab) {
     boolean noProviders = ContainerUtil.filterIsInstance(tab.getContributors(), SearchEverywherePreviewProvider.class).isEmpty();
-    myUsagePreviewPanel.setVisible(isPreviewEnabled() && isPreviewActive() && !noProviders);
+    myUsagePreviewPanel.setVisible(isPreviewEnabled() && isPreviewActive() && !noProviders && !myResultsList.isEmpty());
   }
 
   @Override
@@ -1604,9 +1604,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
       mySelectionTracker.resetSelectionIfNeeded();
       myHintHelper.setSearchInProgress(false);
 
-      if (isPreviewEnabled()) {
-        myUsagePreviewPanel.setVisible(!myResultsList.isEmpty());
-      }
+      updatePreviewVisibility(myHeader.getSelectedTab());
 
       myExternalSearchListeners.forEach(listener -> {
         listener.searchFinished(hasMoreContributors);
