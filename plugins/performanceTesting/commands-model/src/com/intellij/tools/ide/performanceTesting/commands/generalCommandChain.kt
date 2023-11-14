@@ -807,3 +807,7 @@ fun <T : CommandChain> T.moveCaret(text: String): T = apply {
 fun <T : CommandChain> T.startNewLine(): T = apply {
   executeEditorAction("EditorStartNewLine")
 }
+
+fun <T : CommandChain> T.captureMemoryMetrics(suffix: String): T = apply {
+  addCommand("${CMD_PREFIX}captureMemoryMetrics $suffix")
+}

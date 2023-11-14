@@ -96,7 +96,8 @@ public final class BaseCommandProvider implements CommandProvider {
       Map.entry(SaveDocumentsAndSettingsCommand.PREFIX, SaveDocumentsAndSettingsCommand::new),
       Map.entry(FreezeUICommand.PREFIX, FreezeUICommand::new),
       Map.entry(MoveCaretCommand.PREFIX, MoveCaretCommand::new),
-      Map.entry(TakeThreadDumpCommand.PREFIX, TakeThreadDumpCommand::new)
+      Map.entry(TakeThreadDumpCommand.PREFIX, TakeThreadDumpCommand::new),
+      Map.entry(CaptureMemoryMetricsCommand.PREFIX, CaptureMemoryMetricsCommand::new)
     );
   }
 }
