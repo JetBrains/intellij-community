@@ -1563,7 +1563,7 @@ public class Py3TypeTest extends PyTestCase {
 
   // PY-48338
   public void testDecoratedFunctionHasOriginalFunctionType() {
-    doTest("(input_a: int, input_b: float) -> float | Any",
+    doTest("(input_a: int, input_b: float) -> float",
            "import functools\n" +
            "\n" +
            "def decorator(func):\n" +
@@ -1585,7 +1585,7 @@ public class Py3TypeTest extends PyTestCase {
 
   // PY-48338
   public void testDecoratedFromOtherFileFunctionHasOriginalFunctionType() {
-    doMultiFileTest("(input_a: int, input_b: float) -> float | Any",
+    doMultiFileTest("(input_a: int, input_b: float) -> float",
            "import functools\n" +
            "from dec_mod import decorator\n" +
            "\n" +
@@ -1601,7 +1601,7 @@ public class Py3TypeTest extends PyTestCase {
 
   // PY-48338
   public void testTwiceDecoratedFunctionHasUnionOfOriginalFunctionAndUnknownCallableType() {
-    doTest("(input_a: int, input_b: float) -> float | Any",
+    doTest("(input_a: int, input_b: float) -> float",
            "import functools\n" +
            "\n" +
            "\n" +
@@ -1633,7 +1633,7 @@ public class Py3TypeTest extends PyTestCase {
 
   // PY-48338
   public void testDecoratedFunctionWithUnknownWrapperDecoratorHasUnionOriginalFunctionAndUnknownCallableType() {
-    doTest("(input_a: int, input_b: float) -> float | Any",
+    doTest("(input_a: int, input_b: float) -> float",
            "import functools\n" +
            "\n" +
            "\n" +
@@ -1664,7 +1664,7 @@ public class Py3TypeTest extends PyTestCase {
 
   // PY-48338
   public void testDecoratedFunctionWithOtherWrapperParametersHasWrapperType() {
-    doTest("(str, input_a: int, input_b: float) -> float | Any",
+    doTest("(str, input_a: int, input_b: float) -> float",
            "import functools\n" +
            "from typing import Callable, ParamSpec, TypeVar, Concatenate\n" +
            "P = ParamSpec(\"P\")\n" +

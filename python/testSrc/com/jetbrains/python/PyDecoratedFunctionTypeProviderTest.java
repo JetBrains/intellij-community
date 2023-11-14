@@ -412,6 +412,24 @@ public class PyDecoratedFunctionTypeProviderTest extends PyTestCase {
              """);
   }
 
+  public void testUntypedFunctionDecoratedWithTypedDecorator() {
+    doTest("str", "() -> str", """
+      from typing import Callable, TypeVar
+      
+      T = TypeVar('T')
+      
+      def d(fn: Callable[[], T]) -> Callable[[], T]:
+          return fn
+      
+      @d
+      def f():
+          return 'foo'
+      
+      value = f()
+      dec_func = f
+      """);
+  }
+
   private void doTest(@NotNull String expectedValueType, @NotNull String expectedFuncType, @NotNull String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     checkTypes(expectedValueType, expectedFuncType, allContexts());
