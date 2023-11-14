@@ -106,6 +106,12 @@ public class ReplacePathToMacroMapTest {
     assertEquals("file://$MACRO$", substitute("file://x"));
   }
 
+  @Test
+  public void testPrefixCase() {
+    assertEquals("FILE:/tmp/foo", substitute("FILE:/tmp/foo"));
+    assertEquals("file:$MODULE_DIR$", substitute("file:/tmp/foo"));
+  }
+
   private String substitute(@NotNull String s) {
     return myMap.substitute(s, true);
   }

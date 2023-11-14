@@ -97,7 +97,7 @@ public final class ReplacePathToMacroMap extends PathMacroMap {
       return "";
     }
     for (String prefix : prefixes) {
-      if (text.startsWith(prefix)) {
+      if (startsWith(text, prefix, caseSensitive, 0)) {
         int prefixLength = prefix.length();
         if (startsWith(text, path, caseSensitive, prefixLength)) {
           return prefix;
