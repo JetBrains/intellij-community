@@ -19,7 +19,7 @@ internal class TimeSpanUserActivityDatabaseThrottler(cs: CoroutineScope,
                                                      private val eventTtl: Duration = Duration.ofMinutes(2L),
                                                      runBackgroundUpdater: Boolean = true) {
 
-  private val events = mutableMapOf<String, EventDescriptor>()
+  private val events = HashMap<String, EventDescriptor>()
   private val eventsLock = Mutex()
 
   init {
@@ -47,31 +47,32 @@ internal class TimeSpanUserActivityDatabaseThrottler(cs: CoroutineScope,
                            canBeStale: Boolean,
                            moment: Instant?,
                            extra: Map<String, String>?): Instant? {
-    return when (kind) {
-      TimeSpanUserActivityDatabaseManualKind.Start -> {
-        if (events.containsKey(activity.toKey(id))) {
-          logger.warn("Already logged ${activity.toKey(id)}, it won't be overwritten")
-          null
+    return eventsLock.withLock {
+      when (kind) {
+        TimeSpanUserActivityDatabaseManualKind.Start -> {
+          if (events.containsKey(activity.toKey(id))) {
+            logger.warn("Already logged ${activity.toKey(id)}, it won't be overwritten")
+            null
+          }
+          else {
+            logger.info("Starting activity ${activity.id} with id $id")
+            val theMoment = moment ?: InstantUtils.Now
+            events[activity.toKey(id)] = EventDescriptor.manual(activity, id, canBeStale, theMoment, extra)
+            theMoment
+          }
         }
-        else {
-          logger.info("Starting activity ${activity.id} with id $id")
-          val theMoment = moment ?: InstantUtils.Now
-          events[activity.toKey(id)] = EventDescriptor.manual(activity, id, canBeStale, theMoment, extra)
-          theMoment
-        }
-      }
-      TimeSpanUserActivityDatabaseManualKind.End -> {
-        val event = events[activity.toKey(id)]
-        if (event == null) {
-          logger.warn("Tried to end activity ${activity.toKey(id)} that wasn't started")
-          null
-        }
-        else {
-          logger.info("Ending activity ${activity.id} with id $id")
-          val theMoment = moment ?: InstantUtils.Now
-          // TODO This thing saves event to DB immediately, we don't want that
-          endEvent(event, theMoment)
-          theMoment
+        TimeSpanUserActivityDatabaseManualKind.End -> {
+          val event = events[activity.toKey(id)]
+          if (event == null) {
+            logger.warn("Tried to end activity ${activity.toKey(id)} that wasn't started")
+            null
+          }
+          else {
+            logger.info("Ending activity ${activity.id} with id $id")
+            val theMoment = moment ?: InstantUtils.Now
+            endEvent(event, theMoment)
+            theMoment
+          }
         }
       }
     }
@@ -101,6 +102,7 @@ internal class TimeSpanUserActivityDatabaseThrottler(cs: CoroutineScope,
     }
   }
 
+  // should run under [eventsLock]
   private suspend fun endEvent(eventDescriptor: EventDescriptor, endedAtInit: Instant, isFinished: Boolean = true) {
     val endedAt = if (eventDescriptor.startedAt == endedAtInit) {
       // We assume that all events lasted at least for a bit
@@ -132,20 +134,24 @@ internal class TimeSpanUserActivityDatabaseThrottler(cs: CoroutineScope,
   }
 
   private suspend fun commitStaleEvents() {
-    for (event in events.values) {
-      if (!event.canBeStale && event.endAt == null) {
-        logger.warn("Event ${event.toKey()} wasn't marked as canBeStale, but the end wasn't reported. It will be still saved anyway")
+    eventsLock.withLock {
+      val values = ArrayList(events.values)
+      for (event in values) {
+        if (!event.canBeStale && event.endAt == null) {
+          logger.warn("Event ${event.toKey()} wasn't marked as canBeStale, but the end wasn't reported. It will be still saved anyway")
+        }
+        else {
+          logger.info("Submitting stale event ${event.toKey()}")
+        }
+        endEvent(event, InstantUtils.Now)
       }
-      else {
-        logger.info("Submitting stale event ${event.toKey()}")
-      }
-      endEvent(event, InstantUtils.Now)
     }
   }
 
   internal suspend fun commitChanges(isFinal: Boolean) {
     eventsLock.withLock {
-      events.values.forEach { descriptor ->
+      val values = ArrayList(events.values)
+      for (descriptor in values) {
         val now = InstantUtils.Now
 
         if (descriptor.isPeriodic) {
@@ -154,7 +160,7 @@ internal class TimeSpanUserActivityDatabaseThrottler(cs: CoroutineScope,
 
           if (endAt == null) {
             logger.warn("Attempt to commit periodic event (${descriptor.toKey()}) with no end time, skipping")
-            return@forEach
+            continue
           }
 
           endEvent(descriptor, endAt, isFinished = endAt < threshold || isFinal)

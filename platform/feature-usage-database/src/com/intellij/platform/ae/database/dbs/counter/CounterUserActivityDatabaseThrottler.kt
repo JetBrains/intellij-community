@@ -25,7 +25,7 @@ internal class CounterUserActivityDatabaseThrottler(private val cs: CoroutineSco
                                                     private val database: IInternalCounterUserActivityDatabase,
                                                     private val updatePause: Duration = 2.minutes,
                                                     runBackgroundUpdater: Boolean = true) {
-  private val events = mutableMapOf<DatabaseBackedCounterUserActivity, CounterUserActivityHits>()
+  private val events = HashMap<DatabaseBackedCounterUserActivity, CounterUserActivityHits>()
   private val eventsLock = Mutex()
 
   init {
