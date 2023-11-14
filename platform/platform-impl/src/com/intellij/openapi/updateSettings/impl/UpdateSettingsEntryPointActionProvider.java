@@ -299,7 +299,7 @@ final class UpdateSettingsEntryPointActionProvider implements ActionProvider {
       actions.add(new IdeUpdateAction(myPlatformUpdateInfo.getNewBuild().getVersion()));
     }
     // todo[AL/RS] separate action for plugins compatible with both old and new builds
-    else if (myUpdatedPlugins != null) {
+    else if (myUpdatedPlugins != null && !myUpdatedPlugins.isEmpty()) {
       int size = myUpdatedPlugins.size();
 
       actions.add(new UpdateAction(size == 1
