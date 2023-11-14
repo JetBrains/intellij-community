@@ -168,7 +168,10 @@ class KotlinJavaChangeInfoConverter: JavaChangeInfoConverter {
             }
             if (anno != null && !type.hasAnnotation(anno)) {
                 val nullabilityAnno = JavaPsiFacade.getElementFactory(project).createAnnotationFromText("@$anno", originalFunction)
-                type.annotate(TypeAnnotationProvider.Static.create(arrayOf(nullabilityAnno, *type.annotations)))
+                val annotationType = nullabilityAnno.resolveAnnotationType()
+                if (annotationType != null) {
+                    type.annotate(TypeAnnotationProvider.Static.create(arrayOf(nullabilityAnno, *type.annotations)))
+                } else type
             }
             else type
         }
