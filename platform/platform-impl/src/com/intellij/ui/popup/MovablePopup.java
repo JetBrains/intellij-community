@@ -4,6 +4,7 @@ package com.intellij.ui.popup;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.Gray;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -181,6 +182,17 @@ public final class MovablePopup {
         if (myHeavyWeight) {
           JWindow view = new JWindow(owner);
           view.setType(Window.Type.POPUP);
+          if (StartupUiUtil.isWaylandToolkit()) {
+            // Wayland popups *must* know their parent in order to be
+            // placed on the screen relative to it.
+            try {
+              Field field = Window.class.getDeclaredField("popupParent");
+              field.setAccessible(true);
+              field.set(view, owner);
+            }
+            catch (NoSuchFieldException| IllegalAccessException ignore) {
+            }
+          }
           setAlwaysOnTop(view, myAlwaysOnTop);
           setWindowFocusable(view, myWindowFocusable);
           setWindowShadow(view, myWindowShadow);
