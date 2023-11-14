@@ -580,7 +580,7 @@ object CommunityRepositoryModules {
 
       // sdk-common.jar
       spec.withModuleLibrary("precompiled-sdk-common", "android.sdktools.sdk-common", "sdk-common.jar")
-      spec.withModuleLibrary("precompiled-sdk-common.gradle", "android.sdktools.sdk-common.gradle", "sdk-common.jar")
+      spec.withModuleLibrary("precompiled-sdk-common.gradle", "android.sdktools.sdk-common.gradle.rt", "sdk-common.jar")
 
       // sdk-tools.jar
       spec.withModuleLibrary("precompiled-android-annotations", "android.sdktools.android-annotations", "sdk-tools.jar")
