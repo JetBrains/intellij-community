@@ -4,8 +4,8 @@ package com.intellij.openapi.vfs.newvfs.persistent.recovery;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.newvfs.persistent.*;
 import com.intellij.util.hash.ContentHashEnumerator;
+import com.intellij.util.io.storage.VFSContentStorage;
 import com.intellij.util.io.storage.RecordIdIterator;
-import com.intellij.util.io.storage.RefCountingContentStorage;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -57,12 +57,12 @@ public final class ContentStoragesRecoverer implements VFSRecoverer {
         //Seems like the ContentStorage itself is broken -> clean both Content & ContentHashes storages,
         //  and invalidate all the contentId references from fs-records:
 
-        RefCountingContentStorage contentStorage = loader.contentsStorage();
+        VFSContentStorage contentStorage = loader.contentsStorage();
         contentStorage.closeAndClean();
         ContentHashEnumerator contentHashEnumerator = loader.contentHashesEnumerator();
         contentHashEnumerator.closeAndClean();
 
-        RefCountingContentStorage emptyContentStorage = loader.createContentStorage(loader.contentsFile);
+        VFSContentStorage emptyContentStorage = loader.createContentStorage(loader.contentsFile);
         ContentHashEnumerator emptyHashesEnumerator = PersistentFSLoader.createContentHashStorage(loader.contentsHashesFile);
         loader.setContentsStorage(emptyContentStorage);
         loader.setContentHashesEnumerator(emptyHashesEnumerator);
@@ -90,7 +90,7 @@ public final class ContentStoragesRecoverer implements VFSRecoverer {
 
   private static void checkContentStorage(@NotNull PersistentFSLoader loader) throws IOException {
     PersistentFSRecordsStorage records = loader.recordsStorage();
-    RefCountingContentStorage contentStorage = loader.contentsStorage();
+    VFSContentStorage contentStorage = loader.contentsStorage();
     int maxAllocatedID = records.maxAllocatedID();
     for (int fileId = FSRecords.ROOT_FILE_ID; fileId <= maxAllocatedID; fileId++) {
       int contentId = records.getContentRecordId(fileId);
@@ -113,7 +113,7 @@ public final class ContentStoragesRecoverer implements VFSRecoverer {
     Path contentsHashesFile = loader.contentsHashesFile;
     ContentHashEnumerator recoveringHashesEnumerator = PersistentFSLoader.createContentHashStorage(contentsHashesFile);
 
-    RefCountingContentStorage contentStorage = loader.contentsStorage();
+    VFSContentStorage contentStorage = loader.contentsStorage();
     try {
       fillHashesEnumeratorByContentStorage(contentStorage, recoveringHashesEnumerator);
       loader.setContentHashesEnumerator(recoveringHashesEnumerator);
@@ -133,7 +133,7 @@ public final class ContentStoragesRecoverer implements VFSRecoverer {
     }
   }
 
-  private static void fillHashesEnumeratorByContentStorage(@NotNull RefCountingContentStorage contentStorage,
+  private static void fillHashesEnumeratorByContentStorage(@NotNull VFSContentStorage contentStorage,
                                                            @NotNull ContentHashEnumerator hashesEnumeratorToFill) throws IOException {
     //Try to fill hashesEnumerator from contentStorage records (and check contentIds match)
     // (along the way we also checks contentStorage is OK -- i.e. all the records could be read)

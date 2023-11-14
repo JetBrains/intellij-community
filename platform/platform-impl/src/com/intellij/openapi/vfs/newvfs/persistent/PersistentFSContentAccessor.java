@@ -7,19 +7,17 @@ import com.intellij.openapi.util.io.ByteArraySequence;
 import com.intellij.util.hash.ContentHashEnumerator;
 import com.intellij.util.io.DataOutputStream;
 import com.intellij.util.io.DigestUtil;
-import com.intellij.util.io.storage.IStorageDataOutput;
-import com.intellij.util.io.storage.RefCountingContentStorage;
-import org.jetbrains.annotations.ApiStatus;
+import com.intellij.util.io.storage.VFSContentStorage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.DataInputStream;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
 public final class PersistentFSContentAccessor {
@@ -75,7 +73,7 @@ public final class PersistentFSContentAccessor {
     PersistentFSConnection.ensureIdIsValid(fileId);
     lock.writeLock().lock();
     try {
-      RefCountingContentStorage contentStorage = connection.getContents();
+      VFSContentStorage contentStorage = connection.getContents();
       PersistentFSRecordsStorage records = connection.getRecords();
 
       int contentRecordId = findOrCreateContentRecord(bytes.getInternalBuffer(), bytes.getOffset(), bytes.getLength());
@@ -105,9 +103,7 @@ public final class PersistentFSContentAccessor {
       }
 
       recordId = -recordId;
-      try (IStorageDataOutput output = connection.getContents().writeStream(recordId, true)) {
-        output.write(bytes);
-      }
+      connection.getContents().writeBytes(recordId, new ByteArraySequence(bytes), /*fixedSize:*/ true);
       return recordId;
     }
     finally {
@@ -138,13 +134,12 @@ public final class PersistentFSContentAccessor {
     }
 
     ContentHashEnumerator hashesEnumerator = connection.getContentHashesEnumerator();
-    RefCountingContentStorage contentStorage = connection.getContents();
+    VFSContentStorage contentStorage = connection.getContents();
 
     int hashId = hashesEnumerator.enumerateEx(contentHash);
 
     if (hashId < 0) {//already known hash -> already stored content
       int contentRecordId = -hashId;
-      contentStorage.acquireRecord(contentRecordId);
 
       totalContentRecordsReused++;
       totalContentBytesReused += length;
@@ -153,7 +148,7 @@ public final class PersistentFSContentAccessor {
     }
     else {
       int contentRecordId = hashId;
-      int newRecord = contentStorage.acquireNewRecord();
+      int newRecord = contentStorage.createNewRecord();
       //We assume we call contents.acquireNewRecord() when and only when
       //hashesEnumerator.enumerateEx() returns positive value (which means 'new hash')
       assert contentRecordId == newRecord
@@ -184,8 +179,8 @@ public final class PersistentFSContentAccessor {
   public static byte @NotNull [] calculateHash(byte[] bytes, int offset, int length) {
     // Probably we don't need to hash the length and "\0000".
     MessageDigest digest = getContentHashDigest();
-    digest.update(String.valueOf(length).getBytes(StandardCharsets.UTF_8));
-    digest.update("\u0000".getBytes(StandardCharsets.UTF_8));
+    digest.update(String.valueOf(length).getBytes(UTF_8));
+    digest.update("\u0000".getBytes(UTF_8));
     digest.update(bytes, offset, length);
     return digest.digest();
   }
@@ -238,5 +233,4 @@ public final class PersistentFSContentAccessor {
   void releaseContentRecord(int contentRecordId) throws IOException {
     //nothing: content records kept forever
   }
-
 }

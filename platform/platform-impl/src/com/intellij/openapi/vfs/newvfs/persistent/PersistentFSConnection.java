@@ -10,7 +10,6 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IntRef;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.io.GentleFlusherBase;
@@ -27,7 +26,7 @@ import com.intellij.util.hash.ContentHashEnumerator;
 import com.intellij.util.io.*;
 import com.intellij.util.io.storage.CapacityAllocationPolicy;
 import com.intellij.util.io.storage.HeavyProcessLatch;
-import com.intellij.util.io.storage.RefCountingContentStorage;
+import com.intellij.util.io.storage.VFSContentStorage;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.ApiStatus;
@@ -100,7 +99,7 @@ public final class PersistentFSConnection {
   private final @NotNull PersistentFSPaths persistentFSPaths;
 
   private final @NotNull AbstractAttributesStorage attributesStorage;
-  private final @NotNull RefCountingContentStorage contentStorage;
+  private final @NotNull VFSContentStorage contentStorage;
 
   private final @NotNull PersistentFSRecordsStorage records;
 
@@ -127,7 +126,7 @@ public final class PersistentFSConnection {
                          @NotNull PersistentFSRecordsStorage records,
                          @NotNull ScannableDataEnumeratorEx<String> names,
                          @NotNull AbstractAttributesStorage attributes,
-                         @NotNull RefCountingContentStorage contents,
+                         @NotNull VFSContentStorage contents,
                          @Nullable ContentHashEnumerator contentHashesEnumerator,
                          @NotNull SimpleStringPersistentEnumerator enumeratedAttributes,
                          @Nullable VfsLogEx vfsLog,
@@ -155,7 +154,7 @@ public final class PersistentFSConnection {
 
   //It is 'second level' of wrapping, not really used today, but for the bright future:
 
-  private static RefCountingContentStorage wrapContents(RefCountingContentStorage contents, List<ConnectionInterceptor> interceptors) {
+  private static VFSContentStorage wrapContents(VFSContentStorage contents, List<ConnectionInterceptor> interceptors) {
     var contentInterceptors = interceptors.stream()
       .filter(ContentsInterceptor.class::isInstance)
       .map(ContentsInterceptor.class::cast)
@@ -192,7 +191,7 @@ public final class PersistentFSConnection {
   }
 
 
-  @NotNull RefCountingContentStorage getContents() {
+  @NotNull VFSContentStorage getContents() {
     return contentStorage;
   }
 
@@ -327,7 +326,7 @@ public final class PersistentFSConnection {
                             @Nullable ScannableDataEnumeratorEx<String> names,
                             @Nullable AbstractAttributesStorage attributes,
                             @Nullable ContentHashEnumerator contentHashesEnumerator,
-                            @Nullable RefCountingContentStorage contents,
+                            @Nullable VFSContentStorage contents,
                             @Nullable VfsLogEx vfsLog) throws IOException {
     if (names instanceof Closeable) {//implies != null
       ((Closeable)names).close();
@@ -338,7 +337,7 @@ public final class PersistentFSConnection {
     }
 
     if (contents != null) {
-      Disposer.dispose(contents);
+      contents.close();
     }
 
     if (contentHashesEnumerator != null) {

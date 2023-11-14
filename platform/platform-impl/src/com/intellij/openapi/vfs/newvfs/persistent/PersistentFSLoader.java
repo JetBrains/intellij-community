@@ -115,7 +115,7 @@ public final class PersistentFSLoader {
   private PersistentFSRecordsStorage recordsStorage = null;
   private ScannableDataEnumeratorEx<String> namesStorage = null;
   private AbstractAttributesStorage attributesStorage = null;
-  private RefCountingContentStorage contentsStorage = null;
+  private VFSContentStorage contentsStorage = null;
   private ContentHashEnumerator contentHashesEnumerator = null;
   private SimpleStringPersistentEnumerator attributesEnumerator = null;
 
@@ -185,7 +185,7 @@ public final class PersistentFSLoader {
       executorService.async(() -> createFileNamesEnumerator(namesFile));
     CompletableFuture<AbstractAttributesStorage> attributesStorageFuture =
       executorService.async(() -> createAttributesStorage(attributesFile));
-    CompletableFuture<RefCountingContentStorage> contentsStorageFuture = executorService.async(() -> createContentStorage(contentsFile));
+    CompletableFuture<VFSContentStorage> contentsStorageFuture = executorService.async(() -> createContentStorage(contentsFile));
     CompletableFuture<PersistentFSRecordsStorage> recordsStorageFuture = executorService.async(() -> createRecordsStorage(recordsFile));
 
     //TODO RC: if !REUSE_DELETED_FILE_IDS -> check recordsStorage.maxAllocatedID() -> rebuild VFS if maxID >~ MAX_INT/2
@@ -619,7 +619,7 @@ public final class PersistentFSLoader {
   public boolean isJustCreated() throws IOException {
     return recordsStorage.recordsCount() == 0
            && attributesStorage.isEmpty()
-           && contentsStorage().getRecordsCount() == 0;
+           && contentsStorage.getRecordsCount() == 0;
   }
 
 
@@ -723,8 +723,8 @@ public final class PersistentFSLoader {
     }
   }
 
-  public @NotNull RefCountingContentStorage createContentStorage(@NotNull Path contentsFile) throws IOException {
-    RefCountingContentStorage storage = createContentStorage_makeStorage(contentsFile);
+  public @NotNull VFSContentStorage createContentStorage(@NotNull Path contentsFile) throws IOException {
+    VFSContentStorage storage = createContentStorage_makeStorage(contentsFile);
     if (vfsLog != null) {
       var contentInterceptors = vfsLog.getConnectionInterceptors().stream()
         .filter(ContentsInterceptor.class::isInstance)
@@ -735,25 +735,25 @@ public final class PersistentFSLoader {
     return storage;
   }
 
-  private static @NotNull RefCountingContentStorage createContentStorage_makeStorage(@NotNull Path contentsFile) throws IOException {
+  private static @NotNull VFSContentStorage createContentStorage_makeStorage(@NotNull Path contentsFile) throws IOException {
     // sources usually zipped with 4x ratio
     if (FSRecordsImpl.USE_CONTENT_STORAGE_OVER_NEW_FILE_PAGE_CACHE && PageCacheUtils.LOCK_FREE_PAGE_CACHE_ENABLED) {
       LOG.info("VFS uses content storage over new FilePageCache");
-      return new RefCountingContentStorageImplLF(
+      return new ContentStorageAdapter(new RefCountingContentStorageImplLF(
         contentsFile,
         CapacityAllocationPolicy.FIVE_PERCENT_FOR_GROWTH,
         SequentialTaskExecutor.createSequentialApplicationPoolExecutor("FSRecords Content Write Pool"),
         /*useContentHashes: */ true
-      );
+      ));
     }
     else {
       LOG.info("VFS uses content storage over regular FilePageCache");
-      return new RefCountingContentStorageImpl(
+      return new ContentStorageAdapter(new RefCountingContentStorageImpl(
         contentsFile,
         CapacityAllocationPolicy.FIVE_PERCENT_FOR_GROWTH,
         SequentialTaskExecutor.createSequentialApplicationPoolExecutor("FSRecords Content Write Pool"),
         /*useContentHashes: */ true
-      );
+      ));
     }
   }
 
@@ -783,7 +783,7 @@ public final class PersistentFSLoader {
   /** @return common version of all 3 storages, or -1, if their versions are different (i.e. inconsistent) */
   private static int commonVersionIfExists(@NotNull PersistentFSRecordsStorage records,
                                            @NotNull AbstractAttributesStorage attributes,
-                                           @NotNull RefCountingContentStorage contents) throws IOException {
+                                           @NotNull VFSContentStorage contents) throws IOException {
     final int recordsVersion = records.getVersion();
     final int attributesVersion = attributes.getVersion();
     final int contentsVersion = contents.getVersion();
@@ -800,7 +800,7 @@ public final class PersistentFSLoader {
 
   private static void setCurrentVersion(@NotNull PersistentFSRecordsStorage records,
                                         @NotNull AbstractAttributesStorage attributes,
-                                        @NotNull RefCountingContentStorage contents,
+                                        @NotNull VFSContentStorage contents,
                                         int version) throws IOException {
     records.setVersion(version);
     attributes.setVersion(version);
@@ -848,7 +848,7 @@ public final class PersistentFSLoader {
     return attributesStorage;
   }
 
-  public RefCountingContentStorage contentsStorage() {
+  public VFSContentStorage contentsStorage() {
     return contentsStorage;
   }
 
@@ -877,7 +877,7 @@ public final class PersistentFSLoader {
     this.attributesStorage = attributesStorage;
   }
 
-  public void setContentsStorage(RefCountingContentStorage contentsStorage) {
+  public void setContentsStorage(VFSContentStorage contentsStorage) {
     this.contentsStorage = contentsStorage;
   }
 

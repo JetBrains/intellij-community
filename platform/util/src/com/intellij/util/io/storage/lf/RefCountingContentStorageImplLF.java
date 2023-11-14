@@ -81,6 +81,8 @@ public final class RefCountingContentStorageImplLF extends AbstractStorageLF imp
   }
 
   private BufferExposingByteArrayOutputStream internalReadStream(int record) throws IOException {
+    //TODO RC: why to wait for record to be written, if we can just return the not-yet-written bytes?
+    //MAYBE RC: even better -- cache last 2-4-8 records uncompressed, in memory?
     waitForPendingWriteForRecord(record);
     byte[] result = withReadLock(() -> super.readBytes(record));
 

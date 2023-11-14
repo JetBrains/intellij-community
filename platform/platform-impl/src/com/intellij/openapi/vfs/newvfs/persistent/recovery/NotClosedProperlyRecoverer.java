@@ -8,7 +8,7 @@ import com.intellij.util.SystemProperties;
 import com.intellij.util.hash.ContentHashEnumerator;
 import com.intellij.util.io.DataEnumerator;
 import com.intellij.util.io.ScannableDataEnumeratorEx;
-import com.intellij.util.io.storage.RefCountingContentStorage;
+import com.intellij.util.io.storage.VFSContentStorage;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInputStream;
@@ -40,7 +40,7 @@ public class NotClosedProperlyRecoverer implements VFSRecoverer {
 
     PersistentFSRecordsStorage records = loader.recordsStorage();
     ScannableDataEnumeratorEx<String> namesEnumerator = loader.namesStorage();
-    RefCountingContentStorage contentStorage = loader.contentsStorage();
+    VFSContentStorage contentStorage = loader.contentsStorage();
     ContentHashEnumerator contentHashEnumerator = loader.contentHashesEnumerator();
     AbstractAttributesStorage attributesStorage = loader.attributesStorage();
     try {
@@ -146,7 +146,7 @@ public class NotClosedProperlyRecoverer implements VFSRecoverer {
 
   private static boolean contentResolvedSuccessfully(int fileId,
                                                      int contentId,
-                                                     @NotNull RefCountingContentStorage contentStorage,
+                                                     @NotNull VFSContentStorage contentStorage,
                                                      @NotNull ContentHashEnumerator contentHashEnumerator) {
     try (DataInputStream stream = contentStorage.readStream(contentId)) {
       stream.readAllBytes();
