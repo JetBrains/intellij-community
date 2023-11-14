@@ -1,623 +1,536 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.openapi.vcs.changes.actions.diff.lst;
+package com.intellij.openapi.vcs.changes.actions.diff.lst
 
-import com.intellij.codeWithMe.ClientId;
-import com.intellij.diff.DiffContext;
-import com.intellij.diff.fragments.LineFragment;
-import com.intellij.diff.tools.fragmented.*;
-import com.intellij.diff.util.*;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.LogicalPosition;
-import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
-import com.intellij.openapi.editor.markup.GutterIconRenderer;
-import com.intellij.openapi.editor.markup.HighlighterTargetArea;
-import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.vcs.changes.actions.diff.lst.LocalTrackerDiffUtil.LineFragmentData;
-import com.intellij.openapi.vcs.changes.actions.diff.lst.LocalTrackerDiffUtil.SelectedTrackerLine;
-import com.intellij.openapi.vcs.changes.actions.diff.lst.LocalTrackerDiffUtil.ToggleableLineRange;
-import com.intellij.openapi.vcs.ex.RangeExclusionState;
-import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.components.BorderLayoutPanel;
-import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.diff.DiffContext
+import com.intellij.diff.fragments.LineFragment
+import com.intellij.diff.tools.fragmented.*
+import com.intellij.diff.util.DiffDrawUtil
+import com.intellij.diff.util.DiffDrawUtil.LineHighlighterBuilder
+import com.intellij.diff.util.DiffUtil
+import com.intellij.diff.util.Side
+import com.intellij.diff.util.TextDiffType
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.editor.Document
+import com.intellij.openapi.editor.ex.RangeHighlighterEx
+import com.intellij.openapi.editor.markup.HighlighterTargetArea
+import com.intellij.openapi.editor.markup.RangeHighlighter
+import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.vcs.changes.actions.diff.lst.LocalTrackerDiffUtil.ExcludeAllCheckboxPanel
+import com.intellij.openapi.vcs.changes.actions.diff.lst.LocalTrackerDiffUtil.LineFragmentData
+import com.intellij.openapi.vcs.changes.actions.diff.lst.LocalTrackerDiffUtil.LocalTrackerActionProvider
+import com.intellij.openapi.vcs.changes.actions.diff.lst.LocalTrackerDiffUtil.LocalTrackerChange
+import com.intellij.openapi.vcs.changes.actions.diff.lst.LocalTrackerDiffUtil.LocalTrackerDiffHandler
+import com.intellij.openapi.vcs.changes.actions.diff.lst.LocalTrackerDiffUtil.SelectedTrackerLine
+import com.intellij.openapi.vcs.changes.actions.diff.lst.LocalTrackerDiffUtil.ToggleableLineRange
+import com.intellij.openapi.vcs.changes.actions.diff.lst.LocalTrackerDiffUtil.computeDifferences
+import com.intellij.openapi.vcs.changes.actions.diff.lst.LocalTrackerDiffUtil.createCheckboxToggle
+import com.intellij.openapi.vcs.changes.actions.diff.lst.LocalTrackerDiffUtil.createToggleAreaThumb
+import com.intellij.openapi.vcs.changes.actions.diff.lst.LocalTrackerDiffUtil.createTrackerEditorPopupActions
+import com.intellij.openapi.vcs.changes.actions.diff.lst.LocalTrackerDiffUtil.createTrackerShortcutOnlyActions
+import com.intellij.openapi.vcs.changes.actions.diff.lst.LocalTrackerDiffUtil.getSingleCheckBoxLine
+import com.intellij.openapi.vcs.changes.actions.diff.lst.LocalTrackerDiffUtil.getStatusText
+import com.intellij.openapi.vcs.changes.actions.diff.lst.LocalTrackerDiffUtil.hasIconHighlighters
+import com.intellij.openapi.vcs.changes.actions.diff.lst.LocalTrackerDiffUtil.installTrackerListener
+import com.intellij.openapi.vcs.changes.actions.diff.lst.LocalTrackerDiffUtil.shouldShowToggleAreaThumb
+import com.intellij.openapi.vcs.changes.actions.diff.lst.LocalTrackerDiffUtil.toggleBlockExclusion
+import com.intellij.openapi.vcs.changes.actions.diff.lst.LocalTrackerDiffUtil.toggleLinePartialExclusion
+import com.intellij.openapi.vcs.ex.RangeExclusionState
+import com.intellij.openapi.vcs.ex.countAffectedVisibleChanges
+import com.intellij.openapi.vcs.ex.createClientIdGutterIconRenderer
+import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.ui.JBUI
+import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.NonNls
+import java.awt.event.MouseAdapter
+import java.awt.event.MouseEvent
+import java.util.*
+import javax.swing.JComponent
 
-import javax.swing.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.util.ArrayList;
-import java.util.BitSet;
-import java.util.Collections;
-import java.util.List;
+class UnifiedLocalChangeListDiffViewer(context: DiffContext,
+                                       private val myLocalRequest: LocalChangeListDiffRequest)
+  : UnifiedDiffViewer(context, myLocalRequest.request) {
+  private val myAllowExcludeChangesFromCommit: Boolean
 
-import static com.intellij.openapi.vcs.ex.DocumentTrackerKt.countAffectedVisibleChanges;
-import static com.intellij.openapi.vcs.ex.LineStatusClientIdTrackerKt.createClientIdGutterIconRenderer;
+  private val myTrackerActionProvider: LocalTrackerActionProvider
+  private val myExcludeAllCheckboxPanel = ExcludeAllCheckboxPanel(this, editor)
+  private val myGutterCheckboxMouseMotionListener: GutterCheckboxMouseMotionListener
 
-public class UnifiedLocalChangeListDiffViewer extends UnifiedDiffViewer {
-  @NotNull private final LocalChangeListDiffRequest myLocalRequest;
+  private val myHighlighters: MutableList<RangeHighlighter> = mutableListOf()
 
-  private final boolean myAllowExcludeChangesFromCommit;
+  init {
+    myAllowExcludeChangesFromCommit = DiffUtil.isUserDataFlagSet(LocalChangeListDiffTool.ALLOW_EXCLUDE_FROM_COMMIT, context)
+    myTrackerActionProvider = MyLocalTrackerActionProvider(this, myLocalRequest, myAllowExcludeChangesFromCommit)
+    myExcludeAllCheckboxPanel.init(myLocalRequest, myAllowExcludeChangesFromCommit)
 
-  private final LocalTrackerDiffUtil.LocalTrackerActionProvider myTrackerActionProvider;
-  private final LocalTrackerDiffUtil.ExcludeAllCheckboxPanel myExcludeAllCheckboxPanel;
-  private final GutterCheckboxMouseMotionListener myGutterCheckboxMouseMotionListener;
+    installTrackerListener(this, myLocalRequest)
 
-  private final @NotNull List<RangeHighlighter> myHighlighters = new ArrayList<>();
+    myGutterCheckboxMouseMotionListener = GutterCheckboxMouseMotionListener()
+    myGutterCheckboxMouseMotionListener.install()
 
-  public UnifiedLocalChangeListDiffViewer(@NotNull DiffContext context,
-                                          @NotNull LocalChangeListDiffRequest localRequest) {
-    super(context, localRequest.getRequest());
-    myLocalRequest = localRequest;
-
-    myAllowExcludeChangesFromCommit = DiffUtil.isUserDataFlagSet(LocalChangeListDiffTool.ALLOW_EXCLUDE_FROM_COMMIT, context);
-    myTrackerActionProvider = new MyLocalTrackerActionProvider(this, localRequest, myAllowExcludeChangesFromCommit);
-    myExcludeAllCheckboxPanel = new LocalTrackerDiffUtil.ExcludeAllCheckboxPanel(this, getEditor());
-    myExcludeAllCheckboxPanel.init(myLocalRequest, myAllowExcludeChangesFromCommit);
-
-    LocalTrackerDiffUtil.installTrackerListener(this, myLocalRequest);
-
-    myGutterCheckboxMouseMotionListener = new GutterCheckboxMouseMotionListener();
-    myGutterCheckboxMouseMotionListener.install();
-
-    for (AnAction action : LocalTrackerDiffUtil.createTrackerShortcutOnlyActions(myTrackerActionProvider)) {
-      DiffUtil.registerAction(action, myPanel);
+    for (action in createTrackerShortcutOnlyActions(myTrackerActionProvider)) {
+      DiffUtil.registerAction(action, myPanel)
     }
   }
 
-  @Nullable
-  @Override
-  protected JComponent createTitles() {
-    JComponent titles = super.createTitles();
+  override fun createTitles(): JComponent {
+    val titles = super.createTitles()
 
-    BorderLayoutPanel titleWithCheckbox = JBUI.Panels.simplePanel();
-    if (titles != null) titleWithCheckbox.addToCenter(titles);
-    titleWithCheckbox.addToLeft(myExcludeAllCheckboxPanel);
-    return titleWithCheckbox;
+    val titleWithCheckbox = JBUI.Panels.simplePanel()
+    if (titles != null) titleWithCheckbox.addToCenter(titles)
+    titleWithCheckbox.addToLeft(myExcludeAllCheckboxPanel)
+    return titleWithCheckbox
   }
 
-  @NotNull
-  @Override
-  protected List<AnAction> createEditorPopupActions() {
-    List<AnAction> group = new ArrayList<>(super.createEditorPopupActions());
-    group.addAll(LocalTrackerDiffUtil.createTrackerEditorPopupActions(myTrackerActionProvider));
-    return group;
+  override fun createEditorPopupActions(): List<AnAction> {
+    return super.createEditorPopupActions() +
+           createTrackerEditorPopupActions(myTrackerActionProvider)
   }
 
-  @NotNull
-  @Override
-  protected UnifiedDiffChangeUi createUi(@NotNull UnifiedDiffChange change) {
-    if (change instanceof MyUnifiedDiffChange) return new MyUnifiedDiffChangeUi(this, (MyUnifiedDiffChange)change);
-    return super.createUi(change);
+  override fun createUi(change: UnifiedDiffChange): UnifiedDiffChangeUi {
+    if (change is MyUnifiedDiffChange) return MyUnifiedDiffChangeUi(this, change)
+    return super.createUi(change)
   }
 
-  @Override
-  @Nullable
-  protected @Nls String getStatusTextMessage() {
-    List<UnifiedDiffChange> allChanges = getDiffChanges();
+  override fun getStatusTextMessage(): @Nls String? {
+    val allChanges = diffChanges
     if (myAllowExcludeChangesFromCommit && allChanges != null) {
-      int totalCount = 0;
-      int includedIntoCommitCount = 0;
-      int excludedCount = 0;
+      var totalCount = 0
+      var includedIntoCommitCount = 0
+      var excludedCount = 0
 
-      for (UnifiedDiffChange change : allChanges) {
-        RangeExclusionState exclusionState;
-        if (change instanceof MyUnifiedDiffChange myChange) {
-          exclusionState = myChange.getExclusionState();
+      for (change in allChanges) {
+        val exclusionState = if (change is MyUnifiedDiffChange) {
+          change.exclusionState
         }
         else {
-          exclusionState = RangeExclusionState.Included.INSTANCE;
+          RangeExclusionState.Included
         }
 
-        totalCount += countAffectedVisibleChanges(exclusionState, false);
-        if (change.isSkipped()) {
-          excludedCount += countAffectedVisibleChanges(exclusionState, false);
+        totalCount += exclusionState.countAffectedVisibleChanges(false)
+        if (change.isSkipped) {
+          excludedCount += exclusionState.countAffectedVisibleChanges(false)
         }
         else {
-          includedIntoCommitCount += countAffectedVisibleChanges(exclusionState, true);
+          includedIntoCommitCount += exclusionState.countAffectedVisibleChanges(true)
         }
       }
 
-      return LocalTrackerDiffUtil.getStatusText(totalCount, includedIntoCommitCount, excludedCount, myModel.isContentsEqual());
+      return getStatusText(totalCount, includedIntoCommitCount, excludedCount, myModel.isContentsEqual())
     }
 
-    return super.getStatusTextMessage();
+    return super.getStatusTextMessage()
   }
 
-  @NotNull
-  private Runnable superComputeDifferences(@NotNull ProgressIndicator indicator) {
-    return super.computeDifferences(indicator);
+  private fun superComputeDifferences(indicator: ProgressIndicator): Runnable {
+    return super.computeDifferences(indicator)
   }
 
-  @NotNull
-  @Override
-  protected Runnable computeDifferences(@NotNull ProgressIndicator indicator) {
-    Document document1 = getContent1().getDocument();
-    Document document2 = getContent2().getDocument();
+  override fun computeDifferences(indicator: ProgressIndicator): Runnable {
+    val document1 = content1.document
+    val document2 = content2.document
 
-    return LocalTrackerDiffUtil.computeDifferences(
-      myLocalRequest.getLineStatusTracker(),
+    return computeDifferences(
+      myLocalRequest.lineStatusTracker,
       document1,
       document2,
-      myLocalRequest.getChangelistId(),
+      myLocalRequest.changelistId,
       myAllowExcludeChangesFromCommit,
       myTextDiffProvider,
       indicator,
-      new MyLocalTrackerDiffHandler(document1, document2, indicator));
+      MyLocalTrackerDiffHandler(document1, document2, indicator))
   }
 
-  private final class MyLocalTrackerDiffHandler implements LocalTrackerDiffUtil.LocalTrackerDiffHandler {
-    @NotNull private final Document myDocument1;
-    @NotNull private final Document myDocument2;
-    @NotNull private final ProgressIndicator myIndicator;
+  private inner class MyLocalTrackerDiffHandler(private val myDocument1: Document,
+                                                private val myDocument2: Document,
+                                                private val myIndicator: ProgressIndicator) : LocalTrackerDiffHandler {
 
-    private MyLocalTrackerDiffHandler(@NotNull Document document1,
-                                      @NotNull Document document2,
-                                      @NotNull ProgressIndicator indicator) {
-      myDocument1 = document1;
-      myDocument2 = document2;
-      myIndicator = indicator;
-    }
+    override fun done(isContentsEqual: Boolean,
+                      texts: Array<CharSequence>,
+                      toggleableLineRanges: List<ToggleableLineRange>): Runnable {
 
-    @NotNull
-    @Override
-    public Runnable done(boolean isContentsEqual,
-                         CharSequence @NotNull [] texts,
-                         @NotNull List<ToggleableLineRange> toggleableLineRanges) {
-      @NotNull List<LineFragment> fragments = new ArrayList<>();
-      @NotNull List<LineFragmentData> fragmentsData = new ArrayList<>();
+      val fragments = mutableListOf<LineFragment>()
+      val fragmentsData = mutableListOf<LineFragmentData>()
 
-      for (ToggleableLineRange range : toggleableLineRanges) {
-        List<LineFragment> rangeFragments = range.getFragments();
-        fragments.addAll(rangeFragments);
-        fragmentsData.addAll(Collections.nCopies(rangeFragments.size(), range.getFragmentData()));
+      for (range in toggleableLineRanges) {
+        val rangeFragments = range.fragments
+        fragments.addAll(rangeFragments)
+        fragmentsData.addAll(Collections.nCopies(rangeFragments.size, range.fragmentData))
       }
 
-      UnifiedDiffState builder = ReadAction.compute(() -> {
-        myIndicator.checkCanceled();
-        return new MyUnifiedFragmentBuilder(fragments, fragmentsData, myDocument1, myDocument2).exec();
-      });
+      val builder = runReadAction {
+        myIndicator.checkCanceled()
+        MyUnifiedFragmentBuilder(fragments, fragmentsData, myDocument1, myDocument2).exec()
+      }
 
-      Runnable applyChanges = apply(builder, texts, myIndicator);
-      Runnable applyGutterExcludeOperations = applyGutterOperations(builder, toggleableLineRanges);
+      val applyChanges = apply(builder, texts, myIndicator)
+      val applyGutterExcludeOperations = applyGutterOperations(builder, toggleableLineRanges)
 
-      return () -> {
-        applyChanges.run();
-        applyGutterExcludeOperations.run();
-      };
+      return Runnable {
+        applyChanges.run()
+        applyGutterExcludeOperations.run()
+      }
     }
 
-    @NotNull
-    @Override
-    public Runnable retryLater() {
-      ApplicationManager.getApplication().invokeLater(() -> scheduleRediff());
-      throw new ProcessCanceledException();
+    override fun retryLater(): Runnable {
+      ApplicationManager.getApplication().invokeLater { scheduleRediff() }
+      throw ProcessCanceledException()
     }
 
-    @NotNull
-    @Override
-    public Runnable fallback() {
-      return superComputeDifferences(myIndicator);
+    override fun fallback(): Runnable {
+      return superComputeDifferences(myIndicator)
     }
 
-    @NotNull
-    @Override
-    public Runnable fallbackWithProgress() {
-      Runnable callback = superComputeDifferences(myIndicator);
-      return () -> {
-        callback.run();
-        getStatusPanel().setBusy(true);
-      };
+    override fun fallbackWithProgress(): Runnable {
+      val callback = superComputeDifferences(myIndicator)
+      return Runnable {
+        callback.run()
+        statusPanel.setBusy(true)
+      }
     }
 
-    @NotNull
-    @Override
-    public Runnable error() {
-      return applyErrorNotification();
+    override fun error(): Runnable {
+      return applyErrorNotification()
     }
   }
 
-  private class MyUnifiedFragmentBuilder extends UnifiedFragmentBuilder {
-    @NotNull private final List<LineFragmentData> myFragmentsData;
+  private inner class MyUnifiedFragmentBuilder(fragments: List<LineFragment>,
+                                               private val myFragmentsData: List<LineFragmentData>,
+                                               document1: Document,
+                                               document2: Document
+  ) : UnifiedFragmentBuilder(fragments, document1, document2, myMasterSide) {
 
-    MyUnifiedFragmentBuilder(@NotNull List<? extends LineFragment> fragments,
-                             @NotNull List<LineFragmentData> fragmentsData,
-                             @NotNull Document document1,
-                             @NotNull Document document2) {
-      super(fragments, document1, document2, myMasterSide);
-      myFragmentsData = fragmentsData;
-    }
-
-    @NotNull
-    @Override
-    protected UnifiedDiffChange createDiffChange(int blockStart,
-                                                 int insertedStart,
-                                                 int blockEnd,
-                                                 int fragmentIndex) {
-      LineFragment fragment = getFragments().get(fragmentIndex);
-      LineFragmentData data = myFragmentsData.get(fragmentIndex);
-      boolean isSkipped = data.isSkipped();
-      boolean isExcluded = data.isExcluded(myAllowExcludeChangesFromCommit);
-      return new MyUnifiedDiffChange(blockStart, insertedStart, blockEnd, fragment, isExcluded, isSkipped,
-                                     data.getChangelistId(), data.isPartiallyExcluded(), data.getExclusionState());
+    override fun createDiffChange(blockStart: Int,
+                                  insertedStart: Int,
+                                  blockEnd: Int,
+                                  fragmentIndex: Int): UnifiedDiffChange {
+      val fragment = fragments[fragmentIndex]
+      val data = myFragmentsData[fragmentIndex]
+      val isSkipped = data.isSkipped()
+      val isExcluded = data.isExcluded(myAllowExcludeChangesFromCommit)
+      return MyUnifiedDiffChange(blockStart, insertedStart, blockEnd, fragment, isExcluded, isSkipped,
+                                 data.changelistId, data.isPartiallyExcluded(), data.exclusionState)
     }
   }
 
-  @Override
-  protected void onAfterRediff() {
-    super.onAfterRediff();
-    myExcludeAllCheckboxPanel.refresh();
+  override fun onAfterRediff() {
+    super.onAfterRediff()
+    myExcludeAllCheckboxPanel.refresh()
   }
 
-  @Override
-  protected void clearDiffPresentation() {
-    super.clearDiffPresentation();
+  override fun clearDiffPresentation() {
+    super.clearDiffPresentation()
 
-    for (RangeHighlighter operation : myHighlighters) {
-      operation.dispose();
+    for (operation in myHighlighters) {
+      operation.dispose()
     }
-    myHighlighters.clear();
+    myHighlighters.clear()
 
-    myGutterCheckboxMouseMotionListener.destroyHoverHighlighter();
+    myGutterCheckboxMouseMotionListener.destroyHoverHighlighter()
   }
 
-  private @NotNull Runnable applyGutterOperations(@NotNull UnifiedDiffState builder,
-                                                  @NotNull List<ToggleableLineRange> toggleableLineRanges) {
-    return () -> {
+  private fun applyGutterOperations(builder: UnifiedDiffState,
+                                    toggleableLineRanges: List<ToggleableLineRange>): Runnable {
+    return Runnable {
       if (myAllowExcludeChangesFromCommit) {
-        for (ToggleableLineRange toggleableLineRange : toggleableLineRanges) {
-          myHighlighters.addAll(createGutterToggleRenderers(builder, toggleableLineRange));
+        for (toggleableLineRange in toggleableLineRanges) {
+          myHighlighters.addAll(createGutterToggleRenderers(builder, toggleableLineRange))
         }
       }
 
-      for (ToggleableLineRange range : toggleableLineRanges) {
-        ContainerUtil.addIfNotNull(myHighlighters, createClientIdHighlighter(builder, range));
+      for (range in toggleableLineRanges) {
+        ContainerUtil.addIfNotNull(myHighlighters, createClientIdHighlighter(builder, range))
       }
 
       if (!myHighlighters.isEmpty()) {
-        getEditor().getGutterComponentEx().revalidateMarkup();
+        editor.gutterComponentEx.revalidateMarkup()
       }
-    };
+    }
   }
 
-  private @NotNull List<RangeHighlighter> createGutterToggleRenderers(@NotNull UnifiedDiffState builder,
-                                                                      @NotNull ToggleableLineRange toggleableLineRange) {
-    LineFragmentData fragmentData = toggleableLineRange.getFragmentData();
-    if (!fragmentData.isFromActiveChangelist()) return Collections.emptyList();
+  private fun createGutterToggleRenderers(builder: UnifiedDiffState,
+                                          toggleableLineRange: ToggleableLineRange): List<RangeHighlighter> {
+    val fragmentData = toggleableLineRange.fragmentData
+    if (!fragmentData.isFromActiveChangelist()) return emptyList()
 
-    List<RangeHighlighter> result = new ArrayList<>();
-    RangeExclusionState exclusionState = fragmentData.getExclusionState();
+    val result = mutableListOf<RangeHighlighter>()
+    val exclusionState = fragmentData.exclusionState
     if (fragmentData.isPartiallyExcluded()) {
-      RangeExclusionState.Partial partialExclusionState = (RangeExclusionState.Partial)exclusionState;
-      Range lineRange = toggleableLineRange.getLineRange();
+      val partialExclusionState = exclusionState as RangeExclusionState.Partial
+      val lineRange = toggleableLineRange.lineRange
 
-      partialExclusionState.iterateDeletionOffsets((start, end, isIncluded) -> {
-        for (int i = start; i < end; i++) {
-          result.add(createLineCheckboxToggleHighlighter(builder, i + lineRange.start1, Side.LEFT, !isIncluded));
+      partialExclusionState.iterateDeletionOffsets { start: Int, end: Int, isIncluded: Boolean ->
+        for (i in start until end) {
+          result.add(createLineCheckboxToggleHighlighter(builder, i + lineRange.start1, Side.LEFT, !isIncluded))
         }
-        return null;
-      });
-      partialExclusionState.iterateAdditionOffsets((start, end, isIncluded) -> {
-        for (int i = start; i < end; i++) {
-          result.add(createLineCheckboxToggleHighlighter(builder, i + lineRange.start2, Side.RIGHT, !isIncluded));
+      }
+      partialExclusionState.iterateAdditionOffsets { start: Int, end: Int, isIncluded: Boolean ->
+        for (i in start until end) {
+          result.add(createLineCheckboxToggleHighlighter(builder, i + lineRange.start2, Side.RIGHT, !isIncluded))
         }
-        return null;
-      });
+      }
     }
     else {
-      result.add(createBlockCheckboxToggleHighlighter(builder, toggleableLineRange));
+      result.add(createBlockCheckboxToggleHighlighter(builder, toggleableLineRange))
     }
 
-    if (LocalTrackerDiffUtil.shouldShowToggleAreaThumb(toggleableLineRange)) {
-      ContainerUtil.addIfNotNull(result, createToggleAreaThumb(builder, toggleableLineRange));
+    if (shouldShowToggleAreaThumb(toggleableLineRange)) {
+      ContainerUtil.addIfNotNull(result, createToggleAreaThumb(builder, toggleableLineRange))
     }
-    return result;
+    return result
   }
 
-  @NotNull
-  private RangeHighlighter createBlockCheckboxToggleHighlighter(@NotNull UnifiedDiffState builder,
-                                                                @NotNull ToggleableLineRange toggleableLineRange) {
-    Side side = Side.RIGHT;
-    int line = LocalTrackerDiffUtil.getSingleCheckBoxLine(toggleableLineRange, side);
-    boolean isExcludedFromCommit = toggleableLineRange.getFragmentData().getExclusionState() instanceof RangeExclusionState.Excluded;
+  private fun createBlockCheckboxToggleHighlighter(builder: UnifiedDiffState,
+                                                   toggleableLineRange: ToggleableLineRange): RangeHighlighter {
+    val side = Side.RIGHT
+    val line = getSingleCheckBoxLine(toggleableLineRange, side)
+    val isExcludedFromCommit = toggleableLineRange.fragmentData.exclusionState is RangeExclusionState.Excluded
 
-    LineNumberConvertor lineConvertor = side.select(builder.getConvertor1(), builder.getConvertor2());
-    int editorLine = lineConvertor.convertApproximateInv(line);
+    val lineConvertor = side.selectNotNull(builder.convertor1, builder.convertor2)
+    val editorLine = lineConvertor.convertApproximateInv(line)
 
-    return LocalTrackerDiffUtil.createCheckboxToggle(getEditor(), editorLine, isExcludedFromCommit, () -> {
-      LocalTrackerDiffUtil.toggleBlockExclusion(myTrackerActionProvider, line, isExcludedFromCommit);
-    });
+    return createCheckboxToggle(editor, editorLine, isExcludedFromCommit) {
+      toggleBlockExclusion(myTrackerActionProvider, line, isExcludedFromCommit)
+    }
   }
 
-  @NotNull
-  private RangeHighlighter createLineCheckboxToggleHighlighter(@NotNull UnifiedDiffState builder,
-                                                               int line, @NotNull Side side, boolean isExcludedFromCommit) {
-    LineNumberConvertor lineConvertor = side.select(builder.getConvertor1(), builder.getConvertor2());
-    int editorLine = lineConvertor.convertApproximateInv(line);
+  private fun createLineCheckboxToggleHighlighter(builder: UnifiedDiffState,
+                                                  line: Int, side: Side, isExcludedFromCommit: Boolean): RangeHighlighter {
+    val lineConvertor = side.selectNotNull(builder.convertor1, builder.convertor2)
+    val editorLine = lineConvertor.convertApproximateInv(line)
 
-    return LocalTrackerDiffUtil.createCheckboxToggle(getEditor(), editorLine, isExcludedFromCommit, () -> {
-      LocalTrackerDiffUtil.toggleLinePartialExclusion(myTrackerActionProvider, line, side, isExcludedFromCommit);
-    });
+    return createCheckboxToggle(editor, editorLine, isExcludedFromCommit) {
+      toggleLinePartialExclusion(myTrackerActionProvider, line, side, isExcludedFromCommit)
+    }
   }
 
-  @Nullable
-  private RangeHighlighter createToggleAreaThumb(@NotNull UnifiedDiffState builder,
-                                                 @NotNull ToggleableLineRange toggleableLineRange) {
-    Range lineRange = toggleableLineRange.getLineRange();
-    int line1 = builder.getConvertor1().convertApproximateInv(lineRange.start1);
-    int line2 = builder.getConvertor2().convertApproximateInv(lineRange.end2);
+  private fun createToggleAreaThumb(builder: UnifiedDiffState,
+                                    toggleableLineRange: ToggleableLineRange): RangeHighlighter? {
+    val lineRange = toggleableLineRange.lineRange
+    val line1 = builder.convertor1.convertApproximateInv(lineRange.start1)
+    val line2 = builder.convertor2.convertApproximateInv(lineRange.end2)
     if (line1 < 0 || line2 < 0 || line2 <= line1 || line2 > DiffUtil.getLineCount(myDocument)) {
-      LOG.warn("Failed to show toggle area thumb");
-      return null;
+      LOG.warn("Failed to show toggle area thumb")
+      return null
     }
-    boolean isExcludedFromCommit = toggleableLineRange.getFragmentData().getExclusionState() instanceof RangeExclusionState.Excluded;
-    return LocalTrackerDiffUtil.createToggleAreaThumb(getEditor(), line1, line2, () -> {
-      LocalTrackerDiffUtil.toggleBlockExclusion(myTrackerActionProvider, lineRange.start1, isExcludedFromCommit);
-    });
+    val isExcludedFromCommit = toggleableLineRange.fragmentData.exclusionState is RangeExclusionState.Excluded
+    return createToggleAreaThumb(editor, line1, line2) {
+      toggleBlockExclusion(myTrackerActionProvider, lineRange.start1, isExcludedFromCommit)
+    }
   }
 
-  private @Nullable RangeHighlighter createClientIdHighlighter(@NotNull UnifiedDiffState builder,
-                                                               @NotNull ToggleableLineRange range) {
-    List<ClientId> clientIds = range.getFragmentData().getClientIds();
-    if (clientIds.isEmpty()) return null;
+  private fun createClientIdHighlighter(builder: UnifiedDiffState,
+                                        range: ToggleableLineRange): RangeHighlighter? {
+    val clientIds = range.fragmentData.clientIds
+    if (clientIds.isEmpty()) return null
 
-    GutterIconRenderer iconRenderer = createClientIdGutterIconRenderer(myLocalRequest.getProject(), clientIds);
-    if (iconRenderer == null) return null;
+    val iconRenderer = createClientIdGutterIconRenderer(myLocalRequest.project, clientIds)
+    if (iconRenderer == null) return null
 
-    Range lineRange = range.getLineRange();
-    int line1 = builder.getConvertor1().convertApproximateInv(lineRange.start1);
-    int line2 = builder.getConvertor2().convertApproximateInv(lineRange.end2);
+    val lineRange = range.lineRange
+    val line1 = builder.convertor1.convertApproximateInv(lineRange.start1)
+    val line2 = builder.convertor2.convertApproximateInv(lineRange.end2)
     if (line1 < 0 || line2 < 0 || line2 <= line1 || line2 > DiffUtil.getLineCount(myDocument)) {
-      LOG.warn("Failed to show toggle area thumb");
-      return null;
+      LOG.warn("Failed to show toggle area thumb")
+      return null
     }
 
-    EditorEx editor = getEditor();
-    TextRange textRange = DiffUtil.getLinesRange(editor.getDocument(), line1, line2);
-    return editor.getMarkupModel()
+    val editor = editor
+    val textRange = DiffUtil.getLinesRange(editor.document, line1, line2)
+    return editor.markupModel
       .addRangeHighlighterAndChangeAttributes(null,
-                                              textRange.getStartOffset(), textRange.getEndOffset(),
+                                              textRange.startOffset, textRange.endOffset,
                                               DiffDrawUtil.LST_LINE_MARKER_LAYER,
                                               HighlighterTargetArea.LINES_IN_RANGE,
-                                              false, rangeHighlighterEx -> {
-          rangeHighlighterEx.setGreedyToLeft(true);
-          rangeHighlighterEx.setGreedyToRight(true);
-
-          rangeHighlighterEx.setGutterIconRenderer(iconRenderer);
-        });
+                                              false) { rangeHighlighterEx: RangeHighlighterEx ->
+        rangeHighlighterEx.isGreedyToLeft = true
+        rangeHighlighterEx.isGreedyToRight = true
+        rangeHighlighterEx.gutterIconRenderer = iconRenderer
+      }
   }
 
-  private static final class MyUnifiedDiffChange extends UnifiedDiffChange {
-    private final @NotNull @NonNls String myChangelistId;
-    private final boolean myIsPartiallyExcluded;
-    private final @NotNull RangeExclusionState myExclusionState;
+  private class MyUnifiedDiffChange(blockStart: Int,
+                                    insertedStart: Int,
+                                    blockEnd: Int,
+                                    lineFragment: LineFragment,
+                                    isExcluded: Boolean,
+                                    isSkipped: Boolean,
+                                    val changelistId: @NonNls String,
+                                    val isPartiallyExcluded: Boolean,
+                                    val exclusionState: RangeExclusionState
+  ) : UnifiedDiffChange(blockStart, insertedStart, blockEnd, lineFragment, isExcluded, isSkipped)
 
-    private MyUnifiedDiffChange(int blockStart,
-                                int insertedStart,
-                                int blockEnd,
-                                @NotNull LineFragment lineFragment,
-                                boolean isExcluded,
-                                boolean isSkipped,
-                                @NotNull @NonNls String changelistId,
-                                boolean isPartiallyExcluded,
-                                @NotNull RangeExclusionState exclusionState) {
-      super(blockStart, insertedStart, blockEnd, lineFragment, isExcluded, isSkipped);
-      myChangelistId = changelistId;
-      myIsPartiallyExcluded = isPartiallyExcluded;
-      myExclusionState = exclusionState;
-    }
+  private class MyUnifiedDiffChangeUi(viewer: UnifiedLocalChangeListDiffViewer,
+                                      change: MyUnifiedDiffChange) : UnifiedDiffChangeUi(viewer, change) {
 
-    public @NotNull @NonNls String getChangelistId() {
-      return myChangelistId;
-    }
+    private val viewer: UnifiedLocalChangeListDiffViewer
+      get() = myViewer as UnifiedLocalChangeListDiffViewer
 
-    public boolean isPartiallyExcluded() {
-      return myIsPartiallyExcluded;
-    }
+    private val change: MyUnifiedDiffChange
+      get() = myChange as MyUnifiedDiffChange
 
-    public @NotNull RangeExclusionState getExclusionState() {
-      return myExclusionState;
-    }
-  }
+    override fun installHighlighter() {
+      if (change.isPartiallyExcluded && viewer.myAllowExcludeChangesFromCommit) {
+        assert(myHighlighters.isEmpty() && myOperations.isEmpty())
 
-  private static final class MyUnifiedDiffChangeUi extends UnifiedDiffChangeUi {
-    private MyUnifiedDiffChangeUi(@NotNull UnifiedLocalChangeListDiffViewer viewer,
-                                  @NotNull MyUnifiedDiffChange change) {
-      super(viewer, change);
-    }
+        val deletionStart = myChange.deletedRange.start
+        val additionStart = myChange.insertedRange.start
 
-    @NotNull
-    private UnifiedLocalChangeListDiffViewer getViewer() {
-      return (UnifiedLocalChangeListDiffViewer)myViewer;
-    }
-
-    @NotNull
-    private MyUnifiedDiffChange getChange() {
-      return ((MyUnifiedDiffChange)myChange);
-    }
-
-    @Override
-    public void installHighlighter() {
-      if (getChange().isPartiallyExcluded() && getViewer().myAllowExcludeChangesFromCommit) {
-        assert myHighlighters.isEmpty() && myOperations.isEmpty();
-
-        int deletionStart = myChange.getDeletedRange().start;
-        int additionStart = myChange.getInsertedRange().start;
-
-        RangeExclusionState.Partial exclusionState = (RangeExclusionState.Partial)getChange().getExclusionState();
-        exclusionState.iterateDeletionOffsets((start, end, isIncluded) -> {
+        val exclusionState = change.exclusionState as RangeExclusionState.Partial
+        exclusionState.iterateDeletionOffsets { start: Int, end: Int, isIncluded: Boolean ->
           myHighlighters.addAll(
-            new DiffDrawUtil.LineHighlighterBuilder(myEditor,
-                                                    start + deletionStart,
-                                                    end + deletionStart,
-                                                    TextDiffType.DELETED)
-              .withExcludedInEditor(myChange.isSkipped())
+            LineHighlighterBuilder(myEditor,
+                                   start + deletionStart,
+                                   end + deletionStart,
+                                   TextDiffType.DELETED)
+              .withExcludedInEditor(myChange.isSkipped)
               .withExcludedInGutter(!isIncluded)
-              .done());
-          return null;
-        });
-        exclusionState.iterateAdditionOffsets((start, end, isIncluded) -> {
+              .done())
+        }
+        exclusionState.iterateAdditionOffsets { start: Int, end: Int, isIncluded: Boolean ->
           myHighlighters.addAll(
-            new DiffDrawUtil.LineHighlighterBuilder(myEditor,
-                                                    start + additionStart,
-                                                    end + additionStart,
-                                                    TextDiffType.INSERTED)
-              .withExcludedInEditor(myChange.isSkipped())
+            LineHighlighterBuilder(myEditor,
+                                   start + additionStart,
+                                   end + additionStart,
+                                   TextDiffType.INSERTED)
+              .withExcludedInEditor(myChange.isSkipped)
               .withExcludedInGutter(!isIncluded)
-              .done());
-          return null;
-        });
+              .done())
+        }
 
         // do not draw ">>"
         // doInstallActionHighlighters();
       }
       else {
-        super.installHighlighter();
+        super.installHighlighter()
       }
     }
   }
 
-  private static final class MyLocalTrackerActionProvider extends LocalTrackerDiffUtil.LocalTrackerActionProvider {
-    @NotNull private final UnifiedLocalChangeListDiffViewer myViewer;
+  private class MyLocalTrackerActionProvider(private val myViewer: UnifiedLocalChangeListDiffViewer,
+                                             localRequest: LocalChangeListDiffRequest,
+                                             allowExcludeChangesFromCommit: Boolean
+  ) : LocalTrackerActionProvider(myViewer, localRequest, allowExcludeChangesFromCommit) {
 
-    private MyLocalTrackerActionProvider(@NotNull UnifiedLocalChangeListDiffViewer viewer,
-                                         @NotNull LocalChangeListDiffRequest localRequest,
-                                         boolean allowExcludeChangesFromCommit) {
-      super(viewer, localRequest, allowExcludeChangesFromCommit);
-      myViewer = viewer;
+    override fun getSelectedTrackerChanges(e: AnActionEvent): List<LocalTrackerChange>? {
+      if (!myViewer.isContentGood) return null
+
+      return myViewer.selectedChanges.filterIsInstance<MyUnifiedDiffChange>().map {
+        LocalTrackerChange(myViewer.transferLineFromOneside(Side.RIGHT, it.line1),
+                           myViewer.transferLineFromOneside(Side.RIGHT, it.line2),
+                           it.changelistId,
+                           it.exclusionState)
+      }
     }
 
-    @Nullable
-    @Override
-    public List<LocalTrackerDiffUtil.LocalTrackerChange> getSelectedTrackerChanges(@NotNull AnActionEvent e) {
-      if (!myViewer.isContentGood()) return null;
+    override fun getSelectedTrackerLines(e: AnActionEvent): SelectedTrackerLine? {
+      if (!myViewer.isContentGood) return null
 
-      return StreamEx.of(myViewer.getSelectedChanges())
-        .select(MyUnifiedDiffChange.class)
-        .map(it -> new LocalTrackerDiffUtil.LocalTrackerChange(myViewer.transferLineFromOneside(Side.RIGHT, it.getLine1()),
-                                                               myViewer.transferLineFromOneside(Side.RIGHT, it.getLine2()),
-                                                               it.getChangelistId(),
-                                                               it.getExclusionState()))
-        .toList();
-    }
+      val deletions = BitSet()
+      val additions = BitSet()
+      @Suppress("SSBasedInspection") // allow IntStream usage in Kotlin
+      DiffUtil.getSelectedLines(myViewer.editor).stream().forEach { line: Int ->
+        val line1 = myViewer.transferLineFromOnesideStrict(Side.LEFT, line)
+        if (line1 != -1) deletions.set(line1)
+        val line2 = myViewer.transferLineFromOnesideStrict(Side.RIGHT, line)
+        if (line2 != -1) additions.set(line2)
+      }
 
-    @Override
-    public @Nullable SelectedTrackerLine getSelectedTrackerLines(@NotNull AnActionEvent e) {
-      if (!myViewer.isContentGood()) return null;
-
-      BitSet deletions = new BitSet();
-      BitSet additions = new BitSet();
-      DiffUtil.getSelectedLines(myViewer.getEditor()).stream().forEach(line -> {
-        int line1 = myViewer.transferLineFromOnesideStrict(Side.LEFT, line);
-        if (line1 != -1) deletions.set(line1);
-        int line2 = myViewer.transferLineFromOnesideStrict(Side.RIGHT, line);
-        if (line2 != -1) additions.set(line2);
-      });
-
-      return new SelectedTrackerLine(deletions, additions);
+      return SelectedTrackerLine(deletions, additions)
     }
   }
 
-  private class GutterCheckboxMouseMotionListener {
-    private @Nullable RangeHighlighter myHighlighter;
+  private inner class GutterCheckboxMouseMotionListener {
+    private var myHighlighter: RangeHighlighter? = null
 
-    public void install() {
-      MyGutterMouseListener listener = new MyGutterMouseListener();
-      myEditor.getGutterComponentEx().addMouseListener(listener);
-      myEditor.getGutterComponentEx().addMouseMotionListener(listener);
+    fun install() {
+      val listener = MyGutterMouseListener()
+      myEditor.gutterComponentEx.addMouseListener(listener)
+      myEditor.gutterComponentEx.addMouseMotionListener(listener)
     }
 
-    public void destroyHoverHighlighter() {
+    fun destroyHoverHighlighter() {
       if (myHighlighter != null) {
-        myHighlighter.dispose();
-        myHighlighter = null;
+        myHighlighter!!.dispose()
+        myHighlighter = null
       }
     }
 
-    private void updateHoverHighlighter(int editorLine) {
-      List<UnifiedDiffChange> changes = getDiffChanges();
+    private fun updateHoverHighlighter(editorLine: Int) {
+      val changes = diffChanges
       if (changes == null) {
-        destroyHoverHighlighter();
-        return;
+        destroyHoverHighlighter()
+        return
       }
 
-      MyUnifiedDiffChange change = ObjectUtils.tryCast(ContainerUtil.find(changes, it -> it.getLine1() <= editorLine &&
-                                                                                         it.getLine2() > editorLine),
-                                                       MyUnifiedDiffChange.class);
+      val change = changes.find {
+        it.line1 <= editorLine && it.line2 > editorLine
+      } as? MyUnifiedDiffChange
+
       if (change == null ||
-          change.isPartiallyExcluded() ||
-          !myLocalRequest.getChangelistId().equals(change.getChangelistId())) {
-        destroyHoverHighlighter();
-        return;
+          change.isPartiallyExcluded ||
+          myLocalRequest.changelistId != change.changelistId) {
+        destroyHoverHighlighter()
+        return
       }
 
-      int rightLine = transferLineFromOnesideStrict(Side.RIGHT, editorLine);
-      int leftLine = transferLineFromOnesideStrict(Side.LEFT, editorLine);
+      val rightLine = transferLineFromOnesideStrict(Side.RIGHT, editorLine)
+      val leftLine = transferLineFromOnesideStrict(Side.LEFT, editorLine)
 
-      int line;
-      Side side;
+      val line: Int
+      val side: Side
       if (rightLine != -1) {
-        line = rightLine;
-        side = Side.RIGHT;
+        line = rightLine
+        side = Side.RIGHT
       }
       else if (leftLine != -1) {
-        line = leftLine;
-        side = Side.LEFT;
+        line = leftLine
+        side = Side.LEFT
       }
       else {
-        destroyHoverHighlighter();
-        return;
+        destroyHoverHighlighter()
+        return
       }
 
-      if (LocalTrackerDiffUtil.hasIconHighlighters(myProject, myEditor, editorLine)) {
-        if (myHighlighter != null && myEditor.getDocument().getLineNumber(myHighlighter.getStartOffset()) != editorLine) {
-          destroyHoverHighlighter();
+      if (hasIconHighlighters(myProject, myEditor, editorLine)) {
+        if (myHighlighter != null && myEditor.document.getLineNumber(myHighlighter!!.startOffset) != editorLine) {
+          destroyHoverHighlighter()
         }
-        return;
+        return
       }
 
-      destroyHoverHighlighter();
+      destroyHoverHighlighter()
 
-      boolean isExcludedFromCommit = change.getExclusionState() instanceof RangeExclusionState.Excluded;
-      myHighlighter = LocalTrackerDiffUtil.createCheckboxToggle(myEditor, editorLine, isExcludedFromCommit, () -> {
-        LocalTrackerDiffUtil.toggleLinePartialExclusion(myTrackerActionProvider, line, side, isExcludedFromCommit);
-        destroyHoverHighlighter();
-      });
+      val isExcludedFromCommit = change.exclusionState is RangeExclusionState.Excluded
+      myHighlighter = createCheckboxToggle(myEditor, editorLine, isExcludedFromCommit) {
+        toggleLinePartialExclusion(myTrackerActionProvider, line, side, isExcludedFromCommit)
+        destroyHoverHighlighter()
+      }
     }
 
-    private class MyGutterMouseListener extends MouseAdapter {
-      @Override
-      public void mouseMoved(MouseEvent e) {
+    private inner class MyGutterMouseListener : MouseAdapter() {
+      override fun mouseMoved(e: MouseEvent) {
         if (!myAllowExcludeChangesFromCommit) {
-          destroyHoverHighlighter();
-          return;
+          destroyHoverHighlighter()
+          return
         }
 
-        EditorGutterComponentEx gutter = myEditor.getGutterComponentEx();
-        int xOffset = DiffUtil.isMirrored(myEditor) ? gutter.getWidth() - e.getX() : e.getX();
-        if (xOffset < gutter.getIconAreaOffset() || xOffset > gutter.getIconAreaOffset() + gutter.getIconsAreaWidth()) {
-          destroyHoverHighlighter();
-          return;
+        val gutter = myEditor.gutterComponentEx
+        val xOffset = if (DiffUtil.isMirrored(myEditor)) gutter.width - e.x else e.x
+        if (xOffset < gutter.iconAreaOffset || xOffset > gutter.iconAreaOffset + gutter.iconsAreaWidth) {
+          destroyHoverHighlighter()
+          return
         }
 
-        LogicalPosition position = myEditor.xyToLogicalPosition(e.getPoint());
-        updateHoverHighlighter(position.line);
+        val position = myEditor.xyToLogicalPosition(e.point)
+        updateHoverHighlighter(position.line)
       }
 
-      @Override
-      public void mouseExited(MouseEvent e) {
-        destroyHoverHighlighter();
+      override fun mouseExited(e: MouseEvent) {
+        destroyHoverHighlighter()
       }
     }
   }
