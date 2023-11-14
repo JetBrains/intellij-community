@@ -18,6 +18,7 @@ import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.siyeh.IntentionPowerPackBundle;
+import com.siyeh.ig.psiutils.DeclarationSearchUtils;
 import one.util.streamex.EntryStream;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -107,9 +108,11 @@ public class ConvertInterfaceToClassIntention extends PsiBasedModCommandAction<P
     if (!aClass.isInterface() || aClass.isAnnotationType()) {
       return false;
     }
+    if (DeclarationSearchUtils.isTooExpensiveToSearch(aClass, false)) {
+      return false;
+    }
     final SearchScope useScope = aClass.getUseScope();
-    for (PsiClass inheritor :
-      ClassInheritorsSearch.search(aClass, useScope, true)) {
+    for (PsiClass inheritor : ClassInheritorsSearch.search(aClass, useScope, true)) {
       if (inheritor.isInterface()) {
         return false;
       }
