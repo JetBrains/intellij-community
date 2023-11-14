@@ -263,8 +263,10 @@ class SettingsImpl internal constructor(private val editor: EditorImpl?, kind: E
 
   override fun isUseTabCharacter(project: Project): Boolean {
     if (project != state.project) {
-      // todo mb log error only under some flag?
-      LOG.error("called isUseTabCharacter with foreign project")  // investigating such cases
+      // getting here when `state.project` is `null` is expected case (e.g. in fleet)
+      if (state.project != null) {
+        LOG.error("called isUseTabCharacter with foreign project")  // investigating such cases
+      }
       return isUseTabCharacterForForeignProject(project)
     }
     return state.myUseTabCharacter
