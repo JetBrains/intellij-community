@@ -21,10 +21,9 @@ private class SemanticSearchInitializer : ProjectActivity {
     if (semanticSearchSettings.enabledInActionsTab) {
       ActionEmbeddingsStorage.getInstance().prepareForSearch(project)
     }
-    else if ((ApplicationManager.getApplication().isInternal ||
-              (ApplicationManager.getApplication().isEAP &&
+    else if ((ApplicationManager.getApplication().isEAP &&
                serviceAsync<SearchEverywhereSemanticExperiments>()
-                 .getSemanticFeatureForTab(ActionSearchEverywhereContributor::class.java.simpleName) == SemanticSearchFeature.ENABLED)) &&
+                 .getSemanticFeatureForTab(ActionSearchEverywhereContributor::class.java.simpleName) == SemanticSearchFeature.ENABLED) &&
              !semanticSearchSettings.manuallyDisabledInActionsTab) {
       // Manually enable search in the corresponding experiment groups
       semanticSearchSettings.enabledInActionsTab = true
