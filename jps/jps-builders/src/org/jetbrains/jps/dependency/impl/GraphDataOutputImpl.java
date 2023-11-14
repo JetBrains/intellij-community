@@ -4,15 +4,18 @@ package org.jetbrains.jps.dependency.impl;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.IOUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.dependency.ExternalizableGraphElement;
+import org.jetbrains.jps.dependency.GraphDataOutput;
 
 import java.io.DataOutput;
 import java.io.IOException;
 
-public class GraphDataOutput implements DataOutput {
+public class GraphDataOutputImpl implements GraphDataOutput {
 
   private final DataOutput myDelegate;
 
-  public GraphDataOutput(DataOutput delegate) {
+  public GraphDataOutputImpl(DataOutput delegate) {
     myDelegate = delegate;
   }
 
@@ -86,20 +89,35 @@ public class GraphDataOutput implements DataOutput {
     IOUtil.writeUTF(myDelegate, s);
   }
 
-  public static DataOutput wrap(DataOutput out) {
-    return new GraphDataOutput(out);
+  @Override
+  public <T extends ExternalizableGraphElement> void writeGraphElement(@NotNull T elem) throws IOException {
+    writeUTF(elem.getClass().getName());
+    elem.write(this);
+  }
+
+  @Override
+  public <T extends ExternalizableGraphElement> void writeGraphElementCollection(Class<? extends T> elemType, @NotNull Iterable<T> col) throws IOException {
+    writeUTF(elemType.getName());
+    RW.writeCollection(this, col, elem -> elem.write(this));
+  }
+
+  public static GraphDataOutput wrap(DataOutput out) {
+    return new GraphDataOutputImpl(out);
   }
   
   public interface StringEnumerator {
     int toNumber(String str) throws IOException;
   }
 
-  public static DataOutput wrap(DataOutput out, @NotNull StringEnumerator enumerator) {
-    return new GraphDataOutput(out) {
-      @Override
-      public void writeUTF(@NotNull String s) throws IOException {
-        writeInt(enumerator.toNumber(s));
-      }
-    };
+  public static GraphDataOutput wrap(DataOutput out, @Nullable StringEnumerator enumerator) {
+    if (enumerator != null) {
+      return new GraphDataOutputImpl(out) {
+        @Override
+        public void writeUTF(@NotNull String s) throws IOException {
+          writeInt(enumerator.toNumber(s));
+        }
+      };
+    }
+    return wrap(out);
   }
 }

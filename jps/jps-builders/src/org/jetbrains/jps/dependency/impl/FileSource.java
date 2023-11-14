@@ -2,10 +2,10 @@
 package org.jetbrains.jps.dependency.impl;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.dependency.GraphDataInput;
+import org.jetbrains.jps.dependency.GraphDataOutput;
 import org.jetbrains.jps.dependency.NodeSource;
 
-import java.io.DataInput;
-import java.io.DataOutput;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -22,12 +22,12 @@ public final class FileSource implements NodeSource {
     myPath = path;
   }
 
-  public FileSource(@NotNull DataInput in) throws IOException {
+  public FileSource(@NotNull GraphDataInput in) throws IOException {
     myPath = Path.of(in.readUTF());
   }
 
   @Override
-  public void write(DataOutput out) throws IOException {
+  public void write(GraphDataOutput out) throws IOException {
     out.writeUTF(myPath.toString());
   }
 

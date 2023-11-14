@@ -2,10 +2,10 @@
 package org.jetbrains.jps.dependency.java;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.dependency.GraphDataInput;
+import org.jetbrains.jps.dependency.GraphDataOutput;
 import org.jetbrains.jps.dependency.ReferenceID;
 
-import java.io.DataInput;
-import java.io.DataOutput;
 import java.io.IOException;
 
 public final class JvmNodeReferenceID implements ReferenceID {
@@ -15,12 +15,12 @@ public final class JvmNodeReferenceID implements ReferenceID {
     myName = name;
   }
 
-  public JvmNodeReferenceID(DataInput in) throws IOException {
+  public JvmNodeReferenceID(GraphDataInput in) throws IOException {
     myName = in.readUTF();
   }
 
   @Override
-  public void write(DataOutput out) throws IOException {
+  public void write(GraphDataOutput out) throws IOException {
     out.writeUTF(myName);
   }
 

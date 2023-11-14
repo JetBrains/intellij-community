@@ -3,7 +3,6 @@ package org.jetbrains.jps.dependency;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.io.DataOutput;
 import java.io.IOException;
 
 /**
@@ -18,7 +17,7 @@ public final class AffectionScopeMetaUsage implements Usage {
   }
 
   @Override
-  public void write(DataOutput out) throws IOException {
+  public void write(GraphDataOutput out) throws IOException {
     // not supported
   }
 

@@ -3,6 +3,8 @@ package org.jetbrains.jps.dependency.java;
 
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.dependency.GraphDataInput;
+import org.jetbrains.jps.dependency.GraphDataOutput;
 import org.jetbrains.jps.dependency.Node;
 import org.jetbrains.jps.dependency.Usage;
 import org.jetbrains.jps.dependency.diff.DiffCapable;
@@ -11,8 +13,6 @@ import org.jetbrains.jps.dependency.impl.RW;
 import org.jetbrains.jps.javac.Iterators;
 import org.jetbrains.org.objectweb.asm.Type;
 
-import java.io.DataInput;
-import java.io.DataOutput;
 import java.io.IOException;
 import java.util.Objects;
 import java.util.function.BiPredicate;
@@ -33,7 +33,7 @@ public final class JvmMethod extends ProtoMember implements DiffCapable<JvmMetho
     myArgTypes = TypeRepr.getTypes(Type.getArgumentTypes(descriptor));
   }
 
-  public JvmMethod(DataInput in) throws IOException {
+  public JvmMethod(GraphDataInput in) throws IOException {
     super(in);
     myArgTypes = RW.readCollection(in, () -> TypeRepr.getType(in.readUTF()));
     myParamAnnotations = RW.readCollection(in, () -> {
@@ -45,7 +45,7 @@ public final class JvmMethod extends ProtoMember implements DiffCapable<JvmMetho
   }
 
   @Override
-  public void write(DataOutput out) throws IOException {
+  public void write(GraphDataOutput out) throws IOException {
     super.write(out);
     RW.writeCollection(out, myArgTypes, t -> out.writeUTF(t.getDescriptor()));
     RW.writeCollection(out, myParamAnnotations, pa -> {

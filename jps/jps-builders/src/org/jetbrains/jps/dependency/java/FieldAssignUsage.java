@@ -1,7 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.dependency.java;
 
-import java.io.DataInput;
+import org.jetbrains.jps.dependency.GraphDataInput;
+
 import java.io.IOException;
 
 public final class FieldAssignUsage extends FieldUsage{
@@ -10,7 +11,7 @@ public final class FieldAssignUsage extends FieldUsage{
     super(className, name, descriptor);
   }
 
-  public FieldAssignUsage(DataInput in) throws IOException {
+  public FieldAssignUsage(GraphDataInput in) throws IOException {
     super(in);
   }
 

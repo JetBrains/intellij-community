@@ -1,8 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.dependency.java;
 
-import java.io.DataInput;
-import java.io.DataOutput;
+import org.jetbrains.jps.dependency.GraphDataInput;
+import org.jetbrains.jps.dependency.GraphDataOutput;
+
 import java.io.IOException;
 
 public class FieldUsage extends MemberUsage{
@@ -19,13 +20,13 @@ public class FieldUsage extends MemberUsage{
     myDescriptor = descriptor;
   }
 
-  public FieldUsage(DataInput in) throws IOException {
+  public FieldUsage(GraphDataInput in) throws IOException {
     super(in);
     myDescriptor = in.readUTF();
   }
 
   @Override
-  public void write(DataOutput out) throws IOException {
+  public void write(GraphDataOutput out) throws IOException {
     super.write(out);
     out.writeUTF(myDescriptor);
   }

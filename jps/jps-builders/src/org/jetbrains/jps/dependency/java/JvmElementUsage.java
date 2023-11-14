@@ -2,10 +2,10 @@
 package org.jetbrains.jps.dependency.java;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.dependency.GraphDataInput;
+import org.jetbrains.jps.dependency.GraphDataOutput;
 import org.jetbrains.jps.dependency.Usage;
 
-import java.io.DataInput;
-import java.io.DataOutput;
 import java.io.IOException;
 
 abstract class JvmElementUsage implements Usage {
@@ -16,12 +16,12 @@ abstract class JvmElementUsage implements Usage {
     myOwner = owner;
   }
 
-  JvmElementUsage(DataInput in) throws IOException {
+  JvmElementUsage(GraphDataInput in) throws IOException {
     myOwner = new JvmNodeReferenceID(in);
   }
 
   @Override
-  public void write(DataOutput out) throws IOException {
+  public void write(GraphDataOutput out) throws IOException {
     myOwner.write(out);
   }
 

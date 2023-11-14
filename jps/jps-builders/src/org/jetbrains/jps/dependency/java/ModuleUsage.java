@@ -2,8 +2,8 @@
 package org.jetbrains.jps.dependency.java;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.dependency.GraphDataInput;
 
-import java.io.DataInput;
 import java.io.IOException;
 
 public final class ModuleUsage extends JvmElementUsage {
@@ -16,7 +16,7 @@ public final class ModuleUsage extends JvmElementUsage {
     super(modId);
   }
 
-  public ModuleUsage(DataInput in) throws IOException {
+  public ModuleUsage(GraphDataInput in) throws IOException {
     super(in);
   }
 

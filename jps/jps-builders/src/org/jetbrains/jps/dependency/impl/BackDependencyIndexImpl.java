@@ -3,7 +3,6 @@ package org.jetbrains.jps.dependency.impl;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.dependency.*;
-import org.jetbrains.jps.dependency.java.JvmNodeElementExternalizer;
 import org.jetbrains.jps.dependency.java.JvmNodeReferenceID;
 import org.jetbrains.jps.javac.Iterators;
 
@@ -19,7 +18,7 @@ public abstract class BackDependencyIndexImpl implements BackDependencyIndex {
   protected BackDependencyIndexImpl(@NotNull String name, @NotNull MapletFactory cFactory) {
     myName = name;
     // important: if multiple implementations of ReferenceID are available, change to createMultitypeExternalizer
-    Externalizer<ReferenceID> ext = JvmNodeElementExternalizer.getMonotypeExternalizer(JvmNodeReferenceID::new);
+    Externalizer<ReferenceID> ext = Externalizer.forGraphElement(JvmNodeReferenceID::new);
     myMap = cFactory.createSetMultiMaplet(name, ext, ext);
   }
 

@@ -1,10 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.dependency.java;
 
+import org.jetbrains.jps.dependency.GraphDataInput;
+import org.jetbrains.jps.dependency.GraphDataOutput;
 import org.jetbrains.jps.dependency.impl.RW;
 
-import java.io.DataInput;
-import java.io.DataOutput;
 import java.io.IOException;
 
 public final class AnnotationUsage extends JvmElementUsage {
@@ -20,7 +20,7 @@ public final class AnnotationUsage extends JvmElementUsage {
     myTargets = targets;
   }
 
-  public AnnotationUsage(DataInput in) throws IOException {
+  public AnnotationUsage(GraphDataInput in) throws IOException {
     super(in);
     myClassType = new TypeRepr.ClassType(in.readUTF());
     myUsedArgNames = RW.readCollection(in, () -> in.readUTF());
@@ -28,7 +28,7 @@ public final class AnnotationUsage extends JvmElementUsage {
   }
 
   @Override
-  public void write(DataOutput out) throws IOException {
+  public void write(GraphDataOutput out) throws IOException {
     super.write(out);
     out.writeUTF(myClassType.getJvmName());
     RW.writeCollection(out, myUsedArgNames, s -> out.writeUTF(s));

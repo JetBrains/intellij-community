@@ -3,13 +3,13 @@ package org.jetbrains.jps.dependency.java;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.dependency.GraphDataInput;
+import org.jetbrains.jps.dependency.GraphDataOutput;
 import org.jetbrains.jps.dependency.Usage;
 import org.jetbrains.jps.dependency.diff.Difference;
 import org.jetbrains.jps.dependency.impl.RW;
 import org.jetbrains.jps.javac.Iterators;
 
-import java.io.DataInput;
-import java.io.DataOutput;
 import java.io.IOException;
 import java.lang.annotation.RetentionPolicy;
 import java.util.Objects;
@@ -47,7 +47,7 @@ public final class JvmClass extends JVMClassNode<JvmClass, JvmClass.Diff> {
     myRetentionPolicy = retentionPolicy;
   }
 
-  public JvmClass(DataInput in) throws IOException {
+  public JvmClass(GraphDataInput in) throws IOException {
     super(in);
     myOuterFqName = in.readUTF();
     mySuperFqName = in.readUTF();
@@ -68,7 +68,7 @@ public final class JvmClass extends JVMClassNode<JvmClass, JvmClass.Diff> {
   }
 
   @Override
-  public void write(DataOutput out) throws IOException {
+  public void write(GraphDataOutput out) throws IOException {
     super.write(out);
     out.writeUTF(myOuterFqName);
     out.writeUTF(mySuperFqName);

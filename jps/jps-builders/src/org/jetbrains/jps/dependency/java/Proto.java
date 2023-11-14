@@ -3,12 +3,12 @@ package org.jetbrains.jps.dependency.java;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.dependency.ExternalizableGraphElement;
+import org.jetbrains.jps.dependency.GraphDataInput;
+import org.jetbrains.jps.dependency.GraphDataOutput;
 import org.jetbrains.jps.dependency.diff.Difference;
 import org.jetbrains.jps.dependency.impl.RW;
 import org.jetbrains.jps.dependency.java.TypeRepr.ClassType;
 
-import java.io.DataInput;
-import java.io.DataOutput;
 import java.io.IOException;
 import java.util.Objects;
 
@@ -25,7 +25,7 @@ public class Proto implements ExternalizableGraphElement {
     this.annotations = annotations;
   }
 
-  public Proto(DataInput in) throws IOException {
+  public Proto(GraphDataInput in) throws IOException {
     access = new JVMFlags(in.readInt());
     signature = in.readUTF();
     name = in.readUTF();
@@ -33,7 +33,7 @@ public class Proto implements ExternalizableGraphElement {
   }
 
   @Override
-  public void write(DataOutput out) throws IOException {
+  public void write(GraphDataOutput out) throws IOException {
     out.writeInt(access.getValue());
     out.writeUTF(signature);
     out.writeUTF(name);

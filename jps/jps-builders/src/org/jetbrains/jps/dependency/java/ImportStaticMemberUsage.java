@@ -1,7 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.dependency.java;
 
-import java.io.DataInput;
+import org.jetbrains.jps.dependency.GraphDataInput;
+
 import java.io.IOException;
 
 public final class ImportStaticMemberUsage extends MemberUsage{
@@ -14,7 +15,7 @@ public final class ImportStaticMemberUsage extends MemberUsage{
     super(clsId, name);
   }
 
-  public ImportStaticMemberUsage(DataInput in) throws IOException {
+  public ImportStaticMemberUsage(GraphDataInput in) throws IOException {
     super(in);
   }
 

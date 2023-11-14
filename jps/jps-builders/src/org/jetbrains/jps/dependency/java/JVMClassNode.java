@@ -3,26 +3,19 @@ package org.jetbrains.jps.dependency.java;
 
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.dependency.GraphDataInput;
+import org.jetbrains.jps.dependency.GraphDataOutput;
 import org.jetbrains.jps.dependency.Node;
 import org.jetbrains.jps.dependency.Usage;
 import org.jetbrains.jps.dependency.diff.DiffCapable;
 import org.jetbrains.jps.dependency.diff.Difference;
-import org.jetbrains.jps.dependency.impl.RW;
 
-import java.io.DataInput;
-import java.io.DataOutput;
 import java.io.IOException;
-import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodHandles;
-import java.lang.invoke.MethodType;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 public abstract class JVMClassNode<T extends JVMClassNode<T, D>, D extends Difference> extends Proto implements Node<T, D> {
-  private static final MethodHandles.Lookup ourLookup = MethodHandles.lookup();
-  private static final MethodType ourConstructorType = MethodType.methodType(void.class, DataInput.class);
-
   private final JvmNodeReferenceID myId;
   private final String outFilePath;
   private final Iterable<Usage> myUsages;
@@ -34,7 +27,7 @@ public abstract class JVMClassNode<T extends JVMClassNode<T, D>, D extends Diffe
     myUsages = usages;
   }
 
-  public JVMClassNode(DataInput in) throws IOException {
+  public JVMClassNode(GraphDataInput in) throws IOException {
     super(in);
     myId = new JvmNodeReferenceID(in);
     outFilePath = in.readUTF();
@@ -43,25 +36,8 @@ public abstract class JVMClassNode<T extends JVMClassNode<T, D>, D extends Diffe
     try {
       int groupCount = in.readInt();
       while(groupCount-- > 0) {
-        MethodHandle constructor = ourLookup.findConstructor(Class.forName(in.readUTF()), ourConstructorType);
-        RW.readCollection(in, () -> {
-          try {
-            return (Usage)constructor.invoke(in);
-          }
-          catch (IOException e) {
-            throw e;
-          }
-          catch (Throwable e) {
-            throw new IOException(e);
-          }
-        }, usages);
+        in.readGraphElementCollection(usages);
       }
-    }
-    catch (IOException e) {
-      throw e;
-    }
-    catch (Throwable e) {
-      throw new IOException(e);
     }
     finally {
       myUsages = usages;
@@ -69,7 +45,7 @@ public abstract class JVMClassNode<T extends JVMClassNode<T, D>, D extends Diffe
   }
 
   @Override
-  public void write(DataOutput out) throws IOException {
+  public void write(GraphDataOutput out) throws IOException {
     super.write(out);
     myId.write(out);
     out.writeUTF(outFilePath);
@@ -86,8 +62,7 @@ public abstract class JVMClassNode<T extends JVMClassNode<T, D>, D extends Diffe
     
     out.writeInt(usageGroups.size());
     for (Map.Entry<Class<? extends Usage>, List<Usage>> entry : usageGroups.entrySet()) {
-      out.writeUTF(entry.getKey().getName());
-      RW.writeCollection(out, entry.getValue(), u -> u.write(out));
+      out.writeGraphElementCollection(entry.getKey(), entry.getValue());
    }
   }
 

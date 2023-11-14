@@ -8,6 +8,7 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.List;
 
 public final class RW {
   private RW() {
@@ -29,11 +30,11 @@ public final class RW {
     }
   }
 
-  public static <T> Collection<T> readCollection(DataInput in, Reader<? extends T> reader) throws IOException {
-    return readCollection(in, reader, new SmartList<>());
+  public static <T> List<T> readCollection(DataInput in, Reader<? extends T> reader) throws IOException {
+    return readCollection(in, reader, new SmartList<T>());
   }
 
-  public static <T> Collection<T> readCollection(DataInput in, Reader<? extends T> reader, Collection<T> acc) throws IOException {
+  public static <T, C extends Collection<? super T>> C readCollection(DataInput in, Reader<? extends T> reader, C acc) throws IOException {
     int size = in.readInt();
     while (size-- > 0) {
       acc.add(reader.read());

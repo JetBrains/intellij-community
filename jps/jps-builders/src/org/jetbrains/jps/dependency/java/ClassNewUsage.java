@@ -2,8 +2,8 @@
 package org.jetbrains.jps.dependency.java;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.dependency.GraphDataInput;
 
-import java.io.DataInput;
 import java.io.IOException;
 
 public final class ClassNewUsage extends ClassUsage {
@@ -16,7 +16,7 @@ public final class ClassNewUsage extends ClassUsage {
     super(clsId);
   }
 
-  public ClassNewUsage(DataInput in) throws IOException {
+  public ClassNewUsage(GraphDataInput in) throws IOException {
     super(in);
   }
 

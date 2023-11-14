@@ -3,9 +3,9 @@ package org.jetbrains.jps.dependency.java;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.dependency.GraphDataInput;
+import org.jetbrains.jps.dependency.GraphDataOutput;
 
-import java.io.DataInput;
-import java.io.DataOutput;
 import java.io.IOException;
 import java.util.Objects;
 
@@ -19,14 +19,14 @@ public abstract class ProtoMember extends Proto {
     this.value = value;
   }
 
-  public ProtoMember(DataInput in) throws IOException {
+  public ProtoMember(GraphDataInput in) throws IOException {
     super(in);
     type = TypeRepr.getType(in.readUTF());
     value = JvmProtoMemberValueExternalizer.read(in);
   }
 
   @Override
-  public void write(DataOutput out) throws IOException {
+  public void write(GraphDataOutput out) throws IOException {
     super.write(out);
     out.writeUTF(type.getDescriptor());
     JvmProtoMemberValueExternalizer.write(out, value);

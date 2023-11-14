@@ -1,6 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.dependency.impl;
 
+import com.github.benmanes.caffeine.cache.Caffeine;
+import com.github.benmanes.caffeine.cache.LoadingCache;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.KeyDescriptor;
@@ -71,7 +73,7 @@ public final class Containers {
     private final PersistentStringEnumerator myStringTable;
     private final List<Closeable> myMaps = new ArrayList<>();
     private final Enumerator myEnumerator;
-    private
+    private final Function<ExternalizableGraphElement, ExternalizableGraphElement> myUsagesInterner;
 
     PersistentMapletFactory(String rootDirPath) throws IOException {
       myRootDirPath = rootDirPath;
@@ -87,12 +89,16 @@ public final class Containers {
           return myStringTable.enumerate(str);
         }
       };
+      LoadingCache<Usage, Usage> interner = Caffeine.newBuilder().maximumSize(2 * CACHE_SIZE).build(key -> key);
+      myUsagesInterner = elem -> {
+        return elem instanceof Usage? interner.get((Usage)elem) : elem;
+      };
     }
 
     @Override
     public <K, V> MultiMaplet<K, V> createSetMultiMaplet(String storageName, Externalizer<K> keyExternalizer, Externalizer<V> valueExternalizer) {
       MultiMaplet<K, V> container = new CachingMultiMaplet<>(
-        new PersistentMultiMaplet<>(getMapFile(storageName), new GraphKeyDescriptor<>(keyExternalizer, myEnumerator), new GraphDataExternalizer<>(valueExternalizer, myEnumerator), () -> (Set<V>)new HashSet<V>()),
+        new PersistentMultiMaplet<>(getMapFile(storageName), new GraphKeyDescriptor<>(keyExternalizer, myEnumerator), new GraphDataExternalizer<>(valueExternalizer, myEnumerator, myUsagesInterner), () -> (Set<V>)new HashSet<V>()),
         CACHE_SIZE
       );
       myMaps.add(container);
@@ -102,7 +108,7 @@ public final class Containers {
     @Override
     public <K, V> Maplet<K, V> createMaplet(String storageName, Externalizer<K> keyExternalizer, Externalizer<V> valueExternalizer) {
       Maplet<K, V> container = new CachingMaplet<>(
-        new PersistentMaplet<>(getMapFile(storageName), new GraphKeyDescriptor<>(keyExternalizer, myEnumerator), new GraphDataExternalizer<>(valueExternalizer, myEnumerator)),
+        new PersistentMaplet<>(getMapFile(storageName), new GraphKeyDescriptor<>(keyExternalizer, myEnumerator), new GraphDataExternalizer<>(valueExternalizer, myEnumerator, myUsagesInterner)),
         CACHE_SIZE
       );
       myMaps.add(container);
@@ -142,26 +148,30 @@ public final class Containers {
     private final Externalizer<T> myExternalizer;
     @Nullable
     private final Enumerator myEnumerator;
-    GraphDataExternalizer(Externalizer<T> externalizer, @Nullable Enumerator enumerator) {
+    @Nullable
+    private final Function<ExternalizableGraphElement, ExternalizableGraphElement> myElementInterner;
+
+    GraphDataExternalizer(Externalizer<T> externalizer, @Nullable Enumerator enumerator, @Nullable Function<ExternalizableGraphElement, ExternalizableGraphElement> elementInterner) {
       myExternalizer = externalizer;
       myEnumerator = enumerator;
+      myElementInterner = elementInterner;
     }
 
     @Override
     public void save(@NotNull DataOutput out, T value) throws IOException {
-      myExternalizer.save(myEnumerator != null? GraphDataOutput.wrap(out, myEnumerator) : GraphDataOutput.wrap(out), value);
+      myExternalizer.save(GraphDataOutputImpl.wrap(out, myEnumerator), value);
     }
 
     @Override
     public T read(@NotNull DataInput in) throws IOException {
-      return myExternalizer.load(myEnumerator != null? GraphDataInput.wrap(in, myEnumerator) : GraphDataInput.wrap(in));
+      return myExternalizer.load(GraphDataInputImpl.wrap(in, myEnumerator, myElementInterner));
     }
   }
 
   private static class GraphKeyDescriptor<T> extends GraphDataExternalizer<T> implements KeyDescriptor<T> {
 
     GraphKeyDescriptor(Externalizer<T> externalizer, @Nullable Enumerator enumerator) {
-      super(externalizer, enumerator);
+      super(externalizer, enumerator, null);
     }
 
     @Override

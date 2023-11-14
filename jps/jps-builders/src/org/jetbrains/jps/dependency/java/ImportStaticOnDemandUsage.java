@@ -2,8 +2,8 @@
 package org.jetbrains.jps.dependency.java;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.dependency.GraphDataInput;
 
-import java.io.DataInput;
 import java.io.IOException;
 
 public final class ImportStaticOnDemandUsage extends JvmElementUsage {
@@ -16,7 +16,7 @@ public final class ImportStaticOnDemandUsage extends JvmElementUsage {
     super(importedClassId);
   }
 
-  public ImportStaticOnDemandUsage(DataInput in) throws IOException {
+  public ImportStaticOnDemandUsage(GraphDataInput in) throws IOException {
     super(in);
   }
 

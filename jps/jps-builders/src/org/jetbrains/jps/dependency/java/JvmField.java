@@ -2,10 +2,10 @@
 package org.jetbrains.jps.dependency.java;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.dependency.GraphDataInput;
 import org.jetbrains.jps.dependency.diff.DiffCapable;
 import org.jetbrains.org.objectweb.asm.Opcodes;
 
-import java.io.DataInput;
 import java.io.IOException;
 import java.util.Objects;
 
@@ -16,7 +16,7 @@ public final class JvmField extends ProtoMember implements DiffCapable<JvmField,
     super(flags, signature, name, TypeRepr.getType(descriptor), annotations, value);
   }
 
-  public JvmField(DataInput in) throws IOException {
+  public JvmField(GraphDataInput in) throws IOException {
     super(in);
   }
 
