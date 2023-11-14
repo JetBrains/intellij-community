@@ -7,5 +7,5 @@ package org.apache.commons.lang.time;
  * Or consider using the corresponding API from IJ Platform.
  */
 @Deprecated(forRemoval = true)
-public final class DateUtils extends org.apache.commons.lang3.time.DateUtils {
+public class DateUtils extends org.apache.commons.lang3.time.DateUtils {
 }
