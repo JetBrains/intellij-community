@@ -214,13 +214,6 @@ internal class InlineBreakpointInlayManager(private val project: Project, privat
     }
   }
 
-  private fun isAllVariant(variant: XLineBreakpointType<*>.XLineBreakpointVariant): Boolean {
-    // Currently, it's the easiest way to check that it's really multi-location variant.
-    // Don't try to check whether the variant is an instance of XLineBreakpointAllVariant, they all are.
-    // FIXME[inline-bp]: introduce better way for this or completely get rid of multi-location variants
-    return variant.icon === AllIcons.Debugger.MultipleBreakpoints
-  }
-
   private fun areMatching(variant: XLineBreakpointType<*>.XLineBreakpointVariant, breakpoint: XLineBreakpointImpl<*>, codeStartOffset: Int): Boolean {
     return variant.type == breakpoint.type &&
            getBreakpointVariantRangeStartOffset(variant, codeStartOffset) == getBreakpointRangeStartOffset(breakpoint, codeStartOffset)
@@ -274,5 +267,17 @@ internal class InlineBreakpointInlayManager(private val project: Project, privat
     @JvmStatic
     fun getInstance(project: Project): InlineBreakpointInlayManager =
       project.service<InlineBreakpointInlayManager>()
+
+    /**
+     * Returns whether this breakpoint variant covers multiple locations (e.g. "line and lambdas" aka "All").
+     * Such variants aren't used with new inline breakpoints inlays because user can manually put separate breakpoints at every location.
+     */
+    @JvmStatic
+    fun isAllVariant(variant: XLineBreakpointType<*>.XLineBreakpointVariant): Boolean {
+      // Currently, it's the easiest way to check that it's really multi-location variant.
+      // Don't try to check whether the variant is an instance of XLineBreakpointAllVariant, they all are.
+      // FIXME[inline-bp]: introduce better way for this or completely get rid of multi-location variants
+      return variant.icon === AllIcons.Debugger.MultipleBreakpoints
+    }
   }
 }
