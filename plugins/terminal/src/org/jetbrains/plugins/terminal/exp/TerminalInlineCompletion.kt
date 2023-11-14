@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.ActionPromoter
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Caret
@@ -19,6 +20,7 @@ import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.TextRange
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.flow
@@ -48,7 +50,14 @@ class TerminalInlineCompletionProvider : InlineCompletionProvider {
     return InlineCompletionSuggestion.Default(flow)
   }
 
-  private fun getCompletionElement(editor: Editor): InlineCompletionElement? {
+  private suspend fun getCompletionElement(editor: Editor): InlineCompletionElement? {
+    val isAtTheEnd = readAction {
+      val caretOffset = editor.caretModel.offset
+      val document = editor.document
+      caretOffset >= document.textLength || document.getText(TextRange(caretOffset, caretOffset + 1)) == " "
+    }
+    if (!isAtTheEnd) return null
+
     val lookup = LookupManager.getActiveLookup(editor) ?: return null
     val item = lookup.currentItem ?: return null
     val itemPrefix = lookup.itemPattern(item)
