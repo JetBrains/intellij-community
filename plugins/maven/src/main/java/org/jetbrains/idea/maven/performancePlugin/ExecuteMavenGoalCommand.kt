@@ -17,8 +17,8 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager
 
 /**
  * The command executes a maven goal in module
- * Syntax: %executeMavenGoal [moduleName] [goal]
- * Example: %executeMavenGoal mainModule package
+ * Syntax: %executeMavenGoal moduleName [moduleName] goalName [goal]
+ * Example: %executeMavenGoal moduleName main module goalName package
  */
 class ExecuteMavenGoalCommand(text: String, line: Int) : AbstractCommand(text, line) {
   companion object {
@@ -47,18 +47,25 @@ class ExecuteMavenGoalCommand(text: String, line: Int) : AbstractCommand(text, l
         }
       }
     })
-
-    perform(project, moduleName, goal)
+    perform(project, moduleName, goal, promise)
     return promise
   }
 
-  private fun perform(project: Project, moduleName: String, goal: String) {
+  private fun perform(project: Project, moduleName: String, goal: String, promise: AsyncPromise<Any?>) {
     ApplicationManager.getApplication().invokeLater {
       val projectsManager = MavenProjectsManager.getInstance(project)
-      if (projectsManager == null) return@invokeLater
+      if (projectsManager == null) {
+        promise.setError("There is no MavenProjectsManager for project")
+        return@invokeLater
+      }
 
-      val mavenProject = projectsManager.projects.firstOrNull { it.displayName.equals(moduleName) }
-      if (mavenProject == null) return@invokeLater
+      val currentProjects = projectsManager.projects
+      val mavenProject = currentProjects.firstOrNull { it.displayName == moduleName }
+      if (mavenProject == null) {
+        promise.setError(
+          "There is no module with name $moduleName. Actual modules: ${currentProjects.joinToString("\n") { it.displayName }}")
+        return@invokeLater
+      }
 
       val explicitProfiles = projectsManager.getExplicitProfiles()
 
