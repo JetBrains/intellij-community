@@ -79,7 +79,7 @@ public final class Containers {
 
     PersistentMapletFactory(String rootDirPath) throws IOException {
       myRootDirPath = rootDirPath;
-      myStringTable = new PersistentStringEnumerator(getMapFile("strings.tab"), 1024 * 4, true, new StorageLockContext());
+      myStringTable = new PersistentStringEnumerator(getMapFile("string-table"), 1024 * 4, true, new StorageLockContext());
       myInputEnumerator = num -> myStringTable.valueOf(num);
       myOutEnumerator = str -> myStringTable.enumerate(str);
     }
