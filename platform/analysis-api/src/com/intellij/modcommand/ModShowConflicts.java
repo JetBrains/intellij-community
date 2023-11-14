@@ -15,10 +15,8 @@ import java.util.Set;
  * Not executed in batch; preview shows next step automatically (it must be computed before conflicts are shown).
  * 
  * @param conflicts conflicts to show
- * @param nextStep next step to execute if user agrees; not executed if user cancels on conflict view
  */
-public record ModShowConflicts(@NotNull Map<@NotNull PsiElement, @NotNull Conflict> conflicts,
-                               @NotNull ModCommand nextStep) implements ModCommand {
+public record ModShowConflicts(@NotNull Map<@NotNull PsiElement, @NotNull Conflict> conflicts) implements ModCommand {
   /**
    * Conflict description
    * @param messages list of user-readable messages that describe the problem
@@ -28,11 +26,6 @@ public record ModShowConflicts(@NotNull Map<@NotNull PsiElement, @NotNull Confli
 
   @Override
   public boolean isEmpty() {
-    return conflicts().isEmpty() && nextStep().isEmpty();
-  }
-
-  @Override
-  public @NotNull Set<@NotNull VirtualFile> modifiedFiles() {
-    return nextStep.modifiedFiles();
+    return conflicts().isEmpty();
   }
 }

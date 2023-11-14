@@ -79,7 +79,7 @@ public class ModCommandExecutorImpl implements ModCommandExecutor {
   @Override
   public void executeInteractively(@NotNull ActionContext context, @NotNull ModCommand command, @Nullable Editor editor) {
     if (!ensureWritable(context.project(), command)) return;
-    doExecuteInteractively(context, command, editor);
+    doExecuteInteractively(context, command, ModCommand.nop(), editor);
   }
 
   private static boolean ensureWritable(@NotNull Project project, @NotNull ModCommand command) {
@@ -97,7 +97,7 @@ public class ModCommandExecutorImpl implements ModCommandExecutor {
 
   private BatchExecutionResult doExecuteInBatch(@NotNull ActionContext context, @NotNull ModCommand command) {
     Project project = context.project();
-    if (command instanceof ModNothing) {
+    if (command.isEmpty()) {
       return Result.NOTHING;
     }
     if (command instanceof ModUpdateFileText upd) {
@@ -131,10 +131,7 @@ public class ModCommandExecutorImpl implements ModCommandExecutor {
         command instanceof ModStartTemplate || command instanceof ModUpdateSystemOptions) {
       return Result.INTERACTIVE;
     }
-    if (command instanceof ModShowConflicts showConflicts) {
-      if (showConflicts.conflicts().isEmpty()) {
-        return executeInBatch(context, showConflicts.nextStep());
-      }
+    if (command instanceof ModShowConflicts) {
       return Result.CONFLICTS;
     }
     if (command instanceof ModDisplayMessage message) {
@@ -161,7 +158,8 @@ public class ModCommandExecutorImpl implements ModCommandExecutor {
     return executeInBatch(context, next);
   }
 
-  private boolean doExecuteInteractively(@NotNull ActionContext context, @NotNull ModCommand command, @Nullable Editor editor) {
+  private boolean doExecuteInteractively(@NotNull ActionContext context, @NotNull ModCommand command, @NotNull ModCommand tail,
+                                         @Nullable Editor editor) {
     Project project = context.project();
     if (command instanceof ModUpdateFileText upd) {
       return executeUpdate(project, upd);
@@ -203,7 +201,7 @@ public class ModCommandExecutorImpl implements ModCommandExecutor {
       return executeDelete(project, deleteFile);
     }
     if (command instanceof ModShowConflicts showConflicts) {
-      return executeShowConflicts(context, showConflicts, editor);
+      return executeShowConflicts(context, showConflicts, editor, tail);
     }
     if (command instanceof ModStartTemplate startTemplate) {
       return executeStartTemplate(context, startTemplate, editor);
@@ -356,17 +354,14 @@ public class ModCommandExecutorImpl implements ModCommandExecutor {
     return true;
   }
 
-  private boolean executeShowConflicts(@NotNull ActionContext context, @NotNull ModShowConflicts conflicts, @Nullable Editor editor) {
+  private boolean executeShowConflicts(@NotNull ActionContext context, @NotNull ModShowConflicts conflicts, @Nullable Editor editor,
+                                       @NotNull ModCommand tail) {
     MultiMap<PsiElement, String> conflictData = new MultiMap<>();
     conflicts.conflicts().forEach((e, c) -> conflictData.put(e, c.messages()));
-    if (!conflictData.isEmpty()) {
-      var conflictsDialog =
-        new ConflictsDialog(context.project(), conflictData, () -> doExecuteInteractively(context, conflicts.nextStep(), editor));
-      if (!conflictsDialog.showAndGet()) {
-        return false;
-      }
-    }
-    return doExecuteInteractively(context, conflicts.nextStep(), editor);
+    if (conflictData.isEmpty()) return true;
+    var conflictsDialog =
+      new ConflictsDialog(context.project(), conflictData, () -> doExecuteInteractively(context, tail, ModCommand.nop(), editor));
+    return conflictsDialog.showAndGet();
   }
 
   private static boolean executeCopyToClipboard(@NotNull ModCopyToClipboard clipboard) {
@@ -641,8 +636,11 @@ public class ModCommandExecutorImpl implements ModCommandExecutor {
   }
 
   private boolean executeComposite(@NotNull ActionContext context, ModCompositeCommand cmp, @Nullable Editor editor) {
-    for (ModCommand command : cmp.commands()) {
-      if (!doExecuteInteractively(context, command, editor)) {
+    List<@NotNull ModCommand> commands = cmp.commands();
+    int size = commands.size();
+    for (int i = 0; i < size; i++) {
+      ModCommand command = commands.get(i);
+      if (!doExecuteInteractively(context, command, new ModCompositeCommand(commands.subList(i + 1, size)), editor)) {
         return false;
       }
     }

@@ -69,7 +69,8 @@ public class MakeClassFinalFix extends ModCommandQuickFix {
       });
     }
     ModShowConflicts.Conflict conflict = new ModShowConflicts.Conflict(conflictMessages);
-    return new ModShowConflicts(Map.of(containingClass, conflict), ModCommand.psiUpdate(modifierList, list -> doMakeFinal(list)));
+    return new ModShowConflicts(Map.of(containingClass, conflict))
+      .andThen(ModCommand.psiUpdate(modifierList, list -> doMakeFinal(list)));
   }
 
   private static void doMakeFinal(PsiModifierList modifierList) {

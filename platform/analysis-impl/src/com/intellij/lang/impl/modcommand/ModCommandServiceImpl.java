@@ -141,9 +141,6 @@ public class ModCommandServiceImpl implements ModCommandService {
       else if (command instanceof ModChooseMember target) {
         return getPreview(target.nextCommand().apply(target.defaultSelection()), context);
       }
-      else if (command instanceof ModShowConflicts showConflicts) {
-        return getPreview(showConflicts.nextStep(), context);
-      }
       else if (command instanceof ModDisplayMessage message) {
         if (message.kind() == ModDisplayMessage.MessageKind.ERROR) {
           return new IntentionPreviewInfo.Html(new HtmlBuilder().append(
