@@ -3,44 +3,45 @@ package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx;
-import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.lang.annotation.HighlightSeverity;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.ModCommandAction;
+import com.intellij.modcommand.Presentation;
+import com.intellij.psi.PsiImportList;
+import com.intellij.psi.PsiImportStatement;
+import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class RemoveAllUnusedImportsFix implements IntentionAction {
+public class RemoveAllUnusedImportsFix implements ModCommandAction {
   @Override
   public @NotNull String getFamilyName() {
     return JavaErrorBundle.message("remove.unused.imports.quickfix.text");
   }
 
   @Override
-  public @NotNull String getText() {
-    return getFamilyName();
+  public @Nullable Presentation getPresentation(@NotNull ActionContext context) {
+    return context.file() instanceof PsiJavaFile ? Presentation.of(getFamilyName()) : null;
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return file instanceof PsiJavaFile && editor != null;
-  }
-
-  @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
-    if (!(psiFile instanceof PsiJavaFile javaFile) || editor == null) return;
+  public @NotNull ModCommand perform(@NotNull ActionContext context) {
+    if (!(context.file() instanceof PsiJavaFile javaFile)) return ModCommand.nop();
     PsiImportList importList = javaFile.getImportList();
-    if (importList == null) return;
+    if (importList == null) return ModCommand.nop();
     List<PsiImportStatement> importStatements = new ArrayList<>();
-    DaemonCodeAnalyzerEx.processHighlights(editor.getDocument(), project, HighlightSeverity.INFORMATION, importList.getTextRange().getStartOffset(), importList.getTextRange().getEndOffset(), info -> {
-      if (PostHighlightingVisitor.isUnusedImportHighlightInfo(psiFile, info)) {
-        PsiImportStatement importStatement = PsiTreeUtil.findElementOfClassAtOffset(psiFile, info.getActualStartOffset(), PsiImportStatement.class, false);
+    DaemonCodeAnalyzerEx.processHighlights(javaFile.getViewProvider().getDocument(), context.project(), HighlightSeverity.INFORMATION, 
+                                           importList.getTextRange().getStartOffset(), 
+                                           importList.getTextRange().getEndOffset(), info -> {
+      if (PostHighlightingVisitor.isUnusedImportHighlightInfo(javaFile, info)) {
+        PsiImportStatement importStatement = PsiTreeUtil.findElementOfClassAtOffset(javaFile, info.getActualStartOffset(), PsiImportStatement.class, false);
         if (importStatement != null) {
           importStatements.add(importStatement);
         }
@@ -48,14 +49,11 @@ public class RemoveAllUnusedImportsFix implements IntentionAction {
       return true;
     });
 
-    if (!importStatements.isEmpty()) {
-      IntentionAction deleteAll = QuickFixFactory.getInstance().createDeleteFix(importStatements.toArray(PsiElement.EMPTY_ARRAY));
-      deleteAll.invoke(project, editor, psiFile);
-    }
-  }
-
-  @Override
-  public boolean startInWriteAction() {
-    return false;
+    if (importStatements.isEmpty()) return ModCommand.nop();
+    return ModCommand.psiUpdate(context, updater -> {
+      for (PsiImportStatement statement : ContainerUtil.map(importStatements, updater::getWritable)) {
+        new CommentTracker().deleteAndRestoreComments(statement);
+      }
+    });
   }
 }
