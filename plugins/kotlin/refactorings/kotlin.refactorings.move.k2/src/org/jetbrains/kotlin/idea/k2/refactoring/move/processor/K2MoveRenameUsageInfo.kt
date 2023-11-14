@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring.move.processor
 
-import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.Key
 import com.intellij.psi.*
 import com.intellij.psi.search.searches.ReferencesSearch
@@ -13,18 +12,22 @@ import com.intellij.refactoring.move.moveMembers.MoveMembersProcessor
 import com.intellij.refactoring.util.MoveRenameUsageInfo
 import com.intellij.usageView.UsageInfo
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.calls.KtCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.calls.singleCallOrNull
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtDeclarationSymbol
 import org.jetbrains.kotlin.asJava.toLightElements
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.invokeShortening
 import org.jetbrains.kotlin.idea.base.psi.imports.addImport
 import org.jetbrains.kotlin.idea.base.utils.fqname.isImported
 import org.jetbrains.kotlin.idea.references.KtReference
+import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
@@ -39,7 +42,7 @@ sealed class K2MoveRenameUsageInfo(
 
     open fun refresh(referenceElement: PsiElement, referencedElement: KtNamedDeclaration): K2MoveRenameUsageInfo = this
 
-    abstract fun retarget(to: KtNamedDeclaration)
+    abstract fun retarget(to: KtNamedDeclaration): PsiElement?
 
     class Light(
         element: PsiElement,
@@ -51,15 +54,15 @@ sealed class K2MoveRenameUsageInfo(
     ) : K2MoveRenameUsageInfo(element, reference, referencedElement) {
         override val isInternal: Boolean = false // internal usages are always Kotlin usages
 
-        override fun retarget(to: KtNamedDeclaration) {
-            val element = element ?: return
+        override fun retarget(to: KtNamedDeclaration): PsiElement? {
+            val element = element ?: return element
             val newLightElement = to.toLightElements()[lightElementIndex]
             if (element is PsiReferenceExpression
                 && wasMember
                 && newLightElement is PsiMember
                 && updateJavaReference(element, oldContainingFqn, newLightElement)
-            ) return
-            reference?.bindToElement(newLightElement)
+            ) return element
+            return reference?.bindToElement(newLightElement)
         }
 
         private fun updateJavaReference(
@@ -106,18 +109,21 @@ sealed class K2MoveRenameUsageInfo(
      */
     class Qualifiable(
       element: KtElement,
-      reference: KtReference,
+      reference: KtSimpleNameReference,
       referencedElement: KtNamedDeclaration,
       override val isInternal: Boolean
     ) : K2MoveRenameUsageInfo(element, reference, referencedElement) {
         override fun refresh(referenceElement: PsiElement, referencedElement: KtNamedDeclaration): K2MoveRenameUsageInfo {
             if (referenceElement !is KtElement) return this
-            val reference = referenceElement.mainReference ?: return this
+            val reference = (referenceElement.mainReference as? KtSimpleNameReference) ?: return this
            return Qualifiable(referenceElement, reference, referencedElement, isInternal)
         }
 
-        override fun retarget(to: KtNamedDeclaration) {
-            reference?.bindToElement(to)
+        override fun retarget(to: KtNamedDeclaration): PsiElement? {
+            // shortening needs to be delayed because shortening might depend on other references
+            // Lets say we for example want to replace `a.Foo` (imported) here by `b.Foo`: val x: Foo = Foo()
+            // The typer reference can't shorten without changing the reference to the constructor call.
+            return (element?.reference as? KtSimpleNameReference)?.bindToElement(to, KtSimpleNameReference.ShorteningMode.NO_SHORTENING)
         }
     }
 
@@ -137,10 +143,11 @@ sealed class K2MoveRenameUsageInfo(
             return Unqualifiable(referenceElement, reference, referencedElement, isInternal)
         }
 
-        override fun retarget(to: KtNamedDeclaration) {
-            val element = (element as? KtElement) ?: return
-            val referencedElement = (to as? KtNamedDeclaration) ?: return
+        override fun retarget(to: KtNamedDeclaration): PsiElement? {
+            val element = (element as? KtElement) ?: return element
+            val referencedElement = (to as? KtNamedDeclaration) ?: return element
             referencedElement.fqName?.let(element.containingKtFile::addImport)
+            return element
         }
     }
 
@@ -206,7 +213,7 @@ sealed class K2MoveRenameUsageInfo(
             return ReferencesSearch.search(declaration, declaration.resolveScope).findAll()
                 .filter { !declaration.isAncestor(it.element) } // exclude internal usages
                 .mapNotNull { ref ->
-                    if (ref is KtReference) {
+                    if (ref is KtSimpleNameReference) {
                         ref.createKotlinUsageInfo(declaration, isInternal = false)
                     } else {
                         val lightElements = declaration.toLightElements()
@@ -218,23 +225,7 @@ sealed class K2MoveRenameUsageInfo(
                         val fqn = if (lightElement is PsiMember) lightElement.containingClass?.qualifiedName else null
                         Light(ref.element, ref, declaration, lightElement is PsiMember, fqn, lightElements.indexOf(lightElement))
                     }
-                }.sortedWith(
-                    Comparator { o1, o2 ->
-                        val file1 = o1.virtualFile
-                        val file2 = o2.virtualFile
-                        if (Comparing.equal(file1, file2)) {
-                            val rangeInElement1 = o1.rangeInElement
-                            val rangeInElement2 = o2.rangeInElement
-                            if (rangeInElement1 != null && rangeInElement2 != null) {
-                                return@Comparator rangeInElement2.startOffset - rangeInElement1.startOffset
-                            }
-                            return@Comparator 0
-                        }
-                        if (file1 == null) return@Comparator -1
-                        if (file2 == null) return@Comparator 1
-                        Comparing.compare(file1.path, file2.path)
-                    }
-                )
+                }
         }
 
         @OptIn(KtAllowAnalysisFromWriteAction::class)
@@ -268,9 +259,9 @@ sealed class K2MoveRenameUsageInfo(
             return parent.selectorExpression != baseExpression // check if this expression is first in qualified chain
         }
 
-        private fun KtReference.createKotlinUsageInfo(declaration: KtNamedDeclaration, isInternal: Boolean): K2MoveRenameUsageInfo {
+        private fun KtSimpleNameReference.createKotlinUsageInfo(declaration: KtNamedDeclaration, isInternal: Boolean): K2MoveRenameUsageInfo {
             val refExpr = element
-            return if (refExpr is KtSimpleNameExpression && refExpr.isUnqualifiable()) {
+            return if (refExpr.isUnqualifiable()) {
                 Unqualifiable(refExpr, this, declaration, isInternal)
             } else {
                 Qualifiable(refExpr, this, declaration, isInternal)
@@ -299,18 +290,46 @@ sealed class K2MoveRenameUsageInfo(
 
         private fun retargetInternalUsages(oldToNewMap: MutableMap<PsiElement, PsiElement>) {
             val newDeclarations = oldToNewMap.values.filterIsInstance<KtNamedDeclaration>()
-            val restoredInternalUsages = newDeclarations.flatMap { decl -> restoreInternalUsages(decl, oldToNewMap) }
-            restoredInternalUsages.forEach {  usageInfo ->
-                (usageInfo as K2MoveRenameUsageInfo).retarget(usageInfo.referencedElement)
-            }
+            val internalUsages = newDeclarations
+                .flatMap { decl -> restoreInternalUsages(decl, oldToNewMap) }
+                .filterIsInstance<K2MoveRenameUsageInfo>()
+                .sortedByFile()
+            retargetMoveUsages(internalUsages, oldToNewMap)
         }
 
         private fun retargetExternalUsages(usages: List<UsageInfo>, oldToNewMap: MutableMap<PsiElement, PsiElement>) {
-            val externalUsages = usages.filter { it is K2MoveRenameUsageInfo && !it.isInternal }
-            externalUsages.forEach { usageInfo ->
-                if (usageInfo is K2MoveRenameUsageInfo) {
-                    val newElement = oldToNewMap[usageInfo.referencedElement] as? KtNamedDeclaration ?: usageInfo.referencedElement
-                    usageInfo.retarget(newElement)
+            val externalUsages = usages
+                .filterIsInstance<K2MoveRenameUsageInfo>()
+                .filter { !it.isInternal }
+                .sortedByFile()
+            retargetMoveUsages(externalUsages, oldToNewMap)
+        }
+
+        private fun List<K2MoveRenameUsageInfo>.sortedByFile(): Map<PsiFile, List<K2MoveRenameUsageInfo>> {
+            return groupBy { it.element?.containingFile ?: error("Element should have containing file") }
+                .mapValues { (_, value) -> value.sortedBy { it.element?.textOffset } }
+        }
+
+        @OptIn(KtAllowAnalysisFromWriteAction::class, KtAllowAnalysisOnEdt::class)
+        private fun retargetMoveUsages(
+            usageInfosByFile: Map<PsiFile, List<K2MoveRenameUsageInfo>>,
+            oldToNewMap: MutableMap<PsiElement, PsiElement>
+        ) = allowAnalysisFromWriteAction {
+            allowAnalysisOnEdt {
+                usageInfosByFile.forEach { (file, usageInfos) ->
+                    val qualifiedElements = usageInfos.mapNotNull { usageInfo ->
+                        val newElement = oldToNewMap[usageInfo.referencedElement] as? KtNamedDeclaration ?: usageInfo.referencedElement
+                        val result = usageInfo.retarget(newElement)
+                        val smartPointerManager = SmartPointerManager.getInstance(file.project)
+                        if (usageInfo is Qualifiable && result != null) smartPointerManager.createSmartPsiElementPointer(result) else null
+                    }
+                    if (file !is KtFile) return@forEach
+                    qualifiedElements.forEach shortening@{ ptr ->
+                        val qualifiedElem = ptr.element ?: return@shortening
+                        analyze(file) {
+                            collectPossibleReferenceShortenings(file, qualifiedElem.textRange).invokeShortening()
+                        }
+                    }
                 }
             }
         }
