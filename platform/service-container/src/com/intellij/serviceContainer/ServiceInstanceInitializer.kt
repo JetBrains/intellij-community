@@ -77,7 +77,7 @@ internal open class ServiceDescriptorInstanceInitializer(
   private val keyClassName: String,
   override val instanceClassName: String,
   componentManager: ComponentManagerImpl,
-  @JvmField val pluginDescriptor: PluginDescriptor,
+  private val pluginDescriptor: PluginDescriptor,
   private val serviceDescriptor: ServiceDescriptor,
 ) : ServiceInstanceInitializer(componentManager, pluginDescriptor.pluginId, serviceDescriptor) {
 
