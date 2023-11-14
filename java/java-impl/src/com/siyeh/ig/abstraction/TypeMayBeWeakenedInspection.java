@@ -193,7 +193,7 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
 
       @Override
       public @NotNull ModCommand perform(@NotNull ActionContext context) {
-        return ModCommand.updateOption(context.file(), TypeMayBeWeakenedInspection.this,
+        return ModCommand.updateInspectionOption(context.file(), TypeMayBeWeakenedInspection.this,
                                        insp -> insp.myStopClassSet.add(myCandidate));
       }
     }

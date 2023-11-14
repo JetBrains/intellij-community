@@ -244,11 +244,7 @@ internal class JavaPlatformModuleSystem : JavaModuleSystemEx {
     }
 
     override fun perform(context: ActionContext): ModCommand {
-      return ModCommand.updateOption(context.file, "JavaCompilerConfiguration.additionalOptions") {
-        @Suppress("UNCHECKED_CAST") val options = it as MutableList<String>
-        update(options)
-        options
-      }
+      return ModCommand.updateOptionList(context.file, "JavaCompilerConfiguration.additionalOptions", ::update)
     }
 
     protected abstract fun update(options: MutableList<String>)

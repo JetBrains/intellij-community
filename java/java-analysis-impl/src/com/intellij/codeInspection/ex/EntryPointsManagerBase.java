@@ -660,11 +660,9 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
 
     @Override
     public @NotNull ModCommand perform(@NotNull ActionContext context) {
-      return ModCommand.updateOption(context.file(), myBindId, oldValue -> {
-        @SuppressWarnings("unchecked") List<String> list = (List<String>)oldValue;
+      return ModCommand.updateOptionList(context.file(), myBindId, list -> {
         list.add(myQualifiedName);
         list.sort(null);
-        return list;
       });
     }
   }

@@ -2,7 +2,6 @@
 package com.siyeh.ig.dependency;
 
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.apiUsage.ApiUsageProcessor;
 import com.intellij.codeInspection.apiUsage.ApiUsageUastVisitor;
@@ -315,7 +314,7 @@ public final class SuspiciousPackagePrivateAccessInspection extends AbstractBase
     @Override
     public @NotNull ModCommand perform(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiElement psiElement = descriptor.getPsiElement();
-      return ModCommand.updateOption(psiElement, SuspiciousPackagePrivateAccessInspection.this, inspection -> {
+      return ModCommand.updateInspectionOption(psiElement, SuspiciousPackagePrivateAccessInspection.this, inspection -> {
           Map<String, ModulesSet> moduleSetByModule = inspection.myModuleSetByModuleName.getValue();
           ModulesSet module1Set = moduleSetByModule.get(myModule1);
           ModulesSet module2Set = moduleSetByModule.get(myModule2);

@@ -200,7 +200,7 @@ public class AutoCloseableResourceInspection extends ResourceInspection {
       if (methodCallExpression == null) {
         return ModCommand.nop();
       }
-      return ModCommand.updateOption(element, AutoCloseableResourceInspection.this, insp -> insp.myMethodMatcher.add(methodCallExpression));
+      return ModCommand.updateInspectionOption(element, AutoCloseableResourceInspection.this, insp -> insp.myMethodMatcher.add(methodCallExpression));
     }
 
     @Override

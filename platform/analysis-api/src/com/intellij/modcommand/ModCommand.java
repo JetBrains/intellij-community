@@ -20,6 +20,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -146,7 +147,7 @@ public sealed interface ModCommand
    * @param <T> inspection class
    * @return a command to update an inspection option
    */
-  static <T extends InspectionProfileEntry> @NotNull ModCommand updateOption(
+  static <T extends InspectionProfileEntry> @NotNull ModCommand updateInspectionOption(
     @NotNull PsiElement context, @NotNull T inspection, @NotNull Consumer<@NotNull T> updater) {
     return ModCommandService.getInstance().updateOption(context, inspection, updater);
   }
@@ -159,14 +160,28 @@ public sealed interface ModCommand
    * @see OptionControllerProvider for details
    */
   static @NotNull ModCommand updateOption(
-    @NotNull PsiElement context, @NotNull @NonNls String bindId, @NotNull UnaryOperator<Object> valueSupplier) {
-    Object origOldValue = OptionControllerProvider.getOption(context, bindId);
-    Object fnOldValue = origOldValue;
-    if (fnOldValue instanceof List<?> list) {
-      // Defensive copy, as function may try to modify the list right here
-      fnOldValue = new ArrayList<>(list);
+    @NotNull PsiElement context, @NotNull @NonNls String bindId, @NotNull Object newValue) {
+    Object oldValue = OptionControllerProvider.getOption(context, bindId);
+    return new ModUpdateSystemOptions(List.of(new ModUpdateSystemOptions.ModifiedOption(bindId, oldValue, newValue)));
+  }
+
+  /**
+   * @param context context PSI element
+   * @param bindId global option locator
+   * @param listUpdater function that accepts a mutable list (an old value) and updates it
+   * @return a command that updates the given option
+   * @see OptionControllerProvider for details
+   */
+  static @NotNull ModCommand updateOptionList(
+    @NotNull PsiElement context, @NotNull @NonNls String bindId, @NotNull Consumer<@NotNull List<@NotNull String>> listUpdater) {
+    @SuppressWarnings("unchecked") 
+    List<String> oldValue = (List<String>)Objects.requireNonNull(OptionControllerProvider.getOption(context, bindId));
+    List<String> newValue = new ArrayList<>(oldValue);
+    listUpdater.accept(newValue);
+    if (oldValue.equals(newValue)) {
+      return nop();
     }
-    return new ModUpdateSystemOptions(List.of(new ModUpdateSystemOptions.ModifiedOption(bindId, origOldValue, valueSupplier.apply(fnOldValue))));
+    return new ModUpdateSystemOptions(List.of(new ModUpdateSystemOptions.ModifiedOption(bindId, oldValue, newValue)));
   }
 
   /**

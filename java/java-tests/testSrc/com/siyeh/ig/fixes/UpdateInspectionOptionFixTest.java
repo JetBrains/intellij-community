@@ -29,7 +29,7 @@ public class UpdateInspectionOptionFixTest extends BasePlatformTestCase {
     myFixture.configureByText("Test.java", "class X {}");
     Java8MapApiInspection inspection = new Java8MapApiInspection();
     myFixture.enableInspections(inspection);
-    ModCommand command = ModCommand.updateOption(myFixture.getFile(), inspection, tool -> {
+    ModCommand command = ModCommand.updateInspectionOption(myFixture.getFile(), inspection, tool -> {
       tool.mySuggestMapComputeIfAbsent = false;
       tool.mySuggestMapGetOrDefault = false;
     });

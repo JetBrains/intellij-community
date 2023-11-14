@@ -26,8 +26,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-import static com.intellij.modcommand.ModCommand.nop;
-import static com.intellij.modcommand.ModCommand.updateOption;
+import static com.intellij.modcommand.ModCommand.*;
 
 class ChangeNullableDefaultsFix extends ModCommandQuickFix {
   private final String myNotNullName;
@@ -54,25 +53,19 @@ class ChangeNullableDefaultsFix extends ModCommandQuickFix {
     ModCommand command = nop();
     if (myNotNullName != null) {
       command = command.andThen(
-        updateOption(descriptor.getPsiElement(), "NullableNotNullManager.myNotNulls", old -> {
-          @SuppressWarnings("unchecked") List<String> list = (List<String>)old;
+        updateOptionList(descriptor.getPsiElement(), "NullableNotNullManager.myNotNulls", list -> {
           if (!list.contains(myNotNullName)) {
             list.add(myNotNullName);
           }
-          return list;
-        })).andThen(
-        updateOption(descriptor.getPsiElement(), "NullableNotNullManager.myDefaultNotNull", old -> myNotNullName));
+        })).andThen(updateOption(descriptor.getPsiElement(), "NullableNotNullManager.myDefaultNotNull", myNotNullName));
     }
     else {
       command = command.andThen(
-        updateOption(descriptor.getPsiElement(), "NullableNotNullManager.myNullables", old -> {
-          @SuppressWarnings("unchecked") List<String> list = (List<String>)old;
+        updateOptionList(descriptor.getPsiElement(), "NullableNotNullManager.myNullables", list -> {
           if (!list.contains(myNullableName)) {
             list.add(myNullableName);
           }
-          return list;
-        })).andThen(
-        updateOption(descriptor.getPsiElement(), "NullableNotNullManager.myDefaultNullable", old -> myNotNullName));
+        })).andThen(updateOption(descriptor.getPsiElement(), "NullableNotNullManager.myDefaultNullable", myNullableName));
     }
     return command;
   }

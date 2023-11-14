@@ -32,6 +32,6 @@ public final class EnableOptimizeImportsOnTheFlyFix implements ModCommandAction 
 
   @Override
   public @NotNull ModCommand perform(@NotNull ActionContext context) {
-    return ModCommand.updateOption(context.file(), "CodeInsightWorkspaceSettings.optimizeImportsOnTheFly", old -> true);
+    return ModCommand.updateOption(context.file(), "CodeInsightWorkspaceSettings.optimizeImportsOnTheFly", true);
   }
 }

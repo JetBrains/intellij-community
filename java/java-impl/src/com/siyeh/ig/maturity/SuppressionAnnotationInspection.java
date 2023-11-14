@@ -99,7 +99,7 @@ public class SuppressionAnnotationInspection extends BaseInspection {
         }
         ids = StringUtil.tokenize(suppressedIds, ",");
       }
-      return ModCommand.updateOption(psiElement, SuppressionAnnotationInspection.this, inspection -> {
+      return ModCommand.updateInspectionOption(psiElement, SuppressionAnnotationInspection.this, inspection -> {
         for (String id : ids) {
           if (!inspection.myAllowedSuppressions.contains(id)) {
             inspection.myAllowedSuppressions.add(id);
