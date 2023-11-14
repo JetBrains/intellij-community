@@ -95,10 +95,14 @@
       <add-to-group group-id="Internal" anchor="last"/>
     </group>
 
-    <action id="PreviousLessonAction" class="training.actions.PreviousLessonAction"/>
-    <action id="NextLessonAction" class="training.actions.NextLessonAction"/>
-    <action id="ResetLearningProgressAction" class="training.actions.ResetLearningProgressAction"/>
-    <action id="RestartLessonAction" class="training.actions.RestartLessonAction"/>
+    <action id="PreviousLessonAction" class="training.actions.PreviousLessonAction"
+            icon="AllIcons.Actions.Back"/>
+    <action id="NextLessonAction" class="training.actions.NextLessonAction"
+            icon="AllIcons.Actions.Forward"/>
+    <action id="ResetLearningProgressAction" class="training.actions.ResetLearningProgressAction"
+            icon="AllIcons.Actions.Restart"/>
+    <action id="RestartLessonAction" class="training.actions.RestartLessonAction"
+            icon="training.FeaturesTrainerIcons.ResetLesson"/>
 
     <!-- Help -->
     <group id="LearnGroup">
