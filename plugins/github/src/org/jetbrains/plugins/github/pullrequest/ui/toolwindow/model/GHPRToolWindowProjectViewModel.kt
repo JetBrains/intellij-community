@@ -3,6 +3,7 @@ package org.jetbrains.plugins.github.pullrequest.ui.toolwindow.model
 
 import com.intellij.collaboration.ui.toolwindow.ReviewToolwindowProjectViewModel
 import com.intellij.collaboration.ui.toolwindow.ReviewToolwindowTabs
+import com.intellij.collaboration.ui.toolwindow.ReviewToolwindowTabsStateHolder
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.project.Project
@@ -12,13 +13,8 @@ import git4idea.GitStandardRemoteBranch
 import git4idea.push.GitPushRepoResult
 import git4idea.remote.hosting.knownRepositories
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.github.api.GHRepositoryConnection
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
@@ -47,33 +43,8 @@ class GHPRToolWindowProjectViewModel internal constructor(
 
   override val listVm: GHPRListViewModel = GHPRListViewModel(project, cs, connection.dataContext)
 
-  private val _tabs = MutableStateFlow<ReviewToolwindowTabs<GHPRToolWindowTab, GHPRToolWindowTabViewModel>>(
-    ReviewToolwindowTabs(emptyMap(), null)
-  )
-  override val tabs: StateFlow<ReviewToolwindowTabs<GHPRToolWindowTab, GHPRToolWindowTabViewModel>> = _tabs.asStateFlow()
-
-  private val tabsGuard = Mutex()
-
-  private inline fun <reified T, reified VM> showTab(tab: T,
-                                                     crossinline vmProducer: (T) -> VM,
-                                                     crossinline processVM: VM.() -> Unit = {})
-    where T : GHPRToolWindowTab, VM : GHPRToolWindowTabViewModel {
-    cs.launch {
-      tabsGuard.withLock {
-        val current = _tabs.value
-        val currentVm = current.tabs[tab]
-        if (currentVm == null || currentVm !is VM || !tab.reuseTabOnRequest) {
-          currentVm?.destroy()
-          val tabVm = vmProducer(tab).apply(processVM)
-          _tabs.value = current.copy(current.tabs + (tab to tabVm), tab)
-        }
-        else {
-          currentVm.apply(processVM)
-          _tabs.value = current.copy(selectedTab = tab)
-        }
-      }
-    }
-  }
+  private val tabsHelper = ReviewToolwindowTabsStateHolder<GHPRToolWindowTab, GHPRToolWindowTabViewModel>()
+  override val tabs: StateFlow<ReviewToolwindowTabs<GHPRToolWindowTab, GHPRToolWindowTabViewModel>> = tabsHelper.tabs.asStateFlow()
 
   private fun createVm(tab: GHPRToolWindowTab.PullRequest): GHPRToolWindowTabViewModel.PullRequest =
     GHPRToolWindowTabViewModel.PullRequest(project, cs, dataContext, tab.prId)
@@ -81,31 +52,11 @@ class GHPRToolWindowProjectViewModel internal constructor(
   private fun createVm(tab: GHPRToolWindowTab.NewPullRequest): GHPRToolWindowTabViewModel.NewPullRequest =
     GHPRToolWindowTabViewModel.NewPullRequest(project, dataContext)
 
-  override fun selectTab(tab: GHPRToolWindowTab?) {
-    cs.launch {
-      tabsGuard.withLock {
-        _tabs.update {
-          it.copy(selectedTab = tab)
-        }
-      }
-    }
-  }
-
-  override fun closeTab(tab: GHPRToolWindowTab) {
-    cs.launch {
-      tabsGuard.withLock {
-        val current = _tabs.value
-        val currentVm = current.tabs[tab]
-        if (currentVm != null) {
-          currentVm.destroy()
-          _tabs.value = current.copy(current.tabs - tab, null)
-        }
-      }
-    }
-  }
+  override fun selectTab(tab: GHPRToolWindowTab?) = tabsHelper.select(tab)
+  override fun closeTab(tab: GHPRToolWindowTab) = tabsHelper.close(tab)
 
   fun createPullRequest(requestFocus: Boolean = true) {
-    showTab(GHPRToolWindowTab.NewPullRequest, ::createVm) {
+    tabsHelper.showTab(GHPRToolWindowTab.NewPullRequest, ::createVm) {
       if (requestFocus) {
         requestFocus()
       }
@@ -120,7 +71,7 @@ class GHPRToolWindowProjectViewModel internal constructor(
   }
 
   fun viewPullRequest(id: GHPRIdentifier, requestFocus: Boolean = true) {
-    showTab(GHPRToolWindowTab.PullRequest(id), ::createVm) {
+    tabsHelper.showTab(GHPRToolWindowTab.PullRequest(id), ::createVm) {
       if (requestFocus) {
         requestFocus()
       }
@@ -128,13 +79,13 @@ class GHPRToolWindowProjectViewModel internal constructor(
   }
 
   fun viewPullRequest(id: GHPRIdentifier, commitOid: String) {
-    showTab(GHPRToolWindowTab.PullRequest(id), ::createVm) {
+    tabsHelper.showTab(GHPRToolWindowTab.PullRequest(id), ::createVm) {
       selectCommit(commitOid)
     }
   }
 
   fun viewPullRequest(id: GHPRIdentifier, commitOid: String?, filePath: String) {
-    showTab(GHPRToolWindowTab.PullRequest(id), ::createVm) {
+    tabsHelper.showTab(GHPRToolWindowTab.PullRequest(id), ::createVm) {
       selectChange(commitOid, filePath)
     }
   }

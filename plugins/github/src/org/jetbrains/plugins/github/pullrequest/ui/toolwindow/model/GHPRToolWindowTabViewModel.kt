@@ -1,13 +1,15 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui.toolwindow.model
 
-import com.intellij.collaboration.async.cancelAndJoinSilently
+import com.intellij.collaboration.async.cancelledWith
 import com.intellij.collaboration.ui.toolwindow.ReviewTabViewModel
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.platform.util.coroutines.childScope
 import git4idea.remote.hosting.knownRepositories
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.*
@@ -21,14 +23,13 @@ import org.jetbrains.plugins.github.util.GHHostedRepositoriesManager
 
 @ApiStatus.Experimental
 sealed interface GHPRToolWindowTabViewModel : ReviewTabViewModel {
-  suspend fun destroy()
-
   @ApiStatus.Experimental
   class PullRequest internal constructor(project: Project,
                                          parentCs: CoroutineScope,
                                          dataContext: GHPRDataContext,
-                                         id: GHPRIdentifier) : GHPRToolWindowTabViewModel {
-    private val cs = parentCs.childScope()
+                                         id: GHPRIdentifier)
+    : GHPRToolWindowTabViewModel, Disposable {
+    private val cs = parentCs.childScope().cancelledWith(this)
 
     override val displayName: String = "#${id.number}"
 
@@ -62,7 +63,9 @@ sealed interface GHPRToolWindowTabViewModel : ReviewTabViewModel {
       selectionRequests.trySend(SelectionRequest.Change(oid, filePath))
     }
 
-    override suspend fun destroy() = cs.cancelAndJoinSilently()
+    override fun dispose() {
+      cs.cancel()
+    }
 
     private sealed interface SelectionRequest {
       class Commit(val oid: String) : SelectionRequest
@@ -88,7 +91,5 @@ sealed interface GHPRToolWindowTabViewModel : ReviewTabViewModel {
     fun requestFocus() {
       _focusRequests.trySend(Unit)
     }
-
-    override suspend fun destroy() = Unit
   }
 }

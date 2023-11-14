@@ -1,9 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.model
 
-import com.intellij.collaboration.async.cancelAndJoinSilently
+import com.intellij.collaboration.async.cancelledWith
 import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.collaboration.ui.toolwindow.ReviewTabViewModel
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.util.coroutines.childScope
@@ -23,14 +24,14 @@ internal sealed interface GitLabReviewTabViewModel : ReviewTabViewModel {
     parentCs: CoroutineScope,
     reviewId: String,
     detailsVm: Flow<Result<GitLabMergeRequestDetailsViewModel>>
-  ) : GitLabReviewTabViewModel {
-    private val cs = parentCs.childScope()
+  ) : GitLabReviewTabViewModel, Disposable {
+    private val cs = parentCs.childScope().cancelledWith(this)
 
     override val displayName: @NlsSafe String = "!${reviewId}"
 
     val detailsVm: GitLabMergeRequestDetailsLoadingViewModel = GitLabMergeRequestDetailsLoadingViewModelImpl(cs, reviewId, detailsVm)
 
-    override suspend fun destroy() = cs.cancelAndJoinSilently()
+    override fun dispose() = Unit
   }
 
   class CreateMergeRequest(
@@ -41,8 +42,8 @@ internal sealed interface GitLabReviewTabViewModel : ReviewTabViewModel {
     avatarIconProvider: IconsProvider<GitLabUserDTO>,
     openReviewTabAction: suspend (mrIid: String) -> Unit,
     onReviewCreated: () -> Unit
-  ) : GitLabReviewTabViewModel {
-    private val cs = parentCs.childScope()
+  ) : GitLabReviewTabViewModel, Disposable {
+    private val cs = parentCs.childScope().cancelledWith(this)
 
     private val projectPath = projectData.projectMapping.repository.projectPath.fullPath()
     override val displayName: String = GitLabBundle.message("merge.request.create.tab.title", projectPath)
@@ -53,8 +54,6 @@ internal sealed interface GitLabReviewTabViewModel : ReviewTabViewModel {
       openReviewTabAction, onReviewCreated
     )
 
-    override suspend fun destroy() = cs.cancelAndJoinSilently()
+    override fun dispose() = Unit
   }
-
-  suspend fun destroy()
 }
