@@ -4,10 +4,12 @@
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.util.containers.UnmodifiableHashMap
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
-import kotlinx.collections.immutable.*
+import kotlinx.collections.immutable.PersistentList
+import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.intellij.build.*
@@ -34,7 +36,7 @@ class BuildContextImpl(
 ) : BuildContext, CompilationContext by compilationContext {
   private val distFiles = ConcurrentLinkedQueue<DistFile>()
 
-  private val extraExecutablePatterns = AtomicReference<PersistentMap<OsFamily, PersistentList<String>>>(persistentHashMapOf())
+  private val extraExecutablePatterns = AtomicReference<UnmodifiableHashMap<OsFamily, PersistentList<String>>>(UnmodifiableHashMap.empty())
 
   override val fullBuildNumber: String
     get() = "${applicationInfo.productCode}-$buildNumber"
@@ -77,7 +79,7 @@ class BuildContextImpl(
     options.buildStepsToSkip.addAll(productProperties.incompatibleBuildSteps)
     if (!options.buildStepsToSkip.isEmpty()) {
       Span.current().addEvent("build steps to be skipped", Attributes.of(
-        AttributeKey.stringArrayKey("stepsToSkip"), options.buildStepsToSkip.toImmutableList()
+        AttributeKey.stringArrayKey("stepsToSkip"), java.util.List.copyOf(options.buildStepsToSkip)
       ))
     }
   }
@@ -301,7 +303,7 @@ class BuildContextImpl(
 
   override fun addExtraExecutablePattern(os: OsFamily, pattern: String) {
     extraExecutablePatterns.updateAndGet { prev ->
-      prev.put(os, (prev.get(os) ?: persistentListOf()).add(pattern))
+      prev.with(os, (prev.get(os) ?: persistentListOf()).add(pattern))
     }
   }
 
