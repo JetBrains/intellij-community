@@ -5,10 +5,13 @@ import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCa
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.SimplifyStreamApiCallChainsInspection;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
-public class SimplifyStreamApiCallChainsInspectionFixTest extends LightQuickFixParameterizedTestCase {
+public class SimplifyStreamApiCallChainsInspectionFixJava21Test extends LightQuickFixParameterizedTestCase {
 
   @Override
   protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
@@ -17,11 +20,21 @@ public class SimplifyStreamApiCallChainsInspectionFixTest extends LightQuickFixP
 
   @Override
   protected Sdk getProjectJDK() {
-    return IdeaTestUtil.getMockJdk11();
+    return IdeaTestUtil.getMockJdk21();
+  }
+
+  @Override
+  protected LanguageLevel getLanguageLevel() {
+    return LanguageLevel.JDK_21;
+  }
+
+  @Override
+  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return LightJavaCodeInsightFixtureTestCase.JAVA_21;
   }
 
   @Override
   protected String getBasePath() {
-    return "/inspection/streamApiCallChains";
+    return "/inspection/streamApiCallChains21";
   }
 }

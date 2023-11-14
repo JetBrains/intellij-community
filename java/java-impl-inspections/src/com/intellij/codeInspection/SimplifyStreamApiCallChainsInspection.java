@@ -87,6 +87,8 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
     instanceCall(JAVA_UTIL_STREAM_BASE_STREAM, "map", "mapToInt", "mapToDouble", "mapToLong").parameterCount(1);
 
   private static final CallMatcher STREAM_MATCH = anyOf(STREAM_ANY_MATCH, STREAM_NONE_MATCH, STREAM_ALL_MATCH);
+  private static final CallMatcher STREAM_TO_LIST = instanceCall(JAVA_UTIL_STREAM_BASE_STREAM, "toList").parameterCount(0);
+
 
   private static final CallMatcher COLLECTORS_TO_LIST = staticCall(JAVA_UTIL_STREAM_COLLECTORS, "toList", "toUnmodifiableList")
     .parameterCount(0);
@@ -129,7 +131,8 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
     CollectorToListSize.handler(),
     IterateTakeWhileFix.handler(),
     FilterAndMapUseSameMethodChainFix.handler(),
-    ReplaceWithOrElseThrowFix.handler()
+    ReplaceWithOrElseThrowFix.handler(),
+    StreamToListChainFix.handler()
   ).registerAll(SimplifyMatchNegationFix.handlers());
 
   private static final Logger LOG = Logger.getInstance(SimplifyStreamApiCallChainsInspection.class);
@@ -2192,6 +2195,85 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
       });
     }
   }
+
+  private static class StreamToListChainFix implements CallChainSimplification {
+    @NotNull
+    private final String myTermination;
+
+    private StreamToListChainFix(@NotNull String termination) { myTermination = termination; }
+
+    @Override
+    public String getName() {
+      return JavaBundle.message("simplify.stream.to.list.fix.name", myTermination);
+    }
+
+    @Override
+    public String getMessage() {
+      return JavaBundle.message("simplify.stream.to.list.fix.message", myTermination);
+    }
+
+    @Override
+    public boolean keepsStream() {
+      return false;
+    }
+
+    @Override
+    public PsiElement simplify(PsiMethodCallExpression element) {
+      final CommentTracker ct = new CommentTracker();
+      PsiMethodCallExpression qualifierCall = getQualifierMethodCall(element);
+      if (qualifierCall == null) {
+        return null;
+      }
+      PsiMethodCallExpression root = getQualifierMethodCall(qualifierCall);
+      if (root == null) {
+        return null;
+      }
+      return ct.replace(element, root);
+    }
+
+    public static CallHandler<CallChainSimplification> handler() {
+      return CallHandler.of(anyOf(STREAM_TO_LIST) , call -> {
+        PsiMethodCallExpression qualifierCall = getQualifierMethodCall(call);
+        if (!COLLECTION_STREAM.test(qualifierCall)) {
+          return null;
+        }
+        String referenceName = call.getMethodExpression().getReferenceName();
+        if (referenceName == null) {
+          return null;
+        }
+
+        PsiType expectedTypeByParent = PsiTypesUtil.getExpectedTypeByParent(call);
+        PsiType erasuredParentType = TypeConversionUtil.erasure(expectedTypeByParent);
+        if (erasuredParentType != null && erasuredParentType.equalsToText(JAVA_LANG_ITERABLE)) {
+          return new StreamToListChainFix(referenceName);
+        }
+        PsiMethodCallExpression root = getQualifierMethodCall(qualifierCall);
+        if (root == null) {
+          return null;
+        }
+        if (root.getType() == null || !(call.getParent() instanceof PsiVariable variable && call.equals(variable.getInitializer()))) {
+          return null;
+        }
+        PsiType lType = variable.getType();
+        if (!TypeConversionUtil.isAssignable(lType, root.getType()) ||
+            !MismatchedCollectionQueryUpdateInspection.isUnmodified(call)) {
+          return null;
+        }
+        final PsiElement context =
+          PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class, PsiMethod.class, PsiLambdaExpression.class,
+                                      PsiCatchSection.class, PsiForStatement.class, PsiForeachStatement.class);
+        if (context == null) {
+          return null;
+        }
+        if (VariableAccessUtils.variableIsReturned(variable, context) ||
+            VariableAccessUtils.variableIsPassedAsMethodArgument(variable, context)) {
+          return null;
+        }
+        return new StreamToListChainFix(referenceName);
+      });
+    }
+  }
+
 
   private static class FilterAndMapUseSameMethodChainFix implements CallChainSimplification {
 
