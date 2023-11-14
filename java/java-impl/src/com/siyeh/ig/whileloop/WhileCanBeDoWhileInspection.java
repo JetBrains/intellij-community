@@ -53,7 +53,7 @@ public class WhileCanBeDoWhileInspection extends AbstractBaseJavaLocalInspection
                                  InspectionGadgetsBundle.message("inspection.while.can.be.replaced.with.do.while.message"),
                                  duplicateElements.type(), new ReplaceWhileWithDoWhileFix());
         }
-        else {
+        else if (isOnTheFly){
           holder.registerProblem(highlightElement,
                                  InspectionGadgetsBundle.message("inspection.while.can.be.replaced.with.do.while.message"),
                                  ProblemHighlightType.INFORMATION, new ReplaceWhileWithDoWhileFix());
@@ -199,6 +199,7 @@ public class WhileCanBeDoWhileInspection extends AbstractBaseJavaLocalInspection
         }
       }
       else {
+        if (statements.isEmpty()) return null;
         if (statements.size() != block.statements.size()) return null;
         for (int i = 0; i < statements.size(); i++) {
           if (!checker.statementsAreEquivalent(statements.get(i), block.statements.get(i))) {

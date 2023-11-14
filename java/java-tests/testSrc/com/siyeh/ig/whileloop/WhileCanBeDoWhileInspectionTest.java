@@ -217,6 +217,22 @@ public class WhileCanBeDoWhileInspectionTest extends LightJavaCodeInsightFixture
              }""");
   }
 
+  public void testEmptyBlock() {
+    doTest("""
+             class DoWhileClass {
+               void test() {
+                 while<caret>(true) {
+                 }
+               }
+             }""", """
+             class DoWhileClass {
+               void test() {
+                   do {
+                   } while (true);
+               }
+             }""");
+  }
+
   public void testInfiniteLoop() {
     doTest("""
              class DoWhileClass {
