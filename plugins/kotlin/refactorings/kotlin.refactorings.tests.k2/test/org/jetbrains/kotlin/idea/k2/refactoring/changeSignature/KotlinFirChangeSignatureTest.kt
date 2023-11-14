@@ -2,7 +2,6 @@
 package org.jetbrains.kotlin.idea.k2.refactoring.changeSignature
 
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiMethod
 import com.intellij.refactoring.RefactoringBundle
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.descriptors.Visibility
@@ -64,10 +63,6 @@ class KotlinFirChangeSignatureTest :
 
     override fun doRefactoring(configure: KotlinChangeInfo.() -> Unit) {
         KotlinChangeSignatureProcessor(project, createChangeInfo().apply { configure() }).run()
-    }
-
-    override fun findCallers(method: PsiMethod): LinkedHashSet<PsiMethod> {
-        TODO("Not yet implemented")
     }
 
     override fun ignoreTestData(fileName: String): Boolean {

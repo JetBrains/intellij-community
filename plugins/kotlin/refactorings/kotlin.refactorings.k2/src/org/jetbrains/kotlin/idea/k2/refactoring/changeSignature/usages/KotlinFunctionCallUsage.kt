@@ -3,7 +3,11 @@
 package org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.usages
 
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.SmartPsiElementPointer
+import com.intellij.psi.util.PsiSuperMethodUtil
+import com.intellij.refactoring.changeSignature.CallerUsageInfo
 import com.intellij.refactoring.changeSignature.ChangeInfo
 import com.intellij.usageView.UsageInfo
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisFromWriteAction
@@ -18,6 +22,7 @@ import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.KtAnonymousObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassifierSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
+import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.k2.refactoring.canMoveLambdaOutsideParentheses
@@ -26,6 +31,7 @@ import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinParameterI
 import org.jetbrains.kotlin.idea.refactoring.isInsideOfCallerBody
 import org.jetbrains.kotlin.idea.refactoring.moveFunctionLiteralOutsideParentheses
 import org.jetbrains.kotlin.idea.refactoring.replaceListPsiAndKeepDelimiters
+import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
@@ -173,7 +179,7 @@ internal class KotlinFunctionCallUsage(
         allUsages: Array<out UsageInfo>,
         psiFactory: KtPsiFactory
     ): KtValueArgument {
-        val isInsideOfCallerBody = element.isInsideOfCallerBody(allUsages) { false } //todo
+        val isInsideOfCallerBody = element.isInsideOfCallerBody(allUsages) { isCaller(it) }
         val defaultValueForCall = parameter.defaultValueForCall
         val argValue = when {
             isInsideOfCallerBody -> psiFactory.createExpression(parameter.name)
@@ -338,6 +344,25 @@ internal class KotlinFunctionCallUsage(
             val identifier = argumentNameExpression.getIdentifier() ?: continue
             val newName = if (callee is KtCallableDeclaration) parameterInfo.getInheritedName(callee) else parameterInfo.name
             identifier.replace(KtPsiFactory(project).createIdentifier(newName))
+        }
+    }
+}
+
+@OptIn(KtAllowAnalysisFromWriteAction::class, KtAllowAnalysisOnEdt::class)
+internal fun PsiElement.isCaller(u: Array<out UsageInfo>): Boolean {
+    val callers = u.mapNotNull { (it as? CallerUsageInfo)?.element }
+    val usagesSupport = KotlinSearchUsagesSupport.getInstance(project)
+    return callers.contains(this) || callers.any { caller ->
+        when (this) {
+            is KtDeclaration -> allowAnalysisFromWriteAction {
+                allowAnalysisOnEdt {
+                    caller is PsiNamedElement && usagesSupport.isCallableOverride(this, caller)
+                }
+            }
+
+            is PsiMethod -> caller.toLightMethods().any { PsiSuperMethodUtil.isSuperMethod(this, it) }
+
+            else -> false
         }
     }
 }

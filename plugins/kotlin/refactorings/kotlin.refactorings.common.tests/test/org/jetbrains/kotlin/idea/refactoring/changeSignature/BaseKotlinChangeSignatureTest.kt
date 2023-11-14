@@ -6,9 +6,13 @@ import com.intellij.codeInsight.TargetElementUtil
 import com.intellij.codeInsight.TargetElementUtil.ELEMENT_NAME_ACCEPTED
 import com.intellij.codeInsight.TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED
 import com.intellij.lang.LanguageRefactoringSupport
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.*
 import com.intellij.psi.impl.java.stubs.index.JavaFullClassNameIndex
+import com.intellij.psi.search.searches.MethodReferencesSearch
+import com.intellij.psi.search.searches.ReferencesSearch
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.refactoring.BaseRefactoringProcessor
 import com.intellij.refactoring.BaseRefactoringProcessor.ConflictsInTestsException.withIgnoredConflicts
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor
@@ -19,6 +23,7 @@ import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.util.VisibilityUtil
 import junit.framework.ComparisonFailure
 import org.jetbrains.kotlin.asJava.getRepresentativeLightMethod
+import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.descriptors.Visibilities.Internal
 import org.jetbrains.kotlin.descriptors.Visibilities.Private
 import org.jetbrains.kotlin.descriptors.Visibilities.Protected
@@ -65,7 +70,26 @@ abstract class BaseKotlinChangeSignatureTest<C: KotlinModifiableChangeInfo<P>, P
 
     abstract fun doRefactoring(configure: C.() -> Unit = {})
 
-    protected abstract fun findCallers(method: PsiMethod): LinkedHashSet<PsiMethod>
+    protected fun findCallers(method: PsiMethod): LinkedHashSet<PsiMethod> {
+        val callers = LinkedHashSet<PsiMethod>()
+
+        ActionUtil.underModalProgress(project, "Find method callers..." ) {
+            val references = (method.getRepresentativeLightMethod()
+                ?.let { MethodReferencesSearch.search(it, it.getUseScope(), true) }
+                ?: ReferencesSearch.search(method, method.getUseScope()))
+
+            references.forEach { ref ->
+                val element = ref.element
+                val caller = PsiTreeUtil.getParentOfType(element, PsiMethod::class.java, false)?.let { listOf(it) }
+                    ?: PsiTreeUtil.getParentOfType(element, KtDeclaration::class.java, false)?.toLightMethods()
+                if (caller != null) {
+                    callers.addAll(caller)
+                }
+            }
+        }
+
+        return callers
+    }
 
     override val testDataDirectory: File
         get() = IDEA_TEST_DATA_DIR.resolve("refactoring/changeSignature")
@@ -1394,7 +1418,7 @@ abstract class BaseKotlinChangeSignatureTest<C: KotlinModifiableChangeInfo<P>, P
         newParameters[0].setType(PsiTypes.intType())
     }
 
-    fun testJavaParameterPropagation() = doJavaTest {//todo
+    fun testJavaParameterPropagation() = doJavaTest {
         newParameters.add(ParameterInfoImpl(-1, "n", PsiTypes.intType(), "1"))
         newParameters.add(ParameterInfoImpl(-1, "s", stringPsiType, "\"abc\""))
 
@@ -1407,7 +1431,7 @@ abstract class BaseKotlinChangeSignatureTest<C: KotlinModifiableChangeInfo<P>, P
     }
 
 
-    fun testJavaConstructorParameterPropagation() = doJavaTest {//todo not implemented?
+    fun testJavaConstructorParameterPropagation() = doJavaTest {
         newParameters.add(ParameterInfoImpl(-1, "n", PsiTypes.intType(), "1"))
         parameterPropagationTargets.addAll(findCallers(method))
     }

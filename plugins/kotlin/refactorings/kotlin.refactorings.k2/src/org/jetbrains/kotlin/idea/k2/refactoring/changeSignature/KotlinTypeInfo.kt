@@ -23,7 +23,7 @@ data class KotlinTypeInfo(var text: String?, val context: KtElement)
 @OptIn(KtAllowAnalysisFromWriteAction::class, KtAllowAnalysisOnEdt::class)
 internal fun KtPsiFactory.createType(
     typeText: String,
-    inheritedCallable: KtCallableDeclaration?,
+    inheritedCallable: KtDeclaration?,
     baseFunction: PsiElement,
     variance: Variance
 ): KtTypeReference {
@@ -65,7 +65,7 @@ internal fun KtPsiFactory.createType(
 }
 
 context(KtAnalysisSession)
-private fun createSubstitutor(inheritorDeclaration: KtCallableDeclaration, baseFunction: PsiElement): KtSubstitutor? {
+private fun createSubstitutor(inheritorDeclaration: KtDeclaration, baseFunction: PsiElement): KtSubstitutor? {
     val inheritorCallable = inheritorDeclaration.getSymbol()
     val baseCallable = (baseFunction as? KtCallableDeclaration)?.getSymbol()
         ?: (baseFunction as? PsiMember)?.getCallableSymbol() ?: return null

@@ -29,4 +29,3 @@ class Test {
         new D(true);
     }
 }
-// IGNORE_K2

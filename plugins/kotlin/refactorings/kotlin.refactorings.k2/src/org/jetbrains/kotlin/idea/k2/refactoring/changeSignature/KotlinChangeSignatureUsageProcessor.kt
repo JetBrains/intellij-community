@@ -55,7 +55,7 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
                     val ktCallExpression = ktElement.parent as? KtCallExpression ?: return@mapNotNull null
                     if (ktCallExpression.calleeExpression == ktElement && ktCallExpression.lambdaArguments.size == 1) {
                         val overrider = ktCallExpression.lambdaArguments[0].getLambdaExpression()?.functionLiteral
-                        overrider?.let { KotlinOverrideUsageInfo(overrider, psiMethod) }
+                        overrider?.let { KotlinOverrideUsageInfo(overrider, psiMethod, false) }
                     } else null
                 }.toTypedArray()
             }
@@ -216,14 +216,15 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
             if (usageInfo is KotlinEnumEntryWithoutSuperCallUsage) {
                 usageInfo.preprocess(kotlinChangeInfo, usageInfo.element as KtElement)
             }
-            if ((usageInfo is KotlinOverrideUsageInfo || usageInfo is OverriderUsageInfo) && element is KtCallableDeclaration) {
-                val baseElement =
-                    if (usageInfo is KotlinOverrideUsageInfo) usageInfo.baseMethod
-                    else (usageInfo as OverriderUsageInfo).baseMethod.unwrapped
+            if (usageInfo is KotlinOverrideUsageInfo && element is KtCallableDeclaration) {
+                val baseElement = usageInfo.baseMethod
                 val mappedChangeInfo =
                     (kotlinChangeInfo as? KotlinChangeInfo)?.dependentProperties?.get(baseElement)
                         ?: kotlinChangeInfo
-                updatePrimaryMethod(element, mappedChangeInfo, true)
+                updatePrimaryMethod(element, mappedChangeInfo, isInherited = true, isCaller = usageInfo.isCaller)
+            }
+            if (usageInfo is CallerUsageInfo && element is KtNamedDeclaration) {
+                updatePrimaryMethod(element, kotlinChangeInfo, isCaller = true)
             }
         }
 
@@ -254,7 +255,12 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
         return true
     }
 
-    private fun updatePrimaryMethod(element: KtNamedDeclaration, changeInfo: KotlinChangeInfoBase, isInherited: Boolean = false) {
+    private fun updatePrimaryMethod(
+        element: KtNamedDeclaration,
+        changeInfo: KotlinChangeInfoBase,
+        isInherited: Boolean = false,
+        isCaller: Boolean = false
+    ) {
         val psiFactory = KtPsiFactory(element.project)
 
         if (changeInfo.isNameChanged) {
@@ -267,7 +273,7 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
         changeReturnTypeIfNeeded(changeInfo, element)
 
         if (changeInfo.isParameterSetOrOrderChanged) {
-            processParameterListWithStructuralChanges(changeInfo, element, (element as? KtCallableDeclaration)?.getValueParameterList(), psiFactory, changeInfo.method, isInherited)
+            processParameterListWithStructuralChanges(changeInfo, element, (element as? KtCallableDeclaration)?.getValueParameterList(), psiFactory, changeInfo.method, isInherited, isCaller)
         }
         else {
             val parameterList = (element as? KtCallableDeclaration)?.valueParameterList
@@ -349,7 +355,8 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
         originalParameterList: KtParameterList?,
         psiFactory: KtPsiFactory,
         baseFunction: PsiElement,
-        isInherited: Boolean
+        isInherited: Boolean,
+        isCaller: Boolean
     ) {
         var parameterList = originalParameterList
         val parametersCount = changeInfo.newParameters.filter { it != changeInfo.receiverParameterInfo }.count()
@@ -370,7 +377,28 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
                 canReplaceEntireList = true
             }
         } else if (!(element is KtProperty || element is KtParameter)) {
-            newParameterList = psiFactory.createParameterList("(" + changeInfo.getNewParametersSignatureWithoutParentheses(element as? KtCallableDeclaration, baseFunction, isInherited) + ")")
+            if (isCaller) {
+                //propagation
+                val paramString = buildString {
+                    val existingParameters = (element as? KtCallableDeclaration)?.valueParameters?.joinToString(", ") {
+                        it.text
+                    }
+                    if (existingParameters != null) {
+                        append(existingParameters)
+                    }
+                    val newParameters = changeInfo.newParameters.filter { it.isNewParameter }
+                    if (isNotEmpty() && newParameters.isNotEmpty()) {
+                        append(",")
+                    }
+                    append(newParameters.joinToString(", ") {
+                        it.getDeclarationSignature(element, baseFunction, false).text
+                    })
+                }
+
+                newParameterList = psiFactory.createParameterList("($paramString)")
+            } else {
+                newParameterList = psiFactory.createParameterList("(" + changeInfo.getNewParametersSignatureWithoutParentheses(element as? KtCallableDeclaration, baseFunction, isInherited) + ")")
+            }
         }
 
         if (newParameterList == null) return

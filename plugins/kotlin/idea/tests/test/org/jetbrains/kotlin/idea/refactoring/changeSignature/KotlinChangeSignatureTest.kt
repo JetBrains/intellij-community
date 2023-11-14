@@ -6,7 +6,6 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
 import org.jetbrains.kotlin.asJava.getRepresentativeLightMethod
-import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
@@ -14,7 +13,6 @@ import org.jetbrains.kotlin.descriptors.DescriptorVisibility
 import org.jetbrains.kotlin.idea.base.util.allScope
 import org.jetbrains.kotlin.idea.core.getDeepestSuperDeclarations
 import org.jetbrains.kotlin.idea.intentions.AddFullQualifierIntention
-import org.jetbrains.kotlin.idea.refactoring.changeSignature.ui.KotlinMethodNode
 import org.jetbrains.kotlin.idea.stubindex.KotlinFullClassNameIndex
 import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelFunctionFqnNameIndex
 import org.jetbrains.kotlin.psi.*
@@ -41,13 +39,6 @@ class KotlinChangeSignatureTest : BaseKotlinChangeSignatureTest<KotlinChangeInfo
 
     override fun addFullQualifier(fragment: KtExpressionCodeFragment) {
         AddFullQualifierIntention.Holder.addQualifiersRecursively(fragment)
-    }
-
-    override fun findCallers(method: PsiMethod): LinkedHashSet<PsiMethod> {
-        val root = KotlinMethodNode(method, HashSet(), project) { }
-        return (0 until root.childCount).flatMapTo(LinkedHashSet()) {
-            (root.getChildAt(it) as KotlinMethodNode).member.toLightMethods()
-        }
     }
 
     override fun doRefactoring(configure: KotlinChangeInfo.() -> Unit) {
