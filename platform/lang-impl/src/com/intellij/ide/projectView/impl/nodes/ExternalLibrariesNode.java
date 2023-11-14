@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectView.impl.nodes;
 
 import com.intellij.ide.IdeBundle;
@@ -68,7 +68,7 @@ public class ExternalLibrariesNode extends ProjectViewNode<String> {
           if (!hasExternalEntries(fileIndex, libraryOrderEntry)) continue;
 
           final String libraryName = library.getName();
-          if (libraryName == null || libraryName.length() == 0) {
+          if (libraryName == null || libraryName.isEmpty()) {
             addLibraryChildren(libraryOrderEntry, children, project, this);
           }
           else {
@@ -85,7 +85,7 @@ public class ExternalLibrariesNode extends ProjectViewNode<String> {
         }
       }
     }
-    for (AdditionalLibraryRootsProvider provider : AdditionalLibraryRootsProvider.EP_NAME.getExtensions()) {
+    for (AdditionalLibraryRootsProvider provider : AdditionalLibraryRootsProvider.EP_NAME.getExtensionList()) {
       Collection<SyntheticLibrary> libraries = provider.getAdditionalProjectLibraries(project);
       for (SyntheticLibrary library : libraries) {
         if (library.isShowInExternalLibrariesNode()) {
