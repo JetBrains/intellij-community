@@ -6,6 +6,18 @@ package org.apache.commons.lang;
  * please consider migrating to either the commons-lang3 or commons-text libraries and bundling them with your plugin.
  * Or consider using the corresponding API from IJ Platform.
  */
+@SuppressWarnings("unused")
 @Deprecated(forRemoval = true)
 public class Validate extends org.apache.commons.lang3.Validate {
+  public static void notEmpty(String string, String message) {
+    if (string == null || string.isEmpty()) {
+      throw new IllegalArgumentException(message);
+    }
+  }
+
+  public static void notEmpty(String string) {
+    if (string == null || string.isEmpty()) {
+      throw new IllegalArgumentException("The validated string is empty");
+    }
+  }
 }

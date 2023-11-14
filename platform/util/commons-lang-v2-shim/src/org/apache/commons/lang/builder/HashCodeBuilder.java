@@ -6,6 +6,7 @@ package org.apache.commons.lang.builder;
  * please consider migrating to either the commons-lang3 or commons-text libraries and bundling them with your plugin.
  * Or consider using the corresponding API from IJ Platform.
  */
+@SuppressWarnings("unused")
 @Deprecated(forRemoval = true)
 public final class HashCodeBuilder extends org.apache.commons.lang3.builder.HashCodeBuilder {
   public HashCodeBuilder() {
@@ -13,5 +14,15 @@ public final class HashCodeBuilder extends org.apache.commons.lang3.builder.Hash
 
   public HashCodeBuilder(int initialOddNumber, int multiplierOddNumber) {
     super(initialOddNumber, multiplierOddNumber);
+  }
+
+  @Override
+  public HashCodeBuilder append(boolean value) {
+    super.append(value);
+    return this;
+  }
+
+  public static int reflectionHashCode(Object object) {
+    return reflectionHashCode(17, 37, object, false);
   }
 }
