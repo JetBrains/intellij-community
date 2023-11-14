@@ -132,10 +132,8 @@ public abstract class ActionGroup extends AnAction {
    *
    * @see #getActionUpdateThread()
    */
-  @ApiStatus.OverrideOnly
   public abstract AnAction @NotNull [] getChildren(@Nullable AnActionEvent e);
 
-  @ApiStatus.Internal
   public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e, @NotNull ActionManager actionManager) {
     return getChildren(null);
   }
@@ -158,7 +156,6 @@ public abstract class ActionGroup extends AnAction {
   /**
    * Allows the group to intercept and transform its expanded content.
    */
-  @ApiStatus.OverrideOnly
   public @NotNull List<AnAction> postProcessVisibleChildren(@NotNull List<? extends AnAction> visibleChildren,
                                                             @NotNull UpdateSession updateSession) {
     return Collections.unmodifiableList(visibleChildren);
