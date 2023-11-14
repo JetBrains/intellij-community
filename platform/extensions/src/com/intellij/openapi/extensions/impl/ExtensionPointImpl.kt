@@ -800,7 +800,7 @@ sealed class ExtensionPointImpl<T : Any>(@JvmField val name: String,
    * `adapters` is modified directly without copying - method must be called only during start-up.
    */
   @Synchronized
-  fun registerExtensions(descriptors: PersistentList<ExtensionDescriptor>,
+  fun registerExtensions(descriptors: List<ExtensionDescriptor>,
                          pluginDescriptor: PluginDescriptor,
                          listenerCallbacks: MutableList<in Runnable>?) {
     adaptersAreSorted = false

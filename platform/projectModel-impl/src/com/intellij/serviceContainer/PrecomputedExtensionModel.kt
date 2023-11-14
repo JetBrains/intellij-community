@@ -1,5 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
+
 package com.intellij.serviceContainer
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor
@@ -7,13 +8,13 @@ import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.extensions.ExtensionDescriptor
 import com.intellij.openapi.extensions.ExtensionPointDescriptor
-import kotlinx.collections.immutable.*
+import kotlinx.collections.immutable.PersistentList
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 class PrecomputedExtensionModel(
-  @JvmField val extensionPoints: PersistentList<Pair<IdeaPluginDescriptor, PersistentList<ExtensionPointDescriptor>>>,
-  @JvmField val nameToExtensions: Map<String, PersistentList<Pair<IdeaPluginDescriptor, PersistentList<ExtensionDescriptor>>>>,
+  @JvmField val extensionPoints: List<Pair<IdeaPluginDescriptor, List<ExtensionPointDescriptor>>>,
+  @JvmField val nameToExtensions: Map<String, List<Pair<IdeaPluginDescriptor, List<ExtensionDescriptor>>>>,
 )
 
 @ApiStatus.Internal
@@ -21,36 +22,35 @@ fun precomputeModuleLevelExtensionModel(): PrecomputedExtensionModel {
   val modules = PluginManagerCore.getPluginSet().getEnabledModules()
 
   var extensionPointTotalCount = 0
-  val nameToExtensions = HashMap<String, PersistentList<Pair<IdeaPluginDescriptor, PersistentList<ExtensionDescriptor>>>>()
+  val mutableNameToExtensions = HashMap<String, MutableList<Pair<IdeaPluginDescriptor, List<ExtensionDescriptor>>>>()
 
   // step 1 - collect container level extension points
-  val extensionPointDescriptors = persistentListOf<Pair<IdeaPluginDescriptor, PersistentList<ExtensionPointDescriptor>>>().mutate { mutator ->
-    executeRegisterTask(modules) { pluginDescriptor ->
-      val list = pluginDescriptor.moduleContainerDescriptor.extensionPoints
-      if (!list.isEmpty()) {
-        mutator.add(pluginDescriptor to list)
-        extensionPointTotalCount += list.size
+  val extensionPointDescriptors = ArrayList<Pair<IdeaPluginDescriptor, PersistentList<ExtensionPointDescriptor>>>()
+  executeRegisterTask(modules) { pluginDescriptor ->
+    val list = pluginDescriptor.moduleContainerDescriptor.extensionPoints
+    if (!list.isEmpty()) {
+      extensionPointDescriptors.add(pluginDescriptor to list)
+      extensionPointTotalCount += list.size
 
-        for (descriptor in list) {
-          nameToExtensions.put(descriptor.getQualifiedName(pluginDescriptor), persistentListOf())
-        }
+      for (descriptor in list) {
+        mutableNameToExtensions.put(descriptor.getQualifiedName(pluginDescriptor), ArrayList())
       }
     }
   }
 
+  val nameToExtensions = java.util.Map.copyOf(mutableNameToExtensions)
   // step 2 - collect container level extensions
   executeRegisterTask(modules) { pluginDescriptor ->
     val map = pluginDescriptor.epNameToExtensions
     for ((name, list) in map.entries) {
-      nameToExtensions.get(name)?.let {
-        nameToExtensions.putIfAbsent(name, it.add(pluginDescriptor to list))
-      }
+      nameToExtensions.get(name)?.add(pluginDescriptor to list)
     }
   }
 
+  extensionPointDescriptors.trimToSize()
   return PrecomputedExtensionModel(
     extensionPoints = extensionPointDescriptors,
-    nameToExtensions = java.util.Map.copyOf(nameToExtensions),
+    nameToExtensions = nameToExtensions,
   )
 }
 
