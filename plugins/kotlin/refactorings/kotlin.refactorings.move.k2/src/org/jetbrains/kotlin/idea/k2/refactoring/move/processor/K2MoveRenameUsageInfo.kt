@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring.move.processor
 
+import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.Key
 import com.intellij.psi.*
 import com.intellij.psi.search.searches.ReferencesSearch
@@ -217,7 +218,23 @@ sealed class K2MoveRenameUsageInfo(
                         val fqn = if (lightElement is PsiMember) lightElement.containingClass?.qualifiedName else null
                         Light(ref.element, ref, declaration, lightElement is PsiMember, fqn, lightElements.indexOf(lightElement))
                     }
-                }
+                }.sortedWith(
+                    Comparator { o1, o2 ->
+                        val file1 = o1.virtualFile
+                        val file2 = o2.virtualFile
+                        if (Comparing.equal(file1, file2)) {
+                            val rangeInElement1 = o1.rangeInElement
+                            val rangeInElement2 = o2.rangeInElement
+                            if (rangeInElement1 != null && rangeInElement2 != null) {
+                                return@Comparator rangeInElement2.startOffset - rangeInElement1.startOffset
+                            }
+                            return@Comparator 0
+                        }
+                        if (file1 == null) return@Comparator -1
+                        if (file2 == null) return@Comparator 1
+                        Comparing.compare(file1.path, file2.path)
+                    }
+                )
         }
 
         @OptIn(KtAllowAnalysisFromWriteAction::class)
