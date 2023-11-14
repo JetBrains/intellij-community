@@ -44,12 +44,13 @@ internal class GHPRToolWindowTabComponentFactory(
   }
 
   override fun createReviewListComponent(cs: CoroutineScope, projectVm: GHPRToolWindowProjectViewModel): JComponent {
-    val listModel = cs.scopedDelegatingListModel(projectVm.listVm.listModel)
-    val list = GHPRListComponentFactory(listModel).create(projectVm.avatarIconsProvider)
+    val listVm = projectVm.listVm
+    val listModel = cs.scopedDelegatingListModel(listVm.listModel)
+    val list = GHPRListComponentFactory(listModel).create(listVm.avatarIconsProvider)
 
     GHPRStatisticsCollector.logListOpened(project)
-    return GHPRListPanelFactory(project, projectVm.listVm)
-      .create(cs, list, projectVm.avatarIconsProvider)
+    return GHPRListPanelFactory(project, listVm)
+      .create(cs, list, listVm.avatarIconsProvider)
   }
 
   private fun <T> CoroutineScope.scopedDelegatingListModel(delegate: ListModel<T>) =

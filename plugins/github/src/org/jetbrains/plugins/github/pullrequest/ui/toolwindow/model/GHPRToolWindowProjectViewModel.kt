@@ -26,7 +26,6 @@ import org.jetbrains.plugins.github.pullrequest.GHPRListViewModel
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRToolWindowTab
-import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.ui.util.GHUIUtil
 import org.jetbrains.plugins.github.util.GHGitRepositoryMapping
 import org.jetbrains.plugins.github.util.GHHostedRepositoriesManager
@@ -46,10 +45,7 @@ class GHPRToolWindowProjectViewModel internal constructor(
   val repository: GHRepositoryCoordinates = dataContext.repositoryDataService.repositoryCoordinates
   override val projectName: String = GHUIUtil.getRepositoryDisplayName(allRepos, repository)
 
-  override val listVm: GHPRListViewModel =
-    GHPRListViewModel(project, cs, connection.dataContext)
-
-  val avatarIconsProvider: GHAvatarIconsProvider = dataContext.avatarIconsProvider
+  override val listVm: GHPRListViewModel = GHPRListViewModel(project, cs, connection.dataContext)
 
   private val _tabs = MutableStateFlow<ReviewToolwindowTabs<GHPRToolWindowTab, GHPRToolWindowTabViewModel>>(
     ReviewToolwindowTabs(emptyMap(), null)
