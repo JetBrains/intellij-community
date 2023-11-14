@@ -91,7 +91,7 @@ object PyDataclassNames {
  * It should be used only to map arguments to parameters and
  * determine what settings dataclass has.
  */
-val DECORATOR_AND_TYPE_AND_PARAMETERS = listOf(
+private val DECORATOR_AND_TYPE_AND_PARAMETERS = listOf(
   Triple(KnownDecorator.DATACLASSES_DATACLASS, PyDataclassParameters.PredefinedType.STD, PyDataclassNames.Dataclasses.DECORATOR_PARAMETERS),
   Triple(KnownDecorator.ATTR_S, PyDataclassParameters.PredefinedType.ATTRS, PyDataclassNames.Attrs.DECORATOR_PARAMETERS),
   Triple(KnownDecorator.ATTR_ATTRS, PyDataclassParameters.PredefinedType.ATTRS, PyDataclassNames.Attrs.DECORATOR_PARAMETERS),
