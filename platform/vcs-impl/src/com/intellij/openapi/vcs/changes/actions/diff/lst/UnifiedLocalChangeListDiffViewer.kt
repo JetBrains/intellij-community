@@ -4,11 +4,8 @@ package com.intellij.openapi.vcs.changes.actions.diff.lst
 import com.intellij.diff.DiffContext
 import com.intellij.diff.fragments.LineFragment
 import com.intellij.diff.tools.fragmented.*
-import com.intellij.diff.util.DiffDrawUtil
+import com.intellij.diff.util.*
 import com.intellij.diff.util.DiffDrawUtil.LineHighlighterBuilder
-import com.intellij.diff.util.DiffUtil
-import com.intellij.diff.util.Side
-import com.intellij.diff.util.TextDiffType
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
@@ -37,6 +34,8 @@ import com.intellij.openapi.vcs.changes.actions.diff.lst.LocalTrackerDiffUtil.in
 import com.intellij.openapi.vcs.changes.actions.diff.lst.LocalTrackerDiffUtil.shouldShowToggleAreaThumb
 import com.intellij.openapi.vcs.changes.actions.diff.lst.LocalTrackerDiffUtil.toggleBlockExclusion
 import com.intellij.openapi.vcs.changes.actions.diff.lst.LocalTrackerDiffUtil.toggleLinePartialExclusion
+import com.intellij.openapi.vcs.changes.actions.diff.lst.UnifiedLocalChangeListDiffViewer.UnifiedLocalFragmentBuilder.LocalUnifiedDiffState
+import com.intellij.openapi.vcs.changes.actions.diff.lst.UnifiedLocalChangeListDiffViewer.UnifiedLocalFragmentBuilder.ToggleRangeArea
 import com.intellij.openapi.vcs.ex.RangeExclusionState
 import com.intellij.openapi.vcs.ex.countAffectedVisibleChanges
 import com.intellij.openapi.vcs.ex.createClientIdGutterIconRenderer
@@ -191,13 +190,16 @@ class UnifiedLocalChangeListDiffViewer(context: DiffContext,
                                             masterSide: Side,
                                             val allowExcludeChangesFromCommit: Boolean
   ) : UnifiedFragmentBuilder(document1, document2, masterSide) {
+    private val rangeAreas = mutableListOf<ToggleRangeArea>()
 
-    fun exec(toggleableLineRanges: List<ToggleableLineRange>): UnifiedDiffState {
+    fun exec(toggleableLineRanges: List<ToggleableLineRange>): LocalUnifiedDiffState {
       for (toggleableRange in toggleableLineRanges) {
         val data = toggleableRange.fragmentData
+        val lineRange = toggleableRange.lineRange
         val isSkipped = data.isSkipped()
         val isExcluded = data.isExcluded(allowExcludeChangesFromCommit)
 
+        val rangeStart = processEquals(lineRange.start1 - 1, lineRange.start2 - 1)
         for (fragment in toggleableRange.fragments) {
           val blockLineRange = processChanged(fragment.asLineRange())
 
@@ -206,11 +208,31 @@ class UnifiedLocalChangeListDiffViewer(context: DiffContext,
                                            data.changelistId, data.isPartiallyExcluded(), data.exclusionState)
           reportChange(change)
         }
+        val rangeEnd = processEquals(lineRange.end1 - 1, lineRange.end2 - 1)
+
+        rangeAreas.add(ToggleRangeArea(rangeStart, rangeEnd))
       }
       finishDocuments()
 
-      return UnifiedDiffState(masterSide, textBuilder, changes, ranges, convertorBuilder1.build(), convertorBuilder2.build(), changedLines)
+      return LocalUnifiedDiffState(masterSide, textBuilder, changes, ranges,
+                                   convertorBuilder1.build(), convertorBuilder2.build(),
+                                   changedLines, rangeAreas)
     }
+
+    class LocalUnifiedDiffState(masterSide: Side,
+                                text: CharSequence,
+                                changes: List<UnifiedDiffChange>,
+                                ranges: List<HighlightRange>,
+                                convertor1: LineNumberConvertor,
+                                convertor2: LineNumberConvertor,
+                                changedLines: List<LineRange>,
+                                val rangeAreas: List<ToggleRangeArea>)
+      : UnifiedDiffState(masterSide, text, changes, ranges, convertor1, convertor2, changedLines)
+
+    /**
+     * Affected lines in [myEditor], even if change is fully ignored.
+     */
+    class ToggleRangeArea(val line1: Int, val line2: Int)
   }
 
   override fun onAfterRediff() {
@@ -229,17 +251,15 @@ class UnifiedLocalChangeListDiffViewer(context: DiffContext,
     gutterCheckboxMouseMotionListener.destroyHoverHighlighter()
   }
 
-  private fun applyGutterOperations(builder: UnifiedDiffState,
+  private fun applyGutterOperations(builder: LocalUnifiedDiffState,
                                     toggleableLineRanges: List<ToggleableLineRange>): Runnable {
     return Runnable {
-      if (isAllowExcludeChangesFromCommit) {
-        for (toggleableLineRange in toggleableLineRanges) {
-          viewerHighlighters.addAll(createGutterToggleRenderers(builder, toggleableLineRange))
+      toggleableLineRanges.forEachIndexed { index, toggleableLineRange ->
+        val rangeArea = builder.rangeAreas[index]
+        if (isAllowExcludeChangesFromCommit) {
+          viewerHighlighters.addAll(createGutterToggleRenderers(builder, toggleableLineRange, rangeArea))
         }
-      }
-
-      for (range in toggleableLineRanges) {
-        viewerHighlighters.addIfNotNull(createClientIdHighlighter(builder, range))
+        viewerHighlighters.addIfNotNull(createClientIdHighlighter(toggleableLineRange, rangeArea))
       }
 
       if (!viewerHighlighters.isEmpty()) {
@@ -248,8 +268,9 @@ class UnifiedLocalChangeListDiffViewer(context: DiffContext,
     }
   }
 
-  private fun createGutterToggleRenderers(builder: UnifiedDiffState,
-                                          toggleableLineRange: ToggleableLineRange): List<RangeHighlighter> {
+  private fun createGutterToggleRenderers(builder: LocalUnifiedDiffState,
+                                          toggleableLineRange: ToggleableLineRange,
+                                          rangeArea: ToggleRangeArea): List<RangeHighlighter> {
     val fragmentData = toggleableLineRange.fragmentData
     if (!fragmentData.isFromActiveChangelist()) return emptyList()
 
@@ -275,12 +296,12 @@ class UnifiedLocalChangeListDiffViewer(context: DiffContext,
     }
 
     if (shouldShowToggleAreaThumb(toggleableLineRange)) {
-      result.addIfNotNull(createToggleAreaThumb(builder, toggleableLineRange))
+      result.addIfNotNull(createToggleAreaThumb(toggleableLineRange, rangeArea))
     }
     return result
   }
 
-  private fun createBlockCheckboxToggleHighlighter(builder: UnifiedDiffState,
+  private fun createBlockCheckboxToggleHighlighter(builder: LocalUnifiedDiffState,
                                                    toggleableLineRange: ToggleableLineRange): RangeHighlighter {
     val side = Side.RIGHT
     val line = getSingleCheckBoxLine(toggleableLineRange, side)
@@ -294,7 +315,7 @@ class UnifiedLocalChangeListDiffViewer(context: DiffContext,
     }
   }
 
-  private fun createLineCheckboxToggleHighlighter(builder: UnifiedDiffState,
+  private fun createLineCheckboxToggleHighlighter(builder: LocalUnifiedDiffState,
                                                   line: Int, side: Side, isExcludedFromCommit: Boolean): RangeHighlighter {
     val lineConvertor = side.selectNotNull(builder.convertor1, builder.convertor2)
     val editorLine = lineConvertor.convertApproximateInv(line)
@@ -304,35 +325,33 @@ class UnifiedLocalChangeListDiffViewer(context: DiffContext,
     }
   }
 
-  private fun createToggleAreaThumb(builder: UnifiedDiffState,
-                                    toggleableLineRange: ToggleableLineRange): RangeHighlighter? {
-    val lineRange = toggleableLineRange.lineRange
-    val line1 = builder.convertor1.convertApproximateInv(lineRange.start1)
-    val line2 = builder.convertor2.convertApproximateInv(lineRange.end2)
-    if (line1 < 0 || line2 < 0 || line2 <= line1 || line2 > DiffUtil.getLineCount(myDocument)) {
+  private fun createToggleAreaThumb(toggleableLineRange: ToggleableLineRange, rangeArea: ToggleRangeArea): RangeHighlighter? {
+    val line1 = rangeArea.line1
+    val line2 = rangeArea.line2
+    if (line1 < 0 || line2 < 0 || line2 < line1 || line2 > DiffUtil.getLineCount(myDocument)) {
       LOG.warn("Failed to show toggle area thumb")
       return null
     }
 
+    val localDocumentLine = toggleableLineRange.lineRange.start1
     val isExcludedFromCommit = toggleableLineRange.fragmentData.exclusionState is RangeExclusionState.Excluded
     return createToggleAreaThumb(editor, line1, line2) {
-      toggleBlockExclusion(trackerActionProvider, lineRange.start1, isExcludedFromCommit)
+      toggleBlockExclusion(trackerActionProvider, localDocumentLine, isExcludedFromCommit)
     }
   }
 
-  private fun createClientIdHighlighter(builder: UnifiedDiffState,
-                                        range: ToggleableLineRange): RangeHighlighter? {
+  private fun createClientIdHighlighter(range: ToggleableLineRange,
+                                        rangeArea: ToggleRangeArea): RangeHighlighter? {
     val clientIds = range.fragmentData.clientIds
     if (clientIds.isEmpty()) return null
 
     val iconRenderer = createClientIdGutterIconRenderer(localRequest.project, clientIds)
     if (iconRenderer == null) return null
 
-    val lineRange = range.lineRange
-    val line1 = builder.convertor1.convertApproximateInv(lineRange.start1)
-    val line2 = builder.convertor2.convertApproximateInv(lineRange.end2)
-    if (line1 < 0 || line2 < 0 || line2 <= line1 || line2 > DiffUtil.getLineCount(myDocument)) {
-      LOG.warn("Failed to show toggle area thumb")
+    val line1 = rangeArea.line1
+    val line2 = rangeArea.line2
+    if (line1 < 0 || line2 < 0 || line2 < line1 || line2 > DiffUtil.getLineCount(myDocument)) {
+      LOG.warn("Failed to client area renderer")
       return null
     }
 

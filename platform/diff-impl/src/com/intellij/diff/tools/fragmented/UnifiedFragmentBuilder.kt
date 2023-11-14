@@ -41,11 +41,14 @@ abstract class UnifiedFragmentBuilder(protected val document1: Document,
     processEquals(DiffUtil.getLineCount(document1) - 1, DiffUtil.getLineCount(document2) - 1)
   }
 
-  protected fun processEquals(endLine1: Int, endLine2: Int) {
+  protected fun processEquals(endLine1: Int, endLine2: Int): Int {
     val startLine1 = lastProcessedLine1 + 1
     val startLine2 = lastProcessedLine2 + 1
+    lastProcessedLine1 = endLine1
+    lastProcessedLine2 = endLine2
 
     appendTextMaster(startLine1, startLine2, endLine1, endLine2)
+    return totalLines
   }
 
   protected fun processChanged(fragment: Range): BlockLineRange {
@@ -153,7 +156,7 @@ class SimpleUnifiedFragmentBuilder(document1: Document,
   }
 }
 
-class UnifiedDiffState(
+open class UnifiedDiffState(
   val masterSide: Side,
   val text: CharSequence,
   val changes: List<UnifiedDiffChange>,
