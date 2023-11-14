@@ -136,7 +136,7 @@ internal class FileHistoryFilterer(private val logData: VcsLogData, private val 
                filters: VcsLogFilterCollection,
                commitCount: CommitCountStage): Pair<VisiblePack, CommitCountStage> {
       val start = System.currentTimeMillis()
-      TelemetryManager.getInstance().getTracer(VcsScope).spanBuilder(LogHistory.Computing.name).useWithScope { scope ->
+      TelemetryManager.getInstance().getTracer(VcsScope).spanBuilder(LogHistory.Computing.getName()).useWithScope { scope ->
         val isInitial = commitCount == CommitCountStage.INITIAL
 
         scope.setAttribute("filePath", filePath.toString())
@@ -289,7 +289,7 @@ internal class FileHistoryFilterer(private val logData: VcsLogData, private val 
     private fun collectRenamesFromProvider(fileHistory: FileHistory): MultiMap<UnorderedPair<Int>, Rename> {
       if (fileHistory.unmatchedAdditionsDeletions.isEmpty()) return MultiMap.empty()
 
-      TelemetryManager.getInstance().getTracer(VcsScope).spanBuilder(LogHistory.CollectingRenames.name).useWithScope { span ->
+      TelemetryManager.getInstance().getTracer(VcsScope).spanBuilder(LogHistory.CollectingRenames.getName()).useWithScope { span ->
         val renames = fileHistory.unmatchedAdditionsDeletions.mapNotNull { ad ->
           val parentHash = storage.getCommitId(ad.parent)!!.hash
           val childHash = storage.getCommitId(ad.child)!!.hash

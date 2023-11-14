@@ -41,7 +41,7 @@ private class VcsLogTelemetryExporter : OpenTelemetryExporterProvider {
     override suspend fun export(spans: Collection<SpanData>) {
       spans.vcsSpans().forEach { span ->
         LogHistory.entries
-          .find { historySpan -> historySpan.name == span.name }
+          .find { historySpan -> historySpan.getName() == span.name }
           ?.let { historySpan ->
             val vcsName = span.attributes[VCS_NAME].orEmpty()
             when (historySpan) {

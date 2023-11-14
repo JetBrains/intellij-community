@@ -147,7 +147,7 @@ class ContainingBranchesGetter internal constructor(private val logData: VcsLogD
 
     @Throws(VcsException::class)
     fun getContainingBranches(): List<String> {
-      return computeWithSpan(TelemetryManager.getInstance().getTracer(VcsScope), LogData.GettingContainingBranches.name) {
+      return computeWithSpan(TelemetryManager.getInstance().getTracer(VcsScope), LogData.GettingContainingBranches.getName()) {
         try {
           getContainingBranches(myProvider, myRoot, myHash)
         }
