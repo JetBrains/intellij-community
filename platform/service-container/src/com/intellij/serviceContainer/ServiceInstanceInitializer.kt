@@ -12,6 +12,7 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.Cancellation
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.Disposer
+import com.intellij.platform.instanceContainer.instantiation.InstantiationException
 import com.intellij.platform.instanceContainer.instantiation.instantiate
 import com.intellij.platform.instanceContainer.internal.InstanceInitializer
 import kotlinx.coroutines.CoroutineScope
