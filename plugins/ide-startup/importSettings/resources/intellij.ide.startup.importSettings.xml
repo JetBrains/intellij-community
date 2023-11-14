@@ -1,19 +1,7 @@
 <idea-plugin package="com.intellij.ide.startup.importSettings">
   <actions>
     <!--suppress PluginXmlI18n -->
-    <action id="ProductChooserDialogAction" class="com.intellij.ide.startup.importSettings.chooser.testActions.ProductChooserDialogAction" text="[INTERNAL] 1 Transfer: Show Product Chooser Dialog" internal="true"/>
-    <action id="ProductChooserSingleDialogAction" class="com.intellij.ide.startup.importSettings.chooser.testActions.ProductChooserSingleDialogAction" text="[INTERNAL] 1s Transfer: Show Product Chooser Dialog Single" internal="true"/>
-    <!--suppress PluginXmlI18n -->
-    <action id="SettingChooserDialogAction" class="com.intellij.ide.startup.importSettings.chooser.testActions.SettingChooserDialogAction" text="[INTERNAL] 2 Transfer: Show Setting Chooser Dialog" internal="true"/>
-    <action id="SettingChooserSimpleDialogAction" class="com.intellij.ide.startup.importSettings.chooser.testActions.SettingChooserSimpleDialogAction" text="[INTERNAL] 2s Transfer: Show Setting Chooser Dialog Single" internal="true"/>
-
-    <action id="ImportProgressDialogAction" class="com.intellij.ide.startup.importSettings.chooser.testActions.ImportProgressDialogAction" text="[INTERNAL] 3 Transfer: Import Progress Dialog" internal="true"/>
-    <action id="ImportProgressSimpleDialogAction" class="com.intellij.ide.startup.importSettings.chooser.testActions.ImportProgressSimpleDialogAction" text="[INTERNAL] 3simple Transfer: Simple Import Progress Dialog" internal="true"/>
-    <action id="ImportProgressSingleDialogAction" class="com.intellij.ide.startup.importSettings.chooser.testActions.ImportProgressSingleDialogAction" text="[INTERNAL] 3s Transfer: Import Progress Dialog Single" internal="true"/>
-
-
     <action id="ImportSettingDialogAction" class="com.intellij.ide.startup.importSettings.chooser.testActions.ImportSettingDialogAction" text="[INTERNAL] 3 Transfer: ONE" internal="true"/>
-
     <action id="ErrorTestDialogAction" class="com.intellij.ide.startup.importSettings.chooser.testActions.ErrorTestDialogAction" text="[INTERNAL] 4 Transfer: Error Dispatcher Dialog Single" internal="true"/>
 
 

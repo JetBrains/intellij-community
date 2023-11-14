@@ -22,7 +22,7 @@ import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.SwingConstants
 
-class ProductChooserPage(val controller: ImportSettingsController, private val disposable: Disposable) : ImportSettingsPage {
+class ProductChooserPage(val controller: ImportSettingsController) : ImportSettingsPage {
   private val accountLabel = JLabel("user.name").apply {
     icon = AllIcons.General.User
   }

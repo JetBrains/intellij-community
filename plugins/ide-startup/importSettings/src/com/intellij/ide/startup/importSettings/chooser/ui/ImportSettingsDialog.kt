@@ -53,7 +53,7 @@ class ImportSettingsDialog(val callback: () -> Unit) : DialogWrapper(null, null,
   }
 
   override fun goToProductChooserPage() {
-    val page = ProductChooserPage(this, this.disposable)
+    val page = ProductChooserPage(this)
     changePage(page)
   }
 
