@@ -25,7 +25,6 @@ import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.function.UnaryOperator;
 
 /**
  * A transparent command, which modifies the project/workspace state (writes file, changes setting, moves editor caret, etc.),
@@ -35,7 +34,7 @@ import java.util.function.UnaryOperator;
  */
 public sealed interface ModCommand
   permits ModChooseAction, ModChooseMember, ModCompositeCommand, ModCopyToClipboard, ModCreateFile, ModDeleteFile, ModDisplayMessage,
-          ModHighlight, ModNavigate, ModNothing, ModRenameSymbol, ModShowConflicts, ModStartTemplate, ModUpdateReferences,
+          ModHighlight, ModNavigate, ModNothing, ModStartRename, ModShowConflicts, ModStartTemplate, ModUpdateReferences,
           ModUpdateFileText, ModUpdateSystemOptions {
 
   /**

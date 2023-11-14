@@ -217,7 +217,7 @@ final class PsiUpdateImpl {
     private @NotNull TextRange mySelection;
     private final List<ModHighlight.HighlightInfo> myHighlightInfos = new ArrayList<>();
     private final List<ModStartTemplate.TemplateField> myTemplateFields = new ArrayList<>();
-    private @Nullable ModRenameSymbol myRenameSymbol;
+    private @Nullable ModStartRename myRenameSymbol;
     private final List<ModUpdateReferences> myTrackedDeclarations = new ArrayList<>();
     private boolean myPositionUpdated = false;
     private @NlsContexts.Tooltip String myErrorMessage;
@@ -425,7 +425,7 @@ final class PsiUpdateImpl {
       }
       PsiElement nameIdentifier = element.getNameIdentifier();
       TextRange identifierRange = nameIdentifier != null ? nameIdentifier.getTextRange() : null;
-      myRenameSymbol = new ModRenameSymbol(myNavigationFile, new ModRenameSymbol.RenameSymbolRange(range, identifierRange), suggestedNames);
+      myRenameSymbol = new ModStartRename(myNavigationFile, new ModStartRename.RenameSymbolRange(range, identifierRange), suggestedNames);
     }
 
     @Override
@@ -495,16 +495,16 @@ final class PsiUpdateImpl {
       myTemplateFields.replaceAll(info -> info.withRange(updateRange(event, info.range())));
       myTrackedDeclarations.replaceAll(range -> range.withNewRange(updateRange(event, range.newRange())));
       if (myRenameSymbol != null) {
-        ModRenameSymbol.RenameSymbolRange renameSymbolRange = myRenameSymbol.symbolRange();
+        ModStartRename.RenameSymbolRange renameSymbolRange = myRenameSymbol.symbolRange();
 
         myRenameSymbol = myRenameSymbol.withRange(updateRange(event, renameSymbolRange));
       }
     }
 
-    private static @NotNull ModRenameSymbol.RenameSymbolRange updateRange(@NotNull DocumentEvent event,
-                                                                          @NotNull ModRenameSymbol.RenameSymbolRange range) {
+    private static @NotNull ModStartRename.RenameSymbolRange updateRange(@NotNull DocumentEvent event,
+                                                                         @NotNull ModStartRename.RenameSymbolRange range) {
       TextRange idRange = range.nameIdentifierRange();
-      return new ModRenameSymbol.RenameSymbolRange(
+      return new ModStartRename.RenameSymbolRange(
         updateRange(event, range.range()), idRange != null ? updateRange(event, idRange) : null);
     }
 

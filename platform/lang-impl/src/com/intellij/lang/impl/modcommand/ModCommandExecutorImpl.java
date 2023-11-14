@@ -127,7 +127,7 @@ public class ModCommandExecutorImpl implements ModCommandExecutor {
       executeInBatch(context, nextCommand);
     }
     if (command instanceof ModNavigate || command instanceof ModHighlight ||
-        command instanceof ModCopyToClipboard || command instanceof ModRenameSymbol ||
+        command instanceof ModCopyToClipboard || command instanceof ModStartRename ||
         command instanceof ModStartTemplate || command instanceof ModUpdateSystemOptions) {
       return Result.INTERACTIVE;
     }
@@ -193,7 +193,7 @@ public class ModCommandExecutorImpl implements ModCommandExecutor {
     if (command instanceof ModDisplayMessage message) {
       return executeMessage(project, message);
     }
-    if (command instanceof ModRenameSymbol rename) {
+    if (command instanceof ModStartRename rename) {
       return executeRename(project, rename, editor);
     }
     if (command instanceof ModCreateFile create) {
@@ -405,7 +405,7 @@ public class ModCommandExecutorImpl implements ModCommandExecutor {
     }
   }
 
-  private static boolean executeRename(@NotNull Project project, @NotNull ModRenameSymbol rename, @Nullable Editor editor) {
+  private static boolean executeRename(@NotNull Project project, @NotNull ModStartRename rename, @Nullable Editor editor) {
     VirtualFile file = actualize(rename.file());
     if (file == null) return false;
     PsiFile psiFile = PsiManagerEx.getInstanceEx(project).findFile(file);
@@ -439,7 +439,7 @@ public class ModCommandExecutorImpl implements ModCommandExecutor {
   }
 
   private static void fallBackRename(@NotNull Project project,
-                                @NotNull ModRenameSymbol rename,
+                                @NotNull ModStartRename rename,
                                 PsiNameIdentifierOwner element,
                                 Editor finalEditor) {
     SmartPsiElementPointer<PsiNameIdentifierOwner> pointer = SmartPointerManager.createPointer(element);
