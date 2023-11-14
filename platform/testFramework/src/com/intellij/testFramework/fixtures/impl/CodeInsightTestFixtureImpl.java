@@ -759,7 +759,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       assertNotNull(action.getText(), text);
       launchAction(action);
       NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
-      assertEquals(action.getText(), getFile().getText(), text);
+      assertEquals(action.getText(), InjectedLanguageManager.getInstance(getProject()).getTopLevelFile(getFile()).getText(), text);
     }
   }
 
