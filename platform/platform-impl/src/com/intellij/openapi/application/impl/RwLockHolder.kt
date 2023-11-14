@@ -10,6 +10,7 @@ import com.intellij.openapi.application.AccessToken
 import com.intellij.openapi.application.ReadActionListener
 import com.intellij.openapi.application.ThreadingSupport
 import com.intellij.openapi.application.WriteActionListener
+import com.intellij.openapi.application.WriteDelayDiagnostics
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
@@ -22,7 +23,6 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.platform.ide.bootstrap.isImplicitReadOnEDTDisabled
-import com.intellij.util.EventDispatcher
 import com.intellij.util.ReflectionUtil
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.ThreadingAssertions
@@ -498,10 +498,11 @@ object RwLockHolder: ThreadingSupport {
         else AppExecutorUtil.getAppScheduledExecutorService()
           .scheduleWithFixedDelay({ PerformanceWatcher.getInstance().dumpThreads("waiting", true, true) },
                                   delay.toLong(), delay.toLong(), TimeUnit.MILLISECONDS)
-        val t = if (logger.isDebugEnabled) System.currentTimeMillis() else 0
+        val t = System.currentTimeMillis()
         l.writeLock()
+        val elapsed = System.currentTimeMillis() - t
+        WriteDelayDiagnostics.registerWrite(elapsed)
         if (logger.isDebugEnabled) {
-          val elapsed = System.currentTimeMillis() - t
           if (elapsed != 0L) {
             logger.debug("Write action wait time: $elapsed")
           }

@@ -493,6 +493,8 @@
 
     <applicationService serviceImplementation="com.intellij.diagnostic.WindowsDefenderChecker"/>
     <applicationService serviceImplementation="com.intellij.diagnostic.GcPauseWatcher"/>
+    <applicationService serviceImplementation="com.intellij.diagnostic.WriteDelayDiagnosticsHandlerImpl"
+                        serviceInterface="com.intellij.openapi.application.WriteDelayDiagnostics$WriteDelayDiagnosticsHandler"/>
 
     <applicationService serviceInterface="com.intellij.execution.process.ProcessHandlerFactory"
                         serviceImplementation="com.intellij.execution.process.ProcessHandlerFactoryImpl"/>
