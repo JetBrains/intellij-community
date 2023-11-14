@@ -173,7 +173,7 @@ public class EditorMouseHoverPopupManager implements Disposable {
 
           myCurrentProgress = null;
           if (info == null ||
-              !topLevelEditor.getContentComponent().isShowing() ||
+              !UIUtil.isShowing(topLevelEditor.getContentComponent()) ||
               (!forceShowing && isPopupDisabled(topLevelEditor))) {
             return;
           }
@@ -411,7 +411,7 @@ public class EditorMouseHoverPopupManager implements Disposable {
       .expireWhen(() -> editor.isDisposed())
       .finishOnUiThread(ModalityState.any(), context -> {
         myPreparationTask = null;
-        if (context == null || !editor.getContentComponent().isShowing()) {
+        if (context == null || !UIUtil.isShowing(editor.getContentComponent())) {
           closeHint();
           return;
         }
