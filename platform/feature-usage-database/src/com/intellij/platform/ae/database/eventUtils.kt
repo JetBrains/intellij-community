@@ -4,6 +4,7 @@ package com.intellij.platform.ae.database
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.ae.database.activities.UserActivity
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -24,6 +25,9 @@ inline fun <T : UserActivity> runUpdateEvent(activity: T, crossinline action: su
     withContext(Dispatchers.Default) {
       try {
         action(activity)
+      }
+      catch (t: CancellationException) {
+        throw t
       }
       catch (t: Throwable) {
         logger<AEEventUtils>().error(t)
