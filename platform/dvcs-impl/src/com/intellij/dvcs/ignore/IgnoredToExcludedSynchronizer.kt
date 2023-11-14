@@ -47,6 +47,7 @@ import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotificationProvider
 import com.intellij.ui.EditorNotifications
 import com.intellij.util.Alarm
+import com.intellij.util.application
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
 import kotlinx.coroutines.CoroutineScope
@@ -277,9 +278,11 @@ internal class CheckIgnoredToExcludeAction : DumbAwareAction() {
           .notifyMinorInfo(IGNORED_TO_EXCLUDE_NOT_FOUND, "", message("ignore.to.exclude.no.directories.found"))
       }
       else {
-        val userSelectedFiles = selectFilesToExclude(project, dirsToExclude)
-        if (userSelectedFiles.isNotEmpty()) {
-          markIgnoredAsExcluded(project, userSelectedFiles)
+        application.invokeAndWait {
+          val userSelectedFiles = selectFilesToExclude(project, dirsToExclude)
+          if (userSelectedFiles.isNotEmpty()) {
+            markIgnoredAsExcluded(project, userSelectedFiles)
+          }
         }
       }
     }
