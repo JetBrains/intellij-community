@@ -70,7 +70,6 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Objects;
 import java.util.concurrent.Callable;
 
 import static java.util.Objects.requireNonNullElse;
@@ -623,7 +622,7 @@ public class ModCommandExecutorImpl implements ModCommandExecutor {
   }
 
   private static boolean executeHighlight(Project project, ModHighlight highlight) {
-    VirtualFile file = actualize(highlight.virtualFile());
+    VirtualFile file = actualize(highlight.file());
     if (file == null) return false;
     FileEditor fileEditor = FileEditorManager.getInstance(project).getSelectedEditor(file);
     if (!(fileEditor instanceof TextEditor textEditor)) return false;
