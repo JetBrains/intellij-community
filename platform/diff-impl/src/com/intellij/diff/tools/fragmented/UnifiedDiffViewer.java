@@ -334,7 +334,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase implements Differe
 
     UnifiedDiffState builder = ReadAction.compute(() -> {
       indicator.checkCanceled();
-      return new UnifiedFragmentBuilder(fragments, document1, document2, myMasterSide).exec();
+      return new SimpleUnifiedFragmentBuilder(document1, document2, myMasterSide).exec(fragments);
     });
 
     return apply(builder, texts, indicator);

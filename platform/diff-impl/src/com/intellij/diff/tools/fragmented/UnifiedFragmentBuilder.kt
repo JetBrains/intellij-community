@@ -16,61 +16,47 @@
 package com.intellij.diff.tools.fragmented
 
 import com.intellij.diff.fragments.LineFragment
-import com.intellij.diff.util.DiffUtil.getLineCount
+import com.intellij.diff.util.DiffUtil
 import com.intellij.diff.util.LineRange
+import com.intellij.diff.util.Range
 import com.intellij.diff.util.Side
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.util.TextRange
 
-open class UnifiedFragmentBuilder(protected val fragments: List<LineFragment>,
-                                  protected val document1: Document,
-                                  protected val document2: Document,
-                                  protected val masterSide: Side) {
-  private val textBuilder = StringBuilder()
-  private val changes = mutableListOf<UnifiedDiffChange>()
-  private val ranges = mutableListOf<HighlightRange>()
-  private val convertorBuilder1 = LineNumberConvertor.Builder()
-  private val convertorBuilder2 = LineNumberConvertor.Builder()
-  private val changedLines = mutableListOf<LineRange>()
+abstract class UnifiedFragmentBuilder(protected val document1: Document,
+                                      protected val document2: Document,
+                                      protected val masterSide: Side) {
+  protected val textBuilder = StringBuilder()
+  protected val changes = mutableListOf<UnifiedDiffChange>()
+  protected val ranges = mutableListOf<HighlightRange>()
+  protected val convertorBuilder1 = LineNumberConvertor.Builder()
+  protected val convertorBuilder2 = LineNumberConvertor.Builder()
+  protected val changedLines = mutableListOf<LineRange>()
 
   private var lastProcessedLine1 = -1
   private var lastProcessedLine2 = -1
   private var totalLines = 0
 
-  fun exec(): UnifiedDiffState {
-    if (fragments.isEmpty()) {
-      appendTextMaster(0, 0, getLineCount(document1) - 1, getLineCount(document2) - 1)
-      return finish()
-    }
-
-    for (i in fragments.indices) {
-      val fragment = fragments[i]
-      processEquals(fragment.getStartLine1() - 1, fragment.getStartLine2() - 1)
-      processChanged(fragment, i)
-    }
-    processEquals(getLineCount(document1) - 1, getLineCount(document2) - 1)
-
-    return finish()
+  protected fun finishDocuments() {
+    processEquals(DiffUtil.getLineCount(document1) - 1, DiffUtil.getLineCount(document2) - 1)
   }
 
-  private fun finish(): UnifiedDiffState {
-    return UnifiedDiffState(masterSide, textBuilder, changes, ranges, convertorBuilder1.build(), convertorBuilder2.build(), changedLines)
-  }
-
-  private fun processEquals(endLine1: Int, endLine2: Int) {
+  protected fun processEquals(endLine1: Int, endLine2: Int) {
     val startLine1 = lastProcessedLine1 + 1
     val startLine2 = lastProcessedLine2 + 1
 
     appendTextMaster(startLine1, startLine2, endLine1, endLine2)
   }
 
-  private fun processChanged(fragment: LineFragment, fragmentIndex: Int) {
-    val startLine1 = fragment.getStartLine1()
-    val endLine1 = fragment.getEndLine1() - 1
+  protected fun processChanged(fragment: Range): BlockLineRange {
+    processEquals(fragment.start1 - 1, fragment.start2 - 1)
+
+    val startLine1 = fragment.start1
+    val endLine1 = fragment.end1 - 1
     val lines1 = endLine1 - startLine1
 
-    val startLine2 = fragment.getStartLine2()
-    val endLine2 = fragment.getEndLine2() - 1
+    val startLine2 = fragment.start2
+    val endLine2 = fragment.end2 - 1
     val lines2 = endLine2 - startLine2
 
     val linesBefore = totalLines
@@ -91,21 +77,17 @@ open class UnifiedFragmentBuilder(protected val fragments: List<LineFragment>,
 
     val linesAfter = totalLines
 
-    val change = createDiffChange(linesBefore, linesBetween, linesAfter, fragmentIndex)
-    changes.add(change)
-    if (!change.isSkipped) {
-      changedLines.add(LineRange(linesBefore, linesAfter))
-    }
-
     lastProcessedLine1 = endLine1
     lastProcessedLine2 = endLine2
+
+    return BlockLineRange(linesBefore, linesBetween, linesAfter)
   }
 
-  protected open fun createDiffChange(blockStart: Int,
-                                      insertedStart: Int,
-                                      blockEnd: Int,
-                                      fragmentIndex: Int): UnifiedDiffChange {
-    return UnifiedDiffChange(blockStart, insertedStart, blockEnd, fragments[fragmentIndex])
+  protected fun reportChange(change: UnifiedDiffChange) {
+    changes.add(change)
+    if (!change.isSkipped) {
+      changedLines.add(LineRange(change.line1, change.line2))
+    }
   }
 
   private fun appendTextMaster(startLine1: Int, startLine2: Int, endLine1: Int, endLine2: Int) {
@@ -148,6 +130,27 @@ open class UnifiedFragmentBuilder(protected val fragments: List<LineFragment>,
       totalLines += lines + 1
     }
   }
+
+  protected class BlockLineRange(val blockStart: Int, val insertedStart: Int, val blockEnd: Int)
+}
+
+class SimpleUnifiedFragmentBuilder(document1: Document,
+                                   document2: Document,
+                                   masterSide: Side
+) : UnifiedFragmentBuilder(document1, document2, masterSide) {
+
+  fun exec(fragments: List<LineFragment>): UnifiedDiffState {
+    for (fragment in fragments) {
+      val blockLineRange = processChanged(fragment.asLineRange())
+
+      val change = UnifiedDiffChange(blockLineRange.blockStart, blockLineRange.insertedStart, blockLineRange.blockEnd,
+                                     fragment)
+      reportChange(change)
+    }
+    finishDocuments()
+
+    return UnifiedDiffState(masterSide, textBuilder, changes, ranges, convertorBuilder1.build(), convertorBuilder2.build(), changedLines)
+  }
 }
 
 class UnifiedDiffState(
@@ -159,3 +162,7 @@ class UnifiedDiffState(
   val convertor2: LineNumberConvertor,
   val changedLines: List<LineRange>
 )
+
+fun LineFragment.asLineRange(): Range {
+  return Range(startLine1, endLine1, startLine2, endLine2)
+}

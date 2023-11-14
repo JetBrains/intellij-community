@@ -232,7 +232,7 @@ class UnifiedFragmentBuilderTest : DiffTestCase() {
         val fragments = if (customFragments != null) customFragments!!
         else MANAGER.compareLines(text1, text2, ComparisonPolicy.DEFAULT, INDICATOR)
 
-        val builder = UnifiedFragmentBuilder(fragments, DocumentImpl(text1), DocumentImpl(text2), side).exec()
+        val builder = SimpleUnifiedFragmentBuilder(DocumentImpl(text1), DocumentImpl(text2), side).exec(fragments)
 
 
         val lineCount1 = input1.count { it == '_' } + 1

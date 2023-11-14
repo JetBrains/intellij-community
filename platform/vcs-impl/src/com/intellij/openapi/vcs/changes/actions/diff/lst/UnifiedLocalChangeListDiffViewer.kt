@@ -20,7 +20,6 @@ import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.vcs.changes.actions.diff.lst.LocalTrackerDiffUtil.ExcludeAllCheckboxPanel
-import com.intellij.openapi.vcs.changes.actions.diff.lst.LocalTrackerDiffUtil.LineFragmentData
 import com.intellij.openapi.vcs.changes.actions.diff.lst.LocalTrackerDiffUtil.LocalTrackerActionProvider
 import com.intellij.openapi.vcs.changes.actions.diff.lst.LocalTrackerDiffUtil.LocalTrackerChange
 import com.intellij.openapi.vcs.changes.actions.diff.lst.LocalTrackerDiffUtil.LocalTrackerDiffHandler
@@ -151,18 +150,9 @@ class UnifiedLocalChangeListDiffViewer(context: DiffContext,
     override fun done(isContentsEqual: Boolean,
                       texts: Array<CharSequence>,
                       toggleableLineRanges: List<ToggleableLineRange>): Runnable {
-      val fragments = mutableListOf<LineFragment>()
-      val fragmentsData = mutableListOf<LineFragmentData>()
-
-      for (range in toggleableLineRanges) {
-        val rangeFragments = range.fragments
-        fragments.addAll(rangeFragments)
-        fragmentsData.addAll(Collections.nCopies(rangeFragments.size, range.fragmentData))
-      }
-
       val builder = runReadAction {
         progressIndicator.checkCanceled()
-        MyUnifiedFragmentBuilder(fragments, fragmentsData, document1, document2).exec()
+        UnifiedLocalFragmentBuilder(document1, document2, myMasterSide, isAllowExcludeChangesFromCommit).exec(toggleableLineRanges)
       }
 
       val applyChanges = apply(builder, texts, progressIndicator)
@@ -196,22 +186,30 @@ class UnifiedLocalChangeListDiffViewer(context: DiffContext,
     }
   }
 
-  private inner class MyUnifiedFragmentBuilder(fragments: List<LineFragment>,
-                                               private val fragmentsData: List<LineFragmentData>,
-                                               document1: Document,
-                                               document2: Document
-  ) : UnifiedFragmentBuilder(fragments, document1, document2, myMasterSide) {
+  private class UnifiedLocalFragmentBuilder(document1: Document,
+                                            document2: Document,
+                                            masterSide: Side,
+                                            val allowExcludeChangesFromCommit: Boolean
+  ) : UnifiedFragmentBuilder(document1, document2, masterSide) {
 
-    override fun createDiffChange(blockStart: Int,
-                                  insertedStart: Int,
-                                  blockEnd: Int,
-                                  fragmentIndex: Int): UnifiedDiffChange {
-      val fragment = fragments[fragmentIndex]
-      val data = fragmentsData[fragmentIndex]
-      val isSkipped = data.isSkipped()
-      val isExcluded = data.isExcluded(isAllowExcludeChangesFromCommit)
-      return MyUnifiedDiffChange(blockStart, insertedStart, blockEnd, fragment, isExcluded, isSkipped,
-                                 data.changelistId, data.isPartiallyExcluded(), data.exclusionState)
+    fun exec(toggleableLineRanges: List<ToggleableLineRange>): UnifiedDiffState {
+      for (toggleableRange in toggleableLineRanges) {
+        val data = toggleableRange.fragmentData
+        val isSkipped = data.isSkipped()
+        val isExcluded = data.isExcluded(allowExcludeChangesFromCommit)
+
+        for (fragment in toggleableRange.fragments) {
+          val blockLineRange = processChanged(fragment.asLineRange())
+
+          val change = MyUnifiedDiffChange(blockLineRange.blockStart, blockLineRange.insertedStart, blockLineRange.blockEnd,
+                                           fragment, isExcluded, isSkipped,
+                                           data.changelistId, data.isPartiallyExcluded(), data.exclusionState)
+          reportChange(change)
+        }
+      }
+      finishDocuments()
+
+      return UnifiedDiffState(masterSide, textBuilder, changes, ranges, convertorBuilder1.build(), convertorBuilder2.build(), changedLines)
     }
   }
 
