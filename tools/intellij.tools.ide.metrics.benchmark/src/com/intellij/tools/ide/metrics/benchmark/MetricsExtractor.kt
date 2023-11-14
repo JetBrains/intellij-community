@@ -32,6 +32,9 @@ class MetricsExtractor(val telemetryJsonFile: File = PathManager.getLogDir().res
 
     val attempts = originalMetrics.filter { it.id.name.contains("Attempt", ignoreCase = true) }
 
+    // some tests might be forced to run without warmup attempts
+    if (forWarmup && attempts.isEmpty()) return listOf()
+
     val medianValueOfAttempts: Long = attempts.medianValue()
 
     val attemptMeanMetric = "${metricsPrefix}attempt.mean.ms".toPerformanceMetricDuration(attempts.map { it.value }.average().toLong())
