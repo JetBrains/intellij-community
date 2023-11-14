@@ -1,0 +1,25 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="IDE sample (23.3)" type="GradleRunConfiguration" factoryName="Gradle">
+    <log_file alias="idea.log" path="$PROJECT_DIR$/samples/ide-plugin/build/idea-sandbox/system/log/idea.log" />
+    <ExternalSystemSettings>
+      <option name="executionName" />
+      <option name="externalProjectPath" value="$PROJECT_DIR$/samples/ide-plugin" />
+      <option name="externalSystemIdString" value="GRADLE" />
+      <option name="scriptParameters" value="-Psupported.ij.version=233" />
+      <option name="taskDescriptions">
+        <list />
+      </option>
+      <option name="taskNames">
+        <list>
+          <option value="runIde" />
+        </list>
+      </option>
+      <option name="vmOptions" />
+    </ExternalSystemSettings>
+    <ExternalSystemDebugServerProcess>true</ExternalSystemDebugServerProcess>
+    <ExternalSystemReattachDebugProcess>true</ExternalSystemReattachDebugProcess>
+    <DebugAllEnabled>false</DebugAllEnabled>
+    <RunAsTest>false</RunAsTest>
+    <method v="2" />
+  </configuration>
+</component>

@@ -1,11 +1,11 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="IDE sample" type="GradleRunConfiguration" factoryName="Gradle">
+  <configuration default="false" name="IDE sample (23.2)" type="GradleRunConfiguration" factoryName="Gradle">
     <log_file alias="idea.log" path="$PROJECT_DIR$/samples/ide-plugin/build/idea-sandbox/system/log/idea.log" />
     <ExternalSystemSettings>
       <option name="executionName" />
       <option name="externalProjectPath" value="$PROJECT_DIR$/samples/ide-plugin" />
       <option name="externalSystemIdString" value="GRADLE" />
-      <option name="scriptParameters" value="" />
+      <option name="scriptParameters" value="-Psupported.ij.version=232" />
       <option name="taskDescriptions">
         <list />
       </option>
