@@ -87,7 +87,7 @@ public class SwitchExprent extends Exprent {
       List<Exprent> parameters = invocationExprent.getParameters();
       if (parameters.size() == 2) {
         Exprent exprent = parameters.get(1);
-        buf.append("//").append(exprent.toJava(indent, tracer)).append("->").append("value").appendLineSeparator();
+        buf.append("//$FF: ").append(exprent.toJava(indent, tracer)).append("->").append("value").appendLineSeparator();
         tracer.incrementCurrentSourceLine();
         List<PooledConstant> arguments = invocationExprent.getBootstrapArguments();
         for (int i = 0; i < arguments.size(); i++) {
