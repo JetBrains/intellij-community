@@ -39,7 +39,7 @@ import com.intellij.openapi.vcs.changes.actions.diff.lst.LocalTrackerDiffUtil.to
 import com.intellij.openapi.vcs.ex.RangeExclusionState
 import com.intellij.openapi.vcs.ex.countAffectedVisibleChanges
 import com.intellij.openapi.vcs.ex.createClientIdGutterIconRenderer
-import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.containers.addIfNotNull
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
@@ -49,29 +49,29 @@ import java.util.*
 import javax.swing.JComponent
 
 class SimpleLocalChangeListDiffViewer(context: DiffContext,
-                                      private val myLocalRequest: LocalChangeListDiffRequest
-) : SimpleDiffViewer(context, myLocalRequest.request) {
+                                      private val localRequest: LocalChangeListDiffRequest
+) : SimpleDiffViewer(context, localRequest.request) {
 
-  private val myAllowExcludeChangesFromCommit: Boolean
+  private val isAllowExcludeChangesFromCommit: Boolean = DiffUtil.isUserDataFlagSet(LocalChangeListDiffTool.ALLOW_EXCLUDE_FROM_COMMIT,
+                                                                                    context)
 
-  private val myTrackerActionProvider: LocalTrackerActionProvider
-  private val myExcludeAllCheckboxPanel: ExcludeAllCheckboxPanel
-  private val myGutterCheckboxMouseMotionListener: GutterCheckboxMouseMotionListener
+  private val trackerActionProvider: LocalTrackerActionProvider
+  private val excludeAllCheckboxPanel: ExcludeAllCheckboxPanel
+  private val gutterCheckboxMouseMotionListener: GutterCheckboxMouseMotionListener
 
-  private val myHighlighters: MutableList<RangeHighlighter> = ArrayList()
+  private val localHighlighters = mutableListOf<RangeHighlighter>()
 
   init {
-    myAllowExcludeChangesFromCommit = DiffUtil.isUserDataFlagSet(LocalChangeListDiffTool.ALLOW_EXCLUDE_FROM_COMMIT, context)
-    myTrackerActionProvider = MyLocalTrackerActionProvider(this, myLocalRequest, myAllowExcludeChangesFromCommit)
-    myExcludeAllCheckboxPanel = ExcludeAllCheckboxPanel(this, editor2)
-    myExcludeAllCheckboxPanel.init(myLocalRequest, myAllowExcludeChangesFromCommit)
+    trackerActionProvider = MyLocalTrackerActionProvider(this, localRequest, isAllowExcludeChangesFromCommit)
+    excludeAllCheckboxPanel = ExcludeAllCheckboxPanel(this, editor2)
+    excludeAllCheckboxPanel.init(localRequest, isAllowExcludeChangesFromCommit)
 
-    installTrackerListener(this, myLocalRequest)
+    installTrackerListener(this, localRequest)
 
-    myGutterCheckboxMouseMotionListener = GutterCheckboxMouseMotionListener()
-    myGutterCheckboxMouseMotionListener.install()
+    gutterCheckboxMouseMotionListener = GutterCheckboxMouseMotionListener()
+    gutterCheckboxMouseMotionListener.install()
 
-    for (action in createTrackerShortcutOnlyActions(myTrackerActionProvider)) {
+    for (action in createTrackerShortcutOnlyActions(trackerActionProvider)) {
       DiffUtil.registerAction(action, myPanel)
     }
   }
@@ -82,14 +82,14 @@ class SimpleLocalChangeListDiffViewer(context: DiffContext,
 
     val titleWithCheckbox = JBUI.Panels.simplePanel()
     if (titles[1] != null) titleWithCheckbox.addToCenter(titles[1])
-    titleWithCheckbox.addToLeft(myExcludeAllCheckboxPanel)
+    titleWithCheckbox.addToLeft(excludeAllCheckboxPanel)
 
     return Arrays.asList(titles[0], titleWithCheckbox)
   }
 
   override fun createEditorPopupActions(): List<AnAction> {
     return super.createEditorPopupActions() +
-           createTrackerEditorPopupActions(myTrackerActionProvider)
+           createTrackerEditorPopupActions(trackerActionProvider)
   }
 
   override fun createUi(change: SimpleDiffChange): SimpleDiffChangeUi {
@@ -98,7 +98,7 @@ class SimpleLocalChangeListDiffViewer(context: DiffContext,
   }
 
   override fun getStatusTextMessage(): @Nls String? {
-    if (myAllowExcludeChangesFromCommit) {
+    if (isAllowExcludeChangesFromCommit) {
       var totalCount = 0
       var includedIntoCommitCount = 0
       var excludedCount = 0
@@ -131,18 +131,19 @@ class SimpleLocalChangeListDiffViewer(context: DiffContext,
 
   override fun computeDifferences(indicator: ProgressIndicator): Runnable {
     return computeDifferences(
-      myLocalRequest.lineStatusTracker,
+      localRequest.lineStatusTracker,
       content1.document,
       content2.document,
-      myLocalRequest.changelistId,
-      myAllowExcludeChangesFromCommit,
+      localRequest.changelistId,
+      isAllowExcludeChangesFromCommit,
       myTextDiffProvider,
       indicator,
       MyLocalTrackerDiffHandler(indicator)
     )
   }
 
-  private inner class MyLocalTrackerDiffHandler(private val myIndicator: ProgressIndicator) : LocalTrackerDiffHandler {
+  private inner class MyLocalTrackerDiffHandler(private val progressIndicator: ProgressIndicator) : LocalTrackerDiffHandler {
+
     override fun done(isContentsEqual: Boolean,
                       texts: Array<CharSequence>,
                       toggleableLineRanges: List<ToggleableLineRange>): Runnable {
@@ -152,7 +153,7 @@ class SimpleLocalChangeListDiffViewer(context: DiffContext,
       for (toggleableLineRange in toggleableLineRanges) {
         val data = toggleableLineRange.fragmentData
         val isSkipped = data.isSkipped()
-        val isExcluded = data.isExcluded(myAllowExcludeChangesFromCommit)
+        val isExcluded = data.isExcluded(isAllowExcludeChangesFromCommit)
 
         for (fragment in toggleableLineRange.fragments) {
           changes.add(MySimpleDiffChange(changes.size, fragment, isExcluded, isSkipped,
@@ -175,11 +176,11 @@ class SimpleLocalChangeListDiffViewer(context: DiffContext,
     }
 
     override fun fallback(): Runnable {
-      return superComputeDifferences(myIndicator)
+      return superComputeDifferences(progressIndicator)
     }
 
     override fun fallbackWithProgress(): Runnable {
-      val callback = superComputeDifferences(myIndicator)
+      val callback = superComputeDifferences(progressIndicator)
       return Runnable {
         callback.run()
         statusPanel.setBusy(true)
@@ -193,33 +194,33 @@ class SimpleLocalChangeListDiffViewer(context: DiffContext,
 
   override fun onAfterRediff() {
     super.onAfterRediff()
-    myExcludeAllCheckboxPanel.refresh()
+    excludeAllCheckboxPanel.refresh()
   }
 
   override fun clearDiffPresentation() {
     super.clearDiffPresentation()
 
-    for (operation in myHighlighters) {
+    for (operation in localHighlighters) {
       operation.dispose()
     }
-    myHighlighters.clear()
+    localHighlighters.clear()
 
-    myGutterCheckboxMouseMotionListener.destroyHoverHighlighter()
+    gutterCheckboxMouseMotionListener.destroyHoverHighlighter()
   }
 
   private fun applyGutterOperations(toggleableLineRanges: List<ToggleableLineRange>): Runnable {
     return Runnable {
-      if (myAllowExcludeChangesFromCommit) {
+      if (isAllowExcludeChangesFromCommit) {
         for (toggleableLineRange in toggleableLineRanges) {
-          myHighlighters.addAll(createGutterToggleRenderers(toggleableLineRange))
+          localHighlighters.addAll(createGutterToggleRenderers(toggleableLineRange))
         }
       }
 
       for (range in toggleableLineRanges) {
-        ContainerUtil.addIfNotNull(myHighlighters, createClientIdHighlighter(range))
+        localHighlighters.addIfNotNull(createClientIdHighlighter(range))
       }
 
-      if (!myHighlighters.isEmpty()) {
+      if (!localHighlighters.isEmpty()) {
         editor1.gutterComponentEx.revalidateMarkup()
         editor2.gutterComponentEx.revalidateMarkup()
       }
@@ -265,13 +266,13 @@ class SimpleLocalChangeListDiffViewer(context: DiffContext,
     val isExcludedFromCommit = toggleableLineRange.fragmentData.exclusionState is RangeExclusionState.Excluded
 
     return createCheckboxToggle(getEditor(side), line, isExcludedFromCommit) {
-      toggleBlockExclusion(myTrackerActionProvider, line, isExcludedFromCommit)
+      toggleBlockExclusion(trackerActionProvider, line, isExcludedFromCommit)
     }
   }
 
   private fun createLineCheckboxToggleHighlighter(line: Int, side: Side, isExcludedFromCommit: Boolean): RangeHighlighter {
     return createCheckboxToggle(getEditor(side), line, isExcludedFromCommit) {
-      toggleLinePartialExclusion(myTrackerActionProvider, line, side, isExcludedFromCommit)
+      toggleLinePartialExclusion(trackerActionProvider, line, side, isExcludedFromCommit)
     }
   }
 
@@ -282,7 +283,7 @@ class SimpleLocalChangeListDiffViewer(context: DiffContext,
     val line2 = side.select(lineRange.end1, lineRange.end2)
     val isExcludedFromCommit = toggleableLineRange.fragmentData.exclusionState is RangeExclusionState.Excluded
     return createToggleAreaThumb(editor, line1, line2) {
-      toggleBlockExclusion(myTrackerActionProvider, lineRange.start1, isExcludedFromCommit)
+      toggleBlockExclusion(trackerActionProvider, lineRange.start1, isExcludedFromCommit)
     }
   }
 
@@ -290,7 +291,7 @@ class SimpleLocalChangeListDiffViewer(context: DiffContext,
     val clientIds = range.fragmentData.clientIds
     if (clientIds.isEmpty()) return null
 
-    val iconRenderer = createClientIdGutterIconRenderer(myLocalRequest.project, clientIds)
+    val iconRenderer = createClientIdGutterIconRenderer(localRequest.project, clientIds)
     if (iconRenderer == null) return null
 
     val lineRange = range.lineRange
@@ -322,19 +323,13 @@ class SimpleLocalChangeListDiffViewer(context: DiffContext,
                                                 val exclusionState: RangeExclusionState
   ) : SimpleDiffChange(index, fragment, isExcluded, isSkipped)
 
-  private class MySimpleDiffChangeUi(viewer: SimpleLocalChangeListDiffViewer,
-                                     change: MySimpleDiffChange
+  private class MySimpleDiffChangeUi(val viewer: SimpleLocalChangeListDiffViewer,
+                                     val change: MySimpleDiffChange
   ) : SimpleDiffChangeUi(viewer, change) {
-
-    private val viewer: SimpleLocalChangeListDiffViewer
-      get() = myViewer as SimpleLocalChangeListDiffViewer
-
-    private val change: MySimpleDiffChange
-      get() = myChange as MySimpleDiffChange
 
     override fun installHighlighter(previousChange: SimpleDiffChange?) {
 
-      if (change.isPartiallyExcluded && viewer.myAllowExcludeChangesFromCommit) {
+      if (change.isPartiallyExcluded && viewer.isAllowExcludeChangesFromCommit) {
         assert(myHighlighters.isEmpty() && myOperations.isEmpty())
 
         val changeStart1 = change.getStartLine(Side.LEFT)
@@ -343,47 +338,47 @@ class SimpleLocalChangeListDiffViewer(context: DiffContext,
         val exclusionState = change.exclusionState as RangeExclusionState.Partial
         exclusionState.iterateDeletionOffsets { start: Int, end: Int, isIncluded: Boolean ->
           myHighlighters.addAll(
-            LineHighlighterBuilder(myViewer.getEditor(Side.LEFT),
+            LineHighlighterBuilder(viewer.getEditor(Side.LEFT),
                                    start + changeStart1,
                                    end + changeStart1,
                                    TextDiffType.DELETED)
-              .withExcludedInEditor(myChange.isSkipped)
+              .withExcludedInEditor(change.isSkipped)
               .withExcludedInGutter(!isIncluded)
-              .withAlignedSides(myViewer.needAlignChanges())
+              .withAlignedSides(viewer.needAlignChanges())
               .done())
         }
         exclusionState.iterateAdditionOffsets { start: Int, end: Int, isIncluded: Boolean ->
           myHighlighters.addAll(
-            LineHighlighterBuilder(myViewer.getEditor(Side.RIGHT),
+            LineHighlighterBuilder(viewer.getEditor(Side.RIGHT),
                                    start + changeStart2,
                                    end + changeStart2,
                                    TextDiffType.INSERTED)
-              .withExcludedInEditor(myChange.isSkipped)
+              .withExcludedInEditor(change.isSkipped)
               .withExcludedInGutter(!isIncluded)
-              .withAlignedSides(myViewer.needAlignChanges())
+              .withAlignedSides(viewer.needAlignChanges())
               .done())
         }
 
         if (exclusionState.deletionsCount == 0) {
           myHighlighters.addAll(
-            LineHighlighterBuilder(myViewer.getEditor(Side.LEFT),
+            LineHighlighterBuilder(viewer.getEditor(Side.LEFT),
                                    changeStart1,
                                    changeStart1,
                                    TextDiffType.INSERTED)
-              .withExcludedInEditor(myChange.isSkipped)
+              .withExcludedInEditor(change.isSkipped)
               .withExcludedInGutter(false)
-              .withAlignedSides(myViewer.needAlignChanges())
+              .withAlignedSides(viewer.needAlignChanges())
               .done())
         }
         if (exclusionState.additionsCount == 0) {
           myHighlighters.addAll(
-            LineHighlighterBuilder(myViewer.getEditor(Side.RIGHT),
+            LineHighlighterBuilder(viewer.getEditor(Side.RIGHT),
                                    changeStart2,
                                    changeStart2,
                                    TextDiffType.DELETED)
-              .withExcludedInEditor(myChange.isSkipped)
+              .withExcludedInEditor(change.isSkipped)
               .withExcludedInGutter(false)
-              .withAlignedSides(myViewer.needAlignChanges())
+              .withAlignedSides(viewer.needAlignChanges())
               .done())
         }
 
@@ -396,13 +391,13 @@ class SimpleLocalChangeListDiffViewer(context: DiffContext,
     }
 
     override fun drawDivider(handler: DiffDividerDrawUtil.DividerPaintable.Handler): Boolean {
-      if (change.isPartiallyExcluded && viewer.myAllowExcludeChangesFromCommit) {
-        val startLine1 = myChange.getStartLine(Side.LEFT)
-        val endLine1 = myChange.getEndLine(Side.LEFT)
-        val startLine2 = myChange.getStartLine(Side.RIGHT)
-        val endLine2 = myChange.getEndLine(Side.RIGHT)
+      if (change.isPartiallyExcluded && viewer.isAllowExcludeChangesFromCommit) {
+        val startLine1 = change.getStartLine(Side.LEFT)
+        val endLine1 = change.getEndLine(Side.LEFT)
+        val startLine2 = change.getStartLine(Side.RIGHT)
+        val endLine2 = change.getEndLine(Side.RIGHT)
 
-        if (myViewer.needAlignChanges()) {
+        if (viewer.needAlignChanges()) {
           if (startLine1 != endLine1) {
             if (!handler.processAligned(startLine1, endLine1, startLine2, startLine2, TextDiffType.DELETED)) {
               return false
@@ -418,13 +413,13 @@ class SimpleLocalChangeListDiffViewer(context: DiffContext,
         else {
           if (startLine1 != endLine1) {
             if (!handler.processExcludable(startLine1, endLine1, startLine2, startLine2, TextDiffType.DELETED,
-                                           myChange.isExcluded, myChange.isSkipped)) {
+                                           change.isExcluded, change.isSkipped)) {
               return false
             }
           }
           if (startLine2 != endLine2) {
             if (!handler.processExcludable(endLine1, endLine1, startLine2, endLine2, TextDiffType.INSERTED,
-                                           myChange.isExcluded, myChange.isSkipped)) {
+                                           change.isExcluded, change.isSkipped)) {
               return false
             }
           }
@@ -437,17 +432,17 @@ class SimpleLocalChangeListDiffViewer(context: DiffContext,
     }
   }
 
-  private class MyLocalTrackerActionProvider(private val myViewer: SimpleLocalChangeListDiffViewer,
-                                             localRequest: LocalChangeListDiffRequest,
-                                             allowExcludeChangesFromCommit: Boolean
-  ) : LocalTrackerActionProvider(myViewer, localRequest, allowExcludeChangesFromCommit) {
+  private class MyLocalTrackerActionProvider(override val viewer: SimpleLocalChangeListDiffViewer,
+                                             override val localRequest: LocalChangeListDiffRequest,
+                                             override val allowExcludeChangesFromCommit: Boolean
+  ) : LocalTrackerActionProvider {
 
     override fun getSelectedTrackerChanges(e: AnActionEvent): List<LocalTrackerChange>? {
       val editor = e.getData(CommonDataKeys.EDITOR)
-      val side = Side.fromValue(myViewer.editors, editor)
+      val side = Side.fromValue(viewer.editors, editor)
       if (side == null) return null
 
-      return myViewer.getSelectedChanges(side)
+      return viewer.getSelectedChanges(side)
         .filterIsInstance<MySimpleDiffChange>()
         .map {
           LocalTrackerChange(it.getStartLine(Side.RIGHT),
@@ -459,7 +454,7 @@ class SimpleLocalChangeListDiffViewer(context: DiffContext,
 
     override fun getSelectedTrackerLines(e: AnActionEvent): SelectedTrackerLine? {
       val editor = e.getData(CommonDataKeys.EDITOR)
-      val side = Side.fromValue(myViewer.editors, editor)
+      val side = Side.fromValue(viewer.editors, editor)
       if (editor == null || side == null) return null
 
       val selectedLines = DiffUtil.getSelectedLines(editor)
@@ -491,14 +486,11 @@ class SimpleLocalChangeListDiffViewer(context: DiffContext,
     }
 
     private fun updateHoverHighlighter(side: Side, line: Int) {
-      val change = diffChanges.find {
-        it.getStartLine(side) <= line &&
-        it.getEndLine(side) > line
-      } as? MySimpleDiffChange
+      val change = diffChanges.find { it.getStartLine(side) <= line && it.getEndLine(side) > line } as? MySimpleDiffChange
 
       if (change == null ||
           change.isPartiallyExcluded ||
-          myLocalRequest.changelistId != change.changelistId) {
+          localRequest.changelistId != change.changelistId) {
         destroyHoverHighlighter()
         return
       }
@@ -515,14 +507,14 @@ class SimpleLocalChangeListDiffViewer(context: DiffContext,
 
       val isExcludedFromCommit = change.exclusionState is RangeExclusionState.Excluded
       myHighlighter = createCheckboxToggle(editor, line, isExcludedFromCommit) {
-        toggleLinePartialExclusion(myTrackerActionProvider, line, side, isExcludedFromCommit)
+        toggleLinePartialExclusion(trackerActionProvider, line, side, isExcludedFromCommit)
         destroyHoverHighlighter()
       }
     }
 
     private inner class MyGutterMouseListener(private val mySide: Side) : MouseAdapter() {
       override fun mouseMoved(e: MouseEvent) {
-        if (!myAllowExcludeChangesFromCommit) {
+        if (!isAllowExcludeChangesFromCommit) {
           destroyHoverHighlighter()
           return
         }
