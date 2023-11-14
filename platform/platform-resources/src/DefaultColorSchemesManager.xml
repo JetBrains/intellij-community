@@ -526,7 +526,14 @@
           <option name="EFFECT_COLOR"/>
         </value>
       </option>
-      
+
+      <option name="INLINE_SUGGESTION">
+        <value>
+          <option name="FOREGROUND" value="808080"/>
+          <option name="FONT_TYPE" value="2"/>
+        </value>
+      </option>
+
       <option name="INLINE_PARAMETER_HINT">
         <value>
           <option name="FOREGROUND" value="7a7a7a"/>
@@ -2268,6 +2275,11 @@
           <option name="BACKGROUND" value="344134" deuteranopia="32394c" protanopia="32394c"/>
           <option name="ERROR_STRIPE_COLOR" value="036b13" deuteranopia="4b6f99" protanopia="4b6f99"/>
           <option name="EFFECT_TYPE" value="1" />
+        </value>
+      </option>
+      <option name="INLINE_SUGGESTION">
+        <value>
+          <option name="FOREGROUND" value="808080" deuteranopia="7a7a7a" protanopia="7a7a7a"/>
         </value>
       </option>
       <option name="INLINE_PARAMETER_HINT">
