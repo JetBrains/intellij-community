@@ -18,7 +18,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectNameListener
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.startup.ProjectActivity
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.impl.ProjectFrameHelper
 import com.intellij.openapi.wm.impl.ToolbarComboButton
@@ -357,11 +356,11 @@ class ProjectWindowCustomizerService : Disposable {
       SwingUtilities.convertPoint(it.parent, it.x, it.y, parent).x.toFloat() + it.margin.left.toFloat() + projectIconWidth / 2
     } ?: 150f
 
+
     val mainToolbarXPosition = (ComponentUtil.findComponentsOfType(parent, MainToolbar::class.java).firstOrNull())?.let {
       SwingUtilities.convertPoint(it.parent, it.location, parent)
     }?.x ?: return true
-    val saturation = (if (SystemInfo.isWindows) Registry.doubleValue("ide.colorful.toolbar.win.gradient.saturation", 0.4)
-    else Registry.doubleValue("ide.colorful.toolbar.gradient.saturation", 0.85)).coerceIn(0.0, 1.0)
+    val saturation = Registry.doubleValue("ide.colorful.toolbar.gradient.saturation", 0.85).coerceIn(0.0, 1.0)
     val blendedColor = ColorUtil.blendColorsInRgb(parent.background, color, saturation)
     val leftBound = (offset - length).coerceAtLeast(mainToolbarXPosition.toFloat() / 2)
     g.paint = GradientPaint(leftBound, 0f, parent.background, offset, 0f, blendedColor)
