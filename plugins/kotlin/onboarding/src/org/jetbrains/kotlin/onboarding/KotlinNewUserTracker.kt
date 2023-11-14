@@ -24,14 +24,14 @@ class KotlinNewUserTrackerState : BaseState() {
 class KotlinNewUserTracker : PersistentStateComponent<KotlinNewUserTrackerState> {
     companion object {
         // Offer survey after one week of using Kotlin
-        private val NEW_USER_SURVEY_DELAY = Duration.ofDays(7)
-        private val NEW_IDEA_USER_DATE = LocalDate.of(2023, 10, 19)
+        internal val NEW_USER_SURVEY_DELAY = Duration.ofDays(7)
+        internal val NEW_IDEA_USER_DATE = LocalDate.of(2023, 10, 19)
 
         // How long we will classify a user as new
-        private val NEW_USER_DURATION = Duration.ofDays(30)
+        internal val NEW_USER_DURATION = Duration.ofDays(30)
 
         // After how long of a period of not using Kotlin at all we consider the user a new user again
-        private val NEW_USER_RESET = Duration.ofDays(90)
+        internal val NEW_USER_RESET = Duration.ofDays(90)
 
         private val LOG = Logger.getInstance(KotlinNewUserTracker::class.java)
 
