@@ -111,15 +111,7 @@ public final class ThreadLeakTracker {
       "VM Thread",
       "YJPAgent-Telemetry"
     );
-    List<String> sorted = new ArrayList<>(offenders);
-    sorted.sort(String::compareToIgnoreCase);
-    if (!offenders.equals(sorted)) {
-      String proper = String
-        .join(",\n", ContainerUtil.map(sorted, s -> '"' + s + '"'))
-        .replaceAll('"' + FlushingDaemon.NAME + '"', "FlushingDaemon.NAME")
-        .replaceAll('"' + ProcessIOExecutorService.POOLED_THREAD_PREFIX + '"', "ProcessIOExecutorService.POOLED_THREAD_PREFIX");
-      throw new AssertionError("Thread names must be sorted (for ease of maintenance). Something like this will do:\n" + proper);
-    }
+    validateWhitelistedThreads(offenders);
     wellKnownOffenders = new HashSet<>(offenders);
 
     try {
@@ -153,59 +145,69 @@ public final class ThreadLeakTracker {
       thread -> new Pair<>(thread, thread.getStackTrace())
     );
     for (Thread thread : after.values()) {
-      if (thread == Thread.currentThread()) {
-        continue;
-      }
-
-      ThreadGroup group = thread.getThreadGroup();
-      if (group != null && "system".equals(group.getName()) || !thread.isAlive()) {
-        continue;
-      }
-
-      long start = System.currentTimeMillis();
-      //if (thread.isAlive()) {
-      //  System.err.println("waiting for " + thread + "\n" + ThreadDumper.dumpThreadsToString());
-      //}
-      StackTraceElement[] traceBeforeWait = thread.getStackTrace();
-      if (shouldIgnore(thread, traceBeforeWait)) continue;
-      int WAIT_SEC = 10;
-      StackTraceElement[] stackTrace = traceBeforeWait;
-      while (System.currentTimeMillis() < start + WAIT_SEC * 1_000) {
-        // give blocked thread opportunity to die if it's stuck doing invokeAndWait()
-        if (EDT.isCurrentThreadEdt()) {
-          UIUtil.dispatchAllInvocationEvents();
-        }
-        else {
-          UIUtil.pump();
-        }
-        // after some time, the submitted task can finish and the thread can become idle
-        stackTrace = thread.getStackTrace();
-        if (shouldIgnore(thread, stackTrace)) break;
-      }
-      //long elapsed = System.currentTimeMillis() - start;
-      //if (elapsed > 1_000) {
-      //  System.err.println("waited for " + thread + " for " + elapsed+"ms");
-      //}
-
-      // check once more because the thread name may be set via race
-      stackTraces.put(thread, stackTrace);
-      if (shouldIgnore(thread, stackTrace)) continue;
-
-      all.keySet().removeAll(after.keySet());
-      Map<Thread, StackTraceElement[]> otherStackTraces = ContainerUtil.map2Map(all.values(), t -> Pair.create(t, t.getStackTrace()));
-
-      String trace = PerformanceWatcher.printStacktrace("", thread, stackTrace);
-      String traceBefore = PerformanceWatcher.printStacktrace("", thread, traceBeforeWait);
-
-      String internalDiagnostic = internalDiagnostic(stackTrace);
-
-      throw new AssertionError(
-        "Thread leaked: " + traceBefore + (trace.equals(traceBefore) ? "" : "(its trace after " + WAIT_SEC + " seconds wait:) " + trace) +
-        internalDiagnostic +
-        "\n\nLeaking threads dump:\n" + dumpThreadsToString(after, stackTraces) +
-        "\n----\nAll other threads dump:\n" + dumpThreadsToString(all, otherStackTraces)
-      );
+      waitForThread(thread, stackTraces, all, after);
     }
+  }
+
+  private static void waitForThread(@NotNull Thread thread,
+                                    @NotNull Map<Thread, StackTraceElement[]> stackTraces,
+                                    @NotNull Map<String, Thread> all,
+                                    @NotNull Map<String, Thread> after) {
+    if (!shouldWaitForThread(thread)) {
+      return;
+    }
+    long start = System.currentTimeMillis();
+    StackTraceElement[] traceBeforeWait = thread.getStackTrace();
+    if (shouldIgnore(thread, traceBeforeWait)) {
+      return;
+    }
+    int WAIT_SEC = 10;
+    long deadlineMs = start + TimeUnit.SECONDS.toMillis(WAIT_SEC);
+    StackTraceElement[] stackTrace = traceBeforeWait;
+    while (System.currentTimeMillis() < deadlineMs) {
+      // give blocked thread opportunity to die if it's stuck doing invokeAndWait()
+      if (EDT.isCurrentThreadEdt()) {
+        UIUtil.dispatchAllInvocationEvents();
+      }
+      else {
+        UIUtil.pump();
+      }
+      // after some time, the submitted task can finish and the thread can become idle
+      stackTrace = thread.getStackTrace();
+      if (shouldIgnore(thread, stackTrace)) break;
+    }
+
+    // check once more because the thread name may be set via race
+    stackTraces.put(thread, stackTrace);
+    if (shouldIgnore(thread, stackTrace)) {
+      return;
+    }
+
+    all.keySet().removeAll(after.keySet());
+    Map<Thread, StackTraceElement[]> otherStackTraces = ContainerUtil.map2Map(all.values(), t -> Pair.create(t, t.getStackTrace()));
+
+    String trace = PerformanceWatcher.printStacktrace("", thread, stackTrace);
+    String traceBefore = PerformanceWatcher.printStacktrace("", thread, traceBeforeWait);
+
+    String internalDiagnostic = internalDiagnostic(stackTrace);
+
+    throw new AssertionError(
+      "Thread leaked: " + traceBefore + (trace.equals(traceBefore) ? "" : "(its trace after " + WAIT_SEC + " seconds wait:) " + trace) +
+      internalDiagnostic +
+      "\n\nLeaking threads dump:\n" + dumpThreadsToString(after, stackTraces) +
+      "\n----\nAll other threads dump:\n" + dumpThreadsToString(all, otherStackTraces)
+    );
+  }
+
+  private static boolean shouldWaitForThread(@NotNull Thread thread) {
+    if (thread == Thread.currentThread()) {
+      return false;
+    }
+    ThreadGroup group = thread.getThreadGroup();
+    if (group != null && "system".equals(group.getName()) || !thread.isAlive()) {
+      return false;
+    }
+    return true;
   }
 
   private static boolean shouldIgnore(@NotNull Thread thread, StackTraceElement @NotNull [] stackTrace) {
@@ -393,5 +395,18 @@ public final class ThreadLeakTracker {
     catch (Throwable e) {
       throw new IllegalStateException("Unable to access the Thread#getThreads method", e);
     }
+  }
+
+  private static void validateWhitelistedThreads(@NotNull List<String> offenders) {
+    List<String> sorted = new ArrayList<>(offenders);
+    sorted.sort(String::compareToIgnoreCase);
+    if (offenders.equals(sorted)) {
+      return;
+    }
+    String proper = String
+      .join(",\n", ContainerUtil.map(sorted, s -> '"' + s + '"'))
+      .replaceAll('"' + FlushingDaemon.NAME + '"', "FlushingDaemon.NAME")
+      .replaceAll('"' + ProcessIOExecutorService.POOLED_THREAD_PREFIX + '"', "ProcessIOExecutorService.POOLED_THREAD_PREFIX");
+    throw new AssertionError("Thread names must be sorted (for ease of maintenance). Something like this will do:\n" + proper);
   }
 }
