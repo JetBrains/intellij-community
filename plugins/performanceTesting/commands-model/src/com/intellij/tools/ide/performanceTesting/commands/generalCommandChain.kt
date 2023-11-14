@@ -762,10 +762,6 @@ fun <T : CommandChain> T.waitVcsLogIndexing(timeout: Duration? = null): T = appl
   }
 }
 
-fun <T : CommandChain> T.disableCodeVision(): T = apply {
-  addCommand("${CMD_PREFIX}disableCodeVision")
-}
-
 fun <T : CommandChain> T.showRecentFiles(secondsToWaitTillClose: Int): T = apply {
   addCommand("${CMD_PREFIX}showRecentFiles ${secondsToWaitTillClose}")
 }
