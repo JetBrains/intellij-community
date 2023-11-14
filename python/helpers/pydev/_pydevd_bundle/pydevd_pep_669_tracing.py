@@ -6,8 +6,10 @@ from os.path import splitext, basename
 
 from _pydev_bundle import pydev_log
 from _pydev_bundle.pydev_is_thread_alive import is_thread_alive
-from _pydevd_bundle.pydevd_additional_thread_info_regular import \
-    set_additional_thread_info
+from _pydevd_bundle.pydevd_trace_dispatch import set_additional_thread_info, \
+    handle_breakpoint_condition, handle_breakpoint_expression, \
+    DEBUG_START, DEBUG_START_PY3K, should_stop_on_exception, handle_exception, \
+    manage_return_values
 from _pydevd_bundle.pydevd_breakpoints import stop_on_unhandled_exception
 from _pydevd_bundle.pydevd_bytecode_utils import find_last_call_name, \
     find_last_func_call_order
@@ -17,9 +19,6 @@ from _pydevd_bundle.pydevd_comm_constants import CMD_STEP_OVER, CMD_SMART_STEP_I
 from _pydevd_bundle.pydevd_constants import get_current_thread_id, PYDEVD_TOOL_NAME, \
     STATE_RUN, STATE_SUSPEND
 from _pydevd_bundle.pydevd_dont_trace_files import DONT_TRACE
-from _pydevd_bundle.pydevd_frame import handle_breakpoint_condition, \
-    handle_breakpoint_expression, DEBUG_START, DEBUG_START_PY3K, \
-    should_stop_on_exception, handle_exception, manage_return_values
 from _pydevd_bundle.pydevd_kill_all_pydevd_threads import kill_all_pydev_threads
 from pydevd_file_utils import NORM_PATHS_AND_BASE_CONTAINER, \
     get_abs_path_real_path_and_base_from_frame
