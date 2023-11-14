@@ -114,7 +114,7 @@ private class DemoShortcut(override val name: String, shortcut: Any) : ChildSett
       is KeyboardShortcut -> buildString {
         append(getKeyStrokeText(shortcut.firstKeyStroke))
         shortcut.secondKeyStroke?.let {
-          if (!SystemInfo.isMac) append("+")
+          append(", ")
           append(getKeyStrokeText(it))
         }
       }
