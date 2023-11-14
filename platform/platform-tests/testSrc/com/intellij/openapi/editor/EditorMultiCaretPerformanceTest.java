@@ -30,7 +30,7 @@ public class EditorMultiCaretPerformanceTest extends AbstractEditorTest {
       for (int i = 0; i < charactersToType; i++) {
         type('a');
       }
-    }).attempts(1).assertTiming();
+    }).warmupIterations(0).attempts(1).assertTiming();
     checkResultByText(StringUtil.repeat(StringUtil.repeat("a", charactersToType) + "<caret>\n", caretCount));
   }
 
@@ -48,7 +48,7 @@ public class EditorMultiCaretPerformanceTest extends AbstractEditorTest {
       for (int i = 0; i < charactersToType; i++) {
         type('a');
       }
-    }).attempts(1).assertTiming();
+    }).warmupIterations(0).attempts(1).assertTiming();
     checkResultByText(StringUtil.repeat(' ' + StringUtil.repeat("a", charactersToType) + "<caret> \n", caretCount));
   }
 
@@ -61,7 +61,7 @@ public class EditorMultiCaretPerformanceTest extends AbstractEditorTest {
       for (int i = 0; i < charactersToType; i++) {
         type('a');
       }
-    }).attempts(1).assertTiming();
+    }).warmupIterations(0).attempts(1).assertTiming();
     checkResultByText("<root>\n" + StringUtil.repeat("  <node>" + StringUtil.repeat("a", charactersToType) + "<caret></node>\n", caretCount)
                       + "</root>");
   }

@@ -114,7 +114,6 @@ public class PerformanceTestInfo {
    */
   @Contract(pure = true) // to warn about not calling .assertTiming() in the end
   public PerformanceTestInfo warmupIterations(int iterations) {
-    assert iterations >= 1 : "invalid argument: " + iterations + "; must be >= 1";
     warmupIterations = iterations;
     return this;
   }
