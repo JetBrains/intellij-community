@@ -3,7 +3,6 @@
 
 package com.intellij.openapi.extensions.impl
 
-import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.diagnostic.ThreadDumper
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.openapi.Disposable
@@ -333,8 +332,6 @@ sealed class ExtensionPointImpl<T : Any>(@JvmField val name: String,
     // check before to avoid any "restore" work if already canceled
     CHECK_CANCELED?.invoke()
 
-    val startTime = System.nanoTime()
-
     val adapters = sortedAdapters
     val totalSize = adapters.size
     val extensionClass = getExtensionClass()
@@ -369,8 +366,6 @@ sealed class ExtensionPointImpl<T : Any>(@JvmField val name: String,
     }
 
     // do not count ProcessCanceledException as a valid action to measure (later special category can be introduced if needed)
-    val category = componentManager.getActivityCategory(true)
-    StartUpMeasurer.addCompletedActivity(startTime, extensionClass, category,  /* pluginId = */null, StartUpMeasurer.MEASURE_THRESHOLD)
     if (result.size == index) {
       return Java11Shim.INSTANCE.listOf(result)
     }
