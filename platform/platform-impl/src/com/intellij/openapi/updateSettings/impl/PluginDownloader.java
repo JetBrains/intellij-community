@@ -353,6 +353,7 @@ public final class PluginDownloader {
     indicator.checkCanceled();
     indicator.setText2(IdeBundle.message("progress.downloading.plugin", getPluginName()));
 
+    LOG.info("tryDownloadPlugin: " + myPluginId + " | " + myPluginVersion + " | " + myPluginUrl);
     MarketplacePluginDownloadService downloader = myDownloadService != null ? myDownloadService : new MarketplacePluginDownloadService();
     return myOldFile != null ?
            downloader.downloadPluginViaBlockMap(myPluginUrl, myOldFile, indicator) :
