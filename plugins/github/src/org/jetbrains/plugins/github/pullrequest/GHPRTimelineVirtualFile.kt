@@ -25,7 +25,7 @@ internal class GHPRTimelineVirtualFile(fileManagerId: String,
   override fun getName() = "#${pullRequest.number}"
   override fun getPresentableName() = findDetails()?.let { "${it.title} $name" } ?: name
 
-  override fun getPath(): String = (fileSystem as GHPRVirtualFileSystem).getPath(sessionId, project, repository, pullRequest, null)
+  override fun getPath(): String = (fileSystem as GHPRVirtualFileSystem).getPath(sessionId, project, repository, pullRequest, false)
   override fun getPresentablePath() = findDetails()?.url ?: "${repository.toUrl()}/pulls/${pullRequest.number}"
 
   fun getIcon(): Icon? = findDetails()?.let { GHUIUtil.getPullRequestStateIcon(it.state, it.isDraft) }

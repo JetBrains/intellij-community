@@ -8,10 +8,7 @@ import com.intellij.collaboration.util.filePath
 import com.intellij.collaboration.util.fileStatus
 import com.intellij.collaboration.util.selectedChange
 import com.intellij.diff.chains.DiffRequestProducer
-import com.intellij.diff.tools.combined.COMBINED_DIFF_VIEWER_KEY
-import com.intellij.diff.tools.combined.CombinedDiffModel
-import com.intellij.diff.tools.combined.CombinedDiffModelImpl
-import com.intellij.diff.tools.combined.CombinedPathBlockId
+import com.intellij.diff.tools.combined.*
 import com.intellij.diff.util.DiffUserDataKeys
 import com.intellij.diff.util.DiffUserDataKeysEx
 import com.intellij.diff.util.DiffUtil
@@ -46,7 +43,7 @@ import org.jetbrains.plugins.github.pullrequest.ui.review.GHPRReviewViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.review.GHPRReviewViewModelHelper
 
 @Service(Service.Level.PROJECT)
-internal class GHPRCreateCombinedDiffModelProvider(private val project: Project, parentCs: CoroutineScope) {
+internal class GHPRCombinedDiffModelProvider(private val project: Project, parentCs: CoroutineScope) {
   private val cs = parentCs.childScope()
 
   fun createCombinedDiffModel(repository: GHRepositoryCoordinates, pullRequest: GHPRIdentifier): CombinedDiffModelImpl {
@@ -59,7 +56,7 @@ internal class GHPRCreateCombinedDiffModelProvider(private val project: Project,
     val dataContext = GHPRDataContextRepository.getInstance(project).findContext(repository)!!
     val dataProvider = dataContext.dataProviderRepository.getDataProvider(pullRequest, model.ourDisposable)
 
-    val uiCs = cs.childScope(Dispatchers.Main.immediate + CoroutineName("GitLab Merge Request Review Combined Diff UI"))
+    val uiCs = cs.childScope(Dispatchers.Main.immediate + CoroutineName("GitHub Pull Request Review Combined Diff UI"))
     model.ourDisposable.whenDisposed {
       uiCs.cancel("disposed")
     }
@@ -74,6 +71,27 @@ internal class GHPRCreateCombinedDiffModelProvider(private val project: Project,
       dataProvider.changesData.addChangesListener(model.ourDisposable) {
         childJob.cancel()
         childJob = handleChanges(project, dataContext, dataProvider, reviewVm, model)
+      }
+    }
+    return model
+  }
+
+  fun createCombinedDiffModel(repository: GHRepositoryCoordinates): CombinedDiffModelImpl {
+    val model = CombinedDiffModelImpl(project)
+    val dataContext = GHPRDataContextRepository.getInstance(project).findContext(repository)!!
+
+    val diffModel: GHPRDiffRequestModel = dataContext.newPRDiffModel
+    diffModel.addAndInvokeRequestChainListener(model.ourDisposable) {
+      model.cleanBlocks()
+      diffModel.requestChain?.let {
+        val requests = linkedMapOf<CombinedBlockId, DiffRequestProducer>()
+        for (request in it.requests) {
+          if (request !is ChangeDiffRequestProducer) return@addAndInvokeRequestChainListener
+          val change = request.change
+          val id = CombinedPathBlockId((change.afterRevision?.file ?: change.beforeRevision?.file)!!, change.fileStatus, null)
+          requests[id] = request
+        }
+        model.setBlocks(requests)
       }
     }
     return model

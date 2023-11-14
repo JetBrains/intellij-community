@@ -1,18 +1,29 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest
 
+import com.intellij.collaboration.file.codereview.CodeReviewCombinedDiffVirtualFile
+import com.intellij.collaboration.file.codereview.CodeReviewDiffVirtualFile
 import com.intellij.diff.impl.DiffRequestProcessor
+import com.intellij.diff.tools.combined.CombinedDiffModelImpl
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.ui.MutableDiffRequestChainProcessor
+import com.intellij.vcs.editor.ComplexPathVirtualFileSystem
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContextRepository
 
-@Suppress("EqualsOrHashCode")
-internal class GHNewPRDiffVirtualFile(fileManagerId: String,
-                                      project: Project,
-                                      repository: GHRepositoryCoordinates)
-  : GHPRDiffVirtualFileBase(fileManagerId, project, repository) {
+internal data class GHNewPRDiffVirtualFile(private val fileManagerId: String,
+                                           private val project: Project,
+                                           private val repository: GHRepositoryCoordinates)
+  : CodeReviewDiffVirtualFile(getFileName()) {
+  override fun getFileSystem(): ComplexPathVirtualFileSystem<*> = GHPRVirtualFileSystem.getInstance()
+
+  override fun getPath(): String = (fileSystem as GHPRVirtualFileSystem).getPath(fileManagerId, project, repository, null, true)
+  override fun getPresentablePath() = getPresentablePath(repository)
+  override fun getPresentableName() = GithubBundle.message("pull.request.new.diff.editor.title")
+
+  override fun isValid(): Boolean = isFileValid(fileManagerId, project, repository)
 
   override fun createProcessor(project: Project): DiffRequestProcessor {
     val dataContext = GHPRDataContextRepository.getInstance(project).findContext(repository)!!
@@ -22,17 +33,32 @@ internal class GHNewPRDiffVirtualFile(fileManagerId: String,
       diffRequestModel.process(it)
     }
   }
+}
 
-  override fun getName() = "newPR.diff"
+internal data class GHNewPRCombinedDiffPreviewVirtualFile(private val fileManagerId: String,
+                                                          private val project: Project,
+                                                          private val repository: GHRepositoryCoordinates)
+  : CodeReviewCombinedDiffVirtualFile("GitHubNewPullRequests:$fileManagerId:$repository", getFileName()) {
+
+  override fun getFileSystem(): ComplexPathVirtualFileSystem<*> = GHPRVirtualFileSystem.getInstance()
+
+  override fun getPath(): String = (fileSystem as GHPRVirtualFileSystem).getPath(fileManagerId, project, repository, null, true)
+  override fun getPresentablePath() = getPresentablePath(repository)
   override fun getPresentableName() = GithubBundle.message("pull.request.new.diff.editor.title")
 
-  override fun getPath(): String = (fileSystem as GHPRVirtualFileSystem).getPath(fileManagerId, project, repository, null, null, true)
-  override fun getPresentablePath() = "${repository.toUrl()}/pulls/newPR.diff"
+  override fun isValid(): Boolean = isFileValid(fileManagerId, project, repository)
 
-  override fun equals(other: Any?): Boolean {
-    if (this === other) return true
-    if (other !is GHNewPRDiffVirtualFile) return false
-    if (!super.equals(other)) return false
-    return true
+  override fun createModel(id: String): CombinedDiffModelImpl {
+    return project.service<GHPRCombinedDiffModelProvider>().createCombinedDiffModel(repository)
   }
 }
+
+private fun isFileValid(fileManagerId: String, project: Project, repository: GHRepositoryCoordinates): Boolean {
+  val dataContext = GHPRDataContextRepository.getInstance(project).findContext(repository) ?: return false
+  return dataContext.filesManager.id == fileManagerId
+}
+
+private fun getPresentablePath(repository: GHRepositoryCoordinates) =
+  "${repository.toUrl()}/pulls/newPR.diff"
+
+private fun getFileName(): String = "newPR.diff"

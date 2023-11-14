@@ -13,26 +13,27 @@ import org.jetbrains.plugins.github.GHRegistry
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.pullrequest.*
+import java.util.concurrent.atomic.AtomicReference
 
 internal class GHPRFilesManagerImpl(private val project: Project,
                                     private val repository: GHRepositoryCoordinates) : GHPRFilesManager {
 
   // current time should be enough to distinguish the manager between launches
-  private val id = System.currentTimeMillis().toString()
+  override val id: String = System.currentTimeMillis().toString()
 
   private val files = ContainerUtil.createWeakValueMap<GHPRIdentifier, GHPRTimelineVirtualFile>()
   private val diffFiles = ContainerUtil.createWeakValueMap<GHPRIdentifier, DiffVirtualFileBase>()
-  private var newPRDiffFiles = ContainerUtil.createWeakValueMap<String, DiffVirtualFileBase>()
+  private var newPRDiffFile: AtomicReference<DiffVirtualFileBase?> = AtomicReference()
 
-  override fun createOrGetNewPRDiffFile(sourceId: String, combinedDiff: Boolean): DiffVirtualFileBase {
-    return newPRDiffFiles.getOrPut(sourceId) {
-      if (combinedDiff) {
-        GHNewPRCombinedDiffPreviewVirtualFile(sourceId, id, project, repository)
+  override fun createOrGetNewPRDiffFile(): DiffVirtualFileBase {
+    return newPRDiffFile.updateAndGet {
+      it ?: if (GHRegistry.isCombinedDiffEnabled()) {
+        GHNewPRCombinedDiffPreviewVirtualFile(id, project, repository)
       }
       else {
         GHNewPRDiffVirtualFile(id, project, repository)
       }
-    }
+    }!!
   }
 
   override fun createAndOpenTimelineFile(pullRequest: GHPRIdentifier, requestFocus: Boolean) {
@@ -47,8 +48,9 @@ internal class GHPRFilesManagerImpl(private val project: Project,
   override fun createAndOpenDiffFile(pullRequest: GHPRIdentifier, requestFocus: Boolean) {
     diffFiles.getOrPut(pullRequest) {
       if (GHRegistry.isCombinedDiffEnabled()) {
-        GHPRCombinedDiffPreviewVirtualFile(pullRequest.number.toString(), id, project, repository, pullRequest)
-      } else {
+        GHPRCombinedDiffPreviewVirtualFile(id, project, repository, pullRequest)
+      }
+      else {
         GHPRDiffVirtualFile(id, project, repository, pullRequest)
       }
     }.let {
@@ -70,9 +72,11 @@ internal class GHPRFilesManagerImpl(private val project: Project,
   override fun dispose() {
     // otherwise the exception is thrown when removing an editor tab
     (TransactionGuard.getInstance() as TransactionGuardImpl).performUserActivity {
-      for (file in (files.values + diffFiles.values + newPRDiffFiles.values)) {
+      for (file in (files.values + diffFiles.values)) {
         FileEditorManager.getInstance(project).closeFile(file)
-        file.isValid = false
+      }
+      newPRDiffFile.get()?.also {
+        FileEditorManager.getInstance(project).closeFile(it)
       }
     }
   }
