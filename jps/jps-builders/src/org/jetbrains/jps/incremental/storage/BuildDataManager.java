@@ -180,7 +180,9 @@ public final class BuildDataManager {
             FileUtil.delete(mappingsRoot);
           }
 
-          createDependencyGraph(mappingsRoot, true);
+          if (JavaBuilderUtil.isDepGraphEnabled()) {
+            createDependencyGraph(mappingsRoot, true);
+          }
         }
       }
       myTargetsState.clean();
