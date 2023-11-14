@@ -205,11 +205,6 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
         inferredType = getReturnStatementType(context);
       }
     }
-
-    if (getProperty() == null && PyKnownDecoratorUtil.hasUnknownOrChangingReturnTypeDecorator(this, context)) {
-      inferredType = PyUnionType.createWeakType(inferredType);
-    }
-
     return PyTypingTypeProvider.toAsyncIfNeeded(this, inferredType);
   }
 

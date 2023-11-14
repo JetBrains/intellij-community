@@ -5,9 +5,8 @@ import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
-import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.types.PyType;
@@ -16,9 +15,6 @@ import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 import static com.jetbrains.python.psi.types.PyTypeUtil.notNullToRef;
@@ -39,17 +35,10 @@ public class PyDecoratedFunctionTypeProvider extends PyTypeProviderBase {
       return null;
     }
 
-    List<PyKnownDecoratorUtil.KnownDecorator> filteredDecorators = new ArrayList<>();
-    filteredDecorators.add(PyKnownDecoratorUtil.KnownDecorator.TYPING_OVERLOAD);
-    filteredDecorators.add(PyKnownDecoratorUtil.KnownDecorator.STATICMETHOD);
-    filteredDecorators.add(PyKnownDecoratorUtil.KnownDecorator.CLASSMETHOD);
-
-    var decorators = Arrays.stream(decoratorList.getDecorators()).toList();
-    var haveSpecialCase = ContainerUtil.exists(decorators, d ->
-      ContainerUtil.exists(PyKnownDecoratorUtil.asKnownDecorators(d, context),
-                           it -> ContainerUtil.exists(filteredDecorators, filtered -> filtered.equals(it))));
-    if (haveSpecialCase) return null;
-
+    List<PyDecorator> decorators = ContainerUtil.filter(decoratorList.getDecorators(), d -> !isTransparentDecorator(d, context));
+    if (decorators.isEmpty()) {
+      return null;
+    }
 
     /* Our goal is to infer the type of reference of decorated object.
      * For that we going to infer a type of expression <code>decorator(reference)<code>.
@@ -63,52 +52,39 @@ public class PyDecoratedFunctionTypeProvider extends PyTypeProviderBase {
     );
   }
 
+  private static boolean isTransparentDecorator(@NotNull PyDecorator decorator, @NotNull TypeEvalContext context) {
+    return !PyKnownDecoratorUtil.asKnownDecorators(decorator, context).isEmpty() || isUntypedDecorator(decorator, context);
+  }
+
+  private static boolean isUntypedDecorator(@NotNull PyDecorator decorator, @NotNull TypeEvalContext context) {
+    QualifiedName qualifiedName = decorator.getQualifiedName();
+    if (qualifiedName == null) return false;
+    // Decorator is the only expression persisted in PSI stubs.
+    // Calling getReference().resolve() will cause un-stubbing of the containing file
+    List<PsiElement> resolved = PyResolveUtil.resolveQualifiedNameInScope(qualifiedName, (PyFile)decorator.getContainingFile(), context);
+    for (PsiElement res : resolved) {
+      if (res instanceof PyFunction function) {
+        if (function.getTypeCommentAnnotation() != null || function.getAnnotation() != null) {
+          return false;
+        }
+      }
+      else if (res instanceof PyClass) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   @Nullable
   private static Ref<PyType> evaluateType(@NotNull PyDecoratable referenceTarget,
                                           @NotNull TypeEvalContext context,
                                           @NotNull List<PyDecorator> decorators) {
-    PyType sourceType = null;
-    if (referenceTarget instanceof PyTypedElement typedElement) {
-      sourceType = context.getType(typedElement);
+    PyExpression fakeCallExpression = fakeCallExpression(referenceTarget, decorators, context);
+    if (fakeCallExpression == null) {
+      return null;
     }
-
-    var annotatedDecorators = getAnnotatedDecorators(referenceTarget, decorators, context);
-    if (!annotatedDecorators.isEmpty()) {
-      PyExpression fakeCallExpression = fakeCallExpression(referenceTarget, annotatedDecorators, context);
-      if (fakeCallExpression == null) {
-        return null;
-      }
-      var fakeCallExpressionType = context.getType(fakeCallExpression);
-      return notNullToRef(fakeCallExpressionType);
-    }
-
-    return notNullToRef(sourceType);
-  }
-
-  @NotNull
-  private static List<PyDecorator> getAnnotatedDecorators(@NotNull PyDecoratable referenceTarget,
-                                                          @NotNull List<PyDecorator> decorators,
-                                                          @NotNull TypeEvalContext context) {
-    var result = new ArrayList<PyDecorator>();
-    var scopeOwner = ScopeUtil.getScopeOwner(referenceTarget);
-    if (scopeOwner == null) return Collections.emptyList();
-    for (var decorator : decorators) {
-      var qualifiedName = decorator.getQualifiedName();
-      if (qualifiedName == null) continue;
-      var resolved = PyResolveUtil.resolveQualifiedNameInScope(qualifiedName, scopeOwner, context);
-      for (var res : resolved) {
-        if (res instanceof PyFunction function) {
-          var annotation = PyTypingTypeProvider.getReturnTypeAnnotation(function, context);
-          if (annotation != null) {
-            result.add(decorator);
-          }
-        }
-        else if (res instanceof PyClass) {
-          result.add(decorator);
-        }
-      }
-    }
-    return result;
+    // TODO Don't ignore explicit return type Any on one of the decorators 
+    return notNullToRef(context.getType(fakeCallExpression));
   }
 
   @Nullable
