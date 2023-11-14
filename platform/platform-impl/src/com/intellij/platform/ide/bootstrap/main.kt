@@ -728,15 +728,21 @@ interface AppStarter {
 @VisibleForTesting
 @Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
 class Java11ShimImpl : Java11Shim() {
-  override fun <K, V : Any> copyOf(map: Map<K, V>) = java.util.Map.copyOf(map)
+  override fun <K : Any, V> copyOf(map: Map<K, V>) = java.util.Map.copyOf(map)
 
-  override fun <K, V : Any> mapOf(k: K, v: V): Map<K, V> = java.util.Map.of(k, v)
+  override fun <K : Any, V> mapOf(k: K, v: V): Map<K, V> = java.util.Map.of(k, v)
 
   override fun <E> copyOf(collection: Collection<E>): Set<E> = java.util.Set.copyOf(collection)
 
-  override fun <K, V : Any> emptyMap(): Map<K, V> = java.util.Map.of()
+  override fun <K : Any, V> emptyMap(): Map<K, V> = java.util.Map.of()
 
   override fun <V : Any> createConcurrentLongObjectMap(): ConcurrentLongObjectMap<V> {
     return ConcurrentCollectionFactory.createConcurrentLongObjectMap()
   }
+
+  override fun <E> listOf(): List<E> = java.util.List.of()
+
+  override fun <E> listOf(element: E): List<E> = java.util.List.of(element)
+
+  override fun <E> listOf(array: Array<E>): List<E> = java.util.List.of(*array)
 }

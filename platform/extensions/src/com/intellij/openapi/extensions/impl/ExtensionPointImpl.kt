@@ -14,6 +14,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.*
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.Disposer
+import com.intellij.util.Java11Shim
 import com.intellij.util.ThreeState
 import kotlinx.collections.immutable.*
 import org.jetbrains.annotations.ApiStatus
@@ -39,7 +40,7 @@ sealed class ExtensionPointImpl<T : Any>(@JvmField val name: String,
                                          private var extensionClass: Class<T>?,
                                          private val isDynamic: Boolean) : ExtensionPoint<T>, Sequence<T> {
   @Volatile
-  private var cachedExtensions: PersistentList<T>? = null
+  private var cachedExtensions: List<T>? = null
 
   @Volatile
   private var cachedExtensionsAsArray: Array<T>? = null
@@ -326,7 +327,7 @@ sealed class ExtensionPointImpl<T : Any>(@JvmField val name: String,
       return adapters
     }
 
-  private fun createExtensionInstances(): PersistentList<T> {
+  private fun createExtensionInstances(): List<T> {
     assertNotReadOnlyMode()
 
     // check before to avoid any "restore" work if already canceled
@@ -338,34 +339,52 @@ sealed class ExtensionPointImpl<T : Any>(@JvmField val name: String,
     val totalSize = adapters.size
     val extensionClass = getExtensionClass()
     if (totalSize == 0) {
-      return persistentListOf()
+      return Java11Shim.INSTANCE.listOf()
+    }
+    else if (totalSize == 1) {
+      val extension = processAdapter(adapter = adapters.get(0),
+                                     listeners = listeners,
+                                     result = null,
+                                     duplicates = null,
+                                     extensionClassForCheck = extensionClass, adapters = adapters) ?: return Java11Shim.INSTANCE.listOf()
+      return Java11Shim.INSTANCE.listOf(extension)
     }
 
     val duplicates = if (this is BeanExtensionPoint<*>) null else Collections.newSetFromMap<T>(IdentityHashMap(totalSize))
     val listeners = listeners
-    val result = persistentListOf<T>().mutate { result ->
-      for (adapter in adapters) {
-        val extension = processAdapter(adapter = adapter,
-                                       listeners = listeners,
-                                       result = result,
-                                       duplicates = duplicates,
-                                       extensionClassForCheck = extensionClass,
-                                       adapters = adapters)
-        if (extension != null) {
-          result.add(extension)
-        }
+
+    @Suppress("UNCHECKED_CAST")
+    val result = java.lang.reflect.Array.newInstance(extensionClass, totalSize) as Array<T>
+    var index = 0
+    for (adapter in adapters) {
+      val extension = processAdapter(adapter = adapter,
+                                     listeners = listeners,
+                                     result = result,
+                                     duplicates = duplicates,
+                                     extensionClassForCheck = extensionClass,
+                                     adapters = adapters)
+      if (extension != null) {
+        result[index++] = extension
       }
     }
 
     // do not count ProcessCanceledException as a valid action to measure (later special category can be introduced if needed)
     val category = componentManager.getActivityCategory(true)
     StartUpMeasurer.addCompletedActivity(startTime, extensionClass, category,  /* pluginId = */null, StartUpMeasurer.MEASURE_THRESHOLD)
-    return result
+    if (result.size == index) {
+      return Java11Shim.INSTANCE.listOf(result)
+    }
+    else {
+      @Suppress("UNCHECKED_CAST")
+      val newResult = java.lang.reflect.Array.newInstance(extensionClass, index) as Array<T>
+      System.arraycopy(result, 0, newResult, 0, index)
+      return Java11Shim.INSTANCE.listOf(newResult)
+    }
   }
 
   private fun processAdapter(adapter: ExtensionComponentAdapter,
                              listeners: List<ExtensionPointListener<T>>?,
-                             result: List<T>?,
+                             result: Array<T>?,
                              duplicates: MutableSet<T>?,
                              extensionClassForCheck: Class<T>,
                              adapters: List<ExtensionComponentAdapter>): T? {

@@ -11,9 +11,9 @@ abstract class Java11Shim {
   companion object {
     @JvmField
     var INSTANCE: Java11Shim = object : Java11Shim() {
-      override fun <K, V : Any> copyOf(map: Map<K, V>) = Collections.unmodifiableMap(map)
+      override fun <K : Any, V> copyOf(map: Map<K, V>) = Collections.unmodifiableMap(map)
 
-      override fun <K, V : Any> mapOf(k: K, v: V): Map<K, V> = Collections.singletonMap(k, v)
+      override fun <K : Any, V> mapOf(k: K, v: V): Map<K, V> = Collections.singletonMap(k, v)
 
       override fun <E> copyOf(collection: Collection<E>): Set<E> = Collections.unmodifiableSet(HashSet(collection))
 
@@ -21,17 +21,29 @@ abstract class Java11Shim {
         return ConcurrentLongObjectHashMap()
       }
 
-      override fun <K, V : Any> emptyMap(): Map<K, V> = Collections.emptyMap()
+      override fun <K : Any, V> emptyMap(): Map<K, V> = Collections.emptyMap()
+
+      override fun <E> listOf(): List<E> = Collections.emptyList()
+
+      override fun <E> listOf(element: E): List<E> = Collections.singletonList(element)
+
+      override fun <E> listOf(array: Array<E>) = array.asList()
     }
   }
 
-  abstract fun <K, V : Any> copyOf(map: Map<K, V>): Map<K, V>
+  abstract fun <K : Any, V> copyOf(map: Map<K, V>): Map<K, V>
 
-  abstract fun <K, V : Any> mapOf(k: K, v: V): Map<K, V>
+  abstract fun <K : Any, V> mapOf(k: K, v: V): Map<K, V>
 
-  abstract fun <K, V : Any> emptyMap(): Map<K, V>
+  abstract fun <K : Any, V> emptyMap(): Map<K, V>
 
   abstract fun <E> copyOf(collection: Collection<E>): Set<E>
+
+  abstract fun <E> listOf(): List<E>
+
+  abstract fun <E> listOf(element: E): List<E>
+
+  abstract fun <E> listOf(array: Array<E>): List<E>
 
   abstract fun <V : Any> createConcurrentLongObjectMap(): ConcurrentLongObjectMap<V>
 }
