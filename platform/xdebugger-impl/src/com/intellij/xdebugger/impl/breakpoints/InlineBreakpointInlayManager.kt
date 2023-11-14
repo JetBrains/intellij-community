@@ -130,6 +130,8 @@ internal class InlineBreakpointInlayManager(private val project: Project, privat
 
     val inlays = mutableListOf<SingleInlayDatum>()
     if (onlyLine != null) {
+      if (!DocumentUtil.isValidLine(onlyLine, document)) return
+
       val breakpoints = allBreakpoints.filter { it.line == onlyLine }
       if (!breakpoints.isEmpty()) {
         inlays += collectInlays(document, onlyLine, breakpoints)
