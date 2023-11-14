@@ -95,6 +95,7 @@ public final class ThreadLeakTracker {
       "OkHttp ConnectionPool", // Dockers okhttp3.internal.connection.RealConnectionPool
       "Okio Watchdog", // Dockers "okio.AsyncTimeout.Watchdog"
       "Periodic tasks thread", // com.intellij.util.concurrency.AppDelayQueue.TransferThread
+      "process reaper", // Thread[#46,process reaper(pid7496),10,InnocuousThreadGroup] (since JDK-8279488 part of InnocuousThreadGroup)
       "rd throttler", // daemon thread created by com.jetbrains.rd.util.AdditionalApiKt.getTimer
       "Reference Handler",
       "RMI GC Daemon",
