@@ -238,8 +238,12 @@ sealed class ExtensionPointImpl<T : Any>(@JvmField val name: String,
   fun asSequence(): Sequence<T> = cachedExtensions?.asSequence() ?: this
 
   final override fun iterator(): Iterator<T> {
+    cachedExtensions?.let {
+      return it.iterator()
+    }
+
     val size: Int
-    val adapters: List<ExtensionComponentAdapter> = sortedAdapters
+    val adapters = sortedAdapters
     size = adapters.size
     if (size == 0) {
       return Collections.emptyIterator()

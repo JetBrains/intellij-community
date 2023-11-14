@@ -310,7 +310,7 @@ public final class SerializationManagerImpl extends SerializationManagerEx imple
   private static <T> void getExtensions(@NotNull KeyedExtensionCollector<T, ?> collector, @NotNull Consumer<? super T> consumer) {
     ExtensionPointImpl<@NotNull KeyedLazyInstance<T>> point = (ExtensionPointImpl<@NotNull KeyedLazyInstance<T>>)collector.getPoint();
     if (point != null) {
-      Iterator<KeyedLazyInstance<T>> iterator = point.asSequence().iterator();
+      Iterator<KeyedLazyInstance<T>> iterator = point.iterator();
       while (iterator.hasNext()) {
         consumer.accept(iterator.next().getInstance());
       }
