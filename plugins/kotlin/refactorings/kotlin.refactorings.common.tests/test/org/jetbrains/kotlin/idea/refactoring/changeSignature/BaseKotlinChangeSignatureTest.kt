@@ -868,7 +868,7 @@ abstract class BaseKotlinChangeSignatureTest<C: KotlinModifiableChangeInfo<P>, P
         setNewParameter(1, newParameters[0])
     }
 
-    fun testImplicitReceiverInRecursiveCall() = doTest {//todo here the changed arg is replaced by cached receiver
+    fun testImplicitReceiverInRecursiveCall() = doTest {
         receiverParameterInfo = null
         newParameters[0].name = "a"
     }

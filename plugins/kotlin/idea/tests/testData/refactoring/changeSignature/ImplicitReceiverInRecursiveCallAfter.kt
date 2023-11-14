@@ -3,4 +3,3 @@ interface A {
 }
 
 fun ext(a: A): Int = 1 + ext(a.parent)
-// IGNORE_K2

@@ -7,6 +7,7 @@ import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.util.PsiSuperMethodUtil
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.refactoring.changeSignature.CallerUsageInfo
 import com.intellij.refactoring.changeSignature.ChangeInfo
 import com.intellij.usageView.UsageInfo
@@ -219,7 +220,9 @@ internal class KotlinFunctionCallUsage(
             val (index, param) = it
             val oldIndex = param.oldIndex
             val resolvedArgument = argumentMapping[oldIndex]
-            val receiverValue = if (oldIndex == originalReceiverInfo?.oldIndex) extensionReceiver else null
+            val receiverValue = if (oldIndex == originalReceiverInfo?.oldIndex) {
+                (if (PsiTreeUtil.isAncestor(changeInfo.method, element, false)) "${param.name}." else "") + extensionReceiver
+            } else null
             ArgumentInfo(param, index, resolvedArgument, receiverValue)
         }.toList()
 
