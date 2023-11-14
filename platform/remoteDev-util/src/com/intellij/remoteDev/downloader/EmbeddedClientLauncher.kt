@@ -53,6 +53,21 @@ class EmbeddedClientLauncher private constructor(private val moduleRepository: R
   }
 
   fun launch(urlToOpen: String, lifetime: Lifetime, errorReporter: EmbeddedClientErrorReporter): Lifetime {
+    if (Registry.`is`("rdct.embedded.client.use.launcher")) {
+      val launcherData = findJetBrainsClientLauncher()
+      if (launcherData != null) {
+        LOG.debug("Start embedded client using launcher")
+        val workingDirectory = Path(PathManager.getHomePath())
+        return CodeWithMeClientDownloader.runJetBrainsClientProcess(
+          launcherData, 
+          workingDirectory,
+          clientVersion = ApplicationInfo.getInstance().build.asStringWithoutProductCode(),
+          urlToOpen, 
+          lifetime
+        )
+      }
+    }
+    
     val processLifetimeDef = lifetime.createNested()
     
     val javaParameters = createProcessParameters(moduleRepository, moduleRepositoryPath, urlToOpen)
@@ -77,6 +92,27 @@ class EmbeddedClientLauncher private constructor(private val moduleRepository: R
 
     handler.startNotify()
     return processLifetimeDef
+  }
+
+  private fun findJetBrainsClientLauncher(): JetBrainsClientLauncherData? {
+    return when (OS.CURRENT) {
+      OS.macOS -> {
+        val appPath = Path(PathManager.getHomePath()).parent
+        //on macOS, the default launcher is modified to start JetBrains Client when running with 'thinClient' command
+        if (appPath.fileName.toString().endsWith(".app")) {
+          CodeWithMeClientDownloader.createLauncherDataForMacOs(appPath)
+        }
+        else {
+          null
+        }
+      }
+      OS.Windows -> PathManager.findBinFile("jetbrains_client64.exe")?.let { 
+        JetBrainsClientLauncherData(it, listOf(it.pathString))
+      }
+      else -> PathManager.findBinFile("jetbrains_client.sh")?.let {
+        JetBrainsClientLauncherData(it, listOf(it.pathString))
+      }
+    }
   }
 
   private fun createProcessParameters(moduleRepository: RuntimeModuleRepository, moduleRepositoryPath: Path, urlToOpen: String): SimpleJavaParameters {
