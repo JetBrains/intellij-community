@@ -198,7 +198,8 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
     return ActionUpdateThreadAware.super.getActionUpdateThread();
   }
 
-  private boolean updateNotOverridden() {
+  @ApiStatus.Internal
+  final boolean updateNotOverridden() {
     if (myUpdateNotOverridden != null) {
       return myUpdateNotOverridden;
     }
