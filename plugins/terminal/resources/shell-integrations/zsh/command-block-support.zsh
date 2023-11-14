@@ -56,6 +56,10 @@ __jetbrains_intellij_zshaddhistory() {
 }
 
 __jetbrains_intellij_prompt_shown() {
+  if [ -z "$__JETBRAINS_INTELLIJ_INITIALIZED" ]; then
+    __JETBRAINS_INTELLIJ_INITIALIZED=1
+    builtin printf '\e]1341;initialized;current_directory=%s\a' "$(__jetbrains_intellij_encode "$PWD")"
+  fi
   builtin printf '\e]1341;prompt_shown\a'
 }
 
@@ -106,6 +110,3 @@ __jetbrains_intellij_configure_prompt
 # Get all commands from history from the first command
 builtin local hist="$(builtin history 1)"
 builtin printf '\e]1341;command_history;history_string=%s\a' "$(__jetbrains_intellij_encode_large "${hist}")"
-
-# This script is sourced from inside a `precmd` hook, i.e. right before the first prompt.
-builtin printf '\e]1341;initialized;current_directory=%s\a' "$(__jetbrains_intellij_encode "$PWD")"

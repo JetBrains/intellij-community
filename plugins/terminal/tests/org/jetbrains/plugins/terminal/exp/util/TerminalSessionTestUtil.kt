@@ -1,12 +1,15 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.exp.util
 
+import com.intellij.execution.Platform
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import com.intellij.util.execution.ParametersListUtil
 import com.jediterm.core.util.TermSize
 import com.jediterm.terminal.RequestOrigin
 import org.jetbrains.plugins.terminal.LocalTerminalDirectRunner
@@ -16,6 +19,7 @@ import org.jetbrains.plugins.terminal.exp.TerminalModel
 import org.jetbrains.plugins.terminal.exp.TerminalSession
 import org.jetbrains.plugins.terminal.exp.ui.BlockTerminalColorPalette
 import org.junit.Assume
+import java.nio.file.Path
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
@@ -65,5 +69,28 @@ object TerminalSessionTestUtil {
 
   private fun assumeBlockShellIntegration(options: ShellStartupOptions) {
     Assume.assumeTrue("Block shell integration is expected", options.shellIntegration?.withCommandBlocks == true)
+  }
+
+  fun getJavaShellCommand(mainClass: Class<*>, vararg args: String): String {
+    val command = getJavaCommand(mainClass, args.toList())
+    return ParametersListUtil.join(command)
+  }
+
+  private fun getJavaCommand(mainClass: Class<*>, args: List<String>): List<String> {
+    return listOf(getJavaExecutablePath().toString(),
+                  "-cp",
+                  getJarPathForClasses(listOf(mainClass, KotlinVersion::class.java /* kotlin-stdlib.jar */)),
+                  mainClass.name) +
+           args
+  }
+
+  private fun getJavaExecutablePath(): Path {
+    return Path.of(System.getProperty("java.home"), "bin", if (Platform.current() == Platform.WINDOWS) "java.exe" else "java")
+  }
+
+  private fun getJarPathForClasses(classes: List<Class<*>>): String {
+    return classes.joinToString(Platform.current().pathSeparator.toString()) {
+      checkNotNull(PathManager.getJarPathForClass(it)) { "Cannot find jar/directory for $it" }
+    }
   }
 }

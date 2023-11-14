@@ -6,8 +6,8 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.RuleChain
-import com.intellij.testFramework.rules.TempDirectory
 import com.jediterm.core.util.TermSize
+import org.jetbrains.plugins.terminal.block.testApps.SimpleTextRepeater
 import org.jetbrains.plugins.terminal.exp.*
 import org.jetbrains.plugins.terminal.exp.util.TerminalSessionTestUtil
 import org.junit.Assert
@@ -23,7 +23,6 @@ import java.util.concurrent.atomic.AtomicReference
 class BlockTerminalTest(private val shellPath: String) {
 
   private val projectRule: ProjectRule = ProjectRule()
-  private val tmpDir: TempDirectory = TempDirectory()
   private val disposableRule = DisposableRule()
 
   companion object {
@@ -38,15 +37,33 @@ class BlockTerminalTest(private val shellPath: String) {
 
   @Rule
   @JvmField
-  val ruleChain: RuleChain = RuleChain(projectRule, tmpDir, disposableRule)
+  val ruleChain: RuleChain = RuleChain(projectRule, disposableRule)
 
   @org.junit.Test
   fun `test echo output is read`() {
-    val session = TerminalSessionTestUtil.startBlockTerminalSession(projectRule.project, shellPath, disposableRule.disposable, TermSize(20, 10))
+    val session = startBlockTerminalSession(TermSize(20, 10))
     val outputFuture: CompletableFuture<CommandResult> = getCommandResultFuture(session)
     session.sendCommandToExecute("echo qqq")
     assertCommandResult(0, "qqq\n", outputFuture)
   }
+
+  @org.junit.Test
+  fun `test read from history and screen buffers`() {
+    val termSize = TermSize(20, 10)
+    val session = startBlockTerminalSession(termSize)
+    val outputFuture: CompletableFuture<CommandResult> = getCommandResultFuture(session)
+    val items = listOf(SimpleTextRepeater.Item("Hello, World", termSize.rows * 3),
+                       SimpleTextRepeater.Item("Done", 1))
+    session.sendCommandToExecute(SimpleTextRepeater.generateCommandLine(*items.toTypedArray()))
+    val expectedLines = items.flatMap { item ->
+      MutableList(item.count) { item.lineText }
+    }
+    val expectedOutput : String = expectedLines.joinToString("\n", postfix = "\n")
+    assertCommandResult(0, expectedOutput, outputFuture)
+  }
+
+  private fun startBlockTerminalSession(termSize: TermSize) =
+    TerminalSessionTestUtil.startBlockTerminalSession(projectRule.project, shellPath, disposableRule.disposable, termSize)
 
   @Suppress("SameParameterValue")
   private fun assertCommandResult(expectedExitCode: Int, expectedOutput: String, actualResultFuture: CompletableFuture<CommandResult>) {

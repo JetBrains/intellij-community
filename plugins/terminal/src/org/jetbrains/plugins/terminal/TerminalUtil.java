@@ -99,6 +99,9 @@ public final class TerminalUtil {
     }
     String enterCode = new String(terminalStarter.getTerminal().getCodeForKey(KeyEvent.VK_ENTER, 0), StandardCharsets.UTF_8);
     result.append(shellCommand).append(enterCode);
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Sending " + shellCommand);
+    }
     terminalStarter.sendString(result.toString(), false);
   }
 }

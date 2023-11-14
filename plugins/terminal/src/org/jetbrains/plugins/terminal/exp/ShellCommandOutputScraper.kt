@@ -91,8 +91,8 @@ internal class ShellCommandOutputScraper(private val textBuffer: TerminalTextBuf
         pendingNuls = 0
       }
     }
-    val historyLines = -textBuffer.historyLinesCount
-    textBuffer.processHistoryAndScreenLines(-historyLines, historyLines + textBuffer.height, consumer)
+    val historyLinesCount = textBuffer.historyLinesCount
+    textBuffer.processHistoryAndScreenLines(-historyLinesCount, historyLinesCount + textBuffer.height, consumer)
     return StyledCommandOutput(builder.toString(), highlightings)
   }
 }
