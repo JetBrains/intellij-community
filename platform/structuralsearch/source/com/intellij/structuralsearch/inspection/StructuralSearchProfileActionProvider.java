@@ -105,7 +105,7 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
                                             @NotNull InspectionProfileImpl profile) {
     final SSBasedInspection inspection = SSBasedInspection.getStructuralSearchInspection(profile);
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      InspectionMetaDataDialog dialog = inspection.createMetaDataDialog(project, null);
+      InspectionMetaDataDialog dialog = inspection.createMetaDataDialog(project, profile.getDisplayName(), null);
       if (configuration instanceof ReplaceConfiguration) {
         dialog.showCleanupOption(false);
       }

@@ -182,7 +182,7 @@ public class StructuralSearchFakeInspection extends LocalInspectionTool {
       return;
     }
     final SSBasedInspection inspection = SSBasedInspection.getStructuralSearchInspection(profile);
-    final InspectionMetaDataDialog dialog = inspection.createMetaDataDialog(project, myMainConfiguration);
+    final InspectionMetaDataDialog dialog = inspection.createMetaDataDialog(project, profile.getDisplayName(), myMainConfiguration);
     if (isCleanupAllowed()) {
       dialog.showCleanupOption(myMainConfiguration.isCleanup());
     }

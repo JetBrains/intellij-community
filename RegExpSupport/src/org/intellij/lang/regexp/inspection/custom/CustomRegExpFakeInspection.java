@@ -179,7 +179,8 @@ public class CustomRegExpFakeInspection extends LocalInspectionTool {
       return;
     }
     final CustomRegExpInspection inspection = getRegExpInspection(profile);
-    final InspectionMetaDataDialog dialog = inspection.createMetaDataDialog(project, myConfiguration);
+    final InspectionMetaDataDialog dialog =
+      inspection.createMetaDataDialog(project, profile.getDisplayName(), myConfiguration);
     if (isCleanupAllowed()) {
       dialog.showCleanupOption(myConfiguration.isCleanup());
     }

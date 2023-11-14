@@ -40,7 +40,8 @@ public class RegExpProfileActionProvider extends InspectionProfileActionProvider
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      final RegExpDialog dialog = new RegExpDialog(e.getProject(), true, myReplace ? RegExpInspectionConfiguration.InspectionPattern.EMPTY_REPLACE_PATTERN : null);
+      final RegExpDialog dialog =
+        new RegExpDialog(e.getProject(), true, myReplace ? RegExpInspectionConfiguration.InspectionPattern.EMPTY_REPLACE_PATTERN : null);
       if (!dialog.showAndGet()) return;
 
       final RegExpInspectionConfiguration.InspectionPattern pattern = dialog.getPattern();
@@ -48,7 +49,7 @@ public class RegExpProfileActionProvider extends InspectionProfileActionProvider
       final CustomRegExpInspection inspection = CustomRegExpInspection.getCustomRegExpInspection(profile);
       final Project project = e.getData(CommonDataKeys.PROJECT);
       if (project == null) return;
-      final InspectionMetaDataDialog metaDataDialog = inspection.createMetaDataDialog(project, null);
+      final InspectionMetaDataDialog metaDataDialog = inspection.createMetaDataDialog(project, profile.getDisplayName(), null);
       if (pattern.replacement() != null) {
         metaDataDialog.showCleanupOption(false);
       }

@@ -286,7 +286,7 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
     return removed;
   }
 
-  public InspectionMetaDataDialog createMetaDataDialog(Project project, @Nullable Configuration configuration) {
+  public InspectionMetaDataDialog createMetaDataDialog(Project project, @NotNull String profileName, @Nullable Configuration configuration) {
     final List<Configuration> configurations = getConfigurations();
     final Function<String, @Nullable @NlsContexts.DialogMessage String> nameValidator = name -> {
       for (Configuration current : configurations) {
@@ -298,9 +298,9 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
       return null;
     };
     if (configuration == null) {
-      return new InspectionMetaDataDialog(project, nameValidator);
+      return new InspectionMetaDataDialog(project, profileName, nameValidator);
     }
-    return new InspectionMetaDataDialog(project, nameValidator, configuration.getName(), configuration.getDescription(),
+    return new InspectionMetaDataDialog(project, profileName, nameValidator, configuration.getName(), configuration.getDescription(),
                                         configuration.getProblemDescriptor(), configuration.getSuppressId());
   }
 
