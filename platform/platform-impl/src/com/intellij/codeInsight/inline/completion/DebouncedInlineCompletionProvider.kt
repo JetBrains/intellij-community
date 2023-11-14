@@ -6,6 +6,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.job
+import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.coroutines.coroutineContext
 import kotlin.time.Duration
@@ -13,11 +14,28 @@ import kotlin.time.Duration
 abstract class DebouncedInlineCompletionProvider : InlineCompletionProvider {
   private val jobCall = AtomicReference<Job?>(null)
 
-  protected abstract val delay: Duration
+  @Deprecated(
+    message = "Please, use more flexible method: getDebounceDelay. This method is going to be removed soon.",
+    replaceWith = ReplaceWith("getDebounceDelay(request)"),
+    level = DeprecationLevel.WARNING
+  )
+  protected open val delay: Duration
+    @ScheduledForRemoval
+    @Deprecated(
+      message = "Please, use more flexible method: getDebounceDelay. This method is going to be removed soon.",
+      replaceWith = ReplaceWith("getDebounceDelay(request)"),
+      level = DeprecationLevel.WARNING
+    )
+    get() = throw UnsupportedOperationException("Please, use more flexible method: getDebounceDelay.")
+
+  protected open suspend fun getDebounceDelay(request: InlineCompletionRequest): Duration {
+    @Suppress("DEPRECATION")
+    return delay
+  }
 
   /**
    * Returns a Flow of InlineCompletionElement objects with debounced proposals for the given InlineCompletionRequest.
-   * Override [delay] to control debounce delay
+   * Override [getDebounceDelay] to control debounce delay
    */
   abstract suspend fun getSuggestionDebounced(request: InlineCompletionRequest): InlineCompletionSuggestion
 
@@ -41,7 +59,7 @@ abstract class DebouncedInlineCompletionProvider : InlineCompletionProvider {
   }
 
   suspend fun debounce(request: InlineCompletionRequest): InlineCompletionSuggestion {
-    delay(delay)
+    delay(getDebounceDelay(request))
     return getSuggestionDebounced(request)
   }
 
