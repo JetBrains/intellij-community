@@ -124,6 +124,7 @@ class IdeFrameImpl : JFrame(), IdeFrame, DataProvider, DisposableWindow {
 
   @Suppress("OVERRIDE_DEPRECATION")
   override fun show() {
+    isDisposed = false
     if (IdeRootPane.hideNativeLinuxTitle && !isUndecorated) {
       isUndecorated = true
     }
