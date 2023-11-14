@@ -176,8 +176,7 @@ public final class CommentByLineCommentHandler extends MultiCaretCodeInsightActi
 
       block.blockSuitableCommenter = getBlockSuitableCommenter(psiFile, block.editor, offset, endOffset);
       Language lineStartLanguage = getLineStartLanguage(block.editor, psiFile, startLine);
-      CommonCodeStyleSettings languageSettings = CodeStyle.getLanguageSettings(psiFile, lineStartLanguage);
-      CommentStyleSettings commentStyleSettings = languageSettings.getCommentStyleSettings();
+      CommentStyleSettings commentStyleSettings = CodeStyle.getLanguageSettings(psiFile, lineStartLanguage);
       block.commentWithIndent = !commentStyleSettings.isLineCommentInTheFirstColumn();
       block.addLineSpace = commentStyleSettings.isLineCommentFollowedWithSpace();
       block.addBlockSpace = commentStyleSettings.isBlockCommentIncludesSpace();
