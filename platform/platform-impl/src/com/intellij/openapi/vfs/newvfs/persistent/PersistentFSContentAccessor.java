@@ -9,6 +9,7 @@ import com.intellij.util.io.DataOutputStream;
 import com.intellij.util.io.DigestUtil;
 import com.intellij.util.io.storage.IStorageDataOutput;
 import com.intellij.util.io.storage.RefCountingContentStorage;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,20 +25,18 @@ import static java.util.concurrent.TimeUnit.NANOSECONDS;
 public final class PersistentFSContentAccessor {
   private static final Logger LOG = Logger.getInstance(PersistentFSContentAccessor.class);
 
-  private static final boolean USE_CONTENT_HASHES = true;
-
   private final @NotNull PersistentFSConnection connection;
 
   private final ReadWriteLock lock = new ReentrantReadWriteLock();
 
   //=========== monitoring: ===========
+  //TODO RC: redirect values to OTel.Metrics, instead of logging them
   private long totalContentBytesStored;
   private long totalContentBytesReused;
   private int totalContentRecordsStored;
   private int totalContentRecordsReused;
 
   private long totalHashCalculationTimeNs;
-
 
 
   PersistentFSContentAccessor(@NotNull PersistentFSConnection connection) {
@@ -69,77 +68,28 @@ public final class PersistentFSContentAccessor {
     }
   }
 
-  void deleteContent(int fileId) throws IOException {
-    if (USE_CONTENT_HASHES) {
-      return;
-    }
-    lock.writeLock().lock();
-    try {
-      final int contentRecordId = connection.getRecords().getContentRecordId(fileId);
-      if (contentRecordId != 0) {
-        releaseContentRecord(contentRecordId);
-      }
-    }
-    finally {
-      lock.writeLock().unlock();
-    }
-  }
-
-  void releaseContentRecord(int contentRecordId) throws IOException {
-    if (USE_CONTENT_HASHES) {
-      return;
-    }
-    lock.writeLock().lock();
-    try {
-      RefCountingContentStorage contentStorage = connection.getContents();
-      //IDEA-302595: Don't decrement counter if already 0.
-      // Ideally, it is a bug if we ever reach here with refCount==0 -- attempt to release something
-      // that was already released. But in practice, refCount mechanic currently is not smooth enough
-      // to rely on the invariant 'contentStorage.refCount == count of contentId references across the
-      // app'. Ref-counting is prone to unexpected app shutdowns, and with contentHashes introduction,
-      // contentStorage works mostly as an append-only log anyway. So I see no reason to blow logs with
-      // useless warnings -- better just make releaseContentRecord() idempotent, allowing to release
-      // the same contentId as many times as one wants:
-      final int refCount = contentStorage.getRefCount(contentRecordId);
-      if (refCount > 0) {
-        contentStorage.releaseRecord(contentRecordId);
-      }
-    }
-    finally {
-      lock.writeLock().unlock();
-    }
-  }
-
-  boolean writeContent(int fileId, @NotNull ByteArraySequence bytes, @SuppressWarnings("ParameterCanBeLocal") boolean fixedSize)
+  boolean writeContent(int fileId,
+                       @NotNull ByteArraySequence bytes,
+                       boolean fixedSize)
     throws IOException {
     PersistentFSConnection.ensureIdIsValid(fileId);
     lock.writeLock().lock();
     try {
-      PersistentFSConnection connection = this.connection;
-
-      boolean modified;
       RefCountingContentStorage contentStorage = connection.getContents();
+      PersistentFSRecordsStorage records = connection.getRecords();
 
-      int contentRecordId;
-      if (USE_CONTENT_HASHES) {
-        contentRecordId = findOrCreateContentRecord(bytes.getInternalBuffer(), bytes.getOffset(), bytes.getLength());
+      int contentRecordId = findOrCreateContentRecord(bytes.getInternalBuffer(), bytes.getOffset(), bytes.getLength());
+      boolean contentAlreadyExisted = contentRecordId > 0;
+      contentRecordId = Math.abs(contentRecordId);
 
-        modified = connection.getRecords().setContentRecordId(fileId, (contentRecordId > 0 ? contentRecordId : -contentRecordId));
+      boolean modified = records.setContentRecordId(fileId, contentRecordId);
 
-        if (contentRecordId > 0) return modified;
-        contentRecordId = -contentRecordId;
-        fixedSize = true;
-      }
-      else {
-        contentRecordId = connection.getRecords().getContentRecordId(fileId);
-        if (contentRecordId == 0 || contentStorage.getRefCount(contentRecordId) > 1) {
-          contentRecordId = contentStorage.acquireNewRecord();
-          connection.getRecords().setContentRecordId(fileId, contentRecordId);
-        }
+      if (contentAlreadyExisted) {
+        return modified;
       }
 
-      contentStorage.writeBytes(contentRecordId, bytes, fixedSize);
-      return true;
+      contentStorage.writeBytes(contentRecordId, bytes, /*fixedSize: */true);
+      return true;//definitely modified
     }
     finally {
       lock.writeLock().unlock();
@@ -149,15 +99,12 @@ public final class PersistentFSContentAccessor {
   int allocateContentRecordAndStore(byte @NotNull [] bytes) throws IOException {
     lock.writeLock().lock();
     try {
-      int recordId;
-      if (USE_CONTENT_HASHES) {
-        recordId = findOrCreateContentRecord(bytes, 0, bytes.length);
-        if (recordId > 0) return recordId;
-        recordId = -recordId;
+      int recordId = findOrCreateContentRecord(bytes, 0, bytes.length);
+      if (recordId > 0) {
+        return recordId;
       }
-      else {
-        recordId = connection.getContents().acquireNewRecord();
-      }
+
+      recordId = -recordId;
       try (IStorageDataOutput output = connection.getContents().writeStream(recordId, true)) {
         output.write(bytes);
       }
@@ -169,8 +116,6 @@ public final class PersistentFSContentAccessor {
   }
 
   byte @Nullable [] getContentHash(int fileId) throws IOException {
-    if (!USE_CONTENT_HASHES) return null;
-
     int contentId = connection.getRecords().getContentRecordId(fileId);
     return contentId <= 0 ? null : connection.getContentHashesEnumerator().valueOf(contentId);
   }
@@ -179,7 +124,6 @@ public final class PersistentFSContentAccessor {
    * @return -recordId for newly created record, or recordId (>0) of existent record with matching hash
    */
   private int findOrCreateContentRecord(byte[] bytes, int offset, int length) throws IOException {
-    assert USE_CONTENT_HASHES;
 
     long hashStartedNs = System.nanoTime();
     byte[] contentHash = calculateHash(bytes, offset, length);
@@ -190,15 +134,17 @@ public final class PersistentFSContentAccessor {
       LOG.info("Contents: " +
                totalContentRecordsStored + " records of " + totalContentBytesStored + "b total were actually stored, " +
                totalContentRecordsReused + " records of " + totalContentBytesReused + "b were reused, " +
-               "for " + NANOSECONDS.toSeconds(totalHashCalculationTimeNs)+" ms spent on hashing");
+               "for " + NANOSECONDS.toSeconds(totalHashCalculationTimeNs) + " ms spent on hashing");
     }
 
     ContentHashEnumerator hashesEnumerator = connection.getContentHashesEnumerator();
+    RefCountingContentStorage contentStorage = connection.getContents();
+
     int hashId = hashesEnumerator.enumerateEx(contentHash);
 
     if (hashId < 0) {//already known hash -> already stored content
       int contentRecordId = -hashId;
-      connection.getContents().acquireRecord(contentRecordId);
+      contentStorage.acquireRecord(contentRecordId);
 
       totalContentRecordsReused++;
       totalContentBytesReused += length;
@@ -207,7 +153,7 @@ public final class PersistentFSContentAccessor {
     }
     else {
       int contentRecordId = hashId;
-      int newRecord = connection.getContents().acquireNewRecord();
+      int newRecord = contentStorage.acquireNewRecord();
       //We assume we call contents.acquireNewRecord() when and only when
       //hashesEnumerator.enumerateEx() returns positive value (which means 'new hash')
       assert contentRecordId == newRecord
@@ -217,20 +163,6 @@ public final class PersistentFSContentAccessor {
       totalContentBytesStored += length;
 
       return -contentRecordId;
-    }
-  }
-
-  int acquireContentRecord(int fileId) throws IOException {
-    lock.writeLock().lock();
-    try {
-      int record = connection.getRecords().getContentRecordId(fileId);
-      if (record > 0) {
-        connection.getContents().acquireRecord(record);
-      }
-      return record;
-    }
-    finally {
-      lock.writeLock().unlock();
     }
   }
 
@@ -284,4 +216,27 @@ public final class PersistentFSContentAccessor {
       return myModified;
     }
   }
+
+  //TODO RC: the group of methods below are remnants of the content-use-counting era. The idea of content records use-counting
+  //         was abandoned long ago: today we use content (crypto)hashes to re-use content records, but we never delete
+  //         content records -- hence no use-counting is needed, and I plan to remove the methods below, but I dont'
+  //         know yet how to reorganize them
+
+  /**
+   * Method mark the content record of fileId to have +1 use, and return the apt contentRecordId.
+   * Nowadays method just returns contentRecordId, since we abandon the use-counting idea -- I plan to remove
+   * it entirely
+   */
+  int acquireContentRecord(int fileId) throws IOException {
+    return connection.getRecords().getContentRecordId(fileId);
+  }
+
+  void deleteContent(int fileId) throws IOException {
+    //nothing: content records kept forever
+  }
+
+  void releaseContentRecord(int contentRecordId) throws IOException {
+    //nothing: content records kept forever
+  }
+
 }
