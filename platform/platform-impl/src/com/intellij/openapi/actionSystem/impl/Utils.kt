@@ -12,6 +12,9 @@ import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.ui.UISettings
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionIdProvider
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsCollectorImpl.Companion.recordActionGroupExpanded
+import com.intellij.notification.Notification
+import com.intellij.notification.NotificationType
+import com.intellij.notification.Notifications
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionMenu.Companion.isAligned
 import com.intellij.openapi.actionSystem.impl.ActionMenu.Companion.isAlignedInGroup
@@ -49,6 +52,7 @@ import com.intellij.util.SlowOperations
 import com.intellij.util.TimeoutUtil
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.ui.*
+import com.intellij.util.ui.update.UiNotifyConnector
 import io.opentelemetry.api.OpenTelemetry
 import io.opentelemetry.api.trace.Tracer
 import io.opentelemetry.context.Context
@@ -790,6 +794,18 @@ object Utils {
     }
     while (cur != null)
     return true
+  }
+
+  @JvmStatic
+  fun showPopupElapsedMillisIfConfigured(startNanos: Long, comp: Component) {
+    if (startNanos > 0 && Registry.`is`("ide.diagnostics.show.context.menu.invocation.time")) {
+      UiNotifyConnector.doWhenFirstShown(comp) {
+        val time = TimeoutUtil.getDurationMillis(startNanos)
+        @Suppress("DEPRECATION", "removal", "HardCodedStringLiteral")
+        Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID, "Popup invocation took $time ms",
+                     NotificationType.INFORMATION).notify(null)
+      }
+    }
   }
 
   /**

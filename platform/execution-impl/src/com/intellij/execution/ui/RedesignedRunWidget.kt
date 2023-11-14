@@ -19,6 +19,7 @@ import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.actionSystem.impl.IdeaActionButtonLook
+import com.intellij.openapi.actionSystem.impl.Utils
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
@@ -332,8 +333,10 @@ abstract class TogglePopupAction : ToggleAction {
     val component = e.inputEvent?.component as? JComponent ?: return
     val project = e.project ?: return
     project.coroutineScope.launch(Dispatchers.EDT, CoroutineStart.UNDISPATCHED) {
-      val popup = createPopup(e)
-      popup?.showUnderneathOf(component)
+      val start = System.nanoTime()
+      val popup = createPopup(e) ?: return@launch
+      Utils.showPopupElapsedMillisIfConfigured(start, popup.content)
+      popup.showUnderneathOf(component)
     }
   }
 
