@@ -327,7 +327,7 @@ object CommunityRepositoryModules {
     }
   )
 
-  private fun androidDesignPlugin(mainModuleName: String = "intellij.android.design-plugin"): PluginLayout {
+  private fun androidDesignPlugin(mainModuleName: String = "intellij.android.design-plugin.descriptor"): PluginLayout {
     return plugin (mainModuleName) { spec ->
       spec.directoryName = "design-tools"
       spec.mainJarName = "design-tools.jar"
@@ -335,8 +335,7 @@ object CommunityRepositoryModules {
       // modules:
       // design-tools.jar
       spec.withModule("intellij.android.compose-designer")
-      if (mainModuleName != "intellij.android.design-plugin") {
-        spec.withModule("intellij.android.design-plugin")
+      if (mainModuleName != "intellij.android.design-plugin.descriptor") {
         spec.withModule("intellij.android.design-plugin.descriptor")
       }
       @Suppress("SpellCheckingInspection")
