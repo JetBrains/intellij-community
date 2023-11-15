@@ -51,7 +51,7 @@ final class UpdateCheckerService {
 
   private static final Logger LOG = Logger.getInstance(UpdateCheckerService.class);
 
-  private static final long CHECK_INTERVAL = DateFormatUtil.DAY;
+  private static final long CHECK_INTERVAL = TimeUnit.DAYS.toMillis(1);
   private static final String ERROR_LOG_FILE_NAME = "idea_updater_error.log"; // must be equal to 'com.intellij.updater.Runner.ERROR_LOG_FILE_NAME'
   private static final String PREVIOUS_BUILD_NUMBER_PROPERTY = "ide.updates.previous.build.number";
   private static final String OLD_DIRECTORIES_SCAN_SCHEDULED = "ide.updates.old.dirs.scan.scheduled";

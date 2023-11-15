@@ -63,6 +63,7 @@ import javax.swing.event.DocumentEvent
 import javax.swing.event.HyperlinkEvent
 import javax.swing.event.PopupMenuEvent
 import javax.swing.text.JTextComponent
+import kotlin.time.Duration.Companion.days
 
 internal class NotificationsToolWindowFactory : ToolWindowFactory, DumbAware {
   companion object {
@@ -1125,7 +1126,7 @@ private class NotificationComponent(val project: Project,
     }
 
     if (notification.isSuggestionType) {
-      val remindAction = RemindLaterManager.createAction(notification, DateFormatUtil.DAY)
+      val remindAction = RemindLaterManager.createAction(notification, 1.days)
       if (remindAction != null) {
         @Suppress("DialogTitleCapitalization")
         group.add(object : DumbAwareAction(IdeBundle.message("notifications.toolwindow.remind.tomorrow")) {

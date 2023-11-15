@@ -26,14 +26,22 @@ import java.util.TimeZone;
 public final class DateFormatUtil {
   private static final Logger LOG = Logger.getInstance(DateFormatUtil.class);
 
-  public static final long SECOND = 1000;
-  public static final long MINUTE = SECOND * 60;
-  public static final long HOUR = MINUTE * 60;
-  public static final long DAY = HOUR * 24;
-  public static final long WEEK = DAY * 7;
-  public static final long MONTH = DAY * 30;
-  public static final long YEAR = DAY * 365;
-  public static final long DAY_FACTOR = 24L * 60 * 60 * 1000;
+  /** @deprecated use {@link java.util.concurrent.TimeUnit#toMillis} */
+  @Deprecated public static final long SECOND = 1_000L;
+  /** @deprecated use {@link java.util.concurrent.TimeUnit#toMillis} */
+  @Deprecated public static final long MINUTE = 60 * SECOND;
+  /** @deprecated use {@link java.util.concurrent.TimeUnit#toMillis} */
+  @Deprecated public static final long HOUR = 60 * MINUTE;
+  /** @deprecated use {@link java.util.concurrent.TimeUnit#toMillis} */
+  @Deprecated public static final long DAY = 24 * HOUR;
+  /** @deprecated use {@link java.util.concurrent.TimeUnit#toMillis} */
+  @Deprecated public static final long WEEK = 7 * DAY;
+  /** @deprecated use {@link java.util.concurrent.TimeUnit#toMillis} */
+  @Deprecated public static final long MONTH = 30 * DAY;
+  /** @deprecated use {@link java.util.concurrent.TimeUnit#toMillis} */
+  @Deprecated public static final long YEAR = 365 * DAY;
+  /** @deprecated use {@link java.util.concurrent.TimeUnit#toMillis} */
+  @Deprecated public static final long DAY_FACTOR = DAY;
 
   // do not expose these constants - they are very likely to be changed in future
   private static final SyncDateFormat DATE_FORMAT;

@@ -12,10 +12,10 @@ import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.feedback.impl.notification.RequestFeedbackNotification
-import com.intellij.util.text.DateFormatUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes
 
@@ -52,8 +52,7 @@ class EAPApplicationInitializedListener : ApplicationInitializedListener {
 
     val currentTimeMillis = System.currentTimeMillis()
     if (parsedValue != null) {
-      val diff = System.currentTimeMillis() - parsedValue
-      if (diff > DateFormatUtil.DAY) {
+      if (System.currentTimeMillis() - parsedValue > 1.days.inWholeMilliseconds) {
         showNotificationAndDisableTimer(propComponent)
         return
       }
