@@ -29,6 +29,8 @@ interface GHPRDetailsViewModel : CodeReviewDetailsViewModel {
   val securityService: GHPRSecurityService
   val avatarIconsProvider: IconsProvider<String>
 
+  val isUpdating: StateFlow<Boolean>
+
   val branchesVm: GHPRBranchesViewModel
   val changesVm: GHPRChangesViewModel
   val statusVm: GHPRStatusViewModelImpl
@@ -73,6 +75,8 @@ internal class GHPRDetailsViewModelImpl(
       commitsLoadingModel.future = it
     }
   }
+
+  override val isUpdating = MutableStateFlow(false)
 
   override val securityService: GHPRSecurityService = dataContext.securityService
   override val avatarIconsProvider: IconsProvider<String> = dataContext.avatarIconsProvider

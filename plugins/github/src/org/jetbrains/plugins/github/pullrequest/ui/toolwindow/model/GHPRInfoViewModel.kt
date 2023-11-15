@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui.toolwindow.model
 
+import com.intellij.collaboration.util.ComputedResult
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.util.coroutines.childScope
@@ -33,11 +34,7 @@ class GHPRInfoViewModel internal constructor(
   val pullRequest: GHPRIdentifier = dataProvider.id
   val pullRequestUrl: String? get() = dataProvider.detailsData.loadedDetails?.url
 
-  private val _isLoading = MutableStateFlow(false)
-  override val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
-  private val _detailsVm = MutableStateFlow<Result<GHPRDetailsViewModel>?>(null)
-  override val detailsVm: SharedFlow<Result<GHPRDetailsViewModel>> = _detailsVm
-    .filterNotNull().shareIn(cs, SharingStarted.Lazily, 1)
+  override val detailsVm: StateFlow<ComputedResult<GHPRDetailsViewModel>>
 
   init {
     val detailsRequestsFlow: Flow<CompletableFuture<GHPullRequest>> = callbackFlow {
@@ -50,38 +47,46 @@ class GHPRInfoViewModel internal constructor(
       }
     }
 
-    cs.launch {
+    detailsVm = channelFlow<ComputedResult<GHPRDetailsViewModel>> {
       var vm: GHPRDetailsViewModelImpl? = null
-      detailsRequestsFlow.collect {
-        _isLoading.value = true
-        try {
+      detailsRequestsFlow.collectLatest {
+        if (vm == null) {
+          send(ComputedResult.loading())
+        }
+
+        vm?.isUpdating?.value = true
+        val toSend = try {
           val details = it.await()
           val currentVm = vm
           if (currentVm == null) {
             val newVm = GHPRDetailsViewModelImpl(project, cs.childScope(), dataContext, dataProvider, details)
-            _detailsVm.value = Result.success(newVm)
             vm = newVm
+            ComputedResult.success(newVm)
           }
           else {
             currentVm.update(details)
+            null
           }
         }
         catch (ce: CancellationException) {
           vm?.destroy()
           vm = null
-          _detailsVm.value = null
-          throw ce
+          ComputedResult.loading()
         }
         catch (e: Throwable) {
           vm?.destroy()
           vm = null
-          _detailsVm.value = Result.failure(e)
+          ComputedResult.failure(e)
         }
         finally {
-          _isLoading.value = false
+          vm?.isUpdating?.value = false
+        }
+        if (toSend != null) {
+          send(toSend)
         }
       }
-    }
+
+    }.stateIn(cs, SharingStarted.Lazily, ComputedResult.loading())
   }
 
   val detailsLoadingErrorHandler: GHApiLoadingErrorHandler = GHApiLoadingErrorHandler(project, dataContext.securityService.account) {

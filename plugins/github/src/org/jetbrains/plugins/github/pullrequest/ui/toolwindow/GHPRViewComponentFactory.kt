@@ -63,22 +63,22 @@ internal class GHPRViewComponentFactory(actionManager: ActionManager,
       background = UIUtil.getListBackground()
 
       bindContentIn(cs, vm.detailsVm) { result ->
-        result.fold(
-          onSuccess = { createInfoComponent(vm, it) },
+        result.result?.fold(
+          onSuccess = { createInfoComponent(it) },
           onFailure = { createInfoErrorComponent(it) }
-        )
+        ) ?: LoadingLabel()
       }
     }
   }
 
-  private fun CoroutineScope.createInfoComponent(vm: GHPRInfoViewModel, detailsVm: GHPRDetailsViewModel): JComponent {
+  private fun CoroutineScope.createInfoComponent(detailsVm: GHPRDetailsViewModel): JComponent {
     return GHPRDetailsComponentFactory.create(this,
                                               project,
                                               detailsVm,
                                               createChangesComponent(detailsVm.changesVm)).apply {
       reloadDetailsAction.registerCustomShortcutSet(this, nestedDisposable())
     }.let {
-      CollaborationToolsUIUtil.wrapWithProgressStripe(this, vm.isLoading, it)
+      CollaborationToolsUIUtil.wrapWithProgressStripe(this, detailsVm.isUpdating, it)
     }
   }
 
@@ -93,7 +93,7 @@ internal class GHPRViewComponentFactory(actionManager: ActionManager,
   }
 
   private fun CoroutineScope.createChangesComponent(changesVm: GHPRChangesViewModel): JComponent {
-    val cs = this    
+    val cs = this
     return Wrapper(LoadingLabel()).apply {
       bindContentIn(cs, changesVm.changeListVm) { res ->
         res.result?.let {

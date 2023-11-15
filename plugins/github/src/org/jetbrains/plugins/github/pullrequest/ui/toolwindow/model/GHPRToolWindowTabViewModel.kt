@@ -10,10 +10,9 @@ import com.intellij.platform.util.coroutines.childScope
 import git4idea.remote.hosting.knownRepositories
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.receiveAsFlow
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
@@ -36,39 +35,20 @@ sealed interface GHPRToolWindowTabViewModel : ReviewTabViewModel {
     private val _focusRequests = Channel<Unit>(1)
     internal val focusRequests: Flow<Unit> = _focusRequests.receiveAsFlow()
 
-    private val selectionRequests = Channel<SelectionRequest>(1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
-
-    init {
-      cs.launch {
-        selectionRequests.consumeAsFlow().collectLatest {
-          val changesVm = infoVm.detailsVm.first().getOrNull()?.changesVm ?: return@collectLatest
-          when (it) {
-            is SelectionRequest.Commit -> changesVm.selectCommit(it.oid)
-            is SelectionRequest.Change -> changesVm.selectChange(it.oid, it.filePath)
-          }
-        }
-      }
-    }
-
     fun requestFocus() {
       _focusRequests.trySend(Unit)
     }
 
     fun selectCommit(oid: String) {
-      selectionRequests.trySend(SelectionRequest.Commit(oid))
+      infoVm.detailsVm.value.result?.getOrNull()?.changesVm?.selectCommit(oid)
     }
 
     fun selectChange(oid: String?, filePath: String) {
-      selectionRequests.trySend(SelectionRequest.Change(oid, filePath))
+      infoVm.detailsVm.value.result?.getOrNull()?.changesVm?.selectChange(oid, filePath)
     }
 
     override fun dispose() {
       cs.cancel()
-    }
-
-    private sealed interface SelectionRequest {
-      class Commit(val oid: String) : SelectionRequest
-      class Change(val oid: String?, val filePath: String) : SelectionRequest
     }
   }
 
