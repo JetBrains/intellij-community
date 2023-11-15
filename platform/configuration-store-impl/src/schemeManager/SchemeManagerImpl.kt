@@ -27,6 +27,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile
 import com.intellij.util.PathUtilRt
 import com.intellij.util.ResourceUtil
+import com.intellij.util.SlowOperations
 import com.intellij.util.SmartList
 import com.intellij.util.io.directoryStreamIfExists
 import com.intellij.util.io.systemIndependentPath
@@ -550,7 +551,9 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(
         }
 
         if (file == null) {
-          file = dir.getOrCreateChild(fileName, this)
+          file = SlowOperations.knownIssue("IDEA-338219, EA-867032").use {
+            dir.getOrCreateChild(fileName, this)
+          }
         }
 
         runWriteAction {
