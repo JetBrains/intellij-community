@@ -8,6 +8,7 @@ import com.intellij.ide.ReopenProjectAction
 import com.intellij.ide.impl.ProjectUtilCore
 import com.intellij.ide.plugins.newui.ListPluginComponent
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.*
 import com.intellij.openapi.ui.popup.util.PopupUtil
@@ -49,7 +50,7 @@ internal class DefaultOpenProjectSelectionPredicateSupplier : OpenProjectSelecti
   }
 }
 
-class ProjectToolbarWidgetAction : ExpandableComboAction() {
+class ProjectToolbarWidgetAction : ExpandableComboAction(), DumbAware {
   override fun createPopup(event: AnActionEvent): JBPopup? {
     val widget = event.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT) as? ToolbarComboButton?
     val step = createStep(createActionGroup(event), event.dataContext, widget)
