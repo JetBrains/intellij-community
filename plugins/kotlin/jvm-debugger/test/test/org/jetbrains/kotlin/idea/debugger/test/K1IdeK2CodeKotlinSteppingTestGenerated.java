@@ -1225,6 +1225,16 @@ public abstract class K1IdeK2CodeKotlinSteppingTestGenerated extends AbstractK1I
             runTest("testData/stepping/custom/crossinlineLiteral.kt");
         }
 
+        @TestMetadata("defaultLambdaParameter.kt")
+        public void testDefaultLambdaParameter() throws Exception {
+            runTest("testData/stepping/custom/defaultLambdaParameter.kt");
+        }
+
+        @TestMetadata("defaultLambdaParameterInConstructor.kt")
+        public void testDefaultLambdaParameterInConstructor() throws Exception {
+            runTest("testData/stepping/custom/defaultLambdaParameterInConstructor.kt");
+        }
+
         @TestMetadata("filterChainedFunctionCalls.kt")
         public void testFilterChainedFunctionCalls() throws Exception {
             runTest("testData/stepping/custom/filterChainedFunctionCalls.kt");
