@@ -6,14 +6,14 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Disposer
 import com.intellij.terminal.completion.ShellEnvironment
 import com.intellij.terminal.completion.ShellRuntimeDataProvider
-import com.intellij.util.io.await
+import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import org.jetbrains.plugins.terminal.exp.ShellCommandListener
 import org.jetbrains.plugins.terminal.exp.TerminalSession
 import org.jetbrains.plugins.terminal.util.ShellType
-import java.util.concurrent.CompletableFuture
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.coroutines.resume
 
 class IJShellRuntimeDataProvider(private val session: TerminalSession) : ShellRuntimeDataProvider {
   override suspend fun getFilesFromDirectory(path: String): List<String> {
@@ -36,22 +36,20 @@ class IJShellRuntimeDataProvider(private val session: TerminalSession) : ShellRu
   }
 
   private suspend fun executeCommandBlocking(reqId: Int, command: String): String {
-    val resultFuture = CompletableFuture<String>()
-    val disposable = Disposer.newDisposable()
-    try {
+    return suspendCancellableCoroutine { continuation ->
+      val disposable = Disposer.newDisposable()
+      continuation.invokeOnCancellation {
+        Disposer.dispose(disposable)
+      }
       session.addCommandListener(object : ShellCommandListener {
         override fun generatorFinished(requestId: Int, result: String) {
           if (requestId == reqId) {
-            resultFuture.complete(result)
+            Disposer.dispose(disposable)
+            continuation.resume(result)
           }
         }
       }, disposable)
-
       session.sendCommandToExecute(command)
-      return resultFuture.await()
-    }
-    finally {
-      Disposer.dispose(disposable)
     }
   }
 
