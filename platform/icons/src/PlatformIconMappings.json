@@ -195,6 +195,7 @@
       "jspx.svg": "fileTypes/jspx.svg",
       "less.svg": "icons/less.svg",
       "manifest.svg": "fileTypes/manifest.svg",
+      "microsoftWindows.svg": "fileTypes/microsoftWindows.svg",
       "modified.svg": "general/modified.svg",
       "patch.svg": "vcs/patch_file.svg",
       "properties.svg": "fileTypes/properties.svg",

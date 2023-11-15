@@ -415,6 +415,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon Jsp = load("fileTypes/jsp.svg", -476790980, 0);
     /** 16x16 */ public static final @NotNull Icon Jspx = load("fileTypes/jspx.svg", -576899393, 0);
     /** 16x16 */ public static final @NotNull Icon Manifest = load("fileTypes/manifest.svg", -119717710, 0);
+    /** 16x16 */ public static final @NotNull Icon MicrosoftWindows = load("fileTypes/microsoftWindows.svg", 10953923, 0);
     /** 16x16 */ public static final @NotNull Icon Properties = load("fileTypes/properties.svg", -1983560201, 0);
     /** 16x16 */ public static final @NotNull Icon Regexp = load("fileTypes/regexp.svg", -1788323989, 0);
     /** 16x16 */ public static final @NotNull Icon Text = load("fileTypes/text.svg", -444897274, 0);
