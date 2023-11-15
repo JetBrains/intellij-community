@@ -116,22 +116,50 @@ public class GradleProgressListener implements ProgressListener, org.gradle.tool
   }
 
   private boolean maybeReportModelBuilderMessage(String eventDescription) {
-    if (!eventDescription.startsWith(MessageReporter.MODEL_BUILDER_SERVICE_MESSAGE_PREFIX)) {
+    var message = parseModelBuilderMessage(eventDescription);
+    if (message == null) {
       return false;
     }
-    try {
-      Message message = new GsonBuilder().create()
-        .fromJson(StringUtil.substringAfter(eventDescription, MessageReporter.MODEL_BUILDER_SERVICE_MESSAGE_PREFIX), Message.class);
-      MessageEvent messageEvent = getModelBuilderMessage(message);
 
-      GradleModelBuilderMessageCollector.logModelBuilderMessage(myTaskId.findProject(), myTaskId.getId(), message);
-      myListener.onStatusChange(new ExternalSystemBuildEvent(myTaskId, messageEvent));
-      return true;
+    reportModelBuilderMessageIntoFus(message);
+    reportModelBuilderMessageIntoLogger(message);
+    reportModelBuilderMessageIntoMessageBus(message);
+    return true;
+  }
+
+  private static @Nullable Message parseModelBuilderMessage(String eventDescription) {
+    if (!eventDescription.startsWith(MessageReporter.MODEL_BUILDER_SERVICE_MESSAGE_PREFIX)) {
+      return null;
+    }
+    var messageString = StringUtil.substringAfter(eventDescription, MessageReporter.MODEL_BUILDER_SERVICE_MESSAGE_PREFIX);
+    try {
+      return new GsonBuilder().create().fromJson(messageString, Message.class);
     }
     catch (Exception e) {
       LOG.warn("Failed to report model builder message using event '" + eventDescription + "'", e);
+      return null;
     }
-    return false;
+  }
+
+  private void reportModelBuilderMessageIntoFus(@NotNull Message message) {
+    GradleModelBuilderMessageCollector.logModelBuilderMessage(myTaskId.findProject(), myTaskId.getId(), message);
+  }
+
+  private static void reportModelBuilderMessageIntoLogger(@NotNull Message message) {
+    if (message.getKind() == Message.Kind.INTERNAL) {
+      LOG.warn(
+        message.getGroup() + "\n" +
+        message.getTitle() + "\n" +
+        message.getText()
+      );
+    }
+  }
+
+  private void reportModelBuilderMessageIntoMessageBus(@NotNull Message message) {
+    if (message.getKind() != Message.Kind.INTERNAL) {
+      var messageEvent = getModelBuilderMessage(message);
+      myListener.onStatusChange(new ExternalSystemBuildEvent(myTaskId, messageEvent));
+    }
   }
 
   @NotNull
