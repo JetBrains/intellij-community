@@ -1,9 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui.toolwindow.model
 
+import com.github.benmanes.caffeine.cache.Caffeine
 import com.intellij.collaboration.ui.toolwindow.ReviewToolwindowProjectViewModel
 import com.intellij.collaboration.ui.toolwindow.ReviewToolwindowTabs
 import com.intellij.collaboration.ui.toolwindow.ReviewToolwindowTabsStateHolder
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.project.Project
@@ -21,8 +23,10 @@ import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.pullrequest.GHPRListViewModel
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
+import org.jetbrains.plugins.github.pullrequest.ui.GHPRViewModelContainer
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRToolWindowTab
 import org.jetbrains.plugins.github.ui.util.GHUIUtil
+import org.jetbrains.plugins.github.util.DisposalCountingHolder
 import org.jetbrains.plugins.github.util.GHGitRepositoryMapping
 import org.jetbrains.plugins.github.util.GHHostedRepositoriesManager
 
@@ -43,11 +47,17 @@ class GHPRToolWindowProjectViewModel internal constructor(
 
   override val listVm: GHPRListViewModel = GHPRListViewModel(project, cs, connection.dataContext)
 
+  private val pullRequestsVms = Caffeine.newBuilder().build<GHPRIdentifier, DisposalCountingHolder<GHPRViewModelContainer>> { id ->
+    DisposalCountingHolder {
+      GHPRViewModelContainer(project, cs, dataContext, id, it)
+    }
+  }
+
   private val tabsHelper = ReviewToolwindowTabsStateHolder<GHPRToolWindowTab, GHPRToolWindowTabViewModel>()
   override val tabs: StateFlow<ReviewToolwindowTabs<GHPRToolWindowTab, GHPRToolWindowTabViewModel>> = tabsHelper.tabs.asStateFlow()
 
   private fun createVm(tab: GHPRToolWindowTab.PullRequest): GHPRToolWindowTabViewModel.PullRequest =
-    GHPRToolWindowTabViewModel.PullRequest(project, cs, dataContext, tab.prId)
+    GHPRToolWindowTabViewModel.PullRequest(cs, this, tab.prId)
 
   private fun createVm(tab: GHPRToolWindowTab.NewPullRequest): GHPRToolWindowTabViewModel.NewPullRequest =
     GHPRToolWindowTabViewModel.NewPullRequest(project, dataContext)
@@ -95,6 +105,9 @@ class GHPRToolWindowProjectViewModel internal constructor(
 
   fun openPullRequestDiff(id: GHPRIdentifier, requestFocus: Boolean) =
     dataContext.filesManager.createAndOpenDiffFile(id, requestFocus)
+
+  fun acquireInfoViewModel(id: GHPRIdentifier, disposable: Disposable): GHPRInfoViewModel =
+    pullRequestsVms[id].acquireValue(disposable).infoVm
 
   suspend fun isExistingPullRequest(pushResult: GitPushRepoResult): Boolean? {
     val creationService = dataContext.creationService

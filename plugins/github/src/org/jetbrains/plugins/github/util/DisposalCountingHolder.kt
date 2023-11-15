@@ -10,16 +10,22 @@ class DisposalCountingHolder<T : Any>(private val valueFactory: (CheckedDisposab
   private var valueAndDisposable: Pair<T, CheckedDisposable>? = null
   private var disposalCounter = 0
 
-  val value: T?
-    get() = valueAndDisposable?.first
+  @get:Synchronized
+  val value: T? get() = valueAndDisposable?.first
 
+  @Synchronized
   fun acquireValue(disposable: Disposable): T {
     if (Disposer.isDisposed(this)) error("Already disposed")
 
-    if (valueAndDisposable == null) {
-      valueAndDisposable = Disposer.newCheckedDisposable().let {
-        valueFactory(it) to it
-      }
+    val current = valueAndDisposable
+    val value = if (current == null) {
+      val newDisposable = Disposer.newCheckedDisposable()
+      val newValue = valueFactory(newDisposable)
+      valueAndDisposable = newValue to newDisposable
+      newValue
+    }
+    else {
+      current.first
     }
 
     disposalCounter++
@@ -29,9 +35,10 @@ class DisposalCountingHolder<T : Any>(private val valueFactory: (CheckedDisposab
         disposeValue()
       }
     })
-    return value!!
+    return value
   }
 
+  @Synchronized
   private fun disposeValue() {
     valueAndDisposable?.let { Disposer.dispose(it.second) }
     valueAndDisposable = null

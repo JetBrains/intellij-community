@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui.toolwindow.model
 
-import com.intellij.collaboration.async.nestedDisposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.util.coroutines.childScope
@@ -27,12 +26,11 @@ class GHPRInfoViewModel internal constructor(
   private val project: Project,
   parentCs: CoroutineScope,
   private val dataContext: GHPRDataContext,
-  val pullRequest: GHPRIdentifier
+  private val dataProvider: GHPRDataProvider
 ) : GHPRDetailsLoadingViewModel {
   private val cs = parentCs.childScope()
 
-  private val dataProvider: GHPRDataProvider = dataContext.dataProviderRepository.getDataProvider(pullRequest, cs.nestedDisposable())
-
+  val pullRequest: GHPRIdentifier = dataProvider.id
   val pullRequestUrl: String? get() = dataProvider.detailsData.loadedDetails?.url
 
   private val _isLoading = MutableStateFlow(false)

@@ -24,16 +24,15 @@ import org.jetbrains.plugins.github.util.GHHostedRepositoriesManager
 @ApiStatus.Experimental
 sealed interface GHPRToolWindowTabViewModel : ReviewTabViewModel {
   @ApiStatus.Experimental
-  class PullRequest internal constructor(project: Project,
-                                         parentCs: CoroutineScope,
-                                         dataContext: GHPRDataContext,
+  class PullRequest internal constructor(parentCs: CoroutineScope,
+                                         projectVm: GHPRToolWindowProjectViewModel,
                                          id: GHPRIdentifier)
     : GHPRToolWindowTabViewModel, Disposable {
     private val cs = parentCs.childScope().cancelledWith(this)
 
     override val displayName: String = "#${id.number}"
 
-    val infoVm: GHPRInfoViewModel = GHPRInfoViewModel(project, cs, dataContext, id)
+    val infoVm: GHPRInfoViewModel = projectVm.acquireInfoViewModel(id, this)
     private val _focusRequests = Channel<Unit>(1)
     internal val focusRequests: Flow<Unit> = _focusRequests.receiveAsFlow()
 
