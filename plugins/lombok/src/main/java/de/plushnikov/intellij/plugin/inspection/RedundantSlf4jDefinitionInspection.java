@@ -1,6 +1,6 @@
 package de.plushnikov.intellij.plugin.inspection;
 
-import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.*;
 import de.plushnikov.intellij.plugin.LombokBundle;
@@ -32,16 +32,17 @@ public class RedundantSlf4jDefinitionInspection extends LombokJavaInspectionBase
     @Override
     public void visitField(@NotNull PsiField field) {
       super.visitField(field);
-      findRedundantDefinition(field, field.getContainingClass());
+      findRedundantDefinition(field);
     }
 
-    private void findRedundantDefinition(@NotNull PsiField field, PsiClass containingClass) {
+    private void findRedundantDefinition(@NotNull PsiField field) {
       if (field.getType().equalsToText(LOGGER_SLF4J_FQCN)) {
         final PsiExpression initializer = field.getInitializer();
+        final PsiClass containingClass = field.getContainingClass();
         if (initializer != null && containingClass != null) {
           if (initializer.getText().contains(format(LOGGER_INITIALIZATION, containingClass.getQualifiedName()))) {
-            holder.problem(field, LombokBundle.message("inspection.message.slf4j.logger.defined.explicitly"))
-              .highlight(ProblemHighlightType.WARNING).fix(new UseSlf4jAnnotationQuickFix(field, containingClass)).register();
+            holder.registerProblem(field, LombokBundle.message("inspection.message.slf4j.logger.defined.explicitly"),
+                                   LocalQuickFix.from(new UseSlf4jAnnotationQuickFix(field, containingClass)));
           }
         }
       }
