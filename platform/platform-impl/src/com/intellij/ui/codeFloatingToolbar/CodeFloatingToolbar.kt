@@ -53,13 +53,15 @@ class CodeFloatingToolbar(
 
     private var TEMPORARILY_DISABLED = false
 
-    private var activeMenuPopup: JBPopup? = null
-
     @JvmStatic
     fun getToolbar(editor: Editor?): CodeFloatingToolbar? {
       return editor?.getUserData(FLOATING_TOOLBAR)
     }
 
+    /**
+     * Temporarily enables or disables a specific floating toolbar. Can be used to hide the toolbar when it conflicts with another popup.
+     * @see hideOnPopupConflict
+     */
     @JvmStatic
     fun temporarilyDisable(disable: Boolean = true) {
       TEMPORARILY_DISABLED = disable
@@ -75,6 +77,8 @@ class CodeFloatingToolbar(
     editor.putUserData(FLOATING_TOOLBAR, this)
     Disposer.register(this) { editor.putUserData(FLOATING_TOOLBAR, null) }
   }
+
+  private var activeMenuPopup: JBPopup? = null
 
   override fun hasIgnoredParent(element: PsiElement): Boolean {
     return !element.isWritable || TemplateManager.getInstance(element.project).getActiveTemplate(editor) != null
