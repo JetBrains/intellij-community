@@ -26,6 +26,7 @@ import com.jetbrains.python.PythonPluginDisposable;
 import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.toolWindowWithActions.ConsoleWithProcess;
 import kotlin.jvm.functions.Function1;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -138,7 +139,7 @@ final class CommandConsole extends LanguageConsoleImpl implements Consumer<Strin
    */
   @NotNull
   static CommandConsole createConsole(@NotNull final Module module,
-                                      @NotNull final String title,
+                                      @Nls @NotNull final String title,
                                       @Nullable final CommandsInfo commandsInfo) {
     final CommandConsole console = new CommandConsole(module, title, commandsInfo);
     console.setEditable(true);
