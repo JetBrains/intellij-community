@@ -122,8 +122,7 @@ class KotlinLineBreakpointType :
             val isLambdaResult = bodyExpression is KtLambdaExpression && bodyExpression.functionLiteral in lambdas
 
             if (!isLambdaResult) {
-                val variantElement = getTopmostElementAtOffset(elementAt, pos.offset)
-                result.add(LineKotlinBreakpointVariant(position, variantElement, -1))
+                result.add(LineKotlinBreakpointVariant(position, mainMethod, -1))
                 mainMethodAdded = true
             }
         }

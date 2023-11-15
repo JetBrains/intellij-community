@@ -367,8 +367,8 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
   }
 
   public class LineJavaBreakpointVariant extends ExactJavaBreakpointVariant {
-    public LineJavaBreakpointVariant(@NotNull XSourcePosition position, @Nullable PsiElement element, int lambdaOrdinal) {
-      super(position, element, JavaLineBreakpointProperties.encodeInlinePosition(lambdaOrdinal, false));
+    public LineJavaBreakpointVariant(@NotNull XSourcePosition position, @Nullable PsiElement method, int lambdaOrdinal) {
+      super(position, method, JavaLineBreakpointProperties.encodeInlinePosition(lambdaOrdinal, false));
     }
 
     @NotNull
