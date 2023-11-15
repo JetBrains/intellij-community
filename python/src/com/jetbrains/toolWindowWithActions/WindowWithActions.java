@@ -73,7 +73,10 @@ public final class WindowWithActions {
       resultCloseListeners.addAll(closeListeners);
     }
     final AnAction[] resultActions = ArrayUtil.mergeArrays(new AnAction[]{stopProcessAction}, customActions);
-    showConsole(consoleWithProcess, actionListenerComponent, consoleTitle, project, toolWindowTitle, toolWindowIcon, resultCloseListeners, resultActions);
+
+    final ToolWindowApi api = new ToolWindowApi(project, toolWindowTitle, toolWindowIcon);
+
+    api.add(new ConsolePanelWithActions(consoleWithProcess, resultCloseListeners, actionListenerComponent, resultActions), consoleTitle);
   }
 
   @Nullable
@@ -88,36 +91,6 @@ public final class WindowWithActions {
       return null;
     }
     return content.getComponent();
-  }
-
-  /**
-   * Displays console in the toolwindow
-   *
-   * @param consoleView             console to display
-   * @param actionListenerComponent component to bind to actions shortcuts (can be null)
-   * @param consoleTitle                   console title (should be unique!)
-   * @param project                 project where displaying takes place
-   * @param closeListeners          engine to listen for "close" events. Something that stops console process may be good example of it.
-   *                                Null if you do not want this delegate to be called.
-   * @param customActions           additional actions to add
-   */
-  public static void showConsole(@NotNull final ConsoleView consoleView,
-                                 @Nullable final JComponent actionListenerComponent,
-                                 @NotNull @Nls(capitalization = Nls.Capitalization.Title) final String consoleTitle,
-                                 @NotNull final Project project,
-                                 @NotNull final String toolWindowTitle,
-                                 @NotNull final Icon toolWindowIcon,
-                                 @Nullable final Collection<? extends Runnable> closeListeners,
-                                 final AnAction @NotNull ... customActions) {
-    final AnAction[] actions = ArrayUtil.mergeArrays(customActions, consoleView.createConsoleActions());
-
-    final ToolWindowApi api = new ToolWindowApi(project, toolWindowTitle, toolWindowIcon);
-
-    final Collection<Runnable> closeListenersToAdd = new ArrayList<>(Collections.singleton(new MyToolWindowCloser(api)));
-    if (closeListeners != null) {
-      closeListenersToAdd.addAll(closeListeners);
-    }
-    api.add(new ConsolePanelWithActions(consoleView, closeListenersToAdd, actionListenerComponent, actions), consoleTitle);
   }
 
   /**
