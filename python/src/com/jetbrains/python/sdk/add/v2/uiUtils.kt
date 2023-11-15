@@ -2,6 +2,7 @@
 package com.jetbrains.python.sdk.add.v2
 
 import com.intellij.icons.AllIcons
+import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.fileChooser.FileChooser
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
@@ -34,6 +35,8 @@ import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.sdk.PyDetectedSdk
 import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMethod.CREATE_NEW
 import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMethod.SELECT_EXISTING
+import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMode.CUSTOM
+import com.jetbrains.python.sdk.add.v2.PythonSupportedEnvironmentManagers.VIRTUALENV
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnvIdentity
 import kotlinx.coroutines.CoroutineScope
@@ -77,6 +80,47 @@ class PythonNewEnvironmentDialogNavigator {
         null -> null
       }
     }
+  }
+
+  fun saveLastState() {
+    val properties = PropertiesComponent.getInstance()
+
+    val mode = selectionMode.get()
+    properties.setValue(FAV_MODE, mode.toString())
+    if (mode == CUSTOM) {
+      val method = selectionMethod.get()
+      val manager = if (method == CREATE_NEW) newEnvManager.get() else existingEnvManager.get()
+      properties.setValue(FAV_METHOD, method.toString())
+      properties.setValue(FAV_MANAGER, manager.toString())
+    }
+    else {
+      // restore defaults
+      properties.setValue(FAV_METHOD, CREATE_NEW.toString())
+      properties.setValue(FAV_MANAGER, VIRTUALENV.toString())
+    }
+  }
+
+
+  fun restoreLastState() {
+    val properties = PropertiesComponent.getInstance()
+
+    val modeString = properties.getValue(FAV_MODE) ?: return
+    val mode = PythonInterpreterSelectionMode.valueOf(modeString)
+    selectionMode.set(mode)
+
+    if (mode == CUSTOM) {
+      val method = PythonInterpreterSelectionMethod.valueOf(properties.getValue(FAV_METHOD) ?: return)
+      selectionMethod.set(method)
+
+      val manager = PythonSupportedEnvironmentManagers.valueOf(properties.getValue(FAV_MANAGER) ?: return)
+      if (method == CREATE_NEW) newEnvManager.set(manager) else existingEnvManager.set(manager)
+    }
+  }
+
+  companion object {
+    const val FAV_MODE = "python.new.interpreter.fav.mode"
+    const val FAV_METHOD = "python.new.interpreter.fav.method"
+    const val FAV_MANAGER = "python.new.interpreter.fav.manager"
   }
 }
 
