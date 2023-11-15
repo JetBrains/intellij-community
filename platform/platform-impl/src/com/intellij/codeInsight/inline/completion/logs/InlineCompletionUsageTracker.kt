@@ -18,7 +18,7 @@ import kotlin.concurrent.withLock
 import kotlin.coroutines.cancellation.CancellationException
 
 object InlineCompletionUsageTracker : CounterUsagesCollector() {
-  private val GROUP = EventLogGroup("inline.completion", 16)
+  private val GROUP = EventLogGroup("inline.completion", 17)
 
   const val INVOKED_EVENT_ID = "invoked"
   internal object InvokedEvents {
@@ -85,6 +85,7 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
 
     enum class FinishType {
       SELECTED,
+      TYPED,
       ESCAPE_PRESSED,
       KEY_PRESSED,
       INVALIDATED,

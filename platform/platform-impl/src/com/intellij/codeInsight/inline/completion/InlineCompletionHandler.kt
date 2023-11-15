@@ -296,10 +296,13 @@ class InlineCompletionHandler(
               context.clear()
               result.newElements.forEach { context.renderElement(it, context.endOffset() ?: result.newOffset) }
             }
+            if (context.textToInsert().isEmpty()) {
+              hide(context, FinishType.TYPED)
+            }
           }
           is UpdateSessionResult.Same -> Unit
           UpdateSessionResult.Invalidated -> {
-            hide(session.context, FinishType.INVALIDATED)
+            hide(context, FinishType.INVALIDATED)
           }
         }
       }
