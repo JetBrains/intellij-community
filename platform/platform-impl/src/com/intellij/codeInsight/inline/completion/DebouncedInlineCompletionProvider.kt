@@ -11,6 +11,15 @@ import java.util.concurrent.atomic.AtomicReference
 import kotlin.coroutines.coroutineContext
 import kotlin.time.Duration
 
+/**
+ * Abstract class representing a debounced inline completion provider.
+ *
+ * This class provides a base implementation for inline completion providers that debounce completion suggestions based on input events.
+ * Subclasses must implement the [getSuggestionDebounced] function to generate the debounced suggestions.
+ *
+ * Also, subclasses must implement [getDebounceDelay] to configure the delay between an input event and start of computations.
+ * Please, do not use [delay] as it will be removed in the next release and [getDebounceDelay] will become `abstract`.
+ */
 abstract class DebouncedInlineCompletionProvider : InlineCompletionProvider {
   private val jobCall = AtomicReference<Job?>(null)
 
@@ -28,6 +37,11 @@ abstract class DebouncedInlineCompletionProvider : InlineCompletionProvider {
     )
     get() = throw UnsupportedOperationException("Please, use more flexible method: getDebounceDelay.")
 
+  /**
+   * Retrieves the delay duration for debouncing code completion requests.
+   * This function gives the time interval for which input events are delayed before
+   * the completion suggestions are calculated.
+   */
   protected open suspend fun getDebounceDelay(request: InlineCompletionRequest): Duration {
     @Suppress("DEPRECATION")
     return delay
