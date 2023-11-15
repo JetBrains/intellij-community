@@ -28,6 +28,7 @@ internal class BeanExtensionPoint<T : Any>(
       return SimpleConstructorInjectionAdapter(implementationClassName = className,
                                                pluginDescriptor = pluginDescriptor,
                                                descriptor = descriptor,
+                                               extensionElement = descriptor.element,
                                                implementationClassResolver = this)
     }
     else {
