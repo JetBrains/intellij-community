@@ -1,11 +1,15 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import com.intellij.openapi.util.io.ByteArraySequence;
 import com.intellij.openapi.util.io.FileAttributes;
+import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.BlobStorageTestBase;
 import com.intellij.util.io.DataOutputStream;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -14,11 +18,9 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
+import java.util.concurrent.*;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 public class FSRecordsImplTest {
 
@@ -105,6 +107,46 @@ public class FSRecordsImplTest {
     }
   }
 
+  @Test
+  public void fileRecordModCountChanges_onlyIfFileContentActuallyChanges() throws IOException {
+    ThreadLocalRandom rnd = ThreadLocalRandom.current();
+    String[] randomContents = Stream.generate(
+        () -> BlobStorageTestBase.randomString(rnd, rnd.nextInt(0, 1024))
+      )
+      .limit(1024)
+      .toArray(String[]::new);
+
+    int fileId = vfs.createRecord();
+
+    String previousContent = "";
+    writeContent(fileId, previousContent);
+    for (int attempt = 0; attempt < 1024; attempt++) {
+      int modCountBefore = vfs.getModCount(fileId);
+      String content = randomContents[rnd.nextInt(randomContents.length)];
+      writeContent(fileId, content);
+      int modCountAfter = vfs.getModCount(fileId);
+
+      if (previousContent.equals(content)) {
+        assertEquals(
+          modCountAfter, modCountBefore,
+          "[" + previousContent + "]->[" + content + "]:" +
+          " modCountAfter(" + modCountAfter + ") most be == modCountBefore(" + modCountBefore + ") since content doesn't change"
+        );
+      }
+      else {
+        //'+1' is a bit of over-specification: modCount 'after' must be more than 'before' -- but it doesn't really
+        // matter how much more. But I also don't want to grow modCount without a reason, so I check the minimum
+        // increment:
+        assertEquals(
+          modCountAfter, modCountBefore + 1,
+          "[" + previousContent + "]->[" + content + "]:" +
+          "modCountAfter(" + modCountAfter + ") most be modCountBefore(" + modCountBefore + ")+1 since content does change"
+        );
+      }
+      previousContent = content;
+    }
+  }
+
   @BeforeEach
   void setUp(@TempDir Path vfsDir) {
     vfs = FSRecordsImpl.connect(vfsDir, Collections.emptyList(), false, FSRecordsImpl.ON_ERROR_RETHROW);
@@ -115,5 +157,10 @@ public class FSRecordsImplTest {
     if (vfs != null) {
       StorageTestingUtils.bestEffortToCloseAndClean(vfs);
     }
+  }
+
+  private void writeContent(int fileId,
+                            @NotNull String content) {
+    vfs.writeContent(fileId, new ByteArraySequence(content.getBytes(UTF_8)), true);
   }
 }

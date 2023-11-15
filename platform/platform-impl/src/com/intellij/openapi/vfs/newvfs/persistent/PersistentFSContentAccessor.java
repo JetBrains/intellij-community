@@ -66,63 +66,44 @@ public final class PersistentFSContentAccessor {
     }
   }
 
-  boolean writeContent(int fileId,
-                       @NotNull ByteArraySequence bytes,
-                       boolean fixedSize)
+  void writeContent(int fileId,
+                    @NotNull ByteArraySequence content,
+                    boolean fixedSizeHint)
     throws IOException {
     PersistentFSConnection.ensureIdIsValid(fileId);
+    PersistentFSRecordsStorage records = connection.getRecords();
     lock.writeLock().lock();
     try {
-      VFSContentStorage contentStorage = connection.getContents();
-      PersistentFSRecordsStorage records = connection.getRecords();
+      int contentRecordId = enumerateContent(content);
 
-      int contentRecordId = findOrCreateContentRecord(bytes.getInternalBuffer(), bytes.getOffset(), bytes.getLength());
-      boolean contentAlreadyExisted = contentRecordId > 0;
-      contentRecordId = Math.abs(contentRecordId);
-
-      boolean modified = records.setContentRecordId(fileId, contentRecordId);
-
-      if (contentAlreadyExisted) {
-        return modified;
-      }
-
-      contentStorage.writeBytes(contentRecordId, bytes, /*fixedSize: */true);
-      return true;//definitely modified
+      records.setContentRecordId(fileId, contentRecordId);
     }
     finally {
       lock.writeLock().unlock();
     }
   }
 
-  int allocateContentRecordAndStore(byte @NotNull [] bytes) throws IOException {
+
+  int allocateContentRecordAndStore(byte @NotNull [] content) throws IOException {
     lock.writeLock().lock();
     try {
-      int recordId = findOrCreateContentRecord(bytes, 0, bytes.length);
-      if (recordId > 0) {
-        return recordId;
-      }
-
-      recordId = -recordId;
-      connection.getContents().writeBytes(recordId, new ByteArraySequence(bytes), /*fixedSize:*/ true);
-      return recordId;
+      return enumerateContent(new ByteArraySequence(content));
     }
     finally {
       lock.writeLock().unlock();
     }
-  }
-
-  byte @Nullable [] getContentHash(int fileId) throws IOException {
-    int contentId = connection.getRecords().getContentRecordId(fileId);
-    return contentId <= 0 ? null : connection.getContentHashesEnumerator().valueOf(contentId);
   }
 
   /**
-   * @return -recordId for newly created record, or recordId (>0) of existent record with matching hash
+   * Stores content in VFS and return contentRecordId, by which content could be later retrieved.
+   * If the same content (bytes) was already stored -- method could return id of already existing record, without allocating
+   * & storing new record.
    */
-  private int findOrCreateContentRecord(byte[] bytes, int offset, int length) throws IOException {
+  private int enumerateContent(@NotNull ByteArraySequence contentBytes) throws IOException {
+    int length = contentBytes.length();
 
     long hashStartedNs = System.nanoTime();
-    byte[] contentHash = calculateHash(bytes, offset, length);
+    byte[] contentHash = calculateHash(contentBytes.getInternalBuffer(), contentBytes.getOffset(), length);
     totalHashCalculationTimeNs += (System.nanoTime() - hashStartedNs);
 
 
@@ -139,26 +120,32 @@ public final class PersistentFSContentAccessor {
     int hashId = hashesEnumerator.enumerateEx(contentHash);
 
     if (hashId < 0) {//already known hash -> already stored content
-      int contentRecordId = -hashId;
-
       totalContentRecordsReused++;
       totalContentBytesReused += length;
 
-      return contentRecordId;
+      int alreadyExistingContentRecordId = -hashId;
+      return alreadyExistingContentRecordId;
     }
-    else {
-      int contentRecordId = hashId;
-      int newRecord = contentStorage.createNewRecord();
-      //We assume we call contents.acquireNewRecord() when and only when
-      //hashesEnumerator.enumerateEx() returns positive value (which means 'new hash')
-      assert contentRecordId == newRecord
-        : "Unexpected content storage modification: contentHashId=" + hashId + "; newContentRecord=" + newRecord;
 
-      totalContentRecordsStored++;
-      totalContentBytesStored += length;
+    //unknown hash -> not-previously-seen content:
+    int newContentRecordId = contentStorage.createNewRecord();
 
-      return -contentRecordId;
-    }
+    //We assume we call contents.acquireNewRecord() when and only when
+    //hashesEnumerator.enumerateEx() returns positive value (which means 'new hash')
+    assert hashId == newContentRecordId
+      : "Unexpected content storage modification: contentHashId=" + hashId + "; newContentRecord=" + newContentRecordId;
+
+    contentStorage.writeBytes(newContentRecordId, contentBytes, /*fixedSize: */ true);
+
+    totalContentRecordsStored++;
+    totalContentBytesStored += length;
+
+    return newContentRecordId;
+  }
+
+  byte @Nullable [] getContentHash(int fileId) throws IOException {
+    int contentId = connection.getRecords().getContentRecordId(fileId);
+    return contentId <= 0 ? null : connection.getContentHashesEnumerator().valueOf(contentId);
   }
 
   private static @NotNull MessageDigest getContentHashDigest() {
@@ -188,7 +175,6 @@ public final class PersistentFSContentAccessor {
   final class ContentOutputStream extends DataOutputStream {
     private final int myFileId;
     private final boolean myFixedSize;
-    boolean myModified;
 
     ContentOutputStream(int fileId, boolean fixedSize) {
       super(new BufferExposingByteArrayOutputStream());
@@ -202,13 +188,7 @@ public final class PersistentFSContentAccessor {
       super.close();
       final BufferExposingByteArrayOutputStream _out = (BufferExposingByteArrayOutputStream)out;
 
-      if (writeContent(myFileId, _out.toByteArraySequence(), myFixedSize)) {
-        myModified = true;
-      }
-    }
-
-    boolean isModified() {
-      return myModified;
+      writeContent(myFileId, _out.toByteArraySequence(), myFixedSize);
     }
   }
 

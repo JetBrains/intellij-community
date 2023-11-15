@@ -1294,10 +1294,6 @@ public final class FSRecordsImpl implements Closeable {
       public void close() {
         try {
           super.close();
-          if (((PersistentFSContentAccessor.ContentOutputStream)out).isModified()) {
-            checkNotClosed();
-            connection.markRecordAsModified(fileId);
-          }
         }
         catch (IOException e) {
           throw handleError(e);
