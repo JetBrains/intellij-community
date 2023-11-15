@@ -43,6 +43,8 @@
                          id="terminalFindNext" order="first"/>
     <editorActionHandler action="FindPrevious" implementationClass="org.jetbrains.plugins.terminal.exp.TerminalFindPreviousHandler"
                          id="terminalFindPrevious" order="first"/>
+    <editorActionHandler action="Replace" implementationClass="org.jetbrains.plugins.terminal.exp.TerminalReplaceHandler"
+                         id="terminalReplace" order="first"/>
     <typedHandler implementation="org.jetbrains.plugins.terminal.exp.TerminalCompletionAutoPopupHandler"
                   id="terminalCompletionAutoPopup" order="first"/>
     <lookup.charFilter implementation="org.jetbrains.plugins.terminal.exp.TerminalCharFilter"
