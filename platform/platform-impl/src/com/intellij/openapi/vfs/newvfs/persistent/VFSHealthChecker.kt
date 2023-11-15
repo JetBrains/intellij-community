@@ -457,7 +457,7 @@ class VFSHealthChecker(private val impl: FSRecordsImpl,
     val connection = impl.connection()
     val contentsStorage = connection.contents
     val contentRecordsIterator = contentsStorage.createRecordIdIterator()
-    while(contentRecordsIterator.hasNextId()){
+    while (contentRecordsIterator.hasNextId()) {
       val contentId = contentRecordsIterator.nextId()
       try {
         contentsStorage.checkRecord(contentId, false)

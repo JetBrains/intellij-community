@@ -13,6 +13,9 @@ import com.intellij.util.io.storage.VFSContentStorage
 import java.io.DataInputStream
 import java.io.IOException
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.locks.ReadWriteLock
+import java.util.concurrent.locks.ReentrantReadWriteLock
+import kotlin.concurrent.withLock
 
 
 private val LOG = Logger.getInstance(ContentStorageAdapter::class.java)
@@ -25,6 +28,9 @@ class ContentStorageAdapter(private val contentStorage: RefCountingContentStorag
 
   private val hashesEnumerator: ContentHashEnumerator
 
+  private val lock: ReadWriteLock = ReentrantReadWriteLock()
+
+
   //=========== monitoring: ===========
   //TODO RC: redirect values to OTel.Metrics, instead of logging them
   private var totalContentBytesStored: Long = 0
@@ -34,14 +40,15 @@ class ContentStorageAdapter(private val contentStorage: RefCountingContentStorag
 
   private var totalHashCalculationTimeNs: Long = 0
 
+
   init {
     val hashesEnumerator = hashesEnumeratorSupplier.compute()
 
-    val hashedRecordsCount = hashesEnumerator.recordsCount()
-    val liveRecordsCount = contentStorage.getRecordsCount()
-    if (hashedRecordsCount != liveRecordsCount) {
+    val hashRecordsCount = hashesEnumerator.recordsCount()
+    val recordsCount = contentStorage.getRecordsCount()
+    if (hashRecordsCount != recordsCount) {
       LOG.warn("Content storage is not match content hash enumerator: " +
-               "contents.records(=$liveRecordsCount) != contentHashes.recordsCount(=$hashedRecordsCount) -> trying rebuild hashesEnumerator from content storage")
+               "contents.records(=$recordsCount) != contentHashes.records(=$hashRecordsCount) -> trying rebuild hashesEnumerator from content storage")
 
       hashesEnumerator.closeAndClean()
       this.hashesEnumerator = tryRebuildHashesStorageByContentStorage(hashesEnumeratorSupplier)
@@ -88,21 +95,26 @@ class ContentStorageAdapter(private val contentStorage: RefCountingContentStorag
 
 
   @Throws(IOException::class)
-  override fun createRecordIdIterator(): RecordIdIterator = contentStorage.createRecordIdIterator()
+  override fun createRecordIdIterator(): RecordIdIterator = lock.readLock().withLock {
+    contentStorage.createRecordIdIterator()
+  }
 
   @Throws(IOException::class)
-  override fun getRecordsCount(): Int = contentStorage.recordsCount
+  override fun getRecordsCount(): Int = lock.readLock().withLock {
+    contentStorage.recordsCount
+  }
 
   @Throws(IOException::class)
-  override fun getVersion(): Int = contentStorage.version
+  override fun getVersion(): Int = lock.readLock().withLock {
+    contentStorage.version
+  }
 
   @Throws(IOException::class)
-  override fun setVersion(expectedVersion: Int) {
+  override fun setVersion(expectedVersion: Int) = lock.writeLock().withLock {
     contentStorage.version = expectedVersion
   }
 
-  override fun checkRecord(recordId: Int,
-                           fastCheck: Boolean) {
+  override fun checkRecord(recordId: Int, fastCheck: Boolean) = lock.readLock().withLock {
     val contentHash = hashesEnumerator.valueOf(recordId)
     if (contentHash == null) {
       throw IOException("contentHash[#$recordId] does not exist (null)! " +
@@ -116,21 +128,22 @@ class ContentStorageAdapter(private val contentStorage: RefCountingContentStorag
     }
   }
 
-  override fun contentHash(recordId: Int): ByteArray {
+  override fun contentHash(recordId: Int): ByteArray = lock.readLock().withLock {
     return hashesEnumerator.valueOf(recordId)!!
   }
 
   @Throws(IOException::class)
-  override fun readStream(recordId: Int): DataInputStream = contentStorage.readStream(recordId)
+  override fun readStream(recordId: Int): DataInputStream = lock.readLock().withLock {
+    contentStorage.readStream(recordId)
+  }
 
 
   @Throws(IOException::class)
-  override fun storeRecord(contentBytes: ByteArraySequence,
-                           fixedSize: Boolean): Int {
+  override fun storeRecord(contentBytes: ByteArraySequence): Int = lock.writeLock().withLock {
     val length = contentBytes.length()
 
     val hashStartedNs = System.nanoTime()
-    val contentHash = PersistentFSContentAccessor.calculateHash(contentBytes.internalBuffer, contentBytes.offset, length)
+    val contentHash = PersistentFSContentAccessor.calculateHash(contentBytes)
     totalHashCalculationTimeNs += (System.nanoTime() - hashStartedNs)
 
 
@@ -165,6 +178,7 @@ class ContentStorageAdapter(private val contentStorage: RefCountingContentStorag
 
     return newContentRecordId
   }
+
 
   //both contentStorage & hashesEnumerator are modified at same time, so enough to check one of them
   override fun isDirty(): Boolean = contentStorage.isDirty

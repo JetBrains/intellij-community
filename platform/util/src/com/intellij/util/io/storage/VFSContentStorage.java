@@ -25,7 +25,7 @@ public interface VFSContentStorage extends CleanableStorage, Closeable, Forceabl
    * If the same bytes was already stored -- method could return id of already existing record, without allocating
    * & storing new record.
    */
-  int storeRecord(@NotNull ByteArraySequence bytes, boolean fixedSize) throws IOException;
+  int storeRecord(@NotNull ByteArraySequence bytes) throws IOException;
 
   void checkRecord(int recordId, boolean fastCheck) throws IOException;
 

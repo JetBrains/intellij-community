@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.ByteArraySequence;
 import com.intellij.util.io.DataOutputStream;
@@ -13,27 +12,13 @@ import org.jetbrains.annotations.Nullable;
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.security.MessageDigest;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+import static com.intellij.util.io.blobstorage.StreamlinedBlobStorage.NULL_ID;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 public final class PersistentFSContentAccessor {
-  private static final Logger LOG = Logger.getInstance(PersistentFSContentAccessor.class);
 
   private final @NotNull PersistentFSConnection connection;
-
-  private final ReadWriteLock lock = new ReentrantReadWriteLock();
-
-  //=========== monitoring: ===========
-  //TODO RC: redirect values to OTel.Metrics, instead of logging them
-  private long totalContentBytesStored;
-  private long totalContentBytesReused;
-  private int totalContentRecordsStored;
-  private int totalContentRecordsReused;
-
-  private long totalHashCalculationTimeNs;
-
 
   PersistentFSContentAccessor(@NotNull PersistentFSConnection connection) {
     this.connection = connection;
@@ -42,69 +27,42 @@ public final class PersistentFSContentAccessor {
   @Nullable
   DataInputStream readContent(int fileId) throws IOException {
     PersistentFSConnection.ensureIdIsValid(fileId);
-    lock.readLock().lock();
-    try {
-      int contentId = connection.getRecords().getContentRecordId(fileId);
-      if (contentId == 0) return null;
-      return readContentByContentId(contentId);
-    }
-    finally {
-      lock.readLock().unlock();
-    }
+    int contentId = connection.getRecords().getContentRecordId(fileId);
+    if (contentId == 0) return null;
+    return readContentByContentId(contentId);
   }
 
   @NotNull
   DataInputStream readContentByContentId(int contentId) throws IOException {
-    lock.readLock().lock();
-    try {
-      return connection.getContents().readStream(contentId);
-    }
-    finally {
-      lock.readLock().unlock();
-    }
+    return connection.getContents().readStream(contentId);
   }
 
   void writeContent(int fileId,
                     @NotNull ByteArraySequence content,
-                    boolean fixedSizeHint)
-    throws IOException {
+                    boolean fixedSizeHint) throws IOException {
     PersistentFSConnection.ensureIdIsValid(fileId);
     PersistentFSRecordsStorage records = connection.getRecords();
 
-    //we don't need a lock here: as soon, as .storeRecord() is thread-safe -- .setContentRecordId() provides
-    // linearization point
-    lock.writeLock().lock();
-    try {
-      int contentRecordId = connection.getContents().storeRecord(content, fixedSizeHint);
+    int contentRecordId = connection.getContents().storeRecord(content);
 
-      records.setContentRecordId(fileId, contentRecordId);
-    }
-    finally {
-      lock.writeLock().unlock();
-    }
+    records.setContentRecordId(fileId, contentRecordId);
   }
 
 
   int allocateContentRecordAndStore(byte @NotNull [] content) throws IOException {
-    lock.writeLock().lock();
-    try {
-      return connection.getContents().storeRecord(new ByteArraySequence(content), /*fixedSize: */ false);
-    }
-    finally {
-      lock.writeLock().unlock();
-    }
+    return connection.getContents().storeRecord(new ByteArraySequence(content));
   }
 
   @ApiStatus.Obsolete
   byte @Nullable [] getContentHash(int fileId) throws IOException {
     int contentId = connection.getRecords().getContentRecordId(fileId);
-    if (contentId <= 0) {
+    if (contentId <= NULL_ID) {
       return null;
     }
     return connection.getContents().contentHash(contentId);
   }
 
-  private static @NotNull MessageDigest getContentHashDigest() {
+  private static @NotNull MessageDigest contentHashDigest() {
     // MAYBE: consider replace it with sha-256? It is 20%-30% slower than sha1, but more secure.
     //        For now I think this is not really a priority -- but we may consider the move at some point.
 
@@ -119,9 +77,13 @@ public final class PersistentFSContentAccessor {
     return DigestUtil.sha1();
   }
 
+  public static byte @NotNull [] calculateHash(@NotNull ByteArraySequence bytes) {
+    return calculateHash(bytes.getInternalBuffer(), bytes.getOffset(), bytes.length());
+  }
+
   public static byte @NotNull [] calculateHash(byte[] bytes, int offset, int length) {
     // Probably we don't need to hash the length and "\0000".
-    MessageDigest digest = getContentHashDigest();
+    MessageDigest digest = contentHashDigest();
     digest.update(String.valueOf(length).getBytes(UTF_8));
     digest.update("\u0000".getBytes(UTF_8));
     digest.update(bytes, offset, length);
@@ -129,14 +91,14 @@ public final class PersistentFSContentAccessor {
   }
 
   final class ContentOutputStream extends DataOutputStream {
-    private final int myFileId;
-    private final boolean myFixedSize;
+    private final int fileId;
+    private final boolean fixedSize;
 
     ContentOutputStream(int fileId, boolean fixedSize) {
       super(new BufferExposingByteArrayOutputStream());
       PersistentFSConnection.ensureIdIsValid(fileId);
-      myFileId = fileId;
-      myFixedSize = fixedSize;
+      this.fileId = fileId;
+      this.fixedSize = fixedSize;
     }
 
     @Override
@@ -144,7 +106,7 @@ public final class PersistentFSContentAccessor {
       super.close();
       final BufferExposingByteArrayOutputStream _out = (BufferExposingByteArrayOutputStream)out;
 
-      writeContent(myFileId, _out.toByteArraySequence(), myFixedSize);
+      writeContent(fileId, _out.toByteArraySequence(), fixedSize);
     }
   }
 
