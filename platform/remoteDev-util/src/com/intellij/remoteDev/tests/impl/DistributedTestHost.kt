@@ -96,7 +96,6 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
     }
   }
 
-  @OptIn(ExperimentalCoroutinesApi::class)
   private fun createProtocol(hostAddress: InetAddress, port: Int) {
     LOG.info("Creating protocol...")
     enableCoroutineDump()
@@ -292,7 +291,7 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
   }
 
   private fun screenshotFile(actionName: String, suffix: String, timeStamp: LocalTime): File {
-    var fileName = getArtifactsFileName(actionName, suffix, "png", timeStamp)
+    val fileName = getArtifactsFileName(actionName, suffix, "png", timeStamp)
 
     return File(PathManager.getLogPath()).resolve(fileName)
   }
