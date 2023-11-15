@@ -14,8 +14,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * @author Konstantin Bulenkov
@@ -66,10 +64,6 @@ public final class DateTimeFormatManager implements PersistentStateComponent<Ele
       e.printStackTrace();
     }
     return null;
-  }
-
-  public Set<String> getIds() {
-    return DateTimeFormatterBean.EP_NAME.getExtensionList().stream().map(bean -> bean.id).collect(Collectors.toSet());
   }
 
   public @NotNull String getDateFormatPattern() {

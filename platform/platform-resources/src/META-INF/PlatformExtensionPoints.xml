@@ -403,7 +403,6 @@
     <extensionPoint name="experimentalFeature" beanClass="com.intellij.openapi.application.ExperimentalFeatureImpl" dynamic="true" />
     <extensionPoint name="themeProvider" beanClass="com.intellij.ide.ui.UIThemeProvider" dynamic="true"/>
     <extensionPoint name="themeRemapper" interface="com.intellij.ide.ui.laf.UiThemeRemapper" dynamic="true"/>
-    <extensionPoint name="dateTimeFormatter" beanClass="com.intellij.util.text.DateTimeFormatterBean" dynamic="true"/>
     <extensionPoint name="themeMetadataProvider" beanClass="com.intellij.ide.ui.UIThemeMetadataProvider" dynamic="true"/>
     <extensionPoint name="iconMapper" beanClass="com.intellij.ide.ui.IconMapperBean" dynamic="true"/>
 
