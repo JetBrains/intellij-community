@@ -5,6 +5,7 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
 import com.intellij.vcs.log.ui.filter.VcsLogFilterUiEx;
+import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -12,6 +13,10 @@ import javax.swing.*;
 
 @ApiStatus.Experimental
 public interface MainVcsLogUi extends VcsLogUiEx {
+  @Override
+  @NotNull
+  VcsLogGraphTable getTable();
+
   @NotNull
   @Override
   VcsLogFilterUiEx getFilterUi();

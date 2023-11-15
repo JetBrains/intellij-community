@@ -22,6 +22,7 @@ import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.impl.VcsLogImpl;
 import com.intellij.vcs.log.ui.highlighters.VcsLogHighlighterFactory;
 import com.intellij.vcs.log.ui.table.GraphTableModel;
+import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.visible.CompoundVisibleGraph;
 import com.intellij.vcs.log.visible.VisiblePack;
@@ -114,6 +115,9 @@ public abstract class AbstractVcsLogUi implements VcsLogUiEx, Disposable {
   public @NotNull VcsLogData getLogData() {
     return myLogData;
   }
+
+  @Override
+  public abstract @NotNull VcsLogGraphTable getTable();
 
   public void requestMore(@NotNull Runnable onLoaded) {
     myRefresher.moreCommitsNeeded(onLoaded);

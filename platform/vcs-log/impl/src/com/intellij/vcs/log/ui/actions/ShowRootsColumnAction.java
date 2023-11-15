@@ -20,7 +20,7 @@ import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.impl.CommonUiProperties;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
-import com.intellij.vcs.log.ui.VcsLogUiEx;
+import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
 import org.jetbrains.annotations.NotNull;
 
 public class ShowRootsColumnAction extends BooleanPropertyToggleAction {
@@ -37,7 +37,7 @@ public class ShowRootsColumnAction extends BooleanPropertyToggleAction {
   @Override
   public void update(@NotNull AnActionEvent e) {
     super.update(e);
-    VcsLogUiEx ui = e.getData(VcsLogInternalDataKeys.LOG_UI_EX);
-    if (ui == null || !ui.getTable().getColorManager().hasMultiplePaths()) e.getPresentation().setEnabledAndVisible(false);
+    VcsLogGraphTable table = e.getData(VcsLogInternalDataKeys.VCS_LOG_GRAPH_TABLE);
+    if (table == null || !table.getColorManager().hasMultiplePaths()) e.getPresentation().setEnabledAndVisible(false);
   }
 }

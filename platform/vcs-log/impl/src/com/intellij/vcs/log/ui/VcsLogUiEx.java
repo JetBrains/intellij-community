@@ -9,7 +9,7 @@ import com.intellij.vcs.log.VcsLog;
 import com.intellij.vcs.log.VcsLogUi;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
-import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
+import com.intellij.vcs.log.ui.table.VcsLogCommitList;
 import com.intellij.vcs.log.visible.VisiblePack;
 import com.intellij.vcs.log.visible.VisiblePackRefresher;
 import org.jetbrains.annotations.ApiStatus;
@@ -31,7 +31,7 @@ public interface VcsLogUiEx extends VcsLogUi, Disposable {
   VisiblePack getDataPack();
 
   @NotNull
-  VcsLogGraphTable getTable();
+  VcsLogCommitList getTable();
 
   @NotNull
   JComponent getMainComponent();

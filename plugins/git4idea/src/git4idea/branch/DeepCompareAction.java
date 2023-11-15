@@ -21,6 +21,7 @@ import com.intellij.vcs.log.ui.MainVcsLogUi;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
 import com.intellij.vcs.log.ui.VcsLogUiEx;
 import com.intellij.vcs.log.ui.filter.BranchPopupBuilder;
+import com.intellij.vcs.log.util.VcsLogUiUtil;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject;
 import com.intellij.vcs.log.visible.filters.VcsLogFiltersKt;
@@ -108,7 +109,7 @@ public class DeepCompareAction extends ToggleAction implements DumbAware {
       popup.show(new RelativePoint((MouseEvent)inputEvent));
     }
     else {
-      popup.showInCenterOf(ui.getTable());
+      popup.showInCenterOf(VcsLogUiUtil.getComponent(ui));
     }
   }
 

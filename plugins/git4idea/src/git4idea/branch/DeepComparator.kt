@@ -29,6 +29,7 @@ import com.intellij.vcs.log.impl.HashImpl
 import com.intellij.vcs.log.ui.VcsLogUiEx
 import com.intellij.vcs.log.ui.highlighters.MergeCommitsHighlighter
 import com.intellij.vcs.log.ui.highlighters.VcsLogHighlighterFactory
+import com.intellij.vcs.log.util.VcsLogUiUtil
 import com.intellij.vcs.log.util.VcsLogUtil
 import com.intellij.vcs.log.util.findBranch
 import com.intellij.vcs.log.util.subgraphDifference
@@ -167,7 +168,7 @@ class DeepComparator(private val project: Project,
                                                                               MessageType.INFO.popupBackground, null)
         .setFadeoutTime(5000)
         .createBalloon()
-      val component = ui.table
+      val component = VcsLogUiUtil.getComponent(ui)
       balloon.show(RelativePoint(component, Point(component.width / 2, component.visibleRect.y)), Balloon.Position.below)
       Disposer.register(this, balloon)
     }

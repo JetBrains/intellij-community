@@ -6,6 +6,7 @@ import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.LoadingDetails;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.ui.VcsLogUiEx;
+import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
 import com.intellij.vcs.log.ui.table.column.Author;
 import com.intellij.vcs.log.ui.table.column.VcsLogColumnManager;
 import com.intellij.vcs.log.util.VcsUserUtil;
@@ -43,7 +44,11 @@ public class MyCommitsHighlighter implements VcsLogHighlighter {
   }
 
   private boolean isAuthorColumnVisible() {
-    if (myUi instanceof VcsLogUiEx ui) return ui.getTable().isColumnVisible(Author.INSTANCE);
+    if (myUi instanceof VcsLogUiEx ui) {
+      if (ui.getTable() instanceof VcsLogGraphTable table) {
+        return table.isColumnVisible(Author.INSTANCE);
+      }
+    }
     return true;
   }
 

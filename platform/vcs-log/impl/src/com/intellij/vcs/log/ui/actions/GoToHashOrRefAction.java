@@ -13,6 +13,7 @@ import com.intellij.vcs.log.impl.VcsLogNavigationUtil;
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
 import com.intellij.vcs.log.ui.VcsLogUiEx;
+import com.intellij.vcs.log.util.VcsLogUiUtil;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -40,7 +41,7 @@ public class GoToHashOrRefAction extends DumbAwareAction {
                                                                                                      reference.getRoot(), false, true),
                                                       logManager.getColorManager(),
                                                       new VcsGoToRefComparator(logUi.getDataPack().getLogProviders()));
-    popup.show(logUi.getTable());
+    popup.show(VcsLogUiUtil.getComponent(logUi));
   }
 
   @Override

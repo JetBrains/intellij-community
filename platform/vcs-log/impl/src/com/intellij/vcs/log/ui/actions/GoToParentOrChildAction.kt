@@ -20,6 +20,7 @@ import com.intellij.vcs.log.ui.frame.CommitPresentationUtil
 import com.intellij.vcs.log.ui.table.VcsLogCommitListModel
 import com.intellij.vcs.log.ui.table.getCachedCommitMetadata
 import com.intellij.vcs.log.ui.table.getCommitId
+import java.awt.Component
 import java.awt.event.KeyEvent
 
 open class GoToParentOrChildAction(val parent: Boolean) : DumbAwareAction() {
@@ -34,8 +35,10 @@ open class GoToParentOrChildAction(val parent: Boolean) : DumbAwareAction() {
     }
 
     e.presentation.isVisible = true
-    if (e.inputEvent is KeyEvent) {
-      e.presentation.isEnabled = ui.table.isFocusOwner
+
+    val table = ui.table
+    if (e.inputEvent is KeyEvent && table is Component) {
+      e.presentation.isEnabled = table.isFocusOwner
     }
     else {
       e.presentation.isEnabled = getRowsToJump(ui).isNotEmpty()
