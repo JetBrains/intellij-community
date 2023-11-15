@@ -62,9 +62,7 @@ internal class GHPRCombinedDiffModelProvider(private val project: Project, paren
     }
 
     uiCs.launch {
-      val details = dataProvider.detailsData.loadDetails().await()
-      val viewerIsAuthor = dataContext.securityService.currentUser.id == details.author?.id
-      val reviewVmHelper = GHPRReviewViewModelHelper(this, dataProvider.reviewData, viewerIsAuthor)
+      val reviewVmHelper = GHPRReviewViewModelHelper(this, dataProvider)
       val reviewVm = DelegatingGHPRReviewViewModel(reviewVmHelper)
 
       var childJob = handleChanges(project, dataContext, dataProvider, reviewVm, model)

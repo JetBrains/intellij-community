@@ -4,7 +4,9 @@ package org.jetbrains.plugins.github.pullrequest.ui.review
 import com.intellij.collaboration.async.nestedDisposable
 import com.intellij.collaboration.util.ComputedResult
 import com.intellij.openapi.actionSystem.DataKey
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.util.coroutines.childScope
+import com.intellij.util.io.await
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.currentCoroutineContext
@@ -13,7 +15,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.github.pullrequest.data.GHPullRequestPendingReview
-import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRReviewDataProvider
+import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
 
 interface GHPRReviewViewModel {
   /**
@@ -49,10 +51,9 @@ internal class DelegatingGHPRReviewViewModel(private val helper: GHPRReviewViewM
   }
 }
 
-internal class GHPRReviewViewModelHelper(parentCs: CoroutineScope,
-                                         private val dataProvider: GHPRReviewDataProvider,
-                                         private val viewerIsAuthor: Boolean) {
+internal class GHPRReviewViewModelHelper(parentCs: CoroutineScope, private val dataProvider: GHPRDataProvider) {
   private val cs = parentCs.childScope()
+  private val reviewData = dataProvider.reviewData
 
   val pendingReviewState = MutableStateFlow<ComputedResult<GHPullRequestPendingReview?>>(ComputedResult.loading())
 
@@ -60,7 +61,14 @@ internal class GHPRReviewViewModelHelper(parentCs: CoroutineScope,
     val pendingReviewResult = pendingReviewState.value.result ?: return
     cs.launch {
       val ctx = currentCoroutineContext()
-      val vm = GHPRSubmitReviewViewModelImpl(this, dataProvider, viewerIsAuthor, pendingReviewResult.getOrNull()) {
+      val viewerIsAuthor = try {
+        dataProvider.detailsData.loadDetails().await().viewerDidAuthor
+      }
+      catch (e: Exception) {
+        LOG.info("Details loading failed", e)
+        return@launch
+      }
+      val vm = GHPRSubmitReviewViewModelImpl(this, reviewData, viewerIsAuthor, pendingReviewResult.getOrNull()) {
         ctx.cancel()
       }
       handler.invoke(vm)
@@ -68,9 +76,9 @@ internal class GHPRReviewViewModelHelper(parentCs: CoroutineScope,
   }
 
   init {
-    dataProvider.addPendingReviewListener(cs.nestedDisposable()) {
+    reviewData.addPendingReviewListener(cs.nestedDisposable()) {
       pendingReviewState.value = ComputedResult.loading()
-      dataProvider.loadPendingReview().handle { res, err ->
+      reviewData.loadPendingReview().handle { res, err ->
         if (err != null) {
           pendingReviewState.value = ComputedResult.failure(err.cause ?: err)
         }
@@ -79,6 +87,10 @@ internal class GHPRReviewViewModelHelper(parentCs: CoroutineScope,
         }
       }
     }
-    dataProvider.resetPendingReview()
+    reviewData.resetPendingReview()
+  }
+
+  companion object {
+    private val LOG = logger<GHPRReviewViewModelHelper>()
   }
 }
