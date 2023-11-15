@@ -7,6 +7,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiNameIdentifierOwner
 import com.intellij.psi.util.hasErrorElementInRange
 import com.intellij.refactoring.suggested.*
+import com.intellij.util.SlowOperations
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.PyTokenTypes
 import com.jetbrains.python.psi.PyElement
@@ -80,7 +81,9 @@ class PySuggestedRefactoringSupport : SuggestedRefactoringSupport {
   internal data class ParameterData(val defaultValue: String?) : SuggestedRefactoringSupport.ParameterAdditionalData
 
   private fun findSupport(declaration: PsiElement): SupportInternal? {
-    return sequenceOf(ChangeSignatureSupport, RenameSupport(this)).firstOrNull { it.isApplicable(declaration) }
+    SlowOperations.knownIssue("IDEA-338217, EA-935635").use {
+      return sequenceOf(ChangeSignatureSupport, RenameSupport(this)).firstOrNull { it.isApplicable(declaration) }
+    }
   }
 
   private interface SupportInternal {
