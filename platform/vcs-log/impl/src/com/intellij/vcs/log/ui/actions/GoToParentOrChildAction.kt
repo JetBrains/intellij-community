@@ -10,15 +10,14 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.text.DateFormatUtil
-import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcs.log.VcsLogBundle
 import com.intellij.vcs.log.VcsLogDataKeys
-import com.intellij.vcs.log.data.LoadingDetails
 import com.intellij.vcs.log.impl.VcsLogNavigationUtil.jumpToRow
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector.PARENT_COMMIT
 import com.intellij.vcs.log.ui.VcsLogUiEx
 import com.intellij.vcs.log.ui.frame.CommitPresentationUtil
+import com.intellij.vcs.log.ui.table.GraphTableModel
 import java.awt.event.KeyEvent
 
 open class GoToParentOrChildAction(val parent: Boolean) : DumbAwareAction() {
@@ -67,7 +66,7 @@ open class GoToParentOrChildAction(val parent: Boolean) : DumbAwareAction() {
 
   private fun createGroup(ui: VcsLogUiEx, rows: List<Int>): ActionGroup {
     val actions = rows.mapTo(mutableListOf()) { row ->
-      val text = getActionText(ui.table.model.getCommitMetadata(row))
+      val text = ui.table.listModel.getActionText(row)
       object : DumbAwareAction(text, VcsLogBundle.message("action.go.to.navigate.to", text), null) {
         override fun actionPerformed(e: AnActionEvent) {
           triggerUsage(e)
@@ -83,8 +82,9 @@ open class GoToParentOrChildAction(val parent: Boolean) : DumbAwareAction() {
   }
 
   @NlsActions.ActionText
-  private fun getActionText(commitMetadata: VcsCommitMetadata): String {
-    if (commitMetadata !is LoadingDetails) {
+  private fun GraphTableModel.getActionText(row: Int): String {
+    val commitMetadata = logData.miniDetailsGetter.getCachedData(getId(row))
+    if (commitMetadata != null) {
       val time: Long = commitMetadata.authorTime
       val commitMessage = "\"" + StringUtil.shortenTextWithEllipsis(commitMetadata.subject,
                                                                     40, 0,
@@ -96,7 +96,7 @@ open class GoToParentOrChildAction(val parent: Boolean) : DumbAwareAction() {
                                   DateFormatUtil.formatDate(time),
                                   DateFormatUtil.formatTime(time))
     }
-    return commitMetadata.id.toShortString()
+    return getCommitId(row)?.hash?.toShortString() ?: ""
   }
 
   private fun getRowsToJump(ui: VcsLogUiEx): List<Int> {

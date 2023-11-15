@@ -704,7 +704,7 @@ public class VcsLogGraphTable extends TableWithProgress implements VcsLogCommitL
   }
 
   @Override
-  public @NotNull VcsLogCommitListModel getListModel() {
+  public @NotNull GraphTableModel getListModel() {
     return getModel();
   }
 
