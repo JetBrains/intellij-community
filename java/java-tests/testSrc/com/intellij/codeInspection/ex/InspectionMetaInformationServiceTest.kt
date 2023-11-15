@@ -44,7 +44,7 @@ class InspectionMetaInformationServiceTest {
   fun testCWEids() {
     doTest {
       assertEquals(listOf(570, 571), service<InspectionMetaInformationService>().getMetaInformation("ConstantValue")?.cweIds)
-      assertEquals(listOf(476), service<InspectionMetaInformationService>().getMetaInformation("NullableProblems")?.cweIds)
+      assertEquals(listOf(476, 754), service<InspectionMetaInformationService>().getMetaInformation("NullableProblems")?.cweIds)
     }
   }
 
