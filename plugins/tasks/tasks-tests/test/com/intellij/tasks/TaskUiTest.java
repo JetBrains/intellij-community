@@ -62,7 +62,7 @@ public class TaskUiTest extends CodeInsightFixtureTestCase {
     assertTrue(defaultTask.isDefault());
     assertEquals(defaultTask.getCreated(), defaultTask.getUpdated());
 
-    toolbar.updateActionsImmediately();
+    PlatformTestUtil.waitForFuture(toolbar.updateActionsAsync());
     Presentation presentation = doTest(combo, toolbar);
     assertFalse(presentation.isVisible());
     assertNull(presentation.getClientProperty(CustomComponentAction.COMPONENT_KEY));

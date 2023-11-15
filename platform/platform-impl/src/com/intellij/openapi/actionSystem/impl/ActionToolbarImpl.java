@@ -1312,14 +1312,15 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     return myOrientation;
   }
 
-  /** Async toolbars are not updated immediately despite the name of the method. */
+  @Deprecated
   @Override
   public void updateActionsImmediately() {
     updateActionsImmediately(false);
   }
 
+  @Override
   @RequiresEdt
-  public Future<?> updateActionsAsync() {
+  public @NotNull Future<?> updateActionsAsync() {
     updateActionsImmediately(false);
     CancellablePromise<List<AnAction>> update = myLastUpdate;
     return update == null ? CompletableFuture.completedFuture(null) : update;
@@ -1328,7 +1329,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
 
   @ApiStatus.Internal
   @RequiresEdt
-  public void updateActionsImmediately(boolean includeInvisible) {
+  protected void updateActionsImmediately(boolean includeInvisible) {
     boolean isTestMode = ApplicationManager.getApplication().isUnitTestMode();
     if (getParent() == null && myTargetComponent == null && !isTestMode && !includeInvisible) {
       LOG.warn(new Throwable("'" + myPlace + "' toolbar manual update is ignored. " +
