@@ -128,11 +128,13 @@ class PythonAddNewEnvironmentPanel(val projectPath: ObservableProperty<String>) 
       }
 
       custom.onShown()
+      presenter.navigator.restoreLastState()
     }
   }
 
-  fun getSdk(): Sdk? =
-    when (selectedMode.get()) {
+  fun getSdk(): Sdk? {
+    presenter.navigator.saveLastState()
+    return when (selectedMode.get()) {
       PROJECT_VENV -> {
         val venvPath = Path.of(projectPath.get(), ".venv")
         val venvPathOnTarget = presenter.getPathOnTarget(venvPath)
@@ -148,6 +150,7 @@ class PythonAddNewEnvironmentPanel(val projectPath: ObservableProperty<String>) 
       }
       CUSTOM -> custom.getSdk()
     }
+  }
 
 
   fun createStatisticsInfo(): InterpreterStatisticsInfo = when (selectedMode.get()) {
