@@ -76,8 +76,8 @@ fun jbFilter(filter: (String) -> String): (String) -> String {
 @RequiresEdt
 fun findExistingConsole(
   module: Module,
-  consoleName: String,
-  toolWindowTitle: String
+  @Nls consoleName: String,
+  @Nls(capitalization = Nls.Capitalization.Title) toolWindowTitle: String
 ): LanguageConsoleView? {
   val project = module.project
   val consoleComponent = WindowWithActions.findWindowByName(project, toolWindowTitle, consoleName)
@@ -101,10 +101,10 @@ fun findExistingConsole(
 @RequiresEdt
 fun createConsoleInToolWindow(
   module: Module,
-  @Nls(capitalization = Nls.Capitalization.Title) consoleName: String,
-  prompt: String = consoleName,
+  @Nls consoleName: String,
+  @Nls prompt: String = consoleName,
   commandsInfo: CommandsInfo?,
-  toolWindowTitle: String,
+  @Nls(capitalization = Nls.Capitalization.Title) toolWindowTitle: String,
   toolWindowIcon: Icon
 ): LanguageConsoleView {
   val project = module.project

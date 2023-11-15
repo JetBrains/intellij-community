@@ -46,7 +46,7 @@ final class ToolWindowApi {
    * @param windowName name to be used as id (and shown to user)
    */
   @RequiresEdt
-  ToolWindowApi(@NotNull final Project project, @NotNull final String windowName, @NotNull Icon icon) {
+  ToolWindowApi(@NotNull final Project project, @Nls(capitalization = Nls.Capitalization.Title) @NotNull final String windowName, @NotNull Icon icon) {
 
     myToolWindowManager = ToolWindowManager.getInstance(project);
     ToolWindow window = myToolWindowManager.getToolWindow(windowName);
@@ -64,7 +64,7 @@ final class ToolWindowApi {
    * @param component component to add to window
    */
   @RequiresEdt
-  void add(@NotNull final JComponent component, @Nls(capitalization = Nls.Capitalization.Title) String componentTitle) {
+  void add(@NotNull final JComponent component, @Nls String componentTitle) {
     myContentManager.addContent(new ContentImpl(component, componentTitle, true));
   }
 
