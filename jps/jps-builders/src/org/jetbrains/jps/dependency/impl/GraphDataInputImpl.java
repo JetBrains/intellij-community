@@ -153,12 +153,12 @@ public class GraphDataInputImpl implements GraphDataInput {
     String toString(int num) throws IOException;
   }
 
-  public static GraphDataInput wrap(DataInput in, @Nullable StringEnumerator enumerator, Function<? super ExternalizableGraphElement, ? extends ExternalizableGraphElement> elementInterner) {
+  public static GraphDataInput wrap(DataInput in, @Nullable StringEnumerator enumerator, Function<Object, Object> elementInterner) {
     if (enumerator != null && elementInterner != null) {
       return new GraphDataInputImpl(in) {
         @Override
         public @NotNull String readUTF() throws IOException {
-          return enumerator.toString(readInt());
+          return (String)elementInterner.apply(enumerator.toString(readInt()));
         }
 
         @Override
@@ -172,6 +172,11 @@ public class GraphDataInputImpl implements GraphDataInput {
 
     if (elementInterner != null) {
       return new GraphDataInputImpl(in) {
+        @Override
+        public @NotNull String readUTF() throws IOException {
+          return (String)elementInterner.apply(super.readUTF());
+        }
+
         @Override
         protected <T extends ExternalizableGraphElement> T processLoadedGraphElement(T element) {
           // by contract interner must return the element of exactly the same type

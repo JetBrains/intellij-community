@@ -73,7 +73,8 @@ public final class Containers {
     private final PersistentStringEnumerator myStringTable;
     private final List<Closeable> myMaps = new ArrayList<>();
     private final Enumerator myEnumerator;
-    private final Function<ExternalizableGraphElement, ExternalizableGraphElement> myUsagesInterner;
+    private final Function<Object, Object> myDataInterner;
+    private final LoadingCache<Object, Object> myInternerCache;
 
     PersistentMapletFactory(String rootDirPath) throws IOException {
       myRootDirPath = rootDirPath;
@@ -89,16 +90,16 @@ public final class Containers {
           return myStringTable.enumerate(str);
         }
       };
-      LoadingCache<Usage, Usage> interner = Caffeine.newBuilder().maximumSize(2 * CACHE_SIZE).build(key -> key);
-      myUsagesInterner = elem -> {
-        return elem instanceof Usage? interner.get((Usage)elem) : elem;
+      myInternerCache = Caffeine.newBuilder().maximumSize(2 * CACHE_SIZE).build(key -> key);
+      myDataInterner = elem -> {
+        return elem instanceof Usage || elem instanceof String? myInternerCache.get(elem) : elem;
       };
     }
 
     @Override
     public <K, V> MultiMaplet<K, V> createSetMultiMaplet(String storageName, Externalizer<K> keyExternalizer, Externalizer<V> valueExternalizer) {
       MultiMaplet<K, V> container = new CachingMultiMaplet<>(
-        new PersistentMultiMaplet<>(getMapFile(storageName), new GraphKeyDescriptor<>(keyExternalizer, myEnumerator), new GraphDataExternalizer<>(valueExternalizer, myEnumerator, myUsagesInterner), () -> (Set<V>)new HashSet<V>()),
+        new PersistentMultiMaplet<>(getMapFile(storageName), new GraphKeyDescriptor<>(keyExternalizer, myEnumerator), new GraphDataExternalizer<>(valueExternalizer, myEnumerator, myDataInterner), () -> (Set<V>)new HashSet<V>()),
         CACHE_SIZE
       );
       myMaps.add(container);
@@ -108,7 +109,7 @@ public final class Containers {
     @Override
     public <K, V> Maplet<K, V> createMaplet(String storageName, Externalizer<K> keyExternalizer, Externalizer<V> valueExternalizer) {
       Maplet<K, V> container = new CachingMaplet<>(
-        new PersistentMaplet<>(getMapFile(storageName), new GraphKeyDescriptor<>(keyExternalizer, myEnumerator), new GraphDataExternalizer<>(valueExternalizer, myEnumerator, myUsagesInterner)),
+        new PersistentMaplet<>(getMapFile(storageName), new GraphKeyDescriptor<>(keyExternalizer, myEnumerator), new GraphDataExternalizer<>(valueExternalizer, myEnumerator, myDataInterner)),
         CACHE_SIZE
       );
       myMaps.add(container);
@@ -129,6 +130,7 @@ public final class Containers {
         }
       }
       myMaps.clear();
+      myInternerCache.invalidateAll();
       if (ex instanceof IOException) {
         throw new BuildDataCorruptedException((IOException)ex);
       }
@@ -149,12 +151,12 @@ public final class Containers {
     @Nullable
     private final Enumerator myEnumerator;
     @Nullable
-    private final Function<ExternalizableGraphElement, ExternalizableGraphElement> myElementInterner;
+    private final Function<Object, Object> myObjectInterner;
 
-    GraphDataExternalizer(Externalizer<T> externalizer, @Nullable Enumerator enumerator, @Nullable Function<ExternalizableGraphElement, ExternalizableGraphElement> elementInterner) {
+    GraphDataExternalizer(Externalizer<T> externalizer, @Nullable Enumerator enumerator, @Nullable Function<Object, Object> objectInterner) {
       myExternalizer = externalizer;
       myEnumerator = enumerator;
-      myElementInterner = elementInterner;
+      myObjectInterner = objectInterner;
     }
 
     @Override
@@ -164,7 +166,7 @@ public final class Containers {
 
     @Override
     public T read(@NotNull DataInput in) throws IOException {
-      return myExternalizer.load(GraphDataInputImpl.wrap(in, myEnumerator, myElementInterner));
+      return myExternalizer.load(GraphDataInputImpl.wrap(in, myEnumerator, myObjectInterner));
     }
   }
 
