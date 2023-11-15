@@ -16,6 +16,8 @@ import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.ex.InlineActionsHolder
 import com.intellij.openapi.actionSystem.impl.ActionMenu.Companion.ALWAYS_VISIBLE
 import com.intellij.openapi.actionSystem.impl.ActionMenu.Companion.SUPPRESS_SUBMENU
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehavior
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
@@ -80,6 +82,7 @@ internal class ActionUpdater @JvmOverloads constructor(
   private val contextMenuAction: Boolean,
   private val toolbarAction: Boolean,
   private val edtDispatcher: CoroutineDispatcher,
+  private val checkActionRemoteBehaviorSpecification: Boolean = false,
   private val eventTransform: ((AnActionEvent) -> AnActionEvent)? = null) {
 
   @Volatile private var bgtScope: CoroutineScope? = null
@@ -528,6 +531,14 @@ internal class ActionUpdater @JvmOverloads constructor(
     }
     // clone the presentation to avoid partially changing the cached one if the update is interrupted
     val presentation = presentationFactory.getPresentation(action).clone()
+    if (checkActionRemoteBehaviorSpecification) {
+      val behavior = (action as? ActionRemoteBehaviorSpecification)?.getBehavior()
+      if (behavior == ActionRemoteBehavior.Disabled || behavior == ActionRemoteBehavior.FrontendOnly) {
+        presentation.isEnabledAndVisible = false
+        updatedPresentations[action] = presentation
+        return presentation
+      }
+    }
     // reset enabled/visible flags (actions are encouraged to always set them in `update`)
     presentation.setEnabledAndVisible(true)
     val event = createActionEvent(presentation)
