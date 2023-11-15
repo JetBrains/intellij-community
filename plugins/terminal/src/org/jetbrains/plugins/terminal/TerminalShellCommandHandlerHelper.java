@@ -77,8 +77,7 @@ public final class TerminalShellCommandHandlerHelper {
         scheduleCommandHighlighting();
       }
     };
-    widget.getTerminalTextBuffer().addModelListener(listener);
-    Disposer.register(myWidget, () -> widget.getTerminalTextBuffer().removeModelListener(listener));
+    TerminalUtil.addModelListener(widget.getTerminalTextBuffer(), myWidget, listener);
   }
 
   public void processKeyPressed(KeyEvent e) {

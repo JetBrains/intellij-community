@@ -2,11 +2,9 @@
 package org.jetbrains.plugins.terminal.exp
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.util.Disposer
 import com.jediterm.terminal.StyledTextConsumer
 import com.jediterm.terminal.TextStyle
 import com.jediterm.terminal.model.CharBuffer
-import com.jediterm.terminal.model.TerminalModelListener
 import com.jediterm.terminal.model.TerminalTextBuffer
 import org.jetbrains.plugins.terminal.TerminalUtil
 import java.util.concurrent.CopyOnWriteArrayList
@@ -21,10 +19,8 @@ internal class ShellCommandOutputScraper(private val textBuffer: TerminalTextBuf
   private var runningCommand: String? = null
 
   init {
-    val terminalListener = TerminalModelListener { onContentChanged() }
-    textBuffer.addModelListener(terminalListener)
-    Disposer.register(parentDisposable) {
-      textBuffer.removeModelListener(terminalListener)
+    TerminalUtil.addModelListener(textBuffer, parentDisposable) {
+      onContentChanged()
     }
     commandManager.addListener(object: ShellCommandListener {
       override fun commandStarted(command: String) {
