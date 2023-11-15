@@ -65,6 +65,8 @@ import javax.swing.event.PopupMenuEvent
 import javax.swing.text.JTextComponent
 import kotlin.time.Duration.Companion.days
 
+private const val FONT_KEY = "FontFunction"
+
 internal class NotificationsToolWindowFactory : ToolWindowFactory, DumbAware {
   companion object {
     const val ID: String = "Notifications"
@@ -109,10 +111,6 @@ internal class NotificationsToolWindowFactory : ToolWindowFactory, DumbAware {
 
 @ApiStatus.Internal
 object NotificationsStateWatcher {
-  fun hasNotifications(project: Project): Boolean {
-    return !NotificationsToolWindowFactory.myModel.getNotifications(project).isEmpty()
-  }
-
   fun hasSuggestionNotifications(project: Project): Boolean {
     val notifications = NotificationsToolWindowFactory.myModel.getNotifications(project)
     return notifications.any { it.isSuggestionType }
@@ -333,10 +331,6 @@ internal class NotificationContent(val project: Project,
     }
   }
 
-  fun hasSuggestions(): Boolean {
-    return !suggestions.isEmpty()
-  }
-
   private fun remove(notification: Notification) {
     if (notification.isSuggestionType) {
       suggestions.remove(notification)
@@ -353,8 +347,9 @@ internal class NotificationContent(val project: Project,
   }
 
   private fun clear(notifications: List<Notification>) {
-    myNotifications.removeAll(notifications)
-    myIconNotifications.removeAll(notifications)
+    val notificationSet = notifications.toSet()
+    myNotifications.removeAll(notificationSet)
+    myIconNotifications.removeAll(notificationSet)
     searchController.update()
     autoProportionController.update()
     setStatusMessage()
@@ -443,7 +438,7 @@ private fun JComponent.mediumFontFunction() {
   val f: (JComponent) -> Unit = {
     it.font = JBFont.medium()
   }
-  putClientProperty(NotificationGroupComponent.FONT_KEY, f)
+  putClientProperty(FONT_KEY, f)
 }
 
 private fun JComponent.smallFontFunction() {
@@ -451,7 +446,7 @@ private fun JComponent.smallFontFunction() {
   val f: (JComponent) -> Unit = {
     it.font = JBFont.smallOrNewUiMedium()
   }
-  putClientProperty(NotificationGroupComponent.FONT_KEY, f)
+  putClientProperty(FONT_KEY, f)
 }
 
 private class SearchController(private val mainContent: NotificationContent,
@@ -570,7 +565,6 @@ private class NotificationGroupComponent(private val myMainContent: Notification
   JBPanel<NotificationGroupComponent>(BorderLayout()), NullableComponent {
 
   companion object {
-    const val FONT_KEY = "FontFunction"
   }
 
   private val myTitle = JBLabel(
@@ -770,12 +764,15 @@ private class NotificationGroupComponent(private val myMainContent: Notification
   }
 
   fun updateComponents() {
-    UIUtil.uiTraverser(this).filter(JComponent::class.java).forEach {
-      val value = it.getClientProperty(FONT_KEY)
-      if (value != null) {
-        (value as (JComponent) -> Unit).invoke(it)
+    UIUtil.uiTraverser(this)
+      .filter(JComponent::class.java)
+      .forEach {
+        val value = it.getClientProperty(FONT_KEY)
+        if (value != null) {
+          @Suppress("UNCHECKED_CAST")
+          (value as (JComponent) -> Unit).invoke(it)
+        }
       }
-    }
     myMainContent.fullRepaint()
   }
 
@@ -893,6 +890,7 @@ private class NotificationComponent(val project: Project,
     layout = object : BorderLayout(JBUI.scale(7), 0) {
       private var myEastComponent: Component? = null
 
+      @Suppress("OVERRIDE_DEPRECATION", "DEPRECATION")
       override fun addLayoutComponent(name: String?, comp: Component) {
         if (EAST == name) {
           myEastComponent = comp
@@ -1102,16 +1100,15 @@ private class NotificationComponent(val project: Project,
     }
   }
 
-  private fun createAction(action: AnAction): JComponent {
-    return object : LinkLabel<AnAction>(action.templateText, action.templatePresentation.icon,
-                                        { link, _action -> runAction(_action, link) }, action) {
+  @Suppress("DialogTitleCapitalization")
+  private fun createAction(action: AnAction): JComponent =
+    object : LinkLabel<AnAction>(action.templateText, action.templatePresentation.icon, { lnk, act -> runAction(act, lnk) }, action) {
       init {
         Notification.setDataProvider(myNotificationWrapper.notification!!, this)
       }
 
       override fun getTextColor() = JBUI.CurrentTheme.Link.Foreground.ENABLED
     }
-  }
 
   private fun createPopupAction(notification: Notification): JComponent {
     val group = MyActionGroup()
@@ -1155,7 +1152,7 @@ private class NotificationComponent(val project: Project,
     val presentation = Presentation()
     presentation.description = IdeBundle.message("tooltip.turn.notification.off")
     presentation.icon = AllIcons.Actions.More
-    presentation.putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, java.lang.Boolean.TRUE)
+    presentation.putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, true)
 
     val button = object : ActionButton(group, presentation, ActionPlaces.UNKNOWN, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE) {
       override fun createAndShowActionGroupPopup(actionGroup: ActionGroup, event: AnActionEvent): JBPopup {
@@ -1231,7 +1228,7 @@ private class NotificationComponent(val project: Project,
   private fun createTextComponent(text: @Nls String): JEditorPane {
     val component = JEditorPane()
     component.isEditable = false
-    component.putClientProperty(JEditorPane.HONOR_DISPLAY_PROPERTIES, java.lang.Boolean.TRUE)
+    component.putClientProperty(JEditorPane.HONOR_DISPLAY_PROPERTIES, true)
     component.contentType = "text/html"
     component.isOpaque = false
     component.border = null
@@ -1377,7 +1374,7 @@ private class MoreAction(val notificationComponent: NotificationComponent, actio
 
   init {
     val size = actions.size
-    for (i in 1..size - 1) {
+    for (i in 1..<size) {
       group.add(actions[i])
     }
 
@@ -1454,7 +1451,7 @@ private class NotificationWrapper(notification: Notification) {
   val id = notification.id
   val displayId = notification.displayId
   val groupId = notification.groupId
-  val actions: List<String?> = notification.actions.stream().map { it.templateText }.toList()
+  val actions: List<String?> = notification.actions.map { it.templateText }
   var notification: Notification? = notification
 }
 
@@ -1592,8 +1589,8 @@ internal class ApplicationNotificationModel {
           myNotifications.add(notification)
         }
         else {
-          for ((_project, model) in myProjectToModel.entries) {
-            model.addNotification(_project, notification, myNotifications, runnables)
+          for ((eachProject, eachModel) in myProjectToModel.entries) {
+            eachModel.addNotification(eachProject, notification, myNotifications, runnables)
           }
         }
       }
@@ -1828,7 +1825,7 @@ fun Project.closeAllBalloons() {
   balloonLayout.closeAll()
 }
 
-private class ClearAllNotificationsAction : DumbAwareAction(IdeBundle.message("clear.all.notifications"), null, AllIcons.Actions.GC) {
+private class ClearAllNotificationsAction : DumbAwareAction() {
   override fun update(e: AnActionEvent) {
     val project = e.project
     e.presentation.isEnabled = NotificationsToolWindowFactory.getNotifications(project).isNotEmpty() ||
