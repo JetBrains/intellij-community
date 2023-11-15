@@ -16,13 +16,16 @@ import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.impl.*
 import com.intellij.platform.workspace.storage.impl.containers.BidirectionalLongMultiMap
 import com.intellij.platform.workspace.storage.impl.indices.*
+import com.intellij.platform.workspace.storage.impl.serialization.kryo.CachedReferenceResolver
 import com.intellij.platform.workspace.storage.impl.serialization.registration.StorageClassesRegistrar
 import com.intellij.platform.workspace.storage.impl.serialization.registration.StorageRegistrar
 import com.intellij.platform.workspace.storage.impl.serialization.registration.registerEntitiesClasses
 import com.intellij.platform.workspace.storage.impl.serialization.serializer.StorageSerializerUtil
 import com.intellij.platform.workspace.storage.metadata.diff.CacheMetadataComparator
 import com.intellij.platform.workspace.storage.metadata.diff.ComparisonResult
+import com.intellij.platform.workspace.storage.metadata.model.StorageClassMetadata
 import com.intellij.platform.workspace.storage.metadata.model.StorageTypeMetadata
+import com.intellij.platform.workspace.storage.metadata.utils.collectClassesByFqn
 import com.intellij.platform.workspace.storage.url.UrlRelativizer
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
@@ -105,10 +108,13 @@ public class EntityStorageSerializerImpl(
       // Save version
       output.writeString(serializerDataFormatVersion)
 
-      val entitiesMetadata = getCacheMetadata(storage, typesResolver)
-      kryo.writeObject(output, entitiesMetadata)// Serialize all Entities, Entity Source and Symbolic id metadata from the storage
+      val cacheMetadata = getCacheMetadata(storage, typesResolver)
 
-      writeAndRegisterClasses(kryo, output, storage, entitiesMetadata, classCache) // Register entities classes
+      setCachedReferenceResolver(kryo, cacheMetadata)
+
+      kryo.writeObject(output, cacheMetadata)// Serialize all Entities, Entity Source and Symbolic id metadata from the storage
+
+      writeAndRegisterClasses(kryo, output, storage, cacheMetadata, classCache) // Register entities classes
 
       // Write entity data and references
       kryo.writeClassAndObject(output, storage.entitiesByType)
@@ -164,6 +170,7 @@ public class EntityStorageSerializerImpl(
 
         time = logAndResetTime(time) { measuredTime -> "Read cache metadata and compare it with the existing metadata: $measuredTime ns" }
 
+        setCachedReferenceResolver(kryo, cacheMetadata)
 
         readAndRegisterClasses(kryo, input, cacheMetadata, classCache)
         time = logAndResetTime(time) { measuredTime -> "Read and register classes: $measuredTime ns" }
@@ -261,6 +268,21 @@ public class EntityStorageSerializerImpl(
       classCache.putIfAbsent(objectClass, resolvedClass.toClassId())
       kryo.register(resolvedClass)
     }
+  }
+
+  private fun setCachedReferenceResolver(kryo: Kryo, cacheMetadata: CacheMetadata) {
+    val classesByFqn: MutableMap<String, StorageClassMetadata> = hashMapOf()
+
+    val cacheMetadataAsList = cacheMetadata.toList()
+    cacheMetadataAsList.forEach {
+      it.collectClassesByFqn(classesByFqn)
+    }
+
+    val entitiesWithCollectedClasses = arrayListOf<StorageTypeMetadata>()
+    entitiesWithCollectedClasses.addAll(cacheMetadataAsList)
+    entitiesWithCollectedClasses.addAll(classesByFqn.values)
+
+    kryo.referenceResolver = CachedReferenceResolver(kryo.referenceResolver, entitiesWithCollectedClasses)
   }
 
   internal val Class<*>.typeInfo: TypeInfo
