@@ -3,15 +3,15 @@ package com.intellij.ide.startup.importSettings.chooser.productChooser
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.startup.importSettings.ImportSettingsBundle
-import com.intellij.ide.startup.importSettings.chooser.ui.ImportSettingsPage
 import com.intellij.ide.startup.importSettings.chooser.ui.ImportSettingsController
+import com.intellij.ide.startup.importSettings.chooser.ui.ImportSettingsPage
 import com.intellij.ide.startup.importSettings.chooser.ui.UiUtils
 import com.intellij.ide.startup.importSettings.data.SettingsService
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
+import com.intellij.platform.ide.bootstrap.StartupWizardStage
 import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.util.preferredHeight
@@ -23,6 +23,9 @@ import javax.swing.JPanel
 import javax.swing.SwingConstants
 
 class ProductChooserPage(val controller: ImportSettingsController) : ImportSettingsPage {
+
+  override val stage = StartupWizardStage.ProductChoicePage
+
   private val accountLabel = JLabel("user.name").apply {
     icon = AllIcons.General.User
   }

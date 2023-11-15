@@ -12,6 +12,7 @@ import com.intellij.openapi.rd.createLifetime
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.platform.ide.bootstrap.StartupWizardStage
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
 import com.jetbrains.rd.util.lifetime.Lifetime
@@ -39,6 +40,7 @@ class ImportSettingsDialog(val callback: () -> Unit) : DialogWrapper(null, null,
   }
 
   override val lifetime: Lifetime = disposable.createLifetime()
+  private val tracker = WizardPageTracker()
 
   private val pane = JPanel(BorderLayout()).apply {
     border = JBUI.Borders.empty()
@@ -68,6 +70,7 @@ class ImportSettingsDialog(val callback: () -> Unit) : DialogWrapper(null, null,
 
       if (shouldExit != false) {
         super.doCancelAction()
+        tracker.onLeave()
         callback()
       }
 
@@ -85,6 +88,7 @@ class ImportSettingsDialog(val callback: () -> Unit) : DialogWrapper(null, null,
     currentPage?.content?.let {
       overlay.clearNotifications()
       pane.remove(it)
+      tracker.onLeave()
     }
 
     val content = page.content
@@ -92,6 +96,7 @@ class ImportSettingsDialog(val callback: () -> Unit) : DialogWrapper(null, null,
     pane.preferredSize = JBDimension(640, 410)
 
     currentPage = page
+    tracker.onEnter(page.stage)
   }
 
   override fun getStyle(): DialogStyle {
@@ -142,12 +147,11 @@ class ImportSettingsDialog(val callback: () -> Unit) : DialogWrapper(null, null,
       }
     }
   }
-
-  var tracker = WizardPageTracker(null)
 }
 
 interface ImportSettingsPage {
   val content: JComponent
+  val stage: StartupWizardStage?
 
   fun showExit(): MessageDialogBuilder.YesNo? = null
 }

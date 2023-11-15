@@ -10,6 +10,7 @@ import com.intellij.ide.startup.importSettings.data.DialogImportData
 import com.intellij.ide.startup.importSettings.data.ImportFromProduct
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.platform.ide.bootstrap.StartupWizardStage
 import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.util.minimumWidth
@@ -24,6 +25,8 @@ import java.awt.GridBagLayout
 import javax.swing.*
 
 class ImportProgressPage(importFromProduct: DialogImportData, controller: ImportSettingsController) : ImportSettingsPage {
+
+  override val stage = StartupWizardStage.ImportProgressPage
 
   override fun showExit(): MessageDialogBuilder.YesNo = MessageDialogBuilder.yesNo(ImportSettingsBundle.message("exit.confirm.title"),
                                                                                    ImportSettingsBundle.message("exit.confirm.prompt"))

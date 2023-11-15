@@ -3,13 +3,14 @@ package com.intellij.ide.startup.importSettings.chooser.settingChooser
 
 import com.intellij.CommonBundle
 import com.intellij.ide.startup.importSettings.ImportSettingsBundle
-import com.intellij.ide.startup.importSettings.chooser.ui.ImportSettingsPage
 import com.intellij.ide.startup.importSettings.chooser.ui.ImportSettingsController
+import com.intellij.ide.startup.importSettings.chooser.ui.ImportSettingsPage
 import com.intellij.ide.startup.importSettings.data.*
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.platform.ide.bootstrap.StartupWizardStage
 import com.intellij.ui.JBColor
 import com.intellij.ui.SeparatorComponent
 import com.intellij.ui.SeparatorOrientation
@@ -143,6 +144,8 @@ class ConfigurableSettingChooserPage<T : BaseService>(val provider: ActionsDataP
                                                       controller: ImportSettingsController) : SettingChooserPage(provider, product,
                                                                                                                  controller) {
 
+  override val stage = StartupWizardStage.SettingsToImportPage
+
   private val importButton = controller.createDefaultButton(ImportSettingsBundle.message("import.settings.ok")) {
     val productService = provider.productService
     val dataForSaves = prepareDataForSave()
@@ -173,6 +176,9 @@ class ConfigurableSettingChooserPage<T : BaseService>(val provider: ActionsDataP
 class SyncSettingChooserPage(val provider: SyncActionsDataProvider,
                              product: SettingsContributor,
                              controller: ImportSettingsController) : SettingChooserPage(provider, product, controller) {
+
+  override val stage = StartupWizardStage.SettingsToSyncPage
+
   override val configurable = false
 
   private val importOnceButton = controller.createButton(ImportSettingsBundle.message("import.settings.sync.import.once")) {

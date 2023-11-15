@@ -9,21 +9,22 @@ import java.time.Duration
 
 private val logger = logger<WizardPageTracker>()
 
-class WizardPageTracker(private val stage: StartupWizardStage?) {
+class WizardPageTracker {
 
   private var lastEnterTimeNs: Long? = null
-  fun onEnter() {
-    if (stage == null) return
+  private var currentStage: StartupWizardStage? = null
+  fun onEnter(stage: StartupWizardStage?) {
     ThreadingAssertions.assertEventDispatchThread()
-    if (lastEnterTimeNs != null) {
-      logger.error("Double enter on page $stage without leave.")
+    if (currentStage != null) {
+      logger.error("Logic error: entered page $stage while still on page $currentStage.")
     }
 
     lastEnterTimeNs = System.nanoTime()
+    currentStage = stage
   }
 
   fun onLeave() {
-    if (stage == null) return
+    val stage = currentStage ?: return
     ThreadingAssertions.assertEventDispatchThread()
 
     val enterTimeNs = lastEnterTimeNs
@@ -34,6 +35,8 @@ class WizardPageTracker(private val stage: StartupWizardStage?) {
 
     val duration = Duration.ofNanos(leaveTimeNs - enterTimeNs)
     IdeStartupWizardCollector.logStartupStageTime(stage, duration)
+
     lastEnterTimeNs = null
+    currentStage = null
   }
 }
