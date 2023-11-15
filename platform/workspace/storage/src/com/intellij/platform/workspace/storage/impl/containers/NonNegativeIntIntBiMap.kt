@@ -110,7 +110,7 @@ internal sealed class NonNegativeIntIntBiMap {
     get() = key2Value.keys
 
   inline fun forEachKey(crossinline action: (Int, Int) -> Unit) {
-    Int2IntMaps.fastForEach(`access$key2Value`, Consumer { action(it.intKey, it.intValue) })
+    Int2IntMaps.fastForEach(key2Value, Consumer { action(it.intKey, it.intValue) })
   }
 
   fun containsKey(key: Int) = key2Value.containsKey(key)
@@ -139,10 +139,9 @@ internal sealed class NonNegativeIntIntBiMap {
     return result
   }
 
-  @Suppress("PropertyName")
-  @PublishedApi
-  internal val `access$key2Value`: Int2IntMap
-    get() = key2Value
+  internal fun assertConsistency() {
+    assert(key2Value.defaultReturnValue() == DEFAULT_RETURN_VALUE)
+  }
 
   companion object {
     internal const val DEFAULT_RETURN_VALUE = -1

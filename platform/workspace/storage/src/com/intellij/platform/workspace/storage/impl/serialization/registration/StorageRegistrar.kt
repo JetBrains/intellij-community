@@ -147,7 +147,12 @@ internal class StorageClassesRegistrar(
     kryo.register(HashBiMap::class.java).instantiator = ObjectInstantiator { HashBiMap.create<Any, Any>() }
     kryo.register(LinkedHashSet::class.java).instantiator = ObjectInstantiator { LinkedHashSet<Any>() }
     kryo.register(LinkedBidirectionalMap::class.java).instantiator = ObjectInstantiator { LinkedBidirectionalMap<Any, Any>() }
-    kryo.register(Int2IntOpenHashMap::class.java).instantiator = ObjectInstantiator { Int2IntOpenHashMap() }
+    kryo.register(Int2IntOpenHashMap::class.java).instantiator = ObjectInstantiator {
+      // We set -1 as a default return value because it's used in all Int2IntOpenHashMap in WM. But it would be better
+      //   to wrap "Int2IntOpenHashMap with default -1" with some helper class to avoid possible issues
+      //   if in some place we'll use this map with different default return value
+      Int2IntOpenHashMap().also { it.defaultReturnValue(-1) }
+    }
     @Suppress("SSBasedInspection")
     kryo.register(ObjectOpenHashSet::class.java).instantiator = ObjectInstantiator { ObjectOpenHashSet<Any>() }
     @Suppress("SSBasedInspection")

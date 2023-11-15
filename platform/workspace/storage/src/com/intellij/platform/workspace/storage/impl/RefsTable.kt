@@ -439,7 +439,8 @@ internal class MutableRefsTable(
       val copiedMap = getOneToManyMutableMap(connectionId)
 
       // Check if the reference already exists. This is needed to make fewer operations and not to break children ordering
-      if (copiedMap.get(childId.arrayId) == parentId.id.arrayId) return emptyList()
+      val existingParent = copiedMap.get(childId.arrayId)
+      if (existingParent != NonNegativeIntIntBiMap.DEFAULT_RETURN_VALUE && existingParent == parentId.id.arrayId) return emptyList()
 
       val removedParent = copiedMap.removeKey(childId.arrayId)
       val removedChildren = copiedMap.putAll(intArrayOf(childId.arrayId), parentId.id.arrayId)
