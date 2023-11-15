@@ -42,6 +42,7 @@ class ImportProgressPage(importFromProduct: DialogImportData, controller: Import
       })
 
       importFromProduct.message?.let {
+        @Suppress("HardCodedStringLiteral") // IDEA-255051
         add(JLabel(it).apply {
           horizontalAlignment = SwingConstants.CENTER
         })
@@ -129,6 +130,7 @@ class ImportProgressPage(importFromProduct: DialogImportData, controller: Import
   private open class HLabel(txt: String) {
     var text: @NlsContexts.Label String = ""
       set(value) {
+        @Suppress("HardCodedStringLiteral") // IDEA-338243
         if (field == value) return
         lbl.text = "<html><center>${value}</center></html>"
         field = value
@@ -141,7 +143,7 @@ class ImportProgressPage(importFromProduct: DialogImportData, controller: Import
       }
     }
 
-    protected open fun getPref(prefH: Int): Dimension {
+    open fun getPref(prefH: Int): Dimension {
       return Dimension(0, prefH)
     }
 

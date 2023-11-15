@@ -77,6 +77,7 @@ abstract class SettingChooserPage(private val provider: ActionsDataProvider<*>,
 
             provider.getComment(product)?.let { addTxt ->
               row {
+                @Suppress("HardCodedStringLiteral") // IDEA-255051
                 comment(addTxt).customize(
                   UnscaledGaps(top = 3))
               }
