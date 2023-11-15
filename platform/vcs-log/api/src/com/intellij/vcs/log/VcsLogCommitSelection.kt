@@ -49,13 +49,6 @@ interface VcsLogCommitSelection {
   val cachedFullDetails: List<VcsFullCommitDetails>
 
   /**
-   * Returns a lazy list of commit details for this selection.
-   *
-   * @param detailsGetter function which gets commit details by commit id.
-   */
-  fun <T> getDetails(detailsGetter: (Int) -> T): List<T>
-
-  /**
    * Sends a request to load full details of the selected commits in a background thread.
    * After all details are loaded they are provided to the consumer in the EDT.
    *

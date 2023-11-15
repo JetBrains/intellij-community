@@ -15,11 +15,11 @@ import com.intellij.vcs.log.data.DataGetter
 import com.intellij.vcs.log.data.LoadingDetails
 import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.history.FileHistoryModel
-import com.intellij.vcs.log.ui.table.size
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys
 import com.intellij.vcs.log.ui.VcsLogNotificationIdsHolder
-import com.intellij.vcs.log.ui.table.CommitSelectionImpl.Companion.getCachedDetails
+import com.intellij.vcs.log.ui.table.lazyMap
+import com.intellij.vcs.log.ui.table.size
 
 abstract class FileHistoryOneCommitAction<T : VcsCommitMetadata> : AnAction(), DumbAware {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
@@ -38,7 +38,7 @@ abstract class FileHistoryOneCommitAction<T : VcsCommitMetadata> : AnAction(), D
       e.presentation.isEnabled = false
       return
     }
-    val detail = selection.getCachedDetails(getDetailsGetter(logData)).singleOrNull()?.takeIf { it !is LoadingDetails }
+    val detail = selection.lazyMap(getDetailsGetter(logData)::getCachedDataOrPlaceholder).singleOrNull()?.takeIf { it !is LoadingDetails }
     e.presentation.isEnabled = isEnabled(model, detail, e)
   }
 
