@@ -7,12 +7,9 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.project.Project
 import com.intellij.ui.RowIcon
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisFromWriteAction
-import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KtRendererAnnotationsFilter
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KtDeclarationRendererForSource
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
@@ -26,6 +23,7 @@ import org.jetbrains.kotlin.idea.KtIconProvider.getBaseIcon
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferencesInRange
 import org.jetbrains.kotlin.idea.completion.OverridesCompletionLookupElementDecorator
 import org.jetbrains.kotlin.idea.completion.context.FirBasicCompletionContext
+import org.jetbrains.kotlin.idea.completion.context.getOriginalDeclarationOrSelf
 import org.jetbrains.kotlin.idea.completion.keywords.CompletionKeywordHandler
 import org.jetbrains.kotlin.idea.completion.lookups.withAllowedResolve
 import org.jetbrains.kotlin.idea.core.overrideImplement.BodyType
@@ -60,7 +58,7 @@ internal class OverrideKeywordHandler(
         val position = parameters.position
         val isConstructorParameter = position.getNonStrictParentOfType<KtPrimaryConstructor>() != null
         val parent = position.getNonStrictParentOfType<KtClassOrObject>() ?: return result
-        val classOrObject = parent.getOriginalDeclaration() as? KtClassOrObject ?: parent
+        val classOrObject = getOriginalDeclarationOrSelf(parent, basicContext.originalKtFile)
         val members = collectMembers(classOrObject, isConstructorParameter)
 
         for (member in members) {

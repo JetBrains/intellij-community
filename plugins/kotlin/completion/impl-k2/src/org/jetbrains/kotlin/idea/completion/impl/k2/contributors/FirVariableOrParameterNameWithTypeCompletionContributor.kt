@@ -26,6 +26,7 @@ import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.completion.*
 import org.jetbrains.kotlin.idea.completion.checkers.CompletionVisibilityChecker
 import org.jetbrains.kotlin.idea.completion.context.FirBasicCompletionContext
+import org.jetbrains.kotlin.idea.completion.context.getOriginalElementOfSelf
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.CompletionSymbolOrigin
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.FirClassifierProvider.getAvailableClassifiersFromIndex
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.KtSymbolWithOrigin
@@ -65,7 +66,7 @@ internal class FirVariableOrParameterNameWithTypeCompletionContributor(
 
         val visibilityChecker = CompletionVisibilityChecker.create(basicContext, positionContext)
         val lookupNamesAdded = mutableSetOf<String>()
-        val scopeContext = originalKtFile.getScopeContextForPosition(variableOrParameter.getOriginalDeclaration() ?: variableOrParameter)
+        val scopeContext = originalKtFile.getScopeContextForPosition(variableOrParameter)
 
         completeFromParametersInFile(variableOrParameter, visibilityChecker, lookupNamesAdded, scopeContext)
         completeClassesFromScopeContext(variableOrParameter, visibilityChecker, lookupNamesAdded, scopeContext, weighingContext)
@@ -82,12 +83,20 @@ internal class FirVariableOrParameterNameWithTypeCompletionContributor(
         val typeParametersScope = scopeContext.getCompositeScope { it is KtScopeKind.TypeParameterScope }
         val availableTypeParameters = getAvailableTypeParameters(typeParametersScope).toSet()
 
-        val variableOrParameterInOriginal = variableOrParameter.getOriginalDeclaration() ?: variableOrParameter
+        val variableOrParameterInOriginal = getOriginalElementOfSelf(variableOrParameter, basicContext.originalKtFile)
+
         val parametersInFile = originalKtFile.collectDescendantsOfType<KtParameter>(
-            // for performance reasons don't go inside expressions except declarations (parameters of local functions,
-            // which are declared in body block expressions, will be skipped)
-            canGoInside = { it !is KtExpression || it is KtDeclaration }
-        ) { parameter -> parameter.name != null && variableOrParameterInOriginal != parameter && prefixMatcher.isStartMatch(parameter.name) }
+            canGoInside = { element ->
+                // For performance reasons, don't go inside expressions except declarations (parameters of local functions,
+                // which are declared in body block expressions, will be skipped)
+                element !is KtExpression || element is KtDeclaration
+            },
+            predicate = { parameter ->
+                parameter.name != null
+                        && variableOrParameterInOriginal != parameter
+                        && prefixMatcher.isStartMatch(parameter.name)
+            }
+        )
 
         val lookupElementsWithNames: List<Pair<LookupElement, String>> = parametersInFile.mapNotNull { parameter ->
             ProgressManager.checkCanceled()

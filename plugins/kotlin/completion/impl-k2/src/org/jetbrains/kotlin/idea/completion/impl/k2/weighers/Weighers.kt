@@ -22,11 +22,12 @@ import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.projectStructure.compositeAnalysis.findAnalyzerServices
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.utils.fqname.ImportableFqNameClassifier
+import org.jetbrains.kotlin.idea.completion.context.FirBasicCompletionContext
+import org.jetbrains.kotlin.idea.completion.context.getOriginalDeclarationOrSelf
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.CompletionSymbolOrigin
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.KtSymbolWithOrigin
 import org.jetbrains.kotlin.idea.completion.impl.k2.weighers.K2SoftDeprecationWeigher
 import org.jetbrains.kotlin.idea.completion.isPositionSuitableForNull
-import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinRawPositionContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinSuperReceiverNameReferencePositionContext
 import org.jetbrains.kotlin.name.FqName
@@ -110,6 +111,7 @@ internal class WeighingContext private constructor(
     companion object {
         context(KtAnalysisSession)
         fun createWeighingContext(
+            basicContext: FirBasicCompletionContext,
             receiver: KtElement?,
             expectedType: KtType?,
             implicitReceivers: List<KtImplicitReceiver>,
@@ -126,7 +128,7 @@ internal class WeighingContext private constructor(
                 positionInFakeCompletionFile,
                 expectedType,
                 implicitReceivers,
-                positionInFakeCompletionFile.getContextualSymbolsCache(),
+                getContextualSymbolsCache(basicContext, positionInFakeCompletionFile),
                 ImportableFqNameClassifier(fakeCompletionFile) { defaultImportPaths.hasImport(it) },
                 symbolsToSkip,
             )
@@ -134,8 +136,10 @@ internal class WeighingContext private constructor(
 
         context(KtAnalysisSession)
         fun createEmptyWeighingContext(
+            basicContext: FirBasicCompletionContext,
             positionInFakeCompletionFile: PsiElement,
         ): WeighingContext = createWeighingContext(
+            basicContext,
             receiver = null,
             expectedType = null,
             implicitReceivers = emptyList(),
@@ -152,14 +156,15 @@ internal class WeighingContext private constructor(
         }
 
         context(KtAnalysisSession)
-        private fun PsiElement.getContextualSymbolsCache(): ContextualSymbolsCache {
-            // don't collect contextual symbols for position without reference
-            if ((parent as? KtSimpleNameExpression)?.mainReference == null) return ContextualSymbolsCache(emptyMap())
+        private fun getContextualSymbolsCache(basicContext: FirBasicCompletionContext, element: PsiElement): ContextualSymbolsCache {
+            if (element.parent !is KtSimpleNameExpression) {
+                return ContextualSymbolsCache(emptyMap())
+            }
 
-            val containingCallableDeclarations = parentsOfType<KtCallableDeclaration>().filter { it !is KtParameter }
-            val containingCallableSymbols = containingCallableDeclarations.map { it.getSymbolOfType<KtCallableSymbol>() }
-
-            return containingCallableSymbols
+            return element
+                .parentsOfType<KtCallableDeclaration>()
+                .filter { it !is KtParameter }
+                .map { getOriginalDeclarationOrSelf(it, basicContext.originalKtFile).getSymbolOfType<KtCallableSymbol>() }
                 .filter { it is KtNamedSymbol }
                 .groupBy { (it as KtNamedSymbol).name }
                 .let { ContextualSymbolsCache(it) }

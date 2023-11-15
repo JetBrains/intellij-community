@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.idea.completion.FirCompletionSessionParameters
 import org.jetbrains.kotlin.idea.completion.ItemPriority
 import org.jetbrains.kotlin.idea.completion.context.FirBasicCompletionContext
+import org.jetbrains.kotlin.idea.completion.context.getOriginalDeclarationOrSelf
 import org.jetbrains.kotlin.idea.completion.priority
 import org.jetbrains.kotlin.idea.completion.referenceScope
 import org.jetbrains.kotlin.idea.completion.suppressAutoInsertion
@@ -62,7 +63,10 @@ internal class FirDeclarationFromUnresolvedNameContributor(
         }
         val name = unresolvedRef.getReferencedName()
         if (!prefixMatcher.prefixMatches(name)) return
-        if (!shouldOfferCompletion(unresolvedRef, currentDeclarationInFakeFile)) return
+
+        val originalCurrentDeclaration = getOriginalDeclarationOrSelf(currentDeclarationInFakeFile, basicContext.originalKtFile)
+        if (!shouldOfferCompletion(unresolvedRef, originalCurrentDeclaration)) return
+
         if (unresolvedRef.reference?.resolve() == null) {
             val lookupElement = LookupElementBuilder.create(name).suppressAutoInsertion()
                 .also { it.priority = ItemPriority.FROM_UNRESOLVED_NAME_SUGGESTION }
@@ -71,17 +75,14 @@ internal class FirDeclarationFromUnresolvedNameContributor(
     }
 
     context(KtAnalysisSession)
-    private fun shouldOfferCompletion(
-        unresolvedRef: KtNameReferenceExpression,
-        currentDeclarationInFakeFile: KtNamedDeclaration
-    ): Boolean {
+    private fun shouldOfferCompletion(unresolvedRef: KtNameReferenceExpression, currentDeclaration: KtNamedDeclaration): Boolean {
         val refExprParent = unresolvedRef.parent
         val receiver = if (refExprParent is KtCallExpression) {
             refExprParent.getReceiverForSelector()
         } else {
             unresolvedRef.getReceiverForSelector()
         }
-        return when (val symbol = currentDeclarationInFakeFile.getSymbol()) {
+        return when (val symbol = currentDeclaration.getSymbol()) {
             is KtCallableSymbol -> when {
                 refExprParent is KtUserType -> false
 

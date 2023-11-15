@@ -149,7 +149,13 @@ internal object Completions {
             val receiver = positionContext.superExpression
 
             // Implicit receivers do not match for this position completion context.
-            WeighingContext.createWeighingContext(receiver, expectedType, implicitReceivers = emptyList(), positionContext.position)
+            WeighingContext.createWeighingContext(
+                basicContext,
+                receiver,
+                expectedType,
+                implicitReceivers = emptyList(),
+                positionContext.position
+            )
         }
 
         is KotlinWithSubjectEntryPositionContext -> {
@@ -159,7 +165,7 @@ internal object Completions {
         }
 
         is KotlinNameReferencePositionContext -> createWeighingContextForNameReference(basicContext, positionContext)
-        else -> WeighingContext.createEmptyWeighingContext(positionContext.position)
+        else -> WeighingContext.createEmptyWeighingContext(basicContext, positionContext.position)
     }
 
     context(KtAnalysisSession)
@@ -180,7 +186,14 @@ internal object Completions {
         val receiver = positionContext.explicitReceiver
         val implicitReceivers = basicContext.originalKtFile.getScopeContextForPosition(positionContext.nameExpression).implicitReceivers
 
-        return WeighingContext.createWeighingContext(receiver, expectedType, implicitReceivers, positionContext.position, symbolsToSkip)
+        return WeighingContext.createWeighingContext(
+            basicContext,
+            receiver,
+            expectedType,
+            implicitReceivers,
+            positionContext.position,
+            symbolsToSkip
+        )
     }
 }
 

@@ -12,7 +12,6 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.ProcessingContext
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.analyzeInDependedAnalysisSession
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo
@@ -25,9 +24,11 @@ import org.jetbrains.kotlin.kdoc.lexer.KDocTokens
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.platform.isMultiPlatform
 import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
 class KotlinFirCompletionContributor : CompletionContributor() {
     init {
@@ -112,47 +113,14 @@ private object KotlinFirCompletionProvider : CompletionProvider<CompletionParame
         positionContext: KotlinRawPositionContext,
         action: KtAnalysisSession.() -> Unit
     ) {
-        return when (positionContext) {
-            is KotlinUnknownPositionContext,
-            is KotlinImportDirectivePositionContext,
-            is KotlinPackageDirectivePositionContext,
-            is KotlinTypeConstraintNameInWhereClausePositionContext,
-            is KotlinIncorrectPositionContext,
-            is KDocNameReferencePositionContext -> {
-                analyze(basicContext.originalKtFile, action = action)
+        analyze(basicContext.fakeKtFile) {
+            when (positionContext) {
+                is KotlinSimpleParameterPositionContext -> recordOriginalDeclaration(basicContext, positionContext.ktParameter)
+                is KotlinClassifierNamePositionContext -> recordOriginalDeclaration(basicContext, positionContext.classLikeDeclaration)
+                else -> {}
             }
 
-            is KotlinSimpleParameterPositionContext -> {
-                analyze(basicContext.originalKtFile) {
-                    recordOriginalDeclaration(basicContext.originalKtFile, positionContext.ktParameter)
-                    action()
-                }
-            }
-
-            is KotlinClassifierNamePositionContext -> {
-                analyze(basicContext.originalKtFile) {
-                    recordOriginalDeclaration(basicContext.originalKtFile, positionContext.classLikeDeclaration)
-                    action()
-                }
-            }
-
-            is KotlinNameReferencePositionContext -> analyzeInDependedAnalysisSession(
-                basicContext.originalKtFile,
-                positionContext.nameExpression,
-                action = action
-            )
-
-            is KotlinMemberDeclarationExpectedPositionContext -> analyzeInDependedAnalysisSession(
-                basicContext.originalKtFile,
-                positionContext.classBody,
-                action = action
-            )
-
-            is KotlinPrimaryConstructorParameterPositionContext -> analyzeInDependedAnalysisSession(
-                basicContext.originalKtFile,
-                positionContext.ktParameter,
-                action = action
-            )
+            action()
         }
     }
 
@@ -164,9 +132,9 @@ private object KotlinFirCompletionProvider : CompletionProvider<CompletionParame
     }
 
     context(KtAnalysisSession)
-    private fun recordOriginalDeclaration(originalFile: KtFile, declaration: KtDeclaration) {
+    private fun recordOriginalDeclaration(basicContext: FirBasicCompletionContext, declaration: KtDeclaration) {
         try {
-            declaration.recordOriginalDeclaration(PsiTreeUtil.findSameElementInCopy(declaration, originalFile))
+            declaration.recordOriginalDeclaration(PsiTreeUtil.findSameElementInCopy(declaration, basicContext.originalKtFile))
         } catch (ignore: IllegalStateException) {
             //declaration is written at empty space
         }
