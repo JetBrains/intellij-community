@@ -21,6 +21,7 @@ import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.impl.ContentImpl;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -44,6 +45,7 @@ final class ToolWindowApi {
    * @param project    project
    * @param windowName name to be used as id (and shown to user)
    */
+  @RequiresEdt
   ToolWindowApi(@NotNull final Project project, @NotNull final String windowName, @NotNull Icon icon) {
 
     myToolWindowManager = ToolWindowManager.getInstance(project);
@@ -61,6 +63,7 @@ final class ToolWindowApi {
   /**
    * @param component component to add to window
    */
+  @RequiresEdt
   void add(@NotNull final JComponent component, @Nls(capitalization = Nls.Capitalization.Title) String componentTitle) {
     myContentManager.addContent(new ContentImpl(component, componentTitle, true));
   }
@@ -68,6 +71,7 @@ final class ToolWindowApi {
   /**
    * Close window
    */
+  @RequiresEdt
   void close() {
     myContentManager.removeAllContents(true);
     myToolWindowManager.unregisterToolWindow(myWindowName);

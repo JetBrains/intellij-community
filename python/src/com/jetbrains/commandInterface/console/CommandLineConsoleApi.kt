@@ -18,6 +18,7 @@ package com.jetbrains.commandInterface.console
 import com.intellij.execution.console.LanguageConsoleBuilder
 import com.intellij.execution.console.LanguageConsoleView
 import com.intellij.openapi.module.Module
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jetbrains.commandInterface.command.Command
 import com.jetbrains.commandInterface.command.CommandExecutor
 import com.jetbrains.toolWindowWithActions.ConsolePanelWithActions
@@ -72,6 +73,7 @@ fun jbFilter(filter: (String) -> String): (String) -> String {
 /**
  * Returns [LanguageConsoleView] if is already present in the toolwindow, null otherwise.
  */
+@RequiresEdt
 fun findExistingConsole(
   module: Module,
   consoleName: String,
@@ -96,6 +98,7 @@ fun findExistingConsole(
  *
  * @return newly created console. You do not need to do anything with this value to display console: it will be displayed automatically
  */
+@RequiresEdt
 fun createConsoleInToolWindow(
   module: Module,
   @Nls(capitalization = Nls.Capitalization.Title) consoleName: String,
