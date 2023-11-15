@@ -9,6 +9,7 @@ import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
 import com.intellij.codeInspection.dataFlow.MethodContract;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
+import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.tree.JavaSharedImplUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.JavaPsiPatternUtil;
@@ -191,24 +192,24 @@ public final class InstanceOfUtils {
    */
   @Nullable
   public static PsiInstanceOfExpression findCorrespondingInstanceOf(@NotNull PsiTypeCastExpression cast) {
-    PsiElement context = PsiUtil.skipParenthesizedExprUp(cast.getParent());
+    PsiElement context = PsiUtil.skipParenthesizedExprUp(cast.getContext());
     if (context instanceof PsiLocalVariable) {
-      context = context.getParent();
+      context = context.getContext();
     } else {
       while (true) {
-        if (context instanceof PsiPolyadicExpression) {
-          IElementType tokenType = ((PsiPolyadicExpression)context).getOperationTokenType();
+        if (context instanceof PsiPolyadicExpression polyadic) {
+          IElementType tokenType = polyadic.getOperationTokenType();
           if (tokenType.equals(JavaTokenType.ANDAND) || tokenType.equals(JavaTokenType.OROR)) {
-            PsiInstanceOfExpression instanceOf = findInstanceOf((PsiExpression)context, cast, tokenType.equals(JavaTokenType.ANDAND));
+            PsiInstanceOfExpression instanceOf = findInstanceOf(polyadic, cast, tokenType.equals(JavaTokenType.ANDAND));
             if (instanceOf != null) {
               return instanceOf;
             }
           }
         }
-        if (context instanceof PsiConditionalExpression) {
-          PsiExpression condition = ((PsiConditionalExpression)context).getCondition();
+        if (context instanceof PsiConditionalExpression conditional) {
+          PsiExpression condition = conditional.getCondition();
           if (!PsiTreeUtil.isAncestor(condition, cast, true)) {
-            boolean whenTrue = PsiTreeUtil.isAncestor(((PsiConditionalExpression)context).getThenExpression(), cast, false);
+            boolean whenTrue = PsiTreeUtil.isAncestor(conditional.getThenExpression(), cast, false);
             PsiInstanceOfExpression instanceOf = findInstanceOf(condition, cast, whenTrue);
             if (instanceOf != null) {
               return instanceOf;
@@ -216,15 +217,17 @@ public final class InstanceOfUtils {
           }
         }
         if ((context instanceof PsiExpression && !(context instanceof PsiLambdaExpression)) ||
-            context instanceof PsiExpressionList || context instanceof PsiLocalVariable) {
-          context = context.getParent();
+            context instanceof PsiExpressionList || context instanceof PsiLocalVariable ||
+            context instanceof DummyHolder) {
+          context = context.getContext();
           continue;
         }
         break;
       }
       if (!(context instanceof PsiStatement)) return null;
     }
-    PsiElement parent = context.getParent();
+    if (context == null) return null;
+    PsiElement parent = context.getContext();
     if (parent instanceof PsiCodeBlock) {
       for (PsiElement stmt = context.getPrevSibling(); stmt != null; stmt = stmt.getPrevSibling()) {
         if (stmt instanceof PsiIfStatement ifStatement) {
@@ -242,7 +245,7 @@ public final class InstanceOfUtils {
         if (stmt instanceof PsiWhileStatement || stmt instanceof PsiDoWhileStatement || stmt instanceof PsiForStatement) {
           PsiConditionalLoopStatement loop = (PsiConditionalLoopStatement)stmt;
           if (PsiTreeUtil.processElements(
-            loop, e -> !(e instanceof PsiBreakStatement) || ((PsiBreakStatement)e).findExitedStatement() != loop)) {
+            loop, e -> !(e instanceof PsiBreakStatement breakStatement) || breakStatement.findExitedStatement() != loop)) {
             PsiInstanceOfExpression instanceOf = findInstanceOf(loop.getCondition(), cast, false);
             if (instanceOf != null) {
               return instanceOf;
@@ -251,9 +254,9 @@ public final class InstanceOfUtils {
         }
         if (stmt instanceof PsiSwitchLabelStatementBase) break;
       }
-      if (parent.getParent() instanceof PsiBlockStatement) {
-        context = parent.getParent();
-        parent = context.getParent();
+      if (parent.getContext() instanceof PsiBlockStatement) {
+        context = parent.getContext();
+        parent = context.getContext();
       }
     }
     return processParent(cast, context, parent);
@@ -315,7 +318,7 @@ public final class InstanceOfUtils {
       if (tokenType == JavaTokenType.ANDAND && whenTrue ||
           tokenType == JavaTokenType.OROR && !whenTrue) {
         for (PsiExpression operand : polyadic.getOperands()) {
-          if (PsiTreeUtil.isAncestor(operand, cast, false)) return null;
+          if (PsiTreeUtil.isContextAncestor(operand, cast, false)) return null;
           PsiInstanceOfExpression result = findInstanceOf(operand, cast, whenTrue);
           if (result != null) {
             return result;

@@ -66,7 +66,8 @@ public class SimplifyBooleanExpressionFix extends PsiUpdateModCommandAction<PsiE
     return e instanceof PsiInstanceOfExpression &&
            !ContainerUtil.exists(JavaPsiPatternUtil.getExposedPatternVariables(((PsiInstanceOfExpression)e)),
                                  var -> PatternResolveState.fromBoolean(mySubExpressionValue)
-                                   .equals(PatternResolveState.stateAtParent(var, subExpression)));
+                                   .equals(PatternResolveState.stateAtParent(var, subExpression)) &&
+                                        newTargetForPatternVariable(subExpression, var) == null);
   }
 
   private boolean canExtractSideEffect(PsiExpression subExpression) {
@@ -127,6 +128,20 @@ public class SimplifyBooleanExpressionFix extends PsiUpdateModCommandAction<PsiE
     return true;
   }
 
+  private static @Nullable PsiInstanceOfExpression newTargetForPatternVariable(@NotNull PsiExpression expression,
+                                                                               @NotNull PsiPatternVariable variable) {
+    if (!(variable.getPattern() instanceof PsiTypeTestPattern typeTest)) return null;
+    PsiTypeElement checkType = typeTest.getCheckType();
+    if (checkType == null) return null;
+    if (!(typeTest.getParent() instanceof PsiInstanceOfExpression instanceOf)) return null;
+
+    PsiTypeCastExpression cast =
+      (PsiTypeCastExpression)JavaPsiFacade.getElementFactory(expression.getProject()).createExpressionFromText("(a)b", expression);
+    Objects.requireNonNull(cast.getCastType()).replace(checkType);
+    Objects.requireNonNull(cast.getOperand()).replace(instanceOf.getOperand());
+    return InstanceOfUtils.findPatternCandidate(cast);
+  }
+
   private static boolean containsBreakOrContinue(PsiDoWhileStatement doWhileLoop) {
     return SyntaxTraverser.psiTraverser(doWhileLoop).filter(e -> isBreakOrContinue(e, doWhileLoop)).iterator().hasNext();
   }
@@ -157,6 +172,7 @@ public class SimplifyBooleanExpressionFix extends PsiUpdateModCommandAction<PsiE
 
   public void invoke(@NotNull PsiExpression subExpression) {
     CommentTracker ct = new CommentTracker();
+    processPatternVariables(subExpression);
     if (SideEffectChecker.mayHaveSideEffects(subExpression) && canExtractSideEffect(subExpression)) {
       PsiExpression orig = subExpression;
       subExpression = ensureCodeBlock(subExpression.getProject(), subExpression);
@@ -187,6 +203,27 @@ public class SimplifyBooleanExpressionFix extends PsiUpdateModCommandAction<PsiE
       expression = (PsiExpression)expression.getParent();
     }
     simplifyExpression(expression);
+  }
+
+  private static void processPatternVariables(@NotNull PsiExpression subExpression) {
+    List<PsiPatternVariable> variables = JavaPsiPatternUtil.getExposedPatternVariables(subExpression);
+    for (PsiPatternVariable variable : variables) {
+      if (VariableAccessUtils.variableIsUsed(variable, variable.getDeclarationScope())) {
+        PsiInstanceOfExpression target = newTargetForPatternVariable(subExpression, variable);
+        if (target != null) {
+          PsiInstanceOfExpression updated = (PsiInstanceOfExpression)JavaPsiFacade.getElementFactory(subExpression.getProject())
+            .createExpressionFromText("x instanceof T t", target);
+          updated.getOperand().replace(target.getOperand());
+          PsiTypeTestPattern newPattern = (PsiTypeTestPattern)Objects.requireNonNull(updated.getPattern());
+          PsiTypeElement checkType = target.getCheckType();
+          if (checkType == null) continue;
+          Objects.requireNonNull(newPattern.getCheckType()).replace(checkType);
+          Objects.requireNonNull(newPattern.getPatternVariable()).replace(variable);
+          target.replace(updated);
+          variable.delete();
+        }
+      }
+    }
   }
 
   private PsiExpression ensureCodeBlock(@NotNull Project project, PsiExpression subExpression) {
