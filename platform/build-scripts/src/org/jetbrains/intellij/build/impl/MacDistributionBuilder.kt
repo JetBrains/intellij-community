@@ -15,6 +15,7 @@ import org.apache.commons.compress.archivers.zip.ZipArchiveEntry
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.impl.OsSpecificDistributionBuilder.Companion.suffix
+import org.jetbrains.intellij.build.impl.client.ADDITIONAL_EMBEDDED_CLIENT_VM_OPTIONS
 import org.jetbrains.intellij.build.impl.client.createJetBrainsClientContextForLaunchers
 import org.jetbrains.intellij.build.impl.productInfo.*
 import org.jetbrains.intellij.build.io.*
@@ -466,7 +467,7 @@ private fun createProductInfoLaunchData(context: BuildContext, arch: JvmArchitec
       commands = listOf("thinClient", "thinClient-headless"),
       vmOptionsFilePath = "../bin/${it.productProperties.baseFileName}.vmoptions",
       bootClassPathJarNames = it.bootClassPathJarNames,
-      additionalJvmArguments = it.getAdditionalJvmArguments(OsFamily.MACOS, arch),
+      additionalJvmArguments = it.getAdditionalJvmArguments(OsFamily.MACOS, arch) + ADDITIONAL_EMBEDDED_CLIENT_VM_OPTIONS,
       mainClass = it.ideMainClassName,
     )
   }
