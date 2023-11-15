@@ -29,6 +29,11 @@ public class GenerateEqualsTest extends LightJavaCodeInsightTestCase {
     doTest(new int[]{0, 1, 2}, new int[0], new int[0], false);
   }
 
+  public void testPrimitiveFieldsJava8() {
+    int[] indices = {0, 1, 2, 3, 4, 5, 6};
+    doTest(indices, indices, new int[0], false);
+  }
+
   public void testFields() {
     doTest(new int[]{0, 1, 2}, new int[0], new int[]{1}, false);
   }
@@ -50,6 +55,10 @@ public class GenerateEqualsTest extends LightJavaCodeInsightTestCase {
   }
 
   public void testOneDoubleField() {
+    doTest(new int[]{0}, new int[]{0}, new int[0], false);
+  }
+
+  public void testOneDoubleFieldJava8() {
     doTest(new int[]{0}, new int[]{0}, new int[0], false);
   }
 
@@ -86,8 +95,7 @@ public class GenerateEqualsTest extends LightJavaCodeInsightTestCase {
   }
 
   public void testDifferentTypes() {
-    doTest(Functions.id(), Functions.id(), fields -> PsiField.EMPTY_ARRAY, true
-    );
+    doTest(Functions.id(), Functions.id(), fields -> PsiField.EMPTY_ARRAY, true);
   }
 
   public void testDifferentTypesGetters() {
@@ -204,5 +212,10 @@ public class GenerateEqualsTest extends LightJavaCodeInsightTestCase {
       result.add(fields[index]);
     }
     return result.toArray(PsiField.EMPTY_ARRAY);
+  }
+
+  @Override
+  protected LanguageLevel getDefaultLanguageLevel() {
+    return LanguageLevel.JDK_1_7;
   }
 }
