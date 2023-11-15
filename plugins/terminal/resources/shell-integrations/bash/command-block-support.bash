@@ -128,6 +128,11 @@ __jetbrains_intellij_command_terminated() {
   fi
 }
 
+# override clear behaviour to handle it on IDE side and remove the blocks
+clear() {
+  builtin printf '\e]1341;clear_invoked\a'
+}
+
 preexec_functions+=(__jetbrains_intellij_command_started)
 precmd_functions+=(__jetbrains_intellij_command_terminated)
 HISTIGNORE="${HISTIGNORE-}:__jetbrains_intellij_get_directory_files*:__jetbrains_intellij_get_environment*"

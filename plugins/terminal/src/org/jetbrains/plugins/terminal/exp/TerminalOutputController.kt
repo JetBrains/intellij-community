@@ -44,6 +44,14 @@ class TerminalOutputController(
     editor.highlighter = textHighlighter
     session.model.addTerminalListener(this)
     Disposer.register(session, caretModel)
+
+    session.addCommandListener(object : ShellCommandListener {
+      override fun clearInvoked() {
+        invokeLater {
+          outputModel.clearBlocks()
+        }
+      }
+    })
   }
 
   @RequiresEdt
@@ -143,14 +151,14 @@ class TerminalOutputController(
     // and EDT can be frozen now trying to acquire this lock
     invokeLater(ModalityState.any()) {
       if (!editor.isDisposed) {
-        updateEditor(toHighlightedCommandOutput(output))
+        // there can be no last block for 'clear' command, because it removes all blocks
+        val baseOffset = outputModel.getLastBlock()?.outputStartOffset ?: return@invokeLater
+        updateEditor(toHighlightedCommandOutput(output, baseOffset))
       }
     }
   }
 
-  private fun toHighlightedCommandOutput(output: StyledCommandOutput): CommandOutput {
-    val block = outputModel.getLastBlock()!!
-    val baseOffset = block.outputStartOffset
+  private fun toHighlightedCommandOutput(output: StyledCommandOutput, baseOffset: Int): CommandOutput {
     return CommandOutput(output.text, output.styleRanges.map {
       HighlightingInfo(baseOffset + it.startOffset, baseOffset + it.endOffset, it.style.toTextAttributes())
     })

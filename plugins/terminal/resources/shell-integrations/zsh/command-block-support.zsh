@@ -100,6 +100,11 @@ __jetbrains_intellij_command_precmd() {
   __jetbrains_intellij_configure_prompt
 }
 
+# override clear behaviour to handle it on IDE side and remove the blocks
+clear() {
+  builtin printf '\e]1341;clear_invoked\a'
+}
+
 add-zsh-hook preexec __jetbrains_intellij_command_preexec
 add-zsh-hook precmd __jetbrains_intellij_command_precmd
 add-zsh-hook zshaddhistory __jetbrains_intellij_zshaddhistory

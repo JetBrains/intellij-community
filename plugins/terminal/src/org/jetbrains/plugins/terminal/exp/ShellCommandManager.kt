@@ -26,6 +26,7 @@ class ShellCommandManager(terminal: Terminal) {
         "command_finished" -> processCommandFinishedEvent(it)
         "command_history" -> processCommandHistoryEvent(it)
         "generator_finished" -> processGeneratorFinishedEvent(it)
+        "clear_invoked" -> fireClearInvoked()
       }
     })
   }
@@ -156,6 +157,15 @@ class ShellCommandManager(terminal: Terminal) {
     }
   }
 
+  private fun fireClearInvoked() {
+    if (LOG.isDebugEnabled) {
+      LOG.debug("Shell event: clear_invoked")
+    }
+    for (listener in listeners) {
+      listener.clearInvoked()
+    }
+  }
+
   fun addListener(listener: ShellCommandListener, parentDisposable: Disposable? = null) {
     listeners.add(listener)
     if (parentDisposable != null) {
@@ -199,6 +209,8 @@ interface ShellCommandListener {
   fun commandHistoryReceived(history: String) {}
 
   fun generatorFinished(requestId: Int, result: String) {}
+
+  fun clearInvoked() {}
 }
 
 private class CommandRun(val commandStartedNano: Long, val workingDirectory: String, val command: String) {

@@ -76,6 +76,15 @@ class TerminalOutputModel(val editor: EditorEx) {
     blockStates.remove(block)
   }
 
+  @RequiresEdt
+  fun clearBlocks() {
+    val blocksCopy = blocks.reversed()
+    for (block in blocksCopy) {
+      removeBlock(block)
+    }
+    editor.document.setText("")
+  }
+
   fun getLastBlock(): CommandBlock? {
     return blocks.lastOrNull()
   }
