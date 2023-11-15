@@ -3,9 +3,11 @@ package com.intellij.testFramework;
 
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
 import com.intellij.concurrency.JobSchedulerImpl;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.platform.diagnostic.telemetry.IJTracer;
+import com.intellij.platform.diagnostic.telemetry.NoopTelemetryManager;
 import com.intellij.platform.diagnostic.telemetry.Scope;
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.platform.testFramework.diagnostic.MetricsPublisher;
@@ -13,12 +15,14 @@ import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.io.StorageLockContext;
 import kotlin.reflect.KFunction;
+import kotlinx.coroutines.*;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
@@ -54,12 +58,46 @@ public class PerformanceTestInfo {
   @NotNull
   private final IJTracer tracer;
 
+  private static final CoroutineScope coroutineScope = CoroutineScopeKt.CoroutineScope(
+    SupervisorKt.SupervisorJob(null).plus(Dispatchers.getIO())
+  );
+
   static {
     // to use JobSchedulerImpl.getJobPoolParallelism() in tests which don't init application
     IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(true);
   }
 
+  /** In case if perf tests don't use Test Application we need to initialize OpenTelemetry without Application */
+  private static void initOpenTelemetryIfNeeded() {
+    // Open Telemetry file will be located at ../system/test/log/opentelemetry.json (alongside with open-telemetry-metrics.*.csv)
+    System.setProperty("idea.diagnostic.opentelemetry.file",
+                       PathManager.getLogDir().resolve("opentelemetry.json").toAbsolutePath().toString());
+
+    var telemetryInstance = TelemetryManager.getInstance();
+
+    var isNoop = telemetryInstance instanceof NoopTelemetryManager;
+    // looks like telemetry manager is properly initialized
+    if (!isNoop) return;
+
+    try {
+      var telemetryClazz = Class.forName("com.intellij.platform.diagnostic.telemetry.impl.TelemetryManagerImpl");
+      var instance = Arrays.stream(telemetryClazz.getDeclaredConstructors())
+        .filter((it) -> it.getParameterCount() > 0).findFirst()
+        .get()
+        .newInstance(coroutineScope, true);
+
+      TelemetryManager.Companion.forceSetTelemetryManager((TelemetryManager)instance);
+    }
+    catch (Throwable e) {
+      System.err.println(
+        "Couldn't setup TelemetryManager without TestApplication. Either test should use TestApplication or somewhere is a bug");
+      e.printStackTrace();
+    }
+  }
+
   PerformanceTestInfo(@NotNull ThrowableComputable<Integer, ?> test, int expectedMs, int expectedInputSize, @NotNull String what) {
+    initOpenTelemetryIfNeeded();
+
     this.test = test;
     this.expectedMs = expectedMs;
     this.expectedInputSize = expectedInputSize;
@@ -331,7 +369,7 @@ public class PerformanceTestInfo {
       }
       catch (Throwable t) {
         System.err.println("Something unexpected happened during publishing performance metrics");
-        t.printStackTrace();
+        throw t;
       }
     }
   }

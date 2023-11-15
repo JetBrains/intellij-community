@@ -27,6 +27,7 @@ import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
 import java.nio.file.Path
 import java.util.concurrent.TimeUnit
 import kotlin.coroutines.CoroutineContext
@@ -38,7 +39,8 @@ import kotlin.coroutines.CoroutineContext
 @ApiStatus.Experimental
 @ApiStatus.Internal
 class TelemetryManagerImpl(coroutineScope: CoroutineScope, isUnitTestMode: Boolean) : TelemetryManager {
-  // for the unit (performance) tests
+  // for the unit (performance) tests that use Application
+  @TestOnly
   @Suppress("unused", "DEPRECATION")
   constructor() : this(ApplicationManager.getApplication().coroutineScope, ApplicationManager.getApplication().isUnitTestMode)
 
@@ -53,7 +55,14 @@ class TelemetryManagerImpl(coroutineScope: CoroutineScope, isUnitTestMode: Boole
 
   init {
     verboseMode = System.getProperty("idea.diagnostic.opentelemetry.verbose")?.toBooleanStrictOrNull() == true
-    val configurator = createOpenTelemetryConfigurator(appInfo = ApplicationInfoImpl.getShadowInstance())
+
+    val configurator: OpenTelemetryConfigurator = try {
+      createOpenTelemetryConfigurator(appInfo = ApplicationInfoImpl.getShadowInstance())
+    }
+    catch (e: Throwable) {
+      createOpenTelemetryConfiguratorForPerfTestWithoutApplication()
+    }
+
     aggregatedMetricExporter = configurator.aggregatedMetricExporter
     otlpService = OtlpService()
 
@@ -214,12 +223,18 @@ private fun createSpanExporters(resource: Resource, isUnitTestMode: Boolean = fa
   return spanExporters
 }
 
-private fun createOpenTelemetryConfigurator(appInfo: ApplicationInfo): OpenTelemetryConfigurator {
+private fun createOpenTelemetryConfiguratorForPerfTestWithoutApplication(): OpenTelemetryConfigurator {
+  return createOpenTelemetryConfigurator("", "", "")
+}
+
+private fun createOpenTelemetryConfigurator(serviceName: String,
+                                            serviceVersion: String,
+                                            serviceNamespace: String): OpenTelemetryConfigurator {
   return OpenTelemetryConfigurator(
     sdkBuilder = OpenTelemetrySdk.builder(),
-    serviceName = ApplicationNamesInfo.getInstance().fullProductName,
-    serviceVersion = appInfo.build.asStringWithoutProductCode(),
-    serviceNamespace = appInfo.build.productCode,
+    serviceName = serviceName,
+    serviceVersion = serviceVersion,
+    serviceNamespace = serviceNamespace,
     enableMetricsByDefault = true,
     customResourceBuilder = {
       // don't write username to file - it maybe private information
@@ -228,4 +243,10 @@ private fun createOpenTelemetryConfigurator(appInfo: ApplicationInfo): OpenTelem
       }
     },
   )
+}
+
+private fun createOpenTelemetryConfigurator(appInfo: ApplicationInfo): OpenTelemetryConfigurator {
+  return createOpenTelemetryConfigurator(serviceName = ApplicationNamesInfo.getInstance().fullProductName,
+                                         serviceVersion = appInfo.build.asStringWithoutProductCode(),
+                                         serviceNamespace = appInfo.build.productCode)
 }

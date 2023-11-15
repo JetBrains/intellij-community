@@ -109,7 +109,7 @@ private val instance = SynchronizedClearableLazy {
   instance
 }
 
-internal class NoopTelemetryManager : TelemetryManager {
+class NoopTelemetryManager : TelemetryManager {
   override var verboseMode: Boolean = false
 
   override fun getTracer(scope: Scope): IJTracer = IJNoopTracer

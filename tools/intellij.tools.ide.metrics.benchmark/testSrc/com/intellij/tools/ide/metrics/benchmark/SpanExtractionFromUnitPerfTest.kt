@@ -4,13 +4,11 @@ package com.intellij.tools.ide.metrics.benchmark
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.testFramework.PlatformTestUtil
-import com.intellij.testFramework.TestApplicationManager
 import com.intellij.tools.ide.metrics.collector.publishing.CIServerBuildInfo
 import com.intellij.tools.ide.metrics.collector.publishing.PerformanceMetricsDto
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions
-import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInfo
 import java.nio.file.Files
@@ -28,14 +26,6 @@ class SpanExtractionFromUnitPerfTest {
 
   private val openTelemetryReports by lazy {
     Paths.get(this::class.java.classLoader.getResource("opentelemetry")!!.toURI())
-  }
-
-  companion object {
-    @JvmStatic
-    @BeforeAll
-    fun initTestApplication() {
-      TestApplicationManager.getInstance()
-    }
   }
 
   @Test
