@@ -28,9 +28,9 @@ public class MavenIdeaAsyncIndexerImpl extends MavenIdeaIndexerImpl implements A
     public boolean isCanceled;
   }
 
-  private ExecutorService myExecutor = Executors.newSingleThreadExecutor(new MyThreadFactory());
+  private final ExecutorService myExecutor = Executors.newSingleThreadExecutor(new MyThreadFactory());
 
-  private Map<String, IndexProcessData> states = new HashMap<>();
+  private final Map<String, IndexProcessData> states = new HashMap<>();
 
   public MavenIdeaAsyncIndexerImpl(PlexusContainer container) throws ComponentLookupException {
     super(container);
@@ -108,10 +108,10 @@ public class MavenIdeaAsyncIndexerImpl extends MavenIdeaIndexerImpl implements A
     }
   }
 
-  private class MyMavenServerProgressIndicator implements MavenServerProgressIndicator {
+  private static class MyMavenServerProgressIndicator implements MavenServerProgressIndicator {
     private final IndexProcessData myData;
 
-    public MyMavenServerProgressIndicator(IndexProcessData data) {
+    private MyMavenServerProgressIndicator(IndexProcessData data) {
 
       myData = data;
     }

@@ -6,7 +6,7 @@ import org.intellij.lang.annotations.Language;
 
 public class StaticMethodImportLombokInspectionTest extends AbstractLombokLightCodeInsightTestCase {
 
-  @Language("JAVA") final String usingClassText = """
+  @Language("JAVA") static final String usingClassText = """
       package otherpackage;
 
       import somepackage.Place;
@@ -40,7 +40,7 @@ public class StaticMethodImportLombokInspectionTest extends AbstractLombokLightC
           }
       }
       """;
-  @Language("JAVA") final String placeClassText = """
+  @Language("JAVA") static final String placeClassText = """
     package somepackage;
 
     import lombok.AllArgsConstructor;
@@ -54,7 +54,7 @@ public class StaticMethodImportLombokInspectionTest extends AbstractLombokLightC
     }
     """;
 
-  @Language("JAVA") final String someClassText = """
+  @Language("JAVA") static final String someClassText = """
     package somepackage;
 
     import lombok.Data;
