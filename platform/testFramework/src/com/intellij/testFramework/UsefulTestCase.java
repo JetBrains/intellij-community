@@ -908,6 +908,10 @@ public abstract class UsefulTestCase extends TestCase {
     return name == null ? "" : PlatformTestUtil.getTestName(name, lowercaseFirstLetter);
   }
 
+  public final @NotNull String getQualifiedTestMethodName() {
+    return String.format("%s.%s", this.getClass().getName(), getName());
+  }
+
   protected @NotNull String getTestDirectoryName() {
     return getTestName(true).replaceAll("_.*", "");
   }

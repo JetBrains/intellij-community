@@ -2050,14 +2050,16 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
 
     PlatformTestUtil.startPerformanceTest("SSR", 20000,
                                           () -> assertEquals("Reformat Performance", loadFile("ReformatPerformance_result.java"),
-                                                             replace(source, pattern, replacement, true, true))).assertTiming();
+                                                             replace(source, pattern, replacement, true, true)))
+      .assertTimingAsSubtest();
 
     options.setToReformatAccordingToStyle(false);
     options.setToShortenFQN(true);
 
     PlatformTestUtil.startPerformanceTest("SSR", 20000,
                                           () -> assertEquals("Shorten Class Ref Performance", loadFile("ShortenPerformance_result.java"),
-                                                             replace(source, pattern, replacement, true, true))).assertTiming();
+                                                             replace(source, pattern, replacement, true, true)))
+      .assertTimingAsSubtest();
   }
 
   public void testLeastSurprise() {

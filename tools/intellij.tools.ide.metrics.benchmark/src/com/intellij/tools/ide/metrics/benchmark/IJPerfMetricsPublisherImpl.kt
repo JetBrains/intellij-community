@@ -2,8 +2,8 @@
 package com.intellij.tools.ide.metrics.benchmark
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.testFramework.diagnostic.MetricsPublisher
 import com.intellij.teamcity.TeamCityClient
@@ -72,7 +72,7 @@ class IJPerfMetricsPublisherImpl : MetricsPublisher {
         projectURL = "",
         projectDescription = "",
         methodName = fullQualifiedTestMethodName,
-        buildNumber = ApplicationInfo.getInstance().build,
+        buildNumber = BuildNumber.currentVersion(),
         metrics = metrics,
         buildInfo = buildInfo
       )

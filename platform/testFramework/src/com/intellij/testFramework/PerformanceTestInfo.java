@@ -15,6 +15,7 @@ import com.intellij.util.io.StorageLockContext;
 import kotlin.reflect.KFunction;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
@@ -169,7 +170,7 @@ public class PerformanceTestInfo {
       });
   }
 
-  public void assertTiming() {
+  private static Method getCallingTestMethod() {
     Method callingTestMethod = tryToFindCallingTestMethodByJUnitAnnotation();
 
     if (callingTestMethod == null) {
@@ -181,17 +182,54 @@ public class PerformanceTestInfo {
       }
     }
 
-    assertTiming(callingTestMethod);
+    return callingTestMethod;
+  }
+
+  /** @see PerformanceTestInfo#assertTiming(String) */
+  public void assertTiming() {
+    assertTiming(getCallingTestMethod());
   }
 
   public void assertTiming(@NotNull Method javaTestMethod) {
-    assertTiming(String.format("%s.%s", javaTestMethod.getDeclaringClass().getName(), javaTestMethod.getName()));
+    assertTiming(javaTestMethod, "");
   }
 
+  public void assertTiming(@NotNull Method javaTestMethod, @Nullable String subTestName) {
+    var fullTestName = String.format("%s.%s", javaTestMethod.getDeclaringClass().getName(), javaTestMethod.getName());
+    if (subTestName != null && !subTestName.isEmpty()) {
+      assert !subTestName.isEmpty() : "Sub test name either should be null or NOT empty string";
+      fullTestName += " - " + subTestName;
+    }
+    assertTiming(fullTestName);
+  }
+
+  /**
+   * {@link PerformanceTestInfo#assertTiming(String)}
+   * <br/>
+   * Eg: <code>assertTiming(GradleHighlightingPerformanceTest::testCompletionPerformance)</code>
+   */
   public void assertTiming(@NotNull KFunction<?> kotlinTestMethod) {
     assertTiming(String.format("%s.%s", kotlinTestMethod.getClass().getName(), kotlinTestMethod.getName()));
   }
 
+  /** @see PerformanceTestInfo#assertTimingAsSubtest(String) */
+  public void assertTimingAsSubtest() {
+    assertTimingAsSubtest(what);
+  }
+
+  /** In case if you want to run many subsequent performance measurements in your JUnit test */
+  public void assertTimingAsSubtest(@Nullable String subTestName) {
+    assertTiming(getCallingTestMethod(), subTestName);
+  }
+
+  /**
+   * Asserts expected timing.
+   * For Java you can use {@link com.intellij.testFramework.UsefulTestCase#getQualifiedTestMethodName()}
+   * OR
+   * {@link com.intellij.testFramework.fixtures.BareTestFixtureTestCase#getQualifiedTestMethodName()}
+   *
+   * @param fullQualifiedTestMethodName - String representation of full method name.
+   */
   public void assertTiming(String fullQualifiedTestMethodName) {
     assertTiming(IterationType.WARMUP, fullQualifiedTestMethodName);
     assertTiming(IterationType.MEASURE, fullQualifiedTestMethodName);
