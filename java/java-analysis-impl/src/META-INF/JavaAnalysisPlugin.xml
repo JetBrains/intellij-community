@@ -333,5 +333,7 @@
                     serviceImplementation="com.intellij.lang.OuterModelsModificationTrackerManagerImpl"/>
     <optionController implementation="com.intellij.codeInspection.ex.EntryPointsManagerBase$Provider"/>
     <optionController implementation="com.intellij.codeInsight.NullableNotNullManagerImpl$Provider"/>
+
+    <virtualManifestProvider implementation="com.intellij.codeInsight.daemon.impl.analysis.VirtualManifestProviderImpl"/>
   </extensions>
 </idea-plugin>
