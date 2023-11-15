@@ -52,7 +52,7 @@ class EscapeInlineCompletionHandler(originalHandler: EditorActionHandler) :
   CancellationKeyInlineCompletionHandler(originalHandler, FinishType.ESCAPE_PRESSED)
 
 class BackSpaceInlineCompletionHandler(originalHandler: EditorActionHandler) :
-  CancellationKeyInlineCompletionHandler(originalHandler, FinishType.KEY_PRESSED)
+  CancellationKeyInlineCompletionHandler(originalHandler, FinishType.BACKSPACE_PRESSED)
 
 class CallInlineCompletionAction : EditorAction(CallInlineCompletionHandler()), HintManagerImpl.ActionToIgnore {
   class CallInlineCompletionHandler : EditorWriteActionHandler() {
