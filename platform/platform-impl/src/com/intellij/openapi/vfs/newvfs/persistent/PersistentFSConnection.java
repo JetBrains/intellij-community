@@ -22,7 +22,6 @@ import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.serviceContainer.AlreadyDisposedException;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.FlushingDaemon;
-import com.intellij.util.hash.ContentHashEnumerator;
 import com.intellij.util.io.*;
 import com.intellij.util.io.storage.CapacityAllocationPolicy;
 import com.intellij.util.io.storage.HeavyProcessLatch;
@@ -103,7 +102,6 @@ public final class PersistentFSConnection {
 
   private final @NotNull PersistentFSRecordsStorage records;
 
-  private final @Nullable ContentHashEnumerator contentHashesEnumerator;
   private final @NotNull ScannableDataEnumeratorEx<String> namesEnumerator;
   /**
    * Enumerator for repeating strings used in attributes. Used to support
@@ -127,7 +125,6 @@ public final class PersistentFSConnection {
                          @NotNull ScannableDataEnumeratorEx<String> names,
                          @NotNull AbstractAttributesStorage attributes,
                          @NotNull VFSContentStorage contents,
-                         @Nullable ContentHashEnumerator contentHashesEnumerator,
                          @NotNull SimpleStringPersistentEnumerator enumeratedAttributes,
                          @Nullable VfsLogEx vfsLog,
                          @NotNull NotNullLazyValue<? extends IntList> freeRecords,
@@ -144,7 +141,6 @@ public final class PersistentFSConnection {
     namesEnumerator = names;
     attributesStorage = wrapAttributes(attributes, interceptors);
     contentStorage = wrapContents(contents, interceptors);
-    this.contentHashesEnumerator = contentHashesEnumerator;
     this.vfsLog = vfsLog;
     persistentFSPaths = paths;
     this.freeRecords = freeRecords;
@@ -184,12 +180,6 @@ public final class PersistentFSConnection {
   SimpleStringPersistentEnumerator getEnumeratedAttributes() {
     return enumeratedAttributes;
   }
-
-  @NotNull
-  ContentHashEnumerator getContentHashesEnumerator() {
-    return Objects.requireNonNull(contentHashesEnumerator, "Content hash enumerator must be initialized");
-  }
-
 
   @NotNull VFSContentStorage getContents() {
     return contentStorage;
@@ -265,9 +255,6 @@ public final class PersistentFSConnection {
     }
     attributesStorage.force();
     contentStorage.force();
-    if (contentHashesEnumerator != null) {
-      contentHashesEnumerator.force();
-    }
     resetDirty(/*markSafelyClosed: */ markSafelyClosed);
     records.force();
   }
@@ -277,8 +264,7 @@ public final class PersistentFSConnection {
            || ((Forceable)namesEnumerator).isDirty()
            || attributesStorage.isDirty()
            || contentStorage.isDirty()
-           || records.isDirty()
-           || (contentHashesEnumerator != null && contentHashesEnumerator.isDirty());
+           || records.isDirty();
   }
 
   int corruptionsDetected() {
@@ -301,7 +287,6 @@ public final class PersistentFSConnection {
     closeStorages(records,
                   namesEnumerator,
                   attributesStorage,
-                  contentHashesEnumerator,
                   contentStorage,
                   vfsLog);
     closed = true;
@@ -325,7 +310,6 @@ public final class PersistentFSConnection {
   static void closeStorages(@Nullable PersistentFSRecordsStorage records,
                             @Nullable ScannableDataEnumeratorEx<String> names,
                             @Nullable AbstractAttributesStorage attributes,
-                            @Nullable ContentHashEnumerator contentHashesEnumerator,
                             @Nullable VFSContentStorage contents,
                             @Nullable VfsLogEx vfsLog) throws IOException {
     if (names instanceof Closeable) {//implies != null
@@ -338,10 +322,6 @@ public final class PersistentFSConnection {
 
     if (contents != null) {
       contents.close();
-    }
-
-    if (contentHashesEnumerator != null) {
-      contentHashesEnumerator.close();
     }
 
     if (records != null) {
@@ -616,15 +596,6 @@ public final class PersistentFSConnection {
         unspentContentionQuota -= competingThreads();
         if (unspentContentionQuota < 0) {
           return FlushResult.HAS_MORE_TO_FLUSH;
-        }
-
-        if (connection.contentHashesEnumerator != null) {
-          connection.contentHashesEnumerator.force();
-
-          unspentContentionQuota -= competingThreads();
-          if (unspentContentionQuota < 0) {
-            return FlushResult.HAS_MORE_TO_FLUSH;
-          }
         }
 
         //Actually, this is no strictly correct: we can set SAFELY_CLOSED only if we just flush _all_ storages,

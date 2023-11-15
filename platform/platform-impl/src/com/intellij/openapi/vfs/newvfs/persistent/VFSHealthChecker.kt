@@ -200,7 +200,6 @@ class VFSHealthChecker(private val impl: FSRecordsImpl,
     val connection = impl.connection()
     val fileRecords = connection.records
     val namesEnumerator = connection.names
-    val contentHashesEnumerator = connection.contentHashesEnumerator
     val contentsStorage = connection.contents
 
     val maxAllocatedID = fileRecords.maxAllocatedID()
@@ -259,20 +258,12 @@ class VFSHealthChecker(private val impl: FSRecordsImpl,
 
           if (contentId != DataEnumeratorEx.NULL_ID) {
             notNullContentIds++
-            val contentHash = contentHashesEnumerator.valueOf(contentId)
-            if (contentHash == null) {
-              unresolvableContentIds++.alsoLogThrottled(
-                "file[#$fileId]{$fileName}: contentHash[#$contentId] does not exist (null)! " +
-                "-> content hashes enumerator is inconsistent (broken?)"
-              )
-            }
             try {
-              //just ensure storage has the record 
-              contentsStorage.readStream(contentId).use { _ -> }
+              contentsStorage.checkRecord(contentId, false)
             }
-            catch (e: IOException) {
+            catch (e: Throwable) {
               unresolvableContentIds++.alsoLogThrottled(
-                "file[#$fileId]{$fileName}: content[#$contentId] can't be read", e
+                "file[#$fileId]{$fileName}: content[#$contentId] can't be read, or inconsistent", e
               )
             }
           } //else: it is ok, contentId _could_ be NULL_ID
@@ -464,25 +455,19 @@ class VFSHealthChecker(private val impl: FSRecordsImpl,
     val report = VFSHealthCheckReport.ContentEnumeratorReport(0, 0)
 
     val connection = impl.connection()
-    val contentHashesEnumerator = connection.contentHashesEnumerator
     val contentsStorage = connection.contents
-    contentHashesEnumerator.forEach { contentId, contentHash ->
-      if (contentHash == null) {
-        report.generalErrors++.alsoLogThrottled(
-          "contentId[#$contentId]: contentHash is absent in contentHashes -> contentHashEnumerator is corrupted?")
-      }
+    val contentRecordsIterator = contentsStorage.createRecordIdIterator()
+    while(contentRecordsIterator.hasNextId()){
+      val contentId = contentRecordsIterator.nextId()
       try {
-        contentsStorage.readStream(contentId).use { stream -> stream.readAllBytes() }
-        //MAYBE RC: evaluate content hash from stream, and check == contentHash?
+        contentsStorage.checkRecord(contentId, false)
       }
       catch (e: IOException) {
         report.generalErrors++.alsoLogThrottled(
-          "contentId[#$contentId]: present in contentHashesEnumerator, but can't be read from content storage: ${e.message}")
+          "contentId[#$contentId]: content record fails to read or inconsistent: ${e.message}")
       }
       report.contentRecordsChecked = contentId
-      return@forEach true
     }
-
     return report
   }
 

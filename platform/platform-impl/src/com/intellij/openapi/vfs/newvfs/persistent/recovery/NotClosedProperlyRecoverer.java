@@ -5,13 +5,11 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.newvfs.persistent.*;
 import com.intellij.openapi.vfs.newvfs.persistent.VFSInitException.ErrorCategory;
 import com.intellij.util.SystemProperties;
-import com.intellij.util.hash.ContentHashEnumerator;
 import com.intellij.util.io.DataEnumerator;
 import com.intellij.util.io.ScannableDataEnumeratorEx;
 import com.intellij.util.io.storage.VFSContentStorage;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.DataInputStream;
 import java.io.IOException;
 import java.util.List;
 
@@ -41,7 +39,6 @@ public class NotClosedProperlyRecoverer implements VFSRecoverer {
     PersistentFSRecordsStorage records = loader.recordsStorage();
     ScannableDataEnumeratorEx<String> namesEnumerator = loader.namesStorage();
     VFSContentStorage contentStorage = loader.contentsStorage();
-    ContentHashEnumerator contentHashEnumerator = loader.contentHashesEnumerator();
     AbstractAttributesStorage attributesStorage = loader.attributesStorage();
     try {
       int accumulatedErrors = records.getErrorsAccumulated();
@@ -87,7 +84,7 @@ public class NotClosedProperlyRecoverer implements VFSRecoverer {
         }
 
         if (contentId != DataEnumerator.NULL_ID) {
-          if (!contentResolvedSuccessfully(fileId, contentId, contentStorage, contentHashEnumerator)) {
+          if (!contentResolvedSuccessfully(fileId, contentId, contentStorage)) {
             contentEnumeratorErrors++;
             totalErrors++;
           }
@@ -146,24 +143,12 @@ public class NotClosedProperlyRecoverer implements VFSRecoverer {
 
   private static boolean contentResolvedSuccessfully(int fileId,
                                                      int contentId,
-                                                     @NotNull VFSContentStorage contentStorage,
-                                                     @NotNull ContentHashEnumerator contentHashEnumerator) {
-    try (DataInputStream stream = contentStorage.readStream(contentId)) {
-      stream.readAllBytes();
+                                                     @NotNull VFSContentStorage contentStorage) {
+    try {
+      contentStorage.checkRecord(contentId, /* fast: */ false);
     }
     catch (IOException e) {
       LOG.warn("file[#" + fileId + "]: contentId(=" + contentId + ") content fails to resolve. " + e.getMessage());
-      return false;
-    }
-    try {
-      byte[] hash = contentHashEnumerator.valueOf(contentId);
-      if (hash == null) {
-        LOG.warn("file[#" + fileId + "]: contentId(=" + contentId + ") content hash fails to resolve (null)");
-        return false;
-      }
-    }
-    catch (IOException e) {
-      LOG.warn("file[#" + fileId + "]: contentId(=" + contentId + ") content hash fails to resolve. " + e.getMessage());
       return false;
     }
 

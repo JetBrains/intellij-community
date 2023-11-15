@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent.intercept
 
-import com.intellij.openapi.util.io.ByteArraySequence
 import com.intellij.openapi.vfs.newvfs.AttributeOutputStream
 import com.intellij.openapi.vfs.newvfs.FileAttribute
 import com.intellij.openapi.vfs.newvfs.persistent.AbstractAttributesStorage
@@ -19,19 +18,21 @@ object InterceptorInjection {
       return storage
     }
 
-    val writeBytes = intercept(storage::writeBytes, ContentsInterceptor::onWriteBytes)
+    //val writeBytes = intercept(storage::writeBytes, ContentsInterceptor::onWriteBytes)
     //val writeStream1: (record: Int) -> IStorageDataOutput = intercept(storage::writeStream, ContentsInterceptor::onWriteStream)
     //val writeStream2: (record: Int, fixedSize: Boolean) -> IStorageDataOutput = intercept(storage::writeStream,
     //                                                                                      ContentsInterceptor::onWriteStream)
     //val appendStream = intercept(storage::appendStream, ContentsInterceptor::onAppendStream)
     //val replaceBytes = intercept(storage::replaceBytes, ContentsInterceptor::onReplaceBytes)
-    val acquireNewRecord = intercept(storage::createNewRecord, ContentsInterceptor::onAcquireNewRecord)
+    //val acquireNewRecord = intercept(storage::createNewRecord, ContentsInterceptor::onAcquireNewRecord)
     //val acquireRecord = intercept(storage::acquireRecord, ContentsInterceptor::onAcquireRecord)
     //val releaseRecord = intercept(storage::releaseRecord, ContentsInterceptor::onReleaseRecord)
+    //FIXME: intercept storeRecord
     val setVersion = intercept(storage::setVersion, ContentsInterceptor::onSetVersion)
 
     object : VFSContentStorage by storage {
-      override fun writeBytes(recordId: Int, bytes: ByteArraySequence, fixedSize: Boolean) = writeBytes(recordId, bytes, fixedSize)
+
+      //override fun writeBytes(recordId: Int, bytes: ByteArraySequence, fixedSize: Boolean) = writeBytes(recordId, bytes, fixedSize)
 
       //override fun writeStream(record: Int): IStorageDataOutput = writeStream1(record)
 
@@ -41,7 +42,7 @@ object InterceptorInjection {
 
       //override fun replaceBytes(record: Int, offset: Int, bytes: ByteArraySequence) = replaceBytes(record, offset, bytes)
 
-      override fun createNewRecord(): Int = acquireNewRecord()
+      //override fun createNewRecord(): Int = acquireNewRecord()
 
       //override fun acquireRecord(record: Int) = acquireRecord(record)
 

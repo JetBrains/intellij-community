@@ -23,6 +23,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 
 import static com.intellij.openapi.vfs.newvfs.persistent.PersistentFSHeaders.HEADER_CONNECTION_STATUS_OFFSET;
@@ -93,6 +94,12 @@ public class VFSCorruptionRecoveryTest {
       .filter(name -> !name.startsWith("records.dat"))
       .toList();
 
+    //contentHashes recovered by VFSContentStorage internally, without involving VFS Recoverers,
+    // hence this recovery is not reported in .recoverInfo()
+    List<String> vfsFilesSilentlyRecovering = vfsCrucialDataFilesNames.stream()
+      .filter(name -> name.startsWith("contentHashes.dat"))
+      .toList();
+
     List<String> filesCorruptionsVFSCantOvercome = new ArrayList<>();
     List<String> filesCorruptionsVFSCantDetect = new ArrayList<>();
     int vfsFilesCount = vfsFilesToTryCorrupt.size();
@@ -137,8 +144,9 @@ public class VFSCorruptionRecoveryTest {
       filesCorruptionsVFSCantOvercome.isEmpty()
     );
 
+    filesCorruptionsVFSCantDetect.removeAll(vfsFilesSilentlyRecovering);
     assertTrue(
-      "VFS must detect if any of " + filesCorruptionsVFSCantDetect + " is corrupted",
+      "VFS must DETECT corruptions in any of " + filesCorruptionsVFSCantDetect + " files (and recover, and report recovery)",
       filesCorruptionsVFSCantDetect.isEmpty()
     );
   }

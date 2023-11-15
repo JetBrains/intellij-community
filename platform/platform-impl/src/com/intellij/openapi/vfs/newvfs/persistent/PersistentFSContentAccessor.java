@@ -8,6 +8,7 @@ import com.intellij.util.hash.ContentHashEnumerator;
 import com.intellij.util.io.DataOutputStream;
 import com.intellij.util.io.DigestUtil;
 import com.intellij.util.io.storage.VFSContentStorage;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -72,9 +73,12 @@ public final class PersistentFSContentAccessor {
     throws IOException {
     PersistentFSConnection.ensureIdIsValid(fileId);
     PersistentFSRecordsStorage records = connection.getRecords();
+
+    //we don't need a lock here: as soon, as .storeRecord() is thread-safe -- .setContentRecordId() provides
+    // linearization point
     lock.writeLock().lock();
     try {
-      int contentRecordId = enumerateContent(content);
+      int contentRecordId = connection.getContents().storeRecord(content, fixedSizeHint);
 
       records.setContentRecordId(fileId, contentRecordId);
     }
@@ -87,65 +91,20 @@ public final class PersistentFSContentAccessor {
   int allocateContentRecordAndStore(byte @NotNull [] content) throws IOException {
     lock.writeLock().lock();
     try {
-      return enumerateContent(new ByteArraySequence(content));
+      return connection.getContents().storeRecord(new ByteArraySequence(content), /*fixedSize: */ false);
     }
     finally {
       lock.writeLock().unlock();
     }
   }
 
-  /**
-   * Stores content in VFS and return contentRecordId, by which content could be later retrieved.
-   * If the same content (bytes) was already stored -- method could return id of already existing record, without allocating
-   * & storing new record.
-   */
-  private int enumerateContent(@NotNull ByteArraySequence contentBytes) throws IOException {
-    int length = contentBytes.length();
-
-    long hashStartedNs = System.nanoTime();
-    byte[] contentHash = calculateHash(contentBytes.getInternalBuffer(), contentBytes.getOffset(), length);
-    totalHashCalculationTimeNs += (System.nanoTime() - hashStartedNs);
-
-
-    if ((totalContentRecordsStored & 0x3FFF) == 0) {
-      LOG.info("Contents: " +
-               totalContentRecordsStored + " records of " + totalContentBytesStored + "b total were actually stored, " +
-               totalContentRecordsReused + " records of " + totalContentBytesReused + "b were reused, " +
-               "for " + NANOSECONDS.toSeconds(totalHashCalculationTimeNs) + " ms spent on hashing");
-    }
-
-    ContentHashEnumerator hashesEnumerator = connection.getContentHashesEnumerator();
-    VFSContentStorage contentStorage = connection.getContents();
-
-    int hashId = hashesEnumerator.enumerateEx(contentHash);
-
-    if (hashId < 0) {//already known hash -> already stored content
-      totalContentRecordsReused++;
-      totalContentBytesReused += length;
-
-      int alreadyExistingContentRecordId = -hashId;
-      return alreadyExistingContentRecordId;
-    }
-
-    //unknown hash -> not-previously-seen content:
-    int newContentRecordId = contentStorage.createNewRecord();
-
-    //We assume we call contents.acquireNewRecord() when and only when
-    //hashesEnumerator.enumerateEx() returns positive value (which means 'new hash')
-    assert hashId == newContentRecordId
-      : "Unexpected content storage modification: contentHashId=" + hashId + "; newContentRecord=" + newContentRecordId;
-
-    contentStorage.writeBytes(newContentRecordId, contentBytes, /*fixedSize: */ true);
-
-    totalContentRecordsStored++;
-    totalContentBytesStored += length;
-
-    return newContentRecordId;
-  }
-
+  @ApiStatus.Obsolete
   byte @Nullable [] getContentHash(int fileId) throws IOException {
     int contentId = connection.getRecords().getContentRecordId(fileId);
-    return contentId <= 0 ? null : connection.getContentHashesEnumerator().valueOf(contentId);
+    if (contentId <= 0) {
+      return null;
+    }
+    return connection.getContents().contentHash(contentId);
   }
 
   private static @NotNull MessageDigest getContentHashDigest() {

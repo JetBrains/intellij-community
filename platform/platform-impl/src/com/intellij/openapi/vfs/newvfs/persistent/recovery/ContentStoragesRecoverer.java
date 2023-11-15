@@ -42,31 +42,22 @@ public final class ContentStoragesRecoverer implements VFSRecoverer {
       LOG.info(contentStoragesProblems.size() + " ContentStorage-related issue(s) -> trying to fix");
       PersistentFSRecordsStorage records = loader.recordsStorage();
       try {
+        //Check: is there really any problem?
         checkContentStorage(loader);
-
-        //If contentStorage is OK -> try to re-create contentHashesEnumerator, and re-fill it by contentsStorage data:
-        tryRebuildHashesStorageByContentStorage(loader);
-
-        //MAYBE IDEA-334517: re-check contentHashStorage: is it really 'fixed'?
-
+        //if not -> false alarm? mark content-related problems as 'fixed'
         loader.problemsWereRecovered(contentStoragesProblems);
-        LOG.info("ContentHashesEnumerator was successfully rebuild, ContentStorage was verified along the way");
+        LOG.warn("ContentStorage was verified, no problems found -> seems like false alarm?");
       }
       catch (Throwable ex) {
-        LOG.warn("ContentStorage check is failed: " + ex.getMessage());
-        //Seems like the ContentStorage itself is broken -> clean both Content & ContentHashes storages,
-        //  and invalidate all the contentId references from fs-records:
+        LOG.warn("ContentStorage verification is failed: " + ex.getMessage());
+        //Seems like the ContentStorage is totally broken -> clean everything,
+        //  and invalidate all the contentId references from fs-records (and other places):
 
         VFSContentStorage contentStorage = loader.contentsStorage();
         contentStorage.closeAndClean();
-        ContentHashEnumerator contentHashEnumerator = loader.contentHashesEnumerator();
-        contentHashEnumerator.closeAndClean();
 
-        VFSContentStorage emptyContentStorage = loader.createContentStorage(loader.contentsFile);
-        ContentHashEnumerator emptyHashesEnumerator = PersistentFSLoader.createContentHashStorage(loader.contentsHashesFile);
+        VFSContentStorage emptyContentStorage = loader.createContentStorage(loader.contentsHashesFile, loader.contentsFile);
         loader.setContentsStorage(emptyContentStorage);
-        loader.setContentHashesEnumerator(emptyHashesEnumerator);
-
 
         cleanAllContentIds(records);
         // FIXME MAYBE VfsLog recovery related: we don't place a special event in VfsLog about content storage being cleared.
@@ -82,7 +73,7 @@ public final class ContentStoragesRecoverer implements VFSRecoverer {
       loader.problemsRecoveryFailed(
         contentStoragesProblems,
         CONTENT_STORAGES_INCOMPLETE,
-        "Content enumerator recovery fails",
+        "Content storage recovery fails",
         t
       );
     }
@@ -95,8 +86,8 @@ public final class ContentStoragesRecoverer implements VFSRecoverer {
     for (int fileId = FSRecords.ROOT_FILE_ID; fileId <= maxAllocatedID; fileId++) {
       int contentId = records.getContentRecordId(fileId);
       if (contentId != NULL_ID) {
-        try (var stream = contentStorage.readStream(contentId)) {
-          stream.readAllBytes();
+        try {
+          contentStorage.checkRecord(contentId, /*fastCheck: */ false);
         }
         catch (Throwable t) {
           throw new IOException("file[#" + fileId + "].content[contentId: " + contentId + "] is broken, " + t, t);
@@ -105,50 +96,12 @@ public final class ContentStoragesRecoverer implements VFSRecoverer {
     }
   }
 
-  private static void tryRebuildHashesStorageByContentStorage(@NotNull PersistentFSLoader loader) throws IOException {
-
-    ContentHashEnumerator contentHashEnumerator = loader.contentHashesEnumerator();
-    contentHashEnumerator.closeAndClean();
-
-    Path contentsHashesFile = loader.contentsHashesFile;
-    ContentHashEnumerator recoveringHashesEnumerator = PersistentFSLoader.createContentHashStorage(contentsHashesFile);
-
-    VFSContentStorage contentStorage = loader.contentsStorage();
-    try {
-      fillHashesEnumeratorByContentStorage(contentStorage, recoveringHashesEnumerator);
-      loader.setContentHashesEnumerator(recoveringHashesEnumerator);
-    }
-    catch (Throwable t) {
-      recoveringHashesEnumerator.closeAndClean();
-      throw t;
-    }
-  }
 
   private static void cleanAllContentIds(@NotNull PersistentFSRecordsStorage records) throws IOException {
     int maxAllocatedID = records.maxAllocatedID();
     for (int fileId = FSRecords.ROOT_FILE_ID; fileId <= maxAllocatedID; fileId++) {
       if (records.getContentRecordId(fileId) != NULL_ID) {
         records.setContentRecordId(fileId, NULL_ID);
-      }
-    }
-  }
-
-  private static void fillHashesEnumeratorByContentStorage(@NotNull VFSContentStorage contentStorage,
-                                                           @NotNull ContentHashEnumerator hashesEnumeratorToFill) throws IOException {
-    //Try to fill hashesEnumerator from contentStorage records (and check contentIds match)
-    // (along the way we also checks contentStorage is OK -- i.e. all the records could be read)
-    for (RecordIdIterator it = contentStorage.createRecordIdIterator();
-         it.hasNextId(); ) {
-      int contentRecordId = it.nextId();
-      try (var stream = contentStorage.readStream(contentRecordId)) {
-        byte[] content = stream.readAllBytes();
-        byte[] hash = PersistentFSContentAccessor.calculateHash(content, 0, content.length);
-        int contentHashId = hashesEnumeratorToFill.enumerate(hash);
-        if (contentHashId != contentRecordId) {
-          throw new IOException(
-            "Content enumerator recovery fails (content id: #" + contentRecordId + " hashed to different id: #" + contentHashId + ")"
-          );
-        }
       }
     }
   }
