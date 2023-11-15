@@ -35,6 +35,7 @@ import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.*
 import java.awt.Dimension
 import java.awt.Point
+import java.awt.Rectangle
 import java.awt.event.MouseEvent
 import javax.swing.JComponent
 
@@ -253,6 +254,9 @@ class CodeFloatingToolbar(
    * Hides the toolbar if it intersects another popup.
    */
   fun hideOnPopupConflict(popup: JBPopup){
+    val toolbarBounds = getScreenBounds(hintComponent) ?: return
+    val popupBounds = getScreenBounds(popup.content) ?: return
+    if (!toolbarBounds.intersects(popupBounds)) return
     val wasVisible = isShown()
     val wasDisabled = TEMPORARILY_DISABLED
     val disposable = getPopupDisposable(popup)
@@ -264,6 +268,12 @@ class CodeFloatingToolbar(
         allowInstantShowing()
       }
     }
+  }
+
+  private fun getScreenBounds(component: JComponent?): Rectangle? {
+    val location = component?.locationOnScreen ?: return null
+    val size = component.size ?: return null
+    return Rectangle(location.x, location.y, size.width, size.height)
   }
 
   private fun getPopupDisposable(popup: JBPopup): Disposable {

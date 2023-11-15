@@ -40,6 +40,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.reference.SoftReference;
 import com.intellij.ui.MouseMovementTracker;
+import com.intellij.ui.codeFloatingToolbar.CodeFloatingToolbar;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.util.Alarm;
@@ -191,6 +192,8 @@ public class EditorMouseHoverPopupManager implements Disposable {
             else {
               AbstractPopup hint = createHint(component, popupBridge, requestFocus);
               showHintInEditor(hint, topLevelEditor, position);
+              CodeFloatingToolbar floatingToolbar = CodeFloatingToolbar.getToolbar(editor);
+              if (floatingToolbar != null) floatingToolbar.hideOnPopupConflict(hint);
               myPopupReference = new WeakReference<>(hint);
               myCurrentEditor = new WeakReference<>(topLevelEditor);
             }
