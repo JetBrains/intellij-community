@@ -140,7 +140,7 @@ class ReviewListCellRenderer<T>(private val presenter: (T) -> ReviewListItemPres
             val color = tag.color
             if (color != null) {
               //TODO: need a separate untinted icon to color properly
-              label.icon = IconUtil.colorize(DvcsImplIcons.BranchLabel, color)
+              label.icon = IconUtil.colorizeTint(DvcsImplIcons.BranchLabel, color)
             }
             else {
               label.icon = DvcsImplIcons.BranchLabel

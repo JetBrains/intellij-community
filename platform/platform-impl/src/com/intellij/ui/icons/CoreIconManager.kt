@@ -174,7 +174,7 @@ class CoreIconManager : IconManager, CoreAwareIconManager {
 
   override fun createOffsetIcon(icon: Icon): Icon = OffsetIcon(icon)
 
-  override fun colorize(g: Graphics2D, source: Icon, color: Color): Icon = IconUtil.colorize(g, source, color)
+  override fun colorize(g: Graphics2D, source: Icon, color: Color): Icon = IconUtil.colorizeTint(g, source, color)
 
   override fun createLayered(vararg icons: Icon): Icon = LayeredIcon.layeredIcon(icons)
 

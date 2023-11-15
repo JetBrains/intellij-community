@@ -440,16 +440,28 @@ object IconUtil {
 
   @JvmOverloads
   @JvmStatic
-  fun colorize(source: Icon, color: Color, keepGray: Boolean = false): Icon {
+  fun colorizeTint(source: Icon, color: Color, keepGray: Boolean = false): Icon {
     return filterIcon(icon = source, filterSupplier = object : RgbImageFilterSupplier {
-      override fun getFilter() = ColorFilter(color = color, keepGray = keepGray)
+      override fun getFilter() = ColorMultiplyFilter(color = color, keepGray = keepGray)
     })
   }
 
   @JvmOverloads
   @JvmStatic
-  fun colorize(g: Graphics2D?, source: Icon, color: Color, keepGray: Boolean = false): Icon {
-    return filterIcon(g = g, source = source, filter = ColorFilter(color = color, keepGray = keepGray))
+  fun colorizeTint(g: Graphics2D?, source: Icon, color: Color, keepGray: Boolean = false): Icon {
+    return filterIcon(g = g, source = source, filter = ColorMultiplyFilter(color = color, keepGray = keepGray))
+  }
+
+  @JvmStatic
+  fun colorizeReplace(source: Icon, color: Color): Icon {
+    return filterIcon(icon = source, filterSupplier = object : RgbImageFilterSupplier {
+      override fun getFilter() = ColorReplaceFilter(color = color)
+    })
+  }
+
+  @JvmStatic
+  fun colorizeReplace(g: Graphics2D?, source: Icon, color: Color): Icon {
+    return filterIcon(g = g, source = source, filter = ColorReplaceFilter(color = color))
   }
 
   @JvmStatic
@@ -641,7 +653,7 @@ class CropIcon internal constructor(val sourceIcon: Icon, val crop: Rectangle) :
   override fun hashCode(): Int = Objects.hash(sourceIcon, crop)
 }
 
-private class ColorFilter(color: Color, private val keepGray: Boolean) : RGBImageFilter() {
+private class ColorMultiplyFilter(color: Color, private val keepGray: Boolean) : RGBImageFilter() {
   private val base = Color.RGBtoHSB(color.red, color.green, color.blue, null)
 
   override fun filterRGB(x: Int, y: Int, rgba: Int): Int {
@@ -651,6 +663,20 @@ private class ColorFilter(color: Color, private val keepGray: Boolean) : RGBImag
     val hsb = FloatArray(3)
     Color.RGBtoHSB(r, g, b, hsb)
     val rgb = Color.HSBtoRGB(base[0], base[1] * if (keepGray) hsb[1] else 1.0f, base[2] * hsb[2])
+    return rgba and -0x1000000 or (rgb and 0xffffff)
+  }
+}
+
+private class ColorReplaceFilter(color: Color) : RGBImageFilter() {
+  private val base = Color.RGBtoHSB(color.red, color.green, color.blue, null)
+
+  override fun filterRGB(x: Int, y: Int, rgba: Int): Int {
+    val r = rgba shr 16 and 0xff
+    val g = rgba shr 8 and 0xff
+    val b = rgba and 0xff
+    val hsb = FloatArray(3)
+    Color.RGBtoHSB(r, g, b, hsb)
+    val rgb = Color.HSBtoRGB(base[0], base[1], base[2])
     return rgba and -0x1000000 or (rgb and 0xffffff)
   }
 }
@@ -762,7 +788,7 @@ private fun scaleByIcon(icon: Icon?, ancestor: Component?, defaultIcon: Icon, si
   }
 }
 
-private fun filterIcon(g: Graphics2D?, source: Icon, filter: ColorFilter): Icon {
+private fun filterIcon(g: Graphics2D?, source: Icon, filter: RGBImageFilter): Icon {
   val src = if (g == null) {
     ImageUtil.createImage(source.iconWidth, source.iconHeight, BufferedImage.TYPE_INT_ARGB)
   }

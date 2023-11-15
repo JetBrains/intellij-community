@@ -476,7 +476,7 @@ open class FlatWelcomeFrame @JvmOverloads constructor(
           var icon = presentation.icon
           if (icon == null || icon.iconHeight != JBUIScale.scale(16) || icon.iconWidth != JBUIScale.scale(16)) {
             icon = if (icon == null) JBUIScale.scaleIcon(EmptyIcon.create(16)) else IconUtil.scale(icon, null, 16f / icon.iconWidth)
-            icon = IconUtil.colorize(icon, JBColor(0x6e6e6e, 0xafb1b3))
+            icon = IconUtil.colorizeTint(icon, JBColor(0x6e6e6e, 0xafb1b3))
           }
           action = ActionGroupPanelWrapper.wrapGroups(action, this)
           val link = ActionLink(text, icon, action, null, ActionPlaces.WELCOME_SCREEN)
