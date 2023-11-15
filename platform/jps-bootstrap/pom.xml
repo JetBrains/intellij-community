@@ -53,27 +53,27 @@
     <dependency>
       <groupId>commons-io</groupId>
       <artifactId>commons-io</artifactId>
-      <version>2.14.0</version>
+      <version>2.15.0</version>
     </dependency>
     <dependency>
       <groupId>io.ktor</groupId>
       <artifactId>ktor-client-cio-jvm</artifactId>
-      <version>2.3.5</version>
+      <version>2.3.6</version>
     </dependency>
     <dependency>
       <groupId>io.ktor</groupId>
       <artifactId>ktor-client-encoding-jvm</artifactId>
-      <version>2.3.5</version>
+      <version>2.3.6</version>
     </dependency>
     <dependency>
       <groupId>io.ktor</groupId>
       <artifactId>ktor-client-auth-jvm</artifactId>
-      <version>2.3.5</version>
+      <version>2.3.6</version>
     </dependency>
     <dependency>
       <groupId>io.opentelemetry</groupId>
       <artifactId>opentelemetry-extension-kotlin</artifactId>
-      <version>1.31.0</version>
+      <version>1.32.0</version>
     </dependency>
     <dependency>
       <groupId>com.jetbrains.intellij.platform</groupId>
