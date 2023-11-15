@@ -211,6 +211,7 @@ private suspend fun isJbrOperational(): Boolean {
   if (Files.isRegularFile(bin) && (SystemInfoRt.isWindows || Files.isExecutable(bin))) {
     try {
       return withTimeout(30.seconds) {
+        @Suppress("UsePlatformProcessAwaitExit")
         ProcessBuilder(bin.toString(), "-version")
           .redirectError(ProcessBuilder.Redirect.DISCARD)
           .redirectOutput(ProcessBuilder.Redirect.DISCARD)
