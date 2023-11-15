@@ -27,6 +27,8 @@ import com.intellij.util.TimeoutUtil
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.cancellable
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -137,13 +139,22 @@ class SemanticActionSearchEverywhereContributor(defaultContributor: ActionSearch
         readyChannel.close()
       }
 
-      coroutineToIndicator {
-        defaultFetchElements(pattern, progressIndicator) {
-          val prepareDescriptor = prepareStandardDescriptor(it, knownItems)
-          val descriptor = runBlockingCancellable { mutex.withLock { prepareDescriptor() } }
-          consumer.process(descriptor)
+      val descriptorFlow = channelFlow {
+        coroutineToIndicator {
+          defaultFetchElements(pattern, progressIndicator) {
+            val prepareDescriptor = prepareStandardDescriptor(it, knownItems)
+            launch {
+              send(mutex.withLock { prepareDescriptor() })
+            }
+            true
+          }
         }
-      }
+      }.cancellable()
+
+      descriptorFlow.takeWhile {
+        consumer.process(it)
+      }.collect {}
+
       standardContributorFinishedChannel.close()
       readyChannel.receiveCatching()
     }

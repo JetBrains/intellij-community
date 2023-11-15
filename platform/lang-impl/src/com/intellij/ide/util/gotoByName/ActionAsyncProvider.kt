@@ -113,7 +113,7 @@ class ActionAsyncProvider(private val myModel: GotoActionModel) {
         return
       }
 
-      if (!coroutineToIndicator { consumer.test(value) }) {
+      if (!consumer.test(value)) {
         LOG.debug("Sending results: consumer returned false")
         throw SearchFinishedException()
       }
@@ -123,8 +123,7 @@ class ActionAsyncProvider(private val myModel: GotoActionModel) {
 
   private suspend fun sendResults(flow: Flow<MatchedValue>, consumer: Predicate<in MatchedValue>) {
     flow.onEach {
-      val collected = coroutineToIndicator { consumer.test(it) } //this wrapper is only to avoid a problem with semantic search
-      if (!collected) {
+      if (!consumer.test(it)) {
         LOG.debug("Sending results: consumer returned false")
         throw SearchFinishedException()
       }
