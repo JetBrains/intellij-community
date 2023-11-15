@@ -188,18 +188,24 @@ private fun CoroutineScope.showIndicator(
     delay(DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS.toLong())
     tracer.spanBuilder("Progress: ${taskInfo.title}").startSpan().use {
       val indicator = coroutineCancellingIndicator(taskJob) // cancel taskJob from UI
-      indicator.start()
-      try {
-        val indicatorAdded = withContext(Dispatchers.EDT) {
-          showIndicatorInUI(project, taskInfo, indicator)
+      withContext(Dispatchers.EDT) {
+        val indicatorAdded = showIndicatorInUI(project, taskInfo, indicator)
+        try {
+          indicator.start() // must be after showIndicatorInUI
+          try {
+            if (indicatorAdded) {
+              withContext(Dispatchers.Default) {
+                indicator.updateFromFlow(stateFlow)
+              }
+            }
+          }
+          finally {
+            indicator.stop()
+          }
         }
-        if (indicatorAdded) {
-          indicator.updateFromFlow(stateFlow)
+        finally {
+          indicator.finish(taskInfo) // removes indicator from UI if added
         }
-      }
-      finally {
-        indicator.stop()
-        indicator.finish(taskInfo)
       }
     }
   }
