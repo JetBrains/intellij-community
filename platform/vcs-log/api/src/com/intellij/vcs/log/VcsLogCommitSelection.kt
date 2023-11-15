@@ -61,11 +61,4 @@ interface VcsLogCommitSelection {
    * @param consumer called in EDT after all details are loaded.
    */
   fun requestFullDetails(consumer: Consumer<in List<VcsFullCommitDetails>>)
-
-  companion object {
-    @JvmStatic
-    fun VcsLogCommitSelection.isEmpty() = size == 0
-    @JvmStatic
-    fun VcsLogCommitSelection.isNotEmpty() = size != 0
-  }
 }

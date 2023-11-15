@@ -14,6 +14,7 @@ import com.intellij.vcs.log.VcsLogDataKeys;
 import com.intellij.vcs.log.history.FileHistoryUi;
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
+import com.intellij.vcs.log.ui.table.VcsLogCommitSelectionUtils;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -61,7 +62,7 @@ public class CreatePatchFromHistoryActionProvider implements AnActionExtensionPr
     e.getPresentation().setVisible(true);
 
     String commitMessage = e.getData(VcsDataKeys.PRESET_COMMIT_MESSAGE);
-    e.getPresentation().setEnabled(VcsLogCommitSelection.isNotEmpty(selection) && commitMessage != null);
+    e.getPresentation().setEnabled(VcsLogCommitSelectionUtils.isNotEmpty(selection) && commitMessage != null);
   }
 
   @Override
