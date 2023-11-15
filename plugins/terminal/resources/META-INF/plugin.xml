@@ -131,6 +131,11 @@
             use-shortcut-of="QuickJavaDoc"/>
     <action id="Terminal.Escape" class="org.jetbrains.plugins.terminal.action.TerminalEscapeAction"
             use-shortcut-of="EditorEscape"/>
+    <action id="Terminal.CloseSession" class="org.jetbrains.plugins.terminal.action.TerminalCloseSessionAction">
+      <keyboard-shortcut first-keystroke="control D" keymap="$default"/>
+      <keyboard-shortcut first-keystroke="control D" keymap="Mac OS X" replace-all="true"/>
+      <keyboard-shortcut first-keystroke="control D" keymap="Mac OS X 10.5+" replace-all="true"/>
+    </action>
     <action id="Terminal.Copy" class="org.jetbrains.plugins.terminal.action.TerminalCopyAction"
             use-shortcut-of="$Copy" icon="AllIcons.Actions.Copy"/>
 

@@ -41,6 +41,9 @@ class TerminalPromptController(
       }
     }
 
+  val commandText: String
+    get() = editor.document.text
+
   init {
     editor.putUserData(IS_PROMPT_EDITOR_KEY, true)
     editor.putUserData(TerminalSession.KEY, session)
