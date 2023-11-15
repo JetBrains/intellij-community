@@ -10,7 +10,7 @@ import java.util.function.Consumer
 internal class CommitSelectionImpl(private val logData: VcsLogData,
                                    private val visibleGraph: VisibleGraph<Int>,
                                    override val rows: IntArray) : VcsLogCommitSelection {
-  override val ids: List<Int> get() = rows.map { getIdAtRow(it) }
+  override val ids: List<Int> get() = getDataForRows(rows) { row -> getIdAtRow(row) }
 
   override val commits: List<CommitId>
     get() = getDetails { id -> logData.getCommitId(id)!! }
