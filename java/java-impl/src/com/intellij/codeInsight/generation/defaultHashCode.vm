@@ -52,7 +52,7 @@ public int hashCode() {
   #elseif ($field.boolean)
     ($fName ? 1 : 0)##
   #elseif ($field.float)
-    ($fName != 0.0f ? java.lang.Float.floatToIntBits($fName) : 0)##
+    java.lang.Float.floatToIntBits($fName)##
   #elseif ($field.double)
     #set($tempName = "#getTempVarName()")
     (int) ($tempName ^ ($tempName >>> 32))##

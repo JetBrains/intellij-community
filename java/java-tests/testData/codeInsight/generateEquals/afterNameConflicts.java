@@ -60,7 +60,7 @@ class A {
         result1 = 31 * result1 + (int) a8;
         result1 = 31 * result1 + a9;
         result1 = 31 * result1 + (int) (a10 ^ (a10 >>> 32));
-        result1 = 31 * result1 + (a11 != 0.0f ? Float.floatToIntBits(a11) : 0);
+        result1 = 31 * result1 + Float.floatToIntBits(a11);
         temp1 = Double.doubleToLongBits(temp);
         result1 = 31 * result1 + (int) (temp1 ^ (temp1 >>> 32));
         result1 = 31 * result1 + result.hashCode();

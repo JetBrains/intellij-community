@@ -108,7 +108,7 @@ class A {
         result = 31 * result + (int) getA8();
         result = 31 * result + getA9();
         result = 31 * result + (int) (getA10() ^ (getA10() >>> 32));
-        result = 31 * result + (getA11() != 0.0f ? Float.floatToIntBits(getA11()) : 0);
+        result = 31 * result + Float.floatToIntBits(getA11());
         temp = Double.doubleToLongBits(getA12());
         result = 31 * result + (int) (temp ^ (temp >>> 32));
         result = 31 * result + (a13 != null ? a13.hashCode() : 0);
