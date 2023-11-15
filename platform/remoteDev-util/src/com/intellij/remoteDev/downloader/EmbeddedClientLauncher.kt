@@ -10,6 +10,7 @@ import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.CustomConfigMigrationOption
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.projectRoots.SimpleJavaSdkType
@@ -21,11 +22,13 @@ import com.intellij.platform.bootstrap.RuntimeModuleIntrospection
 import com.intellij.platform.runtime.repository.ProductMode
 import com.intellij.platform.runtime.repository.RuntimeModuleId
 import com.intellij.platform.runtime.repository.RuntimeModuleRepository
+import com.intellij.remoteDev.util.ProductInfo
 import com.intellij.util.JavaModuleOptions
 import com.intellij.util.SystemProperties
 import com.intellij.util.system.OS
 import com.jetbrains.rd.util.lifetime.Lifetime
 import org.jetbrains.annotations.ApiStatus
+import java.io.IOException
 import java.nio.file.Path
 import java.util.*
 import kotlin.io.path.*
@@ -97,7 +100,24 @@ class EmbeddedClientLauncher private constructor(private val moduleRepository: R
   private fun findJetBrainsClientLauncher(): JetBrainsClientLauncherData? {
     return when (OS.CURRENT) {
       OS.macOS -> {
-        val appPath = Path(PathManager.getHomePath()).parent
+        val homePath = Path(PathManager.getHomePath())
+        val productInfoPath = homePath.resolve(ApplicationEx.PRODUCT_INFO_FILE_NAME_MAC)
+        if (!productInfoPath.exists()) {
+          LOG.warn("$productInfoPath does not exist")
+          return null
+        }
+        val productInfoData = try {
+          ProductInfo.fromJson(productInfoPath.readText())
+        }
+        catch (e: IOException) {
+          LOG.warn("Failed to parse $productInfoPath: $e", e)
+          return null
+        }
+        if (productInfoData.launch.none { launchData -> launchData.customCommands.any { it.commands.contains("thinClient") } }) {
+          LOG.info("Cannot use launcher because $productInfoPath doesn't have special handling for 'thinClient' command")
+          return null
+        }
+        val appPath = homePath.parent
         //on macOS, the default launcher is modified to start JetBrains Client when running with 'thinClient' command
         if (appPath.fileName.toString().endsWith(".app")) {
           CodeWithMeClientDownloader.createLauncherDataForMacOs(appPath)
