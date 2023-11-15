@@ -22,6 +22,7 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.content.Content;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -57,6 +58,7 @@ public final class WindowWithActions {
    *                                Null if you do not want this delegate to be called.
    * @param customActions           additional actions to add
    */
+  @RequiresEdt
   public static void showConsoleWithProcess(@NotNull final ConsoleWithProcess consoleWithProcess,
                                             @Nullable final JComponent actionListenerComponent,
                                             @NotNull @Nls(capitalization = Nls.Capitalization.Title) final String consoleTitle,
@@ -80,6 +82,7 @@ public final class WindowWithActions {
   }
 
   @Nullable
+  @RequiresEdt
   public static JComponent findWindowByName(@NotNull Project project, @NotNull String toolWindowTitle, @NotNull String windowName) {
     final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
     ToolWindow window = toolWindowManager.getToolWindow(toolWindowTitle);
@@ -104,6 +107,7 @@ public final class WindowWithActions {
    *                                Null if you do not want this delegate to be called.
    * @param customActions           additional actions to add
    */
+  @RequiresEdt
   public static void show(@NotNull final JComponent dataComponent,
                           @Nullable final JComponent actionListenerComponent,
                           @NotNull @Nls(capitalization = Nls.Capitalization.Title) final String componentWindowTitle,
