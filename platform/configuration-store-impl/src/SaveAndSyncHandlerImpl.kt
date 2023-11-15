@@ -325,7 +325,9 @@ internal class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope
         if (roots.any { it is NewVirtualFile && it.isDirty }) {
           val session = queue.createBackgroundRefreshSession(roots)
           bgRefreshSession = session
-          session.launch()
+          blockingContext {
+            session.launch()
+          }
           bgRefreshSession = null
           sessions.incrementAndGet()
           events.addAndGet(session.metric("events") as Int)
