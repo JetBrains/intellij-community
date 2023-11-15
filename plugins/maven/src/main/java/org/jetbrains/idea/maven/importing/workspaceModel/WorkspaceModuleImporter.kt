@@ -23,6 +23,7 @@ import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
+import com.intellij.psi.PsiJavaModule.AUTO_MODULE_NAME
 import com.intellij.util.containers.addIfNotNull
 import com.intellij.workspaceModel.ide.impl.LegacyBridgeJpsEntitySourceFactory
 import org.jetbrains.idea.maven.importing.MavenImportUtil
@@ -243,11 +244,18 @@ internal class WorkspaceModuleImporter(
       else -> ModuleDependencyItem.DependencyScope.COMPILE
     }
 
+  private fun MavenProject.getAutomaticModuleName(): String? {
+    return this.getPluginConfiguration("org.apache.maven.plugins", "maven-jar-plugin")
+      ?.getChild("archive")
+      ?.getChild("manifestEntries")
+      ?.getChild(AUTO_MODULE_NAME)?.text
+  }
 
   private fun importJavaSettings(moduleEntity: ModuleEntity,
                                  importData: MavenModuleImportData,
                                  importFolderHolder: WorkspaceFolderImporter.CachedProjectFolders) {
-    val languageLevel = MavenImportUtil.getLanguageLevel(importData.mavenProject) { importData.moduleData.sourceLanguageLevel }
+    val mavenProject = importData.mavenProject
+    val languageLevel = MavenImportUtil.getLanguageLevel(mavenProject) { importData.moduleData.sourceLanguageLevel }
 
     var inheritCompilerOutput = true
     var compilerOutputUrl: VirtualFileUrl? = null
@@ -265,11 +273,15 @@ internal class WorkspaceModuleImporter(
         compilerOutputUrlForTests = virtualFileUrlManager.fromPath(importFolderHolder.testOutputPath)
       }
     }
+
+    val automaticModuleName = mavenProject.getAutomaticModuleName()
+
     builder addEntity JavaModuleSettingsEntity(inheritCompilerOutput, false, moduleEntity.entitySource) {
       this.module = moduleEntity
       this.compilerOutput = compilerOutputUrl
       this.compilerOutputForTests = compilerOutputUrlForTests
       this.languageLevelId = languageLevel.name
+      this.automaticModuleName = automaticModuleName
     }
   }
 
