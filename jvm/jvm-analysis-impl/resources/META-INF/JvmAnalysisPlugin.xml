@@ -9,7 +9,11 @@
                     beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.codeInspection.sourceToSink.SourceToSinkProvider"/>
     </extensionPoint>
-
+    <extensionPoint qualifiedName="com.intellij.codeInspection.suppressionAnnotationUtil"
+                    dynamic="true"
+                    beanClass="com.intellij.lang.LanguageExtensionPoint">
+      <with attribute="implementationClass" implements="com.intellij.codeInspection.SuppressionAnnotationUtil"/>
+    </extensionPoint>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
     <!--Test frameworks-->
@@ -203,6 +207,11 @@
                      groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"
                      groupKey="jvm.inspections.group.name" key="jvm.inspections.system.get.property.display.name"
                      implementationClass="com.intellij.codeInspection.SystemGetPropertyInspection"/>
+    <localInspection language="UAST" enabledByDefault="false" level="WARNING"
+                     shortName="SuppressionAnnotation"
+                     groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"
+                     groupKey="jvm.inspections.group.name" key="inspection.suppression.annotation.display.name"
+                     implementationClass="com.intellij.codeInspection.SuppressionAnnotationInspection"/>
     <notificationGroup id="UAST" displayType="BALLOON" hideFromSettings="true"/>
     <projectService serviceInterface="com.intellij.codeInsight.AnnotationCacheOwnerNormalizer"
                     serviceImplementation="com.intellij.psi.UastAnnotationCacheOwnerNormalizer"/>
@@ -214,6 +223,7 @@
   </extensions>
   <extensions defaultExtensionNs="com.intellij.codeInspection">
     <sourceToSinkProvider language="JAVA" implementationClass="com.intellij.codeInspection.sourceToSink.JavaSourceToSinkProvider"/>
+    <suppressionAnnotationUtil language="JAVA" implementationClass="com.intellij.codeInspection.JavaSuppressionAnnotationUtil"/>
   </extensions>
   <actions>
     <group id="UastInternal" text="UAST" internal="true" popup="true">

@@ -1437,10 +1437,6 @@
                      implementationClass="com.siyeh.ig.logging.StringConcatenationArgumentToLogCallInspection" cleanupTool="true"/>
 
     <!--group.names.code.maturity.issues-->
-    <localInspection groupPath="Java" language="JAVA" shortName="SuppressionAnnotation" bundle="messages.InspectionGadgetsBundle"
-                     key="inspection.suppression.annotation.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.code.maturity.issues" enabledByDefault="false" level="WARNING"
-                     implementationClass="com.siyeh.ig.maturity.SuppressionAnnotationInspection"/>
     <localInspection groupPath="Java" language="JAVA" suppressId="UseOfSystemOutOrSystemErr" shortName="SystemOutErr" bundle="messages.InspectionGadgetsBundle"
                      key="use.system.out.err.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.code.maturity.issues" enabledByDefault="false" level="WARNING"
