@@ -8,6 +8,7 @@ import com.intellij.codeInsight.inline.completion.logs.InlineCompletionUsageTrac
 import com.intellij.codeInsight.inline.completion.session.InlineCompletionContext
 import com.intellij.codeInsight.inline.completion.session.InlineCompletionSession
 import com.intellij.codeInsight.inline.completion.session.InlineCompletionSessionManager
+import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSingleSuggestion
 import com.intellij.codeInsight.inline.completion.tooltip.onboarding.InlineCompletionOnboardingListener
 import com.intellij.codeInsight.inline.completion.utils.SafeInlineCompletionExecutor
 import com.intellij.codeInsight.lookup.LookupManager
@@ -159,11 +160,11 @@ class InlineCompletionHandler(
     val offset = request.endOffset
 
     val result = Result.runCatching {
-      val suggestion = request(session.provider, request)
+      val variant = request(session.provider, request).getVariant()
 
       // If you write a test and observe an infinite hang here, set [UsefulTestCase.runInDispatchThread] to false.
       withContext(Dispatchers.EDT) {
-        suggestion.suggestionFlow.flowOn(Dispatchers.Default)
+        variant.elements.flowOn(Dispatchers.Default)
           .onEmpty {
             coroutineToIndicator {
               trace(InlineCompletionEventType.Empty)
@@ -171,8 +172,9 @@ class InlineCompletionHandler(
             }
           }
           .onCompletion {
-            if (it == null && !suggestion.isUserDataEmpty) {
-              suggestion.copyUserDataTo(context)
+            val data = variant.data
+            if (it == null && !data.isUserDataEmpty) {
+              data.copyUserDataTo(context)
             }
           }
           .collectIndexed { index, it ->
@@ -240,7 +242,10 @@ class InlineCompletionHandler(
     }
   }
 
-  private suspend fun request(provider: InlineCompletionProvider, request: InlineCompletionRequest): InlineCompletionSuggestion {
+  private suspend fun request(
+    provider: InlineCompletionProvider,
+    request: InlineCompletionRequest
+  ): InlineCompletionSingleSuggestion {
     withContext(Dispatchers.EDT) {
       coroutineToIndicator {
         trace(InlineCompletionEventType.Request(System.currentTimeMillis(), request, provider::class.java))
