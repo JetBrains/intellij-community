@@ -96,7 +96,7 @@ internal class CreateKotlinCallableAction(
             append("Any")
         } else {
             val ktType = parameterType.asKtType(context)
-            append(ktType?.render(position = Variance.INVARIANT) ?: "Any")
+            append(ktType?.render(renderer = WITH_TYPE_NAMES_FOR_CREATE_ELEMENTS, position = Variance.INVARIANT) ?: "Any")
         }
     }
 }
