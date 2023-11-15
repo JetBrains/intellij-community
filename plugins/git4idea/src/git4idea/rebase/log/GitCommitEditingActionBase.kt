@@ -278,7 +278,7 @@ abstract class GitCommitEditingActionBase<T : GitCommitEditingActionBase.Multipl
       return Prohibited()
     }
 
-    val commitList = selection.cachedMetadata.takeIf { it.isNotEmpty() } ?: return Prohibited()
+    val commitList = selection.commits.takeIf { it.isNotEmpty() } ?: return Prohibited()
     val repositoryManager = GitUtil.getRepositoryManager(project)
 
     val root = commitList.map { it.root }.distinct().singleOrNull() ?: return Prohibited(
