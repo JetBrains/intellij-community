@@ -173,6 +173,46 @@ public class K2InplaceRenameTestGenerated extends AbstractK2InplaceRenameTest {
         runTest("../../idea/tests/testData/refactoring/rename/inplace/LocalVarShadowingMemberProperty.kt");
     }
 
+    @TestMetadata("MemberFunctionInChildRedeclaration.kt")
+    public void testMemberFunctionInChildRedeclaration() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/rename/inplace/MemberFunctionInChildRedeclaration.kt");
+    }
+
+    @TestMetadata("MemberFunctionRedeclaration.kt")
+    public void testMemberFunctionRedeclaration() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/rename/inplace/MemberFunctionRedeclaration.kt");
+    }
+
+    @TestMetadata("MemberPropertyInChildRedeclaration.kt")
+    public void testMemberPropertyInChildRedeclaration() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/rename/inplace/MemberPropertyInChildRedeclaration.kt");
+    }
+
+    @TestMetadata("MemberPropertyInChildRedeclaration1.kt")
+    public void testMemberPropertyInChildRedeclaration1() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/rename/inplace/MemberPropertyInChildRedeclaration1.kt");
+    }
+
+    @TestMetadata("MemberPropertyInChildRedeclaration2.kt")
+    public void testMemberPropertyInChildRedeclaration2() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/rename/inplace/MemberPropertyInChildRedeclaration2.kt");
+    }
+
+    @TestMetadata("MemberPropertyInConstructor.kt")
+    public void testMemberPropertyInConstructor() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/rename/inplace/MemberPropertyInConstructor.kt");
+    }
+
+    @TestMetadata("MemberPropertyInConstructorRedeclaration.kt")
+    public void testMemberPropertyInConstructorRedeclaration() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/rename/inplace/MemberPropertyInConstructorRedeclaration.kt");
+    }
+
+    @TestMetadata("MemberPropertyInConstructorRedeclaration1.kt")
+    public void testMemberPropertyInConstructorRedeclaration1() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/rename/inplace/MemberPropertyInConstructorRedeclaration1.kt");
+    }
+
     @TestMetadata("MultiDeclaration.kt")
     public void testMultiDeclaration() throws Exception {
         runTest("../../idea/tests/testData/refactoring/rename/inplace/MultiDeclaration.kt");
@@ -188,6 +228,11 @@ public class K2InplaceRenameTestGenerated extends AbstractK2InplaceRenameTest {
         runTest("../../idea/tests/testData/refactoring/rename/inplace/NoTextUsagesForLocalVar.kt");
     }
 
+    @TestMetadata("ParameterRedecklaration.kt")
+    public void testParameterRedecklaration() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/rename/inplace/ParameterRedecklaration.kt");
+    }
+
     @TestMetadata("QuotedLocalVar.kt")
     public void testQuotedLocalVar() throws Exception {
         runTest("../../idea/tests/testData/refactoring/rename/inplace/QuotedLocalVar.kt");
@@ -196,6 +241,16 @@ public class K2InplaceRenameTestGenerated extends AbstractK2InplaceRenameTest {
     @TestMetadata("QuotedParameter.kt")
     public void testQuotedParameter() throws Exception {
         runTest("../../idea/tests/testData/refactoring/rename/inplace/QuotedParameter.kt");
+    }
+
+    @TestMetadata("TopLevelFunctionAnotherSignature.kt")
+    public void testTopLevelFunctionAnotherSignature() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/rename/inplace/TopLevelFunctionAnotherSignature.kt");
+    }
+
+    @TestMetadata("TopLevelFunctionRedeclaration.kt")
+    public void testTopLevelFunctionRedeclaration() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/rename/inplace/TopLevelFunctionRedeclaration.kt");
     }
 
     @TestMetadata("TopLevelValNotInplace.kt")
