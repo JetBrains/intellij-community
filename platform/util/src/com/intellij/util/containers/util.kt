@@ -4,10 +4,12 @@ package com.intellij.util.containers
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.util.SmartList
 import com.intellij.util.lang.CompoundRuntimeException
-import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Experimental
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.*
 import java.util.stream.Stream
 import kotlin.collections.ArrayDeque
+import kotlin.collections.isNullOrEmpty
 
 fun <K, V> MutableMap<K, MutableList<V>>.remove(key: K, value: V) {
   val list = get(key)
@@ -68,11 +70,11 @@ fun <T> List<T>.init(): List<T> {
 }
 
 fun <T> List<T>?.nullize(): List<T>? {
-  return if (this == null || this.isEmpty()) null else this
+  return if (this.isNullOrEmpty()) null else this
 }
 
 fun <T> Array<T>?.nullize(): Array<T>? {
-  return if (this == null || this.isEmpty()) null else this
+  return if (this.isNullOrEmpty()) null else this
 }
 
 inline fun <T> Array<out T>.forEachGuaranteed(operation: (T) -> Unit) {
@@ -100,7 +102,7 @@ inline fun <T> Iterator<T>.forEachGuaranteed(operation: (T) -> Unit) {
 }
 
 inline fun <T> Collection<T>.forEachLoggingErrors(logger: Logger, operation: (T) -> Unit) {
-  asSequence().forEach {
+  for (it in this) {
     try {
       operation(it)
     }
@@ -137,7 +139,7 @@ fun <T> Stream<T>?.getIfSingle(): T? {
 }
 
 /**
- * There probably could be some performance issues if there is lots of streams to concat. See
+ * There probably could be some performance issues if there are lots of streams to concat. See
  * http://mail.openjdk.org/pipermail/lambda-dev/2013-July/010659.html for some details.
  *
  * See also [Stream.concat] documentation for other possible issues of concatenating large number of streams.
@@ -178,7 +180,7 @@ inline fun <T, R> Collection<T>.mapSmart(transform: (T) -> R): List<R> {
 }
 
 /**
- * Not mutable set will be returned.
+ * Not a mutable set will be returned.
  */
 inline fun <T, R> Collection<T>.mapSmartSet(transform: (T) -> R): Set<R> {
   return when (val size = size) {
@@ -256,7 +258,7 @@ fun <T> Collection<T>.minimalElements(comparator: Comparator<in T>): Collection<
  *   .stopAfter { it == 3 }
  *   .forEach(::println)
  * ```
- * @return an iterator, which stops [this] Iterator after first element for which [predicate] returns `true`
+ * @return an iterator, which stops [this] Iterator after a first element for which [predicate] returns `true`
  */
 inline fun <T> Iterator<T>.stopAfter(crossinline predicate: (T) -> Boolean): Iterator<T> {
   return iterator {
@@ -312,14 +314,13 @@ fun <Node> generateRecursiveSequence(initialSequence: Sequence<Node>, children: 
 }
 
 /**
- * Returns a new sequence either of single given element, if it is not null, or empty sequence if the element is null.
+ * Returns a new sequence either of single-given elements, if it is not null, or empty sequence if the element is null.
  */
 fun <T : Any> sequenceOfNotNull(element: T?): Sequence<T> = if (element == null) emptySequence() else sequenceOf(element)
 
 fun <K, V : Any> Map<K, V>.reverse(): Map<V, K> = map { (k, v) -> v to k }.toMap()
 
-fun <K, V> Iterable<Pair<K, V>>.toMultiMap(): MultiMap<K, V> =
-  toMultiMap(MultiMap.createLinked())
+fun <K, V> Iterable<Pair<K, V>>.toMultiMap(): MultiMap<K, V> = toMultiMap(MultiMap.createLinked())
 
 fun <K, V> Iterable<Pair<K, V>>.toMultiMap(multiMap: MultiMap<K, V>): MultiMap<K, V> {
   forEach {
