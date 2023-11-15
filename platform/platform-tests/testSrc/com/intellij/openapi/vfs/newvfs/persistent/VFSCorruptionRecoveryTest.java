@@ -23,7 +23,6 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 
 import static com.intellij.openapi.vfs.newvfs.persistent.PersistentFSHeaders.HEADER_CONNECTION_STATUS_OFFSET;

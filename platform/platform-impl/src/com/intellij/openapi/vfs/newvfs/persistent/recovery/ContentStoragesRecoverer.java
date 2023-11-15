@@ -3,13 +3,10 @@ package com.intellij.openapi.vfs.newvfs.persistent.recovery;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.newvfs.persistent.*;
-import com.intellij.util.hash.ContentHashEnumerator;
 import com.intellij.util.io.storage.VFSContentStorage;
-import com.intellij.util.io.storage.RecordIdIterator;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
-import java.nio.file.Path;
 import java.util.List;
 
 import static com.intellij.openapi.vfs.newvfs.persistent.PersistentFSRecordsStorage.NULL_ID;

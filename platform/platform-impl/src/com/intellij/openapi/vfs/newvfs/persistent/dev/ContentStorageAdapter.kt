@@ -37,8 +37,8 @@ class ContentStorageAdapter(private val contentStorage: RefCountingContentStorag
   init {
     val hashesEnumerator = hashesEnumeratorSupplier.compute()
 
-    val hashedRecordsCount = hashesEnumerator.recordsCount();
-    val liveRecordsCount = contentStorage.getRecordsCount();
+    val hashedRecordsCount = hashesEnumerator.recordsCount()
+    val liveRecordsCount = contentStorage.getRecordsCount()
     if (hashedRecordsCount != liveRecordsCount) {
       LOG.warn("Content storage is not match content hash enumerator: " +
                "contents.records(=$liveRecordsCount) != contentHashes.recordsCount(=$hashedRecordsCount) -> trying rebuild hashesEnumerator from content storage")

@@ -4,10 +4,8 @@ package com.intellij.openapi.vfs.newvfs.persistent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.ByteArraySequence;
-import com.intellij.util.hash.ContentHashEnumerator;
 import com.intellij.util.io.DataOutputStream;
 import com.intellij.util.io.DigestUtil;
-import com.intellij.util.io.storage.VFSContentStorage;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -19,7 +17,6 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
 public final class PersistentFSContentAccessor {
   private static final Logger LOG = Logger.getInstance(PersistentFSContentAccessor.class);
