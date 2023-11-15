@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.util.ProgressIndicatorWithDelayedPresentation.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.platform.ide.progress.*
@@ -90,6 +91,15 @@ internal class TestCoroutineProgressAction : AnAction() {
                 withContext(NonCancellable) {
                   stage(parallel = true)
                 }
+              }
+            }
+          }
+        }
+        row {
+          button("300ms BG Progress") {
+            cs.launch {
+              withBackgroundProgress(project, "300ms background progress") {
+                delay(DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS.toLong() + 10) // + epsilon
               }
             }
           }
