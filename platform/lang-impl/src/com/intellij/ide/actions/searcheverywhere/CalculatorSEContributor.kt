@@ -13,6 +13,7 @@ import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.Processor
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.ApiStatus
 import java.awt.BorderLayout
 import java.awt.Component
 import java.awt.datatransfer.StringSelection
@@ -114,7 +115,8 @@ private class EvaluationResultRenderer : ListCellRenderer<EvaluationResult> {
   }
 }
 
-internal fun evaluate(input: String): String {
+@ApiStatus.Internal
+fun evaluate(input: String): String {
   return format(round(doEvaluate(input)))
 }
 

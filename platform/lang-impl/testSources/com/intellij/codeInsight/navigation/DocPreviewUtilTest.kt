@@ -1,38 +1,22 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.navigation
 
-
+import org.junit.Assert.*
 import org.junit.Test
 
-import static org.junit.Assert.assertEquals
-import static org.junit.Assert.assertTrue
 
 class DocPreviewUtilTest {
 
   @Test
-  void classDocPreview() {
-    
-    def header = '''\
+  fun classDocPreview() {
+
+    val header = """
 [&lt; 1.7 &gt;] java.lang
  public final class String extends Object
- implements Serializable, Comparable&lt;String&gt;, CharSequence\
-'''
-    
-    def fullText = '''\
+ implements Serializable, Comparable&lt;String&gt;, CharSequence
+ """.trimMargin()
+
+    val fullText = """
 <html><head>    <style type="text/css">        #error {            background-color: #eeeeee;            margin-bottom: 10px;        }        p {            margin: 5px 0;        }    </style></head><body><small><b>java.lang</b></small><PRE>public final class <b>java.lang.String</b>
 extends <a href="psi_element://java.lang.Object"><code>java.lang.Object</code></a>
 implements <a href="psi_element://java.io.Serializable"><code>java.io.Serializable</code></a>,&nbsp;<a href="psi_element://java.lang.Comparable"><code>java.lang.Comparable</code></a>&lt;<a href="psi_element://java.lang.String"><code>java.lang.String</code></a>&gt;,&nbsp;<a href="psi_element://java.lang.CharSequence"><code>java.lang.CharSequence</code></a></PRE>
@@ -96,104 +80,112 @@ implements <a href="psi_element://java.io.Serializable"><code>java.io.Serializab
    <DD><DL><DT><b>Since:</b><DD>JDK1.0</DD></DL></DD><DD><DL><DT><b>See Also:</b><DD><a href="psi_element://java.lang.Object#toString()"><code>Object.toString()</code></a>,
 <a href="psi_element://java.lang.StringBuffer"><code>StringBuffer</code></a>,
 <a href="psi_element://java.lang.StringBuilder"><code>StringBuilder</code></a>,
-<a href="psi_element://java.nio.charset.Charset"><code>Charset</code></a></DD></DL></DD></body></html>\
-'''
-    
-    def expected = '''\
-java.lang<br/> public final class <a href="psi_element://java.lang.String">String</a> extends <a href="psi_element://java.lang.Object">Object</a><br/> implements <a href="psi_element://java.io.Serializable">Serializable</a>, <a href="psi_element://java.lang.Comparable">Comparable</a>&lt;<a href="psi_element://java.lang.String">String</a>&gt;, <a href="psi_element://java.lang.CharSequence">CharSequence</a>\
-'''
+<a href="psi_element://java.nio.charset.Charset"><code>Charset</code></a></DD></DL></DD></body></html>
+""".trimMargin()
 
-    def actual = DocPreviewUtil.buildPreview(header, "java.lang.String", fullText)
+    val expected = """
+java.lang<br/> public final class <a href="psi_element://java.lang.String">String</a> extends <a href="psi_element://java.lang.Object">Object</a><br/> implements <a href="psi_element://java.io.Serializable">Serializable</a>, <a href="psi_element://java.lang.Comparable">Comparable</a>&lt;<a href="psi_element://java.lang.String">String</a>&gt;, <a href="psi_element://java.lang.CharSequence">CharSequence</a>
+""".trimMargin()
+
+    val actual = DocPreviewUtil.buildPreview(header, "java.lang.String", fullText)
     assertTrue(actual.endsWith(expected)) // Can't check for equals() because jdk name might differ on different machines.
   }
 
   @Test
-  void crossingLinks() {
-    def header = '''\
+  fun crossingLinks() {
+    val header = """
 OCCompletionPriority
-OCCompletionPriority SMART_COMPLETION_PRIORITY'''
-    
-    def fullText = '''\
+OCCompletionPriority SMART_COMPLETION_PRIORITY
+""".trimMargin()
+
+    val fullText = """
 <html><head>    <style type="text/css">        #error {            background-color: #eeeeee;            margin-bottom: 10px;        }        p {            margin: 5px 0;        }    </style></head><body><small><b><a href="psi_element://com.jetbrains.objc.lang.completion.OCCompletionPriority"><code>com.jetbrains.objc.lang.completion.OCCompletionPriority</code></a></b></small><PRE><a href="psi_element://com.jetbrains.objc.lang.completion.OCCompletionPriority"><code>OCCompletionPriority</code></a> <b>SMART_COMPLETION_PRIORITY</b></PRE></body></html>
 
-Qname'''
-    
-    def expected = '''\
-<a href="psi_element://com.jetbrains.objc.lang.completion.OCCompletionPriority">OCCompletionPriority</a><br/><a href="psi_element://com.jetbrains.objc.lang.completion.OCCompletionPriority">OCCompletionPriority</a> SMART_COMPLETION_PRIORITY'''
-    
+Qname""".trimMargin()
+
+    val expected = """
+<a href="psi_element://com.jetbrains.objc.lang.completion.OCCompletionPriority">OCCompletionPriority</a><br/><a href="psi_element://com.jetbrains.objc.lang.completion.OCCompletionPriority">OCCompletionPriority</a> SMART_COMPLETION_PRIORITY
+""".trimMargin()
+
     assertEquals(expected, DocPreviewUtil.buildPreview(header, null, fullText))
   }
-  
+
   @Test
-  void tailSubstrings() {
-    def header = '''\
+  fun tailSubstrings() {
+    val header = """
 PsiResolveHelperImpl
-public static Pair&lt;PsiType, ConstraintType&gt; getSubstitutionForTypeParameterConstraint (PsiTypeParameter typeParam, PsiType param, PsiType arg, boolean isContraVariantPosition, LanguageLevel languageLevel)'''
-    
-    def fullText = '''\
+public static Pair&lt;PsiType, ConstraintType&gt; getSubstitutionForTypeParameterConstraint (PsiTypeParameter typeParam, PsiType param, PsiType arg, boolean isContraVariantPosition, LanguageLevel languageLevel)
+""".trimMargin()
+
+    val fullText = """
 <html><head>    <style type="text/css">        #error {            background-color: #eeeeee;            margin-bottom: 10px;        }        p {            margin: 5px 0;        }    </style></head><body><small><b><a href="psi_element://com.intellij.psi.impl.source.resolve.PsiResolveHelperImpl"><code>com.intellij.psi.impl.source.resolve.PsiResolveHelperImpl</code></a></b></small><PRE>@<a href="psi_element://org.jetbrains.annotations.Nullable"><code>Nullable</code></a>&nbsp;public static&nbsp;<a href="psi_element://com.intellij.openapi.util.Pair"><code>Pair</code></a>&lt;<a href="psi_element://com.intellij.psi.PsiType"><code>PsiType</code></a>, <a href="psi_element://com.intellij.psi.ConstraintType"><code>ConstraintType</code></a>&gt;&nbsp;<b>getSubstitutionForTypeParameterConstraint</b>(<a href="psi_element://com.intellij.psi.PsiTypeParameter"><code>PsiTypeParameter</code></a>&nbsp;typeParam,
                                                                                   <a href="psi_element://com.intellij.psi.PsiType"><code>PsiType</code></a>&nbsp;param,
                                                                                   <a href="psi_element://com.intellij.psi.PsiType"><code>PsiType</code></a>&nbsp;arg,
                                                                                   boolean&nbsp;isContraVariantPosition,
-                                                                                  <a href="psi_element://com.intellij.pom.java.LanguageLevel"><code>LanguageLevel</code></a>&nbsp;languageLevel)</PRE></body></html>'''
-    
-    def expected = '''\
-<a href="psi_element://com.intellij.psi.impl.source.resolve.PsiResolveHelperImpl">PsiResolveHelperImpl</a><br/>public static <a href="psi_element://com.intellij.openapi.util.Pair">Pair</a>&lt;<a href="psi_element://com.intellij.psi.PsiType">PsiType</a>, <a href="psi_element://com.intellij.psi.ConstraintType">ConstraintType</a>&gt; getSubstitutionForTypeParameterConstraint (<a href="psi_element://com.intellij.psi.PsiTypeParameter">PsiTypeParameter</a> typeParam, <a href="psi_element://com.intellij.psi.PsiType">PsiType</a> param, <a href="psi_element://com.intellij.psi.PsiType">PsiType</a> arg, boolean isContraVariantPosition, <a href="psi_element://com.intellij.pom.java.LanguageLevel">LanguageLevel</a> languageLevel)'''
+                                                                                  <a href="psi_element://com.intellij.pom.java.LanguageLevel"><code>LanguageLevel</code></a>&nbsp;languageLevel)</PRE></body></html>
+""".trimMargin()
+
+    val expected = """
+<a href="psi_element://com.intellij.psi.impl.source.resolve.PsiResolveHelperImpl">PsiResolveHelperImpl</a><br/>public static <a href="psi_element://com.intellij.openapi.util.Pair">Pair</a>&lt;<a href="psi_element://com.intellij.psi.PsiType">PsiType</a>, <a href="psi_element://com.intellij.psi.ConstraintType">ConstraintType</a>&gt; getSubstitutionForTypeParameterConstraint (<a href="psi_element://com.intellij.psi.PsiTypeParameter">PsiTypeParameter</a> typeParam, <a href="psi_element://com.intellij.psi.PsiType">PsiType</a> param, <a href="psi_element://com.intellij.psi.PsiType">PsiType</a> arg, boolean isContraVariantPosition, <a href="psi_element://com.intellij.pom.java.LanguageLevel">LanguageLevel</a> languageLevel)
+""".trimMargin()
 
     assertEquals(expected, DocPreviewUtil.buildPreview(header, null, fullText))
   }
-  
+
   @Test
-  void headSubstrings() {
-    def header = '''\
-ASTNode
-TextRange getTextRange ()'''
-    
-    def fullText = '''\
+  fun headSubstrings() {
+    val header = "ASTNode\nTextRange getTextRange ()"
+
+    val fullText = """
 <html><head>    <style type="text/css">        #error {            background-color: #eeeeee;            margin-bottom: 10px;        }        p {            margin: 5px 0;        }    </style></head><body><small><b><a href="psi_element://com.intellij.lang.ASTNode"><code>com.intellij.lang.ASTNode</code></a></b></small><PRE><a href="psi_element://com.intellij.openapi.util.TextRange"><code>TextRange</code></a>&nbsp;<b>getTextRange</b>()</PRE>
      Returns the text range (a combination of starting offset in the document and length) for this node.
     
-     <DD><DL><DT><b>Returns:</b><DD>the text range.</DD></DL></DD></body></html>'''
-    
-    def expected = '''\
-<a href="psi_element://com.intellij.lang.ASTNode">ASTNode</a><br/><a href="psi_element://com.intellij.openapi.util.TextRange">TextRange</a> getTextRange ()'''
-    
+     <DD><DL><DT><b>Returns:</b><DD>the text range.</DD></DL></DD></body></html>
+""".trimMargin()
+
+    val expected = """
+<a href="psi_element://com.intellij.lang.ASTNode">ASTNode</a><br/><a href="psi_element://com.intellij.openapi.util.TextRange">TextRange</a> getTextRange ()
+""".trimMargin()
+
     assertEquals(expected, DocPreviewUtil.buildPreview(header, null, fullText))
   }
 
   @Test
-  void "single letter 'from' substitution"() {
-    def header = '''\
+  fun singleLetterFromSubstitution() {
+    val header = """
 E
 E A
 Enum constant ordinal: 0'''
-    
-    def fullText = '''\
-<html><head>    <style type="text/css">        #error {            background-color: #eeeeee;            margin-bottom: 10px;        }        p {            margin: 5px 0;        }    </style></head><body><small><b><a href="psi_element://org.denis.E"><code>org.denis.E</code></a></b></small><PRE><a href="psi_element://org.denis.E"><code>E</code></a> <b>A</b></PRE></body></html>'''
-    
-    def expected = '''\
+""".trimMargin()
+
+    val fullText = """
+<html><head>    <style type="text/css">        #error {            background-color: #eeeeee;            margin-bottom: 10px;        }        p {            margin: 5px 0;        }    </style></head><body><small><b><a href="psi_element://org.denis.E"><code>org.denis.E</code></a></b></small><PRE><a href="psi_element://org.denis.E"><code>E</code></a> <b>A</b></PRE></body></html>
+""".trimMargin()
+
+    val expected = """
 <a href="psi_element://org.denis.E">E</a><br/><a href="psi_element://org.denis.E">E</a> A<br/>Enum constant ordinal: 0'''
-    
-    assertEquals(expected, DocPreviewUtil.buildPreview(header, null, fullText))
-  }
-
-  @Test
-  void "last element should have a hyperlink as well (WEB-17860)"() {
-    def header = '''ExternalModule.ts
-var abc: A &amp; B &amp; C'''
-
-    def fullText = '''<b>Type:</b> <code><a href="psi_element://A">A</a> &amp; <a href="psi_element://B">B</a> &amp; <a href="psi_element://C">C</a></code>'''
-
-    def expected = '''ExternalModule.ts<br/>var abc: <a href="psi_element://A">A</a> &amp; <a href="psi_element://B">B</a> &amp; <a href="psi_element://C">C</a>'''
+""".trimMargin()
 
     assertEquals(expected, DocPreviewUtil.buildPreview(header, null, fullText))
   }
 
   @Test
-  void "empty qName doesn't hang"() {
-    def header = '''Header'''
-    def fullText = '''FullText'''
-    def expected = '''Header'''
+  fun lastElementShouldHaveHyperlinkAsWellWEB17860() {
+    val header = """ExternalModule.ts
+var abc: A &amp; B &amp; C"""
+
+    val fullText = "<b>Type:</b> <code><a href=\"psi_element://A\">A</a> &amp; <a href=\"psi_element://B\">B</a> &amp; <a href=\"psi_element://C\">C</a></code>"
+
+    val expected = "ExternalModule.ts<br/>var abc: <a href=\"psi_element://A\">A</a> &amp; <a href=\"psi_element://B\">B</a> &amp; <a href=\"psi_element://C\">C</a>"
+
+    assertEquals(expected, DocPreviewUtil.buildPreview(header, null, fullText))
+  }
+
+  @Test
+  fun emptyQNameDoesntHang() {
+    val header = "Header"
+    val fullText = "FullText"
+    val expected = "Header"
 
     assertEquals(expected, DocPreviewUtil.buildPreview(header, "", fullText))
   }

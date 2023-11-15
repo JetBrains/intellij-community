@@ -9,27 +9,24 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.impl.cache.impl.id.IdTableBuilding
 import com.intellij.testFramework.LexerTestCase
 import com.intellij.testFramework.PlatformTestUtil
-import com.intellij.util.Processor
-import groovy.transform.CompileStatic
 import junit.framework.TestCase
 import org.jetbrains.annotations.NonNls
-import org.jetbrains.annotations.Nullable
-@CompileStatic
-class CustomFileTypeLexerTest extends TestCase {
 
-  private static void doTest(SyntaxTable table, @NonNls String text, @Nullable String expected) {
-    def lexer = new CustomFileTypeLexer(table)
+class CustomFileTypeLexerTest : TestCase() {
+
+  private fun doTest(table: SyntaxTable, @NonNls text: String, expected: String?) {
+    val lexer = CustomFileTypeLexer(table)
     doTest(lexer, text, expected)
   }
 
-  private static void doTest(Lexer lexer, String text, String expected) {
-    assertEquals(expected, LexerTestCase.printTokens(text, 0, lexer))
+  private fun doTest(lexer: Lexer, text: String, expected: String?) {
+    assertEquals(expected?.trimStart(), LexerTestCase.printTokens(text, 0, lexer))
   }
 
-  private static SyntaxTable createGenericTable() {
-    SyntaxTable table = new SyntaxTable()
+  private fun createGenericTable(): SyntaxTable {
+    val table = SyntaxTable()
 
-    table.lineComment = ';'
+    table.lineComment = ";"
     table.lineCommentOnlyAtStart = true
 
     table.addKeyword1("if")
@@ -38,13 +35,13 @@ class CustomFileTypeLexerTest extends TestCase {
     table.addKeyword1("length")
 
     return table
-
   }
 
-  void testSpacesInsideKeywords() {
-    def table = createGenericTable()
+  fun testSpacesInsideKeywords() {
+    val table = createGenericTable()
     table.addKeyword1("sysvar ")
-    doTest table, 'if length(if_variable)then return 1 sysvar  ', '''\
+    doTest(
+      table, "if length(if_variable)then return 1 sysvar  ", """
 KEYWORD_1 ('if')
 WHITESPACE (' ')
 KEYWORD_1 ('length')
@@ -59,34 +56,35 @@ NUMBER ('1')
 WHITESPACE (' ')
 KEYWORD_1 ('sysvar ')
 WHITESPACE (' ')
-'''
+"""
+    )
   }
 
-  void testFortranComments() {
-    doTest createGenericTable(), '''
+  fun testFortranComments() {
+    doTest(createGenericTable(), """
 foo;noncomment
 ;comment
   ;noncomment
-''', '''\
-WHITESPACE ('\\n')
+""", """
+WHITESPACE ('\n')
 IDENTIFIER ('foo')
 PUNCTUATION (';')
 IDENTIFIER ('noncomment')
-WHITESPACE ('\\n')
+WHITESPACE ('\n')
 LINE_COMMENT (';comment')
-WHITESPACE ('\\n  ')
+WHITESPACE ('\n  ')
 PUNCTUATION (';')
 IDENTIFIER ('noncomment')
-WHITESPACE ('\\n')
-'''
+WHITESPACE ('\n')
+""")
   }
 
-  void "test punctuation keywords"() {
-    def table = createGenericTable()
+  fun `test punctuation keywords`() {
+    val table = createGenericTable()
     table.addKeyword4("+")
     table.addKeyword4("-")
     table.addKeyword4("=")
-    doTest table, 'i++; i--; i-100; i -100; i- 100; a=-1; a= -1; a+=1; a= +1;', '''\
+    doTest(table, "i++; i--; i-100; i -100; i- 100; a=-1; a= -1; a+=1; a= +1;", """
 IDENTIFIER ('i')
 KEYWORD_4 ('+')
 KEYWORD_4 ('+')
@@ -139,11 +137,11 @@ WHITESPACE (' ')
 KEYWORD_4 ('+')
 NUMBER ('1')
 PUNCTUATION (';')
-'''
+""")
   }
 
-  private static SyntaxTable createJavaSyntaxTable() {
-    SyntaxTable table = new SyntaxTable()
+  private fun createJavaSyntaxTable(): SyntaxTable {
+    val table = SyntaxTable()
 
     table.setLineComment("//")
     table.setStartComment("/*")
@@ -198,8 +196,9 @@ PUNCTUATION (';')
     return table
   }
 
-  void testParseSampleCode() {
-    doTest createJavaSyntaxTable(), "private some text f b g\n\n\n//   1\n  public static void main(String[] args) {\n}\n-10 - 10\n\"dsfdfdf\"\n/* a\n *bc */", '''\
+  fun testParseSampleCode() {
+    doTest(createJavaSyntaxTable(),
+           "private some text f b g\n\n\n//   1\n  public static void main(String[] args) {\n}\n-10 - 10\n\"dsfdfdf\"\n/* a\n *bc */", """
 KEYWORD_1 ('private')
 WHITESPACE (' ')
 IDENTIFIER ('some')
@@ -211,9 +210,9 @@ WHITESPACE (' ')
 IDENTIFIER ('b')
 WHITESPACE (' ')
 IDENTIFIER ('g')
-WHITESPACE ('\\n\\n\\n')
+WHITESPACE ('\n\n\n')
 LINE_COMMENT ('//   1')
-WHITESPACE ('\\n  ')
+WHITESPACE ('\n  ')
 KEYWORD_1 ('public')
 WHITESPACE (' ')
 KEYWORD_1 ('static')
@@ -230,83 +229,83 @@ IDENTIFIER ('args')
 CHARACTER (')')
 WHITESPACE (' ')
 CHARACTER ('{')
-WHITESPACE ('\\n')
+WHITESPACE ('\n')
 CHARACTER ('}')
-WHITESPACE ('\\n')
+WHITESPACE ('\n')
 CHARACTER ('-')
 NUMBER ('10')
 WHITESPACE (' ')
 CHARACTER ('-')
 WHITESPACE (' ')
 NUMBER ('10')
-WHITESPACE ('\\n')
+WHITESPACE ('\n')
 STRING ('"dsfdfdf"')
-WHITESPACE ('\\n')
-MULTI_LINE_COMMENT ('/* a\\n *bc */')
-'''
+WHITESPACE ('\n')
+MULTI_LINE_COMMENT ('/* a\n *bc */')
+""")
   }
 
-  void testBlockCommentStart() {
-    doTest createJavaSyntaxTable(), "/*", 'MULTI_LINE_COMMENT (\'/*\')\n'
+  fun testBlockCommentStart() {
+    doTest(createJavaSyntaxTable(), "/*", "MULTI_LINE_COMMENT ('/*')\n")
   }
 
-  void testLineCommentStart() {
-    doTest createJavaSyntaxTable(), "//", 'LINE_COMMENT (\'//\')\n'
+  fun testLineCommentStart() {
+    doTest(createJavaSyntaxTable(), "//", "LINE_COMMENT ('//')\n")
   }
 
-  void "test block comment start overrides line comment start"() {
-    def table = new SyntaxTable()
-    table.lineComment = '#'
-    table.startComment = '#{'
-    table.endComment = '}#'
-    doTest table, "#{ \nblock\n }#\n# line\nid", '''\
-MULTI_LINE_COMMENT ('#{ \\nblock\\n }#')
-WHITESPACE ('\\n')
+  fun `test block comment start overrides line comment start`() {
+    val table = SyntaxTable()
+    table.lineComment = "#"
+    table.startComment = "#{"
+    table.endComment = "}#"
+    doTest(table, "#{ \nblock\n }#\n# line\nid", """
+MULTI_LINE_COMMENT ('#{ \nblock\n }#')
+WHITESPACE ('\n')
 LINE_COMMENT ('# line')
-WHITESPACE ('\\n')
+WHITESPACE ('\n')
 IDENTIFIER ('id')
-'''
+""")
   }
 
-  void "test line comment start overrides block comment start"() {
-    def table = new SyntaxTable()
-    table.lineComment = '##'
-    table.startComment = '#'
-    table.endComment = '/#'
-    doTest table, "#\nblock\n/#\n## line\nid", '''\
-MULTI_LINE_COMMENT ('#\\nblock\\n/#')
-WHITESPACE ('\\n')
+  fun `test line comment start overrides block comment start`() {
+    val table = SyntaxTable()
+    table.lineComment = "##"
+    table.startComment = "#"
+    table.endComment = "/#"
+    doTest(table, "#\nblock\n/#\n## line\nid", """
+MULTI_LINE_COMMENT ('#\nblock\n/#')
+WHITESPACE ('\n')
 LINE_COMMENT ('## line')
-WHITESPACE ('\\n')
+WHITESPACE ('\n')
 IDENTIFIER ('id')
-'''
+""")
   }
 
-  void testEmpty() {
-    doTest createJavaSyntaxTable(), "", ''
+  fun testEmpty() {
+    doTest(createJavaSyntaxTable(), "", "")
   }
 
-  void testSpace() {
-    doTest createJavaSyntaxTable(), " ", 'WHITESPACE (\' \')\n'
+  fun testSpace() {
+    doTest(createJavaSyntaxTable(), " ", "WHITESPACE (' ')\n")
   }
 
-  void testParseSampleCodeFromTo() {
-    String sampleCode = "  int n=123;\n  float z=1;"
-    def lexer = new CustomFileTypeLexer(createJavaSyntaxTable())
+  fun testParseSampleCodeFromTo() {
+    val sampleCode = "  int n=123;\n  float z=1;"
+    val lexer = CustomFileTypeLexer(createJavaSyntaxTable())
     lexer.start(sampleCode, 5, 5)
-    assertEquals(lexer.getTokenType(), null)
+    assertNull(lexer.tokenType)
     lexer.start(sampleCode, 5, 6)
-    lexer.getTokenType()
-    assertEquals(5, lexer.getTokenStart())
-    assertEquals(6, lexer.getTokenEnd())
-    assertEquals(6, lexer.getBufferEnd())
+    lexer.tokenType
+    assertEquals(5, lexer.tokenStart)
+    assertEquals(6, lexer.tokenEnd)
+    assertEquals(6, lexer.bufferEnd)
   }
 
-  private static SyntaxTable createPropTable() {
-    SyntaxTable table = new SyntaxTable()
+  private fun createPropTable(): SyntaxTable {
+    val table = SyntaxTable()
 
     table.setLineComment("#")
-    table.setIgnoreCase(true)
+    table.isIgnoreCase = true
 
     table.addKeyword1("value")
     table.addKeyword2("Value")
@@ -314,13 +313,16 @@ IDENTIFIER ('id')
     return table
   }
 
-  void testSimple() {
-    doTest createPropTable(), "# Comment\n" +
-                              "x.1.a=12.2L\n" +
-                              "   y.2.b=13.4 # comment\n" +
-                              "VALUE value VaLuE Value1 17.00h 11.0k", '''\
+  fun testSimple() {
+    doTest(
+      createPropTable(), """
+# Comment
+x.1.a=12.2L
+   y.2.b=13.4 # comment
+VALUE value VaLuE Value1 17.00h 11.0k
+""".trimMargin(), """
 LINE_COMMENT ('# Comment')
-WHITESPACE ('\\n')
+WHITESPACE ('\n')
 IDENTIFIER ('x')
 PUNCTUATION ('.')
 NUMBER ('1')
@@ -328,7 +330,7 @@ PUNCTUATION ('.')
 IDENTIFIER ('a')
 CHARACTER ('=')
 NUMBER ('12.2L')
-WHITESPACE ('\\n   ')
+WHITESPACE ('\n   ')
 IDENTIFIER ('y')
 PUNCTUATION ('.')
 NUMBER ('2')
@@ -338,7 +340,7 @@ CHARACTER ('=')
 NUMBER ('13.4')
 WHITESPACE (' ')
 LINE_COMMENT ('# comment')
-WHITESPACE ('\\n')
+WHITESPACE ('\n')
 KEYWORD_1 ('VALUE')
 WHITESPACE (' ')
 KEYWORD_1 ('value')
@@ -353,55 +355,55 @@ NUMBER ('11')
 PUNCTUATION ('.')
 NUMBER ('0')
 IDENTIFIER ('k')
-'''
+""")
   }
 
-  void testCpp() {
-    SyntaxTable table = new SyntaxTable()
-    table.addKeyword1('->')
-    doTest table, "foo->bar", '''\
+  fun testCpp() {
+    val table = SyntaxTable()
+    table.addKeyword1("->")
+    doTest(table, "foo->bar", """
 IDENTIFIER ('foo')
 KEYWORD_1 ('->')
 IDENTIFIER ('bar')
-'''
+""")
   }
 
-  void testNumber() {
-    doTest createPropTable(), "1.23=1.24", '''\
+  fun testNumber() {
+    doTest(createPropTable(), "1.23=1.24", """
 NUMBER ('1.23')
 CHARACTER ('=')
 NUMBER ('1.24')
-'''
+""")
   }
 
-  void testPostfix() {
-    doTest createPropTable(), "abc 1.2ltext", '''\
+  fun testPostfix() {
+    doTest(createPropTable(), "abc 1.2ltext", """
 IDENTIFIER ('abc')
 WHITESPACE (' ')
 NUMBER ('1.2l')
 IDENTIFIER ('text')
-'''
+""")
   }
 
-  void testWeird() {
-    doTest createPropTable(), "test.1.", '''\
+  fun testWeird() {
+    doTest(createPropTable(), "test.1.", """
 IDENTIFIER ('test')
 PUNCTUATION ('.')
 NUMBER ('1.')
-'''
+""")
   }
 
-  void testParenths() throws Exception {
-    doTest createPropTable(),"value(255)", '''\
+  fun testParenths() {
+    doTest(createPropTable(), "value(255)", """
 KEYWORD_1 ('value')
 CHARACTER ('(')
 NUMBER ('255')
 CHARACTER (')')
-'''
+""")
   }
 
-  void testSpecialCharactersInKeywords() {
-    SyntaxTable table = new SyntaxTable()
+  fun testSpecialCharactersInKeywords() {
+    val table = SyntaxTable()
     table.addKeyword1("a*")
     table.addKeyword1("b-c")
     table.addKeyword1(":")
@@ -410,8 +412,8 @@ CHARACTER (')')
     table.addKeyword2("foo{}")
     table.addKeyword3("foldl")
     table.addKeyword3("foldl'")
-    def text = "a* b-c d# e- e foo{} : foldl' foo"
-    def expected = '''\
+    val text = "a* b-c d# e- e foo{} : foldl' foo"
+    val expected = """
 KEYWORD_1 ('a*')
 WHITESPACE (' ')
 KEYWORD_1 ('b-c')
@@ -430,41 +432,42 @@ WHITESPACE (' ')
 KEYWORD_3 ('foldl'')
 WHITESPACE (' ')
 IDENTIFIER ('foo')
-'''
-    doTest(new CustomFileTypeLexer(table), text, expected)
-    doTest(new CustomFileHighlighter(table).highlightingLexer, text, expected)
+"""
+    doTest(CustomFileTypeLexer(table), text, expected)
+    doTest(CustomFileHighlighter(table).highlightingLexer, text, expected)
   }
 
-  void testWordsScanner() {
-    SyntaxTable table = new SyntaxTable()
+  fun testWordsScanner() {
+    val table = SyntaxTable()
     table.addKeyword1("a*")
-    def scanner = IdTableBuilding.createCustomFileTypeScanner(table)
-    def words = []
-    String text = 'a* b-c d# e$ foo{}'
-    def expectedWords = ['a', 'b', 'c', 'd', 'e$', 'foo']
+    val scanner = IdTableBuilding.createCustomFileTypeScanner(table)
+    val words = mutableListOf<String>()
+    val text = "a* b-c d# e$ foo{}"
+    val expectedWords = listOf("a", "b", "c", "d", "e$", "foo")
 
-    scanner.processWords(text, { WordOccurrence w ->
-      assert w instanceof WordOccurrence // groovy 3.0.19 bug
-      words.add(w.baseText.subSequence(w.start, w.end))
-    } as Processor)
-    assert words == expectedWords
+    scanner.processWords(text) { w: WordOccurrence ->
+      words.add(w.baseText.subSequence(w.start, w.end).toString())
+      true
+    }
+    assertEquals(expectedWords, words)
 
     // words searched by find usages should be the same as words produced by word scanner
-    assert StringUtil.getWordsIn(text) == expectedWords
+    assertEquals(expectedWords, StringUtil.getWordsIn(text))
   }
 
-  void "test quote block comment"() {
-    SyntaxTable table = new SyntaxTable()
-    table.startComment = '"'
-    table.endComment = 'x'
-    doTest table, '"axa', '''\
+  fun `test quote block comment`() {
+    val table = SyntaxTable()
+    table.startComment = "\""
+    table.endComment = "x"
+    doTest(table, "\"axa", """
 MULTI_LINE_COMMENT ('"ax')
 IDENTIFIER ('a')
-'''
+""")
   }
 
-  void testPlainText() {
-    doTest PlainTextSyntaxHighlighterFactory.createPlainTextLexer(), 'ab.@c  (<def>)', '''\
+  fun testPlainText() {
+    doTest(
+      PlainTextSyntaxHighlighterFactory.createPlainTextLexer(), "ab.@c  (<def>)", """
 CHARACTER ('ab.@c')
 WHITESPACE ('  ')
 L_PARENTH ('(')
@@ -472,62 +475,58 @@ L_BROCKET ('<')
 CHARACTER ('def')
 R_BROCKET ('>')
 R_PARENTH (')')
-'''
+""")
   }
 
-  void "test hex literals"() {
-    SyntaxTable table = new SyntaxTable()
-    table.hexPrefix = '0y'
-    doTest table, '1 0yabc0', '''\
+  fun `test hex literals`() {
+    val table = SyntaxTable()
+    table.hexPrefix = "0y"
+    doTest(table, "1 0yabc0", """
 NUMBER ('1')
 WHITESPACE (' ')
 NUMBER ('0yabc0')
-'''
+""")
   }
 
-  void testKeywordLexerPerformance() {
-    int count = 3000
-    List<String> keywords = []
-    for (i in 0..<count) {
-      char start = (('a' as char) + (i % 7)).intValue()
-      keywords.add((start as String) * i)
+  fun testKeywordLexerPerformance() {
+    val count = 3000
+    val keywords = mutableListOf<String>()
+    for (i in 0 until count) {
+      val start = ('a'.code + (i % 7)).toInt()
+      keywords.add(start.toString().repeat(i))
     }
-    SyntaxTable table = new SyntaxTable()
+    val table = SyntaxTable()
     for (s in keywords) {
       table.addKeyword1(s)
     }
-    
-    StringBuilder text = new StringBuilder()
+
+    var text = StringBuilder()
     for (i in 0..10) {
-      Collections.shuffle(keywords)
-      for (s in keywords[0..10]) {
-        text.append(s + "\n")
+      keywords.shuffle()
+      for (s in keywords.subList(0, 10)) {
+        text.append("$s\n")
       }
     }
 
-    PlatformTestUtil.startPerformanceTest(name, 300, {
-      IntRef charAts = new IntRef()
-      LexerTestCase.printTokens(countingCharSequence(text, charAts), 0, new CustomFileTypeLexer(table))
-      assert charAts.get() < text.length() * 4
-    }).assertTiming()
+    PlatformTestUtil.startPerformanceTest(name, 300) {
+      val charAts = IntRef()
+      LexerTestCase.printTokens(countingCharSequence(text, charAts), 0, CustomFileTypeLexer(table))
+      assertTrue(charAts.get() < text.length * 4)
+    }.assertTiming()
   }
 
-  private static CharSequence countingCharSequence(CharSequence text, IntRef charAts) {
-    new CharSequence() {
-      @Override
-      int length() {
-        return text.length()
-      }
+  private fun countingCharSequence(text: CharSequence, charAts: IntRef): CharSequence {
+    return object : CharSequence {
+      override val length: Int
+        get() = text.length
 
-      @Override
-      char charAt(int index) {
+      override fun get(index: Int): Char {
         charAts.inc()
-        return text.charAt(index)
+        return text[index]
       }
 
-      @Override
-      CharSequence subSequence(int start, int end) {
-        return countingCharSequence(text.subSequence(start, end), charAts)
+      override fun subSequence(startIndex: Int, endIndex: Int): CharSequence {
+        return countingCharSequence(text.subSequence(startIndex, endIndex), charAts)
       }
     }
   }
