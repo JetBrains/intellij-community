@@ -186,17 +186,11 @@ public class RunLineMarkerProvider extends LineMarkerProviderDescriptor implemen
 
   static final class RunLineMarkerInfo extends MergeableLineMarkerInfo<PsiElement> {
     private final DefaultActionGroup myActionGroup;
-    private final AnAction mySingleAction;
 
     RunLineMarkerInfo(PsiElement element, Icon icon, Function<? super PsiElement, @Nls String> tooltipProvider, DefaultActionGroup actionGroup) {
       super(element, element.getTextRange(), icon, tooltipProvider, null, GutterIconRenderer.Alignment.CENTER,
             () -> tooltipProvider.fun(element));
       myActionGroup = actionGroup;
-      if (myActionGroup.getChildrenCount() == 1) {
-        mySingleAction = myActionGroup.getChildActionsOrStubs()[0];
-      } else {
-        mySingleAction = null;
-      }
     }
 
     @Override
@@ -204,7 +198,7 @@ public class RunLineMarkerProvider extends LineMarkerProviderDescriptor implemen
       return new LineMarkerGutterIconRenderer<>(this) {
         @Override
         public AnAction getClickAction() {
-          return mySingleAction;
+          return myActionGroup.getChildrenCount() == 1 ? myActionGroup.getChildActionsOrStubs()[0] : null;
         }
 
         @Override
