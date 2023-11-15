@@ -188,4 +188,8 @@ public final class PersistentMultiMaplet<K, V, C extends Collection<V>> implemen
     }
   }
 
+  @Override
+  public void flush() throws IOException {
+    myMap.force();
+  }
 }

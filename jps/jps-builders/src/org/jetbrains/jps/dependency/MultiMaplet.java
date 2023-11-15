@@ -3,19 +3,12 @@ package org.jetbrains.jps.dependency;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.io.Closeable;
-import java.io.IOException;
-
-public interface MultiMaplet<K, V> extends Closeable {
-  
-  boolean containsKey(K key);
+public interface MultiMaplet<K, V> extends BaseMaplet<K> {
 
   @NotNull
   Iterable<V> get(K key);
 
   void put(K key, @NotNull Iterable<? extends V> values);
-
-  void remove(K key);
 
   void appendValue(K key, final V value);
 
@@ -33,9 +26,4 @@ public interface MultiMaplet<K, V> extends Closeable {
     }
   }
 
-  @NotNull
-  Iterable<K> getKeys();
-
-  @Override
-  void close() throws IOException;
 }

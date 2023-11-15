@@ -5,6 +5,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.dependency.MultiMaplet;
 import org.jetbrains.jps.javac.Iterators;
 
+import java.io.IOException;
 import java.util.*;
 import java.util.function.Supplier;
 
@@ -77,5 +78,10 @@ public final class MemoryMultiMaplet<K, V, C extends Collection<V>> implements M
   @Override
   public void close() {
     myMap.clear();
+  }
+
+  @Override
+  public void flush() throws IOException {
+    // empty
   }
 }

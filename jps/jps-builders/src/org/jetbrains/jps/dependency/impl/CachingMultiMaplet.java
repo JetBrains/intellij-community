@@ -98,4 +98,10 @@ public class CachingMultiMaplet<K, V> implements MultiMaplet<K, V> {
     myCache.invalidateAll();
     myDelegate.close();
   }
+
+  @Override
+  public void flush() throws IOException {
+    myCache.invalidateAll();
+    myDelegate.flush();
+  }
 }

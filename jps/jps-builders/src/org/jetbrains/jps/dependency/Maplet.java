@@ -3,21 +3,10 @@ package org.jetbrains.jps.dependency;
 
 import org.jetbrains.annotations.Nullable;
 
-import java.io.Closeable;
-import java.io.IOException;
-
-public interface Maplet<K, V> extends Closeable {
-  boolean containsKey(final K key);
+public interface Maplet<K, V> extends BaseMaplet<K> {
 
   @Nullable
   V get(final K key);
 
   void put(K key, V value);
-
-  void remove(K key);
-
-  Iterable<K> getKeys();
-
-  @Override
-  void close() throws IOException;
 }

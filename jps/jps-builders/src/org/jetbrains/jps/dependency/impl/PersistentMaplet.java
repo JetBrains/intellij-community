@@ -83,4 +83,8 @@ public final class PersistentMaplet<K, V> implements Maplet<K, V> {
     myMap.close();
   }
 
+  @Override
+  public void flush() throws IOException {
+    myMap.force();
+  }
 }

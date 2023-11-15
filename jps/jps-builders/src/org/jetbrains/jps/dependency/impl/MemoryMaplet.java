@@ -5,6 +5,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.dependency.Maplet;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -39,5 +40,10 @@ public final class MemoryMaplet<K, V> implements Maplet<K, V> {
   @Override
   public void close() {
     myMap.clear();
+  }
+
+  @Override
+  public void flush() throws IOException {
+    // empty
   }
 }

@@ -56,4 +56,10 @@ public class CachingMaplet<K, V> implements Maplet<K, V> {
     myCache.invalidateAll();
     myDelegate.close();
   }
+
+  @Override
+  public void flush() throws IOException {
+    myCache.invalidateAll();
+    myDelegate.flush();
+  }
 }

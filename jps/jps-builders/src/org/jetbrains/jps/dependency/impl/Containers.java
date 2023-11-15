@@ -3,6 +3,7 @@ package org.jetbrains.jps.dependency.impl;
 
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.LoadingCache;
+import com.intellij.openapi.util.LowMemoryWatcher;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.KeyDescriptor;
@@ -71,10 +72,11 @@ public final class Containers {
     private static final int CACHE_SIZE = 512; // todo: make configurable?
     private final String myRootDirPath;
     private final PersistentStringEnumerator myStringTable;
-    private final List<Closeable> myMaps = new ArrayList<>();
+    private final List<BaseMaplet<?>> myMaps = new ArrayList<>();
     private final Enumerator myEnumerator;
     private final Function<Object, Object> myDataInterner;
     private final LoadingCache<Object, Object> myInternerCache;
+    private final LowMemoryWatcher myMemWatcher;
 
     PersistentMapletFactory(String rootDirPath) throws IOException {
       myRootDirPath = rootDirPath;
@@ -90,10 +92,22 @@ public final class Containers {
           return myStringTable.enumerate(str);
         }
       };
-      myInternerCache = Caffeine.newBuilder().maximumSize(2 * CACHE_SIZE).build(key -> key);
+      myInternerCache = Caffeine.newBuilder().maximumSize(CACHE_SIZE).build(key -> key);
       myDataInterner = elem -> {
         return elem instanceof Usage || elem instanceof String? myInternerCache.get(elem) : elem;
       };
+      myMemWatcher = LowMemoryWatcher.register(() -> {
+        myInternerCache.invalidateAll();
+        myStringTable.force();
+        for (BaseMaplet<?> map : myMaps) {
+          try {
+            map.flush();
+          }
+          catch (IOException e) {
+            throw new RuntimeException(e);
+          }
+        }
+      });
     }
 
     @Override
@@ -118,6 +132,7 @@ public final class Containers {
 
     @Override
     public void close() {
+      myMemWatcher.stop();
       Throwable ex = null;
       for (Closeable container : Iterators.flat(myMaps, Iterators.asIterable(myStringTable))) {
         try {
