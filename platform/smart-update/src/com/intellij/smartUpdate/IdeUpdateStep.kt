@@ -18,7 +18,6 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.ide.ToolboxSettingsActionRegistry
 import org.jetbrains.ide.ToolboxUpdateAction
 import javax.swing.JComponent
-import javax.swing.JLabel
 
 private val LOG = logger<IdeUpdateStep>()
 
@@ -39,7 +38,7 @@ class IdeUpdateStep : StepOption {
   }
 
   override fun getDetailsComponent(project: Project): JComponent {
-    return JLabel(getDescription())
+    return hintLabel(getDescription())
   }
 
   @Nls

@@ -11,7 +11,6 @@ import com.intellij.ui.SpinningProgressIcon
 import org.jetbrains.annotations.Nls
 import java.util.function.Consumer
 import javax.swing.JComponent
-import javax.swing.JLabel
 
 const val PLUGINS_UPDATE = "plugins.update"
 
@@ -46,7 +45,7 @@ class PluginsUpdateStep: SmartUpdateStep {
   }
 
   override fun getDetailsComponent(project: Project): JComponent {
-    val label = JLabel(SmartUpdateBundle.message("checking.for.updates")).apply {
+    val label = hintLabel(SmartUpdateBundle.message("checking.for.updates")).apply {
       icon = SpinningProgressIcon()
     }
     UpdateChecker.getUpdates().doWhenProcessed(Runnable {
