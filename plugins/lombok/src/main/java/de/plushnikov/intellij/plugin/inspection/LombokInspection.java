@@ -1,10 +1,15 @@
 package de.plushnikov.intellij.plugin.inspection;
 
+import com.intellij.codeInsight.intention.AddAnnotationFix;
+import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import de.plushnikov.intellij.plugin.LombokBundle;
+import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.problem.LombokProblem;
+import de.plushnikov.intellij.plugin.problem.LombokProblemInstance;
 import de.plushnikov.intellij.plugin.processor.LombokProcessorManager;
 import de.plushnikov.intellij.plugin.processor.Processor;
 import de.plushnikov.intellij.plugin.processor.ValProcessor;
@@ -60,8 +65,30 @@ public class LombokInspection extends LombokJavaInspectionBase {
         problems.addAll(inspector.verifyAnnotation(annotation));
       }
 
+      doAdditionalVerifications(annotation, problems);
+
       for (LombokProblem problem : problems) {
         holder.registerProblem(annotation, problem.getMessage(), problem.getHighlightType(), problem.getQuickFixes());
+      }
+    }
+
+    private static void doAdditionalVerifications(@NotNull PsiAnnotation annotation, @NotNull Collection<LombokProblem> problems) {
+      verifyBuilderDefault(annotation, problems);
+    }
+
+    private static void verifyBuilderDefault(@NotNull PsiAnnotation annotation, @NotNull Collection<LombokProblem> problems) {
+      if (annotation.hasQualifiedName(LombokClassNames.BUILDER_DEFAULT)) {
+        final PsiClass parentOfAnnotation = PsiTreeUtil.getParentOfType(annotation, PsiClass.class);
+        if (null != parentOfAnnotation) {
+          if (!parentOfAnnotation.hasAnnotation(LombokClassNames.BUILDER) &&
+              !parentOfAnnotation.hasAnnotation(LombokClassNames.SUPER_BUILDER)) {
+            final LombokProblemInstance problemInstance = new LombokProblemInstance(
+              LombokBundle.message("inspection.message.builder.default.requires.builder.annotation"), ProblemHighlightType.GENERIC_ERROR);
+            problemInstance.withLocalQuickFixes(() -> new AddAnnotationFix(LombokClassNames.BUILDER, parentOfAnnotation),
+                                                () -> new AddAnnotationFix(LombokClassNames.SUPER_BUILDER, parentOfAnnotation));
+            problems.add(problemInstance);
+          }
+        }
       }
     }
 
