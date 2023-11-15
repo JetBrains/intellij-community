@@ -16,6 +16,8 @@ enum class Language(val displayName: String, private val extension: String, val 
   DART("Dart", "dart", "Dart", needSdk = true),
   RUST("Rust", "rs", "Rust"),
   CSHARP("C#", "cs", "C#"),
+  CSS("CSS", "css", "CSS"),
+  HTML("HTML", "html", "HTML"),
   ANOTHER("Another", "*", ""),
   UNSUPPORTED("Unsupported", "", ""); // TODO: There are no unsupported languages
 
