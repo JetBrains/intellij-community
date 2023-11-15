@@ -26,6 +26,7 @@ public class StaticMethodImportLombokInspection extends LombokJavaInspectionBase
       this.holder = holder;
     }
 
+    @Override
     public void visitImportStaticReferenceElement(@NotNull PsiImportStaticReferenceElement reference) {
       final PsiElement resolvedElement = reference.resolve();
       if (resolvedElement instanceof LombokLightMethodBuilder lombokLightMethodBuilder &&
