@@ -20,14 +20,10 @@ import java.text.SimpleDateFormat
 import javax.swing.JEditorPane
 import javax.swing.event.DocumentEvent
 
-/**
- * @author Konstantin Bulenkov
- */
-class DateTimeFormatConfigurable : BoundSearchableConfigurable(
-  IdeBundle.message("date.time.format.configurable"),
-  "reference.date.formats"
-), NoScroll {
-
+class DateTimeFormatConfigurable :
+  BoundSearchableConfigurable(IdeBundle.message("date.time.format.configurable"), helpTopic = "reference.date.formats", _id = "ide.date.format"),
+  NoScroll
+{
   private lateinit var dateFormatField: Cell<JBTextField>
   private lateinit var use24HourCheckbox: Cell<JBCheckBox>
   private lateinit var datePreviewField: Cell<JEditorPane>
