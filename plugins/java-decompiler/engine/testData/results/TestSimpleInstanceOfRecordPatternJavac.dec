@@ -5,8 +5,8 @@ public class TestSimpleInstanceOfRecordPatternJavac {
    }// 6
 
    public static void instanceOfTest1(Object o) {
-      if (o instanceof R(Object var3)) {// 9
-         System.out.println(var3);// 10
+      if (o instanceof R(Object s1)) {// 9
+         System.out.println(s1);// 10
       }
 
       System.out.println("1");// 12
@@ -28,9 +28,9 @@ public class TestSimpleInstanceOfRecordPatternJavac {
    }// 26
 
    public static void negativeInstanceOfTest1(Object o) {
-      if (o instanceof R(Object var3)) {// 29
-         if (var3.hashCode() == 1) {// 31
-            System.out.println(var3);// 32
+      if (o instanceof R(Object s1)) {// 29
+         if (s1.hashCode() == 1) {// 31
+            System.out.println(s1);// 32
             System.out.println("1");// 33
          }
 
@@ -79,20 +79,20 @@ public class TestSimpleInstanceOfRecordPatternJavac {
    }
 
    public static void instanceOfTestDouble1(Object o, Object o2) {
-      if (o instanceof R(Object var4)) {// 78
-         System.out.println(var4);// 79
+      if (o instanceof R(Object r)) {// 78
+         System.out.println(r);// 79
       }
 
-      if (o2 instanceof R(Object var4)) {// 82
-         System.out.println(var4);// 83
+      if (o2 instanceof R(Object r)) {// 82
+         System.out.println(r);// 83
       }
 
       System.out.println("s2222222");// 85
    }
 
    public static void instanceOfTestDouble2(Object o, Object o2) {
-      if (o instanceof R(Object var4)) {// 89
-         System.out.println(var4);// 90
+      if (o instanceof R(Object s1)) {// 89
+         System.out.println(s1);// 90
       }
 
       if (o2 instanceof R(String r)) {// 93
@@ -103,8 +103,8 @@ public class TestSimpleInstanceOfRecordPatternJavac {
    }
 
    public static void instanceOfTestDoubleNegate2(Object o, Object o2) {
-      if (o instanceof R(Object var4)) {// 100
-         System.out.println(var4);// 103
+      if (o instanceof R(Object s1)) {// 100
+         System.out.println(s1);// 103
          if (o2 instanceof R(String r)) {// 105
             System.out.println(r);// 108
             System.out.println("2222222");// 110

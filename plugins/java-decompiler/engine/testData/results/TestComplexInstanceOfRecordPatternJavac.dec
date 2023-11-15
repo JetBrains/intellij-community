@@ -5,9 +5,9 @@ public class TestComplexInstanceOfRecordPatternJavac {
    }// 6
 
    public static void instanceOfTest1(Object o) {
-      if (o instanceof R(R(Object var4))) {// 9
-         System.out.println(var4);// 10
-         System.out.println(var4);// 11
+      if (o instanceof R(R(Object s1))) {// 9
+         System.out.println(s1);// 10
+         System.out.println(s1);// 11
       }
 
       System.out.println("1");// 13

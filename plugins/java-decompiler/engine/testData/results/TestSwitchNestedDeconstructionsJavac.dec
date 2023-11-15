@@ -18,20 +18,20 @@ public class TestSwitchNestedDeconstructionsJavac {
             }
 
             return;
-         case R2(String s, Object var23) when s.length() > 45:// 25
+         case R2(String s, Object var24) when s.length() > 45:// 25
             if (s.length() == 2) {// 26
                System.out.println(o);// 27
             }
 
             return;
-         case R2(Object var19, Object var22) when var19.hashCode() > 7:// 30
-            if (var19.hashCode() == 2) {// 31
+         case R2(Object s, Object var23) when s.hashCode() > 7:// 30
+            if (s.hashCode() == 2) {// 31
                System.out.println(o);// 32
             }
 
             return;
-         case R2(Object var13, Object var24):
-            if (var13.hashCode() == 2) {// 36
+         case R2(Object s, Object var25):
+            if (s.hashCode() == 2) {// 36
                System.out.println(o);// 37
             }
 
@@ -65,8 +65,8 @@ public class TestSwitchNestedDeconstructionsJavac {
             }
 
             return;// 70
-         case R2(Object var9, R1(String var8)) when var8.length() > 7:// 63
-            if (var9.hashCode() == 2) {// 64
+         case R2(Object s, R1(String var8)) when var8.length() > 7:// 63
+            if (s.hashCode() == 2) {// 64
                System.out.println(o);// 65
             }
 
@@ -125,18 +125,18 @@ public class TestSwitchNestedDeconstructionsJavac {
                System.out.println(o);// 115
             }
             break;
-         case R2(String s, Object var28) when s.length() > 3:// 118
+         case R2(String s, Object var29) when s.length() > 3:// 118
             if (s.length() == 2) {// 119
                System.out.println(o);// 120
             }
             break;
-         case R2(Object var24, Object var27) when var24.hashCode() > 3:// 123
-            if (var24.hashCode() == 2) {// 124
+         case R2(Object s, Object var28) when s.hashCode() > 3:// 123
+            if (s.hashCode() == 2) {// 124
                System.out.println(o);// 125
             }
             break;
-         case R2(Object var13, Object var29):
-            if (var13.hashCode() == 2) {// 129
+         case R2(Object s, Object var30):
+            if (s.hashCode() == 2) {// 129
                System.out.println(o);// 130
             }
             break;
@@ -158,20 +158,20 @@ public class TestSwitchNestedDeconstructionsJavac {
             }
 
             return;
-         case R2(String s, Object var32) when s.length() > 3:// 147
+         case R2(String s, Object var33) when s.length() > 3:// 147
             if (s.length() == 2) {// 148
                System.out.println(o);// 149
             }
 
             return;
-         case R2(Object var24, Object var31) when var24.hashCode() > 3:// 152
-            if (var24.hashCode() == 2) {// 153
+         case R2(Object s, Object var32) when s.hashCode() > 3:// 152
+            if (s.hashCode() == 2) {// 153
                System.out.println(o);// 154
             }
 
             return;
-         case R2(Object var13, Object var33):
-            if (var13.hashCode() == 2) {// 158
+         case R2(Object s, Object var34):
+            if (s.hashCode() == 2) {// 158
                System.out.println(o);// 159
             }
 

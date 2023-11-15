@@ -66,8 +66,8 @@ public class TestSwitchWithDeconstructionsWithoutNestedJavac {
 
    public static void testObjectObject(Object o) {
       switch (o) {// 63
-         case R1(Object var6, Object var10):
-            if (var6.hashCode() == 1) {// 65
+         case R1(Object s1, Object var10):
+            if (s1.hashCode() == 1) {// 65
                System.out.println("1");// 66
             }
             break;

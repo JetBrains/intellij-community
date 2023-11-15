@@ -20,19 +20,33 @@ public class TestSwitchSimpleReferencesJavac {
 
    private static void testString2(String r2) {
       switch (r2) {// 21
-         case "first" -> System.out.println("1");// 23
-         case "second" -> System.out.println("2");// 26
-         default -> System.out.println(r2);// 29
+         case "first":
+            System.out.println("1");// 23
+            break;// 24
+         case "second":
+            System.out.println("2");// 26
+            break;// 27
+         default:
+            String s = r2;// 28
+            System.out.println(s);// 29
       }
 
    }// 31
 
    private static void testString3(String r2) {
       switch (r2) {// 34
-         case null -> System.out.println("null");// 42
-         case "first" -> System.out.println("1");// 36
-         case "second" -> System.out.println("2");// 39
-         default -> System.out.println(r2);// 45
+         case null:
+            System.out.println("null");// 42
+            break;// 43
+         case "first":
+            System.out.println("1");// 36
+            break;// 37
+         case "second":
+            System.out.println("2");// 39
+            break;// 40
+         default:
+            String s = r2;// 44
+            System.out.println(s);// 45
       }
 
    }// 47
@@ -109,10 +123,17 @@ public class TestSwitchSimpleReferencesJavac {
 
    private static void testEnum3(Numbers r2) {
       switch (r2) {// 130
-         case null -> System.out.println("null");// 137
-         case FIRST -> { }
-         case SECOND -> System.out.println("2");// 134
-         default -> System.out.println(r2);// 140
+         case null:
+            System.out.println("null");// 137
+            break;// 138
+         case FIRST:
+            break;
+         case SECOND:
+            System.out.println("2");// 134
+            break;// 135
+         default:
+            Numbers n = r2;// 139
+            System.out.println(n);// 140
       }
 
    }// 142
@@ -166,144 +187,154 @@ class 'pkg/TestSwitchSimpleReferencesJavac' {
 
    method 'testString2 (Ljava/lang/String;)V' {
       10      21
-      2c      22
-      2f      22
-      31      22
-      37      23
-      3a      23
-      3c      23
-      44      24
-      48      24
-      4b      27
+      2c      23
+      2f      23
+      31      23
+      34      24
+      37      26
+      3a      26
+      3c      26
+      3f      27
+      43      29
+      44      30
+      48      30
+      4b      33
    }
 
    method 'testString3 (Ljava/lang/String;)V' {
-      b      30
-      24      32
-      27      32
-      29      32
-      2f      33
-      32      33
-      34      33
-      3a      31
-      3d      31
-      3f      31
-      47      34
-      4b      34
-      4e      37
+      b      36
+      24      41
+      27      41
+      29      41
+      2c      42
+      2f      44
+      32      44
+      34      44
+      37      45
+      3a      38
+      3d      38
+      3f      38
+      42      39
+      46      47
+      47      48
+      4b      48
+      4e      51
    }
 
    method 'testByte (Ljava/lang/Byte;)V' {
-      b      40
-      27      44
-      2a      44
-      2c      44
-      2f      45
-      32      48
-      35      48
-      37      48
-      3a      51
+      b      54
+      27      58
+      2a      58
+      2c      58
+      2f      59
+      32      62
+      35      62
+      37      62
+      3a      65
    }
 
    method 'testChar (Ljava/lang/Character;)V' {
-      b      54
-      24      57
-      27      57
-      29      57
-      2c      58
-      2f      61
-      32      61
-      34      61
-      37      64
+      b      68
+      24      71
+      27      71
+      29      71
+      2c      72
+      2f      75
+      32      75
+      34      75
+      37      78
    }
 
    method 'testInt (Ljava/lang/Integer;)V' {
-      b      67
-      27      71
-      2a      71
-      2c      71
-      2f      72
-      32      75
-      35      75
-      37      75
-      3a      78
+      b      81
+      27      85
+      2a      85
+      2c      85
+      2f      86
+      32      89
+      35      89
+      37      89
+      3a      92
    }
 
    method 'testInt2 (Ljava/lang/Integer;)V' {
-      1      81
-      4      81
-      23      83
-      26      83
-      28      83
-      2e      84
-      31      84
-      33      84
-      36      87
+      1      95
+      4      95
+      23      97
+      26      97
+      28      97
+      2e      98
+      31      98
+      33      98
+      36      101
    }
 
    method 'testEnum (Lpkg/TestSwitchSimpleReferencesJavac$Numbers;)V' {
-      b      90
-      28      94
-      29      94
-      2d      94
-      31      93
-      34      93
-      36      93
-      3c      91
-      3f      91
-      41      91
-      44      97
+      b      104
+      28      108
+      29      108
+      2d      108
+      31      107
+      34      107
+      36      107
+      3c      105
+      3f      105
+      41      105
+      44      111
    }
 
    method 'testEnum2 (Lpkg/TestSwitchSimpleReferencesJavac$Numbers;)V' {
-      b      100
-      28      104
-      29      104
-      2d      104
-      31      103
-      34      103
-      36      103
-      3c      101
-      3f      101
-      41      101
-      44      107
+      b      114
+      28      118
+      29      118
+      2d      118
+      31      117
+      34      117
+      36      117
+      3c      115
+      3f      115
+      41      115
+      44      121
    }
 
    method 'testEnum3 (Lpkg/TestSwitchSimpleReferencesJavac$Numbers;)V' {
-      b      110
-      27      113
-      2a      113
-      2c      113
-      32      111
-      35      111
-      37      111
-      3f      114
-      43      114
-      46      117
+      b      124
+      27      131
+      2a      131
+      2c      131
+      2f      132
+      32      126
+      35      126
+      37      126
+      3a      127
+      3e      134
+      3f      135
+      43      135
+      46      138
    }
 
    method 'testEnum4 (Lpkg/TestSwitchSimpleReferencesJavac$Numbers;)V' {
-      1      120
-      4      120
-      23      122
-      26      122
-      28      122
-      2e      123
-      31      123
-      33      123
-      36      126
+      1      141
+      4      141
+      23      143
+      26      143
+      28      143
+      2e      144
+      31      144
+      33      144
+      36      147
    }
 
    method 'testEnum5 (Lpkg/TestSwitchSimpleReferencesJavac$Numbers;)V' {
-      b      129
-      24      131
-      27      131
-      29      131
-      2c      132
-      2f      135
-      32      135
-      34      135
-      37      138
+      b      150
+      24      152
+      27      152
+      29      152
+      2c      153
+      2f      156
+      32      156
+      34      156
+      37      159
    }
 }
 
@@ -317,65 +348,68 @@ Lines mapping:
 16 <-> 16
 18 <-> 19
 21 <-> 22
-23 <-> 23
-26 <-> 24
-29 <-> 25
-31 <-> 28
-34 <-> 31
-36 <-> 33
-39 <-> 34
-42 <-> 32
-45 <-> 35
-47 <-> 38
-51 <-> 41
-55 <-> 45
-56 <-> 46
-59 <-> 49
-61 <-> 52
-64 <-> 55
-67 <-> 58
-68 <-> 59
-71 <-> 62
-73 <-> 65
-77 <-> 68
-81 <-> 72
-82 <-> 73
-85 <-> 76
-87 <-> 79
-90 <-> 82
-94 <-> 84
-97 <-> 85
-99 <-> 88
-106 <-> 95
-110 <-> 94
-113 <-> 92
-115 <-> 98
-118 <-> 105
-122 <-> 104
-125 <-> 102
-127 <-> 108
-130 <-> 111
-134 <-> 114
-137 <-> 112
-140 <-> 115
-142 <-> 118
-145 <-> 121
-149 <-> 123
-152 <-> 124
-154 <-> 127
-157 <-> 130
-159 <-> 132
-160 <-> 133
-162 <-> 136
-164 <-> 139
+23 <-> 24
+24 <-> 25
+26 <-> 27
+27 <-> 28
+28 <-> 30
+29 <-> 31
+31 <-> 34
+34 <-> 37
+36 <-> 42
+37 <-> 43
+39 <-> 45
+40 <-> 46
+42 <-> 39
+43 <-> 40
+44 <-> 48
+45 <-> 49
+47 <-> 52
+51 <-> 55
+55 <-> 59
+56 <-> 60
+59 <-> 63
+61 <-> 66
+64 <-> 69
+67 <-> 72
+68 <-> 73
+71 <-> 76
+73 <-> 79
+77 <-> 82
+81 <-> 86
+82 <-> 87
+85 <-> 90
+87 <-> 93
+90 <-> 96
+94 <-> 98
+97 <-> 99
+99 <-> 102
+106 <-> 109
+110 <-> 108
+113 <-> 106
+115 <-> 112
+118 <-> 119
+122 <-> 118
+125 <-> 116
+127 <-> 122
+130 <-> 125
+134 <-> 132
+135 <-> 133
+137 <-> 127
+138 <-> 128
+139 <-> 135
+140 <-> 136
+142 <-> 139
+145 <-> 142
+149 <-> 144
+152 <-> 145
+154 <-> 148
+157 <-> 151
+159 <-> 153
+160 <-> 154
+162 <-> 157
+164 <-> 160
 Not mapped:
-24
-27
-28
-37
-40
-43
-44
 53
 79
 92
@@ -385,8 +419,5 @@ Not mapped:
 120
 123
 132
-135
-138
-139
 147
 150
