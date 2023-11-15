@@ -113,7 +113,7 @@ class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
         .withTitle("Jar task configuration error")
         .withText("Artifact files collecting for project Jar task was finished. " +
                   "Resolution for Jar task " + jar.path + " will be skipped.")
-        .withKind(Message.Kind.WARNING)
+        .withKind(Message.Kind.INTERNAL)
         .withException(stackTrace)
         .reportMessage(project)
     }.accept()
@@ -147,7 +147,7 @@ class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
         .withTitle("Jar task configuration error")
         .withText("Artifact files collecting for project Jar task was finished. " +
                   "Resolution for Jar task " + jar.path + " will be skipped.")
-        .withKind(Message.Kind.WARNING)
+        .withKind(Message.Kind.INTERNAL)
         .withException(stackTrace)
         .reportMessage(project)
     }.accept()
@@ -179,7 +179,7 @@ class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
         .withTitle("Project configuration error")
         .withText("Artifact files collecting for project configuration was finished. " +
                   "Resolution for configuration " + configuration + " will be skipped.")
-        .withKind(Message.Kind.WARNING)
+        .withKind(Message.Kind.INTERNAL)
         .withException(stackTrace)
         .reportMessage(project)
     }.accept()
