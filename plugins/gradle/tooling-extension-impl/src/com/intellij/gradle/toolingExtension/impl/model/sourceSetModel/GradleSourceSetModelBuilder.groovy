@@ -293,6 +293,10 @@ class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
     if (generatedSourceDirs && !generatedSourceDirs.isEmpty()) {
       additionalIdeaGenDirs.addAll(generatedSourceDirs)
     }
+    def testFixtures = sourceSets.findByName("testFixtures")
+    if (testFixtures != null) {
+      testSourceSets.add(testFixtures)
+    }
     sourceSets.each { SourceSet sourceSet ->
       ExternalSourceSet externalSourceSet = new DefaultExternalSourceSet()
       externalSourceSet.name = sourceSet.name
