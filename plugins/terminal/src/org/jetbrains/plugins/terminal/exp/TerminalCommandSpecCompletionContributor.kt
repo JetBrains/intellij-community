@@ -99,7 +99,7 @@ class TerminalCommandSpecCompletionContributor : CompletionContributor(), DumbAw
   private fun getNextSuggestionsString(suggestion: BaseSuggestion): String {
     val result = when (suggestion) {
       is ShellCommand -> getNextOptionsAndArgumentsString(suggestion)
-      is ShellOption -> getNextArgumentsString(suggestion)
+      is ShellOption -> getNextArgumentsString(suggestion.args)
       else -> ""
     }
     return if (result.isNotEmpty()) " $result" else ""
@@ -111,25 +111,24 @@ class TerminalCommandSpecCompletionContributor : CompletionContributor(), DumbAw
     return buildString {
       for (option in nextOptions) {
         append(option.names.first())
-        val arguments = getNextArgumentsString(option)
+        val arguments = getNextArgumentsString(option.args)
         if (arguments.isNotEmpty()) {
           append(' ')
           append(arguments)
         }
         append(' ')
       }
-      for (arg in command.args) {
-        append(arg.asSuggestionString())
-        append(' ')
-      }
+      append(getNextArgumentsString(command.args))
     }.trim()
   }
 
-  private fun getNextArgumentsString(option: ShellOption): String {
-    return option.args.joinToString(" ") { it.asSuggestionString() }
+  private fun getNextArgumentsString(args: List<ShellArgument>): String {
+    val argStrings = args.mapIndexed { index, arg -> arg.asSuggestionString(index) }
+    return argStrings.joinToString(" ")
   }
 
-  private fun ShellArgument.asSuggestionString(): String {
-    return if (isOptional) "[$displayName]" else "<$displayName>"
+  private fun ShellArgument.asSuggestionString(index: Int): String {
+    val name = displayName ?: "arg${index + 1}"
+    return if (isOptional) "[$name]" else "<$name>"
   }
 }
