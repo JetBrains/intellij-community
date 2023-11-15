@@ -11,3 +11,8 @@ java -> USimpleNameReferenceExpression (identifier = java) from PsiJavaCodeRefer
         readLine -> UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) from PsiMethodCallExpression:br.readLine()
         readLine -> UQualifiedReferenceExpression from PsiReferenceExpression:br.readLine
         br -> USimpleNameReferenceExpression (identifier = br) from PsiReferenceExpression:br
+BufferedReader -> USimpleNameReferenceExpression (identifier = BufferedReader) from PsiJavaCodeReferenceElement:BufferedReader
+    br -> USimpleNameReferenceExpression (identifier = br) from PsiReferenceExpression:br
+        readLine -> UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) from PsiMethodCallExpression:br.readLine()
+        readLine -> UQualifiedReferenceExpression from PsiReferenceExpression:br.readLine
+        br -> USimpleNameReferenceExpression (identifier = br) from PsiReferenceExpression:br
