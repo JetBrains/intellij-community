@@ -152,5 +152,6 @@ enum class TypeProperty {
 
   METHOD,
   CLASS,
-  UNKNOWN
+  FUNCTION,
+  UNKNOWN,
 }
