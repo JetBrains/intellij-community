@@ -58,23 +58,22 @@ internal class ShellCommandOutputScraper(private val textBuffer: TerminalTextBuf
                            style: TextStyle,
                            characters: CharBuffer,
                            startRow: Int) {
-        repeat(pendingNewLines) {
-          val startOffset = baseOffset + builder.length
-          builder.append("\n")
-          highlightings.add(StyleRange(startOffset, startOffset + 1, TextStyle.EMPTY))
-        }
-        pendingNewLines = 0
-        repeat(pendingNuls) {
-          builder.append(' ')
-        }
-        pendingNuls = 0
-        val startOffset = baseOffset + builder.length
         val text = characters.toString()
-        check(text.isNotEmpty()) {
-          "unexpected empty text chunk"
+        if (text.isNotEmpty()) {
+          repeat(pendingNewLines) {
+            val startOffset = baseOffset + builder.length
+            builder.append("\n")
+            highlightings.add(StyleRange(startOffset, startOffset + 1, TextStyle.EMPTY))
+          }
+          pendingNewLines = 0
+          repeat(pendingNuls) {
+            builder.append(' ')
+          }
+          pendingNuls = 0
+          val startOffset = baseOffset + builder.length
+          builder.append(text)
+          highlightings.add(StyleRange(startOffset, baseOffset + builder.length, style))
         }
-        builder.append(text)
-        highlightings.add(StyleRange(startOffset, baseOffset + builder.length, style))
       }
 
       override fun consumeNul(x: Int,
