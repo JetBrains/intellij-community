@@ -24,10 +24,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.Iconable;
-import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
@@ -279,7 +276,7 @@ public final class CachedIntentions implements IntentionContainer {
     IntentionActionWithTextCaching cachedAction =
       new IntentionActionWithTextCaching(
         descriptor.getAction(), descriptor.getDisplayName(), descriptor.getIcon(), descriptor.getToolId(),
-        descriptor.getProblemOffset(), (cached, action) -> {
+        descriptor.getProblemRange(), (cached, action) -> {
           if (QuickFixWrapper.unwrap(action) != null) {
             // remove only inspection fixes after invocation,
             // since intention actions might be still available
@@ -348,7 +345,8 @@ public final class CachedIntentions implements IntentionContainer {
   @Override
   public @NotNull IntentionGroup getGroup(@NotNull IntentionActionWithTextCaching action) {
     if (myErrorFixes.contains(action)) {
-      return IntentionGroup.ERROR;
+      TextRange problemRange = action.getProblemRange();
+      return problemRange == null || problemRange.contains(getOffset()) ? IntentionGroup.ERROR : IntentionGroup.REMOTE_ERROR;
     }
     if (myInspectionFixes.contains(action)) {
       return IntentionGroup.INSPECTION;
