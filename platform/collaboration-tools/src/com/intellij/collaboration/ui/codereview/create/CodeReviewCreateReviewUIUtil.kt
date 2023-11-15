@@ -6,12 +6,10 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.components.JBTextArea
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
-import org.jetbrains.annotations.ApiStatus
 import java.awt.Dimension
 import javax.swing.text.AttributeSet
 import javax.swing.text.PlainDocument
 
-@ApiStatus.Internal
 object CodeReviewCreateReviewUIUtil {
   private val titleFont
     get() = JBUI.Fonts.label(16f)
@@ -31,7 +29,6 @@ object CodeReviewCreateReviewUIUtil {
   }
 }
 
-@ApiStatus.Internal
 open class SingleLineDocument : PlainDocument() {
   override fun insertString(offs: Int, str: String, a: AttributeSet?) {
     // filter new lines
