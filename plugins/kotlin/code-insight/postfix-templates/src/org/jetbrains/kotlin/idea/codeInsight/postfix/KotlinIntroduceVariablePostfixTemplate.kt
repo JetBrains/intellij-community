@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.psi.KtExpression
 internal class KotlinIntroduceVariablePostfixTemplate(
   val kind: String,
   provider: PostfixTemplateProvider
-) : PostfixTemplateWithExpressionSelector(kind, kind, "$kind name = expression", allExpressions(), provider) {
+) : PostfixTemplateWithExpressionSelector(kind, kind, "$kind name = expression", allExpressions(NonPackageAndNonImportFilter), provider) {
     override fun expandForChooseExpression(expression: PsiElement, editor: Editor) {
         KotlinIntroduceVariableHandler.doRefactoring(
           expression.project, editor, expression as KtExpression,

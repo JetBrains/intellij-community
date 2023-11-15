@@ -36,6 +36,11 @@ public abstract class KotlinPostfixTemplateTestGenerated extends AbstractKotlinP
             performTest();
         }
 
+        @TestMetadata("package.kt")
+        public void testPackage() throws Exception {
+            performTest();
+        }
+
         @TestMetadata("simple.kt")
         public void testSimple() throws Exception {
             performTest();
@@ -234,6 +239,11 @@ public abstract class KotlinPostfixTemplateTestGenerated extends AbstractKotlinP
             performTest();
         }
 
+        @TestMetadata("package.kt")
+        public void testPackage() throws Exception {
+            performTest();
+        }
+
         @TestMetadata("simple.kt")
         public void testSimple() throws Exception {
             performTest();
@@ -322,6 +332,11 @@ public abstract class KotlinPostfixTemplateTestGenerated extends AbstractKotlinP
 
         @TestMetadata("call.kt")
         public void testCall() throws Exception {
+            performTest();
+        }
+
+        @TestMetadata("package.kt")
+        public void testPackage() throws Exception {
             performTest();
         }
 
@@ -510,6 +525,24 @@ public abstract class KotlinPostfixTemplateTestGenerated extends AbstractKotlinP
 
         @TestMetadata("topLevel.kt")
         public void testTopLevel() throws Exception {
+            performTest();
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/expansion/val")
+    public static class Val extends AbstractKotlinPostfixTemplateTest {
+        @TestMetadata("package.kt")
+        public void testPackage() throws Exception {
+            performTest();
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/expansion/var")
+    public static class Var extends AbstractKotlinPostfixTemplateTest {
+        @TestMetadata("package.kt")
+        public void testPackage() throws Exception {
             performTest();
         }
     }

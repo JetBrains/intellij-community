@@ -20,7 +20,7 @@ internal abstract class KotlinWrapIntoCollectionPostfixTemplate : StringBasedPos
     constructor(functionName: String, provider: KotlinPostfixTemplateProvider) : super(
         /* name = */ functionName,
         /* example = */ "$functionName(expr)",
-        /* selector = */ allExpressions(ValuedFilter),
+        /* selector = */ allExpressions(ValuedFilter, NonPackageAndNonImportFilter),
         /* provider = */ provider
     ) {
         this.functionName = functionName
