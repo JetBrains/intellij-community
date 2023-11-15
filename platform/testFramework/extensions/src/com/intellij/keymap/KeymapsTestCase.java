@@ -157,6 +157,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
       {"shift ctrl alt M",         "Console.TableResult.MaximizeEditingCell", "FullLine.GenerateMarkerAction"},
       {"ctrl alt N",               "Console.TableResult.SetNull", "Git.New.Branch.In.Log", "GitNewBranchAction", "Inline"},
       {"ctrl BACK_SLASH",          "AIAssistant.Editor.GenerateCodeInplace", "FileChooser.GoToRoot"},
+      {"alt BACK_SLASH",           "AIAssistant.Editor.CallCloudCompletion", "MainMenuButton.ShowMenu"},
     }),
     Map.entry("Mac OS X 10.5+", new String[][]{
       {"BACK_SPACE",               "$Delete", "EditorBackSpace"},
@@ -258,6 +259,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
       {"shift ctrl MINUS",         "$Undo", "NotebookSplitCellAction"},
     }),
     Map.entry("Visual Studio", new String[][]{
+      {"alt BACK_SLASH",           "AIAssistant.Editor.CallCloudCompletion", "FileStructurePopup"},
       {"F5",                       "Graph.RouteEdges", "Resume", "WebInspector.Browser.Refresh"},
       {"F7",                       "CompileDirty", "NextDiff"},
       {"F12",                      "GotoDeclaration", "WebInspector.Browser.Selection.Toggle"},
@@ -303,6 +305,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     Map.entry("Visual Studio OSX", new String[][]{
       {"F12",                      "GotoDeclaration", "WebInspector.Browser.Selection.Toggle"},
       {"meta L",                   "$Cut", "Terminal.ClearBuffer"},
+      {"alt BACK_SLASH",           "AIAssistant.Editor.CallCloudCompletion", "FileStructurePopup"},
       {"alt DELETE",               "EditorDeleteToWordEnd", "SafeDelete"},
       {"shift ctrl RIGHT",         "Diff.NextChange", "EditorRightWithSelection"},
       {"meta F10",                 "RunToCursor", "UpdateRunningApplication"},
