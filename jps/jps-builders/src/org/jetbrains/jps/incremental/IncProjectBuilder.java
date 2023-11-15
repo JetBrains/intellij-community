@@ -64,6 +64,8 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import static org.jetbrains.jps.builders.java.JavaBuilderUtil.isDepGraphEnabled;
+
 /**
  * @author Eugene Zhuravlev
  */
@@ -420,7 +422,9 @@ public final class IncProjectBuilder {
              "; isMake:" +
              context.isMake() +
              " parallel compilation:" +
-             isParallelBuild());
+             isParallelBuild() +
+             "; dependency graph enabled:" +
+             isDepGraphEnabled());
 
     context.addBuildListener(new ChainedTargetsBuildListener(context));
 
