@@ -61,9 +61,9 @@ public final class WindowWithActions {
   @RequiresEdt
   public static void showConsoleWithProcess(@NotNull final ConsoleWithProcess consoleWithProcess,
                                             @Nullable final JComponent actionListenerComponent,
-                                            @NotNull @Nls(capitalization = Nls.Capitalization.Title) final String consoleTitle,
+                                            @NotNull @Nls final String consoleTitle,
                                             @NotNull final Project project,
-                                            @NotNull final String toolWindowTitle,
+                                            @NotNull @Nls(capitalization = Nls.Capitalization.Title) final String toolWindowTitle,
                                             @NotNull final Icon toolWindowIcon,
                                             @Nullable final Collection<? extends Runnable> closeListeners,
                                             final AnAction @NotNull ... customActions) {
@@ -83,7 +83,9 @@ public final class WindowWithActions {
 
   @Nullable
   @RequiresEdt
-  public static JComponent findWindowByName(@NotNull Project project, @NotNull String toolWindowTitle, @NotNull String windowName) {
+  public static JComponent findWindowByName(@NotNull Project project,
+                                            @NotNull @Nls(capitalization = Nls.Capitalization.Title) String toolWindowTitle,
+                                            @NotNull @Nls String windowName) {
     final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
     ToolWindow window = toolWindowManager.getToolWindow(toolWindowTitle);
     if (window == null) {
@@ -110,8 +112,8 @@ public final class WindowWithActions {
   @RequiresEdt
   public static void show(@NotNull final JComponent dataComponent,
                           @Nullable final JComponent actionListenerComponent,
-                          @NotNull @Nls(capitalization = Nls.Capitalization.Title) final String componentWindowTitle,
-                          @NotNull final String toolWindowTitle,
+                          @NotNull @Nls final String componentWindowTitle,
+                          @NotNull @Nls(capitalization = Nls.Capitalization.Title) final String toolWindowTitle,
                           @NotNull final Icon toolWindowIcon,
                           @NotNull final Project project,
                           @Nullable final Collection<? extends Runnable> closeListeners,
