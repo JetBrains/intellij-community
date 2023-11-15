@@ -85,7 +85,7 @@ public class HtmlParsing {
       }
     }
 
-    flushIncompleteItemsWhile((item) -> true);
+    flushIncompleteStackItemsWhile((item) -> true);
 
     if (error != null) {
       error.error(XmlPsiBundle.message("xml.parsing.top.level.element.is.not.completed"));
@@ -95,19 +95,19 @@ public class HtmlParsing {
   }
 
 
-  protected final void completeTopItem() {
+  protected final void completeTopStackItem() {
     popItemFromStack().done(myBuilder, null, false);
   }
 
-  protected final void completeTopItemBefore(@Nullable PsiBuilder.Marker beforeMarker) {
+  protected final void completeTopStackItemBefore(@Nullable PsiBuilder.Marker beforeMarker) {
     popItemFromStack().done(myBuilder, beforeMarker, false);
   }
 
-  protected final void flushIncompleteItemsWhile(Predicate<HtmlParserStackItem> itemFilter) {
-    flushIncompleteItemsWhile(null, itemFilter);
+  protected final void flushIncompleteStackItemsWhile(Predicate<HtmlParserStackItem> itemFilter) {
+    flushIncompleteStackItemsWhile(null, itemFilter);
   }
 
-  protected final void flushIncompleteItemsWhile(@Nullable PsiBuilder.Marker beforeMarker, Predicate<HtmlParserStackItem> itemFilter) {
+  protected final void flushIncompleteStackItemsWhile(@Nullable PsiBuilder.Marker beforeMarker, Predicate<HtmlParserStackItem> itemFilter) {
     while (!myItemsStack.isEmpty() && itemFilter.test(myItemsStack.peek())) {
       myItemsStack.pop().done(myBuilder, beforeMarker, true);
     }
@@ -175,7 +175,7 @@ public class HtmlParsing {
 
         HtmlTagInfo info = createHtmlTagInfo(originalTagName, tagStart);
         while (openingTagAutoClosesTagInStack(info)) {
-          completeTopItemBefore(tagStart);
+          completeTopStackItemBefore(tagStart);
         }
         pushItemToStack(info);
 
@@ -443,7 +443,7 @@ public class HtmlParsing {
       throw new IllegalStateException(
         "Unexpected item on stack: " + myItemsStack);
     }
-    completeTopItem();
+    completeTopStackItem();
   }
 
   protected IElementType getHtmlTagElementType(@NotNull HtmlTagInfo info, int tagLevel) {
@@ -743,6 +743,13 @@ public class HtmlParsing {
   }
 
   public interface HtmlParserStackItem {
+    /**
+     * Make all of associated with the item markers dropped or done.
+     *
+     * @param builder current PsiBuilder
+     * @param beforeMarker an optional marker before, which the item should be done
+     * @param incomplete whether the item is missing the closing tag, token, etc.
+     */
     void done(@NotNull PsiBuilder builder, @Nullable PsiBuilder.Marker beforeMarker, boolean incomplete);
   }
 
