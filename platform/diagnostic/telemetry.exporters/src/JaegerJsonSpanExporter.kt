@@ -10,6 +10,7 @@ import io.opentelemetry.sdk.trace.IdGenerator
 import io.opentelemetry.sdk.trace.data.SpanData
 import io.opentelemetry.sdk.trace.data.StatusData
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.io.BufferedWriter
@@ -20,8 +21,6 @@ import java.nio.file.StandardOpenOption
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.util.concurrent.TimeUnit
-import java.util.concurrent.locks.ReentrantLock
-import kotlin.concurrent.withLock
 
 // https://github.com/jaegertracing/jaeger-ui/issues/381
 @ApiStatus.Internal
@@ -35,7 +34,7 @@ class JaegerJsonSpanExporter(
   private val telemetryJsonPath: Path
   private val writer: JsonGenerator
 
-  private val lock = ReentrantLock()
+  private val lock = Mutex()
 
   init {
     // presume that telemetry stuff needs to be saved in log dir
@@ -59,7 +58,7 @@ class JaegerJsonSpanExporter(
 
   @Suppress("DuplicatedCode")
   override suspend fun export(spans: Collection<SpanData>) {
-    lock.withLock {
+    lock.withReentrantLock {
       for (span in spans) {
         writer.writeStartObject()
         writer.writeStringField("traceID", span.traceId)
@@ -128,8 +127,8 @@ class JaegerJsonSpanExporter(
 
   @OptIn(ExperimentalStdlibApi::class)
   @Suppress("DuplicatedCode")
-  fun flushOtlp(scopeSpans: Collection<ScopeSpans>) {
-    lock.withLock {
+  suspend fun flushOtlp(scopeSpans: Collection<ScopeSpans>) {
+    lock.withReentrantLock {
       for (scopeSpan in scopeSpans) {
         for (span in scopeSpan.spans) {
           writer.writeStartObject()
@@ -173,29 +172,25 @@ class JaegerJsonSpanExporter(
     }
   }
 
-  fun shutdownSync() {
-    lock.withLock {
-      closeJsonFile(writer)
-      // nothing was written to the file
-      if (Files.notExists(tempTelemetryPath)) {
-        return
-      }
-
-      Files.move(tempTelemetryPath, telemetryJsonPath, StandardCopyOption.REPLACE_EXISTING)
-    }
-  }
-
   override suspend fun shutdown() {
-    withContext(Dispatchers.IO) {
-      shutdownSync()
+    lock.withReentrantLock {
+      withContext(Dispatchers.IO) {
+        closeJsonFile(writer)
+        // nothing was written to the file
+        if (Files.notExists(tempTelemetryPath)) {
+          return@withContext
+        }
+
+        Files.move(tempTelemetryPath, telemetryJsonPath, StandardCopyOption.REPLACE_EXISTING)
+      }
     }
   }
 
-  override fun forceFlush() {
-    lock.withLock {
+  override suspend fun flush() {
+    lock.withReentrantLock {
       // if shutdown was already invoked OR nothing has been written to the temp file
       if (writer.isClosed || Files.notExists(tempTelemetryPath)) {
-        return
+        return@withReentrantLock
       }
 
       Files.copy(tempTelemetryPath, telemetryJsonPath, StandardCopyOption.REPLACE_EXISTING)

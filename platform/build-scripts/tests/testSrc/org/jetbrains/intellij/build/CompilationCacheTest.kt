@@ -1,6 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.intellij.build.impl.compilation.fetchAndUnpackCompiledClasses
 import org.jetbrains.intellij.build.io.deleteDir
 import org.junit.jupiter.api.AfterAll
@@ -15,7 +16,9 @@ class CompilationCacheTest {
     @AfterAll
     @JvmStatic
     fun flushTracer() {
-      TraceManager.finish()
+      runBlocking {
+        TracerProviderManager.finish()
+      }
     }
   }
 

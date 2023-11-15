@@ -16,12 +16,14 @@ import io.opentelemetry.sdk.OpenTelemetrySdk
 import io.opentelemetry.sdk.resources.Resource
 import io.opentelemetry.sdk.trace.SdkTracerProvider
 import io.opentelemetry.sdk.trace.data.SpanData
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 
@@ -43,12 +45,7 @@ var traceManagerInitializer: () -> Tracer = {
 object TraceManager {
   private val tracer: Tracer = traceManagerInitializer()
 
-  @JvmStatic
   fun spanBuilder(spanName: String): SpanBuilder = tracer.spanBuilder(spanName)
-
-  fun finish(): Path? {
-    return TracerProviderManager.finish()
-  }
 }
 
 object TracerProviderManager {
@@ -73,28 +70,27 @@ object TracerProviderManager {
     list
   }
 
-  fun setOutput(file: Path) {
-    Files.createDirectories(file.parent)
-    jaegerJsonSpanExporter.getAndSet(JaegerJsonSpanExporter(file, serviceName = "build"))?.shutdownSync()
+  suspend fun setOutput(file: Path) {
+    withContext(Dispatchers.IO) {
+      Files.createDirectories(file.parent)
+    }
+    jaegerJsonSpanExporter.getAndSet(JaegerJsonSpanExporter(file, serviceName = "build"))?.shutdown()
     if (shutdownHookAdded.compareAndSet(false, true)) {
       Runtime.getRuntime().addShutdownHook(Thread({
-                                                    tracerProvider?.let {
-                                                      tracerProvider = null
-
-                                                      it.forceFlush()?.join(10, TimeUnit.SECONDS)
-                                                      jaegerJsonSpanExporter.getAndSet(null)?.shutdownSync()
-                                                      it.shutdown().join(10, TimeUnit.SECONDS)
+                                                    jaegerJsonSpanExporter.getAndSet(null)?.let {
+                                                      runBlocking {
+                                                        it.shutdown()
+                                                      }
                                                     }
                                                   }, "close tracer"))
     }
   }
 
-  fun finish(): Path? {
+  suspend fun finish(): Path? {
     try {
-      tracerProvider?.forceFlush()?.join(10, TimeUnit.SECONDS)
       return jaegerJsonSpanExporter.getAndSet(null)?.let {
         val file = it.file
-        it.shutdownSync()
+        it.shutdown()
         file
       }
     }
@@ -104,11 +100,7 @@ object TracerProviderManager {
     }
   }
 
-  fun flush() {
-    try {
-      tracerProvider?.forceFlush()?.join(5, TimeUnit.SECONDS)
-    }
-    catch (ignored: Throwable) {
-    }
+  suspend fun flush() {
+    jaegerJsonSpanExporter.get()?.flush()
   }
 }

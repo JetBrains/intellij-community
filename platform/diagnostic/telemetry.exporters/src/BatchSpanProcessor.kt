@@ -13,11 +13,9 @@ import io.opentelemetry.sdk.trace.SpanProcessor
 import io.opentelemetry.sdk.trace.data.SpanData
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.future.asCompletableFuture
 import kotlinx.coroutines.selects.onTimeout
 import kotlinx.coroutines.selects.select
 import org.jetbrains.annotations.ApiStatus.Internal
-import java.util.function.BiFunction
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
@@ -32,41 +30,17 @@ class BatchSpanProcessor(
   private val exporterTimeout: Duration = 30.seconds,
 ) : SpanProcessor {
   private val queue = Channel<ReadableSpan>(capacity = Channel.UNLIMITED)
-  private val flushRequested = Channel<CompletableDeferred<Unit>>(capacity = Channel.UNLIMITED)
-
   init {
     coroutineScope.launch {
       val batch = ArrayList<SpanData>(maxExportBatchSize)
       try {
-        var counter = 0
         while (true) {
           select {
-            flushRequested.onReceive { result ->
-              try {
-                exportCurrentBatch(batch)
-                for (spanExporter in spanExporters) {
-                  spanExporter.forceFlush()
-                }
-              }
-              finally {
-                result.complete(Unit)
-              }
-            }
-
             queue.onReceive { span ->
               batch.add(span.toSpanData())
 
-              if (counter++ >= maxExportBatchSize) {
-                counter = 0
-                try {
-                  exportCurrentBatch(batch)
-                }
-                catch (e: CancellationException) {
-                  throw e
-                }
-                catch (e: Throwable) {
-                  logger<BatchSpanProcessor>().error("Cannot flush", e)
-                }
+              if (batch.size >= maxExportBatchSize) {
+                exportCurrentBatch(batch)
               }
             }
 
@@ -117,22 +91,7 @@ class BatchSpanProcessor(
   }
 
   override fun forceFlush(): CompletableResultCode {
-    val completableDeferred = CompletableDeferred<Unit>()
-    if (flushRequested.trySend(completableDeferred).isClosed) {
-      return CompletableResultCode.ofSuccess()
-    }
-
-    val result = CompletableResultCode()
-    completableDeferred.asCompletableFuture().handle(BiFunction { _, error ->
-      if (error == null) {
-        result.succeed()
-      }
-      else {
-        result.fail()
-        logger<BatchSpanProcessor>().error("Failed to flush", error)
-      }
-    })
-    return result
+    throw UnsupportedOperationException()
   }
 
   private suspend fun exportCurrentBatch(batch: MutableList<SpanData>) {
@@ -158,7 +117,7 @@ class BatchSpanProcessor(
     }
   }
 
-  fun flushOtlp(scopeSpans: Collection<ScopeSpans>) {
+  suspend fun flushOtlp(scopeSpans: Collection<ScopeSpans>) {
     for (spanExporter in spanExporters) {
       if (spanExporter is JaegerJsonSpanExporter) {
         spanExporter.flushOtlp(scopeSpans)

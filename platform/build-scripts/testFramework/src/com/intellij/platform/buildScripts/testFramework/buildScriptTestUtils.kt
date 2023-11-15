@@ -233,7 +233,7 @@ private fun copyDebugLog(productProperties: ProductProperties, messages: BuildMe
   }
 }
 
-private inline fun asSingleTraceFile(traceSpanName: String, build: () -> Unit) {
+private suspend inline fun asSingleTraceFile(traceSpanName: String, build: () -> Unit) {
   val traceFile = TestLoggerFactory.getTestLogDir().resolve("$traceSpanName-trace.json")
   TracerProviderManager.setOutput(traceFile)
   try {
@@ -244,8 +244,8 @@ private inline fun asSingleTraceFile(traceSpanName: String, build: () -> Unit) {
   }
 }
 
-private fun publishTraceFile() {
-  val trace = TraceManager.finish()?.takeIf { it.exists() } ?: return
+private suspend fun publishTraceFile() {
+  val trace = TracerProviderManager.finish()?.takeIf { it.exists() } ?: return
   try {
     println("Performance report is written to $trace")
     println("##teamcity[publishArtifacts '$trace']")

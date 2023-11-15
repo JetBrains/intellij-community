@@ -2,10 +2,10 @@
 @file:Suppress("ReplaceGetOrSet", "ReplaceNegatedIsEmptyWithIsNotEmpty")
 package org.jetbrains.intellij.build.impl
 
-import com.intellij.platform.diagnostic.telemetry.helpers.use
-import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope2
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.io.NioFiles
+import com.intellij.platform.diagnostic.telemetry.helpers.use
+import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope2
 import com.intellij.util.PathUtilRt
 import com.intellij.util.SystemProperties
 import io.opentelemetry.api.common.AttributeKey
@@ -181,7 +181,7 @@ class CompilationContextImpl private constructor(
 
       messages.setDebugLogPath(context.paths.logDir.resolve("debug.log"))
 
-      // this is not a proper place to initialize logging but this is the only place which is called in most build scripts
+      // this is not a proper place to initialize logging, but this is the only place called in most build scripts
       BuildMessagesHandler.initLogging(messages)
       return context
     }
@@ -277,7 +277,7 @@ class CompilationContextImpl private constructor(
 
   override fun getModuleRuntimeClasspath(module: JpsModule, forTests: Boolean): List<String> {
     val enumerator = JpsJavaExtensionService.dependencies(module).recursively()
-      // if project requires different SDKs they all shouldn't be added to test classpath
+      // if a project requires different SDKs, they all shouldn't be added to test classpath
       .also { if (forTests) it.withoutSdk() }
       .includedIn(JpsJavaClasspathKind.runtime(forTests))
     return enumerator.classes().roots.map { it.absolutePath }

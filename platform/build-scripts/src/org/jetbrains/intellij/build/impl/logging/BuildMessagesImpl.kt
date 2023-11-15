@@ -1,7 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl.logging
 
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
@@ -110,7 +111,10 @@ class BuildMessagesImpl private constructor(private val logger: BuildMessageLogg
   }
 
   override fun block(blockName: String, task: Callable<Unit>) {
-    TracerProviderManager.flush()
+    runBlocking {
+      TracerProviderManager.flush()
+    }
+
     try {
       processMessage(LogMessage(LogMessage.Kind.BLOCK_STARTED, blockName))
       spanBuilder(blockName.lowercase(Locale.getDefault())).useWithScope {
@@ -119,13 +123,17 @@ class BuildMessagesImpl private constructor(private val logger: BuildMessageLogg
         }
         catch (e: Throwable) {
           // print all pending spans
-          TracerProviderManager.flush()
+          runBlocking {
+            TracerProviderManager.flush()
+          }
           throw e
         }
       }
     }
     finally {
-      TracerProviderManager.flush()
+      runBlocking {
+        TracerProviderManager.flush()
+      }
       processMessage(LogMessage(LogMessage.Kind.BLOCK_FINISHED, blockName))
     }
   }
@@ -152,8 +160,8 @@ class BuildMessagesImpl private constructor(private val logger: BuildMessageLogg
 }
 
 /**
- * Used to print debug-level log message to a file in the build output. It firstly prints messages to a temp file and copies it to the real
- * file after the build process cleans up the output directory.
+ * Used to print a debug-level log message to a file in the build output.
+ * It firstly prints messages to a temp file and copies it to the real file after the build process cleans up the output directory.
  */
 private class DebugLogger {
   private val tempFile: Path = Files.createTempFile("intellij-build", ".log")
