@@ -709,6 +709,8 @@ object CommunityRepositoryModules {
       //spec.withProjectLibrary("jetty")
       spec.withProjectLibrary("kotlinx-coroutines-guava")
       spec.withProjectLibrary("kotlin-multiplatform-android-models-proto")
+      spec.withProjectLibrary("kotlin-tooling-core")
+      spec.withProjectLibrary("kotlin-gradle-plugin-idea")
       spec.withProjectLibrary("kxml2")
       spec.withProjectLibrary("layoutinspector-skia-proto")
       spec.withProjectLibrary("layoutinspector-view-proto")
