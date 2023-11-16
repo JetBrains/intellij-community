@@ -412,7 +412,7 @@ object K1IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
         occurrencesToReplace: List<KtExpression>?,
         onNonInteractiveFinish: ((KtDeclaration) -> Unit)?
     ) {
-        val substringInfo = expression.extractableSubstringInfo
+        val substringInfo = expression.extractableSubstringInfo as? ExtractableSubstringInfo
         val physicalExpression = expression.substringContextOrThis
 
         val parent = physicalExpression.parent

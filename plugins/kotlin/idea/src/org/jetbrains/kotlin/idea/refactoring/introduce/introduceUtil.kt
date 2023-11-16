@@ -173,7 +173,7 @@ fun KotlinPsiRange.getPhysicalTextRange(): TextRange {
     return (elements.singleOrNull() as? KtExpression)?.extractableSubstringInfo?.contentRange ?: textRange
 }
 
-fun ExtractableSubstringInfo.replaceWith(replacement: KtExpression): KtExpression {
+fun AbstractExtractableSubstringInfo.replaceWith(replacement: KtExpression): KtExpression {
     return with(this) {
         val psiFactory = KtPsiFactory(replacement.project)
         val parent = startEntry.parent

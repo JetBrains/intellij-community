@@ -79,7 +79,7 @@ data class ExtractionData(
     val physicalElements = originalElements.map { it.substringContextOrThis }
 
     val substringInfo: ExtractableSubstringInfo?
-        get() = (originalElements.singleOrNull() as? KtExpression)?.extractableSubstringInfo
+        get() = (originalElements.singleOrNull() as? KtExpression)?.extractableSubstringInfo as? ExtractableSubstringInfo
 
     val insertBefore: Boolean = options.extractAsProperty
             || targetSibling.getStrictParentOfType<KtDeclaration>()?.let {

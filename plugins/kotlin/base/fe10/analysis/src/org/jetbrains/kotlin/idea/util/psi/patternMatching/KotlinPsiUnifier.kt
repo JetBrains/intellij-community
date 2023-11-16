@@ -36,8 +36,8 @@ import org.jetbrains.kotlin.resolve.scopes.receivers.ImplicitReceiver
 import org.jetbrains.kotlin.resolve.scopes.receivers.Receiver
 import org.jetbrains.kotlin.resolve.source.getPsi
 import org.jetbrains.kotlin.types.*
-import org.jetbrains.kotlin.types.error.ErrorUtils
 import org.jetbrains.kotlin.types.checker.KotlinTypeChecker
+import org.jetbrains.kotlin.types.error.ErrorUtils
 import org.jetbrains.kotlin.types.expressions.DoubleColonLHS
 import org.jetbrains.kotlin.types.expressions.OperatorConventions
 import java.util.*
@@ -793,7 +793,8 @@ class KotlinPsiUnifier(
         }
 
         fun doUnify(target: KotlinPsiRange, pattern: KotlinPsiRange): Boolean {
-            (pattern.elements.singleOrNull() as? KtExpression)?.extractableSubstringInfo?.let {
+            val singleExpression = pattern.elements.singleOrNull() as? KtExpression
+            (singleExpression?.extractableSubstringInfo as? ExtractableSubstringInfo)?.let {
                 val targetTemplate = target.elements.singleOrNull() as? KtStringTemplateExpression ?: return false
                 return doUnifyStringTemplateFragments(targetTemplate, it)
             }
