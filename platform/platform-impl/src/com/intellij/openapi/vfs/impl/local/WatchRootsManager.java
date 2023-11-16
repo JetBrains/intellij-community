@@ -106,23 +106,8 @@ final class WatchRootsManager {
 
       SymlinkData existing = mySymlinksByPath.get(linkPath);
       if (existing != null) {
-        //TODO RC more diagnostics:
-        //  1) store VFS ref in SymlinkData and check here?
-        //  2) Check existing/incoming ids against current VFS?
-        int existingId = existing.id;
-        int incomingId = data.id;
-        try {
-          PersistentFS pfs = PersistentFS.getInstance();
-          VirtualFile existingFile = pfs.findFileById(existingId);
-          VirtualFile incomingFile = pfs.findFileById(incomingId);
-          LOG.error("Path conflict. " +
-                    "Existing symlink: " + existing + " (" + existingFile + ") " +
-                    "vs. incoming symlink: " + data + " (" + incomingFile + ")");
-        }
-        catch (Throwable t) {
-          LOG.error("Path conflict. " +
-                    "Existing symlink: " + existing + "vs. incoming symlink: " + data + " (can't resolve ids)", t);
-        }
+        LOG.error("Path conflict. " +
+                  "Existing symlink: " + existing + " vs. incoming symlink: " + data);
         return;
       }
 
