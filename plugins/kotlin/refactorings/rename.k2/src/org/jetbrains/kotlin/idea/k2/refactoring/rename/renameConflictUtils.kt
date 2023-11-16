@@ -57,26 +57,28 @@ fun checkClassNameShadowing(
     newUsages: MutableList<UsageInfo>
 ) {
 
-    val newFqName = declaration.fqName?.parent()?.let { it.child(Name.identifier(newName)) } ?: return
+    val newFqName = declaration.fqName?.parent()?.let { it.child(Name.identifier(newName)) }
 
-    val usageIterator = originalUsages.listIterator()
-    while (usageIterator.hasNext()) {
-        val usage = usageIterator.next()
-        val refElement = usage.element as? KtSimpleNameExpression ?: continue
-        val typeReference = refElement.getStrictParentOfType<KtTypeReference>() ?: continue
+    if (newFqName != null) {
+        val usageIterator = originalUsages.listIterator()
+        while (usageIterator.hasNext()) {
+            val usage = usageIterator.next()
+            val refElement = usage.element as? KtSimpleNameExpression ?: continue
+            val typeReference = refElement.getStrictParentOfType<KtTypeReference>() ?: continue
 
-        fun createTypeFragment(type: String): KtExpressionCodeFragment {
-            return KtPsiFactory(declaration.project).createExpressionCodeFragment("__foo__ as $type", typeReference)
-        }
+            fun createTypeFragment(type: String): KtExpressionCodeFragment {
+                return KtPsiFactory(declaration.project).createExpressionCodeFragment("__foo__ as $type", typeReference)
+            }
 
-        val shortNameFragment = createTypeFragment(newName)
-        val hasConflict = analyze(shortNameFragment) {
-            val typeByShortName = shortNameFragment.getContentElement()?.getKtType()
-            typeByShortName != null && typeByShortName !is KtErrorType
-        }
+            val shortNameFragment = createTypeFragment(newName)
+            val hasConflict = analyze(shortNameFragment) {
+                val typeByShortName = shortNameFragment.getContentElement()?.getKtType()
+                typeByShortName != null && typeByShortName !is KtErrorType
+            }
 
-        if (hasConflict) {
-            usageIterator.set(UsageInfoWithFqNameReplacement(refElement, declaration, newFqName))
+            if (hasConflict) {
+                usageIterator.set(UsageInfoWithFqNameReplacement(refElement, declaration, newFqName))
+            }
         }
     }
 
@@ -191,9 +193,14 @@ private fun createQualifiedExpression(callExpression: KtExpression, newName: Str
                 "this"
             }
         } else if (receiver == null) {
+            val symbol = appliedSymbol?.symbol
+            val containingSymbol = symbol?.getContainingSymbol()
             val containerFQN =
-                (appliedSymbol?.symbol?.getContainingSymbol() as? KtClassOrObjectSymbol)?.classIdIfNonLocal?.asSingleFqName()?.parent()
-                    ?: (appliedSymbol?.symbol?.psi as? KtElement)?.containingKtFile?.packageFqName
+                if (containingSymbol is KtClassOrObjectSymbol) {
+                    containingSymbol.classIdIfNonLocal?.asSingleFqName()?.parent()
+                } else {
+                    (symbol?.psi as? KtElement)?.containingKtFile?.packageFqName
+                }
             containerFQN?.asString()?.takeIf { it.isNotEmpty() }
         } else null
     }?.let { psiFactory.createExpressionByPattern("$it.$0", callExpression) } ?: callExpression.copied()
@@ -233,8 +240,8 @@ private fun retargetExternalDeclarations(classOrObjectSymbol: KtDeclarationSymbo
     }
 
     var classOrObjectSymbol = classOrObjectSymbol
-    while (classOrObjectSymbol is KtClassOrObjectSymbol) {
-        classOrObjectSymbol.getMemberScope().processScope(classOrObjectSymbol)
+    while (classOrObjectSymbol != null) {
+        (classOrObjectSymbol as? KtClassOrObjectSymbol)?.getMemberScope()?.processScope(classOrObjectSymbol)
 
         val companionObject = (classOrObjectSymbol as? KtNamedClassOrObjectSymbol)?.companionObject
         companionObject?.getMemberScope()?.processScope(companionObject)

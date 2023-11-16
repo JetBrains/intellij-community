@@ -128,6 +128,26 @@ public class InplaceRenameTestGenerated extends AbstractInplaceRenameTest {
         runTest("testData/refactoring/rename/inplace/HidingExternalClass.kt");
     }
 
+    @TestMetadata("HidingLocalClass.kt")
+    public void testHidingLocalClass() throws Exception {
+        runTest("testData/refactoring/rename/inplace/HidingLocalClass.kt");
+    }
+
+    @TestMetadata("HidingLocalClass1.kt")
+    public void testHidingLocalClass1() throws Exception {
+        runTest("testData/refactoring/rename/inplace/HidingLocalClass1.kt");
+    }
+
+    @TestMetadata("HidingLocalClass2.kt")
+    public void testHidingLocalClass2() throws Exception {
+        runTest("testData/refactoring/rename/inplace/HidingLocalClass2.kt");
+    }
+
+    @TestMetadata("HidingLocalClass3.kt")
+    public void testHidingLocalClass3() throws Exception {
+        runTest("testData/refactoring/rename/inplace/HidingLocalClass3.kt");
+    }
+
     @TestMetadata("HidingMethodByTopLevel.kt")
     public void testHidingMethodByTopLevel() throws Exception {
         runTest("testData/refactoring/rename/inplace/HidingMethodByTopLevel.kt");

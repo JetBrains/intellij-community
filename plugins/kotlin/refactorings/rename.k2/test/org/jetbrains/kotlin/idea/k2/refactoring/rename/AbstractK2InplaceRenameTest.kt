@@ -19,7 +19,7 @@ abstract class AbstractK2InplaceRenameTest : AbstractInplaceRenameTest() {
             IgnoreTests.DIRECTIVES.IGNORE_K2,
             directivePosition = IgnoreTests.DirectivePosition.LAST_LINE_IN_FILE
         ) {
-            super.doTest(unused)
+            doTestWithoutIgnoreDirective(unused)
         }
     }
 }

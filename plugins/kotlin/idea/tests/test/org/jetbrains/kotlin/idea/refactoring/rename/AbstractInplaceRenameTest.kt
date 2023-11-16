@@ -17,12 +17,23 @@ import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
+import org.jetbrains.kotlin.test.utils.IgnoreTests
 
 abstract class AbstractInplaceRenameTest : KotlinLightCodeInsightFixtureTestCase() {
     override fun getProjectDescriptor(): LightProjectDescriptor =
         KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
 
     open fun doTest(unused: String) {
+        IgnoreTests.runTestIfNotDisabledByFileDirective(
+            dataFilePath(),
+            IgnoreTests.DIRECTIVES.IGNORE_K1,
+            directivePosition = IgnoreTests.DirectivePosition.LAST_LINE_IN_FILE
+        ) {
+            doTestWithoutIgnoreDirective(unused)
+        }
+    }
+
+    protected fun doTestWithoutIgnoreDirective(unused: String) {
         val file = myFixture.configureByFile(fileName())
         val newName = InTextDirectivesUtils.findStringWithPrefixes(file.text, "// NEW_NAME: ")
         val dataContext = createTextEditorBasedDataContext(project, editor, editor.caretModel.currentCaret)
