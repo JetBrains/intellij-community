@@ -14,13 +14,13 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.TypeUtils
 
-class ExtractableSubstringInfo(
+class K1ExtractableSubstringInfo(
     startEntry: KtStringTemplateEntry,
     endEntry: KtStringTemplateEntry,
     prefix: String,
     suffix: String,
     type: KotlinType? = null
-): AbstractExtractableSubstringInfo(startEntry, endEntry, prefix, suffix) {
+): ExtractableSubstringInfo(startEntry, endEntry, prefix, suffix) {
     private fun guessLiteralType(literal: String): KotlinType {
         val facade = template.getResolutionFacade()
         val module = facade.moduleDescriptor
@@ -46,7 +46,7 @@ class ExtractableSubstringInfo(
 
     override val isString: Boolean = KotlinBuiltIns.isString(this.type)
 
-    override fun copy(newStartEntry: KtStringTemplateEntry, newEndEntry: KtStringTemplateEntry): ExtractableSubstringInfo {
-        return ExtractableSubstringInfo(newStartEntry, newEndEntry, prefix, suffix, type)
+    override fun copy(newStartEntry: KtStringTemplateEntry, newEndEntry: KtStringTemplateEntry): K1ExtractableSubstringInfo {
+        return K1ExtractableSubstringInfo(newStartEntry, newEndEntry, prefix, suffix, type)
     }
 }

@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.idea.base.psi.unifier.KotlinPsiUnificationResult
 import org.jetbrains.kotlin.idea.base.psi.unifier.KotlinPsiUnificationResult.*
 import org.jetbrains.kotlin.idea.base.psi.unifier.toRange
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
-import org.jetbrains.kotlin.idea.refactoring.introduce.ExtractableSubstringInfo
+import org.jetbrains.kotlin.idea.refactoring.introduce.K1ExtractableSubstringInfo
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractableSubstringInfo
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.lexer.KtToken
@@ -62,7 +62,7 @@ class KotlinPsiUnifier(
         val declarationPatternsToTargets = MultiMap<DeclarationDescriptor, DeclarationDescriptor>()
         val weakMatches = HashMap<KtElement, KtElement>()
         var checkEquivalence: Boolean = false
-        var targetSubstringInfo: ExtractableSubstringInfo? = null
+        var targetSubstringInfo: K1ExtractableSubstringInfo? = null
 
         private fun KotlinPsiRange.getBindingContext(): BindingContext {
             val element = elements.firstOrNull() as? KtElement
@@ -733,7 +733,7 @@ class KotlinPsiUnifier(
             return targetElementType != null && KotlinTypeChecker.DEFAULT.isSubtypeOf(targetElementType, expectedType)
         }
 
-        private fun doUnifyStringTemplateFragments(target: KtStringTemplateExpression, pattern: ExtractableSubstringInfo): Boolean {
+        private fun doUnifyStringTemplateFragments(target: KtStringTemplateExpression, pattern: K1ExtractableSubstringInfo): Boolean {
             val prefixLength = pattern.prefix.length
             val suffixLength = pattern.suffix.length
             val targetEntries = target.entries
@@ -751,7 +751,7 @@ class KotlinPsiUnifier(
                     if (i < 0) continue
                     val targetPrefix = targetEntryText.substring(0, i)
                     val targetSuffix = targetEntryText.substring(i + patternText.length)
-                    targetSubstringInfo = ExtractableSubstringInfo(targetEntry, targetEntry, targetPrefix, targetSuffix, pattern.type)
+                    targetSubstringInfo = K1ExtractableSubstringInfo(targetEntry, targetEntry, targetPrefix, targetSuffix, pattern.type)
                     return true
                 }
 
@@ -785,7 +785,7 @@ class KotlinPsiUnifier(
                     status && doUnify(targetEntryToUnify, patternEntryToUnify)
                 }
                 if (!status) continue
-                targetSubstringInfo = ExtractableSubstringInfo(targetEntry, lastTargetEntry, targetPrefix, targetSuffix, pattern.type)
+                targetSubstringInfo = K1ExtractableSubstringInfo(targetEntry, lastTargetEntry, targetPrefix, targetSuffix, pattern.type)
                 return true
             }
 
@@ -794,7 +794,7 @@ class KotlinPsiUnifier(
 
         fun doUnify(target: KotlinPsiRange, pattern: KotlinPsiRange): Boolean {
             val singleExpression = pattern.elements.singleOrNull() as? KtExpression
-            (singleExpression?.extractableSubstringInfo as? ExtractableSubstringInfo)?.let {
+            (singleExpression?.extractableSubstringInfo as? K1ExtractableSubstringInfo)?.let {
                 val targetTemplate = target.elements.singleOrNull() as? KtStringTemplateExpression ?: return false
                 return doUnifyStringTemplateFragments(targetTemplate, it)
             }

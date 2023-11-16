@@ -218,7 +218,7 @@ open class KotlinIntroduceParameterHandler(
         val expressionType = if (physicalExpression is KtProperty && physicalExpression.isLocal) {
             context[BindingContext.VARIABLE, physicalExpression]?.type
         } else {
-            (expression.extractableSubstringInfo as? ExtractableSubstringInfo)?.type ?: context.getType(physicalExpression)
+            (expression.extractableSubstringInfo as? K1ExtractableSubstringInfo)?.type ?: context.getType(physicalExpression)
         }
 
         if (expressionType == null) {

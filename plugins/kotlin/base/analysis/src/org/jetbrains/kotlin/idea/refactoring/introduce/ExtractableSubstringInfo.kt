@@ -19,7 +19,7 @@ import kotlin.sequences.joinToString
 import kotlin.sequences.map
 import kotlin.text.substring
 
-abstract class AbstractExtractableSubstringInfo(
+abstract class ExtractableSubstringInfo(
   val startEntry: KtStringTemplateEntry,
   val endEntry: KtStringTemplateEntry,
   val prefix: String,
@@ -44,10 +44,10 @@ abstract class AbstractExtractableSubstringInfo(
         val quote = template.firstChild.text
         val literalValue = if (isString) "$quote$content$quote" else content
         return KtPsiFactory(template.project).createExpression(literalValue)
-            .apply { extractableSubstringInfo = this@AbstractExtractableSubstringInfo }
+            .apply { extractableSubstringInfo = this@ExtractableSubstringInfo }
     }
 
-    fun copy(newTemplate: KtStringTemplateExpression): AbstractExtractableSubstringInfo {
+    fun copy(newTemplate: KtStringTemplateExpression): ExtractableSubstringInfo {
         val oldEntries = template.entries
         val newEntries = newTemplate.entries
         val startIndex = oldEntries.indexOf(startEntry)
@@ -60,10 +60,10 @@ abstract class AbstractExtractableSubstringInfo(
         return copy(newEntries[startIndex], newEntries[endIndex])
     }
 
-    abstract fun copy(newStartEntry: KtStringTemplateEntry, newEndEntry: KtStringTemplateEntry): AbstractExtractableSubstringInfo
+    abstract fun copy(newStartEntry: KtStringTemplateEntry, newEndEntry: KtStringTemplateEntry): ExtractableSubstringInfo
 }
 
-var KtExpression.extractableSubstringInfo: AbstractExtractableSubstringInfo? by UserDataProperty(Key.create("EXTRACTED_SUBSTRING_INFO"))
+var KtExpression.extractableSubstringInfo: ExtractableSubstringInfo? by UserDataProperty(Key.create("EXTRACTED_SUBSTRING_INFO"))
 
 val KtExpression.substringContextOrThis: KtExpression
     get() = extractableSubstringInfo?.template ?: this
