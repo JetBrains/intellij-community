@@ -8,9 +8,6 @@ import com.intellij.lang.LangBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -32,6 +29,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
 
 /**
@@ -276,25 +274,42 @@ public final class ExtensionsRootType extends RootType {
     FileUtil.rename(file, newName);
   }
 
+  private final Set<IdeaPluginDescriptor> updatingResources = ConcurrentHashMap.newKeySet();
+
   private void extractBundledExtensionsIfNeeded(@NotNull PluginId pluginId) {
     IdeaPluginDescriptor plugin = PluginManagerCore.getPlugin(pluginId);
-    if (plugin == null || !ResourceVersions.getInstance().shouldUpdateResourcesOf(plugin)) {
+    if (plugin == null) {
       return;
     }
 
-    Task.Backgroundable extractResourcesInBackground =
-      new Task.Backgroundable(null, LangBundle.message("progress.title.extracting.bundled.extensions.for.plugin", pluginId.getIdString())) {
-        @Override
-        public void run(@NotNull ProgressIndicator indicator) {
-          try {
-            extractBundledResources(pluginId, "");
-            ApplicationManager.getApplication().invokeLater(() -> ResourceVersions.getInstance().resourcesUpdated(plugin));
-          }
-          catch (IOException ex) {
-            LOG.warn("Failed to extract bundled extensions for plugin: " + plugin.getName(), ex);
-          }
+    if (startResourcesUpdate(plugin)) {
+      ApplicationManager.getApplication().executeOnPooledThread(() -> {
+        boolean updated = false;
+        try {
+          extractBundledResources(pluginId, "");
+          updated = true;
         }
-      };
-    ProgressManager.getInstance().run(extractResourcesInBackground);
+        catch (IOException ex) {
+          LOG.warn("Failed to extract bundled extensions for plugin: " + plugin.getName(), ex);
+        }
+        finally {
+          finishResourcesUpdate(plugin, updated);
+        }
+      });
+    }
+  }
+
+  private boolean startResourcesUpdate(@NotNull IdeaPluginDescriptor plugin) {
+    if (updatingResources.contains(plugin) || !ResourceVersions.getInstance().shouldUpdateResourcesOf(plugin)) {
+      return false;
+    }
+    return updatingResources.add(plugin);
+  }
+
+  private void finishResourcesUpdate(@NotNull IdeaPluginDescriptor plugin, boolean updated) {
+    if (updated) {
+      ResourceVersions.getInstance().resourcesUpdated(plugin);
+    }
+    updatingResources.remove(plugin);
   }
 }
