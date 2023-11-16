@@ -4,7 +4,7 @@ private class A {
 
     private class B {
         private fun b() {
-            println(this@Companion.m)
+            println(A.m)
         }
         private val <caret>m = ""
     }
@@ -13,3 +13,4 @@ private class A {
         private val m = ""
     }
 }
+// IGNORE_K1

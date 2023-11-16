@@ -1,4 +1,4 @@
-// NEW_NAME: m
+// NEW_NAME: a
 // RENAME: member
 private class A {
 
@@ -6,11 +6,11 @@ private class A {
         private fun b() {
             println(m)
         }
-        private val <caret>a = ""
+        private val a = ""
     }
 
     companion object {
-        private val m = ""
+        private val <caret>m = ""
     }
 }
 // IGNORE_K1

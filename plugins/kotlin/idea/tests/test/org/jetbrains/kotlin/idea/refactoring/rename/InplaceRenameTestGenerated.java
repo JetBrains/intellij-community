@@ -113,9 +113,24 @@ public class InplaceRenameTestGenerated extends AbstractInplaceRenameTest {
         runTest("testData/refactoring/rename/inplace/HidingClassFromCompanionObject.kt");
     }
 
+    @TestMetadata("HidingCompanionMethod.kt")
+    public void testHidingCompanionMethod() throws Exception {
+        runTest("testData/refactoring/rename/inplace/HidingCompanionMethod.kt");
+    }
+
+    @TestMetadata("HidingCompanionMethod1.kt")
+    public void testHidingCompanionMethod1() throws Exception {
+        runTest("testData/refactoring/rename/inplace/HidingCompanionMethod1.kt");
+    }
+
     @TestMetadata("HidingCompanionProperty.kt")
     public void testHidingCompanionProperty() throws Exception {
         runTest("testData/refactoring/rename/inplace/HidingCompanionProperty.kt");
+    }
+
+    @TestMetadata("HidingCompanionProperty1.kt")
+    public void testHidingCompanionProperty1() throws Exception {
+        runTest("testData/refactoring/rename/inplace/HidingCompanionProperty1.kt");
     }
 
     @TestMetadata("HidingExternalCallable.kt")
