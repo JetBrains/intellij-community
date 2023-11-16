@@ -175,40 +175,44 @@ internal class InlineBreakpointInlayManager(private val project: Project, privat
       val linePosition = XSourcePositionImpl.create(file, line)
       val breakpointTypes = XBreakpointUtil.getAvailableLineBreakpointTypes(project, linePosition, null)
 
-      val variants = runCatching {
-        XDebuggerUtilImpl.getLineBreakpointVariantsSync(project, breakpointTypes, linePosition)
-          // No need to show "all" variant in case of the inline breakpoints approach, it's useful only for the popup based one.
-          .filter { !isAllVariant(it) }
-      }.getOrElse { emptyList() }
+      val variants =
+        if (breakpointTypes.isNotEmpty()) {
+          XDebuggerUtilImpl.getLineBreakpointVariantsSync(project, breakpointTypes, linePosition)
+            // No need to show "all" variant in case of the inline breakpoints approach, it's useful only for the popup based one.
+            .filter { !isAllVariant(it) }
+        }
+        else {
+          emptyList()
+        }
 
       val codeStartOffset = DocumentUtil.getLineStartIndentedOffset(document, line)
 
-      if (breakpoints.size == 1 && variants.size == 1 &&
-          areMatching(variants[0], breakpoints[0], codeStartOffset)) {
-        // No need to show inline variants when there is only one breakpoint and one matching variant.
-        emptyList()
+      if (breakpoints.size == 1 &&
+          (variants.isEmpty() ||
+           variants.size == 1 && areMatching(variants[0], breakpoints[0], codeStartOffset))) {
+        // No need to show inline variants when there is only one breakpoint and one matching variant (or no variants at all).
+        return@readAction emptyList()
       }
-      else {
-        buildList {
-          val remainingBreakpoints = breakpoints.toMutableSmartList()
-          for (variant in variants) {
-            val breakpointsHere = remainingBreakpoints.filter { areMatching(variant, it, codeStartOffset) }
-            if (!breakpointsHere.isEmpty()) {
-              for (breakpointHere in breakpointsHere) {
-                remainingBreakpoints.remove(breakpointHere)
-                add(SingleInlayDatum(breakpointHere, variant,
-                                     getBreakpointRangeStartOffset(breakpointHere, codeStartOffset)))
-              }
-            }
-            else {
-              add(SingleInlayDatum(null, variant,
-                                   getBreakpointVariantRangeStartOffset(variant, codeStartOffset)))
+
+      buildList {
+        val remainingBreakpoints = breakpoints.toMutableSmartList()
+        for (variant in variants) {
+          val breakpointsHere = remainingBreakpoints.filter { areMatching(variant, it, codeStartOffset) }
+          if (!breakpointsHere.isEmpty()) {
+            for (breakpointHere in breakpointsHere) {
+              remainingBreakpoints.remove(breakpointHere)
+              add(SingleInlayDatum(breakpointHere, variant,
+                                   getBreakpointRangeStartOffset(breakpointHere, codeStartOffset)))
             }
           }
-          for (remainingBreakpoint in remainingBreakpoints) {
-            add(SingleInlayDatum(remainingBreakpoint, null,
-                                 getBreakpointRangeStartOffset(remainingBreakpoint, codeStartOffset)))
+          else {
+            add(SingleInlayDatum(null, variant,
+                                 getBreakpointVariantRangeStartOffset(variant, codeStartOffset)))
           }
+        }
+        for (remainingBreakpoint in remainingBreakpoints) {
+          add(SingleInlayDatum(remainingBreakpoint, null,
+                               getBreakpointRangeStartOffset(remainingBreakpoint, codeStartOffset)))
         }
       }
     }
