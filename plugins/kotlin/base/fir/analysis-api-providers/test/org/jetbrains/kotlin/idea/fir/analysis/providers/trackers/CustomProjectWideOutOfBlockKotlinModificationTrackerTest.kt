@@ -104,7 +104,7 @@ class CustomProjectWideOutOfBlockKotlinModificationTrackerTest : KotlinLightCode
         }
     }
 
-    fun `disabled test remove contract from function`() {
+    fun `test remove contract from function`() {
         val file = myFixture.configureByText(
             "usage.kt",
             """
