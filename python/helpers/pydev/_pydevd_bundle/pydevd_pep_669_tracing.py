@@ -72,6 +72,12 @@ class PEP669CallbackBase:
 
         return abs_path_real_path_and_base[1]
 
+    @staticmethod
+    def clear_run_state(info):
+        info.pydev_step_stop = None
+        info.pydev_step_cmd = -1
+        info.pydev_state = STATE_RUN
+
 
 class PyStartCallback(PEP669CallbackBase):
     def __init__(self, py_db):
@@ -171,7 +177,7 @@ class PyStartCallback(PEP669CallbackBase):
                 return
 
         except SystemExit:
-            self.stop_monitoring()
+            return
         except Exception:
             try:
                 if traceback is not None:
@@ -379,6 +385,7 @@ class PyLineCallback(PEP669CallbackBase):
                     global_cache_frame_skips[line_cache_key] = 0
             except KeyboardInterrupt:
                 self.clear_run_state(info)
+                raise
             except:
                 traceback.print_exc()
                 raise
@@ -438,17 +445,13 @@ class PyLineCallback(PEP669CallbackBase):
 
             except KeyboardInterrupt:
                 self.clear_run_state(info)
+                raise
             except:
                 traceback.print_exc()
                 raise
 
         finally:
             info.is_tracing = False
-
-    def clear_run_state(self, info):
-        info.pydev_step_stop = None
-        info.pydev_step_cmd = -1
-        info.pydev_state = STATE_RUN
 
     @staticmethod
     def start_monitoring(code):
@@ -490,24 +493,30 @@ class PyRaiseCallback(PEP669CallbackBase):
         exc_info = (type(exception), exception, exception.__traceback__)
 
         frame = self.frame
+        thread = self.thread
+        info = self._get_additional_info(thread)
 
-        if frame is self._get_top_level_frame():
-            self._stop_on_unhandled_exception(exc_info)
-            return
+        try:
+            if frame is self._get_top_level_frame():
+                self._stop_on_unhandled_exception(exc_info)
+                return
 
-        has_exception_breakpoints = (self.py_db.break_on_caught_exceptions
-                                     or self.py_db.has_plugin_exception_breaks
-                                     or self.py_db.stop_on_failed_tests)
-        if has_exception_breakpoints:
-            args = (
-                self.py_db, self._get_filename(frame),
-                self._get_additional_info(self.thread), self.thread, global_cache_skips,
-                global_cache_frame_skips
-            )
-            should_stop, frame = should_stop_on_exception(
-                args, self.frame, 'exception', exc_info)
-            if should_stop:
-                handle_exception(args, frame, 'exception', exc_info)
+            has_exception_breakpoints = (self.py_db.break_on_caught_exceptions
+                                         or self.py_db.has_plugin_exception_breaks
+                                         or self.py_db.stop_on_failed_tests)
+            if has_exception_breakpoints:
+                args = (
+                    self.py_db, self._get_filename(frame),
+                    self._get_additional_info(self.thread), self.thread, global_cache_skips,
+                    global_cache_frame_skips
+                )
+                should_stop, frame = should_stop_on_exception(
+                    args, self.frame, 'exception', exc_info)
+                if should_stop:
+                    handle_exception(args, frame, 'exception', exc_info)
+        except KeyboardInterrupt:
+            self.clear_run_state(info)
+            raise
 
     def _stop_on_unhandled_exception(self, exc_info):
         additional_info = self._get_additional_info(self.thread)
@@ -519,13 +528,13 @@ class PyRaiseCallback(PEP669CallbackBase):
 
 class PyReturnCallback(PEP669CallbackBase):
     def __call__(self, code, instruction_offset, retval):
+        # print('PY_RETURN %s %s %s' % (code, code.co_name, code.co_filename))
+
+        frame = self.frame
+        thread = self.thread
+        info = self._get_additional_info(thread)
+
         try:
-            # print('PY_RETURN %s %s %s' % (code, code.co_name, code.co_filename))
-
-            frame = self.frame
-            thread = self.thread
-            info = self._get_additional_info(thread)
-
             if self.py_db.show_return_values or self.py_db.remove_return_values_flag:
                 manage_return_values(self.py_db, frame, 'return', retval)
 
@@ -548,6 +557,9 @@ class PyReturnCallback(PEP669CallbackBase):
                         PyLineCallback.start_monitoring(back_code)
                         if back_code.co_name != '<module>':
                             PyReturnCallback.start_monitoring(back_code)
+        except KeyboardInterrupt:
+            self.clear_run_state(info)
+            raise
         finally:
             self.stop_monitoring(code)
 
