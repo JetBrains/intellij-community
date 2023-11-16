@@ -84,7 +84,7 @@ object ChooserPopupUtil {
                                               popupConfig: PopupConfig = PopupConfig.DEFAULT): T? = coroutineScope {
     val listModel = CollectionListModel<T>()
     val list = createList(listModel, renderer)
-    val loadingListener = ListLoadingListener(this, listModel, itemsLoader, list, popupConfig.errorPresenter)
+    val loadingListener = ListLoadingListener(this, itemsLoader, list, listModel, popupConfig.errorPresenter)
 
     @Suppress("UNCHECKED_CAST")
     val popup = JBPopupFactory.getInstance().createListPopupBuilder(list)
@@ -117,8 +117,9 @@ object ChooserPopupUtil {
     val list = createSelectableList(listModel, SimpleSelectablePopupItemRenderer.create { item ->
       SelectablePopupItemPresentation.fromPresenter(presenter, item)
     })
-    val loadingListener = SelectableListLoadingListener(this, listModel, itemsLoader, list, isOriginallySelected,
-                                                        popupConfig.errorPresenter)
+    val loadingListener = SelectableListLoadingListener(
+      this, itemsLoader, list, listModel, isOriginallySelected, popupConfig.errorPresenter
+    )
 
     @Suppress("UNCHECKED_CAST")
     val popup = JBPopupFactory.getInstance().createListPopupBuilder(list)
@@ -172,43 +173,6 @@ object ChooserPopupUtil {
     }
     repaint()
   }
-
-  private class ListLoadingListener<T : Any>(private val parentScope: CoroutineScope,
-                                             private val listModel: CollectionListModel<T>,
-                                             private val items: Flow<Result<List<T>>>,
-                                             private val list: JBList<T>,
-                                             private val errorPresenter: ErrorStatusPresenter<Throwable>?) : JBPopupListener {
-    private var cs: CoroutineScope? = null
-
-    override fun beforeShown(event: LightweightWindowEvent) {
-      val cs = parentScope.childScope()
-      this.cs = cs
-
-      cs.launchNow {
-        items.collect { resultedItems ->
-          list.emptyText.clear()
-          resultedItems.fold(
-            onSuccess = { item ->
-              val selected = list.selectedIndex
-              if (item.size > listModel.size) {
-                val newList = item.subList(listModel.size, item.size)
-                listModel.addAll(listModel.size, newList)
-              }
-              if (selected != -1) {
-                list.selectedIndex = selected
-              }
-            },
-            onFailure = { e -> showErrorOnPopupFailure(e, errorPresenter, list) }
-          )
-        }
-      }
-    }
-
-    override fun onClosed(event: LightweightWindowEvent) {
-      cs?.cancel()
-      cs = null
-    }
-  }
 }
 
 data class PopupConfig(
@@ -228,15 +192,15 @@ enum class ShowDirection {
   BELOW
 }
 
-private class SelectableListLoadingListener<T : Any>(
+private abstract class AbstractListLoadingListener<T>(
   private val parentScope: CoroutineScope,
-  private val listModel: CollectionListModel<SelectableWrapper<T>>,
   private val itemsFlow: Flow<Result<List<T>>>,
-  private val list: JBList<SelectableWrapper<T>>,
-  private val isOriginallySelected: (T) -> Boolean,
-  private val errorPresenter: ErrorStatusPresenter<Throwable>?
+  private val list: JBList<*>,
 ) : JBPopupListener {
   private var cs: CoroutineScope? = null
+
+  abstract fun onSuccess(items: List<T>)
+  abstract fun onFailure(exception: Throwable)
 
   override fun beforeShown(event: LightweightWindowEvent) {
     val cs = parentScope.childScope()
@@ -246,15 +210,8 @@ private class SelectableListLoadingListener<T : Any>(
       itemsFlow.collect { resultedItems ->
         list.emptyText.clear()
         resultedItems.fold(
-          onSuccess = { items ->
-            val newList = items.map { item -> SelectableWrapper(item, isOriginallySelected(item)) }
-            listModel.replaceAll(newList)
-
-            if (list.selectedIndex == -1) {
-              list.selectedIndex = 0
-            }
-          },
-          onFailure = { e -> showErrorOnPopupFailure(e, errorPresenter, list) }
+          onSuccess = { items -> onSuccess(items) },
+          onFailure = { exception -> onFailure(exception) }
         )
       }
     }
@@ -263,6 +220,51 @@ private class SelectableListLoadingListener<T : Any>(
   override fun onClosed(event: LightweightWindowEvent) {
     cs?.cancel()
     cs = null
+  }
+}
+
+private class ListLoadingListener<T : Any>(
+  private val parentScope: CoroutineScope,
+  private val itemsFlow: Flow<Result<List<T>>>,
+  private val list: JBList<*>,
+  private val listModel: CollectionListModel<T>,
+  private val errorPresenter: ErrorStatusPresenter<Throwable>?
+) : AbstractListLoadingListener<T>(parentScope, itemsFlow, list) {
+  override fun onSuccess(items: List<T>) {
+    val selected = list.selectedIndex
+    if (items.size > listModel.size) {
+      val newList = items.subList(listModel.size, items.size)
+      listModel.addAll(listModel.size, newList)
+    }
+    if (selected != -1) {
+      list.selectedIndex = selected
+    }
+  }
+
+  override fun onFailure(exception: Throwable) {
+    showErrorOnPopupFailure(exception, errorPresenter, list)
+  }
+}
+
+private class SelectableListLoadingListener<T : Any>(
+  private val parentScope: CoroutineScope,
+  private val itemsFlow: Flow<Result<List<T>>>,
+  private val list: JBList<*>,
+  private val listModel: CollectionListModel<SelectableWrapper<T>>,
+  private val isOriginallySelected: (T) -> Boolean,
+  private val errorPresenter: ErrorStatusPresenter<Throwable>?
+) : AbstractListLoadingListener<T>(parentScope, itemsFlow, list) {
+  override fun onSuccess(items: List<T>) {
+    val newList = items.map { item -> SelectableWrapper(item, isOriginallySelected(item)) }
+    listModel.replaceAll(newList)
+
+    if (list.selectedIndex == -1) {
+      list.selectedIndex = 0
+    }
+  }
+
+  override fun onFailure(exception: Throwable) {
+    showErrorOnPopupFailure(exception, errorPresenter, list)
   }
 }
 
