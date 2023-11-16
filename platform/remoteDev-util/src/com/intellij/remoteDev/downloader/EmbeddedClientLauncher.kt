@@ -56,21 +56,19 @@ class EmbeddedClientLauncher private constructor(private val moduleRepository: R
   }
 
   fun launch(urlToOpen: String, lifetime: Lifetime, errorReporter: EmbeddedClientErrorReporter): Lifetime {
-    if (Registry.`is`("rdct.embedded.client.use.launcher")) {
-      val launcherData = findJetBrainsClientLauncher()
-      if (launcherData != null) {
-        LOG.debug("Start embedded client using launcher")
-        val workingDirectory = Path(PathManager.getHomePath())
-        return CodeWithMeClientDownloader.runJetBrainsClientProcess(
-          launcherData, 
-          workingDirectory,
-          clientVersion = ApplicationInfo.getInstance().build.asStringWithoutProductCode(),
-          urlToOpen, 
-          lifetime
-        )
-      }
+    val launcherData = findJetBrainsClientLauncher()
+    if (launcherData != null) {
+      LOG.debug("Start embedded client using launcher")
+      val workingDirectory = Path(PathManager.getHomePath())
+      return CodeWithMeClientDownloader.runJetBrainsClientProcess(
+        launcherData, 
+        workingDirectory,
+        clientVersion = ApplicationInfo.getInstance().build.asStringWithoutProductCode(),
+        urlToOpen, 
+        lifetime
+      )
     }
-    
+
     val processLifetimeDef = lifetime.createNested()
     
     val javaParameters = createProcessParameters(moduleRepository, moduleRepositoryPath, urlToOpen)
