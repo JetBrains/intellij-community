@@ -11,7 +11,7 @@ import org.jetbrains.idea.devkit.inspections.toLevel
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.Name
 
-private class ServiceLevelExtractorForKotlin : ServiceLevelExtractor {
+internal class ServiceLevelExtractorForKotlin : ServiceLevelExtractor {
   override fun extractLevels(attributeValue: JvmAnnotationArrayValue): Collection<Service.Level> {
     return attributeValue.values
       .asSequence()

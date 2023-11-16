@@ -11,7 +11,7 @@ private val EP_NAME: ExtensionPointName<ErrorMessageProvider> =
 
 internal object LightServiceMustBeFinalErrorMessageProviders : LanguageExtension<ErrorMessageProvider>(EP_NAME.name)
 
-private class LightServiceMustBeFinalErrorMessageProvider : ErrorMessageProvider {
+internal class LightServiceMustBeFinalErrorMessageProvider : ErrorMessageProvider {
   override fun provideErrorMessage(): @Nls String {
     return DevKitBundle.message("inspection.light.service.must.be.final.message")
   }
