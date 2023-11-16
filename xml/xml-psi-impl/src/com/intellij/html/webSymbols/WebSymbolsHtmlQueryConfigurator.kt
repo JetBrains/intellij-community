@@ -284,18 +284,21 @@ class WebSymbolsHtmlQueryConfigurator : WebSymbolsQueryConfigurator {
       get() = descriptor.declaration
 
     override val attributeValue: WebSymbolHtmlAttributeValue
-      get() = WebSymbolHtmlAttributeValue.create(
-        null,
-        if (HtmlUtil.isBooleanAttribute(descriptor, null)) {
-          WebSymbolHtmlAttributeValue.Type.BOOLEAN
-        }
-        else {
-          WebSymbolHtmlAttributeValue.Type.STRING
-        },
-        true,
-        descriptor.defaultValue,
-        null
-      )
+      get() {
+        val isBooleanAttribute = HtmlUtil.isBooleanAttribute(descriptor, null)
+        return WebSymbolHtmlAttributeValue.create(
+          null,
+          if (isBooleanAttribute) {
+            WebSymbolHtmlAttributeValue.Type.BOOLEAN
+          }
+          else {
+            WebSymbolHtmlAttributeValue.Type.STRING
+          },
+          !isBooleanAttribute,
+          descriptor.defaultValue,
+          null
+        )
+      }
 
     override fun createPointer(): Pointer<HtmlAttributeDescriptorBasedSymbol> {
       val descriptor = this.descriptor
