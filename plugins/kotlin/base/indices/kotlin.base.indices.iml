@@ -20,5 +20,6 @@
     <orderEntry type="module" module-name="intellij.platform.ide.core" />
     <orderEntry type="module" module-name="intellij.platform.analysis" />
     <orderEntry type="module" module-name="intellij.java" />
+    <orderEntry type="module" module-name="kotlin.base.plugin" />
   </component>
 </module>

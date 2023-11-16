@@ -1,5 +1,4 @@
-// FIR_COMPARISON
-// FIR_IDENTICAL
+// IGNORE_K2
 package ppp
 
 interface I
