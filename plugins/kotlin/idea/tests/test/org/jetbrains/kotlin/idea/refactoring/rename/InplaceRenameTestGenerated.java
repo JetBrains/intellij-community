@@ -188,6 +188,11 @@ public class InplaceRenameTestGenerated extends AbstractInplaceRenameTest {
         runTest("testData/refactoring/rename/inplace/HidingOuterPropertyInSuper.kt");
     }
 
+    @TestMetadata("HidingPropertyBySetterParameter.kt")
+    public void testHidingPropertyBySetterParameter() throws Exception {
+        runTest("testData/refactoring/rename/inplace/HidingPropertyBySetterParameter.kt");
+    }
+
     @TestMetadata("HidingPropertyByTopLevel.kt")
     public void testHidingPropertyByTopLevel() throws Exception {
         runTest("testData/refactoring/rename/inplace/HidingPropertyByTopLevel.kt");
