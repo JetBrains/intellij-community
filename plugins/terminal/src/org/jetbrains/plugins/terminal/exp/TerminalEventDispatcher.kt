@@ -259,11 +259,8 @@ internal fun setupMouseListener(editor: EditorEx,
   }, disposable)
 
   val mouseWheelListener = MouseWheelListener { event ->
-    if (settings.enableMouseReporting() && isRemoteMouseAction(event)) {
-      editor.selectionModel.removeSelection()
-      val p = editor.xyToLogicalPosition(event.point)
-      eventsHandler.mouseWheelMoved(p.column, p.line + historyLinesCount(), event)
-    }
+    val p = editor.xyToLogicalPosition(event.point)
+    eventsHandler.mouseWheelMoved(p.column, p.line + historyLinesCount(), event)
   }
   editor.scrollPane.addMouseWheelListener(mouseWheelListener)
   Disposer.register(disposable, Disposable {

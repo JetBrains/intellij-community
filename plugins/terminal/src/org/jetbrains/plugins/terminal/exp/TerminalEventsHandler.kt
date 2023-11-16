@@ -3,6 +3,7 @@ package org.jetbrains.plugins.terminal.exp
 
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
+import java.awt.event.MouseWheelEvent
 
 interface TerminalEventsHandler {
   fun keyTyped(e: KeyEvent) {}
@@ -12,5 +13,5 @@ interface TerminalEventsHandler {
   fun mouseReleased(x: Int, y: Int, event: MouseEvent) {}
   fun mouseMoved(x: Int, y: Int, event: MouseEvent) {}
   fun mouseDragged(x: Int, y: Int, event: MouseEvent) {}
-  fun mouseWheelMoved(x: Int, y: Int, event: MouseEvent) {}
+  fun mouseWheelMoved(x: Int, y: Int, event: MouseWheelEvent) {}
 }

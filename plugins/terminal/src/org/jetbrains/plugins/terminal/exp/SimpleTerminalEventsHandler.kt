@@ -15,6 +15,7 @@ import java.awt.event.MouseEvent
 import java.awt.event.MouseWheelEvent
 import java.nio.charset.Charset
 import javax.swing.SwingUtilities
+import kotlin.math.abs
 
 /**
  * Logic of key events handling is copied from [com.jediterm.terminal.ui.TerminalPanel]
@@ -199,9 +200,25 @@ open class SimpleTerminalEventsHandler(
     lastMotionReport = Point(x, y)
   }
 
-  override fun mouseWheelMoved(x: Int, y: Int, event: MouseEvent) {
-    // mousePressed() handles mouse wheel using SCROLLDOWN and SCROLLUP buttons
-    mousePressed(x, y, event)
+  override fun mouseWheelMoved(x: Int, y: Int, event: MouseWheelEvent) {
+    if (settings.enableMouseReporting() && model.mouseMode != MouseMode.MOUSE_REPORTING_NONE && !event.isShiftDown) {
+      outputModel.editor.selectionModel.removeSelection()
+      // mousePressed() handles mouse wheel using SCROLLDOWN and SCROLLUP buttons
+      mousePressed(x, y, event)
+    }
+    if (model.useAlternateBuffer && settings.sendArrowKeysInAlternativeMode()) {
+      //Send Arrow keys instead
+      val arrowKeys = if (event.wheelRotation < 0) {
+        session.controller.getCodeForKey(KeyEvent.VK_UP, 0)
+      }
+      else {
+        session.controller.getCodeForKey(KeyEvent.VK_DOWN, 0)
+      }
+      for (i in 0 until abs(event.unitsToScroll)) {
+        sendUserInput(arrowKeys)
+      }
+      event.consume()
+    }
   }
 
   private fun shouldSendMouseData(vararg eligibleModes: MouseMode): Boolean {
