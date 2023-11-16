@@ -35,7 +35,7 @@ public class PerformanceTestInfo {
                                  @NotNull String logMessage) {
   }
 
-  private enum IterationType {
+  private enum IterationMode {
     WARMUP,
     MEASURE
   }
@@ -231,19 +231,19 @@ public class PerformanceTestInfo {
    * @param fullQualifiedTestMethodName - String representation of full method name.
    */
   public void assertTiming(String fullQualifiedTestMethodName) {
-    assertTiming(IterationType.WARMUP, fullQualifiedTestMethodName);
-    assertTiming(IterationType.MEASURE, fullQualifiedTestMethodName);
+    assertTiming(IterationMode.WARMUP, fullQualifiedTestMethodName);
+    assertTiming(IterationMode.MEASURE, fullQualifiedTestMethodName);
   }
 
-  private void assertTiming(IterationType iterationType, String fullQualifiedTestMethodName) {
+  private void assertTiming(IterationMode iterationType, String fullQualifiedTestMethodName) {
     if (PlatformTestUtil.COVERAGE_ENABLED_BUILD) return;
-    System.out.printf("Performance measurement type: %s", iterationType);
+    System.out.printf("Starting performance test in mode: %s%n", iterationType);
 
     Timings.getStatistics(); // warm-up, measure
     updateJitUsage();
 
     int maxIterationsNumber;
-    if (iterationType.equals(IterationType.WARMUP)) {
+    if (iterationType.equals(IterationMode.WARMUP)) {
       maxIterationsNumber = warmupIterations;
     }
     else {
@@ -256,7 +256,7 @@ public class PerformanceTestInfo {
     }
 
     try {
-      computeWithSpanAttribute(tracer, what, "warmup", (st) -> String.valueOf(iterationType.equals(IterationType.WARMUP)), () -> {
+      computeWithSpanAttribute(tracer, what, "warmup", (st) -> String.valueOf(iterationType.equals(IterationMode.WARMUP)), () -> {
         try {
           for (int attempt = 1; attempt <= maxIterationsNumber; attempt++) {
             AtomicInteger actualInputSize;
@@ -292,7 +292,7 @@ public class PerformanceTestInfo {
                 var spanAttributes = new HashMap<String, String>();
 
                 spanAttributes.put("Attempt status", String.valueOf(iterationStatusSupplier));
-                if (iterationType.equals(IterationType.WARMUP)) {
+                if (iterationType.equals(IterationMode.WARMUP)) {
                   spanAttributes.put("warmup", "true");
                 }
 
@@ -325,7 +325,7 @@ public class PerformanceTestInfo {
     finally {
       try {
         // publish warmup and clean measurements at once at the end of the runs
-        if (iterationType.equals(IterationType.MEASURE)) {
+        if (iterationType.equals(IterationMode.MEASURE)) {
           MetricsPublisher.getInstance().publish(fullQualifiedTestMethodName, what);
         }
       }

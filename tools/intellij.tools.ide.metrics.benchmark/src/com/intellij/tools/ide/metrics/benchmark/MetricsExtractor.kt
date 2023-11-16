@@ -12,7 +12,15 @@ import java.io.File
 import kotlin.time.Duration.Companion.milliseconds
 
 
-class MetricsExtractor(val telemetryJsonFile: File = PathManager.getLogDir().resolve("opentelemetry.json").toFile()) {
+class MetricsExtractor(val telemetryJsonFile: File = getDefaultPathToTelemetrySpanJson()) {
+  companion object {
+    fun getDefaultPathToTelemetrySpanJson(): File {
+      val pathStr: String = System.getProperty("idea.diagnostic.opentelemetry.file",
+                                               PathManager.getLogDir().resolve("opentelemetry.json").toAbsolutePath().toString())
+      return File(pathStr)
+    }
+  }
+
   fun waitTillMetricsExported(spanName: String): List<PerformanceMetrics.Metric> {
     val originalMetrics: List<PerformanceMetrics.Metric>? = withRetry(retries = 3, delayBetweenRetries = 300.milliseconds) {
       TelemetryManager.getInstance().forceFlushMetrics()

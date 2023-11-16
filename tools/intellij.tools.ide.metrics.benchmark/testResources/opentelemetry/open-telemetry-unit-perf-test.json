@@ -1,7 +1,7 @@
 {
   "data": [
     {
-      "traceID": "5c172cafd9dac7726ad11c5ffd25a1e9",
+      "traceID": "b90062207de03dcb363a3e71a1686c1a",
       "processes": {
         "p1": {
           "serviceName": "IntelliJ IDEA",
@@ -9,7 +9,7 @@
             {
               "key": "time",
               "type": "string",
-              "value": "Fri, 10 Nov 2023 15:52:49 +0200"
+              "value": "Thu, 16 Nov 2023 09:18:11 +0200"
             },
             {
               "key": "service.version",
@@ -26,360 +26,20 @@
       },
       "spans": [
         {
-          "traceID": "632b941321ed9f82257a1cd61a476e96",
-          "spanID": "2a2c3731f13c52c5",
-          "operationName": "project.opening",
-          "processID": "p1",
-          "startTime": 1699624369173569,
-          "duration": 1218465,
-          "references": [
-            {
-              "refType": "CHILD_OF",
-              "traceID": "632b941321ed9f82257a1cd61a476e96",
-              "spanID": "cd82a0c3de952e3d"
-            }
-          ]
-        },
-        {
-          "traceID": "4ef4717632c7f7d1e0decd45c5ea5feb",
-          "spanID": "47595069c17afa9b",
+          "traceID": "ccdb97928eb9eb5a3edcb42011c7e004",
+          "spanID": "809f150acd521f74",
           "operationName": "Attempt: 1",
           "processID": "p1",
-          "startTime": 1699624377110056,
-          "duration": 59078,
+          "startTime": 1700119096816631,
+          "duration": 243012,
           "tags": [
             {
               "key": "Attempt status",
               "type": "string",
-              "value": "false"
-            }
-          ],
-          "references": [
+              "value": "IterationStatus[iterationResult=SLOW, passed=false, logMessage=simple perf test took \u001B[31;1m1343% more time\u001B[0m than expected\n  Expected: 16ms\n  Actual:   231ms\n  Timings:  CPU=33 (16% reference CPU), I/O=5 (5% reference IO), 20 cores (X86_64)\n  Threads:  insignificant\n  GC stats: insignificant; free 86/112 -> 86/112 MB\n  Process:  2ms (10%) compilation of 20ms total]"
+            },
             {
-              "refType": "CHILD_OF",
-              "traceID": "4ef4717632c7f7d1e0decd45c5ea5feb",
-              "spanID": "055d55b84d0b44df"
-            }
-          ]
-        },
-        {
-          "traceID": "4ef4717632c7f7d1e0decd45c5ea5feb",
-          "spanID": "dfe37a02f4ab6c96",
-          "operationName": "Attempt: 2",
-          "processID": "p1",
-          "startTime": 1699624378240774,
-          "duration": 38450,
-          "tags": [
-            {
-              "key": "Attempt status",
-              "type": "string",
-              "value": "false"
-            }
-          ],
-          "references": [
-            {
-              "refType": "CHILD_OF",
-              "traceID": "4ef4717632c7f7d1e0decd45c5ea5feb",
-              "spanID": "055d55b84d0b44df"
-            }
-          ]
-        },
-        {
-          "traceID": "4ef4717632c7f7d1e0decd45c5ea5feb",
-          "spanID": "20890d65bea99346",
-          "operationName": "Attempt: 3",
-          "processID": "p1",
-          "startTime": 1699624379861047,
-          "duration": 35672,
-          "tags": [
-            {
-              "key": "Attempt status",
-              "type": "string",
-              "value": "false"
-            }
-          ],
-          "references": [
-            {
-              "refType": "CHILD_OF",
-              "traceID": "4ef4717632c7f7d1e0decd45c5ea5feb",
-              "spanID": "055d55b84d0b44df"
-            }
-          ]
-        },
-        {
-          "traceID": "4ef4717632c7f7d1e0decd45c5ea5feb",
-          "spanID": "08c16ebadc95eafa",
-          "operationName": "Attempt: 4",
-          "processID": "p1",
-          "startTime": 1699624380732923,
-          "duration": 35011,
-          "tags": [
-            {
-              "key": "Attempt status",
-              "type": "string",
-              "value": "false"
-            }
-          ],
-          "references": [
-            {
-              "refType": "CHILD_OF",
-              "traceID": "4ef4717632c7f7d1e0decd45c5ea5feb",
-              "spanID": "055d55b84d0b44df"
-            }
-          ]
-        },
-        {
-          "traceID": "4ef4717632c7f7d1e0decd45c5ea5feb",
-          "spanID": "a94b9a5f4c00fc78",
-          "operationName": "Attempt: 5",
-          "processID": "p1",
-          "startTime": 1699624381812049,
-          "duration": 32625,
-          "tags": [
-            {
-              "key": "Attempt status",
-              "type": "string",
-              "value": "false"
-            }
-          ],
-          "references": [
-            {
-              "refType": "CHILD_OF",
-              "traceID": "4ef4717632c7f7d1e0decd45c5ea5feb",
-              "spanID": "055d55b84d0b44df"
-            }
-          ]
-        },
-        {
-          "traceID": "4ef4717632c7f7d1e0decd45c5ea5feb",
-          "spanID": "382c84f1cf99c6ad",
-          "operationName": "Attempt: 6",
-          "processID": "p1",
-          "startTime": 1699624382737316,
-          "duration": 29701,
-          "tags": [
-            {
-              "key": "Attempt status",
-              "type": "string",
-              "value": "false"
-            }
-          ],
-          "references": [
-            {
-              "refType": "CHILD_OF",
-              "traceID": "4ef4717632c7f7d1e0decd45c5ea5feb",
-              "spanID": "055d55b84d0b44df"
-            }
-          ]
-        },
-        {
-          "traceID": "4ef4717632c7f7d1e0decd45c5ea5feb",
-          "spanID": "e57c1d44a72838e9",
-          "operationName": "Attempt: 7",
-          "processID": "p1",
-          "startTime": 1699624383503034,
-          "duration": 30447,
-          "tags": [
-            {
-              "key": "Attempt status",
-              "type": "string",
-              "value": "false"
-            }
-          ],
-          "references": [
-            {
-              "refType": "CHILD_OF",
-              "traceID": "4ef4717632c7f7d1e0decd45c5ea5feb",
-              "spanID": "055d55b84d0b44df"
-            }
-          ]
-        },
-        {
-          "traceID": "4ef4717632c7f7d1e0decd45c5ea5feb",
-          "spanID": "ef6020ee8cdd600e",
-          "operationName": "Attempt: 8",
-          "processID": "p1",
-          "startTime": 1699624384293788,
-          "duration": 28718,
-          "tags": [
-            {
-              "key": "Attempt status",
-              "type": "string",
-              "value": "false"
-            }
-          ],
-          "references": [
-            {
-              "refType": "CHILD_OF",
-              "traceID": "4ef4717632c7f7d1e0decd45c5ea5feb",
-              "spanID": "055d55b84d0b44df"
-            }
-          ]
-        },
-        {
-          "traceID": "4ef4717632c7f7d1e0decd45c5ea5feb",
-          "spanID": "1471d5bed0d2df33",
-          "operationName": "Attempt: 9",
-          "processID": "p1",
-          "startTime": 1699624385074956,
-          "duration": 29212,
-          "tags": [
-            {
-              "key": "Attempt status",
-              "type": "string",
-              "value": "false"
-            }
-          ],
-          "references": [
-            {
-              "refType": "CHILD_OF",
-              "traceID": "4ef4717632c7f7d1e0decd45c5ea5feb",
-              "spanID": "055d55b84d0b44df"
-            }
-          ]
-        },
-        {
-          "traceID": "4ef4717632c7f7d1e0decd45c5ea5feb",
-          "spanID": "80859d13fda9d9bd",
-          "operationName": "Attempt: 10",
-          "processID": "p1",
-          "startTime": 1699624385689046,
-          "duration": 26245,
-          "tags": [
-            {
-              "key": "Attempt status",
-              "type": "string",
-              "value": "false"
-            }
-          ],
-          "references": [
-            {
-              "refType": "CHILD_OF",
-              "traceID": "4ef4717632c7f7d1e0decd45c5ea5feb",
-              "spanID": "055d55b84d0b44df"
-            }
-          ]
-        },
-        {
-          "traceID": "4ef4717632c7f7d1e0decd45c5ea5feb",
-          "spanID": "c89f531682fa4324",
-          "operationName": "Attempt: 11",
-          "processID": "p1",
-          "startTime": 1699624386349733,
-          "duration": 42708,
-          "tags": [
-            {
-              "key": "Attempt status",
-              "type": "string",
-              "value": "false"
-            }
-          ],
-          "references": [
-            {
-              "refType": "CHILD_OF",
-              "traceID": "4ef4717632c7f7d1e0decd45c5ea5feb",
-              "spanID": "055d55b84d0b44df"
-            }
-          ]
-        },
-        {
-          "traceID": "4ef4717632c7f7d1e0decd45c5ea5feb",
-          "spanID": "89e567094fd524d4",
-          "operationName": "Attempt: 12",
-          "processID": "p1",
-          "startTime": 1699624387068986,
-          "duration": 26965,
-          "tags": [
-            {
-              "key": "Attempt status",
-              "type": "string",
-              "value": "false"
-            }
-          ],
-          "references": [
-            {
-              "refType": "CHILD_OF",
-              "traceID": "4ef4717632c7f7d1e0decd45c5ea5feb",
-              "spanID": "055d55b84d0b44df"
-            }
-          ]
-        },
-        {
-          "traceID": "4ef4717632c7f7d1e0decd45c5ea5feb",
-          "spanID": "5fc84942f4553748",
-          "operationName": "Attempt: 13",
-          "processID": "p1",
-          "startTime": 1699624387822162,
-          "duration": 27567,
-          "tags": [
-            {
-              "key": "Attempt status",
-              "type": "string",
-              "value": "false"
-            }
-          ],
-          "references": [
-            {
-              "refType": "CHILD_OF",
-              "traceID": "4ef4717632c7f7d1e0decd45c5ea5feb",
-              "spanID": "055d55b84d0b44df"
-            }
-          ]
-        },
-        {
-          "traceID": "4ef4717632c7f7d1e0decd45c5ea5feb",
-          "spanID": "66ace6d38579a2e8",
-          "operationName": "Attempt: 14",
-          "processID": "p1",
-          "startTime": 1699624388422774,
-          "duration": 28768,
-          "tags": [
-            {
-              "key": "Attempt status",
-              "type": "string",
-              "value": "false"
-            }
-          ],
-          "references": [
-            {
-              "refType": "CHILD_OF",
-              "traceID": "4ef4717632c7f7d1e0decd45c5ea5feb",
-              "spanID": "055d55b84d0b44df"
-            }
-          ]
-        },
-        {
-          "traceID": "4ef4717632c7f7d1e0decd45c5ea5feb",
-          "spanID": "f4b10457bd561016",
-          "operationName": "Attempt: 15",
-          "processID": "p1",
-          "startTime": 1699624389277942,
-          "duration": 26656,
-          "tags": [
-            {
-              "key": "Attempt status",
-              "type": "string",
-              "value": "false"
-            }
-          ],
-          "references": [
-            {
-              "refType": "CHILD_OF",
-              "traceID": "4ef4717632c7f7d1e0decd45c5ea5feb",
-              "spanID": "055d55b84d0b44df"
-            }
-          ]
-        },
-        {
-          "traceID": "4ef4717632c7f7d1e0decd45c5ea5feb",
-          "spanID": "3cb8caf04b974075",
-          "operationName": "Attempt: 16",
-          "processID": "p1",
-          "startTime": 1699624389870565,
-          "duration": 24549,
-          "tags": [
-            {
-              "key": "Attempt status",
+              "key": "warmup",
               "type": "string",
               "value": "true"
             }
@@ -387,178 +47,106 @@
           "references": [
             {
               "refType": "CHILD_OF",
-              "traceID": "4ef4717632c7f7d1e0decd45c5ea5feb",
-              "spanID": "055d55b84d0b44df"
+              "traceID": "ccdb97928eb9eb5a3edcb42011c7e004",
+              "spanID": "d904b99697b813b7"
             }
           ]
         },
         {
-          "traceID": "4ef4717632c7f7d1e0decd45c5ea5feb",
-          "spanID": "055d55b84d0b44df",
-          "operationName": "Adding and removing a project library 30 times",
+          "traceID": "ccdb97928eb9eb5a3edcb42011c7e004",
+          "spanID": "d904b99697b813b7",
+          "operationName": "simple perf test",
           "processID": "p1",
-          "startTime": 1699624375876000,
-          "duration": 14019272
-        },
-        {
-          "traceID": "019d68b11bfefef31df8caac19253041",
-          "spanID": "015ff47b1bfefef3",
-          "operationName": "run activity: scheduled",
-          "processID": "p1",
-          "startTime": 1699624369607389,
-          "duration": 148
-        },
-        {
-          "traceID": "019d68b128fe2f2b1df8caac19253041",
-          "spanID": "015ff47d11aa39b8",
-          "operationName": "firing modules_added event: scheduled",
-          "processID": "p1",
-          "startTime": 1699624369608732,
-          "duration": 104,
-          "references": [
-            {
-              "refType": "CHILD_OF",
-              "traceID": "019d68b128fe2f2b1df8caac19253041",
-              "spanID": "015ff47c28fe2f2b"
-            }
-          ]
-        },
-        {
-          "traceID": "019d68b128fe2f2b1df8caac19253041",
-          "spanID": "015ff47d069abef7",
-          "operationName": "firing modules_added event",
-          "processID": "p1",
-          "startTime": 1699624369608837,
-          "duration": 9390,
-          "references": [
-            {
-              "refType": "CHILD_OF",
-              "traceID": "019d68b128fe2f2b1df8caac19253041",
-              "spanID": "015ff47c28fe2f2b"
-            }
-          ]
-        },
-        {
-          "traceID": "019d68b128fe2f2b1df8caac19253041",
-          "spanID": "015ff4871f63cbc1",
-          "operationName": "deprecated module component moduleAdded calling: scheduled",
-          "processID": "p1",
-          "startTime": 1699624369618914,
-          "duration": 87,
-          "references": [
-            {
-              "refType": "CHILD_OF",
-              "traceID": "019d68b128fe2f2b1df8caac19253041",
-              "spanID": "015ff47c28fe2f2b"
-            }
-          ]
-        },
-        {
-          "traceID": "019d68b128fe2f2b1df8caac19253041",
-          "spanID": "015ff4873b2ae853",
-          "operationName": "deprecated module component moduleAdded calling",
-          "processID": "p1",
-          "startTime": 1699624369619002,
-          "duration": 112,
-          "references": [
-            {
-              "refType": "CHILD_OF",
-              "traceID": "019d68b128fe2f2b1df8caac19253041",
-              "spanID": "015ff47c28fe2f2b"
-            }
-          ]
-        },
-        {
-          "traceID": "019d68b128fe2f2b1df8caac19253041",
-          "spanID": "015ff47c28fe2f2b",
-          "operationName": "run activity",
-          "processID": "p1",
-          "startTime": 1699624369607538,
-          "duration": 11626,
+          "startTime": 1700119096713000,
+          "duration": 379215,
           "tags": [
             {
-              "key": "class",
+              "key": "warmup",
               "type": "string",
-              "value": "com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge$ModuleManagerInitProjectActivity"
-            },
-            {
-              "key": "plugin",
-              "type": "string",
-              "value": "com.intellij"
+              "value": "true"
             }
           ]
         },
         {
-          "traceID": "019d68b115dea0231df8caac19253041",
-          "spanID": "015ff48815dea023",
-          "operationName": "run activity: scheduled",
+          "traceID": "0e41c95bfa9df6cee41cd27e4a85dadc",
+          "spanID": "081a305a1f14d933",
+          "operationName": "Attempt: 1",
           "processID": "p1",
-          "startTime": 1699624369619853,
-          "duration": 35
-        },
-        {
-          "traceID": "019d68b168c6f4521df8caac19253041",
-          "spanID": "015ff48868c6f452",
-          "operationName": "run activity",
-          "processID": "p1",
-          "startTime": 1699624369619888,
-          "duration": 5511,
+          "startTime": 1700119097395956,
+          "duration": 486235,
           "tags": [
             {
-              "key": "class",
+              "key": "Attempt status",
               "type": "string",
-              "value": "com.intellij.psi.impl.file.impl.PsiVFSListener$MyStartUpActivity"
-            },
+              "value": "IterationStatus[iterationResult=SLOW, passed=false, logMessage=simple perf test took \u001B[31;1m2931% more time\u001B[0m than expected\n  Expected: 16ms\n  Actual:   485ms\n  Timings:  CPU=33 (16% reference CPU), I/O=5 (5% reference IO), 20 cores (X86_64)\n  Threads:  insignificant\n  GC stats: insignificant; free 86/112 -> 86/112 MB\n  Process:  6ms (30%) compilation of 20ms total]"
+            }
+          ],
+          "references": [
             {
-              "key": "plugin",
-              "type": "string",
-              "value": "com.intellij"
+              "refType": "CHILD_OF",
+              "traceID": "0e41c95bfa9df6cee41cd27e4a85dadc",
+              "spanID": "c1ccfdfe0001bb6a"
             }
           ]
         },
         {
-          "traceID": "019d68b111006d271df8caac19253041",
-          "spanID": "015ff48e11006d27",
-          "operationName": "run activity: scheduled",
+          "traceID": "0e41c95bfa9df6cee41cd27e4a85dadc",
+          "spanID": "8e69596e1b91aa55",
+          "operationName": "Attempt: 2",
           "processID": "p1",
-          "startTime": 1699624369625926,
-          "duration": 45
-        },
-        {
-          "traceID": "019d68b1294f39a61df8caac19253041",
-          "spanID": "015ff48e294f39a6",
-          "operationName": "run activity",
-          "processID": "p1",
-          "startTime": 1699624369625971,
-          "duration": 395178,
+          "startTime": 1700119098210549,
+          "duration": 110988,
           "tags": [
             {
-              "key": "class",
+              "key": "Attempt status",
               "type": "string",
-              "value": "com.intellij.openapi.project.DumbServiceStartupActivity"
-            },
+              "value": "IterationStatus[iterationResult=SLOW, passed=false, logMessage=simple perf test took \u001B[31;1m587% more time\u001B[0m than expected\n  Expected: 16ms\n  Actual:   110ms\n  Timings:  CPU=33 (16% reference CPU), I/O=5 (5% reference IO), 20 cores (X86_64)\n  Threads:  insignificant\n  GC stats: insignificant; free 86/112 -> 86/112 MB\n  Process:  0ms (0%) compilation of 0ms total]"
+            }
+          ],
+          "references": [
             {
-              "key": "plugin",
-              "type": "string",
-              "value": "com.intellij"
+              "refType": "CHILD_OF",
+              "traceID": "0e41c95bfa9df6cee41cd27e4a85dadc",
+              "spanID": "c1ccfdfe0001bb6a"
             }
           ]
         },
         {
-          "traceID": "019d68b1482d4ce41df8caac19253041",
-          "spanID": "015ff789482d4ce4",
-          "operationName": "run post-startup dynamically registered activities: scheduled",
+          "traceID": "0e41c95bfa9df6cee41cd27e4a85dadc",
+          "spanID": "23c840e94caf056f",
+          "operationName": "Attempt: 3",
           "processID": "p1",
-          "startTime": 1699624370389491,
-          "duration": 33
+          "startTime": 1700119098749467,
+          "duration": 324189,
+          "tags": [
+            {
+              "key": "Attempt status",
+              "type": "string",
+              "value": "IterationStatus[iterationResult=SLOW, passed=false, logMessage=simple perf test took \u001B[31;1m1918% more time\u001B[0m than expected\n  Expected: 16ms\n  Actual:   323ms\n  Timings:  CPU=33 (16% reference CPU), I/O=5 (5% reference IO), 20 cores (X86_64)\n  Threads:  insignificant\n  GC stats: insignificant; free 86/112 -> 86/112 MB\n  Process:  0ms (0%) compilation of 10ms total]"
+            }
+          ],
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "0e41c95bfa9df6cee41cd27e4a85dadc",
+              "spanID": "c1ccfdfe0001bb6a"
+            }
+          ]
         },
         {
-          "traceID": "019d68b12c349ce71df8caac19253041",
-          "spanID": "015ff78a2c349ce7",
-          "operationName": "run post-startup dynamically registered activities",
+          "traceID": "0e41c95bfa9df6cee41cd27e4a85dadc",
+          "spanID": "c1ccfdfe0001bb6a",
+          "operationName": "simple perf test",
           "processID": "p1",
-          "startTime": 1699624370389525,
-          "duration": 71
+          "startTime": 1700119097093000,
+          "duration": 2004871,
+          "tags": [
+            {
+              "key": "warmup",
+              "type": "string",
+              "value": "false"
+            }
+          ]
         }
       ]
     }

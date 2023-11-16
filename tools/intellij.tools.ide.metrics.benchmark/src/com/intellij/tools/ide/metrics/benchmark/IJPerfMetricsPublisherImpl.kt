@@ -49,8 +49,7 @@ class IJPerfMetricsPublisherImpl : MetricsPublisher {
     )
 
     private fun prepareMetricsForPublishing(fullQualifiedTestMethodName: String, spanName: String): PerformanceMetricsDto {
-      val metrics: List<PerformanceMetrics.Metric> = MetricsExtractor(PathManager.getLogDir().resolve("opentelemetry.json").toFile())
-        .waitTillMetricsExported(spanName)
+      val metrics: List<PerformanceMetrics.Metric> = MetricsExtractor().waitTillMetricsExported(spanName)
 
       teamCityClient.publishTeamCityArtifacts(source = PathManager.getLogDir(), artifactPath = fullQualifiedTestMethodName)
 
