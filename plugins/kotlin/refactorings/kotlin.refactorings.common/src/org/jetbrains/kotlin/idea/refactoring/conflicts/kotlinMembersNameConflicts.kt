@@ -41,6 +41,19 @@ fun checkRedeclarationConflicts(declaration: KtNamedDeclaration, newName: String
 }
 
 context(KtAnalysisSession)
+fun KtScope.findSiblingsByName(symbol: KtDeclarationSymbol, newName: Name, containingSymbol: KtDeclarationSymbol? = symbol.getContainingSymbol()): Sequence<KtDeclarationSymbol> {
+    return when (symbol) {
+        is KtClassLikeSymbol -> getClassifierSymbols(newName)
+        is KtCallableSymbol -> getCallableSymbols(newName).filter { callable ->
+            symbol != callable &&
+                    (symbol is KtVariableSymbol) == (callable is KtVariableSymbol) &&
+                    ((callable as? KtSymbolWithVisibility)?.visibility != Visibilities.Private || containingSymbol == null || callable.getContainingSymbol() == containingSymbol)
+        }
+        else -> return emptySequence()
+    }
+}
+
+context(KtAnalysisSession)
 private fun checkDeclarationNewNameConflicts(declaration: KtNamedDeclaration, newName: Name, result: MutableList<UsageInfo>) {
 
     val declarationSymbol = declaration.getSymbol()
@@ -63,21 +76,9 @@ private fun checkDeclarationNewNameConflicts(declaration: KtNamedDeclaration, ne
       return typeParameters.filter { it.name == newName }.asSequence() + outerTypeParameters
     }
 
-    fun KtScope.findSiblingsByName(): Sequence<KtDeclarationSymbol> {
-      return when (symbol) {
-        is KtClassLikeSymbol -> getClassifierSymbols(newName)
-        is KtCallableSymbol -> getCallableSymbols(newName).filter { callable ->
-            symbol != callable &&
-                    (symbol is KtVariableSymbol) == (callable is KtVariableSymbol) &&
-                    ((callable as? KtSymbolWithVisibility)?.visibility != Visibilities.Private || callable.getContainingSymbol() == containingSymbol)
-        }
-        else -> return emptySequence()
-      }
-    }
-
     return when (containingSymbol) {
       is KtClassOrObjectSymbol -> {
-        containingSymbol.getMemberScope().findSiblingsByName()
+        containingSymbol.getMemberScope().findSiblingsByName(symbol, newName)
       }
 
       is KtPackageSymbol -> {
@@ -85,7 +86,7 @@ private fun checkDeclarationNewNameConflicts(declaration: KtNamedDeclaration, ne
 
         fun isInSameFile(s1: KtDeclarationSymbol, s2: KtDeclarationSymbol): Boolean = s1.psi?.containingFile == s2.psi?.containingFile
 
-        containingSymbol.getPackageScope().findSiblingsByName().filter {
+        containingSymbol.getPackageScope().findSiblingsByName(symbol, newName).filter {
           !symbol.isTopLevelPrivate() && !it.isTopLevelPrivate() || isInSameFile(symbol, it)
         }
       }
@@ -142,7 +143,7 @@ context(KtAnalysisSession)
 private fun areTypesTheSame(t1: KtType?, t2: KtType?): Boolean {
   if (t1 === t2) return true
   if (t2 == null) return false
-  return t1?.isEqualTo(t2) ?: false
+  return t1?.isEqualTo(t2) == true
 }
 
 fun PsiElement.representativeContainer(): PsiNamedElement? = when (this) {

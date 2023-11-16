@@ -108,6 +108,51 @@ public class InplaceRenameTestGenerated extends AbstractInplaceRenameTest {
         runTest("testData/refactoring/rename/inplace/GlobalFunctionNotInplace.kt");
     }
 
+    @TestMetadata("HidingMethodByTopLevel.kt")
+    public void testHidingMethodByTopLevel() throws Exception {
+        runTest("testData/refactoring/rename/inplace/HidingMethodByTopLevel.kt");
+    }
+
+    @TestMetadata("HidingMethodByTopLevel1.kt")
+    public void testHidingMethodByTopLevel1() throws Exception {
+        runTest("testData/refactoring/rename/inplace/HidingMethodByTopLevel1.kt");
+    }
+
+    @TestMetadata("HidingNestedMethod.kt")
+    public void testHidingNestedMethod() throws Exception {
+        runTest("testData/refactoring/rename/inplace/HidingNestedMethod.kt");
+    }
+
+    @TestMetadata("HidingNestedProperty.kt")
+    public void testHidingNestedProperty() throws Exception {
+        runTest("testData/refactoring/rename/inplace/HidingNestedProperty.kt");
+    }
+
+    @TestMetadata("HidingOuterMethod.kt")
+    public void testHidingOuterMethod() throws Exception {
+        runTest("testData/refactoring/rename/inplace/HidingOuterMethod.kt");
+    }
+
+    @TestMetadata("HidingOuterProperty.kt")
+    public void testHidingOuterProperty() throws Exception {
+        runTest("testData/refactoring/rename/inplace/HidingOuterProperty.kt");
+    }
+
+    @TestMetadata("HidingOuterPropertyInSuper.kt")
+    public void testHidingOuterPropertyInSuper() throws Exception {
+        runTest("testData/refactoring/rename/inplace/HidingOuterPropertyInSuper.kt");
+    }
+
+    @TestMetadata("HidingPropertyByTopLevel.kt")
+    public void testHidingPropertyByTopLevel() throws Exception {
+        runTest("testData/refactoring/rename/inplace/HidingPropertyByTopLevel.kt");
+    }
+
+    @TestMetadata("HidingPropertyByTopLevel1.kt")
+    public void testHidingPropertyByTopLevel1() throws Exception {
+        runTest("testData/refactoring/rename/inplace/HidingPropertyByTopLevel1.kt");
+    }
+
     @TestMetadata("InvokeToFoo.kt")
     public void testInvokeToFoo() throws Exception {
         runTest("testData/refactoring/rename/inplace/InvokeToFoo.kt");
@@ -226,6 +271,16 @@ public class InplaceRenameTestGenerated extends AbstractInplaceRenameTest {
     @TestMetadata("NoTextUsagesForLocalVar.kt")
     public void testNoTextUsagesForLocalVar() throws Exception {
         runTest("testData/refactoring/rename/inplace/NoTextUsagesForLocalVar.kt");
+    }
+
+    @TestMetadata("OuterPrivatePropertyInSuper.kt")
+    public void testOuterPrivatePropertyInSuper() throws Exception {
+        runTest("testData/refactoring/rename/inplace/OuterPrivatePropertyInSuper.kt");
+    }
+
+    @TestMetadata("OuterPropertyInSuper1.kt")
+    public void testOuterPropertyInSuper1() throws Exception {
+        runTest("testData/refactoring/rename/inplace/OuterPropertyInSuper1.kt");
     }
 
     @TestMetadata("ParameterRedecklaration.kt")

@@ -8,10 +8,11 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.usageView.UsageInfo
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.calls.KtCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.calls.KtImplicitReceiverValue
-import org.jetbrains.kotlin.analysis.api.calls.successfulFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.calls.successfulVariableAccessCall
+import org.jetbrains.kotlin.analysis.api.calls.successfulCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.symbol
+import org.jetbrains.kotlin.analysis.api.scopes.KtScope
 import org.jetbrains.kotlin.analysis.api.symbols.KtAnonymousObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassifierSymbol
@@ -20,6 +21,7 @@ import org.jetbrains.kotlin.analysis.api.types.KtErrorType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.idea.base.psi.copied
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.refactoring.conflicts.findSiblingsByName
 import org.jetbrains.kotlin.idea.refactoring.conflicts.renderDescription
 import org.jetbrains.kotlin.idea.refactoring.rename.BasicUnresolvableCollisionUsageInfo
 import org.jetbrains.kotlin.idea.refactoring.rename.UsageInfoWithFqNameReplacement
@@ -30,6 +32,7 @@ import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtCallableReferenceExpression
 import org.jetbrains.kotlin.psi.KtClassLikeDeclaration
+import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtExpressionCodeFragment
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
@@ -159,9 +162,8 @@ fun checkCallableShadowing(
         }
     }
 
-    val useScope = declaration.useScope
-    for (foreignDeclaration in foreignDeclarationsToQualifyReferences) {
-        ReferencesSearch.search(foreignDeclaration, useScope).forEach { ref ->
+    fun checkPotentialConflictingDeclaration(foreignDeclaration: KtNamedDeclaration) {
+        ReferencesSearch.search(foreignDeclaration, declaration.useScope).forEach { ref ->
             val refElement = ref.element as? KtSimpleNameExpression ?: return@forEach
             val fullCallExpression = refElement
             val qualifiedExpression = createQualifiedExpression(refElement, newName)
@@ -169,6 +171,30 @@ fun checkCallableShadowing(
                 newUsages.add(UsageInfoWithReplacement(fullCallExpression, declaration, qualifiedExpression))
             }
         }
+    }
+
+    for (foreignDeclaration in foreignDeclarationsToQualifyReferences) {
+        checkPotentialConflictingDeclaration(foreignDeclaration)
+    }
+
+    analyze(declaration) {
+        val symbol = declaration.getSymbol()
+        val name = Name.identifier(newName)
+
+        fun KtScope.processScope(containingSymbol: KtDeclarationSymbol?) {
+            findSiblingsByName(symbol, name, containingSymbol).forEach { outerSymbol ->
+                val namedDeclaration = outerSymbol.psi as? KtNamedDeclaration ?: return@forEach
+                checkPotentialConflictingDeclaration(namedDeclaration)
+            }
+        }
+
+        //check outer callables hiding/hidden by rename
+        var classOrObjectSymbol = symbol.getContainingSymbol()?.getContainingSymbol()
+        while (classOrObjectSymbol is KtClassOrObjectSymbol) {
+            classOrObjectSymbol.getMemberScope().processScope(classOrObjectSymbol)
+            classOrObjectSymbol = classOrObjectSymbol.getContainingSymbol()
+        }
+        getPackageSymbolIfPackageExists(declaration.containingKtFile.packageFqName)?.getPackageScope()?.processScope(null)
     }
 }
 
@@ -181,10 +207,9 @@ private fun createQualifiedExpression(callExpression: KtExpression, newName: Str
     val qualifiedExpression = analyze(callExpression) {
         val referenceExpression = callExpression.referenceExpression()
         val resolveCall = referenceExpression.resolveCall()
-        val call = resolveCall?.successfulFunctionCallOrNull() ?: resolveCall?.successfulVariableAccessCall()
-        val appliedSymbol = call?.partiallyAppliedSymbol
+        val appliedSymbol = resolveCall?.successfulCallOrNull<KtCallableMemberCall<*, *>>()?.partiallyAppliedSymbol
         val receiver = appliedSymbol?.dispatchReceiver ?: appliedSymbol?.extensionReceiver
-        if (receiver is KtImplicitReceiverValue)  {
+        if (receiver is KtImplicitReceiverValue) {
             val symbol = receiver.symbol
             if (symbol is KtClassifierSymbol && symbol !is KtAnonymousObjectSymbol) {
                 "this@" + symbol.name!!.asString()
@@ -192,9 +217,11 @@ private fun createQualifiedExpression(callExpression: KtExpression, newName: Str
                 "this"
             }
         } else if (receiver == null) {
-            (appliedSymbol?.symbol?.getContainingSymbol() as? KtClassOrObjectSymbol)?.classIdIfNonLocal?.asSingleFqName()?.parent()?.asString()
-        }
-        else null
+            val containerFQN =
+                (appliedSymbol?.symbol?.getContainingSymbol() as? KtClassOrObjectSymbol)?.classIdIfNonLocal?.asSingleFqName()?.parent()
+                    ?: (appliedSymbol?.symbol?.psi as? KtElement)?.containingKtFile?.packageFqName
+            containerFQN?.asString()?.takeIf { it.isNotEmpty() }
+        } else null
     }?.let { psiFactory.createExpressionByPattern("$it.$0", callExpression) } ?: callExpression.copied()
     val newCallee = if (qualifiedExpression is KtCallableReferenceExpression) {
         qualifiedExpression.callableReference
