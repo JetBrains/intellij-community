@@ -242,6 +242,15 @@ def patch_args(args):
             return args
 
         i = 1
+        # Implementation-specific options that start with `-X` can be passed right
+        # after the Python executable. We have to preserve them.
+        while i < len(args) and args[i].startswith('-X'):
+            new_args.append(args[i])
+            if i < len(args) - 1:
+                new_args.append(args[i + 1])
+                i += 1
+            i += 1
+
         # Original args should be something as:
         # ['X:\\pysrc\\pydevd.py', '--multiprocess', '--print-in-debugger-startup',
         #  '--vm_type', 'python', '--client', '127.0.0.1', '--port', '56352', '--file', 'x:\\snippet1.py']
