@@ -22,7 +22,9 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.wm.IdeFocusManager
+import com.intellij.openapi.wm.impl.IdeFrameImpl
 import com.intellij.platform.ide.menu.IdeJMenuBar
+import com.intellij.ui.ComponentUtil
 import com.intellij.ui.popup.PopupFactoryImpl
 import com.intellij.ui.popup.list.ListPopupImpl
 import com.intellij.util.messages.MessageBusConnection
@@ -55,7 +57,7 @@ class MainMenuButton {
       if (field !== value) {
         uninstall()
         field = value
-        if (button.isShowing) {
+        if (button.isShowing && value != null) {
           install()
         }
       }
@@ -63,6 +65,8 @@ class MainMenuButton {
 
   init {
     button.addHierarchyListener { e ->
+      // The root pane might have been replaced/removed (this happens when a frame is reused to open another project).
+      rootPane = (ComponentUtil.getWindow(button) as? IdeFrameImpl?)?.rootPane
       if (e!!.changeFlags.toInt() and HierarchyEvent.SHOWING_CHANGED != 0) {
         if (button.isShowing) {
           install()
