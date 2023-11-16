@@ -532,7 +532,7 @@ internal class ActionUpdater @JvmOverloads constructor(
     val presentation = presentationFactory.getPresentation(action).clone()
     if (checkActionRemoteBehaviorSpecification) {
       val behavior = (action as? ActionRemoteBehaviorSpecification)?.getBehavior()
-      if (behavior == ActionRemoteBehavior.Disabled || behavior == ActionRemoteBehavior.FrontendOnly) {
+      if (behavior == ActionRemoteBehavior.Disabled) {
         presentation.isEnabledAndVisible = false
         updatedPresentations[action] = presentation
         return presentation
