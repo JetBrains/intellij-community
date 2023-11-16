@@ -313,6 +313,11 @@ public class K2InplaceRenameTestGenerated extends AbstractK2InplaceRenameTest {
         runTest("../../idea/tests/testData/refactoring/rename/inplace/OuterPropertyInSuper1.kt");
     }
 
+    @TestMetadata("ParameterConflicitingWithProperty.kt")
+    public void testParameterConflicitingWithProperty() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/rename/inplace/ParameterConflicitingWithProperty.kt");
+    }
+
     @TestMetadata("ParameterRedecklaration.kt")
     public void testParameterRedecklaration() throws Exception {
         runTest("../../idea/tests/testData/refactoring/rename/inplace/ParameterRedecklaration.kt");
@@ -326,6 +331,11 @@ public class K2InplaceRenameTestGenerated extends AbstractK2InplaceRenameTest {
     @TestMetadata("QuotedParameter.kt")
     public void testQuotedParameter() throws Exception {
         runTest("../../idea/tests/testData/refactoring/rename/inplace/QuotedParameter.kt");
+    }
+
+    @TestMetadata("SameNameFunctionByImplicitReceiver.kt")
+    public void testSameNameFunctionByImplicitReceiver() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/rename/inplace/SameNameFunctionByImplicitReceiver.kt");
     }
 
     @TestMetadata("TopLevelFunctionAnotherSignature.kt")

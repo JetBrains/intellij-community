@@ -46,7 +46,7 @@ fun KtScope.findSiblingsByName(symbol: KtDeclarationSymbol, newName: Name, conta
         is KtClassLikeSymbol -> getClassifierSymbols(newName)
         is KtCallableSymbol -> getCallableSymbols(newName).filter { callable ->
             symbol != callable &&
-                    (symbol is KtVariableSymbol) == (callable is KtVariableSymbol) &&
+                   // (symbol is KtVariableSymbol) == (callable is KtVariableSymbol) &&
                     ((callable as? KtSymbolWithVisibility)?.visibility != Visibilities.Private || callable.getContainingSymbol() == containingSymbol)
         }
         else -> return emptySequence()
