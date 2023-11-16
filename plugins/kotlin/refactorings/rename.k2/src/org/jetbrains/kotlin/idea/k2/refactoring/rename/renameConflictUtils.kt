@@ -20,7 +20,6 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtClassifierSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtDeclarationSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtNamedClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtErrorType
-import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.idea.base.psi.copied
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.refactoring.conflicts.findSiblingsByName
@@ -29,11 +28,11 @@ import org.jetbrains.kotlin.idea.refactoring.rename.BasicUnresolvableCollisionUs
 import org.jetbrains.kotlin.idea.refactoring.rename.UsageInfoWithFqNameReplacement
 import org.jetbrains.kotlin.idea.refactoring.rename.UsageInfoWithReplacement
 import org.jetbrains.kotlin.idea.references.mainReference
-import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtCallableReferenceExpression
 import org.jetbrains.kotlin.psi.KtClassLikeDeclaration
+import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtExpressionCodeFragment
@@ -57,11 +56,8 @@ fun checkClassNameShadowing(
     newUsages: MutableList<UsageInfo>
 ) {
 
-    fun KtType?.resolveFailed(): Boolean {
-        return this == null || this is KtErrorType
-    }
+    val newFqName = declaration.fqName?.parent()?.let { it.child(Name.identifier(newName)) } ?: return
 
-    val foreignReferences = mutableSetOf<Pair<PsiNamedElement, ClassId>>()
     val usageIterator = originalUsages.listIterator()
     while (usageIterator.hasNext()) {
         val usage = usageIterator.next()
@@ -73,51 +69,30 @@ fun checkClassNameShadowing(
         }
 
         val shortNameFragment = createTypeFragment(newName)
-        val conflictingClassToClassIdPair = analyze(shortNameFragment) {
+        val hasConflict = analyze(shortNameFragment) {
             val typeByShortName = shortNameFragment.getContentElement()?.getKtType()
-            if (typeByShortName.resolveFailed()) {
-                null
-            } else {
-                require(typeByShortName != null)
-                val classSymbol = typeByShortName.expandedClassSymbol
-                classSymbol?.psi as? PsiNamedElement to classSymbol?.classIdIfNonLocal
-            }
+            typeByShortName != null && typeByShortName !is KtErrorType
         }
 
-        if (conflictingClassToClassIdPair == null) {
-            continue
+        if (hasConflict) {
+            usageIterator.set(UsageInfoWithFqNameReplacement(refElement, declaration, newFqName))
         }
+    }
 
-        val referencedClassFqName = analyze(typeReference) {
-            val classSymbol = typeReference.getKtType().expandedClassSymbol
-            classSymbol?.classIdIfNonLocal
-        } ?: continue
-
-        val (conflictingClass, conflictingClassId) = conflictingClassToClassIdPair
-        if (conflictingClass != null && conflictingClassId != null) {
-            foreignReferences.add(conflictingClass to conflictingClassId)
-        }
-
-        val newFqName = referencedClassFqName.asSingleFqName().parent().child(Name.identifier(newName))
-        val codeFragment = createTypeFragment(newFqName.asString())
-        analyze(codeFragment) {
-            val ktType = codeFragment.getContentElement()?.getKtType()
-            if (ktType.resolveFailed()) {
-                usageIterator.set(UsageInfoWithFqNameReplacement(refElement, declaration, newFqName))
-            } else {
-                require(ktType != null)
-                reportShadowing(declaration, declaration, ktType.expandedClassSymbol, refElement, newUsages)
+    analyze(declaration) {
+        //check outer classes hiding/hidden by rename
+        retargetExternalDeclarations(declaration.getSymbol().getContainingSymbol(), declaration, Name.identifier(newName)) {
+            val klass = it.psi as? KtClassOrObject
+            val newFqName = klass?.fqName
+            if (newFqName != null) {
+                for (ref in ReferencesSearch.search(klass, declaration.useScope)) {
+                    val refElement = ref.element as? KtSimpleNameExpression ?: continue //todo cross language conflicts
+                    newUsages.add(UsageInfoWithFqNameReplacement(refElement, declaration, newFqName))
+                }
             }
         }
     }
 
-    foreignReferences.forEach { (klass, classId) ->
-        val newFqName = classId.asSingleFqName()
-        for (ref in ReferencesSearch.search(klass, declaration.useScope)) {
-            val refElement = ref.element as? KtSimpleNameExpression ?: continue //todo cross language conflicts
-            newUsages.add(UsageInfoWithFqNameReplacement(refElement, declaration, newFqName))
-        }
-    }
 }
 
 fun checkCallableShadowing(
@@ -127,7 +102,7 @@ fun checkCallableShadowing(
     newUsages: MutableList<UsageInfo>
 ) {
     val psiFactory = KtPsiFactory(declaration.project)
-    val foreignDeclarationsToQualifyReferences = mutableSetOf<KtNamedDeclaration>()
+    val externalProperties = mutableSetOf<KtProperty>()
     val usageIterator = originalUsages.listIterator()
     while (usageIterator.hasNext()) {
 
@@ -147,7 +122,7 @@ fun checkCallableShadowing(
                 val newDeclaration = referenceExpression.mainReference?.resolve() as? KtNamedDeclaration
                 if (newDeclaration != null && declaration is KtParameter && !declaration.hasValOrVar()) {
                     if (newDeclaration is KtProperty) {
-                        foreignDeclarationsToQualifyReferences.add(newDeclaration)
+                        externalProperties.add(newDeclaration)
                     }
                 } else if (newDeclaration != null && !PsiTreeUtil.isAncestor(newDeclaration, declaration, true)) {
                     val fullCallExpression = callExpression.getQualifiedExpressionForSelectorOrThis()
@@ -164,8 +139,9 @@ fun checkCallableShadowing(
         }
     }
 
-    fun checkPotentialConflictingDeclaration(foreignDeclaration: KtNamedDeclaration) {
-        ReferencesSearch.search(foreignDeclaration, declaration.useScope).forEach { ref ->
+    fun retargetExternalDeclaration(externalDeclaration: KtNamedDeclaration?) {
+        if (externalDeclaration == null) return
+        ReferencesSearch.search(externalDeclaration, declaration.useScope).forEach { ref ->
             val refElement = ref.element as? KtSimpleNameExpression ?: return@forEach
             val fullCallExpression = refElement
             val qualifiedExpression = createQualifiedExpression(refElement, newName)
@@ -175,32 +151,16 @@ fun checkCallableShadowing(
         }
     }
 
-    for (foreignDeclaration in foreignDeclarationsToQualifyReferences) {
-        checkPotentialConflictingDeclaration(foreignDeclaration)
+    for (externalDeclaration in externalProperties) {
+        retargetExternalDeclaration(externalDeclaration)
     }
 
     analyze(declaration) {
-        val symbol = declaration.getSymbol()
-        val name = Name.identifier(newName)
-
-        fun KtScope.processScope(containingSymbol: KtDeclarationSymbol?) {
-            findSiblingsByName(symbol, name, containingSymbol).forEach { outerSymbol ->
-                val namedDeclaration = outerSymbol.psi as? KtNamedDeclaration ?: return@forEach
-                checkPotentialConflictingDeclaration(namedDeclaration)
-            }
-        }
-
         //check outer callables hiding/hidden by rename
-        var classOrObjectSymbol = symbol.getContainingSymbol()?.getContainingSymbol()
-        while (classOrObjectSymbol is KtClassOrObjectSymbol) {
-            classOrObjectSymbol.getMemberScope().processScope(classOrObjectSymbol)
-
-            val companionObject = (classOrObjectSymbol as? KtNamedClassOrObjectSymbol)?.companionObject
-            companionObject?.getMemberScope()?.processScope(companionObject)
-
-            classOrObjectSymbol = classOrObjectSymbol.getContainingSymbol()
+        val callableSymbol = declaration.getSymbol()
+        retargetExternalDeclarations(callableSymbol.getContainingSymbol()?.getContainingSymbol(), declaration, Name.identifier(newName)) {
+            retargetExternalDeclaration(it.psi as? KtNamedDeclaration)
         }
-        getPackageSymbolIfPackageExists(declaration.containingKtFile.packageFqName)?.getPackageScope()?.processScope(null)
     }
 }
 
@@ -257,4 +217,27 @@ private fun reportShadowing(
         candidate.renderDescription()
     ).capitalize()
     result += BasicUnresolvableCollisionUsageInfo(refElement, elementToBindUsageInfoTo, message)
+}
+
+context(KtAnalysisSession)
+private fun retargetExternalDeclarations(classOrObjectSymbol: KtDeclarationSymbol?, declaration: KtNamedDeclaration, name: Name, retargetJob: (KtDeclarationSymbol) -> Unit) {
+    val declarationSymbol = declaration.getSymbol()
+
+    fun KtScope.processScope(containingSymbol: KtDeclarationSymbol?) {
+        findSiblingsByName(declarationSymbol, name, containingSymbol).forEach(retargetJob)
+    }
+
+    var classOrObjectSymbol = classOrObjectSymbol
+    while (classOrObjectSymbol is KtClassOrObjectSymbol) {
+        classOrObjectSymbol.getMemberScope().processScope(classOrObjectSymbol)
+
+        val companionObject = (classOrObjectSymbol as? KtNamedClassOrObjectSymbol)?.companionObject
+        companionObject?.getMemberScope()?.processScope(companionObject)
+
+        classOrObjectSymbol = classOrObjectSymbol.getContainingSymbol()
+    }
+
+    val file = declaration.containingKtFile
+    getPackageSymbolIfPackageExists(file.packageFqName)?.getPackageScope()?.processScope(null)
+    file.getImportingScopeContext().getCompositeScope().processScope(null)
 }

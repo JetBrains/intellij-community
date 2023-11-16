@@ -47,7 +47,7 @@ fun KtScope.findSiblingsByName(symbol: KtDeclarationSymbol, newName: Name, conta
         is KtCallableSymbol -> getCallableSymbols(newName).filter { callable ->
             symbol != callable &&
                     (symbol is KtVariableSymbol) == (callable is KtVariableSymbol) &&
-                    ((callable as? KtSymbolWithVisibility)?.visibility != Visibilities.Private || containingSymbol == null || callable.getContainingSymbol() == containingSymbol)
+                    ((callable as? KtSymbolWithVisibility)?.visibility != Visibilities.Private || callable.getContainingSymbol() == containingSymbol)
         }
         else -> return emptySequence()
     }

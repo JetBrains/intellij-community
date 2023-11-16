@@ -108,9 +108,24 @@ public class InplaceRenameTestGenerated extends AbstractInplaceRenameTest {
         runTest("testData/refactoring/rename/inplace/GlobalFunctionNotInplace.kt");
     }
 
+    @TestMetadata("HidingClassFromCompanionObject.kt")
+    public void testHidingClassFromCompanionObject() throws Exception {
+        runTest("testData/refactoring/rename/inplace/HidingClassFromCompanionObject.kt");
+    }
+
     @TestMetadata("HidingCompanionProperty.kt")
     public void testHidingCompanionProperty() throws Exception {
         runTest("testData/refactoring/rename/inplace/HidingCompanionProperty.kt");
+    }
+
+    @TestMetadata("HidingExternalCallable.kt")
+    public void testHidingExternalCallable() throws Exception {
+        runTest("testData/refactoring/rename/inplace/HidingExternalCallable.kt");
+    }
+
+    @TestMetadata("HidingExternalClass.kt")
+    public void testHidingExternalClass() throws Exception {
+        runTest("testData/refactoring/rename/inplace/HidingExternalClass.kt");
     }
 
     @TestMetadata("HidingMethodByTopLevel.kt")
@@ -131,6 +146,11 @@ public class InplaceRenameTestGenerated extends AbstractInplaceRenameTest {
     @TestMetadata("HidingNestedProperty.kt")
     public void testHidingNestedProperty() throws Exception {
         runTest("testData/refactoring/rename/inplace/HidingNestedProperty.kt");
+    }
+
+    @TestMetadata("HidingOuterClass.kt")
+    public void testHidingOuterClass() throws Exception {
+        runTest("testData/refactoring/rename/inplace/HidingOuterClass.kt");
     }
 
     @TestMetadata("HidingOuterMethod.kt")
