@@ -237,6 +237,8 @@ public class PerformanceTestInfo {
 
   private void assertTiming(IterationType iterationType, String fullQualifiedTestMethodName) {
     if (PlatformTestUtil.COVERAGE_ENABLED_BUILD) return;
+    System.out.printf("Performance measurement type: %s", iterationType);
+
     Timings.getStatistics(); // warm-up, measure
     updateJitUsage();
 

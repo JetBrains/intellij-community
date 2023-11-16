@@ -160,9 +160,6 @@ class YAMLIncompatibleTypesInspectionTest : BasePlatformTestCase() {
     """.trimIndent())
     PlatformTestUtil.startPerformanceTest("Inspection should finish in sane time", 4000) {
       myFixture.testHighlighting()
-    }.attempts(1)
-      .assertTiming()
+    }.warmupIterations(0).attempts(1).assertTiming()
   }
-
-
 }
