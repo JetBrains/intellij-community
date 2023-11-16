@@ -177,12 +177,14 @@ open class HighlightDisplayLevel(val severity: HighlightSeverity) {
     get() = false
 }
 
-sealed interface HighlightDisplayLevelColoredIcon {
+sealed interface HighlightDisplayLevelColoredIcon : Icon {
   fun getColor(): Color
+  fun getIcon(): Icon
 }
 
 private class HighlightDisplayLevelColorIcon(size: Int, color: Color) : ColorIcon(size, color), HighlightDisplayLevelColoredIcon {
   override fun getColor(): Color = iconColor
+  override fun getIcon(): Icon = this
 }
 
 private class HighlightDisplayLevelColorizedIcon(private val key: TextAttributesKey,
@@ -193,6 +195,7 @@ private class HighlightDisplayLevelColorizedIcon(private val key: TextAttributes
   private var lastColor: Color? = null
 
   override fun getColor(): Color = getColorFromAttributes(key) ?: JBColor.GRAY
+  override fun getIcon(): Icon  = baseIcon
 
   private fun getColorFromAttributes(key: TextAttributesKey): Color? {
     val editorColorManager = EditorColorsManager.getInstance()
