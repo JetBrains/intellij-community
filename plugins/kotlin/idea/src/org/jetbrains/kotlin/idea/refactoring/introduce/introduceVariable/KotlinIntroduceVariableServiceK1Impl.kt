@@ -54,12 +54,12 @@ internal class KotlinIntroduceVariableServiceK1Impl(private val project: Project
     }
 
     override fun getContainersForExpression(expression: KtExpression): List<KotlinIntroduceVariableHelper.Containers> =
-        with(KotlinIntroduceVariableHandler) { expression.getCandidateContainers() }
+        with(K1IntroduceVariableHandler) { expression.getCandidateContainers() }
 
     override fun findOccurrences(
         expression: KtExpression,
         occurrenceContainer: PsiElement
-    ): List<KtExpression> = with(KotlinIntroduceVariableHandler) {
+    ): List<KtExpression> = with(K1IntroduceVariableHandler) {
         expression.findOccurrences(occurrenceContainer)
     }
 
@@ -69,7 +69,7 @@ internal class KotlinIntroduceVariableServiceK1Impl(private val project: Project
         container: KtElement,
         occurrencesToReplace: List<KtExpression>?
     ) {
-        KotlinIntroduceVariableHandler.collectCandidateTargetContainersAndDoRefactoring(
+        K1IntroduceVariableHandler.collectCandidateTargetContainersAndDoRefactoring(
             project = project,
             editor = editor,
             expressionToExtract = expressionToExtract,

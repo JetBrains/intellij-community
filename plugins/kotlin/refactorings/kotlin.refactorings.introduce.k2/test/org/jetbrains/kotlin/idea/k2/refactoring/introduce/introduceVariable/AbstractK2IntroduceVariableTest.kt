@@ -12,7 +12,7 @@ abstract class AbstractK2IntroduceVariableTest : AbstractExtractionTest() {
         doTestIfNotDisabledByFileDirective { file ->
             file as KtFile
 
-            KotlinIntroduceVariableHandler.invoke(
+            K2IntroduceVariableHandler.invoke(
                 fixture.project,
                 fixture.editor,
                 file,

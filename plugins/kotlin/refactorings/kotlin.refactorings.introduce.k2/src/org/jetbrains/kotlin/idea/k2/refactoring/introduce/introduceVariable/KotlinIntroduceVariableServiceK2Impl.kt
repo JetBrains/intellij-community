@@ -6,7 +6,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.analyzeInModalWindow
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.k2.refactoring.introduce.introduceVariable.KotlinIntroduceVariableHandler.getCandidateContainers
+import org.jetbrains.kotlin.idea.k2.refactoring.introduce.introduceVariable.K2IntroduceVariableHandler.getCandidateContainers
 import org.jetbrains.kotlin.idea.refactoring.introduce.IntroduceRefactoringException
 import org.jetbrains.kotlin.idea.refactoring.introduce.KotlinIntroduceVariableHelper
 import org.jetbrains.kotlin.idea.refactoring.introduce.KotlinIntroduceVariableService
@@ -51,7 +51,7 @@ internal class KotlinIntroduceVariableServiceK2Impl(private val project: Project
         container: KtElement,
         occurrencesToReplace: List<KtExpression>?
     ) {
-        KotlinIntroduceVariableHandler.doRefactoringWithSelectedTargetContainer(
+        K2IntroduceVariableHandler.doRefactoringWithSelectedTargetContainer(
             project, editor,
             expressionToExtract,
             // TODO: fix occurence container (currently it is not used in K2-implementation)

@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyze
 import org.jetbrains.kotlin.idea.intentions.negate
-import org.jetbrains.kotlin.idea.refactoring.introduce.introduceVariable.KotlinIntroduceVariableHandler
+import org.jetbrains.kotlin.idea.refactoring.introduce.introduceVariable.K1IntroduceVariableHandler
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
@@ -94,7 +94,7 @@ private class KtIntroduceVariablePostfixTemplate(
     provider: PostfixTemplateProvider
 ) : PostfixTemplateWithExpressionSelector(kind, kind, "$kind name = expression", createExpressionSelector(), provider) {
     override fun expandForChooseExpression(expression: PsiElement, editor: Editor) {
-        KotlinIntroduceVariableHandler.collectCandidateTargetContainersAndDoRefactoring(
+        K1IntroduceVariableHandler.collectCandidateTargetContainersAndDoRefactoring(
             expression.project, editor, expression as KtExpression,
             isVar = kind == "var",
             occurrencesToReplace = null,

@@ -19,7 +19,7 @@ import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinChangeInfo
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinParameterInfo
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.isCaller
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.createNameCounterpartMap
-import org.jetbrains.kotlin.idea.refactoring.introduce.introduceVariable.KotlinIntroduceVariableHandler
+import org.jetbrains.kotlin.idea.refactoring.introduce.introduceVariable.K1IntroduceVariableHandler
 import org.jetbrains.kotlin.idea.refactoring.isInsideOfCallerBody
 import org.jetbrains.kotlin.idea.refactoring.moveFunctionLiteralOutsideParentheses
 import org.jetbrains.kotlin.idea.refactoring.replaceListPsiAndKeepDelimiters
@@ -213,7 +213,7 @@ class KotlinFunctionCallUsage(
                 ) == null
             ) {
 
-                KotlinIntroduceVariableHandler.collectCandidateTargetContainersAndDoRefactoring(
+                K1IntroduceVariableHandler.collectCandidateTargetContainersAndDoRefactoring(
                     project, null, argumentExpression,
                     isVar = false,
                     occurrencesToReplace = listOf(argumentExpression),

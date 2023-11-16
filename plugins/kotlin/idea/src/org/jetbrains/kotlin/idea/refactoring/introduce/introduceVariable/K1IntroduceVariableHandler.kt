@@ -63,7 +63,7 @@ import org.jetbrains.kotlin.utils.sure
 import kotlin.Pair
 import kotlin.math.min
 
-object KotlinIntroduceVariableHandler : AbstractKotlinIntroduceVariableHandler() {
+object K1IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
     private val EXPRESSION_KEY = Key.create<Boolean>("EXPRESSION_KEY")
     private val REPLACE_KEY = Key.create<Boolean>("REPLACE_KEY")
     private val COMMON_PARENT_KEY = Key.create<Boolean>("COMMON_PARENT_KEY")

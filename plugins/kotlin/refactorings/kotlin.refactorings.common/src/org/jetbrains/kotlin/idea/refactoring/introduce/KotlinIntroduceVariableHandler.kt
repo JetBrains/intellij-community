@@ -36,7 +36,7 @@ import org.jetbrains.kotlin.psi.psiUtil.isFunctionalExpression
 import org.jetbrains.kotlin.psi.psiUtil.parents
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 
-abstract class AbstractKotlinIntroduceVariableHandler : RefactoringActionHandler {
+abstract class KotlinIntroduceVariableHandler : RefactoringActionHandler {
     abstract fun doRefactoringWithSelectedTargetContainer(
         project: Project,
         editor: Editor?,

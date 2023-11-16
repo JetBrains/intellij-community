@@ -23,7 +23,7 @@ import org.jetbrains.kotlin.idea.codeinsight.utils.getLeftMostReceiverExpression
 import org.jetbrains.kotlin.idea.codeinsight.utils.replaceFirstReceiver
 import org.jetbrains.kotlin.idea.intentions.callExpression
 import org.jetbrains.kotlin.idea.refactoring.inline.KotlinInlinePropertyHandler
-import org.jetbrains.kotlin.idea.refactoring.introduce.introduceVariable.KotlinIntroduceVariableHandler
+import org.jetbrains.kotlin.idea.refactoring.introduce.introduceVariable.K1IntroduceVariableHandler
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.resolve.dataFlowValueFactory
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
@@ -132,7 +132,7 @@ fun KtIfExpression.introduceValueForCondition(occurrenceInThenClause: KtExpressi
         else -> throw KotlinExceptionWithAttachments("Only binary / is expressions are supported here: ${condition?.let { it::class.java }}")
             .withPsiAttachment("condition", condition)
     }!!
-    KotlinIntroduceVariableHandler.collectCandidateTargetContainersAndDoRefactoring(
+    K1IntroduceVariableHandler.collectCandidateTargetContainersAndDoRefactoring(
         project,
         editor,
         occurrenceInConditional,

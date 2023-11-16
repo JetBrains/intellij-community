@@ -30,7 +30,7 @@ import org.jetbrains.kotlin.idea.refactoring.CallableRefactoring
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.usages.explicateReceiverOf
 import org.jetbrains.kotlin.idea.refactoring.checkConflictsInteractively
 import org.jetbrains.kotlin.idea.refactoring.getAffectedCallables
-import org.jetbrains.kotlin.idea.refactoring.introduce.introduceVariable.KotlinIntroduceVariableHandler
+import org.jetbrains.kotlin.idea.refactoring.introduce.introduceVariable.K1IntroduceVariableHandler
 import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.idea.references.KtSimpleReference
 import org.jetbrains.kotlin.idea.search.usagesSearch.searchReferencesOrMethodReferences
@@ -173,7 +173,7 @@ class ConvertFunctionTypeParameterToReceiverIntention : SelfTargetingRangeIntent
 
         private fun generateVariable(expression: KtExpression): String {
             var baseCallee = ""
-            KotlinIntroduceVariableHandler.collectCandidateTargetContainersAndDoRefactoring(
+            K1IntroduceVariableHandler.collectCandidateTargetContainersAndDoRefactoring(
                 project,
                 editor = null,
                 expression,

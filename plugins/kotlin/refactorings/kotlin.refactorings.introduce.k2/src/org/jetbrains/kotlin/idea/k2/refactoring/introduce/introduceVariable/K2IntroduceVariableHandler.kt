@@ -32,7 +32,7 @@ import org.jetbrains.kotlin.idea.codeinsight.utils.NamedArgumentUtils
 import org.jetbrains.kotlin.idea.codeinsight.utils.addTypeArguments
 import org.jetbrains.kotlin.idea.codeinsight.utils.getRenderedTypeArguments
 import org.jetbrains.kotlin.idea.refactoring.KotlinCommonRefactoringSettings
-import org.jetbrains.kotlin.idea.refactoring.introduce.AbstractKotlinIntroduceVariableHandler
+import org.jetbrains.kotlin.idea.refactoring.introduce.KotlinIntroduceVariableHandler
 import org.jetbrains.kotlin.idea.refactoring.introduce.KotlinIntroduceVariableHelper.Containers
 import org.jetbrains.kotlin.idea.refactoring.introduce.findExpressionByCopyableDataAndClearIt
 import org.jetbrains.kotlin.idea.refactoring.introduce.mustBeParenthesizedInInitializerPosition
@@ -48,7 +48,7 @@ import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.utils.sure
 import kotlin.math.min
 
-object KotlinIntroduceVariableHandler : AbstractKotlinIntroduceVariableHandler() {
+object K2IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
     private val EXPRESSION_KEY = Key.create<Boolean>("EXPRESSION_KEY")
 
     private var KtExpression.isOccurrence: Boolean by NotNullablePsiCopyableUserDataProperty(Key.create("OCCURRENCE"), false)
