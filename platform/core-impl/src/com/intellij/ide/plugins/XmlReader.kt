@@ -175,7 +175,6 @@ private val K2_ALLOWED_PLUGIN_IDS = KNOWN_KOTLIN_PLUGIN_IDS.addAll(persistentHas
   "fleet.backend.mercury",
   "fleet.backend.mercury.macos",
   "fleet.backend.mercury.kotlin.macos",
-  "fleet.backend.mercury.kotlin.macos",
   "org.jetbrains.android",
   "androidx.compose.plugins.idea",
   "org.jetbrains.compose.desktop.ide",
