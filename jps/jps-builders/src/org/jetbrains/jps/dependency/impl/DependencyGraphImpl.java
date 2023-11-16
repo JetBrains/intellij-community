@@ -18,7 +18,7 @@ public final class DependencyGraphImpl extends GraphImpl implements DependencyGr
   private static final List<DifferentiateStrategy> ourDifferentiateStrategies = List.of(
     new JavaDifferentiateStrategy()
   );
-  private Set<String> myRegisteredIndices;
+  private final Set<String> myRegisteredIndices;
 
   public DependencyGraphImpl(MapletFactory containerFactory) throws IOException {
     super(containerFactory);

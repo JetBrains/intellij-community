@@ -314,7 +314,15 @@ public final class Utils {
     };
   }
 
-  private void debug(String message) {
-    // todo
+  public static <V> Iterators.Provider<V> lazyValue(Iterators.Provider<V> provider) {
+    return new Iterators.Provider<>() {
+      private Object[] computed;
+
+      @Override
+      public V get() {
+        //noinspection unchecked
+        return computed == null? (V)(computed = new Object[] {provider.get()})[0] : (V)computed[0];
+      }
+    };
   }
 }
