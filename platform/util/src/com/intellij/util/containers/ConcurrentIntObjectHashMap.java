@@ -22,6 +22,7 @@ import java.util.function.Consumer;
  * @deprecated Use {@link com.intellij.concurrency.ConcurrentCollectionFactory#createConcurrentIntObjectMap()} instead
  */
 @Deprecated
+@SuppressWarnings("ConstantValue")
 final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
 
   /*

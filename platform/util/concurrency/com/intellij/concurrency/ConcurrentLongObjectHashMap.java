@@ -23,6 +23,7 @@ import java.util.function.Predicate;
  * @param <V> the type of mapped values
  * Use {@link ConcurrentCollectionFactory#createConcurrentLongObjectMap()} to create this map
  */
+@SuppressWarnings("ConstantValue")
 final class ConcurrentLongObjectHashMap<V> implements ConcurrentLongObjectMap<V> {
 
   /*

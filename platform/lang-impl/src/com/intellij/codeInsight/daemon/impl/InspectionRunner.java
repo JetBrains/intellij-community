@@ -194,7 +194,7 @@ class InspectionRunner {
         }
       }
       catch (Exception e) {
-        ExceptionUtil.rethrow(e instanceof ExecutionException ? e.getCause() : e);
+        ExceptionUtil.rethrow(e);
       }
       boolean isWholeFileInspectionsPass = !init.isEmpty() && init.get(0).tool.runForWholeFile();
       if (myIsOnTheFly && !isWholeFileInspectionsPass) {
