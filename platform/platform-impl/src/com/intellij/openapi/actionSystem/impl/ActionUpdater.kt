@@ -5,6 +5,7 @@
 package com.intellij.openapi.actionSystem.impl
 
 import com.intellij.concurrency.ConcurrentCollectionFactory
+import com.intellij.concurrency.currentThreadContext
 import com.intellij.diagnostic.PluginException
 import com.intellij.diagnostic.ThreadDumpService
 import com.intellij.ide.IdeEventQueue
@@ -20,8 +21,6 @@ import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehavior
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.CeProcessCanceledException
@@ -44,9 +43,8 @@ import com.intellij.util.containers.FList
 import com.intellij.util.ui.EDT
 import com.intellij.util.use
 import io.opentelemetry.api.trace.Span
-import io.opentelemetry.context.Context
-import io.opentelemetry.extension.kotlin.asContextElement
 import kotlinx.coroutines.*
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus
 import java.awt.AWTEvent
@@ -463,8 +461,9 @@ internal class ActionUpdater @JvmOverloads constructor(
     // free while the EDT block is still waiting to be cancelled in EDT queue.
     // The target scope must not be cancelled by `AwaitSharedData` exception (SupervisorJob)!
     val scope = /*bgtScope ?: */service<CoreUiCoroutineScopeHolder>().coroutineScope
-    val deferred = scope.async(CoroutineName("computeOnEdt ($place)") + edtDispatcher +
-                               ModalityState.any().asContextElement()) {
+    val deferred = scope.async(
+      currentCoroutineContext().minusKey(Job) +
+      CoroutineName("computeOnEdt ($place)") + edtDispatcher) {
       blockingContext {
         supplier()
       }
@@ -571,7 +570,8 @@ internal class ActionUpdater @JvmOverloads constructor(
     val bgtScope = bgtScope
     return if (bgtScope != null) {
       sessionData.computeIfAbsent(key) {
-        bgtScope.async(Context.current().asContextElement()) {
+        bgtScope.async(currentThreadContext().minusKey(Job) +
+                       CoroutineName("getSessionDataDeferred#${key.first} ($place)" )) {
           computeWithSpan(Utils.getTracer(true), "${key.first}@$place") {
             supplier()
           }
