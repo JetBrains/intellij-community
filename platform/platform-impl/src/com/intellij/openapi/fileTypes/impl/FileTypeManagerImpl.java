@@ -68,12 +68,13 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   private static final Logger LOG = Logger.getInstance(FileTypeManagerImpl.class);
 
   // You must update all existing default configurations accordingly
-  static final int VERSION = 18;
+  static final int VERSION = 19;
 
   // must be sorted
   @SuppressWarnings("SpellCheckingInspection")
-  static final List<String> DEFAULT_IGNORED = List.of("*.pyc", "*.pyo", "*.rbc", "*.yarb", "*~", ".DS_Store", ".git", ".hg", ".svn", "CVS",
-                                                      "__pycache__", "_svn", "vssver.scc", "vssver2.scc");
+  static final List<String> DEFAULT_IGNORED = List.of("*.pyc", "*.pyo", "*.rbc", "*.yarb", "*~", ".DS_Store", ".git", ".hg",
+                                                      ".mypy_cache", ".pytest_cache", ".ruff_cache",
+                                                      ".svn", "CVS", "__pycache__", "_svn", "vssver.scc", "vssver2.scc");
 
   static final String FILE_SPEC = "filetypes";
   private static final String ELEMENT_EXTENSION_MAP = "extensionMap";
@@ -1123,6 +1124,12 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     if (savedVersion < 18) {
       // we want .hprof back, we can open it in our profiler
       unignoreMask("*.hprof");
+    }
+
+    if (savedVersion < 19) {
+      addIgnore(".mypy_cache");
+      addIgnore(".ruff_cache");
+      addIgnore(".pytest_cache");
     }
   }
 
