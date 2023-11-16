@@ -4,6 +4,7 @@ import com.intellij.codeInsight.hint.HintManager
 import com.intellij.codeInsight.hint.HintManagerImpl
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
+import com.intellij.openapi.client.ClientSessionsManager
 import com.intellij.ui.awt.RelativePoint
 import java.awt.Point
 import java.awt.event.MouseEvent
@@ -37,6 +38,11 @@ internal class CreateOrChangeListPopupAction: AnAction(), Toggleable {
   }
 
   override fun update(event: AnActionEvent) {
+    val session = ClientSessionsManager.getAppSession()
+    if (session?.isRemote == true) {
+      event.presentation.isEnabledAndVisible = false
+      return
+    }
     val children = actualGroup.getChildren(event).asSequence().filterIsInstance<ToggleAction>()
     val active = children.find { it.isSelected(event) }
     if (active == null) {

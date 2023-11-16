@@ -4,6 +4,7 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText
 import com.intellij.openapi.actionSystem.impl.MenuItemPresentationFactory
+import com.intellij.openapi.client.ClientSessionsManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.ui.SimpleColoredComponent
@@ -23,6 +24,12 @@ internal class SetHeaderLevelAction: AnAction(), CustomComponentAction {
   override fun actionPerformed(event: AnActionEvent) = Unit
 
   override fun update(event: AnActionEvent) {
+    // CustomComponentAction doesn't seem to be handled well by the backend action manager
+    val session = ClientSessionsManager.getAppSession()
+    if (session?.isRemote == true) {
+      event.presentation.isEnabledAndVisible = false
+      return
+    }
     updateWithChildren(event)
     val editor = event.getData(CommonDataKeys.EDITOR)
     if (editor?.let(this::isMultilineSelection) == true) {
