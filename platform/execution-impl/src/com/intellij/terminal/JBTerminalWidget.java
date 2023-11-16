@@ -94,7 +94,7 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
   }
 
   private @Nullable LinkResult runFilters(@NotNull Project project, @NotNull String line) {
-    Filter.Result r = ReadAction.compute(() -> {
+    Filter.Result r = ReadAction.nonBlocking(() -> {
       if (project.isDisposed()) {
         return null;
       }
@@ -107,7 +107,7 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
         }
         return null;
       }
-    });
+    }).executeSynchronously();
     if (r != null) {
       return new LinkResult(ContainerUtil.mapNotNull(r.getResultItems(), item -> convertResultItem(project, item)));
     }
