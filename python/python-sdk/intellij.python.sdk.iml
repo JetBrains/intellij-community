@@ -28,5 +28,8 @@
     <orderEntry type="library" name="jna" level="project" />
     <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
     <orderEntry type="library" name="caffeine" level="project" />
+    <orderEntry type="library" name="jackson" level="project" />
+    <orderEntry type="library" name="jackson-databind" level="project" />
+    <orderEntry type="library" name="jackson-module-kotlin" level="project" />
   </component>
 </module>
