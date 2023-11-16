@@ -289,20 +289,20 @@ public class EntityStorageSerializerImpl(
     get() = getTypeInfo(this, interner, typesResolver)
 
 
-  internal fun createKryoOutput(file: Path): Output {
+  private fun createKryoOutput(file: Path): Output {
     val output = KryoOutput(file)
     output.variableLengthEncoding = false
     return output
   }
 
-  internal fun createKryoInput(file: Path): Input {
+  private fun createKryoInput(file: Path): Input {
     val input = KryoInput(file)
     input.variableLengthEncoding = false
     return input
   }
 
 
-  internal fun closeOutput(output: Output) {
+  private fun closeOutput(output: Output) {
     try {
       output.close()
     }
