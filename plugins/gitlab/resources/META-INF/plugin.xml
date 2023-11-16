@@ -39,6 +39,8 @@
   <dependencies>
     <plugin id="com.intellij.modules.lang"/>
     <plugin id="Git4Idea"/>
+    <plugin id="org.jetbrains.plugins.yaml"/>
+    <plugin id="com.intellij.modules.json"/>
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -69,6 +71,7 @@
       implementation="org.jetbrains.plugins.gitlab.mergerequest.diff.action.GitLabMergeRequestShowDiffActionProvider"/>
     <diff.actions.ShowStandaloneDiffAction.ExtensionProvider
       implementation="org.jetbrains.plugins.gitlab.mergerequest.diff.action.GitLabMergeRequestShowDiffActionProvider"/>
+    <fileIconProvider implementation="org.jetbrains.plugins.gitlab.ui.GitLabCiConfigIconProvider"/>
     <iconMapper mappingFile="GitlabIconMappings.json"/>
 
     <vcsAnnotationGutterActionProvider implementation="org.jetbrains.plugins.gitlab.ui.action.GitLabAnnotationGutterActionProvider"/>
