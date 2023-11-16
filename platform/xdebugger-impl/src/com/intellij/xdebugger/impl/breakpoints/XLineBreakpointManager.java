@@ -91,13 +91,6 @@ public final class XLineBreakpointManager {
         }
       }));
 
-      EditorFactory.getInstance().addEditorFactoryListener(new EditorFactoryListener() {
-        @Override
-        public void editorCreated(@NotNull EditorFactoryEvent event) {
-          getInlineBreakpointInlayManager().initializeInNewEditor(event.getEditor());
-        }
-      }, project);
-
       Registry.get(XDebuggerUtil.INLINE_BREAKPOINTS_KEY).addListener(new RegistryValueListener() {
         @Override
         public void afterValueChanged(@NotNull RegistryValue value) {
@@ -111,7 +104,6 @@ public final class XLineBreakpointManager {
               updateBreakpoints(document);
             }
           }
-          getInlineBreakpointInlayManager().reinitializeAll();
         }
       }, project);
     }
@@ -126,10 +118,6 @@ public final class XLineBreakpointManager {
           .forEach(XLineBreakpointManager.this::queueBreakpointUpdate);
       }
     });
-  }
-
-  private @NotNull InlineBreakpointInlayManager getInlineBreakpointInlayManager() {
-    return InlineBreakpointInlayManager.getInstance(myProject);
   }
 
   void updateBreakpointsUI() {
@@ -252,18 +240,7 @@ public final class XLineBreakpointManager {
           }
         });
 
-        if (XDebuggerUtil.areInlineBreakpointsEnabled()) {
-          var file = FileDocumentManager.getInstance().getFile(document);
-          if (file != null) {
-            var inlineInlaysManager = getInlineBreakpointInlayManager();
-            var firstLine = document.getLineNumber(e.getOffset());
-            var lastLine = document.getLineNumber(e.getOffset() + e.getNewLength());
-            inlineInlaysManager.redrawLineQueued(document, firstLine);
-            if (lastLine != firstLine) {
-              inlineInlaysManager.redrawLineQueued(document, lastLine);
-            }
-          }
-        }
+        InlineBreakpointInlayManager.getInstance(myProject).redrawDocument(e);
       }
     }
   }

@@ -2,16 +2,23 @@
 package com.intellij.xdebugger.impl.breakpoints
 
 import com.intellij.icons.AllIcons
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
+import com.intellij.openapi.editor.event.DocumentEvent
+import com.intellij.openapi.editor.event.EditorFactoryEvent
+import com.intellij.openapi.editor.event.EditorFactoryListener
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.registry.RegistryValue
+import com.intellij.openapi.util.registry.RegistryValueListener
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.util.DocumentUtil
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
@@ -25,7 +32,8 @@ import com.intellij.xdebugger.breakpoints.XLineBreakpoint
 import com.intellij.xdebugger.breakpoints.XLineBreakpointType
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl
 import com.intellij.xdebugger.impl.XSourcePositionImpl
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import kotlin.math.max
 
 @Service(Service.Level.PROJECT)
@@ -37,6 +45,27 @@ internal class InlineBreakpointInlayManager(private val project: Project, privat
   ).setRestartTimerOnAdd(true)
 
   private fun areInlineBreakpointsEnabled() = XDebuggerUtil.areInlineBreakpointsEnabled()
+
+  private val SHOW_EVEN_TRIVIAL_KEY = "debugger.show.breakpoints.inline.even.trivial"
+
+  private fun shouldAlwaysShowAllInlays() = Registry.`is`(SHOW_EVEN_TRIVIAL_KEY)
+
+  init {
+
+    EditorFactory.getInstance().addEditorFactoryListener(object : EditorFactoryListener {
+      override fun editorCreated(event: EditorFactoryEvent) {
+        initializeInNewEditor(event.editor)
+      }
+    }, project)
+
+    for (key in listOf(XDebuggerUtil.INLINE_BREAKPOINTS_KEY, SHOW_EVEN_TRIVIAL_KEY)) {
+      Registry.get(key).addListener(object : RegistryValueListener {
+        override fun afterValueChanged(value: RegistryValue) {
+          reinitializeAll()
+        }
+      }, project)
+    }
+  }
 
   /**
    * Refresh inlays for the given [document] at given [line].
@@ -55,17 +84,30 @@ internal class InlineBreakpointInlayManager(private val project: Project, privat
    *
    * This request might be merged with subsequent requests for the same location.
    */
-  fun redrawLineQueued(document: Document, line: Int) {
+  private fun redrawLineQueued(document: Document, line: Int) {
     if (!areInlineBreakpointsEnabled()) return
     redrawQueue.queue(Update.create(Pair(document, line)) {
       redrawLine(document, line)
     })
   }
 
+  fun redrawDocument(e: DocumentEvent) {
+    if (!XDebuggerUtil.areInlineBreakpointsEnabled()) return
+    val document = e.document
+    val file = FileDocumentManager.getInstance().getFile(document)
+    if (file == null) return
+    val firstLine: Int = document.getLineNumber(e.offset)
+    val lastLine: Int = document.getLineNumber(e.offset + e.newLength)
+    redrawLineQueued(document, firstLine)
+    if (lastLine != firstLine) {
+      redrawLineQueued(document, lastLine)
+    }
+  }
+
   /**
    * Refresh all inlays in the editor.
    */
-  fun initializeInNewEditor(editor: Editor) {
+  private fun initializeInNewEditor(editor: Editor) {
     if (!areInlineBreakpointsEnabled()) return
     scope.launch {
       val document = editor.document
@@ -83,7 +125,7 @@ internal class InlineBreakpointInlayManager(private val project: Project, privat
   /**
    * Refresh inlays in all editors.
    */
-  fun reinitializeAll() {
+  private fun reinitializeAll() {
     val enabled = areInlineBreakpointsEnabled()
     for (editor in EditorFactory.getInstance().allEditors) {
       val document = editor.document
@@ -187,7 +229,8 @@ internal class InlineBreakpointInlayManager(private val project: Project, privat
 
       val codeStartOffset = DocumentUtil.getLineStartIndentedOffset(document, line)
 
-      if (breakpoints.size == 1 &&
+      if (!shouldAlwaysShowAllInlays() &&
+          breakpoints.size == 1 &&
           (variants.isEmpty() ||
            variants.size == 1 && areMatching(variants[0], breakpoints[0], codeStartOffset))) {
         // No need to show inline variants when there is only one breakpoint and one matching variant (or no variants at all).
@@ -201,18 +244,23 @@ internal class InlineBreakpointInlayManager(private val project: Project, privat
           if (!breakpointsHere.isEmpty()) {
             for (breakpointHere in breakpointsHere) {
               remainingBreakpoints.remove(breakpointHere)
-              add(SingleInlayDatum(breakpointHere, variant,
-                                   getBreakpointRangeStartOffset(breakpointHere, codeStartOffset)))
+              val offset = getBreakpointRangeStartOffset(breakpointHere, codeStartOffset)
+              // TODO[inline-bp]: introduce better way to check that it's simple line breakpoint,
+              //                  it should be possible when we are able to better match variants and breakpoints
+              val singleLineBreakpoint = breakpoints.size == 1 && offset == codeStartOffset
+              if (!singleLineBreakpoint || shouldAlwaysShowAllInlays()) {
+                add(SingleInlayDatum(breakpointHere, variant, offset))
+              }
             }
           }
           else {
-            add(SingleInlayDatum(null, variant,
-                                 getBreakpointVariantRangeStartOffset(variant, codeStartOffset)))
+            val offset = getBreakpointVariantRangeStartOffset(variant, codeStartOffset)
+            add(SingleInlayDatum(null, variant, offset))
           }
         }
         for (remainingBreakpoint in remainingBreakpoints) {
-          add(SingleInlayDatum(remainingBreakpoint, null,
-                               getBreakpointRangeStartOffset(remainingBreakpoint, codeStartOffset)))
+          val offset = getBreakpointRangeStartOffset(remainingBreakpoint, codeStartOffset)
+          add(SingleInlayDatum(remainingBreakpoint, null, offset))
         }
       }
     }
