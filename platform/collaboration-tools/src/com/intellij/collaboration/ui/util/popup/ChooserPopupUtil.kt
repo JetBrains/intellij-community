@@ -11,6 +11,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
+import com.intellij.openapi.ui.popup.PopupChooserBuilder
 import com.intellij.openapi.ui.popup.util.PopupUtil
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.platform.util.coroutines.childScope
@@ -54,13 +55,7 @@ object ChooserPopupUtil {
     @Suppress("UNCHECKED_CAST")
     val popup = JBPopupFactory.getInstance().createListPopupBuilder(list)
       .setFilteringEnabled { filteringMapper(it as T) }
-      .setResizable(true)
-      .setMovable(true)
-      .setFilterAlwaysVisible(popupConfig.alwaysShowSearchField)
-      .also { builder ->
-        val title = popupConfig.title ?: return@also
-        builder.setTitle(title)
-      }
+      .configure(popupConfig)
       .createPopup()
 
     CollaborationToolsPopupUtil.configureSearchField(popup, popupConfig)
@@ -89,14 +84,8 @@ object ChooserPopupUtil {
     @Suppress("UNCHECKED_CAST")
     val popup = JBPopupFactory.getInstance().createListPopupBuilder(list)
       .setFilteringEnabled { filteringMapper(it as T) }
-      .setResizable(true)
-      .setMovable(true)
-      .setFilterAlwaysVisible(popupConfig.alwaysShowSearchField)
       .addListener(loadingListener)
-      .also { builder ->
-        val title = popupConfig.title ?: return@also
-        builder.setTitle(title)
-      }
+      .configure(popupConfig)
       .createPopup()
 
     CollaborationToolsPopupUtil.configureSearchField(popup, popupConfig)
@@ -128,14 +117,8 @@ object ChooserPopupUtil {
         presenter(selectableItem.value).shortText
       }
       .setCloseOnEnter(false)
-      .setResizable(true)
-      .setMovable(true)
-      .setFilterAlwaysVisible(popupConfig.alwaysShowSearchField)
       .addListener(loadingListener)
-      .also { builder ->
-        val title = popupConfig.title ?: return@also
-        builder.setTitle(title)
-      }
+      .configure(popupConfig)
       .createPopup()
 
     CollaborationToolsPopupUtil.configureSearchField(popup, popupConfig)
@@ -173,12 +156,27 @@ object ChooserPopupUtil {
     }
     repaint()
   }
+
+  private fun <T> PopupChooserBuilder<T>.configure(popupConfig: PopupConfig): PopupChooserBuilder<T> {
+    val builder = this
+
+    val title = popupConfig.title
+    if (title != null) builder.setTitle(title)
+
+    builder.setFilterAlwaysVisible(popupConfig.alwaysShowSearchField)
+    builder.setMovable(popupConfig.isMovable)
+    builder.setResizable(popupConfig.isResizable)
+
+    return builder
+  }
 }
 
 data class PopupConfig(
   val title: @NlsContexts.PopupTitle String? = null,
   val searchTextPlaceHolder: @NlsContexts.StatusText String? = null,
   val alwaysShowSearchField: Boolean = true,
+  val isMovable: Boolean = true,
+  val isResizable: Boolean = true,
   val showDirection: ShowDirection = ShowDirection.BELOW,
   val errorPresenter: ErrorStatusPresenter<Throwable>? = null
 ) {
