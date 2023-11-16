@@ -28,8 +28,8 @@ interface GitLabProject {
 
   val mergeRequests: GitLabProjectMergeRequestsStore
 
-  val labels: Flow<Result<List<GitLabLabelDTO>>>
-  val members: Flow<Result<List<GitLabUserDTO>>>
+  val labels: SharedFlow<Result<List<GitLabLabelDTO>>>
+  val members: SharedFlow<Result<List<GitLabUserDTO>>>
   val defaultBranch: Deferred<String>
   val plan: Deferred<GitLabPlan>
 
@@ -65,13 +65,16 @@ class GitLabLazyProject(
     CachingGitLabProjectMergeRequestsStore(project, cs, api, glMetadata, projectMapping, tokenRefreshFlow)
   }
 
-  override val labels: Flow<Result<List<GitLabLabelDTO>>> = projectDataReloadSignal.withInitial(Unit).flatMapLatest {
-    loadLabels()
-  }.modelFlow(parentCs, LOG)
+  override val labels: SharedFlow<Result<List<GitLabLabelDTO>>> = resultListFlow {
+    api.graphQL.createAllProjectLabelsFlow(projectMapping.repository)
+  }.triggerOn(projectDataReloadSignal.withInitial(Unit))
+    .modelFlow(parentCs, LOG)
 
-  override val members: SharedFlow<Result<List<GitLabUserDTO>>> = projectDataReloadSignal.withInitial(Unit).flatMapLatest {
-    loadMembers()
-  }.modelFlow(parentCs, LOG)
+  override val members: SharedFlow<Result<List<GitLabUserDTO>>> = resultListFlow {
+    ApiPageUtil.createPagesFlowByLinkHeader(getProjectUsersURI(projectMapping.repository)) { api.rest.getProjectUsers(it) }
+      .map { response -> response.body().map(GitLabUserDTO::fromRestDTO) }
+  }.triggerOn(projectDataReloadSignal.withInitial(Unit))
+    .modelFlow(parentCs, LOG)
 
   override val defaultBranch: Deferred<String> = cs.async(Dispatchers.IO, start = CoroutineStart.LAZY) {
     val projectRepository = api.graphQL.getProjectRepository(projectCoordinates).body()
@@ -122,26 +125,20 @@ class GitLabLazyProject(
     }
   }
 
-  private fun loadLabels(): Flow<Result<List<GitLabLabelDTO>>> = channelFlow<Result<List<GitLabLabelDTO>>> {
+  private fun <T> resultListFlow(flowProvider: () -> Flow<List<T>>): Flow<Result<List<T>>> = channelFlow<Result<List<T>>> {
     runCatchingUser {
-      val loadedLabels = mutableListOf<GitLabLabelDTO>()
-      api.graphQL.createAllProjectLabelsFlow(projectMapping.repository)
-        .collect { labelDTOs ->
-          loadedLabels.addAll(labelDTOs)
-          send(Result.success(loadedLabels))
-        }
+      val loadedItems = mutableListOf<T>()
+      val itemsFlow = flowProvider()
+      itemsFlow.collect { items ->
+        loadedItems.addAll(items)
+        send(Result.success(loadedItems))
+      }
     }.onFailure { e -> send(Result.failure(e)) }
   }
 
-  private fun loadMembers(): Flow<Result<List<GitLabUserDTO>>> = channelFlow<Result<List<GitLabUserDTO>>> {
-    runCatchingUser {
-      val loadedMembers = mutableListOf<GitLabUserDTO>()
-      ApiPageUtil.createPagesFlowByLinkHeader(getProjectUsersURI(projectMapping.repository)) { api.rest.getProjectUsers(it) }
-        .map { response -> response.body().map(GitLabUserDTO::fromRestDTO) }
-        .collect { userDTOs ->
-          loadedMembers.addAll(userDTOs)
-          send(Result.success(loadedMembers))
-        }
-    }.onFailure { e -> send(Result.failure(e)) }
+  // NOTE: works only with cold flow
+  private fun <T> Flow<T>.triggerOn(signalFlow: Flow<Unit>): Flow<T> {
+    val originalFlow = this
+    return signalFlow.flatMapLatest { originalFlow }
   }
 }
