@@ -396,7 +396,6 @@ class MetadataDiffTest {
 
   private fun twoEntitiesDiff(current: EntityMetadata, cache: EntityMetadata): Boolean {
     val comparisonResult = CacheMetadataComparator().areEquals(listOf(cache), listOf(current))
-    println(comparisonResult.info)
     return comparisonResult.areEquals
   }
 
