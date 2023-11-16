@@ -9,9 +9,9 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.TestDialog
 import com.intellij.openapi.ui.TestDialogManager
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.rt.execution.junit.FileComparisonFailure
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.UsefulTestCase
-import junit.framework.ComparisonFailure
 import junit.framework.TestCase
 import org.jetbrains.kotlin.idea.codeinsight.utils.findExistingEditor
 import org.jetbrains.kotlin.idea.multiplatform.setupMppProjectFromDirStructure
@@ -135,8 +135,6 @@ abstract class AbstractQuickFixMultiModuleTest : AbstractMultiModuleTest(), Quic
                     TestCase.assertFalse(logFile.exists())
                 }
 
-            } catch (e: ComparisonFailure) {
-                throw e
             } catch (e: AssertionError) {
                 throw e
             } catch (e: Throwable) {
@@ -164,7 +162,7 @@ abstract class AbstractQuickFixMultiModuleTest : AbstractMultiModuleTest(), Quic
             setActiveEditor(editedFile.findExistingEditor() ?: createEditor(editedFile.virtualFile))
             try {
                 checkResultByFile(afterFileInTestData.relativeTo(File(testDataPath)).path)
-            } catch (e: ComparisonFailure) {
+            } catch (e: FileComparisonFailure) {
                 KotlinTestUtils.assertEqualsToFile(afterFileInTestData, editor)
             }
         }

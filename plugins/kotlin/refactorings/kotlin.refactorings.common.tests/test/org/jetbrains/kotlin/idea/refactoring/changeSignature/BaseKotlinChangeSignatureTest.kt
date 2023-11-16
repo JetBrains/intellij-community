@@ -19,9 +19,9 @@ import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl
 import com.intellij.refactoring.util.CanonicalTypes
 import com.intellij.refactoring.util.CommonRefactoringUtil
+import com.intellij.rt.execution.junit.FileComparisonFailure
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.util.VisibilityUtil
-import junit.framework.ComparisonFailure
 import org.jetbrains.kotlin.asJava.getRepresentativeLightMethod
 import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.descriptors.Visibilities.Internal
@@ -231,7 +231,7 @@ abstract class BaseKotlinChangeSignatureTest<C: KotlinModifiableChangeInfo<P>, P
             val afterFilePath: String = getAfterFilePath(file)
             try {
                 myFixture.checkResultByFile(file, afterFilePath, true)
-            } catch (e: ComparisonFailure) {
+            } catch (e: FileComparisonFailure) {
                 KotlinTestUtils.assertEqualsToFile(File(testDataDirectory, afterFilePath), psiFile.text)
             }
 

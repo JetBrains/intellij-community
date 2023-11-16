@@ -144,7 +144,6 @@ import com.intellij.util.indexing.FileBasedIndexExtension;
 import com.intellij.util.indexing.FindSymbolParameters;
 import com.intellij.util.io.ReadOnlyAttributeUtil;
 import com.intellij.util.ui.UIUtil;
-import junit.framework.ComparisonFailure;
 import kotlin.UninitializedPropertyAccessException;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
@@ -1853,7 +1852,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
     if (!Objects.equals(expectedText, actualText)) {
       if (loader.filePath == null) {
-        throw new ComparisonFailure(expectedFile, expectedText, actualText);
+        throw new FileComparisonFailure(expectedFile, expectedText, actualText);
       }
 
       if (loader.caretState.hasExplicitCaret()) {
