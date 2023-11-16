@@ -19,13 +19,14 @@ import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.ui.dsl.builder.AlignY
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
-import com.intellij.ui.util.preferredHeight
 import com.intellij.ui.util.preferredWidth
-import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
 import java.awt.*
-import javax.swing.*
+import javax.swing.JButton
+import javax.swing.JComponent
+import javax.swing.JPanel
+import javax.swing.ScrollPaneConstants
 
 abstract class SettingChooserPage(private val provider: ActionsDataProvider<*>,
                                   val product: SettingsContributor,
@@ -110,8 +111,7 @@ abstract class SettingChooserPage(private val provider: ActionsDataProvider<*>,
       }, BorderLayout.CENTER
     )
   }.apply {
-    preferredSize = JBDimension(640, 409)
-    maximumSize = preferredSize
+//    maximumSize = preferredSize
     minimumSize = Dimension(0, 0)
   }
 
@@ -119,19 +119,33 @@ abstract class SettingChooserPage(private val provider: ActionsDataProvider<*>,
 
   override val content: JComponent
     get() {
-      val page = contentPage ?: JPanel(VerticalLayout(0)).apply {
+      val page = contentPage ?: JPanel(GridBagLayout()).apply {
+        val gbc = GridBagConstraints()
+        gbc.gridx = 0
+        gbc.gridy = 0
+        gbc.weightx = 1.0
+        gbc.weighty = 0.0
+        gbc.fill = GridBagConstraints.HORIZONTAL
         isOpaque = false
-        add(SeparatorComponent(JBColor.namedColor("Borders.color", JBColor.BLACK), SeparatorOrientation.HORIZONTAL))
-        add(pane)
-        add(SeparatorComponent(JBColor.namedColor("Borders.color", JBColor.BLACK), SeparatorOrientation.HORIZONTAL))
 
-        val pane = JPanel(BorderLayout()).apply {
-          preferredHeight = JBUI.scale(47)
-          add(DialogWrapper.layoutButtonsPanel(buttons), BorderLayout.EAST)
-          border = JBUI.Borders.emptyRight(15)
+        add(SeparatorComponent(JBColor.namedColor("Borders.color", JBColor.BLACK), SeparatorOrientation.HORIZONTAL), gbc)
+
+        gbc.fill = GridBagConstraints.BOTH
+        gbc.gridy = 1
+        gbc.weighty = 3.0
+        add(pane, gbc)
+
+        gbc.fill = GridBagConstraints.HORIZONTAL
+        gbc.gridy = 2
+        gbc.weighty = 0.0
+        add(SeparatorComponent(JBColor.namedColor("Borders.color", JBColor.BLACK), SeparatorOrientation.HORIZONTAL), gbc)
+        gbc.gridy = 3
+        gbc.weighty = 0.0
+        val buttonPane = JPanel(FlowLayout(FlowLayout.RIGHT)).apply {
+          add(DialogWrapper.layoutButtonsPanel(buttons))
+          border = JBUI.Borders.empty(3, 0, 3, 15)
         }
-
-        add(pane)
+        add(buttonPane, gbc)
         border = JBUI.Borders.empty()
         contentPage = this
       }

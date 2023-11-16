@@ -44,7 +44,7 @@ class ImportSettingsDialog(val callback: () -> Unit) : DialogWrapper(null, null,
 
   private val pane = JPanel(BorderLayout()).apply {
     border = JBUI.Borders.empty()
-    preferredSize = JBDimension(640, 410)
+    preferredSize = JBDimension(640, 457)
   }
 
   private var currentPage: ImportSettingsPage? = null
@@ -93,7 +93,7 @@ class ImportSettingsDialog(val callback: () -> Unit) : DialogWrapper(null, null,
 
     val content = page.content
     pane.add(content)
-    pane.preferredSize = JBDimension(640, 410)
+
 
     currentPage = page
     tracker.onEnter(page.stage)
