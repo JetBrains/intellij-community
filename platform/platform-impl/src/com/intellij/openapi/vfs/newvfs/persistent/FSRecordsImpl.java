@@ -398,6 +398,7 @@ public final class FSRecordsImpl implements Closeable {
   @Override
   public synchronized void close() {
     if (!closed) {
+      LOG.info("VFS closing");
       Exception stackTraceEx = new Exception("FSRecordsImpl close stacktrace");
 
       if (flushingTask != null) {

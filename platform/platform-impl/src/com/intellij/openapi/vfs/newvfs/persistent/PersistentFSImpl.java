@@ -71,6 +71,7 @@ import java.util.function.Function;
 
 import static com.intellij.notification.NotificationType.INFORMATION;
 import static com.intellij.util.SystemProperties.*;
+import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
 @SuppressWarnings("NonDefaultConstructor")
@@ -162,18 +163,27 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       for (PersistentFsConnectionListener listener : PersistentFsConnectionListener.EP_NAME.getExtensionList()) {
         listener.beforeConnectionClosed();
       }
-      // TODO make sure we don't have files in memory
-      myRoots.clear();
-      myIdToDirCache.clear();
-      long ms = System.currentTimeMillis();
+
       LOG.info("VFS dispose started");
-      FSRecordsImpl vfsPeer = this.vfsPeer;
-      if (vfsPeer != null && !vfsPeer.isClosed()) {
-        vfsPeer.close();
-        //better not this.vfsPeer=null, but leave it as-is, since on access instead of NPE we'll get
-        // more understandable AlreadyDisposedException with additional diagnostic info
+      long startedAtNs = System.nanoTime();
+      try {
+        //Give LFSystem a chance to clear caches/stop file watchers:
+        //TODO RC: would be much better use PersistentFsConnectionListener or alike instead of direct calling
+        //         (PFSImpl shouldn't even explicitly know that LocalFileSystem needs cleaning)
+        ((LocalFileSystemImpl)LocalFileSystem.getInstance()).onDisconnecting();
+        // TODO make sure we don't have files in memory
+        myRoots.clear();
+        myIdToDirCache.clear();
       }
-      LOG.info("VFS dispose completed in " + (System.currentTimeMillis() - ms) + "ms.");
+      finally {
+        FSRecordsImpl vfsPeer = this.vfsPeer;
+        if (vfsPeer != null && !vfsPeer.isClosed()) {
+          vfsPeer.close();
+          //better not set this.vfsPeer=null, but leave it as-is: on access instead of just NPE we'll get
+          // more understandable AlreadyDisposedException with additional diagnostic info
+        }
+      }
+      LOG.info("VFS dispose completed in " + NANOSECONDS.toMillis(System.nanoTime() - startedAtNs) + " ms.");
     }
   }
 

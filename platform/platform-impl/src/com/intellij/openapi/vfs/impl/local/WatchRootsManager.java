@@ -9,11 +9,9 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem.WatchRequest;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
-import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
@@ -29,6 +27,8 @@ import java.nio.file.Path;
 import java.util.*;
 
 /**
+ * Class manages the roots to monitor via {@link FileWatcher} -- i.e. it keeps {@link FileWatcher} configured with the
+ * actual set of roots to watch for.
  * Unless stated otherwise, all paths are {@link SystemIndependent @SystemIndependent}.
  */
 final class WatchRootsManager {
@@ -43,7 +43,8 @@ final class WatchRootsManager {
   private final Int2ObjectMap<SymlinkData> mySymlinksById = new Int2ObjectOpenHashMap<>();
   private final NavigableSet<Pair<String, String>> myPathMappings = WatchRootsUtil.createMappingsNavigableSet();
 
-  @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized") private boolean myWatcherRequiresUpdate;  // synchronized on `myLock`
+  @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
+  private boolean myWatcherRequiresUpdate;  // synchronized on `myLock`
   private final Object myLock = new Object();
 
   WatchRootsManager(@NotNull FileWatcher fileWatcher, @NotNull Disposable parent) {
@@ -85,7 +86,10 @@ final class WatchRootsManager {
       myOptimizedRecursiveWatchRoots.clear();
       myFlatWatchRoots.clear();
       myPathMappings.clear();
+
+      mySymlinksByPath.clear();
       mySymlinksById.values().forEach(SymlinkData::clear);
+      mySymlinksById.clear();
     }
   }
 
@@ -305,7 +309,7 @@ final class WatchRootsManager {
   }
 
   private void collectSymlinkRequests(@NotNull WatchRequestImpl newRequest,
-                                      @NotNull Collection<WatchSymlinkRequest> watchSymlinkRequestsToAdd) {
+                                      @NotNull /*OutParam*/ Collection<WatchSymlinkRequest> watchSymlinkRequestsToAdd) {
     assert newRequest.isToWatchRecursively() : newRequest;
     WatchRootsUtil.collectByPrefix(mySymlinksByPath, newRequest.getRootPath(), e -> {
       if (e.getValue().hasValidTarget()) {
@@ -414,7 +418,7 @@ final class WatchRootsManager {
 
     @Override
     public String toString() {
-      return "SymlinkData{" + id + ", " + path + " -> " + target + '}';
+      return "SymlinkData{" + id + ", " + path + " -> " + target + "}[" + (myWatchRequest == null ? "cleared" : "valid") + "]";
     }
   }
 }

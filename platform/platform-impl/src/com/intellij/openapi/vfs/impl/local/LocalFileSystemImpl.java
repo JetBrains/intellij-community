@@ -76,6 +76,11 @@ public class LocalFileSystemImpl extends LocalFileSystemBase implements Disposab
     new SymbolicLinkRefresher(this).refresh();
   }
 
+  public void onDisconnecting() {
+    //on VFS reconnect we must clear roots manager
+    myWatchRootsManager.clear();
+  }
+
   public @NotNull FileWatcher getFileWatcher() {
     return myWatcher;
   }
