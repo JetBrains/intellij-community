@@ -24,7 +24,7 @@ public class LanguageExtensionPoint<T> extends CustomLoadingExtensionPointBean<T
    * @see Language#getID()
    */
   @Attribute("language")
-  @RequiredElement
+  @RequiredElement(allowEmpty = true)
   public String language;
 
   @Attribute("implementationClass")
