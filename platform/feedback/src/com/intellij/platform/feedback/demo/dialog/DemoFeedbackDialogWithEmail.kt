@@ -7,6 +7,7 @@ import com.intellij.platform.feedback.dialog.BlockBasedFeedbackDialogWithEmail
 import com.intellij.platform.feedback.dialog.CommonFeedbackSystemData
 import com.intellij.platform.feedback.dialog.showFeedbackSystemInfoDialog
 import com.intellij.platform.feedback.dialog.uiBlocks.*
+import kotlinx.serialization.json.JsonObject
 
 class DemoFeedbackDialogWithEmail(
   project: Project?,
@@ -55,5 +56,9 @@ class DemoFeedbackDialogWithEmail(
 
   init {
     init()
+  }
+
+  override fun computeZendeskTicketTags(collectedData: JsonObject): List<String> {
+    return listOf("demo_tag_1", "demo_tag_2")
   }
 }

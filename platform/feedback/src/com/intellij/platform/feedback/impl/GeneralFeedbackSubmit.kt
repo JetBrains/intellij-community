@@ -31,6 +31,7 @@ private const val FEEDBACK_COLLECTED_DATA_KEY = "collected_data"
 private const val FEEDBACK_EMAIL_KEY = "email"
 private const val FEEDBACK_SUBJECT_KEY = "subject"
 private const val FEEDBACK_COMMENT_KEY = "comment"
+private const val FEEDBACK_TAGS_KEY = "tags"
 
 const val DEFAULT_FEEDBACK_CONSENT_ID = "rsch.statistics.feedback.common"
 
@@ -38,6 +39,7 @@ private const val REQUEST_ID_KEY = "Request-Id"
 
 private const val EMAIL_PLACEHOLDER = "<EMAIL>"
 internal val EMAIL_REGEX = Regex("\\S+@\\S+\\.\\S+")
+internal val SPACE_SYMBOL_REGEX = Regex("\\s")
 
 private val LOG = Logger.getInstance(FeedbackRequestDataHolder::class.java)
 
@@ -78,6 +80,7 @@ data class FeedbackRequestDataWithDetailedAnswer(val email: String,
                                                  val description: String,
                                                  val privacyConsentType: String,
                                                  val autoSolveTicket: Boolean,
+                                                 val ticketTags: List<String>,
                                                  override val feedbackType: String,
                                                  override val collectedData: JsonObject) : FeedbackRequestDataHolder {
   override fun toJsonObject(): JsonObject {
@@ -91,6 +94,7 @@ data class FeedbackRequestDataWithDetailedAnswer(val email: String,
       put(FEEDBACK_TYPE_KEY, feedbackType)
       put(FEEDBACK_PRIVACY_CONSENT_KEY, true)
       put(FEEDBACK_PRIVACY_CONSENT_TYPE_KEY, privacyConsentType)
+      put(FEEDBACK_TAGS_KEY, buildJsonArray { ticketTags.forEach { add(it.replace(SPACE_SYMBOL_REGEX, "_")) } })
       put(FEEDBACK_COLLECTED_DATA_KEY, cleanFeedbackFromEmails(collectedData))
     }
   }
