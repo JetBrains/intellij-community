@@ -3,6 +3,8 @@ package com.intellij.codeInspection
 
 import com.intellij.lang.LanguageExtension
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.util.IntellijInternalApi
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.uast.UAnnotation
 import org.jetbrains.uast.UExpression
 
@@ -12,6 +14,8 @@ private val EP_NAME: ExtensionPointName<SuppressionAnnotationUtil> =
 /**
  * Helper extension providing utility methods used by [com.intellij.codeInspection.SuppressionAnnotationInspection].
  */
+@Internal
+@IntellijInternalApi
 interface SuppressionAnnotationUtil {
   companion object {
     @JvmField
