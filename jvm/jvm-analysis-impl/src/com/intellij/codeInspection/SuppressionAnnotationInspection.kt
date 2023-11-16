@@ -140,7 +140,7 @@ class SuppressionAnnotationInspection : AbstractBaseUastLocalInspectionTool() {
     override fun perform(project: Project, descriptor: ProblemDescriptor): ModCommand {
       val psiElement = descriptor.psiElement
       val ids = getIds(psiElement) ?: return ModCommand.nop()
-      return ModCommand.updateOption(psiElement, this@SuppressionAnnotationInspection) { inspection ->
+      return ModCommand.updateInspectionOption(psiElement, this@SuppressionAnnotationInspection) { inspection ->
         for (id in ids) {
           if (!inspection.myAllowedSuppressions.contains(id)) {
             inspection.myAllowedSuppressions.add(id)
