@@ -1,8 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.startup.importSettings.transfer
 
-import com.intellij.ide.customize.transferSettings.models.BaseIdeVersion
 import com.intellij.ide.startup.importSettings.data.Product
+import com.intellij.ide.startup.importSettings.models.BaseIdeVersion
 import java.time.LocalDate
 
 

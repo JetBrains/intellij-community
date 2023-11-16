@@ -2,11 +2,11 @@
 package com.intellij.ide.startup.importSettings.transfer
 
 import com.intellij.icons.AllIcons
-import com.intellij.ide.customize.transferSettings.models.BaseIdeVersion
-import com.intellij.ide.customize.transferSettings.models.IdeVersion
 import com.intellij.ide.startup.importSettings.data.*
 import com.intellij.ide.startup.importSettings.jb.JbProductInfo
 import com.intellij.ide.startup.importSettings.jb.NameMappings
+import com.intellij.ide.startup.importSettings.models.BaseIdeVersion
+import com.intellij.ide.startup.importSettings.models.IdeVersion
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator

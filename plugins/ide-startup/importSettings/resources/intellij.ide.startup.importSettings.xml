@@ -7,6 +7,12 @@
 
   </actions>
 
+  <extensionPoints>
+    <extensionPoint name="transferSettings.vscode.pluginMapping"
+                    interface="com.intellij.ide.startup.importSettings.providers.vscode.mappings.VSCodePluginMapping"
+                    dynamic="true" />
+  </extensionPoints>
+
   <extensions defaultExtensionNs="com.intellij">
     <!--suppress PluginXmlDynamicPlugin -->
     <ideStartupWizard implementation="com.intellij.ide.startup.importSettings.IdeStartupWizardImpl"/>
@@ -15,5 +21,11 @@
     <applicationService serviceInterface="com.intellij.ide.startup.importSettings.data.SettingsService"
                         serviceImplementation="com.intellij.ide.startup.importSettings.data.SettingsServiceImpl"/>
     <registryKey defaultValue="true" description="Hide import settings sync in unlogged mode" key="import.setting.unlogged.sync.hide" restartRequired="false" />
+
+    <transferSettings.vscode.pluginMapping id="CommonPluginMapping"
+                                           implementation="com.intellij.ide.startup.importSettings.providers.vscode.mappings.CommonPluginMapping"/>
+
+    <statistics.counterUsagesCollector implementationClass="com.intellij.ide.startup.importSettings.fus.TransferSettingsCollector"/>
+    <statistics.validation.customValidationRule implementation="com.intellij.ide.startup.importSettings.fus.KnownPluginValidationRule"/>
   </extensions>
 </idea-plugin>

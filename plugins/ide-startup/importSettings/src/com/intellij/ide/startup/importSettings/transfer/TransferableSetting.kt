@@ -1,13 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.startup.importSettings.transfer
 
-import com.intellij.ide.customize.transferSettings.models.BuiltInFeature
-import com.intellij.ide.customize.transferSettings.models.DummyKeyboardShortcut
-import com.intellij.ide.customize.transferSettings.models.FeatureInfo
-import com.intellij.ide.customize.transferSettings.models.ILookAndFeel
-import com.intellij.ide.customize.transferSettings.models.Keymap
-import com.intellij.ide.customize.transferSettings.models.PatchedKeymap
-import com.intellij.ide.customize.transferSettings.models.PluginFeature
 import com.intellij.ide.nls.NlsMessages
 import com.intellij.ide.plugins.PluginManager
 import com.intellij.ide.startup.importSettings.ImportSettingsBundle
@@ -15,6 +8,13 @@ import com.intellij.ide.startup.importSettings.StartupImportIcons
 import com.intellij.ide.startup.importSettings.data.BaseSetting
 import com.intellij.ide.startup.importSettings.data.ChildSetting
 import com.intellij.ide.startup.importSettings.data.Multiple
+import com.intellij.ide.startup.importSettings.models.BuiltInFeature
+import com.intellij.ide.startup.importSettings.models.DummyKeyboardShortcut
+import com.intellij.ide.startup.importSettings.models.FeatureInfo
+import com.intellij.ide.startup.importSettings.models.ILookAndFeel
+import com.intellij.ide.startup.importSettings.models.Keymap
+import com.intellij.ide.startup.importSettings.models.PatchedKeymap
+import com.intellij.ide.startup.importSettings.models.PluginFeature
 import com.intellij.openapi.actionSystem.KeyboardShortcut
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.extensions.PluginId
