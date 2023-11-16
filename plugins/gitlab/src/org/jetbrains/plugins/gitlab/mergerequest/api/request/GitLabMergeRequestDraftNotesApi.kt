@@ -76,7 +76,7 @@ suspend fun GitLabApi.Rest.submitSingleDraftNote(project: GitLabProjectCoordinat
   }
 }
 
-@SinceGitLab("15.10")
+@SinceGitLab("16.3")
 suspend fun GitLabApi.Rest.addDraftReplyNote(project: GitLabProjectCoordinates,
                                              mrIid: String,
                                              discussionId: String,
