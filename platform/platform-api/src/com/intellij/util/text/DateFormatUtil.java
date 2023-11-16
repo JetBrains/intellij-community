@@ -12,7 +12,6 @@ import com.sun.jna.Native;
 import com.sun.jna.Pointer;
 import com.sun.jna.Structure;
 import com.sun.jna.win32.StdCallLibrary;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -235,8 +234,7 @@ public final class DateFormatUtil {
   }
 
   /** @deprecated use {@link com.intellij.ide.nls.NlsMessages#formatDateLong} */
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static @NlsSafe @NotNull String formatAboutDialogDate(@NotNull Date date) {
     return DateFormat.getDateInstance(DateFormat.LONG, Locale.US).format(date.getTime());
   }
@@ -254,37 +252,25 @@ public final class DateFormatUtil {
 
   //<editor-fold desc="Helpers.">
   private static String someTimeAgoMessage(Period period, int n) {
-    switch (period) {
-      case DAY:
-        return UtilBundle.message("date.format.n.days.ago", n);
-      case MINUTE:
-        return UtilBundle.message("date.format.n.minutes.ago", n);
-      case HOUR:
-        return UtilBundle.message("date.format.n.hours.ago", n);
-      case MONTH:
-        return UtilBundle.message("date.format.n.months.ago", n);
-      case WEEK:
-        return UtilBundle.message("date.format.n.weeks.ago", n);
-      default:
-        return UtilBundle.message("date.format.n.years.ago", n);
-    }
+    return switch (period) {
+      case DAY -> UtilBundle.message("date.format.n.days.ago", n);
+      case MINUTE -> UtilBundle.message("date.format.n.minutes.ago", n);
+      case HOUR -> UtilBundle.message("date.format.n.hours.ago", n);
+      case MONTH -> UtilBundle.message("date.format.n.months.ago", n);
+      case WEEK -> UtilBundle.message("date.format.n.weeks.ago", n);
+      default -> UtilBundle.message("date.format.n.years.ago", n);
+    };
   }
 
   private static String composeInSomeTimeMessage(Period period, int n) {
-    switch (period) {
-      case DAY:
-        return UtilBundle.message("date.format.in.n.days", n);
-      case MINUTE:
-        return UtilBundle.message("date.format.in.n.minutes", n);
-      case HOUR:
-        return UtilBundle.message("date.format.in.n.hours", n);
-      case MONTH:
-        return UtilBundle.message("date.format.in.n.months", n);
-      case WEEK:
-        return UtilBundle.message("date.format.in.n.weeks", n);
-      default:
-        return UtilBundle.message("date.format.in.n.years", n);
-    }
+    return switch (period) {
+      case DAY -> UtilBundle.message("date.format.in.n.days", n);
+      case MINUTE -> UtilBundle.message("date.format.in.n.minutes", n);
+      case HOUR -> UtilBundle.message("date.format.in.n.hours", n);
+      case MONTH -> UtilBundle.message("date.format.in.n.months", n);
+      case WEEK -> UtilBundle.message("date.format.in.n.weeks", n);
+      default -> UtilBundle.message("date.format.in.n.years", n);
+    };
   }
 
   private static SyncDateFormat[] getDateTimeFormats() {
