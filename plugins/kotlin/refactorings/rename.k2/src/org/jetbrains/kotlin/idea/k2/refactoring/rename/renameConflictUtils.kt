@@ -30,6 +30,7 @@ import org.jetbrains.kotlin.idea.refactoring.rename.UsageInfoWithReplacement
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtCallableReferenceExpression
 import org.jetbrains.kotlin.psi.KtClassLikeDeclaration
 import org.jetbrains.kotlin.psi.KtClassOrObject
@@ -81,10 +82,11 @@ fun checkClassNameShadowing(
 
     analyze(declaration) {
         //check outer classes hiding/hidden by rename
+        val processedClasses = mutableSetOf<KtClassOrObject>()
         retargetExternalDeclarations(declaration.getSymbol().getContainingSymbol(), declaration, Name.identifier(newName)) {
             val klass = it.psi as? KtClassOrObject
             val newFqName = klass?.fqName
-            if (newFqName != null) {
+            if (newFqName != null && processedClasses.add(klass)) {
                 for (ref in ReferencesSearch.search(klass, declaration.useScope)) {
                     val refElement = ref.element as? KtSimpleNameExpression ?: continue //todo cross language conflicts
                     newUsages.add(UsageInfoWithFqNameReplacement(refElement, declaration, newFqName))
@@ -139,8 +141,7 @@ fun checkCallableShadowing(
         }
     }
 
-    fun retargetExternalDeclaration(externalDeclaration: KtNamedDeclaration?) {
-        if (externalDeclaration == null) return
+    fun retargetExternalDeclaration(externalDeclaration: KtCallableDeclaration) {
         ReferencesSearch.search(externalDeclaration, declaration.useScope).forEach { ref ->
             val refElement = ref.element as? KtSimpleNameExpression ?: return@forEach
             val fullCallExpression = refElement
@@ -158,8 +159,12 @@ fun checkCallableShadowing(
     analyze(declaration) {
         //check outer callables hiding/hidden by rename
         val callableSymbol = declaration.getSymbol()
+        val processedCallables = mutableSetOf<KtCallableDeclaration>()
         retargetExternalDeclarations(callableSymbol.getContainingSymbol()?.getContainingSymbol(), declaration, Name.identifier(newName)) {
-            retargetExternalDeclaration(it.psi as? KtNamedDeclaration)
+            val callableDeclaration = it.psi as? KtCallableDeclaration
+            if (callableDeclaration != null && processedCallables.add(callableDeclaration)) {
+                retargetExternalDeclaration(callableDeclaration)
+            }
         }
     }
 }

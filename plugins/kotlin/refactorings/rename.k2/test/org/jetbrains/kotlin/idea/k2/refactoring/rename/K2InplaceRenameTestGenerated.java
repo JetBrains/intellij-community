@@ -178,6 +178,11 @@ public class K2InplaceRenameTestGenerated extends AbstractK2InplaceRenameTest {
         runTest("../../idea/tests/testData/refactoring/rename/inplace/HidingPropertyByTopLevel1.kt");
     }
 
+    @TestMetadata("HidingTopLevelClass.kt")
+    public void testHidingTopLevelClass() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/rename/inplace/HidingTopLevelClass.kt");
+    }
+
     @TestMetadata("InvokeToFoo.kt")
     public void testInvokeToFoo() throws Exception {
         runTest("../../idea/tests/testData/refactoring/rename/inplace/InvokeToFoo.kt");
