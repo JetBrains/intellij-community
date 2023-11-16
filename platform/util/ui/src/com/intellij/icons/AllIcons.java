@@ -229,6 +229,10 @@ public class AllIcons {
     public static final @NotNull Icon ShowViewer = load("actions/showViewer.png", 0, 0);
   }
 
+  public static final class AiAssistant {
+    /** 16x16 */ public static final @NotNull Icon AiAssistantColored = load("aiAssistant/aiAssistantColored.svg", -625679760, 0);
+  }
+
   public static final class Chooser {
     /** 16x16 */ public static final @NotNull Icon Bottom = load("chooser/bottom.svg", -411920834, 2);
     /** 16x16 */ public static final @NotNull Icon Left = load("chooser/left.svg", 277946192, 2);
