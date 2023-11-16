@@ -50,7 +50,7 @@ public class PerformanceTestInfo {
   private ThrowableRunnable<?> setup;      // to run before each test
   private int usedReferenceCpuCores = 1;
   private int maxMeasurementAttempts = 3;             // number of retries
-  private final String what;         // to print on fail
+  private final String launchName;         // to print on fail
   private boolean adjustForIO;// true if test uses IO, timings need to be re-calibrated according to this agent disk performance
   private boolean adjustForCPU = true;  // true if test uses CPU, timings need to be re-calibrated according to this agent CPU speed
   private boolean useLegacyScaling;
@@ -95,7 +95,7 @@ public class PerformanceTestInfo {
     }
   }
 
-  PerformanceTestInfo(@NotNull ThrowableComputable<Integer, ?> test, int expectedMs, int expectedInputSize, @NotNull String what) {
+  PerformanceTestInfo(@NotNull ThrowableComputable<Integer, ?> test, int expectedMs, int expectedInputSize, @NotNull String launchName) {
     initOpenTelemetryIfNeeded();
 
     this.test = test;
@@ -103,7 +103,7 @@ public class PerformanceTestInfo {
     this.expectedInputSize = expectedInputSize;
     assert expectedMs > 0 : "Expected must be > 0. Was: " + expectedMs;
     assert expectedInputSize > 0 : "Expected input size must be > 0. Was: " + expectedInputSize;
-    this.what = what;
+    this.launchName = launchName;
     this.tracer = TelemetryManager.getInstance().getTracer(new Scope("performanceUnitTests", null));
   }
 
@@ -250,23 +250,29 @@ public class PerformanceTestInfo {
     assertTiming(String.format("%s.%s", kotlinTestMethod.getClass().getName(), kotlinTestMethod.getName()));
   }
 
-  /** @see PerformanceTestInfo#assertTimingAsSubtest(String) */
+  /**
+   * By default passed test launch name will be used as the subtest name.
+   * @see PerformanceTestInfo#assertTimingAsSubtest(String)
+   * */
   public void assertTimingAsSubtest() {
-    assertTimingAsSubtest(what);
+    assertTimingAsSubtest(launchName);
   }
 
-  /** In case if you want to run many subsequent performance measurements in your JUnit test */
+  /**
+   * In case if you want to run many subsequent performance measurements in your JUnit test.
+   * @see PerformanceTestInfo#assertTiming(String)
+   * */
   public void assertTimingAsSubtest(@Nullable String subTestName) {
     assertTiming(getCallingTestMethod(), subTestName);
   }
 
   /**
    * Asserts expected timing.
+   *
+   * @param fullQualifiedTestMethodName String representation of full method name.
    * For Java you can use {@link com.intellij.testFramework.UsefulTestCase#getQualifiedTestMethodName()}
    * OR
    * {@link com.intellij.testFramework.fixtures.BareTestFixtureTestCase#getQualifiedTestMethodName()}
-   *
-   * @param fullQualifiedTestMethodName - String representation of full method name.
    */
   public void assertTiming(String fullQualifiedTestMethodName) {
     assertTiming(IterationMode.WARMUP, fullQualifiedTestMethodName);
@@ -294,7 +300,7 @@ public class PerformanceTestInfo {
     }
 
     try {
-      computeWithSpanAttribute(tracer, what, "warmup", (st) -> String.valueOf(iterationType.equals(IterationMode.WARMUP)), () -> {
+      computeWithSpanAttribute(tracer, launchName, "warmup", (st) -> String.valueOf(iterationType.equals(IterationMode.WARMUP)), () -> {
         try {
           for (int attempt = 1; attempt <= maxIterationsNumber; attempt++) {
             AtomicInteger actualInputSize;
@@ -364,7 +370,7 @@ public class PerformanceTestInfo {
       try {
         // publish warmup and clean measurements at once at the end of the runs
         if (iterationType.equals(IterationMode.MEASURE)) {
-          MetricsPublisher.getInstance().publish(fullQualifiedTestMethodName, what);
+          MetricsPublisher.getInstance().publish(fullQualifiedTestMethodName, launchName);
         }
       }
       catch (Throwable t) {
@@ -385,7 +391,7 @@ public class PerformanceTestInfo {
                        iterationResult == IterationResult.BORDERLINE ? "33;1m" : // yellow
                        "31;1m"; // red
     return
-      what+" took \u001B[" + colorCode + Math.abs(percentage) + "% " + (percentage > 0 ? "more" : "less") + " time\u001B[0m than expected" +
+      launchName + " took \u001B[" + colorCode + Math.abs(percentage) + "% " + (percentage > 0 ? "more" : "less") + " time\u001B[0m than expected" +
       (iterationResult == IterationResult.DISTRACTED ? " (but JIT compilation took too long, will retry anyway)" : "") +
       "\n  Expected: " + expectedOnMyMachine + "ms" + (expectedOnMyMachine < 1000 ? "" : " (" + StringUtil.formatDuration(expectedOnMyMachine) + ")") +
       "\n  Actual:   " + duration + "ms" + (duration < 1000 ? "" : " (" + StringUtil.formatDuration(duration) + ")") +
