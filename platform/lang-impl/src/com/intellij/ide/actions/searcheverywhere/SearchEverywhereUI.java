@@ -92,6 +92,8 @@ import org.jetbrains.annotations.*;
 import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
+import javax.swing.event.ListDataEvent;
+import javax.swing.event.ListDataListener;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.List;
@@ -292,7 +294,27 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
   public JBList<Object> createList() {
     myListModel = myListFactory.createModel(this::getSelectedTabID);
     addListDataListener(myListModel);
+    addPreviewDataListener(myListModel);
     return myListFactory.createList(myListModel);
+  }
+
+  private void addPreviewDataListener(@NotNull AbstractListModel<Object> model) {
+    model.addListDataListener(new ListDataListener() {
+      @Override
+      public void intervalAdded(ListDataEvent e) {
+        updatePreviewVisibility();
+      }
+
+      @Override
+      public void intervalRemoved(ListDataEvent e) {
+        updatePreviewVisibility();
+      }
+
+      @Override
+      public void contentsChanged(ListDataEvent e) {
+        updatePreviewVisibility();
+      }
+    });
   }
 
   public void toggleEverywhereFilter() {
@@ -629,7 +651,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
       }
     };
 
-    updatePreviewVisibility(myHeader.getSelectedTab());
+    updatePreviewVisibility();
 
     ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(
       SETabSwitcherListener.Companion.getSE_TAB_TOPIC(), new SETabSwitcherListener() {
@@ -644,7 +666,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
         @Override
         public void performed(@NotNull SEHeaderActionListener.SearchEverywhereActionEvent event) {
           if (event.getActionID().equals("Preview")) {
-            updatePreviewVisibility(myHeader.getSelectedTab());
+            updatePreviewVisibility();
           }
         }
       });
@@ -659,6 +681,10 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
     panel.add(splitter, BorderLayout.CENTER);
 
     return createFooterPanel(panel);
+  }
+
+  private void updatePreviewVisibility() {
+    updatePreviewVisibility(myHeader.getSelectedTab());
   }
 
   private void updatePreviewVisibility(@NotNull SETab tab) {
@@ -1603,8 +1629,6 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
       hasMoreContributors.forEach(myListModel::setHasMore);
       mySelectionTracker.resetSelectionIfNeeded();
       myHintHelper.setSearchInProgress(false);
-
-      updatePreviewVisibility(myHeader.getSelectedTab());
 
       myExternalSearchListeners.forEach(listener -> {
         listener.searchFinished(hasMoreContributors);
