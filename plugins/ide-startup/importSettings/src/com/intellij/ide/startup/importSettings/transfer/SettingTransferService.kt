@@ -1,16 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.startup.importSettings.transfer
 
-import com.intellij.ide.customize.transferSettings.DefaultTransferSettingsConfiguration
-import com.intellij.ide.customize.transferSettings.TransferSettingsDataProvider
-import com.intellij.ide.customize.transferSettings.controllers.TransferSettingsListener
-import com.intellij.ide.customize.transferSettings.models.IdeVersion
-import com.intellij.ide.customize.transferSettings.models.Settings
-import com.intellij.ide.customize.transferSettings.models.SettingsPreferencesKind
-import com.intellij.ide.customize.transferSettings.providers.PluginInstallationState
-import com.intellij.ide.customize.transferSettings.providers.TransferSettingsPerformContext
-import com.intellij.ide.customize.transferSettings.providers.vscode.VSCodeTransferSettingsProvider
+import com.intellij.ide.startup.importSettings.DefaultTransferSettingsConfiguration
 import com.intellij.ide.startup.importSettings.ImportSettingsBundle
+import com.intellij.ide.startup.importSettings.TransferSettingsDataProvider
+import com.intellij.ide.startup.importSettings.controllers.TransferSettingsListener
 import com.intellij.ide.startup.importSettings.data.BaseSetting
 import com.intellij.ide.startup.importSettings.data.DataForSave
 import com.intellij.ide.startup.importSettings.data.DialogImportData
@@ -20,6 +14,12 @@ import com.intellij.ide.startup.importSettings.data.ImportProgress
 import com.intellij.ide.startup.importSettings.data.NotificationData
 import com.intellij.ide.startup.importSettings.data.Product
 import com.intellij.ide.startup.importSettings.data.SettingsService
+import com.intellij.ide.startup.importSettings.models.IdeVersion
+import com.intellij.ide.startup.importSettings.models.Settings
+import com.intellij.ide.startup.importSettings.models.SettingsPreferencesKind
+import com.intellij.ide.startup.importSettings.providers.PluginInstallationState
+import com.intellij.ide.startup.importSettings.providers.TransferSettingsPerformContext
+import com.intellij.ide.startup.importSettings.providers.vscode.VSCodeTransferSettingsProvider
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service

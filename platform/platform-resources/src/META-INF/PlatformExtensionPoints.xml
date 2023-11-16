@@ -537,10 +537,5 @@
     <extensionPoint name="uiDslRendererProvider" interface="com.intellij.ui.dsl.listCellRenderer.UiDslRendererProvider" dynamic="true"/>
 
     <extensionPoint name="notificationRouter" interface="com.intellij.notification.NotificationRouter" dynamic="true"/>
-
-    <!-- Settings Transfer -->
-    <extensionPoint name="transferSettings.vscode.pluginMapping"
-                    interface="com.intellij.ide.customize.transferSettings.providers.vscode.mappings.VSCodePluginMapping"
-                    dynamic="true" />
   </extensionPoints>
 </idea-plugin>

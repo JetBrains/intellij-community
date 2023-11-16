@@ -585,8 +585,7 @@
                        order="after PluginsWelcomeTab"/>
     <welcomeScreenCustomization id="defaultCustomization"
                                 implementation="com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenDefaultCustomization"/>
-    <statistics.counterUsagesCollector implementationClass="com.intellij.ide.customize.transferSettings.fus.TransferSettingsCollector"/>
-    <statistics.validation.customValidationRule implementation="com.intellij.ide.customize.transferSettings.fus.KnownPluginValidationRule"/>
+
     <statistics.counterUsagesCollector implementationClass="com.intellij.platform.ide.bootstrap.IdeStartupWizardCollector"/>
     <registryKey defaultValue="-1"
                  description="Defines the experiment group number. Negative value will be ignored."
@@ -1731,10 +1730,6 @@
     <ideEventQueueDispatcher implementation="com.intellij.ide.ui.laf.LaFMnemonicDispatcher"/>
 
     <registryKey key="code.toolbar.debugger.actions" defaultValue="true" description="Add debugger actions into floating toolbar."/>
-
-    <!-- Settings Transfer -->
-    <transferSettings.vscode.pluginMapping id="CommonPluginMapping"
-                                           implementation="com.intellij.ide.customize.transferSettings.providers.vscode.mappings.CommonPluginMapping"/>
 
     <registryKey key="rdct.new.async.actions"
                  defaultValue="false"
