@@ -47,7 +47,7 @@ import javax.swing.border.Border;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.awt.event.KeyEvent;
-import java.util.HashSet;
+import java.util.Collections;
 import java.util.Set;
 import java.util.concurrent.Future;
 
@@ -138,16 +138,12 @@ public class FileHistoryDialog extends HistoryDialog<FileHistoryDialogModel> {
       decorator.startLoading(false);
       updateEditorSearch();
       myFilterFuture = ApplicationManager.getApplication().executeOnPooledThread(() -> {
-        Set<Long> revisions = new HashSet<>();
         FileHistoryDialogModel model = myModel;
+        Set<Long> revisions;
         if (model != null) {
-          model.processContents((r, c) -> {
-            if (Thread.currentThread().isInterrupted()) return false;
-            if (c != null && StringUtil.containsIgnoreCase(c, filter)) {
-              revisions.add(r.getChangeSetId());
-            }
-            return true;
-          });
+          revisions = model.filterContents(filter);
+        } else {
+          revisions = Collections.emptySet();
         }
         decorator.stopLoading();
         UIUtil.invokeLaterIfNeeded(() -> applyFilteredRevisions(revisions));
