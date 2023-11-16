@@ -4,6 +4,7 @@ package com.intellij.internal.statistic.collectors.fus.actions.persistence
 import com.intellij.featureStatistics.FeatureUsageTracker
 import com.intellij.ide.actions.ActionsCollector
 import com.intellij.ide.plugins.IdeaPluginDescriptor
+import com.intellij.internal.statistic.collectors.fus.DataContextUtils
 import com.intellij.internal.statistic.eventLog.events.*
 import com.intellij.internal.statistic.eventLog.events.FusInputEvent.Companion.from
 import com.intellij.internal.statistic.utils.PluginInfo
@@ -12,7 +13,6 @@ import com.intellij.internal.statistic.utils.getPluginInfo
 import com.intellij.lang.Language
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
-import com.intellij.openapi.actionSystem.impl.DataContextUtils
 import com.intellij.openapi.actionSystem.impl.FusAwareAction
 import com.intellij.openapi.actionSystem.impl.Utils
 import com.intellij.openapi.application.runReadAction

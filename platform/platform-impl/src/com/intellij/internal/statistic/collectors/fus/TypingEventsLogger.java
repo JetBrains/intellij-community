@@ -15,7 +15,6 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
-import com.intellij.openapi.actionSystem.impl.DataContextUtils;
 import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
