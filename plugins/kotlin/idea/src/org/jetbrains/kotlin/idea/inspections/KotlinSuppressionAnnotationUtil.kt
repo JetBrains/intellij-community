@@ -28,7 +28,7 @@ internal class KotlinSuppressionAnnotationUtil : SuppressionAnnotationUtil {
     override fun getRemoveAnnotationQuickFix(annotation: PsiElement): LocalQuickFix? {
         if (annotation is KtAnnotationEntry) {
             val fix = RemoveAnnotationFix(CommonQuickFixBundle.message("fix.remove.annotation.text", "Suppress"), annotation)
-            return IntentionWrapper.wrapToQuickFixes(arrayOf(fix), annotation.containingFile).takeIf { it.size == 1 }?.first()
+            return IntentionWrapper.wrapToQuickFixes(arrayOf(fix), annotation.containingFile).singleOrNull()
         }
         return null
     }
