@@ -8,7 +8,6 @@ import com.intellij.collaboration.ui.bindValueIn
 import com.intellij.collaboration.ui.codereview.commits.CommitsBrowserComponentBuilder
 import com.intellij.collaboration.ui.codereview.create.CodeReviewCreateReviewLayoutBuilder
 import com.intellij.collaboration.ui.codereview.create.CodeReviewCreateReviewUIUtil
-import com.intellij.collaboration.ui.codereview.create.CodeReviewTwoLinesCommitRenderer
 import com.intellij.openapi.project.Project
 import com.intellij.vcs.log.VcsCommitMetadata
 import git4idea.ui.branch.MergeDirectionComponentFactory
@@ -99,7 +98,7 @@ internal object GitLabMergeRequestCreateComponentFactory {
       bindValueIn(cs, createVm.commits.filterNotNull().map { result -> result.getOrDefault(emptyList()) })
     }
     val commitsPanel = CommitsBrowserComponentBuilder(project, commitsModel)
-      .setCustomCommitRenderer(CodeReviewTwoLinesCommitRenderer())
+      .setCustomCommitRenderer(CodeReviewCreateReviewUIUtil.createCommitListCellRenderer())
       .showCommitDetails(false)
       .setEmptyCommitListText(GitLabBundle.message("merge.request.create.commits.empty.text"))
       .create()

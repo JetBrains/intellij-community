@@ -19,6 +19,10 @@ import java.awt.Rectangle
 import javax.swing.JList
 import javax.swing.ListCellRenderer
 
+/**
+ * use [CodeReviewCreateReviewUIUtil.createCommitListCellRenderer] instead
+ */
+@ApiStatus.Internal
 class CodeReviewTwoLinesCommitRenderer : ListCellRenderer<VcsCommitMetadata>, BorderLayoutPanel() {
   private val nodeComponent: MyCommitNodeComponent = MyCommitNodeComponent().apply {
     foreground = JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground()
@@ -73,6 +77,7 @@ private class MyCommitNodeComponent : CommitNodeComponent() {
   }
 }
 
+@ApiStatus.Internal
 class TwoLinesCommitRenderer<T>(
   private val getCommitMessage: (T) -> @Nls String,
   private val getAuthorAndDateLine: (T) -> @Nls String
