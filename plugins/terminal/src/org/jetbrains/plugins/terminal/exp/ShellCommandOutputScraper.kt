@@ -2,21 +2,26 @@
 package org.jetbrains.plugins.terminal.exp
 
 import com.intellij.openapi.Disposable
+import com.intellij.util.Alarm
 import com.jediterm.terminal.StyledTextConsumer
 import com.jediterm.terminal.TextStyle
 import com.jediterm.terminal.model.CharBuffer
 import com.jediterm.terminal.model.TerminalTextBuffer
 import org.jetbrains.plugins.terminal.TerminalUtil
 import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.atomic.AtomicBoolean
 
-internal class ShellCommandOutputScraper(private val textBuffer: TerminalTextBuffer,
+internal class ShellCommandOutputScraper(private val session: TerminalSession,
+                                         private val textBuffer: TerminalTextBuffer,
                                          commandManager: ShellCommandManager,
                                          parentDisposable: Disposable) {
 
-  constructor(session: TerminalSession): this(session.model.textBuffer, session.commandManager, session)
+  constructor(session: TerminalSession): this(session, session.model.textBuffer, session.commandManager, session)
 
   private val listeners: CopyOnWriteArrayList<ShellCommandOutputListener> = CopyOnWriteArrayList()
   private var runningCommand: String? = null
+  private val contentChangedAlarm: Alarm = Alarm(Alarm.ThreadToUse.POOLED_THREAD, parentDisposable)
+  private val scheduled: AtomicBoolean = AtomicBoolean(false)
 
   init {
     TerminalUtil.addModelListener(textBuffer, parentDisposable) {
@@ -34,9 +39,25 @@ internal class ShellCommandOutputScraper(private val textBuffer: TerminalTextBuf
   }
 
   private fun onContentChanged() {
-    val output = computeCommandOutput()
-    for (listener in listeners) {
-      listener.commandOutputChanged(output)
+    if (listeners.isNotEmpty()) {
+      if (scheduled.compareAndSet(false, true)) {
+        val request = {
+          scheduled.set(false)
+          if (listeners.isNotEmpty()) {
+            val output = scrapeOutput()
+            for (listener in listeners) {
+              listener.commandOutputChanged(output)
+            }
+          }
+        }
+        contentChangedAlarm.addRequest(request, 50)
+      }
+    }
+  }
+
+  fun scrapeOutput(): StyledCommandOutput {
+    session.model.withContentLock {
+      return computeCommandOutput()
     }
   }
 

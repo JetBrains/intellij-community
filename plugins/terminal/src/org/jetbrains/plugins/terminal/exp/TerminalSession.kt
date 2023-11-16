@@ -3,6 +3,7 @@ package org.jetbrains.plugins.terminal.exp
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataKey
+import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.util.Key
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.terminal.TerminalColorPalette
@@ -35,7 +36,7 @@ class TerminalSession(settings: JBTerminalSystemSettingsProviderBase,
     val defaultStyle = TextStyle(TerminalColor { colorPalette.defaultForeground },
                                  TerminalColor { colorPalette.defaultBackground })
     styleState.setDefaultStyle(defaultStyle)
-    textBuffer = TerminalTextBuffer(80, 24, styleState)
+    textBuffer = TerminalTextBuffer(80, 24, styleState, AdvancedSettings.getInt("terminal.buffer.max.lines.count"), null)
     model = TerminalModel(textBuffer)
     controller = JediTerminal(ModelUpdatingTerminalDisplay(model, settings), textBuffer, styleState)
 

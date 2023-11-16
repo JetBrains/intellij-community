@@ -95,6 +95,7 @@ class TerminalOutputController(
 
   fun finishCommandBlock(exitCode: Int) {
     disposeRunningCommandListeners()
+    updateEditorContent(scraper.scrapeOutput())
     invokeLater {
       val block = outputModel.getLastBlock() ?: error("No active block")
       val document = editor.document
