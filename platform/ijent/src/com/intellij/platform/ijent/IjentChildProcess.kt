@@ -15,10 +15,31 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Experimental
 interface IjentChildProcess : AutoCloseable {
   val pid: Int
+
+  /**
+   * Although sending data through this channel may block due to buffer overflows, this method doesn't wait for actual delivery
+   * of the data to the process.
+   * For synchronous delivery [sendStdinWithConfirmation] should be used.
+   *
+   * Notice that every data chunk is flushed into the process separately. There's no buffering.
+   */
   val stdin: SendChannel<ByteArray>
+
   val stdout: ReceiveChannel<ByteArray>
   val stderr: ReceiveChannel<ByteArray>
   val exitCode: Deferred<Int>
+
+  /**
+   * Sends [data] into the process stdin and waits until the data is received by the process.
+   *
+   * Notice that every data chunk is flushed into the process separately. There's no buffering.
+   */
+  @Throws(SendStdinError::class)
+  suspend fun sendStdinWithConfirmation(data: ByteArray)
+
+  sealed class SendStdinError(msg: String) : Exception(msg) {
+    class ProcessExited : SendStdinError("Process exited")
+  }
 
   @Deprecated("Switch either to kill or terminate")
   suspend fun sendSignal(signal: Int)
@@ -29,16 +50,8 @@ interface IjentChildProcess : AutoCloseable {
   @Throws(ResizePtyError::class)  // Can't use @CheckReturnValue: KTIJ-7061
   suspend fun resizePty(columns: Int, rows: Int)
 
-  /**
-   * This method should return immediately and produce no errors. The actual destruction should happen in background. Errors may be logged.
-   * The method must be idempotent.
-   *
-   * It is safe to call the method even if the process hasn't exited. However, all further calls to other methods of the interface will fail
-   * in that case.
-   *
-   * If it is cumbersome to call [close] explicitly, [AutoClosingIjentChildProcess] may be useful.
-   */
-  override fun close()
+  @Deprecated("No need in explicit deinitialization anymore")
+  override fun close(): Unit = Unit
 
   sealed class ResizePtyError(msg: String) : Exception(msg) {
     class ProcessExited : ResizePtyError("Process exited")
