@@ -37,10 +37,7 @@ import org.jetbrains.jps.model.serialization.PathMacroUtil;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Paths;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static com.intellij.execution.util.EnvFilesUtilKt.configureEnvsFromFiles;
 
@@ -135,39 +132,16 @@ public class ProgramParametersConfigurator {
     }
 
     DataContext context = createContext(fallbackDataContext);
-    for (Macro macro : MacroManager.getInstance().getMacros()) {
-      boolean paramsMacro = macro instanceof MacroWithParams;
-      String template = "$" + macro.getName() + (paramsMacro ? "(" : "$");
-      for (int index = path.indexOf(template);
-           index != -1 && index < path.length() + template.length();
-           index = path.indexOf(template, index)) {
-        String value;
-        int tailIndex;
-        if (paramsMacro) {
-          int endIndex = path.indexOf(")$", index + template.length());
-          if (endIndex != -1) {
-            value = StringUtil.notNullize(previewOrExpandMacro(macro, context, path.substring(index + template.length(), endIndex)));
-            tailIndex = endIndex + 2;
-          }
-          else {
-            //noinspection AssignmentToForLoopParameter
-            index += template.length();
-            continue;
-          }
-        }
-        else {
-          tailIndex = index + template.length();
-          value = StringUtil.notNullize(previewOrExpandMacro(macro, context));
-        }
-        if (applyParameterEscaping) {
-          value = ParametersListUtil.escape(value);
-        }
-        path = path.substring(0, index) + value + path.substring(tailIndex);
-        //noinspection AssignmentToForLoopParameter
-        index += value.length();
-      }
+    try {
+      Collection<Macro> macros = MacroManager.getInstance().getMacros();
+      return MacroManager.expandMacros(path, macros, (macro, occurence) -> {
+        String value = StringUtil.notNullize(previewOrExpandMacro(macro, context, occurence));
+        return applyParameterEscaping ? ParametersListUtil.escape(value) : value;
+      });
     }
-    return path;
+    catch (Macro.ExecutionCancelledException ignore) {
+      return path; // won't happen :)
+    }
   }
 
   private static DataContext createContext(@NotNull DataContext fallbackDataContext) {
@@ -191,7 +165,7 @@ public class ProgramParametersConfigurator {
     return context;
   }
 
-  private static @Nullable String previewOrExpandMacro(Macro macro, DataContext dataContext, String @NotNull ... args) {
+  private static @Nullable String previewOrExpandMacro(Macro macro, DataContext dataContext, String occurence) {
     try {
       if (macro instanceof PromptingMacro || macro instanceof MacroWithParams) {
         Boolean mode = VALIDATION_MODE.getData(dataContext);
@@ -200,8 +174,8 @@ public class ProgramParametersConfigurator {
         }
       }
       String value = macro instanceof PromptingMacro ?
-                     macro.expand(dataContext, args) :
-                     ReadAction.compute(() -> macro.expand(dataContext, args));
+                     macro.expandOccurence(dataContext, occurence) :
+                     ReadAction.compute(() -> macro.expandOccurence(dataContext, occurence));
       MacroUsageCollector.logMacroExpanded(macro, value != null);
       return value;
     }
