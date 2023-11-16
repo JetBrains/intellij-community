@@ -19,10 +19,19 @@ object SimpleTextRepeater {
     }
   }
 
-  fun generateCommandLine(vararg chunks: Item): String {
-    val args: Array<String> = chunks.flatMap { listOf(it.lineText, it.count.toString()) }.toTypedArray()
-    return TerminalSessionTestUtil.getJavaShellCommand(SimpleTextRepeater::class.java, *args)
-  }
-
   data class Item(val lineText: String, val count: Int)
+
+  object Helper {
+    fun generateCommandLine(items: List<Item>): String {
+      val args: Array<String> = items.flatMap { listOf(it.lineText, it.count.toString()) }.toTypedArray()
+      return TerminalSessionTestUtil.getJavaShellCommand(SimpleTextRepeater::class.java, *args)
+    }
+
+    fun getExpectedOutput(items: List<Item>): String {
+      val expectedLines = items.flatMap { item ->
+        MutableList(item.count) { item.lineText }
+      }
+      return expectedLines.joinToString("\n", postfix = "\n")
+    }
+  }
 }

@@ -46,7 +46,7 @@ class BlockTerminalTest(private val shellPath: String) {
   fun `test echo output is read`() {
     val session = startBlockTerminalSession(TermSize(20, 10))
     val outputFuture: CompletableFuture<CommandResult> = getCommandResultFuture(session)
-    session.sendCommandToExecute("echo qqq")
+    session.sendCommandToExecuteWithoutAddingToHistory("echo qqq")
     assertCommandResult(0, "qqq\n", outputFuture)
   }
 
@@ -57,12 +57,8 @@ class BlockTerminalTest(private val shellPath: String) {
     val outputFuture: CompletableFuture<CommandResult> = getCommandResultFuture(session)
     val items = listOf(SimpleTextRepeater.Item("Hello, World", termSize.rows * 3),
                        SimpleTextRepeater.Item("Done", 1))
-    session.sendCommandToExecute(SimpleTextRepeater.generateCommandLine(*items.toTypedArray()))
-    val expectedLines = items.flatMap { item ->
-      MutableList(item.count) { item.lineText }
-    }
-    val expectedOutput : String = expectedLines.joinToString("\n", postfix = "\n")
-    assertCommandResult(0, expectedOutput, outputFuture)
+    session.sendCommandToExecuteWithoutAddingToHistory(SimpleTextRepeater.Helper.generateCommandLine(items))
+    assertCommandResult(0, SimpleTextRepeater.Helper.getExpectedOutput(items), outputFuture)
   }
 
   @org.junit.Test
@@ -73,12 +69,8 @@ class BlockTerminalTest(private val shellPath: String) {
     val session = startBlockTerminalSession(TermSize(200, 100))
     PlatformTestUtil.startPerformanceTest("large output is read", 30000) {
       val outputFuture: CompletableFuture<CommandResult> = getCommandResultFuture(session)
-      session.sendCommandToExecute(SimpleTextRepeater.generateCommandLine(*items.toTypedArray()))
-      val expectedLines = items.flatMap { item ->
-        MutableList(item.count) { item.lineText }
-      }
-      val expectedOutput : String = expectedLines.joinToString("\n", postfix = "\n")
-      assertCommandResult(0, expectedOutput, outputFuture)
+      session.sendCommandToExecuteWithoutAddingToHistory(SimpleTextRepeater.Helper.generateCommandLine(items))
+      assertCommandResult(0, SimpleTextRepeater.Helper.getExpectedOutput(items), outputFuture)
     }.attempts(1).assertTiming()
   }
 
@@ -93,6 +85,10 @@ class BlockTerminalTest(private val shellPath: String) {
 
   private fun startBlockTerminalSession(termSize: TermSize) =
     TerminalSessionTestUtil.startBlockTerminalSession(projectRule.project, shellPath, disposableRule.disposable, termSize)
+
+  private fun TerminalSession.sendCommandToExecuteWithoutAddingToHistory(shellCommand: String) {
+    this.sendCommandToExecute(" $shellCommand")
+  }
 
   @Suppress("SameParameterValue")
   private fun assertCommandResult(expectedExitCode: Int, expectedOutput: String, actualResultFuture: CompletableFuture<CommandResult>) {
