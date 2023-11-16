@@ -88,14 +88,13 @@ final class CommandModeConsumer implements Consumer<String> {
       (commandAndArgs.size() > 1 ? commandAndArgs.subList(1, commandAndArgs.size()) : Collections.emptyList());
     for (final Command command : myCommands) {
       if (command.getName().equals(commandName)) {
-
-        command.execute(commandName, myModule, args, myConsole);
+        command.execute(commandName, myModule, args, myConsole, null);
         return;
       }
     }
     if (myDefaultExecutor != null && !commandAndArgs.isEmpty()) {
       // Unknown command execution is delegated to default executor
-      myDefaultExecutor.execute(commandAndArgs.get(0), myModule, args, myConsole);
+      myDefaultExecutor.execute(commandAndArgs.get(0), myModule, args, myConsole, null);
     }
     else {
       myConsole.print(PyBundle.message("commandLine.commandNotFound", commandName), ConsoleViewContentType.ERROR_OUTPUT);
