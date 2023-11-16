@@ -3,6 +3,7 @@ package com.intellij.codeInspection
 
 import com.intellij.analysis.JvmAnalysisBundle
 import com.intellij.codeInspection.options.OptPane
+import com.intellij.lang.LanguageCommenters
 import com.intellij.lang.jvm.JvmAnnotation
 import com.intellij.modcommand.ModCommand
 import com.intellij.modcommand.ModCommandQuickFix
@@ -78,10 +79,11 @@ class SuppressionAnnotationInspection : AbstractBaseUastLocalInspectionTool() {
 
     private fun isSuppressComment(comment: UComment): Boolean {
       val text = comment.text
-      if (text.length <= 2 && !text.startsWith("//")) {
+      val commentPrefix = LanguageCommenters.INSTANCE.forLanguage(comment.lang)?.lineCommentPrefix ?: return false
+      if (text.length <= commentPrefix.length && !text.startsWith(commentPrefix)) {
         return false
       }
-      val strippedComment = text.substring(2).trim()
+      val strippedComment = text.substring(commentPrefix.length).trim()
       return strippedComment.startsWith(SuppressionUtilCore.SUPPRESS_INSPECTIONS_TAG_NAME)
     }
 
