@@ -33,6 +33,8 @@ import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.testFramework.*;
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
 import com.intellij.testFramework.rules.TempDirectory;
+import com.intellij.testFramework.utils.vfs.CheckVFSHealthRule;
+import com.intellij.testFramework.utils.vfs.SkipVFSHealthCheck;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -77,7 +79,8 @@ import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
 public class PersistentFsTest extends BareTestFixtureTestCase {
-  @Rule public TempDirectory tempDirectory = new TempDirectory();
+  @Rule public final TempDirectory tempDirectory = new TempDirectory();
+  @Rule public final CheckVFSHealthRule checkVFSHealth = new CheckVFSHealthRule();
 
   @Test
   public void testAccessingFileByID() {
@@ -662,6 +665,7 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
   }
 
   @Test
+  @SkipVFSHealthCheck
   public void testConcurrentListAllDoesntCauseDuplicateFileIds() throws Exception {
     PersistentFSImpl pfs = (PersistentFSImpl)PersistentFS.getInstance();
     Application application = ApplicationManager.getApplication();

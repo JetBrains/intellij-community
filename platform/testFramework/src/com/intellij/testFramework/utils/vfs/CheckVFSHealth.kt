@@ -68,6 +68,10 @@ private constructor(private val checkBeforeEach: Boolean = false,
 
   @Throws(Exception::class)
   private fun checkVFS(context: ExtensionContext) {
+    //TODO RC: check SkipVFSHealthCheck !in context.element.get().annotations
+
+    //TODO RC: supply dummy LOG instance so VFSHealthChecker doesn't fill the log with
+    //         warnings?
     val checker = VFSHealthChecker()
     val currentReport = checker.checkHealth(checkForOrphanRecords = true)
     context.publishReportEntry(LOCAL_STORE_REPORT_KEY, currentReport.toString())
@@ -106,9 +110,15 @@ private constructor(private val checkBeforeEach: Boolean = false,
 class CheckVFSHealthRule : TestRule {
   override fun apply(base: Statement,
                      description: Description): Statement {
+    if (description.annotations.any { it.annotationClass == SkipVFSHealthCheck::class }) {
+      return base
+    }
+
     return object : Statement() {
       @Throws(Throwable::class)
       override fun evaluate() {
+        //TODO RC: supply dummy LOG instance so VFSHealthChecker doesn't fill the log with
+        //         warnings?
         val reportBefore = VFSHealthChecker().checkHealth(checkForOrphanRecords = true)
         try {
           base.evaluate()
@@ -120,7 +130,13 @@ class CheckVFSHealthRule : TestRule {
       }
     }
   }
+
 }
+
+/** Don't check VFS health for the method annotated by this */
+@Retention(AnnotationRetention.RUNTIME)
+@Target(AnnotationTarget.FUNCTION)
+annotation class SkipVFSHealthCheck
 
 private fun assertVFSErrorsAreNotIncreased(reportAfter: VFSHealthCheckReport,
                                            reportBefore: VFSHealthCheckReport) {
