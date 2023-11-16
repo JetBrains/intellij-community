@@ -115,7 +115,7 @@ class LoadedGitLabDiscussion(
   override val canAddNotes: Flow<Boolean> = draftNotes.map { it.isEmpty() && mr.details.value.userPermissions.createNote }
   override val canAddDraftNotes: Boolean =
     mr.details.value.userPermissions.createNote &&
-    (glMetadata?.let { GitLabVersion(15, 10) <= it.version } ?: false)
+    (glMetadata?.let { GitLabVersion(16, 3) <= it.version } ?: false)
 
   // a little cheat that greatly simplifies the implementation
   override val resolvable: Boolean = discussionData.notes.first().resolvable

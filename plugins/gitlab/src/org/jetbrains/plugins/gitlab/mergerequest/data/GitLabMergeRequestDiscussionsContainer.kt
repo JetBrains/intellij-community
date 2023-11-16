@@ -37,13 +37,10 @@ interface GitLabMergeRequestDiscussionsContainer {
 
   suspend fun addNote(position: GitLabMergeRequestNewDiscussionPosition, body: String)
 
-  @SinceGitLab("15.10")
   suspend fun addDraftNote(body: String)
 
-  @SinceGitLab("16.3")
   suspend fun addDraftNote(position: GitLabMergeRequestNewDiscussionPosition, body: String)
 
-  @SinceGitLab("15.11")
   suspend fun submitDraftNotes()
 }
 
