@@ -117,21 +117,32 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
       return Collections.emptyList();
     }
 
-    PsiElement startMethod = DebuggerUtilsEx.getContainingMethod(pos);
     List<PsiLambdaExpression> lambdas = DebuggerUtilsEx.collectLambdas(pos, true);
     PsiElement condRet = canStopOnConditionalReturn(file)
                          ? findSingleConditionalReturn(project, document, position.getLine())
                          : null;
 
-    if ((lambdas.isEmpty() || (lambdas.contains(startMethod) && lambdas.size() == 1)) && condRet == null) {
+    // Start method is either outer method/lambda or lambda starting at the beginning of the line.
+    PsiElement startMethod = DebuggerUtilsEx.getContainingMethod(pos);
+
+    PsiElement outerMethod = startMethod != null && startMethod.getTextOffset() >= pos.getOffset()
+                             ? DebuggerUtilsEx.getContainingMethod(startMethod.getParent())
+                             : startMethod;
+
+    // In this case, startMethod lambda is not treated like a real lambda variant, but it's just containing block for us.
+    boolean startMethodIsOuterLambda = startMethod == outerMethod && lambdas.contains(startMethod);
+
+    if ((lambdas.isEmpty() || (startMethodIsOuterLambda && lambdas.size() == 1)) && condRet == null) {
       return Collections.emptyList();
     }
 
     List<JavaBreakpointVariant> res = new SmartList<>();
 
+    boolean mainMethodAdded = false;
     int lambdaCount = 0;
     if (!(startMethod instanceof PsiLambdaExpression)) {
       res.add(new LineJavaBreakpointVariant(position, startMethod, -1));
+      mainMethodAdded = true;
     }
 
     {
@@ -140,18 +151,20 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
         PsiElement firstElem = DebuggerUtilsEx.getFirstElementOnTheLine(lambda, document, position.getLine());
         XSourcePositionImpl elementPosition = XSourcePositionImpl.createByElement(firstElem);
         if (elementPosition != null) {
-          if (lambda == startMethod) {
-            res.add(0, new LineJavaBreakpointVariant(elementPosition, lambda, ordinal++));
+          if (startMethodIsOuterLambda && lambda == startMethod) {
+            res.add(0, new LineJavaBreakpointVariant(elementPosition, lambda, ordinal));
+            mainMethodAdded = true;
           }
-          else {
+          else if (lambda != outerMethod) {
             lambdaCount++;
-            res.add(new LambdaJavaBreakpointVariant(elementPosition, lambda, ordinal++));
+            res.add(new LambdaJavaBreakpointVariant(elementPosition, lambda, ordinal));
           }
+          ordinal++;
         }
       }
     }
 
-    if (lambdaCount > 0) {
+    if (lambdaCount >= 2 || (mainMethodAdded && lambdaCount == 1)) {
       res.add(new JavaBreakpointVariant(position, lambdaCount)); //all
     }
 
