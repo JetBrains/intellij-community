@@ -88,7 +88,8 @@ public class StandardDataFlowRunner {
           myInlining = true;
         }
         if (result == RunnerResult.OK || result == RunnerResult.CANCELLED) {
-          final Collection<DfaMemoryState> closureStates = myInterpreter.getClosures().get(DfaPsiUtil.getTopmostBlockInSameClass(psiBlock));
+          PsiElement topmostBlock = DfaPsiUtil.getTopmostBlockInSameClass(psiBlock);
+          final Collection<DfaMemoryState> closureStates = topmostBlock == null ? List.of() : myInterpreter.getClosures().get(topmostBlock);
           if (allowInlining || !closureStates.isEmpty()) {
             return closureStates;
           }
@@ -106,7 +107,7 @@ public class StandardDataFlowRunner {
    * On the other hand, inlining will normally work inside the supplied method.
    *
    * @param psiBlock method/lambda/class initializer body
-   * @param listener an listener to use
+   * @param listener a listener to use
    * @return result status
    */
   public final @NotNull RunnerResult analyzeMethod(@NotNull PsiElement psiBlock, @NotNull DfaListener listener) {
@@ -119,7 +120,7 @@ public class StandardDataFlowRunner {
    * Usually inlining works, e.g. for lambdas inside stream API calls.
    *
    * @param psiBlock method/lambda/class initializer body
-   * @param listener an listener to use
+   * @param listener a listener to use
    * @return result status
    */
   public final @NotNull RunnerResult analyzeMethodWithInlining(@NotNull PsiElement psiBlock, @NotNull DfaListener listener) {
@@ -131,16 +132,6 @@ public class StandardDataFlowRunner {
       return RunnerResult.OK;
     }
     return analyzeMethod(psiBlock, listener, initialStates);
-  }
-
-  /**
-   * Analyze given code-block without analyzing any parent and children context
-   * @param block block to analyze
-   * @param listener an listener to use
-   * @return result status
-   */
-  public final RunnerResult analyzeCodeBlock(@NotNull PsiCodeBlock block, @NotNull DfaListener listener) {
-    return analyzeMethod(block, listener, Collections.singleton(createMemoryState()));
   }
 
   final @NotNull RunnerResult analyzeMethod(@NotNull PsiElement psiBlock,
