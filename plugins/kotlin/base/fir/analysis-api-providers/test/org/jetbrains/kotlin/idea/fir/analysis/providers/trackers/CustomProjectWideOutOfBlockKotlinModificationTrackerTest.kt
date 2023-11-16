@@ -6,11 +6,13 @@ import com.intellij.psi.PsiDocumentManager
 import org.jetbrains.kotlin.analysis.providers.createProjectWideOutOfBlockModificationTracker
 import org.jetbrains.kotlin.idea.base.test.JUnit4Assertions.assertNotEquals
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
+import org.jetbrains.kotlin.psi.KtBlockExpression
 import org.jetbrains.kotlin.psi.KtDeclarationWithBody
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.psiUtil.isContractDescriptionCallPsiCheck
 
 class CustomProjectWideOutOfBlockKotlinModificationTrackerTest : KotlinLightCodeInsightFixtureTestCase() {
     override fun isFirPlugin(): Boolean = true
@@ -74,6 +76,68 @@ class CustomProjectWideOutOfBlockKotlinModificationTrackerTest : KotlinLightCode
         val file = myFixture.configureByText("usage.kt", "fun foo():Int=") as KtFile
         val function = file.declarations.first() as KtNamedFunction
         doBodyExpressionAddTest(function)
+    }
+
+    // The following contract test cases are also covered by `AbstractProjectWideOutOfBlockKotlinModificationTrackerTest`. However, it turns
+    // out that editing file text and editing a file via its PSI structure may cause different PSI tree change events. While
+    // `AbstractProjectWideOutOfBlockKotlinModificationTrackerTest` types and deletes lines, this test edits the PSI directly, covering both
+    // areas.
+
+    fun `test add contract to function`() {
+        val file = myFixture.configureByText(
+            "usage.kt",
+            """
+                inline fun foo(block: () -> Unit) {
+                    block()
+                }
+            """.trimIndent(),
+        ) as KtFile
+
+        val function = file.declarations.first() as KtNamedFunction
+
+        doPrependExpressionToBodyTest(
+            function,
+            "kotlin.contracts.contract { callsInPlace(block, InvocationKind.EXACTLY_ONCE) }",
+        ) { blockExpression, before, after ->
+            assertTrue(blockExpression.statements.first().isContractDescriptionCallPsiCheck())
+            assertNotEquals(before, after)
+        }
+    }
+
+    fun `disabled test remove contract from function`() {
+        val file = myFixture.configureByText(
+            "usage.kt",
+            """
+                inline fun foo(block: () -> Unit) {
+                    kotlin.contracts.contract { callsInPlace(block, InvocationKind.EXACTLY_ONCE) }
+                    block()
+                }
+            """.trimIndent(),
+        ) as KtFile
+
+        val function = file.declarations.first() as KtNamedFunction
+
+        doRemoveExpressionFromBodyTest(function, expressionIndex = 0) { blockExpression, before, after ->
+            assertNotEquals(before, after)
+        }
+    }
+
+    fun `test add non-contract statement to function body`() {
+        val file = myFixture.configureByText("usage.kt", "fun foo() { }") as KtFile
+        val function = file.declarations.first() as KtNamedFunction
+
+        doPrependExpressionToBodyTest(function, "println()") { blockExpression, before, after ->
+            assertEquals(before, after)
+        }
+    }
+
+    fun `test remove non-contract statement from function body`() {
+        val file = myFixture.configureByText("usage.kt", "fun foo() { println() }") as KtFile
+        val function = file.declarations.first() as KtNamedFunction
+
+        doRemoveExpressionFromBodyTest(function, expressionIndex = 0) { blockExpression, before, after ->
+            assertEquals(before, after)
+        }
     }
 
     fun `test add block to getter`() {
@@ -228,6 +292,47 @@ class CustomProjectWideOutOfBlockKotlinModificationTrackerTest : KotlinLightCode
                 assertNotNull(declaration.bodyExpression)
                 assertionAfterTransformation(before, after)
             }
+        )
+    }
+
+    private fun doPrependExpressionToBodyTest(
+        declaration: KtDeclarationWithBody,
+        expressionText: String,
+        assertionAfterTransformation: (blockExpression: KtBlockExpression, before: Long, after: Long) -> Unit,
+    ) {
+        val blockExpression = declaration.bodyBlockExpression!!
+        val statementCountBeforeTransformation = blockExpression.statements.size
+
+        doTest(
+            actionUnderWriteAction = {
+                blockExpression.addBefore(
+                    buildPsi { createExpression(expressionText) },
+                    blockExpression.statements.firstOrNull(),
+                )
+            },
+            assertion = { before, after ->
+                assertEquals(statementCountBeforeTransformation + 1, blockExpression.statements.size)
+                assertionAfterTransformation(blockExpression, before, after)
+            },
+        )
+    }
+
+    private fun doRemoveExpressionFromBodyTest(
+        declaration: KtDeclarationWithBody,
+        expressionIndex: Int,
+        assertionAfterTransformation: (blockExpression: KtBlockExpression, before: Long, after: Long) -> Unit,
+    ) {
+        val blockExpression = declaration.bodyBlockExpression!!
+        val statementCountBeforeTransformation = blockExpression.statements.size
+
+        doTest(
+            actionUnderWriteAction = {
+                blockExpression.statements[expressionIndex].delete()
+            },
+            assertion = { before, after ->
+                assertEquals(statementCountBeforeTransformation - 1, blockExpression.statements.size)
+                assertionAfterTransformation(blockExpression, before, after)
+            },
         )
     }
 

@@ -246,6 +246,149 @@ class KotlinModuleOutOfBlockModificationTest : AbstractKotlinModuleModificationE
         disposeTrackers(trackerA)
     }
 
+    fun `test that source module out-of-block modification occurs after adding a contract to a function body`() {
+        val moduleA = createModuleInTmpDir("a") {
+            listOf(
+                FileWithText(
+                    "main.kt",
+                    """
+                        inline fun foo(block: () -> Unit) {
+                            <caret>block()
+                        }
+                    """.trimIndent()
+                )
+            )
+        }
+
+        val trackerA = createTracker(moduleA)
+
+        val textAfterModification =
+            """
+                inline fun foo(block: () -> Unit) {
+                    kotlin.contracts.contract { callsInPlace(block, InvocationKind.EXACTLY_ONCE) }
+                    block()
+                }
+            """.trimIndent()
+
+        moduleA.configureEditorForFile("main.kt").apply {
+            modify(textAfterModification) {
+                type("kotlin.contracts.contract { callsInPlace(block, InvocationKind.EXACTLY_ONCE) }\n")
+            }
+        }
+
+        trackerA.assertModified("module A after adding a contract to a function body", expectedEventCount = 15)
+
+        disposeTrackers(trackerA)
+    }
+
+    fun `test that source module out-of-block modification occurs after deleting a contract inside a function body`() {
+        val moduleA = createModuleInTmpDir("a") {
+            listOf(
+                FileWithText(
+                    "main.kt",
+                    """
+                        inline fun foo(block: () -> Unit) {
+                            <caret>kotlin.contracts.contract { callsInPlace(block, InvocationKind.EXACTLY_ONCE) }
+                            block()
+                        }
+                    """.trimIndent()
+                )
+            )
+        }
+
+        val trackerA = createTracker(moduleA)
+
+        val textAfterModification =
+            """
+                inline fun foo(block: () -> Unit) {
+                    block()
+                }
+            """.trimIndent()
+
+        moduleA.configureEditorForFile("main.kt").apply {
+            modify(textAfterModification) {
+                deleteLine()
+            }
+        }
+
+        trackerA.assertModified("module A after deleting a contract inside a function body", expectedEventCount = 2)
+
+        disposeTrackers(trackerA)
+    }
+
+    fun `test that source module out-of-block modification occurs after wrapping a contract statement in an if-expression`() {
+        val moduleA = createModuleInTmpDir("a") {
+            listOf(
+                FileWithText(
+                    "main.kt",
+                    """
+                        inline fun foo(block: () -> Unit) {
+                            <caret>kotlin.contracts.contract { callsInPlace(block, InvocationKind.EXACTLY_ONCE) }
+                            block()
+                        }
+                    """.trimIndent()
+                )
+            )
+        }
+
+        val trackerA = createTracker(moduleA)
+
+        val textAfterModification =
+            """
+                inline fun foo(block: () -> Unit) {
+                    if (1 == 2) kotlin.contracts.contract { callsInPlace(block, InvocationKind.EXACTLY_ONCE) }
+                    block()
+                }
+            """.trimIndent()
+
+        moduleA.configureEditorForFile("main.kt").apply {
+            modify(textAfterModification) {
+                type("if (1 == 2) ")
+            }
+        }
+
+        trackerA.assertModified("module A after wrapping a contract statement in an if-expression", expectedEventCount = 2)
+
+        disposeTrackers(trackerA)
+    }
+
+    fun `test that source module out-of-block modification occurs after unwrapping an illegally nested contract statement`() {
+        val moduleA = createModuleInTmpDir("a") {
+            listOf(
+                FileWithText(
+                    "main.kt",
+                    """
+                        inline fun foo(block: () -> Unit) {
+                            <caret>if (1 == 2)
+                            kotlin.contracts.contract { callsInPlace(block, InvocationKind.EXACTLY_ONCE) }
+                            block()
+                        }
+                    """.trimIndent()
+                )
+            )
+        }
+
+        val trackerA = createTracker(moduleA)
+
+        val textAfterModification =
+            """
+                inline fun foo(block: () -> Unit) {
+                    kotlin.contracts.contract { callsInPlace(block, InvocationKind.EXACTLY_ONCE) }
+                    block()
+                }
+            """.trimIndent()
+
+        moduleA.configureEditorForFile("main.kt").apply {
+            modify(textAfterModification) {
+                deleteLine()
+            }
+        }
+
+        trackerA.assertModifiedOnce("module A after unwrapping an illegally nested contract statement")
+
+        disposeTrackers(trackerA)
+    }
+
     fun `test that source module out-of-block modification does not occur after changing a non-physical file`() {
         val moduleA = createModuleInTmpDir("a") {
             listOf(
