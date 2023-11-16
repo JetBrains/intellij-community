@@ -18,6 +18,7 @@ import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestDTO
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.loadMergeRequest
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.mergeRequestSetReviewers
 import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
+import org.jetbrains.plugins.gitlab.util.GitLabRegistry
 
 private val LOG = logger<GitLabProject>()
 
@@ -30,7 +31,13 @@ interface GitLabProject {
   val members: Flow<Result<List<GitLabUserDTO>>>
   val defaultBranch: Deferred<String>
 
-  suspend fun createMergeRequest(sourceBranch: String, targetBranch: String, title: String): GitLabMergeRequestDTO
+  /**
+   * Creates a merge request on the GitLab server and returns a DTO containing the merge request
+   * once the merge request was successfully initialized on server.
+   * The reason for this wait is that GitLab might take a few moments to process the merge request
+   * before returning one that can be displayed in the IDE in a useful way.
+   */
+  suspend fun createMergeRequestAndAwaitCompletion(sourceBranch: String, targetBranch: String, title: String): GitLabMergeRequestDTO
   suspend fun adjustReviewers(mrIid: String, reviewers: List<GitLabUserDTO>): GitLabMergeRequestDTO
 }
 
@@ -72,9 +79,22 @@ class GitLabLazyProject(
   }
 
   @Throws(GitLabGraphQLMutationException::class)
-  override suspend fun createMergeRequest(sourceBranch: String, targetBranch: String, title: String): GitLabMergeRequestDTO {
+  override suspend fun createMergeRequestAndAwaitCompletion(sourceBranch: String, targetBranch: String, title: String): GitLabMergeRequestDTO {
     return withContext(cs.coroutineContext + Dispatchers.IO) {
-      api.graphQL.createMergeRequest(projectCoordinates, sourceBranch, targetBranch, title).getResultOrThrow()
+      var data: GitLabMergeRequestDTO = api.graphQL.createMergeRequest(projectCoordinates, sourceBranch, targetBranch, title).getResultOrThrow()
+      val iid = data.iid
+      var attempts = 1
+      while (attempts++ < GitLabRegistry.getRequestPollingAttempts()) {
+        val updatedMr = api.graphQL.loadMergeRequest(projectCoordinates, iid).body()
+        requireNotNull(updatedMr)
+
+        data = updatedMr
+
+        if (data.diffRefs != null) break
+
+        delay(GitLabRegistry.getRequestPollingIntervalMillis().toLong())
+      }
+      data
     }
   }
 
