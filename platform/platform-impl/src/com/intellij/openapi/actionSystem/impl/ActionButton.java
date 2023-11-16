@@ -303,7 +303,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     if (myPresentationListener == null) {
       myPresentation.addPropertyChangeListener(myPresentationListener = this::presentationPropertyChanged);
     }
-    if (!(getParent() instanceof ActionToolbar)) {
+    if (ActionToolbar.findToolbarBy(this) == null) {
       ActionManagerEx.doWithLazyActionManager(__ -> update());
     }
     else {
