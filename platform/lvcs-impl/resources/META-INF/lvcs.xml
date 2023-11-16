@@ -1,5 +1,5 @@
 <idea-plugin>
-  <actions>
+  <actions resource-bundle="messages.LocalHistoryBundle">
     <group id="LocalHistory" class="com.intellij.history.integration.ui.actions.LocalHistoryGroup" popup="true">
       <action id="LocalHistory.ShowHistory" class="com.intellij.history.integration.ui.actions.ShowHistoryAction">
         <override-text place="GoToAction"/>
