@@ -26,7 +26,7 @@ class PreviewAction : DumbAwareToggleAction(Supplier { IdeBundle.message("search
     PropertiesComponent.getInstance().isTrueValue(SearchEverywhereUI.PREVIEW_PROPERTY_KEY)
 
   override fun setSelected(e: AnActionEvent, state: Boolean) {
-    PropertiesComponent.getInstance().setValue(SearchEverywhereUI.PREVIEW_PROPERTY_KEY, state)
+    PropertiesComponent.getInstance().updateValue(SearchEverywhereUI.PREVIEW_PROPERTY_KEY, state)
     ApplicationManager.getApplication().messageBus.syncPublisher<SEHeaderActionListener>(SE_HEADER_ACTION_TOPIC)
       .performed(SEHeaderActionListener.SearchEverywhereActionEvent(e.presentation.text))
   }
