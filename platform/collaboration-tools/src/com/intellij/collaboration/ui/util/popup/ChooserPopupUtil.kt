@@ -4,6 +4,8 @@ package com.intellij.collaboration.ui.util.popup
 import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.codereview.details.SelectableWrapper
+import com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPresenter
+import com.intellij.collaboration.ui.util.name
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.ui.popup.JBPopupFactory
@@ -22,7 +24,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.catch
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import javax.swing.JList
@@ -70,20 +71,20 @@ object ChooserPopupUtil {
 
   @JvmOverloads
   suspend fun <T : Any> showAsyncChooserPopup(point: RelativePoint,
-                                              itemsLoader: Flow<List<T>>,
+                                              itemsLoader: Flow<Result<List<T>>>,
                                               presenter: (T) -> PopupItemPresentation,
                                               popupConfig: PopupConfig = PopupConfig.DEFAULT): T? =
     showAsyncChooserPopup(point, itemsLoader, { presenter(it).shortText }, SimplePopupItemRenderer.create(presenter), popupConfig)
 
   @JvmOverloads
   suspend fun <T : Any> showAsyncChooserPopup(point: RelativePoint,
-                                              itemsLoader: Flow<List<T>>,
+                                              itemsLoader: Flow<Result<List<T>>>,
                                               filteringMapper: (T) -> String,
                                               renderer: ListCellRenderer<T>,
                                               popupConfig: PopupConfig = PopupConfig.DEFAULT): T? = coroutineScope {
     val listModel = CollectionListModel<T>()
     val list = createList(listModel, renderer)
-    val loadingListener = ListLoadingListener(this, listModel, itemsLoader, list)
+    val loadingListener = ListLoadingListener(this, listModel, itemsLoader, list, popupConfig.errorPresenter)
 
     @Suppress("UNCHECKED_CAST")
     val popup = JBPopupFactory.getInstance().createListPopupBuilder(list)
@@ -107,7 +108,7 @@ object ChooserPopupUtil {
   @JvmOverloads
   suspend fun <T : Any> showAsyncMultipleChooserPopup(
     point: RelativePoint,
-    itemsLoader: Flow<List<T>>,
+    itemsLoader: Flow<Result<List<T>>>,
     presenter: (T) -> PopupItemPresentation,
     isOriginallySelected: (T) -> Boolean,
     popupConfig: PopupConfig = PopupConfig.DEFAULT
@@ -116,7 +117,8 @@ object ChooserPopupUtil {
     val list = createSelectableList(listModel, SimpleSelectablePopupItemRenderer.create { item ->
       SelectablePopupItemPresentation.fromPresenter(presenter, item)
     })
-    val loadingListener = SelectableListLoadingListener(this, listModel, itemsLoader, list, isOriginallySelected)
+    val loadingListener = SelectableListLoadingListener(this, listModel, itemsLoader, list, isOriginallySelected,
+                                                        popupConfig.errorPresenter)
 
     @Suppress("UNCHECKED_CAST")
     val popup = JBPopupFactory.getInstance().createListPopupBuilder(list)
@@ -173,8 +175,9 @@ object ChooserPopupUtil {
 
   private class ListLoadingListener<T : Any>(private val parentScope: CoroutineScope,
                                              private val listModel: CollectionListModel<T>,
-                                             private val items: Flow<List<T>>,
-                                             private val list: JBList<T>) : JBPopupListener {
+                                             private val items: Flow<Result<List<T>>>,
+                                             private val list: JBList<T>,
+                                             private val errorPresenter: ErrorStatusPresenter<Throwable>?) : JBPopupListener {
     private var cs: CoroutineScope? = null
 
     override fun beforeShown(event: LightweightWindowEvent) {
@@ -182,20 +185,21 @@ object ChooserPopupUtil {
       this.cs = cs
 
       cs.launchNow {
-        items.catch { e ->
-          val errorMessage = e.localizedMessage ?: CollaborationToolsBundle.message("popup.data.loading.error")
-          list.emptyText.setText(errorMessage, SimpleTextAttributes.ERROR_ATTRIBUTES)
-          LOG.error(e)
-        }.collect {
+        items.collect { resultedItems ->
           list.emptyText.clear()
-          val selected = list.selectedIndex
-          if (it.size > listModel.size) {
-            val newList = it.subList(listModel.size, it.size)
-            listModel.addAll(listModel.size, newList)
-          }
-          if (selected != -1) {
-            list.selectedIndex = selected
-          }
+          resultedItems.fold(
+            onSuccess = { item ->
+              val selected = list.selectedIndex
+              if (item.size > listModel.size) {
+                val newList = item.subList(listModel.size, item.size)
+                listModel.addAll(listModel.size, newList)
+              }
+              if (selected != -1) {
+                list.selectedIndex = selected
+              }
+            },
+            onFailure = { e -> showErrorOnPopupFailure(e, errorPresenter, list) }
+          )
         }
       }
     }
@@ -211,7 +215,8 @@ data class PopupConfig(
   val title: @NlsContexts.PopupTitle String? = null,
   val searchTextPlaceHolder: @NlsContexts.StatusText String? = null,
   val alwaysShowSearchField: Boolean = true,
-  val showDirection: ShowDirection = ShowDirection.BELOW
+  val showDirection: ShowDirection = ShowDirection.BELOW,
+  val errorPresenter: ErrorStatusPresenter<Throwable>? = null
 ) {
   companion object {
     val DEFAULT = PopupConfig()
@@ -226,9 +231,10 @@ enum class ShowDirection {
 private class SelectableListLoadingListener<T : Any>(
   private val parentScope: CoroutineScope,
   private val listModel: CollectionListModel<SelectableWrapper<T>>,
-  private val itemsFlow: Flow<List<T>>,
+  private val itemsFlow: Flow<Result<List<T>>>,
   private val list: JBList<SelectableWrapper<T>>,
-  private val isOriginallySelected: (T) -> Boolean
+  private val isOriginallySelected: (T) -> Boolean,
+  private val errorPresenter: ErrorStatusPresenter<Throwable>?
 ) : JBPopupListener {
   private var cs: CoroutineScope? = null
 
@@ -237,18 +243,19 @@ private class SelectableListLoadingListener<T : Any>(
     this.cs = cs
 
     cs.launchNow {
-      itemsFlow.catch { e ->
-        val errorMessage = e.localizedMessage ?: CollaborationToolsBundle.message("popup.data.loading.error")
-        list.emptyText.setText(errorMessage, SimpleTextAttributes.ERROR_ATTRIBUTES)
-        LOG.error(e)
-      }.collect { items ->
+      itemsFlow.collect { resultedItems ->
         list.emptyText.clear()
-        val newList = items.map { item -> SelectableWrapper(item, isOriginallySelected(item)) }
-        listModel.replaceAll(newList)
+        resultedItems.fold(
+          onSuccess = { items ->
+            val newList = items.map { item -> SelectableWrapper(item, isOriginallySelected(item)) }
+            listModel.replaceAll(newList)
 
-        if (list.selectedIndex == -1) {
-          list.selectedIndex = 0
-        }
+            if (list.selectedIndex == -1) {
+              list.selectedIndex = 0
+            }
+          },
+          onFailure = { e -> showErrorOnPopupFailure(e, errorPresenter, list) }
+        )
       }
     }
   }
@@ -256,5 +263,17 @@ private class SelectableListLoadingListener<T : Any>(
   override fun onClosed(event: LightweightWindowEvent) {
     cs?.cancel()
     cs = null
+  }
+}
+
+private fun showErrorOnPopupFailure(e: Throwable, errorPresenter: ErrorStatusPresenter<Throwable>?, list: JBList<*>) {
+  if (errorPresenter == null) {
+    val errorMessage = e.localizedMessage ?: CollaborationToolsBundle.message("popup.data.loading.error")
+    list.emptyText.setText(errorMessage, SimpleTextAttributes.ERROR_ATTRIBUTES)
+  }
+  else {
+    val errorAction = errorPresenter.getErrorAction(e)!!
+    list.emptyText.appendText(errorPresenter.getErrorTitle(e), SimpleTextAttributes.ERROR_ATTRIBUTES)
+    list.emptyText.appendSecondaryText(errorAction.name!!, SimpleTextAttributes.LINK_ATTRIBUTES, errorAction)
   }
 }

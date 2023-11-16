@@ -2,9 +2,9 @@
 package org.jetbrains.plugins.gitlab.mergerequest.data
 
 import com.intellij.collaboration.api.page.ApiPageUtil
-import com.intellij.collaboration.async.asResultFlow
-import com.intellij.collaboration.async.collectBatches
 import com.intellij.collaboration.async.modelFlow
+import com.intellij.collaboration.async.withInitial
+import com.intellij.collaboration.util.ResultUtil.runCatchingUser
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.platform.util.coroutines.childScope
@@ -41,8 +41,11 @@ interface GitLabProject {
    */
   suspend fun createMergeRequestAndAwaitCompletion(sourceBranch: String, targetBranch: String, title: String): GitLabMergeRequestDTO
   suspend fun adjustReviewers(mrIid: String, reviewers: List<GitLabUserDTO>): GitLabMergeRequestDTO
+
+  fun reloadData()
 }
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class GitLabLazyProject(
   private val project: Project,
   parentCs: CoroutineScope,
@@ -56,24 +59,19 @@ class GitLabLazyProject(
 
   private val projectCoordinates: GitLabProjectCoordinates = projectMapping.repository
 
+  private val projectDataReloadSignal = MutableSharedFlow<Unit>()
+
   override val mergeRequests by lazy {
     CachingGitLabProjectMergeRequestsStore(project, cs, api, glMetadata, projectMapping, tokenRefreshFlow)
   }
 
-  override val labels: Flow<Result<List<GitLabLabelDTO>>> =
-    api.graphQL.createAllProjectLabelsFlow(projectMapping.repository)
-      .collectBatches()
-      .asResultFlow()
-      .modelFlow(parentCs, LOG)
+  override val labels: Flow<Result<List<GitLabLabelDTO>>> = projectDataReloadSignal.withInitial(Unit).flatMapLatest {
+    loadLabels()
+  }.modelFlow(parentCs, LOG)
 
-  override val members: Flow<Result<List<GitLabUserDTO>>> =
-    ApiPageUtil.createPagesFlowByLinkHeader(getProjectUsersURI(projectMapping.repository)) {
-      api.rest.getProjectUsers(it)
-    }
-      .map { it.body().map(GitLabUserDTO::fromRestDTO) }
-      .collectBatches()
-      .asResultFlow()
-      .modelFlow(parentCs, LOG)
+  override val members: SharedFlow<Result<List<GitLabUserDTO>>> = projectDataReloadSignal.withInitial(Unit).flatMapLatest {
+    loadMembers()
+  }.modelFlow(parentCs, LOG)
 
   override val defaultBranch: Deferred<String> = cs.async(Dispatchers.IO, start = CoroutineStart.LAZY) {
     val projectRepository = api.graphQL.getProjectRepository(projectCoordinates).body()
@@ -116,5 +114,34 @@ class GitLabLazyProject(
         api.graphQL.loadMergeRequest(projectCoordinates, mrIid).body() ?: error("Merge request could not be loaded")
       }
     }
+  }
+
+  override fun reloadData() {
+    cs.launch {
+      projectDataReloadSignal.emit(Unit)
+    }
+  }
+
+  private fun loadLabels(): Flow<Result<List<GitLabLabelDTO>>> = channelFlow<Result<List<GitLabLabelDTO>>> {
+    runCatchingUser {
+      val loadedLabels = mutableListOf<GitLabLabelDTO>()
+      api.graphQL.createAllProjectLabelsFlow(projectMapping.repository)
+        .collect { labelDTOs ->
+          loadedLabels.addAll(labelDTOs)
+          send(Result.success(loadedLabels))
+        }
+    }.onFailure { e -> send(Result.failure(e)) }
+  }
+
+  private fun loadMembers(): Flow<Result<List<GitLabUserDTO>>> = channelFlow<Result<List<GitLabUserDTO>>> {
+    runCatchingUser {
+      val loadedMembers = mutableListOf<GitLabUserDTO>()
+      ApiPageUtil.createPagesFlowByLinkHeader(getProjectUsersURI(projectMapping.repository)) { api.rest.getProjectUsers(it) }
+        .map { response -> response.body().map(GitLabUserDTO::fromRestDTO) }
+        .collect { userDTOs ->
+          loadedMembers.addAll(userDTOs)
+          send(Result.success(loadedMembers))
+        }
+    }.onFailure { e -> send(Result.failure(e)) }
   }
 }

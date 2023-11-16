@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.util
 
-import com.intellij.collaboration.async.throwFailure
 import com.intellij.collaboration.ui.codereview.Avatar
 import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.collaboration.ui.util.popup.ChooserPopupUtil
@@ -21,7 +20,7 @@ internal object GitLabMergeRequestReviewersUtil {
   ): List<GitLabUserDTO>? {
     val selectedReviewer = ChooserPopupUtil.showAsyncChooserPopup(
       point,
-      potentialReviewers.throwFailure(),
+      potentialReviewers,
       filteringMapper = { user -> user.username },
       renderer = SimpleSelectablePopupItemRenderer.create { reviewer ->
         SelectablePopupItemPresentation.Simple(
@@ -44,7 +43,7 @@ internal object GitLabMergeRequestReviewersUtil {
   ): List<GitLabUserDTO> {
     return ChooserPopupUtil.showAsyncMultipleChooserPopup(
       point,
-      potentialReviewers.throwFailure(),
+      potentialReviewers,
       presenter = { reviewer ->
         PopupItemPresentation.Simple(
           reviewer.username,

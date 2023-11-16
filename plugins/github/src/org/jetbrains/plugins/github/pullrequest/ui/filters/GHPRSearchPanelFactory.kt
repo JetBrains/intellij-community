@@ -39,7 +39,7 @@ internal class GHPRSearchPanelFactory(vm: GHPRSearchPanelViewModel, private val 
       .create(viewScope, GithubBundle.message("pull.request.list.filter.author")) { point ->
         ChooserPopupUtil.showAsyncChooserPopup(
           point,
-          itemsLoader = flow { emit(vm.getAuthors()) },
+          itemsLoader = flow { emit(runCatching { vm.getAuthors() }) },
           presenter = {
             PopupItemPresentation.Simple(
               it.shortName,
@@ -52,7 +52,7 @@ internal class GHPRSearchPanelFactory(vm: GHPRSearchPanelViewModel, private val 
       .create(viewScope, GithubBundle.message("pull.request.list.filter.label")) { point ->
         ChooserPopupUtil.showAsyncChooserPopup(
           point,
-          itemsLoader = flow { emit(vm.getLabels()) },
+          itemsLoader = flow { emit(runCatching { vm.getLabels() }) },
           presenter = { PopupItemPresentation.Simple(it.name) }
         )?.name
       },
@@ -60,7 +60,7 @@ internal class GHPRSearchPanelFactory(vm: GHPRSearchPanelViewModel, private val 
       .create(viewScope, GithubBundle.message("pull.request.list.filter.assignee")) { point ->
         ChooserPopupUtil.showAsyncChooserPopup(
           point,
-          itemsLoader = flow { emit(vm.getAssignees()) },
+          itemsLoader = flow { emit(runCatching { vm.getAssignees() }) },
           presenter = {
             PopupItemPresentation.Simple(
               it.shortName,
