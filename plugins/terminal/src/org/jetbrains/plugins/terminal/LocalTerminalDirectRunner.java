@@ -69,6 +69,8 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   private static final String ZSH_NAME = "zsh";
   private static final String FISH_NAME = "fish";
   public static final String BLOCK_TERMINAL_REGISTRY = "ide.experimental.ui.new.terminal";
+  public static final String BLOCK_TERMINAL_FISH_REGISTRY = "ide.experimental.ui.new.terminal.fish";
+  public static final String BLOCK_TERMINAL_POWERSHELL_REGISTRY = "ide.experimental.ui.new.terminal.powershell";
 
   protected final Charset myDefaultCharset;
   private final ThreadLocal<ShellStartupOptions> myStartupOptionsThreadLocal = new ThreadLocal<>();
@@ -468,14 +470,14 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
         // Multiple `--init-command=COMMANDS` are supported.
         resultCommand.add("--init-command=source " + CommandLineUtil.posixQuote(rcFilePath));
         shellType = ShellType.FISH;
-        withCommandBlocks = true;
+        withCommandBlocks = Registry.is(BLOCK_TERMINAL_FISH_REGISTRY, false);
       }
       else if (isPowerShell(shellName)) {
         resultCommand.addAll(arguments);
         arguments.clear();
         resultCommand.addAll(List.of("-NoExit", "-ExecutionPolicy", "Bypass", "-File", rcFilePath));
         shellType = ShellType.POWERSHELL;
-        withCommandBlocks = true;
+        withCommandBlocks = Registry.is(BLOCK_TERMINAL_POWERSHELL_REGISTRY, false);
       }
     }
 

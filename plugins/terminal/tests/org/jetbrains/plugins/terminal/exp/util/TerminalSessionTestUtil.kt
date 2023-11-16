@@ -30,6 +30,8 @@ object TerminalSessionTestUtil {
                                 parentDisposable: Disposable,
                                 initialTermSize: TermSize = TermSize(200, 20)): TerminalSession {
     Registry.get(LocalTerminalDirectRunner.BLOCK_TERMINAL_REGISTRY).setValue(true, parentDisposable)
+    Registry.get(LocalTerminalDirectRunner.BLOCK_TERMINAL_FISH_REGISTRY).setValue(true, parentDisposable)
+    Registry.get(LocalTerminalDirectRunner.BLOCK_TERMINAL_POWERSHELL_REGISTRY).setValue(true, parentDisposable)
     val runner = LocalTerminalDirectRunner.createTerminalRunner(project)
     val baseOptions = ShellStartupOptions.Builder().shellCommand(listOf(shellPath, "-i")).initialTermSize(initialTermSize).build()
     val configuredOptions = runner.configureStartupOptions(baseOptions)
