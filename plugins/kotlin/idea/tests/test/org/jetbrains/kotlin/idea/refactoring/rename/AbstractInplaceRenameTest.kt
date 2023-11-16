@@ -63,7 +63,13 @@ abstract class AbstractInplaceRenameTest : KotlinLightCodeInsightFixtureTestCase
                 if (throwable != null) {
                     throw throwable!!
                 }
-                myFixture.checkResultByFile(dataFile("${fileName()}.after"))
+
+                val nameSuffix = getAfterFileNameSuffix()
+                var afterFile = dataFile("${fileName()}${nameSuffix ?: ""}.after")
+                if (nameSuffix != null && !afterFile.exists()) {
+                    afterFile = dataFile("${fileName()}.after")
+                }
+                myFixture.checkResultByFile(afterFile)
             } catch (e: BaseRefactoringProcessor.ConflictsInTestsException) {
                 val expectedMessage = InTextDirectivesUtils.findStringWithPrefixes(file.text, "// SHOULD_FAIL_WITH: ")
                 TestCase.assertEquals(expectedMessage, e.messages.joinToString())
@@ -73,6 +79,8 @@ abstract class AbstractInplaceRenameTest : KotlinLightCodeInsightFixtureTestCase
             }
         }
     }
+
+    protected open fun getAfterFileNameSuffix(): String? = null
 
     private fun doImplicitLambdaParameterTest(
         file: PsiFile,

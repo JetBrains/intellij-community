@@ -1,0 +1,15 @@
+// NEW_NAME: m
+// RENAME: member
+private class A {
+
+    private class B {
+        private fun b() {
+            println(A.m)
+        }
+        private val <caret>m = ""
+    }
+
+    companion object {
+        private val m = ""
+    }
+}

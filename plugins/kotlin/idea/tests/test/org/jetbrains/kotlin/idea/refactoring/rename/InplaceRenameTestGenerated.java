@@ -108,6 +108,11 @@ public class InplaceRenameTestGenerated extends AbstractInplaceRenameTest {
         runTest("testData/refactoring/rename/inplace/GlobalFunctionNotInplace.kt");
     }
 
+    @TestMetadata("HidingCompanionProperty.kt")
+    public void testHidingCompanionProperty() throws Exception {
+        runTest("testData/refactoring/rename/inplace/HidingCompanionProperty.kt");
+    }
+
     @TestMetadata("HidingMethodByTopLevel.kt")
     public void testHidingMethodByTopLevel() throws Exception {
         runTest("testData/refactoring/rename/inplace/HidingMethodByTopLevel.kt");

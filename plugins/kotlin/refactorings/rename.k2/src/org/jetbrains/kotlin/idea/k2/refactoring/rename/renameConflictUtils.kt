@@ -14,9 +14,11 @@ import org.jetbrains.kotlin.analysis.api.calls.successfulCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.analysis.api.scopes.KtScope
 import org.jetbrains.kotlin.analysis.api.symbols.KtAnonymousObjectSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KtClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassifierSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtDeclarationSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KtNamedClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtErrorType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.idea.base.psi.copied
@@ -192,6 +194,10 @@ fun checkCallableShadowing(
         var classOrObjectSymbol = symbol.getContainingSymbol()?.getContainingSymbol()
         while (classOrObjectSymbol is KtClassOrObjectSymbol) {
             classOrObjectSymbol.getMemberScope().processScope(classOrObjectSymbol)
+
+            val companionObject = (classOrObjectSymbol as? KtNamedClassOrObjectSymbol)?.companionObject
+            companionObject?.getMemberScope()?.processScope(companionObject)
+
             classOrObjectSymbol = classOrObjectSymbol.getContainingSymbol()
         }
         getPackageSymbolIfPackageExists(declaration.containingKtFile.packageFqName)?.getPackageScope()?.processScope(null)
@@ -211,7 +217,10 @@ private fun createQualifiedExpression(callExpression: KtExpression, newName: Str
         val receiver = appliedSymbol?.dispatchReceiver ?: appliedSymbol?.extensionReceiver
         if (receiver is KtImplicitReceiverValue) {
             val symbol = receiver.symbol
-            if (symbol is KtClassifierSymbol && symbol !is KtAnonymousObjectSymbol) {
+            if ((symbol as? KtClassOrObjectSymbol)?.classKind == KtClassKind.COMPANION_OBJECT) {
+                (symbol.getContainingSymbol() as? KtClassOrObjectSymbol)?.name
+            }
+            else if (symbol is KtClassifierSymbol && symbol !is KtAnonymousObjectSymbol) {
                 "this@" + symbol.name!!.asString()
             } else {
                 "this"

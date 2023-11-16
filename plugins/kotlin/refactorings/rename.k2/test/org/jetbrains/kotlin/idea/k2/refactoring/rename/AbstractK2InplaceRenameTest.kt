@@ -9,6 +9,10 @@ abstract class AbstractK2InplaceRenameTest : AbstractInplaceRenameTest() {
 
     override fun isFirPlugin(): Boolean = true
 
+    override fun getAfterFileNameSuffix(): String? {
+        return ".k2"
+    }
+
     override fun doTest(unused: String) {
         IgnoreTests.runTestIfNotDisabledByFileDirective(
             dataFilePath(),
