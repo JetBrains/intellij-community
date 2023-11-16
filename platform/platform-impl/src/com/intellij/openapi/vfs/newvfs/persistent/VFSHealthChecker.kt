@@ -492,9 +492,21 @@ class VFSHealthChecker(private val impl: FSRecordsImpl,
                                   val namesEnumeratorReport: NamesEnumeratorReport,
                                   val contentEnumeratorReport: ContentEnumeratorReport,
                                   val timeTaken: Duration) {
+    fun hasSameErrors(other: VFSHealthCheckReport): Boolean {
+      return recordsReport.hasSameErrors(other.recordsReport)
+             && rootsReport.hasSameErrors(other.rootsReport)
+             && namesEnumeratorReport.hasSameErrors(other.namesEnumeratorReport)
+             && contentEnumeratorReport.hasSameErrors(other.contentEnumeratorReport)
+    }
+
+    override fun toString(): String {
+      return "VFSHealthCheckReport[healthy: $healthy]($recordsReport, $rootsReport, $namesEnumeratorReport, $contentEnumeratorReport){timeTaken=$timeTaken}"
+    }
 
     val healthy: Boolean
       get() = recordsReport.healthy && rootsReport.healthy && namesEnumeratorReport.healthy && contentEnumeratorReport.healthy
+
+
 
     data class FileRecordsReport(var fileRecordsChecked: Int = 0,
                                  var fileRecordsDeleted: Int = 0,
@@ -523,6 +535,20 @@ class VFSHealthChecker(private val impl: FSRecordsImpl,
                 && nullParents == 0
                 && inconsistentParentChildRelationships == 0
                 && generalErrors == 0
+
+      fun hasSameErrors(other: FileRecordsReport): Boolean {
+        return nullNameIds == other.nullNameIds
+               && unresolvableNameIds == other.unresolvableNameIds
+               && unresolvableAttributesIds == other.unresolvableAttributesIds
+               && unresolvableContentIds == other.unresolvableContentIds
+               && nullParents == other.nullParents
+               && inconsistentParentChildRelationships == other.inconsistentParentChildRelationships
+               && generalErrors == other.generalErrors
+      }
+
+      override fun toString(): String {
+        return "FileRecordsReport[recordsChecked=$fileRecordsChecked, recordsDeleted=$fileRecordsDeleted, childrenChecked=$childrenChecked]{nullNameIds=$nullNameIds, unresolvableNameIds=$unresolvableNameIds, notNullContentIds=$notNullContentIds, unresolvableContentIds=$unresolvableContentIds, unresolvableAttributesIds=$unresolvableAttributesIds, nullParents=$nullParents, inconsistentParentChildRelationships=$inconsistentParentChildRelationships, generalErrors=$generalErrors)"
+      }
     }
 
     data class NamesEnumeratorReport(var namesChecked: Int = 0,
@@ -539,6 +565,13 @@ class VFSHealthChecker(private val impl: FSRecordsImpl,
                 && idsResolvedToNull == 0
                 && inconsistentNames == 0
                 && generalErrors == 0
+
+      fun hasSameErrors(other: NamesEnumeratorReport): Boolean {
+        return namesResolvedToNull == other.namesResolvedToNull
+               && idsResolvedToNull == other.idsResolvedToNull
+               && inconsistentNames == other.inconsistentNames
+               && generalErrors == other.generalErrors
+      }
     }
 
     data class RootsReport(var rootsCount: Int = 0,
@@ -552,15 +585,23 @@ class VFSHealthChecker(private val impl: FSRecordsImpl,
         get() = rootsWithParents == 0
                 && rootsDeletedButNotRemoved == 0
                 && generalErrors == 0
+
+      fun hasSameErrors(other: RootsReport): Boolean {
+        return rootsWithParents == other.rootsWithParents
+               && rootsDeletedButNotRemoved == other.rootsDeletedButNotRemoved
+               && generalErrors == other.generalErrors
+      }
     }
 
     data class ContentEnumeratorReport(
       var contentRecordsChecked: Int = 0,
       /* tryEnumerate/valueOf/etc exceptions */
-      var generalErrors: Int = 0
-    ) {
+      var generalErrors: Int = 0) {
+
       val healthy: Boolean
         get() = (generalErrors == 0)
+
+      fun hasSameErrors(other: ContentEnumeratorReport): Boolean = (generalErrors == other.generalErrors)
     }
   }
 
