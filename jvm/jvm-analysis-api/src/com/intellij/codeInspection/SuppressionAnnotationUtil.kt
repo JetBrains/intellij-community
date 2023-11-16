@@ -3,7 +3,6 @@ package com.intellij.codeInspection
 
 import com.intellij.lang.LanguageExtension
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.psi.PsiElement
 import org.jetbrains.uast.UAnnotation
 import org.jetbrains.uast.UExpression
 
@@ -30,9 +29,4 @@ interface SuppressionAnnotationUtil {
    * Returned values should be [org.jetbrains.uast.UNamedExpression.expression].
    */
   fun getSuppressionAnnotationAttributeExpressions(annotation: UAnnotation): List<UExpression>
-
-  /**
-   * @return quick fix removing a given annotation in its language.
-   */
-  fun getRemoveAnnotationQuickFix(annotation: PsiElement): LocalQuickFix?
 }

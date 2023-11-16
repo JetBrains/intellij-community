@@ -4,7 +4,9 @@ package com.intellij.codeInspection
 import com.intellij.analysis.JvmAnalysisBundle
 import com.intellij.codeInspection.options.OptPane
 import com.intellij.lang.LanguageCommenters
-import com.intellij.lang.jvm.JvmAnnotation
+import com.intellij.lang.jvm.JvmModifiersOwner
+import com.intellij.lang.jvm.actions.annotationRequest
+import com.intellij.lang.jvm.actions.createRemoveAnnotationActions
 import com.intellij.modcommand.ModCommand
 import com.intellij.modcommand.ModCommandQuickFix
 import com.intellij.modcommand.ModPsiUpdater
@@ -21,7 +23,6 @@ import com.intellij.uast.UastHintedVisitorAdapter
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.uast.*
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
-import com.intellij.jvm.analysis.quickFix.RemoveAnnotationQuickFix as RemoveJvmAnnotationQuickFix
 
 @VisibleForTesting
 class SuppressionAnnotationInspection : AbstractBaseUastLocalInspectionTool() {
@@ -108,21 +109,18 @@ class SuppressionAnnotationInspection : AbstractBaseUastLocalInspectionTool() {
     private fun registerProblem(annotation: UAnnotation, addAllowSuppressionsFix: Boolean) {
       val sourcePsi = annotation.sourcePsi ?: return
       var fixes: Array<LocalQuickFix> = if (addAllowSuppressionsFix) arrayOf(AllowSuppressionsFix()) else arrayOf()
-      val removeAnnotationFix = getRemoveAnnotationFix(sourcePsi)
+      val removeAnnotationFix = getRemoveAnnotationFix(annotation, sourcePsi)
       if (removeAnnotationFix != null) {
         fixes += removeAnnotationFix
       }
       holder.registerProblem(sourcePsi, JvmAnalysisBundle.message("inspection.suppression.annotation.problem.descriptor"), *fixes)
     }
 
-    private fun getRemoveAnnotationFix(annotationElement: PsiElement): LocalQuickFix? {
-      val suppressionAnnotationUtil = SuppressionAnnotationUtil.extension.forLanguage(annotationElement.language)
-      val quickFix = suppressionAnnotationUtil?.getRemoveAnnotationQuickFix(annotationElement)
-      if (quickFix != null) {
-        return quickFix
-      }
-      val jvmAnnotation = annotationElement as? JvmAnnotation ?: return null
-      return RemoveJvmAnnotationQuickFix(jvmAnnotation)
+    private fun getRemoveAnnotationFix(annotationElement: UAnnotation, sourcePsi: PsiElement): LocalQuickFix? {
+      val owner = annotationElement.getParentOfType<UDeclaration>()?.javaPsi as? JvmModifiersOwner ?: return null
+      val annotationQualifiedName = annotationElement.qualifiedName ?: return null
+      val actions = createRemoveAnnotationActions(owner, annotationRequest(annotationQualifiedName))
+      return IntentionWrapper.wrapToQuickFixes(actions, sourcePsi.containingFile).singleOrNull()
     }
   }
 
@@ -220,9 +218,5 @@ internal class JavaSuppressionAnnotationUtil : SuppressionAnnotationUtil {
     return annotation.attributeValues
       .filter { it.name == null || it.name == "value" }
       .map { it.expression }
-  }
-
-  override fun getRemoveAnnotationQuickFix(annotation: PsiElement): LocalQuickFix? {
-    return null // default will be used
   }
 }
