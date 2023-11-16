@@ -144,6 +144,17 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
   public PackageEntryTable IMPORT_LAYOUT_TABLE = new PackageEntryTable();
 
 
+  /**
+   * <pre>
+   * builder.add()
+   *        .sub()
+   *        .multiply()
+   * ;
+   * ^
+   * </pre>
+   */
+  public boolean WRAP_SEMICOLON_AFTER_CALL_CHAIN = false;
+
   @WrapConstant
   public int RECORD_COMPONENTS_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
   public boolean ALIGN_MULTILINE_RECORDS = true;

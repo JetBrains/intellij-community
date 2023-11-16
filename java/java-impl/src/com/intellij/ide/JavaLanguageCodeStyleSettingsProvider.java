@@ -198,6 +198,11 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
                                    "KEEP_BUILDER_METHODS_INDENTS");
 
       consumer.showCustomOption(JavaCodeStyleSettings.class,
+                                "WRAP_SEMICOLON_AFTER_CALL_CHAIN",
+                                JavaBundle.message("wrapping.semicolon.after.call.chain"),
+                                getInstance().WRAPPING_CALL_CHAIN);
+
+      consumer.showCustomOption(JavaCodeStyleSettings.class,
                                 "ANNOTATION_PARAMETER_WRAP",
                                 JavaBundle.message("wrapping.annotation.parameters"),
                                 null,
