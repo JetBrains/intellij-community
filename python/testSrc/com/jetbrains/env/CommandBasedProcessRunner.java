@@ -62,6 +62,6 @@ public class CommandBasedProcessRunner extends ProcessWithConsoleRunner {
                   @NotNull final ProcessListener processListener,
                   @NotNull final String tempWorkingPath) {
     myConsole = new SimpleProcessRunnerConsole(project, processListener);
-    myCommand.execute(myCommand.getName(), myModule, myParameters, myConsole);
+    myCommand.execute(myCommand.getName(), myModule, myParameters, myConsole, null);
   }
 }
