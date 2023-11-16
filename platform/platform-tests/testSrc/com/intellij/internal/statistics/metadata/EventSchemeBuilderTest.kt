@@ -91,8 +91,7 @@ class EventSchemeBuilderTest : BasePlatformTestCase() {
   private fun buildGroupDescription(eventField: EventField<*>): GroupDescriptor {
     val eventLogGroup = EventLogGroup("test.group.id", 1)
     eventLogGroup.registerEvent("test_event", eventField)
-    val collector = EventsSchemeBuilder.FeatureUsageCollectorInfo(TestCounterCollector(eventLogGroup),
-                                                                  PluginSchemeDescriptor("testPlugin", "testPluginVersion"))
+    val collector = EventsSchemeBuilder.FeatureUsageCollectorInfo(TestCounterCollector(eventLogGroup), PluginSchemeDescriptor("testPlugin"))
     val groups = EventsSchemeBuilder.collectGroupsFromExtensions("count", listOf(collector), "FUS")
     assertSize(1, groups)
     return groups.first()

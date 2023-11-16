@@ -24,8 +24,7 @@ data class FieldDescriptor(val path: String,
 data class EventDescriptor(val event: String,
                            val fields: Set<FieldDescriptor>)
 
-data class PluginSchemeDescriptor(val id: String,
-                                  val version: String)
+data class PluginSchemeDescriptor(val id: String)
 
 data class GroupDescriptor(val id: String,
                            val type: String,
