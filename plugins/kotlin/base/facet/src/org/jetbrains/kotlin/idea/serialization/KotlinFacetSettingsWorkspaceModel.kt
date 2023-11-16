@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.platform.IdePlatformKind
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.isCommon
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
+import org.jetbrains.kotlin.platform.toTargetPlatform
 
 class KotlinFacetSettingsWorkspaceModel(val entity: KotlinSettingsEntity.Builder) : IKotlinFacetSettings {
     private var myUseProjectSettings = entity.useProjectSettings
@@ -179,7 +180,7 @@ class KotlinFacetSettingsWorkspaceModel(val entity: KotlinSettingsEntity.Builder
             entity.sourceSetNames = value.toMutableList()
         }
 
-    private var _targetPlatform : TargetPlatform? = entity.targetPlatform.deserializeTargetPlatformByComponentPlatforms()
+    private var _targetPlatform : TargetPlatform? = JvmPlatforms.defaultJvmPlatform.singleOrNull()?.toTargetPlatform()
     override var targetPlatform: TargetPlatform?
         get() {
             val args = compilerArguments
