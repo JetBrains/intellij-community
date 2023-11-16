@@ -189,27 +189,6 @@ public class RefJavaUtilImpl extends RefJavaUtil {
                          return false;
                        }
 
-                       @Override
-                       public boolean visitTryExpression(@NotNull UTryExpression node) {
-                         // hack to workaround the problem that UAST does not support resource expressions IDEA-337821
-                         PsiTryStatement tryStatement = (PsiTryStatement)node.getJavaPsi();
-                         if (tryStatement != null) {
-                           PsiResourceList resourceList = tryStatement.getResourceList();
-                           if (resourceList != null) {
-                             for (PsiResourceListElement resourceListElement : resourceList) {
-                               if (resourceListElement instanceof PsiResourceExpression rExpression) {
-                                 PsiExpression expression = rExpression.getExpression();
-                                 UElement uElement = UastContextKt.toUElement(expression);
-                                 if (uElement instanceof UExpression exp) {
-                                   exp.accept(this);
-                                 }
-                               }
-                             }
-                           }
-                         }
-                         return false;
-                       }
-
                        private void visitReferenceExpression(@NotNull UExpression node) {
                          UElement uastParent = node.getUastParent();
                          if (uastParent instanceof UQualifiedReferenceExpression qualifiedReference && qualifiedReference.getSelector() == node) {
