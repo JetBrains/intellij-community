@@ -14,6 +14,7 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.components.service
+import com.intellij.openapi.concurrency.waitForPromise
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopup
@@ -69,6 +70,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.drop
+import org.jetbrains.annotations.TestOnly
 import java.awt.Cursor
 import java.awt.Point
 import java.awt.event.*
@@ -82,6 +84,7 @@ import javax.swing.tree.TreePath
 import javax.swing.tree.TreeSelectionModel
 import kotlin.math.min
 import kotlin.reflect.KClass
+import kotlin.time.Duration
 
 class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, parent: JBPopup? = null, parentValue: Any? = null)
   : WizardPopup(project, parent, step),
@@ -142,7 +145,7 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
       return
     }
 
-    val searchBorder =  mySpeedSearchPatternField.border
+    val searchBorder = mySpeedSearchPatternField.border
     mySpeedSearchPatternField.border = null
 
     val toolbar = createToolbar().component.apply {
@@ -791,4 +794,10 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
         Disposer.register(parent) { it.cancel() }
       }
   }
+
+  @TestOnly
+  fun waitTreeExpand(timeout: Duration) {
+    TreeUtil.promiseExpandAll(tree).waitForPromise(timeout)
+  }
+
 }

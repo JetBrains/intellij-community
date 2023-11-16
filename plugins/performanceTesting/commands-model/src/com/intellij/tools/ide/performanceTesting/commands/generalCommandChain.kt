@@ -638,6 +638,10 @@ fun <T : CommandChain> T.filterVcsLogTab(params:Map<String, String>): T = apply 
   addCommand("${CMD_PREFIX}filterVcsLogTab $cmdParams")
 }
 
+fun <T : CommandChain> T.showBranchWidget(): T = apply {
+  addCommand("${CMD_PREFIX}gitShowBranchWidget")
+}
+
 fun <T : CommandChain> T.chooseCompletionCommand(completionName: String): T = apply {
   addCommand("${CMD_PREFIX}chooseCompletionCommand ${completionName}")
 }

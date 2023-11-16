@@ -6,6 +6,10 @@ import com.intellij.dvcs.branch.BranchType
 import com.intellij.dvcs.getCommonCurrentBranch
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.vcs.VcsScope
+import com.intellij.openapi.vcs.telemetry.VcsTelemetrySpan
+import com.intellij.platform.diagnostic.telemetry.TelemetryManager.Companion.getInstance
+import com.intellij.platform.diagnostic.telemetry.helpers.computeWithSpan
 import com.intellij.psi.codeStyle.MinusculeMatcher
 import com.intellij.ui.SeparatorWithText
 import com.intellij.ui.popup.PopupFactoryImpl
@@ -299,7 +303,9 @@ internal class LazyBranchesSubtreeHolder(
 
   val tree: Map<String, Any> by lazy {
     val branchesList = matchingResult.matchedNodes
-    buildSubTree(branchesList.map { (if (isPrefixGrouping()) it.name.split('/') else listOf(it.name)) to it })
+    computeWithSpan(getInstance().getTracer(VcsScope), VcsTelemetrySpan.GitBranchesPopup.BuildingTree.getName()) {
+      buildSubTree(branchesList.map { (if (isPrefixGrouping()) it.name.split('/') else listOf(it.name)) to it })
+    }
   }
 
   val topMatch: GitBranch?
