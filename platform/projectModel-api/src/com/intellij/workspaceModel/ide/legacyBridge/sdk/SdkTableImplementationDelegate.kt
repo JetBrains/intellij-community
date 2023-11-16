@@ -27,7 +27,6 @@ interface SdkTableImplementationDelegate {
   companion object {
     fun getInstance(): SdkTableImplementationDelegate {
       return ApplicationManager.getApplication().service()
-      //return ExtensionPointName.create<SdkTableImplementationDelegate>("com.intellij.workspaceModel.sdk.implementation.delegate").extensions.first()
     }
   }
 }

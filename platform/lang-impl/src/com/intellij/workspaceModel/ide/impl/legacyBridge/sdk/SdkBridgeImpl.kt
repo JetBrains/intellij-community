@@ -30,15 +30,6 @@ class SdkBridgeImpl(private var sdkEntityBuilder: SdkMainEntity.Builder) : UserD
     reloadAdditionalData()
   }
 
-  //var sdkId: SdkId = entityId
-
-  //private val sdkEntityCachedValue = CachedValue { storage -> storage.resolve(sdkId) ?: error("Unexpected state") }
-  //
-  //private val sdkEntity: SdkMainEntity
-  //  get() {
-  //    return GlobalWorkspaceModel.getInstance().entityStorage.cachedValue(sdkEntityCachedValue)
-  //  }
-
   override fun getSdkType(): SdkTypeId = sdkEntityBuilder.getSdkType()
 
   override fun getName(): String = sdkEntityBuilder.name
@@ -90,15 +81,8 @@ class SdkBridgeImpl(private var sdkEntityBuilder: SdkMainEntity.Builder) : UserD
   }
 
   override fun getSdkAdditionalData(): SdkAdditionalData? = additionalData
-  //  val additionalData = sdkEntityBuilder.additionalData
-  //  if (additionalData.isBlank()) return null
-  //  val additionalDataElement = JDOMUtil.load(additionalData)
-  //  return sdkEntityBuilder.getSdkType().loadAdditionalData(this, additionalDataElement)
-  //}
 
   override fun clone(): Any {
-    // Called from com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel.reset
-    // So I need to have such implementation and can't use implementation with SymbolicId and searching in storage
     val sdkEntityClone = SdkTableBridgeImpl.createEmptySdkEntity("", "", "")
     sdkEntityClone.applyChangesFrom(sdkEntityBuilder)
     return SdkBridgeImpl(sdkEntityClone)

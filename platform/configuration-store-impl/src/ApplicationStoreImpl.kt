@@ -54,7 +54,6 @@ open class ApplicationStoreImpl(private val app: Application)
   }
 
   override suspend fun doSave(result: SaveResult, forceSavingAllSettings: Boolean) {
-    println("ApplicationStoreImpl.doSave ${Thread.currentThread()}")
     val saveSessionManager = createSaveSessionProducerManager()
     if (GlobalLibraryTableBridge.isEnabled() || GlobalSdkTableBridge.isEnabled()) {
       (JpsGlobalModelSynchronizer.getInstance() as JpsGlobalModelSynchronizerImpl).saveGlobalEntities()
@@ -68,7 +67,6 @@ open class ApplicationStoreImpl(private val app: Application)
 
       @Suppress("TestOnlyProblems")
       if (ProjectManagerEx.getInstanceEx().isDefaultProjectInitialized) {
-        println("Default project is initialized")
         launch {
           // here, because no Project (and so, ProjectStoreImpl) on a Welcome Screen
           val r = serviceAsync<DefaultProjectExportableAndSaveTrigger>().save(forceSavingAllSettings)

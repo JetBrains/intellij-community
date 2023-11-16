@@ -1,12 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.sdk
 
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.components.impl.stores.IComponentStore
-import com.intellij.openapi.components.stateStore
-import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SdkTypeId
 import com.intellij.openapi.roots.OrderRootType
@@ -16,7 +11,6 @@ import com.intellij.platform.workspace.jps.entities.SdkMainEntity
 import com.intellij.platform.workspace.jps.entities.SdkRoot
 import com.intellij.platform.workspace.jps.entities.SdkRootTypeId
 import com.intellij.platform.workspace.jps.entities.modifyEntity
-import com.intellij.platform.workspace.jps.serialization.impl.ApplicationStoreJpsContentReader
 import com.intellij.platform.workspace.jps.serialization.impl.JpsGlobalEntitiesSerializers
 import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
@@ -26,11 +20,7 @@ import com.intellij.workspaceModel.ide.getGlobalInstance
 import com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModel
 import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsGlobalModelSynchronizerImpl
 import com.intellij.workspaceModel.ide.legacyBridge.sdk.SdkTableImplementationDelegate
-import kotlinx.coroutines.CoroutineName
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.TestOnly
 
 //TODO::
@@ -93,7 +83,6 @@ class SdkTableBridgeImpl: SdkTableImplementationDelegate {
     val sdkEntity = SdkMainEntity(sdk.name, sdk.sdkType.name, homePathVfu, roots, additionalDataAsString, sdkEntitySource) {
       this.version = sdk.versionString
     }
-    println("Adding new SDK ${sdk.name}")
     globalWorkspaceModel.updateModel("Adding SDK: ${sdk.name} ${sdk.sdkType}") {
       it.addEntity(sdkEntity)
       it.mutableSdkMap.addIfAbsent(sdkEntity, sdk)
@@ -109,7 +98,6 @@ class SdkTableBridgeImpl: SdkTableImplementationDelegate {
     globalWorkspaceModel.updateModel("Removing SDK: ${sdk.name} ${sdk.sdkType}") {
       it.removeEntity(sdkEntity)
     }
-    println("Remove SDK ${sdk.name} All SDKs ${getAllSdks().size}" )
   }
 
   override fun updateSdk(originalSdk: Sdk, modifiedSdk: Sdk) {

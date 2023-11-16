@@ -134,30 +134,6 @@ public final class IdeaTestUtil {
                                "classes are included into classpath and that the plugin isn't disabled " +
                                "by 'idea.load.plugins' or 'idea.load.plugins.id' system properties");
     }
-
-    //MultiMap<OrderRootType, VirtualFile> roots = MultiMap.create();
-    //SdkModificator sdkModificator = new SdkModificator() {
-    //  @NotNull
-    //  @Override public String getName() { throw new UnsupportedOperationException(); }
-    //  @Override public void setName(@NotNull String name1) { throw new UnsupportedOperationException(); }
-    //  @Override public String getHomePath() { throw new UnsupportedOperationException(); }
-    //  @Override public void setHomePath(String path1) { throw new UnsupportedOperationException(); }
-    //  @Override public String getVersionString() { throw new UnsupportedOperationException(); }
-    //  @Override public void setVersionString(String versionString) { throw new UnsupportedOperationException(); }
-    //  @Override public SdkAdditionalData getSdkAdditionalData() { throw new UnsupportedOperationException(); }
-    //  @Override public void setSdkAdditionalData(SdkAdditionalData data) { throw new UnsupportedOperationException(); }
-    //  @Override public VirtualFile @NotNull [] getRoots(@NotNull OrderRootType rootType) { return roots.get(rootType).toArray(VirtualFile.EMPTY_ARRAY); }
-    //  @Override public void removeRoot(@NotNull VirtualFile root, @NotNull OrderRootType rootType) { throw new UnsupportedOperationException(); }
-    //  @Override public void removeRoots(@NotNull OrderRootType rootType) { throw new UnsupportedOperationException(); }
-    //  @Override public void removeAllRoots() { throw new UnsupportedOperationException(); }
-    //  @Override public void commitChanges() { throw new UnsupportedOperationException(); }
-    //  @Override public boolean isWritable() { throw new UnsupportedOperationException(); }
-    //
-    //  @Override
-    //  public void addRoot(@NotNull VirtualFile root, @NotNull OrderRootType rootType) {
-    //    roots.putValue(rootType, root);
-    //  }
-    //};
     Sdk sdk = ProjectJdkTable.getInstance().createSdk(name, JavaSdk.getInstance());
     SdkModificator sdkModificator = sdk.getSdkModificator();
 

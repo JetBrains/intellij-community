@@ -48,14 +48,7 @@ class SdkModificatorBridgeImpl(private val originalEntity: SdkMainEntity.Builder
     modifiedSdkEntity.homePath = homePath
   }
 
-  // TODO:: I don't use versionDefined `com.intellij.openapi.projectRoots.impl.ProjectJdkImpl.myVersionDefined`
   override fun getVersionString(): String? {
-    //if (modifiedSdkEntity.version == null) {
-    //  val homePath = getHomePath()
-    //  if (homePath != null && !homePath.isEmpty()) {
-    //    versionString = modifiedSdkEntity.getSdkType().getVersionString(this)
-    //  }
-    //}
     return modifiedSdkEntity.version
   }
 
@@ -65,18 +58,10 @@ class SdkModificatorBridgeImpl(private val originalEntity: SdkMainEntity.Builder
 
   override fun getSdkAdditionalData(): SdkAdditionalData? {
     return additionalData
-    //val additionalDataElement = JDOMUtil.load(modifiedSdkEntity.additionalData)
-    //return modifiedSdkEntity.getSdkType().loadAdditionalData(modifiedSdk, additionalDataElement)
   }
 
   override fun setSdkAdditionalData(additionalData: SdkAdditionalData?) {
     this.additionalData =  additionalData
-    //val additionalDataAsString = if (additionalData != null) {
-    //  val additionalDataElement = Element(ELEMENT_ADDITIONAL)
-    //  modifiedSdkEntity.getSdkType().saveAdditionalData(additionalData, additionalDataElement)
-    //  JDOMUtil.write(additionalDataElement)
-    //} else ""
-    //modifiedSdkEntity.additionalData = additionalDataAsString
   }
 
   override fun getRoots(rootType: OrderRootType): Array<VirtualFile> {
@@ -112,8 +97,7 @@ class SdkModificatorBridgeImpl(private val originalEntity: SdkMainEntity.Builder
     if (isCommitted) error("Modification already completed")
 
     val globalWorkspaceModel = GlobalWorkspaceModel.getInstance()
-    // In some cases we create SDK in air and need to modify it somehow e.g
-    // com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel.createSdkInternal
+    // In some cases we create SDK in air and need to modify it somehow e.g ProjectSdksModel.createSdkInternal,
     // so it's OK that entity may not be in storage
 
     modifiedSdkEntity.additionalData = if (additionalData != null) {
@@ -122,7 +106,6 @@ class SdkModificatorBridgeImpl(private val originalEntity: SdkMainEntity.Builder
       JDOMUtil.write(additionalDataElement)
     } else ""
 
-    //globalWorkspaceModel.currentSnapshot.resolve(originalEntity.symbolicId)
     // Update only entity existing in the storage
     val existingEntity = globalWorkspaceModel.currentSnapshot.sdkMap.getFirstEntity(originalSdkBridge) as? SdkMainEntity
     existingEntity?.let { entity ->

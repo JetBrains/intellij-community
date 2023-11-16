@@ -74,7 +74,6 @@ internal class DefaultProjectStoreImpl(override val project: Project) : Componen
   
   override suspend fun doSave(result: SaveResult, forceSavingAllSettings: Boolean) {
     val saveSessionManager = createSaveSessionProducerManager()
-    println("Calling save for the default project store ${Thread.currentThread()}")
     saveSettingsSavingComponentsAndCommitComponents(result, forceSavingAllSettings, saveSessionManager)
     saveSessionManager.save().appendTo(result)
   }
@@ -115,7 +114,6 @@ internal class DefaultProjectStoreImpl(override val project: Project) : Componen
 @State(name = "ProjectManager", storages = [(Storage(FILE_SPEC))])
 internal class DefaultProjectExportableAndSaveTrigger {
   suspend fun save(forceSavingAllSettings: Boolean): SaveResult {
-    println("Saving DefaultProjectExportableAndSaveTrigger ${ApplicationManager.getApplication().isDispatchThread}")
     val result = SaveResult()
     (ProjectManagerEx.getInstanceEx().defaultProject.stateStore as ComponentStoreImpl).doSave(result, forceSavingAllSettings)
     return result

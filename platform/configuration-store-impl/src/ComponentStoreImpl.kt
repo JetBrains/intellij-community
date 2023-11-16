@@ -194,7 +194,6 @@ abstract class ComponentStoreImpl : IComponentStore {
 
   override suspend fun save(forceSavingAllSettings: Boolean) {
     val result = SaveResult()
-    println("Called Save ${Thread.currentThread()}")
     doSave(result, forceSavingAllSettings)
     result.throwIfErrored()
   }

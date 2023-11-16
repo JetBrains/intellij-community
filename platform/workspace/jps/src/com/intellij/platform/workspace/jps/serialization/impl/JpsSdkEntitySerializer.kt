@@ -22,18 +22,18 @@ import org.jetbrains.jps.model.serialization.java.JpsJavaModelSerializerExtensio
 import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer
 
 
-val SDK_TABLE_COMPONENT_NAME = "ProjectJdkTable"
+private const val SDK_TABLE_COMPONENT_NAME = "ProjectJdkTable"
 
-val ELEMENT_JDK = "jdk"
-
-@NonNls
-val ELEMENT_NAME = "name"
+private const val ELEMENT_JDK = "jdk"
 
 @NonNls
-val ATTRIBUTE_VALUE = "value"
+private const val ELEMENT_NAME = "name"
 
 @NonNls
-val ELEMENT_TYPE = "type"
+private const val ATTRIBUTE_VALUE = "value"
+
+@NonNls
+private const val ELEMENT_TYPE = "type"
 
 @NonNls
 private val ELEMENT_VERSION = "version"
@@ -42,17 +42,18 @@ private val ELEMENT_VERSION = "version"
 private val ELEMENT_ROOTS = "roots"
 
 @NonNls
+private val ELEMENT_ROOT = "root"
+
+@NonNls
 private val ELEMENT_HOMEPATH = "homePath"
 
 @NonNls
-val ELEMENT_ADDITIONAL = "additional"
+const val ELEMENT_ADDITIONAL = "additional"
 
 
 class JpsSdkEntitySerializer(val entitySource: JpsGlobalFileEntitySource, private val sortedRootTypes: List<String>): JpsFileEntitiesSerializer<SdkMainEntity> {
   private val LOG = logger<JpsSdkEntitySerializer>()
   private val rootTypes = ConcurrentFactoryMap.createMap<String, SdkRootTypeId> { SdkRootTypeId(it) }
-
-  //private val myRoots: ConcurrentHashMap<OrderRootType, VirtualFilePointerContainer?> = ConcurrentHashMap()
 
   override val internalEntitySource: JpsFileEntitySource
     get() = entitySource
@@ -68,7 +69,6 @@ class JpsSdkEntitySerializer(val entitySource: JpsGlobalFileEntitySource, privat
     val sdkEntities = sdkTag.getChildren(ELEMENT_JDK).map { sdkElement ->
       val sdkName = sdkElement.getChild(ELEMENT_NAME).getAttributeValue(ATTRIBUTE_VALUE)
       val sdkType = sdkElement.getChild(ELEMENT_TYPE).getAttributeValue(ATTRIBUTE_VALUE)
-      //val mySdkType = ProjectJdkTable.getInstance().getSdkTypeByName(sdkTypeName ?: "")
 
       val versionValue = sdkElement.getAttributeValue(ELEMENT_VERSION)
       if ("2" != versionValue) {
@@ -80,14 +80,12 @@ class JpsSdkEntitySerializer(val entitySource: JpsGlobalFileEntitySource, privat
 
       val roots = readRoots(sdkElement.getChildTagStrict(ELEMENT_ROOTS), virtualFileManager)
 
-      // TODO the same problem as with FacetConfiguration we have 7 types of additional data for SDK so 7 entities
       val additionalDataElement = sdkElement.getChild(ELEMENT_ADDITIONAL)
       val additionalData = if (additionalDataElement != null) JDOMUtil.write(additionalDataElement) else ""
       SdkMainEntity(sdkName, sdkType, homePathVfu, roots, additionalData, entitySource) {
         this.version = sdkVersion
       }
     }
-
     return LoadingResult(mapOf(SdkMainEntity::class.java to sdkEntities))
   }
 
@@ -169,14 +167,13 @@ class JpsSdkEntitySerializer(val entitySource: JpsGlobalFileEntitySource, privat
     if (additionalData.isNotBlank()) {
       sdkRootElement.addContent(JDOMUtil.load(additionalData))
     }
-    //sdkRootElement.addContent(additional)
   }
 
   private fun writeRoots(rootType: String, roots: List<SdkRoot>): Element {
-    val composite = Element("root")
+    val composite = Element(ELEMENT_ROOT)
     composite.setAttribute("type", "composite")
     roots.forEach { root ->
-      val rootElement = Element("root")
+      val rootElement = Element(ELEMENT_ROOT)
       rootElement.setAttribute("url", root.url.url)
       rootElement.setAttribute("type", "simple")
       composite.addContent(rootElement)
@@ -185,34 +182,4 @@ class JpsSdkEntitySerializer(val entitySource: JpsGlobalFileEntitySource, privat
     element.addContent(composite)
     return element
   }
-
-
-  //
-  //private fun setNoCopyJars(url: String) {
-  //  if (StandardFileSystems.JAR_PROTOCOL == VirtualFileManager.extractProtocol(url)) {
-  //    val path = VirtualFileManager.extractPath(url)
-  //    val fileSystem = StandardFileSystems.jar()
-  //    if (fileSystem is JarCopyingFileSystem) {
-  //      (fileSystem as JarCopyingFileSystem).setNoCopyJarForPath(path)
-  //    }
-  //  }
-  //}
-
-  //private val tellAllProjectsTheirRootsAreGoingToChange: VirtualFilePointerListener = object : VirtualFilePointerListener {
-  //  override fun beforeValidityChanged(pointers: Array<VirtualFilePointer>) {
-  //    //todo check if this sdk is really used in the project
-  //    for (project in ProjectManager.getInstance().openProjects) {
-  //      val listener = (ProjectRootManager.getInstance(project) as ProjectRootManagerImpl).rootsValidityChangedListener
-  //      listener.beforeValidityChanged(pointers)
-  //    }
-  //  }
-  //
-  //  override fun validityChanged(pointers: Array<VirtualFilePointer>) {
-  //    //todo check if this sdk is really used in the project
-  //    for (project in ProjectManager.getInstance().openProjects) {
-  //      val listener = (ProjectRootManager.getInstance(project) as ProjectRootManagerImpl).rootsValidityChangedListener
-  //      listener.validityChanged(pointers)
-  //    }
-  //  }
-  //}
 }

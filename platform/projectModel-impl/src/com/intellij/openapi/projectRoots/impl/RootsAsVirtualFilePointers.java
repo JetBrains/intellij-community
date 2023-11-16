@@ -102,9 +102,7 @@ public class RootsAsVirtualFilePointers implements RootProvider {
 
   void copyRootsFrom(@NotNull RootProvider rootContainer) {
     removeAllRoots();
-    //List<OrderRootType> rootTypes = Lists.asList(OrderRootType.DOCUMENTATION, OrderRootType.getAllTypes());
-    OrderRootType[] rootTypes = OrderRootType.getAllTypes();
-    for (OrderRootType rootType : rootTypes) {
+    for (OrderRootType rootType : OrderRootType.getAllTypes()) {
       final String[] newRoots = rootContainer.getUrls(rootType);
       for (String newRoot : newRoots) {
         addRoot(newRoot, rootType);

@@ -13,8 +13,6 @@
                     dynamic="true"/>
     <extensionPoint name="workspace.bridgeInitializer" interface="com.intellij.platform.backend.workspace.BridgeInitializer"
                     dynamic="true"/>
-    <!--<extensionPoint name="workspaceModel.sdk.implementation.delegate" interface="com.intellij.workspaceModel.ide.legacyBridge.sdk.SdkTableImplementationDelegate"-->
-    <!--                dynamic="true"/>-->
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
