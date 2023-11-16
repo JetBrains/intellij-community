@@ -105,7 +105,7 @@ internal object CopyTBXReferenceAction {
 
   private fun getSelectionParameters(editor: Editor, caret: Caret, index: String): String? =
     getSelectionRange(editor, caret)?.let {
-      "&${NavigationKeyPrefix.SELECTION}=$it"
+      "&${NavigationKeyPrefix.SELECTION}$index=$it"
     }
 
   private fun getSelectionRange(editor: Editor, caret: Caret): String? {
