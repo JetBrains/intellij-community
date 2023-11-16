@@ -1,6 +1,10 @@
 public int hashCode() {
-#if (!$superHasHashCode && $fields.size()==1 && $fields[0].array)
-  return java.util.Arrays.hashCode($fields[0].accessor);
+#if (!$superHasHashCode && $fields.size()==1)
+  #if ($fields[0].array)
+    return java.util.Arrays.hashCode($fields[0].accessor);
+  #else
+    return java.util.Objects.hashCode($fields[0].accessor);
+  #end
 #else
   #set($hasArrays = false)
   #set($hasNoArrays = false)
@@ -20,7 +24,7 @@ public int hashCode() {
       #end
       #foreach($field in $fields)
         #if ($i > 0)
-        , ##
+          , ##
         #end
         $field.accessor ##
         #set($i = $i + 1)
@@ -41,7 +45,7 @@ public int hashCode() {
         #foreach($field in $fields)
           #if(!$field.array)
             #if ($i > 0)
-            , ##
+              , ##
             #end
             $field.accessor ##
             #set($i = $i + 1)
@@ -60,7 +64,7 @@ public int hashCode() {
         #if ($resultDeclarationCompleted)
           $resultName ##
         #end
-        = ##
+          = ##
         #if ($resultAssigned)
           31 * $resultName + ##
         #end

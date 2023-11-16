@@ -1,18 +1,18 @@
 import java.util.Objects;
 
-class A {
-  int a;
+class X {
+  private String s = null;
 
     @Override
-    public boolean equals(Object o) {<caret>
+    public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        A a1 = (A) o;
-        return a == a1.a;
+        final X x = (X) o;
+        return Objects.equals(s, x.s);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(a);
+        return Objects.hashCode(s);
     }
 }
