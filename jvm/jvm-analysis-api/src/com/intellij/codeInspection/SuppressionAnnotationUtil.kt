@@ -10,13 +10,29 @@ import org.jetbrains.uast.UExpression
 private val EP_NAME: ExtensionPointName<SuppressionAnnotationUtil> =
   ExtensionPointName.create("com.intellij.codeInspection.suppressionAnnotationUtil")
 
+/**
+ * Helper extension providing utility methods used by [com.intellij.codeInspection.SuppressionAnnotationInspection].
+ */
 interface SuppressionAnnotationUtil {
   companion object {
     @JvmField
     val extension = LanguageExtension<SuppressionAnnotationUtil>(EP_NAME.name)
   }
 
+  /**
+   * @return true if a given annotation is a suppression annotation in its language,
+   * e.g. [SuppressWarnings] in Java or [Suppress] in Kotlin.
+   */
   fun isSuppressionAnnotation(annotation: UAnnotation): Boolean
+
+  /**
+   * @return values of a suppression annotation attribute defining suppressed problem names.
+   * Returned values should be [org.jetbrains.uast.UNamedExpression.expression].
+   */
   fun getSuppressionAnnotationAttributeExpressions(annotation: UAnnotation): List<UExpression>
+
+  /**
+   * @return quick fix removing a given annotation in its language.
+   */
   fun getRemoveAnnotationQuickFix(annotation: PsiElement): LocalQuickFix?
 }
