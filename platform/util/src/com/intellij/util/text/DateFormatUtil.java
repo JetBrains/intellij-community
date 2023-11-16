@@ -64,7 +64,7 @@ public final class DateFormatUtil {
     TIME_WITH_SECONDS_FORMAT = formats[2];
     DATE_TIME_FORMAT = formats[3];
 
-    @SuppressWarnings("SpellCheckingInspection") DateFormat iso8601 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
+    DateFormat iso8601 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
     iso8601.setTimeZone(TimeZone.getTimeZone("UTC"));
     ISO8601_FORMAT = new SyncDateFormat(iso8601);
   }
@@ -76,7 +76,7 @@ public final class DateFormatUtil {
   private DateFormatUtil() { }
 
   public static long getDifferenceInDays(@NotNull Date startDate, @NotNull Date endDate) {
-    return (endDate.getTime() - startDate.getTime() + DAY_FACTOR - 1000) / DAY_FACTOR;
+    return (endDate.getTime() - startDate.getTime() + DAY - 1000) / DAY;
   }
 
   public static @NotNull SyncDateFormat getDateFormat() {
