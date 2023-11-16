@@ -51,7 +51,7 @@ internal class KotlinIntroduceVariableServiceK2Impl(private val project: Project
         container: KtElement,
         occurrencesToReplace: List<KtExpression>?
     ) {
-        KotlinIntroduceVariableHandler.doRefactoring(
+        KotlinIntroduceVariableHandler.doRefactoringWithSelectedTargetContainer(
             project, editor,
             expressionToExtract,
             // TODO: fix occurence container (currently it is not used in K2-implementation)

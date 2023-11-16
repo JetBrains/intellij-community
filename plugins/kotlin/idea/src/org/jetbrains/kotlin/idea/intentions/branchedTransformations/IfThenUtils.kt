@@ -132,7 +132,7 @@ fun KtIfExpression.introduceValueForCondition(occurrenceInThenClause: KtExpressi
         else -> throw KotlinExceptionWithAttachments("Only binary / is expressions are supported here: ${condition?.let { it::class.java }}")
             .withPsiAttachment("condition", condition)
     }!!
-    KotlinIntroduceVariableHandler.doRefactoring(
+    KotlinIntroduceVariableHandler.collectCandidateTargetContainersAndDoRefactoring(
         project,
         editor,
         occurrenceInConditional,

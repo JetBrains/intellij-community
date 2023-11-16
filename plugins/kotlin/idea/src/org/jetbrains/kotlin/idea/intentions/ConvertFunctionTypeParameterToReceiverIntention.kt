@@ -173,7 +173,13 @@ class ConvertFunctionTypeParameterToReceiverIntention : SelfTargetingRangeIntent
 
         private fun generateVariable(expression: KtExpression): String {
             var baseCallee = ""
-            KotlinIntroduceVariableHandler.doRefactoring(project, editor = null, expression, isVar = false, emptyList()) {
+            KotlinIntroduceVariableHandler.collectCandidateTargetContainersAndDoRefactoring(
+                project,
+                editor = null,
+                expression,
+                isVar = false,
+                emptyList()
+            ) {
                 baseCallee = it.name!!
             }
 

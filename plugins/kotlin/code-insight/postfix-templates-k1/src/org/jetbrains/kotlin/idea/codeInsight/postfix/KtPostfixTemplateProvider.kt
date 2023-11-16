@@ -94,7 +94,7 @@ private class KtIntroduceVariablePostfixTemplate(
     provider: PostfixTemplateProvider
 ) : PostfixTemplateWithExpressionSelector(kind, kind, "$kind name = expression", createExpressionSelector(), provider) {
     override fun expandForChooseExpression(expression: PsiElement, editor: Editor) {
-        KotlinIntroduceVariableHandler.doRefactoring(
+        KotlinIntroduceVariableHandler.collectCandidateTargetContainersAndDoRefactoring(
             expression.project, editor, expression as KtExpression,
             isVar = kind == "var",
             occurrencesToReplace = null,

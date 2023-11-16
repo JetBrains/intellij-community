@@ -403,7 +403,7 @@ object KotlinIntroduceVariableHandler : AbstractKotlinIntroduceVariableHandler()
         }
     }
 
-    override fun doRefactoring(
+    override fun doRefactoringWithSelectedTargetContainer(
         project: Project,
         editor: Editor?,
         expression: KtExpression,

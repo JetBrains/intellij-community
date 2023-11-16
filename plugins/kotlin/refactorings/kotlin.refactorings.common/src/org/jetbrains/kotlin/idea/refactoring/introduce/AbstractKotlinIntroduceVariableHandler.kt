@@ -37,7 +37,7 @@ import org.jetbrains.kotlin.psi.psiUtil.parents
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 
 abstract class AbstractKotlinIntroduceVariableHandler : RefactoringActionHandler {
-    abstract fun doRefactoring(
+    abstract fun doRefactoringWithSelectedTargetContainer(
         project: Project,
         editor: Editor?,
         expression: KtExpression,
@@ -54,7 +54,7 @@ abstract class AbstractKotlinIntroduceVariableHandler : RefactoringActionHandler
 
         try {
             selectElement(editor, file, ElementKind.EXPRESSION) {
-                doRefactoring(project, editor, it as KtExpression?, isVar = false)
+                collectCandidateTargetContainersAndDoRefactoring(project, editor, it as KtExpression?, isVar = false)
             }
         } catch (e: IntroduceRefactoringException) {
             showErrorHint(project, editor, e.message!!)
@@ -65,7 +65,7 @@ abstract class AbstractKotlinIntroduceVariableHandler : RefactoringActionHandler
         // do nothing
     }
 
-    fun doRefactoring(
+    fun collectCandidateTargetContainersAndDoRefactoring(
         project: Project,
         editor: Editor?,
         expressionToExtract: KtExpression?,
@@ -88,7 +88,7 @@ abstract class AbstractKotlinIntroduceVariableHandler : RefactoringActionHandler
         }
 
         selectTargetContainerAndDoRefactoring(editor, targetContainer, candidateContainers) { containers ->
-            doRefactoring(
+            doRefactoringWithSelectedTargetContainer(
                 project, editor, expression, containers,
                 isVar, occurrencesToReplace, onNonInteractiveFinish
             )

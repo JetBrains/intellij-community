@@ -69,7 +69,7 @@ internal class KotlinIntroduceVariableServiceK1Impl(private val project: Project
         container: KtElement,
         occurrencesToReplace: List<KtExpression>?
     ) {
-        KotlinIntroduceVariableHandler.doRefactoring(
+        KotlinIntroduceVariableHandler.collectCandidateTargetContainersAndDoRefactoring(
             project = project,
             editor = editor,
             expressionToExtract = expressionToExtract,

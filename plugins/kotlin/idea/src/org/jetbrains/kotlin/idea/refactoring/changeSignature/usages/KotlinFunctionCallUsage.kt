@@ -213,7 +213,7 @@ class KotlinFunctionCallUsage(
                 ) == null
             ) {
 
-                KotlinIntroduceVariableHandler.doRefactoring(
+                KotlinIntroduceVariableHandler.collectCandidateTargetContainersAndDoRefactoring(
                     project, null, argumentExpression,
                     isVar = false,
                     occurrencesToReplace = listOf(argumentExpression),
