@@ -12,12 +12,9 @@ import com.intellij.diff.tools.fragmented.UnifiedDiffViewer
 import com.intellij.diff.tools.simple.SimpleOnesideDiffViewer
 import com.intellij.diff.tools.util.base.DiffViewerBase
 import com.intellij.diff.tools.util.side.TwosideTextDiffViewer
-import com.intellij.diff.util.DiffUserDataKeys
 import com.intellij.diff.util.Side
-import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
-import com.intellij.openapi.diff.impl.GenericDataProvider
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.component1
 import com.intellij.openapi.util.component2
@@ -30,7 +27,6 @@ import org.jetbrains.plugins.gitlab.mergerequest.ui.diff.GitLabMergeRequestDiffR
 import org.jetbrains.plugins.gitlab.mergerequest.ui.editor.GitLabMergeRequestDiscussionInlayRenderer
 import org.jetbrains.plugins.gitlab.mergerequest.ui.editor.GitLabMergeRequestNewDiscussionInlayRenderer
 import org.jetbrains.plugins.gitlab.mergerequest.ui.editor.GitLabMergeRequestReviewControlsGutterRenderer
-import org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestReviewViewModel
 import org.jetbrains.plugins.gitlab.util.GitLabStatistics
 
 class GitLabMergeRequestDiffExtension : DiffExtension() {
@@ -41,13 +37,6 @@ class GitLabMergeRequestDiffExtension : DiffExtension() {
 
     val reviewVm = context.getUserData(GitLabMergeRequestDiffViewModel.KEY) ?: return
     val change = request.getUserData(RefComparisonChange.KEY) ?: return
-
-    val dataProvider = GenericDataProvider().apply {
-      putData(GitLabMergeRequestReviewViewModel.DATA_KEY, reviewVm)
-    }
-    context.putUserData(DiffUserDataKeys.DATA_PROVIDER, dataProvider)
-    context.putUserData(DiffUserDataKeys.CONTEXT_ACTIONS,
-                        listOf(ActionManager.getInstance().getAction("GitLab.MergeRequest.Review.Submit")))
 
     project.service<InlaysController>().installInlays(reviewVm, change, viewer)
   }

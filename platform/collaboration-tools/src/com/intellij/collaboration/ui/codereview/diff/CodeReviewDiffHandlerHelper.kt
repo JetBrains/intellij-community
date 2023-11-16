@@ -7,6 +7,9 @@ import com.intellij.collaboration.ui.codereview.diff.model.ComputedDiffViewModel
 import com.intellij.collaboration.ui.codereview.diff.model.DiffProducersViewModel
 import com.intellij.collaboration.ui.codereview.diff.model.getSelected
 import com.intellij.collaboration.util.ComputedResult
+import com.intellij.collaboration.util.KeyValuePair
+import com.intellij.collaboration.util.clearData
+import com.intellij.collaboration.util.putData
 import com.intellij.diff.chains.DiffRequestProducer
 import com.intellij.diff.impl.DiffRequestProcessor
 import com.intellij.diff.tools.combined.COMBINED_DIFF_VIEWER_KEY
@@ -14,7 +17,6 @@ import com.intellij.diff.tools.combined.CombinedBlockId
 import com.intellij.diff.tools.combined.CombinedDiffModelImpl
 import com.intellij.diff.tools.combined.CombinedPathBlockId
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Key
 import com.intellij.openapi.vcs.LocalFilePath
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.cancelOnDispose
@@ -29,7 +31,9 @@ import kotlinx.coroutines.flow.collectLatest
 class CodeReviewDiffHandlerHelper(private val project: Project, parentCs: CoroutineScope) {
   private val cs = parentCs.childScope(Dispatchers.Main.immediate)
 
-  fun <VM : ComputedDiffViewModel> createDiffRequestProcessor(reviewDiffVm: Flow<VM?>, vmKey: Key<VM>): DiffRequestProcessor {
+  fun <VM : ComputedDiffViewModel> createDiffRequestProcessor(
+    reviewDiffVm: Flow<VM?>, createContext: (VM) -> List<KeyValuePair<*>>
+  ): DiffRequestProcessor {
     val uiCs = cs.childScope()
     val vm = object : ComputedDiffViewModel {
       override val diffVm = MutableStateFlow<ComputedResult<DiffProducersViewModel?>>(ComputedResult.loading())
@@ -37,14 +41,16 @@ class CodeReviewDiffHandlerHelper(private val project: Project, parentCs: Corout
     val processor = ComputingDiffRequestProcessor(project, uiCs, vm)
     uiCs.launchNow(CoroutineName("Code Review Diff UI")) {
       reviewDiffVm.collectLatest { computedDiffVm ->
-        try {
-          if (computedDiffVm != null) {
-            processor.putContextUserData(vmKey, computedDiffVm)
+        if (computedDiffVm != null) {
+          val context = createContext(computedDiffVm)
+          try {
+            context.forEach { processor.putData(it) }
             computedDiffVm.diffVm.collect(vm.diffVm)
           }
-        }
-        finally {
-          processor.putContextUserData(vmKey, null)
+          finally {
+            context.forEach(processor::clearData)
+            vm.diffVm.value = ComputedResult.loading()
+          }
         }
       }
     }
@@ -52,20 +58,23 @@ class CodeReviewDiffHandlerHelper(private val project: Project, parentCs: Corout
     return processor
   }
 
-  fun <VM : ComputedDiffViewModel> createCombinedDiffModel(reviewDiffVm: Flow<VM?>, vmKey: Key<VM>): CombinedDiffModelImpl {
+  fun <VM : ComputedDiffViewModel> createCombinedDiffModel(
+    reviewDiffVm: Flow<VM?>, createContext: (VM) -> List<KeyValuePair<*>>
+  ): CombinedDiffModelImpl {
     val model = CombinedDiffModelImpl(project, null)
     cs.launchNow(CoroutineName("Code Review Combined Diff UI")) {
       reviewDiffVm.collectLatest { computedDiffVm ->
-        try {
-          if (computedDiffVm != null) {
-            model.context.putUserData(vmKey, computedDiffVm)
+        if (computedDiffVm != null) {
+          val context = createContext(computedDiffVm)
+          try {
+            context.forEach { model.context.putData(it) }
             handleChanges(computedDiffVm, model)
             awaitCancellation()
           }
-        }
-        finally {
-          model.context.putUserData(vmKey, null)
-          model.cleanBlocks()
+          finally {
+            context.forEach(model.context::clearData)
+            model.cleanBlocks()
+          }
         }
       }
     }.cancelOnDispose(model.ourDisposable)
@@ -122,3 +131,11 @@ class CodeReviewDiffHandlerHelper(private val project: Project, parentCs: Corout
 }
 
 private val CONSTANT_BLOCK_ID = CombinedPathBlockId(LocalFilePath("", false), null)
+
+private fun <T> DiffRequestProcessor.putData(keyValue: KeyValuePair<T>) {
+  putContextUserData(keyValue.key, keyValue.value)
+}
+
+private fun DiffRequestProcessor.clearData(keyValue: KeyValuePair<*>) {
+  putContextUserData(keyValue.key, null)
+}

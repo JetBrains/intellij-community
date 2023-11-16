@@ -4,11 +4,15 @@ package org.jetbrains.plugins.gitlab.mergerequest.file
 import com.intellij.collaboration.file.codereview.CodeReviewCombinedDiffVirtualFile
 import com.intellij.collaboration.file.codereview.CodeReviewDiffVirtualFile
 import com.intellij.collaboration.ui.codereview.diff.CodeReviewDiffHandlerHelper
+import com.intellij.collaboration.util.KeyValuePair
 import com.intellij.diff.impl.DiffRequestProcessor
 import com.intellij.diff.tools.combined.CombinedDiffModelImpl
+import com.intellij.diff.util.DiffUserDataKeys
+import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated
+import com.intellij.openapi.diff.impl.GenericDataProvider
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFilePathWrapper
 import com.intellij.vcs.editor.ComplexPathVirtualFileSystem
@@ -20,6 +24,7 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
 import org.jetbrains.plugins.gitlab.mergerequest.diff.GitLabMergeRequestDiffViewModel
+import org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestReviewViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.model.GitLabToolWindowViewModel
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 
@@ -81,13 +86,22 @@ private class GitLabMergeRequestDiffService(private val project: Project, parent
   private val base = CodeReviewDiffHandlerHelper(project, parentCs)
 
   fun createDiffRequestProcessor(connectionId: String, mergeRequestIid: String): DiffRequestProcessor {
-    val vm = findDiffVm(project, connectionId, mergeRequestIid)
-    return base.createDiffRequestProcessor(vm, GitLabMergeRequestDiffViewModel.KEY)
+    val vmFlow = findDiffVm(project, connectionId, mergeRequestIid)
+    return base.createDiffRequestProcessor(vmFlow, ::createDiffContext)
   }
 
   fun createGitLabCombinedDiffModel(connectionId: String, mergeRequestIid: String): CombinedDiffModelImpl {
-    val vm = findDiffVm(project, connectionId, mergeRequestIid)
-    return base.createCombinedDiffModel(vm, GitLabMergeRequestDiffViewModel.KEY)
+    val vmFlow = findDiffVm(project, connectionId, mergeRequestIid)
+    return base.createCombinedDiffModel(vmFlow, ::createDiffContext)
+  }
+
+  private fun createDiffContext(vm: GitLabMergeRequestDiffViewModel): List<KeyValuePair<*>> = buildList {
+    add(KeyValuePair(GitLabMergeRequestDiffViewModel.KEY, vm))
+    add(KeyValuePair(DiffUserDataKeys.DATA_PROVIDER, GenericDataProvider().apply {
+      putData(GitLabMergeRequestReviewViewModel.DATA_KEY, vm)
+    }))
+    add(KeyValuePair(DiffUserDataKeys.CONTEXT_ACTIONS,
+                     listOf(ActionManager.getInstance().getAction("GitLab.MergeRequest.Review.Submit"))))
   }
 }
 
