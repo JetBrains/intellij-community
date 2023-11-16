@@ -7,9 +7,11 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.dataFlow.ConstantValueInspection;
 import com.intellij.codeInspection.dataFlow.DataFlowInspection;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
@@ -707,6 +709,9 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testGetterNullityAfterCheck() { doTest(); }
   public void testInferenceNullityMismatch() { doTestWith((insp, __) -> insp.SUGGEST_NULLABLE_ANNOTATIONS = false); }
   public void testFieldInInstanceInitializer() { doTest(); }
+  public void testCallsBeforeFieldInitializing() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_17, () -> doTest());
+  }
   public void testNullableCallWithPrecalculatedValueAndSpecialField() { doTest(); }
   public void testJoinConstantAndSubtype() { doTest(); }
   public void testDereferenceInThrowMessage() { doTest(); }

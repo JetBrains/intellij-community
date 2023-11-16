@@ -14,15 +14,19 @@ import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.codeInspection.dataFlow.value.VariableDescriptor;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.*;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
 
 /**
@@ -156,7 +160,114 @@ public final class PlainDescriptor extends PsiVarDescriptor {
     PsiClass placeClass = placeMethod.getContainingClass();
     if (placeClass == null || placeClass != target.getContainingClass()) return false;
     if (!placeMethod.hasModifierProperty(PsiModifier.STATIC) && target.hasModifierProperty(PsiModifier.STATIC)) return false;
+    if (!target.hasModifierProperty(PsiModifier.STATIC) &&
+        !placeMethod.hasModifierProperty(PsiModifier.STATIC) &&
+        methodCanBeCalledFromConstructorBeforeFieldInitializing(target, placeMethod, placeClass)) {
+      return true;
+    }
     return getAccessOffset(placeMethod) < getWriteOffset(target);
+  }
+
+  private static boolean methodCanBeCalledFromConstructorBeforeFieldInitializing(@NotNull PsiField target,
+                                                                                 @NotNull PsiMethod method,
+                                                                                 @NotNull PsiClass placeClass) {
+     if (target.hasInitializer() || method.isConstructor() ||
+        //consider cases with only one constructor to do it faster
+        placeClass.getConstructors().length != 1) {
+      return false;
+    }
+    PsiMethod constructor = placeClass.getConstructors()[0];
+    if (constructor.getBody() == null ||
+        constructor.getBody().getStatements().length == 0 ||
+        constructor.getBody().getStatements()[0] instanceof PsiSuperExpression) {
+      return false;
+    }
+    PsiMethodCallExpression methodCallExpression = findCallIn(target, placeClass, method);
+    if (methodCallExpression == null) {
+      return false;
+    }
+    if (JavaPsiRecordUtil.isCompactConstructor(constructor)) {
+      return true;
+    }
+    if (!VariableAccessUtils.variableIsAssignedAtPoint(target, constructor, methodCallExpression)) {
+      return true;
+    }
+    return false;
+  }
+
+  private record MethodInfo(Map<String, Map<PsiMethod, PsiMethodCallExpression>> methods, boolean hasCallOutside){}
+
+  @Nullable
+  private static PsiMethodCallExpression findCallIn(@NotNull PsiField field,
+                                                    @NotNull PsiClass contextClass,
+                                                    @NotNull PsiMethod method) {
+    PsiMethod constructor = contextClass.getConstructors()[0];
+    if (!constructor.isPhysical() || constructor.getBody() == null) {
+      return null;
+    }
+
+    MethodInfo cacheValue = CachedValuesManager.getCachedValue(contextClass, () -> {
+      PsiMethod context = contextClass.getConstructors()[0];
+      ConcurrentHashMap<String, Map<PsiMethod, PsiMethodCallExpression>> collectedMethods = new ConcurrentHashMap<>();
+      Ref<Boolean> callsOutside = new Ref<>(false);
+      PsiManager psiManager = context.getManager();
+      JavaRecursiveElementWalkingVisitor visitor = new JavaRecursiveElementWalkingVisitor() {
+        @Override
+        public void visitLambdaExpression(@NotNull PsiLambdaExpression expression) {}
+        @Override
+        public void visitClass(@NotNull PsiClass aClass) {}
+
+        @Override
+        public void visitAnonymousClass(@NotNull PsiAnonymousClass aClass) {}
+
+        @Override
+        public void visitMethodCallExpression(@NotNull PsiMethodCallExpression methodCallExpression) {
+          PsiExpression qualifier = methodCallExpression.getMethodExpression().getQualifierExpression();
+          if (qualifier == null || qualifier instanceof PsiThisExpression) {
+            PsiMethod resolvedMethod = methodCallExpression.resolveMethod();
+            if (resolvedMethod != null &&
+                resolvedMethod.getContainingClass() != null &&
+                psiManager.areElementsEquivalent(resolvedMethod.getContainingClass(), contextClass)) {
+              collectedMethods.compute(resolvedMethod.getName(),
+                                       (ignoreKey, methodsByCall) -> {
+                                         if (methodsByCall == null) {
+                                           methodsByCall = new HashMap<>();
+                                         }
+                                         if (!methodsByCall.containsKey(resolvedMethod)) {
+                                           methodsByCall.put(resolvedMethod, methodCallExpression);
+                                         }
+                                         return methodsByCall;
+                                       });
+            }
+            else {
+              callsOutside.set(true);
+            }
+          }
+          else {
+            callsOutside.set(true);
+          }
+          super.visitMethodCallExpression(methodCallExpression);
+        }
+      };
+      context.accept(visitor);
+      return CachedValueProvider.Result.create( new MethodInfo(collectedMethods, callsOutside.get()), PsiModificationTracker.MODIFICATION_COUNT);
+    });
+    PsiManager psiManager = contextClass.getManager();
+    if (field.hasModifierProperty(PsiModifier.FINAL) ||
+        (!cacheValue.hasCallOutside() &&
+         cacheValue.methods().size() == 1 &&
+         cacheValue.methods().entrySet().iterator().next().getValue().size() == 1)) {
+      Map<PsiMethod, PsiMethodCallExpression> methodsByCall = cacheValue.methods().get(method.getName());
+      if (methodsByCall == null) {
+        return null;
+      }
+      for (PsiMethod methodByCall : methodsByCall.keySet()) {
+        if (psiManager.areElementsEquivalent(methodByCall, method)) {
+          return methodsByCall.get(methodByCall);
+        }
+      }
+    }
+    return null;
   }
 
   private static int getWriteOffset(PsiField target) {
