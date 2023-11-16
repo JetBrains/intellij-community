@@ -1607,10 +1607,6 @@
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.probable.bugs"
                      bundle="messages.JavaBundle" key="inspection.meaningless.record.annotation.description"
                      implementationClass="com.intellij.codeInspection.MeaninglessRecordAnnotationInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="CompactRecordConstructorAccessFieldsInspection" enabledByDefault="true" level="WARNING"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.probable.bugs"
-                     bundle="messages.JavaBundle" key="inspection.record.compact.constructor.access.fields.description"
-                     implementationClass="com.intellij.codeInspection.CompactRecordConstructorAccessFieldsInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="RecordCanBeClass" enabledByDefault="true" level="INFORMATION"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.code.style.issues"
                      bundle="messages.JavaBundle" key="inspection.message.record.can.be.converted.to.class"
