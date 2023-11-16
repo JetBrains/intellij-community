@@ -34,3 +34,30 @@ private fun runSuppressing(blocks: Sequence<() -> Unit>) {
 
 fun <T: Throwable> addSuppressed(first: T?, next: T): T =
   first?.also { it.addSuppressed(next) } ?: next
+
+/**
+ * Runs [action].
+ * If an exception occurs, it will be added as suppressed to the [Throwable].
+ * This method does not throw.
+ *
+ * Intended usage example:
+ * ```
+ * fun initMultipleResources(): MultiResource {
+ *   val resourceA = initResourceA() // AutoCloseable
+ *   try {
+ *     val resourceB = initResourceB() // AutoCloseable
+ *     return MultiResource(resourceA, resourceB)
+ *   } catch (exceptionB: Throwable) {
+ *     exceptionB.runSuppressing(resourceA::close) // instead of a nested try/catch
+ *     throw exceptionB
+ *   }
+ * }
+ * ```
+ */
+fun Throwable.runSuppressing(action: () -> Unit) {
+  try {
+    action()
+  } catch (e: Throwable) {
+    this.addSuppressed(e)
+  }
+}
