@@ -187,7 +187,7 @@ internal class GitLabMergeRequestCreateViewModelImpl(
       _reviewCreatingError.value = null
       try {
         val gitRemoteBranch = findGitRemoteBranch(headRepo, headBranch)
-        val mergeRequest = projectData.createMergeRequest(
+        val mergeRequest = projectData.createMergeRequestAndAwaitCompletion(
           sourceBranch = gitRemoteBranch.nameForRemoteOperations,
           targetBranch = baseBranch.nameForRemoteOperations,
           title = title.value.ifBlank { gitRemoteBranch.nameForRemoteOperations }
