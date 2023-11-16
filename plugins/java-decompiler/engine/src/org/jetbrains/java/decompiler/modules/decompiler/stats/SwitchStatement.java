@@ -35,6 +35,7 @@ public final class SwitchStatement extends Statement {
   private StatEdge defaultEdge;
   private Exprent headExprent;
   private boolean canBeRule = false;
+  private boolean useCustomDefault = false;
 
   private SwitchStatement() {
     super(StatementType.SWITCH);
@@ -134,6 +135,10 @@ public final class SwitchStatement extends Statement {
     return caseIndex + 1;
   }
 
+  public void setUseCustomDefault() {
+    useCustomDefault = true;
+  }
+
   @Nullable
   public static Statement isHead(@NotNull Statement head) {
     if (head.type == StatementType.BASIC_BLOCK && head.getLastBasicType() == StatementType.SWITCH) {
@@ -172,7 +177,7 @@ public final class SwitchStatement extends Statement {
       List<StatEdge> edges = caseEdges.get(i);
       List<Exprent> values = caseValues.get(i);
       for (int j = 0; j < edges.size(); j++) {
-        if (edges.get(j) == defaultEdge) {
+        if (edges.get(j) == defaultEdge && !useCustomDefault) {
           if (!canBeRule) {
             buf.appendIndent(indent + 1).append("default:").appendLineSeparator();
           }

@@ -847,7 +847,9 @@ public final class SwitchPatternHelper {
       return edge.getDestination() instanceof DummyExitStatement ||
              (doStatement == null && edge.closure == myRootSwitchStatement) ||
              (doStatement != null && edge.closure == doStatement) ||
-             (doStatement != null && edge.closure instanceof DoStatement upperDoStatement && upperDoStatement.containsStatement(doStatement)) ||
+             (doStatement != null &&
+              edge.closure instanceof DoStatement upperDoStatement &&
+              upperDoStatement.containsStatement(doStatement)) ||
              outsideCatch(edge, doStatement);
     }
 
@@ -1165,6 +1167,7 @@ public final class SwitchPatternHelper {
     private final SwitchStatement myRootSwitchStatement;
     @NotNull
     private final InvocationExprent myPreviousSelector;
+    @NotNull
     private final Exprent myNewSwitchSelectorVariant;
     @NotNull
     private final List<TempVarAssignmentItem> myTempVarAssignments;
@@ -1225,12 +1228,80 @@ public final class SwitchPatternHelper {
       if (headExprent != null) {
         headExprent.replaceExprent(myPreviousSelector, myNewSwitchSelectorVariant);
       }
-
       if (hasPattern) {
         remapWithPatterns(myRootSwitchStatement, myPatternContainer, myUppedDoStatement, myTempVarAssignments);
         cleanDefault(myRootSwitchStatement);
       }
+      Exprent oldSelector = myPreviousSelector.getInstance();
+      if (oldSelector instanceof VarExprent oldSelectorVarExprent &&
+          myNewSwitchSelectorVariant instanceof VarExprent newSwitchSelectorVarExprent) {
+        changeEverywhere(oldSelectorVarExprent, newSwitchSelectorVarExprent, myRootSwitchStatement.getCaseStatements());
+        changeDefaultToFullCase(myRootSwitchStatement, newSwitchSelectorVarExprent);
+      }
     }
+
+    private static void changeDefaultToFullCase(@NotNull SwitchStatement myRoot, @NotNull VarExprent newSwitch) {
+      List<List<StatEdge>> edges = myRoot.getCaseEdges();
+      for (int i = 0; i < edges.size(); i++) {
+        List<StatEdge> statEdges = edges.get(i);
+        if (statEdges.size() == 1 && statEdges.get(0) == myRoot.getDefaultEdge()) {
+          Statement defaultStatement = myRoot.getCaseStatements().get(i);
+          Statement statementWithFirstAssignment = getStatementWithFirstAssignment(defaultStatement);
+          if (statementWithFirstAssignment!=null &&
+              statementWithFirstAssignment.getExprents() != null &&
+              !statementWithFirstAssignment.getExprents().isEmpty() &&
+              statementWithFirstAssignment.getExprents().get(0) instanceof AssignmentExprent assignmentExprent &&
+              assignmentExprent.getRight() != null &&
+              assignmentExprent.getLeft() instanceof VarExprent newVarExprent &&
+              assignmentExprent.getLeft().getExprType() != null &&
+              assignmentExprent.getRight().equals(newSwitch) &&
+              assignmentExprent.getLeft().getExprType().equals(newSwitch.getExprType())) {
+            statementWithFirstAssignment.getExprents().remove(0);
+            List<@Nullable Exprent> defaultValues = myRoot.getCaseValues().get(i);
+            defaultValues.clear();
+            defaultValues.add(newVarExprent);
+            myRoot.setUseCustomDefault();
+            break;
+          }
+        }
+      }
+    }
+
+    @Nullable
+    private static Statement getStatementWithFirstAssignment(@NotNull Statement statement) {
+      if (statement.getExprents() != null && !statement.getExprents().isEmpty()) {
+        if (statement.getExprents().get(0) instanceof AssignmentExprent) {
+          return statement;
+        }
+        else {
+          return null;
+        }
+      }
+      if (!statement.getStats().isEmpty()) {
+        return getStatementWithFirstAssignment(statement.getStats().get(0));
+      }
+      return null;
+    }
+
+    private static void changeEverywhere(@NotNull VarExprent oldVariant,
+                                         @NotNull VarExprent newVariant,
+                                         @NotNull List<Statement> statements) {
+      for (Statement statement : statements) {
+        if (statement.getExprents() != null) {
+          for (Exprent exprent : statement.getExprents()) {
+            for (Exprent nestedExprent : exprent.getAllExprents()) {
+              if (nestedExprent.equals(oldVariant)) {
+                exprent.replaceExprent(nestedExprent, newVariant);
+              }
+            }
+          }
+        }
+        for (Statement nestedStat : statement.getStats()) {
+          changeEverywhere(oldVariant, newVariant, nestedStat.getStats());
+        }
+      }
+    }
+
     @Override
     public Set<SwitchStatement> usedSwitch() {
       return myUsedSwitchStatements;
