@@ -6,8 +6,11 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColorUtil;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
+import org.intellij.markdown.ast.ASTNode;
+import org.intellij.markdown.html.HtmlGenerator;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -17,7 +20,7 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.intellij.markdown.utils.MarkdownToHtmlConverterKt.convertMarkdownToHtml;
+import static com.intellij.markdown.utils.MarkdownToHtmlConverterKt.convertMarkdownToHtmlWithTagRenderer;
 
 /**
  * TODO move to contrib/markdown/lib/intellij-markdown.jar
@@ -223,7 +226,7 @@ public final class HtmlMarkdownUtils {
 
   private static @Nullable @NlsSafe String convert(@NotNull @Nls String text) {
     try {
-      return convertMarkdownToHtml(text);
+      return convertMarkdownToHtmlWithTagRenderer(text, new SanitizingTagRendered());
     }
     catch (Exception e) {
       LOG.warn(e.getMessage(), e);
@@ -279,5 +282,56 @@ public final class HtmlMarkdownUtils {
     str = str.replace(BR_TAG_AFTER_MARKDOWN_PROCESSING, "");
 
     return str.trim();
+  }
+
+  private static class SanitizingTagRendered extends HtmlGenerator.DefaultTagRenderer {
+
+    private static final Set<CharSequence> allowedTags = CollectionFactory.createCharSequenceSet(false);
+
+    static  {
+      allowedTags.addAll(Arrays.asList(
+        // Content sectioning
+        "h1", "h2", "h3", "h4", "h5", "h6",
+        // Text content
+        "blockquote", "div", "dd", "dl", "dt",
+        "hr", "li", "ol", "ul", "pre", "p",
+        // Inline text semantic
+        "a", "abbr", "b", "br", "cite", "code", "em", "i", "s", "span", "strong", "u", "wbr",
+        // Image and multimedia
+        "img",
+        // Svg and math
+        "svg", "math",
+        // Table,
+        "caption", "col", "colgroup", "table", "tbody", "td", "tfoot", "th", "thead", "tr"
+      ));
+    }
+
+    private SanitizingTagRendered() {
+      super((a,b,c) -> c, false);
+    }
+
+    @NotNull
+    @Override
+    public CharSequence openTag(@NotNull ASTNode node,
+                                @NotNull CharSequence tagName,
+                                CharSequence @NotNull[] attributes,
+                                boolean autoClose) {
+      var result = super.openTag(node, tagName, attributes, autoClose);
+      if (!allowedTags.contains(tagName)) {
+        return StringUtil.escapeXmlEntities(result.toString());
+      } else {
+        return result;
+      }
+    }
+
+    @NotNull
+    @Override
+    public CharSequence closeTag(@NotNull CharSequence tagName) {
+      if (!allowedTags.contains(tagName)) {
+        return StringUtil.escapeXmlEntities(super.closeTag(tagName).toString());
+      } else {
+        return super.closeTag(tagName);
+      }
+    }
   }
 }
