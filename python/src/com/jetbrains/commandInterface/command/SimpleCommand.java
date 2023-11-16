@@ -44,6 +44,27 @@ public final class SimpleCommand implements Command {
   @NotNull
   private final CommandExecutor myExecutor;
 
+  /**
+   *
+   * @param name command name
+   * @param help command help (if available)
+   * @param argumentsInfo command arguments
+   * @param executor engine to execute command
+   * @param options command options
+   * @param onCommandSuccessExecutedRunnable runnable to be run when command is executed with exit code 0
+   */
+  public SimpleCommand(@NotNull final @NlsSafe String name,
+                       @Nullable final Help help,
+                       @NotNull final ArgumentsInfo argumentsInfo,
+                       @NotNull final CommandExecutor executor,
+                       @NotNull final Collection<Option> options,
+                       @Nullable final Runnable onCommandSuccessExecutedRunnable) {
+    myName = name;
+    myHelp = help;
+    myArgumentsInfo = argumentsInfo;
+    myExecutor = executor;
+    myOptions.addAll(options);
+  }
 
   /**
    *
@@ -58,11 +79,7 @@ public final class SimpleCommand implements Command {
                        @NotNull final ArgumentsInfo argumentsInfo,
                        @NotNull final CommandExecutor executor,
                        @NotNull final Collection<Option> options) {
-    myName = name;
-    myHelp = help;
-    myArgumentsInfo = argumentsInfo;
-    myExecutor = executor;
-    myOptions.addAll(options);
+    this(name, help, argumentsInfo, executor, options, null);
   }
 
   @NotNull
@@ -98,13 +115,13 @@ public final class SimpleCommand implements Command {
   public void execute(@NotNull final String commandName,
                       @NotNull final Module module,
                       @NotNull final List<String> parameters,
-                      @Nullable final ConsoleView consoleView) {
-    myExecutor.execute(myName, module, parameters, consoleView);
+                      @Nullable final ConsoleView consoleView,
+                      @Nullable final Runnable onExecuted) {
+    myExecutor.execute(myName, module, parameters, consoleView, onExecuted);
   }
 
   @NotNull
   public CommandExecutor getExecutor() {
     return myExecutor;
   }
-
 }
