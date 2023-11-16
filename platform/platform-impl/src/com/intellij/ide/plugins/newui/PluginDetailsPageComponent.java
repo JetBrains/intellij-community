@@ -919,6 +919,9 @@ public final class PluginDetailsPageComponent extends MultiPanel {
             }
           });
         }
+        else if (!node.isConverted() && !myMarketplace) {
+          component.setInstalledPluginMarketplaceNode(node);
+        }
       }
       else if (!descriptor.isBundled() && component.getInstalledPluginMarketplaceNode() == null) {
         syncLoading = false;
