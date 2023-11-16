@@ -131,7 +131,7 @@ internal class MatchedLineLength : Metric {
   override fun evaluate(sessions: List<Session>): Double {
     val fileSample = Sample()
     for (session in sessions) {
-      val value = session.lookups.maxOf { lookup -> lookup.selectedWithoutPrefix()?.length ?: 0 }.toDouble()
+      val value = session.lookups.maxOfOrNull { lookup -> lookup.selectedWithoutPrefix()?.length ?: 0 }?.toDouble() ?: 0.0
       fileSample.add(value)
       sample.add(value)
     }
