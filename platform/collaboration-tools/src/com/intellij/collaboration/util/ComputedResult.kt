@@ -7,9 +7,10 @@ package com.intellij.collaboration.util
  * null value means that the computation hasn't completed yet
  */
 @JvmInline
-value class ComputedResult<out T> private constructor(
+value class ComputedResult<out T> internal constructor(
   val result: Result<T>?
 ) {
+  val isSuccess: Boolean get() = result != null && result.isSuccess
   val isInProgress: Boolean get() = result == null
 
   companion object {
@@ -18,3 +19,7 @@ value class ComputedResult<out T> private constructor(
     fun <T> failure(error: Throwable): ComputedResult<T> = ComputedResult(Result.failure(error))
   }
 }
+
+fun <T> ComputedResult<T>.getOrNull(): T? = result?.getOrNull()
+
+fun <T, R> ComputedResult<T>.map(mapper: (value: T) -> R): ComputedResult<R> = ComputedResult(result?.map(mapper))

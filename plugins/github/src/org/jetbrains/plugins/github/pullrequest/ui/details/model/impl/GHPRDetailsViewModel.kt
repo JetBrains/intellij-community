@@ -83,7 +83,7 @@ internal class GHPRDetailsViewModelImpl(
   override val branchesVm = GHPRBranchesViewModel(cs, project, dataContext.repositoryDataService.repositoryMapping, detailsState)
 
   private val reviewVmHelper = GHPRReviewViewModelHelper(cs, dataProvider)
-  override val changesVm = GHPRChangesViewModelImpl(cs, project, dataContext, dataProvider, reviewVmHelper)
+  override val changesVm = GHPRChangesViewModelImpl(cs, project, dataContext, dataProvider)
 
   override val statusVm = GHPRStatusViewModelImpl(cs, project, detailsState, dataProvider.stateData)
 

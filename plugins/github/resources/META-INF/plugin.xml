@@ -215,14 +215,6 @@
                     relative-to-action="Vcs.Diff.ToggleDiffAligningMode"
                     anchor="before"/>
     </group>
-    <group id="Github.PullRequest.Combined.Diff.Thread.View.Options"
-           class="org.jetbrains.plugins.github.pullrequest.comment.action.combined.GHPRCombinedDiffReviewThreadsToggleAction"
-           icon="AllIcons.Actions.Show"
-           popup="true">
-      <add-to-group group-id="Diff.EditorGutterPopupMenu.EditorSettings"
-                    relative-to-action="Vcs.ShowDiffChangedLines"
-                    anchor="before"/>
-    </group>
   </actions>
 
   <projectListeners>

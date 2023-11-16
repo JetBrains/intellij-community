@@ -25,7 +25,8 @@ class CodeReviewDiffRequestProducer(
   private val project: Project,
   val change: RefComparisonChange,
   private val delegate: ChangeDiffRequestProducer,
-  private val diffComputer: DiffUserDataKeysEx.DiffComputer?
+  private val diffComputer: DiffUserDataKeysEx.DiffComputer?,
+  private val postProcess: DiffRequest.() -> Unit = {}
 ) : ChangeDiffRequestChain.Producer by delegate, ScrollableDiffRequestProducer {
 
   private val _scrollRequest = Channel<DiffLineLocation>(capacity = 1, BufferOverflow.DROP_OLDEST)
@@ -53,7 +54,7 @@ class CodeReviewDiffRequestProducer(
         // only perform the scroll once
         requestedScrollLocation = null
       }
-    }
+    }.apply(postProcess)
 
   fun scrollTo(loc: DiffLineLocation) {
     requestedScrollLocation = loc

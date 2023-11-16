@@ -4,7 +4,7 @@ package org.jetbrains.plugins.github.api.data
 import com.intellij.collaboration.api.dto.GraphQLFragment
 
 @GraphQLFragment("/graphql/fragment/nodeInfo.graphql")
-open class GHNode(val id: String) {
+open class GHNode(open val id: String) {
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
     if (other !is GHNode) return false

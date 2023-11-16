@@ -24,6 +24,7 @@ import org.jetbrains.plugins.github.pullrequest.GHPRListViewModel
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.pullrequest.ui.GHPRViewModelContainer
+import org.jetbrains.plugins.github.pullrequest.ui.diff.GHPRDiffViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRToolWindowTab
 import org.jetbrains.plugins.github.ui.util.GHUIUtil
 import org.jetbrains.plugins.github.util.DisposalCountingHolder
@@ -108,6 +109,9 @@ class GHPRToolWindowProjectViewModel internal constructor(
 
   fun acquireInfoViewModel(id: GHPRIdentifier, disposable: Disposable): GHPRInfoViewModel =
     pullRequestsVms[id].acquireValue(disposable).infoVm
+
+  fun acquireDiffViewModel(id: GHPRIdentifier, disposable: Disposable): GHPRDiffViewModel =
+    pullRequestsVms[id].acquireValue(disposable).diffVm
 
   suspend fun isExistingPullRequest(pushResult: GitPushRepoResult): Boolean? {
     val creationService = dataContext.creationService

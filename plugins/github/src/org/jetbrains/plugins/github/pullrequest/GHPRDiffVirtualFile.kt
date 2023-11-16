@@ -7,13 +7,12 @@ import com.intellij.diff.impl.DiffRequestProcessor
 import com.intellij.diff.tools.combined.CombinedDiffModelImpl
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.vcs.changes.ui.MutableDiffRequestChainProcessor
 import com.intellij.vcs.editor.ComplexPathVirtualFileSystem
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContextRepository
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
+import org.jetbrains.plugins.github.pullrequest.ui.diff.GHPRDiffService
 
 internal data class GHPRDiffVirtualFile(private val fileManagerId: String,
                                         private val project: Project,
@@ -30,17 +29,8 @@ internal data class GHPRDiffVirtualFile(private val fileManagerId: String,
 
   override fun isValid(): Boolean = isFileValid(fileManagerId, project, repository)
 
-  override fun createProcessor(project: Project): DiffRequestProcessor {
-    val dataDisposable = Disposer.newDisposable()
-    val dataContext = GHPRDataContextRepository.getInstance(project).findContext(repository)!!
-    val dataProvider = dataContext.dataProviderRepository.getDataProvider(pullRequest, dataDisposable)
-    val diffRequestModel = dataProvider.diffRequestModel
-
-    return MutableDiffRequestChainProcessor(project, null).also {
-      diffRequestModel.process(it)
-      Disposer.register(it, dataDisposable)
-    }
-  }
+  override fun createProcessor(project: Project): DiffRequestProcessor =
+    project.service<GHPRDiffService>().createDiffRequestProcessor(repository, pullRequest)
 }
 
 internal data class GHPRCombinedDiffPreviewVirtualFile(private val fileManagerId: String,
@@ -61,7 +51,7 @@ internal data class GHPRCombinedDiffPreviewVirtualFile(private val fileManagerId
   override fun isValid(): Boolean = isFileValid(fileManagerId, project, repository)
 
   override fun createModel(id: String): CombinedDiffModelImpl =
-    project.service<GHPRCombinedDiffModelProvider>().createCombinedDiffModel(repository, pullRequest)
+    project.service<GHPRDiffService>().createCombinedDiffModel(repository, pullRequest)
 }
 
 private fun createSourceId(fileManagerId: String, repository: GHRepositoryCoordinates, pullRequest: GHPRIdentifier) =

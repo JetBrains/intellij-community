@@ -5,7 +5,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.actions.RefreshAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import org.jetbrains.plugins.github.i18n.GithubBundle
-import org.jetbrains.plugins.github.pullrequest.comment.GHPRDiffReviewSupport
+import org.jetbrains.plugins.github.pullrequest.ui.diff.GHPRDiffViewModel
 
 class GHPRDiffReviewThreadsReloadAction
   : RefreshAction({ GithubBundle.message("pull.request.review.refresh.data.task") },
@@ -13,12 +13,12 @@ class GHPRDiffReviewThreadsReloadAction
                   AllIcons.Actions.Refresh) {
 
   override fun update(e: AnActionEvent) {
-    val reviewSupport = e.getData(GHPRDiffReviewSupport.DATA_KEY)
-    e.presentation.isVisible = reviewSupport != null
-    e.presentation.isEnabled = reviewSupport?.isLoadingReviewData?.not() ?: false
+    val vm = e.getData(GHPRDiffViewModel.DATA_KEY)
+    e.presentation.isVisible = vm != null
+    e.presentation.isEnabled = vm?.isLoadingReviewData?.value?.not() ?: false
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    e.getRequiredData(GHPRDiffReviewSupport.DATA_KEY).reloadReviewData()
+    e.getRequiredData(GHPRDiffViewModel.DATA_KEY).reloadReview()
   }
 }

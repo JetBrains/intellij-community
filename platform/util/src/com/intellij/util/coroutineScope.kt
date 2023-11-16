@@ -11,10 +11,13 @@ import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
 @Experimental
-fun Job.cancelOnDispose(disposable: Disposable) {
+@JvmOverloads
+fun Job.cancelOnDispose(disposable: Disposable, disposeOnCompletion: Boolean = true) {
   val childDisposable = Disposable { cancel("disposed") }
   Disposer.register(disposable, childDisposable)
-  job.invokeOnCompletion {
-    Disposer.dispose(childDisposable)
+  if (disposeOnCompletion) {
+    job.invokeOnCompletion {
+      Disposer.dispose(childDisposable)
+    }
   }
 }

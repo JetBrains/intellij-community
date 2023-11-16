@@ -3,15 +3,14 @@ package org.jetbrains.plugins.github.pullrequest.comment
 
 import com.intellij.collaboration.ui.SingleValueModel
 import com.intellij.collaboration.ui.codereview.diff.DiffMappedValue
-import com.intellij.collaboration.ui.codereview.diff.DiscussionsViewOption
 import com.intellij.collaboration.ui.html.AsyncHtmlImageLoader
+import com.intellij.collaboration.util.getOrNull
 import com.intellij.diff.tools.fragmented.UnifiedDiffViewer
 import com.intellij.diff.tools.simple.SimpleOnesideDiffViewer
 import com.intellij.diff.tools.util.base.DiffViewerBase
 import com.intellij.diff.tools.util.side.TwosideTextDiffViewer
 import com.intellij.diff.util.Range
 import com.intellij.diff.util.Side
-import com.intellij.execution.process.ProcessIOExecutorService
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diff.impl.patch.PatchHunkUtil
 import com.intellij.openapi.diff.impl.patch.TextFilePatch
@@ -24,41 +23,27 @@ import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPRReviewProcessMode
 import org.jetbrains.plugins.github.pullrequest.comment.viewer.GHPRSimpleOnesideDiffViewerReviewThreadsHandler
 import org.jetbrains.plugins.github.pullrequest.comment.viewer.GHPRTwosideDiffViewerReviewThreadsHandler
 import org.jetbrains.plugins.github.pullrequest.comment.viewer.GHPRUnifiedDiffViewerReviewThreadsHandler
-import org.jetbrains.plugins.github.pullrequest.data.GHPullRequestPendingReview
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDetailsDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRReviewDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRRepositoryDataService
-import org.jetbrains.plugins.github.pullrequest.ui.GHCompletableFutureLoadingModel
-import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingModel
-import org.jetbrains.plugins.github.pullrequest.ui.GHSimpleLoadingModel
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRSuggestedChangeHelper
+import org.jetbrains.plugins.github.pullrequest.ui.diff.GHPRDiffViewModelImpl
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
-import java.util.function.Function
-import kotlin.properties.Delegates.observable
 
-class GHPRDiffReviewSupportImpl(private val project: Project,
-                                private val reviewDataProvider: GHPRReviewDataProvider,
-                                private val detailsDataProvider: GHPRDetailsDataProvider,
-                                private val htmlImageLoader: AsyncHtmlImageLoader,
-                                private val avatarIconsProvider: GHAvatarIconsProvider,
-                                private val repositoryDataService: GHPRRepositoryDataService,
-                                private val diffData: GitTextFilePatchWithHistory,
-                                private val ghostUser: GHUser,
-                                private val currentUser: GHUser)
+internal class GHPRDiffReviewSupportImpl(private val project: Project,
+                                         private val reviewDataProvider: GHPRReviewDataProvider,
+                                         private val detailsDataProvider: GHPRDetailsDataProvider,
+                                         private val htmlImageLoader: AsyncHtmlImageLoader,
+                                         private val avatarIconsProvider: GHAvatarIconsProvider,
+                                         private val repositoryDataService: GHPRRepositoryDataService,
+                                         private val diffVm: GHPRDiffViewModelImpl,
+                                         private val diffData: GitTextFilePatchWithHistory,
+                                         private val ghostUser: GHUser,
+                                         private val currentUser: GHUser)
   : GHPRDiffReviewSupport {
 
-  private var pendingReviewLoadingModel: GHSimpleLoadingModel<GHPullRequestPendingReview?>? = null
   private val reviewProcessModel = GHPRReviewProcessModelImpl()
-
-  private var reviewThreadsLoadingModel: GHSimpleLoadingModel<List<DiffMappedValue<GHPullRequestReviewThread>>>? = null
   private val reviewThreadsModel = SingleValueModel<List<DiffMappedValue<GHPullRequestReviewThread>>?>(null)
-
-  override val isLoadingReviewData: Boolean
-    get() = reviewThreadsLoadingModel?.loading == true || pendingReviewLoadingModel?.loading == true
-
-  override var discussionsViewOption by observable(DiscussionsViewOption.UNRESOLVED_ONLY) { _, _, _ ->
-    updateReviewThreads()
-  }
 
   override fun install(viewer: DiffViewerBase) {
     val diffRangesModel = SingleValueModel(if (reviewDataProvider.canComment()) diffData.patch.ranges else null)
@@ -100,52 +85,23 @@ class GHPRDiffReviewSupportImpl(private val project: Project,
     }
   }
 
-  override fun reloadReviewData() {
-    reviewDataProvider.resetPendingReview()
-    reviewDataProvider.resetReviewThreads()
-  }
-
   private fun loadPendingReview(disposable: Disposable) {
-    val loadingModel = GHCompletableFutureLoadingModel<GHPullRequestPendingReview?>(disposable).also {
-      it.addStateChangeListener(object : GHLoadingModel.StateChangeListener {
-        override fun onLoadingCompleted() {
-          if (it.resultAvailable) {
-            reviewProcessModel.populatePendingReviewData(it.result)
-          }
-        }
-      })
-    }
-    pendingReviewLoadingModel = loadingModel
-
-    doLoadPendingReview(loadingModel)
-    reviewDataProvider.addPendingReviewListener(disposable) {
+    diffVm.loadPendingReview(disposable) {
       reviewProcessModel.clearPendingReviewData()
-      doLoadPendingReview(loadingModel)
+      if (it.isSuccess) {
+        reviewProcessModel.populatePendingReviewData(it.getOrNull())
+      }
     }
-  }
-
-  private fun doLoadPendingReview(model: GHCompletableFutureLoadingModel<GHPullRequestPendingReview?>) {
-    model.future = reviewDataProvider.loadPendingReview()
   }
 
   private fun loadReviewThreads(disposable: Disposable) {
-    val loadingModel = GHCompletableFutureLoadingModel<List<DiffMappedValue<GHPullRequestReviewThread>>>(disposable).apply {
-      addStateChangeListener(object : GHLoadingModel.StateChangeListener {
-        override fun onLoadingCompleted() = updateReviewThreads()
-      })
+    diffVm.loadReviewThreads(disposable) {
+      val threads = it.getOrNull()
+      if (threads != null) {
+        //TODO: move to bgt
+        reviewThreadsModel.value = threads.mapNotNull(::mapThread)
+      }
     }
-    reviewThreadsLoadingModel = loadingModel
-
-    doLoadReviewThreads(loadingModel)
-    reviewDataProvider.addReviewThreadsListener(disposable) {
-      doLoadReviewThreads(loadingModel)
-    }
-  }
-
-  private fun doLoadReviewThreads(model: GHCompletableFutureLoadingModel<List<DiffMappedValue<GHPullRequestReviewThread>>>) {
-    model.future = reviewDataProvider.loadReviewThreads().thenApplyAsync(Function {
-      it.mapNotNull(::mapThread)
-    }, ProcessIOExecutorService.INSTANCE)
   }
 
   private fun mapThread(thread: GHPullRequestReviewThread): DiffMappedValue<GHPullRequestReviewThread>? {
@@ -186,17 +142,7 @@ class GHPRDiffReviewSupportImpl(private val project: Project,
 
     return DiffMappedValue(mappedLocation, thread)
   }
-
-  private fun updateReviewThreads() {
-    val loadingModel = reviewThreadsLoadingModel ?: return
-    if (loadingModel.loading) return
-    reviewThreadsModel.value = when (discussionsViewOption) {
-      DiscussionsViewOption.ALL -> loadingModel.result
-      DiscussionsViewOption.UNRESOLVED_ONLY -> loadingModel.result?.filter { !it.value.isResolved }
-      DiscussionsViewOption.DONT_SHOW -> null
-    }
-  }
 }
 
-val TextFilePatch.ranges: List<Range>
+private val TextFilePatch.ranges: List<Range>
   get() = hunks.map(PatchHunkUtil::getRange)

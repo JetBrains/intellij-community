@@ -128,6 +128,35 @@ fun <T, M> StateFlow<T>.mapState(
   mapper: (value: T) -> M
 ): StateFlow<M> = map { mapper(it) }.stateIn(scope, SharingStarted.Eagerly, mapper(value))
 
+@ApiStatus.Experimental
+fun <T, M> StateFlow<T>.mapState(mapper: (value: T) -> M): StateFlow<M> = DerivedStateFlow(map(mapper)) { mapper(value) }
+
+@ApiStatus.Experimental
+fun <T1, T2, R> StateFlow<T1>.combineState(other: StateFlow<T2>, combiner: (T1, T2) -> R): StateFlow<R> =
+  DerivedStateFlow(combine(other, combiner)) { combiner(value, other.value) }
+
+/**
+ * Special state flow which value is supplied by [valueSupplier] and collection is delegated to [source]
+ *
+ * [valueSupplier] should NEVER THROW to avoid contract violation
+ *
+ *
+ * https://github.com/Kotlin/kotlinx.coroutines/issues/2631#issuecomment-870565860
+ */
+private class DerivedStateFlow<T>(
+  private val source: Flow<T>,
+  private val valueSupplier: () -> T
+) : StateFlow<T> {
+
+  override val value: T get() = valueSupplier()
+  override val replayCache: List<T> get() = listOf(value)
+
+  @InternalCoroutinesApi
+  override suspend fun collect(collector: FlowCollector<T>): Nothing {
+    coroutineScope { source.distinctUntilChanged().stateIn(this).collect(collector) }
+  }
+}
+
 @OptIn(ExperimentalCoroutinesApi::class)
 @ApiStatus.Experimental
 fun <T, R> Flow<T>.mapScoped(mapper: CoroutineScope.(T) -> R): Flow<R> {

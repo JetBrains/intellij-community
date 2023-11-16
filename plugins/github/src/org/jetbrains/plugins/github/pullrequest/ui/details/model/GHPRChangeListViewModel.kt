@@ -8,8 +8,6 @@ import com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangeLi
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangeListViewModelBase
 import com.intellij.collaboration.util.RefComparisonChange
 import com.intellij.collaboration.util.filePath
-import com.intellij.diff.DiffDialogHints
-import com.intellij.diff.DiffManager
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -20,23 +18,15 @@ import git4idea.repo.GitRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestFileViewedState
 import org.jetbrains.plugins.github.api.data.pullrequest.isViewed
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
-import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRDiffRequestChainProducer
-import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRViewedStateDiffSupport
-import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRViewedStateDiffSupportImpl
-import org.jetbrains.plugins.github.pullrequest.ui.review.DelegatingGHPRReviewViewModel
-import org.jetbrains.plugins.github.pullrequest.ui.review.GHPRReviewViewModelHelper
 
 @ApiStatus.Experimental
 interface GHPRChangeListViewModel : CodeReviewChangeListViewModel.WithDetails {
   val isUpdating: StateFlow<Boolean>
-
-  fun canShowDiff(): Boolean
 
   /**
    * Tests if the viewed state matches for all files
@@ -60,7 +50,6 @@ internal class GHPRChangeListViewModelImpl(
   override val project: Project,
   private val dataContext: GHPRDataContext,
   private val dataProvider: GHPRDataProvider,
-  private val reviewVmHelper: GHPRReviewViewModelHelper,
   changeList: CodeReviewChangeList
 ) : GHPRChangeListViewModel, CodeReviewChangeListViewModelBase(parentCs, changeList) {
   private val repository: GitRepository get() = dataContext.repositoryDataService.remoteCoordinates.repository
@@ -69,23 +58,6 @@ internal class GHPRChangeListViewModelImpl(
   override val isUpdating: StateFlow<Boolean> = _isUpdating.asStateFlow()
 
   private val viewedStateData = dataProvider.viewedStateData
-  private val viewedStateSupport = GHPRViewedStateDiffSupportImpl(repository, viewedStateData)
-  private val reviewVm = DelegatingGHPRReviewViewModel(reviewVmHelper)
-  private val diffRequestProducer: GHPRDiffRequestChainProducer =
-    GHPRDiffRequestChainProducer(project,
-                                 dataProvider,
-                                 dataContext.htmlImageLoader, dataContext.avatarIconsProvider,
-                                 dataContext.repositoryDataService,
-                                 dataContext.securityService.ghostUser,
-                                 dataContext.securityService.currentUser,
-                                 reviewVm) {
-
-      if (selectedCommit != null) emptyMap()
-      else mapOf(
-        GHPRViewedStateDiffSupport.KEY to viewedStateSupport,
-        GHPRViewedStateDiffSupport.PULL_REQUEST_FILE to it.filePath
-      )
-    }
 
   override val detailsByChange: StateFlow<Map<RefComparisonChange, CodeReviewChangeDetails>> =
     if (changeList.commitSha == null) {
@@ -99,24 +71,15 @@ internal class GHPRChangeListViewModelImpl(
     _isUpdating.value = updating
   }
 
-  init {
-    cs.launch {
-      changesSelection.collect { selection ->
-        dataProvider.combinedDiffSelectionModel.updateSelectedChanges(selection)
-        dataProvider.diffRequestModel.requestChain = selection?.let { diffRequestProducer.getRequestChain(it) }
-      }
-    }
-  }
-
   override fun showDiffPreview() {
     dataContext.filesManager.createAndOpenDiffFile(dataProvider.id, true)
   }
 
-  override fun canShowDiff(): Boolean = dataProvider.diffRequestModel.requestChain != null
-
   override fun showDiff() {
-    val requestChain = dataProvider.diffRequestModel.requestChain ?: return
-    DiffManager.getInstance().showDiff(project, requestChain, DiffDialogHints.DEFAULT)
+    // TODO: show standalone
+    showDiffPreview()
+    /*val requestChain = dataProvider.diffRequestModel.requestChain ?: return
+    DiffManager.getInstance().showDiff(project, requestChain, DiffDialogHints.DEFAULT)*/
   }
 
   override fun isViewedStateForAllFiles(files: Iterable<FilePath>, viewed: Boolean): Boolean? {

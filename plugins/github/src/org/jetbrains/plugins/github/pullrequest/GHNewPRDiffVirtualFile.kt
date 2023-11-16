@@ -3,10 +3,14 @@ package org.jetbrains.plugins.github.pullrequest
 
 import com.intellij.collaboration.file.codereview.CodeReviewCombinedDiffVirtualFile
 import com.intellij.collaboration.file.codereview.CodeReviewDiffVirtualFile
+import com.intellij.diff.chains.DiffRequestChain
+import com.intellij.diff.chains.DiffRequestProducer
 import com.intellij.diff.impl.DiffRequestProcessor
+import com.intellij.diff.tools.combined.CombinedBlockId
 import com.intellij.diff.tools.combined.CombinedDiffModelImpl
-import com.intellij.openapi.components.service
+import com.intellij.diff.tools.combined.CombinedPathBlockId
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer
 import com.intellij.openapi.vcs.changes.ui.MutableDiffRequestChainProcessor
 import com.intellij.vcs.editor.ComplexPathVirtualFileSystem
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
@@ -49,8 +53,25 @@ internal data class GHNewPRCombinedDiffPreviewVirtualFile(private val fileManage
   override fun isValid(): Boolean = isFileValid(fileManagerId, project, repository)
 
   override fun createModel(id: String): CombinedDiffModelImpl {
-    return project.service<GHPRCombinedDiffModelProvider>().createCombinedDiffModel(repository)
+    val model = CombinedDiffModelImpl(project)
+    val dataContext = GHPRDataContextRepository.getInstance(project).findContext(repository)!!
+    val diffModel: GHPRDiffRequestModel = dataContext.newPRDiffModel
+    diffModel.addAndInvokeRequestChainListener(model.ourDisposable) {
+      model.cleanBlocks()
+      diffModel.requestChain?.let<DiffRequestChain, Unit> {
+        val requests = linkedMapOf<CombinedBlockId, DiffRequestProducer>()
+        for (request in it.requests) {
+          if (request !is ChangeDiffRequestProducer) return@addAndInvokeRequestChainListener
+          val change = request.change
+          val id = CombinedPathBlockId((change.afterRevision?.file ?: change.beforeRevision?.file)!!, change.fileStatus, null)
+          requests[id] = request
+        }
+        model.setBlocks(requests)
+      }
+    }
+    return model
   }
+
 }
 
 private fun isFileValid(fileManagerId: String, project: Project, repository: GHRepositoryCoordinates): Boolean {
