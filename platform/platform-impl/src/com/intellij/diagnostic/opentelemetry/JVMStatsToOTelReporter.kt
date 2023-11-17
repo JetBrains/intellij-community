@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic.opentelemetry
 
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.project.Project
@@ -25,7 +24,7 @@ private class JVMStatsToOTelReporter : ProjectActivity {
   }
 
   @Service(Service.Level.APP)
-  private class ReportingService : Disposable {
+  private class ReportingService {
     private var batchCallback: BatchCallback? = null
 
     init {
@@ -99,10 +98,6 @@ private class JVMStatsToOTelReporter : ProjectActivity {
         totalBytesAllocatedCounter,
         totalCpuTimeCounterMs
       )
-    }
-
-    override fun dispose() {
-      batchCallback?.close()
     }
   }
 
