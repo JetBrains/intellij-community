@@ -305,6 +305,7 @@
     <statistics.counterUsagesCollector implementationClass="org.jetbrains.idea.maven.statistics.MavenActionsUsagesCollector"/>
     <statistics.counterUsagesCollector implementationClass="org.jetbrains.idea.maven.statistics.MavenImportCollector"/>
     <statistics.counterUsagesCollector implementationClass="org.jetbrains.idea.maven.statistics.MavenDependencyInsertionCollector"/>
+    <statistics.counterUsagesCollector implementationClass="org.jetbrains.idea.maven.statistics.MavenIndexUsageCollector"/>
     <statistics.projectUsagesCollector implementation="org.jetbrains.idea.maven.statistics.MavenPluginCollector"/>
 
     <statistics.validation.customValidationRule

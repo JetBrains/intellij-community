@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.indices;
 
+import com.intellij.internal.statistic.StructuredIdeActivity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -18,6 +19,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.model.*;
 import org.jetbrains.idea.maven.server.*;
+import org.jetbrains.idea.maven.statistics.MavenIndexUsageCollector;
 import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
@@ -100,6 +102,11 @@ public final class MavenIndexImpl implements MavenIndex {
       }
     }
     finally {
+      boolean isCentral = isForCentral();
+      MavenIndexUsageCollector.INDEX_OPENED.log(null,
+                                                myKind == IndexKind.LOCAL,
+                                                isCentral,
+                                                myKind == IndexKind.REMOTE && !isCentral);
       save();
     }
   }
@@ -213,6 +220,7 @@ public final class MavenIndexImpl implements MavenIndex {
   @Override
   public void updateOrRepair(boolean fullUpdate, MavenProgressIndicator progress, boolean multithreaded)
     throws MavenProcessCanceledException {
+    StructuredIdeActivity activity = MavenIndexUsageCollector.INDEX_UPDATE.started(null);
     try {
       indexUpdateLock.lock();
 
@@ -260,10 +268,24 @@ public final class MavenIndexImpl implements MavenIndex {
       handleUpdateException(e);
     }
     finally {
+      boolean isCentral = isForCentral();
+      activity.finished(() ->
+                          Arrays.asList(
+                            MavenIndexUsageCollector.IS_LOCAL.with(myKind == IndexKind.LOCAL),
+                            MavenIndexUsageCollector.IS_CENTRAL.with(myKind == IndexKind.REMOTE && isCentral),
+                            MavenIndexUsageCollector.IS_PRIVATE_REMOTE.with(myKind == IndexKind.REMOTE && !isCentral),
+                            MavenIndexUsageCollector.IS_SUCCESS.with(!isBroken),
+                            MavenIndexUsageCollector.MANUAL.with(multithreaded)
+                          )
+      );
       indexUpdateLock.unlock();
     }
 
     save();
+  }
+
+  private boolean isForCentral() {
+    return myRepositoryPathOrUrl != null && myRepositoryPathOrUrl.contains("repo.maven.apache.org");
   }
 
   private boolean hasValidContext(@NotNull File contextDir) {
@@ -588,6 +610,7 @@ public final class MavenIndexImpl implements MavenIndex {
     if (isClose) return;
     if (!isBroken) {
       MavenLog.LOG.info("index is broken " + this);
+      MavenIndexUsageCollector.INDEX_BROKEN.log();
       ApplicationManager.getApplication().getMessageBus().syncPublisher(INDEX_IS_BROKEN).indexIsBroken(this);
     }
     isBroken = true;
