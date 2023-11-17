@@ -470,7 +470,7 @@ public final class FSRecordsImpl implements Closeable {
     if (!WRAP_ADE_IN_PCE) {
       return alreadyDisposed;
     }
-    
+
     return ContainerUtilKt.wrapAlreadyDisposedError(alreadyDisposed);
   }
 
@@ -645,6 +645,7 @@ public final class FSRecordsImpl implements Closeable {
     }
   }
 
+  /** Delete fileId from the roots catalog. Does NOT delete fileId record itself */
   void deleteRootRecord(int fileId) {
     try {
       treeAccessor.deleteRootRecord(fileId);
@@ -715,14 +716,7 @@ public final class FSRecordsImpl implements Closeable {
     return ContainerUtil.map(list(parentId).children, ChildInfo::getName);
   }
 
-  /**
-   * Perform operation on children and save the list atomically:
-   * Obtain fresh children and try to apply `childrenConvertor` to the children of `parentId`.
-   * If everything is still valid (i.e. no one changed the list in the meantime), commit.
-   * Failing that, repeat pessimistically: retry converter inside write lock for fresh children and commit inside the same write lock
-   * <p>
-   * TODO actually everything related to this method is kinda of guru code. Please, don't touch it, people are bad in parallel programming.
-   */
+  /** Perform operation on children and save the list atomically */
   @NotNull
   ListResult update(@NotNull VirtualFile parent,
                     int parentId,
@@ -788,11 +782,11 @@ public final class FSRecordsImpl implements Closeable {
             setParent(childToMove.getId(), toParentId);
           }
 
-          connection.markRecordAsModified(toParentId);
           treeAccessor.doSaveChildren(toParentId, childrenToMove);
+          connection.markRecordAsModified(toParentId);
 
-          connection.markRecordAsModified(fromParentId);
           treeAccessor.doSaveChildren(fromParentId, new ListResult(getModCount(fromParentId), Collections.emptyList(), fromParentId));
+          connection.markRecordAsModified(fromParentId);
         }
         catch (ProcessCanceledException e) {
           // NewVirtualFileSystem.list methods can be interrupted now
