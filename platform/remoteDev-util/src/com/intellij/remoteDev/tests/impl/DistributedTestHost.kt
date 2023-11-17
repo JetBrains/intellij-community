@@ -14,7 +14,6 @@ import com.intellij.notification.Notifications
 import com.intellij.openapi.application.*
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.runBlockingCancellable
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.rd.util.setSuspendPreserveClientId
 import com.intellij.openapi.ui.isFocusAncestor
@@ -66,9 +65,6 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
   protected open fun assertLoggerFactory() {
     LogFactoryHandler.assertLoggerFactory<AgentTestLoggerFactory>()
   }
-
-  private val projectOrNull: Project?
-    get() = ProjectManagerEx.getOpenProjects().singleOrNull()
 
   init {
     val hostAddress =
@@ -203,11 +199,12 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
 
         session.closeProjectIfOpened.setSuspendPreserveClientId { _, _ ->
           runLogged("Close project if it is opened") {
-            projectOrNull?.let {
+            ProjectManagerEx.getOpenProjects().forEach {
               withContext(Dispatchers.EDT + ModalityState.any().asContextElement() + NonCancellable) {
                 ProjectManagerEx.getInstanceEx().forceCloseProject(it)
               }
-            } ?: true
+            }
+            true
           }
         }
 
@@ -250,17 +247,24 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
 
 
   private fun requestFocus(actionTitle: String): Boolean {
-    val currentProject = projectOrNull
+    val projects = ProjectManagerEx.getOpenProjects()
+
+    if (projects.size > 1) {
+      LOG.info("'$actionTitle': Can't choose a project to focus. All projects: ${projects.joinToString(", ")}")
+      return false
+    }
+
+    val currentProject = projects.singleOrNull()
 
     val windowToFocus =
       if (currentProject != null) {
-        val ideFrame = WindowManager.getInstance().getFrame(currentProject)
-        if (ideFrame == null) {
+        val projectIdeFrame = WindowManager.getInstance().getFrame(currentProject)
+        if (projectIdeFrame == null) {
           LOG.info("'$actionTitle': No frame yet, nothing to focus")
           return false
         }
         else {
-          ideFrame
+          projectIdeFrame
         }
       }
       else {
@@ -281,7 +285,7 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
     }
     else {
       LOG.info("'$actionTitle': Requesting project focus for '$windowString'")
-      ProjectUtil.focusProjectWindow(projectOrNull, true)
+      ProjectUtil.focusProjectWindow(currentProject, true)
       if (!windowToFocus.isFocusAncestor()) {
         LOG.error("Failed to request the focus.")
         return false
