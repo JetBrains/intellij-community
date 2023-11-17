@@ -25,10 +25,10 @@ internal class InterfaceExtensionPoint<T : Any>(
 
     if (hasAttributes) {
       val customAttributes = if (descriptor.hasExtraAttributes) {
-        descriptor.element?.attributes ?: Java11Shim.INSTANCE.emptyMap()
+        descriptor.element?.attributes ?: Java11Shim.INSTANCE.mapOf()
       }
       else {
-        Java11Shim.INSTANCE.emptyMap()
+        Java11Shim.INSTANCE.mapOf()
       }
       return AdapterWithCustomAttributes(implementationClassName = implementationClassName,
                                          pluginDescriptor = pluginDescriptor,

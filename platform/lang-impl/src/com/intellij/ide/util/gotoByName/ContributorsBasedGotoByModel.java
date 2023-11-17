@@ -44,7 +44,7 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModelE
   private final List<ChooseByNameContributor> myContributors;
 
   protected ContributorsBasedGotoByModel(@NotNull Project project, ChooseByNameContributor @NotNull [] contributors) {
-    this(project, Java11Shim.INSTANCE.listOf(contributors));
+    this(project, List.of(contributors));
   }
 
   protected ContributorsBasedGotoByModel(@NotNull Project project, @NotNull List<ChooseByNameContributor> contributors) {

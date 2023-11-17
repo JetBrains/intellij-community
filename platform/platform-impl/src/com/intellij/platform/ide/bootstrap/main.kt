@@ -6,7 +6,6 @@ package com.intellij.platform.ide.bootstrap
 
 import com.intellij.BundleBase
 import com.intellij.accessibility.enableScreenReaderSupportIfNecessary
-import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.diagnostic.*
 import com.intellij.ide.*
 import com.intellij.ide.bootstrap.*
@@ -35,7 +34,6 @@ import com.intellij.ui.mac.screenmenu.Menu
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.svg.SvgCacheManager
 import com.intellij.util.*
-import com.intellij.util.containers.ConcurrentLongObjectMap
 import com.intellij.util.containers.SLRUMap
 import com.intellij.util.io.*
 import com.intellij.util.lang.ZipFilePool
@@ -44,7 +42,6 @@ import io.opentelemetry.sdk.OpenTelemetrySdkBuilder
 import kotlinx.coroutines.*
 import kotlinx.coroutines.debug.internal.DebugProbesImpl
 import org.jetbrains.annotations.ApiStatus.Internal
-import org.jetbrains.annotations.VisibleForTesting
 import java.awt.Toolkit
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
@@ -725,24 +722,3 @@ interface AppStarter {
   fun importFinished(newConfigDir: Path) {}
 }
 
-@VisibleForTesting
-@Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
-class Java11ShimImpl : Java11Shim() {
-  override fun <K : Any, V> copyOf(map: Map<K, V>) = java.util.Map.copyOf(map)
-
-  override fun <K : Any, V> mapOf(k: K, v: V): Map<K, V> = java.util.Map.of(k, v)
-
-  override fun <E> copyOf(collection: Collection<E>): Set<E> = java.util.Set.copyOf(collection)
-
-  override fun <K : Any, V> emptyMap(): Map<K, V> = java.util.Map.of()
-
-  override fun <V : Any> createConcurrentLongObjectMap(): ConcurrentLongObjectMap<V> {
-    return ConcurrentCollectionFactory.createConcurrentLongObjectMap()
-  }
-
-  override fun <E> listOf(): List<E> = java.util.List.of()
-
-  override fun <E> listOf(element: E): List<E> = java.util.List.of(element)
-
-  override fun <E> listOf(array: Array<E>): List<E> = java.util.List.of(*array)
-}

@@ -15,7 +15,10 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.Java11Shim
 import com.intellij.util.ThreeState
-import kotlinx.collections.immutable.*
+import kotlinx.collections.immutable.PersistentList
+import kotlinx.collections.immutable.mutate
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.toPersistentList
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
@@ -193,8 +196,10 @@ sealed class ExtensionPointImpl<T : Any>(@JvmField val name: String,
     }
     else {
       message += " (adapter=$adapter)"
-      throw componentManager.createError(message, null, adapter.pluginDescriptor.pluginId,
-                                         persistentHashMapOf("threadDump" to ThreadDumper.dumpThreadsToString()))
+      throw componentManager.createError(/* message = */ message,
+                                         /* error = */ null,
+                                         /* pluginId = */ adapter.pluginDescriptor.pluginId,
+                                         /* attachments = */ Java11Shim.INSTANCE.mapOf("threadDump", ThreadDumper.dumpThreadsToString()))
     }
   }
 
@@ -347,15 +352,15 @@ sealed class ExtensionPointImpl<T : Any>(@JvmField val name: String,
                                      listeners = listeners,
                                      result = null,
                                      duplicates = null,
-                                     extensionClassForCheck = extensionClass, adapters = adapters) ?: return Java11Shim.INSTANCE.listOf()
+                                     extensionClassForCheck = extensionClass,
+                                     adapters = adapters) ?: return Java11Shim.INSTANCE.listOf()
       return Java11Shim.INSTANCE.listOf(extension)
     }
 
     val duplicates = if (this is BeanExtensionPoint<*>) null else Collections.newSetFromMap<T>(IdentityHashMap(totalSize))
     val listeners = listeners
 
-    @Suppress("UNCHECKED_CAST")
-    val result = java.lang.reflect.Array.newInstance(extensionClass, totalSize) as Array<T>
+    val result = arrayOfNulls<Any>(totalSize)
     var index = 0
     for (adapter in adapters) {
       val extension = processAdapter(adapter = adapter,
@@ -368,22 +373,13 @@ sealed class ExtensionPointImpl<T : Any>(@JvmField val name: String,
         result[index++] = extension
       }
     }
-
-    // do not count ProcessCanceledException as a valid action to measure (later special category can be introduced if needed)
-    if (result.size == index) {
-      return Java11Shim.INSTANCE.listOf(result)
-    }
-    else {
-      @Suppress("UNCHECKED_CAST")
-      val newResult = java.lang.reflect.Array.newInstance(extensionClass, index) as Array<T>
-      System.arraycopy(result, 0, newResult, 0, index)
-      return Java11Shim.INSTANCE.listOf(newResult)
-    }
+    @Suppress("UNCHECKED_CAST")
+    return Java11Shim.INSTANCE.listOf(result, index) as List<T>
   }
 
   private fun processAdapter(adapter: ExtensionComponentAdapter,
                              listeners: List<ExtensionPointListener<T>>?,
-                             result: Array<T>?,
+                             result: Array<*>?,
                              duplicates: MutableSet<T>?,
                              extensionClassForCheck: Class<T>,
                              adapters: List<ExtensionComponentAdapter>): T? {

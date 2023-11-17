@@ -1,7 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplacePutWithAssignment")
+
 package com.intellij.util.containers
 
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.util.Java11Shim
 import com.intellij.util.SmartList
 import com.intellij.util.lang.CompoundRuntimeException
 import org.jetbrains.annotations.ApiStatus.Experimental
@@ -16,6 +19,62 @@ fun <K, V> MutableMap<K, MutableList<V>>.remove(key: K, value: V) {
   if (list != null && list.remove(value) && list.isEmpty()) {
     remove(key)
   }
+}
+
+/**
+ * Do not use it for a concurrent map (doesn't make sense).
+ */
+@Internal
+@Experimental
+fun <K : Any, V> Map<K, V>.without(key: K): Map<K, V> {
+  if (!containsKey(key)) {
+    return this
+  }
+  else if (size == 1) {
+    return Java11Shim.INSTANCE.mapOf()
+  }
+  else {
+    val result = HashMap<K, V>(size, 0.5f)
+    result.putAll(this)
+    result.remove(key)
+    return result
+  }
+}
+
+/**
+ * Do not use it for a concurrent map (doesn't make sense).
+ */
+@Internal
+@Experimental
+fun <K : Any, V> Map<K, V>.with(key: K, value: V): Map<K, V> {
+  val size = size
+  if (size == 0) {
+    return Java11Shim.INSTANCE.mapOf(key, value)
+  }
+
+  // do not use a java-immutable map, same as ours UnmodifiableHashMap and fastutil it uses open addressing hashing
+  // - https://stackoverflow.com/a/16303438
+  val result = HashMap<K, V>(size + 1, 0.5f)
+  result.putAll(this)
+  result.put(key, value)
+  return result
+}
+
+/**
+ * Do not use it for a concurrent map (doesn't make sense).
+ */
+@Internal
+@Experimental
+fun <K : Any, V> Map<K, V>.withAll(otherMap: Map<K, V>): Map<K, V> {
+  val totalSize = size + otherMap.size
+  if (totalSize == 0) {
+    return Java11Shim.INSTANCE.mapOf()
+  }
+
+  val result = HashMap<K, V>(totalSize, 0.5f)
+  result.putAll(this)
+  result.putAll(otherMap)
+  return result
 }
 
 fun <K, V> MutableMap<K, MutableList<V>>.putValue(key: K, value: V) {
