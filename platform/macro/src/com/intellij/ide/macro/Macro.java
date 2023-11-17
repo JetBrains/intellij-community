@@ -78,14 +78,19 @@ public abstract class Macro {
 
   public @Nullable TextRange findOccurence(@NotNull CharSequence s, int offset) {
     String prefix = "$" + getName();
-    int i = Strings.indexOf(s, prefix, offset);
-    int next = i + prefix.length();
-    if (i < 0 || next >= s.length()) return null;
+    int start = Strings.indexOf(s, prefix, offset);
+    int next = start + prefix.length();
+    if (start < 0 || next >= s.length()) return null;
+    return getRangeForSuffix(s, start, next);
+  }
+
+  @Nullable
+  protected TextRange getRangeForSuffix(@NotNull CharSequence s, int start, int next) {
     return switch (s.charAt(next)) {
-      case '$' -> TextRange.create(i, next + 1);
+      case '$' -> TextRange.create(start, next + 1);
       case '(' -> {
         int end = Strings.indexOf(s, ")$", next);
-        yield end < 0 ? null : TextRange.create(i, end + 2);
+        yield end < 0 ? null : TextRange.create(start, end + 2);
       }
       default -> null;
     };

@@ -21,7 +21,14 @@ class MacroExpandingTest: LightPlatformTestCase() {
     assertEquals("", expand("\$WithParams()\$"))
   }
 
-  private fun expand(input: String) = MacroManager.expandMacros(input, listOf(regular, withParams)) {
+  fun testPrompt() {
+    assertEquals("\$Prompt", expand("\$Prompt"))
+    assertEquals("Prompt null null", expand("\$Prompt\$"))
+    assertEquals("Prompt Title null", expand("\$Prompt:Title\$"))
+    assertEquals("Prompt Title value", expand("\$Prompt:Title:value\$"))
+  }
+
+  private fun expand(input: String) = MacroManager.expandMacros(input, listOf(regular, withParams, prompt)) {
     macro, occurence -> macro.expandOccurence(DataContext.EMPTY_CONTEXT, occurence)
   }
 
@@ -36,5 +43,12 @@ class MacroExpandingTest: LightPlatformTestCase() {
     override fun getDescription() = ""
     override fun expand(dataContext: DataContext) = "foo"
     override fun expand(dataContext: DataContext, vararg args: String?) = args.firstOrNull()
+  }
+
+  private val prompt: Macro = object : PromptingMacro() {
+    override fun getName() = "Prompt"
+    override fun getDescription() = ""
+    override fun expand(dataContext: DataContext, vararg args: String?) = args.firstOrNull()
+    override fun promptUser(dataContext: DataContext, label: String?, defaultValue: String?) = "Prompt $label $defaultValue"
   }
 }
