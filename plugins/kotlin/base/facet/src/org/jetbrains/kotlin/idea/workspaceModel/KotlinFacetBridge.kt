@@ -2,6 +2,8 @@
 package org.jetbrains.kotlin.idea.workspaceModel
 
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.roots.ExternalProjectSystemRegistry
+import com.intellij.openapi.roots.ProjectModelExternalSource
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetBridge
 import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetConfigurationBridge
@@ -9,9 +11,9 @@ import org.jetbrains.kotlin.idea.facet.KotlinFacet
 import org.jetbrains.kotlin.idea.facet.KotlinFacetConfiguration
 
 class KotlinFacetBridge(
-                        module: Module,
-                        name: String,
-                        configuration: KotlinFacetConfiguration
+    module: Module,
+    name: String,
+    configuration: KotlinFacetConfiguration
 ) : KotlinFacet(module, name, configuration),
     FacetBridge<KotlinSettingsEntity> {
     override val config: FacetConfigurationBridge<KotlinSettingsEntity>
@@ -42,5 +44,10 @@ class KotlinFacetBridge(
             pureKotlinSourceFolders = kotlinSettingsEntity.pureKotlinSourceFolders.toMutableList()
             targetPlatform = kotlinSettingsEntity.targetPlatform
         }
+    }
+
+    override fun getExternalSource(): ProjectModelExternalSource? {
+        return if (configuration.settings.externalProjectId.isEmpty()) return null
+        else ExternalProjectSystemRegistry.getInstance().getSourceById(configuration.settings.externalProjectId)
     }
 }

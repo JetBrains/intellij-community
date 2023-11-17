@@ -241,7 +241,7 @@ class KotlinMavenImporterEx : KotlinMavenImporter(), MavenWorkspaceFacetConfigur
             this.testOutputPath = kotlinFacetSettings.testOutputPath ?: ""
             this.sourceSetNames = kotlinFacetSettings.sourceSetNames.toMutableList()
             this.isTestModule = kotlinFacetSettings.isTestModule
-            this.externalProjectId = kotlinFacetSettings.externalProjectId
+            this.externalProjectId = "Maven"
             this.isHmppEnabled = kotlinFacetSettings.isHmppEnabled
             this.pureKotlinSourceFolders = kotlinFacetSettings.pureKotlinSourceFolders.toMutableList()
             this.kind = kotlinFacetSettings.kind
