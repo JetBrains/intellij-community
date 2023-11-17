@@ -97,7 +97,8 @@ class TerminalOutputController(
     disposeRunningCommandListeners()
     updateEditorContent(scraper.scrapeOutput())
     invokeLater {
-      val block = outputModel.getLastBlock() ?: error("No active block")
+      // the last block can be null in case of 'clear' command
+      val block = outputModel.getLastBlock() ?: return@invokeLater
       val document = editor.document
       val lastLineInd = document.getLineNumber(block.endOffset)
       val lastLineStart = document.getLineStartOffset(lastLineInd)
