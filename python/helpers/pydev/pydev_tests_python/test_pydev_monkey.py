@@ -179,8 +179,6 @@ class TestCase(unittest.TestCase):
         ])
 
     def test_monkey_patch_b_interpreter_arg(self):
-
-
         SetupHolder.setup = {'client': '127.0.0.1', 'port': '0'}
         check = ['C:\\bin\\python.exe', '-B', '-u', 'target.py', '-c',
                  '-another_arg']
