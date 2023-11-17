@@ -20,6 +20,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.github.api.GHRepositoryConnection
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.pullrequest.GHPRListViewModel
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
@@ -112,6 +113,10 @@ class GHPRToolWindowProjectViewModel internal constructor(
 
   fun acquireDiffViewModel(id: GHPRIdentifier, disposable: Disposable): GHPRDiffViewModel =
     pullRequestsVms[id].acquireValue(disposable).diffVm
+
+  fun findDetails(pullRequest: GHPRIdentifier): GHPullRequestShort? =
+    dataContext.listLoader.loadedData.find { it.id == pullRequest.id }
+    ?: dataContext.dataProviderRepository.findDataProvider(pullRequest)?.detailsData?.loadedDetails
 
   suspend fun isExistingPullRequest(pushResult: GitPushRepoResult): Boolean? {
     val creationService = dataContext.creationService
