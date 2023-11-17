@@ -154,11 +154,10 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(
     if (alreadyExists) {
       manager.addConfiguration(this)
       val runConfigHistory = RunConfigurationStartHistory.getInstance(manager.project)
-      runConfigHistory.state.pinned.find { it.setting == oldUniqueId }?.apply {
-        setting = getSettings(configuration).uniqueID
-      }
-      runConfigHistory.state.history.find { it.setting == oldUniqueId }?.apply {
-        setting = getSettings(configuration).uniqueID
+      for (set in runConfigHistory.state.let { listOf(it.pinned, it.history) }) {
+        set.find { it.setting == oldUniqueId }?.apply {
+          setting = getSettings(configuration).uniqueID
+        }
       }
       runConfigHistory.reloadState()
     }
