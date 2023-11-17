@@ -91,6 +91,7 @@ internal fun initMacApplication(mainScope: CoroutineScope) {
     else {
       openFilesOnLoading(list)
     }
+    Desktop.getDesktop().requestForeground(false)
   }
   if (JnaLoader.isLoaded()) {
     installAutoUpdateMenu()
