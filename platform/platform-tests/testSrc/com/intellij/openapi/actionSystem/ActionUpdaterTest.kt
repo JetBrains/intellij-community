@@ -1,6 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem
 
+import com.intellij.concurrency.currentThreadContext
+import com.intellij.concurrency.installThreadContext
 import com.intellij.ide.IdeEventQueue
 import com.intellij.openapi.actionSystem.impl.PresentationFactory
 import com.intellij.openapi.actionSystem.impl.Utils
@@ -29,6 +31,8 @@ import kotlinx.coroutines.withContext
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import kotlin.coroutines.AbstractCoroutineContextElement
+import kotlin.coroutines.CoroutineContext
 
 @TestApplication
 @RunInEdt(allMethods = false)
@@ -224,6 +228,32 @@ class ActionUpdaterTest {
     assertEquals(1, actions.size)
   }
 
+  @Test
+  fun testCoroutineContextPropagation() = timeoutRunBlocking {
+    val key = Key.create<Int>("Key")
+    val actionGroup = object : ActionGroup() {
+      override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+      override fun getChildren(e: AnActionEvent?): Array<AnAction> {
+        e!!
+        val actualElement = currentThreadContext()[MyContextElement]
+        assertEquals(1, actualElement?.value, "MyContextElement must be propagated to getChildren")
+        installThreadContext(currentThreadContext() + MyContextElement(2), true).use {
+          e.updateSession.sharedData(key) {
+            val actualElement = currentThreadContext()[MyContextElement]
+            assertEquals(2, actualElement?.value, "MyContextElement must be propagated to sharedData")
+            0
+          }
+        }
+        return arrayOf<AnAction>(EmptyAction.createEmptyAction("", null, true))
+      }
+    }
+    val actions = withContext(Dispatchers.EDT + MyContextElement(1)) {
+      Utils.expandActionGroupSuspend(actionGroup, PresentationFactory(), DataContext.EMPTY_CONTEXT,
+                                     ActionPlaces.UNKNOWN, false, fastTrack = false)
+    }
+    assertEquals(1, actions.size)
+  }
+
   private fun expandActionGroup(actionGroup: ActionGroup,
                                 presentationFactory: PresentationFactory = PresentationFactory()): List<AnAction?> {
     return Utils.expandActionGroup(actionGroup, presentationFactory, DataContext.EMPTY_CONTEXT, ActionPlaces.UNKNOWN)
@@ -244,5 +274,10 @@ class ActionUpdaterTest {
         e.presentation.isPerformGroup = true
       }
     }
+  }
+
+  private class MyContextElement(val value: Int)
+    : AbstractCoroutineContextElement(MyContextElement), CoroutineContext.Element {
+    companion object : CoroutineContext.Key<MyContextElement>
   }
 }
