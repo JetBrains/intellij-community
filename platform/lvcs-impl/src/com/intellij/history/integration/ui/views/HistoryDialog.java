@@ -2,9 +2,7 @@
 package com.intellij.history.integration.ui.views;
 
 import com.intellij.CommonBundle;
-import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.requests.ContentDiffRequest;
-import com.intellij.diff.requests.SimpleDiffRequest;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.history.core.LocalHistoryFacade;
 import com.intellij.history.integration.IdeaGateway;
@@ -299,21 +297,13 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
 
   protected abstract Runnable doUpdateDiffs(T model);
 
-  protected ContentDiffRequest createDifference(final FileDifferenceModel m) {
+  protected ContentDiffRequest createDifference(FileDifferenceModel m) {
     return ProgressManager.getInstance().run(new Task.WithResult<>(myProject, message("message.processing.revisions"), false) {
       @Override
-      protected ContentDiffRequest compute(@NotNull ProgressIndicator i) {
-        i.setIndeterminate(false);
-        return ReadAction.compute(() -> {
-          RevisionProcessingProgressAdapter p = new RevisionProcessingProgressAdapter(i);
-          p.processingLeftRevision();
-          DiffContent left = m.getLeftDiffContent(p);
-
-          p.processingRightRevision();
-          DiffContent right = m.getRightDiffContent(p);
-
-          return new SimpleDiffRequest(m.getTitle(), left, right, m.getLeftTitle(p), m.getRightTitle(p));
-        });
+      protected ContentDiffRequest compute(@NotNull ProgressIndicator indicator) {
+        indicator.setIndeterminate(false);
+        RevisionProcessingProgressAdapter p = new RevisionProcessingProgressAdapter(indicator);
+        return FileDifferenceModel.createRequest(m, p);
       }
     });
   }

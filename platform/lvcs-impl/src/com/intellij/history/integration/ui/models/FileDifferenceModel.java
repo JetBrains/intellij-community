@@ -18,9 +18,12 @@ package com.intellij.history.integration.ui.models;
 
 import com.intellij.diff.DiffContentFactory;
 import com.intellij.diff.contents.DiffContent;
+import com.intellij.diff.requests.ContentDiffRequest;
+import com.intellij.diff.requests.SimpleDiffRequest;
 import com.intellij.history.core.tree.Entry;
 import com.intellij.history.integration.IdeaGateway;
 import com.intellij.history.integration.LocalHistoryBundle;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.io.FileUtil;
@@ -104,4 +107,17 @@ public abstract class FileDifferenceModel {
   protected abstract @Nullable DiffContent getReadOnlyRightDiffContent(@NotNull RevisionProcessingProgress p);
 
   protected abstract @Nullable DiffContent getEditableRightDiffContent(@NotNull RevisionProcessingProgress p);
+
+  public static @NotNull ContentDiffRequest createRequest(@NotNull FileDifferenceModel model,
+                                                          @NotNull RevisionProcessingProgress progress) {
+    return ReadAction.compute(() -> {
+      progress.processingLeftRevision();
+      DiffContent left = model.getLeftDiffContent(progress);
+
+      progress.processingRightRevision();
+      DiffContent right = model.getRightDiffContent(progress);
+
+      return new SimpleDiffRequest(model.getTitle(), left, right, model.getLeftTitle(progress), model.getRightTitle(progress));
+    });
+  }
 }
