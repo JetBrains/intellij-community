@@ -33,8 +33,8 @@ import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.testFramework.*;
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
 import com.intellij.testFramework.rules.TempDirectory;
-import com.intellij.testFramework.utils.vfs.CheckVFSHealthRule;
 import com.intellij.testFramework.utils.vfs.SkipVFSHealthCheck;
+import com.intellij.testFramework.utils.vfs.CheckVFSHealthRule;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -669,13 +669,7 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
   public void testConcurrentListAllDoesntCauseDuplicateFileIds() throws Exception {
     PersistentFSImpl pfs = (PersistentFSImpl)PersistentFS.getInstance();
     Application application = ApplicationManager.getApplication();
-
-    //FIXME RC: this test actually fails given enough attempts (100-2000 is usually enough).
-    //          It was failing for quite a lot of time, just rarely, since attempts count
-    //          is low.
-    //          It fails because PersistentFSImpl.persistAllChildren() is not thread-safe,
-    //          it is possible for it to create file duplicates
-    int enoughAttempts = 10;
+    int enoughAttempts = 1000;
     for (int attempt = 0; attempt < enoughAttempts; attempt++) {
       File file1 = tempDirectory.newFile("dir." + attempt + "/file1", "text1".getBytes(UTF_8));
       Path file2 = file1.toPath().resolveSibling("file2");

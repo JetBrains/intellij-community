@@ -728,33 +728,28 @@ public final class FSRecordsImpl implements Closeable {
                     int parentId,
                     @NotNull Function<? super ListResult, ListResult> childrenConvertor) {
     SlowOperations.assertSlowOperationsAreAllowed();
-    assert parentId > 0 : parentId;
-    ListResult children = list(parentId);
-    ListResult result = childrenConvertor.apply(children);
+    PersistentFSConnection.ensureIdIsValid(parentId);
 
     updateLock.lock(parentId);
     try {
-      ListResult toSave;
-      // optimization: if the children were never changed after list(), do not check for duplicates again
-      if (result.childrenWereChangedSinceLastList(this)) {
-        children = list(parentId);
-        toSave = childrenConvertor.apply(children);
-      }
-      else {
-        toSave = result;
-      }
+      ListResult children = list(parentId);
+      ListResult modifiedChildren = childrenConvertor.apply(children);
+
       // optimization: when converter returned unchanged children (see e.g. PersistentFSImpl.findChildInfo())
       // then do not save them back again unnecessarily
-      if (!toSave.equals(children)) {
+      if (!modifiedChildren.equals(children)) {
         if (LOG.isDebugEnabled()) {
-          LOG.debug("Update children for " + parent + " (id = " + parentId + "); old = " + children + ", new = " + toSave);
+          LOG.debug("Update children for " + parent + " (id = " + parentId + "); old = " + children + ", new = " + modifiedChildren);
         }
         checkNotClosed();
-        updateSymlinksForNewChildren(parent, children, toSave);
-        treeAccessor.doSaveChildren(parentId, toSave);
+
+        //TODO RC: why we update symlinks here, under the lock?
+        updateSymlinksForNewChildren(parent, children, modifiedChildren);
+
+        treeAccessor.doSaveChildren(parentId, modifiedChildren);
         connection.markRecordAsModified(parentId);
       }
-      return toSave;
+      return modifiedChildren;
     }
     catch (ProcessCanceledException e) {
       // NewVirtualFileSystem.list methods can be interrupted now
