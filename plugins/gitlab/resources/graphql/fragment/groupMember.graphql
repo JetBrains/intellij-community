@@ -1,6 +1,10 @@
 fragment groupMember on GroupMember {
   group {
-    projects {
+    projects(first: 100) {
+      pageInfo {
+        ...pageInfo
+      }
+
       nodes {
         ...project
       }

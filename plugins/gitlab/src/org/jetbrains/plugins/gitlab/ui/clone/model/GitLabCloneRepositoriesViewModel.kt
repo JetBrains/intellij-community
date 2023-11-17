@@ -20,6 +20,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.gitlab.api.GitLabApiManager
 import org.jetbrains.plugins.gitlab.api.dto.GitLabGroupMemberDTO
+import org.jetbrains.plugins.gitlab.api.dto.GitLabProjectMemberDTO
 import org.jetbrains.plugins.gitlab.api.request.getCurrentUser
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
@@ -116,7 +117,7 @@ internal class GitLabCloneRepositoriesViewModelImpl(
   private val _selectedUrl: StateFlow<String?> = combine(searchValue, _selectedItem) { searchValue, selectedItem ->
     when {
       searchValue is SearchModel.Url -> searchValue.url
-      selectedItem != null && selectedItem is GitLabCloneListItem.Repository -> selectedItem.projectMember.project.httpUrlToRepo
+      selectedItem != null && selectedItem is GitLabCloneListItem.Repository -> selectedItem.project.httpUrlToRepo
       else -> null
     }
   }.stateIn(cs, SharingStarted.Eagerly, initialValue = null)
@@ -185,15 +186,13 @@ internal class GitLabCloneRepositoriesViewModelImpl(
             GitLabCloneListItem.Error(account, GitLabCloneException.RevokedToken { switchToLoginAction(account) })
           )
         }
-        val projectRepositories = currentUser.projectMemberships
-          .map { projectMember -> GitLabCloneListItem.Repository(account, projectMember) }
-        val groupProjectRepositories = currentUser.groupMemberships
-          .flatMap(GitLabGroupMemberDTO::projectMemberships)
-          .map { projectMember -> GitLabCloneListItem.Repository(account, projectMember) }
-
-        (projectRepositories + groupProjectRepositories)
-          .distinctBy { repository -> repository.projectMember.project.fullPath }
-          .sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER) { it.presentation() })
+        with(currentUser) {
+          (projectMemberships + groupMemberships.flatMap(GitLabGroupMemberDTO::projectMemberships))
+            .mapNotNull(GitLabProjectMemberDTO::project)
+            .map { project -> GitLabCloneListItem.Repository(account, project) }
+            .distinctBy { repository -> repository.project.fullPath }
+            .sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER) { it.presentation() })
+        }
       }
       catch (e: CancellationException) {
         throw e

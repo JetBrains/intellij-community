@@ -2,7 +2,7 @@
 package org.jetbrains.plugins.gitlab.ui.clone
 
 import com.intellij.openapi.util.NlsSafe
-import org.jetbrains.plugins.gitlab.api.dto.GitLabProjectMemberDTO
+import org.jetbrains.plugins.gitlab.api.dto.GitLabProjectDTO
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
 
 internal sealed interface GitLabCloneListItem {
@@ -10,7 +10,7 @@ internal sealed interface GitLabCloneListItem {
 
   data class Repository(
     override val account: GitLabAccount,
-    val projectMember: GitLabProjectMemberDTO
+    val project: GitLabProjectDTO
   ) : GitLabCloneListItem
 
   data class Error(
@@ -19,4 +19,4 @@ internal sealed interface GitLabCloneListItem {
   ) : GitLabCloneListItem
 }
 
-internal fun GitLabCloneListItem.Repository.presentation(): @NlsSafe String = projectMember.project.nameWithNamespace
+internal fun GitLabCloneListItem.Repository.presentation(): @NlsSafe String = project.nameWithNamespace
