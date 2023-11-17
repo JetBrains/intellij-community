@@ -140,7 +140,15 @@ public class SimplifyBooleanExpressionFix extends PsiUpdateModCommandAction<PsiE
       (PsiTypeCastExpression)JavaPsiFacade.getElementFactory(expression.getProject()).createExpressionFromText("(a)b", expression);
     Objects.requireNonNull(cast.getCastType()).replace(checkType);
     Objects.requireNonNull(cast.getOperand()).replace(instanceOf.getOperand());
-    return InstanceOfUtils.findPatternCandidate(cast);
+    PsiInstanceOfExpression candidate = InstanceOfUtils.findPatternCandidate(cast);
+    if (candidate == null) return null;
+    PsiPrimaryPattern pattern = candidate.getPattern();
+    if (pattern != null) {
+      if (!(pattern instanceof PsiTypeTestPattern existingTypeTest)) return null;
+      PsiPatternVariable existingVar = existingTypeTest.getPatternVariable();
+      if (existingVar != null && VariableAccessUtils.variableIsAssigned(existingVar)) return null;
+    }
+    return candidate;
   }
 
   private static boolean containsBreakOrContinue(PsiDoWhileStatement doWhileLoop) {
@@ -238,7 +246,6 @@ public class SimplifyBooleanExpressionFix extends PsiUpdateModCommandAction<PsiE
     Objects.requireNonNull(newPattern.getCheckType()).replace(checkType);
     PsiPatternVariable newVariable = (PsiPatternVariable)Objects.requireNonNull(newPattern.getPatternVariable()).replace(variable);
     variable.delete();
-    target.replace(updated);
     String name = new VariableNameGenerator(target, VariableKind.LOCAL_VARIABLE).byName(variable.getName())
       .generate(true);
     if (!name.equals(newVariable.getName())) {
@@ -249,6 +256,7 @@ public class SimplifyBooleanExpressionFix extends PsiUpdateModCommandAction<PsiE
         }
       }
     }
+    target.replace(updated);
   }
 
   private PsiExpression ensureCodeBlock(@NotNull Project project, PsiExpression subExpression) {
