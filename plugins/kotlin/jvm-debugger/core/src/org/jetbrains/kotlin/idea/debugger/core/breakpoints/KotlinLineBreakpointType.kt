@@ -18,14 +18,12 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
 import com.intellij.psi.impl.source.tree.LeafPsiElement
-import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.parentOfType
 import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.breakpoints.XBreakpoint
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint
 import com.intellij.xdebugger.impl.XSourcePositionImpl
 import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointImpl
-import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointManager
 import org.jetbrains.java.debugger.breakpoints.properties.JavaBreakpointProperties
 import org.jetbrains.java.debugger.breakpoints.properties.JavaLineBreakpointProperties
 import org.jetbrains.kotlin.idea.base.psi.getTopmostElementAtOffset
@@ -116,14 +114,14 @@ class KotlinLineBreakpointType :
         val result = LinkedList<JavaLineBreakpointType.JavaBreakpointVariant>()
         val elementAt = pos.elementAt?.parentsWithSelf?.firstIsInstance<KtElement>() ?: return emptyList()
         val mainMethod = elementAt.getContainingMethod(excludingElement = false)
-        var mainMethodAdded = false
+        var lineBreakpointAdded = false
         if (mainMethod != null) {
             val bodyExpression = if (mainMethod is KtDeclarationWithBody) mainMethod.bodyExpression else null
             val isLambdaResult = bodyExpression is KtLambdaExpression && bodyExpression.functionLiteral in lambdas
 
             if (!isLambdaResult) {
                 result.add(LineKotlinBreakpointVariant(position, mainMethod, -1))
-                mainMethodAdded = true
+                lineBreakpointAdded = true
             }
         }
 
@@ -134,7 +132,7 @@ class KotlinLineBreakpointType :
             }
         }
 
-        if (mainMethodAdded && result.size > 1) {
+        if (lineBreakpointAdded && result.size > 1) {
             result.add(KotlinBreakpointVariant(position, lambdas.size))
         }
 
