@@ -2,6 +2,7 @@
 package org.jetbrains.intellij.build
 
 import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.plus
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import org.jetbrains.intellij.build.impl.BuildContextImpl
 import org.jetbrains.intellij.build.kotlin.KotlinBinaries
@@ -81,6 +82,8 @@ open class IdeaCommunityProperties(private val communityHomeDir: Path) : BaseIde
     versionCheckerConfig = CE_CLASS_VERSIONS
     baseDownloadUrl = "https://download.jetbrains.com/idea/"
     buildDocAuthoringAssets = true
+
+    additionalVmOptions += "-Dide.show.tips.on.startup.default.value=false"
   }
 
   override suspend fun copyAdditionalFiles(context: BuildContext, targetDirectory: String) {
