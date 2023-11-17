@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.controlFlow.AnalysisCanceledException;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.scope.PatternResolveState;
@@ -208,7 +209,8 @@ public class SimplifyBooleanExpressionFix extends PsiUpdateModCommandAction<PsiE
   private static void processPatternVariables(@NotNull PsiExpression subExpression) {
     List<PsiPatternVariable> variables = JavaPsiPatternUtil.getExposedPatternVariables(subExpression);
     for (PsiPatternVariable variable : variables) {
-      if (VariableAccessUtils.variableIsUsed(variable, variable.getDeclarationScope())) {
+      List<PsiReferenceExpression> refs = VariableAccessUtils.getVariableReferences(variable, variable.getDeclarationScope());
+      if (!refs.isEmpty()) {
         PsiInstanceOfExpression target = newTargetForPatternVariable(subExpression, variable);
         if (target != null) {
           PsiInstanceOfExpression updated = (PsiInstanceOfExpression)JavaPsiFacade.getElementFactory(subExpression.getProject())
@@ -218,9 +220,19 @@ public class SimplifyBooleanExpressionFix extends PsiUpdateModCommandAction<PsiE
           PsiTypeElement checkType = target.getCheckType();
           if (checkType == null) continue;
           Objects.requireNonNull(newPattern.getCheckType()).replace(checkType);
-          Objects.requireNonNull(newPattern.getPatternVariable()).replace(variable);
-          target.replace(updated);
+          PsiPatternVariable newVariable = (PsiPatternVariable)Objects.requireNonNull(newPattern.getPatternVariable()).replace(variable);
           variable.delete();
+          String name = new VariableNameGenerator(target, VariableKind.LOCAL_VARIABLE).byName(variable.getName())
+            .generate(true);
+          if (!name.equals(newVariable.getName())) {
+            newVariable.setName(name);
+            for (PsiReferenceExpression ref : refs) {
+              if (ref.isValid()) {
+                ref.handleElementRename(name);
+              }
+            }
+          }
+          target.replace(updated);
         }
       }
     }
