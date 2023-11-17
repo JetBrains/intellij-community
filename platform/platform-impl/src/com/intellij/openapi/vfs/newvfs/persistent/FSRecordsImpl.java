@@ -807,9 +807,10 @@ public final class FSRecordsImpl implements Closeable {
 
   //========== symlink manipulation: ========================================
 
-  private void updateSymlinksForNewChildren(@NotNull VirtualFile parent,
-                                            @NotNull ListResult oldChildren,
-                                            @NotNull ListResult newChildren) {
+  @VisibleForTesting
+  void updateSymlinksForNewChildren(@NotNull VirtualFile parent,
+                                    @NotNull ListResult oldChildren,
+                                    @NotNull ListResult newChildren) {
     // find children which are added to the list and call updateSymlinkInfoForNewChild() on them (once)
     ContainerUtil.processSortedListsInOrder(
       oldChildren.children, newChildren.children,
