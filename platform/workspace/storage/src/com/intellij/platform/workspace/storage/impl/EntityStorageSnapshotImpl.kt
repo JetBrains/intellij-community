@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.platform.diagnostic.telemetry.JPS
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
+import com.intellij.platform.diagnostic.telemetry.WorkspaceModel
 import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMs
 import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.impl.cache.EntityStorageCacheImpl
@@ -16,7 +17,10 @@ import com.intellij.platform.workspace.storage.impl.external.EmptyExternalEntity
 import com.intellij.platform.workspace.storage.impl.external.ExternalEntityMappingImpl
 import com.intellij.platform.workspace.storage.impl.external.MutableExternalEntityMappingImpl
 import com.intellij.platform.workspace.storage.impl.indices.VirtualFileIndex.MutableVirtualFileIndex.Companion.VIRTUAL_FILE_INDEX_ENTITY_SOURCE_PROPERTY
-import com.intellij.platform.workspace.storage.instrumentation.*
+import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
+import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
+import com.intellij.platform.workspace.storage.instrumentation.EntityStorageSnapshotInstrumentation
+import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.query.StorageQuery
 import com.intellij.platform.workspace.storage.url.MutableVirtualFileUrlIndex
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlIndex
@@ -50,6 +54,9 @@ internal data class EntityReferenceImpl<E : WorkspaceEntity>(internal val id: En
   }
 }
 
+// companion object in EntityStorageSnapshotImpl is initialized too late
+private val entityStorageSnapshotImplInstancesCounter: AtomicLong = AtomicLong()
+
 @OptIn(EntityStorageInstrumentationApi::class)
 internal open class EntityStorageSnapshotImpl(
   override val entitiesByType: ImmutableEntitiesBarrel,
@@ -60,6 +67,7 @@ internal open class EntityStorageSnapshotImpl(
 
   init {
     this.snapshotCache.initSnapshot(this)
+    entityStorageSnapshotImplInstancesCounter.incrementAndGet()
   }
 
   // This cache should not be transferred to other versions of storage
@@ -95,6 +103,22 @@ internal open class EntityStorageSnapshotImpl(
   companion object {
     private val NULL_ENTITY = ObjectUtils.sentinel("null entity", WorkspaceEntity::class.java)
     val EMPTY = EntityStorageSnapshotImpl(ImmutableEntitiesBarrel.EMPTY, RefsTable(), StorageIndexes.EMPTY)
+
+    private fun setupOpenTelemetryReporting(meter: Meter): Unit {
+      val instancesCountGauge = meter.gaugeBuilder("workspaceModel.entityStorageSnapshotImpl.instances.count")
+        .ofLongs().buildObserver()
+
+      meter.batchCallback(
+        {
+          instancesCountGauge.record(entityStorageSnapshotImplInstancesCounter.get())
+        },
+        instancesCountGauge,
+      )
+    }
+
+    init {
+      setupOpenTelemetryReporting(TelemetryManager.getMeter(WorkspaceModel))
+    }
   }
 }
 
@@ -115,6 +139,7 @@ internal class MutableEntityStorageImpl(
 
   init {
     calculationCache.init(this)
+    instancesCounter.incrementAndGet()
   }
 
   /**
@@ -872,6 +897,7 @@ internal class MutableEntityStorageImpl(
 
     private val LOG = logger<MutableEntityStorageImpl>()
 
+    private val instancesCounter: AtomicLong = AtomicLong()
     private val getEntitiesTimeMs: AtomicLong = AtomicLong()
     private val getReferrersTimeMs: AtomicLong = AtomicLong()
     private val resolveTimeMs: AtomicLong = AtomicLong()
@@ -889,6 +915,8 @@ internal class MutableEntityStorageImpl(
     private val getMutableVFUrlIndexTimeMs: AtomicLong = AtomicLong()
 
     private fun setupOpenTelemetryReporting(meter: Meter): Unit {
+      val instancesCountGauge = meter.gaugeBuilder("workspaceModel.mutableEntityStorage.instances.count")
+        .ofLongs().buildObserver()
       val getEntitiesTimeGauge = meter.gaugeBuilder("workspaceModel.mutableEntityStorage.entities.ms")
         .ofLongs().setDescription("Total time spent in method").buildObserver()
       val getReferrersTimeGauge = meter.gaugeBuilder("workspaceModel.mutableEntityStorage.referrers.ms")
@@ -922,6 +950,7 @@ internal class MutableEntityStorageImpl(
 
       meter.batchCallback(
         {
+          instancesCountGauge.record(instancesCounter.get())
           getEntitiesTimeGauge.record(getEntitiesTimeMs.get())
           getReferrersTimeGauge.record(getReferrersTimeMs.get())
           resolveTimeGauge.record(resolveTimeMs.get())
@@ -938,7 +967,8 @@ internal class MutableEntityStorageImpl(
           getMutableExternalMappingTimeGauge.record(getMutableExternalMappingTimeMs.get())
           getMutableVFUrlIndexTimeGauge.record(getMutableVFUrlIndexTimeMs.get())
         },
-        getEntitiesTimeGauge, getReferrersTimeGauge, resolveTimeGauge, getEntitiesBySourceTimeGauge, addEntityTimeGauge,
+        instancesCountGauge, getEntitiesTimeGauge, getReferrersTimeGauge, resolveTimeGauge,
+        getEntitiesBySourceTimeGauge, addEntityTimeGauge,
         putEntityTimeGauge, modifyEntityTimeGauge, removeEntityTimeGauge, replaceBySourceTimeGauge,
         collectChangesTimeGauge, hasSameEntitiesTimeGauge, toSnapshotTimeGauge, addDiffTimeGauge,
         getMutableExternalMappingTimeGauge, getMutableVFUrlIndexTimeGauge
