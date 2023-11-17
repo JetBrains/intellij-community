@@ -358,7 +358,7 @@ public final class HighlightManagerImpl extends HighlightManager {
     return highlighter.getUserData(HIGHLIGHT_FLAGS_KEY);
   }
 
-  private static void setHideFlags(@NotNull RangeHighlighter highlighter, @HideFlags @Nullable Integer flags) {
+  public static void setHideFlags(@NotNull RangeHighlighter highlighter, @HideFlags @Nullable Integer flags) {
     highlighter.putUserData(HIGHLIGHT_FLAGS_KEY, flags);
   }
 

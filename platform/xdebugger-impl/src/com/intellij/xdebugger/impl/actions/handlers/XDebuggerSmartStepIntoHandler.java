@@ -10,19 +10,30 @@ import com.intellij.codeInsight.unwrap.ScopeHighlighter;
 import com.intellij.execution.impl.EditorHyperlinkSupport;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.editor.ex.MarkupModelEx;
+import com.intellij.openapi.editor.ex.util.EditorActionAvailabilityHint;
+import com.intellij.openapi.editor.ex.util.EditorActionAvailabilityHintKt;
+import com.intellij.openapi.editor.markup.HighlighterLayer;
+import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.fileEditor.TextEditor;
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.Hint;
 import com.intellij.ui.LightweightHint;
@@ -221,10 +232,30 @@ public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandl
     data.myVariants.stream().filter(v -> v.myVariant == variants.get(0)).findFirst().ifPresent(data::select);
     LOG.assertTrue(data.myCurrentVariant != null);
     editor.putUserData(SMART_STEP_INPLACE_DATA, data);
+    // for the remote development scenario we have to add a fake invisible highlighter on the whole document with extra payload
+    // that will be restored on the client and used to alternate actions availability
+    // see com.intellij.openapi.editor.ex.util.EditorActionAvailabilityHintKt.addActionAvailabilityHint
+    ((MarkupModelEx)editor.getMarkupModel()).addRangeHighlighterAndChangeAttributes(HighlighterColors.NO_HIGHLIGHTING, 0, editor.getDocument().getTextLength(),
+                                                                                    HighlighterLayer.LAST, HighlighterTargetArea.EXACT_RANGE, false, h -> {
+      // this hints should be added in this lambda in order to be serialized by RD markup machinery
+      EditorActionAvailabilityHintKt.addActionAvailabilityHint(h,
+                                                               new EditorActionAvailabilityHint(IdeActions.ACTION_EDITOR_ENTER, EditorActionAvailabilityHint.AvailabilityCondition.CaretInside),
+                                                               new EditorActionAvailabilityHint(IdeActions.ACTION_EDITOR_TAB, EditorActionAvailabilityHint.AvailabilityCondition.CaretInside),
+                                                               new EditorActionAvailabilityHint(IdeActions.ACTION_EDITOR_ESCAPE, EditorActionAvailabilityHint.AvailabilityCondition.CaretInside),
+                                                               new EditorActionAvailabilityHint(IdeActions.ACTION_EDITOR_MOVE_CARET_UP, EditorActionAvailabilityHint.AvailabilityCondition.CaretInside),
+                                                               new EditorActionAvailabilityHint(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN, EditorActionAvailabilityHint.AvailabilityCondition.CaretInside),
+                                                               new EditorActionAvailabilityHint(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT, EditorActionAvailabilityHint.AvailabilityCondition.CaretInside),
+                                                               new EditorActionAvailabilityHint(IdeActions.ACTION_EDITOR_MOVE_CARET_LEFT, EditorActionAvailabilityHint.AvailabilityCondition.CaretInside));
+      data.myActionHintSyntheticHighlighter = h;
+    });
 
     session.updateExecutionPosition();
+    VirtualFile virtualFile = editor.getVirtualFile();
+    // in the case of remote development the ordinary focus request doesn't work, we need to use FileEditorManagerEx api to focus the editor
+    if (virtualFile != null) {
+      FileEditorManagerEx.getInstanceEx(session.getProject()).openFile(virtualFile, true, true);
+    }
     IdeFocusManager.getGlobalInstance().requestFocus(editor.getContentComponent(), true);
-
     showInfoHint(editor, data);
 
     session.addSessionListener(new XDebugSessionListener() {
@@ -303,6 +334,7 @@ public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandl
     private final Editor myEditor;
     private VariantInfo myCurrentVariant;
     private final List<RangeHighlighter> myHighlighters = new ArrayList<>();
+    private RangeHighlighter myActionHintSyntheticHighlighter;
 
     SmartStepData(final XSmartStepIntoHandler<V> handler, List<? extends V> variants, final XDebugSession session, Editor editor) {
       myHandler = handler;
@@ -382,6 +414,9 @@ public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandl
       myEditor.putUserData(SMART_STEP_HINT_DATA, null);
       HighlightManagerImpl highlightManager = (HighlightManagerImpl)HighlightManager.getInstance(mySession.getProject());
       highlightManager.hideHighlights(myEditor, HighlightManager.HIDE_BY_ESCAPE | HighlightManager.HIDE_BY_TEXT_CHANGE);
+      // since we don't use HighlightManagerImpl to mark the highlighting with the hide flags it can't be used to remove it as well
+      // just remove it manually
+      if (myActionHintSyntheticHighlighter != null) myEditor.getMarkupModel().removeHighlighter(myActionHintSyntheticHighlighter);
     }
 
     class VariantInfo {
