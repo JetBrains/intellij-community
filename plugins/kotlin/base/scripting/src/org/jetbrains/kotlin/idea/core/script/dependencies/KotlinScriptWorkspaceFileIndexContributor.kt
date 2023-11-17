@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.core.script.dependencies
 
 import com.intellij.java.workspace.fileIndex.JvmPackageRootData
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMs
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndexContributor
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind
@@ -23,6 +24,7 @@ class KotlinScriptWorkspaceFileIndexContributor : WorkspaceFileIndexContributor<
         get() = KotlinScriptLibraryEntity::class.java
 
     override fun registerFileSets(entity: KotlinScriptLibraryEntity, registrar: WorkspaceFileSetRegistrar, storage: EntityStorage) {
+        val start = System.currentTimeMillis()
         val (classes, sources) = entity.roots.partition { it.type == KotlinScriptLibraryRootTypeId.COMPILED }
         classes.forEach {
             registrar.registerFileSet(it.url, WorkspaceFileKind.EXTERNAL, entity, RootData)
@@ -33,6 +35,7 @@ class KotlinScriptWorkspaceFileIndexContributor : WorkspaceFileIndexContributor<
                 registrar.registerFileSet(it.url, WorkspaceFileKind.EXTERNAL_SOURCE, entity, RootSourceData)
             }
         }
+        WorkspaceFileIndexContributor.registerFileSetsTimeMs.addElapsedTimeMs(start)
     }
 
     private object RootData : JvmPackageRootData

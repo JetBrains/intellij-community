@@ -13,8 +13,11 @@ fun AtomicLong.addElapsedTimeMs(startTimeMs: Long) {
 }
 
 /**
- * Measure time in milliseconds and add it to current value
+ * Measure time of the [block] in milliseconds and add it to current value.
+ * @return Value [T], calculated by the [block]
  */
-inline fun AtomicLong.addMeasuredTimeMs(block: () -> Unit) {
-  this.addAndGet(measureTimeMillis { block() })
+inline fun <T> AtomicLong.addMeasuredTimeMs(block: () -> T): T {
+  val value: T
+  this.addAndGet(measureTimeMillis { value = block() })
+  return value
 }
