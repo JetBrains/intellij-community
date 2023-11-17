@@ -50,7 +50,7 @@ internal class GHPRViewModelContainer(
   }
 
   val timelineVm: GHPRTimelineViewModel by lazy {
-    GHPRTimelineViewModelImpl(cs, dataContext, dataProvider)
+    GHPRTimelineViewModelImpl(project, cs, dataContext, dataProvider)
   }
 
   init {

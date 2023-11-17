@@ -1,7 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.ui.timeline
 
-import com.intellij.collaboration.async.CompletableFutureUtil.handleOnEdt
+import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.async.nestedDisposable
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.collaboration.ui.ComponentListPanelFactory
@@ -11,7 +11,7 @@ import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil
 import com.intellij.collaboration.ui.codereview.CodeReviewTimelineUIUtil
 import com.intellij.collaboration.ui.codereview.comment.CommentInputActionsComponentFactory
 import com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFieldFactory
-import com.intellij.collaboration.ui.html.AsyncHtmlImageLoader
+import com.intellij.collaboration.util.getOrNull
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
@@ -28,8 +28,6 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.update.UiNotifyConnector
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
-import org.jetbrains.plugins.github.api.data.GHRepositoryPermissionLevel
-import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRTimelineItem
 import org.jetbrains.plugins.github.i18n.GithubBundle
@@ -37,12 +35,7 @@ import org.jetbrains.plugins.github.pullrequest.comment.ui.GHCommentTextFieldFac
 import org.jetbrains.plugins.github.pullrequest.comment.ui.GHCommentTextFieldModel
 import org.jetbrains.plugins.github.pullrequest.comment.ui.submitAction
 import org.jetbrains.plugins.github.pullrequest.data.GHListLoader
-import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRCommentsDataProvider
-import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDetailsDataProvider
-import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRReviewDataProvider
-import org.jetbrains.plugins.github.pullrequest.ui.GHApiLoadingErrorHandler
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRSuggestedChangeHelper
-import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.ui.component.GHHandledErrorPanelModel
 import org.jetbrains.plugins.github.ui.component.GHHtmlErrorPanel
 import javax.swing.JComponent
@@ -61,16 +54,16 @@ internal class GHPRFileEditorComponentFactory(private val project: Project,
   private val detailsModel = SingleValueModel(currentDetails)
 
   private val errorModel = GHHandledErrorPanelModel(GithubBundle.message("pull.request.timeline.cannot.load"),
-                                                    GHApiLoadingErrorHandler(project,
-                                                                             timelineVm.securityService.account,
-                                                                             timelineVm.timelineLoader::reset))
+                                                    timelineVm.loadingErrorHandler)
   private val timelineModel = GHPRTimelineMergingModel()
-  private val reviewThreadsModelsProvider = GHPRReviewsThreadsModelsProviderImpl(timelineVm.reviewData, uiDisposable)
 
   init {
-    timelineVm.detailsData.loadDetails(uiDisposable) {
-      it.handleOnEdt(uiDisposable) { pr, _ ->
-        if (pr != null) detailsModel.value = pr
+    cs.launchNow {
+      timelineVm.details.collect {
+        val details = it.getOrNull()
+        if (details != null) {
+          detailsModel.value = details
+        }
       }
     }
 
@@ -110,21 +103,8 @@ internal class GHPRFileEditorComponentFactory(private val project: Project,
       border = JBUI.Borders.empty(CodeReviewTimelineUIUtil.HEADER_VERT_PADDING, CodeReviewTimelineUIUtil.ITEM_HOR_PADDING)
     }
 
-    val suggestedChangesHelper = GHPRSuggestedChangeHelper(project,
-                                                           uiDisposable,
-                                                           timelineVm.repositoryDataService.remoteCoordinates.repository,
-                                                           timelineVm.reviewData,
-                                                           timelineVm.detailsData)
 
-    val itemComponentFactory = createItemComponentFactory(
-      project,
-      timelineVm.detailsData, timelineVm.commentsData, timelineVm.reviewData,
-      reviewThreadsModelsProvider,
-      timelineVm.htmlImageLoader, timelineVm.avatarIconsProvider,
-      suggestedChangesHelper,
-      timelineVm.securityService.ghostUser,
-      timelineVm.securityService.currentUser
-    )
+    val itemComponentFactory = createItemComponentFactory()
     val descriptionWrapper = Wrapper().apply {
       isOpaque = false
     }
@@ -166,10 +146,8 @@ internal class GHPRFileEditorComponentFactory(private val project: Project,
 
       add(progressAndErrorPanel)
 
-      if (timelineVm.securityService.currentUserHasPermissionLevel(GHRepositoryPermissionLevel.READ)) {
-        val commentField = createCommentField(timelineVm.commentsData,
-                                              timelineVm.avatarIconsProvider,
-                                              timelineVm.securityService.currentUser).apply {
+      if (timelineVm.canComment) {
+        val commentField = createCommentField().apply {
           border = JBUI.Borders.empty(CodeReviewChatItemUIUtil.ComponentType.FULL.inputPaddingInsets)
         }
         add(commentField)
@@ -204,18 +182,10 @@ internal class GHPRFileEditorComponentFactory(private val project: Project,
 
     mainPanel.setContent(scrollPane)
 
-    val ctrl = object : GHPRTimelineController {
-      override fun requestUpdate() {
-        timelineVm.detailsData.reloadDetails()
-        timelineVm.timelineLoader.loadMore(true)
-        timelineVm.reviewData.resetReviewThreads()
-      }
-    }
-
     DataManager.registerDataProvider(mainPanel, DataProvider {
       when {
         PlatformDataKeys.UI_DISPOSABLE.`is`(it) -> uiDisposable
-        GHPRTimelineController.DATA_KEY.`is`(it) -> ctrl
+        GHPRTimelineViewModel.DATA_KEY.`is`(it) -> timelineVm
         else -> null
       }
     })
@@ -228,11 +198,9 @@ internal class GHPRFileEditorComponentFactory(private val project: Project,
     return mainPanel
   }
 
-  private fun createCommentField(commentService: GHPRCommentsDataProvider,
-                                 avatarIconsProvider: GHAvatarIconsProvider,
-                                 currentUser: GHUser): JComponent {
+  private fun createCommentField(): JComponent {
     val model = GHCommentTextFieldModel(project) {
-      commentService.addComment(EmptyProgressIndicator(), it)
+      timelineVm.commentsData.addComment(EmptyProgressIndicator(), it)
     }
 
     val submitShortcutText = CommentInputActionsComponentFactory.submitShortcutText
@@ -242,37 +210,32 @@ internal class GHPRFileEditorComponentFactory(private val project: Project,
       submitHint = MutableStateFlow(GithubBundle.message("pull.request.comment.hint", submitShortcutText))
     )
     val icon = CommentTextFieldFactory.IconConfig.of(CodeReviewChatItemUIUtil.ComponentType.FULL,
-                                                     avatarIconsProvider, currentUser.avatarUrl)
+                                                     timelineVm.avatarIconsProvider, timelineVm.currentUser.avatarUrl)
 
     return GHCommentTextFieldFactory(model).create(actions, icon)
   }
 
-  private fun createItemComponentFactory(project: Project,
-                                         detailsDataProvider: GHPRDetailsDataProvider,
-                                         commentsDataProvider: GHPRCommentsDataProvider,
-                                         reviewDataProvider: GHPRReviewDataProvider,
-                                         reviewThreadsModelsProvider: GHPRReviewsThreadsModelsProvider,
-                                         htmlImageLoader: AsyncHtmlImageLoader,
-                                         avatarIconsProvider: GHAvatarIconsProvider,
-                                         suggestedChangeHelper: GHPRSuggestedChangeHelper,
-                                         ghostUser: GHUser,
-                                         currentUser: GHUser)
-    : GHPRTimelineItemComponentFactory {
-
+  private fun createItemComponentFactory(): GHPRTimelineItemComponentFactory {
+    val reviewThreadsModelsProvider = GHPRReviewsThreadsModelsProviderImpl(timelineVm.reviewData, uiDisposable)
+    val suggestedChangesHelper = GHPRSuggestedChangeHelper(project,
+                                                           uiDisposable,
+                                                           timelineVm.repository,
+                                                           timelineVm.reviewData,
+                                                           timelineVm.detailsData)
     val selectInToolWindowHelper = GHPRSelectInToolWindowHelper(project, detailsModel.value.prId)
     return GHPRTimelineItemComponentFactory(
       project,
-      detailsDataProvider,
-      commentsDataProvider,
-      reviewDataProvider,
-      htmlImageLoader,
-      avatarIconsProvider,
+      timelineVm.detailsData,
+      timelineVm.commentsData,
+      timelineVm.reviewData,
+      timelineVm.htmlImageLoader,
+      timelineVm.avatarIconsProvider,
       reviewThreadsModelsProvider,
       selectInToolWindowHelper,
-      suggestedChangeHelper,
-      ghostUser,
+      suggestedChangesHelper,
+      timelineVm.ghostUser,
       detailsModel.value.author,
-      currentUser
+      timelineVm.currentUser
     )
   }
 }

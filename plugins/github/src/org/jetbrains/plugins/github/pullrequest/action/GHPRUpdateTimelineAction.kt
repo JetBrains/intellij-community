@@ -6,19 +6,18 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.actions.RefreshAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import org.jetbrains.plugins.github.i18n.GithubBundle
-import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineController
+import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineViewModel
 
 class GHPRUpdateTimelineAction
   : RefreshAction({ GithubBundle.message("pull.request.timeline.refresh.action") },
                   { GithubBundle.message("pull.request.timeline.refresh.action.description") },
                   AllIcons.Actions.Refresh) {
   override fun update(e: AnActionEvent) {
-    val ctrl = e.getData(GHPRTimelineController.DATA_KEY)
-    e.presentation.isEnabled = ctrl != null
+    val vm = e.getData(GHPRTimelineViewModel.DATA_KEY)
+    e.presentation.isEnabled = vm != null
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val ctrl = e.getRequiredData(GHPRTimelineController.DATA_KEY)
-    ctrl.requestUpdate()
+    e.getRequiredData(GHPRTimelineViewModel.DATA_KEY).updateAll()
   }
 }
