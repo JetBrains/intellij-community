@@ -133,6 +133,19 @@ class EditorColorsManagerImpl @NonInjectable constructor(schemeManagerFactory: S
       }
       return null
     }
+
+    @JvmStatic
+    fun fireGlobalSchemeChange(newScheme: EditorColorsScheme?) {
+      val manager = getInstance()
+      if (manager is EditorColorsManagerImpl) {
+        manager.schemeChangedOrSwitched(newScheme)
+      }
+      else {
+        // This branch may not be necessary, but we've had such calls scattered around the codebase,
+        // bypassing the manager, so it's better to have a fallback here in case of some unusual environment, like a test.
+        ApplicationManager.getApplication().getMessageBus().syncPublisher(TOPIC).globalSchemeChange(newScheme)
+      }
+    }
   }
 
   override fun getSchemeModificationCounter() = schemeModificationCounter.get()

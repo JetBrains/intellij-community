@@ -26,10 +26,7 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.*;
 import com.intellij.openapi.editor.actions.CopyAction;
 import com.intellij.openapi.editor.colors.*;
-import com.intellij.openapi.editor.colors.impl.AbstractColorsScheme;
-import com.intellij.openapi.editor.colors.impl.DelegateColorScheme;
-import com.intellij.openapi.editor.colors.impl.EditorFontCacheImpl;
-import com.intellij.openapi.editor.colors.impl.FontPreferencesImpl;
+import com.intellij.openapi.editor.colors.impl.*;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.ex.util.EditorScrollingPositionKeeper;
@@ -5435,7 +5432,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     if (myScheme instanceof MyColorSchemeDelegate) {
       ((MyColorSchemeDelegate)myScheme).resetEditorFontSize();
     }
-    ApplicationManager.getApplication().getMessageBus().syncPublisher(EditorColorsManager.TOPIC).globalSchemeChange(null);
+    EditorColorsManagerImpl.fireGlobalSchemeChange(null);
   }
 
   private final class TablessBorder extends SideBorder {
