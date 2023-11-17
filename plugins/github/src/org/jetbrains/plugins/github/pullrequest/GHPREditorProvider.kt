@@ -6,16 +6,18 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorPolicy
 import com.intellij.openapi.fileEditor.FileEditorProvider
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
-import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContextRepository
+import com.intellij.platform.util.coroutines.childScope
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 
 internal class GHPREditorProvider : FileEditorProvider, DumbAware {
 
   override fun accept(project: Project, file: VirtualFile): Boolean =
-    file is GHPRTimelineVirtualFile && project.service<GHPREditorProviderService>().canCreateTimelineEditor(file)
+    file is GHPRTimelineVirtualFile && file.isValid
 
   override fun createEditor(project: Project, file: VirtualFile): FileEditor {
     file as GHPRTimelineVirtualFile
@@ -27,18 +29,11 @@ internal class GHPREditorProvider : FileEditorProvider, DumbAware {
 }
 
 @Service(Service.Level.PROJECT)
-private class GHPREditorProviderService(private val project: Project) {
-  fun canCreateTimelineEditor(file: GHPRTimelineVirtualFile): Boolean =
-    GHPRDataContextRepository.getInstance(project).findContext(file.repository) != null
+private class GHPREditorProviderService(private val project: Project, parentCs: CoroutineScope) {
+  private val cs = parentCs.childScope(Dispatchers.Main)
 
   fun createTimelineEditor(file: GHPRTimelineVirtualFile): FileEditor {
-    val dataContext = GHPRDataContextRepository.getInstance(project).findContext(file.repository)!!
-
-    val dataDisposable = Disposer.newDisposable()
-    val dataProvider = dataContext.dataProviderRepository.getDataProvider(file.pullRequest, dataDisposable)
-
-    return GHPRTimelineFileEditor(project, dataContext, dataProvider, file).also {
-      Disposer.register(it, dataDisposable)
-    }
+    val projectVm = file.findProjectVm() ?: throw ProcessCanceledException()
+    return GHPRTimelineFileEditor(project, cs, projectVm, file)
   }
 }

@@ -32,7 +32,11 @@ internal class GHPRTimelineVirtualFile(fileManagerId: String,
 
   fun getIcon(): Icon? = findDetails()?.let { GHUIUtil.getPullRequestStateIcon(it.state, it.isDraft) }
 
-  private fun findProjectVm(): GHPRToolWindowProjectViewModel? =
+  override fun isValid(): Boolean = findProjectVm() != null
+
+  override fun setValid(valid: Boolean) = Unit
+
+  fun findProjectVm(): GHPRToolWindowProjectViewModel? =
     project.service<GHPRToolWindowViewModel>().projectVm.value?.takeIf { it.repository == repository }
 
   private fun findDetails(): GHPullRequestShort? = findProjectVm()?.findDetails(pullRequest)

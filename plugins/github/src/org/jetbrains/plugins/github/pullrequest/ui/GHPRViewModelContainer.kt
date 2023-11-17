@@ -19,6 +19,8 @@ import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
 import org.jetbrains.plugins.github.pullrequest.ui.diff.GHPRDiffViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.diff.GHPRDiffViewModelImpl
 import org.jetbrains.plugins.github.pullrequest.ui.review.GHPRReviewViewModelHelper
+import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineViewModel
+import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineViewModelImpl
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.model.GHPRInfoViewModel
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -45,6 +47,10 @@ internal class GHPRViewModelContainer(
     GHPRDiffViewModelImpl(project, cs, dataContext, dataProvider, reviewVmHelper).apply {
       setup()
     }
+  }
+
+  val timelineVm: GHPRTimelineViewModel by lazy {
+    GHPRTimelineViewModelImpl(cs, dataContext, dataProvider)
   }
 
   init {

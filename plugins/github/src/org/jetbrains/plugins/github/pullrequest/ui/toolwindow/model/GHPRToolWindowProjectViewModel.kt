@@ -26,6 +26,7 @@ import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.pullrequest.ui.GHPRViewModelContainer
 import org.jetbrains.plugins.github.pullrequest.ui.diff.GHPRDiffViewModel
+import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRToolWindowTab
 import org.jetbrains.plugins.github.ui.util.GHUIUtil
 import org.jetbrains.plugins.github.util.DisposalCountingHolder
@@ -113,6 +114,9 @@ class GHPRToolWindowProjectViewModel internal constructor(
 
   fun acquireDiffViewModel(id: GHPRIdentifier, disposable: Disposable): GHPRDiffViewModel =
     pullRequestsVms[id].acquireValue(disposable).diffVm
+
+  fun acquireTimelineViewModel(id: GHPRIdentifier, disposable: Disposable): GHPRTimelineViewModel =
+    pullRequestsVms[id].acquireValue(disposable).timelineVm
 
   fun findDetails(pullRequest: GHPRIdentifier): GHPullRequestShort? =
     dataContext.listLoader.loadedData.find { it.id == pullRequest.id }

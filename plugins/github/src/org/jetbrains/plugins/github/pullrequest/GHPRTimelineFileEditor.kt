@@ -1,45 +1,40 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest
 
-import com.intellij.collaboration.async.CompletableFutureUtil.handleOnEdt
+import com.intellij.collaboration.async.cancelledWith
+import com.intellij.collaboration.async.launchNow
+import com.intellij.collaboration.ui.LoadingTextLabel
+import com.intellij.collaboration.util.getOrNull
 import com.intellij.diff.util.FileEditorBase
 import com.intellij.ide.DataManager
-import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.colors.EditorColorsListener
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.EditorColorsManager.TOPIC
 import com.intellij.openapi.project.Project
-import com.intellij.ui.AnimatedIcon
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.ui.SingleComponentCenteringLayout
-import com.intellij.util.ui.UIUtil
-import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
+import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.collectLatest
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.action.GHPRActionKeys
-import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
-import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRFileEditorComponentFactory
+import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.model.GHPRToolWindowProjectViewModel
 import java.awt.BorderLayout
+import java.awt.LayoutManager
 import javax.swing.JComponent
-import javax.swing.JLabel
 import javax.swing.JPanel
 
 internal class GHPRTimelineFileEditor(private val project: Project,
-                                      private val dataContext: GHPRDataContext,
-                                      private val dataProvider: GHPRDataProvider,
+                                      parentCs: CoroutineScope,
+                                      projectVm: GHPRToolWindowProjectViewModel,
                                       private val file: GHPRTimelineVirtualFile)
   : FileEditorBase() {
+  private val cs = parentCs
+    .childScope(Dispatchers.Main + CoroutineName("GitHub Pull Request Timeline UI"))
+    .cancelledWith(this)
 
-  val securityService = dataContext.securityService
-  val repositoryDataService = dataContext.repositoryDataService
-  val htmlImageLoader = dataContext.htmlImageLoader
-  val avatarIconsProvider = dataContext.avatarIconsProvider
-
-  val detailsData = dataProvider.detailsData
-  val reviewData = dataProvider.reviewData
-  val commentsData = dataProvider.commentsData
-
-  val timelineLoader = dataProvider.acquireTimelineLoader(this)
+  private val timelineVm = projectVm.acquireTimelineViewModel(file.pullRequest, this)
 
   override fun getName() = GithubBundle.message("pull.request.editor.timeline")
 
@@ -55,57 +50,50 @@ internal class GHPRTimelineFileEditor(private val project: Project,
       ApplicationManager.getApplication().messageBus.connect(this)
         .subscribe(TOPIC, EditorColorsListener { scheme -> it.background = scheme?.defaultBackground })
 
-      val prevProvider = DataManager.getDataProvider(it)
-      DataManager.removeDataProvider(it) // suppress warning - we're delegating to the old provider
       DataManager.registerDataProvider(it) { dataId ->
         when {
           GHPRActionKeys.PULL_REQUEST_ID.`is`(dataId) -> file.pullRequest
-          GHPRActionKeys.PULL_REQUEST_URL.`is`(dataId) -> detailsData.loadedDetails?.url
-          else -> prevProvider?.getData(dataId)
+          GHPRActionKeys.PULL_REQUEST_URL.`is`(dataId) -> timelineVm.details.value.getOrNull()?.url
+          else -> null
         }
       }
     }
   }
 
   private fun doCreateContent(): JComponent {
-    val details = getCurrentDetails()
-    if (details != null) {
-      return GHPRFileEditorComponentFactory(project, this, details).create()
-    }
-    else {
-      val panel = JPanel(SingleComponentCenteringLayout()).apply {
-        add(JLabel().apply {
-          foreground = UIUtil.getContextHelpForeground()
-          text = ApplicationBundle.message("label.loading.page.please.wait")
-          icon = AnimatedIcon.Default()
-        })
-      }
-
-      detailsData.loadDetails().handleOnEdt(this) { loadedDetails, error ->
-        if (loadedDetails != null) {
-          panel.layout = BorderLayout()
-          panel.removeAll()
-          panel.add(GHPRFileEditorComponentFactory(project, this, loadedDetails).create())
-        }
-        else if (error != null) {
-          //TODO: handle error
-          throw error
+    val panel = JPanel(null)
+    cs.launchNow {
+      timelineVm.details.collectLatest {
+        when (val result = it.result) {
+          null -> panel.setLayoutAndComponent(SingleComponentCenteringLayout(), LoadingTextLabel())
+          else -> result.fold({ details ->
+                                supervisorScope {
+                                  val timeline = GHPRFileEditorComponentFactory(project, timelineVm, details, this)
+                                    .create()
+                                  panel.setLayoutAndComponent(BorderLayout(), timeline)
+                                  awaitCancellation()
+                                }
+                              }, { _ ->
+                                //TODO: handle error
+                              })
         }
       }
-      return panel
     }
+    return panel
   }
 
-
-  private fun getCurrentDetails(): GHPullRequestShort? {
-    return detailsData.loadedDetails ?: dataContext.listLoader.loadedData.find { it.id == dataProvider.id.id }
+  private fun JPanel.setLayoutAndComponent(newLayout: LayoutManager, component: JComponent) {
+    removeAll()
+    layout = newLayout
+    add(component)
+    revalidate()
+    repaint()
   }
 
   override fun getPreferredFocusedComponent(): JComponent? = null
 
   override fun selectNotify() {
-    if (timelineLoader.loadedData.isNotEmpty())
-      timelineLoader.loadMore(true)
+    timelineVm.update()
   }
 
   override fun getFile() = file

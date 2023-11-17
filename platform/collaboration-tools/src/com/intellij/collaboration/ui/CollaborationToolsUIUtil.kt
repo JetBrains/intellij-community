@@ -13,6 +13,7 @@ import com.intellij.ide.ui.LafManagerListener
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.observable.properties.AbstractObservableProperty
 import com.intellij.openapi.ui.ComponentValidator
 import com.intellij.openapi.ui.ValidationInfo
@@ -384,6 +385,15 @@ fun jbColorFromHex(light: @NonNls String, dark: @NonNls String): JBColor =
 @Suppress("FunctionName")
 fun LoadingLabel(): JLabel = JLabel(CollaborationToolsUIUtil.animatedLoadingIcon).apply {
   name = "Animated loading label"
+}
+
+/**
+ * Loading label with a text
+ */
+@Suppress("FunctionName")
+fun LoadingTextLabel(): JLabel = JLabel(ApplicationBundle.message("label.loading.page.please.wait")).apply {
+  foreground = UIUtil.getContextHelpForeground()
+  name = "Textual loading label"
 }
 
 /**
