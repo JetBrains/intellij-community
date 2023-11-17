@@ -21,9 +21,11 @@ import com.intellij.ide.actions.RevealFileAction;
 import com.intellij.ide.ui.SplitterProportionsDataImpl;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.openapi.diff.impl.patch.IdeaTextPatchBuilder;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.*;
@@ -298,13 +300,11 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
   protected abstract Runnable doUpdateDiffs(T model);
 
   protected ContentDiffRequest createDifference(final FileDifferenceModel m) {
-    final Ref<ContentDiffRequest> requestRef = new Ref<>();
-
-    new Task.Modal(myProject, message("message.processing.revisions"), false) {
+    return ProgressManager.getInstance().run(new Task.WithResult<>(myProject, message("message.processing.revisions"), false) {
       @Override
-      public void run(final @NotNull ProgressIndicator i) {
+      protected ContentDiffRequest compute(@NotNull ProgressIndicator i) {
         i.setIndeterminate(false);
-        ApplicationManager.getApplication().runReadAction(() -> {
+        return ReadAction.compute(() -> {
           RevisionProcessingProgressAdapter p = new RevisionProcessingProgressAdapter(i);
           p.processingLeftRevision();
           DiffContent left = m.getLeftDiffContent(p);
@@ -312,12 +312,10 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
           p.processingRightRevision();
           DiffContent right = m.getRightDiffContent(p);
 
-          requestRef.set(new SimpleDiffRequest(m.getTitle(), left, right, m.getLeftTitle(p), m.getRightTitle(p)));
+          return new SimpleDiffRequest(m.getTitle(), left, right, m.getLeftTitle(p), m.getRightTitle(p));
         });
       }
-    }.queue();
-
-    return requestRef.get();
+    });
   }
 
   private void saveSplitterProportion() {
@@ -418,7 +416,8 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
   }
 
   private @NotNull Path getDefaultPatchFile() {
-    return FileUtil.findSequentNonexistentFile(ProjectKt.getStateStore(myProject).getProjectBasePath().toFile(), "local_history", "patch").toPath();
+    return FileUtil.findSequentNonexistentFile(ProjectKt.getStateStore(myProject).getProjectBasePath().toFile(), "local_history", "patch")
+      .toPath();
   }
 
   private boolean showAsDialog(CreatePatchConfigurationPanel p) {
