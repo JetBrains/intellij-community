@@ -43,7 +43,6 @@ import org.jetbrains.kotlin.psi.KtExpressionCodeFragment
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtParameter
-import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtQualifiedExpression
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
@@ -109,7 +108,7 @@ fun checkCallableShadowing(
     newUsages: MutableList<UsageInfo>
 ) {
     val psiFactory = KtPsiFactory(declaration.project)
-    val externalProperties = mutableSetOf<KtCallableDeclaration>()
+    val externalDeclarations = mutableSetOf<KtNamedDeclaration>()
     val usageIterator = originalUsages.listIterator()
     while (usageIterator.hasNext()) {
 
@@ -127,8 +126,8 @@ fun checkCallableShadowing(
         if (referenceExpression != null) {
             analyze(codeFragment) {
                 val newDeclaration = referenceExpression.mainReference?.resolve() as? KtNamedDeclaration
-                if ((newDeclaration is KtProperty || newDeclaration is KtParameter && newDeclaration.hasValOrVar()) && declaration is KtParameter) {
-                    externalProperties.add(newDeclaration as KtCallableDeclaration)
+                if (newDeclaration is KtCallableDeclaration) {
+                    externalDeclarations.add(newDeclaration)
                 }
                 if (newDeclaration != null && (declaration !is KtParameter || declaration.hasValOrVar()) && !PsiTreeUtil.isAncestor(newDeclaration, declaration, true)) {
                     val qualifiedExpression = createQualifiedExpression(refElement, newName)
@@ -144,7 +143,7 @@ fun checkCallableShadowing(
         }
     }
 
-    fun retargetExternalDeclaration(externalDeclaration: KtCallableDeclaration) {
+    fun retargetExternalDeclaration(externalDeclaration: KtNamedDeclaration) {
         ReferencesSearch.search(externalDeclaration, declaration.useScope).forEach { ref ->
             val refElement = ref.element as? KtSimpleNameExpression ?: return@forEach
             val fullCallExpression = refElement
@@ -155,7 +154,7 @@ fun checkCallableShadowing(
         }
     }
 
-    for (externalDeclaration in externalProperties) {
+    for (externalDeclaration in externalDeclarations) {
         retargetExternalDeclaration(externalDeclaration)
     }
 
