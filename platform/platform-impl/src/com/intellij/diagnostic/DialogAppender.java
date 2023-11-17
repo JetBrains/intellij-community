@@ -18,12 +18,11 @@ import java.util.logging.LogRecord;
 
 public final class DialogAppender extends Handler {
   private static final int MAX_EARLY_LOGGING_EVENTS = 5;
-  private static final int MAX_ASYNC_LOGGING_EVENTS = 5;
 
   private static volatile boolean ourDelay;
 
   private final Queue<IdeaLoggingEvent> myEarlyEvents = new ArrayDeque<>();
-  private final AtomicInteger myPendingAppendCounts = new AtomicInteger();
+  private final AtomicInteger myEarlyEventCounter = new AtomicInteger();
   private final ScheduledExecutorService myExecutor = AppExecutorUtil.createBoundedScheduledExecutorService("DialogAppender", 1);
 
   //TODO android update checker accesses project jdk, fix it and remove
@@ -38,7 +37,9 @@ public final class DialogAppender extends Handler {
   @Override
   public void publish(LogRecord event) {
     if (event.getLevel().intValue() < Level.SEVERE.intValue() || AppMode.isCommandLine()) {
-      return;  // the dialog appender doesn't deal with non-critical errors and is meaningless when there is no frame to show an error icon
+      // the dialog appender doesn't deal with non-critical errors
+      // also, it makes no sense when there is no frame to show an error icon
+      return;
     }
 
     IdeaLoggingEvent ideaEvent;
@@ -54,22 +55,32 @@ public final class DialogAppender extends Handler {
 
     synchronized (this) {
       if (LoadingState.COMPONENTS_LOADED.isOccurred() && !ourDelay) {
-        IdeaLoggingEvent queued;
-        while ((queued = myEarlyEvents.poll()) != null) queueAppend(queued);
+        processEarlyEventsIfNeeded();
         queueAppend(ideaEvent);
       }
-      else if (myEarlyEvents.size() < MAX_EARLY_LOGGING_EVENTS) {
-        myEarlyEvents.add(ideaEvent);
+      else {
+        myEarlyEventCounter.incrementAndGet();
+        if (myEarlyEvents.size() < MAX_EARLY_LOGGING_EVENTS) {
+          myEarlyEvents.add(ideaEvent);
+        }
       }
     }
   }
 
-  private void queueAppend(IdeaLoggingEvent event) {
-    if (myPendingAppendCounts.incrementAndGet() > MAX_ASYNC_LOGGING_EVENTS) {
-      // stop adding requests to the queue, or we can get OOME on pending logging requests (IDEA-95327)
-      myPendingAppendCounts.decrementAndGet(); // number of pending logging events should not increase
+  private void processEarlyEventsIfNeeded() {
+    int count = myEarlyEventCounter.getAndSet(0);
+    if (count == 0) return;
+    IdeaLoggingEvent queued;
+    while ((queued = myEarlyEvents.poll()) != null) {
+      count --;
+      queueAppend(queued);
     }
-    else if (DefaultIdeaErrorLogger.canHandle(event)) {
+    queueAppend(new IdeaLoggingEvent(DiagnosticBundle.message(
+      "error.monitor.early.errors.skipped", count), new Throwable()));
+  }
+
+  private void queueAppend(IdeaLoggingEvent event) {
+    if (DefaultIdeaErrorLogger.canHandle(event)) {
       myExecutor.execute(() -> DefaultIdeaErrorLogger.handle(event));
     }
   }
