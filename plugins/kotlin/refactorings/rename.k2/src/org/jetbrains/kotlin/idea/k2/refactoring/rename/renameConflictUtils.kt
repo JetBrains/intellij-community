@@ -9,6 +9,7 @@ import com.intellij.usageView.UsageInfo
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.calls.KtCallableMemberCall
+import org.jetbrains.kotlin.analysis.api.calls.KtExplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.calls.KtImplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.calls.successfulCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.symbol
@@ -37,6 +38,7 @@ import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtExpressionCodeFragment
+import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.KtProperty
@@ -46,7 +48,6 @@ import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.psi.KtTypeReference
 import org.jetbrains.kotlin.psi.createExpressionByPattern
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElementSelector
-import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelectorOrThis
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import kotlin.collections.mutableSetOf
 
@@ -85,7 +86,7 @@ fun checkClassNameShadowing(
     analyze(declaration) {
         //check outer classes hiding/hidden by rename
         val processedClasses = mutableSetOf<KtClassOrObject>()
-        retargetExternalDeclarations(declaration.getSymbol().getContainingSymbol(), declaration, Name.identifier(newName)) {
+        retargetExternalDeclarations(declaration, newName) {
             val klass = it.psi as? KtClassOrObject
             val newFqName = klass?.fqName
             if (newFqName != null && processedClasses.add(klass)) {
@@ -129,10 +130,9 @@ fun checkCallableShadowing(
                         externalProperties.add(newDeclaration)
                     }
                 } else if (newDeclaration != null && !PsiTreeUtil.isAncestor(newDeclaration, declaration, true)) {
-                    val fullCallExpression = callExpression.getQualifiedExpressionForSelectorOrThis()
-                    val qualifiedExpression = createQualifiedExpression(callExpression, newName)
+                    val qualifiedExpression = createQualifiedExpression(refElement, newName)
                     if (qualifiedExpression != null) {
-                        usageIterator.set(UsageInfoWithReplacement(fullCallExpression, declaration, qualifiedExpression))
+                        usageIterator.set(UsageInfoWithReplacement(refElement, declaration, qualifiedExpression))
                     } else {
                         reportShadowing(declaration, declaration, newDeclaration.getSymbol(), refElement, newUsages)
                     }
@@ -160,9 +160,8 @@ fun checkCallableShadowing(
 
     analyze(declaration) {
         //check outer callables hiding/hidden by rename
-        val callableSymbol = declaration.getSymbol()
         val processedCallables = mutableSetOf<KtCallableDeclaration>()
-        retargetExternalDeclarations(callableSymbol.getContainingSymbol()?.getContainingSymbol(), declaration, Name.identifier(newName)) {
+        retargetExternalDeclarations(declaration, newName) {
             val callableDeclaration = it.psi as? KtCallableDeclaration
             if (callableDeclaration != null && processedCallables.add(callableDeclaration)) {
                 retargetExternalDeclaration(callableDeclaration)
@@ -185,7 +184,8 @@ private fun createQualifiedExpression(callExpression: KtExpression, newName: Str
         if (receiver is KtImplicitReceiverValue) {
             val symbol = receiver.symbol
             if ((symbol as? KtClassOrObjectSymbol)?.classKind == KtClassKind.COMPANION_OBJECT) {
-                (symbol.getContainingSymbol() as? KtClassOrObjectSymbol)?.name
+                //specify companion name to avoid clashes with enum entries
+                symbol.name!!.asString()
             }
             else if (symbol is KtClassifierSymbol && symbol !is KtAnonymousObjectSymbol) {
                 "this@" + symbol.name!!.asString()
@@ -202,7 +202,19 @@ private fun createQualifiedExpression(callExpression: KtExpression, newName: Str
                     (symbol?.psi as? KtElement)?.containingKtFile?.packageFqName
                 }
             containerFQN?.asString()?.takeIf { it.isNotEmpty() }
-        } else null
+        }
+        else if (receiver is KtExplicitReceiverValue) {
+            val containingSymbol = appliedSymbol?.symbol?.getContainingSymbol()
+            val enumClassSymbol = containingSymbol?.getContainingSymbol()
+            //add companion qualifier to avoid clashes with enum entries
+            if (containingSymbol is KtNamedClassOrObjectSymbol && containingSymbol.classKind == KtClassKind.COMPANION_OBJECT &&
+                enumClassSymbol is KtNamedClassOrObjectSymbol && enumClassSymbol.classKind == KtClassKind.ENUM_CLASS &&
+                (receiver.expression as? KtNameReferenceExpression)?.mainReference?.resolve() == containingSymbol.psi
+            ) {
+                containingSymbol.name.asString()
+            } else null
+        }
+        else null
     }?.let { psiFactory.createExpressionByPattern("$it.$0", callExpression) } ?: callExpression.copied()
     val newCallee = if (qualifiedExpression is KtCallableReferenceExpression) {
         qualifiedExpression.callableReference
@@ -232,14 +244,15 @@ private fun reportShadowing(
 }
 
 context(KtAnalysisSession)
-private fun retargetExternalDeclarations(classOrObjectSymbol: KtDeclarationSymbol?, declaration: KtNamedDeclaration, name: Name, retargetJob: (KtDeclarationSymbol) -> Unit) {
+private fun retargetExternalDeclarations(declaration: KtNamedDeclaration, name: String, retargetJob: (KtDeclarationSymbol) -> Unit) {
     val declarationSymbol = declaration.getSymbol()
 
+    val nameAsName = Name.identifier(name)
     fun KtScope.processScope(containingSymbol: KtDeclarationSymbol?) {
-        findSiblingsByName(declarationSymbol, name, containingSymbol).forEach(retargetJob)
+        findSiblingsByName(declarationSymbol, nameAsName, containingSymbol).forEach(retargetJob)
     }
 
-    var classOrObjectSymbol = classOrObjectSymbol
+    var classOrObjectSymbol = declarationSymbol.getContainingSymbol()
     while (classOrObjectSymbol != null) {
         (classOrObjectSymbol as? KtClassOrObjectSymbol)?.getMemberScope()?.processScope(classOrObjectSymbol)
 

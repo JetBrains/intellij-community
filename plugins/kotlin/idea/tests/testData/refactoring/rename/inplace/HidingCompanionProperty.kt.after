@@ -4,7 +4,7 @@ private class A {
 
     private class B {
         private fun b() {
-            println(A.m)
+            println(Companion.m)
         }
         private val <caret>m = ""
     }

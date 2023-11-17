@@ -10,7 +10,7 @@ class MemberExtract2 {
     }
 
     fun mainContext() {
-        println(mainVar + this@MemberExtract2.compFun() + compVar + compFun())
+        println(mainVar + this@MemberExtract2.compFun() + compVar + Companion.compFun())
     }
 }
 // IGNORE_K1
