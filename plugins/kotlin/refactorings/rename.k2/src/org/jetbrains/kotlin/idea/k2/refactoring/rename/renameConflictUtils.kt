@@ -33,7 +33,6 @@ import org.jetbrains.kotlin.idea.refactoring.rename.UsageInfoWithReplacement
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtCallExpression
-import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtCallableReferenceExpression
 import org.jetbrains.kotlin.psi.KtClassLikeDeclaration
 import org.jetbrains.kotlin.psi.KtClassOrObject
@@ -93,7 +92,10 @@ fun checkClassNameShadowing(
             if (newFqName != null && processedClasses.add(klass)) {
                 for (ref in ReferencesSearch.search(klass, declaration.useScope)) {
                     val refElement = ref.element as? KtSimpleNameExpression ?: continue //todo cross language conflicts
-                    newUsages.add(UsageInfoWithFqNameReplacement(refElement, declaration, newFqName))
+                    if (refElement.getStrictParentOfType<KtTypeReference>() != null) {
+                        //constructor (also implicit) calls would be processed together with other callables
+                        newUsages.add(UsageInfoWithFqNameReplacement(refElement, declaration, newFqName))
+                    }
                 }
             }
         }
@@ -126,7 +128,7 @@ fun checkCallableShadowing(
         if (referenceExpression != null) {
             analyze(codeFragment) {
                 val newDeclaration = referenceExpression.mainReference?.resolve() as? KtNamedDeclaration
-                if (newDeclaration is KtCallableDeclaration) {
+                if (newDeclaration != null) {
                     externalDeclarations.add(newDeclaration)
                 }
                 if (newDeclaration != null && (declaration !is KtParameter || declaration.hasValOrVar()) && !PsiTreeUtil.isAncestor(newDeclaration, declaration, true)) {
@@ -146,10 +148,10 @@ fun checkCallableShadowing(
     fun retargetExternalDeclaration(externalDeclaration: KtNamedDeclaration) {
         ReferencesSearch.search(externalDeclaration, declaration.useScope).forEach { ref ->
             val refElement = ref.element as? KtSimpleNameExpression ?: return@forEach
-            val fullCallExpression = refElement
+            if (refElement.getStrictParentOfType<KtTypeReference>() != null) return@forEach
             val qualifiedExpression = createQualifiedExpression(refElement, newName)
             if (qualifiedExpression != null) {
-                newUsages.add(UsageInfoWithReplacement(fullCallExpression, declaration, qualifiedExpression))
+                newUsages.add(UsageInfoWithReplacement(refElement, declaration, qualifiedExpression))
             }
         }
     }
@@ -160,10 +162,11 @@ fun checkCallableShadowing(
 
     analyze(declaration) {
         //check outer callables hiding/hidden by rename
-        val processedCallables = mutableSetOf<KtCallableDeclaration>()
+        val processedDeclarations = mutableSetOf<KtNamedDeclaration>()
+        processedDeclarations.addAll(externalDeclarations)
         retargetExternalDeclarations(declaration, newName) {
-            val callableDeclaration = it.psi as? KtCallableDeclaration
-            if (callableDeclaration != null && processedCallables.add(callableDeclaration)) {
+            val callableDeclaration = it.psi as? KtNamedDeclaration
+            if (callableDeclaration != null && processedDeclarations.add(callableDeclaration)) {
                 retargetExternalDeclaration(callableDeclaration)
             }
         }

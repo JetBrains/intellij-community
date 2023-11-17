@@ -123,6 +123,16 @@ public class K2InplaceRenameTestGenerated extends AbstractK2InplaceRenameTest {
         runTest("../../idea/tests/testData/refactoring/rename/inplace/HidingClassFromCompanionObject.kt");
     }
 
+    @TestMetadata("HidingClassFromReceiver.kt")
+    public void testHidingClassFromReceiver() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/rename/inplace/HidingClassFromReceiver.kt");
+    }
+
+    @TestMetadata("HidingClassFromReceiver1.kt")
+    public void testHidingClassFromReceiver1() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/rename/inplace/HidingClassFromReceiver1.kt");
+    }
+
     @TestMetadata("HidingCompanionMethod.kt")
     public void testHidingCompanionMethod() throws Exception {
         runTest("../../idea/tests/testData/refactoring/rename/inplace/HidingCompanionMethod.kt");
