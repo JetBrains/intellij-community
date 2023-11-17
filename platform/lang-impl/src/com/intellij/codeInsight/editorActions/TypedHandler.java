@@ -5,6 +5,7 @@ import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.completion.CompletionContributor;
 import com.intellij.codeInsight.completion.CompletionPhase;
+import com.intellij.codeInsight.completion.TypedEvent;
 import com.intellij.codeInsight.highlighting.BraceMatcher;
 import com.intellij.codeInsight.highlighting.BraceMatchingUtil;
 import com.intellij.codeInsight.highlighting.NontrivialBraceMatcher;
@@ -45,7 +46,6 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
@@ -163,8 +163,7 @@ public final class TypedHandler extends TypedActionHandlerBase {
       Editor editor = injectedEditorIfCharTypedIsSignificant(charTyped, originalEditor, originalFile);
       PsiFile file = editor == originalEditor ? originalFile : Objects.requireNonNull(psiDocumentManager.getPsiFile(editor.getDocument()));
 
-      editor.putUserData(CompletionPhase.AUTO_POPUP_TYPED_EVENT_ID,
-                         ObjectUtils.sentinel("charTyped: " + charTyped + "; offset: " + editor.getCaretModel().getOffset()));
+      editor.putUserData(CompletionPhase.AUTO_POPUP_TYPED_EVENT, new TypedEvent(charTyped, editor.getCaretModel().getOffset()));
       try {
         if (caret == originalEditor.getCaretModel().getPrimaryCaret()) {
           boolean handled = callDelegates(TypedHandlerDelegate::checkAutoPopup, charTyped, project, editor, file);
@@ -237,7 +236,7 @@ public final class TypedHandler extends TypedActionHandlerBase {
         }
       }
       finally {
-        editor.putUserData(CompletionPhase.AUTO_POPUP_TYPED_EVENT_ID, null);
+        editor.putUserData(CompletionPhase.AUTO_POPUP_TYPED_EVENT, null);
       }
     });
   }

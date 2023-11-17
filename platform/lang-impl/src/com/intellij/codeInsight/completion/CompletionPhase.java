@@ -16,7 +16,10 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.FocusChangeListener;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -39,7 +42,7 @@ import java.util.Set;
 import java.util.concurrent.ExecutorService;
 
 public abstract class CompletionPhase implements Disposable {
-  public static final Key<Object> AUTO_POPUP_TYPED_EVENT_ID = Key.create("AutoPopupTypedEventId");
+  public static final Key<TypedEvent> AUTO_POPUP_TYPED_EVENT = Key.create("AutoPopupTypedEvent");
 
   private static final Logger LOG = Logger.getInstance(CompletionPhase.class);
 
@@ -71,14 +74,14 @@ public abstract class CompletionPhase implements Disposable {
     private static final ExecutorService ourExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Completion Preparation", 1);
     boolean replaced;
     private final ActionTracker myTracker;
-    private final @Nullable Object myEventId;
+    private final @Nullable TypedEvent myEvent;
     private int myRequestCount = 1;
 
     CommittingDocuments(@Nullable CompletionProgressIndicator prevIndicator, @NotNull Editor editor,
-                        @Nullable Object eventId) {
+                        @Nullable TypedEvent event) {
       super(prevIndicator);
       myTracker = new ActionTracker(editor, this);
-      myEventId = eventId;
+      myEvent = event;
     }
 
     public void ignoreCurrentDocumentChange() {
@@ -89,8 +92,8 @@ public abstract class CompletionPhase implements Disposable {
       return myTracker.hasAnythingHappened() || myRequestCount <= 0;
     }
 
-    private @Nullable Object getEventId() {
-      return myEventId;
+    private @Nullable TypedEvent getEvent() {
+      return myEvent;
     }
 
     void incrementRequestCount() {
@@ -132,8 +135,8 @@ public abstract class CompletionPhase implements Disposable {
       Editor topLevelEditor = InjectedLanguageEditorUtil.getTopLevelEditor(_editor);
       int offset = topLevelEditor.getCaretModel().getOffset();
 
-      Object eventId = condition == null ? null : _editor.getUserData(AUTO_POPUP_TYPED_EVENT_ID);
-      CommittingDocuments phase = getCompletionPhase(prevIndicator, topLevelEditor, eventId);
+      TypedEvent event = condition == null ? null : _editor.getUserData(AUTO_POPUP_TYPED_EVENT);
+      CommittingDocuments phase = getCompletionPhase(prevIndicator, topLevelEditor, event);
 
       boolean autopopup = prevIndicator == null || prevIndicator.isAutopopupCompletion();
 
@@ -177,17 +180,17 @@ public abstract class CompletionPhase implements Disposable {
     @NotNull
     private static CommittingDocuments getCompletionPhase(@Nullable CompletionProgressIndicator prevIndicator,
                                                           Editor topLevelEditor,
-                                                          @Nullable Object eventId) {
-      if (eventId != null) {
+                                                          @Nullable TypedEvent event) {
+      if (event != null) {
         CompletionPhase currentPhase = CompletionServiceImpl.getCompletionPhase();
         if (currentPhase instanceof CommittingDocuments committingPhase &&
             !committingPhase.isExpired() &&
-            Comparing.equal(eventId, committingPhase.getEventId())) {
+            event.equals(committingPhase.getEvent())) {
           committingPhase.incrementRequestCount();
           return committingPhase;
         }
       }
-      CommittingDocuments phase = new CommittingDocuments(prevIndicator, topLevelEditor, eventId);
+      CommittingDocuments phase = new CommittingDocuments(prevIndicator, topLevelEditor, event);
       CompletionServiceImpl.setCompletionPhase(phase);
       phase.ignoreCurrentDocumentChange();
       return phase;
