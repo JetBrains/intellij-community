@@ -5,6 +5,7 @@
 package com.intellij.openapi.actionSystem.impl
 
 import com.intellij.concurrency.ConcurrentCollectionFactory
+import com.intellij.concurrency.currentThreadContext
 import com.intellij.diagnostic.PluginException
 import com.intellij.diagnostic.ThreadDumpService
 import com.intellij.ide.IdeEventQueue
@@ -38,12 +39,9 @@ import com.intellij.util.application
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.FList
-import com.intellij.util.io.computeDetached
 import com.intellij.util.ui.EDT
 import com.intellij.util.use
 import io.opentelemetry.api.trace.Span
-import io.opentelemetry.context.Context
-import io.opentelemetry.extension.kotlin.asContextElement
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import java.awt.AWTEvent
@@ -549,7 +547,8 @@ internal class ActionUpdater @JvmOverloads constructor(
     val bgtScope = bgtScope
     return if (bgtScope != null) {
       sessionData.computeIfAbsent(key) {
-        bgtScope.async(Context.current().asContextElement()) {
+        bgtScope.async(currentThreadContext().minusKey(Job) +
+                       CoroutineName("getSessionDataDeferred#${key.first} ($place)")) {
           computeWithSpan(Utils.getTracer(true), "${key.first}@$place") {
             supplier()
           }
