@@ -561,12 +561,12 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   @ApiStatus.Internal
   public ChildInfo findChildInfo(@NotNull VirtualFile parent, @NotNull String childName, @NotNull NewVirtualFileSystem fs) {
     int parentId = getFileId(parent);
-    Ref<ChildInfo> result = new Ref<>();
+    Ref<ChildInfo> foundChildRef = new Ref<>();
 
     Function<ListResult, ListResult> convertor = children -> {
       ChildInfo child = findExistingChildInfo(parent, childName, children.children);
       if (child != null) {
-        result.set(child);
+        foundChildRef.set(child);
         return children;
       }
 
@@ -578,6 +578,11 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       if (childData == null) {
         return children;
       }
+      //[childData != null]
+      // => file DOES exist
+      // => We haven't found it yet because either look up the wrong name
+      //    or it is the new file, and VFS hasn't received the update yet
+
       String canonicalName;
       if (parent.isCaseSensitive()) {
         canonicalName = childName;
@@ -590,24 +595,22 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
         if (!childName.equals(canonicalName)) {
           child = findExistingChildInfo(parent, canonicalName, children.children);
-          result.set(child);
         }
       }
+
       if (child == null) {
-        if (result.isNull()) {
-          child = makeChildRecord(parent, parentId, canonicalName, childData, fs, null);
-          result.set(child);
-        }
-        else {
-          // might have stored on a previous attempt
-          child = result.get();
-        }
+        child = makeChildRecord(parent, parentId, canonicalName, childData, fs, null);
+        foundChildRef.set(child);
         return children.insert(child);
       }
-      return children;
+      else {
+        foundChildRef.set(child);
+        return children;
+      }
     };
+
     vfsPeer.update(parent, parentId, convertor);
-    return result.get();
+    return foundChildRef.get();
   }
 
   private ChildInfo findExistingChildInfo(@NotNull VirtualFile parent,
@@ -839,7 +842,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   }
 
   private static boolean shouldCache(long len) {
-    if(len > PersistentFSConstants.FILE_LENGTH_TO_CACHE_THRESHOLD){
+    if (len > PersistentFSConstants.FILE_LENGTH_TO_CACHE_THRESHOLD) {
       return false;
     }
     if (HeavyProcessLatch.INSTANCE.isRunning()) {
