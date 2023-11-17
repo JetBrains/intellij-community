@@ -121,9 +121,9 @@ public class GradleProgressListener implements ProgressListener, org.gradle.tool
       return false;
     }
 
-    reportModelBuilderMessageIntoFus(message);
-    reportModelBuilderMessageIntoLogger(message);
-    reportModelBuilderMessageIntoMessageBus(message);
+    reportModelBuilderMessageToFus(message);
+    reportModelBuilderMessageToLogger(message);
+    reportModelBuilderMessageToListener(message);
     return true;
   }
 
@@ -141,11 +141,11 @@ public class GradleProgressListener implements ProgressListener, org.gradle.tool
     }
   }
 
-  private void reportModelBuilderMessageIntoFus(@NotNull Message message) {
+  private void reportModelBuilderMessageToFus(@NotNull Message message) {
     GradleModelBuilderMessageCollector.logModelBuilderMessage(myTaskId.findProject(), myTaskId.getId(), message);
   }
 
-  private static void reportModelBuilderMessageIntoLogger(@NotNull Message message) {
+  private static void reportModelBuilderMessageToLogger(@NotNull Message message) {
     if (message.getKind() == Message.Kind.INTERNAL) {
       LOG.warn(
         message.getGroup() + "\n" +
@@ -155,7 +155,7 @@ public class GradleProgressListener implements ProgressListener, org.gradle.tool
     }
   }
 
-  private void reportModelBuilderMessageIntoMessageBus(@NotNull Message message) {
+  private void reportModelBuilderMessageToListener(@NotNull Message message) {
     if (message.getKind() != Message.Kind.INTERNAL) {
       var messageEvent = getModelBuilderMessage(message);
       myListener.onStatusChange(new ExternalSystemBuildEvent(myTaskId, messageEvent));
