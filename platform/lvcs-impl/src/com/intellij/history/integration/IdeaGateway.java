@@ -482,7 +482,9 @@ public class IdeaGateway {
   }
 
   public @Nullable Document getDocument(@NotNull String path) {
-    return FileDocumentManager.getInstance().getDocument(findVirtualFile(path));
+    VirtualFile file = findVirtualFile(path);
+    if (file == null) return null;
+    return FileDocumentManager.getInstance().getDocument(file);
   }
 
   public @NotNull FileType getFileType(@NotNull String fileName) {
