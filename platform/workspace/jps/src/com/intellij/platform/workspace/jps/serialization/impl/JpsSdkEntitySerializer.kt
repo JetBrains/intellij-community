@@ -21,9 +21,10 @@ import org.jetbrains.jps.model.serialization.JDomSerializationUtil
 import org.jetbrains.jps.model.serialization.java.JpsJavaModelSerializerExtension
 import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer
 
-
+@NonNls
 private const val SDK_TABLE_COMPONENT_NAME = "ProjectJdkTable"
 
+@NonNls
 private const val ELEMENT_JDK = "jdk"
 
 @NonNls

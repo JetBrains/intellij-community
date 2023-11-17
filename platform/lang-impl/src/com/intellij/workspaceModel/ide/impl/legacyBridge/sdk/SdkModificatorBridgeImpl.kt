@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.sdk
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.projectRoots.SdkAdditionalData
 import com.intellij.openapi.projectRoots.SdkModificator
 import com.intellij.openapi.roots.OrderRootType
@@ -13,6 +12,7 @@ import com.intellij.platform.workspace.jps.entities.SdkRoot
 import com.intellij.platform.workspace.jps.entities.modifyEntity
 import com.intellij.platform.workspace.jps.serialization.impl.ELEMENT_ADDITIONAL
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.workspaceModel.ide.getGlobalInstance
 import com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModel
@@ -93,7 +93,7 @@ class SdkModificatorBridgeImpl(private val originalEntity: SdkEntity.Builder,
 
   @RequiresWriteLock
   override fun commitChanges() {
-    ApplicationManager.getApplication().assertWriteAccessAllowed()
+    ThreadingAssertions.assertWriteAccess()
     if (isCommitted) error("Modification already completed")
 
     val globalWorkspaceModel = GlobalWorkspaceModel.getInstance()

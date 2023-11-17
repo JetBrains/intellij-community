@@ -20,6 +20,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
@@ -269,7 +270,7 @@ public class ProjectJdkImpl extends UserDataHolderBase implements ProjectJdk, Sd
 
   @ApiStatus.Internal
   public void changeType(@NotNull SdkTypeId newType, @Nullable Element additionalDataElement) {
-    ApplicationManager.getApplication().assertWriteAccessAllowed();
+    ThreadingAssertions.assertWriteAccess();
     mySdkType = newType;
     myAdditionalData = additionalDataElement != null ? mySdkType.loadAdditionalData(this, additionalDataElement) : null;
   }
