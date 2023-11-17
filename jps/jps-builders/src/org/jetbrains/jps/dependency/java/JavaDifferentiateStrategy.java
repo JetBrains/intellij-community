@@ -17,7 +17,12 @@ import java.util.function.Predicate;
 
 public final class JavaDifferentiateStrategy extends GeneralDifferentiateStrategy {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.dependency.java.JavaDifferentiateStrategy");
-  
+
+  private static final Iterable<AnnotationChangesTracker> ourAnnotationChangeTrackers = Iterators.collect(
+    ServiceLoader.load(AnnotationChangesTracker.class, JavaDifferentiateStrategy.class.getClassLoader()),
+    new SmartList<>()
+  );
+
   @Override
   public boolean isIncremental(DifferentiateContext context, Node<?, ?> affectedNode) {
     if (affectedNode instanceof JvmClass && ((JvmClass)affectedNode).getFlags().isGenerated()) {
@@ -114,7 +119,7 @@ public final class JavaDifferentiateStrategy extends GeneralDifferentiateStrateg
         parents.removeAll(Iterators.collect(future.allSupertypes(changedClass.getReferenceID()), new HashSet<>()));
         for (JvmNodeReferenceID parent : parents) {
           debug("Affecting usages in generic type parameter bounds of class: ", parent);
-          context.affectUsage(new ClassAsGenericBoundUsage(parent)); // todo: need support of file-filter usage constraint?
+          context.affectUsage(new ClassAsGenericBoundUsage(parent));
         }
       }
     }
@@ -217,7 +222,32 @@ public final class JavaDifferentiateStrategy extends GeneralDifferentiateStrateg
       // only mark synthetic classes used to implement switch statements: this will limit the number of recompiled classes to those where switch statements on changed enum are used
       context.affectUsage(new ClassUsage(changedClass.getReferenceID()), n -> n instanceof JVMClassNode<?, ?> && ((JVMClassNode<?, ?>)n).isSynthetic());
     }
-    
+
+    Difference.Specifier<TypeRepr.ClassType, ?> annotationsDiff = classDiff.annotations();
+    if (!annotationsDiff.unchanged()) {
+      EnumSet<AnnotationChangesTracker.Recompile> toRecompile = EnumSet.noneOf(AnnotationChangesTracker.Recompile.class);
+      for (AnnotationChangesTracker tracker : ourAnnotationChangeTrackers) {
+        if (toRecompile.containsAll(AnnotationChangesTracker.RECOMPILE_ALL)) {
+          break;
+        }
+        Set<AnnotationChangesTracker.Recompile> result = tracker.classAnnotationsChanged(changedClass, annotationsDiff);
+        if (result.contains(AnnotationChangesTracker.Recompile.USAGES)) {
+          debug("Extension ", tracker.getClass().getName(), " requested class usages recompilation because of changes in annotations list --- adding class usage to affected usages");
+        }
+        if (result.contains(AnnotationChangesTracker.Recompile.SUBCLASSES)) {
+          debug("Extension ", tracker.getClass().getName(), " requested subclasses recompilation because of changes in annotations list --- adding subclasses to affected usages");
+        }
+        toRecompile.addAll(result);
+      }
+      boolean affectUsages = toRecompile.contains(AnnotationChangesTracker.Recompile.USAGES);
+      if (affectUsages) {
+        context.affectUsage(new ClassUsage(changedClass.getReferenceID()));
+      }
+      if (toRecompile.contains(AnnotationChangesTracker.Recompile.SUBCLASSES)) {
+        affectSubclasses(context, future, changedClass.getReferenceID(), affectUsages);
+      }
+    }
+
     return true;
   }
 
@@ -318,10 +348,30 @@ public final class JavaDifferentiateStrategy extends GeneralDifferentiateStrateg
         }
       }
 
-      // todo: do we need to support AnnotationChangeTracker in the new implementation? Looks like its functionality transforms into kotlin-specific rules
-      //Difference.Specifier<TypeRepr.ClassType, ?> annotationsDiff = diff.annotations();
-      //if (!annotationsDiff.unchanged()) {
-      //}
+      Difference.Specifier<TypeRepr.ClassType, ?> annotationsDiff = diff.annotations();
+      Difference.Specifier<ParamAnnotation, ?> paramAnnotationsDiff = diff.paramAnnotations();
+      if (!annotationsDiff.unchanged() || !paramAnnotationsDiff.unchanged()) {
+        EnumSet<AnnotationChangesTracker.Recompile> toRecompile = EnumSet.noneOf(AnnotationChangesTracker.Recompile.class);
+        for (AnnotationChangesTracker tracker : ourAnnotationChangeTrackers) {
+          if (toRecompile.containsAll(AnnotationChangesTracker.RECOMPILE_ALL)) {
+            break;
+          }
+          Set<AnnotationChangesTracker.Recompile> result = tracker.methodAnnotationsChanged(changedMethod, annotationsDiff, paramAnnotationsDiff);
+          if (result.contains(AnnotationChangesTracker.Recompile.USAGES)) {
+            debug("Extension ", tracker.getClass().getName(), " requested recompilation because of changes in annotations list --- affecting method usages");
+          }
+          if (result.contains(AnnotationChangesTracker.Recompile.SUBCLASSES)) {
+            debug("Extension ", tracker.getClass().getName(), " requested recompilation because of changes in method annotations or method parameter annotations list --- affecting subclasses");
+          }
+          toRecompile.addAll(result);
+        }
+        if (toRecompile.contains(AnnotationChangesTracker.Recompile.USAGES)) {
+          affectMemberUsages(context, changedClass.getReferenceID(), changedMethod, propagated);
+        }
+        if (toRecompile.contains(AnnotationChangesTracker.Recompile.SUBCLASSES)) {
+          affectSubclasses(context, future, changedClass.getReferenceID(), false);
+        }
+      }
     }
 
     Iterable<Difference.Change<JvmMethod, JvmMethod.Diff>> moreAccessible = Iterators.collect(Iterators.filter(changed, ch -> ch.getDiff().accessExpanded()), new SmartList<>());
@@ -680,8 +730,28 @@ public final class JavaDifferentiateStrategy extends GeneralDifferentiateStrateg
       }
     }
 
-    if (!diff.annotations().unchanged()) {
-      // todo: AnnotationsTracker handling
+    Difference.Specifier<TypeRepr.ClassType, ?> annotationsDiff = diff.annotations();
+    if (!annotationsDiff.unchanged()) {
+      EnumSet<AnnotationChangesTracker.Recompile> toRecompile = EnumSet.noneOf(AnnotationChangesTracker.Recompile.class);
+      for (AnnotationChangesTracker tracker : ourAnnotationChangeTrackers) {
+        if (toRecompile.containsAll(AnnotationChangesTracker.RECOMPILE_ALL)) {
+          break;
+        }
+        Set<AnnotationChangesTracker.Recompile> result = tracker.fieldAnnotationsChanged(changedField, annotationsDiff);
+        if (result.contains(AnnotationChangesTracker.Recompile.USAGES)) {
+          debug("Extension ", tracker.getClass().getName(), " requested recompilation because of changes in annotations list --- affecting field usages");
+        }
+        if (result.contains(AnnotationChangesTracker.Recompile.SUBCLASSES)) {
+          debug("Extension ", tracker.getClass().getName(), " requested recompilation because of changes in field annotations list --- affecting subclasses");
+        }
+        toRecompile.addAll(result);
+      }
+      if (toRecompile.contains(AnnotationChangesTracker.Recompile.USAGES)) {
+        affectMemberUsages(context, changedClass.getReferenceID(), changedField, propagated);
+      }
+      if (toRecompile.contains(AnnotationChangesTracker.Recompile.SUBCLASSES)) {
+        affectSubclasses(context, future, changedClass.getReferenceID(), false);
+      }
     }
 
     return true;
@@ -842,7 +912,6 @@ public final class JavaDifferentiateStrategy extends GeneralDifferentiateStrateg
     }
   }
 
-  // todo: probably support a file filter over a module structure
   private  boolean affectOnNonIncrementalChange(DifferentiateContext context, JvmNodeReferenceID owner, Proto proto, Utils utils) {
     if (proto.isPublic()) {
       debug("Public access, switching to a non-incremental mode");
