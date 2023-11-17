@@ -21,6 +21,8 @@ object AEEventUtils
  */
 inline fun <T : UserActivity> runUpdateEvent(activity: T, crossinline action: suspend (T) -> Unit) {
   if (ApplicationManager.getApplication().isUnitTestMode) return
+  /*
+  Temporary disable writing to database
   AEDatabaseLifetime.getScope().launch {
     withContext(Dispatchers.Default) {
       try {
@@ -33,7 +35,7 @@ inline fun <T : UserActivity> runUpdateEvent(activity: T, crossinline action: su
         logger<AEEventUtils>().error(t)
       }
     }
-  }
+  }*/
 }
 
 internal fun formatString(params: Map<String, String>): String {
