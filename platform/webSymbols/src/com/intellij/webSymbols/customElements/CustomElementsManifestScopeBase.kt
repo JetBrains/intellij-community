@@ -74,7 +74,7 @@ abstract class CustomElementsManifestScopeBase :
       sourceSymbolResolver(source, cacheHolder)
 
     override fun renderDescription(description: String): String =
-      HtmlMarkdownUtils.toHtml(description, false) ?: ("<p>$description")
+      HtmlMarkdownUtils.toHtml(description, false)
 
     override fun toString(): String {
       return "$library@$version"
