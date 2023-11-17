@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.NotUnderContentRootModuleInfo
 import org.jetbrains.kotlin.idea.base.util.KotlinPlatformUtils
 import org.jetbrains.kotlin.idea.core.script.IdeScriptReportSink
+import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.psi.KtCodeFragment
 import org.jetbrains.kotlin.psi.KtFile
 import kotlin.script.experimental.api.ScriptDiagnostic
@@ -83,3 +84,5 @@ private fun KtFile.shouldCheckScript(): Boolean? = runReadAction {
 private fun KtFile.shouldHighlightScript(): Boolean =
     !KotlinPlatformUtils.isCidr // There is no Java support in CIDR. So do not highlight errors in KTS if running in CIDR.
             && !IdeScriptReportSink.getReports(this).any { it.severity == ScriptDiagnostic.Severity.FATAL }
+            && ScriptConfigurationManager.getInstance(project).getConfiguration(this) != null
+            && RootKindFilter.projectSources.copy(includeScriptsOutsideSourceRoots = true).matches(this)

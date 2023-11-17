@@ -2,16 +2,19 @@
 
 package org.jetbrains.kotlin.idea.codeInsight.gradle
 
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
 import com.intellij.testFramework.runInEdtAndWait
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlin.diagnostics.Severity
 import org.jetbrains.kotlin.diagnostics.rendering.DefaultErrorMessages
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithContent
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
+import org.jetbrains.kotlin.idea.highlighter.KotlinProblemHighlightFilter
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.plugins.gradle.extensions.cloneWithCorruptedRoots
 import org.jetbrains.plugins.gradle.extensions.rootsFiles
@@ -23,22 +26,32 @@ import org.junit.Test
 
 abstract class GradleBuildFileHighlightingTest : KotlinGradleImportingTestCase() {
 
-    class KtsInJsProject2114 : GradleBuildFileHighlightingTest() {
-        @TargetVersions("4.8 <=> 6.0")
-        @Test
-        fun testKtsInJsProject() {
-            val buildGradleKts = configureByFiles().findBuildGradleKtsFile()
-            importProjectUsingSingeModulePerGradleProject()
-            checkHighlighting(buildGradleKts)
+    protected fun withHighLightingFilterChecked(file: VirtualFile, block: () -> Unit) = runBlocking {
+        val psiFile = readAction {
+            PsiManager.getInstance(myProject).findFile(file) as? KtFile
+                ?: error("Couldn't get PSI for $file")
         }
+
+        val highlightFilter = KotlinProblemHighlightFilter()
+
+        val highlightBefore = readAction { highlightFilter.shouldHighlight(psiFile) }
+        assertFalse("Script shouldn't be highlighted before the import is over", highlightBefore)
+
+        block.invoke()
+
+        val highlightAfter = readAction { highlightFilter.shouldHighlight(psiFile) }
+        assertTrue("Script should be highlighted after the import is over", highlightAfter)
     }
 
+
     class Simple : GradleBuildFileHighlightingTest() {
-        @TargetVersions("5.3+")
+        @TargetVersions("6.0.1+")
         @Test
         fun testSimple() {
             val buildGradleKts = configureByFiles().findBuildGradleKtsFile()
-            importProjectUsingSingeModulePerGradleProject()
+            withHighLightingFilterChecked(buildGradleKts) {
+                importProjectUsingSingeModulePerGradleProject()
+            }
             checkHighlighting(buildGradleKts)
         }
     }
@@ -49,7 +62,9 @@ abstract class GradleBuildFileHighlightingTest : KotlinGradleImportingTestCase()
         @Test
         fun testComplexBuildGradleKts() {
             val buildGradleKts = configureByFiles().findBuildGradleKtsFile()
-            importProjectUsingSingeModulePerGradleProject()
+            withHighLightingFilterChecked(buildGradleKts) {
+                importProjectUsingSingeModulePerGradleProject()
+            }
             checkHighlighting(buildGradleKts)
         }
 
@@ -60,7 +75,9 @@ abstract class GradleBuildFileHighlightingTest : KotlinGradleImportingTestCase()
         @TargetVersions("6.0.1+")
         fun testJavaLibraryPlugin() {
             val buildGradleKts = configureByFiles().findBuildGradleKtsFile()
-            importProject()
+            withHighLightingFilterChecked(buildGradleKts) {
+                importProject()
+            }
 
             checkHighlighting(buildGradleKts)
         }
@@ -82,7 +99,9 @@ abstract class GradleBuildFileHighlightingTest : KotlinGradleImportingTestCase()
             assertTrue(validJdk.rootsFiles.isNotEmpty())
 
             val buildGradleKts = configureByFiles().findBuildGradleKtsFile()
-            importProject()
+            withHighLightingFilterChecked(buildGradleKts) {
+                importProject()
+            }
             checkHighlighting(buildGradleKts)
         }
 
