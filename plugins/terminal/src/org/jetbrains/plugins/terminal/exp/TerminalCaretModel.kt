@@ -68,8 +68,9 @@ class TerminalCaretModel(
   private fun calculateCaretPosition(cursorX: Int, cursorY: Int): LogicalPosition {
     val lastBlock = outputModel.getLastBlock() ?: error("No active block")
     // cursor position in the TextBuffer is relative to the output start
-    val blockStartLine = editor.document.getLineNumber(lastBlock.outputStartOffset)
-    val blockLine = terminalModel.historyLinesCount + cursorY - 1
+    val blockStartLine = if (terminalModel.useAlternateBuffer) 0 else editor.document.getLineNumber(lastBlock.outputStartOffset)
+    val historyLines = if (terminalModel.useAlternateBuffer) 0 else terminalModel.historyLinesCount
+    val blockLine = historyLines + cursorY - 1
     return LogicalPosition(blockStartLine + blockLine, cursorX)
   }
 
