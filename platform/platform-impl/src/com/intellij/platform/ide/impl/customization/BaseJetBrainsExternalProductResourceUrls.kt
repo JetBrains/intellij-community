@@ -71,7 +71,7 @@ abstract class BaseJetBrainsExternalProductResourceUrls : ExternalProductResourc
       return UpdateRequestParameters.amendUpdateRequest(Urls.newFromEncoded("https://www.jetbrains.com/updates/updates.xml"))
     }
 
-  override fun computePatchUrl(from: BuildNumber, to: BuildNumber): Url? {
+  final override fun computePatchUrl(from: BuildNumber, to: BuildNumber): Url {
     return computeCustomPatchDownloadUrl(from, to)
            ?: basePatchDownloadUrl.resolve(computePatchFileName(from, to)) 
   }
