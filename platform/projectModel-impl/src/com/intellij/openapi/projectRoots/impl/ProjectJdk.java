@@ -2,8 +2,13 @@
 package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.SdkTypeId;
+import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 @ApiStatus.Internal
 public interface ProjectJdk extends Sdk {
+   void changeType(@NotNull SdkTypeId newType, @Nullable Element additionalDataElement);
 }

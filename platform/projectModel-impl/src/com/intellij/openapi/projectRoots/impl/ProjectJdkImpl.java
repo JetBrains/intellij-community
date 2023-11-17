@@ -268,6 +268,7 @@ public class ProjectJdkImpl extends UserDataHolderBase implements ProjectJdk, Sd
     dest.myRootProvider.rootsChanged();
   }
 
+  @Override
   @ApiStatus.Internal
   public void changeType(@NotNull SdkTypeId newType, @Nullable Element additionalDataElement) {
     ThreadingAssertions.assertWriteAccess();

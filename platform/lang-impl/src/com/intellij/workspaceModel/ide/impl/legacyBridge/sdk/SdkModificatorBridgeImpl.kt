@@ -34,6 +34,10 @@ class SdkModificatorBridgeImpl(private val originalEntity: SdkEntity.Builder,
     }
   }
 
+  internal fun setType(name: String) {
+    modifiedSdkEntity.type = name
+  }
+
   override fun getName(): String = modifiedSdkEntity.name
 
   override fun setName(name: String) {

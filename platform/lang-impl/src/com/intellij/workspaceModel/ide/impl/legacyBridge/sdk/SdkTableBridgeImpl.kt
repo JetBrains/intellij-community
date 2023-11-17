@@ -28,7 +28,6 @@ import org.jetbrains.annotations.TestOnly
 // [] Old version `2` constantly serialized for SDK
 // [] `SdkConfigurationUtil.createSdk` broken API
 // [] Strange to have type `SDK` but methods - `updateJDK`
-// [] SdkType.EP_NAME.addExtensionPointListener
 
 internal val rootTypes = ConcurrentFactoryMap.createMap<String, SdkRootTypeId> { SdkRootTypeId(it) }
 class SdkTableBridgeImpl: SdkTableImplementationDelegate {

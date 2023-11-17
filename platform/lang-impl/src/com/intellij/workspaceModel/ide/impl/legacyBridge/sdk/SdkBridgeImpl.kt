@@ -17,6 +17,9 @@ import com.intellij.platform.workspace.jps.entities.SdkEntity
 import com.intellij.platform.workspace.jps.entities.SdkRoot
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.util.EventDispatcher
+import com.intellij.util.concurrency.ThreadingAssertions
+import org.jdom.Element
+import org.jetbrains.annotations.ApiStatus
 
 
 // SdkBridgeImpl.clone called from com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel.reset
@@ -86,6 +89,17 @@ class SdkBridgeImpl(private var sdkEntityBuilder: SdkEntity.Builder) : UserDataH
     val sdkEntityClone = SdkTableBridgeImpl.createEmptySdkEntity("", "", "")
     sdkEntityClone.applyChangesFrom(sdkEntityBuilder)
     return SdkBridgeImpl(sdkEntityClone)
+  }
+
+  @ApiStatus.Internal
+  override fun changeType(newType: SdkTypeId, additionalDataElement: Element?) {
+    ThreadingAssertions.assertWriteAccess()
+    sdkModificator.let {
+      it as SdkModificatorBridgeImpl
+      it.setType(newType.name)
+      it.sdkAdditionalData = if (additionalDataElement != null) newType.loadAdditionalData(this, additionalDataElement) else null
+      it.commitChanges()
+    }
   }
 
   internal fun getRawSdkAdditionalData(): String = sdkEntityBuilder.additionalData
