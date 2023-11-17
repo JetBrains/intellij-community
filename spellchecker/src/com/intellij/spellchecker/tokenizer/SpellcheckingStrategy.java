@@ -9,6 +9,7 @@ import com.intellij.openapi.fileTypes.impl.CustomSyntaxTableFileType;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.spellchecker.DictionaryLevel;
 import com.intellij.spellchecker.inspections.PlainTextSplitter;
 import com.intellij.spellchecker.quickfixes.ChangeTo;
@@ -98,8 +99,8 @@ public class SpellcheckingStrategy {
                                                        @NotNull TextRange range) {
     ArrayList<LocalQuickFix> result = new ArrayList<>();
 
-    if (useRename) {
-      result.add(new RenameTo(typo));
+    if (useRename && PsiTreeUtil.getNonStrictParentOfType(element, PsiNamedElement.class) != null) {
+      result.add(new RenameTo());
     } else if (element != null) {
       result.addAll(new ChangeTo(typo, element, range).getAllAsFixes());
     }
