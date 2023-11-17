@@ -12,6 +12,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.refactoring.HelpID
 import com.intellij.refactoring.RefactoringActionHandler
 import com.intellij.refactoring.util.CommonRefactoringUtil
+import com.intellij.util.SmartList
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.refactoring.chooseContainer.chooseContainerElementIfNecessary
 import org.jetbrains.kotlin.idea.refactoring.introduce.KotlinIntroduceVariableHelper.Containers
@@ -31,9 +32,12 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.KtFunctionLiteral
 import org.jetbrains.kotlin.psi.KtIfExpression
+import org.jetbrains.kotlin.psi.KtLambdaExpression
 import org.jetbrains.kotlin.psi.KtLoopExpression
 import org.jetbrains.kotlin.psi.KtPsiUtil
+import org.jetbrains.kotlin.psi.KtReferenceExpression
 import org.jetbrains.kotlin.psi.KtWhenEntry
+import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 import org.jetbrains.kotlin.psi.psiUtil.isFunctionalExpression
 import org.jetbrains.kotlin.psi.psiUtil.parents
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
@@ -49,7 +53,31 @@ abstract class KotlinIntroduceVariableHandler : RefactoringActionHandler {
         onNonInteractiveFinish: ((KtDeclaration) -> Unit)? = null,
     )
 
-    abstract fun KtExpression.getCandidateContainers(): List<Containers>
+    /**
+     * @param contained expression, which is:
+     * * parent of extracted expression before refactoring
+     * * sibling of introduced variable after refactoring in case [container] was chosen
+     */
+    protected data class ContainerWithContained(val container: KtElement, val contained: KtExpression)
+
+    /**
+     * @param containersWithContainedLambdas containers of nested lambdas with corresponding lambdas. For the following example:
+     * ```
+     * fun test() {
+     *     bar { p -> foo { <selection>p + 3</selection> } }
+     * }
+     * ```
+     * [containersWithContainedLambdas] consists of:
+     * * block expression of `bar { ... }` - container of `foo { ... }`
+     * * block expression of `fun test() { ... }` - container of `bar { ... }`
+     *
+     * The second container is inapplicable so the resulting sequence will contain only the first one.
+     */
+    protected abstract fun filterContainersWithContainedLambdasByAnalyze(
+        containersWithContainedLambdas: Sequence<ContainerWithContained>,
+        physicalExpression: KtExpression,
+        referencesFromExpressionToExtract: List<KtReferenceExpression>,
+    ): Sequence<ContainerWithContained>
 
     override fun invoke(project: Project, editor: Editor, file: PsiFile, dataContext: DataContext) {
         if (file !is KtFile) return
@@ -94,6 +122,46 @@ abstract class KotlinIntroduceVariableHandler : RefactoringActionHandler {
                 project, editor, expression, containers,
                 isVar, occurrencesToReplace, onNonInteractiveFinish
             )
+        }
+    }
+
+    fun KtExpression.getCandidateContainers(): List<Containers> {
+        val physicalExpression = substringContextOrThis
+
+        val firstContainer = physicalExpression.getContainer() ?: return emptyList()
+        val firstOccurrenceContainer = physicalExpression.getOccurrenceContainer() ?: return emptyList()
+
+        val lambda = firstContainer.getLambdaForFunExpressionOrLambdaBody()
+        val lambdaContainer = lambda?.getContainer()
+
+        if (lambda == null || lambdaContainer == null) return listOf(Containers(firstContainer, firstOccurrenceContainer))
+
+        // `lambda` != null, which means that expression is inside lambda; if expression doesn't use any of lambda's arguments, then it's
+        // likely that it should be introduced outside the lambda, that's why here we suggest other containers beside lambda, see KTIJ-3457
+
+        val containersWithContainedLambdas = generateSequence(ContainerWithContained(lambdaContainer, lambda)) { (container, _) ->
+            val nextLambda = container.getLambdaForFunExpressionOrLambdaBody() ?: return@generateSequence null
+            val nextLambdaContainer = nextLambda.getContainer() ?: return@generateSequence null
+
+            ContainerWithContained(nextLambdaContainer, nextLambda)
+        }.let {
+            val contentRange = extractableSubstringInfo?.contentRange
+            val references = physicalExpression.collectDescendantsOfType<KtReferenceExpression> {
+                contentRange == null || contentRange.contains(it.textRange)
+            }
+            filterContainersWithContainedLambdasByAnalyze(it, physicalExpression, references)
+        }.toList()
+
+        val containers = SmartList(firstContainer)
+        val occurrenceContainers = SmartList(firstOccurrenceContainer)
+
+        containersWithContainedLambdas.mapTo(containers) { it.container }
+        containersWithContainedLambdas.mapTo(occurrenceContainers) { it.contained.getOccurrenceContainer() }
+        return ArrayList<Containers>().apply {
+            for ((container, occurrenceContainer) in (containers zip occurrenceContainers)) {
+                if (occurrenceContainer == null) continue
+                add(Containers(container, occurrenceContainer))
+            }
         }
     }
 
@@ -174,10 +242,15 @@ abstract class KotlinIntroduceVariableHandler : RefactoringActionHandler {
             else -> false
         }
 
-        fun PsiElement.isFunExpressionOrLambdaBody(): Boolean {
-            if (isFunctionalExpression()) return true
-            val parent = parent as? KtFunction ?: return false
-            return parent.bodyExpression == this && (parent is KtFunctionLiteral || parent.isFunctionalExpression())
+        fun PsiElement.getLambdaForFunExpressionOrLambdaBody(): KtExpression? {
+            if (isFunctionalExpression()) return this as? KtFunction
+            val parent = (parent as? KtFunction)?.takeIf { it.bodyExpression == this }
+
+            return when {
+                parent is KtFunctionLiteral -> parent.parent as? KtLambdaExpression
+                parent?.isFunctionalExpression() == true -> parent
+                else -> null
+            }
         }
 
         fun isInplaceAvailable(editor: Editor?, project: Project) = when {

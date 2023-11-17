@@ -13,7 +13,6 @@ import com.intellij.openapi.util.*
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.refactoring.introduce.inplace.OccurrencesChooser
-import com.intellij.util.SmartList
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
@@ -60,7 +59,6 @@ import org.jetbrains.kotlin.types.model.TypeConstructorMarker
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 import org.jetbrains.kotlin.utils.addIfNotNull
 import org.jetbrains.kotlin.utils.sure
-import kotlin.Pair
 import kotlin.math.min
 
 object K1IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
@@ -605,23 +603,21 @@ object K1IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
         }
     }
 
-    override fun KtExpression.getCandidateContainers(): List<Containers> {
-        val physicalExpression = substringContextOrThis
-        val contentRange = extractableSubstringInfo?.contentRange
-
+    override fun filterContainersWithContainedLambdasByAnalyze(
+        containersWithContainedLambdas: Sequence<ContainerWithContained>,
+        physicalExpression: KtExpression,
+        referencesFromExpressionToExtract: List<KtReferenceExpression>,
+    ): Sequence<ContainerWithContained> {
         val file = physicalExpression.containingKtFile
-
-        val references =
-            physicalExpression.collectDescendantsOfType<KtReferenceExpression> { contentRange == null || contentRange.contains(it.textRange) }
 
         val resolutionFacade = physicalExpression.getResolutionFacade()
         val originalContext = resolutionFacade.analyze(physicalExpression, BodyResolveMode.FULL)
 
-        fun isResolvableNextTo(neighbour: KtExpression): Boolean {
+        return containersWithContainedLambdas.takeWhile { (_, neighbour) ->
             val scope = neighbour.getResolutionScope(originalContext, resolutionFacade)
             val newContext = physicalExpression.analyzeInContext(scope, neighbour)
             val project = file.project
-            return references.all {
+            referencesFromExpressionToExtract.all {
                 val originalDescriptor = originalContext[BindingContext.REFERENCE_TARGET, it]
                 if (originalDescriptor is ValueParameterDescriptor && (originalContext[BindingContext.AUTO_CREATED_IT, originalDescriptor] == true)) {
                     return@all originalDescriptor.containingDeclaration.source.getPsi().isAncestor(neighbour, true)
@@ -629,36 +625,6 @@ object K1IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
 
                 val newDescriptor = newContext[BindingContext.REFERENCE_TARGET, it]
                 compareDescriptors(project, newDescriptor, originalDescriptor)
-            }
-        }
-
-        val firstContainer = physicalExpression.getContainer() ?: return emptyList()
-        val firstOccurrenceContainer = physicalExpression.getOccurrenceContainer() ?: return emptyList()
-
-        val containers = SmartList(firstContainer)
-        val occurrenceContainers = SmartList(firstOccurrenceContainer)
-
-        if (!firstContainer.isFunExpressionOrLambdaBody()) {
-            return listOf(Containers(firstContainer, firstOccurrenceContainer))
-        }
-
-        val lambdasAndContainers = ArrayList<Pair<KtExpression, KtElement>>().apply {
-            var container = firstContainer
-            do {
-                var lambda: KtExpression = container.getNonStrictParentOfType<KtFunction>()!!
-                if (lambda is KtFunctionLiteral) lambda = lambda.parent as? KtLambdaExpression ?: return@apply
-                if (!isResolvableNextTo(lambda)) return@apply
-                container = lambda.getContainer() ?: return@apply
-                add(lambda to container)
-            } while (container.isFunExpressionOrLambdaBody())
-        }
-
-        lambdasAndContainers.mapTo(containers) { it.second }
-        lambdasAndContainers.mapTo(occurrenceContainers) { it.first.getOccurrenceContainer() }
-        return ArrayList<Containers>().apply {
-            for ((container, occurrenceContainer) in (containers zip occurrenceContainers)) {
-                if (occurrenceContainer == null) continue
-                add(Containers(container, occurrenceContainer))
             }
         }
     }

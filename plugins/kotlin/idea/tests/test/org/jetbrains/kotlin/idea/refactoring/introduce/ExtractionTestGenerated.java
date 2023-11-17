@@ -120,6 +120,21 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
             public void testOuterItInsideNestedLamba() throws Exception {
                 runTest("testData/refactoring/introduceVariable/extractToScope/outerItInsideNestedLamba.kt");
             }
+
+            @TestMetadata("parameterInsideNestedLamba.kt")
+            public void testParameterInsideNestedLamba() throws Exception {
+                runTest("testData/refactoring/introduceVariable/extractToScope/parameterInsideNestedLamba.kt");
+            }
+
+            @TestMetadata("unresolvedInsideNestedLamba.kt")
+            public void testUnresolvedInsideNestedLamba() throws Exception {
+                runTest("testData/refactoring/introduceVariable/extractToScope/unresolvedInsideNestedLamba.kt");
+            }
+
+            @TestMetadata("variableInsideNestedLambda.kt")
+            public void testVariableInsideNestedLambda() throws Exception {
+                runTest("testData/refactoring/introduceVariable/extractToScope/variableInsideNestedLambda.kt");
+            }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)

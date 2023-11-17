@@ -11,12 +11,14 @@ import com.intellij.openapi.util.Key
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.SlowOperations
-import com.intellij.util.SmartList
 import com.intellij.util.application
 import com.intellij.util.containers.addIfNotNull
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.components.KtDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
+import org.jetbrains.kotlin.analysis.api.symbols.KtAnonymousFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KtSymbolOrigin
+import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.analyzeInModalWindow
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinDeclarationNameValidator
@@ -37,6 +39,7 @@ import org.jetbrains.kotlin.idea.refactoring.introduce.KotlinIntroduceVariableHe
 import org.jetbrains.kotlin.idea.refactoring.introduce.findExpressionByCopyableDataAndClearIt
 import org.jetbrains.kotlin.idea.refactoring.introduce.mustBeParenthesizedInInitializerPosition
 import org.jetbrains.kotlin.idea.refactoring.introduce.removeTemplateEntryBracesIfPossible
+import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.application.executeCommand
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
@@ -228,8 +231,7 @@ object K2IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
                         val sibling = PsiTreeUtil.skipSiblingsBackward(expression, PsiWhiteSpace::class.java)
                         if (sibling == property) {
                             expression.parent.deleteChildRange(property.nextSibling, expression)
-                        }
-                        else {
+                        } else {
                             expression.delete()
                         }
                     }
@@ -534,26 +536,28 @@ object K2IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
         return (diagnostics.any { diagnostic -> diagnostic is KtFirDiagnostic.NewInferenceNoInformationForParameter })
     }
 
-    override fun KtExpression.getCandidateContainers(): List<Containers> {
-        val firstContainer = getContainer() ?: return emptyList()
+    override fun filterContainersWithContainedLambdasByAnalyze(
+        containersWithContainedLambdas: Sequence<ContainerWithContained>,
+        physicalExpression: KtExpression,
+        referencesFromExpressionToExtract: List<KtReferenceExpression>,
+    ): Sequence<ContainerWithContained> {
+        return analyzeInModalWindow(physicalExpression, KotlinBundle.message("find.usages.prepare.dialog.progress")) {
+            val psiToCheck = referencesFromExpressionToExtract.mapNotNull { reference ->
+                // in case of an unresolved reference consider all containers applicable
+                val symbol = reference.mainReference.resolveToSymbol() ?: return@mapNotNull null
 
-        val containers = SmartList(firstContainer)
+                if (symbol.origin == KtSymbolOrigin.SOURCE) {
+                    symbol.psi
+                } else if (symbol is KtValueParameterSymbol && symbol.isImplicitLambdaParameter) {
+                    (symbol.getContainingSymbol() as? KtAnonymousFunctionSymbol)?.psi as? KtFunctionLiteral
+                } else null
+            }
 
-        if (!firstContainer.isFunExpressionOrLambdaBody()) return listOf(Containers(firstContainer, firstContainer))
-
-        val lambdasAndContainers = ArrayList<Pair<KtExpression, KtElement>>().apply {
-            var container = firstContainer
-            do {
-                var lambda: KtExpression = container.getNonStrictParentOfType<KtFunction>()!!
-                if (lambda is KtFunctionLiteral) {
-                    lambda = lambda.parent as? KtLambdaExpression ?: return@apply
-                }
-                container = lambda.getContainer() ?: return@apply
-                add(lambda to container)
-            } while (container.isFunExpressionOrLambdaBody())
+            containersWithContainedLambdas.takeWhile { (container, contained) ->
+                // `contained` is among parents of expression to extract;
+                // if reference is resolved and its psi is not inside `contained` then it will be accessible next to `contained`
+                psiToCheck.all { psi -> !psi.isInsideOf(listOf(contained)) }
+            }
         }
-
-        lambdasAndContainers.mapTo(containers) { it.second }
-        return containers.map { Containers(it, it) } // TODO: fix occurence container (currently it is not used in K2-implementation)
     }
 }
