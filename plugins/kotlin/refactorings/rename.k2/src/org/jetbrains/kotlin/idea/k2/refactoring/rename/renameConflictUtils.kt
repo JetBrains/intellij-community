@@ -20,6 +20,8 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassifierSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtDeclarationSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtNamedClassOrObjectSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KtReceiverParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtErrorType
 import org.jetbrains.kotlin.idea.base.psi.copied
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -107,7 +109,7 @@ fun checkCallableShadowing(
     newUsages: MutableList<UsageInfo>
 ) {
     val psiFactory = KtPsiFactory(declaration.project)
-    val externalProperties = mutableSetOf<KtProperty>()
+    val externalProperties = mutableSetOf<KtCallableDeclaration>()
     val usageIterator = originalUsages.listIterator()
     while (usageIterator.hasNext()) {
 
@@ -125,11 +127,10 @@ fun checkCallableShadowing(
         if (referenceExpression != null) {
             analyze(codeFragment) {
                 val newDeclaration = referenceExpression.mainReference?.resolve() as? KtNamedDeclaration
-                if (newDeclaration != null && declaration is KtParameter && !declaration.hasValOrVar()) {
-                    if (newDeclaration is KtProperty) {
-                        externalProperties.add(newDeclaration)
-                    }
-                } else if (newDeclaration != null && !PsiTreeUtil.isAncestor(newDeclaration, declaration, true)) {
+                if ((newDeclaration is KtProperty || newDeclaration is KtParameter && newDeclaration.hasValOrVar()) && declaration is KtParameter) {
+                    externalProperties.add(newDeclaration as KtCallableDeclaration)
+                }
+                if (newDeclaration != null && (declaration !is KtParameter || declaration.hasValOrVar()) && !PsiTreeUtil.isAncestor(newDeclaration, declaration, true)) {
                     val qualifiedExpression = createQualifiedExpression(refElement, newName)
                     if (qualifiedExpression != null) {
                         usageIterator.set(UsageInfoWithReplacement(refElement, declaration, qualifiedExpression))
@@ -189,7 +190,11 @@ private fun createQualifiedExpression(callExpression: KtExpression, newName: Str
             }
             else if (symbol is KtClassifierSymbol && symbol !is KtAnonymousObjectSymbol) {
                 "this@" + symbol.name!!.asString()
-            } else {
+            }
+            else if (symbol is KtReceiverParameterSymbol && symbol.owningCallableSymbol is KtNamedSymbol) {
+                receiver.type.expandedClassSymbol?.name?.let { "this@$it" } ?: "this"
+            }
+            else {
                 "this"
             }
         } else if (receiver == null) {
