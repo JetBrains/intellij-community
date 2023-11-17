@@ -8,12 +8,14 @@ import java.awt.Rectangle
 import java.awt.Shape
 import javax.swing.text.AttributeSet
 import javax.swing.text.Element
+import javax.swing.text.TabExpander
 import javax.swing.text.View
 import javax.swing.text.html.CSS
 import javax.swing.text.html.HTMLDocument
 import javax.swing.text.html.HTMLDocument.BlockElement
 import javax.swing.text.html.InlineView
 import javax.swing.text.html.StyleSheet
+import kotlin.math.max
 
 /**
  * Supports paddings and margins for inline elements, like `<span>`. Due to limitations of [HTMLDocument],
@@ -23,7 +25,7 @@ class InlineViewEx(elem: Element) : InlineView(elem) {
 
   private lateinit var padding: JBInsets
   private lateinit var margin: JBInsets
-
+  private lateinit var insets: JBInsets
 
   override fun setPropertiesFromAttributes() {
     super.setPropertiesFromAttributes()
@@ -55,6 +57,13 @@ class InlineViewEx(elem: Element) : InlineView(elem) {
       margin.bottom,
       if (endView) margin.right else 0,
     )
+
+    insets = JBInsets(
+      padding.top + margin.top,
+      padding.left + margin.left,
+      padding.bottom + margin.bottom,
+      padding.right + margin.right,
+    )
   }
 
   private val Element.padding: JBInsets
@@ -83,26 +92,37 @@ class InlineViewEx(elem: Element) : InlineView(elem) {
     cssLength.invoke(css, this, attribute, styleSheet) as Float
 
   override fun getPartialSpan(p0: Int, p1: Int): Float {
-    val offset = when {
-      p0 == startOffset -> padding.left + margin.left
-      p1 == endOffset -> padding.right + margin.right
-      else -> 0
+    var offset = 0
+    if (p0 == startOffset && p0 != p1) {
+      offset += insets.left
+    }
+    if (p1 == endOffset && p0 != p1) {
+      offset += insets.right
     }
     return offset + super.getPartialSpan(p0, p1)
   }
 
   override fun getPreferredSpan(axis: Int): Float =
     super.getPreferredSpan(axis) + when (axis) {
-      View.X_AXIS -> padding.width() + margin.width()
-      View.Y_AXIS -> padding.height() + margin.height()
+      View.X_AXIS -> insets.width()
+      View.Y_AXIS -> insets.height()
       else -> throw IllegalArgumentException("Invalid axis: $axis")
     }
 
-  override fun getMinimumSpan(axis: Int): Float =
-    if (axis == Y_AXIS)
-      super.getMinimumSpan(axis) + padding.height() + margin.height()
-    else
-      super.getMinimumSpan(axis)
+  override fun getTabbedSpan(x: Float, e: TabExpander?): Float =
+    super.getTabbedSpan(x, e) + insets.width()
+
+  override fun getBreakWeight(axis: Int, pos: Float, len: Float): Int =
+    super.getBreakWeight(axis, adjustedBreakPos(axis, pos), adjustedBreakLen(axis, len))
+
+  override fun breakView(axis: Int, offset: Int, pos: Float, len: Float): View =
+    super.breakView(axis, offset, adjustedBreakPos(axis, pos), adjustedBreakLen(axis, len))
+
+  private fun adjustedBreakPos(axis: Int, pos: Float): Float =
+    max(pos - if (axis == View.X_AXIS) insets.left else insets.top, 0f)
+
+  private fun adjustedBreakLen(axis: Int, pos: Float): Float =
+    max(pos - if (axis == View.X_AXIS) insets.width() else insets.height(), 0f)
 
   override fun paint(g: Graphics, a: Shape) {
     val alloc = if (a is Rectangle) a else a.bounds
@@ -136,7 +156,7 @@ class InlineViewEx(elem: Element) : InlineView(elem) {
         sub -> if (h > 0) (h - (d + a / 2)) / h else 0f
         else -> if (h > 0) (h - d) / h else 0f
       }
-      return (padding.top + margin.top + (contentsAlign * h)) / (padding.height() + margin.height() + h)
+      return (insets.top + (contentsAlign * h)) / (insets.height() + h)
     }
     return super.getAlignment(axis)
   }
