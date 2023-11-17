@@ -169,6 +169,83 @@ class TestCase(unittest.TestCase):
         finally:
             SetupHolder.setup = original
 
+    def test_monkey_patch_x_interpreter_arg(self):
+        original = SetupHolder.setup
+        from _pydevd_bundle.pydevd_command_line_handling import get_pydevd_file
+
+        try:
+            SetupHolder.setup = {'client': '127.0.0.1', 'port': '0'}
+            check = ['C:\\bin\\python.exe', '-X', 'pycache_prefix=C:\\temp', '-u',
+                     'target.py', '-c', '-another_arg']
+            self.assertEqual(pydev_monkey.patch_args(check), [
+                'C:\\bin\\python.exe',
+                '-X',
+                'pycache_prefix=C:\\temp',
+                '-u',
+                get_pydevd_file(),
+                '--port',
+                '0',
+                '--client',
+                '127.0.0.1',
+                '--file',
+                'target.py',
+                '-c',
+                '-another_arg'
+            ])
+        finally:
+            SetupHolder.setup = original
+
+    def test_monkey_patch_x_program_arg(self):
+        original = SetupHolder.setup
+        from _pydevd_bundle.pydevd_command_line_handling import get_pydevd_file
+
+        try:
+            SetupHolder.setup = {'client': '127.0.0.1', 'port': '0'}
+            check = ['C:\\bin\\python.exe', '-u', 'target.py', '-c', '-X', 'foo=bar',
+                     '-another_arg']
+            self.assertEqual(pydev_monkey.patch_args(check), [
+                'C:\\bin\\python.exe',
+                '-u',
+                get_pydevd_file(),
+                '--port',
+                '0',
+                '--client',
+                '127.0.0.1',
+                '--file',
+                'target.py',
+                '-c',
+                '-X',
+                'foo=bar',
+                '-another_arg'
+            ])
+        finally:
+            SetupHolder.setup = original
+
+    def test_monkey_patch_b_interpreter_arg(self):
+        original = SetupHolder.setup
+        from _pydevd_bundle.pydevd_command_line_handling import get_pydevd_file
+
+        try:
+            SetupHolder.setup = {'client': '127.0.0.1', 'port': '0'}
+            check = ['C:\\bin\\python.exe', '-B', '-u', 'target.py', '-c',
+                     '-another_arg']
+            self.assertEqual(pydev_monkey.patch_args(check), [
+                'C:\\bin\\python.exe',
+                '-B',
+                '-u',
+                get_pydevd_file(),
+                '--port',
+                '0',
+                '--client',
+                '127.0.0.1',
+                '--file',
+                'target.py',
+                '-c',
+                '-another_arg'
+            ])
+        finally:
+            SetupHolder.setup = original
+
 
 if __name__ == '__main__':
     unittest.main()
