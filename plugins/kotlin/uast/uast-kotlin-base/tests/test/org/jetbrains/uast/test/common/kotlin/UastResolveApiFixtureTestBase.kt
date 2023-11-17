@@ -1267,21 +1267,21 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
         val resolvedElements = mutableMapOf<UElement, PsiElement>()
 
         override fun visitSimpleNameReferenceExpression(node: USimpleNameReferenceExpression): Boolean {
-            val name = node.resolvedName ?: return false
+            val name = node.resolvedName ?: return super.visitSimpleNameReferenceExpression(node)
             if (!nameFilter.invoke(name)) {
-                return false
+                return super.visitSimpleNameReferenceExpression(node)
             }
             node.resolve()?.let { resolvedElements[node] = it }
-            return true
+            return super.visitSimpleNameReferenceExpression(node)
         }
 
         override fun visitCallExpression(node: UCallExpression): Boolean {
-            val name = node.methodName ?: return false
+            val name = node.methodName ?: return super.visitCallExpression(node)
             if (!nameFilter.invoke(name)) {
-                return false
+                return super.visitCallExpression(node)
             }
             node.resolve()?.let { resolvedElements[node] = it }
-            return true
+            return super.visitCallExpression(node)
         }
     }
 
