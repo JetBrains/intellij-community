@@ -976,7 +976,8 @@ public final class UIUtil {
   }
 
   /**
-   * @deprecated Do not use it. Use {@link JBColor}.
+   * @deprecated Do not use it. Use {@link JBColor#isBright()} to detect if current LaF theme is dark or bright.
+   * See also {@link com.intellij.openapi.editor.colors.EditorColorsManager#isDarkEditor()}
    */
   @Deprecated(forRemoval = true)
   public static boolean isUnderDarcula() {
