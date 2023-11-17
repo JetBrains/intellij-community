@@ -209,30 +209,43 @@ public class SimplifyBooleanExpressionFix extends PsiUpdateModCommandAction<PsiE
   private static void processPatternVariables(@NotNull PsiExpression subExpression) {
     List<PsiPatternVariable> variables = JavaPsiPatternUtil.getExposedPatternVariables(subExpression);
     for (PsiPatternVariable variable : variables) {
-      List<PsiReferenceExpression> refs = VariableAccessUtils.getVariableReferences(variable, variable.getDeclarationScope());
-      if (!refs.isEmpty()) {
-        PsiInstanceOfExpression target = newTargetForPatternVariable(subExpression, variable);
-        if (target != null) {
-          PsiInstanceOfExpression updated = (PsiInstanceOfExpression)JavaPsiFacade.getElementFactory(subExpression.getProject())
-            .createExpressionFromText("x instanceof T t", target);
-          updated.getOperand().replace(target.getOperand());
-          PsiTypeTestPattern newPattern = (PsiTypeTestPattern)Objects.requireNonNull(updated.getPattern());
-          PsiTypeElement checkType = target.getCheckType();
-          if (checkType == null) continue;
-          Objects.requireNonNull(newPattern.getCheckType()).replace(checkType);
-          PsiPatternVariable newVariable = (PsiPatternVariable)Objects.requireNonNull(newPattern.getPatternVariable()).replace(variable);
-          variable.delete();
-          String name = new VariableNameGenerator(target, VariableKind.LOCAL_VARIABLE).byName(variable.getName())
-            .generate(true);
-          if (!name.equals(newVariable.getName())) {
-            newVariable.setName(name);
-            for (PsiReferenceExpression ref : refs) {
-              if (ref.isValid()) {
-                ref.handleElementRename(name);
-              }
-            }
+      retargetPatternVariable(subExpression, variable);
+    }
+  }
+
+  private static void retargetPatternVariable(@NotNull PsiExpression subExpression, @NotNull PsiPatternVariable variable) {
+    List<PsiReferenceExpression> refs = VariableAccessUtils.getVariableReferences(variable, variable.getDeclarationScope());
+    if (refs.isEmpty()) return;
+    PsiInstanceOfExpression target = newTargetForPatternVariable(subExpression, variable);
+    if (target == null) return;
+    if (target.getPattern() instanceof PsiTypeTestPattern existingPattern) {
+      PsiPatternVariable existingVar = existingPattern.getPatternVariable();
+      if (existingVar != null) {
+        for (PsiReferenceExpression ref : refs) {
+          if (ref.isValid()) {
+            ref.handleElementRename(existingVar.getName());
           }
-          target.replace(updated);
+        }
+        return;
+      }
+    }
+    PsiInstanceOfExpression updated = (PsiInstanceOfExpression)JavaPsiFacade.getElementFactory(subExpression.getProject())
+      .createExpressionFromText("x instanceof T t", target);
+    updated.getOperand().replace(target.getOperand());
+    PsiTypeTestPattern newPattern = (PsiTypeTestPattern)Objects.requireNonNull(updated.getPattern());
+    PsiTypeElement checkType = target.getCheckType();
+    if (checkType == null) return;
+    Objects.requireNonNull(newPattern.getCheckType()).replace(checkType);
+    PsiPatternVariable newVariable = (PsiPatternVariable)Objects.requireNonNull(newPattern.getPatternVariable()).replace(variable);
+    variable.delete();
+    target.replace(updated);
+    String name = new VariableNameGenerator(target, VariableKind.LOCAL_VARIABLE).byName(variable.getName())
+      .generate(true);
+    if (!name.equals(newVariable.getName())) {
+      newVariable.setName(name);
+      for (PsiReferenceExpression ref : refs) {
+        if (ref.isValid()) {
+          ref.handleElementRename(name);
         }
       }
     }
