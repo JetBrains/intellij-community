@@ -188,6 +188,10 @@ public final class IntentionActionWithTextCaching
     return myProblemRange == null ? -1 : myProblemRange.getStartOffset();
   }
 
+  /**
+   * @return <code>null</code> if the action belong to the problem at the caret offset
+   */
+  @Nullable
   public TextRange getProblemRange() {
     return myProblemRange;
   }
