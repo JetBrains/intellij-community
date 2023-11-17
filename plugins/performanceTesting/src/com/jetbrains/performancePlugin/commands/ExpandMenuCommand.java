@@ -10,13 +10,13 @@ import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.ui.playback.PlaybackContext;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.platform.diagnostic.telemetry.helpers.TraceUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.JBTreeTraverser;
 import com.jetbrains.performancePlugin.PerformanceTestSpan;
 import com.jetbrains.performancePlugin.utils.AbstractCallbackBasedCommand;
 import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.context.Context;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -34,17 +34,17 @@ abstract public class ExpandMenuCommand extends AbstractCallbackBasedCommand {
     Component focusedComponent = IdeFocusManager.findInstance().getFocusOwner(); // real focused component (editor/project view/..)
     DataContext dataContext = DataManager.getInstance().getDataContext(focusedComponent);
     ActionGroup mainMenu = (ActionGroup)actionManager.getAction(getGroupId());
-    TraceUtil.runWithSpanThrows(PerformanceTestSpan.TRACER, getSpanName(), totalSpan -> {
-      JBTreeTraverser.<AnAction>from(action -> {
-        totalSpan.addEvent(action.getClass().getSimpleName());
-        if (!(action instanceof ActionGroup group)) return JBIterable.empty();
-        String groupSpanName = ObjectUtils.coalesce(actionManager.getId(group), group.getTemplateText(), group.getClass().getName());
-        Span groupSpan = PerformanceTestSpan.TRACER.spanBuilder(groupSpanName).startSpan();
-        List<AnAction> actions = Utils.expandActionGroup(group, new PresentationFactory(), dataContext, getPlace());
-        groupSpan.end();
-        return actions;
-      }).withRoots(mainMenu.getChildren(null)).traverse().size();
-    });
+    Span totalSpan = PerformanceTestSpan.TRACER.spanBuilder(getSpanName()).startSpan();
+    JBTreeTraverser.<AnAction>from(action -> {
+      totalSpan.addEvent(action.getClass().getSimpleName());
+      if (!(action instanceof ActionGroup group)) return JBIterable.empty();
+      String groupSpanName = ObjectUtils.coalesce(actionManager.getId(group), group.getTemplateText(), group.getClass().getName());
+      Span groupSpan = PerformanceTestSpan.TRACER.spanBuilder(groupSpanName).setParent(Context.current().with(totalSpan)).startSpan();
+      List<AnAction> actions = Utils.expandActionGroup(group, new PresentationFactory(), dataContext, getPlace());
+      groupSpan.end();
+      return actions;
+    }).withRoots(mainMenu.getChildren(null)).traverse().size();
+    totalSpan.end();
     callback.setDone();
   }
 
