@@ -1096,4 +1096,115 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
       "for (Rec(): foo)",
       "for (Rec() : foo)");
   }
+
+  public void testSemicolOnNewLineInLongCallChainWithWrapping() {
+    getSettings().METHOD_CALL_CHAIN_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
+    getJavaSettings().WRAP_SEMICOLON_AFTER_CALL_CHAIN = true;
+
+    doTextTest("""
+                 class Foo {
+                     int x = new Summator().reallyLongLongLongAddOperation(1).reallyLongLongLongAddOperation(1).get();
+                                  
+                     void foo() {
+                         new Summator().reallyLongLongLongAddOperation(1).reallyLongLongLongAddOperation(1).get();
+                                  
+                         int i = new Summator().reallyLongLongLongAddOperation(1).reallyLongLongLongAddOperation(1).get();
+                     }
+                 }
+                 """,
+               """
+                 class Foo {
+                     int x = new Summator().reallyLongLongLongAddOperation(1)
+                             .reallyLongLongLongAddOperation(1)
+                             .get()
+                             ;
+                                  
+                     void foo() {
+                         new Summator().reallyLongLongLongAddOperation(1)
+                                 .reallyLongLongLongAddOperation(1)
+                                 .get()
+                         ;
+                                  
+                         int i = new Summator().reallyLongLongLongAddOperation(1)
+                                 .reallyLongLongLongAddOperation(1)
+                                 .get()
+                                 ;
+                     }
+                 }
+                 """);
+
+  }
+
+  public void testSemicolonOnNewLineInLongCallChainNoWrapping() {
+    getSettings().METHOD_CALL_CHAIN_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP;
+    getJavaSettings().WRAP_SEMICOLON_AFTER_CALL_CHAIN = true;
+    doTextTest("""
+                 class Foo {
+                     int x = new Summator().reallyLongLongLongAddOperation(1).reallyLongLongLongAddOperation(1).get();
+                                  
+                     void foo() {
+                         new Summator().reallyLongLongLongAddOperation(1).reallyLongLongLongAddOperation(1).get();
+                                  
+                         int i = new Summator().reallyLongLongLongAddOperation(1).reallyLongLongLongAddOperation(1).get();
+                     }
+                 }
+                 """,
+               """
+                 class Foo {
+                     int x = new Summator().reallyLongLongLongAddOperation(1).reallyLongLongLongAddOperation(1).get();
+                                  
+                     void foo() {
+                         new Summator().reallyLongLongLongAddOperation(1).reallyLongLongLongAddOperation(1).get();
+                                  
+                         int i = new Summator().reallyLongLongLongAddOperation(1).reallyLongLongLongAddOperation(1).get();
+                     }
+                 }
+                 """);
+  }
+
+  public void testSemicolonOnNewLineInShortCallChainWithWrapping() {
+    getSettings().METHOD_CALL_CHAIN_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
+    getJavaSettings().WRAP_SEMICOLON_AFTER_CALL_CHAIN = true;
+    doTextTest("""
+                 class Foo {
+                     int x = new Summator().reallyLongLongLongAddOperation(1).get();
+                                  
+                     void foo() {
+                         new Summator().reallyLongLongLongAddOperation(1).get();
+                         
+                         int i = new Summator().reallyLongLongLongAddOperation(1).get();
+                     }
+                 }
+                 """,
+               """
+                 class Foo {
+                     int x = new Summator().reallyLongLongLongAddOperation(1)
+                             .get();
+                                  
+                     void foo() {
+                         new Summator().reallyLongLongLongAddOperation(1)
+                                 .get();
+                                  
+                         int i = new Summator().reallyLongLongLongAddOperation(1)
+                                 .get();
+                     }
+                 }
+                 """);
+  }
+
+  public void testSemicolonOnNewLineInLongCallChainWithWrappingInForStatement() {
+    getSettings().METHOD_CALL_CHAIN_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
+    getJavaSettings().WRAP_SEMICOLON_AFTER_CALL_CHAIN = true;
+    doMethodTest("""
+                   for (int i = new Summator().add(1).add(1).get(); i < new Summator().add(1).add(10).get(); ++i) {}
+                   """,
+                 """
+                 for (int i = new Summator().add(1)
+                         .add(1)
+                         .get(); i < new Summator().add(1)
+                         .add(10)
+                         .get(); ++i) {
+                 }
+                   """);
+  }
 }
