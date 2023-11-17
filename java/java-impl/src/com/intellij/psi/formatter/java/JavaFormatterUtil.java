@@ -23,6 +23,8 @@ import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 import static com.intellij.psi.impl.PsiImplUtil.isTypeAnnotation;
 
 public final class JavaFormatterUtil {
@@ -513,5 +515,28 @@ public final class JavaFormatterUtil {
     }
 
     return CommonCodeStyleSettings.DO_NOT_WRAP;
+  }
+
+  /**
+   * Traverses the children of the node and collects nodes with type method calls or reference expressions to the list
+   * @param nodes List in which the method add nodes
+   * @param node Node to traverse
+   *
+   */
+  public static void collectCallExpressionNodes(@NotNull List<? super ASTNode> nodes, @NotNull ASTNode node) {
+    ASTNode child = node.getFirstChildNode();
+    while (child != null) {
+      if (!FormatterUtil.containsWhiteSpacesOnly(child)) {
+        IElementType type = child.getElementType();
+        if (type == JavaElementType.METHOD_CALL_EXPRESSION ||
+            type == JavaElementType.REFERENCE_EXPRESSION) {
+          collectCallExpressionNodes(nodes, child);
+        }
+        else {
+          nodes.add(child);
+        }
+      }
+      child = child.getTreeNext();
+    }
   }
 }

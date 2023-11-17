@@ -823,29 +823,12 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
   @NotNull
   private Block createMethodCallExpressionBlock(@NotNull ASTNode node, Wrap blockWrap, Alignment alignment, Indent indent) {
     final ArrayList<ASTNode> nodes = new ArrayList<>();
-    collectNodes(nodes, node);
+    JavaFormatterUtil.collectCallExpressionNodes(nodes, node);
     if (Registry.is(LegacyChainedMethodCallsBlockBuilder.COMPATIBILITY_KEY)) {
       return
         new LegacyChainedMethodCallsBlockBuilder(alignment, blockWrap, indent, mySettings, myJavaSettings, myFormattingMode).build(nodes);
     }
     return new ChainMethodCallsBlockBuilder(alignment, blockWrap, indent, mySettings, myJavaSettings, myFormattingMode).build(nodes);
-  }
-
-  private static void collectNodes(@NotNull List<? super ASTNode> nodes, @NotNull ASTNode node) {
-    ASTNode child = node.getFirstChildNode();
-    while (child != null) {
-      if (!FormatterUtil.containsWhiteSpacesOnly(child)) {
-        IElementType type = child.getElementType();
-        if (type == JavaElementType.METHOD_CALL_EXPRESSION ||
-            type == JavaElementType.REFERENCE_EXPRESSION) {
-          collectNodes(nodes, child);
-        }
-        else {
-          nodes.add(child);
-        }
-      }
-      child = child.getTreeNext();
-    }
   }
 
   private boolean shouldAlignChild(@NotNull final ASTNode child) {
