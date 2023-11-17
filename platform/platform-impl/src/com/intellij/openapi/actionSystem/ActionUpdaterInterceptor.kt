@@ -5,6 +5,7 @@ import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.actionSystem.impl.PresentationFactory
 import com.intellij.openapi.actionSystem.impl.SuspendingUpdateSession
 import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
 
@@ -38,9 +39,14 @@ interface ActionUpdaterInterceptor {
                                                 original: suspend (List<AnAction>) -> R): R? =
     original(emptyList())
 
+  fun treatDefaultActionGroupAsDynamic(): Boolean = false
 
   companion object {
     val isDefaultImpl = PluginManagerCore.getPlugin(PluginId.getId("com.intellij.jetbrains.rd.client")) == null
+
+    fun treatDefaultActionGroupAsDynamic(): Boolean =
+      if (isDefaultImpl) false
+      else serviceIfCreated<ActionUpdaterInterceptor>()?.treatDefaultActionGroupAsDynamic() == true
 
     suspend inline fun expandActionGroup(presentationFactory: PresentationFactory,
                                          context: DataContext,
