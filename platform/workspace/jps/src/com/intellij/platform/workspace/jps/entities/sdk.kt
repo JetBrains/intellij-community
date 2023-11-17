@@ -12,7 +12,7 @@ import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import org.jetbrains.annotations.NonNls
 import java.io.Serializable
 
-interface SdkMainEntity: WorkspaceEntityWithSymbolicId {
+interface SdkEntity: WorkspaceEntityWithSymbolicId {
   val name: String
   val type: String
   val version: String?
@@ -25,7 +25,7 @@ interface SdkMainEntity: WorkspaceEntityWithSymbolicId {
 
   //region generated code
   @GeneratedCodeApiVersion(2)
-  interface Builder : SdkMainEntity, WorkspaceEntity.Builder<SdkMainEntity> {
+  interface Builder : SdkEntity, WorkspaceEntity.Builder<SdkEntity> {
     override var entitySource: EntitySource
     override var name: String
     override var type: String
@@ -35,7 +35,7 @@ interface SdkMainEntity: WorkspaceEntityWithSymbolicId {
     override var additionalData: String
   }
 
-  companion object : EntityType<SdkMainEntity, Builder>() {
+  companion object : EntityType<SdkEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
@@ -45,7 +45,7 @@ interface SdkMainEntity: WorkspaceEntityWithSymbolicId {
                         roots: List<SdkRoot>,
                         additionalData: String,
                         entitySource: EntitySource,
-                        init: (Builder.() -> Unit)? = null): SdkMainEntity {
+                        init: (Builder.() -> Unit)? = null): SdkEntity {
       val builder = builder()
       builder.name = name
       builder.type = type
@@ -61,8 +61,8 @@ interface SdkMainEntity: WorkspaceEntityWithSymbolicId {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: SdkMainEntity, modification: SdkMainEntity.Builder.() -> Unit): SdkMainEntity = modifyEntity(
-  SdkMainEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(entity: SdkEntity, modification: SdkEntity.Builder.() -> Unit): SdkEntity = modifyEntity(
+  SdkEntity.Builder::class.java, entity, modification)
 //endregion
 
 

@@ -52,7 +52,7 @@ class JpsGlobalEntitiesSyncTest {
                               parentDisposable = disposableRule.disposable, ) { _, entitySource ->
       val sdkInfos = mutableListOf(SdkTestInfo("corretto-20", "Amazon Corretto version 20.0.2", "JavaSDK"),
                             SdkTestInfo("jbr-17", "java version \"17.0.7\"", "JavaSDK"))
-      val sdkEntities = GlobalWorkspaceModel.getInstance().currentSnapshot.entities(SdkMainEntity::class.java).toList()
+      val sdkEntities = GlobalWorkspaceModel.getInstance().currentSnapshot.entities(SdkEntity::class.java).toList()
       UsefulTestCase.assertSameElements(sdkInfos, sdkEntities.map { SdkTestInfo(it.name, it.version!!, it.type) })
 
       val loadedProjects = listOf(loadProject(), loadProject())
@@ -62,7 +62,7 @@ class JpsGlobalEntitiesSyncTest {
       ApplicationManager.getApplication().invokeAndWait {
         runWriteAction {
           GlobalWorkspaceModel.getInstance().updateModel("Test update") { builder ->
-            val sdkEntity = builder.entities(SdkMainEntity::class.java).first { it.name == "corretto-20" }
+            val sdkEntity = builder.entities(SdkEntity::class.java).first { it.name == "corretto-20" }
             val sdkNameToRemove = sdkEntity.name
             builder.removeEntity(sdkEntity)
             sdkInfos.removeIf { it.name == sdkNameToRemove }
@@ -77,7 +77,7 @@ class JpsGlobalEntitiesSyncTest {
       ApplicationManager.getApplication().invokeAndWait {
         runWriteAction {
           WorkspaceModel.getInstance(project).updateProjectModel("Test update") { builder ->
-            val sdkEntity = builder.entities(SdkMainEntity::class.java).first { it.name == "jbr-17" }
+            val sdkEntity = builder.entities(SdkEntity::class.java).first { it.name == "jbr-17" }
             val sdkNameToRemove = sdkEntity.name
             builder.removeEntity(sdkEntity)
             sdkInfos.removeIf { it.name == sdkNameToRemove }
@@ -91,9 +91,9 @@ class JpsGlobalEntitiesSyncTest {
         runWriteAction {
           val virtualFileManager = VirtualFileUrlManager.getInstance(project)
           WorkspaceModel.getInstance(project).updateProjectModel("Test update") { builder ->
-            val projectSdkEntity = SdkMainEntity("oracle-1.8", "JavaSDK", virtualFileManager.fromUrl("/Library/Java/JavaVirtualMachines/oracle-1.8/Contents/Home"),
-                                                 listOf(SdkRoot(virtualFileManager.fromUrl("/Library/Java/JavaVirtualMachines/oracle-1.8/Contents/Home!/java.base"), SdkRootTypeId("sourcePath"))),
-                                                 "", entitySource) {
+            val projectSdkEntity = SdkEntity("oracle-1.8", "JavaSDK", virtualFileManager.fromUrl("/Library/Java/JavaVirtualMachines/oracle-1.8/Contents/Home"),
+                                             listOf(SdkRoot(virtualFileManager.fromUrl("/Library/Java/JavaVirtualMachines/oracle-1.8/Contents/Home!/java.base"), SdkRootTypeId("sourcePath"))),
+                                             "", entitySource) {
               version = "1.8"
             }
             builder.addEntity(projectSdkEntity)
@@ -115,14 +115,14 @@ class JpsGlobalEntitiesSyncTest {
     val globalWorkspaceModel = GlobalWorkspaceModel.getInstance()
     val globalVirtualFileUrlManager = VirtualFileUrlManager.getGlobalInstance()
 
-    val sdkEntities = globalWorkspaceModel.currentSnapshot.entities(SdkMainEntity::class.java).toList()
+    val sdkEntities = globalWorkspaceModel.currentSnapshot.entities(SdkEntity::class.java).toList()
     UsefulTestCase.assertSameElements(sdkInfos, sdkEntities.map { SdkTestInfo(it.name, it.version!!, it.type) })
 
     loadedProjects.forEach { loadedProject ->
       val projectWorkspaceModel = WorkspaceModel.getInstance(loadedProject)
       val projectVirtualFileUrlManager = VirtualFileUrlManager.getInstance(loadedProject)
       projectWorkspaceModel as WorkspaceModelImpl
-      val projectSdkEntities = projectWorkspaceModel.currentSnapshot.entities(SdkMainEntity::class.java).toList()
+      val projectSdkEntities = projectWorkspaceModel.currentSnapshot.entities(SdkEntity::class.java).toList()
       UsefulTestCase.assertSameElements(sdkInfos, projectSdkEntities.map { SdkTestInfo(it.name, it.version!!, it.type) })
 
       // Check VirtualFileUrls are from different managers but same url

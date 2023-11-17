@@ -7,7 +7,7 @@ import com.intellij.openapi.projectRoots.SdkTypeId
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.util.Comparing
 import com.intellij.platform.workspace.jps.JpsGlobalFileEntitySource
-import com.intellij.platform.workspace.jps.entities.SdkMainEntity
+import com.intellij.platform.workspace.jps.entities.SdkEntity
 import com.intellij.platform.workspace.jps.entities.SdkRoot
 import com.intellij.platform.workspace.jps.entities.SdkRootTypeId
 import com.intellij.platform.workspace.jps.entities.modifyEntity
@@ -41,7 +41,7 @@ class SdkTableBridgeImpl: SdkTableImplementationDelegate {
   override fun findSdkByName(name: String): Sdk? {
     val globalWorkspaceModel = GlobalWorkspaceModel.getInstance()
     val currentSnapshot = globalWorkspaceModel.currentSnapshot
-    val sdkEntity = currentSnapshot.entities(SdkMainEntity::class.java)
+    val sdkEntity = currentSnapshot.entities(SdkEntity::class.java)
       .firstOrNull { Comparing.strEqual(name, it.name) } ?: return null
     return currentSnapshot.sdkMap.getDataByEntity(sdkEntity)
   }
@@ -49,7 +49,7 @@ class SdkTableBridgeImpl: SdkTableImplementationDelegate {
   override fun getAllSdks(): List<Sdk> {
     val globalWorkspaceModel = GlobalWorkspaceModel.getInstance()
     val currentSnapshot = globalWorkspaceModel.currentSnapshot
-    return currentSnapshot.entities(SdkMainEntity::class.java)
+    return currentSnapshot.entities(SdkEntity::class.java)
       .mapNotNull { currentSnapshot.sdkMap.getDataByEntity(it) }
       .toList()
   }
@@ -80,7 +80,7 @@ class SdkTableBridgeImpl: SdkTableImplementationDelegate {
     }
 
     val additionalDataAsString = sdk.getRawSdkAdditionalData()
-    val sdkEntity = SdkMainEntity(sdk.name, sdk.sdkType.name, homePathVfu, roots, additionalDataAsString, sdkEntitySource) {
+    val sdkEntity = SdkEntity(sdk.name, sdk.sdkType.name, homePathVfu, roots, additionalDataAsString, sdkEntitySource) {
       this.version = sdk.versionString
     }
     globalWorkspaceModel.updateModel("Adding SDK: ${sdk.name} ${sdk.sdkType}") {
@@ -102,14 +102,14 @@ class SdkTableBridgeImpl: SdkTableImplementationDelegate {
 
   override fun updateSdk(originalSdk: Sdk, modifiedSdk: Sdk) {
     val globalWorkspaceModel = GlobalWorkspaceModel.getInstance()
-    val sdkMainEntity = (globalWorkspaceModel.currentSnapshot.entities(SdkMainEntity::class.java)
+    val sdkEntity = (globalWorkspaceModel.currentSnapshot.entities(SdkEntity::class.java)
                            .firstOrNull { it.name == originalSdk.name && it.type == originalSdk.sdkType.name }
-                         ?: error("SDK entity for bridge `${originalSdk.name}` `${originalSdk.sdkType.name}` doesn't exist"))
+                     ?: error("SDK entity for bridge `${originalSdk.name}` `${originalSdk.sdkType.name}` doesn't exist"))
 
 
     globalWorkspaceModel.updateModel("Updating SDK ${originalSdk.name} ${originalSdk.sdkType.name}") {
       modifiedSdk as SdkBridgeImpl
-      it.modifyEntity(sdkMainEntity) {
+      it.modifyEntity(sdkEntity) {
         this.applyChangesFrom(modifiedSdk.getEntity())
       }
       (originalSdk as SdkBridgeImpl).applyChangesFrom(modifiedSdk)
@@ -133,11 +133,11 @@ class SdkTableBridgeImpl: SdkTableImplementationDelegate {
     val MutableEntityStorage.mutableSdkMap: MutableExternalEntityMapping<SdkBridgeImpl>
       get() = getMutableExternalMapping(SDK_BRIDGE_MAPPING_ID)
 
-    internal fun createEmptySdkEntity(name: String, type: String, homePath: String): SdkMainEntity.Builder {
+    internal fun createEmptySdkEntity(name: String, type: String, homePath: String): SdkEntity.Builder {
       val sdkEntitySource = createEntitySourceForSdk()
       val virtualFileUrlManager = VirtualFileUrlManager.getGlobalInstance()
       val homePathVfu = virtualFileUrlManager.fromUrl(homePath)
-      return SdkMainEntity(name, type, homePathVfu, emptyList(), "", sdkEntitySource) as SdkMainEntity.Builder
+      return SdkEntity(name, type, homePathVfu, emptyList(), "", sdkEntitySource) as SdkEntity.Builder
     }
 
     private fun createEntitySourceForSdk(): EntitySource {

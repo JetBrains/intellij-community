@@ -24,7 +24,6 @@ interface LibraryEntity : WorkspaceEntityWithSymbolicId {
 
     val roots: List<LibraryRoot>
     val excludedRoots: List<@Child ExcludeUrlEntity>
-    @Child val sdk: SdkEntity?
     @Child val libraryProperties: LibraryPropertiesEntity?
 
     override val symbolicId: LibraryId
@@ -38,7 +37,6 @@ interface LibraryEntity : WorkspaceEntityWithSymbolicId {
     override var tableId: LibraryTableId
     override var roots: MutableList<LibraryRoot>
     override var excludedRoots: List<ExcludeUrlEntity>
-    override var sdk: SdkEntity?
     override var libraryProperties: LibraryPropertiesEntity?
   }
 
@@ -109,44 +107,6 @@ interface LibraryPropertiesEntity : WorkspaceEntity {
 fun MutableEntityStorage.modifyEntity(entity: LibraryPropertiesEntity,
                                       modification: LibraryPropertiesEntity.Builder.() -> Unit): LibraryPropertiesEntity = modifyEntity(
   LibraryPropertiesEntity.Builder::class.java, entity, modification)
-//endregion
-
-/**
- * Will represent an SDK in the project configuration.
- * Currently, these entities aren't synchronized with the project model, so until IDEA-306969 is implemented, it makes no sense to use them.
- */
-interface SdkEntity : WorkspaceEntity {
-    val library: LibraryEntity
-
-    val homeUrl: VirtualFileUrl
-
-  //region generated code
-  @GeneratedCodeApiVersion(2)
-  interface Builder : SdkEntity, WorkspaceEntity.Builder<SdkEntity> {
-    override var entitySource: EntitySource
-    override var library: LibraryEntity
-    override var homeUrl: VirtualFileUrl
-  }
-
-  companion object : EntityType<SdkEntity, Builder>() {
-    @JvmOverloads
-    @JvmStatic
-    @JvmName("create")
-    operator fun invoke(homeUrl: VirtualFileUrl, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): SdkEntity {
-      val builder = builder()
-      builder.homeUrl = homeUrl
-      builder.entitySource = entitySource
-      init?.invoke(builder)
-      return builder
-    }
-  }
-  //endregion
-
-}
-
-//region generated code
-fun MutableEntityStorage.modifyEntity(entity: SdkEntity, modification: SdkEntity.Builder.() -> Unit): SdkEntity = modifyEntity(
-  SdkEntity.Builder::class.java, entity, modification)
 //endregion
 
 data class LibraryRootTypeId(val name: @NonNls String) : Serializable {

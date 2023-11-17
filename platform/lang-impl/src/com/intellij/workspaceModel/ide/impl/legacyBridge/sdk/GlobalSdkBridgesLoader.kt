@@ -8,7 +8,7 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.platform.backend.workspace.BridgeInitializer
-import com.intellij.platform.workspace.jps.entities.SdkMainEntity
+import com.intellij.platform.workspace.jps.entities.SdkEntity
 import com.intellij.platform.workspace.storage.*
 import com.intellij.workspaceModel.ide.impl.legacyBridge.sdk.SdkTableBridgeImpl.Companion.mutableSdkMap
 import com.intellij.workspaceModel.ide.impl.legacyBridge.sdk.SdkTableBridgeImpl.Companion.sdkMap
@@ -19,8 +19,8 @@ class GlobalSdkBridgeInitializer : BridgeInitializer {
 
   override fun initializeBridges(project: Project, changes: Map<Class<*>, List<EntityChange<*>>>, builder: MutableEntityStorage) {
     @Suppress("UNCHECKED_CAST")
-    val sdkChanges = (changes[SdkMainEntity::class.java] as? List<EntityChange<SdkMainEntity>>) ?: emptyList()
-    val addChanges = sdkChanges.filterIsInstance<EntityChange.Added<SdkMainEntity>>()
+    val sdkChanges = (changes[SdkEntity::class.java] as? List<EntityChange<SdkEntity>>) ?: emptyList()
+    val addChanges = sdkChanges.filterIsInstance<EntityChange.Added<SdkEntity>>()
 
     for (addChange in addChanges) {
       // Will initialize the bridge if missing
@@ -38,9 +38,9 @@ class GlobalSdkBridgesLoader: GlobalSdkTableBridge {
   override fun initializeSdkBridgesAfterLoading(mutableStorage: MutableEntityStorage,
                                                 initialEntityStorage: VersionedEntityStorage): () -> Unit {
     val sdks = mutableStorage
-      .entities(SdkMainEntity::class.java)
+      .entities(SdkEntity::class.java)
       .filter { mutableStorage.sdkMap.getDataByEntity(it) == null }
-      .map { sdkEntity -> sdkEntity to SdkBridgeImpl(sdkEntity as SdkMainEntity.Builder) }
+      .map { sdkEntity -> sdkEntity to SdkBridgeImpl(sdkEntity as SdkEntity.Builder) }
       .toList()
     thisLogger().debug("Initial load of SDKs")
 
@@ -52,8 +52,8 @@ class GlobalSdkBridgesLoader: GlobalSdkTableBridge {
 
   override fun initializeSdkBridges(changes: Map<Class<*>, List<EntityChange<*>>>, builder: MutableEntityStorage) {
     @Suppress("UNCHECKED_CAST")
-    val sdkChanges = (changes[SdkMainEntity::class.java] as? List<EntityChange<SdkMainEntity>>) ?: emptyList()
-    val addChanges = sdkChanges.filterIsInstance<EntityChange.Added<SdkMainEntity>>()
+    val sdkChanges = (changes[SdkEntity::class.java] as? List<EntityChange<SdkEntity>>) ?: emptyList()
+    val addChanges = sdkChanges.filterIsInstance<EntityChange.Added<SdkEntity>>()
 
     for (addChange in addChanges) {
       // Will initialize the bridge if missing
@@ -69,7 +69,7 @@ class GlobalSdkBridgesLoader: GlobalSdkTableBridge {
 
   override fun handleChangedEvents(event: VersionedStorageChange) {
     // Since the listener is not deprecated, it will be better to keep the order of events as remove -> replace -> add
-    val changes = event.getChanges(SdkMainEntity::class.java).orderToRemoveReplaceAdd()
+    val changes = event.getChanges(SdkEntity::class.java).orderToRemoveReplaceAdd()
     if (changes.isEmpty()) return
 
     for (change in changes) {

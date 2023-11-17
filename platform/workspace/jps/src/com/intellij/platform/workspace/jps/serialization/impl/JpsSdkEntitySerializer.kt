@@ -6,7 +6,7 @@ import com.intellij.openapi.util.InvalidDataException
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.platform.workspace.jps.JpsFileEntitySource
 import com.intellij.platform.workspace.jps.JpsGlobalFileEntitySource
-import com.intellij.platform.workspace.jps.entities.SdkMainEntity
+import com.intellij.platform.workspace.jps.entities.SdkEntity
 import com.intellij.platform.workspace.jps.entities.SdkRoot
 import com.intellij.platform.workspace.jps.entities.SdkRootTypeId
 import com.intellij.platform.workspace.storage.EntityStorage
@@ -51,7 +51,7 @@ private val ELEMENT_HOMEPATH = "homePath"
 const val ELEMENT_ADDITIONAL = "additional"
 
 
-class JpsSdkEntitySerializer(val entitySource: JpsGlobalFileEntitySource, private val sortedRootTypes: List<String>): JpsFileEntitiesSerializer<SdkMainEntity> {
+class JpsSdkEntitySerializer(val entitySource: JpsGlobalFileEntitySource, private val sortedRootTypes: List<String>): JpsFileEntitiesSerializer<SdkEntity> {
   private val LOG = logger<JpsSdkEntitySerializer>()
   private val rootTypes = ConcurrentFactoryMap.createMap<String, SdkRootTypeId> { SdkRootTypeId(it) }
 
@@ -59,8 +59,8 @@ class JpsSdkEntitySerializer(val entitySource: JpsGlobalFileEntitySource, privat
     get() = entitySource
   override val fileUrl: VirtualFileUrl
     get() = entitySource.file
-  override val mainEntityClass: Class<SdkMainEntity>
-    get() = SdkMainEntity::class.java
+  override val mainEntityClass: Class<SdkEntity>
+    get() = SdkEntity::class.java
 
 
   override fun loadEntities(reader: JpsFileContentReader, errorReporter: ErrorReporter,
@@ -82,11 +82,11 @@ class JpsSdkEntitySerializer(val entitySource: JpsGlobalFileEntitySource, privat
 
       val additionalDataElement = sdkElement.getChild(ELEMENT_ADDITIONAL)
       val additionalData = if (additionalDataElement != null) JDOMUtil.write(additionalDataElement) else ""
-      SdkMainEntity(sdkName, sdkType, homePathVfu, roots, additionalData, entitySource) {
+      SdkEntity(sdkName, sdkType, homePathVfu, roots, additionalData, entitySource) {
         this.version = sdkVersion
       }
     }
-    return LoadingResult(mapOf(SdkMainEntity::class.java to sdkEntities))
+    return LoadingResult(mapOf(SdkEntity::class.java to sdkEntities))
   }
 
   /**
@@ -121,7 +121,7 @@ class JpsSdkEntitySerializer(val entitySource: JpsGlobalFileEntitySource, privat
     newEntities.values.flatten().forEach { builder addEntity  it }
   }
 
-  override fun saveEntities(mainEntities: Collection<SdkMainEntity>, entities: Map<Class<out WorkspaceEntity>, List<WorkspaceEntity>>,
+  override fun saveEntities(mainEntities: Collection<SdkEntity>, entities: Map<Class<out WorkspaceEntity>, List<WorkspaceEntity>>,
                             storage: EntityStorage, writer: JpsFileContentWriter) {
     val componentTag = JDomSerializationUtil.createComponentElement(SDK_TABLE_COMPONENT_NAME)
     mainEntities.forEach { sdkEntity ->
@@ -132,7 +132,7 @@ class JpsSdkEntitySerializer(val entitySource: JpsGlobalFileEntitySource, privat
     writer.saveComponent(fileUrl.url, SDK_TABLE_COMPONENT_NAME, componentTag)
   }
 
-  private fun saveSdkEntity(sdkRootElement: Element, sdkEntity: SdkMainEntity) {
+  private fun saveSdkEntity(sdkRootElement: Element, sdkEntity: SdkEntity) {
     sdkRootElement.setAttribute(ELEMENT_VERSION, "2")
 
     val name = Element(ELEMENT_NAME)

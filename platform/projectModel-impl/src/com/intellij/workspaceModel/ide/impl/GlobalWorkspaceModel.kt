@@ -237,14 +237,14 @@ class GlobalWorkspaceModel : Disposable {
     }
 
     // Copying sdks
-    storage.entities(SdkMainEntity::class.java).forEach { sdkEntity ->
+    storage.entities(SdkEntity::class.java).forEach { sdkEntity ->
       if (!globalEntitiesFilter.invoke(sdkEntity.entitySource)) return@forEach
       val sdkRootsCopy = sdkEntity.roots.map { root ->
         SdkRoot(root.url.createCopyAtManager(vfuManager), root.type)
       }
 
       val entitySourceCopy = (sdkEntity.entitySource as JpsGlobalFileEntitySource).copy(vfuManager)
-      val sdkEntityCopy = SdkMainEntity(sdkEntity.name, sdkEntity.type, sdkEntity.homePath, sdkRootsCopy, sdkEntity.additionalData, entitySourceCopy) {
+      val sdkEntityCopy = SdkEntity(sdkEntity.name, sdkEntity.type, sdkEntity.homePath, sdkRootsCopy, sdkEntity.additionalData, entitySourceCopy) {
         version = sdkEntity.version
       }
       mutableEntityStorage.addEntity(sdkEntityCopy)

@@ -38,15 +38,12 @@ open class LibraryEntityImpl(private val dataSource: LibraryEntityData) : Librar
   private companion object {
     internal val EXCLUDEDROOTS_CONNECTION_ID: ConnectionId = ConnectionId.create(LibraryEntity::class.java, ExcludeUrlEntity::class.java,
                                                                                  ConnectionId.ConnectionType.ONE_TO_MANY, true)
-    internal val SDK_CONNECTION_ID: ConnectionId = ConnectionId.create(LibraryEntity::class.java, SdkEntity::class.java,
-                                                                       ConnectionId.ConnectionType.ONE_TO_ONE, false)
     internal val LIBRARYPROPERTIES_CONNECTION_ID: ConnectionId = ConnectionId.create(LibraryEntity::class.java,
                                                                                      LibraryPropertiesEntity::class.java,
                                                                                      ConnectionId.ConnectionType.ONE_TO_ONE, false)
 
     private val connections = listOf<ConnectionId>(
       EXCLUDEDROOTS_CONNECTION_ID,
-      SDK_CONNECTION_ID,
       LIBRARYPROPERTIES_CONNECTION_ID,
     )
 
@@ -63,9 +60,6 @@ open class LibraryEntityImpl(private val dataSource: LibraryEntityData) : Librar
 
   override val excludedRoots: List<ExcludeUrlEntity>
     get() = snapshot.extractOneToManyChildren<ExcludeUrlEntity>(EXCLUDEDROOTS_CONNECTION_ID, this)!!.toList()
-
-  override val sdk: SdkEntity?
-    get() = snapshot.extractOneToOneChild(SDK_CONNECTION_ID, this)
 
   override val libraryProperties: LibraryPropertiesEntity?
     get() = snapshot.extractOneToOneChild(LIBRARYPROPERTIES_CONNECTION_ID, this)
@@ -264,40 +258,6 @@ open class LibraryEntityImpl(private val dataSource: LibraryEntityData) : Librar
           this.entityLinks[EntityLink(true, EXCLUDEDROOTS_CONNECTION_ID)] = value
         }
         changedProperty.add("excludedRoots")
-      }
-
-    override var sdk: SdkEntity?
-      get() {
-        val _diff = diff
-        return if (_diff != null) {
-          _diff.extractOneToOneChild(SDK_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(true, SDK_CONNECTION_ID)] as? SdkEntity
-        }
-        else {
-          this.entityLinks[EntityLink(true, SDK_CONNECTION_ID)] as? SdkEntity
-        }
-      }
-      set(value) {
-        checkModificationAllowed()
-        val _diff = diff
-        if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
-          if (value is ModifiableWorkspaceEntityBase<*, *>) {
-            value.entityLinks[EntityLink(false, SDK_CONNECTION_ID)] = this
-          }
-          // else you're attaching a new entity to an existing entity that is not modifiable
-          _diff.addEntity(value)
-        }
-        if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
-          _diff.updateOneToOneChildOfParent(SDK_CONNECTION_ID, this, value)
-        }
-        else {
-          if (value is ModifiableWorkspaceEntityBase<*, *>) {
-            value.entityLinks[EntityLink(false, SDK_CONNECTION_ID)] = this
-          }
-          // else you're attaching a new entity to an existing entity that is not modifiable
-
-          this.entityLinks[EntityLink(true, SDK_CONNECTION_ID)] = value
-        }
-        changedProperty.add("sdk")
       }
 
     override var libraryProperties: LibraryPropertiesEntity?

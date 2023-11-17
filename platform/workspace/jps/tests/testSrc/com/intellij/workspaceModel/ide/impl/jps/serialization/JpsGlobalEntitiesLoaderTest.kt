@@ -12,7 +12,7 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.library.GlobalLibraryTa
 import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.jps.entities.LibraryRootTypeId
 import com.intellij.platform.workspace.jps.entities.LibraryTableId
-import com.intellij.platform.workspace.jps.entities.SdkMainEntity
+import com.intellij.platform.workspace.jps.entities.SdkEntity
 import org.junit.Assert
 import org.junit.ClassRule
 import org.junit.Rule
@@ -72,7 +72,7 @@ class JpsGlobalEntitiesLoaderTest {
       UsefulTestCase.assertSameElements(sdkInfos, sdkBridges.map { SdkTestInfo(it.name, it.versionString!!, it.sdkType.name)  })
 
       val workspaceModel = GlobalWorkspaceModel.getInstance()
-      val sdkEntities = workspaceModel.currentSnapshot.entities(SdkMainEntity::class.java).toList()
+      val sdkEntities = workspaceModel.currentSnapshot.entities(SdkEntity::class.java).toList()
       Assert.assertEquals(sdkInfos.size, sdkEntities.size)
       UsefulTestCase.assertSameElements(sdkInfos, sdkEntities.map { SdkTestInfo(it.name, it.version!!, it.type) })
       sdkEntities.forEach { sdkEntity ->

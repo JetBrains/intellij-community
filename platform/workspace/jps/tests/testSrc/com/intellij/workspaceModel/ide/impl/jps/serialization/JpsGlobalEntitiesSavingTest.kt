@@ -82,7 +82,7 @@ class JpsGlobalEntitiesSavingTest {
       Assert.assertEquals(0, sdks.size)
 
       val workspaceModel = GlobalWorkspaceModel.getInstance()
-      Assert.assertEquals(0, workspaceModel.currentSnapshot.entities(SdkMainEntity::class.java).toList().size)
+      Assert.assertEquals(0, workspaceModel.currentSnapshot.entities(SdkEntity::class.java).toList().size)
 
       val virtualFileManager = VirtualFileUrlManager.getGlobalInstance()
       ApplicationManager.getApplication().invokeAndWait {
@@ -90,13 +90,13 @@ class JpsGlobalEntitiesSavingTest {
           workspaceModel.updateModel("Test update") { builder ->
             var sdkRoots = listOf(SdkRoot(virtualFileManager.fromUrl("/Contents/Home!/java.compiler"), SdkRootTypeId(OrderRootType.CLASSES.customName)),
                                   SdkRoot(virtualFileManager.fromUrl("/lib/src.zip!/java.se"), SdkRootTypeId(OrderRootType.SOURCES.customName)))
-            val jbrSdkEntity = SdkMainEntity(sdkNames[0], "JavaSDK", virtualFileManager.fromUrl("/Library/Java/JavaVirtualMachines/jbr-2048/Contents/Home"),
-                                                    sdkRoots, "", entitySource)
+            val jbrSdkEntity = SdkEntity(sdkNames[0], "JavaSDK", virtualFileManager.fromUrl("/Library/Java/JavaVirtualMachines/jbr-2048/Contents/Home"),
+                                         sdkRoots, "", entitySource)
             builder.addEntity(jbrSdkEntity)
 
             sdkRoots = listOf(SdkRoot(virtualFileManager.fromUrl("/Contents/plugins/java/lib/resources/jdkAnnotations.jar"), SdkRootTypeId(AnnotationOrderRootType.getInstance().customName)))
-            val amazonSdkEntity = SdkMainEntity(sdkNames[1], "JavaSDK", virtualFileManager.fromUrl("/Library/Java/JavaVirtualMachines/amazon.crevetto/Contents/Home"),
-                                                   sdkRoots, "", entitySource)
+            val amazonSdkEntity = SdkEntity(sdkNames[1], "JavaSDK", virtualFileManager.fromUrl("/Library/Java/JavaVirtualMachines/amazon.crevetto/Contents/Home"),
+                                            sdkRoots, "", entitySource)
             builder.addEntity(amazonSdkEntity)
           }
         }

@@ -8,7 +8,7 @@ import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.virtualFile
-import com.intellij.platform.workspace.jps.entities.SdkMainEntity
+import com.intellij.platform.workspace.jps.entities.SdkEntity
 import com.intellij.platform.workspace.jps.entities.SdkRoot
 import com.intellij.platform.workspace.jps.entities.modifyEntity
 import com.intellij.platform.workspace.jps.serialization.impl.ELEMENT_ADDITIONAL
@@ -19,12 +19,12 @@ import com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModel
 import com.intellij.workspaceModel.ide.impl.legacyBridge.sdk.SdkTableBridgeImpl.Companion.sdkMap
 import org.jdom.Element
 
-class SdkModificatorBridgeImpl(private val originalEntity: SdkMainEntity.Builder,
+class SdkModificatorBridgeImpl(private val originalEntity: SdkEntity.Builder,
                                private val originalSdkBridge: SdkBridgeImpl) : SdkModificator {
 
   private var isCommitted = false
   private var additionalData: SdkAdditionalData? = null
-  private val modifiedSdkEntity: SdkMainEntity.Builder = SdkTableBridgeImpl.createEmptySdkEntity("", "", "")
+  private val modifiedSdkEntity: SdkEntity.Builder = SdkTableBridgeImpl.createEmptySdkEntity("", "", "")
 
   init {
     modifiedSdkEntity.applyChangesFrom(originalEntity)
@@ -107,7 +107,7 @@ class SdkModificatorBridgeImpl(private val originalEntity: SdkMainEntity.Builder
     } else ""
 
     // Update only entity existing in the storage
-    val existingEntity = globalWorkspaceModel.currentSnapshot.sdkMap.getFirstEntity(originalSdkBridge) as? SdkMainEntity
+    val existingEntity = globalWorkspaceModel.currentSnapshot.sdkMap.getFirstEntity(originalSdkBridge) as? SdkEntity
     existingEntity?.let { entity ->
       globalWorkspaceModel.updateModel("Modifying SDK ${originalEntity.symbolicId}") {
         it.modifyEntity(entity) {

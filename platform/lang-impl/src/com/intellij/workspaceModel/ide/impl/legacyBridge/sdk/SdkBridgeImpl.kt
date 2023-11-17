@@ -13,7 +13,7 @@ import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.virtualFile
-import com.intellij.platform.workspace.jps.entities.SdkMainEntity
+import com.intellij.platform.workspace.jps.entities.SdkEntity
 import com.intellij.platform.workspace.jps.entities.SdkRoot
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.util.EventDispatcher
@@ -21,7 +21,7 @@ import com.intellij.util.EventDispatcher
 
 // SdkBridgeImpl.clone called from com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel.reset
 // So I need to have such implementation and can't use implementation with SymbolicId and searching in storage
-class SdkBridgeImpl(private var sdkEntityBuilder: SdkMainEntity.Builder) : UserDataHolderBase(), ProjectJdk, RootProvider, Sdk {
+class SdkBridgeImpl(private var sdkEntityBuilder: SdkEntity.Builder) : UserDataHolderBase(), ProjectJdk, RootProvider, Sdk {
 
   private var additionalData: SdkAdditionalData? = null
   private val dispatcher = EventDispatcher.create(RootSetChangedListener::class.java)
@@ -107,18 +107,18 @@ class SdkBridgeImpl(private var sdkEntityBuilder: SdkMainEntity.Builder) : UserD
     }
   }
 
-  internal fun applyChangesTo(sdkEntity: SdkMainEntity.Builder) {
+  internal fun applyChangesTo(sdkEntity: SdkEntity.Builder) {
     sdkEntity.applyChangesFrom(sdkEntityBuilder)
   }
 
-  internal fun getEntity(): SdkMainEntity = sdkEntityBuilder
+  internal fun getEntity(): SdkEntity = sdkEntityBuilder
 
   override fun toString(): String {
     return "$name $versionString ($homePath )"
   }
 }
 
-internal fun SdkMainEntity.Builder.getSdkType(): SdkTypeId {
+internal fun SdkEntity.Builder.getSdkType(): SdkTypeId {
   return ProjectJdkTable.getInstance().getSdkTypeByName(type)
 }
 
@@ -136,7 +136,7 @@ internal val OrderRootType.customName: String
     }
   }
 
-internal fun SdkMainEntity.Builder.applyChangesFrom(fromSdk: SdkMainEntity) {
+internal fun SdkEntity.Builder.applyChangesFrom(fromSdk: SdkEntity) {
   name = fromSdk.name
   type = fromSdk.type
   version = fromSdk.version
