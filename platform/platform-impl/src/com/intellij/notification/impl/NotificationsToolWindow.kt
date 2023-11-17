@@ -62,6 +62,7 @@ import javax.swing.*
 import javax.swing.event.DocumentEvent
 import javax.swing.event.HyperlinkEvent
 import javax.swing.event.PopupMenuEvent
+import javax.swing.plaf.basic.BasicHTML
 import javax.swing.text.JTextComponent
 import kotlin.time.Duration.Companion.days
 
@@ -940,6 +941,37 @@ private class NotificationComponent(val project: Project,
             singleSelectionHandler.add(newEditor, true)
           }
         }
+
+        private val mySizeCache = PreferredSizeCache { super.getPreferredSize() }
+
+        override fun getPreferredSize(): Dimension {
+          return mySizeCache.getSize(this)
+        }
+
+        override fun firePropertyChange(propertyName: String?, oldValue: Any?, newValue: Any?) {
+          if (skipUpdateGraphicsConfiguration(propertyName, oldValue, newValue)) {
+            return
+          }
+          super.firePropertyChange(propertyName, oldValue, newValue)
+        }
+
+        private fun skipUpdateGraphicsConfiguration(propertyName: String?, oldValue: Any?, newValue: Any?): Boolean {
+          if ("graphicsConfiguration" == propertyName) {
+            if (oldValue != null && newValue == null) {
+              return true
+            }
+            if (oldValue == null && newValue != null) {
+              val basicHtml = getClientProperty(BasicHTML.propertyKey)
+              val accessibleName = getClientProperty(AccessibleContext.ACCESSIBLE_NAME_PROPERTY)
+              if (basicHtml != null && accessibleName != null) {
+                putClientProperty(BasicHTML.propertyKey, basicHtml)
+                putClientProperty(AccessibleContext.ACCESSIBLE_NAME_PROPERTY, accessibleName)
+                return true
+              }
+            }
+          }
+          return false
+        }
       }
       title.verticalTextPosition = SwingConstants.TOP
 
@@ -1226,7 +1258,13 @@ private class NotificationComponent(val project: Project,
   }
 
   private fun createTextComponent(text: @Nls String): JEditorPane {
-    val component = JEditorPane()
+    val component = object : JEditorPane() {
+      val sizeCache = PreferredSizeCache { super.getPreferredSize() }
+
+      override fun getPreferredSize(): Dimension {
+        return sizeCache.getSize(this)
+      }
+    }
     component.isEditable = false
     component.putClientProperty(JEditorPane.HONOR_DISPLAY_PROPERTIES, true)
     component.contentType = "text/html"
@@ -1259,6 +1297,7 @@ private class NotificationComponent(val project: Project,
 
     myLafUpdater = Runnable {
       NotificationsUtil.configureHtmlEditorKit(component, false)
+      component.sizeCache.clearCache()
       component.text = text
       component.revalidate()
       component.repaint()
@@ -1365,6 +1404,25 @@ private class NotificationComponent(val project: Project,
       }
     }
     return false
+  }
+}
+
+private class PreferredSizeCache(private val mySuperSize: () -> Dimension) {
+  private var myCachedSize: Dimension? = null
+  private var myCachedWidth = -1
+  private var myCachedHeight = -1
+
+  fun getSize(component: Component): Dimension {
+    if (myCachedSize == null || myCachedWidth != component.width || myCachedHeight != component.height) {
+      myCachedSize = mySuperSize.invoke()
+      myCachedWidth = component.width
+      myCachedHeight = component.height
+    }
+    return myCachedSize!!
+  }
+
+  fun clearCache() {
+    myCachedSize = null
   }
 }
 
