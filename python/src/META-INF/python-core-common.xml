@@ -401,7 +401,7 @@
     <registryKey key="python.debug.asyncio.repl" defaultValue="false" restartRequired="false"
                  description="Possibility to write await outside of function"/>
 
-    <registryKey defaultValue="false" description="Enables an experimental low impact monitoring API for Python 3.12"
+    <registryKey defaultValue="true" description="Enables an experimental low impact monitoring API for Python 3.12"
                  restartRequired="false" key="python.debug.low.impact.monitoring.api"/>
 
     <!-- typing -->

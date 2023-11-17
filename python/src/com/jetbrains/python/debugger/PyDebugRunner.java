@@ -663,7 +663,7 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
       environmentController.putFixedValue(ASYNCIO_ENV, "True");
     }
 
-    if (RegistryManager.getInstance().is("python.debug.low.impact.monitoring.api") || ApplicationManager.getApplication().isEAP()) {
+    if (RegistryManager.getInstance().is("python.debug.low.impact.monitoring.api")) {
       environmentController.putFixedValue(USE_LOW_IMPACT_MONITORING, "True");
     }
 
