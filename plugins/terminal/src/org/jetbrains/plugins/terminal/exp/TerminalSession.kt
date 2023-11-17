@@ -4,6 +4,7 @@ package org.jetbrains.plugins.terminal.exp
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.options.advanced.AdvancedSettings
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.Key
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.terminal.TerminalColorPalette
@@ -53,14 +54,24 @@ class TerminalSession(settings: JBTerminalSystemSettingsProviderBase,
                                           typeAheadManager, executorServiceManager)
     terminalStarterFuture.complete(terminalStarter)
     executorServiceManager.unboundedExecutorService.submit {
-      terminalStarter.start()
       try {
-        ttyConnector.close()
+        terminalStarter.start()
       }
-      catch (ignored: Exception) {
+      catch (t: Throwable) {
+        thisLogger().error(t)
       }
-      for (terminationListener in terminationListeners) {
-        terminationListener.run()
+      finally {
+        try {
+          ttyConnector.close()
+        }
+        catch (t: Throwable) {
+          thisLogger().error(t)
+        }
+        finally {
+          for (terminationListener in terminationListeners) {
+            terminationListener.run()
+          }
+        }
       }
     }
   }

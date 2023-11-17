@@ -19,14 +19,19 @@ class ShellCommandManager(terminal: Terminal) {
 
   init {
     terminal.addCustomCommandListener(TerminalCustomCommandListener {
-      when (it.getOrNull(0)) {
-        "initialized" -> processInitialized(it)
-        "prompt_shown" -> firePromptShown()
-        "command_started" -> processCommandStartedEvent(it)
-        "command_finished" -> processCommandFinishedEvent(it)
-        "command_history" -> processCommandHistoryEvent(it)
-        "generator_finished" -> processGeneratorFinishedEvent(it)
-        "clear_invoked" -> fireClearInvoked()
+      try {
+        when (it.getOrNull(0)) {
+          "initialized" -> processInitialized(it)
+          "prompt_shown" -> firePromptShown()
+          "command_started" -> processCommandStartedEvent(it)
+          "command_finished" -> processCommandFinishedEvent(it)
+          "command_history" -> processCommandHistoryEvent(it)
+          "generator_finished" -> processGeneratorFinishedEvent(it)
+          "clear_invoked" -> fireClearInvoked()
+        }
+      }
+      catch (t: Throwable) {
+        LOG.warn("Error while processing custom command: $it", t)
       }
     })
   }
