@@ -373,6 +373,16 @@ public class PyTypedDictInspectionTest extends PyInspectionTestCase {
                    group: Group[str] = {"key": 1, "group": ['one']}""");
   }
 
+  // PY-64127, PY-64128
+  public void testGenericTypedDictWithNewStyleSyntaxNoWarnings() {
+    doTestByText("""
+                   from typing import TypedDict
+                   class Group[T](TypedDict):
+                       key: T
+                       group: list[T]
+                   group: Group[str] = {"key": 1, "group": ['one']}""");
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {
