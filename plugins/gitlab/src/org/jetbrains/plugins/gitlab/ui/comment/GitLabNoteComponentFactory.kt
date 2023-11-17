@@ -9,6 +9,7 @@ import com.intellij.collaboration.ui.HorizontalListPanel
 import com.intellij.collaboration.ui.SimpleHtmlPane
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil.ComponentType
+import com.intellij.collaboration.ui.codereview.comment.CodeReviewCommentTextFieldFactory
 import com.intellij.collaboration.ui.codereview.comment.CodeReviewCommentUIUtil
 import com.intellij.collaboration.ui.codereview.comment.CommentInputActionsComponentFactory
 import com.intellij.collaboration.ui.icon.IconsProvider
@@ -41,7 +42,7 @@ internal object GitLabNoteComponentFactory {
     val contentPanel = if (actionsVm != null) {
       EditableComponentFactory.create(cs, textPanel, actionsVm.editVm) { editVm ->
         val actions = createEditActionsConfig(actionsVm, editVm, project, place)
-        val editor = GitLabNoteEditorComponentFactory.create(project, this, editVm, actions)
+        val editor = CodeReviewCommentTextFieldFactory.createIn(this, editVm, actions)
         editVm.requestFocus()
         editor
       }

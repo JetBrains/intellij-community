@@ -53,7 +53,7 @@ class GitLabNoteAdminActionsViewModelImpl(
     if (editing) {
       coroutineScope {
         val cs = this@coroutineScope
-        val editVm = GitLabNoteEditingViewModel.forExistingNote(cs, note).apply {
+        val editVm = GitLabNoteEditingViewModel.forExistingNote(cs, project, note).apply {
             onDoneIn(cs) {
               stopEditing()
             }

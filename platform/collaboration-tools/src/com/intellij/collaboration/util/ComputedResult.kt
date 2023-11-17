@@ -22,4 +22,6 @@ value class ComputedResult<out T> internal constructor(
 
 fun <T> ComputedResult<T>.getOrNull(): T? = result?.getOrNull()
 
+fun ComputedResult<*>.exceptionOrNull(): Throwable? = result?.exceptionOrNull()
+
 fun <T, R> ComputedResult<T>.map(mapper: (value: T) -> R): ComputedResult<R> = ComputedResult(result?.map(mapper))

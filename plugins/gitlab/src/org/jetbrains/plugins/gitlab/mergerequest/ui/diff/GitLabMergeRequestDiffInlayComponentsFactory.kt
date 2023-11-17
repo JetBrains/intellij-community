@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gitlab.mergerequest.ui.diff
 
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil
+import com.intellij.collaboration.ui.codereview.comment.CodeReviewCommentTextFieldFactory
 import com.intellij.collaboration.ui.codereview.comment.CodeReviewCommentUIUtil
 import com.intellij.collaboration.ui.codereview.comment.CommentInputActionsComponentFactory
 import com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFieldFactory
@@ -65,7 +66,7 @@ internal object GitLabMergeRequestDiffInlayComponentsFactory {
     val itemType = CodeReviewChatItemUIUtil.ComponentType.COMPACT
     val icon = CommentTextFieldFactory.IconConfig.of(itemType, avatarIconsProvider, vm.currentUser)
 
-    val editor = GitLabNoteEditorComponentFactory.create(project, cs, vm, actions, icon).apply {
+    val editor = CodeReviewCommentTextFieldFactory.createIn(cs, vm, actions, icon).apply {
       border = JBUI.Borders.empty(itemType.inputPaddingInsets)
     }
 

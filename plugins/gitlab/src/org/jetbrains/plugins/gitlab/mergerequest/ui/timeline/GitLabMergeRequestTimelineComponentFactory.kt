@@ -6,6 +6,7 @@ import com.intellij.collaboration.ui.*
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil.ComponentType
 import com.intellij.collaboration.ui.codereview.CodeReviewTimelineUIUtil
+import com.intellij.collaboration.ui.codereview.comment.CodeReviewCommentTextFieldFactory
 import com.intellij.collaboration.ui.codereview.comment.CommentInputActionsComponentFactory
 import com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPanelFactory
 import com.intellij.collaboration.ui.codereview.timeline.StatusMessageComponentFactory
@@ -125,7 +126,7 @@ internal object GitLabMergeRequestTimelineComponentFactory {
     val itemType = ComponentType.FULL
     val icon = CommentTextFieldFactory.IconConfig.of(itemType, iconsProvider, editVm.currentUser)
 
-    return GitLabNoteEditorComponentFactory.create(project, noteCs, editVm, actions, icon).apply {
+    return CodeReviewCommentTextFieldFactory.createIn(noteCs, editVm, actions, icon).apply {
       border = Borders.empty(itemType.inputPaddingInsets)
     }
   }

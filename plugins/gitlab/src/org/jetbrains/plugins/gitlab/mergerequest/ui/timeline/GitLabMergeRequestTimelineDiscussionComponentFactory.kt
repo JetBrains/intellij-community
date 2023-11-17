@@ -10,6 +10,7 @@ import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil.ComponentType
 import com.intellij.collaboration.ui.codereview.CodeReviewTimelineUIUtil
 import com.intellij.collaboration.ui.codereview.CodeReviewTimelineUIUtil.Thread.Replies
+import com.intellij.collaboration.ui.codereview.comment.CodeReviewCommentTextFieldFactory
 import com.intellij.collaboration.ui.codereview.timeline.TimelineDiffComponentFactory
 import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.collaboration.ui.layout.SizeRestrictedSingleComponentLayout
@@ -130,7 +131,7 @@ internal object GitLabMergeRequestTimelineDiscussionComponentFactory {
 
     val textContentPanel = EditableComponentFactory.create(cs, textPanel, actionAndEditVmsFlow) { (actionsVm, editVm) ->
       val actions = createEditActionsConfig(actionsVm, editVm, project, GitLabStatistics.MergeRequestNoteActionPlace.TIMELINE)
-      val editor = GitLabNoteEditorComponentFactory.create(project, this, editVm, actions)
+      val editor = CodeReviewCommentTextFieldFactory.createIn(this, editVm, actions)
       editVm.requestFocus()
       editor
     }.let {

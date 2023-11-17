@@ -3,17 +3,13 @@ package org.jetbrains.plugins.gitlab.ui.comment
 
 import com.intellij.collaboration.async.cancelAndJoinSilently
 import com.intellij.collaboration.async.mapState
-import com.intellij.collaboration.ui.util.bindEnabledIn
-import com.intellij.collaboration.ui.util.swingAction
-import com.intellij.collaboration.util.SingleCoroutineLauncher
+import com.intellij.collaboration.ui.codereview.comment.CodeReviewSubmittableTextViewModel
+import com.intellij.collaboration.ui.codereview.comment.CodeReviewSubmittableTextViewModelBase
+import com.intellij.collaboration.ui.codereview.comment.submitActionIn
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.platform.util.coroutines.childScope
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -25,30 +21,18 @@ import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestNewDiscussionPosition
 import org.jetbrains.plugins.gitlab.mergerequest.data.MutableGitLabNote
 import org.jetbrains.plugins.gitlab.util.GitLabStatistics
-import javax.swing.AbstractAction
+import javax.swing.Action
 
-interface GitLabNoteEditingViewModel {
-  val text: MutableStateFlow<String>
-  val focusRequests: Flow<Unit>
-
-  val state: Flow<SubmissionState?>
-
-  fun requestFocus()
-
+interface GitLabNoteEditingViewModel : CodeReviewSubmittableTextViewModel {
   suspend fun destroy()
-
-  sealed interface SubmissionState {
-    data object Loading : SubmissionState
-    class Error(val error: Throwable) : SubmissionState
-    data object Done : SubmissionState
-  }
 
   companion object {
     internal fun forExistingNote(
       parentCs: CoroutineScope,
+      project: Project,
       note: MutableGitLabNote
     ): ExistingGitLabNoteEditingViewModel =
-      GitLabNoteEditingViewModelImpl(parentCs, note)
+      GitLabNoteEditingViewModelImpl(project, parentCs, note)
 
     internal fun forNewNote(
       parentCs: CoroutineScope,
@@ -56,7 +40,7 @@ interface GitLabNoteEditingViewModel {
       mergeRequest: GitLabMergeRequest,
       currentUser: GitLabUserDTO
     ): NewGitLabNoteViewModel =
-      NewStandaloneGitLabNoteViewModel(parentCs, "", project, mergeRequest, currentUser)
+      NewStandaloneGitLabNoteViewModel(project, parentCs, "", mergeRequest, currentUser)
 
     internal fun forNewDiffNote(
       parentCs: CoroutineScope,
@@ -65,7 +49,7 @@ interface GitLabNoteEditingViewModel {
       currentUser: GitLabUserDTO,
       position: GitLabMergeRequestNewDiscussionPosition
     ): NewGitLabNoteViewModel =
-      NewDiffGitLabNoteViewModel(parentCs, "", project, mergeRequest, currentUser, position)
+      NewDiffGitLabNoteViewModel(project, parentCs, "", mergeRequest, currentUser, position)
 
     internal fun forReplyNote(
       parentCs: CoroutineScope,
@@ -73,48 +57,15 @@ interface GitLabNoteEditingViewModel {
       discussion: GitLabDiscussion,
       currentUser: GitLabUserDTO
     ): NewGitLabNoteViewModel =
-      NewReplyGitLabNoteViewModel(parentCs, "", project, discussion, currentUser)
+      NewReplyGitLabNoteViewModel(project, parentCs, "", discussion, currentUser)
   }
 }
 
-abstract class AbstractGitLabNoteEditingViewModel(parentCs: CoroutineScope, initialText: String) : GitLabNoteEditingViewModel {
-  protected val cs = parentCs.childScope()
-  private val taskLauncher = SingleCoroutineLauncher(cs)
-
-  override val text: MutableStateFlow<String> = MutableStateFlow(initialText)
-
-  private val _state = MutableStateFlow<GitLabNoteEditingViewModel.SubmissionState?>(null)
-  override val state: Flow<GitLabNoteEditingViewModel.SubmissionState?> = _state.asSharedFlow()
-
-  private val _focusRequestsChannel = Channel<Unit>(1, BufferOverflow.DROP_OLDEST)
-  override val focusRequests: Flow<Unit>
-    get() = _focusRequestsChannel.receiveAsFlow()
-
-  override fun requestFocus() {
-    cs.launch {
-      _focusRequestsChannel.send(Unit)
-    }
-  }
-
-  protected fun submit(submitter: suspend (String) -> Unit) {
-    taskLauncher.launch {
-      val newText = text.first()
-      _state.value = GitLabNoteEditingViewModel.SubmissionState.Loading
-      try {
-        submitter(newText)
-
-        _state.value = GitLabNoteEditingViewModel.SubmissionState.Done
-      }
-      catch (ce: CancellationException) {
-        _state.value = GitLabNoteEditingViewModel.SubmissionState.Done
-        throw ce
-      }
-      catch (e: Exception) {
-        _state.value = GitLabNoteEditingViewModel.SubmissionState.Error(e)
-      }
-    }
-  }
-
+abstract class AbstractGitLabNoteEditingViewModel(
+  override val project: Project,
+  parentCs: CoroutineScope,
+  initialText: String
+) : CodeReviewSubmittableTextViewModelBase(project, parentCs, initialText), GitLabNoteEditingViewModel {
   override suspend fun destroy() = cs.cancelAndJoinSilently()
 }
 
@@ -122,8 +73,8 @@ interface ExistingGitLabNoteEditingViewModel : GitLabNoteEditingViewModel {
   fun save()
 }
 
-private class GitLabNoteEditingViewModelImpl(parentCs: CoroutineScope, private val note: MutableGitLabNote)
-  : AbstractGitLabNoteEditingViewModel(parentCs, note.body.value), ExistingGitLabNoteEditingViewModel {
+private class GitLabNoteEditingViewModelImpl(project: Project, parentCs: CoroutineScope, private val note: MutableGitLabNote)
+  : AbstractGitLabNoteEditingViewModel(project, parentCs, note.body.value), ExistingGitLabNoteEditingViewModel {
   override fun save() {
     submit(note::setBody)
   }
@@ -140,11 +91,11 @@ interface NewGitLabNoteViewModel : GitLabNoteEditingViewModel {
 }
 
 private abstract class NewGitLabNoteViewModelBase(
+  project: Project,
   parentCs: CoroutineScope,
   initialText: String,
-  project: Project,
   override val currentUser: GitLabUserDTO
-) : AbstractGitLabNoteEditingViewModel(parentCs, initialText), NewGitLabNoteViewModel {
+) : AbstractGitLabNoteEditingViewModel(project, parentCs, initialText), NewGitLabNoteViewModel {
   private val preferences = project.service<GitLabMergeRequestsPreferences>()
 
   override val usedAsDraftSubmitActionLast: StateFlow<Boolean> = channelFlow {
@@ -175,35 +126,35 @@ private abstract class NewGitLabNoteViewModelBase(
   protected abstract suspend fun doSubmitAsDraft(text: String)
 }
 
-private class NewStandaloneGitLabNoteViewModel(parentCs: CoroutineScope,
+private class NewStandaloneGitLabNoteViewModel(project: Project,
+                                               parentCs: CoroutineScope,
                                                initialText: String,
-                                               project: Project,
                                                private val mergeRequest: GitLabMergeRequest,
                                                currentUser: GitLabUserDTO)
-  : NewGitLabNoteViewModelBase(parentCs, initialText, project, currentUser) {
+  : NewGitLabNoteViewModelBase(project, parentCs, initialText, currentUser) {
   override val canSubmitAsDraft: Boolean = mergeRequest.canAddDraftNotes
   override suspend fun doSubmit(text: String) = mergeRequest.addNote(text)
   override suspend fun doSubmitAsDraft(text: String) = mergeRequest.addDraftNote(text)
 }
 
-private class NewDiffGitLabNoteViewModel(parentCs: CoroutineScope,
+private class NewDiffGitLabNoteViewModel(project: Project,
+                                         parentCs: CoroutineScope,
                                          initialText: String,
-                                         project: Project,
                                          private val mergeRequest: GitLabMergeRequest,
                                          currentUser: GitLabUserDTO,
                                          private val position: GitLabMergeRequestNewDiscussionPosition)
-  : NewGitLabNoteViewModelBase(parentCs, initialText, project, currentUser) {
+  : NewGitLabNoteViewModelBase(project, parentCs, initialText, currentUser) {
   override val canSubmitAsDraft: Boolean = mergeRequest.canAddPositionalDraftNotes
   override suspend fun doSubmit(text: String) = mergeRequest.addNote(position, text)
   override suspend fun doSubmitAsDraft(text: String) = mergeRequest.addDraftNote(position, text)
 }
 
-private class NewReplyGitLabNoteViewModel(parentCs: CoroutineScope,
+private class NewReplyGitLabNoteViewModel(project: Project,
+                                          parentCs: CoroutineScope,
                                           initialText: String,
-                                          project: Project,
                                           private val discussion: GitLabDiscussion,
                                           currentUser: GitLabUserDTO)
-  : NewGitLabNoteViewModelBase(parentCs, initialText, project, currentUser) {
+  : NewGitLabNoteViewModelBase(project, parentCs, initialText, currentUser) {
   override val canSubmitAsDraft: Boolean = discussion.canAddDraftNotes
   override suspend fun doSubmit(text: String) = discussion.addNote(text)
   override suspend fun doSubmitAsDraft(text: String) = discussion.addDraftNote(text)
@@ -212,7 +163,7 @@ private class NewReplyGitLabNoteViewModel(parentCs: CoroutineScope,
 fun GitLabNoteEditingViewModel.onDoneIn(cs: CoroutineScope, callback: suspend () -> Unit) {
   cs.launch {
     state.filter { state ->
-      state == GitLabNoteEditingViewModel.SubmissionState.Done
+      state?.isSuccess == true
     }.collect {
       callback()
     }
@@ -221,12 +172,9 @@ fun GitLabNoteEditingViewModel.onDoneIn(cs: CoroutineScope, callback: suspend ()
 
 internal fun ExistingGitLabNoteEditingViewModel.saveActionIn(cs: CoroutineScope, actionName: @Nls String,
                                                              project: Project, place: GitLabStatistics.MergeRequestNoteActionPlace)
-  : AbstractAction {
-  val enabledFlow = text.combine(state) { text, state -> text.isNotBlank() && state != GitLabNoteEditingViewModel.SubmissionState.Loading }
-  return swingAction(actionName) {
+  : Action = submitActionIn(cs, actionName) {
     save()
     GitLabStatistics.logMrActionExecuted(project, GitLabStatistics.MergeRequestAction.UPDATE_NOTE, place)
-  }.apply { bindEnabledIn(cs, enabledFlow) }
 }
 
 internal enum class NewGitLabNoteType {
@@ -241,31 +189,27 @@ private fun NewGitLabNoteType.toStatAction(isDraft: Boolean): GitLabStatistics.M
 
 internal fun NewGitLabNoteViewModel.submitActionIn(cs: CoroutineScope, actionName: @Nls String,
                                                    project: Project, type: NewGitLabNoteType,
-                                                   place: GitLabStatistics.MergeRequestNoteActionPlace): AbstractAction {
-  val enabledFlow = text.combine(state) { text, state -> text.isNotBlank() && state != GitLabNoteEditingViewModel.SubmissionState.Loading }
-  return swingAction(actionName) {
+                                                   place: GitLabStatistics.MergeRequestNoteActionPlace): Action =
+  submitActionIn(cs, actionName) {
     submit()
     GitLabStatistics.logMrActionExecuted(project, type.toStatAction(false), place)
-  }.apply { bindEnabledIn(cs, enabledFlow) }
-}
+  }
 
 internal fun NewGitLabNoteViewModel.submitAsDraftActionIn(cs: CoroutineScope, actionName: @Nls String,
                                                           project: Project, type: NewGitLabNoteType,
-                                                          place: GitLabStatistics.MergeRequestNoteActionPlace): AbstractAction? {
+                                                          place: GitLabStatistics.MergeRequestNoteActionPlace): Action? {
   if (!canSubmitAsDraft) return null
-
-  val enabledFlow = text.combine(state) { text, state -> text.isNotBlank() && state != GitLabNoteEditingViewModel.SubmissionState.Loading }
-  return swingAction(actionName) {
+  return submitActionIn(cs, actionName) {
     submitAsDraft()
     GitLabStatistics.logMrActionExecuted(project, type.toStatAction(true), place)
-  }.apply { bindEnabledIn(cs, enabledFlow) }
+  }
 }
 
 internal fun NewGitLabNoteViewModel.primarySubmitActionIn(
   cs: CoroutineScope,
-  submit: AbstractAction,
-  submitAsDraft: AbstractAction?
-): StateFlow<AbstractAction> =
+  submit: Action,
+  submitAsDraft: Action?
+): StateFlow<Action> =
   usedAsDraftSubmitActionLast.mapState(cs) {
     if (it && submitAsDraft != null) submitAsDraft
     else submit
@@ -273,9 +217,9 @@ internal fun NewGitLabNoteViewModel.primarySubmitActionIn(
 
 internal fun NewGitLabNoteViewModel.secondarySubmitActionIn(
   cs: CoroutineScope,
-  submit: AbstractAction,
-  submitAsDraft: AbstractAction?
-): StateFlow<List<AbstractAction>> =
+  submit: Action,
+  submitAsDraft: Action?
+): StateFlow<List<Action>> =
   usedAsDraftSubmitActionLast.mapState(cs) {
     if (it && submitAsDraft != null) listOf(submit)
     else listOfNotNull(submitAsDraft)

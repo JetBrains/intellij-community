@@ -11,6 +11,7 @@ import com.intellij.collaboration.ui.VerticalListPanel
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil.ComponentType
 import com.intellij.collaboration.ui.codereview.CodeReviewTimelineUIUtil
+import com.intellij.collaboration.ui.codereview.comment.CodeReviewCommentTextFieldFactory
 import com.intellij.collaboration.ui.codereview.comment.CommentInputActionsComponentFactory
 import com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFieldFactory
 import com.intellij.collaboration.ui.codereview.timeline.thread.TimelineThreadCommentsPanel
@@ -112,7 +113,7 @@ internal object GitLabDiscussionComponentFactory {
     )
     val icon = CommentTextFieldFactory.IconConfig.of(componentType, iconsProvider, vm.currentUser)
 
-    return GitLabNoteEditorComponentFactory.create(project, cs, vm, actions, icon).let {
+    return CodeReviewCommentTextFieldFactory.createIn(cs, vm, actions, icon).let {
       CollaborationToolsUIUtil
         .wrapWithLimitedSize(it, maxWidth = CodeReviewChatItemUIUtil.TEXT_CONTENT_WIDTH + componentType.contentLeftShift)
     }.apply {
