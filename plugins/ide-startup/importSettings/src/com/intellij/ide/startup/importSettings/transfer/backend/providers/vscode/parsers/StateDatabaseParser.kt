@@ -10,8 +10,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode
 import com.intellij.ide.startup.importSettings.models.Settings
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.io.FileUtil
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withTimeout
+import com.intellij.util.concurrency.ThreadingAssertions
 import java.io.File
 import java.sql.Connection
 import java.sql.DriverManager
@@ -25,13 +24,10 @@ class StateDatabaseParser(private val settings: Settings) {
   private val recentsKey = "history.recentlyOpenedPathsList"
 
   fun process(file: File) {
+    ThreadingAssertions.assertBackgroundThread()
     try {
-      @Suppress("RAW_RUN_BLOCKING")
-      runBlocking {
-        withTimeout(5000) {
-          Class.forName("org.sqlite.JDBC")
-        }
-      }
+      Class.forName("org.sqlite.JDBC")
+
       val connection = DriverManager.getConnection("jdbc:sqlite:" + FileUtil.toSystemIndependentName(file.path))
       parseRecents(connection)
     }
