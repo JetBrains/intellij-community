@@ -7,12 +7,12 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.lightEdit.LightEditCompatible
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.customization.CustomActionsSchema
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.ActionMenu
 import com.intellij.openapi.actionSystem.impl.PresentationFactory
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.keymap.Keymap
@@ -21,23 +21,27 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.use
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.impl.IdeFrameImpl
 import com.intellij.platform.ide.menu.IdeJMenuBar
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.popup.PopupFactoryImpl
 import com.intellij.ui.popup.list.ListPopupImpl
+import com.intellij.util.childScope
 import com.intellij.util.messages.MessageBusConnection
 import com.intellij.util.ui.JBUI
+import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Dimension
 import java.awt.event.ActionEvent
 import java.awt.event.HierarchyEvent
 import java.awt.event.KeyEvent
+import java.lang.Runnable
 import javax.swing.*
 
 @ApiStatus.Internal
-class MainMenuButton {
+class MainMenuButton(private val coroutineScope: CoroutineScope) {
 
   internal var expandableMenu: ExpandableMenu? = null
     set(value) {
@@ -46,7 +50,7 @@ class MainMenuButton {
     }
 
   private val menuAction = ShowMenuAction()
-  private var disposable: Disposable? = null
+  private var installedScope: CoroutineScope? = null
   private var shortcutsChangeConnection: MessageBusConnection? = null
   private val subMenuShortcutsManager = SubMenuShortcutsManager()
 
@@ -96,8 +100,8 @@ class MainMenuButton {
       return
     }
 
-    if (disposable == null) {
-      disposable = Disposer.newDisposable()
+    if (installedScope == null) {
+      installedScope = coroutineScope.childScope()
 
       registerMenuButtonShortcut(rootPaneCopy)
       updateSubMenuShortcutsManager()
@@ -106,8 +110,8 @@ class MainMenuButton {
   }
 
   private fun uninstall() {
-    disposable?.let { Disposer.dispose(it) }
-    disposable = null
+    installedScope?.cancel()
+    installedScope = null
     shortcutsChangeConnection?.let { Disposer.dispose(it) }
     shortcutsChangeConnection = null
     subMenuShortcutsManager.reset()
@@ -128,7 +132,12 @@ class MainMenuButton {
       LOG.warn("Cannot find action by id $MAIN_MENU_ACTION_ID")
       return
     }
-    menuAction.registerCustomShortcutSet(showMenuAction.shortcutSet, component, disposable)
+    installedScope!!.launch(Dispatchers.EDT) {
+      Disposer.newDisposable().use {
+        menuAction.registerCustomShortcutSet(showMenuAction.shortcutSet, component, it)
+        awaitCancellation()
+      }
+    }
     button.update() // Update shortcut in tooltip
   }
 

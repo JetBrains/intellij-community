@@ -63,7 +63,7 @@ private sealed interface MainToolbarFlavor {
 private class MenuButtonInToolbarMainToolbarFlavor(coroutineScope: CoroutineScope,
                                                    private val headerContent: JComponent,
                                                    frame: JFrame) : MainToolbarFlavor {
-  private val mainMenuButton = MainMenuButton()
+  private val mainMenuButton = MainMenuButton(coroutineScope)
 
   init {
     val expandableMenu = ExpandableMenu(headerContent = headerContent, coroutineScope = coroutineScope, frame)
