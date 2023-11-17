@@ -1435,7 +1435,7 @@
     <notificationGroup id="Diff Changes Loading Error" displayType="BALLOON" hideFromSettings="true"/>
     <notificationGroup id="System shortcuts conflicts" displayType="STICKY_BALLOON" bundle="messages.KeyMapBundle"
                        key="notification.group.shortcut.conflicts"/>
-    <notificationGroup id="Required Plugins" displayType="BALLOON" bundle="messages.IdeBundle" key="notification.group.required.plugins"/>
+    <notificationGroup id="Required Plugins" displayType="STICKY_BALLOON" bundle="messages.IdeBundle" key="notification.group.required.plugins"/>
     <notificationGroup id="System Health" displayType="STICKY_BALLOON" bundle="messages.IdeBundle" key="notification.group.system.health"
                        notificationIds="mixed.bag.installation;implicit.plugin.directory.path;implicit.log.directory.path;
                                         bundled.jre.m1.arch.message;bundled.jre.version.message;code.cache.warn.message;
