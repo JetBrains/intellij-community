@@ -38,6 +38,16 @@ public class K2InplaceRenameTestGenerated extends AbstractK2InplaceRenameTest {
         runTest("../../idea/tests/testData/refactoring/rename/inplace/BacktickedWithAccessors.kt");
     }
 
+    @TestMetadata("EnumEntries.kt")
+    public void testEnumEntries() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/rename/inplace/EnumEntries.kt");
+    }
+
+    @TestMetadata("EnumEntryAndProperty.kt")
+    public void testEnumEntryAndProperty() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/rename/inplace/EnumEntryAndProperty.kt");
+    }
+
     @TestMetadata("EraseCompanionName.kt")
     public void testEraseCompanionName() throws Exception {
         runTest("../../idea/tests/testData/refactoring/rename/inplace/EraseCompanionName.kt");

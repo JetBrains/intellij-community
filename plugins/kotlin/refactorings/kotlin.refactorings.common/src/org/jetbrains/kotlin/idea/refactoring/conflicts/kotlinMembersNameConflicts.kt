@@ -78,7 +78,7 @@ private fun checkDeclarationNewNameConflicts(declaration: KtNamedDeclaration, ne
 
     return when (containingSymbol) {
       is KtClassOrObjectSymbol -> {
-        containingSymbol.getMemberScope().findSiblingsByName(symbol, newName)
+        containingSymbol.getCombinedMemberScope().findSiblingsByName(symbol, newName)
       }
 
       is KtPackageSymbol -> {
