@@ -37,14 +37,14 @@ public class CastCanBeRemovedNarrowingVariableTypeInspection extends AbstractBas
         PsiVariable variable = tryCast(ref.resolve(), PsiVariable.class);
         if (!PsiUtil.isJvmLocalVariable(variable)) return;
         PsiForeachStatement forEach = null;
-        if (variable instanceof PsiParameter) {
-          forEach = tryCast(((PsiParameter)variable).getDeclarationScope(), PsiForeachStatement.class);
+        if (variable instanceof PsiParameter parameter) {
+          forEach = tryCast(parameter.getDeclarationScope(), PsiForeachStatement.class);
           if (forEach == null) return;
         }
         PsiTypeElement variableTypeElement = variable.getTypeElement();
         if (variableTypeElement == null || variableTypeElement.isInferredType() || variableTypeElement.getAnnotations().length > 0) return;
         PsiType variableType = variable.getType();
-        if (!(variableType instanceof PsiClassType) || ((PsiClassType)variableType).isRaw()) return;
+        if (!(variableType instanceof PsiClassType classType) || classType.isRaw()) return;
         if (variableType.equals(castType) || !variableType.isAssignableFrom(castType)) return;
 
         if (forEach != null) {
@@ -89,23 +89,22 @@ public class CastCanBeRemovedNarrowingVariableTypeInspection extends AbstractBas
     while (parent instanceof PsiConditionalExpression) {
       parent = PsiUtil.skipParenthesizedExprUp(parent.getParent());
     }
-    if (parent instanceof PsiInstanceOfExpression) {
-      PsiTypeElement checkTypeElement = ((PsiInstanceOfExpression)parent).getCheckType();
+    if (parent instanceof PsiInstanceOfExpression instanceOf) {
+      PsiTypeElement checkTypeElement = instanceOf.getCheckType();
       if (checkTypeElement == null) return false;
       PsiType checkType = checkTypeElement.getType();
       // Could be always false instanceof which will become compilation error after fix
       return TypeConversionUtil.areTypesConvertible(targetType, checkType);
     }
-    if (parent instanceof PsiTypeCastExpression && parent != cast) {
-      PsiTypeElement castTypeElement = ((PsiTypeCastExpression)parent).getCastType();
+    if (parent instanceof PsiTypeCastExpression parentCast && parent != cast) {
+      PsiTypeElement castTypeElement = parentCast.getCastType();
       if (castTypeElement == null) return false;
       PsiType castType = castTypeElement.getType();
       // Another cast could become invalid due to this change
       return TypeConversionUtil.areTypesConvertible(targetType, castType);
     }
     // Some method call can be mis-resolved after update, check this
-    if (parent instanceof PsiExpressionList && parent.getParent() instanceof PsiCallExpression) {
-      PsiCallExpression call = (PsiCallExpression)parent.getParent();
+    if (parent instanceof PsiExpressionList && parent.getParent() instanceof PsiCallExpression call) {
       PsiMethod method = call.resolveMethod();
       if (method == null) return false;
       Object mark = new Object();
@@ -117,14 +116,11 @@ public class CastCanBeRemovedNarrowingVariableTypeInspection extends AbstractBas
       refCopy.replace(cast);
       return callCopy.resolveMethod() == method;
     }
-    if (parent instanceof PsiReferenceExpression && parent.getParent() instanceof PsiMethodCallExpression) {
-      PsiMethodCallExpression call = (PsiMethodCallExpression)parent.getParent();
+    if (parent instanceof PsiReferenceExpression && parent.getParent() instanceof PsiMethodCallExpression call) {
       PsiMethod method = call.resolveMethod();
       if (method == null) return false;
-      if (method.hasModifierProperty(PsiModifier.PRIVATE)) {
-        // private method cannot be called on a subtype qualifier
-        return false;
-      }
+      // private method cannot be called on a subtype qualifier
+      return !method.hasModifierProperty(PsiModifier.PRIVATE);
     }
     return true;
   }
@@ -166,9 +162,9 @@ public class CastCanBeRemovedNarrowingVariableTypeInspection extends AbstractBas
       if (typeElement == null) return;
       PsiElement newTypeElement = JavaCodeStyleManager.getInstance(project).shortenClassReferences(typeElement.replace(castType));
       for (PsiReference reference : ReferencesSearch.search(var).findAll()) {
-        if (reference instanceof PsiReferenceExpression) {
+        if (reference instanceof PsiReferenceExpression varRef) {
           PsiTypeCastExpression castOccurrence =
-            tryCast(PsiUtil.skipParenthesizedExprUp(((PsiReferenceExpression)reference).getParent()), PsiTypeCastExpression.class);
+            tryCast(PsiUtil.skipParenthesizedExprUp(varRef.getParent()), PsiTypeCastExpression.class);
           if (castOccurrence != null && RedundantCastUtil.isCastRedundant(castOccurrence)) {
             RemoveRedundantCastUtil.removeCast(castOccurrence);
           }
