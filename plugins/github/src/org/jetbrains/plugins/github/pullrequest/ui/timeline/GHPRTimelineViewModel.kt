@@ -36,8 +36,6 @@ interface GHPRTimelineViewModel {
   val ghostUser: GHUser
   val currentUser: GHUser
 
-  val canComment: Boolean
-
   val detailsData: GHPRDetailsDataProvider
   val reviewData: GHPRReviewDataProvider
   val commentsData: GHPRCommentsDataProvider
@@ -46,6 +44,8 @@ interface GHPRTimelineViewModel {
 
   val timelineLoader: GHListLoader<GHPRTimelineItem>
   val loadingErrorHandler: GHLoadingErrorHandler
+
+  val commentVm: GHPRNewCommentViewModel?
 
   val htmlImageLoader: AsyncHtmlImageLoader
   val avatarIconsProvider: GHAvatarIconsProvider
@@ -78,7 +78,6 @@ internal class GHPRTimelineViewModelImpl(
 
   override val ghostUser: GHUser = securityService.ghostUser
   override val currentUser: GHUser = securityService.currentUser
-  override val canComment: Boolean = securityService.currentUserHasPermissionLevel(GHRepositoryPermissionLevel.READ)
 
   override val details: StateFlow<ComputedResult<GHPullRequestShort>> = channelFlow<ComputedResult<GHPullRequestShort>> {
     val disposable = Disposer.newDisposable()
@@ -106,6 +105,12 @@ internal class GHPRTimelineViewModelImpl(
 
   override val loadingErrorHandler: GHLoadingErrorHandler =
     GHApiLoadingErrorHandler(project, securityService.account, timelineLoader::reset)
+
+  override val commentVm: GHPRNewCommentViewModel? =
+    if (securityService.currentUserHasPermissionLevel(GHRepositoryPermissionLevel.READ)) {
+      GHPRNewCommentViewModel(project, parentCs, commentsData)
+    }
+    else null
 
   override val htmlImageLoader = dataContext.htmlImageLoader
   override val avatarIconsProvider = dataContext.avatarIconsProvider

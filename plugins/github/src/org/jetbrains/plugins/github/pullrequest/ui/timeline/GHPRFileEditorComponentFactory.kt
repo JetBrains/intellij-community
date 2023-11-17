@@ -9,7 +9,9 @@ import com.intellij.collaboration.ui.SingleValueModel
 import com.intellij.collaboration.ui.VerticalListPanel
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil
 import com.intellij.collaboration.ui.codereview.CodeReviewTimelineUIUtil
+import com.intellij.collaboration.ui.codereview.comment.CodeReviewCommentTextFieldFactory
 import com.intellij.collaboration.ui.codereview.comment.CommentInputActionsComponentFactory
+import com.intellij.collaboration.ui.codereview.comment.submitActionIn
 import com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFieldFactory
 import com.intellij.collaboration.util.getOrNull
 import com.intellij.ide.DataManager
@@ -17,7 +19,6 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.PlatformDataKeys
-import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.PopupHandler
@@ -31,9 +32,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRTimelineItem
 import org.jetbrains.plugins.github.i18n.GithubBundle
-import org.jetbrains.plugins.github.pullrequest.comment.ui.GHCommentTextFieldFactory
-import org.jetbrains.plugins.github.pullrequest.comment.ui.GHCommentTextFieldModel
-import org.jetbrains.plugins.github.pullrequest.comment.ui.submitAction
 import org.jetbrains.plugins.github.pullrequest.data.GHListLoader
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRSuggestedChangeHelper
 import org.jetbrains.plugins.github.ui.component.GHHandledErrorPanelModel
@@ -47,7 +45,7 @@ import javax.swing.event.ChangeListener
 internal class GHPRFileEditorComponentFactory(private val project: Project,
                                               private val timelineVm: GHPRTimelineViewModel,
                                               currentDetails: GHPullRequestShort,
-                                              cs: CoroutineScope) {
+                                              private val cs: CoroutineScope) {
 
   private val uiDisposable = cs.nestedDisposable()
 
@@ -146,11 +144,11 @@ internal class GHPRFileEditorComponentFactory(private val project: Project,
 
       add(progressAndErrorPanel)
 
-      if (timelineVm.canComment) {
-        val commentField = createCommentField().apply {
+      timelineVm.commentVm?.also {
+        val commentTextField = createCommentField(it).apply {
           border = JBUI.Borders.empty(CodeReviewChatItemUIUtil.ComponentType.FULL.inputPaddingInsets)
         }
-        add(commentField)
+        add(commentTextField)
       }
     }
 
@@ -198,21 +196,16 @@ internal class GHPRFileEditorComponentFactory(private val project: Project,
     return mainPanel
   }
 
-  private fun createCommentField(): JComponent {
-    val model = GHCommentTextFieldModel(project) {
-      timelineVm.commentsData.addComment(EmptyProgressIndicator(), it)
-    }
-
+  private fun createCommentField(vm: GHPRNewCommentViewModel): JComponent {
     val submitShortcutText = CommentInputActionsComponentFactory.submitShortcutText
-
     val actions = CommentInputActionsComponentFactory.Config(
-      primaryAction = MutableStateFlow(model.submitAction(GithubBundle.message("action.comment.text"))),
+      primaryAction = MutableStateFlow(vm.submitActionIn(cs, GithubBundle.message("action.comment.text"), GHPRNewCommentViewModel::submit)),
       submitHint = MutableStateFlow(GithubBundle.message("pull.request.comment.hint", submitShortcutText))
     )
     val icon = CommentTextFieldFactory.IconConfig.of(CodeReviewChatItemUIUtil.ComponentType.FULL,
                                                      timelineVm.avatarIconsProvider, timelineVm.currentUser.avatarUrl)
 
-    return GHCommentTextFieldFactory(model).create(actions, icon)
+    return CodeReviewCommentTextFieldFactory.createIn(cs, vm, actions, icon)
   }
 
   private fun createItemComponentFactory(): GHPRTimelineItemComponentFactory {
