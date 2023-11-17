@@ -208,7 +208,7 @@ public final class FSRecordsImpl implements Closeable {
   private final int currentVersion;
 
 
-  private final FineGrainedIdLock updateLock = new FineGrainedIdLock();
+  private final FileRecordLock updateLock = new FileRecordLock();
 
   private volatile boolean closed = false;
 
