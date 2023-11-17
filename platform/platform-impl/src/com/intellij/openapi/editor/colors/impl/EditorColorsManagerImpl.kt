@@ -29,6 +29,7 @@ import com.intellij.openapi.components.SettingsCategory
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.colors.EditorColorsListener
 import com.intellij.openapi.editor.colors.EditorColorsManager
@@ -143,7 +144,9 @@ class EditorColorsManagerImpl @NonInjectable constructor(schemeManagerFactory: S
       else {
         // This branch may not be necessary, but we've had such calls scattered around the codebase,
         // bypassing the manager, so it's better to have a fallback here in case of some unusual environment, like a test.
-        ApplicationManager.getApplication().getMessageBus().syncPublisher(TOPIC).globalSchemeChange(newScheme)
+        runCatching {
+          ApplicationManager.getApplication().getMessageBus().syncPublisher(TOPIC).globalSchemeChange(newScheme)
+        }.getOrLogException(LOG)
       }
     }
   }
@@ -361,8 +364,12 @@ class EditorColorsManagerImpl @NonInjectable constructor(schemeManagerFactory: S
   private fun callGlobalSchemeChange(scheme: EditorColorsScheme?) {
     schemeModificationCounter.incrementAndGet()
     // we need to push events to components that use editor font, e.g., HTML editor panes
-    ApplicationManager.getApplication().getMessageBus().syncPublisher(TOPIC).globalSchemeChange(scheme)
-    treeDispatcher.multicaster.globalSchemeChange(scheme)
+    runCatching {
+      ApplicationManager.getApplication().getMessageBus().syncPublisher(TOPIC).globalSchemeChange(scheme)
+    }.getOrLogException(LOG)
+    runCatching {
+      treeDispatcher.multicaster.globalSchemeChange(scheme)
+    }.getOrLogException(LOG)
   }
 
   override fun getGlobalScheme(): EditorColorsScheme {
