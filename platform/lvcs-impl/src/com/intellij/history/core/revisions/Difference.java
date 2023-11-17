@@ -43,6 +43,12 @@ public final class Difference {
     return myRight;
   }
 
+  public @Nullable FilePath getFilePath() {
+    if (myRight != null) return getFilePath(myRight);
+    if (myLeft != null) return getFilePath(myLeft);
+    return null;
+  }
+
   public ContentRevision getLeftContentRevision(IdeaGateway gw) {
     return createContentRevision(getLeft(), gw);
   }
@@ -76,7 +82,7 @@ public final class Difference {
 
       @Override
       public @NotNull FilePath getFile() {
-        return Paths.createDvcsFilePath(e.getPath(), e.isDirectory());
+        return getFilePath(e);
       }
 
       @Override
@@ -84,5 +90,9 @@ public final class Difference {
         return VcsRevisionNumber.NULL;
       }
     };
+  }
+
+  private static @NotNull FilePath getFilePath(@NotNull Entry entry) {
+    return Paths.createDvcsFilePath(entry.getPath(), entry.isDirectory());
   }
 }

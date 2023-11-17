@@ -8,6 +8,7 @@ import com.intellij.history.core.changes.ChangeVisitor
 import com.intellij.history.core.changes.StructuralChange
 import com.intellij.history.core.revisions.CurrentRevision
 import com.intellij.history.core.revisions.Revision
+import com.intellij.history.core.tree.RootEntry
 import com.intellij.history.integration.IdeaGateway
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -15,6 +16,7 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.PairProcessor
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 import java.util.*
 
 data class RevisionData(val currentRevision: Revision, val revisions: List<RevisionItem>)
@@ -30,12 +32,34 @@ internal fun collectRevisionData(project: Project,
   return runReadAction {
     gateway.registerUnsavedDocuments(facade)
 
-    val path = gateway.getPathOrUrl(file)
     val root = gateway.createTransientRootEntry()
-    val revisions = RevisionsCollector(facade, root, path, project.getLocationHash(), filter, before).result
+    val path = gateway.getPathOrUrl(file)
 
-    RevisionData(CurrentRevision(root, path), mergeLabelsWithRevisions(revisions))
+    val revisionItems = collectRevisionItems(project, facade, root, path, filter, before)
+    RevisionData(CurrentRevision(root, path), revisionItems)
   }
+}
+
+internal fun collectRevisionItems(project: Project,
+                                  gateway: IdeaGateway,
+                                  facade: LocalHistoryFacade,
+                                  file: VirtualFile,
+                                  filter: String?,
+                                  before: Boolean): List<RevisionItem> {
+  return runReadAction {
+    gateway.registerUnsavedDocuments(facade)
+    return@runReadAction collectRevisionItems(project, facade, gateway.createTransientRootEntry(), gateway.getPathOrUrl(file), filter, before)
+  }
+}
+
+@RequiresReadLock
+private fun collectRevisionItems(project: Project,
+                                 facade: LocalHistoryFacade,
+                                 root: RootEntry,
+                                 path: String,
+                                 filter: String?,
+                                 before: Boolean): List<RevisionItem> {
+  return mergeLabelsWithRevisions(RevisionsCollector(facade, root, path, project.getLocationHash(), filter, before).result)
 }
 
 private fun mergeLabelsWithRevisions(revisions: List<Revision>): List<RevisionItem> {

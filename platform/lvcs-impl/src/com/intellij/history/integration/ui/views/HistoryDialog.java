@@ -489,29 +489,6 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
     }
   }
 
-  private static final class RevisionProcessingProgressAdapter implements RevisionProcessingProgress {
-    private final ProgressIndicator myIndicator;
-
-    RevisionProcessingProgressAdapter(ProgressIndicator i) {
-      myIndicator = i;
-    }
-
-    @Override
-    public void processingLeftRevision() {
-      myIndicator.setText(message("message.processing.left.revision"));
-    }
-
-    @Override
-    public void processingRightRevision() {
-      myIndicator.setText(message("message.processing.right.revision"));
-    }
-
-    @Override
-    public void processed(int percentage) {
-      myIndicator.setFraction(percentage / 100.0);
-    }
-  }
-
   private static final class MyDialogWrapper extends DialogWrapper {
     private final @NotNull CreatePatchConfigurationPanel myPanel;
 

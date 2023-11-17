@@ -19,4 +19,18 @@ package com.intellij.history.integration.ui.models;
 public interface RevisionProcessingProgress extends Progress {
   void processingLeftRevision();
   void processingRightRevision();
+
+  class Empty implements RevisionProcessingProgress {
+    @Override
+    public void processed(int percentage) {
+    }
+
+    @Override
+    public void processingLeftRevision() {
+    }
+
+    @Override
+    public void processingRightRevision() {
+    }
+  }
 }
