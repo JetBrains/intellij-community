@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
-public class MockAnnotationsChangeTracker extends AnnotationChangesTracker {
+public class MockAnnotationsChangeTracker implements AnnotationChangesTracker {
   private static final String ANOTATION_NAME = MockAnnotation.class.getName().replace('.', '/');
   private static final String HIERARCHY_ANOTATION_NAME = MockHierarchyAnnotation.class.getName().replace('.', '/');
 

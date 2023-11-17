@@ -21,17 +21,17 @@ import java.util.Set;
  * <li> define a subclass of this class implementing desired callback methods
  * <li> register this implementation via standard java Service Provider Interface mechanism:
  *   <ul>
- *     <li>create a file 'META-INF/services/org.jetbrains.jps.dependency.java.AnnotationsChangeTracker'
+ *     <li>create a file 'META-INF/services/org.jetbrains.jps.dependency.java.AnnotationChangesTracker'
  *     <li>containing fully qualified name of extension implementation, e.g. "org.plugin-name.MyAnnotationsChangeTrackerImpl"
  *   </ul>
  * </ul>
  */
-public abstract class AnnotationChangesTracker {
+public interface AnnotationChangesTracker {
 
   /**
    * Enumeration defining all possible places that extension requests to recompile
    */
-  public enum Recompile {
+  enum Recompile {
     /**
      * If present in the returned result set, the usages of the annotated program element (class, field, method) will be affected.
      * it means that files where this program element is references, will be marked for recompilation
@@ -49,13 +49,13 @@ public abstract class AnnotationChangesTracker {
    * Utility object specifying extension's return result, when all possible dependencies on the item being examined, should be recompiled
    * See {@link AnnotationsChangeTracker.Recompile}
    */
-  public static final Set<Recompile> RECOMPILE_ALL = Collections.unmodifiableSet(EnumSet.allOf(Recompile.class));
+  Set<Recompile> RECOMPILE_ALL = Collections.unmodifiableSet(EnumSet.allOf(Recompile.class));
 
   /**
    * Utility object specifying extension's return result, indicating that no additional files should be recompiled.
    * See {@link AnnotationsChangeTracker.Recompile}
    */
-  public static final Set<Recompile> RECOMPILE_NONE = Collections.unmodifiableSet(EnumSet.noneOf(Recompile.class));
+  Set<Recompile> RECOMPILE_NONE = Collections.unmodifiableSet(EnumSet.noneOf(Recompile.class));
 
   /**
    * Invoked when changes in annotation list or parameter annotations for some method are detected
@@ -64,7 +64,7 @@ public abstract class AnnotationChangesTracker {
    * @param paramAnnotationsDiff differences descriptor on method parameters annotations
    * @return a set of specifiers, determining what places in the program should be recompiled, see {@link org.jetbrains.jps.builders.java.dependencyView.AnnotationsChangeTracker.Recompile}
    */
-  public @NotNull Set<Recompile> methodAnnotationsChanged(JvmMethod method, Difference.Specifier<TypeRepr.ClassType, ?> annotationsDiff, Difference.Specifier<ParamAnnotation, ?> paramAnnotationsDiff) {
+  default @NotNull Set<Recompile> methodAnnotationsChanged(JvmMethod method, Difference.Specifier<TypeRepr.ClassType, ?> annotationsDiff, Difference.Specifier<ParamAnnotation, ?> paramAnnotationsDiff) {
     return RECOMPILE_NONE;
   }
 
@@ -74,7 +74,7 @@ public abstract class AnnotationChangesTracker {
    * @param annotationsDiff differences descriptor for annotations on the field
    * @return a set of specifiers, determining what places in the program should be recompiled, see {@link org.jetbrains.jps.builders.java.dependencyView.AnnotationsChangeTracker.Recompile}
    */
-  public @NotNull Set<Recompile> fieldAnnotationsChanged(JvmField field, Difference.Specifier<TypeRepr.ClassType, ?> annotationsDiff) {
+  default @NotNull Set<Recompile> fieldAnnotationsChanged(JvmField field, Difference.Specifier<TypeRepr.ClassType, ?> annotationsDiff) {
     return RECOMPILE_NONE;
   }
 
@@ -84,7 +84,7 @@ public abstract class AnnotationChangesTracker {
    * @param annotationsDiff differences descriptor for the class annotations
    * @return a set of specifiers, determining what places in the program should be recompiled, see {@link org.jetbrains.jps.builders.java.dependencyView.AnnotationsChangeTracker.Recompile}
    */
-  public @NotNull Set<Recompile> classAnnotationsChanged(JvmClass aClass, Difference.Specifier<TypeRepr.ClassType, ?> annotationsDiff) {
+  default @NotNull Set<Recompile> classAnnotationsChanged(JvmClass aClass, Difference.Specifier<TypeRepr.ClassType, ?> annotationsDiff) {
     return RECOMPILE_NONE;
   }
 }
