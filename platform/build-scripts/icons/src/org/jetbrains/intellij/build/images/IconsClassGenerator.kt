@@ -149,7 +149,7 @@ internal open class IconsClassGenerator(private val projectHome: Path,
         )
         val existingIconsClass = findExistingIconsClass(sourceRoots, possiblePackageNames)
         val packageName = existingIconsClass?.packageName ?: possiblePackageNames.first()
-        val targetRoot = sourceRoot.path.resolve(packageName.replace('.', File.separatorChar))
+        val targetRoot = sourceRoot.findPackageDirectory(packageName)
 
         if (existingIconsClass != null && !existingIconsClass.sourceRoot.properties.isForGeneratedSources
             && sourceRoot.properties.isForGeneratedSources && images.isNotEmpty()) {
@@ -178,7 +178,7 @@ internal open class IconsClassGenerator(private val projectHome: Path,
                                      possiblePackageNames: List<String>): ExistingIconsClass? {
     for (sourceRoot in sourceRoots) {
       for (packageName in possiblePackageNames) {
-        val directory = sourceRoot.path.resolve(packageName.replace('.', File.separatorChar))
+        val directory = sourceRoot.findPackageDirectory(packageName)
         val className = findIconClass(directory)
         if (className != null) {
           return ExistingIconsClass(sourceRoot, directory.resolve("$className.java"), packageName, className)
@@ -186,6 +186,13 @@ internal open class IconsClassGenerator(private val projectHome: Path,
       }
     }
     return null
+  }
+
+  private fun JpsTypedModuleSourceRoot<JavaSourceRootProperties>.findPackageDirectory(packageName: String): Path {
+    val packagePrefix = properties.packagePrefix
+    if (packagePrefix == packageName) return path
+    val relativePackage = packageName.removePrefix("$packagePrefix.")
+    return path.resolve(relativePackage.replace('.', File.separatorChar))
   }
 
   fun processModule(module: JpsModule, moduleConfig: IntellijIconClassGeneratorModuleConfig?) {
