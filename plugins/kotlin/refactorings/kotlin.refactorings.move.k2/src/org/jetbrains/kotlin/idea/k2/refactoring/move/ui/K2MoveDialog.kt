@@ -24,7 +24,7 @@ internal class K2MoveDialog(project: Project, private val model: K2MoveModel) : 
 
     override fun createCenterPanel(): JComponent {
         mainPanel = panel {
-            model.target.buildPanel(::setErrorText)
+            model.target.buildPanel(model.project, ::setErrorText)
             model.source.buildPanel(::setErrorText)
             row {
                 panel {

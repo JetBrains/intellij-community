@@ -2,11 +2,9 @@
 package org.jetbrains.kotlin.idea.k2.refactoring.move.ui
 
 import com.intellij.ide.util.DirectoryChooser
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
-import com.intellij.psi.JavaDirectoryService
-import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiDirectory
-import com.intellij.psi.PsiPackage
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.ui.PackageNameReferenceEditorCombo
@@ -15,33 +13,33 @@ import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.RowLayout
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveTargetDescriptor
 import org.jetbrains.kotlin.idea.refactoring.ui.KotlinDestinationFolderComboBox
 import org.jetbrains.kotlin.idea.refactoring.ui.KotlinFileChooserDialog
+import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.resolve.jvm.KotlinJavaPsiFacade
 import java.nio.file.Paths
 import javax.swing.JComponent
 
 sealed interface K2MoveTargetModel {
     val directory: PsiDirectory
 
-    val pkg: PsiPackage
+    val pkgName: FqName
 
     fun toDescriptor(): K2MoveTargetDescriptor
 
     context(Panel)
-    fun buildPanel(onError: (String?, JComponent) -> Unit)
+    fun buildPanel(project: Project, onError: (String?, JComponent) -> Unit)
 
-    open class SourceDirectory(override var pkg: PsiPackage, override var directory: PsiDirectory) : K2MoveTargetModel {
-        override fun toDescriptor(): K2MoveTargetDescriptor.SourceDirectory = K2MoveTargetDescriptor.SourceDirectory(pkg, directory)
+    open class SourceDirectory(
+        override var pkgName: FqName,
+        override var directory: PsiDirectory
+    ) : K2MoveTargetModel {
+        override fun toDescriptor(): K2MoveTargetDescriptor.SourceDirectory = K2MoveTargetDescriptor.SourceDirectory(pkgName, directory)
 
         context(Panel)
-        override fun buildPanel(onError: (String?, JComponent) -> Unit) {
-            val project = pkg.project
-
+        override fun buildPanel(project: Project, onError: (String?, JComponent) -> Unit) {
             lateinit var pkgChooser: PackageNameReferenceEditorCombo
             row {
                 label(KotlinBundle.message("label.text.package")).align(AlignX.LEFT)
@@ -53,7 +51,7 @@ sealed interface K2MoveTargetModel {
                         RefactoringBundle.message("choose.destination.package")
                     )
                 ).align(AlignX.FILL).component
-                pkgChooser.prependItem(pkg.qualifiedName)
+                pkgChooser.prependItem(pkgName.asString())
             }.layout(RowLayout.PARENT_GRID)
 
             lateinit var destinationChooser: KotlinDestinationFolderComboBox
@@ -69,8 +67,7 @@ sealed interface K2MoveTargetModel {
 
             onApply {
                 directory = (destinationChooser.comboBox.selectedItem as? DirectoryChooser.ItemWrapper?)?.directory ?: directory
-                val module = directory.module ?: error("Chosen directory is not a source module")
-                pkg = KotlinJavaPsiFacade.getInstance(project).findPackage(pkgChooser.text, GlobalSearchScope.moduleScope(module))
+                pkgName = FqName(pkgChooser.text)
                 RecentsManager.getInstance(project).registerRecentEntry(RECENT_PACKAGE_KEY, destinationChooser.targetPackage)
             }
         }
@@ -80,17 +77,16 @@ sealed interface K2MoveTargetModel {
         }
     }
 
-    class File(file: KtFile, pkg: PsiPackage, directory: PsiDirectory) : SourceDirectory(pkg, directory) {
+    class File(file: KtFile, pkg: FqName, directory: PsiDirectory) : SourceDirectory(pkg, directory) {
         var file: KtFile = file
             private set
 
-        override fun toDescriptor(): K2MoveTargetDescriptor.File = K2MoveTargetDescriptor.File(file, pkg, directory)
+        override fun toDescriptor(): K2MoveTargetDescriptor.File = K2MoveTargetDescriptor.File(file, pkgName, directory)
 
         context(Panel)
-        override fun buildPanel(onError: (String?, JComponent) -> Unit) {
-            super.buildPanel(onError)
+        override fun buildPanel(project: Project, onError: (String?, JComponent) -> Unit) {
+            super.buildPanel(project, onError)
             lateinit var fileChooser: TextFieldWithBrowseButton
-            val project = file.project
             row {
                 label(KotlinBundle.message("label.text.file")).align(AlignX.LEFT)
                 fileChooser = cell(TextFieldWithBrowseButton()).align(AlignX.FILL).component
@@ -99,7 +95,7 @@ sealed interface K2MoveTargetModel {
                     val dialog = KotlinFileChooserDialog(
                         KotlinBundle.message("text.choose.containing.file"),
                         project,
-                        GlobalSearchScope.projectScope(project), pkg.text
+                        GlobalSearchScope.projectScope(project), pkgName.asString()
                     )
                     dialog.showDialog()
                     val selectedFile = if (dialog.isOK) dialog.selected else null
@@ -114,17 +110,9 @@ sealed interface K2MoveTargetModel {
     }
 
     companion object {
-        fun SourceDirectory(directory: PsiDirectory): SourceDirectory {
-            val pkg = JavaDirectoryService.getInstance().getPackage(directory) ?: error("No package was found")
-            return SourceDirectory(pkg, directory)
-        }
-
         fun File(file: KtFile): File {
             val directory = file.containingDirectory ?: error("No containing directory was found")
-            val pkgDirective = file.packageDirective?.fqName
-            val pkg = JavaPsiFacade.getInstance(file.project).findPackage(pkgDirective?.asString() ?: "")
-                      ?: error("No package was found")
-            return File(file, pkg, directory)
+            return File(file, file.packageFqName, directory)
         }
     }
 }

@@ -1,8 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring.move.ui
 
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.psi.JavaDirectoryService
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
 import com.intellij.ui.dsl.builder.Panel
@@ -11,6 +13,7 @@ import com.intellij.ui.dsl.builder.bindSelected
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveDescriptor
 import org.jetbrains.kotlin.idea.refactoring.KotlinCommonRefactoringSettings
+import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
@@ -20,6 +23,8 @@ import kotlin.reflect.KMutableProperty0
  * @see org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveDescriptor
  */
 sealed class K2MoveModel {
+    abstract val project: Project
+
     abstract val source: K2MoveSourceModel<*>
 
     abstract val target: K2MoveTargetModel
@@ -65,6 +70,7 @@ sealed class K2MoveModel {
      * @see org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveDescriptor.Files
      */
     class Files(
+        override val project: Project,
         override val source: K2MoveSourceModel.FileSource,
         override val target: K2MoveTargetModel.SourceDirectory,
         override val inSourceRoot: Boolean,
@@ -73,7 +79,14 @@ sealed class K2MoveModel {
             val srcDescr = source.toDescriptor()
             val targetDescr = target.toDescriptor()
             val searchReferences = if (inSourceRoot) searchReferences.state else false
-            return K2MoveDescriptor.Files(srcDescr, targetDescr, searchForText.state, searchReferences, searchInComments.state)
+            return K2MoveDescriptor.Files(
+                project,
+                srcDescr,
+                targetDescr,
+                searchForText.state,
+                searchReferences,
+                searchInComments.state
+            )
         }
     }
 
@@ -81,6 +94,7 @@ sealed class K2MoveModel {
      * @see org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveDescriptor.Members
      */
     class Members(
+        override val project: Project,
         override val source: K2MoveSourceModel.ElementSource,
         override val target: K2MoveTargetModel.File,
         override val inSourceRoot: Boolean,
@@ -89,7 +103,14 @@ sealed class K2MoveModel {
             val srcDescr = source.toDescriptor()
             val targetDescr = target.toDescriptor()
             val searchReferences = if (inSourceRoot) searchReferences.state else false
-            return K2MoveDescriptor.Members(srcDescr, targetDescr, searchForText.state, searchReferences, searchInComments.state)
+            return K2MoveDescriptor.Members(
+                project,
+                srcDescr,
+                targetDescr,
+                searchForText.state,
+                searchReferences,
+                searchInComments.state
+            )
         }
     }
 
@@ -120,12 +141,15 @@ sealed class K2MoveModel {
                 elementsToMove.all { it is KtFile } && correctedTarget !is KtFile -> {
                     val source = K2MoveSourceModel.FileSource(elementsToMove.filterIsInstance<KtFile>().toSet())
                     val target = if (correctedTarget is PsiDirectory) {
-                        K2MoveTargetModel.SourceDirectory(correctedTarget)
+                        val pkg = JavaDirectoryService.getInstance().getPackage(correctedTarget) ?: error("No package was found")
+                        K2MoveTargetModel.SourceDirectory(FqName(pkg.qualifiedName), correctedTarget)
                     } else { // no default target is provided, happens when invoking refactoring via keyboard instead of drag-and-drop
                         val file = elementsToMove.firstOrNull()?.containingKtFile ?: error("No default target found")
-                        K2MoveTargetModel.SourceDirectory(file.containingDirectory ?: error("No default target found"))
+                        val directory = file.containingDirectory ?: error("No default target found")
+                        val pkgName = elementsToMove.mapNotNull { it?.containingKtFile?.packageFqName }.toSet().singleOrNull() ?: FqName.ROOT
+                        K2MoveTargetModel.SourceDirectory(pkgName, directory)
                     }
-                    Files(source, target, inSourceRoot)
+                    Files(project, source, target, inSourceRoot)
                 }
 
                 elementsToMove.all { it is KtNamedDeclaration } || correctedTarget is KtFile -> {
@@ -143,7 +167,7 @@ sealed class K2MoveModel {
                         val file = elementsFromFiles.firstOrNull()?.containingKtFile ?: error("No default target found")
                         K2MoveTargetModel.File(file)
                     }
-                    Members(source, target, inSourceRoot)
+                    Members(project, source, target, inSourceRoot)
                 }
                 else -> error("Can't mix file and element source")
             }

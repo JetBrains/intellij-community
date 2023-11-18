@@ -149,12 +149,12 @@ object K2MoveAction : AbstractMultifileRefactoringTest.RefactoringAction {
                 targetDir != null -> {
                     runWriteAction { VfsUtil.createDirectoryIfMissing(rootDir, targetDir) }
                     if (targetPackage != null) {
-                        val pkg = JavaPsiFacade.getInstance(project).findPackage(targetPackage)!!
                         val directory = JavaPsiFacade.getInstance(project).findPackage(targetPackage)!!.directories.first()
-                        K2MoveTargetDescriptor.SourceDirectory(pkg, directory)
+                        K2MoveTargetDescriptor.SourceDirectory(FqName(targetPackage), directory)
                     } else {
                         val directory = rootDir.findFileByRelativePath(targetDir)!!.toPsiDirectory(project)!!
-                        K2MoveTargetDescriptor.SourceDirectory(directory)
+                        val pkg = JavaDirectoryService.getInstance().getPackage(directory) ?: error("No package was found")
+                        K2MoveTargetDescriptor.SourceDirectory(FqName(pkg.qualifiedName), directory)
                     }
                 }
                 else -> error("No target specified")
@@ -169,7 +169,7 @@ object K2MoveAction : AbstractMultifileRefactoringTest.RefactoringAction {
         } else null
         val specifiedTarget = buildTarget(project, rootDir, config)
         if (source is K2MoveSourceDescriptor.FileSource && specifiedTarget is K2MoveTargetDescriptor.SourceDirectory) {
-            val descriptor = K2MoveDescriptor.Files(source, specifiedTarget, true, true, true)
+            val descriptor = K2MoveDescriptor.Files(project, source, specifiedTarget, true, true, true)
             K2MoveFilesOrDirectoriesRefactoringProcessor(descriptor).run()
         } else if (source is K2MoveSourceDescriptor.ElementSource) {
             val actualTarget = when (specifiedTarget) {
@@ -179,14 +179,14 @@ object K2MoveAction : AbstractMultifileRefactoringTest.RefactoringAction {
                         createKotlinFile(
                             source.elements.first().name?.capitalizeAsciiOnly() + ".kt",
                             specifiedTarget.directory,
-                            specifiedTarget.pkg.name
+                            specifiedTarget.pkgName.asString()
                         )
                     }
                     K2MoveTargetDescriptor.File(file)
                 }
                 else -> throw IllegalStateException("Invalid specified target")
             }
-            val descriptor = K2MoveDescriptor.Members(source, actualTarget, true, true, true)
+            val descriptor = K2MoveDescriptor.Members(project, source, actualTarget, true, true, true)
             K2MoveMembersRefactoringProcessor(descriptor).run()
         } else if (specifiedTarget is PsiElement) {
             MoveHandler.doMove(
