@@ -416,6 +416,11 @@ final class PsiUpdateImpl {
 
     @Override
     public void rename(@NotNull PsiNameIdentifierOwner element, @NotNull List<@NotNull String> suggestedNames) {
+      rename(element, element.getNameIdentifier(), suggestedNames);
+    }
+
+    @Override
+    public void rename(@NotNull PsiNamedElement element, @Nullable PsiElement nameIdentifier, @NotNull List<@NotNull String> suggestedNames) {
       if (myRenameSymbol != null) {
         throw new IllegalStateException("One element is already registered for rename");
       }
@@ -423,7 +428,6 @@ final class PsiUpdateImpl {
       if (range == null) {
         throw new IllegalArgumentException("Element disappeared after postponed operations: " + element);
       }
-      PsiElement nameIdentifier = element.getNameIdentifier();
       TextRange identifierRange = nameIdentifier != null ? nameIdentifier.getTextRange() : null;
       myRenameSymbol = new ModStartRename(myNavigationFile, new ModStartRename.RenameSymbolRange(range, identifierRange), suggestedNames);
     }
