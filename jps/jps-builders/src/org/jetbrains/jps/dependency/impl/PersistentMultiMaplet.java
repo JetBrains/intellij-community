@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.dependency.impl;
 
+import com.intellij.util.containers.SmartHashSet;
 import com.intellij.util.io.AppendablePersistentMap;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.KeyDescriptor;
@@ -146,14 +147,10 @@ public final class PersistentMultiMaplet<K, V, C extends Collection<V>> implemen
 
   @Override
   public void removeValues(K key, @NotNull Iterable<? extends V> values) {
-    try {
-      C collection = get(key);
-      if (!collection.isEmpty()) {
-        boolean changes = false;
-        for (V value : values) {
-          changes |= collection.remove(value);
-        }
-        if (changes) {
+    if (!Iterators.isEmpty(values)) {
+      try {
+        C collection = get(key);
+        if (collection != myEmptyCollection && collection.removeAll(values instanceof Set? ((Set<? extends V>)values) : Iterators.collect(values, new SmartHashSet<>()))) {
           if (collection.isEmpty()) {
             myMap.remove(key);
           }
@@ -162,9 +159,9 @@ public final class PersistentMultiMaplet<K, V, C extends Collection<V>> implemen
           }
         }
       }
-    }
-    catch (IOException e) {
-      throw new BuildDataCorruptedException(e);
+      catch (IOException e) {
+        throw new BuildDataCorruptedException(e);
+      }
     }
   }
 

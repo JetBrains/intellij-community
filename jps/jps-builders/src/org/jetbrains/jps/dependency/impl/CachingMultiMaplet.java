@@ -3,14 +3,15 @@ package org.jetbrains.jps.dependency.impl;
 
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.LoadingCache;
-import com.intellij.util.SmartList;
+import com.intellij.util.containers.SmartHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.dependency.MultiMaplet;
 import org.jetbrains.jps.javac.Iterators;
 
 import java.io.IOException;
-import java.util.Collection;
 import java.util.Collections;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 public class CachingMultiMaplet<K, V> implements MultiMaplet<K, V> {
 
@@ -26,7 +27,7 @@ public class CachingMultiMaplet<K, V> implements MultiMaplet<K, V> {
 
   @Override
   public boolean containsKey(K key) {
-    return myDelegate.containsKey(key);
+    return myCache.getIfPresent(key) != null || myDelegate.containsKey(key);
   }
 
   @Override
@@ -36,14 +37,22 @@ public class CachingMultiMaplet<K, V> implements MultiMaplet<K, V> {
 
   @Override
   public void put(K key, @NotNull Iterable<? extends V> values) {
-    myCache.invalidate(key);
-    myDelegate.put(key, values);
+    try {
+      myDelegate.put(key, values);
+    }
+    finally {
+      myCache.invalidate(key);
+    }
   }
 
   @Override
   public void remove(K key) {
-    myCache.invalidate(key);
-    myDelegate.remove(key);
+    try {
+      myDelegate.remove(key);
+    }
+    finally {
+      myCache.invalidate(key);
+    }
   }
 
   @Override
@@ -54,8 +63,12 @@ public class CachingMultiMaplet<K, V> implements MultiMaplet<K, V> {
   @Override
   public void appendValues(K key, @NotNull Iterable<? extends V> values) {
     if (!Iterators.isEmpty(values)) {
-      myCache.invalidate(key);     
-      myDelegate.appendValues(key, values);
+      try {
+        myDelegate.appendValues(key, values);
+      }
+      finally {
+        myCache.invalidate(key);
+      }
     }
   }
 
@@ -66,23 +79,15 @@ public class CachingMultiMaplet<K, V> implements MultiMaplet<K, V> {
 
   @Override
   public void removeValues(K key, @NotNull Iterable<? extends V> values) {
-    if (Iterators.isEmpty(values)) {
-      return;
-    }
-    Iterable<V> currentData = myCache.get(key);
-    Collection<V> collection = currentData instanceof Collection? (Collection<V>)currentData : Iterators.collect(currentData, new SmartList<>());
-    if (!collection.isEmpty()) {
-      boolean changes = false;
-      for (V value : values) {
-        changes |= collection.remove(value);
-      }
-      if (changes) {
-        myCache.invalidate(key);
+    if (!Iterators.isEmpty(values)) {
+      Set<V> collection = Iterators.collect(myCache.get(key), new LinkedHashSet<>());
+      if (collection.removeAll(values instanceof Set? ((Set<? extends V>)values) : Iterators.collect(values, new SmartHashSet<>()))) {
         if (collection.isEmpty()) {
-          myDelegate.remove(key);
+          remove(key);
         }
         else {
           myDelegate.put(key, collection);
+          myCache.put(key, collection);
         }
       }
     }
