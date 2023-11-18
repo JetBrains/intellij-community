@@ -14,10 +14,14 @@ import com.intellij.openapi.editor.colors.EditorColorsManager.TOPIC
 import com.intellij.openapi.project.Project
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.ui.SingleComponentCenteringLayout
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.collectLatest
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.action.GHPRActionKeys
+import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRDetailsFull
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRFileEditorComponentFactory
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.model.GHPRToolWindowProjectViewModel
 import java.awt.BorderLayout
@@ -53,7 +57,7 @@ internal class GHPRTimelineFileEditor(private val project: Project,
       DataManager.registerDataProvider(it) { dataId ->
         when {
           GHPRActionKeys.PULL_REQUEST_ID.`is`(dataId) -> file.pullRequest
-          GHPRActionKeys.PULL_REQUEST_URL.`is`(dataId) -> timelineVm.details.value.getOrNull()?.url
+          GHPRActionKeys.PULL_REQUEST_URL.`is`(dataId) -> timelineVm.detailsVm.details.value.getOrNull()?.url
           else -> null
         }
       }
@@ -63,16 +67,13 @@ internal class GHPRTimelineFileEditor(private val project: Project,
   private fun doCreateContent(): JComponent {
     val panel = JPanel(null)
     cs.launchNow {
-      timelineVm.details.collectLatest {
+      timelineVm.detailsVm.details.collectLatest {
         when (val result = it.result) {
           null -> panel.setLayoutAndComponent(SingleComponentCenteringLayout(), LoadingTextLabel())
           else -> result.fold({ details ->
-                                supervisorScope {
-                                  val timeline = GHPRFileEditorComponentFactory(project, timelineVm, details, this)
-                                    .create()
-                                  panel.setLayoutAndComponent(BorderLayout(), timeline)
-                                  awaitCancellation()
-                                }
+                                //further updates will be handled by the timeline itself
+                                panel.showTimeline(details)
+                                cancel()
                               }, { _ ->
                                 //TODO: handle error
                               })
@@ -80,6 +81,11 @@ internal class GHPRTimelineFileEditor(private val project: Project,
       }
     }
     return panel
+  }
+
+  private fun JPanel.showTimeline(details: GHPRDetailsFull) {
+    val timeline = GHPRFileEditorComponentFactory(project, timelineVm, details, cs).create()
+    setLayoutAndComponent(BorderLayout(), timeline)
   }
 
   private fun JPanel.setLayoutAndComponent(newLayout: LayoutManager, component: JComponent) {

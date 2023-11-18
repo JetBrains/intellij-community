@@ -24,9 +24,6 @@ import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.util.text.buildChildren
 import com.intellij.openapi.wm.IdeFocusManager
-import com.intellij.ui.AnimatedIcon
-import com.intellij.ui.ColorUtil
-import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.text.DateFormatUtil
 import com.intellij.util.ui.JBUI
@@ -41,7 +38,9 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.github.api.data.GHActor
 import org.jetbrains.plugins.github.api.data.GHIssueComment
 import org.jetbrains.plugins.github.api.data.GHUser
-import org.jetbrains.plugins.github.api.data.pullrequest.*
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestCommitShort
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReview
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewCommentState
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewState.*
 import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRTimelineEvent
 import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRTimelineItem
@@ -52,7 +51,6 @@ import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPRReviewCommentMode
 import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPRReviewThreadComponent
 import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPRReviewThreadModel
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRCommentsDataProvider
-import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDetailsDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRReviewDataProvider
 import org.jetbrains.plugins.github.pullrequest.ui.GHEditableHtmlPaneHandle
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRSuggestedChangeHelper
@@ -67,7 +65,6 @@ import javax.swing.event.ListDataEvent
 import javax.swing.event.ListDataListener
 
 class GHPRTimelineItemComponentFactory(private val project: Project,
-                                       private val detailsDataProvider: GHPRDetailsDataProvider,
                                        private val commentsDataProvider: GHPRCommentsDataProvider,
                                        private val reviewDataProvider: GHPRReviewDataProvider,
                                        private val htmlImageLoader: AsyncHtmlImageLoader,
@@ -160,47 +157,6 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
     }
     val actor = commits.singleOrNull()?.commit?.author?.user ?: prAuthor ?: ghostUser
     return createTimelineItem(avatarIconsProvider, actor ?: ghostUser, commits.singleOrNull()?.commit?.author?.date, contentPanel)
-  }
-
-  private val noDescriptionHtmlText by lazy {
-    HtmlBuilder()
-      .append(GithubBundle.message("pull.request.timeline.no.description"))
-      .wrapWith(HtmlChunk.font(ColorUtil.toHex(UIUtil.getContextHelpForeground())))
-      .wrapWith("i")
-      .toString()
-  }
-
-  fun createComponent(details: GHPullRequestShort): JComponent {
-    val contentPanel: JPanel?
-    val actionsPanel: JPanel?
-    if (details is GHPullRequest) {
-      val textPane = SimpleHtmlPane(customImageLoader = htmlImageLoader)
-      fun JEditorPane.updateText(body: @Nls String) {
-        val text = body.takeIf { it.isNotBlank() }?.convertToHtml(project) ?: noDescriptionHtmlText
-        setHtmlBody(text)
-      }
-      textPane.updateText(details.body)
-
-      val panelHandle = GHEditableHtmlPaneHandle(project, textPane, details::body) { newText ->
-        detailsDataProvider.updateDetails(EmptyProgressIndicator(), description = newText)
-          .successOnEdt { textPane.updateText(it.body) }
-      }
-      contentPanel = panelHandle.panel
-      actionsPanel = if (details.viewerCanUpdate) HorizontalListPanel(CodeReviewCommentUIUtil.Actions.HORIZONTAL_GAP).apply {
-        add(CodeReviewCommentUIUtil.createEditButton {
-          panelHandle.showAndFocusEditor()
-        })
-      }
-      else null
-    }
-    else {
-      contentPanel = NonOpaquePanel(SingleComponentCenteringLayout()).apply {
-        add(JLabel(AnimatedIcon.Default()))
-      }
-      actionsPanel = null
-    }
-
-    return createTimelineItem(avatarIconsProvider, details.author ?: ghostUser, details.createdAt, contentPanel, actionsPanel)
   }
 
   private fun createComponent(comment: GHIssueComment): JComponent {

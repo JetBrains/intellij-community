@@ -1,28 +1,20 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui.timeline
 
-import com.intellij.collaboration.async.CompletableFutureUtil
 import com.intellij.collaboration.async.nestedDisposable
 import com.intellij.collaboration.ui.html.AsyncHtmlImageLoader
-import com.intellij.collaboration.util.ComputedResult
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Disposer
 import com.intellij.platform.util.coroutines.childScope
 import git4idea.repo.GitRepository
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.channels.awaitClose
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.channelFlow
-import kotlinx.coroutines.flow.stateIn
 import org.jetbrains.plugins.github.api.data.GHRepositoryPermissionLevel
 import org.jetbrains.plugins.github.api.data.GHUser
-import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRTimelineItem
 import org.jetbrains.plugins.github.pullrequest.data.GHListLoader
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
+import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRCommentsDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDetailsDataProvider
@@ -32,6 +24,7 @@ import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingErrorHandler
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 
 interface GHPRTimelineViewModel {
+  val prId: GHPRIdentifier
   val repository: GitRepository
   val ghostUser: GHUser
   val currentUser: GHUser
@@ -40,7 +33,7 @@ interface GHPRTimelineViewModel {
   val reviewData: GHPRReviewDataProvider
   val commentsData: GHPRCommentsDataProvider
 
-  val details: StateFlow<ComputedResult<GHPullRequestShort>>
+  val detailsVm: GHPRDetailsTimelineViewModel
 
   val timelineLoader: GHListLoader<GHPRTimelineItem>
   val loadingErrorHandler: GHLoadingErrorHandler
@@ -70,6 +63,7 @@ internal class GHPRTimelineViewModelImpl(
   private val securityService = dataContext.securityService
   private val repositoryDataService = dataContext.repositoryDataService
 
+  override val prId: GHPRIdentifier = dataProvider.id
   override val detailsData = dataProvider.detailsData
   override val reviewData = dataProvider.reviewData
   override val commentsData = dataProvider.commentsData
@@ -79,28 +73,7 @@ internal class GHPRTimelineViewModelImpl(
   override val ghostUser: GHUser = securityService.ghostUser
   override val currentUser: GHUser = securityService.currentUser
 
-  override val details: StateFlow<ComputedResult<GHPullRequestShort>> = channelFlow<ComputedResult<GHPullRequestShort>> {
-    val disposable = Disposer.newDisposable()
-    val fromList = dataContext.listLoader.loadedData.find { it.id == dataProvider.id.id }
-    if (fromList != null) {
-      trySend(ComputedResult.success(fromList))
-    }
-    detailsData.loadDetails(disposable) {
-      if (!it.isDone) {
-        trySend(ComputedResult.loading())
-      }
-      it.handle { res, err ->
-        if (err != null && !CompletableFutureUtil.isCancellation(err)) {
-          trySend(ComputedResult.failure(err.cause ?: err))
-        }
-        else {
-          trySend(ComputedResult.success(res))
-        }
-      }
-    }
-    awaitClose { Disposer.dispose(disposable) }
-  }.stateIn(cs, SharingStarted.Eagerly, ComputedResult.loading())
-
+  override val detailsVm = GHPRDetailsTimelineViewModel(project, parentCs, dataContext, dataProvider)
   override val timelineLoader = dataProvider.acquireTimelineLoader(cs.nestedDisposable())
 
   override val loadingErrorHandler: GHLoadingErrorHandler =
