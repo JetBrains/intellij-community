@@ -1735,6 +1735,10 @@
     <!-- Settings Transfer -->
     <transferSettings.vscode.pluginMapping id="CommonPluginMapping"
                                            implementation="com.intellij.ide.customize.transferSettings.providers.vscode.mappings.CommonPluginMapping"/>
+
+    <registryKey key="rdct.new.async.actions"
+                 defaultValue="false"
+                 description="Turns on the new async action system"/>
   </extensions>
 
   <applicationListeners>
