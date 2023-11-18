@@ -19,7 +19,7 @@ object DemorgansLawUtils {
     @OptIn(UnsafeCastFunction::class)
     fun prepareDemorgansLawContext(operands: List<KtExpression>): DemorgansLawContext {
         val pointers = operands.asReversed().map { operand ->
-            operand.safeAs<KtQualifiedExpression>()?.invertSelectorFunction() ?: operand.negate(false) { it.isBoolean }
+            operand.safeAs<KtQualifiedExpression>()?.invertSelectorFunction() ?: operand.negate(reformat = false) { it.isBoolean }
         }.map { it.createSmartPointer() }
         return DemorgansLawContext(pointers)
     }
