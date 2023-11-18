@@ -2,19 +2,20 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 
 import com.intellij.modcommand.ModPsiUpdater
-import com.intellij.psi.PsiComment
-import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.refactoring.suggested.createSmartPointer
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.idea.base.psi.getLineNumber
-import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinModCommandWithContext
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AnalysisActionContext
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicabilityTarget
 import org.jetbrains.kotlin.idea.codeinsight.utils.*
+import org.jetbrains.kotlin.idea.codeinsight.utils.InvertIfConditionUtils.copyThenBranchAfter
+import org.jetbrains.kotlin.idea.codeinsight.utils.InvertIfConditionUtils.handleStandardCase
+import org.jetbrains.kotlin.idea.codeinsight.utils.InvertIfConditionUtils.isEmptyReturn
+import org.jetbrains.kotlin.idea.codeinsight.utils.InvertIfConditionUtils.nextEolCommentOnSameLine
+import org.jetbrains.kotlin.idea.codeinsight.utils.InvertIfConditionUtils.parentBlockRBrace
 import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
@@ -76,7 +77,7 @@ internal class InvertIfConditionIntention : AbstractKotlinModCommandWithContext<
         if (rBrace != null) element.nextEolCommentOnSameLine()?.delete()
 
         val analyzeContext = context.analyzeContext
-        val newIf = handleSpecialCases(element, analyzeContext) ?: handleStandardCase(element, analyzeContext)
+        val newIf = handleSpecialCases(element, analyzeContext) ?: handleStandardCase(element, analyzeContext.newCondition.element!!)
 
         val commentRestoreRange = if (rBrace != null)
             PsiChildRange(newIf, rBrace)
@@ -93,39 +94,6 @@ internal class InvertIfConditionIntention : AbstractKotlinModCommandWithContext<
         }
 
         updater.moveTo(newIf)
-    }
-
-    private fun handleStandardCase(ifExpression: KtIfExpression, context: Context): KtIfExpression {
-        val psiFactory = KtPsiFactory(ifExpression.project)
-
-        val thenBranch = ifExpression.then!!
-        val elseBranch = ifExpression.`else` ?: psiFactory.createEmptyBody()
-
-        val newThen = if (elseBranch is KtIfExpression)
-            psiFactory.createSingleStatementBlock(elseBranch)
-        else
-            elseBranch
-
-        val newElse = if (thenBranch is KtBlockExpression && thenBranch.statements.isEmpty())
-            null
-        else
-            thenBranch
-
-        val conditionLineNumber = ifExpression.condition?.getLineNumber(false)
-        val thenBranchLineNumber = thenBranch.getLineNumber(false)
-        val elseKeywordLineNumber = ifExpression.elseKeyword?.getLineNumber()
-        val afterCondition = if (newThen !is KtBlockExpression && elseKeywordLineNumber != elseBranch.getLineNumber(false)) "\n" else ""
-        val beforeElse = if (newThen !is KtBlockExpression && conditionLineNumber != elseKeywordLineNumber) "\n" else " "
-        val afterElse = if (newElse !is KtBlockExpression && conditionLineNumber != thenBranchLineNumber) "\n" else " "
-
-        val newCondition = context.newCondition.element!!
-        val newIf = if (newElse == null) {
-            psiFactory.createExpressionByPattern("if ($0)$afterCondition$1", newCondition, newThen)
-        } else {
-            psiFactory.createExpressionByPattern("if ($0)$afterCondition$1${beforeElse}else$afterElse$2", newCondition, newThen, newElse)
-        } as KtIfExpression
-
-        return ifExpression.replaced(newIf)
     }
 
     private fun handleSpecialCases(ifExpression: KtIfExpression, context: Context): KtIfExpression? {
@@ -199,37 +167,6 @@ internal class InvertIfConditionIntention : AbstractKotlinModCommandWithContext<
         } else exitExpr1.javaClass == exitExpr2.javaClass
     }
 
-    private fun isEmptyReturn(statement: KtExpression) =
-        statement is KtReturnExpression && statement.returnedExpression == null && statement.labeledExpression == null
-
-    private fun copyThenBranchAfter(ifExpression: KtIfExpression): KtIfExpression {
-        val psiFactory = KtPsiFactory(ifExpression.project)
-        val thenBranch = ifExpression.then ?: return ifExpression
-
-        val parent = ifExpression.parent
-        if (parent !is KtBlockExpression) {
-            assert(parent is KtContainerNode)
-            val block = psiFactory.createEmptyBody()
-            block.addAfter(ifExpression, block.lBrace)
-            val newBlock = ifExpression.replaced(block)
-            val newIf = newBlock.statements.single() as KtIfExpression
-            return copyThenBranchAfter(newIf)
-        }
-
-        if (thenBranch is KtBlockExpression) {
-            (thenBranch.statements.lastOrNull() as? KtContinueExpression)?.delete()
-            val range = thenBranch.contentRange()
-            if (!range.isEmpty) {
-                parent.addRangeAfter(range.first, range.last, ifExpression)
-                parent.addAfter(psiFactory.createNewLine(), ifExpression)
-            }
-        } else if (thenBranch !is KtContinueExpression) {
-            parent.addAfter(thenBranch, ifExpression)
-            parent.addAfter(psiFactory.createNewLine(), ifExpression)
-        }
-        return ifExpression
-    }
-
     private fun exitStatementExecutedAfter(expression: KtExpression, context: Context): KtExpression? {
         when (val parent = expression.parent) {
             is KtBlockExpression -> {
@@ -270,14 +207,6 @@ internal class InvertIfConditionIntention : AbstractKotlinModCommandWithContext<
     private fun KtExpression.isExitStatement(): Boolean = when (this) {
         is KtContinueExpression, is KtBreakExpression, is KtThrowExpression, is KtReturnExpression -> true
         else -> false
-    }
-
-    private fun parentBlockRBrace(element: KtIfExpression): PsiElement? = (element.parent as? KtBlockExpression)?.rBrace
-
-    private fun KtIfExpression.nextEolCommentOnSameLine(): PsiElement? = getLineNumber(false).let { lastLineNumber ->
-        siblings(withItself = false)
-            .takeWhile { it.getLineNumber() == lastLineNumber }
-            .firstOrNull { it is PsiComment && it.node.elementType == KtTokens.EOL_COMMENT }
     }
 }
 
