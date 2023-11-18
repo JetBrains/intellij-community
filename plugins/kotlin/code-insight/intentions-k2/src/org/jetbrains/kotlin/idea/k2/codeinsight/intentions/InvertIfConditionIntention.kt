@@ -28,7 +28,16 @@ import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstance
 import org.jetbrains.kotlin.utils.addToStdlib.lastIsInstanceOrNull
 
-internal class InvertIfConditionIntention : AbstractKotlinModCommandWithContext<KtIfExpression, Context>(KtIfExpression::class) {
+internal class InvertIfConditionIntention :
+    AbstractKotlinModCommandWithContext<KtIfExpression, InvertIfConditionIntention.Context>(KtIfExpression::class) {
+
+    data class Context(
+        val newCondition: SmartPsiElementPointer<KtExpression>,
+        val demorgansLawContext: DemorgansLawUtils.Context?,
+        val isParentFunUnit: Boolean,
+        val commentSaver: CommentSaver,
+    )
+
     override fun getFamilyName(): String = KotlinBundle.message("invert.if.condition")
     override fun getActionName(element: KtIfExpression, context: Context): String = familyName
 
@@ -216,10 +225,3 @@ internal class InvertIfConditionIntention : AbstractKotlinModCommandWithContext<
         return getOperandsIfAllBoolean(expression) != null
     }
 }
-
-internal class Context(
-    val newCondition: SmartPsiElementPointer<KtExpression>,
-    val demorgansLawContext: DemorgansLawUtils.Context?,
-    val isParentFunUnit: Boolean,
-    val commentSaver: CommentSaver,
-)
