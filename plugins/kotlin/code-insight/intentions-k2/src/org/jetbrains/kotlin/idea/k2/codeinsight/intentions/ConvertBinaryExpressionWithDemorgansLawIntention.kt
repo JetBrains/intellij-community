@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AnalysisA
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsight.utils.DemorgansLawUtils.DemorgansLawContext
 import org.jetbrains.kotlin.idea.codeinsight.utils.DemorgansLawUtils.applyDemorgansLaw
-import org.jetbrains.kotlin.idea.codeinsight.utils.DemorgansLawUtils.isBoolean
+import org.jetbrains.kotlin.idea.codeinsight.utils.DemorgansLawUtils.getOperandsIfAllBoolean
 import org.jetbrains.kotlin.idea.codeinsight.utils.DemorgansLawUtils.prepareDemorgansLawContext
 import org.jetbrains.kotlin.idea.codeinsight.utils.DemorgansLawUtils.splitBooleanSequence
 import org.jetbrains.kotlin.idea.codeinsight.utils.DemorgansLawUtils.topmostBinaryExpression
@@ -33,8 +33,7 @@ internal class ConvertBinaryExpressionWithDemorgansLawIntention :
 
     context(KtAnalysisSession)
     override fun prepareContext(element: KtBinaryExpression): DemorgansLawContext? {
-        val operands = element.topmostBinaryExpression().let(::splitBooleanSequence) ?: return null
-        if (operands.any { !it.isBoolean }) return null
+        val operands = getOperandsIfAllBoolean(element) ?: return null
         return prepareDemorgansLawContext(operands)
     }
 

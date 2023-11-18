@@ -13,8 +13,8 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicabilityTarget
 import org.jetbrains.kotlin.idea.codeinsight.utils.*
 import org.jetbrains.kotlin.idea.codeinsight.utils.DemorgansLawUtils.DemorgansLawContext
 import org.jetbrains.kotlin.idea.codeinsight.utils.DemorgansLawUtils.applyDemorgansLaw
+import org.jetbrains.kotlin.idea.codeinsight.utils.DemorgansLawUtils.getOperandsIfAllBoolean
 import org.jetbrains.kotlin.idea.codeinsight.utils.DemorgansLawUtils.invertSelectorFunction
-import org.jetbrains.kotlin.idea.codeinsight.utils.DemorgansLawUtils.isBoolean
 import org.jetbrains.kotlin.idea.codeinsight.utils.DemorgansLawUtils.prepareDemorgansLawContext
 import org.jetbrains.kotlin.idea.codeinsight.utils.DemorgansLawUtils.splitBooleanSequence
 import org.jetbrains.kotlin.idea.codeinsight.utils.DemorgansLawUtils.topmostBinaryExpression
@@ -50,7 +50,7 @@ internal class InvertIfConditionIntention : AbstractKotlinModCommandWithContext<
         val isParentFunUnit = element.getParentOfType<KtNamedFunction>(true)
         val isUnit = isParentFunUnit != null && isParentFunUnit.getReturnKtType().isUnit
 
-        val demorgansLawContext = if (condition is KtBinaryExpression && splitBooleanSequence(condition)?.all { it.isBoolean } == true) {
+        val demorgansLawContext = if (condition is KtBinaryExpression && areAllOperandsBoolean(condition)) {
             getBinaryExpression(newCondition)?.let(::splitBooleanSequence)?.let { expressions ->
                 prepareDemorgansLawContext(expressions)
             }
@@ -212,6 +212,11 @@ internal class InvertIfConditionIntention : AbstractKotlinModCommandWithContext<
     private fun KtExpression.isExitStatement(): Boolean = when (this) {
         is KtContinueExpression, is KtBreakExpression, is KtThrowExpression, is KtReturnExpression -> true
         else -> false
+    }
+
+    context(KtAnalysisSession)
+    private fun areAllOperandsBoolean(expression: KtBinaryExpression): Boolean {
+        return getOperandsIfAllBoolean(expression) != null
     }
 }
 
