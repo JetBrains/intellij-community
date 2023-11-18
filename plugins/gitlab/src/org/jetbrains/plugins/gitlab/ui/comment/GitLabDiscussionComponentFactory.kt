@@ -39,7 +39,8 @@ internal object GitLabDiscussionComponentFactory {
              avatarIconsProvider: IconsProvider<GitLabUserDTO>,
              vm: GitLabMergeRequestDiscussionViewModel,
              place: GitLabStatistics.MergeRequestNoteActionPlace): JComponent {
-    val notesPanel = ComponentListPanelFactory.createVertical(cs, vm.notes, NoteItem::id) { itemCs, item ->
+    val notesPanel = ComponentListPanelFactory.createVertical(cs, vm.notes, NoteItem::id) { item ->
+      val itemCs = this
       when (item) {
         is NoteItem.Expander -> TimelineThreadCommentsPanel.createUnfoldComponent(item.collapsedCount) {
           item.expand()

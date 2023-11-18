@@ -61,7 +61,7 @@ object ComponentListPanelFactory {
                                itemKeyExtractor: ((T) -> Any),
                                panelInitializer: JPanel.() -> Unit = {},
                                gap: Int = 0,
-                               componentFactory: (CoroutineScope, T) -> JComponent): JPanel {
+                               componentFactory: CoroutineScope.(T) -> JComponent): JPanel {
     val cs = parentCs.childScope(Dispatchers.Main)
     val panel = VerticalListPanel(gap).apply(panelInitializer)
     val keyList = LinkedList<Any>()
@@ -70,7 +70,7 @@ object ComponentListPanelFactory {
       keyList.add(idx, key)
       withContext(Dispatchers.Main.immediate) {
         val scope = cs.childScope()
-        val component = componentFactory(scope, item).also {
+        val component = scope.componentFactory(item).also {
           ClientProperty.put(it, COMPONENT_SCOPE_KEY, scope)
         }
         panel.add(component, idx)

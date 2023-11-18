@@ -46,7 +46,7 @@ internal object GitLabMergeRequestCreateReviewersComponentFactory {
       items = createVm.adjustedReviewers,
       itemKeyExtractor = { reviewer -> reviewer.id },
       gap = REVIEWERS_GAP,
-      componentFactory = { _, reviewer -> createReviewerComponent(createVm, reviewer) }
+      componentFactory = { reviewer -> createReviewerComponent(createVm, reviewer) }
     )
 
     return VerticalListPanel(gap = COMPONENTS_GAP).apply {

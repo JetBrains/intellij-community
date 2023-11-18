@@ -149,8 +149,8 @@ internal object GitLabMergeRequestTimelineComponentFactory {
                                                                          add(LoadingLabel().apply {
                                                                            border = Borders.empty(ComponentType.FULL.paddingInsets)
                                                                          }, ListLayout.Alignment.CENTER)
-                                                                       }) { itemCs, item ->
-      createItemComponent(project, itemCs, avatarIconsProvider, item)
+                                                                       }) { item ->
+      createItemComponent(project, avatarIconsProvider, item)
     }
     timelineOrErrorPanel.setContent(timelineItemContent)
 
@@ -176,10 +176,9 @@ internal object GitLabMergeRequestTimelineComponentFactory {
     return timelineOrErrorPanel
   }
 
-  private fun createItemComponent(project: Project,
-                                  cs: CoroutineScope,
-                                  avatarIconsProvider: IconsProvider<GitLabUserDTO>,
-                                  item: GitLabMergeRequestTimelineItemViewModel): JComponent =
+  private fun CoroutineScope.createItemComponent(project: Project,
+                                                 avatarIconsProvider: IconsProvider<GitLabUserDTO>,
+                                                 item: GitLabMergeRequestTimelineItemViewModel): JComponent =
     when (item) {
       is GitLabMergeRequestTimelineItemViewModel.Immutable -> {
         val immutableItem = item.item
@@ -192,7 +191,7 @@ internal object GitLabMergeRequestTimelineComponentFactory {
         }
       }
       is GitLabMergeRequestTimelineDiscussionViewModel -> {
-        GitLabMergeRequestTimelineDiscussionComponentFactory.create(project, cs, avatarIconsProvider, item)
+        GitLabMergeRequestTimelineDiscussionComponentFactory.create(project, this, avatarIconsProvider, item)
       }
     }
 
