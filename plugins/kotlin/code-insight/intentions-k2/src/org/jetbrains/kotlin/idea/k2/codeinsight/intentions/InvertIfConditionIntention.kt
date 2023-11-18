@@ -11,11 +11,9 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AnalysisA
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicabilityTarget
 import org.jetbrains.kotlin.idea.codeinsight.utils.*
-import org.jetbrains.kotlin.idea.codeinsight.utils.DemorgansLawUtils.DemorgansLawContext
 import org.jetbrains.kotlin.idea.codeinsight.utils.DemorgansLawUtils.applyDemorgansLaw
 import org.jetbrains.kotlin.idea.codeinsight.utils.DemorgansLawUtils.getOperandsIfAllBoolean
 import org.jetbrains.kotlin.idea.codeinsight.utils.DemorgansLawUtils.invertSelectorFunction
-import org.jetbrains.kotlin.idea.codeinsight.utils.DemorgansLawUtils.prepareDemorgansLawContext
 import org.jetbrains.kotlin.idea.codeinsight.utils.DemorgansLawUtils.splitBooleanSequence
 import org.jetbrains.kotlin.idea.codeinsight.utils.DemorgansLawUtils.topmostBinaryExpression
 import org.jetbrains.kotlin.idea.codeinsight.utils.InvertIfConditionUtils.copyThenBranchAfter
@@ -47,16 +45,15 @@ internal class InvertIfConditionIntention : AbstractKotlinModCommandWithContext<
         val condition = element.condition!!
         val newCondition = (condition as? KtQualifiedExpression)?.invertSelectorFunction() ?: condition.negate()
 
-        val isParentFunUnit = element.getParentOfType<KtNamedFunction>(true)
-        val isUnit = isParentFunUnit != null && isParentFunUnit.getReturnKtType().isUnit
+        val isParentFunUnit = element.getParentOfType<KtNamedFunction>(true)?.let { it.getReturnKtType().isUnit } == true
 
         val demorgansLawContext = if (condition is KtBinaryExpression && areAllOperandsBoolean(condition)) {
-            getBinaryExpression(newCondition)?.let(::splitBooleanSequence)?.let { expressions ->
-                prepareDemorgansLawContext(expressions)
+            getBinaryExpression(newCondition)?.let(::splitBooleanSequence)?.let { operands ->
+                DemorgansLawUtils.prepareContext(operands)
             }
         } else null
 
-        return Context(newCondition.createSmartPointer(), demorgansLawContext, isUnit, commentSaver)
+        return Context(newCondition.createSmartPointer(), demorgansLawContext, isParentFunUnit, commentSaver)
     }
 
     private fun getBinaryExpression(expression: KtExpression): KtBinaryExpression? {
@@ -222,7 +219,7 @@ internal class InvertIfConditionIntention : AbstractKotlinModCommandWithContext<
 
 internal class Context(
     val newCondition: SmartPsiElementPointer<KtExpression>,
-    val demorgansLawContext: DemorgansLawContext?,
+    val demorgansLawContext: DemorgansLawUtils.Context?,
     val isParentFunUnit: Boolean,
     val commentSaver: CommentSaver,
 )

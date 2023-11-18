@@ -13,18 +13,18 @@ import org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 object DemorgansLawUtils {
-    data class DemorgansLawContext(val pointers: List<SmartPsiElementPointer<KtExpression>>)
+    data class Context(val pointers: List<SmartPsiElementPointer<KtExpression>>)
 
     context(KtAnalysisSession)
     @OptIn(UnsafeCastFunction::class)
-    fun prepareDemorgansLawContext(operands: List<KtExpression>): DemorgansLawContext {
+    fun prepareContext(operands: List<KtExpression>): Context {
         val pointers = operands.asReversed().map { operand ->
             operand.safeAs<KtQualifiedExpression>()?.invertSelectorFunction() ?: operand.negate(reformat = false) { it.isBoolean }
         }.map { it.createSmartPointer() }
-        return DemorgansLawContext(pointers)
+        return Context(pointers)
     }
 
-    fun applyDemorgansLaw(expression: KtBinaryExpression, context: DemorgansLawContext) {
+    fun applyDemorgansLaw(expression: KtBinaryExpression, context: Context) {
         val operatorText = when (expression.operationToken) {
             KtTokens.ANDAND -> KtTokens.OROR.value
             KtTokens.OROR -> KtTokens.ANDAND.value

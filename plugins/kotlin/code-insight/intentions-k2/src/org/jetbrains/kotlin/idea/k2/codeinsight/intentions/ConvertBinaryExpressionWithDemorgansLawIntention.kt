@@ -7,10 +7,9 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinModCommandWithContext
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AnalysisActionContext
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
-import org.jetbrains.kotlin.idea.codeinsight.utils.DemorgansLawUtils.DemorgansLawContext
+import org.jetbrains.kotlin.idea.codeinsight.utils.DemorgansLawUtils
 import org.jetbrains.kotlin.idea.codeinsight.utils.DemorgansLawUtils.applyDemorgansLaw
 import org.jetbrains.kotlin.idea.codeinsight.utils.DemorgansLawUtils.getOperandsIfAllBoolean
-import org.jetbrains.kotlin.idea.codeinsight.utils.DemorgansLawUtils.prepareDemorgansLawContext
 import org.jetbrains.kotlin.idea.codeinsight.utils.DemorgansLawUtils.splitBooleanSequence
 import org.jetbrains.kotlin.idea.codeinsight.utils.DemorgansLawUtils.topmostBinaryExpression
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
@@ -18,28 +17,28 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 
 internal class ConvertBinaryExpressionWithDemorgansLawIntention :
-    AbstractKotlinModCommandWithContext<KtBinaryExpression, DemorgansLawContext>(KtBinaryExpression::class) {
+    AbstractKotlinModCommandWithContext<KtBinaryExpression, DemorgansLawUtils.Context>(KtBinaryExpression::class) {
 
     @Suppress("DialogTitleCapitalization")
     override fun getFamilyName(): String = KotlinBundle.message("demorgan.law")
 
     override fun getApplicabilityRange(): KotlinApplicabilityRange<KtBinaryExpression> = ApplicabilityRanges.SELF
 
-    override fun apply(element: KtBinaryExpression, context: AnalysisActionContext<DemorgansLawContext>, updater: ModPsiUpdater) {
-        val expr = element.topmostBinaryExpression()
-        if (splitBooleanSequence(expr) == null) return
-        applyDemorgansLaw(expr, context.analyzeContext)
+    override fun apply(element: KtBinaryExpression, context: AnalysisActionContext<DemorgansLawUtils.Context>, updater: ModPsiUpdater) {
+        val topmostBinaryExpression = element.topmostBinaryExpression()
+        if (splitBooleanSequence(topmostBinaryExpression) == null) return
+        applyDemorgansLaw(topmostBinaryExpression, context.analyzeContext)
     }
 
     context(KtAnalysisSession)
-    override fun prepareContext(element: KtBinaryExpression): DemorgansLawContext? {
+    override fun prepareContext(element: KtBinaryExpression): DemorgansLawUtils.Context? {
         val operands = getOperandsIfAllBoolean(element) ?: return null
-        return prepareDemorgansLawContext(operands)
+        return DemorgansLawUtils.prepareContext(operands)
     }
 
-    override fun getActionName(element: KtBinaryExpression, context: DemorgansLawContext): String {
-        val expression = element.topmostBinaryExpression()
-        return when (expression.operationToken) {
+    override fun getActionName(element: KtBinaryExpression, context: DemorgansLawUtils.Context): String {
+        val topmostBinaryExpression = element.topmostBinaryExpression()
+        return when (topmostBinaryExpression.operationToken) {
             KtTokens.ANDAND -> KotlinBundle.message("replace.&&.with.||")
             KtTokens.OROR -> KotlinBundle.message("replace.||.with.&&")
             else -> throw IllegalArgumentException()
@@ -47,9 +46,9 @@ internal class ConvertBinaryExpressionWithDemorgansLawIntention :
     }
 
     override fun isApplicableByPsi(element: KtBinaryExpression): Boolean {
-        val expression = element.topmostBinaryExpression()
-        val operationToken = expression.operationToken
+        val topmostBinaryExpression = element.topmostBinaryExpression()
+        val operationToken = topmostBinaryExpression.operationToken
         if (operationToken != KtTokens.ANDAND && operationToken != KtTokens.OROR) return false
-        return splitBooleanSequence(expression) != null
+        return splitBooleanSequence(topmostBinaryExpression) != null
     }
 }
