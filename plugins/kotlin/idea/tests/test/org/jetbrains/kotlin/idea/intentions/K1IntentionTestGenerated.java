@@ -11774,6 +11774,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             runTest("testData/intentions/invertIfCondition/functionWithReturnExpression.kt");
         }
 
+        @TestMetadata("hasNothing.kt")
+        public void testHasNothing() throws Exception {
+            runTest("testData/intentions/invertIfCondition/hasNothing.kt");
+        }
+
         @TestMetadata("ifExpressionInsideForLoop.kt")
         public void testIfExpressionInsideForLoop() throws Exception {
             runTest("testData/intentions/invertIfCondition/ifExpressionInsideForLoop.kt");

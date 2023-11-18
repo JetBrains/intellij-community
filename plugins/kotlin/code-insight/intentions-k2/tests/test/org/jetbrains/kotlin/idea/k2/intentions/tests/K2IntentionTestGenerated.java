@@ -4724,6 +4724,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/invertIfCondition/functionWithReturnExpression.kt");
         }
 
+        @TestMetadata("hasNothing.kt")
+        public void testHasNothing() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/invertIfCondition/hasNothing.kt");
+        }
+
         @TestMetadata("ifExpressionInsideForLoop.kt")
         public void testIfExpressionInsideForLoop() throws Exception {
             runTest("../../../idea/tests/testData/intentions/invertIfCondition/ifExpressionInsideForLoop.kt");

@@ -45,14 +45,12 @@ internal class InvertIfConditionIntention : AbstractKotlinModCommandWithContext<
         val commentSaver = CommentSaver(commentSavingRange)
 
         val condition = element.condition!!
-        val areAllOperandsBoolean =
-            (condition is KtBinaryExpression && splitBooleanSequence(condition)?.all { it.isBoolean } == true) || condition.isBoolean
         val newCondition = (condition as? KtQualifiedExpression)?.invertSelectorFunction() ?: condition.negate()
 
         val isParentFunUnit = element.getParentOfType<KtNamedFunction>(true)
         val isUnit = isParentFunUnit != null && isParentFunUnit.getReturnKtType().isUnit
 
-        val demorgansLawContext = if (areAllOperandsBoolean) {
+        val demorgansLawContext = if (condition is KtBinaryExpression && splitBooleanSequence(condition)?.all { it.isBoolean } == true) {
             getBinaryExpression(newCondition)?.let(::splitBooleanSequence)?.let { expressions ->
                 prepareDemorgansLawContext(expressions)
             }
