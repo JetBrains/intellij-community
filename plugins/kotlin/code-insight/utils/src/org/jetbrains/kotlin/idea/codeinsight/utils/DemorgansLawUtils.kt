@@ -12,63 +12,65 @@ import org.jetbrains.kotlin.util.match
 import org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
-context(KtAnalysisSession)
-@OptIn(UnsafeCastFunction::class)
-fun prepareDemorgansLawContext(operands: List<KtExpression>): DemorgansLawContext {
-    val pointers = operands.asReversed().map { operand ->
-        operand.safeAs<KtQualifiedExpression>()?.invertSelectorFunction() ?: operand.negate(false) { it.isBoolean }
-    }.map { it.createSmartPointer() }
-    return DemorgansLawContext(pointers)
-}
+object DemorgansLawUtils {
+    class DemorgansLawContext(val pointers: List<SmartPsiElementPointer<KtExpression>>)
 
-fun applyDemorgansLaw(expression: KtBinaryExpression, context: DemorgansLawContext) {
-    val operatorText = when (expression.operationToken) {
-        KtTokens.ANDAND -> KtTokens.OROR.value
-        KtTokens.OROR -> KtTokens.ANDAND.value
-        else -> throw IllegalArgumentException()
+    context(KtAnalysisSession)
+    @OptIn(UnsafeCastFunction::class)
+    fun prepareDemorgansLawContext(operands: List<KtExpression>): DemorgansLawContext {
+        val pointers = operands.asReversed().map { operand ->
+            operand.safeAs<KtQualifiedExpression>()?.invertSelectorFunction() ?: operand.negate(false) { it.isBoolean }
+        }.map { it.createSmartPointer() }
+        return DemorgansLawContext(pointers)
     }
-    val newExpression = KtPsiFactory(expression.project).buildExpression {
-        val negatedOperands = context.pointers.map { it.element }
-        appendExpressions(negatedOperands, separator = operatorText)
+
+    fun applyDemorgansLaw(expression: KtBinaryExpression, context: DemorgansLawContext) {
+        val operatorText = when (expression.operationToken) {
+            KtTokens.ANDAND -> KtTokens.OROR.value
+            KtTokens.OROR -> KtTokens.ANDAND.value
+            else -> throw IllegalArgumentException()
+        }
+        val newExpression = KtPsiFactory(expression.project).buildExpression {
+            val negatedOperands = context.pointers.map { it.element }
+            appendExpressions(negatedOperands, separator = operatorText)
+        }
+        expression.parents.match(KtParenthesizedExpression::class, last = KtPrefixExpression::class)
+            ?.takeIf { it.operationReference.getReferencedNameElementType() == KtTokens.EXCL }
+            ?.replace(newExpression)
+            ?: expression.replace(newExpression.negate())
     }
-    expression.parents.match(KtParenthesizedExpression::class, last = KtPrefixExpression::class)
-        ?.takeIf { it.operationReference.getReferencedNameElementType() == KtTokens.EXCL }
-        ?.replace(newExpression)
-        ?: expression.replace(newExpression.negate())
-}
 
-fun splitBooleanSequence(expression: KtBinaryExpression): List<KtExpression>? {
-    val result = ArrayList<KtExpression>()
-    val firstOperator = expression.operationToken
-    var remainingExpression: KtExpression = expression
-    while (true) {
-        if (remainingExpression !is KtBinaryExpression) break
+    fun splitBooleanSequence(expression: KtBinaryExpression): List<KtExpression>? {
+        val result = ArrayList<KtExpression>()
+        val firstOperator = expression.operationToken
+        var remainingExpression: KtExpression = expression
+        while (true) {
+            if (remainingExpression !is KtBinaryExpression) break
 
-        if (KtPsiUtil.deparenthesize(remainingExpression.left) is KtStatementExpression ||
-            KtPsiUtil.deparenthesize(remainingExpression.right) is KtStatementExpression
-        ) return null
+            if (KtPsiUtil.deparenthesize(remainingExpression.left) is KtStatementExpression ||
+                KtPsiUtil.deparenthesize(remainingExpression.right) is KtStatementExpression
+            ) return null
 
-        val operation = remainingExpression.operationToken
-        if (operation != KtTokens.ANDAND && operation != KtTokens.OROR) break
-        if (operation != firstOperator) return null //Boolean sequence must be homogenous
+            val operation = remainingExpression.operationToken
+            if (operation != KtTokens.ANDAND && operation != KtTokens.OROR) break
+            if (operation != firstOperator) return null //Boolean sequence must be homogenous
 
-        result.add(remainingExpression.right ?: return null)
-        remainingExpression = remainingExpression.left ?: return null
+            result.add(remainingExpression.right ?: return null)
+            remainingExpression = remainingExpression.left ?: return null
+        }
+        result.add(remainingExpression)
+        return result
     }
-    result.add(remainingExpression)
-    return result
+
+    context(KtAnalysisSession)
+    fun KtQualifiedExpression.invertSelectorFunction(): KtQualifiedExpression? {
+        return EmptinessCheckFunctionUtils.invertFunctionCall(this) as? KtQualifiedExpression
+    }
+
+    context(KtAnalysisSession)
+    val KtExpression?.isBoolean: Boolean
+        get() = this != null && this.getKtType()?.isBoolean == true
+
+    fun KtBinaryExpression.topmostBinaryExpression(): KtBinaryExpression =
+        parentsWithSelf.takeWhile { it is KtBinaryExpression }.last() as KtBinaryExpression
 }
-
-context(KtAnalysisSession)
-fun KtQualifiedExpression.invertSelectorFunction(): KtQualifiedExpression? {
-    return EmptinessCheckFunctionUtils.invertFunctionCall(this) as? KtQualifiedExpression
-}
-
-context(KtAnalysisSession)
-val KtExpression?.isBoolean: Boolean
-    get() = this != null && this.getKtType()?.isBoolean == true
-
-fun KtBinaryExpression.topmostBinaryExpression(): KtBinaryExpression =
-    parentsWithSelf.takeWhile { it is KtBinaryExpression }.last() as KtBinaryExpression
-
-class DemorgansLawContext(val pointers: List<SmartPsiElementPointer<KtExpression>>)

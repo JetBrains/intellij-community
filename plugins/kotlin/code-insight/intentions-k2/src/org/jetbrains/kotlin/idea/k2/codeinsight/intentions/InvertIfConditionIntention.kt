@@ -11,6 +11,13 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AnalysisA
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicabilityTarget
 import org.jetbrains.kotlin.idea.codeinsight.utils.*
+import org.jetbrains.kotlin.idea.codeinsight.utils.DemorgansLawUtils.DemorgansLawContext
+import org.jetbrains.kotlin.idea.codeinsight.utils.DemorgansLawUtils.applyDemorgansLaw
+import org.jetbrains.kotlin.idea.codeinsight.utils.DemorgansLawUtils.invertSelectorFunction
+import org.jetbrains.kotlin.idea.codeinsight.utils.DemorgansLawUtils.isBoolean
+import org.jetbrains.kotlin.idea.codeinsight.utils.DemorgansLawUtils.prepareDemorgansLawContext
+import org.jetbrains.kotlin.idea.codeinsight.utils.DemorgansLawUtils.splitBooleanSequence
+import org.jetbrains.kotlin.idea.codeinsight.utils.DemorgansLawUtils.topmostBinaryExpression
 import org.jetbrains.kotlin.idea.codeinsight.utils.InvertIfConditionUtils.copyThenBranchAfter
 import org.jetbrains.kotlin.idea.codeinsight.utils.InvertIfConditionUtils.handleStandardCase
 import org.jetbrains.kotlin.idea.codeinsight.utils.InvertIfConditionUtils.isEmptyReturn
