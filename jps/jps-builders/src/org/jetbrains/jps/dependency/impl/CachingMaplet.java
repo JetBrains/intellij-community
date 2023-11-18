@@ -25,7 +25,7 @@ public class CachingMaplet<K, V> implements Maplet<K, V> {
 
   @Override
   public boolean containsKey(K key) {
-    return myDelegate.containsKey(key);
+    return myCache.getIfPresent(key) != null || myDelegate.containsKey(key);
   }
 
   @Override
@@ -36,14 +36,24 @@ public class CachingMaplet<K, V> implements Maplet<K, V> {
 
   @Override
   public void put(K key, @NotNull V value) {
-    myCache.invalidate(key);
-    myDelegate.put(key, value);
+    try {
+      myDelegate.put(key, value);
+    }
+    finally {
+      if (myCache.getIfPresent(key) != null) {
+        myCache.put(key, value);
+      }
+    }
   }
 
   @Override
   public void remove(K key) {
-    myCache.invalidate(key);
-    myDelegate.remove(key);
+    try {
+      myDelegate.remove(key);
+    }
+    finally {
+      myCache.invalidate(key);
+    }
   }
 
   @Override
