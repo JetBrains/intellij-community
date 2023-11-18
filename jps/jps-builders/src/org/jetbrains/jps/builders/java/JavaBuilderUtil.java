@@ -422,7 +422,7 @@ public final class JavaBuilderUtil {
     BuildDataManager dataManager = context.getProjectDescriptor().dataManager;
     DependencyGraph graph = dataManager.getDependencyGraph();
     final ModulesBasedFileFilter moduleBasedFilter = new ModulesBasedFileFilter(context, chunk);
-    DifferentiateParametersBuilder params = DifferentiateParametersBuilder.create()
+    DifferentiateParametersBuilder params = DifferentiateParametersBuilder.create(chunk.getPresentableShortName())
       .calculateAffected(context.shouldDifferentiate(chunk) && !isForcedRecompilationAllJavaModules(context))
       .processConstantsIncrementally(dataManager.isProcessConstantsIncrementally())
       .withAffectionFilter(s -> moduleBasedFilter.accept(s.getPath().toFile()))

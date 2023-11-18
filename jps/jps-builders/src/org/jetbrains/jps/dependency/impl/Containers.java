@@ -112,6 +112,7 @@ public final class Containers {
 
     @Override
     public <K, V> MultiMaplet<K, V> createSetMultiMaplet(String storageName, Externalizer<K> keyExternalizer, Externalizer<V> valueExternalizer) {
+      // todo: use per-factory storage lock context?
       MultiMaplet<K, V> container = new CachingMultiMaplet<>(
         new PersistentMultiMaplet<>(getMapFile(storageName), new GraphKeyDescriptor<>(keyExternalizer, myEnumerator), new GraphDataExternalizer<>(valueExternalizer, myEnumerator, myDataInterner), () -> (Set<V>)new HashSet<V>()),
         CACHE_SIZE
@@ -122,6 +123,7 @@ public final class Containers {
 
     @Override
     public <K, V> Maplet<K, V> createMaplet(String storageName, Externalizer<K> keyExternalizer, Externalizer<V> valueExternalizer) {
+      // todo: use per-factory storage lock context?
       Maplet<K, V> container = new CachingMaplet<>(
         new PersistentMaplet<>(getMapFile(storageName), new GraphKeyDescriptor<>(keyExternalizer, myEnumerator), new GraphDataExternalizer<>(valueExternalizer, myEnumerator, myDataInterner)),
         CACHE_SIZE

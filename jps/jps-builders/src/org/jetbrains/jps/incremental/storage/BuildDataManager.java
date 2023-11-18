@@ -20,6 +20,7 @@ import org.jetbrains.jps.cmdline.BuildRunner;
 import org.jetbrains.jps.dependency.*;
 import org.jetbrains.jps.dependency.impl.Containers;
 import org.jetbrains.jps.dependency.impl.DependencyGraphImpl;
+import org.jetbrains.jps.dependency.impl.LoggingDependencyGraph;
 import org.jetbrains.jps.incremental.IncProjectBuilder;
 import org.jetbrains.jps.incremental.relativizer.PathRelativizerService;
 
@@ -35,9 +36,10 @@ import java.util.function.Consumer;
  * @author Eugene Zhuravlev
  */
 public final class BuildDataManager {
+  private static final Logger LOG = Logger.getInstance(BuildDataManager.class);
+
   public static final String PROCESS_CONSTANTS_NON_INCREMENTAL_PROPERTY = "compiler.process.constants.non.incremental";
   private static final int VERSION = 39 + (PersistentHashMapValueStorage.COMPRESSION_ENABLED ? 1:0);
-  private static final Logger LOG = Logger.getInstance(BuildDataManager.class);
   private static final String SRC_TO_FORM_STORAGE = "src-form";
   private static final String SRC_TO_OUTPUT_STORAGE = "src-out";
   private static final String OUT_TARGET_STORAGE = "out-target";
@@ -477,72 +479,74 @@ public final class BuildDataManager {
   }
 
   private static DependencyGraph asSynchronizableGraph(DependencyGraph graph, Object lock) {
+    //noinspection IOResourceOpenedButNotSafelyClosed
+    DependencyGraph delegate = new LoggingDependencyGraph(graph, msg -> LOG.info(msg));
     return new DependencyGraph() {
       @Override
       public Delta createDelta(Iterable<NodeSource> sourcesToProcess, Iterable<NodeSource> deletedSources) throws IOException {
         synchronized (lock) {
-          return graph.createDelta(sourcesToProcess, deletedSources);
+          return delegate.createDelta(sourcesToProcess, deletedSources);
         }
       }
 
       @Override
       public DifferentiateResult differentiate(Delta delta, DifferentiateParameters params) {
         synchronized (lock) {
-          return graph.differentiate(delta, params);
+          return delegate.differentiate(delta, params);
         }
       }
 
       @Override
       public void integrate(@NotNull DifferentiateResult diffResult) {
         synchronized (lock) {
-          graph.integrate(diffResult);
+          delegate.integrate(diffResult);
         }
       }
 
       @Override
       public Iterable<BackDependencyIndex> getIndices() {
-        return graph.getIndices();
+        return delegate.getIndices();
       }
 
       @Override
       public @Nullable BackDependencyIndex getIndex(String name) {
-        return graph.getIndex(name);
+        return delegate.getIndex(name);
       }
 
       @Override
       public Iterable<NodeSource> getSources(@NotNull ReferenceID id) {
-        return graph.getSources(id);
+        return delegate.getSources(id);
       }
 
       @Override
       public Iterable<ReferenceID> getRegisteredNodes() {
-        return graph.getRegisteredNodes();
+        return delegate.getRegisteredNodes();
       }
 
       @Override
       public Iterable<NodeSource> getSources() {
-        return graph.getSources();
+        return delegate.getSources();
       }
 
       @Override
       public Iterable<Node<?, ?>> getNodes(@NotNull NodeSource source) {
-        return graph.getNodes(source);
+        return delegate.getNodes(source);
       }
 
       @Override
       public <T extends Node<T, ?>> Iterable<T> getNodes(NodeSource src, Class<T> nodeSelector) {
-        return graph.getNodes(src, nodeSelector);
+        return delegate.getNodes(src, nodeSelector);
       }
 
       @Override
       public @NotNull Iterable<ReferenceID> getDependingNodes(@NotNull ReferenceID id) {
-        return graph.getDependingNodes(id);
+        return delegate.getDependingNodes(id);
       }
 
       @Override
       public void close() throws IOException {
         synchronized (lock) {
-          graph.close();
+          delegate.close();
         }
       }
     };

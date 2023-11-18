@@ -8,12 +8,20 @@ import org.jetbrains.jps.dependency.NodeSource;
 import java.util.function.Predicate;
 
 public final class DifferentiateParametersBuilder implements DifferentiateParameters {
+
+  private final String mySessionName;
   private boolean calculateAffected = true;
   private boolean processConstantsIncrementally = true;
   private Predicate<? super NodeSource> myAffectionFilter = s -> true;
   private Predicate<? super NodeSource> myCurrentChunkFilter = s -> true;
 
-  private DifferentiateParametersBuilder() {
+  private DifferentiateParametersBuilder(String sessionName) {
+    mySessionName = sessionName;
+  }
+
+  @Override
+  public String getSessionName() {
+    return mySessionName;
   }
 
   @Override
@@ -41,11 +49,19 @@ public final class DifferentiateParametersBuilder implements DifferentiateParame
   }
 
   public static DifferentiateParametersBuilder create() {
-    return new DifferentiateParametersBuilder();
+    return create("");
+  }
+  
+  public static DifferentiateParametersBuilder create(String sessionName) {
+    return new DifferentiateParametersBuilder(sessionName);
   }
 
   public static DifferentiateParameters withDefaultSettings() {
-    return create().get();
+    return withDefaultSettings("");
+  }
+  
+  public static DifferentiateParameters withDefaultSettings(String sessionName) {
+    return create(sessionName).get();
   }
 
   public DifferentiateParametersBuilder calculateAffected(boolean value) {

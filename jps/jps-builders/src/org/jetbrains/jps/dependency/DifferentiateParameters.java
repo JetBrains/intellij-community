@@ -6,6 +6,9 @@ import org.jetbrains.annotations.NotNull;
 import java.util.function.Predicate;
 
 public interface DifferentiateParameters {
+  default String getSessionName() {
+    return "";
+  }
 
   boolean isCalculateAffected();
 

@@ -42,6 +42,7 @@ public final class DependencyGraphImpl extends GraphImpl implements DependencyGr
   @Override
   public DifferentiateResult differentiate(Delta delta, DifferentiateParameters params) {
 
+    String sessionName = params.getSessionName();
     Iterable<NodeSource> deltaSources = delta.getSources();
     Set<NodeSource> allProcessedSources = Iterators.collect(Iterators.flat(Arrays.asList(delta.getBaseSources(), deltaSources, delta.getDeletedSources())), new HashSet<>());
     Set<Node<?, ?>> nodesBefore = Iterators.collect(Iterators.flat(Iterators.map(allProcessedSources, s -> getNodes(s))), Containers.createCustomPolicySet(DiffCapable::isSame, DiffCapable::diffHashCode));
@@ -53,6 +54,11 @@ public final class DependencyGraphImpl extends GraphImpl implements DependencyGr
 
     if (!params.isCalculateAffected()) {
       return new DifferentiateResult() {
+        @Override
+        public String getSessionName() {
+          return sessionName;
+        }
+
         @Override
         public Delta getDelta() {
           return delta;
@@ -146,7 +152,7 @@ public final class DependencyGraphImpl extends GraphImpl implements DependencyGr
     }
 
     if (!incremental) {
-      return DifferentiateResult.createNonIncremental(delta, deletedNodes);
+      return DifferentiateResult.createNonIncremental("", delta, deletedNodes);
     }
 
     Set<NodeSource> affectedSources = new HashSet<>();
@@ -167,7 +173,7 @@ public final class DependencyGraphImpl extends GraphImpl implements DependencyGr
               affectSource = true;
               for (DifferentiateStrategy strategy : ourDifferentiateStrategies) {
                 if (!strategy.isIncremental(diffContext, depNode)) {
-                  return DifferentiateResult.createNonIncremental(delta, deletedNodes);
+                  return DifferentiateResult.createNonIncremental("", delta, deletedNodes);
                 }
               }
             }
@@ -184,6 +190,11 @@ public final class DependencyGraphImpl extends GraphImpl implements DependencyGr
     affectedSources.addAll(diffContext.affectedSources);
 
     return new DifferentiateResult() {
+      @Override
+      public String getSessionName() {
+        return sessionName;
+      }
+
       @Override
       public Delta getDelta() {
         return delta;
