@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 object DemorgansLawUtils {
-    class DemorgansLawContext(val pointers: List<SmartPsiElementPointer<KtExpression>>)
+    data class DemorgansLawContext(val pointers: List<SmartPsiElementPointer<KtExpression>>)
 
     context(KtAnalysisSession)
     @OptIn(UnsafeCastFunction::class)
