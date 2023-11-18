@@ -13,6 +13,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.lookup.LookupFocusDegree;
 import com.intellij.codeInsight.template.*;
+import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInspection.options.OptionController;
 import com.intellij.codeInspection.options.OptionControllerProvider;
 import com.intellij.diff.comparison.ComparisonManager;
@@ -412,7 +413,8 @@ public class ModCommandExecutorImpl implements ModCommandExecutor {
     if (finalEditor == null) return false;
     PsiElement nameIdentifier = element.getNameIdentifier();
     if (nameIdentifier == null) return false;
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
+    if (TemplateManager.getInstance(project) instanceof TemplateManagerImpl manager &&
+        manager.shouldSkipInTests()) {
       int offset = nameIdentifier.getTextRange().getEndOffset();
       return executeNavigate(project, new ModNavigate(file, offset, offset, offset));
     }
