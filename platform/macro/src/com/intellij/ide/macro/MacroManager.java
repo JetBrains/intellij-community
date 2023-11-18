@@ -57,6 +57,7 @@ public final class MacroManager {
     registerMacro(new FilePathRelativeToSourcepathMacro());
     registerMacro(new JdkPathMacro());
     registerMacro(new PromptMacro());
+    registerMacro(new PasswordMacro());
     registerMacro(new FilePromptMacro());
     registerMacro(new SourcepathEntryMacro());
     registerMacro(new ProjectFileDirMacro());
