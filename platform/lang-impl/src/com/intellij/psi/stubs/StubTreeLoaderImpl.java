@@ -284,7 +284,7 @@ final class StubTreeLoaderImpl extends StubTreeLoader {
 
   void saveIndexingStampInfo(@Nullable IndexingStampInfo indexingStampInfo, int fileId) {
     VfsEventsMerger.tryLog(() -> {
-      return "event=SAVE_INDEXING_STAMP_INFO" +
+      return "event=SAVE_STUB_INDEXING_STAMP_INFO" +
              ",id=" + fileId +
              "," + indexingStampInfo;
     });
