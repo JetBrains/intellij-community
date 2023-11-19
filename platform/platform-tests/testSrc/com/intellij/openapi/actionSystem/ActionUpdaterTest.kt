@@ -5,6 +5,7 @@ import com.intellij.concurrency.currentThreadContext
 import com.intellij.concurrency.installThreadContext
 import com.intellij.ide.IdeEventQueue
 import com.intellij.openapi.actionSystem.impl.PresentationFactory
+import com.intellij.openapi.actionSystem.impl.SkipOperation
 import com.intellij.openapi.actionSystem.impl.Utils
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.impl.LaterInvocator
@@ -254,27 +255,55 @@ class ActionUpdaterTest {
     assertEquals(1, actions.size)
   }
 
+  @Test
+  fun testSkipOperationException() = timeoutRunBlocking {
+    val key1 = Key.create<Int>("Key1")
+    val key2 = Key.create<Int>("Key2")
+    val actionGroup = object : ActionGroup() {
+      override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+      override fun getChildren(e: AnActionEvent?): Array<AnAction> {
+        e!!
+        return arrayOf<AnAction>(
+          EmptyAction.createEmptyAction("", null, true),
+          newAction(ActionUpdateThread.BGT) { throw SkipOperation("update") },
+          newAction(ActionUpdateThread.EDT) { throw SkipOperation("update") },
+          newAction(ActionUpdateThread.BGT) { e.updateSession.sharedData(key1) { throw SkipOperation("sharedData") } },
+          newAction(ActionUpdateThread.EDT) { e.updateSession.sharedData(key2) { throw SkipOperation("sharedData") } })
+      }
+    }
+    val actions = withContext(Dispatchers.EDT + MyContextElement(1)) {
+      Utils.expandActionGroupSuspend(actionGroup, PresentationFactory(), DataContext.EMPTY_CONTEXT,
+                                     ActionPlaces.UNKNOWN, false, fastTrack = false)
+    }
+    assertEquals(1, actions.size)
+  }
+
   private fun expandActionGroup(actionGroup: ActionGroup,
                                 presentationFactory: PresentationFactory = PresentationFactory()): List<AnAction?> {
     return Utils.expandActionGroup(actionGroup, presentationFactory, DataContext.EMPTY_CONTEXT, ActionPlaces.UNKNOWN)
   }
 
-  private fun newPopupGroup(vararg actions: AnAction): ActionGroup {
-    val group = DefaultActionGroup(*actions)
-    group.templatePresentation.isPopupGroup = true
-    group.templatePresentation.isHideGroupIfEmpty = true
-    return group
-  }
+  private fun newAction(updateThread: ActionUpdateThread, update: (AnActionEvent) -> Unit): AnAction =
+    object : AnAction("testAction-$update") {
+      override fun actionPerformed(e: AnActionEvent) {}
+      override fun getActionUpdateThread(): ActionUpdateThread = updateThread
+      override fun update(e: AnActionEvent) = update(e)
+    }
 
-  private fun newCanBePerformedGroup(visible: Boolean, enabled: Boolean): DefaultActionGroup {
-    return object : DefaultActionGroup() {
+  private fun newPopupGroup(vararg actions: AnAction): ActionGroup =
+    DefaultActionGroup(*actions).apply {
+      templatePresentation.isPopupGroup = true
+      templatePresentation.isHideGroupIfEmpty = true
+    }
+
+  private fun newCanBePerformedGroup(visible: Boolean, enabled: Boolean): DefaultActionGroup =
+    object : DefaultActionGroup() {
       override fun update(e: AnActionEvent) {
         e.presentation.isVisible = visible
         e.presentation.isEnabled = enabled
         e.presentation.isPerformGroup = true
       }
     }
-  }
 
   private class MyContextElement(val value: Int)
     : AbstractCoroutineContextElement(MyContextElement), CoroutineContext.Element {
