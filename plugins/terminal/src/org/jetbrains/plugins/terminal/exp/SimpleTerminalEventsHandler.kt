@@ -1,9 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.exp
 
+import com.google.common.base.Ascii
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
-import com.jediterm.core.util.Ascii
 import com.jediterm.terminal.emulator.mouse.MouseButtonCodes
 import com.jediterm.terminal.emulator.mouse.MouseButtonModifierFlags
 import com.jediterm.terminal.emulator.mouse.MouseFormat
