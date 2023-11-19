@@ -46,7 +46,7 @@ public int hashCode() {
 #macro (addPrimitiveFieldHashCode $field)
   #set ($fName = $field.accessor)
   #if ($field.byte || $field.short || $field.char)
-    (int) $fName##
+    $fName##
   #elseif ($field.long)
     #if ($java_version < 8)
       (int)($fName ^ ($fName >>> 32))##

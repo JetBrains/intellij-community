@@ -27,8 +27,8 @@ public class X {
     public int hashCode() {
         int result = Long.hashCode(l);
         result = 31 * result + Boolean.hashCode(b);
-        result = 31 * result + (int) v;
-        result = 31 * result + (int) s;
+        result = 31 * result + v;
+        result = 31 * result + s;
         result = 31 * result + i;
         result = 31 * result + Float.hashCode(f);
         result = 31 * result + Double.hashCode(d);

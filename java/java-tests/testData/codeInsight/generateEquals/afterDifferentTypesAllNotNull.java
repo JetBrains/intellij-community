@@ -56,8 +56,8 @@ class A {
         result = 31 * result + Arrays.deepHashCode(a4);
         result = 31 * result + Arrays.hashCode(a5);
         result = 31 * result + Arrays.deepHashCode(a6);
-        result = 31 * result + (int) a7;
-        result = 31 * result + (int) a8;
+        result = 31 * result + a7;
+        result = 31 * result + a8;
         result = 31 * result + a9;
         result = 31 * result + (int) (a10 ^ (a10 >>> 32));
         result = 31 * result + Float.floatToIntBits(a11);
