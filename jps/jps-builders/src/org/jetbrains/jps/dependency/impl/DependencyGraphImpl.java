@@ -4,6 +4,7 @@ package org.jetbrains.jps.dependency.impl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.dependency.*;
 import org.jetbrains.jps.dependency.diff.DiffCapable;
+import org.jetbrains.jps.dependency.diff.Difference;
 import org.jetbrains.jps.dependency.java.ClassShortNameIndex;
 import org.jetbrains.jps.dependency.java.JavaDifferentiateStrategy;
 import org.jetbrains.jps.dependency.java.SubclassesIndex;
@@ -255,7 +256,19 @@ public final class DependencyGraphImpl extends GraphImpl implements DependencyGr
     }
 
     for (NodeSource src : delta.getSources()) {
-      mySourceToNodesMap.put(src, delta.getNodes(src));
+      Iterable<Node<?, ?>> nodesBefore = mySourceToNodesMap.get(src);
+      Iterable<Node<?, ?>> nodesAfter = delta.getNodes(src);
+      //noinspection unchecked
+      Difference.Specifier<Node, Difference> diff = Difference.deepDiff(Graph.getNodesOfType(nodesBefore, Node.class), Graph.getNodesOfType(nodesAfter, Node.class));
+      if (diff.unchanged()) {
+        continue;
+      }
+      if (Iterators.isEmpty(diff.removed()) && Iterators.isEmpty(diff.changed())) {
+        mySourceToNodesMap.appendValues(src, Iterators.map(diff.added(), n -> (Node<?, ?>)n));
+      }
+      else {
+        mySourceToNodesMap.put(src, nodesAfter);
+      }
     }
   }
 

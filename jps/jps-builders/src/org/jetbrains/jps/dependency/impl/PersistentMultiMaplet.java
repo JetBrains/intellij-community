@@ -125,18 +125,20 @@ public final class PersistentMultiMaplet<K, V, C extends Collection<V>> implemen
 
   @Override
   public void appendValues(K key, @NotNull Iterable<? extends V> values) {
-    try {
-      myMap.appendData(key, new AppendablePersistentMap.ValueDataAppender() {
-        @Override
-        public void append(@NotNull DataOutput out) throws IOException {
-          for (V v : values) {
-            myValuesExternalizer.save(out, v);
+    if (!Iterators.isEmpty(values)) {
+      try {
+        myMap.appendData(key, new AppendablePersistentMap.ValueDataAppender() {
+          @Override
+          public void append(@NotNull DataOutput out) throws IOException {
+            for (V v : values) {
+              myValuesExternalizer.save(out, v);
+            }
           }
-        }
-      });
-    }
-    catch (IOException e) {
-      throw new BuildDataCorruptedException(e);
+        });
+      }
+      catch (IOException e) {
+        throw new BuildDataCorruptedException(e);
+      }
     }
   }
 

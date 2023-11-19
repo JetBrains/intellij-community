@@ -98,4 +98,20 @@ public abstract class JVMClassNode<T extends JVMClassNode<T, D>, D extends Diffe
     return 31 * outFilePath.hashCode() + myId.hashCode();
   }
 
+  public class Diff extends Proto.Diff<T> {
+
+    public Diff(T past) {
+      super(past);
+    }
+
+    @Override
+    public boolean unchanged() {
+      return super.unchanged() && usages().unchanged();
+    }
+
+    public Specifier<Usage, ?> usages() {
+      return Difference.diff(myPast.getUsages(), getUsages());
+    }
+  }
+
 }

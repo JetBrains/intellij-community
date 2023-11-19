@@ -74,7 +74,7 @@ public final class JvmModule extends JVMClassNode<JvmModule, JvmModule.Diff>{
     return new Diff(past);
   }
 
-  public final class Diff extends Proto.Diff<JvmModule> {
+  public final class Diff extends JVMClassNode<JvmModule, JvmModule.Diff>.Diff {
 
     public Diff(JvmModule past) {
       super(past);

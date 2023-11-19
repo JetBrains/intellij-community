@@ -163,7 +163,7 @@ public final class JvmClass extends JVMClassNode<JvmClass, JvmClass.Diff> {
     return new Diff(past);
   }
 
-  public final class Diff extends Proto.Diff<JvmClass> {
+  public final class Diff extends JVMClassNode<JvmClass, JvmClass.Diff>.Diff {
 
     public Diff(JvmClass past) {
       super(past);

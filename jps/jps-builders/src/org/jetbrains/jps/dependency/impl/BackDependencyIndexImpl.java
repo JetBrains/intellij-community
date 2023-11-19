@@ -81,10 +81,7 @@ public abstract class BackDependencyIndexImpl implements BackDependencyIndex {
         }
       }
       else {
-        Iterable<ReferenceID> toAdd = deltaIndex.getDependencies(id);
-        if (!Iterators.isEmpty(toAdd)) {
-          myMap.appendValues(id, toAdd);
-        }
+        myMap.appendValues(id, deltaIndex.getDependencies(id));
       }
     }
   }
