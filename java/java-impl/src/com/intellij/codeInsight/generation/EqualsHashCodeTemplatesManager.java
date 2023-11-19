@@ -47,8 +47,7 @@ public final class EqualsHashCodeTemplatesManager extends TemplatesManager {
   @NonNls public static final String EQUALS_HASH_CODE_BUILDER_APACHE_COMMONS_LANG = "Equals/HashCodeBuilder (Apache commons-lang)";
   @NonNls public static final String EQUALS_HASH_CODE_BUILDER_APACHE_COMMONS_LANG_3 = "Equals/HashCodeBuilder (Apache commons-lang 3)";
   @NonNls public static final String OBJECTS_EQUAL_AND_HASH_CODE_GUAVA = "Objects.equal() and hashCode() (Guava)";
-  @NonNls public static final String JAVA_UTIL_OBJECTS_EQUALS_AND_HASH_CODE = "java.util.Objects.equals() and hashCode() (java 7+)";
-
+  @NonNls public static final String JAVA_UTIL_OBJECTS_EQUALS_AND_HASH_CODE = "java.util.Objects.equals() and hash() (java 7+)";
 
   public static EqualsHashCodeTemplatesManager getInstance() {
     return ApplicationManager.getApplication().getService(EqualsHashCodeTemplatesManager.class);

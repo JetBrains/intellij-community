@@ -138,6 +138,10 @@ public class GenerateEqualsTest extends LightJavaCodeInsightTestCase {
     doTestWithTemplate(EqualsHashCodeTemplatesManager.JAVA_UTIL_OBJECTS_EQUALS_AND_HASH_CODE);
   }
 
+  public void testSingleArrayFieldWithObjectsTemplate() {
+    doTestWithTemplate(EqualsHashCodeTemplatesManager.JAVA_UTIL_OBJECTS_EQUALS_AND_HASH_CODE);
+  }
+
   public void testArrayAndNotOnlyArrayWithObjectsTemplate() {
     doTestWithTemplate(EqualsHashCodeTemplatesManager.JAVA_UTIL_OBJECTS_EQUALS_AND_HASH_CODE);
   }

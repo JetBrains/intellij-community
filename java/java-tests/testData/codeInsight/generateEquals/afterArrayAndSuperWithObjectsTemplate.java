@@ -1,4 +1,5 @@
 import java.util.Arrays;
+import java.util.Objects;
 
 class I {
   public int hashCode() {
@@ -18,13 +19,11 @@ class A extends I {
         if (o == null || getClass() != o.getClass()) return false;
         if (!super.equals(o)) return false;
         final A a = (A) o;
-        return Arrays.equals(a1, a.a1);
+        return Objects.deepEquals(a1, a.a1);
     }
 
     @Override
     public int hashCode() {
-        int result = super.hashCode();
-        result = 31 * result + Arrays.hashCode(a1);
-        return result;
+        return Objects.hash(super.hashCode(), Arrays.hashCode(a1));
     }
 }

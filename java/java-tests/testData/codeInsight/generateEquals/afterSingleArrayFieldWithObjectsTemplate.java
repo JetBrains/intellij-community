@@ -1,19 +1,19 @@
 import java.util.Arrays;
 import java.util.Objects;
 
-class A {
-  int[] a1;
+class X {
+  private String[][] s = null;
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        final A a = (A) o;
-        return Objects.deepEquals(a1, a.a1);
+        final X x = (X) o;
+        return Objects.deepEquals(s, x.s);
     }
 
     @Override
     public int hashCode() {
-        return Arrays.hashCode(a1);
+        return Arrays.deepHashCode(s);
     }
 }
