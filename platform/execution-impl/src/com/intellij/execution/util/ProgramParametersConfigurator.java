@@ -146,23 +146,13 @@ public class ProgramParametersConfigurator {
 
   private static DataContext createContext(@NotNull DataContext fallbackDataContext) {
     DataContext envContext = ExecutionManagerImpl.getEnvironmentDataContext();
-    if (fallbackDataContext == DataContext.EMPTY_CONTEXT && envContext != null) {
-      Project project = ReadAction.compute(() -> CommonDataKeys.PROJECT.getData(envContext));
-      if (project != null) {
-        Module module = ReadAction.compute(() -> PlatformCoreDataKeys.MODULE.getData(envContext));
-        fallbackDataContext = projectContext(project, module, null);
-      }
-    }
-
-    DataContext finalFallbackDataContext = fallbackDataContext;
-    DataContext context = envContext == null ? fallbackDataContext : new DataContext() {
+    return envContext == null ? fallbackDataContext : new DataContext() {
       @Override
       public @Nullable Object getData(@NotNull String dataId) {
         Object data = envContext.getData(dataId);
-        return data != null ? data : finalFallbackDataContext.getData(dataId);
+        return data != null ? data : fallbackDataContext.getData(dataId);
       }
     };
-    return context;
   }
 
   private static @Nullable String previewOrExpandMacro(Macro macro, DataContext dataContext, String occurence) {
@@ -175,7 +165,7 @@ public class ProgramParametersConfigurator {
       }
       String value = macro instanceof PromptingMacro ?
                      macro.expandOccurence(dataContext, occurence) :
-                     ReadAction.compute(() -> macro.expandOccurence(dataContext, occurence));
+                     ReadAction.nonBlocking(() -> macro.expandOccurence(dataContext, occurence)).executeSynchronously();
       MacroUsageCollector.logMacroExpanded(macro, value != null);
       return value;
     }
