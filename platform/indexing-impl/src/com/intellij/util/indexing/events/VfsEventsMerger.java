@@ -22,10 +22,14 @@ import org.jetbrains.annotations.VisibleForTesting;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.Iterator;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
+import java.util.logging.Formatter;
 import java.util.logging.Level;
+import java.util.logging.LogRecord;
 
 public final class VfsEventsMerger {
   private static final boolean DEBUG = FileBasedIndexEx.DO_TRACE_STUB_INDEX_UPDATE || Boolean.getBoolean("log.index.vfs.events");
@@ -204,6 +208,7 @@ public final class VfsEventsMerger {
     tryLog(() -> {
       return "event=" + eventName +
              ",f=" + file.getPath() +
+             ",len=" + file.getLength() +
              (file instanceof VirtualFileWithId ? (",id=" + ((VirtualFileWithId)file).getId()) : "") +
              (additionalMessage == null ? "" : ("," + additionalMessage.get()));
     });
@@ -237,6 +242,13 @@ public final class VfsEventsMerger {
       Path indexingDiagnosticDir = Paths.get(PathManager.getLogPath()).resolve("indexing-diagnostic");
       Path logPath = indexingDiagnosticDir.resolve("index-vfs-events.log");
       myAppender = new RollingFileHandler(logPath, 20000000, 50, false);
+      myAppender.setFormatter(new Formatter() {
+        @Override
+        public String format(LogRecord record) {
+          ZonedDateTime zdt = ZonedDateTime.ofInstant(record.getInstant(), ZoneId.systemDefault());
+          return String.format("%1$tY-%1$tm-%1$td %1$tH:%1$tM:%1$tS.%1$tL %2$s%n", zdt, record.getMessage());
+        }
+      });
     }
 
     @Override
