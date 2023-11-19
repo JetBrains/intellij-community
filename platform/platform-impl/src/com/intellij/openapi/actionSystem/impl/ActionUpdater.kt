@@ -17,8 +17,6 @@ import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.ex.InlineActionsHolder
 import com.intellij.openapi.actionSystem.impl.ActionMenu.Companion.ALWAYS_VISIBLE
 import com.intellij.openapi.actionSystem.impl.ActionMenu.Companion.SUPPRESS_SUBMENU
-import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehavior
-import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
@@ -80,7 +78,7 @@ internal class ActionUpdater @JvmOverloads constructor(
   private val contextMenuAction: Boolean,
   private val toolbarAction: Boolean,
   private val edtDispatcher: CoroutineDispatcher,
-  private val checkActionRemoteBehaviorSpecification: Boolean = false,
+  private val actionFilter: ((AnAction) -> Boolean)? = null,
   private val eventTransform: ((AnActionEvent) -> AnActionEvent)? = null) {
 
   @Volatile private var bgtScope: CoroutineScope? = null
@@ -409,6 +407,7 @@ internal class ActionUpdater @JvmOverloads constructor(
     var hasEnabled = false
     var hasVisible = false
     if (checkChildren) {
+      var last: AnAction? = null // for debug
       val childrenFlow = iterateGroupChildren(child)
       childrenFlow.take(100).filter { it !is Separator }.takeWhile { action ->
         val p = updateAction(action)
@@ -416,6 +415,7 @@ internal class ActionUpdater @JvmOverloads constructor(
         hasEnabled = hasEnabled or (p?.isEnabled == true)
         // stop early if all the required flags are collected
         val result = !(hasVisible && (hasEnabled || !hideDisabled))
+        last = action
         result
       }
         .collect()
@@ -530,13 +530,13 @@ internal class ActionUpdater @JvmOverloads constructor(
     }
     // clone the presentation to avoid partially changing the cached one if the update is interrupted
     val presentation = presentationFactory.getPresentation(action).clone()
-    if (checkActionRemoteBehaviorSpecification) {
-      val behavior = (action as? ActionRemoteBehaviorSpecification)?.getBehavior()
-      if (behavior == ActionRemoteBehavior.Disabled) {
-        presentation.isEnabledAndVisible = false
-        updatedPresentations[action] = presentation
-        return presentation
+    if (actionFilter?.invoke(action) == true) {
+      presentation.isEnabledAndVisible = false
+      updatedPresentations[action] = presentation
+      if (action is ActionGroup) {
+        groupChildren[action] = emptyList()
       }
+      return presentation
     }
     // reset enabled/visible flags (actions are encouraged to always set them in `update`)
     presentation.setEnabledAndVisible(true)

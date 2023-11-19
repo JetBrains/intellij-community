@@ -836,9 +836,10 @@ object Utils {
 
   @Suppress("DEPRECATION", "removal")
   suspend fun <R> withSuspendingUpdateSession(e: AnActionEvent, factory: PresentationFactory,
+                                              actionFilter: (AnAction) -> Boolean,
                                               block: suspend CoroutineScope.(SuspendingUpdateSession) -> R): R = coroutineScope {
     val edtDispatcher = Dispatchers.EDT[CoroutineDispatcher]!!
-    val updater = ActionUpdater(factory, e.dataContext, e.place, e.isFromContextMenu, e.isFromActionToolbar, edtDispatcher, true)
+    val updater = ActionUpdater(factory, e.dataContext, e.place, e.isFromContextMenu, e.isFromActionToolbar, edtDispatcher, actionFilter)
     e.updateSession = updater.asUpdateSession()
     updater.runUpdateSession(updaterContext(e.place, 0, e.isFromContextMenu, e.isFromActionToolbar)) {
       block(e.updateSession as SuspendingUpdateSession)
