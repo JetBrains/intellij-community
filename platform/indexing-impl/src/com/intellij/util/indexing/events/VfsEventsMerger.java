@@ -35,6 +35,12 @@ public final class VfsEventsMerger {
   private static final boolean DEBUG = FileBasedIndexEx.DO_TRACE_STUB_INDEX_UPDATE || Boolean.getBoolean("log.index.vfs.events");
   private static final Logger LOG = MyLoggerFactory.getLoggerInstance();
 
+  static {
+    if (LOG != null) {
+      LOG.info("-------------- VfsEventsMerger initialized --------------------");
+    }
+  }
+
   void recordFileEvent(@NotNull VirtualFile file, boolean contentChange) {
     tryLog(contentChange ? "FILE_CONTENT_CHANGED" : "FILE_ADDED", file);
     updateChange(file, contentChange ? FILE_CONTENT_CHANGED : FILE_ADDED);
