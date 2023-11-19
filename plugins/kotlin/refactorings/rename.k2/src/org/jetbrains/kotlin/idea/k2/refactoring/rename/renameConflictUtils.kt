@@ -83,6 +83,10 @@ fun checkClassNameShadowing(
         }
     }
 
+    checkClassLikeNameShadowing(declaration, newName, newUsages)
+}
+
+fun checkClassLikeNameShadowing(declaration: KtNamedDeclaration, newName: String, newUsages: MutableList<UsageInfo>) {
     analyze(declaration) {
         //check outer classes hiding/hidden by rename
         val processedClasses = mutableSetOf<KtClassOrObject>()
@@ -100,7 +104,6 @@ fun checkClassNameShadowing(
             }
         }
     }
-
 }
 
 fun checkCallableShadowing(

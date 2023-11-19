@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.refactoring.conflicts
 
 import com.intellij.psi.*
 import com.intellij.psi.search.searches.ClassInheritorsSearch
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.usageView.UsageInfo
 import com.intellij.usageView.UsageViewUtil
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
@@ -43,7 +44,7 @@ fun checkRedeclarationConflicts(declaration: KtNamedDeclaration, newName: String
 context(KtAnalysisSession)
 fun KtScope.findSiblingsByName(symbol: KtDeclarationSymbol, newName: Name, containingSymbol: KtDeclarationSymbol? = symbol.getContainingSymbol()): Sequence<KtDeclarationSymbol> {
     return when (symbol) {
-        is KtClassLikeSymbol -> getClassifierSymbols(newName)
+        is KtClassifierSymbol -> getClassifierSymbols(newName)
         is KtCallableSymbol -> getCallableSymbols(newName).filter { callable ->
             symbol != callable &&
                    // (symbol is KtVariableSymbol) == (callable is KtVariableSymbol) &&
@@ -73,7 +74,13 @@ private fun checkDeclarationNewNameConflicts(declaration: KtNamedDeclaration, ne
 
       val outerTypeParameters = (containingSymbol.psi as? KtElement)?.nonStaticOuterClasses()?.flatMap { outerClass -> outerClass.typeParameters.filter { pName -> pName.nameAsName == newName }.map { p -> p.getSymbol() } }.orEmpty()
 
-      return typeParameters.filter { it.name == newName }.asSequence() + outerTypeParameters
+      val innerTypeParameters = (containingSymbol.psi as? KtElement)?.let {  currentPsi ->
+          PsiTreeUtil.findChildrenOfType(currentPsi, KtClass::class.java)
+              .filter { it.isInner() }
+              .flatMap { innerClass -> innerClass.typeParameters.mapNotNull { p -> if (p.nameAsName == newName) p.getSymbol() else null } }
+      }.orEmpty()
+
+      return typeParameters.filter { it.name == newName }.asSequence() + outerTypeParameters + innerTypeParameters
     }
 
     return when (containingSymbol) {

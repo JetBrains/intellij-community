@@ -118,6 +118,16 @@ public class K2InplaceRenameTestGenerated extends AbstractK2InplaceRenameTest {
         runTest("../../idea/tests/testData/refactoring/rename/inplace/GlobalFunctionNotInplace.kt");
     }
 
+    @TestMetadata("HidingClassByTypeParameter.kt")
+    public void testHidingClassByTypeParameter() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/rename/inplace/HidingClassByTypeParameter.kt");
+    }
+
+    @TestMetadata("HidingClassByTypeParameter1.kt")
+    public void testHidingClassByTypeParameter1() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/rename/inplace/HidingClassByTypeParameter1.kt");
+    }
+
     @TestMetadata("HidingClassFromCompanionObject.kt")
     public void testHidingClassFromCompanionObject() throws Exception {
         runTest("../../idea/tests/testData/refactoring/rename/inplace/HidingClassFromCompanionObject.kt");
@@ -286,6 +296,16 @@ public class K2InplaceRenameTestGenerated extends AbstractK2InplaceRenameTest {
     @TestMetadata("HidingTopLevelClass.kt")
     public void testHidingTopLevelClass() throws Exception {
         runTest("../../idea/tests/testData/refactoring/rename/inplace/HidingTopLevelClass.kt");
+    }
+
+    @TestMetadata("HidingTypeParameterByContainingClassTypeParameter.kt")
+    public void testHidingTypeParameterByContainingClassTypeParameter() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/rename/inplace/HidingTypeParameterByContainingClassTypeParameter.kt");
+    }
+
+    @TestMetadata("HidingTypeParameterByContainingClassTypeParameter1.kt")
+    public void testHidingTypeParameterByContainingClassTypeParameter1() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/rename/inplace/HidingTypeParameterByContainingClassTypeParameter1.kt");
     }
 
     @TestMetadata("InvokeToFoo.kt")

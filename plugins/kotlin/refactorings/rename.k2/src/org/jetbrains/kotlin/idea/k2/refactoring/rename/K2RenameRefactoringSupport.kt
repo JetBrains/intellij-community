@@ -64,6 +64,10 @@ internal class K2RenameRefactoringSupport : KotlinRenameRefactoringSupport {
         if (declaration is KtClassLikeDeclaration) {
             checkClassNameShadowing(declaration, newName.quoteIfNeeded(), originalUsages, newUsages)
         }
+        else if (declaration is KtTypeParameter) {
+            //it's impossible to fix type parameter usages, let's try to fix external usages
+            checkClassLikeNameShadowing(declaration, newName.quoteIfNeeded(), newUsages)
+        }
         checkCallableShadowing(declaration, newName.quoteIfNeeded(), originalUsages, newUsages)
     }
 
