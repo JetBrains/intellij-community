@@ -3,8 +3,8 @@ package org.jetbrains.kotlin.idea.junit
 
 import com.intellij.execution.junit.JUnit4Framework
 import com.intellij.execution.junit.JUnitUtil
-import com.intellij.lang.Language
 import com.intellij.java.analysis.OuterModelsModificationTrackerManager
+import com.intellij.lang.Language
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
@@ -34,7 +34,7 @@ class KotlinJUnit4Framework: JUnit4Framework(), KotlinPsiBasedTestFramework {
             if (checkState != UNSURE) return checkState
 
             return CachedValuesManager.getCachedValue(declaration) {
-                CachedValueProvider.Result.create(checkJUnit4TestClass(declaration), OuterModelsModificationTrackerManager.getInstance(declaration.project).tracker)
+                CachedValueProvider.Result.create(checkJUnit4TestClass(declaration), OuterModelsModificationTrackerManager.getTracker(declaration.project))
             }
         }
 
@@ -46,7 +46,7 @@ class KotlinJUnit4Framework: JUnit4Framework(), KotlinPsiBasedTestFramework {
             return CachedValuesManager.getCachedValue(ktClassOrObject) {
                 CachedValueProvider.Result.create(
                     checkJUnit4PotentialTestClass(ktClassOrObject) == YES,
-                    OuterModelsModificationTrackerManager.getInstance(ktClassOrObject.project).tracker
+                    OuterModelsModificationTrackerManager.getTracker(ktClassOrObject.project)
                 )
             }
         }

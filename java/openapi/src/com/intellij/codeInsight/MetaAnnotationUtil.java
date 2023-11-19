@@ -71,7 +71,7 @@ public abstract class MetaAnnotationUtil {
       });
 
       return Result.create(map,
-                           OuterModelsModificationTrackerManager.getInstance(module.getProject()).getTracker(),
+                           OuterModelsModificationTrackerManager.getTracker(module.getProject()),
                            JavaLibraryModificationTracker.getInstance(module.getProject()));
     });
   }
@@ -120,7 +120,7 @@ public abstract class MetaAnnotationUtil {
       });
 
       return Result.create(map,
-                           OuterModelsModificationTrackerManager.getInstance(module.getProject()).getTracker(),
+                           OuterModelsModificationTrackerManager.getTracker(module.getProject()),
                            JavaLibraryModificationTracker.getInstance(module.getProject()));
     });
   }
