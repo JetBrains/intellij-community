@@ -32,7 +32,7 @@ class InspectionMetaInformationServiceTest {
 
   @Rule
   @JvmField
-  val initServiceRule = InitMetaInformationServiceRule()
+  val invalidateMetaInformationServiceRule = InvalidateMetaInformationServiceRule()
 
   private fun doTest(task: suspend (Project) -> Unit) {
     runBlocking {
@@ -43,20 +43,18 @@ class InspectionMetaInformationServiceTest {
   @Test
   fun testCWEids() {
     doTest {
-      assertEquals(listOf(570, 571), service<InspectionMetaInformationService>().getMetaInformation("ConstantValue")?.cweIds)
-      assertEquals(listOf(476, 754), service<InspectionMetaInformationService>().getMetaInformation("NullableProblems")?.cweIds)
+      val state = service<InspectionMetaInformationService>().getState()
+      assertEquals(listOf(570, 571), state.inspections["ConstantValue"]?.cweIds)
+      assertEquals(listOf(476, 754), state.inspections["NullableProblems"]?.cweIds)
     }
   }
 
-  class InitMetaInformationServiceRule : TestRule {
+  class InvalidateMetaInformationServiceRule : TestRule {
     override fun apply(base: Statement, description: Description): Statement = statement {
       try {
-        runBlocking {
-          service<InspectionMetaInformationService>().initialize().await()
-        }
         base.evaluate()
       } finally {
-        service<InspectionMetaInformationService>().dropStorage()
+        service<InspectionMetaInformationService>().invalidateState()
       }
     }
   }

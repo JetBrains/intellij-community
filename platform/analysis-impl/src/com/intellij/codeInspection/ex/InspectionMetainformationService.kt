@@ -14,8 +14,6 @@ import com.intellij.util.lang.UrlClassLoader
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicReference
 
 val CWE_TOP25_2023 = setOf(20, 22, 77, 78, 79, 89, 94, 119, 125, 190, 269, 276, 287, 306, 352, 362, 416, 434, 476, 502,
@@ -31,56 +29,54 @@ data class MetaInformation @JsonCreator constructor(
   @JsonProperty("categories") val categories: List<String>?
 )
 
+class MetaInformationState(val inspections: Map<String, MetaInformation>)
+
+
 @Service(Service.Level.APP)
 class InspectionMetaInformationService(val serviceScope: CoroutineScope) {
-
-  private val storage = ConcurrentHashMap<String, MetaInformation>()
-  private val initJob = AtomicReference<Deferred<Any?>?>()
+  private val loadJob = AtomicReference<Deferred<MetaInformationState>?>()
 
   init {
     val app = ApplicationManager.getApplication()
 
     app.getMessageBus().connect(serviceScope).subscribe(DynamicPluginListener.TOPIC, object : DynamicPluginListener {
       override fun pluginLoaded(pluginDescriptor: IdeaPluginDescriptor) {
-        dropStorage()
+        invalidateState()
       }
 
       override fun pluginUnloaded(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) {
-        dropStorage()
+        invalidateState()
       }
     })
   }
 
-  fun dropStorage() {
-    initJob.set(null)
-    storage.clear()
+  fun invalidateState() {
+    loadJob.set(null)
   }
 
-  @OptIn(ExperimentalCoroutinesApi::class)
-  fun isInitialized(): Boolean {
-    val job = initJob.get() ?: return false
-    if (job.isCompleted) return job.getCompletionExceptionOrNull() == null
-    return false
+  suspend fun getState(): MetaInformationState {
+    val job = loadJob.get() ?: loadState()
+    return job.await()
   }
 
-
-  fun initialize(): Deferred<Any?> {
-    val deferred = CompletableDeferred<Any?>()
+  private fun loadState(): Deferred<MetaInformationState> {
+    val deferred = CompletableDeferred<MetaInformationState>()
     while (true) {
-      if (initJob.compareAndSet(null, deferred)) break
-      val job = initJob.get()
+      if (loadJob.compareAndSet(null, deferred)) break
+      val job = loadJob.get()
       if (job != null) return job
     }
 
     var error: Throwable? = null
     val visited = mutableSetOf<ClassLoader>()
+    val result = mutableMapOf<String, MetaInformation>()
     for (plugin in PluginManagerCore.getPluginSet().getEnabledModules()) {
       val classLoader = plugin.getPluginClassLoader() ?: continue
       if (!visited.add(classLoader) || classLoader !is UrlClassLoader) {
         continue
       }
       try {
-        readPluginMetaInformation(classLoader, plugin)
+        readPluginMetaInformation(classLoader, plugin, result)
       }
       catch (e: Throwable) {
         if (error == null) {
@@ -93,20 +89,18 @@ class InspectionMetaInformationService(val serviceScope: CoroutineScope) {
     }
 
     if (error != null) {
-      initJob.set(null)
+      loadJob.set(null)
       deferred.completeExceptionally(error)
     }
     else {
-      deferred.complete(null)
+      deferred.complete(MetaInformationState(result))
     }
     return deferred
   }
 
-  fun getMetaInformation(inspectionId: String): MetaInformation? {
-    return storage[inspectionId]
-  }
-
-  private fun readPluginMetaInformation(classLoader: UrlClassLoader, plugin: IdeaPluginDescriptorImpl) {
+  private fun readPluginMetaInformation(classLoader: UrlClassLoader,
+                                        plugin: IdeaPluginDescriptorImpl,
+                                        storage: MutableMap<String, MetaInformation>) {
     classLoader.processResources("inspectionDescriptions", { "inspectionDescriptions/metaInformation.json" == it }) { _, inputStream ->
       if (inputStream.available() <= 0) return@processResources
       val objectMapper = ObjectMapper()
