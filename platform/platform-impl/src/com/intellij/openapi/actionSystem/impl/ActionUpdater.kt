@@ -33,7 +33,7 @@ import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.platform.diagnostic.telemetry.helpers.computeWithSpan
+import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.util.SlowOperations
 import com.intellij.util.TimeoutUtil
@@ -144,8 +144,9 @@ internal class ActionUpdater @JvmOverloads constructor(
     }
     checkCancelled()
     if (isEDT || !shallEDT) {
-      return computeWithSpan(Utils.getTracer(true), operationName) { span: Span ->
-        val adjustedCall = {
+      val spanBuilder = Utils.getTracer(true).spanBuilder(operationName)
+      return spanBuilder.useWithScope(EmptyCoroutineContext) {
+        readActionUndispatchedForActionExpand {
           val start = System.nanoTime()
           try {
             ProhibitAWTEvents.start(operationName).use {
@@ -159,7 +160,6 @@ internal class ActionUpdater @JvmOverloads constructor(
             }
           }
         }
-        readActionUndispatchedForActionExpand(adjustedCall)
       }
     }
     if (PopupMenuPreloader.isToSkipComputeOnEDT(place)) {
@@ -185,7 +185,7 @@ internal class ActionUpdater @JvmOverloads constructor(
         edtCallsCount++
         edtWaitNanos += start - start0
         currentEDTWaitMillis = TimeUnit.NANOSECONDS.toMillis(start - start0)
-        computeWithSpan(Utils.getTracer(true), operationName) { span: Span ->
+        Utils.getTracer(true).spanBuilder(operationName).useWithScope { span: Span ->
           val prevStack = ourInEDTActionOperationStack
           val prevNoRules = isNoRulesInEDTSection
           var traceCookie: ThreadDumpService.Cookie? = null
@@ -572,7 +572,8 @@ internal class ActionUpdater @JvmOverloads constructor(
       sessionData.computeIfAbsent(key) {
         bgtScope.async(currentThreadContext().minusKey(Job) +
                        CoroutineName("getSessionDataDeferred#${key.first} ($place)" )) {
-          computeWithSpan(Utils.getTracer(true), "${key.first}@$place") {
+          val spanBuilder = Utils.getTracer(true).spanBuilder("${key.first}@$place")
+          spanBuilder.useWithScope(EmptyCoroutineContext) {
             supplier()
           }
         }
