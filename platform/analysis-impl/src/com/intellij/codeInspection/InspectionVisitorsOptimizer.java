@@ -88,11 +88,12 @@ public final class InspectionVisitorsOptimizer {
       PsiElement element = elements.get(i);
       Class<? extends PsiElement> elementClass = element.getClass();
 
+      // this check guarantees that items are unique in value collections, so we can use simple lists inside
       if (uniqueElementClasses.add(elementClass)) {
         for (Class<?> aSuper : ELEMENT_TYPE_SUPERS.get(elementClass)) {
           Collection<Class<?>> classes = targetPsiClasses.get(aSuper);
           if (classes == null) {
-            classes = createSmallMemoryFootprintSet(10);
+            classes = new ArrayList<>(10);
             targetPsiClasses.put(aSuper, classes);
             if (!aSuper.isInterface() && !Modifier.isAbstract(aSuper.getModifiers())) { // PSI elements in tree cannot be abstract
               classes.add(aSuper);
