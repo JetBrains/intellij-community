@@ -14,6 +14,8 @@ import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FileBasedIndexEx;
+import com.intellij.util.indexing.FileContentImpl;
+import com.intellij.util.indexing.IndexedFile;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -217,6 +219,22 @@ public final class VfsEventsMerger {
              ",len=" + file.getLength() +
              (file instanceof VirtualFileWithId ? (",id=" + ((VirtualFileWithId)file).getId()) : "") +
              (additionalMessage == null ? "" : ("," + additionalMessage.get()));
+    });
+  }
+
+  public static void tryLog(@NotNull String eventName, @NotNull IndexedFile indexedFile, @Nullable Supplier<String> additionalMessage) {
+    VirtualFile file = indexedFile.getFile();
+
+    tryLog(eventName, file, () -> {
+      String extra = "";
+      if (indexedFile instanceof FileContentImpl fileContentImpl) {
+        extra += "transient=" + fileContentImpl.isTransientContent();
+      }
+
+      if (additionalMessage != null) {
+        extra += "," + additionalMessage.get();
+      }
+      return extra;
     });
   }
 
