@@ -18,10 +18,7 @@ import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 
 public class PsiTodoSearchHelperImpl implements PsiTodoSearchHelper {
   private static final TodoItem[] EMPTY_TODO_ITEMS = new TodoItem[0];
@@ -116,7 +113,7 @@ public class PsiTodoSearchHelperImpl implements PsiTodoSearchHelper {
     }
     TodoItem[] items = findTodoItems(file);
     for (TodoItem item : items) {
-      if (item.getPattern().equals(pattern)) count++;
+      if (Objects.equals(item.getPattern(), pattern)) count++;
     }
     return count;
   }

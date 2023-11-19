@@ -36,6 +36,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.search.PsiTodoSearchHelperImpl;
 import com.intellij.psi.search.PsiTodoSearchHelper;
 import com.intellij.psi.search.TodoItem;
+import com.intellij.psi.search.TodoPattern;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.serviceContainer.AlreadyDisposedException;
 import com.intellij.util.CommonProcessors;
@@ -513,13 +514,18 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     for (TodoItem todoItem : todoItems) {
       ProgressManager.checkCanceled();
 
+      TodoPattern todoPattern = todoItem.getPattern();
+      if (todoPattern == null) {
+        continue;
+      }
+
       TextRange textRange = todoItem.getTextRange();
       List<TextRange> additionalRanges = todoItem.getAdditionalTextRanges();
 
       String description = formatDescription(text, textRange, additionalRanges);
       String tooltip = XmlStringUtil.escapeString(StringUtil.shortenPathWithEllipsis(description, 1024)).replace("\n", "<br>");
 
-      TextAttributes attributes = todoItem.getPattern().getAttributes().getTextAttributes();
+      TextAttributes attributes = todoPattern.getAttributes().getTextAttributes();
       addTodoItem(startOffset, endOffset, priorityRange, insideResult, outsideResult, attributes, description, tooltip, textRange);
       if (!additionalRanges.isEmpty()) {
         TextAttributes attributesForAdditionalLines = attributes.clone();
