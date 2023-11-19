@@ -30,13 +30,13 @@ import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.platform.instanceContainer.internal.*
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
-import com.intellij.util.containers.UnmodifiableHashMap
 import com.intellij.util.messages.*
 import com.intellij.util.messages.impl.MessageBusEx
 import com.intellij.util.messages.impl.MessageBusImpl
 import com.intellij.util.namedChildScope
 import com.intellij.util.runSuppressing
-import kotlinx.collections.immutable.*
+import kotlinx.collections.immutable.PersistentList
+import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
@@ -427,12 +427,11 @@ abstract class ComponentManagerImpl(
     }
 
     if (precomputedExtensionModel == null) {
-      val immutableExtensionPoints = UnmodifiableHashMap.fromMap(extensionPoints!!)
-      extensionArea.reset(immutableExtensionPoints)
+      extensionArea.reset(extensionPoints!!)
 
       for (rootModule in modules) {
         executeRegisterTask(rootModule) { module ->
-          module.registerExtensions(nameToPoint = immutableExtensionPoints,
+          module.registerExtensions(nameToPoint = extensionPoints,
                                     containerDescriptor = getContainerDescriptor(module),
                                     listenerCallbacks = listenerCallbacks)
         }
@@ -465,11 +464,9 @@ abstract class ComponentManagerImpl(
       return
     }
 
-    val result = HashMap<String, ExtensionPointImpl<*>>().let { map ->
-      for ((pluginDescriptor, points) in precomputedExtensionModel.extensionPoints) {
-        createExtensionPoints(points = points, componentManager = this, result = map, pluginDescriptor = pluginDescriptor)
-      }
-      UnmodifiableHashMap.fromMap(map)
+    val result = HashMap<String, ExtensionPointImpl<*>>()
+    for ((pluginDescriptor, points) in precomputedExtensionModel.extensionPoints) {
+      createExtensionPoints(points = points, componentManager = this, result = result, pluginDescriptor = pluginDescriptor)
     }
 
     assert(extensionArea.nameToPointMap.isEmpty())

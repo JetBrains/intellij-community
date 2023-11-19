@@ -4,7 +4,6 @@ package com.intellij.ide.plugins
 import com.intellij.openapi.extensions.ExtensionDescriptor
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.util.containers.UnmodifiableHashMap
 import com.intellij.util.xml.dom.XmlElement
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
@@ -53,7 +52,7 @@ class RawPluginDescriptor {
   @JvmField val projectContainerDescriptor: ContainerDescriptor = ContainerDescriptor()
   @JvmField val moduleContainerDescriptor: ContainerDescriptor = ContainerDescriptor()
 
-  @JvmField var epNameToExtensions: UnmodifiableHashMap<String, PersistentList<ExtensionDescriptor>> = UnmodifiableHashMap.empty()
+  @JvmField var epNameToExtensions: MutableMap<String, PersistentList<ExtensionDescriptor>>? = null
 
   @JvmField internal var contentModules: PersistentList<PluginContentDescriptor.ModuleItem> = persistentListOf()
   @JvmField internal var dependencies: ModuleDependenciesDescriptor = ModuleDependenciesDescriptor.EMPTY

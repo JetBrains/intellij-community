@@ -128,7 +128,7 @@ public class LanguageExtension<T> extends KeyedExtensionCollector<T, Language> {
   }
 
   @Override
-  protected @NotNull PersistentList<T> buildExtensions(@NotNull String stringKey, @NotNull Language key) {
+  protected @NotNull List<T> buildExtensions(@NotNull String stringKey, @NotNull Language key) {
     List<MetaLanguage> metaLanguages = LanguageUtil.matchingMetaLanguages(key);
     if (metaLanguages.isEmpty()) {
       return super.buildExtensions(stringKey, key);

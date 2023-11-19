@@ -302,7 +302,7 @@ internal suspend fun executeApplicationStarter(starter: ApplicationStarter, args
 fun getAppInitializedListeners(app: Application): List<ApplicationInitializedListener> {
   val extensionArea = app.extensionArea as ExtensionsAreaImpl
   val point = extensionArea.getExtensionPoint<ApplicationInitializedListener>("com.intellij.applicationInitializedListener")
-  val result = point.extensionList
+  val result = point.asSequence().toList()
   point.reset()
   return result
 }

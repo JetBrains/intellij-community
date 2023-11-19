@@ -457,10 +457,15 @@ private fun readExtensions(reader: XMLStreamReader2, descriptor: RawPluginDescri
                                                       element = element,
                                                       hasExtraAttributes = hasExtraAttributes)
 
-        val list = descriptor.epNameToExtensions.get(qualifiedExtensionPointName)
+        var epNameToExtensions = descriptor.epNameToExtensions
+        if (epNameToExtensions == null) {
+          epNameToExtensions = HashMap()
+          descriptor.epNameToExtensions = epNameToExtensions
+        }
+
+        val list = epNameToExtensions.get(qualifiedExtensionPointName)
         @Suppress("IfThenToElvis")
-        descriptor.epNameToExtensions = descriptor.epNameToExtensions
-          .with(qualifiedExtensionPointName, if (list == null) persistentListOf(extensionDescriptor) else list.add(extensionDescriptor))
+        epNameToExtensions.put(qualifiedExtensionPointName, if (list == null) persistentListOf(extensionDescriptor) else list.add(extensionDescriptor))
 
         assert(reader.isEndElement)
         return@consumeChildElements

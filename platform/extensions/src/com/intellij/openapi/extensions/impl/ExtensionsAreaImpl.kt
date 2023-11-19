@@ -9,11 +9,14 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.*
 import com.intellij.openapi.util.Disposer
-import com.intellij.util.containers.UnmodifiableHashMap
+import com.intellij.util.containers.with
+import com.intellij.util.containers.withAll
+import com.intellij.util.containers.without
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import java.lang.reflect.Modifier
+import java.util.*
 
 private val LOG: Logger
   get() = logger<ExtensionsAreaImpl>()
@@ -55,7 +58,7 @@ fun createExtensionPoints(points: List<ExtensionPointDescriptor>,
 @Internal
 class ExtensionsAreaImpl(private val componentManager: ComponentManager) : ExtensionsArea {
   @Volatile
-  private var extensionPoints: UnmodifiableHashMap<String, ExtensionPointImpl<*>> = UnmodifiableHashMap.empty()
+  private var extensionPoints: Map<String, ExtensionPointImpl<*>> = Collections.emptyMap()
 
   private val epTraces = if (DEBUG_REGISTRATION) HashMap<String, Throwable>() else null
 
@@ -64,7 +67,7 @@ class ExtensionsAreaImpl(private val componentManager: ComponentManager) : Exten
 
   private val lock = Any()
 
-  fun reset(nameToPointMap: UnmodifiableHashMap<String, ExtensionPointImpl<*>>) {
+  fun reset(nameToPointMap: Map<String, ExtensionPointImpl<*>>) {
     extensionPoints = nameToPointMap
   }
 

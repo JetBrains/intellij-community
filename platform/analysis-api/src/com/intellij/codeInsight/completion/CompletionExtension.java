@@ -4,11 +4,11 @@ package com.intellij.codeInsight.completion;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageExtension;
 import com.intellij.lang.MetaLanguage;
-import kotlinx.collections.immutable.PersistentList;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 @ApiStatus.Internal
@@ -18,7 +18,7 @@ public final class CompletionExtension<T> extends LanguageExtension<T> {
   }
 
   @Override
-  protected @NotNull PersistentList<T> buildExtensions(@NotNull String stringKey, @NotNull Language key) {
+  protected @NotNull List<T> buildExtensions(@NotNull String stringKey, @NotNull Language key) {
     return buildExtensions(getAllBaseLanguageIdsWithAny(key));
   }
 
