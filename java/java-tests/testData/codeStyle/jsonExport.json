@@ -276,9 +276,9 @@
       "while_on_new_line": false,
       "wrap_comments": false,
       "wrap_first_method_in_call_chain": false,
-      "wrap_semicolon_after_call_chair": false,
       "wrap_long_lines": false,
-      "wrap_on_typing": true
+      "wrap_on_typing": true,
+      "wrap_semicolon_after_call_chain": false
     }
   }
 }
