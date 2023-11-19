@@ -32,10 +32,8 @@ class A {
         if (a10 != a.a10) return false;
         if (Float.compare(a11, a.a11) != 0) return false;
         if (Double.compare(temp, a.temp) != 0) return false;
-        // Probably incorrect - comparing Object[] arrays with Arrays.equals
         if (!Arrays.equals(a1, a.a1)) return false;
         if (!Arrays.deepEquals(a2, a.a2)) return false;
-        // Probably incorrect - comparing Object[] arrays with Arrays.equals
         if (!Arrays.equals(a3, a.a3)) return false;
         if (!Arrays.deepEquals(a4, a.a4)) return false;
         if (!Arrays.equals(a5, a.a5)) return false;

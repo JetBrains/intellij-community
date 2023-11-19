@@ -80,10 +80,8 @@ class A {
         if (getA10() != a.getA10()) return false;
         if (Float.compare(getA11(), a.getA11()) != 0) return false;
         if (Double.compare(getA12(), a.getA12()) != 0) return false;
-        // Probably incorrect - comparing Object[] arrays with Arrays.equals
         if (!Arrays.equals(getA1(), a.getA1())) return false;
         if (!Arrays.deepEquals(getA2(), a.getA2())) return false;
-        // Probably incorrect - comparing Object[] arrays with Arrays.equals
         if (!Arrays.equals(getA3(), a.getA3())) return false;
         if (!Arrays.deepEquals(getA4(), a.getA4())) return false;
         if (!Arrays.equals(getA5(), a.getA5())) return false;
