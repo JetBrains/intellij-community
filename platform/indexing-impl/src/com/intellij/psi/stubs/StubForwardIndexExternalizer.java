@@ -130,10 +130,12 @@ public abstract class StubForwardIndexExternalizer<StubKeySerializationState>
             skipIndexValue(in);
           }
         }
-        else {
+        else if (indexKey == null) {
           // key is deleted, just properly skip bytes (used while index update)
-          assert indexKey == null : "indexKey '" + indexKey + "' is not a StubIndexKey";
           skipIndexValue(in);
+        }
+        else {
+          throw new AssertionError("indexKey '" + indexKey + "' [" + indexKey.getClass() + "] is not null, and not a StubIndexKey");
         }
       }
       return stubIndicesValueMap;
