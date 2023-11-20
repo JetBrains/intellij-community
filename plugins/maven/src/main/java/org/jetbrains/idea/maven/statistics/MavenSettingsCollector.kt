@@ -128,7 +128,7 @@ class MavenSettingsCollector : ProjectUsagesCollector() {
   private val SKIP_TESTS = GROUP.registerEvent("skipTests", EventFields.Enabled)
   private val HAS_RUNNER_MAVEN_PROPERTIES = GROUP.registerEvent("hasRunnerMavenProperties", EventFields.Enabled)
 
-  private val VERSION_FIELD = EventFields.StringValidatedByRegexp("value", "version")
+  private val VERSION_FIELD = EventFields.StringValidatedByRegexpReference("value", "version")
 
   private val CHECKSUM_POLICY = GROUP.registerEvent("checksumPolicy", EventFields.Enum("value",
                                                                                        MavenExecutionOptions.ChecksumPolicy::class.java) { it.name.lowercase() })

@@ -107,7 +107,7 @@ internal class GradleSettingsCollector : ProjectUsagesCollector() {
 
   private val DISTRIBUTION_TYPE = GROUP.registerEvent("distributionType",
                                                       EventFields.Enum("value", DistributionType::class.java) { it.name.lowercase() })
-  private val VERSION_FIELD = EventFields.StringValidatedByRegexp("value", "version")
+  private val VERSION_FIELD = EventFields.StringValidatedByRegexpReference("value", "version")
   private val GRADLE_VERSION = GROUP.registerEvent("gradleVersion", VERSION_FIELD)
   private val PREFERRED_TEST_RUNNER = GROUP.registerEvent("preferredTestRunner",
                                                           EventFields.Enum("value", TestRunner::class.java) { it.name.lowercase() })

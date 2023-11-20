@@ -57,7 +57,7 @@ fun registerPythonSpecificEvent(group: EventLogGroup, eventId: String, vararg ex
                                    *extraFields)
 }
 
-val PYTHON_VERSION = EventFields.StringValidatedByRegexp("python_version", "version")
+val PYTHON_VERSION = EventFields.StringValidatedByRegexpReference("python_version", "version")
 val PYTHON_IMPLEMENTATION = EventFields.String("python_implementation", listOf("PyPy", "Jython", "Python"))
 
 

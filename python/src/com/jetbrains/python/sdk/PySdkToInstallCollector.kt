@@ -39,7 +39,7 @@ class PySdkToInstallCollector : CounterUsagesCollector() {
 
     private val GROUP = EventLogGroup("python.sdk.install.events", 3)
 
-    private val versionField = EventFields.StringValidatedByRegexp("py_version", "version")
+    private val versionField = EventFields.StringValidatedByRegexpReference("py_version", "version")
 
     private val osField = EventFields.Enum("os", OS::class.java)
 

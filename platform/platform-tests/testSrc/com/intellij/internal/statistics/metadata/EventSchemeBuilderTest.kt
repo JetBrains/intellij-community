@@ -19,7 +19,7 @@ import com.intellij.testFramework.fixtures.BasePlatformTestCase
 class EventSchemeBuilderTest : BasePlatformTestCase() {
 
   fun `test generate string field validated by regexp`() {
-    doFieldTest(EventFields.StringValidatedByRegexp("count", "integer"), hashSetOf("{regexp#integer}"))
+    doFieldTest(EventFields.StringValidatedByRegexpReference("count", "integer"), hashSetOf("{regexp#integer}"))
   }
 
   fun `test generate string field validated by enum`() {

@@ -29,7 +29,7 @@ object TerminalUsageTriggerCollector : CounterUsagesCollector() {
                                                                                TERMINAL_COMMAND_HANDLER_FIELD,
                                                                                RUN_ANYTHING_PROVIDER_FIELD)
   private val localExecEvent = GROUP.registerEvent("local.exec",
-                                                   EventFields.StringValidatedByRegexp("os-version", "version"),
+                                                   EventFields.StringValidatedByRegexpReference("os-version", "version"),
                                                    EventFields.String("shell", KNOWN_SHELLS.toList()))
 
   private val commandExecutedEvent = GROUP.registerEvent("terminal.command.executed",
