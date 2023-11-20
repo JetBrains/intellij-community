@@ -78,16 +78,16 @@ interface WorkspaceFileIndexData {
   fun resetFileCache()
 
   companion object {
-    val instancesCounter: AtomicLong = AtomicLong()
-    val initTimeMs: AtomicLong = AtomicLong()
-    val getFileInfoTimeMs: AtomicLong = AtomicLong()
-    val visitFileSetsTimeMs: AtomicLong = AtomicLong()
-    val processFileSetsTimeMs: AtomicLong = AtomicLong()
-    val markDirtyTimeMs: AtomicLong = AtomicLong()
-    val updateDirtyEntitiesTimeMs: AtomicLong = AtomicLong()
-    val onEntitiesChangedTimeMs: AtomicLong = AtomicLong()
-    val getPackageNameTimeMs: AtomicLong = AtomicLong()
-    val getDirectoriesByPackageNameTimeMs: AtomicLong = AtomicLong()
+    internal val instancesCounter: AtomicLong = AtomicLong()
+    internal val initTimeMs: AtomicLong = AtomicLong()
+    internal val getFileInfoTimeMs: AtomicLong = AtomicLong()
+    internal val visitFileSetsTimeMs: AtomicLong = AtomicLong()
+    internal val processFileSetsTimeMs: AtomicLong = AtomicLong()
+    internal val markDirtyTimeMs: AtomicLong = AtomicLong()
+    internal val updateDirtyEntitiesTimeMs: AtomicLong = AtomicLong()
+    internal val onEntitiesChangedTimeMs: AtomicLong = AtomicLong()
+    internal val getPackageNameTimeMs: AtomicLong = AtomicLong()
+    internal val getDirectoriesByPackageNameTimeMs: AtomicLong = AtomicLong()
 
     private fun setupOpenTelemetryReporting(meter: Meter): Unit {
       val instancesCountGauge = meter.gaugeBuilder("workspaceModel.workspaceFileIndexData.instances.count")
