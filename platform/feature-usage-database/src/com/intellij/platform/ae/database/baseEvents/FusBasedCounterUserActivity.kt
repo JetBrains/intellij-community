@@ -9,6 +9,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.platform.ae.database.AEDatabaseLifetime
 import com.intellij.platform.ae.database.activities.ReadableUserActivity
 import com.intellij.platform.ae.database.activities.WritableDatabaseBackedCounterUserActivity
 import com.jetbrains.fus.reporting.model.lion3.LogEvent
@@ -188,7 +189,7 @@ class Listener : StatisticsEventLogListener {
   override fun onLogEvent(validatedEvent: LogEvent, rawEventId: String?, rawData: Map<String, Any>?) {
     // rawEventId and rawData can't be used
 
-    com.intellij.platform.ae.database.AEDatabaseLifetime.getScope().launch {
+    AEDatabaseLifetime.getScope().launch {
       val group = validatedEvent.group.id
       val event = validatedEvent.event.id
       val fields = validatedEvent.event.data

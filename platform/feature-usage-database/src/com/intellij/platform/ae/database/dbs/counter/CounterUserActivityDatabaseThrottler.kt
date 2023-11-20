@@ -3,6 +3,7 @@ package com.intellij.platform.ae.database.dbs.counter
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.ae.database.activities.DatabaseBackedCounterUserActivity
 import com.intellij.platform.ae.database.utils.InstantUtils
+import com.intellij.util.awaitCancellationAndInvoke
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -30,7 +31,7 @@ internal class CounterUserActivityDatabaseThrottler(private val cs: CoroutineSco
 
   init {
     if (runBackgroundUpdater) {
-      cs.async {
+      cs.launch {
         while (isActive) {
           logger.trace("Updater was (re)started")
           delay(updatePause)
@@ -40,8 +41,10 @@ internal class CounterUserActivityDatabaseThrottler(private val cs: CoroutineSco
       }
     }
 
-    database.invokeOnDatabaseDeath {
-      commitChanges()
+    cs.launch {
+      cs.awaitCancellationAndInvoke {
+        commitChanges()
+      }
     }
   }
 

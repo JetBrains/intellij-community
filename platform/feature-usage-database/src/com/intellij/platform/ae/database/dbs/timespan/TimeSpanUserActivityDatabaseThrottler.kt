@@ -4,6 +4,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.ae.database.activities.DatabaseBackedTimeSpanUserActivity
 import com.intellij.platform.ae.database.activities.toKey
 import com.intellij.platform.ae.database.utils.InstantUtils
+import com.intellij.util.awaitCancellationAndInvoke
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -24,7 +25,7 @@ internal class TimeSpanUserActivityDatabaseThrottler(cs: CoroutineScope,
 
   init {
     if (runBackgroundUpdater) {
-      cs.async {
+      cs.launch {
         while (isActive) {
           delay(updatePause)
           commitChanges(false)
@@ -32,9 +33,11 @@ internal class TimeSpanUserActivityDatabaseThrottler(cs: CoroutineScope,
       }
     }
 
-    database.invokeOnDatabaseDeath {
-      commitChanges(true)
-      commitStaleEvents()
+    cs.launch {
+      cs.awaitCancellationAndInvoke {
+        commitChanges(true)
+        commitStaleEvents()
+      }
     }
   }
 

@@ -2,7 +2,6 @@
 package com.intellij.platform.ae.database.activities
 
 import com.intellij.platform.ae.database.AEDatabaseLifetime
-import com.intellij.platform.ae.database.dbs.AEUserActivityDatabase
 import com.intellij.platform.ae.database.dbs.timespan.TimeSpanUserActivityDatabase
 import com.intellij.platform.ae.database.dbs.timespan.TimeSpanUserActivityDatabaseManualKind
 import java.time.Instant
@@ -11,7 +10,7 @@ interface TimeSpanUserActivity : UserActivity
 
 abstract class DatabaseBackedTimeSpanUserActivity : TimeSpanUserActivity {
   protected val coroutineScope get() = AEDatabaseLifetime.getScope()
-  protected suspend fun getDatabase() = AEUserActivityDatabase.getDatabaseAsync<TimeSpanUserActivityDatabase>()
+  protected suspend fun getDatabase() = TimeSpanUserActivityDatabase.getInstanceAsync()
 }
 
 abstract class WritableDatabaseBackedTimeSpanUserActivity : DatabaseBackedTimeSpanUserActivity() {

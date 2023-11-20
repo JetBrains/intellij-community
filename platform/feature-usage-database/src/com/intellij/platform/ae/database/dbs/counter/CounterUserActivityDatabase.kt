@@ -4,14 +4,19 @@
 package com.intellij.platform.ae.database.dbs.counter
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.platform.ae.database.IdService
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.platform.ae.database.activities.DatabaseBackedCounterUserActivity
 import com.intellij.platform.ae.database.dbs.IUserActivityDatabaseLayer
+import com.intellij.platform.ae.database.dbs.SqliteDatabaseMetadata
+import com.intellij.platform.ae.database.dbs.ISqliteExecutor
 import com.intellij.platform.ae.database.dbs.SqliteLazyInitializedDatabase
 import com.intellij.platform.ae.database.utils.InstantUtils
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.sqlite.ObjectBinderFactory
+import org.jetbrains.sqlite.SqliteConnection
 import java.time.Instant
 
 /**
@@ -19,10 +24,16 @@ import java.time.Instant
  *
  * All events are rounded to a minute, seconds and milliseconds are always 0
  */
-class CounterUserActivityDatabase(cs: CoroutineScope, private val database: SqliteLazyInitializedDatabase) : ICounterUserActivityDatabase,
-                                                                                                             IUserActivityDatabaseLayer,
-                                                                                                             IReadOnlyCounterUserActivityDatabase,
-                                                                                                             IInternalCounterUserActivityDatabase {
+@Service
+class CounterUserActivityDatabase(cs: CoroutineScope) : ICounterUserActivityDatabase,
+                                                        IUserActivityDatabaseLayer,
+                                                        IReadOnlyCounterUserActivityDatabase,
+                                                        IInternalCounterUserActivityDatabase,
+                                                        ISqliteExecutor {
+  companion object {
+    internal suspend fun getInstanceAsync() = serviceAsync<CounterUserActivityDatabase>()
+  }
+
   private val throttler = CounterUserActivityDatabaseThrottler(cs, this, runBackgroundUpdater = !ApplicationManager.getApplication().isUnitTestMode)
 
   /**
@@ -30,12 +41,11 @@ class CounterUserActivityDatabase(cs: CoroutineScope, private val database: Sqli
    * Answers the question 'How many times did activity happen in given timeframe?'
    */
   override suspend fun getActivitySum(activity: DatabaseBackedCounterUserActivity, from: Instant?, until: Instant?): Int {
-
     val nnFrom = InstantUtils.formatForDatabase(from ?: InstantUtils.SomeTimeAgo)
     val nnUntil = InstantUtils.formatForDatabase(until ?: InstantUtils.NowButABitLater)
 
-    return execute {
-      val getActivityStatement = database.connection.prepareStatement(
+    return execute { connection ->
+      val getActivityStatement = connection.prepareStatement(
         "SELECT sum(diff) FROM counterUserActivity WHERE activity_id = ? AND created_at >= ? AND created_at <= ?",
         ObjectBinderFactory.create3<String, String, String>()
       )
@@ -43,7 +53,7 @@ class CounterUserActivityDatabase(cs: CoroutineScope, private val database: Sqli
 
       getActivityStatement.binder.bind(activity.id, nnFrom, nnUntil)
       getActivityStatement.selectInt() ?: 0
-    }
+    } ?: 0
   }
 
   /**
@@ -60,23 +70,21 @@ class CounterUserActivityDatabase(cs: CoroutineScope, private val database: Sqli
    * Writes event directly to database. Very internal API!
    */
   override suspend fun submitDirect(activity: DatabaseBackedCounterUserActivity, diff: Int, instant: Instant) {
-    execute {
-      val updateActivityStatement = database.connection.prepareStatement(
+    execute { database, metadata ->
+      val updateActivityStatement = database.prepareStatement(
         "INSERT INTO counterUserActivity (activity_id, diff, created_at, ide_id) VALUES (?, ?, ?, ?)",
         ObjectBinderFactory.create4<String, Int, String, Int>()
       )
-      updateActivityStatement.binder.bind(activity.id, diff, InstantUtils.formatForDatabase(instant), IdService.getInstance().getDatabaseId(database))
+      updateActivityStatement.binder.bind(activity.id, diff, InstantUtils.formatForDatabase(instant), IdService.getInstance().getDatabaseId(metadata))
       updateActivityStatement.executeUpdate()
     }
   }
 
-  override fun invokeOnDatabaseDeath(action: suspend () -> Unit) {
-    database.invokeBeforeDatabaseDeath(action)
+  override suspend fun <T> execute(action: suspend (initDb: SqliteConnection) -> T): T? {
+    return SqliteLazyInitializedDatabase.getInstanceAsync().execute(action)
   }
 
-  override suspend fun <T> execute(action: suspend () -> T): T {
-    return database.execute {
-      action()
-    }
+  private suspend fun <T> execute(action: suspend (initDb: SqliteConnection, metadata: SqliteDatabaseMetadata) -> T): T? {
+    return SqliteLazyInitializedDatabase.getInstanceAsync().execute(action)
   }
 }

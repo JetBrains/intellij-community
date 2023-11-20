@@ -3,20 +3,20 @@
 
 package com.intellij.platform.ae.database.dbs.timespan
 
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.platform.ae.database.IdService
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.ae.database.activities.DatabaseBackedTimeSpanUserActivity
 import com.intellij.platform.ae.database.activities.WritableDatabaseBackedTimeSpanUserActivity
-import com.intellij.platform.ae.database.dbs.IInternalUserActivityDatabaseLayer
-import com.intellij.platform.ae.database.dbs.ISqliteBackedDatabaseLayer
-import com.intellij.platform.ae.database.dbs.IUserActivityDatabaseLayer
-import com.intellij.platform.ae.database.dbs.SqliteLazyInitializedDatabase
+import com.intellij.platform.ae.database.dbs.*
 import com.intellij.platform.ae.database.formatString
 import com.intellij.platform.ae.database.models.TimeSpan
 import com.intellij.platform.ae.database.utils.BooleanUtils
 import com.intellij.platform.ae.database.utils.InstantUtils
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.sqlite.ObjectBinderFactory
+import org.jetbrains.sqlite.SqliteConnection
 import java.time.Instant
 
 enum class TimeSpanUserActivityDatabaseManualKind {
@@ -26,18 +26,23 @@ enum class TimeSpanUserActivityDatabaseManualKind {
 
 private val logger = logger<TimeSpanUserActivityDatabase>()
 
-class TimeSpanUserActivityDatabase(cs: CoroutineScope, val database: SqliteLazyInitializedDatabase) : IUserActivityDatabaseLayer,
-                                                                                                      IReadOnlyTimeSpanUserActivityDatabase,
-                                                                                                      ITimeSpanUserActivityDatabase,
-                                                                                                      IInternalTimeSpanUserActivityDatabase,
-                                                                                                      ISqliteBackedDatabaseLayer {
+@Service
+class TimeSpanUserActivityDatabase(cs: CoroutineScope) : IUserActivityDatabaseLayer,
+                                                         IReadOnlyTimeSpanUserActivityDatabase,
+                                                         ITimeSpanUserActivityDatabase,
+                                                         IInternalTimeSpanUserActivityDatabase,
+                                                         ISqliteBackedDatabaseLayer,
+                                                         ISqliteExecutor {
+  companion object {
+    internal suspend fun getInstanceAsync() = serviceAsync<TimeSpanUserActivityDatabase>()
+  }
   private val throttler = TimeSpanUserActivityDatabaseThrottler(cs, this)
 
-  override suspend fun getLongestActivity(activity: DatabaseBackedTimeSpanUserActivity, from: Instant?, until: Instant?): TimeSpan {
-    return execute {
+  override suspend fun getLongestActivity(activity: DatabaseBackedTimeSpanUserActivity, from: Instant?, until: Instant?): TimeSpan? {
+    return execute { database ->
       throttler.commitChanges(false)
 
-      val longestActivityStatement = database.connection.prepareStatement(
+      val longestActivityStatement = database.prepareStatement(
         """SELECT activity_id, started_at, ended_at FROM timespanUserActivity 
       |WHERE activity_id = ? AND (julianday(started_at) >= julianday(?) AND julianday(?) <= julianday(ended_at)) 
       |ORDER BY (julianday(ended_at) - julianday(started_at)) DESC LIMIT ?""".trimMargin(),
@@ -83,9 +88,9 @@ class TimeSpanUserActivityDatabase(cs: CoroutineScope, val database: SqliteLazyI
     val dbEndedAt = InstantUtils.formatForDatabase(endedAt)
     val dbIsFinished = BooleanUtils.formatForDatabase(isFinished)
 
-    return execute {
+    return execute { database, metadata ->
       if (databaseId != null) {
-        val endEventUpdateStatement = database.connection.prepareStatement(
+        val endEventUpdateStatement = database.prepareStatement(
           """
       UPDATE timespanUserActivity 
       SET ended_at = ?,
@@ -100,7 +105,7 @@ class TimeSpanUserActivityDatabase(cs: CoroutineScope, val database: SqliteLazyI
         databaseId
       }
       else {
-        val endEventInsertStatement = database.connection.prepareStatement(
+        val endEventInsertStatement = database.prepareStatement(
           """
       INSERT INTO timespanUserActivity (
         activity_id,
@@ -119,7 +124,7 @@ class TimeSpanUserActivityDatabase(cs: CoroutineScope, val database: SqliteLazyI
         val extraString = extra?.let { formatString(it) }
         endEventInsertStatement.binder.bind(
           activity.id,
-          IdService.getInstance().getDatabaseId(database),
+          IdService.getInstance().getDatabaseId(metadata),
           dbStartedAt,
           dbEndedAt,
           dbIsFinished,
@@ -131,7 +136,7 @@ class TimeSpanUserActivityDatabase(cs: CoroutineScope, val database: SqliteLazyI
           .executeQuery()
           .getInt(0)
       }
-    }
+    } ?: error("Could not execute because of null from database")
   }
 
   /**
@@ -146,21 +151,19 @@ class TimeSpanUserActivityDatabase(cs: CoroutineScope, val database: SqliteLazyI
     throttler.submitPeriodic(activity, id, activity.canBeStale, extra)
   }
 
-  override fun invokeOnDatabaseDeath(action: suspend () -> Unit) {
-    database.invokeBeforeDatabaseDeath(action)
+  override suspend fun <T> execute(action: suspend (initDb: SqliteConnection) -> T): T? {
+    return SqliteLazyInitializedDatabase.getInstanceAsync().execute(action)
   }
 
-  override suspend fun <T> execute(action: suspend () -> T): T {
-    return database.execute {
-      action()
-    }
+  private suspend fun <T> execute(action: suspend (initDb: SqliteConnection, metadata: SqliteDatabaseMetadata) -> T): T? {
+    return SqliteLazyInitializedDatabase.getInstanceAsync().execute(action)
   }
 
   override val tableName: String = "timespanUserActivity"
 }
 
 interface IReadOnlyTimeSpanUserActivityDatabase {
-  suspend fun getLongestActivity(activity: DatabaseBackedTimeSpanUserActivity, from: Instant?, until: Instant?): TimeSpan
+  suspend fun getLongestActivity(activity: DatabaseBackedTimeSpanUserActivity, from: Instant?, until: Instant?): TimeSpan?
 }
 
 interface ITimeSpanUserActivityDatabase : IReadOnlyTimeSpanUserActivityDatabase {
@@ -173,7 +176,7 @@ interface ITimeSpanUserActivityDatabase : IReadOnlyTimeSpanUserActivityDatabase 
   suspend fun submitPeriodicEvent(activity: WritableDatabaseBackedTimeSpanUserActivity, id: String, extra: Map<String, String>? = null)
 }
 
-internal interface IInternalTimeSpanUserActivityDatabase : IInternalUserActivityDatabaseLayer {
+internal interface IInternalTimeSpanUserActivityDatabase {
   suspend fun endEventInternal(
     databaseId: Int?,
     activity: DatabaseBackedTimeSpanUserActivity,
