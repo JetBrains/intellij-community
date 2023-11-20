@@ -230,7 +230,7 @@ class GradleTestAssertionTest : GradleExecutionTestCase() {
             }
           }
           assertNode("test wrapped assertion exception") {
-            // Wrapped assertion exceptions isn't recognized by Gradle and IDE comparison extractors.
+            // Wrapped assertion exceptions aren't recognized by Gradle and IDE comparison extractors.
             assertTestConsoleContains("""
               |java.lang.AssertionError: additional message
             """.trimMargin())
@@ -266,7 +266,7 @@ class GradleTestAssertionTest : GradleExecutionTestCase() {
 
   @ParameterizedTest
   @AllGradleVersionsSource
-  fun `test assertion result of raw Junit 5`(gradleVersion: GradleVersion) {
+  fun `test assertion result of Junit 5 (Opentest4j)`(gradleVersion: GradleVersion) {
     testJunit5Project(gradleVersion) {
       writeText("src/test/java/org/example/TestCase.java", """
         |package org.example;
@@ -397,7 +397,7 @@ class GradleTestAssertionTest : GradleExecutionTestCase() {
 
   @ParameterizedTest
   @AllGradleVersionsSource
-  fun `test assertion result of AssertJ`(gradleVersion: GradleVersion) {
+  fun `test assertion result of Junit 5 (AssertJ)`(gradleVersion: GradleVersion) {
     testJunit5AssertJProject(gradleVersion) {
       writeText("src/test/java/org/example/TestCase.java", """
         |package org.example;
@@ -746,7 +746,7 @@ class GradleTestAssertionTest : GradleExecutionTestCase() {
             """.trimMargin())
           }
           assertNode("test_wrapped_assertion_exception") {
-            // Wrapped assertion exceptions isn't recognized by Gradle and IDE comparison extractors.
+            // Wrapped assertion exceptions aren't recognized by Gradle and IDE comparison extractors.
             assertTestConsoleContains("""
               |java.lang.AssertionError: additional message
             """.trimMargin())
@@ -761,7 +761,7 @@ class GradleTestAssertionTest : GradleExecutionTestCase() {
 
   @ParameterizedTest
   @AllGradleVersionsSource
-  fun `test assertion result of deprecated Junit 4 (Junit 3)`(gradleVersion: GradleVersion) {
+  fun `test assertion result of Junit 4 (Junit 3)`(gradleVersion: GradleVersion) {
     testJunit4Project(gradleVersion) {
       writeText("src/test/java/org/example/TestCase.java", """
         |package org.example;
@@ -1097,7 +1097,7 @@ class GradleTestAssertionTest : GradleExecutionTestCase() {
 
   @ParameterizedTest
   @AllGradleVersionsSource
-  fun `test assertion result of Test NG (Junit)`(gradleVersion: GradleVersion) {
+  fun `test assertion result of Test NG (Junit 3)`(gradleVersion: GradleVersion) {
     testTestNGProject(gradleVersion) {
       writeText("src/test/java/org/example/TestCase.java", """
         |package org.example;
@@ -1267,7 +1267,7 @@ class GradleTestAssertionTest : GradleExecutionTestCase() {
 
   @ParameterizedTest
   @AllGradleVersionsSource
-  fun `test intellij file comparison test Junit 4`(gradleVersion: GradleVersion) {
+  fun `test assertion result of Junit 4 (IJ FileComparisonFailure)`(gradleVersion: GradleVersion) {
     val fixture = GradleTestFixtureBuilder.create("GradleTestAssertionTest-file-comparison-junit-4") {
       withSettingsFile {
         setProjectName("GradleTestAssertionTest-file-comparison-junit-4")
@@ -1349,7 +1349,7 @@ class GradleTestAssertionTest : GradleExecutionTestCase() {
             }
           }
           assertNode("test_wrapped_file_comparison_failure") {
-            // Wrapped assertion exceptions isn't recognized by Gradle and IDE comparison extractors.
+            // Wrapped assertion exceptions aren't recognized by Gradle and IDE comparison extractors.
             assertTestConsoleContains("""
               |java.lang.AssertionError: additional message
             """.trimMargin())
@@ -1364,7 +1364,7 @@ class GradleTestAssertionTest : GradleExecutionTestCase() {
 
   @ParameterizedTest
   @AllGradleVersionsSource
-  fun `test intellij file comparison test Junit 5`(gradleVersion: GradleVersion) {
+  fun `test assertion result of Junit 5 (IJ FileComparisonFailure)`(gradleVersion: GradleVersion) {
     assumeThatJunit5IsSupported(gradleVersion)
     val fixture = GradleTestFixtureBuilder.create("GradleTestAssertionTest-file-comparison-junit-5") {
       withSettingsFile {
@@ -1504,7 +1504,7 @@ class GradleTestAssertionTest : GradleExecutionTestCase() {
             }
           }
           assertNode("test_wrapped_file_comparison_failure") {
-            // Wrapped assertion exceptions isn't recognized by Gradle and IDE comparison extractors.
+            // Wrapped assertion exceptions aren't recognized by Gradle and IDE comparison extractors.
             assertTestConsoleContains("""
               |java.lang.AssertionError: additional message
             """.trimMargin())
