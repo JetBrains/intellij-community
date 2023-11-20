@@ -13,6 +13,7 @@ import com.intellij.lang.Language
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.util.Version
+import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
 import org.jetbrains.annotations.NonNls
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
@@ -38,15 +39,32 @@ object EventFields {
    * @param name  name of the field
    * @param regexpRef reference to global regexp, e.g "integer" for "{regexp#integer}"
    */
+  @Deprecated("Confusing API - users may pass regex directly and assume it can work",
+              ReplaceWith("StringEventField.StringValidatedByRegexpReference(name, regexpRef)"))
+  @ScheduledForRemoval
   @JvmStatic
   fun StringValidatedByRegexp(@NonNls @EventFieldName name: String, @NonNls regexpRef: String): StringEventField {
     return StringEventField.ValidatedByRegexp(name, regexpRef)
   }
 
   /**
-   * Creates a field that will be validated by global enum rule
+   * Creates a field that will be validated by global regexp rule.
+   * You can find existing regexp rules in the "APM/metadata" repository /global/rules.json.
+
    * @param name  name of the field
-   * @param enumRef reference to global enum, e.g "os" for "{enum#os}"
+   * @param regexpRef reference to global regexp rule, e.g. "integer" for "{regexp#integer}".
+   */
+  @JvmStatic
+  fun StringValidatedByRegexpReference(@NonNls name: String, @NonNls regexpRef: String): StringEventField {
+    return StringEventField.ValidatedByRegexp(name, regexpRef)
+  }
+
+  /**
+   * Creates a field that will be validated by global enum rule.
+   * You can find existing enum rules in the "APM/metadata" repository /global/rules.json.
+   *
+   * @param name  name of the field
+   * @param enumRef reference to global enum, e.g. "os" for "{enum#os}".
    */
   @JvmStatic
   fun StringValidatedByEnum(@NonNls name: String, @NonNls enumRef: String): StringEventField {
