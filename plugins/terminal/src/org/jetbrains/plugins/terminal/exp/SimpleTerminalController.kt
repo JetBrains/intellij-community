@@ -30,13 +30,14 @@ class SimpleTerminalController(
 
   private val outputModel: TerminalOutputModel = TerminalOutputModel(editor)
   private val selectionModel = TerminalSelectionModel(outputModel)  // fake model, that won't be changed
-  private val caretModel: TerminalCaretModel = TerminalCaretModel(session, outputModel, editor)
+  private val caretModel: TerminalCaretModel = TerminalCaretModel(session, outputModel, editor, parentDisposable = this)
   private val caretPainter: TerminalCaretPainter = TerminalCaretPainter(caretModel, outputModel, selectionModel, editor)
 
   var isFocused: Boolean = false
 
   init {
     editor.putUserData(TerminalDataContextUtils.IS_ALTERNATE_BUFFER_EDITOR_KEY, true)
+    Disposer.register(this, caretPainter)
 
     // create dummy logical block, that will cover all the output, needed only for caret model
     outputModel.createBlock(command = null, directory = null)

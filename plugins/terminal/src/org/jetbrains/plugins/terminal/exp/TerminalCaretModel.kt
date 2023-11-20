@@ -10,7 +10,8 @@ import java.util.concurrent.CopyOnWriteArrayList
 class TerminalCaretModel(
   private val session: TerminalSession,
   private val outputModel: TerminalOutputModel,
-  private val editor: EditorEx
+  private val editor: EditorEx,
+  parentDisposable: Disposable,
 ) : TerminalModel.CursorListener, TerminalModel.TerminalListener, Disposable {
   private val terminalModel: TerminalModel
     get() = session.model
@@ -26,8 +27,8 @@ class TerminalCaretModel(
     private set
 
   init {
-    terminalModel.addTerminalListener(this, parentDisposable = this)
-    terminalModel.addCursorListener(this, parentDisposable = this)
+    terminalModel.addTerminalListener(this, parentDisposable)
+    terminalModel.addCursorListener(this, parentDisposable)
   }
 
   fun addListener(listener: CaretListener, disposable: Disposable? = null) {

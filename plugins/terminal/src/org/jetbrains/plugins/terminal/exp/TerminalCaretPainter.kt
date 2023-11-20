@@ -3,6 +3,7 @@ package org.jetbrains.plugins.terminal.exp
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.invokeLater
+import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.editor.colors.EditorColors
@@ -34,19 +35,29 @@ class TerminalCaretPainter(
   private val outputModel: TerminalOutputModel,
   selectionModel: TerminalSelectionModel,
   private val editor: EditorEx
-) : TerminalCaretModel.CaretListener, FocusChangeListener, TerminalSelectionListener {
+) : TerminalCaretModel.CaretListener, FocusChangeListener, TerminalSelectionListener, Disposable {
   private var caretHighlighter: RangeHighlighter? = null
   private var caretUpdater: BlinkingCaretUpdater? = null
   private var isFocused: Boolean = false
   private var isBlockActive: Boolean = true
 
+  @Volatile
+  private var isDisposed: Boolean = false
+
   private val caretColor: Color
     get() = editor.colorsScheme.getColor(EditorColors.CARET_COLOR) ?: JBColor(CARET_DARK, CARET_LIGHT)
 
   init {
-    caretModel.addListener(this)
-    selectionModel.addListener(this)
-    editor.addFocusListener(this, caretModel)
+    caretModel.addListener(this, disposable = this)
+    selectionModel.addListener(this, disposable = this)
+    editor.addFocusListener(this, this)
+  }
+
+  override fun dispose() {
+    isDisposed = true
+    runInEdt {
+      updateCaretHighlighter(null, true)
+    }
   }
 
   @RequiresEdt
@@ -56,7 +67,7 @@ class TerminalCaretPainter(
 
   override fun caretPositionChanged(oldPosition: LogicalPosition?, newPosition: LogicalPosition?) {
     invokeLater {
-      if (!editor.isDisposed) {
+      if (!isDisposed && !editor.isDisposed) {
         updateCaretHighlighter(newPosition, caretModel.isBlinking)
       }
     }
@@ -64,7 +75,7 @@ class TerminalCaretPainter(
 
   override fun caretBlinkingChanged(isBlinking: Boolean) {
     invokeLater {
-      if (!editor.isDisposed) {
+      if (!isDisposed && !editor.isDisposed) {
         updateCaretHighlighter(caretModel.caretPosition, isBlinking)
       }
     }
@@ -96,7 +107,7 @@ class TerminalCaretPainter(
       installCaretHighlighter(newPosition)
       if (isBlinking) {
         caretUpdater = BlinkingCaretUpdater(newPosition)
-        Disposer.register(caretModel, caretUpdater!!)
+        Disposer.register(this, caretUpdater!!)
       }
     }
   }
@@ -165,7 +176,7 @@ class TerminalCaretPainter(
     private fun update() {
       if (!editor.isDisposed) {
         removeHighlighter()
-        if (paintCaret) {
+        if (!isDisposed && paintCaret) {
           installCaretHighlighter(position)
         }
         paintCaret = !paintCaret

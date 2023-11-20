@@ -30,8 +30,7 @@ class TerminalOutputController(
   private val blocksDecorator: TerminalBlocksDecorator = TerminalBlocksDecorator(outputModel, editor)
   private val textHighlighter: TerminalTextHighlighter = TerminalTextHighlighter(outputModel)
 
-  private val caretModel: TerminalCaretModel = TerminalCaretModel(session, outputModel, editor)
-  private val caretPainter: TerminalCaretPainter = TerminalCaretPainter(caretModel, outputModel, selectionModel, editor)
+  private var caretPainter: TerminalCaretPainter? = null
 
   @Volatile
   private var keyEventsListenerDisposable: Disposable? = null
@@ -43,7 +42,6 @@ class TerminalOutputController(
     editor.putUserData(IS_OUTPUT_EDITOR_KEY, true)
     editor.highlighter = textHighlighter
     session.model.addTerminalListener(this)
-    Disposer.register(session, caretModel)
 
     session.addCommandListener(object : ShellCommandListener {
       override fun clearInvoked() {
@@ -80,6 +78,10 @@ class TerminalOutputController(
     setupKeyEventDispatcher(editor, settings, eventsHandler, outputModel, selectionModel, keyEventsDisposable)
     setupMouseListener(editor, settings, session.model, eventsHandler, mouseAndContentDisposable)
     setupContentListener(mouseAndContentDisposable)
+
+    val caretModel = TerminalCaretModel(session, outputModel, editor, mouseAndContentDisposable)
+    caretPainter = TerminalCaretPainter(caretModel, outputModel, selectionModel, editor)
+    Disposer.register(keyEventsDisposable, caretPainter!!)
   }
 
   private fun disposeRunningCommandListeners() {
@@ -90,6 +92,7 @@ class TerminalOutputController(
       // and this disposable is disposed on BGT. The dispatcher won't be removed as a result.
       keyEventsListenerDisposable?.let { Disposer.dispose(it) }
       keyEventsListenerDisposable = null
+      caretPainter = null
     }
   }
 
@@ -197,7 +200,7 @@ class TerminalOutputController(
     editor.scrollingModel.scrollToCaret(ScrollType.CENTER_DOWN)
     // caret highlighter can be removed at this moment, because we replaced the text of the block
     // so, call repaint manually
-    caretPainter.repaint()
+    caretPainter?.repaint()
   }
 
   private fun TextStyle.toTextAttributes(): TextAttributes = this.toTextAttributes(session.colorPalette)
