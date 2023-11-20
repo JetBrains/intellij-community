@@ -78,5 +78,6 @@ abstract class IncorrectServiceRetrievingInspectionTestBase : LightDevKitInspect
       }
       """)
     }
+    doTest()
   }
 }
