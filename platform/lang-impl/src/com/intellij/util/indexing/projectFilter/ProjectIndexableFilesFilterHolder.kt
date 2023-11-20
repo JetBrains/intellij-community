@@ -6,16 +6,14 @@ import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
-import com.intellij.openapi.project.*
+import com.intellij.openapi.project.DumbService
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectCloseListener
 import com.intellij.openapi.roots.ContentIterator
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileWithId
-import com.intellij.util.indexing.FileBasedIndex
-import com.intellij.util.indexing.FileBasedIndexImpl
-import com.intellij.util.indexing.IdFilter
-import com.intellij.util.indexing.UnindexedFilesScanner
-import com.intellij.util.indexing.UnindexedFilesUpdater
+import com.intellij.util.indexing.*
 import java.util.concurrent.Callable
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
@@ -119,10 +117,6 @@ internal class IncrementalProjectIndexableFilesFilterHolder : ProjectIndexableFi
 
         if (errors.isNullOrEmpty()) continue
 
-        for (error in errors!!) {
-          error.fix(filter)
-        }
-
         val message = StringUtil.first(errors!!.map { ReadAction.nonBlocking(Callable { it.presentableText }) }.joinToString(", "),
                                        300,
                                        true)
@@ -144,8 +138,8 @@ internal class IncrementalProjectIndexableFilesFilterHolder : ProjectIndexableFi
     index.iterateIndexableFiles(ContentIterator {
       if (it is VirtualFileWithId) {
         val fileId = it.id
-        if (!filter.containsFileId(fileId)) {
-          filter.ensureFileIdPresent(fileId) { true }
+        if (!filter.containsFileId(fileId) && filter.ensureFileIdPresent(fileId) { true } == FileAddStatus.ADDED) {
+          errors.add(HealthCheckError(project, it))
         }
       }
       true
@@ -156,10 +150,5 @@ internal class IncrementalProjectIndexableFilesFilterHolder : ProjectIndexableFi
   private class HealthCheckError(private val project: Project, private val virtualFile: VirtualFile) {
     val presentableText: String
       get() = "file ${virtualFile.path} not found in ${project.name}"
-
-    fun fix(filter: IncrementalProjectIndexableFilesFilter) {
-      filter.ensureFileIdPresent((virtualFile as VirtualFileWithId).id) { true }
-    }
-
   }
 }
