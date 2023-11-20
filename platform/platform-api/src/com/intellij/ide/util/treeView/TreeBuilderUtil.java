@@ -8,22 +8,12 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.util.List;
 
 public final class TreeBuilderUtil {
   private static final Logger LOG = Logger.getInstance(TreeBuilderUtil.class);
-
-  public static void storePaths(@NotNull AbstractTreeBuilder treeBuilder, @NotNull DefaultMutableTreeNode root, @NotNull List<Object> pathsToExpand, @NotNull List<Object> selectionPaths, boolean storeElementsOnly) {
-    if (!treeBuilder.wasRootNodeInitialized()) return;
-
-    JTree tree = treeBuilder.getTree();
-    if (tree != null) {
-      storePaths(tree, root, pathsToExpand, selectionPaths, storeElementsOnly);
-    }
-  }
 
   public static void storePaths(@NotNull JTree tree, @NotNull DefaultMutableTreeNode root, @NotNull List<Object> pathsToExpand, @NotNull List<Object> selectionPaths, boolean storeElementsOnly) {
     TreePath path = new TreePath(root.getPath());
@@ -54,32 +44,6 @@ public final class TreeBuilderUtil {
                           ? ((NodeDescriptor<?>)userObject).getElement()
                           : path);
         _storePaths(tree, childNode, pathsToExpand, selectionPaths, storeElementsOnly);
-      }
-    }
-  }
-
-  public static void restorePaths(@NotNull AbstractTreeBuilder treeBuilder, @NotNull List<Object> pathsToExpand, @NotNull List<Object> selectionPaths, boolean elementsOnly) {
-    JTree tree = treeBuilder.getTree();
-    if (!elementsOnly){
-      for (Object path : pathsToExpand) {
-        tree.expandPath((TreePath)path);
-      }
-      tree.addSelectionPaths(selectionPaths.toArray(TreeUtil.EMPTY_TREE_PATH));
-    }
-    else{
-      for (Object element : pathsToExpand) {
-        treeBuilder.buildNodeForElement(element);
-        DefaultMutableTreeNode node = treeBuilder.getNodeForElement(element);
-        if (node != null) {
-          tree.expandPath(new TreePath(node.getPath()));
-        }
-      }
-      for (Object element : selectionPaths) {
-        DefaultMutableTreeNode node = treeBuilder.getNodeForElement(element);
-        if (node != null) {
-          DefaultTreeModel treeModel = (DefaultTreeModel)tree.getModel();
-          tree.addSelectionPath(new TreePath(treeModel.getPathToRoot(node)));
-        }
       }
     }
   }

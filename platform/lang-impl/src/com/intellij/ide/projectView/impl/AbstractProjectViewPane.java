@@ -29,8 +29,6 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.NlsActions.ActionText;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.ToolWindowId;
-import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.problems.ProblemListener;
 import com.intellij.psi.*;
@@ -281,25 +279,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
   }
 
   private void doSelectModuleOrGroup(@NotNull Object toSelect, final boolean requestFocus) {
-    ToolWindowManager windowManager=ToolWindowManager.getInstance(myProject);
-    final Runnable runnable = () -> {
-      if (requestFocus) {
-        ProjectView projectView = ProjectView.getInstance(myProject);
-        if (projectView != null) {
-          projectView.changeView(getId(), getSubId());
-        }
-      }
-      BaseProjectTreeBuilder builder = (BaseProjectTreeBuilder)getTreeBuilder();
-      if (builder != null) {
-        builder.selectInWidth(toSelect, requestFocus, node -> node instanceof AbstractModuleNode || node instanceof ModuleGroupNode || node instanceof AbstractProjectNode);
-      }
-    };
-    if (requestFocus) {
-      windowManager.getToolWindow(ToolWindowId.PROJECT_VIEW).activate(runnable);
-    }
-    else {
-      runnable.run();
-    }
+    throw new UnsupportedOperationException("Not implemented");
   }
 
   public void selectModuleGroup(@NotNull ModuleGroup moduleGroup, boolean requestFocus) {
