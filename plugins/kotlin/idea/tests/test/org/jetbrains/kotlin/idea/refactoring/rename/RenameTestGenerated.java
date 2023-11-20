@@ -768,6 +768,11 @@ public class RenameTestGenerated extends AbstractRenameTest {
         runTest("testData/refactoring/rename/renameKotlinClassByImplicitConstructorRef/kotlinClass.test");
     }
 
+    @TestMetadata("renameKotlinClassConflictingWithJava/kotlinClassConflictingWithJava.test")
+    public void testRenameKotlinClassConflictingWithJava_KotlinClassConflictingWithJava() throws Exception {
+        runTest("testData/refactoring/rename/renameKotlinClassConflictingWithJava/kotlinClassConflictingWithJava.test");
+    }
+
     @TestMetadata("renameKotlinClassConstructor/renameKotlinConstructor.test")
     public void testRenameKotlinClassConstructor_RenameKotlinConstructor() throws Exception {
         runTest("testData/refactoring/rename/renameKotlinClassConstructor/renameKotlinConstructor.test");
@@ -1101,6 +1106,11 @@ public class RenameTestGenerated extends AbstractRenameTest {
     @TestMetadata("renameKotlinPropertyWithGetterSetterJvmName/renameKotlinPropertyWithGetterSetterJvmName.test")
     public void testRenameKotlinPropertyWithGetterSetterJvmName_RenameKotlinPropertyWithGetterSetterJvmName() throws Exception {
         runTest("testData/refactoring/rename/renameKotlinPropertyWithGetterSetterJvmName/renameKotlinPropertyWithGetterSetterJvmName.test");
+    }
+
+    @TestMetadata("renameKotlinPropertyWithJavaGetter/renameKotlinPropertyWithJavaGetter.test")
+    public void testRenameKotlinPropertyWithJavaGetter_RenameKotlinPropertyWithJavaGetter() throws Exception {
+        runTest("testData/refactoring/rename/renameKotlinPropertyWithJavaGetter/renameKotlinPropertyWithJavaGetter.test");
     }
 
     @TestMetadata("renameKotlinPropertyWithJavaSuper/renameKotlinPropertyWithJavaSuper.test")

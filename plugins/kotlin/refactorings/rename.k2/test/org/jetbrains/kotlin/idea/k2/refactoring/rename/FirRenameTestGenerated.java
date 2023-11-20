@@ -768,6 +768,11 @@ public class FirRenameTestGenerated extends AbstractFirRenameTest {
         runTest("../../idea/tests/testData/refactoring/rename/renameKotlinClassByImplicitConstructorRef/kotlinClass.test");
     }
 
+    @TestMetadata("renameKotlinClassConflictingWithJava/kotlinClassConflictingWithJava.test")
+    public void testRenameKotlinClassConflictingWithJava_KotlinClassConflictingWithJava() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/rename/renameKotlinClassConflictingWithJava/kotlinClassConflictingWithJava.test");
+    }
+
     @TestMetadata("renameKotlinClassConstructor/renameKotlinConstructor.test")
     public void testRenameKotlinClassConstructor_RenameKotlinConstructor() throws Exception {
         runTest("../../idea/tests/testData/refactoring/rename/renameKotlinClassConstructor/renameKotlinConstructor.test");
@@ -1101,6 +1106,11 @@ public class FirRenameTestGenerated extends AbstractFirRenameTest {
     @TestMetadata("renameKotlinPropertyWithGetterSetterJvmName/renameKotlinPropertyWithGetterSetterJvmName.test")
     public void testRenameKotlinPropertyWithGetterSetterJvmName_RenameKotlinPropertyWithGetterSetterJvmName() throws Exception {
         runTest("../../idea/tests/testData/refactoring/rename/renameKotlinPropertyWithGetterSetterJvmName/renameKotlinPropertyWithGetterSetterJvmName.test");
+    }
+
+    @TestMetadata("renameKotlinPropertyWithJavaGetter/renameKotlinPropertyWithJavaGetter.test")
+    public void testRenameKotlinPropertyWithJavaGetter_RenameKotlinPropertyWithJavaGetter() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/rename/renameKotlinPropertyWithJavaGetter/renameKotlinPropertyWithJavaGetter.test");
     }
 
     @TestMetadata("renameKotlinPropertyWithJavaSuper/renameKotlinPropertyWithJavaSuper.test")

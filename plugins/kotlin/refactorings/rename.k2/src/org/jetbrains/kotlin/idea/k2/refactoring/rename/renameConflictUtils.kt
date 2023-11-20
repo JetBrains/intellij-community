@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring.rename
 
+import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.search.searches.ReferencesSearch
@@ -31,6 +32,7 @@ import org.jetbrains.kotlin.idea.refactoring.rename.BasicUnresolvableCollisionUs
 import org.jetbrains.kotlin.idea.refactoring.rename.UsageInfoWithFqNameReplacement
 import org.jetbrains.kotlin.idea.refactoring.rename.UsageInfoWithReplacement
 import org.jetbrains.kotlin.idea.references.mainReference
+import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtCallableReferenceExpression
@@ -89,11 +91,11 @@ fun checkClassNameShadowing(
 fun checkClassLikeNameShadowing(declaration: KtNamedDeclaration, newName: String, newUsages: MutableList<UsageInfo>) {
     analyze(declaration) {
         //check outer classes hiding/hidden by rename
-        val processedClasses = mutableSetOf<KtClassOrObject>()
+        val processedClasses = mutableSetOf<PsiElement>()
         retargetExternalDeclarations(declaration, newName) {
-            val klass = it.psi as? KtClassOrObject
-            val newFqName = klass?.fqName
-            if (newFqName != null && processedClasses.add(klass)) {
+            val klass = it.psi
+            val newFqName = (klass as? KtClassOrObject)?.fqName ?: (klass as? PsiClass)?.qualifiedName?.let { FqName.fromSegments(it.split(".")) }
+            if (newFqName != null && klass != null && processedClasses.add(klass)) {
                 for (ref in ReferencesSearch.search(klass, declaration.useScope)) {
                     val refElement = ref.element as? KtSimpleNameExpression ?: continue //todo cross language conflicts
                     if (refElement.getStrictParentOfType<KtTypeReference>() != null) {
@@ -113,7 +115,7 @@ fun checkCallableShadowing(
     newUsages: MutableList<UsageInfo>
 ) {
     val psiFactory = KtPsiFactory(declaration.project)
-    val externalDeclarations = mutableSetOf<KtNamedDeclaration>()
+    val externalDeclarations = mutableSetOf<PsiElement>()
     val usageIterator = originalUsages.listIterator()
     while (usageIterator.hasNext()) {
 
@@ -130,7 +132,7 @@ fun checkCallableShadowing(
 
         if (referenceExpression != null) {
             analyze(codeFragment) {
-                val newDeclaration = referenceExpression.mainReference?.resolve() as? KtNamedDeclaration
+                val newDeclaration = referenceExpression.mainReference?.resolve()
                 if (newDeclaration != null) {
                     externalDeclarations.add(newDeclaration)
                 }
@@ -139,7 +141,7 @@ fun checkCallableShadowing(
                     if (qualifiedExpression != null) {
                         usageIterator.set(UsageInfoWithReplacement(refElement, declaration, qualifiedExpression))
                     } else {
-                        reportShadowing(declaration, declaration, newDeclaration.getSymbol(), refElement, newUsages)
+                        reportShadowing(declaration, declaration, newDeclaration, refElement, newUsages)
                     }
                 } else {
                     //k1 fails to compile otherwise
@@ -148,7 +150,7 @@ fun checkCallableShadowing(
         }
     }
 
-    fun retargetExternalDeclaration(externalDeclaration: KtNamedDeclaration) {
+    fun retargetExternalDeclaration(externalDeclaration: PsiElement) {
         ReferencesSearch.search(externalDeclaration, declaration.useScope).forEach { ref ->
             val refElement = ref.element as? KtSimpleNameExpression ?: return@forEach
             if (refElement.getStrictParentOfType<KtTypeReference>() != null) return@forEach
@@ -165,7 +167,7 @@ fun checkCallableShadowing(
 
     analyze(declaration) {
         //check outer callables hiding/hidden by rename
-        val processedDeclarations = mutableSetOf<KtNamedDeclaration>()
+        val processedDeclarations = mutableSetOf<PsiElement>()
         processedDeclarations.addAll(externalDeclarations)
         retargetExternalDeclarations(declaration, newName) {
             val callableDeclaration = it.psi as? KtNamedDeclaration
@@ -239,11 +241,11 @@ context(KtAnalysisSession)
 private fun reportShadowing(
     declaration: PsiNamedElement,
     elementToBindUsageInfoTo: PsiElement,
-    candidateDescriptor: KtDeclarationSymbol?,
+    candidate: PsiElement,
     refElement: PsiElement,
     result: MutableList<UsageInfo>
 ) {
-    val candidate = candidateDescriptor?.psi as? PsiNamedElement ?: return
+    val candidate = candidate as? PsiNamedElement ?: return
     if (declaration.parent == candidate.parent) return
     val message = KotlinBundle.message(
         "text.0.will.be.shadowed.by.1",
