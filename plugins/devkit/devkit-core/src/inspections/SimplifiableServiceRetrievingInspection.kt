@@ -16,6 +16,9 @@ import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
 
 internal class SimplifiableServiceRetrievingInspection : ServiceRetrievingInspectionBase() {
 
+  override val additionalMethodNames
+    get() = emptyArray<String>()
+
   override fun buildInternalVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
     return UastHintedVisitorAdapter.create(holder.file.language, object : AbstractUastNonRecursiveVisitor() {
 
@@ -67,7 +70,7 @@ internal class SimplifiableServiceRetrievingInspection : ServiceRetrievingInspec
     val param = method.uastParameters[0]
     if (param.type.canonicalText != Project::class.java.canonicalName) return false
     val qualifiedRef = getReturnExpression(method)?.returnExpression as? UQualifiedReferenceExpression ?: return false
-    return COMPONENT_MANAGER_GET_SERVICE.uCallMatches(qualifiedRef.selector as? UCallExpression) &&
+    return allGetServiceMethods.uCallMatches(qualifiedRef.selector as? UCallExpression) &&
            (qualifiedRef.receiver as? USimpleNameReferenceExpression)?.resolveToUElement() == param
   }
 
@@ -76,7 +79,7 @@ internal class SimplifiableServiceRetrievingInspection : ServiceRetrievingInspec
       return false
     }
     val qualifiedRef = getReturnExpression(method)?.returnExpression as? UQualifiedReferenceExpression ?: return false
-    return COMPONENT_MANAGER_GET_SERVICE.uCallMatches(qualifiedRef.selector as? UCallExpression) &&
+    return allGetServiceMethods.uCallMatches(qualifiedRef.selector as? UCallExpression) &&
            qualifiedRef.receiver.getExpressionType()?.isInheritorOf(Application::class.java.canonicalName) == true
   }
 

@@ -2,9 +2,11 @@
 package org.jetbrains.idea.devkit.kotlin.inspections.quickfix
 
 import com.intellij.testFramework.TestDataPath
+import org.intellij.lang.annotations.Language
 import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.inspections.quickfix.SimplifiableServiceRetrievingInspectionTestBase
 import org.jetbrains.idea.devkit.kotlin.DevkitKtTestsUtil
+import org.jetbrains.kotlin.idea.KotlinFileType
 
 @TestDataPath("\$CONTENT_ROOT/testData/inspections/simplifiableServiceRetrieving")
 internal class KtSimplifiableServiceRetrievingInspectionTest : SimplifiableServiceRetrievingInspectionTestBase() {
@@ -51,6 +53,28 @@ internal class KtSimplifiableServiceRetrievingInspectionTest : SimplifiableServi
   }
 
   fun testPropertyWithGetterRetrievingService() {
+    doTest()
+  }
+
+  fun testGetInstanceServicesKtMethodsNoWarnings() {
+    doTestWithServicesKt()
+  }
+
+  fun testServicesKtMethodsCallsNoWarnings() {
+    doTestWithServicesKt()
+  }
+
+  fun doTestWithServicesKt() {
+    @Language("kotlin") val servicesKtFileText = """
+      @file:JvmName("ServicesKt")
+
+      package com.intellij.openapi.components
+
+      inline fun <reified T : Any> ComponentManager.service(): T {}
+      inline fun <reified T : Any> ComponentManager.serviceIfCreated(): T? {}
+      inline fun <reified T : Any> ComponentManager.serviceOrNull(): T? {}
+    """
+    myFixture.configureByText(KotlinFileType.INSTANCE, servicesKtFileText)
     doTest()
   }
 }
