@@ -24,7 +24,7 @@ internal class SimplifiableServiceRetrievingInspection : ServiceRetrievingInspec
 
       override fun visitCallExpression(node: UCallExpression): Boolean {
         val (howServiceRetrieved, serviceClass) = getServiceRetrievingInfo(node) ?: return true
-        val retrievingExpression = node.uastParent as? UQualifiedReferenceExpression ?: return true
+        val retrievingExpression = getRetrievingExpression(node) ?: return true
         val getInstanceMethod = findGetInstanceMethod(retrievingExpression, howServiceRetrieved, serviceClass)
         if (getInstanceMethod != null) {
           registerProblem(getInstanceMethod, howServiceRetrieved, holder, retrievingExpression)
@@ -34,7 +34,7 @@ internal class SimplifiableServiceRetrievingInspection : ServiceRetrievingInspec
     }, arrayOf(UCallExpression::class.java))
   }
 
-  private fun findGetInstanceMethod(retrievingExpression: UQualifiedReferenceExpression,
+  private fun findGetInstanceMethod(retrievingExpression: UExpression,
                                     howServiceRetrieved: Service.Level,
                                     serviceClass: UClass): UMethod? {
     val returnExpr = retrievingExpression.uastParent as? UReturnExpression
@@ -54,13 +54,17 @@ internal class SimplifiableServiceRetrievingInspection : ServiceRetrievingInspec
   private fun registerProblem(replacementMethod: UMethod,
                               howServiceRetrieved: Service.Level,
                               holder: ProblemsHolder,
-                              retrievingExpression: UQualifiedReferenceExpression) {
+                              retrievingExpression: UExpression) {
     val qualifiedName = replacementMethod.getContainingUClass()?.qualifiedName ?: return
     val serviceName = StringUtil.getShortName(qualifiedName)
     val message = DevKitBundle.message("inspection.simplifiable.service.retrieving.can.be.replaced.with", serviceName,
                                        replacementMethod.name)
     val fix = ReplaceWithGetInstanceCallFix(serviceName, replacementMethod.name, howServiceRetrieved)
-    holder.registerUProblem(retrievingExpression, message, fixes = arrayOf(fix))
+    when (retrievingExpression) {
+      is UQualifiedReferenceExpression -> holder.registerUProblem(retrievingExpression, message, fixes = arrayOf(fix))
+      is UCallExpression -> holder.registerUProblem(retrievingExpression, message, fixes = arrayOf(fix))
+      else -> assert(false)
+    }
   }
 
   private fun isGetInstanceProjectLevel(method: UMethod): Boolean {
@@ -78,9 +82,14 @@ internal class SimplifiableServiceRetrievingInspection : ServiceRetrievingInspec
     if (!(method.isStaticOrJvmStatic && method.visibility == UastVisibility.PUBLIC && method.uastParameters.isEmpty())) {
       return false
     }
-    val qualifiedRef = getReturnExpression(method)?.returnExpression as? UQualifiedReferenceExpression ?: return false
-    return allGetServiceMethods.uCallMatches(qualifiedRef.selector as? UCallExpression) &&
-           qualifiedRef.receiver.getExpressionType()?.isInheritorOf(Application::class.java.canonicalName) == true
+    return when (val returnExpression = getReturnExpression(method)?.returnExpression) {
+      is UQualifiedReferenceExpression -> {
+        (componentManagerGetServiceMethods.uCallMatches(returnExpression.selector as? UCallExpression)
+         && returnExpression.receiver.getExpressionType()?.isInheritorOf(Application::class.java.canonicalName) == true)
+      }
+      is UCallExpression -> serviceKtFileMethods.uCallMatches(returnExpression)
+      else -> false
+    }
   }
 
   private val UMethod.isStaticOrJvmStatic: Boolean
@@ -98,20 +107,28 @@ internal class SimplifiableServiceRetrievingInspection : ServiceRetrievingInspec
                                                                 methodName)
 
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-      val oldCall = descriptor.psiElement.toUElement()?.getParentOfType<UQualifiedReferenceExpression>() ?: return
+      val call = descriptor.psiElement.toUElement()?.getParentOfType<UCallExpression>() ?: return
+      val oldRetrievingExpression = getRetrievingExpression(call) ?: return
       val generationPlugin = UastCodeGenerationPlugin.byLanguage(descriptor.psiElement.language) ?: return
       val factory = generationPlugin.getElementFactory(project)
-      val serviceName = oldCall.getExpressionType()?.canonicalText ?: return
-      val parameters = when (howServiceRetrieved) {
-        Service.Level.APP -> emptyList()
-        Service.Level.PROJECT -> listOf(oldCall.receiver)
+      val serviceName = oldRetrievingExpression.getExpressionType()?.canonicalText ?: return
+      val parameters = when {
+        howServiceRetrieved == Service.Level.APP -> emptyList()
+        howServiceRetrieved == Service.Level.PROJECT &&
+        oldRetrievingExpression is UQualifiedReferenceExpression -> listOf(oldRetrievingExpression.receiver)
+        else -> return
       }
-      val context = oldCall.sourcePsi
+      val context = oldRetrievingExpression.sourcePsi
       val receiver = factory.createQualifiedReference(serviceName, context) ?: factory.createSimpleReference(serviceName, context)
       val newCall = factory.createCallExpression(receiver = receiver, methodName = methodName, parameters = parameters,
-                                                 expectedReturnType = oldCall.getExpressionType(), kind = UastCallKind.METHOD_CALL,
+                                                 expectedReturnType = oldRetrievingExpression.getExpressionType(),
+                                                 kind = UastCallKind.METHOD_CALL,
                                                  context = null) ?: return
-      oldCall.replace(newCall)
+      oldRetrievingExpression.replace(newCall)
     }
   }
+}
+
+private fun getRetrievingExpression(call: UCallExpression): UExpression? {
+  return call.uastParent as? UQualifiedReferenceExpression ?: call as? UCallExpression
 }
