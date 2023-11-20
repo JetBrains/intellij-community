@@ -21,12 +21,13 @@ import com.intellij.diff.comparison.ComparisonPolicy;
 import com.intellij.diff.fragments.DiffFragment;
 import com.intellij.ide.util.MemberChooser;
 import com.intellij.lang.LangBundle;
+import com.intellij.lang.LanguageRefactoringSupport;
+import com.intellij.lang.refactoring.RefactoringSupportProvider;
 import com.intellij.modcommand.*;
 import com.intellij.modcommand.ModChooseMember.SelectionMode;
 import com.intellij.modcommand.ModUpdateFileText.Fragment;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
@@ -47,16 +48,15 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
-import com.intellij.psi.search.LocalSearchScope;
-import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.rename.RenameDialog;
 import com.intellij.refactoring.rename.RenamePsiElementProcessor;
 import com.intellij.refactoring.rename.inplace.MemberInplaceRenamer;
 import com.intellij.refactoring.suggested.*;
 import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.testFramework.LightVirtualFile;
-import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -71,6 +71,7 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.Callable;
 
 import static java.util.Objects.requireNonNullElse;
@@ -406,75 +407,41 @@ public class ModCommandExecutorImpl implements ModCommandExecutor {
     if (file == null) return false;
     PsiFile psiFile = PsiManagerEx.getInstanceEx(project).findFile(file);
     if (psiFile == null) return false;
-    PsiNameIdentifierOwner element =
-      PsiTreeUtil.getNonStrictParentOfType(psiFile.findElementAt(rename.symbolRange().range().getStartOffset()), PsiNameIdentifierOwner.class);
+    PsiNamedElement element =
+      PsiTreeUtil.getNonStrictParentOfType(psiFile.findElementAt(rename.symbolRange().range().getStartOffset()), PsiNamedElement.class);
     if (element == null) return false;
     Editor finalEditor = getEditor(project, editor, file);
     if (finalEditor == null) return false;
-    PsiElement nameIdentifier = element.getNameIdentifier();
-    if (nameIdentifier == null) return false;
+    PsiElement nameIdentifier = element instanceof PsiNameIdentifierOwner owner ? owner.getNameIdentifier() : null;
     if (TemplateManager.getInstance(project) instanceof TemplateManagerImpl manager &&
         manager.shouldSkipInTests()) {
+      if (nameIdentifier == null) return true;
       int offset = nameIdentifier.getTextRange().getEndOffset();
       return executeNavigate(project, new ModNavigate(file, offset, offset, offset));
     }
-    finalEditor.getCaretModel().moveToOffset(nameIdentifier.getTextOffset());
     final RenamePsiElementProcessor processor = RenamePsiElementProcessor.forElement(element);
-    if (!processor.isInplaceRenameSupported()) {
-      fallBackRename(project, rename, element, finalEditor);
-      return true;
-    }
     processor.substituteElementToRename(element, finalEditor, new Pass<>() {
       @Override
       public void pass(PsiElement substitutedElement) {
-        final MemberInplaceRenamer renamer = new MemberInplaceRenamer(element, substitutedElement, finalEditor);
-        final LinkedHashSet<String> nameSuggestions = new LinkedHashSet<>(rename.nameSuggestions());
-        renamer.performInplaceRefactoring(nameSuggestions);
+        RefactoringSupportProvider supportProvider = LanguageRefactoringSupport.INSTANCE.forContext(element);
+        if (supportProvider != null &&
+            supportProvider.isInplaceRenameAvailable(element, element)) {
+          finalEditor.getCaretModel().moveToOffset(Objects.requireNonNullElse(nameIdentifier, element).getTextOffset());
+          final MemberInplaceRenamer renamer = new MemberInplaceRenamer(element, substitutedElement, finalEditor);
+          final LinkedHashSet<String> nameSuggestions = new LinkedHashSet<>(rename.nameSuggestions());
+          renamer.performInplaceRefactoring(nameSuggestions);
+        }
+        else {
+          new RenameDialog(project, element, null, finalEditor) {
+            @Override
+            public String[] getSuggestedNames() {
+              return ArrayUtil.toStringArray(rename.nameSuggestions());
+            }
+          }.show();
+        }
       }
     });
     return true;
-  }
-
-  private static void fallBackRename(@NotNull Project project,
-                                @NotNull ModStartRename rename,
-                                PsiNameIdentifierOwner element,
-                                Editor finalEditor) {
-    SmartPsiElementPointer<PsiNameIdentifierOwner> pointer = SmartPointerManager.createPointer(element);
-    record RenameData(Collection<PsiReference> references, PsiElement scope, PsiNameIdentifierOwner nameOwner) {
-      static RenameData create(SmartPsiElementPointer<? extends PsiNameIdentifierOwner> pointer) {
-        PsiNameIdentifierOwner owner = pointer.getElement();
-        if (owner == null) return null;
-        PsiFile psiFile = owner.getContainingFile();
-        Collection<PsiReference> references = ReferencesSearch.search(owner, new LocalSearchScope(psiFile)).findAll();
-        PsiElement scope = PsiTreeUtil.findCommonParent(ContainerUtil.map(references, ref -> ref.getElement()));
-        if (scope != null) {
-          scope = PsiTreeUtil.findCommonParent(scope, owner);
-        }
-        if (scope == null) {
-          scope = psiFile;
-        }
-        return new RenameData(references, scope, owner);
-      }
-    }
-    ReadAction.nonBlocking(() -> RenameData.create(pointer)).expireWhen(() -> finalEditor.isDisposed())
-      .finishOnUiThread(ModalityState.defaultModalityState(), renameData -> {
-        final TextRange textRange = renameData.scope().getTextRange();
-        final int startOffset = textRange.getStartOffset();
-        final TemplateBuilderImpl builder = new TemplateBuilderImpl(renameData.scope());
-        final Expression nameExpression = new NameExpression(element.getName(), rename.nameSuggestions());
-        final PsiElement identifier = renameData.nameOwner().getNameIdentifier();
-        builder.replaceElement(identifier, "PATTERN", nameExpression, true);
-        for (PsiReference reference : renameData.references()) {
-          builder.replaceElement(reference, "PATTERN", "PATTERN", false);
-        }
-        CommandProcessor.getInstance().executeCommand(project, () -> {
-          final Template template = WriteAction.compute(builder::buildInlineTemplate);
-          finalEditor.getCaretModel().moveToOffset(startOffset);
-          final TemplateManager templateManager = TemplateManager.getInstance(project);
-          templateManager.startTemplate(finalEditor, template);
-        }, LangBundle.message("action.rename.text"), null);
-      })
-      .submit(AppExecutorUtil.getAppExecutorService());
   }
 
   @Nullable
