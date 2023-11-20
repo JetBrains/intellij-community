@@ -59,8 +59,7 @@ import com.intellij.util.ReflectionUtil
 import com.intellij.util.childScope
 import com.intellij.util.concurrency.*
 import com.intellij.util.containers.ContainerUtil
-import com.intellij.util.containers.with
-import com.intellij.util.containers.without
+import com.intellij.util.containers.UnmodifiableHashMap
 import com.intellij.util.ui.StartupUiUtil.addAwtListener
 import com.intellij.util.xml.dom.XmlElement
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
@@ -98,7 +97,7 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
   private val lock = Any()
 
   @Volatile
-  private var idToAction: Map<String, AnAction> = java.util.Map.of()
+  private var idToAction = UnmodifiableHashMap.empty<String, AnAction>()
   private val pluginToId = HashMap<PluginId, MutableList<String>>()
   private val idToIndex = Object2IntOpenHashMap<String>()
 
@@ -126,7 +125,7 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
   init {
     val app = ApplicationManager.getApplication()
     if (!app.isUnitTestMode && !app.isHeadlessEnvironment && !app.isCommandLine) {
-      ThreadingAssertions.assertBackgroundThread()
+      ApplicationManager.getApplication().assertIsNonDispatchThread()
     }
     registerActions(PluginManagerCore.getPluginSet().getEnabledModules())
     EP.forEachExtensionSafe { it.customize(this) }
@@ -980,10 +979,14 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
 
   private fun actionToString(action: AnAction?): @NonNls String {
     if (action == null) return "null"
-    when (action) {
-      is ChameleonAction -> return "ChameleonAction(" + action.actions.values.joinToString { actionToString(it) } + ")"
-      is ActionStub -> return "'$action' (${action.className})"
-      else -> return "'$action' (${action.javaClass})"
+    if (action is ChameleonAction) {
+      return "ChameleonAction(" + action.actions.values.joinToString { actionToString(it) } + ")";
+    }
+    else if (action is ActionStub) {
+      return "'$action' (${action.className})"
+    }
+    else {
+      return "'$action' (${action.javaClass})"
     }
   }
 
