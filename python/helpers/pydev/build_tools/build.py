@@ -16,7 +16,7 @@ import sys
 import tempfile
 
 from generate_code import remove_if_exists, root_dir, is_python_64bit, \
-    generate_dont_trace_files, generate_cython_module
+    generate_dont_trace_files, generate_cython_module, generate_pep669_module
 
 # noinspection SpellCheckingInspection
 BINARY_DIRS = '_pydevd_bundle', '_pydevd_frame_eval'
@@ -220,6 +220,7 @@ if __name__ == '__main__':
         if '--no-regenerate-files' not in sys.argv:
             generate_dont_trace_files()
             generate_cython_module()
+            generate_pep669_module()
         build()
     else:
         raise RuntimeError(

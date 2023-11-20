@@ -217,6 +217,12 @@ def main():
         build_extension(frame_eval_dir_name, extension_name, target_frame_eval,
                         force_cython, target_arch, extended)
 
+    if IS_PY312_OR_GREATER:
+        extension_name = "pydevd_pep_669_tracing_cython"
+        build_extension("_pydevd_bundle", extension_name, extension_name,
+                        force_cython, target_arch, extended)
+
+
     if extension_folder:
         create_init_py_files(extension_folder, subdir_names_to_ignore=["build"])
 
