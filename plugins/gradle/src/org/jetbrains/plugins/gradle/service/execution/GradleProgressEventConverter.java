@@ -171,12 +171,23 @@ public final class GradleProgressEventConverter {
     if (failure instanceof FileComparisonTestAssertionFailure comparisonFailure) {
       var exceptionName = comparisonFailure.getClassName();
       var stackTrace = comparisonFailure.getStacktrace();
+
       var expectedContent = comparisonFailure.getExpectedContent();
+      var expectedText = expectedContent != null ?
+                         new String(expectedContent, FILE_COMPARISON_CONTENT_CHARSET) :
+                         comparisonFailure.getExpected();
+      var expectedFile = expectedContent != null ?
+                         comparisonFailure.getExpected() :
+                         null;
+
       var actualContent = comparisonFailure.getActualContent();
-      var expectedText = ObjectUtils.doIfNotNull(expectedContent, it -> new String(it, FILE_COMPARISON_CONTENT_CHARSET));
-      var actualText = ObjectUtils.doIfNotNull(actualContent, it -> new String(it, FILE_COMPARISON_CONTENT_CHARSET));
-      var expectedFile = comparisonFailure.getExpected();
-      var actualFile = comparisonFailure.getActual();
+      var actualText = actualContent != null ?
+                       new String(actualContent, FILE_COMPARISON_CONTENT_CHARSET) :
+                       comparisonFailure.getActual();
+      var actualFile = actualContent != null ?
+                       comparisonFailure.getActual() :
+                       null;
+
       if (expectedText != null && actualText != null) {
         return new TestAssertionFailure(exceptionName, message, stackTrace, description, causes, expectedText, actualText, expectedFile, actualFile);
       }
