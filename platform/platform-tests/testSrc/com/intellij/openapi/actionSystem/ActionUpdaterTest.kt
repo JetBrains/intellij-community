@@ -9,7 +9,7 @@ import com.intellij.openapi.actionSystem.impl.Utils
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.application.writeAction
-import com.intellij.openapi.progress.util.ProgressIndicatorUtils
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils.awaitWithCheckCanceled
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.UsefulTestCase.assertEmpty
@@ -103,7 +103,7 @@ class ActionUpdaterTest {
       fastTrack.setValue(3_000)
       val group = object : ActionGroup() {
         override fun getChildren(e: AnActionEvent?): Array<out AnAction?> {
-          ProgressIndicatorUtils.awaitWithCheckCanceled(100)
+          awaitWithCheckCanceled(100)
           return arrayOf(EmptyAction.createEmptyAction("", null, true))
         }
       }
@@ -184,10 +184,10 @@ class ActionUpdaterTest {
       override fun getChildren(e: AnActionEvent?): Array<out AnAction?> {
         e!!
         getChildrenCount ++
-        e.updateSession.sharedData(key1) { supplierCount++; 1 }
-        e.updateSession.sharedData(key1) { supplierCount++; 1 }
-        e.updateSession.sharedData(key2) { supplierCount++; 2 }
-        e.updateSession.sharedData(key2) { supplierCount++; 2 }
+        e.updateSession.sharedData(key1) { supplierCount++; awaitWithCheckCanceled(10); 1 }
+        e.updateSession.sharedData(key1) { supplierCount++; awaitWithCheckCanceled(10); 1 }
+        e.updateSession.sharedData(key2) { supplierCount++; awaitWithCheckCanceled(10); 2 }
+        e.updateSession.sharedData(key2) { supplierCount++; awaitWithCheckCanceled(10); 2 }
         return arrayOf<AnAction>(action)
       }
     }
@@ -259,12 +259,11 @@ class ActionUpdaterTest {
     return Utils.expandActionGroup(actionGroup, presentationFactory, DataContext.EMPTY_CONTEXT, ActionPlaces.UNKNOWN)
   }
 
-  private fun newPopupGroup(vararg actions: AnAction): ActionGroup {
-    val group = DefaultActionGroup(*actions)
-    group.templatePresentation.isPopupGroup = true
-    group.templatePresentation.isHideGroupIfEmpty = true
-    return group
-  }
+  private fun newPopupGroup(vararg actions: AnAction): ActionGroup =
+    DefaultActionGroup(*actions).apply {
+      templatePresentation.isPopupGroup = true
+      templatePresentation.isHideGroupIfEmpty = true
+    }
 
   private fun newCanBePerformedGroup(visible: Boolean, enabled: Boolean): DefaultActionGroup {
     return object : DefaultActionGroup() {
