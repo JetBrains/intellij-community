@@ -35,7 +35,7 @@ import kotlin.math.floor
 import kotlin.math.roundToInt
 
 internal const val HEADER_HEIGHT_DFM = 30
-internal const val HEADER_HEIGHT_COMPACT = 34
+internal const val HEADER_HEIGHT_COMPACT = 32
 internal const val HEADER_HEIGHT_NORMAL = 40
 
 private val windowBorderThicknessInPhysicalPx: Int = run {
