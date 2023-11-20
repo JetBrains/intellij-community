@@ -3,6 +3,7 @@ package com.intellij.tools.ide.performanceTesting.commands
 import java.io.File
 import java.lang.reflect.Modifier
 import java.nio.file.Path
+import java.util.concurrent.TimeUnit
 import kotlin.io.path.listDirectoryEntries
 import kotlin.reflect.KFunction
 import kotlin.reflect.jvm.javaMethod
@@ -810,4 +811,8 @@ fun <T : CommandChain> T.startNewLine(): T = apply {
 
 fun <T : CommandChain> T.captureMemoryMetrics(suffix: String): T = apply {
   addCommand("${CMD_PREFIX}captureMemoryMetrics $suffix")
+}
+
+fun <T : CommandChain> T.sleep(timeOut: Long, unit: TimeUnit = TimeUnit.MILLISECONDS): T = apply {
+  addCommand("${CMD_PREFIX}sleep ${unit.toMillis(timeOut)}")
 }
