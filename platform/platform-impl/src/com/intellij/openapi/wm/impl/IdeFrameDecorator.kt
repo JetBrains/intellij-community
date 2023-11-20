@@ -197,7 +197,9 @@ private class WLFrameDecorator(frame: IdeFrameImpl) : IdeFrameDecorator(frame) {
 
   override suspend fun toggleFullScreen(state: Boolean): Boolean {
     val gd = frame.graphicsConfiguration.device
-    gd.fullScreenWindow = if (isInFullScreen) null else frame
+    withContext(Dispatchers.EDT) {
+      gd.fullScreenWindow = if (isInFullScreen) null else frame
+    }
     val menuBar = frame.jMenuBar
     if (menuBar is IdeJMenuBar) {
       menuBar.onToggleFullScreen(state)
