@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util;
 
+import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
@@ -10,6 +11,8 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Comparator;
 
 public class TreeClassChooserFactoryImpl extends TreeClassChooserFactory {
   @NotNull
@@ -78,7 +81,14 @@ public class TreeClassChooserFactoryImpl extends TreeClassChooserFactory {
   @NotNull
   public TreeClassChooser createInheritanceClassChooser(@NlsContexts.DialogTitle String title, GlobalSearchScope scope, PsiClass base, PsiClass initialClass,
                                                         ClassFilter classFilter) {
-    return new TreeJavaClassChooserDialog(title, myProject, scope, classFilter, base, initialClass, false);
+    return createInheritanceClassChooser(title, scope, base, initialClass, classFilter, null);
+  }
+
+  @Override
+  @NotNull
+  public TreeClassChooser createInheritanceClassChooser(@NlsContexts.DialogTitle String title, GlobalSearchScope scope, PsiClass base, PsiClass initialClass,
+                                                        ClassFilter classFilter, @Nullable Comparator<? super NodeDescriptor<?>> comparator) {
+    return new TreeJavaClassChooserDialog(title, myProject, scope, classFilter, comparator, base, initialClass, false);
   }
 
   @Override
@@ -87,7 +97,7 @@ public class TreeClassChooserFactoryImpl extends TreeClassChooserFactory {
                                            final PsiFile initialFile,
                                            FileType fileType,
                                            TreeFileChooser.PsiFileFilter filter) {
-    return new TreeFileChooserDialog(myProject, title, initialFile, fileType, filter, false, false);
+    return new TreeFileChooserDialog(myProject, title, initialFile, fileType, filter, null, false, false);
   }
 
   @Override
@@ -98,7 +108,7 @@ public class TreeClassChooserFactoryImpl extends TreeClassChooserFactory {
                                     @Nullable FileType fileType,
                                     @Nullable TreeFileChooser.PsiFileFilter filter,
                                     boolean disableStructureProviders) {
-    return new TreeFileChooserDialog(myProject, title, initialFile, fileType, filter, disableStructureProviders, false);
+    return new TreeFileChooserDialog(myProject, title, initialFile, fileType, filter, null, disableStructureProviders, false);
   }
 
 
@@ -110,6 +120,6 @@ public class TreeClassChooserFactoryImpl extends TreeClassChooserFactory {
                                            @Nullable TreeFileChooser.PsiFileFilter filter,
                                            boolean disableStructureProviders,
                                            boolean showLibraryContents) {
-    return new TreeFileChooserDialog(myProject, title, initialFile, fileType, filter, disableStructureProviders, showLibraryContents);
+    return new TreeFileChooserDialog(myProject, title, initialFile, fileType, filter, null, disableStructureProviders, showLibraryContents);
   }
 }

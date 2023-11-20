@@ -12,6 +12,7 @@ import com.intellij.ide.util.gotoByName.ChooseByNamePanel;
 import com.intellij.ide.util.gotoByName.ChooseByNamePopupComponent;
 import com.intellij.ide.util.gotoByName.GotoFileCellRenderer;
 import com.intellij.ide.util.treeView.AlphaComparator;
+import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -66,6 +67,7 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
   private final @Nullable PsiFile myInitialFile;
   private final @Nullable PsiFileFilter myFilter;
   private final @Nullable FileType myFileType;
+  private final @NotNull Comparator<? super NodeDescriptor<?>> myComparator;
 
   private final boolean myDisableStructureProviders;
   private final boolean myShowLibraryContents;
@@ -78,10 +80,22 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
                                @Nullable PsiFileFilter filter,
                                final boolean disableStructureProviders,
                                final boolean showLibraryContents) {
+    this(project, title, initialFile, fileType, filter, null, disableStructureProviders, showLibraryContents);
+  }
+
+  public TreeFileChooserDialog(@NotNull Project project,
+                               @NlsContexts.DialogTitle String title,
+                               final @Nullable PsiFile initialFile,
+                               @Nullable FileType fileType,
+                               @Nullable PsiFileFilter filter,
+                               @Nullable Comparator<? super NodeDescriptor<?>> comparator,
+                               final boolean disableStructureProviders,
+                               final boolean showLibraryContents) {
     super(project, true);
     myInitialFile = initialFile;
     myFilter = filter;
     myFileType = fileType;
+    myComparator = comparator == null ? AlphaComparator.INSTANCE : comparator;
     myDisableStructureProviders = disableStructureProviders;
     myShowLibraryContents = showLibraryContents;
     setTitle(title);
@@ -125,7 +139,7 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
     };
 
     myModel = new StructureTreeModel<>(treeStructure, getDisposable());
-    myModel.setComparator(AlphaComparator.INSTANCE);
+    myModel.setComparator(myComparator);
     myTree = new Tree(new AsyncTreeModel(myModel, getDisposable()));
     myTree.setRootVisible(false);
     myTree.expandRow(0);
