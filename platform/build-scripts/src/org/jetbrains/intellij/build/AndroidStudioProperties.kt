@@ -308,9 +308,13 @@ class AndroidStudioProperties(home: Path) : BaseIdeaProperties() {
     }
 
     override suspend fun copyAdditionalFiles(context: BuildContext, targetDir: Path, arch: JvmArchitecture) {
-      FileSet(context.paths.communityHomeDir.resolve("../../prebuilts/tools/clion/bin/clang/mac"))
+      val archDir = when (arch) {
+        JvmArchitecture.x64 -> "x64"
+        JvmArchitecture.aarch64 -> "aarch64"
+      }
+      FileSet(context.paths.communityHomeDir.resolve("../../prebuilts/tools/clion/bin/clang/mac/$archDir"))
         .includeAll()
-        .copyToDir(targetDir.resolve("plugins/c-clangd-plugin/bin/clang/mac"))
+        .copyToDir(targetDir.resolve("plugins/c-clangd-plugin/bin/clang/mac/$archDir"))
     }
   }
 
