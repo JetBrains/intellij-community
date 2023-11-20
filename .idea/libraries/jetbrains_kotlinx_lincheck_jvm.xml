@@ -1,0 +1,88 @@
+<component name="libraryTable">
+  <library name="jetbrains.kotlinx.lincheck.jvm" type="repository">
+    <properties maven-id="org.jetbrains.kotlinx:lincheck-jvm:2.23">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/lincheck-jvm/2.23/lincheck-jvm-2.23.jar">
+          <sha256sum>b828ef373581f811c5093a236c4aac2325a1d45389d27fce19a1da76a4998515</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-jdk8/1.6.21/kotlin-stdlib-jdk8-1.6.21.jar">
+          <sha256sum>dab45489b47736d59fce44b80676f1947a9b6bcab10fd60e878a83bd82a6954c</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-jdk7/1.6.21/kotlin-stdlib-jdk7-1.6.21.jar">
+          <sha256sum>f1b0634dbb94172038463020bb2dd45ca26849f8ce29d625acb0f1569d11dbee</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib/1.6.21/kotlin-stdlib-1.6.21.jar">
+          <sha256sum>739c526672bb337573b28f63afa8306eb088b0c3a0967f56d6c89f4a3012a492</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/annotations/13.0/annotations-13.0.jar">
+          <sha256sum>ace2a10dc8e2d5fd34925ecac03e4988b2c0f851650c94b8cef49ba1bd111478</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-common/1.6.21/kotlin-stdlib-common-1.6.21.jar">
+          <sha256sum>183bec59cd9f3a14957b190e8c879cf1194bd1f106b0a7b6e1cbb8790d242363</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-reflect/1.6.21/kotlin-reflect-1.6.21.jar">
+          <sha256sum>1e1f57209f7238c3fd1735a1b9339a56565507dca249f8371bf59d91f601aeaa</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-coroutines-core-jvm/1.6.4/kotlinx-coroutines-core-jvm-1.6.4.jar">
+          <sha256sum>c24c8bb27bb320c4a93871501a7e5e0c61607638907b197aef675513d4c820be</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/ow2/asm/asm-commons/9.4/asm-commons-9.4.jar">
+          <sha256sum>0c128a9ec3f33c98959272f6d16cf14247b508f58951574bcdbd2b56d6326364</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/ow2/asm/asm/9.4/asm-9.4.jar">
+          <sha256sum>39d0e2b3dc45af65a09b097945750a94a126e052e124f93468443a1d0e15f381</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/ow2/asm/asm-tree/9.4/asm-tree-9.4.jar">
+          <sha256sum>c42d479cf24566a21eb20af7eeaeef4e86bdb4a886306cf72f483b65e75b2acf</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/ow2/asm/asm-util/9.4/asm-util-9.4.jar">
+          <sha256sum>3d7932b93ff55056641e7cfb601f96bcd5cd071e1b0503c78a5014232297a23e</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/ow2/asm/asm-analysis/9.4/asm-analysis-9.4.jar">
+          <sha256sum>7b5f8c5e3bf341b5bb570d26f379e3fdebdc32732187159c42479164053f373d</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/reflections/reflections/0.9.12/reflections-0.9.12.jar">
+          <sha256sum>d168f58d32f2ae7ac5a8d5d9092adeee526c604b41125dcb45eea877960a99cf</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/javassist/javassist/3.26.0-GA/javassist-3.26.0-GA.jar">
+          <sha256sum>ca5625874ff0a34f2422173a511b33c225218c146a3c961b18940efff430462d</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/lincheck-jvm/2.23/lincheck-jvm-2.23.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-jdk8/1.6.21/kotlin-stdlib-jdk8-1.6.21.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-jdk7/1.6.21/kotlin-stdlib-jdk7-1.6.21.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib/1.6.21/kotlin-stdlib-1.6.21.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/annotations/13.0/annotations-13.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-common/1.6.21/kotlin-stdlib-common-1.6.21.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-reflect/1.6.21/kotlin-reflect-1.6.21.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-coroutines-core-jvm/1.6.4/kotlinx-coroutines-core-jvm-1.6.4.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/ow2/asm/asm-commons/9.4/asm-commons-9.4.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/ow2/asm/asm/9.4/asm-9.4.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/ow2/asm/asm-tree/9.4/asm-tree-9.4.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/ow2/asm/asm-util/9.4/asm-util-9.4.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/ow2/asm/asm-analysis/9.4/asm-analysis-9.4.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/reflections/reflections/0.9.12/reflections-0.9.12.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/javassist/javassist/3.26.0-GA/javassist-3.26.0-GA.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/lincheck-jvm/2.23/lincheck-jvm-2.23-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-jdk8/1.6.21/kotlin-stdlib-jdk8-1.6.21-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-jdk7/1.6.21/kotlin-stdlib-jdk7-1.6.21-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib/1.6.21/kotlin-stdlib-1.6.21-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/annotations/13.0/annotations-13.0-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-common/1.6.21/kotlin-stdlib-common-1.6.21-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-reflect/1.6.21/kotlin-reflect-1.6.21-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-coroutines-core-jvm/1.6.4/kotlinx-coroutines-core-jvm-1.6.4-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/ow2/asm/asm-commons/9.4/asm-commons-9.4-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/ow2/asm/asm/9.4/asm-9.4-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/ow2/asm/asm-tree/9.4/asm-tree-9.4-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/ow2/asm/asm-util/9.4/asm-util-9.4-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/ow2/asm/asm-analysis/9.4/asm-analysis-9.4-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/reflections/reflections/0.9.12/reflections-0.9.12-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/javassist/javassist/3.26.0-GA/javassist-3.26.0-GA-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

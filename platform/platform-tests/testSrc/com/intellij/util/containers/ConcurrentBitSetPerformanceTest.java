@@ -37,8 +37,8 @@ import java.util.stream.IntStream;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class ConcurrentBitSetTest {
-  private static final Logger LOG = Logger.getInstance(ConcurrentBitSetTest.class);
+class ConcurrentBitSetPerformanceTest {
+  private static final Logger LOG = Logger.getInstance(ConcurrentBitSetPerformanceTest.class);
 
   @Test
   void testSanity() {
