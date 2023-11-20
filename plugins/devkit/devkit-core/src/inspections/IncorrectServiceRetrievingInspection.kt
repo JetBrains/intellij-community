@@ -12,6 +12,9 @@ import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
 
 internal class IncorrectServiceRetrievingInspection : ServiceRetrievingInspectionBase() {
 
+  override val additionalMethodNames
+    get() = arrayOf("serviceOrNull", "serviceIfCreated")
+
   override fun buildInternalVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
     return UastHintedVisitorAdapter.create(holder.file.language, object : AbstractUastNonRecursiveVisitor() {
 

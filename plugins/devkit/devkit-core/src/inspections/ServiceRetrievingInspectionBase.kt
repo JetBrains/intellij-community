@@ -17,8 +17,22 @@ internal abstract class ServiceRetrievingInspectionBase : DevKitUastInspectionBa
   protected data class ServiceRetrievingInfo(val howServiceRetrieved: Service.Level,
                                              val serviceClass: UClass)
 
+  protected abstract val additionalMethodNames: Array<String>
+
+  private val serviceKtFileMethods = CallMatcher.staticCall(
+    "com.intellij.openapi.components.ServiceKt", "service", *additionalMethodNames
+  ).parameterCount(0)
+
+  private val componentManagerGetServiceMethods = CallMatcher.anyOf(
+    CallMatcher.instanceCall(ComponentManager::class.java.canonicalName, "getService").parameterTypes(CommonClassNames.JAVA_LANG_CLASS),
+    CallMatcher.staticCall("com.intellij.openapi.components.ServicesKt", "service", *additionalMethodNames)
+      .parameterTypes(ComponentManager::class.java.canonicalName),
+  )
+
+  protected val allGetServiceMethods = CallMatcher.anyOf(componentManagerGetServiceMethods, serviceKtFileMethods)
+
   protected fun getServiceRetrievingInfo(node: UCallExpression): ServiceRetrievingInfo? {
-    if (!COMPONENT_MANAGER_GET_SERVICE.uCallMatches(node)) return null
+    if (!allGetServiceMethods.uCallMatches(node)) return null
     val howServiceRetrieved = howServiceRetrieved(node) ?: return null
     val serviceType = node.returnType as? PsiClassType ?: return null
     val serviceClass = serviceType.resolve()?.toUElement(UClass::class.java) ?: return null
@@ -26,7 +40,7 @@ internal abstract class ServiceRetrievingInspectionBase : DevKitUastInspectionBa
   }
 
   protected fun howServiceRetrieved(getServiceCandidate: UCallExpression): Service.Level? {
-    if (SERVICE_KT_METHODS.uCallMatches(getServiceCandidate)) return Service.Level.APP
+    if (serviceKtFileMethods.uCallMatches(getServiceCandidate)) return Service.Level.APP
     val receiverType = getServiceCandidate.receiver?.getExpressionType() ?: return null
     val aClass = (receiverType as? PsiClassType)?.resolve() ?: return null
     return when {
@@ -36,16 +50,3 @@ internal abstract class ServiceRetrievingInspectionBase : DevKitUastInspectionBa
     }
   }
 }
-
-private val SERVICE_KT_METHODS =
-  CallMatcher.staticCall("com.intellij.openapi.components.ServiceKt", "service", "serviceOrNull", "serviceIfCreated")
-    .parameterCount(0)
-private val SERVICES_KT_METHODS =
-  CallMatcher.staticCall("com.intellij.openapi.components.ServicesKt", "service", "serviceOrNull", "serviceIfCreated")
-    .parameterTypes(ComponentManager::class.java.canonicalName)
-
-internal val COMPONENT_MANAGER_GET_SERVICE = CallMatcher.anyOf(
-  CallMatcher.instanceCall(ComponentManager::class.java.canonicalName, "getService").parameterTypes(CommonClassNames.JAVA_LANG_CLASS),
-  SERVICE_KT_METHODS,
-  SERVICES_KT_METHODS,
-)
