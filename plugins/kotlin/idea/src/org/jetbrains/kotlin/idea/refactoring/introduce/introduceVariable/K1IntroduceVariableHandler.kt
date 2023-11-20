@@ -410,33 +410,10 @@ object K1IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
         occurrencesToReplace: List<KtExpression>?,
         onNonInteractiveFinish: ((KtDeclaration) -> Unit)?
     ) {
+        if (!isRefactoringApplicableByPsi(project, editor, expression)) return
+
         val substringInfo = expression.extractableSubstringInfo as? K1ExtractableSubstringInfo
         val physicalExpression = expression.substringContextOrThis
-
-        val parent = physicalExpression.parent
-
-        when {
-            parent is KtQualifiedExpression -> {
-                if (parent.receiverExpression != physicalExpression) {
-                    return showErrorHint(project, editor, KotlinBundle.message("cannot.refactor.no.expression"))
-                }
-            }
-            physicalExpression is KtStatementExpression ->
-                return showErrorHint(project, editor, KotlinBundle.message("cannot.refactor.no.expression"))
-            parent is KtOperationExpression && parent.operationReference == physicalExpression ->
-                return showErrorHint(project, editor, KotlinBundle.message("cannot.refactor.no.expression"))
-        }
-
-        PsiTreeUtil.getNonStrictParentOfType(
-            physicalExpression,
-            KtTypeReference::class.java,
-            KtConstructorCalleeExpression::class.java,
-            KtSuperExpression::class.java,
-            KtConstructorDelegationReferenceExpression::class.java,
-            KtAnnotationEntry::class.java
-        )?.let {
-            return showErrorHint(project, editor, KotlinBundle.message("cannot.refactor.no.container"))
-        }
 
         val resolutionFacade = physicalExpression.getResolutionFacade()
         val bindingContext = resolutionFacade.analyze(physicalExpression, BodyResolveMode.FULL)

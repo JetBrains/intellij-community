@@ -378,32 +378,7 @@ object K2IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
         occurrencesToReplace: List<KtExpression>?,
         onNonInteractiveFinish: ((KtDeclaration) -> Unit)?
     ) {
-        val parent = expression.parent
-
-        when {
-            parent is KtQualifiedExpression -> {
-                if (parent.receiverExpression != expression) {
-                    return showErrorHint(project, editor, KotlinBundle.message("cannot.refactor.no.expression"))
-                }
-            }
-
-            expression is KtStatementExpression ->
-                return showErrorHint(project, editor, KotlinBundle.message("cannot.refactor.no.expression"))
-
-            parent is KtOperationExpression && parent.operationReference == expression ->
-                return showErrorHint(project, editor, KotlinBundle.message("cannot.refactor.no.expression"))
-        }
-
-        PsiTreeUtil.getNonStrictParentOfType(
-            expression,
-            KtTypeReference::class.java,
-            KtConstructorCalleeExpression::class.java,
-            KtSuperExpression::class.java,
-            KtConstructorDelegationReferenceExpression::class.java,
-            KtAnnotationEntry::class.java
-        )?.let {
-            return showErrorHint(project, editor, KotlinBundle.message("cannot.refactor.no.container"))
-        }
+        if (!isRefactoringApplicableByPsi(project, editor, expression)) return
 
         val expressionRenderedType = analyzeInModalWindow(expression, KotlinBundle.message("find.usages.prepare.dialog.progress")) {
             val expressionType = expression.getKtType()
