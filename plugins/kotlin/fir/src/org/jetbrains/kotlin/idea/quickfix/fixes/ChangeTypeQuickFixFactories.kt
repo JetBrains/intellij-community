@@ -179,7 +179,7 @@ object ChangeTypeQuickFixFactories {
         return buildList {
             add(UpdateTypeQuickFix(declaration, TargetType.VARIABLE, createTypeInfo(declaration.returnType(type))))
             if (expression is KtConstantExpression && expectedType.isNumberOrUNumberType() && type.isNumberOrUNumberType()) {
-                add(WrongPrimitiveLiteralFix(expression, expectedType))
+                add(WrongPrimitiveLiteralFix(expression, preparePrimitiveLiteral(expression, expectedType)))
             }
         }
     }
@@ -191,7 +191,7 @@ object ChangeTypeQuickFixFactories {
             val expectedType = diagnostic.expectedType
             buildList {
                 if (expression is KtConstantExpression && expectedType.isNumberOrUNumberType() && actualType.isNumberOrUNumberType()) {
-                    add(WrongPrimitiveLiteralFix(expression, expectedType))
+                    add(WrongPrimitiveLiteralFix(expression, preparePrimitiveLiteral(expression, expectedType)))
                 }
             }
         }
