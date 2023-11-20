@@ -507,6 +507,7 @@ private class MyWorkspaceFileSetRegistrar<E : WorkspaceEntity>(contributor: Work
   val rootData: RootData<E> = RootData(contributor, ignoreModuleRoots)
 
   override fun registerFileSet(root: VirtualFileUrl, kind: WorkspaceFileKind, entity: WorkspaceEntity, customData: WorkspaceFileSetData?) {
+    @Suppress("UNCHECKED_CAST")
     rootData.registerFileSet(root, kind, entity as E, customData, true)
   }
 
@@ -542,6 +543,7 @@ private class MyWorkspaceFileSetRegistrar<E : WorkspaceEntity>(contributor: Work
                                            kind: WorkspaceFileKind,
                                            entity: WorkspaceEntity,
                                            customData: WorkspaceFileSetData?) {
+    @Suppress("UNCHECKED_CAST")
     rootData.registerFileSet(file, kind, entity as E, customData, false)
   }
 }
