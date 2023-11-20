@@ -11,11 +11,13 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.validOrNull
 import com.intellij.platform.ae.database.activities.WritableDatabaseBackedTimeSpanUserActivity
 import com.intellij.platform.ae.database.createMap
 import com.intellij.platform.ae.database.runUpdateEvent
 import com.intellij.platform.ae.database.utils.InstantUtils
 import com.intellij.psi.impl.PsiManagerEx
+import com.intellij.psi.util.validOrNull
 import com.intellij.util.io.DigestUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -36,36 +38,33 @@ object CodingTimeUserActivity : WritableDatabaseBackedTimeSpanUserActivity() {
     submitPeriodic(editorId, extra)
   }
 
-  private val filesEditedStatement by lazy {
-    getDatabase().getStatementCollection()
-      .prepareStatement("SELECT COUNT(DISTINCT json_extract(extra, '\$.fileHash')) FROM timespanUserActivity\n" +
-                        "WHERE activity_id = '$id'\n" +
-                        "AND datetime(started_at) >= datetime(?)\n" +
-                        "AND datetime(ended_at) <= datetime(?)", ObjectBinderFactory.create2<String, String>())
-  }
   /**
    * How many files were edited in the period of [from]..[until]
    */
   suspend fun getFilesEdited(from: Instant, until: Instant): Int {
     return getDatabase().execute {
+      val filesEditedStatement = getDatabase().database.connection
+          .prepareStatement("SELECT COUNT(DISTINCT json_extract(extra, '\$.fileHash')) FROM timespanUserActivity\n" +
+                            "WHERE activity_id = '$id'\n" +
+                            "AND datetime(started_at) >= datetime(?)\n" +
+                            "AND datetime(ended_at) <= datetime(?)", ObjectBinderFactory.create2<String, String>())
+
       filesEditedStatement.binder.bind(InstantUtils.formatForDatabase(from), InstantUtils.formatForDatabase(until))
       filesEditedStatement.selectInt() ?: 0
     }
   }
 
-  private val byLanguageStatStatement by lazy {
-    getDatabase().getStatementCollection()
-      .prepareStatement("SELECT json_extract(extra, '\$.lang') as lang, SUM(strftime('%s', ended_at) - strftime('%s', started_at)) FROM timespanUserActivity\n" +
-                        "WHERE activity_id = '$id'\n" +
-                        "AND datetime(started_at) >= datetime(?)\n" +
-                        "AND datetime(ended_at) <= datetime(?)\n" +
-                        "GROUP BY lang", ObjectBinderFactory.create2<String, String>())
-  }
   /**
    * How much files per language were edited / map of  (language name -> length in seconds)
    */
   suspend fun getByLanguageStat(from: Instant, until: Instant): Map<LanguageWrapper, Int> {
     return getDatabase().execute {
+      val byLanguageStatStatement = getDatabase().database.connection
+        .prepareStatement("SELECT json_extract(extra, '\$.lang') as lang, SUM(strftime('%s', ended_at) - strftime('%s', started_at)) FROM timespanUserActivity\n" +
+                          "WHERE activity_id = '$id'\n" +
+                          "AND datetime(started_at) >= datetime(?)\n" +
+                          "AND datetime(ended_at) <= datetime(?)\n" +
+                          "GROUP BY lang", ObjectBinderFactory.create2<String, String>())
       byLanguageStatStatement.binder.bind(InstantUtils.formatForDatabase(from), InstantUtils.formatForDatabase(until))
       val res = byLanguageStatStatement.executeQuery()
 
@@ -106,9 +105,9 @@ private class CodingTimeUserActivityEditorFactoryListener : EditorFactoryListene
     editor.document.addDocumentListener(object : DocumentListener {
       override fun documentChanged(event: DocumentEvent) {
         runUpdateEvent(CodingTimeUserActivity) {
-          val vf = editor.virtualFile ?: return@runUpdateEvent
+          val vf = editor.virtualFile.validOrNull() ?: return@runUpdateEvent
           val psiFile = withContext(Dispatchers.EDT) {
-            PsiManagerEx.getInstance(project).findFile(vf)
+            PsiManagerEx.getInstance(project).findFile(vf)?.validOrNull()
           } ?: return@runUpdateEvent
           it.write(editorId, psiFile.language, vf)
         }

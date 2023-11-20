@@ -25,8 +25,6 @@ private val logger = logger<SqliteInitializedDatabase>()
  * This class is responsible for keeping consistency of a database (initial state, running migrations)
  * and keeps metadata, like this IDE id and DB version
  *
- * This class manages resources based on lifetime of [CoroutineScope], please don't implement [AutoCloseable] here
- *
  * This class must be initialized on background thread
  *
  * TODO: open/close db on each request? How bad it is?
@@ -38,7 +36,7 @@ private val logger = logger<SqliteInitializedDatabase>()
  */
 class SqliteInitializedDatabase(cs: CoroutineScope, path: Path?) {
   private val shouldRunMigrations = path?.exists() ?: true
-  private val connection = SqliteConnection(path, false)
+  val connection = SqliteConnection(path, false)
   private val actionsBeforeDatabaseDeath = mutableListOf<suspend () -> Unit>()
 
   /**
@@ -77,8 +75,6 @@ class SqliteInitializedDatabase(cs: CoroutineScope, path: Path?) {
 
     ideId = initIdeId()
   }
-
-  fun createStatementCollection() = StatementCollection(connection)
 
   fun invokeBeforeDatabaseDeath(action: suspend () -> Unit) {
     actionsBeforeDatabaseDeath.add(action)

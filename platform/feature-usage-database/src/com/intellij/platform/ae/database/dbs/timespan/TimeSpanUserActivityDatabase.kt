@@ -27,23 +27,23 @@ enum class TimeSpanUserActivityDatabaseManualKind {
 
 private val logger = logger<TimeSpanUserActivityDatabase>()
 
-class TimeSpanUserActivityDatabase(cs: CoroutineScope, private val database: SqliteInitializedDatabase) : IUserActivityDatabaseLayer,
+class TimeSpanUserActivityDatabase(cs: CoroutineScope, val database: SqliteInitializedDatabase) : IUserActivityDatabaseLayer,
                                                                                                           IReadOnlyTimeSpanUserActivityDatabase,
                                                                                                           ITimeSpanUserActivityDatabase,
                                                                                                           IInternalTimeSpanUserActivityDatabase,
                                                                                                           ISqliteBackedDatabaseLayer {
-  private val statementCollection = database.createStatementCollection()
   private val throttler = TimeSpanUserActivityDatabaseThrottler(cs, this)
 
-  private val longestActivityStatement = statementCollection.prepareStatement(
-    """SELECT activity_id, started_at, ended_at FROM timespanUserActivity 
-      |WHERE activity_id = ? AND (julianday(started_at) >= julianday(?) AND julianday(?) <= julianday(ended_at)) 
-      |ORDER BY (julianday(ended_at) - julianday(started_at)) DESC LIMIT ?""".trimMargin(),
-    ObjectBinderFactory.create4<String, String, String, Int>()
-  )
   override suspend fun getLongestActivity(activity: DatabaseBackedTimeSpanUserActivity, from: Instant?, until: Instant?): TimeSpan {
     return execute {
       throttler.commitChanges(false)
+
+      val longestActivityStatement = database.connection.prepareStatement(
+        """SELECT activity_id, started_at, ended_at FROM timespanUserActivity 
+      |WHERE activity_id = ? AND (julianday(started_at) >= julianday(?) AND julianday(?) <= julianday(ended_at)) 
+      |ORDER BY (julianday(ended_at) - julianday(started_at)) DESC LIMIT ?""".trimMargin(),
+        ObjectBinderFactory.create4<String, String, String, Int>()
+      )
 
       longestActivityStatement.binder.bind(activity.id, InstantUtils.formatForDatabase(from ?: InstantUtils.SomeTimeAgo), InstantUtils.formatForDatabase(until ?: InstantUtils.NowButABitLater), 1)
 
@@ -72,32 +72,6 @@ class TimeSpanUserActivityDatabase(cs: CoroutineScope, private val database: Sql
     throttler.submitManual(activity, id, kind, canBeStale, moment, extra)
   }
 
-  private val endEventInsertStatement = statementCollection.prepareStatement(
-    """
-      INSERT INTO timespanUserActivity (
-        activity_id,
-        ide_id,
-        started_at,
-        ended_at,
-        is_finished,
-        extra
-      )
-      VALUES (?, ?, ?, ?, ?, ?)
-      RETURNING id;
-    """.trimIndent(),
-    ObjectBinderFactory.create6<String, Int, String, String, Int, String?>(),
-  )
-
-  private val endEventUpdateStatement = statementCollection.prepareStatement(
-    """
-      UPDATE timespanUserActivity 
-      SET ended_at = ?,
-          is_finished = ?
-      WHERE id = ?
-    """.trimIndent(),
-    ObjectBinderFactory.create3<String, Int, Int>(),
-  )
-
   override suspend fun endEventInternal(
     databaseId: Int?,
     activity: DatabaseBackedTimeSpanUserActivity,
@@ -112,12 +86,37 @@ class TimeSpanUserActivityDatabase(cs: CoroutineScope, private val database: Sql
 
     return execute {
       if (databaseId != null) {
+        val endEventUpdateStatement = database.connection.prepareStatement(
+          """
+      UPDATE timespanUserActivity 
+      SET ended_at = ?,
+          is_finished = ?
+      WHERE id = ?
+    """.trimIndent(),
+          ObjectBinderFactory.create3<String, Int, Int>(),
+        )
         endEventUpdateStatement.binder.bind(dbEndedAt, dbIsFinished, databaseId)
         endEventUpdateStatement.executeUpdate()
         // Return the current ID
         databaseId
       }
       else {
+        val endEventInsertStatement = database.connection.prepareStatement(
+          """
+      INSERT INTO timespanUserActivity (
+        activity_id,
+        ide_id,
+        started_at,
+        ended_at,
+        is_finished,
+        extra
+      )
+      VALUES (?, ?, ?, ?, ?, ?)
+      RETURNING id;
+    """.trimIndent(),
+          ObjectBinderFactory.create6<String, Int, String, String, Int, String?>(),
+        )
+
         val extraString = extra?.let { formatString(it) }
         endEventInsertStatement.binder.bind(
           activity.id,
@@ -158,7 +157,6 @@ class TimeSpanUserActivityDatabase(cs: CoroutineScope, private val database: Sql
     }
   }
 
-  override fun getStatementCollection() = statementCollection
   override val tableName: String = "timespanUserActivity"
 }
 

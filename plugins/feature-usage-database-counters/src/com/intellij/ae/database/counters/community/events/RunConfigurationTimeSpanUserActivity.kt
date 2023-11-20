@@ -40,37 +40,33 @@ object RunConfigurationTimeSpanUserActivity : WritableDatabaseBackedTimeSpanUser
     submitManual(id.toString(), TimeSpanUserActivityDatabaseManualKind.End, null)
   }
 
-  private val sessionsLengthStatement by lazy {
-    getDatabase().getStatementCollection()
-      .prepareStatement("SELECT SUM(strftime('%s', ended_at) - strftime('%s', started_at)) FROM timespanUserActivity\n" +
-                        "WHERE activity_id = '$id' " +
-                        "AND json_extract(extra, '\$.act') = ? " +
-                        "AND datetime(started_at) >= datetime(?) " +
-                        "AND datetime(ended_at) <= datetime(?)", ObjectBinderFactory.create3<String, String, String>())
-  }
   /**
    *  @return sum of sessions lengths of specific [kind] in the period [from]..[until] in seconds
    */
   suspend fun getSessionsLength(kind: RunConfigurationEventKind, from: Instant, until: Instant): Int {
     return getDatabase().execute {
+      val sessionsLengthStatement = getDatabase().database.connection
+        .prepareStatement("SELECT SUM(strftime('%s', ended_at) - strftime('%s', started_at)) FROM timespanUserActivity\n" +
+                          "WHERE activity_id = '$id' " +
+                          "AND json_extract(extra, '\$.act') = ? " +
+                          "AND datetime(started_at) >= datetime(?) " +
+                          "AND datetime(ended_at) <= datetime(?)", ObjectBinderFactory.create3<String, String, String>())
       sessionsLengthStatement.binder.bind(kind.eventName, InstantUtils.formatForDatabase(from), InstantUtils.formatForDatabase(until))
       sessionsLengthStatement.selectInt() ?: 0
     }
   }
 
-  private val allSessionsLengthStatement by lazy {
-    getDatabase().getStatementCollection()
-      .prepareStatement("SELECT json_extract(extra, '\$.act') as field, SUM(strftime('%s', ended_at) - strftime('%s', started_at)) FROM timespanUserActivity\n" +
-                        "WHERE activity_id = '$id' " +
-                        "AND datetime(started_at) >= datetime(?) " +
-                        "AND datetime(ended_at) <= datetime(?) " +
-                        "GROUP BY field", ObjectBinderFactory.create2<String, String>())
-  }
   /**
    *  @return sum of sessions lengths grouped by kind in the period [from]..[until] in seconds
    */
   suspend fun getAllSessionsLength(from: Instant, until: Instant): Map<RunConfigurationEventKind, Int> {
     return getDatabase().execute {
+      val allSessionsLengthStatement = getDatabase().database.connection
+        .prepareStatement("SELECT json_extract(extra, '\$.act') as field, SUM(strftime('%s', ended_at) - strftime('%s', started_at)) FROM timespanUserActivity\n" +
+                          "WHERE activity_id = '$id' " +
+                          "AND datetime(started_at) >= datetime(?) " +
+                          "AND datetime(ended_at) <= datetime(?) " +
+                          "GROUP BY field", ObjectBinderFactory.create2<String, String>())
       allSessionsLengthStatement.binder.bind(InstantUtils.formatForDatabase(from), InstantUtils.formatForDatabase(until))
       val res = allSessionsLengthStatement.executeQuery()
       val map = mutableMapOf<RunConfigurationEventKind, Int>()
@@ -93,7 +89,7 @@ enum class RunConfigurationEventKind(val eventName: String) {
   Run("run"), Debug("debug"), Build("build");
 
   companion object {
-    fun fromString(eventName: String) = values().find { it.eventName == eventName }
+    fun fromString(eventName: String) = entries.find { it.eventName == eventName }
   }
 }
 

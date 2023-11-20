@@ -30,8 +30,7 @@ class TimeSpanUserActivityDatabaseTest : BasePlatformTestCase() {
   )
 
   private suspend fun SqliteInitializedDatabase.getActivityEvents(activityId: String): List<TestEvent> {
-    val collection = createStatementCollection()
-    val stmt = collection.prepareStatement(
+    val stmt = connection.prepareStatement(
       """ 
       SELECT id, activity_id, started_at, ended_at, is_finished
       FROM "timespanUserActivity"

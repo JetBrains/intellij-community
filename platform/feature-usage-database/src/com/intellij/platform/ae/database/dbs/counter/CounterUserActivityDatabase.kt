@@ -23,22 +23,22 @@ class CounterUserActivityDatabase(cs: CoroutineScope, private val database: Sqli
                                                                                                          IUserActivityDatabaseLayer,
                                                                                                          IReadOnlyCounterUserActivityDatabase,
                                                                                                          IInternalCounterUserActivityDatabase {
-  private val statementCollection = database.createStatementCollection()
   private val throttler = CounterUserActivityDatabaseThrottler(cs, this, runBackgroundUpdater = !ApplicationManager.getApplication().isUnitTestMode)
 
-  private val getActivityStatement = statementCollection.prepareStatement(
-    "SELECT sum(diff) FROM counterUserActivity WHERE activity_id = ? AND created_at >= ? AND created_at <= ?",
-    ObjectBinderFactory.create3<String, String, String>()
-  )
   /**
    * Retrieves the activity for a user based on the provided activity ID and time range.
    * Answers the question 'How many times did activity happen in given timeframe?'
    */
   override suspend fun getActivitySum(activity: DatabaseBackedCounterUserActivity, from: Instant?, until: Instant?): Int {
+
     val nnFrom = InstantUtils.formatForDatabase(from ?: InstantUtils.SomeTimeAgo)
     val nnUntil = InstantUtils.formatForDatabase(until ?: InstantUtils.NowButABitLater)
 
     return execute {
+      val getActivityStatement = database.connection.prepareStatement(
+        "SELECT sum(diff) FROM counterUserActivity WHERE activity_id = ? AND created_at >= ? AND created_at <= ?",
+        ObjectBinderFactory.create3<String, String, String>()
+      )
       throttler.commitChanges()
 
       getActivityStatement.binder.bind(activity.id, nnFrom, nnUntil)
@@ -59,12 +59,12 @@ class CounterUserActivityDatabase(cs: CoroutineScope, private val database: Sqli
   /**
    * Writes event directly to database. Very internal API!
    */
-  private val updateActivityStatement = statementCollection.prepareStatement(
-    "INSERT INTO counterUserActivity (activity_id, diff, created_at, ide_id) VALUES (?, ?, ?, ?)",
-    ObjectBinderFactory.create4<String, Int, String, Int>()
-  )
   override suspend fun submitDirect(activity: DatabaseBackedCounterUserActivity, diff: Int, instant: Instant) {
     execute {
+      val updateActivityStatement = database.connection.prepareStatement(
+        "INSERT INTO counterUserActivity (activity_id, diff, created_at, ide_id) VALUES (?, ?, ?, ?)",
+        ObjectBinderFactory.create4<String, Int, String, Int>()
+      )
       updateActivityStatement.binder.bind(activity.id, diff, InstantUtils.formatForDatabase(instant), IdService.getInstance().getDatabaseId(database))
       updateActivityStatement.executeUpdate()
     }
