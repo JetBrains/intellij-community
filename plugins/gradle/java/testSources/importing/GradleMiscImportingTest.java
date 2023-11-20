@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gradle.importing;
 
 import com.intellij.ide.highlighter.ModuleFileType;
+import com.intellij.java.workspace.entities.JavaModuleSettingsKt;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ExternalProjectInfo;
@@ -19,6 +20,8 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.TestModuleProperties;
+import com.intellij.platform.backend.workspace.WorkspaceModel;
+import com.intellij.platform.workspace.jps.entities.ModuleId;
 import com.intellij.pom.java.AcceptedLanguageLevelsSettings;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.IdeaTestUtil;
@@ -356,6 +359,24 @@ public class GradleMiscImportingTest extends GradleJavaImportingTestCase {
 
     assertProjectLibraryCoordinates("Gradle: junit:junit:4.0",
                                     "junit", "junit", "4.0");
+  }
+
+  @Test
+  public void testJarManifestAutomaticModuleName() throws Exception {
+    importProject(
+      """
+        apply plugin: 'java'
+        tasks.named('jar') {
+          manifest {
+            attributes('Automatic-Module-Name': 'my.module.name')
+          }
+        }"""
+    );
+
+    var moduleEntity = WorkspaceModel.getInstance(myProject).getCurrentSnapshot().resolve(new ModuleId("project.main"));
+    var javaSettings = JavaModuleSettingsKt.getJavaSettings(moduleEntity);
+    var automaticModuleName = javaSettings.getAutomaticModuleName();
+    assertEquals("my.module.name", automaticModuleName);
   }
 
   private static void assertExternalProjectIds(Map<String, ExternalProject> projectMap, String projectId, String... sourceSetModulesIds) {
