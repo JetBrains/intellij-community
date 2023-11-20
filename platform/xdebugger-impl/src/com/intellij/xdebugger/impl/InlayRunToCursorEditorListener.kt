@@ -7,6 +7,7 @@ import com.intellij.codeInsight.hint.ClientHintManager
 import com.intellij.codeInsight.hint.HintManager
 import com.intellij.codeInsight.hint.HintManagerImpl
 import com.intellij.icons.AllIcons
+import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.actionSystem.impl.IdeaActionButtonLook
@@ -24,6 +25,7 @@ import com.intellij.openapi.editor.event.EditorMouseListener
 import com.intellij.openapi.editor.event.EditorMouseMotionListener
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.impl.view.IterationState
@@ -53,6 +55,7 @@ import org.jetbrains.annotations.ApiStatus
 import java.awt.*
 import java.lang.ref.WeakReference
 import javax.swing.*
+import kotlin.math.min
 
 private const val MINIMAL_TEXT_OFFSET = 16
 private const val ACTION_BUTTON_GAP = 2
@@ -201,10 +204,8 @@ class InlayRunToCursorEditorListener(private val project: Project, private val c
 
     val lineY = editor.logicalPositionToXY(LogicalPosition(lineNumber, 0)).y
 
-    val group = DefaultActionGroup()
     if (isAtExecution) {
-      group.add(ActionManager.getInstance().getAction(XDebuggerActions.RESUME))
-      showHint(editor, lineNumber, firstNonSpacePos, group, lineY)
+      showHint(editor, lineNumber, firstNonSpacePos, listOf(ActionManager.getInstance().getAction(XDebuggerActions.RESUME)), lineY)
     }
     else {
       val hoverPosition = XSourcePositionImpl.create(FileDocumentManager.getInstance().getFile(editor.getDocument()), lineNumber) ?: return
@@ -213,20 +214,22 @@ class InlayRunToCursorEditorListener(private val project: Project, private val c
         types.any { it.enabledIcon === AllIcons.Debugger.Db_set_breakpoint }
       }
 
+      val actions = mutableListOf<AnAction>()
+
       if (hasGeneralBreakpoint) {
-        group.add(ActionManager.getInstance().getAction(IdeActions.ACTION_RUN_TO_CURSOR))
+        actions.add(ActionManager.getInstance().getAction(IdeActions.ACTION_RUN_TO_CURSOR))
       }
 
-      val extraActions = ActionManager.getInstance().getAction("XDebugger.RunToCursorInlayExtraActions") as DefaultActionGroup
-      group.addAll(extraActions)
+      val extraActions = (ActionManager.getInstance().getAction("XDebugger.RunToCursorInlayExtraActions") as DefaultActionGroup).getChildren(null)
+      actions.addAll(extraActions)
 
-      showHint(editor, lineNumber, firstNonSpacePos, group, lineY)
+      showHint(editor, lineNumber, firstNonSpacePos, actions, lineY)
     }
   }
 
   @RequiresEdt
-  private suspend fun showHint(editor: Editor, lineNumber: Int, firstNonSpacePos: Point, group: DefaultActionGroup, lineY: Int) {
-    if (group.childrenCount == 0) return
+  private suspend fun showHint(editor: Editor, lineNumber: Int, firstNonSpacePos: Point, actions: List<AnAction>, lineY: Int) {
+    if (actions.isEmpty()) return
 
     val rootPane = editor.getComponent().rootPane
     if (rootPane == null) {
@@ -235,9 +238,41 @@ class InlayRunToCursorEditorListener(private val project: Project, private val c
 
     val editorGutterComponentEx = editor.gutter as? EditorGutterComponentEx ?: return
 
-    val needShowOnGutter = firstNonSpacePos.x < JBUI.scale(MINIMAL_TEXT_OFFSET + ACTION_BUTTON_SIZE * (group.childrenCount - 1))
-    val xPosition = JBUI.scale(NEGATIVE_INLAY_PANEL_SHIFT) -
-                    (if (needShowOnGutter) JBUI.scale(ACTION_BUTTON_SIZE) * group.childrenCount else 0)
+    val needShowOnGutter = firstNonSpacePos.x < JBUI.scale(MINIMAL_TEXT_OFFSET + ACTION_BUTTON_SIZE * (actions.size - 1))
+
+    var xPosition = JBUI.scale(NEGATIVE_INLAY_PANEL_SHIFT)
+    var actionsToShow = actions
+
+    if (needShowOnGutter) {
+      val breakpointInsertionZoneRightOffset = if (EditorSettingsExternalizable.getInstance().isLineNumbersShown && UISettings.getInstance().showBreakpointsOverLineNumbers)
+        editorGutterComponentEx.lineNumberAreaOffset + editorGutterComponentEx.lineNumberAreaWidth
+      else
+        editorGutterComponentEx.whitespaceSeparatorOffset
+      val numberOfActionsToShow = min(
+        (editorGutterComponentEx.width + JBUI.scale(NEGATIVE_INLAY_PANEL_SHIFT) - breakpointInsertionZoneRightOffset) / JBUI.scale(ACTION_BUTTON_SIZE),
+        actions.size)
+      if (numberOfActionsToShow <= 0) {
+        return
+      }
+      xPosition -= JBUI.scale(ACTION_BUTTON_SIZE) * numberOfActionsToShow
+      actionsToShow = actions.take(numberOfActionsToShow)
+    }
+
+    if (needShowOnGutter) {
+      val breakpointInsertionZoneRightOffset = if (EditorSettingsExternalizable.getInstance().isLineNumbersShown && UISettings.getInstance().showBreakpointsOverLineNumbers)
+        editorGutterComponentEx.lineNumberAreaOffset + editorGutterComponentEx.lineNumberAreaWidth
+      else
+        editorGutterComponentEx.whitespaceSeparatorOffset
+      if (editorGutterComponentEx.width + xPosition < breakpointInsertionZoneRightOffset) {
+        val fillingNumberOfActions = (editorGutterComponentEx.width + JBUI.scale(NEGATIVE_INLAY_PANEL_SHIFT) - breakpointInsertionZoneRightOffset) / JBUI.scale(ACTION_BUTTON_SIZE)
+        if (fillingNumberOfActions <= 0) {
+          return
+        }
+        actionsToShow = actionsToShow.take(fillingNumberOfActions)
+      }
+    }
+
+    val group = DefaultActionGroup(actionsToShow)
 
     val gutterRenderer = editorGutterComponentEx.getGutterRenderer(Point(editorGutterComponentEx.width + xPosition, lineY))
     if (gutterRenderer != null) {
