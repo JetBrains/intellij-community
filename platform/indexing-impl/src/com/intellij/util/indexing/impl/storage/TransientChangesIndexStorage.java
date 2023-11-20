@@ -8,6 +8,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.*;
+import com.intellij.util.indexing.events.VfsEventsMerger;
 import com.intellij.util.indexing.impl.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -62,6 +63,9 @@ public final class TransientChangesIndexStorage<Key, Value> implements VfsAwareI
   public boolean clearMemoryMap() {
     boolean modified = !myMap.isEmpty();
     myMap.clear();
+    if (modified) {
+      VfsEventsMerger.tryLog(() -> "Clear memory map: index=" + myIndexId);
+    }
     return modified;
   }
 
@@ -69,6 +73,7 @@ public final class TransientChangesIndexStorage<Key, Value> implements VfsAwareI
     TransientChangeTrackingValueContainer<Value> container = myMap.get(key);
     if (container != null) {
       container.dropAssociatedValue(fileId);
+      VfsEventsMerger.tryLog(() -> "Clear memory map: fileId" + fileId + ",key=" + key + ",index=" + myIndexId);
       return true;
     }
     return false;
@@ -85,7 +90,7 @@ public final class TransientChangesIndexStorage<Key, Value> implements VfsAwareI
     try {
       if (myMap.isEmpty()) return;
 
-      if (IndexDebugProperties.DEBUG) {
+      if (IndexDebugProperties.DEBUG || FileBasedIndexEx.DO_TRACE_STUB_INDEX_UPDATE) {
         String message = "Dropping caches for " + myIndexId + ", number of items:" + myMap.size();
         ((FileBasedIndexEx)FileBasedIndex.getInstance()).getLogger().info(message);
       }
