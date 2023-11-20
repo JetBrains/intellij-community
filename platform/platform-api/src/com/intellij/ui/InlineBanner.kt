@@ -154,7 +154,7 @@ open class InlineBanner(background: Color, private var myBorderColor: Color, ico
       }
 
       override fun paintHover(g: Graphics) {
-        paintHover(g, myClick)
+        paintHover(g, if (myClick) JBUI.CurrentTheme.InlineBanner.PRESSED_BACKGROUND else JBUI.CurrentTheme.InlineBanner.HOVER_BACKGROUND)
       }
     }
     button.preferredSize = JBDimension(22, 22)

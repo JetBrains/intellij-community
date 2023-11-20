@@ -834,6 +834,11 @@ public final class JBUI {
       Color SUCCESS = JBColor.namedColor("IconBadge.successBackground", 0x55A76A, 0x5FAD65);
     }
 
+    public interface InlineBanner {
+      Color HOVER_BACKGROUND = JBColor.namedColor("InlineBanner.hoverBackground", ActionButton.hoverBorder());
+      Color PRESSED_BACKGROUND = JBColor.namedColor("InlineBanner.pressedBackground", ActionButton.pressedBackground());
+    }
+
     public interface Notification {
       Color FOREGROUND = JBColor.namedColor("Notification.foreground", Label.foreground());
       Color BACKGROUND = JBColor.namedColor("Notification.background", 0xFFF8D1, 0x1D3857);

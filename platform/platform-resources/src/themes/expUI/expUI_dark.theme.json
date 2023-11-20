@@ -954,7 +954,10 @@
     "ManagedIdeBadgeBorder": "Grey5",
     "ManagedIdeBadgeBackground": "Grey3",
     "ManagedIdeBadgeBackgroundHover": "Grey4",
-    "ManagedIdeMenuItemHover": "Grey4"
+    "ManagedIdeMenuItemHover": "Grey4",
+
+    "InlineBanner.hoverBackground": "#FFFFFF14",
+    "InlineBanner.pressedBackground": "#FFFFFF1E"
   },
 
   "icons": {
