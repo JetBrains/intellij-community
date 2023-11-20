@@ -227,6 +227,16 @@ class GradleTestAssertionTest : GradleExecutionTestCase() {
                 |
                 |org.opentest4j.AssertionFailedError: assertion message 3 ==> expected: <expected text 3> but was: <actual text 3>
               """.trimMargin())
+            } else {
+              assertTestConsoleContains("""
+                |org.opentest4j.AssertionFailedError: assertion message 1 ==> expected: <expected text 1> but was: <actual text 1>
+              """.trimMargin())
+              assertTestConsoleContains("""
+                |org.opentest4j.AssertionFailedError: assertion message 2 ==> expected: <expected text 2> but was: <actual text 2>
+              """.trimMargin())
+              assertTestConsoleContains("""
+                |org.opentest4j.AssertionFailedError: assertion message 3 ==> expected: <expected text 3> but was: <actual text 3>
+              """.trimMargin())
             }
           }
           assertNode("test wrapped assertion exception") {
@@ -274,7 +284,11 @@ class GradleTestAssertionTest : GradleExecutionTestCase() {
         |import org.junit.jupiter.api.DisplayNameGeneration;
         |import org.junit.jupiter.api.DisplayNameGenerator;
         |import org.junit.jupiter.api.Test;
+        |
         |import org.opentest4j.AssertionFailedError;
+        |import org.opentest4j.MultipleFailuresError;
+        |
+        |import java.util.Arrays;
         |
         |@DisplayNameGeneration(DisplayNameGenerator.ReplaceUnderscores.class)
         |public class TestCase {
@@ -321,6 +335,15 @@ class GradleTestAssertionTest : GradleExecutionTestCase() {
         |      }
         |    };
         |    throw new AssertionFailedError("assertion message", expected, actual);
+        |  }
+        |  
+        |  @Test
+        |  public void test_multiple_assert_equals_with_texts() {
+        |    throw new MultipleFailuresError("assertion message", Arrays.asList(
+        |      new AssertionFailedError("assertion message 1", "Expected text 1.", "Actual text 1."),
+        |      new AssertionFailedError("assertion message 2", "Expected text 2.", "Actual text 2."),
+        |      new AssertionFailedError("assertion message 3", "Expected text 3.", "Actual text 3.")
+        |    ));
         |  }
         |}
       """.trimMargin())
@@ -387,6 +410,47 @@ class GradleTestAssertionTest : GradleExecutionTestCase() {
               assertTestConsoleContains("""
                 |
                 |org.opentest4j.AssertionFailedError: assertion message
+              """.trimMargin())
+            }
+          }
+          assertNode("test multiple assert equals with texts") {
+            if (isBuiltInTestEventsUsed()) {
+              assertTestConsoleContains("""
+                |
+                |assertion message 1
+                |Expected :Expected text 1.
+                |Actual   :Actual text 1.
+                |<Click to see difference>
+                |
+                |org.opentest4j.AssertionFailedError: assertion message 1
+              """.trimMargin())
+              assertTestConsoleContains("""
+                |
+                |assertion message 2
+                |Expected :Expected text 2.
+                |Actual   :Actual text 2.
+                |<Click to see difference>
+                |
+                |org.opentest4j.AssertionFailedError: assertion message 2
+              """.trimMargin())
+              assertTestConsoleContains("""
+                |
+                |assertion message 3
+                |Expected :Expected text 3.
+                |Actual   :Actual text 3.
+                |<Click to see difference>
+                |
+                |org.opentest4j.AssertionFailedError: assertion message 3
+              """.trimMargin())
+            } else {
+              assertTestConsoleContains("""
+                |org.opentest4j.AssertionFailedError: assertion message 1
+              """.trimMargin())
+              assertTestConsoleContains("""
+                |org.opentest4j.AssertionFailedError: assertion message 2
+              """.trimMargin())
+              assertTestConsoleContains("""
+                |org.opentest4j.AssertionFailedError: assertion message 3
               """.trimMargin())
             }
           }
@@ -933,7 +997,11 @@ class GradleTestAssertionTest : GradleExecutionTestCase() {
         |package org.example;
         |
         |import org.junit.Test;
+        |
         |import org.opentest4j.AssertionFailedError;
+        |import org.opentest4j.MultipleFailuresError;
+        |
+        |import java.util.Arrays;
         |
         |public class TestCase {
         |
@@ -979,6 +1047,15 @@ class GradleTestAssertionTest : GradleExecutionTestCase() {
         |      }
         |    };
         |    throw new AssertionFailedError("assertion message", expected, actual);
+        |  }
+        |  
+        |  @Test
+        |  public void test_multiple_assert_equals_with_texts() {
+        |    throw new MultipleFailuresError("assertion message", Arrays.asList(
+        |      new AssertionFailedError("assertion message 1", "Expected text 1.", "Actual text 1."),
+        |      new AssertionFailedError("assertion message 2", "Expected text 2.", "Actual text 2."),
+        |      new AssertionFailedError("assertion message 3", "Expected text 3.", "Actual text 3.")
+        |    ));
         |  }
         |}
       """.trimMargin())
@@ -1035,6 +1112,47 @@ class GradleTestAssertionTest : GradleExecutionTestCase() {
                 |
                 |org.opentest4j.AssertionFailedError: assertion message
               """.trimMargin())
+          }
+          assertNode("test_multiple_assert_equals_with_texts") {
+            if (isOpentest4jSupportedByGradleJunit4Integration()) {
+              assertTestConsoleContains("""
+                |
+                |assertion message 1
+                |Expected :Expected text 1.
+                |Actual   :Actual text 1.
+                |<Click to see difference>
+                |
+                |org.opentest4j.AssertionFailedError: assertion message 1
+              """.trimMargin())
+              assertTestConsoleContains("""
+                |
+                |assertion message 2
+                |Expected :Expected text 2.
+                |Actual   :Actual text 2.
+                |<Click to see difference>
+                |
+                |org.opentest4j.AssertionFailedError: assertion message 2
+              """.trimMargin())
+              assertTestConsoleContains("""
+                |
+                |assertion message 3
+                |Expected :Expected text 3.
+                |Actual   :Actual text 3.
+                |<Click to see difference>
+                |
+                |org.opentest4j.AssertionFailedError: assertion message 3
+              """.trimMargin())
+            } else {
+              assertTestConsoleContains("""
+                |org.opentest4j.AssertionFailedError: assertion message 1
+              """.trimMargin())
+              assertTestConsoleContains("""
+                |org.opentest4j.AssertionFailedError: assertion message 2
+              """.trimMargin())
+              assertTestConsoleContains("""
+                |org.opentest4j.AssertionFailedError: assertion message 3
+              """.trimMargin())
+            }
           }
         }
       }
