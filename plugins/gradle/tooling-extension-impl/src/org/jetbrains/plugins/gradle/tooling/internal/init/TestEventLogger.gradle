@@ -7,6 +7,8 @@ import org.gradle.api.tasks.testing.TestDescriptor
 import org.gradle.api.tasks.testing.TestOutputEvent
 import org.gradle.api.tasks.testing.TestResult
 
+import java.nio.charset.StandardCharsets
+
 class TestEventLogger {
 
   static def writeLog(String text) {
@@ -70,20 +72,20 @@ class TestEventLogger {
         logFailureDescriptor(xml, exception)
       }
 
-      if ('org.junit.ComparisonFailure' == exception?.class?.name) {
-        logJunit4ComparisonFailure(xml, exception)
-      }
-      else if ('junit.framework.ComparisonFailure' == exception?.class?.name) {
-        logJunit4ComparisonFailure(xml, exception)
-      }
-      else if ('org.opentest4j.AssertionFailedError' == exception?.class?.name) {
-        logJunit5ComparisonFailure(xml, exception)
-      }
-      else if ('com.intellij.rt.execution.junit.FileComparisonFailure' == exception?.class?.name) {
+      if (isInstance(exception, 'com.intellij.rt.execution.junit.FileComparisonFailure')) {
         logIjFileComparisonFailure(xml, exception)
       }
-      else if ('com.intellij.rt.execution.junit.FileComparisonFailure' == exception?.cause?.class?.name) {
+      else if (isInstance(exception?.cause, 'com.intellij.rt.execution.junit.FileComparisonFailure')) {
         logIjFileComparisonFailure(xml, exception.cause)
+      }
+      else if (isInstance(exception, 'org.junit.ComparisonFailure')) {
+        logJunit4ComparisonFailure(xml, exception)
+      }
+      else if (isInstance(exception, 'junit.framework.ComparisonFailure')) {
+        logJunit4ComparisonFailure(xml, exception)
+      }
+      else if (isInstance(exception, 'org.opentest4j.AssertionFailedError')) {
+        logOpentest4jComparisonFailure(xml, exception)
       }
       else if (exception instanceof AssertionError) {
         xml.failureType('assertionFailed')
@@ -92,6 +94,17 @@ class TestEventLogger {
         xml.failureType('error')
       }
     }
+  }
+
+  private static boolean isInstance(Object object, String aClassReference) {
+    Class<?> aClass = object?.getClass()
+    while (aClass != null) {
+      if (aClassReference == aClass.getName()) {
+        return true
+      }
+      aClass = aClass.getSuperclass()
+    }
+    return false
   }
 
   private static def logFailureDescriptor(MarkupBuilder xml, Throwable exception) {
@@ -115,13 +128,39 @@ class TestEventLogger {
   }
 
   // org.opentest4j.AssertionFailedError
-  private static def logJunit5ComparisonFailure(MarkupBuilder xml, Throwable exception) {
-    def expected = escapeCdata(exception.expected?.stringRepresentation)
-    def actual = escapeCdata(exception.actual?.stringRepresentation)
+  private static def logOpentest4jComparisonFailure(MarkupBuilder xml, Throwable exception) {
+    def expectedValueWrapper = exception.expected
+    def actualValueWrapper = exception.actual
+    def expectedValue = expectedValueWrapper?.value
+    def actualValue = actualValueWrapper?.value
+    def expectedString = getOpentest4jStringPresentation(expectedValueWrapper, expectedValue)
+    def actualString = getOpentest4jStringPresentation(actualValueWrapper, actualValue)
+    def expectedFilePath = getOpentest4jFilePath(expectedValue)
+    def actualFilePath = getOpentest4jFilePath(actualValue)
 
     xml.failureType('comparison')
-    xml.mkp.yieldUnescaped("<expected>$expected</expected>")
-    xml.mkp.yieldUnescaped("<actual>$actual</actual>")
+    xml.mkp.yieldUnescaped("<expected>${escapeCdata(expectedString)}</expected>")
+    xml.mkp.yieldUnescaped("<actual>${escapeCdata(actualString)}</actual>")
+    xml.mkp.yieldUnescaped("<filePath>${escapeCdata(expectedFilePath)}</filePath>")
+    xml.mkp.yieldUnescaped("<actualFilePath>${escapeCdata(actualFilePath)}</actualFilePath>")
+  }
+
+  private static String getOpentest4jFilePath(Object value) {
+    if ("org.opentest4j.FileInfo" == value.getClass().getName()) {
+      return value.path
+    }
+    return null
+  }
+
+  // org.opentest4j.ValueWrapper
+  private static String getOpentest4jStringPresentation(Object valueWrapper, Object value) {
+    if (value instanceof String) {
+      return value
+    }
+    if ("org.opentest4j.FileInfo" == value.getClass().getName()) {
+      return value.getContentsAsString(StandardCharsets.UTF_8)
+    }
+    return valueWrapper?.stringRepresentation
   }
 
   // com.intellij.rt.execution.junit.FileComparisonFailure
@@ -133,7 +172,7 @@ class TestEventLogger {
       ? escapeCdata(exception.actualFilePath)
       : escapeCdata(null)
 
-    xml.failureType('file-comparison')
+    xml.failureType('comparison')
     xml.mkp.yieldUnescaped("<expected>$expected</expected>")
     xml.mkp.yieldUnescaped("<actual>$actual</actual>")
     xml.mkp.yieldUnescaped("<filePath>$filePath</filePath>")

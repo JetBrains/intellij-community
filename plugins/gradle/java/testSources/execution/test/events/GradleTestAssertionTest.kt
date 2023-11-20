@@ -5,13 +5,14 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.rt.execution.junit.FileComparisonFailure
 import junit.framework.ComparisonFailure
 import org.gradle.util.GradleVersion
+import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.isGradleAtLeast
+import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.isGradleOlderThan
 import org.jetbrains.plugins.gradle.testFramework.GradleExecutionTestCase
 import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
 import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
-import org.jetbrains.plugins.gradle.testFramework.util.assumeThatJunit5IsSupported
-import org.jetbrains.plugins.gradle.testFramework.util.withBuildFile
-import org.jetbrains.plugins.gradle.testFramework.util.withSettingsFile
+import org.jetbrains.plugins.gradle.testFramework.util.*
 import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.params.ParameterizedTest
 
 class GradleTestAssertionTest : GradleExecutionTestCase() {
@@ -1598,6 +1599,183 @@ class GradleTestAssertionTest : GradleExecutionTestCase() {
 
   @ParameterizedTest
   @AllGradleVersionsSource
+  fun `test assertion result of Junit 4 (Opentest4j FileComparisonFailure)`(gradleVersion: GradleVersion) {
+    assumeThatGradleIsAtLeast(gradleVersion, "7.6") {
+      "Integration between Intellij and Gradle ${gradleVersion.version} doesn't support custom assertion exceptions."
+    }
+    assumeThatGradleIsAtLeast(gradleVersion, "8.4") {
+      "Integration between Junit 4 and Gradle ${gradleVersion.version} doesn't support Opentest4j assertion exceptions."
+    }
+    testJunit4Opentest4jProject(gradleVersion) {
+      val expectedPath = writeText("expected.txt", "Expected text.").path
+      val actualPath = writeText("actual.txt", "Actual text.").path
+
+      writeText("src/test/java/org/example/FileComparisonFailure.java", """
+        |package org.example;
+        |
+        |import org.opentest4j.AssertionFailedError;
+        |import org.opentest4j.ValueWrapper;
+        |import org.opentest4j.FileInfo;
+        |
+        |import java.nio.charset.StandardCharsets;
+        |
+        |public class FileComparisonFailure extends AssertionFailedError {
+        |
+        |  public FileComparisonFailure(String message, String expected, String actual, String expectedFilePath, String actualFilePath) {
+        |    super(message, createFileInfo(expected, expectedFilePath), createFileInfo(actual, actualFilePath));
+        |  }
+        |
+        |  private static ValueWrapper createFileInfo(String text, String path) {
+        |    byte[] contents = text.getBytes(StandardCharsets.UTF_8);
+        |    if (path != null) {
+        |      FileInfo fileInfo = new FileInfo(path, contents);
+        |      return ValueWrapper.create(fileInfo);
+        |    }
+        |    return ValueWrapper.create(text);
+        |  }
+        |}
+      """.trimMargin())
+      writeText("src/test/java/org/example/TestCase.java", """
+        |package org.example;
+        |
+        |import org.opentest4j.AssertionFailedError;
+        |
+        |import org.junit.Test;
+        |
+        |public class TestCase {
+        |
+        |  @Test
+        |  public void test_file_comparison_failure() {
+        |    throw new FileComparisonFailure("assertion message", "Expected text.", "Actual text.", "$expectedPath", "$actualPath");
+        |  }
+        |
+        |  @Test
+        |  public void test_file_comparison_failure_without_actual_file() {
+        |    throw new FileComparisonFailure("assertion message", "Expected text.", "Actual text.", "$expectedPath", null);
+        |  }
+        |}
+      """.trimMargin())
+
+      executeTasks(":test", isRunAsTest = true)
+      assertTestViewTree {
+        assertNode("TestCase") {
+          assertNode("test_file_comparison_failure") {
+            assertTestConsoleContains("""
+              |
+              |assertion message
+              |Expected :Expected text.
+              |Actual   :Actual text.
+              |<Click to see difference>
+              |
+              |org.example.FileComparisonFailure: assertion message
+            """.trimMargin())
+            assertValue { testProxy ->
+              val diffViewerProvider = testProxy.diffViewerProvider!!
+              Assertions.assertEquals(expectedPath, diffViewerProvider.filePath)
+              Assertions.assertEquals(actualPath, diffViewerProvider.actualFilePath)
+            }
+          }
+          assertNode("test_file_comparison_failure_without_actual_file") {
+            assertTestConsoleContains("""
+              |
+              |assertion message
+              |Expected :Expected text.
+              |Actual   :Actual text.
+              |<Click to see difference>
+              |
+              |org.example.FileComparisonFailure: assertion message
+            """.trimMargin())
+            assertValue { testProxy ->
+              val diffViewerProvider = testProxy.diffViewerProvider!!
+              Assertions.assertEquals(expectedPath, diffViewerProvider.filePath)
+              Assertions.assertEquals(null, diffViewerProvider.actualFilePath)
+            }
+          }
+        }
+      }
+    }
+  }
+
+  @ParameterizedTest
+  @AllGradleVersionsSource
+  fun `test assertion result of Junit 4 (Opentest4j FileInfo)`(gradleVersion: GradleVersion) {
+    Assumptions.assumeTrue(gradleVersion.isGradleOlderThan("7.6") || gradleVersion.isGradleAtLeast("8.4")) {
+      "Integration between Junit 4 and Gradle ${gradleVersion.version} doesn't support Opentest4j assertion exceptions."
+    }
+    testJunit4Opentest4jProject(gradleVersion) {
+      val expectedPath = writeText("expected.txt", "Expected text.").path
+      val actualPath = writeText("actual.txt", "Actual text.").path
+
+      writeText("src/test/java/org/example/TestCase.java", """
+        |package org.example;
+        |
+        |import org.junit.Test;
+        |
+        |import org.opentest4j.AssertionFailedError;
+        |import org.opentest4j.FileInfo;
+        |
+        |import java.util.Arrays;
+        |import java.nio.charset.StandardCharsets;
+        |
+        |public class TestCase {
+        |
+        |  @Test
+        |  public void test_assert_equals_for_files() {
+        |    FileInfo expected = new FileInfo("$expectedPath", "Expected text.".getBytes(StandardCharsets.UTF_8));
+        |    FileInfo actual = new FileInfo("$actualPath", "Actual text.".getBytes(StandardCharsets.UTF_8));
+        |    throw new AssertionFailedError("assertion message", expected, actual);
+        |  }
+        |
+        |  @Test
+        |  public void test_assert_equals_for_file_and_text() {
+        |    FileInfo expected = new FileInfo("$expectedPath", "Expected text.".getBytes(StandardCharsets.UTF_8));
+        |    throw new AssertionFailedError("assertion message", expected, "Actual text.");
+        |  }
+        |}
+      """.trimMargin())
+
+      executeTasks(":test", isRunAsTest = true)
+      assertTestViewTree {
+        assertNode("TestCase") {
+          assertNode("test_assert_equals_for_files") {
+            assertTestConsoleContains("""
+              |
+              |assertion message
+              |Expected :Expected text.
+              |Actual   :Actual text.
+              |<Click to see difference>
+              |
+              |org.opentest4j.AssertionFailedError: assertion message
+            """.trimMargin())
+            assertValue { testProxy ->
+              val diffViewerProvider = testProxy.diffViewerProvider!!
+              Assertions.assertEquals(expectedPath, diffViewerProvider.filePath)
+              Assertions.assertEquals(actualPath, diffViewerProvider.actualFilePath)
+            }
+          }
+          assertNode("test_assert_equals_for_file_and_text") {
+            assertTestConsoleContains("""
+              |
+              |assertion message
+              |Expected :Expected text.
+              |Actual   :Actual text.
+              |<Click to see difference>
+              |
+              |org.opentest4j.AssertionFailedError: assertion message
+            """.trimMargin())
+            assertValue { testProxy ->
+              val diffViewerProvider = testProxy.diffViewerProvider!!
+              Assertions.assertEquals(expectedPath, diffViewerProvider.filePath)
+              Assertions.assertEquals(null, diffViewerProvider.actualFilePath)
+            }
+          }
+        }
+      }
+    }
+  }
+
+  @ParameterizedTest
+  @AllGradleVersionsSource
   fun `test assertion result of Junit 5 (IJ FileComparisonFailure)`(gradleVersion: GradleVersion) {
     assumeThatJunit5IsSupported(gradleVersion)
     val fixture = GradleTestFixtureBuilder.create("GradleTestAssertionTest-file-comparison-junit-5") {
@@ -1745,6 +1923,176 @@ class GradleTestAssertionTest : GradleExecutionTestCase() {
             assertTestConsoleContains("""
               |com.intellij.rt.execution.junit.FileComparisonFailure: assertion message expected:<[Expected] text.> but was:<[Actual] text.>
             """.trimMargin())
+          }
+        }
+      }
+    }
+  }
+
+  @ParameterizedTest
+  @AllGradleVersionsSource
+  fun `test assertion result of Junit 5 (Opentest4j FileComparisonFailure)`(gradleVersion: GradleVersion) {
+    assumeThatGradleIsAtLeast(gradleVersion, "7.6") {
+      "Integration between Intellij and Gradle ${gradleVersion.version} doesn't support custom assertion exceptions."
+    }
+    testJunit5Project(gradleVersion) {
+      val expectedPath = writeText("expected.txt", "Expected text.").path
+      val actualPath = writeText("actual.txt", "Actual text.").path
+
+      writeText("src/test/java/org/example/FileComparisonFailure.java", """
+        |package org.example;
+        |
+        |import org.opentest4j.AssertionFailedError;
+        |import org.opentest4j.ValueWrapper;
+        |import org.opentest4j.FileInfo;
+        |
+        |import java.nio.charset.StandardCharsets;
+        |
+        |public class FileComparisonFailure extends AssertionFailedError {
+        |
+        |  public FileComparisonFailure(String message, String expected, String actual, String expectedFilePath, String actualFilePath) {
+        |    super(message, createFileInfo(expected, expectedFilePath), createFileInfo(actual, actualFilePath));
+        |  }
+        |
+        |  private static ValueWrapper createFileInfo(String text, String path) {
+        |    byte[] contents = text.getBytes(StandardCharsets.UTF_8);
+        |    if (path != null) {
+        |      FileInfo fileInfo = new FileInfo(path, contents);
+        |      return ValueWrapper.create(fileInfo);
+        |    }
+        |    return ValueWrapper.create(text);
+        |  }
+        |}
+      """.trimMargin())
+      writeText("src/test/java/org/example/TestCase.java", """
+        |package org.example;
+        |
+        |import org.junit.jupiter.api.Assertions;
+        |import org.junit.jupiter.api.Test;
+        |
+        |public class TestCase {
+        |
+        |  @Test
+        |  public void test_file_comparison_failure() {
+        |    throw new FileComparisonFailure("assertion message", "Expected text.", "Actual text.", "$expectedPath", "$actualPath");
+        |  }
+        |
+        |  @Test
+        |  public void test_file_comparison_failure_without_actual_file() {
+        |    throw new FileComparisonFailure("assertion message", "Expected text.", "Actual text.", "$expectedPath", null);
+        |  }
+        |}
+      """.trimMargin())
+
+      executeTasks(":test", isRunAsTest = true)
+      assertTestViewTree {
+        assertNode("TestCase") {
+          assertNode("test_file_comparison_failure") {
+            assertTestConsoleContains("""
+              |
+              |assertion message
+              |Expected :Expected text.
+              |Actual   :Actual text.
+              |<Click to see difference>
+              |
+              |org.example.FileComparisonFailure: assertion message
+            """.trimMargin())
+            assertValue { testProxy ->
+              val diffViewerProvider = testProxy.diffViewerProvider!!
+              Assertions.assertEquals(expectedPath, diffViewerProvider.filePath)
+              Assertions.assertEquals(actualPath, diffViewerProvider.actualFilePath)
+            }
+          }
+          assertNode("test_file_comparison_failure_without_actual_file") {
+            assertTestConsoleContains("""
+              |
+              |assertion message
+              |Expected :Expected text.
+              |Actual   :Actual text.
+              |<Click to see difference>
+              |
+              |org.example.FileComparisonFailure: assertion message
+            """.trimMargin())
+            assertValue { testProxy ->
+              val diffViewerProvider = testProxy.diffViewerProvider!!
+              Assertions.assertEquals(expectedPath, diffViewerProvider.filePath)
+              Assertions.assertEquals(null, diffViewerProvider.actualFilePath)
+            }
+          }
+        }
+      }
+    }
+  }
+
+  @ParameterizedTest
+  @AllGradleVersionsSource
+  fun `test assertion result of Junit 5 (Opentest4j FileInfo)`(gradleVersion: GradleVersion) {
+    testJunit5Project(gradleVersion) {
+      val expectedPath = writeText("expected.txt", "Expected text.").path
+      val actualPath = writeText("actual.txt", "Actual text.").path
+
+      writeText("src/test/java/org/example/TestCase.java", """
+        |package org.example;
+        |
+        |import org.junit.jupiter.api.Test;
+        |
+        |import org.opentest4j.AssertionFailedError;
+        |import org.opentest4j.FileInfo;
+        |
+        |import java.util.Arrays;
+        |import java.nio.charset.StandardCharsets;
+        |
+        |public class TestCase {
+        |
+        |  @Test
+        |  public void test_assert_equals_for_files() {
+        |    FileInfo expected = new FileInfo("$expectedPath", "Expected text.".getBytes(StandardCharsets.UTF_8));
+        |    FileInfo actual = new FileInfo("$actualPath", "Actual text.".getBytes(StandardCharsets.UTF_8));
+        |    throw new AssertionFailedError("assertion message", expected, actual);
+        |  }
+        |
+        |  @Test
+        |  public void test_assert_equals_for_file_and_text() {
+        |    FileInfo expected = new FileInfo("$expectedPath", "Expected text.".getBytes(StandardCharsets.UTF_8));
+        |    throw new AssertionFailedError("assertion message", expected, "Actual text.");
+        |  }
+        |}
+      """.trimMargin())
+
+      executeTasks(":test", isRunAsTest = true)
+      assertTestViewTree {
+        assertNode("TestCase") {
+          assertNode("test_assert_equals_for_files") {
+            assertTestConsoleContains("""
+              |
+              |assertion message
+              |Expected :Expected text.
+              |Actual   :Actual text.
+              |<Click to see difference>
+              |
+              |org.opentest4j.AssertionFailedError: assertion message
+            """.trimMargin())
+            assertValue { testProxy ->
+              val diffViewerProvider = testProxy.diffViewerProvider!!
+              Assertions.assertEquals(expectedPath, diffViewerProvider.filePath)
+              Assertions.assertEquals(actualPath, diffViewerProvider.actualFilePath)
+            }
+          }
+          assertNode("test_assert_equals_for_file_and_text") {
+            assertTestConsoleContains("""
+              |
+              |assertion message
+              |Expected :Expected text.
+              |Actual   :Actual text.
+              |<Click to see difference>
+              |
+              |org.opentest4j.AssertionFailedError: assertion message
+            """.trimMargin())
+            assertValue { testProxy ->
+              val diffViewerProvider = testProxy.diffViewerProvider!!
+              Assertions.assertEquals(expectedPath, diffViewerProvider.filePath)
+              Assertions.assertEquals(null, diffViewerProvider.actualFilePath)
+            }
           }
         }
       }
