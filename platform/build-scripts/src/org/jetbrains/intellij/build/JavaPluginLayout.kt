@@ -5,19 +5,14 @@ import org.jetbrains.intellij.build.impl.LibraryPackMode
 import org.jetbrains.intellij.build.impl.PluginLayout
 
 object JavaPluginLayout {
-
   const val MAIN_MODULE_NAME = "intellij.java.plugin"
   const val MAIN_FRONTEND_MODULE_NAME = "intellij.java.frontend"
 
-
-  @JvmStatic
-  @JvmOverloads
   fun javaPlugin(addition: ((PluginLayout.PluginLayoutSpec) -> Unit)? = null): PluginLayout {
     return PluginLayout.plugin(MAIN_MODULE_NAME) { spec ->
       spec.directoryName = "java"
 
-      val mainJarName = "java-impl.jar"
-      spec.mainJarName = mainJarName
+      spec.mainJarName = "java-impl.jar"
 
       spec.excludeFromModule("intellij.java.resources.en", "search/searchableOptions.xml")
 
@@ -26,8 +21,8 @@ object JavaPluginLayout {
       spec.withModule("intellij.platform.jps.build.javac.rt", "jps-builders-6.jar")
       spec.withModule("intellij.java.aetherDependencyResolver", "aether-dependency-resolver.jar")
       spec.withModule("intellij.java.jshell.protocol", "jshell-protocol.jar")
-      spec.withModule("intellij.java.resources", mainJarName)
-      spec.withModule("intellij.java.resources.en", mainJarName)
+      spec.withModule("intellij.java.resources")
+      spec.withModule("intellij.java.resources.en")
 
       for (moduleName in listOf(
         "intellij.java.compiler.antTasks",
@@ -55,6 +50,7 @@ object JavaPluginLayout {
         "intellij.java.uast.ide",
       ))
 
+      @Suppress("SpellCheckingInspection")
       for (moduleName in listOf(
         "intellij.java.frontback.impl",
         "intellij.java.frontback.psi",
@@ -114,16 +110,14 @@ object JavaPluginLayout {
   /**
    * A special plugin for JetBrains Client
    */
-  @JvmStatic
   fun javaFrontendPlugin(): PluginLayout {
     return PluginLayout.plugin(MAIN_FRONTEND_MODULE_NAME) { spec ->
-      spec.withModules(
-        listOf(
-          "intellij.java.frontback.impl",
-          "intellij.java.frontback.psi",
-          "intellij.java.frontback.psi.impl",
-        )
-      )
+      @Suppress("SpellCheckingInspection")
+      spec.withModules(listOf(
+        "intellij.java.frontback.impl",
+        "intellij.java.frontback.psi",
+        "intellij.java.frontback.psi.impl",
+      ))
     }
   }
 }
