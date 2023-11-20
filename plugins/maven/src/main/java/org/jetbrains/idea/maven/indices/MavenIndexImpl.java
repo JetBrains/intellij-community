@@ -221,6 +221,7 @@ public final class MavenIndexImpl implements MavenIndex {
   public void updateOrRepair(boolean fullUpdate, MavenProgressIndicator progress, boolean multithreaded)
     throws MavenProcessCanceledException {
     StructuredIdeActivity activity = MavenIndexUsageCollector.INDEX_UPDATE.started(null);
+    boolean isSuccess = false;
     try {
       indexUpdateLock.lock();
 
@@ -260,6 +261,7 @@ public final class MavenIndexImpl implements MavenIndex {
       myFailureMessage = null;
 
       MavenLog.LOG.debug("finish update index " + this);
+      isSuccess = true;
     }
     catch (MavenProcessCanceledException e) {
       throw e;
@@ -269,12 +271,13 @@ public final class MavenIndexImpl implements MavenIndex {
     }
     finally {
       boolean isCentral = isForCentral();
+      boolean finalIsSuccess = isSuccess;
       activity.finished(() ->
                           Arrays.asList(
                             MavenIndexUsageCollector.IS_LOCAL.with(myKind == IndexKind.LOCAL),
                             MavenIndexUsageCollector.IS_CENTRAL.with(myKind == IndexKind.REMOTE && isCentral),
                             MavenIndexUsageCollector.IS_PRIVATE_REMOTE.with(myKind == IndexKind.REMOTE && !isCentral),
-                            MavenIndexUsageCollector.IS_SUCCESS.with(!isBroken),
+                            MavenIndexUsageCollector.IS_SUCCESS.with(finalIsSuccess),
                             MavenIndexUsageCollector.MANUAL.with(multithreaded)
                           )
       );
