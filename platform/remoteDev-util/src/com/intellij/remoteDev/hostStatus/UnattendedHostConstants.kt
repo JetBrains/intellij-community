@@ -32,6 +32,9 @@ data class UnattendedHostStatus(
   val modalDialogIsOpened: Boolean,
   val idePath: String,
 
+  // available since 2024.1 - helps determine which host IDE is which after restart
+  val ideIdentityString: String?,
+
   // join links at app level are available since 2023.1
   val joinLink: String?,
   val httpLink: String?,
