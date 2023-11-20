@@ -135,8 +135,7 @@ public abstract class CompletionPhase implements Disposable {
       Editor topLevelEditor = InjectedLanguageEditorUtil.getTopLevelEditor(_editor);
       int offset = topLevelEditor.getCaretModel().getOffset();
 
-      TypedEvent event = condition == null ? null : _editor.getUserData(AUTO_POPUP_TYPED_EVENT);
-      CommittingDocuments phase = getCompletionPhase(prevIndicator, topLevelEditor, event);
+      CommittingDocuments phase = getCompletionPhase(prevIndicator, topLevelEditor, _editor.getUserData(AUTO_POPUP_TYPED_EVENT));
 
       boolean autopopup = prevIndicator == null || prevIndicator.isAutopopupCompletion();
 

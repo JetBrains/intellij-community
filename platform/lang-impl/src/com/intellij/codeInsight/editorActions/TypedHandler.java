@@ -163,11 +163,12 @@ public final class TypedHandler extends TypedActionHandlerBase {
       Editor editor = injectedEditorIfCharTypedIsSignificant(charTyped, originalEditor, originalFile);
       PsiFile file = editor == originalEditor ? originalFile : Objects.requireNonNull(psiDocumentManager.getPsiFile(editor.getDocument()));
 
-      editor.putUserData(CompletionPhase.AUTO_POPUP_TYPED_EVENT, new TypedEvent(charTyped, editor.getCaretModel().getOffset()));
       try {
         if (caret == originalEditor.getCaretModel().getPrimaryCaret()) {
+          setTypedEvent(editor, charTyped, TypedEvent.TypedHandlerPhase.CHECK_AUTO_POPUP);
           boolean handled = callDelegates(TypedHandlerDelegate::checkAutoPopup, charTyped, project, editor, file);
           if (!handled) {
+            setTypedEvent(editor, charTyped, TypedEvent.TypedHandlerPhase.AUTO_POPUP);
             autoPopupCompletion(editor, charTyped, project, file);
             autoPopupParameterInfo(editor, charTyped, project, file);
           }
@@ -182,6 +183,7 @@ public final class TypedHandler extends TypedActionHandlerBase {
           return;
         }
 
+        setTypedEvent(editor, charTyped, TypedEvent.TypedHandlerPhase.BEFORE_SELECTION_REMOVED);
         if (callDelegates(TypedHandlerDelegate::beforeSelectionRemoved, charTyped, project, editor, file)) {
           return;
         }
@@ -190,6 +192,7 @@ public final class TypedHandler extends TypedActionHandlerBase {
 
         FileType fileType = getFileType(file, editor);
 
+        setTypedEvent(editor, charTyped, TypedEvent.TypedHandlerPhase.BEFORE_CHAR_TYPED);
         TypedDelegateFunc func = (delegate, c1, p1, e1, f1) -> delegate.beforeCharTyped(c1, p1, e1, f1, fileType);
         if (callDelegates(func, charTyped, project, editor, file)) {
           return;
@@ -224,6 +227,7 @@ public final class TypedHandler extends TypedActionHandlerBase {
           indentClosingParenth(project, editor);
         }
 
+        setTypedEvent(editor, charTyped, TypedEvent.TypedHandlerPhase.CHAR_TYPED);
         if (callDelegates(TypedHandlerDelegate::charTyped, charTyped, project, editor, file)) {
           return;
         }
@@ -239,6 +243,15 @@ public final class TypedHandler extends TypedActionHandlerBase {
         editor.putUserData(CompletionPhase.AUTO_POPUP_TYPED_EVENT, null);
       }
     });
+  }
+
+  private static void setTypedEvent(@NotNull Editor editor, char charTyped, @Nullable TypedEvent.TypedHandlerPhase phase) {
+    if (phase == null) {
+      editor.putUserData(CompletionPhase.AUTO_POPUP_TYPED_EVENT, null);
+    }
+    else {
+      editor.putUserData(CompletionPhase.AUTO_POPUP_TYPED_EVENT, new TypedEvent(charTyped, editor.getCaretModel().getOffset(), phase));
+    }
   }
 
   @FunctionalInterface
