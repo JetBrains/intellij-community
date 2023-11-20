@@ -3,7 +3,7 @@ package com.intellij.platform.ae.database.tests.dbs.timespan
 
 import com.intellij.platform.ae.database.tests.dbs.runDatabaseLayerTest
 import com.intellij.platform.ae.database.activities.DatabaseBackedTimeSpanUserActivity
-import com.intellij.platform.ae.database.dbs.SqliteInitializedDatabase
+import com.intellij.platform.ae.database.dbs.SqliteLazyInitializedDatabase
 import com.intellij.platform.ae.database.dbs.timespan.TimeSpanUserActivityDatabase
 import com.intellij.platform.ae.database.utils.InstantUtils
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
@@ -14,7 +14,7 @@ import kotlin.time.Duration.Companion.seconds
 import kotlin.time.toJavaDuration
 
 class TimeSpanUserActivityDatabaseTest : BasePlatformTestCase() {
-  private val databaseFactory = { cs: CoroutineScope, initDb: SqliteInitializedDatabase ->
+  private val databaseFactory = { cs: CoroutineScope, initDb: SqliteLazyInitializedDatabase ->
     TimeSpanUserActivityDatabase(cs, initDb)
   }
 
@@ -29,7 +29,7 @@ class TimeSpanUserActivityDatabaseTest : BasePlatformTestCase() {
     val isFinished: Boolean,
   )
 
-  private suspend fun SqliteInitializedDatabase.getActivityEvents(activityId: String): List<TestEvent> {
+  private suspend fun SqliteLazyInitializedDatabase.getActivityEvents(activityId: String): List<TestEvent> {
     val stmt = connection.prepareStatement(
       """ 
       SELECT id, activity_id, started_at, ended_at, is_finished

@@ -8,7 +8,7 @@ interface CounterUserActivity : UserActivity
 
 abstract class DatabaseBackedCounterUserActivity : CounterUserActivity {
   protected val coroutineScope get() = com.intellij.platform.ae.database.AEDatabaseLifetime.getScope()
-  protected fun getDatabase() = AEUserActivityDatabase.getDatabase<CounterUserActivityDatabase>()
+  protected suspend fun getDatabase() = AEUserActivityDatabase.getDatabaseAsync<CounterUserActivityDatabase>()
 }
 
 abstract class WritableDatabaseBackedCounterUserActivity : DatabaseBackedCounterUserActivity() {

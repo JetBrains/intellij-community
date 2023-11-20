@@ -11,7 +11,7 @@ interface TimeSpanUserActivity : UserActivity
 
 abstract class DatabaseBackedTimeSpanUserActivity : TimeSpanUserActivity {
   protected val coroutineScope get() = AEDatabaseLifetime.getScope()
-  protected fun getDatabase() = AEUserActivityDatabase.getDatabase<TimeSpanUserActivityDatabase>()
+  protected suspend fun getDatabase() = AEUserActivityDatabase.getDatabaseAsync<TimeSpanUserActivityDatabase>()
 }
 
 abstract class WritableDatabaseBackedTimeSpanUserActivity : DatabaseBackedTimeSpanUserActivity() {

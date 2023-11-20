@@ -2,7 +2,7 @@
 package com.intellij.platform.ae.database.tests.dbs
 
 import com.intellij.platform.ae.database.dbs.IUserActivityDatabaseLayer
-import com.intellij.platform.ae.database.dbs.SqliteInitializedDatabase
+import com.intellij.platform.ae.database.dbs.SqliteLazyInitializedDatabase
 import com.intellij.testFramework.common.timeoutRunBlocking
 import kotlinx.coroutines.*
 
@@ -10,19 +10,19 @@ import kotlinx.coroutines.*
  * Runs a test for [IUserActivityDatabaseLayer]
  */
 fun <T : IUserActivityDatabaseLayer> runDatabaseLayerTest(
-  dbFactory: (CoroutineScope, SqliteInitializedDatabase) -> T,
+  dbFactory: (CoroutineScope, SqliteLazyInitializedDatabase) -> T,
   action: suspend (T) -> Unit,
 ) = runInitializedDatabaseTestInternal { cs, db -> action(dbFactory(cs, db)) }
 
 fun <T : IUserActivityDatabaseLayer> runDatabaseLayerTest(
-  dbFactory: (CoroutineScope, SqliteInitializedDatabase) -> T,
-  action: suspend (T, SqliteInitializedDatabase) -> Unit,
+  dbFactory: (CoroutineScope, SqliteLazyInitializedDatabase) -> T,
+  action: suspend (T, SqliteLazyInitializedDatabase) -> Unit,
 ) = runInitializedDatabaseTestInternal { cs, db -> action(dbFactory(cs, db), db) }
 
-private fun runInitializedDatabaseTestInternal(action: suspend (CoroutineScope, SqliteInitializedDatabase) -> Unit) {
+private fun runInitializedDatabaseTestInternal(action: suspend (CoroutineScope, SqliteLazyInitializedDatabase) -> Unit) {
   timeoutRunBlocking {
     withContext(Dispatchers.IO) {
-      val db = SqliteInitializedDatabase(this, null)
+      val db = SqliteLazyInitializedDatabase(this, null)
       action(this, db)
       db.onCoroutineScopeDeath()
       cancel()

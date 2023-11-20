@@ -14,7 +14,6 @@ import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.io.createDirectories
 import kotlinx.coroutines.CoroutineScope
 import java.nio.file.Path
-import java.util.concurrent.locks.ReentrantLock
 import kotlin.reflect.KClass
 
 private val logger = logger<AEUserActivityDatabase>()
@@ -29,7 +28,7 @@ internal class AEUserActivityDatabase(private val cs: CoroutineScope) {
     inline fun <reified T : IUserActivityDatabaseLayer> getDatabase() = ApplicationManager.getApplication().service<AEUserActivityDatabase>().getDatabase<T>()
   }
 
-  private var db: SqliteInitializedDatabase? = null
+  private var db: SqliteLazyInitializedDatabase? = null
   private val layers = HashMap<String, IUserActivityDatabaseLayer>()
 
   private val layersFactories = listOf(
@@ -75,7 +74,7 @@ internal class AEUserActivityDatabase(private val cs: CoroutineScope) {
     }
   }
 
-  private fun safeGetDb(): SqliteInitializedDatabase {
+  private fun safeGetDb(): SqliteLazyInitializedDatabase {
     val currentDb = db
     return if (currentDb == null) {
       logger.info("DB is not yet init")
@@ -88,7 +87,7 @@ internal class AEUserActivityDatabase(private val cs: CoroutineScope) {
     }
   }
 
-  private fun initLayer(clazz: Class<*>, database: SqliteInitializedDatabase): IUserActivityDatabaseLayer? {
+  private fun initLayer(clazz: Class<*>, database: SqliteLazyInitializedDatabase): IUserActivityDatabaseLayer? {
     val layerFactory = layersFactories.firstOrNull { it.clazz.java == clazz }
     if (layerFactory == null) {
       logger.warn("Layer ${clazz.simpleName} not found")
@@ -98,8 +97,8 @@ internal class AEUserActivityDatabase(private val cs: CoroutineScope) {
     return layerFactory.getInstance(cs, database)
   }
 
-  private fun initDb(): SqliteInitializedDatabase {
-    val theDb = SqliteInitializedDatabase(cs, getDatabasePath())
+  private fun initDb(): SqliteLazyInitializedDatabase {
+    val theDb = SqliteLazyInitializedDatabase(getDatabasePath())
     db = theDb
 
     return theDb
@@ -116,9 +115,9 @@ internal class AEUserActivityDatabase(private val cs: CoroutineScope) {
 
   private class DatabaseFactory<T : IUserActivityDatabaseLayer> (
     val clazz: KClass<T>,
-    val prod: (cs: CoroutineScope, db: SqliteInitializedDatabase) -> IUserActivityDatabaseLayer,
+    val prod: (cs: CoroutineScope, db: SqliteLazyInitializedDatabase) -> IUserActivityDatabaseLayer,
     val test: (cs: CoroutineScope) -> IUserActivityDatabaseLayer
   ) {
-    fun getInstance(cs: CoroutineScope, db: SqliteInitializedDatabase): IUserActivityDatabaseLayer = if (ApplicationManager.getApplication().isUnitTestMode) test(cs) else prod(cs, db)
+    fun getInstance(cs: CoroutineScope, db: SqliteLazyInitializedDatabase): IUserActivityDatabaseLayer = if (ApplicationManager.getApplication().isUnitTestMode) test(cs) else prod(cs, db)
   }
 }

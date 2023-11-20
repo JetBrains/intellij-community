@@ -2,7 +2,7 @@
 package com.intellij.platform.ae.database.tests.dbs.counter
 
 import com.intellij.platform.ae.database.activities.DatabaseBackedCounterUserActivity
-import com.intellij.platform.ae.database.dbs.SqliteInitializedDatabase
+import com.intellij.platform.ae.database.dbs.SqliteLazyInitializedDatabase
 import com.intellij.platform.ae.database.dbs.counter.CounterUserActivityDatabase
 import com.intellij.platform.ae.database.tests.dbs.runDatabaseLayerTest
 import com.intellij.platform.ae.database.utils.InstantUtils
@@ -11,7 +11,7 @@ import kotlinx.coroutines.CoroutineScope
 import org.junit.Assert
 
 class CounterUserActivityDatabaseTest : BasePlatformTestCase() {
-  private val databaseFactory = { cs: CoroutineScope, initDb: SqliteInitializedDatabase ->
+  private val databaseFactory = { cs: CoroutineScope, initDb: SqliteLazyInitializedDatabase ->
     CounterUserActivityDatabase(cs, initDb)
   }
 

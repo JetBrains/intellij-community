@@ -10,13 +10,12 @@ import com.intellij.platform.ae.database.activities.WritableDatabaseBackedTimeSp
 import com.intellij.platform.ae.database.dbs.IInternalUserActivityDatabaseLayer
 import com.intellij.platform.ae.database.dbs.ISqliteBackedDatabaseLayer
 import com.intellij.platform.ae.database.dbs.IUserActivityDatabaseLayer
-import com.intellij.platform.ae.database.dbs.SqliteInitializedDatabase
+import com.intellij.platform.ae.database.dbs.SqliteLazyInitializedDatabase
 import com.intellij.platform.ae.database.formatString
 import com.intellij.platform.ae.database.models.TimeSpan
 import com.intellij.platform.ae.database.utils.BooleanUtils
 import com.intellij.platform.ae.database.utils.InstantUtils
 import kotlinx.coroutines.CoroutineScope
-import org.jetbrains.sqlite.ObjectBinder
 import org.jetbrains.sqlite.ObjectBinderFactory
 import java.time.Instant
 
@@ -27,11 +26,11 @@ enum class TimeSpanUserActivityDatabaseManualKind {
 
 private val logger = logger<TimeSpanUserActivityDatabase>()
 
-class TimeSpanUserActivityDatabase(cs: CoroutineScope, val database: SqliteInitializedDatabase) : IUserActivityDatabaseLayer,
-                                                                                                          IReadOnlyTimeSpanUserActivityDatabase,
-                                                                                                          ITimeSpanUserActivityDatabase,
-                                                                                                          IInternalTimeSpanUserActivityDatabase,
-                                                                                                          ISqliteBackedDatabaseLayer {
+class TimeSpanUserActivityDatabase(cs: CoroutineScope, val database: SqliteLazyInitializedDatabase) : IUserActivityDatabaseLayer,
+                                                                                                      IReadOnlyTimeSpanUserActivityDatabase,
+                                                                                                      ITimeSpanUserActivityDatabase,
+                                                                                                      IInternalTimeSpanUserActivityDatabase,
+                                                                                                      ISqliteBackedDatabaseLayer {
   private val throttler = TimeSpanUserActivityDatabaseThrottler(cs, this)
 
   override suspend fun getLongestActivity(activity: DatabaseBackedTimeSpanUserActivity, from: Instant?, until: Instant?): TimeSpan {

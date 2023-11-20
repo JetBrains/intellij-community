@@ -8,7 +8,7 @@ import com.intellij.platform.ae.database.IdService
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.platform.ae.database.activities.DatabaseBackedCounterUserActivity
 import com.intellij.platform.ae.database.dbs.IUserActivityDatabaseLayer
-import com.intellij.platform.ae.database.dbs.SqliteInitializedDatabase
+import com.intellij.platform.ae.database.dbs.SqliteLazyInitializedDatabase
 import com.intellij.platform.ae.database.utils.InstantUtils
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.sqlite.ObjectBinderFactory
@@ -19,10 +19,10 @@ import java.time.Instant
  *
  * All events are rounded to a minute, seconds and milliseconds are always 0
  */
-class CounterUserActivityDatabase(cs: CoroutineScope, private val database: SqliteInitializedDatabase) : ICounterUserActivityDatabase,
-                                                                                                         IUserActivityDatabaseLayer,
-                                                                                                         IReadOnlyCounterUserActivityDatabase,
-                                                                                                         IInternalCounterUserActivityDatabase {
+class CounterUserActivityDatabase(cs: CoroutineScope, private val database: SqliteLazyInitializedDatabase) : ICounterUserActivityDatabase,
+                                                                                                             IUserActivityDatabaseLayer,
+                                                                                                             IReadOnlyCounterUserActivityDatabase,
+                                                                                                             IInternalCounterUserActivityDatabase {
   private val throttler = CounterUserActivityDatabaseThrottler(cs, this, runBackgroundUpdater = !ApplicationManager.getApplication().isUnitTestMode)
 
   /**

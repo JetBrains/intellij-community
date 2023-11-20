@@ -6,7 +6,7 @@ import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.platform.ae.database.dbs.SqliteInitializedDatabase
+import com.intellij.platform.ae.database.dbs.SqliteLazyInitializedDatabase
 import java.util.UUID
 
 private val logger = logger<IdService>()
@@ -25,7 +25,7 @@ class IdService : PersistentStateComponent<IdService.State> {
 
   val machineId by lazy { MachineIdManager.getAnonymizedMachineId("com.intellij.platform.ae.database", "salty") ?: "undefined" }
 
-  fun getDatabaseId(db: SqliteInitializedDatabase) = db.ideId
+  fun getDatabaseId(db: SqliteLazyInitializedDatabase) = db.metadata.ideId
 
   val ideCode by lazy {
     ApplicationInfo.getInstance().build.productCode.ifBlank {
