@@ -327,6 +327,29 @@
         </jar>
     </target>
 
+    <target name="repackage" depends="repackage-app-jar,repackage-java-plugin"/>
+
+    <!-- We need this to remove IdeaApplicationInfo.xml and IdeaPlugin.xml from platform-impl.jar.
+    MPS declare its own files -->
+    <target name="repackage-app-jar" description="Remove IDEA specific descriptors">
+        <jar destfile="${community.out}/dist.all/lib/stripped.jar" zip64Mode="always">
+            <zipfileset src="${community.out}/dist.all/lib/app.jar" excludes="idea/IdeaApplicationInfo.xml,META-INF/IdeaPlugin.xml" />
+        </jar>
+        <move file="${community.out}/dist.all/lib/stripped.jar" tofile="${community.out}/dist.all/lib/app.jar"/>
+    </target>
+
+    <!-- We need this to initialize JRT FS before repository to read JDK solution later.
+    It's quite impossible to change loading of modules/models to lazy variant.
+    Also, a possible solution is to load JRT roots with IO FS -->
+    <!--In java-impl.jar, we remove META-INF contents for Idea not to try loading plugins from it (see MPS-30538) -->
+    <target name="repackage-java-plugin" description="Remove IDEA specific descriptors">
+        <jar destfile="${community.out}/dist.all/plugins/java/lib/stripped.jar" zip64Mode="always">
+            <zipfileset src="${community.out}/dist.all/plugins/java/lib/java-impl.jar" excludes="META-INF/**" />
+        </jar>
+        <copy file="${community.out}/dist.all/plugins/java/lib/stripped.jar" tofile="${community.out}/dist.all/lib/java-impl.jar"/>
+        <move file="${community.out}/dist.all/plugins/java/lib/stripped.jar" tofile="${community.out}/dist.all/plugins/java/lib/java-impl.jar"/>
+    </target>
+
     <target name="build" depends="pull,prepare,compile"
             description="Build patched IDEA Community sources to create MPS platform"/>
 
