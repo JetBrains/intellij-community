@@ -19,11 +19,11 @@ internal abstract class ServiceRetrievingInspectionBase : DevKitUastInspectionBa
 
   protected abstract val additionalMethodNames: Array<String>
 
-  private val serviceKtFileMethods = CallMatcher.staticCall(
+  protected val serviceKtFileMethods = CallMatcher.staticCall(
     "com.intellij.openapi.components.ServiceKt", "service", *additionalMethodNames
   ).parameterCount(0)
 
-  private val componentManagerGetServiceMethods = CallMatcher.anyOf(
+  protected val componentManagerGetServiceMethods = CallMatcher.anyOf(
     CallMatcher.instanceCall(ComponentManager::class.java.canonicalName, "getService").parameterTypes(CommonClassNames.JAVA_LANG_CLASS),
     CallMatcher.staticCall("com.intellij.openapi.components.ServicesKt", "service", *additionalMethodNames)
       .parameterTypes(ComponentManager::class.java.canonicalName),

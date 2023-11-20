@@ -64,6 +64,10 @@ internal class KtSimplifiableServiceRetrievingInspectionTest : SimplifiableServi
     doTestWithServicesKt()
   }
 
+  fun testServiceKtMethods() {
+    doTestWithServiceKt()
+  }
+
   fun doTestWithServicesKt() {
     @Language("kotlin") val servicesKtFileText = """
       @file:JvmName("ServicesKt")
@@ -75,6 +79,20 @@ internal class KtSimplifiableServiceRetrievingInspectionTest : SimplifiableServi
       inline fun <reified T : Any> ComponentManager.serviceOrNull(): T? {}
     """
     myFixture.configureByText(KotlinFileType.INSTANCE, servicesKtFileText)
+    doTest()
+  }
+
+  fun doTestWithServiceKt() {
+    @Language("kotlin") val serviceKtFileText = """
+      @file:JvmName("ServiceKt")
+
+      package com.intellij.openapi.components
+
+      inline fun <reified T : Any> service(): T {}
+      inline fun <reified T : Any> serviceIfCreated(): T? {}
+      inline fun <reified T : Any> serviceOrNull(): T? {}
+    """
+    myFixture.configureByText(KotlinFileType.INSTANCE, serviceKtFileText)
     doTest()
   }
 }
