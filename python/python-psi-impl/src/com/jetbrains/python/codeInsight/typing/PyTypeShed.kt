@@ -22,6 +22,7 @@ import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.util.QualifiedName
+import com.intellij.util.PlatformUtils
 import com.jetbrains.python.PyPsiPackageUtil
 import com.jetbrains.python.PythonHelpersLocator
 import com.jetbrains.python.PythonRuntimeService
@@ -102,7 +103,7 @@ object PyTypeShed {
       val alternativePossiblePackages = PyPsiPackageUtil.PACKAGES_TOPLEVEL[possiblePackage] ?: ""
 
       val packageManager = PyPackageManagers.getInstance().forSdk(sdk)
-      val installedPackages = if (ApplicationManager.getApplication().isHeadlessEnvironment) {
+      val installedPackages = if (ApplicationManager.getApplication().isHeadlessEnvironment && !PlatformUtils.isFleetBackend()) {
         packageManager.refreshAndGetPackages(false)
       }
       else {
