@@ -1058,7 +1058,7 @@ internal sealed class AbstractEntityStorage : EntityStorageInstrumentation {
   override fun <T: WorkspaceEntity> initializeEntity(entityId: EntityId, newInstance: (() -> T)): T = newInstance()
 
   internal fun assertConsistencyInStrictMode(message: String) {
-    if (ConsistencyCheckingMode.current != ConsistencyCheckingMode.DISABLED) {
+    if (ConsistencyCheckingMode.current != ConsistencyCheckingMode.DISABLED && !ConsistencyCheckingDisabler.isDisabled()) {
       try {
         this.assertConsistency()
       }

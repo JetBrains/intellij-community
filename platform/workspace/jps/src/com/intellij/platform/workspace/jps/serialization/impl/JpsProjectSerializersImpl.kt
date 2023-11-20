@@ -10,6 +10,7 @@ import com.intellij.platform.workspace.jps.*
 import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.jps.serialization.SerializationContext
 import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.impl.ConsistencyCheckingDisabler
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.util.PathUtilRt
@@ -460,17 +461,15 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
   }
 
   private fun squash(builders: List<MutableEntityStorage>): MutableEntityStorage {
-    var result = builders
+    val target = MutableEntityStorage.create()
 
-    while (result.size > 1) {
-      result = result.chunked(2) { list ->
-        val res = list.first()
-        if (list.size == 2) res.addDiff(list.last())
-        res
-      }
+    // Consistency check takes a lot of time when we make an "accumulator" storage.
+    // To avoid a huge impact on performance metrics, we turn off consistency check for this particular case.
+    // However, in general, this place should be refactored: instead of returning builders, we should return entities themselves.
+    ConsistencyCheckingDisabler.withDisabled {
+      builders.forEach { builder -> target.addDiff(builder) }
     }
-
-    return result.singleOrNull() ?: MutableEntityStorage.create()
+    return target
   }
 
   @TestOnly
