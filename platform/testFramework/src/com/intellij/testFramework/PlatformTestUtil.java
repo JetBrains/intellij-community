@@ -25,10 +25,8 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.impl.FileTemplateManagerImpl;
-import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
-import com.intellij.ide.util.treeView.AbstractTreeUi;
 import com.intellij.model.psi.PsiSymbolReferenceService;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -320,11 +318,7 @@ public final class PlatformTestUtil {
       UIUtil.dispatchAllInvocationEvents();
       return async.isProcessing();
     }
-    AbstractTreeBuilder builder = AbstractTreeBuilder.getBuilderFor(tree);
-    if (builder == null) return false;
-    AbstractTreeUi ui = builder.getUi();
-    if (ui == null) return false;
-    return ui.hasPendingWork();
+    return false;
   }
 
   public static void waitWhileBusy(@NotNull JTree tree) {

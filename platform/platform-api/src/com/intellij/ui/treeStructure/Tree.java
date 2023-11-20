@@ -4,7 +4,8 @@ package com.intellij.ui.treeStructure;
 import com.intellij.ide.ActivityTracker;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.dnd.SmoothAutoScroller;
-import com.intellij.ide.util.treeView.*;
+import com.intellij.ide.util.treeView.NodeRenderer;
+import com.intellij.ide.util.treeView.PresentableNodeDescriptor;
 import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.ui.Queryable;
@@ -24,7 +25,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.plaf.TreeUI;
-import javax.swing.plaf.basic.BasicTreeUI;
 import javax.swing.text.Position;
 import javax.swing.tree.*;
 import java.awt.*;
@@ -231,39 +231,11 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
   @Override
   public void paint(Graphics g) {
     Rectangle visible = getVisibleRect();
-
-    if (!AbstractTreeBuilder.isToPaintSelection(this)) {
-      boolean canHoldSelection = false;
-      TreePath[] paths = getSelectionModel().getSelectionPaths();
-      if (paths != null) {
-        for (TreePath each : paths) {
-          Rectangle selection = getPathBounds(each);
-          if (selection != null && (g.getClipBounds().intersects(selection) || g.getClipBounds().contains(selection))) {
-            if (myBusy && myBusyIcon != null) {
-              Rectangle busyIconBounds = myBusyIcon.getBounds();
-              if (selection.contains(busyIconBounds) || selection.intersects(busyIconBounds)) {
-                canHoldSelection = false;
-                break;
-              }
-            }
-            canHoldSelection = true;
-            if (!myBusy || myBusyIcon == null) break;
-          }
-        }
-      }
-
-      if (canHoldSelection) {
-        mySelectionModel.holdSelection();
-      }
-    }
-
     try {
       super.paint(g);
-
       if (!visible.equals(myLastVisibleRec)) {
         updateBusyIconLocation();
       }
-
       myLastVisibleRec = visible;
     }
     finally {
@@ -288,16 +260,6 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
         myBusyIcon.setPaintPassiveIcon(false);
         myBusyIcon.setToolTipText(IdeBundle.message("tooltip.text.update.is.in.progress.click.to.cancel"));
         add(myBusyIcon);
-        myBusyIcon.addMouseListener(new MouseAdapter() {
-          @Override
-          public void mousePressed(MouseEvent e) {
-            if (!UIUtil.isActionClick(e)) return;
-            AbstractTreeBuilder builder = AbstractTreeBuilder.getBuilderFor(Tree.this);
-            if (builder != null) {
-              builder.cancelUpdate();
-            }
-          }
-        });
       }
 
       myBusyIcon.resume();
@@ -330,8 +292,6 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     if (paintNodes()) {
       g.setColor(getBackground());
       g.fillRect(0, 0, getWidth(), getHeight());
-
-      paintNodeContent(g);
     }
 
     if (isFileColorsEnabled()) {
@@ -354,7 +314,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
 
     Color prevColor = firstVisibleRow == 0 ? null : getFileColorForRow(firstVisibleRow - 1);
     Color curColor = getFileColorForRow(firstVisibleRow);
-    Color nextColor = firstVisibleRow + 1 < getRowCount() ? getFileColorForRow(firstVisibleRow + 1) : null;
+    Color nextColor;
     for (int row = firstVisibleRow; row <= lastVisibleRow; row++) {
       nextColor = row + 1 < getRowCount() ? getFileColorForRow(row + 1) : null;
       if (curColor != null) {
@@ -434,18 +394,6 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
   }
 
   /**
-   * Returns true if {@code mouseX} falls
-   * in the area of row that is used to expand/collapse the node and
-   * the node at {@code row} does not represent a leaf.
-   */
-  @ApiStatus.Experimental
-  protected boolean isLocationInExpandControl(@Nullable TreePath path, int mouseX) {
-    if (path == null) return false;
-    Rectangle bounds = getRowBounds(getRowForPath(path));
-    return TreeUtil.isLocationInExpandControl(this, path, mouseX, bounds.y + bounds.height / 2);
-  }
-
-  /**
    * Disable Sun's speed search
    */
   @Override
@@ -453,172 +401,8 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     return null;
   }
 
-  protected boolean highlightSingleNode() {
-    return true;
-  }
-
-  private void paintNodeContent(Graphics g) {
-    if (!(getUI() instanceof BasicTreeUI)) return;
-
-    AbstractTreeBuilder builder = AbstractTreeBuilder.getBuilderFor(this);
-    if (builder == null || builder.isDisposed()) return;
-
-    GraphicsConfig config = new GraphicsConfig(g);
-    config.setAntialiasing(true);
-
-    AbstractTreeStructure structure = builder.getTreeStructure();
-
-    for (int eachRow = 0; eachRow < getRowCount(); eachRow++) {
-      TreePath path = getPathForRow(eachRow);
-      PresentableNodeDescriptor<?> node = TreeUtil.getLastUserObject(PresentableNodeDescriptor.class, path);
-      if (node == null) continue;
-
-      if (!node.isContentHighlighted()) continue;
-
-      if (highlightSingleNode()) {
-        if (node.isContentHighlighted()) {
-          TreePath nodePath = getPath(node);
-
-          Rectangle rect;
-
-          Rectangle parentRect = getPathBounds(nodePath);
-          if (isExpanded(nodePath)) {
-            int[] max = getMax(node, structure);
-            rect = new Rectangle(parentRect.x,
-                                 parentRect.y,
-                                 Math.max((int)parentRect.getMaxX(), max[1]) - parentRect.x - 1,
-                                 Math.max((int)parentRect.getMaxY(), max[0]) - parentRect.y - 1);
-          }
-          else {
-            rect = parentRect;
-          }
-
-          if (rect != null) {
-            Color highlightColor = node.getHighlightColor();
-            g.setColor(highlightColor);
-            g.fillRoundRect(rect.x, rect.y, rect.width, rect.height, 4, 4);
-            g.setColor(highlightColor.darker());
-            g.drawRoundRect(rect.x, rect.y, rect.width, rect.height, 4, 4);
-          }
-        }
-      }
-      else {
-        //todo: to investigate why it might happen under 1.6: http://www.productiveme.net:8080/browse/PM-217
-        if (node.getParentDescriptor() == null) continue;
-
-        Object[] kids = structure.getChildElements(node);
-        if (kids.length == 0) continue;
-
-        PresentableNodeDescriptor first = null;
-        PresentableNodeDescriptor last = null;
-        int lastIndex = -1;
-        for (int i = 0; i < kids.length; i++) {
-          Object kid = kids[i];
-          if (kid instanceof PresentableNodeDescriptor eachKid) {
-            if (!node.isHighlightableContentNode(eachKid)) continue;
-            if (first == null) {
-              first = eachKid;
-            }
-            last = eachKid;
-            lastIndex = i;
-          }
-        }
-
-        if (first == null) continue;
-        Rectangle firstBounds = getPathBounds(getPath(first));
-
-        if (isExpanded(getPath(last))) {
-          if (lastIndex + 1 < kids.length) {
-            Object child = kids[lastIndex + 1];
-            if (child instanceof PresentableNodeDescriptor nextKid) {
-              int nextRow = getRowForPath(getPath(nextKid));
-              last = TreeUtil.getLastUserObject(PresentableNodeDescriptor.class, getPathForRow(nextRow - 1));
-            }
-          }
-          else {
-            NodeDescriptor parentNode = node.getParentDescriptor();
-            if (parentNode instanceof PresentableNodeDescriptor ppd) {
-              int nodeIndex = node.getIndex();
-              if (nodeIndex + 1 < structure.getChildElements(ppd).length) {
-                PresentableNodeDescriptor nextChild = ppd.getChildToHighlightAt(nodeIndex + 1);
-                int nextRow = getRowForPath(getPath(nextChild));
-                TreePath prevPath = getPathForRow(nextRow - 1);
-                if (prevPath != null) {
-                  last = TreeUtil.getLastUserObject(PresentableNodeDescriptor.class, prevPath);
-                }
-              }
-              else {
-                int lastRow = getRowForPath(getPath(last));
-                PresentableNodeDescriptor lastParent = last;
-                boolean lastWasFound = false;
-                for (int i = lastRow + 1; i < getRowCount(); i++) {
-                  PresentableNodeDescriptor<?> eachNode = TreeUtil.getLastUserObject(PresentableNodeDescriptor.class, getPathForRow(i));
-                  if (!node.isParentOf(eachNode)) {
-                    last = lastParent;
-                    lastWasFound = true;
-                    break;
-                  }
-                  lastParent = eachNode;
-                }
-                if (!lastWasFound) {
-                  last = TreeUtil.getLastUserObject(PresentableNodeDescriptor.class, getPathForRow(getRowCount() - 1));
-                }
-              }
-            }
-          }
-        }
-
-        if (last == null) continue;
-        Rectangle lastBounds = getPathBounds(getPath(last));
-
-        if (firstBounds == null || lastBounds == null) continue;
-
-        Rectangle toPaint = new Rectangle(firstBounds.x, firstBounds.y, 0, (int)lastBounds.getMaxY() - firstBounds.y - 1);
-
-        toPaint.width = getWidth() - toPaint.x - 4;
-
-        Color highlightColor = first.getHighlightColor();
-        g.setColor(highlightColor);
-        g.fillRoundRect(toPaint.x, toPaint.y, toPaint.width, toPaint.height, 4, 4);
-        g.setColor(highlightColor.darker());
-        g.drawRoundRect(toPaint.x, toPaint.y, toPaint.width, toPaint.height, 4, 4);
-      }
-    }
-
-    config.restore();
-  }
-
-  private int[] getMax(PresentableNodeDescriptor node, AbstractTreeStructure structure) {
-    int x = 0;
-    int y = 0;
-    Object[] children = structure.getChildElements(node);
-    for (Object child : children) {
-      if (child instanceof PresentableNodeDescriptor) {
-        TreePath childPath = getPath((PresentableNodeDescriptor)child);
-        if (childPath != null) {
-          if (isExpanded(childPath)) {
-            int[] tmp = getMax((PresentableNodeDescriptor)child, structure);
-            y = Math.max(y, tmp[0]);
-            x = Math.max(x, tmp[1]);
-          }
-
-          Rectangle r = getPathBounds(childPath);
-          if (r != null) {
-            y = Math.max(y, (int)r.getMaxY());
-            x = Math.max(x, (int)r.getMaxX());
-          }
-        }
-      }
-    }
-
-    return new int[]{y, x};
-  }
-
   public TreePath getPath(@NotNull PresentableNodeDescriptor node) {
-    AbstractTreeBuilder builder = AbstractTreeBuilder.getBuilderFor(this);
-    DefaultMutableTreeNode treeNode = builder.getNodeForElement(node);
-
-    return treeNode != null ? new TreePath(treeNode.getPath()) : new TreePath(node);
+    return null; // TODO not implemented
   }
 
   @Override

@@ -2,7 +2,6 @@
 package com.intellij.util.ui.tree;
 
 import com.intellij.ide.ui.UISettings;
-import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -708,14 +707,12 @@ public final class TreeUtil {
     // store relative offset because the row can be moved during the tree updating
     int offset = rowBounds.y - bounds.y;
 
-    AbstractTreeBuilder builder = AbstractTreeBuilder.getBuilderFor(tree);
-    scrollToVisible(tree, path, bounds, offset, stamp, callback::setDone, builder, 3);
+    scrollToVisible(tree, path, bounds, offset, stamp, callback::setDone, 3);
 
     return callback;
   }
 
-  private static void scrollToVisible(JTree tree, TreePath path, Rectangle bounds, int offset, long expected, Runnable done,
-                                      AbstractTreeBuilder builder, int attempt) {
+  private static void scrollToVisible(JTree tree, TreePath path, Rectangle bounds, int offset, long expected, Runnable done, int attempt) {
     Runnable scroll = () -> {
       Rectangle pathBounds = attempt <= 0 ? null : tree.getPathBounds(path);
       if (pathBounds != null) {
@@ -727,14 +724,14 @@ public final class TreeUtil {
           Rectangle visible = tree.getVisibleRect();
           if (bounds.y < visible.y || bounds.y > visible.y + Math.max(0, visible.height - bounds.height)) {
             tree.scrollRectToVisible(bounds);
-            scrollToVisible(tree, path, bounds, offset, expected, done, builder, attempt - 1);
+            scrollToVisible(tree, path, bounds, offset, expected, done, attempt - 1);
             return; // try to scroll again
           }
         }
       }
       done.run();
     };
-    SwingUtilities.invokeLater(builder == null ? scroll : () -> builder.getReady(TreeUtil.class).doWhenDone(scroll));
+    SwingUtilities.invokeLater(scroll);
   }
 
   // this method returns FIRST selected row but not LEAD

@@ -14,7 +14,6 @@ import com.intellij.ide.projectView.impl.nodes.ProjectViewDirectoryHelper;
 import com.intellij.ide.scopeView.ScopeViewPane;
 import com.intellij.ide.ui.SplitterProportionsDataImpl;
 import com.intellij.ide.ui.UISettings;
-import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
@@ -92,8 +91,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.FocusEvent;
@@ -105,7 +102,6 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 import static com.intellij.application.options.OptionId.PROJECT_VIEW_SHOW_VISIBILITY_ICONS;
-import static com.intellij.ui.tree.TreePathUtil.toTreePathArray;
 import static com.intellij.ui.treeStructure.Tree.AUTO_SCROLL_FROM_SOURCE_BLOCKED;
 
 @State(name = "ProjectView", storages = @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE), getStateRequiresEdt = true)
@@ -1748,33 +1744,13 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
         return;
       }
 
-      AbstractTreeBuilder treeBuilder = viewPane.getTreeBuilder();
       JTree tree = viewPane.myTree;
-      if (treeBuilder == null) {
-        List<TreeVisitor> visitors = AbstractProjectViewPane.createVisitors(elements);
-        if (1 == visitors.size()) {
-          TreeUtil.promiseSelect(tree, visitors.get(0));
-        }
-        else if (!visitors.isEmpty()) {
-          TreeUtil.promiseSelect(tree, visitors.stream());
-        }
+      List<TreeVisitor> visitors = AbstractProjectViewPane.createVisitors(elements);
+      if (1 == visitors.size()) {
+        TreeUtil.promiseSelect(tree, visitors.get(0));
       }
-      else {
-        DefaultTreeModel treeModel = (DefaultTreeModel)tree.getModel();
-        List<TreePath> paths = new ArrayList<>(elements.length);
-        for (final Object element : elements) {
-          DefaultMutableTreeNode node = treeBuilder.getNodeForElement(element);
-          if (node == null) {
-            treeBuilder.buildNodeForElement(element);
-            node = treeBuilder.getNodeForElement(element);
-          }
-          if (node != null) {
-            paths.add(new TreePath(treeModel.getPathToRoot(node)));
-          }
-        }
-        if (!paths.isEmpty()) {
-          tree.setSelectionPaths(toTreePathArray(paths));
-        }
+      else if (!visitors.isEmpty()) {
+        TreeUtil.promiseSelect(tree, visitors.stream());
       }
     }
 

@@ -380,8 +380,7 @@ public final class TreeState implements JDOMExternalizable {
     abstract void batch(Progressive progressive);
 
     static TreeFacade getFacade(JTree tree) {
-      AbstractTreeBuilder builder = AbstractTreeBuilder.getBuilderFor(tree);
-      return builder != null ? new BuilderFacade(builder) : new JTreeFacade(tree);
+      return new JTreeFacade(tree);
     }
   }
 
@@ -408,38 +407,6 @@ public final class TreeState implements JDOMExternalizable {
     @Override
     public void batch(Progressive progressive) {
       progressive.run(new EmptyProgressIndicator());
-    }
-  }
-
-  static final class BuilderFacade extends TreeFacade {
-    private final AbstractTreeBuilder myBuilder;
-
-    BuilderFacade(AbstractTreeBuilder builder) {
-      super(Objects.requireNonNull(builder.getTree()));
-      myBuilder = builder;
-    }
-
-    @Override
-    public ActionCallback getInitialized() {
-      return myBuilder.getReady(this);
-    }
-
-    @Override
-    public void batch(Progressive progressive) {
-      myBuilder.batch(progressive);
-    }
-
-    @Override
-    public ActionCallback expand(TreePath treePath) {
-      NodeDescriptor<?> desc = TreeUtil.getLastUserObject(NodeDescriptor.class, treePath);
-      if (desc == null) {
-        return ActionCallback.REJECTED;
-      }
-      Object element = myBuilder.getTreeStructureElement(desc);
-      ActionCallback result = new ActionCallback();
-      myBuilder.expand(element, result.createSetDoneRunnable());
-
-      return result;
     }
   }
 
