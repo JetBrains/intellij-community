@@ -124,7 +124,7 @@ private fun checkDeclarationNewNameConflicts(declaration: KtNamedDeclaration, ne
     }
     for (candidateSymbol in potentialCandidates) {
         if (symbol == candidateSymbol) continue
-        val candidate = candidateSymbol.psi as? KtNamedDeclaration ?: continue
+        val candidate = candidateSymbol.psi as? PsiNamedElement ?: continue
 
         if (candidateSymbol is KtFunctionLikeSymbol && symbol is KtFunctionLikeSymbol && !areSameSignatures(candidateSymbol, symbol)) {
             continue
@@ -154,10 +154,18 @@ private fun areTypesTheSame(t1: KtType?, t2: KtType?): Boolean {
 }
 
 fun PsiElement.representativeContainer(): PsiNamedElement? = when (this) {
-  is KtDeclaration -> containingClassOrObject ?: getStrictParentOfType<KtNamedDeclaration>() ?: JavaPsiFacade.getInstance(
-    project).findPackage(containingKtFile.packageFqName.asString())
-  is PsiMember -> containingClass
-  else -> null
+  is KtDeclaration -> {
+      containingClassOrObject
+          ?: getStrictParentOfType<KtNamedDeclaration>()
+          ?: JavaPsiFacade.getInstance(project).findPackage(containingKtFile.packageFqName.asString())
+  }
+  is PsiMember -> {
+      containingClass
+          ?: (containingFile as? PsiJavaFile)?.packageName?.let { JavaPsiFacade.getInstance(project).findPackage(it) }
+  }
+  else -> {
+      null
+  }
 }
 
 fun PsiNamedElement.renderDescription(): String {

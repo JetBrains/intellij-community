@@ -768,6 +768,11 @@ public class FirRenameTestGenerated extends AbstractFirRenameTest {
         runTest("../../idea/tests/testData/refactoring/rename/renameKotlinClassByImplicitConstructorRef/kotlinClass.test");
     }
 
+    @TestMetadata("renameKotlinClassConflictingWithJava1/kotlinClassConflictingWithJava1.test")
+    public void testRenameKotlinClassConflictingWithJava1_KotlinClassConflictingWithJava1() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/rename/renameKotlinClassConflictingWithJava1/kotlinClassConflictingWithJava1.test");
+    }
+
     @TestMetadata("renameKotlinClassConflictingWithJava/kotlinClassConflictingWithJava.test")
     public void testRenameKotlinClassConflictingWithJava_KotlinClassConflictingWithJava() throws Exception {
         runTest("../../idea/tests/testData/refactoring/rename/renameKotlinClassConflictingWithJava/kotlinClassConflictingWithJava.test");

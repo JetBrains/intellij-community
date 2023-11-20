@@ -768,6 +768,11 @@ public class RenameTestGenerated extends AbstractRenameTest {
         runTest("testData/refactoring/rename/renameKotlinClassByImplicitConstructorRef/kotlinClass.test");
     }
 
+    @TestMetadata("renameKotlinClassConflictingWithJava1/kotlinClassConflictingWithJava1.test")
+    public void testRenameKotlinClassConflictingWithJava1_KotlinClassConflictingWithJava1() throws Exception {
+        runTest("testData/refactoring/rename/renameKotlinClassConflictingWithJava1/kotlinClassConflictingWithJava1.test");
+    }
+
     @TestMetadata("renameKotlinClassConflictingWithJava/kotlinClassConflictingWithJava.test")
     public void testRenameKotlinClassConflictingWithJava_KotlinClassConflictingWithJava() throws Exception {
         runTest("testData/refactoring/rename/renameKotlinClassConflictingWithJava/kotlinClassConflictingWithJava.test");

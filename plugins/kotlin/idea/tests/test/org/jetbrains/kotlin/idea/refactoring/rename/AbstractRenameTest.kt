@@ -109,7 +109,7 @@ abstract class AbstractRenameTest : KotlinLightCodeInsightFixtureTestCase() {
         val result = runCatching {
             val renameTypeStr = renameObject.getString("type")
 
-            val hintDirective = renameObject.getNullableString("hint")
+            val hintsDirective = setOfNotNull(renameObject.getNullableString("hint"), renameObject.getNullableString("k1Hint"))
 
             val fixtureClasses = renameObject.getAsJsonArray("fixtureClasses")?.map { it.asString } ?: emptyList()
 
@@ -132,8 +132,8 @@ abstract class AbstractRenameTest : KotlinLightCodeInsightFixtureTestCase() {
                     RenameType.AUTO_DETECT -> renameWithAutoDetection(renameObject, context)
                 }
 
-                if (hintDirective != null) {
-                    Assert.fail("""Hint "$hintDirective" was expected""")
+                if (hintsDirective.isNotEmpty()) {
+                    Assert.fail("""Hint "${hintsDirective.first()}" was expected""")
                 }
 
                 if (renameObject["checkErrorsAfter"]?.asBoolean == true) {
@@ -153,8 +153,9 @@ abstract class AbstractRenameTest : KotlinLightCodeInsightFixtureTestCase() {
                 if (e !is RefactoringErrorHintException && e !is ConflictsInTestsException) throw e
 
                 val hintExceptionUnquoted = StringUtil.unquoteString(e.message!!)
-                if (hintDirective != null) {
-                    Assert.assertEquals(hintDirective, hintExceptionUnquoted)
+                if (hintsDirective.isNotEmpty()) {
+                    Assert.assertTrue("Expected one of $hintsDirective but was $hintExceptionUnquoted",
+                                      hintsDirective.contains(hintExceptionUnquoted))
                 } else {
                     Assert.fail("""Unexpected "hint: $hintExceptionUnquoted" """)
                 }
