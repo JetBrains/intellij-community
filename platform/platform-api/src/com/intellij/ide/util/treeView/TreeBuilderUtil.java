@@ -12,6 +12,7 @@ import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.util.List;
 
+@Deprecated(forRemoval = true) // TODO move the code to other util class if needed
 public final class TreeBuilderUtil {
   private static final Logger LOG = Logger.getInstance(TreeBuilderUtil.class);
 
@@ -46,17 +47,5 @@ public final class TreeBuilderUtil {
         _storePaths(tree, childNode, pathsToExpand, selectionPaths, storeElementsOnly);
       }
     }
-  }
-
-  static boolean isNodeOrChildSelected(@NotNull JTree tree, @NotNull DefaultMutableTreeNode node){
-    TreePath[] selectionPaths = tree.getSelectionPaths();
-    if (selectionPaths == null || selectionPaths.length == 0) return false;
-
-    TreePath path = new TreePath(node.getPath());
-    for (TreePath selectionPath : selectionPaths) {
-      if (path.isDescendant(selectionPath)) return true;
-    }
-
-    return false;
   }
 }
