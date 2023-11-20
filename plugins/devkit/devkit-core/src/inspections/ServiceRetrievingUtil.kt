@@ -17,10 +17,10 @@ import org.jetbrains.uast.UClass
 import org.jetbrains.uast.toUElement
 
 private val SERVICE_KT_METHODS =
-  CallMatcher.staticCall("com.intellij.openapi.components.ServiceKt", "service"/*, "serviceOrNull", "serviceIfCreated"*/)
+  CallMatcher.staticCall("com.intellij.openapi.components.ServiceKt", "service", "serviceOrNull", "serviceIfCreated")
              .parameterCount(0)
 private val SERVICES_KT_METHODS =
-  CallMatcher.staticCall("com.intellij.openapi.components.ServicesKt", "service"/*, "serviceOrNull", "serviceIfCreated"*/)
+  CallMatcher.staticCall("com.intellij.openapi.components.ServicesKt", "service", "serviceOrNull", "serviceIfCreated")
              .parameterTypes(ComponentManager::class.java.canonicalName)
 
 internal val COMPONENT_MANAGER_GET_SERVICE = CallMatcher.anyOf(
