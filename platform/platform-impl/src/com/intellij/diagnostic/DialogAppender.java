@@ -11,7 +11,6 @@ import com.intellij.util.concurrency.AppExecutorUtil;
 
 import java.util.*;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.LogRecord;
@@ -21,8 +20,8 @@ public final class DialogAppender extends Handler {
 
   private static volatile boolean ourDelay;
 
+  private int myEarlyEventCounter;
   private final Queue<IdeaLoggingEvent> myEarlyEvents = new ArrayDeque<>();
-  private final AtomicInteger myEarlyEventCounter = new AtomicInteger();
   private final ScheduledExecutorService myExecutor = AppExecutorUtil.createBoundedScheduledExecutorService("DialogAppender", 1);
 
   //TODO android update checker accesses project jdk, fix it and remove
@@ -59,7 +58,7 @@ public final class DialogAppender extends Handler {
         queueAppend(ideaEvent);
       }
       else {
-        myEarlyEventCounter.incrementAndGet();
+        myEarlyEventCounter ++;
         if (myEarlyEvents.size() < MAX_EARLY_LOGGING_EVENTS) {
           myEarlyEvents.add(ideaEvent);
         }
@@ -68,15 +67,16 @@ public final class DialogAppender extends Handler {
   }
 
   private void processEarlyEventsIfNeeded() {
-    int count = myEarlyEventCounter.getAndSet(0);
-    if (count == 0) return;
+    if (myEarlyEventCounter == 0) return;
     IdeaLoggingEvent queued;
     while ((queued = myEarlyEvents.poll()) != null) {
-      count --;
+      myEarlyEventCounter --;
       queueAppend(queued);
     }
-    queueAppend(new IdeaLoggingEvent(DiagnosticBundle.message(
-      "error.monitor.early.errors.skipped", count), new Throwable()));
+    if (myEarlyEventCounter > 0) {
+      queueAppend(new IdeaLoggingEvent(DiagnosticBundle.message(
+        "error.monitor.early.errors.skipped", myEarlyEventCounter), new Throwable()));
+    }
   }
 
   private void queueAppend(IdeaLoggingEvent event) {
