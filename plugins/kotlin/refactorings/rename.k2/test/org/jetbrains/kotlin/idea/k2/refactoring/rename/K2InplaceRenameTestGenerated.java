@@ -118,6 +118,16 @@ public class K2InplaceRenameTestGenerated extends AbstractK2InplaceRenameTest {
         runTest("../../idea/tests/testData/refactoring/rename/inplace/GlobalFunctionNotInplace.kt");
     }
 
+    @TestMetadata("HidingClassByInner.kt")
+    public void testHidingClassByInner() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/rename/inplace/HidingClassByInner.kt");
+    }
+
+    @TestMetadata("HidingClassByInnerInCompanionObject.kt")
+    public void testHidingClassByInnerInCompanionObject() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/rename/inplace/HidingClassByInnerInCompanionObject.kt");
+    }
+
     @TestMetadata("HidingClassByTypeParameter.kt")
     public void testHidingClassByTypeParameter() throws Exception {
         runTest("../../idea/tests/testData/refactoring/rename/inplace/HidingClassByTypeParameter.kt");
@@ -141,6 +151,11 @@ public class K2InplaceRenameTestGenerated extends AbstractK2InplaceRenameTest {
     @TestMetadata("HidingClassFromReceiver1.kt")
     public void testHidingClassFromReceiver1() throws Exception {
         runTest("../../idea/tests/testData/refactoring/rename/inplace/HidingClassFromReceiver1.kt");
+    }
+
+    @TestMetadata("HidingClassFromSuper.kt")
+    public void testHidingClassFromSuper() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/rename/inplace/HidingClassFromSuper.kt");
     }
 
     @TestMetadata("HidingCompanionMethod.kt")
@@ -181,6 +196,16 @@ public class K2InplaceRenameTestGenerated extends AbstractK2InplaceRenameTest {
     @TestMetadata("HidingCompanionPropertyByEnumEntry1.kt")
     public void testHidingCompanionPropertyByEnumEntry1() throws Exception {
         runTest("../../idea/tests/testData/refactoring/rename/inplace/HidingCompanionPropertyByEnumEntry1.kt");
+    }
+
+    @TestMetadata("HidingEnumEntryByClass.kt")
+    public void testHidingEnumEntryByClass() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/rename/inplace/HidingEnumEntryByClass.kt");
+    }
+
+    @TestMetadata("HidingEnumEntryByClass1.kt")
+    public void testHidingEnumEntryByClass1() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/rename/inplace/HidingEnumEntryByClass1.kt");
     }
 
     @TestMetadata("HidingExternalCallable.kt")
@@ -296,6 +321,11 @@ public class K2InplaceRenameTestGenerated extends AbstractK2InplaceRenameTest {
     @TestMetadata("HidingTopLevelClass.kt")
     public void testHidingTopLevelClass() throws Exception {
         runTest("../../idea/tests/testData/refactoring/rename/inplace/HidingTopLevelClass.kt");
+    }
+
+    @TestMetadata("HidingTopLevelClassByInner.kt")
+    public void testHidingTopLevelClassByInner() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/rename/inplace/HidingTopLevelClassByInner.kt");
     }
 
     @TestMetadata("HidingTypeParameterByContainingClassTypeParameter.kt")

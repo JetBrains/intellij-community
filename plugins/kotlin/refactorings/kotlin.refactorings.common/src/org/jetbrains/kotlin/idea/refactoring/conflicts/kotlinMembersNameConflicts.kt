@@ -42,15 +42,15 @@ fun checkRedeclarationConflicts(declaration: KtNamedDeclaration, newName: String
 }
 
 context(KtAnalysisSession)
-fun KtScope.findSiblingsByName(symbol: KtDeclarationSymbol, newName: Name, containingSymbol: KtDeclarationSymbol? = symbol.getContainingSymbol()): Sequence<KtDeclarationSymbol> {
-    return when (symbol) {
-        is KtClassifierSymbol -> getClassifierSymbols(newName)
-        is KtCallableSymbol -> getCallableSymbols(newName).filter { callable ->
-            symbol != callable &&
-                   // (symbol is KtVariableSymbol) == (callable is KtVariableSymbol) &&
-                    ((callable as? KtSymbolWithVisibility)?.visibility != Visibilities.Private || callable.getContainingSymbol() == containingSymbol)
-        }
-        else -> return emptySequence()
+fun KtScope.findSiblingsByName(
+    symbol: KtDeclarationSymbol,
+    newName: Name,
+    containingSymbol: KtDeclarationSymbol? = symbol.getContainingSymbol()
+): Sequence<KtDeclarationSymbol> {
+    return getClassifierSymbols(newName) +
+            getCallableSymbols(newName).filter { callable ->
+                symbol != callable &&
+                ((callable as? KtSymbolWithVisibility)?.visibility != Visibilities.Private || callable.getContainingSymbol() == containingSymbol)
     }
 }
 
@@ -85,7 +85,12 @@ private fun checkDeclarationNewNameConflicts(declaration: KtNamedDeclaration, ne
 
     return when (containingSymbol) {
       is KtClassOrObjectSymbol -> {
-        containingSymbol.getCombinedMemberScope().findSiblingsByName(symbol, newName)
+          if (symbol is KtClassifierSymbol) {
+              //allow shadowing classes in super
+              containingSymbol.getCombinedDeclaredMemberScope()
+          } else {
+              containingSymbol.getCombinedMemberScope()
+          }.findSiblingsByName(symbol, newName)
       }
 
       is KtPackageSymbol -> {
