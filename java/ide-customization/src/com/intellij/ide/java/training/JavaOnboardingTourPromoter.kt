@@ -14,5 +14,5 @@ class JavaOnboardingTourPromoter : OnboardingLessonPromoter(
     get() = IconLoader.getIcon("img/idea-onboarding-tour.png", JavaOnboardingTourPromoter::class.java.classLoader)
 
   override fun canCreatePromo(isEmptyState: Boolean): Boolean =
-    super.canCreatePromo(isEmptyState) && (PlatformUtils.isIdeaCommunity() || PlatformUtils.isIdeaUltimate())
+    super.canCreatePromo(isEmptyState) && PlatformUtils.isIntelliJ()
 }
