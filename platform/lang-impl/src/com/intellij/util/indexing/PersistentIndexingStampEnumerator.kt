@@ -3,6 +3,7 @@ package com.intellij.util.indexing
 
 import com.intellij.openapi.vfs.newvfs.persistent.dev.appendonlylog.AppendOnlyLogFactory
 import com.intellij.openapi.vfs.newvfs.persistent.dev.enumerator.DurableEnumeratorFactory
+import com.intellij.util.SystemProperties
 import com.intellij.util.io.DurableDataEnumerator
 import com.intellij.util.io.IOUtil
 import com.intellij.util.io.KeyDescriptor
@@ -17,20 +18,42 @@ import java.nio.ByteBuffer
 import java.nio.file.Path
 
 
+private val USE_MAPPED_ENUMERATOR = SystemProperties.getBooleanProperty("idea.use-mapped-index-stamps-enumerator", false)
 
-class PersistentTimestampsEnumerator(path: Path) :
-  PersistentEnumerator<TimestampsImmutable>(path, TimestampsKeyDescriptor(), 1024, null, 1) {
-}
+class DurableTimestampsEnumerator(path: Path) : DurableDataEnumerator<TimestampsImmutable>
+                                                by createTimestampsEnumerator(path)
 
-class DurableTimestampEnumerator(path: Path)
-  : DurableDataEnumerator<TimestampsImmutable> by DurableEnumeratorFactory
-  .defaultWithInMemoryMap(TimestampsKeyDescriptorEx())
-  .valuesLogFactory(
-    AppendOnlyLogFactory.withDefaults()
-      .pageSize(256 * IOUtil.KiB) //smaller page size: we expect just (100s..1000s) records in the enumerator
-  )
-  .open(path) {
-
+private fun createTimestampsEnumerator(path: Path): DurableDataEnumerator<TimestampsImmutable> {
+  return if (!USE_MAPPED_ENUMERATOR) {
+    PersistentEnumerator(path, TimestampsKeyDescriptor(), 1024, null, 1)
+  }
+  else {
+    //make file name differ, so difference in binary formats won't lead to the issues
+    val pathWithNewFileName: Path = path.parent.resolve(path.fileName.toString() + ".mmapped")
+    val durableEnumerator = DurableEnumeratorFactory
+      .defaultWithInMemoryMap(TimestampsKeyDescriptorEx())
+      .valuesLogFactory(
+        AppendOnlyLogFactory.withDefaults()
+          .pageSize(256 * IOUtil.KiB) //use small page size: we expect only (100..1000)s records in the enumerator
+      ).open(pathWithNewFileName)
+    return object : DurableDataEnumerator<TimestampsImmutable> by durableEnumerator {
+      //TODO RC: general DataEnumerator contract states .valueOf(unknownId) == null.
+      //         DurableEnumerator violates this contract and throws Exception for unknownId.
+      //         This was done intentionally, because I believe supplying the unknownId to enumerator is almost always
+      //         an error, and should be processed accordingly. But currently IndexingStamp code requires null to be
+      //         returned, so the adapter below. I think we should re-consider IndexingStamp code that relies on
+      //         null so that exception is caught instead -- e.g. because exception carries more information about
+      //         what is going on
+      override fun valueOf(idx: Int): TimestampsImmutable? {
+        try {
+          return durableEnumerator.valueOf(idx)
+        }
+        catch (e: Exception) {
+          return null
+        }
+      }
+    }
+  }
 }
 
 /** Descriptor for [PersistentEnumerator] */

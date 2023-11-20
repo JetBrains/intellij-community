@@ -4,6 +4,7 @@ package com.intellij.util.indexing
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.rules.TempDirectory
 import com.intellij.util.io.DataInputOutputUtil
+import com.intellij.util.io.DurableDataEnumerator
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -31,12 +32,12 @@ class PersistentTimestampsEnumeratorTest {
   @JvmField
   val temp = TempDirectory()
 
-  lateinit var enumerator: PersistentTimestampsEnumerator
+  lateinit var enumerator: DurableDataEnumerator<TimestampsImmutable>
 
   @Before
   fun setup() {
     val dir = temp.newDirectory("persistentTimestampsEnumerator").toPath()
-    enumerator = PersistentTimestampsEnumerator(dir.resolve("enumerator"))
+    enumerator = DurableTimestampsEnumerator(dir.resolve("enumerator"))
   }
 
   @After
