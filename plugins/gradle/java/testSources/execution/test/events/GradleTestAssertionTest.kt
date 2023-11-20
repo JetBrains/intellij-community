@@ -927,6 +927,122 @@ class GradleTestAssertionTest : GradleExecutionTestCase() {
 
   @ParameterizedTest
   @AllGradleVersionsSource
+  fun `test assertion result of Junit 4 (Opentest4j)`(gradleVersion: GradleVersion) {
+    testJunit4Opentest4jProject(gradleVersion) {
+      writeText("src/test/java/org/example/TestCase.java", """
+        |package org.example;
+        |
+        |import org.junit.Test;
+        |import org.opentest4j.AssertionFailedError;
+        |
+        |public class TestCase {
+        |
+        |  @Test
+        |  public void test_assert_equals_for_ints() {
+        |    throw new AssertionFailedError("assertion message", 5, 1 + 1);
+        |  }
+        |
+        |  @Test
+        |  public void test_assert_equals_for_texts() {
+        |    throw new AssertionFailedError("assertion message", "expected text", "actual text");
+        |  }
+        |
+        |  @Test
+        |  public void test_assert_equals_for_objects() {
+        |    Object expected = new Object() {
+        |      @Override
+        |      public String toString() {
+        |        return "expected text";
+        |      }
+        |    };
+        |    Object actual = new Object() {
+        |      @Override
+        |      public String toString() {
+        |        return "actual text";
+        |      }
+        |    };
+        |    throw new AssertionFailedError("assertion message", expected, actual);
+        |  }
+        |
+        |  @Test
+        |  public void test_assert_equals_for_same_objects() {
+        |    Object expected = new Object() {
+        |      @Override
+        |      public String toString() {
+        |        return "string";
+        |      }
+        |    };
+        |    Object actual = new Object() {
+        |      @Override
+        |      public String toString() {
+        |        return "string";
+        |      }
+        |    };
+        |    throw new AssertionFailedError("assertion message", expected, actual);
+        |  }
+        |}
+      """.trimMargin())
+
+      executeTasks(":test", isRunAsTest = true)
+      assertTestViewTree {
+        assertNode("TestCase") {
+          assertNode("test_assert_equals_for_ints") {
+            if (isIntellijTestEventsUsed() || isOpentest4jSupportedByGradleJunit4Integration()) {
+              assertTestConsoleContains("""
+                |
+                |assertion message
+                |Expected :5
+                |Actual   :2
+                |<Click to see difference>
+                |
+                |org.opentest4j.AssertionFailedError: assertion message
+              """.trimMargin())
+            }
+            else {
+              assertTestConsoleContains("""
+                |
+                |org.opentest4j.AssertionFailedError: assertion message
+              """.trimMargin())
+            }
+          }
+          assertNode("test_assert_equals_for_texts") {
+            if (isIntellijTestEventsUsed() || isOpentest4jSupportedByGradleJunit4Integration()) {
+              assertTestConsoleContains("""
+                |
+                |assertion message
+                |Expected :expected text
+                |Actual   :actual text
+                |<Click to see difference>
+                |
+                |org.opentest4j.AssertionFailedError: assertion message
+              """.trimMargin())
+            }
+            else {
+              assertTestConsoleContains("""
+                |
+                |org.opentest4j.AssertionFailedError: assertion message
+              """.trimMargin())
+            }
+          }
+          assertNode("test_assert_equals_for_objects") {
+            assertTestConsoleContains("""
+                |
+                |org.opentest4j.AssertionFailedError: assertion message
+              """.trimMargin())
+          }
+          assertNode("test_assert_equals_for_same_objects") {
+            assertTestConsoleContains("""
+                |
+                |org.opentest4j.AssertionFailedError: assertion message
+              """.trimMargin())
+          }
+        }
+      }
+    }
+  }
+
+  @ParameterizedTest
+  @AllGradleVersionsSource
   fun `test assertion result of Test NG`(gradleVersion: GradleVersion) {
     testTestNGProject(gradleVersion) {
       writeText("src/test/java/org/example/TestCase.java", """
