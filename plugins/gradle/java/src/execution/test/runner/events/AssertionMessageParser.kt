@@ -4,7 +4,7 @@ package org.jetbrains.plugins.gradle.execution.test.runner.events
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.text.nullize
 
-object AssertionParser {
+object AssertionMessageParser {
 
   // JUnit 5: assertEquals | assertSame: org.junit.jupiter.api.Assertions
   private val JUNIT5_ASSERT_EQUALS_EXTRACTOR =

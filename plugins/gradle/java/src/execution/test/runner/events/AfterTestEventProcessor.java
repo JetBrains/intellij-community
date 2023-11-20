@@ -118,7 +118,7 @@ public class AfterTestEventProcessor extends AbstractTestEventProcessor {
   private static void processTestFailureResult(@NotNull SMTestProxy testProxy, @NotNull TestFailure failure) {
     var message = ObjectUtils.doIfNotNull(failure, it -> it.getMessage());
     var stackTrace = failure.getStackTrace();
-    var comparisonResult = ObjectUtils.doIfNotNull(message, it -> AssertionParser.parse(it));
+    var comparisonResult = ObjectUtils.doIfNotNull(message, it -> AssertionMessageParser.parse(it));
     if (failure instanceof TestAssertionFailure assertionFailure) {
       var localizedMessage = comparisonResult == null ? message : comparisonResult.getMessage();
       var actualText = assertionFailure.getActualText();

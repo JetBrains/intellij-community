@@ -1,13 +1,13 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.execution.test
 
-import org.jetbrains.plugins.gradle.execution.test.runner.events.AssertionParser
+import org.jetbrains.plugins.gradle.execution.test.runner.events.AssertionMessageParser
 import org.junit.Test
 import org.junit.jupiter.api.Assertions
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.toJavaDuration
 
-class AssertionParserTest {
+class AssertionMessageParserTest {
 
   @Test
   fun `parse comparison message test`() {
@@ -98,7 +98,7 @@ class AssertionParserTest {
     expectedParsedActual: String,
     expectedParsedMessage: String? = null
   ) {
-    val result = AssertionParser.parse(actualAssertionMessage)
+    val result = AssertionMessageParser.parse(actualAssertionMessage)
     Assertions.assertNotNull(result) {
       "Assertion isn't parsed in\n" +
       actualAssertionMessage + "\n"
