@@ -62,7 +62,6 @@ public final class MavenIndexImpl implements MavenIndex {
   public MavenIndexImpl(MavenIndexerWrapper indexer,
                         MavenIndexUtils.IndexPropertyHolder propertyHolder) throws MavenIndexException {
     myNexusIndexer = indexer;
-
     myDir = propertyHolder.dir;
     myKind = propertyHolder.kind;
     myRegisteredRepositoryIds = propertyHolder.repositoryIds;
@@ -487,6 +486,7 @@ public final class MavenIndexImpl implements MavenIndex {
     if (isBroken) return false;
 
     IndexData indexData = myData;
+    if (indexData == null) return false;
     return doIndexTask(() -> indexData.groupToArtifactMap.containsMapping(groupId), false);
   }
 
@@ -495,6 +495,7 @@ public final class MavenIndexImpl implements MavenIndex {
     if (isBroken) return false;
 
     IndexData indexData = myData;
+    if (indexData == null) return false;
     String key = groupId + ":" + artifactId;
     return doIndexTask(() -> indexData.groupWithArtifactToVersionMap.containsMapping(key), false);
   }
@@ -502,16 +503,20 @@ public final class MavenIndexImpl implements MavenIndex {
   @Override
   public boolean hasVersion(String groupId, String artifactId, final String version) {
     if (isBroken) return false;
+    IndexData indexData = myData;
+    if (indexData == null) return false;
 
     final String groupWithArtifactWithVersion = groupId + ":" + artifactId + ':' + version;
     String groupWithArtifact = groupWithArtifactWithVersion.substring(0, groupWithArtifactWithVersion.length() - version.length() - 1);
-    IndexData indexData = myData;
+
     return doIndexTask(() -> notNullize(indexData.groupWithArtifactToVersionMap.get(groupWithArtifact)).contains(version), false);
   }
 
   @Override
   public Set<MavenArtifactInfo> search(final String pattern, final int maxResult) {
-    return doIndexAndRecoveryTask(() -> myData.search(pattern, maxResult), Collections.emptySet());
+    IndexData indexData = myData;
+    if (indexData == null) return Collections.emptySet();
+    return doIndexAndRecoveryTask(() -> indexData.search(pattern, maxResult), Collections.emptySet());
   }
 
   @Override
@@ -519,6 +524,7 @@ public final class MavenIndexImpl implements MavenIndex {
     return doIndexAndRecoveryTask(() -> {
       Set<MavenArchetype> archetypes = new HashSet<>();
       IndexData indexData = myData;
+      if (indexData == null) return Collections.emptySet();
       indexData.archetypeIdToDescriptionMap.consumeKeysWithExistingMapping(ga -> {
         List<String> gaParts = split(ga, ":");
 
