@@ -2,6 +2,10 @@
 package org.jetbrains.jps.dependency;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.dependency.diff.Difference;
+import org.jetbrains.jps.javac.Iterators;
+
+import java.util.function.BiFunction;
 
 public interface MultiMaplet<K, V> extends BaseMaplet<K> {
 
@@ -23,6 +27,24 @@ public interface MultiMaplet<K, V> extends BaseMaplet<K> {
   default void removeValues(K key, @NotNull Iterable<? extends V> values) {
     for (V value : values) {
       removeValue(key, value);
+    }
+  }
+
+  default void update(K key, @NotNull Iterable<V> dataAfter, BiFunction<? super Iterable<V>, ? super Iterable<V>, Difference.Specifier<? extends V, ?>> diffComparator) {
+    Iterable<V> dataBefore = get(key);
+    if (Iterators.isEmpty(dataBefore) || Iterators.isEmpty(dataAfter)) {
+      put(key, dataAfter);
+    }
+    else {
+      var diff = diffComparator.apply(dataBefore, dataAfter);
+      if (!diff.unchanged()) {
+        if (Iterators.isEmpty(diff.removed()) && Iterators.isEmpty(diff.changed())) {
+          appendValues(key, diff.added());
+        }
+        else {
+          put(key, dataAfter);
+        }
+      }
     }
   }
 

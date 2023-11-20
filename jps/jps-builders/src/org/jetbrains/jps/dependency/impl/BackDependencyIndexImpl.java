@@ -3,6 +3,7 @@ package org.jetbrains.jps.dependency.impl;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.dependency.*;
+import org.jetbrains.jps.dependency.diff.Difference;
 import org.jetbrains.jps.dependency.java.JvmNodeReferenceID;
 import org.jetbrains.jps.javac.Iterators;
 
@@ -68,21 +69,16 @@ public abstract class BackDependencyIndexImpl implements BackDependencyIndex {
     }
 
     for (ReferenceID id : Iterators.unique(Iterators.flat(deltaIndex.getKeys(), depsToRemove.keySet()))) {
+      Iterable<ReferenceID> dataBefore = getDependencies(id);
+
+      Set<ReferenceID> dataAfter = Iterators.collect(dataBefore, new HashSet<>());
       Set<ReferenceID> toRemove = depsToRemove.get(id);
       if (!Iterators.isEmpty(toRemove)) {
-        Iterable<ReferenceID> currentData = getDependencies(id);
+        dataAfter.removeAll(toRemove);
+      }
+      Iterators.collect(deltaIndex.getDependencies(id), dataAfter);
 
-        Set<ReferenceID> deps = Iterators.collect(currentData, new HashSet<>());
-        deps.removeAll(toRemove);
-        Iterators.collect(deltaIndex.getDependencies(id), deps);
-        
-        if (!deps.equals(currentData instanceof Set? currentData : Iterators.collect(currentData, new HashSet<>()))) {
-          myMap.put(id, deps);
-        }
-      }
-      else {
-        myMap.appendValues(id, deltaIndex.getDependencies(id));
-      }
+      myMap.update(id, dataAfter, Difference::diff);
     }
   }
 

@@ -244,31 +244,37 @@ public final class DependencyGraphImpl extends GraphImpl implements DependencyGr
 
     var deltaNodes = Iterators.unique(Iterators.map(Iterators.flat(Iterators.map(delta.getSources(), s -> delta.getNodes(s))), node -> node.getReferenceID()));
     for (ReferenceID nodeID : deltaNodes) {
-      Iterable<NodeSource> currentSources = myNodeToSourcesMap.get(nodeID);
+      Set<NodeSource> sourcesAfter = Iterators.collect(myNodeToSourcesMap.get(nodeID), new HashSet<>());
+      sourcesAfter.removeAll(delta.getBaseSources());
+      Iterators.collect(delta.getSources(nodeID), sourcesAfter);
 
-      Set<NodeSource> sources = Iterators.collect(currentSources, new HashSet<>());
-      sources.removeAll(delta.getBaseSources());
-      Iterators.collect(delta.getSources(nodeID), sources);
-
-      if (!sources.equals(currentSources instanceof Set? currentSources : Iterators.collect(currentSources, new HashSet<>()))) {
-        myNodeToSourcesMap.put(nodeID, sources);
-      }
+      myNodeToSourcesMap.update(nodeID, sourcesAfter, Difference::diff);
     }
 
     for (NodeSource src : delta.getSources()) {
-      Iterable<Node<?, ?>> nodesBefore = mySourceToNodesMap.get(src);
-      Iterable<Node<?, ?>> nodesAfter = delta.getNodes(src);
       //noinspection unchecked
-      Difference.Specifier<Node, Difference> diff = Difference.deepDiff(Graph.getNodesOfType(nodesBefore, Node.class), Graph.getNodesOfType(nodesAfter, Node.class));
-      if (diff.unchanged()) {
-        continue;
-      }
-      if (Iterators.isEmpty(diff.removed()) && Iterators.isEmpty(diff.changed())) {
-        mySourceToNodesMap.appendValues(src, Iterators.map(diff.added(), n -> (Node<?, ?>)n));
-      }
-      else {
-        mySourceToNodesMap.put(src, nodesAfter);
-      }
+      mySourceToNodesMap.update(src, delta.getNodes(src), (past, now) -> new Difference.Specifier<>() {
+        private final Difference.Specifier<Node, ?> diff = Difference.deepDiff(Graph.getNodesOfType(past, Node.class), Graph.getNodesOfType(now, Node.class));
+        @Override
+        public Iterable<Node<?, ?>> added() {
+          return Iterators.map(diff.added(), n -> (Node<?, ?>)n);
+        }
+
+        @Override
+        public Iterable<Node<?, ?>> removed() {
+          return Iterators.map(diff.removed(), n -> (Node<?, ?>)n);
+        }
+
+        @Override
+        public Iterable<Difference.Change<Node<?, ?>, Difference>> changed() {
+          return Iterators.map(diff.changed(), ch -> new DiffChangeAdapter(ch));
+        }
+
+        @Override
+        public boolean unchanged() {
+          return diff.unchanged();
+        }
+      });
     }
   }
 
@@ -293,4 +299,26 @@ public final class DependencyGraphImpl extends GraphImpl implements DependencyGr
     return result;
   }
 
+  private static final class DiffChangeAdapter implements Difference.Change<Node<?, ?>, Difference> {
+    private final Difference.Change<Node, ?> myDelegate;
+
+    DiffChangeAdapter(Difference.Change<Node, ?> delegate) {
+      myDelegate = delegate;
+    }
+
+    @Override
+    public Node<?, ?> getPast() {
+      return myDelegate.getPast();
+    }
+
+    @Override
+    public Node<?, ?> getNow() {
+      return myDelegate.getNow();
+    }
+
+    @Override
+    public Difference getDiff() {
+      return myDelegate.getDiff();
+    }
+  }
 }
