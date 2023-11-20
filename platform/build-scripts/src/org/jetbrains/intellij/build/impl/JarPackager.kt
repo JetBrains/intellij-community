@@ -30,6 +30,7 @@ import java.nio.file.FileSystems
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.PathMatcher
+import java.security.MessageDigest
 import java.util.*
 import kotlin.io.path.invariantSeparatorsPathString
 
@@ -173,6 +174,7 @@ class JarPackager private constructor(private val outputDir: Path,
 
       val cacheManager = if (dryRun || context !is BuildContextImpl) NonCachingJarCacheManager else context.jarCacheManager
       val nativeFiles = buildJars(descriptors = packager.jarDescriptors.values,
+                                  layout = layout,
                                   cache = cacheManager,
                                   context = context,
                                   isCodesignEnabled = isCodesignEnabled,
@@ -657,7 +659,8 @@ private suspend fun buildJars(descriptors: Collection<AssetDescriptor>,
                               context: BuildContext,
                               isCodesignEnabled: Boolean,
                               useCacheAsTargetFile: Boolean,
-                              dryRun: Boolean): Map<ZipSource, List<String>> {
+                              dryRun: Boolean,
+                              layout: BaseLayout?): Map<ZipSource, List<String>> {
   val uniqueFiles = HashMap<Path, List<Source>>()
   for (descriptor in descriptors) {
     val existing = uniqueFiles.putIfAbsent(descriptor.file, descriptor.sources)
@@ -692,10 +695,26 @@ private suspend fun buildJars(descriptors: Collection<AssetDescriptor>,
                 targetFile = file,
                 nativeFiles = nativeFileHandler?.sourceToNativeFiles,
                 span = span,
-                useCacheAsTargetFile = useCacheAsTargetFile,
-              ) {
-                buildJar(targetFile = file, sources = sources, nativeFileHandler = nativeFileHandler, notify = false)
-              }
+                producer = object : SourceBuilder {
+                  override val useCacheAsTargetFile: Boolean
+                    get() = useCacheAsTargetFile
+
+                  override fun updateDigest(digest: MessageDigest) {
+                    if (layout is PluginLayout) {
+                      val mainModule = layout.mainModule
+                      digest.update(mainModule.length.toByte())
+                      digest.update(mainModule.encodeToByteArray())
+                    }
+                    else {
+                      digest.update(0)
+                    }
+                  }
+
+                  override suspend fun produce() {
+                    buildJar(targetFile = file, sources = sources, nativeFileHandler = nativeFileHandler, notify = false)
+                  }
+                }
+              )
             }
           }
 

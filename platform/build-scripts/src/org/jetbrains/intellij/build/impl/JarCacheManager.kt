@@ -24,20 +24,29 @@ import java.nio.file.FileAlreadyExistsException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.attribute.FileTime
+import java.security.MessageDigest
 import java.time.Instant
 
 private const val jarSuffix = ".jar"
 private const val metaSuffix = ".json"
 
-private const val cacheVersion: Byte = 5
+private const val cacheVersion: Byte = 6
+
+internal interface SourceBuilder {
+  val useCacheAsTargetFile: Boolean
+
+  // one module (source) can be included in different plugins - cache per plugin
+  fun updateDigest(digest: MessageDigest)
+
+  suspend fun produce()
+}
 
 internal sealed interface JarCacheManager {
   suspend fun computeIfAbsent(sources: List<Source>,
                               targetFile: Path,
                               nativeFiles: MutableMap<ZipSource, List<String>>?,
                               span: Span,
-                              useCacheAsTargetFile: Boolean,
-                              producer: suspend () -> Unit): Path
+                              producer: SourceBuilder): Path
 }
 
 internal data object NonCachingJarCacheManager : JarCacheManager {
@@ -45,9 +54,8 @@ internal data object NonCachingJarCacheManager : JarCacheManager {
                                        targetFile: Path,
                                        nativeFiles: MutableMap<ZipSource, List<String>>?,
                                        span: Span,
-                                       useCacheAsTargetFile: Boolean,
-                                       producer: suspend () -> Unit): Path {
-    producer()
+                                       producer: SourceBuilder): Path {
+    producer.produce()
     return targetFile
   }
 }
@@ -72,8 +80,7 @@ internal class LocalDiskJarCacheManager(private val cacheDir: Path,
                                        targetFile: Path,
                                        nativeFiles: MutableMap<ZipSource, List<String>>?,
                                        span: Span,
-                                       useCacheAsTargetFile: Boolean,
-                                       producer: suspend () -> Unit): Path {
+                                       producer: SourceBuilder): Path {
     val items = createSourceAndCacheStrategyList(sources = sources, classOutDirectory = classOutDirectory)
 
     // 224 bit and not 256/512 - use a slightly shorter filename
@@ -91,6 +98,8 @@ internal class LocalDiskJarCacheManager(private val cacheDir: Path,
       source.updateDigest(hash)
     }
 
+    producer.updateDigest(hash)
+
     val hashString = BigInteger(1, hash.digest()).toString(Character.MAX_RADIX)
     val cacheName = "${targetFile.fileName.toString().removeSuffix(jarSuffix)}-$hashString"
     val cacheFileName = (cacheName + jarSuffix).takeLast(255)
@@ -102,7 +111,7 @@ internal class LocalDiskJarCacheManager(private val cacheDir: Path,
                    items = items,
                    span = span,
                    nativeFiles = nativeFiles)) {
-      if (!useCacheAsTargetFile) {
+      if (!producer.useCacheAsTargetFile) {
         Files.createDirectories(targetFile.parent)
         Files.copy(cacheFile, targetFile)
       }
@@ -117,13 +126,13 @@ internal class LocalDiskJarCacheManager(private val cacheDir: Path,
       // update file modification time to maintain FIFO caches i.e., in persistent cache folder on TeamCity agent and for CacheDirCleanup
       Files.setLastModifiedTime(cacheFile, FileTime.from(Instant.now()))
 
-      if (useCacheAsTargetFile) {
+      if (producer.useCacheAsTargetFile) {
         return cacheFile
       }
       return targetFile
     }
 
-    producer()
+    producer.produce()
 
     val sourceCacheItems = items.map { source ->
       SourceCacheItem(path = source.path,
@@ -155,7 +164,7 @@ internal class LocalDiskJarCacheManager(private val cacheDir: Path,
       }
     }
 
-    if (useCacheAsTargetFile) {
+    if (producer.useCacheAsTargetFile) {
       return cacheFile
     }
     return targetFile

@@ -23,6 +23,7 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRoot
 import org.jetbrains.jps.util.JpsPathUtil
 import java.nio.file.Files
 import java.nio.file.Path
+import java.security.MessageDigest
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicReference
 
@@ -310,13 +311,24 @@ class BuildContextImpl(
   override fun getExtraExecutablePattern(os: OsFamily): List<String> = extraExecutablePatterns.get().get(os) ?: emptyList()
 
   override suspend fun buildJar(targetFile: Path, sources: List<Source>, compress: Boolean) {
-    jarCacheManager.computeIfAbsent(sources = sources,
-                                    targetFile = targetFile,
-                                    nativeFiles = null,
-                                    span = Span.current(),
-                                    useCacheAsTargetFile = false) {
-      buildJar(targetFile = targetFile, sources = sources, compress = compress, notify = false)
-    }
+    jarCacheManager.computeIfAbsent(
+      sources = sources,
+      targetFile = targetFile,
+      nativeFiles = null,
+      span = Span.current(),
+      producer = object : SourceBuilder {
+        override val useCacheAsTargetFile: Boolean
+          get() = false
+
+        override fun updateDigest(digest: MessageDigest) {
+          digest.update(Byte.MIN_VALUE)
+        }
+
+        override suspend fun produce() {
+          buildJar(targetFile = targetFile, sources = sources, compress = compress, notify = false)
+        }
+      },
+    )
   }
 }
 
