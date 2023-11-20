@@ -18,7 +18,7 @@ public final class CustomKindEntityIteratorImpl extends RootHolderIteratorBase {
     super(entityReference, roots, presentation != null
                                   ? presentation
                                   : IndexableIteratorPresentation.create(
-                                    "Custom kind roots from entity (" + roots.getRootsDebugStr() + ")",
+                                    "Custom kind roots from entity (" + roots.getDebugDescription() + ")",
                                     IndexingBundle.message("indexable.files.provider.indexing.additional.dependencies"),
                                     IndexingBundle.message("indexable.files.provider.scanning.additional.dependencies")),
           true);

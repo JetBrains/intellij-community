@@ -50,8 +50,8 @@ internal open class IndexingRootHolderImpl(override val roots: List<VirtualFile>
     return IndexingRootHolderImpl(java.util.List.copyOf(roots), java.util.List.copyOf(nonRecursiveRoots))
   }
 
-  override fun getRootsDebugStr(): String {
-    return getRootsDebugStr(roots) + ", " + getRootsDebugStr(nonRecursiveRoots)
+  override fun getDebugDescription(): String {
+    return getDebugDescription(roots) + ", " + getDebugDescription(nonRecursiveRoots)
   }
 
   override fun isEmpty(): Boolean {
@@ -122,10 +122,10 @@ internal open class IndexingSourceRootHolderImpl(override val roots: List<Virtua
   }
 
   override fun getRootsDebugStr(): String {
-    return getRootsDebugStr(roots) + "; " +
-           getRootsDebugStr(nonRecursiveRoots) + "; " +
-           getRootsDebugStr(sourceRoots) + "; " +
-           getRootsDebugStr(nonRecursiveSourceRoots)
+    return getDebugDescription(roots) + "; " +
+           getDebugDescription(nonRecursiveRoots) + "; " +
+           getDebugDescription(sourceRoots) + "; " +
+           getDebugDescription(nonRecursiveSourceRoots)
   }
 
   override fun isEmpty(): Boolean {
@@ -178,7 +178,7 @@ internal class MutableIndexingSourceRootHolder(override val roots: MutableList<V
 
 
 @NonNls
-private fun getRootsDebugStr(files: Collection<VirtualFile?>): String {
+private fun getDebugDescription(files: Collection<VirtualFile?>): String {
   return if (files.isEmpty()) {
     "empty"
   }
