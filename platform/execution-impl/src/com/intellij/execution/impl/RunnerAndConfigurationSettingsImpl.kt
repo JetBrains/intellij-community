@@ -351,22 +351,22 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(
 
   override fun checkSettings(executor: Executor?) {
     val configuration = configuration
-    var warning: RuntimeConfigurationException? = null
     val dataContext = ProgramParametersConfigurator.projectContext(configuration.project, null, null)
 
-     ReadAction.nonBlocking {
+    var warning = ReadAction.nonBlocking<RuntimeConfigurationException?> {
       try {
         ExecutionManagerImpl.withEnvironmentDataContext(dataContext).use {
           configuration.checkConfiguration()
         }
       }
       catch (e: RuntimeConfigurationException) {
-        warning = e
+        return@nonBlocking e
       }
+      null
     }.executeSynchronously()
     if (configuration !is RunConfigurationBase<*>) {
       if (warning != null) {
-        throw warning as RuntimeConfigurationException
+        throw warning
       }
       return
     }
@@ -401,7 +401,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(
     }
 
     if (warning != null) {
-      throw warning as RuntimeConfigurationException
+      throw warning
     }
   }
 
