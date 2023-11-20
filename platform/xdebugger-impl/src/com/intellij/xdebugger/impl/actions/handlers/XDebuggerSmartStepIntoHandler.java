@@ -9,6 +9,7 @@ import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.codeInsight.unwrap.ScopeHighlighter;
 import com.intellij.execution.impl.EditorHyperlinkSupport;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.idea.AppMode;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.diagnostic.Logger;
@@ -23,10 +24,8 @@ import com.intellij.openapi.editor.ex.util.EditorActionAvailabilityHintKt;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.ui.popup.PopupStep;
@@ -250,10 +249,12 @@ public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandl
     });
 
     session.updateExecutionPosition();
-    VirtualFile virtualFile = editor.getVirtualFile();
-    // in the case of remote development the ordinary focus request doesn't work, we need to use FileEditorManagerEx api to focus the editor
-    if (virtualFile != null) {
-      FileEditorManagerEx.getInstanceEx(session.getProject()).openFile(virtualFile, true, true);
+    if (AppMode.isRemoteDevHost()) {
+      VirtualFile virtualFile = editor.getVirtualFile();
+      // in the case of remote development the ordinary focus request doesn't work, we need to use FileEditorManagerEx api to focus the editor
+      if (virtualFile != null) {
+        FileEditorManagerEx.getInstanceEx(session.getProject()).openFile(virtualFile, true, true);
+      }
     }
     IdeFocusManager.getGlobalInstance().requestFocus(editor.getContentComponent(), true);
     showInfoHint(editor, data);
