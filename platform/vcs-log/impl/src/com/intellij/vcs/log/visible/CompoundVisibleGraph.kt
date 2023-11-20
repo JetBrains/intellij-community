@@ -29,7 +29,7 @@ internal class CompoundVisibleGraph<CommitId : Any>(private val firstGraph: Visi
   }
 
   override fun getRecommendedWidth(): Int {
-    return firstGraph.recommendedWidth
+    return secondGraph.recommendedWidth
   }
 
   private fun VisibleGraph<CommitId>.containsRow(visibleRow: Int): Boolean {
