@@ -1084,6 +1084,7 @@ private fun applyDensityOnUpdateUi(defaults: UIDefaults) {
     defaults.put(JBUI.CurrentTheme.Toolbar.verticalInsetsKey(), cmInsets(2, 4))
     // main toolbar
     defaults.put(JBUI.CurrentTheme.Toolbar.experimentalToolbarButtonSizeKey(), cmSize(30, 30))
+    defaults.put(JBUI.CurrentTheme.Toolbar.mainToolbarButtonInsetsKey(), cmInsets(2))
     defaults.put(JBUI.CurrentTheme.Toolbar.experimentalToolbarButtonIconSizeKey(), 16)
     defaults.put(JBUI.CurrentTheme.Toolbar.experimentalToolbarFontKey(), Supplier { JBFont.medium().asUIResource() })
     defaults.put(JBUI.CurrentTheme.TitlePane.buttonPreferredSizeKey(), cmSize(44, 34))
@@ -1091,7 +1092,6 @@ private fun applyDensityOnUpdateUi(defaults: UIDefaults) {
     defaults.put(JBUI.CurrentTheme.Toolbar.stripeToolbarButtonSizeKey(), cmSize(32, 32))
     defaults.put(JBUI.CurrentTheme.Toolbar.stripeToolbarButtonIconSizeKey(), 16)
     defaults.put(JBUI.CurrentTheme.Toolbar.stripeToolbarButtonIconPaddingKey(), cmInsets(4))
-    defaults.put(JBUI.CurrentTheme.Toolbar.mainToolbarButtonInsetsKey(), cmInsets(2))
     // Run Widget
     defaults.put(JBUI.CurrentTheme.RunWidget.toolbarHeightKey(), 26)
     defaults.put(JBUI.CurrentTheme.RunWidget.toolbarBorderHeightKey(), 4)
