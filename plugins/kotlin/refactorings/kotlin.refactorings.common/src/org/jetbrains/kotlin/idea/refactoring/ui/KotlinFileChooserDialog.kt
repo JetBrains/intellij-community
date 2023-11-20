@@ -29,6 +29,7 @@ class KotlinFileChooserDialog(
     ScopeAwareClassFilter(searchScope, packageName),
     null,
     null,
+    null,
     false,
     false
 ) {
