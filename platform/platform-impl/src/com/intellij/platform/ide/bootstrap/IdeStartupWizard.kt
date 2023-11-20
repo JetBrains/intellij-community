@@ -77,7 +77,6 @@ internal suspend fun runStartupWizard(isInitialStart: Job, app: Application) {
           }
         } finally {
           startupStatus?.cancel()
-          com.intellij.platform.ide.bootstrap.isInitialStart = null
         }
 
         log.info("Passing execution control to $wizard.")
