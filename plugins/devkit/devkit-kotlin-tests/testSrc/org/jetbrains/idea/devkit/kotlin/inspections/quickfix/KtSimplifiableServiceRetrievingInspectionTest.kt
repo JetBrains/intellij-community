@@ -49,4 +49,8 @@ internal class KtSimplifiableServiceRetrievingInspectionTest : SimplifiableServi
   fun testTooGenericGetInstanceReturnType() {
     doTest()
   }
+
+  fun testPropertyWithGetterRetrievingService() {
+    doTest()
+  }
 }

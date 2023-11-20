@@ -35,16 +35,16 @@ internal class SimplifiableServiceRetrievingInspection : DevKitUastInspectionBas
                                     howServiceRetrieved: Service.Level,
                                     serviceClass: UClass): UMethod? {
     val returnExpr = retrievingExpression.uastParent as? UReturnExpression
-    if (returnExpr != null) {
-      val containingMethod = returnExpr.jumpTarget as? UMethod
-      if (containingMethod != null) {
-        if (howServiceRetrieved == Service.Level.APP && isGetInstanceApplicationLevel(containingMethod)) return null
-        if (howServiceRetrieved == Service.Level.PROJECT && isGetInstanceProjectLevel(containingMethod)) return null
-      }
+    val containingMethod = returnExpr?.jumpTarget as? UMethod
+    if (containingMethod != null) {
+      if (howServiceRetrieved == Service.Level.APP && isGetInstanceApplicationLevel(containingMethod)) return null
+      if (howServiceRetrieved == Service.Level.PROJECT && isGetInstanceProjectLevel(containingMethod)) return null
     }
-    return when (howServiceRetrieved) {
-      Service.Level.APP -> findGetInstanceApplicationLevel(serviceClass)
-      Service.Level.PROJECT -> findGetInstanceProjectLevel(serviceClass)
+    return serviceClass.methods.find {
+      it.sourcePsi !== containingMethod?.sourcePsi && when (howServiceRetrieved) {
+        Service.Level.APP -> isGetInstanceApplicationLevel(it)
+        Service.Level.PROJECT -> isGetInstanceProjectLevel(it)
+      }
     }?.takeIf { method -> method.returnType == retrievingExpression.getExpressionType()  }
   }
 
@@ -60,10 +60,6 @@ internal class SimplifiableServiceRetrievingInspection : DevKitUastInspectionBas
     holder.registerUProblem(retrievingExpression, message, fixes = arrayOf(fix))
   }
 
-  private fun findGetInstanceProjectLevel(uClass: UClass): UMethod? {
-    return uClass.methods.find { isGetInstanceProjectLevel(it) }
-  }
-
   private fun isGetInstanceProjectLevel(method: UMethod): Boolean {
     if (!(method.isStaticOrJvmStatic && method.visibility == UastVisibility.PUBLIC && method.uastParameters.size == 1)) {
       return false
@@ -73,10 +69,6 @@ internal class SimplifiableServiceRetrievingInspection : DevKitUastInspectionBas
     val qualifiedRef = getReturnExpression(method)?.returnExpression as? UQualifiedReferenceExpression ?: return false
     return COMPONENT_MANAGER_GET_SERVICE.uCallMatches(qualifiedRef.selector as? UCallExpression) &&
            (qualifiedRef.receiver as? USimpleNameReferenceExpression)?.resolveToUElement() == param
-  }
-
-  private fun findGetInstanceApplicationLevel(uClass: UClass): UMethod? {
-    return uClass.methods.find { isGetInstanceApplicationLevel(it) }
   }
 
   private fun isGetInstanceApplicationLevel(method: UMethod): Boolean {
