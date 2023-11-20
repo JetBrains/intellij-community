@@ -11,7 +11,6 @@ import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithMembers
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.getSymbolContainingMemberDeclarations
 import org.jetbrains.kotlin.idea.fir.invalidateCaches
 import org.jetbrains.kotlin.idea.refactoring.rename.AbstractRenameTest
-import org.jetbrains.kotlin.idea.refactoring.rename.loadTestConfiguration
 import org.jetbrains.kotlin.idea.test.KotlinLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.runAll
@@ -35,14 +34,7 @@ abstract class AbstractFirRenameTest : AbstractRenameTest() {
 
     @OptIn(KtAllowAnalysisOnEdt::class)
     override fun doTest(path: String) {
-        val renameObject = loadTestConfiguration(dataFile())
-        val testIsEnabledInK2 = renameObject.get("enabledInK2")?.asBoolean ?: error("`enabledInK2` has to be specified explicitly")
-
-        val result = allowAnalysisOnEdt { runCatching { super.doTest(path) } }
-        result.fold(
-            onSuccess = { require(testIsEnabledInK2) { "This test passes and should be enabled!" } },
-            onFailure = { exception -> if (testIsEnabledInK2) throw exception }
-        )
+        allowAnalysisOnEdt { super.doTest(path) }
     }
 
     override fun checkForUnexpectedErrors(ktFile: KtFile) {}
