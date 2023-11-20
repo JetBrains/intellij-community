@@ -16,11 +16,11 @@ import kotlin.io.path.*
 
 /**
  * A class that allows associating enumerable objects and virtual files.
- * Physical storage contains two pieces: [PersistentEnumerator] and [IntFileAttribute].
+ * Physical storage contains two pieces: [DurableDataEnumerator] and [IntFileAttribute].
  * Physical storage ([exclusiveDir] directory with all its content) will be deleted on VFS rebuild.
  *
  * The main problems that this class is intended to solve:
- * 1. store files used for enumerated data ([PersistentEnumerator]) and [IntFileAttribute] in the same folder
+ * 1. store files used for enumerated data ([DurableDataEnumerator]) and [IntFileAttribute] in the same folder
  * 2. delete all the data on VFS rebuild
  *
  * @param exclusiveDir a directory to use for storage. [EnumeratedFastFileAttribute] assumes that it
@@ -29,7 +29,7 @@ import kotlin.io.path.*
  * delete it (while [EnumeratedFastFileAttribute] is closed) to drop all the existing data.
  * @param fileAttribute
  * @param descriptorForCache enable caching via [CachingEnumerator] (or use no-cache if `null`)
- * @param createEnumerator lambda that creates [PersistentEnumerator] in specified `enumeratorPath`. Invoked at most once (exactly once if
+ * @param createEnumerator lambda that creates [DurableDataEnumerator] in specified `enumeratorPath`. Invoked at most once (exactly once if
  * constructor completes normally).
  */
 @Internal
@@ -37,7 +37,7 @@ class EnumeratedFastFileAttribute<T> @VisibleForTesting constructor(private val 
                                                                     fileAttribute: FileAttribute,
                                                                     descriptorForCache: KeyDescriptor<T>?,
                                                                     expectedVfsCreationTimestamp: Long,
-                                                                    createEnumerator: (enumeratorPath: Path) -> PersistentEnumerator<T>) : Closeable {
+                                                                    createEnumerator: (enumeratorPath: Path) -> DurableDataEnumerator<T>) : Closeable {
 
   private val baseEnumerator: DataEnumerator<T>
   private val baseAttribute: IntFileAttribute
@@ -46,7 +46,7 @@ class EnumeratedFastFileAttribute<T> @VisibleForTesting constructor(private val 
   constructor(exclusiveDir: Path,
               fileAttribute: FileAttribute,
               descriptorForCache: KeyDescriptor<T>?,
-              createEnumerator: (enumeratorPath: Path) -> PersistentEnumerator<T>) :
+              createEnumerator: (enumeratorPath: Path) -> DurableDataEnumerator<T>) :
     this(exclusiveDir, fileAttribute, descriptorForCache, FSRecords.getCreationTimestamp(), createEnumerator)
 
   init {
@@ -73,8 +73,8 @@ class EnumeratedFastFileAttribute<T> @VisibleForTesting constructor(private val 
     vfsChecker.createVfsTimestampMarkerFileIfAbsent(expectedVfsCreationTimestamp)
   }
 
-  private fun tryOpenStorages(fileAttribute: FileAttribute, createEnumerator: (enumeratorPath: Path) -> PersistentEnumerator<T>)
-    : Pair<PersistentEnumerator<T>, IntFileAttribute> {
+  private fun tryOpenStorages(fileAttribute: FileAttribute, createEnumerator: (enumeratorPath: Path) -> DurableDataEnumerator<T>)
+    : Pair<DurableDataEnumerator<T>, IntFileAttribute> {
     val localCloser = Closer.create()
     try {
       val enumerator = createEnumerator(getEnumeratorFile())
@@ -85,7 +85,7 @@ class EnumeratedFastFileAttribute<T> @VisibleForTesting constructor(private val 
 
       return Pair(enumerator, attribute)
     }
-    catch (e: Exception) {
+    catch (e: Throwable) {
       localCloser.close()
       throw e
     }
