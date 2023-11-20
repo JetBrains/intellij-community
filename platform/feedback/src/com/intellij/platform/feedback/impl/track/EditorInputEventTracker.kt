@@ -15,22 +15,17 @@ import com.intellij.psi.PsiFile
 import java.time.Duration
 import java.time.LocalDateTime
 
-
 /**
  * Tracks keyboard and mouse activity in any editor and show a feedback notification after a long inactivity.
  */
 class EditorInputEventTracker : TypedHandlerDelegate(), EditorMouseListener, EditorMouseMotionListener {
+
   init {
     val app = ApplicationManager.getApplication()
     if (app.isUnitTestMode || app.isHeadlessEnvironment) {
       throw ExtensionNotApplicableException.create()
     }
   }
-
-  // 10 minutes
-  private val MIN_INACTIVE_TIME = 600
-
-  private var lastActivityTime: LocalDateTime = LocalDateTime.now()
 
   override fun mouseClicked(event: EditorMouseEvent) {
     checkActivity(event.editor.project)
@@ -53,3 +48,8 @@ class EditorInputEventTracker : TypedHandlerDelegate(), EditorMouseListener, Edi
     lastActivityTime = LocalDateTime.now()
   }
 }
+
+// 10 minutes
+private const val MIN_INACTIVE_TIME = 600
+
+private var lastActivityTime: LocalDateTime = LocalDateTime.now()
