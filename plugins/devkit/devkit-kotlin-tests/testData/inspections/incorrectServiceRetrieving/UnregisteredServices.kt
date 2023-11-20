@@ -27,7 +27,6 @@ fun main() {
     <error descr="The 'UnregisteredService' class is not registered as a service">serviceIfCreated</error><UnregisteredService>()
 
     ApplicationManager.getApplication().<error descr="The 'UnregisteredService' class is not registered as a service">getService</error>(UnregisteredService::class.java)
-    ApplicationManager.getApplication().<error descr="The 'UnregisteredService' class is not registered as a service">getService</error>(UnregisteredService::class.java, true)
   }
 
   fun lightServices(project: Project) {
@@ -41,6 +40,5 @@ fun main() {
     serviceIfCreated<ApplicationService>()
 
     ApplicationManager.getApplication().getService(ApplicationService::class.java)
-    ApplicationManager.getApplication().getService(ApplicationService::class.java, true)
   }
 }
