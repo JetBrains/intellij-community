@@ -230,7 +230,7 @@ public class AllIcons {
   }
 
   public static final class AiAssistant {
-    /** 16x16 */ public static final @NotNull Icon AiAssistantColored = load("aiAssistant/aiAssistantColored.svg", -625679760, 0);
+    /** 16x16 */ public static final @NotNull Icon AiAssistantColored = load("aiAssistant/aiAssistantColored.svg", -625679760, 2);
   }
 
   public static final class Chooser {
