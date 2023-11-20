@@ -10,6 +10,9 @@ import com.intellij.openapi.project.Project
 @Service
 class MyService
 
+@Service(Service.Level.PROJECT)
+class ProjectService
+
 fun test(project: Project) {
   service<MyService>()
   serviceOrNull<MyService>()
