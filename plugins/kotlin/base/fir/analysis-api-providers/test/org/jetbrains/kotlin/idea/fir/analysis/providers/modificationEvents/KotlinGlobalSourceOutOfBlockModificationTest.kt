@@ -24,8 +24,6 @@ class KotlinGlobalSourceOutOfBlockModificationTest : AbstractKotlinGlobalModific
         }
 
         tracker.assertModifiedOnce("the project after a file is added to the content root of module A")
-
-        disposeTrackers(tracker)
     }
 
     fun `test that global source out-of-block modification occurs after a file is moved to another module content root`() {
@@ -44,8 +42,6 @@ class KotlinGlobalSourceOutOfBlockModificationTest : AbstractKotlinGlobalModific
         move(file, destination)
 
         tracker.assertModifiedOnce("the project after a file from module A is moved to the content root of module B")
-
-        disposeTrackers(tracker)
     }
 
     fun `test that global source out-of-block modification occurs after moving a script file to a non-source module content root`() {
@@ -60,8 +56,6 @@ class KotlinGlobalSourceOutOfBlockModificationTest : AbstractKotlinGlobalModific
         move(scriptA.virtualFile, destination)
 
         tracker.assertModifiedOnce("the project after a script file is moved to a non-source content root of module B")
-
-        disposeTrackers(tracker)
     }
 
     fun `test that global source out-of-block modification occurs after moving a script file outside the project content root`() {
@@ -73,8 +67,6 @@ class KotlinGlobalSourceOutOfBlockModificationTest : AbstractKotlinGlobalModific
         move(scriptA.virtualFile, destination)
 
         tracker.assertModifiedOnce("the project after a script file is moved outside the project content root")
-
-        disposeTrackers(tracker)
     }
 
     // TODO (marco): This test can be enabled once IDEA-324516 is fixed.
@@ -86,8 +78,6 @@ class KotlinGlobalSourceOutOfBlockModificationTest : AbstractKotlinGlobalModific
     //    delete(scriptA.virtualFile)
     //
     //    tracker.assertModified("the project after a script file is deleted", expectedEventCount = 2)
-    //
-    //    disposeTrackers(tracker)
     //}
 
     fun `test that global source out-of-block modification occurs after moving a not-under-content-root file to a non-source module content root`() {
@@ -102,8 +92,6 @@ class KotlinGlobalSourceOutOfBlockModificationTest : AbstractKotlinGlobalModific
         move(fileA.virtualFile, destination)
 
         tracker.assertModifiedOnce("the project after a not-under-content-root file is moved to a non-source content root of module B")
-
-        disposeTrackers(tracker)
     }
 
     fun `test that global source out-of-block modification occurs after moving a not-under-content-root file outside the project content root`() {
@@ -117,8 +105,6 @@ class KotlinGlobalSourceOutOfBlockModificationTest : AbstractKotlinGlobalModific
         move(fileA.virtualFile, destination)
 
         tracker.assertModifiedOnce("the project after a not-under-content-root file is moved outside the project content root")
-
-        disposeTrackers(tracker)
     }
 
     fun `test that global source out-of-block modification occurs after deleting a not-under-content-root file`() {
@@ -129,8 +115,6 @@ class KotlinGlobalSourceOutOfBlockModificationTest : AbstractKotlinGlobalModific
         delete(fileA.virtualFile)
 
         tracker.assertModified("the project after a not-under-content-root file is deleted", expectedEventCount = 2)
-
-        disposeTrackers(tracker)
     }
 }
 

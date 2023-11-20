@@ -27,10 +27,6 @@ abstract class AbstractKotlinModificationEventTest<TRACKER : ModificationEventTr
         // While the not-under-content-root module is named as it is, it is still decidedly under the project's content root, just not a
         // part of any other kind of `KtModule`.
         createKtFileUnderNewContentRoot(FileWithText("$name.kt", text))
-
-    protected fun disposeTrackers(vararg trackers: TRACKER) {
-        trackers.forEach { Disposer.dispose(it) }
-    }
 }
 
 abstract class ModificationEventTracker(
@@ -41,7 +37,9 @@ abstract class ModificationEventTracker(
 
     protected val receivedEvents: MutableList<ReceivedEvent> = mutableListOf()
 
-    fun initialize() {
+    fun initialize(testRootDisposable: Disposable) {
+        Disposer.register(testRootDisposable, this)
+
         val busConnection = project.analysisMessageBus.connect(this)
         configureSubscriptions(busConnection)
     }
