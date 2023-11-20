@@ -2,7 +2,9 @@ package com.jetbrains.performancePlugin.commands
 
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.ui.playback.commands.PlaybackCommandCoroutineAdapter
-import com.jetbrains.performancePlugin.PerformanceTestSpan
+import com.intellij.platform.diagnostic.telemetry.PlatformMetrics
+import com.intellij.platform.diagnostic.telemetry.Scope
+import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 
 class CaptureMemoryMetricsCommand(text: String, line: Int) : PlaybackCommandCoroutineAdapter(text, line) {
   companion object {
@@ -11,20 +13,19 @@ class CaptureMemoryMetricsCommand(text: String, line: Int) : PlaybackCommandCoro
     private var prevHeapUsageMb: Long? = null
   }
 
-  override suspend fun doExecute(context: PlaybackContext) {
-   val postfix = extractCommandArgument(PREFIX);
+  val otelMeter = TelemetryManager.getMeter(Scope("test", PlatformMetrics))
 
+  override suspend fun doExecute(context: PlaybackContext) {
+    val postfix = extractCommandArgument(PREFIX)
+    val heapUsageMb = otelMeter.counterBuilder("JVM.heapUsageMb$postfix").build()
+    val diffHeapUsageMb = otelMeter.counterBuilder("JVM.diffHeapUsageMb$postfix").build()
     val memory = MemoryCapture.capture()
-    val span = PerformanceTestSpan.getTracer(false)
-      .spanBuilder(SPAN_NAME)
-      .setParent(PerformanceTestSpan.getContext())
-      span
-        .setAttribute("usedHeapMemoryUsageMb${postfix}", memory.usedMb)
-        .setAttribute("maxHeapMemoryUsageMb${postfix}", memory.maxMb)
+    heapUsageMb.add(memory.usedMb)
     prevHeapUsageMb?.also {
-     span.setAttribute("diffUsedHeapMemoryUsageMb${postfix}", it - memory.usedMb)
+      if (it > 0) {
+        diffHeapUsageMb.add(it - memory.usedMb)
+      }
     }
-    span.startSpan().end()
     prevHeapUsageMb = memory.usedMb
   }
 }
