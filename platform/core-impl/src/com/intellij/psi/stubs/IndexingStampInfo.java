@@ -25,7 +25,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 
-import static java.lang.Math.max;
 import static java.lang.Math.min;
 
 /**
@@ -77,39 +76,32 @@ class IndexingStampInfo {
     return true; //this.indexingByteLength == byteContentLength;
   }
 
-  public int[] toInt3() {
-    // 48 bits for indexingFileStamp
-    // 16 bits for indexingCharLengthDiff (indexingCharLength = indexingByteLength + indexingCharLengthDiff)
+  public int[] toInt4() {
+    // 64 bits for indexingFileStamp (48 is enough in most cases, if you want to save 16 bits)
     // 1 bit for binary flag
-    // 31 bits for indexingByteLength, unsigned (files >2GB are represented with 2^31-1)
+    // 31 bits for indexingCharLength, unsigned
+    // 32 bits for indexingByteLength, signed for simplicity (files >2GB are represented with 2^31-1)
 
-    int representableByteLength = coerceToNonNegativeInt(indexingByteLength);
+    // we don't actually use indexingByteLength for diagnostics (see contentLengthMatches), so we can reduce stored size by 1 int,
+    // still it is useful for debugging, until we find a better way to utilize this space (we can only store 2 or 4 ints per file, not 3)
+
     int binary = isBinary ? 0x80_00_00_00 : 0;
-    short indexingCharLengthDiff = coerceToShort(indexingCharLength - representableByteLength);
-    int[] ints = new int[3];
+    int[] ints = new int[4];
     ints[0] = (int)(indexingFileStamp & 0x0_ff_ff_ff_ffL);
-    ints[1] = (int)(((indexingFileStamp >> 32) & 0x0_ff_ff) | (indexingCharLengthDiff << 16));
-    ints[2] = representableByteLength | binary;
+    ints[1] = (int)((indexingFileStamp >> 32) & 0x0_ff_ff_ff_ffL);
+    ints[2] = indexingCharLength | binary;
+    ints[3] = (int)min(indexingByteLength, Integer.MAX_VALUE);
     return ints;
   }
 
-  public static IndexingStampInfo fromInt3(int[] ints) {
-    assert ints.length == 3 : Arrays.toString(ints);
-    long indexingFileStamp = (ints[0] & 0x0_ff_ff_ff_ffL) | ((long)(ints[1] & 0x0_ff_ff) << 32);
-    int indexingCharLengthDiff = (ints[1] >> 16);
+  public static IndexingStampInfo fromInt4(int[] ints) {
+    assert ints.length == 4 : Arrays.toString(ints);
+    long indexingFileStamp = (ints[0] & 0x0_ff_ff_ff_ffL) | ((long)ints[1] << 32);
     boolean isBinary = ((ints[2] & 0x80_00_00_00) != 0);
-    long indexingByteLength = (ints[2] & ~0x80_00_00_00);
-    int indexingCharLength = (int)(indexingByteLength + indexingCharLengthDiff);
+    int indexingCharLength = (ints[2] & ~0x80_00_00_00);
+    int indexingByteLength = ints[3];
 
     return new IndexingStampInfo(indexingFileStamp, indexingByteLength, isBinary ? -1 : indexingCharLength, isBinary);
-  }
-
-  private static short coerceToShort(int l) {
-    return (short)max(Short.MIN_VALUE, min(l, Short.MAX_VALUE));
-  }
-
-  private static int coerceToNonNegativeInt(long l) {
-    return (int)max(0, min(l, Integer.MAX_VALUE));
   }
 
   @Override
