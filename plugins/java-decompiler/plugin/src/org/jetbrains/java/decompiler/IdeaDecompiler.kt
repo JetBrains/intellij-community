@@ -42,11 +42,23 @@ import java.util.jar.Manifest
 const val IDEA_DECOMPILER_BANNER: String = "//\n// Source code recreated from a .class file by IntelliJ IDEA\n// (powered by FernFlower decompiler)\n//\n\n"
 
 class IdeaDecompiler : ClassFileDecompilers.Light() {
-  class LegalBurden : FileEditorManagerListener.Before {
-    private var showNotice = !canWork()
+  internal class LegalBurden : FileEditorManagerListener.Before {
+    private var showNotice: Boolean? = null
 
     override fun beforeFileOpened(source: FileEditorManager, file: VirtualFile) {
-      if (!showNotice || file.fileType !== JavaClassFileType.INSTANCE) {
+      showNotice?.let {
+        if (!it) {
+          return
+        }
+      }
+
+      // fileType is cached per file, it is a cheap call, so, check before PropertiesComponent
+      if (file.fileType !== JavaClassFileType.INSTANCE) {
+        return
+      }
+
+      if (PropertiesComponent.getInstance().isValueSet(LEGAL_NOTICE_KEY)) {
+        showNotice = false
         return
       }
 
@@ -98,7 +110,7 @@ class IdeaDecompiler : ClassFileDecompilers.Light() {
   override fun accepts(file: VirtualFile): Boolean = true
 
   override fun getText(file: VirtualFile): CharSequence {
-    if (canWork()) {
+    if (ApplicationManager.getApplication().isUnitTestMode || PropertiesComponent.getInstance().isValueSet(LEGAL_NOTICE_KEY)) {
       val previous = TASK_KEY.pop(file)?.get()
       if (previous != null) {
         return previous
@@ -233,8 +245,4 @@ private fun getOptions(): Map<String, Any> {
     IFernflowerPreferences.VERIFY_ANONYMOUS_CLASSES to "1",
     //IFernflowerPreferences.UNIT_TEST_MODE to if (ApplicationManager.getApplication().isUnitTestMode) "1" else "0"
   )
-}
-
-private fun canWork(): Boolean {
-  return ApplicationManager.getApplication().isUnitTestMode || PropertiesComponent.getInstance().isValueSet(LEGAL_NOTICE_KEY)
 }
