@@ -39,7 +39,7 @@ class TerminalCaretModel(
   }
 
   override fun onPositionChanged(cursorX: Int, cursorY: Int) {
-    if (terminalModel.isCommandRunning && terminalModel.isCursorVisible) {
+    if (terminalModel.isCursorVisible) {
       updateCaretPosition(cursorX, cursorY)
     }
     else updateCaretPosition(null)
@@ -70,7 +70,7 @@ class TerminalCaretModel(
     // this call can happen before a block is created
     val outputStartOffset = outputModel.getLastBlock()?.outputStartOffset ?: 0
     // cursor position in the TextBuffer is relative to the output start
-    val blockStartLine = if (terminalModel.useAlternateBuffer) 0 else editor.document.getLineNumber(outputStartOffset)
+    val blockStartLine = editor.document.getLineNumber(outputStartOffset)
     val historyLines = if (terminalModel.useAlternateBuffer) 0 else terminalModel.historyLinesCount
     val blockLine = historyLines + cursorY - 1
     return LogicalPosition(blockStartLine + blockLine, cursorX)
