@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.webSymbols.customElements
 
+import com.intellij.markdown.utils.doc.DocMarkdownToHtmlConverter
 import com.intellij.model.Pointer
 import com.intellij.openapi.util.UserDataHolderEx
 import com.intellij.psi.PsiElement
@@ -14,7 +15,6 @@ import com.intellij.webSymbols.customElements.json.*
 import com.intellij.webSymbols.impl.StaticWebSymbolsScopeBase
 import com.intellij.webSymbols.query.WebSymbolNameConversionRules
 import com.intellij.webSymbols.query.WebSymbolNameConversionRulesProvider
-import com.intellij.webSymbols.utils.HtmlMarkdownUtils
 
 abstract class CustomElementsManifestScopeBase :
   StaticWebSymbolsScopeBase<CustomElementsManifest, Any, CustomElementsJsonOrigin>() {
@@ -74,7 +74,7 @@ abstract class CustomElementsManifestScopeBase :
       sourceSymbolResolver(source, cacheHolder)
 
     override fun renderDescription(description: String): String =
-      HtmlMarkdownUtils.toHtml(description, false)
+      DocMarkdownToHtmlConverter.convert(description)
 
     override fun toString(): String {
       return "$library@$version"

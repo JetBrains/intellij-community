@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.webSymbols.utils.markdown
+package com.intellij.markdown.utils.doc
 
-import com.intellij.webSymbols.utils.HtmlMarkdownUtils
 import org.intellij.markdown.lexer.Compat.assert
 import org.intellij.markdown.parser.LookaheadText
 import org.intellij.markdown.parser.MarkerProcessor
@@ -11,12 +10,12 @@ import org.intellij.markdown.parser.markerblocks.MarkerBlock
 import org.intellij.markdown.parser.markerblocks.MarkerBlockProvider
 import org.intellij.markdown.parser.markerblocks.impl.HtmlBlockMarkerBlock
 
-class DocumentationHtmlBlockProvider : MarkerBlockProvider<MarkerProcessor.StateInfo> {
+internal class DocHtmlBlockProvider : MarkerBlockProvider<MarkerProcessor.StateInfo> {
   override fun createMarkerBlocks(pos: LookaheadText.Position,
                                   productionHolder: ProductionHolder,
                                   stateInfo: MarkerProcessor.StateInfo): List<MarkerBlock> {
     val matchingGroup = matches(pos, stateInfo.currentConstraints)
-    if (matchingGroup in 0 until 4) {
+    if (matchingGroup in 0..3) {
       return listOf(HtmlBlockMarkerBlock(stateInfo.currentConstraints, productionHolder, OPEN_CLOSE_REGEXES[matchingGroup].second, pos))
     }
     return emptyList()
@@ -62,7 +61,7 @@ class DocumentationHtmlBlockProvider : MarkerBlockProvider<MarkerProcessor.State
       Pair(Regex("<\\?"), Regex("\\?>")),
       Pair(Regex("<![A-Z]"), Regex(">")),
       Pair(Regex("<!\\[CDATA\\["), Regex("]]>")),
-      Pair(Regex("</?(?:${HtmlMarkdownUtils.ACCEPTABLE_BLOCK_TAGS.joinToString("|")})(?: |/?>|$)", RegexOption.IGNORE_CASE), null)
+      Pair(Regex("</?(?:${DocMarkdownToHtmlConverter.ACCEPTABLE_BLOCK_TAGS.joinToString("|")})(?: |/?>|$)", RegexOption.IGNORE_CASE), null)
     )
 
     @JvmField
