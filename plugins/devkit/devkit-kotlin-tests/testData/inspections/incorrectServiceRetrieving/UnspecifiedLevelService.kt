@@ -19,7 +19,6 @@ fun test(project: Project) {
   serviceIfCreated<MyService>()
 
   ApplicationManager.getApplication().getService(MyService::class.java)
-  ApplicationManager.getApplication().getService(MyService::class.java, true)
 
   project.getService(ProjectService::class.java)
   project.service<ProjectService>()

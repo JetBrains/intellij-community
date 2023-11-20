@@ -25,8 +25,6 @@ private val SERVICES_KT_METHODS =
 
 internal val COMPONENT_MANAGER_GET_SERVICE = CallMatcher.anyOf(
   CallMatcher.instanceCall(ComponentManager::class.java.canonicalName, "getService").parameterTypes(CommonClassNames.JAVA_LANG_CLASS),
-  CallMatcher.instanceCall(ComponentManager::class.java.canonicalName, "getService").parameterTypes(CommonClassNames.JAVA_LANG_CLASS,
-                                                                                                    "boolean"),
   SERVICE_KT_METHODS,
   SERVICES_KT_METHODS,
 )
