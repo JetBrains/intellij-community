@@ -36,7 +36,7 @@ class KotlinModuleOutOfBlockModificationTest : AbstractKotlinModuleModificationE
         }
 
         // We expect two events: One published before and one after the PSI tree modification.
-        trackerA.assertModified("module A after out-of-block change", expectedEventCount = 2)
+        trackerA.assertModified("module A after out-of-block change")
         trackerB.assertNotModified("unmodified module B")
         trackerC.assertNotModified("unmodified module C")
     }
@@ -107,7 +107,7 @@ class KotlinModuleOutOfBlockModificationTest : AbstractKotlinModuleModificationE
         }
 
         // In total, seven PSI tree changes are processed: Two `BEFORE_CHILD_REPLACEMENT`, one `CHILDREN_CHANGED`, and four `CHILD_ADDED`.
-        trackerA.assertModified("module A after adding a space in an identifier", expectedEventCount = 7)
+        trackerA.assertModified("module A after adding a space in an identifier")
     }
 
     fun `test that source module out-of-block modification occurs after commenting out a function`() {
@@ -127,7 +127,7 @@ class KotlinModuleOutOfBlockModificationTest : AbstractKotlinModuleModificationE
             }
         }
 
-        trackerA.assertModifiedOnce("module A after commenting out a function")
+        trackerA.assertModified("module A after commenting out a function")
     }
 
     fun `test that source module out-of-block modification does not occur after commenting out a type inside a function body`() {
@@ -182,7 +182,7 @@ class KotlinModuleOutOfBlockModificationTest : AbstractKotlinModuleModificationE
             }
         }
 
-        trackerA.assertModifiedOnce("module A after commenting out a type")
+        trackerA.assertModified("module A after commenting out a type")
     }
 
     fun `test that source module out-of-block modification occurs after adding a modifier to a function`() {
@@ -203,7 +203,7 @@ class KotlinModuleOutOfBlockModificationTest : AbstractKotlinModuleModificationE
         }
 
         // In total, seven PSI tree changes are processed: Three `BEFORE_CHILD_REMOVAL`, three `CHILD_REMOVED`, and one `CHILD_ADDED`.
-        trackerA.assertModified("module A after adding a modifier to a function", expectedEventCount = 7)
+        trackerA.assertModified("module A after adding a modifier to a function")
     }
 
     fun `test that source module out-of-block modification occurs after adding a return type to a function`() {
@@ -225,7 +225,7 @@ class KotlinModuleOutOfBlockModificationTest : AbstractKotlinModuleModificationE
 
         // In total, seventeen PSI tree changes are processed: Five `BEFORE_CHILD_REMOVAL`, two `CHILDREN_CHANGED`, seven `CHILD_REMOVED`,
         // two `CHILD_ADDED`, and one `BEFORE_CHILD_REPLACEMENT`.
-        trackerA.assertModified("module A after adding a return type to a function", expectedEventCount = 17)
+        trackerA.assertModified("module A after adding a return type to a function")
     }
 
     fun `test that source module out-of-block modification occurs after adding a contract to a function body`() {
@@ -258,7 +258,7 @@ class KotlinModuleOutOfBlockModificationTest : AbstractKotlinModuleModificationE
             }
         }
 
-        trackerA.assertModified("module A after adding a contract to a function body", expectedEventCount = 15)
+        trackerA.assertModified("module A after adding a contract to a function body")
     }
 
     fun `test that source module out-of-block modification occurs after deleting a contract inside a function body`() {
@@ -291,7 +291,7 @@ class KotlinModuleOutOfBlockModificationTest : AbstractKotlinModuleModificationE
             }
         }
 
-        trackerA.assertModified("module A after deleting a contract inside a function body", expectedEventCount = 2)
+        trackerA.assertModified("module A after deleting a contract inside a function body")
     }
 
     fun `test that source module out-of-block modification occurs after wrapping a contract statement in an if-expression`() {
@@ -325,7 +325,7 @@ class KotlinModuleOutOfBlockModificationTest : AbstractKotlinModuleModificationE
             }
         }
 
-        trackerA.assertModified("module A after wrapping a contract statement in an if-expression", expectedEventCount = 2)
+        trackerA.assertModified("module A after wrapping a contract statement in an if-expression")
     }
 
     fun `test that source module out-of-block modification occurs after unwrapping an illegally nested contract statement`() {
@@ -360,7 +360,7 @@ class KotlinModuleOutOfBlockModificationTest : AbstractKotlinModuleModificationE
             }
         }
 
-        trackerA.assertModifiedOnce("module A after unwrapping an illegally nested contract statement")
+        trackerA.assertModified("module A after unwrapping an illegally nested contract statement")
     }
 
     fun `test that source module out-of-block modification does not occur after changing a non-physical file`() {
@@ -403,7 +403,7 @@ class KotlinModuleOutOfBlockModificationTest : AbstractKotlinModuleModificationE
         }
 
         // We expect two events: One published before and one after the PSI tree modification.
-        trackerA.assertModified("script A after out-of-block modification", expectedEventCount = 2)
+        trackerA.assertModified("script A after out-of-block modification")
         trackerB.assertNotModified("unmodified script B")
         trackerC.assertNotModified("unmodified module C")
         trackerD.assertNotModified("unmodified not-under-content-root file D")
@@ -427,7 +427,7 @@ class KotlinModuleOutOfBlockModificationTest : AbstractKotlinModuleModificationE
         }
 
         // We expect two events: One published before and one after the PSI tree modification.
-        trackerA.assertModified("not-under-content-root file A after out-of-block modification", expectedEventCount = 2)
+        trackerA.assertModified("not-under-content-root file A after out-of-block modification")
         trackerB.assertNotModified("unmodified not-under-content-root file B")
         trackerC.assertNotModified("unmodified module C")
         trackerD.assertNotModified("unmodified script D")

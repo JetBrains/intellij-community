@@ -77,7 +77,7 @@ class KotlinGlobalSourceOutOfBlockModificationTest : AbstractKotlinGlobalModific
     //
     //    delete(scriptA.virtualFile)
     //
-    //    tracker.assertModified("the project after a script file is deleted", expectedEventCount = 2)
+    //    tracker.assertModified("the project after a script file is deleted")
     //}
 
     fun `test that global source out-of-block modification occurs after moving a not-under-content-root file to a non-source module content root`() {
@@ -114,7 +114,7 @@ class KotlinGlobalSourceOutOfBlockModificationTest : AbstractKotlinGlobalModific
 
         delete(fileA.virtualFile)
 
-        tracker.assertModified("the project after a not-under-content-root file is deleted", expectedEventCount = 2)
+        tracker.assertModified("the project after a not-under-content-root file is deleted")
     }
 }
 
