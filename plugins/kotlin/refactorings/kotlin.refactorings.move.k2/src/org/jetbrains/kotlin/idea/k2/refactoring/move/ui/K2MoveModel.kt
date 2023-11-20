@@ -1,20 +1,25 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring.move.ui
 
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.psi.JavaDirectoryService
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
+import com.intellij.refactoring.RefactoringBundle
+import com.intellij.refactoring.util.CommonRefactoringUtil
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.RowLayout
 import com.intellij.ui.dsl.builder.bindSelected
+import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveDescriptor
 import org.jetbrains.kotlin.idea.refactoring.KotlinCommonRefactoringSettings
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtEnumEntry
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import kotlin.reflect.KMutableProperty0
@@ -115,7 +120,15 @@ sealed class K2MoveModel {
     }
 
     companion object {
-        fun create(elements: Array<out PsiElement>, targetContainer: PsiElement?): K2MoveModel {
+        private val MOVE_DECLARATIONS: String
+            @Nls
+            get() = KotlinBundle.message("text.move.declarations")
+
+        fun create(
+            elements: Array<out PsiElement>,
+            targetContainer: PsiElement?,
+            editor: Editor? = null
+        ): K2MoveModel? {
             val project = elements.firstOrNull()?.project ?: error("Elements not part of project")
 
             /** When moving elements to or from a class we expect the user to want to move them to the containing file instead */
@@ -136,6 +149,13 @@ sealed class K2MoveModel {
 
             val correctedTarget = if (targetContainer is KtElement) targetContainer.correctForProjectView() else targetContainer
             val elementsToMove = elements.map { (it as? KtElement)?.correctForProjectView() }.toSet()
+
+            if (elementsToMove.any { it is KtEnumEntry }) {
+                val message = RefactoringBundle.getCannotRefactorMessage(KotlinBundle.message("text.move.declaration.no.support.for.enums"))
+                CommonRefactoringUtil.showErrorHint(project, editor, message, MOVE_DECLARATIONS, null)
+                return null
+            }
+
             val inSourceRoot = inSourceRoot()
             return when {
                 elementsToMove.all { it is KtFile } && correctedTarget !is KtFile -> {

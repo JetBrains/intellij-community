@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.k2.refactoring.move
 
 import com.intellij.openapi.application.runWriteAction
+import com.intellij.refactoring.util.CommonRefactoringUtil.RefactoringErrorHintException
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.assertInstanceOf
 import org.jetbrains.kotlin.idea.k2.refactoring.move.ui.K2MoveModel
@@ -105,5 +106,20 @@ class K2MoveModelTest : KotlinLightCodeInsightFixtureTestCase() {
         assert(sourceElement is KtFile && sourceElement.name == "Foo.kt")
         val targetElement = moveFilesModel.target.pkgName
         assert(targetElement.asString() == "")
+    }
+
+    fun `test move enum entry should fail`() {
+        PsiTestUtil.addSourceRoot(module, myFixture.getTempDirFixture().getFile("")!!)
+        myFixture.configureByText("Foo.kt", """
+            package foo
+            
+            enum Foo {
+                B<caret>AR, FOOBAR
+            }
+        """.trimIndent())
+        val barEnumEntry = myFixture.elementAtCaret
+        assertThrows(RefactoringErrorHintException::class.java) {
+            K2MoveModel.create(arrayOf(barEnumEntry), null)
+        }
     }
 }

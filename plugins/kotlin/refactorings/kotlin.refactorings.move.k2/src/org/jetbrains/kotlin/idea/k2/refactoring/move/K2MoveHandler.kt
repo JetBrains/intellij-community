@@ -52,13 +52,22 @@ class K2MoveHandler : MoveHandlerDelegate() {
         val elementToMove = element.findElementToMove() ?: return false
         val elements = arrayOf(elementToMove)
         return if (canMove(elements, null, reference)) {
-            doMove(project, elements, null, null)
+            doMoveWithCheck(project, elements, null, editor)
             true
         } else false
     }
 
     override fun doMove(project: Project, elements: Array<out PsiElement>, targetContainer: PsiElement?, callback: MoveCallback?) {
-        val type = K2MoveModel.create(elements, targetContainer)
+        doMoveWithCheck(project, elements, targetContainer, null)
+    }
+
+    private fun doMoveWithCheck(
+        project: Project,
+        elements: Array<out PsiElement>,
+        targetContainer: PsiElement?,
+        editor: Editor?
+    ) {
+        val type = K2MoveModel.create(elements, targetContainer, editor) ?: return
         K2MoveDialog(project, type).show()
     }
 }
