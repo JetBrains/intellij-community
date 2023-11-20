@@ -2,6 +2,7 @@
 package com.intellij.ide.util;
 
 import com.intellij.ide.projectView.impl.nodes.ClassTreeNode;
+import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -19,6 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.DefaultMutableTreeNode;
+import java.util.Comparator;
 import java.util.List;
 
 public class TreeJavaClassChooserDialog extends AbstractTreeClassChooserDialog<PsiClass> implements TreeClassChooser {
@@ -44,7 +46,17 @@ public class TreeJavaClassChooserDialog extends AbstractTreeClassChooserDialog<P
                                     @Nullable ClassFilter classFilter,
                                     PsiClass baseClass,
                                     @Nullable PsiClass initialClass, boolean isShowMembers) {
-    super(title, project, scope, PsiClass.class, createFilter(classFilter), baseClass, initialClass, isShowMembers, true);
+    super(title, project, scope, PsiClass.class, createFilter(classFilter), null, baseClass, initialClass, isShowMembers, true);
+  }
+
+  public TreeJavaClassChooserDialog(@NlsContexts.DialogTitle String title,
+                                    @NotNull Project project,
+                                    GlobalSearchScope scope,
+                                    @Nullable ClassFilter classFilter,
+                                    @Nullable Comparator<? super NodeDescriptor<?>> comparator,
+                                    PsiClass baseClass,
+                                    @Nullable PsiClass initialClass, boolean isShowMembers) {
+    super(title, project, scope, PsiClass.class, createFilter(classFilter), comparator, baseClass, initialClass, isShowMembers, true);
   }
 
   public static TreeJavaClassChooserDialog withInnerClasses(@NlsContexts.DialogTitle String title,
