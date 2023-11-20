@@ -69,16 +69,17 @@ public abstract class BackDependencyIndexImpl implements BackDependencyIndex {
     }
 
     for (ReferenceID id : Iterators.unique(Iterators.flat(deltaIndex.getKeys(), depsToRemove.keySet()))) {
-      Iterable<ReferenceID> dataBefore = getDependencies(id);
-
-      Set<ReferenceID> dataAfter = Iterators.collect(dataBefore, new HashSet<>());
       Set<ReferenceID> toRemove = depsToRemove.get(id);
       if (!Iterators.isEmpty(toRemove)) {
+        Set<ReferenceID> dataAfter = Iterators.collect(getDependencies(id), new HashSet<>());
         dataAfter.removeAll(toRemove);
-      }
-      Iterators.collect(deltaIndex.getDependencies(id), dataAfter);
+        Iterators.collect(deltaIndex.getDependencies(id), dataAfter);
 
-      myMap.update(id, dataAfter, Difference::diff);
+        myMap.update(id, dataAfter, Difference::diff);
+      }
+      else {
+        myMap.appendValues(id, deltaIndex.getDependencies(id));
+      }
     }
   }
 

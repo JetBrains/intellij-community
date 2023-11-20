@@ -32,8 +32,12 @@ public interface MultiMaplet<K, V> extends BaseMaplet<K> {
 
   default void update(K key, @NotNull Iterable<V> dataAfter, BiFunction<? super Iterable<V>, ? super Iterable<V>, Difference.Specifier<? extends V, ?>> diffComparator) {
     Iterable<V> dataBefore = get(key);
-    if (Iterators.isEmpty(dataBefore) || Iterators.isEmpty(dataAfter)) {
-      put(key, dataAfter);
+    boolean beforeEmpty = Iterators.isEmpty(dataBefore);
+    boolean afterEmpty = Iterators.isEmpty(dataAfter);
+    if (beforeEmpty || afterEmpty) {
+      if (!beforeEmpty || !afterEmpty) {
+        put(key, dataAfter);
+      }
     }
     else {
       var diff = diffComparator.apply(dataBefore, dataAfter);
