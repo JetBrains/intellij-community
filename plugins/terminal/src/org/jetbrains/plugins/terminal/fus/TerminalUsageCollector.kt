@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.terminal
+package org.jetbrains.plugins.terminal.fus
 
 import com.intellij.internal.statistic.collectors.fus.TerminalFusAwareHandler
 import com.intellij.internal.statistic.eventLog.EventLogGroup
@@ -11,7 +11,6 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.Version
 import com.intellij.terminal.TerminalShellCommandHandler
 import com.intellij.util.PathUtil
-import org.jetbrains.plugins.terminal.fus.TerminalCommandUsageStatistics
 import java.util.*
 
 object TerminalUsageTriggerCollector : CounterUsagesCollector() {

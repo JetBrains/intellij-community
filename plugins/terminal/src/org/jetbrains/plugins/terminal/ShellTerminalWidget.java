@@ -29,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.terminal.action.RenameTerminalSessionActionKt;
 import org.jetbrains.plugins.terminal.action.TerminalSplitAction;
+import org.jetbrains.plugins.terminal.fus.TerminalUsageTriggerCollector;
 
 import java.awt.event.KeyEvent;
 import java.io.IOException;
