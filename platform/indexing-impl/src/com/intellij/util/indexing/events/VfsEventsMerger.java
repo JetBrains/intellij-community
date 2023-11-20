@@ -216,7 +216,7 @@ public final class VfsEventsMerger {
     tryLog(() -> {
       return "event=" + eventName +
              ",f=" + file.getPath() +
-             ",len=" + file.getLength() +
+             ",flen=" + file.getLength() +
              (file instanceof VirtualFileWithId ? (",id=" + ((VirtualFileWithId)file).getId()) : "") +
              (additionalMessage == null ? "" : ("," + additionalMessage.get()));
     });
@@ -229,6 +229,7 @@ public final class VfsEventsMerger {
       String extra = "";
       if (indexedFile instanceof FileContentImpl fileContentImpl) {
         extra += "transient=" + fileContentImpl.isTransientContent();
+        extra += ",contentLen(bytes)=" + fileContentImpl.getContent().length;
       }
 
       if (additionalMessage != null) {
