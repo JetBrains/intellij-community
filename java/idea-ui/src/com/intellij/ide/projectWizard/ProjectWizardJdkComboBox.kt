@@ -81,6 +81,16 @@ fun Row.projectWizardJdkComboBox(sdkProperty: GraphProperty<Sdk?>, sdkDownloadTa
       sdkProperty.set(sdk)
       sdkDownloadTaskProperty.set(downloadTask)
     }
+    .validationOnApply {
+      val intent = it.selectedItem
+      if (intent is DownloadJdk) {
+        val (path) = JdkInstaller.getInstance().validateInstallDir(intent.task.plannedHomeDir)
+        if (path == null) error(JavaUiBundle.message("jdk.location.error", intent.task.plannedHomeDir))
+        else null
+      } else {
+        null
+      }
+    }
 }
 
 class ProjectWizardJdkComboBox(): ComboBox<ProjectWizardJdkIntent>() {
