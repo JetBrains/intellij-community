@@ -112,7 +112,7 @@ internal class JdkDownloader : SdkDownload, JdkDownloaderBase {
       return
     }
 
-    sdkCreatedCallback.accept(JdkDownloaderBase.newDownloadTask(request, project))
+    sdkCreatedCallback.accept(JdkDownloaderBase.newDownloadTask(jdkItem, request, project))
   }
 
   private inline fun <T : Any?> computeInBackground(project: Project?,
@@ -125,17 +125,19 @@ internal class JdkDownloader : SdkDownload, JdkDownloaderBase {
 
 interface JdkDownloaderBase {
   companion object {
-    fun newDownloadTask(request: JdkInstallRequest, project: Project?): SdkDownloadTask {
-      return object : SdkDownloadTask {
-        override fun getSuggestedSdkName() = request.item.suggestedSdkName
-        override fun getPlannedHomeDir() = request.javaHome.toString()
-        override fun getPlannedVersion() = request.item.versionString
-        override fun doDownload(indicator: ProgressIndicator) {
-          JdkInstaller.getInstance().installJdk(request, indicator, project)
-        }
-
-        override fun toString() = "DownloadTask{${request.item.fullPresentationText}, dir=${request.installDir}}"
-      }
+    fun newDownloadTask(item: JdkItem, request: JdkInstallRequest, project: Project?): SdkDownloadTask {
+      return JdkDownloadTask(item, request, project)
     }
   }
+}
+
+class JdkDownloadTask(val jdkItem: JdkItem, val request: JdkInstallRequest, val project: Project?): SdkDownloadTask {
+  override fun getSuggestedSdkName() = request.item.suggestedSdkName
+  override fun getPlannedHomeDir() = request.javaHome.toString()
+  override fun getPlannedVersion() = request.item.versionString
+  override fun doDownload(indicator: ProgressIndicator) {
+    JdkInstaller.getInstance().installJdk(request, indicator, project)
+  }
+
+  override fun toString() = "DownloadTask{${request.item.fullPresentationText}, dir=${request.installDir}}"
 }
