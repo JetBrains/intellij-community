@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInspection.bytecodeAnalysis;
 
 import com.intellij.codeInsight.*;
@@ -34,12 +34,12 @@ import com.intellij.testFramework.fixtures.MavenDependencyUtil;
 import one.util.streamex.EntryStream;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.java.decompiler.IdeaDecompiler;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.jetbrains.java.decompiler.IdeaDecompilerKt.IDEA_DECOMPILER_BANNER;
 
 public class BytecodeAnalysisIntegrationTest extends LightJavaCodeInsightFixtureTestCase {
   private static final String ORG_JETBRAINS_ANNOTATIONS_CONTRACT = JavaMethodContractUtil.ORG_JETBRAINS_ANNOTATIONS_CONTRACT;
@@ -122,7 +122,7 @@ public class BytecodeAnalysisIntegrationTest extends LightJavaCodeInsightFixture
     assertNotNull(psiClass);
     myFixture.openFileInEditor(psiClass.getContainingFile().getVirtualFile());
     String documentText = myFixture.getEditor().getDocument().getText();
-    assertThat(documentText).startsWith(IdeaDecompiler.BANNER);
+    assertThat(documentText).startsWith(IDEA_DECOMPILER_BANNER);
     Set<String> gutters = myFixture.findAllGutters().stream()
       .map(GutterMark::getTooltipText)
       .filter(Objects::nonNull)
