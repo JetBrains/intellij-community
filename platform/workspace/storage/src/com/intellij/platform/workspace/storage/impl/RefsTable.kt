@@ -598,9 +598,14 @@ internal sealed class AbstractRefsTable {
 
   fun getChildrenByParent(connectionId: ConnectionId, parentId: ParentEntityId): List<ChildEntityId> {
     return when (connectionId.connectionType) {
-      ConnectionType.ONE_TO_ONE -> oneToOneContainer[connectionId]
-                                     ?.getKey(parentId.id.arrayId)
-                                     ?.let { listOf(createEntityId(it, connectionId.childClass).asChild()) } ?: emptyList()
+      ConnectionType.ONE_TO_ONE -> {
+        val map = oneToOneContainer[connectionId] ?: return emptyList()
+        if (map.containsValue(parentId.id.arrayId)) {
+          val childId = map.getKey(parentId.id.arrayId)
+          listOf(createEntityId(childId, connectionId.childClass).asChild())
+        }
+        else emptyList()
+      }
       ConnectionType.ONE_TO_MANY -> {
         oneToManyContainer[connectionId]
           ?.getKeys(parentId.id.arrayId)

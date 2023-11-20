@@ -9,6 +9,8 @@ import com.esotericsoftware.kryo.kryo5.io.Output
 import com.esotericsoftware.kryo.kryo5.serializers.CollectionSerializer
 import com.esotericsoftware.kryo.kryo5.serializers.MapSerializer
 import com.google.common.collect.HashMultimap
+import com.intellij.platform.workspace.storage.impl.containers.Int2IntWithDefaultMap
+import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
 import java.util.ArrayList
 import java.util.HashMap
@@ -86,5 +88,37 @@ internal class HashMultimapSerializer : Serializer<HashMultimap<*, *>>(false, tr
       res.putAll(key, values)
     }
     return res
+  }
+}
+
+internal class Int2IntWithDefaultMapSerializer : Serializer<Int2IntWithDefaultMap>(false, true) {
+  override fun write(kryo: Kryo, output: Output, `object`: Int2IntWithDefaultMap) {
+    val res = `object`.backingMap.toMap()
+    kryo.writeClassAndObject(output, res)
+  }
+
+  @Suppress("UNCHECKED_CAST")
+  override fun read(kryo: Kryo, input: Input, type: Class<out Int2IntWithDefaultMap>): Int2IntWithDefaultMap {
+    val des = kryo.readClassAndObject(input) as Map<Int, Int>
+    val res = Int2IntWithDefaultMap()
+    des.forEach { key, value ->
+      res.put(key, value)
+    }
+    return res
+  }
+}
+
+/**
+ * Int2IntOpenHashMap is prohibited in EntityStorage because it's error-prone.
+ *   It's very easy to create an instance of Int2IntOpenHashMap and forget to set the default value (see IDEA-338250)
+ * Use [Int2IntWithDefaultMap] if you need an Int2IntMap with -1 as default value or create another wrapper.
+ */
+internal class Int2IntOpenHashMapSerializer : Serializer<Int2IntOpenHashMap>(false, true) {
+  override fun write(kryo: Kryo?, output: Output?, `object`: Int2IntOpenHashMap?) {
+    error("Int2IntOpenHashMap is prohibited in EntityStorage")
+  }
+
+  override fun read(kryo: Kryo?, input: Input?, type: Class<out Int2IntOpenHashMap>?): Int2IntOpenHashMap {
+    error("Int2IntOpenHashMap is prohibited in EntityStorage")
   }
 }

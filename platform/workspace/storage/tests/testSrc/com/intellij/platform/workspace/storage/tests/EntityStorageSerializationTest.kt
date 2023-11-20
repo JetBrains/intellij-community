@@ -126,7 +126,15 @@ class EntityStorageSerializationTest {
       .joinToString(separator = "\n")
 
     assertEquals(expectedKryoRegistration, registration,
-                 "Have you changed kryo registration? Update the version number! (And this test)")
+                 """
+                   |Have you changed kryo registration? Update the version number! (And this test)
+                   |Existing result:
+                   |=========
+                   |
+                   |$registration
+                   |
+                   |=========
+                 """.trimMargin())
   }
 
   @Test
@@ -239,6 +247,8 @@ private val usedCacheVersionPrefixes: List<String> = listOf("v", "version")
 
 // Use '#' instead of '$' to separate the subclass of the class
 private val expectedKryoRegistration = """
+  com.google.common.collect.HashMultimap
+  com.intellij.platform.workspace.storage.impl.containers.Int2IntWithDefaultMap
   com.intellij.platform.workspace.storage.impl.ConnectionId
   com.intellij.platform.workspace.storage.impl.ImmutableEntitiesBarrel
   com.intellij.platform.workspace.storage.impl.ChildEntityId
@@ -280,7 +290,6 @@ private val expectedKryoRegistration = """
   com.google.common.collect.HashBiMap
   java.util.LinkedHashSet
   com.intellij.platform.workspace.storage.impl.containers.LinkedBidirectionalMap
-  it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap
   it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
   com.intellij.platform.workspace.storage.impl.containers.MutableWorkspaceList
   com.intellij.platform.workspace.storage.impl.containers.MutableWorkspaceSet

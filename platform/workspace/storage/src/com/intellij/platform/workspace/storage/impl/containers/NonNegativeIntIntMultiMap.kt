@@ -30,10 +30,11 @@ import java.util.function.IntFunction
 
 internal sealed class ImmutableNonNegativeIntIntMultiMap(
   override var values: IntArray,
-  override val links: Int2IntMap
+  override val links: Int2IntWithDefaultMap,
 ) : NonNegativeIntIntMultiMap() {
 
-  internal class ByList internal constructor(values: IntArray, links: Int2IntMap) : ImmutableNonNegativeIntIntMultiMap(values, links) {
+  internal class ByList internal constructor(values: IntArray, links: Int2IntWithDefaultMap) : ImmutableNonNegativeIntIntMultiMap(values,
+                                                                                                                                  links) {
     override fun toMutable(): MutableNonNegativeIntIntMultiMap.ByList = MutableNonNegativeIntIntMultiMap.ByList(values, links)
   }
 
@@ -95,22 +96,22 @@ internal sealed class ImmutableNonNegativeIntIntMultiMap(
 
 internal sealed class MutableNonNegativeIntIntMultiMap(
   override var values: IntArray,
-  override var links: Int2IntMap,
+  override var links: Int2IntWithDefaultMap,
   protected var freezed: Boolean
 ) : NonNegativeIntIntMultiMap() {
 
   internal val modifiableValues = HashMap<Int, IntList>()
 
-  class ByList private constructor(values: IntArray, links: Int2IntMap, freezed: Boolean) : MutableNonNegativeIntIntMultiMap(values, links,
+  class ByList private constructor(values: IntArray, links: Int2IntWithDefaultMap, freezed: Boolean) : MutableNonNegativeIntIntMultiMap(values, links,
                                                                                                                              freezed) {
-    constructor() : this(IntArray(0), Int2IntOpenHashMap(), false)
-    internal constructor(values: IntArray, links: Int2IntMap) : this(values, links, true)
+    constructor() : this(IntArray(0), Int2IntWithDefaultMap(), false)
+    internal constructor(values: IntArray, links: Int2IntWithDefaultMap) : this(values, links, true)
 
     override fun toImmutable(): ImmutableNonNegativeIntIntMultiMap.ByList {
       if (freezed) return ImmutableNonNegativeIntIntMultiMap.ByList(values, links)
 
       val resultingList = IntArrayList(values.size)
-      val newLinks = Int2IntOpenHashMap()
+      val newLinks = Int2IntWithDefaultMap()
 
       var valuesCounter = 0
       links.forEach(BiConsumer { key, value ->
@@ -277,13 +278,13 @@ internal sealed class MutableNonNegativeIntIntMultiMap(
   private fun startWrite() {
     if (!freezed) return
     values = values.clone()
-    links = Int2IntOpenHashMap(links)
+    links = Int2IntWithDefaultMap.from(links)
     freezed = false
   }
 
   private fun startWriteDoNotCopyValues() {
     if (!freezed) return
-    links = Int2IntOpenHashMap(links)
+    links = Int2IntWithDefaultMap.from(links)
     freezed = false
   }
 
@@ -325,7 +326,7 @@ internal sealed class MutableNonNegativeIntIntMultiMap(
 internal sealed class NonNegativeIntIntMultiMap {
 
   protected abstract var values: IntArray
-  protected abstract val links: Int2IntMap
+  protected abstract val links: Int2IntWithDefaultMap
 
   abstract operator fun get(key: Int): IntSequence
   abstract fun keys(): IntSet

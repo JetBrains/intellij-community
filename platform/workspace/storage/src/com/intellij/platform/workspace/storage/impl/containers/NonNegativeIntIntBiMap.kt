@@ -5,7 +5,7 @@ import it.unimi.dsi.fastutil.ints.*
 import java.util.function.Consumer
 
 internal class ImmutableNonNegativeIntIntBiMap(
-  override val key2Value: Int2IntMap,
+  override val key2Value: Int2IntWithDefaultMap,
   override val value2Keys: ImmutableNonNegativeIntIntMultiMap.ByList
 ) : NonNegativeIntIntBiMap() {
 
@@ -15,23 +15,23 @@ internal class ImmutableNonNegativeIntIntBiMap(
 }
 
 internal class MutableNonNegativeIntIntBiMap private constructor(
-  override var key2Value: Int2IntMap,
+  override var key2Value: Int2IntWithDefaultMap,
   override var value2Keys: MutableNonNegativeIntIntMultiMap.ByList,
   private var freezed: Boolean
 ) : NonNegativeIntIntBiMap() {
 
-  constructor() : this(Int2IntOpenHashMap(), MutableNonNegativeIntIntMultiMap.ByList(), false) {
+  constructor() : this(Int2IntWithDefaultMap(), MutableNonNegativeIntIntMultiMap.ByList(), false) {
     key2Value.defaultReturnValue(DEFAULT_RETURN_VALUE)
   }
-  constructor(key2Value: Int2IntMap, value2Keys: MutableNonNegativeIntIntMultiMap.ByList) : this(key2Value, value2Keys, true)
+  constructor(key2Value: Int2IntWithDefaultMap, value2Keys: MutableNonNegativeIntIntMultiMap.ByList) : this(key2Value, value2Keys, true)
 
   /**
    * Returns map of removed pairs
    */
-  fun putAll(keys: IntArray, value: Int): Int2IntMap {
+  fun putAll(keys: IntArray, value: Int): Int2IntWithDefaultMap {
     startWrite()
 
-    val previousValues = Int2IntOpenHashMap()
+    val previousValues = Int2IntWithDefaultMap()
     var hasDuplicates = false
     val duplicatesFinder = IntOpenHashSet()
     keys.forEach {
@@ -90,7 +90,7 @@ internal class MutableNonNegativeIntIntBiMap private constructor(
 
   private fun startWrite() {
     if (!freezed) return
-    key2Value = Int2IntOpenHashMap(key2Value)
+    key2Value = Int2IntWithDefaultMap.from(key2Value)
     key2Value.defaultReturnValue(DEFAULT_RETURN_VALUE)
     freezed = false
   }
@@ -103,14 +103,14 @@ internal class MutableNonNegativeIntIntBiMap private constructor(
 
 internal sealed class NonNegativeIntIntBiMap {
 
-  protected abstract val key2Value: Int2IntMap
+  protected abstract val key2Value: Int2IntWithDefaultMap
   protected abstract val value2Keys: NonNegativeIntIntMultiMap
 
   val keys: IntSet
     get() = key2Value.keys
 
   inline fun forEachKey(crossinline action: (Int, Int) -> Unit) {
-    Int2IntMaps.fastForEach(key2Value, Consumer { action(it.intKey, it.intValue) })
+    Int2IntMaps.fastForEach(key2Value.backingMap, Consumer { action(it.intKey, it.intValue) })
   }
 
   fun containsKey(key: Int) = key2Value.containsKey(key)
