@@ -3,9 +3,10 @@ package org.jetbrains.jps.dependency.diff;
 
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.dependency.impl.Containers;
-import org.jetbrains.jps.javac.Iterators;
 
 import java.util.*;
+
+import static org.jetbrains.jps.javac.Iterators.*;
 
 public interface Difference {
 
@@ -53,13 +54,13 @@ public interface Difference {
     }
 
     default boolean unchanged() {
-      return Iterators.isEmpty(added()) && Iterators.isEmpty(removed()) && Iterators.isEmpty(changed());
+      return isEmpty(added()) && isEmpty(removed()) && isEmpty(changed());
     }
   }
 
   static <T> Specifier<T, ?> diff(@Nullable Iterable<T> past, @Nullable Iterable<T> now) {
-    if (Iterators.isEmpty(past)) {
-      if (Iterators.isEmpty(now)) {
+    if (isEmpty(past)) {
+      if (isEmpty(now)) {
         return new Specifier<>() {
           @Override
           public boolean unchanged() {
@@ -79,7 +80,7 @@ public interface Difference {
         }
       };
     }
-    else if (Iterators.isEmpty(now)) {
+    else if (isEmpty(now)) {
       return new Specifier<>() {
         @Override
         public Iterable<T> removed() {
@@ -93,16 +94,14 @@ public interface Difference {
       };
     }
 
-    Set<T> pastSet = past instanceof Set? (Set<T>)past : Iterators.collect(past, new HashSet<>());
-    Set<T> nowSet = now instanceof Set? (Set<T>)now : Iterators.collect(now, new HashSet<>());
+    Set<T> pastSet = past instanceof Set? (Set<T>)past : collect(past, new HashSet<>());
+    Set<T> nowSet = now instanceof Set? (Set<T>)now : collect(now, new HashSet<>());
 
-    Set<T> added = new HashSet<>(nowSet);
-    added.removeAll(pastSet);
-
-    Set<T> removed = new HashSet<>(pastSet);
-    removed.removeAll(nowSet);
+    Iterable<T> added = lazy(() -> collect(filter(nowSet, elem -> !pastSet.contains(elem)), new ArrayList<>()));
+    Iterable<T> removed = lazy(() -> collect(filter(pastSet, elem -> !nowSet.contains(elem)), new ArrayList<>()));
 
     return new Specifier<>() {
+      private Boolean isUnchanged;
       @Override
       public Iterable<T> added() {
         return added;
@@ -115,14 +114,14 @@ public interface Difference {
 
       @Override
       public boolean unchanged() {
-        return Iterators.isEmpty(added) && Iterators.isEmpty(removed);
+        return isUnchanged != null? isUnchanged : (isUnchanged = pastSet.equals(nowSet)).booleanValue();
       }
     };
   }
 
   static <T extends DiffCapable<T, D>, D extends Difference> Specifier<T, D> deepDiff(@Nullable Iterable<T> past, @Nullable Iterable<T> now) {
-    if (Iterators.isEmpty(past)) {
-      if (Iterators.isEmpty(now)) {
+    if (isEmpty(past)) {
+      if (isEmpty(now)) {
         return new Specifier<>() {
           @Override
           public boolean unchanged() {
@@ -142,7 +141,7 @@ public interface Difference {
         }
       };
     }
-    else if (Iterators.isEmpty(now)) {
+    else if (isEmpty(now)) {
       return new Specifier<>() {
         @Override
         public Iterable<T> removed() {
@@ -156,16 +155,13 @@ public interface Difference {
       };
     }
 
-    Set<T> pastSet = Iterators.collect(past, Containers.createCustomPolicySet(T::isSame, T::diffHashCode));
-    Set<T> nowSet = Iterators.collect(now, Containers.createCustomPolicySet(T::isSame, T::diffHashCode));
+    Set<T> pastSet = collect(past, Containers.createCustomPolicySet(T::isSame, T::diffHashCode));
+    Set<T> nowSet = collect(now, Containers.createCustomPolicySet(T::isSame, T::diffHashCode));
 
-    Set<T> added = Containers.createCustomPolicySet(nowSet, T::isSame, T::diffHashCode);
-    added.removeAll(pastSet);
+    Iterable<T> added = lazy(() -> collect(filter(nowSet, obj -> !pastSet.contains(obj)), new ArrayList<>()));
+    Iterable<T> removed = lazy(() -> collect(filter(pastSet, obj -> !nowSet.contains(obj)), new ArrayList<>()));
 
-    Set<T> removed = Containers.createCustomPolicySet(pastSet, T::isSame, T::diffHashCode);
-    removed.removeAll(nowSet);
-
-    Iterable<Change<T, D>> changed = Iterators.lazy(() -> {
+    Iterable<Change<T, D>> changed = lazy(() -> {
       final Map<T, T> nowMap = Containers.createCustomPolicyMap(T::isSame, T::diffHashCode);
       for (T s : nowSet) {
         if (pastSet.contains(s)) {
