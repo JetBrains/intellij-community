@@ -83,9 +83,11 @@ open class ChangesTreeCellRenderer(protected val textRenderer: ChangesBrowserNod
 
         override fun getAccessibleName(): String? {
           if (checkBox.isVisible) {
+            // AccessibleThreeStateCheckBox getter is overridden
             checkBox.accessibleContext.accessibleName = textRenderer.accessibleContext.accessibleName
             return checkBox.accessibleContext.accessibleName
-          } else {
+          }
+          else {
             // AccessibleThreeStateCheckBox.getAccessibleName adds state description of the checkbox (e.g. "not checked") to the name,
             // which we don't need if it's not visible.
             return textRenderer.accessibleContext.accessibleName
@@ -101,7 +103,8 @@ open class ChangesTreeCellRenderer(protected val textRenderer: ChangesBrowserNod
         override fun getAccessibleStateSet(): AccessibleStateSet {
           return if (checkBox.isVisible) {
             checkBox.accessibleContext.accessibleStateSet
-          } else {
+          }
+          else {
             textRenderer.accessibleContext.accessibleStateSet
           }
         }
