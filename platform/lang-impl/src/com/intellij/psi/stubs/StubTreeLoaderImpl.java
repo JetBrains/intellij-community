@@ -37,7 +37,7 @@ final class StubTreeLoaderImpl extends StubTreeLoader {
   private final IndexingStampInfoStorage indexingStampInfoStorage = createStorage();
 
   private static IndexingStampInfoStorage createStorage() {
-    return IndexingStampInfoStorage.create("stubIndexStamp", 3);
+    return IndexingStampInfoStorage.create("stubIndexStamp", 4);
   }
 
   @Override
