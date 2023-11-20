@@ -5,5 +5,5 @@ import java.io.Serializable;
 import java.util.Map;
 
 public interface JarTaskManifestConfiguration extends Serializable {
-  Map<String, String> getProjectIdentityPathToModuleName();
+  Map<String, Map<String, String>> getProjectIdentityPathToManifestAttributes();
 }

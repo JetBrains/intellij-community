@@ -26,10 +26,10 @@ class JarTaskManifestResolver : AbstractProjectResolverExtension() {
     val model = resolverCtx.models.getModel(gradleModule, JarTaskManifestConfiguration::class.java) ?: return
     val moduleData = ideModule.data
     val moduleIdentityPath = moduleData.gradleIdentityPathOrNull ?: moduleData.id
-    val automaticModuleName = model.projectIdentityPathToModuleName[moduleIdentityPath] ?: return
+    val manifestAttributes = model.projectIdentityPathToManifestAttributes[moduleIdentityPath] ?: return
     val jarTask = ExternalSystemApiUtil.findChild(ideModule, ProjectKeys.TASK) {
       it.data.name == JAR_TASK || it.data.name == "${moduleData.id}:$JAR_TASK"
     } ?: return
-    jarTask.createChild(JarTaskManifestData.KEY, JarTaskManifestData(automaticModuleName))
+    jarTask.createChild(JarTaskManifestData.KEY, JarTaskManifestData(manifestAttributes))
   }
 }

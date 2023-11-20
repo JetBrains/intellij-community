@@ -24,6 +24,7 @@ import com.intellij.platform.backend.workspace.WorkspaceModel;
 import com.intellij.platform.workspace.jps.entities.ModuleId;
 import com.intellij.pom.java.AcceptedLanguageLevelsSettings;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.PsiJavaModule;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
@@ -375,7 +376,7 @@ public class GradleMiscImportingTest extends GradleJavaImportingTestCase {
 
     var moduleEntity = WorkspaceModel.getInstance(myProject).getCurrentSnapshot().resolve(new ModuleId("project.main"));
     var javaSettings = JavaModuleSettingsKt.getJavaSettings(moduleEntity);
-    var automaticModuleName = javaSettings.getAutomaticModuleName();
+    var automaticModuleName = javaSettings.getManifestAttributes().get(PsiJavaModule.AUTO_MODULE_NAME);
     assertEquals("my.module.name", automaticModuleName);
   }
 

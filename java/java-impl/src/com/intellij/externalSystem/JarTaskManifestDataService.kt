@@ -31,13 +31,13 @@ internal class JarTaskManifestDataService : AbstractProjectDataService<JarTaskMa
     for (jarTaskManifestNode in toImport) {
       val moduleNode = jarTaskManifestNode.getParent(ModuleData::class.java) ?: continue
       val module = moduleNode.getUserData(AbstractModuleDataService.MODULE_KEY) ?: continue
-      val automaticModuleName = jarTaskManifestNode.data.automaticModuleName
+      val manifestAttributes = jarTaskManifestNode.data.manifestAttributes
 
-      importAutomaticModuleName(module, automaticModuleName, modelsProvider)
+      importAutomaticModuleName(module, manifestAttributes, modelsProvider)
     }
   }
 
-  private fun importAutomaticModuleName(module: Module, automaticModuleName: String, modelsProvider: IdeModifiableModelsProvider) {
+  private fun importAutomaticModuleName(module: Module, manifestAttributes: Map<String, String>, modelsProvider: IdeModifiableModelsProvider) {
     // TODO: fix broken encapsulation
     if (modelsProvider !is IdeModifiableModelsProviderImpl) return
 
@@ -49,21 +49,21 @@ internal class JarTaskManifestDataService : AbstractProjectDataService<JarTaskMa
     val javaSettings = moduleEntity.javaSettings
     if (javaSettings != null) {
       diff.modifyEntity(javaSettings) {
-        this.automaticModuleName = automaticModuleName
+        this.manifestAttributes = manifestAttributes
       }
     }
     else {
       diff addEntity JavaModuleSettingsEntity(inheritedCompilerOutput = true,
                                               excludeOutput = true,
                                               entitySource = moduleEntity.entitySource) {
-        this.automaticModuleName = automaticModuleName
+        this.manifestAttributes = manifestAttributes
         this.module = moduleEntity
       }
     }
   }
 }
 
-class JarTaskManifestData(val automaticModuleName: String) {
+class JarTaskManifestData(val manifestAttributes: Map<String, String>) {
   companion object {
     @JvmField
     val KEY = Key.create(JarTaskManifestData::class.java, ProjectKeys.TASK.processingWeight + 1)

@@ -11,6 +11,7 @@ import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.annotations.Child
+import com.intellij.platform.workspace.storage.annotations.Default
 import com.intellij.platform.workspace.storage.impl.ConnectionId
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
@@ -51,8 +52,7 @@ open class JavaModuleSettingsEntityImpl(private val dataSource: JavaModuleSettin
   override val languageLevelId: String?
     get() = dataSource.languageLevelId
 
-  override val automaticModuleName: String?
-    get() = dataSource.automaticModuleName
+  override var manifestAttributes: Map<String, String> = dataSource.manifestAttributes
 
   override val entitySource: EntitySource
     get() = dataSource.entitySource
@@ -122,7 +122,7 @@ open class JavaModuleSettingsEntityImpl(private val dataSource: JavaModuleSettin
       if (this.compilerOutput != dataSource?.compilerOutput) this.compilerOutput = dataSource.compilerOutput
       if (this.compilerOutputForTests != dataSource?.compilerOutputForTests) this.compilerOutputForTests = dataSource.compilerOutputForTests
       if (this.languageLevelId != dataSource?.languageLevelId) this.languageLevelId = dataSource.languageLevelId
-      if (this.automaticModuleName != dataSource?.automaticModuleName) this.automaticModuleName = dataSource.automaticModuleName
+      if (this.manifestAttributes != dataSource.manifestAttributes) this.manifestAttributes = dataSource.manifestAttributes.toMutableMap()
       updateChildToParentReferences(parents)
     }
 
@@ -215,12 +215,12 @@ open class JavaModuleSettingsEntityImpl(private val dataSource: JavaModuleSettin
         changedProperty.add("languageLevelId")
       }
 
-    override var automaticModuleName: String?
-      get() = getEntityData().automaticModuleName
+    override var manifestAttributes: Map<String, String>
+      get() = getEntityData().manifestAttributes
       set(value) {
         checkModificationAllowed()
-        getEntityData(true).automaticModuleName = value
-        changedProperty.add("automaticModuleName")
+        getEntityData(true).manifestAttributes = value
+        changedProperty.add("manifestAttributes")
       }
 
     override fun getEntityClass(): Class<JavaModuleSettingsEntity> = JavaModuleSettingsEntity::class.java
@@ -233,7 +233,7 @@ class JavaModuleSettingsEntityData : WorkspaceEntityData<JavaModuleSettingsEntit
   var compilerOutput: VirtualFileUrl? = null
   var compilerOutputForTests: VirtualFileUrl? = null
   var languageLevelId: String? = null
-  var automaticModuleName: String? = null
+  var manifestAttributes: Map<String, String> = emptyMap()
 
 
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<JavaModuleSettingsEntity> {
@@ -272,7 +272,7 @@ class JavaModuleSettingsEntityData : WorkspaceEntityData<JavaModuleSettingsEntit
       this.compilerOutput = this@JavaModuleSettingsEntityData.compilerOutput
       this.compilerOutputForTests = this@JavaModuleSettingsEntityData.compilerOutputForTests
       this.languageLevelId = this@JavaModuleSettingsEntityData.languageLevelId
-      this.automaticModuleName = this@JavaModuleSettingsEntityData.automaticModuleName
+      this.manifestAttributes = this@JavaModuleSettingsEntityData.manifestAttributes
       parents.filterIsInstance<ModuleEntity>().singleOrNull()?.let { this.module = it }
     }
   }
@@ -295,7 +295,7 @@ class JavaModuleSettingsEntityData : WorkspaceEntityData<JavaModuleSettingsEntit
     if (this.compilerOutput != other.compilerOutput) return false
     if (this.compilerOutputForTests != other.compilerOutputForTests) return false
     if (this.languageLevelId != other.languageLevelId) return false
-    if (this.automaticModuleName != other.automaticModuleName) return false
+    if (this.manifestAttributes != other.manifestAttributes) return false
     return true
   }
 
@@ -310,7 +310,7 @@ class JavaModuleSettingsEntityData : WorkspaceEntityData<JavaModuleSettingsEntit
     if (this.compilerOutput != other.compilerOutput) return false
     if (this.compilerOutputForTests != other.compilerOutputForTests) return false
     if (this.languageLevelId != other.languageLevelId) return false
-    if (this.automaticModuleName != other.automaticModuleName) return false
+    if (this.manifestAttributes != other.manifestAttributes) return false
     return true
   }
 
@@ -321,7 +321,7 @@ class JavaModuleSettingsEntityData : WorkspaceEntityData<JavaModuleSettingsEntit
     result = 31 * result + compilerOutput.hashCode()
     result = 31 * result + compilerOutputForTests.hashCode()
     result = 31 * result + languageLevelId.hashCode()
-    result = 31 * result + automaticModuleName.hashCode()
+    result = 31 * result + manifestAttributes.hashCode()
     return result
   }
 
@@ -332,7 +332,7 @@ class JavaModuleSettingsEntityData : WorkspaceEntityData<JavaModuleSettingsEntit
     result = 31 * result + compilerOutput.hashCode()
     result = 31 * result + compilerOutputForTests.hashCode()
     result = 31 * result + languageLevelId.hashCode()
-    result = 31 * result + automaticModuleName.hashCode()
+    result = 31 * result + manifestAttributes.hashCode()
     return result
   }
 }

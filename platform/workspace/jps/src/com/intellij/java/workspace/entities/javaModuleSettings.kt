@@ -4,6 +4,7 @@ package com.intellij.java.workspace.entities
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.annotations.Child
+import com.intellij.platform.workspace.storage.annotations.Default
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import org.jetbrains.annotations.NonNls
 
@@ -15,7 +16,8 @@ interface JavaModuleSettingsEntity: WorkspaceEntity {
   val compilerOutput: VirtualFileUrl?
   val compilerOutputForTests: VirtualFileUrl?
   val languageLevelId: @NonNls String?
-  val automaticModuleName: @NonNls String?
+  val manifestAttributes: Map<String, String>
+  @Default get() = emptyMap()
 
   //region generated code
   @GeneratedCodeApiVersion(2)
@@ -27,7 +29,7 @@ interface JavaModuleSettingsEntity: WorkspaceEntity {
     override var compilerOutput: VirtualFileUrl?
     override var compilerOutputForTests: VirtualFileUrl?
     override var languageLevelId: String?
-    override var automaticModuleName: String?
+    override var manifestAttributes: Map<String, String>
   }
 
   companion object : EntityType<JavaModuleSettingsEntity, Builder>() {

@@ -5,6 +5,7 @@ import com.intellij.gradle.toolingExtension.impl.model.taskModel.GradleTaskCache
 import com.intellij.gradle.toolingExtension.util.GradleNegotiationUtil;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
+import org.gradle.api.java.archives.Attributes;
 import org.gradle.jvm.tasks.Jar;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.model.jar.JarTaskManifestConfiguration;
@@ -28,19 +29,25 @@ public class JarTaskManifestModelBuilder extends AbstractModelBuilderService {
                                                    @NotNull Project project,
                                                    @NotNull ModelBuilderContext context) {
     GradleTaskCache taskCache = GradleTaskCache.getInstance(context);
-    Map<String, String> projectIdentityPathToModuleName = new HashMap<>();
+    Map<String, Map<String, String>> projectIdentityPathToManifestAttributes = new HashMap<>();
     for (Task task : taskCache.getAllTasks(project)) {
       if (task instanceof Jar && JAR_TASK.equals(task.getName())) {
         Jar jar = (Jar)task;
-        if (!jar.getManifest().getAttributes().isEmpty()) {
-          // TODO: all manifest attributes
-          projectIdentityPathToModuleName.put(
-            identityPath(project),
-            (String)jar.getManifest().getAttributes().get("Automatic-Module-Name"));
+        Attributes attributes = jar.getManifest().getAttributes();
+        if (!attributes.isEmpty()) {
+          projectIdentityPathToManifestAttributes.put(identityPath(project), attributeMap(attributes));
         }
       }
     }
-    return new JarTaskManifestConfigurationImpl(projectIdentityPathToModuleName);
+    return new JarTaskManifestConfigurationImpl(projectIdentityPathToManifestAttributes);
+  }
+
+  private static Map<String, String> attributeMap(Attributes attributes) {
+    Map<String, String> result = new HashMap<>();
+    for (Map.Entry<String, Object> entry : attributes.entrySet()) {
+      result.put(entry.getKey(), entry.getValue().toString());
+    }
+    return result;
   }
 
   private static String identityPath(Project project) {

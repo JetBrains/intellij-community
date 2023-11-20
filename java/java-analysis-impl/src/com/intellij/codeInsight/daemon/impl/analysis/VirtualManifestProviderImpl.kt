@@ -11,7 +11,6 @@ internal class VirtualManifestProviderImpl : VirtualManifestProvider {
     val project = module.project
     val storage = WorkspaceModel.getInstance(project).currentSnapshot
     val moduleName = module.name
-    if (attribute == "Automatic-Module-Name") return storage.resolve(ModuleId(moduleName))?.javaSettings?.automaticModuleName
-    return null
+    return storage.resolve(ModuleId(moduleName))?.javaSettings?.manifestAttributes?.get(attribute)
   }
 }

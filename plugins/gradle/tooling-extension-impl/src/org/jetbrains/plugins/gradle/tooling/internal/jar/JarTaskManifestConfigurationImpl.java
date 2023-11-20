@@ -6,14 +6,14 @@ import org.jetbrains.plugins.gradle.model.jar.JarTaskManifestConfiguration;
 import java.util.Map;
 
 public class JarTaskManifestConfigurationImpl implements JarTaskManifestConfiguration {
-  private final Map<String, String> projectIdentityPathToModuleName;
+  private final Map<String, Map<String, String>> projectIdentityPathToManifestAttributes;
 
-  public JarTaskManifestConfigurationImpl(Map<String, String> projectIdentityPathToModuleName) {
-    this.projectIdentityPathToModuleName = projectIdentityPathToModuleName;
+  public JarTaskManifestConfigurationImpl(Map<String, Map<String, String>> projectIdentityPathToManifestAttributes) {
+    this.projectIdentityPathToManifestAttributes = projectIdentityPathToManifestAttributes;
   }
 
   @Override
-  public Map<String, String> getProjectIdentityPathToModuleName() {
-    return projectIdentityPathToModuleName;
+  public Map<String, Map<String, String>> getProjectIdentityPathToManifestAttributes() {
+    return projectIdentityPathToManifestAttributes;
   }
 }

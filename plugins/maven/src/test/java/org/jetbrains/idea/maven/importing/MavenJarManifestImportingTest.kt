@@ -5,6 +5,7 @@ import com.intellij.java.workspace.entities.javaSettings
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.workspace.jps.entities.ModuleId
+import com.intellij.psi.PsiJavaModule
 import kotlinx.coroutines.runBlocking
 import org.junit.Assume.assumeTrue
 import org.junit.Test
@@ -36,7 +37,7 @@ class MavenJarManifestImportingTest : MavenMultiVersionImportingTestCase() {
                     </build>
                     """.trimIndent())
 
-    val automaticModuleName = WorkspaceModel.getInstance(myProject).currentSnapshot.resolve(ModuleId("project"))?.javaSettings?.automaticModuleName
+    val automaticModuleName = WorkspaceModel.getInstance(myProject).currentSnapshot.resolve(ModuleId("project"))?.javaSettings?.manifestAttributes?.get(PsiJavaModule.AUTO_MODULE_NAME)
     assertEquals("my.module.name", automaticModuleName)
   }
 }

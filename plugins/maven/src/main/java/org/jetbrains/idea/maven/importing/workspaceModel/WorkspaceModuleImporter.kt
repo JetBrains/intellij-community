@@ -23,7 +23,6 @@ import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
-import com.intellij.psi.PsiJavaModule.AUTO_MODULE_NAME
 import com.intellij.util.containers.addIfNotNull
 import com.intellij.workspaceModel.ide.impl.LegacyBridgeJpsEntitySourceFactory
 import org.jetbrains.idea.maven.importing.MavenImportUtil
@@ -244,11 +243,12 @@ internal class WorkspaceModuleImporter(
       else -> ModuleDependencyItem.DependencyScope.COMPILE
     }
 
-  private fun MavenProject.getAutomaticModuleName(): String? {
+  private fun MavenProject.getManifestAttributes(): Map<String,String> {
     return this.getPluginConfiguration("org.apache.maven.plugins", "maven-jar-plugin")
       ?.getChild("archive")
       ?.getChild("manifestEntries")
-      ?.getChild(AUTO_MODULE_NAME)?.text
+      ?.children
+      ?.associate { it.name to it.text } ?: emptyMap()
   }
 
   private fun importJavaSettings(moduleEntity: ModuleEntity,
@@ -274,14 +274,14 @@ internal class WorkspaceModuleImporter(
       }
     }
 
-    val automaticModuleName = mavenProject.getAutomaticModuleName()
+    val manifestAttributes = mavenProject.getManifestAttributes()
 
     builder addEntity JavaModuleSettingsEntity(inheritCompilerOutput, false, moduleEntity.entitySource) {
       this.module = moduleEntity
       this.compilerOutput = compilerOutputUrl
       this.compilerOutputForTests = compilerOutputUrlForTests
       this.languageLevelId = languageLevel.name
-      this.automaticModuleName = automaticModuleName
+      this.manifestAttributes = manifestAttributes
     }
   }
 
