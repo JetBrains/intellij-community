@@ -128,8 +128,7 @@ public class EntityStorageSerializerImpl(
     }
     catch (e: Exception) {
       output.reset()
-      LOG.warn("Exception at project serialization", e)
-      SerializationResult.Fail(e.message)
+      SerializationResult.Fail(e)
     }
     finally {
       closeOutput(output)
@@ -286,7 +285,6 @@ public class EntityStorageSerializerImpl(
     }
     catch (e: KryoException) {
       LOG.warn("Exception at project serialization", e)
-      SerializationResult.Fail(e.message)
     }
   }
 

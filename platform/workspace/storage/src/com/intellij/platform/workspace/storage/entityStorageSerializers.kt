@@ -33,7 +33,7 @@ public sealed class SerializationResult {
    * [size] is the size in bytes
    */
   public class Success(public val size: Long) : SerializationResult()
-  public class Fail<T>(public val info: T) : SerializationResult()
+  public class Fail(public val problem: Throwable) : SerializationResult()
 }
 
 public sealed interface EntityInformation {
