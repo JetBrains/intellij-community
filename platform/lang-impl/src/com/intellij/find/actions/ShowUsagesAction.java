@@ -808,7 +808,7 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
       @Override
       protected void paintHover(Graphics g) {
         if (ExperimentalUI.isNewUI()) {
-          paintHover(g, false);
+          paintHover(g, JBUI.CurrentTheme.Editor.Tooltip.ICON_HOVER_BACKGROUND);
         }
       }
     };
