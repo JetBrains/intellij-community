@@ -10,12 +10,10 @@ import com.intellij.ide.trustedProjects.TrustedProjectsListener
 import com.intellij.ide.trustedProjects.TrustedProjectsLocator
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.util.ThreeState
 import com.intellij.util.messages.Topic
-import com.intellij.util.xmlb.annotations.Attribute
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 import java.util.function.Consumer
@@ -70,28 +68,6 @@ fun isTrustedCheckDisabled(): Boolean = TrustedProjects.isTrustedCheckDisabled()
 @Deprecated("Use TrustedProjects.isProjectTrusted instead")
 fun isProjectImplicitlyTrusted(projectDir: Path?, project: Project? = null): Boolean =
   TrustedProjects.isProjectImplicitlyTrusted(projectDir, project)
-
-/**
- * Per-project "is this project trusted" setting from the previous version of the trusted API.
- * It shouldn't be used and is kept for migration purposes only.
- */
-@State(name = "Trusted.Project.Settings", storages = [Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE)])
-@Service(Service.Level.PROJECT)
-@ApiStatus.Internal
-@Suppress("DEPRECATION")
-@Deprecated("Use TrustedPaths instead")
-internal class TrustedProjectSettings : SimplePersistentStateComponent<TrustedProjectSettings.State>(State()) {
-  class State : BaseState() {
-    @get:Attribute
-    var isTrusted: ThreeState by enum(ThreeState.UNSURE)
-  }
-
-  var trustedState: ThreeState
-    get() = state.isTrusted
-    set(value) {
-      state.isTrusted = value
-    }
-}
 
 @Suppress("DEPRECATION")
 @Deprecated("Use TrustedProjectsListener instead")
