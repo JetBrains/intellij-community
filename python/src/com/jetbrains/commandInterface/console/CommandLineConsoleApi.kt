@@ -74,13 +74,13 @@ fun jbFilter(filter: (String) -> String): (String) -> String {
  * Returns [LanguageConsoleView] if is already present in the toolwindow, null otherwise.
  */
 @RequiresEdt
-fun findExistingConsole(
+fun findExistingConsoleAndOpen(
   module: Module,
   @Nls consoleName: String,
   @Nls(capitalization = Nls.Capitalization.Title) toolWindowTitle: String
 ): LanguageConsoleView? {
   val project = module.project
-  val consoleComponent = WindowWithActions.findWindowByName(project, toolWindowTitle, consoleName)
+  val consoleComponent = WindowWithActions.findWindowByNameAndOpen(project, toolWindowTitle, consoleName)
   if (consoleComponent is ConsolePanelWithActions && consoleComponent.consoleView is LanguageConsoleView) {
     return consoleComponent.consoleView
   }
