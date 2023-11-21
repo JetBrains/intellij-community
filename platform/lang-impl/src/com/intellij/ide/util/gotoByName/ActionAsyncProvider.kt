@@ -180,7 +180,8 @@ class ActionAsyncProvider(private val myModel: GotoActionModel) {
         val action = it.action
         if (action is ActionStubBase) {
           myActionManager.getAction(action.id)?.let { loaded -> emit(MatchedAction(loaded, it.mode, it.weight)) }
-        } else {
+        }
+        else {
           emit(it)
         }
       }
@@ -192,7 +193,7 @@ class ActionAsyncProvider(private val myModel: GotoActionModel) {
   }
 
   private fun unmatchedStubsFlow(pattern: String, allIds: Collection<String>,
-                        presentationProvider: suspend (AnAction) -> Presentation): Flow<MatchedValue> {
+                                 presentationProvider: suspend (AnAction) -> Presentation): Flow<MatchedValue> {
     val matcher = buildMatcher(pattern)
     val weightMatcher = buildWeightMatcher(pattern)
 
@@ -203,7 +204,8 @@ class ActionAsyncProvider(private val myModel: GotoActionModel) {
         action
       }
       .filter {
-        runCatching { (it is ActionStubBase) && myModel.actionMatches(pattern, matcher, it) == MatchMode.NONE }.getOrLogException(LOG) == true
+        runCatching { (it is ActionStubBase) && myModel.actionMatches(pattern, matcher, it) == MatchMode.NONE }
+          .getOrLogException(LOG) == true
       }
       .transform {
         runCatching {
@@ -223,7 +225,7 @@ class ActionAsyncProvider(private val myModel: GotoActionModel) {
   }
 
   private fun topHitsFlow(pattern: String,
-                                  presentationProvider: suspend (AnAction) -> Presentation): Flow<MatchedValue> {
+                          presentationProvider: suspend (AnAction) -> Presentation): Flow<MatchedValue> {
     LOG.debug("Create TopHits flow ($pattern)")
     val project = myModel.project
     val commandAccelerator = SearchTopHitProvider.getTopHitAccelerator()
