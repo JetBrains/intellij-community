@@ -785,6 +785,7 @@ class SkipOperation(operation: String) : RuntimeException(operation) {
 
 private class RecursionElement(val level: Int) :
   AbstractCoroutineContextElement(RecursionElement), CoroutineContext.Element {
+  override fun toString(): String = "Recursion(${level})"
 
   companion object : CoroutineContext.Key<RecursionElement> {
     suspend fun level() = currentCoroutineContext()[this]?.level ?: 0
