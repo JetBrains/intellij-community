@@ -1,6 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework;
 
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.AnnotationOrderRootType;
 import com.intellij.openapi.util.io.FileUtil;
@@ -22,6 +24,15 @@ public class SdkEqualityTest extends LightPlatformTestCase {
     assertTrue(areSdkEqual(jdk8, jdk8_copy));
     assertFalse(areSdkEqual(jdk8, jdk11));
     assertFalse(areSdkEqual(jdk8, jdk8_annotated));
+
+    // We need to remove JDK from the table  to dispose created VFP, otherwise we need to add JDK with disposable using
+    // ProjectJdkTable.addJdk(Sdk, Disposable) which makes it under the hood
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      ProjectJdkTable.getInstance().removeJdk(jdk8);
+      ProjectJdkTable.getInstance().removeJdk(jdk8_copy);
+      ProjectJdkTable.getInstance().removeJdk(jdk8_annotated);
+      ProjectJdkTable.getInstance().removeJdk(jdk11);
+    });
   }
   
   boolean areSdkEqual(Sdk sdk1, Sdk sdk2) {
