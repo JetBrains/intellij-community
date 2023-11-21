@@ -4,7 +4,7 @@ package com.intellij.openapi.vcs.versionBrowser;
 
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.ui.IdeBorderFactory;
-import com.intellij.util.text.DateFormatUtil;
+import com.intellij.util.text.DateTimeFormatManager;
 import com.michaelbaranov.microba.calendar.DatePicker;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -26,7 +26,7 @@ public class DateFilterComponent {
   private JPanel myRootPanel;
 
   public DateFilterComponent() {
-    this(true, DateFormatUtil.getDateTimeFormat().getDelegate());
+    this(true, DateTimeFormatManager.getInstance().getDateFormat());
   }
 
   public DateFilterComponent(boolean showBorder, @NotNull DateFormat dateFormat) {

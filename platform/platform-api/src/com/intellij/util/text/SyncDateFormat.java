@@ -9,6 +9,9 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
+/** @deprecated use {@link java.time.format.DateTimeFormatter} */
+@Deprecated(forRemoval = true)
+@SuppressWarnings("DeprecatedIsStillUsed")
 public final class SyncDateFormat {
   private final DateFormat myDelegate;
 

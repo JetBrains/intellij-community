@@ -12,10 +12,8 @@ import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.dsl.builder.*
-import com.intellij.util.text.CustomJBDateTimeFormatter
 import com.intellij.util.text.DateFormatUtil
 import com.intellij.util.text.DateTimeFormatManager
-import com.intellij.util.text.JBDateFormat
 import java.text.SimpleDateFormat
 import javax.swing.JEditorPane
 import javax.swing.event.DocumentEvent
@@ -79,7 +77,7 @@ class DateTimeFormatConfigurable :
       updateCommentField()
 
       onApply {
-        JBDateFormat.invalidateCustomFormatter()
+        settings.resetFormats()
         LafManager.getInstance().updateUI()
       }
     }
@@ -102,8 +100,9 @@ class DateTimeFormatConfigurable :
 
   private fun updateCommentField() {
     val text = try {
-      val formatter = CustomJBDateTimeFormatter(dateFormatField.component.text, use24HourCheckbox.component.isSelected)
-      formatter.formatDateTime(DateFormatUtil.getSampleDateTime())
+      val timeFmt = if (use24HourCheckbox.component.isSelected) DateFormatUtil.TIME_SHORT_24H else DateFormatUtil.TIME_SHORT_12H
+      SimpleDateFormat("${dateFormatField.component.text} ${timeFmt}")
+        .format(DateFormatUtil.getSampleDateTime())
     }
     catch (e: IllegalArgumentException) {
       IdeBundle.message("date.format.error.invalid.pattern", e.message)
