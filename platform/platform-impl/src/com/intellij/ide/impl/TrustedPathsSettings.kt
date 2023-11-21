@@ -1,7 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.impl
 
+import com.intellij.ide.trustedProjects.TrustedProjectsLocator
 import com.intellij.openapi.components.*
+import com.intellij.util.ThreeState
 import com.intellij.util.xmlb.annotations.OptionTag
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
@@ -32,7 +34,9 @@ class TrustedPathsSettings : SimplePersistentStateComponent<TrustedPathsSettings
       .any { path.startsWith(it) }
   }
 
-  fun getTrustedPaths(): List<String> = Collections.unmodifiableList(state.trustedPaths)
+  fun getTrustedPaths(): List<String> {
+    return Collections.unmodifiableList(state.trustedPaths)
+  }
 
   fun setTrustedPaths(paths: List<String>) {
     state.trustedPaths = paths.toMutableList()
@@ -40,5 +44,13 @@ class TrustedPathsSettings : SimplePersistentStateComponent<TrustedPathsSettings
 
   fun addTrustedPath(path: String) {
     state.trustedPaths.add(path)
+  }
+
+  fun getProjectTrustedState(locatedProject: TrustedProjectsLocator.LocatedProject): ThreeState {
+    if (locatedProject.projectRoots.all { isPathTrusted(it) }) {
+      TrustedProjectsStatistics.PROJECT_IMPLICITLY_TRUSTED_BY_PATH.log(locatedProject.project)
+      return ThreeState.YES
+    }
+    return ThreeState.UNSURE
   }
 }
