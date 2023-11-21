@@ -17,7 +17,6 @@ import com.intellij.openapi.actionSystem.impl.Utils.runUpdateSessionForActionSea
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.Strings
