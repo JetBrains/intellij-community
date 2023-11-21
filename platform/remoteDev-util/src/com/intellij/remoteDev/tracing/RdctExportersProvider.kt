@@ -38,10 +38,9 @@ private class RdctExportersProvider : OpenTelemetryExporterProvider {
       null
     }
     fileToWrite?.let {
-      return listOf(
-        FilteredMetricsExporter(SynchronizedClearableLazy { CsvGzippedMetricsExporter(fileToWrite) }) { metric ->
-          metric.belongsToScope(RDCT)
-        })
+      return listOf(FilteredMetricsExporter(SynchronizedClearableLazy { CsvGzippedMetricsExporter(fileToWrite) }) { metric ->
+        metric.belongsToScope(RDCT)
+      })
     }
     return emptyList()
   }

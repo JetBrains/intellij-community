@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceGetOrSet")
+@file:Suppress("ReplaceGetOrSet", "ReplaceJavaStaticMethodWithKotlinAnalog")
 
 package com.intellij.platform.diagnostic.telemetry.impl
 
@@ -143,7 +143,7 @@ internal class OtlpService {
 
     if (endpoint != null) {
       val data = TracesData(
-        resourceSpans = listOf(
+        resourceSpans = java.util.List.of(
           ResourceSpans(
             resource = resource,
             scopeSpans = java.util.List.copyOf(scopeToSpans.values),

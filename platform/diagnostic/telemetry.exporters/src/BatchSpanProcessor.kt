@@ -121,6 +121,7 @@ class BatchSpanProcessor(
     for (spanExporter in spanExporters) {
       if (spanExporter is JaegerJsonSpanExporter) {
         spanExporter.flushOtlp(scopeSpans)
+        break
       }
     }
   }
