@@ -5,12 +5,10 @@ package org.jetbrains.kotlin.idea.debugger.core
 import com.intellij.debugger.engine.DebugProcessImpl
 import com.intellij.debugger.jdi.StackFrameProxyImpl
 import com.intellij.xdebugger.frame.XStackFrame
-import com.sun.jdi.Location
 
 interface StackFrameInterceptor {
     fun createStackFrame(
         frame: StackFrameProxyImpl,
-        debugProcess: DebugProcessImpl,
-        location: Location
+        debugProcess: DebugProcessImpl
     ): XStackFrame?
 }
