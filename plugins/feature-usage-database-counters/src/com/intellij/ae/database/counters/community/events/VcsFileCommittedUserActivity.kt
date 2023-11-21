@@ -26,7 +26,7 @@ internal class VcsListenerFactory : CheckinHandlerFactory() {
     return object : CheckinHandler() {
       override fun checkinSuccessful() {
         val count = panel.files.size
-        runUpdateEvent(VcsFileCommittedUserActivity) {
+        FeatureUsageDatabaseCountersScopeProvider.getScope().runUpdateEvent(VcsFileCommittedUserActivity) {
           it.write(count)
         }
       }

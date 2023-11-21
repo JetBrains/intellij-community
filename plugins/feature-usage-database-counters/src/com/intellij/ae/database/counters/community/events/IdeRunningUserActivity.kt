@@ -28,7 +28,7 @@ internal class IdeStartedUserActivityListener : AppLifecycleListener {
    * Enough to write down when app was started, because event marked as canBeStale
    */
   override fun appStarted() {
-    runUpdateEvent(IdeRunningUserActivity) {
+    FeatureUsageDatabaseCountersScopeProvider.getScope().runUpdateEvent(IdeRunningUserActivity) {
       it.writeStart()
     }
   }

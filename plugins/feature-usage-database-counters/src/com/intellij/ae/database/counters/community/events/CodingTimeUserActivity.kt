@@ -41,9 +41,9 @@ object CodingTimeUserActivity : WritableDatabaseBackedTimeSpanUserActivity() {
   /**
    * How many files were edited in the period of [from]..[until]
    */
-  suspend fun getFilesEdited(from: Instant, until: Instant): Int {
-    return getDatabase().execute {
-      val filesEditedStatement = getDatabase().database.connection
+  suspend fun getFilesEdited(from: Instant, until: Instant): Int? {
+    return getDatabase().execute { database ->
+      val filesEditedStatement = database
           .prepareStatement("SELECT COUNT(DISTINCT json_extract(extra, '\$.fileHash')) FROM timespanUserActivity\n" +
                             "WHERE activity_id = '$id'\n" +
                             "AND datetime(started_at) >= datetime(?)\n" +
@@ -57,9 +57,9 @@ object CodingTimeUserActivity : WritableDatabaseBackedTimeSpanUserActivity() {
   /**
    * How much files per language were edited / map of  (language name -> length in seconds)
    */
-  suspend fun getByLanguageStat(from: Instant, until: Instant): Map<LanguageWrapper, Int> {
-    return getDatabase().execute {
-      val byLanguageStatStatement = getDatabase().database.connection
+  suspend fun getByLanguageStat(from: Instant, until: Instant): Map<LanguageWrapper, Int>? {
+    return getDatabase().execute { database ->
+      val byLanguageStatStatement = database
         .prepareStatement("SELECT json_extract(extra, '\$.lang') as lang, SUM(strftime('%s', ended_at) - strftime('%s', started_at)) FROM timespanUserActivity\n" +
                           "WHERE activity_id = '$id'\n" +
                           "AND datetime(started_at) >= datetime(?)\n" +
@@ -104,8 +104,8 @@ private class CodingTimeUserActivityEditorFactoryListener : EditorFactoryListene
 
     editor.document.addDocumentListener(object : DocumentListener {
       override fun documentChanged(event: DocumentEvent) {
-        runUpdateEvent(CodingTimeUserActivity) {
-          val vf = editor.virtualFile.validOrNull() ?: return@runUpdateEvent
+        FeatureUsageDatabaseCountersScopeProvider.getScope().runUpdateEvent(CodingTimeUserActivity) {
+          val vf = editor.virtualFile?.validOrNull() ?: return@runUpdateEvent
           val psiFile = withContext(Dispatchers.EDT) {
             PsiManagerEx.getInstance(project).findFile(vf)?.validOrNull()
           } ?: return@runUpdateEvent

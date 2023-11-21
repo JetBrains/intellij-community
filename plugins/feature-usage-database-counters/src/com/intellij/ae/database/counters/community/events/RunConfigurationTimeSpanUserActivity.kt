@@ -43,9 +43,9 @@ object RunConfigurationTimeSpanUserActivity : WritableDatabaseBackedTimeSpanUser
   /**
    *  @return sum of sessions lengths of specific [kind] in the period [from]..[until] in seconds
    */
-  suspend fun getSessionsLength(kind: RunConfigurationEventKind, from: Instant, until: Instant): Int {
-    return getDatabase().execute {
-      val sessionsLengthStatement = getDatabase().database.connection
+  suspend fun getSessionsLength(kind: RunConfigurationEventKind, from: Instant, until: Instant): Int? {
+    return getDatabase().execute { database ->
+      val sessionsLengthStatement = database
         .prepareStatement("SELECT SUM(strftime('%s', ended_at) - strftime('%s', started_at)) FROM timespanUserActivity\n" +
                           "WHERE activity_id = '$id' " +
                           "AND json_extract(extra, '\$.act') = ? " +
@@ -59,9 +59,9 @@ object RunConfigurationTimeSpanUserActivity : WritableDatabaseBackedTimeSpanUser
   /**
    *  @return sum of sessions lengths grouped by kind in the period [from]..[until] in seconds
    */
-  suspend fun getAllSessionsLength(from: Instant, until: Instant): Map<RunConfigurationEventKind, Int> {
-    return getDatabase().execute {
-      val allSessionsLengthStatement = getDatabase().database.connection
+  suspend fun getAllSessionsLength(from: Instant, until: Instant): Map<RunConfigurationEventKind, Int>? {
+    return getDatabase().execute { database ->
+      val allSessionsLengthStatement = database
         .prepareStatement("SELECT json_extract(extra, '\$.act') as field, SUM(strftime('%s', ended_at) - strftime('%s', started_at)) FROM timespanUserActivity\n" +
                           "WHERE activity_id = '$id' " +
                           "AND datetime(started_at) >= datetime(?) " +
@@ -101,12 +101,12 @@ internal class RunConfigurationListener : ExecutionListener {
     }
     when (env.executor) {
       is DefaultDebugExecutor -> {
-        runUpdateEvent(RunConfigurationTimeSpanUserActivity) {
+        FeatureUsageDatabaseCountersScopeProvider.getScope().runUpdateEvent(RunConfigurationTimeSpanUserActivity) {
           it.writeStart(RunConfigurationEventKind.Debug, id)
         }
       }
       is DefaultRunExecutor -> {
-        runUpdateEvent(RunConfigurationTimeSpanUserActivity) {
+        FeatureUsageDatabaseCountersScopeProvider.getScope().runUpdateEvent(RunConfigurationTimeSpanUserActivity) {
           it.writeStart(RunConfigurationEventKind.Run, id)
         }
       }
@@ -115,7 +115,7 @@ internal class RunConfigurationListener : ExecutionListener {
 
   override fun processTerminated(executorId: String, env: ExecutionEnvironment, handler: ProcessHandler, exitCode: Int) {
     val id = System.identityHashCode(handler)
-    runUpdateEvent(RunConfigurationTimeSpanUserActivity) {
+    FeatureUsageDatabaseCountersScopeProvider.getScope().runUpdateEvent(RunConfigurationTimeSpanUserActivity) {
       it.writeEnd(id)
     }
   }
@@ -125,7 +125,7 @@ internal class BuildListenerProjectActivity : ProjectActivity {
   override suspend fun execute(project: Project) {
     project.serviceAsync<BuildViewManager>().addListener(
       BuildListener(),
-      AEDatabaseLifetime.getDisposable(project)
+      FeatureUsageDatabaseCountersScopeProvider.getDisposable(project)
     )
   }
 }
@@ -137,12 +137,12 @@ internal class BuildListener : BuildProgressListener {
       is StartBuildEvent -> {
         // Skip Gradle initial loading
         if (event.buildDescriptor.title == "Classes up-to-date check") return
-        runUpdateEvent(RunConfigurationTimeSpanUserActivity) {
+        FeatureUsageDatabaseCountersScopeProvider.getScope().runUpdateEvent(RunConfigurationTimeSpanUserActivity) {
           it.writeStart(RunConfigurationEventKind.Build, id)
         }
       }
       is FinishBuildEvent -> {
-        runUpdateEvent(RunConfigurationTimeSpanUserActivity) {
+        FeatureUsageDatabaseCountersScopeProvider.getScope().runUpdateEvent(RunConfigurationTimeSpanUserActivity) {
           it.writeEnd(id)
         }
       }

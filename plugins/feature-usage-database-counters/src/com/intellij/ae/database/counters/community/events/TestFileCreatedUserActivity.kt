@@ -29,7 +29,7 @@ internal class TestFileCreationListener : AsyncFileListener {
           val project = ProjectLocator.getInstance().guessProjectForFile(file) ?: return
           val isTest = TestSourcesFilter.isTestSources(file, project)
           if (isTest) {
-            runUpdateEvent(TestFileCreatedUserActivity) {
+            FeatureUsageDatabaseCountersScopeProvider.getScope().runUpdateEvent(TestFileCreatedUserActivity) {
               it.write()
             }
           }

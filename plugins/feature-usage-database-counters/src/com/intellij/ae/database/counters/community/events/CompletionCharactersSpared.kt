@@ -23,7 +23,7 @@ object CompletionCharactersSpared : ReadableUserActivity<Int>, WritableDatabaseB
 
 class CompletionCharactersSparedListener : FeatureStatisticsUpdateListener {
   override fun completionStatUpdated(spared: Int) {
-    runUpdateEvent(CompletionCharactersSpared) {
+    FeatureUsageDatabaseCountersScopeProvider.getScope().runUpdateEvent(CompletionCharactersSpared) {
       it.write(spared)
     }
   }
