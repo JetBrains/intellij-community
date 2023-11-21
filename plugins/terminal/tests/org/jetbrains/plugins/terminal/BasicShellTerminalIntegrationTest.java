@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.terminal;
 
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import org.jetbrains.plugins.terminal.fixture.TestShellSession;
 
@@ -16,6 +17,7 @@ public class BasicShellTerminalIntegrationTest extends BasePlatformTestCase {
     if (!SystemInfo.isUnix) {
       return;
     }
+    Registry.get(LocalTerminalDirectRunner.BLOCK_TERMINAL_REGISTRY).setValue(false, getTestRootDisposable());
     TestShellSession session = new TestShellSession(getProject(), getTestRootDisposable());
     session.executeCommand("_MY_FOO=test; echo -e \"1\\n2\\n$_MY_FOO\"");
     session.awaitScreenLinesEndWith(List.of("1", "2", "test"), 10000);
