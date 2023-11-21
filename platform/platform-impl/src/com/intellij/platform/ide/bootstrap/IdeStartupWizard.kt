@@ -9,6 +9,7 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ConfigImportHelper
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
@@ -23,7 +24,9 @@ import kotlin.time.Duration.Companion.milliseconds
 private val log = logger<IdeStartupWizard>()
 
 val isIdeStartupWizardEnabled: Boolean
-  get() = java.lang.Boolean.getBoolean("intellij.startup.wizard") && IdeStartupExperiment.isExperimentEnabled()
+  get() = !ApplicationManagerEx.isInIntegrationTest()
+          && System.getProperty ("intellij.startup.wizard", "true").toBoolean()
+          && IdeStartupExperiment.isExperimentEnabled()
 
 @ExperimentalCoroutinesApi
 internal suspend fun runStartupWizard(isInitialStart: Job, app: Application) {
