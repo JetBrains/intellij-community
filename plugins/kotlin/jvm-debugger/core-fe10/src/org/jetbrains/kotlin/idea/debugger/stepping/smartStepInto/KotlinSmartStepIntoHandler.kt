@@ -97,17 +97,9 @@ private fun findSmartStepTargets(element: KtElement, lines: Range<Int>): List<Sm
 }
 
 private fun calculateSmartStepTargetsToShow(targets: List<SmartStepTarget>, debugProcess: DebugProcessImpl, lines: ClosedRange<Int>): List<SmartStepTarget> {
-    val lambdaTargets = mutableListOf<SmartStepTarget>()
-    val methodTargets = mutableListOf<KotlinMethodSmartStepTarget>()
-    for (target in targets) {
-        if (target is KotlinMethodSmartStepTarget) {
-            methodTargets.add(target)
-        } else {
-            lambdaTargets.add(target)
-        }
-    }
-
-    return lambdaTargets + methodTargets.filterAlreadyExecuted(debugProcess, lines)
+    val methodTargets = targets.filterIsInstance<KotlinMethodSmartStepTarget>()
+    val notYetExecutedMethodTargets = methodTargets.filterAlreadyExecuted(debugProcess, lines).toHashSet()
+    return targets.filter { it !is KotlinMethodSmartStepTarget || it in notYetExecutedMethodTargets }
 }
 
 private fun List<KotlinMethodSmartStepTarget>.filterAlreadyExecuted(

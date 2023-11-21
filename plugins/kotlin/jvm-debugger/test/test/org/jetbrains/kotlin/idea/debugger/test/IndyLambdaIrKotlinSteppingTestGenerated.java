@@ -1665,6 +1665,11 @@ public abstract class IndyLambdaIrKotlinSteppingTestGenerated extends AbstractIn
             runTest("testData/stepping/custom/smartStepIntoSuspendLambda.kt");
         }
 
+        @TestMetadata("smartStepIntoTargetsOrder.kt")
+        public void testSmartStepIntoTargetsOrder() throws Exception {
+            runTest("testData/stepping/custom/smartStepIntoTargetsOrder.kt");
+        }
+
         @TestMetadata("smartStepIntoToLambdaParameter.kt")
         public void testSmartStepIntoToLambdaParameter() throws Exception {
             runTest("testData/stepping/custom/smartStepIntoToLambdaParameter.kt");

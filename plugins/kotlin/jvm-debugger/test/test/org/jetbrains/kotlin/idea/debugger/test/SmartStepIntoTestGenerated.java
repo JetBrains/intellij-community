@@ -163,6 +163,11 @@ public class SmartStepIntoTestGenerated extends AbstractSmartStepIntoTest {
         runTest("testData/smartStepInto/javaSyntheticPropertyReference.kt");
     }
 
+    @TestMetadata("lambdas.kt")
+    public void testLambdas() throws Exception {
+        runTest("testData/smartStepInto/lambdas.kt");
+    }
+
     @TestMetadata("libraryFun.kt")
     public void testLibraryFun() throws Exception {
         runTest("testData/smartStepInto/libraryFun.kt");

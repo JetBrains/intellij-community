@@ -30,6 +30,7 @@ import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.xdebugger.XDebuggerTestUtil
 import com.intellij.xdebugger.frame.XStackFrame
 import junit.framework.AssertionFailedError
+import junit.framework.TestCase
 import org.jetbrains.idea.maven.aether.ArtifactKind
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor
 import org.jetbrains.kotlin.idea.debugger.KotlinPositionManager
@@ -266,8 +267,20 @@ abstract class KotlinDescriptorTestCaseWithStepping : KotlinDescriptorTestCase()
             .findStepIntoTargets(position, debuggerSession)
             .blockingGet(XDebuggerTestUtil.TIMEOUT_MS)
             ?: error("Couldn't calculate smart step targets")
+
+        // the resulting order is different from the order in code when stepping some methods are filtered
+        // due to de-prioritisation in JvmSmartStepIntoHandler.reorderWithSteppingFilters
+        if (stepTargets.none { DebugProcessImpl.isClassFiltered(it.className)}) {
+            try {
+                TestCase.assertEquals("Smart step targets are not sorted by position in tree",
+                                      stepTargets.sortedByPositionInTree().map { runReadAction { it.presentation } },
+                                      stepTargets.map { runReadAction { it.presentation } })
+            } catch (e: AssertionFailedError) {
+                thrownExceptions.add(e)
+            }
+        }
         return runReadAction {
-            stepTargets.sortedByPositionInTree().mapNotNull { stepTarget ->
+            stepTargets.mapNotNull { stepTarget ->
                 when (stepTarget) {
                     is KotlinSmartStepTarget -> stepTarget.createMethodFilter()
                     is MethodSmartStepTarget -> BasicStepMethodFilter(stepTarget.method, stepTarget.getCallingExpressionLines())
