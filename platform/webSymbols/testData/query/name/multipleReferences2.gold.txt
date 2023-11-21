@@ -30,7 +30,7 @@
       matchedName: "html/special-items/the-b",
       origin: "filter@1.0.0 (<none>)",
       complete: true,
-      description: "<p>special</p>",
+      description: "<p>special",
       priority: LOW,
       segments: [
        {
@@ -44,7 +44,7 @@
       matchedName: "html/normal-items/the-b",
       origin: "filter@1.0.0 (<none>)",
       complete: true,
-      description: "<p>normal</p>",
+      description: "<p>normal",
       priority: LOW,
       segments: [
        {

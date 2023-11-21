@@ -46,7 +46,7 @@
      name: "event name",
      origin: "vue@3.0.0 (vue)",
      complete: true,
-     description: "<p>Optional event name</p>",
+     description: "<p>Optional event name",
      priority: NORMAL,
      has-pattern: true,
      segments: [
@@ -64,7 +64,7 @@
      matchedName: "js/events/event1",
      origin: "test-lib@2.0.0-rc.24 (vue)",
      complete: true,
-     description: "<p>My best event</p>",
+     description: "<p>My best event",
      docUrl: "http://event.doc.url",
      priority: NORMAL,
      segments: [
