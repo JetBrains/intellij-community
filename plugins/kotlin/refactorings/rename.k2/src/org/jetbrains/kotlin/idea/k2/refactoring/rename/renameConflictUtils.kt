@@ -137,9 +137,10 @@ fun checkCallableShadowing(
                     externalDeclarations.add(newDeclaration)
                 }
                 if (newDeclaration != null && (declaration !is KtParameter || declaration.hasValOrVar()) && !PsiTreeUtil.isAncestor(newDeclaration, declaration, true)) {
-                    val qualifiedExpression = createQualifiedExpression(refElement, newName)
+                    val expression = refElement.parent as? KtCallExpression ?: refElement
+                    val qualifiedExpression = createQualifiedExpression(expression, newName)
                     if (qualifiedExpression != null) {
-                        usageIterator.set(UsageInfoWithReplacement(refElement, declaration, qualifiedExpression))
+                        usageIterator.set(UsageInfoWithReplacement(expression, declaration, qualifiedExpression))
                     } else {
                         reportShadowing(declaration, declaration, newDeclaration, refElement, newUsages)
                     }
@@ -154,9 +155,10 @@ fun checkCallableShadowing(
         ReferencesSearch.search(externalDeclaration, declaration.useScope).forEach { ref ->
             val refElement = ref.element as? KtSimpleNameExpression ?: return@forEach
             if (refElement.getStrictParentOfType<KtTypeReference>() != null) return@forEach
-            val qualifiedExpression = createQualifiedExpression(refElement, newName)
+            val expression = refElement.parent as? KtCallExpression ?: refElement
+            val qualifiedExpression = createQualifiedExpression(expression, newName)
             if (qualifiedExpression != null) {
-                newUsages.add(UsageInfoWithReplacement(refElement, declaration, qualifiedExpression))
+                newUsages.add(UsageInfoWithReplacement(expression, declaration, qualifiedExpression))
             }
         }
     }
@@ -185,10 +187,9 @@ private fun KtExpression.referenceExpression(): KtExpression {
 private fun createQualifiedExpression(callExpression: KtExpression, newName: String): KtExpression? {
     val psiFactory = KtPsiFactory(callExpression.project)
     val qualifiedExpression = analyze(callExpression) {
-        val referenceExpression = callExpression.referenceExpression()
-        val resolveCall = referenceExpression.resolveCall()
+        val resolveCall = callExpression.resolveCall()
         val appliedSymbol = resolveCall?.successfulCallOrNull<KtCallableMemberCall<*, *>>()?.partiallyAppliedSymbol
-        val receiver = appliedSymbol?.dispatchReceiver ?: appliedSymbol?.extensionReceiver
+        val receiver = appliedSymbol?.extensionReceiver ?: appliedSymbol?.dispatchReceiver
         if (receiver is KtImplicitReceiverValue) {
             val symbol = receiver.symbol
             if ((symbol as? KtClassOrObjectSymbol)?.classKind == KtClassKind.COMPANION_OBJECT) {

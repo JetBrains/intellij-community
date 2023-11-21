@@ -478,6 +478,41 @@ public class K2InplaceRenameTestGenerated extends AbstractK2InplaceRenameTest {
         runTest("../../idea/tests/testData/refactoring/rename/inplace/ParameterRedecklaration.kt");
     }
 
+    @TestMetadata("PropertyFunctionConflict.kt")
+    public void testPropertyFunctionConflict() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/rename/inplace/PropertyFunctionConflict.kt");
+    }
+
+    @TestMetadata("PropertyFunctionConflict1.kt")
+    public void testPropertyFunctionConflict1() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/rename/inplace/PropertyFunctionConflict1.kt");
+    }
+
+    @TestMetadata("PropertyFunctionNoConflict.kt")
+    public void testPropertyFunctionNoConflict() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/rename/inplace/PropertyFunctionNoConflict.kt");
+    }
+
+    @TestMetadata("PropertyFunctionNoConflict1.kt")
+    public void testPropertyFunctionNoConflict1() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/rename/inplace/PropertyFunctionNoConflict1.kt");
+    }
+
+    @TestMetadata("PropertyFunctionNoConflict2.kt")
+    public void testPropertyFunctionNoConflict2() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/rename/inplace/PropertyFunctionNoConflict2.kt");
+    }
+
+    @TestMetadata("PropertyFunctionNoConflictDifferentReceivers.kt")
+    public void testPropertyFunctionNoConflictDifferentReceivers() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/rename/inplace/PropertyFunctionNoConflictDifferentReceivers.kt");
+    }
+
+    @TestMetadata("PropertyFunctionNoConflictDifferentReceivers1.kt")
+    public void testPropertyFunctionNoConflictDifferentReceivers1() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/rename/inplace/PropertyFunctionNoConflictDifferentReceivers1.kt");
+    }
+
     @TestMetadata("QuotedLocalVar.kt")
     public void testQuotedLocalVar() throws Exception {
         runTest("../../idea/tests/testData/refactoring/rename/inplace/QuotedLocalVar.kt");

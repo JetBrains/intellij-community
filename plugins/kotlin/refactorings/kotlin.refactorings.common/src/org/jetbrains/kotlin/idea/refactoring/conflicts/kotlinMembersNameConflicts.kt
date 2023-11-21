@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolKind
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithKind
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithTypeParameters
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithVisibility
+import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.asJava.accessorNameByPropertyName
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
@@ -135,6 +136,14 @@ private fun checkDeclarationNewNameConflicts(declaration: KtNamedDeclaration, ne
             continue
         }
 
+        if (candidateSymbol is KtPropertySymbol && symbol is KtFunctionLikeSymbol && !areSameSignatures(candidateSymbol, symbol)) {
+            continue
+        }
+
+        if (candidateSymbol is KtFunctionLikeSymbol && symbol is KtPropertySymbol && !areSameSignatures(symbol, candidateSymbol)) {
+            continue
+        }
+
         val what = candidate.renderDescription()
         val where = candidate.representativeContainer()?.renderDescription() ?: continue
         val message = KotlinBundle.message("text.0.already.declared.in.1", what, where).capitalize()
@@ -143,12 +152,32 @@ private fun checkDeclarationNewNameConflicts(declaration: KtNamedDeclaration, ne
 }
 
 context(KtAnalysisSession)
-private fun areSameSignatures(s1: KtFunctionLikeSymbol, s2: KtFunctionLikeSymbol): Boolean {
-  return areTypesTheSame(s1.receiverType, s2.receiverType) && s1.valueParameters.size == s2.valueParameters.size && s1.valueParameters.zip(
-    s2.valueParameters).all { (p1, p2) ->
-    areTypesTheSame(p1.returnType, p2.returnType) && areTypesTheSame(p1.receiverType, p2.receiverType)
-  } && s1.contextReceivers.size == s2.contextReceivers.size && s1.contextReceivers.zip(
-    s2.contextReceivers).all { (c1, c2) -> c1.type.isEqualTo(c2.type) }
+private fun areSameSignatures(candidateSymbol: KtFunctionLikeSymbol, symbol: KtFunctionLikeSymbol) : Boolean {
+    return areSameSignatures(candidateSymbol.receiverType, symbol.receiverType, candidateSymbol.valueParameters.map { it.returnType }, symbol.valueParameters.map { it.returnType }, candidateSymbol.contextReceivers, symbol.contextReceivers)
+}
+
+context(KtAnalysisSession)
+private fun areSameSignatures(candidateSymbol: KtPropertySymbol, symbol: KtFunctionLikeSymbol) : Boolean {
+    val type = candidateSymbol.returnType
+    if (type is KtFunctionalType &&
+        areSameSignatures(type.receiverType, symbol.receiverType, type.parameterTypes, symbol.valueParameters.map { it.returnType }, candidateSymbol.contextReceivers, symbol.contextReceivers)) {
+        return true
+    }
+    return false
+}
+
+context(KtAnalysisSession)
+private fun areSameSignatures(
+    receiverType1: KtType?,
+    receiverType2: KtType?,
+    parameterTypes1: List<KtType>,
+    parameterTypes2: List<KtType>,
+    c1: List<org.jetbrains.kotlin.analysis.api.base.KtContextReceiver>,
+    c2: List<org.jetbrains.kotlin.analysis.api.base.KtContextReceiver>,
+): Boolean {
+  return areTypesTheSame(receiverType1, receiverType2) &&
+          parameterTypes1.size == parameterTypes2.size && parameterTypes1.zip(parameterTypes2).all { (p1, p2) -> areTypesTheSame(p1, p2) } &&
+          c1.size == c2.size && c1.zip(c2).all { (c1, c2) -> c1.type.isEqualTo(c2.type) }
 }
 
 context(KtAnalysisSession)
