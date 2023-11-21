@@ -5,7 +5,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.util.PropertyUtilBase
 
-internal fun getCapitalizedAccessorName(method: PsiMethod): String? {
+fun getCapitalizedAccessorName(method: PsiMethod): String? {
   val propertyName = PropertyUtilBase.getPropertyName(method) ?: return null
   val methodFinalPart = StringUtil.capitalize(propertyName)
   val methodParts = method.containingClass?.takeUnless { it.name?.startsWith(LIBRARIES_FOR_PREFIX) == true }?.name?.trimAccessorName()
