@@ -9,7 +9,6 @@ import com.intellij.execution.impl.EditConfigurationsDialog
 import com.intellij.execution.impl.ExecutionManagerImpl
 import com.intellij.execution.impl.RunConfigurationSelector
 import com.intellij.execution.multilaunch.MultiLaunchConfiguration
-import com.intellij.execution.multilaunch.execution.BeforeExecuteTask
 import com.intellij.execution.multilaunch.execution.ExecutionMode
 import com.intellij.execution.multilaunch.execution.executables.Executable
 import com.intellij.execution.multilaunch.execution.executables.ExecutableTemplate
@@ -64,11 +63,6 @@ class RunConfigurationExecutableManager(private val project: Project) : Executab
     settings.configuration.icon,
     template
   ) {
-    override val beforeExecuteTasks: List<BeforeExecuteTask>
-      get() = getBeforeRunTasks(settings.configuration)
-        .map { BeforeRunTaskProvider.getProvider(project, it.providerId)?.name ?: it.providerId.toString()}
-        .map { BeforeExecuteTask(it) }
-
     override val supportsDebugging = true
     override val supportsEditing = true
 
