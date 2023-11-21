@@ -340,10 +340,10 @@ private fun IKotlinFacetSettings.configureOutputPaths(moduleNode: DataNode<Modul
     val kotlinGradleProjectDataNode = moduleNode.kotlinGradleProjectDataNodeOrNull ?: return
     val kotlinGradleSourceSetDataNodes = ExternalSystemApiUtil.findAll(kotlinGradleProjectDataNode, KotlinGradleSourceSetData.KEY)
     kotlinGradleSourceSetDataNodes.find { it.data.sourceSetName == "main" }?.let {
-        productionOutputPath = (it.data.compilerArguments as? K2JSCompilerArguments)?.outputFile
+        productionOutputPath = (it.data.compilerArguments as? K2JSCompilerArguments)?.outputDir
     }
     kotlinGradleSourceSetDataNodes.find { it.data.sourceSetName == "test" }?.let {
-        testOutputPath = (it.data.compilerArguments as? K2JSCompilerArguments)?.outputFile
+        testOutputPath = (it.data.compilerArguments as? K2JSCompilerArguments)?.outputDir
     }
 }
 
