@@ -1094,6 +1094,8 @@ private fun applyDensityOnUpdateUi(defaults: UIDefaults) {
     defaults.put(JBUI.CurrentTheme.Toolbar.stripeToolbarButtonIconPaddingKey(), cmInsets(4))
     // Run Widget
     defaults.put(JBUI.CurrentTheme.RunWidget.toolbarHeightKey(), 26)
+    defaults.put(JBUI.CurrentTheme.RunWidget.actionButtonWidthKey(), 26)
+    defaults.put(JBUI.CurrentTheme.RunWidget.toolbarBorderDirectionalGapKey(), 4)
     defaults.put(JBUI.CurrentTheme.RunWidget.toolbarBorderHeightKey(), 3)
     defaults.put(JBUI.CurrentTheme.RunWidget.configurationSelectorFontKey(), Supplier { JBFont.medium().asUIResource() })
     // trees
