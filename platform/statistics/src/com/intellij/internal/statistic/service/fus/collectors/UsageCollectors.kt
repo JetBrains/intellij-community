@@ -10,21 +10,25 @@ import org.jetbrains.annotations.ApiStatus
 object UsageCollectors {
   @ApiStatus.Internal
   @JvmField
-  val APPLICATION_EP_NAME: ExtensionPointName<UsageCollectorBean> = ExtensionPointName.create("com.intellij.statistics.applicationUsagesCollector")
+  val APPLICATION_EP_NAME: ExtensionPointName<UsageCollectorBean> = ExtensionPointName("com.intellij.statistics.applicationUsagesCollector")
 
   @ApiStatus.Internal
   @JvmField
-  val PROJECT_EP_NAME: ExtensionPointName<UsageCollectorBean> = ExtensionPointName.create("com.intellij.statistics.projectUsagesCollector")
+  val PROJECT_EP_NAME: ExtensionPointName<UsageCollectorBean> = ExtensionPointName("com.intellij.statistics.projectUsagesCollector")
 
   @ApiStatus.Internal
   @JvmField
-  val COUNTER_EP_NAME: ExtensionPointName<CounterUsageCollectorEP> = ExtensionPointName.create("com.intellij.statistics.counterUsagesCollector")
+  val COUNTER_EP_NAME: ExtensionPointName<CounterUsageCollectorEP> = ExtensionPointName("com.intellij.statistics.counterUsagesCollector")
 
   internal fun getApplicationCollectors(invoker: UsagesCollectorConsumer,
                                         allowedOnStartupOnly: Boolean): Collection<ApplicationUsagesCollector> {
-    if (isCalledFromPlugin(invoker)) return emptyList()
+    if (isCalledFromPlugin(invoker)) {
+      return emptyList()
+    }
 
-    if (!allowedOnStartupOnly) return getAllApplicationCollectors()
+    if (!allowedOnStartupOnly) {
+      return getAllApplicationCollectors()
+    }
 
     return APPLICATION_EP_NAME.lazySequence()
       .filter { it.allowOnStartup == true }
