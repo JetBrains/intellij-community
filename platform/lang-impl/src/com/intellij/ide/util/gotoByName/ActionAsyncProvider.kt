@@ -65,7 +65,7 @@ class ActionAsyncProvider(private val myModel: GotoActionModel) {
 
     try {
       runBlockingCancellable {
-        runUpdateSessionForActionSearch(myModel.getUpdateSession()) { presentationProvider ->
+        runUpdateSessionForActionSearch(myModel.updateSession) { presentationProvider ->
           LOG.debug("Start actions searching ($pattern)")
 
           myModel.buildGroupMappings()
