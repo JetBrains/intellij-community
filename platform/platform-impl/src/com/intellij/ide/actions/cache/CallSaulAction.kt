@@ -3,6 +3,8 @@ package com.intellij.ide.actions.cache
 
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehavior
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAware
@@ -56,7 +58,9 @@ internal class CacheRecoveryActionGroup: ActionGroup(), DumbAware {
 
   private fun RecoveryAction.toAnAction(): AnAction {
     val recoveryAction = this
-    return object: DumbAwareAction(recoveryAction.presentableName) {
+    return object: DumbAwareAction(recoveryAction.presentableName), ActionRemoteBehaviorSpecification {
+      override fun getBehavior(): ActionRemoteBehavior = ActionRemoteBehavior.BackendOnly
+
       override fun actionPerformed(e: AnActionEvent) {
         val scope = RecoveryScope.createInstance(e)
         recoveryAction.performUnderProgress(scope,false)
