@@ -329,52 +329,23 @@
       ]
     },
     {
-      "id": "SerializableDeserializableClassInSecureContext",
-      "cweIds": [
-        502
-      ]
-    },
-    {
-      "id": "SerializableInnerClassHasSerialVersionUIDField",
-      "cweIds": [
-        502
-      ]
-    },
-    {
-      "id": "SerializableStoresNonSerializable",
-      "cweIds": [
-        502
-      ]
-    },
-    {
-      "id": "SerializableWithUnconstructableAncestor",
-      "cweIds": [
-        502
-      ]
-    },
-    {
       "id": "SortedCollectionWithNonComparableKeys",
       "cweIds": [
-        664,
         697
       ]
     },
     {
       "id": "StringConcatenationInFormatCall",
       "cweIds": [
-        20,
-        117,
-        134,
-        707
+        116,
+        134
       ]
     },
     {
       "id": "StringConcatenationInMessageFormatCall",
       "cweIds": [
-        20,
-        117,
-        134,
-        707
+        116,
+        134
       ]
     },
     {
