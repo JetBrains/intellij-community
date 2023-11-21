@@ -16,10 +16,7 @@ abstract class AbstractOptimizeImportsTest : AbstractImportsTest() {
         try {
             val optimizer = KotlinImportOptimizer().processFile(file)
             optimizer.run()
-            val message = InTextDirectivesUtils.findStringWithPrefixes(file.text, "// WITH_MESSAGE: ")
-            if (message != null) {
-                TestCase.assertEquals(message, optimizer.userNotificationInfo)
-            }
+            userNotificationInfo = optimizer.userNotificationInfo
             return OptimizedImportsBuilder.testLog.toString()
         } finally {
             OptimizedImportsBuilder.testLog = null
