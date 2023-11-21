@@ -3,6 +3,7 @@
 
   <id>com.jetbrains.ae.database.counters.community</id>
   <name>Feature Usage Counters (Community)</name>
+  <description>Register usage of various IDE features: VCS, code editing, run configuration, etc..</description>
   <vendor>JetBrains</vendor>
 
   <incompatible-with>com.intellij.cwm.guest</incompatible-with>
