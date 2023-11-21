@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.actionSystem.Toggleable
+import com.intellij.openapi.actionSystem.impl.ActionPresentationDecorator.decorateTextIfNeeded
 import com.intellij.openapi.actionSystem.impl.PresentationFactory
 import com.intellij.openapi.actionSystem.impl.Utils
 import com.intellij.openapi.actionSystem.impl.actionholder.createActionRef
@@ -29,7 +30,7 @@ internal fun createMacNativeActionMenu(context: DataContext?,
                                        useDarkIcons: Boolean): Menu {
   val groupRef = createActionRef(group)
   val presentation = presentationFactory.getPresentation(group)
-  val menuPeer = Menu(presentation.getText(isMnemonicEnabled))
+  val menuPeer = Menu(decorateTextIfNeeded(group, presentation.getText(isMnemonicEnabled)))
   if (group is Toggleable && Toggleable.isSelected(presentation)) {
     menuPeer.setState(true)
   }

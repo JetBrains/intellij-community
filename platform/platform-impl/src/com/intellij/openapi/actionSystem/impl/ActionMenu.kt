@@ -11,6 +11,7 @@ import com.intellij.internal.inspector.UiInspectorUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.MainMenuPresentationAware
+import com.intellij.openapi.actionSystem.impl.ActionPresentationDecorator.decorateTextIfNeeded
 import com.intellij.openapi.actionSystem.impl.actionholder.createActionRef
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.ui.JBPopupMenu
@@ -189,7 +190,7 @@ class ActionMenu constructor(private val context: DataContext?,
     isMnemonicEnabled = enableMnemonics
     isVisible = presentation.isVisible
     setEnabled(presentation.isEnabled)
-    setText(presentation.getText(isMnemonicEnabled))
+    setText(decorateTextIfNeeded(anAction, presentation.getText(isMnemonicEnabled)))
     mnemonic = presentation.getMnemonic()
     displayedMnemonicIndex = presentation.getDisplayedMnemonicIndex()
     updateIcon()
