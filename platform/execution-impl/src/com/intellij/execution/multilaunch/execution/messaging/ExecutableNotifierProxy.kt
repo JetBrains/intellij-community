@@ -14,7 +14,6 @@ class ExecutableNotifierProxy(
   private val actualExecutable: Executable,
   private val publisher: ExecutionNotifier,
 ) : Executable(actualExecutable.uniqueId, actualExecutable.name, actualExecutable.icon, actualExecutable.template) {
-  override val beforeExecuteTasks get() = actualExecutable.beforeExecuteTasks
   override val supportsDebugging get() = actualExecutable.supportsDebugging
 
   override fun saveAttributes(snapshot: ExecutableSnapshot) {}
