@@ -6,7 +6,7 @@ import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 
 object MavenIndexUsageCollector : CounterUsagesCollector() {
-  val GROUP = EventLogGroup("maven.indexing", 1)
+  val GROUP = EventLogGroup("maven.indexing", 2)
 
   @JvmField
   val IS_LOCAL = EventFields.Boolean("is_local")
@@ -24,7 +24,7 @@ object MavenIndexUsageCollector : CounterUsagesCollector() {
   val MANUAL = EventFields.Boolean("manual")
 
   @JvmField
-  val INDEX_UPDATE = GROUP.registerIdeActivity("index_update",
+  val INDEX_UPDATE = GROUP.registerIdeActivity("index.update",
                                                finishEventAdditionalFields = arrayOf(IS_LOCAL,
                                                                                      IS_CENTRAL,
                                                                                      IS_PRIVATE_REMOTE,
@@ -32,13 +32,13 @@ object MavenIndexUsageCollector : CounterUsagesCollector() {
                                                                                      MANUAL))
 
   @JvmField
-  val INDEX_BROKEN = GROUP.registerEvent("index_open")
+  val INDEX_BROKEN = GROUP.registerEvent("index.broken")
 
   @JvmField
-  val INDEX_OPENED = GROUP.registerEvent("index_open", IS_LOCAL, IS_CENTRAL, IS_PRIVATE_REMOTE)
+  val INDEX_OPENED = GROUP.registerEvent("index.open", IS_LOCAL, IS_CENTRAL, IS_PRIVATE_REMOTE)
 
   @JvmField
-  val ADD_ARTIFACT_FROM_POM = GROUP.registerEvent("artifact_from_pom_added")
+  val ADD_ARTIFACT_FROM_POM = GROUP.registerEvent("artifact.from.pom.added")
 
   override fun getGroup(): EventLogGroup = GROUP
 
