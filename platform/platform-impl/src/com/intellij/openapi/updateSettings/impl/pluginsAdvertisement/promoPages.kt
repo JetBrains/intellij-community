@@ -71,7 +71,7 @@ object PromoPages {
         cell()
 
         (button(FeaturePromoBundle.message("get.prefix", page.suggestedIde.name)) {
-          FUSEventSource.SETTINGS.openDownloadPageAndLog(null, page.suggestedIde.downloadUrl, page.pluginId?.let(PluginId::getId))
+          source.openDownloadPageAndLog(null, page.suggestedIde.downloadUrl, page.pluginId?.let(PluginId::getId))
         }).applyToComponent {
           this.icon = AllIcons.Ide.External_link_arrow
           this.horizontalTextPosition = SwingConstants.LEFT
