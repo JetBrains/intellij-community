@@ -6,7 +6,7 @@ import com.intellij.codeInsight.documentation.DocumentationManager
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.lang.documentation.ide.IdeDocumentationTargetProvider
 import com.intellij.lang.documentation.impl.documentationTargets
-import com.intellij.lang.documentation.psi.psiDocumentationTarget
+import com.intellij.lang.documentation.psi.psiDocumentationTargets
 import com.intellij.lang.documentation.symbol.impl.symbolDocumentationTargets
 import com.intellij.model.Pointer
 import com.intellij.model.Symbol
@@ -29,7 +29,7 @@ open class IdeDocumentationTargetProviderImpl(private val project: Project) : Id
     val sourceElement = DocumentationManager.getContextElement(editor, file)
     val targetElement = DocumentationManager.getElementFromLookup(project, editor, file, lookupElement)
                         ?: return null
-    return psiDocumentationTarget(targetElement, sourceElement)
+    return psiDocumentationTargets(targetElement, sourceElement).first()
   }
 
   override fun documentationTargets(editor: Editor, file: PsiFile, offset: Int): List<DocumentationTarget> {

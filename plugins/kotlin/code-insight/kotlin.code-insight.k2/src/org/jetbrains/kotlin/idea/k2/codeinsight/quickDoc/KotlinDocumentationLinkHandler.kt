@@ -2,7 +2,7 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.quickDoc
 
 import com.intellij.codeInsight.documentation.DocumentationManagerProtocol
-import com.intellij.lang.documentation.psi.psiDocumentationTarget
+import com.intellij.lang.documentation.psi.psiDocumentationTargets
 import com.intellij.platform.backend.documentation.DocumentationLinkHandler
 import com.intellij.platform.backend.documentation.DocumentationTarget
 import com.intellij.platform.backend.documentation.LinkResolveResult
@@ -23,7 +23,7 @@ class KotlinDocumentationLinkHandler : DocumentationLinkHandler {
         if (url.startsWith(DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL) && element is KtElement) {
             val names = url.substring(DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL.length).split('.')
             val target = resolveKDocLink(names, element) ?: return null
-            return LinkResolveResult.resolvedTarget(psiDocumentationTarget(target, target))
+            return LinkResolveResult.resolvedTarget(psiDocumentationTargets(target, target).first()) //TODO support multi-targeting
         }
         return null
     }
