@@ -6,6 +6,19 @@ fun foo2() {} /// M
 // Lambdas should be available if present
 fun foo3() = run { println() } /// *, L, M, λ
 
+fun foo3_1() = run { /// *, L, M, λ
+    println() /// L
+} /// L
+
+// We need to suggest lambda breakpoint when there is some code on the line inside the lambda
+fun foo3_2() = run { println() /// *, L, M, λ
+    println() /// L
+} /// L
+
+fun foo3_3() = run { run { println() } /// *, L, M, λ, λ
+    println() /// L
+} /// L
+
 // Code blocks {} are not considered as expressions
 fun foo4() { /// M
     println() /// L

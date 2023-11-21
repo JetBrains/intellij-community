@@ -58,5 +58,6 @@
     <orderEntry type="module" module-name="kotlin.native" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.analysis" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.fir.frontend-independent.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.scriptDebugger.ui" scope="TEST" />
   </component>
 </module>
