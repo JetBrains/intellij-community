@@ -3,6 +3,7 @@
 
 package com.intellij.ide.impl
 
+import com.intellij.ide.trustedProjects.TrustedProjectsLocator.LocatedProject
 import com.intellij.openapi.components.*
 import com.intellij.util.ThreeState
 import com.intellij.util.xmlb.annotations.OptionTag
@@ -24,7 +25,6 @@ class TrustedPaths : SerializablePersistentStateComponent<TrustedPaths.State>(St
     val trustedPaths: Map<String, Boolean> = emptyMap()
   )
 
-  @ApiStatus.Internal
   fun getProjectPathTrustedState(path: Path): ThreeState {
     val trustedPaths = state.trustedPaths
     val closestAncestor = trustedPaths.keys.asSequence()
@@ -41,10 +41,28 @@ class TrustedPaths : SerializablePersistentStateComponent<TrustedPaths.State>(St
     }
   }
 
-  @ApiStatus.Internal
   fun setProjectPathTrusted(path: Path, value: Boolean) {
     updateState { currentState ->
       State(currentState.trustedPaths + (path.toString() to value))
+    }
+  }
+
+  fun getProjectTrustedState(locatedProject: LocatedProject): ThreeState {
+    val trustedStates = locatedProject.projectRoots.map { getProjectPathTrustedState(it) }
+    return trustedStates.fold(ThreeState.YES) { acc, it ->
+      when {
+        acc == ThreeState.UNSURE -> ThreeState.UNSURE
+        it == ThreeState.UNSURE -> ThreeState.UNSURE
+        acc == ThreeState.NO -> ThreeState.NO
+        it == ThreeState.NO -> ThreeState.NO
+        else -> ThreeState.YES
+      }
+    }
+  }
+
+  fun setProjectTrustedState(locatedProject: LocatedProject, isTrusted: Boolean) {
+    for (projectRoot in locatedProject.projectRoots) {
+      setProjectPathTrusted(projectRoot, isTrusted)
     }
   }
 }
