@@ -83,9 +83,9 @@ public final class WindowWithActions {
 
   @Nullable
   @RequiresEdt
-  public static JComponent findWindowByName(@NotNull Project project,
-                                            @NotNull @Nls(capitalization = Nls.Capitalization.Title) String toolWindowTitle,
-                                            @NotNull @Nls String windowName) {
+  public static JComponent findWindowByNameAndOpen(@NotNull Project project,
+                                                   @NotNull @Nls(capitalization = Nls.Capitalization.Title) String toolWindowTitle,
+                                                   @NotNull @Nls String windowName) {
     final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
     ToolWindow window = toolWindowManager.getToolWindow(toolWindowTitle);
     if (window == null) {
@@ -94,6 +94,9 @@ public final class WindowWithActions {
     Content content = window.getContentManager().findContent(windowName);
     if (content == null) {
       return null;
+    }
+    if (!window.isVisible()) {
+      window.show();
     }
     return content.getComponent();
   }
