@@ -21,10 +21,7 @@ import org.jetbrains.plugins.terminal.exp.BlockTerminalController.BlockTerminalC
 import org.jetbrains.plugins.terminal.exp.TerminalPromptController.PromptStateListener
 import java.awt.BorderLayout
 import java.awt.Dimension
-import java.awt.event.ComponentAdapter
-import java.awt.event.ComponentEvent
-import java.awt.event.KeyAdapter
-import java.awt.event.KeyEvent
+import java.awt.event.*
 import javax.swing.JComponent
 import javax.swing.JPanel
 
@@ -85,6 +82,13 @@ class BlockTerminalView(
     component.addComponentListener(object : ComponentAdapter() {
       override fun componentResized(e: ComponentEvent?) {
         updateTerminalSize()
+      }
+    })
+
+    component.addMouseListener(object : MouseAdapter() {
+      override fun mousePressed(e: MouseEvent) {
+        // move focus to terminal if user clicked in the empty area
+        IdeFocusManager.getInstance(project).requestFocus(preferredFocusableComponent, true)
       }
     })
 
