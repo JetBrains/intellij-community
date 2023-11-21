@@ -355,7 +355,7 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
   // Fixes behavior of JTextComponent caret API.
   // Without this, changes of caret(s) position(s) are not reported to the caret listeners added
   //   via JTextComponent.addCaretListener.
-  // This is required for proper working of JBR-2041.
+  // This is required for proper working of JBR-2460.
   // -----------------------------------------------------------------------------------------------
   private EditorSwingCaretUpdatesCourier myEditorSwingCaretUpdatesCourier = null;
 
