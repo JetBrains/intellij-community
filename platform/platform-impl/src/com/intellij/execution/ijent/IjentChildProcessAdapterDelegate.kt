@@ -3,7 +3,6 @@ package com.intellij.execution.ijent
 
 import com.intellij.platform.ijent.IjentChildProcess
 import com.intellij.util.channel.ChannelInputStream
-import com.intellij.util.channel.ChannelOutputStream
 import kotlinx.coroutines.*
 import kotlinx.coroutines.future.asCompletableFuture
 import java.io.InputStream
@@ -18,7 +17,7 @@ internal class IjentChildProcessAdapterDelegate(
 ) {
   val inputStream: InputStream = ChannelInputStream(ijentChildProcess.stdout)
 
-  val outputStream: OutputStream = ChannelOutputStream(ijentChildProcess.stdin)
+  val outputStream: OutputStream = IjentStdinOutputStream(coroutineScope.coroutineContext, ijentChildProcess)
 
   val errorStream: InputStream = ChannelInputStream(ijentChildProcess.stderr)
 
