@@ -22,7 +22,7 @@ private const val REPETITIONS = 100
 
 @TestApplication
 @ExtendWith(ThreadContextPropagationTest.Enabler::class)
-class CurrentThreadScopeTest {
+class CurrentThreadCoroutineScopeTest {
 
   @Test
   fun `capturing of thread context`(): Unit = timeoutRunBlocking {
@@ -30,7 +30,7 @@ class CurrentThreadScopeTest {
     val id = "abcde"
     withContext(TestElement(id)) {
       blockingContext {
-        currentThreadScope().launch {
+        currentThreadCoroutineScope().launch {
           assertEquals(id, coroutineContext[TestElementKey]?.value)
           semaphore.up()
         }
@@ -45,7 +45,7 @@ class CurrentThreadScopeTest {
     withContext(TestElement(id)) {
       blockingContext {
         ApplicationManager.getApplication().executeOnPooledThread {
-          assertLogThrows<IllegalStateException> { currentThreadScope() }
+          assertLogThrows<IllegalStateException> { currentThreadCoroutineScope() }
         }
       }
     }
@@ -57,7 +57,7 @@ class CurrentThreadScopeTest {
     withContext(TestElement(id)) {
       blockingContextScope {
         ApplicationManager.getApplication().executeOnPooledThread {
-          currentThreadScope().launch {
+          currentThreadCoroutineScope().launch {
             assertEquals(id, coroutineContext[TestElementKey]?.value)
           }
         }
@@ -71,7 +71,7 @@ class CurrentThreadScopeTest {
     val semaphore = Semaphore(1)
     blockingContext {
       assertEquals(0, int.getAndIncrement())
-      currentThreadScope().launch {
+      currentThreadCoroutineScope().launch {
         semaphore.timeoutWaitUp()
         assertEquals(2, int.getAndIncrement())
       }
@@ -86,7 +86,7 @@ class CurrentThreadScopeTest {
     val int = AtomicInteger(0)
     withContext(Dispatchers.EDT) {
       blockingContext {
-        currentThreadScope().launch(Dispatchers.EDT) {
+        currentThreadCoroutineScope().launch(Dispatchers.EDT) {
           assertEquals(1, int.getAndIncrement())
         }
         assertEquals(0, int.getAndIncrement())
@@ -103,7 +103,7 @@ class CurrentThreadScopeTest {
     val innerExecuteOnPooledThreadEnded = Semaphore(1)
     blockingContextScope {
       ApplicationManager.getApplication().executeOnPooledThread {
-        currentThreadScope().launch {
+        currentThreadCoroutineScope().launch {
           blockingContext {
             ApplicationManager.getApplication().executeOnPooledThread {
               assertNull(Cancellation.currentJob())
@@ -123,7 +123,7 @@ class CurrentThreadScopeTest {
   fun `thread scope does not retain dispatcher`(): Unit = timeoutRunBlocking {
     withContext(Dispatchers.EDT) {
       blockingContext {
-        currentThreadScope().launch {
+        currentThreadCoroutineScope().launch {
           ThreadingAssertions.assertBackgroundThread()
         }
       }

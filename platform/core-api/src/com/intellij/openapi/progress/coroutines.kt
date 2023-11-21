@@ -292,7 +292,7 @@ suspend fun <T> blockingContextScope(action: () -> T): T {
  * the coroutines spawned on the service scope are not controlled by the code that spawned them.
  */
 @RequiresBlockingContext
-fun currentThreadScope() : CoroutineScope {
+fun currentThreadCoroutineScope() : CoroutineScope {
   val threadContext = prepareCurrentThreadContext()
   if (threadContext[Job] == null) {
     LOG.error(IllegalStateException(
