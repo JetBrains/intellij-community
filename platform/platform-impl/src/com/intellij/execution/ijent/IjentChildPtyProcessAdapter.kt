@@ -5,7 +5,6 @@ import com.intellij.platform.ijent.IjentChildProcess
 import com.pty4j.PtyProcess
 import com.pty4j.WinSize
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.runBlocking
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
@@ -37,7 +36,7 @@ class IjentChildPtyProcessAdapter(coroutineScope: CoroutineScope, private val ij
 
   override fun destroy(): Unit = delegate.destroy()
 
-  override fun setWinSize(winSize: WinSize): Unit = @Suppress("SSBasedInspection") runBlocking(delegate.coroutineScope.coroutineContext) {
+  override fun setWinSize(winSize: WinSize): Unit = delegate.runBlockingInContext {
     // Notice that setWinSize doesn't throw InterruptedException in contrast with many other methods of Process.
     try {
       delegate.ijentChildProcess.resizePty(columns = winSize.columns, rows = winSize.rows)

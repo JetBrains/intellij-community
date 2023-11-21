@@ -23,12 +23,12 @@ internal class IjentChildProcessAdapterDelegate(
 
   @Throws(InterruptedException::class)
   fun waitFor(): Int =
-    runBlockingInterruptible {
+    runBlockingInContext {
       ijentChildProcess.exitCode.await()
     }
 
   fun waitFor(timeout: Long, unit: TimeUnit): Boolean =
-    runBlockingInterruptible {
+    runBlockingInContext {
       withTimeoutOrNull(unit.toMillis(timeout).milliseconds) {
         ijentChildProcess.exitCode.await()
         true
@@ -61,14 +61,8 @@ internal class IjentChildProcessAdapterDelegate(
   }
 
   @Throws(InterruptedException::class)
-  fun <T> runBlockingInterruptible(body: suspend () -> T): T =
+  fun <T> runBlockingInContext(body: suspend () -> T): T =
     @Suppress("SSBasedInspection") runBlocking(coroutineScope.coroutineContext) {
-      try {
-        body()
-      }
-      catch (err: CancellationException) {
-        Thread.currentThread().interrupt()
-        throw InterruptedException(err.message)
-      }
+      body()
     }
 }
