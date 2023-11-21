@@ -102,10 +102,10 @@ public final class MavenIndexImpl implements MavenIndex {
     }
     finally {
       boolean isCentral = isForCentral();
-      MavenIndexUsageCollector.INDEX_OPENED.log(null,
-                                                myKind == IndexKind.LOCAL,
-                                                isCentral,
-                                                myKind == IndexKind.REMOTE && !isCentral);
+      MavenIndexUsageCollector.INDEX_OPENED.log(
+        myKind == IndexKind.LOCAL,
+        isCentral,
+        myKind == IndexKind.REMOTE && !isCentral);
       save();
     }
   }
