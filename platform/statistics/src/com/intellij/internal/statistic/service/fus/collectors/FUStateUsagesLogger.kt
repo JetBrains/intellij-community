@@ -11,13 +11,13 @@ import com.intellij.internal.statistic.eventLog.StatisticsEventLogProviderUtil.g
 import com.intellij.internal.statistic.eventLog.StatisticsEventLogger
 import com.intellij.internal.statistic.eventLog.fus.FeatureUsageLogger.logState
 import com.intellij.internal.statistic.eventLog.fus.FeatureUsageStateEventTracker
-import com.intellij.internal.statistic.service.fus.collectors.FUStateUsagesLogger.Companion.LOG
 import com.intellij.internal.statistic.updater.allowExecution
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant
 import com.intellij.internal.statistic.utils.getPluginInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.waitForSmartMode
@@ -33,19 +33,20 @@ private val LOG_PROJECTS_STATES_INITIAL_DELAY = 5.minutes
 private val LOG_PROJECTS_STATES_DELAY = 12.hours
 private const val REDUCE_DELAY_FLAG_KEY = "fus.internal.reduce.initial.delay"
 
+private val LOG = logger<FUStateUsagesLogger>()
+
 /**
  * Called by a scheduler once a day and records IDE/project state. <br></br>
  *
  * **Don't** use it directly unless absolutely necessary.
  * Implement [ApplicationUsagesCollector] or [ProjectUsagesCollector] instead.
  *
- * To record IDE events (e.g. invoked action, opened dialog) use [CounterUsagesCollector]
+ * To record IDE events (e.g., invoked action, opened dialog) use [CounterUsagesCollector]
  * @see ProjectFUStateUsagesLogger
  */
 @Service(Service.Level.APP)
 @Internal
 class FUStateUsagesLogger private constructor(private val cs: CoroutineScope) : UsagesCollectorConsumer {
-
   init {
     cs.launch {
       logApplicationStateRegularly()
@@ -53,10 +54,7 @@ class FUStateUsagesLogger private constructor(private val cs: CoroutineScope) : 
   }
 
   companion object {
-
-    internal val LOG = Logger.getInstance(FUStateUsagesLogger::class.java)
-
-    fun getInstance(): FUStateUsagesLogger = ApplicationManager.getApplication().getService(FUStateUsagesLogger::class.java)
+    fun getInstance(): FUStateUsagesLogger = ApplicationManager.getApplication().service()
 
     internal suspend fun logMetricsOrError(
       project: Project?,
@@ -157,8 +155,10 @@ class FUStateUsagesLogger private constructor(private val cs: CoroutineScope) : 
     }
   }
 
-  fun scheduleLogApplicationStatesOnStartup(): Job = cs.launch {
-    logApplicationStates(onStartup = true)
+  fun scheduleLogApplicationStatesOnStartup() {
+    cs.launch {
+      logApplicationStates(onStartup = true)
+    }
   }
 
   fun scheduleLogApplicationState(): Job = cs.launch {
