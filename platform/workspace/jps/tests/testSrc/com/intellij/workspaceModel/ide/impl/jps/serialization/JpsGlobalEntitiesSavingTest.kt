@@ -16,6 +16,7 @@ import com.intellij.testFramework.UsefulTestCase
 import com.intellij.workspaceModel.ide.getGlobalInstance
 import com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModel
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.GlobalLibraryTableBridgeImpl
+import com.intellij.workspaceModel.ide.legacyBridge.sdk.GlobalSdkTableBridge
 import org.junit.*
 import org.junit.rules.TemporaryFolder
 
@@ -72,6 +73,7 @@ class JpsGlobalEntitiesSavingTest {
 
   @Test
   fun `test global sdk saving`() {
+    Assume.assumeTrue("Test has to be executed on the new implementation of SDK", GlobalSdkTableBridge.isEnabled())
     // TODO:: Investigate failing on TC
     Assume.assumeFalse("Temporary failed in check of expected file content", UsefulTestCase.IS_UNDER_TEAMCITY)
     copyAndLoadGlobalEntities(expectedFile = "sdk/saving", testDir = temporaryFolder.newFolder(),

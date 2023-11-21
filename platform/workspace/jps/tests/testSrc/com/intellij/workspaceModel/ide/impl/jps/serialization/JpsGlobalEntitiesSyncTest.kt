@@ -10,18 +10,20 @@ import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.platform.backend.workspace.WorkspaceModel
+import com.intellij.platform.workspace.jps.entities.*
+import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.UsefulTestCase
-import com.intellij.platform.backend.workspace.WorkspaceModel
-import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.workspaceModel.ide.getGlobalInstance
 import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModel
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.GlobalLibraryTableBridgeImpl
-import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
+import com.intellij.workspaceModel.ide.legacyBridge.sdk.GlobalSdkTableBridge
+import org.junit.Assume
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
@@ -48,6 +50,7 @@ class JpsGlobalEntitiesSyncTest {
 
   @Test
   fun `test project and global storage sdk sync`() {
+    Assume.assumeTrue("Test has to be executed on the new implementation of SDK", GlobalSdkTableBridge.isEnabled())
     copyAndLoadGlobalEntities(originalFile = "sdk/loading", expectedFile = "sdk/sync", testDir = temporaryFolder.newFolder(),
                               parentDisposable = disposableRule.disposable, ) { _, entitySource ->
       val sdkInfos = mutableListOf(SdkTestInfo("corretto-20", "Amazon Corretto version 20.0.2", "JavaSDK"),

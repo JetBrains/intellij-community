@@ -13,10 +13,8 @@ import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.jps.entities.LibraryRootTypeId
 import com.intellij.platform.workspace.jps.entities.LibraryTableId
 import com.intellij.platform.workspace.jps.entities.SdkEntity
-import org.junit.Assert
-import org.junit.ClassRule
-import org.junit.Rule
-import org.junit.Test
+import com.intellij.workspaceModel.ide.legacyBridge.sdk.GlobalSdkTableBridge
+import org.junit.*
 import org.junit.rules.TemporaryFolder
 
 class JpsGlobalEntitiesLoaderTest {
@@ -62,6 +60,7 @@ class JpsGlobalEntitiesLoaderTest {
 
   @Test
   fun `test sdks loading`() {
+    Assume.assumeTrue("Test has to be executed on the new implementation of SDK", GlobalSdkTableBridge.isEnabled())
     copyAndLoadGlobalEntities(originalFile = "sdk/loading", testDir = temporaryFolder.newFolder(),
                               parentDisposable = disposableRule.disposable) { _, _ ->
       data class SdkTestInfo(val name: String, val version: String, val type: String)
