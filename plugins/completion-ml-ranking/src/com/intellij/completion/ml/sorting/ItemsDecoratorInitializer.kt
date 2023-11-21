@@ -124,7 +124,11 @@ class ItemsDecoratorInitializer : LookupTracker() {
         }
 
         override fun customizeEmptyIcon(emptyIcon: Icon): Icon =
-          if (!shouldShowRelevant && !shouldShowDiff) emptyIcon else LeftDecoratedIcon(EMPTY_ICON, emptyIcon)
+          if (!shouldShowRelevant && !shouldShowDiff) emptyIcon
+          else {
+            updateCachedIconsIfNeeded()
+            LeftDecoratedIcon(EMPTY_ICON, emptyIcon)
+          }
       })
     }
   }
