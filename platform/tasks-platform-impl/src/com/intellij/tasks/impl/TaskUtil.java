@@ -16,7 +16,6 @@ import com.intellij.tasks.LocalTask;
 import com.intellij.tasks.Task;
 import com.intellij.tasks.TaskRepository;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.text.DateFormatUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -25,18 +24,22 @@ import org.jetbrains.annotations.Nullable;
 import java.io.InputStream;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.text.ParseException;
+import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import static java.util.Objects.requireNonNullElse;
 
 /**
  * @author Dmitry Avdeev
  */
 public final class TaskUtil {
-
-  // Almost ISO-8601 strict except date parts may be separated by '/'
-  // and date only also allowed just in case
+  // Almost ISO-8601 strict, except that date components may be separated by '/', parts may be adjoined with space,
+  // and date-only strings are also allowed, just in case.
   private static final Pattern ISO8601_DATE_PATTERN = Pattern.compile(
     "(\\d{4}[/-]\\d{2}[/-]\\d{2})" +                   // date (1)
     "(?:[ T]" +
@@ -45,7 +48,6 @@ public final class TaskUtil {
     "([+-]\\d{2}:\\d{2}|[+-]\\d{4}|[+-]\\d{2}|Z)" +    // optional timezone info (4), if time is also present
     ")?)?"
   );
-
 
   private TaskUtil() {
     // empty
@@ -98,43 +100,35 @@ public final class TaskUtil {
   }
 
   public static @Nullable Date parseDate(@NotNull String s) {
-    // SimpleDateFormat prior JDK7 doesn't support 'X' specifier for ISO 8601 timezone format.
-    // Because some bug trackers and task servers e.g. send dates ending with 'Z' (that stands for UTC),
-    // dates should be preprocessed before parsing.
-    Matcher m = ISO8601_DATE_PATTERN.matcher(s);
-    if (!m.matches()) {
-      return null;
-    }
-    String datePart = m.group(1).replace('/', '-');
-    String timePart = m.group(2);
-    if (timePart == null) {
-      timePart = "00:00:00";
-    }
-    String milliseconds = m.group(3);
-    milliseconds = milliseconds == null ? "000" : milliseconds.substring(1, 4);
-    String timezone = m.group(4);
-    if (timezone == null || timezone.equals("Z")) {
-      timezone = "+0000";
-    }
-    else if (timezone.length() == 3) {
-      // [+-]HH
-      timezone += "00";
-    }
-    else if (timezone.length() == 6) {
-      // [+-]HH:MM
-      timezone = timezone.substring(0, 3) + timezone.substring(4, 6);
-    }
-    String canonicalForm = String.format("%sT%s.%s%s", datePart, timePart, milliseconds, timezone);
+    s = s.replace('/', '-');
+
     try {
-      return DateFormatUtil.getIso8601Format().parse(canonicalForm);
+      return Date.from(Instant.from(DateTimeFormatter.ISO_OFFSET_DATE_TIME.parse(s)));
     }
-    catch (ParseException e) {
-      return null;
+    catch (DateTimeParseException ignored) { }
+
+    Matcher m = ISO8601_DATE_PATTERN.matcher(s);
+    if (m.matches()) {
+      var date = m.group(1).replace('/', '-');
+      var time = requireNonNullElse(m.group(2), "00:00:00");
+      var millis = requireNonNullElse(m.group(3), ".000").substring(1);
+      var timezone = requireNonNullElse(m.group(4), "Z");
+      if (timezone.length() == 5) {
+        // [+-]HHmm, missing colon
+        timezone = timezone.substring(0, 3) + ':' + timezone.substring(3);
+      }
+      s = String.format("%sT%s.%s%s", date, time, millis, timezone);
+      try {
+        return Date.from(Instant.from(DateTimeFormatter.ISO_OFFSET_DATE_TIME.parse(s)));
+      }
+      catch (DateTimeParseException ignored) { }
     }
+
+    return null;
   }
 
   public static String formatDate(@NotNull Date date) {
-    return DateFormatUtil.getIso8601Format().format(date);
+    return DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(date.toInstant().atZone(ZoneOffset.UTC));
   }
 
   /**
