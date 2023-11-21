@@ -126,7 +126,7 @@ class ConditionColumn(
 
       private fun createContentPanel() = panel {
         buttonsGroup(ExecutionBundle.message("run.configurations.multilaunch.condition.launch.when"), indent = true) {
-          ConditionTemplate.EP_NAME.getExtensionList(viewModel.project).forEach { template ->
+          ConditionTemplate.EP_NAME.extensionList.forEach { template ->
             val rowCondition = executableRow.condition
             val condition = when {
               rowCondition != null && template.type == rowCondition.template.type -> rowCondition
