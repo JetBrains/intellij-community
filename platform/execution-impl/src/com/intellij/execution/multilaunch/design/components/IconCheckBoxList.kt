@@ -18,6 +18,7 @@ abstract class IconCheckBoxList<T>(model: DefaultListModel<T>) : CheckBoxList<T>
       val icon = getIcon(item)
       val text = getText(item)
       val label = JLabel(text, icon ?: EmptyIcon.ICON_16, SwingConstants.LEFT).apply {
+        border = JBUI.Borders.emptyLeft(4)
         isOpaque = true
         background = getBackground(selected)
       }
