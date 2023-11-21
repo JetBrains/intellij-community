@@ -127,7 +127,7 @@ class DebugProbesImpl private constructor(context: DefaultExecutionContext) :
     }
 }
 
-class DebugProbesImplCoroutineOwner(private val coroutineInfo: CoroutineInfo, context: DefaultExecutionContext) :
+class DebugProbesImplCoroutineOwner(private val coroutineInfo: CoroutineInfo?, context: DefaultExecutionContext) :
         BaseMirror<ObjectReference, MirrorOfCoroutineOwner>(COROUTINE_OWNER_CLASS_NAME, context) {
     private val infoField by FieldMirrorDelegate("info", DebugCoroutineInfoImpl(context))
 
@@ -136,7 +136,7 @@ class DebugProbesImplCoroutineOwner(private val coroutineInfo: CoroutineInfo, co
         if (infoField.isCompatible(info))
             return MirrorOfCoroutineOwner(value, infoField.mirrorOnly(info, context))
         else
-            return MirrorOfCoroutineOwner(value, coroutineInfo.mirror(info, context))
+            return coroutineInfo?.let { MirrorOfCoroutineOwner(value, it.mirror(info, context)) }
     }
 
     companion object {

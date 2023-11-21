@@ -3,12 +3,16 @@
 package org.jetbrains.kotlin.idea.debugger.core
 
 import com.intellij.debugger.engine.DebugProcessImpl
+import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.debugger.jdi.StackFrameProxyImpl
 import com.intellij.xdebugger.frame.XStackFrame
+import org.jetbrains.kotlin.idea.debugger.core.stepping.ContinuationFilter
 
 interface StackFrameInterceptor {
     fun createStackFrame(
         frame: StackFrameProxyImpl,
         debugProcess: DebugProcessImpl
     ): XStackFrame?
+
+    fun extractContinuationFilter(suspendContext: SuspendContextImpl): ContinuationFilter? = null
 }

@@ -90,6 +90,12 @@ data class MirrorOfDispatchedContinuation(
 
 data class MirrorOfJavaLangAbstractCollection(val that: ObjectReference, val values: List<ObjectReference>)
 
+data class MirrorOfBaseContinuationImplLight(
+    val that: ObjectReference,
+    val nextContinuation: ObjectReference?,
+    val coroutineOwner: ObjectReference?
+)
+
 data class MirrorOfBaseContinuationImpl(
     val that: ObjectReference,
     val stackTraceElement: MirrorOfStackTraceElement?,

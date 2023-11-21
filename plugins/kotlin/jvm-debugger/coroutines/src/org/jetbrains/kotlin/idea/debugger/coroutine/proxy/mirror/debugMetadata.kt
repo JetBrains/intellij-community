@@ -5,8 +5,8 @@ package org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror
 import com.sun.jdi.ArrayReference
 import com.sun.jdi.ObjectReference
 import com.sun.jdi.StringReference
-import org.jetbrains.kotlin.idea.debugger.coroutine.util.logger
 import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.DefaultExecutionContext
+import org.jetbrains.kotlin.idea.debugger.coroutine.util.logger
 
 class DebugMetadata private constructor(context: DefaultExecutionContext) :
         BaseMirror<ObjectReference, MirrorOfDebugProbesImpl>("kotlin.coroutines.jvm.internal.DebugMetadataKt", context) {
@@ -94,5 +94,18 @@ class BaseContinuationImpl(context: DefaultExecutionContext, private val debugMe
         val fieldName = (rawSpilledVariables.getValue(2 * index) as? StringReference)?.value() ?: return null
         val variableName = (rawSpilledVariables.getValue(2 * index + 1) as? StringReference)?.value() ?: return null
         return FieldVariable(fieldName, variableName)
+    }
+}
+
+class BaseContinuationImplLight(context: DefaultExecutionContext) : BaseMirror<ObjectReference, MirrorOfBaseContinuationImplLight>("kotlin.coroutines.jvm.internal.BaseContinuationImpl", context) {
+    private val getCompletion by FieldMirrorDelegate("completion", this)
+
+    override fun fetchMirror(value: ObjectReference, context: DefaultExecutionContext): MirrorOfBaseContinuationImplLight {
+        val completionValue = getCompletion.value(value)
+        return MirrorOfBaseContinuationImplLight(
+            value,
+            completionValue?.takeIf { getCompletion.isCompatible(it) },
+            completionValue?.takeIf { DebugProbesImplCoroutineOwner.instanceOf(it) }
+        )
     }
 }
