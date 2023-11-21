@@ -142,7 +142,7 @@ private fun createRunActionToolbar(): ActionToolbar {
       setMinimumButtonSize {
         JBUI.size(JBUI.CurrentTheme.RunWidget.actionButtonWidth(), JBUI.CurrentTheme.RunWidget.toolbarHeight())
       }
-      setActionButtonBorder(2, JBUI.CurrentTheme.RunWidget.toolbarBorderHeight())
+      setActionButtonBorder(JBUI.CurrentTheme.RunWidget.toolbarBorderDirectionalGap(), JBUI.CurrentTheme.RunWidget.toolbarBorderHeight())
       setCustomButtonLook(RunWidgetButtonLook())
       border = null
     }

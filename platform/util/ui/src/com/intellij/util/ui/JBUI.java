@@ -2208,6 +2208,18 @@ public final class JBUI {
         return 5;
       }
 
+      public static int toolbarBorderDirectionalGap() {
+        return getInt(toolbarBorderDirectionalGapKey(), defaultToolbarBorderDirectionalGap());
+      }
+
+      public static @NotNull String toolbarBorderDirectionalGapKey() {
+        return "RunWidget.toolbarBorderDirectionalGap";
+      }
+
+      public static int defaultToolbarBorderDirectionalGap() {
+        return 2;
+      }
+
       public static int actionButtonWidth() {
         return getInt(actionButtonWidthKey(), 30);
       }
