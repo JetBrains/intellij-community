@@ -14,10 +14,8 @@ import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.*
 import org.jetbrains.kotlin.analysis.project.structure.KtSourceModule
 import org.jetbrains.kotlin.analysis.providers.DecompiledPsiDeclarationProvider.findPsi
+import org.jetbrains.kotlin.asJava.*
 import org.jetbrains.kotlin.asJava.classes.lazyPub
-import org.jetbrains.kotlin.asJava.findFacadeClass
-import org.jetbrains.kotlin.asJava.getRepresentativeLightMethod
-import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.*
@@ -290,7 +288,13 @@ internal fun getKtType(ktCallableDeclaration: KtCallableDeclaration): KtType? {
 context(KtAnalysisSession)
 internal tailrec fun psiForUast(symbol: KtSymbol, project: Project): PsiElement? {
     if (symbol.origin == KtSymbolOrigin.LIBRARY) {
-        return findPsi(symbol, project) ?: symbol.psi
+        // UAST/Lint CLI: use [DecompiledPsiDeclarationProvider] / [KotlinStaticPsiDeclarationFromBinaryModuleProvider]
+        return findPsi(symbol, project)
+            // UAST/Lint IDE: decompiled PSI
+            ?: symbol.psi?.let {
+                // Attempt to convert (decompiled) library source to LC element
+                (it as? KtElement)?.toPsiElementAsLightElement() ?: it
+            }
     }
 
     if (symbol is KtCallableSymbol) {
@@ -303,4 +307,14 @@ internal tailrec fun psiForUast(symbol: KtSymbol, project: Project): PsiElement?
     }
 
     return symbol.psi
+}
+
+internal fun KtElement.toPsiElementAsLightElement(): PsiElement? {
+    val candidates = toLightElements().takeIf { it.isNotEmpty() } ?: return null
+    if (this is KtProperty) {
+        // Weigh [PsiField]
+        return candidates.firstOrNull { psiMember -> psiMember is PsiField }
+            ?: candidates.firstOrNull()
+    }
+    return candidates.firstOrNull()
 }
