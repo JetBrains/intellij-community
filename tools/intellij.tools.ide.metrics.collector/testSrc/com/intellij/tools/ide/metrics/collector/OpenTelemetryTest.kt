@@ -41,15 +41,15 @@ class OpenTelemetryTest {
     val spanNames = listOf("%findUsages", "run activity")
     val file = (openTelemetryReports / "opentelemetry.json").toFile()
     val expected = spanNames.map { spanName ->
-      getMetricsFromSpanAndChildren(file, SpanFilter.equals(spanName))
+      getMetricsFromSpanAndChildren(file, SpanFilter.nameEquals(spanName))
     }.flatten()
-    val result = getMetricsFromSpanAndChildren(file, SpanFilter.containsIn(spanNames))
+    val result = getMetricsFromSpanAndChildren(file, SpanFilter.containsNameIn(spanNames))
     result.shouldContainExactlyInAnyOrder(expected)
   }
 
   @Test
   fun metricsCorrectlyCollected() {
-    val metrics = getMetricsFromSpanAndChildren((openTelemetryReports / "opentelemetry.json").toFile(), SpanFilter.equals("%findUsages"))
+    val metrics = getMetricsFromSpanAndChildren((openTelemetryReports / "opentelemetry.json").toFile(), SpanFilter.nameEquals("%findUsages"))
     metrics.shouldContainExactlyInAnyOrder(listOf(
       Metric(Duration("%findUsages_1"), 531),
       Metric(Duration("%findUsages_2"), 4110),
@@ -74,7 +74,7 @@ class OpenTelemetryTest {
   @Test
   fun metricsWithSingleSpan() {
     val metrics = getMetricsFromSpanAndChildren((openTelemetryReports / "opentelemetry_with_main_timer.json").toFile(),
-                                                SpanFilter.equals("performance_test"))
+                                                SpanFilter.nameEquals("performance_test"))
     metrics.shouldContainExactlyInAnyOrder(listOf(
       Metric(Duration("performance_test"), 13497),
       Metric(Duration("delayType"), 3739),
@@ -86,7 +86,7 @@ class OpenTelemetryTest {
   @Test
   fun metricsCorrectlyCollected2() {
     val metrics = getMetricsFromSpanAndChildren((openTelemetryReports / "opentelemetry2.json").toFile(),
-                                                SpanFilter.equals("performance_test"))
+                                                SpanFilter.nameEquals("performance_test"))
     metrics.shouldContainExactlyInAnyOrder(listOf(
       Metric(Duration("performance_test"), 81444),
       Metric(Duration("timer_1"), 1184),
@@ -116,7 +116,7 @@ class OpenTelemetryTest {
   @Test
   fun metricsCorrectlyCollectedAvoidingZeroValue() {
     val metrics = getMetricsFromSpanAndChildren((openTelemetryReports / "opentelemetry_with_zero_values.json").toFile(),
-                                                SpanFilter.equals("performance_test"))
+                                                SpanFilter.nameEquals("performance_test"))
     metrics.shouldContainExactlyInAnyOrder(listOf(
       Metric(Duration("performance_test"), 27990),
       Metric(Duration("firstCodeAnalysis"), 1726),
@@ -231,7 +231,7 @@ class OpenTelemetryTest {
   @Test
   fun metricsWithAttributesMaxAndMeanValue() {
     val metrics = getMetricsFromSpanAndChildren((openTelemetryReports / "opentelemetry_with_max_mean_attributes.json").toFile(),
-                                                SpanFilter.equals("performance_test"))
+                                                SpanFilter.nameEquals("performance_test"))
     metrics.shouldContainAll(listOf(
       Metric(Duration("typing#latency#max"), 51),
       Metric(Duration("typing#latency#mean_value"), 3),
@@ -241,7 +241,7 @@ class OpenTelemetryTest {
   @Test
   fun opentelemetryWithWarmupSpans() {
     val metrics = getMetricsFromSpanAndChildren((openTelemetryReports / "opentelemetry_with_warmup_spans.json").toFile(),
-                                                SpanFilter.equals("performance_test"))
+                                                SpanFilter.nameEquals("performance_test"))
     metrics.shouldContainAll(listOf(
       Metric(Duration("localInspections#mean_value"), 369),
       Metric(Duration("localInspections_1"), 375),
@@ -283,7 +283,7 @@ class OpenTelemetryTest {
   @Test
   fun findUsageWithWarmUp() {
     val metrics = getMetricsFromSpanAndChildren((openTelemetryReports / "opentelemetry_findUsage_with_warmup.json").toFile(),
-                                                SpanFilter.equals("performance_test"))
+                                                SpanFilter.nameEquals("performance_test"))
     metrics.shouldContainAll(listOf(
       Metric(Duration("findUsagesParent_1"), 362),
       Metric(Duration("findUsagesParent_2"), 337),
