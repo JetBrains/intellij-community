@@ -3,15 +3,13 @@
 package org.jetbrains.kotlin.idea.debugger.core.stepping;
 
 import com.intellij.debugger.SourcePosition;
-import com.intellij.debugger.engine.DebugProcessImpl;
-import com.intellij.debugger.engine.MethodFilter;
-import com.intellij.debugger.engine.RequestHint;
-import com.intellij.debugger.engine.SuspendContextImpl;
+import com.intellij.debugger.engine.*;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.statistics.Engine;
 import com.intellij.debugger.statistics.StatisticsStorage;
 import com.intellij.debugger.statistics.SteppingAction;
+import com.intellij.xdebugger.XSourcePosition;
 import com.sun.jdi.Location;
 import com.sun.jdi.request.StepRequest;
 import org.jetbrains.annotations.NotNull;
@@ -118,6 +116,26 @@ public final class DebuggerSteppingHelper {
                 } catch (Exception e) {
                     debugProcess.createStepIntoCommand(suspendContext, ignoreBreakpoints, methodFilter).contextAction(suspendContext);
                 }
+            }
+        };
+    }
+
+    public static DebugProcessImpl.ResumeCommand createRunToCursorCommand(
+            @NotNull SuspendContextImpl suspendContext,
+            @NotNull XSourcePosition position,
+            boolean ignoreBreakpoints
+    ) {
+        DebugProcessImpl debugProcess = suspendContext.getDebugProcess();
+        return debugProcess.new RunToCursorCommand(suspendContext, position, ignoreBreakpoints) {
+            @Override
+            public @Nullable LightOrRealThreadInfo getThreadFilterFromContext(@NotNull SuspendContextImpl suspendContext) {
+                if (myContextThread != null) {
+                    LightOrRealThreadInfo result = CoroutineJobInfo.extractJobInfo(suspendContext);
+                    if (result != null) {
+                        return result;
+                    }
+                }
+                return super.getThreadFilterFromContext(suspendContext);
             }
         };
     }

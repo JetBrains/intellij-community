@@ -5,6 +5,9 @@ import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.MethodFilter;
 import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.xdebugger.XSourcePosition;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Allows to change the behavior of the standard java debugger stepping
@@ -37,6 +40,16 @@ public abstract class JvmSteppingCommandProvider {
    * @see DebugProcessImpl#createStepOverCommand(SuspendContextImpl, boolean, MethodFilter, int)
    */
   public DebugProcessImpl.ResumeCommand getStepOverCommand(SuspendContextImpl suspendContext, boolean ignoreBreakpoints, int stepSize) {
+    return null;
+  }
+
+  /**
+   * @return null iff cannot handle
+   * @see DebugProcessImpl#createRunToCursorCommand(SuspendContextImpl, XSourcePosition, boolean)
+   */
+  public DebugProcessImpl.@Nullable ResumeCommand getRunToCursorCommand(SuspendContextImpl suspendContext,
+                                                                        @NotNull XSourcePosition position,
+                                                                        boolean ignoreBreakpoints) {
     return null;
   }
 }

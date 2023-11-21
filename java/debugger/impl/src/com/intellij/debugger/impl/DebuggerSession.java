@@ -330,8 +330,14 @@ public final class DebuggerSession implements AbstractDebuggerSession {
 
   public void runToCursor(@NotNull XSourcePosition position, final boolean ignoreBreakpoints) {
     try {
+      SuspendContextImpl suspendContext = getSuspendContext();
       DebugProcessImpl.ResumeCommand runToCursorCommand =
-        myDebugProcess.createRunToCursorCommand(getSuspendContext(), position, ignoreBreakpoints);
+        DebuggerUtilsImpl.computeSafeIfAny(JvmSteppingCommandProvider.EP_NAME,
+                                           handler -> handler.getRunToCursorCommand(suspendContext, position, ignoreBreakpoints));
+      if (runToCursorCommand == null) {
+        runToCursorCommand = myDebugProcess.createRunToCursorCommand(suspendContext, position, ignoreBreakpoints);
+      }
+
       setSteppingThrough(runToCursorCommand.getContextThread());
       resumeAction(runToCursorCommand, Event.STEP);
     }

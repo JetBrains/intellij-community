@@ -15,6 +15,7 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.parentOfType
 import com.intellij.util.Range
+import com.intellij.xdebugger.XSourcePosition
 import com.sun.jdi.Location
 import com.sun.jdi.Method
 import com.sun.jdi.request.StepRequest
@@ -58,6 +59,18 @@ class KotlinSteppingCommandProvider : JvmSteppingCommandProvider() {
         val sourcePosition = suspendContext.getSourcePosition() ?: return null
         if (sourcePosition.file !is KtFile) return null
         return getStepIntoCommand(suspendContext, ignoreFilters, smartStepFilter)
+    }
+
+    override fun getRunToCursorCommand(
+        suspendContext: SuspendContextImpl?,
+        position: XSourcePosition,
+        ignoreBreakpoints: Boolean
+    ): DebugProcessImpl.ResumeCommand? {
+        if (suspendContext == null || suspendContext.isResumed) return null
+        val sourcePosition = suspendContext.getSourcePosition() ?: return null
+        if (sourcePosition.file !is KtFile) return null
+
+        return DebuggerSteppingHelper.createRunToCursorCommand(suspendContext, position, ignoreBreakpoints)
     }
 
     fun getStepIntoCommand(
