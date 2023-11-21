@@ -17,7 +17,9 @@ import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -185,6 +187,12 @@ public final class TerminalNewPredefinedSessionAction extends DumbAwareAction {
           @Override
           public @NotNull List<String> getInitialCommand(@NotNull Map<String, String> envs) {
             return myCommand;
+          }
+
+          @Override
+          protected boolean isBlockTerminalEnabled() {
+            return (ExperimentalUI.isNewUI() || ApplicationManager.getApplication().isUnitTestMode())
+                   && Registry.is(BLOCK_TERMINAL_REGISTRY, false);
           }
         };
         TerminalTabState tabState = new TerminalTabState();

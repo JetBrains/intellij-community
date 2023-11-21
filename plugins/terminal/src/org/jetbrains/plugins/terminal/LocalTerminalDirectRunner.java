@@ -399,6 +399,13 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     return shellCommand != null ? shellCommand : convertShellPathToCommand(getShellPath());
   }
 
+  protected boolean isBlockTerminalEnabled() {
+    return (ExperimentalUI.isNewUI() || ApplicationManager.getApplication().isUnitTestMode())
+           && Registry.is(BLOCK_TERMINAL_REGISTRY, false)
+           // disable block terminal for inheritors by default
+           && Objects.equals(this.getClass().getName(), LocalTerminalDirectRunner.class.getName());
+  }
+
   private @NotNull String getShellPath() {
     return TerminalProjectOptionsProvider.getInstance(myProject).getShellPath();
   }
@@ -406,7 +413,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   /** @deprecated to be removed */
   @ApiStatus.Internal
   @Deprecated(forRemoval = true)
-  public static @NotNull List<String> getCommand(@NotNull String shellPath,
+  public @NotNull List<String> getCommand(@NotNull String shellPath,
                                                  @NotNull Map<String, String> envs,
                                                  boolean shellIntegration) {
     List<String> command = convertShellPathToCommand(shellPath);
@@ -417,13 +424,13 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     return command;
   }
 
-  static @NotNull ShellStartupOptions injectShellIntegration(@NotNull List<String> shellCommand,
+  @NotNull ShellStartupOptions injectShellIntegration(@NotNull List<String> shellCommand,
                                                              @NotNull Map<String, String> envs) {
     ShellStartupOptions options = new ShellStartupOptions.Builder().shellCommand(shellCommand).envVariables(envs).build();
     return injectShellIntegration(options);
   }
 
-  private static @NotNull ShellStartupOptions injectShellIntegration(@NotNull ShellStartupOptions options) {
+  private @NotNull ShellStartupOptions injectShellIntegration(@NotNull ShellStartupOptions options) {
     List<String> shellCommand = options.getShellCommand();
     String shellExe = ContainerUtil.getFirstItem(shellCommand);
     if (shellCommand == null || shellExe == null) return options;
@@ -547,10 +554,5 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
 
   private static boolean isLogin(@NotNull List<String> command) {
     return ContainerUtil.exists(command, LOGIN_CLI_OPTIONS::contains);
-  }
-
-  private static boolean isBlockTerminalEnabled() {
-    return (ExperimentalUI.isNewUI() || ApplicationManager.getApplication().isUnitTestMode())
-           && Registry.is(BLOCK_TERMINAL_REGISTRY, false);
   }
 }
