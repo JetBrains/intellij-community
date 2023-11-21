@@ -167,12 +167,12 @@ class FUStateUsagesLogger private constructor(private val cs: CoroutineScope) : 
 
   private suspend fun logApplicationStates(onStartup: Boolean) {
     coroutineScope {
-      if (!StatisticsUploadAssistant.isCollectAllowedOrForced()) return@coroutineScope
+      if (!StatisticsUploadAssistant.isCollectAllowedOrForced()) {
+        return@coroutineScope
+      }
 
       val recorderLoggers = HashMap<String, StatisticsEventLogger>()
-
       val collectors = UsageCollectors.getApplicationCollectors(this@FUStateUsagesLogger, onStartup)
-
       for (usagesCollector in collectors) {
         if (!getPluginInfo(usagesCollector.javaClass).isDevelopedByJetBrains()) {
           @Suppress("removal", "DEPRECATION")

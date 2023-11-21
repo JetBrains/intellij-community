@@ -21,9 +21,9 @@ object UsageCollectors {
   val COUNTER_EP_NAME: ExtensionPointName<CounterUsageCollectorEP> = ExtensionPointName("com.intellij.statistics.counterUsagesCollector")
 
   internal fun getApplicationCollectors(invoker: UsagesCollectorConsumer,
-                                        allowedOnStartupOnly: Boolean): Collection<ApplicationUsagesCollector> {
+                                        allowedOnStartupOnly: Boolean): Sequence<ApplicationUsagesCollector> {
     if (isCalledFromPlugin(invoker)) {
-      return emptyList()
+      return emptySequence()
     }
 
     if (!allowedOnStartupOnly) {
@@ -34,14 +34,12 @@ object UsageCollectors {
       .filter { it.allowOnStartup == true }
       .map { it.collector as ApplicationUsagesCollector }
       .filter { isValidCollector(it) }
-      .toList()
   }
 
-  private fun getAllApplicationCollectors(): Collection<ApplicationUsagesCollector> {
+  private fun getAllApplicationCollectors(): Sequence<ApplicationUsagesCollector> {
     return APPLICATION_EP_NAME.lazySequence()
       .map { it.collector as ApplicationUsagesCollector }
       .filter { isValidCollector(it) }
-      .toList()
   }
 
   internal fun getProjectCollectors(invoker: UsagesCollectorConsumer): Collection<ProjectUsagesCollector> {
