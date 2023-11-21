@@ -39,7 +39,13 @@ class TerminalCommandSpecCompletionContributor : CompletionContributor(), DumbAw
     val suggestions = runBlockingCancellable {
       val runtimeDataProvider = IJShellRuntimeDataProvider(session)
       val completion = CommandSpecCompletion(IJCommandSpecManager.getInstance(), runtimeDataProvider)
-      completion.computeCompletionItems(tokens) ?: emptyList()
+      val items = completion.computeCompletionItems(tokens)?.takeIf { it.isNotEmpty() }
+      when {
+        items != null -> items
+        // suggest file names if there is nothing to suggest and completion is invoked manually
+        !parameters.isAutoPopup -> completion.computeFileItems(tokens) ?: emptyList()
+        else -> emptyList()
+      }
     }
 
     val elements = suggestions.flatMap { it.toLookupElements() }

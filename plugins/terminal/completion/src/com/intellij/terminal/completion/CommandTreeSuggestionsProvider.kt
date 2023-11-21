@@ -151,7 +151,7 @@ internal class CommandTreeSuggestionsProvider(private val runtimeDataProvider: S
     return suggestions
   }
 
-  private suspend fun getFileSuggestions(arg: ShellArgument, nextNodeText: String, onlyDirectories: Boolean): List<ShellArgumentSuggestion> {
+  suspend fun getFileSuggestions(arg: ShellArgument, nextNodeText: String, onlyDirectories: Boolean): List<ShellArgumentSuggestion> {
     val basePath = if (nextNodeText.contains('/')) {
       nextNodeText.substringBeforeLast('/') + "/"
     }

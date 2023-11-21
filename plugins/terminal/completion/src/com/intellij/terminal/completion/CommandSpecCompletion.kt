@@ -2,6 +2,7 @@ package com.intellij.terminal.completion
 
 import com.intellij.util.containers.TreeTraversal
 import org.jetbrains.terminal.completion.BaseSuggestion
+import org.jetbrains.terminal.completion.ShellArgument
 
 class CommandSpecCompletion(
   private val commandSpecManager: CommandSpecManager,
@@ -39,11 +40,30 @@ class CommandSpecCompletion(
     return computeSuggestions(suggestionsProvider, rootNode, lastArgument)
   }
 
+  /**
+   * Returns the file suggestions for the last argument from [commandTokens]
+   * But returns null if [commandTokens] length is less than 2,
+   * because it is strange to propose files when there is no complete command.
+   */
+  suspend fun computeFileItems(commandTokens: List<String>): List<BaseSuggestion>? {
+    if (commandTokens.size < 2) {
+      return null  // do not propose files if there is no complete command
+    }
+    val suggestionsProvider = CommandTreeSuggestionsProvider(runtimeDataProvider)
+    val fakeArgument = ShellArgument(templates = listOf("filepaths"))
+    val lastArgument = commandTokens.last()
+    return suggestionsProvider.getFileSuggestions(fakeArgument, lastArgument, onlyDirectories = false).filterEmptyNames()
+  }
+
   private suspend fun computeSuggestions(suggestionsProvider: CommandTreeSuggestionsProvider,
                                          root: SubcommandNode,
                                          lastArgument: String): List<BaseSuggestion> {
     val allChildren = TreeTraversal.PRE_ORDER_DFS.traversal(root as CommandPartNode<*>) { node -> node.children }
     val lastNode = allChildren.last() ?: root
-    return suggestionsProvider.getSuggestionsOfNext(lastNode, lastArgument).filter { s -> s.names.all { it.isNotEmpty() } }
+    return suggestionsProvider.getSuggestionsOfNext(lastNode, lastArgument).filterEmptyNames()
+  }
+
+  private fun Iterable<BaseSuggestion>.filterEmptyNames(): List<BaseSuggestion> {
+    return filter { s -> s.names.all { it.isNotEmpty() } }
   }
 }
