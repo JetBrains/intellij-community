@@ -964,6 +964,9 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     ToolWindowCollector.getInstance().recordShown(project, source, toBeShownInfo)
     toBeShownInfo.isVisible = true
     toBeShownInfo.isShowStripeButton = true
+    if (toBeShownInfo.order == -1) {
+      toBeShownInfo.order = layoutState.getMaxOrder(toBeShownInfo.safeToolWindowPaneId, toBeShownInfo.anchor)
+    }
 
     val snapshotInfo = toBeShownInfo.copy()
     entry.applyWindowInfo(snapshotInfo)
