@@ -178,6 +178,9 @@ open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
     if (!isDecoratedMenu && !isFloatingMenuBarSupported) {
       createMacAwareMenuBar(frame = frame, component = this, mainMenuActionGroup = mainMenuActionGroup, coroutineScope.childScope())
       helper = UndecoratedHelper(isFloatingMenuBarSupported = false)
+      if (SystemInfoRt.isXWindow && !isMenuButtonInToolbar) {
+        installMenuBar(mainMenuActionGroup)
+      }
     }
     else {
       if (isDecoratedMenu) {
@@ -246,9 +249,7 @@ open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
 
       assert(isFloatingMenuBarSupported == helper.isFloatingMenuBarSupported)
       if (helper.isFloatingMenuBarSupported) {
-        menuBar = createMenuBar(coroutineScope.childScope(), frame, mainMenuActionGroup)
-        menuBar.isOpaque = true
-        layeredPane.add(menuBar, (JLayeredPane.DEFAULT_LAYER - 1) as Any)
+        installMenuBar(mainMenuActionGroup)
       }
     }
 
@@ -421,6 +422,12 @@ open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
   }
 
   open fun getToolWindowPane(): ToolWindowPane = toolWindowPane!!
+
+  private fun installMenuBar(mainMenuActionGroup: ActionGroup?) {
+    menuBar = createMenuBar(coroutineScope.childScope(), frame, mainMenuActionGroup)
+    menuBar.isOpaque = true
+    layeredPane.add(menuBar, (JLayeredPane.DEFAULT_LAYER - 1) as Any)
+  }
 
   private fun installLinuxBorder() {
     if (SystemInfoRt.isUnix && !SystemInfoRt.isMac) {
