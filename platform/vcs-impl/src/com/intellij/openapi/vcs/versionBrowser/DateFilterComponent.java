@@ -12,7 +12,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.beans.PropertyVetoException;
 import java.text.DateFormat;
 import java.util.Date;
@@ -35,14 +34,8 @@ public class DateFilterComponent {
 
   public DateFilterComponent() {
     withFormat(DateTimeFormatManager.getInstance().getDateFormat());
-    ActionListener listener = new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        updateAllEnabled(e);
-      }
-    };
-    myUseDateAfterFilter.addActionListener(listener);
-    myUseDateBeforeFilter.addActionListener(listener);
+    myUseDateAfterFilter.addActionListener(e -> updateAllEnabled(e));
+    myUseDateBeforeFilter.addActionListener(e -> updateAllEnabled(e));
     updateAllEnabled(null);
   }
 
@@ -62,8 +55,7 @@ public class DateFilterComponent {
     StandardVersionFilterComponent.updatePair(myUseDateAfterFilter, myDateAfter, e);
   }
 
-  @NotNull
-  public JPanel getPanel() {
+  public @NotNull JPanel getPanel() {
     return myRootPanel;
   }
 
@@ -73,8 +65,7 @@ public class DateFilterComponent {
       myDateBefore.setDate(new Date(beforeTs));
       myDateBefore.setEnabled(true);
     }
-    catch (PropertyVetoException ignored) {
-    }
+    catch (PropertyVetoException ignored) { }
   }
 
   public void setAfter(long afterTs) {
@@ -83,8 +74,7 @@ public class DateFilterComponent {
       myDateAfter.setDate(new Date(afterTs));
       myDateAfter.setEnabled(true);
     }
-    catch (PropertyVetoException ignored) {
-    }
+    catch (PropertyVetoException ignored) { }
   }
 
   public long getBefore() {
@@ -102,9 +92,7 @@ public class DateFilterComponent {
       myDateBefore.setDate(settings.getDateBefore());
       myDateAfter.setDate(settings.getDateAfter());
     }
-    catch (PropertyVetoException e) {
-      // TODO: handle?
-    }
+    catch (PropertyVetoException ignored) { }
     updateAllEnabled(null);
   }
 
@@ -115,9 +103,7 @@ public class DateFilterComponent {
     settings.setDateAfter(myDateAfter.getDate());
   }
 
-  @Nls
-  @Nullable
-  public String validateInput() {
+  public @Nls @Nullable String validateInput() {
     if (myUseDateAfterFilter.isSelected() && myDateAfter.getDate() == null) {
       return VcsBundle.message("error.date.after.must.be.a.valid.date");
     }

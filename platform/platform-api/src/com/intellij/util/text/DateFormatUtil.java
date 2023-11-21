@@ -34,21 +34,21 @@ public final class DateFormatUtil {
   private static final Logger LOG = Logger.getInstance(DateFormatUtil.class);
 
   /** @deprecated use {@link java.util.concurrent.TimeUnit#toMillis} */
-  @Deprecated public static final long SECOND = 1_000L;
+  @Deprecated(forRemoval = true) public static final long SECOND = 1_000L;
   /** @deprecated use {@link java.util.concurrent.TimeUnit#toMillis} */
-  @Deprecated public static final long MINUTE = 60 * SECOND;
+  @Deprecated(forRemoval = true) public static final long MINUTE = 60 * SECOND;
   /** @deprecated use {@link java.util.concurrent.TimeUnit#toMillis} */
-  @Deprecated public static final long HOUR = 60 * MINUTE;
+  @Deprecated(forRemoval = true) public static final long HOUR = 60 * MINUTE;
   /** @deprecated use {@link java.util.concurrent.TimeUnit#toMillis} */
-  @Deprecated public static final long DAY = 24 * HOUR;
+  @Deprecated(forRemoval = true) public static final long DAY = 24 * HOUR;
   /** @deprecated use {@link java.util.concurrent.TimeUnit#toMillis} */
-  @Deprecated public static final long WEEK = 7 * DAY;
+  @Deprecated(forRemoval = true) public static final long WEEK = 7 * DAY;
   /** @deprecated use {@link java.util.concurrent.TimeUnit#toMillis} */
-  @Deprecated public static final long MONTH = 30 * DAY;
+  @Deprecated(forRemoval = true) public static final long MONTH = 30 * DAY;
   /** @deprecated use {@link java.util.concurrent.TimeUnit#toMillis} */
-  @Deprecated public static final long YEAR = 365 * DAY;
+  @Deprecated(forRemoval = true) public static final long YEAR = 365 * DAY;
   /** @deprecated use {@link java.util.concurrent.TimeUnit#toMillis} */
-  @Deprecated public static final long DAY_FACTOR = DAY;
+  @Deprecated(forRemoval = true) public static final long DAY_FACTOR = DAY;
 
   public static final String TIME_SHORT_12H = "h:mm a";
   public static final String TIME_SHORT_24H = "HH:mm";
@@ -124,7 +124,7 @@ public final class DateFormatUtil {
     return pretty != null ? pretty : formatDate(time);
   }
 
-  public static @NlsSafe @NotNull String formatDateTime(Date date) {
+  public static @NlsSafe @NotNull String formatDateTime(@NotNull Date date) {
     return formats().dateTime().format(toZoned(date));
   }
 
@@ -224,7 +224,7 @@ public final class DateFormatUtil {
   /** @deprecated use {@link com.intellij.ide.nls.NlsMessages#formatDateLong} */
   @Deprecated(forRemoval = true)
   public static @NlsSafe @NotNull String formatAboutDialogDate(@NotNull Date date) {
-    return DateFormat.getDateInstance(DateFormat.LONG, Locale.US).format(date.getTime());
+    return DateFormat.getDateInstance(DateFormat.LONG, Locale.US).format(date);
   }
 
   /**
@@ -306,10 +306,8 @@ public final class DateFormatUtil {
     long kCFDateFormatterMediumStyle = 2;
 
     @Structure.FieldOrder({"location", "length"})
-    final
-    class CFRange extends Structure implements Structure.ByValue {
-      public long location;
-      public long length;
+    final class CFRange extends Structure implements Structure.ByValue {
+      public long location, length;
 
       public CFRange(long location, long length) {
         this.location = location;
@@ -375,12 +373,7 @@ public final class DateFormatUtil {
     p = localeStr.indexOf('@');
     if (p > 0) localeStr = localeStr.substring(0, p);
     p = localeStr.indexOf('_');
-    if (p < 0) {
-      return new Locale(localeStr);
-    }
-    else {
-      return new Locale(localeStr.substring(0, p), localeStr.substring(p + 1));
-    }
+    return p < 0 ? new Locale(localeStr) : new Locale(localeStr.substring(0, p), localeStr.substring(p + 1));
   }
 
   @SuppressWarnings("SpellCheckingInspection")
