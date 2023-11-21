@@ -708,8 +708,8 @@ public final class DebuggerSession implements AbstractDebuggerSession {
         clearSteppingThrough();
       }
       DebugProcessImpl debugProcess = (DebugProcessImpl)proc;
-      if (debugProcess.getRequestsManager().getFilterThread() == thread) {
-        DebuggerManagerEx.getInstanceEx(proc.getProject()).getBreakpointManager().applyThreadFilter(debugProcess, null);
+      if (debugProcess.getRequestsManager().getFilterRealThread() == thread) {
+        DebuggerManagerEx.getInstanceEx(proc.getProject()).getBreakpointManager().removeThreadFilter(debugProcess);
       }
     }
 

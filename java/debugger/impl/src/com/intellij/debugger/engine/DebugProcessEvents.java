@@ -31,7 +31,6 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
@@ -641,8 +640,8 @@ public class DebugProcessEvents extends DebugProcessImpl {
         // because these evaluations may lead to skipping of more important stepping events,
         // see IDEA-336282.
         if (!DebuggerSession.filterBreakpointsDuringSteppingUsingDebuggerEngine()) {
-          ThreadReference filteredThread = getRequestsManager().getFilterThread();
-          if (filteredThread != null && !Comparing.equal(filteredThread, thread)) {
+          LightOrRealThreadInfo filter = getRequestsManager().getFilterThread();
+          if (filter != null && !filter.checkSameThread(thread, suspendContext)) {
             notifySkippedBreakpoints(event, SkippedBreakpointReason.STEPPING);
             suspendManager.voteResume(suspendContext);
             return;

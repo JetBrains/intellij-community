@@ -10,6 +10,8 @@ import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.BreakpointStepMethodFilter;
 import com.intellij.debugger.engine.DebugProcessImpl;
+import com.intellij.debugger.engine.LightOrRealThreadInfo;
+import com.intellij.debugger.engine.RealThreadInfo;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
 import com.intellij.debugger.impl.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -560,18 +562,35 @@ public class BreakpointManager {
     }
   }
 
+  /** @deprecated Use removeThreadFilter or version with LightOrRealThreadInfo parameter */
+  @Deprecated
   public void applyThreadFilter(@NotNull final DebugProcessImpl debugProcess, @Nullable ThreadReference newFilterThread) {
+    if (newFilterThread != null) {
+      applyThreadFilter(debugProcess, new RealThreadInfo(newFilterThread));
+    }
+    else {
+      removeThreadFilter(debugProcess);
+    }
+  }
+
+  public void removeThreadFilter(@NotNull final DebugProcessImpl debugProcess) {
+    applyThreadFilter(debugProcess, (LightOrRealThreadInfo)null);
+  }
+
+  public void applyThreadFilter(@NotNull final DebugProcessImpl debugProcess, @Nullable LightOrRealThreadInfo filter) {
     final RequestManagerImpl requestManager = debugProcess.getRequestsManager();
-    final ThreadReference oldFilterThread = requestManager.getFilterThread();
-    if (Comparing.equal(newFilterThread, oldFilterThread)) {
+    if (Comparing.equal(filter, requestManager.getFilterThread())) {
       // the filter already added
       return;
     }
-    requestManager.setFilterThread(newFilterThread);
+    requestManager.setThreadFilter(filter);
 
     if (!DebuggerSession.filterBreakpointsDuringSteppingUsingDebuggerEngine()) {
       return;
     }
+
+    final ThreadReference newFilterThread = filter == null ? null : filter.getRealThread();
+    final ThreadReference oldFilterThread = requestManager.getFilterRealThread();
 
     EventRequestManager eventRequestManager = requestManager.getVMRequestManager();
     if (DebuggerUtilsAsync.isAsyncEnabled() && eventRequestManager instanceof EventRequestManagerImpl) {

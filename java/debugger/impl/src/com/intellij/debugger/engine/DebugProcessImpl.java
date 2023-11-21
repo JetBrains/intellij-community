@@ -879,7 +879,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     DebugProcessImpl debugProcess = context.getDebugProcess();
     if (resetThreadFilter) {
       BreakpointManager breakpointManager = DebuggerManagerEx.getInstanceEx(debugProcess.getProject()).getBreakpointManager();
-      breakpointManager.applyThreadFilter(debugProcess, null); // clear the filter on resume
+      breakpointManager.removeThreadFilter(debugProcess); // clear the filter on resume
     }
     breakpoint.setSuspendPolicy(
       context.getSuspendPolicy() == EventRequest.SUSPEND_EVENT_THREAD ? DebuggerSettings.SUSPEND_THREAD : DebuggerSettings.SUSPEND_ALL);
@@ -1025,7 +1025,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
   public void dispose() {
     Disposer.dispose(myDisposable);
-    myRequestManager.setFilterThread(null);
+    myRequestManager.setThreadFilter(null);
   }
 
   @Override
@@ -1681,7 +1681,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       showStatusText(JavaDebuggerBundle.message("status.step.out"));
       final ThreadReferenceProxyImpl thread = getContextThread();
       RequestHint hint = getHint(suspendContext, thread, null);
-      applyThreadFilter(thread);
+      applyThreadFilter(getThreadFilterFromContext(suspendContext));
       startWatchingMethodReturn(thread);
       step(suspendContext, thread, hint, createCommandToken());
       super.contextAction(suspendContext);
@@ -1731,7 +1731,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         mySession.setIgnoreStepFiltersFlag(getFrameCount(stepThread, suspendContext));
       }
       hint.setIgnoreFilters(myForcedIgnoreFilters || mySession.shouldIgnoreSteppingFilters());
-      applyThreadFilter(stepThread);
+      applyThreadFilter(getThreadFilterFromContext(suspendContext));
       if (myBreakpoint != null) {
         prepareAndSetSteppingBreakpoint(suspendContext, myBreakpoint, hint, false);
       }
@@ -1813,7 +1813,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
       RequestHint hint = getHint(suspendContext, stepThread, null);
 
-      applyThreadFilter(stepThread);
+      applyThreadFilter(getThreadFilterFromContext(suspendContext));
 
       startWatchingMethodReturn(stepThread);
 
@@ -1852,7 +1852,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       if (myIgnoreBreakpoints) {
         DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager().disableBreakpoints(DebugProcessImpl.this);
       }
-      applyThreadFilter(getContextThread());
+      applyThreadFilter(getThreadFilterFromContext(context));
       prepareAndSetSteppingBreakpoint(context, myRunToCursorBreakpoint, null, false);
       final DebugProcessImpl debugProcess = context.getDebugProcess();
 
@@ -1944,14 +1944,19 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       return myContextThread;
     }
 
-    protected void applyThreadFilter(ThreadReferenceProxy thread) {
+    @Nullable
+    public LightOrRealThreadInfo getThreadFilterFromContext(@NotNull SuspendContextImpl suspendContext) {
+      return myContextThread != null ? new RealThreadInfo(myContextThread.getThreadReference()) : null;
+    }
+
+    protected void applyThreadFilter(@Nullable LightOrRealThreadInfo threadInfo) {
       if (getSuspendContext().getSuspendPolicy() == EventRequest.SUSPEND_ALL) {
         // there could be explicit resume as a result of call to voteSuspend()
         // e.g. when breakpoint was considered invalid, in that case the filter will be applied _after_
         // resuming and all breakpoints in other threads will be ignored.
         // As resume() implicitly cleares the filter, the filter must be always applied _before_ any resume() action happens
         final BreakpointManager breakpointManager = DebuggerManagerEx.getInstanceEx(getProject()).getBreakpointManager();
-        breakpointManager.applyThreadFilter(DebugProcessImpl.this, thread.getThreadReference());
+        breakpointManager.applyThreadFilter(DebugProcessImpl.this, threadInfo);
       }
     }
   }
@@ -2360,7 +2365,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     return new ResumeCommand(suspendContext) {
       @Override
       public void contextAction(@NotNull SuspendContextImpl suspendContext) {
-        breakpointManager.applyThreadFilter(DebugProcessImpl.this, null); // clear the filter on resume
+        breakpointManager.removeThreadFilter(DebugProcessImpl.this); // clear the filter on resume
         if (myReturnValueWatcher != null) {
           myReturnValueWatcher.clear();
         }

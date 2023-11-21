@@ -41,6 +41,6 @@ abstract class AbstractCoroutineBreakpointFacility {
         // TODO this is nasty. Find a way to apply an empty thread filter only to the newly created breakpoint
         // TODO consider moving this filtering to event loop?
         val breakpointManager = DebuggerManagerEx.getInstanceEx(debugProcess.project).breakpointManager
-        breakpointManager.applyThreadFilter(debugProcess, null)
+        breakpointManager.removeThreadFilter(debugProcess)
     }
 }
