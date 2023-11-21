@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.refactoring.conflicts
 import com.intellij.psi.*
 import com.intellij.psi.search.searches.ClassInheritorsSearch
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.util.descendantsOfType
 import com.intellij.usageView.UsageInfo
 import com.intellij.usageView.UsageViewUtil
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
@@ -29,6 +30,7 @@ import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.findPropertyByName
+import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.nonStaticOuterClasses
 
@@ -67,7 +69,10 @@ private fun checkDeclarationNewNameConflicts(declaration: KtNamedDeclaration, ne
     val containingSymbol = symbol.getContainingSymbol() ?: getPackageSymbolIfPackageExists(declaration.containingKtFile.packageFqName)
 
     if (symbol is KtValueParameterSymbol) {
-      return (containingSymbol as KtFunctionLikeSymbol).valueParameters.filter { it.name == newName }.asSequence()
+        val functionLikeSymbol = containingSymbol as KtFunctionLikeSymbol
+        val locals = functionLikeSymbol.psi?.descendantsOfType<KtVariableDeclaration>()?.filter { it.nameAsName == newName }
+            ?.mapNotNull { it.getSymbol() }?.asSequence() ?: emptySequence()
+        return functionLikeSymbol.valueParameters.filter { it.name == newName }.asSequence() + locals
     }
 
     if (symbol is KtTypeParameterSymbol) {
@@ -103,20 +108,21 @@ private fun checkDeclarationNewNameConflicts(declaration: KtNamedDeclaration, ne
           !symbol.isTopLevelPrivate() && !it.isTopLevelPrivate() || isInSameFile(symbol, it)
         }
       }
-      else -> {
-        val block = declaration.parent as? KtBlockExpression ?: return emptySequence()
-        block.statements.mapNotNull {
-          if (it.name != newName.asString()) return@mapNotNull null
-          val isAccepted = when (symbol) {
-            is KtClassOrObjectSymbol -> it is KtClassOrObject
-            is KtVariableSymbol -> it is KtProperty
-            is KtFunctionLikeSymbol -> it is KtNamedFunction
-            else -> false
-          }
-          if (!isAccepted) return@mapNotNull null
-          (it as? KtDeclaration)?.getSymbol()
-        }.asSequence()
-      }
+        else -> {
+            val block = declaration.parent as? KtBlockExpression ?: return emptySequence()
+            val functionParameters = (declaration.getParentOfType<KtFunction>(true)?.getSymbol() as? KtFunctionLikeSymbol)?.valueParameters?.filter { it.name == newName } ?: emptyList()
+            (block.statements.mapNotNull {
+                if (it.name != newName.asString()) return@mapNotNull null
+                val isAccepted = when (symbol) {
+                    is KtClassOrObjectSymbol -> it is KtClassOrObject
+                    is KtVariableSymbol -> it is KtProperty
+                    is KtFunctionLikeSymbol -> it is KtNamedFunction
+                    else -> false
+                }
+                if (!isAccepted) return@mapNotNull null
+                (it as? KtDeclaration)?.getSymbol()
+            } + functionParameters).asSequence()
+        }
     }
   }
 

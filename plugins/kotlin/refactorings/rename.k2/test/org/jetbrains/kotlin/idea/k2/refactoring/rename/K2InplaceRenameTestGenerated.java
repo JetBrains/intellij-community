@@ -228,6 +228,11 @@ public class K2InplaceRenameTestGenerated extends AbstractK2InplaceRenameTest {
         runTest("../../idea/tests/testData/refactoring/rename/inplace/HidingFunctionFromReceiver1.kt");
     }
 
+    @TestMetadata("HidingLocalByParameter.kt")
+    public void testHidingLocalByParameter() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/rename/inplace/HidingLocalByParameter.kt");
+    }
+
     @TestMetadata("HidingLocalClass.kt")
     public void testHidingLocalClass() throws Exception {
         runTest("../../idea/tests/testData/refactoring/rename/inplace/HidingLocalClass.kt");
@@ -291,6 +296,11 @@ public class K2InplaceRenameTestGenerated extends AbstractK2InplaceRenameTest {
     @TestMetadata("HidingOuterPropertyInSuper.kt")
     public void testHidingOuterPropertyInSuper() throws Exception {
         runTest("../../idea/tests/testData/refactoring/rename/inplace/HidingOuterPropertyInSuper.kt");
+    }
+
+    @TestMetadata("HidingParameterByLocal.kt")
+    public void testHidingParameterByLocal() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/rename/inplace/HidingParameterByLocal.kt");
     }
 
     @TestMetadata("HidingPropertyBySetterParameter.kt")
