@@ -13,7 +13,7 @@ import org.jetbrains.annotations.ApiStatus
  * and [com.intellij.execution.ijent.IjentChildPtyProcessAdapter].
  */
 @ApiStatus.Experimental
-interface IjentChildProcess : AutoCloseable {
+interface IjentChildProcess {
   val pid: Int
 
   /**
@@ -46,9 +46,6 @@ interface IjentChildProcess : AutoCloseable {
 
   @Throws(ResizePtyError::class)  // Can't use @CheckReturnValue: KTIJ-7061
   suspend fun resizePty(columns: Int, rows: Int)
-
-  @Deprecated("No need in explicit deinitialization anymore")
-  override fun close(): Unit = Unit
 
   sealed class ResizePtyError(msg: String) : Exception(msg) {
     class ProcessExited : ResizePtyError("Process exited")
