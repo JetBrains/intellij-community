@@ -1136,6 +1136,54 @@ public abstract class SharedK1LocalInspectionTestGenerated extends AbstractShare
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../testData/inspectionsLocal/replacePrintlnWithLogging")
+    public static class ReplacePrintlnWithLogging extends AbstractSharedK1LocalInspectionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("alias.kt")
+        public void testAlias() throws Exception {
+            runTest("../testData/inspectionsLocal/replacePrintlnWithLogging/alias.kt");
+        }
+
+        @TestMetadata("fqnPrintln.kt")
+        public void testFqnPrintln() throws Exception {
+            runTest("../testData/inspectionsLocal/replacePrintlnWithLogging/fqnPrintln.kt");
+        }
+
+        @TestMetadata("printInteger.kt")
+        public void testPrintInteger() throws Exception {
+            runTest("../testData/inspectionsLocal/replacePrintlnWithLogging/printInteger.kt");
+        }
+
+        @TestMetadata("printString.kt")
+        public void testPrintString() throws Exception {
+            runTest("../testData/inspectionsLocal/replacePrintlnWithLogging/printString.kt");
+        }
+
+        @TestMetadata("printlnString.kt")
+        public void testPrintlnString() throws Exception {
+            runTest("../testData/inspectionsLocal/replacePrintlnWithLogging/printlnString.kt");
+        }
+
+        @TestMetadata("separateClass.kt")
+        public void testSeparateClass() throws Exception {
+            runTest("../testData/inspectionsLocal/replacePrintlnWithLogging/separateClass.kt");
+        }
+
+        @TestMetadata("separateClassImplicitThis.kt")
+        public void testSeparateClassImplicitThis() throws Exception {
+            runTest("../testData/inspectionsLocal/replacePrintlnWithLogging/separateClassImplicitThis.kt");
+        }
+
+        @TestMetadata("topLevelPrintFun.kt")
+        public void testTopLevelPrintFun() throws Exception {
+            runTest("../testData/inspectionsLocal/replacePrintlnWithLogging/topLevelPrintFun.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/inspectionsLocal/simplifyNegatedBinaryExpression")
     public static class SimplifyNegatedBinaryExpression extends AbstractSharedK1LocalInspectionTest {
         private void runTest(String testDataFilePath) throws Exception {

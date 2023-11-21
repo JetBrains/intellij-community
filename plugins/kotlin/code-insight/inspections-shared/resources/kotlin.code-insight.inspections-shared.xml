@@ -300,5 +300,12 @@
                       enabledByDefault="true"
                       level="WEAK WARNING" key="inspection.package.name.display.name" bundle="messages.KotlinBundle"/>
 
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.codeInsight.inspections.shared.ReplacePrintlnWithLoggingInspection"
+                     groupPath="Kotlin"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.other.problems"
+                     level="WARNING"
+                     language="kotlin"
+                     key="print.should.be.replaced.with.logging" bundle="messages.KotlinBundle"/>
+
   </extensions>
 </idea-plugin>
