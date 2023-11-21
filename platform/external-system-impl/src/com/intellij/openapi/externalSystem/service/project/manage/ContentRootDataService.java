@@ -49,10 +49,8 @@ import kotlin.Pair;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
-import org.jetbrains.jps.model.java.JavaResourceRootType;
-import org.jetbrains.jps.model.java.JavaSourceRootProperties;
-import org.jetbrains.jps.model.java.JavaSourceRootType;
+import org.jetbrains.jps.model.JpsElement;
+import org.jetbrains.jps.model.java.*;
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
@@ -372,8 +370,13 @@ public final class ContentRootDataService extends AbstractProjectDataService<Con
 
   private static void setForGeneratedSources(@NotNull SourceFolder folder, boolean generated) {
     JpsModuleSourceRoot jpsElement = folder.getJpsElement();
-    JavaSourceRootProperties properties = jpsElement.getProperties(JavaModuleSourceRootTypes.SOURCES);
-    if (properties != null) properties.setForGeneratedSources(generated);
+    JpsElement properties = jpsElement.getProperties(jpsElement.getRootType());
+    if (properties instanceof JavaSourceRootProperties p) {
+      p.setForGeneratedSources(generated);
+    }
+    else if (properties instanceof JavaResourceRootProperties p) {
+      p.setForGeneratedSources(generated);
+    }
   }
 
   private static void logUnitTest(@NotNull String format, Object... args) {
