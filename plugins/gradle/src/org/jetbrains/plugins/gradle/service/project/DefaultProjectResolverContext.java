@@ -9,7 +9,6 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotifica
 import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemBuildEvent;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.UserDataHolderBase;
-import org.gradle.initialization.BuildLayoutParameters;
 import org.gradle.tooling.CancellationTokenSource;
 import org.gradle.tooling.GradleConnector;
 import org.gradle.tooling.ProjectConnection;
@@ -20,6 +19,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.Build;
 import org.jetbrains.plugins.gradle.model.ProjectImportAction;
+import org.jetbrains.plugins.gradle.service.execution.GradleUserHomeUtil;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 
 import java.io.File;
@@ -139,7 +139,7 @@ public class DefaultProjectResolverContext extends UserDataHolderBase implements
   public File getGradleUserHome() {
     if (myGradleUserHome == null) {
       String serviceDirectory = mySettings == null ? null : mySettings.getServiceDirectory();
-      myGradleUserHome = serviceDirectory != null ? new File(serviceDirectory) : new BuildLayoutParameters().getGradleUserHomeDir();
+      myGradleUserHome = serviceDirectory != null ? new File(serviceDirectory) : GradleUserHomeUtil.gradleUserHomeDir();
     }
     return myGradleUserHome;
   }

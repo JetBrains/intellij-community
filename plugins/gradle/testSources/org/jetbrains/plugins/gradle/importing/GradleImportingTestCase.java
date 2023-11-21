@@ -40,7 +40,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.PathKt;
 import com.intellij.util.lang.JavaVersion;
 import org.gradle.StartParameter;
-import org.gradle.initialization.BuildLayoutParameters;
 import org.gradle.util.GradleVersion;
 import org.gradle.wrapper.GradleWrapperMain;
 import org.gradle.wrapper.PathAssembler;
@@ -56,6 +55,7 @@ import org.jetbrains.plugins.gradle.frameworkSupport.settingsScript.GroovyDslGra
 import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix;
 import org.jetbrains.plugins.gradle.service.execution.GradleExternalTaskConfigurationType;
 import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration;
+import org.jetbrains.plugins.gradle.service.execution.GradleUserHomeUtil;
 import org.jetbrains.plugins.gradle.settings.DistributionType;
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
 import org.jetbrains.plugins.gradle.settings.GradleSettings;
@@ -298,7 +298,7 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
     roots.add(myJdkHome);
     roots.addAll(collectRootsInside(myJdkHome));
     roots.add(PathManager.getConfigPath());
-    String gradleHomeEnv = System.getenv("GRADLE_USER_HOME");
+    String gradleHomeEnv = Environment.getVariable("GRADLE_USER_HOME");
     if (gradleHomeEnv != null) roots.add(gradleHomeEnv);
     String javaHome = Environment.getVariable("JAVA_HOME");
     if (javaHome != null) roots.add(javaHome);

@@ -11,10 +11,10 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.usageView.UsageInfo;
-import org.gradle.initialization.BuildLayoutParameters;
 import org.gradle.wrapper.PathAssembler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.service.execution.GradleUserHomeUtil;
 import org.junit.Test;
 import org.junit.runners.Parameterized;
 
@@ -45,7 +45,7 @@ public class GradleFindUsagesTest extends GradleImportingTestCase {
   @Override
   protected void collectAllowedRoots(List<String> roots, PathAssembler.LocalDistribution distribution) {
     super.collectAllowedRoots(roots, distribution);
-    File gradleUserHomeDir = new BuildLayoutParameters().getGradleUserHomeDir();
+    File gradleUserHomeDir = GradleUserHomeUtil.gradleUserHomeDir();
     File generatedGradleJarsDir = new File(gradleUserHomeDir, "caches/" + gradleVersion + "/generated-gradle-jars");
     roots.add(generatedGradleJarsDir.getPath());
     File gradleDistLibDir = new File(distribution.getDistributionDir(), "gradle-" + gradleVersion + "/lib");
