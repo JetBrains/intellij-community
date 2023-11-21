@@ -13,7 +13,7 @@ object PythonNewProjectWizardCollector : CounterUsagesCollector() {
     return GROUP
   }
 
-  private val GROUP = EventLogGroup("python.new.project.wizard", 4)
+  private val GROUP = EventLogGroup("python.new.project.wizard", 5)
   private val INHERIT_GLOBAL_SITE_PACKAGE_FIELD = EventFields.Boolean("inherit_global_site_package")
   private val MAKE_AVAILABLE_TO_ALL_PROJECTS = EventFields.Boolean("make_available_to_all_projects")
   private val PREVIOUSLY_CONFIGURED = EventFields.Boolean("previously_configured")
