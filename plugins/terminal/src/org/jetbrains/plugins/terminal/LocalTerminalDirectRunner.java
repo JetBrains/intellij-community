@@ -69,9 +69,9 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   private static final String SH_NAME = "sh";
   private static final String ZSH_NAME = "zsh";
   private static final String FISH_NAME = "fish";
-  public static final String BLOCK_TERMINAL_REGISTRY = "ide.experimental.ui.new.terminal";
-  public static final String BLOCK_TERMINAL_FISH_REGISTRY = "ide.experimental.ui.new.terminal.fish";
-  public static final String BLOCK_TERMINAL_POWERSHELL_REGISTRY = "ide.experimental.ui.new.terminal.powershell";
+  public static final String BLOCK_TERMINAL_REGISTRY = "terminal.new.ui";
+  public static final String BLOCK_TERMINAL_FISH_REGISTRY = "terminal.new.ui.fish";
+  public static final String BLOCK_TERMINAL_POWERSHELL_REGISTRY = "terminal.new.ui.powershell";
 
   protected final Charset myDefaultCharset;
   private final ThreadLocal<ShellStartupOptions> myStartupOptionsThreadLocal = new ThreadLocal<>();

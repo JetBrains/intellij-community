@@ -23,11 +23,11 @@
 
     <registryKey key="terminal.Ctrl-E.opens.RecentFiles.popup" defaultValue="false"
                  description="Ctrl+E in terminal opens 'Recent Files' popup on Linux/Windows"/>
-    <registryKey key="ide.experimental.ui.new.terminal" defaultValue="false"
+    <registryKey key="terminal.new.ui" defaultValue="false"
                  description="Enable new terminal UI"/>
-    <registryKey key="ide.experimental.ui.new.terminal.fish" defaultValue="false"
+    <registryKey key="terminal.new.ui.fish" defaultValue="false"
                  description="Enable new terminal for Fish"/>
-    <registryKey key="ide.experimental.ui.new.terminal.powershell" defaultValue="false"
+    <registryKey key="terminal.new.ui.powershell" defaultValue="false"
                  description="Enable new terminal for PowerShell"/>
 
     <experimentalFeature id="terminal.shell.command.handling" percentOfUsers="100"/>
