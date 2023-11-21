@@ -3,7 +3,7 @@ package com.intellij.junit5;
 
 import com.intellij.junit4.ExpectedPatterns;
 import com.intellij.rt.execution.junit.ComparisonFailureData;
-import com.intellij.rt.execution.junit.FileComparisonData;
+import com.intellij.rt.execution.junit.ComparisonFailureData.AssertionValue;
 import com.intellij.rt.execution.junit.MapSerializerUtil;
 import org.junit.platform.engine.TestExecutionResult;
 import org.junit.platform.engine.TestSource;
@@ -17,6 +17,7 @@ import org.junit.platform.launcher.TestExecutionListener;
 import org.junit.platform.launcher.TestIdentifier;
 import org.junit.platform.launcher.TestPlan;
 import org.opentest4j.AssertionFailedError;
+import org.opentest4j.FileInfo;
 import org.opentest4j.MultipleFailuresError;
 import org.opentest4j.ValueWrapper;
 
@@ -27,6 +28,7 @@ import java.io.StringWriter;
 import java.util.*;
 
 import static com.intellij.rt.execution.TestListenerProtocol.CLASS_CONFIGURATION;
+import static com.intellij.rt.execution.junit.ComparisonFailureData.OPENTEST4J_FILE_CONTENT_CHARSET;
 
 @SuppressWarnings("UseOfSystemOutOrSystemErr")
 public class JUnit5TestExecutionListener implements TestExecutionListener {
@@ -264,12 +266,9 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
           }
         }
         else if (ex instanceof AssertionFailedError &&
-                 !(ex instanceof FileComparisonData) &&
                  ((AssertionFailedError)ex).isActualDefined() &&
                  ((AssertionFailedError)ex).isExpectedDefined()) {
-          ValueWrapper actual = ((AssertionFailedError)ex).getActual();
-          ValueWrapper expected = ((AssertionFailedError)ex).getExpected();
-          failureData = new ComparisonFailureData(expected.getStringRepresentation(), actual.getStringRepresentation());
+          failureData = createOpentest4jAssertion((AssertionFailedError)ex);
         }
         else {
           //try to detect failure with junit 4 if present in the classpath
@@ -439,5 +438,26 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
       }
       return null;
     }).orElse(null);
+  }
+
+  private static ComparisonFailureData createOpentest4jAssertion(AssertionFailedError assertion) {
+    ValueWrapper expectedValueWrapper = assertion.getExpected();
+    ValueWrapper actualValueWrapper = assertion.getActual();
+    AssertionValue expected = getOpentest4jAssertionValue(expectedValueWrapper);
+    AssertionValue actual = getOpentest4jAssertionValue(actualValueWrapper);
+    return new ComparisonFailureData(expected.text, actual.text, expected.path, actual.path);
+  }
+
+  private static AssertionValue getOpentest4jAssertionValue(ValueWrapper valueWrapper) {
+    Object value = valueWrapper.getValue();
+    if (value instanceof FileInfo) {
+      String valueString = ((FileInfo)value).getContentsAsString(OPENTEST4J_FILE_CONTENT_CHARSET);
+      String valuePath = ((FileInfo)value).getPath();
+      return new AssertionValue(valueString, valuePath);
+    }
+    else {
+      String valueString = valueWrapper.getStringRepresentation();
+      return new AssertionValue(valueString, null);
+    }
   }
 }
