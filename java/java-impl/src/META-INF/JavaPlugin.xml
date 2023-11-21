@@ -2454,6 +2454,8 @@
     <notificationGroup id="Invalid Compilation Errors" displayType="STICKY_BALLOON" hideFromSettings="true" />
 
     <iconMapper mappingFile="JavaUIIconsMapping.json"/>
+
+    <pluginSuggestionProvider implementation="com.intellij.ide.ant.AntSuggestionProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains">
