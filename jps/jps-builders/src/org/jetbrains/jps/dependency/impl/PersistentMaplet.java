@@ -4,6 +4,7 @@ package org.jetbrains.jps.dependency.impl;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.KeyDescriptor;
 import com.intellij.util.io.PersistentHashMap;
+import com.intellij.util.io.PersistentMapBuilder;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
 import org.jetbrains.jps.dependency.Maplet;
@@ -16,7 +17,7 @@ public final class PersistentMaplet<K, V> implements Maplet<K, V> {
 
   public PersistentMaplet(Path mapFile, KeyDescriptor<K> keyDescriptor, DataExternalizer<V> valueExternalizer) {
     try {
-      myMap = new PersistentHashMap<>(mapFile, keyDescriptor, valueExternalizer);
+      myMap = PersistentMapBuilder.newBuilder(mapFile, keyDescriptor, valueExternalizer).build();
     }
     catch (IOException e) {
       throw new RuntimeException(e);

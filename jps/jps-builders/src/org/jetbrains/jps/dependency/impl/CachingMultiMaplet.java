@@ -20,9 +20,7 @@ public class CachingMultiMaplet<K, V> implements MultiMaplet<K, V> {
 
   public CachingMultiMaplet(MultiMaplet<K, V> delegate, int maxCacheSize) {
     myDelegate = delegate;
-    myCache = Caffeine.newBuilder().maximumSize(maxCacheSize).build(key -> {
-      return myDelegate.get(key);
-    });
+    myCache = Caffeine.newBuilder().maximumSize(maxCacheSize).build(myDelegate::get);
   }
 
   @Override

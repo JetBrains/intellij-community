@@ -2,10 +2,7 @@
 package org.jetbrains.jps.dependency.impl;
 
 import com.intellij.util.containers.SmartHashSet;
-import com.intellij.util.io.AppendablePersistentMap;
-import com.intellij.util.io.DataExternalizer;
-import com.intellij.util.io.KeyDescriptor;
-import com.intellij.util.io.PersistentHashMap;
+import com.intellij.util.io.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
 import org.jetbrains.jps.dependency.MultiMaplet;
@@ -36,7 +33,8 @@ public final class PersistentMultiMaplet<K, V, C extends Collection<V>> implemen
       myEmptyCollection = col instanceof List? (C)Collections.emptyList() : col instanceof Set? (C)Collections.emptySet() : col;
       
       myValuesExternalizer = valueExternalizer;
-      myMap = new PersistentHashMap<>(mapFile, keyDescriptor, new DataExternalizer<>() {
+
+      myMap = PersistentMapBuilder.newBuilder(mapFile, keyDescriptor, new DataExternalizer<C>() {
         @Override
         public void save(@NotNull DataOutput out, C value) throws IOException {
           for (V v : value) {
@@ -53,7 +51,7 @@ public final class PersistentMultiMaplet<K, V, C extends Collection<V>> implemen
           }
           return acc;
         }
-      });
+      }).build();
     }
     catch (Throwable e) {
       throw new RuntimeException(e);

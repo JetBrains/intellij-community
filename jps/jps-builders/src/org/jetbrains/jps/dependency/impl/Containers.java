@@ -69,7 +69,7 @@ public final class Containers {
   }
 
   private static class PersistentMapletFactory implements MapletFactory, Closeable {
-    private static final int CACHE_SIZE = 512; // todo: make configurable?
+    private static final int BASE_CACHE_SIZE = 128;
     private final String myRootDirPath;
     private final PersistentStringEnumerator myStringTable;
     private final List<BaseMaplet<?>> myMaps = new ArrayList<>();
@@ -77,9 +77,11 @@ public final class Containers {
     private final Function<Object, Object> myDataInterner;
     private final LoadingCache<Object, Object> myInternerCache;
     private final LowMemoryWatcher myMemWatcher;
+    private final int myCacheSize;
 
     PersistentMapletFactory(String rootDirPath) throws IOException {
       myRootDirPath = rootDirPath;
+      // Important: The enumerator will be called from PHM data externalizers. A PHM acquires the page_cache lock before externalizing => this enumerator should use a separate StorageLockContext to avoid deadlocks
       myStringTable = new PersistentStringEnumerator(getMapFile("string-table"), 1024 * 4, true, new StorageLockContext());
       myEnumerator = new Enumerator() {
         @Override
@@ -92,10 +94,11 @@ public final class Containers {
           return myStringTable.enumerate(str);
         }
       };
-      myInternerCache = Caffeine.newBuilder().maximumSize(CACHE_SIZE).build(key -> key);
-      myDataInterner = elem -> {
-        return elem instanceof Usage || elem instanceof String? myInternerCache.get(elem) : elem;
-      };
+      final int maxGb = (int)(Runtime.getRuntime().maxMemory() / 1_073_741_824L);
+      myCacheSize = BASE_CACHE_SIZE * Math.min(Math.max(1, maxGb), 5); // increase by BASE_CACHE_SIZE for every additional Gb
+
+      myInternerCache = Caffeine.newBuilder().maximumSize(myCacheSize).build(key -> key);
+      myDataInterner = elem -> elem instanceof Usage? myInternerCache.get(elem) : elem;
       myMemWatcher = LowMemoryWatcher.register(() -> {
         myInternerCache.invalidateAll();
         myStringTable.force();
@@ -112,10 +115,9 @@ public final class Containers {
 
     @Override
     public <K, V> MultiMaplet<K, V> createSetMultiMaplet(String storageName, Externalizer<K> keyExternalizer, Externalizer<V> valueExternalizer) {
-      // todo: use per-factory storage lock context?
       MultiMaplet<K, V> container = new CachingMultiMaplet<>(
         new PersistentMultiMaplet<>(getMapFile(storageName), new GraphKeyDescriptor<>(keyExternalizer, myEnumerator), new GraphDataExternalizer<>(valueExternalizer, myEnumerator, myDataInterner), () -> (Set<V>)new HashSet<V>()),
-        CACHE_SIZE
+        myCacheSize
       );
       myMaps.add(container);
       return container;
@@ -123,10 +125,9 @@ public final class Containers {
 
     @Override
     public <K, V> Maplet<K, V> createMaplet(String storageName, Externalizer<K> keyExternalizer, Externalizer<V> valueExternalizer) {
-      // todo: use per-factory storage lock context?
       Maplet<K, V> container = new CachingMaplet<>(
         new PersistentMaplet<>(getMapFile(storageName), new GraphKeyDescriptor<>(keyExternalizer, myEnumerator), new GraphDataExternalizer<>(valueExternalizer, myEnumerator, myDataInterner)),
-        CACHE_SIZE
+        myCacheSize
       );
       myMaps.add(container);
       return container;
