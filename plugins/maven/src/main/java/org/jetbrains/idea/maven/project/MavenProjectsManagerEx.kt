@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.project
 
+import com.intellij.ide.impl.isTrusted
 import com.intellij.internal.statistic.StructuredIdeActivity
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
@@ -43,6 +44,7 @@ import org.jetbrains.idea.maven.model.MavenArtifact
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles
 import org.jetbrains.idea.maven.project.preimport.MavenProjectPreImporter
 import org.jetbrains.idea.maven.server.MavenWrapperDownloader
+import org.jetbrains.idea.maven.server.showUntrustedProjectNotification
 import org.jetbrains.idea.maven.utils.MavenActivityKey
 import org.jetbrains.idea.maven.utils.MavenCoroutineScopeProvider
 import org.jetbrains.idea.maven.utils.MavenLog
@@ -75,6 +77,7 @@ interface MavenAsyncProjectsManager {
                                 artifacts: Collection<MavenArtifact>?,
                                 sources: Boolean,
                                 docs: Boolean): MavenArtifactDownloader.DownloadResult
+
   fun scheduleDownloadArtifacts(projects: Collection<MavenProject>,
                                 artifacts: Collection<MavenArtifact>?,
                                 sources: Boolean,
@@ -310,6 +313,11 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
                                                                                     generalSettings, syncActivity)
           }
           if (MavenUtil.enablePreimportOnly()) return result
+
+          if (!project.isTrusted()) {
+            showUntrustedProjectNotification(myProject)
+            return result
+          }
         }
         val readingResult = readMavenProjectsActivity(syncActivity) { read() }
 
@@ -472,6 +480,10 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
 
   private suspend fun checkOrInstallMavenWrapper(project: Project) {
     if (!MavenUtil.isWrapper(generalSettings)) return
+    if (!myProject.isTrusted()) {
+      showUntrustedProjectNotification(myProject)
+      return
+    }
     val baseDir = readAction {
       if (projectsTree.existingManagedFiles.size != 1) null else MavenUtil.getBaseDir(projectsTree.existingManagedFiles[0])
     }
