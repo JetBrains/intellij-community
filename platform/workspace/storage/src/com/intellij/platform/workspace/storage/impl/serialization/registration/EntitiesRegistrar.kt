@@ -3,6 +3,7 @@ package com.intellij.platform.workspace.storage.impl.serialization.registration
 
 import com.esotericsoftware.kryo.kryo5.Kryo
 import com.intellij.platform.workspace.storage.EntityTypesResolver
+import com.intellij.platform.workspace.storage.impl.containers.Object2IntWithDefaultMap
 import com.intellij.platform.workspace.storage.impl.serialization.CacheMetadata
 import com.intellij.platform.workspace.storage.impl.serialization.PluginId
 import com.intellij.platform.workspace.storage.impl.serialization.TypeInfo
@@ -11,17 +12,16 @@ import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.metadata.model.FinalClassMetadata
 import com.intellij.platform.workspace.storage.metadata.model.StorageTypeMetadata
 import com.intellij.platform.workspace.storage.metadata.utils.collectClasses
-import it.unimi.dsi.fastutil.objects.Object2IntMap
 
 internal fun registerEntitiesClasses(kryo: Kryo, cacheMetadata: CacheMetadata,
-                                     typesResolver: EntityTypesResolver, classCache: Object2IntMap<TypeInfo>) =
+                                     typesResolver: EntityTypesResolver, classCache: Object2IntWithDefaultMap<TypeInfo>) =
   EntitiesRegistrar(typesResolver, cacheMetadata.toListWithPluginId(), classCache).registerClasses(kryo)
 
 
 private class EntitiesRegistrar(
   private val typesResolver: EntityTypesResolver,
   private val entitiesMetadata: List<Pair<PluginId, StorageTypeMetadata>>,
-  private val classCache: Object2IntMap<TypeInfo>
+  private val classCache: Object2IntWithDefaultMap<TypeInfo>
 ): StorageRegistrar {
 
   override fun registerClasses(kryo: Kryo) {

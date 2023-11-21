@@ -15,6 +15,7 @@ import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMs
 import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.impl.*
 import com.intellij.platform.workspace.storage.impl.containers.BidirectionalLongMultiMap
+import com.intellij.platform.workspace.storage.impl.containers.Object2IntWithDefaultMap
 import com.intellij.platform.workspace.storage.impl.indices.*
 import com.intellij.platform.workspace.storage.impl.serialization.registration.StorageClassesRegistrar
 import com.intellij.platform.workspace.storage.impl.serialization.registration.StorageRegistrar
@@ -28,8 +29,6 @@ import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import io.opentelemetry.api.metrics.Meter
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap
-import it.unimi.dsi.fastutil.objects.Object2IntMap
-import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
 import it.unimi.dsi.fastutil.objects.Object2LongMap
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap
 import org.jetbrains.annotations.TestOnly
@@ -71,14 +70,14 @@ public class EntityStorageSerializerImpl(
   @set:TestOnly
   override var serializerDataFormatVersion: String = STORAGE_SERIALIZATION_VERSION
 
-  internal fun createKryo(): Pair<Kryo, Object2IntMap<TypeInfo>> {
+  internal fun createKryo(): Pair<Kryo, Object2IntWithDefaultMap<TypeInfo>> {
     val kryo = Kryo()
 
     kryo.setAutoReset(false)
     kryo.references = true
     kryo.instantiatorStrategy = StdInstantiatorStrategy()
 
-    val classCache = Object2IntOpenHashMap<TypeInfo>()
+    val classCache = Object2IntWithDefaultMap<TypeInfo>()
     val registrar: StorageRegistrar = StorageClassesRegistrar(
       StorageSerializerUtil(
         typesResolver,
@@ -234,7 +233,7 @@ public class EntityStorageSerializerImpl(
 
 
   private fun writeAndRegisterClasses(kryo: Kryo, output: Output, entityStorage: EntityStorageSnapshotImpl,
-                                      cacheMetadata: CacheMetadata, classCache: Object2IntMap<TypeInfo>) {
+                                      cacheMetadata: CacheMetadata, classCache: Object2IntWithDefaultMap<TypeInfo>) {
     registerEntitiesClasses(kryo, cacheMetadata, typesResolver, classCache)
 
     val vfsClasses = hashSetOf<Class<*>>()
@@ -250,7 +249,7 @@ public class EntityStorageSerializerImpl(
   }
 
   private fun readAndRegisterClasses(kryo: Kryo, input: Input, cacheMetadata: CacheMetadata,
-                                     classCache: Object2IntMap<TypeInfo>) {
+                                     classCache: Object2IntWithDefaultMap<TypeInfo>) {
     registerEntitiesClasses(kryo, cacheMetadata, typesResolver, classCache)
 
     val nonObjectCount = input.readVarInt(true)

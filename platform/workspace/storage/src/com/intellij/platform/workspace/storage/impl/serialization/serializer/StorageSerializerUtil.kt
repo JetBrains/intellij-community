@@ -11,13 +11,13 @@ import com.intellij.platform.workspace.storage.EntityTypesResolver
 import com.intellij.platform.workspace.storage.SymbolicEntityId
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.impl.*
+import com.intellij.platform.workspace.storage.impl.containers.Object2IntWithDefaultMap
 import com.intellij.platform.workspace.storage.impl.indices.*
 import com.intellij.platform.workspace.storage.impl.serialization.*
 import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlImpl
 import com.intellij.platform.workspace.storage.url.UrlRelativizer
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
-import it.unimi.dsi.fastutil.objects.Object2IntMap
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap
 import java.util.function.BiConsumer
 import java.util.function.ToIntFunction
@@ -28,7 +28,7 @@ internal class StorageSerializerUtil(
   private val virtualFileManager: VirtualFileUrlManager,
   private val interner: StorageInterner,
   private val urlRelativizer: UrlRelativizer?,
-  private val classCache: Object2IntMap<TypeInfo>
+  private val classCache: Object2IntWithDefaultMap<TypeInfo>,
 ) {
 
   internal fun getParentEntityIdSerializer(): Serializer<ParentEntityId> = object : Serializer<ParentEntityId>(false, true) {
@@ -313,7 +313,7 @@ internal class StorageSerializerUtil(
     return interner.intern(SerializableEntityId(arrayId, clazz.typeInfo))
   }
 
-  private fun SerializableEntityId.toEntityId(classCache: Object2IntMap<TypeInfo>): EntityId {
+  private fun SerializableEntityId.toEntityId(classCache: Object2IntWithDefaultMap<TypeInfo>): EntityId {
     val classId = classCache.computeIfAbsent(type, ToIntFunction {
       typesResolver.resolveClass(name = this.type.fqName, pluginId = this.type.pluginId).toClassId()
     })
