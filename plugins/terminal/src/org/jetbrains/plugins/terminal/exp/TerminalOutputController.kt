@@ -6,7 +6,6 @@ import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.application.runInEdt
-import com.intellij.openapi.editor.ScrollType
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.markup.TextAttributes
@@ -65,6 +64,7 @@ class TerminalOutputController(
       blocksDecorator.installDecoration(block, isFirstBlock = outputModel.getBlocksSize() == 1)
     }
 
+    scrollToBottom()
     installRunningCommandListeners()
   }
 
@@ -74,7 +74,7 @@ class TerminalOutputController(
     val keyEventsDisposable = Disposer.newDisposable().also { Disposer.register(session, it) }
     keyEventsListenerDisposable = keyEventsDisposable
 
-    val eventsHandler = BlockTerminalEventsHandler(session, settings, outputModel, selectionModel)
+    val eventsHandler = BlockTerminalEventsHandler(session, settings, this)
     setupKeyEventDispatcher(editor, settings, eventsHandler, outputModel, selectionModel, keyEventsDisposable)
     setupMouseListener(editor, settings, session.model, eventsHandler, mouseAndContentDisposable)
     setupContentListener(mouseAndContentDisposable)
@@ -129,8 +129,21 @@ class TerminalOutputController(
   fun insertEmptyLine() {
     outputModel.closeLastBlock()
     editor.document.insertString(editor.document.textLength, "\n")
-    val visibleArea = editor.scrollingModel.visibleArea
-    editor.scrollingModel.scrollVertically(editor.contentComponent.height - visibleArea.height)
+    scrollToBottom()
+  }
+
+  @RequiresEdt
+  fun scrollToBottom() {
+    val scrollingModel = editor.scrollingModel
+    // disable animation to perform scrolling atomically
+    scrollingModel.disableAnimation()
+    try {
+      val visibleArea = editor.scrollingModel.visibleArea
+      scrollingModel.scrollVertically(editor.contentComponent.height - visibleArea.height)
+    }
+    finally {
+      scrollingModel.enableAnimation()
+    }
   }
 
   override fun onAlternateBufferChanged(enabled: Boolean) {
@@ -171,6 +184,8 @@ class TerminalOutputController(
 
   private fun updateEditor(output: CommandOutput) {
     val block = outputModel.getLastBlock() ?: error("No active block")
+    val wasAtBottom = editor.scrollingModel.visibleArea.let { it.y + it.height } == editor.contentComponent.height
+
     editor.document.replaceString(block.outputStartOffset, block.endOffset, output.text)
 
     // highlightings are collected only for output, so add prompt and command highlightings to the first place
@@ -196,8 +211,11 @@ class TerminalOutputController(
       blocksDecorator.installDecoration(block, isFirstBlock = outputModel.getBlocksSize() == 1)
     }
 
-    editor.caretModel.moveToOffset(block.endOffset)
-    editor.scrollingModel.scrollToCaret(ScrollType.CENTER_DOWN)
+    // scroll to bottom only if we were at the bottom before applying the changes
+    // so the user is free to look at the other commands output while active command is running
+    if (wasAtBottom) {
+      scrollToBottom()
+    }
     // caret highlighter can be removed at this moment, because we replaced the text of the block
     // so, call repaint manually
     caretPainter?.repaint()

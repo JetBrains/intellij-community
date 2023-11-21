@@ -7,19 +7,20 @@ import java.awt.event.KeyEvent
 class BlockTerminalEventsHandler(
   session: TerminalSession,
   settings: JBTerminalSystemSettingsProviderBase,
-  outputModel: TerminalOutputModel,
-  private val selectionModel: TerminalSelectionModel
-) : SimpleTerminalEventsHandler(session, settings, outputModel) {
+  private val outputController: TerminalOutputController
+) : SimpleTerminalEventsHandler(session, settings, outputController.outputModel) {
   override fun keyTyped(e: KeyEvent) {
     // Clear the block selection on typing
+    val selectionModel = outputController.selectionModel
     if (selectionModel.primarySelection != null) {
       selectionModel.selectedBlocks = emptyList()
     }
+    outputController.scrollToBottom()
     super.keyTyped(e)
   }
 
   override fun keyPressed(e: KeyEvent) {
-    val selectedBlock = selectionModel.primarySelection
+    val selectedBlock = outputController.selectionModel.primarySelection
     // Send key pressed events only when no block is selected or last block is selected.
     // So, it is possible to invoke actions on blocks
     if (selectedBlock == null || selectedBlock == outputModel.getLastBlock()) {

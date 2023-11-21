@@ -13,6 +13,7 @@ import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.editor
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.isAlternateBufferEditor
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.isOutputEditor
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.isPromptEditor
+import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.outputController
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.promptController
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.selectionController
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.simpleTerminalController
@@ -59,6 +60,7 @@ class TerminalPasteAction : TerminalPromotedDumbAwareAction(), ActionRemoteBehav
     // clear text selection if it is an alternate buffer editor
     e.simpleTerminalController?.clearTextSelection()
 
+    e.outputController?.scrollToBottom()
     session.terminalStarterFuture.thenAccept {
       if (it != null) {
         doPasteIntoTerminalSession(it)
