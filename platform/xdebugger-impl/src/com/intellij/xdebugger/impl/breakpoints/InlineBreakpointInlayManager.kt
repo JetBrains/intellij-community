@@ -2,7 +2,7 @@
 package com.intellij.xdebugger.impl.breakpoints
 
 import com.intellij.icons.AllIcons
-import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.readAndWriteAction
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -21,6 +21,7 @@ import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.util.registry.RegistryValueListener
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.util.DocumentUtil
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.util.containers.toMutableSmartList
 import com.intellij.util.ui.update.MergingUpdateQueue
@@ -151,48 +152,53 @@ internal class InlineBreakpointInlayManager(private val project: Project, privat
   private suspend fun redraw(document: Document, onlyLine: Int?, onlyEditor: Editor?) {
     val startStamp = document.modificationStamp
 
-    fun retryLater() {
-      redrawQueue.queue(Update.create(Pair(document, onlyLine)) {
-        scope.launch {
-          redraw(document, onlyLine, onlyEditor)
+    fun postponeOnChanged(): Boolean {
+      val documentAndPsiAreOutOfSync = !PsiDocumentManager.getInstance(project).isCommitted(document)
+      val documentIsOutdated = document.modificationStamp != startStamp
+      return if (documentAndPsiAreOutOfSync || documentIsOutdated) {
+        redrawQueue.queue(Update.create(Pair(document, onlyLine)) {
+          scope.launch {
+            redraw(document, onlyLine, onlyEditor)
+          }
+        })
+        true
+      }
+      else {
+        false
+      }
+    }
+
+    if (postponeOnChanged()) return
+    // Double-checked now.
+
+    readAndWriteAction {
+      if (postponeOnChanged()) return@readAndWriteAction value(Unit)
+
+      val allBreakpoints = allBreakpointsIn(document)
+
+      val inlays = mutableListOf<SingleInlayDatum>()
+      if (onlyLine != null) {
+        if (!DocumentUtil.isValidLine(onlyLine, document)) return@readAndWriteAction value(Unit)
+
+        val breakpoints = allBreakpoints.filter { it.line == onlyLine }
+        if (!breakpoints.isEmpty()) {
+          inlays += collectInlays(document, onlyLine, breakpoints)
         }
-      })
-    }
-
-    // We need Document and PSI to be in sync. Also ensure that document was not changed.
-    fun shouldRetry() =
-      !PsiDocumentManager.getInstance(project).isCommitted(document) || document.modificationStamp != startStamp
-
-    if (shouldRetry()) {
-      retryLater()
-      return
-    }
-
-    val allBreakpoints = allBreakpointsIn(document)
-
-    val inlays = mutableListOf<SingleInlayDatum>()
-    if (onlyLine != null) {
-      if (!DocumentUtil.isValidLine(onlyLine, document)) return
-
-      val breakpoints = allBreakpoints.filter { it.line == onlyLine }
-      if (!breakpoints.isEmpty()) {
-        inlays += collectInlays(document, onlyLine, breakpoints)
       }
-    }
-    else {
-      for ((line, breakpoints) in allBreakpoints.groupBy { it.line }) {
-        // We could process lines concurrently, but it doesn't seem to be really required.
-        inlays += collectInlays(document, line, breakpoints)
-      }
-    }
-
-    writeAction {
-      if (shouldRetry()) {
-        retryLater()
-        return@writeAction
+      else {
+        for ((line, breakpoints) in allBreakpoints.groupBy { it.line }) {
+          // We could process lines concurrently, but it doesn't seem to be really required.
+          inlays += collectInlays(document, line, breakpoints)
+        }
       }
 
-      insertInlays(document, onlyEditor, onlyLine, inlays)
+      if (postponeOnChanged()) return@readAndWriteAction value(Unit)
+
+      writeAction {
+        if (postponeOnChanged()) return@writeAction
+
+        insertInlays(document, onlyEditor, onlyLine, inlays)
+      }
     }
   }
 
@@ -207,61 +213,60 @@ internal class InlineBreakpointInlayManager(private val project: Project, privat
     val offset: Int,
   )
 
-  private suspend fun collectInlays(document: Document,
+  @RequiresReadLock
+  private fun collectInlays(document: Document,
                                     line: Int,
                                     breakpoints: List<XLineBreakpointImpl<*>>): List<SingleInlayDatum> {
-    return readAction {
-      if (!DocumentUtil.isValidLine(line, document)) return@readAction emptyList()
+    if (!DocumentUtil.isValidLine(line, document)) return emptyList()
 
-      val file = FileDocumentManager.getInstance().getFile(document) ?: return@readAction emptyList()
-      val linePosition = XSourcePositionImpl.create(file, line)
-      val breakpointTypes = XBreakpointUtil.getAvailableLineBreakpointTypes(project, linePosition, null)
+    val file = FileDocumentManager.getInstance().getFile(document) ?: return emptyList()
+    val linePosition = XSourcePositionImpl.create(file, line)
+    val breakpointTypes = XBreakpointUtil.getAvailableLineBreakpointTypes(project, linePosition, null)
 
-      val variants =
-        if (breakpointTypes.isNotEmpty()) {
-          XDebuggerUtilImpl.getLineBreakpointVariantsSync(project, breakpointTypes, linePosition)
-            // No need to show "all" variant in case of the inline breakpoints approach, it's useful only for the popup based one.
-            .filter { !isAllVariant(it) }
-        }
-        else {
-          emptyList()
-        }
-
-      val codeStartOffset = DocumentUtil.getLineStartIndentedOffset(document, line)
-
-      if (!shouldAlwaysShowAllInlays() &&
-          breakpoints.size == 1 &&
-          (variants.isEmpty() ||
-           variants.size == 1 && areMatching(variants[0], breakpoints[0], codeStartOffset))) {
-        // No need to show inline variants when there is only one breakpoint and one matching variant (or no variants at all).
-        return@readAction emptyList()
+    val variants =
+      if (breakpointTypes.isNotEmpty()) {
+        XDebuggerUtilImpl.getLineBreakpointVariantsSync(project, breakpointTypes, linePosition)
+          // No need to show "all" variant in case of the inline breakpoints approach, it's useful only for the popup based one.
+          .filter { !isAllVariant(it) }
+      }
+      else {
+        emptyList()
       }
 
-      buildList {
-        val remainingBreakpoints = breakpoints.toMutableSmartList()
-        for (variant in variants) {
-          val breakpointsHere = remainingBreakpoints.filter { areMatching(variant, it, codeStartOffset) }
-          if (!breakpointsHere.isEmpty()) {
-            for (breakpointHere in breakpointsHere) {
-              remainingBreakpoints.remove(breakpointHere)
-              val offset = getBreakpointRangeStartOffset(breakpointHere, codeStartOffset)
-              // TODO[inline-bp]: introduce better way to check that it's simple line breakpoint,
-              //                  it should be possible when we are able to better match variants and breakpoints
-              val singleLineBreakpoint = breakpoints.size == 1 && offset == codeStartOffset
-              if (!singleLineBreakpoint || shouldAlwaysShowAllInlays()) {
-                add(SingleInlayDatum(breakpointHere, variant, offset))
-              }
+    val codeStartOffset = DocumentUtil.getLineStartIndentedOffset(document, line)
+
+    if (!shouldAlwaysShowAllInlays() &&
+        breakpoints.size == 1 &&
+        (variants.isEmpty() ||
+         variants.size == 1 && areMatching(variants[0], breakpoints[0], codeStartOffset))) {
+      // No need to show inline variants when there is only one breakpoint and one matching variant (or no variants at all).
+      return emptyList()
+    }
+
+    return buildList {
+      val remainingBreakpoints = breakpoints.toMutableSmartList()
+      for (variant in variants) {
+        val breakpointsHere = remainingBreakpoints.filter { areMatching(variant, it, codeStartOffset) }
+        if (!breakpointsHere.isEmpty()) {
+          for (breakpointHere in breakpointsHere) {
+            remainingBreakpoints.remove(breakpointHere)
+            val offset = getBreakpointRangeStartOffset(breakpointHere, codeStartOffset)
+            // TODO[inline-bp]: introduce better way to check that it's simple line breakpoint,
+            //                  it should be possible when we are able to better match variants and breakpoints
+            val singleLineBreakpoint = breakpoints.size == 1 && offset == codeStartOffset
+            if (!singleLineBreakpoint || shouldAlwaysShowAllInlays()) {
+              add(SingleInlayDatum(breakpointHere, variant, offset))
             }
           }
-          else {
-            val offset = getBreakpointVariantRangeStartOffset(variant, codeStartOffset)
-            add(SingleInlayDatum(null, variant, offset))
-          }
         }
-        for (remainingBreakpoint in remainingBreakpoints) {
-          val offset = getBreakpointRangeStartOffset(remainingBreakpoint, codeStartOffset)
-          add(SingleInlayDatum(remainingBreakpoint, null, offset))
+        else {
+          val offset = getBreakpointVariantRangeStartOffset(variant, codeStartOffset)
+          add(SingleInlayDatum(null, variant, offset))
         }
+      }
+      for (remainingBreakpoint in remainingBreakpoints) {
+        val offset = getBreakpointRangeStartOffset(remainingBreakpoint, codeStartOffset)
+        add(SingleInlayDatum(remainingBreakpoint, null, offset))
       }
     }
   }
