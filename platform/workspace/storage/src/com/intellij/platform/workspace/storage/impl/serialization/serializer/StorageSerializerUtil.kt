@@ -12,13 +12,13 @@ import com.intellij.platform.workspace.storage.SymbolicEntityId
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.impl.*
 import com.intellij.platform.workspace.storage.impl.containers.Object2IntWithDefaultMap
+import com.intellij.platform.workspace.storage.impl.containers.Object2LongWithDefaultMap
 import com.intellij.platform.workspace.storage.impl.indices.*
 import com.intellij.platform.workspace.storage.impl.serialization.*
 import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlImpl
 import com.intellij.platform.workspace.storage.url.UrlRelativizer
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
-import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap
 import java.util.function.BiConsumer
 import java.util.function.ToIntFunction
 
@@ -245,7 +245,7 @@ internal class StorageSerializerUtil(
       vfu2EntityId.forEach { (key: VirtualFileUrl, value) ->
         kryo.writeObject(output, key)
         output.writeInt(value.keys.size)
-        value.forEach { (internalKey: EntityIdWithProperty, internalValue) ->
+        value.forEach { internalKey: EntityIdWithProperty, internalValue ->
           kryo.writeObject(output, internalKey.entityId.toSerializableEntityId())
           output.writeString(internalKey.propertyName)
           kryo.writeObject(output, internalValue.toSerializableEntityId())
@@ -258,7 +258,7 @@ internal class StorageSerializerUtil(
       repeat(input.readInt()) {
         val file = kryo.readObject(input, VirtualFileUrl::class.java) as VirtualFileUrl
         val size = input.readInt()
-        val data = Object2LongOpenHashMap<EntityIdWithProperty>(size)
+        val data = Object2LongWithDefaultMap<EntityIdWithProperty>(size)
         repeat(size) {
           val internalKeyEntityId = kryo.readObject(input, SerializableEntityId::class.java).toEntityId(classCache)
           val internalKeyPropertyName = interner.intern(input.readString())

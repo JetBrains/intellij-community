@@ -1160,6 +1160,16 @@
       <replaceConfiguration name="Do not use maps with primitive value" text="Object2IntMap" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.platform.workspace.storage.impl.containers.Object2IntWithDefaultMap">
         <constraint name="__context__" within="" contains="" />
       </replaceConfiguration>
+      <replaceConfiguration name="Do not use maps with primitive value" text="Object2LongMap" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.platform.workspace.storage.impl.containers.Object2LongWithDefaultMap">
+        <constraint name="__context__" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Do not use maps with primitive value" text="Object2LongOpenHashMap()" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.platform.workspace.storage.impl.containers.Object2LongWithDefaultMap()">
+        <constraint name="__context__" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Do not use maps with primitive value" text="Object2LongOpenHashMap($source$)" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.platform.workspace.storage.impl.containers.Object2LongWithDefaultMap.from($source$)">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="source" within="" contains="" />
+      </replaceConfiguration>
       <replaceConfiguration name="Don't read channels with for, use consume/consumeEach" suppressId="CHAN_WITH_FOR" text="for ($Item$ in $Collection$) {&#10;  $Statement$&#10;}" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="false" replacement="$Collection$.consumeEach { $Item$ -&gt;&#10;  $Statement$&#10;}">
         <constraint name="__context__" within="" contains="" />
         <constraint name="Item" within="" contains="" />

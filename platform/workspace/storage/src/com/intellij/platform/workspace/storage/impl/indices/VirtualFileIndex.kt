@@ -12,6 +12,7 @@ import com.intellij.platform.workspace.storage.impl.EntityId
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.asString
 import com.intellij.platform.workspace.storage.impl.containers.BidirectionalLongMultiMap
+import com.intellij.platform.workspace.storage.impl.containers.Object2LongWithDefaultMap
 import com.intellij.platform.workspace.storage.impl.containers.putAll
 import com.intellij.platform.workspace.storage.url.MutableVirtualFileUrlIndex
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
@@ -19,8 +20,6 @@ import com.intellij.platform.workspace.storage.url.VirtualFileUrlIndex
 import com.intellij.util.containers.CollectionFactory
 import it.unimi.dsi.fastutil.Hash
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap
-import it.unimi.dsi.fastutil.objects.Object2LongMap
-import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
 import org.jetbrains.annotations.TestOnly
@@ -36,7 +35,7 @@ import org.jetbrains.annotations.TestOnly
 //internal typealias Vfu2EntityId = Object2ObjectOpenHashMap<VirtualFileUrl, Object2ObjectOpenHashMap<String, EntityId>>
 //internal typealias EntityId2JarDir = BidirectionalMultiMap<EntityId, VirtualFileUrl>
 internal typealias EntityId2Vfu = Long2ObjectOpenHashMap<Any>
-internal typealias Vfu2EntityId = Object2ObjectOpenCustomHashMap<VirtualFileUrl, Object2LongMap<EntityIdWithProperty>>
+internal typealias Vfu2EntityId = Object2ObjectOpenCustomHashMap<VirtualFileUrl, Object2LongWithDefaultMap<EntityIdWithProperty>>
 internal typealias EntityId2JarDir = BidirectionalLongMultiMap<VirtualFileUrl>
 
 @Suppress("UNCHECKED_CAST")
@@ -129,7 +128,7 @@ public open class VirtualFileIndex internal constructor(
     EntityIdWithProperty(entityId, propertyName)
 
   public class MutableVirtualFileIndex private constructor(
-    // Do not write to [entityId2VirtualFileUrl]  and [vfu2EntityId] directly! Create a dedicated method for that
+    // Do not write to [entityId2VirtualFileUrl] and [vfu2EntityId] directly! Create a dedicated method for that
     // and call [startWrite] before write.
     override var entityId2VirtualFileUrl: EntityId2Vfu,
     override var vfu2EntityId: Vfu2EntityId,
@@ -301,8 +300,8 @@ public open class VirtualFileIndex internal constructor(
         entityId2VirtualFileUrl[id] = Pair(propertyName, virtualFileUrl)
       }
 
-      val property2EntityId = vfu2EntityId.getOrDefault(virtualFileUrl, Object2LongOpenHashMap())
-      property2EntityId[getCompositeKey(id, propertyName)] = id
+      val property2EntityId = vfu2EntityId.getOrDefault(virtualFileUrl, Object2LongWithDefaultMap())
+      property2EntityId.put(getCompositeKey(id, propertyName), id)
       vfu2EntityId[virtualFileUrl] = property2EntityId
     }
 
@@ -364,7 +363,7 @@ public open class VirtualFileIndex internal constructor(
 
     private fun copyVfuMap(originMap: Vfu2EntityId): Vfu2EntityId {
       val copiedMap = Vfu2EntityId(getHashingStrategy())
-      originMap.forEach { (key, value) -> copiedMap[key] = Object2LongOpenHashMap(value) }
+      originMap.forEach { (key, value) -> copiedMap[key] = Object2LongWithDefaultMap.from(value) }
       return copiedMap
     }
 
