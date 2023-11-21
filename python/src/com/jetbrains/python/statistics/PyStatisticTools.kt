@@ -114,7 +114,7 @@ val INTERPRETER_TYPE = EventFields.String("interpreterType", listOf(PIPENV.value
                                                                           REGULAR.value,
                                                                           POETRY.value))
 
-val INTERPRETER_CREATION_MODE = EventFields.String("interpreterCreationMode", listOf(SIMPLE.value,
+val INTERPRETER_CREATION_MODE = EventFields.String("interpreter_creation_mode", listOf(SIMPLE.value,
                                                                                      CUSTOM.value,
                                                                                      NA.value))
 
