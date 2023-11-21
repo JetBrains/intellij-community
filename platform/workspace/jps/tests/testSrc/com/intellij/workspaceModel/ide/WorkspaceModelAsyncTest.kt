@@ -15,7 +15,7 @@ import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.assertInstanceOf
 import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.testFramework.runInEdtAndWait
-import junit.framework.Assert.assertEquals
+import com.intellij.util.namedChildScope
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.first
@@ -25,6 +25,7 @@ import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
 import kotlin.test.assertContains
+import kotlin.test.assertEquals
 
 class WorkspaceModelAsyncTest {
   companion object {
@@ -37,7 +38,8 @@ class WorkspaceModelAsyncTest {
   @JvmField
   val projectModel = ProjectModelRule()
 
-  private val cs = CoroutineScope(Job())
+  @OptIn(DelicateCoroutinesApi::class)
+  private val cs = GlobalScope.namedChildScope("TestScope")
 
   @After
   fun tearDown() {
