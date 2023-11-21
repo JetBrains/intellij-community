@@ -5,6 +5,11 @@ import junit.framework.ComparisonFailure;
 
 import java.io.File;
 
+/**
+ * @deprecated Use {@link com.intellij.platform.testFramework.core.FileComparisonFailedError} instead.
+ */
+@SuppressWarnings("DeprecatedIsStillUsed")
+@Deprecated
 public class FileComparisonFailure extends ComparisonFailure implements FileComparisonData {
   private final String myExpected;
   private final String myActual;
@@ -39,7 +44,7 @@ public class FileComparisonFailure extends ComparisonFailure implements FileComp
   public String getActualFilePath() {
     return myActualFilePath;
   }
-  
+
   @Override
   public String getActualStringPresentation() {
     return myActual;
