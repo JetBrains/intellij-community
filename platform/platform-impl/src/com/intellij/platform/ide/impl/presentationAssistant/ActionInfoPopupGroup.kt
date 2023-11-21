@@ -18,6 +18,7 @@ import com.intellij.ui.WindowMoveListener
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.hover.HoverListener
 import com.intellij.ui.scale.JBUIScale
+import com.intellij.ui.util.width
 import com.intellij.util.Alarm
 import com.intellij.util.ui.Animator
 import com.intellij.util.ui.JBInsets
@@ -43,6 +44,14 @@ internal class ActionInfoPopupGroup(val project: Project, textFragments: List<Te
   }
   private val settingsButton = PresentationAssistantQuickSettingsButton(project, appearance) { isSettingsButtonForcedToBeShown = (it > 0) }
 
+  private val settingsButtonLocation: RelativePoint get() {
+    return actionBlocks.lastOrNull()?.popup?.let { popup ->
+      val location = popup.locationOnScreen
+      location.x += popup.width + appearance.spaceBetweenPopups
+      RelativePoint(location)
+    } ?: computeLocation(project, actionBlocks.size).popupLocation
+  }
+
   private var isPopupHovered: Boolean = false
     set(value) {
       val oldValue = field
@@ -50,7 +59,7 @@ internal class ActionInfoPopupGroup(val project: Project, textFragments: List<Te
 
       if (oldValue != isPopupHovered) {
         if (isPopupHovered) {
-          settingsButton.acquireShownStateRequest(computeLocation(project, actionBlocks.size).popupLocation)
+          settingsButton.acquireShownStateRequest(settingsButtonLocation)
         }
         else {
           settingsButton.releaseShownStateRequest()
