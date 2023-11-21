@@ -29,7 +29,6 @@ import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.*;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static java.util.Objects.requireNonNullElse;
@@ -107,12 +106,12 @@ public final class TaskUtil {
     }
     catch (DateTimeParseException ignored) { }
 
-    Matcher m = ISO8601_DATE_PATTERN.matcher(s);
-    if (m.matches()) {
-      var date = m.group(1).replace('/', '-');
-      var time = requireNonNullElse(m.group(2), "00:00:00");
-      var millis = requireNonNullElse(m.group(3), ".000").substring(1);
-      var timezone = requireNonNullElse(m.group(4), "Z");
+    var matcher = ISO8601_DATE_PATTERN.matcher(s);
+    if (matcher.matches()) {
+      var date = matcher.group(1).replace('/', '-');
+      var time = requireNonNullElse(matcher.group(2), "00:00:00");
+      var millis = requireNonNullElse(matcher.group(3), ".000").substring(1);
+      var timezone = requireNonNullElse(matcher.group(4), "Z");
       if (timezone.length() == 5) {
         // [+-]HHmm, missing colon
         timezone = timezone.substring(0, 3) + ':' + timezone.substring(3);

@@ -62,6 +62,8 @@ public final class DateFormatUtil {
 
   private DateFormatUtil() { }
 
+  /** @deprecated use {@link Duration#between} */
+  @Deprecated(forRemoval = true)
   public static long getDifferenceInDays(@NotNull Date startDate, @NotNull Date endDate) {
     return (endDate.getTime() - startDate.getTime() + DAY - 1000) / DAY;
   }
