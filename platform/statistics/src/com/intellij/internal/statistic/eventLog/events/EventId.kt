@@ -5,6 +5,8 @@ import com.intellij.internal.statistic.beans.MetricEvent
 import com.intellij.internal.statistic.eventLog.*
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
+import org.intellij.lang.annotations.Pattern
+import org.jetbrains.annotations.NonNls
 import java.util.function.Consumer
 
 abstract class BaseEventId(val eventId: String, val recorder: String) {
@@ -18,7 +20,7 @@ abstract class BaseEventId(val eventId: String, val recorder: String) {
 
 class EventId(
   private val group: EventLogGroup,
-  eventId: String,
+  @NonNls @EventIdName eventId: String,
 ) : BaseEventId(eventId, group.recorder) {
 
   fun log() {
@@ -38,7 +40,7 @@ class EventId(
 
 class EventId1<in T>(
   private val group: EventLogGroup,
-  eventId: String,
+  @NonNls @EventIdName eventId: String,
   private val field1: EventField<T>,
 ) : BaseEventId(eventId, group.recorder) {
 
@@ -65,7 +67,7 @@ class EventId1<in T>(
 
 class EventId2<in T1, in T2>(
   private val group: EventLogGroup,
-  eventId: String,
+  @NonNls @EventIdName eventId: String,
   private val field1: EventField<T1>,
   private val field2: EventField<T2>,
 ) : BaseEventId(eventId, group.recorder) {
@@ -94,7 +96,7 @@ class EventId2<in T1, in T2>(
 
 class EventId3<in T1, in T2, in T3>(
   private val group: EventLogGroup,
-  eventId: String,
+  @NonNls @EventIdName eventId: String,
   private val field1: EventField<T1>,
   private val field2: EventField<T2>,
   private val field3: EventField<T3>,
@@ -133,7 +135,7 @@ class EventDataCollector : ArrayList<EventPair<*>>() {
 
 class VarargEventId internal constructor(
   private val group: EventLogGroup,
-  eventId: String,
+  @NonNls @EventIdName eventId: String,
   vararg fields: EventField<*>,
 ) : BaseEventId(eventId, group.recorder) {
 
