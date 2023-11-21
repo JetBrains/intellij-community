@@ -6,12 +6,9 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.ui.ColorUtil
-import com.intellij.util.text.JBDateFormat
+import com.intellij.util.text.DateFormatUtil
 import com.intellij.util.ui.UIUtil
-import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
-import org.jetbrains.plugins.gitlab.ui.comment.GitLabNoteComponentFactory
-import org.jetbrains.plugins.gitlab.ui.comment.GitLabNoteViewModel
 import java.util.*
 import javax.swing.JComponent
 
@@ -34,7 +31,7 @@ object GitLabMergeRequestTimelineUIUtil {
     if (date != null) {
       builder
         .append(HtmlChunk.nbsp())
-        .append(JBDateFormat.getFormatter().formatPrettyDateTime(date))
+        .append(DateFormatUtil.formatPrettyDateTime(date))
     }
 
     return builder.toString()

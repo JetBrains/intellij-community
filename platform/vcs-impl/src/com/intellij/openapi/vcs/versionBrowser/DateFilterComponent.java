@@ -1,5 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.versionBrowser;
 
 import com.intellij.openapi.vcs.VcsBundle;
@@ -11,6 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.beans.PropertyVetoException;
@@ -19,22 +19,22 @@ import java.util.Date;
 
 public class DateFilterComponent {
   private JPanel myDatePanel;
-  private JCheckBox myUseDateAfterFilter;
   private JCheckBox myUseDateBeforeFilter;
-  private DatePicker myDateAfter;
+  private JCheckBox myUseDateAfterFilter;
   private DatePicker myDateBefore;
+  private DatePicker myDateAfter;
   private JPanel myRootPanel;
 
-  public DateFilterComponent() {
-    this(true, DateTimeFormatManager.getInstance().getDateFormat());
+  /** @deprecated use {@link #withBorder} and {@link #withFormat} as appropriate */
+  @Deprecated(forRemoval = true)
+  public DateFilterComponent(boolean showBorder, @NotNull DateFormat dateFormat) {
+    this();
+    if (showBorder) withBorder(IdeBorderFactory.createTitledBorder(VcsBundle.message("border.changes.filter.date.filter")));
+    withFormat(dateFormat);
   }
 
-  public DateFilterComponent(boolean showBorder, @NotNull DateFormat dateFormat) {
-    if (showBorder) {
-      myDatePanel.setBorder(IdeBorderFactory.createTitledBorder(VcsBundle.message("border.changes.filter.date.filter")));
-    }
-    myDateAfter.setDateFormat(dateFormat);
-    myDateBefore.setDateFormat(dateFormat);
+  public DateFilterComponent() {
+    withFormat(DateTimeFormatManager.getInstance().getDateFormat());
     ActionListener listener = new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
@@ -44,6 +44,17 @@ public class DateFilterComponent {
     myUseDateAfterFilter.addActionListener(listener);
     myUseDateBeforeFilter.addActionListener(listener);
     updateAllEnabled(null);
+  }
+
+  public DateFilterComponent withFormat(@NotNull DateFormat format) {
+    myDateBefore.setDateFormat(format);
+    myDateAfter.setDateFormat(format);
+    return this;
+  }
+
+  public DateFilterComponent withBorder(@Nullable Border border) {
+    myDatePanel.setBorder(border);
+    return this;
   }
 
   private void updateAllEnabled(@Nullable ActionEvent e) {
@@ -116,3 +127,4 @@ public class DateFilterComponent {
     return null;
   }
 }
+

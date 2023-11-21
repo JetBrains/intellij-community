@@ -34,7 +34,7 @@ public abstract class JBDateTimeFormatter {
     return DateFormatUtil.formatDate(time);
   }
 
-  public @NotNull String formatDateTime(Date date) {
+  public @NotNull @NlsSafe String formatDateTime(Date date) {
     return formatDateTime(date.getTime());
   }
 
@@ -50,7 +50,7 @@ public abstract class JBDateTimeFormatter {
     return DateFormatUtil.formatPrettyDateTime(time);
   }
 
-  public @NotNull String formatPrettyDate(@NotNull Date date) {
+  public @NotNull @NlsSafe String formatPrettyDate(@NotNull Date date) {
     return formatPrettyDate(date.getTime());
   }
 

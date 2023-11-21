@@ -23,7 +23,7 @@ import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.labels.LinkListener
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.containers.nullize
-import com.intellij.util.text.JBDateFormat
+import com.intellij.util.text.DateFormatUtil
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.SingleComponentCenteringLayout
@@ -284,7 +284,7 @@ internal object GitLabMergeRequestTimelineDiscussionComponentFactory {
     }.apply {
       bindVisibilityIn(cs, vm.replies.map { it.isNotEmpty() })
       bindTextIn(cs, vm.replies.mapNotNull { replies ->
-        replies.lastOrNull()?.createdAt?.let { JBDateFormat.getFormatter().formatPrettyDateTime(it) }
+        replies.lastOrNull()?.createdAt?.let { DateFormatUtil.formatPrettyDateTime(it) }
       })
     }
 
