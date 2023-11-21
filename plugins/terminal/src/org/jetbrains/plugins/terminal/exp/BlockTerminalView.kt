@@ -53,6 +53,10 @@ class BlockTerminalView(
     }
 
   init {
+    focusModel = TerminalFocusModel(project, this, outputView, promptView)
+    selectionController = TerminalSelectionController(focusModel, outputView.controller.selectionModel, outputView.controller.outputModel)
+    controller = BlockTerminalController(project, session, outputView.controller, promptView.controller, selectionController, focusModel)
+
     Disposer.register(this, outputView)
     Disposer.register(this, promptView)
 
@@ -61,7 +65,11 @@ class BlockTerminalView(
         promptView.component.isVisible = visible
         component.revalidate()
         invokeLater {
-          IdeFocusManager.getInstance(project).requestFocus(preferredFocusableComponent, true)
+          // do not focus the terminal if something outside the terminal is focused now
+          // it can be the case when long command is finished and prompt becomes shown
+          if (focusModel.isActive) {
+            IdeFocusManager.getInstance(project).requestFocus(preferredFocusableComponent, true)
+          }
         }
       }
     })
@@ -73,10 +81,6 @@ class BlockTerminalView(
         }
       }
     })
-
-    focusModel = TerminalFocusModel(project, this, outputView, promptView)
-    selectionController = TerminalSelectionController(focusModel, outputView.controller.selectionModel, outputView.controller.outputModel)
-    controller = BlockTerminalController(project, session, outputView.controller, promptView.controller, selectionController, focusModel)
 
     component.addComponentListener(object : ComponentAdapter() {
       override fun componentResized(e: ComponentEvent?) {
