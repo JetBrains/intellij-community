@@ -15,6 +15,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.serialization.PropertyMapping
 
 internal class JarTaskManifestDataService : WorkspaceDataService<JarTaskManifestData> {
   private val GRADLE_MAIN_SUFFIX = ".main"
@@ -56,7 +57,9 @@ internal class JarTaskManifestDataService : WorkspaceDataService<JarTaskManifest
   }
 }
 
-class JarTaskManifestData(val manifestAttributes: Map<String, String>) {
+class JarTaskManifestData
+@PropertyMapping("manifestAttributes")
+constructor(val manifestAttributes: Map<String, String>) {
   companion object {
     @JvmField
     val KEY = Key.create(JarTaskManifestData::class.java, ProjectKeys.TASK.processingWeight + 1)
