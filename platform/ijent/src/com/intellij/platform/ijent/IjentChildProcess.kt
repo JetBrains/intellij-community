@@ -41,9 +41,6 @@ interface IjentChildProcess : AutoCloseable {
     class ProcessExited : SendStdinError("Process exited")
   }
 
-  @Deprecated("Switch either to kill or terminate")
-  suspend fun sendSignal(signal: Int)
-
   suspend fun terminate()
   suspend fun kill()
 
