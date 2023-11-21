@@ -88,6 +88,16 @@ public abstract class FirShortenRefsTestGenerated extends AbstractFirShortenRefs
                 runTest("../idea/tests/testData/shortenRefsFir/calls/multipleImportAlias.kt");
             }
 
+            @TestMetadata("nestedClassConstructor.kt")
+            public void testNestedClassConstructor() throws Exception {
+                runTest("../idea/tests/testData/shortenRefsFir/calls/nestedClassConstructor.kt");
+            }
+
+            @TestMetadata("nestedClassConstructor_imported.kt")
+            public void testNestedClassConstructor_imported() throws Exception {
+                runTest("../idea/tests/testData/shortenRefsFir/calls/nestedClassConstructor_imported.kt");
+            }
+
             @TestMetadata("notImportedTopLevelFunctionAmbiguous.kt")
             public void testNotImportedTopLevelFunctionAmbiguous() throws Exception {
                 runTest("../idea/tests/testData/shortenRefsFir/calls/notImportedTopLevelFunctionAmbiguous.kt");
