@@ -5,6 +5,9 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -12,10 +15,14 @@ import java.util.List;
 import java.util.Map;
 
 public class ComparisonFailureData {
+
   private static final String ASSERTION_CLASS_NAME = "java.lang.AssertionError";
   private static final String ASSERTION_FAILED_CLASS_NAME = "junit.framework.AssertionFailedError";
 
   public static final String OPENTEST4J_ASSERTION = "org.opentest4j.AssertionFailedError";
+  public static final String OPENTEST4J_VALUE_WRAPPER = "org.opentest4j.ValueWrapper";
+  public static final String OPENTEST4J_FILE_INFO = "org.opentest4j.FileInfo";
+  public static final Charset OPENTEST4J_FILE_CONTENT_CHARSET = StandardCharsets.UTF_8;
 
   private static final List<String> COMPARISON_FAILURES = Arrays.asList("org.junit.ComparisonFailure", "org.junit.ComparisonFailure");
 
@@ -43,6 +50,10 @@ public class ComparisonFailureData {
     final Field actualField = exceptionClass.getDeclaredField("fActual");
     actualField.setAccessible(true);
     ACTUAL.put(exceptionClass, actualField);
+  }
+
+  public ComparisonFailureData(AssertionValue expected, AssertionValue actual) {
+    this(expected.text, actual.text, actual.path, expected.path);
   }
 
   public ComparisonFailureData(String expected, String actual) {
@@ -189,6 +200,22 @@ public class ComparisonFailureData {
   }
 
   public static ComparisonFailureData create(Throwable assertion) {
+    ComparisonFailureData failureData;
+
+    failureData = createFileComparisonData(assertion);
+    if (failureData != null) return failureData;
+
+    failureData = createFileComparisonFailure(assertion);
+    if (failureData != null) return failureData;
+
+    failureData = createOpentest4jAssertion(assertion);
+    if (failureData != null) return failureData;
+
+    failureData = createJunitComparisonFailure(assertion);
+    return failureData;
+  }
+
+  private static ComparisonFailureData createFileComparisonData(Throwable assertion) {
     if (assertion instanceof FileComparisonData) {
       final FileComparisonData comparisonFailure = (FileComparisonData)assertion;
       String actual = comparisonFailure.getActualStringPresentation();
@@ -197,7 +224,10 @@ public class ComparisonFailureData {
         return new ComparisonFailureData(expected, actual, comparisonFailure.getFilePath(), comparisonFailure.getActualFilePath());
       }
     }
+    return null;
+  }
 
+  private static ComparisonFailureData createFileComparisonFailure(Throwable assertion) {
     if (assertion instanceof FileComparisonFailure) {
       final FileComparisonFailure comparisonFailure = (FileComparisonFailure)assertion;
       String actual = comparisonFailure.getActual();
@@ -206,49 +236,63 @@ public class ComparisonFailureData {
         return new ComparisonFailureData(expected, actual, comparisonFailure.getFilePath(), comparisonFailure.getActualFilePath());
       }
     }
+    return null;
+  }
 
-    ComparisonFailureData commonAssertion = createCommonAssertion(assertion);
-    if (commonAssertion != null) return commonAssertion;
-
+  private static ComparisonFailureData createOpentest4jAssertion(Throwable assertion) {
     try {
-      return new ComparisonFailureData(getExpected(assertion), getActual(assertion));
-    }
-    catch (IllegalAccessException | NoSuchFieldException e) {
-      return null;
-    }
-}
-
-  /** @noinspection SSBasedInspection*/
-  private static ComparisonFailureData createCommonAssertion(Throwable assertion) {
-    try {
-      Class assertionClass = assertion.getClass();
-      if (assertionClass.getName().equals(OPENTEST4J_ASSERTION)) {
-        Class[] parameterTypes = new Class[0];
-        Object[] args = new Object[0];
-        if (((Boolean)assertionClass.getDeclaredMethod("isExpectedDefined", parameterTypes).invoke(assertion, args)).booleanValue() &&
-            ((Boolean)assertionClass.getDeclaredMethod("isActualDefined", parameterTypes).invoke(assertion, args)).booleanValue()) {
-
-          Object expected = assertionClass.getDeclaredMethod("getExpected", parameterTypes).invoke(assertion, args);
-          Object expectedString = expected.getClass().getDeclaredMethod("getStringRepresentation", parameterTypes).invoke(expected, args);
-
-          Object actual = assertionClass.getDeclaredMethod("getActual", parameterTypes).invoke(assertion, args);
-          Object actualString = actual.getClass().getDeclaredMethod("getStringRepresentation", parameterTypes).invoke(actual, args);
-          return new ComparisonFailureData((String)expectedString, (String)actualString);
+      if (OPENTEST4J_ASSERTION.equals(assertion.getClass().getName())) {
+        Method isExpectedDefinedMethod = assertion.getClass().getDeclaredMethod("isExpectedDefined");
+        Method isActualDefinedMethod = assertion.getClass().getDeclaredMethod("isActualDefined");
+        boolean isExpectedDefined = ((Boolean)isExpectedDefinedMethod.invoke(assertion)).booleanValue();
+        boolean isActualDefined = ((Boolean)isActualDefinedMethod.invoke(assertion)).booleanValue();
+        if (isExpectedDefined && isActualDefined) {
+          Method expectedMethod = assertion.getClass().getDeclaredMethod("getExpected");
+          Method actualMethod = assertion.getClass().getDeclaredMethod("getActual");
+          Object expectedValueWrapper = expectedMethod.invoke(assertion);
+          Object actualValueWrapper = actualMethod.invoke(assertion);
+          AssertionValue expected = getOpentest4jAssertionValue(expectedValueWrapper);
+          AssertionValue actual = getOpentest4jAssertionValue(actualValueWrapper);
+          return new ComparisonFailureData(expected, actual);
         }
       }
     }
-    catch (Throwable e) {
-      return null;
+    catch (InvocationTargetException | NoSuchMethodException | IllegalAccessException ignored) {
     }
     return null;
   }
 
-  public static String getActual(Throwable assertion) throws IllegalAccessException, NoSuchFieldException {
-    return get(assertion, ACTUAL, "fActual");
+  private static AssertionValue getOpentest4jAssertionValue(Object valueWrapper)
+    throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+
+    if (OPENTEST4J_VALUE_WRAPPER.equals(valueWrapper.getClass().getName())) {
+      Method valueMethod = valueWrapper.getClass().getDeclaredMethod("getValue");
+      Object value = valueMethod.invoke(valueWrapper);
+      if (OPENTEST4J_FILE_INFO.equals(value.getClass().getName())) {
+        Method contentAsStringMethod = value.getClass().getDeclaredMethod("getContentsAsString", Charset.class);
+        String valueString = (String)contentAsStringMethod.invoke(value, OPENTEST4J_FILE_CONTENT_CHARSET);
+        Method pathMethod = value.getClass().getDeclaredMethod("getPath");
+        String valuePath = (String)pathMethod.invoke(value);
+        return new AssertionValue(valueString, valuePath);
+      }
+      else {
+        Method stringRepresentationMethod = valueWrapper.getClass().getDeclaredMethod("getStringRepresentation");
+        String valueString = (String)stringRepresentationMethod.invoke(valueWrapper);
+        return new AssertionValue(valueString, null);
+      }
+    }
+    return null;
   }
 
-  public static String getExpected(Throwable assertion) throws IllegalAccessException, NoSuchFieldException {
-    return get(assertion, EXPECTED, "fExpected");
+  private static ComparisonFailureData createJunitComparisonFailure(Throwable assertion) {
+    try {
+      String expected = get(assertion, EXPECTED, "fExpected");
+      String actual = get(assertion, ACTUAL, "fActual");
+      return new ComparisonFailureData(expected, actual);
+    }
+    catch (IllegalAccessException | NoSuchFieldException e) {
+      return null;
+    }
   }
 
   private static String get(final Throwable assertion, final Map<Class<?>, Field> staticMap, final String fieldName) throws IllegalAccessException, NoSuchFieldException {
@@ -262,5 +306,16 @@ public class ComparisonFailureData {
     Field field = assertionClass.getDeclaredField(fieldName);
     field.setAccessible(true);
     return (String)field.get(assertion);
+  }
+
+  public static class AssertionValue {
+
+    public final String text;
+    public final String path;
+
+    public AssertionValue(String text, String path) {
+      this.text = text;
+      this.path = path;
+    }
   }
 }
