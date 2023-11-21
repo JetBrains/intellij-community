@@ -2462,6 +2462,8 @@
 
     <iconMapper mappingFile="JavaUIIconsMapping.json"/>
     <optionController implementation="com.intellij.compiler.JavaCompilerConfiguration$Provider"/>
+
+    <pluginSuggestionProvider implementation="com.intellij.ide.ant.AntSuggestionProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains">
