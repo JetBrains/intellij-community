@@ -1186,6 +1186,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     AbstractProjectViewPane currentProjectViewPane = getCurrentProjectViewPane();
     if (currentProjectViewPane != null) {
       // may be null for e.g. default project
+      IconDeferrer.getInstance().clearCache(); // icons may have changed
       currentProjectViewPane.updateFromRoot(false);
     }
   }
