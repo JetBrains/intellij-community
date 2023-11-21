@@ -2,12 +2,10 @@
 package com.intellij.platform.workspace.storage.tests.containers
 
 import com.intellij.platform.workspace.storage.impl.containers.MutableIntIntUniqueBiMap
-import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import kotlin.test.assertEquals
-import kotlin.test.assertTrue
 
 class IntIntUniqueBiMapTest {
 

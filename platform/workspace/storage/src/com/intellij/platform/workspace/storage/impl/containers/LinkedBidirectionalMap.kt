@@ -2,8 +2,6 @@
 package com.intellij.platform.workspace.storage.impl.containers
 
 import com.intellij.util.SmartList
-import java.util.*
-import kotlin.collections.LinkedHashMap
 
 internal class LinkedBidirectionalMap<K, V> : MutableMap<K, V> {
   private val myKeyToValueMap: MutableMap<K, V> = LinkedHashMap()

@@ -12,9 +12,6 @@ import com.google.common.collect.HashMultimap
 import com.intellij.platform.workspace.storage.impl.containers.Int2IntWithDefaultMap
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
-import java.util.ArrayList
-import java.util.HashMap
-import java.util.HashSet
 
 
 internal class DefaultListSerializer<T : List<*>> : CollectionSerializer<T>() {

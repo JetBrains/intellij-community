@@ -10,7 +10,6 @@ import com.intellij.platform.workspace.storage.metadata.model.FinalClassMetadata
 import com.intellij.platform.workspace.storage.metadata.model.ValueTypeMetadata.EntityReference
 import com.intellij.platform.workspace.storage.metadata.model.ValueTypeMetadata.SimpleType.CustomType
 import com.intellij.platform.workspace.storage.metadata.model.ValueTypeMetadata.SimpleType.PrimitiveType
-import com.intellij.testFramework.junit5.TestApplication
 import org.junit.jupiter.api.Test
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue

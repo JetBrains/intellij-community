@@ -5,7 +5,6 @@ import com.intellij.platform.workspace.storage.EntityTypesResolver
 import com.intellij.platform.workspace.storage.impl.serialization.PluginId
 import com.intellij.platform.workspace.storage.metadata.model.StorageTypeMetadata
 import com.intellij.platform.workspace.storage.metadata.resolver.TypeMetadataResolver
-import com.intellij.platform.workspace.storage.metadata.resolver.TypeMetadataResolverImpl
 import com.intellij.platform.workspace.storage.tests.metadata.serialization.deserialization
 import com.intellij.platform.workspace.storage.tests.metadata.serialization.replaceCacheVersion
 

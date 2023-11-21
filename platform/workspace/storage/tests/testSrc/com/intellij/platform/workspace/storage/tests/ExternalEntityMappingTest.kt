@@ -12,7 +12,6 @@ import com.intellij.platform.workspace.storage.testEntities.entities.SourceEntit
 import com.intellij.platform.workspace.storage.testEntities.entities.modifyEntity
 import com.intellij.platform.workspace.storage.toBuilder
 import com.intellij.testFramework.UsefulTestCase.assertEmpty
-import com.intellij.testFramework.junit5.TestApplication
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals

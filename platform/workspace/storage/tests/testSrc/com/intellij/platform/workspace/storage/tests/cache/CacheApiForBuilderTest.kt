@@ -7,7 +7,6 @@ import com.intellij.platform.workspace.storage.query.map
 import com.intellij.platform.workspace.storage.testEntities.entities.MySource
 import com.intellij.platform.workspace.storage.testEntities.entities.NamedEntity
 import com.intellij.platform.workspace.storage.tests.createEmptyBuilder
-import com.intellij.testFramework.junit5.TestApplication
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 

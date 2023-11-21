@@ -1,14 +1,14 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.platform.workspace.storage.tests.propertyBased
 
-import com.intellij.platform.workspace.storage.testEntities.entities.AnotherSource
-import com.intellij.platform.workspace.storage.testEntities.entities.MySource
-import com.intellij.platform.workspace.storage.testEntities.entities.SampleEntitySource
-import com.intellij.platform.workspace.storage.tests.createEmptyBuilder
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.impl.EntityId
 import com.intellij.platform.workspace.storage.impl.MutableEntityStorageImpl
 import com.intellij.platform.workspace.storage.impl.toClassId
+import com.intellij.platform.workspace.storage.testEntities.entities.AnotherSource
+import com.intellij.platform.workspace.storage.testEntities.entities.MySource
+import com.intellij.platform.workspace.storage.testEntities.entities.SampleEntitySource
+import com.intellij.platform.workspace.storage.tests.createEmptyBuilder
 import org.jetbrains.jetCheck.GenerationEnvironment
 import org.jetbrains.jetCheck.Generator
 
