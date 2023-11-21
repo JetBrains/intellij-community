@@ -5,13 +5,13 @@ import com.intellij.openapi.application.WriteDelayDiagnostics.WriteDelayDiagnost
 import com.intellij.platform.diagnostic.telemetry.PlatformMetrics
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 
-internal class WriteDelayDiagnosticsHandlerImpl: WriteDelayDiagnosticsHandler {
+internal class WriteDelayDiagnosticsHandlerImpl : WriteDelayDiagnosticsHandler {
   private var count: Long = 0
   private var totalTime: Long = 0
   private var maxTime: Long = 0
-  private val delaysMap: MutableMap<Long,Long> = mutableMapOf()
+  private val delaysMap: MutableMap<Long, Long> = mutableMapOf()
 
-  init{
+  init {
     val meter = TelemetryManager.getInstance().getMeter(PlatformMetrics)
     val countObservableCounter = meter.counterBuilder("writeAction.count")
       .setDescription("Number of write actions run")
@@ -32,34 +32,34 @@ internal class WriteDelayDiagnosticsHandlerImpl: WriteDelayDiagnosticsHandler {
       .buildObserver()
     meter.batchCallback(
       {
-      synchronized(this){
-        countObservableCounter.record(count)
-        timeObservableCounter.record(totalTime)
-        maxTimeObservableGauge.record(maxTime)
+        synchronized(this) {
+          countObservableCounter.record(count)
+          timeObservableCounter.record(totalTime)
+          maxTimeObservableGauge.record(maxTime)
 
-        var currentCount: Long = 0
-        var medianValue: Long = 0
-        delaysMap.entries.asSequence()
-          .sortedBy { it.key }
-          .takeWhile { currentCount < count / 2 }
-          .forEach {
-            medianValue = it.key * 100
-            currentCount += it.value
-          }
-        medianTimeObservableGauge.record(medianValue)
-      }
-    }, countObservableCounter, timeObservableCounter, maxTimeObservableGauge, medianTimeObservableGauge)
+          var currentCount: Long = 0
+          var medianValue: Long = 0
+          delaysMap.entries.asSequence()
+            .sortedBy { it.key }
+            .takeWhile { currentCount < count / 2 }
+            .forEach {
+              medianValue = it.key * 100
+              currentCount += it.value
+            }
+          medianTimeObservableGauge.record(medianValue)
+        }
+      }, countObservableCounter, timeObservableCounter, maxTimeObservableGauge, medianTimeObservableGauge)
 
   }
 
   override fun registerWrite(waitTime: Long) {
-    synchronized(this){
+    synchronized(this) {
       count++
       totalTime += waitTime
-      if( maxTime < waitTime){
+      if (maxTime < waitTime) {
         maxTime = waitTime
       }
-      val timeBucket = (totalTime/100)
+      val timeBucket = (totalTime / 100)
       delaysMap[timeBucket] = delaysMap.getOrDefault(timeBucket, 0) + 1
     }
   }
